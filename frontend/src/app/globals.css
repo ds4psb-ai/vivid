@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+:root {
+  --bg-0: #0b0e13;
+  --bg-1: #0f172a;
+  --bg-2: #111827;
+  --fg-0: #e2e8f0;
+  --fg-muted: rgba(226, 232, 240, 0.65);
+  --accent: #38bdf8;
+  --accent-2: #f59e0b;
+}
+
+body {
+  min-height: 100vh;
+  color: var(--fg-0);
+  background:
+    radial-gradient(1200px 600px at 10% -20%, rgba(56, 189, 248, 0.15), transparent 60%),
+    radial-gradient(800px 500px at 90% 10%, rgba(245, 158, 11, 0.15), transparent 55%),
+    linear-gradient(180deg, var(--bg-0), var(--bg-2));
+  font-family: var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
+}
+
+code,
+pre {
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.react-flow__handle {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--bg-0);
+  background: var(--fg-0);
+}
+
+.react-flow__controls {
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(2, 6, 23, 0.7);
+  box-shadow: 0 8px 30px rgba(2, 6, 23, 0.6);
+}
+
+.react-flow__controls-button {
+  background: rgba(15, 23, 42, 0.8);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  color: var(--fg-0);
+}
+
+/* Fix: Remove default white background/border from React Flow nodes (input/output types) */
+.react-flow__node {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  width: auto !important;
+}
+
+.react-flow__node-input,
+.react-flow__node-output,
+.react-flow__node-default {
+  background: transparent !important;
+  border: none !important;
+}

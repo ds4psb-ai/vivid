@@ -1,0 +1,383 @@
+"""Capsule Adapter: Execute capsule logic and generate style outputs.
+
+This module provides adapters for running capsule nodes. Currently uses
+rule-based style generation; future versions will integrate with Gemini/LLM.
+"""
+from __future__ import annotations
+
+import json
+import logging
+import os
+import random
+import time
+import urllib.request
+from typing import Any, Dict, List, Optional, Tuple
+
+# Color palettes for each auteur style
+AUTEUR_PALETTES = {
+    "auteur.bong-joon-ho": {
+        "cool": ["#102A43", "#243B53", "#334E68", "#486581", "#627D98"],
+        "neutral": ["#1F2933", "#323F4B", "#3E4C59", "#52606D", "#7B8794"],
+        "warm": ["#27241D", "#423D33", "#504A40", "#625D52", "#857F72"],
+    },
+    "auteur.park-chan-wook": {
+        "cool": ["#1B1B3A", "#2D2D5A", "#462255", "#6B2D5B", "#8B3A62"],
+        "neutral": ["#2D132C", "#801336", "#C72C41", "#EE4540", "#F5A962"],
+        "warm": ["#3D0C02", "#780116", "#C32F27", "#D8572A", "#F7B538"],
+    },
+    "auteur.shinkai": {
+        "cool": ["#1A365D", "#2C5282", "#3182CE", "#63B3ED", "#90CDF4"],
+        "neutral": ["#2D3748", "#4A5568", "#718096", "#A0AEC0", "#CBD5E0"],
+        "warm": ["#744210", "#975A16", "#D69E2E", "#ECC94B", "#F6E05E"],
+    },
+    "auteur.lee-junho": {
+        "cool": ["#1A202C", "#2D3748", "#4A5568", "#00B5D8", "#00D9FF"],
+        "neutral": ["#171923", "#2D3748", "#4A5568", "#A0AEC0", "#E2E8F0"],
+        "warm": ["#1A1423", "#38184C", "#6B21A8", "#9F7AEA", "#E9D8FD"],
+    },
+    "auteur.na-hongjin": {
+        "cool": ["#0D1117", "#161B22", "#21262D", "#30363D", "#484F58"],
+        "neutral": ["#1C1C1C", "#2D2D2D", "#3D3D3D", "#4D4D4D", "#5D5D5D"],
+        "warm": ["#1A1610", "#2D2418", "#42351F", "#594626", "#70572D"],
+    },
+    "auteur.hong-sangsoo": {
+        "cool": ["#F7FAFC", "#EDF2F7", "#E2E8F0", "#CBD5E0", "#A0AEC0"],
+        "neutral": ["#FAFAFA", "#F5F5F5", "#EEEEEE", "#E0E0E0", "#BDBDBD"],
+        "warm": ["#FFFBEB", "#FEF3C7", "#FDE68A", "#FCD34D", "#FBBF24"],
+    },
+}
+
+COMPOSITION_HINTS = {
+    "auteur.bong-joon-ho": {
+        "static": ["wide establishing", "static master"],
+        "controlled": ["symmetry with tension", "vertical blocking", "staircase motif", "class divide framing"],
+        "dynamic": ["push-in reveal", "tracking across barrier"],
+    },
+    "auteur.park-chan-wook": {
+        "static": ["centered tableau", "mirror composition"],
+        "controlled": ["symmetrical hallway", "split diopter", "wallpaper pattern"],
+        "dynamic": ["360 pan", "overhead dolly"],
+    },
+    "auteur.shinkai": {
+        "static": ["wide sky panorama", "silhouette against sunset"],
+        "controlled": ["light beam through clouds", "rain reflection", "train window"],
+        "dynamic": ["comet trail", "time-lapse clouds"],
+    },
+    "auteur.lee-junho": {
+        "static": ["stage center spotlight"],
+        "controlled": ["rythmic cuts", "synced movement"],
+        "dynamic": ["whip pan", "jump cut sequence", "beat-matched edit"],
+    },
+    "auteur.na-hongjin": {
+        "static": ["claustrophobic close-up"],
+        "controlled": ["over-the-shoulder tension"],
+        "dynamic": ["handheld chase", "shaky pursuit", "collision course"],
+    },
+    "auteur.hong-sangsoo": {
+        "static": ["static wide two-shot", "table composition"],
+        "controlled": ["slow zoom", "sudden pan to window"],
+        "dynamic": ["reframe pan"],
+    },
+}
+
+PACING_HINTS = {
+    "slow": ["long takes > 10s", "contemplative pauses", "minimal cuts", "breathing room"],
+    "medium": ["balanced rhythm", "3-5s average shot", "scene-appropriate transitions"],
+    "fast": ["rapid cuts < 2s", "impact frames", "jump cuts", "urgency"],
+}
+
+ENABLE_EXTERNAL_ADAPTERS = os.getenv("ENABLE_EXTERNAL_ADAPTERS", "false").lower() in (
+    "1",
+    "true",
+    "yes",
+)
+NOTEBOOKLM_API_URL = os.getenv("NOTEBOOKLM_API_URL", "")
+NOTEBOOKLM_API_KEY = os.getenv("NOTEBOOKLM_API_KEY", "")
+OPAL_API_URL = os.getenv("OPAL_API_URL", "")
+OPAL_API_KEY = os.getenv("OPAL_API_KEY", "")
+EXTERNAL_ADAPTER_TIMEOUT = float(os.getenv("EXTERNAL_ADAPTER_TIMEOUT", "15"))
+EXTERNAL_ADAPTER_RETRIES = int(os.getenv("EXTERNAL_ADAPTER_RETRIES", "1"))
+
+logger = logging.getLogger(__name__)
+
+
+def _call_external_api(
+    url: str,
+    api_key: str,
+    payload: Dict[str, Any],
+    timeout: float,
+    retries: int,
+) -> Dict[str, Any]:
+    body = json.dumps(payload).encode("utf-8")
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    last_exc: Optional[Exception] = None
+    for attempt in range(retries + 1):
+        try:
+            logger.info("Adapter call %s attempt=%s", url, attempt + 1)
+            request = urllib.request.Request(url, data=body, headers=headers, method="POST")
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                data = response.read().decode("utf-8")
+            return json.loads(data)
+        except Exception as exc:  # noqa: BLE001
+            last_exc = exc
+            logger.warning("Adapter call failed %s attempt=%s error=%s", url, attempt + 1, exc)
+            if attempt < retries:
+                time.sleep(0.5 * (attempt + 1))
+    raise last_exc or RuntimeError("Adapter call failed")
+
+
+def _run_notebooklm(
+    capsule_id: str,
+    capsule_version: str,
+    inputs: Dict[str, Any],
+    params: Dict[str, Any],
+    capsule_spec: Optional[Dict[str, Any]] = None,
+) -> Tuple[Dict[str, Any], List[str]]:
+    adapter = (capsule_spec or {}).get("adapter", {})
+    payload = {
+        "task": "style_summary",
+        "capsule_id": capsule_id,
+        "capsule_version": capsule_version,
+        "inputs": inputs,
+        "params": params,
+        "internal_graph_ref": adapter.get("internalGraphRef"),
+        "policy": (capsule_spec or {}).get("policy", {}),
+    }
+    if ENABLE_EXTERNAL_ADAPTERS and NOTEBOOKLM_API_URL:
+        try:
+            response = _call_external_api(
+                NOTEBOOKLM_API_URL,
+                NOTEBOOKLM_API_KEY,
+                payload,
+                EXTERNAL_ADAPTER_TIMEOUT,
+                EXTERNAL_ADAPTER_RETRIES,
+            )
+            summary = {
+                "summary": response.get("summary") or response.get("output") or "NotebookLM executed",
+                "source_count": response.get("source_count", 0),
+            }
+            evidence = response.get("evidence_refs", [])
+            return summary, evidence
+        except Exception as exc:  # noqa: BLE001
+            return (
+                {"summary": f"NotebookLM fallback: {exc}"},
+                [f"notebooklm:failed:{capsule_id}"],
+            )
+    logger.info("NotebookLM adapter disabled or missing URL; returning simulated summary")
+    return (
+        {"summary": "NotebookLM simulated summary", "source_count": 3},
+        [f"notebooklm:simulated:{capsule_id}"],
+    )
+
+
+def _run_opal(
+    capsule_id: str,
+    capsule_version: str,
+    inputs: Dict[str, Any],
+    params: Dict[str, Any],
+    capsule_spec: Optional[Dict[str, Any]] = None,
+) -> Tuple[Dict[str, Any], List[str]]:
+    adapter = (capsule_spec or {}).get("adapter", {})
+    payload = {
+        "workflow": adapter.get("workflow", "auteur_capsule_v1"),
+        "capsule_id": capsule_id,
+        "capsule_version": capsule_version,
+        "inputs": inputs,
+        "params": params,
+        "internal_graph_ref": adapter.get("internalGraphRef"),
+    }
+    if ENABLE_EXTERNAL_ADAPTERS and OPAL_API_URL:
+        try:
+            response = _call_external_api(
+                OPAL_API_URL,
+                OPAL_API_KEY,
+                payload,
+                EXTERNAL_ADAPTER_TIMEOUT,
+                EXTERNAL_ADAPTER_RETRIES,
+            )
+            summary = {
+                "summary": response.get("summary") or response.get("output") or "Opal workflow executed",
+                "workflow": response.get("workflow", "opal"),
+            }
+            evidence = response.get("evidence_refs", [])
+            return summary, evidence
+        except Exception as exc:  # noqa: BLE001
+            return (
+                {"summary": f"Opal fallback: {exc}"},
+                [f"opal:failed:{capsule_id}"],
+            )
+    logger.info("Opal adapter disabled or missing URL; returning simulated result")
+    return (
+        {"summary": "Opal simulated workflow result", "workflow": "mock"},
+        [f"opal:simulated:{capsule_id}"],
+    )
+
+
+def compute_style_vector(params: Dict[str, Any], capsule_id: str) -> List[float]:
+    """Generate a style embedding vector based on params."""
+    style_intensity = params.get("style_intensity", 0.7)
+    
+    # Base vector from style intensity
+    base = [style_intensity, style_intensity * 0.9, style_intensity * 0.85]
+    
+    # Color warmth
+    color_bias = params.get("color_bias", "neutral")
+    if color_bias == "warm":
+        base.extend([0.8, 0.5, 0.2])
+    elif color_bias == "cool":
+        base.extend([0.2, 0.5, 0.8])
+    else:
+        base.extend([0.5, 0.5, 0.5])
+    
+    # Camera dynamism
+    camera = params.get("camera_motion", "controlled")
+    if camera == "dynamic":
+        base.extend([0.9, 0.8, 0.85])
+    elif camera == "static":
+        base.extend([0.1, 0.15, 0.2])
+    else:
+        base.extend([0.5, 0.55, 0.5])
+    
+    # Signature param influence
+    for key in ["tension_bias", "symmetry_bias", "light_diffusion", "music_sync", "chaos_bias", "stillness"]:
+        if key in params:
+            val = float(params[key])
+            base.extend([val, val * 0.9])
+    
+    # Pad to fixed length
+    while len(base) < 16:
+        base.append(random.gauss(0.5, 0.1))
+    
+    return [round(v, 4) for v in base[:16]]
+
+
+def get_palette(params: Dict[str, Any], capsule_id: str) -> List[str]:
+    """Get color palette for the style."""
+    color_bias = params.get("color_bias", "neutral")
+    palettes = AUTEUR_PALETTES.get(capsule_id, AUTEUR_PALETTES["auteur.bong-joon-ho"])
+    return palettes.get(color_bias, palettes["neutral"])
+
+
+def get_composition_hints(params: Dict[str, Any], capsule_id: str) -> List[str]:
+    """Get composition hints based on camera motion."""
+    camera = params.get("camera_motion", "controlled")
+    hints_by_auteur = COMPOSITION_HINTS.get(capsule_id, COMPOSITION_HINTS["auteur.bong-joon-ho"])
+    hints = hints_by_auteur.get(camera, hints_by_auteur["controlled"])
+    
+    # Add some variation
+    if random.random() > 0.5:
+        hints = hints + ["rule of thirds"]
+    
+    return hints[:4]
+
+
+def get_pacing_hints(params: Dict[str, Any]) -> List[str]:
+    """Get pacing hints based on pacing param."""
+    pacing = params.get("pacing", "medium")
+    return PACING_HINTS.get(pacing, PACING_HINTS["medium"])
+
+
+def execute_capsule(
+    capsule_id: str,
+    capsule_version: str,
+    inputs: Dict[str, Any],
+    params: Dict[str, Any],
+    capsule_spec: Optional[Dict[str, Any]] = None,
+) -> Tuple[Dict[str, Any], List[str]]:
+    """
+    Execute a capsule and return (summary, evidence_refs).
+    
+    This is the main adapter entry point. Currently uses rule-based logic.
+    Future: integrate with Gemini/LLM for more sophisticated generation.
+    """
+    # Compute outputs based on auteur style
+    style_vector = compute_style_vector(params, capsule_id)
+    palette = get_palette(params, capsule_id)
+    composition_hints = get_composition_hints(params, capsule_id)
+    pacing_hints = get_pacing_hints(params)
+    
+    # Extract signature param for summary
+    signature_param = None
+    signature_value = None
+    for key in ["tension_bias", "symmetry_bias", "light_diffusion", "music_sync", "chaos_bias", "stillness"]:
+        if key in params:
+            signature_param = key
+            signature_value = params[key]
+            break
+    
+    summary = {
+        "message": f"Capsule executed: {capsule_id}@{capsule_version}",
+        "capsule_id": capsule_id,
+        "version": capsule_version,
+        "style_vector": style_vector,
+        "palette": palette,
+        "composition_hints": composition_hints,
+        "pacing_hints": pacing_hints,
+        "signature": {
+            "param": signature_param,
+            "value": signature_value,
+        } if signature_param else None,
+    }
+
+    evidence_refs = [
+        f"auteur:{capsule_id.split('.')[-1]}:style_guide:v{capsule_version}",
+        f"params:applied:{len(params)}_params",
+    ]
+
+    adapter = (capsule_spec or {}).get("adapter", {})
+    adapter_type = adapter.get("type", "rule")
+    chain = adapter.get("chain")
+    if not chain:
+        if adapter_type == "hybrid":
+            chain = ["notebooklm", "opal"]
+        elif adapter_type == "notebooklm":
+            chain = ["notebooklm"]
+        elif adapter_type == "opal":
+            chain = ["opal"]
+        else:
+            chain = []
+
+    external_insights = []
+    for step in chain:
+        if step == "notebooklm":
+            insight, refs = _run_notebooklm(capsule_id, capsule_version, inputs, params, capsule_spec)
+            external_insights.append({"adapter": "notebooklm", **insight})
+            evidence_refs.extend(refs)
+        elif step == "opal":
+            insight, refs = _run_opal(capsule_id, capsule_version, inputs, params, capsule_spec)
+            external_insights.append({"adapter": "opal", **insight})
+            evidence_refs.extend(refs)
+
+    if external_insights:
+        summary["external_insights"] = external_insights
+    
+    return summary, evidence_refs
+
+
+def generate_storyboard_preview(
+    summary: Dict[str, Any],
+    scene_count: int = 3,
+) -> List[Dict[str, Any]]:
+    """
+    Generate a storyboard preview based on capsule output.
+    Returns a list of scene descriptors.
+    """
+    palette = summary.get("palette", ["#333333"])
+    composition_hints = summary.get("composition_hints", ["wide shot"])
+    pacing_hints = summary.get("pacing_hints", ["medium pacing"])
+    
+    scenes = []
+    for i in range(scene_count):
+        scene = {
+            "scene_number": i + 1,
+            "composition": composition_hints[i % len(composition_hints)],
+            "dominant_color": palette[i % len(palette)],
+            "accent_color": palette[(i + 2) % len(palette)],
+            "pacing_note": pacing_hints[i % len(pacing_hints)],
+            "duration_hint": "3-5s" if "medium" in str(pacing_hints) else ("1-2s" if "fast" in str(pacing_hints) else "5-10s"),
+        }
+        scenes.append(scene)
+    
+    return scenes

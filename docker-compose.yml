@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: vivid-postgres
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: vivid_user
+      POSTGRES_PASSWORD: vivid_password
+      POSTGRES_DB: vivid_canvas
+    volumes:
+      - vivid_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  vivid_postgres_data:
