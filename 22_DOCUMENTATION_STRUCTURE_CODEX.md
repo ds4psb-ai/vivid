@@ -17,32 +17,27 @@
 
 ## 1) Document Taxonomy (범주별 구조)
 
+문서 목록/상태는 `00_DOCS_INDEX.md`를 정본으로 삼는다. 아래는 **범주 정의 + 대표 문서**만 유지한다.
+
 ### A. Vision & Architecture (SoR)
-- `00_EXECUTIVE_SUMMARY_NODE_CANVAS.md` (Vision/북극성)
-- `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md` (Architecture baseline)
-- `01_NODE_CANVAS_TECHNICAL_SPECIFICATION.md` (System spec)
-- `05_CAPSULE_NODE_SPEC.md` (Capsule contract)
-- `26_DOC_LINT_RULES_CODEX.md` (Doc lint & canonical anchors)
+- `00_EXECUTIVE_SUMMARY_NODE_CANVAS.md`
+- `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`
+- `01_NODE_CANVAS_TECHNICAL_SPECIFICATION.md`
+- `05_CAPSULE_NODE_SPEC.md`
+- `26_DOC_LINT_RULES_CODEX.md`
 
 ### B. Data & Evidence (SoR)
-- `08_SHEETS_SCHEMA_V1.md` (Sheets Bus contract)
-- `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md` (NotebookLM output contract)
-- `10_PIPELINES_AND_USER_FLOWS.md` (Pipelines & roles)
-- `27_AUTEUR_PIPELINE_E2E_CODEX.md` (E2E pipeline blueprint)
-- `28_AUTEUR_TEMPLATE_PIPELINE_DETAIL_CODEX.md` (Detailed pipeline operations)
-- `11_DB_PROMOTION_RULES_V1.md` (Promotion rules)
-- `12_PATTERN_PROMOTION_CRITERIA_V1.md` (Promotion criteria)
-- `31_NOTEBOOKLM_PATTERN_ENGINE_AND_CAPSULE_NODE_CODEX.md` (NotebookLM -> Capsule pipeline)
-- `32_CLAIM_EVIDENCE_TRACE_SPEC_V1.md` (Claim/Evidence/Trace spec)
-- `14_INGEST_RUNBOOK_V1.md` (Ingest operations)
-- `15_PATTERN_TAXONOMY_V1.md` (Pattern taxonomy)
-- `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md` (Gemini video structuring)
+- `08_SHEETS_SCHEMA_V1.md`
+- `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
+- `10_PIPELINES_AND_USER_FLOWS.md`
+- `11_DB_PROMOTION_RULES_V1.md`
+- `12_PATTERN_PROMOTION_CRITERIA_V1.md`
+- `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
+- `31_NOTEBOOKLM_PATTERN_ENGINE_AND_CAPSULE_NODE_CODEX.md`
+- `32_CLAIM_EVIDENCE_TRACE_SPEC_V1.md`
 
 ### C. Execution & Roadmap (Reference)
-- `03_IMPLEMENTATION_ROADMAP_NODE_CANVAS.md`
-- `07_EXECUTION_PLAN_2025-12.md`
-- `19_VIVID_EXECUTION_PLAN_V1.md`
-- `30_MIGRATION_PLAN_CODEX.md`
+- See `00_DOCS_INDEX.md`
 
 ### D. UI/UX & Product (SoR)
 - `13_UI_DESIGN_GUIDE_2025-12.md`
@@ -51,17 +46,13 @@
 - `24_PDR_NODE_CANVAS.md`
 
 ### E. Business & Growth (Reference)
-- `17_CREDITS_AND_BILLING_SPEC_V1.md`
-- `18_AFFILIATE_PROGRAM_SPEC_V1.md`
+- See `00_DOCS_INDEX.md`
 
 ### F. Research & Reverse Engineering (Reference)
-- `04_RESEARCH_SOURCES_2025-12.md`
-- `16_VIRLO_CONTENT_STUDIO_RESEARCH.md`
-- `18_REVERSE_ENGINEERING_REPORT_FOR_EXECUTION.md`
-- `18_REVERSE_ENGINEERING_REPORT_FOR_EXECUTION_CODEX.md`
+- See `00_DOCS_INDEX.md`
 
 ### G. Audit & Quality (Reference)
-- `21_DOCUMENTATION_AUDIT_REPORT_V1.md`
+- See `00_DOCS_INDEX.md`
 
 ---
 

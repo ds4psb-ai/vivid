@@ -10,6 +10,7 @@
 
 - **원칙/철학**: `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`
 - **흐름/역할**: `10_PIPELINES_AND_USER_FLOWS.md`
+- **캡슐 계약**: `05_CAPSULE_NODE_SPEC.md`
 - **영상 구조화**: `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
 - **Sheets/DB 계약**: `08_SHEETS_SCHEMA_V1.md`, `11_DB_PROMOTION_RULES_V1.md`
 - **NotebookLM 출력 규격**: `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
