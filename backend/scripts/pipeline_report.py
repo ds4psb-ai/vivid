@@ -84,6 +84,15 @@ async def _report() -> str:
 
         evidence_total = await _count(session, EvidenceRecord)
         evidence_latest = await _max_time(session, EvidenceRecord)
+        evidence_missing_pack_result = await session.execute(
+            select(func.count())
+            .select_from(EvidenceRecord)
+            .where(
+                (EvidenceRecord.source_pack_id.is_(None))
+                | (EvidenceRecord.source_pack_id == "")
+            )
+        )
+        evidence_missing_pack = int(evidence_missing_pack_result.scalar() or 0)
 
         candidate_total = await _count(session, PatternCandidate)
         candidate_status = await _group_counts(session, PatternCandidate, "status")
@@ -146,7 +155,7 @@ async def _report() -> str:
         f"Stage 0 RawAsset: {raw_total} total, {raw_restricted_count} restricted, latest { _fmt_date(raw_latest) }",
         f"Stage 2 VideoSegment: {video_total} total, latest { _fmt_date(video_latest) }",
         f"Stage 3 NotebookLibrary: {notebooks_total} total, assets {notebook_assets_total}, latest { _fmt_date(notebooks_latest) }",
-        f"Stage 4 EvidenceRecord: {evidence_total} total, latest { _fmt_date(evidence_latest) }",
+        f"Stage 4 EvidenceRecord: {evidence_total} total, latest { _fmt_date(evidence_latest) }, missing source_pack_id {evidence_missing_pack}",
         f"Stage 5 PatternCandidate: {candidate_total} total, status {candidate_status}",
         f"Stage 6 Pattern: {pattern_total} total, status {pattern_status}, trace {trace_total}, version {pattern_version or '-'} ({_fmt_date(pattern_version_at)})",
         "Pattern versions: "
