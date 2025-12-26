@@ -13,6 +13,7 @@
 - **영상 구조화**: `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
 - **Sheets/DB 계약**: `08_SHEETS_SCHEMA_V1.md`, `11_DB_PROMOTION_RULES_V1.md`
 - **NotebookLM 출력 규격**: `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
+- **Claim/Evidence/Trace**: `32_CLAIM_EVIDENCE_TRACE_SPEC_V1.md`
 
 ---
 

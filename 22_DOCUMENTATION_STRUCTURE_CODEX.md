@@ -32,6 +32,8 @@
 - `28_AUTEUR_TEMPLATE_PIPELINE_DETAIL_CODEX.md` (Detailed pipeline operations)
 - `11_DB_PROMOTION_RULES_V1.md` (Promotion rules)
 - `12_PATTERN_PROMOTION_CRITERIA_V1.md` (Promotion criteria)
+- `31_NOTEBOOKLM_PATTERN_ENGINE_AND_CAPSULE_NODE_CODEX.md` (NotebookLM -> Capsule pipeline)
+- `32_CLAIM_EVIDENCE_TRACE_SPEC_V1.md` (Claim/Evidence/Trace spec)
 - `14_INGEST_RUNBOOK_V1.md` (Ingest operations)
 - `15_PATTERN_TAXONOMY_V1.md` (Pattern taxonomy)
 - `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md` (Gemini video structuring)
@@ -75,6 +77,8 @@
 - `13` → `05` (캡슐 노드 상태/정책 반영)
 - `23` → `05`, `10`, `20` (템플릿 구조/캡슐/파이프라인)
 - `24` → `00`, `01`, `20`, `23` (제품 요구사항 정렬)
+- `31` → `09`, `10`, `11`, `12`, `25`, `05` (NotebookLM -> Capsule pipeline)
+- `32` → `09`, `11`, `12`, `25` (Claim/Evidence/Trace)
 
 ---
 

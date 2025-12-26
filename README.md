@@ -53,6 +53,8 @@ This repo bootstraps the Node Canvas MVP described in the Vivid docs. The focus 
 - `24_PDR_NODE_CANVAS.md`
 - `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
 - `26_DOC_LINT_RULES_CODEX.md`
+- `31_NOTEBOOKLM_PATTERN_ENGINE_AND_CAPSULE_NODE_CODEX.md`
+- `32_CLAIM_EVIDENCE_TRACE_SPEC_V1.md`
 
 ## Local setup
 
