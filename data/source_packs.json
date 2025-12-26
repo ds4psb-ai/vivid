@@ -1,0 +1,78 @@
+[
+    {
+        "pack_id": "sp_cluster-bong-class-divide_hook_20251226",
+        "cluster_id": "cluster-bong-class-divide",
+        "temporal_phase": "HOOK",
+        "source_count": 3,
+        "source_ids": [
+            "bong-2019-parasite",
+            "bong-2013-snowpiercer",
+            "bong-2003-memories-of-murder"
+        ],
+        "segment_refs": [
+            "seg-bong-2019-parasite-hook-001",
+            "seg-bong-2013-snowpiercer-hook-001",
+            "seg-bong-2003-memories-hook-001"
+        ],
+        "bundle_hash": "bong_hook_v1_20251226",
+        "notes": "봉준호 HOOK phase source pack"
+    },
+    {
+        "pack_id": "sp_cluster-bong-class-divide_build_20251226",
+        "cluster_id": "cluster-bong-class-divide",
+        "temporal_phase": "BUILD",
+        "source_count": 1,
+        "source_ids": [
+            "bong-2019-parasite"
+        ],
+        "segment_refs": [
+            "seg-bong-2019-parasite-build-001"
+        ],
+        "bundle_hash": "bong_build_v1_20251226",
+        "notes": "봉준호 BUILD phase source pack"
+    },
+    {
+        "pack_id": "sp_cluster-bong-class-divide_payoff_20251226",
+        "cluster_id": "cluster-bong-class-divide",
+        "temporal_phase": "PAYOFF",
+        "source_count": 1,
+        "source_ids": [
+            "bong-2019-parasite"
+        ],
+        "segment_refs": [
+            "seg-bong-2019-parasite-payoff-001"
+        ],
+        "bundle_hash": "bong_payoff_v1_20251226",
+        "notes": "봉준호 PAYOFF phase source pack"
+    },
+    {
+        "pack_id": "sp_cluster-bong-class-divide_turn_20251226",
+        "cluster_id": "cluster-bong-class-divide",
+        "temporal_phase": "TURN",
+        "source_count": 1,
+        "source_ids": [
+            "bong-2003-memories-of-murder"
+        ],
+        "segment_refs": [
+            "seg-bong-2003-memories-hook-001"
+        ],
+        "bundle_hash": "bong_turn_v1_20251226",
+        "notes": "봉준호 TURN phase source pack"
+    },
+    {
+        "pack_id": "sp_cluster-auteur-sample_hook_20251224",
+        "cluster_id": "cluster-auteur-sample",
+        "temporal_phase": "HOOK",
+        "source_count": 2,
+        "source_ids": [
+            "auteur-sample-2000-film-one",
+            "auteur-sample-2001-film-two"
+        ],
+        "segment_refs": [
+            "seg-auteur-sample-2000-film-one-001",
+            "seg-auteur-sample-2001-film-two-001"
+        ],
+        "bundle_hash": "sample_hook_v1_20251224",
+        "notes": "Sample auteur source pack for pipeline validation"
+    }
+]
