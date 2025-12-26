@@ -81,6 +81,7 @@ export interface PipelineStatus {
   notebook_assets: PipelineStageSummary;
   evidence_records: PipelineStageSummary;
   evidence_missing_source_pack?: number;
+  evidence_ops_only?: number;
   pattern_candidates: PipelineStageSummary;
   pattern_candidate_status: Record<string, number>;
   patterns: PipelineStageSummary;

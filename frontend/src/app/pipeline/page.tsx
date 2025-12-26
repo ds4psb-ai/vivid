@@ -171,6 +171,7 @@ export default function PipelinePage() {
     stageEvidenceRecords: language === "ko" ? "근거 레코드" : "Evidence Records",
     evidenceMissingSourcePack:
       language === "ko" ? "source_pack 누락" : "Missing source_pack_id",
+    evidenceOpsOnly: language === "ko" ? "ops_only" : "ops_only",
     stagePatternCandidates: language === "ko" ? "패턴 후보" : "Pattern Candidates",
     stagePatternLibrary: language === "ko" ? "패턴 라이브러리" : "Pattern Library",
     stageTemplates: language === "ko" ? "템플릿" : "Templates",
@@ -489,7 +490,7 @@ export default function PipelinePage() {
         icon: Sparkles,
         total: status.evidence_records.total,
         latest: status.evidence_records.latest,
-        meta: `${labels.evidenceMissingSourcePack}: ${status.evidence_missing_source_pack ?? 0}`,
+        meta: `${labels.evidenceMissingSourcePack}: ${status.evidence_missing_source_pack ?? 0} · ${labels.evidenceOpsOnly}: ${status.evidence_ops_only ?? 0}`,
       },
       {
         key: "candidates",

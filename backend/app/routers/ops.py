@@ -65,6 +65,7 @@ class PipelineStatusResponse(BaseModel):
     notebook_assets: StageSummary
     evidence_records: StageSummary
     evidence_missing_source_pack: int = 0
+    evidence_ops_only: int = 0
     pattern_candidates: StageSummary
     pattern_candidate_status: Dict[str, int]
     patterns: StageSummary
@@ -276,6 +277,15 @@ async def get_pipeline_status(
         .where((EvidenceRecord.source_pack_id.is_(None)) | (EvidenceRecord.source_pack_id == ""))
     )
     evidence_missing_source_pack = int(evidence_missing_result.scalar() or 0)
+    evidence_ops_only = 0
+    labels_result = await db.execute(select(EvidenceRecord.labels))
+    for (labels,) in labels_result.all():
+        if not isinstance(labels, list):
+            continue
+        for item in labels:
+            if isinstance(item, str) and item.strip().lower() == "ops_only":
+                evidence_ops_only += 1
+                break
 
     candidate_total = await _count(db, PatternCandidate)
     candidate_latest = await _latest(db, PatternCandidate)
@@ -347,6 +357,7 @@ async def get_pipeline_status(
         notebook_assets=StageSummary(total=notebook_assets_total, latest=_format_date(notebook_assets_latest)),
         evidence_records=StageSummary(total=evidence_total, latest=_format_date(evidence_latest)),
         evidence_missing_source_pack=evidence_missing_source_pack,
+        evidence_ops_only=evidence_ops_only,
         pattern_candidates=StageSummary(total=candidate_total, latest=_format_date(candidate_latest)),
         pattern_candidate_status=candidate_status,
         patterns=StageSummary(total=pattern_total, latest=_format_date(pattern_latest)),
