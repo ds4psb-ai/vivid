@@ -309,6 +309,18 @@ export interface GenerationRun {
   updated_at: string;
 }
 
+export interface ShotFeedbackPayload {
+  shot_id: string;
+  rating?: number | null;
+  note?: string | null;
+  tags?: string[];
+}
+
+export interface GenerationRunFeedbackRequest {
+  shots?: ShotFeedbackPayload[];
+  overall_note?: string;
+}
+
 export interface NotebookLibraryItem {
   id: string;
   notebook_id: string;
@@ -871,6 +883,16 @@ class ApiClient {
 
   async getGenerationRun(runId: string): Promise<GenerationRun> {
     return this.request<GenerationRun>(`/api/v1/runs/${runId}`);
+  }
+
+  async submitGenerationFeedback(
+    runId: string,
+    payload: GenerationRunFeedbackRequest,
+  ): Promise<GenerationRun> {
+    return this.request<GenerationRun>(`/api/v1/runs/${runId}/feedback`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
   }
 
   // --- Credits API ---

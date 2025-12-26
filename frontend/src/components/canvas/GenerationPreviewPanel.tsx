@@ -1,20 +1,30 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { useState } from "react";
 import { Clapperboard, X, ListChecks, PanelsTopLeft, Copy } from "lucide-react";
 import type { GenerationRun } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
+
+interface ShotFeedbackEntry {
+  shot_id: string;
+  rating?: number | null;
+  note?: string | null;
+  tags?: string[];
+}
 
 interface GenerationPreviewPanelProps {
   run: GenerationRun | null;
   isLoading: boolean;
   onClose: () => void;
+  onSubmitFeedback?: (payload: { shots: ShotFeedbackEntry[] }) => void;
 }
 
 export function GenerationPreviewPanel({
   run,
   isLoading,
   onClose,
+  onSubmitFeedback,
 }: GenerationPreviewPanelProps) {
   const { t } = useLanguage();
 
@@ -51,6 +61,9 @@ export function GenerationPreviewPanel({
         ? run.outputs.production_contract
         : null;
   const runLabel = run?.id ? `run-${run.id}` : "run";
+  const [feedbackEntries, setFeedbackEntries] = useState<Record<string, ShotFeedbackEntry>>({});
+  const [feedbackSent, setFeedbackSent] = useState(false);
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
 
   const copyToClipboard = (text: string) => {
     if (!text) return;
@@ -157,6 +170,30 @@ export function GenerationPreviewPanel({
       prompt: prompt.prompt,
     }));
     downloadCsv(`${runLabel}-prompt-contracts.csv`, rows);
+  };
+
+  const updateFeedbackEntry = (shotId: string, patch: Partial<ShotFeedbackEntry>) => {
+    setFeedbackEntries((prev) => ({
+      ...prev,
+      [shotId]: {
+        shot_id: shotId,
+        ...prev[shotId],
+        ...patch,
+      },
+    }));
+    setFeedbackSent(false);
+    setFeedbackError(null);
+  };
+
+  const handleSubmitFeedback = () => {
+    if (!onSubmitFeedback) return;
+    const shots = Object.values(feedbackEntries).filter((entry) => entry.shot_id);
+    if (!shots.length) {
+      setFeedbackError(t("feedbackEmpty") ?? "No feedback to submit");
+      return;
+    }
+    onSubmitFeedback({ shots });
+    setFeedbackSent(true);
   };
 
   return (
@@ -301,6 +338,8 @@ export function GenerationPreviewPanel({
                     const env = shot.environment_layers as Record<string, unknown> | undefined;
                     const character = shot.character as Record<string, unknown> | undefined;
                     const continuity = Array.isArray(shot.continuity_tags) ? shot.continuity_tags : [];
+                    const shotId = String(shot.shot_id || idx + 1);
+                    const feedback = feedbackEntries[shotId] || { shot_id: shotId };
                     return (
                       <div
                         key={`${String(shot.shot_id || idx)}`}
@@ -346,9 +385,53 @@ export function GenerationPreviewPanel({
                             {t("dialogue")}: {String(shot.dialogue)}
                           </div>
                         )}
+                        <div className="mt-3 rounded-md border border-white/10 bg-slate-950/60 p-2">
+                          <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                            <span className="uppercase tracking-widest">{t("feedback")}</span>
+                            <div className="ml-auto flex items-center gap-1">
+                              {[1, 2, 3, 4, 5].map((rating) => (
+                                <button
+                                  key={rating}
+                                  onClick={() => updateFeedbackEntry(shotId, { rating })}
+                                  className={`h-5 w-5 rounded-full border text-[10px] transition-colors ${
+                                    feedback.rating === rating
+                                      ? "border-emerald-400 bg-emerald-500/20 text-emerald-200"
+                                      : "border-white/10 text-slate-400 hover:border-emerald-400/60"
+                                  }`}
+                                  type="button"
+                                >
+                                  {rating}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <textarea
+                            value={feedback.note ?? ""}
+                            onChange={(event) =>
+                              updateFeedbackEntry(shotId, { note: event.target.value })
+                            }
+                            placeholder={t("feedbackNotePlaceholder")}
+                            className="mt-2 w-full rounded-md border border-white/10 bg-slate-900/70 p-2 text-[11px] text-slate-200 placeholder:text-slate-500 focus:border-emerald-400/60 focus:outline-none"
+                            rows={2}
+                          />
+                        </div>
                       </div>
                     );
                   })}
+                  {onSubmitFeedback && (
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <button
+                        onClick={handleSubmitFeedback}
+                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-xs font-semibold text-emerald-100 transition-colors hover:bg-emerald-500/20"
+                        type="button"
+                      >
+                        {t("submitFeedback")}
+                      </button>
+                      <div className="text-[10px] text-slate-500">
+                        {feedbackSent ? t("feedbackSaved") : feedbackError ?? ""}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </section>

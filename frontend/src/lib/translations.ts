@@ -249,6 +249,11 @@ export const translations = {
         noShotContracts: "샷 계약이 아직 없습니다.",
         noPromptContracts: "프롬프트 계약이 아직 없습니다.",
         copyPrompt: "프롬프트 복사",
+        feedback: "피드백",
+        submitFeedback: "피드백 저장",
+        feedbackSaved: "피드백이 저장되었습니다",
+        feedbackEmpty: "저장할 피드백이 없습니다",
+        feedbackNotePlaceholder: "이 샷에 대한 코멘트를 남겨주세요",
         aspectRatio: "화면비",
         lens: "렌즈",
         filmStock: "필름",
@@ -261,6 +266,7 @@ export const translations = {
         downloadJson: "JSON 받기",
         downloadCsv: "CSV 받기",
         productionPackage: "프로덕션 패키지",
+        feedbackSaveFailed: "피드백 저장에 실패했습니다",
 
         // Nodes
         generationPreview: "생성 미리보기",
@@ -541,6 +547,11 @@ export const translations = {
         noShotContracts: "No shot contracts yet.",
         noPromptContracts: "No prompt contracts yet.",
         copyPrompt: "Copy prompt",
+        feedback: "Feedback",
+        submitFeedback: "Save feedback",
+        feedbackSaved: "Feedback saved",
+        feedbackEmpty: "No feedback to submit",
+        feedbackNotePlaceholder: "Leave a note for this shot",
         aspectRatio: "Aspect Ratio",
         lens: "Lens",
         filmStock: "Film Stock",
@@ -553,6 +564,7 @@ export const translations = {
         downloadJson: "Download JSON",
         downloadCsv: "Download CSV",
         productionPackage: "Production Package",
+        feedbackSaveFailed: "Failed to save feedback",
 
         // Nodes
         generationPreview: "Generation Preview",

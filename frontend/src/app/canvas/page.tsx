@@ -52,7 +52,14 @@ import {
 import { Inspector } from "@/components/canvas/Inspector";
 import { PreviewPanel } from "@/components/canvas/PreviewPanel";
 import { GenerationPreviewPanel } from "@/components/canvas/GenerationPreviewPanel";
-import { api, CapsuleRunStreamController, Canvas, GenerationRun, StoryboardPreview } from "@/lib/api";
+import {
+  api,
+  CapsuleRunStreamController,
+  Canvas,
+  GenerationRun,
+  GenerationRunFeedbackRequest,
+  StoryboardPreview,
+} from "@/lib/api";
 import { isAdminModeEnabled } from "@/lib/admin";
 import { normalizeAllowedType } from "@/lib/graph";
 import { normalizeApiError } from "@/lib/errors";
@@ -890,6 +897,24 @@ function CanvasFlow() {
     }
   }, [canvasId, pushRunLog, startGenerationPolling, t, updateOutputNodes]);
 
+  const handleGenerationFeedback = useCallback(
+    async (payload: GenerationRunFeedbackRequest) => {
+      if (!generationRun?.id) {
+        return;
+      }
+      setGenerationFeedbackStatus("saving");
+      try {
+        const updated = await api.submitGenerationFeedback(generationRun.id, payload);
+        setGenerationRun(updated);
+        setGenerationFeedbackStatus("saved");
+      } catch (err) {
+        setGenerationFeedbackStatus("error");
+        setError(normalizeApiError(err, t("feedbackSaveFailed")));
+      }
+    },
+    [generationRun?.id, setError, t]
+  );
+
   const applyRecommendation = useCallback(
     (params: Record<string, unknown>) => {
       // Find capsule nodes and update their params
@@ -1643,6 +1668,7 @@ function CanvasFlow() {
           run={generationRun}
           isLoading={isGenerating}
           onClose={() => setShowGenerationPanel(false)}
+          onSubmitFeedback={handleGenerationFeedback}
         />
       )}
 
