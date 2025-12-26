@@ -14,6 +14,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth import get_is_admin
 from app.config import settings
 from app.database import get_db
+from app.ingest_rules import (
+    DERIVED_EVIDENCE_REF_RE,
+    GUIDE_SCOPE_ALLOWLIST,
+    GUIDE_TYPE_ALLOWLIST,
+    NOTEBOOK_ASSET_TYPE_ALLOWLIST,
+    OUTPUT_TYPE_ALLOWLIST,
+    PATTERN_NAME_RE,
+    PATTERN_TYPE_ALLOWLIST,
+    RAW_SOURCE_TYPE_ALLOWLIST,
+    is_mega_notebook_notes,
+)
 from app.models import (
     EvidenceRecord,
     NotebookLibrary,
@@ -27,64 +38,6 @@ from app.models import (
 )
 
 router = APIRouter()
-
-_GUIDE_TYPE_ALLOWLIST = {
-    "summary",
-    "homage",
-    "variation",
-    "template_fit",
-    "persona",
-    "synapse",
-    "story",
-    "beat_sheet",
-    "storyboard",
-    "study_guide",
-    "briefing_doc",
-    "table",
-}
-_GUIDE_SCOPE_ALLOWLIST = {
-    "auteur",
-    "genre",
-    "format",
-    "creator",
-    "mixed",
-}
-_OUTPUT_TYPE_ALLOWLIST = {
-    "video_overview",
-    "audio_overview",
-    "mind_map",
-    "report",
-    "data_table",
-}
-_PATTERN_TYPE_ALLOWLIST = {
-    "hook",
-    "scene",
-    "subtitle",
-    "audio",
-    "pacing",
-}
-_PATTERN_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
-_RAW_SOURCE_TYPE_ALLOWLIST = {"video", "image", "doc"}
-_NOTEBOOK_ASSET_TYPE_ALLOWLIST = {
-    "video",
-    "image",
-    "doc",
-    "script",
-    "still",
-    "scene",
-    "segment",
-    "link",
-}
-
-
-def _is_mega_notebook_notes(notes: Optional[str]) -> bool:
-    if not notes:
-        return False
-    lowered = notes.lower()
-    return any(
-        token in lowered
-        for token in ("mega_notebook", "mega-notebook", "mega notebook", "ops_only", "ops-only")
-    )
 
 class RawAssetRequest(BaseModel):
     source_id: str
@@ -115,8 +68,8 @@ class RawAssetRequest(BaseModel):
                 cleaned = prefix
         if cleaned in {"text", "application"}:
             cleaned = "doc"
-        if cleaned not in _RAW_SOURCE_TYPE_ALLOWLIST:
-            raise ValueError(f"source_type must be one of {sorted(_RAW_SOURCE_TYPE_ALLOWLIST)}")
+        if cleaned not in RAW_SOURCE_TYPE_ALLOWLIST:
+            raise ValueError(f"source_type must be one of {sorted(RAW_SOURCE_TYPE_ALLOWLIST)}")
         return cleaned
 
 
@@ -296,7 +249,6 @@ class VideoStructuredResponse(BaseModel):
 _TIMECODE_RE = re.compile(r"^\d{2}:\d{2}:\d{2}\.\d{3}$")
 _KEYFRAME_RE = re.compile(settings.VIDEO_KEYFRAME_REGEX)
 _EVIDENCE_REF_RE = re.compile(settings.VIDEO_EVIDENCE_REF_REGEX, re.IGNORECASE)
-_DERIVED_EVIDENCE_REF_RE = re.compile(r"^(sheet:[^:]+:.+|db:[^:]+:.+)$", re.IGNORECASE)
 
 
 def _parse_timecode(value: str) -> int:
@@ -361,8 +313,8 @@ class NotebookLibraryRequest(BaseModel):
         cleaned = value.strip()
         if not cleaned:
             return None
-        if cleaned not in _GUIDE_SCOPE_ALLOWLIST:
-            raise ValueError(f"guide_scope must be one of {sorted(_GUIDE_SCOPE_ALLOWLIST)}")
+        if cleaned not in GUIDE_SCOPE_ALLOWLIST:
+            raise ValueError(f"guide_scope must be one of {sorted(GUIDE_SCOPE_ALLOWLIST)}")
         return cleaned
 
 
@@ -412,10 +364,10 @@ async def list_notebook_library(
         query = query.where(NotebookLibrary.cluster_id == cluster_id)
     if guide_scope:
         cleaned = guide_scope.strip()
-        if cleaned and cleaned not in _GUIDE_SCOPE_ALLOWLIST:
+        if cleaned and cleaned not in GUIDE_SCOPE_ALLOWLIST:
             raise HTTPException(
                 status_code=400,
-                detail=f"guide_scope must be one of {sorted(_GUIDE_SCOPE_ALLOWLIST)}",
+                detail=f"guide_scope must be one of {sorted(GUIDE_SCOPE_ALLOWLIST)}",
             )
         if cleaned:
             query = query.where(NotebookLibrary.guide_scope == cleaned)
@@ -454,9 +406,9 @@ class NotebookAssetRequest(BaseModel):
     @classmethod
     def validate_asset_type(cls, value: str) -> str:
         cleaned = value.strip().lower()
-        if cleaned not in _NOTEBOOK_ASSET_TYPE_ALLOWLIST:
+        if cleaned not in NOTEBOOK_ASSET_TYPE_ALLOWLIST:
             raise ValueError(
-                f"asset_type must be one of {sorted(_NOTEBOOK_ASSET_TYPE_ALLOWLIST)}"
+                f"asset_type must be one of {sorted(NOTEBOOK_ASSET_TYPE_ALLOWLIST)}"
             )
         return cleaned
 
@@ -494,10 +446,10 @@ async def list_notebook_assets(
         query = query.where(NotebookAsset.notebook_id == notebook_id.strip())
     if asset_type:
         cleaned = asset_type.strip().lower()
-        if cleaned not in _NOTEBOOK_ASSET_TYPE_ALLOWLIST:
+        if cleaned not in NOTEBOOK_ASSET_TYPE_ALLOWLIST:
             raise HTTPException(
                 status_code=400,
-                detail=f"asset_type must be one of {sorted(_NOTEBOOK_ASSET_TYPE_ALLOWLIST)}",
+                detail=f"asset_type must be one of {sorted(NOTEBOOK_ASSET_TYPE_ALLOWLIST)}",
             )
         query = query.where(NotebookAsset.asset_type == cleaned)
     if search:
@@ -597,16 +549,16 @@ class EvidenceRecordRequest(BaseModel):
         cleaned = value.strip()
         if not cleaned:
             return None
-        if cleaned not in _GUIDE_TYPE_ALLOWLIST:
-            raise ValueError(f"guide_type must be one of {sorted(_GUIDE_TYPE_ALLOWLIST)}")
+        if cleaned not in GUIDE_TYPE_ALLOWLIST:
+            raise ValueError(f"guide_type must be one of {sorted(GUIDE_TYPE_ALLOWLIST)}")
         return cleaned
 
     @field_validator("output_type")
     @classmethod
     def validate_output_type(cls, value: str) -> str:
         cleaned = value.strip()
-        if cleaned not in _OUTPUT_TYPE_ALLOWLIST:
-            raise ValueError(f"output_type must be one of {sorted(_OUTPUT_TYPE_ALLOWLIST)}")
+        if cleaned not in OUTPUT_TYPE_ALLOWLIST:
+            raise ValueError(f"output_type must be one of {sorted(OUTPUT_TYPE_ALLOWLIST)}")
         return cleaned
 
     @field_validator("evidence_refs", mode="before")
@@ -625,7 +577,7 @@ class EvidenceRecordRequest(BaseModel):
             stripped = item.strip()
             if not stripped:
                 raise ValueError("evidence_refs cannot contain empty strings")
-            if not _DERIVED_EVIDENCE_REF_RE.match(stripped):
+            if not DERIVED_EVIDENCE_REF_RE.match(stripped):
                 raise ValueError("evidence_refs must use sheet:{Sheet}:{RowId} or db:{table}:{id}")
             cleaned.append(stripped)
         return cleaned
@@ -648,9 +600,9 @@ class EvidenceRecordRequest(BaseModel):
                 name_part, type_part = cleaned.split(":", 1)
                 pattern_name = name_part.strip()
                 pattern_type = type_part.strip()
-                if not _PATTERN_NAME_RE.match(pattern_name):
+                if not PATTERN_NAME_RE.match(pattern_name):
                     raise ValueError("key_patterns pattern_name must be snake_case")
-                if pattern_type not in _PATTERN_TYPE_ALLOWLIST:
+                if pattern_type not in PATTERN_TYPE_ALLOWLIST:
                     raise ValueError("key_patterns pattern_type must follow taxonomy")
                 normalized.append(
                     {
@@ -667,9 +619,9 @@ class EvidenceRecordRequest(BaseModel):
                 raise ValueError("key_patterns entries must include pattern_name and pattern_type")
             pattern_name = str(pattern_name).strip()
             pattern_type = str(pattern_type).strip()
-            if not _PATTERN_NAME_RE.match(pattern_name):
+            if not PATTERN_NAME_RE.match(pattern_name):
                 raise ValueError("key_patterns pattern_name must be snake_case")
-            if pattern_type not in _PATTERN_TYPE_ALLOWLIST:
+            if pattern_type not in PATTERN_TYPE_ALLOWLIST:
                 raise ValueError("key_patterns pattern_type must follow taxonomy")
             normalized.append(
                 {
@@ -750,19 +702,19 @@ async def list_evidence_records(
         query = query.where(EvidenceRecord.notebook_id == notebook_id)
     if output_type:
         cleaned = output_type.strip()
-        if cleaned and cleaned not in _OUTPUT_TYPE_ALLOWLIST:
+        if cleaned and cleaned not in OUTPUT_TYPE_ALLOWLIST:
             raise HTTPException(
                 status_code=400,
-                detail=f"output_type must be one of {sorted(_OUTPUT_TYPE_ALLOWLIST)}",
+                detail=f"output_type must be one of {sorted(OUTPUT_TYPE_ALLOWLIST)}",
             )
         if cleaned:
             query = query.where(EvidenceRecord.output_type == cleaned)
     if guide_type:
         cleaned = guide_type.strip()
-        if cleaned and cleaned not in _GUIDE_TYPE_ALLOWLIST:
+        if cleaned and cleaned not in GUIDE_TYPE_ALLOWLIST:
             raise HTTPException(
                 status_code=400,
-                detail=f"guide_type must be one of {sorted(_GUIDE_TYPE_ALLOWLIST)}",
+                detail=f"guide_type must be one of {sorted(GUIDE_TYPE_ALLOWLIST)}",
             )
         if cleaned:
             query = query.where(EvidenceRecord.guide_type == cleaned)
@@ -798,7 +750,7 @@ class PatternCandidateRequest(BaseModel):
     @classmethod
     def validate_pattern_name(cls, value: str) -> str:
         cleaned = value.strip()
-        if not _PATTERN_NAME_RE.match(cleaned):
+        if not PATTERN_NAME_RE.match(cleaned):
             raise ValueError("pattern_name must be snake_case (lowercase letters, numbers, underscores)")
         return cleaned
 
@@ -806,8 +758,8 @@ class PatternCandidateRequest(BaseModel):
     @classmethod
     def validate_pattern_type(cls, value: str) -> str:
         cleaned = value.strip()
-        if cleaned not in _PATTERN_TYPE_ALLOWLIST:
-            raise ValueError(f"pattern_type must be one of {sorted(_PATTERN_TYPE_ALLOWLIST)}")
+        if cleaned not in PATTERN_TYPE_ALLOWLIST:
+            raise ValueError(f"pattern_type must be one of {sorted(PATTERN_TYPE_ALLOWLIST)}")
         return cleaned
 
 
@@ -901,10 +853,10 @@ async def list_patterns(
         )
     if pattern_type:
         cleaned = pattern_type.strip()
-        if cleaned and cleaned not in _PATTERN_TYPE_ALLOWLIST:
+        if cleaned and cleaned not in PATTERN_TYPE_ALLOWLIST:
             raise HTTPException(
                 status_code=400,
-                detail=f"pattern_type must be one of {sorted(_PATTERN_TYPE_ALLOWLIST)}",
+                detail=f"pattern_type must be one of {sorted(PATTERN_TYPE_ALLOWLIST)}",
             )
         if cleaned:
             query = query.where(Pattern.pattern_type == cleaned)
@@ -944,10 +896,10 @@ async def list_pattern_trace(
         query = query.where(PatternTrace.pattern_id == pattern_uuid)
     if pattern_type:
         cleaned = pattern_type.strip()
-        if cleaned and cleaned not in _PATTERN_TYPE_ALLOWLIST:
+        if cleaned and cleaned not in PATTERN_TYPE_ALLOWLIST:
             raise HTTPException(
                 status_code=400,
-                detail=f"pattern_type must be one of {sorted(_PATTERN_TYPE_ALLOWLIST)}",
+                detail=f"pattern_type must be one of {sorted(PATTERN_TYPE_ALLOWLIST)}",
             )
         if cleaned:
             query = query.where(Pattern.pattern_type == cleaned)
@@ -1274,7 +1226,7 @@ async def upsert_evidence_record(
             select(NotebookLibrary).where(NotebookLibrary.notebook_id == data.notebook_id)
         )
         notebook = notebook_result.scalars().first()
-        if notebook and _is_mega_notebook_notes(notebook.curator_notes):
+        if notebook and is_mega_notebook_notes(notebook.curator_notes):
             if "ops_only" not in labels:
                 labels.append("ops_only")
     record.labels = labels

@@ -13,6 +13,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from app.database import AsyncSessionLocal, init_db
+from app.ingest_rules import ensure_label, is_mega_notebook_notes
 from app.models import EvidenceRecord, NotebookLibrary, RawAsset
 from app.routers.ingest import EvidenceRecordRequest
 
@@ -71,16 +72,6 @@ def _parse_json_field(value: Any, field_name: str, allow_list: bool = False) -> 
             return [parsed]
         return parsed
     raise ValueError(f"{field_name} must be JSON")
-
-
-def _is_mega_notebook_notes(notes: Optional[str]) -> bool:
-    if not notes:
-        return False
-    lowered = notes.lower()
-    return any(
-        token in lowered
-        for token in ("mega_notebook", "mega-notebook", "mega notebook", "ops_only", "ops-only")
-    )
 
 
 def _normalize_row(
@@ -211,8 +202,8 @@ async def _upsert_records(
             record.mise_en_scene = row.get("mise_en_scene")
             record.director_intent = row.get("director_intent")
             labels = row.get("labels") or []
-            if row.get("notebook_id") in mega_notebook_ids and "ops_only" not in labels:
-                labels.append("ops_only")
+            if row.get("notebook_id") in mega_notebook_ids:
+                labels = ensure_label(labels, "ops_only")
             record.labels = labels
             record.signature_motifs = row.get("signature_motifs") or []
             record.camera_motion = row.get("camera_motion") or {}
@@ -267,7 +258,7 @@ async def main() -> None:
                 select(NotebookLibrary).where(NotebookLibrary.notebook_id.in_(notebook_ids))
             )
             for notebook in result.scalars().all():
-                if _is_mega_notebook_notes(notebook.curator_notes):
+                if is_mega_notebook_notes(notebook.curator_notes):
                     mega_notebook_ids.add(notebook.notebook_id)
 
     normalized_rows: List[Dict[str, Any]] = []
@@ -286,10 +277,7 @@ async def main() -> None:
             validated = EvidenceRecordRequest.model_validate(normalized)
             payload = validated.model_dump()
             if payload.get("notebook_id") in mega_notebook_ids:
-                labels = payload.get("labels") or []
-                if "ops_only" not in labels:
-                    labels.append("ops_only")
-                payload["labels"] = labels
+                payload["labels"] = ensure_label(payload.get("labels") or [], "ops_only")
             generated_at = payload.get("generated_at")
             if isinstance(generated_at, datetime) and generated_at.tzinfo is not None:
                 payload["generated_at"] = (

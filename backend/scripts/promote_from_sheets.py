@@ -17,6 +17,19 @@ from urllib.request import Request, urlopen
 from sqlalchemy import select
 
 from app.database import AsyncSessionLocal
+from app.ingest_rules import (
+    DERIVED_EVIDENCE_REF_RE,
+    GUIDE_SCOPE_ALLOWLIST,
+    GUIDE_TYPE_ALLOWLIST,
+    NOTEBOOK_ASSET_TYPE_ALLOWLIST,
+    OUTPUT_TYPE_ALLOWLIST,
+    PATTERN_NAME_RE,
+    PATTERN_TYPE_ALLOWLIST,
+    RAW_SOURCE_TYPE_ALLOWLIST,
+    VIDEO_EVIDENCE_REF_RE,
+    ensure_label,
+    is_mega_notebook_notes,
+)
 from app.models import (
     EvidenceRecord,
     NotebookLibrary,
@@ -59,38 +72,6 @@ CONFIDENCE_THRESHOLD = float(os.getenv("PATTERN_CONFIDENCE_THRESHOLD", "0.6"))
 SHEETS_RETRY_COUNT = int(os.getenv("SHEETS_RETRY_COUNT", "3"))
 SHEETS_RETRY_BASE_SECONDS = float(os.getenv("SHEETS_RETRY_BASE_SECONDS", "0.5"))
 QUARANTINE_CSV_PATH = os.getenv("VIVID_QUARANTINE_CSV_PATH", "")
-VIDEO_EVIDENCE_REF_PATTERN = os.getenv("VIDEO_EVIDENCE_REF_PATTERN", r"^[a-z][a-z0-9_-]*:.+")
-VIDEO_EVIDENCE_REF_RE = re.compile(VIDEO_EVIDENCE_REF_PATTERN, re.IGNORECASE)
-DERIVED_EVIDENCE_REF_RE = re.compile(r"^(sheet:[^:]+:.+|db:[^:]+:.+)$", re.IGNORECASE)
-PATTERN_TYPE_ALLOWLIST = {"hook", "scene", "subtitle", "audio", "pacing"}
-PATTERN_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
-GUIDE_SCOPE_ALLOWLIST = {"auteur", "genre", "format", "creator", "mixed"}
-GUIDE_TYPE_ALLOWLIST = {
-    "summary",
-    "homage",
-    "variation",
-    "template_fit",
-    "persona",
-    "synapse",
-    "story",
-    "beat_sheet",
-    "storyboard",
-    "study_guide",
-    "briefing_doc",
-    "table",
-}
-OUTPUT_TYPE_ALLOWLIST = {"video_overview", "audio_overview", "mind_map", "report", "data_table"}
-RAW_SOURCE_TYPE_ALLOWLIST = {"video", "image", "doc"}
-NOTEBOOK_ASSET_TYPE_ALLOWLIST = {
-    "video",
-    "image",
-    "doc",
-    "script",
-    "still",
-    "scene",
-    "segment",
-    "link",
-}
 PATTERN_VERSION_RE = re.compile(r"^v(\d+)$", re.IGNORECASE)
 
 
@@ -289,23 +270,6 @@ def _parse_list(value: str) -> List[Any]:
     return _split_list(value)
 
 
-def _ensure_label(labels: List[Any], label: str) -> List[Any]:
-    cleaned = [str(item).strip() for item in labels if str(item).strip()]
-    if label not in cleaned:
-        cleaned.append(label)
-    return cleaned
-
-
-def _is_mega_notebook_notes(notes: Optional[str]) -> bool:
-    if not notes:
-        return False
-    lowered = str(notes).lower()
-    return any(
-        token in lowered
-        for token in ("mega_notebook", "mega-notebook", "mega notebook", "ops_only", "ops-only")
-    )
-
-
 def _collect_mega_notebook_ids(rows: Iterable[Dict[str, str]]) -> set[str]:
     mega_ids: set[str] = set()
     for row in rows:
@@ -313,7 +277,7 @@ def _collect_mega_notebook_ids(rows: Iterable[Dict[str, str]]) -> set[str]:
         if not notebook_id:
             continue
         notes = row.get("curator_notes") or ""
-        if _is_mega_notebook_notes(notes):
+        if is_mega_notebook_notes(notes):
             mega_ids.add(notebook_id)
     return mega_ids
 
@@ -862,7 +826,7 @@ async def _upsert_evidence_records(
             labels = _parse_list(row.get("labels") or "")
             notebook_id = row.get("notebook_id") or ""
             if notebook_id and notebook_id in mega_notebook_ids:
-                labels = _ensure_label(labels, "ops_only")
+                labels = ensure_label(labels, "ops_only")
             record.labels = labels or record.labels
             record.signature_motifs = _parse_list(row.get("signature_motifs") or "") or record.signature_motifs
             record.camera_motion = _parse_dict(row.get("camera_motion") or "") or record.camera_motion
