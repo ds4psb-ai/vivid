@@ -30,6 +30,7 @@ E2E 상세 파이프라인은 `27_AUTEUR_PIPELINE_E2E_CODEX.md`를 참조한다.
   - 업로드 소스는 SoR가 아니며, 결과는 Sheets Bus → DB 승격 규칙을 따른다  
   - Ultra 구독 기준 다중 출력/대량 처리에 유리  
   - 출력 규격: `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
+  - 소스팩/프롬프트 프로토콜: `33_NOTEBOOKLM_SOURCE_PACK_AND_PROMPT_PROTOCOL_CODEX.md`
 - **Opal**: 템플릿 시드 + 내부 워크플로 자동화  
   - 라벨링/QA/프롬프트 체인 도구화  
   - 캡슐 노드 내부 서브그래프로만 실행
@@ -46,6 +47,7 @@ Admin Ingest
   → Preprocess (ASR/Shot/Keyframe)
   → Gemini Structured Output (Video Schema)
   → DB SoR (Video Schema)
+  → NotebookLM Source Pack Builder (cluster_id + temporal_phase)
   → NotebookLM/Opal (Guide)
   → Notebook Library (Private)
   → Notebook Assets (Private)

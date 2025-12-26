@@ -63,6 +63,9 @@ Claim과 EvidenceRef의 연결 테이블/레코드.
 - `token_usage`, `latency_ms`, `cost_usd_est`
 - `created_at`
 
+권장 필드:
+- `eval_scores.ragas` (faithfulness/answer_relevancy/context_precision/context_recall)
+
 ---
 
 ## 2) Evidence Reference 규칙
@@ -88,6 +91,11 @@ Claim과 EvidenceRef의 연결 테이블/레코드.
 ### 3.3 정합성 검증
 - claim_type이 패턴/페르소나 규칙과 불일치 시 Reject
 - temporal_phase 불일치 시 Reject
+
+### 3.4 품질 점수 검증 (RAGAS-style)
+- `eval_scores`는 최소 2개 이상 기록 (예: groundedness/relevancy)
+- RAGAS 계열 지표는 `eval_scores.ragas.*`로 확장 가능
+- 기준 미달 시 `candidate` 유지 또는 `quarantine`
 
 ---
 

@@ -119,6 +119,20 @@ Templates are learnable:
 
 ---
 
+## 3.5 Logic/Persona Fusion + Variation Protocol (SoR)
+
+통데이터셋화(A/B/C/D), 수학적 로직, 거장 페르소나, 둘의 결합, 신규 장르 변주 마이그레이션,
+NotebookLM 소스 구성/가이드 추출 프로토콜은 아래 정본에서 고정한다.
+
+- `33_NOTEBOOKLM_SOURCE_PACK_AND_PROMPT_PROTOCOL_CODEX.md`
+
+핵심 요약:
+- **Logic Vector**(컷/구도/모티프/리듬) + **Persona Vector**(톤/감정/해석) 분리 후 결합
+- **cluster_id + temporal_phase** 단위 노트북 운영
+- 변주 추천은 NotebookLM 가이드 + Evidence/RL 점수로 보정
+
+---
+
 ## 4) NotebookLM -> DB (Canonicalization Pipeline)
 
 **Goal**: turn NotebookLM outputs into stable, queryable, learnable data.
