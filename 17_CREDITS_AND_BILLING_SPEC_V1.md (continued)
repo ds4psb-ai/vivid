@@ -1,3 +1,10 @@
+# Credits & Billing Spec v1 (continued)
+
+**Status**: Reference / continued  
+**Primary spec**: `17_CREDITS_AND_BILLING_SPEC_V1.md`
+
+---
+
 - Base cost by output type:
   - Text summary
   - Storyboard preview
@@ -35,4 +42,3 @@ Tables:
 - No negative balances
 - Refund on failed generation
 - Promo credits cannot be transferred
-
