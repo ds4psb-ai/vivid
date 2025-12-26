@@ -4,6 +4,7 @@
 **Basis**: `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`  
 **Goal**: Preserve Vivid philosophy while sequencing the work to avoid rework.
 **Flow/Roles**: Canonical definitions live in `10_PIPELINES_AND_USER_FLOWS.md`.
+**Principles/Contracts**: `05_CAPSULE_NODE_SPEC.md`, `08_SHEETS_SCHEMA_V1.md`, `11_DB_PROMOTION_RULES_V1.md`.
 
 ---
 
@@ -22,11 +23,10 @@
 ## 2) Detailed Workstreams
 
 ### Workstream A: Knowledge Pipeline (Notebook Library -> DB SoR)
-**Spec**:
-- Notebook Library is private and canonical.
-- NotebookLM outputs go to Sheets Bus, then DB SoR.
-- Pattern Library/Trace is the only evidence source for capsules.
-- NotebookLM guide layer: 클러스터 노트북 + 오마주/변주 가이드 + 템플릿 적합도 제안.
+**Spec (SoR references)**:
+- `10_PIPELINES_AND_USER_FLOWS.md`
+- `11_DB_PROMOTION_RULES_V1.md`
+- `31_NOTEBOOKLM_PATTERN_ENGINE_AND_CAPSULE_NODE_CODEX.md`
 
 **Dev Tasks**:
 - [ ] Extend Sheets ingest to include Notebook Library (manual first, automate later).
@@ -34,9 +34,8 @@
 - [ ] Add promotion rules for Notebook outputs -> Pattern Library/Trace.
 
 ### Workstream B: Capsule Contracts + Execution
-**Spec**:
-- Capsule spec must include `input_contracts`, `output_contracts`, `capsule_id@version`.
-- Capsule run must capture `upstream_context`, `evidence_refs`, `token_usage`, `latency_ms`.
+**Spec (SoR references)**:
+- `05_CAPSULE_NODE_SPEC.md`
 
 **Dev Tasks**:
 - [ ] Add input contract validation in capsule run.
@@ -44,10 +43,8 @@
 - [ ] Enforce evidence refs from DB SoR only.
 
 ### Workstream C: Canvas UX (Creator Hub)
-**Spec**:
-- Left rail: Research / Creator Hub / Accounts / Credits / Affiliate.
-- Empty state: one-click seed graph.
-- Top bar: Run + Preview + Credit balance.
+**Spec (SoR references)**:
+- `13_UI_DESIGN_GUIDE_2025-12.md`
 
 **Dev Tasks**:
 - [ ] Refactor Sidebar + TopBar.
@@ -55,9 +52,8 @@
 - [ ] Node status states + preview panel integration.
 
 ### Workstream D: Template Learning (GA/RL)
-**Spec**:
-- GA explores candidate parameters; RL exploits evidence reward.
-- Promote new template versions only when evidence thresholds pass.
+**Spec (SoR references)**:
+- `12_PATTERN_PROMOTION_CRITERIA_V1.md`
 
 **Dev Tasks**:
 - [ ] Define evidence reward function for GA/RL.
@@ -65,10 +61,10 @@
 - [ ] Persist learning history for auditability.
 
 ### Workstream E: Commerce + Observability
-**Spec**:
-- Credits are not hidden in settings.
-- Ledger is append-only, tied to capsule runs.
-- Token usage + latency visible per run.
+**Spec (Reference)**:
+- `17_CREDITS_AND_BILLING_SPEC_V1.md`
+- `18_AFFILIATE_PROGRAM_SPEC_V1.md`
+- `05_CAPSULE_NODE_SPEC.md` (run telemetry)
 
 **Dev Tasks**:
 - [ ] Implement credit ledger + balance.

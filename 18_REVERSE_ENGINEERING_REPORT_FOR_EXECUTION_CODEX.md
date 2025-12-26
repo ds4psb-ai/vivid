@@ -26,6 +26,17 @@
 
 ---
 
+## 0.2) SoR Alignment
+
+이 문서는 역설계 참고용이며, **최종 결정/계약은 정본 문서에 반영**한다.
+
+- UI/UX 정본: `13_UI_DESIGN_GUIDE_2025-12.md`
+- Node/캡슐 계약: `01_NODE_CANVAS_TECHNICAL_SPECIFICATION.md`, `05_CAPSULE_NODE_SPEC.md`
+- 파이프라인/역할: `10_PIPELINES_AND_USER_FLOWS.md`
+- Growth 스펙: `17_CREDITS_AND_BILLING_SPEC_V1.md`, `18_AFFILIATE_PROGRAM_SPEC_V1.md`
+
+---
+
 ## Workstream A: IA + Onboarding (Product Entry)
 
 ### A.1 Navigation Structure
@@ -37,10 +48,9 @@
 - Accounts (Account, Usage, Billing)
 - Changelog, Get Free Credits, Affiliate Program, Support, Community
 
-**Vivid decision** [PROPOSED]
-- Left rail groups: Research / Creator Hub / Accounts / Credits / Affiliate
-- Credits and Affiliate are top-level for visibility
-- "New" badge reserved for major feature launches
+**Vivid alignment (candidate → SoR)** [PROPOSED]
+- 후보 요약: Left rail 그룹/CTA 배치/New 배지 규칙
+- 확정 문서: `13_UI_DESIGN_GUIDE_2025-12.md`
 
 **Implementation impact**
 - Sidebar component needs grouping support and badge chips
@@ -60,10 +70,9 @@
 - Positioning copy: "Visual AI content workflow builder"
 - Onboarding sections: Core Components, What You Can Build, How It Works
 
-**Vivid decision** [PROPOSED]
-- Primary CTA: "Create First Canvas"
-- Seed graph: Input -> Capsule -> Script/Beat -> Storyboard -> Output
-- Onboarding cards: Core Components, What You Can Build, How It Works
+**Vivid alignment (candidate → SoR)** [PROPOSED]
+- 후보 요약: Empty state CTA / Seed graph / Onboarding cards
+- 확정 문서: `13_UI_DESIGN_GUIDE_2025-12.md`, `23_TEMPLATE_SYSTEM_SPEC_CODEX.md`
 
 **Implementation impact**
 - Empty state component + seed template API
@@ -83,9 +92,9 @@
 - Processor/Capsule nodes: N inputs, 1 output
 - Output nodes: 1 input, 0 outputs
 
-**Connection semantics** [PROPOSED]
-- Connection rules by data type (video, text, image, audio, meta)
-- Visual affordances (compatible glow, incompatible dim)
+**Vivid alignment (candidate → SoR)** [PROPOSED]
+- 후보 요약: 타입 기반 연결 규칙/시각적 호환 피드백
+- 확정 문서: `01_NODE_CANVAS_TECHNICAL_SPECIFICATION.md`, `05_CAPSULE_NODE_SPEC.md`
 
 **Implementation impact**
 - NodeSpec must include port contracts and type rules
@@ -103,9 +112,9 @@
 - Zoom wheel range 10% to 200%
 - Lasso select with shift + drag
 
-**Vivid decision** [PROPOSED]
-- Include minimap, zoom bounds, and lasso selection for MVP
-- Keep hotkeys documented in UI help
+**Vivid alignment (candidate → SoR)** [PROPOSED]
+- 후보 요약: 미니맵/줌 범위/라쏘 선택/핫키 표기
+- 확정 문서: `01_NODE_CANVAS_TECHNICAL_SPECIFICATION.md`, `13_UI_DESIGN_GUIDE_2025-12.md`
 
 **Validation checklist**
 - Confirm minimap is essential for first release
@@ -116,18 +125,9 @@
 
 ### C.1 NodeSpec Contracts
 
-**Proposed schema** [PROPOSED]
-```json
-{
-  "input_contracts": {
-    "required": ["source_context"],
-    "optional": ["style_reference"],
-    "max_upstream": 5,
-    "allowed_types": ["video/mp4", "text/plain", "application/json"],
-    "context_mode": "aggregate"
-  }
-}
-```
+**Vivid alignment (candidate → SoR)** [PROPOSED]
+- 후보 요약: input_contracts 필드(required/optional/max_upstream/allowed_types/context_mode)
+- 확정 문서: `05_CAPSULE_NODE_SPEC.md`, `01_NODE_CANVAS_TECHNICAL_SPECIFICATION.md`
 
 **Implementation impact**
 - NodeSpec table needs `input_contracts` JSONB
@@ -137,9 +137,9 @@
 
 ### C.2 Execution Context Snapshot
 
-**Requirement** [PROPOSED]
-- `CapsuleRun.upstream_inputs`: snapshot of connected lineage
-- Store per-run token usage and model version
+**Vivid alignment (candidate → SoR)** [PROPOSED]
+- 후보 요약: upstream snapshot + token/model version 기록
+- 확정 문서: `05_CAPSULE_NODE_SPEC.md`
 
 **Implementation impact**
 - CapsuleRun schema extension
@@ -163,10 +163,9 @@
 - API packs: 5,000 / 15,000 / 40,000 credits
 - Monthly vs Annual toggle with "Annual 30% Off"
 
-**Vivid decision** [PROPOSED]
-- Adopt dual model: subscription credits + top-up credits
-- Separate creator credits and API credits
-- Surface "Get Free Credits" in nav and empty state
+**Vivid alignment (candidate → SoR)** [PROPOSED]
+- 후보 요약: 구독+탑업, Creator/API 분리, Credits CTA 위치
+- 확정 문서: `17_CREDITS_AND_BILLING_SPEC_V1.md`
 
 **Implementation impact**
 - Wallet + ledger schema
@@ -176,11 +175,9 @@
 
 ### D.2 Consumption Order and Ledger
 
-**Proposed consumption hierarchy** [PROPOSED]
-- Promo (expires) -> Subscription -> Top-up
-
-**Ledger columns** [PROPOSED]
-- transaction_id, event_type, amount, balance_snapshot, meta
+**Vivid alignment (candidate → SoR)** [PROPOSED]
+- 후보 요약: 소비 우선순위/ledger 컬럼
+- 확정 문서: `17_CREDITS_AND_BILLING_SPEC_V1.md`
 
 **Validation checklist**
 - Confirm promo expiration policy
@@ -196,10 +193,9 @@
 - Affiliate Program link in nav
 - "Get Free Credits" CTA surfaced
 
-**Vivid decision** [PROPOSED]
-- Reward: Give 500 / Get 500 credits (draft)
-- Trigger: verified email + first generation run
-- Rewards issued as promo credits in ledger
+**Vivid alignment (candidate → SoR)** [PROPOSED]
+- 후보 요약: 리워드 규칙/트리거/지급 방식
+- 확정 문서: `18_AFFILIATE_PROGRAM_SPEC_V1.md`
 
 **Implementation impact**
 - Referral tracking table + reward issuance job
@@ -212,12 +208,9 @@
 
 ## Workstream F: Observability (Cost Transparency)
 
-**Required logs** [PROPOSED]
-- model_latency_ms
-- input_tokens
-- output_tokens
-- cost_usd_est
-- model_version / prompt_version
+**Vivid alignment (candidate → SoR)** [PROPOSED]
+- 후보 요약: run telemetry 필드(latency/token/cost/version)
+- 확정 문서: `05_CAPSULE_NODE_SPEC.md`
 
 **Implementation impact**
 - CapsuleRun telemetry fields
@@ -239,19 +232,13 @@
 ## 8) Gate for Execution Plan
 
 Execution Plan should only proceed once:
-- IA hierarchy is approved
-- NodeSpec contracts are finalized
-- Credits consumption order is confirmed
-- Affiliate reward trigger is approved
-- Observability fields are agreed
+- `13_UI_DESIGN_GUIDE_2025-12.md` 승인 (IA/Empty state)
+- `05_CAPSULE_NODE_SPEC.md` 확정 (NodeSpec/Run telemetry)
+- `17_CREDITS_AND_BILLING_SPEC_V1.md` 확정 (credits 정책)
+- `18_AFFILIATE_PROGRAM_SPEC_V1.md` 확정 (reward policy)
 
 ---
 
 ## 9) Summary of Decisions to Lock
 
-- Left rail grouping and top bar contents
-- Empty state CTA + seed graph
-- NodeSpec input_contracts format
-- Credits wallet hierarchy and tier counts
-- Affiliate reward policy
-- Observability fields for cost transparency
+정본 확정 항목은 위 Gate 문서에 반영하며, 이 문서는 **관측/후보 기록**만 유지한다.
