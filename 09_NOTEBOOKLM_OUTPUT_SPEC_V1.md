@@ -38,12 +38,13 @@ If the output is from a curated Notebook Library, include `notebook_id`.
 - `audio_overview`
 - `mind_map`
 - `report`
+- `data_table`
 
 ---
 
 ## Optional fields
 
-- `guide_type` (summary / homage / variation / template_fit / persona / synapse / story / beat_sheet / storyboard)
+- `guide_type` (summary / homage / variation / template_fit / persona / synapse / story / beat_sheet / storyboard / study_guide / briefing_doc / table)
 - `temporal_phase` (HOOK / BUILD / PAYOFF / CTA / SETUP / TURN / ESCALATION / CLIMAX / RESOLUTION)
 - `homage_guide`
 - `variation_guide`

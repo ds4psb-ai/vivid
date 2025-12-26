@@ -116,7 +116,7 @@ Purpose: structured outputs from NotebookLM or Opal.
 | source_id | string (uuid) | yes | link to raw asset |
 | notebook_id | string (uuid) | no | link to notebook library |
 | summary | string | yes | short summary |
-| guide_type | enum | no | summary / homage / variation / template_fit / persona / synapse / story / beat_sheet / storyboard |
+| guide_type | enum | no | summary / homage / variation / template_fit / persona / synapse / story / beat_sheet / storyboard / study_guide / briefing_doc / table |
 | persona_profile | string | no | persona summary (B/D) |
 | synapse_logic | string | no | A+B+D→C transform rule |
 | origin_notebook_id | string | no | origin notebook (A/B) |
@@ -140,7 +140,7 @@ Purpose: structured outputs from NotebookLM or Opal.
 | key_patterns | string | no | JSON array of objects or comma-separated `pattern_name:pattern_type` |
 | cluster_label | string | no | cluster name (optional) |
 | cluster_id | string | no | cluster id (optional) |
-| output_type | enum | yes | video_overview / audio_overview / mind_map / report |
+| output_type | enum | yes | video_overview / audio_overview / mind_map / report / data_table |
 | output_language | string | yes | en/ko/ja/etc |
 | studio_output_id | string | no | NotebookLM studio output id |
 | adapter | enum | no | notebooklm / opal |

@@ -16,6 +16,7 @@
 - 승격 규칙: `11_DB_PROMOTION_RULES_V1.md`
 - 승격 기준: `12_PATTERN_PROMOTION_CRITERIA_V1.md`
 - Claim/Evidence/Trace: `32_CLAIM_EVIDENCE_TRACE_SPEC_V1.md`
+- 리서치 소스: `04_RESEARCH_SOURCES_2025-12.md`
 
 ---
 
@@ -26,6 +27,37 @@
 3. **Sealed Capsule**: 노드 내부 체인은 서버에만 존재하며 UI는 I/O + 노출 파라미터만 공개한다.  
 4. **Evidence first**: 모든 주장(claim)은 EvidenceRef를 가진다.  
 5. **cluster_id + temporal_phase** 단위 운영이 기본이다.
+
+---
+
+## 1.5) NotebookLM Capability Notes (2025-12 Research)
+
+이 섹션은 **프로토콜 설계에 영향을 주는 제품 능력**만 정리한다.
+상세 근거는 `04_RESEARCH_SOURCES_2025-12.md`에 기록한다.
+
+### 1.5.1 Source 타입/제약
+- Source 타입: Google Docs, Google Slides, Word/Text/Markdown/PDF, Web URL, public YouTube URL, local audio files.
+- Web URL은 **텍스트만** 수집(이미지/임베드/중첩 페이지는 미포함), paywall은 미지원.
+- YouTube는 **캡션/자막 텍스트만** 수집(공개 영상만).
+- Audio 파일은 업로드 시 **즉시 전사**되어 텍스트 소스로 저장됨.
+- Source는 **정적 스냅샷**이며 Drive 문서는 **수동 sync** 필요. 비-Drive는 재업로드 필요.
+- 제한: **source 최대 50개**, source 당 **500k words 또는 200MB**.
+
+### 1.5.2 Studio 다중 출력
+- Studio는 동일 타입의 출력을 **여러 개** 생성/보관 가능.
+- Audio/Video/Mind Map/Report를 동시에 생성 가능(백그라운드 생성 포함).
+
+### 1.5.3 Output Language
+- Output Language 선택 지원(80+ languages).
+- Chat/Studio 출력 모두 선택 언어로 생성됨.
+
+### 1.5.4 Audio/Video Overviews
+- Audio Overview: **Deep Dive / The Brief** 모드, background 재생, 인터랙티브 Join 지원.
+- Video Overview: narrated slides 기반, **주제/대상/학습 목적**을 지정 가능.
+
+### 1.5.5 Mind Map + Data Tables
+- Mind Map은 **핵심 개념 관계**를 시각화.
+- Data Tables는 **구조화 테이블 생성 + Google Sheets export** 지원.
 
 ---
 
@@ -160,6 +192,12 @@ D = 0.55*D_logic + 0.35*D_persona + 0.10*D_context
 - `{cluster_id, temporal_phase}` 단위로 1 pack
 - 동일 pack은 `bundle_hash`로 재현성 고정
 
+### 8.1.1 Pack Sharding (NotebookLM 제한 대응)
+- **NotebookLM source 제한(50개)**을 초과하면 pack을 분할한다.
+- 규칙: `bundle_id` 뒤에 `p01/p02` shard suffix 추가.
+- 예: `sp_CL_A12_hook_20251226_p01`
+- shard는 동일 `{cluster_id, temporal_phase}`를 공유한다.
+
 ### 8.2 Pack Fields (Required)
 - `bundle_id`, `cluster_id`, `temporal_phase`
 - `segment_refs[]` (shot_id/time range)
@@ -167,6 +205,12 @@ D = 0.55*D_logic + 0.35*D_persona + 0.10*D_context
 - `motif_refs[]` (object/action/visual motif)
 - `evidence_refs[]` (db only)
 - `source_hash`
+
+### 8.2.1 Source Snapshot (Recommended)
+- `source_snapshot_at`: 소스 스냅샷 시각(정적 copy 기준).
+- `source_sync_at`: Drive source 재동기화 시각.
+- `source_count`: shard당 source 수(<=50).
+- `source_manifest[]`: source id + type + title + url + rights_status.
 
 ### 8.3 Pack Example
 ```json
@@ -182,6 +226,11 @@ D = 0.55*D_logic + 0.35*D_persona + 0.10*D_context
 }
 ```
 
+### 8.4 Source Discovery (Optional)
+- NotebookLM의 **Fast Research / Deep Research**로 web/Drive source 후보를 수집할 수 있다.
+- 단, **SoR 규칙**을 위해 수집 결과는 반드시 `raw_assets`에 기록하고 rights check를 통과해야 한다.
+- Deep Research 결과는 **cited source list**를 함께 저장하고, 미선택 소스는 폐기한다.
+
 ---
 
 ## 9) NotebookLM Prompt Protocol (Guide Extraction)
@@ -194,14 +243,17 @@ NotebookLM은 **가이드/변주/요약 레이어**다. 출력은 항상 **Claim
 - Variation Guide (변주 규칙/노브 제안)
 - Template Fit (추천 대상/부적합 조건)
 - New Genre Delta (장르 변주 차이 설명)
+- Mind Map (모티프/관계)
+- Data Table (구조화 테이블 → Sheets export)
 
 ### 9.2 기능 활용 규칙
 - **Citations**: 모든 핵심 주장에 근거 링크 필수
 - **Source filter**: 변주 목적별 소스 포함/제외
 - **Mind Map**: 패턴/모티프 관계 구조화
 - **Audio/Video Overview**: 빠른 감독 브리핑용
-- **Slide/Infographic**: 템플릿 카드 요약용
+- **Video Overview (narrated slides)**: 시각 요약/설명용
 - **Output language**: 다국어 가이드 생성
+- **Multiple outputs**: 동일 타입 출력은 `studio_output_id + output_language + guide_type` 조합으로 구분
 
 ### 9.3 Output Contract (V1)
 ```json
@@ -214,7 +266,10 @@ NotebookLM은 **가이드/변주/요약 레이어**다. 출력은 항상 **Claim
   "variation_rules": ["..."],
   "params_proposal": [{ "key": "pace", "range": [0,1] }],
   "template_fit_notes": ["..."],
-  "claims": [{ "claim_id": "c1", "evidence_refs": ["db:shot_102"] }]
+  "claims": [{ "claim_id": "c1", "evidence_refs": ["db:shot_102"] }],
+  "output_type": "report",
+  "output_language": "ko",
+  "studio_output_id": "studio-output-001"
 }
 ```
 

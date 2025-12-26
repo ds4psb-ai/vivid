@@ -9,6 +9,8 @@
   - https://workspace.google.com/products/notebooklm/
 - NotebookLM Help: Audio Overview (Studio 출력, 백그라운드 생성/공유)
   - https://support.google.com/notebooklm/answer/16212820?hl=en
+- NotebookLM Help: Add or discover new sources (source 타입/제한/Deep Research)
+  - https://support.google.com/notebooklm/answer/16215270?hl=en
 - NotebookLM Help: Output Language (출력 언어 선택)
   - https://support.google.com/notebooklm/answer/16261963?hl=en
 - Google Labs Blog (2024-12): NotebookLM Plus, Audio Overview 인터랙션, Sources/Chat/Studio UI
@@ -22,6 +24,8 @@
   - https://workspaceupdates.googleblog.com/2025/03/new-features-available-in-notebooklm.html
 - Google Labs Blog (2025-07): Video Overviews + Studio upgrades
   - https://blog.google/technology/google-labs/notebooklm-video-overviews-studio-upgrades/
+- Google Labs Blog (2025-12): Data Tables (Sheets export)
+  - https://blog.google/technology/google-labs/notebooklm-data-tables/
 
 ## Google Opal
 
