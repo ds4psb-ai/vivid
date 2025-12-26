@@ -109,6 +109,63 @@ def fitness_function(params: Dict[str, Any], target_profile: str = "balanced") -
     return max(0, score)
 
 
+def evidence_based_fitness(
+    params: Dict[str, Any],
+    run_metrics: Dict[str, Any],
+) -> float:
+    """Calculate fitness score from actual evidence/run metrics.
+    
+    Args:
+        params: The parameter set used for the capsule run.
+        run_metrics: Metrics from actual execution including:
+            - evidence_count: Number of evidence refs in output
+            - token_usage: Total tokens consumed
+            - latency_ms: Execution time in milliseconds
+            - user_feedback: Optional user rating (1-5)
+            - completion_rate: Optional (0.0-1.0)
+    
+    Returns:
+        Evidence-based fitness score.
+    """
+    score = 0.0
+    
+    # Evidence quality (most important)
+    evidence_count = run_metrics.get("evidence_count", 0)
+    if evidence_count > 0:
+        score += min(evidence_count * 5, 25)  # Cap at 25 points
+    
+    # Efficiency (lower tokens = better)
+    token_usage = run_metrics.get("token_usage", 0)
+    if token_usage > 0:
+        # Reward efficient token usage (baseline: 1000 tokens)
+        efficiency_ratio = min(1000 / token_usage, 1.5)
+        score += efficiency_ratio * 10
+    
+    # Latency (lower = better)
+    latency_ms = run_metrics.get("latency_ms", 0)
+    if latency_ms > 0:
+        # Reward fast execution (baseline: 5000ms)
+        speed_ratio = min(5000 / latency_ms, 2.0)
+        score += speed_ratio * 10
+    
+    # User feedback (if available)
+    user_feedback = run_metrics.get("user_feedback")
+    if user_feedback is not None:
+        # Scale 1-5 to 0-25 points
+        score += (user_feedback - 1) * 6.25
+    
+    # Completion rate
+    completion_rate = run_metrics.get("completion_rate", 1.0)
+    score += completion_rate * 10
+    
+    # Pattern version bonus (runs with newer patterns get slight bonus)
+    pattern_version = run_metrics.get("pattern_version", "v0")
+    version_num = int(pattern_version.replace("v", "")) if pattern_version.startswith("v") else 0
+    score += min(version_num, 5)  # Cap bonus at 5 points
+    
+    return max(0, score)
+
+
 def run_ga(
     initial_params: Dict[str, Any],
     target_profile: str = "balanced",

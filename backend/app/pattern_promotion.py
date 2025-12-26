@@ -296,11 +296,25 @@ async def run_pattern_promotion(
     derive_from_evidence: bool = False,
     min_confidence: Optional[float] = None,
     min_sources: int = 2,
+    min_fitness_score: Optional[float] = None,
     allow_empty_evidence: bool = False,
     allow_missing_raw: bool = False,
     note: str = "",
     dry_run: bool = False,
 ) -> Dict[str, object]:
+    """Run pattern promotion with optional fitness threshold.
+    
+    Args:
+        derive_from_evidence: Whether to derive candidates from evidence records.
+        min_confidence: Minimum confidence score for promotion.
+        min_sources: Minimum number of sources required.
+        min_fitness_score: Optional fitness score threshold (from GA).
+            If provided, only patterns with avg fitness >= threshold will promote.
+        allow_empty_evidence: Allow patterns without evidence refs.
+        allow_missing_raw: Allow patterns from missing raw assets.
+        note: Note for the pattern version.
+        dry_run: If True, don't commit changes.
+    """
     await init_db()
     derived_candidates = 0
     if derive_from_evidence and not dry_run:
