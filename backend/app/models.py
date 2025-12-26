@@ -204,6 +204,24 @@ class VideoSegment(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class SourcePack(Base):
+    __tablename__ = "source_packs"
+    __table_args__ = (UniqueConstraint("pack_id", name="uq_source_packs_pack_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    pack_id: Mapped[str] = mapped_column(String(160))
+    cluster_id: Mapped[str] = mapped_column(String(160))
+    temporal_phase: Mapped[str] = mapped_column(String(64))
+    source_ids: Mapped[list] = mapped_column(JSONB, default=list)
+    segment_refs: Mapped[list] = mapped_column(JSONB, default=list)
+    metrics_snapshot: Mapped[dict] = mapped_column(JSONB, default=dict)
+    bundle_hash: Mapped[str] = mapped_column(String(128))
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class EvidenceRecord(Base):
     __tablename__ = "evidence_records"
     __table_args__ = (
@@ -260,6 +278,72 @@ class EvidenceRecord(Base):
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class EvidenceRef(Base):
+    __tablename__ = "evidence_refs"
+    __table_args__ = (UniqueConstraint("evidence_id", name="uq_evidence_refs_evidence_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    evidence_id: Mapped[str] = mapped_column(String(120))
+    kind: Mapped[str] = mapped_column(String(32))
+    source_id: Mapped[str] = mapped_column(String(64))
+    segment_id: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    shot_id: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    time_start_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    time_end_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    source_hash: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    tags: Mapped[list] = mapped_column(JSONB, default=list)
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class Claim(Base):
+    __tablename__ = "claims"
+    __table_args__ = (UniqueConstraint("claim_id", name="uq_claims_claim_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    claim_id: Mapped[str] = mapped_column(String(120))
+    claim_type: Mapped[str] = mapped_column(String(32))
+    statement: Mapped[str] = mapped_column(Text)
+    cluster_id: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)
+    temporal_phase: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ClaimEvidenceMap(Base):
+    __tablename__ = "claim_evidence_map"
+    __table_args__ = (
+        UniqueConstraint("claim_id", "evidence_id", name="uq_claim_evidence"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    claim_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("claims.id"))
+    evidence_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("evidence_refs.id"))
+    weight: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class TraceRecord(Base):
+    __tablename__ = "trace_records"
+    __table_args__ = (UniqueConstraint("trace_id", name="uq_trace_records_trace_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    trace_id: Mapped[str] = mapped_column(String(120))
+    bundle_hash: Mapped[str] = mapped_column(String(128))
+    model_version: Mapped[str] = mapped_column(String(64))
+    prompt_version: Mapped[str] = mapped_column(String(64))
+    eval_scores: Mapped[dict] = mapped_column(JSONB, default=dict)
+    token_usage: Mapped[dict] = mapped_column(JSONB, default=dict)
+    latency_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    cost_usd_est: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
 class PatternCandidate(Base):
