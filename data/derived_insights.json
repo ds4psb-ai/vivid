@@ -6,6 +6,7 @@
     "output_language": "en",
     "prompt_version": "nlm-guide-v1",
     "model_version": "notebooklm-2025-12",
+    "source_pack_id": "sp_sample_auteur_hook_20251224",
     "guide_type": "homage",
     "homage_guide": "Emphasize quiet tension through centered blocking and restrained movement.",
     "template_recommendations": ["tmpl-auteur-sample"],
@@ -43,6 +44,7 @@
     "output_language": "en",
     "prompt_version": "nlm-guide-v1",
     "model_version": "notebooklm-2025-12",
+    "source_pack_id": "sp_sample_auteur_hook_20251224",
     "guide_type": "story",
     "story_beats": [
       {"beat": "Setup", "note": "Introduce the corridor and its symmetry."},
@@ -61,6 +63,7 @@
     "output_language": "en",
     "prompt_version": "nlm-guide-v1",
     "model_version": "notebooklm-2025-12",
+    "source_pack_id": "sp_sample_auteur_hook_20251224",
     "guide_type": "storyboard",
     "storyboard_cards": [
       {"shot": 1, "composition": "leading_lines", "note": "Doorway frames the subject."},

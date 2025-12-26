@@ -289,6 +289,7 @@ class EvidenceRecord(Base):
     story_beats: Mapped[list] = mapped_column(JSONB, default=list)
     storyboard_cards: Mapped[list] = mapped_column(JSONB, default=list)
     key_patterns: Mapped[list] = mapped_column(JSONB, default=list)
+    source_pack_id: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)
     output_type: Mapped[str] = mapped_column(String(32))
     output_language: Mapped[str] = mapped_column(String(16))
     studio_output_id: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)

@@ -6,6 +6,7 @@
         "output_language": "ko",
         "prompt_version": "nlm-guide-v1",
         "model_version": "notebooklm-2025-12",
+        "source_pack_id": "sp_cluster-bong-class-divide_hook_20251226",
         "guide_type": "homage",
         "homage_guide": "계단을 통한 수직 이동을 핵심 모티프로 사용. 아래에서 위로 올라갈수록 조명이 밝아지고, 공간이 넓어진다. 반대로 하강 시 어둡고 좁아진다.",
         "variation_guide": "수직 이동 대신 수평 이동으로 변주 가능 (설국열차 참조). 컬러는 쿨톤 유지.",
@@ -84,6 +85,7 @@
         "output_language": "ko",
         "prompt_version": "nlm-guide-v1",
         "model_version": "notebooklm-2025-12",
+        "source_pack_id": "sp_cluster-bong-class-divide_build_20251226",
         "guide_type": "story",
         "story_beats": [
             {
@@ -121,6 +123,7 @@
         "output_language": "ko",
         "prompt_version": "nlm-guide-v1",
         "model_version": "notebooklm-2025-12",
+        "source_pack_id": "sp_cluster-bong-class-divide_payoff_20251226",
         "guide_type": "storyboard",
         "storyboard_cards": [
             {
@@ -153,6 +156,7 @@
         "output_language": "ko",
         "prompt_version": "nlm-guide-v1",
         "model_version": "notebooklm-2025-12",
+        "source_pack_id": "sp_cluster-bong-class-divide_turn_20251226",
         "guide_type": "persona",
         "persona_profile": "초기 봉준호: 블랙코미디와 사회 구조 비판의 독특한 조합. 비 오는 농촌의 우울함과 형사들의 무력감.",
         "synapse_logic": "비 + 들판 + 실패 = 봉준호식 멜랑콜리. 해결되지 않는 미스터리가 핵심.",

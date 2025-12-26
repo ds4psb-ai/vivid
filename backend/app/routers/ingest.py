@@ -507,6 +507,7 @@ class EvidenceRecordRequest(BaseModel):
     output_language: str
     prompt_version: str
     model_version: str
+    source_pack_id: Optional[str]
     guide_type: Optional[str] = None
     homage_guide: Optional[str] = None
     variation_guide: Optional[str] = None
@@ -559,6 +560,14 @@ class EvidenceRecordRequest(BaseModel):
         cleaned = value.strip()
         if cleaned not in OUTPUT_TYPE_ALLOWLIST:
             raise ValueError(f"output_type must be one of {sorted(OUTPUT_TYPE_ALLOWLIST)}")
+        return cleaned
+
+    @field_validator("source_pack_id")
+    @classmethod
+    def validate_source_pack_id(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("source_pack_id is required")
         return cleaned
 
     @field_validator("evidence_refs", mode="before")
@@ -642,6 +651,7 @@ class EvidenceRecordResponse(BaseModel):
     output_language: str
     prompt_version: str
     model_version: str
+    source_pack_id: str
     guide_type: Optional[str]
     homage_guide: Optional[str]
     variation_guide: Optional[str]
@@ -1201,6 +1211,7 @@ async def upsert_evidence_record(
             output_language=data.output_language,
             prompt_version=data.prompt_version,
             model_version=data.model_version,
+            source_pack_id=data.source_pack_id,
         )
         db.add(record)
 
@@ -1239,6 +1250,7 @@ async def upsert_evidence_record(
     record.story_beats = data.story_beats or []
     record.storyboard_cards = data.storyboard_cards or []
     record.key_patterns = data.key_patterns or []
+    record.source_pack_id = data.source_pack_id
     record.studio_output_id = data.studio_output_id
     record.adapter = data.adapter
     record.opal_workflow_id = data.opal_workflow_id

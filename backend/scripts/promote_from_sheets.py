@@ -766,6 +766,10 @@ async def _upsert_evidence_records(
                 reason = "missing_source_id" if not source_id else "restricted_rights"
                 _append_quarantine(quarantine, "VIVID_DERIVED_INSIGHTS", reason, row)
                 continue
+            source_pack_id = row.get("source_pack_id") or row.get("sourcePackId") or ""
+            if not source_pack_id:
+                _append_quarantine(quarantine, "VIVID_DERIVED_INSIGHTS", "missing_source_pack_id", row)
+                continue
             key = (
                 source_id,
                 row.get("prompt_version") or "",
@@ -801,6 +805,7 @@ async def _upsert_evidence_records(
                     output_language=key[4],
                     prompt_version=key[1],
                     model_version=key[2],
+                    source_pack_id=source_pack_id,
                 )
                 session.add(record)
 
@@ -876,6 +881,7 @@ async def _upsert_evidence_records(
             record.confidence = _parse_float(row.get("confidence") or "") or record.confidence
             record.notebook_id = row.get("notebook_id") or record.notebook_id
             record.notebook_ref = row.get("notebook_ref") or record.notebook_ref
+            record.source_pack_id = source_pack_id or record.source_pack_id
             evidence_refs = _parse_list(row.get("evidence_refs") or "")
             if evidence_refs:
                 invalid_refs = [

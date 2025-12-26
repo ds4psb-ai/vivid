@@ -36,6 +36,8 @@ python backend/scripts/run_sample_pipeline.py --execute
      --default-prompt-version nlm-guide-v1 \
      --default-model-version notebooklm-2025-12
 
+   Note: `derived_insights.json` must include `source_pack_id` per row.
+
 5) Pattern candidates (validated)
    python backend/scripts/ingest_pattern_candidates.py --input data/pattern_candidates.json
 

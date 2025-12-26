@@ -105,6 +105,7 @@ def _normalize_row(
         "output_language": _pick(row, "output_language", "outputLanguage") or default_output_language,
         "prompt_version": _pick(row, "prompt_version", "promptVersion") or default_prompt_version,
         "model_version": _pick(row, "model_version", "modelVersion") or default_model_version,
+        "source_pack_id": _pick(row, "source_pack_id", "sourcePackId"),
         "guide_type": _pick(row, "guide_type", "guideType"),
         "homage_guide": _pick(row, "homage_guide", "homageGuide"),
         "variation_guide": _pick(row, "variation_guide", "variationGuide"),
@@ -221,6 +222,7 @@ async def _upsert_records(
             record.notebook_id = row.get("notebook_id")
             record.notebook_ref = row.get("notebook_ref")
             record.evidence_refs = row.get("evidence_refs") or []
+            record.source_pack_id = row.get("source_pack_id")
             record.generated_at = row.get("generated_at")
 
         await session.commit()

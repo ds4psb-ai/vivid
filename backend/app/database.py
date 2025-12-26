@@ -138,6 +138,9 @@ async def init_db(drop_all: bool = False) -> None:
             text("ALTER TABLE evidence_records ADD COLUMN IF NOT EXISTS cluster_confidence FLOAT")
         )
         await conn.execute(
+            text("ALTER TABLE evidence_records ADD COLUMN IF NOT EXISTS source_pack_id VARCHAR(160)")
+        )
+        await conn.execute(
             text("ALTER TABLE evidence_records ADD COLUMN IF NOT EXISTS story_beats JSONB DEFAULT '[]'::jsonb")
         )
         await conn.execute(
