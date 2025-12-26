@@ -172,24 +172,46 @@ def run_ga(
     population_size: int = 20,
     generations: int = 10,
     top_k: int = 3,
+    mutation_rate: float = 0.5,
+    early_stop_patience: int = 3,
+    min_improvement: float = 0.5,
 ) -> List[Tuple[Dict[str, Any], float]]:
     """
-    Run genetic algorithm optimization.
+    Run genetic algorithm optimization with adaptive mutation and early stopping.
     
     Returns top_k parameter sets with their fitness scores.
     """
     # Initialize population with mutations of initial params
     population = [initial_params]
     for _ in range(population_size - 1):
-        population.append(mutate_params(initial_params, mutation_rate=0.5))
-    
+        population.append(mutate_params(initial_params, mutation_rate=mutation_rate))
+
+    best_score = float("-inf")
+    stalled = 0
+
     for gen in range(generations):
+        # Adaptive mutation: cool down over time
+        if generations > 1:
+            progress = gen / (generations - 1)
+        else:
+            progress = 1.0
+        adaptive_rate = max(0.1, mutation_rate * (1.0 - progress))
+
         # Calculate fitness for all individuals
         scored = [(ind, fitness_function(ind, target_profile)) for ind in population]
         scored.sort(key=lambda x: x[1], reverse=True)
+
+        current_best = scored[0][1] if scored else float("-inf")
+        if current_best - best_score >= min_improvement:
+            best_score = current_best
+            stalled = 0
+        else:
+            stalled += 1
+        if early_stop_patience > 0 and stalled >= early_stop_patience:
+            break
         
         # Selection: keep top 50%
-        survivors = [ind for ind, _ in scored[:population_size // 2]]
+        survivors = [ind for ind, _ in scored[: max(2, population_size // 2)]]
         
         # Reproduction
         new_population = list(survivors)
@@ -197,7 +219,7 @@ def run_ga(
         while len(new_population) < population_size:
             parent1, parent2 = random.sample(survivors, 2)
             child = crossover(parent1, parent2)
-            child = mutate_params(child, mutation_rate=0.2)
+            child = mutate_params(child, mutation_rate=adaptive_rate)
             new_population.append(child)
         
         population = new_population
