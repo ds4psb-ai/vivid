@@ -11,7 +11,7 @@ import os
 import random
 import time
 import urllib.request
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 # Color palettes for each auteur style
 AUTEUR_PALETTES = {
@@ -136,10 +136,14 @@ def _run_notebooklm(
     capsule_spec: Optional[Dict[str, Any]] = None,
 ) -> Tuple[Dict[str, Any], List[str]]:
     adapter = (capsule_spec or {}).get("adapter", {})
+    pattern_version = (capsule_spec or {}).get("patternVersion") or (
+        capsule_spec or {}
+    ).get("pattern_version")
     payload = {
         "task": "style_summary",
         "capsule_id": capsule_id,
         "capsule_version": capsule_version,
+        "pattern_version": pattern_version,
         "inputs": inputs,
         "params": params,
         "internal_graph_ref": adapter.get("internalGraphRef"),
@@ -180,10 +184,14 @@ def _run_opal(
     capsule_spec: Optional[Dict[str, Any]] = None,
 ) -> Tuple[Dict[str, Any], List[str]]:
     adapter = (capsule_spec or {}).get("adapter", {})
+    pattern_version = (capsule_spec or {}).get("patternVersion") or (
+        capsule_spec or {}
+    ).get("pattern_version")
     payload = {
         "workflow": adapter.get("workflow", "auteur_capsule_v1"),
         "capsule_id": capsule_id,
         "capsule_version": capsule_version,
+        "pattern_version": pattern_version,
         "inputs": inputs,
         "params": params,
         "internal_graph_ref": adapter.get("internalGraphRef"),
@@ -213,6 +221,32 @@ def _run_opal(
         {"summary": "Opal simulated workflow result", "workflow": "mock"},
         [f"opal:simulated:{capsule_id}"],
     )
+
+
+def _normalize_evidence_refs(refs: List[str]) -> List[str]:
+    normalized: List[str] = []
+    seen: set[str] = set()
+    for ref in refs:
+        if not isinstance(ref, str):
+            continue
+        cleaned = ref.strip()
+        if not cleaned:
+            continue
+        if cleaned.startswith(("sheet:", "db:")):
+            mapped = cleaned
+        elif cleaned.startswith("evidence:sheet:row:"):
+            row_id = cleaned.replace("evidence:sheet:row:", "", 1).strip() or "unknown"
+            mapped = f"sheet:VIVID_DERIVED_INSIGHTS:{row_id}"
+        else:
+            safe = "".join(
+                ch if ch.isalnum() or ch in ("-", "_") else "_" for ch in cleaned
+            )
+            mapped = f"sheet:VIVID_DERIVED_INSIGHTS:{safe or 'unknown'}"
+        if mapped in seen:
+            continue
+        seen.add(mapped)
+        normalized.append(mapped)
+    return normalized
 
 
 def compute_style_vector(params: Dict[str, Any], capsule_id: str) -> List[float]:
@@ -285,6 +319,7 @@ def execute_capsule(
     inputs: Dict[str, Any],
     params: Dict[str, Any],
     capsule_spec: Optional[Dict[str, Any]] = None,
+    progress_cb: Optional[Callable[[str, int], None]] = None,
 ) -> Tuple[Dict[str, Any], List[str]]:
     """
     Execute a capsule and return (summary, evidence_refs).
@@ -293,9 +328,17 @@ def execute_capsule(
     Future: integrate with Gemini/LLM for more sophisticated generation.
     """
     # Compute outputs based on auteur style
+    if progress_cb:
+        progress_cb("Computing style signature", 30)
     style_vector = compute_style_vector(params, capsule_id)
+    if progress_cb:
+        progress_cb("Selecting palette", 45)
     palette = get_palette(params, capsule_id)
+    if progress_cb:
+        progress_cb("Assembling composition hints", 60)
     composition_hints = get_composition_hints(params, capsule_id)
+    if progress_cb:
+        progress_cb("Balancing pacing", 70)
     pacing_hints = get_pacing_hints(params)
     
     # Extract signature param for summary
@@ -307,10 +350,14 @@ def execute_capsule(
             signature_value = params[key]
             break
     
+    pattern_version = (capsule_spec or {}).get("patternVersion") or (
+        capsule_spec or {}
+    ).get("pattern_version")
     summary = {
         "message": f"Capsule executed: {capsule_id}@{capsule_version}",
         "capsule_id": capsule_id,
         "version": capsule_version,
+        "pattern_version": pattern_version,
         "style_vector": style_vector,
         "palette": palette,
         "composition_hints": composition_hints,
@@ -342,18 +389,25 @@ def execute_capsule(
     external_insights = []
     for step in chain:
         if step == "notebooklm":
+            if progress_cb:
+                progress_cb("NotebookLM analysis", 80)
             insight, refs = _run_notebooklm(capsule_id, capsule_version, inputs, params, capsule_spec)
             external_insights.append({"adapter": "notebooklm", **insight})
             evidence_refs.extend(refs)
         elif step == "opal":
+            if progress_cb:
+                progress_cb("Opal workflow", 85)
             insight, refs = _run_opal(capsule_id, capsule_version, inputs, params, capsule_spec)
             external_insights.append({"adapter": "opal", **insight})
             evidence_refs.extend(refs)
 
     if external_insights:
         summary["external_insights"] = external_insights
-    
-    return summary, evidence_refs
+
+    if progress_cb:
+        progress_cb("Finalizing summary", 95)
+
+    return summary, _normalize_evidence_refs(evidence_refs)
 
 
 def generate_storyboard_preview(

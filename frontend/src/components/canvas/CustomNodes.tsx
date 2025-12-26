@@ -3,9 +3,14 @@
 import { memo } from "react";
 import { Handle, Node, NodeProps, Position } from "@xyflow/react";
 import {
+  Activity,
+  AlertTriangle,
+  Ban,
+  CheckCircle2,
   FileInput,
   FileOutput,
   Lock,
+  Loader2,
   Palette,
   Settings,
   Sparkles,
@@ -32,13 +37,27 @@ export type CanvasNodeKind =
 export interface CanvasNodeData extends Record<string, unknown> {
   label: string;
   subtitle?: string;
-  // Optional: override icon or add explicit status
-  status?: "idle" | "running" | "error" | "success";
+  // 5-State FSM: idle | loading | streaming | complete | error
+  status?: "idle" | "loading" | "streaming" | "complete" | "error" | "cancelled";
   // Capsule node specific
   capsuleId?: string;
   capsuleVersion?: string;
+  patternVersion?: string;
+  inputContracts?: {
+    required?: string[];
+    optional?: string[];
+    maxUpstream?: number;
+    allowedTypes?: string[];
+    contextMode?: "aggregate" | "sequential";
+  };
   params?: Record<string, unknown>;
+  evidence_refs?: string[];
   locked?: boolean;
+  // Streaming state data
+  streamingData?: {
+    partialText: string;
+    progress: number;
+  };
   generationPreview?: {
     beat_sheet?: Array<Record<string, unknown>>;
     storyboard?: Array<Record<string, unknown>>;
@@ -79,10 +98,10 @@ const NODE_CONFIG: Record<
   },
   processing: {
     icon: Sparkles,
-    gradient: "from-fuchsia-400 to-purple-600",
-    glow: "shadow-purple-500/30",
-    text: "text-purple-100",
-    badge: "bg-purple-500/20 text-purple-200 border-purple-500/30",
+    gradient: "from-teal-400 to-cyan-600",
+    glow: "shadow-cyan-500/30",
+    text: "text-cyan-100",
+    badge: "bg-cyan-500/20 text-cyan-200 border-cyan-500/30",
   },
   output: {
     icon: FileOutput,
@@ -111,14 +130,21 @@ function BaseNode({ data, type, selected }: NodeProps<Node<CanvasNodeData>>) {
   const isCapsule = kind === "capsule";
   const isLocked = isCapsule && Boolean(data.locked);
   const status = data.status ?? "idle";
-  const statusClass =
-    status === "running"
-      ? "bg-amber-500/20 text-amber-200 border-amber-500/30"
-      : status === "success"
-        ? "bg-emerald-500/20 text-emerald-200 border-emerald-500/30"
-        : status === "error"
-          ? "bg-rose-500/20 text-rose-200 border-rose-500/30"
-          : config.badge;
+  const evidenceRefs = Array.isArray(data.evidence_refs) ? data.evidence_refs : [];
+  const evidenceCount = evidenceRefs.length;
+
+  // 5-State FSM Visual Mapping
+  const statusConfig: Record<string, { class: string; label: string; icon: React.ElementType }> = {
+    idle: { class: config.badge, label: "READY", icon: CheckCircle2 },
+    loading: { class: "bg-sky-500/20 text-sky-200 border-sky-500/30 animate-pulse", label: "LOADING", icon: Loader2 },
+    streaming: { class: "bg-amber-500/20 text-amber-200 border-amber-500/40 shadow-lg shadow-amber-500/20", label: "STREAMING", icon: Activity },
+    complete: { class: "bg-emerald-500/20 text-emerald-200 border-emerald-500/30", label: "COMPLETE", icon: CheckCircle2 },
+    error: { class: "bg-rose-500/20 text-rose-200 border-rose-500/30", label: "ERROR", icon: AlertTriangle },
+    cancelled: { class: "bg-slate-500/20 text-slate-200 border-slate-500/30", label: "CANCELLED", icon: Ban },
+  };
+  const statusStyle = statusConfig[status] || statusConfig.idle;
+  const StatusIcon = statusStyle.icon;
+  const statusIconClass = cn("h-3 w-3", status === "loading" && "animate-spin");
   const generationPreview = kind === "output" ? data.generationPreview : undefined;
   const beatSheet = Array.isArray(generationPreview?.beat_sheet)
     ? generationPreview?.beat_sheet
@@ -179,7 +205,7 @@ function BaseNode({ data, type, selected }: NodeProps<Node<CanvasNodeData>>) {
           </div>
         </div>
         {isCapsule && (
-          <div className="flex items-center gap-1 text-[10px] uppercase tracking-widest">
+          <div className="flex flex-wrap items-center gap-1 text-[10px] uppercase tracking-widest">
             <span className="rounded-full border border-rose-400/30 bg-rose-500/10 px-2 py-0.5 text-rose-200">
               Sealed
             </span>
@@ -187,6 +213,11 @@ function BaseNode({ data, type, selected }: NodeProps<Node<CanvasNodeData>>) {
               <span className="flex items-center gap-1 rounded-full border border-slate-400/30 bg-slate-500/10 px-2 py-0.5 text-slate-200">
                 <Lock className="h-3 w-3" />
                 Locked
+              </span>
+            )}
+            {evidenceCount > 0 && (
+              <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-emerald-200">
+                {t("evidenceRefs")} {evidenceCount}
               </span>
             )}
           </div>
@@ -237,11 +268,29 @@ function BaseNode({ data, type, selected }: NodeProps<Node<CanvasNodeData>>) {
 
       {/* Status indicator if needed */}
       <div className="flex items-center justify-between mt-2">
-        <span className={cn("px-2 py-0.5 rounded text-[10px] font-medium border", statusClass)}>
-          {status === "running" ? t("running") : status === "success" ? "DONE" : status === "error" ? t("error") : "ACTIVE"}
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border",
+            statusStyle.class
+          )}
+        >
+          <StatusIcon className={statusIconClass} />
+          {statusStyle.label}
         </span>
-        {/* Could add processing spinners here */}
+        {status === "streaming" && data.streamingData && (
+          <span className="text-[10px] text-amber-300">
+            {Math.round(data.streamingData.progress)}%
+          </span>
+        )}
       </div>
+
+      {/* Streaming partial text preview */}
+      {status === "streaming" && data.streamingData?.partialText && (
+        <div className="mt-2 rounded-md bg-slate-900/70 px-3 py-2 text-xs text-slate-300 animate-pulse">
+          {data.streamingData.partialText}
+        </div>
+      )}
+
 
       {/* Handles with improved styling */}
       {canReceive && (

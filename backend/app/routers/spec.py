@@ -15,6 +15,7 @@ router = APIRouter()
 class SpecRequest(BaseModel):
     nodes: list
     edges: list
+    meta: Optional[dict] = None
 
 
 class SpecResponse(BaseModel):
@@ -41,7 +42,7 @@ class OptimizeResponse(BaseModel):
 @router.post("/compute", response_model=SpecResponse)
 async def compute_spec(data: SpecRequest) -> SpecResponse:
     """Compute spec from canvas graph."""
-    spec = compute_graph(data.nodes, data.edges)
+    spec = compute_graph(data.nodes, data.edges, data.meta if isinstance(data.meta, dict) else None)
     return SpecResponse(spec=spec, generated=True)
 
 

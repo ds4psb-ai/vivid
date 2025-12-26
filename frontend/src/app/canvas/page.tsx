@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import {
   ReactFlow,
   addEdge,
@@ -13,11 +14,20 @@ import {
   useEdgesState,
   useNodesState,
   Panel,
+  MiniMap,
+  useReactFlow,
 } from "@xyflow/react";
+
 import "@xyflow/react/dist/style.css";
 import { motion, AnimatePresence } from "framer-motion";
 import {
+  AlertTriangle,
+  Info,
   Save,
+  FileInput,
+  FileOutput,
+  Palette,
+  Sliders,
   FolderOpen,
   Plus,
   Undo,
@@ -27,8 +37,11 @@ import {
   ZoomOut,
   Play,
   Sparkles,
-  Box,
+  Workflow,
+  XCircle,
   X,
+  ChevronLeft,
+  CreditCard,
 } from "lucide-react";
 
 import {
@@ -39,9 +52,19 @@ import {
 import { Inspector } from "@/components/canvas/Inspector";
 import { PreviewPanel } from "@/components/canvas/PreviewPanel";
 import { GenerationPreviewPanel } from "@/components/canvas/GenerationPreviewPanel";
-import { api, Canvas, GenerationRun, StoryboardPreview } from "@/lib/api";
+import { api, CapsuleRunStreamController, Canvas, GenerationRun, StoryboardPreview } from "@/lib/api";
+import { isAdminModeEnabled } from "@/lib/admin";
+import { normalizeAllowedType } from "@/lib/graph";
+import { normalizeApiError } from "@/lib/errors";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
+import { useNodeLifecycle } from "@/hooks/useNodeLifecycle";
 import { useLanguage } from "@/contexts/LanguageContext";
+import AppShell from "@/components/AppShell";
+import EmptyCanvasOverlay from "@/components/EmptyCanvasOverlay";
+import { useRouter } from "next/navigation";
+import { useCreditBalance } from "@/hooks/useCreditBalance";
+
+const IS_ADMIN_MODE = isAdminModeEnabled();
 
 
 const nodeTypes = {
@@ -53,26 +76,7 @@ const nodeTypes = {
   capsule: CanvasNode,
 };
 
-const initialNodes: Node<CanvasNodeData>[] = [
-  {
-    id: "input-1",
-    type: "input",
-    position: { x: 100, y: 300 },
-    data: { label: "Prompt Input", subtitle: "User request" },
-  },
-  {
-    id: "processing-1",
-    type: "processing",
-    position: { x: 450, y: 300 },
-    data: { label: "Reasoning Core", subtitle: "LLM + GA" },
-  },
-  {
-    id: "output-1",
-    type: "output",
-    position: { x: 800, y: 300 },
-    data: { label: "Final Response", subtitle: "Rendered Output" },
-  },
-];
+// Initial nodes removed from global scope to be defined inside component with translations
 
 const initialEdges: Edge[] = [];
 
@@ -87,9 +91,36 @@ function CanvasFlow() {
   const searchParams = useSearchParams();
   const urlCanvasId = searchParams.get("id");
   const { t } = useLanguage();
+  const { zoomIn, zoomOut, fitView } = useReactFlow();
+  const router = useRouter();
+
+  // Empty state overlay - show when no nodes or starting fresh
+  const [showEmptyOverlay, setShowEmptyOverlay] = useState(!urlCanvasId);
+
+  const initialNodes = useMemo<Node<CanvasNodeData>[]>(() => [
+    {
+      id: "input-1",
+      type: "input",
+      position: { x: 100, y: 300 },
+      data: { label: t("promptInput"), subtitle: t("userRequest") },
+    },
+    {
+      id: "processing-1",
+      type: "processing",
+      position: { x: 450, y: 300 },
+      data: { label: t("reasoningCore"), subtitle: t("llmGa") },
+    },
+    {
+      id: "output-1",
+      type: "output",
+      position: { x: 800, y: 300 },
+      data: { label: t("finalResponse"), subtitle: t("renderedOutput") },
+    },
+  ], [t]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [graphMeta, setGraphMeta] = useState<Record<string, unknown>>({});
   const [selectedNode, setSelectedNode] = useState<Node<CanvasNodeData> | null>(
     null
   );
@@ -114,39 +145,190 @@ function CanvasFlow() {
   const [storyboardPreview, setStoryboardPreview] = useState<StoryboardPreview | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [showPreviewPanel, setShowPreviewPanel] = useState(false);
+  const [previewNotice, setPreviewNotice] = useState<{
+    tone: "info" | "warning" | "error";
+    message: string;
+  } | null>(null);
   const [generationRun, setGenerationRun] = useState<GenerationRun | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationStatus, setGenerationStatus] = useState<string | null>(null);
   const generationPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [showGenerationPanel, setShowGenerationPanel] = useState(false);
+  const capsuleStreamRef = useRef<CapsuleRunStreamController | null>(null);
+  const [previewRunId, setPreviewRunId] = useState<string | null>(null);
+  const previewCancelFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isPreviewLoadingRef = useRef(false);
+  const [toasts, setToasts] = useState<
+    Array<{ id: string; tone: "info" | "warning" | "error"; message: string }>
+  >([]);
+  const [runLog, setRunLog] = useState<
+    Array<{
+      id: string;
+      tone: "info" | "warning" | "error" | "success";
+      message: string;
+      time: string;
+      context?: {
+        kind?: "capsule" | "generation" | "system";
+        runId?: string;
+        capsuleId?: string;
+      };
+      metrics?: {
+        latencyMs?: number;
+        costUsd?: number;
+      };
+    }>
+  >([]);
+  const [isRunLogOpen, setIsRunLogOpen] = useState(true);
+  const [runLogFilters, setRunLogFilters] = useState({
+    capsule: true,
+    generation: true,
+    errorsOnly: false,
+  });
+  const toastTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const lastGenerationStatusRef = useRef<string | null>(null);
+  const previewCapsuleIdRef = useRef<string | null>(null);
 
   const { takeSnapshot, undo, redo, canUndo, canRedo } = useUndoRedo();
+  const { updateNodeData, updateNodesByType } = useNodeLifecycle(setNodes, setSelectedNode);
+  const { balance: creditBalance } = useCreditBalance();
+
+  // Seed graph creation based on selected template
+  const handleSelectSeed = useCallback((seedId: string) => {
+    let newNodes: Node<CanvasNodeData>[] = [];
+    const newEdges: Edge[] = [];
+
+    switch (seedId) {
+      case "youtube":
+        newNodes = [
+          { id: createNodeId(), type: "input", position: { x: 100, y: 200 }, data: { label: t("seedYoutubeVideo"), subtitle: t("seedYoutubeSubtitle") } },
+          { id: createNodeId(), type: "capsule", position: { x: 400, y: 150 }, data: { label: t("seedTranscription"), subtitle: t("seedTranscriptionSubtitle"), locked: true } },
+          { id: createNodeId(), type: "capsule", position: { x: 400, y: 300 }, data: { label: t("seedSceneAnalysis"), subtitle: t("seedSceneAnalysisSubtitle"), locked: true } },
+          { id: createNodeId(), type: "processing", position: { x: 700, y: 200 }, data: { label: t("seedShortCreator"), subtitle: t("seedShortCreatorSubtitle") } },
+          { id: createNodeId(), type: "output", position: { x: 1000, y: 200 }, data: { label: t("seedShortsOutput"), subtitle: t("seedShortsOutputSubtitle") } },
+        ];
+        break;
+      case "document":
+        newNodes = [
+          { id: createNodeId(), type: "input", position: { x: 100, y: 250 }, data: { label: t("seedDocumentUpload"), subtitle: t("seedDocumentSubtitle") } },
+          { id: createNodeId(), type: "capsule", position: { x: 400, y: 250 }, data: { label: t("seedDocumentParser"), subtitle: t("seedDocumentParserSubtitle"), locked: true } },
+          { id: createNodeId(), type: "processing", position: { x: 700, y: 250 }, data: { label: t("seedAnalysisEngine"), subtitle: t("seedAnalysisEngineSubtitle") } },
+          { id: createNodeId(), type: "output", position: { x: 1000, y: 250 }, data: { label: t("seedAnalysisReport"), subtitle: t("seedAnalysisReportSubtitle") } },
+        ];
+        break;
+      case "blank":
+      default:
+        newNodes = [
+          { id: createNodeId(), type: "input", position: { x: 200, y: 300 }, data: { label: t("seedInput"), subtitle: t("seedDataInput") } },
+          { id: createNodeId(), type: "capsule", position: { x: 500, y: 300 }, data: { label: t("seedCapsule"), subtitle: t("seedProcessData"), locked: true } },
+          { id: createNodeId(), type: "output", position: { x: 800, y: 300 }, data: { label: t("seedOutput"), subtitle: t("seedFinalResult") } },
+        ];
+        break;
+    }
+
+    // Create edges between consecutive nodes
+    for (let i = 0; i < newNodes.length - 1; i++) {
+      newEdges.push({
+        id: `edge-${newNodes[i].id}-${newNodes[i + 1].id}`,
+        source: newNodes[i].id,
+        target: newNodes[i + 1].id,
+      });
+    }
+
+    setNodes(newNodes);
+    setEdges(newEdges);
+    setShowEmptyOverlay(false);
+    setTitle(
+      seedId === "youtube"
+        ? t("seedOptionYoutubeTitle")
+        : seedId === "document"
+          ? t("seedOptionDocumentTitle")
+          : t("untitledProject")
+    );
+    takeSnapshot(newNodes, newEdges);
+    setTimeout(() => fitView({ padding: 0.2 }), 100);
+  }, [setNodes, setEdges, takeSnapshot, fitView, t]);
+
+  const handleNavigateToTemplates = useCallback(() => {
+    router.push("/");
+  }, [router]);
 
   const updateOutputNodes = useCallback(
     (data: Partial<CanvasNodeData>) => {
-      setNodes((current) =>
-        current.map((node) =>
-          node.type === "output"
-            ? { ...node, data: { ...node.data, ...data } }
-            : node
-        )
-      );
-      setSelectedNode((current) =>
-        current && current.type === "output"
-          ? ({ ...current, data: { ...current.data, ...data } } as Node<CanvasNodeData>)
-          : current
-      );
+      updateNodesByType("output", data);
     },
-    [setNodes]
+    [updateNodesByType]
+  );
+
+  const removeToast = useCallback((toastId: string) => {
+    setToasts((current) => current.filter((toast) => toast.id !== toastId));
+    const timeout = toastTimersRef.current.get(toastId);
+    if (timeout) {
+      clearTimeout(timeout);
+      toastTimersRef.current.delete(toastId);
+    }
+  }, []);
+
+  const pushRunLog = useCallback(
+    (
+      tone: "info" | "warning" | "error" | "success",
+      message: string,
+      context?: { kind?: "capsule" | "generation" | "system"; runId?: string; capsuleId?: string },
+      metrics?: { latencyMs?: number; costUsd?: number }
+    ) => {
+      if (!message) return;
+      const id =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `runlog-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const time = new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      setRunLog((current) => {
+        const next = [{ id, tone, message, time, context, metrics }, ...current];
+        return next.slice(0, 40);
+      });
+    },
+    []
+  );
+
+  const pushToast = useCallback(
+    (tone: "info" | "warning" | "error", message: string, ttl: number = 3200) => {
+      if (!message) return;
+      const id =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `toast-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      setToasts((current) => [...current, { id, tone, message }]);
+      if (tone !== "info") {
+        pushRunLog(tone === "warning" ? "warning" : "error", message);
+      }
+      const timeout = setTimeout(() => removeToast(id), ttl);
+      toastTimersRef.current.set(id, timeout);
+    },
+    [pushRunLog, removeToast]
   );
 
   useEffect(() => {
+    const toastTimers = toastTimersRef.current;
     return () => {
       if (generationPollRef.current) {
         clearInterval(generationPollRef.current);
       }
+      if (capsuleStreamRef.current) {
+        capsuleStreamRef.current.close();
+      }
+      if (previewCancelFallbackRef.current) {
+        clearTimeout(previewCancelFallbackRef.current);
+      }
+      toastTimers.forEach((timeout) => clearTimeout(timeout));
+      toastTimers.clear();
     };
   }, []);
+
+  useEffect(() => {
+    isPreviewLoadingRef.current = isPreviewLoading;
+  }, [isPreviewLoading]);
 
   const stopGenerationPolling = useCallback(() => {
     if (generationPollRef.current) {
@@ -159,16 +341,25 @@ function CanvasFlow() {
     if (generationPollRef.current) {
       clearInterval(generationPollRef.current);
     }
+    const runContext = { kind: "generation" as const, runId };
     generationPollRef.current = setInterval(async () => {
       try {
         const run = await api.getGenerationRun(runId);
         setGenerationRun(run);
         setGenerationStatus(run.status);
+        if (run.status !== lastGenerationStatusRef.current) {
+          lastGenerationStatusRef.current = run.status;
+          if (run.status === "done") {
+            pushRunLog("success", t("runGenerationDone"), runContext);
+          } else if (run.status === "failed") {
+            pushRunLog("error", t("runGenerationFailed"), runContext);
+          }
+        }
         if (run.status === "done") {
           const beatSheet = Array.isArray(run.spec?.beat_sheet) ? run.spec.beat_sheet : [];
           const storyboard = Array.isArray(run.spec?.storyboard) ? run.spec.storyboard : [];
           updateOutputNodes({
-            status: "success",
+            status: "complete",
             generationPreview: {
               beat_sheet: beatSheet,
               storyboard: storyboard,
@@ -183,13 +374,178 @@ function CanvasFlow() {
           setShowGenerationPanel(true);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to fetch run status");
+        setError(normalizeApiError(err, t("runStatusLoadError")));
         updateOutputNodes({ status: "error" });
         stopGenerationPolling();
         setIsGenerating(false);
       }
     }, 1500);
-  }, [stopGenerationPolling, updateOutputNodes]);
+  }, [pushRunLog, stopGenerationPolling, t, updateOutputNodes]);
+
+  const buildUpstreamContext = useCallback(
+    (targetId: string, contextMode?: "aggregate" | "sequential") => {
+      const incoming = new Map<string, string[]>();
+      edges.forEach((edge) => {
+        if (!edge.target || !edge.source) return;
+        const list = incoming.get(edge.target) ?? [];
+        list.push(edge.source);
+        incoming.set(edge.target, list);
+      });
+
+      const visited = new Set<string>();
+      const stack = [targetId];
+      while (stack.length > 0) {
+        const current = stack.pop();
+        if (!current) break;
+        const parents = incoming.get(current) ?? [];
+        for (const parent of parents) {
+          if (!visited.has(parent)) {
+            visited.add(parent);
+            stack.push(parent);
+          }
+        }
+      }
+
+      const upstreamNodes = nodes
+        .filter((node) => visited.has(node.id))
+        .map((node) => ({
+          id: node.id,
+          type: node.type,
+          label: node.data.label,
+          subtitle: node.data.subtitle,
+          params: node.data.params ?? {},
+          capsuleId: node.data.capsuleId,
+          capsuleVersion: node.data.capsuleVersion,
+        }));
+
+      const upstreamEdges = edges
+        .filter((edge) => visited.has(edge.source) && visited.has(edge.target))
+        .map((edge) => ({
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+        }));
+
+      if (contextMode === "sequential") {
+        const nodeIds = upstreamNodes.map((node) => node.id);
+        const nodeIdSet = new Set(nodeIds);
+        const adjacency = new Map<string, string[]>();
+        const indegree = new Map<string, number>();
+        nodeIds.forEach((id) => {
+          adjacency.set(id, []);
+          indegree.set(id, 0);
+        });
+        upstreamEdges.forEach((edge) => {
+          if (!nodeIdSet.has(edge.source) || !nodeIdSet.has(edge.target)) return;
+          const list = adjacency.get(edge.source) ?? [];
+          list.push(edge.target);
+          adjacency.set(edge.source, list);
+          indegree.set(edge.target, (indegree.get(edge.target) ?? 0) + 1);
+        });
+        const queue = [...nodeIds].filter((id) => (indegree.get(id) ?? 0) === 0).sort();
+        const ordered: string[] = [];
+        while (queue.length > 0) {
+          const current = queue.shift();
+          if (!current) break;
+          ordered.push(current);
+          const neighbors = (adjacency.get(current) ?? []).sort();
+          neighbors.forEach((neighbor) => {
+            indegree.set(neighbor, (indegree.get(neighbor) ?? 0) - 1);
+            if ((indegree.get(neighbor) ?? 0) === 0) {
+              queue.push(neighbor);
+            }
+          });
+        }
+        if (ordered.length < nodeIds.length) {
+          nodeIds.forEach((id) => {
+            if (!ordered.includes(id)) ordered.push(id);
+          });
+        }
+        const payloadMap = new Map(upstreamNodes.map((node) => [node.id, node]));
+        const sequence = ordered.map((id) => payloadMap.get(id)).filter(Boolean);
+        return { nodes: upstreamNodes, edges: upstreamEdges, mode: "sequential", sequence };
+      }
+
+      if (contextMode === "aggregate") {
+        return { nodes: upstreamNodes, edges: upstreamEdges, mode: "aggregate" };
+      }
+
+      return { nodes: upstreamNodes, edges: upstreamEdges };
+    },
+    [edges, nodes]
+  );
+
+  const getConnectedCapsules = useCallback(
+    (startId: string) => {
+      const nodeMap = new Map(nodes.map((node) => [node.id, node]));
+      const outgoing = new Map<string, string[]>();
+      edges.forEach((edge) => {
+        if (!edge.source || !edge.target) return;
+        const list = outgoing.get(edge.source) ?? [];
+        list.push(edge.target);
+        outgoing.set(edge.source, list);
+      });
+
+      const visited = new Set<string>([startId]);
+      const queue = [startId];
+      const capsules: Array<{
+        nodeId: string;
+        capsuleId: string;
+        capsuleVersion?: string;
+      }> = [];
+
+      while (queue.length > 0) {
+        const current = queue.shift();
+        if (!current) break;
+        const targets = outgoing.get(current) ?? [];
+        for (const target of targets) {
+          if (visited.has(target)) continue;
+          visited.add(target);
+          queue.push(target);
+          const node = nodeMap.get(target);
+          if (node?.type === "capsule" && node.data?.capsuleId) {
+            capsules.push({
+              nodeId: node.id,
+              capsuleId: node.data.capsuleId,
+              capsuleVersion: node.data.capsuleVersion || "latest",
+            });
+          }
+        }
+      }
+
+      return capsules;
+    },
+    [edges, nodes]
+  );
+
+  const buildInputValues = useCallback(() => {
+    const inputNode = nodes.find((node) => node.type === "input");
+    if (!inputNode || typeof inputNode.data !== "object") {
+      return {};
+    }
+    const params = (inputNode.data.params ?? {}) as Record<string, unknown>;
+    const inputs: Record<string, unknown> = {};
+    const sourceId = params.source_id ?? params.sourceId;
+    if (typeof sourceId === "string" && sourceId.trim()) {
+      inputs.source_id = sourceId.trim();
+    }
+    const sceneSummary = params.scene_summary;
+    if (typeof sceneSummary === "string" && sceneSummary.trim()) {
+      inputs.scene_summary = sceneSummary.trim();
+    }
+    const durationSec = params.duration_sec;
+    if (typeof durationSec === "number" && Number.isFinite(durationSec)) {
+      inputs.duration_sec = durationSec;
+    }
+    const emotionCurve = params.emotion_curve;
+    if (
+      Array.isArray(emotionCurve) &&
+      emotionCurve.every((item) => typeof item === "number" && Number.isFinite(item))
+    ) {
+      inputs.emotion_curve = emotionCurve;
+    }
+    return inputs;
+  }, [nodes]);
 
   const handleRun = useCallback(async () => {
     setIsOptimizing(true);
@@ -209,15 +565,114 @@ function CanvasFlow() {
       if (capsuleNode && capsuleNode.data.capsuleId) {
         setIsPreviewLoading(true);
         setShowPreviewPanel(true);
+        setPreviewNotice(null);
+        updateNodeData(capsuleNode.id, { status: "loading", streamingData: undefined });
         try {
+          let contextMode: "aggregate" | "sequential" | undefined;
+          let inputContracts: { contextMode?: string; maxUpstream?: number; allowedTypes?: string[] } | undefined;
+          if (!canvasId) {
+            try {
+              const spec = await api.getCapsuleSpec(
+                capsuleNode.data.capsuleId,
+                capsuleNode.data.capsuleVersion
+              );
+              inputContracts =
+                spec?.spec && typeof spec.spec === "object"
+                  ? (spec.spec as { inputContracts?: { contextMode?: string } }).inputContracts
+                  : undefined;
+              const rawMode = inputContracts?.contextMode;
+              if (rawMode === "aggregate" || rawMode === "sequential") {
+                contextMode = rawMode;
+              }
+              if (inputContracts) {
+                const strictContracts = {
+                  ...inputContracts,
+                  contextMode: (inputContracts.contextMode === "aggregate" || inputContracts.contextMode === "sequential")
+                    ? (inputContracts.contextMode as "aggregate" | "sequential")
+                    : undefined
+                };
+                updateNodeData(capsuleNode.id, { inputContracts: strictContracts });
+              }
+            } catch {
+              contextMode = undefined;
+            }
+          }
+          if (!inputContracts && capsuleNode.data?.inputContracts) {
+            inputContracts = capsuleNode.data.inputContracts;
+          }
+          const rawMaxUpstream = inputContracts?.maxUpstream;
+          const maxUpstream =
+            typeof rawMaxUpstream === "number" && Number.isFinite(rawMaxUpstream)
+              ? rawMaxUpstream
+              : undefined;
+          if (maxUpstream && maxUpstream > 0) {
+            const upstream = buildUpstreamContext(capsuleNode.id, contextMode);
+            const upstreamCount = Array.isArray(upstream?.nodes) ? upstream.nodes.length : 0;
+            if (upstreamCount > maxUpstream) {
+              const message = `Upstream nodes exceed maxUpstream (${upstreamCount} > ${maxUpstream})`;
+              updateNodeData(capsuleNode.id, { status: "error", streamingData: undefined });
+              setPreviewNotice({ tone: "error", message });
+              pushToast("warning", message);
+              setIsPreviewLoading(false);
+              return;
+            }
+          }
+          const rawAllowed = inputContracts?.allowedTypes;
+          if (rawAllowed && Array.isArray(rawAllowed) && rawAllowed.length > 0) {
+            const allowed = rawAllowed
+              .map((value) => normalizeAllowedType(String(value)))
+              .filter((value): value is string => Boolean(value));
+            const inputs = buildInputValues();
+            const sourceIdRaw = inputs.source_id ?? inputs.sourceId;
+            if (
+              IS_ADMIN_MODE &&
+              allowed.length > 0 &&
+              typeof sourceIdRaw === "string" &&
+              sourceIdRaw.trim()
+            ) {
+              try {
+                const asset = await api.getRawAsset(sourceIdRaw.trim());
+                const normalized = normalizeAllowedType(asset.source_type || "");
+                if (normalized && !allowed.includes(normalized)) {
+                  const message = `source_type '${asset.source_type}' not allowed (allowed: ${allowed.join(", ")})`;
+                  updateNodeData(capsuleNode.id, { status: "error", streamingData: undefined });
+                  setPreviewNotice({ tone: "error", message });
+                  pushToast("warning", message);
+                  setIsPreviewLoading(false);
+                  return;
+                }
+              } catch (err) {
+                const message = normalizeApiError(err, t("sourceTypeLoadError"));
+                if (!message.toLowerCase().includes("admin")) {
+                  updateNodeData(capsuleNode.id, { status: "error", streamingData: undefined });
+                  setPreviewNotice({ tone: "error", message });
+                  pushToast("warning", message);
+                  setIsPreviewLoading(false);
+                  return;
+                }
+              }
+            }
+          }
           const runResult = await api.runCapsule({
             canvas_id: canvasId || undefined,
             node_id: capsuleNode.id,
             capsule_id: capsuleNode.data.capsuleId,
             capsule_version: capsuleNode.data.capsuleVersion || "latest",
-            inputs: {},
+            inputs: buildInputValues(),
             params: capsuleNode.data.params || {},
+            upstream_context: canvasId
+              ? undefined
+              : buildUpstreamContext(capsuleNode.id, contextMode),
+            async_mode: true,
           });
+          const runContext = {
+            kind: "capsule" as const,
+            runId: runResult.run_id,
+            capsuleId: capsuleNode.data.capsuleId,
+          };
+          previewCapsuleIdRef.current = capsuleNode.data.capsuleId;
+          pushRunLog("info", `${t("runCapsuleQueued")} · ${capsuleNode.data.capsuleId}`, runContext);
+          setPreviewRunId(runResult.run_id);
           if (runResult.version && capsuleNode.data.capsuleVersion !== runResult.version) {
             setNodes((current) =>
               current.map((node) =>
@@ -233,45 +688,207 @@ function CanvasFlow() {
               )
             );
           }
-          const preview = await api.getStoryboardPreview(
-            capsuleNode.data.capsuleId,
-            runResult.run_id,
-            3
-          );
-          setStoryboardPreview(preview);
+
+          const capsuleNodeId = capsuleNode.id;
+          const capsuleKey = capsuleNode.data.capsuleId;
+          let isFirstChunk = true;
+
+          if (capsuleStreamRef.current) {
+            capsuleStreamRef.current.close();
+          }
+          capsuleStreamRef.current = api.streamCapsuleRun(runResult.run_id, {
+            onEvent: async (event) => {
+              const payload = event.payload || {};
+              if (
+                event.type === "run.queued" ||
+                event.type === "run.started" ||
+                event.type === "run.progress" ||
+                event.type === "run.partial"
+              ) {
+                if (event.type === "run.started") {
+                  pushRunLog("info", t("runCapsuleStarted"), runContext);
+                }
+                const message =
+                  typeof payload.message === "string"
+                    ? payload.message
+                    : typeof payload.text === "string"
+                      ? payload.text
+                      : "Working...";
+                const progress =
+                  typeof payload.progress === "number" ? payload.progress : undefined;
+                updateNodeData(capsuleNodeId, {
+                  status: "streaming",
+                  streamingData: {
+                    partialText: message,
+                    progress: progress ?? (isFirstChunk ? 10 : 0),
+                  },
+                });
+                isFirstChunk = false;
+                return;
+              }
+
+              if (event.type === "run.completed") {
+                updateNodeData(capsuleNodeId, { status: "complete", streamingData: undefined });
+                const latencyMs =
+                  typeof payload.latency_ms === "number" ? payload.latency_ms : undefined;
+                const costUsd =
+                  typeof payload.cost_usd_est === "number" ? payload.cost_usd_est : undefined;
+                pushRunLog("success", t("runCapsuleCompleted"), runContext, {
+                  latencyMs,
+                  costUsd,
+                });
+                const preview = await api.getStoryboardPreview(capsuleKey, runResult.run_id, 3);
+                setStoryboardPreview(preview);
+                updateNodeData(capsuleNodeId, {
+                  evidence_refs: Array.isArray(preview.evidence_refs) ? preview.evidence_refs : [],
+                });
+                setIsPreviewLoading(false);
+                setPreviewRunId(null);
+                previewCapsuleIdRef.current = null;
+                setPreviewNotice(null);
+                if (previewCancelFallbackRef.current) {
+                  clearTimeout(previewCancelFallbackRef.current);
+                  previewCancelFallbackRef.current = null;
+                }
+                if (capsuleStreamRef.current) {
+                  capsuleStreamRef.current.close();
+                  capsuleStreamRef.current = null;
+                }
+                return;
+              }
+
+              if (event.type === "run.failed") {
+                const message =
+                  typeof payload.error === "string" ? payload.error : "Preview run failed";
+                updateNodeData(capsuleNodeId, { status: "error", streamingData: undefined });
+                setError(message);
+                setPreviewNotice({ tone: "error", message });
+                pushRunLog("error", `${t("runCapsuleFailed")}: ${message}`, runContext);
+                setIsPreviewLoading(false);
+                setPreviewRunId(null);
+                previewCapsuleIdRef.current = null;
+                if (previewCancelFallbackRef.current) {
+                  clearTimeout(previewCancelFallbackRef.current);
+                  previewCancelFallbackRef.current = null;
+                }
+                if (capsuleStreamRef.current) {
+                  capsuleStreamRef.current.close();
+                  capsuleStreamRef.current = null;
+                }
+              }
+
+              if (event.type === "run.cancelled") {
+                const message =
+                  typeof payload.message === "string" ? payload.message : "Preview cancelled";
+                updateNodeData(capsuleNodeId, { status: "cancelled", streamingData: undefined });
+                setError(message);
+                setPreviewNotice({ tone: "warning", message: t("cancelled") });
+                pushToast("warning", t("cancelled"));
+                pushRunLog("warning", t("runCapsuleCancelled"), runContext);
+                setIsPreviewLoading(false);
+                setPreviewRunId(null);
+                previewCapsuleIdRef.current = null;
+                if (previewCancelFallbackRef.current) {
+                  clearTimeout(previewCancelFallbackRef.current);
+                  previewCancelFallbackRef.current = null;
+                }
+                if (capsuleStreamRef.current) {
+                  capsuleStreamRef.current.close();
+                  capsuleStreamRef.current = null;
+                }
+              }
+            },
+            onError: (streamError) => {
+              updateNodeData(capsuleNodeId, { status: "error", streamingData: undefined });
+              setError(streamError.message);
+              setPreviewNotice({ tone: "error", message: streamError.message });
+              pushRunLog("error", `${t("runCapsuleFailed")}: ${streamError.message}`, runContext);
+              setIsPreviewLoading(false);
+              setPreviewRunId(null);
+              previewCapsuleIdRef.current = null;
+              if (previewCancelFallbackRef.current) {
+                clearTimeout(previewCancelFallbackRef.current);
+                previewCancelFallbackRef.current = null;
+              }
+              if (capsuleStreamRef.current) {
+                capsuleStreamRef.current.close();
+                capsuleStreamRef.current = null;
+              }
+            },
+          });
         } catch (previewErr) {
           console.error("Preview error:", previewErr);
+          updateNodeData(capsuleNode.id, { status: "error", streamingData: undefined });
+          previewCapsuleIdRef.current = null;
         } finally {
-          setIsPreviewLoading(false);
+          if (!capsuleStreamRef.current) {
+            setIsPreviewLoading(false);
+          }
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Optimization failed");
+      setError(normalizeApiError(err, t("optimizationFailed")));
     } finally {
       setIsOptimizing(false);
     }
-  }, [nodes, edges, canvasId, setNodes]);
+  }, [nodes, edges, canvasId, setNodes, buildUpstreamContext, buildInputValues, updateNodeData, t, pushRunLog, pushToast]);
+
+  const handleCancelPreviewRun = useCallback(() => {
+    if (!previewRunId) {
+      return;
+    }
+    if (capsuleStreamRef.current) {
+      pushToast("info", t("cancelling"));
+      setPreviewNotice({ tone: "info", message: t("cancelling") });
+      pushRunLog("info", t("runCancelRequested"), {
+        kind: "capsule",
+        runId: previewRunId,
+        capsuleId: previewCapsuleIdRef.current ?? undefined,
+      });
+      capsuleStreamRef.current.cancel();
+      if (previewCancelFallbackRef.current) {
+        clearTimeout(previewCancelFallbackRef.current);
+      }
+      previewCancelFallbackRef.current = setTimeout(() => {
+        if (isPreviewLoadingRef.current) {
+          void api.cancelCapsuleRun(previewRunId).catch(() => undefined);
+        }
+      }, 1200);
+      return;
+    }
+    pushRunLog("info", t("runCancelRequested"), {
+      kind: "capsule",
+      runId: previewRunId,
+      capsuleId: previewCapsuleIdRef.current ?? undefined,
+    });
+    void api.cancelCapsuleRun(previewRunId).catch((err) => {
+      setError(normalizeApiError(err, t("cancelRunError")));
+    });
+  }, [previewRunId, setError, t, pushRunLog, pushToast]);
 
   const handleGenerate = useCallback(async () => {
     if (!canvasId) {
-      setError("Save the canvas before generating.");
+      setError(t("saveBeforeGenerate"));
       return;
     }
     setIsGenerating(true);
-    updateOutputNodes({ status: "running", generationPreview: undefined });
+    lastGenerationStatusRef.current = null;
+    updateOutputNodes({ status: "loading", generationPreview: undefined });
     setError(null);
     try {
       const run = await api.createGenerationRun(canvasId);
       setGenerationRun(run);
       setGenerationStatus(run.status);
+      const runContext = { kind: "generation" as const, runId: run.id };
+      pushRunLog("info", t("runGenerationStarted"), runContext);
       setShowGenerationPanel(true);
       startGenerationPolling(run.id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Generation failed to start");
+      setError(normalizeApiError(err, t("generationStartFailed")));
       updateOutputNodes({ status: "error" });
       setIsGenerating(false);
     }
-  }, [canvasId, startGenerationPolling, updateOutputNodes]);
+  }, [canvasId, pushRunLog, startGenerationPolling, t, updateOutputNodes]);
 
   const applyRecommendation = useCallback(
     (params: Record<string, unknown>) => {
@@ -306,21 +923,22 @@ function CanvasFlow() {
           setIsPublic(loaded.is_public);
           setNodes(loaded.graph_data.nodes as Node<CanvasNodeData>[]);
           setEdges(loaded.graph_data.edges);
+          setGraphMeta(loaded.graph_data.meta ?? {});
           takeSnapshot(loaded.graph_data.nodes, loaded.graph_data.edges);
         })
         .catch((err) => {
-          setError(err instanceof Error ? err.message : "Failed to load canvas");
+          setError(normalizeApiError(err, t("canvasLoadError")));
         })
         .finally(() => setIsLoading(false));
     }
-  }, [urlCanvasId, canvasId, setNodes, setEdges, takeSnapshot]);
+  }, [urlCanvasId, canvasId, setNodes, setEdges, takeSnapshot, t]);
 
   // Initial snapshot (only if not loading from URL)
   useEffect(() => {
     if (!urlCanvasId) {
       takeSnapshot(initialNodes, initialEdges);
     }
-  }, [takeSnapshot, urlCanvasId]);
+  }, [takeSnapshot, urlCanvasId, initialNodes]);
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -342,6 +960,14 @@ function CanvasFlow() {
 
   const handleAddNode = useCallback(
     (kind: CanvasNodeKind) => {
+      const labelMap: Partial<Record<CanvasNodeKind, string>> = {
+        input: t("nodeInput"),
+        style: t("nodeStyle"),
+        customization: t("nodeCustom"),
+        processing: t("nodeProcess"),
+        capsule: t("nodeCapsule"),
+        output: t("nodeOutput"),
+      };
       const newNode: Node<CanvasNodeData> = {
         id: createNodeId(),
         type: kind,
@@ -350,15 +976,16 @@ function CanvasFlow() {
           y: 300 + Math.random() * 100,
         },
         data: {
-          label: `New ${kind}`,
-          subtitle: "Configure in inspector",
+          label: labelMap[kind] || `New ${kind}`,
+          subtitle: t("configureInInspector"),
+          locked: kind === "capsule",
         },
       };
       const nextNodes = [...nodes, newNode];
       setNodes(nextNodes);
       takeSnapshot(nextNodes, edges);
     },
-    [edges, nodes, setNodes, takeSnapshot]
+    [edges, nodes, setNodes, takeSnapshot, t]
   );
 
   const handleUndo = useCallback(() => {
@@ -379,19 +1006,9 @@ function CanvasFlow() {
 
   const handleUpdateNode = useCallback(
     (nodeId: string, data: Partial<CanvasNodeData>) => {
-      const nextNodes = nodes.map((node) =>
-        node.id === nodeId
-          ? { ...node, data: { ...node.data, ...data } }
-          : node
-      );
-      setNodes(nextNodes);
-      setSelectedNode((current) =>
-        current && current.id === nodeId
-          ? ({ ...current, data: { ...current.data, ...data } } as Node<CanvasNodeData>)
-          : current
-      );
+      updateNodeData(nodeId, data);
     },
-    [nodes, setNodes]
+    [updateNodeData]
   );
 
   const handleDeleteNode = useCallback(
@@ -414,7 +1031,7 @@ function CanvasFlow() {
     try {
       const payload = {
         title,
-        graph_data: { nodes, edges },
+        graph_data: { nodes, edges, meta: graphMeta },
         is_public: isPublic,
       };
       const saved = canvasId
@@ -422,11 +1039,11 @@ function CanvasFlow() {
         : await api.createCanvas(payload);
       setCanvasId(saved.id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Save failed");
+      setError(normalizeApiError(err, t("error")));
     } finally {
       setIsSaving(false);
     }
-  }, [canvasId, edges, isPublic, nodes, title]);
+  }, [canvasId, edges, graphMeta, isPublic, nodes, title]);
 
   const handleOpenLoad = useCallback(async () => {
     setIsLoading(true);
@@ -436,7 +1053,7 @@ function CanvasFlow() {
       setCanvases(list);
       setShowLoadModal(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Load failed");
+      setError(normalizeApiError(err, t("error")));
     } finally {
       setIsLoading(false);
     }
@@ -453,18 +1070,19 @@ function CanvasFlow() {
         setIsPublic(loaded.is_public);
         setNodes(loaded.graph_data.nodes as Node<CanvasNodeData>[]);
         setEdges(loaded.graph_data.edges);
+        setGraphMeta(loaded.graph_data.meta ?? {});
         stopGenerationPolling();
         setGenerationRun(null);
         setGenerationStatus(null);
         setIsGenerating(false);
         setShowLoadModal(false);
         takeSnapshot(loaded.graph_data.nodes, loaded.graph_data.edges);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Load failed");
-      } finally {
-        setIsLoading(false);
-      }
-    },
+    } catch (err) {
+      setError(normalizeApiError(err, t("error")));
+    } finally {
+      setIsLoading(false);
+    }
+  },
     [setEdges, setNodes, takeSnapshot, stopGenerationPolling]
   );
 
@@ -474,31 +1092,153 @@ function CanvasFlow() {
     setIsPublic(false);
     setNodes(initialNodes);
     setEdges(initialEdges);
+    setGraphMeta({});
     setSelectedNode(null);
     stopGenerationPolling();
     setGenerationRun(null);
     setGenerationStatus(null);
     setIsGenerating(false);
     takeSnapshot(initialNodes, initialEdges);
-  }, [setEdges, setNodes, takeSnapshot, stopGenerationPolling, t]);
+  }, [setEdges, setNodes, takeSnapshot, stopGenerationPolling, t, initialNodes]);
 
   const toolbarButtons = useMemo(
     () =>
       [
-        { kind: "input", label: t("nodeInput") },
-        { kind: "style", label: t("nodeStyle") },
-        { kind: "customization", label: t("nodeCustom") },
-        { kind: "processing", label: t("nodeProcess") },
-        { kind: "output", label: t("nodeOutput") },
+        {
+          kind: "input",
+          label: t("nodeInput"),
+          icon: FileInput,
+          iconClass: "text-sky-200 bg-sky-500/15 group-hover:bg-sky-500/25",
+          hotkey: "1",
+        },
+        {
+          kind: "style",
+          label: t("nodeStyle"),
+          icon: Palette,
+          iconClass: "text-amber-200 bg-amber-500/15 group-hover:bg-amber-500/25",
+          hotkey: "2",
+        },
+        {
+          kind: "customization",
+          label: t("nodeCustom"),
+          icon: Sliders,
+          iconClass: "text-slate-200 bg-slate-500/15 group-hover:bg-slate-500/25",
+          hotkey: "3",
+        },
+        {
+          kind: "processing",
+          label: t("nodeProcess"),
+          icon: Sparkles,
+          iconClass: "text-cyan-200 bg-cyan-500/15 group-hover:bg-cyan-500/25",
+          hotkey: "4",
+        },
+        {
+          kind: "capsule",
+          label: t("nodeCapsule"),
+          icon: Workflow,
+          iconClass: "text-rose-200 bg-rose-500/15 group-hover:bg-rose-500/25",
+          hotkey: "5",
+        },
+        {
+          kind: "output",
+          label: t("nodeOutput"),
+          icon: FileOutput,
+          iconClass: "text-emerald-200 bg-emerald-500/15 group-hover:bg-emerald-500/25",
+          hotkey: "6",
+        },
       ] as const,
     [t]
   );
+
+  const toastToneConfig = useMemo(
+    () => ({
+      info: {
+        className: "border-sky-500/30 bg-sky-500/10 text-sky-100",
+        icon: Info,
+      },
+      warning: {
+        className: "border-amber-500/30 bg-amber-500/10 text-amber-100",
+        icon: AlertTriangle,
+      },
+      error: {
+        className: "border-rose-500/30 bg-rose-500/10 text-rose-100",
+        icon: XCircle,
+      },
+    }),
+    []
+  );
+
+  const runLogToneConfig = useMemo(
+    () => ({
+      info: "border-sky-500/30 bg-sky-500/10 text-sky-100",
+      warning: "border-amber-500/30 bg-amber-500/10 text-amber-100",
+      error: "border-rose-500/30 bg-rose-500/10 text-rose-100",
+      success: "border-emerald-500/30 bg-emerald-500/10 text-emerald-100",
+    }),
+    []
+  );
+
+  const filteredRunLog = useMemo(() => {
+    return runLog.filter((entry) => {
+      if (runLogFilters.errorsOnly && !["warning", "error"].includes(entry.tone)) {
+        return false;
+      }
+      const kind = entry.context?.kind;
+      if (kind === "capsule" && !runLogFilters.capsule) {
+        return false;
+      }
+      if (kind === "generation" && !runLogFilters.generation) {
+        return false;
+      }
+      return true;
+    });
+  }, [runLog, runLogFilters]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (showEmptyOverlay) return;
+      if (event.defaultPrevented) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (target) {
+        const tagName = target.tagName?.toLowerCase();
+        const isEditable =
+          tagName === "input" ||
+          tagName === "textarea" ||
+          tagName === "select" ||
+          target.isContentEditable ||
+          Boolean(target.closest("[contenteditable='true'], [role='textbox']"));
+        if (isEditable) return;
+      }
+      const keyMap: Record<string, CanvasNodeKind> = {
+        "1": "input",
+        "2": "style",
+        "3": "customization",
+        "4": "processing",
+        "5": "capsule",
+        "6": "output",
+      };
+      const kind = keyMap[event.key];
+      if (!kind) return;
+      event.preventDefault();
+      handleAddNode(kind);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleAddNode, showEmptyOverlay]);
 
   return (
     <div className="h-screen w-screen bg-slate-950 text-slate-100 overflow-hidden relative">
       {/* --- HEADER --- */}
       <header className="absolute top-0 left-0 right-0 z-10 px-6 py-4 flex items-center justify-between pointer-events-none">
         <div className="pointer-events-auto flex items-center gap-4 bg-slate-950/50 backdrop-blur-md p-2 rounded-2xl border border-white/10 shadow-xl">
+          <Link
+            href="/"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
+            aria-label={t("back")}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Link>
           <div className="flex flex-col px-2">
             <span className="text-[10px] uppercase tracking-widest text-sky-400 font-bold">
               {t("appName")}
@@ -507,7 +1247,7 @@ function CanvasFlow() {
               className="bg-transparent text-sm font-bold text-slate-100 focus:outline-none w-40"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Project Name"
+              placeholder={t("projectName")}
             />
           </div>
           <div className="h-6 w-px bg-white/10" />
@@ -560,6 +1300,14 @@ function CanvasFlow() {
           </div>
 
           <div className="flex items-center gap-2">
+            <Link
+              href="/credits"
+              className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10"
+              aria-label={`${creditBalance.toLocaleString()} ${t("credits")}`}
+            >
+              <CreditCard className="h-4 w-4 text-sky-300" />
+              <span>{creditBalance.toLocaleString()}</span>
+            </Link>
             <button
               onClick={handleGenerate}
               disabled={isGenerating}
@@ -594,6 +1342,30 @@ function CanvasFlow() {
         </div>
       </header>
 
+      {/* Status Toasts */}
+      <AnimatePresence>
+        {toasts.length > 0 && (
+          <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none">
+            {toasts.map((toast) => {
+              const tone = toastToneConfig[toast.tone];
+              const ToneIcon = tone.icon;
+              return (
+                <motion.div
+                  key={toast.id}
+                  initial={{ opacity: 0, y: -12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold shadow-lg backdrop-blur ${tone.className}`}
+                >
+                  <ToneIcon className="h-4 w-4" />
+                  <span>{toast.message}</span>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Error Toast */}
       <AnimatePresence>
         {error && (
@@ -607,6 +1379,145 @@ function CanvasFlow() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Run Log Panel */}
+      <div className="fixed bottom-6 left-6 z-30 pointer-events-auto">
+        <button
+          onClick={() => setIsRunLogOpen((prev) => !prev)}
+          className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/70 px-4 py-2 text-xs font-semibold text-slate-200 shadow-lg shadow-black/30 transition-colors hover:bg-white/10"
+          aria-expanded={isRunLogOpen}
+        >
+          {t("runLog")}
+          {runLog.length > 0 && (
+            <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-[10px] text-sky-200">
+              {runLog.length}
+            </span>
+          )}
+        </button>
+        <AnimatePresence>
+          {isRunLogOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 12 }}
+              className="mt-2 w-80 rounded-2xl border border-white/10 bg-slate-950/80 p-4 shadow-2xl backdrop-blur-xl"
+            >
+              <div className="mb-3 flex items-center justify-between text-[11px] uppercase tracking-widest text-slate-400">
+                <span>{t("runLog")}</span>
+                {runLog.length > 0 && (
+                  <button
+                    onClick={() => setRunLog([])}
+                    className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] text-slate-300 hover:bg-white/10"
+                  >
+                    {t("runLogClear")}
+                  </button>
+                )}
+              </div>
+              <div className="mb-3 flex flex-wrap items-center gap-2 text-[10px]">
+                <button
+                  onClick={() =>
+                    setRunLogFilters((prev) => ({ ...prev, capsule: !prev.capsule }))
+                  }
+                  aria-pressed={runLogFilters.capsule}
+                  className={`rounded-full border px-2 py-1 transition-colors ${
+                    runLogFilters.capsule
+                      ? "border-sky-500/30 bg-sky-500/10 text-sky-200"
+                      : "border-white/10 text-slate-400 hover:bg-white/5"
+                  }`}
+                >
+                  {t("runLogFilterCapsule")}
+                </button>
+                <button
+                  onClick={() =>
+                    setRunLogFilters((prev) => ({ ...prev, generation: !prev.generation }))
+                  }
+                  aria-pressed={runLogFilters.generation}
+                  className={`rounded-full border px-2 py-1 transition-colors ${
+                    runLogFilters.generation
+                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+                      : "border-white/10 text-slate-400 hover:bg-white/5"
+                  }`}
+                >
+                  {t("runLogFilterGeneration")}
+                </button>
+                <button
+                  onClick={() =>
+                    setRunLogFilters((prev) => ({ ...prev, errorsOnly: !prev.errorsOnly }))
+                  }
+                  aria-pressed={runLogFilters.errorsOnly}
+                  className={`rounded-full border px-2 py-1 transition-colors ${
+                    runLogFilters.errorsOnly
+                      ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
+                      : "border-white/10 text-slate-400 hover:bg-white/5"
+                  }`}
+                >
+                  {t("runLogFilterErrors")}
+                </button>
+                {filteredRunLog.length !== runLog.length && (
+                  <span className="text-[10px] text-slate-500">
+                    {filteredRunLog.length}/{runLog.length}
+                  </span>
+                )}
+              </div>
+              {filteredRunLog.length === 0 ? (
+                <div className="text-xs text-slate-500">{t("runLogEmpty")}</div>
+              ) : (
+                <div className="max-h-48 space-y-2 overflow-y-auto pr-1">
+                  {filteredRunLog.map((entry) => (
+                    <div
+                      key={entry.id}
+                      className={`rounded-lg border px-3 py-2 text-[11px] ${runLogToneConfig[entry.tone]}`}
+                    >
+                      <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-widest text-slate-400">
+                        <span>{entry.time}</span>
+                        <span>
+                          {entry.context?.kind === "capsule"
+                            ? t("runLogKindCapsule")
+                            : entry.context?.kind === "generation"
+                              ? t("runLogKindGeneration")
+                              : t("runLogKindSystem")}
+                        </span>
+                        {entry.context?.runId && (
+                          <span
+                            className="rounded bg-white/5 px-1.5 font-mono text-[10px] text-slate-300"
+                            title={entry.context.runId}
+                          >
+                            run:{entry.context.runId.slice(0, 6)}
+                          </span>
+                        )}
+                        {entry.context?.capsuleId && (
+                          <span
+                            className="max-w-[140px] truncate rounded bg-white/5 px-1.5 text-[10px] text-slate-300"
+                            title={entry.context.capsuleId}
+                          >
+                            capsule:{entry.context.capsuleId}
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-1 text-slate-100">{entry.message}</div>
+                      {(entry.metrics?.latencyMs !== undefined ||
+                        entry.metrics?.costUsd !== undefined) && (
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-slate-300">
+                          {entry.metrics?.latencyMs !== undefined && (
+                            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-amber-200">
+                              {t("latency")}: {entry.metrics.latencyMs}ms
+                            </span>
+                          )}
+                          {entry.metrics?.costUsd !== undefined && (
+                            <span className="rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-0.5 text-sky-200">
+                              {t("costEstimate")}: ${entry.metrics.costUsd.toFixed(3)}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* --- CANVAS --- */}
       <div className="absolute inset-0 z-0">
@@ -628,20 +1539,39 @@ function CanvasFlow() {
           onPaneClick={() => setSelectedNode(null)}
         >
           <Background color="#334155" gap={40} size={1} />
+          {/* MiniMap for navigation */}
+          <MiniMap
+            nodeColor={() => "#38bdf8"}
+            maskColor="rgba(0, 0, 0, 0.6)"
+            style={{
+              backgroundColor: "rgba(15, 23, 42, 0.9)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              borderRadius: "8px",
+            }}
+          />
           {/* Custom Controls Positioned Bottom Right */}
           <Panel position="bottom-right" className="mb-8 mr-8 flex flex-col gap-2">
-            <button className="bg-slate-900/80 p-2 rounded-lg border border-white/10 text-slate-400 hover:text-white hover:bg-white/10" title="Zoom In">
+            <button onClick={() => zoomIn()} className="bg-slate-900/80 p-2 rounded-lg border border-white/10 text-slate-400 hover:text-white hover:bg-white/10" title="Zoom In">
               <ZoomIn className="h-5 w-5" />
             </button>
-            <button className="bg-slate-900/80 p-2 rounded-lg border border-white/10 text-slate-400 hover:text-white hover:bg-white/10" title="Zoom Out">
+            <button onClick={() => zoomOut()} className="bg-slate-900/80 p-2 rounded-lg border border-white/10 text-slate-400 hover:text-white hover:bg-white/10" title="Zoom Out">
               <ZoomOut className="h-5 w-5" />
             </button>
-            <button className="bg-slate-900/80 p-2 rounded-lg border border-white/10 text-slate-400 hover:text-white hover:bg-white/10" title="Fit View">
+            <button onClick={() => fitView()} className="bg-slate-900/80 p-2 rounded-lg border border-white/10 text-slate-400 hover:text-white hover:bg-white/10" title="Fit View">
               <Maximize2 className="h-5 w-5" />
             </button>
           </Panel>
         </ReactFlow>
+
       </div>
+
+      {/* Empty Canvas Overlay */}
+      {showEmptyOverlay && (
+        <EmptyCanvasOverlay
+          onSelectSeed={handleSelectSeed}
+          onNavigateToTemplates={handleNavigateToTemplates}
+        />
+      )}
 
       {/* --- FLOATING DOCK TOOLBAR --- */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
@@ -655,15 +1585,21 @@ function CanvasFlow() {
               key={btn.kind}
               onClick={() => handleAddNode(btn.kind)}
               className="group relative flex flex-col items-center justify-center w-16 h-16 rounded-xl border border-transparent hover:border-white/10 hover:bg-white/5 transition-all"
+              title={`${btn.label} · ${btn.hotkey}`}
             >
-              <div className="h-8 w-8 rounded bg-slate-800 group-hover:bg-sky-500/20 group-hover:text-sky-400 flex items-center justify-center transition-colors text-slate-400 mb-1">
-                <Box className="h-5 w-5" />
+              <div className={`h-8 w-8 rounded flex items-center justify-center transition-colors mb-1 ${btn.iconClass}`}>
+                <btn.icon className="h-5 w-5" />
               </div>
               <span className="text-[10px] font-medium text-slate-400 group-hover:text-slate-100">
                 {btn.label}
               </span>
+              <span className="text-[9px] uppercase tracking-widest text-slate-500 group-hover:text-slate-300">
+                {btn.hotkey}
+              </span>
 
-              {/* Tooltip hint could go here */}
+              <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md border border-white/10 bg-slate-950/90 px-2 py-1 text-[10px] text-slate-200 opacity-0 transition-opacity group-hover:opacity-100">
+                {btn.label} · {btn.hotkey}
+              </span>
             </button>
           ))}
         </motion.div>
@@ -675,16 +1611,29 @@ function CanvasFlow() {
         onClose={() => setSelectedNode(null)}
         onUpdate={handleUpdateNode}
         onDelete={handleDeleteNode}
+        onToast={pushToast}
+        getInputValues={buildInputValues}
+        getUpstreamContext={buildUpstreamContext}
+        getConnectedCapsules={getConnectedCapsules}
+        canvasId={canvasId}
       />
 
       {/* --- PREVIEW PANEL --- */}
       {showPreviewPanel && (
         <PreviewPanel
+          key={previewRunId ?? storyboardPreview?.run_id ?? "preview-panel"}
           preview={storyboardPreview}
           isLoading={isPreviewLoading}
+          showCancel={Boolean(previewRunId) && isPreviewLoading}
+          onCancel={handleCancelPreviewRun}
+          statusNotice={previewNotice ?? undefined}
           onClose={() => {
+            if (previewRunId && isPreviewLoading) {
+              handleCancelPreviewRun();
+            }
             setShowPreviewPanel(false);
             setStoryboardPreview(null);
+            setPreviewNotice(null);
           }}
         />
       )}
@@ -823,9 +1772,15 @@ import { Suspense } from "react";
 
 function CanvasPageContent() {
   return (
-    <ReactFlowProvider>
-      <CanvasFlow />
-    </ReactFlowProvider>
+    <AppShell
+      showTopBar={false}
+      showBackButton={true}
+      backHref="/"
+    >
+      <ReactFlowProvider>
+        <CanvasFlow />
+      </ReactFlowProvider>
+    </AppShell>
   );
 }
 

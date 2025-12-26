@@ -23,8 +23,10 @@
 
 ## 3) 최신 아키텍처 기준 핵심 구성
 
-- **Data Ingestion & Evidence Loop**: 거장 레퍼런스/미장센 데이터 수집 → 요약/라벨 → 검증/승격
+- **Notebook Library (Private)**: 거장/인기 작품 노트북을 비공개 지식 베이스로 축적
+- **Data Ingestion & Evidence Loop**: 레퍼런스 수집 → 구조화(ASR/샷/키프레임) → 요약/라벨 → 검증/승격
 - **Pattern Library/Trace**: 반복 패턴을 구조화해 증명 가능한 “공식”으로 관리
+- **Tong Dataset (Synapse)**: Visual + Persona + 변환 규칙을 묶어 “거장 공식”을 설명 가능하게 저장
 - **Canvas UI**: 노드/엣지 기반 편집, 즉시 미리보기, 템플릿 저장
 - **Spec Engine**: 노드 계산 + 규칙 기반 조합 + 파이프라인 스냅샷
 - **Optimization**: GA(조합 탐색) + RL/밴딧(피드백 학습)
@@ -32,32 +34,17 @@
 - **Asset & Provenance**: 결과물 메타데이터, 버전/저작권 추적
 - **Observability & Evaluation**: 실행 추적, 비용/지연, 품질 지표, 근거 링크
 - **Event-driven Pipeline**: 수집/요약/생성 흐름을 비동기 이벤트로 분리
+- **RAG/LLMOps 기준**: chunking/embedding/hybrid retrieval + 평가, 프롬프트/체인 버전 관리
 - **Marketplace**: 템플릿 유통, 공유, 수익 쉐어
 
 ---
 
-## 4) 핵심 사용자 플로우 (거장 템플릿 카드 → 캔버스 시작)
+## 4) 핵심 사용자 플로우 (요약)
 
-- 메인에 **거장 템플릿 카드**를 노출하고 클릭 시 해당 템플릿으로 캔버스 시작
-- 기본 그래프는 `Input → Auteur Capsule → Output` 형태로 즉시 작동
-- 핵심 로직은 **캡슐 노드(Sealed Node)**로 감싸 입·출력과 노출 파라미터만 표시
-- NotebookLM/Opal은 **요약/라벨 가속 레이어**로 사용하고 결과는 **Sheets Bus → DB**로 정규화
-- 워크플로는 서버에서 실행하고 요약만 전달 (IP 보호)
-
-### 4.1 관리자 데이터화 플로우 (Evidence Loop)
-
-1. 거장 레퍼런스 링크 수집 (Raw)
-2. NotebookLM/Opal 요약/라벨링 (Derived)
-3. Sheets Bus 기록 → 검수/정규화
-4. DB SoR + Pattern Library 승격
-5. 캡슐 스펙/템플릿에 반영
-
-### 4.2 창작자 플로우 (Canvas → Preview)
-
-1. 템플릿 카드 선택 → 캔버스 시작
-2. 캡슐 파라미터 조정 → 실행 요약 확인
-3. GA/RL 추천 → 선택/반영
-4. Script/Storyboard 프리뷰 → 생성 요청
+- 거장 템플릿 카드 → 캔버스 시작 → 캡슐 실행 → 프리뷰/생성
+- 캡슐 노드는 **Sealed** (입·출력/노출 파라미터만 공개)
+- 상세 파이프라인/역할은 `10_PIPELINES_AND_USER_FLOWS.md`에 정본화
+- 영상 구조화(ASR/샷/키프레임 → Gemini) 기준은 `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md` 참고
 
 ---
 
@@ -72,15 +59,12 @@
 
 ---
 
-## 6) NotebookLM / Google Opal 활용 전략 (2025-12 기준)
+## 6) NotebookLM / Google Opal 활용 전략 (요약)
 
-- **NotebookLM**: 거장 레퍼런스/해석 데이터를 **요약/라벨링/다국어 출력**으로 가속
-  - Video/Audio Overviews, Studio 다중 출력, Mind Map, 출력 언어 선택 활용
-  - 결과는 **Sheets Bus**에 기록하고 DB로 승격 (SoR는 DB)
-- **NotebookLM Ultra**: 대량 출력/다중 포맷 생성에 유리 (현재 Ultra 구독)
-- **Google Opal**: 내부 워크플로우/검수 미니앱 제작
-  - 프롬프트/워크플로 편집, 라벨링, QA 체크리스트 도구화
-  - Gemini 웹앱 내 Opal 실험 기능으로 내부 자동화 속도 향상
+- **Gemini 구조화 → DB SoR**가 영상 해석의 정본(NotebookLM은 요약/가이드만)
+- **NotebookLM**: 지식/가이드 레이어 (클러스터 노트북, 오마주/변주, 템플릿 적합도)
+- **Opal**: 템플릿 시드/QA 워크플로 자동화 (캡슐 내부 서브그래프)
+- 상세 역할/규격은 `10_PIPELINES_AND_USER_FLOWS.md` 참고
 
 ---
 

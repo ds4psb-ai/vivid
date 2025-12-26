@@ -19,40 +19,59 @@
 ## Phase 1: Dataization MVP (0~6주)
 
 ### 1.1 Sheets 스키마 확정 (주 1)
+- Notebook Library 시트: `notebook_id`, `title`, `notebook_ref`, `source_ids`, `source_count`
 - Raw 시트: `source_url`, `title`, `duration`, `scene_notes`, `created_at`, `annotator`
-- Derived 시트: `source_id`, `summary`, `labels`, `output_type`, `output_language`, `prompt_version`, `model_version`, `confidence`
+- Video Structured 시트: `segment_id`, `source_id`, `time_start`, `time_end`, `visual_schema_json`, `audio_schema_json`
+- Derived 시트: `source_id`, `summary`, `labels`, `output_type`, `output_language`, `prompt_version`, `model_version`, `confidence`, `notebook_id`
 - Pattern 후보: `pattern_id`, `pattern_type`, `description`, `source_id`
 - Pattern Trace: `variant_id`, `pattern_id`, `weight`, `evidence_ref`
 - 문서: `08_SHEETS_SCHEMA_V1.md`
+- 패턴 시드: `15_PATTERN_TAXONOMY_V1.md`
 
-### 1.2 NotebookLM 출력 규격 (주 1)
+### 1.2 Gemini 구조화 출력 (주 1)
+- ASR + 샷/키프레임 분할 후 Gemini 3 Pro/Flash로 구조화 JSON 생성
+- `VIVID_VIDEO_STRUCTURED`에 기록 후 DB SoR 승격
+- 문서: `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
+
+### 1.3 Notebook Library 등록 (주 1)
+- NotebookLM 노트북 메타를 `VIVID_NOTEBOOK_LIBRARY`에 등록
+- 노트북은 비공개 지식 베이스로 유지 (UI 노출 금지)
+- 클러스터 메타(`cluster_id`, `cluster_label`, `guide_scope`)로 거장/장르 묶음 관리
+
+### 1.4 NotebookLM 출력 규격 (주 1)
 - 출력 JSON 포맷 고정
 - `summary`, `output_type`, `output_language`, `prompt_version`, `model_version` 필수화
+- `notebook_id` 포함 (Library 연동)
+- `guide_type`, `homage_guide`, `variation_guide`, `template_recommendations`로 가이드 레이어 강화
+- `persona_profile`, `synapse_logic`, `origin_notebook_id`, `filter_notebook_id` 추가 (통 데이터셋)
 - 동일 입력 재실행 시 버전 증가 규칙 정의
 - 문서: `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
 
-### 1.3 수동 인제스트 운영 루틴 (주 2)
+### 1.5 수동 인제스트 운영 루틴 (주 2)
 - 관리자 수집 링크 → Raw 시트 입력
+- Gemini 구조화 → Video Structured 시트 기록
 - NotebookLM 실행 → Derived 시트 기록
 - 일일/주간 검수 → Pattern 후보 승인
+- (옵션) API 입력: `/api/v1/ingest/raw`, `/api/v1/ingest/derive`
+- 문서: `14_INGEST_RUNBOOK_V1.md`
 
-### 1.4 DB 승격 파이프라인 (주 3~4)
-- Sheets → DB 일괄 업서트 (idempotent)
+### 1.6 DB 승격 파이프라인 (주 3~4)
+- Notebook Library + Sheets → DB 일괄 업서트 (idempotent)
 - Pattern Library/Trace 테이블 생성
 - 승격 상태: `proposed → validated → promoted`
 - 문서: `11_DB_PROMOTION_RULES_V1.md`
 - 스크립트: `backend/scripts/promote_from_sheets.py`
 
-### 1.4.1 Pattern 승격 기준 확정
+### 1.6.1 Pattern 승격 기준 확정
 - 검수 기준/리프트 기준 확정
 - 문서: `12_PATTERN_PROMOTION_CRITERIA_V1.md`
 
-### 1.5 캡슐 반영 (주 5~6)
+### 1.7 캡슐 반영 (주 5~6)
 - CapsuleSpec에 DB 기반 패턴/파라미터 주입
 - evidence_refs에 sheet_row 또는 db_ref 연결
 - 캡슐 버전 고정 정책 적용
 
-### 1.6 관찰성 최소 기준 (주 6)
+### 1.8 관찰성 최소 기준 (주 6)
 - capsule_run trace_id + prompt/model version 로그
 - evidence_refs와 결과 요약 저장
 
@@ -72,6 +91,11 @@
 - Run trace, 비용/지연, 품질 지표 대시보드
 - Evidence Coverage, Pattern Lift 평균 모니터링
 
+### 2.4 LLMOps 평가 하니스 (옵션)
+- 프롬프트/체인 버전 관리 + 오프라인 평가셋
+- groundedness/relevancy/completeness 지표 기록
+- 휴먼 피드백 수집 → 템플릿/캡슐 개선 루프
+
 ---
 
 ## Phase 3: Event-driven 확장 (3~6개월)
@@ -84,11 +108,16 @@
 - 프리뷰 저비용 모델, 최종 고품질 모델 분리
 - 캐시 정책 + 스냅샷 버전 관리
 
+### 3.3 Dev/QA/Prod 분리 (운영 기준)
+- 캡슐/템플릿 승격은 QA 검증 후 PROD 반영
+- 배포 전후 품질/비용 리그레션 체크
+
 ---
 
 ## 산출물 체크리스트
 
 - [ ] Sheets 스키마 v1
+- [ ] Notebook Library 시트/DB
 - [ ] NotebookLM 출력 규격 v1
 - [ ] DB 승격 스크립트
 - [ ] Pattern Library/Trace 테이블

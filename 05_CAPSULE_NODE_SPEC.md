@@ -22,6 +22,7 @@
 4. **버전 고정**: `capsuleId@version`으로 재현성 확보
 5. **패턴 버전 고정**: `patternVersion`으로 근거 스냅샷 고정
 6. **권한 기반 노출**: 고가치 노드는 관리자 전용 파라미터만 허용
+7. **DB SoR 우선**: NotebookLM/Opal 결과는 Derived, DB 승격된 근거만 증거로 취급
 
 ---
 
@@ -33,6 +34,16 @@ interface CapsuleNodeSpec {
   version: string; // semver
   displayName: string;
   description?: string;
+  inputContracts: {
+    required: string[];
+    optional?: string[];
+    maxUpstream?: number;
+    allowedTypes?: string[];
+    contextMode?: "aggregate" | "sequential";
+  };
+  outputContracts: {
+    types: string[];
+  };
   inputs: Record<string, { type: string; required?: boolean }>;
   outputs: Record<string, { type: string }>; // summary-only
   patternVersion?: string; // Pattern Library snapshot version
@@ -65,6 +76,22 @@ interface CapsuleNodeInstance {
   params: Record<string, unknown>;
   locked: boolean;
 }
+
+interface CapsuleRunRecord {
+  id: string;
+  capsuleId: string;
+  capsuleVersion: string;
+  status: "queued" | "running" | "done" | "failed" | "cancelled";
+  upstreamContext?: Record<string, unknown>;
+  summary?: Record<string, unknown>;
+  evidenceRefs?: string[];
+  synapseRuleRef?: string;
+  tokenUsage?: { input: number; output: number; total: number };
+  latencyMs?: number;
+  costUsdEst?: number;
+  createdAt: string;
+  updatedAt: string;
+}
 ```
 
 ---
@@ -91,10 +118,13 @@ interface CapsuleNodeInstance {
   "node_id": "...",
   "capsule_id": "auteur.bong-joon-ho",
   "capsule_version": "1.2.0",
-  "inputs": { "emotion": "tension" },
+  "inputs": { "source_id": "auteur-bong-1999-barking-dogs", "emotion": "tension" },
   "params": { "style_intensity": 0.7 }
 }
 ```
+
+노트:
+- `upstream_context`가 없으면 서버가 `canvas_id + node_id` 기준으로 캔버스 그래프에서 자동 계산합니다.
 
 응답:
 ```json
@@ -103,9 +133,13 @@ interface CapsuleNodeInstance {
   "status": "done",
   "summary": {
     "style_vector": [0.8, 0.6, 0.7],
+    "pattern_version": "v1",
     "recommended_palette": ["#102A43", "#243B53"]
   },
-  "evidence_refs": ["evidence:sheet:row:128"],
+  "evidence_refs": ["sheet:VIVID_DERIVED_INSIGHTS:128"],
+  "token_usage": { "input": 320, "output": 180, "total": 500 },
+  "latency_ms": 820,
+  "cost_usd_est": 0.08,
   "version": "1.2.0"
 }
 ```
@@ -116,17 +150,65 @@ interface CapsuleNodeInstance {
 - 상태 조회: `GET /api/v1/capsules/run/{run_id}`
 - `POST /api/v1/capsules/run` 요청에 `async_mode: true` 전달 시 `queued` 상태로 즉시 반환
 
+### 5.3 스트리밍 실행 (WS / SSE)
+
+캡슐 실행 진행 상황을 실시간으로 노출합니다.  
+UI는 `loading → streaming → complete` 상태로 전환됩니다.
+
+- **WebSocket**: `GET /ws/runs/{run_id}`
+- **SSE**: `GET /api/v1/capsules/run/{run_id}/stream`
+
+**이벤트 타입**
+- `run.queued`
+- `run.started`
+- `run.progress`
+- `run.partial`
+- `run.completed`
+- `run.failed`
+- `run.cancelled`
+
+**이벤트 페이로드 예시**
+```json
+{
+  "event_id": "runId:3",
+  "run_id": "runId",
+  "type": "run.progress",
+  "seq": 3,
+  "ts": "2025-12-24T12:00:00Z",
+  "payload": {
+    "progress": 40,
+    "message": "Generating style vector"
+  }
+}
+```
+
+**정책**
+- `summary + evidence_refs`만 노출
+- `evidence_refs`는 `sheet:` 또는 `db:` 포맷만 허용되며, 나머지는 서버에서 필터링
+- 필터링된 항목은 `summary.evidence_warnings[]`에 사유로 기록
+- `outputContracts` 불일치 항목은 `summary.output_warnings[]`에 기록
+- 허용 `db` 테이블: `raw_assets`, `video_segments`, `evidence_records`, `patterns`, `pattern_trace`, `notebook_library`
+- `raw_logs / debug / trace`는 정책에 따라 비공개
+
+**취소**
+- `POST /api/v1/capsules/run/{run_id}/cancel`
+- 실행 중인 캡슐을 취소하고 `run.cancelled` 이벤트 발행
+- WS 컨트롤: `/ws/runs/{run_id}`에 `{"type":"cancel"}` 전송
+
 ---
 
 ## 6) 실행 파이프라인
 
 1. 입력/파라미터 검증
    - 필수 입력 누락 시 `ALLOW_INPUT_FALLBACKS=true`면 기본값 대체
-2. Adapter 실행 (NotebookLM/Opal/Internal)
-3. 결과 요약/정규화
-4. **Sheets Bus 기록 (Derived)** → DB 승격은 별도 파이프라인
-5. 증거 참조 생성 (선택)
-6. 캐시 저장 및 반환
+2. upstream_context 수집 (연결된 모든 상위 노드 스냅샷)
+   - contextMode=sequential이면 `upstream_context.sequence`에 위상 정렬된 노드 리스트를 포함
+   - contextMode=aggregate이면 `upstream_context.mode=aggregate`를 포함
+3. Adapter 실행 (NotebookLM/Opal/Internal)
+4. 결과 요약/정규화
+5. **Sheets Bus 기록 (Derived)** → DB 승격은 별도 파이프라인
+6. 증거 참조 생성 (DB SoR 우선, Synapse Rule 포함)
+7. 캐시 저장 및 반환
 
 ---
 

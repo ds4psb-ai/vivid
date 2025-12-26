@@ -8,7 +8,20 @@
   --fg-muted: rgba(226, 232, 240, 0.65);
   --accent: #38bdf8;
   --accent-2: #f59e0b;
+
+  /* Extended tokens from UI Design Guide */
+  --surface-1: color-mix(in oklch, var(--bg-2) 80%, white 20%);
+  --surface-2: color-mix(in oklch, var(--bg-1) 70%, white 30%);
+  --border-muted: rgba(148, 163, 184, 0.25);
+  --border-subtle: rgba(148, 163, 184, 0.1);
+
+  /* Status colors */
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #3b82f6;
 }
+
 
 body {
   min-height: 100vh;
@@ -58,4 +71,15 @@ pre {
 .react-flow__node-default {
   background: transparent !important;
   border: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

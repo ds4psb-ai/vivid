@@ -15,15 +15,16 @@
 4. **데이터 신뢰성**: 스펙/템플릿/생성 결과는 버전/출처를 보존한다.
 5. **IP 보호**: 핵심 로직은 캡슐 노드로 봉인하고 입·출력만 공개한다.
 6. **관찰성/재현성**: 실행 로그/근거/버전을 추적 가능하게 유지한다.
+7. **RAG/LLMOps 규율**: chunking/embedding/hybrid retrieval + 평가, 프롬프트/체인 버전 관리.
 
 ---
 
 ## 1) 전체 아키텍처 개요
 
 ```
-[Ingestion + NotebookLM/Opal] ──> [Sheets Bus] ──> [DB SoR + Pattern Library]
-                                              │
-                                              └──> [Capsule Spec Repo]
+[Ingestion + Gemini Structuring] ──> [Video Schema DB] ──> [NotebookLM/Opal] ──> [Notebook Library] ──> [Sheets Bus] ──> [DB SoR + Pattern Library]
+                                                                                                                   │
+                                                                                                                   └──> [Capsule Spec Repo]
 
 [Web UI] ──> [Canvas API] ──> [Spec Engine] ──> [Preview]
     │             │                │               │
@@ -41,22 +42,31 @@
 - **Spec 계층**: 노드 계산, 제약 조건, 품질 점수 산정
 - **Optimization 계층**: GA/RL로 조합 개선
 - **Generation 계층**: 스토리/이미지/영상/오디오 생성 및 합성
- - **Data/Evidence 계층**: 거장 데이터 수집, 패턴 라이브러리, 증거 누적
+- **Data/Evidence 계층**: Video Schema DB, Notebook Library, 패턴 라이브러리, 증거 누적
  - **Observability/Eval**: 실행 추적, 품질/비용/지연 평가
 
 ### 1.1 핵심 사용자 플로우
 
 - 메인에 **거장 템플릿 카드** 노출 → 클릭 시 템플릿 그래프 로드
-- 기본 그래프: `Input → Auteur Capsule → Output`
+- 기본 그래프: `Input → Auteur Capsule → Script/Beat → Storyboard → Output`
 - **캡슐 노드**는 내부 체인을 숨기고 노출 파라미터만 편집 가능
 
 ### 1.2 Data → Capsule 파이프라인 (최신 기준)
 
 1. 거장/레퍼런스 데이터 수집 (링크/메타/씬 단위)
-2. NotebookLM 요약/라벨링 → **Sheets Bus** 기록
-3. 검수/정규화 → **DB SoR + Pattern Library** 승격
-4. Pattern Library/Trace 기반 캡슐 스펙 업데이트
-5. 캔버스에서 캡슐 실행 시 DB 근거만 사용
+2. ASR/키프레임/샷 분할 → Gemini 구조화 출력
+3. **Video Schema DB** 적재 (scene/shot 단위)
+4. NotebookLM 요약/라벨링 → **Notebook Library** 축적
+5. Sheets Bus 기록 → 검수/정규화
+6. **DB SoR + Pattern Library** 승격
+7. Pattern Library/Trace 기반 캡슐 스펙 업데이트
+8. 캔버스에서 캡슐 실행 시 DB 근거만 사용
+9. Creator Self-Style 노트북은 동일 파이프라인으로 축적
+
+상세 흐름/역할은 `10_PIPELINES_AND_USER_FLOWS.md`, 영상 구조화는 `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md` 참고.
+
+> 원본 소스를 직접 인제스트하는 경우, RAG 파이프라인(Chunking → Enrichment → Embedding → Index)과
+> hybrid search 및 retrieval 평가를 거쳐 승격한다.
 
 ### 1.3 Creator → Generation 파이프라인
 
@@ -68,10 +78,15 @@
 
 ### 1.4 사용자/역할 흐름
 
-- **Admin/Curator**: 수집 → NotebookLM/Opal 요약 → 승인 → DB 승격
-- **Creator**: 템플릿 선택 → 캡슐 실행 → 프리뷰 → 생성
-- **Viewer/Reviewer**: 결과 검토 → 피드백/평점 → 학습 로그
+사용자/역할 흐름은 `10_PIPELINES_AND_USER_FLOWS.md`에 정본화한다.
 
+### 1.5 RAG/LLMOps 정렬 (2025-12 기준)
+
+- **RAG 설계**: chunking → enrichment → embedding → index → hybrid search 단계 분리
+- **RAG 평가**: retrieval + end-to-end 평가(groundedness, relevancy, completeness) 기록
+- **오케스트레이션**: tool routing + context packaging, 장기 작업은 이벤트/큐로 분리
+- **LLMOps**: 프롬프트/체인도 버전 관리, 오프라인 평가셋 + 휴먼 피드백 기반 개선
+- **운영**: Dev/QA/Prod 분리, CI/CD, 모니터링/알림
 ---
 
 ## 2) 데이터 모델 (핵심)
@@ -114,6 +129,16 @@ interface CapsuleNodeSpec {
   version: string; // semantic version
   displayName: string;
   description?: string;
+  inputContracts: {
+    required: string[];
+    optional?: string[];
+    maxUpstream?: number;
+    allowedTypes?: string[];
+    contextMode?: "aggregate" | "sequential";
+  };
+  outputContracts: {
+    types: string[];
+  };
   inputs: Record<string, { type: string; required?: boolean }>;
   outputs: Record<string, { type: string }>; // summary-only by default
   exposedParams: Record<
@@ -145,6 +170,9 @@ interface CapsuleNodeInstance {
   locked: boolean; // UI cannot open internal graph
 }
 ```
+
+Note: `contextMode=sequential`이면 `upstreamContext.sequence`에 위상 정렬된 노드 리스트를 포함한다.  
+`contextMode=aggregate`이면 `upstreamContext.mode=aggregate`를 포함한다.
 
 ### 2.3 Template
 
@@ -182,8 +210,13 @@ interface NodeRun {
   capsuleId?: string;
   capsuleVersion?: string;
   status: "queued" | "running" | "done" | "failed";
+  upstreamContext?: Record<string, unknown>;
   outputSummary?: Record<string, unknown>;
   evidenceRefs?: string[];
+  tokenUsage?: { input: number; output: number; total: number };
+  latencyMs?: number;
+  costUsdEst?: number;
+  evalScores?: { groundedness?: number; relevancy?: number; completeness?: number };
   ownerId?: string;
   createdAt: string;
   updatedAt: string;
@@ -229,7 +262,95 @@ interface PatternTrace {
 }
 ```
 
-### 2.6 Ingestion / Evidence Record (NotebookLM → Sheets → DB)
+### 2.6 Notebook Library (Canonical, private)
+
+```typescript
+interface NotebookLibrary {
+  id: string;
+  title: string;
+  notebookRef: string; // notebooklm id/url
+  auteurClusterId?: string; // cluster grouping (auteur/genre)
+  auteurClusterLabel?: string; // human-readable label
+  clusterTags?: string[];
+  sourceCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface NotebookOutput {
+  id: string;
+  notebookId: string;
+  sourceId: string;
+  summary: string;
+  labels: string[];
+  outputType?: "summary" | "homage" | "variation_guide" | "template_fit";
+  variationGuide?: string; // how to adapt or remix
+  homageGuide?: string; // homage checklist
+  templateRecommendations?: string[]; // template ids or slugs
+  userFitNotes?: string; // persona or taste alignment notes
+  evidenceRefs?: string[];
+  promptVersion: string;
+  modelVersion: string;
+  generatedAt: string;
+}
+```
+
+### 2.7 Video Structured Segment (Gemini)
+
+```typescript
+interface VideoSegment {
+  id: string;
+  sourceId: string;
+  timeStart: string; // HH:MM:SS.mmm
+  timeEnd: string; // HH:MM:SS.mmm
+  shotIndex?: number;
+  keyframes?: string[];
+  transcript?: string;
+  visualSchema?: Record<string, unknown>;
+  audioSchema?: Record<string, unknown>;
+  motifs?: string[];
+  promptVersion: string;
+  modelVersion: string;
+  confidence?: number;
+  generatedAt: string;
+}
+```
+
+### 2.8 Tong Dataset (Synapse) Entities
+
+```typescript
+interface VisualSchema {
+  composition?: string;
+  lighting?: string;
+  colorPalette?: string[];
+  cameraMotion?: string;
+  lensDepth?: string;
+  blocking?: string;
+  pacing?: string;
+}
+
+interface PersonaProfile {
+  id: string;
+  name: string;
+  traits?: string[];
+  philosophy?: string;
+  motifs?: string[];
+  notes?: string;
+  sourceRefs?: string[];
+}
+
+interface SynapseRule {
+  id: string;
+  originPersonaRef?: string; // B
+  filterPersonaRef?: string; // D
+  ruleSummary: string; // A+B -> C transform
+  transformSteps?: string[];
+  constraints?: string[];
+  confidence?: number;
+}
+```
+
+### 2.9 Ingestion / Evidence Record (NotebookLM → Sheets → DB)
 
 ```typescript
 interface EvidenceRecord {
@@ -237,6 +358,13 @@ interface EvidenceRecord {
   sourceId: string;
   sourceUrl: string;
   summary: string;
+  guideType?: string; // summary/homage/variation/template_fit/persona/synapse/story/beat_sheet/storyboard
+  outputType?: string; // video_overview/audio_overview/mind_map/report
+  outputLanguage?: string;
+  storyBeats?: Array<Record<string, unknown>>;
+  storyboardCards?: Array<Record<string, unknown>>;
+  keyPatterns?: Array<Record<string, unknown>>;
+  evidenceRefs?: string[];
   labels: string[];
   notebookRef?: string;
   promptVersion: string;
@@ -245,6 +373,8 @@ interface EvidenceRecord {
   createdAt: string;
 }
 ```
+
+> Video 구조화 출력은 `VideoSegment`에 저장하고, EvidenceRecord는 NotebookLM/Opal 요약 전용으로 유지한다.
 
 ---
 
@@ -279,13 +409,15 @@ execute(nodeInstance, inputPayload) -> { summary, evidenceRefs }
 - NotebookLM/Opal/외부 모듈은 Adapter로 연결
 - 결과는 **요약/참조만 반환**하고 원문/프롬프트는 절대 클라이언트로 보내지 않음
 - Adapter는 필요 시 **Sheets Bus에 기록**하고 DB 승격은 별도 파이프라인에서 수행
+- inputPayload에는 **upstream_context**가 포함되어 캡슐이 전체 문맥을 읽을 수 있음
 
 ### 4.3 실행 흐름
 
 1. 캔버스에서 캡슐 노드 실행 요청
-2. 서버가 Private Subgraph 실행 (NotebookLM/Opal 포함)
-3. 요약 결과 + 참조만 반환
-4. 노드 출력으로 주입
+2. 서버가 upstream_context 수집 및 계약 검증
+3. Private Subgraph 실행 (NotebookLM/Opal 포함)
+4. 요약 결과 + 참조만 반환
+5. 노드 출력으로 주입
 
 ### 4.4 노출 파라미터 규칙
 
@@ -362,6 +494,9 @@ MVP에서는 1~2단계만 구현하고, 후속 단계는 플러그형으로 확�
 ### NotebookLM (2025-12 최신)
 - Video/Audio Overviews, Studio 다중 출력, Mind Map, 출력 언어 선택 활용
 - 대량 문서 요약/지식 베이스 구축 → 캔버스 설계에 반영
+- 영상 해석은 Gemini 구조화 출력으로 **DB SoR**에 적재 후 NotebookLM 소스로 사용
+- 거장/장르 **클러스터 노트북** 생성 + **오마주/변주 가이드** 출력
+- 사용자 성향 기반 **템플릿 적합도/추천**은 지식 레이어로만 제공
 - **Ultra 구독 기준**: 출력 한도/다중 포맷 생성에 유리 (현재 Ultra)
 - 결과는 **Sheets Bus**에 기록 후 DB 승격 (Derived only)
 - **캡슐 노드 내부 서브그래프**에서 실행 후 요약만 전달
@@ -403,10 +538,11 @@ MVP에서는 1~2단계만 구현하고, 후속 단계는 플러그형으로 확�
 
 Auth (MVP): `X-User-Id` header for private canvases/templates/runs.
 
-Planned (Dataization):
+Dataization (MVP):
 - `POST /api/v1/ingest/raw`
+- `POST /api/v1/ingest/video-structured` (optional)
 - `POST /api/v1/ingest/derive`
-- `POST /api/v1/patterns/promote`
+- `POST /api/v1/ingest/pattern-candidate`
 
 ---
 
@@ -428,3 +564,9 @@ Planned (Dataization):
 - `10_PIPELINES_AND_USER_FLOWS.md`
 - `11_DB_PROMOTION_RULES_V1.md`
 - `12_PATTERN_PROMOTION_CRITERIA_V1.md`
+- `13_UI_DESIGN_GUIDE_2025-12.md`
+- `14_INGEST_RUNBOOK_V1.md`
+- `15_PATTERN_TAXONOMY_V1.md`
+- `16_VIRLO_CONTENT_STUDIO_RESEARCH.md`
+- `17_CREDITS_AND_BILLING_SPEC_V1.md`
+- `18_AFFILIATE_PROGRAM_SPEC_V1.md`

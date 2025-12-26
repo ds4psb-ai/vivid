@@ -19,6 +19,7 @@
 필수:
 - source_id + evidence_ref 존재
 - 패턴 설명이 **행동/시각적 단위**로 명확함
+- pattern_name이 `15_PATTERN_TAXONOMY_V1.md` 네이밍 규칙을 따름
 - 최소 2개 이상 소스에서 반복 확인
 - rights_status가 restricted가 아님
 

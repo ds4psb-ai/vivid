@@ -20,7 +20,8 @@
 ## Phase 1: Node Canvas MVP (0~12주)
 
 ### 핵심 목표
-- 거장 데이터화 파이프라인 (Sheets Bus → DB SoR)
+- 거장 데이터화 파이프라인 (Gemini 구조화 → DB SoR → NotebookLM)
+- 통 데이터셋(Visual/Persona/Synapse) 구조 정립
 - 캔버스 편집 + 저장/불러오기
 - 기본 Spec 생성 및 미리보기
 - 템플릿 저장/공유 (초기)
@@ -29,6 +30,9 @@
 
 ### 주요 작업
 - Sheets 스키마 v1 + NotebookLM 출력 규격 v1
+- Gemini 구조화 출력 (ASR/키프레임/샷) → Video Schema DB 구축
+- Creator Self-Style 노트북 수집/요약 루틴 확정
+- Synapse Logic(변환 규칙) 가이드 출력 규격 추가
 - Derived → DB 승격 파이프라인 (Pattern Library/Trace)
 - Canvas UI (ReactFlow 기반) 완성
 - Graph persistence (Postgres JSONB)
@@ -42,9 +46,9 @@
 - Pattern Library/Trace **DB 승격 파이프라인** 설계
 
 ### NotebookLM/Opal 활용
-- NotebookLM: 레퍼런스/기획 문서 요약 + 스타일 가이드 자동화
-- Opal: 내부 QA 체크리스트, 프롬프트 워크플로우 미니앱 제작
-- 두 도구는 **캡슐 노드 내부 서브그래프**로 실행하고 결과 요약만 노출
+- 역할/흐름 정본: `10_PIPELINES_AND_USER_FLOWS.md`
+- 영상 구조화 기준: `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
+- 실행 정책: 캡슐 노드 내부 서브그래프에서만 실행하고 요약만 노출
 
 ---
 

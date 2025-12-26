@@ -7,6 +7,11 @@ from app.config import settings
 from app.database import init_db
 from app.routers.canvases import router as canvases_router
 from app.routers.capsules import router as capsules_router
+from app.routers.credits import router as credits_router
+from app.routers.affiliate import router as affiliate_router
+from app.routers.ingest import router as ingest_router
+from app.routers.ops import router as ops_router
+from app.routers.realtime import router as realtime_router
 from app.routers.runs import router as runs_router
 from app.routers.templates import router as templates_router
 from app.routers.spec import router as spec_router
@@ -39,8 +44,13 @@ app.add_middleware(
 app.include_router(canvases_router, prefix="/api/v1/canvases", tags=["canvases"])
 app.include_router(templates_router, prefix="/api/v1/templates", tags=["templates"])
 app.include_router(capsules_router, prefix="/api/v1/capsules", tags=["capsules"])
+app.include_router(credits_router, prefix="/api/v1/credits", tags=["credits"])
+app.include_router(affiliate_router, prefix="/api/v1/affiliate", tags=["affiliate"])
+app.include_router(ingest_router, prefix="/api/v1/ingest", tags=["ingest"])
 app.include_router(runs_router, prefix="/api/v1/runs", tags=["runs"])
 app.include_router(spec_router, prefix="/api/v1/spec", tags=["spec"])
+app.include_router(ops_router, prefix="/api/v1/ops", tags=["ops"])
+app.include_router(realtime_router, prefix="/ws", tags=["realtime"])
 
 
 @app.get("/health")

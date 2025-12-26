@@ -82,8 +82,12 @@ class CapsuleRun(Base):
     status: Mapped[str] = mapped_column(String(32), default="queued")
     inputs: Mapped[dict] = mapped_column(JSONB, default=dict)
     params: Mapped[dict] = mapped_column(JSONB, default=dict)
+    upstream_context: Mapped[dict] = mapped_column(JSONB, default=dict)
     summary: Mapped[dict] = mapped_column(JSONB, default=dict)
     evidence_refs: Mapped[list] = mapped_column(JSONB, default=list)
+    token_usage: Mapped[dict] = mapped_column(JSONB, default=dict)
+    latency_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    cost_usd_est: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -98,6 +102,51 @@ class GenerationRun(Base):
     spec: Mapped[dict] = mapped_column(JSONB, default=dict)
     outputs: Mapped[dict] = mapped_column(JSONB, default=dict)
     owner_id: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class NotebookLibrary(Base):
+    __tablename__ = "notebook_library"
+    __table_args__ = (UniqueConstraint("notebook_id", name="uq_notebook_library_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    notebook_id: Mapped[str] = mapped_column(String(64))
+    title: Mapped[str] = mapped_column(String(200))
+    notebook_ref: Mapped[str] = mapped_column(String(400))
+    owner_id: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)
+    cluster_id: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)
+    cluster_label: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    cluster_tags: Mapped[list] = mapped_column(JSONB, default=list)
+    guide_scope: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    source_ids: Mapped[list] = mapped_column(JSONB, default=list)
+    source_count: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    curator_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class NotebookAsset(Base):
+    __tablename__ = "notebook_assets"
+    __table_args__ = (
+        UniqueConstraint(
+            "notebook_id",
+            "asset_id",
+            "asset_type",
+            name="uq_notebook_assets_key",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    notebook_id: Mapped[str] = mapped_column(String(64))
+    asset_id: Mapped[str] = mapped_column(String(200))
+    asset_type: Mapped[str] = mapped_column(String(32))
+    asset_ref: Mapped[Optional[str]] = mapped_column(String(400), nullable=True)
+    title: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    tags: Mapped[list] = mapped_column(JSONB, default=list)
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -126,6 +175,35 @@ class RawAsset(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class VideoSegment(Base):
+    __tablename__ = "video_segments"
+    __table_args__ = (UniqueConstraint("segment_id", name="uq_video_segments_segment_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    segment_id: Mapped[str] = mapped_column(String(120))
+    source_id: Mapped[str] = mapped_column(String(64))
+    work_id: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    sequence_id: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    scene_id: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    shot_id: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    time_start: Mapped[str] = mapped_column(String(32))
+    time_end: Mapped[str] = mapped_column(String(32))
+    shot_index: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    keyframes: Mapped[list] = mapped_column(JSONB, default=list)
+    transcript: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    visual_schema: Mapped[dict] = mapped_column(JSONB, default=dict)
+    audio_schema: Mapped[dict] = mapped_column(JSONB, default=dict)
+    motifs: Mapped[list] = mapped_column(JSONB, default=list)
+    evidence_refs: Mapped[list] = mapped_column(JSONB, default=list)
+    confidence: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    prompt_version: Mapped[str] = mapped_column(String(64))
+    model_version: Mapped[str] = mapped_column(String(64))
+    generated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class EvidenceRecord(Base):
     __tablename__ = "evidence_records"
     __table_args__ = (
@@ -142,6 +220,18 @@ class EvidenceRecord(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     source_id: Mapped[str] = mapped_column(String(64))
     summary: Mapped[str] = mapped_column(Text)
+    guide_type: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    homage_guide: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    variation_guide: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    template_recommendations: Mapped[list] = mapped_column(JSONB, default=list)
+    user_fit_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    persona_profile: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    synapse_logic: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    origin_notebook_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    filter_notebook_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    cluster_id: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)
+    cluster_label: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    cluster_confidence: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     style_logic: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     mise_en_scene: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     director_intent: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -152,6 +242,8 @@ class EvidenceRecord(Base):
     pacing: Mapped[dict] = mapped_column(JSONB, default=dict)
     sound_design: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     editing_rhythm: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    story_beats: Mapped[list] = mapped_column(JSONB, default=list)
+    storyboard_cards: Mapped[list] = mapped_column(JSONB, default=list)
     key_patterns: Mapped[list] = mapped_column(JSONB, default=list)
     output_type: Mapped[str] = mapped_column(String(32))
     output_language: Mapped[str] = mapped_column(String(16))
@@ -161,6 +253,7 @@ class EvidenceRecord(Base):
     confidence: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     prompt_version: Mapped[str] = mapped_column(String(64))
     model_version: Mapped[str] = mapped_column(String(64))
+    notebook_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     notebook_ref: Mapped[Optional[str]] = mapped_column(String(400), nullable=True)
     evidence_refs: Mapped[list] = mapped_column(JSONB, default=list)
     generated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
@@ -228,3 +321,105 @@ class PatternTrace(Base):
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class PatternVersion(Base):
+    __tablename__ = "pattern_versions"
+    __table_args__ = (UniqueConstraint("version", name="uq_pattern_versions_version"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    version: Mapped[str] = mapped_column(String(32))
+    note: Mapped[Optional[str]] = mapped_column(String(400), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class OpsActionLog(Base):
+    __tablename__ = "ops_action_logs"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    action_type: Mapped[str] = mapped_column(String(64))
+    status: Mapped[str] = mapped_column(String(32))
+    note: Mapped[Optional[str]] = mapped_column(String(400), nullable=True)
+    payload: Mapped[dict] = mapped_column(JSONB, default=dict)
+    stats: Mapped[dict] = mapped_column(JSONB, default=dict)
+    duration_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    actor_id: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class AffiliateProfile(Base):
+    __tablename__ = "affiliate_profiles"
+    __table_args__ = (
+        UniqueConstraint("user_id", name="uq_affiliate_profile_user"),
+        UniqueConstraint("affiliate_code", name="uq_affiliate_profile_code"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[str] = mapped_column(String(160))
+    affiliate_code: Mapped[str] = mapped_column(String(64))
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class AffiliateReferral(Base):
+    __tablename__ = "affiliate_referrals"
+    __table_args__ = (
+        UniqueConstraint(
+            "referrer_user_id",
+            "referee_user_id",
+            name="uq_affiliate_referrals_pair",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    affiliate_code: Mapped[str] = mapped_column(String(64))
+    referrer_user_id: Mapped[str] = mapped_column(String(160))
+    referee_user_id: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)
+    referee_label: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    status: Mapped[str] = mapped_column(String(32), default="clicked")
+    reward_status: Mapped[str] = mapped_column(String(32), default="pending")
+    reward_amount: Mapped[int] = mapped_column(Integer, default=0)
+    referee_reward_amount: Mapped[int] = mapped_column(Integer, default=0)
+    reward_ledger_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
+    referee_reward_ledger_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class UserCredits(Base):
+    """User credit balance tracking."""
+    __tablename__ = "user_credits"
+    __table_args__ = (UniqueConstraint("user_id", name="uq_user_credits_user_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[str] = mapped_column(String(160))
+    balance: Mapped[int] = mapped_column(Integer, default=0)
+    subscription_credits: Mapped[int] = mapped_column(Integer, default=0)
+    topup_credits: Mapped[int] = mapped_column(Integer, default=0)
+    promo_credits: Mapped[int] = mapped_column(Integer, default=0)
+    promo_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class CreditLedger(Base):
+    """Append-only credit transaction ledger."""
+    __tablename__ = "credit_ledger"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[str] = mapped_column(String(160))
+    event_type: Mapped[str] = mapped_column(String(32))  # topup | usage | reward | promo | refund
+    amount: Mapped[int] = mapped_column(Integer)  # +/- credits
+    balance_snapshot: Mapped[int] = mapped_column(Integer)  # Balance after this tx
+    description: Mapped[Optional[str]] = mapped_column(String(400), nullable=True)
+    capsule_run_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("capsule_runs.id"), nullable=True
+    )
+    meta: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

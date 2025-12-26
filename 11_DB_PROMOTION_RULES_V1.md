@@ -19,12 +19,16 @@
 
 | Sheets | 목적 | DB 대상(개념) |
 | --- | --- | --- |
+| VIVID_NOTEBOOK_LIBRARY | 노트북 메타 | notebook_library |
+| VIVID_NOTEBOOK_ASSETS | 노트북 자산 링크 | notebook_assets |
 | VIVID_RAW_ASSETS | 원본 링크/메타 | raw_assets |
+| VIVID_VIDEO_STRUCTURED | 영상 구조화(샷/씬) | video_segments |
 | VIVID_DERIVED_INSIGHTS | NotebookLM/Opal 요약 | evidence_records |
 | VIVID_PATTERN_CANDIDATES | 패턴 후보 | pattern_candidates (staging) |
 | VIVID_PATTERN_TRACE | 검증된 패턴 적용 | pattern_trace |
 
 DB SoR에 **승격되는 것은 validated/promoted 패턴**만.
+`guide_type=persona/synapse`는 evidence_records에 태그로 보존된다.
 
 ---
 
@@ -34,16 +38,21 @@ DB SoR에 **승격되는 것은 validated/promoted 패턴**만.
 - **key**: `source_id`
 - duplicate URL은 허용하되 `source_id` 기준이 우선
 
-### 2.2 evidence_records
+### 2.2 video_segments
+- **key**: `segment_id`
+- `segment_id`가 없으면 `(source_id, time_start, time_end, prompt_version, model_version)`로 대체
+
+### 2.3 evidence_records
 - **key**: `(source_id, prompt_version, model_version, output_type, output_language)`
 - 동일 키는 **최신 generated_at**으로 덮어쓰기
 
-### 2.3 patterns
+### 2.4 patterns
 - **key**: `(pattern_name_normalized, pattern_type)`
-- `pattern_id`가 있으면 그것을 우선 키로 사용
+- `pattern_id`가 있으면 그것을 우선 키로 사용 (uuid 또는 `pattern_name:pattern_type` 허용)
 
-### 2.4 pattern_trace
+### 2.5 pattern_trace
 - **key**: `(source_id, pattern_id, evidence_ref)`
+- `pattern_id`는 uuid 또는 `pattern_name:pattern_type` (normalized)로 입력 가능
 - 동일 키는 **weight 업데이트만 허용**
 
 ---
@@ -61,9 +70,14 @@ DB SoR에 **승격되는 것은 validated/promoted 패턴**만.
 ## 4) 데이터 품질 검사
 
 - **source_id 존재 여부** (Derived/Candidate/Trace 모두 필수)
+- **video_structured 타임코드 누락**은 Reject
 - **prompt_version/model_version/output_type** 누락 시 Reject
 - **rights_status=restricted**인 Raw는 자동 승격 금지
 - **confidence < threshold**인 Candidate는 승격 보류
+- **video_structured evidence_refs**는 `VIDEO_EVIDENCE_REF_PATTERN`을 만족해야 승격
+- **derived evidence_refs**는 `sheet:`/`db:` 포맷만 허용 (불일치 시 quarantine)
+- **pattern_trace evidence_ref**는 `VIDEO_EVIDENCE_REF_PATTERN`을 만족해야 승격
+- **key_patterns**는 `pattern_name:pattern_type` 규칙 및 taxonomy를 만족해야 승격
 
 ---
 
@@ -72,6 +86,8 @@ DB SoR에 **승격되는 것은 validated/promoted 패턴**만.
 - 실패 행은 **quarantine 시트**로 이동 (수동 재검토)
 - 오류 이유를 `error_reason` 컬럼에 기록
 - 재실행 시 동일 키는 안전하게 덮어쓰기
+- CSV 모드에서는 `VIVID_QUARANTINE_CSV_PATH`로 로컬 quarantine 파일을 기록
+- API Key 모드에서는 `VIVID_QUARANTINE_RANGE`로 append 기록
 
 ---
 

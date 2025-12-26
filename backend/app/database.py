@@ -65,3 +65,87 @@ async def init_db(drop_all: bool = False) -> None:
         await conn.execute(
             text("ALTER TABLE generation_runs ADD COLUMN IF NOT EXISTS owner_id VARCHAR(160)")
         )
+        await conn.execute(
+            text("ALTER TABLE video_segments ADD COLUMN IF NOT EXISTS work_id VARCHAR(120)")
+        )
+        await conn.execute(
+            text("ALTER TABLE video_segments ADD COLUMN IF NOT EXISTS sequence_id VARCHAR(120)")
+        )
+        await conn.execute(
+            text("ALTER TABLE video_segments ADD COLUMN IF NOT EXISTS scene_id VARCHAR(120)")
+        )
+        await conn.execute(
+            text("ALTER TABLE video_segments ADD COLUMN IF NOT EXISTS shot_id VARCHAR(120)")
+        )
+        await conn.execute(
+            text("ALTER TABLE evidence_records ADD COLUMN IF NOT EXISTS notebook_id VARCHAR(64)")
+        )
+        await conn.execute(
+            text("ALTER TABLE evidence_records ADD COLUMN IF NOT EXISTS notebook_ref VARCHAR(400)")
+        )
+        await conn.execute(
+            text("ALTER TABLE evidence_records ADD COLUMN IF NOT EXISTS guide_type VARCHAR(32)")
+        )
+        await conn.execute(
+            text("ALTER TABLE evidence_records ADD COLUMN IF NOT EXISTS homage_guide TEXT")
+        )
+        await conn.execute(
+            text("ALTER TABLE evidence_records ADD COLUMN IF NOT EXISTS variation_guide TEXT")
+        )
+        await conn.execute(
+            text("ALTER TABLE evidence_records ADD COLUMN IF NOT EXISTS template_recommendations JSONB")
+        )
+        await conn.execute(
+            text("ALTER TABLE evidence_records ADD COLUMN IF NOT EXISTS user_fit_notes TEXT")
+        )
+        await conn.execute(
+            text("ALTER TABLE evidence_records ADD COLUMN IF NOT EXISTS persona_profile TEXT")
+        )
+        await conn.execute(
+            text("ALTER TABLE evidence_records ADD COLUMN IF NOT EXISTS synapse_logic TEXT")
+        )
+        await conn.execute(
+            text("ALTER TABLE evidence_records ADD COLUMN IF NOT EXISTS origin_notebook_id VARCHAR(64)")
+        )
+        await conn.execute(
+            text("ALTER TABLE evidence_records ADD COLUMN IF NOT EXISTS filter_notebook_id VARCHAR(64)")
+        )
+        await conn.execute(
+            text("ALTER TABLE evidence_records ADD COLUMN IF NOT EXISTS cluster_id VARCHAR(160)")
+        )
+        await conn.execute(
+            text("ALTER TABLE evidence_records ADD COLUMN IF NOT EXISTS cluster_label VARCHAR(200)")
+        )
+        await conn.execute(
+            text("ALTER TABLE evidence_records ADD COLUMN IF NOT EXISTS cluster_confidence FLOAT")
+        )
+        await conn.execute(
+            text("ALTER TABLE evidence_records ADD COLUMN IF NOT EXISTS story_beats JSONB DEFAULT '[]'::jsonb")
+        )
+        await conn.execute(
+            text("ALTER TABLE evidence_records ADD COLUMN IF NOT EXISTS storyboard_cards JSONB DEFAULT '[]'::jsonb")
+        )
+        await conn.execute(
+            text("UPDATE evidence_records SET story_beats = '[]'::jsonb WHERE story_beats IS NULL")
+        )
+        await conn.execute(
+            text("UPDATE evidence_records SET storyboard_cards = '[]'::jsonb WHERE storyboard_cards IS NULL")
+        )
+        await conn.execute(
+            text("ALTER TABLE notebook_library ADD COLUMN IF NOT EXISTS cluster_id VARCHAR(160)")
+        )
+        await conn.execute(
+            text("ALTER TABLE notebook_library ADD COLUMN IF NOT EXISTS cluster_label VARCHAR(200)")
+        )
+        await conn.execute(
+            text("ALTER TABLE notebook_library ADD COLUMN IF NOT EXISTS cluster_tags JSONB")
+        )
+        await conn.execute(
+            text("ALTER TABLE notebook_library ADD COLUMN IF NOT EXISTS owner_id VARCHAR(160)")
+        )
+        await conn.execute(
+            text("ALTER TABLE notebook_library ADD COLUMN IF NOT EXISTS guide_scope VARCHAR(32)")
+        )
+        await conn.execute(
+            text("ALTER TABLE notebook_library ADD COLUMN IF NOT EXISTS curator_notes TEXT")
+        )

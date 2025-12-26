@@ -1,18 +1,31 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Node } from "@xyflow/react";
 import { CanvasNodeData, CanvasNodeKind } from "./CustomNodes";
-import { api, CapsuleRun, CapsuleRunHistoryItem, CapsuleSpec } from "@/lib/api";
+import { api, CapsuleRun, CapsuleRunHistoryItem, CapsuleRunStreamController, CapsuleSpec } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Trash2, Sliders, Play, Lock } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { isAdminModeEnabled } from "@/lib/admin";
+import { normalizeAllowedType } from "@/lib/graph";
+import { useCapsuleNodeFSM } from "@/hooks/useCapsuleNodeFSM";
+import { normalizeApiError } from "@/lib/errors";
 
 interface InspectorProps {
   selectedNode: Node<CanvasNodeData> | null;
   onClose: () => void;
   onUpdate: (nodeId: string, data: Partial<CanvasNodeData>) => void;
   onDelete?: (nodeId: string) => void;
+  onToast?: (tone: "info" | "warning" | "error", message: string) => void;
+  getInputValues?: () => Record<string, unknown>;
+  getUpstreamContext?: (nodeId: string, contextMode?: "aggregate" | "sequential") => Record<string, unknown>;
+  getConnectedCapsules?: (nodeId: string) => Array<{
+    nodeId: string;
+    capsuleId: string;
+    capsuleVersion?: string;
+  }>;
+  canvasId?: string | null;
 }
 
 type ParamDef = {
@@ -26,6 +39,11 @@ type ParamDef = {
 };
 
 const NODE_PARAM_DEFS: Partial<Record<CanvasNodeKind, Record<string, ParamDef>>> = {
+  input: {
+    source_id: { type: "string", default: "" },
+    scene_summary: { type: "string", default: "" },
+    duration_sec: { type: "number", min: 1, max: 600, step: 1, default: 60 },
+  },
   style: {
     style_intensity: { type: "number", min: 0.4, max: 1.0, step: 0.05, default: 0.6 },
     color_bias: { type: "enum", options: ["cool", "neutral", "warm"], default: "neutral" },
@@ -67,19 +85,60 @@ export function Inspector({
   onClose,
   onUpdate,
   onDelete,
+  onToast,
+  getInputValues,
+  getUpstreamContext,
+  getConnectedCapsules,
+  canvasId,
 }: InspectorProps) {
   const { t } = useLanguage();
+  const isAdminView = useMemo(() => isAdminModeEnabled(), []);
+  const sourceIdValue =
+    selectedNode?.data?.params && typeof selectedNode.data.params === "object"
+      ? (selectedNode.data.params as Record<string, unknown>).source_id ??
+        (selectedNode.data.params as Record<string, unknown>).sourceId
+      : undefined;
   const [capsuleSpec, setCapsuleSpec] = useState<CapsuleSpec | null>(null);
   const [capsuleError, setCapsuleError] = useState<string | null>(null);
   const [capsuleLoading, setCapsuleLoading] = useState(false);
-  const [runStatus, setRunStatus] = useState<
-    "idle" | "running" | "success" | "error"
-  >("idle");
-  const [runError, setRunError] = useState<string | null>(null);
   const [runResult, setRunResult] = useState<CapsuleRun | null>(null);
   const [runHistory, setRunHistory] = useState<CapsuleRunHistoryItem[]>([]);
   const [runHistoryLoading, setRunHistoryLoading] = useState(false);
   const [runHistoryError, setRunHistoryError] = useState<string | null>(null);
+  const [sourceTypeInfo, setSourceTypeInfo] = useState<{
+    status: "idle" | "loading" | "ready" | "error" | "unavailable";
+    type?: string;
+    title?: string;
+    error?: string;
+  }>({ status: "idle" });
+  const [allowedTypeHints, setAllowedTypeHints] = useState<Array<{
+    capsuleId: string;
+    types: string[];
+  }>>([]);
+
+  const getEvidenceWarnings = (
+    summary: Record<string, unknown> | null | undefined
+  ): string[] => {
+    const raw = summary?.evidence_warnings;
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+    return raw.filter((item): item is string => typeof item === "string");
+  };
+  const getOutputWarnings = (
+    summary: Record<string, unknown> | null | undefined
+  ): string[] => {
+    const raw = summary?.output_warnings;
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+    return raw.filter((item): item is string => typeof item === "string");
+  };
+  const [runNotice, setRunNotice] = useState<{ tone: "info" | "warning"; message: string } | null>(null);
+  const streamControllerRef = useRef<CapsuleRunStreamController | null>(null);
+  const lastRunParamsRef = useRef<Record<string, unknown> | null>(null);
+  const cancelFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const runStatusRef = useRef<"idle" | "loading" | "streaming" | "complete" | "error" | "cancelled">("idle");
 
   useEffect(() => {
     if (!selectedNode || selectedNode.type !== "capsule" || !selectedNode.data.capsuleId) {
@@ -107,7 +166,7 @@ export function Inspector({
       })
       .catch((err) => {
         if (!isActive) return;
-        setCapsuleError(err instanceof Error ? err.message : "Failed to load capsule spec");
+        setCapsuleError(normalizeApiError(err, t("capsuleSpecLoadError")));
       })
       .finally(() => {
         if (isActive) setCapsuleLoading(false);
@@ -116,18 +175,18 @@ export function Inspector({
     return () => {
       isActive = false;
     };
-  }, [selectedNode]);
-
-  useEffect(() => {
-    setRunStatus("idle");
-    setRunError(null);
-    setRunResult(null);
-  }, [selectedNode?.id]);
+  }, [selectedNode, t]);
 
   const exposedParams = useMemo(() => {
     const spec = capsuleSpec?.spec as { exposedParams?: Record<string, ParamDef> } | undefined;
-    return spec?.exposedParams || null;
-  }, [capsuleSpec]);
+    const params = spec?.exposedParams || null;
+    if (!params) return null;
+    if (isAdminView) return params;
+    const filtered = Object.fromEntries(
+      Object.entries(params).filter(([, def]) => def.visibility !== "admin")
+    );
+    return Object.keys(filtered).length > 0 ? filtered : null;
+  }, [capsuleSpec, isAdminView]);
 
   const nodeParamDefs = useMemo(() => {
     if (!selectedNode) return null;
@@ -159,10 +218,147 @@ export function Inspector({
   }, [selectedNode, nodeParamDefs, onUpdate]);
 
   const params = selectedNode?.data?.params || {};
+  const processingSeeds = useMemo(() => {
+    if (!selectedNode || selectedNode.type !== "processing") return null;
+    const data = selectedNode.data as Record<string, unknown>;
+    const seed = data.seed && typeof data.seed === "object" ? (data.seed as Record<string, unknown>) : {};
+    const storyBeats = Array.isArray(seed.story_beats)
+      ? seed.story_beats
+      : Array.isArray(data.story_beats)
+        ? data.story_beats
+        : [];
+    const storyboardCards = Array.isArray(seed.storyboard_cards)
+      ? seed.storyboard_cards
+      : Array.isArray(data.storyboard_cards)
+        ? data.storyboard_cards
+        : [];
+    return { storyBeats, storyboardCards };
+  }, [selectedNode]);
   const capsuleVersion =
     selectedNode?.data?.capsuleVersion || capsuleSpec?.version || "latest";
+  const patternVersion =
+    selectedNode?.data?.patternVersion ||
+    (capsuleSpec?.spec && typeof capsuleSpec.spec === "object"
+      ? (capsuleSpec.spec as { patternVersion?: string }).patternVersion
+      : undefined);
+  const capsuleInputContracts =
+    capsuleSpec?.spec && typeof capsuleSpec.spec === "object"
+      ? (capsuleSpec.spec as { inputContracts?: Record<string, unknown> }).inputContracts
+      : selectedNode?.data?.inputContracts;
+  const capsuleOutputContracts =
+    capsuleSpec?.spec && typeof capsuleSpec.spec === "object"
+      ? (capsuleSpec.spec as { outputContracts?: Record<string, unknown> }).outputContracts
+      : undefined;
+  const upstreamSequenceSummary = useMemo(() => {
+    if (!isAdminView || !selectedNode || selectedNode.type !== "capsule" || !getUpstreamContext) {
+      return null;
+    }
+    const inputContracts =
+      capsuleSpec?.spec && typeof capsuleSpec.spec === "object"
+        ? (capsuleSpec.spec as { inputContracts?: { contextMode?: string } }).inputContracts
+        : selectedNode?.data?.inputContracts;
+    const rawMode = inputContracts?.contextMode;
+    if (rawMode !== "sequential") {
+      return null;
+    }
+    const upstream = getUpstreamContext(selectedNode.id, "sequential");
+    const sequence = Array.isArray((upstream as { sequence?: unknown }).sequence)
+      ? (upstream as { sequence?: Array<{ id?: string; label?: string }> }).sequence
+      : [];
+    if (!sequence.length) return null;
+    const first = sequence[0];
+    const last = sequence[sequence.length - 1];
+    return {
+      length: sequence.length,
+      first: first?.label || first?.id || "n/a",
+      firstId: first?.id || "n/a",
+      last: last?.label || last?.id || "n/a",
+      lastId: last?.id || "n/a",
+    };
+  }, [capsuleSpec?.spec, getUpstreamContext, isAdminView, selectedNode]);
+  const summaryContextMode =
+    runResult?.summary && typeof runResult.summary === "object"
+      ? (runResult.summary as { context_mode?: string }).context_mode
+      : undefined;
+
+  useEffect(() => {
+    if (!selectedNode || selectedNode.type !== "input") {
+      setSourceTypeInfo({ status: "idle" });
+      return;
+    }
+    if (!sourceIdValue || typeof sourceIdValue !== "string" || !sourceIdValue.trim()) {
+      setSourceTypeInfo({ status: "idle" });
+      return;
+    }
+    if (!isAdminView) {
+      setSourceTypeInfo({ status: "unavailable" });
+      return;
+    }
+    let active = true;
+    setSourceTypeInfo({ status: "loading" });
+    api
+      .getRawAsset(sourceIdValue.trim())
+      .then((asset) => {
+        if (!active) return;
+        setSourceTypeInfo({
+          status: "ready",
+          type: asset.source_type,
+          title: asset.title || undefined,
+        });
+      })
+      .catch((err) => {
+        if (!active) return;
+        const message = normalizeApiError(err, t("sourceTypeLoadError"));
+        setSourceTypeInfo({ status: "error", error: message });
+      });
+    return () => {
+      active = false;
+    };
+  }, [isAdminView, selectedNode, sourceIdValue, t]);
+
+  useEffect(() => {
+    if (!selectedNode || selectedNode.type !== "input" || !getConnectedCapsules) {
+      setAllowedTypeHints([]);
+      return;
+    }
+    const capsules = getConnectedCapsules(selectedNode.id);
+    if (!capsules.length) {
+      setAllowedTypeHints([]);
+      return;
+    }
+    let active = true;
+    setAllowedTypeHints([]);
+    const loadAllowedTypes = async () => {
+      const hints: Array<{ capsuleId: string; types: string[] }> = [];
+      for (const capsule of capsules.slice(0, 3)) {
+        try {
+          const spec = await api.getCapsuleSpec(capsule.capsuleId, capsule.capsuleVersion);
+          const inputContracts =
+            spec?.spec && typeof spec.spec === "object"
+              ? (spec.spec as { inputContracts?: { allowedTypes?: string[] } }).inputContracts
+              : undefined;
+          const types = Array.isArray(inputContracts?.allowedTypes)
+            ? inputContracts?.allowedTypes.map((value) => String(value)).filter((value) => value)
+            : [];
+          if (types.length > 0) {
+            hints.push({ capsuleId: capsule.capsuleId, types });
+          }
+        } catch {
+          continue;
+        }
+      }
+      if (active) {
+        setAllowedTypeHints(hints);
+      }
+    };
+    void loadAllowedTypes();
+    return () => {
+      active = false;
+    };
+  }, [getConnectedCapsules, selectedNode]);
 
   const renderParamControl = (key: string, def: ParamDef) => {
+    const isRunning = runStatus === "loading" || runStatus === "streaming";
     const fallback =
       def.default ??
       (def.type === "number"
@@ -176,24 +372,32 @@ export function Inspector({
 
     if (def.type === "enum") {
       return (
-        <select
-          value={String(currentValue)}
-          onChange={(e) =>
-            onUpdate(selectedNode!.id, {
-              params: {
-                ...params,
-                [key]: e.target.value,
-              },
-            })
-          }
-          className="w-full rounded border border-white/10 bg-slate-900/50 px-2 py-1.5 text-xs text-slate-100"
-        >
-          {(def.options || []).map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
+        <div className="relative">
+          <select
+            value={String(currentValue)}
+            onChange={(e) =>
+              onUpdate(selectedNode!.id, {
+                params: {
+                  ...params,
+                  [key]: e.target.value,
+                },
+              })
+            }
+            disabled={isRunning}
+            className="w-full appearance-none rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2 text-xs text-slate-200 transition-colors focus:border-sky-500/50 focus:bg-slate-900 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {(def.options || []).map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
       );
     }
 
@@ -208,34 +412,42 @@ export function Inspector({
               },
             })
           }
-          className={`w-full rounded border px-2 py-1.5 text-xs ${currentValue
-            ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200"
-            : "border-white/10 bg-slate-900/50 text-slate-400"
+          disabled={isRunning}
+          className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-xs font-medium transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 ${currentValue
+              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300 shadow-[0_0_10px_-4px_rgba(16,185,129,0.3)]"
+              : "border-white/10 bg-slate-900/50 text-slate-400 hover:bg-slate-800"
             }`}
         >
-          {currentValue ? "Enabled" : "Disabled"}
+          <span>{currentValue ? "Enabled" : "Disabled"}</span>
+          <div className={`h-2 w-2 rounded-full ${currentValue ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" : "bg-slate-600"}`} />
         </button>
       );
     }
 
     if (def.type === "number") {
       return (
-        <input
-          type="range"
-          min={def.min ?? 0}
-          max={def.max ?? 1}
-          step={def.step ?? 0.05}
-          value={Number(currentValue)}
-          onChange={(e) =>
-            onUpdate(selectedNode!.id, {
-              params: {
-                ...params,
-                [key]: parseFloat(e.target.value),
-              },
-            })
-          }
-          className="w-full accent-rose-400"
-        />
+        <div className="relative flex items-center gap-2">
+          <input
+            type="range"
+            min={def.min ?? 0}
+            max={def.max ?? 1}
+            step={def.step ?? 0.05}
+            value={Number(currentValue)}
+            onChange={(e) =>
+              onUpdate(selectedNode!.id, {
+                params: {
+                  ...params,
+                  [key]: parseFloat(e.target.value),
+                },
+              })
+            }
+            disabled={isRunning}
+            className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-slate-700 accent-rose-500 hover:accent-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+          />
+          <span className="w-8 text-right text-[10px] font-mono text-slate-400">
+            {Number(currentValue).toFixed(def.step && def.step < 0.1 ? 2 : 1)}
+          </span>
+        </div>
       );
     }
 
@@ -251,7 +463,8 @@ export function Inspector({
             },
           })
         }
-        className="w-full rounded border border-white/10 bg-slate-900/50 px-2 py-1.5 text-xs text-slate-100"
+        disabled={isRunning}
+        className="w-full rounded border border-white/10 bg-slate-900/50 px-2 py-1.5 text-xs text-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
       />
     );
   };
@@ -263,51 +476,325 @@ export function Inspector({
       const history = await api.listCapsuleRuns(capsuleId, 5);
       setRunHistory(history);
     } catch (err) {
-      setRunHistoryError(err instanceof Error ? err.message : "Failed to load run history");
+      setRunHistoryError(normalizeApiError(err, t("runHistoryLoadError")));
     } finally {
       setRunHistoryLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!selectedNode || selectedNode.type !== "capsule" || !selectedNode.data.capsuleId) return;
     refreshRunHistory(selectedNode.data.capsuleId);
   }, [selectedNode, refreshRunHistory]);
 
+  const [inputWarning, setInputWarning] = useState<string | null>(null);
+
+  const runCapsule = useCallback(
+    async (
+      runParams: Record<string, unknown>,
+      helpers: {
+        receiveChunk: (text: string, isFirst: boolean, progress?: number) => void;
+        complete: (result: unknown) => void;
+        error: (message: string) => void;
+        cancel: (message: string) => void;
+      }
+    ) => {
+      if (!selectedNode || selectedNode.type !== "capsule" || !selectedNode.data.capsuleId) {
+        throw new Error("Capsule node not selected");
+      }
+      const capsuleId = selectedNode.data.capsuleId;
+      lastRunParamsRef.current = runParams;
+
+      if (!selectedNode.data.capsuleVersion && capsuleSpec?.version) {
+        onUpdate(selectedNode.id, { capsuleVersion: capsuleSpec.version });
+      }
+
+      setInputWarning(null);
+      const inputContracts =
+        capsuleSpec?.spec && typeof capsuleSpec.spec === "object"
+          ? (capsuleSpec.spec as { inputContracts?: { contextMode?: string } }).inputContracts
+          : undefined;
+      const rawContextMode = inputContracts?.contextMode;
+      const contextMode =
+        rawContextMode === "aggregate" || rawContextMode === "sequential"
+          ? rawContextMode
+          : undefined;
+      const rawMaxUpstream = inputContracts?.maxUpstream;
+      const maxUpstream =
+        typeof rawMaxUpstream === "number" && Number.isFinite(rawMaxUpstream)
+          ? rawMaxUpstream
+          : undefined;
+      if (maxUpstream && maxUpstream > 0 && getUpstreamContext) {
+        const upstream = getUpstreamContext(selectedNode.id, contextMode);
+        const upstreamNodes = Array.isArray(upstream?.nodes) ? upstream.nodes.length : 0;
+        if (upstreamNodes > maxUpstream) {
+          const message = `Upstream nodes exceed maxUpstream (${upstreamNodes} > ${maxUpstream})`;
+          onToast?.("warning", message);
+          setInputWarning(message);
+          throw new Error(message);
+        }
+      }
+      if (inputContracts?.allowedTypes) {
+        const inputs = getInputValues ? getInputValues() : {};
+        const sourceIdRaw = inputs?.source_id ?? inputs?.sourceId;
+        if (typeof sourceIdRaw === "string" && sourceIdRaw.trim()) {
+          const allowed = Array.isArray(inputContracts.allowedTypes)
+            ? inputContracts.allowedTypes
+                .map((value) => normalizeAllowedType(String(value)))
+                .filter((value): value is string => Boolean(value))
+            : [];
+          if (allowed.length > 0) {
+            try {
+              const asset = await api.getRawAsset(sourceIdRaw.trim());
+              const normalized = normalizeAllowedType(asset.source_type || "");
+              const isAllowed = normalized ? allowed.includes(normalized) : false;
+              if (normalized && !isAllowed) {
+                const message = `source_type '${asset.source_type}' not allowed (allowed: ${allowed.join(", ")})`;
+                onToast?.("warning", message);
+                setInputWarning(message);
+                throw new Error(message);
+              }
+            } catch (err) {
+              const message = normalizeApiError(err, t("sourceTypeLoadError"));
+              if (message.toLowerCase().includes("admin")) {
+                setInputWarning(message);
+              } else {
+                onToast?.("warning", message);
+                setInputWarning(message);
+                throw err;
+              }
+            }
+          }
+        }
+      }
+
+      const result = await api.runCapsule({
+        capsule_id: capsuleId,
+        capsule_version: capsuleVersion,
+        inputs: getInputValues ? getInputValues() : {},
+        params: runParams,
+        node_id: selectedNode.id,
+        canvas_id: canvasId || undefined,
+        upstream_context:
+          canvasId || !getUpstreamContext
+            ? undefined
+            : getUpstreamContext(selectedNode.id, contextMode),
+        async_mode: true,
+      });
+
+      if (result.version && selectedNode.data.capsuleVersion !== result.version) {
+        onUpdate(selectedNode.id, { capsuleVersion: result.version });
+      }
+
+      setRunResult(result);
+      await refreshRunHistory(capsuleId);
+
+      let isFirstChunk = true;
+      streamControllerRef.current?.close();
+      streamControllerRef.current = api.streamCapsuleRun(result.run_id, {
+        onEvent: async (event) => {
+          const payload = event.payload || {};
+          if (
+            event.type === "run.queued" ||
+            event.type === "run.started" ||
+            event.type === "run.progress" ||
+            event.type === "run.partial"
+          ) {
+            const message =
+              typeof payload.message === "string"
+                ? payload.message
+                : typeof payload.text === "string"
+                  ? payload.text
+                  : "Working...";
+            const progress =
+              typeof payload.progress === "number" ? payload.progress : undefined;
+            helpers.receiveChunk(message, isFirstChunk, progress);
+            isFirstChunk = false;
+            return;
+          }
+
+          if (event.type === "run.completed") {
+            const summary =
+              typeof payload.summary === "object" && payload.summary !== null
+                ? (payload.summary as Record<string, unknown>)
+                : {};
+            const evidenceRefs = Array.isArray(payload.evidence_refs)
+              ? (payload.evidence_refs as string[])
+              : [];
+            const finalRun: CapsuleRun = {
+              run_id: event.run_id,
+              status: "done",
+              summary,
+              evidence_refs: evidenceRefs,
+              version: typeof payload.version === "string" ? payload.version : capsuleVersion,
+              token_usage:
+                typeof payload.token_usage === "object" && payload.token_usage !== null
+                  ? (payload.token_usage as Record<string, unknown>)
+                  : undefined,
+              latency_ms: typeof payload.latency_ms === "number" ? payload.latency_ms : null,
+              cost_usd_est: typeof payload.cost_usd_est === "number" ? payload.cost_usd_est : null,
+              cached: false,
+            };
+            setRunResult(finalRun);
+            onUpdate(selectedNode.id, { evidence_refs: evidenceRefs });
+            helpers.complete(finalRun);
+            void refreshRunHistory(capsuleId);
+            setRunNotice(null);
+            if (cancelFallbackRef.current) {
+              clearTimeout(cancelFallbackRef.current);
+              cancelFallbackRef.current = null;
+            }
+            streamControllerRef.current?.close();
+            streamControllerRef.current = null;
+            return;
+          }
+
+          if (event.type === "run.failed") {
+            const message =
+              typeof payload.error === "string" ? payload.error : "Capsule run failed";
+            helpers.error(message);
+            setRunNotice({ tone: "warning", message });
+            if (cancelFallbackRef.current) {
+              clearTimeout(cancelFallbackRef.current);
+              cancelFallbackRef.current = null;
+            }
+            streamControllerRef.current?.close();
+            streamControllerRef.current = null;
+          }
+
+          if (event.type === "run.cancelled") {
+            const message =
+              typeof payload.message === "string" ? payload.message : "Run cancelled";
+            setRunResult({
+              run_id: event.run_id,
+              status: "cancelled",
+              summary: { message },
+              evidence_refs: [],
+              version: capsuleVersion,
+            });
+            helpers.cancel(message);
+            setRunNotice({ tone: "warning", message: t("cancelled") });
+            onToast?.("warning", t("cancelled"));
+            if (cancelFallbackRef.current) {
+              clearTimeout(cancelFallbackRef.current);
+              cancelFallbackRef.current = null;
+            }
+            streamControllerRef.current?.close();
+            streamControllerRef.current = null;
+          }
+        },
+        onError: (error) => {
+          helpers.error(error.message);
+          setRunNotice({ tone: "warning", message: error.message });
+          if (cancelFallbackRef.current) {
+            clearTimeout(cancelFallbackRef.current);
+            cancelFallbackRef.current = null;
+          }
+          streamControllerRef.current?.close();
+          streamControllerRef.current = null;
+        },
+      });
+
+      return;
+    },
+    [
+      capsuleSpec?.version,
+      capsuleSpec?.spec,
+      capsuleVersion,
+      canvasId,
+      getInputValues,
+      getUpstreamContext,
+      onUpdate,
+      refreshRunHistory,
+      selectedNode,
+      t,
+      onToast,
+    ]
+  );
+
+  const {
+    state: runStatus,
+    errorMessage: runError,
+    run,
+    reset,
+  } = useCapsuleNodeFSM({
+    nodeId: selectedNode?.id || "capsule",
+    updateNodeData: onUpdate,
+    onRun: runCapsule,
+  });
+
+  useEffect(() => {
+    streamControllerRef.current?.close();
+    streamControllerRef.current = null;
+    if (cancelFallbackRef.current) {
+      clearTimeout(cancelFallbackRef.current);
+      cancelFallbackRef.current = null;
+    }
+    reset();
+    setRunResult(null);
+    setRunHistory([]);
+    setRunHistoryError(null);
+    setRunNotice(null);
+  }, [selectedNode?.id, reset]);
+
+  useEffect(() => {
+    runStatusRef.current = runStatus;
+  }, [runStatus]);
+
   const handleRunCapsule = async () => {
     if (!selectedNode || selectedNode.type !== "capsule" || !selectedNode.data.capsuleId) {
       return;
     }
+    setRunNotice(null);
+    setRunResult(null);
+    await run(params as Record<string, unknown>);
+  };
 
-    setRunStatus("running");
-    setRunError(null);
-    onUpdate(selectedNode.id, { status: "running" });
-
-    if (!selectedNode.data.capsuleVersion && capsuleSpec?.version) {
-      onUpdate(selectedNode.id, { capsuleVersion: capsuleSpec.version });
+  const handleCancelCapsule = async () => {
+    if (!runResult?.run_id) {
+      return;
     }
-
+    if (streamControllerRef.current) {
+      onToast?.("info", t("cancelling"));
+      setRunNotice({ tone: "info", message: t("cancelling") });
+      streamControllerRef.current.cancel();
+      if (cancelFallbackRef.current) {
+        clearTimeout(cancelFallbackRef.current);
+      }
+      cancelFallbackRef.current = setTimeout(() => {
+        if (runStatusRef.current === "loading" || runStatusRef.current === "streaming") {
+          void api.cancelCapsuleRun(runResult.run_id).catch(() => undefined);
+        }
+      }, 1200);
+      return;
+    }
     try {
-      const result = await api.runCapsule({
-        capsule_id: selectedNode.data.capsuleId,
-        capsule_version: capsuleVersion,
-        inputs: {},
-        params: params as Record<string, unknown>,
-        node_id: selectedNode.id,
+      onToast?.("info", t("cancelling"));
+      setRunNotice({ tone: "info", message: t("cancelling") });
+      const cancelled = await api.cancelCapsuleRun(runResult.run_id);
+      setRunResult({
+        run_id: cancelled.run_id,
+        status: cancelled.status,
+        summary: cancelled.summary,
+        evidence_refs: cancelled.evidence_refs,
+        version: cancelled.version,
+        token_usage: cancelled.token_usage,
+        latency_ms: cancelled.latency_ms,
+        cost_usd_est: cancelled.cost_usd_est,
+        cached: false,
       });
-      setRunResult(result);
-      setRunStatus("success");
-      onUpdate(selectedNode.id, {
-        status: "success",
-        capsuleVersion:
-          selectedNode.data.capsuleVersion || result.version || capsuleVersion,
-      });
-      await refreshRunHistory(selectedNode.data.capsuleId);
     } catch (err) {
-      setRunError(err instanceof Error ? err.message : "Capsule run failed");
-      setRunStatus("error");
-      onUpdate(selectedNode.id, { status: "error" });
+      onToast?.("error", t("error"));
+      setRunHistoryError(normalizeApiError(err, t("cancelRunError")));
     }
+  };
+
+  const handleRetryCapsule = async () => {
+    onToast?.("info", t("retrying"));
+    setRunNotice({ tone: "info", message: t("retrying") });
+    setRunResult(null);
+    const retryParams = lastRunParamsRef.current ?? (params as Record<string, unknown>);
+    await run(retryParams);
   };
 
   return (
@@ -410,6 +897,78 @@ export function Inspector({
                     </div>
                   ))}
                 </div>
+                {selectedNode.type === "input" && (
+                  <div className="rounded-lg border border-white/10 bg-slate-900/40 p-3 text-xs text-slate-300">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">{t("sourceType")}</span>
+                      <span className="font-mono">
+                        {sourceTypeInfo.status === "loading" && t("loading")}
+                        {sourceTypeInfo.status === "unavailable" && t("sourceTypeAdminOnly")}
+                        {sourceTypeInfo.status === "error" && t("sourceTypeUnknown")}
+                        {sourceTypeInfo.status === "idle" && t("sourceTypeUnknown")}
+                        {sourceTypeInfo.status === "ready" &&
+                          (sourceTypeInfo.type ? sourceTypeInfo.type : t("sourceTypeUnknown"))}
+                      </span>
+                    </div>
+                    {sourceTypeInfo.title && (
+                      <div className="mt-2 text-[11px] text-slate-400">
+                        {sourceTypeInfo.title}
+                      </div>
+                    )}
+                    {allowedTypeHints.length > 0 && (
+                      <div className="mt-3 space-y-1 text-[11px] text-slate-400">
+                        {allowedTypeHints.map((hint) => (
+                          <div key={hint.capsuleId}>
+                            {t("allowedTypes")}: {hint.types.join(", ")} · {hint.capsuleId}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {selectedNode.type === "processing" &&
+                  processingSeeds &&
+                  (processingSeeds.storyBeats.length > 0 || processingSeeds.storyboardCards.length > 0) && (
+                    <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 text-xs text-slate-200">
+                      <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-emerald-300">
+                        <span>{t("narrativeSeeds")}</span>
+                        <span>
+                          {t("beatSheet")}: {processingSeeds.storyBeats.length} · {t("storyboard")}:{" "}
+                          {processingSeeds.storyboardCards.length}
+                        </span>
+                      </div>
+                      {processingSeeds.storyBeats.slice(0, 2).map((beat, idx) => {
+                        const label =
+                          typeof beat === "string"
+                            ? beat
+                            : typeof beat === "object" && beat
+                              ? ((beat as { note?: string }).note ?? (beat as { beat?: string }).beat ?? "")
+                              : "";
+                        if (!label) return null;
+                        return (
+                          <div key={`beat-${idx}`} className="mt-2 line-clamp-1 text-[11px] text-slate-300">
+                            {t("beat")} {idx + 1}: {String(label)}
+                          </div>
+                        );
+                      })}
+                      {processingSeeds.storyboardCards.slice(0, 1).map((card, idx) => {
+                        const label =
+                          typeof card === "string"
+                            ? card
+                            : typeof card === "object" && card
+                              ? ((card as { note?: string }).note ??
+                                (card as { composition?: string }).composition ??
+                                "")
+                              : "";
+                        if (!label) return null;
+                        return (
+                          <div key={`story-${idx}`} className="mt-1 line-clamp-1 text-[11px] text-slate-400">
+                            {t("shot")} {idx + 1}: {String(label)}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
               </div>
             )}
 
@@ -447,6 +1006,71 @@ export function Inspector({
                       </span>
                     </div>
                   )}
+                  {patternVersion && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-400">{t("patternVersion")}</span>
+                      <span className="font-mono text-rose-200">
+                        {String(patternVersion)}
+                      </span>
+                    </div>
+                  )}
+                  {isAdminView && capsuleInputContracts && (
+                    <div className="rounded-lg border border-white/5 bg-black/20 px-3 py-2 text-[10px] text-slate-300">
+                      <div className="mb-1 text-[10px] font-semibold uppercase text-slate-400">
+                        Capsule Contract
+                      </div>
+                      {Array.isArray(capsuleInputContracts.required) && capsuleInputContracts.required.length > 0 && (
+                        <div>
+                          required: {capsuleInputContracts.required.join(", ")}
+                        </div>
+                      )}
+                      {Array.isArray(capsuleInputContracts.optional) && capsuleInputContracts.optional.length > 0 && (
+                        <div>
+                          optional: {capsuleInputContracts.optional.join(", ")}
+                        </div>
+                      )}
+                      {typeof capsuleInputContracts.maxUpstream === "number" && (
+                        <div>maxUpstream: {capsuleInputContracts.maxUpstream}</div>
+                      )}
+                      {Array.isArray(capsuleInputContracts.allowedTypes) && capsuleInputContracts.allowedTypes.length > 0 && (
+                        <div>allowedTypes: {capsuleInputContracts.allowedTypes.join(", ")}</div>
+                      )}
+                      {typeof capsuleInputContracts.contextMode === "string" && (
+                        <div>contextMode: {capsuleInputContracts.contextMode}</div>
+                      )}
+                      {capsuleOutputContracts &&
+                        Array.isArray(capsuleOutputContracts.types) &&
+                        capsuleOutputContracts.types.length > 0 && (
+                          <div>outputTypes: {capsuleOutputContracts.types.join(", ")}</div>
+                        )}
+                      {runResult?.summary && typeof runResult.summary === "object" && (
+                        <div className="mt-1 text-slate-400">
+                          sequence_len:{" "}
+                          {typeof (runResult.summary as { sequence_len?: number }).sequence_len === "number"
+                            ? (runResult.summary as { sequence_len?: number }).sequence_len
+                            : "n/a"}
+                        </div>
+                      )}
+                      {isAdminView && summaryContextMode && (
+                        <div className="mt-1 text-slate-400">
+                          context_mode: {summaryContextMode}
+                        </div>
+                      )}
+                      {isAdminView && summaryContextMode && typeof (runResult?.summary as { sequence_len?: number }).sequence_len === "number" && (
+                        <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] text-slate-300">
+                          <span>context: {summaryContextMode}</span>
+                          <span>seq: {(runResult.summary as { sequence_len?: number }).sequence_len}</span>
+                        </div>
+                      )}
+                      {upstreamSequenceSummary && (
+                        <div className="mt-1 text-slate-400">
+                          seq_nodes: {upstreamSequenceSummary.length} ·
+                          first: {upstreamSequenceSummary.first} ({upstreamSequenceSummary.firstId}) ·
+                          last: {upstreamSequenceSummary.last} ({upstreamSequenceSummary.lastId})
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {capsuleLoading && (
                     <div className="text-xs text-slate-400">Loading capsule spec...</div>
@@ -473,19 +1097,83 @@ export function Inspector({
                 <div className="space-y-2">
                   <button
                     onClick={handleRunCapsule}
-                    disabled={runStatus === "running"}
+                    disabled={runStatus === "loading" || runStatus === "streaming"}
                     className="w-full rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-100 hover:bg-rose-500/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    {runStatus === "running" ? (
+                    {runStatus === "loading" || runStatus === "streaming" ? (
                       <span className="h-4 w-4 animate-spin rounded-full border-2 border-rose-200 border-t-transparent" />
                     ) : (
                       <Play className="h-4 w-4" />
                     )}
-                    {runStatus === "running" ? t("running") : t("runCapsule")}
+                    {runStatus === "loading" || runStatus === "streaming" ? t("running") : t("runCapsule")}
                   </button>
+                  <button
+                    onClick={handleCancelCapsule}
+                    disabled={
+                      !runResult?.run_id ||
+                      (runStatus !== "loading" && runStatus !== "streaming")
+                    }
+                    className="w-full rounded-lg border border-slate-500/30 bg-slate-500/10 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-500/20 transition-colors disabled:opacity-50"
+                  >
+                    {t("cancel")}
+                  </button>
+                  {(runStatus === "error" || runStatus === "cancelled" || runResult?.status === "cancelled") && (
+                    <button
+                      onClick={handleRetryCapsule}
+                      disabled={runStatus === "loading" || runStatus === "streaming"}
+                      className="w-full rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-100 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+                    >
+                      {t("retry")}
+                    </button>
+                  )}
+                  {runNotice && (
+                    <div
+                      className={`rounded-lg border px-3 py-2 text-[11px] font-semibold ${runNotice.tone === "warning"
+                        ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
+                        : "border-sky-500/30 bg-sky-500/10 text-sky-200"
+                        }`}
+                    >
+                      {runNotice.message}
+                    </div>
+                  )}
+                  {inputWarning && !runNotice && (
+                    <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] font-semibold text-amber-200">
+                      {inputWarning}
+                    </div>
+                  )}
                   {runError && <div className="text-xs text-rose-300">{runError}</div>}
                   {runResult && (
                     <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 text-xs">
+                      {(() => {
+                        const evidenceWarnings = getEvidenceWarnings(runResult.summary);
+                        const outputWarnings = getOutputWarnings(runResult.summary);
+                        const summaryPatternVersion =
+                          (runResult.summary as { pattern_version?: string; patternVersion?: string })
+                            .pattern_version ||
+                          (runResult.summary as { patternVersion?: string }).patternVersion;
+                        const summarySourceId =
+                          (runResult.summary as { source_id?: string; sourceId?: string }).source_id ||
+                          (runResult.summary as { sourceId?: string }).sourceId;
+                        const creditCost =
+                          typeof (runResult.summary as { credit_cost?: number }).credit_cost === "number"
+                            ? (runResult.summary as { credit_cost?: number }).credit_cost
+                            : null;
+                        const latencyMs =
+                          typeof runResult.latency_ms === "number" ? runResult.latency_ms : null;
+                        const costUsd =
+                          typeof runResult.cost_usd_est === "number" ? runResult.cost_usd_est : null;
+                        const tokenUsage =
+                          runResult.token_usage && typeof runResult.token_usage === "object"
+                            ? (runResult.token_usage as { input?: number; output?: number; total?: number })
+                            : null;
+                        const tokenTotal =
+                          typeof tokenUsage?.total === "number"
+                            ? tokenUsage.total
+                            : typeof tokenUsage?.input === "number" && typeof tokenUsage?.output === "number"
+                              ? tokenUsage.input + tokenUsage.output
+                              : null;
+                        return (
+                          <>
                       <div className="flex items-center justify-between">
                         <span className="font-semibold text-emerald-200">{t("runSummary")}</span>
                         <span className="text-slate-400 uppercase">{runResult.status}</span>
@@ -493,20 +1181,89 @@ export function Inspector({
                       {runResult.cached && (
                         <div className="mt-1 text-[10px] text-emerald-300 uppercase">{t("cachedResult")}</div>
                       )}
+                      {isAdminView &&
+                        summaryContextMode &&
+                        typeof (runResult.summary as { sequence_len?: number }).sequence_len === "number" && (
+                          <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] text-slate-300">
+                            <span>context: {summaryContextMode}</span>
+                            <span>seq: {(runResult.summary as { sequence_len?: number }).sequence_len}</span>
+                          </div>
+                        )}
                       <div className="mt-2 text-slate-200">
                         {String(runResult.summary?.message ?? t("generating"))}
                       </div>
                       <div className="mt-2 text-[10px] text-slate-400">
                         {t("runId")}: {runResult.run_id}
                       </div>
+                      {(creditCost !== null || latencyMs !== null || costUsd !== null || tokenTotal !== null) && (
+                        <div className="mt-2 grid grid-cols-2 gap-2 text-[10px] text-slate-400">
+                          {creditCost !== null && (
+                            <div>{t("creditsCost")}: {creditCost}</div>
+                          )}
+                          {latencyMs !== null && (
+                            <div>{t("latency")}: {latencyMs}ms</div>
+                          )}
+                          {costUsd !== null && (
+                            <div>{t("costEstimate")}: ${costUsd.toFixed(3)}</div>
+                          )}
+                          {tokenTotal !== null && (
+                            <div>
+                              {t("tokenUsage")}: {tokenTotal}
+                              {typeof tokenUsage?.input === "number" && typeof tokenUsage?.output === "number" && (
+                                <span className="ml-1 text-slate-500">
+                                  ({tokenUsage.input}/{tokenUsage.output})
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {runResult.summary?.pattern_version && (
+                        <div className="mt-1 text-[10px] text-slate-500">
+                          {t("patternVersion")}: {String(runResult.summary.pattern_version)}
+                        </div>
+                      )}
                       <div className="mt-2 space-y-1 text-[10px] text-slate-500">
                         <div>{t("evidenceRefs")}: {runResult.evidence_refs?.length ?? 0}</div>
+                        {summaryPatternVersion && (
+                          <div>{t("patternVersion")}: {String(summaryPatternVersion)}</div>
+                        )}
+                        {summarySourceId && (
+                          <div>{t("sourceId")}: {String(summarySourceId)}</div>
+                        )}
                         {(runResult.evidence_refs || []).map((ref) => (
                           <div key={ref} className="rounded border border-white/5 bg-black/20 px-2 py-1 text-slate-300">
                             {ref}
                           </div>
                         ))}
                       </div>
+                      {evidenceWarnings.length > 0 && (
+                        <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-2 text-[10px] text-amber-200">
+                          <div className="font-semibold">{t("evidenceWarnings")}: {evidenceWarnings.length}</div>
+                          <div className="mt-1 space-y-1 text-amber-100/80">
+                            {evidenceWarnings.map((warning) => (
+                              <div key={warning} className="rounded border border-amber-500/20 bg-amber-500/5 px-2 py-1">
+                                {warning}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {outputWarnings.length > 0 && (
+                        <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-2 text-[10px] text-amber-200">
+                          <div className="font-semibold">{t("outputWarnings")}: {outputWarnings.length}</div>
+                          <div className="mt-1 space-y-1 text-amber-100/80">
+                            {outputWarnings.map((warning) => (
+                              <div key={warning} className="rounded border border-amber-500/20 bg-amber-500/5 px-2 py-1">
+                                {warning}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                          </>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
@@ -538,6 +1295,21 @@ export function Inspector({
                       <div className="mt-1 text-slate-400">
                         {String(item.summary?.message ?? "Capsule executed")}
                       </div>
+                      {item.summary?.pattern_version && (
+                        <div className="mt-1 text-[10px] text-slate-500">
+                          {t("patternVersion")}: {String(item.summary.pattern_version)}
+                        </div>
+                      )}
+                      {isAdminView && (
+                        <div className="mt-1 text-[10px] text-slate-500">
+                          {item.summary?.context_mode && (
+                            <span>context: {String(item.summary.context_mode)}</span>
+                          )}
+                          {typeof item.summary?.sequence_len === "number" && (
+                            <span>{item.summary?.context_mode ? " • " : ""}seq: {item.summary.sequence_len}</span>
+                          )}
+                        </div>
+                      )}
                       <div className="mt-1 text-[10px] text-slate-500">
                         {new Date(item.created_at).toLocaleString()}
                       </div>

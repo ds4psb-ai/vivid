@@ -1,0 +1,38 @@
+- Base cost by output type:
+  - Text summary
+  - Storyboard preview
+  - Final render
+- Multipliers:
+  - Resolution
+  - Length
+  - Model tier
+
+---
+
+## 7) API Endpoints (Spec)
+
+- `GET /api/v1/credits/wallet`
+- `GET /api/v1/credits/ledger`
+- `POST /api/v1/credits/topup`
+- `POST /api/v1/credits/allocate`
+- `POST /api/v1/credits/refund`
+
+---
+
+## 8) Data Model (Draft)
+
+Tables:
+- `credit_wallets`
+- `credit_ledger`
+- `plans`
+- `prices`
+- `subscriptions`
+
+---
+
+## 9) Guardrails
+
+- No negative balances
+- Refund on failed generation
+- Promo credits cannot be transferred
+

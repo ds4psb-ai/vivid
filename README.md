@@ -14,8 +14,11 @@ This repo bootstraps the Node Canvas MVP described in the Vivid docs. The focus 
 - Templates are first-class objects (public share + marketplace later)
 - MVP path: build canvas UI + persistence first, add GA/RL after
 - NotebookLM/Opal outputs flow through **Sheets Bus → DB SoR** (Derived only)
+- NotebookLM은 **지식/가이드 레이어** (클러스터 노트북, 오마주/변주 가이드, 템플릿 적합도 제안)
+- Video 이해는 Gemini 구조화 출력으로 **DB SoR**에 적재 후 NotebookLM 소스로 사용
 - Pattern Library/Trace records the repeatable auteur rules
 - NotebookLM/Opal Ultra 구독 전제 (다중 출력/다국어 활용)
+- 흐름/역할 정본: `10_PIPELINES_AND_USER_FLOWS.md`, 원칙 정본: `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`
 
 ## Tech baseline
 
@@ -35,6 +38,21 @@ This repo bootstraps the Node Canvas MVP described in the Vivid docs. The focus 
 - `10_PIPELINES_AND_USER_FLOWS.md`
 - `11_DB_PROMOTION_RULES_V1.md`
 - `12_PATTERN_PROMOTION_CRITERIA_V1.md`
+- `13_UI_DESIGN_GUIDE_2025-12.md`
+- `14_INGEST_RUNBOOK_V1.md`
+- `15_PATTERN_TAXONOMY_V1.md`
+- `16_VIRLO_CONTENT_STUDIO_RESEARCH.md`
+- `17_CREDITS_AND_BILLING_SPEC_V1.md`
+- `18_AFFILIATE_PROGRAM_SPEC_V1.md`
+- `18_REVERSE_ENGINEERING_REPORT_FOR_EXECUTION.md`
+- `18_REVERSE_ENGINEERING_REPORT_FOR_EXECUTION_CODEX.md`
+- `19_VIVID_EXECUTION_PLAN_V1.md`
+- `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`
+- `22_DOCUMENTATION_STRUCTURE_CODEX.md`
+- `23_TEMPLATE_SYSTEM_SPEC_CODEX.md`
+- `24_PDR_NODE_CANVAS.md`
+- `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
+- `26_DOC_LINT_RULES_CODEX.md`
 
 ## Local setup
 
@@ -80,6 +98,22 @@ Optional: promote Sheets Bus → DB SoR
 # set SHEETS_MODE and URLs in backend/.env
 python scripts/promote_from_sheets.py
 ```
+Note: if you use Notebook Library, set `VIVID_NOTEBOOK_LIBRARY_CSV_URL` (and optional `VIVID_NOTEBOOK_ASSETS_CSV_URL`) or ranges too.
+
+Demo: promote mock sheets data (CSV files in `backend/mock_sheets`)
+```bash
+backend/venv/bin/python backend/scripts/promote_demo.py
+```
+
+Demo (clean tables first):
+```bash
+backend/venv/bin/python backend/scripts/promote_demo.py --drop-all
+```
+
+Demo (custom mock dir):
+```bash
+backend/venv/bin/python backend/scripts/promote_demo.py --mock-dir /path/to/mock_sheets
+```
 
 ### 3) Frontend
 
@@ -94,6 +128,12 @@ Optional (private templates/canvases):
 ```bash
 # in .env.local
 NEXT_PUBLIC_USER_ID=demo-user
+```
+
+Optional (admin-only data visibility):
+```bash
+# in .env.local
+NEXT_PUBLIC_ADMIN_MODE=true
 ```
 
 ## Ports (non-conflicting with komission)
@@ -122,7 +162,21 @@ Reserved if you add services later:
 - GET /api/v1/capsules/{capsule_key}/runs
 - POST /api/v1/capsules/run
 - GET /api/v1/capsules/run/{run_id}
+- GET /api/v1/capsules/run/{run_id}/stream
+- POST /api/v1/capsules/run/{run_id}/cancel
+- WS /ws/runs/{run_id}
 - GET /api/v1/capsules/{capsule_key}/runs/{run_id}/preview
+- POST /api/v1/ingest/raw
+- GET /api/v1/ingest/raw/{source_id}
+- GET /api/v1/ingest/video-structured
+- GET /api/v1/ingest/video-structured/{segment_id}
+- GET /api/v1/ingest/raw/{source_id}/video-structured
+- POST /api/v1/ingest/video-structured
+- POST /api/v1/ingest/notebook
+- GET /api/v1/ingest/notebook
+- POST /api/v1/ingest/derive
+- GET /api/v1/ingest/derive
+- POST /api/v1/ingest/pattern-candidate
 - POST /api/v1/runs/
 - GET /api/v1/runs/{id}
 

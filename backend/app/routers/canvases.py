@@ -5,13 +5,15 @@ from uuid import UUID
 import json
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import get_user_id
 from app.database import get_db
 from app.models import Canvas, Template
+from app.graph_utils import merge_graph_meta
+from app.patterns import get_latest_pattern_version
 
 router = APIRouter()
 
@@ -100,8 +102,7 @@ class CanvasResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CanvasFromTemplate(BaseModel):
@@ -131,15 +132,94 @@ def _to_response(canvas: Canvas) -> CanvasResponse:
     )
 
 
+def _ensure_pattern_version(graph_data: dict, pattern_version: str) -> dict:
+    nodes = graph_data.get("nodes")
+    if not isinstance(nodes, list):
+        return graph_data
+    updated = False
+    next_nodes = []
+    for node in nodes:
+        if not isinstance(node, dict):
+            next_nodes.append(node)
+            continue
+        data = node.get("data")
+        if not isinstance(data, dict):
+            next_nodes.append(node)
+            continue
+        if data.get("patternVersion"):
+            next_nodes.append(node)
+            continue
+        if data.get("capsuleId") and data.get("capsuleVersion"):
+            patched = {**data, "patternVersion": pattern_version}
+            next_nodes.append({**node, "data": patched})
+            updated = True
+        else:
+            next_nodes.append(node)
+    if not updated:
+        return graph_data
+    return {**graph_data, "nodes": next_nodes}
+
+
+
+def _ensure_graph_meta_defaults(graph_data: dict) -> dict:
+    if not isinstance(graph_data, dict):
+        return graph_data
+    meta = graph_data.get("meta")
+    if not isinstance(meta, dict):
+        meta = {}
+    updated = False
+
+    if "guide_sources" not in meta or not isinstance(meta.get("guide_sources"), list):
+        meta["guide_sources"] = []
+        updated = True
+    if "evidence_refs" not in meta or not isinstance(meta.get("evidence_refs"), list):
+        meta["evidence_refs"] = []
+        updated = True
+
+    narrative = meta.get("narrative_seeds")
+    if not isinstance(narrative, dict):
+        narrative = {}
+    if "story_beats" not in narrative or not isinstance(narrative.get("story_beats"), list):
+        narrative["story_beats"] = []
+        updated = True
+    if "storyboard_cards" not in narrative or not isinstance(narrative.get("storyboard_cards"), list):
+        narrative["storyboard_cards"] = []
+        updated = True
+    meta["narrative_seeds"] = narrative
+
+    production = meta.get("production_contract")
+    if not isinstance(production, dict):
+        production = {}
+    if "shot_contracts" not in production or not isinstance(production.get("shot_contracts"), list):
+        production["shot_contracts"] = []
+        updated = True
+    if "prompt_contract_version" not in production or not isinstance(
+        production.get("prompt_contract_version"), str
+    ):
+        production["prompt_contract_version"] = "v1"
+        updated = True
+    if "storyboard_refs" not in production or not isinstance(production.get("storyboard_refs"), list):
+        production["storyboard_refs"] = []
+        updated = True
+    meta["production_contract"] = production
+
+    if not updated and graph_data.get("meta") is meta:
+        return graph_data
+    return {**graph_data, "meta": meta}
+
+
 @router.post("/", response_model=CanvasResponse, status_code=status.HTTP_201_CREATED)
 async def create_canvas(
     data: CanvasCreate,
     user_id: Optional[str] = Depends(get_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> CanvasResponse:
+    pattern_version = await get_latest_pattern_version(db)
     canvas = Canvas(
         title=data.title,
-        graph_data=data.graph_data,
+        graph_data=_ensure_graph_meta_defaults(
+            _ensure_pattern_version(data.graph_data, pattern_version)
+        ),
         is_public=data.is_public,
         owner_id=data.owner_id or user_id,
     )
@@ -168,9 +248,12 @@ async def create_canvas_from_template(
         raise HTTPException(status_code=403, detail="Not authorized to use this template")
 
     title = data.title or f"{template.title} (Copy)"
+    pattern_version = await get_latest_pattern_version(db)
     canvas = Canvas(
         title=title,
-        graph_data=template.graph_data,
+        graph_data=_ensure_graph_meta_defaults(
+            _ensure_pattern_version(template.graph_data or {}, pattern_version)
+        ),
         is_public=data.is_public,
         owner_id=data.owner_id or user_id,
     )
@@ -240,7 +323,11 @@ async def update_canvas(
         canvas.title = data.title
         version_bump = True
     if data.graph_data is not None:
-        canvas.graph_data = data.graph_data
+        pattern_version = await get_latest_pattern_version(db)
+        merged_graph = merge_graph_meta(data.graph_data, canvas.graph_data or {})
+        canvas.graph_data = _ensure_graph_meta_defaults(
+            _ensure_pattern_version(merged_graph, pattern_version)
+        )
         version_bump = True
     if data.is_public is not None:
         canvas.is_public = data.is_public
