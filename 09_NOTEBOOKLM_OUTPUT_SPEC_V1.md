@@ -5,6 +5,11 @@
 
 ---
 
+Source Pack/Guide 프로토콜:
+- `33_NOTEBOOKLM_SOURCE_PACK_AND_PROMPT_PROTOCOL_CODEX.md`
+
+---
+
 ## Output rules
 
 - output must be a **single JSON object**
@@ -23,6 +28,7 @@
 - `prompt_version`
 - `model_version`
 - `generated_at`
+- `source_pack_id`
 
 If the output is from a curated Notebook Library, include `notebook_id`.
 
@@ -66,6 +72,7 @@ If the output is from a curated Notebook Library, include `notebook_id`.
 - `confidence`
 - `studio_output_id`
 - `evidence_refs[]`
+- `claims[]`
 - `notebook_ref`
 - `notebook_id`
 

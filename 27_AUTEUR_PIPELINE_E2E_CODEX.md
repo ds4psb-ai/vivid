@@ -16,7 +16,8 @@
 
 참조 문서:  
 `10_PIPELINES_AND_USER_FLOWS.md`, `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`,  
-`05_CAPSULE_NODE_SPEC.md`, `11_DB_PROMOTION_RULES_V1.md`
+`05_CAPSULE_NODE_SPEC.md`, `11_DB_PROMOTION_RULES_V1.md`,  
+`33_NOTEBOOKLM_SOURCE_PACK_AND_PROMPT_PROTOCOL_CODEX.md`
 
 ---
 
@@ -74,10 +75,11 @@
 
 ### Stage 4. NotebookLM/Opal Guide Outputs (Derived)
 **Goal**: 요약/오마주/변주/템플릿 적합도 가이드를 만든다.  
-**Input**: DB에서 파생된 텍스트/요약 (원본 영상 금지)  
+**Input**: DB SoR + **Source Pack** (원본 영상 금지)  
 **Process**: NotebookLM/Opal 실행 → JSON 출력  
 **Output**: `VIVID_DERIVED_INSIGHTS` (Sheets Bus)  
-**Check**: `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md` 규격 준수
+**Check**: `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md` 규격 준수  
+**Protocol**: `33_NOTEBOOKLM_SOURCE_PACK_AND_PROMPT_PROTOCOL_CODEX.md`
 
 ---
 

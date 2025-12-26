@@ -21,7 +21,8 @@
 
 References:  
 `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`, `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`,  
-`27_AUTEUR_PIPELINE_E2E_CODEX.md`, `10_PIPELINES_AND_USER_FLOWS.md`
+`27_AUTEUR_PIPELINE_E2E_CODEX.md`, `10_PIPELINES_AND_USER_FLOWS.md`,  
+`33_NOTEBOOKLM_SOURCE_PACK_AND_PROMPT_PROTOCOL_CODEX.md`
 
 ---
 
@@ -138,12 +139,13 @@ References:
 
 ### Stage 4. NotebookLM/Opal Derived Outputs (Guide Layer)
 **Goal**: 요약/오마주/변주/템플릿 적합도 가이드를 생성한다.  
-**Input**: DB SoR에서 파생된 텍스트 요약  
+**Input**: DB SoR + **Source Pack**  
 **Process**: NotebookLM/Opal 실행 → JSON 출력  
 **Output**: `VIVID_DERIVED_INSIGHTS` (Sheets Bus)  
 **Owner**: Admin/Curator  
 **Contract**: `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md`  
-**Gate**: guide_type / output_type allowlist 준수
+**Gate**: guide_type / output_type allowlist 준수  
+**Protocol**: `33_NOTEBOOKLM_SOURCE_PACK_AND_PROMPT_PROTOCOL_CODEX.md`
 
 **Guide types (MVP)**
 - `summary`: 작품/장면 요약
