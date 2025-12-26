@@ -149,3 +149,6 @@ async def init_db(drop_all: bool = False) -> None:
         await conn.execute(
             text("ALTER TABLE notebook_library ADD COLUMN IF NOT EXISTS curator_notes TEXT")
         )
+        await conn.execute(
+            text("ALTER TABLE affiliate_referrals ADD COLUMN IF NOT EXISTS referee_verified_at TIMESTAMP")
+        )

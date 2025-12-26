@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import get_is_admin, get_user_id
+from app.auth import get_is_admin, get_is_verified, get_user_id
 from app.credit_service import grant_promo_credits
 from app.database import get_db
 from app.models import AffiliateProfile, AffiliateReferral, GenerationRun
@@ -20,6 +20,11 @@ router = APIRouter()
 
 DEFAULT_REFERRER_REWARD = int(os.getenv("AFFILIATE_REFERRER_REWARD", "100"))
 DEFAULT_REFEREE_REWARD = int(os.getenv("AFFILIATE_REFEREE_REWARD", "100"))
+REQUIRE_EMAIL_VERIFICATION = os.getenv("AFFILIATE_REQUIRE_EMAIL_VERIFICATION", "true").lower() in {
+    "1",
+    "true",
+    "yes",
+}
 
 
 class AffiliateProfileResponse(BaseModel):
@@ -53,6 +58,7 @@ class AffiliateReferralItem(BaseModel):
     reward_status: str
     reward_amount: int
     referee_reward_amount: int
+    referee_verified_at: Optional[datetime] = None
     created_at: datetime
 
 
@@ -60,6 +66,11 @@ class AffiliateRewardRequest(BaseModel):
     referral_id: str
     referrer_reward: Optional[int] = None
     referee_reward: Optional[int] = None
+    note: Optional[str] = None
+
+
+class AffiliateVerifyRequest(BaseModel):
+    referral_id: str
     note: Optional[str] = None
 
 
@@ -206,6 +217,7 @@ async def track_referral_click(
 async def register_referral(
     payload: AffiliateRegisterRequest,
     user_id: Optional[str] = Depends(get_user_id),
+    is_verified: bool = Depends(get_is_verified),
     db: AsyncSession = Depends(get_db),
 ) -> AffiliateReferralItem:
     resolved_user_id = user_id or "demo-user"
@@ -255,6 +267,9 @@ async def register_referral(
         )
         db.add(referral)
 
+    if is_verified:
+        referral.referee_verified_at = datetime.utcnow()
+
     activation_result = await db.execute(
         select(func.count()).select_from(GenerationRun).where(
             GenerationRun.owner_id == resolved_user_id
@@ -274,6 +289,7 @@ async def register_referral(
         reward_status=referral.reward_status,
         reward_amount=referral.reward_amount,
         referee_reward_amount=referral.referee_reward_amount,
+        referee_verified_at=referral.referee_verified_at,
         created_at=referral.created_at,
     )
 
@@ -301,10 +317,46 @@ async def list_referrals(
             reward_status=referral.reward_status,
             reward_amount=referral.reward_amount,
             referee_reward_amount=referral.referee_reward_amount,
+            referee_verified_at=referral.referee_verified_at,
             created_at=referral.created_at,
         )
         for referral in referrals
     ]
+
+
+@router.post("/verify", response_model=AffiliateReferralItem)
+async def verify_referral(
+    payload: AffiliateVerifyRequest,
+    is_admin: bool = Depends(get_is_admin),
+    db: AsyncSession = Depends(get_db),
+) -> AffiliateReferralItem:
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    try:
+        referral_uuid = uuid.UUID(payload.referral_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid referral_id") from exc
+    result = await db.execute(
+        select(AffiliateReferral).where(AffiliateReferral.id == referral_uuid)
+    )
+    referral = result.scalars().first()
+    if not referral:
+        raise HTTPException(status_code=404, detail="Referral not found")
+    if referral.referee_verified_at is None:
+        referral.referee_verified_at = datetime.utcnow()
+        referral.updated_at = datetime.utcnow()
+        await db.commit()
+        await db.refresh(referral)
+    return AffiliateReferralItem(
+        id=str(referral.id),
+        referee_label=referral.referee_label,
+        status=referral.status,
+        reward_status=referral.reward_status,
+        reward_amount=referral.reward_amount,
+        referee_reward_amount=referral.referee_reward_amount,
+        referee_verified_at=referral.referee_verified_at,
+        created_at=referral.created_at,
+    )
 
 
 @router.post("/reward", response_model=AffiliateRewardResponse)
@@ -331,6 +383,8 @@ async def grant_referral_reward(
         raise HTTPException(status_code=409, detail="Reward already granted")
     if not referral.referee_user_id:
         raise HTTPException(status_code=400, detail="Referee not linked to a user")
+    if REQUIRE_EMAIL_VERIFICATION and referral.referee_verified_at is None:
+        raise HTTPException(status_code=400, detail="Referee not verified")
 
     activation_result = await db.execute(
         select(func.count()).select_from(GenerationRun).where(

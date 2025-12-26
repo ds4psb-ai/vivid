@@ -922,6 +922,10 @@ async def _execute_capsule_run(
                             "capsule_id": capsule_id,
                             "capsule_version": capsule_version,
                             "run_type": "capsule",
+                            "credit_cost": credit_cost,
+                            "token_usage": token_usage,
+                            "latency_ms": latency_ms,
+                            "cost_usd_est": cost_usd,
                         },
                     )
                 except ValueError:
@@ -1263,6 +1267,10 @@ async def run_capsule(
                     "capsule_id": data.capsule_id,
                     "capsule_version": resolved_version,
                     "run_type": "capsule",
+                    "credit_cost": credit_cost,
+                    "token_usage": token_usage,
+                    "latency_ms": latency_ms,
+                    "cost_usd_est": cost_usd,
                 },
             )
         except ValueError:

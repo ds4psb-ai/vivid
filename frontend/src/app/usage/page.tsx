@@ -101,6 +101,9 @@ export default function UsagePage() {
     monthSpend: language === "ko" ? "이번 달 사용" : "Month-to-date spend",
     totalRuns: language === "ko" ? "총 실행" : "Total runs",
     avgCost: language === "ko" ? "평균 비용" : "Avg cost",
+    latency: language === "ko" ? "지연" : "Latency",
+    costEstimate: language === "ko" ? "비용 추정" : "Cost est",
+    tokenUsage: language === "ko" ? "토큰" : "Tokens",
     subscription: language === "ko" ? "구독 크레딧" : "Subscription credits",
     topup: language === "ko" ? "추가 충전" : "Top-up credits",
     promo: language === "ko" ? "프로모션" : "Promo credits",
@@ -307,6 +310,30 @@ export default function UsagePage() {
                           (typeof tx.meta?.capsule_id === "string" && tx.meta.capsule_id) ||
                           (typeof tx.meta?.canvas_id === "string" && tx.meta.canvas_id) ||
                           "";
+                        const breakdown =
+                          tx.meta &&
+                          typeof tx.meta === "object" &&
+                          typeof (tx.meta as { breakdown?: unknown }).breakdown === "object"
+                            ? ((tx.meta as { breakdown?: Record<string, number> }).breakdown ?? null)
+                            : null;
+                        const latencyMs =
+                          typeof (tx.meta as { latency_ms?: unknown })?.latency_ms === "number"
+                            ? (tx.meta as { latency_ms: number }).latency_ms
+                            : null;
+                        const costUsd =
+                          typeof (tx.meta as { cost_usd_est?: unknown })?.cost_usd_est === "number"
+                            ? (tx.meta as { cost_usd_est: number }).cost_usd_est
+                            : null;
+                        const tokenUsage =
+                          tx.meta && typeof (tx.meta as { token_usage?: unknown }).token_usage === "object"
+                            ? (tx.meta as { token_usage: { input?: number; output?: number; total?: number } }).token_usage
+                            : null;
+                        const tokenTotal =
+                          tokenUsage && typeof tokenUsage.total === "number"
+                            ? tokenUsage.total
+                            : tokenUsage && typeof tokenUsage.input === "number" && typeof tokenUsage.output === "number"
+                              ? tokenUsage.input + tokenUsage.output
+                              : null;
                         return (
                           <div>
                             <div className="font-medium">
@@ -325,6 +352,32 @@ export default function UsagePage() {
                                 {resourceId && (
                                   <span>
                                     {labels.resourceId}: {resourceId}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            {breakdown && (
+                              <div className="mt-1 text-[10px] text-slate-500">
+                                {labels.promo}: {breakdown.promo ?? 0},{" "}
+                                {labels.subscription}: {breakdown.subscription ?? 0},{" "}
+                                {labels.topup}: {breakdown.topup ?? 0}
+                              </div>
+                            )}
+                            {(latencyMs !== null || costUsd !== null || tokenTotal !== null) && (
+                              <div className="mt-1 text-[10px] text-slate-500">
+                                {latencyMs !== null && (
+                                  <span className="mr-2">
+                                    {labels.latency}: {latencyMs}ms
+                                  </span>
+                                )}
+                                {costUsd !== null && (
+                                  <span className="mr-2">
+                                    {labels.costEstimate}: ${costUsd.toFixed(3)}
+                                  </span>
+                                )}
+                                {tokenTotal !== null && (
+                                  <span>
+                                    {labels.tokenUsage}: {tokenTotal}
                                   </span>
                                 )}
                               </div>

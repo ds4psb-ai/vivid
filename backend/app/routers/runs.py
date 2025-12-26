@@ -198,7 +198,11 @@ async def _execute_run(
                         amount=credit_cost,
                         description=f"Generation run: {canvas_id}",
                         capsule_run_id=None,
-                        meta={"run_type": "generation", "canvas_id": str(canvas_id)},
+                        meta={
+                            "run_type": "generation",
+                            "canvas_id": str(canvas_id),
+                            "credit_cost": credit_cost,
+                        },
                     )
                 except ValueError:
                     run.outputs = {
