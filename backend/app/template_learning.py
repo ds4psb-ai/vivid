@@ -32,6 +32,7 @@ def _safe_float(value: Optional[str], default: float) -> float:
 
 MIN_EVIDENCE_REFS = _safe_int(os.getenv("TEMPLATE_REWARD_MIN_EVIDENCE"), 3) or 3
 MAX_CREDIT_COST = _safe_int(os.getenv("TEMPLATE_REWARD_MAX_CREDITS"), 120) or 120
+MAX_LATENCY_MS = _safe_int(os.getenv("TEMPLATE_REWARD_MAX_LATENCY_MS"), 5000) or 5000
 PROMOTION_THRESHOLD = _safe_float(os.getenv("TEMPLATE_PROMOTION_THRESHOLD"), 0.75)
 PROMOTION_MIN_SAMPLES = _safe_int(os.getenv("TEMPLATE_PROMOTION_MIN_SAMPLES"), 3) or 3
 AUTO_PROMOTE_TEMPLATES = os.getenv("AUTO_PROMOTE_TEMPLATES", "false").lower() in {
@@ -136,6 +137,8 @@ def compute_reward(
     feedback_shots: List[Dict[str, Any]],
     evidence_refs: List[str],
     credit_cost: Optional[int],
+    latency_ms: Optional[int] = None,
+    cost_usd_est: Optional[float] = None,
     shot_count: int,
 ) -> Dict[str, Any]:
     feedback_summary = summarize_feedback(feedback_shots)
@@ -147,19 +150,28 @@ def compute_reward(
     if MIN_EVIDENCE_REFS > 0:
         evidence_score = min(len(evidence_refs) / MIN_EVIDENCE_REFS, 1.0)
 
-    if credit_cost is None:
-        cost_score = 0.5
-    else:
+    cost_score = 0.5
+    if cost_usd_est is not None:
+        max_cost = max(1.0, float(MAX_CREDIT_COST))
+        cost_score = 1.0 - min(float(cost_usd_est) / max_cost, 1.0)
+    elif credit_cost is not None:
         max_cost = max(1, MAX_CREDIT_COST)
         cost_score = 1.0 - min(float(credit_cost) / max_cost, 1.0)
 
-    feedback_weight = 0.5
-    evidence_weight = 0.3
-    cost_weight = 0.2
+    latency_score = 0.5
+    if isinstance(latency_ms, int) and latency_ms > 0:
+        baseline = max(1, MAX_LATENCY_MS)
+        latency_score = min(float(baseline) / float(latency_ms), 1.0)
+
+    feedback_weight = 0.45
+    evidence_weight = 0.25
+    cost_weight = 0.15
+    latency_weight = 0.15
     reward_score = (
         rating_score * feedback_weight
         + evidence_score * evidence_weight
         + cost_score * cost_weight
+        + latency_score * latency_weight
     )
 
     return {
@@ -169,15 +181,18 @@ def compute_reward(
             "feedback_coverage": round(min(feedback_coverage, 1.0), 4),
             "evidence_score": round(evidence_score, 4),
             "cost_score": round(cost_score, 4),
+            "latency_score": round(latency_score, 4),
         },
         "weights": {
             "feedback": feedback_weight,
             "evidence": evidence_weight,
             "cost": cost_weight,
+            "latency": latency_weight,
         },
         "feedback_summary": feedback_summary,
         "shot_count": shot_count,
         "evidence_count": len(evidence_refs),
+        "latency_ms": latency_ms,
     }
 
 

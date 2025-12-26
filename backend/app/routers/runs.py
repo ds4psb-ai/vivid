@@ -328,6 +328,13 @@ async def update_run_feedback(
                     raw_cost = run.spec.get("credit_cost")
                     if isinstance(raw_cost, int):
                         credit_cost = raw_cost
+                latency_ms = None
+                if isinstance(run.outputs, dict):
+                    metrics = run.outputs.get("metrics")
+                    if isinstance(metrics, dict):
+                        metric_latency = metrics.get("latency_ms")
+                        if isinstance(metric_latency, int):
+                            latency_ms = metric_latency
                 feedback_payload = {
                     "shots": outputs.get("shot_feedback", []),
                     "overall_note": outputs.get("overall_note"),
@@ -336,6 +343,7 @@ async def update_run_feedback(
                     feedback_shots=feedback_payload["shots"],
                     evidence_refs=evidence_refs,
                     credit_cost=credit_cost,
+                    latency_ms=latency_ms,
                     shot_count=shot_count,
                 )
                 outputs["learning_reward"] = reward
