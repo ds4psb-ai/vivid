@@ -35,6 +35,7 @@
 - NotebookLM 노트북 메타를 `VIVID_NOTEBOOK_LIBRARY`에 등록
 - 노트북은 비공개 지식 베이스로 유지 (UI 노출 금지)
 - 클러스터 메타(`cluster_id`, `cluster_label`, `guide_scope`)로 거장/장르 묶음 관리
+- (옵션) Mega-Notebook은 **발굴/집계/운영 전용**으로만 사용하고, 캡슐 승격은 **phase-locked pack**에서만 수행
 
 ### 1.4 NotebookLM 출력 규격 (주 1)
 - 출력 JSON 포맷 고정

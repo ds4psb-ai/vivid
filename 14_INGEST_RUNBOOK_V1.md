@@ -138,6 +138,31 @@ nlb-bong-99,Bong Joon-ho Notebook,https://notebooklm.google.com/notebook/abc123,
 
 ---
 
+### Step 1.5.2: Mega-Notebook 운영 (옵션, Ops/Discovery 전용)
+Mega-Notebook은 **발굴/집계/운영 인사이트 전용**이며, **캡슐 승격에 직접 사용하지 않습니다.**
+
+운영 규칙:
+- Mega-Notebook 결과는 **후보 발굴/드리프트 감지/운영 요약**에만 사용
+- 캡슐 승격은 반드시 `{cluster_id, temporal_phase}` **phase-locked pack**에서만 수행
+
+메가팩 생성 스크립트 (JSON 출력):
+```
+cd backend
+python scripts/build_mega_source_pack.py \
+  --cluster-id cluster-auteur-bong \
+  --cluster-id cluster-auteur-park \
+  --max-sources 600 \
+  --max-segments 500 \
+  --notes "ops discovery" \
+  --output /absolute/path/mega_pack.json
+```
+
+권장 표시:
+- Mega-Notebook의 Derived 출력은 `labels`에 `ops_only`를 포함
+- `curator_notes`에 `mega_notebook` 문구를 명시
+
+---
+
 ### Step 1.5.1: Notebook Library JSON 업로드 (옵션)
 Notebook Library JSON이 준비되어 있으면 로컬 스크립트로 바로 DB에 업로드할 수 있습니다.
 
