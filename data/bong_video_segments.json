@@ -1,0 +1,217 @@
+[
+    {
+        "segment_id": "seg-bong-2019-parasite-hook-001",
+        "source_id": "bong-2019-parasite",
+        "work_id": "work-bong-2019-parasite",
+        "sequence_id": "seq-opening",
+        "scene_id": "scene-basement",
+        "shot_id": "shot-basement-window",
+        "time_start": "00:01:30.000",
+        "time_end": "00:01:45.000",
+        "shot_index": 1,
+        "keyframes": [
+            "kf_p_001"
+        ],
+        "transcript": "반지하 창문으로 보이는 골목. 취객이 소변을 본다.",
+        "visual_schema_json": {
+            "composition": "vertical_blocking",
+            "lighting": "low_key",
+            "color_palette": [
+                "#1F2933",
+                "#323F4B",
+                "#3E4C59"
+            ],
+            "camera_motion": "static",
+            "blocking": "below_ground_level",
+            "pacing": "slow"
+        },
+        "audio_schema_json": {
+            "sound_design": "street_ambience",
+            "music_mood": "tension_building"
+        },
+        "motifs": [
+            "basement",
+            "window",
+            "class_divide"
+        ],
+        "evidence_refs": [
+            "source:00:01:30-00:01:45"
+        ],
+        "confidence": 0.92,
+        "prompt_version": "gemini-video-v1",
+        "model_version": "gemini-3-pro-2025-12",
+        "generated_at": "2025-12-26T19:00:00Z"
+    },
+    {
+        "segment_id": "seg-bong-2019-parasite-build-001",
+        "source_id": "bong-2019-parasite",
+        "work_id": "work-bong-2019-parasite",
+        "sequence_id": "seq-infiltration",
+        "scene_id": "scene-staircase",
+        "shot_id": "shot-staircase-ascent",
+        "time_start": "00:25:00.000",
+        "time_end": "00:25:20.000",
+        "shot_index": 2,
+        "keyframes": [
+            "kf_p_002"
+        ],
+        "transcript": "기우가 박 사장 집 계단을 오른다. 카메라가 따라 올라간다.",
+        "visual_schema_json": {
+            "composition": "staircase_motif",
+            "lighting": "high_key_contrast",
+            "color_palette": [
+                "#627D98",
+                "#7B8794",
+                "#F7FAFC"
+            ],
+            "camera_motion": "controlled",
+            "blocking": "vertical_ascent",
+            "pacing": "medium"
+        },
+        "audio_schema_json": {
+            "sound_design": "footsteps_echo",
+            "music_mood": "anticipation"
+        },
+        "motifs": [
+            "staircase",
+            "class_ascent",
+            "infiltration"
+        ],
+        "evidence_refs": [
+            "source:00:25:00-00:25:20"
+        ],
+        "confidence": 0.95,
+        "prompt_version": "gemini-video-v1",
+        "model_version": "gemini-3-pro-2025-12",
+        "generated_at": "2025-12-26T19:00:00Z"
+    },
+    {
+        "segment_id": "seg-bong-2019-parasite-payoff-001",
+        "source_id": "bong-2019-parasite",
+        "work_id": "work-bong-2019-parasite",
+        "sequence_id": "seq-flood",
+        "scene_id": "scene-basement-flood",
+        "shot_id": "shot-flood-descent",
+        "time_start": "01:12:00.000",
+        "time_end": "01:12:30.000",
+        "shot_index": 3,
+        "keyframes": [
+            "kf_p_003"
+        ],
+        "transcript": "폭우 속 기택 가족이 반지하로 돌아온다. 물이 차오른다.",
+        "visual_schema_json": {
+            "composition": "vertical_blocking",
+            "lighting": "low_key_rain",
+            "color_palette": [
+                "#102A43",
+                "#243B53",
+                "#334E68"
+            ],
+            "camera_motion": "handheld",
+            "blocking": "descent_spiral",
+            "pacing": "fast"
+        },
+        "audio_schema_json": {
+            "sound_design": "rain_flood",
+            "music_mood": "catastrophe"
+        },
+        "motifs": [
+            "flood",
+            "descent",
+            "class_collapse"
+        ],
+        "evidence_refs": [
+            "source:01:12:00-01:12:30"
+        ],
+        "confidence": 0.94,
+        "prompt_version": "gemini-video-v1",
+        "model_version": "gemini-3-pro-2025-12",
+        "generated_at": "2025-12-26T19:00:00Z"
+    },
+    {
+        "segment_id": "seg-bong-2013-snowpiercer-hook-001",
+        "source_id": "bong-2013-snowpiercer",
+        "work_id": "work-bong-2013-snowpiercer",
+        "sequence_id": "seq-tail-section",
+        "scene_id": "scene-crowded-car",
+        "shot_id": "shot-tail-wide",
+        "time_start": "00:05:00.000",
+        "time_end": "00:05:30.000",
+        "shot_index": 1,
+        "keyframes": [
+            "kf_s_001"
+        ],
+        "transcript": "꼬리칸의 비참한 환경. 좁고 어두운 공간에 수백명.",
+        "visual_schema_json": {
+            "composition": "horizontal_blocking",
+            "lighting": "minimal",
+            "color_palette": [
+                "#1C1C1C",
+                "#2D2D2D",
+                "#3D3D3D"
+            ],
+            "camera_motion": "static",
+            "blocking": "crowd_mass",
+            "pacing": "slow"
+        },
+        "audio_schema_json": {
+            "sound_design": "engine_rumble",
+            "music_mood": "oppressive"
+        },
+        "motifs": [
+            "train",
+            "class_division",
+            "horizontal_space"
+        ],
+        "evidence_refs": [
+            "source:00:05:00-00:05:30"
+        ],
+        "confidence": 0.88,
+        "prompt_version": "gemini-video-v1",
+        "model_version": "gemini-3-pro-2025-12",
+        "generated_at": "2025-12-26T19:00:00Z"
+    },
+    {
+        "segment_id": "seg-bong-2003-memories-hook-001",
+        "source_id": "bong-2003-memories-of-murder",
+        "work_id": "work-bong-2003-memories",
+        "sequence_id": "seq-crime-scene",
+        "scene_id": "scene-field",
+        "shot_id": "shot-field-rain",
+        "time_start": "00:02:00.000",
+        "time_end": "00:02:30.000",
+        "shot_index": 1,
+        "keyframes": [
+            "kf_m_001"
+        ],
+        "transcript": "비 오는 들판. 시체 발견 현장. 형사가 도착한다.",
+        "visual_schema_json": {
+            "composition": "wide_establishing",
+            "lighting": "overcast_natural",
+            "color_palette": [
+                "#27241D",
+                "#423D33",
+                "#504A40"
+            ],
+            "camera_motion": "controlled",
+            "blocking": "isolation_framing",
+            "pacing": "slow"
+        },
+        "audio_schema_json": {
+            "sound_design": "rain_rural",
+            "music_mood": "melancholy"
+        },
+        "motifs": [
+            "rain",
+            "field",
+            "crime_scene"
+        ],
+        "evidence_refs": [
+            "source:00:02:00-00:02:30"
+        ],
+        "confidence": 0.90,
+        "prompt_version": "gemini-video-v1",
+        "model_version": "gemini-3-pro-2025-12",
+        "generated_at": "2025-12-26T19:00:00Z"
+    }
+]

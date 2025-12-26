@@ -1,0 +1,52 @@
+[
+    {
+        "source_id": "bong-2019-parasite",
+        "pattern_name": "staircase_motif",
+        "pattern_type": "scene",
+        "description": "계단을 통한 수직 이동과 계급 상승/하락의 은유",
+        "weight": 0.9,
+        "confidence": 0.94,
+        "evidence_ref": "db:video_segments:seg-bong-2019-parasite-build-001",
+        "status": "validated"
+    },
+    {
+        "source_id": "bong-2019-parasite",
+        "pattern_name": "vertical_blocking",
+        "pattern_type": "scene",
+        "description": "프레임 내 수직 공간 배치로 권력 관계 표현",
+        "weight": 0.85,
+        "confidence": 0.92,
+        "evidence_ref": "db:video_segments:seg-bong-2019-parasite-hook-001",
+        "status": "validated"
+    },
+    {
+        "source_id": "bong-2019-parasite",
+        "pattern_name": "rain_catastrophe",
+        "pattern_type": "scene",
+        "description": "비가 내리면 하층민에게 재앙이 온다",
+        "weight": 0.75,
+        "confidence": 0.88,
+        "evidence_ref": "db:video_segments:seg-bong-2019-parasite-payoff-001",
+        "status": "validated"
+    },
+    {
+        "source_id": "bong-2013-snowpiercer",
+        "pattern_name": "horizontal_blocking",
+        "pattern_type": "scene",
+        "description": "수평 공간을 통한 계급 이동 표현",
+        "weight": 0.8,
+        "confidence": 0.86,
+        "evidence_ref": "db:video_segments:seg-bong-2013-snowpiercer-hook-001",
+        "status": "validated"
+    },
+    {
+        "source_id": "bong-2003-memories-of-murder",
+        "pattern_name": "rain_motif",
+        "pattern_type": "scene",
+        "description": "비는 진실을 가리고, 증거를 씻어간다",
+        "weight": 0.8,
+        "confidence": 0.88,
+        "evidence_ref": "db:video_segments:seg-bong-2003-memories-hook-001",
+        "status": "validated"
+    }
+]

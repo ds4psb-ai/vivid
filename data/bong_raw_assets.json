@@ -1,0 +1,65 @@
+[
+    {
+        "source_id": "bong-2019-parasite",
+        "source_url": "https://www.themoviedb.org/movie/496243-parasite",
+        "source_type": "video",
+        "title": "기생충 (Parasite)",
+        "director": "봉준호",
+        "year": 2019,
+        "duration_sec": 7920,
+        "language": "ko",
+        "tags": [
+            "auteur",
+            "bong-joon-ho",
+            "cannes",
+            "oscar",
+            "class-divide"
+        ],
+        "scene_ranges": "00:00:00-02:12:00",
+        "notes": "2019 칸 황금종려상 + 아카데미 작품상. 클래스 간 수직 공간 연출의 극치.",
+        "rights_status": "ok",
+        "created_by": "curator"
+    },
+    {
+        "source_id": "bong-2013-snowpiercer",
+        "source_url": "https://www.themoviedb.org/movie/124981-snowpiercer",
+        "source_type": "video",
+        "title": "설국열차 (Snowpiercer)",
+        "director": "봉준호",
+        "year": 2013,
+        "duration_sec": 7560,
+        "language": "ko",
+        "tags": [
+            "auteur",
+            "bong-joon-ho",
+            "dystopia",
+            "horizontal-motion",
+            "class-divide"
+        ],
+        "scene_ranges": "00:00:00-02:06:00",
+        "notes": "수평 공간을 통한 계급 이동. 열차 칸별 미장센 변화가 핵심.",
+        "rights_status": "ok",
+        "created_by": "curator"
+    },
+    {
+        "source_id": "bong-2003-memories-of-murder",
+        "source_url": "https://www.themoviedb.org/movie/4893-memory-of-murder",
+        "source_type": "video",
+        "title": "살인의 추억 (Memories of Murder)",
+        "director": "봉준호",
+        "year": 2003,
+        "duration_sec": 7920,
+        "language": "ko",
+        "tags": [
+            "auteur",
+            "bong-joon-ho",
+            "thriller",
+            "rain-motif",
+            "rural-noir"
+        ],
+        "scene_ranges": "00:00:00-02:12:00",
+        "notes": "한국 사회 구조와 개인의 한계를 블랙코미디와 스릴러로 표현.",
+        "rights_status": "ok",
+        "created_by": "curator"
+    }
+]

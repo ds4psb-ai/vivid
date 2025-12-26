@@ -1,0 +1,23 @@
+[
+    {
+        "notebook_id": "nlb-bong-joon-ho",
+        "title": "봉준호 거장 노트북 (Bong Joon-ho Auteur Notebook)",
+        "notebook_ref": "https://notebooklm.google.com/notebook/bong-joon-ho-auteur",
+        "cluster_id": "cluster-bong-class-divide",
+        "cluster_label": "Class Divide / Vertical Tension",
+        "cluster_tags": [
+            "class_divide",
+            "vertical_blocking",
+            "staircase_motif",
+            "rain"
+        ],
+        "guide_scope": "auteur",
+        "curator_notes": "봉준호 감독의 핵심 DNA: 계급 갈등의 수직적 공간 표현, 계단 모티프, 블랙코미디와 비극의 공존.",
+        "source_ids": [
+            "bong-2019-parasite",
+            "bong-2013-snowpiercer",
+            "bong-2003-memories-of-murder"
+        ],
+        "source_count": 3
+    }
+]

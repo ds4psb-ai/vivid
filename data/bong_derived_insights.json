@@ -1,0 +1,175 @@
+[
+    {
+        "source_id": "bong-2019-parasite",
+        "summary": "계급 갈등의 수직적 공간 연출. 반지하-계단-대저택 구조로 사회 구조를 시각화.",
+        "output_type": "report",
+        "output_language": "ko",
+        "prompt_version": "nlm-guide-v1",
+        "model_version": "notebooklm-2025-12",
+        "guide_type": "homage",
+        "homage_guide": "계단을 통한 수직 이동을 핵심 모티프로 사용. 아래에서 위로 올라갈수록 조명이 밝아지고, 공간이 넓어진다. 반대로 하강 시 어둡고 좁아진다.",
+        "variation_guide": "수직 이동 대신 수평 이동으로 변주 가능 (설국열차 참조). 컬러는 쿨톤 유지.",
+        "template_recommendations": [
+            "tmpl-auteur-bong"
+        ],
+        "user_fit_notes": "사회 비평적 콘텐츠, 긴장감 있는 드라마에 적합.",
+        "origin_notebook_id": "nlb-bong-joon-ho",
+        "cluster_id": "cluster-bong-class-divide",
+        "cluster_label": "Class Divide / Vertical Tension",
+        "cluster_confidence": 0.94,
+        "style_logic": "vertical_blocking + staircase_motif + class_contrast",
+        "mise_en_scene": "반지하 창문, 계단, 대저택 응접실의 대비",
+        "director_intent": "계급 갈등을 공간 배치로 시각적으로 표현",
+        "labels": [
+            "class_divide",
+            "vertical",
+            "tension",
+            "staircase"
+        ],
+        "signature_motifs": [
+            "staircase",
+            "basement",
+            "rain",
+            "window"
+        ],
+        "camera_motion": {
+            "mode": "controlled",
+            "signature": "vertical_tracking"
+        },
+        "color_palette": {
+            "bias": "cool",
+            "signature": [
+                "#1F2933",
+                "#323F4B",
+                "#627D98"
+            ]
+        },
+        "pacing": {
+            "tempo": "medium",
+            "signature": "tension_build_slow_release"
+        },
+        "key_patterns": [
+            {
+                "pattern_name": "staircase_motif",
+                "pattern_type": "scene",
+                "description": "계단을 통한 수직 이동과 계급 상승/하락의 은유",
+                "weight": 0.9
+            },
+            {
+                "pattern_name": "vertical_blocking",
+                "pattern_type": "scene",
+                "description": "프레임 내 수직 공간 배치로 권력 관계 표현",
+                "weight": 0.85
+            },
+            {
+                "pattern_name": "rain_catastrophe",
+                "pattern_type": "scene",
+                "description": "비가 내리면 하층민에게 재앙이 온다",
+                "weight": 0.75
+            }
+        ],
+        "confidence": 0.92,
+        "notebook_id": "nlb-bong-joon-ho",
+        "notebook_ref": "https://notebooklm.google.com/notebook/bong-joon-ho-auteur",
+        "evidence_refs": [
+            "db:video_segments:seg-bong-2019-parasite-hook-001",
+            "db:video_segments:seg-bong-2019-parasite-build-001"
+        ],
+        "generated_at": "2025-12-26T19:00:00Z"
+    },
+    {
+        "source_id": "bong-2019-parasite",
+        "summary": "기생충 Beat Sheet",
+        "output_type": "video_overview",
+        "output_language": "ko",
+        "prompt_version": "nlm-guide-v1",
+        "model_version": "notebooklm-2025-12",
+        "guide_type": "story",
+        "story_beats": [
+            {
+                "beat": "HOOK",
+                "note": "반지하 창문으로 보이는 취객. 가난한 현실 직면."
+            },
+            {
+                "beat": "BUILD",
+                "note": "기우의 침투. 계단을 오르며 새 세계로 진입."
+            },
+            {
+                "beat": "TURN",
+                "note": "지하 벙커 발견. 또 다른 기생충의 존재."
+            },
+            {
+                "beat": "PAYOFF",
+                "note": "폭우와 홍수. 계급 구조의 붕괴."
+            },
+            {
+                "beat": "CLIMAX",
+                "note": "파티 장면. 폭력의 분출."
+            }
+        ],
+        "notebook_id": "nlb-bong-joon-ho",
+        "notebook_ref": "https://notebooklm.google.com/notebook/bong-joon-ho-auteur",
+        "evidence_refs": [
+            "db:video_segments:seg-bong-2019-parasite-payoff-001"
+        ],
+        "generated_at": "2025-12-26T19:00:00Z"
+    },
+    {
+        "source_id": "bong-2013-snowpiercer",
+        "summary": "설국열차 스토리보드 시드",
+        "output_type": "video_overview",
+        "output_language": "ko",
+        "prompt_version": "nlm-guide-v1",
+        "model_version": "notebooklm-2025-12",
+        "guide_type": "storyboard",
+        "storyboard_cards": [
+            {
+                "shot": 1,
+                "composition": "horizontal_blocking",
+                "note": "꼬리칸 와이드샷. 비참한 군중."
+            },
+            {
+                "shot": 2,
+                "composition": "tunnel_perspective",
+                "note": "열차 복도 원근감. 앞으로의 여정 암시."
+            },
+            {
+                "shot": 3,
+                "composition": "contrast_cut",
+                "note": "계급별 칸 대비. 어둠에서 빛으로."
+            }
+        ],
+        "notebook_id": "nlb-bong-joon-ho",
+        "notebook_ref": "https://notebooklm.google.com/notebook/bong-joon-ho-auteur",
+        "evidence_refs": [
+            "db:video_segments:seg-bong-2013-snowpiercer-hook-001"
+        ],
+        "generated_at": "2025-12-26T19:00:00Z"
+    },
+    {
+        "source_id": "bong-2003-memories-of-murder",
+        "summary": "살인의 추억 페르소나 프로파일",
+        "output_type": "report",
+        "output_language": "ko",
+        "prompt_version": "nlm-guide-v1",
+        "model_version": "notebooklm-2025-12",
+        "guide_type": "persona",
+        "persona_profile": "초기 봉준호: 블랙코미디와 사회 구조 비판의 독특한 조합. 비 오는 농촌의 우울함과 형사들의 무력감.",
+        "synapse_logic": "비 + 들판 + 실패 = 봉준호식 멜랑콜리. 해결되지 않는 미스터리가 핵심.",
+        "key_patterns": [
+            {
+                "pattern_name": "rain_motif",
+                "pattern_type": "scene",
+                "description": "비는 진실을 가리고, 증거를 씻어간다",
+                "weight": 0.8
+            }
+        ],
+        "confidence": 0.88,
+        "notebook_id": "nlb-bong-joon-ho",
+        "notebook_ref": "https://notebooklm.google.com/notebook/bong-joon-ho-auteur",
+        "evidence_refs": [
+            "db:video_segments:seg-bong-2003-memories-hook-001"
+        ],
+        "generated_at": "2025-12-26T19:00:00Z"
+    }
+]
