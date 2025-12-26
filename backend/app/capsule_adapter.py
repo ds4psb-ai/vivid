@@ -101,6 +101,70 @@ EXTERNAL_ADAPTER_RETRIES = int(os.getenv("EXTERNAL_ADAPTER_RETRIES", "1"))
 logger = logging.getLogger(__name__)
 
 
+def validate_input_contracts(
+    inputs: Dict[str, Any],
+    input_contracts: Dict[str, Any],
+) -> Tuple[bool, List[str]]:
+    """Validate inputs against capsule input contracts.
+    
+    Args:
+        inputs: The actual inputs provided.
+        input_contracts: The contract definition from capsule spec.
+    
+    Returns:
+        Tuple of (is_valid, errors).
+    """
+    errors: List[str] = []
+    
+    required = input_contracts.get("required", [])
+    optional = input_contracts.get("optional", [])
+    max_upstream = input_contracts.get("maxUpstream")
+    allowed_types = input_contracts.get("allowedTypes", [])
+    
+    # Check required inputs
+    for key in required:
+        if key not in inputs or inputs[key] is None:
+            errors.append(f"Missing required input: {key}")
+    
+    # Check unknown inputs (warn only)
+    all_known = set(required) | set(optional)
+    for key in inputs:
+        if key not in all_known and all_known:
+            logger.warning("Unknown input key (not in contract): %s", key)
+    
+    # Check maxUpstream if provided
+    if max_upstream is not None:
+        upstream_count = len([k for k in inputs if inputs[k] is not None])
+        if upstream_count > max_upstream:
+            errors.append(f"Too many upstream inputs: {upstream_count} > {max_upstream}")
+    
+    # Check allowedTypes if provided
+    if allowed_types:
+        for key, value in inputs.items():
+            if value is None:
+                continue
+            value_type = type(value).__name__
+            # Simple type mapping
+            type_map = {
+                "str": "string",
+                "int": "number",
+                "float": "number",
+                "list": "array",
+                "dict": "object",
+                "bool": "boolean",
+            }
+            mapped_type = type_map.get(value_type, value_type)
+            if mapped_type not in allowed_types and value_type not in allowed_types:
+                # Warning only for type mismatch (not hard error)
+                logger.warning("Input %s has type %s, expected one of %s", key, mapped_type, allowed_types)
+    
+    is_valid = len(errors) == 0
+    if errors:
+        logger.error("Input contract validation failed: %s", errors)
+    
+    return is_valid, errors
+
+
 def _call_external_api(
     url: str,
     api_key: str,
@@ -223,30 +287,74 @@ def _run_opal(
     )
 
 
-def _normalize_evidence_refs(refs: List[str]) -> List[str]:
+def _normalize_evidence_refs(
+    refs: List[str],
+    strict: bool = False,
+) -> Tuple[List[str], List[str]]:
+    """Normalize and filter evidence refs.
+    
+    Args:
+        refs: List of raw evidence reference strings.
+        strict: If True, reject non-compliant refs; if False, map to fallback.
+    
+    Returns:
+        Tuple of (normalized_refs, warnings).
+    """
     normalized: List[str] = []
+    warnings: List[str] = []
     seen: set[str] = set()
+    
+    ALLOWED_DB_TABLES = {
+        "raw_assets", "video_segments", "evidence_records",
+        "patterns", "pattern_trace", "notebook_library",
+    }
+    
     for ref in refs:
         if not isinstance(ref, str):
+            warnings.append(f"Non-string ref ignored: {type(ref)}")
             continue
         cleaned = ref.strip()
         if not cleaned:
             continue
-        if cleaned.startswith(("sheet:", "db:")):
+        
+        # Already compliant
+        if cleaned.startswith("sheet:"):
             mapped = cleaned
+        elif cleaned.startswith("db:"):
+            # Validate db table is allowed
+            parts = cleaned.split(":")
+            if len(parts) >= 2 and parts[1] in ALLOWED_DB_TABLES:
+                mapped = cleaned
+            else:
+                table = parts[1] if len(parts) >= 2 else "unknown"
+                warnings.append(f"Disallowed db table: {table} in {cleaned}")
+                if strict:
+                    continue
+                mapped = f"sheet:VIVID_DERIVED_INSIGHTS:{table}_{parts[2] if len(parts) > 2 else 'unknown'}"
+        # Legacy format conversion
         elif cleaned.startswith("evidence:sheet:row:"):
             row_id = cleaned.replace("evidence:sheet:row:", "", 1).strip() or "unknown"
             mapped = f"sheet:VIVID_DERIVED_INSIGHTS:{row_id}"
+            warnings.append(f"Legacy ref converted: {cleaned} -> {mapped}")
+        # Non-compliant refs
         else:
+            warnings.append(f"Non-compliant ref: {cleaned}")
+            if strict:
+                continue
             safe = "".join(
                 ch if ch.isalnum() or ch in ("-", "_") else "_" for ch in cleaned
             )
             mapped = f"sheet:VIVID_DERIVED_INSIGHTS:{safe or 'unknown'}"
+        
         if mapped in seen:
             continue
         seen.add(mapped)
         normalized.append(mapped)
-    return normalized
+    
+    if warnings:
+        logger.warning("Evidence ref normalization warnings: %s", warnings)
+    
+    return normalized, warnings
 
 
 def compute_style_vector(params: Dict[str, Any], capsule_id: str) -> List[float]:
@@ -443,7 +551,12 @@ def execute_capsule(
     if progress_cb:
         progress_cb("Finalizing summary", 95)
 
-    return summary, _normalize_evidence_refs(evidence_refs)
+    # Normalize evidence refs and record warnings
+    normalized_refs, evidence_warnings = _normalize_evidence_refs(evidence_refs)
+    if evidence_warnings:
+        summary["evidence_warnings"] = evidence_warnings
+
+    return summary, normalized_refs
 
 
 def generate_storyboard_preview(
