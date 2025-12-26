@@ -42,6 +42,10 @@ return top_k(population, k=3)
 - **Multi-objective**: 품질 + 비용 + 생성 시간 동시 최적화
 - **Early Stopping**: 개선 폭이 작으면 조기 종료
 
+구현 노트:
+- `/api/v1/spec/optimize`는 `objective`(balanced/quality/efficient/cost/latency)와 `weights`를 지원한다.
+- 비용/지연은 파라미터 기반의 **complexity proxy**로 계산되며, 품질 점수와 함께 결합된다.
+
 ---
 
 ## 2) Reinforcement Learning (RL) 설계

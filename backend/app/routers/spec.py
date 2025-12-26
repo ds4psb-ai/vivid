@@ -27,6 +27,8 @@ class OptimizeRequest(BaseModel):
     nodes: list
     edges: list
     target_profile: str = "balanced"
+    objective: Optional[str] = None
+    weights: Optional[dict] = None
 
 
 class RecommendationResponse(BaseModel):
@@ -50,7 +52,12 @@ async def compute_spec(data: SpecRequest) -> SpecResponse:
 async def optimize_params(data: OptimizeRequest) -> OptimizeResponse:
     """Run GA optimization on canvas parameters."""
     canvas_data = {"nodes": data.nodes, "edges": data.edges}
-    recommendations = optimize_canvas_params(canvas_data, data.target_profile)
+    recommendations = optimize_canvas_params(
+        canvas_data,
+        data.target_profile,
+        objective=data.objective,
+        weights=data.weights,
+    )
     
     return OptimizeResponse(
         recommendations=[

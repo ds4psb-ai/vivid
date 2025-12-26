@@ -660,7 +660,8 @@ class ApiClient {
   async optimizeParams(
     nodes: Node[],
     edges: Edge[],
-    targetProfile: string = "balanced"
+    targetProfile: string = "balanced",
+    options?: { objective?: string; weights?: Record<string, number> }
   ): Promise<{
     recommendations: Array<{
       params: Record<string, unknown>;
@@ -670,7 +671,13 @@ class ApiClient {
   }> {
     return this.request("/api/v1/spec/optimize", {
       method: "POST",
-      body: JSON.stringify({ nodes, edges, target_profile: targetProfile }),
+      body: JSON.stringify({
+        nodes,
+        edges,
+        target_profile: targetProfile,
+        objective: options?.objective,
+        weights: options?.weights,
+      }),
     });
   }
 

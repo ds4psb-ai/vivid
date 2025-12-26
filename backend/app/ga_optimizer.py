@@ -63,7 +63,59 @@ def crossover(parent1: Dict[str, Any], parent2: Dict[str, Any]) -> Dict[str, Any
     return child
 
 
-def fitness_function(params: Dict[str, Any], target_profile: str = "balanced") -> float:
+def _estimate_complexity_proxy(params: Dict[str, Any]) -> float:
+    """Estimate relative cost/latency proxy from params (0~1)."""
+    score = 0.0
+    style_intensity = params.get("style_intensity")
+    if isinstance(style_intensity, (int, float)):
+        score += max(0.0, min(float(style_intensity), 1.0))
+
+    pacing = params.get("pacing")
+    if pacing == "fast":
+        score += 0.2
+    elif pacing == "slow":
+        score -= 0.1
+
+    camera = params.get("camera_motion")
+    if camera == "dynamic":
+        score += 0.2
+    elif camera == "static":
+        score -= 0.1
+
+    chaos_bias = params.get("chaos_bias")
+    if isinstance(chaos_bias, (int, float)):
+        score += max(0.0, min(float(chaos_bias), 1.0)) * 0.1
+
+    return max(0.0, min(score, 1.0))
+
+
+def _normalize_weights(weights: Dict[str, float]) -> Dict[str, float]:
+    total = sum(max(0.0, float(v)) for v in weights.values())
+    if total <= 0:
+        return weights
+    return {k: max(0.0, float(v)) / total for k, v in weights.items()}
+
+
+def _resolve_objective_weights(objective: Optional[str], weights: Optional[Dict[str, float]]) -> Dict[str, float]:
+    if weights:
+        return _normalize_weights(weights)
+    objective = (objective or "balanced").strip().lower()
+    presets = {
+        "balanced": {"quality": 0.6, "cost": 0.2, "latency": 0.2},
+        "quality": {"quality": 0.8, "cost": 0.1, "latency": 0.1},
+        "efficient": {"quality": 0.4, "cost": 0.3, "latency": 0.3},
+        "cost": {"quality": 0.3, "cost": 0.5, "latency": 0.2},
+        "latency": {"quality": 0.3, "cost": 0.2, "latency": 0.5},
+    }
+    return presets.get(objective, presets["balanced"])
+
+
+def fitness_function(
+    params: Dict[str, Any],
+    target_profile: str = "balanced",
+    objective: Optional[str] = None,
+    weights: Optional[Dict[str, float]] = None,
+) -> float:
     """Calculate fitness score for a parameter set."""
     score = 0.0
     
@@ -106,7 +158,19 @@ def fitness_function(params: Dict[str, Any], target_profile: str = "balanced") -
     # Add some randomness to avoid local optima
     score += random.gauss(0, 2)
     
-    return max(0, score)
+    quality_score = max(0.0, score)
+    proxy = _estimate_complexity_proxy(params)
+    weight_map = _resolve_objective_weights(objective, weights)
+    quality_norm = min(quality_score / 100.0, 1.0)
+    cost_score = 1.0 - proxy
+    latency_score = 1.0 - proxy
+
+    combined = (
+        quality_norm * weight_map.get("quality", 0.0)
+        + cost_score * weight_map.get("cost", 0.0)
+        + latency_score * weight_map.get("latency", 0.0)
+    )
+    return max(0.0, combined * 100.0)
 
 
 def evidence_based_fitness(
@@ -175,6 +239,8 @@ def run_ga(
     mutation_rate: float = 0.5,
     early_stop_patience: int = 3,
     min_improvement: float = 0.5,
+    objective: Optional[str] = None,
+    weights: Optional[Dict[str, float]] = None,
 ) -> List[Tuple[Dict[str, Any], float]]:
     """
     Run genetic algorithm optimization with adaptive mutation and early stopping.
@@ -198,7 +264,10 @@ def run_ga(
         adaptive_rate = max(0.1, mutation_rate * (1.0 - progress))
 
         # Calculate fitness for all individuals
-        scored = [(ind, fitness_function(ind, target_profile)) for ind in population]
+        scored = [
+            (ind, fitness_function(ind, target_profile, objective, weights))
+            for ind in population
+        ]
         scored.sort(key=lambda x: x[1], reverse=True)
 
         current_best = scored[0][1] if scored else float("-inf")
@@ -225,7 +294,10 @@ def run_ga(
         population = new_population
     
     # Final scoring and selection
-    scored = [(ind, fitness_function(ind, target_profile)) for ind in population]
+    scored = [
+        (ind, fitness_function(ind, target_profile, objective, weights))
+        for ind in population
+    ]
     scored.sort(key=lambda x: x[1], reverse=True)
     
     return scored[:top_k]
@@ -234,6 +306,8 @@ def run_ga(
 def optimize_canvas_params(
     canvas_data: Dict[str, Any],
     target_profile: str = "balanced",
+    objective: Optional[str] = None,
+    weights: Optional[Dict[str, float]] = None,
 ) -> List[Dict[str, Any]]:
     """
     Optimize parameters for a canvas using GA.
@@ -260,7 +334,13 @@ def optimize_canvas_params(
         }
     
     # Run GA
-    results = run_ga(current_params, target_profile, top_k=3)
+    results = run_ga(
+        current_params,
+        target_profile,
+        top_k=3,
+        objective=objective,
+        weights=weights,
+    )
     
     # Format recommendations
     recommendations = []
