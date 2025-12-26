@@ -14,7 +14,7 @@ if str(ROOT_DIR) not in sys.path:
 
 from app.database import AsyncSessionLocal, init_db
 from app.ingest_rules import ensure_label, is_mega_notebook_notes
-from app.models import EvidenceRecord, NotebookLibrary, RawAsset
+from app.models import EvidenceRecord, NotebookLibrary, RawAsset, SourcePack
 from app.routers.ingest import EvidenceRecordRequest
 
 
@@ -163,6 +163,11 @@ async def _upsert_records(
                 continue
             if raw_asset and raw_asset.rights_status == "restricted":
                 continue
+            pack_result = await session.execute(
+                select(SourcePack).where(SourcePack.pack_id == row["source_pack_id"])
+            )
+            if not pack_result.scalars().first():
+                raise ValueError(f"source_pack_id not found: {row['source_pack_id']}")
 
             result = await session.execute(
                 select(EvidenceRecord).where(

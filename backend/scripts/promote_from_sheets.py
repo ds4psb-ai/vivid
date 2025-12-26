@@ -40,6 +40,7 @@ from app.models import (
     PatternVersion,
     CapsuleSpec,
     RawAsset,
+    SourcePack,
     VideoSegment,
     Template,
     TemplateVersion,
@@ -769,6 +770,12 @@ async def _upsert_evidence_records(
             source_pack_id = row.get("source_pack_id") or row.get("sourcePackId") or ""
             if not source_pack_id:
                 _append_quarantine(quarantine, "VIVID_DERIVED_INSIGHTS", "missing_source_pack_id", row)
+                continue
+            pack_result = await session.execute(
+                select(SourcePack).where(SourcePack.pack_id == source_pack_id)
+            )
+            if not pack_result.scalars().first():
+                _append_quarantine(quarantine, "VIVID_DERIVED_INSIGHTS", "unknown_source_pack_id", row)
                 continue
             key = (
                 source_id,

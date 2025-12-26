@@ -244,6 +244,7 @@ python scripts/ingest_notebook_assets.py --input /path/notebook_assets.json --dr
 작성 규칙:
 - 리스트는 콤마 또는 JSON 배열
 - 객체 필드는 JSON 형식 권장
+- `source_pack_id`는 `source_packs.pack_id`에 존재해야 함 (미존재 시 quarantine)
 - `evidence_refs`는 `sheet:{Sheet}:{RowId}` 또는 `db:{table}:{id}`만 허용
 - `key_patterns`는 `pattern_name`(snake_case) + `pattern_type`(taxonomy) 규칙을 따라야 함
 

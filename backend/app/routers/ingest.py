@@ -34,6 +34,7 @@ from app.models import (
     PatternTrace,
     PatternVersion,
     RawAsset,
+    SourcePack,
     VideoSegment,
 )
 
@@ -1192,6 +1193,12 @@ async def upsert_evidence_record(
         raise HTTPException(status_code=404, detail="Raw asset not found")
     if raw_asset.rights_status == "restricted":
         raise HTTPException(status_code=403, detail="Restricted asset cannot be promoted")
+
+    pack_result = await db.execute(
+        select(SourcePack).where(SourcePack.pack_id == data.source_pack_id)
+    )
+    if not pack_result.scalars().first():
+        raise HTTPException(status_code=400, detail="source_pack_id not found")
 
     result = await db.execute(
         select(EvidenceRecord).where(
