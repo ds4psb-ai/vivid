@@ -1,0 +1,18 @@
+[
+  {
+    "source_id": "auteur-sample-2000-film-one",
+    "summary": "Ops-only synthesis from a mega notebook pack.",
+    "output_type": "data_table",
+    "output_language": "en",
+    "prompt_version": "nlm-guide-v1",
+    "model_version": "notebooklm-2025-12",
+    "guide_type": "table",
+    "labels": ["ops_only", "mega_notebook"],
+    "cluster_id": "cluster-auteur-sample",
+    "cluster_label": "ops discovery",
+    "notebook_id": "nlb-mega-ops-001",
+    "notebook_ref": "https://notebooklm.google.com/notebook/mega-ops-001",
+    "evidence_refs": ["sheet:VIVID_DERIVED_INSIGHTS:row-mega-001"],
+    "generated_at": "2025-12-26T21:00:00Z"
+  }
+]

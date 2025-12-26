@@ -76,6 +76,16 @@ _NOTEBOOK_ASSET_TYPE_ALLOWLIST = {
     "link",
 }
 
+
+def _is_mega_notebook_notes(notes: Optional[str]) -> bool:
+    if not notes:
+        return False
+    lowered = notes.lower()
+    return any(
+        token in lowered
+        for token in ("mega_notebook", "mega-notebook", "mega notebook", "ops_only", "ops-only")
+    )
+
 class RawAssetRequest(BaseModel):
     source_id: str
     source_url: str
@@ -1258,7 +1268,16 @@ async def upsert_evidence_record(
     record.style_logic = data.style_logic
     record.mise_en_scene = data.mise_en_scene
     record.director_intent = data.director_intent
-    record.labels = data.labels or []
+    labels = data.labels or []
+    if data.notebook_id:
+        notebook_result = await db.execute(
+            select(NotebookLibrary).where(NotebookLibrary.notebook_id == data.notebook_id)
+        )
+        notebook = notebook_result.scalars().first()
+        if notebook and _is_mega_notebook_notes(notebook.curator_notes):
+            if "ops_only" not in labels:
+                labels.append("ops_only")
+    record.labels = labels
     record.signature_motifs = data.signature_motifs or []
     record.camera_motion = data.camera_motion or {}
     record.color_palette = data.color_palette or {}

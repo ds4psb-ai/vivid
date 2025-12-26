@@ -289,6 +289,35 @@ def _parse_list(value: str) -> List[Any]:
     return _split_list(value)
 
 
+def _ensure_label(labels: List[Any], label: str) -> List[Any]:
+    cleaned = [str(item).strip() for item in labels if str(item).strip()]
+    if label not in cleaned:
+        cleaned.append(label)
+    return cleaned
+
+
+def _is_mega_notebook_notes(notes: Optional[str]) -> bool:
+    if not notes:
+        return False
+    lowered = str(notes).lower()
+    return any(
+        token in lowered
+        for token in ("mega_notebook", "mega-notebook", "mega notebook", "ops_only", "ops-only")
+    )
+
+
+def _collect_mega_notebook_ids(rows: Iterable[Dict[str, str]]) -> set[str]:
+    mega_ids: set[str] = set()
+    for row in rows:
+        notebook_id = row.get("notebook_id")
+        if not notebook_id:
+            continue
+        notes = row.get("curator_notes") or ""
+        if _is_mega_notebook_notes(notes):
+            mega_ids.add(notebook_id)
+    return mega_ids
+
+
 def _parse_int(value: str) -> Optional[int]:
     if value in (None, ""):
         return None
@@ -763,7 +792,9 @@ async def _upsert_evidence_records(
     rows: Iterable[Dict[str, str]],
     rights_map: Dict[str, str],
     quarantine: List[Dict[str, str]],
+    mega_notebook_ids: Optional[set[str]] = None,
 ) -> None:
+    mega_notebook_ids = mega_notebook_ids or set()
     async with AsyncSessionLocal() as session:
         for row in rows:
             source_id = row.get("source_id")
@@ -828,7 +859,11 @@ async def _upsert_evidence_records(
             record.style_logic = row.get("style_logic") or record.style_logic
             record.mise_en_scene = row.get("mise_en_scene") or record.mise_en_scene
             record.director_intent = row.get("director_intent") or record.director_intent
-            record.labels = _parse_list(row.get("labels") or "") or record.labels
+            labels = _parse_list(row.get("labels") or "")
+            notebook_id = row.get("notebook_id") or ""
+            if notebook_id and notebook_id in mega_notebook_ids:
+                labels = _ensure_label(labels, "ops_only")
+            record.labels = labels or record.labels
             record.signature_motifs = _parse_list(row.get("signature_motifs") or "") or record.signature_motifs
             record.camera_motion = _parse_dict(row.get("camera_motion") or "") or record.camera_motion
             record.color_palette = _parse_dict(row.get("color_palette") or "") or record.color_palette
@@ -1120,11 +1155,12 @@ async def main() -> None:
     candidate_rows = sheets.get("candidates", [])
     trace_rows = sheets.get("trace", [])
 
+    mega_notebook_ids = _collect_mega_notebook_ids(notebook_rows)
     await _upsert_notebook_library(notebook_rows, quarantine)
     await _upsert_notebook_assets(notebook_asset_rows, quarantine)
     rights_map = await _upsert_raw_assets(raw_rows, quarantine)
     await _upsert_video_segments(video_rows, rights_map, quarantine)
-    await _upsert_evidence_records(derived_rows, rights_map, quarantine)
+    await _upsert_evidence_records(derived_rows, rights_map, quarantine, mega_notebook_ids)
     derived_candidates = _derive_candidate_rows(derived_rows)
     merged_candidates = _merge_candidate_rows(candidate_rows, derived_candidates)
     candidates = await _upsert_pattern_candidates(merged_candidates, rights_map, quarantine)
