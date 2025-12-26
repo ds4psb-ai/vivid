@@ -17,6 +17,7 @@
 - **Capsule Node는 Sealed**: UI에는 입력/출력/노출 파라미터만 공개.  
   (상세: `05_CAPSULE_NODE_SPEC.md`)
 - **NotebookLM 운영 단위는 `cluster_id + temporal_phase`**를 기본으로 한다.
+- **Mega-Notebook은 발굴/집계/운영 전용**이며, 캡슐 승격은 **phase-locked pack**에서만 한다.
 - 본 문서는 흐름/역할을 재정의하지 않는다.  
   (정본: `10_PIPELINES_AND_USER_FLOWS.md`)
 
@@ -90,6 +91,7 @@ D = wL * DL(Li, Lj) + wP * DP(Pi, Pj) + wC * DC(context)
 Raw Video
   → Gemini Video Understanding
   → DB SoR (segments/shots/motifs)
+  → (Optional) Mega-Notebook (Discovery/Ops)
   → Source Pack Builder (cluster_id + temporal_phase)
   → NotebookLM Cluster Notebook
   → Derived Outputs (Sheets Bus)

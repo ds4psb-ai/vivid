@@ -10,6 +10,7 @@
 
 - NotebookLM Library is the canonical auteur knowledge base; end users never see raw notebooks.
 - NotebookLM is the **knowledge/guide layer**: cluster notebooks per auteur and output homage/variation guidance + template fit suggestions.
+- Mega-Notebook은 **발굴/집계/운영 레이어**로만 사용하며, 캡슐 승격은 **phase-locked source pack**에서만 한다.
 - Video understanding uses **Gemini 3 Pro structured outputs** and is stored in DB SoR before NotebookLM.
 - LLM-wrapped nodes are sealed capsules; only input/output ports + exposed params are public.
 - Evidence Loop remains the engine: Sheets Bus -> DB SoR -> Pattern Library/Trace -> Capsule/Template evolution.
@@ -24,6 +25,7 @@
 1. **NotebookLM Library is the canonical auteur knowledge base**  
    - Curated notebooks from auteur/popular works become a library of evidence.  
    - These notebooks are never exposed to end users; only summary outputs + evidence refs are surfaced.
+   - Mega-Notebook은 **분석/운영 집계용**이며, 캡슐/템플릿 승격에 직접 사용하지 않는다.
 
 2. **LLM-wrapped nodes are sealed capsules**  
    - Users can customize inputs + exposed params only.  
@@ -79,6 +81,7 @@ Sources -> Gemini Structuring -> Video Schema DB -> NotebookLM Library -> Sheets
 - 거장/장르 **클러스터 단위 노트북**을 유지
 - “요약/오마주/변주 가이드” 출력은 **가이드 레이어**로만 사용
 - 사용자 성향 기반 **템플릿 적합도/추천**은 참고 신호 (최종 결정은 DB SoR)
+ - Mega-Notebook은 **클러스터/phase 집계**용이며, 캡슐 생성 시에는 **phase-locked source pack**으로 재구성해야 한다.
 
 ### 3.2 Execution Layer: Capsule Nodes
 

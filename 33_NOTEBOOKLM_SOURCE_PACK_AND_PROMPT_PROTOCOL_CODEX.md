@@ -27,6 +27,7 @@
 3. **Sealed Capsule**: 노드 내부 체인은 서버에만 존재하며 UI는 I/O + 노출 파라미터만 공개한다.  
 4. **Evidence first**: 모든 주장(claim)은 EvidenceRef를 가진다.  
 5. **cluster_id + temporal_phase** 단위 운영이 기본이다.
+6. **Mega-Notebook은 발굴/집계/운영 전용**이며, 캡슐 승격은 **phase-locked pack**에서만 한다.
 
 ---
 
@@ -58,6 +59,11 @@
 ### 1.5.5 Mind Map + Data Tables
 - Mind Map은 **핵심 개념 관계**를 시각화.
 - Data Tables는 **구조화 테이블 생성 + Google Sheets export** 지원.
+
+### 1.6 Mega-Notebook Usage (Discovery/Ops)
+- Mega-Notebook은 **다중 cluster/phase 집계**를 허용하되, **캡슐 승격에는 직접 사용하지 않는다**.
+- 캡슐 승격은 반드시 `{cluster_id, temporal_phase}` **phase-locked pack**에서 파생된 출력만 사용한다.
+- Mega-Notebook 결과는 **후보 발굴/운영 인사이트/드리프트 감지**에만 사용한다.
 
 ---
 

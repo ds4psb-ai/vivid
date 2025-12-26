@@ -43,7 +43,8 @@
 3. **승격 금지**: Fusion 결과는 **바로 SoR 승격 불가**  
 4. **범위 제한**: 최대 2~3 cluster만 결합  
 5. **Phase 유지**: `cluster_id + temporal_phase` 단위 유지  
-6. **증명 루프 필수**: 실험/성과 로그 없이는 캡슐 승격 불가
+6. **Mega/Fusion 분리**: Mega‑Notebook/Fusion 결과는 **발굴/가이드 전용**이며, 캡슐 승격은 **phase‑locked pack** 재구성 후에만 가능  
+7. **증명 루프 필수**: 실험/성과 로그 없이는 캡슐 승격 불가
 
 ---
 

@@ -29,6 +29,7 @@ E2E 상세 파이프라인은 `27_AUTEUR_PIPELINE_E2E_CODEX.md`를 참조한다.
   - Studio 다중 출력(Video/Audio/Mind Map) + 출력 언어 선택은 가이드 강화에 사용  
   - 업로드 소스는 SoR가 아니며, 결과는 Sheets Bus → DB 승격 규칙을 따른다  
   - Ultra 구독 기준 다중 출력/대량 처리에 유리  
+  - Mega-Notebook은 **발굴/집계/운영 레이어**로만 사용하며, 캡슐은 **phase-locked pack**에서만 승격  
   - 출력 규격: `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
   - 소스팩/프롬프트 프로토콜: `33_NOTEBOOKLM_SOURCE_PACK_AND_PROMPT_PROTOCOL_CODEX.md`
 - **Opal**: 템플릿 시드 + 내부 워크플로 자동화  
@@ -47,6 +48,7 @@ Admin Ingest
   → Preprocess (ASR/Shot/Keyframe)
   → Gemini Structured Output (Video Schema)
   → DB SoR (Video Schema)
+  → (Optional) Mega-Notebook (Discovery/Ops)
   → NotebookLM Source Pack Builder (cluster_id + temporal_phase)
   → NotebookLM/Opal (Guide)
   → Notebook Library (Private)
@@ -63,6 +65,7 @@ Admin Ingest
 - Notebook Library는 **비공개 지식 베이스**이며 사용자에게 직접 노출하지 않음
 - Notebook Assets는 **노트북이 참조하는 자산 링크**이며 관리자 전용
 - NotebookLM은 **지식/가이드 레이어**로서 클러스터 요약, 오마주/변주 가이드, 템플릿 적합도 제안을 제공
+- Mega-Notebook은 **발굴/집계/운영 전용**이며, 캡슐 승격은 **phase-locked pack**으로만 수행
 - Persona/Profile 및 Synapse Logic은 **guide_type=persona/synapse**로 구분해 축적
 - Story/Beat/Storyboard는 **guide_type=story/beat_sheet/storyboard**로 구분하고 `story_beats`/`storyboard_cards`에 저장
 - DB에 승격되는 것은 **검증된 패턴**만
