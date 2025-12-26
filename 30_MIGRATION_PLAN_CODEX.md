@@ -8,11 +8,14 @@
 
 ## 0) Scope / Constraints
 
-- **No breaking changes**: 기존 캔버스/템플릿/캡슐이 동작해야 한다.
-- **DB SoR 유지**: NotebookLM/Opal 결과는 Sheets Bus → DB 승격 후에만 증거로 사용.
-- **Sealed capsule** 유지: 프롬프트/내부 체인/원문은 클라이언트로 노출 금지.
-- **문서 준수**: `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`와 `22_DOCUMENTATION_STRUCTURE_CODEX.md`를 기준으로 진행.
-- **Legacy 삭제 금지**: 기존 문서/데이터는 삭제하지 않고 CODEX 확장으로 정렬.
+정본 원칙/흐름은 아래 문서를 따른다:
+
+- `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`
+- `10_PIPELINES_AND_USER_FLOWS.md`
+- `05_CAPSULE_NODE_SPEC.md`
+- `08_SHEETS_SCHEMA_V1.md`
+- `11_DB_PROMOTION_RULES_V1.md`
+- `22_DOCUMENTATION_STRUCTURE_CODEX.md`
 
 ---
 
