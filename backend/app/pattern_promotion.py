@@ -8,6 +8,7 @@ from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from sqlalchemy import select
 
+from app.ingest_rules import has_label
 from app.database import AsyncSessionLocal, init_db
 from app.models import (
     CapsuleSpec,
@@ -122,6 +123,8 @@ async def _derive_candidates_from_evidence(session) -> int:
     created = 0
     for record in records:
         if not record.key_patterns:
+            continue
+        if has_label(record.labels or [], "ops_only"):
             continue
         evidence_ref = ""
         if record.evidence_refs:

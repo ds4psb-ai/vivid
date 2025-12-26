@@ -55,6 +55,21 @@ def ensure_label(labels: Iterable[str], label: str) -> List[str]:
     return cleaned
 
 
+def has_label(labels: Iterable[str], label: str) -> bool:
+    if not label:
+        return False
+    target = label.strip().lower()
+    if not target:
+        return False
+    for item in labels:
+        if not isinstance(item, str):
+            continue
+        cleaned = item.strip().lower()
+        if cleaned and cleaned == target:
+            return True
+    return False
+
+
 def is_mega_notebook_notes(notes: Optional[str]) -> bool:
     if not notes:
         return False

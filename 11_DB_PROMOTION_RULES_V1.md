@@ -76,6 +76,7 @@ DB SoR에 **승격되는 것은 validated/promoted 패턴**만.
 - **confidence < threshold**인 Candidate는 승격 보류
 - **video_structured evidence_refs**는 `VIDEO_EVIDENCE_REF_PATTERN`을 만족해야 승격
 - **derived evidence_refs**는 `sheet:`/`db:` 포맷만 허용 (불일치 시 quarantine)
+- **labels에 ops_only 포함** 시 승격 금지 (Mega-Notebook 결과 차단)
 - **pattern_trace evidence_ref**는 `VIDEO_EVIDENCE_REF_PATTERN`을 만족해야 승격
 - **key_patterns**는 `pattern_name:pattern_type` 규칙 및 taxonomy를 만족해야 승격
 - **eval_scores** 누락 시 quarantine (RAGAS 계열 점수는 optional)

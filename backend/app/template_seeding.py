@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.graph_utils import collect_storyboard_refs
 from app.template_graph import build_template_graph
+from app.ingest_rules import has_label
 from app.models import EvidenceRecord, Template, TemplateVersion
 from app.patterns import get_latest_pattern_version
 
@@ -144,7 +145,13 @@ async def seed_template_from_evidence(
         .where(EvidenceRecord.notebook_id == notebook_id)
         .order_by(EvidenceRecord.generated_at.desc().nullslast(), EvidenceRecord.updated_at.desc())
     )
-    records = result.scalars().all()
+    records = [
+        record
+        for record in result.scalars().all()
+        if not has_label(record.labels or [], "ops_only")
+    ]
+    if not records:
+        raise ValueError("No eligible evidence records (ops_only excluded)")
     story_beats = _select_story_beats(records)
     storyboard_cards = _select_storyboard_cards(records)
     derived_tags = _derive_tags(records)
