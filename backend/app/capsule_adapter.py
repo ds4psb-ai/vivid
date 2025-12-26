@@ -289,7 +289,7 @@ def _run_opal(
 
 def _normalize_evidence_refs(
     refs: List[str],
-    strict: bool = False,
+    strict: bool = True,
 ) -> Tuple[List[str], List[str]]:
     """Normalize and filter evidence refs.
     
@@ -552,7 +552,7 @@ def execute_capsule(
         progress_cb("Finalizing summary", 95)
 
     # Normalize evidence refs and record warnings
-    normalized_refs, evidence_warnings = _normalize_evidence_refs(evidence_refs)
+    normalized_refs, evidence_warnings = _normalize_evidence_refs(evidence_refs, strict=True)
     if evidence_warnings:
         summary["evidence_warnings"] = evidence_warnings
 
