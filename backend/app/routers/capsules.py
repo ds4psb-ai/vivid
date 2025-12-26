@@ -1106,6 +1106,12 @@ async def run_capsule(
     )
     cached_run = cached_result.scalars().first()
     if cached_run:
+        cached_pattern = None
+        if isinstance(cached_run.summary, dict):
+            cached_pattern = cached_run.summary.get("pattern_version")
+        if pattern_version and cached_pattern != pattern_version:
+            cached_run = None
+    if cached_run:
         filtered_refs, evidence_warnings = await _filter_evidence_refs(
             list(cached_run.evidence_refs or []),
             db,
