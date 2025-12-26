@@ -80,6 +80,7 @@ export interface PipelineStatus {
   notebook_library: PipelineStageSummary;
   notebook_assets: PipelineStageSummary;
   evidence_records: PipelineStageSummary;
+  evidence_missing_source_pack?: number;
   pattern_candidates: PipelineStageSummary;
   pattern_candidate_status: Record<string, number>;
   patterns: PipelineStageSummary;
