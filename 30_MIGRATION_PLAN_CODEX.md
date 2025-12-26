@@ -53,7 +53,7 @@
 
 ## 3) Migration Phases (No breaking changes)
 
-### Phase 0 — Contract Freeze (Doc → Code)
+### Phase 0 — Contract Freeze (Doc → Code) ✅
 **Goal**: 문서(SoR)의 계약을 확정하고, 코드/데이터 변경 기준점을 고정한다.
 
 **Tasks**
@@ -65,9 +65,11 @@
 - SoR 문서 간 용어/필드 충돌 없음.
 - 템플릿/캡슐 naming 고정.
 
+**Status**: Completed 2025-12-26
+
 ---
 
-### Phase 1 — Schema & Data Canonicalization
+### Phase 1 — Schema & Data Canonicalization ✅
 **Goal**: DB SoR, Notebook Library, Pattern Trace 구조를 일관되게 정리하고 seed를 최신화한다.
 
 **Tasks**
@@ -80,6 +82,10 @@
 **Exit Criteria**
 - NotebookLibrary/Assets, PatternTrace, PatternVersion counts 정상.
 - 템플릿에 narrative_seeds + production_contract 포함.
+
+**Status**: Completed 2025-12-26
+- RawAsset: 4, VideoSegment: 4, NotebookLibrary: 3
+- EvidenceRecord: 7, Pattern: 3, Template: 8
 
 ---
 
