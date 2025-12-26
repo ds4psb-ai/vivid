@@ -1,0 +1,18 @@
+[
+  {
+    "notebook_id": "nlb-sample-auteur",
+    "asset_id": "asset-film-one",
+    "asset_type": "video",
+    "asset_ref": "https://example.com/film-one",
+    "title": "Film One",
+    "tags": ["sample"]
+  },
+  {
+    "notebook_id": "nlb-sample-auteur",
+    "asset_id": "asset-film-two",
+    "asset_type": "video",
+    "asset_ref": "https://example.com/film-two",
+    "title": "Film Two",
+    "tags": ["sample"]
+  }
+]

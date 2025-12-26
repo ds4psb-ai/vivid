@@ -1,0 +1,3 @@
+trace_id,source_id,pattern_id,weight,evidence_ref,created_at
+trace-001,auteur-bong-1999-barking-dogs,blocked_symmetry:scene,0.72,source:00:03:10-00:04:20,2025-12-24T10:50:00Z
+trace-002,auteur-park-2003-oldboy,lateral_tracking:scene,0.90,source:00:15:00-00:18:00,2025-12-24T12:50:00Z

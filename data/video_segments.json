@@ -1,0 +1,64 @@
+[
+  {
+    "segment_id": "seg-auteur-sample-2000-film-one-001",
+    "source_id": "auteur-sample-2000-film-one",
+    "work_id": "work-sample-2000-film-one",
+    "sequence_id": "seq-01",
+    "scene_id": "scene-01",
+    "shot_id": "shot-01-01",
+    "time_start": "00:00:10.000",
+    "time_end": "00:00:15.500",
+    "shot_index": 1,
+    "keyframes": ["kf_001"],
+    "transcript": "A quiet hallway. The camera holds.",
+    "visual_schema_json": {
+      "composition": "blocked_symmetry",
+      "lighting": "low_key",
+      "color_palette": ["#223344", "#556677"],
+      "camera_motion": "controlled",
+      "blocking": "center_frame",
+      "pacing": "slow"
+    },
+    "audio_schema_json": {
+      "sound_design": "room_tone",
+      "music_mood": "minimal"
+    },
+    "motifs": ["stairwell", "mirror"],
+    "evidence_refs": ["source:00:00:10.000-00:00:15.500"],
+    "confidence": 0.82,
+    "prompt_version": "gemini-video-v1",
+    "model_version": "gemini-3-pro-2025-12",
+    "generated_at": "2025-12-24T10:30:00Z"
+  },
+  {
+    "segment_id": "seg-auteur-sample-2001-film-two-001",
+    "source_id": "auteur-sample-2001-film-two",
+    "work_id": "work-sample-2001-film-two",
+    "sequence_id": "seq-01",
+    "scene_id": "scene-01",
+    "shot_id": "shot-01-01",
+    "time_start": "00:00:20.000",
+    "time_end": "00:00:24.000",
+    "shot_index": 1,
+    "keyframes": ["kf_002"],
+    "transcript": "A figure enters frame.",
+    "visual_schema_json": {
+      "composition": "leading_lines",
+      "lighting": "soft_fill",
+      "color_palette": ["#334455", "#667788"],
+      "camera_motion": "controlled",
+      "blocking": "foreground_frame",
+      "pacing": "medium"
+    },
+    "audio_schema_json": {
+      "sound_design": "footsteps",
+      "music_mood": "tense"
+    },
+    "motifs": ["doorway", "shadow"],
+    "evidence_refs": ["source:00:00:20.000-00:00:24.000"],
+    "confidence": 0.78,
+    "prompt_version": "gemini-video-v1",
+    "model_version": "gemini-3-pro-2025-12",
+    "generated_at": "2025-12-24T10:31:00Z"
+  }
+]

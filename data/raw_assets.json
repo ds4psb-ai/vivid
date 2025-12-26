@@ -1,0 +1,32 @@
+[
+  {
+    "source_id": "auteur-sample-2000-film-one",
+    "source_url": "https://example.com/film-one",
+    "source_type": "video",
+    "title": "Film One",
+    "director": "Sample Director",
+    "year": 2000,
+    "duration_sec": 600,
+    "language": "en",
+    "tags": ["sample", "auteur"],
+    "scene_ranges": "00:00:10-00:00:40",
+    "notes": "Sample asset for pipeline validation.",
+    "rights_status": "ok",
+    "created_by": "sample"
+  },
+  {
+    "source_id": "auteur-sample-2001-film-two",
+    "source_url": "https://example.com/film-two",
+    "source_type": "video",
+    "title": "Film Two",
+    "director": "Sample Director",
+    "year": 2001,
+    "duration_sec": 720,
+    "language": "en",
+    "tags": ["sample", "auteur"],
+    "scene_ranges": "00:00:20-00:00:50",
+    "notes": "Second sample asset.",
+    "rights_status": "ok",
+    "created_by": "sample"
+  }
+]

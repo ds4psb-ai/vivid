@@ -1,0 +1,3 @@
+source_id,source_url,source_type,title,director,year,duration_sec,language,tags,scene_ranges,rights_status,created_by,created_at
+auteur-bong-1999-barking-dogs,https://example.com/video.mp4,video,Barking Dogs,Bong Joon-ho,1999,6360,ko,"class,apartment","00:03:10-00:04:20",ok,admin,2025-12-24T10:00:00Z
+auteur-park-2003-oldboy,https://example.com/oldboy.mp4,video,Oldboy,Park Chan-wook,2003,7200,ko,"revenge,corridor",,ok,admin,2025-12-24T12:00:00Z

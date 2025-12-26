@@ -1,0 +1,74 @@
+[
+  {
+    "source_id": "auteur-sample-2000-film-one",
+    "summary": "Controlled symmetry and slow reveal.",
+    "output_type": "report",
+    "output_language": "en",
+    "prompt_version": "nlm-guide-v1",
+    "model_version": "notebooklm-2025-12",
+    "guide_type": "homage",
+    "homage_guide": "Emphasize quiet tension through centered blocking and restrained movement.",
+    "template_recommendations": ["tmpl-auteur-sample"],
+    "user_fit_notes": "Best for slow tension builds.",
+    "origin_notebook_id": "nlb-sample-auteur",
+    "cluster_id": "cluster-auteur-sample",
+    "cluster_label": "Structured tension",
+    "cluster_confidence": 0.86,
+    "style_logic": "Symmetry plus restrained motion.",
+    "mise_en_scene": "Centered blocking, narrow space.",
+    "director_intent": "Heighten tension through stillness.",
+    "labels": ["tension", "symmetry"],
+    "signature_motifs": ["stairwell", "mirror"],
+    "camera_motion": {"mode": "controlled"},
+    "color_palette": {"bias": "cool"},
+    "pacing": {"tempo": "slow"},
+    "key_patterns": [
+      {
+        "pattern_name": "staircase_motif",
+        "pattern_type": "scene",
+        "description": "Vertical frames with repeating stairs",
+        "weight": 0.7
+      }
+    ],
+    "confidence": 0.82,
+    "notebook_id": "nlb-sample-auteur",
+    "notebook_ref": "https://notebooklm.google.com/notebook/sample-auteur",
+    "evidence_refs": ["sheet:VIVID_DERIVED_INSIGHTS:row-001"],
+    "generated_at": "2025-12-24T10:40:00Z"
+  },
+  {
+    "source_id": "auteur-sample-2000-film-one",
+    "summary": "Beat sheet seed.",
+    "output_type": "video_overview",
+    "output_language": "en",
+    "prompt_version": "nlm-guide-v1",
+    "model_version": "notebooklm-2025-12",
+    "guide_type": "story",
+    "story_beats": [
+      {"beat": "Setup", "note": "Introduce the corridor and its symmetry."},
+      {"beat": "Shift", "note": "A figure appears, tension rises."},
+      {"beat": "Reveal", "note": "The mirror reframes the conflict."}
+    ],
+    "notebook_id": "nlb-sample-auteur",
+    "notebook_ref": "https://notebooklm.google.com/notebook/sample-auteur",
+    "evidence_refs": ["sheet:VIVID_DERIVED_INSIGHTS:row-002"],
+    "generated_at": "2025-12-24T10:38:00Z"
+  },
+  {
+    "source_id": "auteur-sample-2001-film-two",
+    "summary": "Storyboard seed.",
+    "output_type": "video_overview",
+    "output_language": "en",
+    "prompt_version": "nlm-guide-v1",
+    "model_version": "notebooklm-2025-12",
+    "guide_type": "storyboard",
+    "storyboard_cards": [
+      {"shot": 1, "composition": "leading_lines", "note": "Doorway frames the subject."},
+      {"shot": 2, "composition": "center_frame", "note": "Hold on the subject in silence."}
+    ],
+    "notebook_id": "nlb-sample-auteur",
+    "notebook_ref": "https://notebooklm.google.com/notebook/sample-auteur",
+    "evidence_refs": ["sheet:VIVID_DERIVED_INSIGHTS:row-003"],
+    "generated_at": "2025-12-24T10:37:00Z"
+  }
+]

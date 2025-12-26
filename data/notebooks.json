@@ -1,0 +1,17 @@
+[
+  {
+    "notebook_id": "nlb-sample-auteur",
+    "title": "Sample Auteur Notebook",
+    "notebook_ref": "https://notebooklm.google.com/notebook/sample-auteur",
+    "cluster_id": "cluster-auteur-sample",
+    "cluster_label": "Structured tension",
+    "cluster_tags": ["tension", "symmetry"],
+    "guide_scope": "auteur",
+    "curator_notes": "Sample notebook for pipeline validation.",
+    "source_ids": [
+      "auteur-sample-2000-film-one",
+      "auteur-sample-2001-film-two"
+    ],
+    "source_count": 2
+  }
+]

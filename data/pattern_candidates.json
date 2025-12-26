@@ -1,0 +1,22 @@
+[
+  {
+    "source_id": "auteur-sample-2000-film-one",
+    "pattern_name": "staircase_motif",
+    "pattern_type": "scene",
+    "description": "Vertical frames emphasizing stairs.",
+    "weight": 0.7,
+    "evidence_ref": "source:00:00:10.000-00:00:15.500",
+    "confidence": 0.78,
+    "status": "validated"
+  },
+  {
+    "source_id": "auteur-sample-2001-film-two",
+    "pattern_name": "staircase_motif",
+    "pattern_type": "scene",
+    "description": "Repeated stairwell framing.",
+    "weight": 0.65,
+    "evidence_ref": "source:00:00:20.000-00:00:24.000",
+    "confidence": 0.74,
+    "status": "validated"
+  }
+]
