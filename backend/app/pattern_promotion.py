@@ -24,6 +24,8 @@ from app.models import (
 
 PATTERN_VERSION_RE = re.compile(r"^v(\d+)$", re.IGNORECASE)
 DEFAULT_MIN_CONFIDENCE = float(os.getenv("PATTERN_CONFIDENCE_THRESHOLD", "0.6"))
+MIN_PROMOTED_TRACE = int(os.getenv("PATTERN_PROMOTION_MIN_TRACE", "5") or 5)
+MIN_EVIDENCE_COVERAGE = float(os.getenv("PATTERN_PROMOTION_MIN_EVIDENCE_COVERAGE", "0.6") or 0.6)
 
 
 def _next_pattern_version(current: Optional[str]) -> str:
@@ -195,6 +197,8 @@ async def _promote_candidates(
         "skipped_confidence": 0,
         "skipped_sources": 0,
         "skipped_evidence": 0,
+        "skipped_trace_min": 0,
+        "skipped_coverage": 0,
     }
     changed = False
     async with AsyncSessionLocal() as session:
@@ -213,6 +217,26 @@ async def _promote_candidates(
         for candidate in candidates:
             key = (candidate.pattern_name, candidate.pattern_type)
             pattern_sources.setdefault(key, set()).add(candidate.source_id)
+
+        eligible_counts: Dict[Tuple[str, str], int] = {}
+        evidence_counts: Dict[Tuple[str, str], int] = {}
+        for candidate in candidates:
+            rights_status = rights_map.get(candidate.source_id)
+            if rights_status == "restricted":
+                continue
+            if rights_status is None and not allow_missing_raw:
+                continue
+            if candidate.status == "validated":
+                if candidate.confidence is not None and candidate.confidence < min_confidence:
+                    continue
+            key = (candidate.pattern_name, candidate.pattern_type)
+            if len(pattern_sources.get(key, set())) < min_sources:
+                continue
+            if require_evidence_ref and not (candidate.evidence_ref or "").strip():
+                continue
+            eligible_counts[key] = eligible_counts.get(key, 0) + 1
+            if (candidate.evidence_ref or "").strip():
+                evidence_counts[key] = evidence_counts.get(key, 0) + 1
 
         for candidate in candidates:
             rights_status = rights_map.get(candidate.source_id)
@@ -250,6 +274,22 @@ async def _promote_candidates(
                 if pattern:
                     pattern_cache[key] = pattern
             desired_status = "promoted" if candidate.status == "promoted" else "validated"
+            if desired_status == "promoted":
+                total_traces = eligible_counts.get(key, 0)
+                evidence_traces = evidence_counts.get(key, 0)
+                coverage = (
+                    evidence_traces / total_traces
+                    if total_traces > 0
+                    else 0.0
+                )
+                if total_traces < MIN_PROMOTED_TRACE:
+                    stats["skipped_trace_min"] += 1
+                    if not (pattern and pattern.status == "promoted"):
+                        desired_status = "validated"
+                elif coverage < MIN_EVIDENCE_COVERAGE:
+                    stats["skipped_coverage"] += 1
+                    if not (pattern and pattern.status == "promoted"):
+                        desired_status = "validated"
             if not pattern:
                 pattern = Pattern(
                     name=candidate.pattern_name,
