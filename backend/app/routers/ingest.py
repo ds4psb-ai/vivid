@@ -507,7 +507,7 @@ class EvidenceRecordRequest(BaseModel):
     output_language: str
     prompt_version: str
     model_version: str
-    source_pack_id: Optional[str]
+    source_pack_id: str
     guide_type: Optional[str] = None
     homage_guide: Optional[str] = None
     variation_guide: Optional[str] = None
