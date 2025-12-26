@@ -277,6 +277,21 @@ async def maybe_promote_template_version(
         return None
     if avg_score < resolved_threshold:
         return None
+    evidence_result = await db.execute(
+        select(TemplateLearningRun.evidence_refs).where(
+            TemplateLearningRun.template_id == template_id,
+            TemplateLearningRun.template_version == template_version,
+        )
+    )
+    evidence_rows = evidence_result.scalars().all()
+    evidence_counts: List[int] = []
+    for refs in evidence_rows:
+        if isinstance(refs, list):
+            evidence_counts.append(len(refs))
+    if evidence_counts:
+        avg_evidence = sum(evidence_counts) / len(evidence_counts)
+        if avg_evidence < MIN_EVIDENCE_REFS:
+            return None
 
     template.version = (template.version or 1) + 1
     template.graph_data = canvas_graph
