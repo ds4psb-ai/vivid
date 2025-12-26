@@ -231,12 +231,12 @@ def _run_notebooklm(
         except Exception as exc:  # noqa: BLE001
             return (
                 {"summary": f"NotebookLM fallback: {exc}"},
-                [f"notebooklm:failed:{capsule_id}"],
+                [],
             )
     logger.info("NotebookLM adapter disabled or missing URL; returning simulated summary")
     return (
         {"summary": "NotebookLM simulated summary", "source_count": 3},
-        [f"notebooklm:simulated:{capsule_id}"],
+        [],
     )
 
 
@@ -278,12 +278,12 @@ def _run_opal(
         except Exception as exc:  # noqa: BLE001
             return (
                 {"summary": f"Opal fallback: {exc}"},
-                [f"opal:failed:{capsule_id}"],
+                [],
             )
     logger.info("Opal adapter disabled or missing URL; returning simulated result")
     return (
         {"summary": "Opal simulated workflow result", "workflow": "mock"},
-        [f"opal:simulated:{capsule_id}"],
+        [],
     )
 
 
@@ -512,10 +512,10 @@ def execute_capsule(
             "storyboard_refs": storyboard_refs,
         }
 
-    evidence_refs = [
-        f"auteur:{capsule_id.split('.')[-1]}:style_guide:v{capsule_version}",
-        f"params:applied:{len(params)}_params",
-    ]
+    evidence_refs = []
+    raw_refs = inputs.get("evidence_refs")
+    if isinstance(raw_refs, list):
+        evidence_refs = [ref for ref in raw_refs if isinstance(ref, str)]
 
     adapter = (capsule_spec or {}).get("adapter", {})
     adapter_type = adapter.get("type", "rule")
