@@ -78,6 +78,24 @@ async def init_db(drop_all: bool = False) -> None:
             text("ALTER TABLE video_segments ADD COLUMN IF NOT EXISTS shot_id VARCHAR(120)")
         )
         await conn.execute(
+            text("ALTER TABLE source_packs ADD COLUMN IF NOT EXISTS source_snapshot_at TIMESTAMP")
+        )
+        await conn.execute(
+            text("ALTER TABLE source_packs ADD COLUMN IF NOT EXISTS source_sync_at TIMESTAMP")
+        )
+        await conn.execute(
+            text("ALTER TABLE source_packs ADD COLUMN IF NOT EXISTS source_count INTEGER DEFAULT 0")
+        )
+        await conn.execute(
+            text("ALTER TABLE source_packs ADD COLUMN IF NOT EXISTS source_manifest JSONB DEFAULT '[]'::jsonb")
+        )
+        await conn.execute(
+            text("UPDATE source_packs SET source_count = COALESCE(source_count, 0)")
+        )
+        await conn.execute(
+            text("UPDATE source_packs SET source_manifest = '[]'::jsonb WHERE source_manifest IS NULL")
+        )
+        await conn.execute(
             text("ALTER TABLE evidence_records ADD COLUMN IF NOT EXISTS notebook_id VARCHAR(64)")
         )
         await conn.execute(
