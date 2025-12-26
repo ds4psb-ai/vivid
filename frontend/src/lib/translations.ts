@@ -191,6 +191,9 @@ export const translations = {
         guideStory: "스토리",
         guideBeatSheet: "비트시트",
         guideStoryboard: "스토리보드",
+        guideStudyGuide: "학습 가이드",
+        guideBriefingDoc: "브리핑 문서",
+        guideTable: "테이블",
 
         // Versions Modal
         templateVersions: "템플릿 버전",
@@ -489,6 +492,9 @@ export const translations = {
         guideStory: "Story",
         guideBeatSheet: "Beat sheet",
         guideStoryboard: "Storyboard",
+        guideStudyGuide: "Study guide",
+        guideBriefingDoc: "Briefing doc",
+        guideTable: "Table",
 
         // Versions Modal
         templateVersions: "Template Versions",

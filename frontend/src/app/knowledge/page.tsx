@@ -174,6 +174,7 @@ export default function KnowledgePage() {
         { value: "audio_overview", label: language === "ko" ? "오디오 요약" : "audio_overview" },
         { value: "mind_map", label: language === "ko" ? "마인드맵" : "mind_map" },
         { value: "report", label: language === "ko" ? "리포트" : "report" },
+        { value: "data_table", label: language === "ko" ? "데이터 테이블" : "data_table" },
     ];
 
     const assetTypeOptions = [
@@ -213,6 +214,12 @@ export default function KnowledgePage() {
                 return t("guideBeatSheet");
             case "storyboard":
                 return t("guideStoryboard");
+            case "study_guide":
+                return t("guideStudyGuide");
+            case "briefing_doc":
+                return t("guideBriefingDoc");
+            case "table":
+                return t("guideTable");
             default:
                 return value;
         }

@@ -38,6 +38,9 @@ _GUIDE_TYPE_ALLOWLIST = {
     "story",
     "beat_sheet",
     "storyboard",
+    "study_guide",
+    "briefing_doc",
+    "table",
 }
 _GUIDE_SCOPE_ALLOWLIST = {
     "auteur",
@@ -51,6 +54,7 @@ _OUTPUT_TYPE_ALLOWLIST = {
     "audio_overview",
     "mind_map",
     "report",
+    "data_table",
 }
 _PATTERN_TYPE_ALLOWLIST = {
     "hook",

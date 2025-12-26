@@ -75,8 +75,11 @@ GUIDE_TYPE_ALLOWLIST = {
     "story",
     "beat_sheet",
     "storyboard",
+    "study_guide",
+    "briefing_doc",
+    "table",
 }
-OUTPUT_TYPE_ALLOWLIST = {"video_overview", "audio_overview", "mind_map", "report"}
+OUTPUT_TYPE_ALLOWLIST = {"video_overview", "audio_overview", "mind_map", "report", "data_table"}
 RAW_SOURCE_TYPE_ALLOWLIST = {"video", "image", "doc"}
 NOTEBOOK_ASSET_TYPE_ALLOWLIST = {
     "video",
