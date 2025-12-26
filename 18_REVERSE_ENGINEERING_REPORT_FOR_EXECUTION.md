@@ -6,6 +6,19 @@
 
 ---
 
+## 0) SoR Alignment (Reference Only)
+
+This document is reference-only. Final decisions and contracts live in SoR docs.
+
+- Docs map: `00_DOCS_INDEX.md`
+- Philosophy: `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`
+- Flows/Roles: `10_PIPELINES_AND_USER_FLOWS.md`
+- Capsule contract: `05_CAPSULE_NODE_SPEC.md`
+- UI/UX: `13_UI_DESIGN_GUIDE_2025-12.md`
+- Credits/Growth: `17_CREDITS_AND_BILLING_SPEC_V1.md`, `18_AFFILIATE_PROGRAM_SPEC_V1.md`
+
+---
+
 ## Workstream A: IA + Onboarding ( Confirmed )
 
 **1. Navigation Structure (Left Rail)**
@@ -97,15 +110,14 @@ To achieve "Cost per Run" transparency seen in Pro tools:
 ---
 
 **Ready for Execution Plan?**
-- Yes. All "Blue" (Missing) puzzles pieces are now "Green" (Extracted/Inferred).
-- We can proceed to writing the `ExecutionPlan.md` or directly implementing Workstream A.
+- Reference only. Execution plan must follow SoR documents above.
 
 ---
 
 ## Deep Dive Level 4: Live API & Auth Intelligence (Verified via Browser Agent)
 
 **1. OAuth Application Specs (Captured)**
-These values must be used to configure Vivid's `Supabase Auth` and `Passport.js` strategies to match the market standard.
+Observed in competitor UI; **do not adopt** without separate validation and legal review.
 
 *   **Google / YouTube**
     *   **OAuth Scopes**: `email`, `profile`, `https://www.googleapis.com/auth/youtube.readonly`
@@ -119,12 +131,13 @@ These values must be used to configure Vivid's `Supabase Auth` and `Passport.js`
     *   **Note**: Requesting `video.list` confirms the "Repurposing" feature reads existing content directly.
 
 **2. Infrastructure Map**
-*   **Core API**: `https://app.virlo.ai/api/...`
-*   **Auth Service**: `https://auth.virlo.ai` (Dedicated Identity Provider)
-*   **Affiliate Engine**: `https://virlo.tolt.io` (Tolt.io integration verified)
-*   **Analytics**: PostHog (Event tracking for standard usage)
+*   **Core API**: `https://app.virlo.ai/api/...` (observed)
+*   **Auth Service**: `https://auth.virlo.ai` (observed)
+*   **Affiliate Engine**: `https://virlo.tolt.io` (observed)
+*   **Analytics**: PostHog (observed)
 
 **3. Credit Cost Matrix (Live data)**
+Observed competitor pricing signals; **do not treat as Vivid policy**.
 | Action | Cost (Credits) | Notes |
 | :--- | :--- | :--- |
 | **Script Gen** | 1-5 | Dynamic based on length |

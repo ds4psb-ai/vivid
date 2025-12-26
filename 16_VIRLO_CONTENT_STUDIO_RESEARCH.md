@@ -6,7 +6,15 @@
 
 ---
 
-## 0) Executive Snapshot
+## 0.1) SoR Alignment (Reference Only)
+
+This document is reference-only. "Vivid mapping" items are candidates; final decisions live in SoR docs.
+
+- UI/UX: `13_UI_DESIGN_GUIDE_2025-12.md`
+- Templates/Capsules: `23_TEMPLATE_SYSTEM_SPEC_CODEX.md`, `05_CAPSULE_NODE_SPEC.md`
+- Growth/Credits: `17_CREDITS_AND_BILLING_SPEC_V1.md`, `18_AFFILIATE_PROGRAM_SPEC_V1.md`
+
+---
 
 ## 0) Executive Snapshot
 
@@ -222,6 +230,8 @@ Virlo’s Content Studio positions itself as a **visual AI content workflow buil
 ---
 
 ## 11) Apply to Vivid (Concrete Plan)
+
+This section is a candidate plan; final decisions live in SoR documents.
 
 **UI structure**
 - Left rail: Research / Creator Hub / Accounts / Credits / Affiliate
