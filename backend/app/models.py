@@ -57,6 +57,28 @@ class TemplateVersion(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class TemplateLearningRun(Base):
+    __tablename__ = "template_learning_runs"
+    __table_args__ = (
+        UniqueConstraint("template_id", "run_id", name="uq_template_learning_run"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    template_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("templates.id"))
+    template_version: Mapped[int] = mapped_column(Integer)
+    canvas_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("canvases.id"))
+    run_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("generation_runs.id"))
+    reward_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    reward_breakdown: Mapped[dict] = mapped_column(JSONB, default=dict)
+    feedback: Mapped[dict] = mapped_column(JSONB, default=dict)
+    evidence_refs: Mapped[list] = mapped_column(JSONB, default=list)
+    params: Mapped[dict] = mapped_column(JSONB, default=dict)
+    status: Mapped[str] = mapped_column(String(32), default="recorded")
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class CapsuleSpec(Base):
     __tablename__ = "capsule_specs"
     __table_args__ = (UniqueConstraint("capsule_key", "version", name="uq_capsule_version"),)

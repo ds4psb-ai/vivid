@@ -17,6 +17,15 @@ from app.database import AsyncSessionLocal, get_db
 from app.models import Canvas, GenerationRun
 from app.affiliate_service import activate_referrals_for_user
 from app.spec_engine import compute_graph
+from app.template_learning import (
+    AUTO_PROMOTE_TEMPLATES,
+    compute_reward,
+    extract_capsule_params,
+    extract_evidence_refs,
+    extract_template_origin,
+    maybe_promote_template_version,
+    record_learning_run,
+)
 
 router = APIRouter()
 
@@ -290,6 +299,58 @@ async def update_run_feedback(
     if isinstance(data.overall_note, str) and data.overall_note.strip():
         outputs["overall_note"] = data.overall_note.strip()
     outputs["feedback_updated_at"] = datetime.utcnow().isoformat() + "Z"
+
+    canvas_result = await db.execute(select(Canvas).where(Canvas.id == run.canvas_id))
+    canvas = canvas_result.scalar_one_or_none()
+    if canvas and isinstance(canvas.graph_data, dict):
+        template_id, template_version, _ = extract_template_origin(canvas.graph_data)
+        if template_id and template_version:
+            try:
+                template_uuid = uuid.UUID(str(template_id))
+            except ValueError:
+                template_uuid = None
+            if template_uuid:
+                evidence_refs = extract_evidence_refs(canvas.graph_data)
+                capsule_params = extract_capsule_params(canvas.graph_data)
+                shot_contracts = outputs.get("shot_contracts")
+                shot_count = len(shot_contracts) if isinstance(shot_contracts, list) else 0
+                credit_cost = None
+                if isinstance(run.spec, dict):
+                    raw_cost = run.spec.get("credit_cost")
+                    if isinstance(raw_cost, int):
+                        credit_cost = raw_cost
+                feedback_payload = {
+                    "shots": outputs.get("shot_feedback", []),
+                    "overall_note": outputs.get("overall_note"),
+                }
+                reward = compute_reward(
+                    feedback_shots=feedback_payload["shots"],
+                    evidence_refs=evidence_refs,
+                    credit_cost=credit_cost,
+                    shot_count=shot_count,
+                )
+                outputs["learning_reward"] = reward
+                await record_learning_run(
+                    db,
+                    template_id=template_uuid,
+                    template_version=template_version,
+                    canvas_id=run.canvas_id,
+                    run_id=run.id,
+                    reward=reward,
+                    evidence_refs=evidence_refs,
+                    feedback=feedback_payload,
+                    capsule_params=capsule_params,
+                )
+                await db.flush()
+                if AUTO_PROMOTE_TEMPLATES:
+                    promotion = await maybe_promote_template_version(
+                        db,
+                        template_id=template_uuid,
+                        template_version=template_version,
+                        canvas_graph=canvas.graph_data,
+                    )
+                    if promotion:
+                        outputs["template_promotion"] = promotion
 
     run.outputs = outputs
     await db.commit()

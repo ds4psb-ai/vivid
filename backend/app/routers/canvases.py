@@ -208,6 +208,22 @@ def _ensure_graph_meta_defaults(graph_data: dict) -> dict:
     return {**graph_data, "meta": meta}
 
 
+def _apply_template_origin(graph_data: dict, template: Template) -> dict:
+    if not isinstance(graph_data, dict):
+        return graph_data
+    meta = graph_data.get("meta")
+    if not isinstance(meta, dict):
+        meta = {}
+    origin = meta.get("template_origin")
+    if not isinstance(origin, dict):
+        origin = {}
+    origin["template_id"] = str(template.id)
+    origin["template_version"] = int(template.version or 1)
+    origin["template_slug"] = template.slug
+    meta["template_origin"] = origin
+    return {**graph_data, "meta": meta}
+
+
 @router.post("/", response_model=CanvasResponse, status_code=status.HTTP_201_CREATED)
 async def create_canvas(
     data: CanvasCreate,
@@ -251,8 +267,11 @@ async def create_canvas_from_template(
     pattern_version = await get_latest_pattern_version(db)
     canvas = Canvas(
         title=title,
-        graph_data=_ensure_graph_meta_defaults(
-            _ensure_pattern_version(template.graph_data or {}, pattern_version)
+        graph_data=_apply_template_origin(
+            _ensure_graph_meta_defaults(
+                _ensure_pattern_version(template.graph_data or {}, pattern_version)
+            ),
+            template,
         ),
         is_public=data.is_public,
         owner_id=data.owner_id or user_id,
