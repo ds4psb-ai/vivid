@@ -16,6 +16,7 @@ Source Pack/Guide 프로토콜:
 - **no markdown**, **no prose outside JSON**
 - arrays must be **flat and compact**
 - use empty string/array when unknown
+- Mega-Notebook outputs are **ops-only** and must include `labels: ["ops_only", "mega_notebook"]`.
 
 ---
 
@@ -31,6 +32,7 @@ Source Pack/Guide 프로토콜:
 - `source_pack_id`
 
 If the output is from a curated Notebook Library, include `notebook_id`.
+If the output is from a Mega-Notebook, include `labels` with `ops_only`, `mega_notebook`.
 
 ## Output type values
 
@@ -147,6 +149,7 @@ If the output is from a curated Notebook Library, include `notebook_id`.
   "confidence": 0.74,
   "prompt_version": "nlm-auteur-v1",
   "model_version": "notebooklm-2025-12",
+  "source_pack_id": "sp_cluster-auteur-bong_HOOK_20251224",
   "generated_at": "2025-12-24T09:00:00Z",
   "evidence_refs": ["sheet:VIVID_RAW_ASSETS:42", "db:video_segments:seg-auteur-bong-1999-barking-dogs-01"],
   "notebook_id": "nlb-001",

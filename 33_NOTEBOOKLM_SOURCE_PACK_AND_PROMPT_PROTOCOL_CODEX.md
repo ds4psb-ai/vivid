@@ -42,7 +42,8 @@
 - YouTube는 **캡션/자막 텍스트만** 수집(공개 영상만).
 - Audio 파일은 업로드 시 **즉시 전사**되어 텍스트 소스로 저장됨.
 - Source는 **정적 스냅샷**이며 Drive 문서는 **수동 sync** 필요. 비-Drive는 재업로드 필요.
-- 제한: **source 최대 50개**, source 당 **500k words 또는 200MB**.
+- Phase-locked pack 제한: **source 최대 50개**, source 당 **500k words 또는 200MB**.
+- Mega-Notebook(Ops/Discovery)은 **Ultra 기준 최대 600 sources**까지 허용하되, 캡슐 승격에는 사용하지 않는다.
 
 ### 1.5.2 Studio 다중 출력
 - Studio는 동일 타입의 출력을 **여러 개** 생성/보관 가능.
@@ -64,6 +65,7 @@
 - Mega-Notebook은 **다중 cluster/phase 집계**를 허용하되, **캡슐 승격에는 직접 사용하지 않는다**.
 - 캡슐 승격은 반드시 `{cluster_id, temporal_phase}` **phase-locked pack**에서 파생된 출력만 사용한다.
 - Mega-Notebook 결과는 **후보 발굴/운영 인사이트/드리프트 감지**에만 사용한다.
+- Ultra 기준 source 상한은 **600**으로 설정하며, 결과는 `ops_only` 라벨로 분리한다.
 
 ---
 
@@ -199,7 +201,7 @@ D = 0.55*D_logic + 0.35*D_persona + 0.10*D_context
 - 동일 pack은 `bundle_hash`로 재현성 고정
 
 ### 8.1.1 Pack Sharding (NotebookLM 제한 대응)
-- **NotebookLM source 제한(50개)**을 초과하면 pack을 분할한다.
+- **Phase-locked pack source 제한(50개)**을 초과하면 pack을 분할한다.
 - 규칙: `bundle_id` 뒤에 `p01/p02` shard suffix 추가.
 - 예: `sp_CL_A12_hook_20251226_p01`
 - shard는 동일 `{cluster_id, temporal_phase}`를 공유한다.

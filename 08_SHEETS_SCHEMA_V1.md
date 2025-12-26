@@ -115,6 +115,7 @@ Purpose: structured outputs from NotebookLM or Opal.
 | derived_id | string (uuid) | yes | row id |
 | source_id | string (uuid) | yes | link to raw asset |
 | notebook_id | string (uuid) | no | link to notebook library |
+| source_pack_id | string | yes | phase-locked pack id (or mega pack id) |
 | summary | string | yes | short summary |
 | guide_type | enum | no | summary / homage / variation / template_fit / persona / synapse / story / beat_sheet / storyboard / study_guide / briefing_doc / table |
 | persona_profile | string | no | persona summary (B/D) |
@@ -128,7 +129,7 @@ Purpose: structured outputs from NotebookLM or Opal.
 | style_logic | string | no | logic/structure note |
 | mise_en_scene | string | no | visual staging summary |
 | director_intent | string | no | personal interpretation |
-| labels | string | no | comma-separated |
+| labels | string | no | comma-separated; mega outputs include `ops_only,mega_notebook` |
 | signature_motifs | string | no | comma-separated |
 | camera_motion | string | no | static/controlled/dynamic + note |
 | color_palette | string | no | swatches or bias |

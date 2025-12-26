@@ -138,6 +138,24 @@ nlb-bong-99,Bong Joon-ho Notebook,https://notebooklm.google.com/notebook/abc123,
 
 ---
 
+### Step 1.5.1: Phase-locked Source Pack (Capsule eligible)
+Capsule 승격에 사용하는 **phase-locked pack**은 `build_source_pack.py`로 생성합니다.
+
+- 기본 제한: **source 50개** (NotebookLM phase-locked pack)
+- Mega-Notebook은 별도(아래 Step 1.5.2)
+
+예시:
+```
+cd backend
+python scripts/build_source_pack.py \
+  --cluster-id cluster-auteur-bong \
+  --temporal-phase HOOK \
+  --max-sources 50 \
+  --output /absolute/path/source_pack.json
+```
+
+---
+
 ### Step 1.5.2: Mega-Notebook 운영 (옵션, Ops/Discovery 전용)
 Mega-Notebook은 **발굴/집계/운영 인사이트 전용**이며, **캡슐 승격에 직접 사용하지 않습니다.**
 
@@ -163,7 +181,7 @@ python scripts/build_mega_source_pack.py \
 
 ---
 
-### Step 1.5.1: Notebook Library JSON 업로드 (옵션)
+### Step 1.5.3: Notebook Library JSON 업로드 (옵션)
 Notebook Library JSON이 준비되어 있으면 로컬 스크립트로 바로 DB에 업로드할 수 있습니다.
 
 ```
@@ -211,7 +229,8 @@ python scripts/ingest_notebook_assets.py --input /path/notebook_assets.json --dr
 `VIVID_DERIVED_INSIGHTS`에 NotebookLM/Opal 출력(JSON)을 규격대로 입력합니다.
 
 핵심 필드 (필수):
-- `summary`, `output_type`, `output_language`, `prompt_version`, `model_version`
+- `summary`, `output_type`, `output_language`, `prompt_version`, `model_version`, `source_pack_id`
+- Mega-Notebook Derived는 `labels`에 `ops_only`, `mega_notebook`를 포함
 
 권장 필드:
 - `style_logic`, `mise_en_scene`, `director_intent`, `labels`, `signature_motifs`
