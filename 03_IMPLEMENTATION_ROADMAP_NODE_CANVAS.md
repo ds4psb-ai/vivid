@@ -1,8 +1,12 @@
 # Implementation Roadmap: Node Canvas → AI Shortform OTT
 
 **작성**: 2025-12-24  
-**버전**: 정본 v1.0  
+**버전**: Reference v1.0  
 **목표**: MVP → 숏드라마/숏필름/숏애니메이션 OTT 고도화  
+
+---
+
+**정본 원칙/흐름**: `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`, `10_PIPELINES_AND_USER_FLOWS.md`
 
 ---
 
@@ -48,7 +52,7 @@
 ### NotebookLM/Opal 활용
 - 역할/흐름 정본: `10_PIPELINES_AND_USER_FLOWS.md`
 - 영상 구조화 기준: `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
-- 실행 정책: 캡슐 노드 내부 서브그래프에서만 실행하고 요약만 노출
+- 실행 정책/보안: `05_CAPSULE_NODE_SPEC.md`
 
 ---
 

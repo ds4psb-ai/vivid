@@ -6,13 +6,11 @@
 
 ---
 
-## 0) 기본 원칙
+## 0) 기본 원칙 (정본 참조)
 
-- NotebookLM/Opal은 **가속 레이어**, DB는 **SoR**
-- Sheets Bus는 **초기 운영 버스**, DB로 승격 가능해야 함
-- Raw/Derived 분리 + 버전 고정 + append-only 로그 유지
-- 캡슐 노드는 요약/근거만 노출 (IP 보호)
-- 파이프라인/사용자 흐름 기준 문서: `10_PIPELINES_AND_USER_FLOWS.md`
+- 철학/원칙: `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`
+- 흐름/역할: `10_PIPELINES_AND_USER_FLOWS.md`
+- 계약/정책: `05_CAPSULE_NODE_SPEC.md`, `08_SHEETS_SCHEMA_V1.md`, `11_DB_PROMOTION_RULES_V1.md`
 
 ---
 
