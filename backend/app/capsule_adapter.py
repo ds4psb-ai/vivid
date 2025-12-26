@@ -340,6 +340,15 @@ def execute_capsule(
     if progress_cb:
         progress_cb("Balancing pacing", 70)
     pacing_hints = get_pacing_hints(params)
+
+    output_contracts = (capsule_spec or {}).get("outputContracts") or (
+        capsule_spec or {}
+    ).get("output_contracts") or {}
+    output_types = output_contracts.get("types") if isinstance(output_contracts, dict) else []
+    requires_production = isinstance(output_types, list) and any(
+        key in output_types
+        for key in ("shot_contracts", "prompt_contracts", "prompt_contract_version", "storyboard_refs")
+    )
     
     # Extract signature param for summary
     signature_param = None
@@ -367,6 +376,33 @@ def execute_capsule(
             "value": signature_value,
         } if signature_param else None,
     }
+
+    if requires_production:
+        from app import spec_engine
+
+        production_inputs = {
+            **inputs,
+            **params,
+            "palette": palette,
+            "composition_hints": composition_hints,
+            "pacing_hints": pacing_hints,
+        }
+        storyboard_cards = spec_engine._generate_storyboard(production_inputs)
+        shot_contracts = spec_engine._generate_shot_contracts(production_inputs, storyboard_cards)
+        prompt_contracts = spec_engine._generate_prompt_contracts(shot_contracts)
+        storyboard_refs = [
+            shot.get("shot_id")
+            for shot in shot_contracts
+            if isinstance(shot, dict) and shot.get("shot_id")
+        ]
+        summary = {
+            **summary,
+            "storyboard_cards": storyboard_cards,
+            "shot_contracts": shot_contracts,
+            "prompt_contracts": prompt_contracts,
+            "prompt_contract_version": "v1",
+            "storyboard_refs": storyboard_refs,
+        }
 
     evidence_refs = [
         f"auteur:{capsule_id.split('.')[-1]}:style_guide:v{capsule_version}",

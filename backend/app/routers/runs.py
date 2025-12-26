@@ -4,7 +4,7 @@ from __future__ import annotations
 import asyncio
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict
@@ -23,6 +23,18 @@ router = APIRouter()
 
 class RunCreate(BaseModel):
     canvas_id: str
+
+
+class ShotFeedback(BaseModel):
+    shot_id: str
+    rating: Optional[int] = None
+    note: Optional[str] = None
+    tags: List[str] = []
+
+
+class RunFeedbackRequest(BaseModel):
+    shots: List[ShotFeedback] = []
+    overall_note: Optional[str] = None
 
 
 class RunResponse(BaseModel):
@@ -230,6 +242,58 @@ async def create_run(
     await db.refresh(run)
 
     asyncio.create_task(_execute_run(run.id, canvas_uuid, billing_user_id, credit_cost))
+    return _to_response(run)
+
+
+@router.post("/{run_id}/feedback", response_model=RunResponse)
+async def update_run_feedback(
+    run_id: str,
+    data: RunFeedbackRequest,
+    user_id: Optional[str] = Depends(get_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> RunResponse:
+    try:
+        run_uuid = uuid.UUID(run_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid run id") from exc
+
+    result = await db.execute(select(GenerationRun).where(GenerationRun.id == run_uuid))
+    run = result.scalar_one_or_none()
+    if not run:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    if run.owner_id and user_id and run.owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to update this run")
+
+    outputs = run.outputs if isinstance(run.outputs, dict) else {}
+    existing = outputs.get("shot_feedback")
+    feedback_map = {}
+    if isinstance(existing, list):
+        for item in existing:
+            if isinstance(item, dict) and item.get("shot_id"):
+                feedback_map[str(item["shot_id"])] = dict(item)
+
+    for shot in data.shots or []:
+        record = feedback_map.get(shot.shot_id, {})
+        record.update(
+            {
+                "shot_id": shot.shot_id,
+                "rating": shot.rating,
+                "note": shot.note,
+                "tags": shot.tags or [],
+                "updated_at": datetime.utcnow().isoformat() + "Z",
+            }
+        )
+        feedback_map[shot.shot_id] = record
+
+    outputs["shot_feedback"] = list(feedback_map.values())
+    if isinstance(data.overall_note, str) and data.overall_note.strip():
+        outputs["overall_note"] = data.overall_note.strip()
+    outputs["feedback_updated_at"] = datetime.utcnow().isoformat() + "Z"
+
+    run.outputs = outputs
+    await db.commit()
+    await db.refresh(run)
     return _to_response(run)
 
 

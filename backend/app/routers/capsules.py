@@ -37,6 +37,9 @@ DEFAULT_INPUT_VALUES = {
     "scene_summary": "",
     "duration_sec": 60,
 }
+STRICT_CONTRACTS = True
+STRICT_EVIDENCE_REFS = True
+STRICT_OUTPUT_CONTRACTS = True
 
 
 class CapsuleSpecResponse(BaseModel):
@@ -191,16 +194,13 @@ async def _validate_allowed_types(
     if isinstance(raw_allowed, str):
         raw_allowed = [raw_allowed]
     if not isinstance(raw_allowed, list):
-        warnings.append("allowed_types_invalid")
-        return
+        raise HTTPException(status_code=400, detail="allowedTypes must be a list of strings")
     allowed = {t for t in (_normalize_allowed_type(item) for item in raw_allowed) if t}
     if not allowed:
-        warnings.append("allowed_types_empty")
-        return
+        raise HTTPException(status_code=400, detail="allowedTypes cannot be empty")
     source_id = inputs.get("source_id") or inputs.get("sourceId")
     if not isinstance(source_id, str) or not source_id.strip():
-        warnings.append("allowed_types_missing_source_id")
-        return
+        raise HTTPException(status_code=400, detail="source_id required when allowedTypes is set")
     cleaned_source_id = source_id.strip()
     result = await db.execute(select(RawAsset).where(RawAsset.source_id == cleaned_source_id))
     asset = result.scalars().first()
@@ -208,8 +208,7 @@ async def _validate_allowed_types(
         raise HTTPException(status_code=404, detail="Raw asset not found for source_id")
     source_type = _normalize_allowed_type(asset.source_type or "")
     if not source_type:
-        warnings.append("allowed_types_unknown_source_type")
-        return
+        raise HTTPException(status_code=400, detail="Raw asset source_type is missing or invalid")
     if source_type not in allowed:
         raise HTTPException(
             status_code=400,
@@ -339,6 +338,21 @@ async def _build_upstream_context(
     return {"nodes": upstream_nodes, "edges": upstream_edges}, None
 
 
+def _requires_upstream_context(input_contracts: Optional[dict]) -> bool:
+    if not isinstance(input_contracts, dict):
+        return False
+    raw_mode = input_contracts.get("contextMode") or input_contracts.get("context_mode")
+    if isinstance(raw_mode, str) and raw_mode.strip() in {"aggregate", "sequential"}:
+        return True
+    raw_max = input_contracts.get("maxUpstream") or input_contracts.get("max_upstream")
+    if raw_max in (None, "", 0):
+        return False
+    try:
+        return int(raw_max) > 0
+    except (TypeError, ValueError):
+        return True
+
+
 def _validate_inputs(
     spec_inputs: dict,
     inputs: dict,
@@ -355,6 +369,13 @@ def _validate_inputs(
     required_keys = set(contract.get("required") or [])
     optional_keys = set(contract.get("optional") or [])
     contract_keys = required_keys | optional_keys
+    if STRICT_CONTRACTS and spec_inputs and contract_keys:
+        missing_defs = contract_keys - set(spec_inputs.keys())
+        if missing_defs:
+            raise HTTPException(
+                status_code=400,
+                detail=f"inputContracts keys missing from inputs: {', '.join(sorted(missing_defs))}",
+            )
 
     for key in sorted(required_keys):
         if key in input_values:
@@ -388,6 +409,16 @@ def _validate_inputs(
             if key in input_values:
                 sanitized[key] = input_values.get(key)
 
+    if STRICT_CONTRACTS:
+        known_keys = set((spec_inputs or {}).keys()) | contract_keys
+        if known_keys:
+            extra_keys = set(input_values.keys()) - known_keys
+            if extra_keys:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Unknown inputs: {', '.join(sorted(extra_keys))}",
+                )
+
     return sanitized, warnings
 
 
@@ -397,20 +428,36 @@ def _validate_upstream_contract(
 ) -> None:
     if not isinstance(input_contracts, dict):
         return
+    raw_mode = input_contracts.get("contextMode") or input_contracts.get("context_mode")
+    context_mode = raw_mode.strip() if isinstance(raw_mode, str) else None
+    if context_mode and context_mode not in {"aggregate", "sequential"}:
+        raise HTTPException(status_code=400, detail="contextMode must be aggregate or sequential")
+    if context_mode:
+        if not isinstance(upstream_context, dict):
+            raise HTTPException(status_code=400, detail="upstream_context must be a dictionary")
+        nodes = upstream_context.get("nodes")
+        if not isinstance(nodes, list):
+            raise HTTPException(status_code=400, detail="upstream_context.nodes must be a list")
+        if context_mode == "sequential":
+            sequence = upstream_context.get("sequence")
+            if not isinstance(sequence, list):
+                raise HTTPException(
+                    status_code=400, detail="upstream_context.sequence must be a list"
+                )
     raw_max = input_contracts.get("maxUpstream") or input_contracts.get("max_upstream")
     if raw_max in (None, "", 0):
         return
     try:
         max_upstream = int(raw_max)
     except (TypeError, ValueError):
-        return
+        raise HTTPException(status_code=400, detail="maxUpstream must be an integer")
     if max_upstream <= 0:
-        return
+        raise HTTPException(status_code=400, detail="maxUpstream must be greater than 0")
     if not isinstance(upstream_context, dict):
-        return
+        raise HTTPException(status_code=400, detail="upstream_context must be a dictionary")
     nodes = upstream_context.get("nodes")
     if not isinstance(nodes, list):
-        return
+        raise HTTPException(status_code=400, detail="upstream_context.nodes must be a list")
     count = len(nodes)
     if count > max_upstream:
         raise HTTPException(
@@ -484,6 +531,21 @@ def _apply_output_contracts(summary: dict, output_contracts: Optional[dict]) -> 
     if not missing:
         return []
     return [f"missing_outputs:{','.join(missing)}"]
+
+
+def _enforce_output_contracts(summary: dict, output_contracts: Optional[dict]) -> None:
+    missing = _apply_output_contracts(summary, output_contracts)
+    if missing:
+        raise HTTPException(
+            status_code=400, detail=f"Output contracts not satisfied: {', '.join(missing)}"
+        )
+
+
+def _enforce_evidence_refs(warnings: list[str]) -> None:
+    if warnings:
+        raise HTTPException(
+            status_code=400, detail=f"Invalid evidence_refs: {', '.join(warnings)}"
+        )
 
 
 def _apply_policy(
@@ -570,9 +632,6 @@ async def _filter_evidence_refs(
             continue
         seen.add(cleaned)
 
-        if cleaned.startswith("evidence:sheet:row:"):
-            filtered.append(cleaned)
-            continue
         if cleaned.startswith("sheet:"):
             parts = cleaned.split(":", 2)
             if len(parts) == 3 and parts[1] and parts[2]:
@@ -819,13 +878,12 @@ async def _execute_capsule_run(
                 list(evidence_refs or []),
                 session,
             )
+            if STRICT_EVIDENCE_REFS and evidence_warnings:
+                _enforce_evidence_refs(evidence_warnings)
+            if STRICT_OUTPUT_CONTRACTS:
+                _enforce_output_contracts(summary, output_contracts)
             if warnings:
                 summary = {**summary, "input_warnings": warnings}
-            if evidence_warnings:
-                summary = {**summary, "evidence_warnings": evidence_warnings}
-            output_warnings = _apply_output_contracts(summary, output_contracts)
-            if output_warnings:
-                summary = {**summary, "output_warnings": output_warnings}
             summary = _apply_pattern_version(summary, pattern_version)
             summary = _apply_source_id(summary, inputs)
             summary = _apply_sequence_len(summary, run.upstream_context or {})
@@ -1012,8 +1070,7 @@ async def run_capsule(
     if isinstance(context_mode, str):
         cleaned_mode = context_mode.strip()
         if cleaned_mode not in {"aggregate", "sequential"}:
-            warnings.append("context_mode_invalid")
-            context_mode = None
+            raise HTTPException(status_code=400, detail="contextMode must be aggregate or sequential")
         else:
             context_mode = cleaned_mode
     else:
@@ -1025,8 +1082,8 @@ async def run_capsule(
             db,
             context_mode=context_mode,
         )
-        if context_warning:
-            warnings.append(context_warning)
+        if context_warning and _requires_upstream_context(input_contracts):
+            raise HTTPException(status_code=400, detail=f"upstream_context error: {context_warning}")
     if upstream_context is None:
         upstream_context = {}
     _validate_upstream_contract(upstream_context, input_contracts)
@@ -1051,32 +1108,40 @@ async def run_capsule(
         )
         cached_summary = _apply_pattern_version(cached_run.summary, pattern_version)
         output_warnings = _apply_output_contracts(cached_summary, output_contracts)
-        if evidence_warnings:
-            cached_summary = {**cached_summary, "evidence_warnings": evidence_warnings}
-        if output_warnings:
-            cached_summary = {**cached_summary, "output_warnings": output_warnings}
-        cached_summary = _apply_source_id(cached_summary, sanitized_inputs)
-        cached_summary = _apply_sequence_len(cached_summary, cached_run.upstream_context or {})
-        cached_summary = _apply_context_mode(cached_summary, cached_run.upstream_context or {})
-        if credit_cost > 0:
-            cached_summary = {**cached_summary, "credit_cost": credit_cost}
-        summary, evidence_refs = _apply_policy(
-            cached_summary,
-            filtered_refs,
-            policy,
-            is_admin,
-        )
-        return CapsuleRunResponse(
-            run_id=str(cached_run.id),
-            status="cached",
-            summary=summary,
-            evidence_refs=evidence_refs,
-            version=cached_run.capsule_version,
-            token_usage=cached_run.token_usage,
-            latency_ms=cached_run.latency_ms,
-            cost_usd_est=cached_run.cost_usd_est,
-            cached=True,
-        )
+        if STRICT_EVIDENCE_REFS and evidence_warnings:
+            if filtered_refs != list(cached_run.evidence_refs or []):
+                cached_run.evidence_refs = filtered_refs
+                await db.commit()
+            cached_run = None
+        if cached_run and STRICT_OUTPUT_CONTRACTS and output_warnings:
+            cached_run = None
+        if cached_run:
+            if evidence_warnings:
+                cached_summary = {**cached_summary, "evidence_warnings": evidence_warnings}
+            if output_warnings:
+                cached_summary = {**cached_summary, "output_warnings": output_warnings}
+            cached_summary = _apply_source_id(cached_summary, sanitized_inputs)
+            cached_summary = _apply_sequence_len(cached_summary, cached_run.upstream_context or {})
+            cached_summary = _apply_context_mode(cached_summary, cached_run.upstream_context or {})
+            if credit_cost > 0:
+                cached_summary = {**cached_summary, "credit_cost": credit_cost}
+            summary, evidence_refs = _apply_policy(
+                cached_summary,
+                filtered_refs,
+                policy,
+                is_admin,
+            )
+            return CapsuleRunResponse(
+                run_id=str(cached_run.id),
+                status="cached",
+                summary=summary,
+                evidence_refs=evidence_refs,
+                version=cached_run.capsule_version,
+                token_usage=cached_run.token_usage,
+                latency_ms=cached_run.latency_ms,
+                cost_usd_est=cached_run.cost_usd_est,
+                cached=True,
+            )
 
     if user_id and credit_cost > 0:
         user_credits = await get_or_create_user_credits(db, user_id)
@@ -1153,13 +1218,12 @@ async def run_capsule(
         list(evidence_refs or []),
         db,
     )
+    if STRICT_EVIDENCE_REFS and evidence_warnings:
+        _enforce_evidence_refs(evidence_warnings)
+    if STRICT_OUTPUT_CONTRACTS:
+        _enforce_output_contracts(summary, output_contracts)
     if warnings:
         summary = {**summary, "input_warnings": warnings}
-    if evidence_warnings:
-        summary = {**summary, "evidence_warnings": evidence_warnings}
-    output_warnings = _apply_output_contracts(summary, output_contracts)
-    if output_warnings:
-        summary = {**summary, "output_warnings": output_warnings}
 
     summary = _apply_pattern_version(summary, pattern_version)
     summary = _apply_source_id(summary, sanitized_inputs)
