@@ -86,6 +86,45 @@ export default function UsagePage() {
     });
   }, [period, runTypeFilter, usageTransactions]);
 
+  const usageMetrics = useMemo(() => {
+    let latencySum = 0;
+    let latencyCount = 0;
+    let costSum = 0;
+    let costCount = 0;
+    let tokenSum = 0;
+    let tokenCount = 0;
+    for (const tx of filteredUsage) {
+      const meta = tx.meta as Record<string, unknown> | undefined;
+      if (meta && typeof meta.latency_ms === "number") {
+        latencySum += meta.latency_ms;
+        latencyCount += 1;
+      }
+      if (meta && typeof meta.cost_usd_est === "number") {
+        costSum += meta.cost_usd_est;
+        costCount += 1;
+      }
+      const tokenUsage =
+        meta && typeof meta.token_usage === "object" && meta.token_usage !== null
+          ? (meta.token_usage as { input?: number; output?: number; total?: number })
+          : null;
+      const tokenTotal =
+        tokenUsage && typeof tokenUsage.total === "number"
+          ? tokenUsage.total
+          : tokenUsage && typeof tokenUsage.input === "number" && typeof tokenUsage.output === "number"
+            ? tokenUsage.input + tokenUsage.output
+            : null;
+      if (tokenTotal !== null) {
+        tokenSum += tokenTotal;
+        tokenCount += 1;
+      }
+    }
+    return {
+      avgLatencyMs: latencyCount ? Math.round(latencySum / latencyCount) : null,
+      avgCostUsd: costCount ? Number((costSum / costCount).toFixed(3)) : null,
+      avgTokens: tokenCount ? Math.round(tokenSum / tokenCount) : null,
+    };
+  }, [filteredUsage]);
+
   const totalRuns = filteredUsage.length;
   const totalSpend = filteredUsage.reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
   const avgCost = totalRuns ? Math.round(totalSpend / totalRuns) : 0;
@@ -101,6 +140,9 @@ export default function UsagePage() {
     monthSpend: language === "ko" ? "이번 달 사용" : "Month-to-date spend",
     totalRuns: language === "ko" ? "총 실행" : "Total runs",
     avgCost: language === "ko" ? "평균 비용" : "Avg cost",
+    avgLatency: language === "ko" ? "평균 지연" : "Avg latency",
+    avgCostUsd: language === "ko" ? "평균 비용 (USD)" : "Avg cost (USD)",
+    avgTokens: language === "ko" ? "평균 토큰" : "Avg tokens",
     latency: language === "ko" ? "지연" : "Latency",
     costEstimate: language === "ko" ? "비용 추정" : "Cost est",
     tokenUsage: language === "ko" ? "토큰" : "Tokens",
@@ -221,6 +263,41 @@ export default function UsagePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
+            className="mb-6 grid gap-3 sm:grid-cols-3"
+          >
+            {[
+              {
+                label: labels.avgLatency,
+                value:
+                  usageMetrics.avgLatencyMs !== null ? `${usageMetrics.avgLatencyMs}ms` : "-",
+              },
+              {
+                label: labels.avgCostUsd,
+                value:
+                  usageMetrics.avgCostUsd !== null ? `$${usageMetrics.avgCostUsd}` : "-",
+              },
+              {
+                label: labels.avgTokens,
+                value:
+                  usageMetrics.avgTokens !== null
+                    ? usageMetrics.avgTokens.toLocaleString()
+                    : "-",
+              },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="rounded-xl border border-white/10 bg-slate-950/60 p-4"
+              >
+                <div className="text-xs text-[var(--fg-muted)]">{item.label}</div>
+                <div className="mt-2 text-xl font-semibold text-[var(--fg-0)]">{item.value}</div>
+              </div>
+            ))}
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
             className="mb-6 grid gap-3 sm:grid-cols-3"
           >
             {[

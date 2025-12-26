@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import time
 import uuid
 from datetime import datetime
 from typing import List, Optional
@@ -150,13 +151,15 @@ async def _execute_run(
                 return
 
             graph = canvas.graph_data or {"nodes": [], "edges": []}
+            start_time = time.perf_counter()
             spec = compute_graph(
                 graph.get("nodes", []),
                 graph.get("edges", []),
                 graph.get("meta") if isinstance(graph, dict) else None,
             )
+            latency_ms = int((time.perf_counter() - start_time) * 1000)
             if isinstance(spec, dict):
-                spec = {**spec, "credit_cost": credit_cost}
+                spec = {**spec, "credit_cost": credit_cost, "latency_ms": latency_ms}
             run.spec = spec
             beat_sheet = spec.get("beat_sheet") if isinstance(spec, dict) else []
             storyboard = spec.get("storyboard") if isinstance(spec, dict) else []
@@ -180,6 +183,7 @@ async def _execute_run(
                     prompt_contract_version if isinstance(prompt_contract_version, str) else None
                 ),
                 "production_contract": production_contract if isinstance(production_contract, dict) else None,
+                "metrics": {"latency_ms": latency_ms},
             }
             run.status = "done"
             await session.commit()
@@ -202,6 +206,7 @@ async def _execute_run(
                             "run_type": "generation",
                             "canvas_id": str(canvas_id),
                             "credit_cost": credit_cost,
+                            "latency_ms": latency_ms,
                         },
                     )
                 except ValueError:
