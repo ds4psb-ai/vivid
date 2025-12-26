@@ -47,6 +47,8 @@ interface CapsuleNodeSpec {
   inputs: Record<string, { type: string; required?: boolean }>;
   outputs: Record<string, { type: string }>; // summary-only
   patternVersion?: string; // Pattern Library snapshot version
+  clusterRef?: string; // cluster_id from Logic/Persona Fusion (see 33_...)
+  temporalPhase?: "HOOK" | "BUILD" | "PAYOFF" | "CTA" | "SETUP" | "TURN" | "ESCALATION" | "CLIMAX" | "RESOLUTION";
   exposedParams: Record<
     string,
     {

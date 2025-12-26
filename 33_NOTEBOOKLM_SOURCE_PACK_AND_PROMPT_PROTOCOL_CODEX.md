@@ -52,17 +52,10 @@
 
 ## 3) Tong Datasetization Protocol (A/B/C/D)
 
-통 데이터셋은 **A/B/C/D**를 분리 저장하고 **Synapse Rule**로 결합한다.
+> **정본**: `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md` §3.4
 
-- **A (Origin Visual)**: 영상 구조화 결과(샷/구도/리듬/모티프)
-- **B (Origin Persona)**: 거장/명작의 해석 톤/감정 곡선
-- **D (Filter Persona)**: 변주/오마주를 위한 필터 페르소나
-- **C (Result Visual)**: 캡슐 실행 결과(생성/프리뷰 산출물)
-
-**Synapse Rule**
-- A + B → D → C 변환 규칙이 캡슐 스펙의 핵심이다.
-- B/D는 NotebookLM 가이드 레이어에서 요약/라벨링한다.
-- Synapse Rule은 **DB SoR**에 구조화해 재현성을 확보한다.
+통 데이터셋 A/B/C/D 정의와 Synapse Rule은 정본 문서를 따른다.
+이 문서는 **Logic/Persona 추출 프로토콜**에 집중한다.
 
 ---
 
@@ -118,13 +111,21 @@
 
 ## 6) Fusion + Clustering Protocol
 
-### 6.1 Distance Function
+### 6.1 Distance Function (EXPERIMENTAL)
+
+> [!WARNING]
+> 아래 가중치는 **실험값**이며 학습/검증 후 조정 예정
 
 ```
 D = 0.55*D_logic + 0.35*D_persona + 0.10*D_context
 ```
 
-### 6.2 Thresholds (MVP)
+**정의**:
+- `D_logic`: Logic Vector 간 코사인 거리
+- `D_persona`: Persona Vector 간 코사인 거리
+- `D_context`: 장르/시대/지역 메타데이터 불일치 페널티 (0 또는 1)
+
+### 6.2 Thresholds (MVP, EXPERIMENTAL)
 
 - join: `D <= 0.22`
 - split: `D >= 0.35`
@@ -228,18 +229,11 @@ NotebookLM은 **가이드/변주/요약 레이어**다. 출력은 항상 **Claim
 
 ---
 
-## 11) Evaluation + Promotion (RAGAS-style)
+## 11) Evaluation + Promotion
 
-RAGAS 계열 평가지표(groundedness/faithfulness/answer_relevancy 등)를
-`Trace.eval_scores`에 기록하여 승격 자동화를 보조한다.
+> **정본**: `32_CLAIM_EVIDENCE_TRACE_SPEC_V1.md` §3.4, `11_DB_PROMOTION_RULES_V1.md` §4
 
-연동 규칙:
-- 평가 점수가 기준 이하이면 `candidate` 상태 유지
-- 기준 이상 + Evidence Gate 통과 시 `promoted`
-
-상세 규칙:
-- `32_CLAIM_EVIDENCE_TRACE_SPEC_V1.md`
-- `11_DB_PROMOTION_RULES_V1.md`
+평가/승격 규칙은 정본 문서를 따른다. 이 문서에서는 중복 기술하지 않는다.
 
 ---
 

@@ -44,6 +44,7 @@ If the output is from a curated Notebook Library, include `notebook_id`.
 ## Optional fields
 
 - `guide_type` (summary / homage / variation / template_fit / persona / synapse / story / beat_sheet / storyboard)
+- `temporal_phase` (HOOK / BUILD / PAYOFF / CTA / SETUP / TURN / ESCALATION / CLIMAX / RESOLUTION)
 - `homage_guide`
 - `variation_guide`
 - `template_recommendations[]`
