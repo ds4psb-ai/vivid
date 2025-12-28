@@ -1,0 +1,203 @@
+{
+    "schema_version": "ideal-v1",
+    "auteur": "bong-joon-ho",
+    "guide_type": "persona",
+    "title": "봉준호 페르소나 (이상적 구조)",
+    "description": "봉준호 감독의 예술적 정체성과 창작 철학 프로파일",
+    "identity": {
+        "full_name": "봉준호 (Bong Joon-ho)",
+        "birth_year": 1969,
+        "active_years": "2000-present",
+        "nationality": "Korean",
+        "education": "한국영화아카데미 (KAFA)"
+    },
+    "artistic_philosophy": {
+        "core_statement": "장르의 껍데기를 빌려 사회를 해부하는 작가",
+        "key_beliefs": [
+            "장르 영화는 가장 효과적인 사회 비평 도구",
+            "디테일이 세계관을 만든다",
+            "웃음과 공포는 같은 뿌리에서 나온다",
+            "공간이 곧 캐릭터"
+        ],
+        "influences": [
+            {
+                "name": "Alfred Hitchcock",
+                "aspect": "서스펜스 구축, 관객 조작"
+            },
+            {
+                "name": "Claude Chabrol",
+                "aspect": "부르주아 비판, 블랙 코미디"
+            },
+            {
+                "name": "Kim Ki-young",
+                "aspect": "하녀/계급/공간의 공포"
+            },
+            {
+                "name": "Shohei Imamura",
+                "aspect": "인간 본성의 적나라한 관찰"
+            }
+        ]
+    },
+    "thematic_obsessions": [
+        {
+            "theme": "계급과 공간",
+            "description": "물리적 공간 배치가 사회 구조를 반영",
+            "manifestations": [
+                "기생충의 반지하-대저택",
+                "설국열차의 칸별 계급",
+                "옥자의 지상-지하 농장"
+            ],
+            "weight": 0.95
+        },
+        {
+            "theme": "시스템의 무능/부조리",
+            "description": "제도와 권위의 실패가 비극을 낳는다",
+            "manifestations": [
+                "살인의 추억의 형사들",
+                "괴물의 정부 대응",
+                "마더의 사법 시스템"
+            ],
+            "weight": 0.90
+        },
+        {
+            "theme": "가족의 연대와 균열",
+            "description": "가족은 가장 작은 사회이자 갈등의 축소판",
+            "manifestations": [
+                "기생충의 두 가족",
+                "괴물의 박씨 일가",
+                "옥자의 미자-옥자 유사가족"
+            ],
+            "weight": 0.85
+        },
+        {
+            "theme": "자연/괴물의 복수",
+            "description": "자연이 인간의 오만에 반격한다",
+            "manifestations": [
+                "괴물의 한강",
+                "옥자의 슈퍼돼지",
+                "기생충의 폭우"
+            ],
+            "weight": 0.75
+        }
+    ],
+    "signature_techniques": {
+        "visual": [
+            {
+                "name": "수직 블로킹",
+                "frequency": "high"
+            },
+            {
+                "name": "깊은 심도 구성",
+                "frequency": "high"
+            },
+            {
+                "name": "대각선 계단 프레임",
+                "frequency": "medium"
+            },
+            {
+                "name": "창문/문 프레임 인 프레임",
+                "frequency": "high"
+            }
+        ],
+        "narrative": [
+            {
+                "name": "장르 믹싱",
+                "frequency": "signature"
+            },
+            {
+                "name": "톤 급변화",
+                "frequency": "high"
+            },
+            {
+                "name": "블랙 코미디 순간",
+                "frequency": "high"
+            },
+            {
+                "name": "열린 결말/순환 구조",
+                "frequency": "medium"
+            }
+        ],
+        "production": [
+            {
+                "name": "극도로 상세한 스토리보딩",
+                "note": "모든 샷 사전 설계"
+            },
+            {
+                "name": "공간 디자인 우선",
+                "note": "세트가 영화의 절반"
+            },
+            {
+                "name": "배우와의 리허설 중시",
+                "note": "정확한 블로킹"
+            }
+        ]
+    },
+    "collaboration_patterns": {
+        "recurring_team": [
+            {
+                "role": "촬영",
+                "name": "홍경표",
+                "significance": "시각 언어의 공동 창시자"
+            },
+            {
+                "role": "음악",
+                "name": "정재일",
+                "significance": "미니멀 오케스트레이션"
+            },
+            {
+                "role": "미술",
+                "name": "이하준",
+                "significance": "공간 구축의 핵심"
+            },
+            {
+                "role": "편집",
+                "name": "양진모",
+                "significance": "리듬과 톤 조절"
+            }
+        ],
+        "actor_direction_style": "정밀한 블로킹 + 자유로운 감정 해석"
+    },
+    "filmography_evolution": {
+        "early_period": {
+            "years": "2000-2006",
+            "films": [
+                "플란다스의 개",
+                "살인의 추억",
+                "괴물"
+            ],
+            "characteristics": "장르 해체 실험, 한국 사회 직접 비판"
+        },
+        "middle_period": {
+            "years": "2009-2013",
+            "films": [
+                "마더",
+                "설국열차"
+            ],
+            "characteristics": "장르 정교화, 글로벌 알레고리 시도"
+        },
+        "mature_period": {
+            "years": "2017-present",
+            "films": [
+                "옥자",
+                "기생충"
+            ],
+            "characteristics": "장르 마스터리, 보편적 계급 서사"
+        }
+    },
+    "creative_process": {
+        "script_phase": "시나리오 단계에서 이미 시각적 구상 완료",
+        "prep_phase": "스토리보드 = 영화 설계도",
+        "production_phase": "계획대로 촬영, 현장 즉흥 최소화",
+        "post_phase": "편집에서 톤 조절 집중"
+    },
+    "application_guide": {
+        "essence_summary": "장르의 쾌감 + 사회 비평의 깊이 + 블랙 유머의 날카로움",
+        "when_to_channel": [
+            "계급/불평등 주제 작업 시",
+            "장르 믹스 프로젝트",
+            "공간 중심 스토리텔링",
+            "긴장과 유머의 균형 필요 시"
+        ],
+        "caution": "표면적 스타일만 따라하면 공허해짐. 사회적 시선이 핵심."
+    }
+}

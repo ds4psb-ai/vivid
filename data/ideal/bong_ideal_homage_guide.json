@@ -1,0 +1,176 @@
+{
+    "schema_version": "ideal-v1",
+    "auteur": "bong-joon-ho",
+    "guide_type": "homage",
+    "title": "봉준호 오마주 가이드 (이상적 구조)",
+    "description": "봉준호 감독 스타일을 재현하기 위한 완전한 시각 언어 가이드",
+    "visual_language": {
+        "blocking": {
+            "primary": "vertical",
+            "secondary": "depth",
+            "signature": "수직 공간 배치로 권력 관계 표현. 위=권력, 아래=종속"
+        },
+        "framing": {
+            "preferred_ratios": [
+                "2.35:1",
+                "1.85:1"
+            ],
+            "signature_compositions": [
+                {
+                    "name": "계단 프레임",
+                    "description": "프레임을 대각선으로 분할하는 계단 배치",
+                    "usage": "계급 이동 장면"
+                },
+                {
+                    "name": "창문 프레임",
+                    "description": "창문을 통해 세상을 엿보는 구도",
+                    "usage": "소외/관찰 장면"
+                },
+                {
+                    "name": "깊은 심도",
+                    "description": "전경-중경-후경 모두 선명한 딥 포커스",
+                    "usage": "사회 구조 시각화"
+                }
+            ]
+        }
+    },
+    "color_palette": {
+        "primary_mood": "desaturated_cool",
+        "signature_colors": [
+            {
+                "hex": "#1F2933",
+                "name": "Charcoal Blue",
+                "usage": "반지하/하층 공간"
+            },
+            {
+                "hex": "#323F4B",
+                "name": "Slate",
+                "usage": "중간 계층/전환"
+            },
+            {
+                "hex": "#627D98",
+                "name": "Steel Blue",
+                "usage": "상층/부유층 공간"
+            },
+            {
+                "hex": "#CBD2D9",
+                "name": "Silver",
+                "usage": "권력/냉정함"
+            },
+            {
+                "hex": "#F5F7FA",
+                "name": "Pure White",
+                "usage": "극적 대비/클라이맥스"
+            }
+        ],
+        "contrast_strategy": "low_saturation_high_value_contrast"
+    },
+    "camera_motion": {
+        "primary_style": "controlled_geometric",
+        "signature_movements": [
+            {
+                "name": "vertical_track",
+                "description": "계단을 따라 수직으로 트래킹",
+                "emotional_function": "계급 이동의 시각화"
+            },
+            {
+                "name": "slow_push",
+                "description": "긴장 고조 시 느린 푸시인",
+                "emotional_function": "불안감 증폭"
+            },
+            {
+                "name": "static_wide",
+                "description": "블랙 코미디 순간의 정적 와이드",
+                "emotional_function": "관조적 유머"
+            }
+        ],
+        "lens_preferences": [
+            "35mm",
+            "50mm",
+            "wide_anamorphic"
+        ]
+    },
+    "lighting": {
+        "primary_approach": "motivated_naturalistic",
+        "signature_techniques": [
+            {
+                "name": "window_light",
+                "description": "창문을 통한 측면광",
+                "mood": "갇힘/갈망"
+            },
+            {
+                "name": "overhead_harsh",
+                "description": "위에서 내리쬐는 강한 조명",
+                "mood": "심판/폭로"
+            },
+            {
+                "name": "rain_diffusion",
+                "description": "빗방울을 통한 빛의 확산",
+                "mood": "혼란/파국"
+            }
+        ]
+    },
+    "audio_design": {
+        "signature_elements": [
+            "diegetic_music_contrast",
+            "silence_before_violence",
+            "weather_as_soundtrack"
+        ],
+        "composer_style": "orchestral_minimalist_korean_fusion"
+    },
+    "thematic_motifs": [
+        {
+            "motif": "stairs",
+            "meaning": "계급 이동/사회 구조",
+            "frequency": "high"
+        },
+        {
+            "motif": "rain",
+            "meaning": "정화/파괴/불평등의 가시화",
+            "frequency": "high"
+        },
+        {
+            "motif": "smell",
+            "meaning": "계급 표식/본능적 혐오",
+            "frequency": "medium"
+        },
+        {
+            "motif": "tunnel/corridor",
+            "meaning": "여정/제한된 선택",
+            "frequency": "high"
+        }
+    ],
+    "reference_shots": [
+        {
+            "film": "기생충",
+            "timecode": "00:15:23",
+            "description": "기우가 계단을 올라 대저택 진입",
+            "technique": "vertical_track + lighting_contrast"
+        },
+        {
+            "film": "기생충",
+            "timecode": "01:42:10",
+            "description": "폭우 속 반지하로 하강",
+            "technique": "rain_diffusion + vertical_descent"
+        },
+        {
+            "film": "설국열차",
+            "timecode": "00:08:45",
+            "description": "꼬리칸 와이드샷",
+            "technique": "horizontal_blocking + depth"
+        }
+    ],
+    "application_notes": {
+        "when_to_use": [
+            "사회 비평적 콘텐츠",
+            "블랙 코미디",
+            "스릴러/서스펜스",
+            "계급/불평등 주제"
+        ],
+        "avoid_when": [
+            "밝은 로맨틱 코미디",
+            "판타지/SF 액션",
+            "다큐멘터리 스타일"
+        ]
+    }
+}

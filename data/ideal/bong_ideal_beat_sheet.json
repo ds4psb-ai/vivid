@@ -1,0 +1,120 @@
+{
+    "schema_version": "ideal-v1",
+    "auteur": "bong-joon-ho",
+    "guide_type": "beat_sheet",
+    "title": "봉준호 비트시트 (이상적 구조)",
+    "description": "봉준호 스타일의 5막 구조 비트시트 템플릿",
+    "structure": {
+        "act_count": 5,
+        "pacing_signature": "slow_build_explosive_release",
+        "tonal_arc": "dark_comedy_to_tragedy"
+    },
+    "beats": [
+        {
+            "beat_id": "HOOK",
+            "act": 1,
+            "duration_ratio": 0.10,
+            "description": "일상의 불편함 노출",
+            "bong_signature": "평범해 보이지만 불길한 디테일 삽입",
+            "example": {
+                "film": "기생충",
+                "scene": "반지하 창문으로 보이는 취객",
+                "function": "가난한 현실을 코믹하게 제시하되 불안감 암시"
+            },
+            "emotional_target": "curious_unease",
+            "visual_cues": [
+                "cramped_space",
+                "low_angle_window",
+                "mundane_action"
+            ]
+        },
+        {
+            "beat_id": "BUILD",
+            "act": 2,
+            "duration_ratio": 0.30,
+            "description": "점진적 침투/상승",
+            "bong_signature": "계획이 순조롭게 진행되는 듯한 착각",
+            "example": {
+                "film": "기생충",
+                "scene": "기우→기정→충숙→기택 순차 침투",
+                "function": "관객도 함께 공범이 되는 쾌감"
+            },
+            "emotional_target": "guilty_pleasure",
+            "pacing_notes": "각 침투 에피소드마다 소규모 긴장-해소 반복",
+            "visual_cues": [
+                "ascending_movement",
+                "brightening_spaces",
+                "symmetrical_framing"
+            ]
+        },
+        {
+            "beat_id": "TURN",
+            "act": 3,
+            "duration_ratio": 0.15,
+            "description": "숨겨진 진실의 폭로",
+            "bong_signature": "예상치 못한 제3의 존재/시스템 발견",
+            "example": {
+                "film": "기생충",
+                "scene": "지하 벙커와 근세 발견",
+                "function": "장르 전환 - 코미디에서 스릴러로"
+            },
+            "emotional_target": "shock_recognition",
+            "pacing_notes": "급격한 템포 변화, 숨 막히는 긴장",
+            "visual_cues": [
+                "descending_movement",
+                "darkness_reveal",
+                "claustrophobic_framing"
+            ]
+        },
+        {
+            "beat_id": "PAYOFF",
+            "act": 4,
+            "duration_ratio": 0.25,
+            "description": "구조의 붕괴",
+            "bong_signature": "자연재해/시스템 오류가 계급 구조를 가시화",
+            "example": {
+                "film": "기생충",
+                "scene": "폭우와 반지하 침수",
+                "function": "비가 '공평하게' 내리지만 피해는 불평등"
+            },
+            "emotional_target": "tragic_irony",
+            "pacing_notes": "병렬 편집 - 상류층 평온 vs 하류층 재난",
+            "visual_cues": [
+                "rain_imagery",
+                "vertical_contrast",
+                "parallel_editing"
+            ]
+        },
+        {
+            "beat_id": "CLIMAX",
+            "act": 5,
+            "duration_ratio": 0.20,
+            "description": "폭력의 분출",
+            "bong_signature": "축제/일상 속 갑작스러운 폭력",
+            "example": {
+                "film": "기생충",
+                "scene": "생일파티 중 살인",
+                "function": "억눌린 분노의 물리적 폭발"
+            },
+            "emotional_target": "cathartic_horror",
+            "pacing_notes": "느린 빌드업 후 순간적 폭발, 이후 정적",
+            "visual_cues": [
+                "wide_shot_chaos",
+                "slow_motion_violence",
+                "color_red_intrusion"
+            ],
+            "epilogue_notes": "열린 결말 또는 순환 구조 (시작점으로 회귀)"
+        }
+    ],
+    "transitions": {
+        "HOOK_to_BUILD": "기회의 도래 (외부 자극)",
+        "BUILD_to_TURN": "계획 성공의 정점에서 반전",
+        "TURN_to_PAYOFF": "숨기기/생존 모드 전환",
+        "PAYOFF_to_CLIMAX": "제어 불능 상황 + 외부 이벤트 (파티/비 등)"
+    },
+    "tonal_markers": {
+        "comedy_peak": "BUILD 중반",
+        "horror_onset": "TURN",
+        "tragedy_peak": "CLIMAX 직후"
+    }
+}
