@@ -19,13 +19,13 @@
 
 | Sheets | 목적 | DB 대상(개념) |
 | --- | --- | --- |
-| VIVID_NOTEBOOK_LIBRARY | 노트북 메타 | notebook_library |
-| VIVID_NOTEBOOK_ASSETS | 노트북 자산 링크 | notebook_assets |
-| VIVID_RAW_ASSETS | 원본 링크/메타 | raw_assets |
-| VIVID_VIDEO_STRUCTURED | 영상 구조화(샷/씬) | video_segments |
-| VIVID_DERIVED_INSIGHTS | NotebookLM/Opal 요약 | evidence_records |
-| VIVID_PATTERN_CANDIDATES | 패턴 후보 | pattern_candidates (staging) |
-| VIVID_PATTERN_TRACE | 검증된 패턴 적용 | pattern_trace |
+| CREBIT_NOTEBOOK_LIBRARY | 노트북 메타 | notebook_library |
+| CREBIT_NOTEBOOK_ASSETS | 노트북 자산 링크 | notebook_assets |
+| CREBIT_RAW_ASSETS | 원본 링크/메타 | raw_assets |
+| CREBIT_VIDEO_STRUCTURED | 영상 구조화(샷/씬) | video_segments |
+| CREBIT_DERIVED_INSIGHTS | NotebookLM/Opal 요약 | evidence_records |
+| CREBIT_PATTERN_CANDIDATES | 패턴 후보 | pattern_candidates (staging) |
+| CREBIT_PATTERN_TRACE | 검증된 패턴 적용 | pattern_trace |
 
 DB SoR에 **승격되는 것은 validated/promoted 패턴**만.
 `guide_type=persona/synapse`는 evidence_records에 태그로 보존된다.
@@ -88,8 +88,8 @@ DB SoR에 **승격되는 것은 validated/promoted 패턴**만.
 - 실패 행은 **quarantine 시트**로 이동 (수동 재검토)
 - 오류 이유를 `error_reason` 컬럼에 기록
 - 재실행 시 동일 키는 안전하게 덮어쓰기
-- CSV 모드에서는 `VIVID_QUARANTINE_CSV_PATH`로 로컬 quarantine 파일을 기록
-- API Key 모드에서는 `VIVID_QUARANTINE_RANGE`로 append 기록
+- CSV 모드에서는 `CREBIT_QUARANTINE_CSV_PATH`로 로컬 quarantine 파일을 기록
+- API Key 모드에서는 `CREBIT_QUARANTINE_RANGE`로 append 기록
 
 ---
 

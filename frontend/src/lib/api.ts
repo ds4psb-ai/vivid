@@ -111,6 +111,7 @@ export interface PatternPromotionRequest {
   derive_from_evidence?: boolean;
   min_confidence?: number;
   min_sources?: number;
+  min_fitness_score?: number;
   allow_empty_evidence?: boolean;
   allow_missing_raw?: boolean;
   note?: string;
@@ -123,6 +124,19 @@ export interface PatternPromotionResponse {
   derived_candidates?: number;
   pattern_version?: string | null;
   note?: string | null;
+}
+
+export interface CapsuleRefreshRequest {
+  pattern_version?: string;
+  dry_run?: boolean;
+  only_active?: boolean;
+}
+
+export interface CapsuleRefreshResponse {
+  pattern_version: string;
+  updated: number;
+  dry_run: boolean;
+  only_active: boolean;
 }
 
 export interface SheetsSyncResponse {
@@ -143,6 +157,44 @@ export interface OpsActionLog {
   duration_ms?: number | null;
   actor_id?: string | null;
   created_at: string;
+}
+
+export interface RunTraceSummaryItem {
+  date: string;
+  run_count: number;
+  avg_latency_ms: number | null;
+  avg_cost_usd: number | null;
+  total_cost_usd: number | null;
+  status_breakdown: Record<string, number>;
+}
+
+export interface RunTraceSummary {
+  items: RunTraceSummaryItem[];
+  total_runs: number;
+  period_start: string;
+  period_end: string;
+  overall_avg_latency_ms: number | null;
+  overall_avg_cost_usd: number | null;
+  overall_total_cost_usd: number | null;
+}
+
+export interface EvidenceCoverageByType {
+  claim_type: string;
+  total_claims: number;
+  claims_with_evidence: number;
+  coverage_rate: number;
+}
+
+export interface EvidenceCoverage {
+  total_claims: number;
+  claims_with_evidence: number;
+  claims_without_evidence: number;
+  coverage_rate: number;
+  avg_evidence_per_claim: number;
+  min_evidence_count: number;
+  max_evidence_count: number;
+  coverage_by_type: EvidenceCoverageByType[];
+  calculated_at: string;
 }
 
 export interface AffiliateProfile {
@@ -288,16 +340,29 @@ export interface ScenePreview {
 export interface StoryboardPreview {
   run_id: string;
   capsule_id: string;
+  summary?: string | null;
+  storyboard_cards?: Record<string, unknown>[];
   scenes: ScenePreview[];
   palette: string[];
   style_vector: number[];
+  audio_overview?: {
+    mood: string;
+    tempo: string;
+    notes: string;
+  } | null;
+  mind_map?: Array<{ label: string; note: string }>;
+  output_language?: string;
+  available_languages?: string[];
   pattern_version?: string;
   source_id?: string;
   sequence_len?: number;
   context_mode?: string;
   credit_cost?: number;
+  latency_ms?: number;
+  token_usage?: { input?: number; output?: number; total?: number };
   evidence_refs: string[];
   evidence_warnings?: string[];
+  output_warnings?: string[];
 }
 
 export interface GenerationRun {
@@ -321,6 +386,32 @@ export interface ShotFeedbackPayload {
 export interface GenerationRunFeedbackRequest {
   shots?: ShotFeedbackPayload[];
   overall_note?: string;
+}
+
+export interface VideoGenerateResponse {
+  run_id: string;
+  status: string;
+  shots_generated: number;
+  shots_total: number;
+  results: Array<{
+    shot_id: string;
+    status: string;
+    video_url: string | null;
+    iteration: number;
+    latency_ms: number;
+    model_version: string;
+    error: string | null;
+  }>;
+  metrics: {
+    total_shots: number;
+    success_count: number;
+    failure_count: number;
+    success_rate: number;
+    total_latency_ms: number;
+    total_cost_usd: number;
+    pipeline_duration_sec: number;
+    provider: string;
+  };
 }
 
 export interface NotebookLibraryItem {
@@ -445,6 +536,19 @@ export interface CreditTransactionList {
   total: number;
 }
 
+export interface SessionUser {
+  user_id: string;
+  email?: string | null;
+  name?: string | null;
+  role?: string | null;
+  verified?: boolean | null;
+}
+
+export interface AuthSession {
+  authenticated: boolean;
+  user?: SessionUser;
+}
+
 export interface TopupRequest {
   amount: number;
   pack_id?: string;
@@ -462,6 +566,7 @@ class ApiClient {
     try {
       response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...options,
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
           ...(USER_ID ? { "X-User-Id": USER_ID } : {}),
@@ -515,6 +620,16 @@ class ApiClient {
 
   async listCanvases(): Promise<Canvas[]> {
     return this.request<Canvas[]>("/api/v1/canvases/");
+  }
+
+  async getSession(): Promise<AuthSession> {
+    return this.request<AuthSession>("/api/v1/auth/session");
+  }
+
+  async logout(): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>("/api/v1/auth/logout", {
+      method: "POST",
+    });
   }
 
   async createCanvas(data: CanvasCreate): Promise<Canvas> {
@@ -584,6 +699,13 @@ class ApiClient {
     });
   }
 
+  async refreshCapsuleSpecs(payload: CapsuleRefreshRequest): Promise<CapsuleRefreshResponse> {
+    return this.request<CapsuleRefreshResponse>("/api/v1/ops/capsules/refresh", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
   async syncSheets(): Promise<SheetsSyncResponse> {
     return this.request<SheetsSyncResponse>("/api/v1/ops/sheets/sync", {
       method: "POST",
@@ -592,6 +714,17 @@ class ApiClient {
 
   async listOpsActions(limit: number = 8): Promise<OpsActionLog[]> {
     return this.request<OpsActionLog[]>(`/api/v1/ops/actions?limit=${limit}`);
+  }
+
+  async getRunTraceSummary(days: number = 7): Promise<RunTraceSummary> {
+    return this.request<RunTraceSummary>(`/api/v1/ops/run-trace-summary?days=${days}`);
+  }
+
+  async getEvidenceCoverage(clusterId?: string, minEvidence: number = 1): Promise<EvidenceCoverage> {
+    const params = new URLSearchParams();
+    if (clusterId) params.set("cluster_id", clusterId);
+    params.set("min_evidence", String(minEvidence));
+    return this.request<EvidenceCoverage>(`/api/v1/ops/evidence-coverage?${params}`);
   }
 
   async getAffiliateProfile(): Promise<AffiliateProfile> {
@@ -685,10 +818,15 @@ class ApiClient {
   async getStoryboardPreview(
     capsuleKey: string,
     runId: string,
-    sceneCount: number = 3
+    sceneCount: number = 3,
+    outputLanguage?: string
   ): Promise<StoryboardPreview> {
+    const params = new URLSearchParams({ scene_count: String(sceneCount) });
+    if (outputLanguage) {
+      params.set("output_language", outputLanguage);
+    }
     return this.request<StoryboardPreview>(
-      `/api/v1/capsules/${capsuleKey}/runs/${runId}/preview?scene_count=${sceneCount}`
+      `/api/v1/capsules/${capsuleKey}/runs/${runId}/preview?${params.toString()}`
     );
   }
 
@@ -736,7 +874,9 @@ class ApiClient {
     }
 
     const baseUrl = this.resolveBaseUrl();
-    const source = new EventSource(`${baseUrl}/api/v1/capsules/run/${runId}/stream`);
+    const source = new EventSource(`${baseUrl}/api/v1/capsules/run/${runId}/stream`, {
+      withCredentials: true,
+    });
     const onMessage = (event: MessageEvent) => handlePayload(event.data);
     const eventTypes: CapsuleRunStreamEventType[] = [
       "run.queued",
@@ -773,6 +913,14 @@ class ApiClient {
       method: "POST",
       body: JSON.stringify({ canvas_id: canvasId }),
     });
+  }
+
+  async listGenerationRuns(params: { canvas_id?: string; limit?: number } = {}): Promise<GenerationRun[]> {
+    const query = new URLSearchParams();
+    if (params.canvas_id) query.set("canvas_id", params.canvas_id);
+    if (typeof params.limit === "number") query.set("limit", String(params.limit));
+    const suffix = query.toString();
+    return this.request<GenerationRun[]>(`/api/v1/runs/${suffix ? `?${suffix}` : ""}`);
   }
 
   async getRawAsset(sourceId: string): Promise<RawAsset> {
@@ -904,6 +1052,19 @@ class ApiClient {
     });
   }
 
+  async generateVideo(
+    runId: string,
+    options: { provider?: "veo" | "kling" | "mock"; shot_indices?: number[] } = {},
+  ): Promise<VideoGenerateResponse> {
+    return this.request<VideoGenerateResponse>(`/api/v1/runs/${runId}/video`, {
+      method: "POST",
+      body: JSON.stringify({
+        provider: options.provider || "veo",
+        shot_indices: options.shot_indices,
+      }),
+    });
+  }
+
   // --- Credits API ---
 
   async getCreditsBalance(userId: string = "demo-user"): Promise<CreditBalance> {
@@ -926,6 +1087,68 @@ class ApiClient {
       body: JSON.stringify({ amount, pack_id: packId }),
     });
   }
+
+  // --- Crebit API ---
+
+  async applyCrebit(data: CrebitApplicationRequest): Promise<CrebitApplication> {
+    return this.request<CrebitApplication>("/api/v1/crebit/apply", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async listCrebitApplications(params?: {
+    status?: string;
+    cohort?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<CrebitApplicationList> {
+    const searchParams = new URLSearchParams();
+    if (params?.status) searchParams.set("status", params.status);
+    if (params?.cohort) searchParams.set("cohort", params.cohort);
+    if (params?.limit) searchParams.set("limit", String(params.limit));
+    if (params?.offset) searchParams.set("offset", String(params.offset));
+    const query = searchParams.toString() ? `?${searchParams.toString()}` : "";
+    return this.request<CrebitApplicationList>(`/api/v1/crebit/applications${query}`);
+  }
+
+  async getCrebitStats(): Promise<CrebitStats> {
+    return this.request<CrebitStats>("/api/v1/crebit/stats");
+  }
+}
+
+// --- Crebit Types ---
+
+export interface CrebitApplicationRequest {
+  name: string;
+  email: string;
+  phone: string;
+  track: "A" | "B";
+}
+
+export interface CrebitApplication {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  track: string;
+  status: string;
+  cohort: string;
+  created_at: string;
+}
+
+export interface CrebitApplicationList {
+  items: CrebitApplication[];
+  total: number;
+  offset: number;
+  limit: number;
+}
+
+export interface CrebitStats {
+  total: number;
+  by_status: Record<string, number>;
+  by_track: Record<string, number>;
+  by_cohort: Record<string, number>;
 }
 
 export const api = new ApiClient();

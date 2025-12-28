@@ -1,6 +1,7 @@
-# Reverse Engineering Report for Execution (Vivid)
+# Reverse Engineering Report for Execution (Crebit)
 
 **Date**: 2025-12-24  
+**Updated**: 2025-12-28  
 **Purpose**: Strengthen the evidence and design decisions that will drive the Execution Plan  
 **Scope**: Workstreams A-F (IA, Canvas, Data, Credits, Affiliate, Observability)
 
@@ -9,9 +10,9 @@
 ## 0) Evidence Map (Sources)
 
 - Primary UI extraction and tokens: `16_VIRLO_CONTENT_STUDIO_RESEARCH.md`
-- Vivid UI guidance baseline: `13_UI_DESIGN_GUIDE_2025-12.md`
+- Crebit UI guidance baseline: `13_UI_DESIGN_GUIDE_2025-12.md`
 - Credits/Billing draft spec: `17_CREDITS_AND_BILLING_SPEC_V1.md`
-- Affiliate draft spec: `18_AFFILIATE_PROGRAM_SPEC_V1.md`
+- Affiliate draft spec: `35_AFFILIATE_PROGRAM_SPEC_V1.md`
 
 **No user-specific data was extracted or stored.**
 
@@ -21,7 +22,7 @@
 
 - **[OBSERVED]**: directly visible in extracted UI copy or nav labels
 - **[INFERRED]**: plausible but not confirmed by DOM text
-- **[PROPOSED]**: design choice for Vivid (not derived from Virlo)
+- **[PROPOSED]**: design choice for Crebit (not derived from Virlo)
 - **[TO_VALIDATE]**: requires manual product review or separate research
 
 ---
@@ -33,7 +34,7 @@
 - UI/UX 정본: `13_UI_DESIGN_GUIDE_2025-12.md`
 - Node/캡슐 계약: `01_NODE_CANVAS_TECHNICAL_SPECIFICATION.md`, `05_CAPSULE_NODE_SPEC.md`
 - 파이프라인/역할: `10_PIPELINES_AND_USER_FLOWS.md`
-- Growth 스펙: `17_CREDITS_AND_BILLING_SPEC_V1.md`, `18_AFFILIATE_PROGRAM_SPEC_V1.md`
+- Growth 스펙: `17_CREDITS_AND_BILLING_SPEC_V1.md`, `35_AFFILIATE_PROGRAM_SPEC_V1.md`
 
 ---
 
@@ -48,7 +49,7 @@
 - Accounts (Account, Usage, Billing)
 - Changelog, Get Free Credits, Affiliate Program, Support, Community
 
-**Vivid alignment (candidate → SoR)** [PROPOSED]
+**Crebit alignment (candidate → SoR)** [PROPOSED]
 - 후보 요약: Left rail 그룹/CTA 배치/New 배지 규칙
 - 확정 문서: `13_UI_DESIGN_GUIDE_2025-12.md`
 
@@ -58,7 +59,7 @@
 
 **Validation checklist**
 - Confirm actual user flows require Credits and Affiliate to be top-level
-- Confirm Research grouping aligns with Vivid Evidence Loop
+- Confirm Research grouping aligns with Crebit Evidence Loop
 
 ---
 
@@ -70,7 +71,7 @@
 - Positioning copy: "Visual AI content workflow builder"
 - Onboarding sections: Core Components, What You Can Build, How It Works
 
-**Vivid alignment (candidate → SoR)** [PROPOSED]
+**Crebit alignment (candidate → SoR)** [PROPOSED]
 - 후보 요약: Empty state CTA / Seed graph / Onboarding cards
 - 확정 문서: `13_UI_DESIGN_GUIDE_2025-12.md`, `23_TEMPLATE_SYSTEM_SPEC_CODEX.md`
 
@@ -92,7 +93,7 @@
 - Processor/Capsule nodes: N inputs, 1 output
 - Output nodes: 1 input, 0 outputs
 
-**Vivid alignment (candidate → SoR)** [PROPOSED]
+**Crebit alignment (candidate → SoR)** [PROPOSED]
 - 후보 요약: 타입 기반 연결 규칙/시각적 호환 피드백
 - 확정 문서: `01_NODE_CANVAS_TECHNICAL_SPECIFICATION.md`, `05_CAPSULE_NODE_SPEC.md`
 
@@ -101,7 +102,7 @@
 - Canvas must enforce compatibility in UI and backend
 
 **Validation checklist**
-- Confirm if Vivid wants strict typing or soft warnings in MVP
+- Confirm if Crebit wants strict typing or soft warnings in MVP
 
 ---
 
@@ -112,7 +113,7 @@
 - Zoom wheel range 10% to 200%
 - Lasso select with shift + drag
 
-**Vivid alignment (candidate → SoR)** [PROPOSED]
+**Crebit alignment (candidate → SoR)** [PROPOSED]
 - 후보 요약: 미니맵/줌 범위/라쏘 선택/핫키 표기
 - 확정 문서: `01_NODE_CANVAS_TECHNICAL_SPECIFICATION.md`, `13_UI_DESIGN_GUIDE_2025-12.md`
 
@@ -125,7 +126,7 @@
 
 ### C.1 NodeSpec Contracts
 
-**Vivid alignment (candidate → SoR)** [PROPOSED]
+**Crebit alignment (candidate → SoR)** [PROPOSED]
 - 후보 요약: input_contracts 필드(required/optional/max_upstream/allowed_types/context_mode)
 - 확정 문서: `05_CAPSULE_NODE_SPEC.md`, `01_NODE_CANVAS_TECHNICAL_SPECIFICATION.md`
 
@@ -137,7 +138,7 @@
 
 ### C.2 Execution Context Snapshot
 
-**Vivid alignment (candidate → SoR)** [PROPOSED]
+**Crebit alignment (candidate → SoR)** [PROPOSED]
 - 후보 요약: upstream snapshot + token/model version 기록
 - 확정 문서: `05_CAPSULE_NODE_SPEC.md`
 
@@ -163,7 +164,7 @@
 - API packs: 5,000 / 15,000 / 40,000 credits
 - Monthly vs Annual toggle with "Annual 30% Off"
 
-**Vivid alignment (candidate → SoR)** [PROPOSED]
+**Crebit alignment (candidate → SoR)** [PROPOSED]
 - 후보 요약: 구독+탑업, Creator/API 분리, Credits CTA 위치
 - 확정 문서: `17_CREDITS_AND_BILLING_SPEC_V1.md`
 
@@ -175,7 +176,7 @@
 
 ### D.2 Consumption Order and Ledger
 
-**Vivid alignment (candidate → SoR)** [PROPOSED]
+**Crebit alignment (candidate → SoR)** [PROPOSED]
 - 후보 요약: 소비 우선순위/ledger 컬럼
 - 확정 문서: `17_CREDITS_AND_BILLING_SPEC_V1.md`
 
@@ -193,9 +194,9 @@
 - Affiliate Program link in nav
 - "Get Free Credits" CTA surfaced
 
-**Vivid alignment (candidate → SoR)** [PROPOSED]
+**Crebit alignment (candidate → SoR)** [PROPOSED]
 - 후보 요약: 리워드 규칙/트리거/지급 방식
-- 확정 문서: `18_AFFILIATE_PROGRAM_SPEC_V1.md`
+- 확정 문서: `35_AFFILIATE_PROGRAM_SPEC_V1.md`
 
 **Implementation impact**
 - Referral tracking table + reward issuance job
@@ -208,7 +209,7 @@
 
 ## Workstream F: Observability (Cost Transparency)
 
-**Vivid alignment (candidate → SoR)** [PROPOSED]
+**Crebit alignment (candidate → SoR)** [PROPOSED]
 - 후보 요약: run telemetry 필드(latency/token/cost/version)
 - 확정 문서: `05_CAPSULE_NODE_SPEC.md`
 
@@ -235,7 +236,7 @@ Execution Plan should only proceed once:
 - `13_UI_DESIGN_GUIDE_2025-12.md` 승인 (IA/Empty state)
 - `05_CAPSULE_NODE_SPEC.md` 확정 (NodeSpec/Run telemetry)
 - `17_CREDITS_AND_BILLING_SPEC_V1.md` 확정 (credits 정책)
-- `18_AFFILIATE_PROGRAM_SPEC_V1.md` 확정 (reward policy)
+- `35_AFFILIATE_PROGRAM_SPEC_V1.md` 확정 (reward policy)
 
 ---
 

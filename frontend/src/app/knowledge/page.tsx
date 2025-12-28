@@ -14,10 +14,12 @@ import {
     List,
 } from "lucide-react";
 import AppShell from "@/components/AppShell";
+import PageStatus from "@/components/PageStatus";
+import LoginRequiredModal from "@/components/LoginRequiredModal";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { api, DerivedInsight, NotebookAssetItem, NotebookLibraryItem } from "@/lib/api";
-import { isAdminModeEnabled } from "@/lib/admin";
-import { normalizeApiError } from "@/lib/errors";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { isNetworkError, normalizeApiError } from "@/lib/errors";
 
 type KnowledgeType = "notebook" | "analysis" | "guide" | "video" | "asset";
 
@@ -66,6 +68,7 @@ export default function KnowledgePage() {
     const [selectedItem, setSelectedItem] = useState<KnowledgeItem | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
+    const [isOffline, setIsOffline] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
     const [guideScopeFilter, setGuideScopeFilter] = useState("");
     const [outputTypeFilter, setOutputTypeFilter] = useState("");
@@ -84,7 +87,8 @@ export default function KnowledgePage() {
         tags: "",
         isPublic: false,
     });
-    const adminModeEnabled = useMemo(() => isAdminModeEnabled(), []);
+    const { isAdmin, session, isLoading: isAuthLoading } = useAdminAccess(false);
+    const [loginModalOpen, setLoginModalOpen] = useState(false);
 
     const labels = useMemo(() => ({
         title: language === "ko" ? "지식 센터" : "Knowledge Center",
@@ -104,6 +108,11 @@ export default function KnowledgePage() {
         loadErrorTitle: language === "ko" ? "데이터 로드 실패" : "Unable to load data",
         loadErrorDetail: language === "ko" ? "지식 데이터를 불러오지 못했습니다." : "Unable to load knowledge data.",
         adminHint: language === "ko" ? "관리자 전용 데이터입니다." : "Admin access required to view library data.",
+        adminHintDetail:
+            language === "ko"
+                ? "관리자 권한이 있는 계정으로 로그인하세요."
+                : "Sign in with an admin-enabled account.",
+        adminAction: language === "ko" ? "관리자 로그인" : "Sign in as admin",
         gridView: language === "ko" ? "그리드 보기" : "Grid view",
         listView: language === "ko" ? "목록 보기" : "List view",
         viewMode: language === "ko" ? "보기 방식" : "View mode",
@@ -236,10 +245,17 @@ export default function KnowledgePage() {
 
     useEffect(() => {
         let active = true;
-        if (!adminModeEnabled) {
+        if (isAuthLoading) {
+            setIsLoading(true);
+            return () => {
+                active = false;
+            };
+        }
+        if (!isAdmin) {
             setKnowledgeItems([]);
             setIsLoading(false);
             setLoadError("admin-only");
+            setIsOffline(false);
             return () => {
                 active = false;
             };
@@ -248,6 +264,7 @@ export default function KnowledgePage() {
         const loadKnowledge = async () => {
             setIsLoading(true);
             setLoadError(null);
+            setIsOffline(false);
 
             const results = await Promise.allSettled([
                 api.listNotebookLibrary({
@@ -359,9 +376,9 @@ export default function KnowledgePage() {
 
             results.forEach((result, index) => {
                 if (result.status === "fulfilled") {
-                    if (index === 0) addNotebookItems(result.value);
-                    if (index === 1) addDerivedItems(result.value);
-                    if (index === 2) addAssetItems(result.value);
+                    if (index === 0) addNotebookItems(result.value as NotebookLibraryItem[]);
+                    if (index === 1) addDerivedItems(result.value as DerivedInsight[]);
+                    if (index === 2) addAssetItems(result.value as NotebookAssetItem[]);
                 } else {
                     errors.push(normalizeApiError(result.reason, labels.loadErrorDetail));
                 }
@@ -371,6 +388,10 @@ export default function KnowledgePage() {
             if (errors.length) {
                 setLoadError(errors[0]);
             }
+            const offlineDetected = results.some(
+                (result) => result.status === "rejected" && isNetworkError(result.reason)
+            );
+            setIsOffline(offlineDetected);
             setIsLoading(false);
         };
 
@@ -378,7 +399,7 @@ export default function KnowledgePage() {
         return () => {
             active = false;
         };
-    }, [adminModeEnabled, guideScopeFilter, outputTypeFilter, assetTypeFilter, labels]);
+    }, [isAdmin, isAuthLoading, guideScopeFilter, outputTypeFilter, assetTypeFilter, labels]);
 
     const filteredKnowledge = useMemo(() => {
         if (!search.trim()) return knowledgeItems;
@@ -392,6 +413,7 @@ export default function KnowledgePage() {
     }, [knowledgeItems, search]);
 
     const showAdminHint = (loadError || "").toLowerCase().includes("admin");
+    const showLoginCta = showAdminHint && !session?.authenticated;
 
     const buildDefaultSlug = (value: string) => {
         const cleaned = value
@@ -405,6 +427,10 @@ export default function KnowledgePage() {
     };
 
     const openSeedDialog = (item: KnowledgeItem) => {
+        if (!session?.authenticated) {
+            setLoginModalOpen(true);
+            return;
+        }
         const notebookId = item.meta?.notebookId || "";
         const base = notebookId || item.title || "template";
         setSeedForm({
@@ -518,8 +544,8 @@ export default function KnowledgePage() {
                                 <button
                                     onClick={() => setViewMode("grid")}
                                     className={`p-2 transition-colors sm:p-3 ${viewMode === "grid"
-                                            ? "bg-white/10 text-[var(--fg-0)]"
-                                            : "text-[var(--fg-muted)] hover:text-[var(--fg-0)]"
+                                        ? "bg-white/10 text-[var(--fg-0)]"
+                                        : "text-[var(--fg-muted)] hover:text-[var(--fg-0)]"
                                         }`}
                                     aria-label={labels.gridView}
                                     aria-pressed={viewMode === "grid"}
@@ -529,8 +555,8 @@ export default function KnowledgePage() {
                                 <button
                                     onClick={() => setViewMode("list")}
                                     className={`p-2 transition-colors sm:p-3 ${viewMode === "list"
-                                            ? "bg-white/10 text-[var(--fg-0)]"
-                                            : "text-[var(--fg-muted)] hover:text-[var(--fg-0)]"
+                                        ? "bg-white/10 text-[var(--fg-0)]"
+                                        : "text-[var(--fg-muted)] hover:text-[var(--fg-0)]"
                                         }`}
                                     aria-label={labels.listView}
                                     aria-pressed={viewMode === "list"}
@@ -628,20 +654,29 @@ export default function KnowledgePage() {
                         aria-label={labels.title}
                     >
                         {isLoading && (
-                            <div className="col-span-full rounded-xl border border-white/10 bg-white/5 p-6 text-sm text-[var(--fg-muted)]">
-                                {labels.loading}
-                            </div>
+                            <PageStatus
+                                variant="loading"
+                                title={labels.loading}
+                                className={viewMode === "grid" ? "col-span-full" : ""}
+                            />
                         )}
                         {!isLoading && loadError && !showAdminHint && (
-                            <div className="col-span-full rounded-xl border border-rose-500/30 bg-rose-500/10 p-6 text-sm text-rose-100">
-                                <div className="font-semibold">{labels.loadErrorTitle}</div>
-                                <div className="mt-2">{loadError}</div>
-                            </div>
+                            <PageStatus
+                                variant="error"
+                                title={labels.loadErrorTitle}
+                                message={loadError}
+                                isOffline={isOffline}
+                                className={viewMode === "grid" ? "col-span-full" : ""}
+                            />
                         )}
                         {showAdminHint && (
-                            <div className="col-span-full rounded-xl border border-amber-500/30 bg-amber-500/10 p-6 text-sm text-amber-200">
-                                {labels.adminHint}
-                            </div>
+                            <PageStatus
+                                variant="admin"
+                                title={labels.adminHint}
+                                message={labels.adminHintDetail}
+                                action={showLoginCta ? { label: labels.adminAction, href: "/login" } : undefined}
+                                className={viewMode === "grid" ? "col-span-full" : ""}
+                            />
                         )}
                         {filteredKnowledge.map((item, index) => {
                             const Icon = TYPE_ICONS[item.type];
@@ -700,15 +735,12 @@ export default function KnowledgePage() {
 
                     {/* Empty State */}
                     {!isLoading && !loadError && filteredKnowledge.length === 0 && (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="mt-12 text-center"
-                        >
-                            <SearchIcon className="mx-auto h-8 w-8 text-[var(--fg-muted)]" aria-hidden="true" />
-                            <div className="mt-4 text-[var(--fg-muted)]">
-                                {labels.noResults} &quot;{search}&quot;
-                            </div>
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-8">
+                            <PageStatus
+                                variant="empty"
+                                title={labels.noResults}
+                                message={search ? `"${search}"` : undefined}
+                            />
                         </motion.div>
                     )}
                 </div>
@@ -767,18 +799,18 @@ export default function KnowledgePage() {
                                         <span className="text-[var(--fg-0)]">{labels.detailNotebookRef}</span>
                                         <div className="mt-1 flex items-center gap-2">
                                             <div className="min-w-0 flex-1 truncate">
-                                            {isExternalLink(selectedItem.meta.notebookRef) ? (
-                                                <a
-                                                    href={selectedItem.meta.notebookRef}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="text-sky-400 hover:text-sky-300 hover:underline"
-                                                >
-                                                    {selectedItem.meta.notebookRef}
-                                                </a>
-                                            ) : (
-                                                <span>{selectedItem.meta.notebookRef}</span>
-                                            )}
+                                                {isExternalLink(selectedItem.meta.notebookRef) ? (
+                                                    <a
+                                                        href={selectedItem.meta.notebookRef}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="text-sky-400 hover:text-sky-300 hover:underline"
+                                                    >
+                                                        {selectedItem.meta.notebookRef}
+                                                    </a>
+                                                ) : (
+                                                    <span>{selectedItem.meta.notebookRef}</span>
+                                                )}
                                             </div>
                                             <button
                                                 onClick={() => copyText(selectedItem.meta?.notebookRef)}
@@ -837,18 +869,18 @@ export default function KnowledgePage() {
                                         <span className="text-[var(--fg-0)]">{labels.detailAssetRef}</span>
                                         <div className="mt-1 flex items-center gap-2">
                                             <div className="min-w-0 flex-1 truncate">
-                                            {isExternalLink(selectedItem.meta.assetRef) ? (
-                                                <a
-                                                    href={selectedItem.meta.assetRef}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="text-sky-400 hover:text-sky-300 hover:underline"
-                                                >
-                                                    {selectedItem.meta.assetRef}
-                                                </a>
-                                            ) : (
-                                                <span>{selectedItem.meta.assetRef}</span>
-                                            )}
+                                                {isExternalLink(selectedItem.meta.assetRef) ? (
+                                                    <a
+                                                        href={selectedItem.meta.assetRef}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="text-sky-400 hover:text-sky-300 hover:underline"
+                                                    >
+                                                        {selectedItem.meta.assetRef}
+                                                    </a>
+                                                ) : (
+                                                    <span>{selectedItem.meta.assetRef}</span>
+                                                )}
                                             </div>
                                             <button
                                                 onClick={() => copyText(selectedItem.meta?.assetRef)}
@@ -1047,6 +1079,12 @@ export default function KnowledgePage() {
                     </>
                 )}
             </AnimatePresence>
+            {/* Login Required Modal */}
+            <LoginRequiredModal
+                isOpen={loginModalOpen}
+                onClose={() => setLoginModalOpen(false)}
+                returnTo="/knowledge"
+            />
         </AppShell>
     );
 }

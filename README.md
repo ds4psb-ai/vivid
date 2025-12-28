@@ -1,12 +1,12 @@
-# Vivid Node Canvas (MVP scaffold)
+# Crebit Node Canvas (MVP scaffold)
 
-This repo bootstraps the Node Canvas MVP described in the Vivid docs. The focus is a fast, minimal base for:
+This repo bootstraps the Node Canvas MVP described in the Crebit docs. The focus is a fast, minimal base for:
 
 - Visual node canvas (drag, connect, inspect)
 - Persisted canvases (save/load) using JSON graphs
 - Future hooks for GA/RL optimization and template marketplace
 
-## Scope distilled from Vivid docs
+## Scope distilled from Crebit docs
 
 - Canvas model: nodes + connections + metadata + versioning
 - Node types grouped into input, style, customization, processing, output, capsule
@@ -18,7 +18,7 @@ This repo bootstraps the Node Canvas MVP described in the Vivid docs. The focus 
 - Video 이해는 Gemini 구조화 출력으로 **DB SoR**에 적재 후 NotebookLM 소스로 사용
 - Pattern Library/Trace records the repeatable auteur rules
 - NotebookLM/Opal Ultra 구독 전제 (다중 출력/다국어 활용)
-- 흐름/역할 정본: `10_PIPELINES_AND_USER_FLOWS.md`, 원칙 정본: `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`
+- 흐름/역할 정본: `10_PIPELINES_AND_USER_FLOWS.md`, 원칙 정본: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
 
 ## Tech baseline
 
@@ -32,7 +32,7 @@ This repo bootstraps the Node Canvas MVP described in the Vivid docs. The focus 
 - 문서 맵: `00_DOCS_INDEX.md`
 
 Canonical anchors:
-- `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`
+- `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
 - `10_PIPELINES_AND_USER_FLOWS.md`
 - `05_CAPSULE_NODE_SPEC.md`
 - `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
@@ -85,7 +85,7 @@ Optional: promote Sheets Bus → DB SoR
 # set SHEETS_MODE and URLs in backend/.env
 python scripts/promote_from_sheets.py
 ```
-Note: if you use Notebook Library, set `VIVID_NOTEBOOK_LIBRARY_CSV_URL` (and optional `VIVID_NOTEBOOK_ASSETS_CSV_URL`) or ranges too.
+Note: if you use Notebook Library, set `CREBIT_NOTEBOOK_LIBRARY_CSV_URL` (and optional `CREBIT_NOTEBOOK_ASSETS_CSV_URL`) or ranges too.
 
 Demo: promote mock sheets data (CSV files in `backend/mock_sheets`)
 ```bash
@@ -127,7 +127,7 @@ NEXT_PUBLIC_ADMIN_MODE=true
 
 - Frontend: http://localhost:3100
 - Backend: http://localhost:8100
-- Postgres: localhost:5433 (db: vivid_canvas)
+- Postgres: localhost:5433 (db: crebit_canvas)
 
 Reserved if you add services later:
 - Redis: 6380

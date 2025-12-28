@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
     Play,
@@ -10,8 +11,13 @@ import {
     Save,
     ChevronLeft,
     Loader2,
+    LogIn,
+    LogOut,
+    UserCircle,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { api, AuthSession } from "@/lib/api";
+import { getAuthStartUrl } from "@/lib/auth";
 
 interface TopBarProps {
     projectName?: string;
@@ -24,6 +30,7 @@ interface TopBarProps {
     onNameChange?: (name: string) => void;
     showBackButton?: boolean;
     backHref?: string;
+    session?: AuthSession | null;
 }
 
 export default function TopBar({
@@ -37,10 +44,13 @@ export default function TopBar({
     onNameChange,
     showBackButton = false,
     backHref = "/",
+    session,
 }: TopBarProps) {
     const { t } = useLanguage();
+    const router = useRouter();
     const [isEditing, setIsEditing] = useState(false);
     const [editedName, setEditedName] = useState(projectName);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     // Sync editedName when projectName prop changes
     useEffect(() => {
@@ -74,6 +84,22 @@ export default function TopBar({
             return fallback;
         }
     }, [t]);
+
+    const handleLogout = useCallback(async () => {
+        setIsLoggingOut(true);
+        try {
+            await api.logout();
+            router.refresh();
+        } finally {
+            setIsLoggingOut(false);
+        }
+    }, [router]);
+
+    // Use centralized auth URL utility
+    const authStartUrl = getAuthStartUrl();
+
+    const userLabel = session?.user?.name || session?.user?.email || getLabel("account", "Account");
+    const isAuthenticated = Boolean(session?.authenticated);
 
     return (
         <header
@@ -134,6 +160,42 @@ export default function TopBar({
 
             {/* Right Section */}
             <div className="flex items-center gap-3">
+                {isAuthenticated ? (
+                    <div className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-1.5 text-sm">
+                        <UserCircle className="h-4 w-4 text-[var(--fg-muted)]" aria-hidden="true" />
+                        <span className="max-w-[160px] truncate">{userLabel}</span>
+                        {session?.user?.role && (
+                            <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-[var(--fg-muted)]">
+                                {session.user.role}
+                            </span>
+                        )}
+                    </div>
+                ) : (
+                    <Link
+                        href={authStartUrl}
+                        className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-[var(--fg-0)] transition-colors hover:bg-white/10"
+                    >
+                        <LogIn className="h-4 w-4" aria-hidden="true" />
+                        {getLabel("signIn", "Sign in")}
+                    </Link>
+                )}
+
+                {isAuthenticated && (
+                    <button
+                        onClick={handleLogout}
+                        disabled={isLoggingOut}
+                        className="flex h-9 items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 text-sm font-medium transition-colors hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label={getLabel("signOut", "Sign out")}
+                    >
+                        {isLoggingOut ? (
+                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                        ) : (
+                            <LogOut className="h-4 w-4" aria-hidden="true" />
+                        )}
+                        {getLabel("signOut", "Sign out")}
+                    </button>
+                )}
+
                 {/* Credit Balance */}
                 <Link
                     href="/credits"

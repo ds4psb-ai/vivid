@@ -1,6 +1,7 @@
 """Seed data for auteur templates and capsule specs."""
 from __future__ import annotations
 
+import copy
 from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,6 +10,7 @@ from app.fixtures.auteur_capsules import CAPSULE_SPECS
 from app.fixtures.auteur_templates import TEMPLATES
 from app.database import AsyncSessionLocal
 from app.models import CapsuleSpec, Template, TemplateVersion
+from app.graph_utils import ensure_pattern_version
 from app.patterns import get_latest_pattern_version
 
 
@@ -29,7 +31,7 @@ async def seed_capsules(session: AsyncSession) -> int:
                 existing.description = spec["description"]
             desired_spec = spec.get("spec") or {}
             desired_pattern_version = desired_spec.get("patternVersion")
-            current_spec = existing.spec or {}
+            current_spec = copy.deepcopy(existing.spec) if existing.spec else {}
             if desired_pattern_version and not current_spec.get("patternVersion"):
                 current_spec["patternVersion"] = desired_pattern_version
 
@@ -47,6 +49,17 @@ async def seed_capsules(session: AsyncSession) -> int:
                 current_contracts["optional"] = sorted(current_optional | desired_optional)
                 if current_contracts:
                     current_spec["inputContracts"] = current_contracts
+
+            # Sync exposedParams (Script Persona Priority fix)
+            desired_exposed = desired_spec.get("exposedParams") or {}
+            current_exposed = current_spec.get("exposedParams") or {}
+            if desired_exposed:
+                # Merge new params while preserving user customizations
+                for key, definition in desired_exposed.items():
+                    if key not in current_exposed:
+                        current_exposed[key] = definition
+                if current_exposed != (current_spec.get("exposedParams") or {}):
+                    current_spec["exposedParams"] = current_exposed
 
             existing.spec = current_spec
             continue
@@ -89,7 +102,7 @@ async def seed_templates(session: AsyncSession) -> int:
             if existing.preview_video_url != template.get("preview_video_url"):
                 existing.preview_video_url = template.get("preview_video_url")
                 updated = True
-            patched_graph = _ensure_pattern_version(graph_data, pattern_version)
+            patched_graph = ensure_pattern_version(graph_data, pattern_version)
             if patched_graph is not None:
                 graph_data = patched_graph
                 updated = True
@@ -131,7 +144,7 @@ async def seed_templates(session: AsyncSession) -> int:
             title=template["title"],
             description=template["description"],
             tags=template["tags"],
-            graph_data=_ensure_pattern_version(template["graph_data"], pattern_version) or template["graph_data"],
+            graph_data=ensure_pattern_version(template["graph_data"], pattern_version),
             is_public=True,
             preview_video_url=template.get("preview_video_url"),
             version=1,
@@ -150,31 +163,6 @@ async def seed_templates(session: AsyncSession) -> int:
         created += 1
 
     return created
-
-
-def _ensure_pattern_version(graph_data: dict, pattern_version: str) -> Optional[dict]:
-    nodes = graph_data.get("nodes")
-    if not isinstance(nodes, list) or not nodes:
-        return None
-    updated = False
-    next_nodes = []
-    for node in nodes:
-        if not isinstance(node, dict):
-            next_nodes.append(node)
-            continue
-        data = node.get("data")
-        if not isinstance(data, dict) or data.get("patternVersion"):
-            next_nodes.append(node)
-            continue
-        if data.get("capsuleId") and data.get("capsuleVersion"):
-            patched = {**data, "patternVersion": pattern_version}
-            next_nodes.append({**node, "data": patched})
-            updated = True
-        else:
-            next_nodes.append(node)
-    if not updated:
-        return None
-    return {**graph_data, "nodes": next_nodes}
 
 
 def _ensure_processing_pipeline(graph_data: dict) -> Optional[dict]:

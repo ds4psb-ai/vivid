@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Palette, Layers, Clock, Eye, Sparkles, Link, Square, Music, Share2 } from "lucide-react";
+import { X, Palette, Layers, Clock, Eye, Sparkles, Link, Square, Music, Share2, FileText, Clapperboard } from "lucide-react";
 import type { StoryboardPreview, ScenePreview } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { isAdminModeEnabled } from "@/lib/admin";
+import { getStoryboardLabel, getStoryboardShotType } from "@/lib/narrative";
 
 interface PreviewPanelProps {
     preview: StoryboardPreview | null;
@@ -11,7 +11,11 @@ interface PreviewPanelProps {
     showCancel?: boolean;
     onCancel?: () => void;
     statusNotice?: { tone: "info" | "warning" | "error"; message: string };
+    outputLanguage?: string;
+    availableLanguages?: string[];
+    onLanguageChange?: (language: string) => void;
     onClose: () => void;
+    isAdminView?: boolean;
 }
 
 export function PreviewPanel({
@@ -20,15 +24,21 @@ export function PreviewPanel({
     showCancel,
     onCancel,
     statusNotice,
+    outputLanguage,
+    availableLanguages,
+    onLanguageChange,
     onClose,
+    isAdminView = false,
 }: PreviewPanelProps) {
     const { t } = useLanguage();
     const [activeOutput, setActiveOutput] = useState<"storyboard" | "audio" | "mindmap">(
         "storyboard"
     );
-    const isAdminView = isAdminModeEnabled();
     const evidenceWarnings = Array.isArray(preview?.evidence_warnings)
         ? preview?.evidence_warnings
+        : [];
+    const outputWarnings = Array.isArray(preview?.output_warnings)
+        ? preview?.output_warnings
         : [];
     const patternVersion = preview?.pattern_version;
     const sourceId = preview?.source_id;
@@ -44,6 +54,21 @@ export function PreviewPanel({
         preview?.token_usage && typeof preview.token_usage === "object"
             ? (preview.token_usage as { input?: number; output?: number; total?: number })
             : null;
+    const summaryText = typeof preview?.summary === "string" ? preview?.summary : null;
+    const storyboardCards = Array.isArray(preview?.storyboard_cards)
+        ? preview?.storyboard_cards
+        : [];
+    const previewLanguages = Array.isArray(availableLanguages)
+        ? availableLanguages
+        : Array.isArray(preview?.available_languages)
+            ? preview?.available_languages
+            : [];
+    const activeLanguage = outputLanguage || preview?.output_language;
+    const showLanguageSwitch = previewLanguages.length > 1;
+    const handleLanguageClick = (language: string) => {
+        if (language === activeLanguage) return;
+        onLanguageChange?.(language);
+    };
     const seqSummary =
         isAdminView && sequenceLen !== undefined && preview?.scenes?.length
             ? {
@@ -57,12 +82,13 @@ export function PreviewPanel({
     return (
         <AnimatePresence>
             <motion.div
-                initial={{ opacity: 0, x: 300 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 300 }}
+                initial={{ opacity: 0, y: 240 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 240 }}
                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="fixed right-0 top-0 h-full w-[400px] bg-gradient-to-b from-gray-900/95 to-gray-950/95 backdrop-blur-xl border-l border-white/10 z-50 overflow-hidden flex flex-col"
+                className="fixed bottom-0 left-0 right-0 h-[360px] md:h-[420px] bg-gradient-to-b from-gray-900/95 to-gray-950/95 backdrop-blur-xl border-t border-white/10 z-50 overflow-hidden rounded-t-2xl panel-container"
             >
+                <div className="mx-auto flex h-full w-full max-w-5xl flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between p-5 border-b border-white/10">
                     <div className="flex items-center gap-3">
@@ -75,6 +101,24 @@ export function PreviewPanel({
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
+                        {showLanguageSwitch && (
+                            <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 p-1 text-[10px] text-gray-300">
+                                <span className="px-2 text-gray-400">{t("outputLanguage")}</span>
+                                {previewLanguages.map((language) => (
+                                    <button
+                                        key={language}
+                                        onClick={() => handleLanguageClick(language)}
+                                        className={`rounded-full px-2 py-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/40 ${
+                                            activeLanguage === language
+                                                ? "bg-sky-500/20 text-sky-200"
+                                                : "text-gray-400 hover:text-gray-200"
+                                        }`}
+                                    >
+                                        {language.toUpperCase()}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                         {showCancel && onCancel && (
                             <button
                                 onClick={onCancel}
@@ -128,39 +172,116 @@ export function PreviewPanel({
                         <section>
                             <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 p-1 text-[11px] text-gray-300">
                                 {[
-                                    { id: "storyboard", label: t("outputStoryboard"), icon: Layers, available: true },
-                                    { id: "audio", label: t("outputAudio"), icon: Music, available: false },
-                                    { id: "mindmap", label: t("outputMindMap"), icon: Share2, available: false },
+                                    { id: "storyboard", label: t("outputStoryboard"), icon: Layers },
+                                    { id: "audio", label: t("outputAudio"), icon: Music },
+                                    { id: "mindmap", label: t("outputMindMap"), icon: Share2 },
                                 ].map((tab) => (
                                     <button
                                         key={tab.id}
-                                        onClick={() => tab.available && setActiveOutput(tab.id as typeof activeOutput)}
-                                        disabled={!tab.available}
+                                        onClick={() => setActiveOutput(tab.id as typeof activeOutput)}
                                         className={`flex flex-1 items-center justify-center gap-1 rounded-full px-3 py-1 transition-colors ${
                                             activeOutput === tab.id
                                                 ? "bg-sky-500/20 text-sky-200"
                                                 : "text-gray-400 hover:text-gray-200"
-                                        } ${tab.available ? "" : "opacity-50 cursor-not-allowed"}`}
+                                        }`}
                                     >
                                         <tab.icon className="h-3 w-3" />
                                         {tab.label}
-                                        {!tab.available && (
-                                            <span className="ml-1 text-[9px] uppercase tracking-widest text-amber-200">
-                                                {t("badgeSoon")}
-                                            </span>
-                                        )}
                                     </button>
                                 ))}
                             </div>
-                            {activeOutput !== "storyboard" && (
-                                <div className="mt-3 rounded-lg border border-white/10 bg-gray-900/50 px-3 py-2 text-[11px] text-gray-400">
-                                    {t("outputComingSoon")}
-                                </div>
-                            )}
                         </section>
+
+                        {activeOutput === "audio" && (
+                            <section>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Music className="w-4 h-4 text-emerald-300" />
+                                    <h3 className="text-sm font-medium text-white">{t("audioOverview")}</h3>
+                                </div>
+                                {preview.audio_overview ? (
+                                    <div className="rounded-xl border border-white/10 bg-gray-900/50 p-4 space-y-2 text-xs text-gray-300">
+                                        <div>{t("audioMood")}: <span className="text-gray-200">{preview.audio_overview.mood}</span></div>
+                                        <div>{t("audioTempo")}: <span className="text-gray-200">{preview.audio_overview.tempo}</span></div>
+                                        <div>{t("audioNotes")}: <span className="text-gray-200">{preview.audio_overview.notes}</span></div>
+                                    </div>
+                                ) : (
+                                    <div className="text-xs text-gray-400">{t("noAudioOverview")}</div>
+                                )}
+                            </section>
+                        )}
+
+                        {activeOutput === "mindmap" && (
+                            <section>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Share2 className="w-4 h-4 text-amber-300" />
+                                    <h3 className="text-sm font-medium text-white">{t("mindMap")}</h3>
+                                </div>
+                                {Array.isArray(preview.mind_map) && preview.mind_map.length > 0 ? (
+                                    <div className="space-y-2">
+                                        {preview.mind_map.map((node, idx) => (
+                                            <div
+                                                key={`${node.label}-${idx}`}
+                                                className="rounded-lg border border-white/10 bg-gray-900/50 px-3 py-2 text-xs"
+                                            >
+                                                <div className="text-gray-200 font-semibold">{node.label}</div>
+                                                <div className="text-gray-400 mt-1">{node.note}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-xs text-gray-400">{t("noMindMap")}</div>
+                                )}
+                            </section>
+                        )}
 
                         {activeOutput !== "storyboard" ? null : (
                             <>
+                        {summaryText && (
+                        <section>
+                            <div className="flex items-center gap-2 mb-3">
+                                <FileText className="w-4 h-4 text-emerald-300" />
+                                <h3 className="text-sm font-medium text-white">{t("previewSummary")}</h3>
+                            </div>
+                            <div className="rounded-xl border border-white/10 bg-gray-900/60 p-3 text-sm text-gray-200 leading-relaxed">
+                                {summaryText}
+                            </div>
+                        </section>
+                        )}
+
+                        {storyboardCards.length > 0 && (
+                        <section>
+                            <div className="flex items-center gap-2 mb-3">
+                                <Clapperboard className="w-4 h-4 text-indigo-300" />
+                                <h3 className="text-sm font-medium text-white">{t("storyboardCards")}</h3>
+                            </div>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                {storyboardCards.slice(0, 6).map((card, idx) => {
+                                    const label = getStoryboardLabel(card);
+                                    const shotType = getStoryboardShotType(card);
+                                    const tone = idx % 2 === 0 ? "from-indigo-500/10" : "from-slate-500/10";
+                                    return (
+                                        <div
+                                            key={`card-${idx}`}
+                                            className={`rounded-xl border border-white/10 bg-gradient-to-br ${tone} to-gray-950/80 p-3`}
+                                        >
+                                            <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-slate-400">
+                                                <span>{t("shot")} {idx + 1}</span>
+                                                {shotType && (
+                                                    <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] text-slate-300">
+                                                        {shotType}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="mt-2 text-xs text-slate-200 line-clamp-3">
+                                                {label || t("outputComingSoon")}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                        )}
+
                         {/* Palette Section */}
                         <section>
                             <div className="flex items-center gap-2 mb-3">
@@ -248,6 +369,11 @@ export function PreviewPanel({
                                     {t("evidenceWarnings")}: {evidenceWarnings.length}
                                 </div>
                             )}
+                            {outputWarnings.length > 0 && (
+                                <div className="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] font-semibold text-amber-200">
+                                    {t("outputWarnings")}: {outputWarnings.length}
+                                </div>
+                            )}
                             {preview.evidence_refs.length === 0 ? (
                                 <div className="text-xs text-gray-500">{t("noEvidenceRefs")}</div>
                             ) : (
@@ -258,6 +384,18 @@ export function PreviewPanel({
                                             className="rounded-lg border border-white/5 bg-gray-900/50 px-3 py-2 text-[11px] text-gray-300"
                                         >
                                             {ref}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            {outputWarnings.length > 0 && (
+                                <div className="mt-3 space-y-2">
+                                    {outputWarnings.map((warning) => (
+                                        <div
+                                            key={warning}
+                                            className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-[11px] text-amber-100/80"
+                                        >
+                                            {warning}
                                         </div>
                                     ))}
                                 </div>
@@ -318,6 +456,7 @@ export function PreviewPanel({
                         </div>
                     </div>
                 )}
+                </div>
             </motion.div>
         </AnimatePresence>
     );

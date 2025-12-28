@@ -5,7 +5,7 @@ import time
 import uuid
 from uuid import UUID
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
@@ -533,6 +533,25 @@ def _apply_output_contracts(summary: dict, output_contracts: Optional[dict]) -> 
     return [f"missing_outputs:{','.join(missing)}"]
 
 
+def _merge_summary_warnings(
+    summary: dict,
+    *,
+    evidence_warnings: Optional[list[str]] = None,
+    output_warnings: Optional[list[str]] = None,
+    output_contracts: Optional[dict] = None,
+) -> dict:
+    if not isinstance(summary, dict):
+        summary = {}
+    merged = dict(summary)
+    if evidence_warnings:
+        merged["evidence_warnings"] = evidence_warnings
+    if output_warnings is None and output_contracts is not None:
+        output_warnings = _apply_output_contracts(merged, output_contracts)
+    if output_warnings:
+        merged["output_warnings"] = output_warnings
+    return merged
+
+
 def _enforce_output_contracts(summary: dict, output_contracts: Optional[dict]) -> None:
     missing = _apply_output_contracts(summary, output_contracts)
     if missing:
@@ -784,7 +803,7 @@ async def _mark_run_cancelled(run: CapsuleRun, reason: str) -> None:
 
 
 async def _stream_run_events(run_id: str):
-    queue = run_event_hub.subscribe(run_id)
+    queue = run_event_hub.subscribe(run_id, replay_last=True)
     try:
         while True:
             event = await queue.get()
@@ -891,6 +910,11 @@ async def _execute_capsule_run(
             if credit_cost > 0:
                 summary = {**summary, "credit_cost": credit_cost}
 
+            summary = _merge_summary_warnings(
+                summary,
+                evidence_warnings=evidence_warnings,
+                output_contracts=output_contracts,
+            )
             if run_event_hub.is_cancelled(run_id_str):
                 await _mark_run_cancelled(run, "Cancelled during execution")
                 await session.commit()
@@ -1126,10 +1150,11 @@ async def run_capsule(
         if cached_run and STRICT_OUTPUT_CONTRACTS and output_warnings:
             cached_run = None
         if cached_run:
-            if evidence_warnings:
-                cached_summary = {**cached_summary, "evidence_warnings": evidence_warnings}
-            if output_warnings:
-                cached_summary = {**cached_summary, "output_warnings": output_warnings}
+            cached_summary = _merge_summary_warnings(
+                cached_summary,
+                evidence_warnings=evidence_warnings,
+                output_warnings=output_warnings,
+            )
             cached_summary = _apply_source_id(cached_summary, sanitized_inputs)
             cached_summary = _apply_sequence_len(cached_summary, cached_run.upstream_context or {})
             cached_summary = _apply_context_mode(cached_summary, cached_run.upstream_context or {})
@@ -1242,6 +1267,11 @@ async def run_capsule(
     if credit_cost > 0:
         summary = {**summary, "credit_cost": credit_cost}
 
+    summary = _merge_summary_warnings(
+        summary,
+        evidence_warnings=evidence_warnings,
+        output_contracts=output_contracts,
+    )
     response_summary, response_refs = _apply_policy(summary, filtered_refs, policy, is_admin)
     
     run = CapsuleRun(
@@ -1323,15 +1353,17 @@ async def get_capsule_run(
     spec_payload = (spec.spec or {}) if spec else {}
     policy = spec_payload.get("policy", {})
     output_contracts = spec_payload.get("outputContracts") or spec_payload.get("output_contracts") or {}
-    filtered_refs, _ = await _filter_evidence_refs(list(run.evidence_refs or []), db)
+    filtered_refs, evidence_warnings = await _filter_evidence_refs(list(run.evidence_refs or []), db)
     summary = _apply_pattern_version(
         run.summary,
         spec_payload.get("patternVersion") or spec_payload.get("pattern_version"),
     )
     summary = _apply_source_id(summary, run.inputs or {})
-    output_warnings = _apply_output_contracts(summary, output_contracts)
-    if output_warnings:
-        summary = {**summary, "output_warnings": output_warnings}
+    summary = _merge_summary_warnings(
+        summary,
+        evidence_warnings=evidence_warnings,
+        output_contracts=output_contracts,
+    )
     summary, evidence_refs = _apply_policy(summary, filtered_refs, policy, is_admin)
 
     return CapsuleRunStatusResponse(
@@ -1372,17 +1404,23 @@ async def cancel_capsule_run(
         )
     )
     spec = spec_result.scalars().first()
-    policy = (spec.spec or {}).get("policy", {}) if spec else {}
-    pattern_version = (
-        (spec.spec or {}).get("patternVersion") or (spec.spec or {}).get("pattern_version")
-        if spec
-        else None
-    )
+    spec_payload = (spec.spec or {}) if spec else {}
+    policy = spec_payload.get("policy", {})
+    output_contracts = spec_payload.get("outputContracts") or spec_payload.get("output_contracts") or {}
+    pattern_version = spec_payload.get("patternVersion") or spec_payload.get("pattern_version")
 
     if run.status in {"done", "failed", "cancelled"}:
-        filtered_refs, _ = await _filter_evidence_refs(list(run.evidence_refs or []), db)
+        filtered_refs, evidence_warnings = await _filter_evidence_refs(
+            list(run.evidence_refs or []),
+            db,
+        )
         summary = _apply_pattern_version(run.summary, pattern_version)
         summary = _apply_source_id(summary, run.inputs or {})
+        summary = _merge_summary_warnings(
+            summary,
+            evidence_warnings=evidence_warnings,
+            output_contracts=output_contracts,
+        )
         summary, evidence_refs = _apply_policy(summary, filtered_refs, policy, is_admin)
         return CapsuleRunStatusResponse(
             run_id=str(run.id),
@@ -1407,9 +1445,17 @@ async def cancel_capsule_run(
         {"status": "cancelled", "message": "Cancelled by user"},
     )
 
-    filtered_refs, _ = await _filter_evidence_refs(list(run.evidence_refs or []), db)
+    filtered_refs, evidence_warnings = await _filter_evidence_refs(
+        list(run.evidence_refs or []),
+        db,
+    )
     summary = _apply_pattern_version(run.summary, pattern_version)
     summary = _apply_source_id(summary, run.inputs or {})
+    summary = _merge_summary_warnings(
+        summary,
+        evidence_warnings=evidence_warnings,
+        output_contracts=output_contracts,
+    )
     summary, evidence_refs = _apply_policy(summary, filtered_refs, policy, is_admin)
     return CapsuleRunStatusResponse(
         run_id=str(run.id),
@@ -1449,17 +1495,23 @@ async def stream_capsule_run(
         )
     )
     spec = spec_result.scalars().first()
-    policy = (spec.spec or {}).get("policy", {}) if spec else {}
-    pattern_version = (
-        (spec.spec or {}).get("patternVersion") or (spec.spec or {}).get("pattern_version")
-        if spec
-        else None
-    )
+    spec_payload = (spec.spec or {}) if spec else {}
+    policy = spec_payload.get("policy", {})
+    output_contracts = spec_payload.get("outputContracts") or spec_payload.get("output_contracts") or {}
+    pattern_version = spec_payload.get("patternVersion") or spec_payload.get("pattern_version")
 
     if run.status in {"done", "failed", "cancelled"}:
-        filtered_refs, _ = await _filter_evidence_refs(list(run.evidence_refs or []), db)
+        filtered_refs, evidence_warnings = await _filter_evidence_refs(
+            list(run.evidence_refs or []),
+            db,
+        )
         summary = _apply_pattern_version(run.summary, pattern_version)
         summary = _apply_source_id(summary, run.inputs or {})
+        summary = _merge_summary_warnings(
+            summary,
+            evidence_warnings=evidence_warnings,
+            output_contracts=output_contracts,
+        )
         summary, evidence_refs = _apply_policy(summary, filtered_refs, policy, is_admin)
         if run.status == "done":
             event_type = "run.completed"
@@ -1512,12 +1564,29 @@ class ScenePreview(BaseModel):
     duration_hint: str
 
 
+class AudioOverview(BaseModel):
+    mood: str
+    tempo: str
+    notes: str
+
+
+class MindMapNode(BaseModel):
+    label: str
+    note: str
+
+
 class StoryboardPreviewResponse(BaseModel):
     run_id: str
     capsule_id: str
+    summary: Optional[str] = None
+    storyboard_cards: List[dict] = []
     scenes: List[ScenePreview]
     palette: List[str]
     style_vector: List[float]
+    audio_overview: Optional[AudioOverview] = None
+    mind_map: List[MindMapNode] = []
+    output_language: Optional[str] = None
+    available_languages: List[str] = []
     pattern_version: Optional[str] = None
     source_id: Optional[str] = None
     sequence_len: Optional[int] = None
@@ -1525,6 +1594,158 @@ class StoryboardPreviewResponse(BaseModel):
     credit_cost: Optional[int] = None
     evidence_refs: List[str]
     evidence_warnings: List[str] = []
+    output_warnings: List[str] = []
+
+
+def _coerce_text(value: Any) -> Optional[str]:
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return None
+
+
+def _collect_languages(summary: dict) -> List[str]:
+    languages: List[str] = []
+    if not isinstance(summary, dict):
+        return languages
+
+    def add_language(lang: Any) -> None:
+        if isinstance(lang, str) and lang.strip() and lang not in languages:
+            languages.append(lang)
+
+    add_language(summary.get("output_language"))
+    add_language(summary.get("language"))
+
+    outputs_by_language = summary.get("outputs_by_language")
+    if isinstance(outputs_by_language, dict):
+        for key in outputs_by_language.keys():
+            add_language(key)
+
+    localized_outputs = summary.get("localized_outputs")
+    if isinstance(localized_outputs, list):
+        for item in localized_outputs:
+            if not isinstance(item, dict):
+                continue
+            add_language(item.get("output_language"))
+            add_language(item.get("language"))
+
+    outputs = summary.get("outputs")
+    if isinstance(outputs, list):
+        for item in outputs:
+            if not isinstance(item, dict):
+                continue
+            add_language(item.get("output_language"))
+            add_language(item.get("language"))
+
+    return languages
+
+
+def _select_language_summary(summary: dict, output_language: Optional[str]) -> dict:
+    if not isinstance(summary, dict) or not output_language:
+        return summary
+
+    outputs_by_language = summary.get("outputs_by_language")
+    if isinstance(outputs_by_language, dict):
+        candidate = outputs_by_language.get(output_language)
+        if isinstance(candidate, dict):
+            merged = dict(summary)
+            merged.update(candidate)
+            return merged
+
+    localized_outputs = summary.get("localized_outputs")
+    if isinstance(localized_outputs, list):
+        for item in localized_outputs:
+            if not isinstance(item, dict):
+                continue
+            lang = item.get("output_language") or item.get("language")
+            if lang == output_language:
+                merged = dict(summary)
+                merged.update(item)
+                return merged
+
+    outputs = summary.get("outputs")
+    if isinstance(outputs, list):
+        for item in outputs:
+            if not isinstance(item, dict):
+                continue
+            lang = item.get("output_language") or item.get("language")
+            if lang == output_language:
+                merged = dict(summary)
+                merged.update(item)
+                return merged
+
+    return summary
+
+
+def _build_audio_overview(summary: dict, inputs: dict) -> Optional[AudioOverview]:
+    raw = summary.get("audio_overview") or summary.get("audio")
+    if isinstance(raw, dict):
+        mood = _coerce_text(raw.get("mood")) or "neutral"
+        tempo = _coerce_text(raw.get("tempo")) or "medium"
+        notes = _coerce_text(raw.get("notes")) or "Audio profile derived from pacing and tone."
+        return AudioOverview(mood=mood, tempo=tempo, notes=notes)
+    if isinstance(raw, str):
+        tempo = "medium"
+        return AudioOverview(mood="neutral", tempo=tempo, notes=raw.strip())
+
+    pacing_hint = None
+    pacing_hints = summary.get("pacing_hints")
+    if isinstance(pacing_hints, list) and pacing_hints:
+        pacing_hint = _coerce_text(pacing_hints[0])
+    tempo = pacing_hint or "medium"
+
+    signature = summary.get("signature") if isinstance(summary.get("signature"), dict) else {}
+    signature_param = signature.get("param") if isinstance(signature, dict) else None
+    mood_map = {
+        "tension_bias": "tense",
+        "chaos_bias": "chaotic",
+        "stillness": "still",
+        "light_diffusion": "dreamy",
+        "music_sync": "rhythmic",
+        "symmetry_bias": "controlled",
+    }
+    mood = mood_map.get(signature_param, "neutral")
+    scene_summary = _coerce_text(inputs.get("scene_summary"))
+    notes = f"{tempo} pacing with {mood} tone."
+    if scene_summary:
+        notes = f"{notes} {scene_summary}"
+    return AudioOverview(mood=mood, tempo=tempo, notes=notes)
+
+
+def _build_mind_map(summary: dict, inputs: dict) -> List[MindMapNode]:
+    raw = summary.get("mind_map") or summary.get("mindmap")
+    if isinstance(raw, list):
+        nodes: List[MindMapNode] = []
+        for item in raw:
+            if isinstance(item, dict):
+                label = _coerce_text(item.get("label")) or "Node"
+                note = _coerce_text(item.get("note")) or ""
+                nodes.append(MindMapNode(label=label, note=note))
+            elif isinstance(item, str) and item.strip():
+                nodes.append(MindMapNode(label="Node", note=item.strip()))
+        if nodes:
+            return nodes
+    if isinstance(raw, str) and raw.strip():
+        return [MindMapNode(label="Mind Map", note=raw.strip())]
+
+    nodes: List[MindMapNode] = []
+    scene_summary = _coerce_text(inputs.get("scene_summary"))
+    if scene_summary:
+        nodes.append(MindMapNode(label="Scene", note=scene_summary))
+    palette = summary.get("palette")
+    if isinstance(palette, list) and palette:
+        nodes.append(MindMapNode(label="Palette", note=", ".join(str(color) for color in palette[:3])))
+    composition = summary.get("composition_hints")
+    if isinstance(composition, list) and composition:
+        nodes.append(MindMapNode(label="Composition", note=", ".join(str(h) for h in composition[:2])))
+    pacing = summary.get("pacing_hints")
+    if isinstance(pacing, list) and pacing:
+        nodes.append(MindMapNode(label="Pacing", note=str(pacing[0])))
+    signature = summary.get("signature") if isinstance(summary.get("signature"), dict) else {}
+    signature_param = signature.get("param") if isinstance(signature, dict) else None
+    signature_value = signature.get("value") if isinstance(signature, dict) else None
+    if signature_param:
+        nodes.append(MindMapNode(label="Signature", note=f"{signature_param}: {signature_value}"))
+    return nodes
 
 
 @router.get("/{capsule_key}/runs/{run_id}/preview", response_model=StoryboardPreviewResponse)
@@ -1532,6 +1753,7 @@ async def get_storyboard_preview(
     capsule_key: str,
     run_id: str,
     scene_count: int = 3,
+    output_language: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
 ) -> StoryboardPreviewResponse:
     """Generate a storyboard preview from a capsule run."""
@@ -1551,24 +1773,78 @@ async def get_storyboard_preview(
     if run.capsule_key != capsule_key:
         raise HTTPException(status_code=400, detail="Run does not match capsule key")
 
-    scenes_data = generate_storyboard_preview(run.summary, scene_count)
+    summary = run.summary if isinstance(run.summary, dict) else {}
+    selected_summary = _select_language_summary(summary, output_language)
+    output_summary = selected_summary if isinstance(selected_summary, dict) else summary
+    available_languages = _collect_languages(summary)
+    resolved_language = (
+        output_language
+        if output_language and output_language in available_languages
+        else selected_summary.get("output_language")
+        or summary.get("output_language")
+        or output_language
+    )
+    if resolved_language and resolved_language not in available_languages:
+        available_languages.append(resolved_language)
+
+    scenes_data = generate_storyboard_preview(selected_summary, scene_count)
     scenes = [ScenePreview(**s) for s in scenes_data]
+    summary_text = (
+        _coerce_text(selected_summary.get("summary"))
+        or _coerce_text(selected_summary.get("message"))
+        or _coerce_text(summary.get("summary"))
+        or _coerce_text(summary.get("message"))
+    )
+    raw_storyboard_cards = (
+        selected_summary.get("storyboard_cards")
+        if isinstance(selected_summary, dict)
+        else None
+    )
+    if not isinstance(raw_storyboard_cards, list):
+        raw_storyboard_cards = summary.get("storyboard_cards") if isinstance(summary, dict) else None
+    storyboard_cards = raw_storyboard_cards if isinstance(raw_storyboard_cards, list) else []
+    inputs = run.inputs if isinstance(run.inputs, dict) else {}
+    audio_overview = _build_audio_overview(selected_summary, inputs)
+    mind_map = _build_mind_map(selected_summary, inputs)
 
     filtered_refs, evidence_warnings = await _filter_evidence_refs(
         list(run.evidence_refs or []),
         db,
     )
+    output_warnings: List[str] = []
+    spec_result = await db.execute(
+        select(CapsuleSpec).where(
+            CapsuleSpec.capsule_key == run.capsule_key,
+            CapsuleSpec.version == run.capsule_version,
+        )
+    )
+    spec = spec_result.scalars().first()
+    spec_payload = spec.spec if spec and isinstance(spec.spec, dict) else {}
+    output_contracts = spec_payload.get("outputContracts") or spec_payload.get("output_contracts")
+    output_warnings = _apply_output_contracts(output_summary, output_contracts)
     return StoryboardPreviewResponse(
         run_id=str(run.id),
         capsule_id=run.capsule_key,
+        summary=summary_text,
+        storyboard_cards=storyboard_cards,
         scenes=scenes,
-        palette=run.summary.get("palette", []),
-        style_vector=run.summary.get("style_vector", []),
-        pattern_version=run.summary.get("pattern_version") or run.summary.get("patternVersion"),
-        source_id=run.summary.get("source_id") or run.inputs.get("source_id") or run.inputs.get("sourceId"),
-        sequence_len=run.summary.get("sequence_len"),
-        context_mode=run.summary.get("context_mode") or run.upstream_context.get("mode"),
-        credit_cost=run.summary.get("credit_cost") if isinstance(run.summary, dict) else None,
+        palette=selected_summary.get("palette", []),
+        style_vector=selected_summary.get("style_vector", []),
+        audio_overview=audio_overview,
+        mind_map=mind_map,
+        output_language=resolved_language,
+        available_languages=available_languages,
+        pattern_version=selected_summary.get("pattern_version")
+        or selected_summary.get("patternVersion")
+        or summary.get("pattern_version")
+        or summary.get("patternVersion"),
+        source_id=selected_summary.get("source_id")
+        or inputs.get("source_id")
+        or inputs.get("sourceId"),
+        sequence_len=selected_summary.get("sequence_len"),
+        context_mode=selected_summary.get("context_mode") or run.upstream_context.get("mode"),
+        credit_cost=selected_summary.get("credit_cost") if isinstance(selected_summary, dict) else None,
         evidence_refs=filtered_refs,
         evidence_warnings=evidence_warnings,
+        output_warnings=output_warnings,
     )

@@ -1,4 +1,4 @@
-# Vivid Node Canvas: Executive Summary (Official)
+# Crebit Node Canvas: Executive Summary (Official)
 
 **작성**: 2025-12-24  
 **버전**: 정본 v1.0  
@@ -106,4 +106,4 @@
 
 ## 11) 결론
 
-Vivid는 Node Canvas + 최적화 학습의 결합으로, **"창작 설계 시간을 최소화하고 결과 품질을 자동 개선하는"** 차세대 창작 스튜디오를 목표로 한다.
+Crebit는 Node Canvas + 최적화 학습의 결합으로, **"창작 설계 시간을 최소화하고 결과 품질을 자동 개선하는"** 차세대 창작 스튜디오를 목표로 한다.

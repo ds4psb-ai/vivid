@@ -8,7 +8,7 @@
 
 ## 0) 기본 원칙 (정본 참조)
 
-- 철학/원칙: `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`
+- 철학/원칙: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
 - 흐름/역할: `10_PIPELINES_AND_USER_FLOWS.md`
 - 계약/정책: `05_CAPSULE_NODE_SPEC.md`, `08_SHEETS_SCHEMA_V1.md`, `11_DB_PROMOTION_RULES_V1.md`
 
@@ -28,11 +28,11 @@
 
 ### 1.2 Gemini 구조화 출력 (주 1)
 - ASR + 샷/키프레임 분할 후 Gemini 3 Pro/Flash로 구조화 JSON 생성
-- `VIVID_VIDEO_STRUCTURED`에 기록 후 DB SoR 승격
+- `CREBIT_VIDEO_STRUCTURED`에 기록 후 DB SoR 승격
 - 문서: `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
 
 ### 1.3 Notebook Library 등록 (주 1)
-- NotebookLM 노트북 메타를 `VIVID_NOTEBOOK_LIBRARY`에 등록
+- NotebookLM 노트북 메타를 `CREBIT_NOTEBOOK_LIBRARY`에 등록
 - 노트북은 비공개 지식 베이스로 유지 (UI 노출 금지)
 - 클러스터 메타(`cluster_id`, `cluster_label`, `guide_scope`)로 거장/장르 묶음 관리
 - (옵션) Mega-Notebook은 **발굴/집계/운영 전용**으로만 사용하고, 캡슐 승격은 **phase-locked pack**에서만 수행
@@ -115,10 +115,13 @@
 
 ## 산출물 체크리스트
 
-- [ ] Sheets 스키마 v1
-- [ ] Notebook Library 시트/DB
-- [ ] NotebookLM 출력 규격 v1
-- [ ] DB 승격 스크립트
-- [ ] Pattern Library/Trace 테이블
-- [ ] CapsuleSpec 버전 고정 정책
-- [ ] Pattern Lift 산출 리포트
+- [x] Sheets 스키마 v1
+- [x] Notebook Library 시트/DB
+- [x] NotebookLM 출력 규격 v1
+- [x] DB 승격 스크립트
+- [x] Pattern Library/Trace 테이블
+- [x] CapsuleSpec 버전 고정 정책
+- [x] Pattern Lift 산출 리포트
+
+> [!NOTE]
+> **2025-12-28 업데이트**: Phase 1 Dataization MVP 100% 완료. 상세 진행은 `21_DOCUMENTATION_AUDIT_REPORT_V1.md` 참조.

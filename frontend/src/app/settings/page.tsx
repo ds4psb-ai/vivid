@@ -1,19 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
-    User,
     Globe,
     Bell,
-    Shield,
     Palette,
-    Database,
     ChevronRight,
     Check,
 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { api } from "@/lib/api";
+import PageStatus from "@/components/PageStatus";
+import { isNetworkError, normalizeApiError } from "@/lib/errors";
+import { useActiveUserId } from "@/hooks/useActiveUserId";
 
 const LANGUAGES = [
     { code: "en", label: "English" },
@@ -42,6 +43,11 @@ export default function SettingsPage() {
     const { language, setLanguage } = useLanguage();
     const [theme, setTheme] = useState("dark");
     const [notifications, setNotifications] = useState(true);
+    const [canvasCount, setCanvasCount] = useState<number | null>(null);
+    const [creditBalance, setCreditBalance] = useState<number | null>(null);
+    const [loadError, setLoadError] = useState<string | null>(null);
+    const [isOffline, setIsOffline] = useState(false);
+    const { userId } = useActiveUserId("demo-user");
 
     const labels = {
         title: language === "ko" ? "설정" : "Settings",
@@ -50,34 +56,44 @@ export default function SettingsPage() {
         theme: language === "ko" ? "테마" : "Theme",
         notifications: language === "ko" ? "알림" : "Notifications",
         configure: language === "ko" ? "설정" : "Configure",
+        overview: language === "ko" ? "계정 요약" : "Account overview",
+        overviewSubtitle:
+            language === "ko"
+                ? "캔버스와 크레딧 상태를 확인하세요."
+                : "Monitor canvas count and credit balance.",
+        canvasCount: language === "ko" ? "캔버스" : "Canvases",
+        credits: language === "ko" ? "크레딧" : "Credits",
+        loadError: language === "ko" ? "설정을 불러오지 못했습니다." : "Unable to load settings.",
     };
+
+    useEffect(() => {
+        let active = true;
+        Promise.all([api.listCanvases(), api.getCreditsBalance(userId)])
+            .then(([canvases, balance]) => {
+                if (!active) return;
+                setLoadError(null);
+                setIsOffline(false);
+                setCanvasCount(canvases.length);
+                setCreditBalance(balance.balance);
+            })
+            .catch((err) => {
+                if (!active) return;
+                setLoadError(normalizeApiError(err, labels.loadError));
+                setIsOffline(isNetworkError(err));
+            });
+        return () => {
+            active = false;
+        };
+    }, [labels.loadError, userId]);
 
     const sections: SettingSection[] = [
         {
-            title: "Account",
-            titleKo: "계정",
-            icon: User,
+            title: "Preferences",
+            titleKo: "환경설정",
+            icon: Palette,
             items: [
-                { label: language === "ko" ? "이메일" : "Email", value: "user@example.com", action: "edit" },
-                { label: language === "ko" ? "플랜" : "Plan", value: language === "ko" ? "프로" : "Pro", action: "upgrade" },
-            ],
-        },
-        {
-            title: "Data",
-            titleKo: "데이터",
-            icon: Database,
-            items: [
-                { label: language === "ko" ? "캔버스 저장소" : "Canvas Storage", value: language === "ko" ? "12개 캔버스" : "12 canvases", action: "manage" },
-                { label: language === "ko" ? "데이터 내보내기" : "Export Data", value: "", action: "export" },
-            ],
-        },
-        {
-            title: "Security",
-            titleKo: "보안",
-            icon: Shield,
-            items: [
-                { label: language === "ko" ? "2단계 인증" : "Two-Factor Auth", value: language === "ko" ? "비활성화" : "Disabled", action: "enable" },
-                { label: language === "ko" ? "API 키" : "API Keys", value: language === "ko" ? "0개 활성" : "0 active", action: "manage" },
+                { label: labels.theme, value: theme === "dark" ? "Dark" : "Darker", action: "theme" },
+                { label: labels.notifications, value: notifications ? "On" : "Off", action: "notifications" },
             ],
         },
     ];
@@ -95,6 +111,44 @@ export default function SettingsPage() {
                         <h1 className="text-xl font-bold text-[var(--fg-0)] sm:text-2xl">{labels.title}</h1>
                         <p className="mt-1 text-sm text-[var(--fg-muted)] sm:text-base">{labels.subtitle}</p>
                     </motion.div>
+
+                    {loadError && (
+                        <PageStatus
+                            variant="error"
+                            title={labels.loadError}
+                            message={loadError}
+                            isOffline={isOffline}
+                            className="mb-4"
+                        />
+                    )}
+
+                    <motion.section
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.05 }}
+                        className="mb-4 rounded-lg border border-white/10 bg-slate-950/60 p-4 sm:mb-6 sm:rounded-xl sm:p-5"
+                        aria-labelledby="overview-heading"
+                    >
+                        <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                            <Globe className="h-4 w-4 text-[var(--fg-muted)]" aria-hidden="true" />
+                            <span id="overview-heading" className="font-medium text-[var(--fg-0)]">{labels.overview}</span>
+                        </div>
+                        <p className="text-xs text-[var(--fg-muted)]">{labels.overviewSubtitle}</p>
+                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                            <div className="rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2">
+                                <div className="text-[9px] uppercase text-[var(--fg-muted)]">{labels.canvasCount}</div>
+                                <div className="mt-1 text-sm font-semibold text-[var(--fg-0)]">
+                                    {canvasCount !== null ? canvasCount.toLocaleString() : "-"}
+                                </div>
+                            </div>
+                            <div className="rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2">
+                                <div className="text-[9px] uppercase text-[var(--fg-muted)]">{labels.credits}</div>
+                                <div className="mt-1 text-sm font-semibold text-[var(--fg-0)]">
+                                    {creditBalance !== null ? creditBalance.toLocaleString() : "-"}
+                                </div>
+                            </div>
+                        </div>
+                    </motion.section>
 
                     {/* Language */}
                     <motion.section

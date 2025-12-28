@@ -1,4 +1,4 @@
-# PDR: Vivid Node Canvas (2025-12)
+# PDR: Crebit Node Canvas (2025-12)
 
 **작성**: 2025-12-24  
 **대상**: Product / Design / Engineering  
@@ -66,7 +66,7 @@
 
 ## 6) 데이터/아키텍처 요구사항
 
-- 역할 정의/증명 레이어: `10_PIPELINES_AND_USER_FLOWS.md`, `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`
+- 역할 정의/증명 레이어: `10_PIPELINES_AND_USER_FLOWS.md`, `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
 - 영상 구조화 기준: `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
 - **Tong Dataset**: Visual + Persona + Synapse 규칙 구조화
 - **Capsule Spec**: input/output contract + version 고정
@@ -124,5 +124,5 @@
 - `01_NODE_CANVAS_TECHNICAL_SPECIFICATION.md`
 - `05_CAPSULE_NODE_SPEC.md`
 - `10_PIPELINES_AND_USER_FLOWS.md`
-- `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`
+- `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
 - `23_TEMPLATE_SYSTEM_SPEC_CODEX.md`

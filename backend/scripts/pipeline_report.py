@@ -116,6 +116,7 @@ async def _report() -> str:
         version_history = version_result.scalars().all()
 
         capsule_specs_total = await _count(session, CapsuleSpec)
+        capsule_specs_latest = await _max_time(session, CapsuleSpec)
         templates_total = await _count(session, Template)
         templates_public = await session.execute(
             select(func.count()).select_from(Template).where(Template.is_public.is_(True))
@@ -145,7 +146,7 @@ async def _report() -> str:
         generation_runs_total = await _count(session, GenerationRun)
         generation_run_status = await _group_counts(session, GenerationRun, "status")
 
-    quarantine_path = os.getenv("VIVID_QUARANTINE_CSV_PATH", "")
+    quarantine_path = os.getenv("CREBIT_QUARANTINE_CSV_PATH", "")
     quarantine_total = 0
     quarantine_summary: Dict[str, int] = {}
     if quarantine_path:
@@ -159,7 +160,7 @@ async def _report() -> str:
                     quarantine_summary[reason] = quarantine_summary.get(reason, 0) + 1
 
     lines = [
-        "=== Vivid Pipeline Status ===",
+        "=== Crebit Pipeline Status ===",
         "",
         f"Stage 0 RawAsset: {raw_total} total, {raw_restricted_count} restricted, latest { _fmt_date(raw_latest) }",
         f"Stage 2 VideoSegment: {video_total} total, latest { _fmt_date(video_latest) }",
@@ -167,6 +168,7 @@ async def _report() -> str:
         f"Stage 4 EvidenceRecord: {evidence_total} total, latest { _fmt_date(evidence_latest) }, missing source_pack_id {evidence_missing_pack}, ops_only {evidence_ops_only}",
         f"Stage 5 PatternCandidate: {candidate_total} total, status {candidate_status}",
         f"Stage 6 Pattern: {pattern_total} total, status {pattern_status}, trace {trace_total}, version {pattern_version or '-'} ({_fmt_date(pattern_version_at)})",
+        f"Stage 7 CapsuleSpec: {capsule_specs_total} total, latest { _fmt_date(capsule_specs_latest) }",
         "Pattern versions: "
         + ", ".join(
             [
@@ -190,7 +192,7 @@ async def _report() -> str:
 
 
 async def main() -> None:
-    parser = argparse.ArgumentParser(description="Report pipeline status for Vivid.")
+    parser = argparse.ArgumentParser(description="Report pipeline status for Crebit.")
     parser.add_argument("--json", action="store_true", help="Output JSON instead of text.")
     args = parser.parse_args()
 

@@ -85,7 +85,7 @@ class AffiliateRewardResponse(BaseModel):
 
 
 def _generate_affiliate_code() -> str:
-    return f"VIVID-{uuid.uuid4().hex[:8].upper()}"
+    return f"CREBIT-{uuid.uuid4().hex[:8].upper()}"
 
 
 async def _get_or_create_profile(db: AsyncSession, user_id: str) -> AffiliateProfile:

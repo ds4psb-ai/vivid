@@ -1,8 +1,8 @@
-# UI Design Guide (2025-12, Vivid)
+# UI Design Guide (2025-12, Crebit)
 
 **작성**: 2025-12-24  
 **대상**: Product / Design / Frontend  
-**목표**: 최신 UI/UX 기준과 기술 트렌드를 반영한 Vivid 전용 UI 가이드
+**목표**: 최신 UI/UX 기준과 기술 트렌드를 반영한 Crebit 전용 UI 가이드
 
 ---
 
@@ -34,7 +34,7 @@
 
 ---
 
-## 2) Vivid UI 방향성 (프로젝트 적합)
+## 2) Crebit UI 방향성 (프로젝트 적합)
 
 핵심 키워드:
 - **Studio-grade**: 제작 도구처럼 깊이감 있는 레이어 구조
@@ -156,7 +156,7 @@ stateDiagram-v2
 - Templates Stage Card: 공개 템플릿 + 근거 누락 수 표시
 - Pattern Version History 카드 (최근 5개 버전 + note 표시)
 - Quarantine 샘플 카드 (sheet/reason/row)
-- Admin-only 메시지: 권한이 없을 때는 **admin-only** 힌트 출력
+- Admin-only 메시지: 권한이 없을 때는 **admin-only** 힌트 + 로그인 CTA 출력
 
 ### 6.5 Preview Panel
 - Storyboard 카드 (컷, 색감, 리듬)

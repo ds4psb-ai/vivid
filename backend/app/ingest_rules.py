@@ -1,6 +1,7 @@
 """Shared ingest rules and allowlists."""
 from __future__ import annotations
 
+import hashlib
 import os
 import re
 from typing import Iterable, List, Optional
@@ -46,6 +47,30 @@ DERIVED_EVIDENCE_REF_RE = re.compile(r"^(sheet:[^:]+:.+|db:[^:]+:.+)$", re.IGNOR
 
 VIDEO_EVIDENCE_REF_PATTERN = os.getenv("VIDEO_EVIDENCE_REF_PATTERN", r"^[a-z][a-z0-9_-]*:.+")
 VIDEO_EVIDENCE_REF_RE = re.compile(VIDEO_EVIDENCE_REF_PATTERN, re.IGNORECASE)
+
+
+def build_segment_id_fallback(
+    source_id: Optional[str],
+    time_start: Optional[str],
+    time_end: Optional[str],
+    prompt_version: Optional[str],
+    model_version: Optional[str],
+) -> Optional[str]:
+    parts = [source_id, time_start, time_end, prompt_version, model_version]
+    cleaned: list[str] = []
+    for part in parts:
+        if part is None:
+            return None
+        if isinstance(part, (int, float)):
+            part = str(part)
+        if not isinstance(part, str):
+            return None
+        value = part.strip()
+        if not value:
+            return None
+        cleaned.append(value)
+    digest = hashlib.sha1("|".join(cleaned).encode("utf-8")).hexdigest()[:16]
+    return f"seg-auto-{digest}"
 
 
 def ensure_label(labels: Iterable[str], label: str) -> List[str]:

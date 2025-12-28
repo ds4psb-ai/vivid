@@ -1,6 +1,7 @@
 # Node Canvas System: 기술 명세서 (2025-12 최신 정본)
 
 **작성**: 2025-12-24  
+**Updated**: 2025-12-28  
 **버전**: 정본 v1.1  
 **대상**: Tech Lead / Architect / Backend / Frontend  
 **목표**: Node Canvas + 최적화 + AI 생성 파이프라인 설계 기준 수립  
@@ -569,4 +570,4 @@ Dataization (MVP):
 - `15_PATTERN_TAXONOMY_V1.md`
 - `16_VIRLO_CONTENT_STUDIO_RESEARCH.md`
 - `17_CREDITS_AND_BILLING_SPEC_V1.md`
-- `18_AFFILIATE_PROGRAM_SPEC_V1.md`
+- `35_AFFILIATE_PROGRAM_SPEC_V1.md`

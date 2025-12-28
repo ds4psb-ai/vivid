@@ -12,7 +12,9 @@ import {
 import AppShell from "@/components/AppShell";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { api, type CreditBalance, type CreditTransaction } from "@/lib/api";
-import { normalizeApiError } from "@/lib/errors";
+import PageStatus from "@/components/PageStatus";
+import { isNetworkError, normalizeApiError } from "@/lib/errors";
+import { useActiveUserId } from "@/hooks/useActiveUserId";
 
 export default function UsagePage() {
   const { language } = useLanguage();
@@ -20,9 +22,10 @@ export default function UsagePage() {
   const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [isOffline, setIsOffline] = useState(false);
   const [period, setPeriod] = useState("this_month");
   const [runTypeFilter, setRunTypeFilter] = useState("all");
-  const userId = process.env.NEXT_PUBLIC_USER_ID || "demo-user";
+  const { userId } = useActiveUserId("demo-user");
 
   const loadErrorFallback =
     language === "ko" ? "사용량 데이터를 불러오지 못했습니다." : "Unable to load usage data.";
@@ -30,6 +33,7 @@ export default function UsagePage() {
   const loadUsage = useCallback(async () => {
     setIsLoading(true);
     setLoadError(null);
+    setIsOffline(false);
     try {
       const [balanceData, ledger] = await Promise.all([
         api.getCreditsBalance(userId),
@@ -37,8 +41,10 @@ export default function UsagePage() {
       ]);
       setBalance(balanceData);
       setTransactions(ledger.transactions);
+      setIsOffline(false);
     } catch (err) {
       setLoadError(normalizeApiError(err, loadErrorFallback));
+      setIsOffline(isNetworkError(err));
     } finally {
       setIsLoading(false);
     }
@@ -153,6 +159,7 @@ export default function UsagePage() {
     exportCsv: language === "ko" ? "CSV 내보내기" : "Export CSV",
     loading: language === "ko" ? "사용량 불러오는 중..." : "Loading usage...",
     noRuns: language === "ko" ? "실행 내역이 없습니다." : "No usage history yet.",
+    loadError: language === "ko" ? "사용량 데이터를 불러오지 못했습니다." : "Unable to load usage data.",
     runId: language === "ko" ? "실행 ID" : "Run ID",
     runType: language === "ko" ? "실행 유형" : "Run type",
     resourceId: language === "ko" ? "대상" : "Resource",
@@ -188,7 +195,7 @@ export default function UsagePage() {
     const link = document.createElement("a");
     const today = new Date().toISOString().slice(0, 10);
     link.href = url;
-    link.download = `vivid_usage_${today}.csv`;
+    link.download = `crebit_usage_${today}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   }, [filteredUsage]);
@@ -207,9 +214,13 @@ export default function UsagePage() {
           </motion.div>
 
           {loadError && (
-            <div className="mb-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-              {loadError}
-            </div>
+            <PageStatus
+              variant="error"
+              title={labels.loadError}
+              message={loadError}
+              isOffline={isOffline}
+              className="mb-4"
+            />
           )}
 
           <motion.div

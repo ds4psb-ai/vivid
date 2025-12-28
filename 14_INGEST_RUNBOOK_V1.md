@@ -19,12 +19,12 @@
 ## 1) 준비 사항 (필수)
 
 ### 1.1 Sheets 탭 확인
-- `VIVID_NOTEBOOK_LIBRARY`
-- `VIVID_RAW_ASSETS`
-- `VIVID_VIDEO_STRUCTURED`
-- `VIVID_DERIVED_INSIGHTS`
-- `VIVID_PATTERN_CANDIDATES`
-- `VIVID_PATTERN_TRACE` (옵션)
+- `CREBIT_NOTEBOOK_LIBRARY`
+- `CREBIT_RAW_ASSETS`
+- `CREBIT_VIDEO_STRUCTURED`
+- `CREBIT_DERIVED_INSIGHTS`
+- `CREBIT_PATTERN_CANDIDATES`
+- `CREBIT_PATTERN_TRACE` (옵션)
 
 ### 1.2 ID 규칙 (권장)
 - `source_id`: `auteur-{director}-{year}-{slug}`
@@ -46,7 +46,7 @@
 ## 2) 단계별 운영 루틴
 
 ### Step 1: Raw 입력 (관리자 수집)
-`VIVID_RAW_ASSETS`에 원본 링크와 메타를 입력합니다.
+`CREBIT_RAW_ASSETS`에 원본 링크와 메타를 입력합니다.
 
 필수 컬럼: `source_id`, `source_url`, `source_type`, `created_at`  
 권장 컬럼: `title`, `director`, `year`, `duration_sec`, `language`, `tags`, `scene_ranges`, `notes`, `rights_status`
@@ -79,7 +79,7 @@ python scripts/ingest_raw_assets.py --input /path/raw_assets.json --dry-run
 
 - `responseMimeType=application/json`
 - `responseJsonSchema` 적용
-- 결과는 `VIVID_VIDEO_STRUCTURED`에 기록
+- 결과는 `CREBIT_VIDEO_STRUCTURED`에 기록
 - 문서: `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
 - `time_start/time_end` 형식: `HH:MM:SS.mmm`
 - `prompt_version`은 `VIDEO_SCHEMA_VERSIONS` allowlist를 따름 (backend/.env)
@@ -125,7 +125,7 @@ python scripts/ingest_video_structured.py --input /path/segments.json --dry-run
 ---
 
 ### Step 1.5: Notebook Library 등록 (권장)
-`VIVID_NOTEBOOK_LIBRARY`에 NotebookLM 노트북 메타를 기록합니다.
+`CREBIT_NOTEBOOK_LIBRARY`에 NotebookLM 노트북 메타를 기록합니다.
 
 필수 컬럼: `notebook_id`, `title`, `notebook_ref`, `created_at`
 권장 컬럼: `cluster_id`, `cluster_label`, `cluster_tags`, `guide_scope`, `curator_notes`
@@ -197,7 +197,7 @@ python scripts/ingest_notebook_library.py --input /path/notebooks.json --dry-run
 ---
 
 ### Step 1.6: Notebook Assets 등록 (옵션)
-`VIVID_NOTEBOOK_ASSETS`에 노트북이 참조하는 자산(영화/씬/스크립트/스틸)을 등록합니다.
+`CREBIT_NOTEBOOK_ASSETS`에 노트북이 참조하는 자산(영화/씬/스크립트/스틸)을 등록합니다.
 
 필수 컬럼: `notebook_id`, `asset_id`, `asset_type`
 권장 컬럼: `asset_ref`, `title`, `tags`, `notes`
@@ -226,7 +226,7 @@ python scripts/ingest_notebook_assets.py --input /path/notebook_assets.json --dr
 ---
 
 ### Step 2: NotebookLM/Opal 요약 → Derived 입력
-`VIVID_DERIVED_INSIGHTS`에 NotebookLM/Opal 출력(JSON)을 규격대로 입력합니다.
+`CREBIT_DERIVED_INSIGHTS`에 NotebookLM/Opal 출력(JSON)을 규격대로 입력합니다.
 
 핵심 필드 (필수):
 - `summary`, `output_type`, `output_language`, `prompt_version`, `model_version`, `source_pack_id`
@@ -276,7 +276,7 @@ python scripts/ingest_derived_insights.py --input /path/derived_insights.json --
 ---
 
 ### Step 3: Pattern 후보 입력
-`VIVID_PATTERN_CANDIDATES`에 패턴 후보를 기록합니다.
+`CREBIT_PATTERN_CANDIDATES`에 패턴 후보를 기록합니다.
 
 필수 컬럼: `source_id`, `pattern_name`, `pattern_type`  
 권장 컬럼: `description`, `weight`, `evidence_ref`, `confidence`, `status`
@@ -311,11 +311,11 @@ Sheets Bus를 DB SoR로 승격합니다.
 `backend/.env`에 CSV Export URL을 넣고 실행:
 ```
 SHEETS_MODE=csv
-VIVID_RAW_ASSETS_CSV_URL=...
-VIVID_VIDEO_STRUCTURED_CSV_URL=...
-VIVID_DERIVED_INSIGHTS_CSV_URL=...
-VIVID_PATTERN_CANDIDATES_CSV_URL=...
-VIVID_PATTERN_TRACE_CSV_URL=...
+CREBIT_RAW_ASSETS_CSV_URL=...
+CREBIT_VIDEO_STRUCTURED_CSV_URL=...
+CREBIT_DERIVED_INSIGHTS_CSV_URL=...
+CREBIT_PATTERN_CANDIDATES_CSV_URL=...
+CREBIT_PATTERN_TRACE_CSV_URL=...
 ```
 
 CSV Export URL 형식:
@@ -325,14 +325,14 @@ https://docs.google.com/spreadsheets/d/<spreadsheet_id>/export?format=csv&gid=<s
 
 로컬 파일 테스트 (옵션):
 ```
-VIVID_RAW_ASSETS_CSV_URL=file:///absolute/path/raw_assets.csv
+CREBIT_RAW_ASSETS_CSV_URL=file:///absolute/path/raw_assets.csv
 ```
 
 #### 4.2 Quarantine 출력 (옵션)
 필수 컬럼 누락/권한 제한 등으로 스킵된 행을 로컬 CSV로 기록합니다.
 
 ```
-VIVID_QUARANTINE_CSV_PATH=/absolute/path/vivid_quarantine.csv
+CREBIT_QUARANTINE_CSV_PATH=/absolute/path/crebit_quarantine.csv
 ```
 
 출력 컬럼:
@@ -341,7 +341,7 @@ VIVID_QUARANTINE_CSV_PATH=/absolute/path/vivid_quarantine.csv
 - `row`: 원본 행(JSON, ASCII)
 - `created_at`: quarantine 기록 시각 (ISO8601)
 
-API Key 모드에서는 `VIVID_QUARANTINE_RANGE` 시트에 append 됩니다.
+API Key 모드에서는 `CREBIT_QUARANTINE_RANGE` 시트에 append 됩니다.
 
 ```
 cd backend
@@ -353,7 +353,7 @@ Ops UI에서도 실행 가능:
 - `POST /api/v1/ops/sheets/sync`
 
 Notebook Library 승격 (권장):
-- `VIVID_NOTEBOOK_LIBRARY_CSV_URL` 또는 Sheets range를 설정하면 `promote_from_sheets.py`가 함께 승격한다.
+- `CREBIT_NOTEBOOK_LIBRARY_CSV_URL` 또는 Sheets range를 설정하면 `promote_from_sheets.py`가 함께 승격한다.
 
 #### 4.2 API 키 모드 (확장)
 ```

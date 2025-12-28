@@ -1,4 +1,4 @@
-# Credits + Billing Spec v1 (Vivid)
+# Credits + Billing Spec v1 (Crebit)
 
 **Date**: 2025-12-24  
 **Scope**: Creator credits, top-ups, API credits, usage UI  

@@ -48,6 +48,7 @@ If the output is from a Mega-Notebook, include `labels` with `ops_only`, `mega_n
 
 - `guide_type` (summary / homage / variation / template_fit / persona / synapse / story / beat_sheet / storyboard / study_guide / briefing_doc / table)
 - `temporal_phase` (HOOK / BUILD / PAYOFF / CTA / SETUP / TURN / ESCALATION / CLIMAX / RESOLUTION)
+- `persona_source` (script / user / auteur / blended) — 페르소나 출처 구분
 - `homage_guide`
 - `variation_guide`
 - `template_recommendations[]`
@@ -151,7 +152,7 @@ If the output is from a Mega-Notebook, include `labels` with `ops_only`, `mega_n
   "model_version": "notebooklm-2025-12",
   "source_pack_id": "sp_cluster-auteur-bong_HOOK_20251224",
   "generated_at": "2025-12-24T09:00:00Z",
-  "evidence_refs": ["sheet:VIVID_RAW_ASSETS:42", "db:video_segments:seg-auteur-bong-1999-barking-dogs-01"],
+  "evidence_refs": ["sheet:CREBIT_RAW_ASSETS:42", "db:video_segments:seg-auteur-bong-1999-barking-dogs-01"],
   "notebook_id": "nlb-001",
   "notebook_ref": "notebooklm://notebook/abc123",
   "studio_output_id": "studio-output-001"
@@ -162,23 +163,24 @@ If the output is from a Mega-Notebook, include `labels` with `ops_only`, `mega_n
 
 ## Mapping to Sheets
 
-- `VIVID_DERIVED_INSIGHTS.summary` = `summary`
-- `VIVID_DERIVED_INSIGHTS.guide_type` = `guide_type`
-- `VIVID_DERIVED_INSIGHTS.homage_guide` = `homage_guide`
-- `VIVID_DERIVED_INSIGHTS.variation_guide` = `variation_guide`
-- `VIVID_DERIVED_INSIGHTS.template_recommendations` = `template_recommendations[]`
-- `VIVID_DERIVED_INSIGHTS.user_fit_notes` = `user_fit_notes`
-- `VIVID_DERIVED_INSIGHTS.cluster_id` = `cluster_id`
-- `VIVID_DERIVED_INSIGHTS.cluster_label` = `cluster_label`
-- `VIVID_DERIVED_INSIGHTS.persona_profile` = `persona_profile`
-- `VIVID_DERIVED_INSIGHTS.synapse_logic` = `synapse_logic`
-- `VIVID_DERIVED_INSIGHTS.origin_notebook_id` = `origin_notebook_id`
-- `VIVID_DERIVED_INSIGHTS.filter_notebook_id` = `filter_notebook_id`
-- `VIVID_DERIVED_INSIGHTS.style_logic` = `style_logic`
-- `VIVID_DERIVED_INSIGHTS.mise_en_scene` = `mise_en_scene`
-- `VIVID_DERIVED_INSIGHTS.director_intent` = `director_intent`
-- `VIVID_DERIVED_INSIGHTS.notebook_id` = `notebook_id`
-- `VIVID_DERIVED_INSIGHTS.story_beats` = `story_beats[]`
-- `VIVID_DERIVED_INSIGHTS.storyboard_cards` = `storyboard_cards[]`
-- `VIVID_PATTERN_CANDIDATES` rows derived from `key_patterns[]`
+- `CREBIT_DERIVED_INSIGHTS.summary` = `summary`
+- `CREBIT_DERIVED_INSIGHTS.guide_type` = `guide_type`
+- `CREBIT_DERIVED_INSIGHTS.homage_guide` = `homage_guide`
+- `CREBIT_DERIVED_INSIGHTS.variation_guide` = `variation_guide`
+- `CREBIT_DERIVED_INSIGHTS.template_recommendations` = `template_recommendations[]`
+- `CREBIT_DERIVED_INSIGHTS.user_fit_notes` = `user_fit_notes`
+- `CREBIT_DERIVED_INSIGHTS.cluster_id` = `cluster_id`
+- `CREBIT_DERIVED_INSIGHTS.cluster_label` = `cluster_label`
+- `CREBIT_DERIVED_INSIGHTS.cluster_confidence` = `cluster_confidence`
+- `CREBIT_DERIVED_INSIGHTS.persona_profile` = `persona_profile`
+- `CREBIT_DERIVED_INSIGHTS.synapse_logic` = `synapse_logic`
+- `CREBIT_DERIVED_INSIGHTS.origin_notebook_id` = `origin_notebook_id`
+- `CREBIT_DERIVED_INSIGHTS.filter_notebook_id` = `filter_notebook_id`
+- `CREBIT_DERIVED_INSIGHTS.style_logic` = `style_logic`
+- `CREBIT_DERIVED_INSIGHTS.mise_en_scene` = `mise_en_scene`
+- `CREBIT_DERIVED_INSIGHTS.director_intent` = `director_intent`
+- `CREBIT_DERIVED_INSIGHTS.notebook_id` = `notebook_id`
+- `CREBIT_DERIVED_INSIGHTS.story_beats` = `story_beats[]`
+- `CREBIT_DERIVED_INSIGHTS.storyboard_cards` = `storyboard_cards[]`
+- `CREBIT_PATTERN_CANDIDATES` rows derived from `key_patterns[]`
 - Opal 출력도 동일 포맷 사용 (adapter=opal, output_type=report 권장)

@@ -1,7 +1,7 @@
 """WebSocket endpoints for run streaming."""
 import asyncio
 import uuid
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from sqlalchemy import select
@@ -9,35 +9,15 @@ from sqlalchemy import select
 from app.database import AsyncSessionLocal
 from app.models import CapsuleRun, CapsuleSpec
 from app.run_events import run_event_hub
-from app.routers.capsules import _filter_evidence_refs
+from app.routers.capsules import (
+    _apply_policy,
+    _apply_pattern_version,
+    _apply_source_id,
+    _filter_evidence_refs,
+    _merge_summary_warnings,
+)
 
 router = APIRouter()
-
-
-def _apply_policy(
-    summary: Dict[str, Any],
-    evidence_refs: List[str],
-    policy: Dict[str, Any],
-    is_admin: bool,
-) -> Tuple[Dict[str, Any], List[str]]:
-    if not policy:
-        return summary, evidence_refs
-
-    filtered = dict(summary or {})
-    allow_raw_logs = bool(policy.get("allowRawLogs", False))
-    if not is_admin or not allow_raw_logs:
-        for key in ("raw_logs", "debug", "trace"):
-            filtered.pop(key, None)
-
-    evidence_policy = policy.get("evidence", "summary_only")
-    if evidence_policy == "references_only":
-        filtered = {
-            "message": "references_only",
-            "capsule_id": summary.get("capsule_id") if isinstance(summary, dict) else None,
-            "version": summary.get("version") if isinstance(summary, dict) else None,
-        }
-
-    return filtered, evidence_refs
 
 
 async def _cancel_run(run_id: str, reason: str) -> None:
@@ -107,9 +87,26 @@ async def run_stream(websocket: WebSocket, run_id: str) -> None:
                 )
             )
             spec = spec_result.scalars().first()
-            policy = (spec.spec or {}).get("policy", {}) if spec else {}
-            filtered_refs, _ = await _filter_evidence_refs(list(run.evidence_refs or []), session)
-            summary, evidence_refs = _apply_policy(run.summary, filtered_refs, policy, False)
+            spec_payload = (spec.spec or {}) if spec else {}
+            policy = spec_payload.get("policy", {})
+            output_contracts = (
+                spec_payload.get("outputContracts") or spec_payload.get("output_contracts") or {}
+            )
+            pattern_version = spec_payload.get("patternVersion") or spec_payload.get(
+                "pattern_version"
+            )
+            filtered_refs, evidence_warnings = await _filter_evidence_refs(
+                list(run.evidence_refs or []),
+                session,
+            )
+            summary = _apply_pattern_version(run.summary, pattern_version)
+            summary = _apply_source_id(summary, run.inputs or {})
+            summary = _merge_summary_warnings(
+                summary,
+                evidence_warnings=evidence_warnings,
+                output_contracts=output_contracts,
+            )
+            summary, evidence_refs = _apply_policy(summary, filtered_refs, policy, False)
             if run.status == "done":
                 event_type = "run.completed"
             elif run.status == "failed":
@@ -138,7 +135,7 @@ async def run_stream(websocket: WebSocket, run_id: str) -> None:
             await websocket.close()
             return
 
-    queue = run_event_hub.subscribe(run_id)
+    queue = run_event_hub.subscribe(run_id, replay_last=True)
     try:
         queue_task = asyncio.create_task(queue.get())
         recv_task = asyncio.create_task(websocket.receive_json())

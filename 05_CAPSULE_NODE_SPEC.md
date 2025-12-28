@@ -138,7 +138,7 @@ interface CapsuleRunRecord {
     "pattern_version": "v1",
     "recommended_palette": ["#102A43", "#243B53"]
   },
-  "evidence_refs": ["sheet:VIVID_DERIVED_INSIGHTS:128"],
+  "evidence_refs": ["sheet:CREBIT_DERIVED_INSIGHTS:128"],
   "token_usage": { "input": 320, "output": 180, "total": 500 },
   "latency_ms": 820,
   "cost_usd_est": 0.08,
@@ -252,6 +252,7 @@ UI는 `loading → streaming → complete` 상태로 전환됩니다.
 - `pacing`: `slow | medium | fast`
 - `color_bias`: `cool | neutral | warm`
 - `camera_motion`: `static | controlled | dynamic`
+- `persona_priority`: `script | blended | user` (default: script) — 페르소나 우선순위
 
 ### 10.3 거장 캡슐 노드 목록
 

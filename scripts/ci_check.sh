@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Vivid CI Check Script
+# Crebit CI Check Script
 # Runs backend tests, frontend lint/build, and doc-lint in sequence.
 # Exit on first failure.
 
@@ -7,7 +7,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-echo "=== Vivid CI Check ==="
+echo "=== Crebit CI Check ==="
 echo "Root: $ROOT_DIR"
 echo ""
 

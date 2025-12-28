@@ -34,6 +34,8 @@ COMMON_PARAM_DEFS = {
     "pacing": {"type": "enum", "options": ["slow", "medium", "fast"]},
     "color_bias": {"type": "enum", "options": ["cool", "neutral", "warm"]},
     "camera_motion": {"type": "enum", "options": ["static", "controlled", "dynamic"]},
+    # Script Persona Priority (33_CODEX §2.4, 05_CAPSULE_NODE_SPEC §10.2)
+    "persona_priority": {"type": "enum", "options": ["script", "blended", "user"], "default": "script", "visibility": "public"},
 }
 
 POLICY = {"evidence": "summary_only", "allowRawLogs": False}
@@ -135,6 +137,8 @@ CAPSULE_SPECS = [
             "adapter": {
                 "type": "hybrid",
                 "internalGraphRef": "private-dag://auteur/bong/v1",
+                "clusterRef": "CL_BONG_01",
+                "temporalPhases": ["HOOK", "BUILD", "PAYOFF"],
             },
         },
     },
@@ -158,6 +162,8 @@ CAPSULE_SPECS = [
             "adapter": {
                 "type": "hybrid",
                 "internalGraphRef": "private-dag://auteur/park/v1",
+                "clusterRef": "CL_PARK_01",
+                "temporalPhases": ["HOOK", "BUILD", "PAYOFF"],
             },
         },
     },
@@ -181,6 +187,8 @@ CAPSULE_SPECS = [
             "adapter": {
                 "type": "hybrid",
                 "internalGraphRef": "private-dag://auteur/shinkai/v1",
+                "clusterRef": "CL_SHINKAI_01",
+                "temporalPhases": ["HOOK", "BUILD", "PAYOFF"],
             },
         },
     },
@@ -204,6 +212,8 @@ CAPSULE_SPECS = [
             "adapter": {
                 "type": "hybrid",
                 "internalGraphRef": "private-dag://auteur/leejunho/v1",
+                "clusterRef": "CL_LEE_01",
+                "temporalPhases": ["HOOK", "BUILD", "PAYOFF"],
             },
         },
     },
@@ -227,6 +237,8 @@ CAPSULE_SPECS = [
             "adapter": {
                 "type": "hybrid",
                 "internalGraphRef": "private-dag://auteur/na/v1",
+                "clusterRef": "CL_NA_01",
+                "temporalPhases": ["HOOK", "BUILD", "PAYOFF"],
             },
         },
     },
@@ -250,6 +262,8 @@ CAPSULE_SPECS = [
             "adapter": {
                 "type": "hybrid",
                 "internalGraphRef": "private-dag://auteur/hong/v1",
+                "clusterRef": "CL_HONG_01",
+                "temporalPhases": ["HOOK", "BUILD", "PAYOFF"],
             },
         },
     },
@@ -269,6 +283,8 @@ CAPSULE_SPECS = [
             "adapter": {
                 "type": "internal",
                 "internalGraphRef": "private-dag://production/stage-rehearsal/v1",
+                "clusterRef": "CL_PROD_01",
+                "temporalPhases": ["SETUP", "TURN", "CLIMAX", "RESOLUTION"],
             },
         },
     },

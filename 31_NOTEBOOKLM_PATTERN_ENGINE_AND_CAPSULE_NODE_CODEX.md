@@ -9,7 +9,7 @@
 ## 0) 범위와 고정 원칙 (정본 요약)
 
 - **DB = SoR(단일 진실)**, NotebookLM/Opal은 가속 레이어.  
-  (상세: `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`)
+  (상세: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`)
 - **원본 영상은 NotebookLM에 직접 넣지 않는다.**  
   Gemini 구조화 → DB SoR → NotebookLM 소스. (상세: `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`)
 - **Derived 결과는 Sheets Bus → DB SoR 승격** 흐름을 거친다.  

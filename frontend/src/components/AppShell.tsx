@@ -2,10 +2,11 @@
 
 import { ReactNode, useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import Sidebar from "./Sidebar";
+import CollapsibleSidebar from "./CollapsibleSidebar";
 import TopBar from "./TopBar";
 import { X } from "lucide-react";
 import { useCreditBalance } from "@/hooks/useCreditBalance";
+import { useSessionContext } from "@/contexts/SessionContext";
 
 interface AppShellProps {
     children: ReactNode;
@@ -37,6 +38,7 @@ export default function AppShell({
     backHref = "/",
 }: AppShellProps) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const { session } = useSessionContext();
     const { balance: liveBalance } = useCreditBalance(
         undefined,
         typeof creditBalance !== "number"
@@ -57,7 +59,7 @@ export default function AppShell({
             {/* Desktop Sidebar */}
             {showSidebar && (
                 <div className="hidden lg:block">
-                    <Sidebar creditBalance={resolvedBalance} />
+                    <CollapsibleSidebar />
                 </div>
             )}
 
@@ -82,11 +84,11 @@ export default function AppShell({
                             transition={{ type: "spring", damping: 25, stiffness: 300 }}
                             className="fixed inset-y-0 left-0 z-50 lg:hidden"
                         >
-                            <Sidebar creditBalance={resolvedBalance} onMobileClose={handleMobileClose} />
-                            {/* Close button */}
+                            <CollapsibleSidebar defaultExpanded={true} />
+                            {/* Close button - positioned at top right of expanded sidebar area */}
                             <button
                                 onClick={handleMobileClose}
-                                className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-white transition-colors hover:bg-white/20"
+                                className="absolute top-4 left-[220px] flex h-8 w-8 items-center justify-center rounded-lg bg-black/60 text-white transition-colors hover:bg-black/80 backdrop-blur-sm"
                                 aria-label="Close menu"
                             >
                                 <X className="h-5 w-5" aria-hidden="true" />
@@ -109,12 +111,13 @@ export default function AppShell({
                     onMenuToggle={handleMenuToggle}
                     showBackButton={showBackButton}
                     backHref={backHref}
+                    session={session}
                 />
             )}
 
             {/* Main Content */}
             <main
-                className={`transition-all duration-300 ${showSidebar ? "lg:ml-60" : ""
+                className={`transition-all duration-300 ${showSidebar ? "lg:ml-14" : ""
                     } ${showTopBar ? "pt-14" : ""}`}
             >
                 {children}

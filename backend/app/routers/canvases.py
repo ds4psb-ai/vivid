@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth import get_user_id
 from app.database import get_db
 from app.models import Canvas, Template
-from app.graph_utils import merge_graph_meta
+from app.graph_utils import merge_graph_meta, ensure_pattern_version
 from app.patterns import get_latest_pattern_version
 
 router = APIRouter()
@@ -132,35 +132,6 @@ def _to_response(canvas: Canvas) -> CanvasResponse:
     )
 
 
-def _ensure_pattern_version(graph_data: dict, pattern_version: str) -> dict:
-    nodes = graph_data.get("nodes")
-    if not isinstance(nodes, list):
-        return graph_data
-    updated = False
-    next_nodes = []
-    for node in nodes:
-        if not isinstance(node, dict):
-            next_nodes.append(node)
-            continue
-        data = node.get("data")
-        if not isinstance(data, dict):
-            next_nodes.append(node)
-            continue
-        if data.get("patternVersion"):
-            next_nodes.append(node)
-            continue
-        if data.get("capsuleId") and data.get("capsuleVersion"):
-            patched = {**data, "patternVersion": pattern_version}
-            next_nodes.append({**node, "data": patched})
-            updated = True
-        else:
-            next_nodes.append(node)
-    if not updated:
-        return graph_data
-    return {**graph_data, "nodes": next_nodes}
-
-
-
 def _ensure_graph_meta_defaults(graph_data: dict) -> dict:
     if not isinstance(graph_data, dict):
         return graph_data
@@ -234,7 +205,7 @@ async def create_canvas(
     canvas = Canvas(
         title=data.title,
         graph_data=_ensure_graph_meta_defaults(
-            _ensure_pattern_version(data.graph_data, pattern_version)
+            ensure_pattern_version(data.graph_data, pattern_version)
         ),
         is_public=data.is_public,
         owner_id=data.owner_id or user_id,
@@ -269,7 +240,7 @@ async def create_canvas_from_template(
         title=title,
         graph_data=_apply_template_origin(
             _ensure_graph_meta_defaults(
-                _ensure_pattern_version(template.graph_data or {}, pattern_version)
+                ensure_pattern_version(template.graph_data or {}, pattern_version)
             ),
             template,
         ),
@@ -345,7 +316,7 @@ async def update_canvas(
         pattern_version = await get_latest_pattern_version(db)
         merged_graph = merge_graph_meta(data.graph_data, canvas.graph_data or {})
         canvas.graph_data = _ensure_graph_meta_defaults(
-            _ensure_pattern_version(merged_graph, pattern_version)
+            ensure_pattern_version(merged_graph, pattern_version)
         )
         version_bump = True
     if data.is_public is not None:

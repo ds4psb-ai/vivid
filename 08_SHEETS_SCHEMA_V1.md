@@ -14,7 +14,7 @@
 
 ---
 
-## 0) VIVID_NOTEBOOK_LIBRARY (curated notebooks)
+## 0) CREBIT_NOTEBOOK_LIBRARY (curated notebooks)
 
 Purpose: curated NotebookLM notebook index (private library).
 
@@ -36,7 +36,7 @@ Purpose: curated NotebookLM notebook index (private library).
 
 ---
 
-## 1) VIVID_NOTEBOOK_ASSETS (library asset links)
+## 1) CREBIT_NOTEBOOK_ASSETS (library asset links)
 
 Purpose: assets referenced by a NotebookLM notebook (films, scenes, scripts, stills).
 
@@ -54,7 +54,7 @@ Purpose: assets referenced by a NotebookLM notebook (films, scenes, scripts, sti
 
 ---
 
-## 2) VIVID_RAW_ASSETS (source inventory)
+## 2) CREBIT_RAW_ASSETS (source inventory)
 
 Purpose: raw references (video/image/doc) captured by the admin.
 
@@ -78,7 +78,7 @@ Purpose: raw references (video/image/doc) captured by the admin.
 
 ---
 
-## 3) VIVID_VIDEO_STRUCTURED (Gemini video outputs)
+## 3) CREBIT_VIDEO_STRUCTURED (Gemini video outputs)
 
 Purpose: structured scene/shot outputs from Gemini 3 Pro/Flash.
 
@@ -106,7 +106,7 @@ Purpose: structured scene/shot outputs from Gemini 3 Pro/Flash.
 
 ---
 
-## 4) VIVID_DERIVED_INSIGHTS (NotebookLM outputs)
+## 4) CREBIT_DERIVED_INSIGHTS (NotebookLM outputs)
 
 Purpose: structured outputs from NotebookLM or Opal.
 
@@ -139,8 +139,9 @@ Purpose: structured outputs from NotebookLM or Opal.
 | story_beats | string | no | JSON array (story/beat structure) |
 | storyboard_cards | string | no | JSON array (scene cards) |
 | key_patterns | string | no | JSON array of objects or comma-separated `pattern_name:pattern_type` |
-| cluster_label | string | no | cluster name (optional) |
 | cluster_id | string | no | cluster id (optional) |
+| cluster_label | string | no | cluster name (optional) |
+| cluster_confidence | number | no | 0.0~1.0 |
 | output_type | enum | yes | video_overview / audio_overview / mind_map / report / data_table |
 | output_language | string | yes | en/ko/ja/etc |
 | studio_output_id | string | no | NotebookLM studio output id |
@@ -155,7 +156,7 @@ Purpose: structured outputs from NotebookLM or Opal.
 
 ---
 
-## 5) VIVID_PATTERN_CANDIDATES (proposed patterns)
+## 5) CREBIT_PATTERN_CANDIDATES (proposed patterns)
 
 Purpose: LLM-proposed patterns before validation.
 
@@ -174,7 +175,7 @@ Purpose: LLM-proposed patterns before validation.
 
 ---
 
-## 6) VIVID_PATTERN_TRACE (validated usage)
+## 6) CREBIT_PATTERN_TRACE (validated usage)
 
 Purpose: validated pattern usage per source/variant.
 
@@ -189,7 +190,7 @@ Purpose: validated pattern usage per source/variant.
 
 ---
 
-## 7) VIVID_QUARANTINE (optional)
+## 7) CREBIT_QUARANTINE (optional)
 
 Purpose: ingestion errors or skipped rows for manual review.
 
@@ -204,7 +205,7 @@ Purpose: ingestion errors or skipped rows for manual review.
 
 ## Notes
 
-- Derived rows must reference a **source_id** from VIVID_RAW_ASSETS and should include **notebook_id** when available.
+- Derived rows must reference a **source_id** from CREBIT_RAW_ASSETS and should include **notebook_id** when available.
 - Video Structured rows are the canonical scene/shot schema and are used as NotebookLM sources.
 - Notebook library rows are private metadata and are not exposed to end users.
 - Pattern Candidates are **not** SoR; only validated patterns are promoted to DB.

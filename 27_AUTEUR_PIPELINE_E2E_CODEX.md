@@ -1,7 +1,8 @@
 # Auteur Data -> Template -> Creator Usage Pipeline (CODEX v27)
 
-**Date**: 2025-12-24  
+**Date**: 2025-12-24 (Updated: 2025-12-28)  
 **Status**: SoR (End-to-End execution blueprint)  
+**Implementation Progress**: 95% (See `21_DOCUMENTATION_AUDIT_REPORT_V1.md` Section 6)  
 **Goal**: 거장/명장면 데이터화부터 템플릿화, 사용자 실행, 학습/승격까지의 전 과정을 완전한 실행 파이프라인으로 정의한다.
 
 ---
@@ -77,7 +78,7 @@
 **Goal**: 요약/오마주/변주/템플릿 적합도 가이드를 만든다.  
 **Input**: DB SoR + **Source Pack** (원본 영상 금지)  
 **Process**: NotebookLM/Opal 실행 → JSON 출력  
-**Output**: `VIVID_DERIVED_INSIGHTS` (Sheets Bus)  
+**Output**: `CREBIT_DERIVED_INSIGHTS` (Sheets Bus)  
 **Check**: `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md` 규격 준수  
 **Protocol**: `33_NOTEBOOKLM_SOURCE_PACK_AND_PROMPT_PROTOCOL_CODEX.md`
 
@@ -194,7 +195,7 @@
 - 템플릿 정책: `23_TEMPLATE_SYSTEM_SPEC_CODEX.md`  
 - 템플릿 시드: `backend/scripts/seed_template_from_evidence.py` 또는 `POST /api/v1/templates/seed/from-evidence`  
 - 캡슐 계약: `05_CAPSULE_NODE_SPEC.md`  
-- 실행 계획: `19_VIVID_EXECUTION_PLAN_V1.md`
+- 실행 계획: `19_CREBIT_EXECUTION_PLAN_V1.md`
 
 ---
 
@@ -206,7 +207,7 @@
 4. **Notebook Library 생성**: 클러스터 노트북 등록  
 5. **Notebook Assets 연결**: 노트북과 참조 자산 링크 기록  
 6. **NotebookLM/Opal 실행**: `guide_type`별 요약/가이드 생성  
-7. **Sheets Bus 기록**: Derived JSON 업로드 (`VIVID_DERIVED_INSIGHTS`)  
+7. **Sheets Bus 기록**: Derived JSON 업로드 (`CREBIT_DERIVED_INSIGHTS`)  
 8. **Promotion 배치**: `promote_from_sheets.py` 실행 → quarantine 확인  
 9. **Pattern 검수**: `pattern_candidates` 승인/보류  
 10. **Pattern Trace 등록**: 적용 근거/evidence ref 기록  

@@ -1,6 +1,7 @@
 # Virlo Content Studio Research (Detailed)
 
 **Date**: 2025-12-24  
+**Updated**: 2025-12-28  
 **Scope**: Content Studio, Usage/Billing, Credits, Affiliate entry points  
 **Method**: Headless DOM snapshot + CSS token review (no user-specific data captured)
 
@@ -8,11 +9,11 @@
 
 ## 0.1) SoR Alignment (Reference Only)
 
-This document is reference-only. "Vivid mapping" items are candidates; final decisions live in SoR docs.
+This document is reference-only. "Crebit mapping" items are candidates; final decisions live in SoR docs.
 
 - UI/UX: `13_UI_DESIGN_GUIDE_2025-12.md`
 - Templates/Capsules: `23_TEMPLATE_SYSTEM_SPEC_CODEX.md`, `05_CAPSULE_NODE_SPEC.md`
-- Growth/Credits: `17_CREDITS_AND_BILLING_SPEC_V1.md`, `18_AFFILIATE_PROGRAM_SPEC_V1.md`
+- Growth/Credits: `17_CREDITS_AND_BILLING_SPEC_V1.md`, `35_AFFILIATE_PROGRAM_SPEC_V1.md`
 
 ---
 
@@ -37,7 +38,7 @@ Virlo’s Content Studio positions itself as a **visual AI content workflow buil
 - Main container: `bg-[#0c111d]` + `border-[#344054]` + `rounded-xl`
 - Shadow: subtle `0px 1px 3px` for elevation
 
-**Implication for Vivid**
+**Implication for Crebit**
 - Use a **fixed left rail** for mode switching
 - Keep the **canvas in a framed panel** (dark surface + border)
 - Reserve top‑bar for title + run/preview/credits
@@ -73,7 +74,7 @@ Virlo’s Content Studio positions itself as a **visual AI content workflow buil
 - Usage
 - Billing
 
-**Vivid mapping**
+**Crebit mapping**
 - Research: Evidence / Outlier / Pattern Library / Collection
 - Creator Hub: Content Studio (Node Canvas)
 - Accounts: Usage / Billing / Credits
@@ -89,7 +90,7 @@ Virlo’s Content Studio positions itself as a **visual AI content workflow buil
 **Short description**
 - “Connect input sources (videos, documents, websites) to AI processors and generate professional outputs—all on an intuitive node‑based canvas.”
 
-**Vivid mapping**
+**Crebit mapping**
 - Keep a single‑sentence **“canvas promise”** on empty state
 - Use a short, scannable description in onboarding
 
@@ -115,9 +116,9 @@ Virlo’s Content Studio positions itself as a **visual AI content workflow buil
 - Email Campaigns
 - Custom Formats
 
-**Vivid mapping**
+**Crebit mapping**
 - Keep **Input / Processor / Output** as the first conceptual model
-- In Vivid, “AI Processor” → “Capsule / Spec Engine” alignment
+- In Crebit, “AI Processor” → “Capsule / Spec Engine” alignment
 
 ---
 
@@ -128,7 +129,7 @@ Virlo’s Content Studio positions itself as a **visual AI content workflow buil
 - **Research Workflows**: “Scrape websites, analyze competitors, and generate comprehensive research reports with citations.”
 - **Batch Content Creation**: “Connect multiple inputs and generate dozens of outputs (captions, scripts, posts) in parallel.”
 
-**Vivid mapping**
+**Crebit mapping**
 - Provide 3–4 **example canvases** (short‑form script, storyboard, marketing variants)
 - Emphasize **batch generation** and **multi‑output** for notebook outputs
 
@@ -140,7 +141,7 @@ Virlo’s Content Studio positions itself as a **visual AI content workflow buil
 - **Connect to AI Processor**: “Drag connections from inputs to the AI processor. The AI automatically understands all connected content.”
 - **Chat & Generate**: “Ask the AI to analyze, summarize, or transform your content. Add output nodes to generate formatted results.”
 
-**Vivid mapping**
+**Crebit mapping**
 - Match step structure: **Add → Connect → Generate**
 - Use the same verbs for onboarding
 
@@ -153,7 +154,7 @@ Virlo’s Content Studio positions itself as a **visual AI content workflow buil
 - Create Your First Canvas
 - “Start with a blank canvas and AI processor node” (supporting copy)
 
-**Vivid mapping**
+**Crebit mapping**
 - Empty state should offer **1‑click seed graph** (Input → Capsule → Script/Beat → Storyboard → Output)
 - Keep CTA copy crisp: “Create First Canvas”
 
@@ -182,7 +183,7 @@ Virlo’s Content Studio positions itself as a **visual AI content workflow buil
 - 15,000 credits
 - 40,000 credits
 
-**Vivid mapping**
+**Crebit mapping**
 - Adopt dual model: **subscription credits + top‑up packs**
 - Separate **creator credits** vs **API credits**
 - Add “Get Free Credits” CTA in nav and empty state
@@ -197,7 +198,7 @@ Virlo’s Content Studio positions itself as a **visual AI content workflow buil
 - “Join our Discord” as community CTA
 - “Yap With Founder” as support CTA
 
-**Vivid mapping**
+**Crebit mapping**
 - Keep Affiliate entry at top‑level nav
 - Add Credits page with “Invite + Earn” module
 
@@ -222,14 +223,14 @@ Virlo’s Content Studio positions itself as a **visual AI content workflow buil
 - “New!” badge on new feature entry
 - Empty‑state CTA + walkthrough trigger
 
-**Vivid mapping**
-- Preserve **dark studio feel**, but use Vivid palette
+**Crebit mapping**
+- Preserve **dark studio feel**, but use Crebit palette
 - Keep **badge chips** for “New / Beta”
 - Use a **single accent** for active nav + capsule focus
 
 ---
 
-## 11) Apply to Vivid (Concrete Plan)
+## 11) Apply to Crebit (Concrete Plan)
 
 This section is a candidate plan; final decisions live in SoR documents.
 
@@ -276,9 +277,9 @@ This section is a candidate plan; final decisions live in SoR documents.
 
 ---
 
-## 14) Deep Dive Level 2: Data Schema Implication (Vivid Spec)
+## 14) Deep Dive Level 2: Data Schema Implication (Crebit Spec)
 
-To support the features observed in Virlo, Vivid's schema must evolve:
+To support the features observed in Virlo, Crebit's schema must evolve:
 
 **1. Node Definition (`NodeSpec`)**
 - Need strict `input_contracts`:
@@ -292,14 +293,14 @@ To support the features observed in Virlo, Vivid's schema must evolve:
 
 **2. Processor State (`ExecutionState`)**
 - Virlo distinguishes "Context Awareness" (Upstream) from "Parameter Config" (Local).
-- Vivid needs `context_window` property in the `CapsuleRun` table:
+- Crebit needs `context_window` property in the `CapsuleRun` table:
   - `upstream_inputs`: `JSONB` array of *all* connected node outputs (not just immediate parent).
   - `token_usage`: Track tokens *per node* for billing transparency.
 
 **3. Edge Properties (`EdgeData`)**
 - Edges shouldn't just be IDs. They need data types to enforce validity.
 - `edge_type`: `data` (flow of content) vs `control` (trigger only).
-- Virlo seems to use implicit typing (video-to-video, text-to-text). Vivid should make this explicit in `connection_rules`.
+- Virlo seems to use implicit typing (video-to-video, text-to-text). Crebit should make this explicit in `connection_rules`.
 
 **4. Project Metadata (`CanvasMeta`)**
 - **`source_manifest`**: List of all external URLs scraped/ingested (for "Research" view).
@@ -309,7 +310,7 @@ To support the features observed in Virlo, Vivid's schema must evolve:
 
 ## 15) Deep Dive Level 3: Implementation Tokens (Tailwind/CSS)
 
-These tokens are extracted for immediate application in Vivid's `globals.css` or `tailwind.config.js`.
+These tokens are extracted for immediate application in Crebit's `globals.css` or `tailwind.config.js`.
 
 **1. Semantic Color Palette**
 ```css
@@ -545,24 +546,24 @@ const calculateCreditCost = (model: string, inputTokens: number, outputTokens: n
 // = 2 (base) × 4.5 (≈4500 tokens / 1000) → rounded to 9
 ```
 
-**4. TypeScript Interfaces for Vivid Implementation**
+**4. TypeScript Interfaces for Crebit Implementation**
 
 ```typescript
-// Adapted from Virlo's schema for Vivid's use
+// Adapted from Virlo's schema for Crebit's use
 
-interface VividCanvas {
+interface CrebitCanvas {
   id: string;                    // UUID
   user_id: string;
   title: string;
   description?: string;
-  nodes: VividNode[];
-  edges: VividEdge[];
+  nodes: CrebitNode[];
+  edges: CrebitEdge[];
   viewport: { x: number; y: number; zoom: number };
   created_at: string;            // ISO 8601
   updated_at: string;
 }
 
-interface VividNode {
+interface CrebitNode {
   id: string;
   type: 'input' | 'processor' | 'output';
   subtype: string;               // e.g., 'youtube', 'capsule', 'script'
@@ -576,7 +577,7 @@ interface VividNode {
   };
 }
 
-interface VividEdge {
+interface CrebitEdge {
   id: string;
   source: string;
   target: string;
@@ -611,7 +612,7 @@ Extracted from React Fiber tree analysis.
 | `W` | Sidebar | `onAddNode`, `nodeCategories`, `collapsed` |
 | `g` | AnimatedCounter | `value`, `duration`, `prefix` (for credits) |
 
-**Vivid React Architecture Recommendation**
+**Crebit React Architecture Recommendation**
 
 ```
 src/
@@ -648,7 +649,7 @@ src/
 
 ## 19) Actionable Token Summary (Quick Reference)
 
-| Category | Token | Value/Pattern | Vivid File |
+| Category | Token | Value/Pattern | Crebit File |
 |----------|-------|---------------|------------|
 | Color | `--accent` | `#ed62a0` | `globals.css` |
 | Color | `--bg-base` | `#0c111d` | `globals.css` |

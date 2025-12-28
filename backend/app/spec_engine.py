@@ -5,6 +5,8 @@ from typing import Any, Dict, List, Optional
 from enum import Enum
 import random
 
+from app.storyboard_utils import build_shot_id, infer_shot_type, normalize_storyboard_cards
+
 
 class NodeType(str, Enum):
     INPUT = "input"
@@ -198,7 +200,7 @@ def _generate_beat_sheet(inputs: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Generate a minimal beat sheet for MVP."""
     seeded = inputs.get("story_beats")
     if isinstance(seeded, list) and seeded:
-        return seeded
+        return _normalize_story_beats(seeded)
     summary = inputs.get("scene_summary") or "Introduce the premise"
     tone = inputs.get("tone", "neutral")
     pacing = inputs.get("pacing", "medium")
@@ -209,45 +211,79 @@ def _generate_beat_sheet(inputs: Dict[str, Any]) -> List[Dict[str, Any]]:
         {"beat": "Climax", "note": "Deliver the core emotional payoff"},
         {"beat": "Resolution", "note": "Close with a clear visual motif"},
     ]
-    return beats
+    return _normalize_story_beats(beats)
+
+
+def _normalize_story_beats(beats: List[Any]) -> List[Dict[str, Any]]:
+    normalized: List[Dict[str, Any]] = []
+    for idx, item in enumerate(beats, start=1):
+        if isinstance(item, dict):
+            entry = dict(item)
+            raw_label = entry.get("beat") or entry.get("beat_id")
+            label = (
+                str(raw_label).strip()
+                if isinstance(raw_label, (str, int, float)) and str(raw_label).strip()
+                else f"Beat {idx}"
+            )
+            raw_note = entry.get("note") or entry.get("summary")
+            note = (
+                str(raw_note).strip()
+                if isinstance(raw_note, (str, int, float)) and str(raw_note).strip()
+                else label
+            )
+            entry["beat"] = label
+            entry["note"] = note
+            normalized.append(entry)
+            continue
+        if isinstance(item, str):
+            cleaned = item.strip()
+            if cleaned:
+                normalized.append({"beat": f"Beat {idx}", "note": cleaned})
+    return normalized
 
 
 def _generate_storyboard(inputs: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Generate a minimal storyboard preview for MVP."""
-    seeded = inputs.get("storyboard_cards")
-    if isinstance(seeded, list) and seeded:
-        return seeded
     palette = inputs.get("palette", ["#333333", "#555555", "#777777"])
     compositions = inputs.get("composition_hints", ["wide shot", "close-up", "overhead"])
     pacing_hints = inputs.get("pacing_hints", ["balanced rhythm"])
+    sequence_id = inputs.get("sequence_id") or inputs.get("sequenceId")
+    pacing = str(inputs.get("pacing") or "medium")
+    seeded = inputs.get("storyboard_cards")
+    if isinstance(seeded, list) and seeded:
+        return normalize_storyboard_cards(
+            seeded,
+            palette=palette,
+            composition_hints=compositions,
+            sequence_id=sequence_id,
+            default_duration=_infer_duration(pacing),
+        )
 
     scenes = []
     for idx in range(3):
+        composition = compositions[idx % len(compositions)]
+        pacing_note = pacing_hints[idx % len(pacing_hints)]
         scenes.append(
             {
                 "shot": idx + 1,
-                "composition": compositions[idx % len(compositions)],
+                "composition": composition,
                 "dominant_color": palette[idx % len(palette)],
                 "accent_color": palette[(idx + 1) % len(palette)],
-                "pacing_note": pacing_hints[idx % len(pacing_hints)],
+                "pacing_note": pacing_note,
+                "note": f"{composition}, {pacing_note}",
             }
         )
-    return scenes
+    return normalize_storyboard_cards(
+        scenes,
+        palette=palette,
+        composition_hints=compositions,
+        sequence_id=sequence_id,
+        default_duration=_infer_duration(pacing),
+    )
 
 
 def _infer_shot_type(composition: str) -> str:
-    if not isinstance(composition, str):
-        return "medium"
-    lowered = composition.lower()
-    if "close" in lowered:
-        return "close-up"
-    if "wide" in lowered:
-        return "wide"
-    if "overhead" in lowered or "top" in lowered:
-        return "overhead"
-    if "medium" in lowered:
-        return "medium"
-    return "medium"
+    return infer_shot_type(composition)
 
 
 def _infer_duration(pacing: str) -> int:
@@ -288,17 +324,24 @@ def _generate_shot_contracts(
     for idx, shot in enumerate(storyboard, start=1):
         if not isinstance(shot, dict):
             continue
-        raw_shot = shot.get("shot_id") or shot.get("shot") or idx
-        shot_id = (
-            f"shot-{int(raw_shot):02d}"
-            if isinstance(raw_shot, int)
-            else str(raw_shot)
+        raw_shot = (
+            shot.get("shot_id")
+            or shot.get("card_id")
+            or shot.get("id")
+            or shot.get("shot")
+            or idx
         )
-        composition = str(shot.get("composition") or "framed composition")
-        dominant = shot.get("dominant_color") or (palette[0] if palette else "#333333")
-        accent = shot.get("accent_color") or (palette[1] if len(palette) > 1 else "#555555")
         shot_scene_id = str(shot.get("scene_id") or shot.get("sceneId") or scene_id)
         shot_sequence_id = str(shot.get("sequence_id") or shot.get("sequenceId") or sequence_id)
+        shot_id = build_shot_id(raw_shot, idx, sequence_id=shot_sequence_id)
+        composition = str(
+            shot.get("composition")
+            or shot.get("shot")
+            or shot.get("note")
+            or "framed composition"
+        )
+        dominant = shot.get("dominant_color") or (palette[0] if palette else "#333333")
+        accent = shot.get("accent_color") or (palette[1] if len(palette) > 1 else "#555555")
         shot_type = _infer_shot_type(composition)
         environment_layers = {
             "foreground": str(shot.get("foreground") or f"{composition} foreground detail"),

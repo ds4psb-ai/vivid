@@ -7,10 +7,16 @@ import { api, CapsuleRun, CapsuleRunHistoryItem, CapsuleRunStreamController, Cap
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Trash2, Sliders, Play, Lock } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { isAdminModeEnabled } from "@/lib/admin";
 import { normalizeAllowedType } from "@/lib/graph";
 import { useCapsuleNodeFSM } from "@/hooks/useCapsuleNodeFSM";
 import { normalizeApiError } from "@/lib/errors";
+import { getBeatLabel, getStoryboardLabel } from "@/lib/narrative";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 interface InspectorProps {
   selectedNode: Node<CanvasNodeData> | null;
@@ -26,6 +32,7 @@ interface InspectorProps {
     capsuleVersion?: string;
   }>;
   canvasId?: string | null;
+  isAdminView?: boolean;
 }
 
 type ParamDef = {
@@ -75,6 +82,11 @@ const NODE_PARAM_DEFS: Partial<Record<CanvasNodeKind, Record<string, ParamDef>>>
       options: ["balanced", "cinematic", "experimental"],
       default: "balanced",
     },
+    objective: {
+      type: "enum",
+      options: ["balanced", "quality", "efficient", "cost", "latency"],
+      default: "balanced",
+    },
     iterations: { type: "number", min: 1, max: 50, step: 1, default: 10 },
     temperature: { type: "number", min: 0.1, max: 1.0, step: 0.05, default: 0.7 },
   },
@@ -90,13 +102,13 @@ export function Inspector({
   getUpstreamContext,
   getConnectedCapsules,
   canvasId,
+  isAdminView = false,
 }: InspectorProps) {
   const { t } = useLanguage();
-  const isAdminView = useMemo(() => isAdminModeEnabled(), []);
   const sourceIdValue =
     selectedNode?.data?.params && typeof selectedNode.data.params === "object"
       ? (selectedNode.data.params as Record<string, unknown>).source_id ??
-        (selectedNode.data.params as Record<string, unknown>).sourceId
+      (selectedNode.data.params as Record<string, unknown>).sourceId
       : undefined;
   const [capsuleSpec, setCapsuleSpec] = useState<CapsuleSpec | null>(null);
   const [capsuleError, setCapsuleError] = useState<string | null>(null);
@@ -263,19 +275,22 @@ export function Inspector({
     }
     const upstream = getUpstreamContext(selectedNode.id, "sequential");
     const sequence = Array.isArray((upstream as { sequence?: unknown }).sequence)
-      ? (upstream as { sequence?: Array<{ id?: string; label?: string }> }).sequence
+      ? ((upstream as { sequence?: Array<{ id?: string; label?: string }> }).sequence ?? [])
       : [];
-    if (!sequence.length) return null;
+    if (!sequence || sequence.length === 0) return null;
     const first = sequence[0];
     const last = sequence[sequence.length - 1];
     return {
       length: sequence.length,
-      first: first?.label || first?.id || "n/a",
-      firstId: first?.id || "n/a",
-      last: last?.label || last?.id || "n/a",
-      lastId: last?.id || "n/a",
+      first: first?.label ?? first?.id ?? "n/a",
+      firstId: first?.id ?? "n/a",
+      last: last?.label ?? last?.id ?? "n/a",
+      lastId: last?.id ?? "n/a",
     };
   }, [capsuleSpec?.spec, getUpstreamContext, isAdminView, selectedNode]);
+
+
+
   const summaryContextMode =
     runResult?.summary && typeof runResult.summary === "object"
       ? (runResult.summary as { context_mode?: string }).context_mode
@@ -372,7 +387,7 @@ export function Inspector({
 
     if (def.type === "enum") {
       return (
-        <div className="relative">
+        <div className="relative group">
           <select
             value={String(currentValue)}
             onChange={(e) =>
@@ -384,7 +399,7 @@ export function Inspector({
               })
             }
             disabled={isRunning}
-            className="w-full appearance-none rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2 text-xs text-slate-200 transition-colors focus:border-sky-500/50 focus:bg-slate-900 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full appearance-none rounded-xl border border-white/5 bg-[#0a0a0c]/80 px-4 py-2.5 text-xs font-medium text-slate-200 transition-all duration-200 hover:border-white/10 hover:bg-[#151518] focus:border-sky-500/50 focus:bg-[#0a0a0c] focus:outline-none focus:ring-1 focus:ring-sky-500/20 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {(def.options || []).map((option) => (
               <option key={option} value={option}>
@@ -392,8 +407,8 @@ export function Inspector({
               </option>
             ))}
           </select>
-          <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400">
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 transition-colors group-hover:text-slate-300">
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </div>
@@ -413,40 +428,68 @@ export function Inspector({
             })
           }
           disabled={isRunning}
-          className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-xs font-medium transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 ${currentValue
-              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300 shadow-[0_0_10px_-4px_rgba(16,185,129,0.3)]"
-              : "border-white/10 bg-slate-900/50 text-slate-400 hover:bg-slate-800"
-            }`}
+          className={cn(
+            "flex w-full items-center justify-between rounded-xl border px-4 py-3 text-xs font-medium transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50",
+            currentValue
+              ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-300 shadow-[0_0_15px_-5px_rgba(16,185,129,0.2)]"
+              : "border-white/5 bg-[#0a0a0c]/50 text-slate-400 hover:bg-[#151518] hover:text-slate-300 hover:border-white/10"
+          )}
         >
-          <span>{currentValue ? "Enabled" : "Disabled"}</span>
-          <div className={`h-2 w-2 rounded-full ${currentValue ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" : "bg-slate-600"}`} />
+          <span className="tracking-wide uppercase text-[10px] font-bold">{currentValue ? "On" : "Off"}</span>
+          <div
+            className={cn(
+              "h-1.5 w-8 rounded-full transition-colors duration-300 relative",
+              currentValue ? "bg-emerald-500/30" : "bg-slate-700/30"
+            )}
+          >
+            <motion.div
+              layout
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              className={cn(
+                "absolute top-1/2 -translate-y-1/2 h-2.5 w-2.5 rounded-full shadow-sm",
+                currentValue ? "bg-emerald-400 right-0 shadow-[0_0_8px_rgba(52,211,153,0.6)]" : "bg-slate-500 left-0"
+              )}
+            />
+          </div>
         </button>
       );
     }
 
     if (def.type === "number") {
       return (
-        <div className="relative flex items-center gap-2">
-          <input
-            type="range"
-            min={def.min ?? 0}
-            max={def.max ?? 1}
-            step={def.step ?? 0.05}
-            value={Number(currentValue)}
-            onChange={(e) =>
-              onUpdate(selectedNode!.id, {
-                params: {
-                  ...params,
-                  [key]: parseFloat(e.target.value),
-                },
-              })
-            }
-            disabled={isRunning}
-            className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-slate-700 accent-rose-500 hover:accent-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-          />
-          <span className="w-8 text-right text-[10px] font-mono text-slate-400">
-            {Number(currentValue).toFixed(def.step && def.step < 0.1 ? 2 : 1)}
-          </span>
+        <div className="relative pt-1 pb-1">
+          <div className="flex items-center gap-3">
+            <div className="relative w-full h-1.5 rounded-full bg-slate-800/50">
+              <input
+                type="range"
+                min={def.min ?? 0}
+                max={def.max ?? 1}
+                step={def.step ?? 0.05}
+                value={Number(currentValue)}
+                onChange={(e) =>
+                  onUpdate(selectedNode!.id, {
+                    params: {
+                      ...params,
+                      [key]: parseFloat(e.target.value),
+                    },
+                  })
+                }
+                disabled={isRunning}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed"
+              />
+              <div
+                className="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-sky-500 to-indigo-500"
+                style={{ width: `${((Number(currentValue) - (def.min ?? 0)) / ((def.max ?? 1) - (def.min ?? 0))) * 100}%` }}
+              />
+              <div
+                className="absolute top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-slate-200 shadow-[0_0_10px_rgba(255,255,255,0.3)] transition-transform hover:scale-110 pointer-events-none"
+                style={{ left: `${((Number(currentValue) - (def.min ?? 0)) / ((def.max ?? 1) - (def.min ?? 0))) * 100}%` }}
+              />
+            </div>
+            <span className="min-w-[3rem] text-right text-[10px] font-mono font-bold text-slate-300 bg-white/5 rounded px-1.5 py-0.5 border border-white/5">
+              {Number(currentValue).toFixed(def.step && def.step < 0.1 ? 2 : 1)}
+            </span>
+          </div>
         </div>
       );
     }
@@ -464,7 +507,7 @@ export function Inspector({
           })
         }
         disabled={isRunning}
-        className="w-full rounded border border-white/10 bg-slate-900/50 px-2 py-1.5 text-xs text-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-xl border border-white/5 bg-[#0a0a0c]/80 px-4 py-2.5 text-xs text-slate-200 placeholder-slate-600 transition-all duration-200 hover:border-white/10 hover:bg-[#151518] focus:border-sky-500/50 focus:bg-[#0a0a0c] focus:outline-none focus:ring-1 focus:ring-sky-500/20 disabled:cursor-not-allowed disabled:opacity-50"
       />
     );
   };
@@ -510,20 +553,21 @@ export function Inspector({
       }
 
       setInputWarning(null);
-      const inputContracts =
-        capsuleSpec?.spec && typeof capsuleSpec.spec === "object"
-          ? (capsuleSpec.spec as { inputContracts?: { contextMode?: string } }).inputContracts
-          : undefined;
-      const rawContextMode = inputContracts?.contextMode;
+      const specObj = capsuleSpec?.spec as Record<string, unknown> | undefined;
+      const inputContracts = specObj?.inputContracts as Record<string, unknown> | undefined;
+
+      const rawContextMode = inputContracts?.contextMode as string | undefined;
       const contextMode =
         rawContextMode === "aggregate" || rawContextMode === "sequential"
           ? rawContextMode
           : undefined;
+
       const rawMaxUpstream = inputContracts?.maxUpstream;
       const maxUpstream =
         typeof rawMaxUpstream === "number" && Number.isFinite(rawMaxUpstream)
           ? rawMaxUpstream
           : undefined;
+
       if (maxUpstream && maxUpstream > 0 && getUpstreamContext) {
         const upstream = getUpstreamContext(selectedNode.id, contextMode);
         const upstreamNodes = Array.isArray(upstream?.nodes) ? upstream.nodes.length : 0;
@@ -538,10 +582,11 @@ export function Inspector({
         const inputs = getInputValues ? getInputValues() : {};
         const sourceIdRaw = inputs?.source_id ?? inputs?.sourceId;
         if (typeof sourceIdRaw === "string" && sourceIdRaw.trim()) {
-          const allowed = Array.isArray(inputContracts.allowedTypes)
-            ? inputContracts.allowedTypes
-                .map((value) => normalizeAllowedType(String(value)))
-                .filter((value): value is string => Boolean(value))
+          const allowedRaw = inputContracts.allowedTypes;
+          const allowed = Array.isArray(allowedRaw)
+            ? allowedRaw
+              .map((value: unknown) => normalizeAllowedType(String(value)))
+              .filter((value: string | null): value is string => Boolean(value))
             : [];
           if (allowed.length > 0) {
             try {
@@ -805,7 +850,7 @@ export function Inspector({
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: "100%", opacity: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="absolute right-0 top-0 h-full w-80 border-l border-white/10 bg-slate-950/80 p-6 backdrop-blur-2xl shadow-2xl z-20"
+          className="absolute right-0 top-0 h-full w-80 border-l border-white/10 bg-slate-950/80 p-6 backdrop-blur-2xl shadow-2xl z-20 panel-container"
         >
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
@@ -938,12 +983,7 @@ export function Inspector({
                         </span>
                       </div>
                       {processingSeeds.storyBeats.slice(0, 2).map((beat, idx) => {
-                        const label =
-                          typeof beat === "string"
-                            ? beat
-                            : typeof beat === "object" && beat
-                              ? ((beat as { note?: string }).note ?? (beat as { beat?: string }).beat ?? "")
-                              : "";
+                        const label = getBeatLabel(beat);
                         if (!label) return null;
                         return (
                           <div key={`beat-${idx}`} className="mt-2 line-clamp-1 text-[11px] text-slate-300">
@@ -952,14 +992,7 @@ export function Inspector({
                         );
                       })}
                       {processingSeeds.storyboardCards.slice(0, 1).map((card, idx) => {
-                        const label =
-                          typeof card === "string"
-                            ? card
-                            : typeof card === "object" && card
-                              ? ((card as { note?: string }).note ??
-                                (card as { composition?: string }).composition ??
-                                "")
-                              : "";
+                        const label = getStoryboardLabel(card);
                         if (!label) return null;
                         return (
                           <div key={`story-${idx}`} className="mt-1 line-clamp-1 text-[11px] text-slate-400">
@@ -1059,7 +1092,7 @@ export function Inspector({
                       {isAdminView && summaryContextMode && typeof (runResult?.summary as { sequence_len?: number }).sequence_len === "number" && (
                         <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] text-slate-300">
                           <span>context: {summaryContextMode}</span>
-                          <span>seq: {(runResult.summary as { sequence_len?: number }).sequence_len}</span>
+                          <span>seq: {(runResult?.summary as { sequence_len?: number }).sequence_len}</span>
                         </div>
                       )}
                       {upstreamSequenceSummary && (
@@ -1174,93 +1207,106 @@ export function Inspector({
                               : null;
                         return (
                           <>
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-emerald-200">{t("runSummary")}</span>
-                        <span className="text-slate-400 uppercase">{runResult.status}</span>
-                      </div>
-                      {runResult.cached && (
-                        <div className="mt-1 text-[10px] text-emerald-300 uppercase">{t("cachedResult")}</div>
-                      )}
-                      {isAdminView &&
-                        summaryContextMode &&
-                        typeof (runResult.summary as { sequence_len?: number }).sequence_len === "number" && (
-                          <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] text-slate-300">
-                            <span>context: {summaryContextMode}</span>
-                            <span>seq: {(runResult.summary as { sequence_len?: number }).sequence_len}</span>
-                          </div>
-                        )}
-                      <div className="mt-2 text-slate-200">
-                        {String(runResult.summary?.message ?? t("generating"))}
-                      </div>
-                      <div className="mt-2 text-[10px] text-slate-400">
-                        {t("runId")}: {runResult.run_id}
-                      </div>
-                      {(creditCost !== null || latencyMs !== null || costUsd !== null || tokenTotal !== null) && (
-                        <div className="mt-2 grid grid-cols-2 gap-2 text-[10px] text-slate-400">
-                          {creditCost !== null && (
-                            <div>{t("creditsCost")}: {creditCost}</div>
-                          )}
-                          {latencyMs !== null && (
-                            <div>{t("latency")}: {latencyMs}ms</div>
-                          )}
-                          {costUsd !== null && (
-                            <div>{t("costEstimate")}: ${costUsd.toFixed(3)}</div>
-                          )}
-                          {tokenTotal !== null && (
-                            <div>
-                              {t("tokenUsage")}: {tokenTotal}
-                              {typeof tokenUsage?.input === "number" && typeof tokenUsage?.output === "number" && (
-                                <span className="ml-1 text-slate-500">
-                                  ({tokenUsage.input}/{tokenUsage.output})
-                                </span>
-                              )}
+                            <div className="flex items-center justify-between">
+                              <span className="font-semibold text-emerald-200">{t("runSummary")}</span>
+                              <span className="text-slate-400 uppercase">{runResult.status}</span>
                             </div>
-                          )}
-                        </div>
-                      )}
-                      {runResult.summary?.pattern_version && (
-                        <div className="mt-1 text-[10px] text-slate-500">
-                          {t("patternVersion")}: {String(runResult.summary.pattern_version)}
-                        </div>
-                      )}
-                      <div className="mt-2 space-y-1 text-[10px] text-slate-500">
-                        <div>{t("evidenceRefs")}: {runResult.evidence_refs?.length ?? 0}</div>
-                        {summaryPatternVersion && (
-                          <div>{t("patternVersion")}: {String(summaryPatternVersion)}</div>
-                        )}
-                        {summarySourceId && (
-                          <div>{t("sourceId")}: {String(summarySourceId)}</div>
-                        )}
-                        {(runResult.evidence_refs || []).map((ref) => (
-                          <div key={ref} className="rounded border border-white/5 bg-black/20 px-2 py-1 text-slate-300">
-                            {ref}
-                          </div>
-                        ))}
-                      </div>
-                      {evidenceWarnings.length > 0 && (
-                        <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-2 text-[10px] text-amber-200">
-                          <div className="font-semibold">{t("evidenceWarnings")}: {evidenceWarnings.length}</div>
-                          <div className="mt-1 space-y-1 text-amber-100/80">
-                            {evidenceWarnings.map((warning) => (
-                              <div key={warning} className="rounded border border-amber-500/20 bg-amber-500/5 px-2 py-1">
-                                {warning}
+                            {runResult.cached && (
+                              <div className="mt-1 text-[10px] text-emerald-300 uppercase">{t("cachedResult")}</div>
+                            )}
+                            {isAdminView &&
+                              summaryContextMode &&
+                              typeof (runResult.summary as { sequence_len?: number }).sequence_len === "number" && (
+                                <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] text-slate-300">
+                                  <span>context: {summaryContextMode}</span>
+                                  <span>seq: {(runResult.summary as { sequence_len?: number }).sequence_len}</span>
+                                </div>
+                              )}
+                            <div className="mt-2 text-slate-200">
+                              {String(runResult.summary?.message ?? t("generating"))}
+                            </div>
+                            <div className="mt-2 text-[10px] text-slate-400">
+                              {t("runId")}: {runResult.run_id}
+                            </div>
+                            {(creditCost !== null || latencyMs !== null || costUsd !== null || tokenTotal !== null) && (
+                              <div className="mt-2 grid grid-cols-2 gap-2 text-[10px] text-slate-400">
+                                {creditCost !== null && (
+                                  <div>{t("creditsCost")}: {creditCost}</div>
+                                )}
+                                {latencyMs !== null && (
+                                  <div>{t("latency")}: {latencyMs}ms</div>
+                                )}
+                                {costUsd !== null && (
+                                  <div>{t("costEstimate")}: ${costUsd.toFixed(3)}</div>
+                                )}
+                                {tokenTotal !== null && (
+                                  <div>
+                                    {t("tokenUsage")}: {tokenTotal}
+                                    {typeof tokenUsage?.input === "number" && typeof tokenUsage?.output === "number" && (
+                                      <span className="ml-1 text-slate-500">
+                                        ({tokenUsage.input}/{tokenUsage.output})
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
                               </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {outputWarnings.length > 0 && (
-                        <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-2 text-[10px] text-amber-200">
-                          <div className="font-semibold">{t("outputWarnings")}: {outputWarnings.length}</div>
-                          <div className="mt-1 space-y-1 text-amber-100/80">
-                            {outputWarnings.map((warning) => (
-                              <div key={warning} className="rounded border border-amber-500/20 bg-amber-500/5 px-2 py-1">
-                                {warning}
+                            )}
+                            {runResult.summary?.pattern_version && (
+                              <div className="mt-1 text-[10px] text-slate-500">
+                                {t("patternVersion")}: {String(runResult.summary.pattern_version)}
                               </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                            )}
+                            <div className="mt-2 space-y-1 text-[10px] text-slate-500">
+                              {summaryPatternVersion && (
+                                <div>{t("patternVersion")}: {String(summaryPatternVersion)}</div>
+                              )}
+                              {summarySourceId && (
+                                <div>{t("sourceId")}: {String(summarySourceId)}</div>
+                              )}
+                              <details className="rounded-lg border border-white/5 bg-black/20 px-2 py-1">
+                                <summary className="cursor-pointer text-[10px] font-semibold text-slate-300">
+                                  {t("evidenceRefs")}: {runResult.evidence_refs?.length ?? 0}
+                                </summary>
+                                <div className="mt-2 space-y-1">
+                                  {(runResult.evidence_refs || []).length === 0 ? (
+                                    <div className="text-slate-400">{t("noEvidenceRefs")}</div>
+                                  ) : (
+                                    (runResult.evidence_refs || []).map((ref) => (
+                                      <div
+                                        key={ref}
+                                        className="rounded border border-white/5 bg-black/30 px-2 py-1 text-slate-200"
+                                      >
+                                        {ref}
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+                              </details>
+                            </div>
+                            {evidenceWarnings.length > 0 && (
+                              <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-2 text-[10px] text-amber-200">
+                                <div className="font-semibold">{t("evidenceWarnings")}: {evidenceWarnings.length}</div>
+                                <div className="mt-1 space-y-1 text-amber-100/80">
+                                  {evidenceWarnings.map((warning) => (
+                                    <div key={warning} className="rounded border border-amber-500/20 bg-amber-500/5 px-2 py-1">
+                                      {warning}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {outputWarnings.length > 0 && (
+                              <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-2 text-[10px] text-amber-200">
+                                <div className="font-semibold">{t("outputWarnings")}: {outputWarnings.length}</div>
+                                <div className="mt-1 space-y-1 text-amber-100/80">
+                                  {outputWarnings.map((warning) => (
+                                    <div key={warning} className="rounded border border-amber-500/20 bg-amber-500/5 px-2 py-1">
+                                      {warning}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </>
                         );
                       })()}
@@ -1295,21 +1341,24 @@ export function Inspector({
                       <div className="mt-1 text-slate-400">
                         {String(item.summary?.message ?? "Capsule executed")}
                       </div>
-                      {item.summary?.pattern_version && (
+                      {typeof item.summary?.pattern_version === "string" && item.summary?.pattern_version && (
                         <div className="mt-1 text-[10px] text-slate-500">
                           {t("patternVersion")}: {String(item.summary.pattern_version)}
                         </div>
                       )}
                       {isAdminView && (
                         <div className="mt-1 text-[10px] text-slate-500">
-                          {item.summary?.context_mode && (
-                            <span>context: {String(item.summary.context_mode)}</span>
+                          {item.summary && typeof item.summary === "object" && "context_mode" in item.summary && (
+                            <span>context: {String((item.summary as Record<string, unknown>).context_mode)}</span>
                           )}
-                          {typeof item.summary?.sequence_len === "number" && (
-                            <span>{item.summary?.context_mode ? " • " : ""}seq: {item.summary.sequence_len}</span>
+                          {item.summary && typeof item.summary === "object" && "sequence_len" in item.summary && typeof (item.summary as Record<string, unknown>).sequence_len === "number" && (
+                            <span>{Boolean((item.summary as Record<string, unknown>).context_mode) ? " • " : ""}seq: {String((item.summary as Record<string, unknown>).sequence_len)}</span>
                           )}
                         </div>
                       )}
+
+                      {/* Spacer to prevent layout jumps */}
+                      <div className="h-0" />
                       <div className="mt-1 text-[10px] text-slate-500">
                         {new Date(item.created_at).toLocaleString()}
                       </div>

@@ -7,15 +7,23 @@ import {
   Database,
   BookOpen,
   Layers,
+  Package,
   Sparkles,
   Workflow,
   Clapperboard,
   CheckCircle2,
   AlertTriangle,
 } from "lucide-react";
+import {
+  PatternVersionHistory,
+  TemplateProvenance,
+  QuarantineSample,
+} from "@/components/admin";
+import RunTraceDashboard from "@/components/RunTraceDashboard";
 import AppShell from "@/components/AppShell";
 import {
   api,
+  CapsuleRefreshResponse,
   CapsuleSpec,
   NotebookLibraryItem,
   Template,
@@ -24,9 +32,10 @@ import {
   PatternPromotionResponse,
   SheetsSyncResponse,
 } from "@/lib/api";
-import { isAdminModeEnabled } from "@/lib/admin";
+import PageStatus from "@/components/PageStatus";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { normalizeApiError } from "@/lib/errors";
+import { isNetworkError, normalizeApiError } from "@/lib/errors";
 import { localizeTemplate } from "@/lib/templateLocalization";
 
 type StageCard = {
@@ -57,12 +66,16 @@ export default function PipelinePage() {
   const [promoteSubmitting, setPromoteSubmitting] = useState(false);
   const [promoteError, setPromoteError] = useState<string | null>(null);
   const [promoteResult, setPromoteResult] = useState<PatternPromotionResponse | null>(null);
+  const [refreshSubmitting, setRefreshSubmitting] = useState(false);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [refreshResult, setRefreshResult] = useState<CapsuleRefreshResponse | null>(null);
   const [syncSubmitting, setSyncSubmitting] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<SheetsSyncResponse | null>(null);
   const [opsLogs, setOpsLogs] = useState<OpsActionLog[]>([]);
   const [opsLogError, setOpsLogError] = useState<string | null>(null);
   const [expandedLogs, setExpandedLogs] = useState<Record<string, boolean>>({});
+  const [isOffline, setIsOffline] = useState(false);
   const [seedForm, setSeedForm] = useState({
     notebookId: "",
     slug: "",
@@ -77,8 +90,14 @@ export default function PipelinePage() {
     note: "",
     minConfidence: 0.6,
     minSources: 2,
+    minFitnessScore: 0.1,
     deriveFromEvidence: false,
     dryRun: false,
+  });
+  const [refreshForm, setRefreshForm] = useState({
+    patternVersion: "",
+    dryRun: false,
+    onlyActive: true,
   });
 
   const loadErrorFallback =
@@ -87,7 +106,7 @@ export default function PipelinePage() {
     language === "ko" ? "템플릿을 불러오지 못했습니다." : "Unable to load templates.";
   const opsErrorFallback =
     language === "ko" ? "운영 로그를 불러오지 못했습니다." : "Unable to load ops logs.";
-  const adminModeEnabled = useMemo(() => isAdminModeEnabled(), []);
+  const { isAdmin, session, isLoading: isAuthLoading } = useAdminAccess();
   const localizedTemplates = useMemo(
     () => recentTemplates.map((template) => localizeTemplate(template, language)),
     [recentTemplates, language]
@@ -95,10 +114,17 @@ export default function PipelinePage() {
 
   useEffect(() => {
     let active = true;
-    if (!adminModeEnabled) {
+    if (isAuthLoading) {
+      setIsLoading(true);
+      return () => {
+        active = false;
+      };
+    }
+    if (!isAdmin) {
       setIsLoading(false);
       setStatus(null);
       setLoadError("admin-only");
+      setIsOffline(false);
       return () => {
         active = false;
       };
@@ -106,14 +132,15 @@ export default function PipelinePage() {
     const loadStatus = async () => {
       setIsLoading(true);
       setLoadError(null);
+      setIsOffline(false);
       const [statusResult, notebooksResult, capsulesResult, templatesResult, logsResult] =
         await Promise.allSettled([
-        api.getPipelineStatus(),
-        api.listNotebookLibrary({ limit: 80 }),
-        api.listCapsules(),
-        api.listTemplates(true),
-        api.listOpsActions(8),
-      ]);
+          api.getPipelineStatus(),
+          api.listNotebookLibrary({ limit: 80 }),
+          api.listCapsules(),
+          api.listTemplates(true),
+          api.listOpsActions(8),
+        ]);
 
       if (!active) return;
 
@@ -122,6 +149,14 @@ export default function PipelinePage() {
       } else {
         setLoadError(normalizeApiError(statusResult.reason, loadErrorFallback));
       }
+      const offlineDetected = [
+        statusResult,
+        notebooksResult,
+        capsulesResult,
+        templatesResult,
+        logsResult,
+      ].some((result) => result.status === "rejected" && isNetworkError(result.reason));
+      setIsOffline(offlineDetected);
 
       if (notebooksResult.status === "fulfilled") {
         setNotebooks(notebooksResult.value);
@@ -157,7 +192,7 @@ export default function PipelinePage() {
     return () => {
       active = false;
     };
-  }, [adminModeEnabled, language, loadErrorFallback, opsErrorFallback, templatesErrorFallback]);
+  }, [isAdmin, isAuthLoading, language, loadErrorFallback, opsErrorFallback, templatesErrorFallback]);
 
   const labels = {
     title: language === "ko" ? "파이프라인 상태" : "Pipeline Status",
@@ -174,6 +209,7 @@ export default function PipelinePage() {
     evidenceOpsOnly: language === "ko" ? "ops_only" : "ops_only",
     stagePatternCandidates: language === "ko" ? "패턴 후보" : "Pattern Candidates",
     stagePatternLibrary: language === "ko" ? "패턴 라이브러리" : "Pattern Library",
+    stageCapsuleSpecs: language === "ko" ? "캡슐 스펙" : "Capsule Specs",
     stageTemplates: language === "ko" ? "템플릿" : "Templates",
     stageCapsuleRuns: language === "ko" ? "캡슐 실행" : "Capsule Runs",
     stageGenerationRuns: language === "ko" ? "생성 실행" : "Generation Runs",
@@ -187,6 +223,11 @@ export default function PipelinePage() {
       language === "ko"
         ? "관리자 전용 데이터입니다."
         : "Admin access required to view pipeline data.",
+    adminOnlyAction: language === "ko" ? "관리자 로그인" : "Sign in as admin",
+    adminOnlyHint:
+      language === "ko"
+        ? "관리자 권한이 있는 계정으로 로그인하세요."
+        : "Sign in with an admin-enabled account.",
     loading: language === "ko" ? "파이프라인 상태 불러오는 중..." : "Loading pipeline status...",
     latest: language === "ko" ? "최근 업데이트" : "Latest",
     patternVersion: language === "ko" ? "패턴 버전" : "Pattern version",
@@ -244,6 +285,7 @@ export default function PipelinePage() {
         : "Recent Sheets sync and promotion runs.",
     opsActionSheets: language === "ko" ? "Sheets 동기화" : "Sheets Sync",
     opsActionPromotion: language === "ko" ? "패턴 승격" : "Pattern Promotion",
+    opsActionCapsuleRefresh: language === "ko" ? "캡슐 스펙 갱신" : "Capsule Refresh",
     opsStatusSuccess: language === "ko" ? "성공" : "Success",
     opsStatusFailed: language === "ko" ? "실패" : "Failed",
     opsActor: language === "ko" ? "실행자" : "Actor",
@@ -276,12 +318,27 @@ export default function PipelinePage() {
     promotionNote: language === "ko" ? "버전 노트" : "Version note",
     promotionMinConfidence: language === "ko" ? "최소 신뢰도" : "Min confidence",
     promotionMinSources: language === "ko" ? "최소 소스 수" : "Min sources",
+    promotionMinFitness: language === "ko" ? "최소 Lift" : "Min lift",
     promotionDerive: language === "ko" ? "Evidence에서 후보 자동 생성" : "Derive candidates from evidence",
     promotionDryRun: language === "ko" ? "Dry run (DB 변경 없음)" : "Dry run (no DB writes)",
     promotionSubmit: language === "ko" ? "패턴 승격 실행" : "Run promotion",
     promotionSubmitting: language === "ko" ? "승격 중..." : "Promoting...",
     promotionFailed: language === "ko" ? "패턴 승격에 실패했습니다." : "Pattern promotion failed.",
     promotionResult: language === "ko" ? "승격 결과" : "Promotion result",
+    capsuleRefreshTitle: language === "ko" ? "캡슐 스펙 갱신" : "Capsule Spec Refresh",
+    capsuleRefreshSubtitle:
+      language === "ko"
+        ? "최신 패턴 버전을 캡슐 스펙에 동기화합니다."
+        : "Sync capsule specs to the latest pattern snapshot.",
+    capsuleRefreshVersion: language === "ko" ? "패턴 버전 (선택)" : "Pattern version (optional)",
+    capsuleRefreshDryRun: language === "ko" ? "Dry run (DB 변경 없음)" : "Dry run (no DB writes)",
+    capsuleRefreshOnlyActive: language === "ko" ? "활성 캡슐만" : "Active only",
+    capsuleRefreshSubmit: language === "ko" ? "캡슐 갱신 실행" : "Run capsule refresh",
+    capsuleRefreshSubmitting: language === "ko" ? "갱신 중..." : "Refreshing...",
+    capsuleRefreshFailed:
+      language === "ko" ? "캡슐 갱신에 실패했습니다." : "Capsule refresh failed.",
+    capsuleRefreshResult: language === "ko" ? "갱신 결과" : "Refresh result",
+    capsuleRefreshUpdated: language === "ko" ? "갱신된 캡슐" : "Capsules updated",
     publishTitle: language === "ko" ? "공개 템플릿 확인" : "Confirm Public Template",
     publishDesc:
       language === "ko"
@@ -292,6 +349,7 @@ export default function PipelinePage() {
   };
 
   const showAdminHint = (loadError || "").toLowerCase().includes("admin");
+  const showLoginCta = showAdminHint && !session?.authenticated;
 
   const selectedNotebook = useMemo(
     () => notebooks.find((item) => item.notebook_id === seedForm.notebookId),
@@ -417,12 +475,15 @@ export default function PipelinePage() {
       : 0.6;
     const minSources = Number.isFinite(promoteForm.minSources) && promoteForm.minSources > 0
       ? promoteForm.minSources
-      : 1;
+      : 2;
     try {
       const result = await api.promotePatterns({
         derive_from_evidence: promoteForm.deriveFromEvidence,
         min_confidence: minConfidence,
         min_sources: minSources,
+        min_fitness_score: Number.isFinite(promoteForm.minFitnessScore)
+          ? promoteForm.minFitnessScore
+          : undefined,
         note: promoteForm.note.trim(),
         dry_run: promoteForm.dryRun,
       });
@@ -437,6 +498,32 @@ export default function PipelinePage() {
       setPromoteError(normalizeApiError(err, labels.promotionFailed));
     } finally {
       setPromoteSubmitting(false);
+    }
+  };
+
+  const handleCapsuleRefresh = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setRefreshError(null);
+    setRefreshResult(null);
+    setRefreshSubmitting(true);
+    try {
+      const patternVersion = refreshForm.patternVersion.trim();
+      const result = await api.refreshCapsuleSpecs({
+        pattern_version: patternVersion || undefined,
+        dry_run: refreshForm.dryRun,
+        only_active: refreshForm.onlyActive,
+      });
+      setRefreshResult(result);
+      const nextLogs = await api.listOpsActions(8);
+      setOpsLogs(nextLogs);
+      if (!refreshForm.dryRun) {
+        const nextStatus = await api.getPipelineStatus();
+        setStatus(nextStatus);
+      }
+    } catch (err) {
+      setRefreshError(normalizeApiError(err, labels.capsuleRefreshFailed));
+    } finally {
+      setRefreshSubmitting(false);
     }
   };
 
@@ -508,14 +595,21 @@ export default function PipelinePage() {
         meta: `${labels.patternVersion}: ${status.pattern_version || "-"}`,
       },
       {
+        key: "capsules",
+        title: labels.stageCapsuleSpecs,
+        icon: Package,
+        total: status.capsule_specs.total,
+        latest: status.capsule_specs.latest,
+        meta: `${labels.patternVersion}: ${status.pattern_version || "-"}`,
+      },
+      {
         key: "templates",
         title: labels.stageTemplates,
         icon: Workflow,
         total: status.templates.total,
         latest: status.templates.latest,
-        meta: `${labels.templatesPublic}: ${status.templates_public} · ${labels.templatesMissing}: ${
-          status.templates_missing_provenance ?? 0
-        }`,
+        meta: `${labels.templatesPublic}: ${status.templates_public} · ${labels.templatesMissing}: ${status.templates_missing_provenance ?? 0
+          }`,
       },
       {
         key: "runs",
@@ -542,8 +636,11 @@ export default function PipelinePage() {
     labels.stageVideoSegments,
     labels.stageNotebookLibrary,
     labels.stageEvidenceRecords,
+    labels.evidenceMissingSourcePack,
+    labels.evidenceOpsOnly,
     labels.stagePatternCandidates,
     labels.stagePatternLibrary,
+    labels.stageCapsuleSpecs,
     labels.stageTemplates,
     labels.stageCapsuleRuns,
     labels.stageGenerationRuns,
@@ -555,6 +652,7 @@ export default function PipelinePage() {
   const formatOpsAction = (value: string) => {
     if (value === "sheets_sync") return labels.opsActionSheets;
     if (value === "pattern_promotion") return labels.opsActionPromotion;
+    if (value === "capsule_refresh") return labels.opsActionCapsuleRefresh;
     return value;
   };
   const statusTone = (value: string) => {
@@ -617,23 +715,34 @@ export default function PipelinePage() {
           </motion.div>
 
           {isLoading && (
-            <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-sm text-[var(--fg-muted)]">
-              {labels.loading}
-            </div>
+            <PageStatus
+              variant="loading"
+              title={labels.loading}
+              className="mb-4"
+            />
           )}
-          {loadError && !showAdminHint && (
-            <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-6 text-sm text-rose-200">
-              {loadError}
-            </div>
+          {!isLoading && loadError && !showAdminHint && (
+            <PageStatus
+              variant="error"
+              title={labels.loadError}
+              message={loadError}
+              isOffline={isOffline}
+              className="mb-4"
+            />
           )}
-          {showAdminHint && (
-            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-6 text-sm text-amber-200">
-              {labels.adminOnly}
-            </div>
+          {!isLoading && showAdminHint && (
+            <PageStatus
+              variant="admin"
+              title={labels.adminOnly}
+              message={labels.adminOnlyHint}
+              action={showLoginCta ? { label: labels.adminOnlyAction, href: "/login" } : undefined}
+              className="mb-4"
+            />
           )}
 
           {!isLoading && status && (
             <>
+              <RunTraceDashboard className="mb-6" />
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {stageCards.map((card, index) => (
                   <motion.div
@@ -673,29 +782,7 @@ export default function PipelinePage() {
                     ))}
                   </div>
                 </div>
-                <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                  <div className="text-xs font-semibold text-[var(--fg-muted)]">{labels.patternHistory}</div>
-                  <div className="mt-3 space-y-2 text-xs text-slate-200">
-                    {patternHistory.length ? (
-                      patternHistory.map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex items-center justify-between rounded-lg border border-white/10 bg-slate-950/40 px-3 py-2"
-                        >
-                          <div className="flex flex-col gap-1">
-                            <div className="font-semibold">{item.version}</div>
-                            {item.note && (
-                              <div className="text-[10px] text-[var(--fg-muted)]">{item.note}</div>
-                            )}
-                          </div>
-                          <div className="text-[10px] text-[var(--fg-muted)]">{item.created_at}</div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-xs text-[var(--fg-muted)]">{labels.noPatternHistory}</div>
-                    )}
-                  </div>
-                </div>
+                <PatternVersionHistory limit={5} className="bg-white/5 border-white/10" />
                 <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                   <div className="text-xs font-semibold text-[var(--fg-muted)]">{labels.runStatusTitle}</div>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -736,124 +823,7 @@ export default function PipelinePage() {
                 </div>
               </div>
 
-                <div className="mt-6 rounded-2xl border border-white/10 bg-slate-950/60 p-6">
-                  <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500/10">
-                    <Workflow className="h-5 w-5 text-sky-200" />
-                  </div>
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="text-lg font-semibold text-[var(--fg-0)]">{labels.templateProvenance}</h2>
-                      {missingProvenanceCount > 0 && (
-                        <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-200">
-                          {labels.templateMissingBadge}: {missingProvenanceCount}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-[var(--fg-muted)]">{labels.templateProvenanceHint}</p>
-                  </div>
-                </div>
-
-                {templatesError && (
-                  <div className="mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">
-                    {templatesError}
-                  </div>
-                )}
-
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--fg-muted)]">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={showMissingOnly}
-                      onChange={(event) => setShowMissingOnly(event.target.checked)}
-                      className="h-4 w-4 rounded border-white/20 bg-slate-950/60 text-[var(--accent)]"
-                    />
-                    {labels.templateMissingOnly}
-                  </label>
-                  <div>
-                    {showMissingOnly
-                      ? `${templatesToShow.length}/${recentTemplates.length}`
-                      : `${recentTemplates.length}`}
-                  </div>
-                </div>
-
-                <div className="mt-4 space-y-3 text-xs text-slate-200">
-                  {templatesToShow.length === 0 ? (
-                    <div className="rounded-lg border border-white/10 bg-slate-950/40 px-3 py-3 text-[var(--fg-muted)]">
-                      {labels.templateNoProvenance}
-                    </div>
-                  ) : (
-                    templatesToShow.map((template) => {
-                      const meta = getTemplateMeta(template);
-                      return (
-                        <div
-                          key={template.id}
-                          className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-3"
-                        >
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div>
-                              <div className="text-[var(--fg-0)] font-semibold">{template.title}</div>
-                              <div className="text-[10px] text-[var(--fg-muted)]">{template.slug}</div>
-                            </div>
-                            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-200">
-                              {template.is_public ? labels.templatePublic : labels.templatePrivate}
-                            </span>
-                          </div>
-
-                          {meta.hasMeta ? (
-                            <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                              <div className="rounded-lg border border-white/10 bg-slate-950/60 px-2 py-2">
-                                <div className="text-[9px] uppercase text-[var(--fg-muted)]">
-                                  {labels.templateNotebook}
-                                </div>
-                                <div className="mt-1 text-[11px] text-slate-200">{meta.notebookId}</div>
-                              </div>
-                              <div className="rounded-lg border border-white/10 bg-slate-950/60 px-2 py-2">
-                                <div className="text-[9px] uppercase text-[var(--fg-muted)]">
-                                  {labels.templateGuideTypes}
-                                </div>
-                                <div className="mt-1 text-[11px] text-slate-200">
-                                  {meta.guideTypes.length ? meta.guideTypes.join(", ") : "-"}
-                                </div>
-                              </div>
-                              <div className="rounded-lg border border-white/10 bg-slate-950/60 px-2 py-2">
-                                <div className="text-[9px] uppercase text-[var(--fg-muted)]">
-                                  {labels.templateEvidence}
-                                </div>
-                                <div className="mt-1 text-[11px] text-slate-200">
-                                  {meta.evidenceRefs.length}
-                                  {meta.evidenceRefs.length > 0 && (
-                                    <span className="text-[10px] text-[var(--fg-muted)]">
-                                      {" "}
-                                      • {meta.evidenceRefs.slice(0, 1).join(", ")}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="mt-3 text-[11px] text-[var(--fg-muted)]">
-                              {labels.templateNoProvenance}
-                            </div>
-                          )}
-                          {meta.hasMeta &&
-                            (meta.storyBeats.length > 0 || meta.storyboardCards.length > 0) && (
-                              <div className="mt-2 rounded-lg border border-white/10 bg-slate-950/60 px-2 py-2 text-[11px] text-slate-200">
-                                <div className="text-[9px] uppercase text-[var(--fg-muted)]">
-                                  {labels.narrativeSeeds}
-                                </div>
-                                <div className="mt-1">
-                                  {labels.beatSheetLabel}: {meta.storyBeats.length} · {labels.storyboardLabel}:{" "}
-                                  {meta.storyboardCards.length}
-                                </div>
-                              </div>
-                            )}
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
+              <TemplateProvenance className="mt-6 bg-slate-950/60 border-white/10" />
 
               <div className="mt-6 rounded-2xl border border-white/10 bg-slate-950/60 p-6">
                 <div className="flex items-center gap-3">
@@ -925,7 +895,7 @@ export default function PipelinePage() {
                     />
                   </label>
 
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="grid gap-3 sm:grid-cols-3">
                     <label className="flex flex-col gap-2 text-xs text-[var(--fg-muted)]">
                       {labels.promotionMinConfidence}
                       <input
@@ -947,12 +917,29 @@ export default function PipelinePage() {
                       {labels.promotionMinSources}
                       <input
                         type="number"
-                        min={1}
+                        min={2}
                         value={promoteForm.minSources}
                         onChange={(event) =>
                           setPromoteForm((prev) => ({
                             ...prev,
                             minSources: Number(event.target.value),
+                          }))
+                        }
+                        className="rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-[var(--fg-0)] focus:border-[var(--accent)]"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-2 text-xs text-[var(--fg-muted)]">
+                      {labels.promotionMinFitness}
+                      <input
+                        type="number"
+                        step="0.05"
+                        min={0}
+                        max={1}
+                        value={promoteForm.minFitnessScore}
+                        onChange={(event) =>
+                          setPromoteForm((prev) => ({
+                            ...prev,
+                            minFitnessScore: Number(event.target.value),
                           }))
                         }
                         className="rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-[var(--fg-0)] focus:border-[var(--accent)]"
@@ -1009,7 +996,11 @@ export default function PipelinePage() {
                         <div>skipped rights: {promoteStats.skipped_rights ?? 0}</div>
                         <div>skipped sources: {promoteStats.skipped_sources ?? 0}</div>
                         <div>skipped confidence: {promoteStats.skipped_confidence ?? 0}</div>
+                        <div>skipped fitness: {promoteStats.skipped_fitness ?? 0}</div>
                         <div>skipped evidence: {promoteStats.skipped_evidence ?? 0}</div>
+                        <div>skipped taxonomy: {promoteStats.skipped_taxonomy ?? 0}</div>
+                        <div>skipped trace min: {promoteStats.skipped_trace_min ?? 0}</div>
+                        <div>skipped coverage: {promoteStats.skipped_coverage ?? 0}</div>
                         <div>derived: {promoteResult.derived_candidates ?? 0}</div>
                       </div>
                     </div>
@@ -1022,6 +1013,105 @@ export default function PipelinePage() {
                       className="rounded-lg bg-sky-500 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {promoteSubmitting ? labels.promotionSubmitting : labels.promotionSubmit}
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <div className="mt-6 rounded-2xl border border-white/10 bg-slate-950/60 p-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10">
+                    <Package className="h-5 w-5 text-emerald-200" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-[var(--fg-0)]">
+                      {labels.capsuleRefreshTitle}
+                    </h2>
+                    <p className="text-sm text-[var(--fg-muted)]">
+                      {labels.capsuleRefreshSubtitle}
+                    </p>
+                  </div>
+                </div>
+
+                <form onSubmit={handleCapsuleRefresh} className="mt-5 space-y-4 text-sm">
+                  <label className="flex flex-col gap-2 text-xs text-[var(--fg-muted)]">
+                    {labels.capsuleRefreshVersion}
+                    <input
+                      value={refreshForm.patternVersion}
+                      onChange={(event) =>
+                        setRefreshForm((prev) => ({
+                          ...prev,
+                          patternVersion: event.target.value,
+                        }))
+                      }
+                      className="rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-[var(--fg-0)] focus:border-[var(--accent)]"
+                      placeholder={status?.pattern_version || "latest"}
+                    />
+                  </label>
+                  <label className="flex items-center gap-2 text-xs text-[var(--fg-muted)]">
+                    <input
+                      type="checkbox"
+                      checked={refreshForm.dryRun}
+                      onChange={(event) =>
+                        setRefreshForm((prev) => ({
+                          ...prev,
+                          dryRun: event.target.checked,
+                        }))
+                      }
+                      className="h-4 w-4 rounded border-white/20 bg-slate-950/60 text-[var(--accent)]"
+                    />
+                    {labels.capsuleRefreshDryRun}
+                  </label>
+                  <label className="flex items-center gap-2 text-xs text-[var(--fg-muted)]">
+                    <input
+                      type="checkbox"
+                      checked={refreshForm.onlyActive}
+                      onChange={(event) =>
+                        setRefreshForm((prev) => ({
+                          ...prev,
+                          onlyActive: event.target.checked,
+                        }))
+                      }
+                      className="h-4 w-4 rounded border-white/20 bg-slate-950/60 text-[var(--accent)]"
+                    />
+                    {labels.capsuleRefreshOnlyActive}
+                  </label>
+
+                  {refreshError && (
+                    <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">
+                      {refreshError}
+                    </div>
+                  )}
+
+                  {refreshResult && (
+                    <div className="rounded-lg border border-white/10 bg-slate-950/50 px-3 py-2 text-xs text-slate-200">
+                      <div className="font-semibold text-[var(--fg-0)]">
+                        {labels.capsuleRefreshResult}
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-3">
+                        <span>
+                          {labels.patternVersion}: {refreshResult.pattern_version}
+                        </span>
+                        <span>
+                          {labels.capsuleRefreshUpdated}: {refreshResult.updated}
+                        </span>
+                        <span>dry run: {refreshResult.dry_run ? "yes" : "no"}</span>
+                        <span>
+                          {labels.capsuleRefreshOnlyActive}: {refreshResult.only_active ? "yes" : "no"}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={refreshSubmitting}
+                      className="rounded-lg bg-emerald-500 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {refreshSubmitting
+                        ? labels.capsuleRefreshSubmitting
+                        : labels.capsuleRefreshSubmit}
                     </button>
                   </div>
                 </form>
@@ -1113,34 +1203,7 @@ export default function PipelinePage() {
               </div>
 
               {status.quarantine_sample && status.quarantine_sample.length > 0 && (
-                <div className="mt-6 rounded-2xl border border-white/10 bg-slate-950/60 p-6">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-[var(--fg-muted)]">
-                    <AlertTriangle className="h-4 w-4 text-amber-300" />
-                    {labels.quarantineSample}
-                  </div>
-                  <div className="mt-4 space-y-3 text-xs text-slate-200">
-                    {status.quarantine_sample.slice(0, 6).map((row, index) => (
-                      <div
-                        key={`${row.sheet}-${row.reason}-${index}`}
-                        className="rounded-xl border border-white/10 bg-slate-950/40 p-3"
-                      >
-                        <div className="flex flex-wrap items-center gap-2 text-[10px] text-[var(--fg-muted)]">
-                          <span className="rounded-full border border-white/10 px-2 py-0.5">
-                            {row.sheet || "-"}
-                          </span>
-                          <span className="rounded-full border border-white/10 px-2 py-0.5">
-                            {row.reason || "-"}
-                          </span>
-                          <span>{row.created_at || "-"}</span>
-                        </div>
-                        <div className="mt-2 rounded-lg border border-white/10 bg-black/30 p-2 text-[10px] text-slate-300">
-                          <div className="text-[9px] uppercase text-[var(--fg-muted)]">{labels.quarantineRow}</div>
-                          <div className="mt-1 break-all">{row.row || "-"}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <QuarantineSample limit={6} className="mt-6 bg-slate-950/60 border-white/10" />
               )}
 
               <div className="mt-8 rounded-2xl border border-white/10 bg-slate-950/60 p-6">

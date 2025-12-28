@@ -141,6 +141,10 @@ export const translations = {
         generationStartFailed: "생성 작업을 시작하지 못했습니다.",
 
         // Navigation
+        // Auth Barrier
+        signInRequired: "로그인이 필요합니다",
+        signInRequiredDesc: "작업을 저장하거나 실행하려면 로그인이 필요합니다.",
+        navHome: "홈",
         navResearch: "리서치",
         navKnowledge: "지식 센터",
         navCollections: "컬렉션",
@@ -157,6 +161,17 @@ export const translations = {
         navCredits: "크레딧",
         badgeNew: "New",
         badgeSoon: "Soon",
+
+        // Sidebar Flyouts
+        partnership: "파트너십",
+        commission: "수수료",
+        settlement: "정산",
+        safe: "안전하게",
+        monthly: "매월 15일",
+        supportCenter: "고객센터",
+        operatingHours: "운영 시간",
+        responseTime: "응답 시간",
+        kakaoInquiry: "카카오톡 1:1 상담",
 
         // Home Page
         homeBadge: "노드 캔버스 스튜디오",
@@ -237,6 +252,8 @@ export const translations = {
 
         // Preview Panel
         storyboardPreview: "스토리보드 미리보기",
+        previewSummary: "요약",
+        storyboardCards: "스토리보드 카드",
         styleVisualization: "스타일 시각화",
         colorPalette: "색상 팔레트",
         sceneBreakdown: "장면 분석",
@@ -337,7 +354,7 @@ export const translations = {
     },
     en: {
         // General
-        appName: "Vivid Node Canvas",
+        appName: "Crebit Node Canvas",
         loading: "Loading...",
         error: "Error",
         save: "Save",
@@ -475,6 +492,10 @@ export const translations = {
         generationStartFailed: "Unable to start generation.",
 
         // Navigation
+        // Auth Barrier
+        signInRequired: "Sign In Required",
+        signInRequiredDesc: "Please sign in to save your progress or run the canvas.",
+        navHome: "Home",
         navResearch: "Research",
         navKnowledge: "Knowledge Center",
         navCollections: "Collections",
@@ -491,6 +512,17 @@ export const translations = {
         navCredits: "Credits",
         badgeNew: "New",
         badgeSoon: "Soon",
+
+        // Sidebar Flyouts
+        partnership: "Partnership",
+        commission: "Commission",
+        settlement: "Settlement",
+        safe: "Safe",
+        monthly: "Monthly",
+        supportCenter: "Support Center",
+        operatingHours: "Operating Hours",
+        responseTime: "Response Time",
+        kakaoInquiry: "KakaoTalk 1:1 Inquiry",
 
         // Home Page
         homeBadge: "Node Canvas Studio",
@@ -571,6 +603,8 @@ export const translations = {
 
         // Preview Panel
         storyboardPreview: "Storyboard Preview",
+        previewSummary: "Summary",
+        storyboardCards: "Storyboard Cards",
         styleVisualization: "Style Visualization",
         colorPalette: "Color Palette",
         sceneBreakdown: "Scene Breakdown",

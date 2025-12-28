@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -71,6 +71,38 @@ def _to_response(run: GenerationRun) -> RunResponse:
         created_at=run.created_at,
         updated_at=run.updated_at,
     )
+
+
+@router.get("/", response_model=List[RunResponse])
+async def list_runs(
+    canvas_id: Optional[str] = Query(default=None),
+    limit: int = Query(default=10, ge=1, le=50),
+    user_id: Optional[str] = Depends(get_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> List[RunResponse]:
+    query = select(GenerationRun).order_by(GenerationRun.created_at.desc()).limit(limit)
+
+    if canvas_id:
+        try:
+            canvas_uuid = uuid.UUID(canvas_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid canvas ID format") from exc
+        canvas_result = await db.execute(select(Canvas).where(Canvas.id == canvas_uuid))
+        canvas = canvas_result.scalar_one_or_none()
+        if not canvas:
+            raise HTTPException(status_code=404, detail="Canvas not found")
+        if canvas.owner_id is not None:
+            if not user_id or canvas.owner_id != user_id:
+                raise HTTPException(status_code=403, detail="Not authorized to access this canvas")
+        query = query.where(GenerationRun.canvas_id == canvas_uuid)
+    elif not user_id:
+        return []
+    else:
+        query = query.where(GenerationRun.owner_id == user_id)
+
+    result = await db.execute(query)
+    runs = result.scalars().all()
+    return [_to_response(run) for run in runs]
 
 
 def _estimate_generation_credits(spec: dict) -> int:
@@ -394,3 +426,108 @@ async def get_run(
         if not user_id or run.owner_id != user_id:
             raise HTTPException(status_code=403, detail="Not authorized to access this run")
     return _to_response(run)
+
+
+class VideoGenerateRequest(BaseModel):
+    """Request for video generation from storyboard."""
+    provider: str = "veo"  # veo, kling, mock
+    shot_indices: Optional[List[int]] = None  # Optional: specific shots to generate
+
+
+class VideoGenerateResponse(BaseModel):
+    """Response from video generation."""
+    run_id: str
+    status: str
+    shots_generated: int
+    shots_total: int
+    results: List[dict]
+    metrics: dict
+
+
+@router.post("/{run_id}/video", response_model=VideoGenerateResponse)
+async def generate_video(
+    run_id: str,
+    data: VideoGenerateRequest,
+    user_id: Optional[str] = Depends(get_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> VideoGenerateResponse:
+    """Generate video from run's storyboard cards using Veo 3.1 or other providers."""
+    from app.generation_client import (
+        GenProvider,
+        run_generation_pipeline,
+    )
+    
+    try:
+        run_uuid = uuid.UUID(run_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid run ID format") from exc
+
+    result = await db.execute(select(GenerationRun).where(GenerationRun.id == run_uuid))
+    run = result.scalar_one_or_none()
+    if not run:
+        raise HTTPException(status_code=404, detail="Run not found")
+    if run.owner_id is not None:
+        if not user_id or run.owner_id != user_id:
+            raise HTTPException(status_code=403, detail="Not authorized to access this run")
+    
+    # Get storyboard cards from run outputs
+    outputs = run.outputs if isinstance(run.outputs, dict) else {}
+    storyboard_cards = outputs.get("storyboard_cards", [])
+    
+    if not storyboard_cards:
+        storyboard_cards = outputs.get("storyboard", [])
+    if not storyboard_cards:
+        raise HTTPException(
+            status_code=400,
+            detail="No storyboard cards found. Run generation first."
+        )
+    
+    # Filter specific shots if requested
+    if data.shot_indices:
+        storyboard_cards = [
+            card for i, card in enumerate(storyboard_cards) 
+            if i in data.shot_indices
+        ]
+    
+    # Map provider string to enum
+    try:
+        provider = GenProvider(data.provider.lower())
+    except ValueError:
+        provider = GenProvider.MOCK
+    
+    # Run generation pipeline
+    gen_results, metrics = await run_generation_pipeline(
+        storyboard_cards,
+        provider=provider,
+        sequence_id=f"seq-{run_id[:8]}",
+        scene_id=f"scene-{run_id[:8]}",
+    )
+    
+    # Update run outputs with video results
+    video_outputs = [
+        {
+            "shot_id": r.shot_id,
+            "status": r.status,
+            "video_url": r.output_url,
+            "iteration": r.iteration,
+            "latency_ms": r.latency_ms,
+            "model_version": r.model_version,
+            "error": r.error,
+        }
+        for r in gen_results
+    ]
+    
+    outputs["video_results"] = video_outputs
+    outputs["video_metrics"] = metrics
+    outputs["video_generated_at"] = datetime.utcnow().isoformat() + "Z"
+    run.outputs = outputs
+    await db.commit()
+    
+    return VideoGenerateResponse(
+        run_id=str(run.id),
+        status="done" if metrics.get("success_rate", 0) == 1.0 else "partial",
+        shots_generated=metrics.get("success_count", 0),
+        shots_total=metrics.get("total_shots", 0),
+        results=video_outputs,
+        metrics=metrics,
+    )

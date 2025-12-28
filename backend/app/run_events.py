@@ -24,6 +24,8 @@ class RunEventHub:
         self._seq: Dict[str, int] = {}
         self._lock = asyncio.Lock()
         self._cancelled: set[str] = set()
+        self._last_event: Dict[str, RunEvent] = {}
+        self._terminal_events = {"run.completed", "run.failed", "run.cancelled"}
 
     async def publish(self, run_id: str, event_type: str, payload: Dict[str, Any]) -> RunEvent:
         async with self._lock:
@@ -38,14 +40,22 @@ class RunEventHub:
                 payload=payload,
             )
             queues = list(self._subscribers.get(run_id, []))
+            self._last_event[run_id] = event
 
         for queue in queues:
             await queue.put(event)
+        if event.type in self._terminal_events and not queues:
+            self._last_event.pop(run_id, None)
+            self._seq.pop(run_id, None)
         return event
 
-    def subscribe(self, run_id: str) -> asyncio.Queue[RunEvent]:
+    def subscribe(self, run_id: str, *, replay_last: bool = False) -> asyncio.Queue[RunEvent]:
         queue: asyncio.Queue[RunEvent] = asyncio.Queue()
         self._subscribers.setdefault(run_id, []).append(queue)
+        if replay_last:
+            last_event = self._last_event.get(run_id)
+            if last_event is not None:
+                queue.put_nowait(last_event)
         return queue
 
     def unsubscribe(self, run_id: str, queue: asyncio.Queue[RunEvent]) -> None:
@@ -56,7 +66,10 @@ class RunEventHub:
             queues.remove(queue)
         if not queues:
             self._subscribers.pop(run_id, None)
-            self._seq.pop(run_id, None)
+            last_event = self._last_event.get(run_id)
+            if last_event and last_event.type in self._terminal_events:
+                self._last_event.pop(run_id, None)
+                self._seq.pop(run_id, None)
 
     def cancel(self, run_id: str) -> None:
         self._cancelled.add(run_id)

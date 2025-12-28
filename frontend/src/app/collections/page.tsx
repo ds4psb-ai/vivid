@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
     FolderOpen,
@@ -10,7 +11,12 @@ import {
     Share2,
 } from "lucide-react";
 import AppShell from "@/components/AppShell";
+import LoginRequiredModal from "@/components/LoginRequiredModal";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSession } from "@/hooks/useSession";
+import { api, Template } from "@/lib/api";
+import PageStatus from "@/components/PageStatus";
+import { isNetworkError, normalizeApiError } from "@/lib/errors";
 
 interface Collection {
     id: string;
@@ -23,60 +29,12 @@ interface Collection {
 
 export default function CollectionsPage() {
     const { language } = useLanguage();
-    const collections: Collection[] =
-        language === "ko"
-            ? [
-                  {
-                      id: "col-1",
-                      name: "내 즐겨찾기",
-                      description: "저장한 패턴과 템플릿",
-                      itemCount: 12,
-                      isStarred: true,
-                      updatedAt: "2025-12-24",
-                  },
-                  {
-                      id: "col-2",
-                      name: "영화 스타일",
-                      description: "감독 스타일 분석",
-                      itemCount: 6,
-                      isStarred: false,
-                      updatedAt: "2025-12-23",
-                  },
-                  {
-                      id: "col-3",
-                      name: "숏폼 콘텐츠",
-                      description: "유튜브 쇼츠 패턴",
-                      itemCount: 8,
-                      isStarred: false,
-                      updatedAt: "2025-12-22",
-                  },
-              ]
-            : [
-                  {
-                      id: "col-1",
-                      name: "My Favorites",
-                      description: "Saved patterns and templates",
-                      itemCount: 12,
-                      isStarred: true,
-                      updatedAt: "2025-12-24",
-                  },
-                  {
-                      id: "col-2",
-                      name: "Film Styles",
-                      description: "Director style analysis",
-                      itemCount: 6,
-                      isStarred: false,
-                      updatedAt: "2025-12-23",
-                  },
-                  {
-                      id: "col-3",
-                      name: "Short-form Content",
-                      description: "YouTube Shorts patterns",
-                      itemCount: 8,
-                      isStarred: false,
-                      updatedAt: "2025-12-22",
-                  },
-              ];
+    const [templates, setTemplates] = useState<Template[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
+    const [isOffline, setIsOffline] = useState(false);
+    const [loginModalOpen, setLoginModalOpen] = useState(false);
+    const { session } = useSession(false);
 
     const labels = {
         title: language === "ko" ? "컬렉션" : "Collections",
@@ -88,7 +46,60 @@ export default function CollectionsPage() {
         moreOptions: language === "ko" ? "더보기" : "More options",
         editCollection: language === "ko" ? "컬렉션 편집" : "Edit collection",
         shareCollection: language === "ko" ? "컬렉션 공유" : "Share collection",
+        loadError: language === "ko" ? "컬렉션 데이터를 불러오지 못했습니다." : "Unable to load collections.",
+        emptyState: language === "ko" ? "아직 컬렉션이 없습니다." : "No collections yet.",
+        tagCollection: language === "ko" ? "템플릿 태그 기반 컬렉션" : "Collections derived from template tags",
+        updated: language === "ko" ? "업데이트" : "Updated",
+        loading: language === "ko" ? "컬렉션 불러오는 중..." : "Loading collections...",
     };
+
+    useEffect(() => {
+        let active = true;
+        const loadCollections = async () => {
+            setIsLoading(true);
+            setLoadError(null);
+            try {
+                const result = await api.listTemplates(true);
+                if (!active) return;
+                setIsOffline(false);
+                setTemplates(result);
+            } catch (err) {
+                if (!active) return;
+                setLoadError(normalizeApiError(err, labels.loadError));
+                setIsOffline(isNetworkError(err));
+            } finally {
+                if (active) setIsLoading(false);
+            }
+        };
+        void loadCollections();
+        return () => {
+            active = false;
+        };
+    }, [labels.loadError]);
+
+    const collections = useMemo<Collection[]>(() => {
+        const tagMap = new Map<string, { count: number; latest: string }>();
+        const today = new Date().toISOString().slice(0, 10);
+        templates.forEach((template) => {
+            (template.tags || []).forEach((tag) => {
+                const key = tag.trim();
+                if (!key) return;
+                const current = tagMap.get(key) || { count: 0, latest: today };
+                tagMap.set(key, { count: current.count + 1, latest: current.latest });
+            });
+        });
+        return Array.from(tagMap.entries())
+            .sort((a, b) => b[1].count - a[1].count)
+            .slice(0, 12)
+            .map(([tag, meta], index) => ({
+                id: `tag-${tag}`,
+                name: `#${tag}`,
+                description: labels.tagCollection,
+                itemCount: meta.count,
+                isStarred: index === 0,
+                updatedAt: meta.latest,
+            }));
+    }, [labels.tagCollection, templates]);
 
     return (
         <AppShell showTopBar={false}>
@@ -105,6 +116,13 @@ export default function CollectionsPage() {
                             <p className="mt-1 text-sm text-[var(--fg-muted)] sm:text-base">{labels.subtitle}</p>
                         </div>
                         <button
+                            onClick={() => {
+                                if (!session?.authenticated) {
+                                    setLoginModalOpen(true);
+                                    return;
+                                }
+                                // Handle new collection (TODO)
+                            }}
                             className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 px-4 py-2 font-semibold text-white shadow-lg shadow-sky-500/25 transition-all hover:from-sky-400 hover:to-sky-500"
                             aria-label={labels.newCollection}
                         >
@@ -122,7 +140,30 @@ export default function CollectionsPage() {
                         role="list"
                         aria-label={labels.title}
                     >
-                        {collections.map((collection, index) => (
+                        {isLoading && (
+                            <PageStatus
+                                variant="loading"
+                                title={labels.loading ?? "Loading..."}
+                                className="sm:col-span-2 lg:col-span-3"
+                            />
+                        )}
+                        {!isLoading && loadError && (
+                            <PageStatus
+                                variant="error"
+                                title={labels.loadError}
+                                message={loadError}
+                                isOffline={isOffline}
+                                className="sm:col-span-2 lg:col-span-3"
+                            />
+                        )}
+                        {!isLoading && !loadError && collections.length === 0 && (
+                            <PageStatus
+                                variant="empty"
+                                title={labels.emptyState}
+                                className="sm:col-span-2 lg:col-span-3"
+                            />
+                        )}
+                        {!isLoading && !loadError && collections.map((collection, index) => (
                             <motion.article
                                 key={collection.id}
                                 initial={{ opacity: 0, y: 20 }}
@@ -171,12 +212,20 @@ export default function CollectionsPage() {
                                 {/* Hover Actions */}
                                 <div className="absolute bottom-4 right-4 flex gap-1 opacity-0 transition-all group-hover:opacity-100 sm:bottom-5 sm:right-5">
                                     <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (!session?.authenticated) setLoginModalOpen(true);
+                                        }}
                                         className="rounded-lg bg-white/5 p-2 text-[var(--fg-muted)] hover:bg-white/10 hover:text-[var(--fg-0)]"
                                         aria-label={labels.editCollection}
                                     >
                                         <Edit2 className="h-3 w-3" aria-hidden="true" />
                                     </button>
                                     <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (!session?.authenticated) setLoginModalOpen(true);
+                                        }}
                                         className="rounded-lg bg-white/5 p-2 text-[var(--fg-muted)] hover:bg-white/10 hover:text-[var(--fg-0)]"
                                         aria-label={labels.shareCollection}
                                     >
@@ -191,6 +240,13 @@ export default function CollectionsPage() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.3 }}
+                            onClick={() => {
+                                if (!session?.authenticated) {
+                                    setLoginModalOpen(true);
+                                    return;
+                                }
+                                // Handle new collection (TODO)
+                            }}
                             className="flex min-h-[140px] flex-col items-center justify-center rounded-lg border border-dashed border-white/20 bg-white/5 transition-all hover:border-white/30 hover:bg-white/10 sm:min-h-[160px] sm:rounded-xl"
                             aria-label={labels.createCollection}
                         >
@@ -202,6 +258,12 @@ export default function CollectionsPage() {
                     </motion.div>
                 </div>
             </div>
+            {/* Login Required Modal */}
+            <LoginRequiredModal
+                isOpen={loginModalOpen}
+                onClose={() => setLoginModalOpen(false)}
+                returnTo="/collections"
+            />
         </AppShell>
     );
 }

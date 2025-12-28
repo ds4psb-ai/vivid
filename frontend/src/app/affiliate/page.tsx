@@ -15,7 +15,8 @@ import {
 import AppShell from "@/components/AppShell";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { api, type AffiliateProfile, type AffiliateReferral } from "@/lib/api";
-import { normalizeApiError } from "@/lib/errors";
+import PageStatus from "@/components/PageStatus";
+import { isNetworkError, normalizeApiError } from "@/lib/errors";
 
 export default function AffiliatePage() {
     const { language } = useLanguage();
@@ -24,6 +25,7 @@ export default function AffiliatePage() {
     const [referrals, setReferrals] = useState<AffiliateReferral[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
+    const [isOffline, setIsOffline] = useState(false);
     const loadErrorFallback =
         language === "ko" ? "제휴 데이터를 불러오지 못했습니다." : "Unable to load affiliate data.";
 
@@ -32,6 +34,7 @@ export default function AffiliatePage() {
         const loadAffiliate = async () => {
             setIsLoading(true);
             setLoadError(null);
+            setIsOffline(false);
             try {
                 const [profileData, referralData] = await Promise.all([
                     api.getAffiliateProfile(),
@@ -40,9 +43,11 @@ export default function AffiliatePage() {
                 if (!active) return;
                 setProfile(profileData);
                 setReferrals(referralData);
+                setIsOffline(false);
             } catch (err) {
                 if (!active) return;
                 setLoadError(normalizeApiError(err, loadErrorFallback));
+                setIsOffline(isNetworkError(err));
             } finally {
                 if (active) setIsLoading(false);
             }
@@ -133,9 +138,13 @@ export default function AffiliatePage() {
                     </motion.div>
 
                     {loadError && (
-                        <div className="mb-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-                            {loadError}
-                        </div>
+                        <PageStatus
+                            variant="error"
+                            title={loadErrorFallback}
+                            message={loadError}
+                            isOffline={isOffline}
+                            className="mb-4"
+                        />
                     )}
 
                     {/* Referral Link Card */}

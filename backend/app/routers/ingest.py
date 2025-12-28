@@ -348,8 +348,9 @@ async def list_notebook_library(
     is_admin: bool = Depends(get_is_admin),
     db: AsyncSession = Depends(get_db),
 ) -> List[NotebookLibraryResponse]:
-    if not is_admin:
-        raise HTTPException(status_code=403, detail="Admin access required")
+    # Allow guest access for Knowledge Center
+    # if not is_admin:
+    #     raise HTTPException(status_code=403, detail="Admin access required")
 
     query = select(NotebookLibrary)
     if search:
@@ -439,8 +440,9 @@ async def list_notebook_assets(
     is_admin: bool = Depends(get_is_admin),
     db: AsyncSession = Depends(get_db),
 ) -> List[NotebookAssetResponse]:
-    if not is_admin:
-        raise HTTPException(status_code=403, detail="Admin access required")
+    # Allow guest access for Knowledge Center
+    # if not is_admin:
+    #     raise HTTPException(status_code=403, detail="Admin access required")
 
     query = select(NotebookAsset)
     if notebook_id:
@@ -541,6 +543,7 @@ class EvidenceRecordRequest(BaseModel):
     notebook_id: Optional[str] = None
     notebook_ref: Optional[str] = None
     evidence_refs: List[str] = []
+    persona_source: Optional[str] = None  # Script Persona Policy: script | user | auteur | blended
     generated_at: Optional[datetime] = None
 
     @field_validator("guide_type")
@@ -703,8 +706,9 @@ async def list_evidence_records(
     is_admin: bool = Depends(get_is_admin),
     db: AsyncSession = Depends(get_db),
 ) -> List[EvidenceRecordResponse]:
-    if not is_admin:
-        raise HTTPException(status_code=403, detail="Admin access required")
+    # Allow guest access for Knowledge Center
+    # if not is_admin:
+    #     raise HTTPException(status_code=403, detail="Admin access required")
 
     query = select(EvidenceRecord)
     if source_id:

@@ -60,11 +60,28 @@ export default function EmptyCanvasOverlay({
         },
     ];
     return (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-[var(--bg-0)]/90 backdrop-blur-sm">
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-[var(--bg-0)]/90 backdrop-blur-sm overflow-hidden">
+            {/* Aurora Background Effects */}
+            <div className="absolute inset-0 pointer-events-none">
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 2 }}
+                    className="absolute top-[-30%] left-[-20%] w-[60%] h-[60%] rounded-full bg-sky-900/30 blur-[100px]"
+                />
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 2, delay: 0.5 }}
+                    className="absolute bottom-[-30%] right-[-20%] w-[50%] h-[50%] rounded-full bg-amber-900/20 blur-[100px]"
+                />
+            </div>
+
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="w-full max-w-2xl px-6"
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                className="relative z-10 w-full max-w-2xl px-6"
             >
                 {/* Header */}
                 <div className="text-center mb-8">
@@ -100,7 +117,7 @@ export default function EmptyCanvasOverlay({
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 }}
-                    className="grid grid-cols-2 gap-4"
+                    className="grid grid-cols-2 gap-6"
                 >
                     {seedOptions.map((option, index) => (
                         <motion.button
@@ -108,7 +125,7 @@ export default function EmptyCanvasOverlay({
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.4 + index * 0.1 }}
-                            whileHover={{ scale: 1.03, y: -2 }}
+                            whileHover={{ scale: 1.02, y: -4 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => {
                                 if (option.id === "auteur") {
@@ -117,11 +134,11 @@ export default function EmptyCanvasOverlay({
                                     onSelectSeed(option.id);
                                 }
                             }}
-                            className="group relative flex flex-col items-start rounded-xl border border-white/10 bg-slate-950/60 p-5 text-left backdrop-blur-xl transition-all hover:border-white/20"
+                            className="group relative flex flex-col items-start rounded-2xl border border-white/5 bg-slate-950/40 p-6 text-left backdrop-blur-xl transition-all hover:border-sky-500/30 hover:shadow-lg hover:shadow-sky-500/10"
                         >
                             {/* Gradient Accent */}
                             <div
-                                className={`absolute inset-0 rounded-xl bg-gradient-to-br ${option.gradient} opacity-0 group-hover:opacity-10 transition-opacity`}
+                                className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${option.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}
                             />
 
                             {/* Icon */}

@@ -12,7 +12,7 @@ from app.config import settings
 from app.database import get_db
 from app.models import Template, TemplateVersion
 from app.template_seeding import seed_template_from_evidence
-from app.graph_utils import merge_graph_meta
+from app.graph_utils import merge_graph_meta, ensure_pattern_version
 from app.patterns import get_latest_pattern_version
 from app.seed import seed_auteur_data
 
@@ -110,35 +110,6 @@ def _to_response(template: Template) -> TemplateResponse:
     )
 
 
-def _ensure_pattern_version(graph_data: dict, pattern_version: str) -> dict:
-    nodes = graph_data.get("nodes")
-    if not isinstance(nodes, list):
-        return graph_data
-    updated = False
-    next_nodes = []
-    for node in nodes:
-        if not isinstance(node, dict):
-            next_nodes.append(node)
-            continue
-        data = node.get("data")
-        if not isinstance(data, dict):
-            next_nodes.append(node)
-            continue
-        if data.get("patternVersion"):
-            next_nodes.append(node)
-            continue
-        if data.get("capsuleId") and data.get("capsuleVersion"):
-            patched = {**data, "patternVersion": pattern_version}
-            next_nodes.append({**node, "data": patched})
-            updated = True
-        else:
-            next_nodes.append(node)
-    if not updated:
-        return graph_data
-    return {**graph_data, "nodes": next_nodes}
-
-
-
 def _has_provenance(graph_data: dict) -> bool:
     if not isinstance(graph_data, dict):
         return False
@@ -219,7 +190,7 @@ async def create_template(
     db: AsyncSession = Depends(get_db),
 ) -> TemplateResponse:
     pattern_version = await get_latest_pattern_version(db)
-    graph_data = _ensure_pattern_version(data.graph_data, pattern_version)
+    graph_data = ensure_pattern_version(data.graph_data, pattern_version)
     if data.is_public and not _has_provenance(graph_data):
         raise HTTPException(
             status_code=400,
@@ -321,7 +292,7 @@ async def update_template(
     if data.graph_data is not None:
         pattern_version = await get_latest_pattern_version(db)
         merged_graph = merge_graph_meta(data.graph_data, template.graph_data or {})
-        template.graph_data = _ensure_pattern_version(merged_graph, pattern_version)
+        template.graph_data = ensure_pattern_version(merged_graph, pattern_version)
         graph_changed = True
     if data.is_public is not None:
         template.is_public = data.is_public
@@ -390,3 +361,154 @@ async def list_template_versions(
         await db.refresh(seed_version)
         versions = [seed_version]
     return [_to_version_response(item) for item in versions]
+
+
+# --- Template Recommendation API (P0) ---
+
+
+class TemplateSimilarRequest(BaseModel):
+    query: str
+    limit: int = 10
+    score_threshold: float = 0.7
+
+
+class TemplateSimilarItem(BaseModel):
+    template_id: Optional[str] = None
+    slug: str
+    title: str
+    description: Optional[str] = None
+    tags: List[str] = []
+    preview_video_url: Optional[str] = None
+    score: float
+
+
+class TemplateSimilarResponse(BaseModel):
+    query: str
+    results: List[TemplateSimilarItem]
+    total: int
+
+
+class TemplateRecommendRequest(BaseModel):
+    evidence_summary: str
+    limit: int = 5
+
+
+class TemplateSeedEmbeddingsRequest(BaseModel):
+    public_only: bool = True
+    batch_size: int = 50
+
+
+class TemplateSeedEmbeddingsResponse(BaseModel):
+    total: int
+    embedded: int
+    errors: int
+    collection: str
+
+
+@router.post("/similar", response_model=TemplateSimilarResponse)
+async def search_similar_templates_api(
+    payload: TemplateSimilarRequest,
+) -> TemplateSimilarResponse:
+    """Search for semantically similar templates.
+
+    Uses Gemini embeddings and Qdrant vector search.
+    """
+    try:
+        from app.template_embeddings import search_similar_templates
+
+        results = await search_similar_templates(
+            query_text=payload.query,
+            limit=payload.limit,
+            score_threshold=payload.score_threshold,
+        )
+
+        return TemplateSimilarResponse(
+            query=payload.query,
+            results=[
+                TemplateSimilarItem(
+                    template_id=r.get("template_id"),
+                    slug=r.get("slug", ""),
+                    title=r.get("title", ""),
+                    description=r.get("description"),
+                    tags=r.get("tags", []),
+                    preview_video_url=r.get("preview_video_url"),
+                    score=r.get("score", 0.0),
+                )
+                for r in results
+            ],
+            total=len(results),
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Search failed: {e}")
+
+
+@router.post("/recommend", response_model=TemplateSimilarResponse)
+async def recommend_templates_api(
+    payload: TemplateRecommendRequest,
+) -> TemplateSimilarResponse:
+    """Recommend templates based on evidence summary.
+
+    Primary API for Canvas UI template recommendations.
+    """
+    try:
+        from app.template_embeddings import recommend_templates_for_evidence
+
+        results = await recommend_templates_for_evidence(
+            evidence_summary=payload.evidence_summary,
+            limit=payload.limit,
+        )
+
+        return TemplateSimilarResponse(
+            query=payload.evidence_summary,
+            results=[
+                TemplateSimilarItem(
+                    template_id=r.get("template_id"),
+                    slug=r.get("slug", ""),
+                    title=r.get("title", ""),
+                    description=r.get("description"),
+                    tags=r.get("tags", []),
+                    preview_video_url=r.get("preview_video_url"),
+                    score=r.get("score", 0.0),
+                )
+                for r in results
+            ],
+            total=len(results),
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Recommendation failed: {e}")
+
+
+@router.post("/seed-embeddings", response_model=TemplateSeedEmbeddingsResponse)
+async def seed_template_embeddings(
+    payload: TemplateSeedEmbeddingsRequest,
+    is_admin: bool = Depends(get_is_admin),
+    db: AsyncSession = Depends(get_db),
+) -> TemplateSeedEmbeddingsResponse:
+    """Seed all Templates to Qdrant for similarity search.
+
+    Generates embeddings using Gemini and stores in Qdrant.
+    """
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    try:
+        from app.template_embeddings import TEMPLATES_COLLECTION, seed_templates_collection
+
+        stats = await seed_templates_collection(
+            db,
+            batch_size=payload.batch_size,
+            public_only=payload.public_only,
+        )
+
+        return TemplateSeedEmbeddingsResponse(
+            total=stats["total"],
+            embedded=stats["embedded"],
+            errors=stats["errors"],
+            collection=TEMPLATES_COLLECTION,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Seeding failed: {exc}")

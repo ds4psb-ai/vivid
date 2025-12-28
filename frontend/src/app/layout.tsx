@@ -13,11 +13,12 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Vivid Node Canvas",
+  title: "Crebit Node Canvas",
   description: "Node-based canvas for generative spec design",
 };
 
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { SessionProvider } from "@/contexts/SessionContext";
 
 export default function RootLayout({
   children,
@@ -25,11 +26,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} antialiased`}>
-        <LanguageProvider>
-          {children}
-        </LanguageProvider>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <link href='//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css' rel='stylesheet' type='text/css' />
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+      </head>
+      <body className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} antialiased font-[family-name:var(--font-spoqa)]`}>
+        <SessionProvider>
+          <LanguageProvider>
+            {children}
+          </LanguageProvider>
+        </SessionProvider>
       </body>
     </html>
   );

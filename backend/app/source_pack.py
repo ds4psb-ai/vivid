@@ -12,6 +12,7 @@ def _segment_ref(segment: VideoSegment) -> Dict[str, Optional[str]]:
     return {
         "segment_id": segment.segment_id,
         "source_id": segment.source_id,
+        "segment_type": segment.segment_type,  # video | script | text
         "work_id": segment.work_id,
         "sequence_id": segment.sequence_id,
         "scene_id": segment.scene_id,

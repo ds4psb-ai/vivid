@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -34,6 +34,7 @@ from app.models import (
     VideoSegment,
 )
 from app.pattern_promotion import DEFAULT_MIN_CONFIDENCE, run_pattern_promotion
+from app.pattern_versioning import refresh_capsule_specs
 from app.sheets_sync import run_sheets_sync
 
 router = APIRouter()
@@ -95,6 +96,7 @@ class PatternPromotionRequest(BaseModel):
     derive_from_evidence: bool = False
     min_confidence: Optional[float] = None
     min_sources: Optional[int] = None
+    min_fitness_score: Optional[float] = None
     allow_empty_evidence: bool = False
     allow_missing_raw: bool = False
     note: str = ""
@@ -107,6 +109,19 @@ class PatternPromotionResponse(BaseModel):
     derived_candidates: int = 0
     pattern_version: Optional[str] = None
     note: Optional[str] = None
+
+
+class CapsuleRefreshRequest(BaseModel):
+    pattern_version: Optional[str] = None
+    dry_run: bool = False
+    only_active: bool = True
+
+
+class CapsuleRefreshResponse(BaseModel):
+    pattern_version: str
+    updated: int
+    dry_run: bool
+    only_active: bool
 
 
 class SheetsSyncResponse(BaseModel):
@@ -136,7 +151,7 @@ def _format_date(value: Optional[datetime]) -> Optional[str]:
 
 
 def _load_quarantine_summary() -> Tuple[int, Dict[str, int], Dict[str, int], List[QuarantineSummaryItem]]:
-    path_value = os.getenv("VIVID_QUARANTINE_CSV_PATH", "")
+    path_value = os.getenv("CREBIT_QUARANTINE_CSV_PATH", "")
     if not path_value:
         return 0, {}, {}, []
     path = Path(path_value).expanduser()
@@ -167,7 +182,7 @@ def _load_quarantine_summary() -> Tuple[int, Dict[str, int], Dict[str, int], Lis
 
 
 def _load_quarantine_sample(limit: int = 20) -> List[Dict[str, str]]:
-    path_value = os.getenv("VIVID_QUARANTINE_CSV_PATH", "")
+    path_value = os.getenv("CREBIT_QUARANTINE_CSV_PATH", "")
     if not path_value:
         return []
     path = Path(path_value).expanduser()
@@ -436,6 +451,7 @@ async def promote_patterns(
             derive_from_evidence=payload.derive_from_evidence,
             min_confidence=min_confidence,
             min_sources=min_sources,
+            min_fitness_score=payload.min_fitness_score,
             allow_empty_evidence=payload.allow_empty_evidence,
             allow_missing_raw=payload.allow_missing_raw,
             note=payload.note,
@@ -450,6 +466,7 @@ async def promote_patterns(
             payload={
                 "min_confidence": min_confidence,
                 "min_sources": min_sources,
+                "min_fitness_score": payload.min_fitness_score,
                 "derive_from_evidence": payload.derive_from_evidence,
                 "allow_empty_evidence": payload.allow_empty_evidence,
                 "allow_missing_raw": payload.allow_missing_raw,
@@ -474,6 +491,64 @@ async def promote_patterns(
             status="failed",
             note=payload.note,
             payload={"error": str(exc)},
+            stats={},
+            duration_ms=duration_ms,
+            actor_id=user_id,
+        )
+        raise
+
+
+@router.post("/capsules/refresh", response_model=CapsuleRefreshResponse)
+async def refresh_capsules(
+    payload: CapsuleRefreshRequest,
+    is_admin: bool = Depends(get_is_admin),
+    db: AsyncSession = Depends(get_db),
+    user_id: Optional[str] = Depends(get_user_id),
+) -> CapsuleRefreshResponse:
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    started = time.perf_counter()
+    try:
+        pattern_version, updated = await refresh_capsule_specs(
+            payload.pattern_version,
+            dry_run=payload.dry_run,
+            only_active=payload.only_active,
+        )
+        duration_ms = int((time.perf_counter() - started) * 1000)
+        await _log_action(
+            db,
+            action_type="capsule_refresh",
+            status="success",
+            note=pattern_version,
+            payload={
+                "pattern_version": payload.pattern_version,
+                "dry_run": payload.dry_run,
+                "only_active": payload.only_active,
+            },
+            stats={"updated": updated},
+            duration_ms=duration_ms,
+            actor_id=user_id,
+        )
+        return CapsuleRefreshResponse(
+            pattern_version=pattern_version,
+            updated=updated,
+            dry_run=payload.dry_run,
+            only_active=payload.only_active,
+        )
+    except Exception as exc:
+        duration_ms = int((time.perf_counter() - started) * 1000)
+        await _log_action(
+            db,
+            action_type="capsule_refresh",
+            status="failed",
+            note=payload.pattern_version,
+            payload={
+                "error": str(exc),
+                "pattern_version": payload.pattern_version,
+                "dry_run": payload.dry_run,
+                "only_active": payload.only_active,
+            },
             stats={},
             duration_ms=duration_ms,
             actor_id=user_id,
@@ -529,3 +604,967 @@ async def sync_sheets(
             actor_id=user_id,
         )
         raise
+
+
+# --- Pattern Lift Report API (Phase 2.1) ---
+
+
+class PatternLiftItem(BaseModel):
+    pattern_id: str
+    pattern_name: str
+    pattern_type: str
+    parent_metric: float
+    variant_metric: float
+    lift: float
+    lift_pct: float
+    sample_size: int
+    source_ids: List[str]
+    calculated_at: str
+
+
+class PatternLiftReportResponse(BaseModel):
+    items: List[PatternLiftItem]
+    total: int
+    avg_lift_pct: float
+    max_lift_pct: float
+    min_lift_pct: float
+
+
+@router.get("/patterns/lift-report", response_model=PatternLiftReportResponse)
+async def get_pattern_lift_report(
+    min_sample: int = Query(3, ge=1, le=100),
+    limit: int = Query(20, ge=1, le=100),
+    min_lift: Optional[float] = Query(None),
+    is_admin: bool = Depends(get_is_admin),
+) -> PatternLiftReportResponse:
+    """Get Pattern Lift Report for Phase 2 optimization.
+    
+    Calculates lift metrics for all promoted patterns.
+    Lift formula: Lift = (variant - parent) / parent
+    
+    Reference: 07_EXECUTION_PLAN_2025-12.md Phase 2.1
+    """
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    from app.pattern_lift import calculate_pattern_lift_report
+
+    results = await calculate_pattern_lift_report(min_sample_size=min_sample)
+    
+    if min_lift is not None:
+        results = [r for r in results if r.lift >= min_lift]
+    
+    results = results[:limit]
+
+    if not results:
+        return PatternLiftReportResponse(
+            items=[],
+            total=0,
+            avg_lift_pct=0.0,
+            max_lift_pct=0.0,
+            min_lift_pct=0.0,
+        )
+
+    items = [
+        PatternLiftItem(
+            pattern_id=r.pattern_id,
+            pattern_name=r.pattern_name,
+            pattern_type=r.pattern_type,
+            parent_metric=r.parent_metric,
+            variant_metric=r.variant_metric,
+            lift=r.lift,
+            lift_pct=r.lift_pct,
+            sample_size=r.sample_size,
+            source_ids=r.source_ids,
+            calculated_at=r.calculated_at.isoformat() + "Z",
+        )
+        for r in results
+    ]
+
+    avg_lift = sum(r.lift_pct for r in results) / len(results)
+    max_lift = max(r.lift_pct for r in results)
+    min_lift_val = min(r.lift_pct for r in results)
+
+    return PatternLiftReportResponse(
+        items=items,
+        total=len(items),
+        avg_lift_pct=round(avg_lift, 2),
+        max_lift_pct=round(max_lift, 2),
+        min_lift_pct=round(min_lift_val, 2),
+    )
+
+
+# --- Evidence Coverage API (Phase 2.3) ---
+
+
+class EvidenceCoverageByTypeItem(BaseModel):
+    claim_type: str
+    total_claims: int
+    claims_with_evidence: int
+    coverage_rate: float
+
+
+class EvidenceCoverageResponse(BaseModel):
+    total_claims: int
+    claims_with_evidence: int
+    claims_without_evidence: int
+    coverage_rate: float
+    avg_evidence_per_claim: float
+    min_evidence_count: int
+    max_evidence_count: int
+    coverage_by_type: List[EvidenceCoverageByTypeItem]
+    calculated_at: str
+
+
+class UncoveredClaimItem(BaseModel):
+    claim_id: str
+    claim_type: str
+    statement: str
+    cluster_id: str
+
+
+class UncoveredClaimsResponse(BaseModel):
+    items: List[UncoveredClaimItem]
+    total: int
+
+
+@router.get("/evidence-coverage", response_model=EvidenceCoverageResponse)
+async def get_evidence_coverage(
+    cluster_id: Optional[str] = Query(None),
+    min_evidence: int = Query(1, ge=1, le=10),
+    is_admin: bool = Depends(get_is_admin),
+    db: AsyncSession = Depends(get_db),
+) -> EvidenceCoverageResponse:
+    """Get Evidence Coverage metrics for monitoring.
+    
+    Calculates the ratio of claims backed by evidence.
+    Coverage = claims_with_evidence / total_claims
+    
+    Reference: 07_EXECUTION_PLAN_2025-12.md Phase 2.3
+               32_CLAIM_EVIDENCE_TRACE_SPEC_V1.md
+    """
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    from app.evidence_coverage import calculate_evidence_coverage
+
+    result = await calculate_evidence_coverage(
+        db,
+        cluster_id=cluster_id,
+        min_evidence_count=min_evidence,
+    )
+
+    return EvidenceCoverageResponse(
+        total_claims=result.total_claims,
+        claims_with_evidence=result.claims_with_evidence,
+        claims_without_evidence=result.claims_without_evidence,
+        coverage_rate=result.coverage_rate,
+        avg_evidence_per_claim=result.avg_evidence_per_claim,
+        min_evidence_count=result.min_evidence_count,
+        max_evidence_count=result.max_evidence_count,
+        coverage_by_type=[
+            EvidenceCoverageByTypeItem(
+                claim_type=item.claim_type,
+                total_claims=item.total_claims,
+                claims_with_evidence=item.claims_with_evidence,
+                coverage_rate=round(item.coverage_rate, 4),
+            )
+            for item in result.coverage_by_type
+        ],
+        calculated_at=result.calculated_at.isoformat() + "Z",
+    )
+
+
+@router.get("/evidence-coverage/uncovered", response_model=UncoveredClaimsResponse)
+async def get_uncovered_claims(
+    limit: int = Query(50, ge=1, le=200),
+    cluster_id: Optional[str] = Query(None),
+    is_admin: bool = Depends(get_is_admin),
+) -> UncoveredClaimsResponse:
+    """Get list of claims without evidence.
+    
+    Useful for identifying gaps in evidence coverage.
+    """
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    from app.evidence_coverage import get_claims_without_evidence
+
+    items = await get_claims_without_evidence(limit=limit, cluster_id=cluster_id)
+
+    return UncoveredClaimsResponse(
+        items=[
+            UncoveredClaimItem(
+                claim_id=item["claim_id"],
+                claim_type=item["claim_type"],
+                statement=item["statement"],
+                cluster_id=item["cluster_id"],
+            )
+            for item in items
+        ],
+        total=len(items),
+    )
+
+
+# --- Pattern Version History API (P2) ---
+
+
+class PatternVersionItem(BaseModel):
+    id: str
+    pattern_id: str
+    version: int
+    snapshot: Dict[str, Any]
+    note: Optional[str] = None
+    created_at: str
+
+
+@router.get("/patterns/versions", response_model=List[PatternVersionItem])
+async def list_pattern_versions(
+    limit: int = Query(5, le=50),
+    is_admin: bool = Depends(get_is_admin),
+    db: AsyncSession = Depends(get_db),
+) -> List[PatternVersionItem]:
+    """List recent pattern versions for admin UI.
+
+    Returns the most recent pattern version changes.
+    """
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    from app.models import PatternVersion
+
+    result = await db.execute(
+        select(PatternVersion)
+        .order_by(PatternVersion.created_at.desc())
+        .limit(limit)
+    )
+    versions = result.scalars().all()
+
+    return [
+        PatternVersionItem(
+            id=str(v.id),
+            pattern_id=str(v.pattern_id),
+            version=v.version,
+            snapshot=v.snapshot or {},
+            note=v.note,
+            created_at=v.created_at.isoformat() if v.created_at else "",
+        )
+        for v in versions
+    ]
+
+
+# --- Pattern Similarity API (Phase B) ---
+
+
+class PatternSimilarRequest(BaseModel):
+    query: str
+    limit: int = 10
+    score_threshold: float = 0.7
+    pattern_type: Optional[str] = None
+
+
+class PatternSimilarItem(BaseModel):
+    pattern_id: Optional[str] = None
+    pattern_name: str
+    pattern_type: str
+    description: Optional[str] = None
+    score: float
+
+
+class PatternSimilarResponse(BaseModel):
+    query: str
+    results: List[PatternSimilarItem]
+    total: int
+
+
+class PatternSeedRequest(BaseModel):
+    status_filter: Optional[str] = None
+    batch_size: int = 50
+
+
+class PatternSeedResponse(BaseModel):
+    total: int
+    embedded: int
+    errors: int
+    collection: str
+
+
+@router.post("/patterns/similar", response_model=PatternSimilarResponse)
+async def search_similar_patterns_api(
+    payload: PatternSimilarRequest,
+    is_admin: bool = Depends(get_is_admin),
+) -> PatternSimilarResponse:
+    """Search for semantically similar patterns.
+
+    Uses Gemini embeddings and Qdrant vector search.
+    """
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    try:
+        from app.pattern_embeddings import search_similar_patterns
+
+        results = await search_similar_patterns(
+            query_text=payload.query,
+            limit=payload.limit,
+            score_threshold=payload.score_threshold,
+            pattern_type=payload.pattern_type,
+        )
+
+        return PatternSimilarResponse(
+            query=payload.query,
+            results=[
+                PatternSimilarItem(
+                    pattern_id=r.get("pattern_id"),
+                    pattern_name=r.get("pattern_name", ""),
+                    pattern_type=r.get("pattern_type", ""),
+                    description=r.get("description"),
+                    score=r.get("score", 0.0),
+                )
+                for r in results
+            ],
+            total=len(results),
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Search failed: {e}")
+
+
+@router.post("/patterns/seed-embeddings", response_model=PatternSeedResponse)
+async def seed_pattern_embeddings(
+    payload: PatternSeedRequest,
+    is_admin: bool = Depends(get_is_admin),
+    db: AsyncSession = Depends(get_db),
+    user_id: Optional[str] = Depends(get_user_id),
+) -> PatternSeedResponse:
+    """Seed all PatternCandidates to Qdrant for similarity search.
+
+    Generates embeddings using Gemini and stores in Qdrant.
+    """
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    started = time.perf_counter()
+    try:
+        from app.pattern_embeddings import PATTERNS_COLLECTION, seed_patterns_collection
+
+        stats = await seed_patterns_collection(
+            db,
+            batch_size=payload.batch_size,
+            status_filter=payload.status_filter,
+        )
+
+        duration_ms = int((time.perf_counter() - started) * 1000)
+        await _log_action(
+            db,
+            action_type="pattern_seed_embeddings",
+            status="success",
+            note=f"Embedded {stats['embedded']} patterns",
+            payload={
+                "status_filter": payload.status_filter,
+                "batch_size": payload.batch_size,
+            },
+            stats=stats,
+            duration_ms=duration_ms,
+            actor_id=user_id,
+        )
+
+        return PatternSeedResponse(
+            total=stats["total"],
+            embedded=stats["embedded"],
+            errors=stats["errors"],
+            collection=PATTERNS_COLLECTION,
+        )
+    except Exception as exc:
+        duration_ms = int((time.perf_counter() - started) * 1000)
+        await _log_action(
+            db,
+            action_type="pattern_seed_embeddings",
+            status="failed",
+            note=None,
+            payload={"error": str(exc)},
+            stats={},
+            duration_ms=duration_ms,
+            actor_id=user_id,
+        )
+        raise HTTPException(status_code=500, detail=f"Seeding failed: {exc}")
+
+
+# --- Evidence Similarity API (P1) ---
+
+
+class EvidenceSimilarRequest(BaseModel):
+    query: str
+    limit: int = 10
+    score_threshold: float = 0.7
+    cluster_id: Optional[str] = None
+    output_type: Optional[str] = None
+
+
+class EvidenceSimilarItem(BaseModel):
+    evidence_id: Optional[str] = None
+    source_id: str
+    summary: Optional[str] = None
+    cluster_label: Optional[str] = None
+    score: float
+
+
+class EvidenceSimilarResponse(BaseModel):
+    query: str
+    results: List[EvidenceSimilarItem]
+    total: int
+
+
+class EvidenceSeedRequest(BaseModel):
+    output_type_filter: Optional[str] = None
+    batch_size: int = 50
+
+
+class EvidenceSeedResponse(BaseModel):
+    total: int
+    embedded: int
+    errors: int
+    collection: str
+
+
+@router.post("/evidence/similar", response_model=EvidenceSimilarResponse)
+async def search_similar_evidence_api(
+    payload: EvidenceSimilarRequest,
+    is_admin: bool = Depends(get_is_admin),
+) -> EvidenceSimilarResponse:
+    """Search for semantically similar evidence records.
+
+    Uses Gemini embeddings and Qdrant vector search.
+    """
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    try:
+        from app.evidence_embeddings import search_similar_evidence
+
+        results = await search_similar_evidence(
+            query_text=payload.query,
+            limit=payload.limit,
+            score_threshold=payload.score_threshold,
+            cluster_id=payload.cluster_id,
+            output_type=payload.output_type,
+        )
+
+        return EvidenceSimilarResponse(
+            query=payload.query,
+            results=[
+                EvidenceSimilarItem(
+                    evidence_id=r.get("evidence_id"),
+                    source_id=r.get("source_id", ""),
+                    summary=r.get("summary"),
+                    cluster_label=r.get("cluster_label"),
+                    score=r.get("score", 0.0),
+                )
+                for r in results
+            ],
+            total=len(results),
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Search failed: {e}")
+
+
+@router.post("/evidence/seed-embeddings", response_model=EvidenceSeedResponse)
+async def seed_evidence_embeddings(
+    payload: EvidenceSeedRequest,
+    is_admin: bool = Depends(get_is_admin),
+    db: AsyncSession = Depends(get_db),
+    user_id: Optional[str] = Depends(get_user_id),
+) -> EvidenceSeedResponse:
+    """Seed all EvidenceRecords to Qdrant for similarity search.
+
+    Generates embeddings using Gemini and stores in Qdrant.
+    """
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    started = time.perf_counter()
+    try:
+        from app.evidence_embeddings import EVIDENCE_COLLECTION, seed_evidence_collection
+
+        stats = await seed_evidence_collection(
+            db,
+            batch_size=payload.batch_size,
+            output_type_filter=payload.output_type_filter,
+        )
+
+        duration_ms = int((time.perf_counter() - started) * 1000)
+        await _log_action(
+            db,
+            action_type="evidence_seed_embeddings",
+            status="success",
+            note=f"Embedded {stats['embedded']} evidence records",
+            payload={
+                "output_type_filter": payload.output_type_filter,
+                "batch_size": payload.batch_size,
+            },
+            stats=stats,
+            duration_ms=duration_ms,
+            actor_id=user_id,
+        )
+
+        return EvidenceSeedResponse(
+            total=stats["total"],
+            embedded=stats["embedded"],
+            errors=stats["errors"],
+            collection=EVIDENCE_COLLECTION,
+        )
+    except Exception as exc:
+        duration_ms = int((time.perf_counter() - started) * 1000)
+        await _log_action(
+            db,
+            action_type="evidence_seed_embeddings",
+            status="failed",
+            note=None,
+            payload={"error": str(exc)},
+            stats={},
+            duration_ms=duration_ms,
+            actor_id=user_id,
+        )
+        raise HTTPException(status_code=500, detail=f"Seeding failed: {exc}")
+
+
+# --- Pilot Metrics API (NotebookLM Loading Gate) ---
+
+
+class PilotMetricsResponse(BaseModel):
+    """Pilot metrics for Go/No-Go decision."""
+    evidence_gate_pass_rate: Optional[float] = None
+    avg_evidence_refs_per_claim: Optional[float] = None
+    template_seed_success_rate: Optional[float] = None
+    template_run_success_rate: Optional[float] = None
+    evidence_click_rate: Optional[float] = None
+    go_nogo_status: str  # "GO" | "NO_GO" | "CONDITIONAL" | "INSUFFICIENT_DATA"
+    blockers: List[str] = []
+    warnings: List[str] = []
+    measured_at: str
+
+
+@router.get("/pilot-metrics", response_model=PilotMetricsResponse)
+async def get_pilot_metrics(
+    days: int = Query(7, le=30),
+    is_admin: bool = Depends(get_is_admin),
+    db: AsyncSession = Depends(get_db),
+) -> PilotMetricsResponse:
+    """Get pilot metrics for Go/No-Go decision.
+
+    Calculates:
+    - Evidence Gate pass rate (claims with >= 2 evidence_refs)
+    - Average evidence refs per claim
+    - Template seed success rate (story + beat + storyboard)
+    - Template run success rate
+    - Evidence click rate (from analytics events)
+    """
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    from datetime import timedelta
+    from app.models import Claim, ClaimEvidenceMap, AnalyticsEvent
+
+    period_end = datetime.utcnow()
+    period_start = period_end - timedelta(days=days)
+
+    blockers = []
+    warnings = []
+
+    # 1. Evidence Gate: claims with >= 2 evidence refs
+    claims_result = await db.execute(
+        select(Claim).where(Claim.created_at >= period_start)
+    )
+    claims = claims_result.scalars().all()
+
+    if claims:
+        claims_with_2_refs = 0
+        total_refs = 0
+        for claim in claims:
+            # Count evidence mappings for this claim
+            refs_result = await db.execute(
+                select(func.count()).select_from(ClaimEvidenceMap).where(
+                    ClaimEvidenceMap.claim_id == claim.id
+                )
+            )
+            ref_count = int(refs_result.scalar() or 0)
+            total_refs += ref_count
+            if ref_count >= 2:
+                claims_with_2_refs += 1
+
+        evidence_gate_pass_rate = claims_with_2_refs / len(claims)
+        avg_evidence_refs = total_refs / len(claims)
+    else:
+        evidence_gate_pass_rate = None
+        avg_evidence_refs = None
+
+    # 2. Template seed success rate
+    templates_result = await db.execute(select(Template))
+    templates = templates_result.scalars().all()
+
+    if templates:
+        valid_templates = 0
+        for t in templates:
+            graph_data = t.graph_data or {}
+            meta = graph_data.get("meta", {})
+            has_story = bool(meta.get("story") or graph_data.get("story"))
+            has_beat = bool(meta.get("beat_sheet") or meta.get("story_beats"))
+            has_storyboard = bool(meta.get("storyboard") or meta.get("storyboard_cards"))
+            if has_story and has_beat and has_storyboard:
+                valid_templates += 1
+        template_seed_rate = valid_templates / len(templates)
+    else:
+        template_seed_rate = None
+
+    # 3. Template run success rate
+    runs_result = await db.execute(
+        select(CapsuleRun.status, func.count()).where(
+            CapsuleRun.created_at >= period_start
+        ).group_by(CapsuleRun.status)
+    )
+    run_counts = {row[0]: row[1] for row in runs_result.all()}
+    total_runs = sum(run_counts.values())
+
+    if total_runs > 0:
+        done_runs = run_counts.get("done", 0)
+        template_run_success_rate = done_runs / total_runs
+    else:
+        template_run_success_rate = None
+
+    # 4. Evidence click rate from analytics
+    analytics_result = await db.execute(
+        select(AnalyticsEvent.event_type, func.count()).where(
+            AnalyticsEvent.created_at >= period_start
+        ).group_by(AnalyticsEvent.event_type)
+    )
+    event_counts = {row[0]: row[1] for row in analytics_result.all()}
+
+    evidence_clicks = event_counts.get("evidence_ref_opened", 0)
+    template_views = (
+        event_counts.get("template_seeded", 0) +
+        event_counts.get("template_version_swapped", 0)
+    )
+
+    if template_views > 0:
+        evidence_click_rate = evidence_clicks / template_views
+    else:
+        evidence_click_rate = None
+
+    # Determine Go/No-Go
+    if evidence_gate_pass_rate is None or template_seed_rate is None:
+        go_nogo_status = "INSUFFICIENT_DATA"
+        blockers.append("Not enough data to evaluate")
+    else:
+        if evidence_gate_pass_rate < 0.95:
+            blockers.append(f"Evidence Gate: {evidence_gate_pass_rate*100:.1f}% < 95%")
+        if template_seed_rate < 0.90:
+            blockers.append(f"Template Seed: {template_seed_rate*100:.1f}% < 90%")
+        if template_run_success_rate is not None and template_run_success_rate < 0.98:
+            blockers.append(f"Template Run: {template_run_success_rate*100:.1f}% < 98%")
+
+        if evidence_click_rate is not None and evidence_click_rate < 0.15:
+            warnings.append(f"Evidence Click Rate: {evidence_click_rate*100:.1f}% < 15%")
+
+        if blockers:
+            go_nogo_status = "NO_GO"
+        elif warnings:
+            go_nogo_status = "CONDITIONAL"
+        else:
+            go_nogo_status = "GO"
+
+    return PilotMetricsResponse(
+        evidence_gate_pass_rate=round(evidence_gate_pass_rate, 4) if evidence_gate_pass_rate else None,
+        avg_evidence_refs_per_claim=round(avg_evidence_refs, 2) if avg_evidence_refs else None,
+        template_seed_success_rate=round(template_seed_rate, 4) if template_seed_rate else None,
+        template_run_success_rate=round(template_run_success_rate, 4) if template_run_success_rate else None,
+        evidence_click_rate=round(evidence_click_rate, 4) if evidence_click_rate else None,
+        go_nogo_status=go_nogo_status,
+        blockers=blockers,
+        warnings=warnings,
+        measured_at=period_end.isoformat(),
+    )
+
+
+# --- Run Trace Dashboard API (Phase 2.3) ---
+
+
+class RunTraceSummaryItem(BaseModel):
+    date: str
+    run_count: int
+    avg_latency_ms: Optional[float] = None
+    avg_cost_usd: Optional[float] = None
+    total_cost_usd: Optional[float] = None
+    status_breakdown: Dict[str, int]
+
+
+class RunTraceSummaryResponse(BaseModel):
+    items: List[RunTraceSummaryItem]
+    total_runs: int
+    period_start: str
+    period_end: str
+    overall_avg_latency_ms: Optional[float] = None
+    overall_avg_cost_usd: Optional[float] = None
+    overall_total_cost_usd: Optional[float] = None
+
+
+@router.get("/run-trace-summary", response_model=RunTraceSummaryResponse)
+async def get_run_trace_summary(
+    days: int = Query(7, ge=1, le=90),
+    is_admin: bool = Depends(get_is_admin),
+    db: AsyncSession = Depends(get_db),
+) -> RunTraceSummaryResponse:
+    """Get Run Trace summary for cost/latency monitoring dashboard.
+    
+    Returns daily aggregated metrics for CapsuleRuns:
+    - Run count per day
+    - Average latency
+    - Cost breakdown
+    - Status distribution
+    
+    Reference: 07_EXECUTION_PLAN_2025-12.md Phase 2.3
+    """
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    from datetime import timedelta
+
+    period_end = datetime.utcnow()
+    period_start = period_end - timedelta(days=days)
+
+    # Get all runs in period
+    result = await db.execute(
+        select(CapsuleRun).where(CapsuleRun.created_at >= period_start)
+    )
+    runs = result.scalars().all()
+
+    if not runs:
+        return RunTraceSummaryResponse(
+            items=[],
+            total_runs=0,
+            period_start=period_start.isoformat() + "Z",
+            period_end=period_end.isoformat() + "Z",
+        )
+
+    # Group by date
+    daily_data: Dict[str, Dict[str, Any]] = {}
+    
+    for run in runs:
+        date_str = run.created_at.strftime("%Y-%m-%d") if run.created_at else "unknown"
+        
+        if date_str not in daily_data:
+            daily_data[date_str] = {
+                "run_count": 0,
+                "latencies": [],
+                "costs": [],
+                "statuses": {},
+            }
+        
+        daily_data[date_str]["run_count"] += 1
+        
+        if run.latency_ms is not None:
+            daily_data[date_str]["latencies"].append(run.latency_ms)
+        
+        if run.cost_usd_est is not None:
+            daily_data[date_str]["costs"].append(run.cost_usd_est)
+        
+        status = run.status or "unknown"
+        daily_data[date_str]["statuses"][status] = daily_data[date_str]["statuses"].get(status, 0) + 1
+
+    # Build response items
+    items: List[RunTraceSummaryItem] = []
+    all_latencies: List[float] = []
+    all_costs: List[float] = []
+
+    for date_str in sorted(daily_data.keys()):
+        data = daily_data[date_str]
+        latencies = data["latencies"]
+        costs = data["costs"]
+        
+        avg_latency = sum(latencies) / len(latencies) if latencies else None
+        avg_cost = sum(costs) / len(costs) if costs else None
+        total_cost = sum(costs) if costs else None
+        
+        if avg_latency:
+            all_latencies.extend(latencies)
+        if costs:
+            all_costs.extend(costs)
+        
+        items.append(
+            RunTraceSummaryItem(
+                date=date_str,
+                run_count=data["run_count"],
+                avg_latency_ms=round(avg_latency, 2) if avg_latency else None,
+                avg_cost_usd=round(avg_cost, 6) if avg_cost else None,
+                total_cost_usd=round(total_cost, 4) if total_cost else None,
+                status_breakdown=data["statuses"],
+            )
+        )
+
+    overall_avg_latency = sum(all_latencies) / len(all_latencies) if all_latencies else None
+    overall_avg_cost = sum(all_costs) / len(all_costs) if all_costs else None
+    overall_total_cost = sum(all_costs) if all_costs else None
+
+    return RunTraceSummaryResponse(
+        items=items,
+        total_runs=len(runs),
+        period_start=period_start.isoformat() + "Z",
+        period_end=period_end.isoformat() + "Z",
+        overall_avg_latency_ms=round(overall_avg_latency, 2) if overall_avg_latency else None,
+        overall_avg_cost_usd=round(overall_avg_cost, 6) if overall_avg_cost else None,
+        overall_total_cost_usd=round(overall_total_cost, 4) if overall_total_cost else None,
+    )
+
+
+# --- LLMOps Evaluation Harness API (Phase 2.4) ---
+
+
+class EvalMetricItem(BaseModel):
+    metric_type: str
+    score: float
+    confidence: float
+    details: Dict[str, Any]
+
+
+class EvalRunResponse(BaseModel):
+    run_id: str
+    run_type: str
+    metrics: List[EvalMetricItem]
+    overall_score: float
+    evidence_count: int
+    token_usage: int
+    latency_ms: int
+    evaluated_at: str
+
+
+class EvalHarnessSummaryResponse(BaseModel):
+    total_runs: int
+    avg_groundedness: float
+    avg_relevancy: float
+    avg_completeness: float
+    avg_overall: float
+    runs_with_human_feedback: int
+    human_feedback_avg: float
+    period_start: str
+    period_end: str
+
+
+class HumanFeedbackRequest(BaseModel):
+    run_id: str
+    feedback_type: str  # thumbs_up | thumbs_down | rating | comment
+    value: Any
+    user_id: Optional[str] = None
+
+
+class HumanFeedbackResponse(BaseModel):
+    success: bool
+    run_id: str
+    feedback_type: str
+
+
+@router.get("/eval-harness/summary", response_model=EvalHarnessSummaryResponse)
+async def get_eval_harness_summary(
+    days: int = Query(7, ge=1, le=90),
+    is_admin: bool = Depends(get_is_admin),
+    db: AsyncSession = Depends(get_db),
+) -> EvalHarnessSummaryResponse:
+    """Get LLMOps Evaluation Harness summary.
+    
+    Returns aggregated metrics for groundedness, relevancy, completeness.
+    
+    Reference: 07_EXECUTION_PLAN_2025-12.md Phase 2.4
+    """
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    from app.llm_eval_harness import get_eval_harness_summary as get_summary
+
+    result = await get_summary(days=days, session=db)
+
+    return EvalHarnessSummaryResponse(
+        total_runs=result.total_runs,
+        avg_groundedness=result.avg_groundedness,
+        avg_relevancy=result.avg_relevancy,
+        avg_completeness=result.avg_completeness,
+        avg_overall=result.avg_overall,
+        runs_with_human_feedback=result.runs_with_human_feedback,
+        human_feedback_avg=result.human_feedback_avg,
+        period_start=result.period_start,
+        period_end=result.period_end,
+    )
+
+
+@router.get("/eval-harness/run/{run_id}", response_model=EvalRunResponse)
+async def evaluate_run(
+    run_id: str,
+    is_admin: bool = Depends(get_is_admin),
+) -> EvalRunResponse:
+    """Evaluate a specific capsule run.
+    
+    Returns groundedness, relevancy, completeness metrics.
+    """
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    from app.llm_eval_harness import evaluate_capsule_run
+
+    result = await evaluate_capsule_run(run_id)
+    
+    if not result:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    return EvalRunResponse(
+        run_id=result.run_id,
+        run_type=result.run_type,
+        metrics=[
+            EvalMetricItem(
+                metric_type=m.metric_type,
+                score=m.score,
+                confidence=m.confidence,
+                details=m.details,
+            )
+            for m in result.metrics
+        ],
+        overall_score=result.overall_score,
+        evidence_count=result.evidence_count,
+        token_usage=result.token_usage,
+        latency_ms=result.latency_ms,
+        evaluated_at=result.evaluated_at.isoformat() + "Z",
+    )
+
+
+@router.post("/eval-harness/feedback", response_model=HumanFeedbackResponse)
+async def submit_human_feedback(
+    payload: HumanFeedbackRequest,
+    is_admin: bool = Depends(get_is_admin),
+) -> HumanFeedbackResponse:
+    """Submit human feedback for a run.
+    
+    Feedback types:
+    - thumbs_up: Positive signal
+    - thumbs_down: Negative signal
+    - rating: 1-5 scale
+    - comment: Text feedback
+    """
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    from app.llm_eval_harness import record_human_feedback
+
+    success = await record_human_feedback(
+        run_id=payload.run_id,
+        feedback_type=payload.feedback_type,
+        value=payload.value,
+        user_id=payload.user_id,
+    )
+
+    if not success:
+        raise HTTPException(status_code=404, detail="Learning run not found for this run_id")
+
+    return HumanFeedbackResponse(
+        success=True,
+        run_id=payload.run_id,
+        feedback_type=payload.feedback_type,
+    )

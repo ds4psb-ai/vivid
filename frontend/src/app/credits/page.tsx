@@ -16,7 +16,9 @@ import {
 import AppShell from "@/components/AppShell";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { api, type CreditTransaction } from "@/lib/api";
-import { normalizeApiError } from "@/lib/errors";
+import PageStatus from "@/components/PageStatus";
+import { isNetworkError, normalizeApiError } from "@/lib/errors";
+import { useActiveUserId } from "@/hooks/useActiveUserId";
 
 interface CreditPack {
     id: string;
@@ -37,11 +39,20 @@ const TRANSACTION_CONFIG: Record<string, { bgClass: string; icon: React.ElementT
 export default function CreditsPage() {
     const { language } = useLanguage();
     const [balance, setBalance] = useState(0);
+    const [subscriptionCredits, setSubscriptionCredits] = useState(0);
+    const [topupCredits, setTopupCredits] = useState(0);
+    const [promoCredits, setPromoCredits] = useState(0);
+    const [promoExpiresAt, setPromoExpiresAt] = useState<string | null>(null);
     const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
+    const [transactionTotal, setTransactionTotal] = useState(0);
+    const [offset, setOffset] = useState(0);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isToppingUp, setIsToppingUp] = useState<string | null>(null);
     const [loadError, setLoadError] = useState<string | null>(null);
-    const userId = process.env.NEXT_PUBLIC_USER_ID || "demo-user";
+    const [isOffline, setIsOffline] = useState(false);
+    const { userId } = useActiveUserId("demo-user");
+    const LIMIT = 20;
 
     const creditPacks = useMemo<CreditPack[]>(() => [
         {
@@ -75,19 +86,43 @@ export default function CreditsPage() {
     const loadCredits = useCallback(async () => {
         setIsLoading(true);
         setLoadError(null);
+        setIsOffline(false);
+        setOffset(0);
         try {
             const [balanceData, ledger] = await Promise.all([
                 api.getCreditsBalance(userId),
-                api.getCreditsTransactions(userId, 20, 0),
+                api.getCreditsTransactions(userId, LIMIT, 0),
             ]);
             setBalance(balanceData.balance);
+            setSubscriptionCredits(balanceData.subscription_credits);
+            setTopupCredits(balanceData.topup_credits);
+            setPromoCredits(balanceData.promo_credits);
+            setPromoExpiresAt(balanceData.promo_expires_at || null);
             setTransactions(ledger.transactions);
+            setTransactionTotal(ledger.total);
+            setIsOffline(false);
         } catch (err) {
             setLoadError(normalizeApiError(err, loadErrorFallback));
+            setIsOffline(isNetworkError(err));
         } finally {
             setIsLoading(false);
         }
     }, [userId, loadErrorFallback]);
+
+    const loadMoreTransactions = useCallback(async () => {
+        if (isLoadingMore || transactions.length >= transactionTotal) return;
+        setIsLoadingMore(true);
+        try {
+            const nextOffset = offset + LIMIT;
+            const ledger = await api.getCreditsTransactions(userId, LIMIT, nextOffset);
+            setTransactions((prev) => [...prev, ...ledger.transactions]);
+            setOffset(nextOffset);
+        } catch (err) {
+            setLoadError(normalizeApiError(err, loadErrorFallback));
+        } finally {
+            setIsLoadingMore(false);
+        }
+    }, [userId, offset, loadErrorFallback, isLoadingMore, transactions.length, transactionTotal]);
 
     useEffect(() => {
         void loadCredits();
@@ -109,6 +144,7 @@ export default function CreditsPage() {
                 await loadCredits();
             } catch (err) {
                 setLoadError(normalizeApiError(err, topupErrorFallback));
+                setIsOffline(isNetworkError(err));
             } finally {
                 setIsToppingUp(null);
             }
@@ -165,6 +201,11 @@ export default function CreditsPage() {
         inviteCta: language === "ko" ? "제휴 페이지로 이동" : "Go to Affiliate",
         loadingTransactions: language === "ko" ? "거래 내역 불러오는 중..." : "Loading transactions...",
         noTransactions: language === "ko" ? "거래 내역이 없습니다." : "No transactions yet.",
+        subscription: language === "ko" ? "구독" : "Subscription",
+        topupLabel: language === "ko" ? "충전" : "Top-up",
+        promo: language === "ko" ? "프로모" : "Promo",
+        expiresOn: language === "ko" ? "만료" : "Expires",
+        loadMore: language === "ko" ? "더 보기" : "Load More",
     };
 
     const handleExportCsv = useCallback(() => {
@@ -199,7 +240,7 @@ export default function CreditsPage() {
         const link = document.createElement("a");
         const today = new Date().toISOString().slice(0, 10);
         link.href = url;
-        link.download = `vivid_credits_${today}.csv`;
+        link.download = `crebit_credits_${today}.csv`;
         link.click();
         URL.revokeObjectURL(url);
     }, [transactions]);
@@ -218,9 +259,13 @@ export default function CreditsPage() {
                         <p className="mt-1 text-sm text-[var(--fg-muted)] sm:text-base">{labels.subtitle}</p>
                     </motion.div>
                     {loadError && (
-                        <div className="mb-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-                            {loadError}
-                        </div>
+                        <PageStatus
+                            variant="error"
+                            title={labels.loadError}
+                            message={loadError}
+                            isOffline={isOffline}
+                            className="mb-4"
+                        />
                     )}
 
                     {/* Balance Card */}
@@ -242,6 +287,30 @@ export default function CreditsPage() {
                                         {labels.credits}
                                     </span>
                                 </div>
+                                {/* Credit Type Breakdown */}
+                                {!isLoading && (
+                                    <div className="mt-3 flex flex-wrap gap-3 text-xs text-[var(--fg-muted)]">
+                                        <span className="rounded-full bg-sky-500/10 px-2 py-1 text-sky-300">
+                                            {labels.subscription}: {subscriptionCredits.toLocaleString()}
+                                        </span>
+                                        <span className="rounded-full bg-emerald-500/10 px-2 py-1 text-emerald-300">
+                                            {labels.topupLabel}: {topupCredits.toLocaleString()}
+                                        </span>
+                                        {promoCredits > 0 && (
+                                            <span className="rounded-full bg-amber-500/10 px-2 py-1 text-amber-300">
+                                                {labels.promo}: {promoCredits.toLocaleString()}
+                                                {promoExpiresAt && (
+                                                    <span className="ml-1 text-[10px] text-amber-400/70">
+                                                        ({labels.expiresOn} {new Date(promoExpiresAt).toLocaleDateString(
+                                                            language === "ko" ? "ko-KR" : "en-US",
+                                                            { month: "short", day: "numeric" }
+                                                        )})
+                                                    </span>
+                                                )}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                             <button
                                 onClick={handleTopUpScroll}
@@ -446,6 +515,26 @@ export default function CreditsPage() {
                                 )}
                             </div>
                         </div>
+                        {/* Load More Button */}
+                        {!isLoading && transactions.length < transactionTotal && (
+                            <div className="mt-4 flex justify-center">
+                                <button
+                                    type="button"
+                                    onClick={loadMoreTransactions}
+                                    disabled={isLoadingMore}
+                                    className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {isLoadingMore ? (
+                                        <span className="animate-pulse">{language === "ko" ? "불러오는 중..." : "Loading..."}</span>
+                                    ) : (
+                                        <>
+                                            <Plus className="h-4 w-4" aria-hidden="true" />
+                                            {labels.loadMore} ({transactions.length}/{transactionTotal})
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        )}
                     </motion.section>
                 </div>
             </div>

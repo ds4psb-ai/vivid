@@ -81,3 +81,15 @@
 - LLMOps: 프롬프트/체인도 버전 관리 아티팩트, 휴먼 피드백 기반 평가/모니터링 필수
 - 운영/인프라: Dev/QA/Prod 분리, CI/CD, 모니터링/알림, 비용/지연 최적화가 최신 기준
 - Sheets API: 배치 호출, 2MB payload 권장, per-minute quota, exponential backoff 필요
+
+## HITL / XAI (2024 가설/참고)
+
+> **NOTE**: 아래는 2024년 업계 동향 기반 가설/참고 자료입니다. 벤치마크 검증 전까지는 정본으로 취급하지 않습니다.
+
+- Human-in-the-Loop AI Overview (Holistic AI, 2024)
+  - https://holisticai.com/blog/human-in-the-loop-ai
+- HITL Best Practices for Enterprise (CIO, 2024)
+  - https://cio.com/article/genai-hitl-best-practices
+- Explainable AI Tools Overview (TDAN, 2024)
+  - https://tdan.com/explainable-ai-tools
+

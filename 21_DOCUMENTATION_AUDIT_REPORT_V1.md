@@ -1,6 +1,7 @@
 # Documentation Audit Report v1
 
 **Date**: 2025-12-24
+**Updated**: 2025-12-28
 **Auditor**: Antigravity (Agent)
 **Scope**: Docs 00-19 + README (2025-12-24 snapshot)
 **Objective**: Verify consistency, philosophical alignment, and Virlo integration.
@@ -12,7 +13,7 @@
 이 문서는 **레퍼런스 스냅샷**이며, 최종 결정/계약은 정본 문서에 반영한다.
 
 - 문서 맵: `00_DOCS_INDEX.md`
-- 철학/원칙: `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`
+- 철학/원칙: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
 - 흐름/역할: `10_PIPELINES_AND_USER_FLOWS.md`
 - 캡슐 계약: `05_CAPSULE_NODE_SPEC.md`
 - UI/UX 정본: `13_UI_DESIGN_GUIDE_2025-12.md`
@@ -33,7 +34,7 @@ The recent reverse-engineering of **Virlo Content Studio** (detailed in `16` and
 
 ### Findings
 - **Alignment check**: no critical conflicts were recorded at the time of audit.
-- **SoR source**: `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`, `10_PIPELINES_AND_USER_FLOWS.md`, `05_CAPSULE_NODE_SPEC.md`.
+- **SoR source**: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`, `10_PIPELINES_AND_USER_FLOWS.md`, `05_CAPSULE_NODE_SPEC.md`.
 
 ### Virlo Integration
 - **Concept**: The "Capsule Node" architecture in `01`/`05` mirrors Virlo's "Processor Node" pattern (complexity hidden, ports exposed).
@@ -49,18 +50,18 @@ The recent reverse-engineering of **Virlo Content Studio** (detailed in `16` and
 
 ### Operational Update (Billing & Sheets)
 - **Sheet Discovery**: ✅ **Success**. The "VDG_Evidence" spreadsheet was located.
-    - **ID**: `1YDqyjn26yl2Onf_pqyiXISHbWdXxCnngXfxsF0losaE` (Owned by `ted`, confirm explicit permissions if using service account).
+    - **ID**: `<redacted>` (store in `.env` only; verify permissions separately).
 - **Project Status**: ✅ **Resolved**.
-    - **Action**: Created new project `vivid-canvas` (ID: `vivid-canvas-482303`) on `arkain` account via Manual Profile Switch.
-    - **Billing**: Linked to active billing account `내 결제 계정 1` (ID: ...485173).
-- **Recommendation**: Update `.env` with `VIVID_SHEET_ID_MAIN` and `GOOGLE_CLOUD_PROJECT`.
+    - **Action**: Created new project `crebit-canvas` (ID: `<redacted>`).
+    - **Billing**: Linked to active billing account (redacted).
+- **Recommendation**: Update `.env` with `CREBIT_SHEET_ID_MAIN` and `GOOGLE_CLOUD_PROJECT`.
 
 > [!NOTE]
 > 값은 운영 스냅샷이며, **비밀/운영 값은 반드시 `.env`에만 보관**한다.
 > `.env` update was blocked by `.gitignore`. Please manually add:
 > ```bash
-> VIVID_SHEET_ID_MAIN=1YDqyjn26yl2Onf_pqyiXISHbWdXxCnngXfxsF0losaE
-> GOOGLE_CLOUD_PROJECT=vivid-canvas-482303
+> CREBIT_SHEET_ID_MAIN=<redacted>
+> GOOGLE_CLOUD_PROJECT=<redacted>
 > ```
 
 ---
@@ -68,7 +69,7 @@ The recent reverse-engineering of **Virlo Content Studio** (detailed in `16` and
 ## 4. Product, UX, & Credits (13, 17, 18, 19)
 
 ### Findings
-- **SoR source**: `13_UI_DESIGN_GUIDE_2025-12.md`, `17_CREDITS_AND_BILLING_SPEC_V1.md`, `18_AFFILIATE_PROGRAM_SPEC_V1.md`.
+- **SoR source**: `13_UI_DESIGN_GUIDE_2025-12.md`, `17_CREDITS_AND_BILLING_SPEC_V1.md`, `35_AFFILIATE_PROGRAM_SPEC_V1.md`.
 - **Snapshot note**: 이 문서는 후보/관측 기록이며 최종 확정은 SoR 문서를 따른다.
 
 ### Recommendations
@@ -80,3 +81,41 @@ The recent reverse-engineering of **Virlo Content Studio** (detailed in `16` and
 ## 5. Action Items
 
 상태는 **스냅샷**이며, 최신 진행은 실행 계획 문서에서 확인한다.
+
+---
+
+## 6. Stage Completion Summary (2025-12-28 Update)
+
+> [!NOTE]
+> 2025-12-28 기준 파이프라인 진행률 업데이트.
+
+### Pipeline Progress: **100%**
+
+| Stage | Description | Status |
+|-------|-------------|--------|
+| 0 | Source Intake | ✅ Complete |
+| 1 | Preprocess (ASR/Shot) | N/A (External) |
+| 2 | Gemini Structured Output | ✅ Complete |
+| 3 | Notebook Library | ✅ Complete |
+| 4 | NotebookLM Guide | ✅ Complete |
+| 5 | Sheets → DB Promotion | ✅ Complete |
+| 6 | Pattern Promotion | ✅ Complete |
+| 7 | Capsule Spec Update | ✅ Complete |
+| 8 | Template Seeding | ✅ Complete |
+| 9 | Canvas Execution (WS/SSE) | ✅ Complete |
+| 10 | Generation Pipeline | ✅ Complete |
+| 11 | Feedback → Learning | ✅ Complete |
+
+### Recent Changes (2025-12-28)
+- Credits page: credit type breakdown (subscription/topup/promo)
+- WS/SSE streaming: verified in `realtime.py` + `capsules.py`
+- Pattern→Capsule refresh: `/api/v1/ops/capsules/refresh`
+- Ideal Persona integration: `ideal_persona.py` + NotebookLM prompts
+- Promotion pipeline: fixed `has_label` import in `promote_from_sheets.py`
+
+### Key Implementation Files
+- `backend/app/pattern_versioning.py`
+- `backend/app/pattern_promotion.py`
+- `backend/app/template_learning.py`
+- `backend/app/routers/realtime.py`
+- `backend/app/ideal_persona.py`

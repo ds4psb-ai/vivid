@@ -20,6 +20,7 @@ import { motion } from "framer-motion";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { getBeatLabel, getStoryboardLabel } from "@/lib/narrative";
 
 // Utility for cleaner classes
 function cn(...inputs: ClassValue[]) {
@@ -119,6 +120,8 @@ const NODE_CONFIG: Record<
   },
 };
 
+export const CanvasNode = memo(BaseNode);
+
 function BaseNode({ data, type, selected }: NodeProps<Node<CanvasNodeData>>) {
   const { t } = useLanguage();
   const kind = (type as CanvasNodeKind) || "customization";
@@ -135,12 +138,12 @@ function BaseNode({ data, type, selected }: NodeProps<Node<CanvasNodeData>>) {
 
   // 5-State FSM Visual Mapping
   const statusConfig: Record<string, { class: string; label: string; icon: React.ElementType }> = {
-    idle: { class: config.badge, label: "READY", icon: CheckCircle2 },
-    loading: { class: "bg-sky-500/20 text-sky-200 border-sky-500/30 animate-pulse", label: "LOADING", icon: Loader2 },
-    streaming: { class: "bg-amber-500/20 text-amber-200 border-amber-500/40 shadow-lg shadow-amber-500/20", label: "STREAMING", icon: Activity },
-    complete: { class: "bg-emerald-500/20 text-emerald-200 border-emerald-500/30", label: "COMPLETE", icon: CheckCircle2 },
-    error: { class: "bg-rose-500/20 text-rose-200 border-rose-500/30", label: "ERROR", icon: AlertTriangle },
-    cancelled: { class: "bg-slate-500/20 text-slate-200 border-slate-500/30", label: "CANCELLED", icon: Ban },
+    idle: { class: "border-white/5 bg-white/5 text-slate-400", label: t("statusReady"), icon: CheckCircle2 },
+    loading: { class: "border-sky-500/30 bg-sky-500/10 text-sky-300 animate-pulse", label: t("statusLoading"), icon: Loader2 },
+    streaming: { class: "border-amber-500/30 bg-amber-500/10 text-amber-300 shadow-[0_0_15px_-3px_rgba(245,158,11,0.2)]", label: t("statusStreaming"), icon: Activity },
+    complete: { class: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300", label: t("statusComplete"), icon: CheckCircle2 },
+    error: { class: "border-rose-500/30 bg-rose-500/10 text-rose-300", label: t("statusError"), icon: AlertTriangle },
+    cancelled: { class: "border-slate-500/30 bg-slate-500/10 text-slate-400", label: t("statusCancelled"), icon: Ban },
   };
   const statusStyle = statusConfig[status] || statusConfig.idle;
   const StatusIcon = statusStyle.icon;
@@ -154,69 +157,76 @@ function BaseNode({ data, type, selected }: NodeProps<Node<CanvasNodeData>>) {
     : [];
   const hasPreview = beatSheet.length > 0 || storyboard.length > 0;
 
+  const kindLabelMap: Record<CanvasNodeKind, string> = {
+    input: t("nodeInput"),
+    style: t("nodeStyle"),
+    customization: t("nodeCustom"),
+    processing: t("nodeProcess"),
+    output: t("nodeOutput"),
+    capsule: t("nodeCapsule"),
+  };
+
   return (
     <motion.div
       initial={{ scale: 0.9, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       whileHover={{ scale: 1.02, y: -2 }}
-      transition={{ duration: 0.2 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
       className={cn(
-        "relative min-w-[240px] rounded-2xl border bg-slate-950/80 px-4 py-4 backdrop-blur-xl transition-all duration-300",
+        "relative min-w-[260px] rounded-2xl border px-5 py-5 transition-all duration-300",
+        // Glassmorphism Base
+        "bg-[#0a0a0c]/60 backdrop-blur-2xl",
+        // Border Logic
         selected
-          ? `border-transparent ring-2 ring-offset-2 ring-offset-slate-950 ring-${config.gradient.split("-")[1]}-400`
-          : "border-slate-800",
-        config.glow,
-        selected && "shadow-2xl"
+          ? `border-${config.gradient.split("-")[1]}-500/50 shadow-[0_0_40px_-10px_rgba(var(--${config.gradient.split("-")[1]}-500-rgb),0.3)]`
+          : "border-white/5 hover:border-white/10",
+        selected && "z-10"
       )}
     >
-      {/* Gradient border effect via pseudo-element container if desired, or simple border for MVP */}
+      {/* Cinematic Glow on Selection */}
       {selected && (
         <div
           className={cn(
-            "absolute inset-0 -z-10 rounded-2xl opacity-20 bg-gradient-to-br",
+            "absolute inset-0 -z-10 rounded-2xl opacity-10 bg-gradient-to-br",
             config.gradient
           )}
         />
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           <div
             className={cn(
-              "flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br shadow-inner",
-              config.gradient
+              "flex h-9 w-9 items-center justify-center rounded-xl shadow-lg border border-white/10",
+              `bg-gradient-to-br ${config.gradient}`
             )}
           >
-            <Icon className="h-4 w-4 text-white" strokeWidth={2.5} />
+            <Icon className="h-5 w-5 text-white" strokeWidth={2} />
           </div>
           <div>
             <div
               className={cn(
-                "text-xs font-bold uppercase tracking-wider opacity-60",
+                "text-[10px] font-bold uppercase tracking-widest opacity-70 mb-0.5",
                 config.text
               )}
             >
-              {kind}
+              {kindLabelMap[kind] || kind}
             </div>
-            <div className="text-sm font-bold text-slate-100 leading-tight">
+            <div className="text-base font-bold text-slate-100 leading-none tracking-tight">
               {data.label}
             </div>
           </div>
         </div>
+
+        {/* Badges */}
         {isCapsule && (
-          <div className="flex flex-wrap items-center gap-1 text-[10px] uppercase tracking-widest">
-            <span className="rounded-full border border-rose-400/30 bg-rose-500/10 px-2 py-0.5 text-rose-200">
-              Sealed
+          <div className="flex flex-col items-end gap-1.5">
+            <span className="inline-flex items-center rounded-full border border-rose-500/20 bg-rose-500/5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-rose-300/80">
+              {t("sealed")}
             </span>
-            {isLocked && (
-              <span className="flex items-center gap-1 rounded-full border border-slate-400/30 bg-slate-500/10 px-2 py-0.5 text-slate-200">
-                <Lock className="h-3 w-3" />
-                Locked
-              </span>
-            )}
             {evidenceCount > 0 && (
-              <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-emerald-200">
+              <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-emerald-300/80">
                 {t("evidenceRefs")} {evidenceCount}
               </span>
             )}
@@ -224,53 +234,53 @@ function BaseNode({ data, type, selected }: NodeProps<Node<CanvasNodeData>>) {
         )}
       </div>
 
-      {/* Body / Content */}
+      {/* Subtitle / Description */}
       {data.subtitle && (
-        <div className="mb-2 rounded-md bg-slate-900/50 px-3 py-2 text-xs font-medium text-slate-400">
+        <div className="mb-4 text-xs font-medium text-slate-400 leading-relaxed pl-1">
           {data.subtitle}
         </div>
       )}
 
+      {/* Preview Content (Cards within Node) */}
       {hasPreview && (
-        <div className="mb-3 rounded-md border border-emerald-500/20 bg-emerald-500/5 px-3 py-2 text-xs text-slate-200">
-          <div className="text-[10px] uppercase tracking-widest text-emerald-300">
-            {t("generationPreview")}
+        <div className="mb-4 overflow-hidden rounded-xl border border-white/5 bg-black/20">
+          <div className="flex items-center justify-between border-b border-white/5 bg-white/5 px-3 py-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/80">
+              {t("generationPreview")}
+            </span>
+            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
           </div>
-          {beatSheet.length > 0 && (
-            <div className="mt-2 space-y-1">
-              {beatSheet.slice(0, 2).map((beat, idx) => (
-                <div key={idx} className="text-[11px] text-slate-300">
-                  {String((beat as Record<string, unknown>).beat ?? `Beat ${idx + 1}`)}:{" "}
-                  {String((beat as Record<string, unknown>).note ?? "")}
+          <div className="p-3 space-y-2">
+            {beatSheet.slice(0, 1).map((beat, idx) => (
+              <div key={idx} className="flex gap-2">
+                <span className="shrink-0 text-[10px] font-mono text-slate-500">{`0${idx + 1}`}</span>
+                <p className="text-[11px] text-slate-300 line-clamp-2">
+                  {getBeatLabel(beat) ?? ""}
+                </p>
+              </div>
+            ))}
+            {storyboard.slice(0, 1).map((shot, idx) => {
+              const shotData = shot as Record<string, unknown>;
+              const dominant = String(shotData.dominant_color ?? "#334155");
+              const shotLabel = getStoryboardLabel(shot);
+              return (
+                <div key={`shot-${idx}`} className="flex items-center gap-2 mt-2 pt-2 border-t border-white/5">
+                  <div className="h-3 w-3 rounded-full shadow-inner" style={{ backgroundColor: dominant }} />
+                  <span className="text-[10px] uppercase tracking-wide text-slate-400 truncate max-w-[150px]">
+                    {shotLabel || String(shotData.composition ?? "Shot Composition")}
+                  </span>
                 </div>
-              ))}
-            </div>
-          )}
-          {storyboard.length > 0 && (
-            <div className="mt-2 space-y-1">
-              {storyboard.slice(0, 2).map((shot, idx) => {
-                const shotData = shot as Record<string, unknown>;
-                const dominant = String(shotData.dominant_color ?? "#334155");
-                const accent = String(shotData.accent_color ?? "#64748b");
-                return (
-                  <div key={idx} className="flex items-center gap-2 text-[11px] text-slate-300">
-                    <span className="text-slate-400">Shot {String(shotData.shot ?? idx + 1)}</span>
-                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: dominant }} />
-                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: accent }} />
-                    <span className="truncate">{String(shotData.composition ?? "composition")}</span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+              )
+            })}
+          </div>
         </div>
       )}
 
-      {/* Status indicator if needed */}
-      <div className="flex items-center justify-between mt-2">
+      {/* Footer / Status */}
+      <div className="flex items-center justify-between pt-2 border-t border-white/5">
         <span
           className={cn(
-            "inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border",
+            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border transition-all duration-300",
             statusStyle.class
           )}
         >
@@ -278,28 +288,34 @@ function BaseNode({ data, type, selected }: NodeProps<Node<CanvasNodeData>>) {
           {statusStyle.label}
         </span>
         {status === "streaming" && data.streamingData && (
-          <span className="text-[10px] text-amber-300">
+          <span className="text-[10px] font-mono text-amber-400/80">
             {Math.round(data.streamingData.progress)}%
           </span>
         )}
       </div>
 
-      {/* Streaming partial text preview */}
+      {/* Streaming Text Effect */}
       {status === "streaming" && data.streamingData?.partialText && (
-        <div className="mt-2 rounded-md bg-slate-900/70 px-3 py-2 text-xs text-slate-300 animate-pulse">
-          {data.streamingData.partialText}
+        <div className="mt-3 rounded-lg border border-amber-500/10 bg-amber-500/5 px-3 py-2">
+          <p className="text-[11px] font-mono text-amber-200/80 leading-relaxed line-clamp-2">
+            {data.streamingData.partialText}
+            <motion.span
+              animate={{ opacity: [0, 1, 0] }}
+              transition={{ repeat: Infinity, duration: 0.8 }}
+              className="inline-block w-1.5 h-3 ml-0.5 align-middle bg-amber-400"
+            />
+          </p>
         </div>
       )}
 
-
-      {/* Handles with improved styling */}
+      {/* Handles - Minimal & Clean */}
       {canReceive && (
         <Handle
           type="target"
           position={Position.Left}
           className={cn(
-            "!h-4 !w-2 !rounded-full !border-2 !border-slate-950 transition-colors",
-            "bg-slate-400 hover:bg-white"
+            "!h-3 !w-3 !rounded-full !border-[3px] !border-[#0a0a0c] transition-transform duration-200",
+            "bg-slate-500 hover:scale-125 hover:bg-white"
           )}
         />
       )}
@@ -308,13 +324,11 @@ function BaseNode({ data, type, selected }: NodeProps<Node<CanvasNodeData>>) {
           type="source"
           position={Position.Right}
           className={cn(
-            "!h-4 !w-2 !rounded-full !border-2 !border-slate-950 transition-colors",
-            "bg-slate-400 hover:bg-white"
+            "!h-3 !w-3 !rounded-full !border-[3px] !border-[#0a0a0c] transition-transform duration-200",
+            "bg-slate-500 hover:scale-125 hover:bg-white"
           )}
         />
       )}
     </motion.div>
   );
 }
-
-export const CanvasNode = memo(BaseNode);

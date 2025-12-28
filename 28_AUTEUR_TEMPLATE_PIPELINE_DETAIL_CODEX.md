@@ -20,7 +20,7 @@
 - evidence는 `sheet:`/`db:`로 추적 가능해야 한다.
 
 References:  
-`20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`, `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`,  
+`20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`, `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`,  
 `27_AUTEUR_PIPELINE_E2E_CODEX.md`, `10_PIPELINES_AND_USER_FLOWS.md`,  
 `33_NOTEBOOKLM_SOURCE_PACK_AND_PROMPT_PROTOCOL_CODEX.md`
 
@@ -141,7 +141,7 @@ References:
 **Goal**: 요약/오마주/변주/템플릿 적합도 가이드를 생성한다.  
 **Input**: DB SoR + **Source Pack**  
 **Process**: NotebookLM/Opal 실행 → JSON 출력  
-**Output**: `VIVID_DERIVED_INSIGHTS` (Sheets Bus)  
+**Output**: `CREBIT_DERIVED_INSIGHTS` (Sheets Bus)  
 **Owner**: Admin/Curator  
 **Contract**: `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md`  
 **Gate**: guide_type / output_type allowlist 준수  
@@ -300,7 +300,7 @@ References:
 **Ops**
 - `backend/scripts/pipeline_report.py`
 - `GET /api/v1/ops/pipeline`
-  - `VIVID_QUARANTINE_CSV_PATH`가 설정되어 있으면 쿼런틴 요약 포함
+  - `CREBIT_QUARANTINE_CSV_PATH`가 설정되어 있으면 쿼런틴 요약 포함
   - 최근 patternVersion 히스토리(최근 5개) 포함
   - Quarantine 샘플 row(최대 20개) 포함
   - patternVersion note 표시
@@ -349,7 +349,7 @@ python backend/scripts/ingest_derived_insights.py \
 
 ### 7.6 Sheets Promotion (Stage 5)
 ```bash
-export VIVID_DERIVED_INSIGHTS_CSV_URL="https://..."
+export CREBIT_DERIVED_INSIGHTS_CSV_URL="https://..."
 python backend/scripts/promote_from_sheets.py
 ```
 

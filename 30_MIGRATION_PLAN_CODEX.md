@@ -1,4 +1,4 @@
-# Vivid Migration Plan (CODEX v30)
+# Crebit Migration Plan (CODEX v30)
 
 **Date**: 2025-12-24  
 **Status**: CODEX reference (migration sequencing)  
@@ -10,7 +10,7 @@
 
 정본 원칙/흐름은 아래 문서를 따른다:
 
-- `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`
+- `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
 - `10_PIPELINES_AND_USER_FLOWS.md`
 - `05_CAPSULE_NODE_SPEC.md`
 - `08_SHEETS_SCHEMA_V1.md`
@@ -21,13 +21,13 @@
 
 ## 1) Canonical References
 
-- Architecture baseline: `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`
+- Architecture baseline: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
 - User flows: `10_PIPELINES_AND_USER_FLOWS.md`
 - Capsule contract: `05_CAPSULE_NODE_SPEC.md`
 - Template system: `23_TEMPLATE_SYSTEM_SPEC_CODEX.md`
 - E2E pipeline: `27_AUTEUR_PIPELINE_E2E_CODEX.md`, `28_AUTEUR_TEMPLATE_PIPELINE_DETAIL_CODEX.md`
 - Production pipeline: `29_AI_PRODUCTION_PIPELINE_CODEX.md`
-- Execution sequencing: `19_VIVID_EXECUTION_PLAN_V1.md`
+- Execution sequencing: `19_CREBIT_EXECUTION_PLAN_V1.md`
 - UI system: `13_UI_DESIGN_GUIDE_2025-12.md`
 
 ---

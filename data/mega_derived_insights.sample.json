@@ -13,7 +13,7 @@
     "cluster_label": "ops discovery",
     "notebook_id": "nlb-mega-ops-001",
     "notebook_ref": "https://notebooklm.google.com/notebook/mega-ops-001",
-    "evidence_refs": ["sheet:VIVID_DERIVED_INSIGHTS:row-mega-001"],
+    "evidence_refs": ["sheet:CREBIT_DERIVED_INSIGHTS:row-mega-001"],
     "generated_at": "2025-12-26T21:00:00Z"
   }
 ]

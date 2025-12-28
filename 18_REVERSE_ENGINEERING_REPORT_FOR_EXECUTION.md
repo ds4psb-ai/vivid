@@ -1,6 +1,7 @@
 # 18_REVERSE_ENGINEERING_REPORT_FOR_EXECUTION.md
 
 **Date**: 2025-12-24
+**Updated**: 2025-12-28
 **Purpose**: Final data extraction to unblock "Execution Plan"
 **Scope**: Workstreams A-F (IA, Canvas, Data, Credits, Affiliate, Observability)
 
@@ -11,11 +12,11 @@
 This document is reference-only. Final decisions and contracts live in SoR docs.
 
 - Docs map: `00_DOCS_INDEX.md`
-- Philosophy: `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`
+- Philosophy: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
 - Flows/Roles: `10_PIPELINES_AND_USER_FLOWS.md`
 - Capsule contract: `05_CAPSULE_NODE_SPEC.md`
 - UI/UX: `13_UI_DESIGN_GUIDE_2025-12.md`
-- Credits/Growth: `17_CREDITS_AND_BILLING_SPEC_V1.md`, `18_AFFILIATE_PROGRAM_SPEC_V1.md`
+- Credits/Growth: `17_CREDITS_AND_BILLING_SPEC_V1.md`, `35_AFFILIATE_PROGRAM_SPEC_V1.md`
 
 ---
 
@@ -137,7 +138,7 @@ Observed in competitor UI; **do not adopt** without separate validation and lega
 *   **Analytics**: PostHog (observed)
 
 **3. Credit Cost Matrix (Live data)**
-Observed competitor pricing signals; **do not treat as Vivid policy**.
+Observed competitor pricing signals; **do not treat as Crebit policy**.
 | Action | Cost (Credits) | Notes |
 | :--- | :--- | :--- |
 | **Script Gen** | 1-5 | Dynamic based on length |

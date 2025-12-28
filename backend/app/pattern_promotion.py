@@ -2,120 +2,29 @@
 from __future__ import annotations
 
 import os
-import re
 from datetime import datetime
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from sqlalchemy import select
 
-from app.ingest_rules import has_label
+from app.ingest_rules import PATTERN_NAME_RE, PATTERN_TYPE_ALLOWLIST, VIDEO_EVIDENCE_REF_RE, has_label
 from app.database import AsyncSessionLocal, init_db
 from app.models import (
-    CapsuleSpec,
     EvidenceRecord,
     Pattern,
     PatternCandidate,
     PatternTrace,
-    PatternVersion,
     RawAsset,
-    Template,
-    TemplateVersion,
+)
+from app.pattern_versioning import (
+    bump_pattern_version,
+    update_capsule_specs,
+    update_template_versions,
 )
 
-PATTERN_VERSION_RE = re.compile(r"^v(\d+)$", re.IGNORECASE)
 DEFAULT_MIN_CONFIDENCE = float(os.getenv("PATTERN_CONFIDENCE_THRESHOLD", "0.6"))
 MIN_PROMOTED_TRACE = int(os.getenv("PATTERN_PROMOTION_MIN_TRACE", "5") or 5)
 MIN_EVIDENCE_COVERAGE = float(os.getenv("PATTERN_PROMOTION_MIN_EVIDENCE_COVERAGE", "0.6") or 0.6)
-
-
-def _next_pattern_version(current: Optional[str]) -> str:
-    if not current:
-        return "v1"
-    match = PATTERN_VERSION_RE.match(current.strip())
-    if not match:
-        return "v1"
-    return f"v{int(match.group(1)) + 1}"
-
-
-async def _bump_pattern_version(note: str) -> str:
-    async with AsyncSessionLocal() as session:
-        result = await session.execute(
-            select(PatternVersion).order_by(PatternVersion.created_at.desc()).limit(1)
-        )
-        latest = result.scalars().first()
-        next_version = _next_pattern_version(latest.version if latest else None)
-        snapshot = PatternVersion(version=next_version, note=note)
-        session.add(snapshot)
-        await session.commit()
-        return next_version
-
-
-async def _update_capsule_specs(pattern_version: str) -> None:
-    async with AsyncSessionLocal() as session:
-        result = await session.execute(select(CapsuleSpec))
-        specs = result.scalars().all()
-        for spec in specs:
-            payload = spec.spec or {}
-            current = payload.get("patternVersion") or payload.get("pattern_version")
-            if current == pattern_version:
-                continue
-            payload["patternVersion"] = pattern_version
-            spec.spec = payload
-        await session.commit()
-
-
-def _apply_pattern_version_to_graph(graph_data: dict, pattern_version: str) -> Optional[dict]:
-    if not isinstance(graph_data, dict):
-        return None
-    nodes = graph_data.get("nodes")
-    if not isinstance(nodes, list):
-        return None
-    updated = False
-    next_nodes = []
-    for node in nodes:
-        if not isinstance(node, dict):
-            next_nodes.append(node)
-            continue
-        data = node.get("data")
-        if not isinstance(data, dict):
-            next_nodes.append(node)
-            continue
-        if data.get("capsuleId") and data.get("capsuleVersion"):
-            current = data.get("patternVersion")
-            if current != pattern_version:
-                patched = {**data, "patternVersion": pattern_version}
-                next_nodes.append({**node, "data": patched})
-                updated = True
-                continue
-        next_nodes.append(node)
-    if not updated:
-        return None
-    return {**graph_data, "nodes": next_nodes}
-
-
-async def _update_template_versions(pattern_version: str, note: str) -> None:
-    async with AsyncSessionLocal() as session:
-        result = await session.execute(select(Template))
-        templates = result.scalars().all()
-        for template in templates:
-            updated_graph = _apply_pattern_version_to_graph(
-                template.graph_data or {}, pattern_version
-            )
-            if not updated_graph:
-                continue
-            template.graph_data = updated_graph
-            template.version = (template.version or 1) + 1
-            session.add(
-                TemplateVersion(
-                    template_id=template.id,
-                    version=template.version,
-                    graph_data=updated_graph,
-                    notes=note,
-                    creator_id=template.creator_id,
-                )
-            )
-        await session.commit()
-
 
 async def _derive_candidates_from_evidence(session) -> int:
     result = await session.execute(
@@ -181,12 +90,30 @@ async def _load_rights_map(session, source_ids: Iterable[str]) -> Dict[str, Opti
     return {asset.source_id: asset.rights_status for asset in result.scalars().all()}
 
 
+def _is_valid_evidence_ref(value: Optional[str]) -> bool:
+    if not value:
+        return False
+    cleaned = value.strip()
+    if not cleaned:
+        return False
+    return bool(VIDEO_EVIDENCE_REF_RE.match(cleaned))
+
+
+def _is_valid_pattern_name_type(name: Optional[str], pattern_type: Optional[str]) -> bool:
+    if not name or not pattern_type:
+        return False
+    if not PATTERN_NAME_RE.match(name):
+        return False
+    return pattern_type in PATTERN_TYPE_ALLOWLIST
+
+
 async def _promote_candidates(
     *,
     min_confidence: float,
     min_sources: int,
     require_evidence_ref: bool,
     allow_missing_raw: bool,
+    min_fitness_score: Optional[float],
     dry_run: bool,
 ) -> Tuple[bool, Dict[str, int]]:
     stats = {
@@ -199,6 +126,8 @@ async def _promote_candidates(
         "skipped_evidence": 0,
         "skipped_trace_min": 0,
         "skipped_coverage": 0,
+        "skipped_taxonomy": 0,
+        "skipped_fitness": 0,
     }
     changed = False
     async with AsyncSessionLocal() as session:
@@ -210,17 +139,33 @@ async def _promote_candidates(
         )
         candidates = result.scalars().all()
         stats["candidates"] = len(candidates)
-        source_ids = {candidate.source_id for candidate in candidates}
+        valid_candidates = [
+            candidate
+            for candidate in candidates
+            if _is_valid_pattern_name_type(candidate.pattern_name, candidate.pattern_type)
+        ]
+        stats["skipped_taxonomy"] = len(candidates) - len(valid_candidates)
+        source_ids = {candidate.source_id for candidate in valid_candidates}
         rights_map = await _load_rights_map(session, source_ids)
 
         pattern_sources: Dict[Tuple[str, str], Set[str]] = {}
-        for candidate in candidates:
+        fitness_totals: Dict[Tuple[str, str], float] = {}
+        fitness_counts: Dict[Tuple[str, str], int] = {}
+        for candidate in valid_candidates:
             key = (candidate.pattern_name, candidate.pattern_type)
             pattern_sources.setdefault(key, set()).add(candidate.source_id)
+            if candidate.weight is not None:
+                fitness_totals[key] = fitness_totals.get(key, 0.0) + float(candidate.weight)
+                fitness_counts[key] = fitness_counts.get(key, 0) + 1
+        fitness_scores = {
+            key: fitness_totals[key] / fitness_counts[key]
+            for key in fitness_counts
+            if fitness_counts.get(key)
+        }
 
         eligible_counts: Dict[Tuple[str, str], int] = {}
         evidence_counts: Dict[Tuple[str, str], int] = {}
-        for candidate in candidates:
+        for candidate in valid_candidates:
             rights_status = rights_map.get(candidate.source_id)
             if rights_status == "restricted":
                 continue
@@ -232,13 +177,15 @@ async def _promote_candidates(
             key = (candidate.pattern_name, candidate.pattern_type)
             if len(pattern_sources.get(key, set())) < min_sources:
                 continue
-            if require_evidence_ref and not (candidate.evidence_ref or "").strip():
+            evidence_ref = (candidate.evidence_ref or "").strip()
+            valid_evidence = _is_valid_evidence_ref(evidence_ref)
+            if require_evidence_ref and not valid_evidence:
                 continue
             eligible_counts[key] = eligible_counts.get(key, 0) + 1
-            if (candidate.evidence_ref or "").strip():
+            if valid_evidence:
                 evidence_counts[key] = evidence_counts.get(key, 0) + 1
 
-        for candidate in candidates:
+        for candidate in valid_candidates:
             rights_status = rights_map.get(candidate.source_id)
             if rights_status == "restricted":
                 stats["skipped_rights"] += 1
@@ -247,7 +194,9 @@ async def _promote_candidates(
                 stats["skipped_rights"] += 1
                 continue
 
-            if require_evidence_ref and not (candidate.evidence_ref or "").strip():
+            evidence_ref = (candidate.evidence_ref or "").strip()
+            valid_evidence = _is_valid_evidence_ref(evidence_ref)
+            if require_evidence_ref and not valid_evidence:
                 stats["skipped_evidence"] += 1
                 continue
 
@@ -290,6 +239,12 @@ async def _promote_candidates(
                     stats["skipped_coverage"] += 1
                     if not (pattern and pattern.status == "promoted"):
                         desired_status = "validated"
+                elif min_fitness_score is not None:
+                    avg_fitness = fitness_scores.get(key)
+                    if avg_fitness is None or avg_fitness < min_fitness_score:
+                        stats["skipped_fitness"] += 1
+                        if not (pattern and pattern.status == "promoted"):
+                            desired_status = "validated"
             if not pattern:
                 pattern = Pattern(
                     name=candidate.pattern_name,
@@ -307,27 +262,27 @@ async def _promote_candidates(
             if pattern.id is None:
                 await session.flush()
 
-            evidence_ref = (candidate.evidence_ref or "").strip()
-            result = await session.execute(
-                select(PatternTrace).where(
-                    PatternTrace.source_id == candidate.source_id,
-                    PatternTrace.pattern_id == pattern.id,
-                    PatternTrace.evidence_ref == evidence_ref,
+            if valid_evidence:
+                result = await session.execute(
+                    select(PatternTrace).where(
+                        PatternTrace.source_id == candidate.source_id,
+                        PatternTrace.pattern_id == pattern.id,
+                        PatternTrace.evidence_ref == evidence_ref,
+                    )
                 )
-            )
-            trace = result.scalars().first()
-            if not trace:
-                trace = PatternTrace(
-                    source_id=candidate.source_id,
-                    pattern_id=pattern.id,
-                    evidence_ref=evidence_ref,
-                )
-                session.add(trace)
-                changed = True
-                stats["traces_upserted"] += 1
-            if candidate.weight is not None and trace.weight != candidate.weight:
-                trace.weight = candidate.weight
-                changed = True
+                trace = result.scalars().first()
+                if not trace:
+                    trace = PatternTrace(
+                        source_id=candidate.source_id,
+                        pattern_id=pattern.id,
+                        evidence_ref=evidence_ref,
+                    )
+                    session.add(trace)
+                    changed = True
+                    stats["traces_upserted"] += 1
+                if candidate.weight is not None and trace.weight != candidate.weight:
+                    trace.weight = candidate.weight
+                    changed = True
 
         if not dry_run:
             await session.commit()
@@ -373,15 +328,16 @@ async def run_pattern_promotion(
         min_sources=min_sources,
         require_evidence_ref=not allow_empty_evidence,
         allow_missing_raw=allow_missing_raw,
+        min_fitness_score=min_fitness_score,
         dry_run=dry_run,
     )
 
     pattern_version = None
     if changed and not dry_run:
         resolved_note = note.strip() or f"manual promotion {datetime.utcnow().isoformat()}Z"
-        pattern_version = await _bump_pattern_version(resolved_note)
-        await _update_capsule_specs(pattern_version)
-        await _update_template_versions(pattern_version, f"{resolved_note} (patternVersion)")
+        pattern_version = await bump_pattern_version(resolved_note)
+        await update_capsule_specs(pattern_version)
+        await update_template_versions(pattern_version, f"{resolved_note} (patternVersion)")
     else:
         resolved_note = note.strip()
 

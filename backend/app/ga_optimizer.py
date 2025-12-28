@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import random
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from copy import deepcopy
 
 
@@ -176,6 +176,7 @@ def fitness_function(
 def evidence_based_fitness(
     params: Dict[str, Any],
     run_metrics: Dict[str, Any],
+    pattern_lifts: Optional[Dict[str, float]] = None,
 ) -> float:
     """Calculate fitness score from actual evidence/run metrics.
     
@@ -187,9 +188,15 @@ def evidence_based_fitness(
             - latency_ms: Execution time in milliseconds
             - user_feedback: Optional user rating (1-5)
             - completion_rate: Optional (0.0-1.0)
+            - pattern_names: Optional list of pattern names used
+        pattern_lifts: Optional dict mapping pattern_name -> lift value.
+            If provided, patterns with positive lift get bonus points.
     
     Returns:
         Evidence-based fitness score.
+    
+    Reference:
+        07_EXECUTION_PLAN_2025-12.md Phase 2.2
     """
     score = 0.0
     
@@ -226,6 +233,22 @@ def evidence_based_fitness(
     pattern_version = run_metrics.get("pattern_version", "v0")
     version_num = int(pattern_version.replace("v", "")) if pattern_version.startswith("v") else 0
     score += min(version_num, 5)  # Cap bonus at 5 points
+    
+    # === NEW: Pattern Lift Bonus (Phase 2.2) ===
+    # Patterns with positive lift values get bonus fitness points
+    # This encourages the GA to favor parameter sets associated with high-lift patterns
+    if pattern_lifts:
+        pattern_names = run_metrics.get("pattern_names", [])
+        if isinstance(pattern_names, list):
+            lift_bonus = 0.0
+            for pattern_name in pattern_names:
+                if pattern_name in pattern_lifts:
+                    lift_value = pattern_lifts[pattern_name]
+                    # Scale lift to bonus: +10% lift = +2 points, max +10 points per pattern
+                    if lift_value > 0:
+                        lift_bonus += min(lift_value * 20, 10)
+            # Cap total lift bonus at 20 points
+            score += min(lift_bonus, 20)
     
     return max(0, score)
 

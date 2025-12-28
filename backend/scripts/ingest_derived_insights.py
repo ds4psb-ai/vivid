@@ -14,6 +14,7 @@ if str(ROOT_DIR) not in sys.path:
 
 from app.database import AsyncSessionLocal, init_db
 from app.ingest_rules import ensure_label, is_mega_notebook_notes
+from app.narrative_utils import normalize_story_beats, normalize_storyboard_cards
 from app.models import EvidenceRecord, NotebookLibrary, RawAsset, SourcePack
 from app.routers.ingest import EvidenceRecordRequest
 
@@ -74,6 +75,19 @@ def _parse_json_field(value: Any, field_name: str, allow_list: bool = False) -> 
     raise ValueError(f"{field_name} must be JSON")
 
 
+def _parse_float_field(value: Any) -> Optional[float]:
+    if value in (None, ""):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value.strip())
+        except ValueError:
+            return None
+    return None
+
+
 def _normalize_row(
     row: Dict[str, Any],
     *,
@@ -96,6 +110,8 @@ def _normalize_row(
         "storyboard_cards",
         allow_list=True,
     )
+    story_beats = normalize_story_beats(story_beats)
+    storyboard_cards = normalize_storyboard_cards(storyboard_cards)
     key_patterns = _parse_json_field(_pick(row, "key_patterns", "keyPatterns"), "key_patterns", allow_list=True)
 
     return {
@@ -117,7 +133,7 @@ def _normalize_row(
         "filter_notebook_id": _pick(row, "filter_notebook_id", "filterNotebookId"),
         "cluster_id": _pick(row, "cluster_id", "clusterId"),
         "cluster_label": _pick(row, "cluster_label", "clusterLabel"),
-        "cluster_confidence": _pick(row, "cluster_confidence", "clusterConfidence"),
+        "cluster_confidence": _parse_float_field(_pick(row, "cluster_confidence", "clusterConfidence")),
         "style_logic": _pick(row, "style_logic", "styleLogic"),
         "mise_en_scene": _pick(row, "mise_en_scene", "miseEnScene"),
         "director_intent": _pick(row, "director_intent", "directorIntent"),
@@ -134,7 +150,7 @@ def _normalize_row(
         "studio_output_id": _pick(row, "studio_output_id", "studioOutputId"),
         "adapter": _pick(row, "adapter"),
         "opal_workflow_id": _pick(row, "opal_workflow_id", "opalWorkflowId"),
-        "confidence": _pick(row, "confidence"),
+        "confidence": _parse_float_field(_pick(row, "confidence")),
         "notebook_id": _pick(row, "notebook_id", "notebookId"),
         "notebook_ref": _pick(row, "notebook_ref", "notebookRef"),
         "evidence_refs": evidence_refs or [],

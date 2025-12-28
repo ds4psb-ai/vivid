@@ -7,16 +7,13 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from sqlalchemy import select
-
-from app.database import AsyncSessionLocal, init_db
-from app.models import CapsuleSpec
-from app.patterns import get_latest_pattern_version
+from app.database import init_db
+from app.pattern_versioning import refresh_capsule_specs
 
 
 async def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Sync CapsuleSpec patternVersion to the latest PatternVersion snapshot."
+        description="Create a new CapsuleSpec version with the latest patternVersion."
     )
     parser.add_argument(
         "--pattern-version",
@@ -27,31 +24,20 @@ async def main() -> None:
         action="store_true",
         help="Show the number of capsules to update without writing.",
     )
+    parser.add_argument(
+        "--include-inactive",
+        action="store_true",
+        help="Also update inactive capsule specs (default updates active only).",
+    )
     args = parser.parse_args()
 
     await init_db()
-    async with AsyncSessionLocal() as session:
-        if args.pattern_version:
-            pattern_version = args.pattern_version.strip()
-        else:
-            pattern_version = await get_latest_pattern_version(session)
-
-        result = await session.execute(select(CapsuleSpec))
-        specs = result.scalars().all()
-        updated = 0
-        for spec in specs:
-            payload = spec.spec or {}
-            current = payload.get("patternVersion") or payload.get("pattern_version")
-            if current == pattern_version:
-                continue
-            payload["patternVersion"] = pattern_version
-            spec.spec = payload
-            updated += 1
-
-        if args.dry_run:
-            await session.rollback()
-        else:
-            await session.commit()
+    pattern_version = args.pattern_version.strip() if args.pattern_version else None
+    pattern_version, updated = await refresh_capsule_specs(
+        pattern_version,
+        dry_run=args.dry_run,
+        only_active=not args.include_inactive,
+    )
 
     mode = "dry-run" if args.dry_run else "updated"
     print(f"{mode}: {updated} capsule specs -> patternVersion={pattern_version}")

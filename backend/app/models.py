@@ -110,6 +110,10 @@ class CapsuleRun(Base):
     token_usage: Mapped[dict] = mapped_column(JSONB, default=dict)
     latency_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     cost_usd_est: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    # Gap 3: persona_priority to track persona source priority setting
+    persona_priority: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)  # script | blended | user
+    # Gap 4: persona_source for KPI tracking  
+    persona_source: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)  # script | user | auteur | blended
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -204,6 +208,8 @@ class VideoSegment(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     segment_id: Mapped[str] = mapped_column(String(120))
     source_id: Mapped[str] = mapped_column(String(64))
+    # Gap 2: segment_type to distinguish video vs script segments
+    segment_type: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)  # video | script | text
     work_id: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
     sequence_id: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
     scene_id: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
@@ -265,6 +271,8 @@ class EvidenceRecord(Base):
     source_id: Mapped[str] = mapped_column(String(64))
     summary: Mapped[str] = mapped_column(Text)
     guide_type: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    # Gap 1: persona_source to track origin of persona (script/user/auteur/blended)
+    persona_source: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     homage_guide: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     variation_guide: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     template_recommendations: Mapped[list] = mapped_column(JSONB, default=list)
@@ -502,6 +510,29 @@ class AffiliateReferral(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class UserAccount(Base):
+    __tablename__ = "user_accounts"
+    __table_args__ = (
+        UniqueConstraint("user_id", name="uq_user_accounts_user_id"),
+        UniqueConstraint("provider", "provider_user_id", name="uq_user_accounts_provider"),
+        UniqueConstraint("email", name="uq_user_accounts_email"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[str] = mapped_column(String(160))
+    provider: Mapped[str] = mapped_column(String(32))
+    provider_user_id: Mapped[str] = mapped_column(String(200))
+    email: Mapped[str] = mapped_column(String(255))
+    name: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    avatar_url: Mapped[Optional[str]] = mapped_column(String(400), nullable=True)
+    role: Mapped[str] = mapped_column(String(32), default="user")
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class UserCredits(Base):
     """User credit balance tracking."""
     __tablename__ = "user_credits"
@@ -535,3 +566,53 @@ class CreditLedger(Base):
     meta: Mapped[dict] = mapped_column(JSONB, default=dict)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class AnalyticsEvent(Base):
+    """Analytics events for measuring user engagement and pilot metrics."""
+    __tablename__ = "analytics_events"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    event_type: Mapped[str] = mapped_column(String(60))  # evidence_ref_opened, template_seeded, template_version_swapped
+    user_id: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)
+    template_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
+    capsule_id: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)
+    run_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
+    evidence_ref: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    meta: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class CrebitApplication(Base):
+    """Crebit ATC course applications."""
+    __tablename__ = "crebit_applications"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    
+    # Applicant info
+    name: Mapped[str] = mapped_column(String(100))
+    email: Mapped[str] = mapped_column(String(255))
+    phone: Mapped[str] = mapped_column(String(20))
+    
+    # Track selection: 'A' (Cinematic) or 'B' (Motion Graphics)
+    track: Mapped[str] = mapped_column(String(1))
+    
+    # Application status
+    status: Mapped[str] = mapped_column(String(20), default="pending")
+    # pending: Application received, awaiting payment
+    # paid: Payment completed
+    # cancelled: Cancelled by user/admin
+    # refunded: Refunded
+    
+    # Payment info (Phase 2)
+    payment_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    paid_amount: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    paid_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    
+    # Metadata
+    cohort: Mapped[str] = mapped_column(String(10), default="1기")
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

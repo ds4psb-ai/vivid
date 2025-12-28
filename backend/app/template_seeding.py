@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Iterable, List, Optional
+from typing import Any, Iterable, List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,7 +11,9 @@ from app.graph_utils import collect_storyboard_refs
 from app.template_graph import build_template_graph
 from app.ingest_rules import has_label
 from app.models import EvidenceRecord, Template, TemplateVersion
+from app.notebooklm_client import AUTEUR_PERSONA_HINTS
 from app.patterns import get_latest_pattern_version
+from app.narrative_utils import normalize_story_beats, normalize_storyboard_cards
 
 
 def _unique_tags(tags: Iterable[str]) -> List[str]:
@@ -24,6 +26,140 @@ def _unique_tags(tags: Iterable[str]) -> List[str]:
         seen.add(cleaned)
         result.append(cleaned)
     return result
+
+
+def _coerce_text(value: Any) -> Optional[str]:
+    if isinstance(value, str):
+        cleaned = value.strip()
+        return cleaned or None
+    if isinstance(value, (int, float)):
+        return str(value)
+    return None
+
+
+def _clamp_unit(value: float) -> float:
+    return max(0.0, min(float(value), 1.0))
+
+
+def _infer_pacing_from_text(text: Optional[str]) -> Optional[str]:
+    if not text:
+        return None
+    lowered = text.lower()
+    if any(token in lowered for token in ("fast", "rapid", "quick", "frantic", "urgent")):
+        return "fast"
+    if any(token in lowered for token in ("slow", "linger", "long", "calm", "still")):
+        return "slow"
+    if any(token in lowered for token in ("medium", "balanced", "steady", "moderate")):
+        return "medium"
+    return None
+
+
+def _infer_color_bias_from_text(text: Optional[str]) -> Optional[str]:
+    if not text:
+        return None
+    lowered = text.lower()
+    if any(token in lowered for token in ("warm", "amber", "gold", "sun", "heat")):
+        return "warm"
+    if any(token in lowered for token in ("cool", "cold", "blue", "icy", "steel")):
+        return "cool"
+    if any(token in lowered for token in ("neutral", "muted", "gray", "grey")):
+        return "neutral"
+    return None
+
+
+def _infer_pacing(record: EvidenceRecord) -> Optional[str]:
+    if isinstance(record.pacing, dict):
+        tempo = record.pacing.get("tempo") or record.pacing.get("speed") or record.pacing.get("pace")
+        if isinstance(tempo, (int, float)):
+            value = float(tempo)
+            if value <= 0.4:
+                return "slow"
+            if value >= 0.7:
+                return "fast"
+            return "medium"
+        inferred = _infer_pacing_from_text(_coerce_text(tempo))
+        if inferred:
+            return inferred
+    inferred = _infer_pacing_from_text(_coerce_text(record.editing_rhythm))
+    if inferred:
+        return inferred
+    profile = _coerce_text(record.persona_profile)
+    if profile:
+        inferred = _infer_pacing_from_text(profile)
+        if inferred:
+            return inferred
+    logic = _coerce_text(record.synapse_logic)
+    if logic:
+        return _infer_pacing_from_text(logic)
+    return None
+
+
+def _infer_color_bias(record: EvidenceRecord) -> Optional[str]:
+    if isinstance(record.color_palette, dict):
+        bias = record.color_palette.get("bias") or record.color_palette.get("tone")
+        if isinstance(bias, str):
+            normalized = bias.strip().lower()
+            if normalized in {"cool", "warm", "neutral"}:
+                return normalized
+        inferred = _infer_color_bias_from_text(_coerce_text(bias))
+        if inferred:
+            return inferred
+    profile = _coerce_text(record.persona_profile)
+    if profile:
+        inferred = _infer_color_bias_from_text(profile)
+        if inferred:
+            return inferred
+    logic = _coerce_text(record.synapse_logic)
+    if logic:
+        return _infer_color_bias_from_text(logic)
+    return None
+
+
+def _infer_motif_weight(record: EvidenceRecord, fallback: Optional[float]) -> Optional[float]:
+    for candidate in (record.confidence, record.cluster_confidence):
+        if isinstance(candidate, (int, float)):
+            return _clamp_unit(candidate)
+    motifs = record.signature_motifs or []
+    if motifs:
+        return _clamp_unit(0.6 + min(len(motifs), 3) * 0.1)
+    if isinstance(fallback, (int, float)):
+        return _clamp_unit(fallback)
+    return None
+
+
+def _select_persona_synapse_record(records: List[EvidenceRecord]) -> Optional[EvidenceRecord]:
+    for record in records:
+        if record.guide_type in {"persona", "synapse"}:
+            return record
+    return None
+
+
+def _signature_param_for_capsule(capsule_key: str) -> Optional[str]:
+    hints = AUTEUR_PERSONA_HINTS.get(capsule_key) if capsule_key else None
+    signature = hints.get("signature") if isinstance(hints, dict) else None
+    return signature if isinstance(signature, str) and signature.strip() else None
+
+
+def _derive_persona_synapse_params(
+    records: List[EvidenceRecord],
+    capsule_key: str,
+    base_params: dict,
+) -> dict:
+    record = _select_persona_synapse_record(records)
+    if not record:
+        return {}
+    overrides: dict = {}
+    pacing = _infer_pacing(record)
+    if pacing:
+        overrides["pacing"] = pacing
+    color_bias = _infer_color_bias(record)
+    if color_bias:
+        overrides["color_bias"] = color_bias
+    signature_key = _signature_param_for_capsule(capsule_key)
+    motif_weight = _infer_motif_weight(record, base_params.get("style_intensity"))
+    if signature_key and motif_weight is not None:
+        overrides[signature_key] = round(motif_weight, 2)
+    return overrides
 
 
 
@@ -152,12 +288,15 @@ async def seed_template_from_evidence(
     ]
     if not records:
         raise ValueError("No eligible evidence records (ops_only excluded)")
-    story_beats = _select_story_beats(records)
-    storyboard_cards = _select_storyboard_cards(records)
+    story_beats = normalize_story_beats(_select_story_beats(records))
+    storyboard_cards = normalize_storyboard_cards(_select_storyboard_cards(records))
     derived_tags = _derive_tags(records)
     resolved_tags = _unique_tags([*(tags or []), *derived_tags])
     capsule_record = _select_capsule_record(records)
     capsule_params = _derive_capsule_params(capsule_record)
+    persona_overrides = _derive_persona_synapse_params(records, capsule_key, capsule_params)
+    if persona_overrides:
+        capsule_params.update(persona_overrides)
     guide_types = _collect_guide_types(records)
     evidence_refs = _collect_evidence_refs(records)
     meta = {

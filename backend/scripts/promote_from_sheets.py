@@ -6,7 +6,6 @@ import csv
 import io
 import json
 import os
-import re
 import time
 import uuid
 from datetime import datetime
@@ -27,9 +26,12 @@ from app.ingest_rules import (
     PATTERN_TYPE_ALLOWLIST,
     RAW_SOURCE_TYPE_ALLOWLIST,
     VIDEO_EVIDENCE_REF_RE,
+    build_segment_id_fallback,
     ensure_label,
+    has_label,
     is_mega_notebook_notes,
 )
+from app.narrative_utils import normalize_story_beats, normalize_storyboard_cards
 from app.models import (
     EvidenceRecord,
     NotebookLibrary,
@@ -37,13 +39,14 @@ from app.models import (
     Pattern,
     PatternCandidate,
     PatternTrace,
-    PatternVersion,
-    CapsuleSpec,
     RawAsset,
     SourcePack,
     VideoSegment,
-    Template,
-    TemplateVersion,
+)
+from app.pattern_versioning import (
+    bump_pattern_version,
+    update_capsule_specs,
+    update_template_versions,
 )
 
 
@@ -52,28 +55,28 @@ SHEETS_API_BASE = os.getenv("SHEETS_API_BASE", "https://sheets.googleapis.com/v4
 SHEETS_API_KEY = os.getenv("SHEETS_API_KEY", "")
 SHEETS_SPREADSHEET_ID = os.getenv("SHEETS_SPREADSHEET_ID", "")
 
-NOTEBOOK_CSV_URL = os.getenv("VIVID_NOTEBOOK_LIBRARY_CSV_URL", "")
-NOTEBOOK_ASSETS_CSV_URL = os.getenv("VIVID_NOTEBOOK_ASSETS_CSV_URL", "")
-RAW_CSV_URL = os.getenv("VIVID_RAW_ASSETS_CSV_URL", "")
-VIDEO_STRUCTURED_CSV_URL = os.getenv("VIVID_VIDEO_STRUCTURED_CSV_URL", "")
-DERIVED_CSV_URL = os.getenv("VIVID_DERIVED_INSIGHTS_CSV_URL", "")
-CANDIDATES_CSV_URL = os.getenv("VIVID_PATTERN_CANDIDATES_CSV_URL", "")
-TRACE_CSV_URL = os.getenv("VIVID_PATTERN_TRACE_CSV_URL", "")
+NOTEBOOK_CSV_URL = os.getenv("CREBIT_NOTEBOOK_LIBRARY_CSV_URL", "")
+NOTEBOOK_ASSETS_CSV_URL = os.getenv("CREBIT_NOTEBOOK_ASSETS_CSV_URL", "")
+RAW_CSV_URL = os.getenv("CREBIT_RAW_ASSETS_CSV_URL", "")
+VIDEO_STRUCTURED_CSV_URL = os.getenv("CREBIT_VIDEO_STRUCTURED_CSV_URL", "")
+DERIVED_CSV_URL = os.getenv("CREBIT_DERIVED_INSIGHTS_CSV_URL", "")
+CANDIDATES_CSV_URL = os.getenv("CREBIT_PATTERN_CANDIDATES_CSV_URL", "")
+TRACE_CSV_URL = os.getenv("CREBIT_PATTERN_TRACE_CSV_URL", "")
 
-NOTEBOOK_RANGE = os.getenv("VIVID_NOTEBOOK_LIBRARY_RANGE", "VIVID_NOTEBOOK_LIBRARY")
-NOTEBOOK_ASSETS_RANGE = os.getenv("VIVID_NOTEBOOK_ASSETS_RANGE", "VIVID_NOTEBOOK_ASSETS")
-RAW_RANGE = os.getenv("VIVID_RAW_ASSETS_RANGE", "VIVID_RAW_ASSETS")
-VIDEO_STRUCTURED_RANGE = os.getenv("VIVID_VIDEO_STRUCTURED_RANGE", "VIVID_VIDEO_STRUCTURED")
-DERIVED_RANGE = os.getenv("VIVID_DERIVED_INSIGHTS_RANGE", "VIVID_DERIVED_INSIGHTS")
-CANDIDATES_RANGE = os.getenv("VIVID_PATTERN_CANDIDATES_RANGE", "VIVID_PATTERN_CANDIDATES")
-TRACE_RANGE = os.getenv("VIVID_PATTERN_TRACE_RANGE", "VIVID_PATTERN_TRACE")
-QUARANTINE_RANGE = os.getenv("VIVID_QUARANTINE_RANGE", "VIVID_QUARANTINE")
+NOTEBOOK_RANGE = os.getenv("CREBIT_NOTEBOOK_LIBRARY_RANGE", "CREBIT_NOTEBOOK_LIBRARY")
+NOTEBOOK_ASSETS_RANGE = os.getenv("CREBIT_NOTEBOOK_ASSETS_RANGE", "CREBIT_NOTEBOOK_ASSETS")
+RAW_RANGE = os.getenv("CREBIT_RAW_ASSETS_RANGE", "CREBIT_RAW_ASSETS")
+VIDEO_STRUCTURED_RANGE = os.getenv("CREBIT_VIDEO_STRUCTURED_RANGE", "CREBIT_VIDEO_STRUCTURED")
+DERIVED_RANGE = os.getenv("CREBIT_DERIVED_INSIGHTS_RANGE", "CREBIT_DERIVED_INSIGHTS")
+CANDIDATES_RANGE = os.getenv("CREBIT_PATTERN_CANDIDATES_RANGE", "CREBIT_PATTERN_CANDIDATES")
+TRACE_RANGE = os.getenv("CREBIT_PATTERN_TRACE_RANGE", "CREBIT_PATTERN_TRACE")
+QUARANTINE_RANGE = os.getenv("CREBIT_QUARANTINE_RANGE", "CREBIT_QUARANTINE")
 
 CONFIDENCE_THRESHOLD = float(os.getenv("PATTERN_CONFIDENCE_THRESHOLD", "0.6"))
+MIN_PATTERN_SOURCES = int(os.getenv("PATTERN_PROMOTION_MIN_SOURCES", "2"))
 SHEETS_RETRY_COUNT = int(os.getenv("SHEETS_RETRY_COUNT", "3"))
 SHEETS_RETRY_BASE_SECONDS = float(os.getenv("SHEETS_RETRY_BASE_SECONDS", "0.5"))
-QUARANTINE_CSV_PATH = os.getenv("VIVID_QUARANTINE_CSV_PATH", "")
-PATTERN_VERSION_RE = re.compile(r"^v(\d+)$", re.IGNORECASE)
+QUARANTINE_CSV_PATH = os.getenv("CREBIT_QUARANTINE_CSV_PATH", "")
 
 
 def _fetch_url(url: str) -> str:
@@ -86,7 +89,7 @@ def _fetch_url(url: str) -> str:
     if os.path.exists(url):
         with open(url, "r", encoding="utf-8") as handle:
             return handle.read()
-    req = Request(url, headers={"User-Agent": "vivid-sheets-sync/1.0"})
+    req = Request(url, headers={"User-Agent": "crebit-sheets-sync/1.0"})
     last_error: Optional[Exception] = None
     for attempt in range(SHEETS_RETRY_COUNT + 1):
         try:
@@ -106,7 +109,7 @@ def _post_json(url: str, payload: Dict[str, Any]) -> None:
         url,
         data=json.dumps(payload).encode("utf-8"),
         headers={
-            "User-Agent": "vivid-sheets-sync/1.0",
+            "User-Agent": "crebit-sheets-sync/1.0",
             "Content-Type": "application/json",
         },
         method="POST",
@@ -261,7 +264,7 @@ def _write_quarantine(quarantine: List[Dict[str, str]]) -> None:
             except Exception as exc:
                 print(f"Quarantine sheet append failed: {exc}")
     if not wrote_any:
-        print(f"Quarantine rows: {len(quarantine)} (set VIVID_QUARANTINE_CSV_PATH or api_key mode)")
+        print(f"Quarantine rows: {len(quarantine)} (set CREBIT_QUARANTINE_CSV_PATH or api_key mode)")
 
 
 def _parse_list(value: str) -> List[Any]:
@@ -413,12 +416,28 @@ def _candidate_base_key(row: Dict[str, str]) -> tuple[str, str, str]:
     return source_id, normalized, pattern_type
 
 
-def _derive_candidate_rows(rows: Iterable[Dict[str, str]]) -> List[Dict[str, str]]:
+def _derive_candidate_rows(
+    rows: Iterable[Dict[str, str]],
+    mega_notebook_ids: Optional[set[str]] = None,
+) -> List[Dict[str, str]]:
     derived_candidates: List[Dict[str, str]] = []
+    mega_notebook_ids = mega_notebook_ids or set()
     for row in rows:
         source_id = (row.get("source_id") or "").strip()
         if not source_id:
             continue
+        labels = _parse_list(row.get("labels") or "")
+        if has_label(labels, "ops_only"):
+            continue
+        notebook_id = row.get("notebook_id") or ""
+        if notebook_id in mega_notebook_ids:
+            continue
+        evidence_refs = _parse_list(row.get("evidence_refs") or "")
+        evidence_ref = ""
+        for ref in evidence_refs:
+            if isinstance(ref, str) and VIDEO_EVIDENCE_REF_RE.match(ref.strip()):
+                evidence_ref = ref.strip()
+                break
         patterns = _parse_key_patterns(row.get("key_patterns") or "")
         if not patterns:
             continue
@@ -430,7 +449,7 @@ def _derive_candidate_rows(rows: Iterable[Dict[str, str]]) -> List[Dict[str, str
                     "pattern_type": pattern["pattern_type"],
                     "description": pattern.get("description") or "",
                     "weight": pattern.get("weight") or "",
-                    "evidence_ref": "",
+                    "evidence_ref": evidence_ref,
                     "confidence": str(row.get("confidence") or ""),
                     "status": "proposed",
                 }
@@ -457,35 +476,6 @@ def _merge_candidate_rows(
         merged.append(row)
         existing.add(base)
     return merged
-
-
-def _apply_pattern_version_to_graph(graph_data: dict, pattern_version: str) -> Optional[dict]:
-    if not isinstance(graph_data, dict):
-        return None
-    nodes = graph_data.get("nodes")
-    if not isinstance(nodes, list):
-        return None
-    updated = False
-    next_nodes = []
-    for node in nodes:
-        if not isinstance(node, dict):
-            next_nodes.append(node)
-            continue
-        data = node.get("data")
-        if not isinstance(data, dict):
-            next_nodes.append(node)
-            continue
-        if data.get("capsuleId") and data.get("capsuleVersion"):
-            current = data.get("patternVersion")
-            if current != pattern_version:
-                patched = {**data, "patternVersion": pattern_version}
-                next_nodes.append({**node, "data": patched})
-                updated = True
-                continue
-        next_nodes.append(node)
-    if not updated:
-        return None
-    return {**graph_data, "nodes": next_nodes}
 
 
 def _fetch_csv_rows(url: str) -> List[Dict[str, str]]:
@@ -541,7 +531,7 @@ async def _upsert_notebook_library(
         for row in rows:
             notebook_id = row.get("notebook_id")
             if not notebook_id:
-                _append_quarantine(quarantine, "VIVID_NOTEBOOK_LIBRARY", "missing_notebook_id", row)
+                _append_quarantine(quarantine, "CREBIT_NOTEBOOK_LIBRARY", "missing_notebook_id", row)
                 continue
             result = await session.execute(
                 select(NotebookLibrary).where(NotebookLibrary.notebook_id == notebook_id)
@@ -559,11 +549,13 @@ async def _upsert_notebook_library(
             record.notebook_ref = row.get("notebook_ref") or record.notebook_ref
             record.owner_id = row.get("owner_id") or record.owner_id
             record.cluster_id = row.get("cluster_id") or record.cluster_id
-            record.cluster_label = row.get("cluster_label") or record.cluster_label
+            cluster_label = (row.get("cluster_label") or "").strip()
+            if cluster_label:
+                record.cluster_label = cluster_label
             record.cluster_tags = _split_list(row.get("cluster_tags") or "") or record.cluster_tags
             guide_scope = row.get("guide_scope") or ""
             if guide_scope and guide_scope not in GUIDE_SCOPE_ALLOWLIST:
-                _append_quarantine(quarantine, "VIVID_NOTEBOOK_LIBRARY", "invalid_guide_scope", row)
+                _append_quarantine(quarantine, "CREBIT_NOTEBOOK_LIBRARY", "invalid_guide_scope", row)
                 continue
             record.guide_scope = guide_scope or record.guide_scope
             record.source_ids = _split_list(row.get("source_ids") or "") or record.source_ids
@@ -585,10 +577,10 @@ async def _upsert_notebook_assets(
             asset_id = (row.get("asset_id") or "").strip()
             asset_type = (row.get("asset_type") or "").strip().lower()
             if not notebook_id or not asset_id or not asset_type:
-                _append_quarantine(quarantine, "VIVID_NOTEBOOK_ASSETS", "missing_asset_fields", row)
+                _append_quarantine(quarantine, "CREBIT_NOTEBOOK_ASSETS", "missing_asset_fields", row)
                 continue
             if asset_type not in NOTEBOOK_ASSET_TYPE_ALLOWLIST:
-                _append_quarantine(quarantine, "VIVID_NOTEBOOK_ASSETS", "invalid_asset_type", row)
+                _append_quarantine(quarantine, "CREBIT_NOTEBOOK_ASSETS", "invalid_asset_type", row)
                 continue
 
             result = await session.execute(
@@ -626,7 +618,7 @@ async def _upsert_raw_assets(
         for row in rows:
             source_id = row.get("source_id") or row.get("sourceid")
             if not source_id:
-                _append_quarantine(quarantine, "VIVID_RAW_ASSETS", "missing_source_id", row)
+                _append_quarantine(quarantine, "CREBIT_RAW_ASSETS", "missing_source_id", row)
                 continue
             result = await session.execute(select(RawAsset).where(RawAsset.source_id == source_id))
             asset = result.scalars().first()
@@ -642,7 +634,7 @@ async def _upsert_raw_assets(
             raw_source_type = row.get("source_type") or asset.source_type or "video"
             normalized_type = _normalize_source_type(raw_source_type)
             if not normalized_type:
-                _append_quarantine(quarantine, "VIVID_RAW_ASSETS", "invalid_source_type", row)
+                _append_quarantine(quarantine, "CREBIT_RAW_ASSETS", "invalid_source_type", row)
                 continue
             asset.source_type = normalized_type
             asset.title = row.get("title") or asset.title
@@ -668,7 +660,7 @@ async def _upsert_video_segments(
 ) -> None:
     async with AsyncSessionLocal() as session:
         for row in rows:
-            segment_id = row.get("segment_id")
+            segment_id = row.get("segment_id") or row.get("segmentId")
             source_id = row.get("source_id")
             work_id = row.get("work_id") or row.get("workId")
             scene_id = row.get("scene_id") or row.get("sceneId")
@@ -676,9 +668,15 @@ async def _upsert_video_segments(
             sequence_id = row.get("sequence_id") or row.get("sequenceId")
             time_start = row.get("time_start")
             time_end = row.get("time_end")
+            prompt_version = row.get("prompt_version") or row.get("promptVersion")
+            model_version = row.get("model_version") or row.get("modelVersion")
+            if isinstance(segment_id, str):
+                segment_id = segment_id.strip()
+            if isinstance(prompt_version, str):
+                prompt_version = prompt_version.strip()
+            if isinstance(model_version, str):
+                model_version = model_version.strip()
             missing_fields = []
-            if not segment_id:
-                missing_fields.append("segment_id")
             if not source_id:
                 missing_fields.append("source_id")
             if not work_id:
@@ -691,12 +689,28 @@ async def _upsert_video_segments(
                 missing_fields.append("time_start")
             if not time_end:
                 missing_fields.append("time_end")
+            if not prompt_version:
+                missing_fields.append("prompt_version")
+            if not model_version:
+                missing_fields.append("model_version")
+            if not segment_id:
+                fallback_id = build_segment_id_fallback(
+                    source_id,
+                    time_start,
+                    time_end,
+                    prompt_version,
+                    model_version,
+                )
+                if fallback_id:
+                    segment_id = fallback_id
+                else:
+                    missing_fields.append("segment_id")
             if missing_fields:
                 reason = "missing_video_required_fields:" + ",".join(missing_fields)
-                _append_quarantine(quarantine, "VIVID_VIDEO_STRUCTURED", reason, row)
+                _append_quarantine(quarantine, "CREBIT_VIDEO_STRUCTURED", reason, row)
                 continue
             if rights_map.get(source_id) == "restricted":
-                _append_quarantine(quarantine, "VIVID_VIDEO_STRUCTURED", "restricted_rights", row)
+                _append_quarantine(quarantine, "CREBIT_VIDEO_STRUCTURED", "restricted_rights", row)
                 continue
 
             result = await session.execute(
@@ -713,8 +727,8 @@ async def _upsert_video_segments(
                     shot_id=shot_id,
                     time_start=time_start,
                     time_end=time_end,
-                    prompt_version=row.get("prompt_version") or "",
-                    model_version=row.get("model_version") or "",
+                    prompt_version=prompt_version or "",
+                    model_version=model_version or "",
                 )
                 session.add(segment)
 
@@ -739,15 +753,15 @@ async def _upsert_video_segments(
                 if invalid_refs:
                     _append_quarantine(
                         quarantine,
-                        "VIVID_VIDEO_STRUCTURED",
+                        "CREBIT_VIDEO_STRUCTURED",
                         "invalid_video_evidence_refs",
                         row,
                     )
                     continue
                 segment.evidence_refs = evidence_refs
             segment.confidence = _parse_float(row.get("confidence") or "") or segment.confidence
-            segment.prompt_version = row.get("prompt_version") or segment.prompt_version
-            segment.model_version = row.get("model_version") or segment.model_version
+            segment.prompt_version = prompt_version or segment.prompt_version
+            segment.model_version = model_version or segment.model_version
             segment.generated_at = _parse_datetime(row.get("generated_at") or "") or segment.generated_at
 
         await session.commit()
@@ -765,17 +779,17 @@ async def _upsert_evidence_records(
             source_id = row.get("source_id")
             if not source_id or rights_map.get(source_id) == "restricted":
                 reason = "missing_source_id" if not source_id else "restricted_rights"
-                _append_quarantine(quarantine, "VIVID_DERIVED_INSIGHTS", reason, row)
+                _append_quarantine(quarantine, "CREBIT_DERIVED_INSIGHTS", reason, row)
                 continue
             source_pack_id = row.get("source_pack_id") or row.get("sourcePackId") or ""
             if not source_pack_id:
-                _append_quarantine(quarantine, "VIVID_DERIVED_INSIGHTS", "missing_source_pack_id", row)
+                _append_quarantine(quarantine, "CREBIT_DERIVED_INSIGHTS", "missing_source_pack_id", row)
                 continue
             pack_result = await session.execute(
                 select(SourcePack).where(SourcePack.pack_id == source_pack_id)
             )
             if not pack_result.scalars().first():
-                _append_quarantine(quarantine, "VIVID_DERIVED_INSIGHTS", "unknown_source_pack_id", row)
+                _append_quarantine(quarantine, "CREBIT_DERIVED_INSIGHTS", "unknown_source_pack_id", row)
                 continue
             key = (
                 source_id,
@@ -785,14 +799,14 @@ async def _upsert_evidence_records(
                 row.get("output_language") or "",
             )
             if not all(key):
-                _append_quarantine(quarantine, "VIVID_DERIVED_INSIGHTS", "missing_evidence_key", row)
+                _append_quarantine(quarantine, "CREBIT_DERIVED_INSIGHTS", "missing_evidence_key", row)
                 continue
             if key[3] not in OUTPUT_TYPE_ALLOWLIST:
-                _append_quarantine(quarantine, "VIVID_DERIVED_INSIGHTS", "invalid_output_type", row)
+                _append_quarantine(quarantine, "CREBIT_DERIVED_INSIGHTS", "invalid_output_type", row)
                 continue
             guide_type = row.get("guide_type") or ""
             if guide_type and guide_type not in GUIDE_TYPE_ALLOWLIST:
-                _append_quarantine(quarantine, "VIVID_DERIVED_INSIGHTS", "invalid_guide_type", row)
+                _append_quarantine(quarantine, "CREBIT_DERIVED_INSIGHTS", "invalid_guide_type", row)
                 continue
             result = await session.execute(
                 select(EvidenceRecord).where(
@@ -830,8 +844,12 @@ async def _upsert_evidence_records(
             record.origin_notebook_id = row.get("origin_notebook_id") or record.origin_notebook_id
             record.filter_notebook_id = row.get("filter_notebook_id") or record.filter_notebook_id
             record.cluster_id = row.get("cluster_id") or record.cluster_id
-            record.cluster_label = row.get("cluster_label") or record.cluster_label
-            record.cluster_confidence = _parse_float(row.get("cluster_confidence") or "") or record.cluster_confidence
+            cluster_label = (row.get("cluster_label") or "").strip()
+            if cluster_label:
+                record.cluster_label = cluster_label
+            cluster_confidence = _parse_float(row.get("cluster_confidence") or "")
+            if cluster_confidence is not None:
+                record.cluster_confidence = cluster_confidence
             record.style_logic = row.get("style_logic") or record.style_logic
             record.mise_en_scene = row.get("mise_en_scene") or record.mise_en_scene
             record.director_intent = row.get("director_intent") or record.director_intent
@@ -851,11 +869,12 @@ async def _upsert_evidence_records(
             if parsed_story_beats is None:
                 _append_quarantine(
                     quarantine,
-                    "VIVID_DERIVED_INSIGHTS",
+                    "CREBIT_DERIVED_INSIGHTS",
                     "invalid_story_beats",
                     row,
                 )
                 continue
+            parsed_story_beats = normalize_story_beats(parsed_story_beats)
             if parsed_story_beats:
                 record.story_beats = parsed_story_beats
             raw_storyboard_cards = row.get("storyboard_cards") or ""
@@ -863,11 +882,12 @@ async def _upsert_evidence_records(
             if parsed_storyboard_cards is None:
                 _append_quarantine(
                     quarantine,
-                    "VIVID_DERIVED_INSIGHTS",
+                    "CREBIT_DERIVED_INSIGHTS",
                     "invalid_storyboard_cards",
                     row,
                 )
                 continue
+            parsed_storyboard_cards = normalize_storyboard_cards(parsed_storyboard_cards)
             if parsed_storyboard_cards:
                 record.storyboard_cards = parsed_storyboard_cards
             raw_key_patterns = row.get("key_patterns") or ""
@@ -875,7 +895,7 @@ async def _upsert_evidence_records(
             if parsed_key_patterns is None:
                 _append_quarantine(
                     quarantine,
-                    "VIVID_DERIVED_INSIGHTS",
+                    "CREBIT_DERIVED_INSIGHTS",
                     "invalid_key_patterns",
                     row,
                 )
@@ -897,7 +917,7 @@ async def _upsert_evidence_records(
                 if invalid_refs:
                     _append_quarantine(
                         quarantine,
-                        "VIVID_DERIVED_INSIGHTS",
+                        "CREBIT_DERIVED_INSIGHTS",
                         "invalid_evidence_refs",
                         row,
                     )
@@ -918,26 +938,26 @@ async def _upsert_pattern_candidates(
             source_id = row.get("source_id")
             if not source_id or rights_map.get(source_id) == "restricted":
                 reason = "missing_source_id" if not source_id else "restricted_rights"
-                _append_quarantine(quarantine, "VIVID_PATTERN_CANDIDATES", reason, row)
+                _append_quarantine(quarantine, "CREBIT_PATTERN_CANDIDATES", reason, row)
                 continue
             pattern_name = row.get("pattern_name")
             pattern_type = row.get("pattern_type")
             if not pattern_name or not pattern_type:
-                _append_quarantine(quarantine, "VIVID_PATTERN_CANDIDATES", "missing_pattern_fields", row)
+                _append_quarantine(quarantine, "CREBIT_PATTERN_CANDIDATES", "missing_pattern_fields", row)
                 continue
             cleaned_name = pattern_name.strip()
             cleaned_type = pattern_type.strip()
             if not PATTERN_NAME_RE.match(cleaned_name):
-                _append_quarantine(quarantine, "VIVID_PATTERN_CANDIDATES", "invalid_pattern_name", row)
+                _append_quarantine(quarantine, "CREBIT_PATTERN_CANDIDATES", "invalid_pattern_name", row)
                 continue
             if cleaned_type not in PATTERN_TYPE_ALLOWLIST:
-                _append_quarantine(quarantine, "VIVID_PATTERN_CANDIDATES", "invalid_pattern_type", row)
+                _append_quarantine(quarantine, "CREBIT_PATTERN_CANDIDATES", "invalid_pattern_type", row)
                 continue
             evidence_ref = row.get("evidence_ref") or ""
             if evidence_ref and not VIDEO_EVIDENCE_REF_RE.match(evidence_ref):
                 _append_quarantine(
                     quarantine,
-                    "VIVID_PATTERN_CANDIDATES",
+                    "CREBIT_PATTERN_CANDIDATES",
                     "invalid_evidence_ref",
                     row,
                 )
@@ -969,16 +989,40 @@ async def _upsert_pattern_candidates(
     return candidates
 
 
-async def _promote_patterns(candidates: List[PatternCandidate]) -> Dict[str, uuid.UUID]:
+async def _promote_patterns(
+    candidates: List[PatternCandidate],
+    rights_map: Dict[str, str],
+) -> Dict[str, uuid.UUID]:
     pattern_map: Dict[str, uuid.UUID] = {}
     changed = False
+    pattern_sources: Dict[tuple[str, str], set[str]] = {}
+    for candidate in candidates:
+        if candidate.status not in {"validated", "promoted"}:
+            continue
+        rights_status = rights_map.get(candidate.source_id)
+        if rights_status == "restricted":
+            continue
+        evidence_ref = candidate.evidence_ref or ""
+        if not VIDEO_EVIDENCE_REF_RE.match(evidence_ref):
+            continue
+        key = (candidate.pattern_name, candidate.pattern_type)
+        pattern_sources.setdefault(key, set()).add(candidate.source_id)
     async with AsyncSessionLocal() as session:
         for candidate in candidates:
             if candidate.status not in {"validated", "promoted"}:
                 continue
+            rights_status = rights_map.get(candidate.source_id)
+            if rights_status == "restricted":
+                continue
+            evidence_ref = candidate.evidence_ref or ""
+            if not VIDEO_EVIDENCE_REF_RE.match(evidence_ref):
+                continue
             if candidate.status != "promoted":
                 if candidate.confidence is not None and candidate.confidence < CONFIDENCE_THRESHOLD:
                     continue
+            key = (candidate.pattern_name, candidate.pattern_type)
+            if len(pattern_sources.get(key, set())) < MIN_PATTERN_SOURCES:
+                continue
             normalized = _normalize_pattern_name(candidate.pattern_name)
             result = await session.execute(
                 select(Pattern).where(
@@ -1023,16 +1067,16 @@ async def _upsert_pattern_trace(
             pattern_id = _parse_pattern_id(row.get("pattern_id") or "", pattern_map)
             if not source_id or not pattern_id:
                 reason = "missing_source_id" if not source_id else "pattern_id_unresolved"
-                _append_quarantine(quarantine, "VIVID_PATTERN_TRACE", reason, row)
+                _append_quarantine(quarantine, "CREBIT_PATTERN_TRACE", reason, row)
                 continue
             if rights_map.get(source_id) == "restricted":
-                _append_quarantine(quarantine, "VIVID_PATTERN_TRACE", "restricted_rights", row)
+                _append_quarantine(quarantine, "CREBIT_PATTERN_TRACE", "restricted_rights", row)
                 continue
             evidence_ref = row.get("evidence_ref") or ""
             if evidence_ref and not VIDEO_EVIDENCE_REF_RE.match(evidence_ref):
                 _append_quarantine(
                     quarantine,
-                    "VIVID_PATTERN_TRACE",
+                    "CREBIT_PATTERN_TRACE",
                     "invalid_evidence_ref",
                     row,
                 )
@@ -1062,65 +1106,6 @@ async def _upsert_pattern_trace(
     return changed
 
 
-def _next_pattern_version(current: Optional[str]) -> str:
-    if not current:
-        return "v1"
-    match = PATTERN_VERSION_RE.match(current.strip())
-    if not match:
-        return "v1"
-    return f"v{int(match.group(1)) + 1}"
-
-
-async def _bump_pattern_version(note: str) -> str:
-    async with AsyncSessionLocal() as session:
-        result = await session.execute(
-            select(PatternVersion).order_by(PatternVersion.created_at.desc()).limit(1)
-        )
-        latest = result.scalars().first()
-        next_version = _next_pattern_version(latest.version if latest else None)
-        snapshot = PatternVersion(version=next_version, note=note)
-        session.add(snapshot)
-        await session.commit()
-        return next_version
-
-
-async def _update_capsule_specs(pattern_version: str) -> None:
-    async with AsyncSessionLocal() as session:
-        result = await session.execute(select(CapsuleSpec))
-        specs = result.scalars().all()
-        for spec in specs:
-            payload = spec.spec or {}
-            current = payload.get("patternVersion") or payload.get("pattern_version")
-            if current == pattern_version:
-                continue
-            payload["patternVersion"] = pattern_version
-            spec.spec = payload
-        await session.commit()
-
-
-async def _update_template_versions(pattern_version: str, note: str) -> None:
-    async with AsyncSessionLocal() as session:
-        result = await session.execute(select(Template))
-        templates = result.scalars().all()
-        for template in templates:
-            updated_graph = _apply_pattern_version_to_graph(
-                template.graph_data or {}, pattern_version
-            )
-            if not updated_graph:
-                continue
-            template.graph_data = updated_graph
-            template.version = (template.version or 1) + 1
-            session.add(
-                TemplateVersion(
-                    template_id=template.id,
-                    version=template.version,
-                    graph_data=updated_graph,
-                    notes=note,
-                    creator_id=template.creator_id,
-                )
-            )
-        await session.commit()
-
 async def main() -> None:
     quarantine: List[Dict[str, str]] = []
     sheets = _load_sheet_rows()
@@ -1138,16 +1123,16 @@ async def main() -> None:
     rights_map = await _upsert_raw_assets(raw_rows, quarantine)
     await _upsert_video_segments(video_rows, rights_map, quarantine)
     await _upsert_evidence_records(derived_rows, rights_map, quarantine, mega_notebook_ids)
-    derived_candidates = _derive_candidate_rows(derived_rows)
+    derived_candidates = _derive_candidate_rows(derived_rows, mega_notebook_ids)
     merged_candidates = _merge_candidate_rows(candidate_rows, derived_candidates)
     candidates = await _upsert_pattern_candidates(merged_candidates, rights_map, quarantine)
-    pattern_map, pattern_changed = await _promote_patterns(candidates)
+    pattern_map, pattern_changed = await _promote_patterns(candidates, rights_map)
     trace_changed = await _upsert_pattern_trace(trace_rows, pattern_map, rights_map, quarantine)
     if pattern_changed or trace_changed:
         note = f"auto-promotion {datetime.utcnow().isoformat()}Z"
-        next_version = await _bump_pattern_version(note)
-        await _update_capsule_specs(next_version)
-        await _update_template_versions(next_version, f"{note} (patternVersion)")
+        next_version = await bump_pattern_version(note)
+        await update_capsule_specs(next_version)
+        await update_template_versions(next_version, f"{note} (patternVersion)")
     _write_quarantine(quarantine)
 
 

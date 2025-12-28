@@ -8,7 +8,7 @@
 
 ## 0) Canonical Anchors
 
-- 철학/원칙: `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`
+- 철학/원칙: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
 - 흐름/역할: `10_PIPELINES_AND_USER_FLOWS.md`
 - 캡슐 계약: `05_CAPSULE_NODE_SPEC.md`
 - 영상 구조화: `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
@@ -88,11 +88,44 @@
 - 로직 유사도 높으나 페르소나가 다르면 **분리 클러스터** 생성.
 - 결합 결과는 Capsule Policy로 동결한다.
 
----
+### 2.4 Script Persona Priority Policy (2025-12)
+
+> **핵심 원칙**: 시나리오 페르소나가 1차 기준, 사용자 페르소나는 2차 보정, 거장/클러스터 페르소나는 안정성 앵커.
+
+**Persona Source 우선순위**:
+1. **Primary (script)**: 텍스트 시나리오 기반 페르소나 — 검증된 톤·리듬·해석이 가장 안정적
+2. **Secondary (user)**: 창작자 개인 페르소나 — 스타일 인장/개성 역할, 보정 레이어
+3. **Anchor (auteur)**: 거장/클러스터 페르소나 — 품질 붕괴 방지 브레이크
+
+**Persona Fusion Formula (EXPERIMENTAL)**:
+```
+P_fused = normalize(w_script * P_script + w_user * P_user + w_auteur * P_auteur)
+권장 초기값: w_script=0.55, w_user=0.20, w_auteur=0.25
+제약: w_auteur >= 0.15 (최소 앵커)
+```
+
+**Capsule 노출 파라미터**:
+- `persona_priority: script | blended | user` (default: script)
+- 결과 summary에 `persona_source` 및 `synapse_rule_ref` 포함
+
+### 2.5 Script Quality Gate (Gap 6)
+
+Script Persona를 사용하기 위한 최소 품질 기준:
+
+| 항목 | 최소 요건 | 검증 시점 |
+|------|----------|----------|
+| `min_length` | 500자 이상 | Source Pack 생성 |
+| `min_scenes` | 3개 이상 | Segment 분할 후 |
+| `required_fields` | `scene_summary`, `characters` 존재 | Ingest 시점 |
+| `segment_type` | `script` 또는 `text` | DB 저장 시점 |
+
+**검증 실패 시**:
+- `segment_type=script`로 저장 불가
+- `persona_source=script` 사용 불가, 자동으로 `auteur`로 fallback
 
 ## 3) Tong Datasetization Protocol (A/B/C/D)
 
-> **정본**: `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md` §3.4
+> **정본**: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md` §3.4
 
 통 데이터셋 A/B/C/D 정의와 Synapse Rule은 정본 문서를 따른다.
 이 문서는 **Logic/Persona 추출 프로토콜**에 집중한다.

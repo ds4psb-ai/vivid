@@ -8,6 +8,9 @@ def _base_payload() -> dict:
     return {
         "segment_id": "seg-demo-001",
         "source_id": "auteur-bong-1999-barking-dogs",
+        "work_id": "work-demo-001",
+        "scene_id": "scene-demo-001",
+        "shot_id": "shot-demo-001",
         "time_start": "00:00:10.000",
         "time_end": "00:00:12.000",
         "prompt_version": "gemini-video-v1",

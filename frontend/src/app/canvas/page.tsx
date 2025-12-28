@@ -38,6 +38,7 @@ import {
   Play,
   Sparkles,
   Workflow,
+  History,
   XCircle,
   X,
   ChevronLeft,
@@ -60,9 +61,10 @@ import {
   GenerationRunFeedbackRequest,
   StoryboardPreview,
 } from "@/lib/api";
-import { isAdminModeEnabled } from "@/lib/admin";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { normalizeAllowedType } from "@/lib/graph";
 import { normalizeApiError } from "@/lib/errors";
+import { withViewTransition } from "@/lib/viewTransitions";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
 import { useNodeLifecycle } from "@/hooks/useNodeLifecycle";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -70,9 +72,8 @@ import AppShell from "@/components/AppShell";
 import EmptyCanvasOverlay from "@/components/EmptyCanvasOverlay";
 import { useRouter } from "next/navigation";
 import { useCreditBalance } from "@/hooks/useCreditBalance";
-
-const IS_ADMIN_MODE = isAdminModeEnabled();
-
+import { useSessionContext } from "@/contexts/SessionContext";
+import LoginRequiredModal from "@/components/LoginRequiredModal";
 
 const nodeTypes = {
   input: CanvasNode,
@@ -97,9 +98,12 @@ const createNodeId = () => {
 function CanvasFlow() {
   const searchParams = useSearchParams();
   const urlCanvasId = searchParams.get("id");
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { zoomIn, zoomOut, fitView } = useReactFlow();
   const router = useRouter();
+  const { session, isLoading: isSessionLoading } = useSessionContext();
+  const { isAdmin } = useAdminAccess();
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // Empty state overlay - show when no nodes or starting fresh
   const [showEmptyOverlay, setShowEmptyOverlay] = useState(!urlCanvasId);
@@ -156,11 +160,13 @@ function CanvasFlow() {
     tone: "info" | "warning" | "error";
     message: string;
   } | null>(null);
+  const [previewLanguage, setPreviewLanguage] = useState<string | null>(null);
   const [generationRun, setGenerationRun] = useState<GenerationRun | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationStatus, setGenerationStatus] = useState<string | null>(null);
   const generationPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [showGenerationPanel, setShowGenerationPanel] = useState(false);
+  const [generationFeedbackStatus, setGenerationFeedbackStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const capsuleStreamRef = useRef<CapsuleRunStreamController | null>(null);
   const [previewRunId, setPreviewRunId] = useState<string | null>(null);
   const previewCancelFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -193,11 +199,25 @@ function CanvasFlow() {
   });
   const toastTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const lastGenerationStatusRef = useRef<string | null>(null);
+  const lastGenerationRunIdRef = useRef<string | null>(null);
   const previewCapsuleIdRef = useRef<string | null>(null);
 
   const { takeSnapshot, undo, redo, canUndo, canRedo } = useUndoRedo();
   const { updateNodeData, updateNodesByType } = useNodeLifecycle(setNodes, setSelectedNode);
   const { balance: creditBalance } = useCreditBalance();
+
+  const openPreviewPanel = useCallback(() => {
+    withViewTransition(() => setShowPreviewPanel(true));
+  }, [setShowPreviewPanel]);
+
+  const closePreviewPanel = useCallback(() => {
+    withViewTransition(() => {
+      setShowPreviewPanel(false);
+      setStoryboardPreview(null);
+      setPreviewNotice(null);
+      setPreviewLanguage(null);
+    });
+  }, [setPreviewLanguage, setPreviewNotice, setShowPreviewPanel, setStoryboardPreview]);
 
   // Seed graph creation based on selected template
   const handleSelectSeed = useCallback((seedId: string) => {
@@ -378,7 +398,9 @@ function CanvasFlow() {
         if (run.status === "done" || run.status === "failed") {
           stopGenerationPolling();
           setIsGenerating(false);
-          setShowGenerationPanel(true);
+          closePreviewPanel();
+          setPreviewRunId(null);
+          withViewTransition(() => setShowGenerationPanel(true));
         }
       } catch (err) {
         setError(normalizeApiError(err, t("runStatusLoadError")));
@@ -387,7 +409,7 @@ function CanvasFlow() {
         setIsGenerating(false);
       }
     }, 1500);
-  }, [pushRunLog, stopGenerationPolling, t, updateOutputNodes]);
+  }, [closePreviewPanel, pushRunLog, stopGenerationPolling, t, updateOutputNodes]);
 
   const buildUpstreamContext = useCallback(
     (targetId: string, contextMode?: "aggregate" | "sequential") => {
@@ -555,6 +577,12 @@ function CanvasFlow() {
   }, [nodes]);
 
   const handleRun = useCallback(async () => {
+    // Wait for session to load before checking auth
+    if (isSessionLoading) return;
+    if (!session?.authenticated) {
+      setShowLoginModal(true);
+      return;
+    }
     setIsOptimizing(true);
     setError(null);
     try {
@@ -563,7 +591,13 @@ function CanvasFlow() {
         typeof processingNode?.data?.params?.target_profile === "string"
           ? (processingNode.data.params.target_profile as string)
           : "balanced";
-      const result = await api.optimizeParams(nodes, edges, targetProfile);
+      const objective =
+        typeof processingNode?.data?.params?.objective === "string"
+          ? (processingNode.data.params.objective as string)
+          : undefined;
+      const result = await api.optimizeParams(nodes, edges, targetProfile, {
+        objective,
+      });
       setRecommendations(result.recommendations);
       setShowRecommendations(true);
 
@@ -571,8 +605,9 @@ function CanvasFlow() {
       const capsuleNode = nodes.find((n) => n.type === "capsule");
       if (capsuleNode && capsuleNode.data.capsuleId) {
         setIsPreviewLoading(true);
-        setShowPreviewPanel(true);
+        openPreviewPanel();
         setPreviewNotice(null);
+        setPreviewLanguage((current) => current ?? language);
         updateNodeData(capsuleNode.id, { status: "loading", streamingData: undefined });
         try {
           let contextMode: "aggregate" | "sequential" | undefined;
@@ -632,7 +667,7 @@ function CanvasFlow() {
             const inputs = buildInputValues();
             const sourceIdRaw = inputs.source_id ?? inputs.sourceId;
             if (
-              IS_ADMIN_MODE &&
+              isAdmin &&
               allowed.length > 0 &&
               typeof sourceIdRaw === "string" &&
               sourceIdRaw.trim()
@@ -744,8 +779,15 @@ function CanvasFlow() {
                   latencyMs,
                   costUsd,
                 });
-                const preview = await api.getStoryboardPreview(capsuleKey, runResult.run_id, 3);
+                const requestedLanguage = previewLanguage ?? language;
+                const preview = await api.getStoryboardPreview(
+                  capsuleKey,
+                  runResult.run_id,
+                  3,
+                  requestedLanguage
+                );
                 setStoryboardPreview(preview);
+                setPreviewLanguage(preview.output_language ?? requestedLanguage ?? null);
                 updateNodeData(capsuleNodeId, {
                   evidence_refs: Array.isArray(preview.evidence_refs) ? preview.evidence_refs : [],
                 });
@@ -838,7 +880,24 @@ function CanvasFlow() {
     } finally {
       setIsOptimizing(false);
     }
-  }, [nodes, edges, canvasId, setNodes, buildUpstreamContext, buildInputValues, updateNodeData, t, pushRunLog, pushToast]);
+  }, [
+    nodes,
+    edges,
+    canvasId,
+    setNodes,
+    buildUpstreamContext,
+    buildInputValues,
+    updateNodeData,
+    t,
+    language,
+    isAdmin,
+    pushRunLog,
+    pushToast,
+    openPreviewPanel,
+    previewLanguage,
+  ]);
+
+  const previewCapsuleKey = storyboardPreview?.capsule_id;
 
   const handleCancelPreviewRun = useCallback(() => {
     if (!previewRunId) {
@@ -873,6 +932,29 @@ function CanvasFlow() {
     });
   }, [previewRunId, setError, t, pushRunLog, pushToast]);
 
+  const handlePreviewLanguageChange = useCallback(
+    async (language: string) => {
+      const capsuleKey = previewCapsuleIdRef.current ?? previewCapsuleKey;
+      if (!previewRunId || !capsuleKey) {
+        return;
+      }
+      setPreviewLanguage(language);
+      setIsPreviewLoading(true);
+      setPreviewNotice(null);
+      try {
+        const preview = await api.getStoryboardPreview(capsuleKey, previewRunId, 3, language);
+        setStoryboardPreview(preview);
+        setPreviewLanguage(preview.output_language ?? language);
+      } catch (err) {
+        const message = normalizeApiError(err, t("previewLoadError"));
+        setPreviewNotice({ tone: "error", message });
+      } finally {
+        setIsPreviewLoading(false);
+      }
+    },
+    [previewCapsuleKey, previewRunId, t]
+  );
+
   const handleGenerate = useCallback(async () => {
     if (!canvasId) {
       setError(t("saveBeforeGenerate"));
@@ -886,16 +968,25 @@ function CanvasFlow() {
       const run = await api.createGenerationRun(canvasId);
       setGenerationRun(run);
       setGenerationStatus(run.status);
+      lastGenerationRunIdRef.current = run.id;
+      lastGenerationStatusRef.current = run.status;
       const runContext = { kind: "generation" as const, runId: run.id };
       pushRunLog("info", t("runGenerationStarted"), runContext);
-      setShowGenerationPanel(true);
+      closePreviewPanel();
+      setPreviewRunId(null);
+      withViewTransition(() => setShowGenerationPanel(true));
       startGenerationPolling(run.id);
     } catch (err) {
       setError(normalizeApiError(err, t("generationStartFailed")));
       updateOutputNodes({ status: "error" });
       setIsGenerating(false);
     }
-  }, [canvasId, pushRunLog, startGenerationPolling, t, updateOutputNodes]);
+  }, [canvasId, closePreviewPanel, pushRunLog, startGenerationPolling, t, updateOutputNodes]);
+
+  const handleOpenGenerationPanel = useCallback(() => {
+    if (!generationRun) return;
+    withViewTransition(() => setShowGenerationPanel(true));
+  }, [generationRun]);
 
   const handleGenerationFeedback = useCallback(
     async (payload: GenerationRunFeedbackRequest) => {
@@ -964,6 +1055,53 @@ function CanvasFlow() {
       takeSnapshot(initialNodes, initialEdges);
     }
   }, [takeSnapshot, urlCanvasId, initialNodes]);
+
+  useEffect(() => {
+    if (!canvasId || isLoading) return;
+    let active = true;
+    const hydrateLastRun = async () => {
+      try {
+        const runs = await api.listGenerationRuns({ canvas_id: canvasId, limit: 1 });
+        if (!active) return;
+        const [latest] = runs;
+        if (!latest) {
+          return;
+        }
+        if (lastGenerationRunIdRef.current === latest.id) {
+          return;
+        }
+        lastGenerationRunIdRef.current = latest.id;
+        lastGenerationStatusRef.current = latest.status;
+        setGenerationRun(latest);
+        setGenerationStatus(latest.status);
+        if (latest.status === "done") {
+          const beatSheet = Array.isArray(latest.spec?.beat_sheet) ? latest.spec.beat_sheet : [];
+          const storyboard = Array.isArray(latest.spec?.storyboard) ? latest.spec.storyboard : [];
+          updateOutputNodes({
+            status: "complete",
+            generationPreview: {
+              beat_sheet: beatSheet,
+              storyboard: storyboard,
+            },
+          });
+          setIsGenerating(false);
+        } else if (latest.status === "failed") {
+          updateOutputNodes({ status: "error" });
+          setIsGenerating(false);
+        } else {
+          setIsGenerating(true);
+          startGenerationPolling(latest.id);
+        }
+      } catch (err) {
+        if (!active) return;
+        setError(normalizeApiError(err, t("runStatusLoadError")));
+      }
+    };
+    void hydrateLastRun();
+    return () => {
+      active = false;
+    };
+  }, [canvasId, isLoading, setError, startGenerationPolling, t, updateOutputNodes]);
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -1051,6 +1189,12 @@ function CanvasFlow() {
   );
 
   const handleSave = useCallback(async () => {
+    // Wait for session to load before checking auth
+    if (isSessionLoading) return;
+    if (!session?.authenticated) {
+      setShowLoginModal(true);
+      return;
+    }
     setIsSaving(true);
     setError(null);
     try {
@@ -1068,7 +1212,7 @@ function CanvasFlow() {
     } finally {
       setIsSaving(false);
     }
-  }, [canvasId, edges, graphMeta, isPublic, nodes, title]);
+  }, [canvasId, edges, graphMeta, isPublic, nodes, t, title]);
 
   const handleOpenLoad = useCallback(async () => {
     setIsLoading(true);
@@ -1082,7 +1226,7 @@ function CanvasFlow() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   const handleLoadCanvas = useCallback(
     async (canvas: Canvas) => {
@@ -1100,18 +1244,22 @@ function CanvasFlow() {
         setGenerationRun(null);
         setGenerationStatus(null);
         setIsGenerating(false);
+        lastGenerationRunIdRef.current = null;
+        lastGenerationStatusRef.current = null;
         setShowLoadModal(false);
         takeSnapshot(loaded.graph_data.nodes, loaded.graph_data.edges);
-    } catch (err) {
-      setError(normalizeApiError(err, t("error")));
-    } finally {
-      setIsLoading(false);
-    }
-  },
-    [setEdges, setNodes, takeSnapshot, stopGenerationPolling]
+      } catch (err) {
+        setError(normalizeApiError(err, t("error")));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [setEdges, setNodes, takeSnapshot, stopGenerationPolling, t]
   );
 
   const handleNewCanvas = useCallback(() => {
+    // Optional: Also block new canvas? Or allow clearing?
+    // Allowing clearing is fine for guest.
     setCanvasId(null);
     setTitle(t("newProject"));
     setIsPublic(false);
@@ -1123,6 +1271,8 @@ function CanvasFlow() {
     setGenerationRun(null);
     setGenerationStatus(null);
     setIsGenerating(false);
+    lastGenerationRunIdRef.current = null;
+    lastGenerationStatusRef.current = null;
     takeSnapshot(initialNodes, initialEdges);
   }, [setEdges, setNodes, takeSnapshot, stopGenerationPolling, t, initialNodes]);
 
@@ -1219,6 +1369,11 @@ function CanvasFlow() {
     });
   }, [runLog, runLogFilters]);
 
+  const runLogOffsetClass =
+    showPreviewPanel || showGenerationPanel
+      ? "bottom-[380px] md:bottom-[440px]"
+      : "bottom-6";
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (showEmptyOverlay) return;
@@ -1253,9 +1408,9 @@ function CanvasFlow() {
   }, [handleAddNode, showEmptyOverlay]);
 
   return (
-    <div className="h-screen w-screen bg-slate-950 text-slate-100 overflow-hidden relative">
+    <div className="h-screen w-full bg-slate-950 text-slate-100 overflow-hidden relative">
       {/* --- HEADER --- */}
-      <header className="absolute top-0 left-0 right-0 z-10 px-6 py-4 flex items-center justify-between pointer-events-none">
+      <header className="absolute top-0 left-0 right-0 z-10 px-4 md:px-6 py-4 flex flex-wrap items-center justify-between gap-2 pointer-events-none overflow-x-auto">
         <div className="pointer-events-auto flex items-center gap-4 bg-slate-950/50 backdrop-blur-md p-2 rounded-2xl border border-white/10 shadow-xl">
           <Link
             href="/"
@@ -1333,6 +1488,16 @@ function CanvasFlow() {
               <CreditCard className="h-4 w-4 text-sky-300" />
               <span>{creditBalance.toLocaleString()}</span>
             </Link>
+            {generationRun && (
+              <button
+                onClick={handleOpenGenerationPanel}
+                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10"
+                title={t("generationResult")}
+              >
+                <History className="h-4 w-4 text-emerald-200" />
+                {t("generationResult")}
+              </button>
+            )}
             <button
               onClick={handleGenerate}
               disabled={isGenerating}
@@ -1406,7 +1571,7 @@ function CanvasFlow() {
       </AnimatePresence>
 
       {/* Run Log Panel */}
-      <div className="fixed bottom-6 left-6 z-30 pointer-events-auto">
+      <div className={`fixed left-6 md:left-72 z-30 pointer-events-auto transition-all duration-300 ${runLogOffsetClass} ${showEmptyOverlay || showLoadModal ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
         <button
           onClick={() => setIsRunLogOpen((prev) => !prev)}
           className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/70 px-4 py-2 text-xs font-semibold text-slate-200 shadow-lg shadow-black/30 transition-colors hover:bg-white/10"
@@ -1444,11 +1609,10 @@ function CanvasFlow() {
                     setRunLogFilters((prev) => ({ ...prev, capsule: !prev.capsule }))
                   }
                   aria-pressed={runLogFilters.capsule}
-                  className={`rounded-full border px-2 py-1 transition-colors ${
-                    runLogFilters.capsule
-                      ? "border-sky-500/30 bg-sky-500/10 text-sky-200"
-                      : "border-white/10 text-slate-400 hover:bg-white/5"
-                  }`}
+                  className={`rounded-full border px-2 py-1 transition-colors ${runLogFilters.capsule
+                    ? "border-sky-500/30 bg-sky-500/10 text-sky-200"
+                    : "border-white/10 text-slate-400 hover:bg-white/5"
+                    }`}
                 >
                   {t("runLogFilterCapsule")}
                 </button>
@@ -1457,11 +1621,10 @@ function CanvasFlow() {
                     setRunLogFilters((prev) => ({ ...prev, generation: !prev.generation }))
                   }
                   aria-pressed={runLogFilters.generation}
-                  className={`rounded-full border px-2 py-1 transition-colors ${
-                    runLogFilters.generation
-                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
-                      : "border-white/10 text-slate-400 hover:bg-white/5"
-                  }`}
+                  className={`rounded-full border px-2 py-1 transition-colors ${runLogFilters.generation
+                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+                    : "border-white/10 text-slate-400 hover:bg-white/5"
+                    }`}
                 >
                   {t("runLogFilterGeneration")}
                 </button>
@@ -1470,11 +1633,10 @@ function CanvasFlow() {
                     setRunLogFilters((prev) => ({ ...prev, errorsOnly: !prev.errorsOnly }))
                   }
                   aria-pressed={runLogFilters.errorsOnly}
-                  className={`rounded-full border px-2 py-1 transition-colors ${
-                    runLogFilters.errorsOnly
-                      ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
-                      : "border-white/10 text-slate-400 hover:bg-white/5"
-                  }`}
+                  className={`rounded-full border px-2 py-1 transition-colors ${runLogFilters.errorsOnly
+                    ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
+                    : "border-white/10 text-slate-400 hover:bg-white/5"
+                    }`}
                 >
                   {t("runLogFilterErrors")}
                 </button>
@@ -1522,19 +1684,19 @@ function CanvasFlow() {
                       <div className="mt-1 text-slate-100">{entry.message}</div>
                       {(entry.metrics?.latencyMs !== undefined ||
                         entry.metrics?.costUsd !== undefined) && (
-                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-slate-300">
-                          {entry.metrics?.latencyMs !== undefined && (
-                            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-amber-200">
-                              {t("latency")}: {entry.metrics.latencyMs}ms
-                            </span>
-                          )}
-                          {entry.metrics?.costUsd !== undefined && (
-                            <span className="rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-0.5 text-sky-200">
-                              {t("costEstimate")}: ${entry.metrics.costUsd.toFixed(3)}
-                            </span>
-                          )}
-                        </div>
-                      )}
+                          <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-slate-300">
+                            {entry.metrics?.latencyMs !== undefined && (
+                              <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-amber-200">
+                                {t("latency")}: {entry.metrics.latencyMs}ms
+                              </span>
+                            )}
+                            {entry.metrics?.costUsd !== undefined && (
+                              <span className="rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-0.5 text-sky-200">
+                                {t("costEstimate")}: ${entry.metrics.costUsd.toFixed(3)}
+                              </span>
+                            )}
+                          </div>
+                        )}
                     </div>
                   ))}
                 </div>
@@ -1641,6 +1803,7 @@ function CanvasFlow() {
         getUpstreamContext={buildUpstreamContext}
         getConnectedCapsules={getConnectedCapsules}
         canvasId={canvasId}
+        isAdminView={isAdmin}
       />
 
       {/* --- PREVIEW PANEL --- */}
@@ -1652,14 +1815,16 @@ function CanvasFlow() {
           showCancel={Boolean(previewRunId) && isPreviewLoading}
           onCancel={handleCancelPreviewRun}
           statusNotice={previewNotice ?? undefined}
+          outputLanguage={previewLanguage ?? undefined}
+          availableLanguages={storyboardPreview?.available_languages}
+          onLanguageChange={handlePreviewLanguageChange}
           onClose={() => {
             if (previewRunId && isPreviewLoading) {
               handleCancelPreviewRun();
             }
-            setShowPreviewPanel(false);
-            setStoryboardPreview(null);
-            setPreviewNotice(null);
+            closePreviewPanel();
           }}
+          isAdminView={isAdmin}
         />
       )}
 
@@ -1667,7 +1832,7 @@ function CanvasFlow() {
         <GenerationPreviewPanel
           run={generationRun}
           isLoading={isGenerating}
-          onClose={() => setShowGenerationPanel(false)}
+          onClose={() => withViewTransition(() => setShowGenerationPanel(false))}
           onSubmitFeedback={handleGenerationFeedback}
         />
       )}
@@ -1790,6 +1955,11 @@ function CanvasFlow() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <LoginRequiredModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+      />
     </div>
   );
 }

@@ -13,6 +13,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from app.database import AsyncSessionLocal, init_db
+from app.ingest_rules import build_segment_id_fallback
 from app.models import RawAsset, VideoSegment
 from app.routers.ingest import VideoStructuredRequest
 
@@ -92,15 +93,29 @@ def _normalize_row(
     motifs = _parse_list_field(_pick(row, "motifs"))
     evidence_refs = _parse_list_field(_pick(row, "evidence_refs", "evidenceRefs", "evidence"))
 
+    time_start = _pick(row, "time_start", "timeStart")
+    time_end = _pick(row, "time_end", "timeEnd")
+    prompt_version = _pick(row, "prompt_version", "promptVersion") or default_prompt_version
+    model_version = _pick(row, "model_version", "modelVersion") or default_model_version
+    segment_id = _pick(row, "segment_id", "segmentId")
+    if not segment_id:
+        segment_id = build_segment_id_fallback(
+            source_id,
+            time_start,
+            time_end,
+            prompt_version,
+            model_version,
+        )
+
     return {
-        "segment_id": _pick(row, "segment_id", "segmentId"),
+        "segment_id": segment_id,
         "source_id": source_id,
         "work_id": work_id,
         "sequence_id": _pick(row, "sequence_id", "sequenceId", "sequence"),
         "scene_id": _pick(row, "scene_id", "sceneId"),
         "shot_id": _pick(row, "shot_id", "shotId", "shot"),
-        "time_start": _pick(row, "time_start", "timeStart"),
-        "time_end": _pick(row, "time_end", "timeEnd"),
+        "time_start": time_start,
+        "time_end": time_end,
         "shot_index": _pick(row, "shot_index", "shotIndex"),
         "keyframes": keyframes,
         "transcript": _pick(row, "transcript", "asr", "dialogue"),
@@ -109,8 +124,8 @@ def _normalize_row(
         "motifs": motifs,
         "evidence_refs": evidence_refs,
         "confidence": _pick(row, "confidence"),
-        "prompt_version": _pick(row, "prompt_version", "promptVersion") or default_prompt_version,
-        "model_version": _pick(row, "model_version", "modelVersion") or default_model_version,
+        "prompt_version": prompt_version,
+        "model_version": model_version,
         "generated_at": _pick(row, "generated_at", "generatedAt"),
     }
 
@@ -128,6 +143,11 @@ async def _upsert_segments(
             source_id = row["source_id"]
             if not source_id:
                 raise ValueError("source_id is required (or pass --source-id)")
+            segment_id = row.get("segment_id")
+            if not segment_id:
+                raise ValueError(
+                    "segment_id is required (or provide source_id/time_start/time_end/prompt_version/model_version)"
+                )
 
             if source_id not in rights_cache:
                 result = await session.execute(
@@ -142,12 +162,12 @@ async def _upsert_segments(
                 continue
 
             result = await session.execute(
-                select(VideoSegment).where(VideoSegment.segment_id == row["segment_id"])
+                select(VideoSegment).where(VideoSegment.segment_id == segment_id)
             )
             segment = result.scalars().first()
             if not segment:
                 segment = VideoSegment(
-                    segment_id=row["segment_id"],
+                    segment_id=segment_id,
                     source_id=source_id,
                     work_id=row.get("work_id"),
                     sequence_id=row.get("sequence_id"),

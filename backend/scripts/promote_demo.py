@@ -14,14 +14,14 @@ import sys
 
 def _ensure_env_from_mock(mock_dir: Path) -> Path:
     os.environ.setdefault("SHEETS_MODE", "csv")
-    os.environ.setdefault("VIVID_NOTEBOOK_LIBRARY_CSV_URL", str(mock_dir / "notebook_library.csv"))
-    os.environ.setdefault("VIVID_RAW_ASSETS_CSV_URL", str(mock_dir / "raw_assets.csv"))
-    os.environ.setdefault("VIVID_VIDEO_STRUCTURED_CSV_URL", str(mock_dir / "video_structured.csv"))
-    os.environ.setdefault("VIVID_DERIVED_INSIGHTS_CSV_URL", str(mock_dir / "derived_insights.csv"))
-    os.environ.setdefault("VIVID_PATTERN_CANDIDATES_CSV_URL", str(mock_dir / "pattern_candidates.csv"))
-    os.environ.setdefault("VIVID_PATTERN_TRACE_CSV_URL", str(mock_dir / "pattern_trace.csv"))
-    quarantine_path = Path(tempfile.gettempdir()) / "vivid_quarantine.csv"
-    os.environ.setdefault("VIVID_QUARANTINE_CSV_PATH", str(quarantine_path))
+    os.environ.setdefault("CREBIT_NOTEBOOK_LIBRARY_CSV_URL", str(mock_dir / "notebook_library.csv"))
+    os.environ.setdefault("CREBIT_RAW_ASSETS_CSV_URL", str(mock_dir / "raw_assets.csv"))
+    os.environ.setdefault("CREBIT_VIDEO_STRUCTURED_CSV_URL", str(mock_dir / "video_structured.csv"))
+    os.environ.setdefault("CREBIT_DERIVED_INSIGHTS_CSV_URL", str(mock_dir / "derived_insights.csv"))
+    os.environ.setdefault("CREBIT_PATTERN_CANDIDATES_CSV_URL", str(mock_dir / "pattern_candidates.csv"))
+    os.environ.setdefault("CREBIT_PATTERN_TRACE_CSV_URL", str(mock_dir / "pattern_trace.csv"))
+    quarantine_path = Path(tempfile.gettempdir()) / "crebit_quarantine.csv"
+    os.environ.setdefault("CREBIT_QUARANTINE_CSV_PATH", str(quarantine_path))
     return quarantine_path
 
 

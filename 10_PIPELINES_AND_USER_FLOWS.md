@@ -1,6 +1,7 @@
 # Pipelines & User Flows (2025-12)
 
 **작성**: 2025-12-24  
+**Updated**: 2025-12-28  
 **대상**: Product / Design / Engineering  
 **목표**: 데이터화 파이프라인과 캔버스 사용자 흐름을 한 장으로 정리
 
@@ -10,7 +11,7 @@
 
 이 문서는 **흐름/역할의 단일 기준**입니다.  
 다른 문서는 이 내용을 반복하지 않고 링크로 참조합니다.
-원칙/철학은 `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`에서 고정한다.
+원칙/철학은 `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`에서 고정한다.
 E2E 상세 파이프라인은 `27_AUTEUR_PIPELINE_E2E_CODEX.md`를 참조한다.
 프로덕션(샷 생성/후반) 상세는 `29_AI_PRODUCTION_PIPELINE_CODEX.md`를 참조한다.
 
@@ -120,6 +121,12 @@ Beat Sheet
 - **Creator**: 템플릿 선택, 캡슐 파라미터 조정, 프리뷰/생성
 - **Reviewer**: 품질 평가, 재사용/승격 근거 제공
 - **Ops**: Pipeline Ops 화면에서 상태/Sheets 동기화/쿼런틴/패턴 승격/템플릿 시드/실행 로그 점검
+
+### 3.1 Access & Session Gate (Auth)
+
+- Admin/Ops 화면은 **세션 기반 역할(Role)**로 접근 제어한다.
+- 로그인 미인증 상태에서는 **admin-only + 로그인 CTA**를 제공한다.
+- 캡슐/템플릿의 **공개 편집은 허용하지 않는다** (서버에서 강제).
 
 ---
 

@@ -67,7 +67,7 @@
       "prompt_contract_version": "v1",
       "storyboard_refs": []
     },
-    "evidence_refs": ["sheet:VIVID_DERIVED_INSIGHTS:42"]
+    "evidence_refs": ["sheet:CREBIT_DERIVED_INSIGHTS:42"]
   },
   "capsules": [
     {
@@ -142,5 +142,5 @@
 - `05_CAPSULE_NODE_SPEC.md`
 - `10_PIPELINES_AND_USER_FLOWS.md`
 - `12_PATTERN_PROMOTION_CRITERIA_V1.md`
-- `20_VIVID_ARCHITECTURE_EVOLUTION_CODEX.md`
+- `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
 - `29_AI_PRODUCTION_PIPELINE_CODEX.md`

@@ -8,6 +8,8 @@
         "model_version": "notebooklm-2025-12",
         "source_pack_id": "sp_cluster-bong-class-divide_hook_20251226",
         "guide_type": "homage",
+        "title": "봉준호 오마주 가이드 - 기생충",
+        "description": "봉준호 감독 스타일을 재현하기 위한 시각 언어 가이드",
         "homage_guide": "계단을 통한 수직 이동을 핵심 모티프로 사용. 아래에서 위로 올라갈수록 조명이 밝아지고, 공간이 넓어진다. 반대로 하강 시 어둡고 좁아진다.",
         "variation_guide": "수직 이동 대신 수평 이동으로 변주 가능 (설국열차 참조). 컬러는 쿨톤 유지.",
         "template_recommendations": [
@@ -18,57 +20,108 @@
         "cluster_id": "cluster-bong-class-divide",
         "cluster_label": "Class Divide / Vertical Tension",
         "cluster_confidence": 0.94,
-        "style_logic": "vertical_blocking + staircase_motif + class_contrast",
-        "mise_en_scene": "반지하 창문, 계단, 대저택 응접실의 대비",
-        "director_intent": "계급 갈등을 공간 배치로 시각적으로 표현",
-        "labels": [
-            "class_divide",
-            "vertical",
-            "tension",
-            "staircase"
-        ],
-        "signature_motifs": [
-            "staircase",
-            "basement",
-            "rain",
-            "window"
-        ],
-        "camera_motion": {
-            "mode": "controlled",
-            "signature": "vertical_tracking"
+        "visual_language": {
+            "blocking": {
+                "primary": "vertical",
+                "secondary": "depth",
+                "signature": "수직 공간 배치로 권력 관계 표현. 위=권력, 아래=종속"
+            },
+            "framing": {
+                "preferred_ratios": [
+                    "2.35:1",
+                    "1.85:1"
+                ],
+                "signature_compositions": [
+                    {
+                        "name": "계단 프레임",
+                        "description": "프레임을 대각선으로 분할하는 계단 배치",
+                        "usage": "계급 이동 장면"
+                    },
+                    {
+                        "name": "창문 프레임",
+                        "description": "창문을 통해 세상을 엿보는 구도",
+                        "usage": "소외/관찰 장면"
+                    }
+                ]
+            }
         },
         "color_palette": {
-            "bias": "cool",
-            "signature": [
-                "#1F2933",
-                "#323F4B",
-                "#627D98"
+            "primary_mood": "desaturated_cool",
+            "signature_colors": [
+                {
+                    "hex": "#1F2933",
+                    "name": "Charcoal Blue",
+                    "usage": "반지하/하층 공간"
+                },
+                {
+                    "hex": "#323F4B",
+                    "name": "Slate",
+                    "usage": "중간 계층/전환"
+                },
+                {
+                    "hex": "#627D98",
+                    "name": "Steel Blue",
+                    "usage": "상층/부유층 공간"
+                }
+            ],
+            "contrast_strategy": "low_saturation_high_value_contrast"
+        },
+        "camera_motion": {
+            "primary_style": "controlled_geometric",
+            "signature_movements": [
+                {
+                    "name": "vertical_track",
+                    "description": "계단을 따라 수직으로 트래킹",
+                    "emotional_function": "계급 이동의 시각화"
+                },
+                {
+                    "name": "slow_push",
+                    "description": "긴장 고조 시 느린 푸시인",
+                    "emotional_function": "불안감 증폭"
+                }
+            ],
+            "lens_preferences": [
+                "35mm",
+                "50mm",
+                "wide_anamorphic"
             ]
         },
-        "pacing": {
-            "tempo": "medium",
-            "signature": "tension_build_slow_release"
-        },
-        "key_patterns": [
+        "thematic_motifs": [
             {
-                "pattern_name": "staircase_motif",
-                "pattern_type": "scene",
-                "description": "계단을 통한 수직 이동과 계급 상승/하락의 은유",
-                "weight": 0.9
+                "motif": "stairs",
+                "meaning": "계급 이동/사회 구조",
+                "frequency": "high"
             },
             {
-                "pattern_name": "vertical_blocking",
-                "pattern_type": "scene",
-                "description": "프레임 내 수직 공간 배치로 권력 관계 표현",
-                "weight": 0.85
+                "motif": "rain",
+                "meaning": "정화/파괴/불평등의 가시화",
+                "frequency": "high"
             },
             {
-                "pattern_name": "rain_catastrophe",
-                "pattern_type": "scene",
-                "description": "비가 내리면 하층민에게 재앙이 온다",
-                "weight": 0.75
+                "motif": "smell",
+                "meaning": "계급 표식/본능적 혐오",
+                "frequency": "medium"
             }
         ],
+        "reference_shots": [
+            {
+                "film": "기생충",
+                "timecode": "00:15:23",
+                "description": "기우가 계단을 올라 대저택 진입",
+                "technique": "vertical_track + lighting_contrast"
+            }
+        ],
+        "application_notes": {
+            "when_to_use": [
+                "사회 비평적 콘텐츠",
+                "블랙 코미디",
+                "계급/불평등 주제"
+            ],
+            "avoid_when": [
+                "밝은 로맨틱 코미디",
+                "판타지/SF 액션"
+            ]
+        },
         "confidence": 0.92,
         "notebook_id": "nlb-bong-joon-ho",
         "notebook_ref": "https://notebooklm.google.com/notebook/bong-joon-ho-auteur",
@@ -87,28 +140,120 @@
         "model_version": "notebooklm-2025-12",
         "source_pack_id": "sp_cluster-bong-class-divide_build_20251226",
         "guide_type": "story",
-        "story_beats": [
+        "title": "기생충 비트시트",
+        "description": "봉준호 스타일의 5막 구조 비트시트",
+        "structure": {
+            "act_count": 5,
+            "pacing_signature": "slow_build_explosive_release",
+            "tonal_arc": "dark_comedy_to_tragedy"
+        },
+        "beats": [
             {
-                "beat": "HOOK",
-                "note": "반지하 창문으로 보이는 취객. 가난한 현실 직면."
+                "beat_id": "HOOK",
+                "act": 1,
+                "duration_ratio": 0.10,
+                "description": "일상의 불편함 노출",
+                "bong_signature": "평범해 보이지만 불길한 디테일 삽입",
+                "example": {
+                    "film": "기생충",
+                    "scene": "반지하 창문으로 보이는 취객",
+                    "function": "가난한 현실을 코믹하게 제시하되 불안감 암시"
+                },
+                "emotional_target": "curious_unease",
+                "visual_cues": [
+                    "cramped_space",
+                    "low_angle_window",
+                    "mundane_action"
+                ]
             },
             {
-                "beat": "BUILD",
-                "note": "기우의 침투. 계단을 오르며 새 세계로 진입."
+                "beat_id": "BUILD",
+                "act": 2,
+                "duration_ratio": 0.30,
+                "description": "점진적 침투/상승",
+                "bong_signature": "계획이 순조롭게 진행되는 듯한 착각",
+                "example": {
+                    "film": "기생충",
+                    "scene": "기우→기정→충숙→기택 순차 침투",
+                    "function": "관객도 함께 공범이 되는 쾌감"
+                },
+                "emotional_target": "guilty_pleasure",
+                "pacing_notes": "각 침투 에피소드마다 소규모 긴장-해소 반복",
+                "visual_cues": [
+                    "ascending_movement",
+                    "brightening_spaces",
+                    "symmetrical_framing"
+                ]
             },
             {
-                "beat": "TURN",
-                "note": "지하 벙커 발견. 또 다른 기생충의 존재."
+                "beat_id": "TURN",
+                "act": 3,
+                "duration_ratio": 0.15,
+                "description": "숨겨진 진실의 폭로",
+                "bong_signature": "예상치 못한 제3의 존재/시스템 발견",
+                "example": {
+                    "film": "기생충",
+                    "scene": "지하 벙커와 근세 발견",
+                    "function": "장르 전환 - 코미디에서 스릴러로"
+                },
+                "emotional_target": "shock_recognition",
+                "pacing_notes": "급격한 템포 변화, 숨 막히는 긴장",
+                "visual_cues": [
+                    "descending_movement",
+                    "darkness_reveal",
+                    "claustrophobic_framing"
+                ]
             },
             {
-                "beat": "PAYOFF",
-                "note": "폭우와 홍수. 계급 구조의 붕괴."
+                "beat_id": "PAYOFF",
+                "act": 4,
+                "duration_ratio": 0.25,
+                "description": "구조의 붕괴",
+                "bong_signature": "자연재해/시스템 오류가 계급 구조를 가시화",
+                "example": {
+                    "film": "기생충",
+                    "scene": "폭우와 반지하 침수",
+                    "function": "비가 '공평하게' 내리지만 피해는 불평등"
+                },
+                "emotional_target": "tragic_irony",
+                "pacing_notes": "병렬 편집 - 상류층 평온 vs 하류층 재난",
+                "visual_cues": [
+                    "rain_imagery",
+                    "vertical_contrast",
+                    "parallel_editing"
+                ]
             },
             {
-                "beat": "CLIMAX",
-                "note": "파티 장면. 폭력의 분출."
+                "beat_id": "CLIMAX",
+                "act": 5,
+                "duration_ratio": 0.20,
+                "description": "폭력의 분출",
+                "bong_signature": "축제/일상 속 갑작스러운 폭력",
+                "example": {
+                    "film": "기생충",
+                    "scene": "생일파티 중 살인",
+                    "function": "억눌린 분노의 물리적 폭발"
+                },
+                "emotional_target": "cathartic_horror",
+                "pacing_notes": "느린 빌드업 후 순간적 폭발, 이후 정적",
+                "visual_cues": [
+                    "wide_shot_chaos",
+                    "slow_motion_violence",
+                    "color_red_intrusion"
+                ]
             }
         ],
+        "transitions": {
+            "HOOK_to_BUILD": "기회의 도래 (외부 자극)",
+            "BUILD_to_TURN": "계획 성공의 정점에서 반전",
+            "TURN_to_PAYOFF": "숨기기/생존 모드 전환",
+            "PAYOFF_to_CLIMAX": "제어 불능 상황 + 외부 이벤트"
+        },
+        "tonal_markers": {
+            "comedy_peak": "BUILD 중반",
+            "horror_onset": "TURN",
+            "tragedy_peak": "CLIMAX 직후"
+        },
         "notebook_id": "nlb-bong-joon-ho",
         "notebook_ref": "https://notebooklm.google.com/notebook/bong-joon-ho-auteur",
         "evidence_refs": [
@@ -125,22 +270,106 @@
         "model_version": "notebooklm-2025-12",
         "source_pack_id": "sp_cluster-bong-class-divide_payoff_20251226",
         "guide_type": "storyboard",
-        "storyboard_cards": [
+        "title": "설국열차 스토리보드",
+        "description": "봉준호 스타일 스토리보드 - 계급 대비 시퀀스",
+        "sequence_info": {
+            "sequence_name": "꼬리칸에서 엔진칸으로",
+            "duration_estimate": "3-5분",
+            "emotional_arc": "desperation_to_hope"
+        },
+        "shots": [
             {
-                "shot": 1,
-                "composition": "horizontal_blocking",
-                "note": "꼬리칸 와이드샷. 비참한 군중."
+                "shot_number": 1,
+                "shot_type": "establishing_wide",
+                "composition": {
+                    "type": "deep_focus",
+                    "rule": "horizontal_thirds",
+                    "depth_layers": [
+                        "foreground_crowd",
+                        "midground_corridor",
+                        "background_light"
+                    ]
+                },
+                "camera": {
+                    "angle": "eye_level",
+                    "movement": "static",
+                    "lens": "wide_anamorphic"
+                },
+                "lighting": "low_key_practical",
+                "description": "꼬리칸 와이드샷. 비참한 군중.",
+                "emotional_function": "절망적 현실 제시",
+                "duration": "4s"
             },
             {
-                "shot": 2,
-                "composition": "tunnel_perspective",
-                "note": "열차 복도 원근감. 앞으로의 여정 암시."
+                "shot_number": 2,
+                "shot_type": "tracking",
+                "composition": {
+                    "type": "tunnel_perspective",
+                    "rule": "leading_lines",
+                    "depth_layers": [
+                        "foreground_character",
+                        "midground_corridor",
+                        "background_destination"
+                    ]
+                },
+                "camera": {
+                    "angle": "low_following",
+                    "movement": "horizontal_track",
+                    "lens": "35mm"
+                },
+                "lighting": "gradient_dark_to_bright",
+                "description": "열차 복도 원근감. 앞으로의 여정 암시.",
+                "emotional_function": "희망/목표 제시",
+                "duration": "6s"
             },
             {
-                "shot": 3,
-                "composition": "contrast_cut",
-                "note": "계급별 칸 대비. 어둠에서 빛으로."
+                "shot_number": 3,
+                "shot_type": "contrast_cut",
+                "composition": {
+                    "type": "symmetrical",
+                    "rule": "center_weighted",
+                    "depth_layers": [
+                        "luxury_interior"
+                    ]
+                },
+                "camera": {
+                    "angle": "straight_on",
+                    "movement": "slow_dolly_in",
+                    "lens": "50mm"
+                },
+                "lighting": "bright_diffused",
+                "description": "계급별 칸 대비. 어둠에서 빛으로.",
+                "emotional_function": "계급 차이 시각화",
+                "duration": "3s"
+            },
+            {
+                "shot_number": 4,
+                "shot_type": "reaction",
+                "composition": {
+                    "type": "off_center",
+                    "rule": "golden_ratio",
+                    "focus": "eyes"
+                },
+                "camera": {
+                    "angle": "eye_level",
+                    "movement": "subtle_handheld",
+                    "lens": "85mm"
+                },
+                "lighting": "side_key",
+                "description": "커티스의 분노/결의 표정",
+                "emotional_function": "감정적 앵커",
+                "duration": "2s"
             }
+        ],
+        "editing_notes": {
+            "rhythm": "accelerating",
+            "transition_style": "hard_cuts",
+            "signature_technique": "contrast_montage"
+        },
+        "sound_design_hints": [
+            "train_rhythm_as_heartbeat",
+            "class_ambient_contrast",
+            "silence_before_action"
         ],
         "notebook_id": "nlb-bong-joon-ho",
         "notebook_ref": "https://notebooklm.google.com/notebook/bong-joon-ho-auteur",
@@ -158,6 +387,81 @@
         "model_version": "notebooklm-2025-12",
         "source_pack_id": "sp_cluster-bong-class-divide_turn_20251226",
         "guide_type": "persona",
+        "title": "봉준호 페르소나 프로파일",
+        "description": "봉준호 감독의 예술적 정체성과 창작 철학",
+        "artistic_philosophy": {
+            "core_statement": "장르의 껍데기를 빌려 사회를 해부하는 작가",
+            "key_beliefs": [
+                "장르 영화는 가장 효과적인 사회 비평 도구",
+                "디테일이 세계관을 만든다",
+                "웃음과 공포는 같은 뿌리에서 나온다"
+            ],
+            "influences": [
+                {
+                    "name": "Alfred Hitchcock",
+                    "aspect": "서스펜스 구축"
+                },
+                {
+                    "name": "Claude Chabrol",
+                    "aspect": "부르주아 비판"
+                },
+                {
+                    "name": "Kim Ki-young",
+                    "aspect": "하녀/계급 공포"
+                }
+            ]
+        },
+        "thematic_obsessions": [
+            {
+                "theme": "계급과 공간",
+                "description": "물리적 공간 배치가 사회 구조를 반영",
+                "manifestations": [
+                    "기생충의 반지하-대저택",
+                    "설국열차의 칸별 계급"
+                ],
+                "weight": 0.95
+            },
+            {
+                "theme": "시스템의 무능/부조리",
+                "description": "제도와 권위의 실패가 비극을 낳는다",
+                "manifestations": [
+                    "살인의 추억의 형사들",
+                    "괴물의 정부 대응"
+                ],
+                "weight": 0.90
+            },
+            {
+                "theme": "가족의 연대와 균열",
+                "description": "가족은 가장 작은 사회이자 갈등의 축소판",
+                "manifestations": [
+                    "기생충의 두 가족",
+                    "괴물의 박씨 일가"
+                ],
+                "weight": 0.85
+            }
+        ],
+        "signature_techniques": {
+            "visual": [
+                {
+                    "name": "수직 블로킹",
+                    "frequency": "high"
+                },
+                {
+                    "name": "깊은 심도 구성",
+                    "frequency": "high"
+                }
+            ],
+            "narrative": [
+                {
+                    "name": "장르 믹싱",
+                    "frequency": "signature"
+                },
+                {
+                    "name": "톤 급변화",
+                    "frequency": "high"
+                }
+            ]
+        },
         "persona_profile": "초기 봉준호: 블랙코미디와 사회 구조 비판의 독특한 조합. 비 오는 농촌의 우울함과 형사들의 무력감.",
         "synapse_logic": "비 + 들판 + 실패 = 봉준호식 멜랑콜리. 해결되지 않는 미스터리가 핵심.",
         "key_patterns": [

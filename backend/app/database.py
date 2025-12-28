@@ -173,3 +173,42 @@ async def init_db(drop_all: bool = False) -> None:
         await conn.execute(
             text("ALTER TABLE affiliate_referrals ADD COLUMN IF NOT EXISTS referee_verified_at TIMESTAMP")
         )
+        # Gap 1: persona_source for EvidenceRecord
+        await conn.execute(
+            text("ALTER TABLE evidence_records ADD COLUMN IF NOT EXISTS persona_source VARCHAR(32)")
+        )
+        # Gap 2: segment_type for VideoSegment
+        await conn.execute(
+            text("ALTER TABLE video_segments ADD COLUMN IF NOT EXISTS segment_type VARCHAR(32)")
+        )
+        # Gap 3 & 4: persona_priority and persona_source for CapsuleRun
+        await conn.execute(
+            text("ALTER TABLE capsule_runs ADD COLUMN IF NOT EXISTS persona_priority VARCHAR(32)")
+        )
+        await conn.execute(
+            text("ALTER TABLE capsule_runs ADD COLUMN IF NOT EXISTS persona_source VARCHAR(32)")
+        )
+        # Analytics events table (Phase 0.1)
+        await conn.execute(
+            text("""
+                CREATE TABLE IF NOT EXISTS analytics_events (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    event_type VARCHAR(60) NOT NULL,
+                    user_id VARCHAR(160),
+                    template_id UUID,
+                    capsule_id VARCHAR(160),
+                    run_id UUID,
+                    evidence_ref VARCHAR(200),
+                    meta JSONB,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+        )
+        # Index for analytics queries
+        await conn.execute(
+            text("CREATE INDEX IF NOT EXISTS idx_analytics_events_type ON analytics_events(event_type)")
+        )
+        await conn.execute(
+            text("CREATE INDEX IF NOT EXISTS idx_analytics_events_created ON analytics_events(created_at)")
+        )
+

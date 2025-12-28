@@ -12,8 +12,9 @@ import {
 import AppShell from "@/components/AppShell";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { api, PatternItem, PatternTraceItem, PatternVersion } from "@/lib/api";
-import { isAdminModeEnabled } from "@/lib/admin";
-import { normalizeApiError } from "@/lib/errors";
+import PageStatus from "@/components/PageStatus";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { isNetworkError, normalizeApiError } from "@/lib/errors";
 
 type ActiveTab = "library" | "trace";
 
@@ -32,7 +33,8 @@ export default function PatternsPage() {
   const [patternVersions, setPatternVersions] = useState<PatternVersion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const adminModeEnabled = useMemo(() => isAdminModeEnabled(), []);
+  const [isOffline, setIsOffline] = useState(false);
+  const { isAdmin, session, isLoading: isAuthLoading } = useAdminAccess();
 
   const patternTypeLabel = (value: string) => {
     switch (value) {
@@ -66,12 +68,19 @@ export default function PatternsPage() {
 
   useEffect(() => {
     let active = true;
-    if (!adminModeEnabled) {
+    if (isAuthLoading) {
+      setIsLoading(true);
+      return () => {
+        active = false;
+      };
+    }
+    if (!isAdmin) {
       setPatterns([]);
       setTrace([]);
       setPatternVersions([]);
       setIsLoading(false);
       setLoadError("admin-only");
+      setIsOffline(false);
       return () => {
         active = false;
       };
@@ -79,6 +88,7 @@ export default function PatternsPage() {
     const loadData = async () => {
       setIsLoading(true);
       setLoadError(null);
+      setIsOffline(false);
       try {
         const versionsPromise = api.listPatternVersions(5);
         if (activeTab === "library") {
@@ -107,6 +117,7 @@ export default function PatternsPage() {
       } catch (err) {
         if (!active) return;
         setLoadError(normalizeApiError(err, t("patternLoadError")));
+        setIsOffline(isNetworkError(err));
       } finally {
         if (active) setIsLoading(false);
       }
@@ -116,7 +127,7 @@ export default function PatternsPage() {
     return () => {
       active = false;
     };
-  }, [adminModeEnabled, activeTab, search, patternType, status, sourceId, t]);
+  }, [isAdmin, isAuthLoading, activeTab, search, patternType, status, sourceId, t]);
 
   const tabLabel = useMemo(
     () => (activeTab === "library" ? t("patternLibraryTab") : t("patternTraceTab")),
@@ -124,6 +135,7 @@ export default function PatternsPage() {
   );
   const latestVersion = patternVersions[0]?.version;
   const showAdminHint = (loadError || "").toLowerCase().includes("admin");
+  const showLoginCta = showAdminHint && !session?.authenticated;
 
   return (
     <AppShell showTopBar={false}>
@@ -155,14 +167,21 @@ export default function PatternsPage() {
           </motion.div>
 
           {loadError && !showAdminHint && (
-            <div className="mb-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-              {loadError}
-            </div>
+            <PageStatus
+              variant="error"
+              title={t("patternLoadError")}
+              message={loadError}
+              isOffline={isOffline}
+              className="mb-4"
+            />
           )}
           {showAdminHint && (
-            <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-              {t("adminOnly")}
-            </div>
+            <PageStatus
+              variant="admin"
+              title={t("adminOnly")}
+              action={showLoginCta ? { label: t("signIn"), href: "/login" } : undefined}
+              className="mb-4"
+            />
           )}
 
           <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -252,13 +271,17 @@ export default function PatternsPage() {
           {activeTab === "library" ? (
             <div className="grid gap-4 md:grid-cols-2">
               {isLoading ? (
-                <div className="col-span-full rounded-xl border border-white/10 bg-slate-950/50 px-4 py-6 text-sm text-slate-500">
-                  {t("loading")}
-                </div>
+                <PageStatus
+                  variant="loading"
+                  title={t("loading")}
+                  className="col-span-full"
+                />
               ) : patterns.length === 0 ? (
-                <div className="col-span-full rounded-xl border border-white/10 bg-slate-950/50 px-4 py-6 text-sm text-slate-500">
-                  {t("noPatterns")}
-                </div>
+                <PageStatus
+                  variant="empty"
+                  title={t("noPatterns")}
+                  className="col-span-full"
+                />
               ) : (
                 patterns.map((pattern) => (
                   <div
@@ -285,13 +308,15 @@ export default function PatternsPage() {
           ) : (
             <div className="space-y-3">
               {isLoading ? (
-                <div className="rounded-xl border border-white/10 bg-slate-950/50 px-4 py-6 text-sm text-slate-500">
-                  {t("loading")}
-                </div>
+                <PageStatus
+                  variant="loading"
+                  title={t("loading")}
+                />
               ) : trace.length === 0 ? (
-                <div className="rounded-xl border border-white/10 bg-slate-950/50 px-4 py-6 text-sm text-slate-500">
-                  {t("noPatternTrace")}
-                </div>
+                <PageStatus
+                  variant="empty"
+                  title={t("noPatternTrace")}
+                />
               ) : (
                 trace.map((item) => (
                   <div

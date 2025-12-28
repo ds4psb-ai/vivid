@@ -53,7 +53,7 @@
 
 ---
 
-## 4) Production Pipeline (Vivid 적용)
+## 4) Production Pipeline (Crebit 적용)
 
 ```
 Idea/Script
@@ -139,7 +139,7 @@ Golden edge light, controlled ferocity.
 
 ---
 
-## 7) Vivid Node Mapping (Production Capsules)
+## 7) Crebit Node Mapping (Production Capsules)
 
 - **Beat Sheet Capsule**: 스토리 비트 구조화  
 - **Shot List Capsule**: 비트 → 샷 리스트 변환  
