@@ -76,6 +76,8 @@ import { useSessionContext } from "@/contexts/SessionContext";
 import LoginRequiredModal from "@/components/LoginRequiredModal";
 import { useDirectorPackState } from "@/hooks/useDirectorPackState";
 import { CanvasDirectorPackPanel } from "@/components/canvas/CanvasDirectorPackPanel";
+import { useNarrativeArcState } from "@/hooks/useNarrativeArcState";
+import { CanvasNarrativePanel } from "@/components/canvas/CanvasNarrativePanel";
 
 const nodeTypes = {
   input: CanvasNode,
@@ -211,6 +213,9 @@ function CanvasFlow() {
   // DirectorPack state for multi-scene DNA consistency
   const capsuleNode = useMemo(() => nodes.find((n) => n.type === "capsule"), [nodes]);
   const directorPackState = useDirectorPackState(capsuleNode?.data?.capsuleId);
+
+  // NarrativeArc state for Story-First generation
+  const narrativeArcState = useNarrativeArcState();
 
   const openPreviewPanel = useCallback(() => {
     withViewTransition(() => setShowPreviewPanel(true));
@@ -1754,6 +1759,18 @@ function CanvasFlow() {
               capsuleId={capsuleNode?.data?.capsuleId}
               defaultCollapsed={true}
             />
+            {/* Story-First Narrative Panel */}
+            <div className="mt-2">
+              <CanvasNarrativePanel
+                isEnabled={narrativeArcState.isEnabled}
+                arc={narrativeArcState.arc}
+                selectedHookVariant={narrativeArcState.selectedHookVariant}
+                onToggleEnabled={narrativeArcState.toggleEnabled}
+                onSetDissonance={narrativeArcState.setDissonance}
+                onSetEmotionCurve={narrativeArcState.setEmotionCurve}
+                onSelectHookVariant={narrativeArcState.setHookVariant}
+              />
+            </div>
           </Panel>
           {/* Custom Controls Positioned Bottom Right */}
           <Panel position="bottom-right" className="mb-8 mr-8 flex flex-col gap-2">
