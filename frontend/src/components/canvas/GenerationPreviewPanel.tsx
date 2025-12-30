@@ -5,11 +5,12 @@ import { useState, useMemo, useEffect } from "react";
 import {
   Clapperboard, X, ListChecks, PanelsTopLeft, Copy, Package,
   FileText, AlertCircle, CheckCircle2, MessageSquare, Play,
-  Film, Download, ChevronRight, Sparkles, Music, Network
+  Film, Download, ChevronRight, Sparkles, Music, Network, Shield
 } from "lucide-react";
 import type { GenerationRun } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getStoryboardLabel, getStoryboardShotType } from "@/lib/narrative";
+import DNAComplianceViewer, { BatchComplianceReport, ShotComplianceReport } from "@/components/DNAComplianceViewer";
 
 /**
  * Premium UI Design - 2025 Refinement
@@ -43,7 +44,7 @@ interface GenerationPreviewPanelProps {
   onSubmitFeedback?: (payload: { shots: ShotFeedbackEntry[] }) => void;
 }
 
-type Tab = "story" | "video" | "audio" | "mindmap" | "data";
+type Tab = "story" | "video" | "audio" | "mindmap" | "data" | "dna";
 
 export function GenerationPreviewPanel({
   run,
@@ -81,7 +82,8 @@ export function GenerationPreviewPanel({
     patternVersion,
     creditCost,
     productionContract,
-    runLabel
+    runLabel,
+    dnaComplianceReport,
   } = useMemo(() => {
     const outputs = run?.outputs || {};
     const spec = run?.spec || {};
@@ -97,7 +99,9 @@ export function GenerationPreviewPanel({
       patternVersion: spec.pattern_version || spec.patternVersion,
       creditCost: typeof spec.credit_cost === "number" ? spec.credit_cost : null,
       productionContract: spec.production_contract || outputs.production_contract,
-      runLabel: run?.id ? `run-${run.id.slice(0, 8)}` : "run"
+      runLabel: run?.id ? `run-${run.id.slice(0, 8)}` : "run",
+      // DNA Compliance report
+      dnaComplianceReport: outputs.dna_compliance_report as BatchComplianceReport | undefined,
     };
   }, [run]);
 
@@ -284,6 +288,7 @@ export function GenerationPreviewPanel({
                 <div className="flex bg-black/20 rounded-lg p-1 border border-white/5">
                   <TabButton id="story" label={t("storyboard")} icon={Clapperboard} />
                   <TabButton id="video" label="Video" icon={Film} count={videoResults.length} />
+                  <TabButton id="dna" label="DNA" icon={Shield} count={dnaComplianceReport?.violation_shots} />
                   <TabButton id="audio" label="Audio" icon={Music} />
                   <TabButton id="mindmap" label="Mind Map" icon={Network} />
                   <TabButton id="data" label="Data" icon={Package} />
@@ -444,6 +449,41 @@ export function GenerationPreviewPanel({
                       <h3 className="text-slate-300 font-medium">Mind Map View</h3>
                       <p className="text-slate-500 text-sm mt-1">Visualize narrative connections and beat structures.</p>
                       {/* Placeholder for future implementation */}
+                    </div>
+                  )}
+
+                  {/* DNA TAB */}
+                  {activeTab === "dna" && (
+                    <div className="space-y-4">
+                      {dnaComplianceReport ? (
+                        <DNAComplianceViewer
+                          report={dnaComplianceReport}
+                          compact={false}
+                          onRegenerateShot={(shotId, suggestions) => {
+                            console.log('Regenerate shot:', shotId, suggestions);
+                            // TODO: Implement shot regeneration
+                          }}
+                          onExport={(format) => {
+                            if (format === 'json') {
+                              const blob = new Blob([JSON.stringify(dnaComplianceReport, null, 2)], { type: 'application/json' });
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = `${runLabel}-dna-report.json`;
+                              a.click();
+                              URL.revokeObjectURL(url);
+                            }
+                          }}
+                        />
+                      ) : (
+                        <div className="text-center py-20">
+                          <Shield className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+                          <h3 className="text-slate-300 font-medium">DNA Compliance</h3>
+                          <p className="text-slate-500 text-sm mt-1">
+                            No compliance report available. Enable DirectorPack DNA validation to see compliance results.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
 
