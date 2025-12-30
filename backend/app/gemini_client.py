@@ -371,6 +371,201 @@ Generate shot contracts with detailed video generation prompts. Output as JSON:
     return normalized, usage
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# DirectorPack-Aware Shot Contract Generation (Multi-Scene Consistency)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _director_pack_to_prompt_rules(director_pack: Dict[str, Any]) -> str:
+    """Convert DirectorPack to prompt rules for consistent shot generation.
+    
+    Args:
+        director_pack: DirectorPack dict with dna_invariants, forbidden_mutations, etc.
+        
+    Returns:
+        Formatted string of rules to inject into system prompt
+    """
+    lines = ["## 일관성 규칙 (DNA Invariants) - 모든 샷에 적용"]
+    
+    # DNA Invariants
+    dna_invariants = director_pack.get("dna_invariants", [])
+    for inv in dna_invariants:
+        rule_type = inv.get("rule_type", "")
+        name = inv.get("name", "")
+        description = inv.get("description", "")
+        spec = inv.get("spec", {})
+        priority = inv.get("priority", "medium")
+        
+        priority_emoji = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "⚪"}.get(priority, "⚪")
+        
+        if rule_type == "composition":
+            lines.append(f"{priority_emoji} [구도] {name}: {description}")
+        elif rule_type == "timing":
+            val = spec.get("value", "")
+            lines.append(f"{priority_emoji} [타이밍] {name}: {description} (기준: {spec.get('operator', '')} {val})")
+        elif rule_type == "audio":
+            lines.append(f"{priority_emoji} [오디오] {name}: {description}")
+        elif rule_type == "technical":
+            lines.append(f"{priority_emoji} [기술] {name}: {description}")
+        else:
+            lines.append(f"{priority_emoji} [{rule_type}] {name}: {description}")
+        
+        # Add coach line as guidance
+        coach_line = inv.get("coach_line_ko") or inv.get("coach_line")
+        if coach_line:
+            lines.append(f"   → 지침: {coach_line}")
+    
+    # Forbidden Mutations
+    forbidden = director_pack.get("forbidden_mutations", [])
+    if forbidden:
+        lines.append("\n## 금지 규칙 (Forbidden Mutations) - 절대 하지 말 것")
+        for fm in forbidden:
+            severity = fm.get("severity", "major")
+            severity_emoji = {"critical": "🚫", "major": "⛔", "minor": "⚠️"}.get(severity, "⚠️")
+            name = fm.get("name", "")
+            desc = fm.get("description", "")
+            lines.append(f"{severity_emoji} {name}: {desc}")
+    
+    # Mutation Slots (variable elements)
+    slots = director_pack.get("mutation_slots", [])
+    if slots:
+        lines.append("\n## 변경 가능 요소 (Mutation Slots)")
+        for slot in slots:
+            name = slot.get("name", "")
+            allowed = slot.get("allowed_values", [])
+            default = slot.get("default_value")
+            if allowed:
+                lines.append(f"- {name}: {', '.join(str(v) for v in allowed)} (기본: {default})")
+    
+    return "\n".join(lines)
+
+
+def generate_shot_contracts_with_dna(
+    inputs: Dict[str, Any],
+    storyboard: List[Dict[str, Any]],
+    params: Dict[str, Any],
+    director_pack: Optional[Dict[str, Any]] = None,
+    scene_overrides: Optional[Dict[str, Dict[str, Any]]] = None,
+    capsule_id: str = "",
+) -> Tuple[List[Dict[str, Any]], Dict[str, int]]:
+    """Generate shot contracts with DirectorPack DNA for multi-scene consistency.
+    
+    This function injects DirectorPack rules into the generation prompt to ensure
+    all shots maintain consistent visual style, timing, and quality standards.
+    
+    Args:
+        inputs: Capsule inputs
+        storyboard: Storyboard cards
+        params: Style parameters
+        director_pack: DirectorPack dict with dna_invariants, forbidden_mutations, etc.
+        scene_overrides: Optional per-scene overrides {scene_id: {custom_prompt, overridden_invariants}}
+        capsule_id: Capsule identifier for auteur detection
+        
+    Returns:
+        Tuple of (shot_contracts, token_usage)
+    """
+    # Build base system prompt
+    base_prompt = _get_auteur_prompt(capsule_id)
+    
+    # Add DNA rules if provided
+    dna_rules = ""
+    if director_pack:
+        dna_rules = _director_pack_to_prompt_rules(director_pack)
+        logger.info(f"Injecting DirectorPack DNA: {len(director_pack.get('dna_invariants', []))} invariants, "
+                   f"{len(director_pack.get('forbidden_mutations', []))} forbidden")
+    
+    # Add scene-specific overrides
+    override_prompt = ""
+    if scene_overrides:
+        override_lines = ["\n## 씬별 특별 지시 (Scene Overrides)"]
+        for scene_id, override in scene_overrides.items():
+            if not override.get("enabled", True):
+                continue
+            custom_prompt = override.get("custom_prompt")
+            if custom_prompt:
+                override_lines.append(f"\n### {scene_id}")
+                override_lines.append(custom_prompt)
+            
+            # Apply overridden invariants
+            overridden = override.get("overridden_invariants", {})
+            if overridden:
+                for rule_id, new_spec in overridden.items():
+                    if new_spec and new_spec.get("spec"):
+                        override_lines.append(f"- {rule_id}: 수정된 값 = {new_spec['spec'].get('value')}")
+        
+        override_prompt = "\n".join(override_lines)
+    
+    # Compose final system prompt
+    system_prompt = f"""{base_prompt}
+
+{dna_rules}
+
+{override_prompt}
+
+위 규칙을 모든 샷에 일관되게 적용하세요. 규칙 위반 시 해당 샷은 품질 검증에서 탈락합니다.
+"""
+    
+    user_prompt = f"""Convert these storyboard cards into production-ready shot contracts:
+
+Storyboard Cards:
+{json.dumps(storyboard, indent=2, ensure_ascii=False)}
+
+Style Parameters: {json.dumps(params, ensure_ascii=False)}
+
+Generate shot contracts that STRICTLY follow the DNA Invariants and avoid Forbidden Mutations.
+Each shot's prompt must incorporate the consistency rules.
+
+Output as JSON:
+{{
+  "shot_contracts": [
+    {{
+      "shot_id": "shot_001",
+      "storyboard_ref": 1,
+      "shot_type": "wide",
+      "duration_sec": 5,
+      "camera": {{
+        "movement": "slow push in",
+        "angle": "eye level",
+        "lens": "35mm"
+      }},
+      "lighting": {{
+        "key": "natural window light",
+        "mood": "soft, contemplative"
+      }},
+      "composition": "rule of thirds, subject left",
+      "prompt": "Cinematic wide shot incorporating [DNA rules]...",
+      "negative_prompt": "cartoon, anime, low quality, blurry, [forbidden elements]",
+      "dna_compliance": {{
+        "applied_rules": ["hook_timing_2s", "center_composition"],
+        "confidence": 0.95
+      }}
+    }}
+  ]
+}}"""
+
+    result, usage = _call_with_retry(user_prompt, system_prompt)
+    contracts = result.get("shot_contracts", [])
+    
+    # Validate and normalize with DNA compliance tracking
+    normalized = []
+    for i, shot in enumerate(contracts):
+        shot_id = shot.get("shot_id", f"shot_{i+1:03d}")
+        normalized.append({
+            "shot_id": shot_id,
+            "storyboard_ref": shot.get("storyboard_ref", i + 1),
+            "shot_type": shot.get("shot_type", "medium"),
+            "duration_sec": shot.get("duration_sec", 5),
+            "camera": shot.get("camera", {}),
+            "lighting": shot.get("lighting", {}),
+            "composition": shot.get("composition", ""),
+            "prompt": shot.get("prompt", ""),
+            "negative_prompt": shot.get("negative_prompt", ""),
+            "dna_compliance": shot.get("dna_compliance", {}),
+        })
+    
+    logger.info(f"Generated {len(normalized)} shot contracts with DNA compliance")
+    return normalized, usage
+
+
 def test_connection() -> Dict[str, Any]:
     """Test Gemini API connection.
     

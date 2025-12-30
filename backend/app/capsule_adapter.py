@@ -347,8 +347,20 @@ def _run_gemini(
     inputs: Dict[str, Any],
     params: Dict[str, Any],
     capsule_spec: Optional[Dict[str, Any]] = None,
+    director_pack: Optional[Dict[str, Any]] = None,
+    scene_overrides: Optional[Dict[str, Dict[str, Any]]] = None,
 ) -> Tuple[Dict[str, Any], List[str]]:
-    """Run Gemini adapter for storyboard and shot contract generation."""
+    """Run Gemini adapter for storyboard and shot contract generation.
+    
+    Args:
+        capsule_id: Capsule identifier
+        capsule_version: Capsule version
+        inputs: Input data for generation
+        params: Style parameters
+        capsule_spec: Capsule specification
+        director_pack: Optional DirectorPack for DNA injection (multi-scene consistency)
+        scene_overrides: Optional per-scene overrides for DNA rules
+    """
     from app.config import settings
     
     if not settings.GEMINI_ENABLED or not settings.GEMINI_API_KEY:
@@ -362,6 +374,7 @@ def _run_gemini(
         from app.gemini_client import (
             generate_storyboard_with_gemini,
             generate_shot_contracts_with_gemini,
+            generate_shot_contracts_with_dna,
             GeminiGenerationError,
         )
         from app.narrative_utils import normalize_storyboard_cards
@@ -371,10 +384,22 @@ def _run_gemini(
             inputs, params, capsule_id
         )
         
-        # Generate shot contracts
-        shot_contracts, shot_usage = generate_shot_contracts_with_gemini(
-            inputs, storyboard, params, capsule_id
-        )
+        # Generate shot contracts - use DNA if available
+        if director_pack:
+            logger.info(f"Using DirectorPack DNA for multi-scene consistency: "
+                       f"{len(director_pack.get('dna_invariants', []))} invariants")
+            shot_contracts, shot_usage = generate_shot_contracts_with_dna(
+                inputs, storyboard, params, 
+                director_pack=director_pack,
+                scene_overrides=scene_overrides,
+                capsule_id=capsule_id
+            )
+            dna_mode = "enabled"
+        else:
+            shot_contracts, shot_usage = generate_shot_contracts_with_gemini(
+                inputs, storyboard, params, capsule_id
+            )
+            dna_mode = "disabled"
         
         # Combine token usage
         total_usage = {
@@ -390,7 +415,13 @@ def _run_gemini(
             "shot_contracts": shot_contracts,
             "token_usage": total_usage,
             "model": settings.GEMINI_MODEL,
+            "dna_mode": dna_mode,
         }
+        
+        # Add DNA compliance info if available
+        if director_pack:
+            summary["director_pack_id"] = director_pack.get("meta", {}).get("pack_id", "unknown")
+            summary["dna_invariants_applied"] = len(director_pack.get("dna_invariants", []))
         
         return summary, []
         
@@ -543,12 +574,24 @@ def execute_capsule(
     params: Dict[str, Any],
     capsule_spec: Optional[Dict[str, Any]] = None,
     progress_cb: Optional[Callable[[str, int], None]] = None,
+    director_pack: Optional[Dict[str, Any]] = None,
+    scene_overrides: Optional[Dict[str, Dict[str, Any]]] = None,
 ) -> Tuple[Dict[str, Any], List[str]]:
     """
     Execute a capsule and return (summary, evidence_refs).
     
     This is the main adapter entry point. Currently uses rule-based logic.
     Future: integrate with Gemini/LLM for more sophisticated generation.
+    
+    Args:
+        capsule_id: Capsule identifier (e.g., "auteur.bong-joon-ho")
+        capsule_version: Version string
+        inputs: Input data for generation
+        params: Style parameters
+        capsule_spec: Capsule specification
+        progress_cb: Optional progress callback
+        director_pack: Optional DirectorPack for DNA-based multi-scene consistency
+        scene_overrides: Optional per-scene overrides for DNA rules
     """
     # Compute outputs based on auteur style
     if progress_cb:
@@ -664,7 +707,12 @@ def execute_capsule(
         elif step == "gemini":
             if progress_cb:
                 progress_cb("Gemini generation", 80)
-            insight, refs = _run_gemini(capsule_id, capsule_version, inputs, params, capsule_spec)
+            # Pass director_pack and scene_overrides for DNA-based multi-scene consistency
+            insight, refs = _run_gemini(
+                capsule_id, capsule_version, inputs, params, capsule_spec,
+                director_pack=director_pack,
+                scene_overrides=scene_overrides
+            )
             external_insights.append({"adapter": "gemini", **insight})
             evidence_refs.extend(refs)
             # Merge Gemini output into main summary if production outputs present
@@ -674,6 +722,11 @@ def execute_capsule(
                 summary["shot_contracts"] = insight["shot_contracts"]
             if "token_usage" in insight:
                 summary["token_usage"] = insight["token_usage"]
+            # Add DNA mode info
+            if "dna_mode" in insight:
+                summary["dna_mode"] = insight["dna_mode"]
+            if "director_pack_id" in insight:
+                summary["director_pack_id"] = insight["director_pack_id"]
 
     if external_insights:
         summary["external_insights"] = external_insights
