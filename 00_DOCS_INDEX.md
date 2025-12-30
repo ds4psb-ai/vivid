@@ -1,6 +1,6 @@
 # Docs Index (SoR / Reference)
 
-**작성**: 2025-12-28 (Last Updated: 2025-12-28)  
+**작성**: 2025-12-28 (Last Updated: 2025-12-30)  
 **대상**: Product / Design / Engineering  
 **목표**: 문서 정본(SoR)과 참고(Reference)를 빠르게 구분하고 진입점을 제공  
 **Pipeline Progress**: 100%
@@ -50,6 +50,25 @@
 - `34_FUSION_NOTEBOOK_PROTOCOL_CODEX.md`
 - `35_AFFILIATE_PROGRAM_SPEC_V1.md` *(renumbered from 18)*
 - `36_MCP_INTEGRATION_SPEC_V1.md`
+- `38_AUTEUR_DATA_COLLECTION_PROTOCOL_CODEX.md` *(NEW: NotebookLM Enterprise API)*
+
+---
+
+## Backend Code Documentation
+
+### Schemas (`backend/app/schemas/`)
+- `vdg_v4.py` - VDG v4.0 2-Pass Pipeline Core Types
+- `director_pack.py` - DirectorPack Coaching Types
+- `metric_registry.py` - Metric Definitions SSoT (25+ metrics)
+
+### Services (`backend/app/services/vdg_2pass/`)
+- `semantic_pass.py` - Pass 1: Meaning/Structure Analysis
+- `visual_pass.py` - Pass 2: Visual Metrics Extraction
+- `analysis_planner.py` - Bridge: Pass 1 → Pass 2
+- `merger.py` - Quality Gate & Pass Merge
+- `director_compiler.py` - VDG → DirectorPack Compiler
+- `frame_extractor.py` - ffmpeg Frame Extraction
+- `gemini_utils.py` - API Retry/Repair Utilities
 
 ---
 
@@ -77,3 +96,4 @@
 - `PRIVACY_POLICY.md`
 - `TERMS_OF_SERVICE.md`
 - `README.md`
+

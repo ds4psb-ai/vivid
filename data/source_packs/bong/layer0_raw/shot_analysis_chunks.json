@@ -1,0 +1,262 @@
+{
+    "schema_version": "layer0-v1",
+    "cluster_id": "CL_BONG_01",
+    "auteur": "봉준호",
+    "layer": "layer0_raw",
+    "description": "원본 영상 분석 결과 - Raw Evidence",
+    "generated_at": "2025-12-29T16:50:00Z",
+    "chunks": [
+        {
+            "chunk_id": "bong_parasite_hook_c001",
+            "metadata": {
+                "source_id": "bong-2019-parasite",
+                "temporal_phase": "HOOK",
+                "scene_range": "00:01:30-00:01:45",
+                "content_type": "shot_analysis",
+                "film_title": "기생충",
+                "film_year": 2019,
+                "token_estimate": 850
+            },
+            "content": {
+                "segment_id": "seg-bong-2019-parasite-hook-001",
+                "transcript": "반지하 창문으로 보이는 골목. 취객이 소변을 본다.",
+                "visual_schema": {
+                    "composition": "vertical_blocking",
+                    "lighting": "low_key",
+                    "color_palette": [
+                        "#1F2933",
+                        "#323F4B",
+                        "#3E4C59"
+                    ],
+                    "camera_motion": "static",
+                    "blocking": "below_ground_level",
+                    "pacing": "slow"
+                },
+                "audio_schema": {
+                    "sound_design": "street_ambience",
+                    "music_mood": "tension_building"
+                },
+                "motifs": [
+                    "basement",
+                    "window",
+                    "class_divide"
+                ]
+            },
+            "evidence_refs": [
+                "db:shot:bong-2019-parasite-hook-001"
+            ]
+        },
+        {
+            "chunk_id": "bong_parasite_build_c001",
+            "metadata": {
+                "source_id": "bong-2019-parasite",
+                "temporal_phase": "BUILD",
+                "scene_range": "00:25:00-00:25:20",
+                "content_type": "shot_analysis",
+                "film_title": "기생충",
+                "film_year": 2019,
+                "token_estimate": 920
+            },
+            "content": {
+                "segment_id": "seg-bong-2019-parasite-build-001",
+                "transcript": "기우가 박 사장 집 계단을 오른다. 카메라가 따라 올라간다.",
+                "visual_schema": {
+                    "composition": "staircase_motif",
+                    "lighting": "high_key_contrast",
+                    "color_palette": [
+                        "#627D98",
+                        "#7B8794",
+                        "#F7FAFC"
+                    ],
+                    "camera_motion": "controlled",
+                    "blocking": "vertical_ascent",
+                    "pacing": "medium"
+                },
+                "audio_schema": {
+                    "sound_design": "footsteps_echo",
+                    "music_mood": "anticipation"
+                },
+                "motifs": [
+                    "staircase",
+                    "class_ascent",
+                    "infiltration"
+                ]
+            },
+            "evidence_refs": [
+                "db:shot:bong-2019-parasite-build-001"
+            ]
+        },
+        {
+            "chunk_id": "bong_parasite_payoff_c001",
+            "metadata": {
+                "source_id": "bong-2019-parasite",
+                "temporal_phase": "PAYOFF",
+                "scene_range": "01:12:00-01:12:30",
+                "content_type": "shot_analysis",
+                "film_title": "기생충",
+                "film_year": 2019,
+                "token_estimate": 880
+            },
+            "content": {
+                "segment_id": "seg-bong-2019-parasite-payoff-001",
+                "transcript": "폭우 속 기택 가족이 반지하로 돌아온다. 물이 차오른다.",
+                "visual_schema": {
+                    "composition": "vertical_blocking",
+                    "lighting": "low_key_rain",
+                    "color_palette": [
+                        "#102A43",
+                        "#243B53",
+                        "#334E68"
+                    ],
+                    "camera_motion": "handheld",
+                    "blocking": "descent_spiral",
+                    "pacing": "fast"
+                },
+                "audio_schema": {
+                    "sound_design": "rain_flood",
+                    "music_mood": "catastrophe"
+                },
+                "motifs": [
+                    "flood",
+                    "descent",
+                    "class_collapse"
+                ]
+            },
+            "evidence_refs": [
+                "db:shot:bong-2019-parasite-payoff-001"
+            ]
+        },
+        {
+            "chunk_id": "bong_snowpiercer_hook_c001",
+            "metadata": {
+                "source_id": "bong-2013-snowpiercer",
+                "temporal_phase": "HOOK",
+                "scene_range": "00:05:00-00:05:30",
+                "content_type": "shot_analysis",
+                "film_title": "설국열차",
+                "film_year": 2013,
+                "token_estimate": 780
+            },
+            "content": {
+                "segment_id": "seg-bong-2013-snowpiercer-hook-001",
+                "transcript": "꼬리칸의 비참한 환경. 좁고 어두운 공간에 수백명.",
+                "visual_schema": {
+                    "composition": "horizontal_blocking",
+                    "lighting": "minimal",
+                    "color_palette": [
+                        "#1C1C1C",
+                        "#2D2D2D",
+                        "#3D3D3D"
+                    ],
+                    "camera_motion": "static",
+                    "blocking": "crowd_mass",
+                    "pacing": "slow"
+                },
+                "audio_schema": {
+                    "sound_design": "engine_rumble",
+                    "music_mood": "oppressive"
+                },
+                "motifs": [
+                    "train",
+                    "class_division",
+                    "horizontal_space"
+                ]
+            },
+            "evidence_refs": [
+                "db:shot:bong-2013-snowpiercer-hook-001"
+            ]
+        },
+        {
+            "chunk_id": "bong_memories_hook_c001",
+            "metadata": {
+                "source_id": "bong-2003-memories-of-murder",
+                "temporal_phase": "HOOK",
+                "scene_range": "00:02:00-00:02:30",
+                "content_type": "shot_analysis",
+                "film_title": "살인의 추억",
+                "film_year": 2003,
+                "token_estimate": 820
+            },
+            "content": {
+                "segment_id": "seg-bong-2003-memories-hook-001",
+                "transcript": "비 오는 들판. 시체 발견 현장. 형사가 도착한다.",
+                "visual_schema": {
+                    "composition": "wide_establishing",
+                    "lighting": "overcast_natural",
+                    "color_palette": [
+                        "#27241D",
+                        "#423D33",
+                        "#504A40"
+                    ],
+                    "camera_motion": "controlled",
+                    "blocking": "isolation_framing",
+                    "pacing": "slow"
+                },
+                "audio_schema": {
+                    "sound_design": "rain_rural",
+                    "music_mood": "melancholy"
+                },
+                "motifs": [
+                    "rain",
+                    "field",
+                    "crime_scene"
+                ]
+            },
+            "evidence_refs": [
+                "db:shot:bong-2003-memories-hook-001"
+            ]
+        }
+    ],
+    "motif_registry": {
+        "recurring_motifs": [
+            {
+                "motif_id": "motif_vertical_space",
+                "name": "수직 공간 구조",
+                "occurrences": [
+                    "기생충 계단",
+                    "설국열차 칸"
+                ],
+                "semantic_meaning": "계급 구조의 물리적 시각화",
+                "frequency": "high"
+            },
+            {
+                "motif_id": "motif_rain",
+                "name": "비 (Rain)",
+                "occurrences": [
+                    "기생충 폭우",
+                    "살인의 추억 들판"
+                ],
+                "semantic_meaning": "정화/파괴/진실 은폐",
+                "frequency": "high"
+            },
+            {
+                "motif_id": "motif_window",
+                "name": "창문/문 프레임",
+                "occurrences": [
+                    "기생충 반지하 창문"
+                ],
+                "semantic_meaning": "세상을 바라보는 제한된 시선",
+                "frequency": "medium"
+            }
+        ]
+    },
+    "aggregate_metrics": {
+        "total_chunks": 5,
+        "total_tokens_estimate": 4250,
+        "films_covered": [
+            "기생충",
+            "설국열차",
+            "살인의 추억"
+        ],
+        "temporal_phases_covered": [
+            "HOOK",
+            "BUILD",
+            "PAYOFF"
+        ],
+        "primary_motifs": [
+            "vertical_blocking",
+            "class_divide",
+            "rain"
+        ]
+    }
+}

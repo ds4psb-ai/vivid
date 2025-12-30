@@ -1,0 +1,61 @@
+{
+    "_source_type": "film_scene_analysis",
+    "_tier": "TIER_3_FILM",
+    "_cluster_id": "FILM_기생충",
+    "title": "ACT 1 HOOK: 반지하 창문 - 일상의 불편함",
+    "film": "기생충 (Parasite)",
+    "director": "봉준호",
+    "act": 1,
+    "beat": "HOOK",
+    "scene_analysis": {
+        "scene_name": "반지하 창문으로 보이는 취객",
+        "timestamp_start": "00:01:30",
+        "timestamp_end": "00:02:45",
+        "duration_seconds": 75,
+        "function": "가난한 현실을 코믹하게 제시하되 불안감 암시",
+        "bong_signature": "평범해 보이지만 불길한 디테일 삽입"
+    },
+    "visual_schema": {
+        "composition": "vertical_blocking",
+        "framing": "below_ground_level",
+        "camera_angle": "low_angle_upward",
+        "camera_motion": "static",
+        "lighting": {
+            "type": "low_key",
+            "source": "fluorescent",
+            "color_temperature": "cool_green",
+            "intensity": "dim"
+        },
+        "color_palette": {
+            "dominant": [
+                "#1F2933",
+                "#323F4B",
+                "#3E4C59"
+            ],
+            "accent": "none",
+            "saturation": "desaturated",
+            "contrast": "low"
+        },
+        "depth_of_field": "deep_focus"
+    },
+    "blocking": {
+        "character_position": "below_frame_center",
+        "spatial_hierarchy": "cramped_semi_basement",
+        "vertical_relationship": "looking_up_at_street_level",
+        "symbolic_meaning": "지하에서 지상을 올려다봄 = 계급적 열망"
+    },
+    "audio_design": {
+        "ambient": "street_noise_filtered",
+        "music": "minimal_tension",
+        "dialogue": "가족간 일상 대화",
+        "sound_symbolism": "외부 세계 소리가 필터링되어 들림 = 단절"
+    },
+    "emotional_target": "curious_unease",
+    "audience_reaction": "코미디인 줄 알았는데...",
+    "production_notes": {
+        "set": "97% 조명 직접 설치 세트",
+        "lens": "wide_angle",
+        "aspect_ratio": "2.39:1"
+    },
+    "coaching_prompt": "반지하 창문 씬처럼 일상적 불편함으로 HOOK을 만들려면: 수직 블로킹으로 캐릭터를 프레임 하단에 배치, 탈색된 녹색 조명, 정적 카메라로 폐쇄감 강조"
+}

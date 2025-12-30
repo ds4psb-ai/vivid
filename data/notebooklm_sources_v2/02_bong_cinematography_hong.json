@@ -1,0 +1,93 @@
+{
+    "_source_type": "consolidated_primary",
+    "_cluster_id": "CL_BONG_01",
+    "title": "홍경표 촬영감독 - 기생충 촬영 기법 분석",
+    "description": "기생충 촬영감독 홍경표의 기술적 선택과 시각적 전략",
+    "camera_equipment": {
+        "main_camera": "ARRI ALEXA 65",
+        "lens_choice": "65mm 렌즈",
+        "rationale": "감정적 공명을 위해 선택. 수퍼와이드 렌즈 없이도 더 넓고 포괄적인 샷, 얕은 피사계심도 달성"
+    },
+    "camera_movement_strategy": {
+        "infiltration_phase": {
+            "technique": "미묘하고 거의 눈에 띄지 않는 전진 움직임",
+            "meaning": "김씨 가족의 계산된 사회적 상승 상징"
+        },
+        "general_style": {
+            "techniques": [
+                "느린 줌",
+                "팬",
+                "동작 중인 카메라"
+            ],
+            "locked_off_ratio": "80% 스태틱 또는 돌리"
+        },
+        "long_takes": {
+            "description": "와이드-미디엄-클로즈업을 컷 없이 통합하는 롱테이크",
+            "purpose": "씬이 자연스럽게 전개되도록 함"
+        },
+        "class_mobility_visualization": {
+            "technique": "김씨 가족을 내려다보다가 기우가 과외 역할 맡을 때 위로 올려다봄",
+            "meaning": "거짓된 사회적 이동 환상"
+        },
+        "climax_techniques": {
+            "tools": [
+                "휩 팬",
+                "달리 샷",
+                "스태빌라이즈드 카메라",
+                "핸드헬드"
+            ],
+            "purpose": "긴박함과 혼돈 고조",
+            "note": "영화 대부분은 안정적 촬영, 클라이맥스에서만 핸드헬드 사용"
+        }
+    },
+    "lighting_philosophy": {
+        "park_mansion": {
+            "quality": "풍부한 자연광, 대형 창문 통해 유입",
+            "color_temperature": "오직 웜톤 조명만 사용",
+            "impression": "자유로움, 개방성, 럭셔리",
+            "technical": "자연광 방향 고려해 창문 위치/크기 결정"
+        },
+        "kim_semi_basement": {
+            "quality": "어둡고, 종종 형광등, 최소한의 자연광",
+            "fixtures": "저급 녹색빛 형광등과 텅스텐 백열등 의도적 설치",
+            "street_lights": "죽은 느낌의 둔한 붉은색",
+            "impression": "생존, 갇힘, 프라이버시 부재"
+        },
+        "technical_control": {
+            "set_installation_ratio": "97% 조명 세트에서 직접 설치",
+            "key_equipment": "ARRI SkyPanel - 디밍과 색온도 제어용"
+        },
+        "color_contrast": {
+            "upper_class": "스틸 블루, 생생한 녹색/노랑",
+            "lower_class": "차콜 블루, 탈색된 녹색/파랑, 낮은 채도"
+        }
+    },
+    "framing_techniques": {
+        "boxy_framing": {
+            "description": "프레임 내 선들로 계급 경계와 부의 불침투성 구분",
+            "purpose": "사회적 장벽 시각화"
+        },
+        "infiltration_positioning": {
+            "kim_family": "배경/환경에 녹아들음",
+            "park_family": "전경 자신감 있게 점령",
+            "meaning": "사회적 지배 관계"
+        },
+        "angle_strategy": {
+            "down_angle_on_kim": "낮은 사회적 지위 상징",
+            "up_angle_on_park": "지배적 위치 상징"
+        },
+        "layering": {
+            "description": "전경/중경/배경 요소로 분리와 위계 표현",
+            "example": "기우가 박씨네 처음 들어갈 때 유리벽으로 분리된 레이어링"
+        },
+        "frame_within_frame": {
+            "example": "김씨네 화장실 씬에서 변기와 벽이 캐릭터를 프레이밍",
+            "purpose": "낮은 사회경제적 지위 강조"
+        }
+    },
+    "vertical_concept": {
+        "production_design_quote": "영화를 관통하는 일반적 개념은 수직성이다. 모든 레이어가 수직으로 존재한다. - 이하준 프로덕션 디자이너",
+        "bong_description": "봉준호 자신이 기생충을 '계단 영화'라고 언급",
+        "class_visualization": "반지하에서 박씨네 저택까지 여러 계단 → 사회적 사다리"
+    }
+}

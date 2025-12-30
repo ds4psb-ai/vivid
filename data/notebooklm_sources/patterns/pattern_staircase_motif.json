@@ -1,0 +1,12 @@
+{
+  "source_id": "bong-2019-parasite",
+  "pattern_name": "staircase_motif",
+  "pattern_type": "scene",
+  "description": "계단을 통한 수직 이동과 계급 상승/하락의 은유",
+  "weight": 0.9,
+  "confidence": 0.94,
+  "evidence_ref": "db:video_segments:seg-bong-2019-parasite-build-001",
+  "status": "validated",
+  "_source_type": "pattern_candidate",
+  "_cluster_id": "CL_BONG_01"
+}

@@ -1,0 +1,23 @@
+{
+  "source_id": "bong-2019-parasite",
+  "beat": {
+    "beat_id": "HOOK",
+    "act": 1,
+    "duration_ratio": 0.1,
+    "description": "일상의 불편함 노출",
+    "bong_signature": "평범해 보이지만 불길한 디테일 삽입",
+    "example": {
+      "film": "기생충",
+      "scene": "반지하 창문으로 보이는 취객",
+      "function": "가난한 현실을 코믹하게 제시하되 불안감 암시"
+    },
+    "emotional_target": "curious_unease",
+    "visual_cues": [
+      "cramped_space",
+      "low_angle_window",
+      "mundane_action"
+    ]
+  },
+  "_source_type": "beat_detail",
+  "_cluster_id": "CL_BONG_01"
+}

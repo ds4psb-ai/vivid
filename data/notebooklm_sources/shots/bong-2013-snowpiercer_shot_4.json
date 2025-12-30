@@ -1,0 +1,23 @@
+{
+  "source_id": "bong-2013-snowpiercer",
+  "shot": {
+    "shot_number": 4,
+    "shot_type": "reaction",
+    "composition": {
+      "type": "off_center",
+      "rule": "golden_ratio",
+      "focus": "eyes"
+    },
+    "camera": {
+      "angle": "eye_level",
+      "movement": "subtle_handheld",
+      "lens": "85mm"
+    },
+    "lighting": "side_key",
+    "description": "커티스의 분노/결의 표정",
+    "emotional_function": "감정적 앵커",
+    "duration": "2s"
+  },
+  "_source_type": "shot_detail",
+  "_cluster_id": "CL_BONG_01"
+}

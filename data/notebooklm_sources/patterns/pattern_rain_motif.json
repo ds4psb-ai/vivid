@@ -1,0 +1,12 @@
+{
+  "source_id": "bong-2003-memories-of-murder",
+  "pattern_name": "rain_motif",
+  "pattern_type": "scene",
+  "description": "비는 진실을 가리고, 증거를 씻어간다",
+  "weight": 0.8,
+  "confidence": 0.88,
+  "evidence_ref": "db:video_segments:seg-bong-2003-memories-hook-001",
+  "status": "validated",
+  "_source_type": "pattern_candidate",
+  "_cluster_id": "CL_BONG_01"
+}

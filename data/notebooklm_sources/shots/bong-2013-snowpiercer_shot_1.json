@@ -1,0 +1,27 @@
+{
+  "source_id": "bong-2013-snowpiercer",
+  "shot": {
+    "shot_number": 1,
+    "shot_type": "establishing_wide",
+    "composition": {
+      "type": "deep_focus",
+      "rule": "horizontal_thirds",
+      "depth_layers": [
+        "foreground_crowd",
+        "midground_corridor",
+        "background_light"
+      ]
+    },
+    "camera": {
+      "angle": "eye_level",
+      "movement": "static",
+      "lens": "wide_anamorphic"
+    },
+    "lighting": "low_key_practical",
+    "description": "꼬리칸 와이드샷. 비참한 군중.",
+    "emotional_function": "절망적 현실 제시",
+    "duration": "4s"
+  },
+  "_source_type": "shot_detail",
+  "_cluster_id": "CL_BONG_01"
+}

@@ -1,0 +1,73 @@
+{
+    "_source_type": "consolidated_primary",
+    "_cluster_id": "CL_BONG_01",
+    "title": "봉준호 감독 인터뷰 종합 (1차 소스)",
+    "description": "봉준호 감독의 직접 인터뷰에서 추출한 연출 철학, 작업 방식, 예술적 의도",
+    "interviews": {
+        "the_talks_2019": {
+            "source": "The Talks Interview",
+            "date": "2019",
+            "key_quotes": [
+                {
+                    "topic": "class_consciousness",
+                    "quote_ko": "우리 모두 빈부 격차를 알고 있지만, 근본적으로 더 무서운 것은 이것이 미래에, 우리 자녀 세대에 해결되지 않을 것이라는 두려움입니다.",
+                    "quote_en": "We are all aware of this gap between rich and poor, but what is fundamentally even more frightening is the fear that this won't be resolved in the future.",
+                    "context": "기생충 제작 동기 설명"
+                },
+                {
+                    "topic": "actor_direction",
+                    "quote_ko": "배우들과 대화할 때 정치적 코멘터리를 언급하지 않습니다. '이 캐릭터가 불쌍하지 않아?'라고 물을 뿐입니다.",
+                    "method": "감정적으로 즉각적이고 단순하게 접근"
+                },
+                {
+                    "topic": "space_importance",
+                    "quote_ko": "좋은 로케이션을 찾으면 좋은 배우를 발견한 것만큼 흥분됩니다. 공간은 캐스팅만큼 중요합니다.",
+                    "example": "기생충 90%가 두 집에서 촬영"
+                },
+                {
+                    "topic": "verticality_concept",
+                    "quote_ko": "기생충에서는 수직적 감각이 매우 중요했고, 설국열차에서는 수평적 공간이 중요했습니다.",
+                    "application": "계급 관계의 공간적 시각화"
+                },
+                {
+                    "topic": "genre_philosophy",
+                    "quote_ko": "장르 관습을 비틀거나 파괴하지만 경계 안에서 작업합니다. 장르 영화가 가져다주는 특정한 시네마틱 흥분을 추구합니다.",
+                    "approach": "정치적 코멘터리로 끝나지 않도록 주의"
+                }
+            ]
+        },
+        "dga_symposium": {
+            "source": "Directors Guild of America Symposium",
+            "key_insights": [
+                {
+                    "topic": "emotional_distance",
+                    "insight": "감정이 격렬한 순간을 오히려 멀리서 담아 감정을 더욱 찡하게 만듦",
+                    "example": "홍수 시퀀스에서 롱샷 사용"
+                }
+            ]
+        },
+        "vanity_fair_breakdown": {
+            "source": "Vanity Fair Scene Breakdown",
+            "content": "봉준호가 기생충 오프닝 씬 직접 해설",
+            "key_points": [
+                "반지하 창문의 상징성",
+                "취객 씬의 코믹함과 불안감 동시 전달",
+                "셋 디자인과 자연광 방향 고려"
+            ]
+        }
+    },
+    "storyboard_methodology": {
+        "process": "모든 영화에 직접 손으로 상세한 스토리보드 그림",
+        "comprehensiveness": "카메라 무브먼트, 캐릭터 블로킹, 씬 전환 정밀 계획",
+        "motivation_quote": "스토리보드 없이 현장에 나가면 속옷만 입고 공공장소에 있는 악몽 같다",
+        "deviation_policy": "촬영 중 사소한 변경에는 열려있으나, 계획에 없던 요소 추가는 거의 안 함",
+        "parasite_output": "304페이지 그래픽 노블로 출판됨"
+    },
+    "filmmaking_principles": {
+        "honest_reality": "정직하게 현실 직면",
+        "instinctual_acting": "배우들의 본능적 연기 유도",
+        "space_as_character": "공간 = 인물의 내면 시각화",
+        "genre_subversion": "장르 틀 안에서 관습 전복",
+        "political_subtlety": "직접 설교 대신 상황을 통한 전달"
+    }
+}

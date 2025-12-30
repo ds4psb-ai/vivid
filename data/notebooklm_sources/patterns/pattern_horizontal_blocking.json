@@ -1,0 +1,12 @@
+{
+  "source_id": "bong-2013-snowpiercer",
+  "pattern_name": "horizontal_blocking",
+  "pattern_type": "scene",
+  "description": "수평 공간을 통한 계급 이동 표현",
+  "weight": 0.8,
+  "confidence": 0.86,
+  "evidence_ref": "db:video_segments:seg-bong-2013-snowpiercer-hook-001",
+  "status": "validated",
+  "_source_type": "pattern_candidate",
+  "_cluster_id": "CL_BONG_01"
+}

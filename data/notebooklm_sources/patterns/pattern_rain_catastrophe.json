@@ -1,0 +1,12 @@
+{
+  "source_id": "bong-2019-parasite",
+  "pattern_name": "rain_catastrophe",
+  "pattern_type": "scene",
+  "description": "비가 내리면 하층민에게 재앙이 온다",
+  "weight": 0.75,
+  "confidence": 0.88,
+  "evidence_ref": "db:video_segments:seg-bong-2019-parasite-payoff-001",
+  "status": "validated",
+  "_source_type": "pattern_candidate",
+  "_cluster_id": "CL_BONG_01"
+}

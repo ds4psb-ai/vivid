@@ -1,0 +1,74 @@
+{
+    "_source_type": "film_scene_analysis",
+    "_tier": "TIER_3_FILM",
+    "_cluster_id": "FILM_기생충",
+    "title": "ACT 3 ENDING: 기우의 계획 - 열린 결말",
+    "film": "기생충 (Parasite)",
+    "director": "봉준호",
+    "act": 3,
+    "beat": "RESOLUTION",
+    "scene_analysis": {
+        "scene_name": "기우의 계획 / 판타지 엔딩",
+        "timestamp_start": "02:05:00",
+        "timestamp_end": "02:12:00",
+        "duration_seconds": 420,
+        "function": "열린 결말, 관객에게 사유 유도",
+        "bong_signature": "열린 결말/순환 구조"
+    },
+    "narrative_structure": {
+        "letter_narration": {
+            "content": "기우가 아버지에게 쓰는 편지",
+            "timestamp": "02:05:30",
+            "tone": "희망적 (표면)"
+        },
+        "fantasy_sequence": {
+            "content": "돈을 벌어 집을 사는 상상",
+            "timestamp": "02:07:00 - 02:10:00",
+            "visual": "밝은 조명, 웜톤, 재회 장면"
+        },
+        "return_to_reality": {
+            "content": "다시 반지하 창문",
+            "timestamp": "02:10:30",
+            "visual": "처음과 같은 구도"
+        }
+    },
+    "circular_structure": {
+        "opening": "반지하 창문에서 시작",
+        "closing": "반지하 창문에서 끝",
+        "difference": "같은 공간, 다른 상황 (아버지 없음)",
+        "meaning": "탈출 불가능 - 계급 이동의 환상"
+    },
+    "visual_schema": {
+        "fantasy_sequence": {
+            "lighting": "밝은 자연광, 웜톤",
+            "composition": "balanced_symmetry",
+            "color": "saturated_warm"
+        },
+        "reality_return": {
+            "lighting": "탈색된 형광등",
+            "composition": "cramped_vertical",
+            "color": "desaturated_green"
+        },
+        "contrast_purpose": "희망과 현실의 극명한 대비"
+    },
+    "interpretation": {
+        "surface": "기우가 계획을 세워 희망을 품음",
+        "subtext": "계획의 실현 가능성 = 거의 없음",
+        "bong_intent": "관객 스스로 결론에 도달하게"
+    },
+    "economic_reality": {
+        "ki_woo_estimated_savings_time": "547년 (팬 계산)",
+        "message": "자본주의에서 계급 이동 환상"
+    },
+    "audio_design": {
+        "fantasy": "희망적 피아노 멜로디",
+        "reality": "정적, 거리 소음",
+        "transition": "음악 페이드아웃 → 현실 소리"
+    },
+    "final_frame": {
+        "composition": "opening shot과 동일",
+        "difference": "기우 혼자",
+        "meaning": "순환 - 변한 것 없음"
+    },
+    "coaching_prompt": "열린 결말을 효과적으로 만들려면: 판타지와 현실 시퀀스 병치, 시작과 끝 구도 동일하게 (순환), 희망적 음악으로 표면적 위안 제공하되 시각적으로 현실 강조, 관객이 스스로 결론 내리게"
+}

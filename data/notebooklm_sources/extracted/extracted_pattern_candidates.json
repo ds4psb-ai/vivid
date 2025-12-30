@@ -1,0 +1,102 @@
+{
+  "pattern_candidates": [
+    {
+      "pattern_name": "수직 계급 블로킹 (Vertical Blocking)",
+      "pattern_type": "composition",
+      "description": "프레임 내 인물의 수직적 위치(위/아래)를 통해 권력 관계와 계급 격차를 시각적으로 정형화함",
+      "weight": 1.0,
+      "temporal_phase": "BUILD",
+      "application_notes": "위는 권력과 부유, 아래는 종속과 빈곤을 의미하며 계단 시퀀스에서 극대화됨",
+      "evidence_refs": [
+        "1",
+        "2",
+        "3"
+      ]
+    },
+    {
+      "pattern_name": "불평등한 재난 (Rain Metaphor)",
+      "pattern_type": "scene",
+      "description": "비라는 자연 현상을 통해 감춰진 진실을 폭로하고, 계급에 따라 재난의 피해가 불평등하게 작용함을 묘사함",
+      "weight": 0.9,
+      "temporal_phase": "PAYOFF",
+      "application_notes": "단순한 기상 상태가 아닌 시스템의 실패나 계급적 붕괴를 암시하는 장치로 활용",
+      "evidence_refs": [
+        "4",
+        "5",
+        "6",
+        "7"
+      ]
+    },
+    {
+      "pattern_name": "블랙 코미디에서 비극으로의 전환 (Genre Mixing)",
+      "pattern_type": "transition",
+      "description": "도입부의 불편한 유머에서 시작하여 서스펜스를 거쳐 갑작스러운 폭력과 비극적 아이러니로 끝나는 서사 구조",
+      "weight": 0.95,
+      "temporal_phase": "TURN",
+      "application_notes": "관객이 공범의 쾌감을 느끼는 BUILD 단계를 거쳐 갑작스러운 전환점을 마련해야 함",
+      "evidence_refs": [
+        "6",
+        "3",
+        "7"
+      ]
+    },
+    {
+      "pattern_name": "수학적 컷 밀도 가속 (Temporal Cadence)",
+      "pattern_type": "scene",
+      "description": "느린 빌드업(0.3 density)으로 시작하여 클라이맥스(3.5 density)로 갈수록 컷의 속도를 수학적으로 급격히 가속함",
+      "weight": 0.85,
+      "temporal_phase": "CLIMAX",
+      "application_notes": "샷 길이 중앙값 3200ms를 기준으로 후반부 긴장감을 폭발시키는 편집 리듬 적용",
+      "evidence_refs": [
+        "2"
+      ]
+    },
+    {
+      "pattern_name": "관망자적 프레임 (Window Frame-in-Frame)",
+      "pattern_type": "composition",
+      "description": "창문이나 문 프레임을 통해 외부를 관찰하게 하여 인물의 제한된 시선과 사회적 관망자 위치를 강조함",
+      "weight": 0.75,
+      "temporal_phase": "HOOK",
+      "application_notes": "반지하 창문이나 기차 창문 등을 통해 계급적 소외와 물리적 장벽을 동시에 표현",
+      "evidence_refs": [
+        "1",
+        "5",
+        "2",
+        "7"
+      ]
+    },
+    {
+      "pattern_name": "수평적 여정 변주 (Horizontal Variation)",
+      "pattern_type": "composition",
+      "description": "수직 구조 활용이 어려운 공간에서 좌측(빈곤)에서 우측(부유)으로의 이동을 통해 계급적 여정을 시각화함",
+      "weight": 0.8,
+      "temporal_phase": "BUILD",
+      "application_notes": "트래킹 샷을 활용하여 공간의 수평적 확장이 곧 계급적 침투임을 묘사",
+      "evidence_refs": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "pattern_name": "통제된 시선에서 폭발적 핸드헬드로의 전환",
+      "pattern_type": "transition",
+      "description": "전체의 80%를 정적인 카메라로 통제하다가 감정적 임계점이나 폭력의 순간에만 핸드헬드를 사용하여 충격을 극대화함",
+      "weight": 0.8,
+      "temporal_phase": "CLIMAX",
+      "application_notes": "평시의 건조한 관찰 톤을 유지하다가 결정적 순간에만 카메라의 흔들림을 허용",
+      "evidence_refs": [
+        "2",
+        "3"
+      ]
+    }
+  ],
+  "metadata": {
+    "cluster_id": "CL_BONG_01",
+    "director": "봉준호",
+    "extracted_at": "2025-12-30T11:18:00+09:00",
+    "source": "NotebookLM",
+    "version": "v1"
+  },
+  "_source_type": "extracted_knowledge",
+  "_extracted_from": "NotebookLM"
+}

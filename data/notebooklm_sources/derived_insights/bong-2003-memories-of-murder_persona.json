@@ -1,0 +1,104 @@
+{
+  "source_id": "bong-2003-memories-of-murder",
+  "summary": "살인의 추억 페르소나 프로파일",
+  "output_type": "report",
+  "output_language": "ko",
+  "prompt_version": "nlm-guide-v1",
+  "model_version": "notebooklm-2025-12",
+  "source_pack_id": "sp_cluster-bong-class-divide_turn_20251226",
+  "guide_type": "persona",
+  "title": "봉준호 페르소나 프로파일",
+  "description": "봉준호 감독의 예술적 정체성과 창작 철학",
+  "artistic_philosophy": {
+    "core_statement": "장르의 껍데기를 빌려 사회를 해부하는 작가",
+    "key_beliefs": [
+      "장르 영화는 가장 효과적인 사회 비평 도구",
+      "디테일이 세계관을 만든다",
+      "웃음과 공포는 같은 뿌리에서 나온다"
+    ],
+    "influences": [
+      {
+        "name": "Alfred Hitchcock",
+        "aspect": "서스펜스 구축"
+      },
+      {
+        "name": "Claude Chabrol",
+        "aspect": "부르주아 비판"
+      },
+      {
+        "name": "Kim Ki-young",
+        "aspect": "하녀/계급 공포"
+      }
+    ]
+  },
+  "thematic_obsessions": [
+    {
+      "theme": "계급과 공간",
+      "description": "물리적 공간 배치가 사회 구조를 반영",
+      "manifestations": [
+        "기생충의 반지하-대저택",
+        "설국열차의 칸별 계급"
+      ],
+      "weight": 0.95
+    },
+    {
+      "theme": "시스템의 무능/부조리",
+      "description": "제도와 권위의 실패가 비극을 낳는다",
+      "manifestations": [
+        "살인의 추억의 형사들",
+        "괴물의 정부 대응"
+      ],
+      "weight": 0.9
+    },
+    {
+      "theme": "가족의 연대와 균열",
+      "description": "가족은 가장 작은 사회이자 갈등의 축소판",
+      "manifestations": [
+        "기생충의 두 가족",
+        "괴물의 박씨 일가"
+      ],
+      "weight": 0.85
+    }
+  ],
+  "signature_techniques": {
+    "visual": [
+      {
+        "name": "수직 블로킹",
+        "frequency": "high"
+      },
+      {
+        "name": "깊은 심도 구성",
+        "frequency": "high"
+      }
+    ],
+    "narrative": [
+      {
+        "name": "장르 믹싱",
+        "frequency": "signature"
+      },
+      {
+        "name": "톤 급변화",
+        "frequency": "high"
+      }
+    ]
+  },
+  "persona_profile": "초기 봉준호: 블랙코미디와 사회 구조 비판의 독특한 조합. 비 오는 농촌의 우울함과 형사들의 무력감.",
+  "synapse_logic": "비 + 들판 + 실패 = 봉준호식 멜랑콜리. 해결되지 않는 미스터리가 핵심.",
+  "key_patterns": [
+    {
+      "pattern_name": "rain_motif",
+      "pattern_type": "scene",
+      "description": "비는 진실을 가리고, 증거를 씻어간다",
+      "weight": 0.8
+    }
+  ],
+  "confidence": 0.88,
+  "notebook_id": "nlb-bong-joon-ho",
+  "notebook_ref": "https://notebooklm.google.com/notebook/bong-joon-ho-auteur",
+  "evidence_refs": [
+    "db:video_segments:seg-bong-2003-memories-hook-001"
+  ],
+  "generated_at": "2025-12-26T19:00:00Z",
+  "_source_type": "derived_insight",
+  "_cluster_id": "CL_BONG_01"
+}

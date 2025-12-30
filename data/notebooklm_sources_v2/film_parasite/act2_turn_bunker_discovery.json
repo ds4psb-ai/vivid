@@ -1,0 +1,67 @@
+{
+    "_source_type": "film_scene_analysis",
+    "_tier": "TIER_3_FILM",
+    "_cluster_id": "FILM_기생충",
+    "title": "ACT 2 TURN: 지하 벙커 발견 - 장르 급변화",
+    "film": "기생충 (Parasite)",
+    "director": "봉준호",
+    "act": 2,
+    "beat": "TURN",
+    "scene_analysis": {
+        "scene_name": "문광의 비밀 / 지하 벙커 발견",
+        "timestamp_start": "00:50:00",
+        "timestamp_end": "01:00:00",
+        "duration_seconds": 600,
+        "function": "장르 정체성 파괴 및 재구축",
+        "bong_signature": "장르 급변화 (코미디 → 서스펜스/공포)"
+    },
+    "genre_transition": {
+        "before": [
+            "블랙 코미디",
+            "케이퍼 영화"
+        ],
+        "after": [
+            "서스펜스",
+            "공포",
+            "사회 드라마"
+        ],
+        "transition_moment": "문광이 초인종을 누르는 순간",
+        "timestamp_exact": "00:50:30"
+    },
+    "revelation": {
+        "content": "더 아래에 또 다른 기생충이 있었다",
+        "layers": [
+            "박씨네 저택 (지상)",
+            "김씨네 반지하 (지하 1층)",
+            "근세 벙커 (지하 2층)"
+        ],
+        "symbolism": "계급의 무한 하강 - 바닥은 없다"
+    },
+    "visual_schema": {
+        "composition": "extreme_vertical_descent",
+        "camera_motion": "following_descent",
+        "lighting": {
+            "transition": "자연광 → 형광등 → 어둠",
+            "color_shift": "웜톤 → 녹색 → 청색",
+            "intensity_drop": "급격"
+        },
+        "framing": "계단을 따라 내려가는 터널 구도"
+    },
+    "blocking": {
+        "moon_gwang": "프레임 지배 → 권력 역전",
+        "kim_family": "수동적 위치로 밀려남",
+        "spatial_relationship": "지상 vs 지하 대립 구조"
+    },
+    "audio_design": {
+        "before_turn": "일상적 대화, 가벼운 BGM",
+        "after_turn": "저음 drone, 침묵, 긴장",
+        "key_sound": "벙커 철문 소리"
+    },
+    "emotional_shift": "웃음 → 공포",
+    "camera_technique": {
+        "before": "안정적 dolly/static",
+        "during_descent": "following shot - 관객도 함께 하강",
+        "after": "불안정한 핸드헬드 도입"
+    },
+    "coaching_prompt": "TURN 비트에서 장르 급변화를 만들려면: 공간적 하강으로 물리적 충격, 조명 색온도 급변(웜→쿨), 안정적 카메라에서 핸드헬드로 전환, 사운드 디자인에 긴장감 drone 삽입"
+}

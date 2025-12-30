@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, User, Mail, Phone, Check, Loader2, CreditCard } from "lucide-react";
 import { api, type CrebitApplicationRequest } from "@/lib/api";
-import { requestNicePayment, CREBIT_PAYMENT, generateOrderId, loadNicePayScript } from "@/lib/nicepay";
+import { requestNicePayment, CREBIT_PAYMENT, loadNicePayScript } from "@/lib/nicepay";
+import { trackEvent, EVENTS } from "@/lib/analytics";
 
 interface ApplicationModalProps {
     isOpen: boolean;
@@ -23,10 +24,11 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
     const [error, setError] = useState<string | null>(null);
     const [step, setStep] = useState<"form" | "payment" | "success">("form");
 
-    // Preload NICE SDK
+    // Preload NICE SDK and track modal open
     useEffect(() => {
         if (isOpen) {
             loadNicePayScript().catch(console.warn);
+            trackEvent(EVENTS.MODAL_OPEN, { source: 'crebit_landing' });
         }
     }, [isOpen]);
 
@@ -38,6 +40,7 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
         try {
             // Step 1: Create application (status: pending)
             const application = await api.applyCrebit(formData as CrebitApplicationRequest);
+            trackEvent(EVENTS.FORM_SUBMIT, { track: formData.track, applicationId: application.id });
 
             // Step 2: Open NICE payment window
             setStep("payment");
@@ -73,6 +76,7 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
 
         } catch (err) {
             console.error("Application error:", err);
+            trackEvent(EVENTS.FORM_ERROR, { error: err instanceof Error ? err.message : 'unknown' });
             setError(err instanceof Error ? err.message : "신청 중 오류가 발생했습니다.");
             setStep("form");
         } finally {

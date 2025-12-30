@@ -1,0 +1,116 @@
+{
+    "_source_type": "consolidated_signature",
+    "_cluster_id": "CL_BONG_01",
+    "title": "봉준호 시각적 DNA - 통합 시그니처 기법",
+    "description": "봉준호 영화에서 반복되는 시각적 패턴과 촬영 규칙의 통합 분석",
+    "vertical_blocking": {
+        "pattern_name": "수직 블로킹",
+        "frequency": "high",
+        "description": "프레임 내 수직 공간 배치로 권력 관계 표현",
+        "weight": 1.0,
+        "films": {
+            "parasite": {
+                "examples": [
+                    {
+                        "scene": "반지하 창문",
+                        "timestamp": "00:02:30",
+                        "technique": "아래에서 위로 올려다보는 앵글"
+                    },
+                    {
+                        "scene": "계단 몽타주",
+                        "timestamp": "00:15:00-00:17:00",
+                        "technique": "수직 트래킹"
+                    },
+                    {
+                        "scene": "폭우 하강 시퀀스",
+                        "timestamp": "01:20:00-01:25:00",
+                        "technique": "끊임없는 하강"
+                    }
+                ],
+                "symbolism": "계단 = 사회적 사다리, 위 = 권력, 아래 = 빈곤"
+            },
+            "snowpiercer": {
+                "examples": [
+                    {
+                        "scene": "열차 관통",
+                        "technique": "수평 블로킹으로 대비"
+                    }
+                ],
+                "note": "설국열차에서는 수평이 대신 사용됨 - 객차별 계급"
+            }
+        },
+        "dna_invariant": {
+            "rule_id": "vertical_hierarchy_visualization",
+            "domain": "composition",
+            "priority": "critical",
+            "check_hint": "수직 공간을 활용하여 권력 관계 시각화"
+        }
+    },
+    "deep_focus_composition": {
+        "pattern_name": "깊은 심도 구성",
+        "frequency": "high",
+        "description": "전경/중경/배경의 레이어링으로 인물 간 관계 표현",
+        "weight": 0.85,
+        "techniques": {
+            "layering": "전경, 중경, 배경 요소로 분리와 위계 표현",
+            "glass_wall": "유리벽으로 물리적/상징적 분리",
+            "visual_triangle": "시각적 삼각형으로 균형과 초점"
+        },
+        "purpose": "관객에게 분리된, 관찰자적 느낌 전달"
+    },
+    "frame_within_frame": {
+        "pattern_name": "창문/문 프레임 인 프레임",
+        "frequency": "medium",
+        "description": "창문, 문 등을 통해 캐릭터를 이중 프레이밍",
+        "films": {
+            "parasite": {
+                "park_window": "거대하고 확장된 창문, 정원 조망 → 영화 스크린처럼",
+                "kim_window": "작은 도로 높이 창문 → 술주정뱅이 오줌, 훈증 가스, 홍수 물 유입"
+            }
+        },
+        "symbolism": "창문의 크기 = 세상을 볼 수 있는 범위 = 계급"
+    },
+    "diagonal_staircase_framing": {
+        "pattern_name": "대각선 계단 프레임",
+        "frequency": "high",
+        "description": "계단의 대각선 라인을 활용한 역동적 구도",
+        "purpose": "수직 이동의 시각화 + 불안정감 전달",
+        "examples": [
+            {
+                "film": "기생충",
+                "scene": "계단 오르내리는 장면들",
+                "lines": "대각선 라인 강조"
+            },
+            {
+                "film": "기생충",
+                "scene": "폭우 후 하강",
+                "lines": "터널처럼 출구 없는 느낌"
+            }
+        ]
+    },
+    "camera_stability_rule": {
+        "pattern_name": "카메라 안정성 규칙",
+        "description": "80% 스태틱/돌리, 클라이맥스에서만 핸드헬드",
+        "locked_off_ratio": 0.8,
+        "handheld_use": "클라이맥스 혼돈 장면에만 제한적 사용",
+        "purpose": "평소 안정 → 혼돈시 불안정으로 충격 극대화",
+        "dna_invariant": {
+            "rule_id": "camera_stability_hierarchy",
+            "domain": "camera_movement",
+            "priority": "medium",
+            "check_hint": "클라이맥스까지 안정적 촬영 유지"
+        }
+    },
+    "color_saturation_contrast": {
+        "pattern_name": "채도 대비",
+        "description": "빈곤층 = 탈색/낮은채도, 부유층 = 생생/높은채도",
+        "application": {
+            "upper_class": "스틸 블루, 생생한 녹색/노랑, 웜톤",
+            "lower_class": "차콜 블루, 탈색된 녹색, 녹색빛 형광등"
+        },
+        "technical": {
+            "park_mansion": "자연광 + 웜톤만 사용",
+            "kim_basement": "저급 녹색 형광등 + 텅스텐"
+        }
+    }
+}

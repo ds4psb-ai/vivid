@@ -1115,6 +1115,19 @@ class ApiClient {
   async getCrebitStats(): Promise<CrebitStats> {
     return this.request<CrebitStats>("/api/v1/crebit/stats");
   }
+
+  // --- Analytics ---
+
+  async trackAnalyticsEvent(payload: AnalyticsEventRequest): Promise<AnalyticsEventResponse> {
+    return this.request<AnalyticsEventResponse>("/api/v1/analytics/events", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getAnalyticsMetrics(days: number = 7): Promise<AnalyticsMetrics> {
+    return this.request<AnalyticsMetrics>(`/api/v1/analytics/metrics?days=${days}`);
+  }
 }
 
 // --- Crebit Types ---
@@ -1151,4 +1164,31 @@ export interface CrebitStats {
   by_cohort: Record<string, number>;
 }
 
+// --- Analytics Types ---
+
+export interface AnalyticsEventRequest {
+  event_type: "evidence_ref_opened" | "template_seeded" | "template_version_swapped" | "template_run_started" | "template_run_completed";
+  template_id?: string;
+  capsule_id?: string;
+  run_id?: string;
+  evidence_ref?: string;
+  meta?: Record<string, unknown>;
+}
+
+export interface AnalyticsEventResponse {
+  id: string;
+  event_type: string;
+  created_at: string;
+}
+
+export interface AnalyticsMetrics {
+  evidence_click_count: number;
+  template_seed_count: number;
+  template_swap_count: number;
+  evidence_click_rate: number | null;
+  period_start: string;
+  period_end: string;
+}
+
 export const api = new ApiClient();
+

@@ -1,0 +1,83 @@
+{
+    "manifest_version": "2.0",
+    "created_at": "2025-12-30T14:10:00Z",
+    "cluster_id": "CL_BONG_01",
+    "director": "봉준호",
+    "refactor_goal": "48 sparse sources → Rich consolidated sources",
+    "sources": [
+        {
+            "id": "01",
+            "filename": "01_bong_interviews_primary.json",
+            "category": "primary_source",
+            "size_bytes": 4129,
+            "density_score": "high",
+            "content_summary": "The Talks, DGA, Vanity Fair 인터뷰 종합"
+        },
+        {
+            "id": "02",
+            "filename": "02_bong_cinematography_hong.json",
+            "category": "primary_source",
+            "size_bytes": 4349,
+            "density_score": "high",
+            "content_summary": "홍경표 촬영 기법, ALEXA 65, 조명 전략"
+        },
+        {
+            "id": "03",
+            "filename": "03_parasite_youtube_critics.json",
+            "category": "crowd_sourced",
+            "size_bytes": 5870,
+            "density_score": "high",
+            "content_summary": "이동진, Heavy Spoilers, Thomas Flight 분석 종합"
+        },
+        {
+            "id": "04",
+            "filename": "04_bong_visual_dna.json",
+            "category": "signature",
+            "size_bytes": 4916,
+            "density_score": "high",
+            "content_summary": "수직블로킹, 프레이밍, 카메라 규칙 통합"
+        },
+        {
+            "id": "05",
+            "filename": "05_bong_thematic_obsessions.json",
+            "category": "signature",
+            "size_bytes": 5188,
+            "density_score": "high",
+            "content_summary": "계급/공간, 가족, 시스템, 비 메타포 통합"
+        },
+        {
+            "id": "06",
+            "filename": "06_parasite_complete_analysis.json",
+            "category": "film_analysis",
+            "size_bytes": 5420,
+            "density_score": "high",
+            "content_summary": "기생충 전체 씬별 분석, 타임스탬프 포함"
+        },
+        {
+            "id": "07",
+            "filename": "07_bong_narrative_dna.json",
+            "category": "signature",
+            "size_bytes": 5261,
+            "density_score": "high",
+            "content_summary": "장르믹싱, 톤변화, 비트시그니처 통합"
+        }
+    ],
+    "statistics": {
+        "total_sources": 7,
+        "total_size_bytes": 35133,
+        "average_size_bytes": 5019,
+        "density_improvement": "25x vs original (173 bytes avg)"
+    },
+    "upload_instructions": {
+        "step_1": "NotebookLM에서 기존 48개 소스 삭제",
+        "step_2": "sources_v2 폴더의 7개 파일을 Pasted Text로 업로드",
+        "step_3": "추가 1차 소스 (다른 영화 분석 등) 여유 슬롯에 추가 가능"
+    },
+    "remaining_slots": 43,
+    "recommended_additions": [
+        "설국열차 완전 분석",
+        "살인의 추억 완전 분석",
+        "다른 봉준호 인터뷰 추가",
+        "학술 논문 분석"
+    ]
+}

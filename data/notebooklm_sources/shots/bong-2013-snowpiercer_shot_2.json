@@ -1,0 +1,27 @@
+{
+  "source_id": "bong-2013-snowpiercer",
+  "shot": {
+    "shot_number": 2,
+    "shot_type": "tracking",
+    "composition": {
+      "type": "tunnel_perspective",
+      "rule": "leading_lines",
+      "depth_layers": [
+        "foreground_character",
+        "midground_corridor",
+        "background_destination"
+      ]
+    },
+    "camera": {
+      "angle": "low_following",
+      "movement": "horizontal_track",
+      "lens": "35mm"
+    },
+    "lighting": "gradient_dark_to_bright",
+    "description": "열차 복도 원근감. 앞으로의 여정 암시.",
+    "emotional_function": "희망/목표 제시",
+    "duration": "6s"
+  },
+  "_source_type": "shot_detail",
+  "_cluster_id": "CL_BONG_01"
+}

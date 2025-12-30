@@ -1,0 +1,48 @@
+{
+    "schema_version": "layer3-v1",
+    "cluster_id": "CL_BONG_01",
+    "auteur": "봉준호",
+    "layer": "layer3_accumulated",
+    "description": "축적된 지식 - 시간이 지남에 따라 쌓이는 메타 인사이트",
+    "last_updated": "2025-12-29T16:50:00Z",
+    "knowledge_loop": {
+        "total_iterations": 1,
+        "notes_converted_to_source": 0,
+        "quality_gate_pass_rate": null,
+        "evolution_status": "initial_seed"
+    },
+    "cross_cluster_insights": [],
+    "evolution_changelog": [
+        {
+            "version": "v1.0.0",
+            "date": "2025-12-29",
+            "author": "system",
+            "changes": [
+                "초기 4-Layer 소스 팩 구조 생성",
+                "Layer 0: 5개 샷 분석 청크 (기생충/설국열차/살인의 추억)",
+                "Layer 1: Logic Vector + Persona Vector 정의",
+                "Layer 2: 오마주 변주 가이드 (한국어)"
+            ],
+            "notes": "Phase 1 파일럿 초기 적재"
+        }
+    ],
+    "user_feedback_summary": {
+        "total_feedback_count": 0,
+        "common_praises": [],
+        "common_issues": [],
+        "feature_requests": [],
+        "last_feedback_at": null
+    },
+    "meta_patterns_discovered": [],
+    "quality_metrics": {
+        "evidence_coverage_rate": null,
+        "template_seed_success_rate": null,
+        "user_satisfaction_average": null,
+        "notes_to_source_promotion_rate": null
+    },
+    "next_accumulation_targets": [
+        "사용자 실행 피드백 수집 후 quality_metrics 업데이트",
+        "Notes → Source 변환 1회 완료 후 knowledge_loop 갱신",
+        "추가 클러스터(박찬욱, 김기덕 등) 연결 시 cross_cluster_insights 생성"
+    ]
+}

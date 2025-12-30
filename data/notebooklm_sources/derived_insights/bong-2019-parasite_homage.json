@@ -1,0 +1,134 @@
+{
+  "source_id": "bong-2019-parasite",
+  "summary": "계급 갈등의 수직적 공간 연출. 반지하-계단-대저택 구조로 사회 구조를 시각화.",
+  "output_type": "report",
+  "output_language": "ko",
+  "prompt_version": "nlm-guide-v1",
+  "model_version": "notebooklm-2025-12",
+  "source_pack_id": "sp_cluster-bong-class-divide_hook_20251226",
+  "guide_type": "homage",
+  "title": "봉준호 오마주 가이드 - 기생충",
+  "description": "봉준호 감독 스타일을 재현하기 위한 시각 언어 가이드",
+  "homage_guide": "계단을 통한 수직 이동을 핵심 모티프로 사용. 아래에서 위로 올라갈수록 조명이 밝아지고, 공간이 넓어진다. 반대로 하강 시 어둡고 좁아진다.",
+  "variation_guide": "수직 이동 대신 수평 이동으로 변주 가능 (설국열차 참조). 컬러는 쿨톤 유지.",
+  "template_recommendations": [
+    "tmpl-auteur-bong"
+  ],
+  "user_fit_notes": "사회 비평적 콘텐츠, 긴장감 있는 드라마에 적합.",
+  "origin_notebook_id": "nlb-bong-joon-ho",
+  "cluster_id": "cluster-bong-class-divide",
+  "cluster_label": "Class Divide / Vertical Tension",
+  "cluster_confidence": 0.94,
+  "visual_language": {
+    "blocking": {
+      "primary": "vertical",
+      "secondary": "depth",
+      "signature": "수직 공간 배치로 권력 관계 표현. 위=권력, 아래=종속"
+    },
+    "framing": {
+      "preferred_ratios": [
+        "2.35:1",
+        "1.85:1"
+      ],
+      "signature_compositions": [
+        {
+          "name": "계단 프레임",
+          "description": "프레임을 대각선으로 분할하는 계단 배치",
+          "usage": "계급 이동 장면"
+        },
+        {
+          "name": "창문 프레임",
+          "description": "창문을 통해 세상을 엿보는 구도",
+          "usage": "소외/관찰 장면"
+        }
+      ]
+    }
+  },
+  "color_palette": {
+    "primary_mood": "desaturated_cool",
+    "signature_colors": [
+      {
+        "hex": "#1F2933",
+        "name": "Charcoal Blue",
+        "usage": "반지하/하층 공간"
+      },
+      {
+        "hex": "#323F4B",
+        "name": "Slate",
+        "usage": "중간 계층/전환"
+      },
+      {
+        "hex": "#627D98",
+        "name": "Steel Blue",
+        "usage": "상층/부유층 공간"
+      }
+    ],
+    "contrast_strategy": "low_saturation_high_value_contrast"
+  },
+  "camera_motion": {
+    "primary_style": "controlled_geometric",
+    "signature_movements": [
+      {
+        "name": "vertical_track",
+        "description": "계단을 따라 수직으로 트래킹",
+        "emotional_function": "계급 이동의 시각화"
+      },
+      {
+        "name": "slow_push",
+        "description": "긴장 고조 시 느린 푸시인",
+        "emotional_function": "불안감 증폭"
+      }
+    ],
+    "lens_preferences": [
+      "35mm",
+      "50mm",
+      "wide_anamorphic"
+    ]
+  },
+  "thematic_motifs": [
+    {
+      "motif": "stairs",
+      "meaning": "계급 이동/사회 구조",
+      "frequency": "high"
+    },
+    {
+      "motif": "rain",
+      "meaning": "정화/파괴/불평등의 가시화",
+      "frequency": "high"
+    },
+    {
+      "motif": "smell",
+      "meaning": "계급 표식/본능적 혐오",
+      "frequency": "medium"
+    }
+  ],
+  "reference_shots": [
+    {
+      "film": "기생충",
+      "timecode": "00:15:23",
+      "description": "기우가 계단을 올라 대저택 진입",
+      "technique": "vertical_track + lighting_contrast"
+    }
+  ],
+  "application_notes": {
+    "when_to_use": [
+      "사회 비평적 콘텐츠",
+      "블랙 코미디",
+      "계급/불평등 주제"
+    ],
+    "avoid_when": [
+      "밝은 로맨틱 코미디",
+      "판타지/SF 액션"
+    ]
+  },
+  "confidence": 0.92,
+  "notebook_id": "nlb-bong-joon-ho",
+  "notebook_ref": "https://notebooklm.google.com/notebook/bong-joon-ho-auteur",
+  "evidence_refs": [
+    "db:video_segments:seg-bong-2019-parasite-hook-001",
+    "db:video_segments:seg-bong-2019-parasite-build-001"
+  ],
+  "generated_at": "2025-12-26T19:00:00Z",
+  "_source_type": "derived_insight",
+  "_cluster_id": "CL_BONG_01"
+}

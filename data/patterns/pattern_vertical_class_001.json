@@ -1,0 +1,67 @@
+{
+    "pattern_id": "pattern_vertical_class_001",
+    "style_category": "cinematic_drama",
+    "visual_language": {
+        "composition": {
+            "blocking_style": "geometric_vertical",
+            "frame_dynamics": "static_with_purposeful_movement",
+            "depth_usage": "layered_foreground_background_contrast"
+        },
+        "color_palette": {
+            "primary_mood": "desaturated_cool",
+            "contrast_strategy": "low_saturation_high_value_contrast",
+            "signature_tones": [
+                "charcoal_blue",
+                "slate_gray",
+                "muted_earth"
+            ]
+        },
+        "camera_motion": {
+            "primary_style": "controlled_geometric",
+            "signature_movements": [
+                "vertical_track",
+                "slow_horizontal_pan",
+                "static_tableau"
+            ]
+        }
+    },
+    "synapse_rules": [
+        {
+            "rule_id": "class_conflict_visualization",
+            "elements": [
+                "vertical_space",
+                "weather_element",
+                "sensory_marker"
+            ],
+            "result": "계급 갈등의 시각화",
+            "application_hint": "높낮이 차이가 있는 공간에서 비 또는 냄새 등 감각 요소를 결합"
+        },
+        {
+            "rule_id": "melancholy_atmosphere",
+            "elements": [
+                "rain",
+                "open_field",
+                "failure_moment"
+            ],
+            "result": "멜랑콜리와 비극적 분위기",
+            "application_hint": "실패의 순간에 비와 넓은 공간을 결합하여 캐릭터의 고립감 강조"
+        }
+    ],
+    "scene_guides": [
+        {
+            "scene_type": "계단/수직 이동",
+            "visual_direction": "카메라를 정면에 고정하고 수직 트래킹. 인물이 올라가거나 내려가는 동선을 풀샷으로 잡아 공간 계층을 강조.",
+            "emotional_tone": "긴장, 계급 의식"
+        },
+        {
+            "scene_type": "비 오는 장면",
+            "visual_direction": "채도를 낮추고 블루-그레이 톤 유지. 비가 캐릭터에게 직접 내리는 클로즈업과 환경을 보여주는 와이드샷 교차.",
+            "emotional_tone": "정화 또는 절망"
+        },
+        {
+            "scene_type": "부엌/식사",
+            "visual_direction": "테이블을 중심으로 대칭 구도. 인물 배치로 권력 관계 표현. 음식 클로즈업으로 감각적 디테일 강조.",
+            "emotional_tone": "친밀함 속 긴장"
+        }
+    ]
+}

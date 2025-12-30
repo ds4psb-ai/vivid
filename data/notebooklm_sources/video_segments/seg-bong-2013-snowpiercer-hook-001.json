@@ -1,0 +1,46 @@
+{
+  "segment_id": "seg-bong-2013-snowpiercer-hook-001",
+  "source_id": "bong-2013-snowpiercer",
+  "work_id": "work-bong-2013-snowpiercer",
+  "sequence_id": "seq-tail-section",
+  "scene_id": "scene-crowded-car",
+  "shot_id": "shot-tail-wide",
+  "time_start": "00:05:00.000",
+  "time_end": "00:05:30.000",
+  "shot_index": 1,
+  "keyframes": [
+    "kf_s_001"
+  ],
+  "transcript": "꼬리칸의 비참한 환경. 좁고 어두운 공간에 수백명.",
+  "visual_schema_json": {
+    "composition": "horizontal_blocking",
+    "lighting": "minimal",
+    "color_palette": [
+      "#1C1C1C",
+      "#2D2D2D",
+      "#3D3D3D"
+    ],
+    "camera_motion": "static",
+    "blocking": "crowd_mass",
+    "pacing": "slow"
+  },
+  "audio_schema_json": {
+    "sound_design": "engine_rumble",
+    "music_mood": "oppressive"
+  },
+  "motifs": [
+    "train",
+    "class_division",
+    "horizontal_space"
+  ],
+  "evidence_refs": [
+    "source:00:05:00-00:05:30"
+  ],
+  "confidence": 0.88,
+  "prompt_version": "gemini-video-v1",
+  "model_version": "gemini-3-pro-2025-12",
+  "generated_at": "2025-12-26T19:00:00Z",
+  "_source_type": "video_segment",
+  "_cluster_id": "CL_BONG_01",
+  "_description": "봉준호 - bong-2013-snowpiercer - scene-crowded-car"
+}

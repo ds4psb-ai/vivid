@@ -1,0 +1,86 @@
+{
+    "_source_type": "film_scene_analysis",
+    "_tier": "TIER_3_FILM",
+    "_cluster_id": "FILM_기생충",
+    "title": "ACT 3 PAYOFF: 폭우 하강 시퀀스 - 가장 가슴 아픈 순간",
+    "film": "기생충 (Parasite)",
+    "director": "봉준호",
+    "act": 3,
+    "beat": "PAYOFF",
+    "scene_analysis": {
+        "scene_name": "폭우 하강 시퀀스",
+        "timestamp_start": "01:20:00",
+        "timestamp_end": "01:25:00",
+        "duration_seconds": 300,
+        "function": "계급 차이의 물리적 시각화",
+        "bong_signature": "결과의 처참한 전개"
+    },
+    "critic_analysis": {
+        "lee_dong_jin": "가장 가슴 아픈 순간",
+        "interpretation": "부자 동네의 물이 빈민가로 쏟아짐 = 불평등한 재난",
+        "visual_metaphor": "비는 모두에게 내리지만 피해는 불평등"
+    },
+    "descent_sequence": {
+        "stages": [
+            {
+                "stage": 1,
+                "location": "박씨네 정원",
+                "rain_state": "시작",
+                "kim_family_emotion": "불안"
+            },
+            {
+                "stage": 2,
+                "location": "동네 골목 계단",
+                "rain_state": "강해짐",
+                "camera": "following descent"
+            },
+            {
+                "stage": 3,
+                "location": "반지하로 내려가는 계단",
+                "rain_state": "폭우",
+                "visual": "물이 계단을 타고 쏟아짐"
+            },
+            {
+                "stage": 4,
+                "location": "침수된 반지하",
+                "rain_state": "범람",
+                "emotion": "절망"
+            }
+        ],
+        "stair_count": "계단 47개 하강 (상징적 추락)"
+    },
+    "visual_schema": {
+        "composition": "continuous_descent",
+        "camera_motion": {
+            "type": "following_shot_to_handheld",
+            "transition": "통제된 구도 → 핸드헬드와 빠른 컷으로 붕괴"
+        },
+        "lighting": {
+            "exterior": "차가운 청색 비",
+            "interior": "침수로 인한 어둠",
+            "practical": "가로등, 형광등 (녹색)"
+        },
+        "framing": "터널처럼 출구 없는 계단"
+    },
+    "color_shift": {
+        "start": "박씨네 웜톤",
+        "transition": "차가운 청회색 비",
+        "end": "침수된 반지하 - 탁한 갈색"
+    },
+    "audio_design": {
+        "rain": "폭우 - 지배적",
+        "music": "low drone, 비통함",
+        "dialogue": "최소화",
+        "key_sound": "물 흐르는 소리, 발소리"
+    },
+    "symbolic_elements": {
+        "vertical_descent": "사회적 추락의 물리화",
+        "water_flow": "부자 → 빈자 방향 흐름",
+        "exit_blocking": "출구 없음 = 계급 탈출 불가"
+    },
+    "cross_reference": {
+        "dna_bong": "수직 블로킹 패턴",
+        "theme": "비가 내리는 날의 재난 = 계급 격차"
+    },
+    "coaching_prompt": "PAYOFF 비트에서 감정적 충격을 극대화하려면: 물리적 하강 시퀀스로 시작, 카메라 스타일 변화(안정→핸드헬드), 색감 급변(웜→쿨), 사운드로 비의 압도감 표현, 대화 최소화하고 시각으로 말하기"
+}

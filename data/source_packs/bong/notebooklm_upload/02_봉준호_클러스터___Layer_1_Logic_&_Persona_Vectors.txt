@@ -1,0 +1,69 @@
+# 봉준호 클러스터 - Layer 1: Logic & Persona Vectors
+
+# 봉준호 클러스터 - 구조화 지식 (Layer 1)
+
+클러스터 ID: CL_BONG_01
+감독: 봉준호
+
+## Logic Vector (수학적 로직)
+
+**Logic ID**: logic_CL_BONG_01_v1
+**설명**: 봉준호 시각 언어의 수학적 로직
+
+### 케이던스 (Cadence)
+- 샷 길이 중앙값: 3200ms
+- 특징: 느린 빌드업 + 급격한 가속
+
+### 컷 밀도 (Temporal Phase별)
+- HOOK: 0.3
+- BUILD: 0.5
+- TURN: 1.2
+- PAYOFF: 2.0
+- CLIMAX: 3.5
+
+### 구도 (Composition)
+- 주요 전략: vertical_blocking
+- 대칭 점수: 0.74
+- 심도: deep_focus_preferred
+- 시그니처 구도: staircase_diagonal, window_frame_in_frame, vertical_splits
+
+### 카메라 움직임
+- 특징: 통제된 움직임, 감정 고조 시만 핸드헬드
+- 스태틱: 40%
+- 돌리: 35%
+- 핸드헬드: 15%
+
+## Persona Vector (예술적 페르소나)
+
+**Persona ID**: persona_CL_BONG_01_v1
+**설명**: 봉준호 감독의 예술적 페르소나
+
+### 톤: dry_observational, black_comedy, sudden_violence
+
+### 감정 곡선 (Emotion Arc)
+- t=0.0: 불편한 일상 (valence=0.2, arousal=0.2)
+- t=0.25: 공범의 쾌감 (valence=0.4, arousal=0.4)
+- t=0.5: 반전의 충격 (valence=-0.2, arousal=0.7)
+- t=0.75: 비극의 가속 (valence=-0.6, arousal=0.9)
+- t=1.0: 공허한 여운 (valence=-0.8, arousal=0.3)
+
+### 해석 프레임: class, society, family, system_failure
+
+## 패턴 규칙
+
+### 수직 계급 시각화
+- **설명**: 위 = 권력/부유, 아래 = 종속/빈곤. 물리적 높이 차이로 사회 구조 표현.
+- **적용 조건**: 계급/권력 관계 표현 시
+
+### 비의 역할
+- **설명**: 비는 '공평하게' 내리지만 피해는 불평등. 자연이 계급 구조를 폭로.
+- **적용 조건**: 구조적 불평등 표현 시
+
+### 장르 믹싱
+- **설명**: 블랙 코미디 → 스릴러 → 비극 순차 전환. 관객의 감정 허를 찌름.
+- **적용 조건**: 2막 후반 ~ 3막 전환부
+
+## Fusion 공식
+- **공식**: `D = 0.55*D_logic + 0.35*D_persona + 0.10*D_context`
+- **동일 클러스터**: D <= 0.22
+- **클러스터 분기**: D >= 0.35

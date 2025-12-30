@@ -1,0 +1,77 @@
+{
+    "_source_type": "film_scene_analysis",
+    "_tier": "TIER_3_FILM",
+    "_cluster_id": "FILM_기생충",
+    "title": "ACT 3 CLIMAX: 정원 파티 대참사",
+    "film": "기생충 (Parasite)",
+    "director": "봉준호",
+    "act": 3,
+    "beat": "CLIMAX",
+    "scene_analysis": {
+        "scene_name": "정원 파티 대참사 / 기택의 결단",
+        "timestamp_start": "01:50:00",
+        "timestamp_end": "02:05:00",
+        "duration_seconds": 900,
+        "function": "모든 갈등의 폭발적 해소",
+        "bong_signature": "블랙 코미디 → 비극 순간 전환"
+    },
+    "tone_shift": {
+        "before": {
+            "atmosphere": "생일 파티 축제 분위기",
+            "colors": "밝은 녹색 잔디, 화려한 장식",
+            "music": "경쾌한 파티음악"
+        },
+        "turning_point": {
+            "trigger": "근세의 등장",
+            "timestamp_exact": "01:58:00"
+        },
+        "after": {
+            "atmosphere": "혼돈, 비극",
+            "colors": "적색(피), 녹색(잔디) 대비",
+            "music": "불협화음, 충격의 정적"
+        }
+    },
+    "ki_taek_decision": {
+        "timestamp": "02:00:00",
+        "buildup_elements": [
+            "냄새 언급 (소파 씬에서 복선)",
+            "박사장의 역겨움 표정",
+            "계급적 굴욕의 누적"
+        ],
+        "action": "순간적 결단",
+        "interpretation": "억압된 분노의 폭발, 이성적 선택 아님"
+    },
+    "visual_schema": {
+        "composition": "wide_to_close",
+        "camera_motion": {
+            "before_chaos": "elegant_dolly",
+            "during_chaos": "handheld_chaotic",
+            "purpose": "혼돈과 긴박함 극대화"
+        },
+        "editing": {
+            "before": "느린 컷 페이스",
+            "during": "빠른 연속 컷",
+            "cut_density_multiplier": 3.5
+        }
+    },
+    "blocking": {
+        "party_setup": "원형으로 배치된 게스트들",
+        "chaos_breakdown": "원 구조 붕괴, 산발적 움직임",
+        "spatial_hierarchy": "파티 중심 → 주변으로 혼란 확산"
+    },
+    "color_symbolism": {
+        "green_grass": "부유층의 여유",
+        "red_blood": "폭력과 희생",
+        "contrast": "평화→파괴 시각화"
+    },
+    "audio_design": {
+        "before": "파티 음악, 웃음소리",
+        "during": "비명, 충격, 음악 끊김",
+        "after": "귀 울림 효과 (tinnitus), 정적"
+    },
+    "emotional_impact": {
+        "audience": "충격과 비극",
+        "technique": "갑작스러운 전환 - 준비 시간 없음"
+    },
+    "coaching_prompt": "CLIMAX에서 충격적 전환을 만들려면: 평화로운 분위기 최대한 구축 후 순간 파괴, 카메라 스타일 완전 변경(dolly→handheld), 컷 밀도 3.5배 증가, 사운드 끊김→귀울림 효과"
+}

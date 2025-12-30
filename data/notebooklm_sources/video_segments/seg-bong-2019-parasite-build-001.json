@@ -1,0 +1,46 @@
+{
+  "segment_id": "seg-bong-2019-parasite-build-001",
+  "source_id": "bong-2019-parasite",
+  "work_id": "work-bong-2019-parasite",
+  "sequence_id": "seq-infiltration",
+  "scene_id": "scene-staircase",
+  "shot_id": "shot-staircase-ascent",
+  "time_start": "00:25:00.000",
+  "time_end": "00:25:20.000",
+  "shot_index": 2,
+  "keyframes": [
+    "kf_p_002"
+  ],
+  "transcript": "기우가 박 사장 집 계단을 오른다. 카메라가 따라 올라간다.",
+  "visual_schema_json": {
+    "composition": "staircase_motif",
+    "lighting": "high_key_contrast",
+    "color_palette": [
+      "#627D98",
+      "#7B8794",
+      "#F7FAFC"
+    ],
+    "camera_motion": "controlled",
+    "blocking": "vertical_ascent",
+    "pacing": "medium"
+  },
+  "audio_schema_json": {
+    "sound_design": "footsteps_echo",
+    "music_mood": "anticipation"
+  },
+  "motifs": [
+    "staircase",
+    "class_ascent",
+    "infiltration"
+  ],
+  "evidence_refs": [
+    "source:00:25:00-00:25:20"
+  ],
+  "confidence": 0.95,
+  "prompt_version": "gemini-video-v1",
+  "model_version": "gemini-3-pro-2025-12",
+  "generated_at": "2025-12-26T19:00:00Z",
+  "_source_type": "video_segment",
+  "_cluster_id": "CL_BONG_01",
+  "_description": "봉준호 - bong-2019-parasite - scene-staircase"
+}

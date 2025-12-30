@@ -1,0 +1,121 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Anonymized Auteur Pattern",
+    "description": "Copyright-safe pattern schema - no direct auteur attribution",
+    "type": "object",
+    "required": [
+        "pattern_id",
+        "style_category",
+        "visual_language",
+        "synapse_rules"
+    ],
+    "properties": {
+        "pattern_id": {
+            "type": "string",
+            "pattern": "^pattern_[a-z0-9_]+$",
+            "description": "Anonymized ID (e.g., pattern_vertical_class_001)"
+        },
+        "style_category": {
+            "type": "string",
+            "enum": [
+                "cinematic_drama",
+                "visual_comedy",
+                "psychological_thriller",
+                "animated_whimsy"
+            ],
+            "description": "Abstract style category"
+        },
+        "visual_language": {
+            "type": "object",
+            "properties": {
+                "composition": {
+                    "type": "object",
+                    "properties": {
+                        "blocking_style": {
+                            "type": "string"
+                        },
+                        "frame_dynamics": {
+                            "type": "string"
+                        },
+                        "depth_usage": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "color_palette": {
+                    "type": "object",
+                    "properties": {
+                        "primary_mood": {
+                            "type": "string"
+                        },
+                        "contrast_strategy": {
+                            "type": "string"
+                        },
+                        "signature_tones": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "camera_motion": {
+                    "type": "object",
+                    "properties": {
+                        "primary_style": {
+                            "type": "string"
+                        },
+                        "signature_movements": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "synapse_rules": {
+            "type": "array",
+            "description": "A + B → C formula for this pattern",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "rule_id": {
+                        "type": "string"
+                    },
+                    "elements": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "result": {
+                        "type": "string"
+                    },
+                    "application_hint": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "scene_guides": {
+            "type": "array",
+            "description": "Pre-generated guides for common scene types",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "scene_type": {
+                        "type": "string"
+                    },
+                    "visual_direction": {
+                        "type": "string"
+                    },
+                    "emotional_tone": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}

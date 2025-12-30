@@ -1,0 +1,63 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Auteur Mapping Table",
+    "description": "Internal-only mapping between user keywords and pattern IDs",
+    "type": "object",
+    "properties": {
+        "mappings": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "keywords",
+                    "pattern_id"
+                ],
+                "properties": {
+                    "keywords": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "User-facing keywords (e.g., ['봉준호', 'Bong Joon-ho', '기생충 스타일'])"
+                    },
+                    "pattern_id": {
+                        "type": "string",
+                        "description": "Internal anonymized pattern ID"
+                    },
+                    "confidence": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1,
+                        "description": "Mapping confidence score"
+                    }
+                }
+            }
+        }
+    },
+    "examples": [
+        {
+            "mappings": [
+                {
+                    "keywords": [
+                        "봉준호",
+                        "Bong Joon-ho",
+                        "기생충",
+                        "Parasite style"
+                    ],
+                    "pattern_id": "pattern_vertical_class_001",
+                    "confidence": 0.95
+                },
+                {
+                    "keywords": [
+                        "웨스 앤더슨",
+                        "Wes Anderson",
+                        "symmetric",
+                        "pastel"
+                    ],
+                    "pattern_id": "pattern_symmetric_whimsy_001",
+                    "confidence": 0.9
+                }
+            ]
+        }
+    ]
+}

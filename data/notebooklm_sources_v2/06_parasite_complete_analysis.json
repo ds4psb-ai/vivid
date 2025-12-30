@@ -1,0 +1,135 @@
+{
+    "_source_type": "consolidated_film_analysis",
+    "_cluster_id": "CL_BONG_01",
+    "title": "기생충 완전 분석 - Scene by Scene",
+    "film": "Parasite (기생충)",
+    "year": 2019,
+    "director": "봉준호",
+    "cinematographer": "홍경표",
+    "runtime_min": 132,
+    "narrative_structure": {
+        "act_1": {
+            "name": "HOOK/BUILD",
+            "time_range": "00:00 - 00:35",
+            "beats": [
+                {
+                    "beat_id": "HOOK",
+                    "time": "00:00 - 00:10",
+                    "description": "일상의 불편함 노출",
+                    "bong_signature": "평범해 보이지만 불길한 디테일 삽입",
+                    "key_scene": {
+                        "name": "반지하 창문으로 보이는 취객",
+                        "timestamp": "00:02:30",
+                        "visual_cues": [
+                            "cramped_space",
+                            "low_angle_window",
+                            "mundane_action"
+                        ],
+                        "function": "가난한 현실을 코믹하게 제시하되 불안감 암시",
+                        "emotional_target": "curious_unease",
+                        "audience_reaction": "코미디인 줄 알았는데..."
+                    }
+                },
+                {
+                    "beat_id": "BUILD",
+                    "time": "00:10 - 00:35",
+                    "description": "침투 작전",
+                    "key_scenes": [
+                        {
+                            "name": "기우 첫 박씨네 방문",
+                            "timestamp": "00:15:00",
+                            "technique": "유리벽 레이어링 - 물리적/상징적 분리",
+                            "camera": "미묘한 전진 움직임 - 사회적 상승 상징"
+                        },
+                        {
+                            "name": "가족 순차 침투",
+                            "timestamp": "00:20:00 - 00:35:00",
+                            "technique": "계단 오르기 반복 - 수직 상승의 시각화"
+                        }
+                    ]
+                }
+            ]
+        },
+        "act_2": {
+            "name": "TURN",
+            "time_range": "00:35 - 01:10",
+            "beats": [
+                {
+                    "beat_id": "TURN",
+                    "time": "00:50 - 01:00",
+                    "description": "지하 벙커 발견",
+                    "bong_signature": "장르 급변화 (코미디 → 서스펜스)",
+                    "key_scene": {
+                        "name": "문광의 비밀",
+                        "timestamp": "00:55:00",
+                        "revelation": "더 아래에 또 다른 기생충이 있었다",
+                        "emotional_shift": "웃음 → 공포"
+                    }
+                }
+            ]
+        },
+        "act_3": {
+            "name": "PAYOFF/CLIMAX",
+            "time_range": "01:10 - 02:12",
+            "beats": [
+                {
+                    "beat_id": "PAYOFF",
+                    "time": "01:10 - 01:30",
+                    "description": "폭우와 하강",
+                    "key_scene": {
+                        "name": "폭우 하강 시퀀스",
+                        "timestamp": "01:20:00 - 01:25:00",
+                        "visual_technique": "계단 하강의 반복 - 터널처럼 출구 없음",
+                        "camera_shift": "통제된 구도 → 핸드헬드와 빠른 컷으로 붕괴",
+                        "symbolism": "부자 동네의 물이 빈민가로 쏟아짐 = 불평등한 재난",
+                        "critic_note": "이동진: 가장 가슴 아픈 순간"
+                    }
+                },
+                {
+                    "beat_id": "CLIMAX",
+                    "time": "01:50 - 02:05",
+                    "description": "정원 파티 대참사",
+                    "bong_signature": "블랙 코미디 → 비극 순간 전환",
+                    "key_scene": {
+                        "name": "기택의 결단",
+                        "timestamp": "02:00:00",
+                        "camera": "핸드헬드 - 혼돈과 긴박함 극대화",
+                        "emotional_impact": "충격과 비극"
+                    }
+                }
+            ]
+        }
+    },
+    "visual_patterns_applied": [
+        {
+            "pattern": "vertical_blocking",
+            "occurrences": 47,
+            "key_examples": [
+                "반지하 창문",
+                "계단 오르내림",
+                "폭우 하강"
+            ]
+        },
+        {
+            "pattern": "frame_within_frame",
+            "occurrences": 12,
+            "key_examples": [
+                "창문을 통한 시선",
+                "화장실 장면"
+            ]
+        },
+        {
+            "pattern": "color_saturation_contrast",
+            "application": {
+                "kim_family_scenes": "탈색, 녹색빛 형광등",
+                "park_family_scenes": "웜톤, 자연광"
+            }
+        }
+    ],
+    "production_notes": {
+        "storyboard": "304페이지 그래픽 노블로 출판",
+        "set_control": "97% 조명 세트에서 직접 설치",
+        "camera": "ARRI ALEXA 65, 65mm 렌즈",
+        "director_description": "계단 영화"
+    }
+}

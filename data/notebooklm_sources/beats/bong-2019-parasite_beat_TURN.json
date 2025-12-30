@@ -1,0 +1,24 @@
+{
+  "source_id": "bong-2019-parasite",
+  "beat": {
+    "beat_id": "TURN",
+    "act": 3,
+    "duration_ratio": 0.15,
+    "description": "숨겨진 진실의 폭로",
+    "bong_signature": "예상치 못한 제3의 존재/시스템 발견",
+    "example": {
+      "film": "기생충",
+      "scene": "지하 벙커와 근세 발견",
+      "function": "장르 전환 - 코미디에서 스릴러로"
+    },
+    "emotional_target": "shock_recognition",
+    "pacing_notes": "급격한 템포 변화, 숨 막히는 긴장",
+    "visual_cues": [
+      "descending_movement",
+      "darkness_reveal",
+      "claustrophobic_framing"
+    ]
+  },
+  "_source_type": "beat_detail",
+  "_cluster_id": "CL_BONG_01"
+}

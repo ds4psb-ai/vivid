@@ -1,0 +1,137 @@
+{
+    "_source_type": "consolidated_signature",
+    "_cluster_id": "CL_BONG_01",
+    "title": "봉준호 서사적 DNA - 통합 내러티브 기법",
+    "description": "봉준호 영화에서 반복되는 서사적 패턴과 스토리텔링 규칙",
+    "genre_mixing": {
+        "pattern_name": "장르 믹싱",
+        "frequency": "high",
+        "description": "단일 영화 내 여러 장르를 넘나드는 전환",
+        "director_philosophy": "장르 관습을 비틀거나 파괴하지만 경계 안에서 작업",
+        "films": {
+            "parasite": [
+                "블랙 코미디",
+                "스릴러",
+                "사회 드라마",
+                "공포"
+            ],
+            "memories_of_murder": [
+                "형사물",
+                "블랙 코미디",
+                "사회 비판"
+            ],
+            "host": [
+                "괴물 영화",
+                "가족 드라마",
+                "정치 풍자",
+                "코미디"
+            ],
+            "snowpiercer": [
+                "SF",
+                "액션",
+                "사회 우화"
+            ]
+        },
+        "technique": "관객이 장르를 예측하지 못하게 함",
+        "quote": "영화가 관객에게 목적지를 거짓으로 알려주는 버스와 같다"
+    },
+    "tone_sudden_shift": {
+        "pattern_name": "톤 급변화",
+        "frequency": "high",
+        "description": "코믹한 순간에서 비극으로, 또는 그 반대로 급격한 전환",
+        "mechanism": "관객 예상 배반 → 정서적 충격 극대화",
+        "examples": [
+            {
+                "film": "기생충",
+                "scene": "소파 아래 숨기",
+                "shift": "코미디 (침대 사랑씬 목격) → 공포 (문광 발견)",
+                "timestamp": "00:55:00"
+            },
+            {
+                "film": "기생충",
+                "scene": "정원 파티",
+                "shift": "축제 분위기 → 대학살",
+                "timestamp": "02:00:00"
+            },
+            {
+                "film": "살인의 추억",
+                "scene": "코미디 수사 장면들",
+                "shift": "웃음 → 연쇄살인의 공포"
+            }
+        ]
+    },
+    "black_comedy_moments": {
+        "pattern_name": "블랙 코미디 순간",
+        "frequency": "high",
+        "description": "어두운 상황에서의 부조화한 유머",
+        "purpose": "비극성 강조 + 사회 비판의 날카로움",
+        "examples": [
+            {
+                "film": "기생충",
+                "moment": "취객 오줌 막는 장면",
+                "function": "빈곤의 코미디화"
+            },
+            {
+                "film": "기생충",
+                "moment": "와이파이 찾아 화장실 천장에 핸드폰",
+                "function": "디지털 빈곤"
+            },
+            {
+                "film": "살인의 추억",
+                "moment": "현장 망치는 수사관들",
+                "function": "시스템 무능의 풍자"
+            }
+        ]
+    },
+    "open_ending_cycle": {
+        "pattern_name": "열린 결말/순환 구조",
+        "frequency": "medium",
+        "description": "결말이 시작과 연결되거나 해결 없이 열려있음",
+        "purpose": "관객에게 사유 유도, 문제 해결은 영화 밖에서",
+        "examples": [
+            {
+                "film": "살인의 추억",
+                "ending": "범인 못 잡고 끝, 관객을 직접 바라보는 마지막 장면",
+                "meaning": "범인은 관객 중에 있을 수 있다"
+            },
+            {
+                "film": "기생충",
+                "ending": "기우의 계획 - 실현 가능성 거의 없음",
+                "meaning": "계급 이동의 환상"
+            }
+        ]
+    },
+    "social_critique_through_character": {
+        "pattern_name": "인물을 통한 사회 비판",
+        "description": "직접적 설교 대신 인물의 상황과 선택으로 메시지 전달",
+        "director_method": "배우에게 '이 캐릭터가 불쌍하지 않아?'라고만 물음",
+        "result": "관객이 스스로 결론에 도달"
+    },
+    "beat_signature": {
+        "HOOK": {
+            "duration_ratio": 0.1,
+            "bong_signature": "평범해 보이지만 불길한 디테일 삽입",
+            "emotional_target": "curious_unease"
+        },
+        "BUILD": {
+            "duration_ratio": 0.25,
+            "bong_signature": "장르의 기대를 충족시키며 긴장 축적",
+            "technique": "점진적 침투/상승"
+        },
+        "TURN": {
+            "duration_ratio": 0.15,
+            "bong_signature": "장르 급변화, 예상 뒤집기",
+            "emotional_target": "shock"
+        },
+        "PAYOFF": {
+            "duration_ratio": 0.25,
+            "bong_signature": "결과의 처참한 전개",
+            "technique": "감정적 거리와 핸드헬드 전환"
+        },
+        "CLIMAX": {
+            "duration_ratio": 0.1,
+            "bong_signature": "블랙 코미디 → 비극 순간 전환",
+            "camera": "핸드헬드로 혼돈 극대화"
+        }
+    }
+}

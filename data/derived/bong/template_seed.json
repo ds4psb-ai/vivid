@@ -1,0 +1,89 @@
+{
+    "template_seed": {
+        "template_name": "봉준호 스타일 템플릿",
+        "capsule_params": {
+            "pace": {
+                "default": 0.5,
+                "range": [
+                    0,
+                    1
+                ],
+                "description": "샷 길이 중앙값 3200ms를 기준으로 도입부의 느린 빌드업과 후반부의 급격한 가속을 제어"
+            },
+            "vertical_emphasis": {
+                "default": 0.74,
+                "range": [
+                    0,
+                    1
+                ],
+                "description": "수직 블로킹(Vertical Blocking)과 계단 모티프를 활용한 상하 권력 관계 시각화 강도"
+            },
+            "genre_volatility": {
+                "default": 0.8,
+                "range": [
+                    0,
+                    1
+                ],
+                "description": "블랙 코미디에서 서스펜스, 비극적 파국으로 이어지는 장르 전환의 급격함"
+            }
+        },
+        "narrative_seeds": {
+            "hook": "반지하 창문이나 제한된 프레임을 통해 소외된 계층의 일상을 건조하고 불편한 유머로 관찰함",
+            "build": "인물들이 상위 계급의 공간으로 침투하며 공범의 쾌감과 장르적 재미를 점진적으로 쌓아감",
+            "turn": "숨겨진 진실이나 예기치 못한 인물의 등장으로 인해 코미디가 서스펜스로 급격히 반전됨",
+            "payoff": "폭우나 시스템의 실패로 인해 통제력을 상실하며 계급적 붕괴와 비극적 아이러니를 노출함",
+            "climax": "억눌린 감정이 폭발하며 갑작스러운 폭력이 발생하고 통제된 구도가 핸드헬드와 빠른 컷으로 무너짐"
+        },
+        "storyboard_hints": [
+            {
+                "phase": "HOOK",
+                "shot_type": "Static Wide",
+                "composition": "Window frame-in-frame",
+                "mood": "Dry, Uncomfortable"
+            },
+            {
+                "phase": "BUILD",
+                "shot_type": "Controlled Dolly",
+                "composition": "Staircase diagonal",
+                "mood": "Tense, Pleasurable"
+            },
+            {
+                "phase": "TURN",
+                "shot_type": "Slow Push-in",
+                "composition": "Vertical splits",
+                "mood": "Shock, Suspense"
+            },
+            {
+                "phase": "PAYOFF",
+                "shot_type": "High-angle / Descent",
+                "composition": "Vertical blocking (Down)",
+                "mood": "Tragic, Overwhelming"
+            },
+            {
+                "phase": "CLIMAX",
+                "shot_type": "Fast-cut Handheld",
+                "composition": "Asymmetric / Chaotic",
+                "mood": "Violent, Explosive"
+            }
+        ],
+        "suitability": {
+            "best_for": [
+                "사회 비평 콘텐츠",
+                "블랙 코미디",
+                "계급 및 불평등 주제",
+                "가족 드라마"
+            ],
+            "avoid_for": [
+                "밝은 로맨스",
+                "순수 판타지"
+            ]
+        }
+    },
+    "metadata": {
+        "cluster_id": "CL_BONG_01",
+        "director": "봉준호",
+        "extracted_at": "2025-12-30T11:20:00+09:00",
+        "source": "NotebookLM",
+        "version": "v1"
+    }
+}

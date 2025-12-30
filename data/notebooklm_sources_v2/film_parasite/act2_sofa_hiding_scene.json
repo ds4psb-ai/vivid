@@ -1,0 +1,62 @@
+{
+    "_source_type": "film_scene_analysis",
+    "_tier": "TIER_3_FILM",
+    "_cluster_id": "FILM_기생충",
+    "title": "ACT 2 TENSION: 소파 아래 숨기 시퀀스",
+    "film": "기생충 (Parasite)",
+    "director": "봉준호",
+    "act": 2,
+    "beat": "TENSION_BUILD",
+    "scene_analysis": {
+        "scene_name": "소파 아래 숨기",
+        "timestamp_start": "00:55:00",
+        "timestamp_end": "01:10:00",
+        "duration_seconds": 900,
+        "function": "코미디와 공포의 동시 존재",
+        "bong_signature": "블랙 코미디 → 공포 순간 전환"
+    },
+    "tone_layers": {
+        "layer_1_comedy": {
+            "element": "박씨 부부 침대 러브씬 목격",
+            "audience_reaction": "웃음 (어색한 상황)"
+        },
+        "layer_2_horror": {
+            "element": "문광이 지하에서 올라옴",
+            "audience_reaction": "공포 (발각 위기)"
+        },
+        "coexistence": "동시간대에 두 톤이 공존"
+    },
+    "visual_schema": {
+        "composition": "split_frame",
+        "primary_angle": "소파 아래에서 위를 올려다보는 POV",
+        "secondary_angle": "거실 전체 wide shot",
+        "lighting": {
+            "living_room": "따뜻한 램프 조명",
+            "under_sofa": "그림자, 어둠",
+            "contrast": "극단적 명암 대비"
+        },
+        "camera_motion": "minimal_static"
+    },
+    "blocking": {
+        "kim_family": "소파 아래 - 문자 그대로 '아래 계급'",
+        "park_family": "소파 위 - 상위 계급",
+        "vertical_hierarchy": "같은 공간에서 수직적 분리"
+    },
+    "sustained_tension": {
+        "duration": "15분",
+        "technique": "실시간 진행",
+        "close_calls": 4,
+        "release_denial": "해소 없이 긴장만 축적"
+    },
+    "dialogue_analysis": {
+        "park_wife": "냄새 언급",
+        "kim_father_reaction": "굴욕감의 씨앗",
+        "foreshadowing": "클라이막스의 기택 행동 복선"
+    },
+    "audio_design": {
+        "breathing": "억제된 숨소리",
+        "ambient": "시계 틱톡, 냉장고 윙윙",
+        "music": "최소화 - 긴장감 극대화"
+    },
+    "coaching_prompt": "블랙 코미디와 서스펜스를 동시에 연출하려면: 같은 프레임 안에 두 톤을 배치, 수직 블로킹으로 계급 관계 시각화, 해소 없는 긴장 축적, 핵심 대사(냄새)로 복선 삽입"
+}

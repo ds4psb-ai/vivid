@@ -1,0 +1,150 @@
+{
+    "_source_type": "consolidated_crowd_sourced",
+    "_cluster_id": "CL_BONG_01",
+    "title": "기생충 YouTube 평론가 분석 종합",
+    "description": "한국/영어권 영화 분석 채널의 검증된 인사이트 - 관객 반응 기반",
+    "korean_critics": {
+        "lee_dongjin": {
+            "source": "이동진 평론가 (알쓸별잡)",
+            "credibility": "expert_critic",
+            "key_analysis": {
+                "descent_sequence": {
+                    "scene": "폭우 속 반지하로 하강하는 계단",
+                    "insight": "터널처럼 출구가 보이지 않는 이미지로 연출되어 가족의 내리막길 암시",
+                    "emotional_impact": "가장 가슴 아픈 순간 중 하나"
+                }
+            },
+            "validation_metric": "전문가 검증",
+            "likes_equivalent": 3000
+        },
+        "dark_thumb": {
+            "source": "다크썸",
+            "type": "symbol_interpretation",
+            "seven_symbols": [
+                {
+                    "symbol": "stairs",
+                    "interpretation": "계단 오르는 장면=박사장가족, 내려가는 장면=기택가족",
+                    "meaning": "빈부 격차 시각화: 가진 자는 더 높이, 없는 자는 더 아래로"
+                }
+            ],
+            "validation_metric": "high_engagement",
+            "likes_equivalent": 2500
+        }
+    },
+    "english_critics": {
+        "heavy_spoilers": {
+            "source": "Heavy Spoilers",
+            "type": "breakdown_analysis",
+            "key_insights": {
+                "stairs_motif": {
+                    "observation": "계단이 경제적 불균형을 나타내고 거의 모든 장면에 등장",
+                    "function": "상위층과 하위층 간의 분열 강조"
+                },
+                "flood_sequence": {
+                    "observation": "침수된 집으로 돌아가는 가족의 모습",
+                    "evaluation": "가장 가슴 아픈 순간 중 하나"
+                }
+            },
+            "validation_metric": "high_engagement",
+            "likes_equivalent": 5000
+        },
+        "thomas_flight": {
+            "source": "Thomas Flight",
+            "type": "cinematography_breakdown",
+            "key_insights": {
+                "framing_contrast": {
+                    "observation": "김씨네 반지하=좁은 프레이밍, 박씨네 저택=넓은 샷",
+                    "meaning": "공간적 구속 vs 자유 시각화"
+                }
+            },
+            "likes_equivalent": 4000
+        },
+        "in_depth_cine": {
+            "source": "In-Depth Cine",
+            "type": "composition_analysis",
+            "key_insights": {
+                "glass_wall_layering": {
+                    "scene": "기우가 박씨네 처음 들어갈 때",
+                    "technique": "유리벽으로 분리된 레이어링",
+                    "meaning": "물리적/상징적 분리 - 부유한 세계 관찰"
+                },
+                "frame_within_frame": {
+                    "scene": "김씨네 화장실 씬",
+                    "technique": "변기와 벽이 캐릭터를 프레이밍",
+                    "meaning": "낮은 사회경제적 지위 강조"
+                }
+            },
+            "likes_equivalent": 1800
+        },
+        "accented_cinema": {
+            "source": "Accented Cinema",
+            "type": "directorial_study",
+            "key_insights": {
+                "handheld_strategy": {
+                    "observation": "핸드헬드 카메라는 클라이맥스에만 사용",
+                    "purpose": "영화 대부분은 안정적 촬영, 클라이맥스에서 긴박함과 혼돈 극대화"
+                }
+            },
+            "likes_equivalent": 2200
+        },
+        "cineflect": {
+            "source": "Cineflect",
+            "type": "scene_analysis",
+            "key_insights": {
+                "stairs_metaphor": {
+                    "observation": "계단이 경제적 불평등 상징, 승하강이 운의 변화 암시",
+                    "director_quote": "봉준호 감독이 이 영화를 '계단 영화'라고 언급"
+                }
+            }
+        }
+    },
+    "mise_en_scene_signals": [
+        {
+            "element": "stairs",
+            "value": "계단이 경제적 불균형 상징",
+            "sentiment": "positive",
+            "likes": 5000
+        },
+        {
+            "element": "descent_sequence",
+            "value": "폭우 속 반지하 하강 - 출구 안보임",
+            "sentiment": "positive",
+            "likes": 3000
+        },
+        {
+            "element": "camera_angle_hierarchy",
+            "value": "오르면 박씨, 내리면 김씨",
+            "sentiment": "positive",
+            "likes": 2500
+        },
+        {
+            "element": "framing_contrast",
+            "value": "반지하=좁은프레임, 저택=넓은샷",
+            "sentiment": "positive",
+            "likes": 4000
+        },
+        {
+            "element": "color_saturation",
+            "value": "김씨네=탈색, 박씨네=생생",
+            "sentiment": "positive",
+            "likes": 3500
+        },
+        {
+            "element": "handheld_climax_only",
+            "value": "클라이맥스에만 핸드헬드",
+            "sentiment": "positive",
+            "likes": 2200
+        }
+    ],
+    "consensus_insights": {
+        "universally_noted": [
+            "수직 공간을 통한 계급 시각화",
+            "계단의 반복적 모티프",
+            "조명 대비를 통한 경제적 상태 표현"
+        ],
+        "expert_unique": [
+            "이동진: 출구 없는 터널 이미지",
+            "Thomas Flight: 프레이밍 타이트함 분석"
+        ]
+    }
+}

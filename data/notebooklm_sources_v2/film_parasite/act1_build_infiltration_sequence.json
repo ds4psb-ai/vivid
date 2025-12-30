@@ -1,0 +1,71 @@
+{
+    "_source_type": "film_scene_analysis",
+    "_tier": "TIER_3_FILM",
+    "_cluster_id": "FILM_기생충",
+    "title": "ACT 1 BUILD: 순차 침투 시퀀스",
+    "film": "기생충 (Parasite)",
+    "director": "봉준호",
+    "act": 1,
+    "beat": "BUILD",
+    "scene_analysis": {
+        "scene_name": "가족 순차 침투 작전",
+        "timestamp_start": "00:10:00",
+        "timestamp_end": "00:35:00",
+        "duration_seconds": 1500,
+        "function": "관객도 함께 공범이 되는 쾌감",
+        "bong_signature": "계획이 순조롭게 진행되는 듯한 착각"
+    },
+    "infiltration_sequence": [
+        {
+            "character": "기우",
+            "timestamp": "00:10:00 - 00:15:00",
+            "role": "영어 과외 선생",
+            "key_visual": "유리벽 레이어링 - 물리적/상징적 분리",
+            "camera": "미묘한 전진 움직임 - 사회적 상승 상징"
+        },
+        {
+            "character": "기정",
+            "timestamp": "00:18:00 - 00:22:00",
+            "role": "미술 치료사",
+            "key_visual": "대각선 구도 - 박씨네 집 복도",
+            "technique": "역할극 리허설 장면 - 메타 연출"
+        },
+        {
+            "character": "충숙",
+            "timestamp": "00:25:00 - 00:28:00",
+            "role": "가정부",
+            "key_visual": "이전 가정부 문광 축출",
+            "tension": "소규모 긴장-해소"
+        },
+        {
+            "character": "기택",
+            "timestamp": "00:30:00 - 00:35:00",
+            "role": "기사",
+            "key_visual": "완전 침투",
+            "technique": "가족 모두 박씨네에 자리잡음"
+        }
+    ],
+    "visual_patterns": {
+        "ascending_movement": {
+            "description": "계단을 오르는 동작 반복",
+            "occurrences": 8,
+            "symbolism": "사회적 상승"
+        },
+        "brightening_spaces": {
+            "description": "김씨네 반지하 → 박씨네 저택으로 이동하며 조명 밝아짐",
+            "kim_family": "탈색, 녹색빛",
+            "park_family": "웜톤, 자연광"
+        },
+        "symmetrical_framing": {
+            "description": "박씨네 집 인테리어 대칭 구도",
+            "purpose": "질서와 부(富)의 시각화"
+        }
+    },
+    "pacing": {
+        "pattern": "소규모 긴장-해소 사이클 반복",
+        "episode_count": 4,
+        "rhythm": "각 침투마다 위기→해결→다음 침투"
+    },
+    "emotional_target": "guilty_pleasure",
+    "coaching_prompt": "BUILD 단계에서 점진적 침투를 시각화하려면: 상승 운동(계단) 반복, 공간이 밝아지는 조명 변화, 각 에피소드마다 작은 긴장-해소 사이클 배치"
+}

@@ -1,0 +1,24 @@
+{
+  "source_id": "bong-2019-parasite",
+  "beat": {
+    "beat_id": "PAYOFF",
+    "act": 4,
+    "duration_ratio": 0.25,
+    "description": "구조의 붕괴",
+    "bong_signature": "자연재해/시스템 오류가 계급 구조를 가시화",
+    "example": {
+      "film": "기생충",
+      "scene": "폭우와 반지하 침수",
+      "function": "비가 '공평하게' 내리지만 피해는 불평등"
+    },
+    "emotional_target": "tragic_irony",
+    "pacing_notes": "병렬 편집 - 상류층 평온 vs 하류층 재난",
+    "visual_cues": [
+      "rain_imagery",
+      "vertical_contrast",
+      "parallel_editing"
+    ]
+  },
+  "_source_type": "beat_detail",
+  "_cluster_id": "CL_BONG_01"
+}

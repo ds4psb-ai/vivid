@@ -1,12 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowLeft, FileText, Shield } from "lucide-react";
 
 export default function CrebitTermsPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-[#050505] flex items-center justify-center text-white">Loading...</div>}>
+            <CrebitTermsContent />
+        </Suspense>
+    );
+}
+
+function CrebitTermsContent() {
     const searchParams = useSearchParams();
     const [activeTab, setActiveTab] = useState<"terms" | "privacy" | "refund">("terms");
 

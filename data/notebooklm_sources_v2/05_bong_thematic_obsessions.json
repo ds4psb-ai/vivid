@@ -1,0 +1,126 @@
+{
+    "_source_type": "consolidated_signature",
+    "_cluster_id": "CL_BONG_01",
+    "title": "봉준호 주제적 집착 - 통합 테마 분석",
+    "description": "봉준호 영화에서 반복되는 주제적 관심사와 서사적 패턴",
+    "class_and_space": {
+        "obsession_name": "계급과 공간",
+        "intensity": 1.0,
+        "manifestation": "공간적 분리를 통한 계급 시각화",
+        "films": {
+            "parasite": {
+                "spatial_hierarchy": [
+                    "반지하 (빈곤)",
+                    "지상 저택 (부유)",
+                    "지하 벙커 (더 아래)"
+                ],
+                "key_scenes": [
+                    {
+                        "scene": "반지하 창문",
+                        "meaning": "제한된 시야 = 제한된 기회"
+                    },
+                    {
+                        "scene": "계단 오르내림",
+                        "meaning": "수직 이동 = 계급 이동"
+                    },
+                    {
+                        "scene": "지하 벙커 발견",
+                        "meaning": "보이지 않는 더 낮은 계층"
+                    }
+                ]
+            },
+            "snowpiercer": {
+                "spatial_hierarchy": [
+                    "꼬리칸 (빈곤)",
+                    "중간칸 (중산층)",
+                    "앞칸 (엘리트)"
+                ],
+                "direction": "수평 이동 = 계급 상승"
+            },
+            "host": {
+                "spatial_hierarchy": [
+                    "한강변 (노동자)",
+                    "지하 하수도 (괴물의 영역)"
+                ],
+                "irony": "괴물이 사는 곳 = 사회가 버린 공간"
+            }
+        },
+        "director_quote": "공간이 곧 인간이라는 믿음에서 출발, 공간을 인물의 내면이 시각화된 세계로 설계"
+    },
+    "family_solidarity_and_fracture": {
+        "obsession_name": "가족의 연대와 균열",
+        "intensity": 0.95,
+        "manifestation": "위기 상황에서 가족의 결속과 붕괴",
+        "films": {
+            "parasite": {
+                "pattern": "가족 전체가 사기 공모 → 이해관계 충돌 → 비극",
+                "key_moment": "소파 아래 숨는 장면 - 가족 연대의 극한"
+            },
+            "host": {
+                "pattern": "괴물 납치 → 가족 전체 구출 작전 → 희생",
+                "key_moment": "아버지의 최종 결단"
+            },
+            "memories_of_murder": {
+                "pattern": "형사 파트너십 = 유사 가족 → 균열"
+            }
+        }
+    },
+    "system_incompetence_absurdity": {
+        "obsession_name": "시스템의 무능/부조리",
+        "intensity": 0.9,
+        "manifestation": "국가, 경찰, 사회 시스템의 실패",
+        "films": {
+            "memories_of_murder": {
+                "target": "80년대 한국 경찰의 무능",
+                "expression": "과학수사 없는 고문 수사 → 실패"
+            },
+            "host": {
+                "target": "한미 관계, 정부 대응",
+                "expression": "괴물 발생 원인 = 미군 포름알데히드 투기, 정부는 무능"
+            },
+            "parasite": {
+                "target": "자본주의 시스템",
+                "expression": "빈부격차는 개인 노력으로 해결 불가"
+            }
+        }
+    },
+    "nature_monster_revenge": {
+        "obsession_name": "자연/괴물의 복수",
+        "intensity": 0.8,
+        "manifestation": "자연 재해 또는 괴물이 인간 시스템을 심판",
+        "films": {
+            "host": {
+                "monster": "한강 괴물 = 환경 파괴의 결과",
+                "revenge": "괴물이 무고한 시민 공격"
+            },
+            "parasite": {
+                "natural_disaster": "폭우 = 빈곤층에게만 재난",
+                "meaning": "불평등한 재난으로서의 비 - 부자 동네의 물이 빈민가로 흘러내림",
+                "mise_en_scene_signal": {
+                    "element": "rain",
+                    "sentiment": "positive",
+                    "likes": 2800
+                }
+            },
+            "snowpiercer": {
+                "environment": "지구 빙하기 = 인간 과학의 결과",
+                "revenge": "열차 밖 모든 것의 죽음"
+            }
+        }
+    },
+    "rain_motif": {
+        "pattern_name": "비/물 메타포",
+        "description": "비가 오면 재난이 온다 - 빈곤층에게 더 가혹하게",
+        "frequency": "high",
+        "films": {
+            "parasite": {
+                "rain_sequence": "폭우 → 반지하 침수 → 가족 삶의 붕괴",
+                "water_flow": "부유층 → 빈곤층으로 물이 흐름 (쓰레기와 함께)"
+            },
+            "memories_of_murder": {
+                "rain_evidence": "비가 와서 증거 유실 → 수사 실패"
+            }
+        },
+        "audience_reaction": "관객들이 공감한 사회적 함의 - 재난도 불평등하다"
+    }
+}

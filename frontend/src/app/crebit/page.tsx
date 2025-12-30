@@ -25,6 +25,7 @@ import {
 import AppShell from "@/components/AppShell";
 import ApplicationModal from "@/components/ApplicationModal";
 import PortfolioLightbox from "@/components/PortfolioLightbox";
+import { trackEvent, EVENTS } from "@/lib/analytics";
 
 export default function CrebitPage() {
     const [timeLeft, setTimeLeft] = useState<{ days: number, hours: number, minutes: number, seconds: number }>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -59,145 +60,199 @@ export default function CrebitPage() {
         <AppShell showTopBar={false}>
             <div className="min-h-screen bg-[#050505] text-white overflow-x-hidden selection:bg-[#4200FF]/30 font-sans">
 
-                {/* 1. Hero Section (Cinema Verite) */}
+                {/* 1. Hero Section (Cinematic Dark Mode) */}
                 <section className="relative h-screen min-h-[900px] flex items-center justify-center overflow-hidden">
                     {/* Background Video/Image Placeholder */}
                     <div className="absolute inset-0 z-0">
-                        <div className="absolute inset-0 bg-[#050505]/60 z-10" />
+                        <div className="absolute inset-0 bg-[#050505]/70 z-10" />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-[#050505]/40 z-10" />
+                        <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/80 via-transparent to-transparent z-10" />
                         <Image
                             src="/images/hero_bg_main.png"
                             alt="Crebit Hero"
                             fill
-                            className="object-cover opacity-100" // Increased opacity as the image is 4K premium
+                            className="object-cover opacity-80"
                             priority
                             quality={100}
                         />
-                        {/* Cinematic Grain Overlay - Reduced for 4K clarity */}
-                        <div className="absolute inset-0 bg-[url('/images/noise.png')] opacity-[0.02] mix-blend-overlay z-20 pointer-events-none" />
+                        {/* Cinematic Grain Overlay */}
+                        <div className="absolute inset-0 bg-[url('/images/noise.png')] opacity-[0.03] mix-blend-overlay z-20 pointer-events-none" />
                     </div>
 
                     <div className="relative z-30 max-w-7xl mx-auto px-6 text-center flex flex-col items-center">
                         <motion.div
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, ease: "easeOut" }}
-                            className="space-y-8"
+                            transition={{ duration: 1.0, ease: "easeOut" }}
+                            className="space-y-10"
                         >
-                            {/* Top Badge - Enhanced (Larger for Premium Feel) */}
-                            <div className="inline-flex items-center gap-4 px-10 py-4 rounded-full border border-white/10 bg-black/50 backdrop-blur-xl mb-10 hover:bg-black/70 transition-colors cursor-default shadow-2xl ring-1 ring-white/5">
-                                <span className="w-2.5 h-2.5 rounded-full bg-[#FF0045] animate-pulse shadow-[0_0_20px_#FF0045]" />
-                                <span className="text-base font-bold tracking-[0.25em] text-white uppercase">Crebit × Page Academy</span>
+                            {/* Top Badge - Dark High-Tech Look */}
+                            <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full border border-white/10 bg-black/60 backdrop-blur-md mb-8 hover:bg-black/80 transition-colors cursor-default">
+                                <span className="w-2 h-2 rounded-full bg-[#4200FF] animate-pulse shadow-[0_0_10px_#4200FF]" />
+                                <span className="text-sm font-medium tracking-[0.2em] text-slate-300 uppercase">Crebit / Season 1</span>
                             </div>
 
-                            {/* Main Heading - 2-Line Semantic Blocks */}
-                            <div className="space-y-2">
-                                <p className="text-2xl md:text-3xl font-light text-white/80 leading-tight tracking-wide">
-                                    나만의 세계관을
-                                </p>
-                                <h1 className="text-5xl md:text-7xl font-black text-white leading-[1.1] tracking-tight">
-                                    <span className="text-[#4200FF]">DATA</span>로 치환하다
+                            {/* Main Heading - Heavy Cinematic Typography */}
+                            <div className="space-y-4">
+                                <h1 className="text-4xl md:text-7xl font-black text-white leading-[1.05] tracking-tight drop-shadow-2xl">
+                                    나만의 세계관을<br />
+                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-500">불멸의 에셋으로</span>
                                 </h1>
                             </div>
 
-                            <p className="text-xl md:text-2xl text-slate-300 font-light tracking-wide max-w-3xl mx-auto leading-relaxed mt-12 drop-shadow-md">
-                                Art & Viral, 감각을 성과로 증명하는 법.<br />
-                                <strong className="text-white font-bold">성수동 크래빗 나이트 아티스트 1기</strong>
+                            <p className="text-lg md:text-2xl text-slate-400 font-light tracking-wide max-w-3xl mx-auto leading-relaxed mt-10">
+                                영감은 휘발되지만, 시스템은 영원합니다.<br />
+                                당신의 세계관을 견고한 IP 자산으로 설계합니다.
+                                <span className="text-white font-medium mt-6 block text-sm tracking-[0.2em] uppercase opacity-80">Crebit Night Artist Season 1</span>
                             </p>
 
-                            {/* Stats / Info */}
-                            <div className="flex flex-wrap justify-center gap-8 md:gap-16 py-8 border-t border-b border-white/10 mt-12 bg-black/40 backdrop-blur-md w-full md:w-auto px-16 md:rounded-full shadow-2xl border-x border-white/5">
+                            {/* Stats / Info - Minimalist Tech */}
+                            <div className="flex flex-wrap justify-center gap-12 md:gap-24 py-10 mt-16 border-t border-white/5 w-full md:w-auto px-10">
                                 <StatItem label="모집 마감" value={`D-${timeLeft.days}`} highlight />
-                                <StatItem label="정원" value="40명" badge="마감임박" urgent />
-                                <StatItem label="장소" value="성수 페이지아카데미" />
+                                <StatItem label="모집 정원" value="40명" badge="선착순" urgent />
+                                <StatItem label="교육 장소" value="성수 페이지 아카데미" />
                             </div>
 
-                            {/* Primary CTA */}
+                            {/* Primary CTA - Solid & Strong */}
                             <button
-                                onClick={() => setIsModalOpen(true)}
-                                className="inline-flex group relative px-14 py-7 bg-[#4200FF] text-white text-xl font-bold rounded-2xl mt-12 hover:bg-[#5500FF] transition-all transform hover:scale-[1.02] shadow-[0_0_40px_rgba(66,0,255,0.5)] hover:shadow-[0_0_80px_rgba(66,0,255,0.8)] ring-1 ring-white/20"
+                                onClick={() => { trackEvent(EVENTS.CTA_CLICK, { location: 'hero' }); setIsModalOpen(true); }}
+                                className="group relative px-12 py-6 bg-white text-black text-lg font-bold rounded-full mt-8 hover:bg-slate-200 transition-all transform hover:scale-[1.02] shadow-[0_0_30px_rgba(255,255,255,0.2)]"
                             >
                                 <span className="relative z-10 flex items-center gap-3">
-                                    1기 얼리버드 신청하기 <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                                    1기 멤버십 합류하기 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                 </span>
                             </button>
                         </motion.div>
                     </div>
-
-                    {/* Rabbit Logo Watermark */}
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/3 w-[600px] h-[600px] bg-[radial-gradient(circle_chost,#4200FF_0%,transparent_70%)] opacity-20 blur-[100px] pointer-events-none" />
                 </section>
 
-                {/* 2. Portfolio Grid (Outcome) - NEW SECTION */}
+                {/* 2. Portfolio (Outcome) - Cinematic Masonry Grid */}
                 <section className="py-32 bg-[#0a0a0c]">
-                    <div className="max-w-7xl mx-auto px-6">
-                        <SectionHeader title="Outcomes" subtitle="압도적인 결과물" desc="이론이 아닙니다. 당신이 가져갈 포트폴리오입니다." />
+                    <div className="max-w-[1400px] mx-auto px-6">
+                        <SectionHeader title="Outcomes" subtitle="시네마틱 퀄리티의 정점" desc="이론이 아닙니다. 당신의 이름으로 남을 작품입니다." />
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-20 h-[800px] md:h-[700px]">
-                            {/* Item 1: Cinematic */}
-                            <PortfolioItem
-                                img="/images/portfolio_noir.png"
-                                tag="시네마틱"
-                                title="누아르 탐정"
-                                desc="Midjourney v6 + Runway Gen-3"
-                                delay={0.1}
-                                color="purple"
-                                onClick={() => setSelectedPortfolio({ img: "/images/portfolio_noir.png", tag: "시네마틱", title: "누아르 탐정", desc: "Midjourney v6 + Runway Gen-3" })}
-                            />
-                            {/* Item 2: Anime */}
-                            <PortfolioItem
-                                img="/images/portfolio_anime.png"
-                                tag="애니메이션"
-                                title="사이버펑크 소녀"
-                                desc="Niji Journey + Live2D"
-                                delay={0.2}
-                                color="pink"
-                                onClick={() => setSelectedPortfolio({ img: "/images/portfolio_anime.png", tag: "애니메이션", title: "사이버펑크 소녀", desc: "Niji Journey + Live2D" })}
-                            />
-                            {/* Item 3: Motion */}
-                            <PortfolioItem
-                                img="/images/portfolio_motion.png"
-                                tag="모션그래픽"
-                                title="추상 3D 루프"
-                                desc="루프 애니메이션 + 업스케일링"
-                                delay={0.3}
-                                color="sky"
-                                onClick={() => setSelectedPortfolio({ img: "/images/portfolio_motion.png", tag: "모션그래픽", title: "추상 3D 루프", desc: "루프 애니메이션 + 업스케일링" })}
-                            />
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-24 h-[1200px] md:h-[800px]">
+                            {/* Item 1: Cinematic - Large Vertical */}
+                            <div className="lg:col-span-1 lg:row-span-2 h-full">
+                                <PortfolioItem
+                                    img="/images/portfolio_noir.png"
+                                    tag="시네마틱 숏필름"
+                                    title="The Detective"
+                                    desc="Midjourney v6 + Runway Gen-3"
+                                    delay={0.1}
+                                    color="purple"
+                                    height="h-full"
+                                    onClick={() => setSelectedPortfolio({ img: "/images/portfolio_noir.png", tag: "시네마틱", title: "누아르 탐정", desc: "Midjourney v6 + Runway Gen-3" })}
+                                />
+                            </div>
+                            {/* Item 2: Anime - Horizontal */}
+                            <div className="lg:col-span-2 h-full">
+                                <PortfolioItem
+                                    img="/images/portfolio_anime.png"
+                                    tag="애니메이션 뮤비"
+                                    title="Cyberpunk Soul"
+                                    desc="Niji Journey + Live2D + After Effects"
+                                    delay={0.2}
+                                    color="pink"
+                                    height="h-full"
+                                    onClick={() => setSelectedPortfolio({ img: "/images/portfolio_anime.png", tag: "애니메이션", title: "사이버펑크 소녀", desc: "Niji Journey + Live2D" })}
+                                />
+                            </div>
+                            {/* Item 3: Motion - Square */}
+                            <div className="md:col-span-1 h-full">
+                                <PortfolioItem
+                                    img="/images/portfolio_motion.png"
+                                    tag="모션 그래픽"
+                                    title="Abstract Loop"
+                                    desc="Sora + Topaz Upscale"
+                                    delay={0.3}
+                                    color="sky"
+                                    height="h-full"
+                                    onClick={() => setSelectedPortfolio({ img: "/images/portfolio_motion.png", tag: "모션그래픽", title: "추상 3D 루프", desc: "루프 애니메이션 + 업스케일링" })}
+                                />
+                            </div>
+                            {/* Item 4: Extra (Placeholder for layout) */}
+                            <div className="md:col-span-1 h-full">
+                                <PortfolioItem
+                                    img="/images/hero_bg_main.png"
+                                    tag="비주얼라이저"
+                                    title="Sound Reactive"
+                                    desc="TouchDesigner + AI Style Transfer"
+                                    delay={0.4}
+                                    color="purple"
+                                    height="h-full"
+                                />
+                            </div>
                         </div>
                     </div>
                 </section>
 
-                {/* 3. System (Philosophy) */}
-                <section className="py-32 bg-[#050505] relative overflow-hidden">
-                    <div className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#4200FF]/30 to-transparent" />
+                {/* 3. System (Pipeline Blueprint) */}
+                <section className="py-40 bg-[#050505] relative overflow-hidden text-left">
+                    {/* Architectural Grid Background */}
+                    <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f1f1f_1px,transparent_1px),linear-gradient(to_bottom,#1f1f1f_1px,transparent_1px)] bg-[size:40px_40px] opacity-20" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_800px_at_50%_50%,#000000_0%,transparent_100%)] z-10" />
 
-                    <div className="max-w-6xl mx-auto px-6 relative z-10">
-                        <SectionHeader title="System" subtitle="감각의 시스템화" />
+                    <div className="max-w-7xl mx-auto px-6 relative z-20">
+                        <SectionHeader title="System Architecture" subtitle="직관에서 자산으로" desc="추상적인 영감을 구체적인 데이터 파이프라인으로 전환합니다." />
 
-                        <div className="flex flex-col md:flex-row justify-between items-center gap-8 mt-20">
-                            <SystemNode icon={Zap} label="아이디어" step="01" />
-                            <Arrow />
-                            <SystemNode icon={Database} label="세계관 데이터" step="02" highlight />
-                            <Arrow />
-                            <SystemNode icon={Clapperboard} label="스토리보드" step="03" />
-                            <Arrow />
-                            <SystemNode icon={PlayCircle} label="파이널 영상" step="04" />
+                        <div className="mt-32 relative">
+                            {/* Node Graph Container */}
+                            <div className="relative grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-4 items-start">
+
+                                {/* Connector Line (Desktop) */}
+                                <div className="hidden md:block absolute top-[60px] left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-[#4200FF] to-transparent opacity-30 z-0" />
+
+                                <PipelineNode
+                                    step="01"
+                                    type="INPUT"
+                                    label="Auteur DNA"
+                                    desc="사용자의 직관과 세계관을 데이터화하여 추출"
+                                    tags={["RAG", "Embeddings"]}
+                                />
+                                <PipelineNode
+                                    step="02"
+                                    type="PROCESS"
+                                    label="장면 설계도 구현"
+                                    desc="LLM 기반 시나리오 구조화 및 프롬프트 엔지니어링"
+                                    tags={["LLM", "Prompt Opt"]}
+                                    active
+                                />
+                                <PipelineNode
+                                    step="03"
+                                    type="GENERATION"
+                                    label="에셋 팩토리 가동"
+                                    desc="멀티 모델 AI를 활용한 고품질 소스 양산"
+                                    tags={["Diffusion", "I2V"]}
+                                />
+                                <PipelineNode
+                                    step="04"
+                                    type="OUTPUT"
+                                    label="파이널 컴포지팅"
+                                    desc="시네마틱 룩뎁 보정 및 최종 렌더링"
+                                    tags={["Upscale", "Grading"]}
+                                />
+                            </div>
                         </div>
 
-                        <p className="text-center text-[#9CA3AF] mt-16 text-xl font-light">
-                            "정리된 감각은, <span className="text-white font-bold border-b-2 border-[#4200FF]">대체 불가능한 브랜드</span>가 됩니다."
-                        </p>
+                        <div className="mt-24 flex flex-col items-center gap-4">
+                            <div className="w-px h-16 bg-gradient-to-b from-transparent via-[#4200FF] to-transparent opacity-50" />
+                            <h3 className="text-xl md:text-2xl font-bold text-white tracking-tight flex items-center gap-3">
+                                <span className="w-2 h-2 rounded-full bg-[#4200FF] shadow-[0_0_15px_#4200FF]" />
+                                대체 불가능한 IP 자산
+                            </h3>
+                            <p className="text-xs text-slate-600 font-mono tracking-[0.3em] uppercase opacity-50">System Output Verified</p>
+                        </div>
                     </div>
                 </section>
 
-                {/* 4. Curriculum - Coloso V2 (Light Background) */}
-                <section id="curriculum" className="py-24 bg-[#F8F8F8] text-[#333333]">
+                {/* 4. Curriculum - Cinematic Roadmap (Dark Mode) */}
+                <section id="curriculum" className="py-32 bg-[#050505] border-t border-white/5">
                     <div className="max-w-5xl mx-auto px-6">
-                        <div className="text-center mb-12 space-y-3">
-                            <span className="text-[#ED2040] font-medium tracking-[0.15em] text-[14px] uppercase">Curriculum</span>
-                            <h2 className="text-[28px] md:text-[32px] font-bold text-[#333333] tracking-[-0.3px]">12주 올인원 커리큘럼</h2>
-                            <p className="text-[#666666] text-[16px]">기초부터 프로덕션 데뷔까지, 빈틈없는 로드맵</p>
+                        <div className="text-center mb-16 space-y-4">
+                            <span className="text-[#4200FF] font-bold tracking-[0.2em] text-sm uppercase">Roadmap</span>
+                            <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight">12주 올인원 커리큘럼</h2>
+                            <p className="text-slate-400 text-lg font-light">기초부터 프로덕션 데뷔까지, 빈틈없는 시스템</p>
                         </div>
 
                         <div className="space-y-4">
@@ -341,9 +396,13 @@ export default function CrebitPage() {
                                     <span className="w-2 h-2 rounded-full bg-[#FF0045]" />
                                     <span className="text-xs text-slate-400 uppercase tracking-wider font-medium">기획・제작</span>
                                 </div>
-                                <p className="text-white font-medium">주식회사 아캐인 (Arkain Inc.)</p>
+                                <p className="text-white font-medium">(주)아캐인 ARKAIN Inc.</p>
                                 <div className="space-y-1.5 text-slate-400">
-                                    <p className="text-xs text-slate-500">콘텐츠 기획, 커리큘럼 설계, 강의 제작</p>
+                                    <p><span className="text-slate-500">대표자:</span> 정의석</p>
+                                    <p><span className="text-slate-500">사업자등록번호:</span> 685-87-03357</p>
+                                    <p><span className="text-slate-500">법인등록번호:</span> 110111-9081607</p>
+                                    <p><span className="text-slate-500">주소:</span> 서울특별시 용산구 한남대로 8길 16 (한남동)</p>
+                                    <p><span className="text-slate-500">업종:</span> 디지털 콘텐츠 제작 및 플랫폼 사업</p>
                                 </div>
                             </div>
                         </div>
@@ -380,10 +439,10 @@ export default function CrebitPage() {
                                 <div className="text-white font-bold text-2xl">34만원 <span className="text-sm font-normal text-[#FF0045] ml-1">1기 특가</span></div>
                             </div>
                             <button
-                                onClick={() => setIsModalOpen(true)}
+                                onClick={() => { trackEvent(EVENTS.CTA_CLICK, { location: 'sticky_bar' }); setIsModalOpen(true); }}
                                 className="flex-1 md:flex-none bg-[#4200FF] text-white px-10 py-4 rounded-xl font-bold text-lg hover:bg-[#5500FF] transition-colors shadow-lg shadow-[#4200FF]/30 active:scale-95 transform transition-transform"
                             >
-                                지금 신청하기
+                                지금 지원하기
                             </button>
                         </div>
                     </div>
@@ -466,7 +525,7 @@ function StatItem({ label, value, highlight, badge, urgent }: { label: string, v
     );
 }
 
-function PortfolioItem({ img, tag, title, desc, delay, color, onClick }: { img: string, tag: string, title: string, desc: string, delay: number, color: string, onClick?: () => void }) {
+function PortfolioItem({ img, tag, title, desc, delay, color, height = "h-[400px]", onClick }: { img: string, tag: string, title: string, desc: string, delay: number, color: string, height?: string, onClick?: () => void }) {
     const colors = {
         purple: 'bg-[#4200FF]',
         pink: 'bg-pink-500',
@@ -475,71 +534,101 @@ function PortfolioItem({ img, tag, title, desc, delay, color, onClick }: { img: 
 
     return (
         <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay, duration: 0.5 }}
+            transition={{ delay, duration: 0.6 }}
             onClick={onClick}
-            className="group relative w-full h-full overflow-hidden cursor-pointer bg-slate-900"
+            className={`group relative w-full ${height} overflow-hidden cursor-pointer bg-[#050505] transition-all duration-500`}
         >
-            <Image src={img} alt={title} fill className="object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100" />
-            <div className="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-black via-black/50 to-transparent translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                <span className={`inline-block px-2 py-0.5 text-[10px] font-bold text-white mb-2 ${colors[color as keyof typeof colors]}`}>{tag}</span>
-                <h3 className="text-2xl font-bold text-white mb-1">{title}</h3>
-                <p className="text-slate-300 text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">{desc}</p>
+            {/* Full Bleed Image */}
+            <Image
+                src={img}
+                alt={title}
+                fill
+                className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-70 group-hover:opacity-100 grayscale group-hover:grayscale-0"
+            />
+
+            {/* Cinematic Letterbox / Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+
+            {/* Hover Content - Minimalist & Bold */}
+            <div className="absolute inset-x-0 bottom-0 p-8 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500 ease-out z-10">
+                <div className="flex items-center gap-3 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform -translate-y-2 group-hover:translate-y-0 delay-75">
+                    <span className={`w-1.5 h-1.5 rounded-full ${colors[color as keyof typeof colors]}`} />
+                    <span className="text-[10px] font-bold text-slate-300 tracking-[0.2em] uppercase font-mono">
+                        {tag}
+                    </span>
+                </div>
+
+                <h3 className="text-3xl md:text-4xl font-black text-white mb-2 tracking-tighter uppercase italic leading-none">
+                    {title}
+                </h3>
+
+                <div className="h-0 group-hover:h-auto overflow-hidden transition-all duration-500">
+                    <p className="text-slate-400 text-sm font-mono pt-2 border-t border-white/20 mt-2">
+                        {desc}
+                    </p>
+                </div>
+            </div>
+
+            {/* Center Play Button - Subtle */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full border border-white/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 scale-90 group-hover:scale-100 backdrop-blur-sm bg-white/5">
+                <PlayCircle className="w-8 h-8 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
             </div>
         </motion.div>
     );
 }
 
-function SystemNode({ icon: Icon, label, step, highlight }: { icon: any, label: string, step: string, highlight?: boolean }) {
+function PipelineNode({ step, type, label, desc, tags, active }: { step: string, type: string, label: string, desc: string, tags: string[], active?: boolean }) {
     return (
-        <div className="flex flex-col items-center relative z-10">
-            <div className={`w-28 h-28 rounded-3xl flex items-center justify-center mb-6 border transition-all duration-300 ${highlight ? 'bg-[#4200FF]/10 border-[#4200FF]/50 shadow-[0_0_30px_rgba(66,0,255,0.3)]' : 'bg-[#1a1a1c] border-white/5'}`}>
-                <Icon className={`w-10 h-10 ${highlight ? 'text-[#4200FF]' : 'text-slate-400'}`} />
-                <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-[#121212] border border-white/10 flex items-center justify-center text-xs font-mono text-slate-500">
-                    {step}
-                </div>
+        <div className={`relative z-10 bg-[#0A0A0A] border rounded-lg p-5 flex flex-col items-start gap-4 transition-all duration-300 group hover:-translate-y-1 ${active ? 'border-[#4200FF] shadow-[0_0_20px_rgba(66,0,255,0.2)]' : 'border-white/10 hover:border-white/30'}`}>
+            {/* Input/Output Ports */}
+            <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-[#1a1a1c] border border-white/20" />
+            <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-[#1a1a1c] border border-white/20 group-hover:bg-[#4200FF] transition-colors" />
+
+            <div className="flex justify-between items-center w-full border-b border-white/5 pb-3">
+                <span className="text-[10px] font-mono text-slate-500 bg-white/5 px-2 py-0.5 rounded">{type}</span>
+                <span className="text-[10px] font-mono text-[#4200FF] font-bold">NODE_{step}</span>
             </div>
-            <div className="text-lg font-bold text-white">{label}</div>
+
+            <div>
+                <h4 className={`text-lg font-bold mb-2 ${active ? 'text-white' : 'text-slate-300 group-hover:text-white'}`}>{label}</h4>
+                <p className="text-xs text-slate-500 leading-relaxed font-mono">{desc}</p>
+            </div>
+
+            <div className="flex flex-wrap gap-2 mt-2">
+                {tags.map((tag, i) => (
+                    <span key={i} className="text-[9px] text-slate-400 bg-white/5 px-1.5 py-0.5 border border-white/5 rounded-sm">{tag}</span>
+                ))}
+            </div>
         </div>
     );
 }
 
-function Arrow() {
-    return (
-        <div className="hidden md:block">
-            <ArrowRight className="w-6 h-6 text-white/20" />
-        </div>
-    );
-}
 
-// CurriculumBox - Coloso V2 (Light, Square, Red Labels) + Accordion
+
+// CurriculumBox - Minimalist & Technical (Dark Mode)
 function CurriculumBox({ section, title, items }: { section: string, title: string, items: string[] }) {
-    const [isOpen, setIsOpen] = React.useState(section === "01"); // First section open by default
+    const [isOpen, setIsOpen] = React.useState(section === "01");
 
     return (
-        <div className="bg-white border-b border-slate-200 overflow-hidden group">
-            {/* Header - Clickable (Compact 80px) */}
+        <div className="bg-[#0A0A0A] border border-white/5 overflow-hidden group hover:border-[#4200FF]/50 transition-colors duration-300">
+            {/* Header */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center justify-between h-20 px-5 text-left hover:bg-slate-50 transition-all"
+                className="w-full flex items-center justify-between h-24 px-8 text-left"
             >
-                <div className="flex items-center gap-4 transition-transform group-hover:translate-x-1">
-                    {/* Section Label: Montserrat ExtraBold Style */}
-                    <span className="text-[#ED2040] text-[13px] font-extrabold tracking-[0.15em] uppercase">Section {section}</span>
-                    {/* Divider */}
-                    <span className="w-px h-4 bg-slate-300" />
-                    {/* Title */}
-                    <h3 className="text-[15px] font-medium text-[#333333]">{title}</h3>
+                <div className="flex items-center gap-8">
+                    <span className="text-[#4200FF] text-xs font-mono font-bold tracking-widest border border-[#4200FF]/30 px-3 py-1.5 rounded bg-[#4200FF]/5">SECTION {section}</span>
+                    <h3 className={`text-xl md:text-2xl font-bold transition-colors ${isOpen ? 'text-white' : 'text-slate-400 group-hover:text-white'}`}>{title}</h3>
                 </div>
-                {/* Chevron with Circle Background */}
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${isOpen ? 'bg-[#ED2040] text-white' : 'bg-slate-100 text-slate-600'}`}>
-                    <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+                <div className={`text-slate-500 transition-transform duration-300 ${isOpen ? 'rotate-180 text-white' : ''}`}>
+                    <ChevronDown className="w-6 h-6" />
                 </div>
             </button>
 
-            {/* Collapsible Content */}
+            {/* Content */}
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
@@ -547,12 +636,12 @@ function CurriculumBox({ section, title, items }: { section: string, title: stri
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.3 }}
-                        className="overflow-hidden"
+                        className="overflow-hidden bg-[#050505] border-t border-white/5"
                     >
-                        <ul className="space-y-2 pl-5 pr-5 pb-5">
+                        <ul className="space-y-4 px-8 py-10">
                             {items.map((item, idx) => (
-                                <li key={idx} className="flex items-start gap-3 text-[14px] text-[#666666]">
-                                    <span className="text-[#ED2040]">•</span>
+                                <li key={idx} className="flex items-start gap-4 text-[15px] text-slate-300 font-light leading-relaxed">
+                                    <div className="w-1 h-1 rounded-full bg-[#4200FF] mt-2.5 shrink-0" />
                                     <span>{item}</span>
                                 </li>
                             ))}
@@ -564,64 +653,64 @@ function CurriculumBox({ section, title, items }: { section: string, title: stri
     );
 }
 
-// TrackCard - Dark Glass Style
+// TrackCard - Dark Glass + Neon
 function TrackCard({ type, title, badge, schedule, desc, color }: { type: string, title: string, badge: string, schedule: string, desc: string, color: string }) {
     return (
-        <div className="group relative p-10 rounded-3xl bg-[#1a1a1c] border border-white/5 hover:border-white/20 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Film className="w-24 h-24 text-white" />
+        <div className="group relative p-10 bg-[#0A0A0A] border border-white/5 hover:border-white/20 transition-all duration-300 hover:-translate-y-2 overflow-hidden">
+            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+                <Film className="w-32 h-32 text-white" />
             </div>
 
-            <div className="inline-block px-3 py-1 rounded text-xs font-bold text-white mb-6" style={{ backgroundColor: color }}>{badge}</div>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded border border-white/10 bg-white/5 text-[11px] font-bold text-slate-300 mb-8 tracking-widest uppercase font-mono">
+                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
+                {badge}
+            </div>
 
             {/* Background Letter */}
-            <div className="text-[12rem] font-black absolute -top-10 -right-4 font-mono select-none pointer-events-none mix-blend-overlay opacity-20 text-white leading-none">
+            <div className="text-[12rem] font-black absolute -top-10 -right-4 font-mono select-none pointer-events-none text-[#ffffff] opacity-[0.02]">
                 {type}
             </div>
 
             <div className="relative z-10">
-                <h3 className="text-3xl font-bold text-white mb-2">{title}</h3>
-                <p className="text-[#9CA3AF] mb-8">{desc}</p>
+                <h3 className="text-3xl font-black text-white mb-3 tracking-tight">{title}</h3>
+                <p className="text-slate-400 mb-8 font-light leading-relaxed">{desc}</p>
 
                 <div className="space-y-4 border-t border-white/5 pt-8">
-                    <div className="flex items-center gap-3">
-                        <Calendar className="w-5 h-5 text-slate-500" />
-                        <span className="text-slate-300 font-mono">{schedule}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <Users className="w-5 h-5 text-slate-500" />
-                        <span className="text-slate-300">정원 20명 소수 정예</span>
-                    </div>
-                </div>
-
-                <div className="mt-8 pt-6 border-t border-white/5 flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-                    {[1, 2, 3, 4].map((week) => (
-                        <div key={week} className="flex-shrink-0 w-[60px] h-[60px] rounded-lg bg-black/50 border border-white/5 flex flex-col items-center justify-center">
-                            <span className="text-[10px] text-slate-500">W{week}</span>
-                            <span className="text-xs font-bold" style={{ color: week % 2 !== 0 ? color : 'white' }}>{week % 2 !== 0 ? '수업' : '코칭'}</span>
+                    <div className="flex items-center gap-4">
+                        <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center text-slate-400 border border-white/5">
+                            <Calendar className="w-4 h-4" />
                         </div>
-                    ))}
+                        <span className="text-slate-300 font-mono text-sm">{schedule}</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center text-slate-400 border border-white/5">
+                            <Users className="w-4 h-4" />
+                        </div>
+                        <span className="text-slate-300 text-sm font-mono tracking-tight">정원 20명 소수정예</span>
+                    </div>
                 </div>
             </div>
         </div>
     );
 }
 
-// MentorProfile - Dark Glass Style
+// MentorProfile - Minimal Pro
 function MentroProfile({ img, name, role, tags }: { img: string, name: string, role: string, tags: string[] }) {
     return (
-        <div className="bg-[#1a1a1c] p-6 rounded-2xl border border-white/5 hover:border-white/20 transition-all group hover:-translate-y-1 duration-300 flex items-center gap-6">
-            <div className="w-24 h-24 rounded-full bg-slate-800 shrink-0 overflow-hidden relative border-2 border-white/5 group-hover:border-[#4200FF]/50 transition-colors">
+        <div className="bg-[#151515] p-6 border border-white/5 hover:border-white/20 transition-all hover:bg-[#1a1a1c] flex items-center gap-6 group">
+            <div className="w-20 h-20 bg-slate-800 shrink-0 overflow-hidden relative grayscale group-hover:grayscale-0 transition-all duration-500">
                 <Image src={img} alt={name} fill className="object-cover" />
             </div>
             <div>
-                <h4 className="text-xl font-bold text-white mb-1">{name} <span className="text-sm font-normal text-slate-500 ml-1 block md:inline">{role}</span></h4>
-                <div className="mt-2 flex flex-wrap gap-2">
+                <h4 className="text-lg font-bold text-white mb-1 group-hover:text-[#4200FF] transition-colors">{name}</h4>
+                <p className="text-sm text-slate-500 mb-3">{role}</p>
+                <div className="flex flex-wrap gap-2">
                     {tags.map((tag, i) => (
-                        <span key={i} className="text-[11px] text-slate-400 bg-black/30 px-2 py-1 rounded border border-white/5">{tag}</span>
+                        <span key={i} className="text-[10px] text-slate-400 bg-white/5 px-2 py-0.5 border border-white/5">{tag}</span>
                     ))}
                 </div>
             </div>
         </div>
     );
 }
+

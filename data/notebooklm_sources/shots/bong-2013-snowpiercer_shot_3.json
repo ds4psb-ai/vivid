@@ -1,0 +1,25 @@
+{
+  "source_id": "bong-2013-snowpiercer",
+  "shot": {
+    "shot_number": 3,
+    "shot_type": "contrast_cut",
+    "composition": {
+      "type": "symmetrical",
+      "rule": "center_weighted",
+      "depth_layers": [
+        "luxury_interior"
+      ]
+    },
+    "camera": {
+      "angle": "straight_on",
+      "movement": "slow_dolly_in",
+      "lens": "50mm"
+    },
+    "lighting": "bright_diffused",
+    "description": "계급별 칸 대비. 어둠에서 빛으로.",
+    "emotional_function": "계급 차이 시각화",
+    "duration": "3s"
+  },
+  "_source_type": "shot_detail",
+  "_cluster_id": "CL_BONG_01"
+}
