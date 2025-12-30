@@ -545,20 +545,233 @@ def _director_pack_to_prompt_rules(director_pack: Dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# NarrativeArc & HookVariant Prompt Injection (Phase 2 + Phase 4 Integration)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _narrative_arc_to_prompt(narrative_arc: Dict[str, Any]) -> str:
+    """Convert NarrativeArc to prompt instructions for story-aware shot generation.
+    
+    Args:
+        narrative_arc: NarrativeArc dict with arc_type, sequences, emotion curve, etc.
+        
+    Returns:
+        Formatted string of narrative rules to inject into system prompt
+    """
+    if not narrative_arc:
+        return ""
+    
+    lines = [
+        "",
+        "# 📖 서사 구조 (Narrative Arc)",
+        "",
+        f"**Arc Type**: {narrative_arc.get('arc_type', '3-act')}",
+        f"**Duration**: {narrative_arc.get('duration_sec', 60)}초",
+        f"**Longform**: {'예' if narrative_arc.get('is_longform') else '아니오'}",
+        "",
+    ]
+    
+    # Emotion curve
+    lines.extend([
+        "## 감정 곡선 (Emotion Curve)",
+        f"- 시작: {narrative_arc.get('emotion_start', 'neutral')}",
+        f"- 피크: {narrative_arc.get('emotion_peak', 'excited')}",
+        f"- 마무리: {narrative_arc.get('emotion_end', 'satisfied')}",
+        "",
+    ])
+    
+    # Dissonance design (viral key)
+    if narrative_arc.get('dissonance_type'):
+        lines.extend([
+            "## 🎭 부조화 설계 (Dissonance Design) - 바이럴 핵심!",
+            f"- 유형: {narrative_arc.get('dissonance_type')}",
+            f"- 익숙한 요소: {narrative_arc.get('familiar_element', 'N/A')}",
+            f"- 낯선 요소: {narrative_arc.get('unexpected_element', 'N/A')}",
+            "",
+            "→ 첫 샷에서 이 부조화를 시각적으로 즉시 드러내세요!",
+            "",
+        ])
+    
+    # Sequences (longform)
+    sequences = narrative_arc.get('sequences', [])
+    if sequences:
+        lines.extend([
+            "## 시퀀스 구조 (Sequences)",
+        ])
+        for seq in sequences:
+            hook_icon = "🔥" if seq.get('hook_recommended', True) else "⏸️"
+            lines.append(
+                f"- {hook_icon} **{seq.get('name', 'Unnamed')}** ({seq.get('t_start', 0)}s - {seq.get('t_end', 30)}s): "
+                f"{seq.get('phase', 'build')} | Hook: {seq.get('hook_intensity', 'medium')}"
+            )
+        lines.append("")
+    
+    # Shot roles
+    shot_roles = narrative_arc.get('shot_roles', [])
+    if shot_roles:
+        lines.extend([
+            "## 샷별 서사 역할 (Shot Narrative Roles)",
+        ])
+        for role in shot_roles[:10]:  # Limit to prevent prompt overflow
+            phase = role.get('phase', 'build')
+            hook_marker = "🎯 HOOK!" if role.get('hook_required') else ""
+            expectation = role.get('expectation_created', '')
+            exp_text = f" → 기대감: '{expectation}'" if expectation else ""
+            lines.append(f"- {role.get('shot_id', 'shot')}: {phase} {hook_marker}{exp_text}")
+        lines.append("")
+    
+    # Generation instructions
+    lines.extend([
+        "## 📌 서사 기반 생성 지침",
+        "1. **Hook 샷 (phase=hook)**: 1.5초 내 시선 잡기! 부조화 요소 즉시 보여주기",
+        "2. **Build 샷**: 긴장감 점진적 고조, 기대감 생성",
+        "3. **Turn 샷**: 반전 또는 전환점, 예상을 뒤집기",
+        "4. **Payoff 샷**: 앞서 만든 기대감 충족",
+        "5. **Climax 샷**: 최고조의 감정/액션",
+        "",
+    ])
+    
+    return "\n".join(lines)
+
+
+def _hook_variant_to_prompt(hook_variant: Dict[str, Any]) -> str:
+    """Convert HookVariant to prompt modifiers for the first shot(s).
+    
+    Args:
+        hook_variant: HookVariant dict with style, intensity, prompt_prefix, etc.
+        
+    Returns:
+        Formatted string to modify hook shot generation
+    """
+    if not hook_variant:
+        return ""
+    
+    style = hook_variant.get('style', 'curiosity')
+    intensity = hook_variant.get('intensity', 'medium')
+    prompt_prefix = hook_variant.get('prompt_prefix', '')
+    keywords = hook_variant.get('prompt_keywords', [])
+    visual_direction = hook_variant.get('visual_direction', '')
+    coach_tip = hook_variant.get('coach_tip_ko') or hook_variant.get('coach_tip', '')
+    
+    # Intensity modifiers
+    intensity_modifiers = {
+        'soft': '자연스럽게, 부드럽게',
+        'medium': '명확하게',
+        'strong': '강렬하게, 집중적으로',
+        'explosive': '폭발적으로, 충격적으로, 즉각적으로',
+    }
+    
+    # Style-specific directions
+    style_directions = {
+        'shock': 'Start with the most visually shocking moment. No buildup, immediate impact.',
+        'curiosity': 'Show just enough to intrigue, hide the full picture. Create mystery.',
+        'emotion': 'Lead with genuine emotion. Close-up on face, eyes, expression.',
+        'question': 'Open with a visual question. What? Why? How did this happen?',
+        'paradox': 'Juxtapose familiar with unexpected. Create cognitive dissonance.',
+        'tease': 'Flash-forward to the climax first, then rewind. "How did we get here?"',
+        'action': 'Drop into action immediately. Movement, energy, no warmup.',
+        'calm': 'Establish atmosphere slowly. Wide shot, ambient mood.',
+    }
+    
+    lines = [
+        "",
+        "# 🎬 훅 스타일 지시 (Hook Variant Instructions)",
+        "",
+        f"**스타일**: {style.upper()} ({intensity})",
+        f"**강도**: {intensity_modifiers.get(intensity, '명확하게')}",
+        "",
+        f"## 훅 연출 방향",
+        f"{style_directions.get(style, '')}",
+        "",
+    ]
+    
+    if prompt_prefix:
+        lines.extend([
+            f"## 프롬프트 프리픽스 (첫 샷에 적용)",
+            f'"{prompt_prefix}"',
+            "",
+        ])
+    
+    if keywords:
+        lines.extend([
+            f"## 포함할 키워드",
+            f"첫 샷 프롬프트에 반드시 포함: {', '.join(keywords)}",
+            "",
+        ])
+    
+    if visual_direction:
+        lines.extend([
+            f"## 시각적 연출",
+            visual_direction,
+            "",
+        ])
+    
+    if coach_tip:
+        lines.extend([
+            f"## 💡 코칭 팁",
+            coach_tip,
+            "",
+        ])
+    
+    lines.extend([
+        "## ⚠️ 중요",
+        "위 훅 스타일을 **첫 번째 샷**과 **각 시퀀스 시작 샷**에 적용하세요!",
+        "Hook이 아닌 중간 샷에는 적용하지 마세요.",
+        "",
+    ])
+    
+    return "\n".join(lines)
+
+
+def _apply_hook_to_shot_prompt(
+    shot_prompt: str,
+    hook_variant: Dict[str, Any],
+    is_hook_shot: bool,
+) -> str:
+    """Apply hook variant modifiers to a shot prompt.
+    
+    Args:
+        shot_prompt: Original shot prompt
+        hook_variant: HookVariant dict
+        is_hook_shot: Whether this shot is a hook shot
+        
+    Returns:
+        Modified prompt with hook style applied
+    """
+    if not hook_variant or not is_hook_shot:
+        return shot_prompt
+    
+    prompt_prefix = hook_variant.get('prompt_prefix', '')
+    keywords = hook_variant.get('prompt_keywords', [])
+    
+    # Add prefix
+    if prompt_prefix and prompt_prefix not in shot_prompt:
+        shot_prompt = f"{prompt_prefix} {shot_prompt}"
+    
+    # Add keywords if not present
+    for kw in keywords:
+        if kw.lower() not in shot_prompt.lower():
+            shot_prompt = f"{shot_prompt}, {kw}"
+    
+    return shot_prompt
+
+
 def generate_shot_contracts_with_dna(
     inputs: Dict[str, Any],
     storyboard: List[Dict[str, Any]],
     params: Dict[str, Any],
     director_pack: Optional[Dict[str, Any]] = None,
     scene_overrides: Optional[Dict[str, Dict[str, Any]]] = None,
+    narrative_arc: Optional[Dict[str, Any]] = None,
+    hook_variant: Optional[Dict[str, Any]] = None,
     capsule_id: str = "",
     fallback_on_error: bool = True,
     max_retries: int = 3,
 ) -> Tuple[List[Dict[str, Any]], Dict[str, int]]:
-    """Generate shot contracts with DirectorPack DNA for multi-scene consistency.
+    """Generate shot contracts with DirectorPack DNA, NarrativeArc, and HookVariant.
     
-    This function injects DirectorPack rules into the generation prompt to ensure
-    all shots maintain consistent visual style, timing, and quality standards.
+    This function injects DirectorPack rules, narrative structure, and hook style
+    into the generation prompt for Story-First + DNA consistency.
     
     Args:
         inputs: Capsule inputs
@@ -566,6 +779,8 @@ def generate_shot_contracts_with_dna(
         params: Style parameters
         director_pack: DirectorPack dict with dna_invariants, forbidden_mutations, etc.
         scene_overrides: Optional per-scene overrides {scene_id: {custom_prompt, overridden_invariants}}
+        narrative_arc: NarrativeArc dict with arc_type, sequences, emotion curve, dissonance
+        hook_variant: HookVariant dict with style, intensity, prompt modifiers
         capsule_id: Capsule identifier for auteur detection
         fallback_on_error: If True, generate without DNA on failure
         max_retries: Maximum retry attempts for rate limiting
@@ -587,6 +802,14 @@ def generate_shot_contracts_with_dna(
     dna_applied = False
     invariant_count = 0
     forbidden_count = 0
+    
+    # Add narrative arc rules
+    narrative_rules = ""
+    narrative_applied = False
+    
+    # Add hook variant rules
+    hook_rules = ""
+    hook_applied = False
     
     if director_pack:
         try:
@@ -631,14 +854,49 @@ def generate_shot_contracts_with_dna(
         except Exception as e:
             logger.warning(f"[DNA] Failed to apply scene overrides: {e}")
     
+    # Add narrative arc rules (Story-First)
+    if narrative_arc:
+        try:
+            narrative_rules = _narrative_arc_to_prompt(narrative_arc)
+            narrative_applied = True
+            logger.info(
+                f"[NARRATIVE] Injecting NarrativeArc: arc_type={narrative_arc.get('arc_type', 'unknown')}, "
+                f"sequences={len(narrative_arc.get('sequences', []))}, "
+                f"dissonance={narrative_arc.get('dissonance_type', 'none')}"
+            )
+        except Exception as e:
+            logger.warning(f"[NARRATIVE] Failed to generate narrative rules: {e}")
+            narrative_rules = ""
+    
+    # Add hook variant rules (Hook A/B Testing)
+    if hook_variant:
+        try:
+            hook_rules = _hook_variant_to_prompt(hook_variant)
+            hook_applied = True
+            logger.info(
+                f"[HOOK] Injecting HookVariant: style={hook_variant.get('style', 'unknown')}, "
+                f"intensity={hook_variant.get('intensity', 'medium')}"
+            )
+        except Exception as e:
+            logger.warning(f"[HOOK] Failed to generate hook rules: {e}")
+            hook_rules = ""
+
+    
     # Compose final system prompt
     system_prompt = f"""{base_prompt}
 
 {dna_rules}
 
+{narrative_rules}
+
+{hook_rules}
+
 {override_prompt}
 
-위 규칙을 모든 샷에 일관되게 적용하세요. 규칙 위반 시 해당 샷은 품질 검증에서 탈락합니다.
+위 규칙을 모든 샷에 일관되게 적용하세요. 
+DNA 규칙 위반 시 해당 샷은 품질 검증에서 탈락합니다.
+서사 구조(Narrative Arc)에 따라 각 샷의 역할을 명확히 하세요.
+첫 샷과 시퀀스 시작 샷에는 반드시 지정된 Hook 스타일을 적용하세요.
 """
     
     user_prompt = f"""Convert these storyboard cards into production-ready shot contracts:
@@ -648,8 +906,13 @@ Storyboard Cards:
 
 Style Parameters: {json.dumps(params, ensure_ascii=False)}
 
-Generate shot contracts that STRICTLY follow the DNA Invariants and avoid Forbidden Mutations.
-Each shot's prompt must incorporate the consistency rules.
+Generate shot contracts that STRICTLY follow:
+1. DNA Invariants (visual style rules)
+2. Forbidden Mutations (never do these)
+3. Narrative Arc (story structure) 
+4. Hook Style (for first shot and sequence starts)
+
+Each shot's prompt must incorporate the consistency rules and narrative role.
 
 Output as JSON:
 {{
@@ -659,6 +922,12 @@ Output as JSON:
       "storyboard_ref": 1,
       "shot_type": "wide",
       "duration_sec": 5,
+      "narrative_role": {{
+        "phase": "hook",
+        "hook_required": true,
+        "target_emotion": "curiosity",
+        "expectation_created": "Why is this person here?"
+      }},
       "camera": {{
         "movement": "slow push in",
         "angle": "eye level",
@@ -669,12 +938,13 @@ Output as JSON:
         "mood": "soft, contemplative"
       }},
       "composition": "rule of thirds, subject left",
-      "prompt": "Cinematic wide shot incorporating [DNA rules]...",
+      "prompt": "Cinematic wide shot with [hook style] opening...",
       "negative_prompt": "cartoon, anime, low quality, blurry, [forbidden elements]",
       "dna_compliance": {{
-        "applied_rules": ["hook_timing_2s", "center_composition"],
+        "applied_rules": ["hook_timing_1_5s", "center_composition"],
         "confidence": 0.95
-      }}
+      }},
+      "hook_applied": true
     }}
   ]
 }}"""
@@ -690,35 +960,64 @@ Output as JSON:
             if not contracts:
                 raise GeminiGenerationError("No shot contracts in response")
             
-            # Validate and normalize with DNA compliance tracking
+            # Validate and normalize with DNA + Narrative compliance tracking
             normalized = []
             for i, shot in enumerate(contracts):
                 shot_id = shot.get("shot_id", f"shot_{i+1:03d}")
+                
+                # Determine if this is a hook shot
+                narrative_role = shot.get("narrative_role", {})
+                is_hook_shot = (
+                    narrative_role.get("hook_required", False) or 
+                    narrative_role.get("phase") == "hook" or
+                    i == 0  # First shot is always treated as hook
+                )
+                
+                # Apply hook variant to prompt if needed
+                original_prompt = shot.get("prompt", "")
+                final_prompt = _apply_hook_to_shot_prompt(
+                    original_prompt, hook_variant, is_hook_shot
+                ) if hook_variant else original_prompt
+                
                 normalized.append({
                     "shot_id": shot_id,
                     "storyboard_ref": shot.get("storyboard_ref", i + 1),
                     "shot_type": shot.get("shot_type", "medium"),
                     "duration_sec": shot.get("duration_sec", 5),
+                    "narrative_role": {
+                        "phase": narrative_role.get("phase", "build"),
+                        "hook_required": narrative_role.get("hook_required", i == 0),
+                        "target_emotion": narrative_role.get("target_emotion", ""),
+                        "expectation_created": narrative_role.get("expectation_created", ""),
+                        "expectation_fulfilled": narrative_role.get("expectation_fulfilled", ""),
+                    },
                     "camera": shot.get("camera", {}),
                     "lighting": shot.get("lighting", {}),
                     "composition": shot.get("composition", ""),
-                    "prompt": shot.get("prompt", ""),
+                    "prompt": final_prompt,
                     "negative_prompt": shot.get("negative_prompt", ""),
                     "dna_compliance": shot.get("dna_compliance", {
                         "applied_rules": [],
                         "confidence": 0.0,
                     }),
+                    "hook_applied": is_hook_shot and hook_applied,
                     "_meta": {
                         "dna_applied": dna_applied,
+                        "narrative_applied": narrative_applied,
+                        "hook_applied": hook_applied,
+                        "hook_style": hook_variant.get("style") if hook_variant else None,
                         "pack_id": director_pack.get("meta", {}).get("pack_id") if director_pack else None,
                         "override_count": override_count,
                     }
                 })
             
             elapsed = time.time() - start_time
+            hook_count = sum(1 for s in normalized if s.get("hook_applied"))
             logger.info(
-                f"[DNA] Generated {len(normalized)} shot contracts in {elapsed:.2f}s | "
-                f"DNA applied: {dna_applied} | Tokens: {token_usage.get('input', 0)}+{token_usage.get('output', 0)}"
+                f"[GENERATION] Generated {len(normalized)} shots in {elapsed:.2f}s | "
+                f"DNA: {dna_applied} | Narrative: {narrative_applied} | "
+                f"Hook: {hook_applied} (style={hook_variant.get('style') if hook_variant else 'none'}, applied_to={hook_count} shots) | "
+                f"Tokens: {token_usage.get('input', 0)}+{token_usage.get('output', 0)}"
             )
             return normalized, token_usage
             

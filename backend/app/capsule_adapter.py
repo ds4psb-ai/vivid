@@ -349,6 +349,8 @@ def _run_gemini(
     capsule_spec: Optional[Dict[str, Any]] = None,
     director_pack: Optional[Dict[str, Any]] = None,
     scene_overrides: Optional[Dict[str, Dict[str, Any]]] = None,
+    narrative_arc: Optional[Dict[str, Any]] = None,
+    hook_variant: Optional[Dict[str, Any]] = None,
 ) -> Tuple[Dict[str, Any], List[str]]:
     """Run Gemini adapter for storyboard and shot contract generation.
     
@@ -360,6 +362,8 @@ def _run_gemini(
         capsule_spec: Capsule specification
         director_pack: Optional DirectorPack for DNA injection (multi-scene consistency)
         scene_overrides: Optional per-scene overrides for DNA rules
+        narrative_arc: Optional NarrativeArc for story structure (Story-First)
+        hook_variant: Optional HookVariant for A/B testing hook styles
     """
     from app.config import settings
     
@@ -384,17 +388,27 @@ def _run_gemini(
             inputs, params, capsule_id
         )
         
-        # Generate shot contracts - use DNA if available
-        if director_pack:
-            logger.info(f"Using DirectorPack DNA for multi-scene consistency: "
-                       f"{len(director_pack.get('dna_invariants', []))} invariants")
+        # Generate shot contracts - use DNA/Narrative/Hook if available
+        if director_pack or narrative_arc or hook_variant:
+            mode_parts = []
+            if director_pack:
+                mode_parts.append(f"DNA({len(director_pack.get('dna_invariants', []))} rules)")
+            if narrative_arc:
+                mode_parts.append(f"Narrative({narrative_arc.get('arc_type', 'unknown')})")
+            if hook_variant:
+                mode_parts.append(f"Hook({hook_variant.get('style', 'unknown')})")
+            
+            logger.info(f"Story-First generation: {' + '.join(mode_parts)}")
+            
             shot_contracts, shot_usage = generate_shot_contracts_with_dna(
                 inputs, storyboard, params, 
                 director_pack=director_pack,
                 scene_overrides=scene_overrides,
+                narrative_arc=narrative_arc,
+                hook_variant=hook_variant,
                 capsule_id=capsule_id
             )
-            dna_mode = "enabled"
+            dna_mode = "story_first"
         else:
             shot_contracts, shot_usage = generate_shot_contracts_with_gemini(
                 inputs, storyboard, params, capsule_id
@@ -576,6 +590,8 @@ def execute_capsule(
     progress_cb: Optional[Callable[[str, int], None]] = None,
     director_pack: Optional[Dict[str, Any]] = None,
     scene_overrides: Optional[Dict[str, Dict[str, Any]]] = None,
+    narrative_arc: Optional[Dict[str, Any]] = None,
+    hook_variant: Optional[Dict[str, Any]] = None,
 ) -> Tuple[Dict[str, Any], List[str]]:
     """
     Execute a capsule and return (summary, evidence_refs).
@@ -592,6 +608,8 @@ def execute_capsule(
         progress_cb: Optional progress callback
         director_pack: Optional DirectorPack for DNA-based multi-scene consistency
         scene_overrides: Optional per-scene overrides for DNA rules
+        narrative_arc: Optional NarrativeArc for Story-First generation
+        hook_variant: Optional HookVariant for A/B testing hook styles
     """
     # Compute outputs based on auteur style
     if progress_cb:
@@ -707,11 +725,13 @@ def execute_capsule(
         elif step == "gemini":
             if progress_cb:
                 progress_cb("Gemini generation", 80)
-            # Pass director_pack and scene_overrides for DNA-based multi-scene consistency
+            # Pass all Story-First parameters for DNA + Narrative + Hook generation
             insight, refs = _run_gemini(
                 capsule_id, capsule_version, inputs, params, capsule_spec,
                 director_pack=director_pack,
-                scene_overrides=scene_overrides
+                scene_overrides=scene_overrides,
+                narrative_arc=narrative_arc,
+                hook_variant=hook_variant,
             )
             external_insights.append({"adapter": "gemini", **insight})
             evidence_refs.extend(refs)
