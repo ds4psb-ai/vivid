@@ -61,9 +61,17 @@ export const CanvasDirectorPackPanel: React.FC<CanvasDirectorPackPanelProps> = (
     return (
         <div className={`bg-gray-900/90 backdrop-blur-md rounded-lg border border-gray-700 overflow-hidden shadow-lg ${className}`}>
             {/* Header - Always Visible */}
-            <button
+            <div
                 onClick={handleToggleCollapse}
-                className="w-full p-3 flex items-center justify-between hover:bg-gray-800/50 transition-colors"
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleToggleCollapse();
+                    }
+                }}
+                className="w-full p-3 flex items-center justify-between hover:bg-gray-800/50 transition-colors cursor-pointer"
+                role="button"
+                tabIndex={0}
                 aria-expanded={!isCollapsed}
                 aria-controls="director-pack-panel-content"
             >
@@ -98,7 +106,7 @@ export const CanvasDirectorPackPanel: React.FC<CanvasDirectorPackPanelProps> = (
                         <ChevronUp size={16} className="text-gray-400" />
                     )}
                 </div>
-            </button>
+            </div>
 
             {/* Expanded Content */}
             <AnimatePresence>
@@ -177,8 +185,8 @@ export const CanvasDirectorPackPanel: React.FC<CanvasDirectorPackPanelProps> = (
                                                     onClick={() => handleSelectPack(pack.pack_id)}
                                                     disabled={state.isLoading}
                                                     className={`w-full p-2.5 rounded-lg text-left transition-all ${state.pack?.meta.pack_id === pack.pack_id
-                                                            ? 'bg-emerald-500/20 border border-emerald-500/50 ring-1 ring-emerald-500/20'
-                                                            : 'bg-gray-800 border border-gray-700 hover:border-gray-600 hover:bg-gray-750'
+                                                        ? 'bg-emerald-500/20 border border-emerald-500/50 ring-1 ring-emerald-500/20'
+                                                        : 'bg-gray-800 border border-gray-700 hover:border-gray-600 hover:bg-gray-750'
                                                         }`}
                                                 >
                                                     <div className="flex items-center justify-between mb-1">
