@@ -9,14 +9,26 @@ export type AnalyticsEventType =
     | "template_seeded"
     | "template_version_swapped"
     | "template_run_started"
-    | "template_run_completed";
+    | "template_run_completed"
+    // Crebit Apply flow events
+    | "crebit_cta_click"
+    | "crebit_modal_open"
+    | "crebit_form_submit"
+    | "crebit_form_error";
 
 export interface TrackEventOptions {
     templateId?: string;
     capsuleId?: string;
     runId?: string;
     evidenceRef?: string;
+    location?: string;  // For Crebit CTA tracking
+    source?: string;    // For modal/component tracking
+    track?: string;     // For Crebit track selection
+    applicationId?: string; // For application tracking
+    errorMessage?: string;  // For error tracking
     meta?: Record<string, unknown>;
+    // Allow any additional properties
+    [key: string]: unknown;
 }
 
 /**

@@ -1167,7 +1167,17 @@ export interface CrebitStats {
 // --- Analytics Types ---
 
 export interface AnalyticsEventRequest {
-  event_type: "evidence_ref_opened" | "template_seeded" | "template_version_swapped" | "template_run_started" | "template_run_completed";
+  event_type:
+  | "evidence_ref_opened"
+  | "template_seeded"
+  | "template_version_swapped"
+  | "template_run_started"
+  | "template_run_completed"
+  // Crebit Apply flow events
+  | "crebit_cta_click"
+  | "crebit_modal_open"
+  | "crebit_form_submit"
+  | "crebit_form_error";
   template_id?: string;
   capsule_id?: string;
   run_id?: string;
