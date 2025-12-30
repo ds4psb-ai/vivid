@@ -552,6 +552,8 @@ def generate_shot_contracts_with_dna(
     director_pack: Optional[Dict[str, Any]] = None,
     scene_overrides: Optional[Dict[str, Dict[str, Any]]] = None,
     capsule_id: str = "",
+    fallback_on_error: bool = True,
+    max_retries: int = 3,
 ) -> Tuple[List[Dict[str, Any]], Dict[str, int]]:
     """Generate shot contracts with DirectorPack DNA for multi-scene consistency.
     
@@ -565,40 +567,69 @@ def generate_shot_contracts_with_dna(
         director_pack: DirectorPack dict with dna_invariants, forbidden_mutations, etc.
         scene_overrides: Optional per-scene overrides {scene_id: {custom_prompt, overridden_invariants}}
         capsule_id: Capsule identifier for auteur detection
+        fallback_on_error: If True, generate without DNA on failure
+        max_retries: Maximum retry attempts for rate limiting
         
     Returns:
         Tuple of (shot_contracts, token_usage)
+        
+    Raises:
+        GeminiGenerationError: If generation fails and fallback is disabled
     """
+    start_time = time.time()
+    token_usage = {"input": 0, "output": 0}
+    
     # Build base system prompt
     base_prompt = _get_auteur_prompt(capsule_id)
     
     # Add DNA rules if provided
     dna_rules = ""
+    dna_applied = False
+    invariant_count = 0
+    forbidden_count = 0
+    
     if director_pack:
-        dna_rules = _director_pack_to_prompt_rules(director_pack)
-        logger.info(f"Injecting DirectorPack DNA: {len(director_pack.get('dna_invariants', []))} invariants, "
-                   f"{len(director_pack.get('forbidden_mutations', []))} forbidden")
+        try:
+            dna_rules = _director_pack_to_prompt_rules(director_pack)
+            invariant_count = len(director_pack.get('dna_invariants', []))
+            forbidden_count = len(director_pack.get('forbidden_mutations', []))
+            dna_applied = True
+            logger.info(
+                f"[DNA] Injecting DirectorPack: pack_id={director_pack.get('meta', {}).get('pack_id', 'unknown')}, "
+                f"invariants={invariant_count}, forbidden={forbidden_count}, "
+                f"prompt_length={len(dna_rules)} chars"
+            )
+        except Exception as e:
+            logger.warning(f"[DNA] Failed to generate DNA rules: {e}. Continuing without DNA.")
+            dna_rules = ""
     
     # Add scene-specific overrides
     override_prompt = ""
+    override_count = 0
     if scene_overrides:
-        override_lines = ["\n## 씬별 특별 지시 (Scene Overrides)"]
-        for scene_id, override in scene_overrides.items():
-            if not override.get("enabled", True):
-                continue
-            custom_prompt = override.get("custom_prompt")
-            if custom_prompt:
-                override_lines.append(f"\n### {scene_id}")
-                override_lines.append(custom_prompt)
+        try:
+            override_lines = ["\n## 씬별 특별 지시 (Scene Overrides)"]
+            for scene_id, override in scene_overrides.items():
+                if not override.get("enabled", True):
+                    continue
+                custom_prompt = override.get("custom_prompt")
+                if custom_prompt:
+                    override_lines.append(f"\n### {scene_id}")
+                    override_lines.append(custom_prompt)
+                    override_count += 1
+                
+                # Apply overridden invariants
+                overridden = override.get("overridden_invariants", {})
+                if overridden:
+                    for rule_id, new_spec in overridden.items():
+                        if new_spec and new_spec.get("spec"):
+                            override_lines.append(f"- {rule_id}: 수정된 값 = {new_spec['spec'].get('value')}")
             
-            # Apply overridden invariants
-            overridden = override.get("overridden_invariants", {})
-            if overridden:
-                for rule_id, new_spec in overridden.items():
-                    if new_spec and new_spec.get("spec"):
-                        override_lines.append(f"- {rule_id}: 수정된 값 = {new_spec['spec'].get('value')}")
-        
-        override_prompt = "\n".join(override_lines)
+            override_prompt = "\n".join(override_lines)
+            if override_count > 0:
+                logger.info(f"[DNA] Applied {override_count} scene overrides")
+        except Exception as e:
+            logger.warning(f"[DNA] Failed to apply scene overrides: {e}")
     
     # Compose final system prompt
     system_prompt = f"""{base_prompt}
@@ -648,28 +679,101 @@ Output as JSON:
   ]
 }}"""
 
-    result, usage = _call_with_retry(user_prompt, system_prompt)
-    contracts = result.get("shot_contracts", [])
+    # Attempt generation with retry logic
+    last_error = None
+    for attempt in range(max_retries):
+        try:
+            result, usage = _call_with_retry(user_prompt, system_prompt)
+            token_usage = usage
+            contracts = result.get("shot_contracts", [])
+            
+            if not contracts:
+                raise GeminiGenerationError("No shot contracts in response")
+            
+            # Validate and normalize with DNA compliance tracking
+            normalized = []
+            for i, shot in enumerate(contracts):
+                shot_id = shot.get("shot_id", f"shot_{i+1:03d}")
+                normalized.append({
+                    "shot_id": shot_id,
+                    "storyboard_ref": shot.get("storyboard_ref", i + 1),
+                    "shot_type": shot.get("shot_type", "medium"),
+                    "duration_sec": shot.get("duration_sec", 5),
+                    "camera": shot.get("camera", {}),
+                    "lighting": shot.get("lighting", {}),
+                    "composition": shot.get("composition", ""),
+                    "prompt": shot.get("prompt", ""),
+                    "negative_prompt": shot.get("negative_prompt", ""),
+                    "dna_compliance": shot.get("dna_compliance", {
+                        "applied_rules": [],
+                        "confidence": 0.0,
+                    }),
+                    "_meta": {
+                        "dna_applied": dna_applied,
+                        "pack_id": director_pack.get("meta", {}).get("pack_id") if director_pack else None,
+                        "override_count": override_count,
+                    }
+                })
+            
+            elapsed = time.time() - start_time
+            logger.info(
+                f"[DNA] Generated {len(normalized)} shot contracts in {elapsed:.2f}s | "
+                f"DNA applied: {dna_applied} | Tokens: {token_usage.get('input', 0)}+{token_usage.get('output', 0)}"
+            )
+            return normalized, token_usage
+            
+        except Exception as e:
+            last_error = e
+            error_str = str(e).lower()
+            
+            # Check for rate limiting
+            if "429" in error_str or "rate" in error_str or "quota" in error_str:
+                wait_time = (attempt + 1) * 5  # 5s, 10s, 15s
+                logger.warning(f"[DNA] Rate limited (attempt {attempt+1}/{max_retries}), waiting {wait_time}s...")
+                time.sleep(wait_time)
+                continue
+            
+            # Check for context length issues
+            if "context" in error_str or "length" in error_str or "token" in error_str:
+                logger.warning(f"[DNA] Context too long, trying without DNA rules...")
+                dna_rules = ""
+                dna_applied = False
+                continue
+            
+            # Other errors - log and possibly retry
+            logger.error(f"[DNA] Generation failed (attempt {attempt+1}/{max_retries}): {e}")
+            if attempt < max_retries - 1:
+                time.sleep(1)
+                continue
+            break
     
-    # Validate and normalize with DNA compliance tracking
-    normalized = []
-    for i, shot in enumerate(contracts):
-        shot_id = shot.get("shot_id", f"shot_{i+1:03d}")
-        normalized.append({
-            "shot_id": shot_id,
-            "storyboard_ref": shot.get("storyboard_ref", i + 1),
-            "shot_type": shot.get("shot_type", "medium"),
-            "duration_sec": shot.get("duration_sec", 5),
-            "camera": shot.get("camera", {}),
-            "lighting": shot.get("lighting", {}),
-            "composition": shot.get("composition", ""),
-            "prompt": shot.get("prompt", ""),
-            "negative_prompt": shot.get("negative_prompt", ""),
-            "dna_compliance": shot.get("dna_compliance", {}),
-        })
-    
-    logger.info(f"Generated {len(normalized)} shot contracts with DNA compliance")
-    return normalized, usage
+    # All retries failed
+    if fallback_on_error:
+        logger.warning(f"[DNA] All retries failed, falling back to generation without DNA")
+        try:
+            # Fallback: generate without DNA
+            basic_prompt = f"""Convert storyboard to shot contracts:
+{json.dumps(storyboard[:5], indent=2, ensure_ascii=False)}
+
+Output JSON with shot_contracts array."""
+            
+            result, usage = _call_with_retry(basic_prompt, base_prompt)
+            contracts = result.get("shot_contracts", [])
+            
+            normalized = [{
+                "shot_id": shot.get("shot_id", f"shot_{i+1:03d}"),
+                "prompt": shot.get("prompt", ""),
+                "dna_compliance": {"applied_rules": [], "confidence": 0.0, "fallback": True},
+            } for i, shot in enumerate(contracts)]
+            
+            logger.info(f"[DNA] Fallback generated {len(normalized)} shots (no DNA)")
+            return normalized, usage
+            
+        except Exception as fallback_error:
+            logger.error(f"[DNA] Fallback also failed: {fallback_error}")
+            raise GeminiGenerationError(f"Generation failed: {last_error}") from last_error
+    else:
+        raise GeminiGenerationError(f"Generation failed after {max_retries} attempts: {last_error}")
 
 
 def test_connection() -> Dict[str, Any]:

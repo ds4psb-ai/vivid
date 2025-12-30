@@ -2,7 +2,10 @@
 
 import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, AlertTriangle, XCircle, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+    CheckCircle, AlertTriangle, XCircle, HelpCircle,
+    ChevronDown, ChevronUp, RefreshCw, Wand2, Download, Copy, Check
+} from 'lucide-react';
 
 // =============================================================================
 // Types
@@ -44,6 +47,14 @@ export interface DNAComplianceViewerProps {
     report: BatchComplianceReport;
     className?: string;
     compact?: boolean;
+    /** Callback when user wants to regenerate a shot */
+    onRegenerateShot?: (shotId: string, suggestions: string[]) => void;
+    /** Callback when user wants to apply all suggestions */
+    onApplyAllSuggestions?: (shotIds: string[]) => void;
+    /** Callback when export is clicked */
+    onExport?: (format: 'json' | 'csv') => void;
+    /** Whether actions are currently loading */
+    isActionsLoading?: boolean;
 }
 
 // =============================================================================
@@ -100,6 +111,35 @@ const ProgressBar: React.FC<{ value: number; className?: string }> = ({ value, c
     );
 };
 
+const ActionButton: React.FC<{
+    onClick: () => void;
+    icon: React.ReactNode;
+    label: string;
+    variant?: 'primary' | 'secondary' | 'danger';
+    disabled?: boolean;
+    size?: 'sm' | 'md';
+}> = ({ onClick, icon, label, variant = 'secondary', disabled = false, size = 'sm' }) => {
+    const variants = {
+        primary: 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border-emerald-500/30',
+        secondary: 'bg-gray-700 text-gray-300 hover:bg-gray-600 border-gray-600',
+        danger: 'bg-red-500/20 text-red-400 hover:bg-red-500/30 border-red-500/30',
+    };
+
+    const sizeClasses = size === 'sm' ? 'px-2 py-1 text-xs gap-1' : 'px-3 py-1.5 text-sm gap-1.5';
+
+    return (
+        <button
+            onClick={onClick}
+            disabled={disabled}
+            className={`flex items-center ${sizeClasses} rounded-lg border transition-colors 
+                ${variants[variant]} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+            {icon}
+            <span>{label}</span>
+        </button>
+    );
+};
+
 // =============================================================================
 // Shot Report Card
 // =============================================================================
@@ -107,8 +147,12 @@ const ProgressBar: React.FC<{ value: number; className?: string }> = ({ value, c
 const ShotReportCard: React.FC<{
     report: ShotComplianceReport;
     defaultExpanded?: boolean;
-}> = ({ report, defaultExpanded = false }) => {
+    onRegenerate?: (shotId: string, suggestions: string[]) => void;
+    isLoading?: boolean;
+}> = ({ report, defaultExpanded = false, onRegenerate, isLoading }) => {
     const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+
+    const hasIssues = report.overall_level === 'violation' || report.overall_level === 'partial';
 
     return (
         <div className="bg-gray-800 rounded-lg overflow-hidden">
@@ -190,6 +234,19 @@ const ShotReportCard: React.FC<{
                                     </ul>
                                 </div>
                             )}
+
+                            {/* Action Buttons */}
+                            {hasIssues && onRegenerate && (
+                                <div className="flex gap-2 pt-2 border-t border-gray-700">
+                                    <ActionButton
+                                        onClick={() => onRegenerate(report.shot_id, report.suggestions)}
+                                        icon={isLoading ? <RefreshCw size={12} className="animate-spin" /> : <Wand2 size={12} />}
+                                        label="제안 적용하여 재생성"
+                                        variant="primary"
+                                        disabled={isLoading}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </motion.div>
                 )}
@@ -206,12 +263,38 @@ export const DNAComplianceViewer: React.FC<DNAComplianceViewerProps> = ({
     report,
     className = '',
     compact = false,
+    onRegenerateShot,
+    onApplyAllSuggestions,
+    onExport,
+    isActionsLoading = false,
 }) => {
     const [showAllShots, setShowAllShots] = useState(false);
+    const [copiedToClipboard, setCopiedToClipboard] = useState(false);
 
     const displayedShots = showAllShots
         ? report.shot_reports
         : report.shot_reports.slice(0, 3);
+
+    const problematicShotIds = report.shot_reports
+        .filter(s => s.overall_level === 'violation' || s.overall_level === 'partial')
+        .map(s => s.shot_id);
+
+    const handleCopyToClipboard = useCallback(async () => {
+        try {
+            const text = JSON.stringify(report, null, 2);
+            await navigator.clipboard.writeText(text);
+            setCopiedToClipboard(true);
+            setTimeout(() => setCopiedToClipboard(false), 2000);
+        } catch {
+            console.error('Failed to copy to clipboard');
+        }
+    }, [report]);
+
+    const handleApplyAll = useCallback(() => {
+        if (onApplyAllSuggestions && problematicShotIds.length > 0) {
+            onApplyAllSuggestions(problematicShotIds);
+        }
+    }, [onApplyAllSuggestions, problematicShotIds]);
 
     return (
         <div className={`bg-gray-900 rounded-xl border border-gray-800 overflow-hidden ${className}`}>
@@ -255,6 +338,42 @@ export const DNAComplianceViewer: React.FC<DNAComplianceViewerProps> = ({
                         <div className="text-xs text-gray-500">위반</div>
                     </div>
                 </div>
+
+                {/* Action Bar */}
+                {!compact && (onApplyAllSuggestions || onExport) && (
+                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-700">
+                        <div className="flex gap-2">
+                            {onApplyAllSuggestions && problematicShotIds.length > 0 && (
+                                <ActionButton
+                                    onClick={handleApplyAll}
+                                    icon={isActionsLoading ? <RefreshCw size={14} className="animate-spin" /> : <Wand2 size={14} />}
+                                    label={`${problematicShotIds.length}개 샷 재생성`}
+                                    variant="primary"
+                                    size="md"
+                                    disabled={isActionsLoading}
+                                />
+                            )}
+                        </div>
+                        <div className="flex gap-2">
+                            <ActionButton
+                                onClick={handleCopyToClipboard}
+                                icon={copiedToClipboard ? <Check size={14} /> : <Copy size={14} />}
+                                label={copiedToClipboard ? '복사됨!' : '복사'}
+                                variant="secondary"
+                                size="md"
+                            />
+                            {onExport && (
+                                <ActionButton
+                                    onClick={() => onExport('json')}
+                                    icon={<Download size={14} />}
+                                    label="JSON 내보내기"
+                                    variant="secondary"
+                                    size="md"
+                                />
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Shot Reports */}
@@ -274,6 +393,8 @@ export const DNAComplianceViewer: React.FC<DNAComplianceViewerProps> = ({
                             <ShotReportCard
                                 report={shot}
                                 defaultExpanded={shot.overall_level === 'violation'}
+                                onRegenerate={onRegenerateShot}
+                                isLoading={isActionsLoading}
                             />
                         </motion.div>
                     ))}
