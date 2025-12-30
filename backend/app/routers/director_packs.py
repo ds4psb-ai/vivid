@@ -187,7 +187,7 @@ def _create_default_bong_pack() -> DirectorPack:
             compiled_at=datetime.utcnow().isoformat(),
             compiled_by="system",
             invariant_count=17,
-            slot_count=5,
+            slot_count=6,
             forbidden_count=5,
             checkpoint_count=8,
         ),
@@ -445,6 +445,27 @@ def _create_default_bong_pack() -> DirectorPack:
                 description="현재 씬의 서사 위치",
                 allowed_values=["Hook", "Build", "Turn", "Payoff", "Climax"],
                 default_value="Build",
+            ),
+            MutationSlot(
+                slot_id="hook_variant",
+                slot_type="creative",
+                name="훅 변형",
+                description="A/B 테스트용 훅 스타일 선택 (시퀀스 시작에 적용)",
+                allowed_values=[
+                    "shock",       # 충격형 - 강렬한 시각적 충격
+                    "curiosity",   # 호기심형 - 질문/미스터리 유발
+                    "emotion",     # 감정형 - 감정적 연결
+                    "question",    # 의문형 - 직접적 질문
+                    "paradox",     # 역설형 - 예상을 뒤집는
+                    "tease",       # 티저형 - 결과 먼저 보여주기
+                    "action",      # 액션형 - 바로 행동/움직임
+                ],
+                default_value="curiosity",
+                persona_presets={
+                    "bong-joon-ho": "paradox",   # 봉준호: 역설/부조화
+                    "nolan": "tease",            # 놀란: 티저형
+                    "tarantino": "shock",        # 타란티노: 충격형
+                },
             ),
         ],
         forbidden_mutations=[
