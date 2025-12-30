@@ -1,47 +1,17 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import {
+import type {
     HookVariant,
-    HookStyle,
-    DEFAULT_HOOK_VARIANTS
-} from '@/components/HookVariantSelector';
+    NarrativeArc,
+    NarrativePhase,
+    Sequence,
+} from '@/types/storyFirst';
+import { DEFAULT_HOOK_VARIANTS } from '@/types/storyFirst';
 
-// =============================================================================
-// Types
-// =============================================================================
-
-export interface NarrativePhase {
-    phase: 'hook' | 'setup' | 'build' | 'turn' | 'payoff' | 'climax';
-    hook_required?: boolean;
-    target_emotion?: string;
-    expectation_created?: string;
-}
-
-export interface Sequence {
-    sequence_id: string;
-    name: string;
-    t_start: number;
-    t_end: number;
-    phase: string;
-    hook_recommended: boolean;
-    hook_intensity: 'soft' | 'medium' | 'strong';
-}
-
-export interface NarrativeArc {
-    arc_id: string;
-    arc_type: 'hook-payoff' | '3-act' | '5-act' | 'circular' | 'parallel';
-    duration_sec: number;
-    is_longform: boolean;
-    emotion_start: string;
-    emotion_peak: string;
-    emotion_end: string;
-    dissonance_type?: string;
-    familiar_element?: string;
-    unexpected_element?: string;
-    sequences: Sequence[];
-    shot_roles: NarrativePhase[];
-}
+// Re-export types for backwards compatibility
+export type { HookVariant, NarrativeArc, NarrativePhase, Sequence } from '@/types/storyFirst';
+export { DEFAULT_HOOK_VARIANTS } from '@/types/storyFirst';
 
 export interface NarrativeArcState {
     arc: NarrativeArc | null;

@@ -7,31 +7,14 @@ import {
     Shuffle, Play, Eye, Wind,
     ChevronDown, Check, Sparkles, FlaskConical
 } from 'lucide-react';
+import type { HookStyle, HookVariant } from '@/types/storyFirst';
+
+// Re-export for backwards compatibility
+export type { HookStyle, HookVariant } from '@/types/storyFirst';
 
 // =============================================================================
-// Types
+// Props
 // =============================================================================
-
-export type HookStyle =
-    | 'shock'
-    | 'curiosity'
-    | 'emotion'
-    | 'question'
-    | 'paradox'
-    | 'tease'
-    | 'action'
-    | 'calm';
-
-export interface HookVariant {
-    variantId: string;
-    style: HookStyle;
-    intensity: 'soft' | 'medium' | 'strong' | 'explosive';
-    promptPrefix: string;
-    promptKeywords: string[];
-    visualDirection: string;
-    coachTipKo: string;
-    isControl?: boolean;
-}
 
 export interface HookVariantSelectorProps {
     variants: HookVariant[];
@@ -367,47 +350,10 @@ export const HookVariantSelector: React.FC<HookVariantSelectorProps> = ({
 };
 
 // =============================================================================
-// Preset Variants
+// Preset Variants (re-exported from unified types)
 // =============================================================================
 
-export const DEFAULT_HOOK_VARIANTS: HookVariant[] = [
-    {
-        variantId: 'shock_1',
-        style: 'shock',
-        intensity: 'explosive',
-        promptPrefix: 'Shocking, unexpected opening.',
-        promptKeywords: ['explosion', 'sudden', 'dramatic'],
-        visualDirection: '극적인 클로즈업, 빠른 줌',
-        coachTipKo: '가장 충격적인 순간으로 시작하세요',
-        isControl: true,
-    },
-    {
-        variantId: 'curiosity_1',
-        style: 'curiosity',
-        intensity: 'medium',
-        promptPrefix: 'Mysterious, intriguing opening.',
-        promptKeywords: ['mysterious', 'hidden', 'reveal'],
-        visualDirection: '부분만 보여주기, 미스터리한 조명',
-        coachTipKo: '전체가 아닌 일부만 보여주세요',
-    },
-    {
-        variantId: 'paradox_1',
-        style: 'paradox',
-        intensity: 'strong',
-        promptPrefix: 'Contradictory juxtaposition opening.',
-        promptKeywords: ['contrast', 'unexpected', 'paradox'],
-        visualDirection: '대비되는 요소 병치',
-        coachTipKo: '익숙함과 낯섦을 조합하세요',
-    },
-    {
-        variantId: 'tease_1',
-        style: 'tease',
-        intensity: 'strong',
-        promptPrefix: 'Shows the climax first.',
-        promptKeywords: ['result', 'climax', 'flash forward'],
-        visualDirection: '결과 장면 → 어떻게 여기까지?',
-        coachTipKo: '결과를 먼저 보여주고 궁금하게 만드세요',
-    },
-];
+export { DEFAULT_HOOK_VARIANTS } from '@/types/storyFirst';
 
 export default HookVariantSelector;
+

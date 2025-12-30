@@ -7,20 +7,14 @@ import {
     Film, Play, Pause, SkipForward, Edit2, Check, X, Copy,
     Sparkles, AlertTriangle
 } from 'lucide-react';
+import type { Sequence, NarrativePhaseType } from '@/types/storyFirst';
+
+// Re-export for backwards compatibility
+export type { Sequence } from '@/types/storyFirst';
 
 // =============================================================================
 // Types
 // =============================================================================
-
-export interface Sequence {
-    sequence_id: string;
-    name: string;
-    t_start: number;
-    t_end: number;
-    phase: 'hook' | 'setup' | 'build' | 'turn' | 'payoff' | 'climax' | 'resolution' | 'transition';
-    hook_recommended: boolean;
-    hook_intensity: 'soft' | 'medium' | 'strong';
-}
 
 export interface SequenceEditorProps {
     sequences: Sequence[];
@@ -244,8 +238,8 @@ const SequenceCard: React.FC<{
                                             onClick={() => onUpdate({ ...sequence, phase: key as any })}
                                             disabled={disabled}
                                             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${sequence.phase === key
-                                                    ? `${config.bgColor}/30 ${config.color} ring-1 ring-current`
-                                                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                                                ? `${config.bgColor}/30 ${config.color} ring-1 ring-current`
+                                                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                                                 }`}
                                         >
                                             {config.label}
@@ -303,8 +297,8 @@ const SequenceCard: React.FC<{
                                                 onClick={() => onUpdate({ ...sequence, hook_intensity: intensity })}
                                                 disabled={disabled}
                                                 className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${sequence.hook_intensity === intensity
-                                                        ? `${INTENSITY_CONFIG[intensity].color} bg-white/10 ring-1 ring-current`
-                                                        : 'text-slate-500 hover:text-slate-300'
+                                                    ? `${INTENSITY_CONFIG[intensity].color} bg-white/10 ring-1 ring-current`
+                                                    : 'text-slate-500 hover:text-slate-300'
                                                     }`}
                                             >
                                                 {INTENSITY_CONFIG[intensity].label}
