@@ -45,7 +45,7 @@ export interface SourceRef {
 // =============================================================================
 
 export interface RuleSpec {
-    operator: 'eq' | 'gt' | 'lt' | 'gte' | 'lte' | 'between' | 'in' | 'exists';
+    operator: 'eq' | 'gt' | 'lt' | 'gte' | 'lte' | '<=' | '>=' | 'between' | 'in' | 'exists';
     value: any;
     tolerance?: number;
     unit?: string;
