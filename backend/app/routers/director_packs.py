@@ -582,3 +582,184 @@ async def export_director_pack(pack_id: str) -> Dict[str, Any]:
         "export_format": "json",
         "exported_at": datetime.utcnow().isoformat(),
     }
+
+
+# =============================================================================
+# Validation Endpoints
+# =============================================================================
+
+class ShotContract(BaseModel):
+    """Shot contract for validation."""
+    shot_id: str
+    prompt: Optional[str] = None
+    visual_prompt: Optional[str] = None
+    duration_sec: Optional[float] = None
+    start_time: Optional[float] = None
+    end_time: Optional[float] = None
+    cuts_per_second: Optional[float] = None
+
+
+class ValidateRequest(BaseModel):
+    """Request for DNA compliance validation."""
+    pack_id: str
+    shots: List[ShotContract]
+
+
+class RuleResult(BaseModel):
+    """Result of a single rule check."""
+    rule_id: str
+    rule_name: str
+    priority: str
+    level: str
+    confidence: float
+    message: str
+    expected: Optional[Any] = None
+    actual: Optional[Any] = None
+
+
+class ShotReportResponse(BaseModel):
+    """Compliance report for a single shot."""
+    shot_id: str
+    overall_level: str
+    overall_confidence: float
+    rule_results: List[RuleResult]
+    critical_violations: int
+    high_violations: int
+    suggestions: List[str]
+
+
+class BatchReportResponse(BaseModel):
+    """Compliance report for batch validation."""
+    total_shots: int
+    compliant_shots: int
+    partial_shots: int
+    violation_shots: int
+    overall_compliance_rate: float
+    summary: str
+    shot_reports: List[ShotReportResponse]
+
+
+@router.post("/validate")
+async def validate_shots(request: ValidateRequest) -> Dict[str, Any]:
+    """Validate shot contracts against DirectorPack DNA rules.
+    
+    Args:
+        request: Validation request with pack_id and shots
+        
+    Returns:
+        BatchComplianceReport with per-shot details and summary
+    """
+    from app.services.dna_validator import (
+        validate_batch_compliance,
+        ComplianceLevel,
+    )
+    
+    pack = _pack_store.get(request.pack_id)
+    if not pack:
+        raise HTTPException(status_code=404, detail=f"DirectorPack not found: {request.pack_id}")
+    
+    # Convert shots to dicts for validator
+    shots_dict = [shot.model_dump() for shot in request.shots]
+    pack_dict = pack.model_dump()
+    
+    # Run validation
+    report = validate_batch_compliance(shots_dict, pack_dict)
+    
+    # Convert to response format
+    shot_reports = []
+    for sr in report.shot_reports:
+        shot_reports.append(ShotReportResponse(
+            shot_id=sr.shot_id,
+            overall_level=sr.overall_level.value,
+            overall_confidence=sr.overall_confidence,
+            rule_results=[
+                RuleResult(
+                    rule_id=r.rule_id,
+                    rule_name=r.rule_name,
+                    priority=r.priority.value,
+                    level=r.level.value,
+                    confidence=r.confidence,
+                    message=r.message,
+                    expected=r.expected,
+                    actual=r.actual,
+                )
+                for r in sr.rule_results
+            ],
+            critical_violations=sr.critical_violations,
+            high_violations=sr.high_violations,
+            suggestions=sr.suggestions,
+        ))
+    
+    return {
+        "success": True,
+        "data": {
+            "total_shots": report.total_shots,
+            "compliant_shots": report.compliant_shots,
+            "partial_shots": report.partial_shots,
+            "violation_shots": report.violation_shots,
+            "overall_compliance_rate": report.overall_compliance_rate,
+            "summary": report.summary,
+            "shot_reports": [sr.model_dump() for sr in shot_reports],
+        },
+        "pack_id": request.pack_id,
+        "validated_at": datetime.utcnow().isoformat(),
+    }
+
+
+@router.post("/{pack_id}/validate-single")
+async def validate_single_shot(
+    pack_id: str,
+    shot: ShotContract,
+) -> Dict[str, Any]:
+    """Validate a single shot contract against DirectorPack DNA rules.
+    
+    Args:
+        pack_id: DirectorPack identifier
+        shot: Shot contract to validate
+        
+    Returns:
+        ShotComplianceReport with rule-by-rule details
+    """
+    from app.services.dna_validator import (
+        validate_shot_compliance,
+        get_compliance_badge,
+    )
+    
+    pack = _pack_store.get(pack_id)
+    if not pack:
+        raise HTTPException(status_code=404, detail=f"DirectorPack not found: {pack_id}")
+    
+    shot_dict = shot.model_dump()
+    pack_dict = pack.model_dump()
+    
+    report = validate_shot_compliance(shot_dict, pack_dict)
+    badge = get_compliance_badge(report.overall_level)
+    
+    return {
+        "success": True,
+        "data": {
+            "shot_id": report.shot_id,
+            "badge": badge,
+            "overall_level": report.overall_level.value,
+            "overall_confidence": report.overall_confidence,
+            "critical_violations": report.critical_violations,
+            "high_violations": report.high_violations,
+            "suggestions": report.suggestions,
+            "rule_results": [
+                {
+                    "rule_id": r.rule_id,
+                    "rule_name": r.rule_name,
+                    "priority": r.priority.value,
+                    "level": r.level.value,
+                    "confidence": r.confidence,
+                    "message": r.message,
+                    "expected": r.expected,
+                    "actual": r.actual,
+                }
+                for r in report.rule_results
+            ],
+        },
+        "pack_id": pack_id,
+        "validated_at": datetime.utcnow().isoformat(),
+    }
+
