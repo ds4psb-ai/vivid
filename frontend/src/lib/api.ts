@@ -281,6 +281,10 @@ export interface CapsuleRunRequest {
   params: Record<string, unknown>;
   upstream_context?: Record<string, unknown>;
   async_mode?: boolean;
+  /** DirectorPack for DNA-based multi-scene consistency */
+  director_pack?: Record<string, unknown>;
+  /** Per-scene overrides for DNA rules */
+  scene_overrides?: Record<string, Record<string, unknown>>;
 }
 
 export interface CapsuleRunStatus {
