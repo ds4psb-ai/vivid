@@ -24,6 +24,7 @@ from app.routers.payment import router as payment_router
 from app.routers.events import router as events_router
 from app.routers.jobs import router as jobs_router
 from app.routers.director_packs import router as director_packs_router
+from app.routers.content_metrics import router as content_metrics_router
 from app.seed import seed_auteur_data
 
 
@@ -71,6 +72,7 @@ app.include_router(payment_router, prefix="/api/v1", tags=["payment"])
 app.include_router(events_router, prefix="/api/v1", tags=["events"])
 app.include_router(jobs_router, prefix="/api/v1", tags=["jobs"])
 app.include_router(director_packs_router, prefix="/api/v1", tags=["director-packs"])
+app.include_router(content_metrics_router, prefix="/api/v1", tags=["content-metrics"])
 app.include_router(realtime_router, prefix="/ws", tags=["realtime"])
 
 
