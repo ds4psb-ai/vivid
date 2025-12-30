@@ -384,57 +384,163 @@ def _director_pack_to_prompt_rules(director_pack: Dict[str, Any]) -> str:
     Returns:
         Formatted string of rules to inject into system prompt
     """
-    lines = ["## 일관성 규칙 (DNA Invariants) - 모든 샷에 적용"]
+    meta = director_pack.get("meta", {})
+    pack_name = meta.get("pattern_id", "unknown").split(".")[-1].replace("-", " ").title()
     
-    # DNA Invariants
+    lines = [
+        f"# 🧬 DirectorPack: {pack_name}",
+        f"버전: {meta.get('version', '1.0')} | 규칙 수: {meta.get('invariant_count', 0)}",
+        "",
+        "## ⚡ 핵심 규칙 (DNA Invariants) - 모든 샷에 반드시 적용",
+        "각 샷의 프롬프트에 아래 규칙들을 명시적으로 반영하세요.",
+        ""
+    ]
+    
+    # DNA Invariants - detailed format
     dna_invariants = director_pack.get("dna_invariants", [])
-    for inv in dna_invariants:
-        rule_type = inv.get("rule_type", "")
+    critical_rules = [inv for inv in dna_invariants if inv.get("priority") == "critical"]
+    high_rules = [inv for inv in dna_invariants if inv.get("priority") == "high"]
+    other_rules = [inv for inv in dna_invariants if inv.get("priority") not in ("critical", "high")]
+    
+    def format_invariant(inv, index):
+        """Format a single invariant with full details."""
+        rule_type = inv.get("rule_type", "general")
         name = inv.get("name", "")
         description = inv.get("description", "")
+        condition = inv.get("condition", "")
         spec = inv.get("spec", {})
         priority = inv.get("priority", "medium")
+        confidence = inv.get("confidence", 0.8)
         
-        priority_emoji = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "⚪"}.get(priority, "⚪")
+        priority_labels = {
+            "critical": "🔴 CRITICAL",
+            "high": "🟠 HIGH",
+            "medium": "🟡 MEDIUM",
+            "low": "⚪ LOW"
+        }
         
-        if rule_type == "composition":
-            lines.append(f"{priority_emoji} [구도] {name}: {description}")
-        elif rule_type == "timing":
-            val = spec.get("value", "")
-            lines.append(f"{priority_emoji} [타이밍] {name}: {description} (기준: {spec.get('operator', '')} {val})")
-        elif rule_type == "audio":
-            lines.append(f"{priority_emoji} [오디오] {name}: {description}")
-        elif rule_type == "technical":
-            lines.append(f"{priority_emoji} [기술] {name}: {description}")
-        else:
-            lines.append(f"{priority_emoji} [{rule_type}] {name}: {description}")
+        type_labels = {
+            "composition": "🎯 구도",
+            "timing": "⏱️ 타이밍",
+            "audio": "🔊 오디오",
+            "lighting": "💡 조명",
+            "color": "🎨 색감",
+            "camera": "📹 카메라",
+            "engagement": "📊 참여도",
+            "narrative": "📖 서사",
+            "technical": "⚙️ 기술"
+        }
         
-        # Add coach line as guidance
+        result_lines = [
+            f"### 규칙 {index}: {name}",
+            f"- **유형**: {type_labels.get(rule_type, f'📌 {rule_type}')}",
+            f"- **우선순위**: {priority_labels.get(priority, priority)}",
+            f"- **설명**: {description}",
+        ]
+        
+        # Add condition and spec
+        if condition and spec:
+            operator = spec.get("operator", "=")
+            value = spec.get("value", "")
+            unit = spec.get("unit", "")
+            result_lines.append(f"- **조건**: `{condition}` {operator} {value}{unit}")
+        
+        # Add explicit guidance for prompt generation
         coach_line = inv.get("coach_line_ko") or inv.get("coach_line")
         if coach_line:
-            lines.append(f"   → 지침: {coach_line}")
+            result_lines.append(f"- **프롬프트 지침**: \"{coach_line}\"")
+        
+        # Add example keywords to include
+        if rule_type == "composition":
+            if "center" in condition.lower() or "중앙" in name:
+                result_lines.append("- **포함할 키워드**: 중앙, 대칭, center, symmetric")
+            elif "vertical" in condition.lower() or "수직" in name:
+                result_lines.append("- **포함할 키워드**: 수직, 위아래, 계단, 층간, vertical, layered")
+        elif rule_type == "timing":
+            result_lines.append(f"- **목표 값**: {spec.get('operator', '')} {spec.get('value', '')} (신뢰도: {confidence:.0%})")
+        
+        return "\n".join(result_lines)
     
-    # Forbidden Mutations
+    # Critical rules first
+    if critical_rules:
+        lines.append("### 🔴 CRITICAL 규칙 (필수 준수)")
+        for i, inv in enumerate(critical_rules, 1):
+            lines.append(format_invariant(inv, i))
+            lines.append("")
+    
+    # High priority rules
+    if high_rules:
+        lines.append("### 🟠 HIGH 규칙 (강력 권장)")
+        for i, inv in enumerate(high_rules, 1 + len(critical_rules)):
+            lines.append(format_invariant(inv, i))
+            lines.append("")
+    
+    # Other rules
+    if other_rules:
+        lines.append("### 기타 규칙")
+        for i, inv in enumerate(other_rules, 1 + len(critical_rules) + len(high_rules)):
+            lines.append(format_invariant(inv, i))
+            lines.append("")
+    
+    # Forbidden Mutations - explicit negative constraints
     forbidden = director_pack.get("forbidden_mutations", [])
     if forbidden:
-        lines.append("\n## 금지 규칙 (Forbidden Mutations) - 절대 하지 말 것")
+        lines.extend([
+            "",
+            "## 🚫 금지 규칙 (Forbidden Mutations) - 절대 사용 금지",
+            "아래 요소들은 프롬프트에 포함하지 마세요:",
+            ""
+        ])
         for fm in forbidden:
             severity = fm.get("severity", "major")
-            severity_emoji = {"critical": "🚫", "major": "⛔", "minor": "⚠️"}.get(severity, "⚠️")
+            severity_icon = {"critical": "🚫🚫", "major": "🚫", "minor": "⚠️"}.get(severity, "⚠️")
             name = fm.get("name", "")
             desc = fm.get("description", "")
-            lines.append(f"{severity_emoji} {name}: {desc}")
+            condition = fm.get("forbidden_condition", "")
+            coach = fm.get("coach_line_ko") or fm.get("coach_line", "")
+            
+            lines.append(f"- {severity_icon} **{name}**: {desc}")
+            if condition:
+                lines.append(f"  - 금지 조건: `{condition}`")
+            if coach:
+                lines.append(f"  - 코칭: \"{coach}\"")
     
-    # Mutation Slots (variable elements)
+    # Mutation Slots - allowed variations
     slots = director_pack.get("mutation_slots", [])
     if slots:
-        lines.append("\n## 변경 가능 요소 (Mutation Slots)")
+        lines.extend([
+            "",
+            "## 🎛️ 변경 가능 요소 (Mutation Slots)",
+            "아래 요소들은 씬에 따라 조정 가능합니다:",
+            ""
+        ])
         for slot in slots:
             name = slot.get("name", "")
+            slot_type = slot.get("slot_type", "")
             allowed = slot.get("allowed_values", [])
+            allowed_range = slot.get("allowed_range", [])
             default = slot.get("default_value")
+            desc = slot.get("description", "")
+            
             if allowed:
-                lines.append(f"- {name}: {', '.join(str(v) for v in allowed)} (기본: {default})")
+                values_str = " | ".join(f"`{v}`" for v in allowed)
+                lines.append(f"- **{name}** ({slot_type}): {values_str}")
+                lines.append(f"  - 기본값: `{default}` | {desc}")
+            elif allowed_range:
+                lines.append(f"- **{name}** ({slot_type}): {allowed_range[0]} ~ {allowed_range[1]}")
+                lines.append(f"  - 기본값: `{default}` | {desc}")
+    
+    # Add compliance reminder
+    lines.extend([
+        "",
+        "---",
+        "## 📋 준수 체크리스트",
+        "각 샷 생성 시 아래를 확인하세요:",
+        "1. CRITICAL 규칙의 키워드가 프롬프트에 포함되어 있는가?",
+        "2. 금지된 요소가 프롬프트에 없는가?",
+        "3. 타이밍 규칙이 숫자로 명시되어 있는가?",
+        ""
+    ])
     
     return "\n".join(lines)
 

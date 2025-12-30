@@ -71,13 +71,229 @@ class BatchComplianceReport:
 
 
 # =============================================================================
+# Keyword Dictionaries (Bilingual: Korean + English)
+# =============================================================================
+
+COMPOSITION_KEYWORDS = {
+    "center": {
+        "ko": ["중앙", "중심", "가운데", "센터", "대칭", "정중앙", "한가운데"],
+        "en": ["center", "centered", "central", "middle", "symmetric", "symmetrical"],
+        "patterns": [
+            r"(중앙|center)[\s]*배치",
+            r"화면[\s]*(중앙|가운데)",
+            r"(대칭|symmetr)",
+        ]
+    },
+    "vertical": {
+        "ko": ["수직", "위아래", "상하", "층간", "계단", "높이", "수직선", "위쪽", "아래쪽"],
+        "en": ["vertical", "top-bottom", "staircase", "stairs", "height", "layered", "levels"],
+        "patterns": [
+            r"(위|아래)[\s]*공간",
+            r"층[\s]*간",
+            r"수직[\s]*(공간|블로킹|배치)",
+        ]
+    },
+    "thirds": {
+        "ko": ["삼분할", "1/3", "3분할", "황금분할"],
+        "en": ["rule of thirds", "third", "thirds", "golden ratio"],
+        "patterns": [
+            r"(오른쪽|왼쪽)[\s]*1/3",
+            r"(상단|하단)[\s]*1/3",
+        ]
+    },
+    "wide": {
+        "ko": ["와이드", "풀샷", "전경", "에스타블리싱", "넓은", "광각", "원경"],
+        "en": ["wide", "full shot", "establishing", "panorama", "panoramic", "long shot"],
+        "patterns": [
+            r"wide[\s]*shot",
+            r"full[\s]*shot",
+            r"establishing[\s]*shot",
+        ]
+    },
+    "closeup": {
+        "ko": ["클로즈업", "접사", "근접", "얼굴", "디테일", "익스트림", "바스트"],
+        "en": ["close-up", "closeup", "close up", "extreme closeup", "detail", "bust shot"],
+        "patterns": [
+            r"close[\s\-]*up",
+            r"extreme[\s]*close",
+        ]
+    },
+    "depth": {
+        "ko": ["깊은", "심도", "포커스", "전경", "후경", "중경", "레이어"],
+        "en": ["deep", "depth", "focus", "foreground", "background", "midground", "layered"],
+        "patterns": [
+            r"(전|중|후)경",
+            r"(deep|shallow)[\s]*focus",
+        ]
+    },
+    "framing": {
+        "ko": ["프레이밍", "프레임", "구도", "자연", "문", "창문", "통로"],
+        "en": ["framing", "frame", "doorway", "window", "archway", "natural frame"],
+        "patterns": [
+            r"(창문|문|통로)[\s]*(을[\s]*통해|으로)",
+            r"natural[\s]*frame",
+        ]
+    },
+}
+
+CAMERA_KEYWORDS = {
+    "zoom": {
+        "ko": ["줌", "줌인", "줌아웃", "확대", "축소"],
+        "en": ["zoom", "zoom in", "zoom out", "zooming"],
+        "patterns": [r"(줌|zoom)[\s]*(인|아웃|in|out)?"]
+    },
+    "pan": {
+        "ko": ["팬", "패닝", "좌우", "수평이동"],
+        "en": ["pan", "panning", "horizontal"],
+        "patterns": [r"(팬|pan)[\s]*(좌|우|left|right)?"]
+    },
+    "tilt": {
+        "ko": ["틸트", "틸팅", "상하이동"],
+        "en": ["tilt", "tilting"],
+        "patterns": [r"(틸트|tilt)[\s]*(업|다운|up|down)?"]
+    },
+    "dutch": {
+        "ko": ["더치", "기울", "사선", "비스듬"],
+        "en": ["dutch", "dutch angle", "canted", "oblique", "tilted"],
+        "patterns": [r"(더치|dutch)[\s]*(앵글|angle)?", r"카메라[\s]*기울"]
+    },
+    "tracking": {
+        "ko": ["트래킹", "따라가", "추적", "팔로우"],
+        "en": ["tracking", "follow", "following"],
+        "patterns": [r"(tracking|follow)[\s]*shot", r"따라가[\s]*(는|며)"]
+    },
+    "push": {
+        "ko": ["푸시인", "다가가", "접근", "전진"],
+        "en": ["push in", "dolly in", "push", "approach"],
+        "patterns": [r"(push|dolly)[\s]*in", r"(다가|전진)[\s]*(가|하)"]
+    },
+    "pullback": {
+        "ko": ["풀백", "뒤로", "후퇴", "물러나"],
+        "en": ["pull back", "dolly out", "pullback", "retreat"],
+        "patterns": [r"(pull|dolly)[\s]*(back|out)"]
+    },
+    "crane": {
+        "ko": ["크레인", "지브", "상승", "하강"],
+        "en": ["crane", "jib", "rising", "descending"],
+        "patterns": [r"(crane|jib)[\s]*shot"]
+    },
+    "handheld": {
+        "ko": ["핸드헬드", "손흔들림", "다큐", "리얼리티"],
+        "en": ["handheld", "shaky", "documentary", "verité"],
+        "patterns": [r"hand[\s]*held"]
+    },
+    "steadicam": {
+        "ko": ["스테디캠", "짐벌", "안정", "부드러운"],
+        "en": ["steadicam", "gimbal", "stabilized", "smooth"],
+        "patterns": [r"steadi[\s]*cam"]
+    },
+}
+
+LIGHTING_KEYWORDS = {
+    "natural": {
+        "ko": ["자연광", "햇빛", "햇살", "일광", "창문광"],
+        "en": ["natural", "sunlight", "daylight", "window light", "ambient"],
+        "patterns": [r"(자연|natural)[\s]*(광|light)"]
+    },
+    "backlight": {
+        "ko": ["역광", "실루엣", "후광", "뒤에서"],
+        "en": ["backlight", "backlighting", "silhouette", "rim light"],
+        "patterns": [r"back[\s]*light", r"역[\s]*광"]
+    },
+    "side": {
+        "ko": ["측광", "방향광", "옆에서", "측면"],
+        "en": ["side light", "directional", "lateral", "key light"],
+        "patterns": [r"side[\s]*light", r"(측|방향)[\s]*광"]
+    },
+    "low_key": {
+        "ko": ["로우키", "어두운", "그림자", "명암", "무드", "어둠"],
+        "en": ["low key", "dark", "shadow", "moody", "chiaroscuro", "noir"],
+        "patterns": [r"low[\s]*key", r"(어둡|어두운|그림자)"]
+    },
+    "high_key": {
+        "ko": ["하이키", "밝은", "화사한", "환한", "고조도"],
+        "en": ["high key", "bright", "luminous", "overexposed", "soft light"],
+        "patterns": [r"high[\s]*key", r"(밝|환|화사)"]
+    },
+    "practical": {
+        "ko": ["실용광", "램프", "조명기구", "네온"],
+        "en": ["practical", "lamp", "neon", "in-frame light"],
+        "patterns": [r"practical[\s]*light"]
+    },
+    "motivated": {
+        "ko": ["동기화광", "창문", "문틈", "틈새"],
+        "en": ["motivated", "motivated light", "source light"],
+        "patterns": [r"(창문|문)[\s]*(에서|으로)[\s]*들어"]
+    },
+}
+
+COLOR_KEYWORDS = {
+    "warm": {
+        "ko": ["따뜻한", "웜톤", "노란", "주황", "갈색"],
+        "en": ["warm", "orange", "yellow", "amber", "golden"],
+        "patterns": [r"(따뜻|warm)[\s]*(한|tone)?"]
+    },
+    "cool": {
+        "ko": ["차가운", "쿨톤", "파란", "청색", "차분한"],
+        "en": ["cool", "cold", "blue", "cyan", "teal"],
+        "patterns": [r"(차가|cool|cold)[\s]*(운|tone)?"]
+    },
+    "desaturated": {
+        "ko": ["저채도", "무채색", "흑백", "모노"],
+        "en": ["desaturated", "muted", "monochrome", "grayscale", "b&w"],
+        "patterns": [r"(저|low)[\s]*채도", r"(흑|black)[\s]*백"]
+    },
+    "vibrant": {
+        "ko": ["선명한", "생동감", "채도", "화려한"],
+        "en": ["vibrant", "saturated", "vivid", "colorful", "punchy"],
+        "patterns": [r"(선명|vibrant|vivid)"]
+    },
+}
+
+
+# =============================================================================
 # Rule Extractors from Shot Prompt
 # =============================================================================
 
+def match_keywords(prompt: str, keyword_dict: dict) -> bool:
+    """
+    Check if prompt contains any keywords from the keyword dictionary.
+    Supports bilingual (ko/en) keywords and regex patterns.
+    """
+    prompt_lower = prompt.lower()
+    
+    # Check Korean keywords
+    for kw in keyword_dict.get("ko", []):
+        if kw in prompt:  # Korean is case-sensitive
+            return True
+    
+    # Check English keywords
+    for kw in keyword_dict.get("en", []):
+        if kw in prompt_lower:
+            return True
+    
+    # Check regex patterns
+    for pattern in keyword_dict.get("patterns", []):
+        if re.search(pattern, prompt, re.IGNORECASE):
+            return True
+    
+    return False
+
+
 def extract_timing_info(shot: Dict[str, Any]) -> Dict[str, Any]:
     """Extract timing-related info from shot contract."""
+    prompt = shot.get("prompt", "") or shot.get("visual_prompt", "")
+    
+    # Try to extract duration from prompt
+    duration = shot.get("duration_sec")
+    if duration is None:
+        # Try regex extraction
+        dur_match = re.search(r'(\d+(?:\.\d+)?)\s*(?:초|sec|s)\b', prompt)
+        if dur_match:
+            duration = float(dur_match.group(1))
+    
     return {
-        "duration_sec": shot.get("duration_sec"),
+        "duration_sec": duration,
         "start_time": shot.get("start_time"),
         "end_time": shot.get("end_time"),
         "cuts_per_second": shot.get("cuts_per_second"),
@@ -85,60 +301,69 @@ def extract_timing_info(shot: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def extract_composition_info(prompt: str) -> Dict[str, Any]:
-    """Extract composition info from prompt text."""
+    """Extract composition info from prompt text using comprehensive keyword matching."""
     info = {}
     
-    # Center composition detection
-    center_keywords = ["중앙", "center", "centered", "symmetr", "대칭"]
-    info["has_center_composition"] = any(kw in prompt.lower() for kw in center_keywords)
-    
-    # Vertical blocking
-    vertical_keywords = ["수직", "vertical", "위아래", "상하", "층간", "계단"]
-    info["has_vertical_blocking"] = any(kw in prompt.lower() for kw in vertical_keywords)
-    
-    # Rule of thirds
-    thirds_keywords = ["삼분할", "rule of thirds", "1/3", "오른쪽 1/3", "왼쪽 1/3"]
-    info["has_rule_of_thirds"] = any(kw in prompt.lower() for kw in thirds_keywords)
-    
-    # Wide shot
-    wide_keywords = ["와이드", "wide", "풀샷", "full shot", "에스타블리싱"]
-    info["has_wide_shot"] = any(kw in prompt.lower() for kw in wide_keywords)
-    
-    # Close-up
-    closeup_keywords = ["클로즈업", "close-up", "closeup", "접사"]
-    info["has_closeup"] = any(kw in prompt.lower() for kw in closeup_keywords)
+    info["has_center_composition"] = match_keywords(prompt, COMPOSITION_KEYWORDS["center"])
+    info["has_vertical_blocking"] = match_keywords(prompt, COMPOSITION_KEYWORDS["vertical"])
+    info["has_rule_of_thirds"] = match_keywords(prompt, COMPOSITION_KEYWORDS["thirds"])
+    info["has_wide_shot"] = match_keywords(prompt, COMPOSITION_KEYWORDS["wide"])
+    info["has_closeup"] = match_keywords(prompt, COMPOSITION_KEYWORDS["closeup"])
+    info["has_depth"] = match_keywords(prompt, COMPOSITION_KEYWORDS["depth"])
+    info["has_framing"] = match_keywords(prompt, COMPOSITION_KEYWORDS["framing"])
     
     return info
 
 
 def extract_camera_info(prompt: str) -> Dict[str, Any]:
-    """Extract camera movement info from prompt."""
+    """Extract camera movement info from prompt using comprehensive keyword matching."""
     info = {}
     
-    # Camera movements
-    info["has_zoom"] = "줌" in prompt or "zoom" in prompt.lower()
-    info["has_pan"] = "팬" in prompt or "pan" in prompt.lower()
-    info["has_tilt"] = "틸트" in prompt or "tilt" in prompt.lower()
-    info["has_dutch_angle"] = "더치" in prompt or "dutch" in prompt.lower() or "기울" in prompt
-    info["has_tracking"] = "트래킹" in prompt or "tracking" in prompt.lower() or "따라가" in prompt
-    info["has_push_in"] = "푸시인" in prompt or "push in" in prompt.lower() or "다가가" in prompt
+    info["has_zoom"] = match_keywords(prompt, CAMERA_KEYWORDS["zoom"])
+    info["has_pan"] = match_keywords(prompt, CAMERA_KEYWORDS["pan"])
+    info["has_tilt"] = match_keywords(prompt, CAMERA_KEYWORDS["tilt"])
+    info["has_dutch_angle"] = match_keywords(prompt, CAMERA_KEYWORDS["dutch"])
+    info["has_tracking"] = match_keywords(prompt, CAMERA_KEYWORDS["tracking"])
+    info["has_push_in"] = match_keywords(prompt, CAMERA_KEYWORDS["push"])
+    info["has_pullback"] = match_keywords(prompt, CAMERA_KEYWORDS["pullback"])
+    info["has_crane"] = match_keywords(prompt, CAMERA_KEYWORDS["crane"])
+    info["has_handheld"] = match_keywords(prompt, CAMERA_KEYWORDS["handheld"])
+    info["has_steadicam"] = match_keywords(prompt, CAMERA_KEYWORDS["steadicam"])
     
     # Lens info
-    lens_match = re.search(r'(\d+)mm', prompt)
+    lens_match = re.search(r'(\d+)\s*mm', prompt, re.IGNORECASE)
     info["lens_mm"] = int(lens_match.group(1)) if lens_match else None
+    
+    # Speed modifiers
+    info["is_fast"] = bool(re.search(r'(빠른|빠르게|fast|rapid|quick)', prompt, re.IGNORECASE))
+    info["is_slow"] = bool(re.search(r'(느린|천천히|slow|gentle|subtle)', prompt, re.IGNORECASE))
     
     return info
 
 
 def extract_lighting_info(prompt: str) -> Dict[str, Any]:
-    """Extract lighting info from prompt."""
+    """Extract lighting info from prompt using comprehensive keyword matching."""
     info = {}
     
-    info["has_natural_light"] = "자연광" in prompt or "natural" in prompt.lower()
-    info["has_backlight"] = "역광" in prompt or "backlight" in prompt.lower()
-    info["has_side_light"] = "측광" in prompt or "방향광" in prompt or "side light" in prompt.lower()
-    info["has_low_key"] = "로우키" in prompt or "low key" in prompt.lower() or "어두운" in prompt
-    info["has_high_key"] = "하이키" in prompt or "high key" in prompt.lower() or "밝은" in prompt
+    info["has_natural_light"] = match_keywords(prompt, LIGHTING_KEYWORDS["natural"])
+    info["has_backlight"] = match_keywords(prompt, LIGHTING_KEYWORDS["backlight"])
+    info["has_side_light"] = match_keywords(prompt, LIGHTING_KEYWORDS["side"])
+    info["has_low_key"] = match_keywords(prompt, LIGHTING_KEYWORDS["low_key"])
+    info["has_high_key"] = match_keywords(prompt, LIGHTING_KEYWORDS["high_key"])
+    info["has_practical"] = match_keywords(prompt, LIGHTING_KEYWORDS["practical"])
+    info["has_motivated"] = match_keywords(prompt, LIGHTING_KEYWORDS["motivated"])
+    
+    return info
+
+
+def extract_color_info(prompt: str) -> Dict[str, Any]:
+    """Extract color grading info from prompt."""
+    info = {}
+    
+    info["has_warm"] = match_keywords(prompt, COLOR_KEYWORDS["warm"])
+    info["has_cool"] = match_keywords(prompt, COLOR_KEYWORDS["cool"])
+    info["has_desaturated"] = match_keywords(prompt, COLOR_KEYWORDS["desaturated"])
+    info["has_vibrant"] = match_keywords(prompt, COLOR_KEYWORDS["vibrant"])
     
     return info
 
