@@ -285,6 +285,10 @@ export interface CapsuleRunRequest {
   director_pack?: Record<string, unknown>;
   /** Per-scene overrides for DNA rules */
   scene_overrides?: Record<string, Record<string, unknown>>;
+  /** NarrativeArc for Story-First generation (arc_type, emotion curve, dissonance) */
+  narrative_arc?: Record<string, unknown>;
+  /** HookVariant for A/B testing hook styles (style, intensity, prompt_prefix) */
+  hook_variant?: Record<string, unknown>;
 }
 
 export interface CapsuleRunStatus {

@@ -708,6 +708,8 @@ function CanvasFlow() {
           }
           // Get DirectorPack payload if enabled
           const dnaPayload = directorPackState.getApiPayload();
+          // Get Story-First payload (NarrativeArc + HookVariant)
+          const storyPayload = narrativeArcState.getApiPayload();
           const runResult = await api.runCapsule({
             canvas_id: canvasId || undefined,
             node_id: capsuleNode.id,
@@ -722,6 +724,9 @@ function CanvasFlow() {
             // DirectorPack DNA for multi-scene consistency
             director_pack: dnaPayload.director_pack,
             scene_overrides: dnaPayload.scene_overrides,
+            // Story-First: NarrativeArc + HookVariant
+            narrative_arc: storyPayload.narrative_arc || undefined,
+            hook_variant: storyPayload.hook_variant || undefined,
           });
           const runContext = {
             kind: "capsule" as const,
