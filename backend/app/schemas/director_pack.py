@@ -74,9 +74,15 @@ class SourceRef(BaseModel):
 
 class RuleSpec(BaseModel):
     """Specification for a coaching rule."""
-    operator: str = Field(description="'eq', 'gt', 'lt', 'gte', 'lte', 'between', 'in'")
+    operator: str = Field(description="'eq', 'gt', 'lt', 'gte', 'lte', 'between', 'in', 'pattern', 'exists', '~='")
     value: Any = Field(description="Target value or range")
     tolerance: Optional[float] = Field(default=None, description="Acceptable deviation")
+    unit: Optional[str] = Field(default=None, description="Unit of measurement, e.g. 'sec', 'percent'")
+    context_filter: Optional[List[str]] = Field(
+        default=None,
+        description="Contexts where this rule applies, e.g. ['sequence_start', 'shortform_start']"
+    )
+
 
 
 class TimeScope(BaseModel):

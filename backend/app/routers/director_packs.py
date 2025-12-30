@@ -30,10 +30,14 @@ router = APIRouter(prefix="/director-packs", tags=["director-packs"])
 # =============================================================================
 
 class RuleSpec(BaseModel):
-    operator: str = Field(..., description="Comparison operator: eq, gt, lt, gte, lte, <=, >=, between, in, exists")
+    operator: str = Field(..., description="Comparison operator: eq, gt, lt, gte, lte, <=, >=, between, in, exists, ~=, pattern")
     value: Any
     tolerance: Optional[float] = None
     unit: Optional[str] = None
+    context_filter: Optional[List[str]] = Field(
+        default=None, 
+        description="Contexts where this rule applies, e.g. ['sequence_start', 'shortform_start']"
+    )
 
 
 class DNAInvariant(BaseModel):
@@ -179,28 +183,60 @@ def _create_default_bong_pack() -> DirectorPack:
         meta=PackMeta(
             pack_id=pack_id,
             pattern_id="auteur.bong-joon-ho",
-            version="2.0.0",
+            version="2.1.0",
             compiled_at=datetime.utcnow().isoformat(),
             compiled_by="system",
-            invariant_count=15,
+            invariant_count=17,
             slot_count=5,
             forbidden_count=5,
             checkpoint_count=8,
         ),
         dna_invariants=[
             # =================================================================
-            # TIMING RULES (4)
+            # TIMING RULES (6)
             # =================================================================
             DNAInvariant(
-                rule_id="hook_timing_2s",
+                rule_id="hook_timing_1_5s",
                 rule_type="timing",
-                name="훅 타이밍 2초",
-                description="시청자 관심을 2초 이내에 사로잡기 - 숏폼 최적화",
+                name="황금 1.5초 훅",
+                description="시퀀스/숏폼 시작 시 1.5초 이내 시선 잡기 (컨텍스트 인식)",
                 condition="hook_punch_time",
-                spec=RuleSpec(operator="<=", value=2.0, unit="sec"),
+                spec=RuleSpec(
+                    operator="<=",
+                    value=1.5,
+                    unit="sec",
+                    context_filter=["sequence_start", "shortform_start", "cold_open"],
+                ),
                 priority="critical",
                 confidence=0.95,
-                coach_line_ko="훅이 너무 늦어요! 시작하자마자 치고 나가세요.",
+                coach_line_ko="1.5초! 시작부터 치고 나가세요!",
+            ),
+            DNAInvariant(
+                rule_id="attention_refresh_2s",
+                rule_type="timing",
+                name="주의 환기 2초",
+                description="씬 중간에서 주의력 환기 (mid-sequence용)",
+                condition="attention_refresh_time",
+                spec=RuleSpec(
+                    operator="<=",
+                    value=2.0,
+                    unit="sec",
+                    context_filter=["mid_sequence", "act_transition"],
+                ),
+                priority="medium",
+                confidence=0.80,
+                coach_line_ko="지루해지기 전에 새로운 자극을!",
+            ),
+            DNAInvariant(
+                rule_id="expectation_fulfillment_10s",
+                rule_type="engagement",
+                name="10초 기대감 충족",
+                description="훅에서 만든 기대감을 10초 내 부분 충족",
+                condition="expectation_gap_closed",
+                spec=RuleSpec(operator=">=", value=0.7),
+                priority="high",
+                confidence=0.82,
+                coach_line_ko="10초까지 뭔가 보여줘야 해요!",
             ),
             DNAInvariant(
                 rule_id="shot_length_median",
