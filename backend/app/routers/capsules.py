@@ -63,6 +63,11 @@ class CapsuleRunRequest(BaseModel):
     params: dict
     upstream_context: Optional[dict] = None
     async_mode: bool = False
+    # Story-First fields
+    director_pack: Optional[dict] = None  # DirectorPack DNA for multi-scene consistency
+    scene_overrides: Optional[dict] = None  # Per-scene overrides for DNA rules
+    narrative_arc: Optional[dict] = None  # NarrativeArc for story structure
+    hook_variant: Optional[dict] = None  # HookVariant for A/B testing hook styles
 
 
 class CapsuleRunResponse(BaseModel):
@@ -836,6 +841,10 @@ async def _execute_capsule_run(
     is_admin: bool,
     user_id: Optional[str],
     credit_cost: int,
+    director_pack: Optional[dict] = None,
+    scene_overrides: Optional[dict] = None,
+    narrative_arc: Optional[dict] = None,
+    hook_variant: Optional[dict] = None,
 ) -> None:
     output_contracts = spec_payload.get("outputContracts") or spec_payload.get("output_contracts") or {}
     pattern_version = spec_payload.get("patternVersion") or spec_payload.get("pattern_version")
@@ -890,6 +899,10 @@ async def _execute_capsule_run(
                 params=params,
                 capsule_spec=spec_payload,
                 progress_cb=_progress_cb,
+                director_pack=director_pack,
+                scene_overrides=scene_overrides,
+                narrative_arc=narrative_arc,
+                hook_variant=hook_variant,
             )
             latency_ms = int((time.perf_counter() - start_time) * 1000)
             token_usage, cost_usd = _extract_metrics(summary)
@@ -1222,6 +1235,10 @@ async def run_capsule(
                 is_admin,
                 user_id,
                 credit_cost,
+                director_pack=data.director_pack,
+                scene_overrides=data.scene_overrides,
+                narrative_arc=data.narrative_arc,
+                hook_variant=data.hook_variant,
             )
         )
         return CapsuleRunResponse(
@@ -1246,6 +1263,10 @@ async def run_capsule(
         inputs=sanitized_inputs,
         params=sanitized_params,
         capsule_spec=spec_payload,
+        director_pack=data.director_pack,
+        scene_overrides=data.scene_overrides,
+        narrative_arc=data.narrative_arc,
+        hook_variant=data.hook_variant,
     )
     latency_ms = int((time.perf_counter() - start_time) * 1000)
     token_usage, cost_usd = _extract_metrics(summary)
