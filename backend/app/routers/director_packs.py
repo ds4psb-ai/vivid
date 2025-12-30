@@ -989,3 +989,87 @@ async def validate_single_shot(
         "validated_at": datetime.utcnow().isoformat(),
     }
 
+
+# =============================================================================
+# Story-First Combined Validation (DNA + Arc)
+# =============================================================================
+
+class StoryFirstValidationRequest(BaseModel):
+    """Story-First 통합 검증 요청"""
+    shots: List[Dict[str, Any]] = Field(..., description="Shot contracts to validate")
+    director_pack: Optional[Dict[str, Any]] = Field(None, description="DirectorPack for DNA validation")
+    narrative_arc: Optional[Dict[str, Any]] = Field(None, description="NarrativeArc for structure validation")
+    dna_weight: float = Field(0.4, ge=0.0, le=1.0, description="DNA weight in total score")
+    arc_weight: float = Field(0.6, ge=0.0, le=1.0, description="Arc weight in total score")
+
+
+@router.post("/validate/story-first")
+async def validate_story_first_compliance(request: StoryFirstValidationRequest):
+    """
+    Story-First 통합 검증 (DNA + Arc)
+    
+    DNA(스타일) 검증과 Arc(서사) 검증을 결합하여 종합 점수를 산출합니다.
+    
+    Features:
+    - DNA: 시각 규칙, 타이밍, 구도, 금지 변형 검증
+    - Arc: 훅 커버리지, 기대감 충족, 감정 곡선 검증
+    - Combined: 가중 평균 점수, A-F 등급, 우선 수정 사항
+    
+    Response includes:
+    - total_score: 0-100 종합 점수
+    - grade: A/B/C/D/F
+    - dna_score: DNA 준수 점수
+    - arc_score: 서사 준수 점수
+    - priority_fixes: 우선 수정 필요 사항
+    - suggestions: 개선 제안
+    - markdown_report: 마크다운 형식 리포트
+    """
+    from app.services.story_first_validator import (
+        StoryFirstValidator,
+        report_to_json,
+        report_to_markdown,
+    )
+    from app.schemas.narrative import NarrativeArc, ArcType
+    
+    # Parse narrative_arc if provided
+    narrative_arc_obj = None
+    if request.narrative_arc:
+        try:
+            arc_data = request.narrative_arc
+            narrative_arc_obj = NarrativeArc(
+                arc_id=arc_data.get("arc_id", "default"),
+                arc_type=ArcType(arc_data.get("arc_type", "hook_payoff")),
+                total_duration_sec=arc_data.get("duration_sec", 60),
+                is_longform=arc_data.get("is_longform", False),
+                emotion_start=arc_data.get("emotion_start", "neutral"),
+                emotion_peak=arc_data.get("emotion_peak", "excited"),
+                emotion_end=arc_data.get("emotion_end", "satisfied"),
+            )
+            # TODO: Add sequences and shot_roles parsing
+        except Exception as e:
+            logger.warning(f"Failed to parse narrative_arc: {e}")
+    
+    # Create validator
+    validator = StoryFirstValidator(
+        dna_weight=request.dna_weight,
+        arc_weight=request.arc_weight,
+    )
+    
+    # Run validation
+    report = validator.validate(
+        shots=request.shots,
+        director_pack=request.director_pack,
+        narrative_arc=narrative_arc_obj,
+    )
+    
+    # Generate outputs
+    json_report = report_to_json(report)
+    markdown_report = report_to_markdown(report)
+    
+    return {
+        "success": True,
+        **json_report,
+        "markdown_report": markdown_report,
+        "validated_at": datetime.utcnow().isoformat(),
+    }
+
