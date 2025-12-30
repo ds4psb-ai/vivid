@@ -74,6 +74,8 @@ import { useRouter } from "next/navigation";
 import { useCreditBalance } from "@/hooks/useCreditBalance";
 import { useSessionContext } from "@/contexts/SessionContext";
 import LoginRequiredModal from "@/components/LoginRequiredModal";
+import { useDirectorPackState } from "@/hooks/useDirectorPackState";
+import { CanvasDirectorPackPanel } from "@/components/canvas/CanvasDirectorPackPanel";
 
 const nodeTypes = {
   input: CanvasNode,
@@ -205,6 +207,10 @@ function CanvasFlow() {
   const { takeSnapshot, undo, redo, canUndo, canRedo } = useUndoRedo();
   const { updateNodeData, updateNodesByType } = useNodeLifecycle(setNodes, setSelectedNode);
   const { balance: creditBalance } = useCreditBalance();
+
+  // DirectorPack state for multi-scene DNA consistency
+  const capsuleNode = useMemo(() => nodes.find((n) => n.type === "capsule"), [nodes]);
+  const directorPackState = useDirectorPackState(capsuleNode?.data?.capsuleId);
 
   const openPreviewPanel = useCallback(() => {
     withViewTransition(() => setShowPreviewPanel(true));
@@ -695,6 +701,8 @@ function CanvasFlow() {
               }
             }
           }
+          // Get DirectorPack payload if enabled
+          const dnaPayload = directorPackState.getApiPayload();
           const runResult = await api.runCapsule({
             canvas_id: canvasId || undefined,
             node_id: capsuleNode.id,
@@ -706,6 +714,9 @@ function CanvasFlow() {
               ? undefined
               : buildUpstreamContext(capsuleNode.id, contextMode),
             async_mode: true,
+            // DirectorPack DNA for multi-scene consistency
+            director_pack: dnaPayload.director_pack,
+            scene_overrides: dnaPayload.scene_overrides,
           });
           const runContext = {
             kind: "capsule" as const,
@@ -1736,6 +1747,14 @@ function CanvasFlow() {
               borderRadius: "8px",
             }}
           />
+          {/* DirectorPack DNA Panel - Top Right */}
+          <Panel position="top-right" className="mt-20 mr-4 w-64">
+            <CanvasDirectorPackPanel
+              state={directorPackState}
+              capsuleId={capsuleNode?.data?.capsuleId}
+              defaultCollapsed={true}
+            />
+          </Panel>
           {/* Custom Controls Positioned Bottom Right */}
           <Panel position="bottom-right" className="mb-8 mr-8 flex flex-col gap-2">
             <button onClick={() => zoomIn()} className="bg-slate-900/80 p-2 rounded-lg border border-white/10 text-slate-400 hover:text-white hover:bg-white/10" title="Zoom In">

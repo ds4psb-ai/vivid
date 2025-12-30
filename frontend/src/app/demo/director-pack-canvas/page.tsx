@@ -144,8 +144,8 @@ export default function DirectorPackDemoPage() {
                             onClick={handleSimulateRun}
                             disabled={isGenerating}
                             className={`w-full py-4 rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-3 ${isGenerating
-                                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                                    : 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:shadow-lg hover:shadow-emerald-500/20'
+                                ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:shadow-lg hover:shadow-emerald-500/20'
                                 }`}
                         >
                             {isGenerating ? (
@@ -172,8 +172,8 @@ export default function DirectorPackDemoPage() {
                             >
                                 {/* Result Header */}
                                 <div className={`p-4 ${simulatedResult.dna_mode === 'enabled'
-                                        ? 'bg-gradient-to-r from-emerald-900/50 to-gray-900'
-                                        : 'bg-gray-800'
+                                    ? 'bg-gradient-to-r from-emerald-900/50 to-gray-900'
+                                    : 'bg-gray-800'
                                     }`}>
                                     <div className="flex items-center justify-between">
                                         <div>
@@ -186,8 +186,8 @@ export default function DirectorPackDemoPage() {
                                             </p>
                                         </div>
                                         <span className={`px-3 py-1 text-xs rounded-full ${simulatedResult.dna_mode === 'enabled'
-                                                ? 'bg-emerald-500/20 text-emerald-400'
-                                                : 'bg-yellow-500/20 text-yellow-400'
+                                            ? 'bg-emerald-500/20 text-emerald-400'
+                                            : 'bg-yellow-500/20 text-yellow-400'
                                             }`}>
                                             DNA: {simulatedResult.dna_mode}
                                         </span>
@@ -262,7 +262,8 @@ export default function DirectorPackDemoPage() {
                                 닫기 ✕
                             </button>
                         </div>
-                        <DirectorPackViewer pack={selectedPack} />
+                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                        <DirectorPackViewer pack={selectedPack as any} />
                     </motion.div>
                 )}
 
