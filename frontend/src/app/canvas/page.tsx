@@ -1774,6 +1774,23 @@ function CanvasFlow() {
                 onSetDissonance={narrativeArcState.setDissonance}
                 onSetEmotionCurve={narrativeArcState.setEmotionCurve}
                 onSelectHookVariant={narrativeArcState.setHookVariant}
+                onRunABTest={(variants) => {
+                  // Store selected variants for A/B test
+                  narrativeArcState.abTestVariants.forEach(v => {
+                    narrativeArcState.removeABTestVariant(v.variantId);
+                  });
+                  variants.forEach(v => narrativeArcState.addABTestVariant(v));
+
+                  // Notify user
+                  pushToast("info", `A/B 테스트 준비: ${variants.length}개 훅 변형 선택됨`);
+
+                  // Log for debugging
+                  console.log('A/B Test variants:', variants.map(v => ({
+                    id: v.variantId,
+                    style: v.style,
+                    intensity: v.intensity,
+                  })));
+                }}
               />
             </div>
           </Panel>
