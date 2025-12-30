@@ -1,14 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  /* Deep Space Theme */
-  --bg-0: #050505;
-  /* Darker, deeper black */
-  --bg-1: #0a0a0a;
-  --bg-2: #121212;
+  /* 2025 Deep Space Theme - Reduced Eye Strain */
+  --bg-0: #0F0F1A;
+  /* Deep Blue-Gray (Primary Background) */
+  --bg-1: #151522;
+  /* Slightly lighter for panels */
+  --bg-2: #1A1A2E;
+  /* Elevated Surface */
 
-  --fg-0: #ececec;
-  --fg-muted: rgba(236, 236, 236, 0.6);
+  --fg-0: #E8E8ED;
+  /* Muted White (Primary Text) */
+  --fg-muted: #A0A0B0;
+  /* Cool Gray (Secondary Text) - WCAG 4.5:1 compliant */
 
   /* Crebit Accents */
   --accent: #38bdf8;
@@ -165,6 +169,37 @@ pre {
 .react-flow__node-default {
   background: transparent !important;
   border: none !important;
+}
+
+/* Edge Animations */
+.react-flow__edge.animated path {
+  stroke-dasharray: 10;
+  animation: dashdraw 1s linear infinite;
+  stroke: var(--accent);
+  filter: drop-shadow(0 0 3px var(--accent));
+}
+
+@keyframes dashdraw {
+  from {
+    stroke-dashoffset: 20;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Connection Line */
+.react-flow__connection-path {
+  stroke: var(--accent);
+  stroke-width: 2;
+  filter: drop-shadow(0 0 5px var(--accent));
+}
+
+/* Handle Hover Glow */
+.react-flow__handle:hover {
+  box-shadow: 0 0 10px 2px currentColor;
+  transition: box-shadow 0.2s ease;
 }
 
 .panel-container {

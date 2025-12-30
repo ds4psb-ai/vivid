@@ -12,8 +12,10 @@
     "test:e2e:headed": "playwright test --headed"
   },
   "dependencies": {
+    "@types/dagre": "^0.7.53",
     "@xyflow/react": "^12.10.0",
     "clsx": "^2.1.1",
+    "dagre": "^0.8.5",
     "framer-motion": "^12.23.26",
     "lucide-react": "^0.562.0",
     "next": "16.1.0",

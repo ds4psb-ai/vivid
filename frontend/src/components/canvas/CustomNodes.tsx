@@ -9,12 +9,12 @@ import {
   CheckCircle2,
   FileInput,
   FileOutput,
-  Lock,
   Loader2,
   Palette,
   Settings,
   Sparkles,
   Workflow,
+  Video,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { clsx, type ClassValue } from "clsx";
@@ -33,13 +33,46 @@ export type CanvasNodeKind =
   | "customization"
   | "processing"
   | "output"
-  | "capsule";
+  | "capsule"
+  | "asset";
+
+// Handle types matching backend
+export type HandleType = "text" | "image" | "video" | "audio" | "dna" | "metadata" | "any";
+export type HandlePosition = "left" | "right" | "top" | "bottom";
+
+export interface NodeHandle {
+  id: string;
+  type: HandleType;
+  position: HandlePosition;
+  label?: string;
+  required?: boolean;
+  max_connections?: number;
+}
+
+// Handle type colors
+const HANDLE_COLORS: Record<HandleType, string> = {
+  text: "bg-sky-400",
+  image: "bg-amber-400",
+  video: "bg-emerald-400",
+  audio: "bg-purple-400",
+  dna: "bg-rose-400",
+  metadata: "bg-slate-400",
+  any: "bg-white",
+};
 
 export interface CanvasNodeData extends Record<string, unknown> {
   label: string;
   subtitle?: string;
+  description?: string;
+  // Node category (from backend)
+  category?: "input" | "generate" | "refine" | "validate" | "compose" | "output";
   // 5-State FSM: idle | loading | streaming | complete | error
   status?: "idle" | "loading" | "streaming" | "complete" | "error" | "cancelled";
+  // Typed handles
+  input_handles?: NodeHandle[];
+  output_handles?: NodeHandle[];
+  // AI model
+  ai_model?: string;
   // Capsule node specific
   capsuleId?: string;
   capsuleVersion?: string;
@@ -54,6 +87,9 @@ export interface CanvasNodeData extends Record<string, unknown> {
   params?: Record<string, unknown>;
   evidence_refs?: string[];
   locked?: boolean;
+  // DNA Compliance status
+  complianceStatus?: "compliant" | "warning" | "violation";
+  complianceIssueCount?: number;
   // Streaming state data
   streamingData?: {
     partialText: string;
@@ -118,6 +154,13 @@ const NODE_CONFIG: Record<
     text: "text-rose-100",
     badge: "bg-rose-500/20 text-rose-200 border-rose-500/30",
   },
+  asset: {
+    icon: Video,
+    gradient: "from-violet-400 to-fuchsia-600",
+    glow: "shadow-violet-500/30",
+    text: "text-violet-100",
+    badge: "bg-violet-500/20 text-violet-200 border-violet-500/30",
+  },
 };
 
 export const CanvasNode = memo(BaseNode);
@@ -135,6 +178,8 @@ function BaseNode({ data, type, selected }: NodeProps<Node<CanvasNodeData>>) {
   const status = data.status ?? "idle";
   const evidenceRefs = Array.isArray(data.evidence_refs) ? data.evidence_refs : [];
   const evidenceCount = evidenceRefs.length;
+  const complianceStatus = data.complianceStatus;
+  const complianceIssueCount = data.complianceIssueCount || 0;
 
   // 5-State FSM Visual Mapping
   const statusConfig: Record<string, { class: string; label: string; icon: React.ElementType }> = {
@@ -164,6 +209,7 @@ function BaseNode({ data, type, selected }: NodeProps<Node<CanvasNodeData>>) {
     processing: t("nodeProcess"),
     output: t("nodeOutput"),
     capsule: t("nodeCapsule"),
+    asset: "Asset",
   };
 
   return (
@@ -220,29 +266,59 @@ function BaseNode({ data, type, selected }: NodeProps<Node<CanvasNodeData>>) {
         </div>
 
         {/* Badges */}
-        {isCapsule && (
-          <div className="flex flex-col items-end gap-1.5">
-            <span className="inline-flex items-center rounded-full border border-rose-500/20 bg-rose-500/5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-rose-300/80">
-              {t("sealed")}
+        <div className="flex flex-col items-end gap-1.5">
+          {/* DNA Compliance Badge */}
+          {complianceStatus === "violation" && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-red-400 animate-pulse">
+              <AlertTriangle size={10} />
+              {complianceIssueCount > 0 ? `${complianceIssueCount} issues` : "DNA 위반"}
             </span>
-            {evidenceCount > 0 && (
-              <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-emerald-300/80">
-                {t("evidenceRefs")} {evidenceCount}
+          )}
+          {complianceStatus === "warning" && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-amber-400">
+              <AlertTriangle size={10} />
+              {complianceIssueCount > 0 ? `${complianceIssueCount} warnings` : "주의"}
+            </span>
+          )}
+          {/* Capsule Badges */}
+          {isCapsule && (
+            <>
+              <span className="inline-flex items-center rounded-full border border-rose-500/20 bg-rose-500/5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-rose-300/80">
+                {t("sealed")}
               </span>
-            )}
-          </div>
-        )}
+              {evidenceCount > 0 && (
+                <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-emerald-300/80">
+                  {t("evidenceRefs")} {evidenceCount}
+                </span>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
+      {/* Skeleton Loading State */}
+      {status === "loading" && (
+        <div className="mb-4 space-y-3 px-1">
+          <div className="h-3 w-3/4 rounded bg-white/10 animate-pulse" />
+          <div className="space-y-2">
+            <div className="h-20 rounded-xl border border-white/5 bg-white/5 animate-pulse" />
+            <div className="flex gap-2">
+              <div className="h-2 w-1/2 rounded bg-white/10 animate-pulse" />
+              <div className="h-2 w-1/4 rounded bg-white/10 animate-pulse" />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Subtitle / Description */}
-      {data.subtitle && (
+      {status !== "loading" && data.subtitle && (
         <div className="mb-4 text-xs font-medium text-slate-400 leading-relaxed pl-1">
           {data.subtitle}
         </div>
       )}
 
       {/* Preview Content (Cards within Node) */}
-      {hasPreview && (
+      {status !== "loading" && hasPreview && (
         <div className="mb-4 overflow-hidden rounded-xl border border-white/5 bg-black/20">
           <div className="flex items-center justify-between border-b border-white/5 bg-white/5 px-3 py-1.5">
             <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/80">
@@ -308,8 +384,9 @@ function BaseNode({ data, type, selected }: NodeProps<Node<CanvasNodeData>>) {
         </div>
       )}
 
-      {/* Handles - Minimal & Clean */}
-      {canReceive && (
+      {/* Handles - Multi-Handle with Typed Colors */}
+      {/* Legacy fallback for nodes without typed handles */}
+      {!data.input_handles?.length && canReceive && (
         <Handle
           type="target"
           position={Position.Left}
@@ -319,7 +396,7 @@ function BaseNode({ data, type, selected }: NodeProps<Node<CanvasNodeData>>) {
           )}
         />
       )}
-      {canSend && (
+      {!data.output_handles?.length && canSend && (
         <Handle
           type="source"
           position={Position.Right}
@@ -329,6 +406,69 @@ function BaseNode({ data, type, selected }: NodeProps<Node<CanvasNodeData>>) {
           )}
         />
       )}
+
+      {/* Typed input handles */}
+      {data.input_handles?.map((handle, idx) => {
+        const positionMap: Record<string, Position> = {
+          left: Position.Left,
+          right: Position.Right,
+          top: Position.Top,
+          bottom: Position.Bottom,
+        };
+        const pos = positionMap[handle.position] || Position.Left;
+        const isVertical = pos === Position.Top || pos === Position.Bottom;
+        const offset = isVertical
+          ? { left: `${30 + idx * 25}%` }
+          : { top: `${30 + idx * 20}%` };
+
+        return (
+          <Handle
+            key={handle.id}
+            id={handle.id}
+            type="target"
+            position={pos}
+            style={offset}
+            className={cn(
+              "!h-3 !w-3 !rounded-full !border-[2px] !border-[#0a0a0c] transition-all duration-200",
+              HANDLE_COLORS[handle.type] || "bg-slate-500",
+              "hover:scale-150 hover:!border-white",
+              !handle.required && "opacity-70"
+            )}
+            title={handle.label || handle.type}
+          />
+        );
+      })}
+
+      {/* Typed output handles */}
+      {data.output_handles?.map((handle, idx) => {
+        const positionMap: Record<string, Position> = {
+          left: Position.Left,
+          right: Position.Right,
+          top: Position.Top,
+          bottom: Position.Bottom,
+        };
+        const pos = positionMap[handle.position] || Position.Right;
+        const isVertical = pos === Position.Top || pos === Position.Bottom;
+        const offset = isVertical
+          ? { left: `${30 + idx * 25}%` }
+          : { top: `${30 + idx * 20}%` };
+
+        return (
+          <Handle
+            key={handle.id}
+            id={handle.id}
+            type="source"
+            position={pos}
+            style={offset}
+            className={cn(
+              "!h-3 !w-3 !rounded-full !border-[2px] !border-[#0a0a0c] transition-all duration-200",
+              HANDLE_COLORS[handle.type] || "bg-slate-500",
+              "hover:scale-150 hover:!border-white"
+            )}
+            title={handle.label || handle.type}
+          />
+        );
+      })}
     </motion.div>
   );
 }

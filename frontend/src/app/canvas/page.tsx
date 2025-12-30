@@ -43,7 +43,10 @@ import {
   X,
   ChevronLeft,
   CreditCard,
+  LayoutGrid,
+  Video,
 } from "lucide-react";
+import { getLayoutedElements } from "@/lib/layout";
 
 import {
   CanvasNode,
@@ -78,6 +81,9 @@ import { useDirectorPackState } from "@/hooks/useDirectorPackState";
 import { CanvasDirectorPackPanel } from "@/components/canvas/CanvasDirectorPackPanel";
 import { useNarrativeArcState } from "@/hooks/useNarrativeArcState";
 import { CanvasNarrativePanel } from "@/components/canvas/CanvasNarrativePanel";
+import VibeBoard, { VibeInput } from "@/components/canvas/VibeBoard";
+import ProactiveAssistant, { ProactiveSuggestion } from "@/components/canvas/ProactiveAssistant";
+import { Wand2 } from "lucide-react";
 
 const nodeTypes = {
   input: CanvasNode,
@@ -86,6 +92,7 @@ const nodeTypes = {
   processing: CanvasNode,
   output: CanvasNode,
   capsule: CanvasNode,
+  asset: CanvasNode,
 };
 
 // Initial nodes removed from global scope to be defined inside component with translations
@@ -216,6 +223,158 @@ function CanvasFlow() {
 
   // NarrativeArc state for Story-First generation
   const narrativeArcState = useNarrativeArcState();
+
+  // VibeBoard state for AI Director workflow generation
+  const [showVibeBoard, setShowVibeBoard] = useState(false);
+  const [isVibeParsing, setIsVibeParsing] = useState(false);
+
+  const handleVibeSelected = useCallback(async (vibe: VibeInput) => {
+    setIsVibeParsing(true);
+    try {
+      const workflow = await api.interpretVibe({
+        type: vibe.type,
+        preset_id: vibe.presetId,
+        custom_description: vibe.customDescription,
+        output_type: vibe.outputType,
+        target_length_sec: vibe.targetLengthSec,
+      });
+
+      // Apply workflow nodes to canvas
+      const newNodes = workflow.nodes.map((n) => ({
+        id: n.id,
+        type: n.type as CanvasNodeKind,
+        position: n.position,
+        data: {
+          label: n.label,
+          ...n.data,
+          narrativeDna: workflow.narrative_dna,
+        },
+      }));
+
+      const newEdges = workflow.edges.map((e) => ({
+        id: e.id,
+        source: e.source,
+        target: e.target,
+        sourceHandle: e.source_handle,
+        targetHandle: e.target_handle,
+      }));
+
+      setNodes(newNodes as Node<CanvasNodeData>[]);
+      setEdges(newEdges);
+      setShowVibeBoard(false);
+      setShowEmptyOverlay(false);
+
+      // Log success
+      console.log(`AI 감독이 ${workflow.nodes.length}개 노드로 워크플로우를 생성했습니다`);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "알 수 없는 오류";
+      console.error(`바이브 해석 실패: ${msg}`);
+      setError(`바이브 해석 실패: ${msg}`);
+    } finally {
+      setIsVibeParsing(false);
+    }
+  }, [setNodes, setEdges]);
+
+  // ProactiveAssistant state
+  const [proactiveSuggestions, setProactiveSuggestions] = useState<ProactiveSuggestion[]>([]);
+  const [isProactiveMinimized, setIsProactiveMinimized] = useState(false);
+
+  const handleDismissSuggestion = useCallback((id: string) => {
+    setProactiveSuggestions((prev) => prev.filter((s) => s.id !== id));
+  }, []);
+
+  const handleAcceptSuggestion = useCallback((suggestion: ProactiveSuggestion) => {
+    console.log("Accepted suggestion:", suggestion);
+    // Apply suggestion action
+    if (suggestion.suggestedAction?.type === "modify_node" && suggestion.targetNodeId) {
+      // Find and update the target node
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (n.id === suggestion.targetNodeId) {
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                ...(suggestion.suggestedAction?.params || {}),
+              },
+            };
+          }
+          return n;
+        })
+      );
+    }
+    setProactiveSuggestions((prev) => prev.filter((s) => s.id !== suggestion.id));
+  }, [setNodes]);
+
+  const handleDismissAllSuggestions = useCallback(() => {
+    setProactiveSuggestions([]);
+  }, []);
+
+  // Auto DNA Compliance Check - runs 2s after graph changes
+  useEffect(() => {
+    const narrativeDna = graphMeta.narrative_dna as Record<string, unknown> | undefined;
+    if (!narrativeDna) return;
+
+    // Extract content from input/style nodes
+    const contentNodes = nodes.filter(
+      (n) => n.type === "input" || n.type === "style" || n.type === "customization"
+    );
+    const contentParts = contentNodes
+      .map((n) => {
+        const data = n.data as Record<string, unknown>;
+        return data.content || data.description || data.label || "";
+      })
+      .filter(Boolean);
+
+    const combinedContent = contentParts.join("\n\n");
+    if (combinedContent.length < 20) return; // Skip if too short
+
+    const timer = setTimeout(async () => {
+      try {
+        const response = await api.checkDnaCompliance({
+          content: combinedContent,
+          content_type: "script",
+          narrative_dna: narrativeDna as any,
+        });
+
+        // Update ProactiveAssistant suggestions
+        if (response.suggestions && response.suggestions.length > 0) {
+          setProactiveSuggestions(response.suggestions as ProactiveSuggestion[]);
+        } else {
+          setProactiveSuggestions([]);
+        }
+
+        // Determine compliance status based on issues
+        const issueCount = response.issues?.length || 0;
+        const hasHighSeverity = response.issues?.some((i) => (i as { severity?: string }).severity === "high");
+        const complianceStatus: "compliant" | "warning" | "violation" =
+          hasHighSeverity ? "violation" : issueCount > 0 ? "warning" : "compliant";
+
+        // Update content nodes with compliance status
+        const contentNodeIds = contentNodes.map((n) => n.id);
+        setNodes((nds) =>
+          nds.map((n) => {
+            if (contentNodeIds.includes(n.id)) {
+              return {
+                ...n,
+                data: {
+                  ...n.data,
+                  complianceStatus,
+                  complianceIssueCount: issueCount,
+                },
+              };
+            }
+            return n;
+          })
+        );
+      } catch (err) {
+        console.error("Auto compliance check failed:", err);
+        // Silently fail - don't block user workflow
+      }
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [nodes, edges, graphMeta, setNodes]);
 
   const openPreviewPanel = useCallback(() => {
     withViewTransition(() => setShowPreviewPanel(true));
@@ -1027,6 +1186,54 @@ function CanvasFlow() {
     [generationRun?.id, setError, t]
   );
 
+  const handleGenerateVideo = useCallback(
+    async (nodeId: string) => {
+      if (!generationRun?.id) {
+        pushToast("error", "먼저 Generation을 실행해주세요");
+        return;
+      }
+
+      // Update node status to loading
+      setNodes((nds) =>
+        nds.map((n) =>
+          n.id === nodeId
+            ? { ...n, data: { ...n.data, status: "loading" } }
+            : n
+        )
+      );
+
+      try {
+        const response = await api.generateVideo(generationRun.id, {
+          provider: "veo",
+        });
+
+        pushToast("info", `비디오 생성 시작 (Run: ${response.run_id || generationRun.id})`);
+
+        // Update node status to streaming/processing
+        setNodes((nds) =>
+          nds.map((n) =>
+            n.id === nodeId
+              ? { ...n, data: { ...n.data, status: "streaming" } }
+              : n
+          )
+        );
+      } catch (err) {
+        console.error("Video generation failed:", err);
+        pushToast("error", normalizeApiError(err, "비디오 생성 실패"));
+
+        // Reset node status
+        setNodes((nds) =>
+          nds.map((n) =>
+            n.id === nodeId
+              ? { ...n, data: { ...n.data, status: "error" } }
+              : n
+          )
+        );
+      }
+    },
+    [generationRun?.id, setNodes, pushToast]
+  );
+
   const applyRecommendation = useCallback(
     (params: Record<string, unknown>) => {
       // Find capsule nodes and update their params
@@ -1124,8 +1331,60 @@ function CanvasFlow() {
     };
   }, [canvasId, isLoading, setError, startGenerationPolling, t, updateOutputNodes]);
 
+  // Connection type compatibility rules
+  const CONNECTION_RULES: Record<string, string[]> = {
+    text: ["text", "any"],
+    image: ["image", "video", "any"],
+    video: ["video", "any"],
+    audio: ["audio", "video", "any"],
+    dna: ["dna", "text", "any"],
+    metadata: ["metadata", "text", "any"],
+    any: ["text", "image", "video", "audio", "dna", "metadata", "any"],
+  };
+
+  const isValidConnection = useCallback(
+    (connection: Connection) => {
+      const sourceNode = nodes.find((n) => n.id === connection.source);
+      const targetNode = nodes.find((n) => n.id === connection.target);
+
+      if (!sourceNode || !targetNode) return false;
+
+      // Get typed handles from node data
+      const sourceHandles = (sourceNode.data.output_handles || []) as Array<{
+        id: string;
+        type: string;
+      }>;
+      const targetHandles = (targetNode.data.input_handles || []) as Array<{
+        id: string;
+        type: string;
+      }>;
+
+      // Find matching handles
+      const sourceHandle = sourceHandles.find(
+        (h) => h.id === connection.sourceHandle
+      );
+      const targetHandle = targetHandles.find(
+        (h) => h.id === connection.targetHandle
+      );
+
+      // If no typed handles, allow legacy connections
+      if (!sourceHandle || !targetHandle) return true;
+
+      // Check type compatibility
+      const allowedTypes = CONNECTION_RULES[sourceHandle.type] || [];
+      return allowedTypes.includes(targetHandle.type);
+    },
+    [nodes]
+  );
+
   const onConnect = useCallback(
     (connection: Connection) => {
+      // Validate connection before adding
+      if (!isValidConnection(connection)) {
+        console.warn("Invalid connection: type mismatch", connection);
+        return;
+      }
+
       setEdges((eds) => {
         const nextEdges = addEdge(
           {
@@ -1139,7 +1398,7 @@ function CanvasFlow() {
         return nextEdges;
       });
     },
-    [nodes, setEdges, takeSnapshot]
+    [nodes, setEdges, takeSnapshot, isValidConnection]
   );
 
   const handleAddNode = useCallback(
@@ -1297,6 +1556,19 @@ function CanvasFlow() {
     takeSnapshot(initialNodes, initialEdges);
   }, [setEdges, setNodes, takeSnapshot, stopGenerationPolling, t, initialNodes]);
 
+  const onLayout = useCallback(() => {
+    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+      nodes,
+      edges,
+      { direction: 'LR' }
+    );
+
+    setNodes([...layoutedNodes] as Node<CanvasNodeData>[]);
+    setEdges([...layoutedEdges]);
+    takeSnapshot(layoutedNodes as Node<CanvasNodeData>[], layoutedEdges);
+    pushToast("info", "Auto layout applied");
+  }, [nodes, edges, setNodes, setEdges, takeSnapshot, pushToast, t]);
+
   const toolbarButtons = useMemo(
     () =>
       [
@@ -1341,6 +1613,13 @@ function CanvasFlow() {
           icon: FileOutput,
           iconClass: "text-emerald-200 bg-emerald-500/15 group-hover:bg-emerald-500/25",
           hotkey: "6",
+        },
+        {
+          kind: "asset",
+          label: "Asset",
+          icon: Video,
+          iconClass: "text-violet-200 bg-violet-500/15 group-hover:bg-violet-500/25",
+          hotkey: "7",
         },
       ] as const,
     [t]
@@ -1418,6 +1697,7 @@ function CanvasFlow() {
         "4": "processing",
         "5": "capsule",
         "6": "output",
+        "7": "asset",
       };
       const kind = keyMap[event.key];
       if (!kind) return;
@@ -1431,7 +1711,7 @@ function CanvasFlow() {
   return (
     <div className="h-screen w-full bg-slate-950 text-slate-100 overflow-hidden relative">
       {/* --- HEADER --- */}
-      <header className="absolute top-0 left-0 right-0 z-10 px-4 md:px-6 py-4 flex flex-wrap items-center justify-between gap-2 pointer-events-none overflow-x-auto">
+      <header className="absolute top-0 left-0 right-0 z-30 px-4 md:px-6 py-4 flex flex-wrap items-center justify-between gap-2 pointer-events-none overflow-x-auto">
         <div className="pointer-events-auto flex items-center gap-4 bg-slate-950/50 backdrop-blur-md p-2 rounded-2xl border border-white/10 shadow-xl">
           <Link
             href="/"
@@ -1477,6 +1757,15 @@ function CanvasFlow() {
               title={t("newProject")}
             >
               <Plus className="h-4 w-4" />
+            </button>
+            <div className="h-6 w-px bg-white/10" />
+            <button
+              onClick={() => setShowVibeBoard(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-sm font-medium transition-all shadow-lg shadow-purple-500/20"
+              title="바이브 코딩"
+            >
+              <Wand2 className="h-4 w-4" />
+              <span className="hidden md:inline">바이브</span>
             </button>
           </div>
         </div>
@@ -1758,14 +2047,16 @@ function CanvasFlow() {
             }}
           />
           {/* DirectorPack DNA Panel - Top Right */}
-          <Panel position="top-right" className="mt-20 mr-4 w-64">
-            <CanvasDirectorPackPanel
-              state={directorPackState}
-              capsuleId={capsuleNode?.data?.capsuleId}
-              defaultCollapsed={true}
-            />
+          <Panel position="top-right" className="mr-4 w-96 flex flex-col items-end gap-2 pointer-events-none" style={{ marginTop: '6rem' }}>
+            <div className="pointer-events-auto w-full">
+              <CanvasDirectorPackPanel
+                state={directorPackState}
+                capsuleId={capsuleNode?.data?.capsuleId}
+                defaultCollapsed={true}
+              />
+            </div>
             {/* Story-First Narrative Panel */}
-            <div className="mt-2">
+            <div className="mt-2 pointer-events-auto w-full">
               <CanvasNarrativePanel
                 isEnabled={narrativeArcState.isEnabled}
                 arc={narrativeArcState.arc}
@@ -1796,6 +2087,22 @@ function CanvasFlow() {
           </Panel>
           {/* Custom Controls Positioned Bottom Right */}
           <Panel position="bottom-right" className="mb-8 mr-8 flex flex-col gap-2">
+            {/* Asset Node: Generate Video Button */}
+            {selectedNode?.type === "asset" && (
+              <button
+                onClick={() => handleGenerateVideo(selectedNode.id)}
+                disabled={!generationRun?.id}
+                className={`bg-violet-600/80 hover:bg-violet-500 p-2 rounded-lg border border-violet-400/30 text-white flex items-center gap-2 text-sm font-medium shadow-lg shadow-violet-900/30 transition-all ${!generationRun?.id ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                title={generationRun?.id ? "Generate Video" : "Run Generation first"}
+              >
+                <Video className="h-5 w-5" />
+                <span>Generate</span>
+              </button>
+            )}
+            <button onClick={onLayout} className="bg-slate-900/80 p-2 rounded-lg border border-white/10 text-slate-400 hover:text-white hover:bg-white/10" title="Auto Layout">
+              <LayoutGrid className="h-5 w-5" />
+            </button>
             <button onClick={() => zoomIn()} className="bg-slate-900/80 p-2 rounded-lg border border-white/10 text-slate-400 hover:text-white hover:bg-white/10" title="Zoom In">
               <ZoomIn className="h-5 w-5" />
             </button>
@@ -1811,12 +2118,14 @@ function CanvasFlow() {
       </div>
 
       {/* Empty Canvas Overlay */}
-      {showEmptyOverlay && (
-        <EmptyCanvasOverlay
-          onSelectSeed={handleSelectSeed}
-          onNavigateToTemplates={handleNavigateToTemplates}
-        />
-      )}
+      {
+        showEmptyOverlay && (
+          <EmptyCanvasOverlay
+            onSelectSeed={handleSelectSeed}
+            onNavigateToTemplates={handleNavigateToTemplates}
+          />
+        )
+      }
 
       {/* --- FLOATING DOCK TOOLBAR --- */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
@@ -1865,35 +2174,39 @@ function CanvasFlow() {
       />
 
       {/* --- PREVIEW PANEL --- */}
-      {showPreviewPanel && (
-        <PreviewPanel
-          key={previewRunId ?? storyboardPreview?.run_id ?? "preview-panel"}
-          preview={storyboardPreview}
-          isLoading={isPreviewLoading}
-          showCancel={Boolean(previewRunId) && isPreviewLoading}
-          onCancel={handleCancelPreviewRun}
-          statusNotice={previewNotice ?? undefined}
-          outputLanguage={previewLanguage ?? undefined}
-          availableLanguages={storyboardPreview?.available_languages}
-          onLanguageChange={handlePreviewLanguageChange}
-          onClose={() => {
-            if (previewRunId && isPreviewLoading) {
-              handleCancelPreviewRun();
-            }
-            closePreviewPanel();
-          }}
-          isAdminView={isAdmin}
-        />
-      )}
+      {
+        showPreviewPanel && (
+          <PreviewPanel
+            key={previewRunId ?? storyboardPreview?.run_id ?? "preview-panel"}
+            preview={storyboardPreview}
+            isLoading={isPreviewLoading}
+            showCancel={Boolean(previewRunId) && isPreviewLoading}
+            onCancel={handleCancelPreviewRun}
+            statusNotice={previewNotice ?? undefined}
+            outputLanguage={previewLanguage ?? undefined}
+            availableLanguages={storyboardPreview?.available_languages}
+            onLanguageChange={handlePreviewLanguageChange}
+            onClose={() => {
+              if (previewRunId && isPreviewLoading) {
+                handleCancelPreviewRun();
+              }
+              closePreviewPanel();
+            }}
+            isAdminView={isAdmin}
+          />
+        )
+      }
 
-      {showGenerationPanel && (
-        <GenerationPreviewPanel
-          run={generationRun}
-          isLoading={isGenerating}
-          onClose={() => withViewTransition(() => setShowGenerationPanel(false))}
-          onSubmitFeedback={handleGenerationFeedback}
-        />
-      )}
+      {
+        showGenerationPanel && (
+          <GenerationPreviewPanel
+            run={generationRun}
+            isLoading={isGenerating}
+            onClose={() => withViewTransition(() => setShowGenerationPanel(false))}
+            onSubmitFeedback={handleGenerationFeedback}
+          />
+        )
+      }
 
       {/* --- LOAD MODAL --- */}
       <AnimatePresence>
@@ -2014,11 +2327,27 @@ function CanvasFlow() {
         )}
       </AnimatePresence>
 
+      <ProactiveAssistant
+        suggestions={proactiveSuggestions}
+        onDismiss={handleDismissSuggestion}
+        onAccept={handleAcceptSuggestion}
+        onDismissAll={handleDismissAllSuggestions}
+        isMinimized={isProactiveMinimized}
+        onToggleMinimize={() => setIsProactiveMinimized(!isProactiveMinimized)}
+      />
+
+      <VibeBoard
+        isOpen={showVibeBoard}
+        onClose={() => setShowVibeBoard(false)}
+        onVibeSelected={handleVibeSelected}
+        isProcessing={isVibeParsing}
+      />
+
       <LoginRequiredModal
         isOpen={showLoginModal}
         onClose={() => setShowLoginModal(false)}
       />
-    </div>
+    </div >
   );
 }
 
