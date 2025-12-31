@@ -8,30 +8,41 @@ interface UseCreditBalanceResult {
   isLoading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
+  /** True if user is authenticated and can access credits */
+  isAuthenticated: boolean;
 }
 
+/**
+ * Fetches user credit balance from session-authenticated backend.
+ * Returns error if not authenticated.
+ */
 export function useCreditBalance(
-  userId?: string,
   enabled: boolean = true
 ): UseCreditBalanceResult {
-  const resolvedUserId =
-    userId || process.env.NEXT_PUBLIC_USER_ID || "demo-user";
   const [details, setDetails] = useState<CreditBalance | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const next = await api.getCreditsBalance(resolvedUserId);
+      const next = await api.getCreditsBalance();
       setDetails(next);
-    } catch (err) {
-      setError(normalizeApiError(err, "Unable to load credits."));
+      setIsAuthenticated(true);
+    } catch (err: unknown) {
+      const errObj = err as { status?: number };
+      if (errObj?.status === 401) {
+        setIsAuthenticated(false);
+        setError("로그인이 필요합니다.");
+      } else {
+        setError(normalizeApiError(err, "Unable to load credits."));
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [resolvedUserId]);
+  }, []);
 
   useEffect(() => {
     if (!enabled) return;
@@ -44,5 +55,6 @@ export function useCreditBalance(
     isLoading,
     error,
     refresh,
+    isAuthenticated,
   };
 }

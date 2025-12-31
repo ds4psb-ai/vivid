@@ -26,7 +26,7 @@ class AnalyzeJobRequest(BaseModel):
 class GenerateJobRequest(BaseModel):
     """Request to start a generation job."""
     storyboard_cards: List[Dict[str, Any]]
-    provider: str = "mock"
+    provider: str = "veo"  # veo, kling, mock (mock only in dev)
     sequence_id: str = "seq-01"
     scene_id: str = "scene-01"
 
@@ -92,6 +92,15 @@ async def submit_generate_job(
     Submit a video generation job to the worker queue.
     Returns immediately with job_id for status polling.
     """
+    from app.config import settings
+    
+    # Reject mock provider in production
+    if data.provider == "mock" and settings.ENVIRONMENT.lower() in {"production", "prod"}:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Mock provider not allowed in production. Use 'veo' or 'kling'."
+        )
+    
     job = await arq_pool.enqueue_job(
         "generate_video_batch",
         storyboard_cards=data.storyboard_cards,

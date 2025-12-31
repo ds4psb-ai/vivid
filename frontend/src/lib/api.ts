@@ -597,6 +597,21 @@ class ApiClient {
     if (!response.ok) {
       const error: ApiError = await response.json().catch(() => ({}));
       const message = error.detail || "Request failed";
+
+      // Handle authentication errors (JWT expired or invalid)
+      if (response.status === 401) {
+        // Clear any cached session and redirect to login
+        if (typeof window !== "undefined") {
+          // Store current path for redirect after login
+          const returnPath = window.location.pathname + window.location.search;
+          if (returnPath !== "/login") {
+            sessionStorage.setItem("auth_redirect", returnPath);
+          }
+          window.location.href = "/login?expired=true";
+        }
+        throw new Error("Session expired. Please log in again.");
+      }
+
       if (response.status === 403) {
         throw new Error(`${message} (admin-only)`);
       }
@@ -1075,22 +1090,22 @@ class ApiClient {
 
   // --- Credits API ---
 
-  async getCreditsBalance(userId: string = "demo-user"): Promise<CreditBalance> {
-    return this.request<CreditBalance>(`/api/v1/credits/balance?user_id=${encodeURIComponent(userId)}`);
+  async getCreditsBalance(): Promise<CreditBalance> {
+    // Backend extracts user_id from session cookie
+    return this.request<CreditBalance>(`/api/v1/credits/balance`);
   }
 
   async getCreditsTransactions(
-    userId: string = "demo-user",
     limit: number = 20,
     offset: number = 0
   ): Promise<CreditTransactionList> {
     return this.request<CreditTransactionList>(
-      `/api/v1/credits/transactions?user_id=${encodeURIComponent(userId)}&limit=${limit}&offset=${offset}`
+      `/api/v1/credits/transactions?limit=${limit}&offset=${offset}`
     );
   }
 
-  async topupCredits(amount: number, packId?: string, userId: string = "demo-user"): Promise<TopupResponse> {
-    return this.request<TopupResponse>(`/api/v1/credits/topup?user_id=${encodeURIComponent(userId)}`, {
+  async topupCredits(amount: number, packId?: string): Promise<TopupResponse> {
+    return this.request<TopupResponse>(`/api/v1/credits/topup`, {
       method: "POST",
       body: JSON.stringify({ amount, pack_id: packId }),
     });
@@ -1135,6 +1150,71 @@ class ApiClient {
 
   async getAnalyticsMetrics(days: number = 7): Promise<AnalyticsMetrics> {
     return this.request<AnalyticsMetrics>(`/api/v1/analytics/metrics?days=${days}`);
+  }
+
+  // --- Content Metrics API ---
+
+  async getAggregateMetrics(params: {
+    group_by?: "hook_style" | "platform" | "date";
+    days?: number;
+  } = {}): Promise<AggregateMetricsResponse> {
+    const query = new URLSearchParams();
+    if (params.group_by) query.set("group_by", params.group_by);
+    if (params.days) query.set("days", String(params.days));
+    const suffix = query.toString();
+    return this.request<AggregateMetricsResponse>(
+      `/api/v1/content-metrics/aggregate${suffix ? `?${suffix}` : ""}`
+    );
+  }
+
+  async getViralInsights(params: {
+    platform?: string;
+    days?: number;
+  } = {}): Promise<ViralInsightsResponse> {
+    const query = new URLSearchParams();
+    if (params.platform) query.set("platform", params.platform);
+    if (params.days) query.set("days", String(params.days));
+    const suffix = query.toString();
+    return this.request<ViralInsightsResponse>(
+      `/api/v1/content-metrics/insights${suffix ? `?${suffix}` : ""}`
+    );
+  }
+
+  async getABTestResults(testId: string): Promise<ABTestResultResponse> {
+    return this.request<ABTestResultResponse>(
+      `/api/v1/content-metrics/ab-tests/${encodeURIComponent(testId)}`
+    );
+  }
+
+  async listABTests(): Promise<ABTestResultResponse[]> {
+    return this.request<ABTestResultResponse[]>("/api/v1/content-metrics/ab-tests");
+  }
+
+  // --- Director API (AI 바이브 코딩) ---
+
+  async getVibePresets(): Promise<VibePresetsResponse> {
+    return this.request<VibePresetsResponse>("/api/v1/director/presets");
+  }
+
+  async interpretVibe(request: VibeInterpretRequest): Promise<WorkflowPlanResponse> {
+    return this.request<WorkflowPlanResponse>("/api/v1/director/interpret-vibe", {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
+  }
+
+  async checkDnaCompliance(request: DnaComplianceRequest): Promise<DnaComplianceResponse> {
+    return this.request<DnaComplianceResponse>("/api/v1/director/check-compliance", {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
+  }
+
+  async analyzeForeshadow(request: ForeshadowRequest): Promise<ForeshadowResponse> {
+    return this.request<ForeshadowResponse>("/api/v1/director/analyze-foreshadow", {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
   }
 }
 
@@ -1208,5 +1288,186 @@ export interface AnalyticsMetrics {
   period_end: string;
 }
 
-export const api = new ApiClient();
+// --- Content Metrics Types ---
 
+export interface AggregateMetricsItem {
+  group_key: string;
+  total_content: number;
+  avg_views: number;
+  avg_engagement_rate: number;
+  avg_viral_score: number;
+  total_views: number;
+}
+
+export interface AggregateMetricsResponse {
+  group_by: string;
+  period_days: number;
+  data: AggregateMetricsItem[];
+}
+
+export interface ViralInsightItem {
+  insight_type: string;
+  title: string;
+  description: string;
+  data: Record<string, unknown>;
+  recommendation?: string;
+}
+
+export interface ViralInsightsResponse {
+  period: string;
+  total_content_analyzed: number;
+  insights: ViralInsightItem[];
+  top_performers: Record<string, unknown>[];
+  hook_style_comparison: Record<string, Record<string, unknown>>;
+}
+
+export interface ABTestVariant {
+  variant_id: string;
+  style: string;
+  views: number;
+  engagement_rate: number;
+  viral_score: number;
+  is_winner: boolean;
+}
+
+export interface ABTestResultResponse {
+  test_id: string;
+  test_name: string;
+  started_at: string;
+  ended_at?: string;
+  status: "running" | "completed" | "cancelled";
+  variants: ABTestVariant[];
+  winner_variant_id?: string;
+  confidence_level?: number;
+}
+
+// --- Director API Types (AI 바이브 코딩) ---
+
+export interface VibePreset {
+  id: string;
+  title: string;
+  tone: string[];
+  visual_style: string;
+  emotional_arc: string;
+  reference_works: string[];
+}
+
+export interface VibePresetsResponse {
+  presets: VibePreset[];
+}
+
+export interface VibeInterpretRequest {
+  type: "preset" | "custom";
+  preset_id?: string;
+  custom_description?: string;
+  output_type: "short_drama" | "ad" | "animation" | "music_video";
+  target_length_sec: number;
+}
+
+export interface NarrativeDNA {
+  core_theme: string;
+  secondary_themes: string[];
+  overall_tone: string;
+  allowed_tones: string[];
+  forbidden_tones: string[];
+  protagonist_arc?: string;
+  visual_style: string;
+  color_palette: string[];
+  reference_works: string[];
+}
+
+export interface WorkflowNode {
+  id: string;
+  type: string;
+  label: string;
+  position: { x: number; y: number };
+  data: Record<string, unknown>;
+}
+
+export interface WorkflowEdge {
+  id: string;
+  source: string;
+  target: string;
+  source_handle?: string;
+  target_handle?: string;
+}
+
+export interface WorkflowPlanResponse {
+  workflow_id: string;
+  nodes: WorkflowNode[];
+  edges: WorkflowEdge[];
+  narrative_dna: NarrativeDNA;
+  estimated_duration_sec: number;
+  agent_assignments: Record<string, string>;
+}
+
+// --- DNA Compliance Types ---
+
+export interface DnaComplianceRequest {
+  content: string;
+  content_type: "script" | "dialogue" | "description" | "visual";
+  narrative_dna: NarrativeDNA;
+  node_id?: string;
+}
+
+export interface ComplianceIssue {
+  id: string;
+  type: string;
+  severity: "low" | "medium" | "high";
+  field: string;
+  expected: string;
+  actual: string;
+  location?: string;
+  message: string;
+  suggestion: string;
+}
+
+export interface DnaComplianceResponse {
+  content_id: string;
+  is_compliant: boolean;
+  compliance_score: number;
+  issues: ComplianceIssue[];
+  suggestions: ProactiveSuggestion[];
+}
+
+export interface ProactiveSuggestion {
+  id: string;
+  type: "improvement" | "warning" | "opportunity" | "dna_violation";
+  title: string;
+  message: string;
+  targetNodeId?: string;
+  suggestedAction?: {
+    type: string;
+    params: Record<string, unknown>;
+    label: string;
+  };
+  confidence: number;
+  dnaField?: string;
+  timestamp: number;
+}
+
+// --- Foreshadow Types ---
+
+export interface ForeshadowRequest {
+  full_script: string;
+  segments?: Array<{ label: string; content: string }>;
+}
+
+export interface NarrativeSeed {
+  id: string;
+  description: string;
+  planted_at: string;
+  planted_text: string;
+  importance: "major" | "minor";
+  expected_payoff?: string;
+}
+
+export interface ForeshadowResponse {
+  total_seeds: number;
+  resolved_seeds: number;
+  orphaned_seeds: NarrativeSeed[];
+  suggestions: ProactiveSuggestion[];
+  analysis_score: number;
+}
+
+export const api = new ApiClient();

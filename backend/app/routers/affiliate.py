@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import get_is_admin, get_is_verified, get_user_id
+from app.auth import get_is_admin, get_is_verified, get_user_id, require_user_id
 from app.credit_service import grant_promo_credits
 from app.database import get_db
 from app.models import AffiliateProfile, AffiliateReferral, GenerationRun
@@ -113,10 +113,10 @@ async def _get_or_create_profile(db: AsyncSession, user_id: str) -> AffiliatePro
 
 @router.get("/profile", response_model=AffiliateProfileResponse)
 async def get_affiliate_profile(
-    user_id: Optional[str] = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> AffiliateProfileResponse:
-    resolved_user_id = user_id or "demo-user"
+    resolved_user_id = user_id
     profile = await _get_or_create_profile(db, resolved_user_id)
 
     total_referrals_result = await db.execute(
@@ -152,10 +152,10 @@ async def get_affiliate_profile(
 
 @router.post("/link", response_model=AffiliateLinkResponse, status_code=status.HTTP_201_CREATED)
 async def create_affiliate_link(
-    user_id: Optional[str] = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> AffiliateLinkResponse:
-    resolved_user_id = user_id or "demo-user"
+    resolved_user_id = user_id
     profile = await _get_or_create_profile(db, resolved_user_id)
     return AffiliateLinkResponse(affiliate_code=profile.affiliate_code, referral_link=None)
 
@@ -216,11 +216,11 @@ async def track_referral_click(
 @router.post("/register", response_model=AffiliateReferralItem, status_code=status.HTTP_201_CREATED)
 async def register_referral(
     payload: AffiliateRegisterRequest,
-    user_id: Optional[str] = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     is_verified: bool = Depends(get_is_verified),
     db: AsyncSession = Depends(get_db),
 ) -> AffiliateReferralItem:
-    resolved_user_id = user_id or "demo-user"
+    resolved_user_id = user_id
     result = await db.execute(
         select(AffiliateProfile).where(AffiliateProfile.affiliate_code == payload.affiliate_code)
     )
@@ -297,10 +297,10 @@ async def register_referral(
 @router.get("/referrals", response_model=List[AffiliateReferralItem])
 async def list_referrals(
     limit: int = 20,
-    user_id: Optional[str] = Depends(get_user_id),
+    user_id: str = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> List[AffiliateReferralItem]:
-    resolved_user_id = user_id or "demo-user"
+    resolved_user_id = user_id
     limit = max(1, min(limit, 50))
     result = await db.execute(
         select(AffiliateReferral)

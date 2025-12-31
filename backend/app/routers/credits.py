@@ -15,6 +15,7 @@ from app.credit_service import (
 )
 from app.database import get_db
 from app.models import CreditLedger
+from app.auth import require_user_id
 
 
 router = APIRouter(tags=["credits"])
@@ -77,7 +78,7 @@ class DeductRequest(BaseModel):
 
 @router.get("/balance", response_model=BalanceResponse)
 async def get_balance(
-    user_id: str = "demo-user",
+    user_id: str = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ):
     """Get user's current credit balance."""
@@ -95,7 +96,7 @@ async def get_balance(
 
 @router.get("/transactions", response_model=TransactionsListResponse)
 async def get_transactions(
-    user_id: str = "demo-user",
+    user_id: str = Depends(require_user_id),
     limit: int = 20,
     offset: int = 0,
     db: AsyncSession = Depends(get_db),
@@ -141,7 +142,7 @@ async def get_transactions(
 @router.post("/topup", response_model=TopupResponse)
 async def topup_credits(
     request: TopupRequest,
-    user_id: str = "demo-user",
+    user_id: str = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ):
     """Top up user credits (mock payment)."""

@@ -29,6 +29,25 @@ async def get_user_id(
     return x_user_id
 
 
+async def require_user_id(
+    request: Request,
+    x_user_id: Optional[str] = Header(default=None),
+) -> str:
+    """Get user_id from session, raise 401 if not authenticated.
+    
+    Use this for endpoints that require authentication.
+    """
+    from fastapi import HTTPException
+    
+    user_id = await get_user_id(request, x_user_id)
+    if not user_id:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required. Please log in.",
+        )
+    return user_id
+
+
 async def get_is_admin(
     request: Request,
     x_admin_mode: Optional[str] = Header(default=None),

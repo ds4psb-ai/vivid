@@ -15,7 +15,15 @@ class Settings(BaseSettings):
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: int = 5433
 
+    # CORS Configuration
+    # Development: localhost origins are default
+    # Production: Set CORS_ORIGINS env var to your production domains (comma-separated)
+    # Example: CORS_ORIGINS=https://crebit.app,https://www.crebit.app
     CORS_ORIGINS: str = "http://localhost:3100,http://127.0.0.1:3100"
+    CORS_PRODUCTION_ORIGINS: str = "https://crebit.app,https://www.crebit.app,https://api.crebit.app"
+    CORS_ALLOW_CREDENTIALS: bool = True
+    CORS_MAX_AGE: int = 600  # Preflight cache time in seconds (10 minutes)
+    
     SEED_AUTEUR_DATA: bool = False
     ALLOW_INPUT_FALLBACKS: bool = True
     VIDEO_SCHEMA_VERSIONS: str = "gemini-video-v1"
@@ -40,6 +48,11 @@ class Settings(BaseSettings):
     
     # Redis (Added Phase 3)
     REDIS_URL: str = "redis://localhost:6379"
+    
+    # Capsule Execution Timeouts (seconds)
+    CAPSULE_EXECUTION_TIMEOUT: int = 120  # Default timeout for capsule runs (2 minutes)
+    CAPSULE_SYNC_TIMEOUT: int = 60        # Timeout for sync mode execution (1 minute)
+    CAPSULE_HEAVY_TIMEOUT: int = 300      # Extended timeout for heavy operations (5 minutes)
 
     # Auth / OAuth
     GOOGLE_CLIENT_ID: str = ""
@@ -76,6 +89,21 @@ class Settings(BaseSettings):
     NOTEBOOKLM_ENDPOINT: str = "global"  # API endpoint region
     NOTEBOOKLM_CREDENTIALS_PATH: str = ""  # Service account JSON path (optional, uses ADC if empty)
 
+    # Monitoring & Error Tracking
+    # Sentry: Error tracking and performance monitoring
+    # Get DSN from https://sentry.io
+    SENTRY_DSN: str = ""  # Leave empty to disable Sentry
+    SENTRY_TRACES_SAMPLE_RATE: float = 0.1  # 10% of transactions for performance monitoring
+    SENTRY_PROFILES_SAMPLE_RATE: float = 0.1  # 10% for profiling (requires Sentry Pro)
+    SENTRY_ENVIRONMENT: str = ""  # Auto-set to ENVIRONMENT if empty
+    
+    # Prometheus: Metrics collection
+    PROMETHEUS_ENABLED: bool = True
+    PROMETHEUS_METRICS_PATH: str = "/metrics"
+    
+    # Logging
+    LOG_LEVEL: str = "INFO"  # DEBUG, INFO, WARNING, ERROR
+
     @property
     def DATABASE_URL(self) -> str:
         return (
@@ -85,9 +113,28 @@ class Settings(BaseSettings):
 
     @property
     def ALLOWED_ORIGINS(self) -> List[str]:
+        """
+        Get allowed CORS origins based on environment.
+        - Development: localhost origins only
+        - Production: Merges CORS_ORIGINS with CORS_PRODUCTION_ORIGINS
+        - Wildcard '*': allows all (NOT recommended for production)
+        """
         if self.CORS_ORIGINS == "*":
             return ["*"]
-        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+        
+        origins = [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+        
+        # In production/staging, also include production origins
+        if self.ENVIRONMENT not in {"development", "local", "dev"}:
+            prod_origins = [
+                origin.strip() 
+                for origin in self.CORS_PRODUCTION_ORIGINS.split(",") 
+                if origin.strip()
+            ]
+            # Merge without duplicates
+            origins = list(dict.fromkeys(origins + prod_origins))
+        
+        return origins
 
     @property
     def ALLOWED_VIDEO_SCHEMA_VERSIONS(self) -> List[str]:
@@ -114,6 +161,43 @@ class Settings(BaseSettings):
     @property
     def COOKIE_SECURE(self) -> bool:
         return self.ENVIRONMENT not in {"development", "local", "dev"}
+
+    def validate_production_config(self) -> list[str]:
+        """
+        Validate configuration for production safety.
+        Returns list of critical warnings. Raises ValueError for blockers.
+        """
+        errors = []
+        warnings = []
+        is_prod = self.ENVIRONMENT.lower() in {"production", "prod", "staging"}
+        
+        if is_prod:
+            # Check for localhost in critical URLs
+            if "localhost" in self.AUTH_SUCCESS_REDIRECT or "127.0.0.1" in self.AUTH_SUCCESS_REDIRECT:
+                errors.append("AUTH_SUCCESS_REDIRECT contains localhost - set to production domain")
+            if "localhost" in self.AUTH_ERROR_REDIRECT or "127.0.0.1" in self.AUTH_ERROR_REDIRECT:
+                errors.append("AUTH_ERROR_REDIRECT contains localhost - set to production domain")
+            if "localhost" in self.QDRANT_URL or "127.0.0.1" in self.QDRANT_URL:
+                warnings.append("QDRANT_URL contains localhost - ensure Qdrant is accessible")
+            if "localhost" in self.REDIS_URL or "127.0.0.1" in self.REDIS_URL:
+                warnings.append("REDIS_URL contains localhost - ensure Redis is accessible")
+            
+            # Check for empty required secrets
+            if not self.SESSION_SECRET:
+                errors.append("SESSION_SECRET is empty - required for session encryption")
+            if not self.GOOGLE_CLIENT_ID or not self.GOOGLE_CLIENT_SECRET:
+                warnings.append("Google OAuth credentials not configured")
+            
+            # Check for sandbox payment in production
+            if self.NICEPAY_MODE == "sandbox":
+                errors.append("NICEPAY_MODE is 'sandbox' - switch to 'production' for live payments")
+        
+        if errors:
+            raise ValueError(
+                f"Production configuration errors:\n" + "\n".join(f"  - {e}" for e in errors)
+            )
+        
+        return warnings
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
