@@ -36,6 +36,7 @@ from app.models import (
 from app.pattern_promotion import DEFAULT_MIN_CONFIDENCE, run_pattern_promotion
 from app.pattern_versioning import refresh_capsule_specs
 from app.sheets_sync import run_sheets_sync
+from app.utils.error_sanitize import SAFE_MESSAGES
 
 router = APIRouter()
 
@@ -927,8 +928,8 @@ async def search_similar_patterns_api(
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Search failed: {e}")
+    except Exception:
+        raise HTTPException(status_code=500, detail=SAFE_MESSAGES["search"])
 
 
 @router.post("/patterns/seed-embeddings", response_model=PatternSeedResponse)
@@ -988,7 +989,7 @@ async def seed_pattern_embeddings(
             duration_ms=duration_ms,
             actor_id=user_id,
         )
-        raise HTTPException(status_code=500, detail=f"Seeding failed: {exc}")
+        raise HTTPException(status_code=500, detail=SAFE_MESSAGES["seeding"])
 
 
 # --- Evidence Similarity API (P1) ---
@@ -1067,8 +1068,8 @@ async def search_similar_evidence_api(
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Search failed: {e}")
+    except Exception:
+        raise HTTPException(status_code=500, detail=SAFE_MESSAGES["search"])
 
 
 @router.post("/evidence/seed-embeddings", response_model=EvidenceSeedResponse)
@@ -1128,7 +1129,7 @@ async def seed_evidence_embeddings(
             duration_ms=duration_ms,
             actor_id=user_id,
         )
-        raise HTTPException(status_code=500, detail=f"Seeding failed: {exc}")
+        raise HTTPException(status_code=500, detail=SAFE_MESSAGES["seeding"])
 
 
 # --- Pilot Metrics API (NotebookLM Loading Gate) ---

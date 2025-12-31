@@ -15,6 +15,7 @@ from app.template_seeding import seed_template_from_evidence
 from app.graph_utils import merge_graph_meta, ensure_pattern_version
 from app.patterns import get_latest_pattern_version
 from app.seed import seed_auteur_data
+from app.utils.error_sanitize import SAFE_MESSAGES
 
 router = APIRouter()
 
@@ -440,8 +441,8 @@ async def search_similar_templates_api(
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Search failed: {e}")
+    except Exception:
+        raise HTTPException(status_code=500, detail=SAFE_MESSAGES["search"])
 
 
 @router.post("/recommend", response_model=TemplateSimilarResponse)
@@ -478,8 +479,8 @@ async def recommend_templates_api(
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Recommendation failed: {e}")
+    except Exception:
+        raise HTTPException(status_code=500, detail="Recommendation failed. Please try again.")
 
 
 @router.post("/seed-embeddings", response_model=TemplateSeedEmbeddingsResponse)
@@ -510,5 +511,5 @@ async def seed_template_embeddings(
             errors=stats["errors"],
             collection=TEMPLATES_COLLECTION,
         )
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Seeding failed: {exc}")
+    except Exception:
+        raise HTTPException(status_code=500, detail=SAFE_MESSAGES["seeding"])
