@@ -1,47 +1,93 @@
-# Crebit Privacy Policy
+# Crebit 개인정보 처리방침
 
-**Effective Date**: 2026-01-19
+**시행일**: 2025-01-19
+**개정일**: 2025-12-31
 
-## 1) Overview
-This Policy explains how Crebit collects, uses, and protects personal information for the Crebit ATC program.
-The program is operated by Page Academy Co., Ltd. and produced by Arkain Inc.
+## 제1조 (개인정보의 수집 및 이용 목적)
 
-## 2) Information We Collect
-- **Identity & contact**: name, email, phone number.
-- **Application data**: portfolio links, work samples, track preference.
-- **Payment data**: payment status and transaction references (processed by NICE Payments).
-- **Program data**: attendance, progress, certification status.
-- **Technical data**: basic logs for service operation.
+Crebit(이하 '서비스')은 다음의 목적을 위하여 개인정보를 수집·이용합니다.
+수집된 개인정보는 다음의 목적 이외의 용도로는 이용되지 않으며, 이용 목적이 변경되는 경우에는 별도의 동의를 받는 등 필요한 조치를 이행할 예정입니다.
 
-## 3) How We Use Data
-- Confirm enrollment and manage cohorts.
-- Send program updates, schedules, and support responses.
-- Issue certificates and manage attendance.
-- Operate billing and refund requests.
-- Improve program quality and operations.
+1. **서비스 제공 및 계약 이행**: 프로그램 등록 확인, 일정 공지, 출석 관리, 수료증 발급
+2. **결제 및 환불 처리**: 결제 정보 처리, 환불 요청 처리
+3. **고객 지원**: 문의 응대, 불만 처리, 공지사항 전달
+4. **서비스 개선**: 이용 현황 분석, 품질 향상
 
-## 4) Sharing & Processing
-We do not sell personal data. We share data only with trusted processors to run the program:
-- **NICE Payments**: payment processing.
-- **Arkain Inc.**: curriculum delivery and content production support.
+## 제2조 (수집하는 개인정보 항목)
 
-## 5) Public Showcase (Outputs)
-Program outputs may be publicly showcased. If we display a creator name or handle, we use the information you provide
-in your application or during the program.
+1. **필수 항목**: 이름, 이메일 주소, 휴대전화번호
+2. **선택 항목**: 포트폴리오 링크, 작업 샘플, 트랙 선호도
+3. **자동 수집 항목**: 서비스 이용 기록, 접속 로그, 쿠키
 
-## 6) Retention
-We retain data only as long as necessary to deliver the program or as required by law.
-- Payment records: 5 years (e-commerce law).
-- Enrollment and attendance records: 3 years.
+## 제3조 (개인정보의 보유 및 이용기간)
 
-## 7) Security
-We use reasonable safeguards to protect data. No system is 100% secure.
+회사는 법령에 따른 개인정보 보유·이용기간 또는 정보주체로부터 개인정보를 수집 시에 동의받은 개인정보 보유·이용기간 내에서 개인정보를 처리·보유합니다.
 
-## 8) Your Rights
-Depending on your location, you may request access, correction, or deletion of your personal data.
+1. **결제 정보**: 전자상거래 등에서의 소비자보호에 관한 법률에 따라 5년
+2. **등록 및 출석 기록**: 프로그램 종료 후 3년
+3. **고객 문의 기록**: 3년
 
-## 9) Updates
-We may update this Policy. Continued participation means you accept the updated Policy.
+## 제4조 (개인정보의 제3자 제공)
 
-## 10) Contact
-Privacy requests: kaylee@page-academy.com
+회사는 원칙적으로 정보주체의 개인정보를 제3자에게 제공하지 않습니다. 다만, 아래의 경우에는 예외로 합니다.
+
+1. **정보주체의 사전 동의**를 받은 경우
+2. **법률의 규정**에 의거하거나 수사 목적으로 법령에 정해진 절차와 방법에 따른 수사기관의 요구가 있는 경우
+
+## 제5조 (개인정보처리 위탁)
+
+회사는 서비스 제공을 위해 개인정보 처리업무를 아래와 같이 위탁하고 있습니다.
+
+| 수탁업체 | 위탁업무 내용 |
+|---------|--------------|
+| 나이스페이먼츠(주) | 결제 처리 |
+| (주)아케인 | 커리큘럼 전달 및 콘텐츠 제작 지원 |
+
+## 제6조 (정보주체의 권리·의무 및 행사방법)
+
+1. 정보주체는 언제든지 개인정보 열람·정정·삭제·처리정지 요구 등의 권리를 행사할 수 있습니다.
+2. 권리 행사는 서면, 전자우편 등을 통하여 하실 수 있으며, 회사는 이에 대해 지체 없이 조치하겠습니다.
+3. 제1항에 따른 권리 행사는 정보주체의 법정대리인이나 위임을 받은 자 등 대리인을 통하여 하실 수 있습니다.
+
+## 제7조 (개인정보의 파기)
+
+1. 회사는 개인정보 보유기간의 경과, 처리목적 달성 등 개인정보가 불필요하게 되었을 때에는 지체없이 해당 개인정보를 파기합니다.
+2. 전자적 파일 형태의 정보는 복구가 불가능한 방법으로 영구 삭제합니다.
+3. 종이 문서에 기록된 개인정보는 분쇄기로 분쇄하거나 소각합니다.
+
+## 제8조 (개인정보의 안전성 확보 조치)
+
+회사는 개인정보의 안전성 확보를 위해 다음과 같은 조치를 취하고 있습니다.
+
+1. **관리적 조치**: 내부관리계획 수립·시행, 정기적 직원 교육
+2. **기술적 조치**: 개인정보처리시스템 등의 접근권한 관리, 접근통제시스템 설치, 보안프로그램 설치
+3. **물리적 조치**: 전산실, 자료보관실 등의 접근통제
+
+## 제9조 (쿠키의 사용)
+
+1. 회사는 이용자에게 개별적인 맞춤서비스를 제공하기 위해 쿠키(cookie)를 사용합니다.
+2. 이용자는 웹브라우저에서 옵션을 설정함으로써 모든 쿠키를 허용하거나, 쿠키가 저장될 때마다 확인을 거치거나, 아니면 모든 쿠키의 저장을 거부할 수 있습니다.
+
+## 제10조 (개인정보 보호책임자)
+
+| 항목 | 내용 |
+|------|------|
+| 이름 | 김케일리 |
+| 직책 | 대표 |
+| 연락처 | kaylee@page-academy.com |
+
+## 제11조 (권익침해 구제방법)
+
+정보주체는 아래의 기관에 대해 개인정보 침해에 대한 피해구제, 상담 등을 문의하실 수 있습니다.
+
+- **개인정보침해신고센터** (한국인터넷진흥원 운영): privacy.kisa.or.kr / 국번없이 118
+- **개인정보분쟁조정위원회**: www.kopico.go.kr / 1833-6972
+- **대검찰청 사이버수사과**: www.spo.go.kr / 국번없이 1301
+- **경찰청 사이버안전국**: cyberbureau.police.go.kr / 국번없이 182
+
+## 제12조 (개정 이력)
+
+| 버전 | 시행일 | 내용 |
+|------|--------|------|
+| 1.0 | 2025-01-19 | 최초 제정 |
+| 1.1 | 2025-12-31 | 한국 개인정보보호법 준수 개정 |

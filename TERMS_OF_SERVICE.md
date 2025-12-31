@@ -1,51 +1,112 @@
-# Crebit Terms of Service
+# Crebit 이용약관
 
-**Effective Date**: 2026-01-19
+**시행일**: 2025-01-19
+**개정일**: 2025-12-31
 
-## 1) Overview
-These Terms govern the Crebit ATC education program and related services ("Crebit", "Service").
-Crebit is operated and sold by Page Academy Co., Ltd., and the curriculum/content is produced by Arkain Inc.
-Payments are processed under Page Academy via NICE Payments.
+## 제1조 (목적)
 
-## 2) Eligibility
-You must be at least the minimum age required by law in your jurisdiction to enroll. If you are a minor,
-legal guardian consent is required.
+본 약관은 페이지아카데미 주식회사(이하 '회사')가 운영하는 Crebit ATC 프로그램(이하 '서비스')의 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로 합니다.
 
-## 3) Enrollment & Payment
-Seats are limited. Enrollment is confirmed only after payment is successfully completed.
-Program details (schedule, track, location) are defined on the official Crebit program page.
+## 제2조 (정의)
 
-## 4) Program Operation
-Crebit ATC is an in-person, cohort-based program. Session times and locations may be adjusted with reasonable notice.
-Participants must follow on-site safety and conduct guidelines.
+1. **'서비스'**: 회사가 제공하는 Crebit ATC 교육 프로그램 및 관련 서비스
+2. **'이용자'**: 본 약관에 따라 서비스를 이용하는 자
+3. **'콘텐츠'**: 서비스 내에서 제공되는 교육 자료, 템플릿, 워크플로우 문서 등
 
-## 5) Acceptable Use
-You agree not to:
-- Disrupt classes or other participants.
-- Record or distribute class materials without written permission.
-- Share or resell program materials, templates, or internal workflow documents.
+## 제3조 (약관의 효력 및 변경)
 
-## 6) Content & Intellectual Property
-All instructional materials, templates, and curriculum assets are owned by Page Academy and/or Arkain.
-You may use them only for personal learning. Redistribution or commercial reuse is prohibited.
+1. 본 약관은 서비스 화면에 게시하거나 기타의 방법으로 이용자에게 공지함으로써 효력이 발생합니다.
+2. 회사는 필요한 경우 관련 법령을 위반하지 않는 범위에서 본 약관을 변경할 수 있습니다.
+3. 변경된 약관은 공지와 함께 그 효력을 발생하며, 이용자는 약관 변경에 대해 주의 의무를 다하여야 합니다.
 
-## 7) Public Showcase (Mandatory)
-Crebit is a results-first program. By participating, you agree that your final outputs may be publicly showcased
-by Crebit, Page Academy, and Arkain (e.g., web, social, exhibitions). This may include your name or creator handle.
-If you do not agree, please do not enroll.
+## 제4조 (이용계약의 체결)
 
-## 8) Refunds
-Refunds follow the Crebit Refund Policy published on the Crebit Terms & Policy page.
+1. 서비스 이용계약은 이용자가 약관에 동의하고 등록을 신청한 후, 회사가 이를 승낙함으로써 체결됩니다.
+2. 등록은 결제가 성공적으로 완료된 후에 확정됩니다.
+3. 정원이 제한되어 있으며, 선착순으로 마감될 수 있습니다.
 
-## 9) Disclaimers
-The Service is provided “as is.” We do not guarantee specific outcomes, placements, or commercial results.
+## 제5조 (이용자격)
 
-## 10) Limitation of Liability
-To the extent permitted by law, Page Academy and Arkain are not liable for indirect or consequential damages
-arising from participation in the program.
+1. 서비스를 이용하려면 관할 법률에서 정한 최소 연령 이상이어야 합니다.
+2. 미성년자의 경우 법정대리인의 동의가 필요합니다.
 
-## 11) Changes
-We may update these Terms. Continued participation after changes means you accept the updated Terms.
+## 제6조 (프로그램 운영)
 
-## 12) Contact
-Questions: kaylee@page-academy.com
+1. Crebit ATC는 오프라인 코호트 기반 프로그램입니다.
+2. 세션 시간과 장소는 합리적인 사전 공지 후 조정될 수 있습니다.
+3. 참가자는 현장 안전 및 행동 지침을 준수해야 합니다.
+
+## 제7조 (이용자의 의무)
+
+이용자는 다음 행위를 하여서는 안 됩니다.
+
+1. 수업을 방해하거나 다른 참가자에게 피해를 주는 행위
+2. 서면 허가 없이 수업 자료를 녹화하거나 배포하는 행위
+3. 프로그램 자료, 템플릿, 내부 워크플로우 문서를 공유하거나 재판매하는 행위
+4. 타인의 개인정보를 수집·저장·공개하는 행위
+5. 회사의 사전 동의 없이 서비스를 상업적 목적으로 이용하는 행위
+
+## 제8조 (지식재산권)
+
+1. 모든 교육 자료, 템플릿, 커리큘럼 자산은 페이지아카데미 및/또는 아케인의 소유입니다.
+2. 이용자는 개인 학습 목적으로만 사용할 수 있습니다.
+3. 재배포 또는 상업적 재사용은 금지됩니다.
+
+## 제9조 (공개 전시)
+
+1. Crebit은 결과물 중심 프로그램입니다.
+2. 참여함으로써, 귀하의 최종 결과물이 Crebit, 페이지아카데미, 아케인에 의해 공개적으로 전시될 수 있음에 동의합니다.
+3. 여기에는 귀하의 이름 또는 크리에이터 핸들이 포함될 수 있습니다.
+4. 동의하지 않는 경우 등록하지 마십시오.
+
+## 제10조 (결제)
+
+1. 서비스 이용료는 회사가 정한 요금에 따릅니다.
+2. 결제는 NICE Payments를 통해 처리됩니다.
+3. 결제 시 표시되는 금액에는 부가가치세가 포함되어 있습니다.
+
+## 제11조 (환불)
+
+1. 환불은 Crebit 환불 정책에 따릅니다.
+2. 프로그램 시작 7일 전까지: 전액 환불
+3. 프로그램 시작 7일 전 ~ 시작일: 70% 환불
+4. 프로그램 시작 후: 환불 불가 (단, 회사 귀책 사유 제외)
+
+## 제12조 (서비스 제공의 중지)
+
+회사는 다음의 경우 서비스 제공을 중지할 수 있습니다.
+
+1. 서비스용 설비의 보수 등 공사로 인한 부득이한 경우
+2. 천재지변, 정전, 서비스 설비의 장애 등 불가항력적 사유가 있는 경우
+3. 기타 서비스를 유지할 수 없는 경우
+
+## 제13조 (면책조항)
+
+1. 서비스는 "있는 그대로" 제공됩니다.
+2. 회사는 특정 결과, 취업 알선, 또는 상업적 성과를 보장하지 않습니다.
+3. 회사는 이용자의 귀책사유로 인한 서비스 이용 장애에 대해 책임을 지지 않습니다.
+
+## 제14조 (손해배상의 제한)
+
+1. 회사는 무료로 제공되는 서비스 이용과 관련하여 관련 법령에 특별한 규정이 없는 한 책임을 지지 않습니다.
+2. 법률이 허용하는 범위 내에서, 페이지아카데미와 아케인은 프로그램 참여로 인해 발생하는 간접적 또는 결과적 손해에 대해 책임을 지지 않습니다.
+
+## 제15조 (분쟁 해결)
+
+1. 이 약관에 명시되지 않은 사항은 전자상거래 등에서의 소비자 보호에 관한 법률, 약관의 규제에 관한 법률 등 관련 법령에 따릅니다.
+2. 서비스 이용과 관련하여 분쟁이 발생한 경우, 회사 소재지 관할 법원을 전속 관할 법원으로 합니다.
+
+## 제16조 (연락처)
+
+| 항목 | 내용 |
+|------|------|
+| 상호 | 페이지아카데미 주식회사 |
+| 대표 | 김케일리 |
+| 이메일 | kaylee@page-academy.com |
+
+## 제17조 (개정 이력)
+
+| 버전 | 시행일 | 내용 |
+|------|--------|------|
+| 1.0 | 2025-01-19 | 최초 제정 |
+| 1.1 | 2025-12-31 | 한국 전자상거래법 준수 개정 |
