@@ -27,11 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <link href='//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css' rel='stylesheet' type='text/css' />
-        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-      </head>
-      <body className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} antialiased font-[family-name:var(--font-spoqa)]`}>
+      <body className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} antialiased`}>
         <SessionProvider>
           <LanguageProvider>
             {children}

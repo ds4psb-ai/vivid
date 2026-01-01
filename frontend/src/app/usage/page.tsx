@@ -14,7 +14,9 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { api, type CreditBalance, type CreditTransaction } from "@/lib/api";
 import PageStatus from "@/components/PageStatus";
 import { isNetworkError, normalizeApiError } from "@/lib/errors";
+import { formatDateTime, formatNumber } from "@/lib/formatters";
 import { useActiveUserId } from "@/hooks/useActiveUserId";
+import { downloadCsvFromRows } from "@/lib/csv";
 
 export default function UsagePage() {
   const { language } = useLanguage();
@@ -178,7 +180,6 @@ export default function UsagePage() {
   const handleExportCsv = useCallback(() => {
     if (filteredUsage.length === 0) return;
     const headers = ["created_at", "amount", "description", "capsule_run_id", "run_type", "meta_json"];
-    const escapeValue = (value: string) => `"${value.replace(/"/g, '""')}"`;
     const rows = filteredUsage.map((tx) => [
       tx.created_at,
       String(tx.amount),
@@ -187,17 +188,8 @@ export default function UsagePage() {
       typeof tx.meta?.run_type === "string" ? tx.meta.run_type : "",
       JSON.stringify(tx.meta || {}),
     ]);
-    const csv = [headers.join(","), ...rows.map((row) => row.map(escapeValue).join(","))].join(
-      "\n"
-    );
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
     const today = new Date().toISOString().slice(0, 10);
-    link.href = url;
-    link.download = `crebit_usage_${today}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadCsvFromRows(`crebit_usage_${today}.csv`, headers, rows);
   }, [filteredUsage]);
 
   return (
@@ -236,7 +228,7 @@ export default function UsagePage() {
                   {labels.balance}
                 </div>
                 <div className="mt-2 text-3xl font-bold text-[var(--fg-0)] sm:text-4xl">
-                  {isLoading ? "..." : balance?.balance.toLocaleString() || "0"}
+                  {isLoading ? "..." : formatNumber(balance?.balance, undefined, undefined, "0")}
                   <span className="ml-2 text-base font-normal text-[var(--fg-muted)] sm:text-lg">
                     {labels.credits}
                   </span>
@@ -291,7 +283,7 @@ export default function UsagePage() {
                 label: labels.avgTokens,
                 value:
                   usageMetrics.avgTokens !== null
-                    ? usageMetrics.avgTokens.toLocaleString()
+                    ? formatNumber(usageMetrics.avgTokens, undefined, undefined, "0")
                     : "-",
               },
             ].map((item) => (
@@ -322,7 +314,7 @@ export default function UsagePage() {
               >
                 <div className="text-xs text-[var(--fg-muted)]">{item.label}</div>
                 <div className={`mt-2 text-xl font-semibold ${item.tone}`}>
-                  {isLoading ? "..." : item.value.toLocaleString()}
+                  {isLoading ? "..." : formatNumber(item.value, undefined, undefined, "0")}
                 </div>
               </div>
             ))}
@@ -478,9 +470,10 @@ export default function UsagePage() {
                           {tx.amount}
                         </div>
                         <div className="text-[10px] text-[var(--fg-muted)]">
-                          {new Date(tx.created_at).toLocaleString(
+                          {formatDateTime(
+                            tx.created_at,
                             language === "ko" ? "ko-KR" : "en-US"
-                          )}
+                          ) ?? ""}
                         </div>
                       </div>
                     </div>

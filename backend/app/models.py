@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import String, Boolean, DateTime, UniqueConstraint, ForeignKey, Integer, Text, Float
+from sqlalchemy import String, Boolean, DateTime, UniqueConstraint, ForeignKey, Integer, Text, Float, Index
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -12,6 +12,10 @@ from app.database import Base
 
 class Canvas(Base):
     __tablename__ = "canvases"
+    __table_args__ = (
+        Index("ix_canvases_owner_id", "owner_id"),
+        Index("ix_canvases_created_at", "created_at"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     title: Mapped[str] = mapped_column(String(200))
@@ -22,6 +26,7 @@ class Canvas(Base):
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 
 
 class Template(Base):
@@ -97,6 +102,12 @@ class CapsuleSpec(Base):
 
 class CapsuleRun(Base):
     __tablename__ = "capsule_runs"
+    __table_args__ = (
+        Index("ix_capsule_runs_capsule_key", "capsule_key"),
+        Index("ix_capsule_runs_status", "status"),
+        Index("ix_capsule_runs_created_at", "created_at"),
+        Index("ix_capsule_runs_key_status", "capsule_key", "status"),  # Composite index
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     capsule_key: Mapped[str] = mapped_column(String(160))
@@ -553,6 +564,12 @@ class UserCredits(Base):
 class CreditLedger(Base):
     """Append-only credit transaction ledger."""
     __tablename__ = "credit_ledger"
+    __table_args__ = (
+        Index("ix_credit_ledger_user_id", "user_id"),
+        Index("ix_credit_ledger_created_at", "created_at"),
+        Index("ix_credit_ledger_event_type", "event_type"),
+        Index("ix_credit_ledger_user_created", "user_id", "created_at"),  # Composite for user history
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[str] = mapped_column(String(160))
@@ -614,5 +631,58 @@ class CrebitApplication(Base):
     cohort: Mapped[str] = mapped_column(String(10), default="1기")
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class AgentSession(Base):
+    __tablename__ = "agent_sessions"
+    __table_args__ = (
+        Index("ix_agent_sessions_owner_id", "owner_id"),
+        Index("ix_agent_sessions_status", "status"),
+        Index("ix_agent_sessions_created_at", "created_at"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    status: Mapped[str] = mapped_column(String(32), default="active")
+    title: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    owner_id: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)
+    meta: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class AgentMessage(Base):
+    __tablename__ = "agent_messages"
+    __table_args__ = (
+        Index("ix_agent_messages_session_id", "session_id"),
+        Index("ix_agent_messages_created_at", "created_at"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_sessions.id"))
+    role: Mapped[str] = mapped_column(String(24))
+    content: Mapped[str] = mapped_column(Text, default="")
+    tool_calls: Mapped[list] = mapped_column(JSONB, default=list)
+    tool_call_id: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    name: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class AgentArtifact(Base):
+    __tablename__ = "agent_artifacts"
+    __table_args__ = (
+        Index("ix_agent_artifacts_session_id", "session_id"),
+        Index("ix_agent_artifacts_created_at", "created_at"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_sessions.id"))
+    artifact_type: Mapped[str] = mapped_column(String(80))
+    payload: Mapped[dict] = mapped_column(JSONB, default=dict)
+    version: Mapped[int] = mapped_column(Integer, default=1)
+
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

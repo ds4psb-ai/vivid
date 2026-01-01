@@ -174,7 +174,6 @@ function BaseNode({ data, type, selected }: NodeProps<Node<CanvasNodeData>>) {
   const canReceive = kind !== "input";
   const canSend = kind !== "output";
   const isCapsule = kind === "capsule";
-  const isLocked = isCapsule && Boolean(data.locked);
   const status = data.status ?? "idle";
   const evidenceRefs = Array.isArray(data.evidence_refs) ? data.evidence_refs : [];
   const evidenceCount = evidenceRefs.length;

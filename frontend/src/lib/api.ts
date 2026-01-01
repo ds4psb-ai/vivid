@@ -1,4 +1,5 @@
 import type { Edge, Node } from "@xyflow/react";
+import type { AgentToolCall } from "@/types/agent";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 const DEFAULT_API_BASE_URL = "http://127.0.0.1:8100";
@@ -557,6 +558,56 @@ export interface AuthSession {
   user?: SessionUser;
 }
 
+export interface AgentMessageRecord {
+  message_id: string;
+  role: string;
+  content: string;
+  tool_calls: AgentToolCall[];
+  tool_call_id?: string | null;
+  name?: string | null;
+  created_at: string;
+}
+
+export interface AgentArtifactRecord {
+  artifact_id: string;
+  artifact_type: string;
+  payload: Record<string, unknown>;
+  version: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AgentSessionResponse {
+  session_id: string;
+  status: string;
+  title?: string | null;
+  agent_model?: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+  messages: AgentMessageRecord[];
+  artifacts: AgentArtifactRecord[];
+}
+
+export interface AgentSessionStatusResponse {
+  session_id: string;
+  status: string;
+  metadata: Record<string, unknown>;
+  updated_at: string;
+}
+
+export interface AgentChatRequest {
+  session_id?: string | null;
+  message: string;
+  metadata?: Record<string, unknown>;
+  model?: string | null;
+}
+
+export interface AgentDecisionRequest {
+  note?: string | null;
+  metadata?: Record<string, unknown>;
+}
+
 export interface TopupRequest {
   amount: number;
   pack_id?: string;
@@ -569,18 +620,39 @@ export interface TopupResponse {
 }
 
 class ApiClient {
+  private buildHeaders(extra?: HeadersInit): Record<string, string> {
+    const base: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...(USER_ID ? { "X-User-Id": USER_ID } : {}),
+      ...(ADMIN_MODE ? { "X-Admin-Mode": ADMIN_MODE } : {}),
+    };
+
+    if (!extra) return base;
+
+    if (extra instanceof Headers) {
+      extra.forEach((value, key) => {
+        base[key] = value;
+      });
+      return base;
+    }
+
+    if (Array.isArray(extra)) {
+      extra.forEach(([key, value]) => {
+        base[key] = value;
+      });
+      return base;
+    }
+
+    return { ...base, ...extra };
+  }
+
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     let response: Response;
     try {
       response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...options,
         credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          ...(USER_ID ? { "X-User-Id": USER_ID } : {}),
-          ...(ADMIN_MODE ? { "X-Admin-Mode": ADMIN_MODE } : {}),
-          ...(options.headers || {}),
-        },
+        headers: this.buildHeaders(options.headers),
       });
     } catch {
       const origin =
@@ -647,6 +719,45 @@ class ApiClient {
 
   async getSession(): Promise<AuthSession> {
     return this.request<AuthSession>("/api/v1/auth/session");
+  }
+
+  async getAgentSession(sessionId: string): Promise<AgentSessionResponse> {
+    return this.request<AgentSessionResponse>(`/api/v1/agent/sessions/${sessionId}`);
+  }
+
+  async approveAgentSession(
+    sessionId: string,
+    payload: AgentDecisionRequest = {}
+  ): Promise<AgentSessionStatusResponse> {
+    return this.request<AgentSessionStatusResponse>(`/api/v1/agent/sessions/${sessionId}/approve`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async rejectAgentSession(
+    sessionId: string,
+    payload: AgentDecisionRequest = {}
+  ): Promise<AgentSessionStatusResponse> {
+    return this.request<AgentSessionStatusResponse>(`/api/v1/agent/sessions/${sessionId}/reject`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async openAgentChatStream(
+    payload: AgentChatRequest,
+    signal?: AbortSignal,
+  ): Promise<Response> {
+    const baseUrl = this.resolveBaseUrl();
+    const endpoint = baseUrl ? `${baseUrl}/api/v1/agent/chat` : "/api/v1/agent/chat";
+    return fetch(endpoint, {
+      method: "POST",
+      credentials: "include",
+      headers: this.buildHeaders({ Accept: "text/event-stream" }),
+      body: JSON.stringify(payload),
+      signal,
+    });
   }
 
   async logout(): Promise<{ success: boolean }> {

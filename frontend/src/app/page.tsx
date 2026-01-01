@@ -21,12 +21,14 @@ import {
 } from "lucide-react";
 import { api, Template, TemplateVersion } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSessionContext } from "@/contexts/SessionContext";
 import PageStatus from "@/components/PageStatus";
 import { isNetworkError, normalizeApiError } from "@/lib/errors";
 import { localizeTemplate } from "@/lib/templateLocalization";
 import { translations } from "@/lib/translations";
 import { withViewTransition } from "@/lib/viewTransitions";
 import { getBeatLabel, getStoryboardLabel } from "@/lib/narrative";
+import { formatDateTime } from "@/lib/formatters";
 import AppShell from "@/components/AppShell";
 
 // Helper component for TemplateCard to use translations
@@ -240,6 +242,18 @@ function TemplateCard({
 
           {/* ─── Badges (Stagger Animation) ─── */}
           <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5">
+            {/* DNA Badge for Auteur Templates */}
+            {template.slug.startsWith("tmpl-auteur-") && (
+              <motion.span
+                initial={{ opacity: 0, x: -8, scale: 0.9 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                transition={{ delay: 0.05, ...springConfig }}
+                className={`inline-flex items-center gap-1 rounded-full bg-gradient-to-r ${colors.gradient} px-2.5 py-1 text-[10px] font-bold text-white shadow-lg ${colors.glow} backdrop-blur-sm ring-1 ring-white/20`}
+              >
+                <Sparkles className="h-3 w-3" />
+                DNA
+              </motion.span>
+            )}
             {evidenceCount > 0 && (
               <motion.span
                 initial={{ opacity: 0, x: -8, scale: 0.9 }}
@@ -437,6 +451,7 @@ function TemplateCard({
 function HomePageContent() {
   const router = useRouter();
   const { t, language, setLanguage } = useLanguage();
+  const { isAuthenticated, isLoading: isSessionLoading } = useSessionContext();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [templateFilter, setTemplateFilter] = useState<"all" | "production">("all");
   const [loading, setLoading] = useState(true);
@@ -451,6 +466,13 @@ function HomePageContent() {
   const [versionAction, setVersionAction] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const [trackedReferral, setTrackedReferral] = useState(false);
+
+  useEffect(() => {
+    if (isSessionLoading) return;
+    if (isAuthenticated) {
+      router.replace("/studio");
+    }
+  }, [isAuthenticated, isSessionLoading, router]);
 
   const localizedTemplates = useMemo(
     () => templates.map((template) => localizeTemplate(template, language)),
@@ -773,7 +795,7 @@ function HomePageContent() {
                                 v{version.version} {isCurrent ? `(${t("currentVersion")})` : ""}
                               </div>
                               <div className="text-xs text-slate-500 mt-1">
-                                {new Date(version.created_at).toLocaleString()}
+                                {formatDateTime(version.created_at) ?? ""}
                               </div>
                               {version.notes && (
                                 <div className="text-xs text-slate-400 mt-1">{version.notes}</div>

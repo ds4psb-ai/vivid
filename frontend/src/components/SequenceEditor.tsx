@@ -4,10 +4,11 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import {
     Plus, Trash2, GripVertical, Clock, Zap, ChevronDown, ChevronUp,
-    Film, Play, Pause, SkipForward, Edit2, Check, X, Copy,
+    Film, Edit2, Check, X, Copy,
     Sparkles, AlertTriangle
 } from 'lucide-react';
 import type { Sequence, NarrativePhaseType } from '@/types/storyFirst';
+import { formatTime } from '@/lib/formatters';
 
 // Re-export for backwards compatibility
 export type { Sequence } from '@/types/storyFirst';
@@ -29,7 +30,7 @@ export interface SequenceEditorProps {
 // Constants
 // =============================================================================
 
-const PHASE_CONFIG: Record<string, { label: string; color: string; bgColor: string; description: string }> = {
+const PHASE_CONFIG: Record<NarrativePhaseType, { label: string; color: string; bgColor: string; description: string }> = {
     hook: { label: '훅', color: 'text-red-400', bgColor: 'bg-red-500', description: '관객의 시선을 사로잡는 시작' },
     setup: { label: '설정', color: 'text-blue-400', bgColor: 'bg-blue-500', description: '상황과 캐릭터 소개' },
     build: { label: '상승', color: 'text-yellow-400', bgColor: 'bg-yellow-500', description: '긴장감 고조' },
@@ -46,7 +47,9 @@ const INTENSITY_CONFIG = {
     strong: { label: '강하게', color: 'text-red-400', dotColor: 'bg-red-400' },
 };
 
-const PRESET_STRUCTURES = {
+type PresetStructureKey = '3-act' | '5-act' | 'hook-payoff';
+
+const PRESET_STRUCTURES: Record<PresetStructureKey, Array<{ name: string; phase: NarrativePhaseType; percentage: number }>> = {
     '3-act': [
         { name: '1막: 설정', phase: 'setup', percentage: 25 },
         { name: '2막: 대결', phase: 'build', percentage: 50 },
@@ -71,12 +74,6 @@ const PRESET_STRUCTURES = {
 // =============================================================================
 
 const generateId = () => `seq_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-};
 
 const parseTime = (timeStr: string): number => {
     const parts = timeStr.split(':');
@@ -232,10 +229,10 @@ const SequenceCard: React.FC<{
                             <div>
                                 <label className="text-xs text-slate-500 uppercase tracking-wider mb-2 block">서사 단계</label>
                                 <div className="flex flex-wrap gap-2">
-                                    {Object.entries(PHASE_CONFIG).map(([key, config]) => (
+                                    {(Object.entries(PHASE_CONFIG) as Array<[NarrativePhaseType, typeof PHASE_CONFIG[NarrativePhaseType]]>).map(([key, config]) => (
                                         <button
                                             key={key}
-                                            onClick={() => onUpdate({ ...sequence, phase: key as any })}
+                                            onClick={() => onUpdate({ ...sequence, phase: key })}
                                             disabled={disabled}
                                             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${sequence.phase === key
                                                 ? `${config.bgColor}/30 ${config.color} ring-1 ring-current`
@@ -378,7 +375,7 @@ export const SequenceEditor: React.FC<SequenceEditorProps> = ({
         onSequencesChange(newSequences);
     }, [sequences, totalDuration, onSequencesChange]);
 
-    const handleApplyPreset = useCallback((presetKey: keyof typeof PRESET_STRUCTURES) => {
+    const handleApplyPreset = useCallback((presetKey: PresetStructureKey) => {
         const preset = PRESET_STRUCTURES[presetKey];
         let currentTime = 0;
 
@@ -389,7 +386,7 @@ export const SequenceEditor: React.FC<SequenceEditorProps> = ({
                 name: item.name,
                 t_start: currentTime,
                 t_end: currentTime + duration,
-                phase: item.phase as any,
+                phase: item.phase,
                 hook_recommended: idx === 0,
                 hook_intensity: 'medium',
             };
@@ -452,10 +449,10 @@ export const SequenceEditor: React.FC<SequenceEditorProps> = ({
                                     exit={{ opacity: 0, y: 10 }}
                                     className="absolute right-0 top-full mt-2 w-48 bg-slate-800 rounded-xl border border-white/10 shadow-xl z-10 overflow-hidden"
                                 >
-                                    {Object.entries(PRESET_STRUCTURES).map(([key, preset]) => (
+                                    {(Object.entries(PRESET_STRUCTURES) as Array<[PresetStructureKey, typeof PRESET_STRUCTURES[PresetStructureKey]]>).map(([key, preset]) => (
                                         <button
                                             key={key}
-                                            onClick={() => handleApplyPreset(key as any)}
+                                            onClick={() => handleApplyPreset(key)}
                                             className="w-full px-4 py-3 text-left text-sm hover:bg-white/5 transition-colors border-b border-white/5 last:border-0"
                                         >
                                             <span className="font-medium text-white">

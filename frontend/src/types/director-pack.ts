@@ -46,7 +46,7 @@ export interface SourceRef {
 
 export interface RuleSpec {
     operator: 'eq' | 'gt' | 'lt' | 'gte' | 'lte' | '<=' | '>=' | 'between' | 'in' | 'exists';
-    value: any;
+    value: unknown;
     tolerance?: number;
     unit?: string;
     aggregation?: 'mean' | 'median' | 'max' | 'min';
@@ -103,12 +103,12 @@ export interface MutationSlot {
     description?: string;
 
     // Allowed values
-    allowed_values?: any[];
+    allowed_values?: unknown[];
     allowed_range?: [number, number];
-    default_value?: any;
+    default_value?: unknown;
 
     // Persona binding
-    persona_presets?: Record<string, any>;
+    persona_presets?: Record<string, unknown>;
 
     // Evidence
     source_refs?: SourceRef[];

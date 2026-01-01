@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -16,14 +16,11 @@ export default function CrebitTermsPage() {
 
 function CrebitTermsContent() {
     const searchParams = useSearchParams();
-    const [activeTab, setActiveTab] = useState<"terms" | "privacy" | "refund">("terms");
-
-    useEffect(() => {
-        const tab = searchParams.get("tab");
-        if (tab === "terms" || tab === "privacy" || tab === "refund") {
-            setActiveTab(tab);
-        }
-    }, [searchParams]);
+    const urlTab = searchParams.get("tab");
+    const resolvedTab =
+        urlTab === "terms" || urlTab === "privacy" || urlTab === "refund" ? urlTab : null;
+    const [manualTab, setManualTab] = useState<"terms" | "privacy" | "refund" | null>(null);
+    const activeTab = manualTab ?? resolvedTab ?? "terms";
 
     return (
         <div className="min-h-screen bg-[#050505] text-white">
@@ -49,7 +46,7 @@ function CrebitTermsContent() {
                 {/* Tab Navigation */}
                 <div className="flex gap-2 mb-8 p-1 rounded-xl bg-white/5 border border-white/10">
                     <button
-                        onClick={() => setActiveTab("terms")}
+                        onClick={() => setManualTab("terms")}
                         className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all ${activeTab === "terms" ? "bg-[#4200FF] text-white" : "text-slate-400 hover:text-white"
                             }`}
                     >
@@ -57,7 +54,7 @@ function CrebitTermsContent() {
                         이용약관
                     </button>
                     <button
-                        onClick={() => setActiveTab("privacy")}
+                        onClick={() => setManualTab("privacy")}
                         className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all ${activeTab === "privacy" ? "bg-[#4200FF] text-white" : "text-slate-400 hover:text-white"
                             }`}
                     >
@@ -65,7 +62,7 @@ function CrebitTermsContent() {
                         개인정보처리방침
                     </button>
                     <button
-                        onClick={() => setActiveTab("refund")}
+                        onClick={() => setManualTab("refund")}
                         className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all ${activeTab === "refund" ? "bg-[#FF0045] text-white" : "text-slate-400 hover:text-white"
                             }`}
                     >
@@ -101,7 +98,7 @@ function TermsContent() {
             <section>
                 <h2 className="text-xl font-bold text-white mb-4">제1조 (목적)</h2>
                 <p>
-                    이 약관은 주식회사 페이지아카데미(이하 "회사")가 제공하는 Crebit ATC 프로그램(이하 "서비스")의
+                    이 약관은 주식회사 페이지아카데미(이하 &quot;회사&quot;)가 제공하는 Crebit ATC 프로그램(이하 &quot;서비스&quot;)의
                     이용조건 및 절차, 회사와 회원 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
                 </p>
                 <p className="mt-2 text-sm text-slate-400">
@@ -113,10 +110,10 @@ function TermsContent() {
             <section>
                 <h2 className="text-xl font-bold text-white mb-4">제2조 (용어의 정의)</h2>
                 <ul className="list-disc list-inside space-y-2">
-                    <li><strong>"회원"</strong>이란 본 약관에 동의하고 서비스 이용 계약을 체결한 자를 말합니다.</li>
-                    <li><strong>"서비스"</strong>란 회사가 제공하는 Crebit ATC 교육 프로그램과 관련 서비스를 말합니다.</li>
-                    <li><strong>"콘텐츠"</strong>란 강의 자료, 템플릿, 제작 가이드 등 프로그램 내 제공되는 모든 자료를 말합니다.</li>
-                    <li><strong>"결과물"</strong>이란 프로그램 과정에서 제작되는 영상 및 산출물을 말합니다.</li>
+                    <li><strong>&quot;회원&quot;</strong>이란 본 약관에 동의하고 서비스 이용 계약을 체결한 자를 말합니다.</li>
+                    <li><strong>&quot;서비스&quot;</strong>란 회사가 제공하는 Crebit ATC 교육 프로그램과 관련 서비스를 말합니다.</li>
+                    <li><strong>&quot;콘텐츠&quot;</strong>란 강의 자료, 템플릿, 제작 가이드 등 프로그램 내 제공되는 모든 자료를 말합니다.</li>
+                    <li><strong>&quot;결과물&quot;</strong>이란 프로그램 과정에서 제작되는 영상 및 산출물을 말합니다.</li>
                 </ul>
             </section>
 

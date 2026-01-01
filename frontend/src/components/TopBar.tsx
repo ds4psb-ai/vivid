@@ -18,6 +18,7 @@ import {
 import { useLanguage } from "@/contexts/LanguageContext";
 import { api, AuthSession } from "@/lib/api";
 import { getAuthStartUrl } from "@/lib/auth";
+import { formatNumber } from "@/lib/formatters";
 
 interface TopBarProps {
     projectName?: string;
@@ -200,10 +201,10 @@ export default function TopBar({
                 <Link
                     href="/credits"
                     className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-1.5 text-sm transition-colors hover:bg-white/10"
-                    aria-label={`${creditBalance.toLocaleString()} ${getLabel("credits", "credits")} available`}
+                    aria-label={`${formatNumber(creditBalance)} ${getLabel("credits", "credits")} available`}
                 >
                     <CreditCard className="h-4 w-4 text-[var(--accent)]" aria-hidden="true" />
-                    <span className="font-medium">{creditBalance.toLocaleString()}</span>
+                    <span className="font-medium">{formatNumber(creditBalance)}</span>
                 </Link>
 
                 {/* Save Button */}

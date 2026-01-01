@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
+import Image from "next/image";
 import type { DNAInvariant, MutationSlot } from '@/types/director-pack';
+import { formatTime } from '@/lib/formatters';
 
 // =============================================================================
 // Types
@@ -20,7 +22,7 @@ export interface Scene {
 export interface SceneOverride {
     scene_id: string;
     overridden_invariants: Record<string, Partial<DNAInvariant>>;
-    overridden_slots: Record<string, any>;
+    overridden_slots: Record<string, unknown>;
     custom_prompt?: string;
     notes?: string;
     enabled: boolean;
@@ -32,9 +34,10 @@ export interface SceneDNAEditorProps {
     baseSlots: MutationSlot[];
     overrides: Record<string, SceneOverride>;
     onOverrideChange: (sceneId: string, override: SceneOverride) => void;
-    onApplyToAll?: (invariantId: string, value: Partial<DNAInvariant>) => void;
     className?: string;
 }
+
+type SceneTab = 'dna' | 'slots' | 'prompt';
 
 // =============================================================================
 // Helper Components
@@ -70,8 +73,7 @@ const InvariantOverrideRow: React.FC<{
     invariant: DNAInvariant;
     override?: Partial<DNAInvariant>;
     onOverride: (value: Partial<DNAInvariant> | null) => void;
-    isGlobal?: boolean;
-}> = ({ invariant, override, onOverride, isGlobal }) => {
+}> = ({ invariant, override, onOverride }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [localValue, setLocalValue] = useState<string>(
         override?.spec?.value !== undefined
@@ -182,8 +184,8 @@ const InvariantOverrideRow: React.FC<{
 
 const SlotOverrideRow: React.FC<{
     slot: MutationSlot;
-    override?: any;
-    onOverride: (value: any | null) => void;
+    override?: unknown;
+    onOverride: (value: unknown | null) => void;
 }> = ({ slot, override, onOverride }) => {
     const currentValue = override ?? slot.default_value;
     const isOverridden = override !== undefined;
@@ -260,7 +262,7 @@ const SceneCard: React.FC<{
     isExpanded: boolean;
     onToggle: () => void;
 }> = ({ scene, baseInvariants, baseSlots, override, onOverrideChange, isExpanded, onToggle }) => {
-    const [activeTab, setActiveTab] = useState<'dna' | 'slots' | 'prompt'>('dna');
+    const [activeTab, setActiveTab] = useState<SceneTab>('dna');
 
     const handleInvariantOverride = (invariantId: string, value: Partial<DNAInvariant> | null) => {
         const newOverrides = { ...override.overridden_invariants };
@@ -275,7 +277,7 @@ const SceneCard: React.FC<{
         });
     };
 
-    const handleSlotOverride = (slotId: string, value: any | null) => {
+    const handleSlotOverride = (slotId: string, value: unknown | null) => {
         const newOverrides = { ...override.overridden_slots };
         if (value === null || value === undefined) {
             delete newOverrides[slotId];
@@ -315,7 +317,13 @@ const SceneCard: React.FC<{
                         {/* Thumbnail */}
                         <div className="w-16 h-10 bg-gray-800 rounded overflow-hidden flex-shrink-0">
                             {scene.thumbnail_url ? (
-                                <img src={scene.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                                <Image
+                                    src={scene.thumbnail_url}
+                                    alt=""
+                                    width={64}
+                                    height={40}
+                                    className="h-full w-full object-cover"
+                                />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-gray-600">
                                     🎬
@@ -366,14 +374,14 @@ const SceneCard: React.FC<{
                 <div className="border-t border-gray-800">
                     {/* Tabs */}
                     <div className="flex border-b border-gray-800">
-                        {[
+                        {([
                             { id: 'dna', label: '🧬 DNA 규칙', count: Object.keys(override.overridden_invariants).length },
                             { id: 'slots', label: '🎨 변수', count: Object.keys(override.overridden_slots).length },
                             { id: 'prompt', label: '📝 프롬프트', count: override.custom_prompt ? 1 : 0 },
-                        ].map((tab) => (
+                        ] as Array<{ id: SceneTab; label: string; count: number }>).map((tab) => (
                             <button
                                 key={tab.id}
-                                onClick={() => setActiveTab(tab.id as any)}
+                                onClick={() => setActiveTab(tab.id)}
                                 className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${activeTab === tab.id
                                         ? 'text-white border-b-2 border-emerald-500 bg-gray-800/30'
                                         : 'text-gray-400 hover:text-gray-200'
@@ -461,7 +469,6 @@ export const SceneDNAEditor: React.FC<SceneDNAEditorProps> = ({
     baseSlots,
     overrides,
     onOverrideChange,
-    onApplyToAll,
     className = '',
 }) => {
     const [expandedScene, setExpandedScene] = useState<string | null>(null);
@@ -571,15 +578,5 @@ export const SceneDNAEditor: React.FC<SceneDNAEditorProps> = ({
         </div>
     );
 };
-
-// =============================================================================
-// Utilities
-// =============================================================================
-
-function formatTime(seconds: number): string {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
 
 export default SceneDNAEditor;

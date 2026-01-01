@@ -278,7 +278,7 @@ export function applySceneOverrides(
     const merged = { ...pack };
 
     // Apply overrides to DNA invariants
-    Object.entries(overrides).forEach(([sceneId, override]) => {
+    Object.entries(overrides).forEach(([, override]) => {
         if (!override.enabled) return;
 
         Object.entries(override.overridden_invariants).forEach(([ruleId, newSpec]) => {

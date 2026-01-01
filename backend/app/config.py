@@ -35,6 +35,11 @@ class Settings(BaseSettings):
     GEMINI_MODEL: str = "gemini-2.0-flash"  # Default for text/general tasks
     GEMINI_VIDEO_MODEL: str = "gemini-2.0-pro-exp"  # For video file interpretation
     GEMINI_ENABLED: bool = True
+    GEMINI_AGENT_MODEL: str = "gemini-3-flash"  # Use gemini-3-pro-preview for higher quality
+    GEMINI_AGENT_TEMPERATURE: float = 0.4
+    GEMINI_AGENT_MAX_TOKENS: int = 2048
+    GEMINI_AGENT_MODELS: str = "gemini-3-flash,gemini-3-flash-preview,gemini-3-pro,gemini-3-pro-preview"
+    GEMINI_IMAGE_MODEL: str = "gemini-3-pro-image-preview"
 
     # Tavily API (Exa alternative for web search)
     # Get free key at https://tavily.com (1,000 credits/month)
@@ -161,6 +166,16 @@ class Settings(BaseSettings):
     @property
     def COOKIE_SECURE(self) -> bool:
         return self.ENVIRONMENT not in {"development", "local", "dev"}
+
+    @property
+    def ALLOWED_GEMINI_AGENT_MODELS(self) -> List[str]:
+        if not self.GEMINI_AGENT_MODELS:
+            return []
+        return [
+            model.strip()
+            for model in self.GEMINI_AGENT_MODELS.split(",")
+            if model.strip()
+        ]
 
     def validate_production_config(self) -> list[str]:
         """

@@ -78,7 +78,7 @@ export default function PatternVersionHistory({
             <div className={`rounded-xl border border-white/10 bg-slate-900/50 p-4 ${className}`}>
                 <div className="flex items-center gap-2 text-slate-500">
                     <History className="h-4 w-4" />
-                    <span className="text-sm">{t("noPatternVersions" as any) || "No pattern versions"}</span>
+                    <span className="text-sm">{t("noPatternVersions")}</span>
                 </div>
             </div>
         );
@@ -97,10 +97,10 @@ export default function PatternVersionHistory({
                 </div>
                 <div>
                     <h3 className="text-sm font-semibold text-slate-100">
-                        {t("patternVersionHistory" as any) || "Pattern Version History"}
+                        {t("patternVersionHistory")}
                     </h3>
                     <p className="text-xs text-slate-500">
-                        {t("recentVersions" as any) || `Recent ${versions.length} versions`}
+                        {t("recentVersions")}
                     </p>
                 </div>
             </div>

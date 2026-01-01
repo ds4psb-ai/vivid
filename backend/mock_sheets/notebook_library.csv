@@ -1,3 +1,0 @@
-notebook_id,title,notebook_ref,owner_id,cluster_id,cluster_label,cluster_tags,guide_scope,curator_notes,source_ids,source_count,created_at,updated_at
-nlb-bong-99,Bong Joon-ho Notebook,https://notebooklm.google.com/notebook/abc123,admin,cluster-auteur-bong,structural-tension,"tension,genre-mix",auteur,seed,"auteur-bong-1999-barking-dogs",1,2025-12-24T10:20:00Z,2025-12-24T10:20:00Z
-nlb-park-03,Park Chan-wook Notebook,https://notebooklm.google.com/notebook/xyz789,admin,cluster-auteur-park,symmetry-contrast,"symmetry,contrast",auteur,seed,"auteur-park-2003-oldboy",1,2025-12-24T12:20:00Z,2025-12-24T12:20:00Z

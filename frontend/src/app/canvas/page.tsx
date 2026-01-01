@@ -62,8 +62,10 @@ import {
   Canvas,
   GenerationRun,
   GenerationRunFeedbackRequest,
+  NarrativeDNA,
   StoryboardPreview,
 } from "@/lib/api";
+import type { WorkflowPlanResponse } from "@/lib/api";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { normalizeAllowedType } from "@/lib/graph";
 import { normalizeApiError } from "@/lib/errors";
@@ -71,12 +73,15 @@ import { withViewTransition } from "@/lib/viewTransitions";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
 import { useNodeLifecycle } from "@/hooks/useNodeLifecycle";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useCanvasSyncChannel } from "@/hooks/useCanvasSyncChannel";
 import AppShell from "@/components/AppShell";
 import EmptyCanvasOverlay from "@/components/EmptyCanvasOverlay";
 import { useRouter } from "next/navigation";
 import { useCreditBalance } from "@/hooks/useCreditBalance";
 import { useSessionContext } from "@/contexts/SessionContext";
 import LoginRequiredModal from "@/components/LoginRequiredModal";
+import { buildCanvasSnapshot, readAutoApplySetting, writeAutoApplySetting } from "@/lib/canvasSync";
+import type { CanvasSyncEvent } from "@/lib/canvasSync";
 import { useDirectorPackState } from "@/hooks/useDirectorPackState";
 import { CanvasDirectorPackPanel } from "@/components/canvas/CanvasDirectorPackPanel";
 import { useNarrativeArcState } from "@/hooks/useNarrativeArcState";
@@ -84,6 +89,7 @@ import { CanvasNarrativePanel } from "@/components/canvas/CanvasNarrativePanel";
 import VibeBoard, { VibeInput } from "@/components/canvas/VibeBoard";
 import ProactiveAssistant, { ProactiveSuggestion } from "@/components/canvas/ProactiveAssistant";
 import { Wand2 } from "lucide-react";
+import { formatNumber } from "@/lib/formatters";
 
 const nodeTypes = {
   input: CanvasNode,
@@ -98,6 +104,16 @@ const nodeTypes = {
 // Initial nodes removed from global scope to be defined inside component with translations
 
 const initialEdges: Edge[] = [];
+
+const CONNECTION_RULES: Record<string, string[]> = {
+  text: ["text", "any"],
+  image: ["image", "video", "any"],
+  video: ["video", "any"],
+  audio: ["audio", "video", "any"],
+  dna: ["dna", "text", "any"],
+  metadata: ["metadata", "text", "any"],
+  any: ["text", "image", "video", "audio", "dna", "metadata", "any"],
+};
 
 const createNodeId = () => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -114,10 +130,17 @@ function CanvasFlow() {
   const router = useRouter();
   const { session, isLoading: isSessionLoading } = useSessionContext();
   const { isAdmin } = useAdminAccess();
+  const isAuthenticated = Boolean(session?.authenticated);
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   // Empty state overlay - show when no nodes or starting fresh
   const [showEmptyOverlay, setShowEmptyOverlay] = useState(!urlCanvasId);
+  const [pendingWorkflow, setPendingWorkflow] = useState<{
+    plan: WorkflowPlanResponse;
+    sessionId?: string | null;
+    receivedAt: string;
+  } | null>(null);
+  const [autoApplyChatWorkflow, setAutoApplyChatWorkflow] = useState(false);
 
   const initialNodes = useMemo<Node<CanvasNodeData>[]>(() => [
     {
@@ -177,7 +200,6 @@ function CanvasFlow() {
   const [generationStatus, setGenerationStatus] = useState<string | null>(null);
   const generationPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [showGenerationPanel, setShowGenerationPanel] = useState(false);
-  const [generationFeedbackStatus, setGenerationFeedbackStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const capsuleStreamRef = useRef<CapsuleRunStreamController | null>(null);
   const [previewRunId, setPreviewRunId] = useState<string | null>(null);
   const previewCancelFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -212,6 +234,8 @@ function CanvasFlow() {
   const lastGenerationStatusRef = useRef<string | null>(null);
   const lastGenerationRunIdRef = useRef<string | null>(null);
   const previewCapsuleIdRef = useRef<string | null>(null);
+  const canvasSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastCanvasSnapshotRef = useRef<string | null>(null);
 
   const { takeSnapshot, undo, redo, canUndo, canRedo } = useUndoRedo();
   const { updateNodeData, updateNodesByType } = useNodeLifecycle(setNodes, setSelectedNode);
@@ -228,18 +252,8 @@ function CanvasFlow() {
   const [showVibeBoard, setShowVibeBoard] = useState(false);
   const [isVibeParsing, setIsVibeParsing] = useState(false);
 
-  const handleVibeSelected = useCallback(async (vibe: VibeInput) => {
-    setIsVibeParsing(true);
-    try {
-      const workflow = await api.interpretVibe({
-        type: vibe.type,
-        preset_id: vibe.presetId,
-        custom_description: vibe.customDescription,
-        output_type: vibe.outputType,
-        target_length_sec: vibe.targetLengthSec,
-      });
-
-      // Apply workflow nodes to canvas
+  const applyWorkflowPlan = useCallback(
+    (workflow: WorkflowPlanResponse, source: "vibe" | "chat") => {
       const newNodes = workflow.nodes.map((n) => ({
         id: n.id,
         type: n.type as CanvasNodeKind,
@@ -259,10 +273,97 @@ function CanvasFlow() {
         targetHandle: e.target_handle,
       }));
 
+      takeSnapshot(nodes as Node<CanvasNodeData>[], edges as Edge[]);
       setNodes(newNodes as Node<CanvasNodeData>[]);
       setEdges(newEdges);
       setShowVibeBoard(false);
       setShowEmptyOverlay(false);
+      pushRunLog(
+        "info",
+        source === "chat" ? t("canvasChatSyncApplied") : t("canvasWorkflowApplied"),
+        { kind: "system" }
+      );
+    },
+    [edges, nodes, pushRunLog, setEdges, setNodes, setShowEmptyOverlay, setShowVibeBoard, takeSnapshot, t]
+  );
+
+  useEffect(() => {
+    setAutoApplyChatWorkflow(readAutoApplySetting(canvasId));
+  }, [canvasId]);
+
+  const sendCanvasSync = useCanvasSyncChannel((event: CanvasSyncEvent) => {
+    if (event.type === "canvas_settings") {
+      if (event.payload.source === "canvas") return;
+      const incomingId = event.payload.canvasId ?? null;
+      const currentId = canvasId ?? null;
+      if (incomingId !== currentId) return;
+      writeAutoApplySetting(currentId, event.payload.autoApplyChatWorkflow);
+      setAutoApplyChatWorkflow(event.payload.autoApplyChatWorkflow);
+      return;
+    }
+    if (event.type !== "workflow_plan") return;
+    if (event.payload.source === "canvas") return;
+    if (!event.payload.plan?.nodes || !event.payload.plan?.edges) return;
+    if (!nodes.length && !edges.length) {
+      applyWorkflowPlan(event.payload.plan, "chat");
+      return;
+    }
+    if (autoApplyChatWorkflow) {
+      applyWorkflowPlan(event.payload.plan, "chat");
+      return;
+    }
+    setPendingWorkflow({
+      plan: event.payload.plan,
+      sessionId: event.payload.sessionId,
+      receivedAt: new Date().toISOString(),
+    });
+  });
+
+  const handleApplyPendingWorkflow = useCallback(() => {
+    if (!pendingWorkflow) return;
+    applyWorkflowPlan(pendingWorkflow.plan, "chat");
+    setPendingWorkflow(null);
+  }, [applyWorkflowPlan, pendingWorkflow]);
+
+  const handleDismissPendingWorkflow = useCallback(() => {
+    if (!pendingWorkflow) return;
+    setPendingWorkflow(null);
+    pushRunLog("info", t("canvasChatSyncDismissed"), { kind: "system" });
+  }, [pendingWorkflow, pushRunLog, t]);
+
+  const handleToggleAutoApply = useCallback(() => {
+    setAutoApplyChatWorkflow((prev) => {
+      const next = !prev;
+      writeAutoApplySetting(canvasId, next);
+      sendCanvasSync({
+        type: "canvas_settings",
+        payload: {
+          source: "canvas",
+          canvasId,
+          autoApplyChatWorkflow: next,
+        },
+      });
+      return next;
+    });
+  }, [canvasId, sendCanvasSync]);
+
+  useEffect(() => {
+    if (!autoApplyChatWorkflow || !pendingWorkflow) return;
+    handleApplyPendingWorkflow();
+  }, [autoApplyChatWorkflow, handleApplyPendingWorkflow, pendingWorkflow]);
+
+  const handleVibeSelected = useCallback(async (vibe: VibeInput) => {
+    setIsVibeParsing(true);
+    try {
+      const workflow = await api.interpretVibe({
+        type: vibe.type,
+        preset_id: vibe.presetId,
+        custom_description: vibe.customDescription,
+        output_type: vibe.outputType,
+        target_length_sec: vibe.targetLengthSec,
+      });
+
+      applyWorkflowPlan(workflow, "vibe");
 
       // Log success
       console.log(`AI 감독이 ${workflow.nodes.length}개 노드로 워크플로우를 생성했습니다`);
@@ -273,7 +374,7 @@ function CanvasFlow() {
     } finally {
       setIsVibeParsing(false);
     }
-  }, [setNodes, setEdges]);
+  }, [applyWorkflowPlan, setError]);
 
   // ProactiveAssistant state
   const [proactiveSuggestions, setProactiveSuggestions] = useState<ProactiveSuggestion[]>([]);
@@ -312,7 +413,7 @@ function CanvasFlow() {
 
   // Auto DNA Compliance Check - runs 2s after graph changes
   useEffect(() => {
-    const narrativeDna = graphMeta.narrative_dna as Record<string, unknown> | undefined;
+    const narrativeDna = graphMeta.narrative_dna as NarrativeDNA | undefined;
     if (!narrativeDna) return;
 
     // Extract content from input/style nodes
@@ -334,7 +435,7 @@ function CanvasFlow() {
         const response = await api.checkDnaCompliance({
           content: combinedContent,
           content_type: "script",
-          narrative_dna: narrativeDna as any,
+          narrative_dna: narrativeDna,
         });
 
         // Update ProactiveAssistant suggestions
@@ -526,6 +627,30 @@ function CanvasFlow() {
   useEffect(() => {
     isPreviewLoadingRef.current = isPreviewLoading;
   }, [isPreviewLoading]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (!nodes.length && !edges.length) return;
+    if (canvasSyncTimerRef.current) {
+      clearTimeout(canvasSyncTimerRef.current);
+    }
+    canvasSyncTimerRef.current = setTimeout(() => {
+      const snapshot = buildCanvasSnapshot(nodes as Node<CanvasNodeData>[], edges as Edge[], {
+        canvasId,
+        title,
+      });
+      const serialized = JSON.stringify(snapshot);
+      if (serialized === lastCanvasSnapshotRef.current) return;
+      lastCanvasSnapshotRef.current = serialized;
+      sendCanvasSync({ type: "canvas_snapshot", payload: snapshot });
+    }, 800);
+    return () => {
+      if (canvasSyncTimerRef.current) {
+        clearTimeout(canvasSyncTimerRef.current);
+        canvasSyncTimerRef.current = null;
+      }
+    };
+  }, [canvasId, edges, isLoading, nodes, sendCanvasSync, title]);
 
   const stopGenerationPolling = useCallback(() => {
     if (generationPollRef.current) {
@@ -749,7 +874,7 @@ function CanvasFlow() {
   const handleRun = useCallback(async () => {
     // Wait for session to load before checking auth
     if (isSessionLoading) return;
-    if (!session?.authenticated) {
+    if (!isAuthenticated) {
       setShowLoginModal(true);
       return;
     }
@@ -1061,6 +1186,8 @@ function CanvasFlow() {
       setIsOptimizing(false);
     }
   }, [
+    isSessionLoading,
+    isAuthenticated,
     nodes,
     edges,
     canvasId,
@@ -1075,6 +1202,8 @@ function CanvasFlow() {
     pushToast,
     openPreviewPanel,
     previewLanguage,
+    directorPackState,
+    narrativeArcState,
   ]);
 
   const previewCapsuleKey = storyboardPreview?.capsule_id;
@@ -1331,17 +1460,6 @@ function CanvasFlow() {
     };
   }, [canvasId, isLoading, setError, startGenerationPolling, t, updateOutputNodes]);
 
-  // Connection type compatibility rules
-  const CONNECTION_RULES: Record<string, string[]> = {
-    text: ["text", "any"],
-    image: ["image", "video", "any"],
-    video: ["video", "any"],
-    audio: ["audio", "video", "any"],
-    dna: ["dna", "text", "any"],
-    metadata: ["metadata", "text", "any"],
-    any: ["text", "image", "video", "audio", "dna", "metadata", "any"],
-  };
-
   const isValidConnection = useCallback(
     (connection: Connection) => {
       const sourceNode = nodes.find((n) => n.id === connection.source);
@@ -1471,7 +1589,7 @@ function CanvasFlow() {
   const handleSave = useCallback(async () => {
     // Wait for session to load before checking auth
     if (isSessionLoading) return;
-    if (!session?.authenticated) {
+    if (!isAuthenticated) {
       setShowLoginModal(true);
       return;
     }
@@ -1492,7 +1610,7 @@ function CanvasFlow() {
     } finally {
       setIsSaving(false);
     }
-  }, [canvasId, edges, graphMeta, isPublic, nodes, t, title]);
+  }, [canvasId, edges, graphMeta, isPublic, isAuthenticated, isSessionLoading, nodes, t, title]);
 
   const handleOpenLoad = useCallback(async () => {
     setIsLoading(true);
@@ -1567,7 +1685,7 @@ function CanvasFlow() {
     setEdges([...layoutedEdges]);
     takeSnapshot(layoutedNodes as Node<CanvasNodeData>[], layoutedEdges);
     pushToast("info", "Auto layout applied");
-  }, [nodes, edges, setNodes, setEdges, takeSnapshot, pushToast, t]);
+  }, [nodes, edges, setNodes, setEdges, takeSnapshot, pushToast]);
 
   const toolbarButtons = useMemo(
     () =>
@@ -1710,6 +1828,38 @@ function CanvasFlow() {
 
   return (
     <div className="h-screen w-full bg-slate-950 text-slate-100 overflow-hidden relative">
+      {pendingWorkflow && (
+        <div className="absolute top-20 right-4 z-40 w-[320px] pointer-events-auto">
+          <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 shadow-xl">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-amber-200">
+              {t("canvasChatWorkflowPending")}
+            </div>
+            <div className="mt-2 text-sm text-slate-100">{t("canvasChatWorkflowPrompt")}</div>
+            {pendingWorkflow.sessionId && (
+              <div className="mt-2 text-[10px] text-slate-400">
+                {pendingWorkflow.sessionId.slice(0, 8)} ·{" "}
+                {new Date(pendingWorkflow.receivedAt).toLocaleTimeString()}
+              </div>
+            )}
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={handleApplyPendingWorkflow}
+                className="flex-1 rounded-full border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-xs font-semibold text-sky-100 hover:border-sky-500/70 hover:bg-sky-500/20"
+              >
+                {t("canvasChatWorkflowApply")}
+              </button>
+              <button
+                type="button"
+                onClick={handleDismissPendingWorkflow}
+                className="flex-1 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-200 hover:border-white/20 hover:bg-white/10"
+              >
+                {t("canvasChatWorkflowDismiss")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* --- HEADER --- */}
       <header className="absolute top-0 left-0 right-0 z-30 px-4 md:px-6 py-4 flex flex-wrap items-center justify-between gap-2 pointer-events-none overflow-x-auto">
         <div className="pointer-events-auto flex items-center gap-4 bg-slate-950/50 backdrop-blur-md p-2 rounded-2xl border border-white/10 shadow-xl">
@@ -1767,6 +1917,24 @@ function CanvasFlow() {
               <Wand2 className="h-4 w-4" />
               <span className="hidden md:inline">바이브</span>
             </button>
+            <button
+              type="button"
+              onClick={handleToggleAutoApply}
+              title={t("canvasChatAutoApplyHint")}
+              aria-pressed={autoApplyChatWorkflow}
+              className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] transition ${
+                autoApplyChatWorkflow
+                  ? "border-emerald-400/60 bg-emerald-500/15 text-emerald-100"
+                  : "border-white/10 bg-white/5 text-slate-300 hover:border-white/20 hover:bg-white/10"
+              }`}
+            >
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  autoApplyChatWorkflow ? "bg-emerald-400" : "bg-slate-500"
+                }`}
+              />
+              {t("canvasChatAutoApply")}
+            </button>
           </div>
         </div>
 
@@ -1793,10 +1961,10 @@ function CanvasFlow() {
             <Link
               href="/credits"
               className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10"
-              aria-label={`${creditBalance.toLocaleString()} ${t("credits")}`}
+              aria-label={`${formatNumber(creditBalance)} ${t("credits")}`}
             >
               <CreditCard className="h-4 w-4 text-sky-300" />
-              <span>{creditBalance.toLocaleString()}</span>
+              <span>{formatNumber(creditBalance)}</span>
             </Link>
             {generationRun && (
               <button

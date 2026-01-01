@@ -17,6 +17,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { api, type AffiliateProfile, type AffiliateReferral } from "@/lib/api";
 import PageStatus from "@/components/PageStatus";
 import { isNetworkError, normalizeApiError } from "@/lib/errors";
+import { copyToClipboard } from "@/lib/clipboard";
 
 export default function AffiliatePage() {
     const { language } = useLanguage();
@@ -66,13 +67,10 @@ export default function AffiliatePage() {
             : "");
 
     const handleCopy = useCallback(async () => {
-        try {
-            await navigator.clipboard.writeText(referralLink);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        } catch (err) {
-            console.error("Failed to copy:", err);
-        }
+        const success = await copyToClipboard(referralLink);
+        if (!success) return;
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
     }, [referralLink]);
 
     const totalEarned = useMemo(() => {

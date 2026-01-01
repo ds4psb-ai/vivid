@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronUp, Settings, Zap, AlertCircle, RefreshCw } from 'lucide-react';
+import { ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import type { UseDirectorPackStateReturn } from '@/hooks/useDirectorPackState';
 
 // =============================================================================
@@ -123,14 +123,14 @@ export const CanvasDirectorPackPanel: React.FC<CanvasDirectorPackPanelProps> = (
                         {/* Tab Navigation */}
                         {state.isEnabled && state.pack && (
                             <div className="flex px-2 pt-2 border-b border-white/5 gap-1">
-                                {[
+                                {([
                                     { id: 'dna', label: 'DNA', icon: '🧬' },
                                     { id: 'scenes', label: 'Scenes', icon: '🎬' },
                                     { id: 'settings', label: 'Settings', icon: '⚙️' }
-                                ].map(tab => (
+                                ] as Array<{ id: 'dna' | 'scenes' | 'settings'; label: string; icon: string }>).map(tab => (
                                     <button
                                         key={tab.id}
-                                        onClick={() => setActiveTab(tab.id as any)}
+                                        onClick={() => setActiveTab(tab.id)}
                                         className={`flex-1 py-2 text-xs font-medium rounded-t-lg transition-colors flex items-center justify-center gap-1.5 ${activeTab === tab.id
                                             ? 'bg-white/10 text-emerald-400 border-b-2 border-emerald-500'
                                             : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
@@ -243,7 +243,7 @@ export const CanvasDirectorPackPanel: React.FC<CanvasDirectorPackPanelProps> = (
                                                 </div>
                                             ) : (
                                                 <div className="space-y-2">
-                                                    {Object.entries(state.sceneOverrides).map(([sceneId, override]) => (
+                                                    {Object.entries(state.sceneOverrides).map(([sceneId]) => (
                                                         <div key={sceneId} className="p-2 bg-purple-500/10 border border-purple-500/20 rounded-lg flex justify-between items-center">
                                                             <span className="text-xs text-purple-300">Scene {sceneId}</span>
                                                             <span className="text-[10px] bg-purple-500/20 px-1.5 py-0.5 rounded text-purple-200">Applied</span>

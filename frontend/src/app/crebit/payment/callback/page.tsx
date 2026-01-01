@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Loader2, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -10,7 +10,6 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 function PaymentCallbackContent() {
     const searchParams = useSearchParams();
-    const router = useRouter();
     const [status, setStatus] = useState<"processing" | "success" | "failed">("processing");
     const [message, setMessage] = useState("결제 처리 중...");
 

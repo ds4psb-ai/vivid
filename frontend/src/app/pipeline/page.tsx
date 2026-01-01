@@ -26,7 +26,6 @@ import {
   CapsuleRefreshResponse,
   CapsuleSpec,
   NotebookLibraryItem,
-  Template,
   PipelineStatus,
   OpsActionLog,
   PatternPromotionResponse,
@@ -36,7 +35,7 @@ import PageStatus from "@/components/PageStatus";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { isNetworkError, normalizeApiError } from "@/lib/errors";
-import { localizeTemplate } from "@/lib/templateLocalization";
+import { formatNumber } from "@/lib/formatters";
 
 type StageCard = {
   key: string;
@@ -56,9 +55,6 @@ export default function PipelinePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [notebooks, setNotebooks] = useState<NotebookLibraryItem[]>([]);
   const [capsules, setCapsules] = useState<CapsuleSpec[]>([]);
-  const [recentTemplates, setRecentTemplates] = useState<Template[]>([]);
-  const [showMissingOnly, setShowMissingOnly] = useState(false);
-  const [templatesError, setTemplatesError] = useState<string | null>(null);
   const [seedSubmitting, setSeedSubmitting] = useState(false);
   const [seedError, setSeedError] = useState<string | null>(null);
   const [seedSuccess, setSeedSuccess] = useState<string | null>(null);
@@ -102,15 +98,9 @@ export default function PipelinePage() {
 
   const loadErrorFallback =
     language === "ko" ? "파이프라인 상태를 불러오지 못했습니다." : "Unable to load pipeline status.";
-  const templatesErrorFallback =
-    language === "ko" ? "템플릿을 불러오지 못했습니다." : "Unable to load templates.";
   const opsErrorFallback =
     language === "ko" ? "운영 로그를 불러오지 못했습니다." : "Unable to load ops logs.";
   const { isAdmin, session, isLoading: isAuthLoading } = useAdminAccess();
-  const localizedTemplates = useMemo(
-    () => recentTemplates.map((template) => localizeTemplate(template, language)),
-    [recentTemplates, language]
-  );
 
   useEffect(() => {
     let active = true;
@@ -133,12 +123,11 @@ export default function PipelinePage() {
       setIsLoading(true);
       setLoadError(null);
       setIsOffline(false);
-      const [statusResult, notebooksResult, capsulesResult, templatesResult, logsResult] =
+      const [statusResult, notebooksResult, capsulesResult, logsResult] =
         await Promise.allSettled([
           api.getPipelineStatus(),
           api.listNotebookLibrary({ limit: 80 }),
           api.listCapsules(),
-          api.listTemplates(true),
           api.listOpsActions(8),
         ]);
 
@@ -153,7 +142,6 @@ export default function PipelinePage() {
         statusResult,
         notebooksResult,
         capsulesResult,
-        templatesResult,
         logsResult,
       ].some((result) => result.status === "rejected" && isNetworkError(result.reason));
       setIsOffline(offlineDetected);
@@ -178,21 +166,13 @@ export default function PipelinePage() {
         setOpsLogError(normalizeApiError(logsResult.reason, opsErrorFallback));
       }
 
-      if (templatesResult.status === "fulfilled") {
-        setRecentTemplates(templatesResult.value.slice(0, 6));
-        setTemplatesError(null);
-      } else {
-        setRecentTemplates([]);
-        setTemplatesError(normalizeApiError(templatesResult.reason, templatesErrorFallback));
-      }
-
       if (active) setIsLoading(false);
     };
     void loadStatus();
     return () => {
       active = false;
     };
-  }, [isAdmin, isAuthLoading, language, loadErrorFallback, opsErrorFallback, templatesErrorFallback]);
+  }, [isAdmin, isAuthLoading, language, loadErrorFallback, opsErrorFallback]);
 
   const labels = {
     title: language === "ko" ? "파이프라인 상태" : "Pipeline Status",
@@ -647,7 +627,6 @@ export default function PipelinePage() {
     labels.stageAssets,
   ]);
 
-  const patternHistory = status?.pattern_versions || [];
   const promoteStats = promoteResult?.stats || {};
   const formatOpsAction = (value: string) => {
     if (value === "sheets_sync") return labels.opsActionSheets;
@@ -663,40 +642,6 @@ export default function PipelinePage() {
   const toggleLog = (id: string) => {
     setExpandedLogs((prev) => ({ ...prev, [id]: !prev[id] }));
   };
-
-  const getTemplateMeta = (template: Template) => {
-    const graphMeta = (template.graph_data?.meta || {}) as Record<string, unknown>;
-    const guideSources = Array.isArray(graphMeta.guide_sources) ? graphMeta.guide_sources : [];
-    const firstSource = guideSources[0] as { notebook_id?: string; guide_types?: string[] } | undefined;
-    const notebookId = firstSource?.notebook_id || "-";
-    const guideTypes = Array.isArray(firstSource?.guide_types) ? firstSource?.guide_types : [];
-    const evidenceRefs = Array.isArray(graphMeta.evidence_refs) ? graphMeta.evidence_refs : [];
-    const narrativeSeeds = (graphMeta.narrative_seeds || {}) as Record<string, unknown>;
-    const storyBeats = Array.isArray(narrativeSeeds.story_beats) ? narrativeSeeds.story_beats : [];
-    const storyboardCards = Array.isArray(narrativeSeeds.storyboard_cards)
-      ? narrativeSeeds.storyboard_cards
-      : [];
-    return {
-      notebookId,
-      guideTypes,
-      evidenceRefs,
-      storyBeats,
-      storyboardCards,
-      hasMeta: guideSources.length > 0 || evidenceRefs.length > 0,
-    };
-  };
-
-  const missingProvenanceCount = useMemo(() => {
-    if (typeof status?.templates_missing_provenance === "number") {
-      return status.templates_missing_provenance;
-    }
-    return localizedTemplates.filter((template) => !getTemplateMeta(template).hasMeta).length;
-  }, [localizedTemplates, status]);
-
-  const templatesToShow = useMemo(() => {
-    if (!showMissingOnly) return localizedTemplates;
-    return localizedTemplates.filter((template) => !getTemplateMeta(template).hasMeta);
-  }, [localizedTemplates, showMissingOnly]);
 
   return (
     <AppShell showTopBar={false}>
@@ -762,7 +707,7 @@ export default function PipelinePage() {
                       </span>
                     </div>
                     <div className="mt-4 text-2xl font-semibold text-[var(--fg-0)]">
-                      {card.total.toLocaleString()}
+                      {formatNumber(card.total, undefined, undefined, "0")}
                     </div>
                     {card.meta && (
                       <div className="mt-2 text-xs text-[var(--fg-muted)]">{card.meta}</div>

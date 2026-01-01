@@ -20,6 +20,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { api, DerivedInsight, NotebookAssetItem, NotebookLibraryItem } from "@/lib/api";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { isNetworkError, normalizeApiError } from "@/lib/errors";
+import { copyToClipboard } from "@/lib/clipboard";
 
 type KnowledgeType = "notebook" | "analysis" | "guide" | "video" | "asset";
 
@@ -55,9 +56,7 @@ const TYPE_ICONS: Record<KnowledgeType, React.ElementType> = {
 const isExternalLink = (value?: string) => Boolean(value && /^https?:\/\//i.test(value));
 const copyText = (value?: string) => {
     if (!value) return;
-    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-        void navigator.clipboard.writeText(value);
-    }
+    void copyToClipboard(value);
 };
 
 export default function KnowledgePage() {

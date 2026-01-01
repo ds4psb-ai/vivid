@@ -1,8 +1,8 @@
 # Node Canvas System: 기술 명세서 (2025-12 최신 정본)
 
 **작성**: 2025-12-24  
-**Updated**: 2025-12-28  
-**버전**: 정본 v1.1  
+**Updated**: 2025-12-30 (Story-First Integration 추가)  
+**버전**: 정본 v1.2  
 **대상**: Tech Lead / Architect / Backend / Frontend  
 **목표**: Node Canvas + 최적화 + AI 생성 파이프라인 설계 기준 수립  
 
@@ -88,7 +88,37 @@
 - **오케스트레이션**: tool routing + context packaging, 장기 작업은 이벤트/큐로 분리
 - **LLMOps**: 프롬프트/체인도 버전 관리, 오프라인 평가셋 + 휴먼 피드백 기반 개선
 - **운영**: Dev/QA/Prod 분리, CI/CD, 모니터링/알림
+
+### 1.6 Story-First Integration (NEW: 2025-12-30)
+
+Canvas에서 바이럴 콘텐츠 제작을 위한 서사 중심 제어 시스템:
+
+**UI 컴포넌트:**
+- `CanvasNarrativePanel`: 부조화 설계, 감정 곡선, 훅 스타일 3-Tab 구조
+- `HookVariantSelector`: 8종 훅 스타일 선택 + A/B 테스트 모드
+- `DNAComplianceViewer`: 브랜드 DNA 가이드라인 준수 리포트
+- `MetricsDashboard`: 바이럴 성과 분석 + 인사이트 대시보드
+
+**Backend API 확장:**
+```typescript
+interface CapsuleRunRequest {
+  capsule_key: string;
+  params?: Record<string, unknown>;
+  // Story-First 확장 필드 (2025-12-30)
+  director_pack?: DirectorPack;      // VDG 분석 결과 주입
+  scene_overrides?: SceneOverride[]; // 씬별 커스터마이징
+  narrative_arc?: NarrativeArc;      // 서사 구조 설정
+  hook_variant?: HookVariant;        // 훅 스타일 선택
+}
+```
+
+**타입 정의 (SSoT):**
+- `frontend/src/types/storyFirst.ts`
+- `HookVariant`, `HookStyle`, `NarrativeArc`, `Sequence`
+- `BatchComplianceReport`, `ShotComplianceReport`, `RuleResult`
+
 ---
+
 
 ## 2) 데이터 모델 (핵심)
 

@@ -1,59 +1,28 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     CheckCircle, AlertTriangle, XCircle, HelpCircle,
-    ChevronDown, ChevronUp, RefreshCw, Wand2, Download, Copy, Check
+    ChevronDown, RefreshCw, Wand2,
+    Shield
 } from 'lucide-react';
+import type { BatchComplianceReport, ShotComplianceReport, RuleResult } from '@/types/storyFirst';
+
+// Re-export for compatibility
+export type { BatchComplianceReport, ShotComplianceReport, RuleResult };
 
 // =============================================================================
-// Types
+// Props
 // =============================================================================
-
-export interface RuleResult {
-    rule_id: string;
-    rule_name: string;
-    priority: 'critical' | 'high' | 'medium' | 'low';
-    level: 'compliant' | 'partial' | 'violation' | 'unknown';
-    confidence: number;
-    message: string;
-    expected?: string | number | null;
-    actual?: string | number | null;
-}
-
-export interface ShotComplianceReport {
-    shot_id: string;
-    badge?: string;
-    overall_level: 'compliant' | 'partial' | 'violation' | 'unknown';
-    overall_confidence: number;
-    rule_results: RuleResult[];
-    critical_violations: number;
-    high_violations: number;
-    suggestions: string[];
-}
-
-export interface BatchComplianceReport {
-    total_shots: number;
-    compliant_shots: number;
-    partial_shots: number;
-    violation_shots: number;
-    overall_compliance_rate: number;
-    summary: string;
-    shot_reports: ShotComplianceReport[];
-}
 
 export interface DNAComplianceViewerProps {
     report: BatchComplianceReport;
     className?: string;
     compact?: boolean;
-    /** Callback when user wants to regenerate a shot */
     onRegenerateShot?: (shotId: string, suggestions: string[]) => void;
-    /** Callback when user wants to apply all suggestions */
     onApplyAllSuggestions?: (shotIds: string[]) => void;
-    /** Callback when export is clicked */
     onExport?: (format: 'json' | 'csv') => void;
-    /** Whether actions are currently loading */
     isActionsLoading?: boolean;
 }
 
@@ -63,33 +32,36 @@ export interface DNAComplianceViewerProps {
 
 const LevelBadge: React.FC<{ level: string; size?: 'sm' | 'md' }> = ({ level, size = 'sm' }) => {
     const config = {
-        compliant: { icon: CheckCircle, color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
-        partial: { icon: AlertTriangle, color: 'text-yellow-400', bg: 'bg-yellow-500/20' },
-        violation: { icon: XCircle, color: 'text-red-400', bg: 'bg-red-500/20' },
-        unknown: { icon: HelpCircle, color: 'text-gray-400', bg: 'bg-gray-500/20' },
-    }[level] || { icon: HelpCircle, color: 'text-gray-400', bg: 'bg-gray-500/20' };
+        compliant: { icon: CheckCircle, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', label: '적합' },
+        partial: { icon: AlertTriangle, color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', label: '주의' },
+        violation: { icon: XCircle, color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20', label: '위반' },
+        unknown: { icon: HelpCircle, color: 'text-gray-400', bg: 'bg-gray-500/10', border: 'border-gray-500/20', label: '확인불가' },
+    }[level] || { icon: HelpCircle, color: 'text-gray-400', bg: 'bg-gray-500/10', border: 'border-gray-500/20', label: '알수없음' };
 
     const Icon = config.icon;
-    const iconSize = size === 'sm' ? 14 : 18;
+    const iconSize = size === 'sm' ? 14 : 16;
+    const textSize = size === 'sm' ? 'text-[10px]' : 'text-xs';
+    const px = size === 'sm' ? 'px-2' : 'px-2.5';
+    const py = size === 'sm' ? 'py-0.5' : 'py-1';
 
     return (
-        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${config.bg} ${config.color}`}>
+        <span className={`inline-flex items-center gap-1.5 ${px} ${py} rounded-full border ${config.bg} ${config.border} ${config.color} ${textSize} font-medium`}>
             <Icon size={iconSize} />
-            <span className={size === 'sm' ? 'text-xs' : 'text-sm'}>{level}</span>
+            {config.label}
         </span>
     );
 };
 
 const PriorityBadge: React.FC<{ priority: string }> = ({ priority }) => {
-    const colors = {
-        critical: 'bg-red-500/20 text-red-400 border-red-500/30',
-        high: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-        medium: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-        low: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
-    }[priority] || 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+    const config = {
+        critical: { color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20' },
+        high: { color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20' },
+        medium: { color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20' },
+        low: { color: 'text-gray-400', bg: 'bg-white/5', border: 'border-white/10' },
+    }[priority] || { color: 'text-gray-400', bg: 'bg-white/5', border: 'border-white/10' };
 
     return (
-        <span className={`px-1.5 py-0.5 text-xs rounded border ${colors}`}>
+        <span className={`px-1.5 py-0.5 text-[10px] uppercase tracking-wider rounded border ${config.bg} ${config.color} ${config.border}`}>
             {priority}
         </span>
     );
@@ -100,157 +72,13 @@ const ProgressBar: React.FC<{ value: number; className?: string }> = ({ value, c
     const color = percent >= 80 ? 'bg-emerald-500' : percent >= 50 ? 'bg-yellow-500' : 'bg-red-500';
 
     return (
-        <div className={`h-2 bg-gray-700 rounded-full overflow-hidden ${className}`}>
+        <div className={`h-1.5 w-full bg-white/5 rounded-full overflow-hidden ${className}`}>
             <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${percent}%` }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
-                className={`h-full ${color}`}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className={`h-full ${color} shadow-[0_0_10px_rgba(255,255,255,0.2)]`}
             />
-        </div>
-    );
-};
-
-const ActionButton: React.FC<{
-    onClick: () => void;
-    icon: React.ReactNode;
-    label: string;
-    variant?: 'primary' | 'secondary' | 'danger';
-    disabled?: boolean;
-    size?: 'sm' | 'md';
-}> = ({ onClick, icon, label, variant = 'secondary', disabled = false, size = 'sm' }) => {
-    const variants = {
-        primary: 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border-emerald-500/30',
-        secondary: 'bg-gray-700 text-gray-300 hover:bg-gray-600 border-gray-600',
-        danger: 'bg-red-500/20 text-red-400 hover:bg-red-500/30 border-red-500/30',
-    };
-
-    const sizeClasses = size === 'sm' ? 'px-2 py-1 text-xs gap-1' : 'px-3 py-1.5 text-sm gap-1.5';
-
-    return (
-        <button
-            onClick={onClick}
-            disabled={disabled}
-            className={`flex items-center ${sizeClasses} rounded-lg border transition-colors 
-                ${variants[variant]} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-            {icon}
-            <span>{label}</span>
-        </button>
-    );
-};
-
-// =============================================================================
-// Shot Report Card
-// =============================================================================
-
-const ShotReportCard: React.FC<{
-    report: ShotComplianceReport;
-    defaultExpanded?: boolean;
-    onRegenerate?: (shotId: string, suggestions: string[]) => void;
-    isLoading?: boolean;
-}> = ({ report, defaultExpanded = false, onRegenerate, isLoading }) => {
-    const [isExpanded, setIsExpanded] = useState(defaultExpanded);
-
-    const hasIssues = report.overall_level === 'violation' || report.overall_level === 'partial';
-
-    return (
-        <div className="bg-gray-800 rounded-lg overflow-hidden">
-            {/* Header */}
-            <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="w-full p-3 flex items-center justify-between hover:bg-gray-750 transition-colors"
-            >
-                <div className="flex items-center gap-3">
-                    <span className="text-lg">{report.badge || '🎬'}</span>
-                    <span className="font-mono text-sm text-cyan-400">{report.shot_id}</span>
-                    <LevelBadge level={report.overall_level} />
-                </div>
-                <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500">
-                        {(report.overall_confidence * 100).toFixed(0)}% 신뢰도
-                    </span>
-                    {isExpanded ? (
-                        <ChevronUp size={16} className="text-gray-400" />
-                    ) : (
-                        <ChevronDown size={16} className="text-gray-400" />
-                    )}
-                </div>
-            </button>
-
-            {/* Expanded Content */}
-            <AnimatePresence>
-                {isExpanded && (
-                    <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden"
-                    >
-                        <div className="p-3 pt-0 space-y-3">
-                            {/* Violation Summary */}
-                            {(report.critical_violations > 0 || report.high_violations > 0) && (
-                                <div className="flex gap-3 text-xs">
-                                    {report.critical_violations > 0 && (
-                                        <span className="text-red-400">
-                                            🔴 Critical: {report.critical_violations}
-                                        </span>
-                                    )}
-                                    {report.high_violations > 0 && (
-                                        <span className="text-orange-400">
-                                            🟠 High: {report.high_violations}
-                                        </span>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Rule Results */}
-                            <div className="space-y-2">
-                                {report.rule_results.map((rule) => (
-                                    <div
-                                        key={rule.rule_id}
-                                        className="flex items-center justify-between p-2 bg-gray-900 rounded text-sm"
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            <PriorityBadge priority={rule.priority} />
-                                            <span className="text-gray-300">{rule.rule_name}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs text-gray-500">{rule.message}</span>
-                                            <LevelBadge level={rule.level} size="sm" />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Suggestions */}
-                            {report.suggestions.length > 0 && (
-                                <div className="p-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                                    <div className="text-xs font-semibold text-yellow-400 mb-1">💡 개선 제안</div>
-                                    <ul className="text-xs text-gray-300 space-y-1">
-                                        {report.suggestions.map((s, i) => (
-                                            <li key={i}>• {s}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
-
-                            {/* Action Buttons */}
-                            {hasIssues && onRegenerate && (
-                                <div className="flex gap-2 pt-2 border-t border-gray-700">
-                                    <ActionButton
-                                        onClick={() => onRegenerate(report.shot_id, report.suggestions)}
-                                        icon={isLoading ? <RefreshCw size={12} className="animate-spin" /> : <Wand2 size={12} />}
-                                        label="제안 적용하여 재생성"
-                                        variant="primary"
-                                        disabled={isLoading}
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
         </div>
     );
 };
@@ -265,178 +93,193 @@ export const DNAComplianceViewer: React.FC<DNAComplianceViewerProps> = ({
     compact = false,
     onRegenerateShot,
     onApplyAllSuggestions,
-    onExport,
     isActionsLoading = false,
 }) => {
-    const [showAllShots, setShowAllShots] = useState(false);
-    const [copiedToClipboard, setCopiedToClipboard] = useState(false);
+    const [expandedShots, setExpandedShots] = useState<Set<string>>(new Set());
 
-    const displayedShots = showAllShots
-        ? report.shot_reports
-        : report.shot_reports.slice(0, 3);
-
-    const problematicShotIds = report.shot_reports
-        .filter(s => s.overall_level === 'violation' || s.overall_level === 'partial')
-        .map(s => s.shot_id);
-
-    const handleCopyToClipboard = useCallback(async () => {
-        try {
-            const text = JSON.stringify(report, null, 2);
-            await navigator.clipboard.writeText(text);
-            setCopiedToClipboard(true);
-            setTimeout(() => setCopiedToClipboard(false), 2000);
-        } catch {
-            console.error('Failed to copy to clipboard');
+    const toggleShot = (shotId: string) => {
+        const newSet = new Set(expandedShots);
+        if (newSet.has(shotId)) {
+            newSet.delete(shotId);
+        } else {
+            newSet.add(shotId);
         }
-    }, [report]);
+        setExpandedShots(newSet);
+    };
 
-    const handleApplyAll = useCallback(() => {
-        if (onApplyAllSuggestions && problematicShotIds.length > 0) {
-            onApplyAllSuggestions(problematicShotIds);
-        }
-    }, [onApplyAllSuggestions, problematicShotIds]);
+    const hasCriticalIssues = report.violation_shots > 0;
+    const violationsList = report.shot_reports.filter(r => r.overall_level === 'violation' || r.overall_level === 'partial');
+    const compliantList = report.shot_reports.filter(r => r.overall_level === 'compliant');
 
     return (
-        <div className={`bg-gray-900 rounded-xl border border-gray-800 overflow-hidden ${className}`}>
-            {/* Header with Summary */}
-            <div className="p-4 bg-gradient-to-r from-gray-800 to-gray-900 border-b border-gray-800">
-                <div className="flex items-center justify-between mb-3">
+        <div className={`space-y-6 ${className}`}>
+            {/* Summary Card */}
+            <div className={`
+                rounded-xl border p-5 backdrop-blur-md transition-all
+                ${hasCriticalIssues
+                    ? 'bg-red-500/5 border-red-500/20 shadow-[0_0_20px_-10px_rgba(239,68,68,0.2)]'
+                    : 'bg-emerald-500/5 border-emerald-500/20 shadow-[0_0_20px_-10px_rgba(16,185,129,0.2)]'
+                }
+            `}>
+                <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                        <span className="text-2xl">🧬</span>
+                        <div className={`p-2.5 rounded-xl ${hasCriticalIssues ? 'bg-red-500/10 text-red-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                            <Shield size={24} />
+                        </div>
                         <div>
-                            <h3 className="text-lg font-bold text-white">DNA 준수 검증</h3>
-                            <p className="text-xs text-gray-500">{report.summary}</p>
+                            <h3 className={`text-lg font-bold ${hasCriticalIssues ? 'text-white' : 'text-white'}`}>
+                                {hasCriticalIssues ? 'DNA 가이드라인 위반 감지' : 'DNA 가이드라인 준수'}
+                            </h3>
+                            <p className="text-sm text-gray-400">
+                                {hasCriticalIssues
+                                    ? `${report.violation_shots}개의 샷에서 수정이 필요한 항목이 발견되었습니다.`
+                                    : '모든 샷이 브랜드 가이드라인을 준수하고 있습니다.'}
+                            </p>
                         </div>
                     </div>
                     <div className="text-right">
-                        <div className="text-2xl font-bold text-white">
+                        <div className="text-2xl font-bold text-white mb-0.5">
                             {(report.overall_compliance_rate * 100).toFixed(0)}%
                         </div>
-                        <div className="text-xs text-gray-500">준수율</div>
+                        <div className="text-xs text-gray-500 uppercase tracking-wider">준수율</div>
                     </div>
                 </div>
 
-                {/* Progress Bar */}
-                <ProgressBar value={report.overall_compliance_rate} className="mb-3" />
+                <div className="space-y-4">
+                    <ProgressBar value={report.overall_compliance_rate} />
 
-                {/* Stats */}
-                <div className="grid grid-cols-4 gap-2 text-center">
-                    <div className="p-2 bg-gray-800 rounded">
-                        <div className="text-lg font-bold text-white">{report.total_shots}</div>
-                        <div className="text-xs text-gray-500">전체</div>
-                    </div>
-                    <div className="p-2 bg-emerald-500/10 rounded">
-                        <div className="text-lg font-bold text-emerald-400">{report.compliant_shots}</div>
-                        <div className="text-xs text-gray-500">준수</div>
-                    </div>
-                    <div className="p-2 bg-yellow-500/10 rounded">
-                        <div className="text-lg font-bold text-yellow-400">{report.partial_shots}</div>
-                        <div className="text-xs text-gray-500">부분</div>
-                    </div>
-                    <div className="p-2 bg-red-500/10 rounded">
-                        <div className="text-lg font-bold text-red-400">{report.violation_shots}</div>
-                        <div className="text-xs text-gray-500">위반</div>
+                    <div className="grid grid-cols-3 gap-2">
+                        <div className="bg-black/20 rounded-lg p-2.5 flex flex-col items-center border border-white/5">
+                            <span className="text-emerald-400 font-bold text-lg">{report.compliant_shots}</span>
+                            <span className="text-[10px] text-gray-500">적합</span>
+                        </div>
+                        <div className="bg-black/20 rounded-lg p-2.5 flex flex-col items-center border border-white/5">
+                            <span className="text-yellow-400 font-bold text-lg">{report.partial_shots}</span>
+                            <span className="text-[10px] text-gray-500">주의</span>
+                        </div>
+                        <div className="bg-black/20 rounded-lg p-2.5 flex flex-col items-center border border-white/5">
+                            <span className="text-red-400 font-bold text-lg">{report.violation_shots}</span>
+                            <span className="text-[10px] text-gray-500">위반</span>
+                        </div>
                     </div>
                 </div>
 
-                {/* Action Bar */}
-                {!compact && (onApplyAllSuggestions || onExport) && (
-                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-700">
-                        <div className="flex gap-2">
-                            {onApplyAllSuggestions && problematicShotIds.length > 0 && (
-                                <ActionButton
-                                    onClick={handleApplyAll}
-                                    icon={isActionsLoading ? <RefreshCw size={14} className="animate-spin" /> : <Wand2 size={14} />}
-                                    label={`${problematicShotIds.length}개 샷 재생성`}
-                                    variant="primary"
-                                    size="md"
-                                    disabled={isActionsLoading}
-                                />
-                            )}
-                        </div>
-                        <div className="flex gap-2">
-                            <ActionButton
-                                onClick={handleCopyToClipboard}
-                                icon={copiedToClipboard ? <Check size={14} /> : <Copy size={14} />}
-                                label={copiedToClipboard ? '복사됨!' : '복사'}
-                                variant="secondary"
-                                size="md"
-                            />
-                            {onExport && (
-                                <ActionButton
-                                    onClick={() => onExport('json')}
-                                    icon={<Download size={14} />}
-                                    label="JSON 내보내기"
-                                    variant="secondary"
-                                    size="md"
-                                />
-                            )}
-                        </div>
+                {hasCriticalIssues && onApplyAllSuggestions && (
+                    <div className="mt-5 pt-4 border-t border-white/5">
+                        <button
+                            onClick={() => onApplyAllSuggestions(violationsList.map(r => r.shot_id))}
+                            disabled={isActionsLoading}
+                            className="w-full py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all shadow-lg shadow-red-900/40"
+                        >
+                            {isActionsLoading ? <RefreshCw size={16} className="animate-spin" /> : <Wand2 size={16} />}
+                            모든 위반 사항 자동 수정 ({violationsList.length}건)
+                        </button>
                     </div>
                 )}
             </div>
 
-            {/* Shot Reports */}
-            {!compact && (
-                <div className="p-4 space-y-3">
-                    <div className="text-sm font-semibold text-gray-400 mb-2">
-                        샷별 상세 결과
-                    </div>
+            {/* Violation Shots List */}
+            {violationsList.length > 0 && (
+                <div className="space-y-3">
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider pl-1">수정이 필요한 샷</h4>
+                    {violationsList.map(shot => (
+                        <div key={shot.shot_id} className="bg-white/5 border border-white/5 rounded-xl overflow-hidden backdrop-blur-sm hover:border-white/10 transition-colors">
+                            <button
+                                onClick={() => toggleShot(shot.shot_id)}
+                                className="w-full p-4 flex items-center justify-between text-left"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <span className="text-sm font-mono text-gray-400">{shot.shot_id}</span>
+                                    <LevelBadge level={shot.overall_level} />
+                                    {shot.critical_violations > 0 && (
+                                        <span className="text-[10px] font-bold text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20">
+                                            CRITICAL
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex gap-1.5">
+                                        {shot.suggestions.length > 0 && (
+                                            <span className="px-2 py-0.5 bg-purple-500/10 text-purple-300 text-[10px] rounded border border-purple-500/20 flex items-center gap-1">
+                                                <Wand2 size={10} />
+                                                제안 {shot.suggestions.length}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <ChevronDown size={16} className={`text-gray-500 transition-transform ${expandedShots.has(shot.shot_id) ? 'rotate-180' : ''}`} />
+                                </div>
+                            </button>
 
-                    {displayedShots.map((shot, idx) => (
-                        <motion.div
-                            key={shot.shot_id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.05 }}
-                        >
-                            <ShotReportCard
-                                report={shot}
-                                defaultExpanded={shot.overall_level === 'violation'}
-                                onRegenerate={onRegenerateShot}
-                                isLoading={isActionsLoading}
-                            />
-                        </motion.div>
+                            <AnimatePresence>
+                                {expandedShots.has(shot.shot_id) && (
+                                    <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        className="border-t border-white/5 bg-black/20"
+                                    >
+                                        <div className="p-4 space-y-4">
+                                            {/* Rule Results */}
+                                            <div className="space-y-2">
+                                                {shot.rule_results.map((rule, idx) => (
+                                                    <div key={idx} className="flex items-start gap-3 text-sm p-2 rounded hover:bg-white/5 transition-colors">
+                                                        <div className="mt-0.5"><LevelBadge level={rule.level} size="sm" /></div>
+                                                        <div className="flex-1">
+                                                            <div className="flex items-baseline gap-2 mb-0.5">
+                                                                <span className="font-medium text-gray-200">{rule.rule_name}</span>
+                                                                <PriorityBadge priority={rule.priority} />
+                                                            </div>
+                                                            <p className="text-gray-400 text-xs leading-relaxed">{rule.message}</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {/* Suggestions Action */}
+                                            {shot.suggestions.length > 0 && (
+                                                <div className="bg-purple-500/5 border border-purple-500/10 rounded-lg p-3">
+                                                    <div className="flex items-center gap-2 mb-2 text-purple-300">
+                                                        <Wand2 size={14} />
+                                                        <span className="text-xs font-bold">AI 수정 제안</span>
+                                                    </div>
+                                                    <ul className="space-y-1 mb-3">
+                                                        {shot.suggestions.map((s, i) => (
+                                                            <li key={i} className="text-xs text-gray-400 pl-4 relative before:content-['•'] before:absolute before:left-1 before:text-purple-500">
+                                                                {s}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                    <button
+                                                        onClick={() => onRegenerateShot?.(shot.shot_id, shot.suggestions)}
+                                                        disabled={isActionsLoading}
+                                                        className="w-full py-2 bg-purple-600 hover:bg-purple-500 text-white rounded text-xs font-medium transition-colors shadow-lg shadow-purple-900/20"
+                                                    >
+                                                        이 제안으로 샷 재생성
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     ))}
+                </div>
+            )}
 
-                    {/* Show More Button */}
-                    {report.shot_reports.length > 3 && (
-                        <button
-                            onClick={() => setShowAllShots(!showAllShots)}
-                            className="w-full py-2 text-sm text-gray-400 hover:text-white transition-colors"
-                        >
-                            {showAllShots
-                                ? '접기'
-                                : `${report.shot_reports.length - 3}개 더 보기`}
-                        </button>
-                    )}
+            {/* Compliant List (Collapsible) */}
+            {compliantList.length > 0 && !compact && (
+                <div className="pt-4 border-t border-white/5">
+                    <button
+                        onClick={() => { }} // Could add toggle logic for this section
+                        className="flex items-center gap-2 text-xs font-medium text-gray-500 hover:text-gray-300 transition-colors"
+                    >
+                        <span>통과된 샷 ({compliantList.length})</span>
+                        <ChevronDown size={12} />
+                    </button>
                 </div>
             )}
         </div>
-    );
-};
-
-// =============================================================================
-// Compact Badge Component
-// =============================================================================
-
-export const ComplianceBadge: React.FC<{
-    complianceRate: number;
-    onClick?: () => void;
-}> = ({ complianceRate, onClick }) => {
-    const percent = Math.round(complianceRate * 100);
-    const color = percent >= 80 ? 'emerald' : percent >= 50 ? 'yellow' : 'red';
-
-    return (
-        <button
-            onClick={onClick}
-            className={`px-3 py-1.5 rounded-lg flex items-center gap-2 text-xs
-        bg-${color}-500/20 text-${color}-400 border border-${color}-500/30
-        hover:bg-${color}-500/30 transition-colors`}
-        >
-            <span className="font-bold">{percent}%</span>
-            <span>DNA 준수</span>
-        </button>
     );
 };
 

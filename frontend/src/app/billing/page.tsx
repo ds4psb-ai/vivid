@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { CreditCard, CheckCircle2, ArrowUpRight } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { formatNumber } from "@/lib/formatters";
 
 type BillingCycle = "monthly" | "yearly";
 
@@ -119,7 +120,7 @@ export default function BillingPage() {
                 <div className="mt-4 space-y-2 text-xs text-[var(--fg-muted)]">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-3 w-3 text-emerald-300" />
-                    {plan.credits.toLocaleString()} {labels.credits}
+                    {formatNumber(plan.credits)} {labels.credits}
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-3 w-3 text-emerald-300" />
@@ -153,7 +154,7 @@ export default function BillingPage() {
                     key={pack.id}
                     className="rounded-full border border-white/10 bg-white/5 px-3 py-1"
                   >
-                    {pack.credits.toLocaleString()} {labels.credits}
+                    {formatNumber(pack.credits)} {labels.credits}
                   </span>
                 ))}
               </div>
@@ -176,7 +177,7 @@ export default function BillingPage() {
                     key={pack.id}
                     className="rounded-full border border-white/10 bg-white/5 px-3 py-1"
                   >
-                    {pack.credits.toLocaleString()} {labels.credits}
+                    {formatNumber(pack.credits)} {labels.credits}
                   </span>
                 ))}
               </div>

@@ -1,3 +1,0 @@
-candidate_id,source_id,pattern_name,pattern_type,description,weight,evidence_ref,confidence,status
-cand-001,auteur-bong-1999-barking-dogs,blocked_symmetry,scene,"Symmetrical composition with blocked view",0.72,source:00:03:10-00:04:20,0.85,validated
-cand-002,auteur-park-2003-oldboy,lateral_tracking,scene,"Long take lateral tracking shot",0.90,source:00:15:00-00:18:00,0.95,promoted

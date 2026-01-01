@@ -1,13 +1,11 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import type {
     HookVariant,
     NarrativeArc,
-    NarrativePhase,
     Sequence,
 } from '@/types/storyFirst';
-import { DEFAULT_HOOK_VARIANTS } from '@/types/storyFirst';
 
 // Re-export types for backwards compatibility
 export type { HookVariant, NarrativeArc, NarrativePhase, Sequence } from '@/types/storyFirst';

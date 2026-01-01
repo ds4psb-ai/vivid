@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { formatDateTime } from '@/lib/formatters';
 
 // =============================================================================
 // Types (matching backend/app/schemas/director_pack.py)
@@ -14,7 +15,7 @@ interface TimeScope {
 
 interface RuleSpec {
     operator: string;
-    value: any;
+    value: unknown;
     tolerance?: number;
 }
 
@@ -37,10 +38,10 @@ interface MutationSlot {
     slot_type: 'style' | 'tone' | 'pacing' | 'color' | 'music' | 'text';
     name: string;
     description?: string;
-    allowed_values?: any[];
+    allowed_values?: unknown[];
     allowed_range?: [number, number];
-    default_value?: any;
-    persona_presets?: Record<string, any>;
+    default_value?: unknown;
+    persona_presets?: Record<string, unknown>;
 }
 
 interface ForbiddenMutation {
@@ -165,7 +166,7 @@ const TimelineBar: React.FC<{ checkpoints: Checkpoint[]; duration?: number }> = 
             </div>
 
             {/* Checkpoint markers */}
-            {checkpoints.map((cp, idx) => {
+            {checkpoints.map((cp) => {
                 const position = (cp.t / duration) * 100;
                 return (
                     <div
@@ -235,7 +236,7 @@ const DNAInvariantsSection: React.FC<{ invariants: DNAInvariant[]; expanded: boo
 
                             {inv.coach_line_ko && (
                                 <div className="mt-2 p-2 bg-gray-900/50 rounded text-xs text-amber-300/80 italic">
-                                    💬 "{inv.coach_line_ko}"
+                                    💬 &quot;{inv.coach_line_ko}&quot;
                                 </div>
                             )}
 
@@ -363,8 +364,6 @@ interface DirectorPackViewerProps {
 
 export const DirectorPackViewer: React.FC<DirectorPackViewerProps> = ({
     pack,
-    onEditInvariant,
-    onEditSlot,
     className = '',
 }) => {
     const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
@@ -373,6 +372,7 @@ export const DirectorPackViewer: React.FC<DirectorPackViewerProps> = ({
         forbidden: true,
         timeline: true,
     });
+    const compiledAt = formatDateTime(pack.meta.compiled_at, 'ko-KR');
 
     const toggleSection = (section: string) => {
         setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
@@ -477,7 +477,7 @@ export const DirectorPackViewer: React.FC<DirectorPackViewerProps> = ({
             {/* Footer */}
             <div className="px-4 py-3 bg-gray-800/50 border-t border-gray-800 flex items-center justify-between">
                 <div className="text-xs text-gray-500">
-                    Compiled: {new Date(pack.meta.compiled_at).toLocaleString('ko-KR')}
+                    Compiled: {compiledAt ?? '-'}
                 </div>
                 <div className="flex items-center gap-2">
                     <span className={`w-2 h-2 rounded-full ${pack.policy.interrupt_on_violation ? 'bg-green-500' : 'bg-gray-500'}`} />

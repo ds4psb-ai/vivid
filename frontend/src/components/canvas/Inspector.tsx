@@ -11,6 +11,7 @@ import { normalizeAllowedType } from "@/lib/graph";
 import { useCapsuleNodeFSM } from "@/hooks/useCapsuleNodeFSM";
 import { normalizeApiError } from "@/lib/errors";
 import { getBeatLabel, getStoryboardLabel } from "@/lib/narrative";
+import { formatDateTime } from "@/lib/formatters";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -1360,7 +1361,7 @@ export function Inspector({
                       {/* Spacer to prevent layout jumps */}
                       <div className="h-0" />
                       <div className="mt-1 text-[10px] text-slate-500">
-                        {new Date(item.created_at).toLocaleString()}
+                        {formatDateTime(item.created_at) ?? ""}
                       </div>
                     </div>
                   ))}

@@ -1,7 +1,8 @@
-# Crebit Node Canvas (MVP scaffold)
+# Crebit Studio (Agent Chat + Node Canvas)
 
-This repo bootstraps the Node Canvas MVP described in the Crebit docs. The focus is a fast, minimal base for:
+This repo builds the chat-first Agent Studio and Node Canvas described in the Crebit docs. The focus is a fast, minimal base for:
 
+- Agent Studio (chat-first): workflow compile + capsule run + artifact previews (SSE streaming)
 - Visual node canvas (drag, connect, inspect)
 - Persisted canvases (save/load) using JSON graphs
 - Future hooks for GA/RL optimization and template marketplace
@@ -13,12 +14,31 @@ This repo bootstraps the Node Canvas MVP described in the Crebit docs. The focus
 - Processing includes auto-calc, GA suggestions, and RL feedback loops
 - Templates are first-class objects (public share + marketplace later)
 - MVP path: build canvas UI + persistence first, add GA/RL after
+- Agent Studio: chat-first entrypoint with workflow compile + canvas sync + artifact previews
 - NotebookLM/Opal outputs flow through **Sheets Bus → DB SoR** (Derived only)
 - NotebookLM은 **지식/가이드 레이어** (클러스터 노트북, 오마주/변주 가이드, 템플릿 적합도 제안)
 - Video 이해는 Gemini 구조화 출력으로 **DB SoR**에 적재 후 NotebookLM 소스로 사용
 - Pattern Library/Trace records the repeatable auteur rules
 - NotebookLM/Opal Ultra 구독 전제 (다중 출력/다국어 활용)
 - 흐름/역할 정본: `10_PIPELINES_AND_USER_FLOWS.md`, 원칙 정본: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
+
+## Story-First Features (NEW: 2025-12-30)
+
+바이럴 콘텐츠 제작을 위한 서사 중심 제어 시스템:
+
+- **CanvasNarrativePanel**: 부조화 설계, 감정 곡선, 훅 스타일 3-Tab 구조
+- **HookVariantSelector**: 8종 훅 스타일 (충격/호기심/감정/역설 등) + A/B 테스트
+- **DNAComplianceViewer**: 브랜드 DNA 가이드라인 준수 리포트
+- **MetricsDashboard**: 바이럴 성과 분석 + 인사이트 대시보드
+
+**핵심 타입**: `frontend/src/types/storyFirst.ts` (HookVariant, NarrativeArc, Sequence 등)
+
+## Agent Studio (Chat-first)
+
+- `/studio` is the chat-first UI (simple/expert modes).
+- Streaming SSE events update assistant messages, tool results, and artifacts.
+- Artifacts include Storyboard, Shot List, and Data Table previews.
+- Optional canvas sync to apply compiled workflows.
 
 ## Tech baseline
 
@@ -166,6 +186,10 @@ Reserved if you add services later:
 - POST /api/v1/ingest/pattern-candidate
 - POST /api/v1/runs/
 - GET /api/v1/runs/{id}
+- POST /api/v1/agent/chat
+- GET /api/v1/agent/sessions/{id}
+- POST /api/v1/agent/sessions/{id}/approve
+- POST /api/v1/agent/sessions/{id}/reject
 
 Auth (MVP): send `X-User-Id` header for private resources.
 

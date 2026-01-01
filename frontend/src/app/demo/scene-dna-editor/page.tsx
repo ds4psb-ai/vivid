@@ -183,11 +183,6 @@ export default function SceneDNAEditorDemoPage() {
         }));
     };
 
-    // Calculate summary
-    const totalOverrides = Object.values(overrides).reduce((sum, o) =>
-        sum + Object.keys(o.overridden_invariants).length + Object.keys(o.overridden_slots).length + (o.custom_prompt ? 1 : 0)
-        , 0);
-
     return (
         <div className="min-h-screen bg-gray-950 text-white p-8">
             <div className="max-w-5xl mx-auto space-y-8">

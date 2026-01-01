@@ -27,8 +27,10 @@ export interface HookVariant {
     intensity: 'soft' | 'medium' | 'strong' | 'explosive';
     promptPrefix: string;
     promptKeywords: string[];
-    visualDirection: string;
-    coachTipKo: string;
+    visualDirection?: string;
+    coachTipKo?: string;
+    description?: string;
+    duration?: number;
     isControl?: boolean;
 }
 

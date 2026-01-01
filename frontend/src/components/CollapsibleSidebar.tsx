@@ -144,7 +144,7 @@ interface NavGroupProps {
     pathname: string;
 }
 
-function NavGroup({ id, label, icon: Icon, items, isExpanded, pathname }: NavGroupProps) {
+function NavGroup({ label, icon: Icon, items, isExpanded, pathname }: NavGroupProps) {
     const [isOpen, setIsOpen] = useState(false);
     const isGroupActive = items.some(item => pathname === item.href);
 
@@ -239,8 +239,9 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
     const { t } = useLanguage();
 
     const NAV_ITEMS: { label: string; href: string; icon: React.ElementType; badge?: string }[] = [
-        { label: t("navHome"), href: "/", icon: Home },
+        { label: t("navStudio"), href: "/studio", icon: MessageCircle },
         { label: t("navCanvas"), href: "/canvas", icon: LayoutGrid },
+        { label: t("navHome"), href: "/", icon: Home },
     ];
 
     const NAV_GROUPS = [

@@ -25,7 +25,14 @@ from app.routers.events import router as events_router
 from app.routers.jobs import router as jobs_router
 from app.routers.director_packs import router as director_packs_router
 from app.routers.content_metrics import router as content_metrics_router
+from app.routers.health import router as health_router
+from app.routers.data_deletion import router as data_deletion_router
+from app.routers.director import router as director_router
+from app.routers.agent import router as agent_router
 from app.seed import seed_auteur_data
+from app.middleware.rate_limit import setup_rate_limiting
+from app.logging_config import setup_logging, LoggingMiddleware
+from app.monitoring import setup_monitoring
 
 
 @asynccontextmanager
@@ -51,10 +58,24 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
-    allow_credentials=True,
+    allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
     allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["X-Request-ID", "X-RateLimit-Limit", "X-RateLimit-Remaining"],
+    max_age=settings.CORS_MAX_AGE,  # Cache preflight requests
 )
+
+# Add logging middleware for structured request/response logging
+app.add_middleware(LoggingMiddleware)
+
+# Setup rate limiting (100/min default, see rate_limit.py for details)
+setup_rate_limiting(app)
+
+# Initialize structured logging
+setup_logging(settings.LOG_LEVEL if hasattr(settings, 'LOG_LEVEL') else "INFO")
+
+# Setup Sentry and Prometheus monitoring
+setup_monitoring(app)
 
 app.include_router(canvases_router, prefix="/api/v1/canvases", tags=["canvases"])
 app.include_router(templates_router, prefix="/api/v1/templates", tags=["templates"])
@@ -73,12 +94,11 @@ app.include_router(events_router, prefix="/api/v1", tags=["events"])
 app.include_router(jobs_router, prefix="/api/v1", tags=["jobs"])
 app.include_router(director_packs_router, prefix="/api/v1", tags=["director-packs"])
 app.include_router(content_metrics_router, prefix="/api/v1", tags=["content-metrics"])
+app.include_router(director_router, prefix="/api/v1", tags=["director"])  # AI Director vibe coding
+app.include_router(agent_router, prefix="/api/v1", tags=["agent"])  # Agent chat endpoints
+app.include_router(data_deletion_router, prefix="/api/v1", tags=["compliance"])  # GDPR data deletion
+app.include_router(health_router, prefix="", tags=["health"])  # Health endpoints at root
 app.include_router(realtime_router, prefix="/ws", tags=["realtime"])
-
-
-@app.get("/health")
-async def health_check():
-    return {"status": "ok", "environment": settings.ENVIRONMENT}
 
 
 @app.get("/")

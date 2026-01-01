@@ -6,6 +6,7 @@ import { Activity, Clock, DollarSign, TrendingUp } from "lucide-react";
 import { api, RunTraceSummary } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { normalizeApiError } from "@/lib/errors";
+import { formatNumber } from "@/lib/formatters";
 
 interface RunTraceDashboardProps {
     className?: string;
@@ -126,7 +127,7 @@ export default function RunTraceDashboard({ className = "", days = 7 }: RunTrace
                         <Activity className="h-3 w-3" />
                         {labels.totalRuns}
                     </div>
-                    <div className="text-lg font-semibold text-[var(--fg-0)]">{data.total_runs.toLocaleString()}</div>
+                    <div className="text-lg font-semibold text-[var(--fg-0)]">{formatNumber(data.total_runs, undefined, undefined, "0")}</div>
                 </motion.div>
 
                 <motion.div

@@ -892,18 +892,31 @@ async def _execute_capsule_run(
                 )
 
             start_time = time.perf_counter()
-            summary, evidence_refs = execute_capsule(
-                capsule_id=capsule_id,
-                capsule_version=capsule_version,
-                inputs=inputs,
-                params=params,
-                capsule_spec=spec_payload,
-                progress_cb=_progress_cb,
-                director_pack=director_pack,
-                scene_overrides=scene_overrides,
-                narrative_arc=narrative_arc,
-                hook_variant=hook_variant,
-            )
+            
+            # Wrap sync execute_capsule in executor with timeout
+            def _run_capsule():
+                return execute_capsule(
+                    capsule_id=capsule_id,
+                    capsule_version=capsule_version,
+                    inputs=inputs,
+                    params=params,
+                    capsule_spec=spec_payload,
+                    progress_cb=_progress_cb,
+                    director_pack=director_pack,
+                    scene_overrides=scene_overrides,
+                    narrative_arc=narrative_arc,
+                    hook_variant=hook_variant,
+                )
+            
+            try:
+                # Run in executor with timeout
+                summary, evidence_refs = await asyncio.wait_for(
+                    loop.run_in_executor(None, _run_capsule),
+                    timeout=settings.CAPSULE_EXECUTION_TIMEOUT
+                )
+            except asyncio.TimeoutError:
+                raise TimeoutError(f"Capsule execution timed out after {settings.CAPSULE_EXECUTION_TIMEOUT}s")
+            
             latency_ms = int((time.perf_counter() - start_time) * 1000)
             token_usage, cost_usd = _extract_metrics(summary)
             filtered_refs, evidence_warnings = await _filter_evidence_refs(
@@ -1004,6 +1017,28 @@ async def _execute_capsule_run(
             run.summary = {"error": str(exc)}
             run.evidence_refs = []
             await session.commit()
+            
+            # Refund credits for failed runs
+            if user_id and credit_cost > 0:
+                try:
+                    from app.credit_service import refund_credits
+                    await refund_credits(
+                        db=session,
+                        user_id=user_id,
+                        amount=credit_cost,
+                        description=f"Failed capsule run: {capsule_id}@{capsule_version}",
+                        capsule_run_id=run.id,
+                        meta={
+                            "error": str(exc),
+                            "capsule_id": capsule_id,
+                            "capsule_version": capsule_version,
+                        },
+                    )
+                    run.summary = {**run.summary, "credits_refunded": credit_cost}
+                    await session.commit()
+                except Exception:
+                    pass  # Don't fail the error handler if refund fails
+            
             await run_event_hub.publish(
                 str(run_id),
                 "run.failed",

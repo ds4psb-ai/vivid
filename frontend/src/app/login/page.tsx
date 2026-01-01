@@ -12,6 +12,7 @@ function LoginContent() {
   const { language } = useLanguage();
   const searchParams = useSearchParams();
   const error = searchParams.get("error") || searchParams.get("reason");
+  const isExpired = searchParams.get("expired") === "true";
   const authStartUrl = (() => {
     const base = process.env.NEXT_PUBLIC_API_URL || "";
     return base ? `${base}/api/v1/auth/google/start` : "/api/v1/auth/google/start";
@@ -28,6 +29,10 @@ function LoginContent() {
       language === "ko"
         ? "로그인에 실패했습니다. 다시 시도해주세요."
         : "Authentication failed. Please try again.",
+    expired:
+      language === "ko"
+        ? "세션이 만료되었습니다. 다시 로그인해주세요."
+        : "Your session has expired. Please sign in again.",
     terms: language === "ko" ? "서비스 이용약관" : "Terms of Service",
     privacy: language === "ko" ? "개인정보 처리방침" : "Privacy Policy",
   };
@@ -43,7 +48,13 @@ function LoginContent() {
           <h1 className="text-2xl font-semibold text-[var(--fg-0)]">{labels.title}</h1>
           <p className="mt-2 text-sm text-[var(--fg-muted)]">{labels.subtitle}</p>
 
-          {error && (
+          {isExpired && (
+            <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+              {labels.expired}
+            </div>
+          )}
+
+          {error && !isExpired && (
             <div className="mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
               {labels.error}
             </div>

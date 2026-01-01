@@ -4,13 +4,15 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, User, Mail, Phone, Check, Loader2, CreditCard } from "lucide-react";
 import { api, type CrebitApplicationRequest } from "@/lib/api";
-import { requestNicePayment, CREBIT_PAYMENT, loadNicePayScript } from "@/lib/nicepay";
+import { requestNicePayment, CREBIT_PAYMENT, loadNicePayScript, type NicePaymentOptions } from "@/lib/nicepay";
 import { trackEvent, EVENTS } from "@/lib/analytics";
 
 interface ApplicationModalProps {
     isOpen: boolean;
     onClose: () => void;
 }
+
+type NicePayError = Parameters<NonNullable<NicePaymentOptions["fnError"]>>[0];
 
 export default function ApplicationModal({ isOpen, onClose }: ApplicationModalProps) {
     const [formData, setFormData] = useState({
@@ -20,9 +22,8 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
         track: "A" as "A" | "B", // A: 시네마틱, B: 모션그래픽
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isSuccess, setIsSuccess] = useState(false);
+    const [isSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [step, setStep] = useState<"form" | "payment" | "success">("form");
 
     // Preload NICE SDK and track modal open
     useEffect(() => {
@@ -43,8 +44,6 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
             trackEvent(EVENTS.FORM_SUBMIT, { track: formData.track, applicationId: application.id });
 
             // Step 2: Open NICE payment window
-            setStep("payment");
-
             const orderId = application.id;
             const returnUrl = `${window.location.origin}/crebit/payment/callback`;
 
@@ -58,7 +57,7 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
                 buyerName: formData.name,
                 buyerEmail: formData.email,
                 buyerTel: formData.phone,
-                fnError: (result: any) => {
+                fnError: (result: NicePayError) => {
                     // 빈 객체는 사용자가 결제창을 닫거나 취소했을 때 발생
                     if (!result || Object.keys(result).length === 0) {
                         setIsSubmitting(false);
@@ -66,7 +65,6 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
                     }
                     console.error("Payment error:", result);
                     setError(`결제 오류: ${result.errorMsg || '알 수 없는 오류'}`);
-                    setStep("form");
                     setIsSubmitting(false);
                 },
             });
@@ -78,7 +76,6 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
             console.error("Application error:", err);
             trackEvent(EVENTS.FORM_ERROR, { error: err instanceof Error ? err.message : 'unknown' });
             setError(err instanceof Error ? err.message : "신청 중 오류가 발생했습니다.");
-            setStep("form");
         } finally {
             setIsSubmitting(false);
         }

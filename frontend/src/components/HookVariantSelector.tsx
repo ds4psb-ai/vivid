@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     Zap, HelpCircle, Heart, MessageCircle,
     Shuffle, Play, Eye, Wind,
-    ChevronDown, Check, Sparkles, FlaskConical
+    ChevronDown, FlaskConical,
+    Info
 } from 'lucide-react';
 import type { HookStyle, HookVariant } from '@/types/storyFirst';
 
@@ -30,85 +31,132 @@ export interface HookVariantSelectorProps {
 // Style Config
 // =============================================================================
 
+// Safe full class names for Tailwind JIT
 const STYLE_CONFIG: Record<HookStyle, {
     icon: React.ComponentType<{ size?: number; className?: string }>;
     label: string;
     labelKo: string;
-    color: string;
-    bgColor: string;
+    // Colors
+    text: string;
+    bg: string;
+    border: string;
+    borderSelected: string;
+    ring: string;
+    iconBg: string;
+    shadow: string; // Custom shadow color
     description: string;
 }> = {
     shock: {
         icon: Zap,
         label: 'Shock',
         labelKo: '충격형',
-        color: 'text-red-400',
-        bgColor: 'bg-red-500/20',
+        text: 'text-red-400',
+        bg: 'bg-red-500/5',
+        border: 'border-red-500/20',
+        borderSelected: 'border-red-500',
+        ring: 'focus:ring-red-500',
+        iconBg: 'bg-red-500/20',
+        shadow: 'shadow-red-500/20',
         description: '강렬한 시각적 충격으로 시작',
     },
     curiosity: {
         icon: HelpCircle,
         label: 'Curiosity',
         labelKo: '호기심형',
-        color: 'text-purple-400',
-        bgColor: 'bg-purple-500/20',
+        text: 'text-purple-400',
+        bg: 'bg-purple-500/5',
+        border: 'border-purple-500/20',
+        borderSelected: 'border-purple-500',
+        ring: 'focus:ring-purple-500',
+        iconBg: 'bg-purple-500/20',
+        shadow: 'shadow-purple-500/20',
         description: '미스터리와 궁금증 유발',
     },
     emotion: {
         icon: Heart,
         label: 'Emotion',
         labelKo: '감정형',
-        color: 'text-pink-400',
-        bgColor: 'bg-pink-500/20',
+        text: 'text-pink-400',
+        bg: 'bg-pink-500/5',
+        border: 'border-pink-500/20',
+        borderSelected: 'border-pink-500',
+        ring: 'focus:ring-pink-500',
+        iconBg: 'bg-pink-500/20',
+        shadow: 'shadow-pink-500/20',
         description: '감정적 연결로 시작',
     },
     question: {
         icon: MessageCircle,
         label: 'Question',
         labelKo: '의문형',
-        color: 'text-blue-400',
-        bgColor: 'bg-blue-500/20',
+        text: 'text-blue-400',
+        bg: 'bg-blue-500/5',
+        border: 'border-blue-500/20',
+        borderSelected: 'border-blue-500',
+        ring: 'focus:ring-blue-500',
+        iconBg: 'bg-blue-500/20',
+        shadow: 'shadow-blue-500/20',
         description: '직접적 질문으로 시작',
     },
     paradox: {
         icon: Shuffle,
         label: 'Paradox',
         labelKo: '역설형',
-        color: 'text-yellow-400',
-        bgColor: 'bg-yellow-500/20',
+        text: 'text-yellow-400',
+        bg: 'bg-yellow-500/5',
+        border: 'border-yellow-500/20',
+        borderSelected: 'border-yellow-500',
+        ring: 'focus:ring-yellow-500',
+        iconBg: 'bg-yellow-500/20',
+        shadow: 'shadow-yellow-500/20',
         description: '예상을 뒤집는 부조화',
     },
     tease: {
         icon: Eye,
         label: 'Tease',
         labelKo: '티저형',
-        color: 'text-cyan-400',
-        bgColor: 'bg-cyan-500/20',
+        text: 'text-cyan-400',
+        bg: 'bg-cyan-500/5',
+        border: 'border-cyan-500/20',
+        borderSelected: 'border-cyan-500',
+        ring: 'focus:ring-cyan-500',
+        iconBg: 'bg-cyan-500/20',
+        shadow: 'shadow-cyan-500/20',
         description: '결과를 먼저 보여주기',
     },
     action: {
         icon: Play,
         label: 'Action',
         labelKo: '액션형',
-        color: 'text-orange-400',
-        bgColor: 'bg-orange-500/20',
+        text: 'text-orange-400',
+        bg: 'bg-orange-500/5',
+        border: 'border-orange-500/20',
+        borderSelected: 'border-orange-500',
+        ring: 'focus:ring-orange-500',
+        iconBg: 'bg-orange-500/20',
+        shadow: 'shadow-orange-500/20',
         description: '바로 액션으로 돌입',
     },
     calm: {
         icon: Wind,
         label: 'Calm',
         labelKo: '차분형',
-        color: 'text-emerald-400',
-        bgColor: 'bg-emerald-500/20',
+        text: 'text-emerald-400',
+        bg: 'bg-emerald-500/5',
+        border: 'border-emerald-500/20',
+        borderSelected: 'border-emerald-500',
+        ring: 'focus:ring-emerald-500',
+        iconBg: 'bg-emerald-500/20',
+        shadow: 'shadow-emerald-500/20',
         description: '여유로운 분위기 조성',
     },
 };
 
 const INTENSITY_LABELS = {
-    soft: { label: '부드럽게', color: 'text-gray-400' },
-    medium: { label: '보통', color: 'text-yellow-400' },
-    strong: { label: '강하게', color: 'text-orange-400' },
-    explosive: { label: '폭발적', color: 'text-red-400' },
+    soft: { label: '부드럽게', color: 'text-gray-400', bg: 'bg-gray-500/20' },
+    medium: { label: '보통', color: 'text-yellow-400', bg: 'bg-yellow-500/20' },
+    strong: { label: '강하게', color: 'text-orange-400', bg: 'bg-orange-500/20' },
+    explosive: { label: '폭발적', color: 'text-red-400', bg: 'bg-red-500/20' },
 };
 
 // =============================================================================
@@ -120,7 +168,8 @@ const VariantCard: React.FC<{
     isSelected: boolean;
     onClick: () => void;
     disabled?: boolean;
-}> = ({ variant, isSelected, onClick, disabled }) => {
+    isInABTest?: boolean;
+}> = ({ variant, isSelected, onClick, disabled, isInABTest }) => {
     const config = STYLE_CONFIG[variant.style];
     const Icon = config.icon;
     const intensity = INTENSITY_LABELS[variant.intensity];
@@ -129,62 +178,75 @@ const VariantCard: React.FC<{
         <motion.button
             onClick={onClick}
             disabled={disabled}
-            whileHover={{ scale: disabled ? 1 : 1.02 }}
-            whileTap={{ scale: disabled ? 1 : 0.98 }}
+            whileHover={disabled ? undefined : { scale: 1.02, y: -2 }}
+            whileTap={disabled ? undefined : { scale: 0.98 }}
             className={`
-                relative p-4 rounded-xl border transition-all w-full text-left
+                relative p-4 rounded-xl border transition-all duration-200 w-full text-left
                 ${isSelected
-                    ? `${config.bgColor} border-${config.color.replace('text-', '')} ring-2 ring-${config.color.replace('text-', '')}/50`
-                    : 'bg-gray-800 border-gray-700 hover:border-gray-600'
+                    ? `${config.bg} ${config.borderSelected} ring-1 ring-offset-0 ${config.shadow} shadow-lg z-10`
+                    : `bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20 hover:shadow-md`
                 }
                 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                ${isInABTest ? 'ring-2 ring-blue-500 border-blue-500' : ''}
             `}
         >
             {/* Control Badge */}
             {variant.isControl && (
-                <span className="absolute top-2 right-2 px-2 py-0.5 text-xs bg-blue-500/20 text-blue-400 rounded-full">
+                <span className="absolute top-2 right-2 px-1.5 py-0.5 text-[10px] font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-full tracking-wide">
                     대조군
                 </span>
             )}
 
-            {/* Selected Check */}
-            {isSelected && (
-                <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute top-2 left-2 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center"
-                >
-                    <Check size={12} className="text-white" />
-                </motion.div>
+            {/* A/B Test Badge */}
+            {isInABTest && !variant.isControl && (
+                <span className="absolute top-2 right-2 px-1.5 py-0.5 text-[10px] font-medium bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded-full tracking-wide flex items-center gap-1">
+                    <FlaskConical size={10} />
+                    TEST
+                </span>
             )}
 
-            {/* Header */}
-            <div className="flex items-center gap-3 mb-2">
-                <div className={`p-2 rounded-lg ${config.bgColor}`}>
-                    <Icon size={20} className={config.color} />
+            <div className="flex flex-col gap-3">
+                {/* Header: Icon & Title */}
+                <div className="flex items-start gap-3">
+                    <div className={`
+                        p-2.5 rounded-lg transition-colors
+                        ${isSelected ? config.iconBg : 'bg-white/5'}
+                    `}>
+                        <Icon size={20} className={isSelected ? config.text : 'text-gray-400'} />
+                    </div>
+                    <div>
+                        <div className={`font-bold text-sm flex items-center gap-2 ${isSelected ? 'text-white' : 'text-gray-300'}`}>
+                            {config.labelKo}
+                            <span className="text-[10px] font-normal text-gray-500 uppercase tracking-wider">
+                                {config.label}
+                            </span>
+                        </div>
+                        <div className={`text-xs mt-0.5 ${isSelected ? config.text : 'text-gray-500'}`}>
+                            {config.description}
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <div className={`font-bold ${config.color}`}>{config.labelKo}</div>
-                    <div className="text-xs text-gray-500">{config.label}</div>
+
+                {/* Additional Info: Intensity */}
+                <div className="flex items-center gap-2 mt-1">
+                    <span className={`px-2 py-0.5 rounded text-[10px] ${intensity.color} bg-white/5`}>
+                        {intensity.label}
+                    </span>
+                    {variant.duration && variant.duration > 0 && (
+                        <span className="px-2 py-0.5 rounded text-[10px] text-gray-400 bg-white/5">
+                            {variant.duration}초
+                        </span>
+                    )}
                 </div>
             </div>
 
-            {/* Description */}
-            <p className="text-sm text-gray-400 mb-2">{config.description}</p>
-
-            {/* Intensity */}
-            <div className="flex items-center gap-2 text-xs">
-                <span className="text-gray-500">강도:</span>
-                <span className={intensity.color}>{intensity.label}</span>
+            {/* Selection/Hover Indicator */}
+            <div className={`
+                absolute bottom-0 left-0 w-full h-1 rounded-b-xl overflow-hidden transition-all duration-300
+                ${isSelected ? 'opacity-100' : 'opacity-0'}
+            `}>
+                <div className={`w-full h-full bg-gradient-to-r from-transparent via-${config.text.split('-')[1]}-500 to-transparent opacity-50`} />
             </div>
-
-            {/* Coach Tip */}
-            {variant.coachTipKo && (
-                <div className="mt-2 p-2 bg-gray-900/50 rounded-lg">
-                    <span className="text-xs text-gray-500">💡 </span>
-                    <span className="text-xs text-gray-300">{variant.coachTipKo}</span>
-                </div>
-            )}
         </motion.button>
     );
 };
@@ -198,162 +260,212 @@ export const HookVariantSelector: React.FC<HookVariantSelectorProps> = ({
     selectedVariantId,
     onSelect,
     onRunABTest,
-    showABTestButton = true,
+    showABTestButton = false,
     disabled = false,
     className = '',
 }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
-    const [abTestVariants, setAbTestVariants] = useState<Set<string>>(new Set());
+    // Local state for A/B testing
+    const [isABTestMode, setIsABTestMode] = useState(false);
+    const [selectedForAB, setSelectedForAB] = useState<Set<string>>(new Set());
 
-    const selectedVariant = variants.find(v => v.variantId === selectedVariantId) || variants[0];
-
-    const toggleABTestVariant = useCallback((variantId: string) => {
-        setAbTestVariants(prev => {
-            const next = new Set(prev);
-            if (next.has(variantId)) {
-                next.delete(variantId);
-            } else {
-                if (next.size < 4) { // Max 4 variants in A/B test
-                    next.add(variantId);
-                }
-            }
-            return next;
-        });
-    }, []);
-
-    const handleRunABTest = useCallback(() => {
-        if (onRunABTest && abTestVariants.size >= 2) {
-            const selectedForTest = variants.filter(v => abTestVariants.has(v.variantId));
-            onRunABTest(selectedForTest);
+    // Toggle variant for A/B test
+    const toggleABSelection = useCallback((variantId: string) => {
+        const newSet = new Set(selectedForAB);
+        if (newSet.has(variantId)) {
+            newSet.delete(variantId);
+        } else {
+            if (newSet.size >= 4) return; // Max 4 variants
+            newSet.add(variantId);
         }
-    }, [onRunABTest, abTestVariants, variants]);
+        setSelectedForAB(newSet);
+    }, [selectedForAB]);
 
-    if (!selectedVariant) return null;
+    // Handle card click
+    const handleCardClick = (variant: HookVariant) => {
+        if (isABTestMode) {
+            toggleABSelection(variant.variantId);
+        } else {
+            onSelect(variant);
+        }
+    };
 
-    const selectedConfig = STYLE_CONFIG[selectedVariant.style];
-    const SelectedIcon = selectedConfig.icon;
+    // Run A/B Test
+    const handleRunTest = () => {
+        if (onRunABTest && selectedForAB.size >= 2) {
+            const selectedVariants = variants.filter(v => selectedForAB.has(v.variantId));
+            onRunABTest(selectedVariants);
+            setIsABTestMode(false);
+            setSelectedForAB(new Set());
+        }
+    };
 
     return (
-        <div className={`bg-gray-900 rounded-xl border border-gray-800 overflow-hidden ${className}`}>
-            {/* Header */}
-            <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="w-full p-4 flex items-center justify-between hover:bg-gray-800/50 transition-colors"
-            >
-                <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${selectedConfig.bgColor}`}>
-                        <SelectedIcon size={20} className={selectedConfig.color} />
-                    </div>
-                    <div className="text-left">
-                        <div className="flex items-center gap-2">
-                            <span className="font-bold text-white">훅 스타일</span>
-                            <span className={`text-sm ${selectedConfig.color}`}>
-                                {selectedConfig.labelKo}
-                            </span>
-                        </div>
-                        <p className="text-xs text-gray-500">
-                            {selectedConfig.description}
-                        </p>
-                    </div>
-                </div>
-                <ChevronDown
-                    size={20}
-                    className={`text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                />
-            </button>
+        <div className={`space-y-4 ${className}`}>
+            {/* Header / Controls */}
+            {showABTestButton && (
+                <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        훅 스타일 선택
+                    </h3>
 
-            {/* Expanded Content */}
+                    {!isABTestMode ? (
+                        <button
+                            onClick={() => setIsABTestMode(true)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 hover:border-purple-500/40 rounded-lg transition-all"
+                        >
+                            <FlaskConical size={14} />
+                            A/B 테스트 모드
+                        </button>
+                    ) : (
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-400">
+                                {selectedForAB.size}개 선택됨
+                            </span>
+                            <button
+                                onClick={handleRunTest}
+                                disabled={selectedForAB.size < 2}
+                                className={`
+                                    flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all
+                                    ${selectedForAB.size >= 2
+                                        ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-900/40'
+                                        : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                                    }
+                                `}
+                            >
+                                <Play size={14} className={selectedForAB.size >= 2 ? 'fill-current' : ''} />
+                                테스트 시작
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setIsABTestMode(false);
+                                    setSelectedForAB(new Set());
+                                }}
+                                className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                            >
+                                <ChevronDown size={16} />
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* A/B Test Instructions */}
             <AnimatePresence>
-                {isExpanded && (
+                {isABTestMode && (
                     <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden"
                     >
-                        <div className="p-4 pt-0 space-y-4">
-                            {/* Variant Grid */}
-                            <div className="grid grid-cols-2 gap-3">
-                                {variants.map(variant => (
-                                    <VariantCard
-                                        key={variant.variantId}
-                                        variant={variant}
-                                        isSelected={variant.variantId === selectedVariantId}
-                                        onClick={() => onSelect(variant)}
-                                        disabled={disabled}
-                                    />
-                                ))}
-                            </div>
-
-                            {/* A/B Test Section */}
-                            {showABTestButton && onRunABTest && (
-                                <div className="pt-4 border-t border-gray-800">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <div className="flex items-center gap-2">
-                                            <FlaskConical size={16} className="text-purple-400" />
-                                            <span className="text-sm font-semibold text-white">A/B 테스트</span>
-                                        </div>
-                                        <span className="text-xs text-gray-500">
-                                            {abTestVariants.size}/4 선택
-                                        </span>
-                                    </div>
-
-                                    {/* A/B Test Variant Selection */}
-                                    <div className="flex flex-wrap gap-2 mb-3">
-                                        {variants.map(variant => {
-                                            const config = STYLE_CONFIG[variant.style];
-                                            const isInTest = abTestVariants.has(variant.variantId);
-                                            return (
-                                                <button
-                                                    key={variant.variantId}
-                                                    onClick={() => toggleABTestVariant(variant.variantId)}
-                                                    className={`
-                                                        px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
-                                                        ${isInTest
-                                                            ? `${config.bgColor} ${config.color} ring-1 ring-current`
-                                                            : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                                                        }
-                                                    `}
-                                                >
-                                                    {config.labelKo}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-
-                                    {/* Run Test Button */}
-                                    <button
-                                        onClick={handleRunABTest}
-                                        disabled={abTestVariants.size < 2}
-                                        className={`
-                                            w-full py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-colors
-                                            ${abTestVariants.size >= 2
-                                                ? 'bg-purple-600 hover:bg-purple-500 text-white'
-                                                : 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                                            }
-                                        `}
-                                    >
-                                        <Sparkles size={16} />
-                                        {abTestVariants.size >= 2
-                                            ? `${abTestVariants.size}개 변형으로 테스트 시작`
-                                            : '2개 이상 선택하세요'
-                                        }
-                                    </button>
-                                </div>
-                            )}
+                        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-4 flex gap-3 text-xs text-blue-200">
+                            <Info size={16} className="text-blue-400 flex-shrink-0 mt-0.5" />
+                            <p>
+                                테스트하고 싶은 변형을 2개 이상 선택하세요. (최대 4개)<br />
+                                <span className="text-blue-400/70">가장 효과적인 훅을 자동으로 찾아냅니다.</span>
+                            </p>
                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Grid display */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {variants.map((variant) => (
+                    <VariantCard
+                        key={variant.variantId}
+                        variant={variant}
+                        isSelected={isABTestMode ? selectedForAB.has(variant.variantId) : selectedVariantId === variant.variantId}
+                        onClick={() => handleCardClick(variant)}
+                        disabled={disabled}
+                        isInABTest={isABTestMode && selectedForAB.has(variant.variantId)}
+                    />
+                ))}
+            </div>
         </div>
     );
 };
 
-// =============================================================================
-// Preset Variants (re-exported from unified types)
-// =============================================================================
-
-export { DEFAULT_HOOK_VARIANTS } from '@/types/storyFirst';
-
 export default HookVariantSelector;
 
+export const DEFAULT_HOOK_VARIANTS: HookVariant[] = [
+    {
+        variantId: 'shock_1',
+        style: 'shock',
+        intensity: 'explosive',
+        duration: 3,
+        description: '화면 깨지는 효과와 경고음',
+        isControl: false,
+        promptPrefix: 'Shocking opening sequence',
+        promptKeywords: ['shock', 'break', 'alarm']
+    },
+    {
+        variantId: 'curiosity_1',
+        style: 'curiosity',
+        intensity: 'medium',
+        duration: 4,
+        description: '블러 처리된 물체 서서히 공개',
+        isControl: true,
+        promptPrefix: 'Mysterious blurred object reveal',
+        promptKeywords: ['blur', 'reveal', 'mystery']
+    },
+    {
+        variantId: 'paradox_1',
+        style: 'paradox',
+        intensity: 'strong',
+        duration: 4,
+        description: '우아한 음악 + 혼돈스러운 영상',
+        isControl: false,
+        promptPrefix: 'Contrasting elegant music with chaos',
+        promptKeywords: ['contrast', 'chaos', 'elegant']
+    },
+    {
+        variantId: 'emotion_1',
+        style: 'emotion',
+        intensity: 'soft',
+        duration: 5,
+        description: '주인공의 클로즈업 눈물',
+        isControl: false,
+        promptPrefix: 'Emotional closeup shot',
+        promptKeywords: ['tears', 'closeup', 'sadness']
+    },
+    {
+        variantId: 'question_1',
+        style: 'question',
+        intensity: 'medium',
+        duration: 3,
+        description: '텍스트: "이것을 믿으시겠습니까?"',
+        isControl: false,
+        promptPrefix: 'Text overlay question',
+        promptKeywords: ['text', 'question', 'believe']
+    },
+    {
+        variantId: 'tease_result',
+        style: 'tease',
+        intensity: 'strong',
+        duration: 2,
+        description: '결과물 퀵 플래시',
+        isControl: false,
+        promptPrefix: 'Quick flash of end result',
+        promptKeywords: ['flash', 'result', 'end']
+    },
+    {
+        variantId: 'action_start',
+        style: 'action',
+        intensity: 'explosive',
+        duration: 3,
+        description: '추격전 중간부터 시작',
+        isControl: false,
+        promptPrefix: 'In media res chase sequence',
+        promptKeywords: ['chase', 'action', 'run']
+    },
+    {
+        variantId: 'calm_contrast',
+        style: 'calm',
+        intensity: 'soft',
+        duration: 5,
+        description: '고요한 풍경 (폭풍 전야)',
+        isControl: false,
+        promptPrefix: 'Calm landscape before storm',
+        promptKeywords: ['landscape', 'calm', 'peaceful']
+    },
+];

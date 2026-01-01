@@ -105,7 +105,6 @@ const PackCard: React.FC<{
 
 export const DirectorPackSelector: React.FC<DirectorPackSelectorProps> = ({
     capsuleId,
-    selectedPackId,
     onSelect,
     onOpenEditor,
     className = '',

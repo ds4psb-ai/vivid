@@ -93,10 +93,10 @@ export default function TemplateProvenance({
                     </div>
                     <div>
                         <h3 className="text-sm font-semibold text-slate-100">
-                            {t("templateProvenance" as any) || "Template Provenance"}
+                            {t("templateProvenance")}
                         </h3>
                         <p className="text-xs text-slate-500">
-                            {t("publicTemplatesCount" as any) || `${publicTemplates.length} public templates`}
+                            {t("publicTemplatesCount")}
                         </p>
                     </div>
                 </div>

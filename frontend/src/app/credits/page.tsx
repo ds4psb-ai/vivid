@@ -19,6 +19,8 @@ import { api, type CreditTransaction } from "@/lib/api";
 import PageStatus from "@/components/PageStatus";
 import { isNetworkError, normalizeApiError } from "@/lib/errors";
 import { useActiveUserId } from "@/hooks/useActiveUserId";
+import { formatNumber } from "@/lib/formatters";
+import { downloadCsvFromRows } from "@/lib/csv";
 
 interface CreditPack {
     id: string;
@@ -220,7 +222,6 @@ export default function CreditsPage() {
             "run_type",
             "meta_json",
         ];
-        const escapeValue = (value: string) => `"${value.replace(/"/g, '""')}"`;
         const rows = transactions.map((tx) => [
             tx.created_at,
             tx.event_type,
@@ -231,18 +232,8 @@ export default function CreditsPage() {
             typeof tx.meta?.run_type === "string" ? tx.meta.run_type : "",
             JSON.stringify(tx.meta || {}),
         ]);
-        const csv = [
-            headers.join(","),
-            ...rows.map((row) => row.map(escapeValue).join(",")),
-        ].join("\n");
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
         const today = new Date().toISOString().slice(0, 10);
-        link.href = url;
-        link.download = `crebit_credits_${today}.csv`;
-        link.click();
-        URL.revokeObjectURL(url);
+        downloadCsvFromRows(`crebit_credits_${today}.csv`, headers, rows);
     }, [transactions]);
 
     return (
@@ -282,7 +273,7 @@ export default function CreditsPage() {
                                     {labels.availableBalance}
                                 </div>
                                 <div className="mt-2 text-3xl font-bold text-[var(--fg-0)] sm:text-4xl">
-                                    {isLoading ? "..." : balance.toLocaleString()}
+                                    {isLoading ? "..." : formatNumber(balance, undefined, undefined, "0")}
                                     <span className="ml-2 text-base font-normal text-[var(--fg-muted)] sm:text-lg">
                                         {labels.credits}
                                     </span>
@@ -291,14 +282,14 @@ export default function CreditsPage() {
                                 {!isLoading && (
                                     <div className="mt-3 flex flex-wrap gap-3 text-xs text-[var(--fg-muted)]">
                                         <span className="rounded-full bg-sky-500/10 px-2 py-1 text-sky-300">
-                                            {labels.subscription}: {subscriptionCredits.toLocaleString()}
+                                            {labels.subscription}: {formatNumber(subscriptionCredits, undefined, undefined, "0")}
                                         </span>
                                         <span className="rounded-full bg-emerald-500/10 px-2 py-1 text-emerald-300">
-                                            {labels.topupLabel}: {topupCredits.toLocaleString()}
+                                            {labels.topupLabel}: {formatNumber(topupCredits, undefined, undefined, "0")}
                                         </span>
                                         {promoCredits > 0 && (
                                             <span className="rounded-full bg-amber-500/10 px-2 py-1 text-amber-300">
-                                                {labels.promo}: {promoCredits.toLocaleString()}
+                                                {labels.promo}: {formatNumber(promoCredits, undefined, undefined, "0")}
                                                 {promoExpiresAt && (
                                                     <span className="ml-1 text-[10px] text-amber-400/70">
                                                         ({labels.expiresOn} {new Date(promoExpiresAt).toLocaleDateString(
@@ -399,7 +390,7 @@ export default function CreditsPage() {
                                     )}
                                     <div className="mb-2 text-sm font-medium text-slate-400 group-hover:text-sky-300 transition-colors">{pack.name}</div>
                                     <div className="flex items-baseline gap-1">
-                                        <span className="text-3xl font-bold text-white tracking-tight">{pack.credits.toLocaleString()}</span>
+                                        <span className="text-3xl font-bold text-white tracking-tight">{formatNumber(pack.credits)}</span>
                                         <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">{labels.credits}</span>
                                     </div>
 

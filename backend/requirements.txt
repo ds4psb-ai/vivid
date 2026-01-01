@@ -11,3 +11,6 @@ google-generativeai>=0.8.0
 google-auth>=2.20.0
 redis>=5.0.0
 arq>=0.25.0
+slowapi>=0.1.9
+sentry-sdk[fastapi]>=1.40.0
+prometheus-fastapi-instrumentator>=6.1.0

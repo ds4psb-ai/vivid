@@ -75,7 +75,7 @@ export default function QuarantineSample({
                 <div className="flex items-center gap-2 text-emerald-400">
                     <AlertTriangle className="h-4 w-4" />
                     <span className="text-sm font-medium">
-                        {t("noQuarantineItems" as any) || "No quarantine items"}
+                        {t("noQuarantineItems")}
                     </span>
                 </div>
             </motion.div>
@@ -96,7 +96,7 @@ export default function QuarantineSample({
                     </div>
                     <div>
                         <h3 className="text-sm font-semibold text-slate-100">
-                            {t("quarantineSample" as any) || "Quarantine Sample"}
+                            {t("quarantineSample")}
                         </h3>
                         <p className="text-xs text-slate-500">
                             {items.length} items need review

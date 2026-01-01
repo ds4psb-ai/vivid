@@ -1,16 +1,18 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, type ElementType } from "react";
 import {
-  Clapperboard, X, ListChecks, PanelsTopLeft, Copy, Package,
-  FileText, AlertCircle, CheckCircle2, MessageSquare, Play,
-  Film, Download, ChevronRight, Sparkles, Music, Network, Shield
+  Clapperboard, X, Copy, Package,
+  FileText, AlertCircle, CheckCircle2, MessageSquare,
+  Film, Download, Sparkles, Music, Network, Shield
 } from "lucide-react";
 import type { GenerationRun } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getStoryboardLabel, getStoryboardShotType } from "@/lib/narrative";
-import DNAComplianceViewer, { BatchComplianceReport, ShotComplianceReport } from "@/components/DNAComplianceViewer";
+import DNAComplianceViewer, { BatchComplianceReport } from "@/components/DNAComplianceViewer";
+import { copyToClipboard } from "@/lib/clipboard";
+import { downloadCsvFromRecords } from "@/lib/csv";
 
 /**
  * Premium UI Design - 2025 Refinement
@@ -46,6 +48,42 @@ interface GenerationPreviewPanelProps {
 
 type Tab = "story" | "video" | "audio" | "mindmap" | "data" | "dna";
 
+interface TabButtonProps {
+  id: Tab;
+  label: string;
+  icon: ElementType;
+  count?: number;
+  activeTab: Tab;
+  onSelect: (id: Tab) => void;
+}
+
+const TabButton = ({ id, label, icon: Icon, count, activeTab, onSelect }: TabButtonProps) => (
+  <button
+    onClick={() => onSelect(id)}
+    className={`
+      relative flex items-center gap-2 px-4 py-2 text-xs font-medium transition-all duration-200
+      ${activeTab === id ? "text-white" : "text-slate-400 hover:text-slate-200"}
+    `}
+  >
+    <Icon className={`w-3.5 h-3.5 ${activeTab === id ? "text-emerald-400" : ""}`} />
+    {label}
+    {count !== undefined && count > 0 && (
+      <span className={`
+        ml-1 rounded-full px-1.5 py-0.5 text-[10px]
+        ${activeTab === id ? "bg-emerald-500/20 text-emerald-300" : "bg-white/5 text-slate-500"}
+      `}>
+        {count}
+      </span>
+    )}
+    {activeTab === id && (
+      <motion.div
+        layoutId="activeTab"
+        className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500"
+      />
+    )}
+  </button>
+);
+
 export function GenerationPreviewPanel({
   run,
   isLoading,
@@ -53,26 +91,12 @@ export function GenerationPreviewPanel({
   onSubmitFeedback,
 }: GenerationPreviewPanelProps) {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<Tab>("story");
-  const [feedbackEntries, setFeedbackEntries] = useState<Record<string, ShotFeedbackEntry>>({});
+  const [activeTab, setActiveTab] = useState<Tab | null>(null);
+  const [feedbackEntries] = useState<Record<string, ShotFeedbackEntry>>({});
   const [feedbackSent, setFeedbackSent] = useState(false);
-  const [feedbackError, setFeedbackError] = useState<string | null>(null);
-  const [playingVideo, setPlayingVideo] = useState<string | null>(null);
-
-  // Reset tab when run changes
-  useEffect(() => {
-    if (run?.outputs?.video_results && Array.isArray(run.outputs.video_results) && run.outputs.video_results.length > 0) {
-      setActiveTab("video");
-    } else {
-      setActiveTab("story");
-    }
-  }, [run?.id, run?.outputs?.video_results]);
-
-  if (!run && !isLoading) return null;
 
   // Memoize data extraction for performance
   const {
-    beatSheet,
     storyboard,
     shotContracts,
     promptContracts,
@@ -81,7 +105,6 @@ export function GenerationPreviewPanel({
     promptContractVersion,
     patternVersion,
     creditCost,
-    productionContract,
     runLabel,
     dnaComplianceReport,
   } = useMemo(() => {
@@ -89,32 +112,29 @@ export function GenerationPreviewPanel({
     const spec = run?.spec || {};
 
     return {
-      beatSheet: Array.isArray(spec.beat_sheet) ? spec.beat_sheet : [],
-      storyboard: (Array.isArray(outputs.storyboard_cards) ? outputs.storyboard_cards : Array.isArray(spec.storyboard) ? spec.storyboard : []) as Record<string, any>[],
-      shotContracts: (Array.isArray(spec.shot_contracts) ? spec.shot_contracts : Array.isArray(outputs.shot_contracts) ? outputs.shot_contracts : []) as Record<string, any>[],
-      promptContracts: (Array.isArray(spec.prompt_contracts) ? spec.prompt_contracts : Array.isArray(outputs.prompt_contracts) ? outputs.prompt_contracts : []) as Record<string, any>[],
+      storyboard: (Array.isArray(outputs.storyboard_cards) ? outputs.storyboard_cards : Array.isArray(spec.storyboard) ? spec.storyboard : []) as Record<string, unknown>[],
+      shotContracts: (Array.isArray(spec.shot_contracts) ? spec.shot_contracts : Array.isArray(outputs.shot_contracts) ? outputs.shot_contracts : []) as Record<string, unknown>[],
+      promptContracts: (Array.isArray(spec.prompt_contracts) ? spec.prompt_contracts : Array.isArray(outputs.prompt_contracts) ? outputs.prompt_contracts : []) as Record<string, unknown>[],
       videoResults: (Array.isArray(outputs.video_results) ? outputs.video_results : []) as VideoResult[],
       scriptText: typeof outputs.script_text === "string" ? outputs.script_text : "",
       promptContractVersion: spec.prompt_contract_version || outputs.prompt_contract_version || spec.promptContractVersion,
       patternVersion: spec.pattern_version || spec.patternVersion,
       creditCost: typeof spec.credit_cost === "number" ? spec.credit_cost : null,
-      productionContract: spec.production_contract || outputs.production_contract,
       runLabel: run?.id ? `run-${run.id.slice(0, 8)}` : "run",
       // DNA Compliance report
       dnaComplianceReport: outputs.dna_compliance_report as BatchComplianceReport | undefined,
     };
   }, [run]);
+  const defaultTab: Tab = videoResults.length > 0 ? "video" : "story";
+  const resolvedActiveTab = activeTab ?? defaultTab;
+
+  if (!run && !isLoading) return null;
 
   // --- Utilities ---
 
-  const copyToClipboard = (text: string) => {
-    if (!text) return;
-    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-      void navigator.clipboard.writeText(text);
-    }
+  const handleCopyScript = () => {
+    void copyToClipboard(scriptText);
   };
-
-  const handleCopyScript = () => copyToClipboard(scriptText);
 
   const downloadJson = (filename: string, payload: unknown) => {
     if (typeof document === "undefined") return;
@@ -127,25 +147,6 @@ export function GenerationPreviewPanel({
     URL.revokeObjectURL(url);
   };
 
-  const toCsvValue = (value: unknown) => {
-    const text = value === null || value === undefined ? "" : String(value);
-    const escaped = text.replace(/"/g, '""');
-    return `"${escaped}"`;
-  };
-
-  const downloadCsv = (filename: string, rows: Array<Record<string, unknown>>) => {
-    if (typeof document === "undefined" || !rows.length) return;
-    const headers = Object.keys(rows[0]);
-    const lines = [headers.map(toCsvValue).join(",")];
-    rows.forEach((row) => lines.push(headers.map((key) => toCsvValue(row[key])).join(",")));
-    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = filename;
-    anchor.click();
-    URL.revokeObjectURL(url);
-  };
 
   // --- Handlers ---
 
@@ -166,9 +167,6 @@ export function GenerationPreviewPanel({
   const handleDownloadShotCsv = () => {
     if (!shotContracts.length) return;
     const rows = shotContracts.map((shot) => {
-      const env = (shot.environment_layers || {}) as Record<string, unknown>;
-      const character = (shot.character || {}) as Record<string, unknown>;
-      const palette = (shot.palette || {}) as Record<string, unknown>;
       return {
         shot_id: shot.shot_id,
         sequence_id: shot.sequence_id,
@@ -180,7 +178,7 @@ export function GenerationPreviewPanel({
         // ... add other fields as needed
       };
     });
-    downloadCsv(`${runLabel}-shot-contracts.csv`, rows);
+    downloadCsvFromRecords(`${runLabel}-shot-contracts.csv`, rows);
   };
 
   const handleDownloadPromptCsv = () => {
@@ -189,57 +187,18 @@ export function GenerationPreviewPanel({
       shot_id: prompt.shot_id,
       prompt: prompt.prompt,
     }));
-    downloadCsv(`${runLabel}-prompt-contracts.csv`, rows);
-  };
-
-  const updateFeedbackEntry = (shotId: string, patch: Partial<ShotFeedbackEntry>) => {
-    setFeedbackEntries((prev) => ({
-      ...prev,
-      [shotId]: { ...prev[shotId], ...patch, shot_id: shotId },
-    }));
-    setFeedbackSent(false);
-    setFeedbackError(null);
+    downloadCsvFromRecords(`${runLabel}-prompt-contracts.csv`, rows);
   };
 
   const handleSubmitFeedback = () => {
     if (!onSubmitFeedback) return;
     const shots = Object.values(feedbackEntries).filter((entry) => entry.shot_id);
     if (!shots.length) {
-      setFeedbackError(t("feedbackEmpty") ?? "No feedback to submit");
       return;
     }
     onSubmitFeedback({ shots });
     setFeedbackSent(true);
   };
-
-  // --- Components ---
-
-  const TabButton = ({ id, label, icon: Icon, count }: { id: Tab; label: string; icon: any; count?: number }) => (
-    <button
-      onClick={() => setActiveTab(id)}
-      className={`
-        relative flex items-center gap-2 px-4 py-2 text-xs font-medium transition-all duration-200
-        ${activeTab === id ? "text-white" : "text-slate-400 hover:text-slate-200"}
-      `}
-    >
-      <Icon className={`w-3.5 h-3.5 ${activeTab === id ? "text-emerald-400" : ""}`} />
-      {label}
-      {count !== undefined && count > 0 && (
-        <span className={`
-          ml-1 rounded-full px-1.5 py-0.5 text-[10px] 
-          ${activeTab === id ? "bg-emerald-500/20 text-emerald-300" : "bg-white/5 text-slate-500"}
-        `}>
-          {count}
-        </span>
-      )}
-      {activeTab === id && (
-        <motion.div
-          layoutId="activeTab"
-          className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500"
-        />
-      )}
-    </button>
-  );
 
   return (
     <AnimatePresence>
@@ -286,12 +245,12 @@ export function GenerationPreviewPanel({
 
               <div className="flex items-center gap-2">
                 <div className="flex bg-black/20 rounded-lg p-1 border border-white/5">
-                  <TabButton id="story" label={t("storyboard")} icon={Clapperboard} />
-                  <TabButton id="video" label="Video" icon={Film} count={videoResults.length} />
-                  <TabButton id="dna" label="DNA" icon={Shield} count={dnaComplianceReport?.violation_shots} />
-                  <TabButton id="audio" label="Audio" icon={Music} />
-                  <TabButton id="mindmap" label="Mind Map" icon={Network} />
-                  <TabButton id="data" label="Data" icon={Package} />
+                  <TabButton id="story" label={t("storyboard")} icon={Clapperboard} activeTab={resolvedActiveTab} onSelect={setActiveTab} />
+                  <TabButton id="video" label="Video" icon={Film} count={videoResults.length} activeTab={resolvedActiveTab} onSelect={setActiveTab} />
+                  <TabButton id="dna" label="DNA" icon={Shield} count={dnaComplianceReport?.violation_shots} activeTab={resolvedActiveTab} onSelect={setActiveTab} />
+                  <TabButton id="audio" label="Audio" icon={Music} activeTab={resolvedActiveTab} onSelect={setActiveTab} />
+                  <TabButton id="mindmap" label="Mind Map" icon={Network} activeTab={resolvedActiveTab} onSelect={setActiveTab} />
+                  <TabButton id="data" label="Data" icon={Package} activeTab={resolvedActiveTab} onSelect={setActiveTab} />
                 </div>
 
                 <div className="w-px h-6 bg-white/10 mx-2" />
@@ -324,7 +283,7 @@ export function GenerationPreviewPanel({
               ) : (
                 <div className="p-6">
                   {/* STORYBOARD TAB */}
-                  {activeTab === "story" && (
+                  {resolvedActiveTab === "story" && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {storyboard.map((card, idx) => {
                         const cardRecord = card as Record<string, unknown>;
@@ -369,7 +328,7 @@ export function GenerationPreviewPanel({
                   )}
 
                   {/* VIDEO TAB */}
-                  {activeTab === "video" && (
+                  {resolvedActiveTab === "video" && (
                     <div className="space-y-8">
                       {videoResults.length === 0 ? (
                         <div className="text-center py-20">
@@ -433,7 +392,7 @@ export function GenerationPreviewPanel({
                   )}
 
                   {/* AUDIO TAB */}
-                  {activeTab === "audio" && (
+                  {resolvedActiveTab === "audio" && (
                     <div className="text-center py-20">
                       <Music className="w-12 h-12 text-slate-600 mx-auto mb-4" />
                       <h3 className="text-slate-300 font-medium">Audio Generation Coming Soon</h3>
@@ -443,7 +402,7 @@ export function GenerationPreviewPanel({
                   )}
 
                   {/* MINDMAP TAB */}
-                  {activeTab === "mindmap" && (
+                  {resolvedActiveTab === "mindmap" && (
                     <div className="text-center py-20">
                       <Network className="w-12 h-12 text-slate-600 mx-auto mb-4" />
                       <h3 className="text-slate-300 font-medium">Mind Map View</h3>
@@ -453,7 +412,7 @@ export function GenerationPreviewPanel({
                   )}
 
                   {/* DNA TAB */}
-                  {activeTab === "dna" && (
+                  {resolvedActiveTab === "dna" && (
                     <div className="space-y-4">
                       {dnaComplianceReport ? (
                         <DNAComplianceViewer
@@ -488,7 +447,7 @@ export function GenerationPreviewPanel({
                   )}
 
                   {/* DATA TAB */}
-                  {activeTab === "data" && (
+                  {resolvedActiveTab === "data" && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="col-span-1 space-y-4">
                         <section className="bg-white/5 rounded-xl p-4 border border-white/5">
@@ -556,7 +515,7 @@ export function GenerationPreviewPanel({
             </div>
 
             {/* Feedback Bar */}
-            {activeTab === "story" && !isLoading && onSubmitFeedback && (
+            {resolvedActiveTab === "story" && !isLoading && onSubmitFeedback && (
               <div className="px-5 py-3 border-t border-white/5 bg-white/[0.02] flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs text-slate-400">
                   <MessageSquare className="w-4 h-4 text-amber-400" />

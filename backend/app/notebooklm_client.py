@@ -424,6 +424,8 @@ def generate_claims_with_evidence(
     if guide.get("logic_summary"):
         claim = {
             "claim_id": f"c_{guide.get('cluster_id')}_logic",
+            "claim_type": "pattern",
+            "statement": guide["logic_summary"],
             "claim_text": guide["logic_summary"],
             "evidence_refs": [
                 f"db:video_segments:{ref.get('segment_id')}"
@@ -436,6 +438,8 @@ def generate_claims_with_evidence(
     if guide.get("persona_summary"):
         claim = {
             "claim_id": f"c_{guide.get('cluster_id')}_persona",
+            "claim_type": "persona",
+            "statement": guide["persona_summary"],
             "claim_text": guide["persona_summary"],
             "evidence_refs": [
                 f"db:video_segments:{ref.get('segment_id')}"
@@ -465,6 +469,8 @@ def generate_claims_with_evidence(
             ]
         claim = {
             "claim_id": f"c_{guide.get('cluster_id')}_var_{idx}",
+            "claim_type": "constraint",
+            "statement": rule,
             "claim_text": rule,
             "evidence_refs": claim_refs,
         }
@@ -627,6 +633,7 @@ def run_notebooklm_analysis(
             "model_version": settings.GEMINI_MODEL,
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "source_pack_id": source_pack.get("pack_id"),
+            "capsule_id": capsule_id,
             "guide_type": "variation",
             "cluster_id": source_pack.get("cluster_id"),
             "logic_vector": logic_vector,

@@ -15,6 +15,7 @@ import { api } from "@/lib/api";
 import PageStatus from "@/components/PageStatus";
 import { isNetworkError, normalizeApiError } from "@/lib/errors";
 import { useActiveUserId } from "@/hooks/useActiveUserId";
+import { formatNumber } from "@/lib/formatters";
 
 const LANGUAGES = [
     { code: "en", label: "English" },
@@ -138,13 +139,13 @@ export default function SettingsPage() {
                             <div className="rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2">
                                 <div className="text-[9px] uppercase text-[var(--fg-muted)]">{labels.canvasCount}</div>
                                 <div className="mt-1 text-sm font-semibold text-[var(--fg-0)]">
-                                    {canvasCount !== null ? canvasCount.toLocaleString() : "-"}
+                                    {formatNumber(canvasCount, undefined, undefined, "-")}
                                 </div>
                             </div>
                             <div className="rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2">
                                 <div className="text-[9px] uppercase text-[var(--fg-muted)]">{labels.credits}</div>
                                 <div className="mt-1 text-sm font-semibold text-[var(--fg-0)]">
-                                    {creditBalance !== null ? creditBalance.toLocaleString() : "-"}
+                                    {formatNumber(creditBalance, undefined, undefined, "-")}
                                 </div>
                             </div>
                         </div>
