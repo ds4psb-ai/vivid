@@ -128,6 +128,8 @@ export interface Tool {
     created_by: string;
     parent_tool_id: string | null;
     created_at: string;
+    // Optional fields from extended queries
+    live_version?: ToolVersion;
 }
 
 export type ToolTier = "experimental" | "verified" | "certified";
