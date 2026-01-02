@@ -1,0 +1,37 @@
+/**
+ * Empty State Component
+ * 
+ * Display when a list or section has no content.
+ */
+
+import { LucideIcon, Inbox } from "lucide-react";
+import { ReactNode } from "react";
+
+interface EmptyStateProps {
+    icon?: LucideIcon;
+    title: string;
+    description?: string;
+    action?: ReactNode;
+}
+
+export function EmptyState({
+    icon: Icon = Inbox,
+    title,
+    description,
+    action,
+}: EmptyStateProps) {
+    return (
+        <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+            <div className="p-4 bg-gray-800/50 rounded-full mb-4">
+                <Icon className="w-12 h-12 text-gray-500" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-300 mb-1">{title}</h3>
+            {description && (
+                <p className="text-gray-500 max-w-sm">{description}</p>
+            )}
+            {action && <div className="mt-4">{action}</div>}
+        </div>
+    );
+}
+
+export default EmptyState;
