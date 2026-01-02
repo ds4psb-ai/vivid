@@ -33,6 +33,7 @@ from app.teaching_adapter import (
     MIN_SCENE_COUNT,
     MAX_SCENE_COUNT,
 )
+from app.services.telemetry_integration import record_tool_run
 
 logger = logging.getLogger(__name__)
 
@@ -211,6 +212,9 @@ async def generate_prompt(
     db: AsyncSession = Depends(get_db),
 ) -> TeachingResponse:
     """Generate Veo video prompt from topic and style."""
+    import time
+    start_time = time.time()
+    
     user_id = user.get("id")
     logger.info(f"Prompt generation request from user {user_id}")
     
@@ -248,6 +252,8 @@ async def generate_prompt(
         user_api_key=byok_key,
     )
     
+    latency_ms = int((time.time() - start_time) * 1000)
+    
     if not result.get("success"):
         error_msg = result.get("error", "Generation failed")
         # Refund on failure (only if we deducted)
@@ -257,6 +263,20 @@ async def generate_prompt(
                 description=f"Refund: Prompt generation failed - {error_msg[:50]}",
                 meta={"capsule": "prompt.generate", "error": error_msg[:200]}
             )
+        
+        # Record failed run (no settlement)
+        await record_tool_run(
+            db=db,
+            tool_key="teaching_prompt_generate",
+            user_id=user_id,
+            inputs_summary={"topic": request.topic, "style": request.style},
+            outputs_summary={},
+            status="failed",
+            latency_ms=latency_ms,
+            credits_charged=0,  # Refunded
+            error_message=error_msg,
+        )
+        
         # Determine appropriate status code
         if "required" in error_msg.lower():
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
@@ -266,6 +286,18 @@ async def generate_prompt(
             raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail=error_msg)
         else:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_msg)
+    
+    # Record successful run → triggers settlement
+    await record_tool_run(
+        db=db,
+        tool_key="teaching_prompt_generate",
+        user_id=user_id,
+        inputs_summary={"topic": request.topic, "style": request.style, "model": request.model},
+        outputs_summary={"has_prompt": bool(result.get("output", {}).get("prompt"))},
+        status="success",
+        latency_ms=latency_ms,
+        credits_charged=credit_cost if not byok_key else 0,
+    )
     
     return TeachingResponse(**result)
 
@@ -288,6 +320,9 @@ async def create_storyboard(
     db: AsyncSession = Depends(get_db),
 ) -> TeachingResponse:
     """Create storyboard cards from concept."""
+    import time
+    start_time = time.time()
+    
     user_id = user.get("id")
     logger.info(f"Storyboard creation request from user {user_id}")
     
@@ -323,6 +358,8 @@ async def create_storyboard(
         user_api_key=byok_key,
     )
     
+    latency_ms = int((time.time() - start_time) * 1000)
+    
     if not result.get("success"):
         error_msg = result.get("error", "Generation failed")
         if not byok_key:
@@ -331,12 +368,36 @@ async def create_storyboard(
                 description=f"Refund: Storyboard creation failed",
                 meta={"capsule": "storyboard.create", "error": error_msg[:200]}
             )
+        
+        await record_tool_run(
+            db=db,
+            tool_key="teaching_storyboard_create",
+            user_id=user_id,
+            inputs_summary={"concept": request.concept[:50], "scene_count": request.scene_count},
+            outputs_summary={},
+            status="failed",
+            latency_ms=latency_ms,
+            credits_charged=0,
+            error_message=error_msg,
+        )
+        
         if "required" in error_msg.lower():
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
         elif "timeout" in error_msg.lower():
             raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail=error_msg)
         else:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_msg)
+    
+    await record_tool_run(
+        db=db,
+        tool_key="teaching_storyboard_create",
+        user_id=user_id,
+        inputs_summary={"concept": request.concept[:50], "scene_count": request.scene_count, "model": request.model},
+        outputs_summary={"scene_count": len(result.get("output", {}).get("scenes", []))},
+        status="success",
+        latency_ms=latency_ms,
+        credits_charged=credit_cost if not byok_key else 0,
+    )
     
     return TeachingResponse(**result)
 
@@ -359,6 +420,9 @@ async def generate_image_prompt(
     db: AsyncSession = Depends(get_db),
 ) -> TeachingResponse:
     """Generate optimized image prompt."""
+    import time
+    start_time = time.time()
+    
     user_id = user.get("id")
     logger.info(f"Image prompt request from user {user_id}")
     
@@ -393,6 +457,8 @@ async def generate_image_prompt(
         user_api_key=byok_key,
     )
     
+    latency_ms = int((time.time() - start_time) * 1000)
+    
     if not result.get("success"):
         error_msg = result.get("error", "Generation failed")
         if not byok_key:
@@ -401,12 +467,36 @@ async def generate_image_prompt(
                 description=f"Refund: Image prompt generation failed",
                 meta={"capsule": "image.generate", "error": error_msg[:200]}
             )
+        
+        await record_tool_run(
+            db=db,
+            tool_key="teaching_image_generate",
+            user_id=user_id,
+            inputs_summary={"description": request.description[:50], "style": request.style},
+            outputs_summary={},
+            status="failed",
+            latency_ms=latency_ms,
+            credits_charged=0,
+            error_message=error_msg,
+        )
+        
         if "required" in error_msg.lower():
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
         elif "timeout" in error_msg.lower():
             raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail=error_msg)
         else:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_msg)
+    
+    await record_tool_run(
+        db=db,
+        tool_key="teaching_image_generate",
+        user_id=user_id,
+        inputs_summary={"description": request.description[:50], "style": request.style, "model": request.model},
+        outputs_summary={"has_prompt": bool(result.get("output", {}).get("prompt"))},
+        status="success",
+        latency_ms=latency_ms,
+        credits_charged=credit_cost if not byok_key else 0,
+    )
     
     return TeachingResponse(**result)
 
@@ -429,6 +519,9 @@ async def analyze_reference(
     db: AsyncSession = Depends(get_db),
 ) -> TeachingResponse:
     """Analyze video reference for cinematic elements."""
+    import time
+    start_time = time.time()
+    
     user_id = user.get("id")
     logger.info(f"Reference analysis request from user {user_id}")
     
@@ -462,6 +555,8 @@ async def analyze_reference(
         user_api_key=byok_key,
     )
     
+    latency_ms = int((time.time() - start_time) * 1000)
+    
     if not result.get("success"):
         error_msg = result.get("error", "Analysis failed")
         if not byok_key:
@@ -470,12 +565,36 @@ async def analyze_reference(
                 description=f"Refund: Reference analysis failed",
                 meta={"capsule": "reference.analyze", "error": error_msg[:200]}
             )
+        
+        await record_tool_run(
+            db=db,
+            tool_key="teaching_reference_analyze",
+            user_id=user_id,
+            inputs_summary={"video_description": request.video_description[:50]},
+            outputs_summary={},
+            status="failed",
+            latency_ms=latency_ms,
+            credits_charged=0,
+            error_message=error_msg,
+        )
+        
         if "required" in error_msg.lower():
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
         elif "timeout" in error_msg.lower():
             raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail=error_msg)
         else:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_msg)
+    
+    await record_tool_run(
+        db=db,
+        tool_key="teaching_reference_analyze",
+        user_id=user_id,
+        inputs_summary={"video_description": request.video_description[:50], "model": request.model},
+        outputs_summary={"has_analysis": bool(result.get("output"))},
+        status="success",
+        latency_ms=latency_ms,
+        credits_charged=credit_cost if not byok_key else 0,
+    )
     
     return TeachingResponse(**result)
 
