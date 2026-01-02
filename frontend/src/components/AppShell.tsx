@@ -40,7 +40,6 @@ export default function AppShell({
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const { session } = useSessionContext();
     const { balance: liveBalance } = useCreditBalance(
-        undefined,
         typeof creditBalance !== "number"
     );
     const resolvedBalance =

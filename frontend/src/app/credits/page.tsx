@@ -53,7 +53,7 @@ export default function CreditsPage() {
     const [isToppingUp, setIsToppingUp] = useState<string | null>(null);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [isOffline, setIsOffline] = useState(false);
-    const { userId } = useActiveUserId("demo-user");
+    const { userId } = useActiveUserId();
     const LIMIT = 20;
 
     const creditPacks = useMemo<CreditPack[]>(() => [
@@ -92,8 +92,8 @@ export default function CreditsPage() {
         setOffset(0);
         try {
             const [balanceData, ledger] = await Promise.all([
-                api.getCreditsBalance(userId),
-                api.getCreditsTransactions(userId, LIMIT, 0),
+                api.getCreditsBalance(),
+                api.getCreditsTransactions(LIMIT, 0),
             ]);
             setBalance(balanceData.balance);
             setSubscriptionCredits(balanceData.subscription_credits);
@@ -116,7 +116,7 @@ export default function CreditsPage() {
         setIsLoadingMore(true);
         try {
             const nextOffset = offset + LIMIT;
-            const ledger = await api.getCreditsTransactions(userId, LIMIT, nextOffset);
+            const ledger = await api.getCreditsTransactions(LIMIT, nextOffset);
             setTransactions((prev) => [...prev, ...ledger.transactions]);
             setOffset(nextOffset);
         } catch (err) {
@@ -142,7 +142,7 @@ export default function CreditsPage() {
         async (pack: CreditPack) => {
             setIsToppingUp(pack.id);
             try {
-                await api.topupCredits(pack.credits, pack.id, userId);
+                await api.topupCredits(pack.credits, pack.id);
                 await loadCredits();
             } catch (err) {
                 setLoadError(normalizeApiError(err, topupErrorFallback));

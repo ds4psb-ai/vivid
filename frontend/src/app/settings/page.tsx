@@ -48,7 +48,7 @@ export default function SettingsPage() {
     const [creditBalance, setCreditBalance] = useState<number | null>(null);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [isOffline, setIsOffline] = useState(false);
-    const { userId } = useActiveUserId("demo-user");
+    const { userId } = useActiveUserId();
 
     const labels = {
         title: language === "ko" ? "설정" : "Settings",
@@ -69,7 +69,7 @@ export default function SettingsPage() {
 
     useEffect(() => {
         let active = true;
-        Promise.all([api.listCanvases(), api.getCreditsBalance(userId)])
+        Promise.all([api.listCanvases(), api.getCreditsBalance()])
             .then(([canvases, balance]) => {
                 if (!active) return;
                 setLoadError(null);

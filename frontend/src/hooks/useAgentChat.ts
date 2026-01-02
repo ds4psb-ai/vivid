@@ -179,14 +179,7 @@ const mergeSceneSnapshot = (
   incoming: SceneSnapshot,
 ): SceneSnapshot => {
   if (!existing) return incoming;
-  const merged: SceneSnapshot = { ...existing };
-  (Object.keys(incoming) as Array<keyof SceneSnapshot>).forEach((key) => {
-    const value = incoming[key];
-    if (value !== undefined) {
-      merged[key] = value;
-    }
-  });
-  return merged;
+  return { ...existing, ...incoming };
 };
 
 const mergeScenes = (artifacts: AgentArtifactItem[]): SceneSnapshot[] => {
@@ -401,12 +394,15 @@ export const useAgentChat = (options?: UseAgentChatOptions) => {
             setMessages((prev) =>
               trimMessages(
                 updateMessageById(prev, messageId, (message) => ({
-                  ...message,
-                  role: "assistant",
+                  id: message.id,
+                  role: "assistant" as const,
+                  content: message.role === "assistant" ? message.content : "",
+                  status: message.role === "assistant" ? message.status : "streaming",
                   toolCalls: mergeToolCalls(
                     message.role === "assistant" ? message.toolCalls : undefined,
                     toolCalls,
                   ),
+                  createdAt: message.createdAt,
                 }))
               )
             );
@@ -424,7 +420,7 @@ export const useAgentChat = (options?: UseAgentChatOptions) => {
                 updateMessageById(prev, messageId, (message) => ({
                   ...message,
                   role: "assistant",
-                  content: getText(payloadData.content) || message.content,
+                  content: getText(payloadData.content) || (message.role === "assistant" ? message.content : ""),
                   status: "complete",
                   toolCalls: mergeToolCalls(
                     message.role === "assistant" ? message.toolCalls : undefined,

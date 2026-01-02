@@ -68,7 +68,7 @@ const getArtifactPayload = (output?: Record<string, unknown>): ArtifactPayload |
   if (!output) return null;
   const artifactType = getText(output.artifact_type);
   if (!artifactType || !KNOWN_ARTIFACT_TYPES.has(artifactType)) return null;
-  return output as ArtifactPayload;
+  return output as unknown as ArtifactPayload;
 };
 
 const ToolResultCard = ({
