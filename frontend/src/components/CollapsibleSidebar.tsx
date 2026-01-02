@@ -249,6 +249,15 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
 
     const NAV_GROUPS = [
         {
+            id: "tools",
+            label: "도구",
+            icon: Zap,
+            items: [
+                { label: "도구 대시보드", href: "/tools", icon: LayoutGrid },
+                { label: "새 도구 만들기", href: "/tools/create", icon: Sparkles },
+            ],
+        },
+        {
             id: "research",
             label: t("navResearch"),
             icon: Search,
@@ -282,7 +291,7 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
         },
     ];
 
-    const ACADEMY_ITEM = { label: "Crebit ATC 1기", href: "/crebit", icon: Zap, badge: "Hot" };
+    const ACADEMY_ITEM = { label: "Crebit ATC 1기", href: "/crebit", icon: Moon, badge: "Hot" };
     const BOTTOM_ITEM = { label: t("navAffiliate"), href: "/affiliate", icon: Gift };
 
     const FLYOUT_CONTENT = {
