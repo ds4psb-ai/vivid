@@ -1,0 +1,151 @@
+{
+    "defaultAction": "SCMP_ACT_ERRNO",
+    "archMap": [
+        {
+            "architecture": "SCMP_ARCH_X86_64",
+            "subArchitectures": [
+                "SCMP_ARCH_X86",
+                "SCMP_ARCH_X32"
+            ]
+        }
+    ],
+    "syscalls": [
+        {
+            "names": [
+                "read",
+                "write",
+                "open",
+                "close",
+                "stat",
+                "fstat",
+                "lstat",
+                "poll",
+                "lseek",
+                "mmap",
+                "mprotect",
+                "munmap",
+                "brk",
+                "rt_sigaction",
+                "rt_sigprocmask",
+                "rt_sigreturn",
+                "ioctl",
+                "access",
+                "pipe",
+                "select",
+                "sched_yield",
+                "mremap",
+                "msync",
+                "mincore",
+                "madvise",
+                "dup",
+                "dup2",
+                "nanosleep",
+                "getpid",
+                "getuid",
+                "getgid",
+                "geteuid",
+                "getegid",
+                "getppid",
+                "getpgrp",
+                "setsid",
+                "getgroups",
+                "uname",
+                "arch_prctl",
+                "futex",
+                "get_thread_area",
+                "set_thread_area",
+                "exit_group",
+                "exit",
+                "epoll_wait",
+                "epoll_ctl",
+                "epoll_create",
+                "epoll_create1",
+                "clock_gettime",
+                "clock_getres",
+                "clock_nanosleep",
+                "getrandom",
+                "pread64",
+                "pwrite64",
+                "readv",
+                "writev",
+                "getcwd",
+                "openat",
+                "newfstatat",
+                "readlinkat",
+                "dup3",
+                "pipe2",
+                "eventfd2",
+                "fcntl",
+                "fadvise64",
+                "statx",
+                "memfd_create",
+                "set_robust_list",
+                "get_robust_list",
+                "set_tid_address",
+                "getdents64",
+                "prlimit64",
+                "prctl",
+                "faccessat2",
+                "rseq",
+                "sigaltstack"
+            ],
+            "action": "SCMP_ACT_ALLOW"
+        },
+        {
+            "names": [
+                "clone",
+                "clone3",
+                "vfork",
+                "fork"
+            ],
+            "action": "SCMP_ACT_ERRNO",
+            "comment": "Block process creation"
+        },
+        {
+            "names": [
+                "execve",
+                "execveat"
+            ],
+            "action": "SCMP_ACT_ERRNO",
+            "comment": "Block execution of other programs"
+        },
+        {
+            "names": [
+                "socket",
+                "connect",
+                "accept",
+                "sendto",
+                "recvfrom",
+                "bind",
+                "listen"
+            ],
+            "action": "SCMP_ACT_ERRNO",
+            "comment": "Block network (strict mode). Allowed in standard/trusted via network flag."
+        },
+        {
+            "names": [
+                "ptrace",
+                "personality",
+                "mount",
+                "umount2",
+                "pivot_root",
+                "chroot",
+                "setns",
+                "unshare"
+            ],
+            "action": "SCMP_ACT_ERRNO",
+            "comment": "Block privilege escalation"
+        },
+        {
+            "names": [
+                "reboot",
+                "kexec_load",
+                "init_module",
+                "finit_module",
+                "delete_module"
+            ],
+            "action": "SCMP_ACT_ERRNO",
+            "comment": "Block system management"
+        }
+    ]
+}

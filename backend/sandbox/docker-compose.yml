@@ -1,0 +1,95 @@
+# Sandbox Docker Compose
+# Development configuration for sandbox execution
+
+services:
+  sandbox-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: vivid-sandbox:latest
+    container_name: vivid-sandbox-dev
+
+    # Security
+    security_opt:
+      - no-new-privileges:true
+      - seccomp=./seccomp-strict.json
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+    # Network isolation (strict mode)
+    network_mode: none
+
+    # Read-only filesystem
+    read_only: true
+
+    # Temp filesystem for any runtime needs
+    tmpfs:
+      - /tmp:size=10M,mode=1777
+
+    # Drop all capabilities
+    cap_drop:
+      - ALL
+
+    # Environment
+    environment:
+      - SANDBOX_MODE=true
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+
+    # Input/output via volumes for development
+    volumes:
+      - ./dev-input:/sandbox/input:ro
+      - ./dev-output:/sandbox/output
+
+    # Don't restart on failure
+    restart: "no"
+
+  # Sandbox with network (for verified tools)
+  sandbox-runner-network:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: vivid-sandbox:latest
+
+    security_opt:
+      - no-new-privileges:true
+
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+
+    # Limited network - egress only to allowed hosts
+    # Configure via docker network + iptables in production
+    networks:
+      - sandbox-net
+
+    read_only: true
+    tmpfs:
+      - /tmp:size=50M,mode=1777
+
+    cap_drop:
+      - ALL
+
+    environment:
+      - SANDBOX_MODE=true
+      - NETWORK_ENABLED=true
+
+    restart: "no"
+
+networks:
+  sandbox-net:
+    driver: bridge
+    internal: false # Allow egress
+    driver_opts:
+      # In production, use iptables to restrict to allowed hosts
+      com.docker.network.bridge.name: sandbox0

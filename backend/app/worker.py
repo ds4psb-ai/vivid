@@ -97,9 +97,57 @@ async def generate_video_batch(
         return {"status": "failed", "error": str(e)}
 
 
+async def sandbox_execute(
+    ctx: Dict[str, Any],
+    tool_id: str,
+    input_data: Dict[str, Any],
+    user_id: str,
+    session_id: str = None,
+) -> Dict[str, Any]:
+    """
+    Execute a tool in sandbox asynchronously.
+    
+    Args:
+        tool_id: Tool UUID as string.
+        input_data: Tool input parameters.
+        user_id: User triggering execution.
+        session_id: Optional session ID.
+    
+    Returns:
+        Execution result dict.
+    """
+    from uuid import UUID
+    from app.database import AsyncSessionLocal
+    from app.services.sandbox_executor import execute_tool_sandboxed
+    
+    logger.info(f"[Job] sandbox_execute: tool_id={tool_id}, user_id={user_id}")
+    
+    try:
+        async with AsyncSessionLocal() as db:
+            execution, result = await execute_tool_sandboxed(
+                db=db,
+                tool_id=UUID(tool_id),
+                input_data=input_data,
+                user_id=user_id,
+                session_id=session_id,
+            )
+            
+            return {
+                "status": "completed",
+                "execution_id": str(execution.id),
+                "execution_status": execution.status,
+                "output": result.output,
+                "error": result.error,
+                "execution_time_ms": result.execution_time_ms,
+            }
+    except Exception as e:
+        logger.exception(f"sandbox_execute failed: {e}")
+        return {"status": "failed", "error": str(e)}
+
+
 class WorkerSettings:
     """Arq WorkerSettings for job processing."""
-    functions = [analyze_source_pack, generate_video_batch]
+    functions = [analyze_source_pack, generate_video_batch, sandbox_execute]
     redis_settings = RedisSettings.from_dsn(settings.REDIS_URL)
     on_startup = startup
     on_shutdown = shutdown
