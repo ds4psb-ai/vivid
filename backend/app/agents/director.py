@@ -271,6 +271,7 @@ class DirectorAgent:
             vibe_input.target_length_sec,
             narrative_dna,
             logic_vector=logic_vector,
+            capsule_id=vibe_input.capsule_id,
         )
         
         # 4. Persona Vector 기반 노드 파라미터 적용
@@ -493,6 +494,7 @@ JSON만 출력하세요. 다른 설명 없이 순수 JSON만."""
         duration_sec: int,
         dna: NarrativeDNA,
         logic_vector: Optional[Dict[str, Any]] = None,
+        capsule_id: Optional[str] = None,
     ) -> tuple[List[NodeSpec], List[EdgeSpec]]:
         """출력 유형과 DNA/Logic Vector에 따른 동적 워크플로우 노드 생성
         
@@ -508,6 +510,7 @@ JSON만 출력하세요. 다른 설명 없이 순수 JSON만."""
         source_node = NodeSpec(
             id="source_1",
             type="source",
+            category=NodeCategory.INPUT,  # Opal Yellow
             label="📝 스토리 입력",
             position={"x": 100, "y": 200},
             data={
@@ -521,6 +524,7 @@ JSON만 출력하세요. 다른 설명 없이 순수 JSON만."""
         dna_node = NodeSpec(
             id="dna_validator",
             type="processing",
+            category=NodeCategory.VALIDATE,  # Opal Teal
             label="🧬 서사 DNA 검증",
             position={"x": 350, "y": 200},
             data={
@@ -535,6 +539,12 @@ JSON만 출력하세요. 다른 설명 없이 순수 JSON만."""
         genre_nodes, genre_edges = self._detect_and_create_genre_nodes(dna, output_type)
         nodes.extend(genre_nodes)
         edges.extend(genre_edges)
+
+        # ========== 거장 스타일 특화 노드 추가 ==========
+        if capsule_id:
+            auteur_nodes, auteur_edges = self._create_auteur_nodes(capsule_id, dna)
+            nodes.extend(auteur_nodes)
+            edges.extend(auteur_edges)
         
         # 출력 유형별 기본 노드
         if output_type == OutputType.SHORT_DRAMA:
@@ -554,6 +564,7 @@ JSON만 출력하세요. 다른 설명 없이 순수 JSON만."""
         output_node = NodeSpec(
             id="output_1",
             type="output",
+            category=NodeCategory.OUTPUT,  # Opal Green
             label="🎬 최종 결과물",
             position={"x": 1100, "y": 200},
             data={
@@ -570,158 +581,26 @@ JSON만 출력하세요. 다른 설명 없이 순수 JSON만."""
         dna: NarrativeDNA, 
         output_type: OutputType
     ) -> tuple[List[NodeSpec], List[EdgeSpec]]:
-        """DNA 내용 분석하여 장르별 특화 노드 생성"""
+        """장르별 특화 노드 생성 - Dual Capsule System으로 대체 예정
         
-        nodes: List[NodeSpec] = []
-        edges: List[EdgeSpec] = []
-        
-        # DNA에서 키워드 추출
-        all_text = f"{dna.core_theme} {' '.join(dna.secondary_themes)} {dna.overall_tone} {dna.visual_style}".lower()
-        
-        # 장르 키워드 매핑
+        현재: 빈 리스트 반환 (Mock 노드 제거됨)
+        향후: Teaching Capsule + NotebookLM RAG 노드로 대체
+        """
+        # DNA에서 장르 감지 (로깅용)
+        all_text = f"{dna.core_theme} {' '.join(dna.secondary_themes)} {dna.overall_tone}".lower()
         genre_keywords = {
-            "horror": ["공포", "스릴러", "호러", "살인", "귀신", "무서운", "어두운 숲", "horror", "thriller"],
-            "romance": ["로맨스", "멜로", "사랑", "연애", "설렘", "따뜻한", "romance", "love"],
-            "action": ["액션", "추격", "싸움", "전투", "폭발", "속도", "action", "fight"],
-            "comedy": ["코미디", "유쾌", "웃긴", "반전", "comedy", "funny"],
-            "noir": ["누아르", "범죄", "어둡고", "고독", "noir", "crime"],
-            "fantasy": ["판타지", "마법", "fantasy", "magic", "환상"],
-            "scifi": ["SF", "미래", "로봇", "우주", "sci-fi", "future"],
+            "horror": ["공포", "스릴러", "호러"],
+            "romance": ["로맨스", "멜로", "사랑"],
+            "action": ["액션", "추격", "전투"],
+            "comedy": ["코미디", "유쾌", "반전"],
         }
+        detected = [g for g, kws in genre_keywords.items() if any(k in all_text for k in kws)]
         
-        detected_genres = []
-        for genre, keywords in genre_keywords.items():
-            if any(kw in all_text for kw in keywords):
-                detected_genres.append(genre)
+        if detected:
+            logger.info(f"Detected genres: {detected} - awaiting Dual Capsule integration")
         
-        logger.info(f"Detected genres from DNA: {detected_genres}")
-        
-        y_offset = -100  # 위쪽에 특화 노드 배치
-        
-        # 공포/스릴러 특화 노드
-        if "horror" in detected_genres:
-            nodes.extend([
-                NodeSpec(
-                    id="horror_atmosphere",
-                    type="capsule",
-                    category=NodeCategory.GENERATE,
-                    label="👻 공포 분위기 설계",
-                    description="긴장감과 공포 요소 설계",
-                    position={"x": 600, "y": y_offset},
-                    ai_model="gemini-2.0-flash",
-                    data={"genre": "horror", "elements": ["jump_scare", "suspense", "dark_lighting"]},
-                ),
-                NodeSpec(
-                    id="sound_design",
-                    type="capsule",
-                    category=NodeCategory.GENERATE,
-                    label="🔊 공포 사운드 디자인",
-                    description="긴장감 있는 사운드 이펙트",
-                    position={"x": 850, "y": y_offset},
-                    ai_model="audiocraft",
-                    data={"style": "horror", "elements": ["ambient", "jump_scare_sfx", "heartbeat"]},
-                ),
-            ])
-            edges.extend([
-                EdgeSpec(id="e_dna_horror", source="dna_validator", target="horror_atmosphere"),
-                EdgeSpec(id="e_horror_sound", source="horror_atmosphere", target="sound_design"),
-            ])
-        
-        # 로맨스 특화 노드
-        if "romance" in detected_genres:
-            nodes.extend([
-                NodeSpec(
-                    id="romance_chemistry",
-                    type="capsule",
-                    category=NodeCategory.GENERATE,
-                    label="💕 케미스트리 설계",
-                    description="캐릭터 간 감정선과 케미",
-                    position={"x": 600, "y": y_offset - 100},
-                    ai_model="gemini-2.0-flash",
-                    data={"genre": "romance", "focus": ["dialogue", "eye_contact", "tension"]},
-                ),
-                NodeSpec(
-                    id="romantic_music",
-                    type="capsule",
-                    category=NodeCategory.GENERATE,
-                    label="🎵 로맨틱 OST",
-                    description="감성적인 배경음악",
-                    position={"x": 850, "y": y_offset - 100},
-                    ai_model="musicgen",
-                    data={"style": "romantic", "mood": dna.overall_tone},
-                ),
-            ])
-            edges.extend([
-                EdgeSpec(id="e_dna_romance", source="dna_validator", target="romance_chemistry"),
-                EdgeSpec(id="e_romance_music", source="romance_chemistry", target="romantic_music"),
-            ])
-        
-        # 액션 특화 노드
-        if "action" in detected_genres:
-            nodes.extend([
-                NodeSpec(
-                    id="action_choreography",
-                    type="capsule",
-                    category=NodeCategory.GENERATE,
-                    label="🥊 액션 안무",
-                    description="액션 시퀀스와 동선 설계",
-                    position={"x": 600, "y": y_offset - 200},
-                    ai_model="gemini-2.0-flash",
-                    data={"genre": "action", "style": "dynamic"},
-                ),
-                NodeSpec(
-                    id="vfx_explosions",
-                    type="capsule",
-                    category=NodeCategory.GENERATE,
-                    label="💥 VFX 폭발 효과",
-                    description="폭발, 파편, 슬로모션 효과",
-                    position={"x": 850, "y": y_offset - 200},
-                    ai_model="veo-2",
-                    data={"effects": ["explosion", "debris", "slow_motion"]},
-                ),
-            ])
-            edges.extend([
-                EdgeSpec(id="e_dna_action", source="dna_validator", target="action_choreography"),
-                EdgeSpec(id="e_action_vfx", source="action_choreography", target="vfx_explosions"),
-            ])
-        
-        # 코미디 특화 노드
-        if "comedy" in detected_genres:
-            nodes.append(
-                NodeSpec(
-                    id="comedy_timing",
-                    type="capsule",
-                    category=NodeCategory.REFINE,
-                    label="😂 코미디 타이밍",
-                    description="개그 타이밍과 리액션 편집",
-                    position={"x": 600, "y": y_offset - 300},
-                    ai_model="gemini-2.0-flash",
-                    data={"genre": "comedy", "elements": ["timing", "reaction_cuts", "zoom"]},
-                ),
-            )
-            edges.append(
-                EdgeSpec(id="e_dna_comedy", source="dna_validator", target="comedy_timing"),
-            )
-        
-        # 누아르 특화 노드
-        if "noir" in detected_genres:
-            nodes.append(
-                NodeSpec(
-                    id="noir_lighting",
-                    type="capsule",
-                    category=NodeCategory.GENERATE,
-                    label="🌑 누아르 라이팅",
-                    description="필름 누아르 조명과 그림자",
-                    position={"x": 600, "y": y_offset - 400},
-                    ai_model="imagen-3",
-                    data={"style": "film_noir", "elements": ["shadows", "neon", "rain"]},
-                ),
-            )
-            edges.append(
-                EdgeSpec(id="e_dna_noir", source="dna_validator", target="noir_lighting"),
-            )
-        
-        return nodes, edges
+        # Mock 노드 대신 빈 리스트 반환
+        return [], []
     
     def _create_drama_nodes(self, dna: NarrativeDNA) -> List[NodeSpec]:
         """숏드라마용 노드 생성 (핸들 시스템 적용)"""
@@ -762,7 +641,7 @@ JSON만 출력하세요. 다른 설명 없이 순수 JSON만."""
                 label="📖 대본 생성",
                 description="AI가 시놉시스를 기반으로 대본 생성",
                 position={"x": 550, "y": 200},
-                ai_model="gemini-2.0-flash",
+                ai_model="gemini-3-flash-preview",
                 input_handles=[
                     NodeHandle(id="in_text", type=HandleType.TEXT, position=HandlePosition.LEFT, label="컨셉"),
                     NodeHandle(id="in_dna", type=HandleType.DNA, position=HandlePosition.TOP, label="DNA", required=False),
@@ -1031,8 +910,20 @@ JSON만 출력하세요. 다른 설명 없이 순수 JSON만."""
         for node in nodes:
             agent = agent_map.get(node.id) or agent_map.get(node.type, "director_agent")
             assignments[node.id] = agent
-        
+            
         return assignments
+
+    def _create_auteur_nodes(self, capsule_id: str, dna: NarrativeDNA) -> tuple[List[NodeSpec], List[EdgeSpec]]:
+        """거장(Auteur)별 시그니처 노드 생성 - Dual Capsule System으로 대체 예정
+        
+        현재: 빈 리스트 반환 (Mock 노드 제거됨)
+        향후: Teaching Capsule + NotebookLM RAG 노드로 대체
+        """
+        if capsule_id:
+            logger.info(f"Auteur style requested: {capsule_id} - awaiting Dual Capsule integration")
+        
+        # Mock 노드 대신 빈 리스트 반환
+        return [], []
 
 
 # Singleton instance

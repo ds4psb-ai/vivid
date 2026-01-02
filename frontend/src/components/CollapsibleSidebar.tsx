@@ -18,7 +18,11 @@ import {
     TrendingUp,
     Receipt,
     Settings,
+    Sparkles,
     Zap,
+    Film,
+    Image as ImageIcon,
+    GraduationCap,
     Gift,
     ChevronLeft,
     ChevronRight,
@@ -240,7 +244,6 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
 
     const NAV_ITEMS: { label: string; href: string; icon: React.ElementType; badge?: string }[] = [
         { label: t("navStudio"), href: "/studio", icon: MessageCircle },
-        { label: t("navCanvas"), href: "/canvas", icon: LayoutGrid },
         { label: t("navHome"), href: "/", icon: Home },
     ];
 
@@ -254,6 +257,17 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
                 { label: t("navCollections"), href: "/collections", icon: FolderOpen },
                 { label: t("navPatterns"), href: "/patterns", icon: Layers },
                 { label: t("navPipeline"), href: "/pipeline", icon: Activity },
+            ],
+        },
+        {
+            id: "teaching",
+            label: t("navTeaching"),
+            icon: GraduationCap,
+            items: [
+                { label: t("navPromptTool"), href: "/teaching/prompt", icon: Sparkles },
+                { label: t("navShotCatch"), href: "/teaching/shot-catch", icon: Film },
+                { label: t("navStoryboardTool"), href: "/teaching/storyboard", icon: LayoutGrid },
+                { label: t("navImageTool"), href: "/teaching/image-tool", icon: ImageIcon },
             ],
         },
         {
