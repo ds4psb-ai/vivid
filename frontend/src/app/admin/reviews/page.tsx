@@ -3,25 +3,18 @@
 /**
  * Admin Review Dashboard
  * 
- * Complete review workflow management:
- * - Queue overview with stats
- * - Review list with filtering
- * - One-click approve/reject
- * - Check results visualization
+ * Complete review workflow management using shared component library.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
     Shield,
     CheckCircle,
     XCircle,
     Clock,
-    AlertTriangle,
-    ArrowLeft,
     Loader2,
     Eye,
-    ChevronRight,
     TrendingUp,
     User,
     GitFork,
@@ -30,135 +23,49 @@ import {
     RefreshCw,
 } from "lucide-react";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// Shared imports
+import { fetchWithAuth } from "@/lib/api-client";
+import { StatCard, StatusBadge, PageHeader, EmptyState } from "@/components/shared";
+import type { Review, ReviewStats, CheckResult } from "@/types/api.types";
 
 // =============================================================================
-// Types
+// Review Card Component
 // =============================================================================
 
-interface ReviewStats {
-    pending_count: number;
-    in_progress_count: number;
-    decided_today: number;
-    avg_auto_score: number;
-}
-
-interface Review {
-    id: string;
-    tool_id: string;
-    version_id: string | null;
-    review_type: string;
-    status: string;
-    priority: number;
-    submitted_by: string;
-    submission_notes: string | null;
-    assigned_to: string | null;
-    auto_checks_passed: boolean;
-    auto_checks_score: number;
-    created_at: string;
-}
-
-interface CheckResult {
-    id: string;
-    category: string;
-    check_name: string;
-    description: string | null;
-    passed: boolean;
-    score: number;
-    details: Record<string, any>;
-    error_message: string | null;
-    is_automated: boolean;
-}
-
-// =============================================================================
-// API Functions
-// =============================================================================
-
-async function fetchWithAuth(url: string, options: RequestInit = {}) {
-    const token = localStorage.getItem("token");
-    const res = await fetch(url, {
-        ...options,
-        headers: {
-            ...options.headers,
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-        },
-    });
-    if (!res.ok) {
-        const error = await res.json().catch(() => ({ detail: res.statusText }));
-        throw new Error(error.detail || `Error: ${res.status}`);
-    }
-    return res.json();
-}
-
-// =============================================================================
-// Components
-// =============================================================================
-
-function StatCard({ title, value, icon: Icon, color }: {
-    title: string;
-    value: number | string;
-    icon: any;
-    color: string;
-}) {
-    return (
-        <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-5">
-            <div className="flex items-center justify-between mb-3">
-                <span className="text-gray-400 text-sm">{title}</span>
-                <Icon className={`w-5 h-5 ${color}`} />
-            </div>
-            <div className="text-3xl font-bold text-white">{value}</div>
-        </div>
-    );
-}
-
-function ReviewCard({ review, onView, onApprove, onReject }: {
+function ReviewCard({
+    review,
+    onView,
+    onApprove,
+    onReject
+}: {
     review: Review;
     onView: () => void;
     onApprove: () => void;
     onReject: () => void;
 }) {
-    const getStatusBadge = () => {
-        switch (review.status) {
-            case "pending":
-                return <span className="px-2 py-1 text-xs bg-yellow-500/20 text-yellow-400 rounded">Pending</span>;
-            case "in_progress":
-                return <span className="px-2 py-1 text-xs bg-blue-500/20 text-blue-400 rounded">In Progress</span>;
-            case "approved":
-                return <span className="px-2 py-1 text-xs bg-green-500/20 text-green-400 rounded">Approved</span>;
-            case "rejected":
-                return <span className="px-2 py-1 text-xs bg-red-500/20 text-red-400 rounded">Rejected</span>;
-            default:
-                return null;
-        }
+    const typeIcons: Record<string, typeof GitFork> = {
+        fork_submission: GitFork,
+        tier_promotion: TrendingUp,
     };
-
-    const getTypeIcon = () => {
-        switch (review.review_type) {
-            case "fork_submission":
-                return <GitFork className="w-4 h-4" />;
-            case "tier_promotion":
-                return <TrendingUp className="w-4 h-4" />;
-            default:
-                return <Zap className="w-4 h-4" />;
-        }
-    };
+    const TypeIcon = typeIcons[review.review_type] || Zap;
 
     return (
         <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-5 hover:border-purple-500/50 transition-colors">
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-purple-500/20 rounded-lg">
-                        {getTypeIcon()}
+                        <TypeIcon className="w-4 h-4 text-purple-400" />
                     </div>
                     <div>
-                        <div className="font-medium text-white">{review.review_type.replace("_", " ")}</div>
+                        <div className="font-medium text-white">
+                            {review.review_type.replace(/_/g, " ")}
+                        </div>
                         <div className="text-sm text-gray-400">
                             by {review.submitted_by.slice(0, 8)}...
                         </div>
                     </div>
                 </div>
-                {getStatusBadge()}
+                <StatusBadge status={review.status} />
             </div>
 
             {/* Auto-check score */}
@@ -177,7 +84,6 @@ function ReviewCard({ review, onView, onApprove, onReject }: {
                 </div>
             </div>
 
-            {/* Submission notes */}
             {review.submission_notes && (
                 <p className="text-sm text-gray-400 mb-4 line-clamp-2">
                     {review.submission_notes}
@@ -215,7 +121,6 @@ function ReviewCard({ review, onView, onApprove, onReject }: {
 
             <div className="mt-3 text-xs text-gray-500">
                 {new Date(review.created_at).toLocaleDateString("ko-KR", {
-                    year: "numeric",
                     month: "short",
                     day: "numeric",
                     hour: "2-digit",
@@ -225,6 +130,10 @@ function ReviewCard({ review, onView, onApprove, onReject }: {
         </div>
     );
 }
+
+// =============================================================================
+// Review Detail Modal
+// =============================================================================
 
 function ReviewDetailModal({
     reviewId,
@@ -243,17 +152,10 @@ function ReviewDetailModal({
     const [rejectReason, setRejectReason] = useState("");
 
     useEffect(() => {
-        const load = async () => {
-            try {
-                const result = await fetchWithAuth(`${API_BASE_URL}/api/v1/reviews/${reviewId}`);
-                setData(result);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        load();
+        fetchWithAuth<any>(`/api/v1/reviews/${reviewId}`)
+            .then(setData)
+            .catch(console.error)
+            .finally(() => setLoading(false));
     }, [reviewId]);
 
     if (loading) {
@@ -269,7 +171,6 @@ function ReviewDetailModal({
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
             <div className="bg-gray-900 border border-gray-700 rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-                {/* Header */}
                 <div className="sticky top-0 bg-gray-900 border-b border-gray-700 p-6">
                     <div className="flex items-center justify-between">
                         <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -283,7 +184,6 @@ function ReviewDetailModal({
                 </div>
 
                 <div className="p-6 space-y-6">
-                    {/* Tool Info */}
                     {data?.tool && (
                         <div className="bg-gray-800/50 rounded-lg p-4">
                             <h3 className="font-medium text-white mb-2">{data.tool.display_name}</h3>
@@ -294,7 +194,6 @@ function ReviewDetailModal({
                         </div>
                     )}
 
-                    {/* Check Results */}
                     <div>
                         <h3 className="font-medium text-white mb-3">Automated Checks</h3>
                         <div className="space-y-3">
@@ -319,18 +218,13 @@ function ReviewDetailModal({
                                             {check.score.toFixed(0)}
                                         </span>
                                     </div>
-                                    {check.description && (
-                                        <p className="text-sm text-gray-400">{check.description}</p>
-                                    )}
-                                    {check.error_message && (
-                                        <p className="text-sm text-red-400 mt-2">{check.error_message}</p>
-                                    )}
+                                    {check.description && <p className="text-sm text-gray-400">{check.description}</p>}
+                                    {check.error_message && <p className="text-sm text-red-400 mt-2">{check.error_message}</p>}
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    {/* Rejection Form */}
                     {rejecting && (
                         <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
                             <h4 className="font-medium text-red-400 mb-2">Rejection Reason</h4>
@@ -344,7 +238,6 @@ function ReviewDetailModal({
                         </div>
                     )}
 
-                    {/* Actions */}
                     {data?.review?.status === "pending" && (
                         <div className="flex items-center gap-3">
                             <button
@@ -356,11 +249,7 @@ function ReviewDetailModal({
                             </button>
                             {rejecting ? (
                                 <button
-                                    onClick={() => {
-                                        if (rejectReason.length >= 10) {
-                                            onReject();
-                                        }
-                                    }}
+                                    onClick={() => rejectReason.length >= 10 && onReject()}
                                     disabled={rejectReason.length < 10}
                                     className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg disabled:opacity-50"
                                 >
@@ -395,14 +284,13 @@ export default function AdminReviewsPage() {
     const [reviews, setReviews] = useState<Review[]>([]);
     const [filter, setFilter] = useState<string | null>(null);
     const [selectedReview, setSelectedReview] = useState<string | null>(null);
-    const [actionLoading, setActionLoading] = useState(false);
 
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         setLoading(true);
         try {
             const [statsData, queueData] = await Promise.all([
-                fetchWithAuth(`${API_BASE_URL}/api/v1/reviews/stats`),
-                fetchWithAuth(`${API_BASE_URL}/api/v1/reviews/queue${filter ? `?review_type=${filter}` : ""}`),
+                fetchWithAuth<ReviewStats>("/api/v1/reviews/stats"),
+                fetchWithAuth<Review[]>(`/api/v1/reviews/queue${filter ? `?review_type=${filter}` : ""}`),
             ]);
             setStats(statsData);
             setReviews(queueData);
@@ -411,16 +299,15 @@ export default function AdminReviewsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [filter]);
 
     useEffect(() => {
         loadData();
-    }, [filter]);
+    }, [loadData]);
 
     const handleApprove = async (reviewId: string) => {
-        setActionLoading(true);
         try {
-            await fetchWithAuth(`${API_BASE_URL}/api/v1/reviews/${reviewId}/approve`, {
+            await fetchWithAuth(`/api/v1/reviews/${reviewId}/approve`, {
                 method: "POST",
                 body: JSON.stringify({ notes: "Approved via admin dashboard" }),
             });
@@ -428,15 +315,12 @@ export default function AdminReviewsPage() {
             setSelectedReview(null);
         } catch (err) {
             alert(err instanceof Error ? err.message : "Failed to approve");
-        } finally {
-            setActionLoading(false);
         }
     };
 
-    const handleReject = async (reviewId: string, reason: string = "Does not meet quality standards") => {
-        setActionLoading(true);
+    const handleReject = async (reviewId: string, reason = "Does not meet quality standards") => {
         try {
-            await fetchWithAuth(`${API_BASE_URL}/api/v1/reviews/${reviewId}/reject`, {
+            await fetchWithAuth(`/api/v1/reviews/${reviewId}/reject`, {
                 method: "POST",
                 body: JSON.stringify({ reason }),
             });
@@ -444,8 +328,6 @@ export default function AdminReviewsPage() {
             setSelectedReview(null);
         } catch (err) {
             alert(err instanceof Error ? err.message : "Failed to reject");
-        } finally {
-            setActionLoading(false);
         }
     };
 
@@ -459,45 +341,31 @@ export default function AdminReviewsPage() {
 
     return (
         <div className="min-h-screen bg-gray-900 text-white">
-            {/* Header */}
-            <div className="border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
-                <div className="max-w-7xl mx-auto px-6 py-4">
+            <PageHeader
+                title="Review Queue"
+                subtitle="Manage tool submissions and promotions"
+                icon={Shield}
+                backHref="/admin"
+                backLabel="Admin Dashboard"
+                actions={
                     <button
-                        onClick={() => router.push("/admin")}
-                        className="flex items-center gap-2 text-gray-400 hover:text-white mb-3 text-sm"
+                        onClick={loadData}
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm"
                     >
-                        <ArrowLeft className="w-4 h-4" />
-                        Admin Dashboard
+                        <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+                        Refresh
                     </button>
-
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-bold flex items-center gap-2">
-                                <Shield className="w-6 h-6 text-purple-400" />
-                                Review Queue
-                            </h1>
-                            <p className="text-gray-400">Manage tool submissions and promotions</p>
-                        </div>
-
-                        <button
-                            onClick={loadData}
-                            className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm"
-                        >
-                            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-                            Refresh
-                        </button>
-                    </div>
-                </div>
-            </div>
+                }
+            />
 
             <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
                 {/* Stats */}
                 {stats && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <StatCard title="Pending" value={stats.pending_count} icon={Clock} color="text-yellow-400" />
-                        <StatCard title="In Progress" value={stats.in_progress_count} icon={User} color="text-blue-400" />
-                        <StatCard title="Decided Today" value={stats.decided_today} icon={CheckCircle} color="text-green-400" />
-                        <StatCard title="Avg Auto Score" value={stats.avg_auto_score} icon={Zap} color="text-purple-400" />
+                        <StatCard title="Pending" value={stats.pending_count} icon={Clock} color="yellow" />
+                        <StatCard title="In Progress" value={stats.in_progress_count} icon={User} color="blue" />
+                        <StatCard title="Decided Today" value={stats.decided_today} icon={CheckCircle} color="green" />
+                        <StatCard title="Avg Auto Score" value={stats.avg_auto_score.toFixed(1)} icon={Zap} color="purple" />
                     </div>
                 )}
 
@@ -513,18 +381,18 @@ export default function AdminReviewsPage() {
                                     : "bg-gray-800 text-gray-400 hover:bg-gray-700"
                                 }`}
                         >
-                            {type === "all" ? "All" : type.replace("_", " ")}
+                            {type === "all" ? "All" : type.replace(/_/g, " ")}
                         </button>
                     ))}
                 </div>
 
                 {/* Review Grid */}
                 {reviews.length === 0 ? (
-                    <div className="text-center py-20">
-                        <CheckCircle className="w-16 h-16 text-green-500/50 mx-auto mb-4" />
-                        <h3 className="text-xl font-bold text-gray-400">No pending reviews</h3>
-                        <p className="text-gray-500">All caught up! 🎉</p>
-                    </div>
+                    <EmptyState
+                        icon={CheckCircle}
+                        title="No pending reviews"
+                        description="All caught up! 🎉"
+                    />
                 ) : (
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {reviews.map((review) => (
@@ -540,7 +408,6 @@ export default function AdminReviewsPage() {
                 )}
             </div>
 
-            {/* Detail Modal */}
             {selectedReview && (
                 <ReviewDetailModal
                     reviewId={selectedReview}
