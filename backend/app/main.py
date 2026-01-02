@@ -29,6 +29,9 @@ from app.routers.telemetry import router as telemetry_router
 # Settlements (Revenue Distribution)
 from app.routers.settlements import router as settlements_router
 
+# Fork (Version Control & Fork Creation)
+from app.routers.fork import router as fork_router
+
 from app.middleware.rate_limit import setup_rate_limiting
 from app.logging_config import setup_logging, LoggingMiddleware
 from app.monitoring import setup_monitoring
@@ -105,6 +108,9 @@ app.include_router(telemetry_router, prefix="/api/v1/telemetry", tags=["telemetr
 
 # Settlements (Revenue Distribution)
 app.include_router(settlements_router, prefix="/api/v1", tags=["settlements"])
+
+# Fork (Version Control & Fork Creation)
+app.include_router(fork_router, prefix="/api/v1", tags=["fork"])
 
 # Infrastructure
 app.include_router(health_router, prefix="", tags=["health"])
