@@ -12,12 +12,14 @@ Hardening:
 """
 import logging
 from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel, Field, validator
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.mcp_servers.pattern_truth_mcp import pattern_truth_mcp
 from app.database import get_db
+from app.models_telemetry import ToolManifest, ToolTier
 
 logger = logging.getLogger(__name__)
 
@@ -247,3 +249,119 @@ async def mcp_stats():
             "uris": [r.uri for r in resources],
         },
     }
+
+
+# =========================================================================
+# Tool Manifests (DB-based)
+# =========================================================================
+
+@router.get("/tools")
+async def list_db_tools(
+    category: Optional[str] = None,
+    tier: Optional[str] = None,
+    is_active: bool = True,
+    limit: int = Query(default=50, le=200),
+    db: AsyncSession = Depends(get_db),
+):
+    """List all tool manifests from DB.
+    
+    This replaces the static capsule_registry.py with dynamic DB lookup.
+    """
+    query = select(ToolManifest).where(ToolManifest.is_active == is_active)
+    
+    if category:
+        query = query.where(ToolManifest.category == category.lower())
+    if tier:
+        query = query.where(ToolManifest.tier == tier.lower())
+    
+    query = query.order_by(ToolManifest.usage_count.desc()).limit(limit)
+    
+    result = await db.execute(query)
+    tools = result.scalars().all()
+    
+    return {
+        "tools": [
+            {
+                "id": str(tool.id),
+                "tool_key": tool.tool_key,
+                "display_name": tool.display_name,
+                "description": tool.description,
+                "category": tool.category,
+                "tier": tool.tier,
+                "credit_cost": tool.credit_cost,
+                "input_schema": tool.input_schema,
+                "output_schema": tool.output_schema,
+                "usage_count": tool.usage_count,
+                "quality_rating": tool.quality_rating,
+            }
+            for tool in tools
+        ],
+        "total": len(tools),
+    }
+
+
+@router.get("/tools/{tool_key}")
+async def get_db_tool(
+    tool_key: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get a single tool manifest by key."""
+    result = await db.execute(
+        select(ToolManifest).where(ToolManifest.tool_key == tool_key)
+    )
+    tool = result.scalars().first()
+    
+    if not tool:
+        raise HTTPException(status_code=404, detail=f"Tool '{tool_key}' not found")
+    
+    return {
+        "id": str(tool.id),
+        "tool_key": tool.tool_key,
+        "display_name": tool.display_name,
+        "description": tool.description,
+        "category": tool.category,
+        "tier": tool.tier,
+        "credit_cost": tool.credit_cost,
+        "input_schema": tool.input_schema,
+        "output_schema": tool.output_schema,
+        "usage_count": tool.usage_count,
+        "fork_count": tool.fork_count,
+        "quality_rating": tool.quality_rating,
+        "safety_rating": tool.safety_rating,
+        "sandbox_required": tool.sandbox_required,
+        "created_by": tool.created_by,
+        "created_at": tool.created_at.isoformat() if tool.created_at else None,
+    }
+
+
+@router.get("/tools/category/{category}")
+async def list_tools_by_category(
+    category: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """List tools by category (for frontend palette)."""
+    result = await db.execute(
+        select(ToolManifest)
+        .where(ToolManifest.category == category.lower())
+        .where(ToolManifest.is_active == True)
+        .order_by(ToolManifest.display_name)
+    )
+    tools = result.scalars().all()
+    
+    return {
+        "category": category,
+        "tools": [
+            {
+                "tool_key": tool.tool_key,
+                "display_name": tool.display_name,
+                "description": tool.description,
+                "tier": tool.tier,
+                "credit_cost": tool.credit_cost,
+                "input_schema": tool.input_schema,
+                "output_schema": tool.output_schema,
+            }
+            for tool in tools
+        ],
+        "count": len(tools),
+    }
+
