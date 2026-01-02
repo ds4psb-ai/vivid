@@ -29,6 +29,7 @@ import {
     ChevronDown,
     MessageCircle,
     Moon,
+    DollarSign,
 } from "lucide-react";
 
 // Moved inside component to use translations
@@ -287,6 +288,15 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
                 { label: t("navUsage"), href: "/usage", icon: TrendingUp },
                 { label: t("navBilling"), href: "/billing", icon: Receipt },
                 { label: t("navSettings"), href: "/settings", icon: Settings },
+            ],
+        },
+        {
+            id: "earnings",
+            label: "수익",
+            icon: DollarSign,
+            items: [
+                { label: "내 정산", href: "/settlements", icon: TrendingUp },
+                { label: "정산 관리", href: "/admin/settlements", icon: Settings, adminOnly: true },
             ],
         },
     ];

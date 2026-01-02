@@ -26,6 +26,9 @@ from app.routers.payment import router as payment_router
 # Telemetry (4-Layer Ecosystem)
 from app.routers.telemetry import router as telemetry_router
 
+# Settlements (Revenue Distribution)
+from app.routers.settlements import router as settlements_router
+
 from app.middleware.rate_limit import setup_rate_limiting
 from app.logging_config import setup_logging, LoggingMiddleware
 from app.monitoring import setup_monitoring
@@ -99,6 +102,9 @@ app.include_router(payment_router, prefix="/api/v1/payment", tags=["payment"])
 
 # Telemetry (4-Layer Ecosystem: Tool tracking, Forks, Attribution)
 app.include_router(telemetry_router, prefix="/api/v1/telemetry", tags=["telemetry"])
+
+# Settlements (Revenue Distribution)
+app.include_router(settlements_router, prefix="/api/v1", tags=["settlements"])
 
 # Infrastructure
 app.include_router(health_router, prefix="", tags=["health"])
