@@ -1,10 +1,13 @@
-"""Agents package for AI orchestration."""
-from app.agents.director import director_agent, DirectorAgent
-from app.agents.dna_validator import dna_validator, DNAValidator
+"""Agents package for 3-Layer Ecosystem."""
 from app.agents.vivid_agent import VividAgent
+from app.agents.agent_types import AgentMessage, AgentState
+from app.agents.teaching_tools import register_teaching_tools
+from app.agents.notebooklm_tools import register_notebooklm_tools
 
 __all__ = [
-    "director_agent", "DirectorAgent",
-    "dna_validator", "DNAValidator",
     "VividAgent",
+    "AgentMessage",
+    "AgentState",
+    "register_teaching_tools",
+    "register_notebooklm_tools",
 ]

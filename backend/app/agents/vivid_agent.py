@@ -1,4 +1,4 @@
-"""Chat-first agent core for Vivid Studio."""
+"""Chat-first agent core for 3-Layer Ecosystem."""
 from __future__ import annotations
 
 import json
@@ -14,11 +14,8 @@ from app.agents.agent_types import (
     ToolRegistry,
     ToolSpec,
 )
-from app.agents.capsule_tools import register_capsule_tools
 from app.agents.notebooklm_tools import register_notebooklm_tools
-from app.agents.scene_tools import register_scene_tools
 from app.agents.teaching_tools import register_teaching_tools
-from app.agents.workflow_tools import register_workflow_tools
 from app.logging_config import get_logger
 
 logger = get_logger("vivid_agent")
@@ -91,7 +88,7 @@ class MemoryManager:
 
 
 class VividAgent:
-    """Core chat-first agent loop with tool execution and memory management."""
+    """Core chat-first agent with Teaching Tools and NotebookLM RAG."""
 
     def __init__(
         self,
@@ -105,11 +102,9 @@ class VividAgent:
         self._model = model_client
         self._tools = tool_registry or ToolRegistry()
         if tool_registry is None:
-            register_scene_tools(self._tools)
-            register_workflow_tools(self._tools)
-            register_capsule_tools(self._tools)
+            # 3-Layer Ecosystem: Teaching + NotebookLM only
+            register_teaching_tools(self._tools)
             register_notebooklm_tools(self._tools)
-            register_teaching_tools(self._tools)  # Teaching 도구 등록
         self._memory = memory_manager or MemoryManager()
         self._system_prompt = system_prompt
         self._max_tool_rounds = max_tool_rounds
