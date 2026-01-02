@@ -4,7 +4,7 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,7 +21,7 @@ router = APIRouter(prefix="/crebit", tags=["crebit"])
 
 class ApplicationCreate(BaseModel):
     name: str
-    email: EmailStr
+    email: str
     phone: str
     track: str  # 'A' or 'B'
 

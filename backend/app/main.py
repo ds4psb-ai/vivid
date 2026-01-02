@@ -19,6 +19,10 @@ from app.routers.user_settings import router as user_settings_router
 from app.routers.dashboard import router as dashboard_router
 from app.routers.feedback import router as feedback_router
 
+# Crebit (강의 판매 + 결제)
+from app.routers.crebit import router as crebit_router
+from app.routers.payment import router as payment_router
+
 from app.middleware.rate_limit import setup_rate_limiting
 from app.logging_config import setup_logging, LoggingMiddleware
 from app.monitoring import setup_monitoring
@@ -85,6 +89,10 @@ app.include_router(user_settings_router, prefix="")
 # Dashboard & Feedback
 app.include_router(dashboard_router, prefix="/api/v1", tags=["dashboard"])
 app.include_router(feedback_router, prefix="/api/v1", tags=["feedback"])
+
+# Crebit (강의 판매 + 결제)
+app.include_router(crebit_router, prefix="/api/v1/crebit", tags=["crebit"])
+app.include_router(payment_router, prefix="/api/v1/payment", tags=["payment"])
 
 # Infrastructure
 app.include_router(health_router, prefix="", tags=["health"])
