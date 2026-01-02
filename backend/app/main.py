@@ -32,6 +32,9 @@ from app.routers.settlements import router as settlements_router
 # Fork (Version Control & Fork Creation)
 from app.routers.fork import router as fork_router
 
+# Reviews (Approval Workflow)
+from app.routers.reviews import router as reviews_router
+
 from app.middleware.rate_limit import setup_rate_limiting
 from app.logging_config import setup_logging, LoggingMiddleware
 from app.monitoring import setup_monitoring
@@ -111,6 +114,9 @@ app.include_router(settlements_router, prefix="/api/v1", tags=["settlements"])
 
 # Fork (Version Control & Fork Creation)
 app.include_router(fork_router, prefix="/api/v1", tags=["fork"])
+
+# Reviews (Approval Workflow)
+app.include_router(reviews_router, prefix="/api/v1", tags=["reviews"])
 
 # Infrastructure
 app.include_router(health_router, prefix="", tags=["health"])
