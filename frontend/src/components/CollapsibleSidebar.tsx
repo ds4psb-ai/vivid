@@ -260,14 +260,14 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
             ],
         },
         {
-            id: "teaching",
-            label: t("navTeaching"),
+            id: "workshop",
+            label: "워크샵",
             icon: GraduationCap,
             items: [
-                { label: t("navPromptTool"), href: "/teaching/prompt", icon: Sparkles },
-                { label: t("navShotCatch"), href: "/teaching/shot-catch", icon: Film },
-                { label: t("navStoryboardTool"), href: "/teaching/storyboard", icon: LayoutGrid },
-                { label: t("navImageTool"), href: "/teaching/image-tool", icon: ImageIcon },
+                { label: "프롬프트 차원", href: "/workshop/prompt", icon: Sparkles },
+                { label: "샷 캐치 차원", href: "/workshop/shot-catch", icon: Film },
+                { label: "스토리보드 차원", href: "/workshop/storyboard", icon: LayoutGrid },
+                { label: "이미지 차원", href: "/workshop/image-tool", icon: ImageIcon },
             ],
         },
         {
