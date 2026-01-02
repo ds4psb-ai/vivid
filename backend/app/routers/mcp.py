@@ -303,9 +303,15 @@ async def list_db_tools(
 @router.get("/tools/{tool_key}")
 async def get_db_tool(
     tool_key: str,
+    include_code: bool = Query(default=False, description="Include live version code"),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get a single tool manifest by key."""
+    """Get a single tool manifest by key.
+    
+    If include_code=true, also returns the live version's code content.
+    """
+    from app.models_versioning import ToolVersion
+    
     result = await db.execute(
         select(ToolManifest).where(ToolManifest.tool_key == tool_key)
     )
@@ -314,7 +320,7 @@ async def get_db_tool(
     if not tool:
         raise HTTPException(status_code=404, detail=f"Tool '{tool_key}' not found")
     
-    return {
+    response = {
         "id": str(tool.id),
         "tool_key": tool.tool_key,
         "display_name": tool.display_name,
@@ -331,7 +337,31 @@ async def get_db_tool(
         "sandbox_required": tool.sandbox_required,
         "created_by": tool.created_by,
         "created_at": tool.created_at.isoformat() if tool.created_at else None,
+        "parent_tool_id": str(tool.parent_tool_id) if tool.parent_tool_id else None,
     }
+    
+    # Include live version if requested
+    if include_code:
+        version_result = await db.execute(
+            select(ToolVersion)
+            .where(ToolVersion.tool_id == tool.id)
+            .where(ToolVersion.is_live == True)
+        )
+        live_version = version_result.scalars().first()
+        
+        if live_version:
+            response["live_version"] = {
+                "id": str(live_version.id),
+                "version": live_version.version,
+                "code_type": live_version.code_type,
+                "code_content": live_version.code_content,
+                "system_prompt": live_version.system_prompt,
+                "status": live_version.status,
+            }
+        else:
+            response["live_version"] = None
+    
+    return response
 
 
 @router.get("/tools/category/{category}")
