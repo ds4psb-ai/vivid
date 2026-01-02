@@ -1,7 +1,8 @@
 # Capsule Node Spec (Sealed / Compound Node)
 
 **작성**: 2025-12-24  
-**버전**: 정본 v1.0  
+**Updated**: 2026-01-01 (Agent Studio 연동)  
+**버전**: 정본 v1.1  
 **목표**: 내부 체인을 숨기고 외부 포트/파라미터만 노출하는 캡슐 노드 규격 정의  
 
 ---
@@ -198,6 +199,28 @@ UI는 `loading → streaming → complete` 상태로 전환됩니다.
 - WS 컨트롤: `/ws/runs/{run_id}`에 `{"type":"cancel"}` 전송
 
 ---
+
+## 6) Agent Studio 연동 (Chat-first)
+
+Agent Studio에서는 캡슐을 **Tool**로 호출하고, 결과는 아티팩트로 표준화한다.
+
+**Tool 호출**
+- `run_capsule`: 요약/근거를 반환 (summary, evidence_refs)
+- `analyze_sources`: NotebookLM 분석 결과를 반환 (claims → DataTable로 변환)
+- `generate_audio_overview`: NotebookLM 오디오 오버뷰 생성 (노트북 소스 기반)
+
+**표준 아티팩트**
+- `storyboard`: 캡슐 요약에서 카드 생성
+- `shot_list`: storyboard에서 파생
+- `data_table`: NotebookLM claims를 표로 변환
+- `audio_overview`: NotebookLM 오디오 오버뷰 결과
+
+**SSE 이벤트 (Chat)**
+- `agent.capsule_start|agent.capsule_progress|agent.capsule_complete`
+- `agent.audio_overview_start|agent.audio_overview_progress`
+- `agent.artifact_update`로 프리뷰를 즉시 갱신
+
+이벤트 envelope 정의는 `28_EVENT_DRIVEN_ARCHITECTURE_SPEC_V1.md` 참고.
 
 ## 6) 실행 파이프라인
 

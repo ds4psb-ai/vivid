@@ -252,6 +252,30 @@ function CanvasFlow() {
   const [showVibeBoard, setShowVibeBoard] = useState(false);
   const [isVibeParsing, setIsVibeParsing] = useState(false);
 
+  const pushRunLog = useCallback(
+    (
+      tone: "info" | "warning" | "error" | "success",
+      message: string,
+      context?: { kind?: "capsule" | "generation" | "system"; runId?: string; capsuleId?: string },
+      metrics?: { latencyMs?: number; costUsd?: number }
+    ) => {
+      if (!message) return;
+      const id =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `runlog-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const time = new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      setRunLog((current) => {
+        const next = [{ id, tone, message, time, context, metrics }, ...current];
+        return next.slice(0, 40);
+      });
+    },
+    []
+  );
+
   const applyWorkflowPlan = useCallback(
     (workflow: WorkflowPlanResponse, source: "vibe" | "chat") => {
       const newNodes = workflow.nodes.map((n) => ({
@@ -566,30 +590,6 @@ function CanvasFlow() {
     }
   }, []);
 
-  const pushRunLog = useCallback(
-    (
-      tone: "info" | "warning" | "error" | "success",
-      message: string,
-      context?: { kind?: "capsule" | "generation" | "system"; runId?: string; capsuleId?: string },
-      metrics?: { latencyMs?: number; costUsd?: number }
-    ) => {
-      if (!message) return;
-      const id =
-        typeof crypto !== "undefined" && "randomUUID" in crypto
-          ? crypto.randomUUID()
-          : `runlog-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-      const time = new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-      setRunLog((current) => {
-        const next = [{ id, tone, message, time, context, metrics }, ...current];
-        return next.slice(0, 40);
-      });
-    },
-    []
-  );
-
   const pushToast = useCallback(
     (tone: "info" | "warning" | "error", message: string, ttl: number = 3200) => {
       if (!message) return;
@@ -630,7 +630,6 @@ function CanvasFlow() {
 
   useEffect(() => {
     if (isLoading) return;
-    if (!nodes.length && !edges.length) return;
     if (canvasSyncTimerRef.current) {
       clearTimeout(canvasSyncTimerRef.current);
     }

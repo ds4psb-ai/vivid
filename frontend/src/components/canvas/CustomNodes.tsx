@@ -15,6 +15,13 @@ import {
   Sparkles,
   Workflow,
   Video,
+  // Opal-style category icons
+  Upload,
+  Wand2,
+  RefreshCcw,
+  ShieldCheck,
+  Layers,
+  Download,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { clsx, type ClassValue } from "clsx";
@@ -29,6 +36,7 @@ function cn(...inputs: ClassValue[]) {
 
 export type CanvasNodeKind =
   | "input"
+  | "source"  // Backend uses 'source' for story input nodes
   | "style"
   | "customization"
   | "processing"
@@ -65,7 +73,7 @@ export interface CanvasNodeData extends Record<string, unknown> {
   subtitle?: string;
   description?: string;
   // Node category (from backend)
-  category?: "input" | "generate" | "refine" | "validate" | "compose" | "output";
+  category?: "input" | "generate" | "refine" | "validate" | "compose" | "output" | "teaching";
   // 5-State FSM: idle | loading | streaming | complete | error
   status?: "idle" | "loading" | "streaming" | "complete" | "error" | "cancelled";
   // Typed handles
@@ -119,6 +127,13 @@ const NODE_CONFIG: Record<
     text: "text-sky-100",
     badge: "bg-sky-500/20 text-sky-200 border-sky-500/30",
   },
+  source: {
+    icon: FileInput,
+    gradient: "from-indigo-400 to-purple-600",
+    glow: "shadow-indigo-500/20",
+    text: "text-indigo-100",
+    badge: "bg-indigo-500/20 text-indigo-200 border-indigo-500/30",
+  },
   style: {
     icon: Palette,
     gradient: "from-amber-300 to-orange-500",
@@ -163,6 +178,67 @@ const NODE_CONFIG: Record<
   },
 };
 
+// Opal-style category configuration for distinct visual differentiation
+// Color scheme based on Google Opal: Yellow=Input, Blue=Generate, Green=Output, Red=Asset
+type NodeCategoryType = "input" | "generate" | "refine" | "validate" | "compose" | "output" | "asset";
+const CATEGORY_CONFIG: Record<NodeCategoryType, {
+  icon: React.ElementType;
+  label: string;
+  labelKo: string;
+  gradient: string;
+  borderColor: string;
+}> = {
+  input: {
+    icon: Upload,
+    label: "INPUT",
+    labelKo: "입력",
+    gradient: "from-yellow-400 to-amber-500",  // Opal Yellow
+    borderColor: "border-yellow-400/50",
+  },
+  generate: {
+    icon: Wand2,
+    label: "GENERATE",
+    labelKo: "생성",
+    gradient: "from-blue-400 to-blue-600",     // Opal Blue
+    borderColor: "border-blue-400/50",
+  },
+  refine: {
+    icon: RefreshCcw,
+    label: "REFINE",
+    labelKo: "다듬기",
+    gradient: "from-amber-400 to-orange-500",  // Keep amber for refine
+    borderColor: "border-amber-400/50",
+  },
+  validate: {
+    icon: ShieldCheck,
+    label: "VALIDATE",
+    labelKo: "검증",
+    gradient: "from-teal-400 to-cyan-500",
+    borderColor: "border-teal-400/50",
+  },
+  compose: {
+    icon: Layers,
+    label: "COMPOSE",
+    labelKo: "합성",
+    gradient: "from-indigo-400 to-purple-500",
+    borderColor: "border-indigo-400/50",
+  },
+  output: {
+    icon: Download,
+    label: "OUTPUT",
+    labelKo: "출력",
+    gradient: "from-emerald-400 to-teal-500",  // Opal Seafoam Green
+    borderColor: "border-emerald-400/50",
+  },
+  asset: {
+    icon: Video,  // Using Video icon for assets
+    label: "ASSET",
+    labelKo: "에셋",
+    gradient: "from-red-400 to-rose-500",      // Opal Red
+    borderColor: "border-red-400/50",
+  },
+};
+
 export const CanvasNode = memo(BaseNode);
 
 function BaseNode({ data, type, selected }: NodeProps<Node<CanvasNodeData>>) {
@@ -203,6 +279,7 @@ function BaseNode({ data, type, selected }: NodeProps<Node<CanvasNodeData>>) {
 
   const kindLabelMap: Record<CanvasNodeKind, string> = {
     input: t("nodeInput"),
+    source: "Source",  // Hardcoded to avoid missing translation key
     style: t("nodeStyle"),
     customization: t("nodeCustom"),
     processing: t("nodeProcess"),
@@ -266,6 +343,21 @@ function BaseNode({ data, type, selected }: NodeProps<Node<CanvasNodeData>>) {
 
         {/* Badges */}
         <div className="flex flex-col items-end gap-1.5">
+          {/* Opal-style Category Badge */}
+          {data.category && CATEGORY_CONFIG[data.category as NodeCategoryType] && (() => {
+            const catConfig = CATEGORY_CONFIG[data.category as NodeCategoryType];
+            const CatIcon = catConfig.icon;
+            return (
+              <span className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest",
+                catConfig.borderColor,
+                `bg-gradient-to-r ${catConfig.gradient} bg-clip-text text-transparent`
+              )}>
+                <CatIcon size={10} className="text-white/80" />
+                {catConfig.labelKo}
+              </span>
+            );
+          })()}
           {/* DNA Compliance Badge */}
           {complianceStatus === "violation" && (
             <span className="inline-flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-red-400 animate-pulse">

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AINSPIRE _ 레퍼런스 수집</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* html과 body가 화면 전체 높이를 차지하도록 설정 */
+      html, body {
+        height: 100%;
+      }
+
+      #root {
+        height: 100%;
+      }
+
+      /* body 태그에 배경 이미지를 적용하고, 스크롤해도 고정되도록 설정 */
+      body {
+        background-image: url('/assets/background-DE32X0WC.jpg');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed; /* 스크롤 시 배경 이미지가 움직이지 않음 */
+        padding: 2rem; /* 앱 주위에 여백을 추가 */
+        box-sizing: border-box; /* 패딩을 크기 계산에 포함 */
+      }
+
+      @keyframes pop-in {
+        from {
+          opacity: 0;
+          transform: translateY(20px) scale(0.98);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      .animate-pop-in {
+        animation: pop-in 0.5s ease-out forwards;
+      }
+      
+      /* Custom Scrollbar for Webkit browsers */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #1a1a1a; /* gray-900 */
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background-color: #4a4a4a; /* gray-600 */
+        border-radius: 4px;
+        border: 2px solid #1a1a1a;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background-color: #999999; /* gray-400 */
+      }
+    </style>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              // --- 기존 색상 (그대로 유지) ---
+              'gray-950': '#121212',
+              'gray-900': '#1a1a1a',
+              'gray-800': '#2a2a2a',
+              'gray-700': '#3a3a3a',
+              'gray-600': '#4a4a4a',
+              'gray-400': '#999999',
+              'amber-400': '#fbbf24',
+              'amber-500': '#f59e0b',
+
+              // --- 새로 추가된 brand 색상 ---
+              'brand-dark': '#131313',
+              'brand-gray-light': '#3C3C3C',
+              'brand-gray': '#2a2a2a',
+              'brand-gray-dark': '#1f1f1f',
+              'brand-yellow': '#FFD43B',
+              'brand-text': '#E0E0E0',
+              'brand-text-muted': '#8e918e',
+              'red-400': '#f87171',
+            },
+            // --- 새로 추가된 애니메이션 ---
+            keyframes: {
+              fadeInUp: {
+                '0%': { opacity: '0', transform: 'translateY(10px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+            },
+            // --- 새로 추가된 애니메이션 유틸리티 ---
+            animation: {
+              'app-load': 'fadeInUp 0.6s ease-out forwards',
+            },
+          }
+        }
+      }
+    </script>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "react": "https://aistudiocdn.com/react@^19.1.1",
+          "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+          "react/": "https://aistudiocdn.com/react@^19.1.1/",
+          "@google/genai": "https://aistudiocdn.com/@google/genai@^1.20.0",
+          "jszip": "https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm"
+        }
+      }
+    </script>
+    <script>
+    (function(){
+      var authMatchers = ["https://studio.ainspire.co.kr/api/auth/session", "/api/auth/session"];
+      var origFetch = window.fetch && window.fetch.bind(window);
+      if (!origFetch) return;
+      function isAuthUrl(url) {
+        if (!url) return false;
+        for (var i = 0; i < authMatchers.length; i++) {
+          var m = authMatchers[i];
+          if (url === m || url.indexOf(m) !== -1) return true;
+        }
+        return false;
+      }
+      window.fetch = function(input, init) {
+        var url = (typeof input === "string") ? input : (input && input.url);
+        if (isAuthUrl(url)) {
+          var body = JSON.stringify({ user: { email: "local@offline" } });
+          return Promise.resolve(new Response(body, {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }));
+        }
+        return origFetch(input, init);
+      };
+    })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-hRqXH-Qf.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

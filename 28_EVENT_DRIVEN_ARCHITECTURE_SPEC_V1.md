@@ -82,6 +82,36 @@ class PipelineEvent(BaseModel):
     timestamp: datetime
 ```
 
+### 3.4 Agent SSE Event Envelope (Chat)
+실시간 Agent Chat 스트리밍은 SSE(`text/event-stream`)로 전달한다.
+
+**Envelope (JSON):**
+```json
+{
+  "event_id": "session_id:seq",
+  "session_id": "uuid",
+  "type": "agent.delta",
+  "seq": 12,
+  "ts": "2026-01-01T00:00:00Z",
+  "payload": {}
+}
+```
+
+**Event types + payload shape:**
+- `agent.session`: `{ "status": "active", "title": "...", "agent_model": "..." }`
+- `agent.thinking`: `{ "message_id": "uuid" }`
+- `agent.delta`: `{ "message_id": "uuid", "delta": "..." }`
+- `agent.tool_calls`: `{ "message_id": "uuid", "tool_calls": [{ "id": "...", "name": "...", "arguments": {} }] }`
+- `agent.message`: `{ "message_id": "uuid", "role": "assistant", "content": "...", "tool_calls": [] }`
+- `agent.tool_result`: `{ "name": "...", "tool_call_id": "...", "status": "completed", "output": {}, "error": null, "task_id": null }`
+- `agent.analysis_progress`: `{ "tool_call_id": "...", "step": 1, "name": "logic_vector", "progress": 20, "total_steps": 5 }`
+- `agent.capsule_start|agent.capsule_progress|agent.capsule_complete`:
+  `{ "tool_call_id": "...", "tool_name": "run_capsule", "capsule_id": "...", "progress": 0-100, "message": "..." }`
+- `agent.audio_overview_start|agent.audio_overview_progress`:
+  `{ "tool_call_id": "...", "notebook_id": "...", "audio_overview_id": "...", "status": "creating|READY", "progress": 0-100 }`
+- `agent.artifact_update`:
+  `{ "artifact_id": "...", "artifact_type": "storyboard|shot_list|data_table|scene_card|video_summary|audio_overview", "payload": {}, "version": 1, "created_at": "...Z", "updated_at": "...Z" }`
+
 ---
 
 ## 4. Execution Roadmap (Phase 3.1)

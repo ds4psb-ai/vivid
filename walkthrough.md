@@ -1,10 +1,27 @@
 # Walkthrough Log
 
-**Date**: 2025-12-30 (Updated)  
+**Date**: 2026-01-01 (Updated)  
 **Scope**: VDG 2-Pass Internalization, NotebookLM 3-Tier RAG Architecture  
 **Type**: Reference log (non-SoR). See `00_DOCS_INDEX.md` for canonical docs.
 
 ---
+
+## 2026-01-01 Summary
+
+### Agent Studio (Chat-First) Integration
+- **Frontend**:
+  - `/studio` chat-first UI with Simple/Expert modes
+  - Inline artifact previews (Storyboard, Shot List, Data Table) with expanded detail view
+  - DataTable CSV export + shared CSV utility
+  - Canvas ↔ Chat sync via BroadcastChannel (workflow plan + snapshots)
+
+- **Backend**:
+  - SSE event stream with artifact updates
+  - NotebookLM claims → DataTable mapping (claim_type/statement enrichment)
+
+- **Docs**:
+  - New `31_AGENT_STUDIO_ARTIFACT_SPEC_V1.md`
+  - Architecture/pipeline docs updated for Agent Studio chat-first flow
 
 ## 2025-12-30 Summary
 
@@ -118,4 +135,3 @@ cd backend && python3 -c "from app.schemas.vdg_v4 import VDGv4; from app.schemas
 3. Implement Tier 1 (META-INVARIANTS) notebooks
 4. Audio Coach API integration with DirectorPack
 5. Cross-tier query testing
-

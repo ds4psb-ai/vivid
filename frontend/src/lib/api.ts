@@ -619,6 +619,38 @@ export interface TopupResponse {
   transaction_id: string;
 }
 
+// --- Node Execution Types ---
+
+export interface NodeExecuteRequest {
+  node_id: string;
+  node_type: string;
+  category: "input" | "generate" | "refine" | "validate" | "compose" | "output";
+  input_data: Record<string, unknown>;
+  upstream_results: Record<string, unknown>;
+  params: Record<string, unknown>;
+  ai_model?: string;
+}
+
+export interface NodeExecuteEvent {
+  type: "status" | "chunk" | "validation" | "result" | "error";
+  status?: string;
+  message?: string;
+  content?: string;
+  progress?: number;
+  rule?: string;
+  passed?: boolean;
+  details?: string;
+  output?: Record<string, unknown>;
+}
+
+export interface NodeExecuteResult {
+  node_id: string;
+  status: "complete" | "error";
+  output: Record<string, unknown>;
+  execution_time_ms: number;
+  token_usage: { input: number; output: number; total: number };
+}
+
 class ApiClient {
   private buildHeaders(extra?: HeadersInit): Record<string, string> {
     const base: Record<string, string> = {
@@ -758,6 +790,19 @@ class ApiClient {
       body: JSON.stringify(payload),
       signal,
     });
+  }
+
+  // Generic HTTP methods for flexible API calls
+  async post<T>(endpoint: string, data?: unknown, headers?: Record<string, string>): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: "POST",
+      body: data ? JSON.stringify(data) : undefined,
+      headers,
+    });
+  }
+
+  async get<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint);
   }
 
   async logout(): Promise<{ success: boolean }> {
@@ -1327,6 +1372,64 @@ class ApiClient {
       body: JSON.stringify(request),
     });
   }
+
+  // --- Node Execution API ---
+
+  /**
+   * Execute a node with SSE streaming support
+   * Returns an async generator that yields events as they arrive
+   */
+  async *executeNodeStream(request: NodeExecuteRequest): AsyncGenerator<NodeExecuteEvent, void, unknown> {
+    const baseUrl = this.resolveBaseUrl();
+    const response = await fetch(`${baseUrl}/api/v1/nodes/execute`, {
+      method: "POST",
+      credentials: "include",
+      headers: this.buildHeaders(),
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || "Node execution failed");
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error("No response body");
+
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        if (line.startsWith("data: ")) {
+          const data = line.slice(6);
+          if (data === "[DONE]") return;
+          try {
+            yield JSON.parse(data) as NodeExecuteEvent;
+          } catch {
+            console.warn("Failed to parse SSE event:", data);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Execute a node synchronously (non-streaming)
+   */
+  async executeNode(request: NodeExecuteRequest): Promise<NodeExecuteResult> {
+    return this.request<NodeExecuteResult>("/api/v1/nodes/execute-sync", {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
+  }
 }
 
 // --- Crebit Types ---
@@ -1491,6 +1594,9 @@ export interface WorkflowNode {
   id: string;
   type: string;
   label: string;
+  description?: string;
+  category?: "input" | "generate" | "refine" | "validate" | "compose" | "output";
+  ai_model?: string;
   position: { x: number; y: number };
   data: Record<string, unknown>;
 }
@@ -1510,6 +1616,9 @@ export interface WorkflowPlanResponse {
   narrative_dna: NarrativeDNA;
   estimated_duration_sec: number;
   agent_assignments: Record<string, string>;
+  capsule_id?: string | null;
+  logic_vector?: Record<string, number> | null;
+  persona_vector?: Record<string, number> | null;
 }
 
 // --- DNA Compliance Types ---

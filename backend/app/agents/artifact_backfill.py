@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 from typing import Any, Dict, List
 
 from app.schemas.artifact_schemas import (
@@ -35,12 +36,14 @@ def derive_artifacts_from_tool_payload(
                 artifact_id=str(uuid.uuid4()),
                 title="Storyboard",
             )
-            artifacts.append(storyboard.model_dump(mode="json"))
-            shot_list = create_shot_list_from_storyboard(
-                storyboard,
-                artifact_id=str(uuid.uuid4()),
-            )
-            artifacts.append(shot_list.model_dump(mode="json"))
+            if storyboard.cards:
+                artifacts.append(storyboard.model_dump(mode="json"))
+                shot_list = create_shot_list_from_storyboard(
+                    storyboard,
+                    artifact_id=str(uuid.uuid4()),
+                )
+                if shot_list.shots:
+                    artifacts.append(shot_list.model_dump(mode="json"))
 
     if tool_name == "analyze_sources":
         summary = output.get("summary")
@@ -65,5 +68,21 @@ def derive_artifacts_from_tool_payload(
             )
             if storyboard:
                 artifacts.append(storyboard.model_dump(mode="json"))
+
+    if tool_name == "generate_audio_overview":
+        if isinstance(output, dict) and output:
+            artifacts.append(
+                {
+                    "artifact_type": "audio_overview",
+                    "artifact_id": str(uuid.uuid4()),
+                    "title": output.get("name") or "Audio Overview",
+                    "created_at": datetime.utcnow().isoformat() + "Z",
+                    "status": output.get("status"),
+                    "focus": output.get("focus"),
+                    "language_code": output.get("language_code"),
+                    "notebook_id": output.get("notebook_id"),
+                    "audio_overview_id": output.get("audio_overview_id"),
+                }
+            )
 
     return [_with_artifact_id(payload) for payload in artifacts]

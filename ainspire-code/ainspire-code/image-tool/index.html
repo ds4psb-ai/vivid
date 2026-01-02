@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ainspire AI 이미지 툴</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+    </style>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'brand-dark': '#131313',
+              'brand-gray-light': '#3C3C3C',
+              'brand-gray': '#2a2a2a',
+              'brand-gray-dark': '#1f1f1f',
+              'brand-yellow': '#FFD43B',
+              'brand-text': '#E0E0E0',
+              'brand-text-muted': '#8e918e',
+              'red-400': '#f87171', // AccessGuard에서 사용하는 빨간색도 추가
+            },            
+            // 메인 컨테이너 페이드인 모션 정의
+            keyframes: {
+              fadeInUp: {
+                '0%': { opacity: '0', transform: 'translateY(10px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+            },
+            animation: {
+              'app-load': 'fadeInUp 0.6s ease-out 0.3s forwards', // 0.6초간 진행, 0.3초 지연 시작
+            },
+          },
+        },
+      }
+    </script>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+        "react/": "https://aistudiocdn.com/react@^19.1.1/",
+        "react": "https://aistudiocdn.com/react@^19.1.1",
+        "@google/genai": "https://aistudiocdn.com/@google/genai@^1.20.0",
+        "jszip": "https://esm.sh/jszip@3.10.1"
+      }
+    }
+    </script>
+    <script type="module" crossorigin src="/assets/index-DA3CG8XM.js"></script>
+  </head>
+  <body style="
+      background-image: url('/assets/background-DE32X0WC.jpg');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-attachment: fixed;
+  ">
+      <div id="root" class="h-screen p-8 box-border"></div>
+  </body>
+</html>

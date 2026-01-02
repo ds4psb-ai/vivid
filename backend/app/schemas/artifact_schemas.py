@@ -23,6 +23,7 @@ class ArtifactType(str, Enum):
     SCENE_CARD = "scene_card"
     CONTI = "conti"
     VIDEO_SUMMARY = "video_summary"
+    AUDIO_OVERVIEW = "audio_overview"
 
 
 class ShotType(str, Enum):
@@ -219,6 +220,24 @@ class VideoSummaryArtifact(BaseModel):
 
 
 # =============================================================================
+# Audio Overview Artifact
+# =============================================================================
+
+class AudioOverviewArtifact(BaseModel):
+    """NotebookLM audio overview artifact."""
+    artifact_type: str = Field(default=ArtifactType.AUDIO_OVERVIEW.value)
+    artifact_id: str = Field(..., description="고유 아티팩트 ID")
+    title: str = Field(..., description="오디오 오버뷰 제목")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    status: Optional[str] = Field(None, description="오디오 생성 상태")
+    focus: Optional[str] = Field(None, description="오디오 요약 포커스")
+    language_code: Optional[str] = Field(None, description="언어 코드")
+    notebook_id: Optional[str] = Field(None, description="NotebookLM 노트북 ID")
+    audio_overview_id: Optional[str] = Field(None, description="오디오 오버뷰 ID")
+
+
+# =============================================================================
 # Artifact Union Type
 # =============================================================================
 
@@ -228,6 +247,7 @@ ArtifactUnion = Union[
     DataTableArtifact,
     SceneCardArtifact,
     VideoSummaryArtifact,
+    AudioOverviewArtifact,
 ]
 
 

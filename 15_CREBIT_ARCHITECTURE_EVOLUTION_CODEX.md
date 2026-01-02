@@ -1,7 +1,7 @@
 # Crebit Architecture Evolution (CODEX v20)
 
 **Date**: 2025-12-24  
-**Updated**: 2025-12-28  
+**Updated**: 2026-01-01  
 **Status**: CODEX baseline (philosophy-preserving)  
 **Purpose**: Convert reverse-engineering learnings into Crebit-specific architecture improvements without breaking the original philosophy.
 
@@ -19,6 +19,7 @@
 - Credits + observability are core UX (not hidden in settings).
 - UI flow keeps "Add -> Connect -> Generate" with strong empty-state onboarding.
 - Admin/Ops access is **session + role** gated; no public editing of SoR or prompts.
+- Agent Studio (chat-first) is the primary interface; Canvas is execution/editing surface.
 
 ---
 
@@ -40,6 +41,10 @@
 4. **Templates are first-class and learnable**  
    - Creator/PD/Writer pipelines are defined as templates.  
    - Templates evolve via GA/RL using evidence-based feedback.
+
+5. **Chat-first orchestration (Agent Studio)**  
+   - Agent Chat compiles workflows and executes tools; Canvas is for refinement/execution.  
+   - Tool outputs are surfaced as standardized artifacts with evidence refs.
 
 ---
 

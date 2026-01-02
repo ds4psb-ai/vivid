@@ -1,4 +1,5 @@
 from app.agents.artifact_backfill import derive_artifacts_from_tool_payload
+from app.schemas.artifact_schemas import create_data_table_from_claims
 
 
 def test_derive_run_capsule_storyboard_and_shot_list():
@@ -59,3 +60,21 @@ def test_derive_generate_storyboard_preview():
     artifacts = derive_artifacts_from_tool_payload("generate_storyboard", payload)
     assert len(artifacts) == 1
     assert artifacts[0].get("artifact_type") == "storyboard"
+
+
+def test_claim_id_numeric_maps_to_string():
+    summary = {
+        "claims": [
+            {
+                "claim_id": 123,
+                "statement": "Numeric claim id handled",
+                "evidence_refs": "ref-1",
+            }
+        ]
+    }
+    data_table = create_data_table_from_claims(summary, artifact_id="artifact-1")
+    assert data_table is not None
+    row = data_table.rows[0]
+    assert row["claim_id"] == "123"
+    assert row["claim_type"] == "pattern"
+    assert row["evidence_count"] == 1

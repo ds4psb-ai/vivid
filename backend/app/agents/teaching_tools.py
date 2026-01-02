@@ -1,0 +1,455 @@
+"""Teaching Tools for VividAgent.
+
+Agent가 사용할 수 있는 Teaching 캡슐 도구들.
+Single Source of Truth: TEACHING_CAPSULES에서 ToolSpec을 동적으로 생성.
+
+사용 가능한 도구:
+- generate_veo_prompt: Veo 비디오 프롬프트 생성
+- create_storyboard: 스토리보드 생성
+- generate_image_prompt: 이미지 프롬프트 생성
+- analyze_reference: 레퍼런스 분석
+"""
+from __future__ import annotations
+
+import uuid
+from typing import Any, Dict, List, Optional
+
+from app.agents.agent_types import (
+    ToolCall,
+    ToolContext,
+    ToolRegistry,
+    ToolResult,
+    ToolSpec,
+    ToolTaskState,
+)
+from app.agents.tool_utils import create_emitter, error_result, success_result
+from app.fixtures.teaching_capsules import TEACHING_CAPSULES
+from app.logging_config import get_logger
+
+logger = get_logger("teaching_tools")
+
+
+# =============================================================================
+# Tool Name <-> Capsule Key Mapping
+# =============================================================================
+
+# Agent 도구 이름과 캡슐 키 간의 매핑
+TOOL_TO_CAPSULE: Dict[str, str] = {
+    "generate_veo_prompt": "teaching.prompt.generate",
+    "create_storyboard": "teaching.storyboard.create",
+    "generate_image_prompt": "teaching.image.generate",
+    "analyze_reference": "teaching.reference.analyze",
+}
+
+CAPSULE_TO_TOOL: Dict[str, str] = {v: k for k, v in TOOL_TO_CAPSULE.items()}
+
+
+def get_capsule_by_key(capsule_key: str) -> Optional[Dict[str, Any]]:
+    """캡슐 키로 캡슐 정의 조회."""
+    for capsule in TEACHING_CAPSULES:
+        if capsule["capsule_key"] == capsule_key:
+            return capsule
+    return None
+
+
+def get_credit_cost(capsule_key: str, model: str) -> int:
+    """캡슐과 모델에 따른 크레딧 비용 계산.
+    
+    Single Source of Truth: TEACHING_CAPSULES에서 credit_costs 조회.
+    
+    Args:
+        capsule_key: 캡슐 식별자 (예: "teaching.prompt.generate")
+        model: AI 모델명 (예: "gemini-2.5-flash")
+        
+    Returns:
+        크레딧 비용 (정수)
+    """
+    capsule = get_capsule_by_key(capsule_key)
+    if not capsule:
+        logger.warning(f"Unknown capsule key: {capsule_key}, using default cost 5")
+        return 5
+    
+    credit_costs = capsule.get("credit_costs", {})
+    cost = credit_costs.get(model)
+    
+    if cost is not None:
+        return cost
+    
+    # Fallback to default model cost
+    default_cost = credit_costs.get("gemini-2.5-flash", 5)
+    logger.debug(f"Model '{model}' not in credit_costs, using default: {default_cost}")
+    return default_cost
+
+
+# =============================================================================
+# ToolSpec Generation from Capsule Definition
+# =============================================================================
+
+def _convert_capsule_input_to_json_schema(
+    input_name: str,
+    input_def: Dict[str, Any],
+) -> Dict[str, Any]:
+    """캡슐 입력 정의를 JSON Schema 형식으로 변환.
+    
+    Args:
+        input_name: 입력 필드 이름
+        input_def: 캡슐에서 정의된 입력 스펙
+        
+    Returns:
+        JSON Schema 호환 딕셔너리
+    """
+    type_mapping = {
+        "string": "string",
+        "integer": "integer",
+        "number": "number",
+        "boolean": "boolean",
+        "array": "array",
+        "object": "object",
+    }
+    
+    capsule_type = input_def.get("type", "string")
+    json_type = type_mapping.get(capsule_type, "string")
+    
+    schema: Dict[str, Any] = {
+        "type": json_type,
+        "description": input_def.get("description", input_name),
+    }
+    
+    # Optional default value
+    if "default" in input_def:
+        schema["default"] = input_def["default"]
+    
+    # Enum options
+    if "options" in input_def:
+        schema["enum"] = input_def["options"]
+    
+    # Array items
+    if json_type == "array" and "items" in input_def:
+        schema["items"] = {"type": input_def["items"].get("type", "string")}
+    
+    return schema
+
+
+def _capsule_to_tool_spec(capsule: Dict[str, Any]) -> ToolSpec:
+    """캡슐 정의를 Agent ToolSpec으로 변환.
+    
+    Args:
+        capsule: TEACHING_CAPSULES의 캡슐 정의
+        
+    Returns:
+        Agent가 사용할 수 있는 ToolSpec
+    """
+    spec = capsule["spec"]
+    capsule_key = capsule["capsule_key"]
+    
+    # 캡슐 키를 도구 이름으로 변환
+    tool_name = CAPSULE_TO_TOOL.get(capsule_key, capsule_key.replace(".", "_"))
+    
+    # Input properties 생성
+    properties: Dict[str, Any] = {}
+    required: List[str] = []
+    
+    for input_name, input_def in spec.get("inputs", {}).items():
+        properties[input_name] = _convert_capsule_input_to_json_schema(
+            input_name, input_def
+        )
+        if input_def.get("required", False):
+            required.append(input_name)
+    
+    # Model parameter 추가 (params에서)
+    params = spec.get("params", {})
+    if "model" in params:
+        model_def = params["model"]
+        properties["model"] = {
+            "type": "string",
+            "description": "AI 모델 선택 (비용이 다름)",
+            "default": model_def.get("default", "gemini-2.5-flash"),
+        }
+        if "options" in model_def:
+            properties["model"]["enum"] = model_def["options"]
+    
+    input_schema = {
+        "type": "object",
+        "properties": properties,
+        "required": required,
+    }
+    
+    # Description에 크레딧 정보 추가
+    description = spec.get("description", spec.get("name", tool_name))
+    credit_costs = capsule.get("credit_costs", {})
+    if credit_costs:
+        costs_str = ", ".join(f"{m}: {c}크레딧" for m, c in credit_costs.items())
+        description = f"{description} (비용: {costs_str})"
+    
+    return ToolSpec(
+        name=tool_name,
+        description=description,
+        input_schema=input_schema,
+    )
+
+
+# =============================================================================
+# Node Spec Builder (for Canvas Integration)
+# =============================================================================
+
+def build_teaching_node_spec(
+    capsule: Dict[str, Any],
+    inputs: Dict[str, Any],
+    output: Dict[str, Any],
+    credit_cost: int = 0,
+) -> Dict[str, Any]:
+    """Teaching 결과를 Canvas 노드 스펙으로 변환.
+    
+    Agent가 Teaching 도구를 실행한 후, Canvas에 노드로 추가할 수 있는
+    스펙을 생성합니다.
+    
+    Args:
+        capsule: 캡슐 정의
+        inputs: 실행에 사용된 입력 값
+        output: 실행 결과 출력
+        credit_cost: 소비된 크레딧
+        
+    Returns:
+        React Flow 노드로 변환 가능한 스펙
+    """
+    spec = capsule["spec"]
+    capsule_key = capsule["capsule_key"]
+    
+    # 입력/출력 포트 추출
+    input_ports = list(spec.get("inputs", {}).keys())
+    output_ports = list(spec.get("outputs", {}).keys())
+    
+    return {
+        "id": str(uuid.uuid4()),
+        "capsule_id": capsule_key,
+        "type": "teaching_capsule",
+        "display_name": spec.get("name", capsule_key),
+        "version": capsule.get("version", "1.0.0"),
+        "position": {"x": 0, "y": 0},  # Canvas에서 자동 배치
+        "data": {
+            "capsule_key": capsule_key,
+            "category": "teaching",
+            "input_schema": spec.get("inputs", {}),
+            "output_schema": spec.get("outputs", {}),
+            "params_schema": spec.get("params", {}),
+            "inputs": inputs,
+            "locked_inputs": list(inputs.keys()),  # 채팅에서 채운 값 표시
+            "output": output,
+            "editable": True,
+            "credit_cost": credit_cost,
+        },
+        "input_ports": input_ports,
+        "output_ports": output_ports,
+        "executed": True,
+        "execution_time": None,
+    }
+
+
+# =============================================================================
+# Tool Handler
+# =============================================================================
+
+async def _teaching_tool_handler(
+    context: ToolContext,
+    call: ToolCall,
+) -> ToolResult:
+    """Teaching 캡슐 도구 실행 핸들러.
+    
+    Agent가 Teaching 도구를 호출하면 이 핸들러가 실행됩니다.
+    
+    1. 도구 이름으로 캡슐 식별
+    2. 입력 검증 및 모델 추출
+    3. Teaching 캡슐 실행
+    4. 노드 스펙 생성 및 이벤트 발행
+    
+    Args:
+        context: 도구 실행 컨텍스트
+        call: 도구 호출 정보
+        
+    Returns:
+        도구 실행 결과
+    """
+    from app.teaching_adapter import execute_teaching_capsule
+    
+    tool_name = call.name
+    capsule_key = TOOL_TO_CAPSULE.get(tool_name)
+    
+    if not capsule_key:
+        logger.error(f"Unknown tool name: {tool_name}")
+        return ToolResult(
+            tool_call_id=call.id,
+            name=call.name,
+            status=ToolTaskState.FAILED,
+            error=f"Unknown teaching tool: {tool_name}",
+        )
+    
+    capsule = get_capsule_by_key(capsule_key)
+    if not capsule:
+        logger.error(f"Capsule not found for key: {capsule_key}")
+        return ToolResult(
+            tool_call_id=call.id,
+            name=call.name,
+            status=ToolTaskState.FAILED,
+            error=f"Capsule definition not found: {capsule_key}",
+        )
+    
+    # 이벤트 에미터 생성
+    emitter = create_emitter(context, call)
+    args = call.arguments or {}
+    
+    # 모델 추출 (기본값 처리)
+    spec = capsule["spec"]
+    default_model = spec.get("params", {}).get("model", {}).get(
+        "default", "gemini-2.5-flash"
+    )
+    model = args.get("model", default_model)
+    
+    # 크레딧 비용 계산
+    credit_cost = get_credit_cost(capsule_key, model)
+    
+    # 시작 이벤트
+    emitter.emit("agent.teaching_start", {
+        "tool_name": tool_name,
+        "capsule_key": capsule_key,
+        "model": model,
+        "credit_cost": credit_cost,
+    })
+    
+    logger.info(
+        f"Teaching tool started: {tool_name}",
+        extra={
+            "session_id": context.session_id,
+            "capsule_key": capsule_key,
+            "model": model,
+            "credit_cost": credit_cost,
+        },
+    )
+    
+    try:
+        # 입력 준비 (model은 params로 분리)
+        inputs = {k: v for k, v in args.items() if k != "model"}
+        params = {"model": model}
+        
+        # Teaching 캡슐 실행
+        result = await execute_teaching_capsule(
+            capsule_id=capsule_key,
+            inputs=inputs,
+            params=params,
+            user_api_key=None,  # Agent는 서버 키 사용
+        )
+        
+        if not result.get("success"):
+            error_msg = result.get("error", "Execution failed")
+            emitter.emit("agent.teaching_error", {
+                "tool_name": tool_name,
+                "capsule_key": capsule_key,
+                "error": error_msg,
+            })
+            logger.warning(
+                f"Teaching tool failed: {tool_name}",
+                extra={
+                    "session_id": context.session_id,
+                    "error": error_msg,
+                },
+            )
+            return error_result(call, error_msg)
+        
+        # 노드 스펙 생성
+        output = result.get("output", {})
+        node_spec = build_teaching_node_spec(
+            capsule=capsule,
+            inputs=inputs,
+            output=output,
+            credit_cost=credit_cost,
+        )
+        
+        # 완료 이벤트
+        emitter.emit("agent.teaching_complete", {
+            "tool_name": tool_name,
+            "capsule_key": capsule_key,
+            "model": model,
+            "credit_cost": credit_cost,
+            "latency_ms": result.get("metrics", {}).get("latency_ms"),
+        })
+        
+        # 노드 생성 이벤트 (Canvas 연동용)
+        emitter.emit("agent.node_created", {
+            "node_type": "teaching_capsule",
+            "node_spec": node_spec,
+            "action": "add_to_canvas",
+        })
+        
+        logger.info(
+            f"Teaching tool completed: {tool_name}",
+            extra={
+                "session_id": context.session_id,
+                "capsule_key": capsule_key,
+                "model": model,
+                "credit_cost": credit_cost,
+                "latency_ms": result.get("metrics", {}).get("latency_ms"),
+            },
+        )
+        
+        return success_result(call, {
+            "capsule_id": capsule_key,
+            "output": output,
+            "node_spec": node_spec,
+            "credit_cost": credit_cost,
+            "metrics": result.get("metrics"),
+        })
+        
+    except Exception as e:
+        emitter.emit("agent.teaching_error", {
+            "tool_name": tool_name,
+            "capsule_key": capsule_key,
+            "error": str(e),
+        })
+        logger.exception(
+            f"Teaching tool error: {tool_name}",
+            extra={
+                "session_id": context.session_id,
+                "error": str(e),
+            },
+        )
+        return error_result(call, f"Teaching tool failed: {e}")
+
+
+# =============================================================================
+# Registration
+# =============================================================================
+
+def get_teaching_tool_specs() -> List[ToolSpec]:
+    """등록 가능한 Teaching 도구 스펙 목록 반환.
+    
+    테스트 및 디버깅에 유용.
+    """
+    specs = []
+    for capsule in TEACHING_CAPSULES:
+        specs.append(_capsule_to_tool_spec(capsule))
+    return specs
+
+
+def register_teaching_tools(registry: ToolRegistry) -> None:
+    """Teaching 도구들을 ToolRegistry에 등록.
+    
+    TEACHING_CAPSULES에서 동적으로 ToolSpec을 생성하여
+    캡슐 정의 변경 시 자동으로 반영됩니다.
+    
+    Args:
+        registry: 도구를 등록할 ToolRegistry 인스턴스
+    """
+    registered_count = 0
+    
+    for capsule in TEACHING_CAPSULES:
+        try:
+            spec = _capsule_to_tool_spec(capsule)
+            registry.register(spec, _teaching_tool_handler)
+            registered_count += 1
+            logger.debug(f"Registered teaching tool: {spec.name}")
+        except Exception as e:
+            logger.error(
+                f"Failed to register teaching tool for capsule: {capsule.get('capsule_key')}",
+                extra={"error": str(e)},
+            )
+    
+    logger.info(f"Registered {registered_count} teaching tools from TEACHING_CAPSULES")

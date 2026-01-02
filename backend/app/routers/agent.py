@@ -370,7 +370,6 @@ async def chat_agent(
 
     async def _event_stream() -> AsyncGenerator[str, None]:
         seq = 0
-        now = f"{datetime.utcnow().isoformat()}Z"
         session_id = str(session.id)
 
         def _next_event(event_type: str, payload: dict) -> str:
@@ -378,7 +377,13 @@ async def chat_agent(
             seq += 1
             return _format_sse(
                 event_type,
-                _build_event(session_id, seq, event_type, payload, now),
+                _build_event(
+                    session_id,
+                    seq,
+                    event_type,
+                    payload,
+                    f"{datetime.utcnow().isoformat()}Z",
+                ),
             )
 
         yield _next_event(

@@ -2,6 +2,7 @@
 
 import { SceneSnapshot } from "@/types/agent";
 import { formatDateTime } from "@/lib/formatters";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface SceneCardProps {
   scene: SceneSnapshot;
@@ -24,6 +25,7 @@ export default function SceneCard({
   isSelected = false,
   onSelect,
 }: SceneCardProps) {
+  const { t } = useLanguage();
   const isCompact = variant === "compact";
   const timestamp = formatDateTime(scene.updatedAt);
   const highlights = extractStyleHighlights(scene.style);
@@ -41,7 +43,7 @@ export default function SceneCard({
       </div>
       <div className="space-y-1">
         <div className={`${isCompact ? "text-sm" : "text-lg"} font-semibold text-slate-100`}>
-          {scene.title || "Untitled Scene"}
+          {scene.title || t("sceneUntitled")}
         </div>
         {scene.summary && (
           <div className={`${isCompact ? "text-xs" : "text-sm"} text-slate-300`}>

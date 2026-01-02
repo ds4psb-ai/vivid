@@ -1,7 +1,7 @@
 # Credits + Billing Spec v1 (Crebit)
 
-**Date**: 2025-12-24  
-**Scope**: Creator credits, top-ups, API credits, usage UI  
+**Date**: 2026-01-01  
+**Scope**: Creator credits, top-ups, API credits, usage UI, Teaching Apps  
 **Goal**: Clear, scalable credit model aligned with content generation workloads
 
 ---
@@ -97,7 +97,7 @@ Notes:
 
 ### Billing page
 - Monthly/Yearly toggle
-- Annual discount label (ex: “Annual 30% Off”)
+- Annual discount label (ex: "Annual 30% Off")
 - Tier cards with "Upgrade" CTA
 - Top-up packs with one-time purchase
 - API packs (separate section)
@@ -107,6 +107,47 @@ Notes:
 - "Invite + Earn" module in Credits page
 
 ---
+
+## 5.1) Teaching Apps Credit Model
+
+> **Added**: 2026-01-01
+
+Teaching Apps는 고정 비용 모델을 사용:
+
+| API Endpoint | Credits | Description |
+|-------------|---------|-------------|
+| `/api/teaching/prompt/generate` | 5 | Veo 프롬프트 생성 |
+| `/api/teaching/storyboard/create` | 10 | 스토리보드 생성 |
+| `/api/teaching/image/generate` | 5 | 이미지 프롬프트 생성 |
+| `/api/teaching/reference/analyze` | 8 | 레퍼런스 분석 |
+
+### BYOK (Bring Your Own Key)
+
+사용자가 `X-Gemini-API-Key` 헤더로 자신의 API Key를 전달하면:
+- 크레딧 차감 없음
+- 키는 클라이언트 localStorage에만 저장 (서버 미전송)
+- 무제한 사용 가능
+
+### Error Handling
+
+크레딧 부족 시 `402 Payment Required`:
+```json
+{
+  "code": "INSUFFICIENT_CREDITS",
+  "message": "크레딧이 부족합니다.",
+  "required": 10,
+  "balance": 3
+}
+```
+
+### Refund Policy
+
+AI 호출 실패 시 자동 환불 (`credit_service.refund_credits`):
+- 실패 사유 기록
+- topup_credits 버킷으로 복원
+
+---
+
 
 ## 6) Credit Cost Model
 

@@ -38,6 +38,7 @@ class GeminiModelClient:
             "Call run_capsule to execute a capsule or generate production outputs. "
             "Call analyze_sources when the user provides sources or asks for analysis. "
             "Call generate_storyboard when asked for storyboard previews. "
+            "Call generate_audio_overview when asked for an audio overview or podcast-style summary. "
             "If session metadata includes a canvas_snapshot, use it to align responses with the current canvas. "
             "Respond ONLY with JSON: {\"content\": \"...\", \"tool_calls\": "
             "[{\"id\": \"optional\", \"name\": \"tool_name\", \"arguments\": {}}]}. "

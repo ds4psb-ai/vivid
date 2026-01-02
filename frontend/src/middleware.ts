@@ -14,6 +14,9 @@ const PROTECTED_ROUTES = [
     "/settings",
     "/billing",
     "/usage",
+    "/teaching",
+    "/ainspire",
+    "/assets",
 ];
 
 const PUBLIC_ROUTES = [
@@ -24,6 +27,8 @@ const PUBLIC_ROUTES = [
     "/images",
     "/favicon",
 ];
+
+const PRIVATE_MEDIA_ROUTES = ["/teaching", "/ainspire", "/assets"];
 
 const SESSION_COOKIE_NAME = "crebit_session";
 
@@ -58,7 +63,14 @@ export function middleware(request: NextRequest) {
     }
 
     // Allow request to continue
-    return NextResponse.next();
+    const response = NextResponse.next();
+
+    if (PRIVATE_MEDIA_ROUTES.some((route) => pathname.startsWith(route))) {
+        response.headers.set("Cache-Control", "private, no-store, max-age=0");
+        response.headers.set("X-Robots-Tag", "noindex, nofollow");
+    }
+
+    return response;
 }
 
 export const config = {
@@ -66,5 +78,8 @@ export const config = {
         "/settings/:path*",
         "/billing/:path*",
         "/usage/:path*",
+        "/teaching/:path*",
+        "/ainspire/:path*",
+        "/assets/:path*",
     ],
 };

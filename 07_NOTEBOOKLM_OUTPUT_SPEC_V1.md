@@ -83,6 +83,27 @@ If the output is from a Mega-Notebook, include `labels` with `ops_only`, `mega_n
 
 ---
 
+## Claims schema (NotebookLM → DataTable)
+
+`claims[]`는 DataTable artifact로 변환된다. 최소 필드는 아래를 권장한다.
+
+```json
+{
+  "claim_id": "c_cluster_logic",
+  "claim_type": "pattern|persona|constraint",
+  "statement": "요약 문장 (표준화 텍스트)",
+  "claim_text": "원문 또는 대체 텍스트",
+  "evidence_refs": ["sheet:...", "db:..."]
+}
+```
+
+규칙:
+- `statement`가 있으면 우선 사용, 없으면 `claim_text`를 사용한다.
+- `claim_type`은 `pattern/persona/constraint` 중 하나로 정규화한다.
+- `evidence_refs`는 Evidence refs format을 따른다.
+
+---
+
 ## Evidence refs format
 
 - Derived outputs must use: `sheet:{SheetName}:{RowId}` or `db:{table}:{id}`

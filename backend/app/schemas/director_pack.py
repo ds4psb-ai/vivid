@@ -113,7 +113,20 @@ class DNAInvariant(BaseModel):
     
     # Evidence
     source_refs: List[SourceRef] = Field(default_factory=list)
-    confidence: float = Field(default=0.5, ge=0.0, le=1.0)
+    
+    # Bayesian Confidence (Phase 1)
+    confidence: float = Field(
+        default=0.5, ge=0.0, le=1.0,
+        description="베이지안 사후 확률 - 이 규칙의 신뢰도"
+    )
+    prior_strength: float = Field(
+        default=1.0, ge=0.1,
+        description="Prior 강도 - 증거에 의해 얼마나 쉽게 갱신되는지 (높을수록 보수적)"
+    )
+    evidence_count: int = Field(
+        default=0, ge=0,
+        description="이 규칙을 지지하는 증거 수"
+    )
     
     # Coaching
     coach_line: Optional[str] = Field(default=None, description="What to say when violated")

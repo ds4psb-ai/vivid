@@ -695,6 +695,35 @@ def execute_capsule(
 
     adapter = (capsule_spec or {}).get("adapter", {})
     adapter_type = adapter.get("type", "rule")
+    
+    # Teaching capsules use dedicated adapter
+    if adapter_type == "teaching" or capsule_id.startswith("teaching."):
+        import asyncio
+        from app.teaching_adapter import execute_teaching_capsule
+        
+        # Run async teaching adapter in sync context
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+        
+        if loop is None:
+            result = asyncio.run(execute_teaching_capsule(capsule_id, inputs, params))
+        else:
+            # Already in async context, create a task
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(
+                    asyncio.run, 
+                    execute_teaching_capsule(capsule_id, inputs, params)
+                )
+                result = future.result()
+        
+        if result.get("success"):
+            return result.get("output", {}), []
+        else:
+            return {"error": result.get("error", "Teaching capsule failed")}, []
+    
     chain = adapter.get("chain")
     if not chain:
         if adapter_type == "hybrid":

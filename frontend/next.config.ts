@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  outputFileTracingIncludes: {
+    "/*": ["./secure-assets/**"],
+  },
 };
 
 export default nextConfig;

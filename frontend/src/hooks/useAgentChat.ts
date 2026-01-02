@@ -30,9 +30,17 @@ export interface AgentToolResultEvent {
   sessionId?: string;
 }
 
+export interface AgentNodeCreatedEvent {
+  nodeType: string;
+  nodeSpec: Record<string, unknown>;
+  action: string;
+  sessionId?: string;
+}
+
 export interface UseAgentChatOptions {
   sessionId?: string | null;
   onToolResult?: (event: AgentToolResultEvent) => void;
+  onNodeCreated?: (event: AgentNodeCreatedEvent) => void;
   maxMessages?: number;
   maxArtifacts?: number;
 }
@@ -203,6 +211,12 @@ const SCENE_TOOL_NAMES = new Set([
   "generate_image",
 ]);
 
+const PROGRESS_TOOL_MESSAGE_IDS: Record<string, (toolCallId: string) => string> = {
+  run_capsule: (toolCallId) => `tool-progress-${toolCallId}`,
+  analyze_sources: (toolCallId) => `analysis-progress-${toolCallId}`,
+  generate_audio_overview: (toolCallId) => `audio-overview-${toolCallId}`,
+};
+
 export const useAgentChat = (options?: UseAgentChatOptions) => {
   const [session, setSession] = useState<AgentSessionState | null>(null);
   const [messages, setMessages] = useState<AgentMessage[]>([]);
@@ -213,6 +227,7 @@ export const useAgentChat = (options?: UseAgentChatOptions) => {
   const streamIdRef = useRef(0);
   const artifactIdsRef = useRef<Set<string>>(new Set());
   const toolResultHandlerRef = useRef<UseAgentChatOptions["onToolResult"]>(options?.onToolResult);
+  const nodeCreatedHandlerRef = useRef<UseAgentChatOptions["onNodeCreated"]>(options?.onNodeCreated);
   const messageLimit = Math.max(0, options?.maxMessages ?? 200);
   const artifactLimit = Math.max(0, options?.maxArtifacts ?? 200);
 
@@ -241,7 +256,8 @@ export const useAgentChat = (options?: UseAgentChatOptions) => {
 
   useEffect(() => {
     toolResultHandlerRef.current = options?.onToolResult;
-  }, [options?.onToolResult]);
+    nodeCreatedHandlerRef.current = options?.onNodeCreated;
+  }, [options?.onToolResult, options?.onNodeCreated]);
 
   const stop = useCallback(() => {
     if (abortRef.current) {
@@ -423,17 +439,27 @@ export const useAgentChat = (options?: UseAgentChatOptions) => {
         case "agent.tool_result": {
           const name = getText(payloadData.name) || "tool";
           const output = asRecord(payloadData.output) ?? {};
+          const toolCallId = getText(payloadData.tool_call_id);
+          const progressMessageId = toolCallId ? PROGRESS_TOOL_MESSAGE_IDS[name]?.(toolCallId) : null;
           const toolMessage: AgentToolMessage = {
-            id: `tool-${event.event_id}`,
+            id: progressMessageId ?? `tool-${event.event_id}`,
             role: "tool",
             name,
             status: getText(payloadData.status),
             output,
             error: getText(payloadData.error),
             taskId: getText(payloadData.task_id),
-            toolCallId: getText(payloadData.tool_call_id),
+            toolCallId,
           };
-          setMessages((prev) => trimMessages(appendMessage(prev, toolMessage)));
+          if (progressMessageId) {
+            setMessages((prev) =>
+              trimMessages(
+                upsertMessageById(prev, progressMessageId, toolMessage, () => toolMessage)
+              )
+            );
+          } else {
+            setMessages((prev) => trimMessages(appendMessage(prev, toolMessage)));
+          }
           if (SCENE_TOOL_NAMES.has(name)) {
             const artifact: AgentArtifactItem = {
               id: `artifact-${event.event_id}`,
@@ -452,7 +478,7 @@ export const useAgentChat = (options?: UseAgentChatOptions) => {
             name,
             output,
             status: getText(payloadData.status),
-            toolCallId: getText(payloadData.tool_call_id),
+            toolCallId,
             payload: payloadData,
             sessionId: event.session_id,
           });
@@ -537,6 +563,44 @@ export const useAgentChat = (options?: UseAgentChatOptions) => {
           );
           break;
         }
+        case "agent.audio_overview_start":
+        case "agent.audio_overview_progress": {
+          const toolCallId = getText(payloadData.tool_call_id) || `tool-${event.event_id}`;
+          const messageId = `audio-overview-${toolCallId}`;
+          const progressOutput: Record<string, unknown> = {};
+          const status = getText(payloadData.status) || "working";
+          const progress = getNumber(payloadData.progress);
+          const notebookId = getText(payloadData.notebook_id);
+          const audioOverviewId = getText(payloadData.audio_overview_id);
+          if (progress !== undefined) progressOutput.progress = progress;
+          if (notebookId) progressOutput.notebook_id = notebookId;
+          if (audioOverviewId) progressOutput.audio_overview_id = audioOverviewId;
+          setMessages((prev) =>
+            trimMessages(
+              upsertMessageById(
+                prev,
+                messageId,
+                {
+                  id: messageId,
+                  role: "tool",
+                  name: "generate_audio_overview",
+                  status,
+                  output: progressOutput,
+                  toolCallId,
+                },
+                (message) => ({
+                  ...message,
+                  role: "tool",
+                  name: "generate_audio_overview",
+                  status,
+                  output: progressOutput,
+                  toolCallId,
+                })
+              )
+            )
+          );
+          break;
+        }
         case "agent.artifact_update": {
           const artifactId = getText(payloadData.artifact_id) || `artifact-${event.event_id}`;
           const payload = asRecord(payloadData.payload) ?? {};
@@ -573,6 +637,28 @@ export const useAgentChat = (options?: UseAgentChatOptions) => {
               upsertMessageById(prev, artifactMessage.id, artifactMessage, () => artifactMessage)
             )
           );
+          break;
+        }
+        // Teaching capsule events
+        case "agent.teaching_start":
+        case "agent.teaching_complete":
+        case "agent.teaching_error": {
+          // These are handled by agent.tool_result, log for debugging
+          console.debug(`[AgentChat] ${event.type}:`, payloadData);
+          break;
+        }
+        // Node created event - for adding nodes to canvas
+        case "agent.node_created": {
+          const nodeType = getText(payloadData.node_type) || "teaching_capsule";
+          const nodeSpec = asRecord(payloadData.node_spec) ?? {};
+          const action = getText(payloadData.action) || "add_to_canvas";
+
+          nodeCreatedHandlerRef.current?.({
+            nodeType,
+            nodeSpec,
+            action,
+            sessionId: event.session_id,
+          });
           break;
         }
         default:

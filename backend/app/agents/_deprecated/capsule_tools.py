@@ -34,19 +34,6 @@ logger = get_logger("capsule_tools")
 
 
 # =============================================================================
-# Analysis Step Definitions
-# =============================================================================
-
-ANALYSIS_STEPS = [
-    (1, "logic_vector", 0, 20),
-    (2, "persona_vector", 20, 40),
-    (3, "variation_guide", 40, 60),
-    (4, "claims", 60, 80),
-    (5, "storyboard", 80, 100),
-]
-
-
-# =============================================================================
 # Tool Handlers
 # =============================================================================
 
@@ -134,7 +121,7 @@ async def _analyze_sources_handler(
     
     try:
         # Run the actual analysis pipeline
-        summary, evidence_refs, data_table = await _run_analysis_pipeline(
+        summary, evidence_refs = await _run_analysis_pipeline(
             source_pack, capsule_id, emitter
         )
         
@@ -151,9 +138,6 @@ async def _analyze_sources_handler(
             "evidence_refs": evidence_refs,
         }
         
-        if data_table:
-            output["data_table_artifact"] = data_table.model_dump(mode="json")
-        
         return success_result(call, output)
         
     except Exception as e:
@@ -167,7 +151,7 @@ async def _run_analysis_pipeline(
     source_pack: Dict[str, Any],
     capsule_id: str,
     emitter: Any,
-) -> Tuple[Dict[str, Any], List[str], Any]:
+) -> Tuple[Dict[str, Any], List[str]]:
     """
     Run the NotebookLM analysis pipeline.
     
@@ -181,9 +165,6 @@ async def _run_analysis_pipeline(
         generate_storyboard_cards,
         generate_variation_guide,
     )
-    from app.schemas.artifact_schemas import create_data_table_from_claims
-    from app.config import settings
-    
     loop = asyncio.get_event_loop()
     tracker = TokenUsageTracker()
     
@@ -235,11 +216,10 @@ async def _run_analysis_pipeline(
         guide, claims, story_beats, storyboard_cards, tracker
     )
     
-    # Extract evidence refs and generate DataTable
+    # Extract evidence refs
     evidence_refs = extract_evidence_refs(claims)
-    data_table = create_data_table_from_claims(summary, f"dt-{id(claims) % 10000:04d}")
     
-    return summary, evidence_refs, data_table
+    return summary, evidence_refs
 
 
 def _build_analysis_summary(
@@ -287,29 +267,16 @@ async def _generate_storyboard_handler(
     args = call.arguments
     summary = args.get("summary", {})
     scene_count = args.get("scene_count", 3)
-    capsule_id = args.get("capsule_id") or summary.get("capsule_id")
-    
     if not summary:
         return validation_error(call, "summary", "summary (from run_capsule) is required")
     
     try:
         from app.capsule_adapter import generate_storyboard_preview
-        from app.schemas.artifact_schemas import create_storyboard_from_preview
         
         loop = asyncio.get_event_loop()
         storyboard = await loop.run_in_executor(
             None,
             partial(generate_storyboard_preview, summary=summary, scene_count=scene_count)
-        )
-        
-        # Create artifact for frontend
-        artifact_id = f"sb-{id(storyboard) % 10000:04d}"
-        title = summary.get("title") or summary.get("message") or "Storyboard Preview"
-        storyboard_artifact = create_storyboard_from_preview(
-            preview=storyboard,
-            artifact_id=artifact_id,
-            title=title,
-            capsule_id=capsule_id,
         )
         
         logger.info("Storyboard generated", extra={
@@ -321,9 +288,6 @@ async def _generate_storyboard_handler(
             "storyboard": storyboard,
             "scene_count": len(storyboard),
         }
-        
-        if storyboard_artifact:
-            output["storyboard_artifact"] = storyboard_artifact.model_dump(mode="json")
         
         return success_result(call, output)
         

@@ -1,7 +1,7 @@
 # Docs Index (정본)
 
 **Updated**: 2026-01-01  
-**총 문서**: 31개 (00~30 순차 번호)
+**총 문서**: 32개 (00~31 순차 번호)
 
 ---
 
@@ -48,6 +48,7 @@
 | 27 | MCP_INTEGRATION_SPEC_V1 | MCP 통합 |
 | 28 | EVENT_DRIVEN_ARCHITECTURE_SPEC_V1 | 이벤트 아키텍처 |
 | 29 | AUTEUR_DATA_COLLECTION_PROTOCOL_CODEX | 데이터 수집 |
+| 31 | AGENT_STUDIO_ARTIFACT_SPEC_V1 | 아티팩트 스펙 |
 
 ---
 

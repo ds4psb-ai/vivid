@@ -6,7 +6,7 @@ enabling chat-first workflow generation.
 from __future__ import annotations
 
 import logging
-from dataclasses import asdict
+from dataclasses import asdict, is_dataclass
 from typing import Any, Dict, Optional
 
 from app.agents.agent_types import (
@@ -22,6 +22,28 @@ from app.logging_config import get_logger
 
 logger = get_logger("workflow_tools")
 
+
+def _serialize_narrative_dna(dna: Any) -> Optional[Dict[str, Any]]:
+    """Serialize narrative_dna to dict, handling Pydantic, dataclass, dict, or None."""
+    if dna is None:
+        return None
+    # Pydantic BaseModel (v2 uses model_dump, v1 uses dict)
+    if hasattr(dna, "model_dump"):
+        return dna.model_dump()
+    if hasattr(dna, "dict"):
+        return dna.dict()
+    # dataclass
+    if is_dataclass(dna) and not isinstance(dna, type):
+        return asdict(dna)
+    # Already a dict
+    if isinstance(dna, dict):
+        return dna
+    # Fallback: try to convert to dict
+    try:
+        return dict(dna)
+    except (TypeError, ValueError):
+        logger.warning("Could not serialize narrative_dna, returning None")
+        return None
 
 async def _compile_workflow_handler(
     context: ToolContext,
@@ -75,7 +97,7 @@ async def _compile_workflow_handler(
             "capsule_id": plan.capsule_id,
             "logic_vector": plan.logic_vector,
             "persona_vector": plan.persona_vector,
-            "narrative_dna": asdict(plan.narrative_dna) if plan.narrative_dna else None,
+            "narrative_dna": _serialize_narrative_dna(plan.narrative_dna),
             "nodes": [
                 {
                     "id": n.id,

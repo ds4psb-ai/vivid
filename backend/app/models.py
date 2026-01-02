@@ -686,3 +686,28 @@ class AgentArtifact(Base):
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class UserTeachingSettings(Base):
+    """User settings for Teaching Apps (API keys and project data)."""
+    __tablename__ = "user_teaching_settings"
+    __table_args__ = (UniqueConstraint("user_id", name="uq_user_teaching_settings_user_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[str] = mapped_column(String(160))
+    
+    # Encrypted Gemini API key (AES-256-GCM)
+    encrypted_api_key: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    
+    # Teaching app project data (JSONB)
+    prompt_data: Mapped[dict] = mapped_column(JSONB, default=dict)  # Veo Prompt Generator state
+    storyboard_data: Mapped[dict] = mapped_column(JSONB, default=dict)  # Storyboard folders/projects
+    image_tool_data: Mapped[dict] = mapped_column(JSONB, default=dict)  # Image Tool settings
+    shot_catch_data: Mapped[dict] = mapped_column(JSONB, default=dict)  # Shot Catch settings
+    
+    # User preferences
+    language: Mapped[str] = mapped_column(String(8), default="ko")
+    selected_model: Mapped[str] = mapped_column(String(64), default="gemini-2.5-flash")
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

@@ -19,7 +19,7 @@
  */
 export const AUTH_ROUTES = {
     /** Routes that require authentication (middleware enforced) */
-    PROTECTED: ["/settings", "/billing", "/usage"] as const,
+    PROTECTED: ["/settings", "/billing", "/usage", "/teaching", "/ainspire", "/assets"] as const,
 
     /** Routes open to guests (no auth check) */
     PUBLIC: ["/", "/login", "/api", "/_next", "/images", "/favicon"] as const,

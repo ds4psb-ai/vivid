@@ -14,3 +14,5 @@ arq>=0.25.0
 slowapi>=0.1.9
 sentry-sdk[fastapi]>=1.40.0
 prometheus-fastapi-instrumentator>=6.1.0
+notion-client>=2.2.1
+notion-to-md-py>=0.1.4

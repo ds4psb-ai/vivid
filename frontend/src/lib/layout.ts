@@ -15,8 +15,8 @@ export const getLayoutedElements = (
     dagreGraph.setGraph({
         rankdir: options.direction,
         align: 'DL', // Align nodes to top-left to keep layout compact
-        nodesep: 50, // Horizontal separation between nodes
-        ranksep: 80, // Vertical separation between ranks
+        nodesep: 80, // Horizontal separation between nodes (increased)
+        ranksep: 150, // Vertical separation between ranks (increased)
         marginx: 20,
         marginy: 20
     });

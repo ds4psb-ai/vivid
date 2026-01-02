@@ -1,8 +1,8 @@
 # Node Canvas System: 기술 명세서 (2025-12 최신 정본)
 
 **작성**: 2025-12-24  
-**Updated**: 2025-12-30 (Story-First Integration 추가)  
-**버전**: 정본 v1.2  
+**Updated**: 2026-01-01 (Agent Studio 반영)  
+**버전**: 정본 v1.3  
 **대상**: Tech Lead / Architect / Backend / Frontend  
 **목표**: Node Canvas + 최적화 + AI 생성 파이프라인 설계 기준 수립  
 
@@ -27,6 +27,7 @@
                                                                                                                    │
                                                                                                                    └──> [Capsule Spec Repo]
 
+[Web UI] ──> [Agent Studio (Chat)] ──> [Agent API + SSE] ──> [Tool Registry] ──> [Capsules/NotebookLM]
 [Web UI] ──> [Canvas API] ──> [Spec Engine] ──> [Preview]
     │             │                │               │
     │             └──> [Template Service]           │
@@ -40,19 +41,27 @@
 
 핵심 계층:
 - **Canvas 계층**: 노드/엣지 편집, 저장, 템플릿 관리
+- **Agent Studio 계층**: 채팅 기반 워크플로우 컴파일, 툴 실행, 아티팩트 프리뷰
 - **Spec 계층**: 노드 계산, 제약 조건, 품질 점수 산정
 - **Optimization 계층**: GA/RL로 조합 개선
 - **Generation 계층**: 스토리/이미지/영상/오디오 생성 및 합성
 - **Data/Evidence 계층**: Video Schema DB, Notebook Library, 패턴 라이브러리, 증거 누적
  - **Observability/Eval**: 실행 추적, 품질/비용/지연 평가
 
-### 1.1 핵심 사용자 플로우
+### 1.1 Agent Studio (Chat-first)
+
+- **Chat → Tool → Artifact**: `compile_workflow` → `run_capsule/analyze_sources` → `artifact_update`
+- **SSE 스트리밍**: `agent.*` 이벤트로 메시지/도구/아티팩트 업데이트 (정의는 `28_EVENT_DRIVEN_ARCHITECTURE_SPEC_V1.md`)
+- **Canvas Sync**: 워크플로우 수신 후 적용/보류/자동 적용
+- **모드 분리**: Simple(결과 중심) / Expert(도구·메타 노출)
+
+### 1.2 핵심 사용자 플로우
 
 - 메인에 **거장 템플릿 카드** 노출 → 클릭 시 템플릿 그래프 로드
 - 기본 그래프: `Input → Auteur Capsule → Script/Beat → Storyboard → Output`
 - **캡슐 노드**는 내부 체인을 숨기고 노출 파라미터만 편집 가능
 
-### 1.2 Data → Capsule 파이프라인 (최신 기준)
+### 1.3 Data → Capsule 파이프라인 (최신 기준)
 
 1. 거장/레퍼런스 데이터 수집 (링크/메타/씬 단위)
 2. ASR/키프레임/샷 분할 → Gemini 구조화 출력
@@ -69,7 +78,7 @@
 > 원본 소스를 직접 인제스트하는 경우, RAG 파이프라인(Chunking → Enrichment → Embedding → Index)과
 > hybrid search 및 retrieval 평가를 거쳐 승격한다.
 
-### 1.3 Creator → Generation 파이프라인
+### 1.4 Creator → Generation 파이프라인
 
 1. 템플릿 카드 선택 → 캔버스 로드
 2. 캡슐 파라미터 조정 → 실행 요약 확인
@@ -77,11 +86,11 @@
 4. Script/Storyboard 프리뷰 생성
 5. Scene/Audio 합성 → 최종 Export
 
-### 1.4 사용자/역할 흐름
+### 1.5 사용자/역할 흐름
 
 사용자/역할 흐름은 `10_PIPELINES_AND_USER_FLOWS.md`에 정본화한다.
 
-### 1.5 RAG/LLMOps 정렬 (2025-12 기준)
+### 1.6 RAG/LLMOps 정렬 (2025-12 기준)
 
 - **RAG 설계**: chunking → enrichment → embedding → index → hybrid search 단계 분리
 - **RAG 평가**: retrieval + end-to-end 평가(groundedness, relevancy, completeness) 기록
@@ -89,7 +98,7 @@
 - **LLMOps**: 프롬프트/체인도 버전 관리, 오프라인 평가셋 + 휴먼 피드백 기반 개선
 - **운영**: Dev/QA/Prod 분리, CI/CD, 모니터링/알림
 
-### 1.6 Story-First Integration (NEW: 2025-12-30)
+### 1.7 Story-First Integration (NEW: 2025-12-30)
 
 Canvas에서 바이럴 콘텐츠 제작을 위한 서사 중심 제어 시스템:
 
