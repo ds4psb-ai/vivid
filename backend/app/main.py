@@ -23,6 +23,9 @@ from app.routers.feedback import router as feedback_router
 from app.routers.crebit import router as crebit_router
 from app.routers.payment import router as payment_router
 
+# Telemetry (4-Layer Ecosystem)
+from app.routers.telemetry import router as telemetry_router
+
 from app.middleware.rate_limit import setup_rate_limiting
 from app.logging_config import setup_logging, LoggingMiddleware
 from app.monitoring import setup_monitoring
@@ -93,6 +96,9 @@ app.include_router(feedback_router, prefix="/api/v1", tags=["feedback"])
 # Crebit (강의 판매 + 결제)
 app.include_router(crebit_router, prefix="/api/v1/crebit", tags=["crebit"])
 app.include_router(payment_router, prefix="/api/v1/payment", tags=["payment"])
+
+# Telemetry (4-Layer Ecosystem: Tool tracking, Forks, Attribution)
+app.include_router(telemetry_router, prefix="/api/v1/telemetry", tags=["telemetry"])
 
 # Infrastructure
 app.include_router(health_router, prefix="", tags=["health"])
