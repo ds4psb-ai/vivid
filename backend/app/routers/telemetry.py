@@ -30,6 +30,7 @@ from app.schemas.telemetry_schemas import (
     ToolAnalytics,
 )
 from app.services import telemetry_service
+from app.services import fork_revenue_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -487,3 +488,86 @@ async def get_category_stats(
         })
     
     return {"period_days": days, "categories": categories}
+
+
+# =============================================================================
+# Revenue Settlement Endpoints
+# =============================================================================
+
+@router.post("/settlement/preview/{tool_id}")
+async def preview_settlement(
+    tool_id: UUID,
+    credits: int = Query(..., ge=1, le=10000, description="Total credits for the run"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Preview revenue settlement without executing.
+    
+    Shows how revenue would be distributed among:
+    - Platform (30% fee)
+    - Tool owner (based on attribution score)
+    - Ancestor creators (remainder)
+    
+    Use this to show users the revenue breakdown before running a tool.
+    """
+    settlement = await fork_revenue_service.calculate_settlement(db, tool_id, credits)
+    return settlement.to_dict()
+
+
+@router.post("/settlement/execute/{tool_run_id}")
+async def execute_settlement(
+    tool_run_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Execute revenue settlement for a completed tool run.
+    
+    This should be called after a tool run completes successfully.
+    It distributes credits to the tool owner and ancestors.
+    
+    Admin only endpoint.
+    """
+    # Check if admin (or could be triggered by background job)
+    if not current_user.get("is_admin", False):
+        raise HTTPException(status_code=403, detail="Admin only")
+    
+    # Get the tool run
+    run = await db.get(ToolRunEvent, tool_run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail="Tool run not found")
+    
+    if run.credits_charged <= 0:
+        raise HTTPException(status_code=400, detail="No credits to settle")
+    
+    settlement = await fork_revenue_service.settle_tool_run(
+        db, run.tool_id, run.credits_charged, tool_run_id
+    )
+    
+    return settlement.to_dict()
+
+
+@router.get("/settlement/lineage/{tool_id}")
+async def get_tool_lineage(
+    tool_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get the ancestry lineage of a tool.
+    
+    Shows the fork chain from original creator to current tool.
+    """
+    lineage = await fork_revenue_service.get_tool_lineage(db, tool_id)
+    
+    return {
+        "tool_id": str(tool_id),
+        "depth": len(lineage),
+        "lineage": [
+            {
+                "tool_key": tool.tool_key,
+                "display_name": tool.display_name,
+                "created_by": tool.created_by,
+                "attribution_score": fork.attribution_score if fork else None,
+                "is_original": tool.parent_tool_id is None,
+            }
+            for tool, fork in lineage
+        ],
+    }
+
