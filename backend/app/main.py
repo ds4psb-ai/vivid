@@ -35,6 +35,9 @@ from app.routers.fork import router as fork_router
 # Reviews (Approval Workflow)
 from app.routers.reviews import router as reviews_router
 
+# Sandbox (Isolated Execution)
+from app.routers.sandbox import router as sandbox_router
+
 from app.middleware.rate_limit import setup_rate_limiting
 from app.logging_config import setup_logging, LoggingMiddleware
 from app.monitoring import setup_monitoring
@@ -117,6 +120,9 @@ app.include_router(fork_router, prefix="/api/v1", tags=["fork"])
 
 # Reviews (Approval Workflow)
 app.include_router(reviews_router, prefix="/api/v1", tags=["reviews"])
+
+# Sandbox (Isolated Execution)
+app.include_router(sandbox_router, prefix="/api/v1", tags=["sandbox"])
 
 # Infrastructure
 app.include_router(health_router, prefix="", tags=["health"])
