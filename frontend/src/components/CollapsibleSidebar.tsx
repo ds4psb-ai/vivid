@@ -93,10 +93,12 @@ function NavItem({ icon: Icon, label, href, isExpanded, isActive, badge }: NavIt
         <div className="relative group/navitem">
             <Link
                 href={href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 relative
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 relative group/item
                 ${isActive
-                        ? 'bg-[#4200FF]/20 text-white'
-                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                        ? label === "차원문"
+                            ? 'bg-gradient-to-r from-violet-500/20 via-violet-500/5 to-transparent text-white border-l-2 border-violet-500 shadow-[0_0_20px_rgba(139,92,246,0.15)]'
+                            : 'bg-gradient-to-r from-[#4200FF]/20 via-[#4200FF]/5 to-transparent text-white border-l-2 border-[#4200FF]'
+                        : 'text-slate-400 hover:bg-white/5 hover:text-white border-l-2 border-transparent hover:border-white/20'
                     }
             `}
             >
@@ -158,8 +160,10 @@ function NavGroup({ label, icon: Icon, items, isExpanded, pathname }: NavGroupPr
         <div className="relative group/navgroup">
             <button
                 onClick={() => isExpanded && setIsOpen(!isOpen)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
-                    ${isGroupActive ? 'text-white' : 'text-slate-400 hover:bg-white/5 hover:text-white'}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 border-l-2
+                    ${isGroupActive
+                        ? 'bg-gradient-to-r from-white/10 to-transparent text-white border-white/40'
+                        : 'text-slate-400 hover:bg-white/5 hover:text-white border-transparent hover:border-white/20'}
                 `}
             >
                 <Icon className="w-5 h-5 shrink-0" />
