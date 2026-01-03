@@ -319,7 +319,7 @@ export default function PromptGeneratorPanel() {
                                     )}
                                 </button>
                             </div>
-                            <div className="p-6 bg-[#18181b] border border-white/10 rounded-xl shadow-inner font-mono text-sm leading-relaxed text-zinc-100 whitespace-pre-wrap group-hover:border-white/20 transition-colors relative overflow-hidden">
+                            <div className="p-6 bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.2)] font-mono text-sm leading-relaxed text-zinc-100 whitespace-pre-wrap group-hover:border-white/20 transition-all relative overflow-hidden">
                                 <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-amber-400/50 to-transparent opacity-50"></div>
                                 {result.prompt}
                             </div>
@@ -343,7 +343,7 @@ export default function PromptGeneratorPanel() {
                                         {copiedField === "negative" ? "Copied" : "Copy"}
                                     </button>
                                 </div>
-                                <div className="p-5 bg-[#18181b]/50 border border-white/10 rounded-xl shadow-inner font-mono text-sm leading-relaxed text-zinc-400 whitespace-pre-wrap group-hover:border-white/20 transition-colors">
+                                <div className="p-5 bg-black/30 backdrop-blur-md border border-white/10 rounded-xl shadow-inner font-mono text-sm leading-relaxed text-zinc-400 whitespace-pre-wrap group-hover:border-white/20 transition-colors">
                                     {result.negative_prompt}
                                 </div>
                             </div>
@@ -353,7 +353,7 @@ export default function PromptGeneratorPanel() {
                         {(result.style || result.technical) && (
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 {result.style && (
-                                    <div className="p-6 bg-white/[0.02] border border-white/5 rounded-xl space-y-4 hover:border-white/10 transition-colors">
+                                    <div className="p-6 bg-white/[0.03] backdrop-blur-sm border border-white/5 rounded-xl space-y-4 hover:border-white/10 transition-colors hover:bg-white/[0.05]">
                                         <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest border-b border-white/5 pb-3 mb-1">Style Parameters</h3>
                                         <div className="space-y-4">
                                             {Object.entries(result.style).map(([key, value]) => (
@@ -366,7 +366,7 @@ export default function PromptGeneratorPanel() {
                                     </div>
                                 )}
                                 {result.technical && (
-                                    <div className="p-6 bg-white/[0.02] border border-white/5 rounded-xl space-y-4 hover:border-white/10 transition-colors">
+                                    <div className="p-6 bg-white/[0.03] backdrop-blur-sm border border-white/5 rounded-xl space-y-4 hover:border-white/10 transition-colors hover:bg-white/[0.05]">
                                         <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest border-b border-white/5 pb-3 mb-1">Technical Specs</h3>
                                         <div className="grid grid-cols-2 gap-6">
                                             {Object.entries(result.technical).map(([key, value]) => (
@@ -383,8 +383,8 @@ export default function PromptGeneratorPanel() {
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center h-full text-zinc-500 space-y-6">
-                        <div className="w-24 h-24 rounded-3xl bg-white/[0.03] border border-white/5 flex items-center justify-center shadow-2xl">
-                            <svg className="w-10 h-10 opacity-20 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-white/5 to-transparent border border-white/5 flex items-center justify-center shadow-[0_0_40px_rgba(0,0,0,0.2)] backdrop-blur-sm group hover:scale-105 transition-transform duration-500">
+                            <svg className="w-12 h-12 opacity-20 text-white group-hover:opacity-40 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                             </svg>
                         </div>

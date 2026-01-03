@@ -9,7 +9,7 @@ export default function TeachingStoryboardPage() {
 
     return (
         <AppShell showTopBar={false}>
-            <div className="h-screen bg-[#131313]">
+            <div className="h-screen">
                 <StoryboardPanel />
             </div>
         </AppShell>

@@ -9,7 +9,7 @@ export default function TeachingShotCatchPage() {
 
     return (
         <AppShell showTopBar={false}>
-            <div className="h-screen bg-[#131313]">
+            <div className="h-screen">
                 <ReferenceCapturePanel />
             </div>
         </AppShell>
