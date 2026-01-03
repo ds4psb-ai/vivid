@@ -243,32 +243,10 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
     const [isLogoHovered, setIsLogoHovered] = useState(false);
     const { t } = useLanguage();
 
-    const NAV_ITEMS: { label: string; href: string; icon: React.ElementType; badge?: string }[] = [
-        { label: t("navStudio"), href: "/studio", icon: MessageCircle },
-        { label: t("navHome"), href: "/", icon: Home },
-    ];
+    // 핵심 네비게이션만 유지
+    const NAV_ITEMS: { label: string; href: string; icon: React.ElementType; badge?: string }[] = [];
 
     const NAV_GROUPS = [
-        {
-            id: "tools",
-            label: "도구",
-            icon: Zap,
-            items: [
-                { label: "도구 대시보드", href: "/tools", icon: LayoutGrid },
-                { label: "새 도구 만들기", href: "/tools/create", icon: Sparkles },
-            ],
-        },
-        {
-            id: "research",
-            label: t("navResearch"),
-            icon: Search,
-            items: [
-                { label: t("navKnowledge"), href: "/knowledge", icon: BookOpen },
-                { label: t("navCollections"), href: "/collections", icon: FolderOpen },
-                { label: t("navPatterns"), href: "/patterns", icon: Layers },
-                { label: t("navPipeline"), href: "/pipeline", icon: Activity },
-            ],
-        },
         {
             id: "workshop",
             label: "워크샵",
@@ -281,13 +259,12 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
             ],
         },
         {
-            id: "accounts",
-            label: t("navAccounts"),
-            icon: User,
+            id: "credits",
+            label: "크레딧",
+            icon: TrendingUp,
             items: [
-                { label: t("navUsage"), href: "/usage", icon: TrendingUp },
-                { label: t("navBilling"), href: "/billing", icon: Receipt },
-                { label: t("navSettings"), href: "/settings", icon: Settings },
+                { label: "사용량", href: "/credits", icon: Activity },
+                { label: "설정", href: "/settings", icon: Settings },
             ],
         },
         {
@@ -296,13 +273,12 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
             icon: DollarSign,
             items: [
                 { label: "내 정산", href: "/settlements", icon: TrendingUp },
-                { label: "정산 관리", href: "/admin/settlements", icon: Settings, adminOnly: true },
             ],
         },
     ];
 
     const ACADEMY_ITEM = { label: "Crebit ATC 1기", href: "/crebit", icon: Moon, badge: "Hot" };
-    const BOTTOM_ITEM = { label: t("navAffiliate"), href: "/affiliate", icon: Gift };
+    const BOTTOM_ITEM = null; // 제휴 프로그램 제거
 
     const FLYOUT_CONTENT = {
         affiliate: {
@@ -447,28 +423,6 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
 
             {/* Bottom Section with Flyouts */}
             <div className="p-2 border-t border-white/5 space-y-1">
-                {/* Affiliate Item with Flyout */}
-                <div className="relative group/affiliate">
-                    <NavItem
-                        icon={BOTTOM_ITEM.icon}
-                        label={BOTTOM_ITEM.label}
-                        href={BOTTOM_ITEM.href}
-                        isExpanded={isExpanded}
-                        isActive={pathname === BOTTOM_ITEM.href}
-                    />
-                    <FlyoutPanel groupId="affiliate" title={FLYOUT_CONTENT.affiliate.title}>
-                        <div className="space-y-2">
-                            {FLYOUT_CONTENT.affiliate.items.map((item) => (
-                                <div key={item.label} className="flex items-center justify-between text-sm text-white">
-                                    <span>{item.label}</span>
-                                    <span className={'highlight' in item && item.highlight ? "text-[#4200FF] font-bold" : "text-slate-400"}>
-                                        {item.value}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </FlyoutPanel>
-                </div>
 
                 {/* KakaoTalk 1:1 Inquiry with Flyout */}
                 <div className="relative group/kakao">
