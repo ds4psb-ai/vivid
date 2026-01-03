@@ -30,6 +30,7 @@ import {
     MessageCircle,
     Moon,
     DollarSign,
+    Orbit,
 } from "lucide-react";
 
 // Moved inside component to use translations
@@ -245,7 +246,7 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
 
     // 핵심 네비게이션 - 단일 링크 아이템
     const NAV_ITEMS: { label: string; href: string; icon: React.ElementType; badge?: string }[] = [
-        { label: "워크샵", href: "/workshop", icon: GraduationCap },
+        { label: "차원문", href: "/workshop", icon: Orbit },
     ];
 
     const NAV_GROUPS = [
