@@ -142,12 +142,69 @@ async def sandbox_execute(
             }
     except Exception as e:
         logger.exception(f"sandbox_execute failed: {e}")
+async def index_tool(
+    ctx: Dict[str, Any],
+    tool_id: str,
+) -> Dict[str, Any]:
+    """
+    Index a tool in the vector database.
+    Called when a tool is created or updated.
+    
+    Args:
+        tool_id: Tool UUID as string.
+    
+    Returns:
+        Indexing result.
+    """
+    from uuid import UUID
+    from app.database import AsyncSessionLocal
+    from app.models import Tool
+    from app.services.vector_service import get_vector_service
+    from sqlalchemy import select
+    
+    logger.info(f"[Job] index_tool: tool_id={tool_id}")
+    
+    try:
+        async with AsyncSessionLocal() as db:
+            result = await db.execute(
+                select(Tool).where(Tool.id == UUID(tool_id))
+            )
+            tool = result.scalar_one_or_none()
+            
+            if not tool:
+                return {"status": "failed", "error": "Tool not found"}
+            
+            service = get_vector_service()
+            success = service.index_tool({
+                "id": str(tool.id),
+                "tool_key": tool.tool_key,
+                "display_name": tool.display_name,
+                "description": tool.description,
+                "category": tool.category,
+                "tier": tool.tier,
+                "usage_count": tool.usage_count,
+                "quality_rating": tool.quality_rating,
+                "input_schema": tool.input_schema,
+            })
+            
+            return {
+                "status": "completed" if success else "failed",
+                "tool_id": tool_id,
+                "indexed": success,
+            }
+    except Exception as e:
+        logger.exception(f"index_tool failed: {e}")
         return {"status": "failed", "error": str(e)}
 
 
 class WorkerSettings:
     """Arq WorkerSettings for job processing."""
-    functions = [analyze_source_pack, generate_video_batch, sandbox_execute]
+    functions = [
+        analyze_source_pack,
+        generate_video_batch,
+        sandbox_execute,
+        index_tool,
+    ]
     redis_settings = RedisSettings.from_dsn(settings.REDIS_URL)
     on_startup = startup
     on_shutdown = shutdown

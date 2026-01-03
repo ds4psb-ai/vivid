@@ -69,3 +69,18 @@ async def require_authenticated_user(
         "user_id": user_id,
         "is_admin": is_admin,
     }
+
+
+async def require_admin(
+    user: Dict[str, Any] = Depends(require_authenticated_user),
+) -> Dict[str, Any]:
+    """Require admin user.
+    
+    Raises HTTPException 403 if user is not admin.
+    """
+    if not user.get("is_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+    return user

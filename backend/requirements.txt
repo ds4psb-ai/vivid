@@ -16,3 +16,6 @@ sentry-sdk[fastapi]>=1.40.0
 prometheus-fastapi-instrumentator>=6.1.0
 notion-client>=2.2.1
 notion-to-md-py>=0.1.4
+# RAG / Vector Search
+qdrant-client>=1.7.0
+sentence-transformers>=2.2.2

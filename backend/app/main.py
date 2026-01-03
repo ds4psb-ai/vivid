@@ -41,6 +41,9 @@ from app.routers.sandbox import router as sandbox_router
 # Human Cloud (Creative Marketplace)
 from app.routers.humancloud import router as humancloud_router
 
+# RAG (Vector Search)
+from app.routers.rag import router as rag_router
+
 from app.middleware.rate_limit import setup_rate_limiting
 from app.logging_config import setup_logging, LoggingMiddleware
 from app.monitoring import setup_monitoring
@@ -129,6 +132,9 @@ app.include_router(sandbox_router, prefix="/api/v1", tags=["sandbox"])
 
 # Human Cloud (Creative Marketplace)
 app.include_router(humancloud_router, prefix="/api/v1", tags=["humancloud"])
+
+# RAG (Vector Search & Recommendations)
+app.include_router(rag_router, prefix="/api/v1", tags=["rag"])
 
 # Infrastructure
 app.include_router(health_router, prefix="", tags=["health"])
