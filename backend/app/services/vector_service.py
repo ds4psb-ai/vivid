@@ -36,22 +36,31 @@ class VectorService:
     def __init__(self, embedder: Optional[Embedder] = None):
         self.embedder = embedder or get_embedder()
         self._client: Optional[QdrantClient] = None
+        self._available: bool = True  # Flag for graceful degradation
     
     @property
-    def client(self) -> QdrantClient:
-        """Lazy-initialize Qdrant client."""
+    def client(self) -> Optional[QdrantClient]:
+        """Lazy-initialize Qdrant client with graceful failure."""
+        if not self._available:
+            return None
+        
         if self._client is None:
             try:
                 self._client = QdrantClient(
                     url=settings.QDRANT_URL,
                     api_key=settings.QDRANT_API_KEY if settings.QDRANT_API_KEY else None,
-                    timeout=10,
+                    timeout=5,  # Reduced timeout for faster failure
                 )
+                # Test connection
+                self._client.get_collections()
                 logger.info(f"Connected to Qdrant at {settings.QDRANT_URL}")
             except Exception as e:
-                logger.error(f"Failed to connect to Qdrant: {e}")
-                raise
+                logger.warning(f"Qdrant unavailable, RAG features disabled: {e}")
+                self._available = False
+                self._client = None
+                return None
         return self._client
+
     
     def ensure_collection(self) -> bool:
         """
@@ -60,12 +69,16 @@ class VectorService:
         Returns:
             True if collection exists or was created
         """
+        client = self.client
+        if client is None:
+            return False
+        
         try:
-            collections = self.client.get_collections()
+            collections = client.get_collections()
             exists = any(c.name == COLLECTION_NAME for c in collections.collections)
             
             if not exists:
-                self.client.create_collection(
+                client.create_collection(
                     collection_name=COLLECTION_NAME,
                     vectors_config=qdrant_models.VectorParams(
                         size=VECTOR_SIZE,
@@ -102,6 +115,10 @@ class VectorService:
         Returns:
             True if successful
         """
+        client = self.client
+        if client is None:
+            return False
+        
         try:
             self.ensure_collection()
             
@@ -113,7 +130,7 @@ class VectorService:
             text = self._build_tool_text(tool)
             vector = self.embedder.embed(text)
             
-            self.client.upsert(
+            client.upsert(
                 collection_name=COLLECTION_NAME,
                 points=[
                     qdrant_models.PointStruct(
@@ -139,8 +156,12 @@ class VectorService:
     
     def delete_tool(self, tool_id: str) -> bool:
         """Remove a tool from the index."""
+        client = self.client
+        if client is None:
+            return False
+        
         try:
-            self.client.delete(
+            client.delete(
                 collection_name=COLLECTION_NAME,
                 points_selector=qdrant_models.PointIdsList(points=[tool_id]),
             )
