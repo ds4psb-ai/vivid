@@ -243,21 +243,12 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
     const [isLogoHovered, setIsLogoHovered] = useState(false);
     const { t } = useLanguage();
 
-    // 핵심 네비게이션만 유지
-    const NAV_ITEMS: { label: string; href: string; icon: React.ElementType; badge?: string }[] = [];
+    // 핵심 네비게이션 - 단일 링크 아이템
+    const NAV_ITEMS: { label: string; href: string; icon: React.ElementType; badge?: string }[] = [
+        { label: "워크샵", href: "/workshop", icon: GraduationCap },
+    ];
 
     const NAV_GROUPS = [
-        {
-            id: "workshop",
-            label: "워크샵",
-            icon: GraduationCap,
-            items: [
-                { label: "프롬프트 차원", href: "/workshop/prompt", icon: Sparkles },
-                { label: "샷 캐치 차원", href: "/workshop/shot-catch", icon: Film },
-                { label: "스토리보드 차원", href: "/workshop/storyboard", icon: LayoutGrid },
-                { label: "이미지 차원", href: "/workshop/image-tool", icon: ImageIcon },
-            ],
-        },
         {
             id: "credits",
             label: "크레딧",
