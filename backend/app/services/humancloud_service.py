@@ -326,6 +326,19 @@ async def start_work(
     return assignment
 
 
+async def get_deliveries(
+    db: AsyncSession,
+    assignment_id: UUID,
+) -> List[Delivery]:
+    """Get all deliveries for an assignment."""
+    result = await db.execute(
+        select(Delivery)
+        .where(Delivery.assignment_id == assignment_id)
+        .order_by(Delivery.version.desc())
+    )
+    return list(result.scalars().all())
+
+
 # =============================================================================
 # Delivery & Completion
 # =============================================================================

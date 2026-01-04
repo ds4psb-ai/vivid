@@ -317,6 +317,7 @@ export const useAgentChat = (options?: UseAgentChatOptions) => {
       role: "user",
       content: text,
       status: "complete",
+      attachments: extra?.attachments,
     };
     setMessages((prev) => trimMessages(appendMessage(prev, userMessage)));
 
@@ -325,6 +326,7 @@ export const useAgentChat = (options?: UseAgentChatOptions) => {
       message: text,
       metadata: extra?.metadata,
       model: extra?.model ?? session?.agentModel ?? undefined,
+      attachments: extra?.attachments,
     };
 
     const controller = new AbortController();

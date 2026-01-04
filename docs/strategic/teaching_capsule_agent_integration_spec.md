@@ -3,7 +3,10 @@
 **작성**: 2026-01-01  
 **버전**: v1.0  
 **대상**: Backend / Frontend Developer  
-**목표**: Teaching 캡슐들을 Agent Chat LLM에서 Tool로 호출하고, 노드 캔버스에 파이프라인으로 연결하는 구현 가이드
+**목표**: Teaching 캡슐들을 Agent Chat LLM에서 Tool로 호출하고, **내부 워크플로우 그래프(레거시 Canvas 노드)**로 연결하는 구현 가이드
+
+> Status (2026-01): 사용자 UI는 Flow/Dimension이 기본이며, Canvas/Node 용어는 내부 그래프 또는 레거시 UI를 의미합니다.  
+> Legacy UI 경로: `frontend/src/app/_deprecated/studio/`, `frontend/src/components/canvas/`.
 
 ---
 
@@ -41,14 +44,16 @@
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
+> Note: 위 "Canvas Node"는 사용자 UI가 아닌 내부 그래프 표현입니다. UI에서는 Train Workflow/Dimension을 사용합니다.
+
 ### 1.2 주요 컴포넌트
 
 | 컴포넌트 | 역할 | 위치 |
 |----------|------|------|
 | **Teaching Capsules** | 4개의 AI 도구 (Prompt, Storyboard, Image, Reference) | `routers/teaching.py` |
 | **Agent Chat** | 사용자 의도 해석 + 도구 호출 | `routers/agent.py` |
-| **Node Canvas** | 노드 기반 그래프 편집 | `frontend/src/app/studio/canvas/` |
-| **Capsule Adapter** | 캡슐 실행 + 크레딧 차감 | `capsule_adapter.py` |
+| **Node Canvas (Legacy UI)** | 노드 기반 그래프 편집 (내부 그래프/레거시 UI) | `frontend/src/app/_deprecated/studio/`, `frontend/src/components/canvas/` |
+| **Teaching Adapter** | 캡슐 실행 + 크레딧 차감 | `backend/app/teaching_adapter.py` |
 
 ---
 

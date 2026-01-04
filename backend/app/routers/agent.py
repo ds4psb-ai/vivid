@@ -8,11 +8,14 @@ import uuid
 from datetime import datetime
 from typing import AsyncGenerator, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+import aiofiles
+import os
+import shutil
 
 from app.agents.agent_types import AgentMessage as CoreAgentMessage
 from app.agents.agent_types import AgentRole, AgentState, ToolCall, ToolContext
@@ -28,7 +31,13 @@ router = APIRouter(prefix="/agent", tags=["agent"])
 logger = get_logger("agent_router")
 
 
-def _build_agent(model_name: Optional[str] = None) -> VividAgent:
+def _build_agent(model_name: Optional[str] = None, use_cache: bool = True) -> VividAgent:
+    """Build VividAgent with optional context caching.
+    
+    Args:
+        model_name: Gemini model name
+        use_cache: Enable explicit context caching for cost optimization
+    """
     selected_model = model_name or settings.GEMINI_AGENT_MODEL
     if settings.GEMINI_ENABLED and settings.GEMINI_API_KEY:
         try:
@@ -37,6 +46,7 @@ def _build_agent(model_name: Optional[str] = None) -> VividAgent:
                     model_name=selected_model,
                     temperature=settings.GEMINI_AGENT_TEMPERATURE,
                     max_output_tokens=settings.GEMINI_AGENT_MAX_TOKENS,
+                    use_cache=use_cache,  # Enable context caching
                 )
             )
         except Exception as exc:
@@ -64,6 +74,7 @@ class AgentChatRequest(BaseModel):
     message: str = Field(..., min_length=1)
     metadata: Optional[dict] = None
     model: Optional[str] = None
+    attachments: List[dict] = Field(default_factory=list)
 
 
 class AgentDecisionRequest(BaseModel):
@@ -78,6 +89,7 @@ class AgentMessageResponse(BaseModel):
     tool_calls: List[dict] = Field(default_factory=list)
     tool_call_id: Optional[str] = None
     name: Optional[str] = None
+    attachments: List[dict] = Field(default_factory=list)
     created_at: datetime
 
 
@@ -184,6 +196,8 @@ def _chunk_text(text: str, size: int = 48) -> List[str]:
 
 def _to_core_message(record: AgentMessageRecord) -> CoreAgentMessage:
     tool_calls = []
+    attachments = record.payload.get("attachments", []) if record.payload else []
+
     for raw in record.tool_calls or []:
         if not isinstance(raw, dict):
             continue
@@ -208,7 +222,21 @@ def _to_core_message(record: AgentMessageRecord) -> CoreAgentMessage:
         tool_calls=tool_calls,
         tool_call_id=record.tool_call_id,
         name=record.name,
+        attachments=attachments,
     )
+
+
+def _ensure_genai():
+    try:
+        import google.generativeai as genai
+        if not settings.GEMINI_API_KEY:
+             raise ValueError("GEMINI_API_KEY not set")
+        genai.configure(api_key=settings.GEMINI_API_KEY)
+        return genai
+    except ImportError:
+        raise HTTPException(status_code=500, detail="google-generativeai not installed")
+    except ValueError:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
 
 
 def _tool_result_payload(result) -> dict:
@@ -306,6 +334,44 @@ def _start_stream_thread(
     thread.start()
 
 
+    thread = threading.Thread(target=_runner, daemon=True)
+    thread.start()
+
+
+@router.post("/upload")
+async def upload_file(
+    file: UploadFile = File(...),
+):
+    """Upload a file to Gemini File API."""
+    genai = _ensure_genai()
+    
+    # Save to temp file first
+    temp_filename = f"temp_{uuid.uuid4().hex}_{file.filename}"
+    try:
+        async with aiofiles.open(temp_filename, 'wb') as out_file:
+            content = await file.read()
+            await out_file.write(content)
+        
+        # Upload to Gemini
+        # Note: upload_file handles MIME type detection, but we can hint it or verify
+        uploaded_file = genai.upload_file(path=temp_filename, display_name=file.filename)
+        
+        # Return info needed for the chat request
+        return {
+            "file_uri": uploaded_file.uri,
+            "name": uploaded_file.name,
+            "mime_type": uploaded_file.mime_type,
+            "display_name": file.filename,
+        }
+    except Exception as e:
+        logger.error(f"File upload failed: {e}")
+        raise HTTPException(status_code=500, detail=f"File upload failed: {str(e)}")
+    finally:
+        # Cleanup temp file
+        if os.path.exists(temp_filename):
+            os.remove(temp_filename)
+
+
 @router.post("/chat")
 async def chat_agent(
     request: AgentChatRequest,
@@ -363,6 +429,7 @@ async def chat_agent(
         role="user",
         content=user_content,
         tool_calls=[],
+        payload={"attachments": request.attachments} if request.attachments else None,
     )
     db.add(user_record)
     await db.commit()
@@ -650,6 +717,7 @@ async def get_session(
                 tool_calls=message.tool_calls or [],
                 tool_call_id=message.tool_call_id,
                 name=message.name,
+                attachments=message.payload.get("attachments", []) if message.payload else [],
                 created_at=message.created_at,
             )
             for message in messages

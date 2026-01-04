@@ -1,9 +1,17 @@
 # Event-Driven Architecture Specification (SPEC v37)
 
 **Date**: 2025-12-28  
-**Status**: DRAFT (Phase 3 Blueprint)  
+**Status**: DRAFT (Phase 3 Blueprint, codebase partially scaffolded)  
 **Author**: Data Engineer Persona (Antigravity)  
 **Context**: Crebit Phase 3.1 - Event-driven Pipeline
+
+---
+
+## 0.1 Current Implementation Snapshot
+
+- Redis는 `docker-compose.yml`에 포함됨.
+- Arq 워커 스캐폴딩: `backend/app/worker.py` (job 등록만 존재).
+- 이벤트 라우터는 별도 구현되지 않았고, `_deprecated` 경로에 과거 라우터만 존재.
 
 ---
 
@@ -64,12 +72,14 @@ redis:
 ### 3.2 Backend Implementation
 **Requirements**: `arq`, `redis`
 
-**Job Definitions (`app/worker.py`)**:
-- `process_upload(file_key: str)`
-- `generate_capsule(asset_id: str)`
-- `sync_sheets()`
+**Job Definitions (`backend/app/worker.py`)**:
+- `analyze_source_pack(source_pack, capsule_id)`
+- `generate_video_batch(storyboard_cards, provider, sequence_id, scene_id)`
+- `sandbox_execute(tool_id, input_data, user_id, session_id)`
+- `index_tool(tool_id)`
+- `poll_batch_jobs(job_ids=None)`
 
-**Event Router (`routers/events.py`)**:
+**Event Router (planned)**:
 - `POST /api/v1/events/s3_hook`: Receives S3 Event JSON, validates, enqueues job.
 
 ### 3.3 Event Schema (Internal)
@@ -84,6 +94,7 @@ class PipelineEvent(BaseModel):
 
 ### 3.4 Agent SSE Event Envelope (Chat)
 실시간 Agent Chat 스트리밍은 SSE(`text/event-stream`)로 전달한다.
+구현 위치: `backend/app/routers/agent.py`
 
 **Envelope (JSON):**
 ```json

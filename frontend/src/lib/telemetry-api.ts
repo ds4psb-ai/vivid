@@ -192,6 +192,7 @@ export async function createTool(data: {
     credit_cost?: number;
     input_schema?: Record<string, unknown>;
     output_schema?: Record<string, unknown>;
+    system_prompt?: string;
     parent_tool_id?: string;
 }): Promise<ToolManifest> {
     return fetchWithAuth("/api/v1/telemetry/tools", {

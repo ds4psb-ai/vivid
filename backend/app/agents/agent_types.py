@@ -55,6 +55,7 @@ class AgentMessage(BaseModel):
     tool_calls: List[ToolCall] = Field(default_factory=list)
     tool_call_id: Optional[str] = None
     name: Optional[str] = None
+    attachments: List[Dict[str, Any]] = Field(default_factory=list)
 
 
 class ToolSpec(BaseModel):

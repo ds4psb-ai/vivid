@@ -1,23 +1,44 @@
 # Docs Index (정본)
 
-**Updated**: 2026-01-01  
-**총 문서**: 32개 (00~31 순차 번호)
+**Updated**: 2026-01-04  
+**총 문서**: 33개 (00 두 개 포함)
 
 ---
 
 ## 핵심 정본 (SoR)
 
-| # | 문서 | 역할 |
-|---|------|------|
-| 00 | DOCS_INDEX | 이 문서 |
-| 00 | EXECUTIVE_SUMMARY_NODE_CANVAS | 프로젝트 개요 |
-| 01 | NODE_CANVAS_TECHNICAL_SPECIFICATION | 기술 명세 |
-| 04 | CAPSULE_NODE_SPEC | 캡슐 계약 |
-| 08 | PIPELINES_AND_USER_FLOWS | 파이프라인/역할 |
-| 09 | DB_PROMOTION_RULES_V1 | 승격 규칙 |
-| 10 | UI_DESIGN_GUIDE_2025-12 | UI/UX |
-| 15 | CREBIT_ARCHITECTURE_EVOLUTION_CODEX | 철학/원칙 |
-| 30 | UNIFIED_EXECUTION_ROADMAP | 실행 로드맵 |
+| # | 문서 | 역할 | 상태 |
+|---|------|------|------|
+| 00 | DOCS_INDEX | 이 문서 | ✅ |
+| 00 | EXECUTIVE_SUMMARY_NODE_CANVAS | 프로젝트 개요 | ✅ |
+| 01 | NODE_CANVAS_TECHNICAL_SPECIFICATION | 기술 명세 | ⚠️ 레거시 (Canvas/Studio deprecated) |
+| 04 | CAPSULE_NODE_SPEC | 캡슐 계약 | ✅ |
+| 08 | PIPELINES_AND_USER_FLOWS | 파이프라인/역할 | ✅ |
+| 09 | DB_PROMOTION_RULES_V1 | 승격 규칙 | ✅ |
+| 10 | UI_DESIGN_GUIDE_2025-12 | UI/UX | ✅ |
+| 15 | CREBIT_ARCHITECTURE_EVOLUTION_CODEX | 철학/원칙 | ✅ |
+| 30 | UNIFIED_EXECUTION_ROADMAP | 실행 로드맵 | ✅ |
+
+---
+
+## 2026 H1 신규 스택
+
+| 항목 | 위치 | 설명 |
+|------|------|------|
+| **AG-UI 이벤트 매퍼** | `frontend/src/lib/agui/` | SSE → AG-UI 표준 이벤트 매핑 |
+| **A2UI 검증기** | `frontend/src/lib/a2ui/validator.ts` | 화이트리스트 위젯 검증 |
+| **Teaching Tools** | `backend/app/agents/teaching_tools.py` | 4개 도구 (generate_veo_prompt 등) |
+
+---
+
+## Deprecated 경로
+
+| 경로 | 사유 |
+|------|------|
+| `frontend/src/app/_deprecated/studio/` | Canvas/Studio UI → Dimension/Flow 전환 |
+| `frontend/src/app/_deprecated/canvas/` | Canvas UI deprecated |
+| `backend/app/agents/_deprecated/` | workflow_tools 등 레거시 도구 |
+| `backend/app/routers/_deprecated/` | 레거시 API 라우터 |
 
 ---
 

@@ -16,6 +16,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import {
     Zap,
     GitFork,
@@ -23,15 +24,14 @@ import {
     TrendingUp,
     Plus,
     AlertTriangle,
-    CheckCircle,
-    Shield,
-    Loader2,
     RefreshCw,
     ChevronRight,
     Beaker,
     Award,
     BadgeCheck,
 } from "lucide-react";
+import AppShell from "@/components/AppShell";
+import { useLanguage } from "@/contexts/LanguageContext";
 import * as telemetryApi from "@/lib/telemetry-api";
 import type { ToolManifest, ToolTier, DashboardOverview } from "@/lib/telemetry-api";
 
@@ -76,7 +76,7 @@ function TierBadge({ tier }: { tier: ToolTier }) {
 
 function StarRating({ rating, count }: { rating: number | null; count?: number }) {
     if (rating === null) {
-        return <span className="text-gray-500 text-sm">No ratings yet</span>;
+        return <span className="text-[var(--fg-muted)] text-sm">No ratings yet</span>;
     }
 
     return (
@@ -86,15 +86,15 @@ function StarRating({ rating, count }: { rating: number | null; count?: number }
                     <Star
                         key={star}
                         className={`w-4 h-4 ${star <= Math.round(rating)
-                                ? "text-yellow-400 fill-yellow-400"
-                                : "text-gray-600"
+                            ? "text-yellow-400 fill-yellow-400"
+                            : "text-slate-600"
                             }`}
                     />
                 ))}
             </div>
-            <span className="text-sm text-gray-400">
+            <span className="text-sm text-[var(--fg-muted)]">
                 {rating.toFixed(1)}
-                {count !== undefined && <span className="text-gray-500"> ({count})</span>}
+                {count !== undefined && <span className="text-slate-500"> ({count})</span>}
             </span>
         </div>
     );
@@ -108,44 +108,43 @@ function ToolCard({ tool, onClick }: { tool: ToolManifest; onClick: () => void }
     return (
         <div
             onClick={onClick}
-            className="group relative bg-gray-800/50 border border-gray-700/50 rounded-xl p-5 
-                 hover:border-purple-500/50 hover:bg-gray-800/80 transition-all cursor-pointer"
+            className="group relative card-glass p-5 card-glass-hover cursor-pointer"
         >
             {/* Header */}
             <div className="flex items-start justify-between mb-3">
                 <div>
-                    <h3 className="text-lg font-semibold text-white group-hover:text-purple-300 transition-colors">
+                    <h3 className="text-lg font-semibold text-[var(--fg-0)] group-hover:text-violet-300 transition-colors">
                         {tool.display_name}
                     </h3>
-                    <p className="text-sm text-gray-400 font-mono">{tool.tool_key}</p>
+                    <p className="text-sm text-[var(--fg-muted)] font-mono">{tool.tool_key}</p>
                 </div>
                 <TierBadge tier={tool.tier} />
             </div>
 
             {/* Description */}
-            <p className="text-sm text-gray-400 line-clamp-2 mb-4">{tool.description}</p>
+            <p className="text-sm text-[var(--fg-muted)] line-clamp-2 mb-4">{tool.description}</p>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-3 gap-3 mb-4">
-                <div className="text-center p-2 bg-gray-900/50 rounded-lg">
-                    <div className="text-lg font-bold text-white">{tool.usage_count}</div>
-                    <div className="text-xs text-gray-500">Uses</div>
+                <div className="text-center p-2 bg-slate-950/50 rounded-lg">
+                    <div className="text-lg font-bold text-[var(--fg-0)]">{tool.usage_count}</div>
+                    <div className="text-xs text-slate-500">Uses</div>
                 </div>
-                <div className="text-center p-2 bg-gray-900/50 rounded-lg">
-                    <div className="text-lg font-bold text-white">{tool.fork_count}</div>
-                    <div className="text-xs text-gray-500">Forks</div>
+                <div className="text-center p-2 bg-slate-950/50 rounded-lg">
+                    <div className="text-lg font-bold text-[var(--fg-0)]">{tool.fork_count}</div>
+                    <div className="text-xs text-slate-500">Forks</div>
                 </div>
-                <div className="text-center p-2 bg-gray-900/50 rounded-lg">
+                <div className="text-center p-2 bg-slate-950/50 rounded-lg">
                     <div className="text-lg font-bold text-emerald-400">{tool.total_revenue}</div>
-                    <div className="text-xs text-gray-500">Credits</div>
+                    <div className="text-xs text-slate-500">Credits</div>
                 </div>
             </div>
 
             {/* Footer */}
             <div className="flex items-center justify-between">
                 <StarRating rating={tool.quality_rating} />
-                <div className="flex items-center gap-1 text-sm text-gray-400">
-                    <span className="px-2 py-0.5 bg-gray-700/50 rounded text-xs">
+                <div className="flex items-center gap-1 text-sm text-[var(--fg-muted)]">
+                    <span className="px-2 py-0.5 bg-slate-700/50 rounded text-xs">
                         {tool.credit_cost} credits
                     </span>
                 </div>
@@ -153,7 +152,7 @@ function ToolCard({ tool, onClick }: { tool: ToolManifest; onClick: () => void }
 
             {/* Fork Indicator */}
             {tool.parent_tool_id && (
-                <div className="absolute top-3 right-3 flex items-center gap-1 text-xs text-purple-400">
+                <div className="absolute top-3 right-3 flex items-center gap-1 text-xs text-violet-400">
                     <GitFork className="w-3 h-3" />
                     <span>Fork</span>
                 </div>
@@ -161,8 +160,8 @@ function ToolCard({ tool, onClick }: { tool: ToolManifest; onClick: () => void }
 
             {/* Hover Arrow */}
             <ChevronRight
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600 
-                   group-hover:text-purple-400 group-hover:translate-x-1 transition-all opacity-0 group-hover:opacity-100"
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600 
+                   group-hover:text-violet-400 group-hover:translate-x-1 transition-all opacity-0 group-hover:opacity-100"
             />
         </div>
     );
@@ -174,21 +173,21 @@ function ToolCard({ tool, onClick }: { tool: ToolManifest; onClick: () => void }
 
 function ToolCardSkeleton() {
     return (
-        <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-5 animate-pulse">
+        <div className="card-glass p-5 animate-pulse">
             <div className="flex items-start justify-between mb-3">
                 <div>
-                    <div className="h-6 w-32 bg-gray-700 rounded mb-2"></div>
-                    <div className="h-4 w-24 bg-gray-700/50 rounded"></div>
+                    <div className="h-6 w-32 bg-slate-700 rounded mb-2"></div>
+                    <div className="h-4 w-24 bg-slate-700/50 rounded"></div>
                 </div>
-                <div className="h-6 w-20 bg-gray-700 rounded-full"></div>
+                <div className="h-6 w-20 bg-slate-700 rounded-full"></div>
             </div>
-            <div className="h-10 bg-gray-700/50 rounded mb-4"></div>
+            <div className="h-10 bg-slate-700/50 rounded mb-4"></div>
             <div className="grid grid-cols-3 gap-3 mb-4">
                 {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-14 bg-gray-900/50 rounded-lg"></div>
+                    <div key={i} className="h-14 bg-slate-950/50 rounded-lg"></div>
                 ))}
             </div>
-            <div className="h-4 w-24 bg-gray-700/50 rounded"></div>
+            <div className="h-4 w-24 bg-slate-700/50 rounded"></div>
         </div>
     );
 }
@@ -197,24 +196,23 @@ function ToolCardSkeleton() {
 // Empty State
 // =============================================================================
 
-function EmptyState({ onCreateClick }: { onCreateClick: () => void }) {
+function EmptyState({ onCreateClick, labels }: { onCreateClick: () => void; labels: { noTools: string; noToolsDesc: string; createFirst: string } }) {
     return (
         <div className="text-center py-16">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-purple-500/10 flex items-center justify-center">
-                <Zap className="w-10 h-10 text-purple-400" />
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-violet-500/10 flex items-center justify-center">
+                <Zap className="w-10 h-10 text-violet-400" />
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">No Tools Yet</h3>
-            <p className="text-gray-400 mb-6 max-w-md mx-auto">
-                Create your first AI tool to start building your ecosystem.
-                Tools can be forked, shared, and earn credits.
+            <h3 className="text-xl font-semibold text-[var(--fg-0)] mb-2">{labels.noTools}</h3>
+            <p className="text-[var(--fg-muted)] mb-6 max-w-md mx-auto">
+                {labels.noToolsDesc}
             </p>
             <button
                 onClick={onCreateClick}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-500 
+                className="inline-flex items-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-500 
                    text-white font-medium rounded-lg transition-colors"
             >
                 <Plus className="w-5 h-5" />
-                Create Your First Tool
+                {labels.createFirst}
             </button>
         </div>
     );
@@ -265,17 +263,17 @@ function DashboardStats({ overview }: { overview: DashboardOverview | null }) {
             {stats.map((stat) => (
                 <div
                     key={stat.label}
-                    className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4"
+                    className="card-glass p-4"
                 >
                     <div className="flex items-center gap-3 mb-2">
                         <div className={`p-2 rounded-lg ${stat.bgColor}`}>
                             <stat.icon className={`w-5 h-5 ${stat.color}`} />
                         </div>
-                        <span className="text-sm text-gray-400">{stat.label}</span>
+                        <span className="text-sm text-[var(--fg-muted)]">{stat.label}</span>
                     </div>
-                    <div className="text-2xl font-bold text-white">{stat.value.toLocaleString()}</div>
+                    <div className="text-2xl font-bold text-[var(--fg-0)]">{stat.value.toLocaleString()}</div>
                     {stat.subValue && (
-                        <div className="text-xs text-gray-500 mt-1">{stat.subValue}</div>
+                        <div className="text-xs text-slate-500 mt-1">{stat.subValue}</div>
                     )}
                 </div>
             ))}
@@ -311,8 +309,8 @@ function TierFilter({
                     onClick={() => onChange(key)}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors
             ${selected === key
-                            ? "bg-purple-600 text-white"
-                            : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white"
+                            ? "bg-violet-600 text-white"
+                            : "bg-slate-800 text-[var(--fg-muted)] hover:bg-slate-700 hover:text-white"
                         }`}
                 >
                     {label}
@@ -331,11 +329,25 @@ function TierFilter({
 
 export default function ToolDashboardPage() {
     const router = useRouter();
+    const { language } = useLanguage();
     const [tools, setTools] = useState<ToolManifest[]>([]);
     const [overview, setOverview] = useState<DashboardOverview | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [tierFilter, setTierFilter] = useState<ToolTier | "all">("all");
+
+    const labels = {
+        title: language === "ko" ? "도구 대시보드" : "Tool Dashboard",
+        subtitle: language === "ko" ? "AI 도구 관리, 사용량 추적, 수익 모니터링" : "Manage your AI tools, track usage, and monitor earnings",
+        createTool: language === "ko" ? "도구 생성" : "Create Tool",
+        retry: language === "ko" ? "다시 시도" : "Retry",
+        noTools: language === "ko" ? "아직 도구가 없습니다" : "No Tools Yet",
+        noToolsDesc: language === "ko"
+            ? "첫 번째 AI 도구를 만들어 생태계를 구축하세요. 도구는 포크, 공유되며 크레딧을 획득합니다."
+            : "Create your first AI tool to start building your ecosystem. Tools can be forked, shared, and earn credits.",
+        createFirst: language === "ko" ? "첫 도구 만들기" : "Create Your First Tool",
+        toolCount: (count: number) => language === "ko" ? `${count}개 도구` : `${count} tool${count !== 1 ? "s" : ""}`,
+    };
 
     const fetchData = async () => {
         setLoading(true);
@@ -348,7 +360,7 @@ export default function ToolDashboardPage() {
             setTools(toolsData);
             setOverview(overviewData);
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to load data");
+            setError(err instanceof Error ? err.message : (language === "ko" ? "데이터를 불러오지 못했습니다" : "Failed to load data"));
         } finally {
             setLoading(false);
         }
@@ -367,94 +379,96 @@ export default function ToolDashboardPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white">
-            {/* Header */}
-            <div className="border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
-                <div className="max-w-7xl mx-auto px-6 py-4">
-                    <div className="flex items-center justify-between">
+        <AppShell showTopBar={false}>
+            <div className="min-h-screen px-4 py-6 sm:px-6 sm:py-8">
+                <div className="mx-auto max-w-7xl">
+                    {/* Header */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-6 sm:mb-8 flex flex-wrap items-start justify-between gap-4"
+                    >
                         <div>
-                            <h1 className="text-2xl font-bold">Tool Dashboard</h1>
-                            <p className="text-gray-400 text-sm">
-                                Manage your AI tools, track usage, and monitor earnings
-                            </p>
+                            <h1 className="text-xl font-bold text-[var(--fg-0)] sm:text-2xl">{labels.title}</h1>
+                            <p className="mt-1 text-sm text-[var(--fg-muted)] sm:text-base">{labels.subtitle}</p>
                         </div>
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={fetchData}
                                 disabled={loading}
-                                className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+                                className="p-2 text-[var(--fg-muted)] hover:text-[var(--fg-0)] hover:bg-slate-800 rounded-lg transition-colors"
                             >
                                 <RefreshCw className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
                             </button>
                             <button
                                 onClick={handleCreateClick}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 
                            text-white font-medium rounded-lg transition-colors"
                             >
                                 <Plus className="w-5 h-5" />
-                                Create Tool
+                                {labels.createTool}
                             </button>
                         </div>
-                    </div>
-                </div>
-            </div>
+                    </motion.div>
 
-            {/* Content */}
-            <div className="max-w-7xl mx-auto px-6 py-8">
-                {/* Stats */}
-                <DashboardStats overview={overview} />
+                    {/* Stats */}
+                    <DashboardStats overview={overview} />
 
-                {/* Filter */}
-                <div className="flex items-center justify-between mb-6">
-                    <TierFilter
-                        selected={tierFilter}
-                        onChange={setTierFilter}
-                        counts={overview?.tools.by_tier || {}}
-                    />
-                    <div className="text-sm text-gray-400">
-                        {tools.length} tool{tools.length !== 1 ? "s" : ""}
-                    </div>
-                </div>
-
-                {/* Error State */}
-                {error && (
-                    <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-6 flex items-center gap-3">
-                        <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0" />
-                        <div className="flex-1">
-                            <p className="text-red-300">{error}</p>
+                    {/* Filter */}
+                    <div className="flex items-center justify-between mb-6">
+                        <TierFilter
+                            selected={tierFilter}
+                            onChange={setTierFilter}
+                            counts={overview?.tools.by_tier || {}}
+                        />
+                        <div className="text-sm text-[var(--fg-muted)]">
+                            {labels.toolCount(tools.length)}
                         </div>
-                        <button
-                            onClick={fetchData}
-                            className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-sm"
-                        >
-                            Retry
-                        </button>
                     </div>
-                )}
 
-                {/* Loading State */}
-                {loading && !error && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {[1, 2, 3, 4, 5, 6].map((i) => (
-                            <ToolCardSkeleton key={i} />
-                        ))}
-                    </div>
-                )}
+                    {/* Error State */}
+                    {error && (
+                        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-6 flex items-center gap-3">
+                            <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                            <div className="flex-1">
+                                <p className="text-red-300">{error}</p>
+                            </div>
+                            <button
+                                onClick={fetchData}
+                                className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-sm"
+                            >
+                                {labels.retry}
+                            </button>
+                        </div>
+                    )}
 
-                {/* Empty State */}
-                {!loading && !error && tools.length === 0 && (
-                    <EmptyState onCreateClick={handleCreateClick} />
-                )}
+                    {/* Loading State */}
+                    {loading && !error && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {[1, 2, 3, 4, 5, 6].map((i) => (
+                                <ToolCardSkeleton key={i} />
+                            ))}
+                        </div>
+                    )}
 
-                {/* Tools Grid */}
-                {!loading && !error && tools.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {tools.map((tool) => (
-                            <ToolCard key={tool.id} tool={tool} onClick={() => handleToolClick(tool)} />
-                        ))}
-                    </div>
-                )}
+                    {/* Empty State */}
+                    {!loading && !error && tools.length === 0 && (
+                        <EmptyState
+                            onCreateClick={handleCreateClick}
+                            labels={{ noTools: labels.noTools, noToolsDesc: labels.noToolsDesc, createFirst: labels.createFirst }}
+                        />
+                    )}
+
+                    {/* Tools Grid */}
+                    {!loading && !error && tools.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {tools.map((tool) => (
+                                <ToolCard key={tool.id} tool={tool} onClick={() => handleToolClick(tool)} />
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
-        </div>
+        </AppShell>
     );
 }

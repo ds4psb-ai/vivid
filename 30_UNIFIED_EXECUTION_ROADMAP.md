@@ -13,16 +13,18 @@
 
 | 영역 | 구현 내용 | 상태 |
 |------|----------|------|
-| **Canvas** | ReactFlow 편집, 저장/불러오기, 템플릿 | ✅ |
-| **Agent Studio** | Chat-first UI, SSE 스트리밍, 아티팩트 프리뷰, 캔버스 동기화 | ✅ |
-| **Capsule** | 실행 파이프라인, WS/SSE 스트리밍, 취소/재시도 | ✅ |
+| **Flow (Train UI)** | 열차 워크플로우 UI (현재 mock 옵션) | ✅ |
+| **Dimension Tools** | 프롬프트/스토리보드/이미지/레퍼런스 미니앱 | ✅ |
+| **Agent Chat** | Chat-first UI, SSE 스트리밍, 아티팩트 프리뷰 (Audio Overview 우선) | ✅ |
+| **Canvas (Legacy)** | ReactFlow 기반 UI (비노출) | ⚠️ |
+| **Teaching Capsules** | `/api/teaching/*` 기반 프롬프트/스토리보드/이미지/레퍼런스 실행 | ✅ |
 | **Template** | 카탈로그, 버전 관리, 공개/비공개 | ✅ |
 | **Credits** | 지갑, 원장, 구독/탑업/프로모 분리 | ✅ |
-| **Affiliate** | 리퍼럴 추적, 리워드 지급 | ✅ |
+| **Affiliate** | 리퍼럴 추적, 리워드 지급 (legacy API, 미마운트) | ⚠️ |
 | **Auth** | Google OAuth, 세션 관리 | ✅ |
 | **Ingest** | Raw/Derive/Pattern 파이프라인 | ✅ |
 | **VDG 2-Pass** | SemanticPass, VisualPass, Merger, DirectorCompiler | ✅ |
-| **Story-First** | NarrativePanel, HookSelector, DNA Compliance, Metrics | ✅ |
+| **Story-First** | NarrativePanel, HookSelector, DNA Compliance, Metrics | ⚠️ (legacy UI) |
 | **Analytics** | 이벤트 추적, 메트릭 집계 | ✅ |
 
 ### 🔄 진행 중 / 부분 구현
@@ -31,16 +33,17 @@
 |------|------|------|
 | NotebookLM Adapter | 실제 API 연동 (현재 stub) | 🔄 |
 | GA/RL 학습 | 프로토타입 존재, 실제 학습 루프 미완성 | 🔄 |
-| Event-driven Queue | Redis/Arq 설계됨, 미배포 | 🔄 |
+| Event-driven Queue | Redis/Arq 설계됨, 운영용 API는 `_deprecated` | 🔄 |
 | Audio Coach | API 설계됨, 통합 진행 중 | 🔄 |
+| Teaching Artifact Derivation | Teaching 도구 결과를 Storyboard/Shot List/Data Table로 파생 | 🔄 |
 
 ---
 
 ## 단기 로드맵 (1~4주)
 
-### Week 1-2: Story-First 완성
+### Week 1-2: Story-First 완성 (legacy UI)
 - [ ] `MetricsDashboard` 백엔드 API 연결 (`/content-metrics`)
-- [ ] `SequenceEditor` Canvas 통합
+- [ ] `SequenceEditor` Canvas 통합 (legacy)
 - [ ] `DNAComplianceViewer` 콜백 구현 (regenerateShot, applyAllSuggestions)
 
 ### Week 3-4: 안정화 및 최적화
@@ -49,6 +52,13 @@
 - [ ] 성능 최적화 (Preview < 500ms 목표)
 
 ---
+
+## Known Issues (Non-blocking)
+
+- Agent streaming 스레드가 중복 시작되는 코드가 존재 (SSE 중복 이벤트 가능성).
+- Global Chokki Accordion은 legacy SSE 파서를 사용하여 `agent.*` 이벤트와 불일치.
+- `aiofiles` 의존성이 명시되지 않아 서버 환경에 따라 import 실패 가능.
+- Affiliate API 라우터가 `_deprecated`에만 존재하여 `/api/v1/affiliate/*` 호출이 404일 수 있음.
 
 ## 중기 로드맵 (1~3개월)
 
@@ -95,7 +105,7 @@
 
 ## 정본 문서 참조
 
-- 아키텍처: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
-- 파이프라인: `10_PIPELINES_AND_USER_FLOWS.md`
-- 캡슐 계약: `05_CAPSULE_NODE_SPEC.md`
-- UI 가이드: `13_UI_DESIGN_GUIDE_2025-12.md`
+- 아키텍처: `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
+- 파이프라인: `08_PIPELINES_AND_USER_FLOWS.md`
+- 캡슐 계약: `04_CAPSULE_NODE_SPEC.md`
+- UI 가이드: `10_UI_DESIGN_GUIDE_2025-12.md`

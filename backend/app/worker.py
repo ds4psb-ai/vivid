@@ -197,6 +197,181 @@ async def index_tool(
         return {"status": "failed", "error": str(e)}
 
 
+async def poll_batch_jobs(
+    ctx: Dict[str, Any],
+    job_ids: List[str] = None,
+) -> Dict[str, Any]:
+    """
+    Poll batch job statuses and handle completions.
+    
+    This job runs periodically to:
+    1. Check status of pending/running batch jobs
+    2. Trigger callbacks for completed jobs
+    3. Clean up old completed jobs
+    
+    Args:
+        job_ids: Optional list of specific job IDs to poll.
+                 If None, polls all pending/running jobs.
+    
+    Returns:
+        Summary of polled jobs and their statuses.
+    """
+    from app.services.batch_processor import (
+        BatchProcessor,
+        BatchJobStatus,
+    )
+    
+    logger.info(f"[Job] poll_batch_jobs: job_ids={job_ids}")
+    
+    try:
+        # Get jobs to poll
+        if job_ids:
+            jobs_to_poll = [
+                await BatchProcessor.get_job_status(job_id)
+                for job_id in job_ids
+            ]
+            jobs_to_poll = [j for j in jobs_to_poll if j is not None]
+        else:
+            # Poll all pending/running jobs
+            pending_jobs = await BatchProcessor.list_jobs(status=BatchJobStatus.PENDING)
+            running_jobs = await BatchProcessor.list_jobs(status=BatchJobStatus.RUNNING)
+            jobs_to_poll = pending_jobs + running_jobs
+        
+        results = {
+            "polled": 0,
+            "completed": 0,
+            "failed": 0,
+            "still_running": 0,
+            "job_statuses": {},
+        }
+        
+        for job in jobs_to_poll:
+            results["polled"] += 1
+            
+            # Get updated status
+            updated_job = await BatchProcessor.get_job_status(job.job_id)
+            if not updated_job:
+                continue
+            
+            status = updated_job.status
+            results["job_statuses"][job.job_id] = status.value
+            
+            if status == BatchJobStatus.SUCCEEDED:
+                results["completed"] += 1
+                # TODO: Trigger callback if configured
+                callback_url = (updated_job.metadata or {}).get("callback_url")
+                if callback_url:
+                    logger.info(f"Would trigger callback for {job.job_id}: {callback_url}")
+                    
+            elif status == BatchJobStatus.FAILED:
+                results["failed"] += 1
+                logger.warning(
+                    f"Batch job failed: {job.job_id}",
+                    extra={"error": updated_job.error}
+                )
+                
+            elif status in [BatchJobStatus.PENDING, BatchJobStatus.RUNNING]:
+                results["still_running"] += 1
+        
+        logger.info(f"[Job] poll_batch_jobs completed: {results}")
+        return {"status": "completed", **results}
+        
+    except Exception as e:
+        logger.exception(f"poll_batch_jobs failed: {e}")
+        return {"status": "failed", "error": str(e)}
+
+
+async def process_pending_settlements(
+    ctx: Dict[str, Any],
+    limit: int = 100,
+) -> Dict[str, Any]:
+    """
+    Process pending settlements in batch.
+    
+    This cron job runs every 5 minutes to:
+    1. Find all pending settlements
+    2. Process each one (credit payouts)
+    3. Update status to completed or failed
+    
+    Args:
+        limit: Max settlements to process per run.
+    
+    Returns:
+        Summary of processed settlements.
+    """
+    from app.database import AsyncSessionLocal
+    from app.services.fork_revenue_service import process_batch_settlements
+    
+    logger.info(f"[Cron] process_pending_settlements: limit={limit}")
+    
+    try:
+        async with AsyncSessionLocal() as db:
+            result = await process_batch_settlements(
+                db=db,
+                limit=limit,
+                processed_by="cron:settlement_worker",
+            )
+            
+            logger.info(
+                f"[Cron] Settlement batch complete: "
+                f"processed={result['processed']}, "
+                f"succeeded={result['succeeded']}, "
+                f"failed={result['failed']}"
+            )
+            
+            return {
+                "status": "completed",
+                **result,
+            }
+    except Exception as e:
+        logger.exception(f"process_pending_settlements failed: {e}")
+        return {"status": "failed", "error": str(e)}
+
+
+async def check_tier_promotions(
+    ctx: Dict[str, Any],
+    auto_promote: bool = True,
+) -> Dict[str, Any]:
+    """
+    Check and optionally auto-promote tools to higher tiers.
+    
+    This cron job runs daily to:
+    1. Evaluate all tools for tier promotion
+    2. Optionally auto-promote eligible tools
+    
+    Args:
+        auto_promote: If True, automatically promote eligible tools.
+    
+    Returns:
+        Summary of promotion checks.
+    """
+    from app.database import AsyncSessionLocal
+    from app.services.telemetry_service import check_all_tier_promotions
+    
+    logger.info(f"[Cron] check_tier_promotions: auto_promote={auto_promote}")
+    
+    try:
+        async with AsyncSessionLocal() as db:
+            result = await check_all_tier_promotions(
+                db=db,
+                auto_promote=auto_promote,
+            )
+            
+            logger.info(
+                f"[Cron] Tier check complete: "
+                f"checked={result['checked']}, "
+                f"promoted={result['promoted']}"
+            )
+            
+            return {
+                "status": "completed",
+                **result,
+            }
+    except Exception as e:
+        logger.exception(f"check_tier_promotions failed: {e}")
+        return {"status": "failed", "error": str(e)}
+
+
 class WorkerSettings:
     """Arq WorkerSettings for job processing."""
     functions = [
@@ -204,10 +379,30 @@ class WorkerSettings:
         generate_video_batch,
         sandbox_execute,
         index_tool,
+        poll_batch_jobs,
+        process_pending_settlements,
+        check_tier_promotions,
     ]
+    
+    # Cron jobs - scheduled tasks
+    cron_jobs = [
+        # Process settlements every 5 minutes
+        {
+            "func": process_pending_settlements,
+            "cron": "*/5 * * * *",  # Every 5 minutes
+            "unique": True,
+        },
+        # Check tier promotions daily at 2 AM
+        {
+            "func": check_tier_promotions,
+            "cron": "0 2 * * *",  # 2:00 AM daily
+            "unique": True,
+        },
+    ]
+    
     redis_settings = RedisSettings.from_dsn(settings.REDIS_URL)
     on_startup = startup
     on_shutdown = shutdown
     handle_signals = False
     job_timeout = 600  # 10 minutes max per job
- 
+

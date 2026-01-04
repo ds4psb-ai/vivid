@@ -1,0 +1,317 @@
+# GCP API Gateway 설정
+#
+# 이 파일은 GCP API Gateway에서 사용되는 OpenAPI 스펙입니다.
+# 배포: gcloud api-gateway api-configs create
+#
+# 환경 변수:
+#   BACKEND_URL: 백엔드 서비스 URL (Cloud Run)
+#   PROJECT_ID: GCP 프로젝트 ID
+
+swagger: "2.0"
+info:
+  title: Crebit Platform API Gateway
+  description: |
+    Crebit 플랫폼 API Gateway
+    - 모든 외부 요청의 단일 진입점
+    - JWT 검증
+    - Rate Limiting
+    - mTLS (서비스 간 통신)
+  version: "1.0.0"
+
+host: "crebit-gateway-${PROJECT_ID}.an.gateway.dev"
+basePath: "/api/v1"
+
+schemes:
+  - https
+
+produces:
+  - application/json
+consumes:
+  - application/json
+
+# 보안 정의
+securityDefinitions:
+  # Firebase/Auth0 JWT
+  firebase_auth:
+    authorizationUrl: ""
+    flow: "implicit"
+    type: "oauth2"
+    x-google-issuer: "https://securetoken.google.com/${PROJECT_ID}"
+    x-google-jwks_uri: "https://www.googleapis.com/service_accounts/v1/metadata/x509/securetoken@system.gserviceaccount.com"
+    x-google-audiences: "${PROJECT_ID}"
+  
+  # Custom JWT (Run Token)
+  run_token:
+    authorizationUrl: ""
+    flow: "implicit"
+    type: "oauth2"
+    x-google-issuer: "crebit-platform"
+    x-google-jwks_uri: "${BACKEND_URL}/.well-known/jwks.json"
+    x-google-audiences: "crebit-apps"
+  
+  # API Key
+  api_key:
+    type: "apiKey"
+    name: "x-api-key"
+    in: "header"
+
+# 기본 보안 (모든 엔드포인트)
+security:
+  - firebase_auth: []
+
+# 경로 정의
+paths:
+  # ============================================
+  # Public Endpoints (인증 불필요)
+  # ============================================
+  /health:
+    get:
+      operationId: health_check
+      summary: 헬스 체크
+      security: []  # 인증 불필요
+      x-google-backend:
+        address: ${BACKEND_URL}/health
+        deadline: 10.0
+      responses:
+        200:
+          description: OK
+
+  /.well-known/jwks.json:
+    get:
+      operationId: jwks
+      summary: JWKS 엔드포인트
+      security: []
+      x-google-backend:
+        address: ${BACKEND_URL}/.well-known/jwks.json
+      responses:
+        200:
+          description: JWKS
+
+  # ============================================
+  # Auth Endpoints
+  # ============================================
+  /auth/login:
+    post:
+      operationId: auth_login
+      summary: 로그인
+      security: []
+      x-google-backend:
+        address: ${BACKEND_URL}/api/v1/auth/login
+        deadline: 30.0
+      responses:
+        200:
+          description: 로그인 성공
+
+  /auth/callback:
+    get:
+      operationId: auth_callback
+      summary: OAuth 콜백
+      security: []
+      x-google-backend:
+        address: ${BACKEND_URL}/api/v1/auth/callback
+      responses:
+        302:
+          description: 리다이렉트
+
+  # ============================================
+  # Run Token Endpoints
+  # ============================================
+  /run-token/issue:
+    post:
+      operationId: run_token_issue
+      summary: Run Token 발급
+      security:
+        - firebase_auth: []
+      x-google-backend:
+        address: ${BACKEND_URL}/api/v1/run-token/issue
+        deadline: 30.0
+      responses:
+        200:
+          description: 토큰 발급 성공
+
+  /run-token/validate:
+    post:
+      operationId: run_token_validate
+      summary: Run Token 검증
+      security:
+        - run_token: []
+      x-google-backend:
+        address: ${BACKEND_URL}/api/v1/run-token/validate
+      responses:
+        200:
+          description: 토큰 유효
+
+  /run-token/{run_id}/deduct:
+    post:
+      operationId: run_token_deduct
+      summary: 크레딧 차감
+      parameters:
+        - name: run_id
+          in: path
+          required: true
+          type: string
+      security:
+        - run_token: []
+      x-google-backend:
+        address: ${BACKEND_URL}/api/v1/run-token/{run_id}/deduct
+        deadline: 10.0
+      responses:
+        200:
+          description: 차감 성공
+
+  /run-token/{run_id}/refund:
+    post:
+      operationId: run_token_refund
+      summary: 크레딧 환불
+      parameters:
+        - name: run_id
+          in: path
+          required: true
+          type: string
+      security:
+        - run_token: []
+      x-google-backend:
+        address: ${BACKEND_URL}/api/v1/run-token/{run_id}/refund
+      responses:
+        200:
+          description: 환불 성공
+
+  # ============================================
+  # App Management
+  # ============================================
+  /admin/apps:
+    get:
+      operationId: admin_list_apps
+      summary: 앱 목록
+      security:
+        - firebase_auth: []
+      x-google-backend:
+        address: ${BACKEND_URL}/api/v1/admin/apps
+      responses:
+        200:
+          description: 앱 목록
+
+  /admin/apps/register:
+    post:
+      operationId: admin_register_app
+      summary: 앱 등록
+      security:
+        - firebase_auth: []
+      x-google-backend:
+        address: ${BACKEND_URL}/api/v1/admin/apps/register
+        deadline: 60.0
+      responses:
+        200:
+          description: 등록 성공
+
+  # ============================================
+  # Sandbox
+  # ============================================
+  /sandbox/{app_id}:
+    get:
+      operationId: sandbox_get
+      summary: 샌드박스 앱 조회
+      parameters:
+        - name: app_id
+          in: path
+          required: true
+          type: string
+      security:
+        - firebase_auth: []
+      x-google-backend:
+        address: ${BACKEND_URL}/api/v1/sandbox/{app_id}
+      responses:
+        200:
+          description: 앱 정보
+
+  # ============================================
+  # Credits
+  # ============================================
+  /credits/balance:
+    get:
+      operationId: credits_balance
+      summary: 크레딧 잔액 조회
+      security:
+        - firebase_auth: []
+      x-google-backend:
+        address: ${BACKEND_URL}/api/v1/credits/balance
+      responses:
+        200:
+          description: 잔액
+
+  /credits/topup:
+    post:
+      operationId: credits_topup
+      summary: 크레딧 충전
+      security:
+        - firebase_auth: []
+      x-google-backend:
+        address: ${BACKEND_URL}/api/v1/credits/topup
+        deadline: 60.0
+      responses:
+        200:
+          description: 충전 성공
+
+  # ============================================
+  # Internal S2S Endpoints (mTLS 전용)
+  # ============================================
+  /internal/credit-reserve:
+    post:
+      operationId: internal_credit_reserve
+      summary: "[Internal] 크레딧 예약"
+      security:
+        - api_key: []
+      x-google-backend:
+        address: ${BACKEND_URL}/api/v1/internal/credit-reserve
+        protocol: h2  # gRPC over HTTP/2
+      responses:
+        200:
+          description: 예약 성공
+
+  /internal/credit-commit:
+    post:
+      operationId: internal_credit_commit
+      summary: "[Internal] 크레딧 확정"
+      security:
+        - api_key: []
+      x-google-backend:
+        address: ${BACKEND_URL}/api/v1/internal/credit-commit
+      responses:
+        200:
+          description: 확정 성공
+
+  /internal/credit-rollback:
+    post:
+      operationId: internal_credit_rollback
+      summary: "[Internal] 크레딧 롤백"
+      security:
+        - api_key: []
+      x-google-backend:
+        address: ${BACKEND_URL}/api/v1/internal/credit-rollback
+      responses:
+        200:
+          description: 롤백 성공
+
+# Rate Limiting (x-google-ratelimit)
+x-google-management:
+  metrics:
+    - name: "read-requests"
+      displayName: "Read Requests"
+      valueType: INT64
+      metricKind: DELTA
+    - name: "write-requests"
+      displayName: "Write Requests"
+      valueType: INT64
+      metricKind: DELTA
+  quota:
+    limits:
+      - name: "read-limit"
+        metric: "read-requests"
+        unit: "1/min/{project}"
+        values:
+          STANDARD: 1000
+      - name: "write-limit"
+        metric: "write-requests"
+        unit: "1/min/{project}"
+        values:
+          STANDARD: 100

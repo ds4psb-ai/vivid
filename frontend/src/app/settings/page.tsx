@@ -8,6 +8,7 @@ import {
     Palette,
     ChevronRight,
     Check,
+    Key,
 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -16,6 +17,7 @@ import PageStatus from "@/components/PageStatus";
 import { isNetworkError, normalizeApiError } from "@/lib/errors";
 import { useActiveUserId } from "@/hooks/useActiveUserId";
 import { formatNumber } from "@/lib/formatters";
+import { useBYOK } from "@/hooks/useBYOK";
 
 const LANGUAGES = [
     { code: "en", label: "English" },
@@ -50,6 +52,11 @@ export default function SettingsPage() {
     const [isOffline, setIsOffline] = useState(false);
     const { userId } = useActiveUserId();
 
+    // BYOK State
+    const { byokKey, setBYOKKey, isBYOKEnabled, clearBYOKKey } = useBYOK();
+    const [showBYOKInput, setShowBYOKInput] = useState(false);
+    const [byokInputValue, setBYOKInputValue] = useState("");
+
     const labels = {
         title: language === "ko" ? "설정" : "Settings",
         subtitle: language === "ko" ? "계정 및 환경설정 관리" : "Manage your account and preferences",
@@ -65,23 +72,51 @@ export default function SettingsPage() {
         canvasCount: language === "ko" ? "캔버스" : "Canvases",
         credits: language === "ko" ? "크레딧" : "Credits",
         loadError: language === "ko" ? "설정을 불러오지 못했습니다." : "Unable to load settings.",
+        apiKey: language === "ko" ? "API Key 설정" : "API Key Settings",
+        apiKeyDesc: language === "ko" ? "Gemini API Key를 설정하면 크레딧 소진 없이 무제한 사용 가능" : "Use your own Gemini API Key for unlimited usage",
+        apiKeySet: language === "ko" ? "설정됨" : "Configured",
+        apiKeyNotSet: language === "ko" ? "미설정" : "Not configured",
+        save: language === "ko" ? "저장" : "Save",
+        delete: language === "ko" ? "삭제" : "Delete",
+        cancel: language === "ko" ? "취소" : "Cancel",
     };
 
     useEffect(() => {
         let active = true;
-        Promise.all([api.listCanvases(), api.getCreditsBalance()])
-            .then(([canvases, balance]) => {
-                if (!active) return;
-                setLoadError(null);
-                setIsOffline(false);
-                setCanvasCount(canvases.length);
-                setCreditBalance(balance.balance);
-            })
-            .catch((err) => {
-                if (!active) return;
-                setLoadError(normalizeApiError(err, labels.loadError));
-                setIsOffline(isNetworkError(err));
-            });
+
+        const loadData = async () => {
+            setLoadError(null);
+            setIsOffline(false);
+
+            try {
+                // Load credits (Critical)
+                try {
+                    const balance = await api.getCreditsBalance();
+                    if (active) setCreditBalance(balance.balance);
+                } catch (err) {
+                    console.error("Failed to load credits:", err);
+                    if (active) {
+                        setLoadError(normalizeApiError(err, labels.loadError));
+                        setIsOffline(isNetworkError(err));
+                    }
+                }
+
+                // Load canvases (Non-critical, okay to fail)
+                try {
+                    const canvases = await api.listCanvases();
+                    if (active) setCanvasCount(canvases.length);
+                } catch (err) {
+                    console.warn("Failed to load canvases (ignoring):", err);
+                    // Do not set global loadError for canvas failure
+                }
+            } catch (err) {
+                // Formatting error catch
+                console.error("Unexpected error in settings load:", err);
+            }
+        };
+
+        loadData();
+
         return () => {
             active = false;
         };
@@ -242,6 +277,99 @@ export default function SettingsPage() {
                                 />
                             </button>
                         </div>
+                    </motion.section>
+
+                    {/* API Key (BYOK) */}
+                    <motion.section
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.25 }}
+                        className="mb-4 rounded-lg border border-white/10 bg-slate-950/60 p-4 sm:mb-6 sm:rounded-xl sm:p-5"
+                        aria-labelledby="apikey-heading"
+                    >
+                        <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                            <Key className="h-4 w-4 text-[var(--fg-muted)]" aria-hidden="true" />
+                            <span id="apikey-heading" className="font-medium text-[var(--fg-0)]">{labels.apiKey}</span>
+                            {isBYOKEnabled && (
+                                <span className="ml-auto px-2 py-0.5 text-xs font-medium bg-violet-500/20 text-violet-400 rounded-full">
+                                    {labels.apiKeySet}
+                                </span>
+                            )}
+                        </div>
+                        <p className="text-xs text-[var(--fg-muted)] mb-4">{labels.apiKeyDesc}</p>
+
+                        {!showBYOKInput ? (
+                            <div className="space-y-3">
+                                {isBYOKEnabled ? (
+                                    <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
+                                        <div className="flex-1">
+                                            <span className="text-sm text-[var(--fg-0)] font-mono">••••••••••••{byokKey?.slice(-4)}</span>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                setBYOKInputValue(byokKey || "");
+                                                setShowBYOKInput(true);
+                                            }}
+                                            className="px-3 py-1.5 text-xs font-medium bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors"
+                                        >
+                                            변경
+                                        </button>
+                                        <button
+                                            onClick={() => clearBYOKKey()}
+                                            className="px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/10 border border-red-500/20 rounded-lg transition-colors"
+                                        >
+                                            {labels.delete}
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => setShowBYOKInput(true)}
+                                        className="w-full py-3 bg-white/5 hover:bg-white/10 border border-dashed border-white/20 hover:border-violet-500/50 text-[var(--fg-muted)] hover:text-white font-medium rounded-xl transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <Key className="w-4 h-4" />
+                                        API Key 등록하기
+                                    </button>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                                <input
+                                    type="password"
+                                    value={byokInputValue}
+                                    onChange={(e) => setBYOKInputValue(e.target.value)}
+                                    placeholder="AIzaSy... (Gemini API Key)"
+                                    className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-xl text-white text-sm font-mono placeholder-white/20 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-all"
+                                    autoFocus
+                                />
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => {
+                                            if (byokInputValue.trim()) {
+                                                setBYOKKey(byokInputValue.trim());
+                                            }
+                                            setShowBYOKInput(false);
+                                            setBYOKInputValue("");
+                                        }}
+                                        disabled={!byokInputValue.trim()}
+                                        className="flex-1 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-medium rounded-lg transition-colors"
+                                    >
+                                        {labels.save}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setShowBYOKInput(false);
+                                            setBYOKInputValue("");
+                                        }}
+                                        className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-[var(--fg-muted)] font-medium rounded-lg transition-colors"
+                                    >
+                                        {labels.cancel}
+                                    </button>
+                                </div>
+                                <p className="text-[10px] text-zinc-500 text-center">
+                                    키는 브라우저에만 저장되며 서버로 전송되지 않습니다.
+                                </p>
+                            </div>
+                        )}
                     </motion.section>
 
                     {/* Sections */}

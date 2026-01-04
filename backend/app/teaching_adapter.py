@@ -49,7 +49,7 @@ MAX_DESCRIPTION_LENGTH = 3000
 MIN_SCENE_COUNT = 1
 MAX_SCENE_COUNT = 20
 ALLOWED_LANGUAGES = {"ko", "en"}
-ALLOWED_MODELS = {"gemini-2.5-flash", "gemini-2.5-pro", "gemini-3-flash-preview"}
+ALLOWED_MODELS = {"gemini-3-flash-preview", "gemini-2.5-pro", "gemini-3-flash-preview"}
 GEMINI_TIMEOUT_SECONDS = 30
 
 
@@ -220,7 +220,7 @@ async def _call_gemini(
     prompt: str,
     system_prompt: str,
     api_key: Optional[str] = None,
-    model: str = "gemini-2.5-flash",
+    model: str = "gemini-3-flash-preview",
     temperature: float = 0.7,
     timeout: float = GEMINI_TIMEOUT_SECONDS,
 ) -> tuple[Dict[str, Any], CapsuleMetrics]:
@@ -250,7 +250,7 @@ async def _call_gemini(
     start_time = time.monotonic()
     
     # Validate model
-    model = _validate_enum(model, ALLOWED_MODELS, "model", "gemini-2.5-flash")
+    model = _validate_enum(model, ALLOWED_MODELS, "model", "gemini-3-flash-preview")
     
     # Use provided key or fall back to server key
     key = api_key or settings.GEMINI_API_KEY
@@ -362,7 +362,7 @@ async def run_prompt_generator(
     mood = _sanitize_text(inputs.get("mood", "neutral"), 50, "mood")
     duration = _sanitize_text(inputs.get("duration", "15 seconds"), 20, "duration")
     language = _validate_enum(inputs.get("language", "ko"), ALLOWED_LANGUAGES, "language", "ko")
-    model = _validate_enum(params.get("model", "gemini-2.5-flash"), ALLOWED_MODELS, "model", "gemini-2.5-flash")
+    model = _validate_enum(params.get("model", "gemini-3-flash-preview"), ALLOWED_MODELS, "model", "gemini-3-flash-preview")
     
     user_prompt = f"""Generate a Veo 3.1 video prompt for:
 
@@ -426,7 +426,7 @@ async def run_storyboard_creator(
     
     scene_count = _validate_int_range(inputs.get("scene_count", 5), MIN_SCENE_COUNT, MAX_SCENE_COUNT, 5)
     language = _validate_enum(inputs.get("language", "ko"), ALLOWED_LANGUAGES, "language", "ko")
-    model = _validate_enum(params.get("model", "gemini-2.5-flash"), ALLOWED_MODELS, "model", "gemini-2.5-flash")
+    model = _validate_enum(params.get("model", "gemini-3-flash-preview"), ALLOWED_MODELS, "model", "gemini-3-flash-preview")
     
     user_prompt = f"""Create a {scene_count}-scene storyboard for:
 
@@ -490,7 +490,7 @@ async def run_image_generator(
     
     style = _sanitize_text(inputs.get("style", "photorealistic"), 50, "style")
     aspect_ratio = _sanitize_text(inputs.get("aspect_ratio", "16:9"), 10, "aspect_ratio")
-    model = _validate_enum(params.get("model", "gemini-2.5-flash"), ALLOWED_MODELS, "model", "gemini-2.5-flash")
+    model = _validate_enum(params.get("model", "gemini-3-flash-preview"), ALLOWED_MODELS, "model", "gemini-3-flash-preview")
     
     user_prompt = f"""Create an optimized AI image generation prompt for:
 
@@ -555,7 +555,7 @@ async def run_reference_analyzer(
         focus_areas = ["composition", "lighting", "color", "movement"]
     focus_areas = [_sanitize_text(str(a), 30, "focus_area") for a in focus_areas[:10]]
     
-    model = _validate_enum(params.get("model", "gemini-2.5-flash"), ALLOWED_MODELS, "model", "gemini-2.5-flash")
+    model = _validate_enum(params.get("model", "gemini-3-flash-preview"), ALLOWED_MODELS, "model", "gemini-3-flash-preview")
     
     user_prompt = f"""Analyze this video reference:
 

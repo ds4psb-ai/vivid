@@ -415,6 +415,29 @@ async def start_work(
 # Delivery Endpoints
 # =============================================================================
 
+@router.get("/assignments/{assignment_id}/deliveries", response_model=List[DeliveryResponse])
+async def get_deliveries(
+    assignment_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Get all deliveries for an assignment."""
+    deliveries = await humancloud_service.get_deliveries(db, assignment_id)
+    
+    return [
+        DeliveryResponse(
+            id=d.id,
+            assignment_id=d.assignment_id,
+            version=d.version,
+            files=d.files,
+            status=d.status,
+            submitted_at=d.submitted_at,
+        )
+        for d in deliveries
+    ]
+
+
+
 @router.post("/assignments/{assignment_id}/deliver", response_model=DeliveryResponse)
 async def submit_delivery(
     assignment_id: UUID,

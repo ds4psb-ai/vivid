@@ -6,33 +6,31 @@
 
 ---
 
-## 1) Credit Types
+## 1) Credit Types (Current Code)
 
-1) **Creator Credits (subscription)**  
+1) **Subscription Credits** (`subscription_credits`)  
 - monthly allocation by plan  
 - reset on billing cycle  
 
-2) **Top-up Credits (one-time)**  
+2) **Top-up Credits** (`topup_credits`)  
 - purchased packs  
 - no auto-expiry by default  
 
-3) **API Credits (B2B)**  
-- separate wallet for API usage  
-- one-time packs  
-
-4) **Promo Credits**  
+3) **Promo Credits** (`promo_credits`)  
 - affiliate/referral rewards  
 - optional expiry (90~180 days)
+
+> Planned: API credits (B2B wallet) are not implemented in current code.
 
 ---
 
 ## 2) Wallet Model
 
 Each user has a wallet per credit type:
-- `creator_balance`
-- `topup_balance`
-- `api_balance`
-- `promo_balance`
+- `subscription_credits`
+- `topup_credits`
+- `promo_credits`
+- `balance` (aggregate)
 
 Consumption order (default):
 1. Promo credits (expire first)
@@ -44,11 +42,11 @@ Consumption order (default):
 ## 3) Ledger Events
 
 Ledger is append-only:
-- `credit_grant` (subscription, promo, manual)
-- `credit_purchase` (top-up, API pack)
-- `credit_spend` (generation, export)
-- `credit_refund` (failed run)
-- `credit_expire`
+- `promo` (welcome/promo grants)
+- `topup` (purchase)
+- `usage` (generation)
+- `reward` (affiliate/reward)
+- `refund` (failed run)
 
 Required fields:
 - `user_id`
@@ -112,21 +110,21 @@ Notes:
 
 > **Added**: 2026-01-01
 
-Teaching Apps는 고정 비용 모델을 사용:
+Teaching Apps는 **모델별 동적 비용**을 사용 (SSoT: `backend/app/fixtures/teaching_capsules.py`):
 
 | API Endpoint | Credits | Description |
 |-------------|---------|-------------|
-| `/api/teaching/prompt/generate` | 5 | Veo 프롬프트 생성 |
-| `/api/teaching/storyboard/create` | 10 | 스토리보드 생성 |
-| `/api/teaching/image/generate` | 5 | 이미지 프롬프트 생성 |
-| `/api/teaching/reference/analyze` | 8 | 레퍼런스 분석 |
+| `/api/teaching/prompt/generate` | 5 (기본값) | Veo 프롬프트 생성 |
+| `/api/teaching/storyboard/create` | 10 (기본값) | 스토리보드 생성 |
+| `/api/teaching/image/generate` | 5 (기본값) | 이미지 프롬프트 생성 |
+| `/api/teaching/reference/analyze` | 8 (기본값) | 레퍼런스 분석 |
 
 ### BYOK (Bring Your Own Key)
 
 사용자가 `X-Gemini-API-Key` 헤더로 자신의 API Key를 전달하면:
 - 크레딧 차감 없음
-- 키는 클라이언트 localStorage에만 저장 (서버 미전송)
-- 무제한 사용 가능
+- 키는 클라이언트에만 저장 (localStorage 또는 secure storage)
+- 서버는 키를 **저장하지 않고** 요청 처리에만 사용
 
 ### Error Handling
 
@@ -190,13 +188,12 @@ total_credits = base_cost × resolution_mult × length_mult × model_mult × cap
 
 ---
 
-## 7) API Endpoints (Spec)
+## 7) API Endpoints (Current)
 
-- `GET /api/v1/credits/wallet`
-- `GET /api/v1/credits/ledger`
+- `GET /api/v1/credits/balance`
+- `GET /api/v1/credits/transactions`
 - `POST /api/v1/credits/topup`
-- `POST /api/v1/credits/allocate`
-- `POST /api/v1/credits/refund`
+- `POST /api/v1/credits/deduct` (internal)
 
 ---
 

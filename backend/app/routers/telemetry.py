@@ -143,6 +143,109 @@ async def get_tool_analytics(
         raise HTTPException(status_code=404, detail=str(e))
 
 
+@router.get("/tools/{tool_id}/tier/evaluate", response_model=dict)
+async def evaluate_tool_tier(
+    tool_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Evaluate if a tool is eligible for tier promotion.
+    
+    Returns detailed criteria check for the next tier.
+    """
+    try:
+        evaluation = await telemetry_service.evaluate_tier_promotion(db, tool_id)
+        return evaluation
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post("/tools/{tool_id}/tier/promote", response_model=dict)
+async def promote_tool(
+    tool_id: UUID,
+    target_tier: str = Query(..., description="Target tier: verified or certified"),
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Manually promote a tool to a higher tier (admin only)."""
+    from app.models_telemetry import ToolTier
+    
+    # Validate target tier
+    try:
+        tier_enum = ToolTier(target_tier)
+    except ValueError:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Invalid tier. Must be one of: {[t.value for t in ToolTier]}"
+        )
+    
+    try:
+        manifest = await telemetry_service.promote_tool_tier(
+            db, tool_id, tier_enum, current_user.get("id", "unknown")
+        )
+        return {
+            "success": True,
+            "tool_key": manifest.tool_key,
+            "new_tier": manifest.tier,
+            "promoted_by": manifest.approved_by,
+            "promoted_at": manifest.approved_at.isoformat() if manifest.approved_at else None,
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.get("/tools/tier/check-all", response_model=list)
+async def check_all_tiers(
+    auto_promote: bool = Query(default=False, description="Auto-promote eligible tools"),
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Check all tools for potential tier promotions.
+    
+    Returns evaluation results for each tool.
+    Set auto_promote=true to automatically promote eligible tools.
+    """
+    evaluations = await telemetry_service.check_all_tier_promotions(db, auto_promote=auto_promote)
+    return evaluations
+
+
+@router.post("/tools/{tool_key}/execute")
+async def execute_tool(
+    tool_key: str,
+    request: dict,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Execute a community-submitted tool using the dynamic adapter.
+    
+    The tool must have a valid ToolSchema with system_prompt to be executed.
+    Uses Gemini API with the stored system prompt and user inputs.
+    """
+    from app.services.dynamic_adapter import execute_tool_by_key
+    
+    # Get optional BYOK (Bring Your Own Key) from request
+    user_api_key = request.pop("api_key", None)
+    
+    result = await execute_tool_by_key(
+        tool_key=tool_key,
+        inputs=request,
+        user_api_key=user_api_key,
+        db_session=db,
+    )
+    
+    if not result.success:
+        raise HTTPException(status_code=400, detail=result.error or "Tool execution failed")
+    
+    return {
+        "success": True,
+        "tool_key": result.tool_key,
+        "output": result.output,
+        "metrics": {
+            "latency_ms": result.metrics.latency_ms if result.metrics else None,
+            "token_usage": result.metrics.token_usage if result.metrics else None,
+        } if result.metrics else None,
+    }
+
+
 # =============================================================================
 # Tool Run Endpoints
 # =============================================================================

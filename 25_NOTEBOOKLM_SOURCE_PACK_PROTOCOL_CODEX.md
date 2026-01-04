@@ -8,15 +8,15 @@
 
 ## 0) Canonical Anchors
 
-- 철학/원칙: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
-- 흐름/역할: `10_PIPELINES_AND_USER_FLOWS.md`
-- 캡슐 계약: `05_CAPSULE_NODE_SPEC.md`
-- 영상 구조화: `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
-- NotebookLM 출력 규격: `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
-- 승격 규칙: `11_DB_PROMOTION_RULES_V1.md`
-- 승격 기준: `12_PATTERN_PROMOTION_CRITERIA_V1.md`
-- Claim/Evidence/Trace: `32_CLAIM_EVIDENCE_TRACE_SPEC_V1.md`
-- 리서치 소스: `04_RESEARCH_SOURCES_2025-12.md`
+- 철학/원칙: `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
+- 흐름/역할: `08_PIPELINES_AND_USER_FLOWS.md`
+- 캡슐 계약: `04_CAPSULE_NODE_SPEC.md`
+- 영상 구조화: `19_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
+- NotebookLM 출력 규격: `07_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
+- 승격 규칙: `09_DB_PROMOTION_RULES_V1.md`
+- 승격 기준: `docs/archive/12_PATTERN_PROMOTION_CRITERIA_V1.md`
+- Claim/Evidence/Trace: `24_CLAIM_EVIDENCE_TRACE_SPEC_V1.md`
+- 리서치 소스: `03_RESEARCH_SOURCES_2025-12.md`
 
 ---
 
@@ -34,7 +34,7 @@
 ## 1.5) NotebookLM Capability Notes (2025-12 Research)
 
 이 섹션은 **프로토콜 설계에 영향을 주는 제품 능력**만 정리한다.
-상세 근거는 `04_RESEARCH_SOURCES_2025-12.md`에 기록한다.
+상세 근거는 `03_RESEARCH_SOURCES_2025-12.md`에 기록한다.
 
 ### 1.5.1 Source 타입/제약
 - Source 타입: Google Docs, Google Slides, Word/Text/Markdown/PDF, Web URL, public YouTube URL, local audio files.
@@ -125,7 +125,7 @@ Script Persona를 사용하기 위한 최소 품질 기준:
 
 ## 3) Tong Datasetization Protocol (A/B/C/D)
 
-> **정본**: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md` §3.4
+> **정본**: `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md` §3.4
 
 통 데이터셋 A/B/C/D 정의와 Synapse Rule은 정본 문서를 따른다.
 이 문서는 **Logic/Persona 추출 프로토콜**에 집중한다.
@@ -327,7 +327,7 @@ NotebookLM은 **가이드/변주/요약 레이어**다. 출력은 항상 **Claim
 
 ## 11) Evaluation + Promotion
 
-> **정본**: `32_CLAIM_EVIDENCE_TRACE_SPEC_V1.md` §3.4, `11_DB_PROMOTION_RULES_V1.md` §4
+> **정본**: `24_CLAIM_EVIDENCE_TRACE_SPEC_V1.md` §3.4, `09_DB_PROMOTION_RULES_V1.md` §4
 
 평가/승격 규칙은 정본 문서를 따른다. 이 문서에서는 중복 기술하지 않는다.
 

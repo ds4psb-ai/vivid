@@ -52,6 +52,29 @@ async def get_current_user(
     }
 
 
+async def get_current_user_optional(
+    request: Request,
+    x_user_id: Optional[str] = Header(default=None, alias="X-User-Id"),
+) -> Optional[Dict[str, Any]]:
+    """Get current user if authenticated, else return None.
+    
+    Unlike get_current_user, this does not create a mock user in development.
+    Returns None if user is not authenticated.
+    """
+    user_id = await get_user_id(request, x_user_id)
+    
+    if not user_id:
+        return None
+    
+    is_admin = await get_is_admin(request)
+    
+    return {
+        "id": user_id,
+        "user_id": user_id,
+        "is_admin": is_admin,
+    }
+
+
 async def require_authenticated_user(
     request: Request,
     x_user_id: Optional[str] = Header(default=None, alias="X-User-Id"),

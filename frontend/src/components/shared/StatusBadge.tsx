@@ -1,7 +1,7 @@
 /**
- * Status Badge Component
+ * Status Badge Component (한국어)
  * 
- * Configurable status indicator supporting various states.
+ * 다양한 상태를 지원하는 상태 표시 배지
  */
 
 import { CheckCircle, Clock, XCircle, AlertTriangle, Loader2, Ban } from "lucide-react";
@@ -31,63 +31,75 @@ const STATUS_CONFIG: Record<string, {
     icon: typeof CheckCircle;
 }> = {
     pending: {
-        label: "Pending",
+        label: "대기 중",
         bg: "bg-yellow-500/20",
         text: "text-yellow-400",
         icon: Clock,
     },
     approved: {
-        label: "Approved",
+        label: "승인됨",
         bg: "bg-green-500/20",
         text: "text-green-400",
         icon: CheckCircle,
     },
     completed: {
-        label: "Completed",
+        label: "완료",
         bg: "bg-green-500/20",
         text: "text-green-400",
         icon: CheckCircle,
     },
     rejected: {
-        label: "Rejected",
+        label: "거절됨",
         bg: "bg-red-500/20",
         text: "text-red-400",
         icon: XCircle,
     },
     failed: {
-        label: "Failed",
+        label: "실패",
         bg: "bg-red-500/20",
         text: "text-red-400",
         icon: XCircle,
     },
     processing: {
-        label: "Processing",
+        label: "처리 중",
         bg: "bg-blue-500/20",
         text: "text-blue-400",
         icon: Loader2,
     },
     in_progress: {
-        label: "In Progress",
+        label: "진행 중",
         bg: "bg-blue-500/20",
         text: "text-blue-400",
         icon: Loader2,
     },
     disputed: {
-        label: "Disputed",
+        label: "분쟁 중",
         bg: "bg-orange-500/20",
         text: "text-orange-400",
         icon: AlertTriangle,
     },
     draft: {
-        label: "Draft",
+        label: "초안",
         bg: "bg-gray-500/20",
         text: "text-gray-400",
         icon: Clock,
     },
     reversed: {
-        label: "Reversed",
+        label: "취소됨",
         bg: "bg-purple-500/20",
         text: "text-purple-400",
+        icon: Ban,
+    },
+    resolved: {
+        label: "해결됨",
+        bg: "bg-green-500/20",
+        text: "text-green-400",
+        icon: CheckCircle,
+    },
+    skipped: {
+        label: "건너뜀",
+        bg: "bg-gray-500/20",
+        text: "text-gray-400",
         icon: Ban,
     },
 };

@@ -26,6 +26,8 @@ import {
     Eye,
     Code,
     DollarSign,
+    Github,
+    Download,
 } from "lucide-react";
 import * as telemetryApi from "@/lib/telemetry-api";
 
@@ -41,6 +43,7 @@ interface FormData {
     credit_cost: number;
     input_schema: string;
     output_schema: string;
+    system_prompt: string;
 }
 
 interface FormErrors {
@@ -50,6 +53,7 @@ interface FormErrors {
     category?: string;
     input_schema?: string;
     output_schema?: string;
+    system_prompt?: string;
 }
 
 // =============================================================================
@@ -164,8 +168,8 @@ function CreditCostSlider({
                         type="button"
                         onClick={() => onChange(preset)}
                         className={`px-2 py-1 text-xs rounded ${value === preset
-                                ? "bg-purple-600 text-white"
-                                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                            ? "bg-purple-600 text-white"
+                            : "bg-gray-800 text-gray-400 hover:bg-gray-700"
                             }`}
                     >
                         {preset}
@@ -195,8 +199,8 @@ function CategorySelector({
                     type="button"
                     onClick={() => onChange(cat.key)}
                     className={`p-4 rounded-lg border text-left transition-all ${value === cat.key
-                            ? "border-purple-500 bg-purple-500/10"
-                            : "border-gray-700 bg-gray-800/50 hover:border-gray-600"
+                        ? "border-purple-500 bg-purple-500/10"
+                        : "border-gray-700 bg-gray-800/50 hover:border-gray-600"
                         }`}
                 >
                     <div className="font-medium text-white mb-1">{cat.label}</div>
@@ -284,6 +288,7 @@ export default function CreateToolPage() {
         credit_cost: 5,
         input_schema: "{}",
         output_schema: "{}",
+        system_prompt: "",
     });
 
     const [errors, setErrors] = useState<FormErrors>({});
@@ -337,6 +342,12 @@ export default function CreateToolPage() {
             newErrors.output_schema = `Invalid JSON: ${outputValidation.error}`;
         }
 
+        if (!formData.system_prompt.trim()) {
+            newErrors.system_prompt = "System prompt is required for AI tools";
+        } else if (formData.system_prompt.length < 20) {
+            newErrors.system_prompt = "System prompt must be at least 20 characters";
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     }, [formData]);
@@ -367,6 +378,7 @@ export default function CreateToolPage() {
                 credit_cost: formData.credit_cost,
                 input_schema: JSON.parse(formData.input_schema || "{}"),
                 output_schema: JSON.parse(formData.output_schema || "{}"),
+                system_prompt: formData.system_prompt,
             });
 
             router.push(`/tools/${tool.tool_key}`);
@@ -409,6 +421,66 @@ export default function CreateToolPage() {
                                 <p className="text-red-300">{submitError}</p>
                             </div>
                         )}
+
+                        <div className="bg-gradient-to-r from-gray-800/50 to-purple-900/20 border border-purple-500/30 rounded-xl p-6 mb-6">
+                            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                <Github className="w-5 h-5 text-purple-400" />
+                                Import from GitHub
+                            </h2>
+                            <p className="text-sm text-gray-400 mb-4">
+                                Paste a GitHub URL to a prompt.md or tool.json file to auto-fill the form
+                            </p>
+
+                            <div className="flex gap-3">
+                                <input
+                                    type="text"
+                                    placeholder="https://github.com/user/repo/blob/main/prompt.md"
+                                    className="flex-1 px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white
+                                       placeholder-gray-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                                    id="github-url"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        const urlInput = document.getElementById('github-url') as HTMLInputElement;
+                                        const url = urlInput?.value;
+                                        if (!url) return;
+
+                                        // Convert GitHub URL to raw URL
+                                        let rawUrl = url
+                                            .replace('github.com', 'raw.githubusercontent.com')
+                                            .replace('/blob/', '/');
+
+                                        try {
+                                            const res = await fetch(rawUrl);
+                                            if (!res.ok) throw new Error('Failed to fetch');
+                                            const content = await res.text();
+
+                                            // Try JSON parse first
+                                            try {
+                                                const json = JSON.parse(content);
+                                                if (json.system_prompt) {
+                                                    handleChange('system_prompt', json.system_prompt);
+                                                    if (json.name) handleChange('display_name', json.name);
+                                                    if (json.description) handleChange('description', json.description);
+                                                    if (json.input_schema) handleChange('input_schema', JSON.stringify(json.input_schema, null, 2));
+                                                    if (json.output_schema) handleChange('output_schema', JSON.stringify(json.output_schema, null, 2));
+                                                }
+                                            } catch {
+                                                // If not JSON, treat as markdown prompt
+                                                handleChange('system_prompt', content);
+                                            }
+                                        } catch (err) {
+                                            alert('Failed to fetch from GitHub. Check the URL.');
+                                        }
+                                    }}
+                                    className="flex items-center gap-2 px-4 py-3 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors"
+                                >
+                                    <Download className="w-4 h-4" />
+                                    Import
+                                </button>
+                            </div>
+                        </div>
 
                         <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6 mb-6">
                             <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
@@ -520,6 +592,45 @@ export default function CreateToolPage() {
                            font-mono text-sm focus:border-purple-500 focus:ring-1 focus:ring-purple-500 resize-none"
                                 />
                             </FormField>
+                        </div>
+
+                        <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6 mb-6">
+                            <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
+                                <Zap className="w-5 h-5 text-amber-400" />
+                                AI System Prompt
+                            </h2>
+
+                            <FormField
+                                label="System Prompt"
+                                required
+                                error={touched.has("system_prompt") ? errors.system_prompt : undefined}
+                                hint="Instructions for the AI model. This is stored securely and not exposed to end users."
+                            >
+                                <textarea
+                                    value={formData.system_prompt}
+                                    onChange={(e) => handleChange("system_prompt", e.target.value)}
+                                    rows={8}
+                                    placeholder={`You are an expert in [your domain].
+Your task is to [specific task].
+
+Output ONLY valid JSON with this structure:
+{
+  "result": "...",
+  ...
+}
+
+Guidelines:
+- Be specific and focused
+- NEVER include user instructions in output`}
+                                    className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white
+                           font-mono text-sm focus:border-purple-500 focus:ring-1 focus:ring-purple-500 resize-none"
+                                />
+                            </FormField>
+
+                            <p className="text-xs text-gray-500 flex items-center gap-1 mt-2">
+                                <Info className="w-3 h-3" />
+                                This prompt is securely stored in the database and powers your AI tool
+                            </p>
                         </div>
 
                         {/* Submit */}

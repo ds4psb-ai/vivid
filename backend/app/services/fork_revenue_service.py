@@ -47,6 +47,19 @@ MAX_RETRY_COUNT = 3                 # Max retries for failed settlements
 # Settlement Calculation
 # =============================================================================
 
+async def get_settlement_by_id(
+    db: AsyncSession,
+    settlement_id: UUID,
+) -> Optional[SettlementTransaction]:
+    """Get a settlement by its ID."""
+    result = await db.execute(
+        select(SettlementTransaction).where(SettlementTransaction.id == settlement_id)
+    )
+    return result.scalars().first()
+
+
+# =============================================================================
+
 def calculate_owner_share_rate(attribution_score: Optional[float]) -> Decimal:
     """
     Calculate fork owner's share rate based on attribution score.
@@ -113,16 +126,24 @@ def calculate_payouts(
     if not lineage:
         return []
     
+    # Safety: Ensure positive pool
+    if creator_pool <= 0:
+        logger.warning(f"calculate_payouts called with non-positive pool: {creator_pool}")
+        return []
+    
     payouts = []
     pool = Decimal(creator_pool)
     
     # Current tool (last in lineage)
     current_tool, current_fork = lineage[-1]
     
+    # Safety: Ensure created_by exists
+    owner_id = current_tool.created_by or "unknown"
+    
     if len(lineage) == 1 or current_fork is None:
         # Original tool - owner gets 100%
         payouts.append({
-            "recipient_id": current_tool.created_by,
+            "recipient_id": owner_id,
             "recipient_tool_id": current_tool.id,
             "recipient_tool_key": current_tool.tool_key,
             "amount": int(pool),
@@ -140,7 +161,7 @@ def calculate_payouts(
         # Owner payout
         if int(owner_amount) >= MIN_PAYOUT_AMOUNT:
             payouts.append({
-                "recipient_id": current_tool.created_by,
+                "recipient_id": owner_id,
                 "recipient_tool_id": current_tool.id,
                 "recipient_tool_key": current_tool.tool_key,
                 "amount": int(owner_amount),
@@ -163,13 +184,14 @@ def calculate_payouts(
                     ancestor_amount += remainder
                 
                 if ancestor_amount >= MIN_PAYOUT_AMOUNT:
+                    ancestor_owner_id = ancestor_tool.created_by or "unknown"
                     payouts.append({
-                        "recipient_id": ancestor_tool.created_by,
+                        "recipient_id": ancestor_owner_id,
                         "recipient_tool_id": ancestor_tool.id,
                         "recipient_tool_key": ancestor_tool.tool_key,
                         "amount": ancestor_amount,
                         "share_type": ShareType.ANCESTOR.value,
-                        "share_rate": float(Decimal(ancestor_amount) / pool),
+                        "share_rate": float(Decimal(ancestor_amount) / pool) if pool > 0 else 0.0,
                         "lineage_position": len(ancestors) - i,
                     })
     
@@ -291,8 +313,18 @@ async def process_settlement(
     
     # Process each payout
     failed_payouts = []
+    platform_revenue = 0
+    
     for payout in settlement.payouts:
         try:
+            # Skip system users - their share goes to platform
+            if payout.recipient_id == "system":
+                payout.status = PayoutStatus.CREDITED.value
+                payout.credited_at = datetime.utcnow()
+                platform_revenue += payout.amount
+                logger.info(f"System payout redirected to platform: {payout.amount} credits")
+                continue
+            
             # Get or create user credits
             user_credits = await get_or_create_user_credits(db, payout.recipient_id, seed_balance=0)
             
@@ -325,32 +357,36 @@ async def process_settlement(
             payout.ledger_entry_id = ledger.id
             
         except Exception as e:
-            logger.error(f"Payout failed: payout_id={payout.id}, error={e}")
+            logger.error(f"Payout failed: recipient={payout.recipient_id}, error={e}")
             payout.status = PayoutStatus.FAILED.value
-            payout.error_message = str(e)
-            failed_payouts.append(payout.id)
+            payout.error_message = str(e)[:500]
+            failed_payouts.append(str(payout.id))
     
     # Update fork revenue tracking
     if settlement.tool_id:
-        fork_result = await db.execute(
-            select(ForkEvent).where(ForkEvent.child_tool_id == settlement.tool_id)
-        )
-        fork = fork_result.scalars().first()
-        if fork:
-            owner_payout = next(
-                (p for p in settlement.payouts if p.share_type == ShareType.OWNER.value),
-                None
+        try:
+            fork_result = await db.execute(
+                select(ForkEvent).where(ForkEvent.child_tool_id == settlement.tool_id)
             )
-            if owner_payout:
-                fork.revenue_generated += owner_payout.amount
-                fork.revenue_shared += settlement.creator_pool - owner_payout.amount
-        
-        # Update tool total revenue
-        await db.execute(
-            update(ToolManifest)
-            .where(ToolManifest.id == settlement.tool_id)
-            .values(total_revenue=ToolManifest.total_revenue + settlement.creator_pool)
-        )
+            fork = fork_result.scalars().first()
+            if fork:
+                owner_payout = next(
+                    (p for p in settlement.payouts if p.share_type == ShareType.OWNER.value),
+                    None
+                )
+                if owner_payout:
+                    # Null safety for revenue fields
+                    fork.revenue_generated = (fork.revenue_generated or 0) + owner_payout.amount
+                    fork.revenue_shared = (fork.revenue_shared or 0) + max(0, settlement.creator_pool - owner_payout.amount)
+            
+            # Update tool total revenue with COALESCE for null safety
+            await db.execute(
+                update(ToolManifest)
+                .where(ToolManifest.id == settlement.tool_id)
+                .values(total_revenue=func.coalesce(ToolManifest.total_revenue, 0) + settlement.creator_pool)
+            )
+        except Exception as e:
+            logger.warning(f"Failed to update fork/tool revenue: {e}")
     
     # Finalize settlement status
     if failed_payouts:
@@ -375,16 +411,31 @@ async def process_batch_settlements(
 ) -> dict:
     """
     Process multiple pending settlements in batch.
+    
+    Each settlement is processed independently with error isolation
+    to prevent one failure from blocking the entire batch.
     """
+    # Validate limit
+    limit = max(1, min(limit, 500))
+    
     # Get pending settlements
-    result = await db.execute(
-        select(SettlementTransaction)
-        .where(SettlementTransaction.status == SettlementStatus.PENDING.value)
-        .where(SettlementTransaction.retry_count < MAX_RETRY_COUNT)
-        .order_by(SettlementTransaction.created_at)
-        .limit(limit)
-    )
-    settlements = result.scalars().all()
+    try:
+        result = await db.execute(
+            select(SettlementTransaction)
+            .where(SettlementTransaction.status == SettlementStatus.PENDING.value)
+            .where(SettlementTransaction.retry_count < MAX_RETRY_COUNT)
+            .order_by(SettlementTransaction.created_at)
+            .limit(limit)
+        )
+        settlements = result.scalars().all()
+    except Exception as e:
+        logger.error(f"Failed to fetch pending settlements: {e}")
+        return {
+            "processed": 0,
+            "succeeded": 0,
+            "failed": 0,
+            "errors": [{"error": str(e)}],
+        }
     
     results = {
         "processed": 0,
@@ -394,16 +445,33 @@ async def process_batch_settlements(
     }
     
     for settlement in settlements:
-        success, error = await process_settlement(db, settlement.id, processed_by)
-        results["processed"] += 1
-        if success:
-            results["succeeded"] += 1
-        else:
+        try:
+            success, error = await process_settlement(db, settlement.id, processed_by)
+            results["processed"] += 1
+            if success:
+                results["succeeded"] += 1
+            else:
+                results["failed"] += 1
+                results["errors"].append({
+                    "settlement_id": str(settlement.id),
+                    "error": (error or "Unknown error")[:200],
+                })
+        except Exception as e:
+            # Isolate each settlement's failure
+            results["processed"] += 1
             results["failed"] += 1
             results["errors"].append({
                 "settlement_id": str(settlement.id),
-                "error": error,
+                "error": str(e)[:200],
             })
+            logger.exception(f"Settlement processing exception: id={settlement.id}")
+            # Continue with next settlement
+            continue
+    
+    # Limit errors array to prevent huge responses
+    if len(results["errors"]) > 10:
+        results["errors"] = results["errors"][:10]
+        results["errors"].append({"note": f"... and {results['failed'] - 10} more errors"})
     
     logger.info(f"Batch settlement: {results['processed']} processed, {results['succeeded']} succeeded")
     return results

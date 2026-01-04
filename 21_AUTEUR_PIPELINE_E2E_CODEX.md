@@ -2,7 +2,7 @@
 
 **Date**: 2025-12-24 (Updated: 2025-12-28)  
 **Status**: SoR (End-to-End execution blueprint)  
-**Implementation Progress**: 95% (See `21_DOCUMENTATION_AUDIT_REPORT_V1.md` Section 6)  
+**Implementation Progress**: 95% (See `docs/archive/21_DOCUMENTATION_AUDIT_REPORT_V1.md` Section 6)  
 **Goal**: 거장/명장면 데이터화부터 템플릿화, 사용자 실행, 학습/승격까지의 전 과정을 완전한 실행 파이프라인으로 정의한다.
 
 ---
@@ -16,9 +16,9 @@
 - 증거는 **evidence_refs**로 추적 가능해야 하며 `sheet:`/`db:`만 허용한다.
 
 참조 문서:  
-`10_PIPELINES_AND_USER_FLOWS.md`, `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`,  
-`05_CAPSULE_NODE_SPEC.md`, `11_DB_PROMOTION_RULES_V1.md`,  
-`33_NOTEBOOKLM_SOURCE_PACK_AND_PROMPT_PROTOCOL_CODEX.md`
+`08_PIPELINES_AND_USER_FLOWS.md`, `19_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`,  
+`04_CAPSULE_NODE_SPEC.md`, `09_DB_PROMOTION_RULES_V1.md`,  
+`25_NOTEBOOKLM_SOURCE_PACK_PROTOCOL_CODEX.md`
 
 ---
 
@@ -33,7 +33,7 @@
 - **Pattern / PatternTrace / PatternVersion**: 검증된 패턴과 적용 기록
 - **CapsuleSpec**: 실행 규약(입력/출력/노출 파라미터)
 - **Template / TemplateVersion**: 재사용 가능한 파이프라인 블루프린트
-- **Canvas / CapsuleRun / GenerationRun**: 사용자 실행 및 결과
+- **WorkflowSession / CapsuleRun / GenerationRun**: 사용자 실행 및 결과 (Canvas는 legacy)
 
 ---
 
@@ -79,8 +79,8 @@
 **Input**: DB SoR + **Source Pack** (원본 영상 금지)  
 **Process**: NotebookLM/Opal 실행 → JSON 출력  
 **Output**: `CREBIT_DERIVED_INSIGHTS` (Sheets Bus)  
-**Check**: `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md` 규격 준수  
-**Protocol**: `33_NOTEBOOKLM_SOURCE_PACK_AND_PROMPT_PROTOCOL_CODEX.md`
+**Check**: `07_NOTEBOOKLM_OUTPUT_SPEC_V1.md` 규격 준수  
+**Protocol**: `25_NOTEBOOKLM_SOURCE_PACK_PROTOCOL_CODEX.md`
 
 ---
 
@@ -96,7 +96,7 @@
 **Goal**: 검증된 패턴만 캡슐에 반영한다.  
 **Process**: 후보 필터링 → Pattern/Trace 승격 → PatternVersion 증가  
 **Output**: `patterns`, `pattern_trace`, `pattern_versions`  
-**Check**: 승격 기준은 `12_PATTERN_PROMOTION_CRITERIA_V1.md`
+**Check**: 승격 기준은 `docs/archive/12_PATTERN_PROMOTION_CRITERIA_V1.md`
 
 ---
 
@@ -124,9 +124,9 @@
 
 ---
 
-### Stage 9. Creator Canvas Execution
-**Goal**: 템플릿 기반 캔버스 실행/미리보기 제공.  
-**Process**: Canvas 생성 → Capsule Run (WS/SSE) → Preview  
+### Stage 9. Creator Workflow Execution
+**Goal**: 템플릿 기반 워크플로우(열차) 실행/미리보기 제공.  
+**Process**: Flow 생성 → Capsule Run (SSE) → Preview  
 **Output**: `capsule_runs`, preview payload  
 **Check**: evidence_refs 필터링, 비용/토큰/지연 기록
 
@@ -173,7 +173,7 @@
 ## 4) Acceptance Criteria (MVP 기준)
 
 1. **거장 1명 + 작품 3개**의 구조화/가이드/패턴이 끝까지 승격됨  
-2. 해당 데이터를 기반으로 **템플릿 1개**가 생성되고 캔버스에서 실행됨  
+2. 해당 데이터를 기반으로 **템플릿 1개**가 생성되고 워크플로우에서 실행됨 (Canvas legacy)  
 3. 실행 결과에 **patternVersion + evidence_refs**가 포함됨  
 4. 프리뷰와 최종 생성이 **분리**되어 비용 제어가 가능함  
 
@@ -190,12 +190,12 @@
 
 ## 6) Implementation Pointers
 
-- Ingest 운영: `14_INGEST_RUNBOOK_V1.md`  
-- DB 승격: `11_DB_PROMOTION_RULES_V1.md`  
-- 템플릿 정책: `23_TEMPLATE_SYSTEM_SPEC_CODEX.md`  
-- 템플릿 시드: `backend/scripts/seed_template_from_evidence.py` 또는 `POST /api/v1/templates/seed/from-evidence`  
-- 캡슐 계약: `05_CAPSULE_NODE_SPEC.md`  
-- 실행 계획: `19_CREBIT_EXECUTION_PLAN_V1.md`
+- Ingest 운영: `11_INGEST_RUNBOOK_V1.md`  
+- DB 승격: `09_DB_PROMOTION_RULES_V1.md`  
+- 템플릿 정책: `17_TEMPLATE_SYSTEM_SPEC_CODEX.md`  
+- 템플릿 시드: `backend/scripts/seed_template_from_evidence.py` 또는 `POST /api/v1/templates/seed/from-evidence` (legacy templates router)  
+- 캡슐 계약: `04_CAPSULE_NODE_SPEC.md`  
+- 실행 계획: `docs/archive/19_CREBIT_EXECUTION_PLAN_V1.md`
 
 ---
 
@@ -213,5 +213,5 @@
 10. **Pattern Trace 등록**: 적용 근거/evidence ref 기록  
 11. **patternVersion 증가 확인**: 캡슐/템플릿 버전 반영  
 12. **템플릿 시드 생성**: Script/Storyboard 노드 포함 그래프 작성  
-13. **캔버스 실행 검증**: Preview 생성 + evidence_refs 확인  
+13. **워크플로우 실행 검증**: Preview 생성 + evidence_refs 확인  
 14. **초기 학습 루프**: GA/RL 추천 결과 점검 → 승격 여부 판단

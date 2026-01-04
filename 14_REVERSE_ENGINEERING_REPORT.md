@@ -1,9 +1,9 @@
-# 18_REVERSE_ENGINEERING_REPORT_FOR_EXECUTION.md
+# 14_REVERSE_ENGINEERING_REPORT.md
 
 **Date**: 2025-12-24
 **Updated**: 2025-12-28
 **Purpose**: Final data extraction to unblock "Execution Plan"
-**Scope**: Workstreams A-F (IA, Canvas, Data, Credits, Affiliate, Observability)
+**Scope**: Workstreams A-F (IA, Canvas(legacy), Data, Credits, Affiliate, Observability)
 
 ---
 
@@ -12,23 +12,23 @@
 This document is reference-only. Final decisions and contracts live in SoR docs.
 
 - Docs map: `00_DOCS_INDEX.md`
-- Philosophy: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
-- Flows/Roles: `10_PIPELINES_AND_USER_FLOWS.md`
-- Capsule contract: `05_CAPSULE_NODE_SPEC.md`
-- UI/UX: `13_UI_DESIGN_GUIDE_2025-12.md`
-- Credits/Growth: `17_CREDITS_AND_BILLING_SPEC_V1.md`, `35_AFFILIATE_PROGRAM_SPEC_V1.md`
+- Philosophy: `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
+- Flows/Roles: `08_PIPELINES_AND_USER_FLOWS.md`
+- Capsule contract: `04_CAPSULE_NODE_SPEC.md`
+- UI/UX: `10_UI_DESIGN_GUIDE_2025-12.md`
+- Credits/Growth: `13_CREDITS_AND_BILLING_SPEC_V1.md`, `26_AFFILIATE_PROGRAM_SPEC_V1.md`
 
 ---
 
 ## Workstream A: IA + Onboarding ( Confirmed )
 
 **1. Navigation Structure (Left Rail)**
-- **Top Group (Product)**: `Dashboard`, `Research` (Data Ingest), `Creator Hub` (Canvas).
+- **Top Group (Product)**: `Dashboard`, `Research` (Data Ingest), `Creator Hub` (Flow/Dimension, Canvas legacy).
 - **Bottom Group (Admin)**: `Accounts`, `Credits` (Wallet), `Affiliate` (Growth).
 - **Logic**: Split "Doing" vs "Managing". Credits is *promoted* to top-level access.
 
 **2. Empty State Mechanics**
-- **CTA**: "Create First Canvas" (Primary, Accent Color).
+- **CTA**: "Create First Workflow" (Primary, Accent Color). *(legacy reference: Create First Canvas)*
 - **Micro-Copy**: "Visual AI content workflow builder. Connect inputs -> AI Processor -> Outputs."
 - **Seed Templates** (Reverse Engineered):
   - "YouTube to Blog" (Video Input -> Summary Node -> Blog Writer)
@@ -36,7 +36,7 @@ This document is reference-only. Final decisions and contracts live in SoR docs.
 
 ---
 
-## Workstream B: Canvas UX ( Observable Behavior )
+## Workstream B: Canvas UX ( Observable Behavior, legacy reference )
 
 **1. Node Port Logic (Inferred from UI)**
 - **Input Nodes**: 0 Inputs, 1 Output.
@@ -82,7 +82,7 @@ To support the observed "Context Awareness", the backend schema must hold:
 - `event_type`: `generation_run` | `purchase` | `referral_reward`
 - `amount`: +/- integer
 - `balance_snapshot`: The balance *after* transaction (for audit).
-- `meta`: `{"canvas_id": "...", "node_id": "..."}` for transparency.
+- `meta`: `{"canvas_id": "...", "node_id": "..."}` for transparency. *(legacy key names)*
 
 ---
 

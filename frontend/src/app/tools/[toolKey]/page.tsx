@@ -42,6 +42,7 @@ import type {
     ForkEvent,
     AttributionScore,
 } from "@/lib/telemetry-api";
+import ForkToolModal from "@/components/tools/ForkToolModal";
 
 // =============================================================================
 // Attribution Score Visualization
@@ -230,8 +231,8 @@ function RunHistoryCard({
                                                                 >
                                                                     <Star
                                                                         className={`w-5 h-5 ${star <= rating
-                                                                                ? "text-yellow-400 fill-yellow-400"
-                                                                                : "text-gray-600"
+                                                                            ? "text-yellow-400 fill-yellow-400"
+                                                                            : "text-gray-600"
                                                                             }`}
                                                                     />
                                                                 </button>
@@ -303,8 +304,8 @@ function ForkHistoryCard({ forks }: { forks: ForkEvent[] }) {
                         <div
                             key={fork.id}
                             className={`p-3 rounded-lg border ${fork.is_suspicious
-                                    ? "bg-yellow-500/10 border-yellow-500/30"
-                                    : "bg-gray-900/50 border-gray-700/30"
+                                ? "bg-yellow-500/10 border-yellow-500/30"
+                                : "bg-gray-900/50 border-gray-700/30"
                                 }`}
                         >
                             <div className="flex items-start justify-between">
@@ -423,7 +424,12 @@ export default function ToolDetailPage() {
     };
 
     const handleFork = () => {
-        router.push(`/tools/${toolKey}/fork`);
+        setShowForkModal(true);
+    };
+
+    const handleForkSuccess = (newToolKey: string) => {
+        setShowForkModal(false);
+        router.push(`/tools/${newToolKey}`);
     };
 
     const copyToolKey = () => {
@@ -475,10 +481,10 @@ export default function ToolDetailPage() {
                                 <h1 className="text-2xl font-bold">{tool.display_name}</h1>
                                 <span
                                     className={`px-2.5 py-1 text-xs font-medium rounded-full ${tool.tier === "certified"
-                                            ? "bg-emerald-500/10 text-emerald-400"
-                                            : tool.tier === "verified"
-                                                ? "bg-blue-500/10 text-blue-400"
-                                                : "bg-yellow-500/10 text-yellow-400"
+                                        ? "bg-emerald-500/10 text-emerald-400"
+                                        : tool.tier === "verified"
+                                            ? "bg-blue-500/10 text-blue-400"
+                                            : "bg-yellow-500/10 text-yellow-400"
                                         }`}
                                 >
                                     {tool.tier}
@@ -565,6 +571,17 @@ export default function ToolDetailPage() {
                     <RunHistoryCard runs={runs} onFeedback={handleFeedback} />
                 </div>
             </div>
+
+            {/* Fork Modal */}
+            {showForkModal && tool && (
+                <ForkToolModal
+                    toolId={tool.id}
+                    toolName={tool.tool_key}
+                    toolKey={toolKey}
+                    onClose={() => setShowForkModal(false)}
+                    onSuccess={handleForkSuccess}
+                />
+            )}
         </div>
     );
 }

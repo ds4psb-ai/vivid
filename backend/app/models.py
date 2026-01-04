@@ -667,6 +667,7 @@ class AgentMessage(Base):
     tool_calls: Mapped[list] = mapped_column(JSONB, default=list)
     tool_call_id: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
     name: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    payload: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
@@ -707,7 +708,91 @@ class UserTeachingSettings(Base):
     
     # User preferences
     language: Mapped[str] = mapped_column(String(8), default="ko")
-    selected_model: Mapped[str] = mapped_column(String(64), default="gemini-2.5-flash")
+    selected_model: Mapped[str] = mapped_column(String(64), default="gemini-3-flash-preview")
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+# =============================================================================
+# Tool Registry (Scalable Workflow Planner)
+# =============================================================================
+
+class Tool(Base):
+    """Dynamic tool definitions for workflow planner."""
+    __tablename__ = "tools"
+    __table_args__ = (
+        Index("ix_tools_dimension", "dimension"),
+        Index("ix_tools_is_active", "is_active"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tool_key: Mapped[str] = mapped_column(String(50), unique=True)
+    dimension: Mapped[str] = mapped_column(String(10))  # '1D', '2D', '3D', '4D'
+    category: Mapped[str] = mapped_column(String(50))  # 'generation', 'analysis', 'editing'
+    
+    # i18n metadata
+    name_ko: Mapped[str] = mapped_column(String(100))
+    name_en: Mapped[str] = mapped_column(String(100))
+    description_ko: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    description_en: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    
+    # Execution info
+    endpoint: Mapped[str] = mapped_column(String(200))
+    executor_type: Mapped[str] = mapped_column(String(20), default="http")  # 'http', 'grpc', 'serverless'
+    timeout_seconds: Mapped[int] = mapped_column(Integer, default=60)
+    
+    # Cost & billing
+    credit_cost: Mapped[int] = mapped_column(Integer, default=5)
+    billing_type: Mapped[str] = mapped_column(String(20), default="per_run")  # 'per_run', 'per_minute', 'per_token'
+    
+    # UI
+    color: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    icon: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    
+    # Status flags
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_beta: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_system: Mapped[bool] = mapped_column(Boolean, default=False)  # System tools can't be deleted
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ToolSchema(Base):
+    """Versioned input/output schemas per tool."""
+    __tablename__ = "tool_schemas"
+    __table_args__ = (
+        UniqueConstraint("tool_id", "version", name="uq_tool_schema_version"),
+        Index("ix_tool_schemas_tool_current", "tool_id", "is_current"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tool_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tools.id", ondelete="CASCADE"))
+    version: Mapped[str] = mapped_column(String(20))  # 'v1.0.0'
+    input_schema: Mapped[dict] = mapped_column(JSONB, default=dict)
+    output_schema: Mapped[dict] = mapped_column(JSONB, default=dict)
+    system_prompt: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # LLM system instructions
+    is_current: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class ToolDependency(Base):
+    """Tool chaining relationships (which tools can follow which)."""
+    __tablename__ = "tool_dependencies"
+
+    from_tool_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), 
+        ForeignKey("tools.id", ondelete="CASCADE"), 
+        primary_key=True
+    )
+    to_tool_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), 
+        ForeignKey("tools.id", ondelete="CASCADE"), 
+        primary_key=True
+    )
+    output_to_input_mapping: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)  # {"prompt": "script"}
+    is_recommended: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

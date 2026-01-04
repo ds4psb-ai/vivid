@@ -65,14 +65,14 @@
 | **타로 해석기** | 타로 카드 AI 해석 | 다중 카테고리 확장 |
 | **사주 분석기** | 생년월일 기반 분석 | 다중 카테고리 확장 |
 
-### 기존 Teaching Tools (유지)
+### 기존 Dimension Apps (Layer 1 통합)
 
 | App | Route | 목적 | Layer 통합 |
 |-----|-------|------|-----------|
-| Veo 프롬프트 생성기 | `/teaching/prompt` | 영상 프롬프트 | Layer 1 도구 |
-| 스토리보드 생성기 | `/teaching/storyboard` | 씬 단위 스토리보드 | Layer 1 도구 |
-| 이미지 프롬프트 생성기 | `/teaching/image-tool` | AI 이미지 프롬프트 | Layer 1 도구 |
-| 레퍼런스 분석기 | `/teaching/shot-catch` | 시네마틱 분석 | Layer 3 RAG |
+| 1D Origin | `/dimension/prompt` | Veo 영상 프롬프트 | Layer 1 도구 |
+| 2D Blueprint | `/dimension/storyboard` | 씬 단위 스토리보드 | Layer 1 도구 |
+| 3D Ambience | `/dimension/image-tool` | AI 이미지 프롬프트 | Layer 1 도구 |
+| 4D Moment | `/dimension/shot-catch` | 시네마틱 분석 | Layer 3 RAG |
 
 ---
 
@@ -145,21 +145,21 @@
 ┌────────────────────────────────────────────────────────────────────┐
 │  Frontend (Next.js)                                                 │
 │                                                                      │
-│  ├─ /teaching/*           (기존 Teaching Tools)                     │
-│  ├─ /tools/*              (Fork 도구 마켓)                          │
-│  ├─ /humancloud/*         (의뢰-제작 플로우)                        │
-│  └─ /knowledge/*          (RAG 추천 UI)                             │
+│  ├─ /dimension/*          (Dimension Apps - Layer 1)
+│  ├─ /tools/*              (Fork 도구 마켓)
+│  ├─ /humancloud/*         (의뢰-제작 플로우)
+│  └─ /knowledge/*          (RAG 추천 UI)
 └────────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌────────────────────────────────────────────────────────────────────┐
 │  Backend (FastAPI)                                                  │
 │                                                                      │
-│  routers/                                                           │
-│  ├─ teaching.py           (기존 Teaching API)                       │
-│  ├─ tools.py              (Fork 도구 관리)                          │
-│  ├─ humancloud.py         (의뢰-매칭-납품)                          │
-│  └─ knowledge.py          (RAG 추천 API)                            │
+│  routers/
+│  ├─ dimension.py          (Dimension Apps API)
+│  ├─ tools.py              (Fork 도구 관리)
+│  ├─ humancloud.py         (의뢰-매칭-납품)
+│  └─ knowledge.py          (RAG 추천 API)
 │                                                                      │
 │  services/                                                          │
 │  ├─ fork_manager.py       (Fork 수익분배)                           │
@@ -184,6 +184,25 @@
 
 | 항목 | 기존 | 신규 |
 |------|------|------|
-| Teaching Tools | 유지 | Layer 1 도구로 통합 |
+| Dimension Apps | Teaching → Dimension 이름 변경 | Layer 1 도구로 통합 |
 | 크레딧 시스템 | 유지 | Fork 수익분배 추가 |
 | Agent 통합 | 유지 | RAG 추천 연동 |
+
+---
+
+## Dimension API 구조
+
+```
+/api/dimension/
+├── 1d/generate        # Origin (Veo 프롬프트)
+├── 2d/create          # Blueprint (스토리보드)
+├── 3d/generate        # Ambience (이미지 프롬프트)
+├── 4d/analyze         # Moment (레퍼런스 분석)
+├── info               # 차원 정보
+├── health             # 헬스 체크
+└── metrics/           # 메트릭 대시보드
+    ├── stats
+    ├── summary
+    ├── session/{id}
+    └── tool/{name}
+```

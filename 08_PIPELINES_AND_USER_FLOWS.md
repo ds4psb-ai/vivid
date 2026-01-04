@@ -3,7 +3,7 @@
 **작성**: 2025-12-24  
 **Updated**: 2026-01-01 (Chat-First Studio 추가)  
 **대상**: Product / Design / Engineering  
-**목표**: 데이터화 파이프라인과 캔버스 사용자 흐름을 한 장으로 정리
+**목표**: 데이터화 파이프라인과 워크플로우 사용자 흐름을 한 장으로 정리
 
 ---
 
@@ -11,9 +11,9 @@
 
 이 문서는 **흐름/역할의 단일 기준**입니다.  
 다른 문서는 이 내용을 반복하지 않고 링크로 참조합니다.
-원칙/철학은 `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`에서 고정한다.
-E2E 상세 파이프라인은 `27_AUTEUR_PIPELINE_E2E_CODEX.md`를 참조한다.
-프로덕션(샷 생성/후반) 상세는 `29_AI_PRODUCTION_PIPELINE_CODEX.md`를 참조한다.
+원칙/철학은 `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`에서 고정한다.
+E2E 상세 파이프라인은 `21_AUTEUR_PIPELINE_E2E_CODEX.md`를 참조한다.
+프로덕션(샷 생성/후반) 상세는 `22_AI_PRODUCTION_PIPELINE_CODEX.md`를 참조한다.
 
 ---
 
@@ -22,7 +22,7 @@ E2E 상세 파이프라인은 `27_AUTEUR_PIPELINE_E2E_CODEX.md`를 참조한다.
 - **Gemini 3 Pro/Flash**: 영상 구조화(JSON Schema) 전용 엔진  
   - ASR + 샷/키프레임 기반의 **scene/shot schema** 생성  
   - 결과는 **DB SoR(Video Schema)**에 적재 (NotebookLM 소스는 DB 요약본)  
-  - 상세 스펙: `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
+  - 상세 스펙: `19_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
 - **NotebookLM**: 지식/가이드 레이어 (Light RAG)  
   - 거장/장르 **클러스터 노트북** 운영  
   - 요약/오마주/변주/템플릿 적합도 가이드 출력  
@@ -31,14 +31,14 @@ E2E 상세 파이프라인은 `27_AUTEUR_PIPELINE_E2E_CODEX.md`를 참조한다.
   - 업로드 소스는 SoR가 아니며, 결과는 Sheets Bus → DB 승격 규칙을 따른다  
   - Ultra 구독 기준 다중 출력/대량 처리에 유리  
   - Mega-Notebook은 **발굴/집계/운영 레이어**로만 사용하며, 캡슐은 **phase-locked pack**에서만 승격  
-  - 출력 규격: `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
-  - 소스팩/프롬프트 프로토콜: `33_NOTEBOOKLM_SOURCE_PACK_AND_PROMPT_PROTOCOL_CODEX.md`
+  - 출력 규격: `07_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
+  - 소스팩/프롬프트 프로토콜: `25_NOTEBOOKLM_SOURCE_PACK_PROTOCOL_CODEX.md`
 - **Opal**: 템플릿 시드 + 내부 워크플로 자동화  
   - 라벨링/QA/프롬프트 체인 도구화  
   - 캡슐 노드 내부 서브그래프로만 실행
 - **Sheets Bus**: 운영/검수용 스테이징  
   - DB SoR가 **증명/학습의 정본**  
-  - 승격 규칙: `11_DB_PROMOTION_RULES_V1.md`
+  - 승격 규칙: `09_DB_PROMOTION_RULES_V1.md`
 
 ---
 
@@ -72,33 +72,33 @@ Admin Ingest
 - DB에 승격되는 것은 **검증된 패턴**만
 - `evidence_refs`는 `sheet:` 또는 `db:` 포맷만 허용 (서버에서 필터링)
 - 모든 결과는 **source_id + prompt/model/version**로 추적
-- 승격 기준은 `12_PATTERN_PROMOTION_CRITERIA_V1.md`
+- 승격 기준은 `docs/archive/12_PATTERN_PROMOTION_CRITERIA_V1.md`
 
 ---
 
-## 2) Creator Pipeline (Canvas → Preview → Generate)
+## 2) Creator Pipeline (Flow → Execute)
 
 ```
-Template Card
-  → Canvas Edit
-  → Capsule Run (Streaming: queued/started/progress/completed)
-  → GA/RL Recommend
-  → Script/Storyboard Preview
-  → Generate (Scene/Audio)
-  → Export + Feedback
+Flow (Train UI)
+  → 연결 고리 선택 (3옵션)
+  → Teaching Tool 실행
+  → 결과 확인/재시도
+  → (필요시) Dimension 미니앱으로 보완
 ```
 
 핵심 규칙:
-- 캡슐 내부 체인은 숨김, 결과만 노출
-- 프리뷰는 저비용, 최종 생성은 고품질
-- 캡슐 실행은 WS/SSE 스트리밍으로 진행 상태와 부분 메시지를 전달
+- 연결 고리는 3개 옵션 중 하나를 선택하도록 제한
+- 각 도구는 Teaching API(`/api/teaching/*`)로 실행
+- Flow UI는 현재 **Mock 옵션** 기반이며 `/api/v1/workflow` 연동은 진행 중
 
-### 2.0.1 Story-First Creator Flow (NEW: 2025-12-30)
+> Legacy: Canvas 기반 파이프라인은 `_deprecated` 경로에서만 유지됩니다.
+
+### 2.0.1 Story-First Creator Flow (Legacy)
 
 서사 중심 바이럴 콘텐츠 제작 흐름:
 
 ```
-Canvas Load
+Canvas Load (legacy)
   → CanvasNarrativePanel 활성화
   → 부조화 설계 (익숙함 ↔ 낯섦)
   → 감정 곡선 설정 (시작/절정/결말)
@@ -131,23 +131,21 @@ Beat Sheet
 - **샷 단위 생성**이 기본이며, Scene/Sequence는 Shot을 묶어 구성
 - 프롬프트는 **5~10개 묶음**으로 병렬 실행 후 선별
 - **일관성 우선**이면 Image-to-Video, **역동성 우선**이면 Text-to-Video
-- 상세 규격은 `29_AI_PRODUCTION_PIPELINE_CODEX.md`를 따른다
+- 상세 규격은 `22_AI_PRODUCTION_PIPELINE_CODEX.md`를 따른다
 
-### 2.2 Chat-First Studio (Agent)
+### 2.2 Agent Chat (Chokki)
 
 ```
-Agent Studio (Chat)
-  → compile_workflow (DirectorAgent)
-  → Canvas Sync (optional)
-  → run_capsule / analyze_sources
-  → Artifact Preview (Storyboard / Shot List / Data Table)
-  → Approve/Reject (session gate)
+Agent Chat (Global)
+  → /api/v1/agent/chat (SSE)
+  → Tool calls + artifacts
+  → (optional) Workflow plan 생성
 ```
 
 핵심 규칙:
-- 채팅이 워크플로우의 빠른 진입점이며, 캔버스는 편집/확장용이다.
+- 채팅은 전역 컴포넌트(Chokki)로 제공된다.
 - 스트리밍은 SSE 이벤트로 tool 결과/아티팩트를 즉시 갱신한다.
-- 단순 모드는 결과 중심, 전문가 모드는 도구/메타를 노출한다.
+- 캔버스 동기화는 현재 비활성(레거시 UI만 유지).
 
 ---
 
@@ -165,6 +163,7 @@ Agent Studio (Chat)
 - Admin/Ops 화면은 **세션 기반 역할(Role)**로 접근 제어한다.
 - 로그인 미인증 상태에서는 **admin-only + 로그인 CTA**를 제공한다.
 - 캡슐/템플릿의 **공개 편집은 허용하지 않는다** (서버에서 강제).
+- 인증은 **Google OAuth + 세션 쿠키**가 기본이며, `X-User-Id`는 개발용 fallback이다.
 
 ---
 

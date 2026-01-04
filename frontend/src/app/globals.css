@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+@layer components {
+
+  /* Lusion-style Glass Card (Standardized) */
+  .card-glass {
+    @apply relative overflow-hidden bg-black/40 backdrop-blur-xl border border-white/5 rounded-[1.5rem];
+  }
+
+  .card-glass-hover {
+    @apply hover:bg-white/[0.03] hover:border-white/10 hover:shadow-2xl hover:shadow-violet-500/5 transition-all duration-500 ease-out;
+  }
+}
+
 :root {
   /* 2025 Deep Space Theme - Reduced Eye Strain */
   --bg-0: #0F0F1A;
@@ -15,8 +27,9 @@
   /* Cool Gray (Secondary Text) - WCAG 4.5:1 compliant */
 
   /* Crebit Accents */
-  --accent: #38bdf8;
-  --accent-glow: rgba(56, 189, 248, 0.4);
+  /* --accent: #38bdf8; (Cyan) -> #8B5CF6 (Violet) */
+  --accent: #8B5CF6;
+  --accent-glow: rgba(139, 92, 246, 0.4);
   --accent-2: #f59e0b;
 
   /* Surfaces & Glass */
@@ -69,6 +82,80 @@
   --glow-rose: 0 0 50px rgba(244, 63, 94, 0.18);
   --glow-emerald: 0 0 50px rgba(16, 185, 129, 0.18);
   --glow-violet: 0 0 50px rgba(139, 92, 246, 0.18);
+
+  /* ═══ LUSION DESIGN SYSTEM (HARDENED) ═══ */
+  /* Colors - Exact matches from lusion.co spec */
+  --lusion-blue: #1a2ffb;
+  --lusion-dark-blue: #071bdf;
+  --lusion-green: #c1ff00;
+  --lusion-purple: #8832f7;
+  --lusion-red: #ff4c41;
+  --lusion-black: #000000;
+  --lusion-white: #ffffff;
+  --lusion-off-white: #f0f1fa;
+  --lusion-dark-white: #e4e6ef;
+  /* Vivid Dimension Colors (Hardened) */
+  --vivid-violet: #8B5CF6;
+  /* Prompt */
+  --vivid-cyan: #1A2FFB;
+  /* Shot Catch (Using Lusion Blue for impact) */
+  --vivid-emerald: #C1FF00;
+  /* Storyboard (Using Lusion Green for impact) */
+  --vivid-amber: #F59E0B;
+  /* Image Tool */
+
+  /* Typography - Aggressive Fluid Sizing (Lusion Spec) */
+  --text-hero: clamp(3rem, 8vw, 8rem);
+  --text-heading: clamp(2rem, 4vw, 4rem);
+  --text-subheading: clamp(1.25rem, 2vw, 2rem);
+  --text-body: clamp(0.875rem, 1vw, 1.125rem);
+  --text-caption: clamp(0.75rem, 0.8vw, 0.875rem);
+
+  /* Easing Functions - Premium Feel */
+  --ease-lusion: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Legacy mapping */
+  --ease-out-expo: var(--ease-lusion);
+
+  /* Lusion Spacing Tokens */
+  --radius-lusion: 20px;
+  --global-border-radius: 20px;
+  --base-padding-x: max(5vw, 40px);
+  --base-padding-y: clamp(30px, 4vw, 50px);
+  --grid-gap: 2vw;
+  --section-gap: clamp(60px, 10vh, 120px);
+
+  /* ═══ LUSION ENHANCED GLOW SYSTEM (HARDENED) ═══ */
+  /* Multi-layer glow for depth (3 layers: intense → medium → ambient) */
+  --glow-violet-intense:
+    0 0 40px rgba(139, 92, 246, 0.5),
+    0 0 80px rgba(139, 92, 246, 0.3),
+    0 0 160px rgba(139, 92, 246, 0.15);
+
+  --glow-cyan-intense:
+    0 0 40px rgba(26, 47, 251, 0.5),
+    /* Lusion Blue base */
+    0 0 80px rgba(26, 47, 251, 0.3),
+    0 0 160px rgba(26, 47, 251, 0.15);
+
+  --glow-emerald-intense:
+    0 0 40px rgba(193, 255, 0, 0.45),
+    /* Lusion Green base */
+    0 0 80px rgba(193, 255, 0, 0.25),
+    0 0 160px rgba(193, 255, 0, 0.1);
+
+  --glow-amber-intense:
+    0 0 40px rgba(245, 158, 11, 0.5),
+    0 0 80px rgba(245, 158, 11, 0.3),
+    0 0 160px rgba(245, 158, 11, 0.15);
+
+  /* RGB values for dynamic glow composition */
+  --color-violet-rgb: 139, 92, 246;
+  --color-cyan-rgb: 26, 47, 251;
+  /* Lusion Blue */
+  --color-emerald-rgb: 193, 255, 0;
+  /* Lusion Green */
+  --color-amber-rgb: 245, 158, 11;
 }
 
 body {
@@ -235,4 +322,640 @@ pre {
 
 .animate-pulse-slow {
   animation: pulse-slow 8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LUSION ANIMATION LAYER
+   Based on lusion.co design patterns
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Easing Functions (Lusion Style) ─── */
+:root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-inertia: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-snap: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* ─── Smooth Scroll with Inertia ─── */
+html {
+  scroll-behavior: smooth;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* ─── Staggered Reveal Animation ─── */
+@keyframes stagger-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.98);
+    filter: blur(4px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes stagger-reveal-left {
+  0% {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes stagger-reveal-right {
+  0% {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes stagger-fade {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Stagger reveal classes */
+.stagger-reveal {
+  animation: stagger-reveal 0.8s var(--ease-out-expo) both;
+}
+
+.stagger-reveal-left {
+  animation: stagger-reveal-left 0.7s var(--ease-out-expo) both;
+}
+
+.stagger-reveal-right {
+  animation: stagger-reveal-right 0.7s var(--ease-out-expo) both;
+}
+
+/* Stagger delay utility classes */
+.stagger-1 {
+  animation-delay: 0.1s;
+}
+
+.stagger-2 {
+  animation-delay: 0.2s;
+}
+
+.stagger-3 {
+  animation-delay: 0.3s;
+}
+
+.stagger-4 {
+  animation-delay: 0.4s;
+}
+
+.stagger-5 {
+  animation-delay: 0.5s;
+}
+
+.stagger-6 {
+  animation-delay: 0.6s;
+}
+
+.stagger-7 {
+  animation-delay: 0.7s;
+}
+
+.stagger-8 {
+  animation-delay: 0.8s;
+}
+
+/* Initial hidden state for stagger items */
+[data-stagger] {
+  opacity: 0;
+}
+
+[data-stagger].is-revealed {
+  animation: stagger-reveal 0.8s var(--ease-out-expo) both;
+}
+
+/* Auto-stagger for children */
+.stagger-children>* {
+  opacity: 0;
+  animation: stagger-reveal 0.8s var(--ease-out-expo) both;
+}
+
+.stagger-children>*:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.stagger-children>*:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.stagger-children>*:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+.stagger-children>*:nth-child(4) {
+  animation-delay: 0.2s;
+}
+
+.stagger-children>*:nth-child(5) {
+  animation-delay: 0.25s;
+}
+
+.stagger-children>*:nth-child(6) {
+  animation-delay: 0.3s;
+}
+
+.stagger-children>*:nth-child(7) {
+  animation-delay: 0.35s;
+}
+
+.stagger-children>*:nth-child(8) {
+  animation-delay: 0.4s;
+}
+
+/* ─── Parallax Scroll Utilities ─── */
+.parallax-slow {
+  will-change: transform;
+  transform: translateY(calc(var(--scroll-y, 0) * 0.1));
+}
+
+.parallax-medium {
+  will-change: transform;
+  transform: translateY(calc(var(--scroll-y, 0) * 0.3));
+}
+
+.parallax-fast {
+  will-change: transform;
+  transform: translateY(calc(var(--scroll-y, 0) * 0.5));
+}
+
+.parallax-reverse {
+  will-change: transform;
+  transform: translateY(calc(var(--scroll-y, 0) * -0.2));
+}
+
+/* ─── Card Hover Micro-interactions (Lusion Style) ─── */
+/* ─── Card Hover Micro-interactions (Lusion Style) ─── */
+.card-lusion {
+  position: relative;
+  transition:
+    transform 0.5s var(--ease-out-expo),
+    box-shadow 0.5s var(--ease-out-expo),
+    border-color 0.5s var(--ease-out-expo),
+    background 0.5s var(--ease-out-expo);
+  will-change: transform;
+}
+
+/* Premium Card Upgrade (Phase C) */
+.card-premium {
+  /* Glassmorphism Base */
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.2),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  /* Inner stroke */
+
+  /* Lusion Interaction Props */
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.card-premium::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(160deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.02) 40%,
+      rgba(255, 255, 255, 0) 100%);
+  opacity: 0.5;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  transition: opacity 0.4s ease;
+}
+
+.card-premium:hover {
+  transform: translateY(-8px) scale(1.02);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.2);
+
+  /* Deep Lusion Shadow */
+  box-shadow:
+    0 20px 40px -5px rgba(0, 0, 0, 0.4),
+    0 10px 15px -3px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.15),
+    /* Brighter inner rim */
+    0 0 30px rgba(var(--glow-color-rgb, 255, 255, 255), 0.1);
+  /* Ambient glow spill */
+}
+
+.card-premium:hover::before {
+  opacity: 1;
+}
+
+/* Card inner image zoom on hover */
+.card-lusion-image {
+  transition: transform 0.7s var(--ease-out-expo);
+  will-change: transform;
+}
+
+.card-lusion:hover .card-lusion-image {
+  transform: scale(1.06);
+}
+
+/* Card glow effect */
+.card-lusion-glow {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      transparent 100%);
+  opacity: 0;
+  transition: opacity 0.5s var(--ease-out-expo);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.card-lusion:hover .card-lusion-glow {
+  opacity: 1;
+}
+
+/* ─── Portal Pulse Effect ─── */
+@keyframes portal-pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.2;
+  }
+
+  50% {
+    transform: scale(1.08);
+    opacity: 0.35;
+  }
+}
+
+.portal-ring {
+  animation: portal-pulse 3s var(--ease-inertia) infinite;
+}
+
+/* ─── Text Reveal Animation ─── */
+@keyframes text-reveal {
+  0% {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+  }
+
+  100% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+}
+
+.text-reveal {
+  animation: text-reveal 0.8s var(--ease-out-expo) both;
+}
+
+/* ─── Magnetic Button Effect Base ─── */
+.magnetic-btn {
+  transition: transform 0.3s var(--ease-out-expo);
+}
+
+.magnetic-btn:hover {
+  transform: scale(1.02);
+}
+
+.magnetic-btn:active {
+  transform: scale(0.98);
+  transition-duration: 0.1s;
+}
+
+/* ─── Glow Pulse for Ambient Effects ─── */
+@keyframes glow-pulse {
+
+  0%,
+  100% {
+    filter: drop-shadow(0 0 20px currentColor);
+    opacity: 0.6;
+  }
+
+  50% {
+    filter: drop-shadow(0 0 40px currentColor);
+    opacity: 0.8;
+  }
+}
+
+.glow-ambient {
+  animation: glow-pulse 4s ease-in-out infinite;
+}
+
+/* ─── Glow Breathe Animation (Multi-layer) ─── */
+/* ─── Glow Breathe Animation (Dynamic) ─── */
+@keyframes glow-breathe {
+
+  0%,
+  100% {
+    box-shadow:
+      0 0 20px rgba(var(--glow-color-rgb), 0.3),
+      0 0 40px rgba(var(--glow-color-rgb), 0.15),
+      0 0 80px rgba(var(--glow-color-rgb), 0.08);
+  }
+
+  50% {
+    box-shadow:
+      0 0 35px rgba(var(--glow-color-rgb), 0.45),
+      0 0 70px rgba(var(--glow-color-rgb), 0.25),
+      0 0 140px rgba(var(--glow-color-rgb), 0.12);
+  }
+}
+
+.glow-breathe {
+  animation: glow-breathe 3s var(--ease-inertia) infinite;
+}
+
+.glow-breathe-violet {
+  --glow-color-rgb: var(--color-violet-rgb);
+}
+
+.glow-breathe-cyan {
+  --glow-color-rgb: var(--color-cyan-rgb);
+}
+
+.glow-breathe-emerald {
+  --glow-color-rgb: var(--color-emerald-rgb);
+}
+
+.glow-breathe-amber {
+  --glow-color-rgb: var(--color-amber-rgb);
+}
+
+/* ─── Aurora Drift Animations ─── */
+@keyframes aurora-drift-slow {
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(3%, -2%) scale(1.05);
+  }
+
+  66% {
+    transform: translate(-2%, 5%) scale(0.95);
+  }
+}
+
+@keyframes aurora-drift-medium {
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(-3%, 4%) scale(1.05);
+  }
+
+  66% {
+    transform: translate(5%, -2%) scale(0.95);
+  }
+}
+
+.animate-aurora-drift-slow {
+  animation: aurora-drift-slow 20s ease-in-out infinite;
+}
+
+.animate-aurora-drift-medium {
+  animation: aurora-drift-medium 15s ease-in-out infinite;
+}
+
+/* ─── Lusion Button Styles ─── */
+.button-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 999px;
+  background: var(--lusion-white);
+  color: var(--lusion-black);
+  font-weight: 500;
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: all 0.3s var(--ease-lusion);
+  cursor: pointer;
+}
+
+.button-primary:hover {
+  background: var(--lusion-green);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.button-primary::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.button-primary:hover::before {
+  opacity: 1;
+}
+
+/* ─── Fluid Typography Utilities ─── */
+.text-hero {
+  font-size: var(--text-hero);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  text-transform: uppercase;
+  /* Hardened: Lusion mostly uses uppercase for hero */
+}
+
+.text-display {
+  font-size: var(--text-display);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.1;
+}
+
+.text-heading {
+  font-size: var(--text-heading);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.text-subheading {
+  font-size: var(--text-subheading);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* ─── Portal Card Glow Utility ─── */
+.portal-glow-violet {
+  box-shadow: var(--glow-violet-intense);
+}
+
+.portal-glow-cyan {
+  box-shadow: var(--glow-cyan-intense);
+}
+
+.portal-glow-emerald {
+  box-shadow: var(--glow-emerald-intense);
+}
+
+.portal-glow-amber {
+  box-shadow: var(--glow-amber-intense);
+}
+
+/* Hover variant with enhanced intensity */
+.portal-glow-hover:hover {
+  box-shadow:
+    0 0 50px rgba(var(--glow-color-rgb), 0.6),
+    0 0 100px rgba(var(--glow-color-rgb), 0.4),
+    0 0 200px rgba(var(--glow-color-rgb), 0.2);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOTION BEST PRACTICES (2025)
+   - Short transitions: 300ms max
+   - GPU-accelerated only: opacity, transform
+   - Progressive enhancement for scroll-driven
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Motion Timing Constraints ─── */
+:root {
+  --motion-instant: 100ms;
+  --motion-fast: 200ms;
+  --motion-normal: 300ms;
+  /* Max recommended for UI transitions */
+}
+
+/* ─── Standard Fade/Slide Transitions ─── */
+.motion-fade {
+  opacity: 0;
+  transition: opacity var(--motion-normal) var(--ease-out-expo);
+}
+
+.motion-fade.is-visible {
+  opacity: 1;
+}
+
+.motion-slide-up {
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity var(--motion-normal) var(--ease-out-expo),
+    transform var(--motion-normal) var(--ease-out-expo);
+}
+
+.motion-slide-up.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─── Scroll-Driven Animations (Progressive Enhancement) ─── */
+@supports (animation-timeline: view()) {
+  @keyframes scroll-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .scroll-reveal {
+    animation: scroll-fade-in linear both;
+    animation-timeline: view();
+    animation-range: entry 10% cover 40%;
+  }
+
+  .scroll-reveal-slow {
+    animation: scroll-fade-in linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 50%;
+  }
+
+  /* Stagger for grid items */
+  .scroll-reveal-grid>* {
+    animation: scroll-fade-in linear both;
+    animation-timeline: view();
+    animation-range: entry 5% cover 35%;
+  }
+
+  .scroll-reveal-grid>*:nth-child(2) {
+    animation-range: entry 8% cover 38%;
+  }
+
+  .scroll-reveal-grid>*:nth-child(3) {
+    animation-range: entry 11% cover 41%;
+  }
+
+  .scroll-reveal-grid>*:nth-child(4) {
+    animation-range: entry 14% cover 44%;
+  }
+
+  .scroll-reveal-grid>*:nth-child(5) {
+    animation-range: entry 17% cover 47%;
+  }
+
+  .scroll-reveal-grid>*:nth-child(6) {
+    animation-range: entry 20% cover 50%;
+  }
+}
+
+/* Fallback for browsers without scroll-driven support */
+@supports not (animation-timeline: view()) {
+
+  .scroll-reveal,
+  .scroll-reveal-slow,
+  .scroll-reveal-grid>* {
+    opacity: 1;
+    transform: none;
+  }
 }

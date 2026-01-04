@@ -4,21 +4,21 @@
 **Updated**: 2026-01-01 (Agent Studio 반영)  
 **버전**: 정본 v1.1  
 **대상**: CEO / 투자자 / 파트너  
-**핵심**: Node Canvas + AI 생성 파이프라인 + 템플릿 마켓  
+**핵심**: Dimension Tools + Train Workflow + Agent Chat (Canvas는 레거시)  
 
 ---
 
 ## 1) 3문장 비전
 
-1. 거장 스타일의 창작 패턴을 수학적 노드로 모델링한다.  
-2. 사용자는 **Agent Studio(채팅)**에서 워크플로우를 설계하고, Canvas에서 편집/실행한다.  
+1. 거장 스타일의 창작 패턴을 도구/워크플로우로 모델링한다.  
+2. 사용자는 **Flow(열차 UI)**에서 도구를 연결하고, 필요 시 캔버스는 내부/레거시 편집에 사용한다.  
 3. GA/RL 최적화로 시간이 갈수록 더 좋은 결과를 자동 추천한다.
 
 ---
 
 ## 2) 무엇을 만드는가 (한 줄 정의)
 
-**"채팅으로 워크플로우를 컴파일하고, 노드 캔버스로 실행·편집하는 AI 단편 영상 스튜디오"**
+**"채팅 + 열차 워크플로우로 도구를 연결하고, 캔버스는 내부/레거시로 보유하는 AI 콘텐츠 스튜디오"**
 
 ---
 
@@ -28,8 +28,10 @@
 - **Data Ingestion & Evidence Loop**: 레퍼런스 수집 → 구조화(ASR/샷/키프레임) → 요약/라벨 → 검증/승격
 - **Pattern Library/Trace**: 반복 패턴을 구조화해 증명 가능한 “공식”으로 관리
 - **Tong Dataset (Synapse)**: Visual + Persona + 변환 규칙을 묶어 “거장 공식”을 설명 가능하게 저장
-- **Canvas UI**: 노드/엣지 기반 편집, 즉시 미리보기, 템플릿 저장
-- **Agent Studio (Chat-first)**: 워크플로우 컴파일 + 캡슐 실행 + 아티팩트 프리뷰 (SSE)
+- **Dimension Tools**: 미니앱(프롬프트/스토리보드/이미지/레퍼런스)
+- **Flow UI (Train)**: 열차형 워크플로우 편집/실행
+- **Agent Chat (Chokki)**: 도구 호출 + 아티팩트 프리뷰 (SSE, Audio Overview 우선)
+- **Canvas UI (Legacy)**: 노드/엣지 기반 편집 (현재 비노출)
 - **Spec Engine**: 노드 계산 + 규칙 기반 조합 + 파이프라인 스냅샷
 - **Optimization**: GA(조합 탐색) + RL/밴딧(피드백 학습)
 - **Model Gateway**: 영상/이미지/음성/텍스트 모델을 통합 호출
@@ -43,11 +45,13 @@
 
 ## 4) 핵심 사용자 플로우 (요약)
 
-- **Agent Studio**: 채팅 입력 → 워크플로우 컴파일 → 아티팩트 프리뷰 → (선택) Canvas 적용
-- **Canvas**: 거장 템플릿 카드 → 캔버스 시작 → 캡슐 실행 → 프리뷰/생성
+- **Flow**: 열차 워크플로우 생성 → 연결 고리 선택 → 순차 실행
+- **Dimension**: 미니앱 선택 → 입력 → 실행
+- **Agent Chat**: 채팅 입력 → 도구 실행 → 아티팩트 프리뷰 (Audio Overview 우선)
+- **Canvas (Legacy)**: 내부/레거시 편집 및 참조
 - 캡슐 노드는 **Sealed** (입·출력/노출 파라미터만 공개)
-- 상세 파이프라인/역할은 `10_PIPELINES_AND_USER_FLOWS.md`에 정본화
-- 영상 구조화(ASR/샷/키프레임 → Gemini) 기준은 `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md` 참고
+- 상세 파이프라인/역할은 `08_PIPELINES_AND_USER_FLOWS.md`에 정본화
+- 영상 구조화(ASR/샷/키프레임 → Gemini) 기준은 `19_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md` 참고
 
 ---
 
@@ -67,25 +71,26 @@
 - **Gemini 구조화 → DB SoR**가 영상 해석의 정본(NotebookLM은 요약/가이드만)
 - **NotebookLM**: 지식/가이드 레이어 (클러스터 노트북, 오마주/변주, 템플릿 적합도)
 - **Opal**: 템플릿 시드/QA 워크플로 자동화 (캡슐 내부 서브그래프)
-- 상세 역할/규격은 `10_PIPELINES_AND_USER_FLOWS.md` 참고
+- 상세 역할/규격은 `08_PIPELINES_AND_USER_FLOWS.md` 참고
 
 ---
 
 ## 7) MVP 범위 (필수 기능)
 
-- 캔버스 편집 및 저장/불러오기
+- Flow(Train) 워크플로우 생성/편집
+- Dimension 미니앱 실행 (Prompt/Storyboard/Image/Reference)
 - Agent Studio (Chat-first) + SSE 스트리밍
-- 아티팩트 프리뷰 (Storyboard/Shot List/Data Table)
-- 10개 노드 타입(입력/스타일/커스터마이징/처리/출력) 기본 UI
+- 아티팩트 프리뷰 (Audio Overview + legacy Storyboard/Shot List/Data Table)
 - 스펙 JSON 생성 및 저장
 - 간단한 자동 계산(규칙 기반) + GA 프로토타입
 - 템플릿 저장/공유(초기 공개/비공개)
+- Canvas 편집은 legacy 경로에서만 유지
 
 ---
 
 ## 8) 확장 로드맵 요약
 
-- **Phase 1 (0-3개월)**: Node Canvas MVP 완성
+- **Phase 1 (0-3개월)**: Flow/Dimension MVP 완성
 - **Phase 2 (3-6개월)**: GA/RL 최적화 + 템플릿 마켓
 - **Phase 3 (6-12개월)**: AI 숏드라마/숏필름/숏애니 파이프라인
 - **Phase 4 (12개월+)**: OTT급 개인화 추천/배포/수익화
@@ -102,7 +107,7 @@
 
 ## 10) 성공 지표 (초기)
 
-- 평균 캔버스 완성 시간 < 10분
+- 평균 워크플로우 완성 시간 < 10분
 - 추천 스펙 선택률 > 40%
 - 템플릿 재사용률 > 25%
 - 유료 전환율 > 5%
@@ -111,4 +116,4 @@
 
 ## 11) 결론
 
-Crebit는 Node Canvas + 최적화 학습의 결합으로, **"창작 설계 시간을 최소화하고 결과 품질을 자동 개선하는"** 차세대 창작 스튜디오를 목표로 한다.
+Crebit는 Flow/Agent Chat + 최적화 학습의 결합으로, **"창작 설계 시간을 최소화하고 결과 품질을 자동 개선하는"** 차세대 창작 스튜디오를 목표로 한다.

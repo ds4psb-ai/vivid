@@ -63,7 +63,7 @@ async def create_tool_manifest(
     data: ToolManifestCreate,
     user_id: str,
 ) -> ToolManifest:
-    """Create a new tool manifest."""
+    """Create a new tool manifest and optionally a Tool + ToolSchema for execution."""
     # Check if parent exists for forks
     fork_depth = 0
     if data.parent_tool_id:
@@ -87,6 +87,48 @@ async def create_tool_manifest(
     )
     
     db.add(manifest)
+    await db.flush()  # Get manifest.id before creating related records
+    
+    # If system_prompt is provided, also create Tool and ToolSchema for dynamic execution
+    if data.system_prompt:
+        from app.models import Tool, ToolSchema
+        
+        # Create Tool record for dynamic_adapter
+        tool = Tool(
+            tool_key=data.tool_key,
+            dimension="custom",  # Community tools are "custom" dimension
+            category=data.category.lower(),
+            name_ko=data.display_name,
+            name_en=data.display_name,
+            description_ko=data.description,
+            description_en=data.description,
+            endpoint=f"/api/v1/tools/{data.tool_key}/execute",
+            executor_type="llm",
+            timeout_seconds=120,
+            credit_cost=data.credit_cost,
+            pricing_model="per_run",
+            ui_color="#8B5CF6",  # Default purple
+            ui_icon="sparkles",
+            is_active=True,
+            is_system=False,
+            is_beta=True,  # Community tools start as beta
+        )
+        db.add(tool)
+        await db.flush()  # Get tool.id
+        
+        # Create ToolSchema with system_prompt
+        schema = ToolSchema(
+            tool_id=tool.id,
+            version="v1.0.0",
+            input_schema=data.input_schema,
+            output_schema=data.output_schema,
+            system_prompt=data.system_prompt,  # Critical! This powers the AI
+            is_current=True,
+        )
+        db.add(schema)
+        
+        logger.info(f"Created Tool + ToolSchema for community tool: {data.tool_key}")
+    
     await db.commit()
     await db.refresh(manifest)
     
@@ -152,9 +194,197 @@ async def promote_tool_tier(
     return manifest
 
 
-# =============================================================================
-# Tool Run Event Service
-# =============================================================================
+# Tier promotion thresholds
+TIER_THRESHOLDS = {
+    "experimental_to_verified": {
+        "min_usage": 10,          # At least 10 uses
+        "min_success_rate": 0.70,  # 70% success rate
+        "test_pass": True,         # Must pass automated tests
+    },
+    "verified_to_certified": {
+        "min_usage": 50,           # At least 50 uses
+        "min_success_rate": 0.85,  # 85% success rate
+        "min_quality_rating": 3.5, # 3.5/5 stars
+        "human_cloud_success_rate": 0.80,  # 80% HC success
+    },
+}
+
+
+async def evaluate_tier_promotion(
+    db: AsyncSession,
+    tool_id: UUID,
+) -> dict:
+    """Evaluate if a tool should be promoted to a higher tier.
+    
+    Returns:
+        dict with keys:
+        - eligible: bool
+        - current_tier: str
+        - suggested_tier: str or None
+        - criteria_met: dict
+        - criteria_failed: dict
+    """
+    manifest = await db.get(ToolManifest, tool_id)
+    if not manifest:
+        return {"eligible": False, "error": "Tool not found"}
+    
+    current_tier = manifest.tier
+    
+    # Calculate success rate from run events
+    total_runs = max(0, manifest.usage_count or 0)  # Ensure non-negative
+    if total_runs == 0:
+        success_rate = 0.0
+    else:
+        result = await db.execute(
+            select(func.count()).where(
+                ToolRunEvent.tool_id == tool_id,
+                ToolRunEvent.status == "success"
+            )
+        )
+        success_count = result.scalar() or 0
+        success_rate = success_count / total_runs
+    
+    # Evaluate based on current tier
+    if current_tier == ToolTier.EXPERIMENTAL.value:
+        thresholds = TIER_THRESHOLDS["experimental_to_verified"]
+        criteria_met = {}
+        criteria_failed = {}
+        
+        # Check usage
+        if total_runs >= thresholds["min_usage"]:
+            criteria_met["min_usage"] = f"{total_runs} >= {thresholds['min_usage']}"
+        else:
+            criteria_failed["min_usage"] = f"{total_runs} < {thresholds['min_usage']}"
+        
+        # Check success rate
+        if success_rate >= thresholds["min_success_rate"]:
+            criteria_met["success_rate"] = f"{success_rate:.1%} >= {thresholds['min_success_rate']:.0%}"
+        else:
+            criteria_failed["success_rate"] = f"{success_rate:.1%} < {thresholds['min_success_rate']:.0%}"
+        
+        # Check test pass (if available)
+        if manifest.test_pass_rate is not None and manifest.test_pass_rate >= 0.9:
+            criteria_met["test_pass"] = f"{manifest.test_pass_rate:.1%} >= 90%"
+        elif manifest.test_pass_rate is None:
+            # No test data yet - allow but note
+            criteria_met["test_pass"] = "No test data (skipped)"
+        else:
+            criteria_failed["test_pass"] = f"{manifest.test_pass_rate:.1%} < 90%"
+        
+        eligible = len(criteria_failed) == 0
+        return {
+            "eligible": eligible,
+            "current_tier": current_tier,
+            "suggested_tier": ToolTier.VERIFIED.value if eligible else None,
+            "criteria_met": criteria_met,
+            "criteria_failed": criteria_failed,
+            "stats": {
+                "usage_count": total_runs,
+                "success_rate": success_rate,
+                "test_pass_rate": manifest.test_pass_rate,
+            }
+        }
+    
+    elif current_tier == ToolTier.VERIFIED.value:
+        thresholds = TIER_THRESHOLDS["verified_to_certified"]
+        criteria_met = {}
+        criteria_failed = {}
+        
+        # Check usage
+        if total_runs >= thresholds["min_usage"]:
+            criteria_met["min_usage"] = f"{total_runs} >= {thresholds['min_usage']}"
+        else:
+            criteria_failed["min_usage"] = f"{total_runs} < {thresholds['min_usage']}"
+        
+        # Check success rate
+        if success_rate >= thresholds["min_success_rate"]:
+            criteria_met["success_rate"] = f"{success_rate:.1%} >= {thresholds['min_success_rate']:.0%}"
+        else:
+            criteria_failed["success_rate"] = f"{success_rate:.1%} < {thresholds['min_success_rate']:.0%}"
+        
+        # Check quality rating
+        quality = manifest.quality_rating or 0.0
+        if quality >= thresholds["min_quality_rating"]:
+            criteria_met["quality_rating"] = f"{quality:.1f} >= {thresholds['min_quality_rating']}"
+        else:
+            criteria_failed["quality_rating"] = f"{quality:.1f} < {thresholds['min_quality_rating']}"
+        
+        # Check Human Cloud success rate
+        hc_rate = manifest.human_cloud_success_rate or 0.0
+        if hc_rate >= thresholds["human_cloud_success_rate"]:
+            criteria_met["human_cloud"] = f"{hc_rate:.1%} >= {thresholds['human_cloud_success_rate']:.0%}"
+        else:
+            criteria_failed["human_cloud"] = f"{hc_rate:.1%} < {thresholds['human_cloud_success_rate']:.0%}"
+        
+        eligible = len(criteria_failed) == 0
+        return {
+            "eligible": eligible,
+            "current_tier": current_tier,
+            "suggested_tier": ToolTier.CERTIFIED.value if eligible else None,
+            "criteria_met": criteria_met,
+            "criteria_failed": criteria_failed,
+            "stats": {
+                "usage_count": total_runs,
+                "success_rate": success_rate,
+                "quality_rating": quality,
+                "human_cloud_success_rate": hc_rate,
+            }
+        }
+    
+    else:
+        # Already CERTIFIED - no further promotion
+        return {
+            "eligible": False,
+            "current_tier": current_tier,
+            "suggested_tier": None,
+            "message": "Already at highest tier (CERTIFIED)",
+        }
+
+
+async def check_all_tier_promotions(
+    db: AsyncSession,
+    auto_promote: bool = False,
+) -> list[dict]:
+    """Check all tools for potential tier promotions.
+    
+    Args:
+        db: Database session
+        auto_promote: If True, automatically promote eligible tools
+        
+    Returns:
+        List of evaluation results for each tool
+    """
+    result = await db.execute(
+        select(ToolManifest).where(
+            ToolManifest.is_active.is_(True),
+            ToolManifest.tier != ToolTier.CERTIFIED.value  # Skip already certified
+        )
+    )
+    tools = result.scalars().all()
+    
+    evaluations = []
+    for tool in tools:
+        eval_result = await evaluate_tier_promotion(db, tool.id)
+        eval_result["tool_key"] = tool.tool_key
+        eval_result["display_name"] = tool.display_name
+        
+        if auto_promote and eval_result.get("eligible"):
+            suggested_tier = eval_result.get("suggested_tier")
+            if suggested_tier:
+                try:
+                    tier_enum = ToolTier(suggested_tier)
+                    await promote_tool_tier(db, tool.id, tier_enum, "system_auto")
+                    eval_result["promoted"] = True
+                    logger.info(f"Auto-promoted {tool.tool_key} to {suggested_tier}")
+                except Exception as e:
+                    eval_result["promoted"] = False
+                    eval_result["promotion_error"] = str(e)
+        
+        evaluations.append(eval_result)
+    
+    return evaluations
+
+
 
 async def record_tool_run_start(
     db: AsyncSession,

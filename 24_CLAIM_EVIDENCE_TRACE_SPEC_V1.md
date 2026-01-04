@@ -8,11 +8,11 @@
 
 ## 0) Canonical Anchors
 
-- 흐름/역할: `10_PIPELINES_AND_USER_FLOWS.md`
-- NotebookLM 출력 규격: `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
-- 승격 규칙: `11_DB_PROMOTION_RULES_V1.md`
-- 승격 기준: `12_PATTERN_PROMOTION_CRITERIA_V1.md`
-- 영상 구조화: `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
+- 흐름/역할: `08_PIPELINES_AND_USER_FLOWS.md`
+- NotebookLM 출력 규격: `07_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
+- 승격 규칙: `09_DB_PROMOTION_RULES_V1.md`
+- 승격 기준: `docs/archive/12_PATTERN_PROMOTION_CRITERIA_V1.md`
+- 영상 구조화: `19_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
 
 ---
 
@@ -107,8 +107,8 @@ Claim과 EvidenceRef의 연결 테이블/레코드.
 - coverage/quant/utility/trace 기준 통과 → `promoted`
 
 상세 기준은 아래 문서에 따른다:
-- `11_DB_PROMOTION_RULES_V1.md`
-- `12_PATTERN_PROMOTION_CRITERIA_V1.md`
+- `09_DB_PROMOTION_RULES_V1.md`
+- `docs/archive/12_PATTERN_PROMOTION_CRITERIA_V1.md`
 
 ---
 

@@ -35,6 +35,9 @@ class ToolManifestCreate(BaseModel):
     output_schema: dict = Field(default_factory=dict)
     credit_cost: int = Field(default=1, ge=0, le=1000)
     
+    # AI system prompt for LLM-powered tools (stored securely in ToolSchema)
+    system_prompt: Optional[str] = Field(None, min_length=20, max_length=10000)
+    
     # Optional fork info
     parent_tool_id: Optional[UUID] = None
     

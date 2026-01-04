@@ -4,12 +4,13 @@
 **Updated**: 2026-01-01 (Agent Studio 연동)  
 **버전**: 정본 v1.1  
 **목표**: 내부 체인을 숨기고 외부 포트/파라미터만 노출하는 캡슐 노드 규격 정의  
+**Status**: Capsule API는 legacy, UI는 Train Workflow/Dimension 중심
 
 ---
 
 ## 1) 핵심 개념
 
-- **Public Graph**: 사용자가 보는 캔버스 노드/엣지
+- **Public Graph**: 사용자가 보는 워크플로우(열차) 단계
 - **Private Subgraph**: 서버에서만 실행되는 내부 DAG
 - **Capsule Node**: Public Graph에서 단일 노드처럼 보이지만, Private Subgraph를 실행하는 래퍼
 
@@ -48,7 +49,7 @@ interface CapsuleNodeSpec {
   inputs: Record<string, { type: string; required?: boolean }>;
   outputs: Record<string, { type: string }>; // summary-only
   patternVersion?: string; // Pattern Library snapshot version
-  clusterRef?: string; // cluster_id from Logic/Persona Fusion (see 33_...)
+  clusterRef?: string; // cluster_id from Logic/Persona Fusion (see 25_NOTEBOOKLM_SOURCE_PACK_PROTOCOL_CODEX.md)
   temporalPhase?: "HOOK" | "BUILD" | "PAYOFF" | "CTA" | "SETUP" | "TURN" | "ESCALATION" | "CLIMAX" | "RESOLUTION";
   exposedParams: Record<
     string,
@@ -108,7 +109,10 @@ interface CapsuleRunRecord {
 
 ---
 
-## 5) 실행 API
+## 5) 실행 API (Legacy, _deprecated)
+
+현재 `/api/v1/capsules/*` 라우터는 `_deprecated`에 있으며 메인 앱에 마운트되지 않는다.  
+현행 실행 경로는 `/api/teaching/*` (Teaching Capsules) 또는 `/api/v1/agent/chat` 중심이다.
 
 ### 5.1 동기 실행 (요약 결과)
 
@@ -204,25 +208,26 @@ UI는 `loading → streaming → complete` 상태로 전환됩니다.
 
 Agent Studio에서는 캡슐을 **Tool**로 호출하고, 결과는 아티팩트로 표준화한다.
 
-**Tool 호출**
-- `run_capsule`: 요약/근거를 반환 (summary, evidence_refs)
-- `analyze_sources`: NotebookLM 분석 결과를 반환 (claims → DataTable로 변환)
-- `generate_audio_overview`: NotebookLM 오디오 오버뷰 생성 (노트북 소스 기반)
+**Tool 호출 (현행)**
+- Teaching: `generate_veo_prompt`, `create_storyboard`, `generate_image_prompt`, `analyze_reference`
+- NotebookLM: `create_notebook`, `add_sources`, `generate_audio_overview`, `list_notebooks`
 
-**표준 아티팩트**
-- `storyboard`: 캡슐 요약에서 카드 생성
-- `shot_list`: storyboard에서 파생
-- `data_table`: NotebookLM claims를 표로 변환
+**Legacy Tool 호출 (deprecated)**
+- `run_capsule`, `analyze_sources`
+
+**표준 아티팩트 (부분 적용)**
+- `storyboard`: storyboard 카드 요약
 - `audio_overview`: NotebookLM 오디오 오버뷰 결과
+- `shot_list` / `data_table`는 legacy capsule 도구에서만 생성
 
 **SSE 이벤트 (Chat)**
-- `agent.capsule_start|agent.capsule_progress|agent.capsule_complete`
 - `agent.audio_overview_start|agent.audio_overview_progress`
 - `agent.artifact_update`로 프리뷰를 즉시 갱신
+- `agent.capsule_*` 이벤트는 legacy capsule 도구 경로에만 존재
 
 이벤트 envelope 정의는 `28_EVENT_DRIVEN_ARCHITECTURE_SPEC_V1.md` 참고.
 
-## 6) 실행 파이프라인
+## 7) 실행 파이프라인
 
 1. 입력/파라미터 검증
    - 필수 입력 누락 시 `ALLOW_INPUT_FALLBACKS=true`면 기본값 대체
@@ -237,7 +242,7 @@ Agent Studio에서는 캡슐을 **Tool**로 호출하고, 결과는 아티팩트
 
 ---
 
-## 7) 보안/로그 정책
+## 8) 보안/로그 정책
 
 - 프롬프트/원문/서브그래프는 **서버 저장만 허용**
 - 클라이언트에는 summary + evidenceRef만 반환
@@ -246,7 +251,7 @@ Agent Studio에서는 캡슐을 **Tool**로 호출하고, 결과는 아티팩트
 
 ---
 
-## 8) UI 적용 방식
+## 9) UI 적용 방식
 
 - 캡슐 노드는 **잠금 아이콘 + 내부 확장 불가**
 - 입력/출력 포트와 노출 파라미터만 편집 가능
@@ -254,10 +259,10 @@ Agent Studio에서는 캡슐을 **Tool**로 호출하고, 결과는 아티팩트
 
 ---
 
-## 9) 템플릿 적용 방식
+## 10) 템플릿 적용 방식
 
 - 거장 템플릿은 캡슐 노드를 포함한 그래프로 제공
-- 사용자는 템플릿 카드를 클릭해 즉시 캔버스 시작
+- 사용자는 템플릿 카드를 클릭해 즉시 워크플로우 시작
 - 템플릿 그래프는 **Public Graph만 공개**
 
 ---

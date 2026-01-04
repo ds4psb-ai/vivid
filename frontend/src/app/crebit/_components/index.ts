@@ -6,3 +6,4 @@ export { PipelineNode } from './PipelineNode';
 export { CurriculumBox } from './CurriculumBox';
 export { TrackCard } from './TrackCard';
 export { MentorProfile } from './MentorProfile';
+export { AgentVisualization } from './AgentVisualization';

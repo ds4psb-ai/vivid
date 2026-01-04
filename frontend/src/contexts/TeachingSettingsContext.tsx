@@ -66,7 +66,7 @@ export function TeachingSettingsProvider({ children }: TeachingSettingsProviderP
                         imageToolData: {},
                         shotCatchData: {},
                         language: "ko",
-                        selectedModel: "gemini-2.5-flash",
+                        selectedModel: "gemini-3-flash-preview",
                     });
                     return;
                 }
@@ -81,7 +81,7 @@ export function TeachingSettingsProvider({ children }: TeachingSettingsProviderP
                 imageToolData: data.image_tool_data || {},
                 shotCatchData: data.shot_catch_data || {},
                 language: data.language || "ko",
-                selectedModel: data.selected_model || "gemini-2.5-flash",
+                selectedModel: data.selected_model || "gemini-3-flash-preview",
             });
             setError(null);
         } catch (err) {

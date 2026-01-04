@@ -23,6 +23,11 @@ from app.agents.agent_types import (
     ToolTaskState,
 )
 from app.agents.tool_utils import create_emitter, error_result, success_result
+from app.agents.evidence_loop import (
+    record_tool_start,
+    record_tool_success,
+    record_tool_failure,
+)
 from app.fixtures.teaching_capsules import TEACHING_CAPSULES
 from app.logging_config import get_logger
 
@@ -43,6 +48,19 @@ TOOL_TO_CAPSULE: Dict[str, str] = {
 
 CAPSULE_TO_TOOL: Dict[str, str] = {v: k for k, v in TOOL_TO_CAPSULE.items()}
 
+# Tool → Dimension 매핑 (Evidence Loop용)
+TOOL_TO_DIMENSION: Dict[str, str] = {
+    "generate_veo_prompt": "1D",
+    "create_storyboard": "2D",
+    "generate_image_prompt": "3D",
+    "analyze_reference": "4D",
+}
+
+
+def _get_tool_dimension(tool_name: str) -> Optional[str]:
+    """도구 이름으로 차원 반환."""
+    return TOOL_TO_DIMENSION.get(tool_name)
+
 
 def get_capsule_by_key(capsule_key: str) -> Optional[Dict[str, Any]]:
     """캡슐 키로 캡슐 정의 조회."""
@@ -59,7 +77,7 @@ def get_credit_cost(capsule_key: str, model: str) -> int:
     
     Args:
         capsule_key: 캡슐 식별자 (예: "teaching.prompt.generate")
-        model: AI 모델명 (예: "gemini-2.5-flash")
+        model: AI 모델명 (예: "gemini-3-flash-preview")
         
     Returns:
         크레딧 비용 (정수)
@@ -76,7 +94,7 @@ def get_credit_cost(capsule_key: str, model: str) -> int:
         return cost
     
     # Fallback to default model cost
-    default_cost = credit_costs.get("gemini-2.5-flash", 5)
+    default_cost = credit_costs.get("gemini-3-flash-preview", 5)
     logger.debug(f"Model '{model}' not in credit_costs, using default: {default_cost}")
     return default_cost
 
@@ -163,7 +181,7 @@ def _capsule_to_tool_spec(capsule: Dict[str, Any]) -> ToolSpec:
         properties["model"] = {
             "type": "string",
             "description": "AI 모델 선택 (비용이 다름)",
-            "default": model_def.get("default", "gemini-2.5-flash"),
+            "default": model_def.get("default", "gemini-3-flash-preview"),
         }
         if "options" in model_def:
             properties["model"]["enum"] = model_def["options"]
@@ -300,14 +318,21 @@ async def _teaching_tool_handler(
     # 모델 추출 (기본값 처리)
     spec = capsule["spec"]
     default_model = spec.get("params", {}).get("model", {}).get(
-        "default", "gemini-2.5-flash"
+        "default", "gemini-3-flash-preview"
     )
     model = args.get("model", default_model)
     
     # 크레딧 비용 계산
     credit_cost = get_credit_cost(capsule_key, model)
     
-    # 시작 이벤트
+    # Evidence Loop: 시작 기록
+    evidence_event_id = record_tool_start(
+        session_id=context.session_id or "unknown",
+        tool_name=tool_name,
+        dimension=_get_tool_dimension(tool_name),
+    )
+    
+    # SSE 시작 이벤트
     emitter.emit("agent.teaching_start", {
         "tool_name": tool_name,
         "capsule_key": capsule_key,
@@ -340,6 +365,16 @@ async def _teaching_tool_handler(
         
         if not result.get("success"):
             error_msg = result.get("error", "Execution failed")
+            
+            # Evidence Loop: 실패 기록
+            record_tool_failure(
+                event_id=evidence_event_id,
+                session_id=context.session_id or "unknown",
+                tool_name=tool_name,
+                error_code="EXECUTION_FAILED",
+                error_message=error_msg,
+            )
+            
             emitter.emit("agent.teaching_error", {
                 "tool_name": tool_name,
                 "capsule_key": capsule_key,
@@ -363,7 +398,15 @@ async def _teaching_tool_handler(
             credit_cost=credit_cost,
         )
         
-        # 완료 이벤트
+        # Evidence Loop: 성공 기록
+        record_tool_success(
+            event_id=evidence_event_id,
+            session_id=context.session_id or "unknown",
+            tool_name=tool_name,
+            credit_cost=credit_cost,
+        )
+        
+        # SSE 완료 이벤트
         emitter.emit("agent.teaching_complete", {
             "tool_name": tool_name,
             "capsule_key": capsule_key,
@@ -399,6 +442,15 @@ async def _teaching_tool_handler(
         })
         
     except Exception as e:
+        # Evidence Loop: 예외 실패 기록
+        record_tool_failure(
+            event_id=evidence_event_id,
+            session_id=context.session_id or "unknown",
+            tool_name=tool_name,
+            error_code="EXCEPTION",
+            error_message=str(e),
+        )
+        
         emitter.emit("agent.teaching_error", {
             "tool_name": tool_name,
             "capsule_key": capsule_key,

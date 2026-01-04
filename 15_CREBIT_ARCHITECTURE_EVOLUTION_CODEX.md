@@ -17,9 +17,9 @@
 - Evidence Loop remains the engine: Sheets Bus -> DB SoR -> Pattern Library/Trace -> Capsule/Template evolution.
 - Templates are first-class and learnable: GA explores, RL exploits, evidence promotes.
 - Credits + observability are core UX (not hidden in settings).
-- UI flow keeps "Add -> Connect -> Generate" with strong empty-state onboarding.
+- UI flow keeps "Pick -> Connect -> Run" train workflow; node graph stays internal.
 - Admin/Ops access is **session + role** gated; no public editing of SoR or prompts.
-- Agent Studio (chat-first) is the primary interface; Canvas is execution/editing surface.
+- Agent Chat + Flow/Dimension are primary; Canvas is legacy/internal.
 
 ---
 
@@ -43,7 +43,7 @@
    - Templates evolve via GA/RL using evidence-based feedback.
 
 5. **Chat-first orchestration (Agent Studio)**  
-   - Agent Chat compiles workflows and executes tools; Canvas is for refinement/execution.  
+   - Agent Chat compiles workflows and executes tools; Flow/Dimension are primary UI, Canvas is internal.  
    - Tool outputs are surfaced as standardized artifacts with evidence refs.
 
 ---
@@ -64,6 +64,13 @@
 - LLMOps: prompts/chains are versioned artifacts, offline eval sets + human feedback, CI/CD + Dev/QA/Prod gates.
 - Inference optimization: low latency, dynamic scaling, caching, and cost controls.
 
+### 2.2 S2S Security & App Integrity (Current)
+
+- **Run Token**: `/api/v1/run-token/*`에서 실행 토큰 발급/검증/차감 수행 (fingerprint 바인딩, 단기 TTL).
+- **Internal S2S**: `/api/v1/internal/*`는 mTLS 미들웨어로 보호되며 `MTLS_ENABLED=true`일 때 강제.
+- **2-Phase Credit Commit**: `credit-reserve/commit/rollback`으로 앱 실행 크레딧을 이중 검증.
+- **Gateway**: `backend/deploy/api-gateway.yaml`는 배포 옵션이며 코드 상 강제 경로는 아님.
+
 ---
 
 ## 3) Crebit Reference Architecture (Layered)
@@ -71,7 +78,7 @@
 ```
 Sources -> Gemini Structuring -> Video Schema DB -> NotebookLM Library -> Sheets Bus -> DB SoR
   -> Pattern Library/Trace -> Capsule Specs -> Templates
-  -> Canvas Runs -> Evidence -> Learning (GA/RL)
+  -> Workflow Runs -> Evidence -> Learning (GA/RL)
 ```
 
 ### 3.1 Knowledge Layer: Notebook Library
@@ -134,7 +141,7 @@ Templates are learnable:
 통데이터셋화(A/B/C/D), 수학적 로직, 거장 페르소나, 둘의 결합, 신규 장르 변주 마이그레이션,
 NotebookLM 소스 구성/가이드 추출 프로토콜은 아래 정본에서 고정한다.
 
-- `33_NOTEBOOKLM_SOURCE_PACK_AND_PROMPT_PROTOCOL_CODEX.md`
+- `25_NOTEBOOKLM_SOURCE_PACK_PROTOCOL_CODEX.md`
 
 핵심 요약:
 - **Logic Vector**(컷/구도/모티프/리듬) + **Persona Vector**(톤/감정/해석) 분리 후 결합
@@ -159,10 +166,10 @@ Flow:
 - Use hybrid search (vector + lexical) and retrieval evaluation before promotion.
 
 **Contract dependencies**
-- `08_SHEETS_SCHEMA_V1.md`
-- `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
-- `11_DB_PROMOTION_RULES_V1.md`
-- `12_PATTERN_PROMOTION_CRITERIA_V1.md`
+- `06_SHEETS_SCHEMA_V1.md`
+- `07_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
+- `09_DB_PROMOTION_RULES_V1.md`
+- `docs/archive/12_PATTERN_PROMOTION_CRITERIA_V1.md`
 
 ---
 
@@ -200,18 +207,18 @@ Loop:
 
 ## 7) User Flows (Two Lanes)
 
-사용자/역할 흐름은 `10_PIPELINES_AND_USER_FLOWS.md`에 정본화한다.
+사용자/역할 흐름은 `08_PIPELINES_AND_USER_FLOWS.md`에 정본화한다.
 
 ---
 
 ## 8) UX/IA Guidance (From RE, adapted)
 
 - Left rail: Research, Creator Hub, Accounts, Credits, Affiliate.
-- Empty state: "Create First Canvas" + 1-click seed graph.
+- Empty state: "Create First Workflow" + 1-click seed flow.
 - Top bar: Run + Preview + Credit balance.
-- Canvas: port rules, status states, lasso select, minimap.
+- Train workflow: car order + connection selector + status states (node graph hidden).
 
-See `13_UI_DESIGN_GUIDE_2025-12.md` for visual system.
+See `10_UI_DESIGN_GUIDE_2025-12.md` for visual system.
 
 ---
 
@@ -277,14 +284,14 @@ If you accept this CODEX v20 as canonical, align these docs next:
 
 - `00_EXECUTIVE_SUMMARY_NODE_CANVAS.md`: add Notebook Library as canonical layer.
 - `01_NODE_CANVAS_TECHNICAL_SPECIFICATION.md`: add input/output contracts + upstream context.
-- `05_CAPSULE_NODE_SPEC.md`: add capsule_id@version, evidence refs, cost fields.
-- `08_SHEETS_SCHEMA_V1.md`: add Notebook Library + Pattern Trace outputs.
-- `10_PIPELINES_AND_USER_FLOWS.md`: split Admin vs Creator flows.
-- `13_UI_DESIGN_GUIDE_2025-12.md`: add nav + empty-state + credit balance.
-- `14_INGEST_RUNBOOK_V1.md`: detail NotebookLM run + Sheets promotion.
-- `17_CREDITS_AND_BILLING_SPEC_V1.md`: confirm credit priority + ledger.
-- `35_AFFILIATE_PROGRAM_SPEC_V1.md`: ensure credits reward flow is defined.
-- `19_CREBIT_EXECUTION_PLAN_V1.md`: re-sequence phases to match this doc.
+- `04_CAPSULE_NODE_SPEC.md`: add capsule_id@version, evidence refs, cost fields.
+- `06_SHEETS_SCHEMA_V1.md`: add Notebook Library + Pattern Trace outputs.
+- `08_PIPELINES_AND_USER_FLOWS.md`: split Admin vs Creator flows.
+- `10_UI_DESIGN_GUIDE_2025-12.md`: add nav + empty-state + credit balance.
+- `11_INGEST_RUNBOOK_V1.md`: detail NotebookLM run + Sheets promotion.
+- `13_CREDITS_AND_BILLING_SPEC_V1.md`: confirm credit priority + ledger.
+- `26_AFFILIATE_PROGRAM_SPEC_V1.md`: ensure credits reward flow is defined.
+- `docs/archive/19_CREBIT_EXECUTION_PLAN_V1.md`: re-sequence phases to match this doc.
 
 ---
 

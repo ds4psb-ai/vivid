@@ -9,8 +9,8 @@
 ## 0) Scope
 
 - **Production 전용 문서**: 실제 영상 생성(shot/scene)부터 후반까지의 흐름에만 집중한다.
-- 데이터화/증거 루프는 `10_PIPELINES_AND_USER_FLOWS.md`와 `27_AUTEUR_PIPELINE_E2E_CODEX.md`를 따른다.
-- NotebookLM/Opal 역할 정의는 `10_PIPELINES_AND_USER_FLOWS.md`를 기준으로 한다.
+- 데이터화/증거 루프는 `08_PIPELINES_AND_USER_FLOWS.md`와 `21_AUTEUR_PIPELINE_E2E_CODEX.md`를 따른다.
+- NotebookLM/Opal 역할 정의는 `08_PIPELINES_AND_USER_FLOWS.md`를 기준으로 한다.
 
 ---
 
@@ -183,8 +183,8 @@ Golden edge light, controlled ferocity.
 
 ## 11) 연동 문서
 
-- `10_PIPELINES_AND_USER_FLOWS.md`
-- `23_TEMPLATE_SYSTEM_SPEC_CODEX.md`
-- `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
-- `27_AUTEUR_PIPELINE_E2E_CODEX.md`
-- `28_AUTEUR_TEMPLATE_PIPELINE_DETAIL_CODEX.md`
+- `08_PIPELINES_AND_USER_FLOWS.md`
+- `17_TEMPLATE_SYSTEM_SPEC_CODEX.md`
+- `19_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
+- `21_AUTEUR_PIPELINE_E2E_CODEX.md`
+- `docs/archive/28_AUTEUR_TEMPLATE_PIPELINE_DETAIL_CODEX.md`

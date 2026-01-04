@@ -1,0 +1,130 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Crebit App Manifest",
+    "description": "외부 앱을 Crebit 플랫폼에 등록하기 위한 매니페스트 스키마",
+    "type": "object",
+    "required": [
+        "name",
+        "version",
+        "entry"
+    ],
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "앱 이름",
+            "minLength": 1,
+            "maxLength": 100
+        },
+        "version": {
+            "type": "string",
+            "description": "앱 버전 (semver)",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "entry": {
+            "type": "string",
+            "description": "진입점 HTML 파일",
+            "default": "index.html"
+        },
+        "description": {
+            "type": "string",
+            "description": "앱 설명",
+            "maxLength": 500
+        },
+        "author": {
+            "type": "string",
+            "description": "제작자"
+        },
+        "dimension": {
+            "type": "object",
+            "description": "차원 테마 설정",
+            "properties": {
+                "theme": {
+                    "type": "string",
+                    "description": "테마 프리셋 이름",
+                    "enum": [
+                        "default",
+                        "cyberpunk",
+                        "cozy",
+                        "horror",
+                        "nature",
+                        "custom"
+                    ]
+                },
+                "primaryColor": {
+                    "type": "string",
+                    "description": "주 색상 (hex)",
+                    "pattern": "^#[0-9a-fA-F]{6}$"
+                },
+                "accentColor": {
+                    "type": "string",
+                    "description": "강조 색상 (hex)",
+                    "pattern": "^#[0-9a-fA-F]{6}$"
+                },
+                "borderStyle": {
+                    "type": "string",
+                    "description": "테두리 스타일",
+                    "enum": [
+                        "solid",
+                        "neon-glow",
+                        "rounded",
+                        "jagged",
+                        "organic"
+                    ]
+                }
+            }
+        },
+        "permissions": {
+            "type": "array",
+            "description": "필요한 권한 목록",
+            "items": {
+                "type": "string",
+                "enum": [
+                    "credits.read",
+                    "credits.deduct",
+                    "storage.local",
+                    "storage.cloud",
+                    "user.profile",
+                    "clipboard.read",
+                    "clipboard.write"
+                ]
+            }
+        },
+        "credits": {
+            "type": "object",
+            "description": "크레딧 비용 설정",
+            "properties": {
+                "perRun": {
+                    "type": "integer",
+                    "description": "실행당 크레딧",
+                    "minimum": 0
+                },
+                "perSave": {
+                    "type": "integer",
+                    "description": "저장당 크레딧",
+                    "minimum": 0
+                },
+                "perMinute": {
+                    "type": "integer",
+                    "description": "분당 크레딧 (실시간 앱용)",
+                    "minimum": 0
+                }
+            }
+        },
+        "icon": {
+            "type": "string",
+            "description": "앱 아이콘 경로"
+        },
+        "preview": {
+            "type": "string",
+            "description": "미리보기 이미지 경로"
+        },
+        "tags": {
+            "type": "array",
+            "description": "태그 목록",
+            "items": {
+                "type": "string"
+            },
+            "maxItems": 10
+        }
+    }
+}

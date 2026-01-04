@@ -79,11 +79,36 @@ async def deduct_credits(
     capsule_run_id: Optional[uuid.UUID] = None,
     meta: Optional[dict] = None,
 ) -> CreditLedger:
-    """Deduct credits using promo -> subscription -> topup order."""
+    """Deduct credits using promo -> subscription -> topup order.
+    
+    Uses SELECT FOR UPDATE to prevent race conditions when multiple
+    requests try to deduct credits simultaneously.
+    """
     if amount <= 0:
         raise ValueError("Amount must be positive")
 
-    user_credits = await get_or_create_user_credits(db, user_id)
+    # Use FOR UPDATE to lock the row and prevent race conditions
+    result = await db.execute(
+        select(UserCredits)
+        .where(UserCredits.user_id == user_id)
+        .with_for_update()
+    )
+    user_credits = result.scalar_one_or_none()
+    
+    if not user_credits:
+        # Create new user credits with lock (seed with 0 to avoid giving free credits during deduction)
+        user_credits = UserCredits(
+            user_id=user_id,
+            balance=0,
+            subscription_credits=0,
+            topup_credits=0,
+            promo_credits=0,
+        )
+        db.add(user_credits)
+        await db.flush()  # Flush to get the lock
+        
+        # Now they definitely don't have enough
+        raise ValueError("Insufficient credits")
 
     if user_credits.balance < amount:
         raise ValueError("Insufficient credits")

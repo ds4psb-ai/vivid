@@ -2,6 +2,7 @@
 Gemini API Utilities
 
 P0-4: Retry + Async Fallback + JSON Repair
+P4-1: Circuit Breaker Integration
 """
 from typing import TypeVar, Type, Callable, Any, Optional
 import json
@@ -10,6 +11,8 @@ import logging
 import time
 import random
 from pydantic import BaseModel
+
+from app.services.circuit_breaker import GEMINI_BREAKER, CircuitBreakerOpen
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +28,10 @@ async def robust_generate_content(
     json_repair_prompt: str = "Your previous output was not valid JSON. Respond with ONLY valid JSON matching the schema, no extra text."
 ) -> T:
     """
-    Robust content generation with retry, backoff, and JSON repair.
+    Robust content generation with retry, backoff, circuit breaker, and JSON repair.
     
-    P0-4 Hardening:
+    P0-4 + P4-1 Hardening:
+    0. Circuit breaker check (fail fast if service is down)
     1. Retry with exponential backoff (429/5xx/network errors)
     2. Async fallback (use sync generate_content in thread if async fails)
     3. JSON repair loop (1 attempt if parsing fails)
@@ -44,8 +48,12 @@ async def robust_generate_content(
         Parsed result of type T
         
     Raises:
+        CircuitBreakerOpen: If Gemini API circuit is open
         Exception: If all retries exhausted
     """
+    # P4-1: Check circuit breaker first
+    GEMINI_BREAKER.check_state()
+    
     last_error = None
     backoff = initial_backoff
     
@@ -57,7 +65,11 @@ async def robust_generate_content(
             # Try to parse response
             try:
                 result_dict = json.loads(response.text)
-                return result_schema(**result_dict)
+                result = result_schema(**result_dict)
+                
+                # P4-1: Record success
+                GEMINI_BREAKER.record_success()
+                return result
             except json.JSONDecodeError as je:
                 logger.warning(f"JSON parse failed (attempt {attempt + 1}): {je}")
                 
@@ -66,10 +78,17 @@ async def robust_generate_content(
                     repair_contents = contents + [json_repair_prompt]
                     repair_response = await _try_generate_async(model, repair_contents)
                     result_dict = json.loads(repair_response.text)
-                    return result_schema(**result_dict)
+                    result = result_schema(**result_dict)
+                    
+                    # P4-1: Record success
+                    GEMINI_BREAKER.record_success()
+                    return result
                 else:
                     raise
                     
+        except CircuitBreakerOpen:
+            # Re-raise circuit breaker exceptions without recording
+            raise
         except Exception as e:
             last_error = e
             error_str = str(e).lower()
@@ -91,8 +110,12 @@ async def robust_generate_content(
                 backoff *= 2  # Exponential backoff
             else:
                 logger.error(f"❌ Non-retryable error or max retries reached: {e}")
+                # P4-1: Record failure for circuit breaker
+                GEMINI_BREAKER.record_failure(e)
                 raise
     
+    # P4-1: Record failure if all retries exhausted
+    GEMINI_BREAKER.record_failure(last_error)
     raise last_error or Exception("All retries exhausted")
 
 

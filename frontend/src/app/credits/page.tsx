@@ -142,7 +142,7 @@ export default function CreditsPage() {
         async (pack: CreditPack) => {
             setIsToppingUp(pack.id);
             try {
-                await api.topupCredits(pack.credits, pack.id);
+                await api.topupCredits({ amount: pack.credits, pack_id: pack.id });
                 await loadCredits();
             } catch (err) {
                 setLoadError(normalizeApiError(err, topupErrorFallback));
@@ -237,7 +237,7 @@ export default function CreditsPage() {
     }, [transactions]);
 
     return (
-        <AppShell showTopBar={false} creditBalance={balance}>
+        <AppShell creditBalance={balance}>
             <div className="min-h-screen px-4 py-6 sm:px-6 sm:py-8">
                 <div className="mx-auto max-w-4xl">
                     {/* Header */}

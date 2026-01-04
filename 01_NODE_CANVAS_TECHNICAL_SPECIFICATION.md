@@ -8,6 +8,11 @@
 
 ---
 
+> **Status (2026-01)**  
+> - 현재 사용자 UI는 **Dimension(/dimension)** 및 **Flow(열차 UI, /flow)**가 기본이다.  
+> - Canvas/Studio UI는 `frontend/src/app/_deprecated`에 남아 있으며 메인 네비게이션에서 숨겨져 있다.  
+> - 본 문서는 **레거시/참조 스펙**으로 유지되며, 활성화 전에는 구현 상태와 다를 수 있다.
+
 ## 0) 설계 원칙
 
 1. **MVP 우선**: 캔버스 저장/불러오기 + 기본 계산을 먼저 완성한다.
@@ -73,7 +78,7 @@
 8. 캔버스에서 캡슐 실행 시 DB 근거만 사용
 9. Creator Self-Style 노트북은 동일 파이프라인으로 축적
 
-상세 흐름/역할은 `10_PIPELINES_AND_USER_FLOWS.md`, 영상 구조화는 `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md` 참고.
+상세 흐름/역할은 `08_PIPELINES_AND_USER_FLOWS.md`, 영상 구조화는 `19_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md` 참고.
 
 > 원본 소스를 직접 인제스트하는 경우, RAG 파이프라인(Chunking → Enrichment → Embedding → Index)과
 > hybrid search 및 retrieval 평가를 거쳐 승격한다.
@@ -88,7 +93,7 @@
 
 ### 1.5 사용자/역할 흐름
 
-사용자/역할 흐름은 `10_PIPELINES_AND_USER_FLOWS.md`에 정본화한다.
+사용자/역할 흐름은 `08_PIPELINES_AND_USER_FLOWS.md`에 정본화한다.
 
 ### 1.6 RAG/LLMOps 정렬 (2025-12 기준)
 
@@ -576,13 +581,10 @@ MVP에서는 1~2단계만 구현하고, 후속 단계는 플러그형으로 확�
 - `POST /api/v1/runs/`
 - `GET /api/v1/runs/{id}`
 
-Auth (MVP): `X-User-Id` header for private canvases/templates/runs.
+> Legacy note: 위 `/api/v1/templates|canvases|capsules|ingest|runs` 경로는 `_deprecated` 라우터에 남아 있으며
+> 현재 메인 앱에 마운트되지 않습니다. 최신 API는 `README.md`를 기준으로 합니다.
 
-Dataization (MVP):
-- `POST /api/v1/ingest/raw`
-- `POST /api/v1/ingest/video-structured` (optional)
-- `POST /api/v1/ingest/derive`
-- `POST /api/v1/ingest/pattern-candidate`
+Legacy Auth: `X-User-Id` header (개발용). 현재는 Google OAuth + 세션 쿠키가 기본입니다.
 
 ---
 
@@ -599,14 +601,14 @@ Dataization (MVP):
 
 - NotebookLM 공식 업데이트 및 기능: 2025-03 / 2025-07 / 2025-12 (Google Workspace Updates, Google Labs)
 - Google Opal 공식 소개 및 실험: 2025-07 / 2025-12 (Google Developers Blog, Google Labs)
-- `08_SHEETS_SCHEMA_V1.md`
-- `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
-- `10_PIPELINES_AND_USER_FLOWS.md`
-- `11_DB_PROMOTION_RULES_V1.md`
-- `12_PATTERN_PROMOTION_CRITERIA_V1.md`
-- `13_UI_DESIGN_GUIDE_2025-12.md`
-- `14_INGEST_RUNBOOK_V1.md`
-- `15_PATTERN_TAXONOMY_V1.md`
-- `16_VIRLO_CONTENT_STUDIO_RESEARCH.md`
-- `17_CREDITS_AND_BILLING_SPEC_V1.md`
-- `35_AFFILIATE_PROGRAM_SPEC_V1.md`
+- `06_SHEETS_SCHEMA_V1.md`
+- `07_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
+- `08_PIPELINES_AND_USER_FLOWS.md`
+- `09_DB_PROMOTION_RULES_V1.md`
+- `docs/archive/12_PATTERN_PROMOTION_CRITERIA_V1.md`
+- `10_UI_DESIGN_GUIDE_2025-12.md`
+- `11_INGEST_RUNBOOK_V1.md`
+- `12_PATTERN_TAXONOMY_V1.md`
+- `docs/archive/16_VIRLO_CONTENT_STUDIO_RESEARCH.md`
+- `13_CREDITS_AND_BILLING_SPEC_V1.md`
+- `26_AFFILIATE_PROGRAM_SPEC_V1.md`

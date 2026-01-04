@@ -3,6 +3,7 @@
 **작성**: 2025-12-24  
 **대상**: ML Engineer / Data Scientist  
 **목표**: 스펙 최적화 로직의 구현 기준 명확화  
+**Status**: Prototype reference (GA/RL 학습 루프는 미완성)
 
 ---
 
@@ -43,7 +44,7 @@ return top_k(population, k=3)
 - **Early Stopping**: 개선 폭이 작으면 조기 종료
 
 구현 노트:
-- `/api/v1/spec/optimize`는 `objective`(balanced/quality/efficient/cost/latency)와 `weights`를 지원한다.
+- `/api/v1/spec/optimize`는 legacy 라우터이며 현재 메인 앱에 마운트되지 않는다 (`_deprecated`).
 - 비용/지연은 파라미터 기반의 **complexity proxy**로 계산되며, 품질 점수와 함께 결합된다.
 
 ---
@@ -69,7 +70,7 @@ Reward = 사용자 별점/선택율/완주율
 
 ### 2.4 학습 루프
 
-1. 캔버스 수정 → GA 후보 생성
+1. 워크플로우/템플릿 수정(legacy canvas 포함) → GA 후보 생성
 2. 유저 선택/평가 로그 저장
 3. Bandit 업데이트 + 주간 RL 재학습
 

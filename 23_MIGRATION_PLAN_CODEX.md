@@ -10,25 +10,25 @@
 
 정본 원칙/흐름은 아래 문서를 따른다:
 
-- `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
-- `10_PIPELINES_AND_USER_FLOWS.md`
-- `05_CAPSULE_NODE_SPEC.md`
-- `08_SHEETS_SCHEMA_V1.md`
-- `11_DB_PROMOTION_RULES_V1.md`
-- `22_DOCUMENTATION_STRUCTURE_CODEX.md`
+- `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
+- `08_PIPELINES_AND_USER_FLOWS.md`
+- `04_CAPSULE_NODE_SPEC.md`
+- `06_SHEETS_SCHEMA_V1.md`
+- `09_DB_PROMOTION_RULES_V1.md`
+- `16_DOCUMENTATION_STRUCTURE_CODEX.md`
 
 ---
 
 ## 1) Canonical References
 
-- Architecture baseline: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
-- User flows: `10_PIPELINES_AND_USER_FLOWS.md`
-- Capsule contract: `05_CAPSULE_NODE_SPEC.md`
-- Template system: `23_TEMPLATE_SYSTEM_SPEC_CODEX.md`
-- E2E pipeline: `27_AUTEUR_PIPELINE_E2E_CODEX.md`, `28_AUTEUR_TEMPLATE_PIPELINE_DETAIL_CODEX.md`
-- Production pipeline: `29_AI_PRODUCTION_PIPELINE_CODEX.md`
-- Execution sequencing: `19_CREBIT_EXECUTION_PLAN_V1.md`
-- UI system: `13_UI_DESIGN_GUIDE_2025-12.md`
+- Architecture baseline: `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
+- User flows: `08_PIPELINES_AND_USER_FLOWS.md`
+- Capsule contract: `04_CAPSULE_NODE_SPEC.md`
+- Template system: `17_TEMPLATE_SYSTEM_SPEC_CODEX.md`
+- E2E pipeline: `21_AUTEUR_PIPELINE_E2E_CODEX.md`, `docs/archive/28_AUTEUR_TEMPLATE_PIPELINE_DETAIL_CODEX.md`
+- Production pipeline: `22_AI_PRODUCTION_PIPELINE_CODEX.md`
+- Execution sequencing: `docs/archive/19_CREBIT_EXECUTION_PLAN_V1.md`
+- UI system: `10_UI_DESIGN_GUIDE_2025-12.md`
 
 ---
 
@@ -57,7 +57,7 @@
 **Goal**: 문서(SoR)의 계약을 확정하고, 코드/데이터 변경 기준점을 고정한다.
 
 **Tasks**
-- Freeze: `00/01/05/08/09/10/13/20/23/27/28/29`.
+- Freeze: `00_EXECUTIVE_SUMMARY_NODE_CANVAS.md`, `01_NODE_CANVAS_TECHNICAL_SPECIFICATION.md`, `04_CAPSULE_NODE_SPEC.md`, `06_SHEETS_SCHEMA_V1.md`, `07_NOTEBOOKLM_OUTPUT_SPEC_V1.md`, `08_PIPELINES_AND_USER_FLOWS.md`, `09_DB_PROMOTION_RULES_V1.md`, `10_UI_DESIGN_GUIDE_2025-12.md`, `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`, `16_DOCUMENTATION_STRUCTURE_CODEX.md`, `21_AUTEUR_PIPELINE_E2E_CODEX.md`, `22_AI_PRODUCTION_PIPELINE_CODEX.md`, `30_UNIFIED_EXECUTION_ROADMAP.md`.
 - Confirm canonical ports + env template (no secret copy).
 - Lock template naming + capsule_id@version policy.
 
@@ -114,7 +114,7 @@
 - Production template 피드백 루프 준비(shot-level metadata).
 
 **Exit Criteria**
-- 템플릿 → 캔버스 → 생성 실행 → shot/prompt 계약 export 완주.
+- 템플릿 → 워크플로우 → 생성 실행 → shot/prompt 계약 export 완주.
 - 프로덕션 템플릿이 필터/배지로 구분됨.
 
 ---
@@ -192,7 +192,7 @@
 - **Admin/Curator**: Notebook Library, rights, seed  
 - **Data Engineer**: ingest + promotion  
 - **Product/Studio**: templates + capsule versioning  
-- **Creator/PD/Writer**: canvas execution + feedback  
+- **Creator/PD/Writer**: workflow execution + feedback  
 
 ---
 

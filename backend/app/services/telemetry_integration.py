@@ -44,7 +44,7 @@ async def record_tool_run(
     
     Args:
         db: Database session
-        tool_key: e.g. "teaching_prompt_generate"
+        tool_key: e.g. "generate_veo_prompt"
         user_id: User who ran the tool
         inputs_summary: Sanitized inputs (no PII)
         outputs_summary: Result summary
@@ -55,57 +55,87 @@ async def record_tool_run(
         session_id: Optional session for grouping
     
     Returns:
-        ToolRunEvent if created, None if tool not found in DB
+        ToolRunEvent if created, None if tool not found or error
     """
-    # Get tool from DB
-    tool = await get_tool_by_key(db, tool_key)
-    
-    if not tool:
-        # Tool not in DB yet - log but don't fail
-        logger.debug(f"Tool {tool_key} not in DB, skipping telemetry")
-        return None
-    
-    # Create run event
-    run_event = ToolRunEvent(
-        id=uuid4(),
-        tool_id=tool.id,
-        tool_key=tool_key,
-        tool_version=tool.version,
-        user_id=user_id,
-        session_id=session_id,
-        status=status,
-        inputs_summary=_sanitize_inputs(inputs_summary),
-        outputs_summary=_truncate_outputs(outputs_summary),
-        error_message=error_message[:500] if error_message else None,
-        latency_ms=latency_ms,
-        credits_charged=credits_charged,
-        credits_refunded=0,
-        created_at=datetime.utcnow(),
-        completed_at=datetime.utcnow() if status in ["success", "failed"] else None,
-    )
-    
-    db.add(run_event)
-    
-    # Update tool usage count
-    tool.usage_count += 1
-    
-    await db.commit()
-    await db.refresh(run_event)
-    
-    logger.info(
-        f"Tool run recorded: {tool_key}, status={status}, "
-        f"latency={latency_ms}ms, credits={credits_charged}"
-    )
-    
-    # If successful, create settlement (async, don't block)
-    if status == "success" and credits_charged > 0:
+    try:
+        # Validate inputs
+        if not tool_key or not user_id:
+            logger.warning(f"record_tool_run: missing tool_key or user_id")
+            return None
+        
+        # Ensure non-negative values
+        latency_ms = max(0, latency_ms or 0)
+        credits_charged = max(0, credits_charged or 0)
+        
+        # Get tool from DB
+        tool = await get_tool_by_key(db, tool_key)
+        
+        if not tool:
+            # Tool not in DB yet - log but don't fail
+            logger.debug(f"Tool {tool_key} not in DB, skipping telemetry")
+            return None
+        
+        # Parse session_id if string UUID
+        parsed_session_id = None
+        if session_id:
+            try:
+                if isinstance(session_id, str):
+                    parsed_session_id = UUID(session_id) if len(session_id) == 36 else None
+                else:
+                    parsed_session_id = session_id
+            except (ValueError, TypeError):
+                parsed_session_id = None
+        
+        # Create run event
+        run_event = ToolRunEvent(
+            id=uuid4(),
+            tool_id=tool.id,
+            tool_key=tool_key,
+            tool_version=tool.version or "1.0.0",
+            user_id=user_id,
+            session_id=parsed_session_id,
+            status=status,
+            inputs_summary=_sanitize_inputs(inputs_summary or {}),
+            outputs_summary=_truncate_outputs(outputs_summary or {}),
+            error_message=error_message[:500] if error_message else None,
+            latency_ms=latency_ms,
+            credits_charged=credits_charged,
+            credits_refunded=0,
+            created_at=datetime.utcnow(),
+            completed_at=datetime.utcnow() if status in ["success", "failed"] else None,
+        )
+        
+        db.add(run_event)
+        
+        # Update tool usage count (with null safety)
+        tool.usage_count = (tool.usage_count or 0) + 1
+        
+        await db.commit()
+        await db.refresh(run_event)
+        
+        logger.info(
+            f"Tool run recorded: {tool_key}, status={status}, "
+            f"latency={latency_ms}ms, credits={credits_charged}"
+        )
+        
+        # If successful, create settlement (async, don't block)
+        if status == "success" and credits_charged > 0:
+            try:
+                await _create_settlement_for_run(db, run_event, tool, user_id)
+            except Exception as e:
+                # Log but don't fail the main request
+                logger.error(f"Settlement creation failed: {e}")
+        
+        return run_event
+        
+    except Exception as e:
+        # Never let telemetry failures break the main request
+        logger.error(f"record_tool_run failed for {tool_key}: {e}")
         try:
-            await _create_settlement_for_run(db, run_event, tool, user_id)
-        except Exception as e:
-            # Log but don't fail the main request
-            logger.error(f"Settlement creation failed: {e}")
-    
-    return run_event
+            await db.rollback()
+        except Exception:
+            pass
+        return None
 
 
 async def update_run_feedback(

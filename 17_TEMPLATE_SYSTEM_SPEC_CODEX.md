@@ -10,7 +10,7 @@
 
 - **템플릿은 1급 객체**이며 공유/버전/학습 대상이다.
 - **캡슐 노드만 핵심 로직을 보유**하고, 템플릿은 Public Graph로만 구성된다.
-- NotebookLM/Opal/DB SoR 역할 정의는 `10_PIPELINES_AND_USER_FLOWS.md`를 따른다.
+- NotebookLM/Opal/DB SoR 역할 정의는 `08_PIPELINES_AND_USER_FLOWS.md`를 따른다.
 - 템플릿의 재현성은 `capsule_id@version` + `patternVersion`으로 고정된다.
 
 ---
@@ -35,7 +35,7 @@
 5. **Production Template (AI Video)**
    - Shot List → Storyboard → Prompt Contract → Gen Run 흐름을 캡슐로 고정
    - Veo/Kling 기반 샷 단위 생성에 최적화
-   - 상세 규격: `29_AI_PRODUCTION_PIPELINE_CODEX.md`
+   - 상세 규격: `22_AI_PRODUCTION_PIPELINE_CODEX.md`
 
 6. **Hybrid Template**
    - Auteur + Creator + Synapse를 조합
@@ -105,7 +105,7 @@
 
 1. **Seed**: NotebookLM/Opal 출력 기반 초기 템플릿 생성
 2. **Validate**: 캡슐 스펙 + 패턴 근거 검수
-3. **Publish**: 공개/비공개 설정 후 캔버스 노출
+3. **Publish**: 공개/비공개 설정 후 워크플로우 노출
 4. **Learn**: GA/RL로 파라미터 개선
 5. **Promote**: evidence 기준 충족 시 버전 승격
 
@@ -124,7 +124,7 @@
 
 - 메인 진입은 **Template Card** 우선
 - 카드에는 `preview_video_url`, `tagline`, `badge` 표시
-- 템플릿 선택 → 즉시 캔버스 시드 그래프 생성
+- 템플릿 선택 → 즉시 워크플로우 시드 생성
 
 ---
 
@@ -138,9 +138,9 @@
 
 ## 8) 연동 문서
 
-- `06_TEMPLATE_CATALOG.md`
-- `05_CAPSULE_NODE_SPEC.md`
-- `10_PIPELINES_AND_USER_FLOWS.md`
-- `12_PATTERN_PROMOTION_CRITERIA_V1.md`
-- `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
-- `29_AI_PRODUCTION_PIPELINE_CODEX.md`
+- `05_TEMPLATE_CATALOG.md`
+- `04_CAPSULE_NODE_SPEC.md`
+- `08_PIPELINES_AND_USER_FLOWS.md`
+- `docs/archive/12_PATTERN_PROMOTION_CRITERIA_V1.md`
+- `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
+- `22_AI_PRODUCTION_PIPELINE_CODEX.md`

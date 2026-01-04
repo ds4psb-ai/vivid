@@ -12,6 +12,7 @@ from app.database import init_db
 from app.routers.auth import router as auth_router
 from app.routers.credits import router as credits_router
 from app.routers.teaching import router as teaching_router
+from app.routers.dimension import router as dimension_router
 from app.routers.agent import router as agent_router
 from app.routers.mcp import router as mcp_router
 from app.routers.health import router as health_router
@@ -44,7 +45,32 @@ from app.routers.humancloud import router as humancloud_router
 # RAG (Vector Search)
 from app.routers.rag import router as rag_router
 
+# Workflow (Tool Chain Orchestration)
+from app.routers.workflow import router as workflow_router
+
+# Blackhole (Template Gallery)
+from app.routers.blackhole import router as blackhole_router
+
+# Tool Registry (MCP-compatible tool discovery)
+from app.routers.tools import router as tools_router
+
+# Batch (Async Processing with 50% cost reduction)
+from app.routers.batch import router as batch_router
+
+# Monitor (API Cost and Performance Tracking)
+from app.routers.monitor import router as monitor_router
+
+# Admin (Internal Staff App Management)
+from app.routers.admin import router as admin_router
+
+# Run Token (App Execution Tokens)
+from app.routers.run_token import router as run_token_router
+
+# Internal S2S (mTLS Protected)
+from app.routers.internal import router as internal_router
+
 from app.middleware.rate_limit import setup_rate_limiting
+from app.middleware.mtls import MTLSMiddleware
 from app.logging_config import setup_logging, LoggingMiddleware
 from app.monitoring import setup_monitoring
 
@@ -54,11 +80,20 @@ async def lifespan(app: FastAPI):
     # Initialize database
     await init_db(drop_all=False)
     
+    # Initialize Redis client
+    from app.redis_client import init_redis, close_redis
+    await init_redis()
+    
     # Initialize Arq Redis Pool
     app.state.arq_pool = await create_pool(RedisSettings.from_dsn(settings.REDIS_URL))
+    
     yield
+    
     # Close Arq Redis Pool
     await app.state.arq_pool.close()
+    
+    # Close Redis client
+    await close_redis()
 
 
 app = FastAPI(
@@ -77,8 +112,13 @@ app.add_middleware(
     max_age=settings.CORS_MAX_AGE,
 )
 
-# Add logging middleware
-app.add_middleware(LoggingMiddleware)
+# Add secure logging middleware (PII Redaction)
+# LoggingMiddleware는 제거하고 SecureLoggingMiddleware 사용
+from app.middleware.secure_logging import SecureLoggingMiddleware
+app.add_middleware(SecureLoggingMiddleware)
+
+# Add mTLS middleware (for internal S2S routes)
+app.add_middleware(MTLSMiddleware)
 
 # Setup rate limiting
 setup_rate_limiting(app)
@@ -93,7 +133,10 @@ setup_monitoring(app)
 # 3-Layer Ecosystem Routers
 # =============================================================================
 
-# Layer 1: Teaching Tools (핵심)
+# Layer 1: Dimension Apps (차원 앱 - 신규 API)
+app.include_router(dimension_router, prefix="/api/dimension", tags=["dimension"])
+
+# Layer 1: Teaching Tools (레거시 호환용 - deprecated)
 app.include_router(teaching_router, prefix="/api/teaching", tags=["teaching"])
 
 # Layer 2: Agent Chat
@@ -135,6 +178,30 @@ app.include_router(humancloud_router, prefix="/api/v1", tags=["humancloud"])
 
 # RAG (Vector Search & Recommendations)
 app.include_router(rag_router, prefix="/api/v1", tags=["rag"])
+
+# Workflow (Tool Chain Orchestration)
+app.include_router(workflow_router, prefix="/api/v1", tags=["workflow"])
+
+# Blackhole (Template Gallery)
+app.include_router(blackhole_router, prefix="/api/v1", tags=["blackhole"])
+
+# Tool Registry (MCP-compatible tool discovery)
+app.include_router(tools_router, tags=["tools"])
+
+# Batch (Async Processing with 50% cost reduction)
+app.include_router(batch_router, tags=["batch"])
+
+# Monitor (API Cost and Performance Tracking)
+app.include_router(monitor_router, tags=["monitor"])
+
+# Admin (Internal Staff App Management)
+app.include_router(admin_router, prefix="/api/v1", tags=["admin"])
+
+# Run Token (App Execution Tokens)
+app.include_router(run_token_router, prefix="/api/v1", tags=["run-token"])
+
+# Internal S2S (mTLS Protected)
+app.include_router(internal_router, prefix="/api/v1", tags=["internal"])
 
 # Infrastructure
 app.include_router(health_router, prefix="", tags=["health"])

@@ -1,7 +1,7 @@
 # MCP Integration Specification (SPEC v36)
 
 **Date**: 2025-12-28  
-**Status**: SoR (MCP 통합 가이드라인)  
+**Status**: Reference (외부 MCP는 미구현, 내부 MCP만 운영)  
 **Author**: Antigravity Agent  
 **Goal**: Crebit 프로젝트에 적합한 MCP(Model Context Protocol) 서버 선정 및 통합 전략 정의
 
@@ -22,9 +22,17 @@ Anthropic이 2024년 11월 오픈소스화했으며, 2025년 현재 OpenAI, Goog
 - GitHub: `https://github.com/modelcontextprotocol`
 - 스펙 문서: `https://modelcontextprotocol.io`
 
+### 0.1 Current Implementation (Codebase)
+
+- MCP 라우터: `backend/app/routers/mcp.py` (`/api/v1/mcp/*`)
+- 내부 MCP 서버: `backend/app/mcp_servers/pattern_truth_mcp.py`
+- 외부 MCP 서버(Playwright/Tavily/Qdrant 등)는 아직 연동되지 않음
+
 ---
 
 ## 1) Crebit MCP 스택 권장안
+
+> 아래는 **권장안**이며 현재 코드베이스에 직접 통합되어 있지 않다.
 
 ### Tier 1: 즉시 적용 (공식/안정)
 
@@ -71,7 +79,7 @@ Anthropic이 2024년 11월 오픈소스화했으며, 2025년 현재 OpenAI, Goog
 **Crebit 활용**:
 ```python
 # E2E 테스트 자동화
-# Canvas UI 검증
+# Flow/Dimension UI 검증 (Canvas legacy)
 # 스크린샷/녹화 기반 문서화
 ```
 
@@ -262,7 +270,9 @@ from app.generation_client import GeminiClient
 
 ---
 
-## 4) 통합 아키텍처
+## 4) 통합 아키텍처 (Target)
+
+> 현재는 내부 MCP 서버만 운영하며, 아래는 목표 아키텍처다.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -332,10 +342,10 @@ from app.generation_client import GeminiClient
 
 ## 7) 참조 문서
 
-- `27_AUTEUR_PIPELINE_E2E_CODEX.md` - 파이프라인 정의
-- `05_CAPSULE_NODE_SPEC.md` - 캡슐 노드 계약
-- `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md` - Gemini 영상 분석
-- `21_DOCUMENTATION_AUDIT_REPORT_V1.md` - 문서 감사 현황
+- `21_AUTEUR_PIPELINE_E2E_CODEX.md` - 파이프라인 정의
+- `04_CAPSULE_NODE_SPEC.md` - 캡슐 노드 계약
+- `19_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md` - Gemini 영상 분석
+- `docs/archive/21_DOCUMENTATION_AUDIT_REPORT_V1.md` - 문서 감사 현황
 
 ---
 

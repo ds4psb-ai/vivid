@@ -13,7 +13,10 @@ logger = logging.getLogger(__name__)
 
 
 class GeminiModelClient:
-    """Gemini client that returns JSON responses with optional tool calls."""
+    """Gemini client that returns JSON responses with optional tool calls.
+    
+    Supports explicit context caching for cost optimization when use_cache=True.
+    """
 
     def __init__(
         self,
@@ -22,6 +25,7 @@ class GeminiModelClient:
         system_prompt: Optional[str] = None,
         temperature: float = 0.4,
         max_output_tokens: int = 2048,
+        use_cache: bool = False,
     ) -> None:
         if not settings.GEMINI_API_KEY:
             raise ValueError("GEMINI_API_KEY not set")
@@ -32,19 +36,26 @@ class GeminiModelClient:
 
         self._genai = genai
         self._genai.configure(api_key=settings.GEMINI_API_KEY)
-        self._system_prompt = system_prompt or (
-            "You are Vivid Studio's chat-first agent. Use tools to build workflows and artifacts. "
-            "Call compile_workflow when the user asks for workflows, nodes, or a video plan. "
-            "Call run_capsule to execute a capsule or generate production outputs. "
-            "Call analyze_sources when the user provides sources or asks for analysis. "
-            "Call generate_storyboard when asked for storyboard previews. "
-            "Call generate_audio_overview when asked for an audio overview or podcast-style summary. "
-            "If session metadata includes a canvas_snapshot, use it to align responses with the current canvas. "
-            "Respond ONLY with JSON: {\"content\": \"...\", \"tool_calls\": "
-            "[{\"id\": \"optional\", \"name\": \"tool_name\", \"arguments\": {}}]}. "
-            "Always put the 'content' field first. Use empty tool_calls when none."
-        )
+        self._use_cache = use_cache
         self._model_name = model_name
+        
+        # Get system prompt from cache manager if caching enabled
+        if use_cache:
+            from app.services.cache_manager import get_chokki_system_prompt
+            self._system_prompt = get_chokki_system_prompt()
+        else:
+            self._system_prompt = system_prompt or (
+                "You are Vivid Studio's chat-first agent. Use tools to help creators. "
+                "Call generate_veo_prompt when the user asks for video prompts. "
+                "Call create_storyboard for visual planning and scene breakdowns. "
+                "Call generate_image_prompt for image generation prompts. "
+                "Call analyze_reference when the user provides sources for analysis. "
+                "If session metadata includes a canvas_snapshot, use it to align responses with the current canvas. "
+                "Respond ONLY with JSON: {\"content\": \"...\", \"tool_calls\": "
+                "[{\"id\": \"optional\", \"name\": \"tool_name\", \"arguments\": {}}]}. "
+                "Always put the 'content' field first. Use empty tool_calls when none."
+            )
+        
         self._generation_config = {
             "temperature": temperature,
             "top_p": 0.95,
@@ -59,8 +70,20 @@ class GeminiModelClient:
         messages: List[AgentMessage],
         tools: List[ToolSpec],
     ) -> AgentMessage:
-        prompt = self._build_prompt(messages, tools)
-        response = self._model.generate_content(prompt)
+        import time
+        start_time = time.perf_counter()
+        
+        contents = self._build_content_parts(messages, tools)
+        response = self._model.generate_content(contents)
+        
+        # Record usage metrics for monitoring
+        latency_ms = (time.perf_counter() - start_time) * 1000
+        try:
+            from app.services.api_monitor import record_gemini_usage
+            record_gemini_usage(response, model=self._model_name, latency_ms=latency_ms)
+        except Exception as e:
+            logger.debug("Failed to record usage metrics", exc_info=e)
+        
         text = (response.text or "").strip()
         return self._build_message(text, tools)
 
@@ -69,12 +92,18 @@ class GeminiModelClient:
         messages: List[AgentMessage],
         tools: List[ToolSpec],
     ) -> Iterator[str]:
-        prompt = self._build_prompt(messages, tools)
+        import time
+        start_time = time.perf_counter()
+        
+        contents = self._build_content_parts(messages, tools)
         model = self._build_model()
-        stream = model.generate_content(prompt, stream=True)
+        stream = model.generate_content(contents, stream=True)
         parser = JSONContentStreamParser()
         raw_text = ""
+        last_chunk = None
+        
         for chunk in stream:
+            last_chunk = chunk
             chunk_text = (chunk.text or "")
             if not chunk_text:
                 continue
@@ -82,17 +111,34 @@ class GeminiModelClient:
             delta = parser.feed(chunk_text)
             if delta:
                 yield delta
+        
+        # Record usage metrics after streaming completes
+        latency_ms = (time.perf_counter() - start_time) * 1000
+        if last_chunk is not None:
+            try:
+                from app.services.api_monitor import record_gemini_usage
+                record_gemini_usage(last_chunk, model=self._model_name, latency_ms=latency_ms)
+            except Exception as e:
+                logger.debug("Failed to record streaming usage metrics", exc_info=e)
 
         return self._build_message(raw_text, tools, parser.content)
 
     def _build_model(self):
+        """Build GenerativeModel, using cached content if enabled."""
+        if self._use_cache:
+            try:
+                from app.services.cache_manager import GeminiCacheManager
+                return GeminiCacheManager.get_model_from_cache(self._model_name)
+            except Exception as e:
+                logger.warning("Failed to get cached model, using direct", exc_info=e)
+        
         return self._genai.GenerativeModel(
             model_name=self._model_name,
             system_instruction=self._system_prompt,
             generation_config=self._generation_config,
         )
 
-    def _build_prompt(self, messages: List[AgentMessage], tools: List[ToolSpec]) -> str:
+    def _build_content_parts(self, messages: List[AgentMessage], tools: List[ToolSpec]) -> List[Any]:
         tool_lines = []
         for tool in tools:
             tool_lines.append(
@@ -101,23 +147,52 @@ class GeminiModelClient:
             )
         tools_section = "\n".join(tool_lines) if tool_lines else "- none"
 
-        convo_lines = []
-        for message in messages:
-            role = message.role.value.upper()
-            if message.role == AgentRole.TOOL:
-                name = message.name or "tool"
-                convo_lines.append(f"{role}({name}): {message.content}")
-            else:
-                convo_lines.append(f"{role}: {message.content}")
-        conversation = "\n".join(convo_lines)
-
-        return (
+        # Start constructing the text part
+        current_text = (
             "Available tools:\n"
             f"{tools_section}\n\n"
             "Conversation:\n"
-            f"{conversation}\n\n"
-            "Return JSON only."
         )
+
+        parts = []
+
+        for message in messages:
+            role = message.role.value.upper()
+            
+            # Handle attachments (Flush text if attachments exist)
+            if hasattr(message, "attachments") and message.attachments:
+                # Add header for this message
+                current_text += f"{role}: "
+                
+                parts.append(current_text)
+                current_text = ""  # Reset buffer
+                
+                for attachment in message.attachments:
+                    # Provide file_data for Gemini
+                    if "file_uri" in attachment and "mime_type" in attachment:
+                        parts.append({
+                            "file_data": {
+                                "mime_type": attachment["mime_type"],
+                                "file_uri": attachment["file_uri"]
+                            }
+                        })
+                
+                # Continue with text content
+                # Add a newline or space after attachments before text
+                current_text += f"\n{message.content}\n"
+            
+            else:
+                # Text-only message
+                if message.role == AgentRole.TOOL:
+                    name = message.name or "tool"
+                    current_text += f"{role}({name}): {message.content}\n"
+                else:
+                    current_text += f"{role}: {message.content}\n"
+
+        current_text += "\nReturn JSON only."
+        parts.append(current_text)
+
+        return parts
 
     def _parse_json(self, text: str) -> Dict[str, Any]:
         try:

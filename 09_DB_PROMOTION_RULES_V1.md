@@ -11,7 +11,7 @@
 - **idempotent upsert** (동일 입력 반복 실행 가능)
 - **append-only in Sheets**, 정합성은 DB에서 확보
 - Raw/Derived/Pattern은 **분리 테이블로 저장**
-- 승격 기준은 `12_PATTERN_PROMOTION_CRITERIA_V1.md`를 따른다
+- 승격 기준은 `docs/archive/12_PATTERN_PROMOTION_CRITERIA_V1.md`를 따른다
 
 ---
 
@@ -112,7 +112,7 @@ DB SoR에 **승격되는 것은 validated/promoted 패턴**만.
 
 ---
 
-## 8) Pattern Promotion Criteria (통합: 12번 문서)
+## 8) Pattern Promotion Criteria (통합: 12번 문서, archive)
 
 ### 8.1 상태 정의
 - **proposed**: NotebookLM/Opal이 제안한 후보 (자동)
@@ -131,4 +131,3 @@ DB SoR에 **승격되는 것은 validated/promoted 패턴**만.
 - Pattern Library에 promoted 등록
 - patternVersion 스냅샷 증가
 - 캡슐 스펙/템플릿 반영
-

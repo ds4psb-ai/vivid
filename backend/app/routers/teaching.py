@@ -65,7 +65,7 @@ def get_credit_cost(capsule_id: TeachingCapsuleId, model: str) -> int:
     for capsule in TEACHING_CAPSULES:
         if capsule["capsule_key"] == capsule_key:
             credit_costs = capsule.get("credit_costs", {})
-            return credit_costs.get(model, credit_costs.get("gemini-2.5-flash", 5))
+            return credit_costs.get(model, credit_costs.get("gemini-3-flash-preview", 5))
     
     return 5  # fallback
 
@@ -90,7 +90,7 @@ class PromptGenerateRequest(BaseModel):
     mood: str = Field("neutral", max_length=50, description="Mood/tone")
     duration: str = Field("15 seconds", max_length=20, description="Target duration")
     language: str = Field("ko", description="Output language")
-    model: str = Field("gemini-2.5-flash", description="AI model")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
     
     @field_validator("language")
     @classmethod
@@ -113,7 +113,7 @@ class StoryboardCreateRequest(BaseModel):
     prompt: Optional[str] = Field(None, max_length=MAX_TOPIC_LENGTH, description="Optional Veo prompt")
     scene_count: int = Field(5, ge=MIN_SCENE_COUNT, le=MAX_SCENE_COUNT, description="Number of scenes")
     language: str = Field("ko", description="Output language")
-    model: str = Field("gemini-2.5-flash", description="AI model")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
     
     @field_validator("language")
     @classmethod
@@ -128,7 +128,7 @@ class ImageGenerateRequest(BaseModel):
     description: str = Field(..., min_length=1, max_length=MAX_DESCRIPTION_LENGTH, description="Image description")
     style: str = Field("photorealistic", max_length=50, description="Art style")
     aspect_ratio: str = Field("16:9", max_length=10, description="Image aspect ratio")
-    model: str = Field("gemini-2.5-flash", description="AI model")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
 
 
 class ReferenceAnalyzeRequest(BaseModel):
@@ -139,7 +139,7 @@ class ReferenceAnalyzeRequest(BaseModel):
         max_length=10,
         description="Analysis focus areas"
     )
-    model: str = Field("gemini-2.5-flash", description="AI model")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
     
     @field_validator("focus_areas")
     @classmethod
@@ -216,10 +216,20 @@ async def generate_prompt(
     start_time = time.time()
     
     user_id = user.get("id")
+    
+    # Validate user_id
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": "INVALID_USER", "message": "유효하지 않은 사용자입니다."}
+        )
+    
     logger.info(f"Prompt generation request from user {user_id}")
     
     # Credit check (skip for BYOK users) - dynamic cost by model
     credit_cost = get_credit_cost(TeachingCapsuleId.PROMPT_GENERATE, request.model)
+    credits_deducted = False
+    
     if not byok_key:
         user_credits = await get_or_create_user_credits(db, user_id)
         if user_credits.balance < credit_cost:
@@ -238,44 +248,73 @@ async def generate_prompt(
             description=f"Teaching: Prompt Generation",
             meta={"capsule": "prompt.generate", "model": request.model}
         )
+        credits_deducted = True
     
-    result = await execute_teaching_capsule(
-        capsule_id=TeachingCapsuleId.PROMPT_GENERATE.value,
-        inputs={
-            "topic": request.topic,
-            "style": request.style,
-            "mood": request.mood,
-            "duration": request.duration,
-            "language": request.language,
-        },
-        params={"model": request.model},
-        user_api_key=byok_key,
-    )
+    result = None
+    error_msg = None
+    
+    try:
+        result = await execute_teaching_capsule(
+            capsule_id=TeachingCapsuleId.PROMPT_GENERATE.value,
+            inputs={
+                "topic": request.topic,
+                "style": request.style,
+                "mood": request.mood,
+                "duration": request.duration,
+                "language": request.language,
+            },
+            params={"model": request.model},
+            user_api_key=byok_key,
+        )
+    except Exception as e:
+        error_msg = f"실행 오류: {type(e).__name__}"
+        logger.error(f"execute_teaching_capsule failed: {e}")
+        result = {"success": False, "error": error_msg}
     
     latency_ms = int((time.time() - start_time) * 1000)
     
-    if not result.get("success"):
-        error_msg = result.get("error", "Generation failed")
-        # Refund on failure (only if we deducted)
-        if not byok_key:
-            await refund_credits(
-                db, user_id, credit_cost,
-                description=f"Refund: Prompt generation failed - {error_msg[:50]}",
-                meta={"capsule": "prompt.generate", "error": error_msg[:200]}
-            )
+    if not result or not result.get("success"):
+        error_msg = error_msg or result.get("error", "Generation failed") if result else "Unknown error"
         
-        # Record failed run (no settlement)
-        await record_tool_run(
-            db=db,
-            tool_key="teaching_prompt_generate",
-            user_id=user_id,
-            inputs_summary={"topic": request.topic, "style": request.style},
-            outputs_summary={},
-            status="failed",
-            latency_ms=latency_ms,
-            credits_charged=0,  # Refunded
-            error_message=error_msg,
-        )
+        # Refund on failure (only if we deducted) - wrapped in try-except
+        if credits_deducted:
+            try:
+                await refund_credits(
+                    db, user_id, credit_cost,
+                    description=f"Refund: Prompt generation failed - {error_msg[:50]}",
+                    meta={"capsule": "prompt.generate", "error": error_msg[:200]}
+                )
+            except Exception as refund_err:
+                logger.error(f"CRITICAL: Refund failed for user {user_id}: {refund_err}")
+                # Add to dead letter queue for manual reconciliation
+                try:
+                    from app.services.dlq_service import add_refund_failure_to_dlq
+                    await add_refund_failure_to_dlq(
+                        db=db,
+                        user_id=user_id,
+                        amount=credit_cost,
+                        operation_type="prompt.generate",
+                        error=refund_err,
+                        context={"topic": request.topic[:100], "model": request.model},
+                    )
+                except Exception as dlq_err:
+                    logger.error(f"CRITICAL: DLQ add also failed: {dlq_err}")
+        
+        # Record failed run (no settlement) - don't let this fail the response
+        try:
+            await record_tool_run(
+                db=db,
+                tool_key="generate_veo_prompt",
+                user_id=user_id,
+                inputs_summary={"topic": request.topic[:100], "style": request.style},
+                outputs_summary={},
+                status="failed",
+                latency_ms=latency_ms,
+                credits_charged=0,  # Refunded
+                error_message=error_msg[:500],
+            )
+        except Exception as tel_err:
+            logger.warning(f"Telemetry recording failed: {tel_err}")
         
         # Determine appropriate status code
         if "required" in error_msg.lower():
@@ -288,16 +327,19 @@ async def generate_prompt(
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_msg)
     
     # Record successful run → triggers settlement
-    await record_tool_run(
-        db=db,
-        tool_key="teaching_prompt_generate",
-        user_id=user_id,
-        inputs_summary={"topic": request.topic, "style": request.style, "model": request.model},
-        outputs_summary={"has_prompt": bool(result.get("output", {}).get("prompt"))},
-        status="success",
-        latency_ms=latency_ms,
-        credits_charged=credit_cost if not byok_key else 0,
-    )
+    try:
+        await record_tool_run(
+            db=db,
+            tool_key="generate_veo_prompt",
+            user_id=user_id,
+            inputs_summary={"topic": request.topic[:100], "style": request.style, "model": request.model},
+            outputs_summary={"has_prompt": bool(result.get("output", {}).get("prompt"))},
+            status="success",
+            latency_ms=latency_ms,
+            credits_charged=credit_cost if credits_deducted else 0,
+        )
+    except Exception as tel_err:
+        logger.warning(f"Telemetry recording failed: {tel_err}")
     
     return TeachingResponse(**result)
 
@@ -324,10 +366,19 @@ async def create_storyboard(
     start_time = time.time()
     
     user_id = user.get("id")
+    
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": "INVALID_USER", "message": "유효하지 않은 사용자입니다."}
+        )
+    
     logger.info(f"Storyboard creation request from user {user_id}")
     
     # Credit check (skip for BYOK users) - dynamic cost by model
     credit_cost = get_credit_cost(TeachingCapsuleId.STORYBOARD_CREATE, request.model)
+    credits_deducted = False
+    
     if not byok_key:
         user_credits = await get_or_create_user_credits(db, user_id)
         if user_credits.balance < credit_cost:
@@ -345,41 +396,66 @@ async def create_storyboard(
             description=f"Teaching: Storyboard Creation",
             meta={"capsule": "storyboard.create", "model": request.model}
         )
+        credits_deducted = True
     
-    result = await execute_teaching_capsule(
-        capsule_id=TeachingCapsuleId.STORYBOARD_CREATE.value,
-        inputs={
-            "concept": request.concept,
-            "prompt": request.prompt,
-            "scene_count": request.scene_count,
-            "language": request.language,
-        },
-        params={"model": request.model},
-        user_api_key=byok_key,
-    )
+    result = None
+    error_msg = None
+    
+    try:
+        result = await execute_teaching_capsule(
+            capsule_id=TeachingCapsuleId.STORYBOARD_CREATE.value,
+            inputs={
+                "concept": request.concept,
+                "prompt": request.prompt,
+                "scene_count": request.scene_count,
+                "language": request.language,
+            },
+            params={"model": request.model},
+            user_api_key=byok_key,
+        )
+    except Exception as e:
+        error_msg = f"실행 오류: {type(e).__name__}"
+        logger.error(f"execute_teaching_capsule failed: {e}")
+        result = {"success": False, "error": error_msg}
     
     latency_ms = int((time.time() - start_time) * 1000)
     
-    if not result.get("success"):
-        error_msg = result.get("error", "Generation failed")
-        if not byok_key:
-            await refund_credits(
-                db, user_id, credit_cost,
-                description=f"Refund: Storyboard creation failed",
-                meta={"capsule": "storyboard.create", "error": error_msg[:200]}
-            )
+    if not result or not result.get("success"):
+        error_msg = error_msg or result.get("error", "Generation failed") if result else "Unknown error"
         
-        await record_tool_run(
-            db=db,
-            tool_key="teaching_storyboard_create",
-            user_id=user_id,
-            inputs_summary={"concept": request.concept[:50], "scene_count": request.scene_count},
-            outputs_summary={},
-            status="failed",
-            latency_ms=latency_ms,
-            credits_charged=0,
-            error_message=error_msg,
-        )
+        if credits_deducted:
+            try:
+                await refund_credits(
+                    db, user_id, credit_cost,
+                    description=f"Refund: Storyboard creation failed",
+                    meta={"capsule": "storyboard.create", "error": error_msg[:200]}
+                )
+            except Exception as refund_err:
+                logger.error(f"CRITICAL: Refund failed for user {user_id}: {refund_err}")
+                try:
+                    from app.services.dlq_service import add_refund_failure_to_dlq
+                    await add_refund_failure_to_dlq(
+                        db=db, user_id=user_id, amount=credit_cost,
+                        operation_type="storyboard.create", error=refund_err,
+                        context={"concept": request.concept[:100] if request.concept else ""},
+                    )
+                except Exception as dlq_err:
+                    logger.error(f"CRITICAL: DLQ add also failed: {dlq_err}")
+        
+        try:
+            await record_tool_run(
+                db=db,
+                tool_key="create_storyboard",
+                user_id=user_id,
+                inputs_summary={"concept": request.concept[:100] if request.concept else "", "scene_count": request.scene_count},
+                outputs_summary={},
+                status="failed",
+                latency_ms=latency_ms,
+                credits_charged=0,
+                error_message=error_msg[:500],
+            )
+        except Exception as tel_err:
+            logger.warning(f"Telemetry recording failed: {tel_err}")
         
         if "required" in error_msg.lower():
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
@@ -388,16 +464,19 @@ async def create_storyboard(
         else:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_msg)
     
-    await record_tool_run(
-        db=db,
-        tool_key="teaching_storyboard_create",
-        user_id=user_id,
-        inputs_summary={"concept": request.concept[:50], "scene_count": request.scene_count, "model": request.model},
-        outputs_summary={"scene_count": len(result.get("output", {}).get("scenes", []))},
-        status="success",
-        latency_ms=latency_ms,
-        credits_charged=credit_cost if not byok_key else 0,
-    )
+    try:
+        await record_tool_run(
+            db=db,
+            tool_key="create_storyboard",
+            user_id=user_id,
+            inputs_summary={"concept": request.concept[:100] if request.concept else "", "scene_count": request.scene_count, "model": request.model},
+            outputs_summary={"scene_count": len(result.get("output", {}).get("scenes", []))},
+            status="success",
+            latency_ms=latency_ms,
+            credits_charged=credit_cost if credits_deducted else 0,
+        )
+    except Exception as tel_err:
+        logger.warning(f"Telemetry recording failed: {tel_err}")
     
     return TeachingResponse(**result)
 
@@ -424,10 +503,19 @@ async def generate_image_prompt(
     start_time = time.time()
     
     user_id = user.get("id")
+    
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": "INVALID_USER", "message": "유효하지 않은 사용자입니다."}
+        )
+    
     logger.info(f"Image prompt request from user {user_id}")
     
     # Credit check (skip for BYOK users) - dynamic cost by model
     credit_cost = get_credit_cost(TeachingCapsuleId.IMAGE_GENERATE, request.model)
+    credits_deducted = False
+    
     if not byok_key:
         user_credits = await get_or_create_user_credits(db, user_id)
         if user_credits.balance < credit_cost:
@@ -445,40 +533,65 @@ async def generate_image_prompt(
             description=f"Teaching: Image Prompt Generation",
             meta={"capsule": "image.generate", "model": request.model}
         )
+        credits_deducted = True
     
-    result = await execute_teaching_capsule(
-        capsule_id=TeachingCapsuleId.IMAGE_GENERATE.value,
-        inputs={
-            "description": request.description,
-            "style": request.style,
-            "aspect_ratio": request.aspect_ratio,
-        },
-        params={"model": request.model},
-        user_api_key=byok_key,
-    )
+    result = None
+    error_msg = None
+    
+    try:
+        result = await execute_teaching_capsule(
+            capsule_id=TeachingCapsuleId.IMAGE_GENERATE.value,
+            inputs={
+                "description": request.description,
+                "style": request.style,
+                "aspect_ratio": request.aspect_ratio,
+            },
+            params={"model": request.model},
+            user_api_key=byok_key,
+        )
+    except Exception as e:
+        error_msg = f"실행 오류: {type(e).__name__}"
+        logger.error(f"execute_teaching_capsule failed: {e}")
+        result = {"success": False, "error": error_msg}
     
     latency_ms = int((time.time() - start_time) * 1000)
     
-    if not result.get("success"):
-        error_msg = result.get("error", "Generation failed")
-        if not byok_key:
-            await refund_credits(
-                db, user_id, credit_cost,
-                description=f"Refund: Image prompt generation failed",
-                meta={"capsule": "image.generate", "error": error_msg[:200]}
-            )
+    if not result or not result.get("success"):
+        error_msg = error_msg or result.get("error", "Generation failed") if result else "Unknown error"
         
-        await record_tool_run(
-            db=db,
-            tool_key="teaching_image_generate",
-            user_id=user_id,
-            inputs_summary={"description": request.description[:50], "style": request.style},
-            outputs_summary={},
-            status="failed",
-            latency_ms=latency_ms,
-            credits_charged=0,
-            error_message=error_msg,
-        )
+        if credits_deducted:
+            try:
+                await refund_credits(
+                    db, user_id, credit_cost,
+                    description=f"Refund: Image prompt generation failed",
+                    meta={"capsule": "image.generate", "error": error_msg[:200]}
+                )
+            except Exception as refund_err:
+                logger.error(f"CRITICAL: Refund failed for user {user_id}: {refund_err}")
+                try:
+                    from app.services.dlq_service import add_refund_failure_to_dlq
+                    await add_refund_failure_to_dlq(
+                        db=db, user_id=user_id, amount=credit_cost,
+                        operation_type="image.generate", error=refund_err,
+                        context={"description": request.description[:100]},
+                    )
+                except Exception as dlq_err:
+                    logger.error(f"CRITICAL: DLQ add also failed: {dlq_err}")
+        
+        try:
+            await record_tool_run(
+                db=db,
+                tool_key="generate_image_prompt",
+                user_id=user_id,
+                inputs_summary={"description": request.description[:100] if request.description else "", "style": request.style},
+                outputs_summary={},
+                status="failed",
+                latency_ms=latency_ms,
+                credits_charged=0,
+                error_message=error_msg[:500],
+            )
+        except Exception as tel_err:
+            logger.warning(f"Telemetry recording failed: {tel_err}")
         
         if "required" in error_msg.lower():
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
@@ -487,16 +600,19 @@ async def generate_image_prompt(
         else:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_msg)
     
-    await record_tool_run(
-        db=db,
-        tool_key="teaching_image_generate",
-        user_id=user_id,
-        inputs_summary={"description": request.description[:50], "style": request.style, "model": request.model},
-        outputs_summary={"has_prompt": bool(result.get("output", {}).get("prompt"))},
-        status="success",
-        latency_ms=latency_ms,
-        credits_charged=credit_cost if not byok_key else 0,
-    )
+    try:
+        await record_tool_run(
+            db=db,
+            tool_key="generate_image_prompt",
+            user_id=user_id,
+            inputs_summary={"description": request.description[:100] if request.description else "", "style": request.style, "model": request.model},
+            outputs_summary={"has_prompt": bool(result.get("output", {}).get("prompt"))},
+            status="success",
+            latency_ms=latency_ms,
+            credits_charged=credit_cost if credits_deducted else 0,
+        )
+    except Exception as tel_err:
+        logger.warning(f"Telemetry recording failed: {tel_err}")
     
     return TeachingResponse(**result)
 
@@ -523,10 +639,19 @@ async def analyze_reference(
     start_time = time.time()
     
     user_id = user.get("id")
+    
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": "INVALID_USER", "message": "유효하지 않은 사용자입니다."}
+        )
+    
     logger.info(f"Reference analysis request from user {user_id}")
     
     # Credit check (skip for BYOK users) - dynamic cost by model
     credit_cost = get_credit_cost(TeachingCapsuleId.REFERENCE_ANALYZE, request.model)
+    credits_deducted = False
+    
     if not byok_key:
         user_credits = await get_or_create_user_credits(db, user_id)
         if user_credits.balance < credit_cost:
@@ -544,39 +669,64 @@ async def analyze_reference(
             description=f"Teaching: Reference Analysis",
             meta={"capsule": "reference.analyze", "model": request.model}
         )
+        credits_deducted = True
     
-    result = await execute_teaching_capsule(
-        capsule_id=TeachingCapsuleId.REFERENCE_ANALYZE.value,
-        inputs={
-            "video_description": request.video_description,
-            "focus_areas": request.focus_areas,
-        },
-        params={"model": request.model},
-        user_api_key=byok_key,
-    )
+    result = None
+    error_msg = None
+    
+    try:
+        result = await execute_teaching_capsule(
+            capsule_id=TeachingCapsuleId.REFERENCE_ANALYZE.value,
+            inputs={
+                "video_description": request.video_description,
+                "focus_areas": request.focus_areas,
+            },
+            params={"model": request.model},
+            user_api_key=byok_key,
+        )
+    except Exception as e:
+        error_msg = f"실행 오류: {type(e).__name__}"
+        logger.error(f"execute_teaching_capsule failed: {e}")
+        result = {"success": False, "error": error_msg}
     
     latency_ms = int((time.time() - start_time) * 1000)
     
-    if not result.get("success"):
-        error_msg = result.get("error", "Analysis failed")
-        if not byok_key:
-            await refund_credits(
-                db, user_id, credit_cost,
-                description=f"Refund: Reference analysis failed",
-                meta={"capsule": "reference.analyze", "error": error_msg[:200]}
-            )
+    if not result or not result.get("success"):
+        error_msg = error_msg or result.get("error", "Analysis failed") if result else "Unknown error"
         
-        await record_tool_run(
-            db=db,
-            tool_key="teaching_reference_analyze",
-            user_id=user_id,
-            inputs_summary={"video_description": request.video_description[:50]},
-            outputs_summary={},
-            status="failed",
-            latency_ms=latency_ms,
-            credits_charged=0,
-            error_message=error_msg,
-        )
+        if credits_deducted:
+            try:
+                await refund_credits(
+                    db, user_id, credit_cost,
+                    description=f"Refund: Reference analysis failed",
+                    meta={"capsule": "reference.analyze", "error": error_msg[:200]}
+                )
+            except Exception as refund_err:
+                logger.error(f"CRITICAL: Refund failed for user {user_id}: {refund_err}")
+                try:
+                    from app.services.dlq_service import add_refund_failure_to_dlq
+                    await add_refund_failure_to_dlq(
+                        db=db, user_id=user_id, amount=credit_cost,
+                        operation_type="reference.analyze", error=refund_err,
+                        context={"description": request.video_description[:100]},
+                    )
+                except Exception as dlq_err:
+                    logger.error(f"CRITICAL: DLQ add also failed: {dlq_err}")
+        
+        try:
+            await record_tool_run(
+                db=db,
+                tool_key="analyze_reference",
+                user_id=user_id,
+                inputs_summary={"video_description": request.video_description[:100] if request.video_description else ""},
+                outputs_summary={},
+                status="failed",
+                latency_ms=latency_ms,
+                credits_charged=0,
+                error_message=error_msg[:500],
+            )
+        except Exception as tel_err:
+            logger.warning(f"Telemetry recording failed: {tel_err}")
         
         if "required" in error_msg.lower():
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
@@ -585,16 +735,19 @@ async def analyze_reference(
         else:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_msg)
     
-    await record_tool_run(
-        db=db,
-        tool_key="teaching_reference_analyze",
-        user_id=user_id,
-        inputs_summary={"video_description": request.video_description[:50], "model": request.model},
-        outputs_summary={"has_analysis": bool(result.get("output"))},
-        status="success",
-        latency_ms=latency_ms,
-        credits_charged=credit_cost if not byok_key else 0,
-    )
+    try:
+        await record_tool_run(
+            db=db,
+            tool_key="analyze_reference",
+            user_id=user_id,
+            inputs_summary={"video_description": request.video_description[:100] if request.video_description else "", "model": request.model},
+            outputs_summary={"has_analysis": bool(result.get("output"))},
+            status="success",
+            latency_ms=latency_ms,
+            credits_charged=credit_cost if credits_deducted else 0,
+        )
+    except Exception as tel_err:
+        logger.warning(f"Telemetry recording failed: {tel_err}")
     
     return TeachingResponse(**result)
 
@@ -652,7 +805,7 @@ async def health_check() -> Dict[str, str]:
 )
 async def kelly_check(
     capsule_id: str = "prompt.generate",
-    model: str = "gemini-2.5-flash",
+    model: str = "gemini-3-flash-preview",
     user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> Dict[str, Any]:
@@ -691,7 +844,7 @@ async def kelly_check(
 )
 async def get_optimal_runs(
     capsule_id: str = "prompt.generate",
-    model: str = "gemini-2.5-flash",
+    model: str = "gemini-3-flash-preview",
     user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> Dict[str, Any]:

@@ -16,7 +16,7 @@ TEACHING_CAPSULES: List[Dict[str, Any]] = [
         "capsule_key": "teaching.prompt.generate",
         "version": "1.0.0",
         "credit_costs": {
-            "gemini-2.5-flash": 5,
+            "gemini-3-flash-preview": 5,
             "gemini-2.5-pro": 15,
             "gemini-3-flash-preview": 5,
         },
@@ -77,8 +77,8 @@ TEACHING_CAPSULES: List[Dict[str, Any]] = [
             "params": {
                 "model": {
                     "type": "string",
-                    "default": "gemini-2.5-flash",
-                    "options": ["gemini-2.5-flash", "gemini-2.5-pro"],
+                    "default": "gemini-3-flash-preview",
+                    "options": ["gemini-3-flash-preview", "gemini-2.5-pro"],
                 },
             },
         },
@@ -87,7 +87,7 @@ TEACHING_CAPSULES: List[Dict[str, Any]] = [
         "capsule_key": "teaching.storyboard.create",
         "version": "1.0.0",
         "credit_costs": {
-            "gemini-2.5-flash": 10,
+            "gemini-3-flash-preview": 10,
             "gemini-2.5-pro": 25,
             "gemini-3-flash-preview": 10,
         },
@@ -129,7 +129,7 @@ TEACHING_CAPSULES: List[Dict[str, Any]] = [
             "params": {
                 "model": {
                     "type": "string",
-                    "default": "gemini-2.5-flash",
+                    "default": "gemini-3-flash-preview",
                 },
             },
         },
@@ -138,7 +138,7 @@ TEACHING_CAPSULES: List[Dict[str, Any]] = [
         "capsule_key": "teaching.image.generate",
         "version": "1.0.0",
         "credit_costs": {
-            "gemini-2.5-flash": 5,
+            "gemini-3-flash-preview": 5,
             "gemini-2.5-pro": 12,
             "gemini-3-flash-preview": 5,
         },
@@ -179,7 +179,7 @@ TEACHING_CAPSULES: List[Dict[str, Any]] = [
             "params": {
                 "model": {
                     "type": "string",
-                    "default": "gemini-2.5-flash",
+                    "default": "gemini-3-flash-preview",
                 },
             },
         },
@@ -188,7 +188,7 @@ TEACHING_CAPSULES: List[Dict[str, Any]] = [
         "capsule_key": "teaching.reference.analyze",
         "version": "1.0.0",
         "credit_costs": {
-            "gemini-2.5-flash": 8,
+            "gemini-3-flash-preview": 8,
             "gemini-2.5-pro": 20,
             "gemini-3-flash-preview": 8,
         },
@@ -219,7 +219,7 @@ TEACHING_CAPSULES: List[Dict[str, Any]] = [
             "params": {
                 "model": {
                     "type": "string",
-                    "default": "gemini-2.5-flash",
+                    "default": "gemini-3-flash-preview",
                 },
             },
         },

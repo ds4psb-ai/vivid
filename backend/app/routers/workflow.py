@@ -1,0 +1,246 @@
+"""
+Workflow API Router
+
+Endpoints for workflow planning and session management.
+"""
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from typing import Optional, List, Dict, Any
+
+from app.services.workflow_planner import (
+    match_workflow_template,
+    WORKFLOW_TEMPLATES,
+    TOOL_METADATA,
+    WorkflowPlanResult,
+)
+from app.schemas.workflow_session import (
+    WorkflowSession,
+    WorkflowStatus,
+    workflow_session_manager,
+)
+from app.dependencies import get_current_user_optional
+
+
+router = APIRouter(prefix="/workflow", tags=["workflow"])
+
+
+# =============================================================================
+# Request/Response Models
+# =============================================================================
+
+class PlanWorkflowRequest(BaseModel):
+    """워크플로우 계획 요청"""
+    user_request: str
+    preferred_template: Optional[str] = None
+
+
+class PlanWorkflowResponse(BaseModel):
+    """워크플로우 계획 응답"""
+    success: bool
+    template_id: str
+    template_name: str
+    template_description: str
+    confidence: float
+    tools: List[str]
+    node_chain: List[Dict[str, Any]]
+    connections: List[Dict[str, str]]
+    estimated_credits: int
+    explanation: str
+    session_id: Optional[str] = None
+
+
+class StartWorkflowRequest(BaseModel):
+    """워크플로우 시작 요청"""
+    session_id: str
+    initial_params: Optional[Dict[str, Any]] = None
+
+
+class WorkflowStatusResponse(BaseModel):
+    """워크플로우 상태 응답"""
+    session_id: str
+    status: str
+    current_step: int
+    total_steps: int
+    nodes: List[Dict[str, Any]]
+    consumed_credits: int
+
+
+# =============================================================================
+# Endpoints
+# =============================================================================
+
+@router.post("/plan", response_model=PlanWorkflowResponse)
+async def plan_workflow(
+    request: PlanWorkflowRequest,
+    user: Optional[dict] = Depends(get_current_user_optional),
+):
+    """
+    사용자 요청을 분석하고 워크플로우를 계획합니다.
+    
+    - 의도에 맞는 템플릿 매칭
+    - 연결된 노드 체인 생성
+    - (로그인 시) 세션 생성
+    """
+    
+    # 1. 워크플로우 매칭
+    if request.preferred_template and request.preferred_template in WORKFLOW_TEMPLATES:
+        # 사용자가 템플릿을 직접 지정한 경우
+        from app.services.workflow_planner import build_node_chain, extract_params_from_message
+        template = WORKFLOW_TEMPLATES[request.preferred_template]
+        plan = WorkflowPlanResult(
+            template_id=template.id,
+            template=template,
+            confidence=1.0,
+            suggested_params=extract_params_from_message(request.user_request, template),
+            node_chain=build_node_chain(template),
+            total_credits=template.estimated_credits,
+            explanation=f"Selected workflow: {template.name}",
+            explanation_ko=f"선택된 워크플로우: {template.name_ko}",
+        )
+    else:
+        # 자동 매칭
+        plan = match_workflow_template(request.user_request)
+    
+    if not plan:
+        raise HTTPException(status_code=400, detail="워크플로우를 계획할 수 없습니다.")
+    
+    # 2. 세션 생성 (로그인 사용자만)
+    session_id = None
+    if user:
+        session = workflow_session_manager.create_session(
+            user_id=user.get("id", user.get("sub", "anonymous")),
+            template_id=plan.template_id,
+            template_name=plan.template.name_ko,
+            template_description=plan.template.description_ko,
+            nodes=plan.node_chain,
+            connections=plan.template.connections,
+            original_request=request.user_request,
+            extracted_params=plan.suggested_params,
+            estimated_credits=plan.total_credits,
+        )
+        session_id = session.id
+    
+    return PlanWorkflowResponse(
+        success=True,
+        template_id=plan.template_id,
+        template_name=plan.template.name_ko,
+        template_description=plan.template.description_ko,
+        confidence=plan.confidence,
+        tools=plan.template.tools,
+        node_chain=plan.node_chain,
+        connections=plan.template.connections,
+        estimated_credits=plan.total_credits,
+        explanation=plan.explanation_ko,
+        session_id=session_id,
+    )
+
+
+@router.get("/templates")
+async def list_workflow_templates():
+    """사용 가능한 워크플로우 템플릿 목록"""
+    return {
+        "templates": [
+            {
+                "id": t.id,
+                "name": t.name_ko,
+                "description": t.description_ko,
+                "tools": t.tools,
+                "estimated_credits": t.estimated_credits,
+            }
+            for t in WORKFLOW_TEMPLATES.values()
+        ]
+    }
+
+
+@router.get("/tools")
+async def list_available_tools():
+    """사용 가능한 도구(차원문) 목록"""
+    return {
+        "tools": [
+            {
+                "id": tool_id,
+                "display_name": tool["display_name_ko"],
+                "icon": tool["icon"],
+                "color": tool["color"],
+                "input_ports": tool["input_ports"],
+                "output_ports": tool["output_ports"],
+            }
+            for tool_id, tool in TOOL_METADATA.items()
+        ]
+    }
+
+
+@router.get("/session/{session_id}", response_model=WorkflowStatusResponse)
+async def get_workflow_status(
+    session_id: str,
+    user: dict = Depends(get_current_user_optional),
+):
+    """워크플로우 세션 상태 조회"""
+    session = workflow_session_manager.get_session(session_id)
+    
+    if not session:
+        raise HTTPException(status_code=404, detail="세션을 찾을 수 없습니다.")
+    
+    return WorkflowStatusResponse(
+        session_id=session.id,
+        status=session.status.value if isinstance(session.status, WorkflowStatus) else session.status,
+        current_step=session.current_step,
+        total_steps=session.total_steps,
+        nodes=[
+            {
+                "node_id": n.node_id,
+                "tool_id": n.tool_id,
+                "order": n.order,
+                "status": n.status,
+                "inputs": n.inputs,
+                "output": n.output,
+            }
+            for n in session.nodes
+        ],
+        consumed_credits=session.consumed_credits,
+    )
+
+
+@router.post("/session/{session_id}/advance")
+async def advance_workflow_step(
+    session_id: str,
+    user: dict = Depends(get_current_user_optional),
+):
+    """워크플로우 다음 단계로 진행"""
+    session = workflow_session_manager.advance_step(session_id)
+    
+    if not session:
+        raise HTTPException(status_code=404, detail="세션을 찾을 수 없습니다.")
+    
+    return {
+        "success": True,
+        "current_step": session.current_step,
+        "status": session.status.value if isinstance(session.status, WorkflowStatus) else session.status,
+    }
+
+
+@router.get("/user/sessions")
+async def get_user_workflow_sessions(
+    user: dict = Depends(get_current_user_optional),
+):
+    """현재 사용자의 워크플로우 세션 목록"""
+    if not user:
+        return {"sessions": []}
+    
+    user_id = user.get("id", user.get("sub", "anonymous"))
+    sessions = workflow_session_manager.get_user_sessions(user_id)
+    
+    return {
+        "sessions": [
+            {
+                "id": s.id,
+                "template_name": s.workflow_name,
+                "status": s.status.value if isinstance(s.status, WorkflowStatus) else s.status,
+                "current_step": s.current_step,
+                "total_steps": s.total_steps,
+                "created_at": s.created_at.isoformat(),
+            }
+            for s in sessions
+        ]
+    }

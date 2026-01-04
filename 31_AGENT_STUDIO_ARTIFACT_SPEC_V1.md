@@ -3,13 +3,14 @@
 **작성**: 2026-01-01  
 **버전**: v1.0  
 **대상**: Backend / Frontend / Product  
-**목표**: Agent Studio에서 사용되는 표준 아티팩트 타입과 스키마를 고정한다.
+**목표**: Agent Studio에서 사용되는 표준 아티팩트 타입과 스키마를 고정한다.  
+**Status**: 부분 적용 (legacy capsule 도구 기반 아티팩트만 자동 생성)
 
 ---
 
 ## 1) 핵심 원칙
 
-- **artifact_type 필수**: 모든 아티팩트는 `artifact_type`이 있어야 한다.
+- **artifact_type 필수**: SSE/DB envelope에는 `artifact_type`이 있어야 한다.
 - **JSON-safe**: SSE/DB 저장을 위해 payload는 JSON 직렬화 가능해야 한다.
 - **증거 추적**: `evidence_refs` 또는 `source_refs`를 통해 provenance를 유지한다.
 - **도구 일관성**: tool 결과에서 생성되는 아티팩트는 표준 스키마로 변환된다.
@@ -57,7 +58,8 @@ Agent Chat은 SSE로 아티팩트를 전달한다.
 }
 ```
 
-`payload.artifact_type`는 반드시 포함한다.
+`payload.artifact_type`는 **파생 아티팩트**에서만 보장된다.  
+Tool result 기반 아티팩트는 envelope의 `artifact_type`만 신뢰한다.
 
 ---
 
@@ -194,12 +196,17 @@ Agent Chat은 SSE로 아티팩트를 전달한다.
 
 ---
 
-## 5) Tool → Artifact Mapping
+## 5) Tool → Artifact Mapping (Current)
 
-- `run_capsule` → `storyboard` + `shot_list`
-- `analyze_sources` → `data_table` (NotebookLM claims)
-- `generate_storyboard` → `storyboard` (preview)
-- `generate_audio_overview` → `audio_overview`
+- **Legacy**
+  - `run_capsule` → `storyboard` + `shot_list`
+  - `analyze_sources` → `data_table` (NotebookLM claims)
+  - `generate_storyboard` → `storyboard` (preview)
+- **Current**
+  - `generate_audio_overview` → `audio_overview`
+
+> Teaching 도구(`create_storyboard`, `generate_veo_prompt`, `generate_image_prompt`, `analyze_reference`)는 아직
+> 자동 아티팩트 변환이 연결되지 않았다. 필요 시 도구 결과를 기반으로 파생 규칙을 추가한다.
 
 ---
 

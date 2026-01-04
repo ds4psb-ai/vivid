@@ -16,6 +16,8 @@ from app.agents.agent_types import (
 )
 from app.agents.notebooklm_tools import register_notebooklm_tools
 from app.agents.teaching_tools import register_teaching_tools
+from app.agents.workflow_tools import register_workflow_tools
+from app.agents.intent_router import classify_intent, get_intent_router
 from app.logging_config import get_logger
 
 logger = get_logger("vivid_agent")
@@ -102,9 +104,10 @@ class VividAgent:
         self._model = model_client
         self._tools = tool_registry or ToolRegistry()
         if tool_registry is None:
-            # 3-Layer Ecosystem: Teaching + NotebookLM only
+            # 3-Layer Ecosystem: Teaching + NotebookLM + Workflow
             register_teaching_tools(self._tools)
             register_notebooklm_tools(self._tools)
+            register_workflow_tools(self._tools)
         self._memory = memory_manager or MemoryManager()
         self._system_prompt = system_prompt
         self._max_tool_rounds = max_tool_rounds
@@ -134,6 +137,33 @@ class VividAgent:
         state: AgentState,
         content: str,
     ) -> AgentTurnOutcome:
+        """Handle user message with intent routing."""
+        # Intent 분류 및 라우팅 컨텍스트 생성
+        routing_result = classify_intent(content)
+        
+        if routing_result.is_confident:
+            # 높은 신뢰도: 라우팅 힌트를 메타데이터에 추가
+            if state.metadata is None:
+                state.metadata = {}
+            state.metadata["routing_hint"] = {
+                "intent": routing_result.intent.value,
+                "confidence": routing_result.confidence,
+                "suggested_tool": routing_result.suggested_tool,
+                "dimension": routing_result.dimension.value if routing_result.dimension else None,
+            }
+            if routing_result.workflow_suggestion:
+                state.metadata["routing_hint"]["workflow"] = routing_result.workflow_suggestion
+            
+            logger.info(
+                "Intent routing applied",
+                extra={
+                    "session_id": state.session_id,
+                    "intent": routing_result.intent.value,
+                    "confidence": routing_result.confidence,
+                    "tool": routing_result.suggested_tool,
+                },
+            )
+        
         state.messages.append(AgentMessage(role=AgentRole.USER, content=content))
         return await self._run_turn(state)
 

@@ -38,6 +38,31 @@ async def get_db() -> AsyncSession:
             await session.close()
 
 
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def get_db_context():
+    """Async context manager for database sessions (for use outside FastAPI Depends).
+    
+    Usage:
+        async with get_db_context() as db:
+            result = await db.execute(...)
+    
+    Note:
+        - Always commits on success, rolls back on exception
+        - Session is properly closed even if exception occurs
+    """
+    session = AsyncSessionLocal()
+    try:
+        yield session
+        await session.commit()
+    except Exception:
+        await session.rollback()
+        raise
+    finally:
+        await session.close()
+
+
 async def init_db(drop_all: bool = False) -> None:
     """Initialize database. If drop_all=True, drop all tables first (dev only)."""
     async with engine.begin() as conn:

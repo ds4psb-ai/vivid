@@ -32,7 +32,7 @@
 
 - 기본 그래프: `Input → Auteur Capsule → Script/Beat → Storyboard → Output`
 - 캡슐 노드는 내부 체인을 숨기고 파라미터만 공개
-- 템플릿 클릭 시 해당 그래프로 캔버스 시작
+- 템플릿 클릭 시 해당 그래프로 워크플로우 시작
 - **[New]**: 카드 호버 시 `preview_video_url` 재생 (스타일 미리보기)
 - 캡슐 버전은 Pattern Library/Trace 근거로 고정
 - 템플릿 메타에 `patternVersion` 표시 (재현성)
@@ -44,7 +44,7 @@
 - **Synapse Templates**: A+B+D→C 변환 규칙을 캡슐로 패키징
 - **Pipeline Templates**: PD/작가용 시나리오 → 스토리보드 파이프라인
 
-Ref: `23_TEMPLATE_SYSTEM_SPEC_CODEX.md`
+Ref: `17_TEMPLATE_SYSTEM_SPEC_CODEX.md`
 
 ---
 

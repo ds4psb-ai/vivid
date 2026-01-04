@@ -1,30 +1,28 @@
-# Crebit Studio (Agent Chat + Node Canvas)
+# Crebit Studio (Dimension Tools + Train Workflow + Agent Chat)
 
-This repo builds the chat-first Agent Studio and Node Canvas described in the Crebit docs. The focus is a fast, minimal base for:
+This repo builds the chat-first agent, dimension miniapps, and train-style workflow UI described in the Crebit docs. The focus is a fast, minimal base for:
 
-- Agent Studio (chat-first): workflow compile + capsule run + artifact previews (SSE streaming)
-- Visual node canvas (drag, connect, inspect)
-- Persisted canvases (save/load) using JSON graphs
-- Future hooks for GA/RL optimization and template marketplace
+- Chokki Agent (chat-first): tool-aware chat + artifact previews (SSE streaming)
+- Dimension tools (miniapps) for prompt/storyboard/image/reference
+- Train workflow UI (Flow) for chaining tools with 3-option connectors
+- Legacy canvas assets remain under `frontend/src/app/_deprecated`
 
-## Scope distilled from Crebit docs
+## Scope distilled from Crebit docs (current code)
 
-- Canvas model: nodes + connections + metadata + versioning
-- Node types grouped into input, style, customization, processing, output, capsule
-- Processing includes auto-calc, GA suggestions, and RL feedback loops
-- Templates are first-class objects (public share + marketplace later)
-- MVP path: build canvas UI + persistence first, add GA/RL after
-- Agent Studio: chat-first entrypoint with workflow compile + canvas sync + artifact previews
+- Train workflow: tool chain planning + connector choices + sequential execution
+- Dimension tools: teaching capsules backed by Gemini models (BYOK supported)
+- Agent chat: SSE streaming + artifact previews
+- Legacy canvas model: nodes + edges + versioning (kept for back-compat only)
 - NotebookLM/Opal outputs flow through **Sheets Bus → DB SoR** (Derived only)
 - NotebookLM은 **지식/가이드 레이어** (클러스터 노트북, 오마주/변주 가이드, 템플릿 적합도 제안)
 - Video 이해는 Gemini 구조화 출력으로 **DB SoR**에 적재 후 NotebookLM 소스로 사용
 - Pattern Library/Trace records the repeatable auteur rules
 - NotebookLM/Opal Ultra 구독 전제 (다중 출력/다국어 활용)
-- 흐름/역할 정본: `10_PIPELINES_AND_USER_FLOWS.md`, 원칙 정본: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
+- 흐름/역할 정본: `08_PIPELINES_AND_USER_FLOWS.md`, 원칙 정본: `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
 
-## Story-First Features (NEW: 2025-12-30)
+## Story-First Features (NEW: 2025-12-30, legacy UI)
 
-바이럴 콘텐츠 제작을 위한 서사 중심 제어 시스템:
+바이럴 콘텐츠 제작을 위한 서사 중심 제어 시스템 (현재 UI는 `_deprecated`에 위치):
 
 - **CanvasNarrativePanel**: 부조화 설계, 감정 곡선, 훅 스타일 3-Tab 구조
 - **HookVariantSelector**: 8종 훅 스타일 (충격/호기심/감정/역설 등) + A/B 테스트
@@ -33,18 +31,18 @@ This repo builds the chat-first Agent Studio and Node Canvas described in the Cr
 
 **핵심 타입**: `frontend/src/types/storyFirst.ts` (HookVariant, NarrativeArc, Sequence 등)
 
-## Agent Studio (Chat-first)
+## Agent Chat (Chokki)
 
-- `/studio` is the chat-first UI (simple/expert modes).
+- Global chat accordion is available in `AppShell` (all pages).
 - Streaming SSE events update assistant messages, tool results, and artifacts.
-- Artifacts include Storyboard, Shot List, and Data Table previews.
-- Optional canvas sync to apply compiled workflows.
+- Audio Overview artifacts are wired; Storyboard/Shot List/Data Table are legacy capsule artifacts.
+- Train workflow integration is in progress (Flow UI currently uses mock options).
 
 ## Tech baseline
 
-- Frontend: Next.js + ReactFlow
+- Frontend: Next.js + train workflow UI (+ legacy ReactFlow in `_deprecated`)
 - Backend: FastAPI + async SQLAlchemy
-- Storage: Postgres JSONB for canvas graphs
+- Storage: Postgres JSONB for sessions/telemetry (canvas graphs are legacy)
 - Data Bus (MVP): Google Sheets (staging) → DB (source of record)
 
 ## Docs index (핵심)
@@ -52,14 +50,14 @@ This repo builds the chat-first Agent Studio and Node Canvas described in the Cr
 - 문서 맵: `00_DOCS_INDEX.md`
 
 Canonical anchors:
-- `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
-- `10_PIPELINES_AND_USER_FLOWS.md`
-- `05_CAPSULE_NODE_SPEC.md`
-- `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
-- `08_SHEETS_SCHEMA_V1.md`
-- `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
-- `11_DB_PROMOTION_RULES_V1.md`
-- `32_CLAIM_EVIDENCE_TRACE_SPEC_V1.md`
+- `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
+- `08_PIPELINES_AND_USER_FLOWS.md`
+- `04_CAPSULE_NODE_SPEC.md`
+- `19_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
+- `06_SHEETS_SCHEMA_V1.md`
+- `07_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
+- `09_DB_PROMOTION_RULES_V1.md`
+- `24_CLAIM_EVIDENCE_TRACE_SPEC_V1.md`
 
 ## Local setup
 
@@ -150,50 +148,46 @@ NEXT_PUBLIC_ADMIN_MODE=true
 - Postgres: localhost:5433 (db: crebit_canvas)
 
 Reserved if you add services later:
-- Redis: 6380
+- Redis: 6379
 - Neo4j: 7475 / 7688
 
-## API
+## API (current routers)
 
-- GET /api/v1/canvases/
-- POST /api/v1/canvases/
-- POST /api/v1/canvases/from-template
-- GET /api/v1/canvases/{id}
-- PATCH /api/v1/canvases/{id}
-- GET /api/v1/templates/
-- GET /api/v1/templates/{id}
-- PATCH /api/v1/templates/{id}
-- GET /api/v1/templates/{id}/versions
-- GET /api/v1/capsules/
-- GET /api/v1/capsules/{capsule_key}
-- GET /api/v1/capsules/{capsule_key}/runs
-- POST /api/v1/capsules/run
-- GET /api/v1/capsules/run/{run_id}
-- GET /api/v1/capsules/run/{run_id}/stream
-- POST /api/v1/capsules/run/{run_id}/cancel
-- WS /ws/runs/{run_id}
-- GET /api/v1/capsules/{capsule_key}/runs/{run_id}/preview
-- POST /api/v1/ingest/raw
-- GET /api/v1/ingest/raw/{source_id}
-- GET /api/v1/ingest/video-structured
-- GET /api/v1/ingest/video-structured/{segment_id}
-- GET /api/v1/ingest/raw/{source_id}/video-structured
-- POST /api/v1/ingest/video-structured
-- POST /api/v1/ingest/notebook
-- GET /api/v1/ingest/notebook
-- POST /api/v1/ingest/derive
-- GET /api/v1/ingest/derive
-- POST /api/v1/ingest/pattern-candidate
-- POST /api/v1/runs/
-- GET /api/v1/runs/{id}
+- POST /api/teaching/prompt/generate
+- POST /api/teaching/storyboard/create
+- POST /api/teaching/image/generate
+- POST /api/teaching/reference/analyze
 - POST /api/v1/agent/chat
+- POST /api/v1/agent/upload
 - GET /api/v1/agent/sessions/{id}
 - POST /api/v1/agent/sessions/{id}/approve
 - POST /api/v1/agent/sessions/{id}/reject
+- GET /api/v1/tools
+- GET /api/v1/tools/for-agent
+- GET /api/v1/tools/dimension/{1D|2D|3D|4D|5D}
+- GET /api/v1/workflow/templates
+- POST /api/v1/workflow/plan
+- GET /api/v1/workflow/tools
+- GET /api/v1/workflow/session/{id}
+- POST /api/v1/workflow/session/{id}/advance
+- GET /api/v1/credits/balance
+- GET /api/v1/credits/transactions
+- POST /api/v1/credits/topup
+- POST /api/v1/credits/deduct (internal)
+- GET /api/v1/auth/session
+- POST /api/v1/auth/logout
+- POST /api/v1/run-token/issue
+- POST /api/v1/run-token/validate
+- POST /api/v1/run-token/deduct
+- POST /api/v1/run-token/refund
+- GET /api/v1/run-token/status/{run_id}
+- POST /api/v1/internal/credit-reserve (mTLS)
+- POST /api/v1/internal/credit-commit (mTLS)
+- POST /api/v1/internal/credit-rollback (mTLS)
 
-Auth (MVP): send `X-User-Id` header for private resources.
+Auth: Google OAuth + session cookie (X-User-Id header is dev fallback).
 
-## Graph data shape
+## Graph data shape (legacy canvas)
 
 ```json
 {

@@ -8,10 +8,10 @@
 
 ## 0) 전제
 
-- Sheets 스키마는 `08_SHEETS_SCHEMA_V1.md` 기준
-- NotebookLM 출력 규격은 `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md` 기준
-- DB 승격 규칙은 `11_DB_PROMOTION_RULES_V1.md` 기준
-- Pattern 승격 기준은 `12_PATTERN_PROMOTION_CRITERIA_V1.md` 기준
+- Sheets 스키마는 `06_SHEETS_SCHEMA_V1.md` 기준
+- NotebookLM 출력 규격은 `07_NOTEBOOKLM_OUTPUT_SPEC_V1.md` 기준
+- DB 승격 규칙은 `09_DB_PROMOTION_RULES_V1.md` 기준
+- Pattern 승격 기준은 `docs/archive/12_PATTERN_PROMOTION_CRITERIA_V1.md` 기준
 - Ingest API는 **Admin 권한**이 필요 (Notebook/Raw/Video/Derived 모두)
 
 ---
@@ -80,7 +80,7 @@ python scripts/ingest_raw_assets.py --input /path/raw_assets.json --dry-run
 - `responseMimeType=application/json`
 - `responseJsonSchema` 적용
 - 결과는 `CREBIT_VIDEO_STRUCTURED`에 기록
-- 문서: `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
+- 문서: `19_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
 - `time_start/time_end` 형식: `HH:MM:SS.mmm`
 - `prompt_version`은 `VIDEO_SCHEMA_VERSIONS` allowlist를 따름 (backend/.env)
 - `visual_schema_json` 허용 키: composition, lighting, color_palette, camera_motion, blocking, pacing
@@ -350,7 +350,7 @@ python scripts/promote_from_sheets.py
 
 Ops UI에서도 실행 가능:
 - `Pipeline` 페이지의 **Sheets 동기화** 버튼 (Admin 전용)
-- `POST /api/v1/ops/sheets/sync`
+- `POST /api/v1/ops/sheets/sync` (legacy ops router, 현재 메인 앱에 마운트되지 않음)
 
 Notebook Library 승격 (권장):
 - `CREBIT_NOTEBOOK_LIBRARY_CSV_URL` 또는 Sheets range를 설정하면 `promote_from_sheets.py`가 함께 승격한다.
@@ -367,9 +367,11 @@ SHEETS_API_KEY=...
 ### Step 4.3: 조회 API (옵션)
 구조화 결과를 확인할 때는 아래 엔드포인트를 사용합니다.
 
-- `GET /api/v1/ingest/video-structured/{segment_id}`
-- `GET /api/v1/ingest/raw/{source_id}/video-structured`
-- `GET /api/v1/ingest/raw/{source_id}`
+- `GET /api/v1/ingest/video-structured/{segment_id}` (legacy ingest router, 현재 메인 앱에 마운트되지 않음)
+- `GET /api/v1/ingest/raw/{source_id}/video-structured` (legacy ingest router, 현재 메인 앱에 마운트되지 않음)
+- `GET /api/v1/ingest/raw/{source_id}` (legacy ingest router, 현재 메인 앱에 마운트되지 않음)
+
+현재 운영은 스크립트 실행 결과/DB 기준으로 검증합니다.
 
 ---
 

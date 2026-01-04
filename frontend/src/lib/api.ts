@@ -601,6 +601,7 @@ export interface AgentChatRequest {
   message: string;
   metadata?: Record<string, unknown>;
   model?: string | null;
+  attachments?: Record<string, unknown>[];
 }
 
 export interface AgentDecisionRequest {
@@ -679,14 +680,36 @@ class ApiClient {
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
     let response: Response;
     try {
+      // Check if offline
+      if (typeof window !== "undefined" && !navigator.onLine) {
+        throw new Error("네트워크 연결이 끊어졌습니다. 인터넷 연결을 확인해주세요.");
+      }
+
       response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...options,
         credentials: "include",
         headers: this.buildHeaders(options.headers),
+        signal: controller.signal,
       });
-    } catch {
+    } catch (err) {
+      clearTimeout(timeoutId);
+
+      // Handle abort (timeout)
+      if (err instanceof Error && err.name === "AbortError") {
+        throw new Error("요청 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.");
+      }
+
+      // Handle offline/network errors
+      if (err instanceof Error && err.message.includes("네트워크")) {
+        throw err;
+      }
+
       const origin =
         typeof window !== "undefined" && window.location?.origin
           ? window.location.origin
@@ -694,8 +717,10 @@ class ApiClient {
       const target = API_BASE_URL || DEFAULT_API_BASE_URL;
       const originHint = origin ? ` (origin: ${origin})` : "";
       throw new Error(
-        `Failed to reach API at ${target}. Is the backend running and CORS allowed${originHint}?`
+        `서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.${originHint ? ` API: ${target}` : ""}`
       );
+    } finally {
+      clearTimeout(timeoutId);
     }
 
     if (!response.ok) {
@@ -713,12 +738,25 @@ class ApiClient {
           }
           window.location.href = "/login?expired=true";
         }
-        throw new Error("Session expired. Please log in again.");
+        throw new Error("세션이 만료되었습니다. 다시 로그인해주세요.");
+      }
+
+      if (response.status === 402) {
+        throw new Error("크레딧이 부족합니다.");
       }
 
       if (response.status === 403) {
         throw new Error(`${message} (admin-only)`);
       }
+
+      if (response.status === 504) {
+        throw new Error("서버 응답 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.");
+      }
+
+      if (response.status >= 500) {
+        throw new Error("서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      }
+
       throw new Error(message);
     }
 
@@ -790,6 +828,36 @@ class ApiClient {
       body: JSON.stringify(payload),
       signal,
     });
+  }
+
+  async uploadFile(file: File): Promise<{
+    file_uri: string;
+    name: string;
+    mime_type: string;
+    display_name: string;
+  }> {
+    const baseUrl = this.resolveBaseUrl();
+    const endpoint = `${baseUrl}/api/v1/agent/upload`;
+
+    // Header setup without Content-Type (let browser set boundary)
+    const headers = this.buildHeaders();
+    delete headers["Content-Type"];
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      credentials: "include",
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || "File upload failed");
+    }
+    return response.json();
   }
 
   // Generic HTTP methods for flexible API calls
@@ -1260,10 +1328,17 @@ class ApiClient {
     );
   }
 
-  async topupCredits(amount: number, packId?: string): Promise<TopupResponse> {
+  async topupCredits(request: TopupRequest): Promise<TopupResponse> {
     return this.request<TopupResponse>(`/api/v1/credits/topup`, {
       method: "POST",
-      body: JSON.stringify({ amount, pack_id: packId }),
+      body: JSON.stringify(request),
+    });
+  }
+
+  async deductCredits(request: { user_id?: string; amount: number; description: string; capsule_run_id?: string }): Promise<{ success: boolean; new_balance: number }> {
+    return this.request<{ success: boolean; new_balance: number }>(`/api/v1/credits/deduct`, {
+      method: "POST",
+      body: JSON.stringify(request),
     });
   }
 

@@ -5,7 +5,7 @@
 **목적**: AI 영상 제작 산업 인사이트를 바탕으로 현재 DirectorPack/Crebit 로드맵의 방향성 점검
 
 > [!TIP]
-> **2026-01-02 Progress**: Agent Chat → Node 생성 통합 완료. 이제 채팅으로 Teaching 도구 호출 → Canvas 노드 자동 생성 가능.
+> **2026-01-02 Progress**: Agent Chat → Node 생성 통합 완료. 채팅으로 Teaching 도구 호출 → 내부 그래프 노드 자동 생성 (Canvas UI는 legacy).
 
 ## 📊 인사이트 요약 vs 현재 구현 현황
 

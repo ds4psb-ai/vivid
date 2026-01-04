@@ -11,7 +11,7 @@ interface StatCardProps {
     title: string;
     value: string | number;
     icon: LucideIcon;
-    color?: "purple" | "blue" | "green" | "yellow" | "red" | "gray";
+    color?: "purple" | "blue" | "green" | "yellow" | "red" | "gray" | "orange";
     subtitle?: string;
     loading?: boolean;
     trend?: {
@@ -27,6 +27,7 @@ const COLOR_MAP: Record<string, { icon: string; bg: string }> = {
     yellow: { icon: "text-yellow-400", bg: "bg-yellow-500/10" },
     red: { icon: "text-red-400", bg: "bg-red-500/10" },
     gray: { icon: "text-gray-400", bg: "bg-gray-500/10" },
+    orange: { icon: "text-orange-400", bg: "bg-orange-500/10" },
 };
 
 export function StatCard({

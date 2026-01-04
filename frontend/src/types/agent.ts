@@ -13,6 +13,7 @@ export interface AgentChatMessage {
   status?: "streaming" | "complete";
   toolCalls?: AgentToolCall[];
   createdAt?: string;
+  attachments?: Record<string, unknown>[];
 }
 
 export interface AgentToolMessage {

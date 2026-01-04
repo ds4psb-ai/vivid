@@ -7,7 +7,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import {
     DollarSign,
     TrendingUp,
@@ -24,12 +24,40 @@ import {
 import { fetchWithAuth } from "@/lib/api-client";
 import { StatusBadge, StatCard, EmptyState } from "@/components/shared";
 import type { Payout, PayoutSummary } from "@/types/api.types";
+import AppShell from "@/components/AppShell";
+import { useLanguage } from "@/contexts/LanguageContext";
+
+// =============================================================================
+// Labels
+// =============================================================================
+
+const getLabels = (language: "ko" | "en") => ({
+    title: language === "ko" ? "내 수익" : "My Earnings",
+    subtitle: language === "ko" ? "도구 기여로 얻은 수익" : "Revenue from your tool contributions",
+    totalEarned: language === "ko" ? "총 수익" : "Total Earned",
+    pending: language === "ko" ? "대기 중" : "Pending",
+    payouts: language === "ko" ? "정산" : "Payouts",
+    average: language === "ko" ? "평균" : "Average",
+    creditsPerPayout: language === "ko" ? "크레딧/정산" : "credits/payout",
+    days: language === "ko" ? "일" : "days",
+    payoutHistory: language === "ko" ? "정산 내역" : "Payout History",
+    noPayoutsTitle: language === "ko" ? "정산 내역 없음" : "No Payouts Yet",
+    noPayoutsDesc: language === "ko" ? "도구를 만들고 공유하여 수익을 올리세요" : "Create and share tools to start earning revenue",
+    credits: language === "ko" ? "크레딧" : "credits",
+    unknownTool: language === "ko" ? "알 수 없는 도구" : "Unknown tool",
+    last7Days: language === "ko" ? "최근 7일" : "Last 7 days",
+    last30Days: language === "ko" ? "최근 30일" : "Last 30 days",
+    last90Days: language === "ko" ? "최근 90일" : "Last 90 days",
+    lastYear: language === "ko" ? "최근 1년" : "Last year",
+    retry: language === "ko" ? "다시 시도" : "Retry",
+    failedToLoad: language === "ko" ? "데이터를 불러오지 못했습니다" : "Failed to load data",
+});
 
 // =============================================================================
 // Summary Cards
 // =============================================================================
 
-function SummaryCards({ summary, loading }: { summary: PayoutSummary | null; loading: boolean }) {
+function SummaryCards({ summary, loading, labels }: { summary: PayoutSummary | null; loading: boolean; labels: ReturnType<typeof getLabels> }) {
     if (loading) {
         return (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -48,30 +76,30 @@ function SummaryCards({ summary, loading }: { summary: PayoutSummary | null; loa
     return (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <StatCard
-                title="Total Earned"
+                title={labels.totalEarned}
                 value={summary.total_earned.toLocaleString()}
                 icon={DollarSign}
                 color="green"
-                subtitle={`${summary.period_days} days`}
+                subtitle={`${summary.period_days} ${labels.days}`}
             />
             <StatCard
-                title="Pending"
+                title={labels.pending}
                 value={summary.pending_amount.toLocaleString()}
                 icon={Clock}
                 color="yellow"
             />
             <StatCard
-                title="Payouts"
+                title={labels.payouts}
                 value={summary.total_payouts}
                 icon={TrendingUp}
                 color="blue"
             />
             <StatCard
-                title="Average"
+                title={labels.average}
                 value={summary.avg_per_payout.toFixed(1)}
                 icon={PieChart}
                 color="purple"
-                subtitle="credits/payout"
+                subtitle={labels.creditsPerPayout}
             />
         </div>
     );
@@ -81,7 +109,7 @@ function SummaryCards({ summary, loading }: { summary: PayoutSummary | null; loa
 // Payout History
 // =============================================================================
 
-function PayoutHistory({ payouts, loading }: { payouts: Payout[]; loading: boolean }) {
+function PayoutHistory({ payouts, loading, labels }: { payouts: Payout[]; loading: boolean; labels: ReturnType<typeof getLabels> }) {
     const router = useRouter();
 
     if (loading) {
@@ -89,7 +117,7 @@ function PayoutHistory({ payouts, loading }: { payouts: Payout[]; loading: boole
             <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6">
                 <div className="flex items-center gap-2 mb-4">
                     <History className="w-5 h-5 text-gray-400" />
-                    <h3 className="text-lg font-semibold">Payout History</h3>
+                    <h3 className="text-lg font-semibold">{labels.payoutHistory}</h3>
                 </div>
                 <div className="space-y-3">
                     {[1, 2, 3, 4].map((i) => (
@@ -108,12 +136,12 @@ function PayoutHistory({ payouts, loading }: { payouts: Payout[]; loading: boole
             <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6">
                 <div className="flex items-center gap-2 mb-4">
                     <History className="w-5 h-5 text-gray-400" />
-                    <h3 className="text-lg font-semibold">Payout History</h3>
+                    <h3 className="text-lg font-semibold">{labels.payoutHistory}</h3>
                 </div>
                 <EmptyState
                     icon={Wallet}
-                    title="No Payouts Yet"
-                    description="Create and share tools to start earning revenue"
+                    title={labels.noPayoutsTitle}
+                    description={labels.noPayoutsDesc}
                 />
             </div>
         );
@@ -124,9 +152,9 @@ function PayoutHistory({ payouts, loading }: { payouts: Payout[]; loading: boole
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                     <History className="w-5 h-5 text-gray-400" />
-                    <h3 className="text-lg font-semibold">Payout History</h3>
+                    <h3 className="text-lg font-semibold">{labels.payoutHistory}</h3>
                 </div>
-                <span className="text-sm text-gray-500">{payouts.length} payouts</span>
+                <span className="text-sm text-gray-500">{payouts.length} {labels.payouts.toLowerCase()}</span>
             </div>
 
             <div className="space-y-3">
@@ -140,12 +168,12 @@ function PayoutHistory({ payouts, loading }: { payouts: Payout[]; loading: boole
                             <div>
                                 <div className="flex items-center gap-2 mb-1">
                                     <span className="text-white font-medium">
-                                        +{payout.amount.toLocaleString()} credits
+                                        +{payout.amount.toLocaleString()} {labels.credits}
                                     </span>
                                     <StatusBadge status={payout.status === "credited" ? "completed" : payout.status} />
                                 </div>
                                 <div className="flex items-center gap-3 text-sm text-gray-500">
-                                    <span>{payout.recipient_tool_key || "Unknown tool"}</span>
+                                    <span>{payout.recipient_tool_key || labels.unknownTool}</span>
                                     <span>•</span>
                                     <span className="capitalize">{payout.share_type}</span>
                                     <span>•</span>
@@ -166,6 +194,9 @@ function PayoutHistory({ payouts, loading }: { payouts: Payout[]; loading: boole
 // =============================================================================
 
 export default function SettlementsPage() {
+    const { language } = useLanguage();
+    const labels = getLabels(language);
+    const pathname = usePathname();
     const [summary, setSummary] = useState<PayoutSummary | null>(null);
     const [payouts, setPayouts] = useState<Payout[]>([]);
     const [loading, setLoading] = useState(true);
@@ -183,70 +214,68 @@ export default function SettlementsPage() {
             setSummary(summaryData);
             setPayouts(payoutsData);
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to load data");
+            setError(err instanceof Error ? err.message : labels.failedToLoad);
         } finally {
             setLoading(false);
         }
-    }, [periodDays]);
+    }, [periodDays, labels.failedToLoad]);
 
     useEffect(() => {
         fetchData();
-    }, [fetchData]);
+    }, [fetchData, pathname]);
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white">
-            {/* Header */}
-            <div className="border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
-                <div className="max-w-6xl mx-auto px-6 py-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-bold flex items-center gap-2">
-                                <DollarSign className="w-6 h-6 text-emerald-400" />
-                                My Earnings
-                            </h1>
-                            <p className="text-gray-400 text-sm">Revenue from your tool contributions</p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <select
-                                value={periodDays}
-                                onChange={(e) => setPeriodDays(Number(e.target.value))}
-                                className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm"
-                            >
-                                <option value={7}>Last 7 days</option>
-                                <option value={30}>Last 30 days</option>
-                                <option value={90}>Last 90 days</option>
-                                <option value={365}>Last year</option>
-                            </select>
-                            <button
-                                onClick={fetchData}
-                                disabled={loading}
-                                className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg"
-                            >
-                                <RefreshCw className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
-                            </button>
-                        </div>
+        <AppShell showTopBar={false}>
+            <div className="min-h-screen px-4 py-6 sm:px-6 sm:py-8">
+                <div className="mx-auto max-w-4xl">
+                    {/* Header */}
+                    <div className="mb-6 sm:mb-8">
+                        <h1 className="text-xl font-bold text-[var(--fg-0)] sm:text-2xl flex items-center gap-2">
+                            <DollarSign className="w-6 h-6 text-emerald-400" />
+                            {labels.title}
+                        </h1>
+                        <p className="mt-1 text-sm text-[var(--fg-muted)] sm:text-base">{labels.subtitle}</p>
                     </div>
-                </div>
-            </div>
 
-            {/* Content */}
-            <div className="max-w-6xl mx-auto px-6 py-8">
-                {error && (
-                    <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-center gap-3">
-                        <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0" />
-                        <p className="text-red-300">{error}</p>
+                    {/* Period Selector */}
+                    <div className="flex items-center justify-end gap-3 mb-6">
+                        <select
+                            value={periodDays}
+                            onChange={(e) => setPeriodDays(Number(e.target.value))}
+                            className="px-3 py-2 bg-[var(--bg-1)] border border-white/10 rounded-lg text-sm text-[var(--fg-0)]"
+                        >
+                            <option value={7}>{labels.last7Days}</option>
+                            <option value={30}>{labels.last30Days}</option>
+                            <option value={90}>{labels.last90Days}</option>
+                            <option value={365}>{labels.lastYear}</option>
+                        </select>
                         <button
                             onClick={fetchData}
-                            className="ml-auto px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-sm"
+                            disabled={loading}
+                            className="p-2 text-[var(--fg-muted)] hover:text-[var(--fg-0)] hover:bg-white/5 rounded-lg transition-colors"
                         >
-                            Retry
+                            <RefreshCw className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
                         </button>
                     </div>
-                )}
 
-                <SummaryCards summary={summary} loading={loading} />
-                <PayoutHistory payouts={payouts} loading={loading} />
+                    {/* Error */}
+                    {error && (
+                        <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-center gap-3">
+                            <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                            <p className="text-red-300">{error}</p>
+                            <button
+                                onClick={fetchData}
+                                className="ml-auto px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-sm"
+                            >
+                                {labels.retry}
+                            </button>
+                        </div>
+                    )}
+
+                    <SummaryCards summary={summary} loading={loading} labels={labels} />
+                    <PayoutHistory payouts={payouts} loading={loading} labels={labels} />
+                </div>
             </div>
-        </div>
+        </AppShell>
     );
 }

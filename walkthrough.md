@@ -10,10 +10,10 @@
 
 ### Agent Studio (Chat-First) Integration
 - **Frontend**:
-  - `/studio` chat-first UI with Simple/Expert modes
+  - `/studio` chat-first UI with Simple/Expert modes (legacy route; current default is `/dimension`)
   - Inline artifact previews (Storyboard, Shot List, Data Table) with expanded detail view
   - DataTable CSV export + shared CSV utility
-  - Canvas ↔ Chat sync via BroadcastChannel (workflow plan + snapshots)
+  - Canvas ↔ Chat sync via BroadcastChannel (legacy canvas path)
 
 - **Backend**:
   - SSE event stream with artifact updates
@@ -37,7 +37,7 @@
   - `HookVariant`, `HookStyle`, `NarrativeArc`, `Sequence` 타입 통합
   - `BatchComplianceReport`, `ShotComplianceReport`, `RuleResult` 타입 통합
 
-- **Canvas Layout Fix**:
+- **Canvas Layout Fix** (legacy UI):
   - `canvas/page.tsx` - 우상단 패널 겹침 문제 해결 (`mt-40`, `w-96`)
   - `pointer-events` 정밀 조정으로 상호작용 개선
 
@@ -46,7 +46,7 @@
   - `director_pack`, `scene_overrides`, `narrative_arc`, `hook_variant` 전달 로직
 
 - **Documentation**:
-  - `13_UI_DESIGN_GUIDE_2025-12.md` - Section 6.7/6.8 추가 (Story-First + Glassmorphism)
+  - `10_UI_DESIGN_GUIDE_2025-12.md` - Section 6.7/6.8 추가 (Story-First + Glassmorphism)
   - `00_DOCS_INDEX.md` - Frontend Components 섹션 추가
   - `README.md` - Story-First Features 섹션 추가
 
@@ -86,10 +86,10 @@
 ## 2025-12-29 Summary
 
 ### NotebookLM Loading Infrastructure (Phase 0-2)
-- **Analytics Events**: `AnalyticsEvent` model + `/api/v1/analytics/*` endpoints
+- **Analytics Events**: `AnalyticsEvent` model + `/api/v1/analytics/*` endpoints (legacy router, 현재 메인 앱에 마운트되지 않음)
 - **Distance Calculation**: `cluster_distance.py` (D = 0.55*DL + 0.35*DP + 0.10*DC)
 - **Evidence Gate**: `evidence_gate.py` (≥95% claims with 2+ refs)
-- **Pilot Metrics**: `/api/v1/ops/pilot-metrics` Go/No-Go dashboard
+- **Pilot Metrics**: `/api/v1/ops/pilot-metrics` Go/No-Go dashboard (legacy ops router, 현재 메인 앱에 마운트되지 않음)
 
 ### Crebit Page
 - Korean localization for Crebit landing page
@@ -110,9 +110,9 @@
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/v1/analytics/events` | POST | Track user events |
-| `/api/v1/analytics/metrics` | GET | Aggregated metrics |
-| `/api/v1/ops/pilot-metrics` | GET | Go/No-Go dashboard (admin) |
+| `/api/v1/analytics/events` | POST | Track user events (legacy router) |
+| `/api/v1/analytics/metrics` | GET | Aggregated metrics (legacy router) |
+| `/api/v1/ops/pilot-metrics` | GET | Go/No-Go dashboard (admin, legacy router) |
 
 ---
 

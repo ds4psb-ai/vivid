@@ -2,7 +2,8 @@
 
 **Date**: 2025-12-24  
 **Scope**: Referral + affiliate flow, credits reward, tracking  
-**Goal**: Acquire creators while keeping rewards measurable and fraud-resistant
+**Goal**: Acquire creators while keeping rewards measurable and fraud-resistant  
+**Status**: Reference (affiliate API는 legacy 라우터에만 존재)
 
 ---
 
@@ -46,7 +47,7 @@ Required fields:
 
 ---
 
-## 5) API Endpoints (Spec)
+## 5) API Endpoints (Spec, legacy)
 
 - `GET /api/v1/affiliate/profile`
 - `POST /api/v1/affiliate/link`
@@ -54,6 +55,9 @@ Required fields:
 - `POST /api/v1/affiliate/register` (signed_up/activated)
 - `GET /api/v1/affiliate/referrals`
 - `POST /api/v1/affiliate/reward`
+
+현재 구현:
+- `backend/app/routers/_deprecated/affiliate.py`에만 존재하며 메인 앱에 마운트되지 않는다.
 
 Activation rule:
 - referee가 **첫 generation run 완료** 시 `activated`로 승격

@@ -24,6 +24,10 @@ export function PortfolioItem({ img, tag, title, desc, delay, color, height = "h
         purple: 'bg-[#4200FF]',
         pink: 'bg-pink-500',
         sky: 'bg-sky-500',
+        emerald: 'bg-emerald-500',
+        violet: 'bg-violet-500',
+        amber: 'bg-amber-500',
+        cyan: 'bg-cyan-500',
     };
 
     return (
@@ -33,7 +37,7 @@ export function PortfolioItem({ img, tag, title, desc, delay, color, height = "h
             viewport={{ once: true }}
             transition={{ delay, duration: 0.6 }}
             onClick={onClick}
-            className={`group relative w-full ${height} overflow-hidden cursor-pointer bg-[#050505] transition-all duration-500`}
+            className={`card-premium group relative w-full ${height} overflow-hidden cursor-pointer transition-all duration-500`}
         >
             <Image
                 src={img}

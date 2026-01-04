@@ -6,10 +6,10 @@
 
 ## Current Status
 
-- Pipeline: 100% complete (per `tasks/todo.md`).
+- Pipeline: core ingest + teaching done; workflow/GA-RL/event-driven remain in progress.
 - Auth: Google OAuth session flow implemented.
-- UI: Admin gating and pipeline UX hardening passes completed.
-- Agent Studio: Chat-first UI, artifact previews, and canvas sync shipped.
+- UI: Flow/Dimension primary; admin gating partial, legacy canvas remains.
+- Agent Studio: Chat-first UI + SSE shipped; artifact previews partial (Audio Overview), canvas sync legacy.
 
 ## Next Focus
 

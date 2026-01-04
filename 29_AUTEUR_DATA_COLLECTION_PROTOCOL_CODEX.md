@@ -8,11 +8,11 @@
 
 ## 0) Canonical Anchors
 
-- 철학/원칙: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
-- NotebookLM 프로토콜: `33_NOTEBOOKLM_SOURCE_PACK_AND_PROMPT_PROTOCOL_CODEX.md`
-- 영상 구조화: `25_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
-- NotebookLM 출력 규격: `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
-- 리서치 소스: `04_RESEARCH_SOURCES_2025-12.md`
+- 철학/원칙: `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
+- NotebookLM 프로토콜: `25_NOTEBOOKLM_SOURCE_PACK_PROTOCOL_CODEX.md`
+- 영상 구조화: `19_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
+- NotebookLM 출력 규격: `07_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
+- 리서치 소스: `03_RESEARCH_SOURCES_2025-12.md`
 
 ---
 
@@ -733,8 +733,8 @@ class CollectionMetrics:
 
 ## 11) Reference
 
-- `33_NOTEBOOKLM_SOURCE_PACK_AND_PROMPT_PROTOCOL_CODEX.md` - Source Pack 규격
-- `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md` - 출력 규격
-- `11_DB_PROMOTION_RULES_V1.md` - 승격 규칙
+- `25_NOTEBOOKLM_SOURCE_PACK_PROTOCOL_CODEX.md` - Source Pack 규격
+- `07_NOTEBOOKLM_OUTPUT_SPEC_V1.md` - 출력 규격
+- `09_DB_PROMOTION_RULES_V1.md` - 승격 규칙
 - [yt-dlp Documentation](https://github.com/yt-dlp/yt-dlp)
 - [Playwright MCP](https://github.com/microsoft/playwright-mcp)

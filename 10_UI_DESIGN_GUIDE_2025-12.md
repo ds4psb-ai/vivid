@@ -6,6 +6,9 @@
 
 ---
 
+> **Status (2026-01)**  
+> 현재 메인 UI는 **Dimension(/dimension)** 및 **Flow(열차 UI, /flow)**가 중심이며, Canvas UI는 레거시로 유지됩니다.
+
 ## 1) Research baseline (2025-12)
 
 ### UI/UX fundamentals
@@ -24,10 +27,10 @@
   https://developer.mozilla.org/en-US/docs/Web/CSS/accent-color
 
 ### Product context (NotebookLM/Opal)
-- 역할 정의는 `10_PIPELINES_AND_USER_FLOWS.md`를 따른다.  
+- 역할 정의는 `08_PIPELINES_AND_USER_FLOWS.md`를 따른다.  
 - NotebookLM Studio 다중 출력/다국어는 **다중 결과 카드/언어 스위치 UI**로 반영 필요.  
 - Opal 워크플로는 **검수/라벨링 패널**을 통해 캡슐 스펙과 연결.  
-  (출처는 `04_RESEARCH_SOURCES_2025-12.md` 참고)
+  (출처는 `03_RESEARCH_SOURCES_2025-12.md` 참고)
 
 ### Benchmark UI notes
 - Virlo Content Studio benchmark findings: `16_VIRLO_CONTENT_STUDIO_RESEARCH.md`
@@ -46,12 +49,15 @@
 
 ## 3) Layout blueprint
 
-기본 구조:
-- **Top bar**: 프로젝트명/상태/Run 버튼 + Credit balance
-- **Left rail**: Research / Creator Hub / Accounts / Credits / Affiliate
-- **Canvas center**: 노드/엣지 편집
-- **Right inspector**: 선택 노드 파라미터/증거/런 히스토리
-- **Bottom panel**: Preview/Storyboard/Run 로그
+기본 구조 (현재):
+- **Top bar**: 상태/크레딧 + 실행 CTA
+- **Left rail**: Dimension / Flow / Credits / Settlements / Settings
+- **Main**: Train Workflow (Flow) 또는 Dimension 미니앱
+- **Right inspector**: 선택 도구/카드 요약 (옵션)
+- **Bottom panel**: 아티팩트 프리뷰/로그 (옵션)
+
+Legacy Canvas 레이아웃:
+- 노드/엣지 편집 + Inspector + Bottom Preview 구성을 유지하되 `_deprecated` 경로에만 존재
 
 모바일/소형 화면:
 - 좌/우 패널은 **스와이프 드로어**로 전환
@@ -163,18 +169,18 @@ stateDiagram-v2
 - 다중 출력 전환: Video/Audio/Mind Map (NotebookLM Ultra 반영)
 
 ### 6.6 Onboarding / Empty State (Detailed)
-- **Primary Action**: "Get Data" or "Create First Canvas" (Clear, singular CTA).
-- **Empty Graph State**:
-  - Show a "Seed Graph" selection (e.g., "Start with YouTube Repurposing", "Start with PDF Analysis").
-  - Do not show a completely blank grid; guide the first node placement.
+- **Primary Action**: "Get Data" or "Create First Workflow" (Clear, singular CTA).
+- **Empty Workflow State**:
+  - Show a "Seed Flow" selection (e.g., "Start with YouTube Repurposing", "Start with PDF Analysis").
+  - Do not show a completely blank grid; guide the first tool placement.
 - **Visuals**:
   - Use "Input / Processor / Output" conceptual icons in the empty state.
-  - See `virlo_content_studio_canvas` for reference on clear node ports.
+  - See `virlo_content_studio_canvas` for reference on clear node ports (legacy canvas reference).
 - Core Components / What You Can Build / How It Works 카드 구성
 
 ### 6.7 Story-First Components (NEW: 2025-12-30)
 
-Canvas UI의 우측 패널에 통합된 Story-First 제어 컴포넌트들:
+Legacy Canvas UI의 우측 패널에 통합된 Story-First 제어 컴포넌트들:
 
 #### 6.7.1 CanvasNarrativePanel
 서사 구조와 훅 설계를 위한 확장 가능한 패널.
@@ -250,8 +256,8 @@ Chat-first 진입점을 위한 Agent Studio UI 가이드.
 - **Simple / Expert** 토글: Simple은 결과 중심(아티팩트/텍스트), Expert는 도구/메타/세션 정보 노출.
 - **Chat Panel**: role 구분(User/Agent/Tool) + SSE 스트리밍 상태 표시.
 - **Tool Result Card**: 실패/거절은 명확한 색상/문구, 성공은 payload 요약.
-- **Artifact Preview**: Storyboard/Shot List/Data Table은 **확장 뷰 + CSV 다운로드** 지원.
-- **Canvas Sync**: 워크플로우 수신 시 적용/무시 선택 + 자동 적용 토글.
+- **Artifact Preview**: Audio Overview는 현행 적용. Storyboard/Shot List/Data Table은 **legacy capsule 경로**에서만 생성되며 Flow/Teaching 연동은 계획 단계.
+- **Canvas Sync**: 워크플로우 수신 시 적용/무시 선택 + 자동 적용 토글 (현재 비활성).
 
 권장 톤:
 - 에이전트 메시지는 **부드러운 카드 대비**와 충분한 행간으로 가독성 확보.
@@ -307,7 +313,7 @@ Story-First 컴포넌트 전반에 적용된 Premium 디자인 시스템.
 
 ## 7) Motion & Interaction
 
-- **View Transition**: 패널 전환, 템플릿 → 캔버스 이동
+- **View Transition**: 패널 전환, 템플릿 → 워크플로우 이동
 - **Reduced motion**: `prefers-reduced-motion` 시 애니메이션 제거
 - Drag/Drop은 **100ms 이하 반응성** 유지
 
@@ -333,7 +339,7 @@ Story-First 컴포넌트 전반에 적용된 Premium 디자인 시스템.
 
 ## 10) Acceptance checklist
 
-- 템플릿 카드 → 캔버스 전환이 1초 내 완료
+- 템플릿 카드 → 워크플로우 전환이 1초 내 완료
 - 캡슐 실행 후 요약/근거가 한 화면에서 확인 가능
 - Storyboard/Preview는 다중 출력 전환 가능
 - 모든 주요 UI는 키보드만으로 조작 가능

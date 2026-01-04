@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -31,7 +32,10 @@ import {
     Moon,
     DollarSign,
     Orbit,
+    Waypoints,
+    CircleDashed,
 } from "lucide-react";
+import { CreditDisplay, ProfileSettingsPanel } from "@/components/CreditDisplay";
 
 // Moved inside component to use translations
 // const NAV_ITEMS ... 
@@ -246,11 +250,14 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
     const [isExpanded, setIsExpanded] = useState(defaultExpanded);
     const pathname = usePathname();
     const [isLogoHovered, setIsLogoHovered] = useState(false);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const { t } = useLanguage();
 
     // 핵심 네비게이션 - 단일 링크 아이템
     const NAV_ITEMS: { label: string; href: string; icon: React.ElementType; badge?: string }[] = [
-        { label: "차원문", href: "/workshop", icon: Orbit },
+        { label: "차원문", href: "/dimension", icon: Orbit },
+        { label: "차원 흐름", href: "/flow", icon: Waypoints },
+        { label: "특이점", href: "/singularity", icon: CircleDashed, badge: "New" },
     ];
 
     const NAV_GROUPS = [
@@ -294,180 +301,201 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
     };
 
     return (
-        <motion.aside
-            initial={false}
-            animate={{ width: isExpanded ? 220 : 56 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="fixed left-0 top-0 h-screen bg-[#0a0a0c]/95 backdrop-blur-xl z-50 
-                       border-r border-white/5 flex flex-col"
-        >
-            {/* Logo Toggle Button */}
-            {/* Logo Toggle Button */}
-            <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                onMouseEnter={() => setIsLogoHovered(true)}
-                onMouseLeave={() => setIsLogoHovered(false)}
-                className="flex items-center gap-3 px-3 py-4 hover:bg-white/5 transition-colors group"
-                aria-label={isExpanded ? "사이드바 축소" : "사이드바 확장"}
-                aria-expanded={isExpanded}
+        <>
+            <motion.aside
+                initial={false}
+                animate={{ width: isExpanded ? 220 : 56 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="fixed left-0 top-0 h-screen bg-black/40 backdrop-blur-2xl z-50 
+                       border-r border-white/10 flex flex-col shadow-[10px_0_30px_rgba(0,0,0,0.5)]"
             >
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#4200FF] to-[#8F00FF] 
+                {/* Logo Toggle Button */}
+                {/* Logo Toggle Button */}
+                <button
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    onMouseEnter={() => setIsLogoHovered(true)}
+                    onMouseLeave={() => setIsLogoHovered(false)}
+                    className="flex items-center gap-3 px-3 py-4 hover:bg-white/5 transition-colors group"
+                    aria-label={isExpanded ? "사이드바 축소" : "사이드바 확장"}
+                    aria-expanded={isExpanded}
+                >
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#4200FF] to-[#8F00FF] 
                                 flex items-center justify-center shrink-0 shadow-lg shadow-[#4200FF]/20 relative overflow-hidden">
-                    <AnimatePresence mode="wait">
-                        {isLogoHovered ? (
+                        <AnimatePresence mode="wait">
+                            {isLogoHovered ? (
+                                <motion.div
+                                    key="moon"
+                                    initial={{ opacity: 0, scale: 0.5, rotate: -30 }}
+                                    animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                                    exit={{ opacity: 0, scale: 0.5, rotate: 30 }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                >
+                                    <Moon className="w-5 h-5 text-yellow-300" />
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="rabbit"
+                                    initial={{ opacity: 0, scale: 0.5, rotate: 30 }}
+                                    animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                                    exit={{ opacity: 0, scale: 0.5, rotate: -30 }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                    className="w-full h-full flex items-center justify-center bg-black"
+                                >
+                                    <Image
+                                        src="/assets/characters/chokki.png"
+                                        alt="Chokki"
+                                        width={32}
+                                        height={32}
+                                        className="object-cover w-full h-full"
+                                        unoptimized
+                                    />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                    <AnimatePresence>
+                        {isExpanded && (
                             <motion.div
-                                key="moon"
-                                initial={{ opacity: 0, scale: 0.5, rotate: -30 }}
-                                animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                                exit={{ opacity: 0, scale: 0.5, rotate: 30 }}
-                                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -10 }}
+                                className="flex items-center gap-2"
                             >
-                                <Moon className="w-5 h-5 text-yellow-300" />
-                            </motion.div>
-                        ) : (
-                            <motion.div
-                                key="rabbit"
-                                initial={{ opacity: 0, scale: 0.5, rotate: 30 }}
-                                animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                                exit={{ opacity: 0, scale: 0.5, rotate: -30 }}
-                                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                            >
-                                <Rabbit className="w-5 h-5 text-white" />
+                                <span className="text-lg font-bold text-white">Crebit</span>
+                                <ChevronLeft className="w-4 h-4 text-slate-400" />
                             </motion.div>
                         )}
                     </AnimatePresence>
-                </div>
-                <AnimatePresence>
-                    {isExpanded && (
+                    {!isExpanded && (
                         <motion.div
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -10 }}
-                            className="flex items-center gap-2"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="absolute left-14 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                            <span className="text-lg font-bold text-white">Crebit</span>
-                            <ChevronLeft className="w-4 h-4 text-slate-400" />
+                            <ChevronRight className="w-4 h-4 text-slate-400" />
                         </motion.div>
                     )}
-                </AnimatePresence>
-                {!isExpanded && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="absolute left-14 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                        <ChevronRight className="w-4 h-4 text-slate-400" />
-                    </motion.div>
-                )}
-            </button>
-
-            {/* Divider */}
-            <div className="mx-3 border-t border-white/5" />
-
-            {/* Main Navigation */}
-            <nav className={`flex-1 p-2 space-y-1 scrollbar-none ${isExpanded ? 'overflow-y-auto' : 'overflow-visible'}`}>
-                {/* Quick Access */}
-                {NAV_ITEMS.map((item) => (
-                    <NavItem
-                        key={item.href + item.label}
-                        icon={item.icon}
-                        label={item.label}
-                        href={item.href}
-                        isExpanded={isExpanded}
-                        isActive={pathname === item.href}
-                        badge={item.badge}
-                    />
-                ))}
+                </button>
 
                 {/* Divider */}
-                <div className="my-2 mx-1 border-t border-white/5" />
+                <div className="mx-3 border-t border-white/5" />
 
-                {/* Nav Groups */}
-                {NAV_GROUPS.map((group) => (
-                    <NavGroup
-                        key={group.id}
-                        {...group}
+                {/* Main Navigation */}
+                <nav className={`flex-1 p-2 space-y-1 scrollbar-none ${isExpanded ? 'overflow-y-auto' : 'overflow-visible'}`}>
+                    {/* Quick Access */}
+                    {NAV_ITEMS.map((item) => (
+                        <NavItem
+                            key={item.href + item.label}
+                            icon={item.icon}
+                            label={item.label}
+                            href={item.href}
+                            isExpanded={isExpanded}
+                            isActive={pathname === item.href}
+                            badge={item.badge}
+                        />
+                    ))}
+
+                    {/* Divider */}
+                    <div className="my-2 mx-1 border-t border-white/5" />
+
+                    {/* Nav Groups */}
+                    {NAV_GROUPS.map((group) => (
+                        <NavGroup
+                            key={group.id}
+                            {...group}
+                            isExpanded={isExpanded}
+                            pathname={pathname}
+                        />
+                    ))}
+
+                    {/* Divider */}
+                    <div className="my-2 mx-1 border-t border-white/5" />
+
+                    {/* Academy (Crebit) */}
+                    <div className="pt-1">
+                        {isExpanded && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="px-3 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider"
+                            >
+                                아카데미
+                            </motion.div>
+                        )}
+                        <NavItem
+                            icon={ACADEMY_ITEM.icon}
+                            label={ACADEMY_ITEM.label}
+                            href={ACADEMY_ITEM.href}
+                            isExpanded={isExpanded}
+                            isActive={pathname === ACADEMY_ITEM.href}
+                            badge={ACADEMY_ITEM.badge}
+                        />
+                    </div>
+                </nav>
+
+                {/* Bottom Section with Credits */}
+                <div className="p-2 border-t border-white/5 space-y-1">
+                    {/* Credit Display */}
+                    <CreditDisplay
                         isExpanded={isExpanded}
-                        pathname={pathname}
+                        onOpenSettings={() => setIsSettingsOpen(true)}
                     />
-                ))}
 
-                {/* Divider */}
-                <div className="my-2 mx-1 border-t border-white/5" />
+                    {/* KakaoTalk 1:1 Inquiry with Flyout */}
+                    <div className="relative group/kakao">
+                        <a
+                            href="http://pf.kakao.com/_YxhVvj"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 text-slate-400 hover:text-[#FAE100] hover:bg-white/5"
+                        >
+                            <MessageCircle className="h-5 w-5 flex-shrink-0" />
+                            {isExpanded && (
+                                <motion.span
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -10 }}
+                                    className="whitespace-nowrap"
+                                >
+                                    카카오톡 1:1 상담
+                                </motion.span>
+                            )}
+                        </a>
+                        <FlyoutPanel groupId="kakao" title={FLYOUT_CONTENT.kakao.title} width="w-52">
+                            <div className="space-y-2">
+                                {FLYOUT_CONTENT.kakao.items.map((item) => (
+                                    <div key={item.label} className="text-sm text-white">
+                                        <span className="block text-slate-400 text-xs mb-1">{item.label}</span>
+                                        {item.value}
+                                    </div>
+                                ))}
+                            </div>
+                        </FlyoutPanel>
+                    </div>
+                </div>
 
-                {/* Academy (Crebit) */}
-                <div className="pt-1">
+                {/* Bottom Branding */}
+                <AnimatePresence>
                     {isExpanded && (
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="px-3 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider"
+                            exit={{ opacity: 0 }}
+                            className="p-3 border-t border-white/5"
                         >
-                            Academy
+                            <p className="text-[10px] text-slate-500 text-center">
+                                © 2025 Crebit
+                            </p>
                         </motion.div>
                     )}
-                    <NavItem
-                        icon={ACADEMY_ITEM.icon}
-                        label={ACADEMY_ITEM.label}
-                        href={ACADEMY_ITEM.href}
-                        isExpanded={isExpanded}
-                        isActive={pathname === ACADEMY_ITEM.href}
-                        badge={ACADEMY_ITEM.badge}
-                    />
-                </div>
-            </nav>
+                </AnimatePresence>
+            </motion.aside>
 
-            {/* Bottom Section with Flyouts */}
-            <div className="p-2 border-t border-white/5 space-y-1">
-
-                {/* KakaoTalk 1:1 Inquiry with Flyout */}
-                <div className="relative group/kakao">
-                    <a
-                        href="http://pf.kakao.com/_YxhVvj"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 text-slate-400 hover:text-[#FAE100] hover:bg-white/5"
-                    >
-                        <MessageCircle className="h-5 w-5 flex-shrink-0" />
-                        {isExpanded && (
-                            <motion.span
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -10 }}
-                                className="whitespace-nowrap"
-                            >
-                                카카오톡 1:1 상담
-                            </motion.span>
-                        )}
-                    </a>
-                    <FlyoutPanel groupId="kakao" title={FLYOUT_CONTENT.kakao.title} width="w-52">
-                        <div className="space-y-2">
-                            {FLYOUT_CONTENT.kakao.items.map((item) => (
-                                <div key={item.label} className="text-sm text-white">
-                                    <span className="block text-slate-400 text-xs mb-1">{item.label}</span>
-                                    {item.value}
-                                </div>
-                            ))}
-                        </div>
-                    </FlyoutPanel>
-                </div>
-            </div>
-
-            {/* Bottom Branding */}
-            <AnimatePresence>
-                {isExpanded && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="p-3 border-t border-white/5"
-                    >
-                        <p className="text-[10px] text-slate-500 text-center">
-                            © 2025 Crebit
-                        </p>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </motion.aside>
+            {/* Profile Settings Panel */}
+            <ProfileSettingsPanel
+                isOpen={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
+            />
+        </>
     );
 }

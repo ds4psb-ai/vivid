@@ -61,7 +61,7 @@ Result:
 - `backend/app/notebooklm_client.py`
 - `backend/scripts/run_guide_generation.py`
 - `backend/app/config.py`
-- `backend/app/capsule_adapter.py`
+- `backend/app/teaching_adapter.py`
 - `backend/app/fixtures/auteur_capsules.py`
 
 ---
@@ -69,25 +69,25 @@ Result:
 # Crebit Pipeline + UI Hardening Plan
 
 Scope: Fix pipeline UX/UI and page reliability issues while staying strictly aligned to canonical docs.
-Canonical docs: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`, `10_PIPELINES_AND_USER_FLOWS.md`,
-`05_CAPSULE_NODE_SPEC.md`, `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md`,
-`11_DB_PROMOTION_RULES_V1.md`, `13_UI_DESIGN_GUIDE_2025-12.md`.
+Canonical docs: `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`, `08_PIPELINES_AND_USER_FLOWS.md`,
+`04_CAPSULE_NODE_SPEC.md`, `07_NOTEBOOKLM_OUTPUT_SPEC_V1.md`,
+`09_DB_PROMOTION_RULES_V1.md`, `10_UI_DESIGN_GUIDE_2025-12.md`.
 
 Note: Ignore `./.agent/` as requested.
 
 ## TODO
 
 - [x] 1) Identify relevant files (code + docs)
-  - Docs: `10_PIPELINES_AND_USER_FLOWS.md`, `13_UI_DESIGN_GUIDE_2025-12.md`,
-    `05_CAPSULE_NODE_SPEC.md`, `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md`,
-    `11_DB_PROMOTION_RULES_V1.md`, `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
-  - Frontend pages: `frontend/src/app/pipeline/page.tsx`,
-    `frontend/src/app/knowledge/page.tsx`,
+  - Docs: `08_PIPELINES_AND_USER_FLOWS.md`, `10_UI_DESIGN_GUIDE_2025-12.md`,
+    `04_CAPSULE_NODE_SPEC.md`, `07_NOTEBOOKLM_OUTPUT_SPEC_V1.md`,
+    `09_DB_PROMOTION_RULES_V1.md`, `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
+  - Frontend pages (legacy): `frontend/src/app/_deprecated/pipeline/page.tsx`,
+    `frontend/src/app/_deprecated/knowledge/page.tsx`,
     `frontend/src/app/credits/page.tsx`,
-    `frontend/src/app/usage/page.tsx`,
-    `frontend/src/app/affiliate/page.tsx`,
-    `frontend/src/app/collections/page.tsx`,
-    `frontend/src/app/patterns/page.tsx`,
+    `frontend/src/app/_deprecated/usage/page.tsx`,
+    `frontend/src/app/_deprecated/affiliate/page.tsx`,
+    `frontend/src/app/_deprecated/collections/page.tsx`,
+    `frontend/src/app/_deprecated/patterns/page.tsx`,
     `frontend/src/app/settings/page.tsx`,
     `frontend/src/app/canvas/page.tsx`,
     `frontend/src/app/page.tsx`
@@ -107,7 +107,7 @@ Note: Ignore `./.agent/` as requested.
   - **High**: Collections/Settings pages are static placeholders (no API/SoR backing) → violates Goal #2 (no skeletons) even if not explicitly spec’d in canonical docs.
   - **Medium**: Pipeline end UX (Canvas → Generate → Export/Feedback) lacks a persistent “return to last generation” entry point when panel is closed; users can lose the end-of-pipeline handoff.
   - **Medium**: Page reliability UX — errors show generic load failures without actionable guidance (backend offline vs admin-only vs empty data).
-  - **Low**: Evidence/SoR labels are shown but not grouped into explicit “Evidence” section titles in all views (minor UI polish vs `13_UI_DESIGN_GUIDE_2025-12.md`).
+  - **Low**: Evidence/SoR labels are shown but not grouped into explicit “Evidence” section titles in all views (minor UI polish vs `10_UI_DESIGN_GUIDE_2025-12.md`).
 
 - [x] 3) Implement fixes (minimal, localized edits only)
   - Stabilized Collections/Settings with live data + error states
@@ -128,8 +128,8 @@ Note: Ignore `./.agent/` as requested.
 # Production Admin Gating Hardening
 
 Scope: Disable env-based admin overrides in production and rely on session roles.
-Canonical docs: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`, `10_PIPELINES_AND_USER_FLOWS.md`,
-`13_UI_DESIGN_GUIDE_2025-12.md`.
+Canonical docs: `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`, `08_PIPELINES_AND_USER_FLOWS.md`,
+`10_UI_DESIGN_GUIDE_2025-12.md`.
 
 ## TODO
 
@@ -157,16 +157,16 @@ Canonical docs: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`, `10_PIPELINES_AND_U
 # UX/UI + Pipeline Quality Pass (Priority)
 
 Scope: Fix highest-impact UX/UI and pipeline flow issues per canonical docs; keep changes minimal.
-Canonical docs: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`, `10_PIPELINES_AND_USER_FLOWS.md`,
-`05_CAPSULE_NODE_SPEC.md`, `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md`,
-`11_DB_PROMOTION_RULES_V1.md`, `13_UI_DESIGN_GUIDE_2025-12.md`.
+Canonical docs: `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`, `08_PIPELINES_AND_USER_FLOWS.md`,
+`04_CAPSULE_NODE_SPEC.md`, `07_NOTEBOOKLM_OUTPUT_SPEC_V1.md`,
+`09_DB_PROMOTION_RULES_V1.md`, `10_UI_DESIGN_GUIDE_2025-12.md`.
 
 ## TODO
 
 - [x] 1) Identify relevant files (code + docs)
-  - Docs: `10_PIPELINES_AND_USER_FLOWS.md`, `13_UI_DESIGN_GUIDE_2025-12.md`,
-    `05_CAPSULE_NODE_SPEC.md`, `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md`,
-    `11_DB_PROMOTION_RULES_V1.md`, `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
+  - Docs: `08_PIPELINES_AND_USER_FLOWS.md`, `10_UI_DESIGN_GUIDE_2025-12.md`,
+    `04_CAPSULE_NODE_SPEC.md`, `07_NOTEBOOKLM_OUTPUT_SPEC_V1.md`,
+    `09_DB_PROMOTION_RULES_V1.md`, `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
   - Key pages: `frontend/src/app/page.tsx`, `frontend/src/app/canvas/page.tsx`,
     `frontend/src/app/pipeline/page.tsx`, `frontend/src/app/knowledge/page.tsx`,
     `frontend/src/app/patterns/page.tsx`, `frontend/src/app/collections/page.tsx`,
@@ -181,7 +181,7 @@ Canonical docs: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`, `10_PIPELINES_AND_U
   - **High**: Admin-only pages still feel like dead ends when data is missing or auth is absent.
   - **Medium**: Page‑level error states are inconsistent and unclear (“failed to fetch” variants).
   - **Medium**: Template → Canvas entry flow lacks context on evidence/promotion status.
-  - **Low**: Visual polish and hierarchy drift from `13_UI_DESIGN_GUIDE_2025-12.md`.
+  - **Low**: Visual polish and hierarchy drift from `10_UI_DESIGN_GUIDE_2025-12.md`.
 
 - [ ] 3) Implement fixes (minimal, localized edits only)
   - [x] Canvas end‑flow: hydrate latest generation run and keep “Generation Result” available.
@@ -206,14 +206,14 @@ Canonical docs: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`, `10_PIPELINES_AND_U
 # Admin Access + Session-aware UI Alignment
 
 Scope: Make admin pages and user-scoped pages work with Google session auth, reduce “Failed to fetch” confusion, and keep UI aligned with canonical docs.
-Canonical docs: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`, `10_PIPELINES_AND_USER_FLOWS.md`,
-`05_CAPSULE_NODE_SPEC.md`, `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md`,
-`11_DB_PROMOTION_RULES_V1.md`, `13_UI_DESIGN_GUIDE_2025-12.md`.
+Canonical docs: `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`, `08_PIPELINES_AND_USER_FLOWS.md`,
+`04_CAPSULE_NODE_SPEC.md`, `07_NOTEBOOKLM_OUTPUT_SPEC_V1.md`,
+`09_DB_PROMOTION_RULES_V1.md`, `10_UI_DESIGN_GUIDE_2025-12.md`.
 
 ## TODO
 
 - [x] 1) Identify relevant files (code + docs)
-  - Docs: `10_PIPELINES_AND_USER_FLOWS.md`, `13_UI_DESIGN_GUIDE_2025-12.md`, `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
+  - Docs: `08_PIPELINES_AND_USER_FLOWS.md`, `10_UI_DESIGN_GUIDE_2025-12.md`, `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
   - Pages: `frontend/src/app/pipeline/page.tsx`, `frontend/src/app/knowledge/page.tsx`,
     `frontend/src/app/patterns/page.tsx`, `frontend/src/app/settings/page.tsx`,
     `frontend/src/app/credits/page.tsx`, `frontend/src/app/usage/page.tsx`
@@ -242,9 +242,9 @@ Canonical docs: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`, `10_PIPELINES_AND_U
 # Google Auth + Policy Baseline Plan
 
 Scope: Add Google sign-in, master admin role assignment, and baseline policy docs while keeping SoR rules intact.
-Canonical docs: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`, `10_PIPELINES_AND_USER_FLOWS.md`,
-`05_CAPSULE_NODE_SPEC.md`, `09_NOTEBOOKLM_OUTPUT_SPEC_V1.md`,
-`11_DB_PROMOTION_RULES_V1.md`, `13_UI_DESIGN_GUIDE_2025-12.md`.
+Canonical docs: `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`, `08_PIPELINES_AND_USER_FLOWS.md`,
+`04_CAPSULE_NODE_SPEC.md`, `07_NOTEBOOKLM_OUTPUT_SPEC_V1.md`,
+`09_DB_PROMOTION_RULES_V1.md`, `10_UI_DESIGN_GUIDE_2025-12.md`.
 
 ## TODO
 
@@ -256,7 +256,7 @@ Canonical docs: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`, `10_PIPELINES_AND_U
     `frontend/src/components/TopBar.tsx`, `frontend/src/components/Sidebar.tsx`,
     `frontend/src/components/AppShell.tsx`, `frontend/src/app/*`,
     `frontend/src/lib/translations.ts`, `frontend/.env.example`
-  - Docs: `20_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md` (auth note), policy/terms docs (new)
+  - Docs: `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md` (auth note), policy/terms docs (new)
 
 - [x] 2) Gap list vs docs (brief, prioritized)
   - **High**: No OAuth/login flow; header-only auth lacks real account system.
