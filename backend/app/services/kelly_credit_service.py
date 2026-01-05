@@ -208,7 +208,7 @@ class KellyIntegratedCreditService:
                 await refund_credits(
                     db, user_id, credits_deducted,
                     description=f"Refund: {capsule_id} failed",
-                    meta={"error": str(e)[:200]}
+                    meta={"error": str(e)[:500]}
                 )
         
         # 4. 피드백 전송

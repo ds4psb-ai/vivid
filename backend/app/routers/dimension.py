@@ -13,6 +13,7 @@ Note: This replaces the legacy /api/teaching/* endpoints.
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from typing import Any, Dict, List, Optional
@@ -36,10 +37,77 @@ from app.dimension_adapter import (
     MAX_SCENE_COUNT,
 )
 from app.services.telemetry_integration import record_tool_run
+from app.services.dlq_service import add_refund_failure_to_dlq
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# Refund retry configuration
+REFUND_MAX_RETRIES = 3
+REFUND_RETRY_BASE_DELAY_MS = 100
+
+
+async def _refund_with_retry(
+    db: AsyncSession,
+    user_id: str,
+    amount: int,
+    description: str,
+    meta: Optional[Dict[str, Any]] = None,
+) -> bool:
+    """Attempt to refund credits with exponential backoff retry.
+
+    Critical security function: Ensures users get their credits back
+    even if there are transient database issues. Failed refunds are
+    added to DLQ for manual reconciliation.
+
+    Args:
+        db: Database session
+        user_id: User to refund
+        amount: Credit amount to refund
+        description: Refund reason
+        meta: Additional metadata
+
+    Returns:
+        True if refund succeeded, False if all retries failed
+    """
+    last_error: Optional[Exception] = None
+
+    for attempt in range(REFUND_MAX_RETRIES):
+        try:
+            await refund_credits(
+                db=db,
+                user_id=user_id,
+                amount=amount,
+                description=description,
+                meta=meta,
+            )
+            logger.info(f"Refund succeeded for user {user_id}: {amount} credits")
+            return True
+        except Exception as e:
+            last_error = e
+            logger.warning(f"Refund attempt {attempt + 1}/{REFUND_MAX_RETRIES} failed for user {user_id}: {e}")
+            if attempt < REFUND_MAX_RETRIES - 1:
+                delay = (REFUND_RETRY_BASE_DELAY_MS * (2 ** attempt)) / 1000
+                await asyncio.sleep(delay)
+
+    logger.error(f"CRITICAL: All refund attempts failed for user {user_id}, amount={amount}")
+
+    # Add to DLQ for manual reconciliation
+    try:
+        await add_refund_failure_to_dlq(
+            db=db,
+            user_id=user_id,
+            amount=amount,
+            operation_type=description,
+            error=last_error or Exception("Unknown refund failure"),
+            context=meta,
+        )
+        logger.info(f"Added failed refund to DLQ for user {user_id}, amount={amount}")
+    except Exception as dlq_error:
+        logger.error(f"CRITICAL: Failed to add refund to DLQ: {dlq_error}")
+
+    return False
 
 
 # ============================================================================
@@ -142,11 +210,71 @@ class ReferenceAnalyzeRequest(BaseModel):
         description="Analysis focus areas"
     )
     model: str = Field("gemini-3-flash-preview", description="AI model")
-    
+
     @field_validator("focus_areas")
     @classmethod
     def validate_focus_areas(cls, v: List[str]) -> List[str]:
         return [area[:30] for area in v[:10]]
+
+
+# ============================================================================
+# Extended Dimension Capsule Request Models
+# ============================================================================
+
+class QualityCheckRequest(BaseModel):
+    """Request model for Quality Checker."""
+    content: str = Field(..., min_length=1, max_length=5000, description="Content to check")
+    content_type: str = Field("text", max_length=50, description="Type of content: text, prompt, storyboard, image_prompt")
+    criteria: List[str] = Field(
+        default=["aesthetic", "consistency", "safety"],
+        max_length=6,
+        description="Quality criteria to evaluate"
+    )
+    threshold: int = Field(70, ge=0, le=100, description="Minimum passing score")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
+
+    @field_validator("criteria")
+    @classmethod
+    def validate_criteria(cls, v: List[str]) -> List[str]:
+        valid = {"aesthetic", "ad_suitability", "consistency", "safety", "technical", "narrative"}
+        return [c for c in v if c in valid][:6]
+
+
+class AestheticDirectRequest(BaseModel):
+    """Request model for Aesthetic Director."""
+    concept: str = Field(..., min_length=1, max_length=MAX_CONCEPT_LENGTH, description="Creative concept")
+    reference_style: str = Field("", max_length=50, description="Reference auteur style: bong, park, shinkai, lee, na, hong")
+    mood: str = Field("neutral", max_length=50, description="Mood/atmosphere")
+    target_medium: str = Field("video", max_length=30, description="Target medium: video, image, animation")
+    use_rag: bool = Field(False, description="Use RAG for aesthetic references")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
+
+
+class PersonaAnalyzeRequest(BaseModel):
+    """Request model for Persona Analyzer (Abyss Interpreter)."""
+    user_message: str = Field(..., min_length=1, max_length=MAX_TOPIC_LENGTH, description="User message")
+    analysis_stage: str = Field("intro", max_length=30, description="Current analysis stage")
+    persona_data: Dict[str, Any] = Field(default_factory=dict, description="Accumulated persona data")
+    birth_info: Dict[str, Any] = Field(default_factory=dict, description="Birth info for Saju analysis")
+    depth_level: str = Field("deep", max_length=20, description="Analysis depth: quick, medium, deep")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
+
+    @field_validator("analysis_stage")
+    @classmethod
+    def validate_stage(cls, v: str) -> str:
+        valid_stages = {"intro", "saju", "mbti", "subconscious", "unconscious", "background", "synthesis"}
+        return v.lower() if v.lower() in valid_stages else "intro"
+
+
+class VeoGenerateRequest(BaseModel):
+    """Request model for Veo 3.1 Video Generator."""
+    prompt: str = Field(..., min_length=10, max_length=1000, description="Video generation prompt")
+    negative_prompt: Optional[str] = Field(None, max_length=500, description="Negative prompt")
+    aspect_ratio: str = Field("16:9", max_length=10, description="Aspect ratio: 16:9, 9:16, 1:1, 4:3")
+    duration: int = Field(5, ge=5, le=10, description="Duration in seconds: 5 or 10")
+    style: str = Field("cinematic", max_length=50, description="Style: cinematic, realistic, artistic, anime")
+    seed: Optional[int] = Field(None, ge=0, description="Random seed for reproducibility")
+    model: str = Field("veo-3.1", description="Veo model version")
 
 
 # ============================================================================
@@ -255,16 +383,15 @@ async def _execute_dimension_tool(
     if not result or not result.get("success"):
         error_msg = error_msg or result.get("error", "Execution failed") if result else "Unknown error"
         
-        # Refund on failure
+        # Refund on failure with retry
         if credits_deducted:
-            try:
-                await refund_credits(
-                    db, user_id, credit_cost,
-                    description=f"Refund: {tool_key} failed",
-                    meta={"tool": tool_key, "error": error_msg[:200]}
-                )
-            except Exception as refund_err:
-                logger.error(f"CRITICAL: Refund failed for user {user_id}: {refund_err}")
+            await _refund_with_retry(
+                db=db,
+                user_id=user_id,
+                amount=credit_cost,
+                description=f"{tool_key} failed",
+                meta={"tool": tool_key, "error": error_msg[:500]},
+            )
         
         # Record failed run
         try:
@@ -461,6 +588,158 @@ async def analyze_4d_reference(
         byok_key=byok_key,
         db=db,
         inputs_summary={"video_description": request.video_description[:100] if request.video_description else ""},
+    )
+
+
+# ============================================================================
+# Extended Dimension Capsules
+# ============================================================================
+
+@router.post(
+    "/quality/check",
+    response_model=DimensionResponse,
+    responses={
+        400: {"model": DimensionErrorResponse},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="Quality Checker: Evaluate Content",
+    description="Evaluate content quality across 6 criteria.",
+    tags=["Dimension Extended"],
+)
+async def check_quality(
+    request: QualityCheckRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> DimensionResponse:
+    """Check content quality (QC)."""
+    return await _execute_dimension_tool(
+        capsule_id=DimensionCapsuleId.QUALITY_CHECK,
+        tool_key="quality_check",
+        inputs={
+            "content": request.content,
+            "content_type": request.content_type,
+            "criteria": request.criteria,
+        },
+        model=request.model,
+        user=user,
+        byok_key=byok_key,
+        db=db,
+        inputs_summary={"content_type": request.content_type, "criteria": request.criteria},
+        params={"threshold": request.threshold},
+    )
+
+
+@router.post(
+    "/aesthetic/direct",
+    response_model=DimensionResponse,
+    responses={
+        400: {"model": DimensionErrorResponse},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="Aesthetic Director: Generate Style Guide",
+    description="Generate visual style guidelines with auteur matching.",
+    tags=["Dimension Extended"],
+)
+async def direct_aesthetic(
+    request: AestheticDirectRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> DimensionResponse:
+    """Generate aesthetic style guide (AD)."""
+    return await _execute_dimension_tool(
+        capsule_id=DimensionCapsuleId.AESTHETIC_DIRECT,
+        tool_key="aesthetic_direct",
+        inputs={
+            "concept": request.concept,
+            "reference_style": request.reference_style,
+            "mood": request.mood,
+            "target_medium": request.target_medium,
+        },
+        model=request.model,
+        user=user,
+        byok_key=byok_key,
+        db=db,
+        inputs_summary={"concept": request.concept[:100], "style": request.reference_style},
+        params={"use_rag": request.use_rag},
+    )
+
+
+@router.post(
+    "/persona/analyze",
+    response_model=DimensionResponse,
+    responses={
+        400: {"model": DimensionErrorResponse},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="Persona Analyzer: Deep Analysis",
+    description="Perform deep persona analysis through multi-turn conversation.",
+    tags=["Dimension Extended"],
+)
+async def analyze_persona(
+    request: PersonaAnalyzeRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> DimensionResponse:
+    """Analyze persona through conversation (AI)."""
+    return await _execute_dimension_tool(
+        capsule_id=DimensionCapsuleId.PERSONA_ANALYZE,
+        tool_key="persona_analyze",
+        inputs={
+            "user_message": request.user_message,
+            "analysis_stage": request.analysis_stage,
+            "persona_data": request.persona_data,
+            "birth_info": request.birth_info,
+        },
+        model=request.model,
+        user=user,
+        byok_key=byok_key,
+        db=db,
+        inputs_summary={"stage": request.analysis_stage, "depth": request.depth_level},
+        params={"depth_level": request.depth_level},
+    )
+
+
+@router.post(
+    "/veo/generate",
+    response_model=DimensionResponse,
+    responses={
+        400: {"model": DimensionErrorResponse},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="Veo 3.1: Generate Video",
+    description="Generate video using Veo 3.1 from text prompt.",
+    tags=["Dimension Extended"],
+)
+async def generate_veo_video(
+    request: VeoGenerateRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> DimensionResponse:
+    """Generate video with Veo 3.1 (VEO)."""
+    return await _execute_dimension_tool(
+        capsule_id=DimensionCapsuleId.VEO_VIDEO_GENERATE,
+        tool_key="veo_generate",
+        inputs={
+            "prompt": request.prompt,
+            "negative_prompt": request.negative_prompt,
+            "aspect_ratio": request.aspect_ratio,
+            "duration": request.duration,
+            "style": request.style,
+            "seed": request.seed,
+        },
+        model=request.model,
+        user=user,
+        byok_key=byok_key,
+        db=db,
+        inputs_summary={"prompt": request.prompt[:100], "style": request.style},
     )
 
 

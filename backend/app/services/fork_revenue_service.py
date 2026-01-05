@@ -454,7 +454,7 @@ async def process_batch_settlements(
                 results["failed"] += 1
                 results["errors"].append({
                     "settlement_id": str(settlement.id),
-                    "error": (error or "Unknown error")[:200],
+                    "error": (error or "Unknown error")[:500],
                 })
         except Exception as e:
             # Isolate each settlement's failure
@@ -462,7 +462,7 @@ async def process_batch_settlements(
             results["failed"] += 1
             results["errors"].append({
                 "settlement_id": str(settlement.id),
-                "error": str(e)[:200],
+                "error": str(e)[:500],
             })
             logger.exception(f"Settlement processing exception: id={settlement.id}")
             # Continue with next settlement
