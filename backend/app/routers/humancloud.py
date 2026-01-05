@@ -219,7 +219,31 @@ async def get_my_creator_profile(
     profile = await humancloud_service.get_creator_profile(db, current_user["id"])
     if not profile:
         raise HTTPException(status_code=404, detail="Not registered as creator")
-    
+
+    return CreatorProfileResponse(
+        id=profile.id,
+        user_id=profile.user_id,
+        display_name=profile.display_name,
+        bio=profile.bio,
+        categories=profile.categories,
+        skills=profile.skills,
+        completed_count=profile.completed_count,
+        avg_rating=float(profile.avg_rating) if profile.avg_rating else None,
+        is_available=profile.is_available,
+        is_verified=profile.is_verified,
+    )
+
+
+@router.get("/creators/{creator_id}", response_model=CreatorProfileResponse)
+async def get_creator_by_id(
+    creator_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get a creator profile by ID."""
+    profile = await humancloud_service.get_creator_by_id(db, creator_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Creator not found")
+
     return CreatorProfileResponse(
         id=profile.id,
         user_id=profile.user_id,

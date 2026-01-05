@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, Fragment } from "react";
-import { X, Plus, Sparkles, Loader2, CheckCircle, Github, Upload, FileArchive } from "lucide-react";
+import { X, Plus, Sparkles, Loader2, CheckCircle, Github, Upload, FileArchive, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { api } from "@/lib/api";
 
 interface MiniAppSubmitModalProps {
     isOpen: boolean;
@@ -27,6 +28,7 @@ const AI_TOOLS = [
 export function MiniAppSubmitModal({ isOpen, onClose }: MiniAppSubmitModalProps) {
     const [step, setStep] = useState<"form" | "success">("form");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
 
     // Form state
     const [appName, setAppName] = useState("");
@@ -34,19 +36,43 @@ export function MiniAppSubmitModal({ isOpen, onClose }: MiniAppSubmitModalProps)
     const [sourceType, setSourceType] = useState<"github" | "zip">("github");
     const [githubUrl, setGithubUrl] = useState("");
     const [zipFile, setZipFile] = useState<File | null>(null);
+    const [zipFileUri, setZipFileUri] = useState<string | null>(null);
     const [description, setDescription] = useState("");
     const [aiTool, setAiTool] = useState("");
+
+    const handleZipUpload = async (file: File) => {
+        setZipFile(file);
+        try {
+            const result = await api.uploadFile(file);
+            setZipFileUri(result.file_uri);
+        } catch (error) {
+            console.error("ZIP upload failed:", error);
+            setSubmitError("파일 업로드에 실패했습니다. 다시 시도해주세요.");
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
+        setSubmitError(null);
 
-        // TODO: API 호출 (Phase 2에서 구현)
-        // For now, simulate submission
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        setIsSubmitting(false);
-        setStep("success");
+        try {
+            await api.submitMiniApp({
+                app_name: appName,
+                category,
+                source_type: sourceType,
+                github_url: sourceType === "github" ? githubUrl : undefined,
+                zip_file_uri: sourceType === "zip" ? zipFileUri || undefined : undefined,
+                description,
+                ai_tool: aiTool || undefined,
+            });
+            setStep("success");
+        } catch (error) {
+            console.error("MiniApp submission failed:", error);
+            setSubmitError(error instanceof Error ? error.message : "제출에 실패했습니다. 다시 시도해주세요.");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleClose = () => {
@@ -55,8 +81,10 @@ export function MiniAppSubmitModal({ isOpen, onClose }: MiniAppSubmitModalProps)
         setCategory("");
         setGithubUrl("");
         setZipFile(null);
+        setZipFileUri(null);
         setDescription("");
         setAiTool("");
+        setSubmitError(null);
         onClose();
     };
 
@@ -209,7 +237,10 @@ export function MiniAppSubmitModal({ isOpen, onClose }: MiniAppSubmitModalProps)
                                                     <input
                                                         type="file"
                                                         accept=".zip"
-                                                        onChange={(e) => setZipFile(e.target.files?.[0] || null)}
+                                                        onChange={(e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (file) handleZipUpload(file);
+                                                        }}
                                                         className="hidden"
                                                     />
                                                     {zipFile ? (
@@ -263,6 +294,14 @@ export function MiniAppSubmitModal({ isOpen, onClose }: MiniAppSubmitModalProps)
                                                 ))}
                                             </select>
                                         </div>
+
+                                        {/* Error Message */}
+                                        {submitError && (
+                                            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center gap-2 text-red-400 text-sm">
+                                                <AlertTriangle className="h-4 w-4 shrink-0" />
+                                                <span>{submitError}</span>
+                                            </div>
+                                        )}
 
                                         {/* Submit Button */}
                                         <button

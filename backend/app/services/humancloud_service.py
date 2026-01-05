@@ -76,6 +76,17 @@ async def get_creator_profile(
     return result.scalars().first()
 
 
+async def get_creator_by_id(
+    db: AsyncSession,
+    creator_id: UUID,
+) -> Optional[CreatorProfile]:
+    """Get creator profile by creator ID (UUID)."""
+    result = await db.execute(
+        select(CreatorProfile).where(CreatorProfile.id == creator_id)
+    )
+    return result.scalars().first()
+
+
 async def find_available_creators(
     db: AsyncSession,
     category: str,

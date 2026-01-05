@@ -1281,6 +1281,22 @@ class ApiClient {
     });
   }
 
+  // MiniApp submissions
+  async submitMiniApp(payload: {
+    app_name: string;
+    category: string;
+    source_type: string;
+    github_url?: string;
+    zip_file_uri?: string;
+    description: string;
+    ai_tool?: string;
+  }): Promise<{ id: string; status: string; message: string }> {
+    return this.request<{ id: string; status: string; message: string }>("/api/v1/miniapps/submit", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
   async getCapsuleSpec(capsuleKey: string, version?: string): Promise<CapsuleSpec> {
     const params = version ? `?version=${encodeURIComponent(version)}` : "";
     return this.request<CapsuleSpec>(`/api/v1/capsules/${capsuleKey}${params}`);
@@ -2168,6 +2184,7 @@ export interface DimensionMetrics {
   latency_ms: number;
   tokens: number;
   model: string;
+  credit_cost?: number;
 }
 
 export interface DimensionResponse {

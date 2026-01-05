@@ -42,15 +42,40 @@ interface SettingSection {
     items: SettingItem[];
 }
 
+const THEME_STORAGE_KEY = "crebit-theme";
+const NOTIFICATIONS_STORAGE_KEY = "crebit-notifications";
+
 export default function SettingsPage() {
     const { language, setLanguage } = useLanguage();
-    const [theme, setTheme] = useState("dark");
-    const [notifications, setNotifications] = useState(true);
+    const [theme, setThemeState] = useState("dark");
+    const [notifications, setNotificationsState] = useState(true);
     const [canvasCount, setCanvasCount] = useState<number | null>(null);
     const [creditBalance, setCreditBalance] = useState<number | null>(null);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [isOffline, setIsOffline] = useState(false);
     const { userId } = useActiveUserId();
+
+    // Load theme and notifications from localStorage on mount
+    useEffect(() => {
+        const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+        if (savedTheme && (savedTheme === "dark" || savedTheme === "darker")) {
+            setThemeState(savedTheme);
+        }
+        const savedNotifications = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
+        if (savedNotifications !== null) {
+            setNotificationsState(savedNotifications === "true");
+        }
+    }, []);
+
+    const setTheme = (newTheme: string) => {
+        setThemeState(newTheme);
+        localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+    };
+
+    const setNotifications = (enabled: boolean) => {
+        setNotificationsState(enabled);
+        localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, String(enabled));
+    };
 
     // BYOK State
     const { byokKey, setBYOKKey, isBYOKEnabled, clearBYOKKey } = useBYOK();

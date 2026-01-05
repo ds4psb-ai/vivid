@@ -487,7 +487,7 @@ export default function HumanCloudPage() {
                                         <CreatorCard
                                             key={creator.id}
                                             creator={creator}
-                                            onClick={() => { }}
+                                            onClick={() => router.push(`/humancloud/creators/${creator.id}`)}
                                         />
                                     ))}
                                 </div>

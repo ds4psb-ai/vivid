@@ -1,16 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
     Play,
     CheckCircle,
-    XCircle,
     Upload,
     DollarSign,
-    MessageSquare,
-    Loader2
+    Loader2,
+    FileVideo,
+    X,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { api } from "@/lib/api";
 
 interface ActionConsoleProps {
     status: string;
@@ -20,15 +20,55 @@ interface ActionConsoleProps {
     budget: number;
 }
 
-export default function ActionConsole({ status, role, onAction, assignmentId, budget }: ActionConsoleProps) {
+export default function ActionConsole({ status, role, onAction, budget }: ActionConsoleProps) {
     const [loading, setLoading] = useState(false);
-    const [showDeliveryModal, setShowDeliveryModal] = useState(false);
-    const [showApprovalModal, setShowApprovalModal] = useState(false);
 
-    // Dummy states for modals (will be fully implemented later)
+    // Form states
     const [rating, setRating] = useState(5);
     const [feedback, setFeedback] = useState("");
     const [deliveryNotes, setDeliveryNotes] = useState("");
+
+    // File upload states
+    const [uploadedFiles, setUploadedFiles] = useState<{ uri: string; name: string }[]>([]);
+    const [uploading, setUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        setUploading(true);
+        setUploadProgress(0);
+
+        try {
+            const uploadedList: { uri: string; name: string }[] = [];
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                setUploadProgress(Math.floor(((i + 0.5) / files.length) * 100));
+
+                const result = await api.uploadFile(file);
+                uploadedList.push({ uri: result.file_uri, name: result.display_name || file.name });
+
+                setUploadProgress(Math.floor(((i + 1) / files.length) * 100));
+            }
+
+            setUploadedFiles((prev) => [...prev, ...uploadedList]);
+        } catch (error) {
+            console.error("File upload failed:", error);
+        } finally {
+            setUploading(false);
+            setUploadProgress(0);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+        }
+    };
+
+    const removeFile = (index: number) => {
+        setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+    };
 
     const handleAction = async (action: string, data?: unknown) => {
         setLoading(true);
@@ -137,6 +177,63 @@ export default function ActionConsole({ status, role, onAction, assignmentId, bu
                 {isActive && (
                     <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl">
                         <h4 className="font-medium text-[var(--fg-0)] mb-3">Submit Delivery</h4>
+
+                        {/* File Upload Section */}
+                        <div className="mb-4">
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                multiple
+                                accept="video/*,image/*,.pdf,.zip"
+                                onChange={handleFileUpload}
+                                className="hidden"
+                                id="delivery-file-input"
+                            />
+                            <label
+                                htmlFor="delivery-file-input"
+                                className={`flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+                                    uploading
+                                        ? "border-violet-500/50 bg-violet-500/5"
+                                        : "border-slate-700 hover:border-slate-500 hover:bg-slate-800/50"
+                                }`}
+                            >
+                                {uploading ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin text-violet-400" />
+                                        <span className="text-sm text-violet-400">Uploading... {uploadProgress}%</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Upload className="w-4 h-4 text-slate-400" />
+                                        <span className="text-sm text-slate-400">Click to upload files</span>
+                                    </>
+                                )}
+                            </label>
+
+                            {/* Uploaded Files List */}
+                            {uploadedFiles.length > 0 && (
+                                <div className="mt-3 space-y-2">
+                                    {uploadedFiles.map((file, index) => (
+                                        <div
+                                            key={index}
+                                            className="flex items-center justify-between p-2 bg-slate-950 rounded-lg border border-slate-800"
+                                        >
+                                            <div className="flex items-center gap-2 min-w-0">
+                                                <FileVideo className="w-4 h-4 text-emerald-400 shrink-0" />
+                                                <span className="text-sm text-slate-300 truncate">{file.name}</span>
+                                            </div>
+                                            <button
+                                                onClick={() => removeFile(index)}
+                                                className="p-1 hover:bg-slate-800 rounded transition-colors"
+                                            >
+                                                <X className="w-3 h-3 text-slate-500" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
                         <textarea
                             value={deliveryNotes}
                             onChange={(e) => setDeliveryNotes(e.target.value)}
@@ -144,16 +241,16 @@ export default function ActionConsole({ status, role, onAction, assignmentId, bu
                             className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm mb-3 min-h-[80px]"
                         />
                         <button
-                            onClick={() => handleAction("deliver", { notes: deliveryNotes, files: ["https://example.com/dummy.mp4"] })}
-                            disabled={loading || !deliveryNotes}
-                            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 rounded-lg flex items-center justify-center gap-2"
+                            onClick={() => handleAction("deliver", {
+                                notes: deliveryNotes,
+                                files: uploadedFiles.map((f) => f.uri)
+                            })}
+                            disabled={loading || uploadedFiles.length === 0}
+                            className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-medium py-2 rounded-lg flex items-center justify-center gap-2"
                         >
                             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                            Submit Delivery
+                            Submit Delivery ({uploadedFiles.length} file{uploadedFiles.length !== 1 ? 's' : ''})
                         </button>
-                        <p className="text-xs text-slate-500 mt-2 text-center">
-                            * Simulates file upload for MVP
-                        </p>
                     </div>
                 )}
             </div>

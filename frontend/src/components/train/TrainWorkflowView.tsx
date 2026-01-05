@@ -53,10 +53,18 @@ interface TrainWorkflowViewProps {
 }
 
 // =============================================================================
-// Mock Data (API 연동 전 테스트용)
+// Dimension Tool Definitions (SSoT)
 // =============================================================================
 
-const MOCK_INITIAL_CAR: Car = {
+// Credit costs from dimension_capsules.py (gemini-3-flash-preview tier)
+const DIMENSION_CREDIT_COSTS: Record<string, number> = {
+    prompt_generator: 5,   // 1D
+    storyboard: 10,        // 2D
+    image_tool: 10,        // 3D
+    reference_analyzer: 10, // 4D
+};
+
+const INITIAL_CAR: Car = {
     id: "car-1",
     order: 0,
     toolId: "prompt_generator",
@@ -65,36 +73,38 @@ const MOCK_INITIAL_CAR: Car = {
     icon: "sparkles",
     color: "violet",
     status: "ready",
-    inputs: { topic: "2분짜리 요리 브이로그" },
+    inputs: {},
+    creditCost: DIMENSION_CREDIT_COSTS["prompt_generator"],
 };
 
-const MOCK_CONNECTION_OPTIONS: ConnectionOption[] = [
+// Connection options based on dimension progression
+const CONNECTION_OPTIONS: ConnectionOption[] = [
     {
-        id: "opt-1",
+        id: "opt-2d",
         label: "2차원으로 확장",
         description: "스토리보드 구조로 입체화",
         recommendedToolId: "storyboard",
         icon: "layout-grid",
         color: "emerald",
-        confidence: 0.92,
+        confidence: 0.95,
     },
     {
-        id: "opt-2",
-        label: "바로 3차원으로",
-        description: "즉시 이미지로 시각화",
+        id: "opt-3d",
+        label: "3차원으로",
+        description: "이미지 프롬프트로 시각화",
         recommendedToolId: "image_tool",
         icon: "image",
         color: "amber",
-        confidence: 0.78,
+        confidence: 0.85,
     },
     {
-        id: "opt-3",
+        id: "opt-4d",
         label: "레퍼런스 차원 탐색",
         description: "참고 영상 스타일 분석",
         recommendedToolId: "reference_analyzer",
         icon: "film",
         color: "cyan",
-        confidence: 0.65,
+        confidence: 0.75,
     },
 ];
 
@@ -157,8 +167,8 @@ function validateInputs(dimension: "1D" | "2D" | "3D" | "4D", inputs: Record<str
 
 export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowViewProps>(
     ({ onComplete }, ref) => {
-        const [cars, setCars] = useState<Car[]>([MOCK_INITIAL_CAR]);
-        const [pendingConnections, setPendingConnections] = useState<ConnectionOption[]>(MOCK_CONNECTION_OPTIONS);
+        const [cars, setCars] = useState<Car[]>([INITIAL_CAR]);
+        const [pendingConnections, setPendingConnections] = useState<ConnectionOption[]>(CONNECTION_OPTIONS);
         const [isLoadingOptions, setIsLoadingOptions] = useState(false);
         const [activeCarIndex, setActiveCarIndex] = useState(0);
         const [isExecutingAll, setIsExecutingAll] = useState(false);
@@ -266,6 +276,11 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
 
                 if (response.success) {
                     // 성공: output 저장 및 상태 업데이트
+                    // creditCost: API 응답에서 가져오거나 차원별 기본값 사용
+                    const actualCreditCost = response.metrics?.credit_cost
+                        ?? DIMENSION_CREDIT_COSTS[car.toolId]
+                        ?? 10;
+
                     setCars((prev) =>
                         prev.map((c) =>
                             c.id === carId
@@ -273,7 +288,7 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                                     ...c,
                                     status: "completed",
                                     output: response.output,
-                                    creditCost: 10, // TODO: 백엔드에서 실제 비용 반환
+                                    creditCost: actualCreditCost,
                                 }
                                 : c
                         )
@@ -367,7 +382,7 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
         // Expose methods to parent
         useImperativeHandle(ref, () => ({
             executeAll: handleExecuteAll,
-            reset: () => setCars([MOCK_INITIAL_CAR]),
+            reset: () => setCars([INITIAL_CAR]),
 
             // Agent integration methods
             addCar: (carData: Omit<Car, "id" | "order">) => {
@@ -396,7 +411,7 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
             clearCars: () => {
                 setCars([]);
                 setActiveCarIndex(0);
-                setPendingConnections(MOCK_CONNECTION_OPTIONS);
+                setPendingConnections(CONNECTION_OPTIONS);
             },
 
             getCars: () => cars,
@@ -440,13 +455,13 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
             setCars((prev) => [...prev, newCar]);
             setActiveCarIndex(cars.length);
 
-            // 다음 연결 옵션 로드 (TODO: 실제 추천 API 호출)
+            // 다음 연결 옵션 로드 - 사용한 차원 제외
             setIsLoadingOptions(true);
             await new Promise((resolve) => setTimeout(resolve, 300));
 
-            // 현재는 Mock: 이미 사용한 차원 제외하고 다음 옵션 생성
+            // 이미 사용한 차원 제외하고 다음 옵션 생성
             const usedDimensions = new Set([...cars.map(c => c.dimension), toolInfo.dimension]);
-            const nextOptions = MOCK_CONNECTION_OPTIONS.filter(
+            const nextOptions = CONNECTION_OPTIONS.filter(
                 (opt) => {
                     const optToolInfo = TOOL_INFO[opt.recommendedToolId];
                     return optToolInfo && !usedDimensions.has(optToolInfo.dimension);
@@ -561,7 +576,7 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                                             onReRecommend={() => {
                                                 setIsLoadingOptions(true);
                                                 setTimeout(() => {
-                                                    setPendingConnections(MOCK_CONNECTION_OPTIONS);
+                                                    setPendingConnections(CONNECTION_OPTIONS);
                                                     setIsLoadingOptions(false);
                                                 }, 500);
                                             }}
@@ -597,7 +612,7 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                                     예상 크레딧
                                 </span>
                                 <p className="text-lg font-bold text-amber-400">
-                                    {cars.length * 10}
+                                    {cars.reduce((sum, c) => sum + (c.creditCost ?? DIMENSION_CREDIT_COSTS[c.toolId] ?? 10), 0)}
                                 </p>
                             </div>
                         </div>
