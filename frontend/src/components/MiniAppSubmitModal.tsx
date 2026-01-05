@@ -37,17 +37,23 @@ export function MiniAppSubmitModal({ isOpen, onClose }: MiniAppSubmitModalProps)
     const [githubUrl, setGithubUrl] = useState("");
     const [zipFile, setZipFile] = useState<File | null>(null);
     const [zipFileUri, setZipFileUri] = useState<string | null>(null);
+    const [isUploadingZip, setIsUploadingZip] = useState(false);
     const [description, setDescription] = useState("");
     const [aiTool, setAiTool] = useState("");
 
     const handleZipUpload = async (file: File) => {
         setZipFile(file);
+        setIsUploadingZip(true);
+        setSubmitError(null);
         try {
             const result = await api.uploadFile(file);
             setZipFileUri(result.file_uri);
         } catch (error) {
             console.error("ZIP upload failed:", error);
+            setZipFile(null);
             setSubmitError("파일 업로드에 실패했습니다. 다시 시도해주세요.");
+        } finally {
+            setIsUploadingZip(false);
         }
     };
 
@@ -82,6 +88,7 @@ export function MiniAppSubmitModal({ isOpen, onClose }: MiniAppSubmitModalProps)
         setGithubUrl("");
         setZipFile(null);
         setZipFileUri(null);
+        setIsUploadingZip(false);
         setDescription("");
         setAiTool("");
         setSubmitError(null);
@@ -89,7 +96,7 @@ export function MiniAppSubmitModal({ isOpen, onClose }: MiniAppSubmitModalProps)
     };
 
     const isFormValid = appName && category && description &&
-        (sourceType === "github" ? githubUrl : zipFile);
+        (sourceType === "github" ? githubUrl : (zipFile && zipFileUri && !isUploadingZip));
 
     return (
         <AnimatePresence>
@@ -245,10 +252,16 @@ export function MiniAppSubmitModal({ isOpen, onClose }: MiniAppSubmitModalProps)
                                                     />
                                                     {zipFile ? (
                                                         <div className="flex items-center gap-3 text-violet-300">
-                                                            <FileArchive className="h-8 w-8" />
+                                                            {isUploadingZip ? (
+                                                                <Loader2 className="h-8 w-8 animate-spin" />
+                                                            ) : (
+                                                                <FileArchive className="h-8 w-8" />
+                                                            )}
                                                             <div className="text-left">
                                                                 <p className="text-sm font-medium">{zipFile.name}</p>
-                                                                <p className="text-xs text-zinc-500">{(zipFile.size / 1024).toFixed(1)} KB</p>
+                                                                <p className="text-xs text-zinc-500">
+                                                                    {isUploadingZip ? "업로드 중..." : `${(zipFile.size / 1024).toFixed(1)} KB ✓`}
+                                                                </p>
                                                             </div>
                                                         </div>
                                                     ) : (

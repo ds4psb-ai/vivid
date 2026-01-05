@@ -5,14 +5,16 @@ Handles dimension portal submission requests from users.
 import logging
 from datetime import datetime
 from typing import Optional, List
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, HttpUrl
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.models_miniapps import MiniAppSubmission
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/miniapps", tags=["MiniApps"])
@@ -22,7 +24,7 @@ router = APIRouter(prefix="/miniapps", tags=["MiniApps"])
 # Schemas
 # =============================================================================
 
-class MiniAppSubmission(BaseModel):
+class MiniAppSubmissionRequest(BaseModel):
     """MiniApp submission request."""
     app_name: str = Field(..., max_length=100)
     category: str = Field(..., max_length=50)
@@ -41,11 +43,16 @@ class MiniAppSubmissionResponse(BaseModel):
     submitted_at: datetime
 
 
-# =============================================================================
-# In-Memory Storage (Replace with DB model in production)
-# =============================================================================
+class MiniAppSubmissionListItem(BaseModel):
+    """MiniApp submission list item."""
+    id: UUID
+    app_name: str
+    category: str
+    status: str
+    created_at: datetime
 
-_submissions: List[dict] = []
+    class Config:
+        from_attributes = True
 
 
 # =============================================================================
@@ -54,7 +61,7 @@ _submissions: List[dict] = []
 
 @router.post("/submit", response_model=MiniAppSubmissionResponse)
 async def submit_miniapp(
-    submission: MiniAppSubmission,
+    request: MiniAppSubmissionRequest,
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
@@ -64,45 +71,48 @@ async def submit_miniapp(
     The submission will be reviewed by the internal team.
     """
     # Validate source
-    if submission.source_type == "github" and not submission.github_url:
+    if request.source_type == "github" and not request.github_url:
         raise HTTPException(status_code=400, detail="GitHub URL is required for github source type")
-    if submission.source_type == "zip" and not submission.zip_file_uri:
+    if request.source_type == "zip" and not request.zip_file_uri:
         raise HTTPException(status_code=400, detail="ZIP file URI is required for zip source type")
 
-    submission_id = uuid4()
-    submitted_at = datetime.utcnow()
+    # Create submission record
+    submission = MiniAppSubmission(
+        user_id=current_user["id"],
+        app_name=request.app_name,
+        category=request.category,
+        source_type=request.source_type,
+        github_url=str(request.github_url) if request.github_url else None,
+        zip_file_uri=request.zip_file_uri,
+        description=request.description,
+        ai_tool=request.ai_tool,
+        status="pending_review",
+    )
 
-    # Store submission (in-memory for now)
-    record = {
-        "id": submission_id,
-        "user_id": current_user["id"],
-        "app_name": submission.app_name,
-        "category": submission.category,
-        "source_type": submission.source_type,
-        "github_url": str(submission.github_url) if submission.github_url else None,
-        "zip_file_uri": submission.zip_file_uri,
-        "description": submission.description,
-        "ai_tool": submission.ai_tool,
-        "status": "pending_review",
-        "submitted_at": submitted_at,
-    }
-    _submissions.append(record)
+    db.add(submission)
+    await db.commit()
+    await db.refresh(submission)
 
-    logger.info(f"MiniApp submitted: {submission.app_name} by user {current_user['id']}")
+    logger.info(f"MiniApp submitted: {request.app_name} by user {current_user['id']}")
 
     return MiniAppSubmissionResponse(
-        id=submission_id,
+        id=submission.id,
         status="pending_review",
         message="Your submission has been received and is pending review.",
-        submitted_at=submitted_at,
+        submitted_at=submission.created_at,
     )
 
 
-@router.get("/submissions")
+@router.get("/submissions", response_model=List[MiniAppSubmissionListItem])
 async def list_my_submissions(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
     """List my MiniApp submissions."""
-    user_submissions = [s for s in _submissions if s["user_id"] == current_user["id"]]
-    return {"submissions": user_submissions}
+    result = await db.execute(
+        select(MiniAppSubmission)
+        .where(MiniAppSubmission.user_id == current_user["id"])
+        .order_by(MiniAppSubmission.created_at.desc())
+    )
+    submissions = result.scalars().all()
+    return submissions
