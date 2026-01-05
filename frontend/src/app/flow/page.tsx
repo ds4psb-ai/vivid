@@ -7,7 +7,7 @@ import { TrainWorkflowView, TrainWorkflowHandle } from "@/components/train/Train
 import { AgentChatAccordion } from "@/components/AgentChatAccordion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Copy, Check, Sparkles, LayoutGrid, Image as ImageIcon, Film, X, Download, Save } from "lucide-react";
+import { ChevronDown, Copy, Check, Sparkles, LayoutGrid, Image as ImageIcon, Film, X, Download, Save, CheckCircle, Palette, Moon, Video } from "lucide-react";
 import { api } from "@/lib/api";
 
 // Tool ID to dimension info mapping
@@ -16,6 +16,11 @@ const TOOL_TO_DIMENSION: Record<string, { displayName: string; icon: string; col
     "create_storyboard": { displayName: "스토리보드 생성기", icon: "layout-grid", color: "emerald", dimension: "2D" },
     "generate_image_prompt": { displayName: "이미지 프롬프트 생성기", icon: "image", color: "amber", dimension: "3D" },
     "analyze_reference": { displayName: "레퍼런스 분석기", icon: "film", color: "cyan", dimension: "4D" },
+    // Extended Dimension Capsules
+    "quality_check": { displayName: "퀄리티 검수기", icon: "check-circle", color: "rose", dimension: "QC" },
+    "aesthetic_direct": { displayName: "미학디렉터", icon: "palette", color: "fuchsia", dimension: "AD" },
+    "persona_analyze": { displayName: "심연해석기", icon: "moon", color: "indigo", dimension: "AI" },
+    "veo_generate": { displayName: "Veo 3.1 비디오", icon: "video", color: "sky", dimension: "VEO" },
 };
 
 // Icon components
@@ -24,6 +29,11 @@ const ICON_COMPONENTS: Record<string, React.ReactNode> = {
     "layout-grid": <LayoutGrid className="h-5 w-5" />,
     image: <ImageIcon className="h-5 w-5" />,
     film: <Film className="h-5 w-5" />,
+    // Extended Dimension Capsules
+    "check-circle": <CheckCircle className="h-5 w-5" />,
+    palette: <Palette className="h-5 w-5" />,
+    moon: <Moon className="h-5 w-5" />,
+    video: <Video className="h-5 w-5" />,
 };
 
 // Workflow result type
@@ -121,7 +131,6 @@ function downloadResultAsMarkdown(result: WorkflowResult) {
 }
 
 export default function FlowPage() {
-    const [isExecuting, setIsExecuting] = useState(false);
     const [workflowResults, setWorkflowResults] = useState<WorkflowResult[]>([]);
     const [showResults, setShowResults] = useState(false);
     const [expandedResult, setExpandedResult] = useState<string | null>(null);
@@ -150,14 +159,6 @@ export default function FlowPage() {
             : "Hello! I'll help you design dimension flows. What content would you like to create?",
         results: language === "ko" ? "워크플로우 결과물" : "Workflow Results",
         copySuccess: language === "ko" ? "복사됨!" : "Copied!",
-    };
-
-    const handleExecuteAll = async () => {
-        setIsExecuting(true);
-        if (workflowRef.current) {
-            await workflowRef.current.executeAll();
-        }
-        setIsExecuting(false);
     };
 
     // 🆕 Save workflow results as template
@@ -253,7 +254,6 @@ export default function FlowPage() {
             carIdMapRef.current.clear();
             setWorkflowResults([]);
             setShowResults(false);
-            setIsExecuting(true);
             setExpandedResult(null);
         } catch (err) {
             console.error('[Flow] Error clearing workflow state:', err);
@@ -313,7 +313,6 @@ export default function FlowPage() {
 
     const handleWorkflowComplete = useCallback((data: { total_credits: number; success_count: number }) => {
         console.log("[Flow] Workflow completed:", data);
-        setIsExecuting(false);
         // Show results panel if there are results
         if (data.success_count > 0) {
             setShowResults(true);
@@ -521,7 +520,7 @@ export default function FlowPage() {
 
                                             {/* Results List */}
                                             <div className="space-y-4">
-                                                {workflowResults.map((result, index) => {
+                                                {workflowResults.map((result) => {
                                                     const isExpanded = expandedResult === result.toolName;
                                                     const toolInfo = TOOL_TO_DIMENSION[result.toolName];
                                                     const Icon = ICON_COMPONENTS[toolInfo?.icon || "sparkles"];
@@ -543,6 +542,10 @@ export default function FlowPage() {
                                                                         ${toolInfo?.color === "emerald" ? "bg-emerald-500/20 text-emerald-400" : ""}
                                                                         ${toolInfo?.color === "amber" ? "bg-amber-500/20 text-amber-400" : ""}
                                                                         ${toolInfo?.color === "cyan" ? "bg-cyan-500/20 text-cyan-400" : ""}
+                                                                        ${toolInfo?.color === "rose" ? "bg-rose-500/20 text-rose-400" : ""}
+                                                                        ${toolInfo?.color === "fuchsia" ? "bg-fuchsia-500/20 text-fuchsia-400" : ""}
+                                                                        ${toolInfo?.color === "indigo" ? "bg-indigo-500/20 text-indigo-400" : ""}
+                                                                        ${toolInfo?.color === "sky" ? "bg-sky-500/20 text-sky-400" : ""}
                                                                     `}>
                                                                         {Icon}
                                                                     </div>
@@ -690,14 +693,25 @@ export default function FlowPage() {
                                             <p className="text-lg font-medium text-white">템플릿 저장 완료!</p>
                                             <p className="text-sm text-zinc-400 mt-1 mb-4">싱귤래리티에서 확인하세요</p>
 
-                                            {/* 🆕 Singularity Link */}
-                                            <a
-                                                href="/singularity"
-                                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors"
-                                            >
-                                                <Sparkles className="h-4 w-4" />
-                                                싱귤래리티로 이동
-                                            </a>
+                                            {/* Singularity & Constellation Links */}
+                                            <div className="flex flex-col gap-2">
+                                                <a
+                                                    href="/singularity"
+                                                    className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors"
+                                                >
+                                                    <Sparkles className="h-4 w-4" />
+                                                    싱귤래리티로 이동
+                                                </a>
+                                                {savedTemplateId && (
+                                                    <a
+                                                        href={`/constellation?new=true&singularity=${savedTemplateId}`}
+                                                        className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-medium transition-colors"
+                                                    >
+                                                        <Sparkles className="h-4 w-4" />
+                                                        별자리로 확장하기
+                                                    </a>
+                                                )}
+                                            </div>
                                         </div>
                                     ) : (
                                         <>

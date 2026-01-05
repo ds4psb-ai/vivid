@@ -71,11 +71,6 @@ interface Delivery {
     submitted_at: string;
 }
 
-interface DeliveryData {
-    files: string[];
-    notes?: string;
-}
-
 interface UserProfile {
     id: string;
     email: string;

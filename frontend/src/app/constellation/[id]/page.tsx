@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { motion, AnimatePresence, Reorder } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
     Sparkles, Plus, Star, Loader2, AlertCircle, X, ArrowLeft,
     Play, Trash2, Check, ChevronRight,
