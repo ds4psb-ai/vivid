@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, forwardRef, useImperativeHandle, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, forwardRef, useImperativeHandle, useCallback, useRef } from "react";
+import { AnimatePresence } from "framer-motion";
 import { TrainCar } from "./TrainCar";
 import { ConnectionSelector } from "./ConnectionSelector";
-import { Trash2 } from "lucide-react";
+import { Trash2, CheckCircle, XCircle } from "lucide-react";
 import { api, DimensionResponse } from "@/lib/api";
 
 // =============================================================================
@@ -112,12 +112,66 @@ const DIMENSION_LABELS = ["1D", "2D", "3D", "4D", "5D"];
 // Component
 // =============================================================================
 
+// =============================================================================
+// Input Validation
+// =============================================================================
+
+function validateInputs(dimension: "1D" | "2D" | "3D" | "4D", inputs: Record<string, unknown>): { valid: boolean; error?: string } {
+    switch (dimension) {
+        case "1D": {
+            const topic = String(inputs.topic || "").trim();
+            if (!topic || topic.length < 2) {
+                return { valid: false, error: "주제를 2자 이상 입력해주세요" };
+            }
+            return { valid: true };
+        }
+        case "2D": {
+            const concept = String(inputs.concept || inputs.topic || "").trim();
+            if (!concept || concept.length < 2) {
+                return { valid: false, error: "컨셉을 2자 이상 입력해주세요" };
+            }
+            return { valid: true };
+        }
+        case "3D": {
+            const description = String(inputs.description || "").trim();
+            if (!description || description.length < 2) {
+                return { valid: false, error: "설명을 2자 이상 입력해주세요" };
+            }
+            return { valid: true };
+        }
+        case "4D": {
+            const videoDesc = String(inputs.video_description || inputs.description || "").trim();
+            if (!videoDesc || videoDesc.length < 2) {
+                return { valid: false, error: "영상 설명을 2자 이상 입력해주세요" };
+            }
+            return { valid: true };
+        }
+        default:
+            return { valid: true };
+    }
+}
+
+// =============================================================================
+// Component
+// =============================================================================
+
 export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowViewProps>(
-    ({ sessionId, initialRequest, onComplete }, ref) => {
+    ({ onComplete }, ref) => {
         const [cars, setCars] = useState<Car[]>([MOCK_INITIAL_CAR]);
         const [pendingConnections, setPendingConnections] = useState<ConnectionOption[]>(MOCK_CONNECTION_OPTIONS);
         const [isLoadingOptions, setIsLoadingOptions] = useState(false);
         const [activeCarIndex, setActiveCarIndex] = useState(0);
+        const [isExecutingAll, setIsExecutingAll] = useState(false);
+        const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+        // Track executing cars to prevent double-click
+        const executingCarsRef = useRef<Set<string>>(new Set());
+
+        // Auto-dismiss notification
+        const showNotification = useCallback((type: "success" | "error", message: string) => {
+            setNotification({ type, message });
+            setTimeout(() => setNotification(null), 3000);
+        }, []);
 
         // Output → Input 체이닝: 이전 노드 출력을 다음 노드 입력으로 변환
         const prepareInputsFromPreviousOutput = useCallback(
@@ -158,12 +212,43 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
             []
         );
 
-        // 노드 실행 핸들러 - 실제 API 호출
+        // 노드 실행 핸들러 - 실제 API 호출 (하드닝 적용)
         const handleExecuteCar = async (carId: string) => {
+            // [TIER1] 중복 실행 방지
+            if (executingCarsRef.current.has(carId)) {
+                console.warn(`Car ${carId} is already executing, ignoring duplicate call`);
+                return;
+            }
+
             const carIndex = cars.findIndex((c) => c.id === carId);
             if (carIndex === -1) return;
 
             const car = cars[carIndex];
+
+            // 이전 노드의 output을 가져와서 inputs 준비
+            const prevCar = carIndex > 0 ? cars[carIndex - 1] : undefined;
+            const preparedInputs = prepareInputsFromPreviousOutput(
+                car.dimension,
+                prevCar?.output,
+                car.inputs
+            );
+
+            // [TIER1] 입력 검증
+            const validation = validateInputs(car.dimension, preparedInputs);
+            if (!validation.valid) {
+                setCars((prev) =>
+                    prev.map((c) =>
+                        c.id === carId
+                            ? { ...c, status: "failed", error: validation.error }
+                            : c
+                    )
+                );
+                showNotification("error", validation.error || "입력 검증 실패");
+                return;
+            }
+
+            // 실행 시작 마킹
+            executingCarsRef.current.add(carId);
 
             // executing 상태로 변경
             setCars((prev) =>
@@ -173,14 +258,6 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
             );
 
             try {
-                // 이전 노드의 output을 가져와서 inputs 준비
-                const prevCar = carIndex > 0 ? cars[carIndex - 1] : undefined;
-                const preparedInputs = prepareInputsFromPreviousOutput(
-                    car.dimension,
-                    prevCar?.output,
-                    car.inputs
-                );
-
                 // 실제 Dimension API 호출
                 const response: DimensionResponse = await api.executeDimension(
                     car.dimension,
@@ -196,11 +273,14 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                                     ...c,
                                     status: "completed",
                                     output: response.output,
-                                    creditCost: response.metrics?.latency_ms ? 10 : undefined, // TODO: 실제 크레딧 비용
+                                    creditCost: 10, // TODO: 백엔드에서 실제 비용 반환
                                 }
                                 : c
                         )
                     );
+
+                    // [TIER2] 성공 피드백
+                    showNotification("success", `${car.displayName} 완료!`);
 
                     // 다음 노드 활성화
                     if (carIndex < cars.length - 1) {
@@ -216,8 +296,20 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                     throw new Error(response.error || "실행 실패");
                 }
             } catch (error) {
-                // 실패 처리
-                const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류";
+                // [TIER1] 에러 분류 및 메시지 개선
+                let errorMessage = "알 수 없는 오류";
+                if (error instanceof Error) {
+                    if (error.message.includes("timeout") || error.message.includes("Timeout")) {
+                        errorMessage = "요청 시간 초과 - 다시 시도해주세요";
+                    } else if (error.message.includes("network") || error.message.includes("fetch")) {
+                        errorMessage = "네트워크 오류 - 연결을 확인해주세요";
+                    } else if (error.message.includes("402") || error.message.includes("credit")) {
+                        errorMessage = "크레딧 부족 - 충전이 필요합니다";
+                    } else {
+                        errorMessage = error.message;
+                    }
+                }
+
                 setCars((prev) =>
                     prev.map((c) =>
                         c.id === carId
@@ -225,18 +317,51 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                             : c
                     )
                 );
+                showNotification("error", errorMessage);
                 console.error(`Car ${carId} execution failed:`, error);
+            } finally {
+                // 실행 완료 마킹 해제
+                executingCarsRef.current.delete(carId);
             }
         };
 
-        // 전체 실행 핸들러
+        // [TIER2] 재시도 핸들러
+        const handleRetryCar = useCallback((carId: string) => {
+            // 먼저 상태를 ready로 변경
+            setCars((prev) =>
+                prev.map((c) =>
+                    c.id === carId ? { ...c, status: "ready", error: undefined } : c
+                )
+            );
+            // 그 다음 실행
+            setTimeout(() => handleExecuteCar(carId), 100);
+        }, []);
+
+        // 전체 실행 핸들러 (하드닝 적용)
         const handleExecuteAll = async () => {
-            for (const car of cars) {
-                if (car.status !== "completed") {
-                    await handleExecuteCar(car.id);
-                }
+            // [TIER2] 중복 전체 실행 방지
+            if (isExecutingAll) {
+                console.warn("Already executing all, ignoring duplicate call");
+                return;
             }
-            onComplete?.(cars.map((c) => c.output || {}));
+
+            setIsExecutingAll(true);
+            try {
+                for (const car of cars) {
+                    if (car.status !== "completed" && car.status !== "failed") {
+                        await handleExecuteCar(car.id);
+                        // 실패 시 중단
+                        const updatedCar = cars.find(c => c.id === car.id);
+                        if (updatedCar?.status === "failed") {
+                            showNotification("error", "워크플로우 실행 중 오류 발생");
+                            break;
+                        }
+                    }
+                }
+                onComplete?.(cars.map((c) => c.output || {}));
+            } finally {
+                setIsExecutingAll(false);
+            }
         };
 
         // Expose methods to parent
@@ -342,7 +467,30 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
         };
 
         return (
-            <div className="w-full min-h-[400px] p-8">
+            <div className="w-full min-h-[400px] p-8 relative">
+                {/* [TIER2] 알림 토스트 */}
+                <AnimatePresence>
+                    {notification && (
+                        <div
+                            className={`
+                                fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg
+                                flex items-center gap-2 animate-in slide-in-from-right
+                                ${notification.type === "success"
+                                    ? "bg-emerald-500/90 text-white"
+                                    : "bg-red-500/90 text-white"
+                                }
+                            `}
+                        >
+                            {notification.type === "success" ? (
+                                <CheckCircle className="h-4 w-4" />
+                            ) : (
+                                <XCircle className="h-4 w-4" />
+                            )}
+                            <span className="text-sm font-medium">{notification.message}</span>
+                        </div>
+                    )}
+                </AnimatePresence>
+
                 {/* 헤더 */}
                 <div className="flex items-center justify-between mb-8">
                     <div>
@@ -379,13 +527,26 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                                                     ? () => handleExecuteCar(car.id)
                                                     : undefined
                                             }
+                                            onRetry={
+                                                car.status === "failed"
+                                                    ? () => handleRetryCar(car.id)
+                                                    : undefined
+                                            }
                                         />
 
-                                        {/* 삭제 버튼 (첫 번째 노드 제외) */}
-                                        {index > 0 && car.status !== "executing" && (
+                                        {/* 삭제 버튼 (첫 번째 노드 제외, 실행 중 비활성화) */}
+                                        {index > 0 && (
                                             <button
                                                 onClick={() => handleDeleteCar(car.id)}
-                                                className="absolute -top-1 -right-1 h-6 w-6 rounded-full bg-red-500/20 border border-red-500/50 flex items-center justify-center text-red-400 hover:bg-red-500/30 transition-all opacity-0 group-hover:opacity-100"
+                                                disabled={car.status === "executing" || isExecutingAll}
+                                                className={`
+                                                    absolute -top-1 -right-1 h-6 w-6 rounded-full
+                                                    border flex items-center justify-center transition-all
+                                                    ${car.status === "executing" || isExecutingAll
+                                                        ? "bg-zinc-800/50 border-zinc-700 text-zinc-600 cursor-not-allowed"
+                                                        : "bg-red-500/20 border-red-500/50 text-red-400 hover:bg-red-500/30 opacity-0 group-hover:opacity-100"
+                                                    }
+                                                `}
                                             >
                                                 <Trash2 className="h-3 w-3" />
                                             </button>

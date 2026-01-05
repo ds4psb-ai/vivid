@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import {
     Sparkles,
@@ -9,7 +10,8 @@ import {
     CheckCircle,
     Loader2,
     Play,
-    ChevronRight
+    RotateCcw,
+    AlertCircle,
 } from "lucide-react";
 
 interface TrainCarProps {
@@ -22,6 +24,7 @@ interface TrainCarProps {
     status: "pending" | "ready" | "executing" | "completed" | "failed";
     isActive?: boolean;
     onExecute?: () => void;
+    onRetry?: () => void;
     inputs?: Record<string, unknown>;
     output?: Record<string, unknown>;
     error?: string;
@@ -75,7 +78,6 @@ const STATUS_INDICATOR: Record<string, React.ReactNode> = {
 };
 
 export function TrainCar({
-    id,
     order,
     toolId,
     displayName,
@@ -84,11 +86,12 @@ export function TrainCar({
     status,
     isActive = false,
     onExecute,
-    inputs,
+    onRetry,
     output,
     error,
     creditCost,
 }: TrainCarProps) {
+    const [showFullError, setShowFullError] = useState(false);
     const colorScheme = COLOR_MAP[color] || COLOR_MAP.violet;
     const IconComponent = ICON_MAP[icon] || <Sparkles className="h-6 w-6" />;
 
@@ -165,6 +168,14 @@ export function TrainCar({
                     </button>
                 )}
 
+                {/* [TIER2] 실행 중 상태 피드백 */}
+                {status === "executing" && (
+                    <div className="text-[10px] text-amber-400 text-center px-2 flex items-center gap-1">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        실행 중...
+                    </div>
+                )}
+
                 {/* 완료 시 출력 미리보기 */}
                 {status === "completed" && output && (
                     <div className="text-[10px] text-emerald-400 text-center px-2 flex items-center gap-1">
@@ -176,10 +187,36 @@ export function TrainCar({
                     </div>
                 )}
 
-                {/* 실패 시 에러 메시지 */}
+                {/* [TIER2] 실패 시 에러 메시지 + 재시도 버튼 */}
                 {status === "failed" && (
-                    <div className="text-[10px] text-red-400 text-center px-2 max-w-[130px] truncate" title={error}>
-                        {error || "실행 실패"}
+                    <div className="flex flex-col items-center gap-2">
+                        {/* 에러 메시지 (클릭으로 확장) */}
+                        <button
+                            onClick={() => setShowFullError(!showFullError)}
+                            className="text-[10px] text-red-400 text-center px-2 flex items-center gap-1 hover:text-red-300 transition-colors"
+                        >
+                            <AlertCircle className="h-3 w-3 flex-shrink-0" />
+                            <span className={showFullError ? "" : "max-w-[100px] truncate"}>
+                                {error || "실행 실패"}
+                            </span>
+                        </button>
+
+                        {/* 재시도 버튼 */}
+                        {onRetry && (
+                            <button
+                                onClick={onRetry}
+                                className={`
+                                    flex items-center gap-1 px-2.5 py-1 rounded-lg
+                                    bg-red-500/20 border border-red-500/50
+                                    text-red-400 text-[10px] font-medium
+                                    hover:bg-red-500/30 hover:text-red-300
+                                    transition-all duration-200
+                                `}
+                            >
+                                <RotateCcw className="h-3 w-3" />
+                                재시도
+                            </button>
+                        )}
                     </div>
                 )}
             </div>
