@@ -5,11 +5,16 @@ Agent가 차원 워크플로우를 생성하고 실행할 수 있는 도구들.
 사용 가능한 도구:
 - create_workflow: 차원 워크플로우 구조 생성
 - execute_workflow: 생성된 워크플로우 순차 실행
+
+Hardening (T2):
+- Handle cleanup on workflow failure
+- Parallel workflow isolation via execution lock
 """
 from __future__ import annotations
 
+import asyncio
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 from app.agents.agent_types import (
     TieredContext,
@@ -25,6 +30,46 @@ from app.logging_config import get_logger
 from datetime import datetime
 
 logger = get_logger("workflow_tools")
+
+
+# =============================================================================
+# T2-2: Workflow Execution Lock (per session)
+# =============================================================================
+
+_workflow_locks: Dict[str, asyncio.Lock] = {}
+_active_workflows: Set[str] = set()  # Track workflow_ids currently executing
+
+
+def _get_workflow_lock(session_id: str) -> asyncio.Lock:
+    """Get or create a lock for the given session."""
+    if session_id not in _workflow_locks:
+        _workflow_locks[session_id] = asyncio.Lock()
+    return _workflow_locks[session_id]
+
+
+async def _cleanup_handles(handle_refs: List[str]) -> int:
+    """Clean up orphaned handles on workflow failure.
+
+    Returns number of handles successfully deleted.
+    """
+    if not handle_refs:
+        return 0
+
+    try:
+        from app.agents.handle_storage import get_handle_storage
+        storage = get_handle_storage()
+        deleted = 0
+        for ref in handle_refs:
+            try:
+                if await storage.delete(ref):
+                    deleted += 1
+                    logger.debug(f"Cleaned up orphan handle: {ref}")
+            except Exception as e:
+                logger.warning(f"Failed to cleanup handle {ref}: {e}")
+        return deleted
+    except Exception as e:
+        logger.error(f"Handle cleanup failed: {e}")
+        return 0
 
 
 # =============================================================================
@@ -230,6 +275,10 @@ async def _execute_workflow_handler(
     각 차원 도구를 순차적으로 실행하고 결과를 체이닝합니다.
     TieredContext를 사용하여 session/step/history를 분리 관리합니다.
     DB에서 동적으로 도구를 로딩하여 커뮤니티 도구도 지원합니다.
+
+    Hardening (T2):
+    - Parallel workflow isolation via per-session lock
+    - Handle cleanup on workflow failure
     """
     from app.services.dynamic_adapter import execute_tool_by_key
     from app.database import get_db_context
@@ -259,185 +308,218 @@ async def _execute_workflow_handler(
 
     workflow_id = str(uuid.uuid4())
 
-    # Initialize TieredContext for this workflow
-    tiered = context.state.get_or_create_tiered_context()
+    # T2-2: Acquire per-session lock to prevent parallel workflow conflicts
+    session_lock = _get_workflow_lock(context.session_id)
 
-    # Set session-level values (persist across all steps)
-    tiered.set_session_value("workflow_id", workflow_id)
-    tiered.set_session_value("topic", topic)
-    tiered.set_session_value("model", model)
-    tiered.set_session_value("style", args.get("style", "cinematic"))
-    tiered.set_session_value("started_at", datetime.utcnow().isoformat() + "Z")
+    # Non-blocking check: if already locked, return error instead of waiting
+    if session_lock.locked():
+        logger.warning(f"Workflow rejected: session {context.session_id} already executing")
+        return error_result(call, "이미 실행 중인 워크플로우가 있습니다. 완료 후 다시 시도해주세요.")
 
-    emitter.emit("agent.workflow_start", {
-        "workflow_id": workflow_id,
-        "topic": topic,
-        "dimensions": valid_dimensions,
-        "total_steps": len(valid_dimensions),
-    })
+    # T2-1: Track handles for cleanup on failure
+    created_handles: List[str] = []
+    workflow_failed = False
 
-    results: List[Dict[str, Any]] = []
-    total_credits = 0
-    prev_output: Dict[str, Any] = {"topic": topic}
-
-    for idx, dim in enumerate(valid_dimensions):
-        tool_name = DIMENSION_TO_TOOL.get(dim)
-        if not tool_name:
-            emitter.emit("agent.workflow_step_error", {
-                "step": idx,
-                "dimension": dim,
-                "error": f"Unknown dimension: {dim}",
-            })
-            continue
-
-        # Advance to new step (archives previous step to history)
-        tiered.advance_step(dimension=dim)
-
-        # Set step-level context
-        tiered.step["tool_name"] = tool_name
-        tiered.step["dimension"] = dim
-        tiered.step["started_at"] = datetime.utcnow().isoformat() + "Z"
-
-        # Prepare inputs using tiered context + backward compatible method
-        inputs = _prepare_dimension_inputs_tiered(tiered, dim, topic, prev_output)
-
-        emitter.emit("agent.workflow_step_start", {
-            "step": idx + 1,
-            "total_steps": len(dimensions),
-            "dimension": dim,
-            "dimension_name": DIMENSION_NAMES.get(dim, dim),
-            "tool_name": tool_name,
-        })
+    async with session_lock:
+        _active_workflows.add(workflow_id)
 
         try:
-            # Execute using dynamic adapter (loads from DB)
-            async with get_db_context() as db:
-                result = await execute_tool_by_key(
-                    tool_key=tool_name,
-                    inputs=inputs,
-                    params={"model": model},
-                    db_session=db,
-                )
+            # Initialize TieredContext for this workflow
+            tiered = context.state.get_or_create_tiered_context()
 
-            if result.success:
-                # Defensive: ensure output is a dict
-                output = result.output if isinstance(result.output, dict) else {}
+            # Set session-level values (persist across all steps)
+            tiered.set_session_value("workflow_id", workflow_id)
+            tiered.set_session_value("topic", topic)
+            tiered.set_session_value("model", model)
+            tiered.set_session_value("style", args.get("style", "cinematic"))
+            tiered.set_session_value("started_at", datetime.utcnow().isoformat() + "Z")
 
-                # Safe metrics access
-                credit_cost = 1
-                if result.metrics and isinstance(result.metrics, dict):
-                    credit_cost = result.metrics.get("credit_cost", 1)
-                    if not isinstance(credit_cost, (int, float)):
-                        credit_cost = 1
-                total_credits += credit_cost
+            emitter.emit("agent.workflow_start", {
+                "workflow_id": workflow_id,
+                "topic": topic,
+                "dimensions": valid_dimensions,
+                "total_steps": len(valid_dimensions),
+            })
 
-                # Store in tiered context step
-                tiered.step["success"] = True
-                tiered.step["output"] = output
-                tiered.step["credit_cost"] = credit_cost
+            results: List[Dict[str, Any]] = []
+            total_credits = 0
+            prev_output: Dict[str, Any] = {"topic": topic}
 
-                # Store large outputs as handles (optional optimization)
-                if _should_use_handle(output):
-                    try:
-                        from app.agents.handle_storage import get_handle_storage
-                        storage = get_handle_storage()
-                        handle_key = f"{workflow_id}:{dim}:{idx}"
-                        handle_ref = await storage.store(
-                            key=handle_key,
-                            data=output,
-                            metadata={"dimension": dim, "session_id": context.session_id},
-                        )
-                        tiered.register_handle(f"{dim}_output", handle_ref)
-                        tiered.step["output_handle"] = handle_ref
-                    except Exception as he:
-                        logger.warning(f"Failed to store handle: {he}")
+            for idx, dim in enumerate(valid_dimensions):
+                tool_name = DIMENSION_TO_TOOL.get(dim)
+                if not tool_name:
+                    emitter.emit("agent.workflow_step_error", {
+                        "step": idx,
+                        "dimension": dim,
+                        "error": f"Unknown dimension: {dim}",
+                    })
+                    continue
 
-                step_result: Dict[str, Any] = {
+                # Advance to new step (archives previous step to history)
+                tiered.advance_step(dimension=dim)
+
+                # Set step-level context
+                tiered.step["tool_name"] = tool_name
+                tiered.step["dimension"] = dim
+                tiered.step["started_at"] = datetime.utcnow().isoformat() + "Z"
+
+                # Prepare inputs using tiered context + backward compatible method
+                inputs = _prepare_dimension_inputs_tiered(tiered, dim, topic, prev_output)
+
+                emitter.emit("agent.workflow_step_start", {
+                    "step": idx + 1,
+                    "total_steps": len(dimensions),
                     "dimension": dim,
                     "dimension_name": DIMENSION_NAMES.get(dim, dim),
                     "tool_name": tool_name,
-                    "status": "success",
-                    "output": output,
-                    "credit_cost": credit_cost,
-                }
-                results.append(step_result)
-
-                # Update prev_output only if output is valid dict
-                if output:
-                    prev_output = output
-
-                emitter.emit("agent.workflow_step_complete", {
-                    "step": idx + 1,
-                    "dimension": dim,
-                    "credit_cost": credit_cost,
-                    "output_preview": _get_output_preview(output),
                 })
-            else:
-                error_msg = result.error or "Unknown error"
-                tiered.step["success"] = False
-                tiered.step["error"] = error_msg
 
-                results.append({
-                    "dimension": dim,
-                    "status": "failed",
-                    "error": error_msg,
-                })
-                emitter.emit("agent.workflow_step_error", {
-                    "step": idx + 1,
-                    "dimension": dim,
-                    "error": error_msg,
-                })
+                try:
+                    # Execute using dynamic adapter (loads from DB)
+                    async with get_db_context() as db:
+                        result = await execute_tool_by_key(
+                            tool_key=tool_name,
+                            inputs=inputs,
+                            params={"model": model},
+                            db_session=db,
+                        )
+
+                    if result.success:
+                        # Defensive: ensure output is a dict
+                        output = result.output if isinstance(result.output, dict) else {}
+
+                        # Safe metrics access
+                        credit_cost = 1
+                        if result.metrics and isinstance(result.metrics, dict):
+                            credit_cost = result.metrics.get("credit_cost", 1)
+                            if not isinstance(credit_cost, (int, float)):
+                                credit_cost = 1
+                        total_credits += credit_cost
+
+                        # Store in tiered context step
+                        tiered.step["success"] = True
+                        tiered.step["output"] = output
+                        tiered.step["credit_cost"] = credit_cost
+
+                        # Store large outputs as handles (optional optimization)
+                        if _should_use_handle(output):
+                            try:
+                                from app.agents.handle_storage import get_handle_storage
+                                storage = get_handle_storage()
+                                handle_key = f"{workflow_id}:{dim}:{idx}"
+                                handle_ref = await storage.store(
+                                    key=handle_key,
+                                    data=output,
+                                    metadata={"dimension": dim, "session_id": context.session_id},
+                                )
+                                tiered.register_handle(f"{dim}_output", handle_ref)
+                                tiered.step["output_handle"] = handle_ref
+                                # T2-1: Track handle for cleanup
+                                created_handles.append(handle_ref)
+                            except Exception as he:
+                                logger.warning(f"Failed to store handle: {he}")
+
+                        step_result: Dict[str, Any] = {
+                            "dimension": dim,
+                            "dimension_name": DIMENSION_NAMES.get(dim, dim),
+                            "tool_name": tool_name,
+                            "status": "success",
+                            "output": output,
+                            "credit_cost": credit_cost,
+                        }
+                        results.append(step_result)
+
+                        # Update prev_output only if output is valid dict
+                        if output:
+                            prev_output = output
+
+                        emitter.emit("agent.workflow_step_complete", {
+                            "step": idx + 1,
+                            "dimension": dim,
+                            "credit_cost": credit_cost,
+                            "output_preview": _get_output_preview(output),
+                        })
+                    else:
+                        error_msg = result.error or "Unknown error"
+                        tiered.step["success"] = False
+                        tiered.step["error"] = error_msg
+                        workflow_failed = True
+
+                        results.append({
+                            "dimension": dim,
+                            "status": "failed",
+                            "error": error_msg,
+                        })
+                        emitter.emit("agent.workflow_step_error", {
+                            "step": idx + 1,
+                            "dimension": dim,
+                            "error": error_msg,
+                        })
+
+                except Exception as e:
+                    logger.exception(f"Workflow step {dim} failed", extra={"error": str(e)})
+                    tiered.step["success"] = False
+                    tiered.step["error"] = str(e)
+                    workflow_failed = True
+
+                    results.append({
+                        "dimension": dim,
+                        "status": "error",
+                        "error": str(e),
+                    })
+                    emitter.emit("agent.workflow_step_error", {
+                        "step": idx + 1,
+                        "dimension": dim,
+                        "error": str(e),
+                    })
+
+            # Final step archival
+            if tiered.step:
+                tiered.advance_step(dimension="complete")
+
+            # Workflow complete
+            success_count = sum(1 for r in results if r.get("status") == "success")
+
+            emitter.emit("agent.workflow_complete", {
+                "workflow_id": workflow_id,
+                "total_steps": len(valid_dimensions),
+                "success_count": success_count,
+                "total_credits": total_credits,
+            })
+
+            logger.info(
+                "Workflow execution complete",
+                extra={
+                    "session_id": context.session_id,
+                    "workflow_id": workflow_id,
+                    "success_count": success_count,
+                    "total_credits": total_credits,
+                    "history_count": len(tiered.history),
+                },
+            )
+
+            return success_result(call, {
+                "workflow_id": workflow_id,
+                "topic": topic,
+                "dimensions": valid_dimensions,
+                "results": results,
+                "total_credits": total_credits,
+                "success_count": success_count,
+                "message": f"워크플로우 완료! {success_count}/{len(valid_dimensions)}개 차원 성공, 총 {total_credits}크레딧 소모",
+            })
 
         except Exception as e:
-            logger.exception(f"Workflow step {dim} failed", extra={"error": str(e)})
-            tiered.step["success"] = False
-            tiered.step["error"] = str(e)
+            # Unexpected workflow-level error
+            workflow_failed = True
+            logger.exception(f"Workflow {workflow_id} failed unexpectedly", extra={"error": str(e)})
+            return error_result(call, f"워크플로우 실행 중 오류가 발생했습니다: {str(e)}")
 
-            results.append({
-                "dimension": dim,
-                "status": "error",
-                "error": str(e),
-            })
-            emitter.emit("agent.workflow_step_error", {
-                "step": idx + 1,
-                "dimension": dim,
-                "error": str(e),
-            })
-
-    # Final step archival
-    if tiered.step:
-        tiered.advance_step(dimension="complete")
-
-    # Workflow complete
-    success_count = sum(1 for r in results if r.get("status") == "success")
-
-    emitter.emit("agent.workflow_complete", {
-        "workflow_id": workflow_id,
-        "total_steps": len(valid_dimensions),
-        "success_count": success_count,
-        "total_credits": total_credits,
-    })
-
-    logger.info(
-        "Workflow execution complete",
-        extra={
-            "session_id": context.session_id,
-            "workflow_id": workflow_id,
-            "success_count": success_count,
-            "total_credits": total_credits,
-            "history_count": len(tiered.history),
-        },
-    )
-
-    return success_result(call, {
-        "workflow_id": workflow_id,
-        "topic": topic,
-        "dimensions": valid_dimensions,
-        "results": results,
-        "total_credits": total_credits,
-        "success_count": success_count,
-        "message": f"워크플로우 완료! {success_count}/{len(valid_dimensions)}개 차원 성공, 총 {total_credits}크레딧 소모",
-    })
+        finally:
+            # T2-1: Cleanup orphaned handles on workflow failure
+            _active_workflows.discard(workflow_id)
+            if workflow_failed and created_handles:
+                cleaned = await _cleanup_handles(created_handles)
+                logger.info(f"Cleaned up {cleaned}/{len(created_handles)} orphan handles for failed workflow {workflow_id}")
 
 
 def _prepare_dimension_inputs(
