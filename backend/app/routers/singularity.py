@@ -16,7 +16,7 @@ from sqlalchemy import select, func, desc, asc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.models_blackhole import BlackholeTemplate, BlackholeUsage
+from app.models_singularity import BlackholeTemplate, BlackholeUsage
 from app.dependencies import get_optional_user_id
 
 router = APIRouter(prefix="/singularity", tags=["singularity"])

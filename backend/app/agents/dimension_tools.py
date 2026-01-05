@@ -1,7 +1,7 @@
 """Teaching Tools for VividAgent.
 
 Agent가 사용할 수 있는 Teaching 캡슐 도구들.
-Single Source of Truth: TEACHING_CAPSULES에서 ToolSpec을 동적으로 생성.
+Single Source of Truth: DIMENSION_CAPSULES에서 ToolSpec을 동적으로 생성.
 
 사용 가능한 도구:
 - generate_veo_prompt: Veo 비디오 프롬프트 생성
@@ -28,10 +28,10 @@ from app.agents.evidence_loop import (
     record_tool_success,
     record_tool_failure,
 )
-from app.fixtures.teaching_capsules import TEACHING_CAPSULES
+from app.fixtures.dimension_capsules import DIMENSION_CAPSULES
 from app.logging_config import get_logger
 
-logger = get_logger("teaching_tools")
+logger = get_logger("dimension_tools")
 
 
 # =============================================================================
@@ -64,7 +64,7 @@ def _get_tool_dimension(tool_name: str) -> Optional[str]:
 
 def get_capsule_by_key(capsule_key: str) -> Optional[Dict[str, Any]]:
     """캡슐 키로 캡슐 정의 조회."""
-    for capsule in TEACHING_CAPSULES:
+    for capsule in DIMENSION_CAPSULES:
         if capsule["capsule_key"] == capsule_key:
             return capsule
     return None
@@ -73,7 +73,7 @@ def get_capsule_by_key(capsule_key: str) -> Optional[Dict[str, Any]]:
 def get_credit_cost(capsule_key: str, model: str) -> int:
     """캡슐과 모델에 따른 크레딧 비용 계산.
     
-    Single Source of Truth: TEACHING_CAPSULES에서 credit_costs 조회.
+    Single Source of Truth: DIMENSION_CAPSULES에서 credit_costs 조회.
     
     Args:
         capsule_key: 캡슐 식별자 (예: "teaching.prompt.generate")
@@ -152,7 +152,7 @@ def _capsule_to_tool_spec(capsule: Dict[str, Any]) -> ToolSpec:
     """캡슐 정의를 Agent ToolSpec으로 변환.
     
     Args:
-        capsule: TEACHING_CAPSULES의 캡슐 정의
+        capsule: DIMENSION_CAPSULES의 캡슐 정의
         
     Returns:
         Agent가 사용할 수 있는 ToolSpec
@@ -210,7 +210,7 @@ def _capsule_to_tool_spec(capsule: Dict[str, Any]) -> ToolSpec:
 # Node Spec Builder (for Canvas Integration)
 # =============================================================================
 
-def build_teaching_node_spec(
+def build_dimension_node_spec(
     capsule: Dict[str, Any],
     inputs: Dict[str, Any],
     output: Dict[str, Any],
@@ -267,7 +267,7 @@ def build_teaching_node_spec(
 # Tool Handler
 # =============================================================================
 
-async def _teaching_tool_handler(
+async def _dimension_tool_handler(
     context: ToolContext,
     call: ToolCall,
 ) -> ToolResult:
@@ -287,7 +287,7 @@ async def _teaching_tool_handler(
     Returns:
         도구 실행 결과
     """
-    from app.teaching_adapter import execute_teaching_capsule
+    from app.dimension_adapter import execute_dimension_capsule
     
     tool_name = call.name
     capsule_key = TOOL_TO_CAPSULE.get(tool_name)
@@ -356,7 +356,7 @@ async def _teaching_tool_handler(
         params = {"model": model}
         
         # Teaching 캡슐 실행
-        result = await execute_teaching_capsule(
+        result = await execute_dimension_capsule(
             capsule_id=capsule_key,
             inputs=inputs,
             params=params,
@@ -391,7 +391,7 @@ async def _teaching_tool_handler(
         
         # 노드 스펙 생성
         output = result.get("output", {})
-        node_spec = build_teaching_node_spec(
+        node_spec = build_dimension_node_spec(
             capsule=capsule,
             inputs=inputs,
             output=output,
@@ -470,21 +470,21 @@ async def _teaching_tool_handler(
 # Registration
 # =============================================================================
 
-def get_teaching_tool_specs() -> List[ToolSpec]:
+def get_dimension_tool_specs() -> List[ToolSpec]:
     """등록 가능한 Teaching 도구 스펙 목록 반환.
     
     테스트 및 디버깅에 유용.
     """
     specs = []
-    for capsule in TEACHING_CAPSULES:
+    for capsule in DIMENSION_CAPSULES:
         specs.append(_capsule_to_tool_spec(capsule))
     return specs
 
 
-def register_teaching_tools(registry: ToolRegistry) -> None:
+def register_dimension_tools(registry: ToolRegistry) -> None:
     """Teaching 도구들을 ToolRegistry에 등록.
     
-    TEACHING_CAPSULES에서 동적으로 ToolSpec을 생성하여
+    DIMENSION_CAPSULES에서 동적으로 ToolSpec을 생성하여
     캡슐 정의 변경 시 자동으로 반영됩니다.
     
     Args:
@@ -492,10 +492,10 @@ def register_teaching_tools(registry: ToolRegistry) -> None:
     """
     registered_count = 0
     
-    for capsule in TEACHING_CAPSULES:
+    for capsule in DIMENSION_CAPSULES:
         try:
             spec = _capsule_to_tool_spec(capsule)
-            registry.register(spec, _teaching_tool_handler)
+            registry.register(spec, _dimension_tool_handler)
             registered_count += 1
             logger.debug(f"Registered teaching tool: {spec.name}")
         except Exception as e:
@@ -504,4 +504,4 @@ def register_teaching_tools(registry: ToolRegistry) -> None:
                 extra={"error": str(e)},
             )
     
-    logger.info(f"Registered {registered_count} teaching tools from TEACHING_CAPSULES")
+    logger.info(f"Registered {registered_count} dimension tools from DIMENSION_CAPSULES")

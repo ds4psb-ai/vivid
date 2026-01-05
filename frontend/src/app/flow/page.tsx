@@ -7,7 +7,8 @@ import { TrainWorkflowView, TrainWorkflowHandle } from "@/components/train/Train
 import { AgentChatAccordion } from "@/components/AgentChatAccordion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Copy, Check, Sparkles, LayoutGrid, Image as ImageIcon, Film, X } from "lucide-react";
+import { ChevronDown, Copy, Check, Sparkles, LayoutGrid, Image as ImageIcon, Film, X, Download, Save } from "lucide-react";
+import { api } from "@/lib/api";
 
 // Tool ID to dimension info mapping
 const TOOL_TO_DIMENSION: Record<string, { displayName: string; icon: string; color: string; dimension: string }> = {
@@ -30,8 +31,10 @@ interface WorkflowResult {
     dimension: string;
     dimensionName: string;
     toolName: string;
+    inputs: Record<string, unknown>;  // 🆕 Added: input prompts/options
     output: Record<string, unknown>;
     creditCost?: number;
+    executedAt: Date;  // 🆕 Added: execution timestamp
 }
 
 // Safe JSON stringify to handle circular references and large objects
@@ -63,12 +66,77 @@ function safeStringify(value: unknown, maxLength = 5000): string {
     }
 }
 
+// 🆕 Download utility functions
+function downloadFile(content: string, filename: string, mimeType: string) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function downloadResultAsJSON(result: WorkflowResult) {
+    const data = {
+        dimension: result.dimension,
+        dimensionName: result.dimensionName,
+        toolName: result.toolName,
+        inputs: result.inputs,
+        output: result.output,
+        executedAt: result.executedAt?.toISOString(),
+    };
+    downloadFile(
+        JSON.stringify(data, null, 2),
+        `${result.dimension}-${result.toolName}.json`,
+        'application/json'
+    );
+}
+
+function downloadResultAsMarkdown(result: WorkflowResult) {
+    let md = `# ${result.dimension} - ${result.dimensionName}\n\n`;
+    md += `**도구**: ${result.toolName}\n`;
+    md += `**실행 시간**: ${result.executedAt?.toLocaleString('ko-KR')}\n\n`;
+
+    if (Object.keys(result.inputs).length > 0) {
+        md += `## 입력\n\n`;
+        Object.entries(result.inputs).forEach(([key, value]) => {
+            md += `### ${key.replace(/_/g, ' ')}\n${typeof value === 'string' ? value : JSON.stringify(value, null, 2)}\n\n`;
+        });
+    }
+
+    md += `## 출력\n\n`;
+    Object.entries(result.output).forEach(([key, value]) => {
+        md += `### ${key.replace(/_/g, ' ')}\n`;
+        if (typeof value === 'string') {
+            md += `${value}\n\n`;
+        } else {
+            md += `\`\`\`json\n${JSON.stringify(value, null, 2)}\n\`\`\`\n\n`;
+        }
+    });
+
+    downloadFile(md, `${result.dimension}-${result.toolName}.md`, 'text/markdown');
+}
+
 export default function FlowPage() {
     const [isExecuting, setIsExecuting] = useState(false);
     const [workflowResults, setWorkflowResults] = useState<WorkflowResult[]>([]);
     const [showResults, setShowResults] = useState(false);
     const [expandedResult, setExpandedResult] = useState<string | null>(null);
     const [copiedField, setCopiedField] = useState<string | null>(null);
+
+    // 🆕 Template save modal state
+    const [showTemplateModal, setShowTemplateModal] = useState(false);
+    const [templateTitle, setTemplateTitle] = useState("");
+    const [templateDescription, setTemplateDescription] = useState("");
+    const [templateTags, setTemplateTags] = useState("");
+    const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+    const [templateSaveSuccess, setTemplateSaveSuccess] = useState(false);
+    const [savedTemplateId, setSavedTemplateId] = useState<string | null>(null);  // 🆕 For singularity link
+    const [templateSaveError, setTemplateSaveError] = useState<string | null>(null);  // 🆕 Inline error
+
     const workflowRef = useRef<TrainWorkflowHandle>(null);
     const { language } = useLanguage();
 
@@ -90,6 +158,53 @@ export default function FlowPage() {
             await workflowRef.current.executeAll();
         }
         setIsExecuting(false);
+    };
+
+    // 🆕 Save workflow results as template
+    const handleSaveAsTemplate = async () => {
+        if (workflowResults.length === 0 || !templateTitle.trim()) return;
+
+        setIsSavingTemplate(true);
+        try {
+            // Merge all inputs and outputs from workflow results
+            const mergedInputs: Record<string, unknown> = {};
+            const mergedOutputs: Record<string, unknown> = {};
+
+            workflowResults.forEach(result => {
+                Object.entries(result.inputs).forEach(([k, v]) => { mergedInputs[k] = v; });
+                Object.entries(result.output).forEach(([k, v]) => { mergedOutputs[k] = v; });
+            });
+
+            const response = await api.createSingularityTemplate({
+                title: templateTitle.trim(),
+                description: templateDescription.trim() || `${workflowResults.length}개 차원 워크플로우 템플릿`,
+                dimension_source: workflowResults[0]?.dimension || "1D",
+                tool_sequence: workflowResults.map(r => r.toolName),
+                input_preset: mergedInputs,
+                output_example: mergedOutputs,
+                tags: templateTags.split(",").map(t => t.trim()).filter(Boolean),
+                category: "user_created",
+            });
+
+            console.log("[Flow] Template saved:", response);
+            setSavedTemplateId(response.id);  // 🆕 Store for singularity link
+            setTemplateSaveSuccess(true);
+            setTemplateSaveError(null);
+            // Auto-close after 5 seconds (longer for user to see link)
+            setTimeout(() => {
+                setShowTemplateModal(false);
+                setTemplateSaveSuccess(false);
+                setSavedTemplateId(null);
+                setTemplateTitle("");
+                setTemplateDescription("");
+                setTemplateTags("");
+            }, 5000);
+        } catch (err) {
+            console.error("[Flow] Template save failed:", err);
+            setTemplateSaveError(err instanceof Error ? err.message : "템플릿 저장에 실패했습니다. 다시 시도해주세요.");
+        } finally {
+            setIsSavingTemplate(false);
+        }
     };
 
     // Copy to clipboard with error handling
@@ -209,6 +324,7 @@ export default function FlowPage() {
         name: string;
         status: string;
         output: Record<string, unknown>;
+        arguments?: Record<string, unknown>;  // 🔧 Fixed: matches AgentChatAccordion
     }) => {
         console.log("[Flow] Tool result:", result);
 
@@ -218,7 +334,7 @@ export default function FlowPage() {
             return;
         }
 
-        const { name, status, output } = result;
+        const { name, status, output, arguments: toolArguments } = result;
 
         // Only process workflow tool results
         if (!name || typeof name !== 'string') return;
@@ -233,6 +349,11 @@ export default function FlowPage() {
             ? output
             : {};
 
+        // Extract inputs (from 'arguments' field sent by backend)
+        const safeInputs = (toolArguments && typeof toolArguments === 'object' && !Array.isArray(toolArguments))
+            ? toolArguments
+            : {};
+
         const toolInfo = TOOL_TO_DIMENSION[name];
 
         setWorkflowResults(prev => {
@@ -240,7 +361,7 @@ export default function FlowPage() {
                 // Avoid duplicates
                 if (prev.some(r => r.toolName === name)) {
                     return prev.map(r => r.toolName === name
-                        ? { ...r, output: safeOutput }
+                        ? { ...r, output: safeOutput, inputs: safeInputs }
                         : r
                     );
                 }
@@ -248,7 +369,9 @@ export default function FlowPage() {
                     dimension: toolInfo.dimension,
                     dimensionName: toolInfo.displayName,
                     toolName: name,
+                    inputs: safeInputs,
                     output: safeOutput,
+                    executedAt: new Date(),
                 }];
             } catch (err) {
                 console.error('[Flow] Error updating workflow results:', err);
@@ -377,12 +500,22 @@ export default function FlowPage() {
                                                         {workflowResults.length}개 완료
                                                     </span>
                                                 </h3>
-                                                <button
-                                                    onClick={() => setShowResults(false)}
-                                                    className="p-1.5 rounded-lg hover:bg-white/5 transition-colors"
-                                                >
-                                                    <X className="h-4 w-4 text-[var(--fg-muted)]" />
-                                                </button>
+                                                <div className="flex items-center gap-2">
+                                                    {/* 🆕 Save as Template Button */}
+                                                    <button
+                                                        onClick={() => setShowTemplateModal(true)}
+                                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-500/20 hover:bg-violet-500/30 text-violet-300 text-xs font-medium transition-colors"
+                                                    >
+                                                        <Save className="h-3.5 w-3.5" />
+                                                        템플릿 저장
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setShowResults(false)}
+                                                        className="p-1.5 rounded-lg hover:bg-white/5 transition-colors"
+                                                    >
+                                                        <X className="h-4 w-4 text-[var(--fg-muted)]" />
+                                                    </button>
+                                                </div>
                                             </div>
 
                                             {/* Results List */}
@@ -426,10 +559,28 @@ export default function FlowPage() {
                                                                         </p>
                                                                     </div>
                                                                 </div>
-                                                                <ChevronDown
-                                                                    className={`h-5 w-5 text-[var(--fg-muted)] transition-transform ${isExpanded ? "rotate-180" : ""
-                                                                        }`}
-                                                                />
+                                                                <div className="flex items-center gap-2">
+                                                                    {/* 🆕 Download Buttons */}
+                                                                    <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                                                                        <button
+                                                                            onClick={() => downloadResultAsJSON(result)}
+                                                                            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                                                                            title="JSON으로 다운로드"
+                                                                        >
+                                                                            <Download className="h-3.5 w-3.5 text-zinc-400" />
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => downloadResultAsMarkdown(result)}
+                                                                            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                                                                            title="Markdown으로 다운로드"
+                                                                        >
+                                                                            <span className="text-[10px] font-bold text-zinc-400">MD</span>
+                                                                        </button>
+                                                                    </div>
+                                                                    <ChevronDown
+                                                                        className={`h-5 w-5 text-[var(--fg-muted)] transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                                                                    />
+                                                                </div>
                                                             </button>
 
                                                             {/* Result Content */}
@@ -443,6 +594,27 @@ export default function FlowPage() {
                                                                         className="overflow-hidden"
                                                                     >
                                                                         <div className="p-4 pt-0 space-y-4 border-t border-white/5">
+                                                                            {/* 🆕 Inputs Section */}
+                                                                            {result.inputs && Object.keys(result.inputs).length > 0 && (
+                                                                                <details className="group">
+                                                                                    <summary className="text-xs font-medium text-violet-400 cursor-pointer hover:text-violet-300 transition-colors flex items-center gap-1.5">
+                                                                                        <span>📝 입력 프롬프트</span>
+                                                                                        <ChevronDown className="h-3 w-3 group-open:rotate-180 transition-transform" />
+                                                                                    </summary>
+                                                                                    <div className="mt-2 p-3 bg-violet-500/5 border border-violet-500/20 rounded-lg space-y-2">
+                                                                                        {Object.entries(result.inputs).map(([key, value]) => (
+                                                                                            <div key={key}>
+                                                                                                <span className="text-[10px] text-violet-300/70 uppercase tracking-wider">{key.replace(/_/g, " ")}</span>
+                                                                                                <p className="text-xs text-[var(--fg-0)]">
+                                                                                                    {typeof value === "string" ? value : JSON.stringify(value)}
+                                                                                                </p>
+                                                                                            </div>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                </details>
+                                                                            )}
+
+                                                                            {/* Outputs Section */}
                                                                             {Object.entries(result.output).map(([key, value]) => (
                                                                                 <div key={key}>
                                                                                     <label className="text-xs font-medium text-[var(--fg-muted)] uppercase tracking-wider mb-2 block">
@@ -475,6 +647,158 @@ export default function FlowPage() {
                     onWorkflowComplete={handleWorkflowComplete}
                     onToolResult={handleToolResult}
                 />
+
+                {/* 🆕 Template Save Modal */}
+                <AnimatePresence>
+                    {showTemplateModal && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                            onClick={() => setShowTemplateModal(false)}
+                        >
+                            <motion.div
+                                initial={{ scale: 0.95, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.95, opacity: 0 }}
+                                onClick={e => e.stopPropagation()}
+                                className="w-full max-w-md mx-4 bg-black/60 backdrop-blur-xl border border-white/10 rounded-[1.5rem] shadow-2xl overflow-hidden"
+                            >
+                                {/* Modal Header */}
+                                <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                        <Save className="h-5 w-5 text-violet-400" />
+                                        싱귤래리티 템플릿 저장
+                                    </h3>
+                                    <button
+                                        onClick={() => setShowTemplateModal(false)}
+                                        className="p-1.5 rounded-lg hover:bg-white/5 transition-colors"
+                                    >
+                                        <X className="h-4 w-4 text-zinc-400" />
+                                    </button>
+                                </div>
+
+                                {/* Modal Body */}
+                                <div className="p-6 space-y-4">
+                                    {templateSaveSuccess ? (
+                                        <div className="text-center py-8">
+                                            <div className="h-16 w-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                                                <Check className="h-8 w-8 text-emerald-400" />
+                                            </div>
+                                            <p className="text-lg font-medium text-white">템플릿 저장 완료!</p>
+                                            <p className="text-sm text-zinc-400 mt-1 mb-4">싱귤래리티에서 확인하세요</p>
+
+                                            {/* 🆕 Singularity Link */}
+                                            <a
+                                                href="/singularity"
+                                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors"
+                                            >
+                                                <Sparkles className="h-4 w-4" />
+                                                싱귤래리티로 이동
+                                            </a>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div>
+                                                <label className="text-xs font-medium text-zinc-400 mb-1.5 block">
+                                                    템플릿 제목 *
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={templateTitle}
+                                                    onChange={e => setTemplateTitle(e.target.value)}
+                                                    placeholder="예: 시네마틱 프롬프트 워크플로우"
+                                                    className="w-full px-4 py-2.5 rounded-lg bg-black/30 border border-white/10 text-white placeholder:text-zinc-500 focus:outline-none focus:border-violet-500/50"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-medium text-zinc-400 mb-1.5 block">
+                                                    설명
+                                                </label>
+                                                <textarea
+                                                    value={templateDescription}
+                                                    onChange={e => setTemplateDescription(e.target.value)}
+                                                    placeholder="워크플로우 템플릿에 대한 설명을 입력하세요"
+                                                    rows={3}
+                                                    className="w-full px-4 py-2.5 rounded-lg bg-black/30 border border-white/10 text-white placeholder:text-zinc-500 focus:outline-none focus:border-violet-500/50 resize-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-medium text-zinc-400 mb-1.5 block">
+                                                    태그 (쉼표로 구분)
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={templateTags}
+                                                    onChange={e => setTemplateTags(e.target.value)}
+                                                    placeholder="예: cinematic, veo, prompt"
+                                                    className="w-full px-4 py-2.5 rounded-lg bg-black/30 border border-white/10 text-white placeholder:text-zinc-500 focus:outline-none focus:border-violet-500/50"
+                                                />
+                                            </div>
+
+                                            {/* Workflow Summary */}
+                                            <div className="p-3 rounded-lg bg-violet-500/10 border border-violet-500/20">
+                                                <p className="text-xs text-violet-300 font-medium mb-1">포함된 도구</p>
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {workflowResults.map(r => (
+                                                        <span key={r.toolName} className="px-2 py-0.5 rounded-md bg-violet-500/20 text-xs text-violet-200">
+                                                            {r.dimension}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+
+                                {/* Modal Footer */}
+                                {!templateSaveSuccess && (
+                                    <div className="px-6 py-4 border-t border-white/5 space-y-3">
+                                        {/* 🆕 Inline Error Display */}
+                                        {templateSaveError && (
+                                            <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+                                                <span className="text-red-400 text-xs">⚠️</span>
+                                                <span className="text-xs text-red-300 flex-1">{templateSaveError}</span>
+                                                <button
+                                                    onClick={() => setTemplateSaveError(null)}
+                                                    className="text-red-400 hover:text-red-300 text-xs"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-end gap-3">
+                                            <button
+                                                onClick={() => setShowTemplateModal(false)}
+                                                className="px-4 py-2 rounded-lg text-sm text-zinc-400 hover:bg-white/5 transition-colors"
+                                            >
+                                                취소
+                                            </button>
+                                            <button
+                                                onClick={handleSaveAsTemplate}
+                                                disabled={!templateTitle.trim() || isSavingTemplate}
+                                                className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:bg-zinc-700 disabled:text-zinc-500 text-white text-sm font-medium transition-colors flex items-center gap-2"
+                                            >
+                                                {isSavingTemplate ? (
+                                                    <>
+                                                        <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                        저장 중...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Save className="h-4 w-4" />
+                                                        저장
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
         </AppShell>
     );

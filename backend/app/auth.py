@@ -26,7 +26,10 @@ async def get_user_id(
     payload = _get_session_payload(request)
     if payload and isinstance(payload.get("user_id"), str):
         return payload["user_id"]
-    return x_user_id
+    # X-User-Id header fallback only in development environments
+    if settings.ENVIRONMENT.lower() in {"development", "dev", "local"}:
+        return x_user_id
+    return None
 
 
 async def require_user_id(

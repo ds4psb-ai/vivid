@@ -106,18 +106,18 @@ Notes:
 
 ---
 
-## 5.1) Teaching Apps Credit Model
+## 5.1) Dimension Apps Credit Model
 
-> **Added**: 2026-01-01
+> **Added**: 2026-01-01, **Updated**: 2026-01-05 (Teaching → Dimension)
 
-Teaching Apps는 **모델별 동적 비용**을 사용 (SSoT: `backend/app/fixtures/teaching_capsules.py`):
+Dimension Apps는 **모델별 동적 비용**을 사용 (SSoT: `backend/app/fixtures/dimension_capsules.py`):
 
 | API Endpoint | Credits | Description |
 |-------------|---------|-------------|
-| `/api/teaching/prompt/generate` | 5 (기본값) | Veo 프롬프트 생성 |
-| `/api/teaching/storyboard/create` | 10 (기본값) | 스토리보드 생성 |
-| `/api/teaching/image/generate` | 5 (기본값) | 이미지 프롬프트 생성 |
-| `/api/teaching/reference/analyze` | 8 (기본값) | 레퍼런스 분석 |
+| `/api/dimension/1d/generate` | 5 (기본값) | 1D Origin - Veo 프롬프트 생성 |
+| `/api/dimension/2d/create` | 10 (기본값) | 2D Blueprint - 스토리보드 생성 |
+| `/api/dimension/3d/generate` | 5 (기본값) | 3D Ambience - 이미지 프롬프트 생성 |
+| `/api/dimension/4d/analyze` | 8 (기본값) | 4D Moment - 레퍼런스 분석 |
 
 ### BYOK (Bring Your Own Key)
 
@@ -200,7 +200,7 @@ total_credits = base_cost × resolution_mult × length_mult × model_mult × cap
 ## 8) Data Model (Draft)
 
 Tables:
-- `credit_wallets`
+- `user_credits` (wallet per user)
 - `credit_ledger`
 - `plans`
 - `prices`

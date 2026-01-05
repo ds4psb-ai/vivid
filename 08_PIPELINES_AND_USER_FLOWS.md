@@ -88,7 +88,7 @@ Flow (Train UI)
 
 핵심 규칙:
 - 연결 고리는 3개 옵션 중 하나를 선택하도록 제한
-- 각 도구는 Teaching API(`/api/teaching/*`)로 실행
+- 각 도구는 Dimension API(`/api/dimension/*`)로 실행
 - Flow UI는 현재 **Mock 옵션** 기반이며 `/api/v1/workflow` 연동은 진행 중
 
 > Legacy: Canvas 기반 파이프라인은 `_deprecated` 경로에서만 유지됩니다.

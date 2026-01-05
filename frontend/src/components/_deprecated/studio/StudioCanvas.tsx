@@ -56,10 +56,10 @@ import {
     CanvasNodeData,
     CanvasNodeKind,
 } from "@/components/canvas/CustomNodes";
-import { TeachingCapsuleNode } from "@/components/canvas/TeachingCapsuleNode";
+import { TeachingCapsuleNode } from "@/components/canvas/DimensionCapsuleNode";
 import { Inspector } from "@/components/canvas/Inspector";
 import { PreviewPanel } from "@/components/canvas/PreviewPanel";
-import { GenerationPreviewPanel } from "@/components/canvas/GenerationPreviewPanel";
+import { GenerationPreviewPanel } from "@/components/_deprecated/canvas/GenerationPreviewPanel";
 import { usePipelineExecution } from "@/hooks/usePipelineExecution";
 import {
     api,
@@ -87,11 +87,11 @@ import { useSessionContext } from "@/contexts/SessionContext";
 import LoginRequiredModal from "@/components/LoginRequiredModal";
 import { buildCanvasSnapshot, readAutoApplySetting, writeAutoApplySetting } from "@/lib/canvasSync";
 import type { CanvasSyncEvent } from "@/lib/canvasSync";
-import { useDirectorPackState } from "@/hooks/useDirectorPackState";
-import { CanvasDirectorPackPanel } from "@/components/canvas/CanvasDirectorPackPanel";
+import { useDirectorPackState } from "@/hooks/_deprecated/useDirectorPackState";
+import { CanvasDirectorPackPanel } from "@/components/_deprecated/canvas/CanvasDirectorPackPanel";
 import { useNarrativeArcState } from "@/hooks/useNarrativeArcState";
 
-import { CanvasNarrativePanel } from "@/components/canvas/CanvasNarrativePanel";
+import { CanvasNarrativePanel } from "@/components/_deprecated/canvas/CanvasNarrativePanel";
 import VibeBoard, { VibeInput } from "@/components/canvas/VibeBoard";
 import ProactiveAssistant, { ProactiveSuggestion } from "@/components/canvas/ProactiveAssistant";
 import { formatNumber } from "@/lib/formatters";

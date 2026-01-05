@@ -8,8 +8,7 @@
  */
 
 import { createContext, useContext, useCallback, useEffect, useState, ReactNode, useRef } from "react";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
+import { api } from "@/lib/api";
 
 export interface TeachingSettings {
     hasApiKey: boolean;
@@ -52,27 +51,7 @@ export function TeachingSettingsProvider({ children }: TeachingSettingsProviderP
 
     const fetchSettings = useCallback(async () => {
         try {
-            const res = await fetch(`${API_BASE_URL}/api/user/teaching-settings`, {
-                credentials: "include",
-            });
-            if (!res.ok) {
-                if (res.status === 401) {
-                    // Not authenticated, return empty settings
-                    setSettings({
-                        hasApiKey: false,
-                        apiKeyPreview: null,
-                        promptData: {},
-                        storyboardData: {},
-                        imageToolData: {},
-                        shotCatchData: {},
-                        language: "ko",
-                        selectedModel: "gemini-3-flash-preview",
-                    });
-                    return;
-                }
-                throw new Error("Failed to fetch settings");
-            }
-            const data = await res.json();
+            const data = await api.getTeachingSettings();
             setSettings({
                 hasApiKey: data.has_api_key,
                 apiKeyPreview: data.api_key_preview,
@@ -85,7 +64,21 @@ export function TeachingSettingsProvider({ children }: TeachingSettingsProviderP
             });
             setError(null);
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to load settings");
+            // Not authenticated or error - return empty settings
+            if (err instanceof Error && err.message.includes("401")) {
+                setSettings({
+                    hasApiKey: false,
+                    apiKeyPreview: null,
+                    promptData: {},
+                    storyboardData: {},
+                    imageToolData: {},
+                    shotCatchData: {},
+                    language: "ko",
+                    selectedModel: "gemini-3-flash-preview",
+                });
+            } else {
+                setError(err instanceof Error ? err.message : "Failed to load settings");
+            }
         } finally {
             setIsLoading(false);
         }
@@ -96,34 +89,18 @@ export function TeachingSettingsProvider({ children }: TeachingSettingsProviderP
     }, [fetchSettings]);
 
     const saveApiKey = useCallback(async (apiKey: string) => {
-        const res = await fetch(`${API_BASE_URL}/api/user/teaching-settings`, {
-            method: "PUT",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ api_key: apiKey }),
-        });
-        if (!res.ok) throw new Error("Failed to save API key");
+        await api.updateTeachingSettings({ api_key: apiKey });
         await fetchSettings();
     }, [fetchSettings]);
 
     const clearApiKey = useCallback(async () => {
-        const res = await fetch(`${API_BASE_URL}/api/user/teaching-settings`, {
-            method: "PUT",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ api_key: "" }),
-        });
-        if (!res.ok) throw new Error("Failed to clear API key");
+        await api.updateTeachingSettings({ api_key: "" });
         await fetchSettings();
     }, [fetchSettings]);
 
     const getFullApiKey = useCallback(async (): Promise<string | null> => {
         try {
-            const res = await fetch(`${API_BASE_URL}/api/user/teaching-settings/api-key`, {
-                credentials: "include",
-            });
-            if (!res.ok) return null;
-            const data = await res.json();
+            const data = await api.getTeachingApiKey();
             return data.api_key || null;
         } catch {
             return null;
@@ -147,14 +124,10 @@ export function TeachingSettingsProvider({ children }: TeachingSettingsProviderP
                 shotCatch: "shot_catch_data",
             };
 
-            const res = await fetch(`${API_BASE_URL}/api/user/teaching-settings`, {
-                method: "PUT",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ [fieldMap[appType]]: data }),
-            });
-            if (!res.ok) {
-                console.error("Failed to save app data");
+            try {
+                await api.updateTeachingSettings({ [fieldMap[appType]]: data });
+            } catch (err) {
+                console.error("Failed to save app data:", err);
             }
         }, 1000); // 1 second debounce
     }, []);

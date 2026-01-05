@@ -1,6 +1,6 @@
-"""Teaching Capsule Adapter: Server-side AI logic for teaching tools.
+"""Dimension Capsule Adapter: Server-side AI logic for dimension tools.
 
-This module provides adapters for Crebit teaching capsules:
+This module provides adapters for Crebit dimension capsules:
 - Prompt Generator: Veo video prompt generation
 - Storyboard Creator: Scene-based storyboard generation
 - Image Generator: AI image generation
@@ -34,8 +34,8 @@ logger = logging.getLogger(__name__)
 # Constants & Configuration
 # ============================================================================
 
-class TeachingCapsuleId(str, Enum):
-    """Valid teaching capsule identifiers."""
+class DimensionCapsuleId(str, Enum):
+    """Valid dimension capsule identifiers."""
     PROMPT_GENERATE = "teaching.prompt.generate"
     STORYBOARD_CREATE = "teaching.storyboard.create"
     IMAGE_GENERATE = "teaching.image.generate"
@@ -325,7 +325,7 @@ async def _call_gemini(
 
 
 # ============================================================================
-# Teaching Capsule Adapters
+# Dimension Capsule Adapters
 # ============================================================================
 
 async def run_prompt_generator(
@@ -352,7 +352,7 @@ async def run_prompt_generator(
     if not topic:
         return {
             "success": False,
-            "capsule_id": TeachingCapsuleId.PROMPT_GENERATE.value,
+            "capsule_id": DimensionCapsuleId.PROMPT_GENERATE.value,
             "output": {},
             "error": "Topic is required",
             "metrics": None,
@@ -385,7 +385,7 @@ Create a detailed, professional prompt. Include camera movements, lighting, and 
         
         return {
             "success": "error" not in result,
-            "capsule_id": TeachingCapsuleId.PROMPT_GENERATE.value,
+            "capsule_id": DimensionCapsuleId.PROMPT_GENERATE.value,
             "output": result,
             "error": result.get("error"),
             "metrics": {
@@ -397,7 +397,7 @@ Create a detailed, professional prompt. Include camera movements, lighting, and 
     except (TimeoutError, RuntimeError, ValueError) as e:
         return {
             "success": False,
-            "capsule_id": TeachingCapsuleId.PROMPT_GENERATE.value,
+            "capsule_id": DimensionCapsuleId.PROMPT_GENERATE.value,
             "output": {},
             "error": str(e),
             "metrics": None,
@@ -418,7 +418,7 @@ async def run_storyboard_creator(
     if not concept:
         return {
             "success": False,
-            "capsule_id": TeachingCapsuleId.STORYBOARD_CREATE.value,
+            "capsule_id": DimensionCapsuleId.STORYBOARD_CREATE.value,
             "output": {},
             "error": "Concept is required",
             "metrics": None,
@@ -449,7 +449,7 @@ For each scene provide: description, camera, duration, notes.
         
         return {
             "success": "error" not in result,
-            "capsule_id": TeachingCapsuleId.STORYBOARD_CREATE.value,
+            "capsule_id": DimensionCapsuleId.STORYBOARD_CREATE.value,
             "output": {"scenes": output} if isinstance(output, list) else output,
             "error": result.get("error") if isinstance(result, dict) else None,
             "metrics": {
@@ -461,7 +461,7 @@ For each scene provide: description, camera, duration, notes.
     except (TimeoutError, RuntimeError, ValueError) as e:
         return {
             "success": False,
-            "capsule_id": TeachingCapsuleId.STORYBOARD_CREATE.value,
+            "capsule_id": DimensionCapsuleId.STORYBOARD_CREATE.value,
             "output": {},
             "error": str(e),
             "metrics": None,
@@ -482,7 +482,7 @@ async def run_image_generator(
     if not description:
         return {
             "success": False,
-            "capsule_id": TeachingCapsuleId.IMAGE_GENERATE.value,
+            "capsule_id": DimensionCapsuleId.IMAGE_GENERATE.value,
             "output": {},
             "error": "Description is required",
             "metrics": None,
@@ -511,7 +511,7 @@ Generate a detailed prompt suitable for Imagen, DALL-E, or Midjourney.
         
         return {
             "success": "error" not in result,
-            "capsule_id": TeachingCapsuleId.IMAGE_GENERATE.value,
+            "capsule_id": DimensionCapsuleId.IMAGE_GENERATE.value,
             "output": result,
             "error": result.get("error"),
             "metrics": {
@@ -523,7 +523,7 @@ Generate a detailed prompt suitable for Imagen, DALL-E, or Midjourney.
     except (TimeoutError, RuntimeError, ValueError) as e:
         return {
             "success": False,
-            "capsule_id": TeachingCapsuleId.IMAGE_GENERATE.value,
+            "capsule_id": DimensionCapsuleId.IMAGE_GENERATE.value,
             "output": {},
             "error": str(e),
             "metrics": None,
@@ -544,7 +544,7 @@ async def run_reference_analyzer(
     if not description:
         return {
             "success": False,
-            "capsule_id": TeachingCapsuleId.REFERENCE_ANALYZE.value,
+            "capsule_id": DimensionCapsuleId.REFERENCE_ANALYZE.value,
             "output": {},
             "error": "Video description is required",
             "metrics": None,
@@ -575,7 +575,7 @@ Provide detailed analysis of the cinematic techniques used.
         
         return {
             "success": "error" not in result,
-            "capsule_id": TeachingCapsuleId.REFERENCE_ANALYZE.value,
+            "capsule_id": DimensionCapsuleId.REFERENCE_ANALYZE.value,
             "output": result,
             "error": result.get("error"),
             "metrics": {
@@ -587,7 +587,7 @@ Provide detailed analysis of the cinematic techniques used.
     except (TimeoutError, RuntimeError, ValueError) as e:
         return {
             "success": False,
-            "capsule_id": TeachingCapsuleId.REFERENCE_ANALYZE.value,
+            "capsule_id": DimensionCapsuleId.REFERENCE_ANALYZE.value,
             "output": {},
             "error": str(e),
             "metrics": None,
@@ -598,21 +598,21 @@ Provide detailed analysis of the cinematic techniques used.
 # Main Entry Point
 # ============================================================================
 
-TEACHING_ADAPTERS: Dict[str, Callable] = {
-    TeachingCapsuleId.PROMPT_GENERATE.value: run_prompt_generator,
-    TeachingCapsuleId.STORYBOARD_CREATE.value: run_storyboard_creator,
-    TeachingCapsuleId.IMAGE_GENERATE.value: run_image_generator,
-    TeachingCapsuleId.REFERENCE_ANALYZE.value: run_reference_analyzer,
+DIMENSION_ADAPTERS: Dict[str, Callable] = {
+    DimensionCapsuleId.PROMPT_GENERATE.value: run_prompt_generator,
+    DimensionCapsuleId.STORYBOARD_CREATE.value: run_storyboard_creator,
+    DimensionCapsuleId.IMAGE_GENERATE.value: run_image_generator,
+    DimensionCapsuleId.REFERENCE_ANALYZE.value: run_reference_analyzer,
 }
 
 
-async def execute_teaching_capsule(
+async def execute_dimension_capsule(
     capsule_id: str,
     inputs: Dict[str, Any],
     params: Optional[Dict[str, Any]] = None,
     user_api_key: Optional[str] = None,
 ) -> CapsuleResult:
-    """Execute a teaching capsule.
+    """Execute a dimension capsule.
     
     Args:
         capsule_id: Capsule identifier (e.g., "teaching.prompt.generate")
@@ -626,9 +626,9 @@ async def execute_teaching_capsule(
     params = params or {}
     
     # Validate capsule_id
-    adapter = TEACHING_ADAPTERS.get(capsule_id)
+    adapter = DIMENSION_ADAPTERS.get(capsule_id)
     if not adapter:
-        valid_ids = [e.value for e in TeachingCapsuleId]
+        valid_ids = [e.value for e in DimensionCapsuleId]
         return {
             "success": False,
             "capsule_id": capsule_id,
@@ -637,7 +637,7 @@ async def execute_teaching_capsule(
             "metrics": None,
         }
     
-    logger.info(f"Executing teaching capsule: {capsule_id}")
+    logger.info(f"Executing dimension capsule: {capsule_id}")
     
     try:
         result = await adapter(inputs, params, user_api_key)

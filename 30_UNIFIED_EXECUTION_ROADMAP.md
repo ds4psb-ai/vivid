@@ -17,7 +17,7 @@
 | **Dimension Tools** | 프롬프트/스토리보드/이미지/레퍼런스 미니앱 | ✅ |
 | **Agent Chat** | Chat-first UI, SSE 스트리밍, 아티팩트 프리뷰 (Audio Overview 우선) | ✅ |
 | **Canvas (Legacy)** | ReactFlow 기반 UI (비노출) | ⚠️ |
-| **Teaching Capsules** | `/api/teaching/*` 기반 프롬프트/스토리보드/이미지/레퍼런스 실행 | ✅ |
+| **Dimension Tools** | `/api/dimension/*` 기반 프롬프트/스토리보드/이미지/레퍼런스 실행 | ✅ |
 | **Template** | 카탈로그, 버전 관리, 공개/비공개 | ✅ |
 | **Credits** | 지갑, 원장, 구독/탑업/프로모 분리 | ✅ |
 | **Affiliate** | 리퍼럴 추적, 리워드 지급 (legacy API, 미마운트) | ⚠️ |

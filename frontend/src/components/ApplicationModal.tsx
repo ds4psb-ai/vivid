@@ -48,7 +48,7 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
             const returnUrl = `${window.location.origin}/crebit/payment/callback`;
 
             await requestNicePayment({
-                clientId: process.env.NEXT_PUBLIC_NICEPAY_CLIENT_ID || "S2_af4543a0be4d49a98122e01ec2059a56",
+                clientId: process.env.NEXT_PUBLIC_NICEPAY_CLIENT_ID!,
                 method: "card",
                 orderId,
                 amount: CREBIT_PAYMENT.AMOUNT,

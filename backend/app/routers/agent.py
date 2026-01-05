@@ -24,6 +24,7 @@ from app.agents.artifact_backfill import derive_artifacts_from_tool_payload
 from app.agents.vivid_agent import VividAgent
 from app.config import settings
 from app.database import get_db
+from app.dependencies import get_current_user
 from app.logging_config import get_logger
 from app.models import AgentArtifact, AgentMessage as AgentMessageRecord, AgentSession
 
@@ -75,6 +76,7 @@ class AgentChatRequest(BaseModel):
     metadata: Optional[dict] = None
     model: Optional[str] = None
     attachments: List[dict] = Field(default_factory=list)
+    page_context: Optional[str] = None  # Current page path for context-aware responses
 
 
 class AgentDecisionRequest(BaseModel):
@@ -334,10 +336,6 @@ def _start_stream_thread(
     thread.start()
 
 
-    thread = threading.Thread(target=_runner, daemon=True)
-    thread.start()
-
-
 @router.post("/upload")
 async def upload_file(
     file: UploadFile = File(...),
@@ -375,6 +373,7 @@ async def upload_file(
 @router.post("/chat")
 async def chat_agent(
     request: AgentChatRequest,
+    user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     session = None
@@ -411,6 +410,11 @@ async def chat_agent(
         session.meta = _merge_metadata(session.meta, request.metadata)
     model_name = _resolve_agent_model(session, request)
     session.meta = _merge_metadata(session.meta, {"agent_model": model_name})
+    
+    # Store page context for context-aware agent responses
+    if request.page_context:
+        session.meta = _merge_metadata(session.meta, {"page_context": request.page_context})
+    
     agent = _get_agent(model_name)
 
     existing_messages_result = await db.execute(
@@ -624,7 +628,11 @@ async def chat_agent(
 
                 yield _next_event(
                     "agent.tool_result",
-                    {**tool_payload, "name": result.name},
+                    {
+                        **tool_payload,
+                        "name": result.name,
+                        "arguments": call.arguments,  # 🆕 Include inputs for frontend display
+                    },
                 )
 
                 for artifact in generated_artifacts:

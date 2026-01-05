@@ -43,7 +43,7 @@ class Settings(BaseSettings):
 
     # Tavily API (Exa alternative for web search)
     # Get free key at https://tavily.com (1,000 credits/month)
-    TAVILY_API_KEY: str = "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"
+    TAVILY_API_KEY: str = ""
 
     # Qdrant Vector Database
     # Local: docker-compose up qdrant (port 6333)
@@ -52,7 +52,7 @@ class Settings(BaseSettings):
     QDRANT_API_KEY: str = ""
     
     # Redis (Added Phase 3)
-    REDIS_URL: str = "redis://localhost:6379"
+    REDIS_URL: str = "redis://localhost:6380"
     
     # Capsule Execution Timeouts (seconds)
     CAPSULE_EXECUTION_TIMEOUT: int = 120  # Default timeout for capsule runs (2 minutes)
@@ -80,8 +80,8 @@ class Settings(BaseSettings):
     # NICE Payments (나이스페이)
     # Sandbox: S2_af4543a0be4d49a98122e01ec2059a56
     # Production: Get from NICE admin console
-    NICEPAY_CLIENT_ID: str = "S2_af4543a0be4d49a98122e01ec2059a56"
-    NICEPAY_SECRET_KEY: str = "9eb85607103646da9f9c02b128f2e5ee"
+    NICEPAY_CLIENT_ID: str = ""
+    NICEPAY_SECRET_KEY: str = ""
     NICEPAY_API_URL: str = "https://sandbox-api.nicepay.co.kr"
     NICEPAY_MODE: str = "sandbox"  # sandbox | production
 

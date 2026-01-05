@@ -340,10 +340,11 @@ async def seed_tools(session):
 
 
 if __name__ == "__main__":
-    from app.database import get_async_session
+    from app.database import get_db
     
     async def main():
-        async for session in get_async_session():
+        async for session in get_db():
             await seed_tools(session)
     
     asyncio.run(main())
+

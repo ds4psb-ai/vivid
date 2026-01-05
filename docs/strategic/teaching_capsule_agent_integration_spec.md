@@ -1,11 +1,17 @@
 # Teaching Capsule Agent Integration Spec
 
-**작성**: 2026-01-01  
-**버전**: v1.0  
-**대상**: Backend / Frontend Developer  
+**작성**: 2026-01-01
+**버전**: v1.0
+**대상**: Backend / Frontend Developer
 **목표**: Teaching 캡슐들을 Agent Chat LLM에서 Tool로 호출하고, **내부 워크플로우 그래프(레거시 Canvas 노드)**로 연결하는 구현 가이드
 
-> Status (2026-01): 사용자 UI는 Flow/Dimension이 기본이며, Canvas/Node 용어는 내부 그래프 또는 레거시 UI를 의미합니다.  
+> ⚠️ **DEPRECATED (2026-01-05)**: 이 문서는 레거시 통합 패턴을 설명합니다.
+> - `routers/teaching.py` → **삭제됨** (현행: `routers/dimension.py`)
+> - `teaching_adapter.py` → **삭제됨** (현행: `dimension_adapter.py`)
+> - `TeachingCapsuleNode.tsx` → **삭제됨** (현행: `DimensionCapsuleNode.tsx`)
+> - 현행 도구: `backend/app/agents/dimension_tools.py`
+
+> Status (2026-01): 사용자 UI는 Flow/Dimension이 기본이며, Canvas/Node 용어는 내부 그래프 또는 레거시 UI를 의미합니다.
 > Legacy UI 경로: `frontend/src/app/_deprecated/studio/`, `frontend/src/components/canvas/`.
 
 ---
@@ -48,12 +54,12 @@
 
 ### 1.2 주요 컴포넌트
 
-| 컴포넌트 | 역할 | 위치 |
+| 컴포넌트 | 역할 | 위치 (현행) |
 |----------|------|------|
-| **Teaching Capsules** | 4개의 AI 도구 (Prompt, Storyboard, Image, Reference) | `routers/teaching.py` |
+| **Dimension Capsules** | 4개의 AI 도구 (Prompt, Storyboard, Image, Reference) | `routers/dimension.py` |
 | **Agent Chat** | 사용자 의도 해석 + 도구 호출 | `routers/agent.py` |
 | **Node Canvas (Legacy UI)** | 노드 기반 그래프 편집 (내부 그래프/레거시 UI) | `frontend/src/app/_deprecated/studio/`, `frontend/src/components/canvas/` |
-| **Teaching Adapter** | 캡슐 실행 + 크레딧 차감 | `backend/app/teaching_adapter.py` |
+| **Dimension Adapter** | 캡슐 실행 + 크레딧 차감 | `backend/app/dimension_adapter.py` |
 
 ---
 
@@ -194,12 +200,12 @@ TEACHING_SYSTEM_PROMPT = """
 
 ### 3.1 Agent → Teaching Router 연동
 
-`routers/agent.py`에서 Teaching 도구 호출:
+`routers/agent.py`에서 Dimension 도구 호출:
 
 ```python
-# routers/agent.py
+# routers/agent.py (현행: dimension.py 사용)
 
-from app.routers.teaching import (
+from app.routers.dimension import (
     generate_prompt,
     create_storyboard,
     generate_image_prompt,
@@ -214,22 +220,22 @@ TOOL_HANDLERS = {
     "generate_veo_prompt": {
         "handler": generate_prompt,
         "request_model": PromptGenerateRequest,
-        "capsule_type": "teaching.prompt",
+        "capsule_type": "dimension.prompt",
     },
     "create_storyboard": {
         "handler": create_storyboard,
         "request_model": StoryboardCreateRequest,
-        "capsule_type": "teaching.storyboard",
+        "capsule_type": "dimension.storyboard",
     },
     "generate_image_prompt": {
         "handler": generate_image_prompt,
         "request_model": ImageGenerateRequest,
-        "capsule_type": "teaching.image",
+        "capsule_type": "dimension.image",
     },
     "analyze_reference": {
         "handler": analyze_reference,
         "request_model": ReferenceAnalyzeRequest,
-        "capsule_type": "teaching.reference",
+        "capsule_type": "dimension.reference",
     },
 }
 
@@ -293,28 +299,28 @@ def build_node_spec(
     """Teaching 도구 결과를 Canvas Node Spec으로 변환"""
     
     CAPSULE_CONFIGS = {
-        "teaching.prompt": {
+        "dimension.prompt": {
             "display_name": "Veo 프롬프트 생성기",
             "node_type": "capsule",
             "input_ports": ["topic"],
             "output_ports": ["prompt", "negative_prompt", "technical"],
             "icon": "wand",
         },
-        "teaching.storyboard": {
+        "dimension.storyboard": {
             "display_name": "스토리보드 생성기",
             "node_type": "capsule",
             "input_ports": ["concept"],
             "output_ports": ["scenes"],
             "icon": "film",
         },
-        "teaching.image": {
+        "dimension.image": {
             "display_name": "이미지 프롬프트 생성기",
             "node_type": "capsule",
             "input_ports": ["description"],
             "output_ports": ["prompt", "parameters"],
             "icon": "image",
         },
-        "teaching.reference": {
+        "dimension.reference": {
             "display_name": "레퍼런스 분석기",
             "node_type": "capsule",
             "input_ports": ["video_description"],
@@ -413,7 +419,7 @@ function handleNodeCreatedEvent(event: NodeCreatedEvent) {
 Canvas에서 렌더링되는 Teaching 노드:
 
 ```typescript
-// components/canvas/TeachingCapsuleNode.tsx
+// components/canvas/DimensionCapsuleNode.tsx (현행)
 
 interface TeachingNodeData {
   capsule_id: string;
@@ -581,21 +587,21 @@ function usePipelineExecution() {
 > **Last Updated**: 2026-01-02
 
 ### Backend ✅
-- [x] `TEACHING_TOOLS` 스키마를 Agent chat system prompt에 추가 → `teaching_tools.py`
+- [x] `DIMENSION_TOOLS` 스키마를 Agent chat system prompt에 추가 → `dimension_tools.py`
 - [x] `execute_teaching_tool()` 함수 구현 → `_teaching_tool_handler()`
 - [x] `build_node_spec()` 노드 변환 로직 → `build_teaching_node_spec()`
 - [x] `agent.node_created` SSE 이벤트 발행 → L376-380
 - [x] 기존 Teaching 엔드포인트와 통합 테스트 → 4개 tools 등록 확인
 
 ### Frontend ✅
-- [x] `TeachingCapsuleNode` 컴포넌트 (React Flow) → `TeachingCapsuleNode.tsx`
+- [x] `DimensionCapsuleNode` 컴포넌트 (React Flow) → `DimensionCapsuleNode.tsx`
 - [x] `agent.node_created` 이벤트 핸들러 → `useAgentEvents.ts`
 - [x] 노드 자동 배치 로직 → `calculateAutoPosition()`
 - [x] 노드 파라미터 수정 UI → `NodeChatPanel.tsx`
 - [x] 파이프라인 연결 + 순차 실행 → `usePipelineExecution.ts`
 
 ### Integration ✅
-- [x] BYOK 헤더 전달 (Agent → Teaching) → `routers/teaching.py` 크레딧 로직
+- [x] BYOK 헤더 전달 (Agent → Dimension) → `routers/dimension.py` 크레딧 로직
 - [x] 크레딧 검사 + 402 에러 처리 → `credit_service.py`
 - [x] 실행 결과 Canvas 저장 → Canvas state update in hooks
 

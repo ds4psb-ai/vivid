@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Bot, MoreHorizontal, Play, CheckCircle2, ChevronDown, Paperclip, X, File as FileIcon } from "lucide-react";
@@ -8,10 +9,15 @@ import { api } from "@/lib/api";
 
 interface Message {
     id: string;
-    role: "user" | "assistant";
+    role: "user" | "assistant" | "tool";
     content: React.ReactNode;
     timestamp: Date;
     attachments?: { name: string; mime_type: string; file_uri: string }[];
+    // Tool-specific properties
+    toolName?: string;
+    toolStatus?: "pending" | "complete" | "error";
+    toolOutput?: Record<string, unknown>;
+    toolError?: string;
 }
 
 // Workflow step event from agent
@@ -31,6 +37,7 @@ interface ToolResultEvent {
     name: string;
     status: string;
     output: Record<string, unknown>;
+    arguments?: Record<string, unknown>;  // 🆕 Tool inputs
     error?: string;
 }
 
@@ -57,6 +64,8 @@ export function AgentChatAccordion({
     onWorkflowComplete,
     onToolResult,
 }: AgentChatAccordionProps) {
+    const pathname = usePathname();
+    const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([
         {
@@ -73,6 +82,28 @@ export function AgentChatAccordion({
     // Draggable FAB position state
     const [fabPosition, setFabPosition] = useState({ x: 0, y: 0 });
     const constraintsRef = useRef<HTMLDivElement>(null);
+    const isDraggingRef = useRef(false);
+
+    // Calculate chat panel position with viewport boundary clamping
+    const chatPosition = useMemo(() => {
+        const chatWidth = 380;
+        const chatHeight = 600;
+        const padding = 16; // minimum distance from edge
+
+        // Get viewport dimensions (use default if SSR)
+        const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1024;
+        const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 768;
+
+        // Calculate ideal position (centered above FAB)
+        const idealLeft = viewportWidth / 2 + fabPosition.x - chatWidth / 2;
+        const idealBottom = 96 + (-fabPosition.y); // 6rem = 96px
+
+        // Clamp to viewport boundaries
+        const clampedLeft = Math.max(padding, Math.min(idealLeft, viewportWidth - chatWidth - padding));
+        const clampedBottom = Math.max(padding, Math.min(idealBottom, viewportHeight - chatHeight - padding));
+
+        return { left: clampedLeft, bottom: clampedBottom };
+    }, [fabPosition.x, fabPosition.y]);
 
     // File upload state
     const [files, setFiles] = useState<File[]>([]);
@@ -151,6 +182,7 @@ export function AgentChatAccordion({
             const response = await api.openAgentChatStream({
                 message: userInput || (uploadedAttachments.length > 0 ? "File attached" : ""),
                 attachments: uploadedAttachments.length > 0 ? uploadedAttachments : undefined,
+                page_context: pathname,
             });
 
             if (!response.ok || !response.body) {
@@ -209,6 +241,22 @@ export function AgentChatAccordion({
                                     )
                                 );
                             }
+                            // 🆕 Handle tool_calls event - show pending cards immediately
+                            else if (eventType === "agent.tool_calls" && payload?.tool_calls) {
+                                const toolCalls = Array.isArray(payload.tool_calls) ? payload.tool_calls : [];
+                                toolCalls.forEach((call: { id?: string; name?: string }) => {
+                                    if (!call.name) return;
+                                    const pendingMessage: Message = {
+                                        id: `tool-pending-${call.id || Date.now()}`,
+                                        role: "tool",
+                                        content: "",
+                                        timestamp: new Date(),
+                                        toolName: call.name,
+                                        toolStatus: "pending",
+                                    };
+                                    setMessages(prev => [...prev, pendingMessage]);
+                                });
+                            }
                             // === Workflow Events for Dimension Integration ===
                             else if (eventType === "agent.workflow_start" && payload) {
                                 onWorkflowStart?.({
@@ -255,14 +303,71 @@ export function AgentChatAccordion({
                                     success_count: typeof payload.success_count === 'number' ? payload.success_count : 0,
                                 });
                             }
-                            // Tool result event - capture dimension outputs
+                            // Tool result event - capture dimension outputs AND add to chat
                             else if (eventType === "agent.tool_result" && payload) {
-                                onToolResult?.({
-                                    name: String(payload.name || ''),
-                                    status: String(payload.status || ''),
-                                    output: (payload.output && typeof payload.output === 'object') ? payload.output : {},
-                                    error: payload.error ? String(payload.error) : undefined,
+                                const toolName = String(payload.name || 'tool');
+                                const toolCallId = payload.tool_call_id ? String(payload.tool_call_id) : null;
+                                const toolStatusValue = String(payload.status || 'complete');
+                                const toolOutput = (payload.output && typeof payload.output === 'object') ? payload.output : {};
+                                const toolArguments = (payload.arguments && typeof payload.arguments === 'object') ? payload.arguments : {};
+                                const toolError = payload.error ? String(payload.error) : undefined;
+                                const finalStatus = toolStatusValue === "error" ? "error" : "complete";
+
+                                // 🆕 Try to update existing pending card, or create new one
+                                setMessages(prev => {
+                                    const pendingIdx = prev.findIndex(
+                                        m => m.role === "tool" &&
+                                            m.toolName === toolName &&
+                                            m.toolStatus === "pending"
+                                    );
+
+                                    if (pendingIdx !== -1) {
+                                        // Update existing pending card
+                                        return prev.map((m, i) =>
+                                            i === pendingIdx
+                                                ? { ...m, toolStatus: finalStatus, toolOutput, toolError }
+                                                : m
+                                        );
+                                    } else {
+                                        // Create new card if no pending found
+                                        const toolMessage: Message = {
+                                            id: `tool-${Date.now()}-${toolName}`,
+                                            role: "tool",
+                                            content: "",
+                                            timestamp: new Date(),
+                                            toolName,
+                                            toolStatus: finalStatus,
+                                            toolOutput,
+                                            toolError,
+                                        };
+                                        return [...prev, toolMessage];
+                                    }
                                 });
+
+                                // Also trigger callback for flow page integration with arguments
+                                onToolResult?.({
+                                    name: toolName,
+                                    status: toolStatusValue,
+                                    output: toolOutput,
+                                    arguments: toolArguments,
+                                    error: toolError,
+                                });
+                            }
+                            // Navigation event - route user to requested page
+                            else if (eventType === "agent.navigation" && payload?.path) {
+                                const targetPath = String(payload.path);
+                                // Add navigation message to chat
+                                accumulatedContent += `\n\n🧭 ${targetPath} 페이지로 이동합니다...`;
+                                setMessages((prev) =>
+                                    prev.map(m => m.id === assistantMessage.id
+                                        ? { ...m, content: accumulatedContent }
+                                        : m
+                                    )
+                                );
+                                // Navigate after a short delay for UX
+                                setTimeout(() => {
+                                    router.push(targetPath);
+                                }, 500);
                             }
                             // Legacy format support
                             else if (eventType === "content" && data.delta) {
@@ -318,35 +423,41 @@ export function AgentChatAccordion({
                 dragConstraints={constraintsRef}
                 dragElastic={0.05}
                 dragMomentum={false}
-                whileDrag={{ scale: 1.1, cursor: "grabbing" }}
-                className="fixed bottom-8 left-1/2 z-50 pointer-events-auto"
+                whileDrag={{ scale: 1.1 }}
+                className="fixed bottom-8 left-1/2 z-[60] pointer-events-auto cursor-grab active:cursor-grabbing"
                 style={{
                     x: fabPosition.x,
                     y: fabPosition.y,
                     translateX: "-50%"
                 }}
                 onDragStart={() => {
-                    // Mark as dragging to prevent click
-                    (window as unknown as { __chokkiDragging: boolean }).__chokkiDragging = true;
+                    isDraggingRef.current = true;
                 }}
                 onDragEnd={(_, info) => {
-                    setFabPosition(prev => ({
-                        x: prev.x + info.offset.x,
-                        y: prev.y + info.offset.y
-                    }));
-                    // Reset drag flag after a short delay
-                    setTimeout(() => {
-                        (window as unknown as { __chokkiDragging: boolean }).__chokkiDragging = false;
-                    }, 100);
+                    // Only update position if actually moved
+                    if (Math.abs(info.offset.x) > 5 || Math.abs(info.offset.y) > 5) {
+                        setFabPosition(prev => ({
+                            x: prev.x + info.offset.x,
+                            y: prev.y + info.offset.y
+                        }));
+                    }
+                    // Reset drag flag after animation frame to avoid race condition
+                    requestAnimationFrame(() => {
+                        isDraggingRef.current = false;
+                    });
                 }}
             >
                 <button
-                    onClick={() => {
-                        // Ignore click if we were just dragging
-                        if ((window as unknown as { __chokkiDragging: boolean }).__chokkiDragging) return;
+                    onClick={(e) => {
+                        // Prevent click if we were dragging
+                        if (isDraggingRef.current) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            return;
+                        }
                         setIsOpen(!isOpen);
                     }}
-                    className="relative group cursor-grab active:cursor-grabbing focus:outline-none"
+                    className="relative group focus:outline-none"
                 >
                     {/* Glow Effect */}
                     <div className={`absolute inset-0 rounded-full blur-xl transition-all duration-500 ${isOpen
@@ -396,7 +507,7 @@ export function AgentChatAccordion({
                 </button>
             </motion.div>
 
-            {/* Chat Panel */}
+            {/* Chat Panel - follows FAB position */}
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
@@ -404,7 +515,11 @@ export function AgentChatAccordion({
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 pointer-events-auto w-[380px] h-[600px] flex flex-col bg-black/90 backdrop-blur-2xl rounded-3xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden"
+                        className="fixed z-50 pointer-events-auto w-[380px] h-[600px] flex flex-col bg-black/90 backdrop-blur-2xl rounded-3xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden"
+                        style={{
+                            left: chatPosition.left,
+                            bottom: chatPosition.bottom,
+                        }}
                     >
                         {/* Background Effect */}
                         <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-violet-500/10 to-transparent pointer-events-none" />
@@ -483,51 +598,137 @@ export function AgentChatAccordion({
 
                         {/* Messages */}
                         <div className="flex-1 overflow-y-auto p-5 space-y-6 scrollbar-thin scrollbar-thumb-zinc-700/50 scrollbar-track-transparent">
-                            {messages.map((message) => (
-                                <div
-                                    key={message.id}
-                                    className={`flex gap-3 ${message.role === "user" ? "flex-row-reverse" : ""
-                                        }`}
-                                >
-                                    {message.role === "assistant" && (
-                                        <div className="h-8 w-8 rounded-full bg-black/50 overflow-hidden border border-white/10 flex items-center justify-center shrink-0 shadow-lg shadow-violet-500/20">
-                                            <Image
-                                                src="/assets/characters/chokki.png"
-                                                alt="Chokki"
-                                                width={32}
-                                                height={32}
-                                                className="object-cover w-full h-full"
-                                                unoptimized
-                                            />
-                                        </div>
-                                    )}
+                            {messages.map((message) => {
+                                // Tool message - render as card
+                                if (message.role === "tool") {
+                                    const isPending = message.toolStatus === "pending";
+                                    const isError = message.toolStatus === "error";
+                                    const isComplete = message.toolStatus === "complete";
 
-                                    <div className="flex flex-col gap-1 max-w-[85%]">
-                                        <span className={`text-[10px] font-medium px-1 ${message.role === "assistant" ? "text-zinc-500" : "text-violet-300 text-right"
-                                            }`}>
-                                            {message.role === "assistant" ? "초끼" : "You"}
-                                        </span>
-                                        <div
-                                            className={`rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${message.role === "assistant"
-                                                ? "bg-zinc-800/80 text-zinc-100 border border-white/5 rounded-tl-none"
-                                                : "bg-violet-600 text-white shadow-lg shadow-violet-600/20 rounded-tr-none"
-                                                }`}
-                                        >
-                                            {message.content}
-                                            {message.attachments && message.attachments.length > 0 && (
-                                                <div className="mt-2 flex flex-wrap gap-2">
-                                                    {message.attachments.map((file, i) => (
-                                                        <div key={i} className="flex items-center gap-1.5 rounded-md bg-black/20 px-2 py-1.5 text-xs text-white/80">
-                                                            <FileIcon className="h-3 w-3 opacity-70" />
-                                                            <span className="max-w-[150px] truncate">{file.name}</span>
-                                                        </div>
-                                                    ))}
+                                    // Dynamic card styling based on status
+                                    const cardStyles = isPending
+                                        ? "border-amber-500/30 bg-amber-500/10"
+                                        : isError
+                                            ? "border-red-500/30 bg-red-500/10"
+                                            : "border-emerald-500/30 bg-emerald-500/10";
+
+                                    const textColor = isPending
+                                        ? "text-amber-400"
+                                        : isError
+                                            ? "text-red-400"
+                                            : "text-emerald-400";
+
+                                    const badgeStyles = isPending
+                                        ? "bg-amber-500/20 text-amber-300"
+                                        : isError
+                                            ? "bg-red-500/20 text-red-300"
+                                            : "bg-emerald-500/20 text-emerald-300";
+
+                                    const statusText = isPending ? "실행 중" : isError ? "실패" : "완료";
+
+                                    return (
+                                        <div key={message.id} className="flex gap-3">
+                                            {/* Icon with glass effect */}
+                                            <div className={`h-8 w-8 rounded-xl backdrop-blur-sm ${isPending
+                                                    ? "bg-amber-500/10 border-amber-500/20"
+                                                    : isComplete
+                                                        ? "bg-emerald-500/10 border-emerald-500/20"
+                                                        : "bg-red-500/10 border-red-500/20"
+                                                } border flex items-center justify-center shrink-0`}>
+                                                {isPending ? (
+                                                    <span className="h-4 w-4 border-2 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" />
+                                                ) : isComplete ? (
+                                                    <Bot className="h-4 w-4 text-emerald-400" />
+                                                ) : (
+                                                    <Bot className="h-4 w-4 text-red-400" />
+                                                )}
+                                            </div>
+                                            {/* Card with glass morphism */}
+                                            <div className={`flex-1 rounded-xl backdrop-blur-sm border ${cardStyles} p-3 transition-all duration-500`}>
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className={`text-xs font-semibold ${textColor}`}>
+                                                        🔧 {message.toolName}
+                                                    </span>
+                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1 ${badgeStyles}`}>
+                                                        {isPending && (
+                                                            <span className="h-2 w-2 border border-current border-t-transparent rounded-full animate-spin" />
+                                                        )}
+                                                        {statusText}
+                                                    </span>
                                                 </div>
-                                            )}
+                                                {isPending ? (
+                                                    <div className="flex items-center gap-2 text-xs text-amber-300/70">
+                                                        <span className="animate-pulse">도구를 실행하고 있습니다...</span>
+                                                    </div>
+                                                ) : message.toolError ? (
+                                                    <p className="text-xs text-red-300">{message.toolError}</p>
+                                                ) : message.toolOutput && Object.keys(message.toolOutput).length > 0 ? (
+                                                    <div className="text-xs text-zinc-400 max-h-20 overflow-y-auto">
+                                                        {Object.entries(message.toolOutput).slice(0, 3).map(([key, value]) => (
+                                                            <div key={key} className="truncate">
+                                                                <span className="text-zinc-500">{key}:</span>{" "}
+                                                                <span className="text-zinc-300">
+                                                                    {typeof value === "string" ? value.slice(0, 50) + (value.length > 50 ? "..." : "") : JSON.stringify(value).slice(0, 50)}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                        {Object.keys(message.toolOutput).length > 3 && (
+                                                            <span className="text-zinc-500 text-[10px]">...외 {Object.keys(message.toolOutput).length - 3}개 필드</span>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-xs text-zinc-500 italic">결과 없음</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                }
+
+                                // User/Assistant message - original rendering
+                                return (
+                                    <div
+                                        key={message.id}
+                                        className={`flex gap-3 ${message.role === "user" ? "flex-row-reverse" : ""}`}
+                                    >
+                                        {message.role === "assistant" && (
+                                            <div className="h-8 w-8 rounded-full bg-black/50 overflow-hidden border border-white/10 flex items-center justify-center shrink-0 shadow-lg shadow-violet-500/20">
+                                                <Image
+                                                    src="/assets/characters/chokki.png"
+                                                    alt="Chokki"
+                                                    width={32}
+                                                    height={32}
+                                                    className="object-cover w-full h-full"
+                                                    unoptimized
+                                                />
+                                            </div>
+                                        )}
+
+                                        <div className="flex flex-col gap-1 max-w-[85%]">
+                                            <span className={`text-[10px] font-medium px-1 ${message.role === "assistant" ? "text-zinc-500" : "text-violet-300 text-right"}`}>
+                                                {message.role === "assistant" ? "초끼" : "You"}
+                                            </span>
+                                            <div
+                                                className={`rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${message.role === "assistant"
+                                                    ? "bg-zinc-800/80 text-zinc-100 border border-white/5 rounded-tl-none"
+                                                    : "bg-violet-600 text-white shadow-lg shadow-violet-600/20 rounded-tr-none"
+                                                    }`}
+                                            >
+                                                {message.content}
+                                                {message.attachments && message.attachments.length > 0 && (
+                                                    <div className="mt-2 flex flex-wrap gap-2">
+                                                        {message.attachments.map((file, i) => (
+                                                            <div key={i} className="flex items-center gap-1.5 rounded-md bg-black/20 px-2 py-1.5 text-xs text-white/80">
+                                                                <FileIcon className="h-3 w-3 opacity-70" />
+                                                                <span className="max-w-[150px] truncate">{file.name}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
 
                             {isLoading && (
                                 <div className="flex gap-3">

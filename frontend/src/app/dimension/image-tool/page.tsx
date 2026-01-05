@@ -1,7 +1,7 @@
 "use client";
 
 import AppShell from "@/components/AppShell";
-import ImageToolPanel from "@/components/teaching/ImageToolPanel";
+import ImageToolPanel from "@/components/dimension/ImageToolPanel";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function TeachingImageToolPage() {

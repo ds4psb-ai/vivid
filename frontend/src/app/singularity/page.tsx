@@ -7,58 +7,11 @@ import {
     Sparkles, Copy, Play, Star, Zap, Loader2, AlertCircle, RefreshCw, X
 } from "lucide-react";
 import AppShell from "@/components/AppShell";
+import { api, SingularityTemplate } from "@/lib/api";
 
-// =============================================================================
-// TYPES
-// =============================================================================
+// Template type alias for local use
+type Template = SingularityTemplate;
 
-interface Template {
-    id: string;
-    title: string;
-    description: string;
-    thumbnail_url: string | null;
-    dimension_sequence: string[]; // 차원 조합: ["1D", "2D", "3D"]
-    tags: string[];
-    use_count: number;
-    rating_avg: number;
-    creator_name: string;
-    is_featured: boolean;
-    tool_names?: string[]; // 사용된 도구 이름들
-}
-
-interface TemplateListResponse {
-    items: Template[];
-    total: number;
-    page: number;
-    page_size: number;
-}
-
-// =============================================================================
-// API
-// =============================================================================
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
-
-async function fetchTemplates(params: {
-    tag?: string;
-    featured_only?: boolean;
-}): Promise<TemplateListResponse> {
-    const searchParams = new URLSearchParams();
-    if (params.tag) searchParams.set("tag", params.tag);
-    if (params.featured_only) searchParams.set("featured_only", "true");
-
-    const res = await fetch(`${API_BASE}/api/v1/singularity/templates?${searchParams}`);
-    if (!res.ok) throw new Error("Failed to fetch");
-    return res.json();
-}
-
-async function applyTemplate(templateId: string): Promise<{ success: boolean }> {
-    const res = await fetch(`${API_BASE}/api/v1/singularity/templates/${templateId}/use`, {
-        method: "POST",
-    });
-    if (!res.ok) throw new Error("Failed to apply");
-    return res.json();
-}
 
 // =============================================================================
 // DIMENSION FLOW DISPLAY - 차원 조합 시각화
@@ -183,8 +136,8 @@ function TagFilter({
             <button
                 onClick={() => onTagChange("")}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${!selectedTag
-                        ? "bg-white text-black shadow-lg"
-                        : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
+                    ? "bg-white text-black shadow-lg"
+                    : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
                     }`}
             >
                 전체
@@ -194,8 +147,8 @@ function TagFilter({
                     key={tag}
                     onClick={() => onTagChange(tag === selectedTag ? "" : tag)}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${tag === selectedTag
-                            ? "bg-violet-500 text-white shadow-lg shadow-violet-500/25"
-                            : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
+                        ? "bg-violet-500 text-white shadow-lg shadow-violet-500/25"
+                        : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
                         }`}
                 >
                     #{tag}
@@ -204,8 +157,8 @@ function TagFilter({
             <button
                 onClick={() => onFeaturedChange(!featuredOnly)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${featuredOnly
-                        ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                        : "bg-white/5 text-slate-400 hover:bg-white/10"
+                    ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                    : "bg-white/5 text-slate-400 hover:bg-white/10"
                     }`}
             >
                 <Star className="w-4 h-4" />
@@ -420,8 +373,8 @@ function TemplateModal({
                                     onClick={() => { setRating(star); setHasRated(true); }}
                                     disabled={hasRated}
                                     className={`w-10 h-10 rounded-xl transition-all ${star <= rating
-                                            ? "bg-amber-500 text-black font-bold"
-                                            : "bg-white/5 text-slate-500 hover:bg-white/10"
+                                        ? "bg-amber-500 text-black font-bold"
+                                        : "bg-white/5 text-slate-500 hover:bg-white/10"
                                         } ${hasRated ? "cursor-not-allowed" : ""}`}
                                 >
                                     {star}
@@ -455,7 +408,7 @@ function TemplateModal({
 // MAIN PAGE
 // =============================================================================
 
-export default function BlackholePage() {
+export default function SingularityPage() {
     const router = useRouter();
     const [templates, setTemplates] = useState<Template[]>([]);
     const [loading, setLoading] = useState(true);
@@ -469,13 +422,13 @@ export default function BlackholePage() {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetchTemplates({
+            const response = await api.listSingularityTemplates({
                 tag: selectedTag || undefined,
                 featured_only: featuredOnly
             });
             setTemplates(response.items);
-        } catch {
-            setError("워크플로우를 불러오는데 실패했습니다");
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "워크플로우를 불러오는데 실패했습니다");
         } finally {
             setLoading(false);
         }
@@ -488,7 +441,7 @@ export default function BlackholePage() {
     const handleApply = async (template: Template) => {
         setIsApplying(true);
         try {
-            await applyTemplate(template.id);
+            await api.useSingularityTemplate(template.id);
             setSelectedTemplate(null);
             router.push(`/flow?template=${template.id}`);
         } catch {

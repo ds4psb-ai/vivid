@@ -5,8 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Loader2, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
+import { api } from "@/lib/api";
 
 function PaymentCallbackContent() {
     const searchParams = useSearchParams();
@@ -35,17 +34,11 @@ function PaymentCallbackContent() {
 
             try {
                 // Call backend to confirm payment
-                const response = await fetch(`${API_BASE_URL}/api/v1/payment/confirm`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        tid,
-                        amount: parseInt(amount),
-                        application_id: orderId,
-                    }),
+                const result = await api.confirmPayment({
+                    tid,
+                    amount: parseInt(amount),
+                    application_id: orderId,
                 });
-
-                const result = await response.json();
 
                 if (result.success) {
                     setStatus("success");

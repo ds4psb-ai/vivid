@@ -112,7 +112,7 @@ interface CapsuleRunRecord {
 ## 5) 실행 API (Legacy, _deprecated)
 
 현재 `/api/v1/capsules/*` 라우터는 `_deprecated`에 있으며 메인 앱에 마운트되지 않는다.  
-현행 실행 경로는 `/api/teaching/*` (Teaching Capsules) 또는 `/api/v1/agent/chat` 중심이다.
+현행 실행 경로는 `/api/dimension/*` (Dimension Capsules) 또는 `/api/v1/agent/chat` 중심이다.
 
 ### 5.1 동기 실행 (요약 결과)
 

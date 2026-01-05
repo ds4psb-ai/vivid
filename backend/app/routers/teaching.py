@@ -22,9 +22,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.credit_service import deduct_credits, get_or_create_user_credits, refund_credits
-from app.teaching_adapter import (
-    execute_teaching_capsule,
-    TeachingCapsuleId,
+from app.dimension_adapter import (
+    execute_dimension_capsule as execute_teaching_capsule,
+    DimensionCapsuleId as TeachingCapsuleId,
     ALLOWED_LANGUAGES,
     ALLOWED_MODELS,
     MAX_TOPIC_LENGTH,
@@ -49,7 +49,7 @@ def get_credit_cost(capsule_id: TeachingCapsuleId, model: str) -> int:
     
     Single Source of Truth: teaching_capsules.py에서 credit_costs 조회
     """
-    from app.fixtures.teaching_capsules import TEACHING_CAPSULES
+    from app.fixtures.dimension_capsules import DIMENSION_CAPSULES as TEACHING_CAPSULES
     
     capsule_key_map = {
         TeachingCapsuleId.PROMPT_GENERATE: "teaching.prompt.generate",

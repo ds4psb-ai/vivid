@@ -1,6 +1,6 @@
 "use client";
 
-import { TeachingSettingsProvider } from "@/contexts/TeachingSettingsContext";
+import { TeachingSettingsProvider } from "@/contexts/DimensionSettingsContext";
 import { CreditProvider } from "@/contexts/CreditContext";
 
 export default function TeachingLayout({

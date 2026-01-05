@@ -1,7 +1,7 @@
 "use client";
 
 import AppShell from "@/components/AppShell";
-import ReferenceCapturePanel from "@/components/teaching/ReferenceCapturePanel";
+import ReferenceCapturePanel from "@/components/dimension/ReferenceCapturePanel";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function TeachingShotCatchPage() {

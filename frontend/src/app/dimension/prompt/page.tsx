@@ -1,7 +1,7 @@
 "use client";
 
 import AppShell from "@/components/AppShell";
-import PromptGeneratorPanel from "@/components/teaching/PromptGeneratorPanel";
+import PromptGeneratorPanel from "@/components/dimension/PromptGeneratorPanel";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function TeachingPromptPage() {

@@ -54,7 +54,7 @@ class GeminiAdapter(BaseAdapter):
                 generate_shot_contracts_with_gemini,
                 generate_shot_contracts_with_dna,
             )
-            from app.narrative_utils import normalize_storyboard_cards
+            from app._deprecated.narrative_utils import normalize_storyboard_cards
             
             # Generate storyboard
             storyboard, storyboard_usage = generate_storyboard_with_gemini(

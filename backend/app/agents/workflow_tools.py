@@ -72,7 +72,8 @@ CREATE_WORKFLOW_SPEC = ToolSpec(
             "dimensions": {
                 "type": "array",
                 "items": {"type": "string", "enum": ["1D", "2D", "3D", "4D"]},
-                "description": "실행할 차원 순서 (예: ['1D', '2D', '3D'])",
+                "description": "실행할 차원 순서 (기본값: ['1D', '2D', '3D'])",
+                "default": ["1D", "2D", "3D"],
             },
             "auto_execute": {
                 "type": "boolean",
@@ -80,7 +81,7 @@ CREATE_WORKFLOW_SPEC = ToolSpec(
                 "default": True,
             },
         },
-        "required": ["topic", "dimensions"],
+        "required": ["topic"],
     },
 )
 
@@ -193,22 +194,19 @@ async def _create_workflow_handler(
 
 EXECUTE_WORKFLOW_SPEC = ToolSpec(
     name="execute_workflow",
-    description="생성된 워크플로우를 순차적으로 실행합니다. 각 차원 도구를 순서대로 호출하고 결과를 연결합니다.",
+    description="워크플로우를 순차적으로 실행합니다. 각 차원 도구를 순서대로 호출하고 결과를 연결합니다.",
     input_schema={
         "type": "object",
         "properties": {
-            "workflow_id": {
-                "type": "string",
-                "description": "실행할 워크플로우 ID",
-            },
             "topic": {
                 "type": "string",
-                "description": "워크플로우 주제 (workflow_id 없이 직접 실행 시 사용)",
+                "description": "워크플로우 주제/컨셉 (예: '시네마틱 도시 야경')",
             },
             "dimensions": {
                 "type": "array",
                 "items": {"type": "string", "enum": ["1D", "2D", "3D", "4D"]},
-                "description": "실행할 차원 순서 (workflow_id 없이 직접 실행 시 사용)",
+                "description": "실행할 차원 순서 (기본값: ['1D', '2D', '3D'])",
+                "default": ["1D", "2D", "3D"],
             },
             "model": {
                 "type": "string",
@@ -216,7 +214,7 @@ EXECUTE_WORKFLOW_SPEC = ToolSpec(
                 "default": "gemini-3-flash-preview",
             },
         },
-        "required": [],  # Either workflow_id OR (topic + dimensions)
+        "required": ["topic"],
     },
 )
 

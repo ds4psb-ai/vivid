@@ -12,8 +12,8 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 from app.config import settings
-from app.narrative_utils import normalize_story_beats, normalize_storyboard_cards
-from app.ideal_persona import build_persona_context, build_visual_context, get_thematic_weights
+from app._deprecated.narrative_utils import normalize_story_beats, normalize_storyboard_cards
+from app._deprecated.ideal_persona import build_persona_context, build_visual_context, get_thematic_weights
 
 logger = logging.getLogger(__name__)
 

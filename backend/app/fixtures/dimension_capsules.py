@@ -11,14 +11,13 @@ from __future__ import annotations
 from typing import List, Dict, Any
 
 
-TEACHING_CAPSULES: List[Dict[str, Any]] = [
+DIMENSION_CAPSULES: List[Dict[str, Any]] = [
     {
         "capsule_key": "teaching.prompt.generate",
         "version": "1.0.0",
         "credit_costs": {
             "gemini-3-flash-preview": 5,
             "gemini-2.5-pro": 15,
-            "gemini-3-flash-preview": 5,
         },
         "spec": {
             "name": "Veo 프롬프트 생성기",
@@ -89,7 +88,6 @@ TEACHING_CAPSULES: List[Dict[str, Any]] = [
         "credit_costs": {
             "gemini-3-flash-preview": 10,
             "gemini-2.5-pro": 25,
-            "gemini-3-flash-preview": 10,
         },
         "spec": {
             "name": "스토리보드 생성기",
@@ -140,7 +138,6 @@ TEACHING_CAPSULES: List[Dict[str, Any]] = [
         "credit_costs": {
             "gemini-3-flash-preview": 5,
             "gemini-2.5-pro": 12,
-            "gemini-3-flash-preview": 5,
         },
         "spec": {
             "name": "이미지 프롬프트 생성기",
@@ -190,7 +187,6 @@ TEACHING_CAPSULES: List[Dict[str, Any]] = [
         "credit_costs": {
             "gemini-3-flash-preview": 8,
             "gemini-2.5-pro": 20,
-            "gemini-3-flash-preview": 8,
         },
         "spec": {
             "name": "레퍼런스 분석기",
@@ -227,6 +223,6 @@ TEACHING_CAPSULES: List[Dict[str, Any]] = [
 ]
 
 
-def get_teaching_capsule_specs() -> List[Dict[str, Any]]:
+def get_dimension_capsule_specs() -> List[Dict[str, Any]]:
     """Return all teaching capsule specs for database seeding."""
-    return TEACHING_CAPSULES
+    return DIMENSION_CAPSULES

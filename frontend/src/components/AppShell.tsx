@@ -29,12 +29,32 @@ interface AppShellProps {
 
 // Page context messages for Chokki
 const PAGE_CONTEXT_MESSAGES: Record<string, string> = {
-    "/dimension": "안녕하세요! 저는 초끼예요 🐰 차원문(미니앱)들을 둘러보고 계시네요. 어떤 도구가 필요하신지 물어보세요!",
+    // Core Pages
+    "/dimension": "안녕하세요! 저는 초끼예요 🐰 차원문(미니앱)들을 둘러보고 계시네요. 원하는 도구 찾아드릴까요?",
     "/flow": "안녕하세요! 차원 흐름을 함께 설계해드릴게요. 어떤 콘텐츠를 만들고 싶으신가요?",
-    "/train": "안녕하세요! 열차 워크플로우에 오셨네요 🚂 도구들을 연결해서 콘텐츠를 만들어볼까요?",
-    "/tools": "안녕하세요! 도구 상세 페이지네요. 이 도구 사용법이 궁금하시면 물어보세요!",
-    "/crebit": "안녕하세요! Crebit 페이지에 오셨네요. 크레딧이나 구독에 대해 궁금한 점이 있으신가요?",
-    default: "안녕하세요! 저는 초끼예요 🐰 무엇을 도와드릴까요?",
+    "/singularity": "안녕하세요! 🌌 싱귤래리티 템플릿 갤러리입니다. 마음에 드는 워크플로우 조합 찾아드릴까요?",
+
+    // Tools Pages
+    "/tools": "안녕하세요! 🔧 도구 대시보드입니다. 새 도구를 만들거나 기존 도구를 Fork해보세요!",
+    "/tools/create": "새 도구를 만드시는군요! 💡 도구 이름, 설명, 스키마 작성을 도와드릴까요?",
+
+    // HumanCloud Pages
+    "/humancloud": "안녕하세요! 🎨 휴먼클라우드 마켓플레이스입니다. 요청을 올리거나 크리에이터를 찾아보세요!",
+    "/humancloud/requests": "요청 목록입니다. 새 요청을 만들거나 기존 요청 상태를 확인해보세요.",
+    "/humancloud/creator": "크리에이터 프로필 페이지네요. 크리에이터 등록이나 수정을 도와드릴까요?",
+
+    // Settings & Credits
+    "/settings": "⚙️ 설정 페이지입니다. API 키 연결, 알림 설정 등 궁금한 점 물어보세요!",
+    "/credits": "💳 크레딧 관리 페이지입니다. 충전, 사용 내역, BYOK 설정을 도와드릴게요.",
+    "/crebit": "Crebit 페이지입니다. 구독이나 크레딧에 대해 궁금한 점이 있으신가요?",
+
+    // Sandbox
+    "/sandbox": "🧪 샌드박스 모드입니다. 도구를 테스트해보세요!",
+
+    // Admin (for admin users)
+    "/admin": "🔐 관리자 페이지입니다. 어떤 관리 작업이 필요하신가요?",
+
+    default: "안녕하세요! 저는 초끼예요 🐰 무엇이든 물어보세요!",
 };
 
 export default function AppShell({

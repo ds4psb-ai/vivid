@@ -147,16 +147,18 @@ NEXT_PUBLIC_ADMIN_MODE=true
 - Backend: http://localhost:8100
 - Postgres: localhost:5433 (db: crebit_canvas)
 
+Active services:
+- Redis: 6380
+
 Reserved if you add services later:
-- Redis: 6379
 - Neo4j: 7475 / 7688
 
 ## API (current routers)
 
-- POST /api/teaching/prompt/generate
-- POST /api/teaching/storyboard/create
-- POST /api/teaching/image/generate
-- POST /api/teaching/reference/analyze
+- POST /api/dimension/1d/generate (1D Origin - Veo Prompt)
+- POST /api/dimension/2d/create (2D Blueprint - Storyboard)
+- POST /api/dimension/3d/generate (3D Ambience - Image Prompt)
+- POST /api/dimension/4d/analyze (4D Moment - Reference Analysis)
 - POST /api/v1/agent/chat
 - POST /api/v1/agent/upload
 - GET /api/v1/agent/sessions/{id}
@@ -178,12 +180,16 @@ Reserved if you add services later:
 - POST /api/v1/auth/logout
 - POST /api/v1/run-token/issue
 - POST /api/v1/run-token/validate
-- POST /api/v1/run-token/deduct
-- POST /api/v1/run-token/refund
+- POST /api/v1/run-token/{run_id}/deduct
+- POST /api/v1/run-token/{run_id}/refund
 - GET /api/v1/run-token/status/{run_id}
 - POST /api/v1/internal/credit-reserve (mTLS)
 - POST /api/v1/internal/credit-commit (mTLS)
 - POST /api/v1/internal/credit-rollback (mTLS)
+- GET /api/v1/singularity/templates (차원의 특이점 - 템플릿 갤러리)
+- GET /api/v1/singularity/templates/{id}
+- POST /api/v1/singularity/templates/{id}/use
+- POST /api/v1/singularity/templates/{id}/rate
 
 Auth: Google OAuth + session cookie (X-User-Id header is dev fallback).
 

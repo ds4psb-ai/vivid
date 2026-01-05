@@ -1,5 +1,7 @@
 "use client";
 
+import React from "react";
+
 /**
  * Stat Item for hero section
  */
@@ -10,12 +12,16 @@ interface StatItemProps {
     highlight?: boolean;
     badge?: string;
     urgent?: boolean;
+    icon?: React.ReactNode;
 }
 
-export function StatItem({ label, value, highlight, badge, urgent }: StatItemProps) {
+export function StatItem({ label, value, highlight, badge, urgent, icon }: StatItemProps) {
     return (
         <div className="flex flex-col items-center">
-            <div className="text-[#9CA3AF] text-xs font-bold tracking-widest uppercase mb-2">{label}</div>
+            <div className="flex items-center gap-2 text-[#9CA3AF] text-xs font-bold tracking-widest uppercase mb-2">
+                {icon}
+                <span>{label}</span>
+            </div>
             <div className="flex items-center gap-2">
                 <span className={`text-xl md:text-2xl font-bold ${highlight ? 'text-[#FF0045]' : 'text-white'}`}>
                     {value}
@@ -35,3 +41,4 @@ export function StatItem({ label, value, highlight, badge, urgent }: StatItemPro
         </div>
     );
 }
+

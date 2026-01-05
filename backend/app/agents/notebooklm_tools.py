@@ -281,9 +281,10 @@ _SPECS = [
                 "title": {
                     "type": "string",
                     "description": "노트북 제목 (예: '봉준호 HOOK 분석')",
+                    "default": "Untitled Notebook",
                 },
             },
-            "required": ["title"],
+            "required": [],
         },
     ),
     ToolSpec(

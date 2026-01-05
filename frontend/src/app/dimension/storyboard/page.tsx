@@ -1,7 +1,7 @@
 "use client";
 
 import AppShell from "@/components/AppShell";
-import StoryboardPanel from "@/components/teaching/StoryboardPanel";
+import StoryboardPanel from "@/components/dimension/StoryboardPanel";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function TeachingStoryboardPage() {

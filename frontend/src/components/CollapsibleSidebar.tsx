@@ -120,7 +120,7 @@ function NavItem({ icon: Icon, label, href, isExpanded, isActive, badge }: NavIt
                     )}
                 </AnimatePresence>
                 {badge && isExpanded && (
-                    <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded ${badge === 'Hot' ? 'bg-[#FF0045] text-white' : 'bg-[#4200FF] text-white'}`}>
+                    <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded ${badge === 'Hot' ? 'bg-[#FF0045] text-white' : 'bg-[#00E0FF] text-white'}`}>
                         {badge}
                     </span>
                 )}
@@ -128,7 +128,7 @@ function NavItem({ icon: Icon, label, href, isExpanded, isActive, badge }: NavIt
                 {badge && !isExpanded && (
                     <span className={`absolute top-2.5 right-3 w-2 h-2 rounded-full ring-2 ring-[#0a0a0c] ${badge === 'Hot'
                         ? 'bg-[#FF0045] shadow-[0_0_8px_rgba(255,0,69,0.8)]'
-                        : 'bg-[#4200FF]'
+                        : 'bg-[#00E0FF]'
                         }`} />
                 )}
             </Link>

@@ -602,6 +602,7 @@ export interface AgentChatRequest {
   metadata?: Record<string, unknown>;
   model?: string | null;
   attachments?: Record<string, unknown>[];
+  page_context?: string | null;  // Current page path for context-aware responses
 }
 
 export interface AgentDecisionRequest {
@@ -651,6 +652,37 @@ export interface NodeExecuteResult {
   execution_time_ms: number;
   token_usage: { input: number; output: number; total: number };
 }
+
+// --- Singularity (특이점) Types ---
+
+export interface SingularityTemplate {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail_url: string | null;
+  dimension_source: string;
+  dimension_sequence: string[];
+  tags: string[];
+  use_count: number;
+  rating_avg: number;
+  creator_name: string;
+  is_featured: boolean;
+  tool_names?: string[];
+}
+
+export interface SingularityTemplateList {
+  items: SingularityTemplate[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface SingularityTemplateParams {
+  tag?: string;
+  featured_only?: boolean;
+  page?: number;
+}
+
 
 class ApiClient {
   private buildHeaders(extra?: HeadersInit): Record<string, string> {
@@ -871,6 +903,88 @@ class ApiClient {
 
   async get<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint);
+  }
+
+  // --- Singularity (특이점) API ---
+
+  async listSingularityTemplates(params?: SingularityTemplateParams): Promise<SingularityTemplateList> {
+    const searchParams = new URLSearchParams();
+    if (params?.tag) searchParams.set("tag", params.tag);
+    if (params?.featured_only) searchParams.set("featured_only", "true");
+    if (params?.page) searchParams.set("page", params.page.toString());
+    const query = searchParams.toString();
+    return this.request<SingularityTemplateList>(`/api/v1/singularity/templates${query ? `?${query}` : ""}`);
+  }
+
+  async getSingularityTemplate(id: string): Promise<SingularityTemplate> {
+    return this.request<SingularityTemplate>(`/api/v1/singularity/templates/${id}`);
+  }
+
+  async useSingularityTemplate(id: string): Promise<{ success: boolean; template_id: string; message: string }> {
+    return this.request<{ success: boolean; template_id: string; message: string }>(`/api/v1/singularity/templates/${id}/use`, {
+      method: "POST",
+    });
+  }
+
+  async rateSingularityTemplate(id: string, rating: number, feedback?: string): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(`/api/v1/singularity/templates/${id}/rate`, {
+      method: "POST",
+      body: JSON.stringify({ rating, feedback }),
+    });
+  }
+
+  async createSingularityTemplate(data: {
+    title: string;
+    description: string;
+    dimension_source: string;
+    tool_sequence: string[];
+    input_preset: Record<string, unknown>;
+    output_example: Record<string, unknown>;
+    tags?: string[];
+    category?: string;
+  }): Promise<{ id: string; title: string }> {
+    return this.request<{ id: string; title: string }>("/api/v1/singularity/templates", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  // --- Payment (결제) API ---
+
+  async confirmPayment(data: { tid: string; amount: number; application_id: string }): Promise<{
+    success: boolean;
+    result_msg?: string;
+  }> {
+    return this.request<{ success: boolean; result_msg?: string }>("/api/v1/payment/confirm", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  // --- Teaching Settings (BYOK) API ---
+
+  async getTeachingSettings(): Promise<{
+    has_api_key: boolean;
+    api_key_preview: string | null;
+    prompt_data: Record<string, unknown>;
+    storyboard_data: Record<string, unknown>;
+    image_tool_data: Record<string, unknown>;
+    shot_catch_data: Record<string, unknown>;
+    language: string;
+    selected_model: string;
+  }> {
+    return this.request("/api/user/teaching-settings");
+  }
+
+  async updateTeachingSettings(data: Record<string, unknown>): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>("/api/user/teaching-settings", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getTeachingApiKey(): Promise<{ api_key: string | null }> {
+    return this.request<{ api_key: string | null }>("/api/user/teaching-settings/api-key");
   }
 
   async logout(): Promise<{ success: boolean }> {

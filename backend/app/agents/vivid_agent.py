@@ -15,8 +15,11 @@ from app.agents.agent_types import (
     ToolSpec,
 )
 from app.agents.notebooklm_tools import register_notebooklm_tools
-from app.agents.teaching_tools import register_teaching_tools
+from app.agents.dimension_tools import register_dimension_tools
 from app.agents.workflow_tools import register_workflow_tools
+from app.agents.navigation_tools import register_navigation_tools
+from app.agents.singularity_tools import register_singularity_tools
+from app.agents.humancloud_tools import register_humancloud_tools
 from app.agents.intent_router import classify_intent, get_intent_router
 from app.logging_config import get_logger
 
@@ -58,21 +61,61 @@ class MemoryManager:
                     content=f"Conversation summary: {state.summary}",
                 )
             )
-        if state.metadata:
-            try:
-                metadata_str = json.dumps(state.metadata, ensure_ascii=True)
-            except TypeError:
-                metadata_str = str(state.metadata)
-            if len(metadata_str) > self.max_summary_chars:
-                metadata_str = f"{metadata_str[: self.max_summary_chars]}..."
-            context.append(
-                AgentMessage(
-                    role=AgentRole.SYSTEM,
-                    content=f"Session metadata: {metadata_str}",
+        
+        # Inject page context hint for context-aware responses
+        if state.metadata and state.metadata.get("page_context"):
+            page_context = state.metadata["page_context"]
+            page_hint = self._get_page_hint(page_context)
+            if page_hint:
+                context.append(
+                    AgentMessage(
+                        role=AgentRole.SYSTEM,
+                        content=f"[Page Context] 사용자가 현재 {page_hint}에 있습니다. 해당 페이지의 기능과 관련된 도움을 제공하세요.",
+                    )
                 )
-            )
+        
+        if state.metadata:
+            # Filter out page_context from metadata string (already handled above)
+            filtered_metadata = {k: v for k, v in state.metadata.items() if k != "page_context"}
+            if filtered_metadata:
+                try:
+                    metadata_str = json.dumps(filtered_metadata, ensure_ascii=True)
+                except TypeError:
+                    metadata_str = str(filtered_metadata)
+                if len(metadata_str) > self.max_summary_chars:
+                    metadata_str = f"{metadata_str[: self.max_summary_chars]}..."
+                context.append(
+                    AgentMessage(
+                        role=AgentRole.SYSTEM,
+                        content=f"Session metadata: {metadata_str}",
+                    )
+                )
         context.extend(state.messages)
         return context
+    
+    def _get_page_hint(self, page_context: str) -> str:
+        """Get human-readable page hint for context injection."""
+        PAGE_HINTS = {
+            "/dimension": "차원문(미니앱) 갤러리 - AI 도구들 (프롬프트 생성, 스토리보드, 이미지 등)",
+            "/flow": "차원 흐름 디자이너 - 워크플로우 설계",
+            "/singularity": "싱귤래리티 템플릿 갤러리 - 워크플로우 템플릿 탐색/적용",
+            "/tools": "도구 대시보드 - 사용자 도구 관리/생성/Fork",
+            "/tools/create": "새 도구 생성 페이지",
+            "/humancloud": "휴먼클라우드 마켓플레이스 - 크리에이티브 요청/크리에이터 매칭",
+            "/humancloud/requests": "요청 목록 페이지",
+            "/settings": "설정 페이지 - API 키, 알림, 프로필",
+            "/credits": "크레딧 관리 페이지 - 충전, 사용 내역, BYOK",
+            "/crebit": "Crebit 구독/결제 페이지",
+            "/admin": "관리자 대시보드",
+        }
+        # Exact match first
+        if page_context in PAGE_HINTS:
+            return PAGE_HINTS[page_context]
+        # Partial match
+        for path, hint in PAGE_HINTS.items():
+            if page_context.startswith(path):
+                return hint
+        return ""
 
     def _summarize(self, messages: List[AgentMessage], previous: Optional[str]) -> str:
         lines: List[str] = []
@@ -104,10 +147,13 @@ class VividAgent:
         self._model = model_client
         self._tools = tool_registry or ToolRegistry()
         if tool_registry is None:
-            # 3-Layer Ecosystem: Teaching + NotebookLM + Workflow
-            register_teaching_tools(self._tools)
+            # Full Ecosystem: Teaching + NotebookLM + Workflow + Navigation + Singularity + HumanCloud
+            register_dimension_tools(self._tools)
             register_notebooklm_tools(self._tools)
             register_workflow_tools(self._tools)
+            register_navigation_tools(self._tools)
+            register_singularity_tools(self._tools)
+            register_humancloud_tools(self._tools)
         self._memory = memory_manager or MemoryManager()
         self._system_prompt = system_prompt
         self._max_tool_rounds = max_tool_rounds

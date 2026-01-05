@@ -11,7 +11,7 @@ from app.fixtures.auteur_templates import TEMPLATES
 from app.database import AsyncSessionLocal
 from app.models import CapsuleSpec, Template, TemplateVersion
 from app.graph_utils import ensure_pattern_version
-from app.patterns import get_latest_pattern_version
+from app._deprecated.patterns import get_latest_pattern_version
 
 
 async def seed_capsules(session: AsyncSession) -> int:

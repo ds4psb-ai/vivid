@@ -52,6 +52,19 @@ async def get_current_user(
     }
 
 
+async def get_optional_user_id(
+    request: Request,
+    x_user_id: Optional[str] = Header(default=None, alias="X-User-Id"),
+) -> Optional[str]:
+    """Get user ID if authenticated, else return None.
+    
+    Returns just the user ID string, not the full user dict.
+    Useful for endpoints that optionally personalize based on user.
+    """
+    user_id = await get_user_id(request, x_user_id)
+    return user_id
+
+
 async def get_current_user_optional(
     request: Request,
     x_user_id: Optional[str] = Header(default=None, alias="X-User-Id"),

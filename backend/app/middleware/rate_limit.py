@@ -17,7 +17,7 @@ from starlette.responses import Response
 import os
 
 # Use Redis if available, otherwise in-memory
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6380")
 
 def get_user_or_ip(request: Request) -> str:
     """Get user ID from session cookie or fall back to IP address."""

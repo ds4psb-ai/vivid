@@ -11,7 +11,8 @@ from app.database import init_db
 # Core Routers (3-Layer Ecosystem)
 from app.routers.auth import router as auth_router
 from app.routers.credits import router as credits_router
-from app.routers.teaching import router as teaching_router
+# [DEPRECATED] teaching_router - merged into dimension_router (2026-01-05)
+# from app.routers.teaching import router as teaching_router
 from app.routers.dimension import router as dimension_router
 from app.routers.agent import router as agent_router
 from app.routers.mcp import router as mcp_router
@@ -48,14 +49,20 @@ from app.routers.rag import router as rag_router
 # Workflow (Tool Chain Orchestration)
 from app.routers.workflow import router as workflow_router
 
-# Blackhole (Template Gallery)
-from app.routers.blackhole import router as blackhole_router
+# Singularity (Template Gallery - 차원의 특이점)
+from app.routers.singularity import router as singularity_router
 
 # Tool Registry (MCP-compatible tool discovery)
 from app.routers.tools import router as tools_router
 
 # Batch (Async Processing with 50% cost reduction)
 from app.routers.batch import router as batch_router
+
+# Content Metrics (Viral/Engagement Tracking)
+from app.routers.content_metrics import router as content_metrics_router
+
+# Affiliate (Referral System)
+from app.routers.affiliate import router as affiliate_router
 
 # Monitor (API Cost and Performance Tracking)
 from app.routers.monitor import router as monitor_router
@@ -137,7 +144,8 @@ setup_monitoring(app)
 app.include_router(dimension_router, prefix="/api/dimension", tags=["dimension"])
 
 # Layer 1: Teaching Tools (레거시 호환용 - deprecated)
-app.include_router(teaching_router, prefix="/api/teaching", tags=["teaching"])
+# [DEPRECATED] teaching API - use /api/dimension/* instead
+# app.include_router(teaching_router, prefix="/api/teaching", tags=["teaching"])
 
 # Layer 2: Agent Chat
 app.include_router(agent_router, prefix="/api/v1", tags=["agent"])
@@ -182,8 +190,14 @@ app.include_router(rag_router, prefix="/api/v1", tags=["rag"])
 # Workflow (Tool Chain Orchestration)
 app.include_router(workflow_router, prefix="/api/v1", tags=["workflow"])
 
-# Blackhole (Template Gallery)
-app.include_router(blackhole_router, prefix="/api/v1", tags=["blackhole"])
+# Singularity (Template Gallery - 차원의 특이점)
+app.include_router(singularity_router, prefix="/api/v1", tags=["singularity"])
+
+# Content Metrics (Viral/Engagement Tracking)
+app.include_router(content_metrics_router, prefix="/api/v1", tags=["content-metrics"])
+
+# Affiliate (Referral System)
+app.include_router(affiliate_router, prefix="/api/v1", tags=["affiliate"])
 
 # Tool Registry (MCP-compatible tool discovery)
 app.include_router(tools_router, tags=["tools"])
