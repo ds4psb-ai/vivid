@@ -12,6 +12,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 from app.agents.agent_types import (
+    TieredContext,
     ToolCall,
     ToolContext,
     ToolRegistry,
@@ -21,6 +22,7 @@ from app.agents.agent_types import (
 )
 from app.agents.tool_utils import create_emitter, error_result, success_result
 from app.logging_config import get_logger
+from datetime import datetime
 
 logger = get_logger("workflow_tools")
 
@@ -224,49 +226,60 @@ async def _execute_workflow_handler(
     call: ToolCall,
 ) -> ToolResult:
     """워크플로우 실행 핸들러.
-    
+
     각 차원 도구를 순차적으로 실행하고 결과를 체이닝합니다.
+    TieredContext를 사용하여 session/step/history를 분리 관리합니다.
     DB에서 동적으로 도구를 로딩하여 커뮤니티 도구도 지원합니다.
     """
     from app.services.dynamic_adapter import execute_tool_by_key
     from app.database import get_db_context
-    
+
     emitter = create_emitter(context, call)
     args = call.arguments or {}
-    
+
     topic = args.get("topic", "") or ""
     dimensions = args.get("dimensions") or ["1D", "2D", "3D"]
     model = args.get("model") or "gemini-3-flash-preview"
-    
+
     # Validate topic
     if not topic or not isinstance(topic, str):
         return error_result(call, "워크플로우 주제(topic)를 지정해주세요.")
     topic = topic.strip()
     if len(topic) < 2:
         return error_result(call, "주제는 최소 2글자 이상이어야 합니다.")
-    
+
     # Validate dimensions
     if not dimensions or not isinstance(dimensions, list):
         return error_result(call, "실행할 차원을 지정해주세요.")
-    
+
     # Filter valid dimensions only
     valid_dimensions = [d for d in dimensions if isinstance(d, str) and d in DIMENSION_TO_TOOL]
     if not valid_dimensions:
         return error_result(call, f"유효한 차원이 없습니다. 사용 가능: {list(DIMENSION_TO_TOOL.keys())}")
-    
+
     workflow_id = str(uuid.uuid4())
-    
+
+    # Initialize TieredContext for this workflow
+    tiered = context.state.get_or_create_tiered_context()
+
+    # Set session-level values (persist across all steps)
+    tiered.set_session_value("workflow_id", workflow_id)
+    tiered.set_session_value("topic", topic)
+    tiered.set_session_value("model", model)
+    tiered.set_session_value("style", args.get("style", "cinematic"))
+    tiered.set_session_value("started_at", datetime.utcnow().isoformat() + "Z")
+
     emitter.emit("agent.workflow_start", {
         "workflow_id": workflow_id,
         "topic": topic,
         "dimensions": valid_dimensions,
         "total_steps": len(valid_dimensions),
     })
-    
+
     results: List[Dict[str, Any]] = []
     total_credits = 0
     prev_output: Dict[str, Any] = {"topic": topic}
-    
+
     for idx, dim in enumerate(valid_dimensions):
         tool_name = DIMENSION_TO_TOOL.get(dim)
         if not tool_name:
@@ -276,10 +289,18 @@ async def _execute_workflow_handler(
                 "error": f"Unknown dimension: {dim}",
             })
             continue
-        
-        # Prepare inputs based on dimension and previous output
-        inputs = _prepare_dimension_inputs(dim, topic, prev_output)
-        
+
+        # Advance to new step (archives previous step to history)
+        tiered.advance_step(dimension=dim)
+
+        # Set step-level context
+        tiered.step["tool_name"] = tool_name
+        tiered.step["dimension"] = dim
+        tiered.step["started_at"] = datetime.utcnow().isoformat() + "Z"
+
+        # Prepare inputs using tiered context + backward compatible method
+        inputs = _prepare_dimension_inputs_tiered(tiered, dim, topic, prev_output)
+
         emitter.emit("agent.workflow_step_start", {
             "step": idx + 1,
             "total_steps": len(dimensions),
@@ -287,7 +308,7 @@ async def _execute_workflow_handler(
             "dimension_name": DIMENSION_NAMES.get(dim, dim),
             "tool_name": tool_name,
         })
-        
+
         try:
             # Execute using dynamic adapter (loads from DB)
             async with get_db_context() as db:
@@ -297,11 +318,11 @@ async def _execute_workflow_handler(
                     params={"model": model},
                     db_session=db,
                 )
-            
+
             if result.success:
                 # Defensive: ensure output is a dict
                 output = result.output if isinstance(result.output, dict) else {}
-                
+
                 # Safe metrics access
                 credit_cost = 1
                 if result.metrics and isinstance(result.metrics, dict):
@@ -309,7 +330,28 @@ async def _execute_workflow_handler(
                     if not isinstance(credit_cost, (int, float)):
                         credit_cost = 1
                 total_credits += credit_cost
-                
+
+                # Store in tiered context step
+                tiered.step["success"] = True
+                tiered.step["output"] = output
+                tiered.step["credit_cost"] = credit_cost
+
+                # Store large outputs as handles (optional optimization)
+                if _should_use_handle(output):
+                    try:
+                        from app.agents.handle_storage import get_handle_storage
+                        storage = get_handle_storage()
+                        handle_key = f"{workflow_id}:{dim}:{idx}"
+                        handle_ref = await storage.store(
+                            key=handle_key,
+                            data=output,
+                            metadata={"dimension": dim, "session_id": context.session_id},
+                        )
+                        tiered.register_handle(f"{dim}_output", handle_ref)
+                        tiered.step["output_handle"] = handle_ref
+                    except Exception as he:
+                        logger.warning(f"Failed to store handle: {he}")
+
                 step_result: Dict[str, Any] = {
                     "dimension": dim,
                     "dimension_name": DIMENSION_NAMES.get(dim, dim),
@@ -319,11 +361,11 @@ async def _execute_workflow_handler(
                     "credit_cost": credit_cost,
                 }
                 results.append(step_result)
-                
+
                 # Update prev_output only if output is valid dict
                 if output:
                     prev_output = output
-                
+
                 emitter.emit("agent.workflow_step_complete", {
                     "step": idx + 1,
                     "dimension": dim,
@@ -332,6 +374,9 @@ async def _execute_workflow_handler(
                 })
             else:
                 error_msg = result.error or "Unknown error"
+                tiered.step["success"] = False
+                tiered.step["error"] = error_msg
+
                 results.append({
                     "dimension": dim,
                     "status": "failed",
@@ -342,9 +387,12 @@ async def _execute_workflow_handler(
                     "dimension": dim,
                     "error": error_msg,
                 })
-                
+
         except Exception as e:
             logger.exception(f"Workflow step {dim} failed", extra={"error": str(e)})
+            tiered.step["success"] = False
+            tiered.step["error"] = str(e)
+
             results.append({
                 "dimension": dim,
                 "status": "error",
@@ -355,17 +403,21 @@ async def _execute_workflow_handler(
                 "dimension": dim,
                 "error": str(e),
             })
-    
+
+    # Final step archival
+    if tiered.step:
+        tiered.advance_step(dimension="complete")
+
     # Workflow complete
     success_count = sum(1 for r in results if r.get("status") == "success")
-    
+
     emitter.emit("agent.workflow_complete", {
         "workflow_id": workflow_id,
         "total_steps": len(valid_dimensions),
         "success_count": success_count,
         "total_credits": total_credits,
     })
-    
+
     logger.info(
         "Workflow execution complete",
         extra={
@@ -373,9 +425,10 @@ async def _execute_workflow_handler(
             "workflow_id": workflow_id,
             "success_count": success_count,
             "total_credits": total_credits,
+            "history_count": len(tiered.history),
         },
     )
-    
+
     return success_result(call, {
         "workflow_id": workflow_id,
         "topic": topic,
@@ -494,6 +547,72 @@ def _prepare_dimension_inputs(
         }
     
     return {"topic": topic}
+
+
+def _prepare_dimension_inputs_tiered(
+    tiered: TieredContext,
+    dimension: str,
+    fallback_topic: str,
+    prev_output: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Prepare inputs using tiered context.
+
+    Uses session values for global preferences and falls back to prev_output.
+    This function is a wrapper that enhances _prepare_dimension_inputs with
+    TieredContext session values.
+
+    Args:
+        tiered: TieredContext instance
+        dimension: Dimension ID (1D, 2D, 3D, 4D)
+        fallback_topic: Fallback topic if not in session
+        prev_output: Previous step output for chaining
+
+    Returns:
+        Input dictionary for the dimension tool
+    """
+    # Get session-level values
+    topic = tiered.get_session_value("topic", fallback_topic)
+    style = tiered.get_session_value("style", "cinematic")
+
+    # Merge session values into prev_output for backward compatibility
+    enhanced_prev = dict(prev_output) if prev_output else {}
+    if "style" not in enhanced_prev:
+        enhanced_prev["style"] = style
+
+    # Use the original function for actual input preparation
+    inputs = _prepare_dimension_inputs(dimension, topic, enhanced_prev)
+
+    return inputs
+
+
+def _should_use_handle(output: Dict[str, Any]) -> bool:
+    """Determine if output should be stored as handle.
+
+    Criteria:
+    - Contains many scenes (storyboard with > 3 scenes)
+    - Large JSON size (> 5KB)
+
+    Args:
+        output: Tool output dictionary
+
+    Returns:
+        True if output should be stored as handle
+    """
+    if not output or not isinstance(output, dict):
+        return False
+
+    # Check for large storyboard
+    if "scenes" in output and isinstance(output["scenes"], list):
+        if len(output["scenes"]) > 3:
+            return True
+
+    # Check total size (rough estimate)
+    try:
+        import json
+        size = len(json.dumps(output, ensure_ascii=False))
+        return size > 5000  # 5KB threshold
+    except Exception:
+        return False
 
 
 def _get_output_preview(output: Dict[str, Any], max_length: int = 100) -> str:

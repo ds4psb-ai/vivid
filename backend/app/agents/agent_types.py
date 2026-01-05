@@ -2,11 +2,20 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Protocol
 
 from pydantic import BaseModel, Field
+
+
+# =============================================================================
+# Handle Pattern Types
+# =============================================================================
+
+# HandleRef is a string reference to large data: "handle:{storage}:{key}"
+HandleRef = str
 
 
 class AgentRole(str, Enum):
@@ -65,6 +74,115 @@ class ToolSpec(BaseModel):
     output_schema: Optional[Dict[str, Any]] = None
 
 
+# =============================================================================
+# TieredContext: Multi-level context for workflow execution
+# =============================================================================
+
+@dataclass
+class StepSummary:
+    """Summary of a completed workflow step."""
+    step_index: int
+    dimension: str  # "1D", "2D", "3D", "4D"
+    tool_name: str
+    success: bool
+    output_preview: str
+    credit_cost: int = 0
+    completed_at: Optional[str] = None  # ISO timestamp
+
+
+@dataclass
+class TieredContext:
+    """Multi-level context for workflow execution.
+
+    Provides isolation between steps while maintaining session-wide state.
+
+    Levels:
+    - session: Series-wide globals (character, style, user preferences)
+    - step: Current step state (inputs, intermediate results)
+    - history: Summaries of previous steps for context continuity
+    - handles: References to large artifacts stored externally
+    """
+    session: Dict[str, Any] = field(default_factory=dict)
+    step: Dict[str, Any] = field(default_factory=dict)
+    history: List[StepSummary] = field(default_factory=list)
+    handles: Dict[str, HandleRef] = field(default_factory=dict)
+    current_step_index: int = 0
+    current_dimension: Optional[str] = None
+
+    def advance_step(self, dimension: str) -> None:
+        """Advance to next step, archiving current step to history."""
+        if self.step and self.current_dimension:
+            summary = StepSummary(
+                step_index=self.current_step_index,
+                dimension=self.current_dimension,
+                tool_name=self.step.get("tool_name", "unknown"),
+                success=self.step.get("success", False),
+                output_preview=self._create_output_preview(self.step.get("output", {})),
+                credit_cost=self.step.get("credit_cost", 0),
+                completed_at=datetime.utcnow().isoformat() + "Z",
+            )
+            self.history.append(summary)
+
+        self.step = {}
+        self.current_step_index += 1
+        self.current_dimension = dimension
+
+    def _create_output_preview(self, output: Dict[str, Any], max_len: int = 200) -> str:
+        """Create truncated preview of step output."""
+        if not output:
+            return "(empty)"
+
+        for key in ["prompt", "description", "analysis"]:
+            if key in output and isinstance(output[key], str):
+                text = output[key]
+                return text[:max_len] + "..." if len(text) > max_len else text
+
+        if "scenes" in output and isinstance(output["scenes"], list):
+            return f"{len(output['scenes'])} scenes generated"
+
+        return f"{len(output)} fields"
+
+    def get_session_value(self, key: str, default: Any = None) -> Any:
+        """Get session-level value."""
+        return self.session.get(key, default)
+
+    def set_session_value(self, key: str, value: Any) -> None:
+        """Set session-level value (persists across steps)."""
+        self.session[key] = value
+
+    def register_handle(self, key: str, handle_ref: HandleRef) -> None:
+        """Register a handle reference for large data."""
+        self.handles[key] = handle_ref
+
+    def get_last_output(self) -> Dict[str, Any]:
+        """Get the last step's full output from step context."""
+        return self.step.get("output", {})
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize for storage/transmission."""
+        return {
+            "session": self.session,
+            "step": self.step,
+            "history": [asdict(s) for s in self.history],
+            "handles": self.handles,
+            "current_step_index": self.current_step_index,
+            "current_dimension": self.current_dimension,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "TieredContext":
+        """Deserialize from storage."""
+        history = [StepSummary(**s) for s in data.get("history", [])]
+        return cls(
+            session=data.get("session", {}),
+            step=data.get("step", {}),
+            history=history,
+            handles=data.get("handles", {}),
+            current_step_index=data.get("current_step_index", 0),
+            current_dimension=data.get("current_dimension"),
+        )
+
+
 @dataclass
 class AgentState:
     session_id: str
@@ -72,6 +190,13 @@ class AgentState:
     summary: Optional[str] = None
     artifacts: Dict[str, Any] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
+    tiered_context: Optional[TieredContext] = None
+
+    def get_or_create_tiered_context(self) -> TieredContext:
+        """Get existing tiered context or create new one."""
+        if self.tiered_context is None:
+            self.tiered_context = TieredContext()
+        return self.tiered_context
 
 
 @dataclass
@@ -82,6 +207,26 @@ class ToolContext:
     @property
     def session_id(self) -> str:
         return self.state.session_id
+
+    @property
+    def tiered(self) -> Optional[TieredContext]:
+        """Get tiered context if available."""
+        return self.state.tiered_context
+
+    def require_tiered(self) -> TieredContext:
+        """Get or create tiered context."""
+        return self.state.get_or_create_tiered_context()
+
+    def get_session_value(self, key: str, default: Any = None) -> Any:
+        """Get value from session tier."""
+        if self.tiered:
+            return self.tiered.get_session_value(key, default)
+        return self.state.metadata.get(key, default)
+
+    def set_session_value(self, key: str, value: Any) -> None:
+        """Set value in session tier."""
+        tiered = self.require_tiered()
+        tiered.set_session_value(key, value)
 
 
 @dataclass
