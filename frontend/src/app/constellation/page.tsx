@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -438,12 +438,35 @@ function CreateModal({
 }
 
 // =============================================================================
+// SEARCH PARAMS HANDLER (must be inside Suspense)
+// =============================================================================
+
+function SearchParamsHandler({
+    onNewWithSingularity,
+}: {
+    onNewWithSingularity: (singularityId: string) => void;
+}) {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+
+    useEffect(() => {
+        const isNew = searchParams.get("new");
+        const singularityId = searchParams.get("singularity");
+        if (isNew === "true" && singularityId) {
+            onNewWithSingularity(singularityId);
+            router.replace("/constellation");
+        }
+    }, [searchParams, router, onNewWithSingularity]);
+
+    return null;
+}
+
+// =============================================================================
 // MAIN PAGE
 // =============================================================================
 
-export default function ConstellationPage() {
+function ConstellationPageContent() {
     const router = useRouter();
-    const searchParams = useSearchParams();
     const toast = useToast();
     const [constellations, setConstellations] = useState<Constellation[]>([]);
     const [loading, setLoading] = useState(true);
@@ -453,17 +476,10 @@ export default function ConstellationPage() {
     const [isCreating, setIsCreating] = useState(false);
     const [initialSingularityId, setInitialSingularityId] = useState<string | null>(null);
 
-    // Handle URL params for auto-creating with a singularity
-    useEffect(() => {
-        const isNew = searchParams.get("new");
-        const singularityId = searchParams.get("singularity");
-        if (isNew === "true" && singularityId) {
-            setInitialSingularityId(singularityId);
-            setShowCreateModal(true);
-            // Clean up URL
-            router.replace("/constellation");
-        }
-    }, [searchParams, router]);
+    const handleNewWithSingularity = useCallback((singularityId: string) => {
+        setInitialSingularityId(singularityId);
+        setShowCreateModal(true);
+    }, []);
 
     const loadConstellations = useCallback(async () => {
         setLoading(true);
@@ -505,6 +521,9 @@ export default function ConstellationPage() {
 
     return (
         <AppShell>
+            <Suspense fallback={null}>
+                <SearchParamsHandler onNewWithSingularity={handleNewWithSingularity} />
+            </Suspense>
             <div className="min-h-screen bg-black">
                 {/* Visual Header */}
                 <ConstellationVisual />
@@ -603,4 +622,8 @@ export default function ConstellationPage() {
             </div>
         </AppShell>
     );
+}
+
+export default function ConstellationPage() {
+    return <ConstellationPageContent />;
 }
