@@ -78,6 +78,12 @@ class ToolSpec(BaseModel):
 # TieredContext: Multi-level context for workflow execution
 # =============================================================================
 
+# Hardening constants
+MAX_HISTORY_LENGTH = 100  # Maximum step summaries to keep
+MAX_HANDLES_COUNT = 50    # Maximum handle references
+MAX_SESSION_KEYS = 50     # Maximum session key-value pairs
+
+
 @dataclass
 class StepSummary:
     """Summary of a completed workflow step."""
@@ -88,6 +94,43 @@ class StepSummary:
     output_preview: str
     credit_cost: int = 0
     completed_at: Optional[str] = None  # ISO timestamp
+
+    @classmethod
+    def from_dict_safe(cls, data: Dict[str, Any]) -> Optional["StepSummary"]:
+        """Safely create StepSummary from dict with validation.
+
+        Returns None if required fields are missing or invalid.
+        """
+        required_fields = ["step_index", "dimension", "tool_name", "success", "output_preview"]
+
+        # Check required fields exist
+        for field in required_fields:
+            if field not in data:
+                return None
+
+        # Validate types
+        try:
+            step_index = int(data["step_index"])
+            dimension = str(data["dimension"])
+            tool_name = str(data["tool_name"])
+            success = bool(data["success"])
+            output_preview = str(data["output_preview"])
+            credit_cost = int(data.get("credit_cost", 0))
+            completed_at = data.get("completed_at")
+            if completed_at is not None:
+                completed_at = str(completed_at)
+
+            return cls(
+                step_index=step_index,
+                dimension=dimension,
+                tool_name=tool_name,
+                success=success,
+                output_preview=output_preview,
+                credit_cost=credit_cost,
+                completed_at=completed_at,
+            )
+        except (ValueError, TypeError):
+            return None
 
 
 @dataclass
@@ -123,6 +166,10 @@ class TieredContext:
             )
             self.history.append(summary)
 
+            # Enforce history size limit (FIFO eviction)
+            if len(self.history) > MAX_HISTORY_LENGTH:
+                self.history = self.history[-MAX_HISTORY_LENGTH:]
+
         self.step = {}
         self.current_step_index += 1
         self.current_dimension = dimension
@@ -147,11 +194,21 @@ class TieredContext:
         return self.session.get(key, default)
 
     def set_session_value(self, key: str, value: Any) -> None:
-        """Set session-level value (persists across steps)."""
+        """Set session-level value (persists across steps).
+
+        Raises ValueError if session key limit exceeded.
+        """
+        if key not in self.session and len(self.session) >= MAX_SESSION_KEYS:
+            raise ValueError(f"Session key limit ({MAX_SESSION_KEYS}) exceeded")
         self.session[key] = value
 
     def register_handle(self, key: str, handle_ref: HandleRef) -> None:
-        """Register a handle reference for large data."""
+        """Register a handle reference for large data.
+
+        Raises ValueError if handle limit exceeded.
+        """
+        if key not in self.handles and len(self.handles) >= MAX_HANDLES_COUNT:
+            raise ValueError(f"Handle limit ({MAX_HANDLES_COUNT}) exceeded")
         self.handles[key] = handle_ref
 
     def get_last_output(self) -> Dict[str, Any]:
@@ -171,14 +228,43 @@ class TieredContext:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "TieredContext":
-        """Deserialize from storage."""
-        history = [StepSummary(**s) for s in data.get("history", [])]
+        """Deserialize from storage with validation.
+
+        Invalid history entries are skipped with warning.
+        Size limits are enforced on load.
+        """
+        # Parse history with validation
+        history: List[StepSummary] = []
+        raw_history = data.get("history", [])
+        if isinstance(raw_history, list):
+            for i, item in enumerate(raw_history):
+                if isinstance(item, dict):
+                    summary = StepSummary.from_dict_safe(item)
+                    if summary is not None:
+                        history.append(summary)
+                    # Skip invalid entries silently (already logged in from_dict_safe)
+
+        # Enforce history limit on load
+        if len(history) > MAX_HISTORY_LENGTH:
+            history = history[-MAX_HISTORY_LENGTH:]
+
+        # Parse session with limit
+        session = data.get("session", {})
+        if isinstance(session, dict) and len(session) > MAX_SESSION_KEYS:
+            # Keep most recent keys (arbitrary order in dict)
+            session = dict(list(session.items())[:MAX_SESSION_KEYS])
+
+        # Parse handles with limit
+        handles = data.get("handles", {})
+        if isinstance(handles, dict) and len(handles) > MAX_HANDLES_COUNT:
+            handles = dict(list(handles.items())[:MAX_HANDLES_COUNT])
+
         return cls(
-            session=data.get("session", {}),
-            step=data.get("step", {}),
+            session=session if isinstance(session, dict) else {},
+            step=data.get("step", {}) if isinstance(data.get("step"), dict) else {},
             history=history,
-            handles=data.get("handles", {}),
-            current_step_index=data.get("current_step_index", 0),
+            handles=handles if isinstance(handles, dict) else {},
+            current_step_index=int(data.get("current_step_index", 0)),
             current_dimension=data.get("current_dimension"),
         )
 

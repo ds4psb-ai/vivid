@@ -5,9 +5,15 @@ without embedding them in context. This keeps agent context lean while allowing
 retrieval when needed.
 
 Storage backends can be swapped without changing tool code.
+
+Hardening (T1):
+- Redis connection retry with exponential backoff
+- Atomic store operations using pipeline
+- Graceful error handling with fallback
 """
 from __future__ import annotations
 
+import asyncio
 import json
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -16,6 +22,14 @@ from typing import Any, Dict, Optional, Protocol
 from app.logging_config import get_logger
 
 logger = get_logger("handle_storage")
+
+
+# =============================================================================
+# Constants
+# =============================================================================
+
+MAX_RETRY_ATTEMPTS = 3
+RETRY_BASE_DELAY_MS = 100  # 100ms, 200ms, 400ms exponential backoff
 
 
 @dataclass(frozen=True)
@@ -67,6 +81,11 @@ class RedisHandleStorage:
 
     Format: handle:redis:{key}
     Storage: JSON serialized with metadata prefix
+
+    Hardening:
+    - Retry with exponential backoff on connection errors
+    - Atomic store using pipeline
+    - Graceful degradation on failures
     """
 
     PREFIX = "handle:vivid:"
@@ -75,13 +94,41 @@ class RedisHandleStorage:
 
     def __init__(self, redis_client=None):
         self._redis = redis_client
+        self._connection_failed = False
 
     async def _get_redis(self):
-        """Lazy load Redis client."""
-        if self._redis is None:
-            from app.redis_client import get_redis_client
-            self._redis = get_redis_client()
-        return self._redis
+        """Lazy load Redis client with retry logic."""
+        if self._redis is not None:
+            return self._redis
+
+        last_error = None
+        for attempt in range(MAX_RETRY_ATTEMPTS):
+            try:
+                from app.redis_client import get_redis_client
+                self._redis = get_redis_client()
+                # Test connection
+                await self._redis.ping()
+                self._connection_failed = False
+                return self._redis
+            except RuntimeError as e:
+                # Redis not initialized
+                last_error = e
+                logger.warning(f"Redis not initialized (attempt {attempt + 1}): {e}")
+            except Exception as e:
+                last_error = e
+                logger.warning(f"Redis connection failed (attempt {attempt + 1}): {e}")
+
+            if attempt < MAX_RETRY_ATTEMPTS - 1:
+                delay = (RETRY_BASE_DELAY_MS * (2 ** attempt)) / 1000
+                await asyncio.sleep(delay)
+
+        self._connection_failed = True
+        logger.error(f"Redis connection failed after {MAX_RETRY_ATTEMPTS} attempts: {last_error}")
+        raise ConnectionError(f"Redis unavailable: {last_error}")
+
+    def _is_available(self) -> bool:
+        """Check if Redis is available without raising."""
+        return self._redis is not None and not self._connection_failed
 
     def _make_handle_ref(self, key: str) -> str:
         """Create handle reference from key."""
@@ -101,21 +148,33 @@ class RedisHandleStorage:
         ttl_seconds: Optional[int] = None,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
-        """Store data in Redis with handle reference."""
-        redis = await self._get_redis()
+        """Store data in Redis with handle reference.
+
+        Uses pipeline for atomic storage of data + metadata.
+        """
+        try:
+            redis = await self._get_redis()
+        except ConnectionError as e:
+            logger.error(f"Cannot store handle, Redis unavailable: {e}")
+            raise
+
         ttl = ttl_seconds or self.DEFAULT_TTL
 
         # Serialize data
-        if content_type == "json":
-            serialized = json.dumps(data, ensure_ascii=False)
-        else:
-            serialized = str(data)
+        try:
+            if content_type == "json":
+                serialized = json.dumps(data, ensure_ascii=False)
+            else:
+                serialized = str(data)
+        except (TypeError, ValueError) as e:
+            logger.error(f"Failed to serialize data: {e}")
+            raise ValueError(f"Data serialization failed: {e}")
 
-        # Store data
+        # Prepare keys
         storage_key = f"{self.PREFIX}{key}"
-        await redis.setex(storage_key, ttl, serialized)
+        meta_key = f"{self.METADATA_PREFIX}{key}"
 
-        # Store metadata
+        # Build metadata with defensive null checks
         meta = HandleMetadata(
             key=key,
             storage_type="redis",
@@ -123,11 +182,20 @@ class RedisHandleStorage:
             size_bytes=len(serialized.encode("utf-8")),
             created_at=datetime.utcnow().isoformat() + "Z",
             expires_at=(datetime.utcnow() + timedelta(seconds=ttl)).isoformat() + "Z",
-            dimension=metadata.get("dimension") if metadata else None,
-            session_id=metadata.get("session_id") if metadata else None,
+            dimension=metadata.get("dimension") if metadata and isinstance(metadata, dict) else None,
+            session_id=metadata.get("session_id") if metadata and isinstance(metadata, dict) else None,
         )
-        meta_key = f"{self.METADATA_PREFIX}{key}"
-        await redis.setex(meta_key, ttl, json.dumps(meta.__dict__))
+        meta_serialized = json.dumps(meta.__dict__)
+
+        # Atomic store using pipeline
+        try:
+            async with redis.pipeline(transaction=True) as pipe:
+                pipe.setex(storage_key, ttl, serialized)
+                pipe.setex(meta_key, ttl, meta_serialized)
+                await pipe.execute()
+        except Exception as e:
+            logger.error(f"Failed to store handle atomically: {e}")
+            raise
 
         handle_ref = self._make_handle_ref(key)
         logger.info(f"Stored handle: {handle_ref}", extra={"size_bytes": meta.size_bytes})
@@ -141,9 +209,18 @@ class RedisHandleStorage:
             logger.warning(f"Invalid handle ref format: {handle_ref}")
             return None
 
-        redis = await self._get_redis()
-        storage_key = f"{self.PREFIX}{key}"
-        data = await redis.get(storage_key)
+        try:
+            redis = await self._get_redis()
+        except ConnectionError:
+            logger.error(f"Cannot retrieve handle, Redis unavailable")
+            return None
+
+        try:
+            storage_key = f"{self.PREFIX}{key}"
+            data = await redis.get(storage_key)
+        except Exception as e:
+            logger.error(f"Redis get failed for {handle_ref}: {e}")
+            return None
 
         if data is None:
             logger.warning(f"Handle not found: {handle_ref}")
@@ -151,7 +228,8 @@ class RedisHandleStorage:
 
         try:
             return json.loads(data)
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
+            logger.warning(f"JSON decode failed for {handle_ref}, returning raw: {e}")
             return data
 
     async def exists(self, handle_ref: str) -> bool:
@@ -160,22 +238,39 @@ class RedisHandleStorage:
         if not key:
             return False
 
-        redis = await self._get_redis()
-        storage_key = f"{self.PREFIX}{key}"
-        return await redis.exists(storage_key) > 0
+        try:
+            redis = await self._get_redis()
+            storage_key = f"{self.PREFIX}{key}"
+            return await redis.exists(storage_key) > 0
+        except Exception as e:
+            logger.error(f"Redis exists check failed for {handle_ref}: {e}")
+            return False
 
     async def delete(self, handle_ref: str) -> bool:
-        """Delete handle and associated data."""
+        """Delete handle and associated data (atomic)."""
         key = self._parse_handle_ref(handle_ref)
         if not key:
             return False
 
-        redis = await self._get_redis()
+        try:
+            redis = await self._get_redis()
+        except ConnectionError:
+            logger.error(f"Cannot delete handle, Redis unavailable")
+            return False
+
         storage_key = f"{self.PREFIX}{key}"
         meta_key = f"{self.METADATA_PREFIX}{key}"
 
-        deleted = await redis.delete(storage_key, meta_key)
-        return deleted > 0
+        try:
+            # Atomic delete using pipeline
+            async with redis.pipeline(transaction=True) as pipe:
+                pipe.delete(storage_key)
+                pipe.delete(meta_key)
+                results = await pipe.execute()
+            return sum(results) > 0
+        except Exception as e:
+            logger.error(f"Redis delete failed for {handle_ref}: {e}")
+            return False
 
     async def get_metadata(self, handle_ref: str) -> Optional[HandleMetadata]:
         """Get metadata for handle."""
@@ -183,16 +278,36 @@ class RedisHandleStorage:
         if not key:
             return None
 
-        redis = await self._get_redis()
-        meta_key = f"{self.METADATA_PREFIX}{key}"
-        data = await redis.get(meta_key)
+        try:
+            redis = await self._get_redis()
+        except ConnectionError:
+            logger.error(f"Cannot get metadata, Redis unavailable")
+            return None
+
+        try:
+            meta_key = f"{self.METADATA_PREFIX}{key}"
+            data = await redis.get(meta_key)
+        except Exception as e:
+            logger.error(f"Redis get metadata failed for {handle_ref}: {e}")
+            return None
 
         if data is None:
             return None
 
         try:
-            return HandleMetadata(**json.loads(data))
-        except (json.JSONDecodeError, TypeError):
+            parsed = json.loads(data)
+            # Validate required fields before creating HandleMetadata
+            required_fields = ["key", "storage_type", "content_type", "size_bytes", "created_at"]
+            for field in required_fields:
+                if field not in parsed:
+                    logger.warning(f"Missing required field '{field}' in metadata for {handle_ref}")
+                    return None
+            return HandleMetadata(**parsed)
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON decode failed for metadata {handle_ref}: {e}")
+            return None
+        except TypeError as e:
+            logger.error(f"Invalid metadata structure for {handle_ref}: {e}")
             return None
 
 
