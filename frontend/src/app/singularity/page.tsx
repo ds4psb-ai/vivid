@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { api, SingularityTemplate } from "@/lib/api";
+import { useToast } from "@/components/Toast";
 
 // Template type alias for local use
 type Template = SingularityTemplate;
@@ -410,6 +411,7 @@ function TemplateModal({
 
 export default function SingularityPage() {
     const router = useRouter();
+    const toast = useToast();
     const [templates, setTemplates] = useState<Template[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -444,8 +446,9 @@ export default function SingularityPage() {
             await api.useSingularityTemplate(template.id);
             setSelectedTemplate(null);
             router.push(`/flow?template=${template.id}`);
-        } catch {
-            // Error handling
+        } catch (err) {
+            const message = err instanceof Error ? err.message : "템플릿 적용에 실패했습니다";
+            toast.error(message);
         } finally {
             setIsApplying(false);
         }

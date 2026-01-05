@@ -21,7 +21,7 @@ import {
     History as HistoryIcon,
     Check,
 } from "lucide-react";
-import { Template } from "@/lib/api";
+import { Template, CanvasGraph } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getBeatLabel, getStoryboardLabel } from "@/lib/narrative";
 
@@ -52,11 +52,11 @@ const isVideoPreview = (url?: string | null) => {
     return [".mp4", ".webm", ".mov"].some((ext) => clean.endsWith(ext));
 };
 
-export const getNarrativeSeeds = (graphData?: Record<string, unknown>) => {
+export const getNarrativeSeeds = (graphData?: CanvasGraph) => {
     const meta = graphData?.meta;
     const narrativeSeeds =
         meta && typeof meta === "object"
-            ? ((meta as Record<string, unknown>).narrative_seeds as Record<string, unknown>) || {}
+            ? (meta.narrative_seeds as Record<string, unknown>) || {}
             : {};
     const storyBeats = Array.isArray(narrativeSeeds.story_beats)
         ? narrativeSeeds.story_beats
@@ -75,8 +75,8 @@ export const getNarrativeSeeds = (graphData?: Record<string, unknown>) => {
     };
 };
 
-export const isProductionTemplateGraph = (graphData?: Record<string, unknown>) => {
-    const meta = graphData?.meta as Record<string, unknown> | undefined;
+export const isProductionTemplateGraph = (graphData?: CanvasGraph) => {
+    const meta = graphData?.meta;
     if (!meta || typeof meta !== "object") return false;
     const production = meta.production_contract as Record<string, unknown> | undefined;
     if (!production || typeof production !== "object") return false;
@@ -100,8 +100,8 @@ export function TemplateCard({ template, onSelect, onOpenVersions, isCreating }:
     const graphMeta = (template.graph_data?.meta || {}) as Record<string, unknown>;
     const evidenceRefs = Array.isArray(graphMeta.evidence_refs) ? graphMeta.evidence_refs : [];
     const evidenceCount = evidenceRefs.length;
-    const isProductionTemplate = isProductionTemplateGraph(template.graph_data as unknown as Record<string, unknown>);
-    const seeds = getNarrativeSeeds(template.graph_data as unknown as Record<string, unknown>);
+    const isProductionTemplate = isProductionTemplateGraph(template.graph_data);
+    const seeds = getNarrativeSeeds(template.graph_data);
     const guideSources = Array.isArray(graphMeta.guide_sources) ? graphMeta.guide_sources : [];
     const guideTypeSet = new Set<string>();
     guideSources.forEach((source) => {

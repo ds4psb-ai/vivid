@@ -257,13 +257,13 @@ export default function ForkEditorPage() {
                     <div className="lg:col-span-2 space-y-4">
                         {/* Tabs */}
                         <div className="flex gap-1 p-1 bg-gray-800/50 rounded-lg w-fit">
-                            {[
+                            {([
                                 { id: "editor", label: "Code Editor", icon: Code },
                                 { id: "diff", label: "View Changes", icon: Diff },
-                            ].map((tab) => (
+                            ] as const).map((tab) => (
                                 <button
                                     key={tab.id}
-                                    onClick={() => setActiveTab(tab.id as any)}
+                                    onClick={() => setActiveTab(tab.id)}
                                     className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === tab.id
                                         ? "bg-purple-500 text-white"
                                         : "text-gray-400 hover:text-white hover:bg-gray-700"

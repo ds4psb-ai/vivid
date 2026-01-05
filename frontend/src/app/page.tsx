@@ -63,7 +63,7 @@ function HomePageContent() {
   const filteredTemplates = useMemo(() => {
     if (templateFilter === "production") {
       return localizedTemplates.filter((template) =>
-        isProductionTemplateGraph(template.graph_data as unknown as Record<string, unknown>)
+        isProductionTemplateGraph(template.graph_data)
       );
     }
     return localizedTemplates;

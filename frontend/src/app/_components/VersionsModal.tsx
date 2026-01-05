@@ -76,7 +76,7 @@ export function VersionsModal({
 
                     {versions.map((version) => {
                         const isCurrent = currentVersion === version.version;
-                        const seeds = getNarrativeSeeds(version.graph_data as unknown as Record<string, unknown>);
+                        const seeds = getNarrativeSeeds(version.graph_data);
 
                         return (
                             <div key={version.id} className="rounded-xl border border-white/10 bg-slate-900/50 p-4">

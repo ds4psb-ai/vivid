@@ -62,6 +62,20 @@ interface Assignment {
     created_at: string;
 }
 
+interface Delivery {
+    id: string;
+    assignment_id: string;
+    version: number;
+    files: string[];
+    status: 'pending' | 'approved' | 'rejected';
+    submitted_at: string;
+}
+
+interface DeliveryData {
+    files: string[];
+    notes?: string;
+}
+
 interface UserProfile {
     id: string;
     email: string;
@@ -88,7 +102,8 @@ export default function RequestDetailPage() {
     const [msg, setMsg] = useState<{ type: 'error' | 'success', text: string } | null>(null);
 
     // Derived Role
-    const role = user?.id === request?.client_id
+    type UserRole = "client" | "creator" | "guest";
+    const role: UserRole = user?.id === request?.client_id
         ? "client"
         : (user?.id === assignment?.creator_id ? "creator" : "guest");
 
@@ -162,7 +177,7 @@ export default function RequestDetailPage() {
     // Action Handlers
     // -------------------------------------------------------------------------
 
-    const handleAction = async (action: string, data?: any) => {
+    const handleAction = async (action: string, data?: unknown) => {
         setMsg(null);
         try {
             if (action === "publish") {
@@ -180,16 +195,16 @@ export default function RequestDetailPage() {
             else if (action === "deliver" && assignment) {
                 await fetchWithAuth(`/api/v1/humancloud/assignments/${assignment.id}/deliver`, {
                     method: "POST",
-                    body: JSON.stringify(data) // { files, notes }
+                    body: JSON.stringify(data)
                 });
                 setMsg({ type: 'success', text: "Delivery submitted for review." });
             }
             else if (action === "approve" && assignment) {
                 // Fetch deliveries to find the latest one
-                const deliveries = await fetchWithAuth(`/api/v1/humancloud/assignments/${assignment.id}/deliveries`) as any[];
+                const deliveries = await fetchWithAuth(`/api/v1/humancloud/assignments/${assignment.id}/deliveries`) as Delivery[];
 
                 // Find latest pending delivery
-                const pendingDelivery = deliveries.find((d: any) => d.status === 'pending');
+                const pendingDelivery = deliveries.find((d) => d.status === 'pending');
 
                 if (!pendingDelivery) {
                     throw new Error("No pending delivery found to approve.");
@@ -309,7 +324,7 @@ export default function RequestDetailPage() {
                                 ) : (
                                     <ActionConsole
                                         status={assignment ? assignment.status : request.status}
-                                        role={role as any}
+                                        role={role}
                                         onAction={handleAction}
                                         assignmentId={assignment?.id}
                                         budget={request.budget_credits}

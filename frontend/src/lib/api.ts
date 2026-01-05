@@ -681,6 +681,96 @@ export interface SingularityTemplateParams {
   tag?: string;
   featured_only?: boolean;
   page?: number;
+  pageSize?: number;
+}
+
+// --- Constellation (별자리) Types ---
+
+export interface StarPoint {
+  scene_number: number;
+  singularity_id: string;
+  singularity_name: string;
+  status: "pending" | "generating" | "done" | "error";
+  thumbnail_url: string | null;
+  overrides: Record<string, unknown>;
+  output_ref: string | null;
+  created_at: string | null;
+}
+
+export interface SharedContext {
+  characters: Record<string, { name: string; singularity_ref?: string }>;
+  visual_style: string | null;
+  audio_style: string | null;
+  custom_params: Record<string, unknown>;
+}
+
+export interface Constellation {
+  id: string;
+  name: string;
+  description: string;
+  thumbnail_url: string | null;
+  preset: "short_drama" | "medium" | "feature_film";
+  target_scene_count: number;
+  scene_count: number;
+  completed_count: number;
+  progress_percent: number;
+  creator_id: string;
+  creator_name: string;
+  is_public: boolean;
+  use_count: number;
+  created_at: string;
+  updated_at: string;
+  shared_context?: SharedContext;
+  star_points?: StarPoint[];
+}
+
+export interface ConstellationList {
+  items: Constellation[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface ConstellationParams {
+  preset?: "short_drama" | "medium" | "feature_film";
+  creator_id?: string;
+  public_only?: boolean;
+  sort_by?: "created_at" | "use_count" | "name";
+  sort_order?: "asc" | "desc";
+  page?: number;
+  page_size?: number;
+}
+
+export interface ConstellationCreateData {
+  name: string;
+  description?: string;
+  preset?: "short_drama" | "medium" | "feature_film";
+  target_scene_count?: number;
+  shared_context?: Partial<SharedContext>;
+  first_singularity_id?: string;
+}
+
+export interface StarAddData {
+  singularity_id: string;
+  overrides?: Record<string, unknown>;
+  scene_number?: number;
+}
+
+export interface StarUpdateData {
+  overrides?: Record<string, unknown>;
+  status?: "pending" | "generating" | "done" | "error";
+  thumbnail_url?: string;
+  output_ref?: string;
+}
+
+export interface ConstellationUpdateData {
+  name?: string;
+  description?: string;
+  thumbnail_url?: string;
+  preset?: "short_drama" | "medium" | "feature_film";
+  target_scene_count?: number;
+  shared_context?: Partial<SharedContext>;
+  is_public?: boolean;
 }
 
 
@@ -912,6 +1002,7 @@ class ApiClient {
     if (params?.tag) searchParams.set("tag", params.tag);
     if (params?.featured_only) searchParams.set("featured_only", "true");
     if (params?.page) searchParams.set("page", params.page.toString());
+    if (params?.pageSize) searchParams.set("page_size", params.pageSize.toString());
     const query = searchParams.toString();
     return this.request<SingularityTemplateList>(`/api/v1/singularity/templates${query ? `?${query}` : ""}`);
   }
@@ -946,6 +1037,77 @@ class ApiClient {
     return this.request<{ id: string; title: string }>("/api/v1/singularity/templates", {
       method: "POST",
       body: JSON.stringify(data),
+    });
+  }
+
+  // --- Constellation (별자리) API ---
+
+  async listConstellations(params?: ConstellationParams): Promise<ConstellationList> {
+    const searchParams = new URLSearchParams();
+    if (params?.preset) searchParams.set("preset", params.preset);
+    if (params?.creator_id) searchParams.set("creator_id", params.creator_id);
+    if (params?.public_only !== undefined) searchParams.set("public_only", params.public_only.toString());
+    if (params?.sort_by) searchParams.set("sort_by", params.sort_by);
+    if (params?.sort_order) searchParams.set("sort_order", params.sort_order);
+    if (params?.page) searchParams.set("page", params.page.toString());
+    if (params?.page_size) searchParams.set("page_size", params.page_size.toString());
+    const query = searchParams.toString();
+    return this.request<ConstellationList>(`/api/v1/constellation${query ? `?${query}` : ""}`);
+  }
+
+  async getConstellation(id: string): Promise<Constellation> {
+    return this.request<Constellation>(`/api/v1/constellation/${id}`);
+  }
+
+  async createConstellation(data: ConstellationCreateData): Promise<Constellation> {
+    return this.request<Constellation>("/api/v1/constellation", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateConstellation(id: string, data: ConstellationUpdateData): Promise<Constellation> {
+    return this.request<Constellation>(`/api/v1/constellation/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteConstellation(id: string): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>(`/api/v1/constellation/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  async addStar(constellationId: string, data: StarAddData): Promise<StarPoint> {
+    return this.request<StarPoint>(`/api/v1/constellation/${constellationId}/stars`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateStar(constellationId: string, sceneNumber: number, data: StarUpdateData): Promise<StarPoint> {
+    return this.request<StarPoint>(`/api/v1/constellation/${constellationId}/stars/${sceneNumber}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteStar(constellationId: string, sceneNumber: number): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>(`/api/v1/constellation/${constellationId}/stars/${sceneNumber}`, {
+      method: "DELETE",
+    });
+  }
+
+  async generateStar(constellationId: string, sceneNumber: number): Promise<{
+    redirect_url: string;
+    singularity_id: string;
+    constellation_id: string;
+    scene_number: number;
+    overrides: Record<string, unknown>;
+  }> {
+    return this.request(`/api/v1/constellation/${constellationId}/stars/${sceneNumber}/generate`, {
+      method: "POST",
     });
   }
 
@@ -1614,10 +1776,17 @@ class ApiClient {
 
   // --- Director API (AI 바이브 코딩) ---
 
+  // =========================================================================
+  // DEPRECATED: Director APIs - Only used by deprecated canvas components
+  // These will be removed in a future release
+  // =========================================================================
+
+  /** @deprecated Only used by deprecated canvas. Use Dimension APIs instead. */
   async getVibePresets(): Promise<VibePresetsResponse> {
     return this.request<VibePresetsResponse>("/api/v1/director/presets");
   }
 
+  /** @deprecated Only used by deprecated canvas. Use Dimension APIs instead. */
   async interpretVibe(request: VibeInterpretRequest): Promise<WorkflowPlanResponse> {
     return this.request<WorkflowPlanResponse>("/api/v1/director/interpret-vibe", {
       method: "POST",
@@ -1625,6 +1794,7 @@ class ApiClient {
     });
   }
 
+  /** @deprecated Only used by deprecated canvas. Use Dimension APIs instead. */
   async checkDnaCompliance(request: DnaComplianceRequest): Promise<DnaComplianceResponse> {
     return this.request<DnaComplianceResponse>("/api/v1/director/check-compliance", {
       method: "POST",
@@ -1632,6 +1802,7 @@ class ApiClient {
     });
   }
 
+  /** @deprecated Only used by deprecated canvas. Use Dimension APIs instead. */
   async analyzeForeshadow(request: ForeshadowRequest): Promise<ForeshadowResponse> {
     return this.request<ForeshadowResponse>("/api/v1/director/analyze-foreshadow", {
       method: "POST",
@@ -1639,11 +1810,15 @@ class ApiClient {
     });
   }
 
-  // --- Node Execution API ---
+  // =========================================================================
+  // DEPRECATED: Node Execution APIs - Only used by deprecated canvas
+  // These will be removed in a future release
+  // =========================================================================
 
   /**
    * Execute a node with SSE streaming support
    * Returns an async generator that yields events as they arrive
+   * @deprecated Only used by deprecated canvas. Use Flow/Dimension APIs instead.
    */
   async *executeNodeStream(request: NodeExecuteRequest): AsyncGenerator<NodeExecuteEvent, void, unknown> {
     const baseUrl = this.resolveBaseUrl();
@@ -1689,6 +1864,7 @@ class ApiClient {
 
   /**
    * Execute a node synchronously (non-streaming)
+   * @deprecated Only used by deprecated canvas. Use Flow/Dimension APIs instead.
    */
   async executeNode(request: NodeExecuteRequest): Promise<NodeExecuteResult> {
     return this.request<NodeExecuteResult>("/api/v1/nodes/execute-sync", {
