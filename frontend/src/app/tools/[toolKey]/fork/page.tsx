@@ -34,6 +34,7 @@ import {
 // Shared
 import { fetchWithAuth } from "@/lib/api-client";
 import type { Tool, DiffPreview } from "@/types/api.types";
+import { useToast } from "@/components/Toast";
 
 // =============================================================================
 // API Functions
@@ -76,6 +77,7 @@ export default function ForkEditorPage() {
     const params = useParams();
     const router = useRouter();
     const toolKey = params.toolKey as string;
+    const toast = useToast();
 
     // Loading states
     const [loading, setLoading] = useState(true);
@@ -134,6 +136,7 @@ export default function ForkEditorPage() {
                 setDiffPreview(preview);
             } catch (err) {
                 console.error("Diff preview failed:", err);
+                toast.warning("Diff 미리보기에 실패했습니다");
             } finally {
                 setDiffLoading(false);
             }

@@ -43,6 +43,7 @@ import type {
     AttributionScore,
 } from "@/lib/telemetry-api";
 import ForkToolModal from "@/components/tools/ForkToolModal";
+import { useToast } from "@/components/Toast";
 
 // =============================================================================
 // Attribution Score Visualization
@@ -369,6 +370,7 @@ export default function ToolDetailPage() {
     const params = useParams();
     const router = useRouter();
     const toolKey = params.toolKey as string;
+    const toast = useToast();
 
     const [tool, setTool] = useState<ToolManifest | null>(null);
     const [runs, setRuns] = useState<ToolRunEvent[]>([]);
@@ -420,6 +422,7 @@ export default function ToolDetailPage() {
             setRuns(updatedRuns);
         } catch (err) {
             console.error("Failed to submit feedback:", err);
+            toast.error("피드백 제출에 실패했습니다");
         }
     };
 
