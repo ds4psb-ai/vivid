@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, forwardRef, useImperativeHandle } from "react";
+import { useState, forwardRef, useImperativeHandle, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { TrainCar } from "./TrainCar";
 import { ConnectionSelector } from "./ConnectionSelector";
 import { Trash2 } from "lucide-react";
+import { api, DimensionResponse } from "@/lib/api";
 
 // =============================================================================
 // Types
@@ -14,12 +15,15 @@ interface Car {
     id: string;
     order: number;
     toolId: string;
+    dimension: "1D" | "2D" | "3D" | "4D";
     displayName: string;
     icon: string;
     color: string;
     status: "pending" | "ready" | "executing" | "completed" | "failed";
     inputs: Record<string, unknown>;
     output?: Record<string, unknown>;
+    error?: string;
+    creditCost?: number;
 }
 
 interface ConnectionOption {
@@ -56,6 +60,7 @@ const MOCK_INITIAL_CAR: Car = {
     id: "car-1",
     order: 0,
     toolId: "prompt_generator",
+    dimension: "1D",
     displayName: "Veo 프롬프트 생성기",
     icon: "sparkles",
     color: "violet",
@@ -93,11 +98,11 @@ const MOCK_CONNECTION_OPTIONS: ConnectionOption[] = [
     },
 ];
 
-const TOOL_INFO: Record<string, { displayName: string; icon: string; color: string }> = {
-    prompt_generator: { displayName: "Veo 프롬프트 생성기", icon: "sparkles", color: "violet" },
-    storyboard: { displayName: "스토리보드 생성기", icon: "layout-grid", color: "emerald" },
-    image_tool: { displayName: "이미지 프롬프트 생성기", icon: "image", color: "amber" },
-    reference_analyzer: { displayName: "레퍼런스 분석기", icon: "film", color: "cyan" },
+const TOOL_INFO: Record<string, { displayName: string; icon: string; color: string; dimension: "1D" | "2D" | "3D" | "4D" }> = {
+    prompt_generator: { displayName: "Veo 프롬프트 생성기", icon: "sparkles", color: "violet", dimension: "1D" },
+    storyboard: { displayName: "스토리보드 생성기", icon: "layout-grid", color: "emerald", dimension: "2D" },
+    image_tool: { displayName: "이미지 프롬프트 생성기", icon: "image", color: "amber", dimension: "3D" },
+    reference_analyzer: { displayName: "레퍼런스 분석기", icon: "film", color: "cyan", dimension: "4D" },
 };
 
 // 차원 레이블
@@ -114,36 +119,113 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
         const [isLoadingOptions, setIsLoadingOptions] = useState(false);
         const [activeCarIndex, setActiveCarIndex] = useState(0);
 
-        // 노드 실행 핸들러
+        // Output → Input 체이닝: 이전 노드 출력을 다음 노드 입력으로 변환
+        const prepareInputsFromPreviousOutput = useCallback(
+            (dimension: "1D" | "2D" | "3D" | "4D", prevOutput: Record<string, unknown> | undefined, baseInputs: Record<string, unknown>) => {
+                if (!prevOutput) return baseInputs;
+
+                switch (dimension) {
+                    case "2D":
+                        // 1D output의 prompt를 2D의 concept으로 사용
+                        return {
+                            ...baseInputs,
+                            concept: prevOutput.prompt || prevOutput.veo_prompt || baseInputs.concept || baseInputs.topic,
+                            prompt: prevOutput.prompt || prevOutput.veo_prompt,
+                        };
+                    case "3D":
+                        // 2D output의 scenes를 3D description으로 사용
+                        if (prevOutput.scenes && Array.isArray(prevOutput.scenes)) {
+                            const firstScene = prevOutput.scenes[0] as Record<string, unknown> | undefined;
+                            return {
+                                ...baseInputs,
+                                description: firstScene?.description || firstScene?.visual || baseInputs.description,
+                            };
+                        }
+                        return {
+                            ...baseInputs,
+                            description: prevOutput.prompt || prevOutput.concept || baseInputs.description,
+                        };
+                    case "4D":
+                        // 이전 output을 video_description으로 사용
+                        return {
+                            ...baseInputs,
+                            video_description: prevOutput.prompt || prevOutput.description || baseInputs.video_description,
+                        };
+                    default:
+                        return baseInputs;
+                }
+            },
+            []
+        );
+
+        // 노드 실행 핸들러 - 실제 API 호출
         const handleExecuteCar = async (carId: string) => {
             const carIndex = cars.findIndex((c) => c.id === carId);
             if (carIndex === -1) return;
 
+            const car = cars[carIndex];
+
+            // executing 상태로 변경
             setCars((prev) =>
-                prev.map((car) =>
-                    car.id === carId ? { ...car, status: "executing" } : car
+                prev.map((c) =>
+                    c.id === carId ? { ...c, status: "executing", error: undefined } : c
                 )
             );
 
-            // Mock: 실행 시뮬레이션
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            try {
+                // 이전 노드의 output을 가져와서 inputs 준비
+                const prevCar = carIndex > 0 ? cars[carIndex - 1] : undefined;
+                const preparedInputs = prepareInputsFromPreviousOutput(
+                    car.dimension,
+                    prevCar?.output,
+                    car.inputs
+                );
 
-            setCars((prev) =>
-                prev.map((car) =>
-                    car.id === carId
-                        ? { ...car, status: "completed", output: { result: "생성 완료" } }
-                        : car
-                )
-            );
+                // 실제 Dimension API 호출
+                const response: DimensionResponse = await api.executeDimension(
+                    car.dimension,
+                    preparedInputs
+                );
 
-            // 다음 노드 활성화
-            if (carIndex < cars.length - 1) {
+                if (response.success) {
+                    // 성공: output 저장 및 상태 업데이트
+                    setCars((prev) =>
+                        prev.map((c) =>
+                            c.id === carId
+                                ? {
+                                    ...c,
+                                    status: "completed",
+                                    output: response.output,
+                                    creditCost: response.metrics?.latency_ms ? 10 : undefined, // TODO: 실제 크레딧 비용
+                                }
+                                : c
+                        )
+                    );
+
+                    // 다음 노드 활성화
+                    if (carIndex < cars.length - 1) {
+                        setCars((prev) =>
+                            prev.map((c, i) =>
+                                i === carIndex + 1 ? { ...c, status: "ready" } : c
+                            )
+                        );
+                        setActiveCarIndex(carIndex + 1);
+                    }
+                } else {
+                    // API 반환은 성공이지만 success: false인 경우
+                    throw new Error(response.error || "실행 실패");
+                }
+            } catch (error) {
+                // 실패 처리
+                const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류";
                 setCars((prev) =>
-                    prev.map((car, i) =>
-                        i === carIndex + 1 ? { ...car, status: "ready" } : car
+                    prev.map((c) =>
+                        c.id === carId
+                            ? { ...c, status: "failed", error: errorMessage }
+                            : c
                     )
                 );
-                setActiveCarIndex(carIndex + 1);
+                console.error(`Car ${carId} execution failed:`, error);
             }
         };
 
@@ -201,27 +283,49 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
             if (!selectedOption) return;
 
             const toolInfo = TOOL_INFO[selectedOption.recommendedToolId];
+            if (!toolInfo) return;
+
+            // 이전 노드의 output에서 기본 inputs 생성
+            const prevCar = cars[cars.length - 1];
+            const baseInputs: Record<string, unknown> = {};
+
+            // 이전 노드 output을 기반으로 다음 노드 inputs 설정
+            if (prevCar?.output) {
+                if (toolInfo.dimension === "2D") {
+                    baseInputs.concept = prevCar.output.prompt || prevCar.output.veo_prompt || "";
+                } else if (toolInfo.dimension === "3D") {
+                    baseInputs.description = prevCar.output.prompt || "";
+                } else if (toolInfo.dimension === "4D") {
+                    baseInputs.video_description = prevCar.output.prompt || prevCar.output.description || "";
+                }
+            }
+
             const newCar: Car = {
                 id: `car-${cars.length + 1}`,
                 order: cars.length,
                 toolId: selectedOption.recommendedToolId,
+                dimension: toolInfo.dimension,
                 displayName: toolInfo.displayName,
                 icon: toolInfo.icon,
                 color: toolInfo.color,
                 status: "pending",
-                inputs: {},
+                inputs: baseInputs,
             };
 
             setCars((prev) => [...prev, newCar]);
             setActiveCarIndex(cars.length);
 
-            // 다음 연결 옵션 로드 (실제로는 API 호출)
+            // 다음 연결 옵션 로드 (TODO: 실제 추천 API 호출)
             setIsLoadingOptions(true);
-            await new Promise((resolve) => setTimeout(resolve, 800));
+            await new Promise((resolve) => setTimeout(resolve, 300));
 
-            // Mock: 다음 옵션 생성
+            // 현재는 Mock: 이미 사용한 차원 제외하고 다음 옵션 생성
+            const usedDimensions = new Set([...cars.map(c => c.dimension), toolInfo.dimension]);
             const nextOptions = MOCK_CONNECTION_OPTIONS.filter(
-                (opt) => opt.recommendedToolId !== selectedOption.recommendedToolId
+                (opt) => {
+                    const optToolInfo = TOOL_INFO[opt.recommendedToolId];
+                    return optToolInfo && !usedDimensions.has(optToolInfo.dimension);
+                }
             ).slice(0, 3);
 
             setPendingConnections(nextOptions);

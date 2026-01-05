@@ -24,6 +24,8 @@ interface TrainCarProps {
     onExecute?: () => void;
     inputs?: Record<string, unknown>;
     output?: Record<string, unknown>;
+    error?: string;
+    creditCost?: number;
 }
 
 const ICON_MAP: Record<string, React.ReactNode> = {
@@ -84,6 +86,8 @@ export function TrainCar({
     onExecute,
     inputs,
     output,
+    error,
+    creditCost,
 }: TrainCarProps) {
     const colorScheme = COLOR_MAP[color] || COLOR_MAP.violet;
     const IconComponent = ICON_MAP[icon] || <Sparkles className="h-6 w-6" />;
@@ -166,6 +170,16 @@ export function TrainCar({
                     <div className="text-[10px] text-emerald-400 text-center px-2 flex items-center gap-1">
                         <CheckCircle className="h-3 w-3" />
                         차원 전개 완료
+                        {creditCost !== undefined && (
+                            <span className="text-amber-400 ml-1">(-{creditCost})</span>
+                        )}
+                    </div>
+                )}
+
+                {/* 실패 시 에러 메시지 */}
+                {status === "failed" && (
+                    <div className="text-[10px] text-red-400 text-center px-2 max-w-[130px] truncate" title={error}>
+                        {error || "실행 실패"}
                     </div>
                 )}
             </div>

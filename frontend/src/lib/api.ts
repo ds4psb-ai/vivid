@@ -1456,6 +1456,83 @@ class ApiClient {
     });
   }
 
+  // --- Dimension API (Flow UI 연동) ---
+
+  async execute1DPrompt(request: Dimension1DRequest): Promise<DimensionResponse> {
+    return this.request<DimensionResponse>("/api/dimension/1d/generate", {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
+  }
+
+  async execute2DStoryboard(request: Dimension2DRequest): Promise<DimensionResponse> {
+    return this.request<DimensionResponse>("/api/dimension/2d/create", {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
+  }
+
+  async execute3DImage(request: Dimension3DRequest): Promise<DimensionResponse> {
+    return this.request<DimensionResponse>("/api/dimension/3d/generate", {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
+  }
+
+  async execute4DReference(request: Dimension4DRequest): Promise<DimensionResponse> {
+    return this.request<DimensionResponse>("/api/dimension/4d/analyze", {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
+  }
+
+  /**
+   * Execute dimension tool by dimension key (1D, 2D, 3D, 4D)
+   * Unified interface for TrainWorkflowView
+   */
+  async executeDimension(
+    dimension: "1D" | "2D" | "3D" | "4D",
+    inputs: Record<string, unknown>,
+    model: string = "gemini-3-flash-preview"
+  ): Promise<DimensionResponse> {
+    switch (dimension) {
+      case "1D":
+        return this.execute1DPrompt({
+          topic: String(inputs.topic || ""),
+          style: String(inputs.style || "cinematic"),
+          mood: String(inputs.mood || "neutral"),
+          duration: String(inputs.duration || "15 seconds"),
+          language: String(inputs.language || "ko"),
+          model,
+        });
+      case "2D":
+        return this.execute2DStoryboard({
+          concept: String(inputs.concept || inputs.topic || ""),
+          prompt: inputs.prompt ? String(inputs.prompt) : undefined,
+          scene_count: Number(inputs.scene_count) || 5,
+          language: String(inputs.language || "ko"),
+          model,
+        });
+      case "3D":
+        return this.execute3DImage({
+          description: String(inputs.description || inputs.concept || ""),
+          style: String(inputs.style || "photorealistic"),
+          aspect_ratio: String(inputs.aspect_ratio || "16:9"),
+          model,
+        });
+      case "4D":
+        return this.execute4DReference({
+          video_description: String(inputs.video_description || inputs.description || ""),
+          focus_areas: Array.isArray(inputs.focus_areas)
+            ? inputs.focus_areas.map(String)
+            : ["composition", "lighting", "color", "movement"],
+          model,
+        });
+      default:
+        throw new Error(`Unknown dimension: ${dimension}`);
+    }
+  }
+
   // --- Crebit API ---
 
   async applyCrebit(data: CrebitApplicationRequest): Promise<CrebitApplication> {
@@ -1877,6 +1954,52 @@ export interface ForeshadowResponse {
   orphaned_seeds: NarrativeSeed[];
   suggestions: ProactiveSuggestion[];
   analysis_score: number;
+}
+
+// --- Dimension API Types (Flow UI 연동) ---
+
+export interface Dimension1DRequest {
+  topic: string;
+  style?: string;
+  mood?: string;
+  duration?: string;
+  language?: string;
+  model?: string;
+}
+
+export interface Dimension2DRequest {
+  concept: string;
+  prompt?: string;
+  scene_count?: number;
+  language?: string;
+  model?: string;
+}
+
+export interface Dimension3DRequest {
+  description: string;
+  style?: string;
+  aspect_ratio?: string;
+  model?: string;
+}
+
+export interface Dimension4DRequest {
+  video_description: string;
+  focus_areas?: string[];
+  model?: string;
+}
+
+export interface DimensionMetrics {
+  latency_ms: number;
+  tokens: number;
+  model: string;
+}
+
+export interface DimensionResponse {
+  success: boolean;
+  capsule_id: string;
+  output: Record<string, unknown>;
+  error?: string;
+  metrics?: DimensionMetrics;
 }
 
 export const api = new ApiClient();

@@ -284,6 +284,7 @@ export default function FlowPage() {
             // Add new car with executing status
             const carId = workflowRef.current.addCar({
                 toolId: event.tool_name,
+                dimension: (toolInfo.dimension || event.dimension) as "1D" | "2D" | "3D" | "4D",
                 displayName: toolInfo.displayName,
                 icon: toolInfo.icon,
                 color: toolInfo.color,
