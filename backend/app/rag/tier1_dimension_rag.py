@@ -265,26 +265,27 @@ class Tier1DimensionRAG:
                     ]
                 )
 
-            # 검색
-            results = client.search(
+            # 검색 (qdrant-client 1.16+ uses query_points instead of search)
+            response = client.query_points(
                 collection_name=self.collection_name,
-                query_vector=query_vector,
+                query=query_vector,
                 query_filter=filter_conditions,
                 limit=limit,
                 score_threshold=min_score,
+                with_payload=True,
             )
 
             return [
                 {
-                    "content": r.payload.get("content", ""),
+                    "content": r.payload.get("content", "") if r.payload else "",
                     "score": r.score,
-                    "doc_id": r.payload.get("doc_id"),
+                    "doc_id": r.payload.get("doc_id") if r.payload else None,
                     "metadata": {
-                        k: v for k, v in r.payload.items()
+                        k: v for k, v in (r.payload or {}).items()
                         if k not in ("content", "doc_id")
                     },
                 }
-                for r in results
+                for r in response.points
             ]
         except Exception as e:
             logger.error(f"[{self.dimension}] Search failed: {e}")

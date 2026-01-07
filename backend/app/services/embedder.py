@@ -70,7 +70,10 @@ class Embedder:
             # Mock embedding for testing without sentence-transformers
             import hashlib
             h = hashlib.md5(text.encode()).hexdigest()
-            return [int(h[i:i+2], 16) / 255.0 - 0.5 for i in range(0, 64, 2)] + [0.0] * (self.DIMENSIONS - 32)
+            # MD5 produces 32 hex chars; use first 32 to create 16 values, repeat for more
+            base_values = [int(h[i:i+2], 16) / 255.0 - 0.5 for i in range(0, 32, 2)]
+            # Repeat pattern to fill 384 dimensions
+            return (base_values * 24)[:self.DIMENSIONS]
         
         try:
             embedding = model.encode(text, convert_to_numpy=True)
