@@ -72,7 +72,9 @@ export function AgentChatAccordion({
     // Compute initial message based on template context
     const computedInitialMessage = templateContext
         ? `🎬 "${templateContext.title}" 템플릿이 적용되었습니다!\n\n` +
-          `${templateContext.tool_sequence.join(" → ")} 워크플로우가 준비되어 있어요.\n\n` +
+          (templateContext.tool_sequence?.length
+              ? `${templateContext.tool_sequence.join(" → ")} 워크플로우가 준비되어 있어요.\n\n`
+              : "") +
           `입력값을 넣고 "전체 실행"을 누르거나, 제가 도와드릴 내용이 있으면 말씀해주세요!`
         : initialMessage;
 
