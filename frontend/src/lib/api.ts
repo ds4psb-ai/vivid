@@ -690,6 +690,11 @@ export interface SingularityTemplate {
   creator_name: string;
   is_featured: boolean;
   tool_names?: string[];
+  // Detail fields (available when fetching single template)
+  tool_sequence?: string[];
+  input_preset?: Record<string, unknown>;
+  output_example?: Record<string, unknown>;
+  category?: string;
 }
 
 export interface SingularityTemplateList {

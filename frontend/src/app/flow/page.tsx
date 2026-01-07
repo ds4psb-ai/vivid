@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useState, useRef, useCallback, useMemo, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { TrainWorkflowView, TrainWorkflowHandle } from "@/components/train/TrainWorkflowView";
@@ -8,8 +9,8 @@ import { AgentChatAccordion } from "@/components/AgentChatAccordion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Copy, Check, Sparkles, LayoutGrid, Image as ImageIcon, Film, X, Download, Save, CheckCircle, Palette, Moon, Video } from "lucide-react";
-import { api } from "@/lib/api";
+import { ChevronDown, Copy, Check, Sparkles, LayoutGrid, Image as ImageIcon, Film, X, Download, Save, CheckCircle, Palette, Moon, Video, Loader2 } from "lucide-react";
+import { api, SingularityTemplate } from "@/lib/api";
 import type {
     WorkflowStartEvent,
     WorkflowStepEvent,
@@ -27,6 +28,18 @@ const AGENT_TOOL_TO_TOOL_ID: Record<string, string> = {
     "aesthetic_direct": "aesthetic_direct",
     "persona_analyze": "persona_analyze",
     "veo_generate": "veo_generate",
+};
+
+// Dimension code to toolId mapping (for template loading)
+const DIMENSION_TO_TOOL_ID: Record<string, string> = {
+    "1D": "prompt_generator",
+    "2D": "storyboard",
+    "3D": "image_tool",
+    "4D": "reference_analyzer",
+    "QC": "quality_check",
+    "AD": "aesthetic_direct",
+    "AI": "persona_analyze",
+    "VEO": "veo_generate",
 };
 
 // Icon components
@@ -136,7 +149,7 @@ function downloadResultAsMarkdown(result: WorkflowResult) {
     downloadFile(md, `${result.dimension}-${result.toolName}.md`, 'text/markdown');
 }
 
-export default function FlowPage() {
+function FlowPageContent() {
     const [workflowResults, setWorkflowResults] = useState<WorkflowResult[]>([]);
     const [showResults, setShowResults] = useState(false);
     const [expandedResult, setExpandedResult] = useState<string | null>(null);
@@ -154,7 +167,13 @@ export default function FlowPage() {
 
     const workflowRef = useRef<TrainWorkflowHandle>(null);
     const { language } = useLanguage();
-    const { toolsById } = useDimensionConfig();
+    const { toolsById, isLoading: isConfigLoading } = useDimensionConfig();
+    const searchParams = useSearchParams();
+
+    // Template loading state
+    const [loadedTemplate, setLoadedTemplate] = useState<SingularityTemplate | null>(null);
+    const [isLoadingTemplate, setIsLoadingTemplate] = useState(false);
+    const [templateApplied, setTemplateApplied] = useState(false);
 
     // Helper: Get tool info from agent tool name
     const getToolInfoFromAgentTool = useCallback((agentToolName: string) => {
@@ -162,6 +181,67 @@ export default function FlowPage() {
         if (!toolId) return null;
         return toolsById[toolId] || null;
     }, [toolsById]);
+
+    // Helper: Get tool info from dimension code (1D, 2D, etc.)
+    const getToolInfoFromDimension = useCallback((dimensionCode: string) => {
+        const toolId = DIMENSION_TO_TOOL_ID[dimensionCode];
+        if (!toolId) return null;
+        return toolsById[toolId] || null;
+    }, [toolsById]);
+
+    // Load template from URL parameter
+    useEffect(() => {
+        const templateId = searchParams.get("template");
+        if (!templateId || templateApplied || isConfigLoading) return;
+
+        const loadTemplate = async () => {
+            setIsLoadingTemplate(true);
+            try {
+                const template = await api.getSingularityTemplate(templateId);
+                setLoadedTemplate(template);
+                console.log("[Flow] Loaded template:", template.title);
+            } catch (err) {
+                console.error("[Flow] Failed to load template:", err);
+            } finally {
+                setIsLoadingTemplate(false);
+            }
+        };
+
+        loadTemplate();
+    }, [searchParams, templateApplied, isConfigLoading]);
+
+    // Apply loaded template to workflow
+    useEffect(() => {
+        if (!loadedTemplate || !workflowRef.current || templateApplied || isConfigLoading) return;
+        if (Object.keys(toolsById).length === 0) return; // Wait for config
+
+        const toolSequence = loadedTemplate.tool_sequence || loadedTemplate.dimension_sequence;
+        if (!toolSequence || toolSequence.length === 0) return;
+
+        console.log("[Flow] Applying template:", loadedTemplate.title, "with sequence:", toolSequence);
+
+        // Clear existing cars
+        workflowRef.current.clearCars();
+
+        // Add cars from template's tool sequence
+        toolSequence.forEach((dimCode, idx) => {
+            const toolInfo = getToolInfoFromDimension(dimCode);
+            if (!toolInfo || !workflowRef.current) return;
+
+            workflowRef.current.addCar({
+                toolId: DIMENSION_TO_TOOL_ID[dimCode] || dimCode,
+                dimension: dimCode as "1D" | "2D" | "3D" | "4D",
+                displayName: toolInfo.displayName,
+                icon: toolInfo.icon,
+                color: toolInfo.color,
+                status: idx === 0 ? "ready" : "pending",
+                inputs: loadedTemplate.input_preset || {},
+            });
+        });
+
+        setTemplateApplied(true);
+        console.log(`[Flow] Applied ${toolSequence.length} cars from template`);
+    }, [loadedTemplate, templateApplied, toolsById, isConfigLoading, getToolInfoFromDimension]);
 
     // Track agent-created cars for updating status
     const carIdMapRef = useRef<Map<number, string>>(new Map());
@@ -515,6 +595,47 @@ export default function FlowPage() {
                             </div>
                         </div>
 
+                        {/* Template Loading Indicator */}
+                        {isLoadingTemplate && (
+                            <div className="card-glass p-4 mb-4 flex items-center gap-3">
+                                <Loader2 className="w-5 h-5 animate-spin text-violet-400" />
+                                <span className="text-sm text-slate-400">템플릿을 불러오는 중...</span>
+                            </div>
+                        )}
+
+                        {/* Template Applied Banner */}
+                        {loadedTemplate && templateApplied && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="card-glass p-4 mb-4 border border-violet-500/30 bg-violet-500/5"
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-violet-500/20 flex items-center justify-center">
+                                            <Sparkles className="w-5 h-5 text-violet-400" />
+                                        </div>
+                                        <div>
+                                            <div className="text-sm font-bold text-white">{loadedTemplate.title}</div>
+                                            <div className="text-xs text-slate-400">
+                                                {loadedTemplate.dimension_sequence?.join(" → ")} 워크플로우가 적용되었습니다
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            setLoadedTemplate(null);
+                                            setTemplateApplied(false);
+                                            workflowRef.current?.clearCars();
+                                        }}
+                                        className="text-xs text-slate-500 hover:text-white transition-colors"
+                                    >
+                                        초기화
+                                    </button>
+                                </div>
+                            </motion.div>
+                        )}
+
                         {/* Main Workflow View */}
                         <div className="card-glass p-1">
                             <div className="overflow-hidden p-6 sm:p-8">
@@ -865,5 +986,20 @@ export default function FlowPage() {
                 </AnimatePresence>
             </div>
         </AppShell>
+    );
+}
+
+// Wrap with Suspense for useSearchParams
+export default function FlowPage() {
+    return (
+        <Suspense fallback={
+            <AppShell>
+                <div className="min-h-screen flex items-center justify-center">
+                    <Loader2 className="w-8 h-8 animate-spin text-violet-400" />
+                </div>
+            </AppShell>
+        }>
+            <FlowPageContent />
+        </Suspense>
     );
 }
