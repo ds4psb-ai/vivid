@@ -249,6 +249,28 @@ export interface CapsuleSpec {
   is_active: boolean;
 }
 
+// Dimension Tools Config (SSoT from backend)
+export interface DimensionToolConfig {
+  toolId: string;
+  dimension: string;
+  displayName: string;
+  displayNameEn: string;
+  description: string;
+  icon: string;
+  color: string;
+  stage: string;
+  capsuleKey: string;
+  endpoint: string;
+  creditCost: number;
+}
+
+export interface DimensionToolsConfig {
+  tools: DimensionToolConfig[];
+  toolsById: Record<string, DimensionToolConfig>;
+  stageOrder: string[];
+  version: string;
+}
+
 export interface CapsuleRun {
   run_id: string;
   status: string;
@@ -1671,7 +1693,7 @@ class ApiClient {
   async executeDimension(
     dimension: "1D" | "2D" | "3D" | "4D" | "QC" | "AD" | "AI" | "VEO",
     inputs: Record<string, unknown>,
-    model: string = "gemini-3-flash-preview"
+    model: string = "gemini-3.0-flash-preview"
   ): Promise<DimensionResponse> {
     switch (dimension) {
       case "1D":
@@ -1818,6 +1840,12 @@ class ApiClient {
       method: "POST",
       body: JSON.stringify(params),
     });
+  }
+
+  // --- Dimension Tools Config (SSoT) ---
+
+  async getDimensionToolsConfig(): Promise<DimensionToolsConfig> {
+    return this.request<DimensionToolsConfig>("/api/dimension/tools");
   }
 
   // --- Crebit API ---

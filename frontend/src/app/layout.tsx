@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { SessionProvider } from "@/contexts/SessionContext";
+import { DimensionConfigProvider } from "@/contexts/DimensionConfigContext";
 import { ToastProvider } from "@/components/Toast";
 
 export default function RootLayout({
@@ -31,9 +32,11 @@ export default function RootLayout({
       <body className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} antialiased`} suppressHydrationWarning>
         <SessionProvider>
           <LanguageProvider>
-            <ToastProvider>
-              {children}
-            </ToastProvider>
+            <DimensionConfigProvider>
+              <ToastProvider>
+                {children}
+              </ToastProvider>
+            </DimensionConfigProvider>
           </LanguageProvider>
         </SessionProvider>
       </body>

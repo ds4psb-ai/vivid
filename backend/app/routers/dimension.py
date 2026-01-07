@@ -157,7 +157,7 @@ def get_credit_cost(capsule_id: DimensionCapsuleId, model: str) -> int:
     for capsule in DIMENSION_CAPSULES:
         if capsule["capsule_key"] == capsule_key:
             credit_costs = capsule.get("credit_costs", {})
-            return credit_costs.get(model, credit_costs.get("gemini-3-flash-preview", 5))
+            return credit_costs.get(model, credit_costs.get("gemini-3.0-flash-preview", 5))
 
     return 5
 
@@ -173,7 +173,7 @@ class PromptGenerateRequest(BaseModel):
     mood: str = Field("neutral", max_length=50, description="Mood/tone")
     duration: str = Field("15 seconds", max_length=20, description="Target duration")
     language: str = Field("ko", description="Output language")
-    model: str = Field("gemini-3-flash-preview", description="AI model")
+    model: str = Field("gemini-3.0-flash-preview", description="AI model")
     
     @field_validator("language")
     @classmethod
@@ -196,7 +196,7 @@ class StoryboardCreateRequest(BaseModel):
     prompt: Optional[str] = Field(None, max_length=MAX_TOPIC_LENGTH, description="Optional Veo prompt")
     scene_count: int = Field(5, ge=MIN_SCENE_COUNT, le=MAX_SCENE_COUNT, description="Number of scenes")
     language: str = Field("ko", description="Output language")
-    model: str = Field("gemini-3-flash-preview", description="AI model")
+    model: str = Field("gemini-3.0-flash-preview", description="AI model")
     
     @field_validator("language")
     @classmethod
@@ -211,7 +211,7 @@ class ImageGenerateRequest(BaseModel):
     description: str = Field(..., min_length=1, max_length=MAX_DESCRIPTION_LENGTH, description="Image description")
     style: str = Field("photorealistic", max_length=50, description="Art style")
     aspect_ratio: str = Field("16:9", max_length=10, description="Image aspect ratio")
-    model: str = Field("gemini-3-flash-preview", description="AI model")
+    model: str = Field("gemini-3.0-flash-preview", description="AI model")
 
 
 class ReferenceAnalyzeRequest(BaseModel):
@@ -222,7 +222,7 @@ class ReferenceAnalyzeRequest(BaseModel):
         max_length=10,
         description="Analysis focus areas"
     )
-    model: str = Field("gemini-3-flash-preview", description="AI model")
+    model: str = Field("gemini-3.0-flash-preview", description="AI model")
 
     @field_validator("focus_areas")
     @classmethod
@@ -244,7 +244,7 @@ class QualityCheckRequest(BaseModel):
         description="Quality criteria to evaluate"
     )
     threshold: int = Field(70, ge=0, le=100, description="Minimum passing score")
-    model: str = Field("gemini-3-flash-preview", description="AI model")
+    model: str = Field("gemini-3.0-flash-preview", description="AI model")
 
     @field_validator("criteria")
     @classmethod
@@ -260,7 +260,7 @@ class AestheticDirectRequest(BaseModel):
     mood: str = Field("neutral", max_length=50, description="Mood/atmosphere")
     target_medium: str = Field("video", max_length=30, description="Target medium: video, image, animation")
     use_rag: bool = Field(False, description="Use RAG for aesthetic references")
-    model: str = Field("gemini-3-flash-preview", description="AI model")
+    model: str = Field("gemini-3.0-flash-preview", description="AI model")
 
 
 class PersonaAnalyzeRequest(BaseModel):
@@ -270,7 +270,7 @@ class PersonaAnalyzeRequest(BaseModel):
     persona_data: Dict[str, Any] = Field(default_factory=dict, description="Accumulated persona data")
     birth_info: Dict[str, Any] = Field(default_factory=dict, description="Birth info for Saju analysis")
     depth_level: str = Field("deep", max_length=20, description="Analysis depth: quick, medium, deep")
-    model: str = Field("gemini-3-flash-preview", description="AI model")
+    model: str = Field("gemini-3.0-flash-preview", description="AI model")
 
     @field_validator("analysis_stage")
     @classmethod
@@ -299,7 +299,7 @@ class StoryArchitectRequest(BaseModel):
     duration: str = Field("60s", max_length=10, description="Target duration: 15s, 30s, 60s, 3m, 5m")
     structure: str = Field("3act", max_length=20, description="Story structure: 3act, hero, circular, montage")
     language: str = Field("ko", description="Output language")
-    model: str = Field("gemini-2.5-pro", description="AI model")
+    model: str = Field("gemini-3.0-pro-preview", description="AI model")
 
     @field_validator("genre")
     @classmethod
@@ -325,7 +325,7 @@ class SoundCraftRequest(BaseModel):
     duration: str = Field("60s", max_length=10, description="Target duration")
     target_platform: str = Field("suno", max_length=20, description="Target platform: suno, udio, elevenlabs")
     language: str = Field("ko", description="Output language")
-    model: str = Field("gemini-3-flash-preview", description="AI model")
+    model: str = Field("gemini-3.0-flash-preview", description="AI model")
 
     @field_validator("sound_type")
     @classmethod
@@ -925,7 +925,7 @@ async def craft_sound(
     tags=["Dimension Info"],
 )
 async def dimension_info() -> Dict[str, Any]:
-    """List all dimensions and their purposes."""
+    """List all dimensions and their purposes (legacy format)."""
     return {
         "dimensions": [
             # Classic Dimensions
@@ -950,6 +950,38 @@ async def dimension_info() -> Dict[str, Any]:
             # Stage 4: Finishing
             {"id": "quality", "stage": "finishing", "name": "Quality Director", "description": "품질 검수", "endpoint": "/api/dimension/quality/check"},
         ],
+    }
+
+
+@router.get(
+    "/tools",
+    summary="Dimension Tools Config",
+    description="Get complete tool configuration for frontend (SSoT).",
+    tags=["Dimension Info"],
+)
+async def dimension_tools_config() -> Dict[str, Any]:
+    """
+    Return complete dimension tool configuration for frontend.
+
+    This is the Single Source of Truth for:
+    - Tool IDs and display names
+    - Icons and colors
+    - Stages and endpoints
+    - Credit costs
+
+    Frontend should fetch this on app load and cache in Context.
+    """
+    from app.fixtures.dimension_capsules import (
+        get_dimension_ui_config,
+        get_dimension_tools_for_frontend,
+        STAGE_ORDER,
+    )
+
+    return {
+        "tools": get_dimension_tools_for_frontend(),
+        "toolsById": get_dimension_ui_config(),
+        "stageOrder": STAGE_ORDER,
+        "version": "2.0.0",  # For cache invalidation
     }
 
 

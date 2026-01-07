@@ -30,8 +30,8 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
         "input_dimensions": ["story-architect", "storyboard-sketch"],
         "output_dimensions": ["visual-realizer", "video-maker"],
         "credit_costs": {
-            "gemini-3-flash-preview": 5,
-            "gemini-2.5-pro": 15,
+            "gemini-3.0-flash-preview": 5,
+            "gemini-3.0-pro-preview": 15,
         },
         "spec": {
             "name": "프롬프트 연금술",
@@ -90,8 +90,8 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
             "params": {
                 "model": {
                     "type": "string",
-                    "default": "gemini-3-flash-preview",
-                    "options": ["gemini-3-flash-preview", "gemini-2.5-pro"],
+                    "default": "gemini-3.0-flash-preview",
+                    "options": ["gemini-3.0-flash-preview", "gemini-3.0-pro-preview"],
                 },
             },
         },
@@ -107,8 +107,8 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
         "input_dimensions": ["story-architect", "reference-decoder"],
         "output_dimensions": ["sound-crafter", "prompt-alchemy"],
         "credit_costs": {
-            "gemini-3-flash-preview": 10,
-            "gemini-2.5-pro": 25,
+            "gemini-3.0-flash-preview": 10,
+            "gemini-3.0-pro-preview": 25,
         },
         "spec": {
             "name": "스토리보드 스케치",
@@ -148,7 +148,7 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
             "params": {
                 "model": {
                     "type": "string",
-                    "default": "gemini-3-flash-preview",
+                    "default": "gemini-3.0-flash-preview",
                 },
             },
         },
@@ -164,8 +164,8 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
         "input_dimensions": ["prompt-alchemy", "storyboard-sketch"],
         "output_dimensions": ["video-maker", "quality-director"],
         "credit_costs": {
-            "gemini-3-flash-preview": 5,
-            "gemini-2.5-pro": 12,
+            "gemini-3.0-flash-preview": 5,
+            "gemini-3.0-pro-preview": 12,
         },
         "spec": {
             "name": "비주얼 리얼라이저",
@@ -204,7 +204,7 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
             "params": {
                 "model": {
                     "type": "string",
-                    "default": "gemini-3-flash-preview",
+                    "default": "gemini-3.0-flash-preview",
                 },
             },
         },
@@ -220,8 +220,8 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
         "input_dimensions": ["abyss-mirror"],
         "output_dimensions": ["story-architect", "storyboard-sketch"],
         "credit_costs": {
-            "gemini-3-flash-preview": 8,
-            "gemini-2.5-pro": 20,
+            "gemini-3.0-flash-preview": 8,
+            "gemini-3.0-pro-preview": 20,
         },
         "spec": {
             "name": "레퍼런스 해석기",
@@ -250,7 +250,7 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
             "params": {
                 "model": {
                     "type": "string",
-                    "default": "gemini-3-flash-preview",
+                    "default": "gemini-3.0-flash-preview",
                 },
             },
         },
@@ -269,7 +269,7 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
         "input_dimensions": ["video-maker", "visual-realizer"],
         "output_dimensions": [],
         "credit_costs": {
-            "gemini-3-flash-preview": 8,
+            "gemini-3.0-flash-preview": 8,
             "gemini-3.0-pro-preview": 20,
         },
         "spec": {
@@ -326,7 +326,7 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
                 "model": {
                     "type": "string",
                     "default": "gemini-3.0-pro-preview",
-                    "options": ["gemini-3-flash-preview", "gemini-3.0-pro-preview"],
+                    "options": ["gemini-3.0-flash-preview", "gemini-3.0-pro-preview"],
                     "description": "Pro 모델 권장 (정확도 우선)",
                 },
                 "threshold": {
@@ -352,7 +352,7 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
         "output_dimensions": ["story-architect", "visual-realizer"],
         "is_extended": True,
         "credit_costs": {
-            "gemini-3-flash-preview": 10,
+            "gemini-3.0-flash-preview": 10,
             "gemini-3.0-pro-preview": 25,
         },
         "spec": {
@@ -410,7 +410,7 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
                 "model": {
                     "type": "string",
                     "default": "gemini-3.0-pro-preview",
-                    "options": ["gemini-3-flash-preview", "gemini-3.0-pro-preview"],
+                    "options": ["gemini-3.0-flash-preview", "gemini-3.0-pro-preview"],
                 },
                 "use_rag": {
                     "type": "boolean",
@@ -434,7 +434,7 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
         "input_dimensions": [],
         "output_dimensions": ["reference-decoder", "story-architect", "aesthetic-director"],
         "credit_costs": {
-            "gemini-3-flash-preview": 5,
+            "gemini-3.0-flash-preview": 5,
             "gemini-3.0-pro-preview": 12,
         },
         "spec": {
@@ -491,7 +491,7 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
                 "model": {
                     "type": "string",
                     "default": "gemini-3.0-pro-preview",
-                    "options": ["gemini-3-flash-preview", "gemini-3.0-pro-preview"],
+                    "options": ["gemini-3.0-flash-preview", "gemini-3.0-pro-preview"],
                 },
                 "depth_level": {
                     "type": "string",
@@ -597,8 +597,8 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
         "input_dimensions": ["abyss-mirror", "reference-decoder"],
         "output_dimensions": ["storyboard-sketch", "sound-crafter", "prompt-alchemy"],
         "credit_costs": {
-            "gemini-3-flash-preview": 10,
-            "gemini-2.5-pro": 25,
+            "gemini-3.0-flash-preview": 10,
+            "gemini-3.0-pro-preview": 25,
         },
         "spec": {
             "name": "시나리오 생성기",
@@ -688,8 +688,8 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
             "params": {
                 "model": {
                     "type": "string",
-                    "default": "gemini-2.5-pro",
-                    "options": ["gemini-3-flash-preview", "gemini-2.5-pro"],
+                    "default": "gemini-3.0-pro-preview",
+                    "options": ["gemini-3.0-flash-preview", "gemini-3.0-pro-preview"],
                 },
                 "use_rag": {
                     "type": "boolean",
@@ -713,8 +713,8 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
         "input_dimensions": ["story-architect", "storyboard-sketch"],
         "output_dimensions": ["video-maker"],
         "credit_costs": {
-            "gemini-3-flash-preview": 8,
-            "gemini-2.5-pro": 18,
+            "gemini-3.0-flash-preview": 8,
+            "gemini-3.0-pro-preview": 18,
         },
         "spec": {
             "name": "사운드 크래프터",
@@ -826,8 +826,8 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
             "params": {
                 "model": {
                     "type": "string",
-                    "default": "gemini-3-flash-preview",
-                    "options": ["gemini-3-flash-preview", "gemini-2.5-pro"],
+                    "default": "gemini-3.0-flash-preview",
+                    "options": ["gemini-3.0-flash-preview", "gemini-3.0-pro-preview"],
                 },
                 "use_rag": {
                     "type": "boolean",
@@ -843,3 +843,174 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
 def get_dimension_capsule_specs() -> List[Dict[str, Any]]:
     """Return all teaching capsule specs for database seeding."""
     return DIMENSION_CAPSULES
+
+
+# =============================================================================
+# Frontend UI Metadata (SSoT for icon, color, toolId mapping)
+# =============================================================================
+
+DIMENSION_UI_CONFIG: Dict[str, Dict[str, Any]] = {
+    # Core Dimensions (1D-4D)
+    "prompt_generator": {
+        "toolId": "prompt_generator",
+        "dimension": "1D",
+        "displayName": "프롬프트 연금술",
+        "displayNameEn": "Prompt Alchemy",
+        "description": "AI가 이해하는 전문 언어로 번역",
+        "icon": "sparkles",
+        "color": "violet",
+        "stage": "pre_production",
+        "capsuleKey": "teaching.prompt.generate",
+        "endpoint": "/api/dimension/1d/generate",
+        "creditCost": 5,
+    },
+    "storyboard": {
+        "toolId": "storyboard",
+        "dimension": "2D",
+        "displayName": "스토리보드 스케치",
+        "displayNameEn": "Storyboard Sketch",
+        "description": "글을 시각적 컷으로 스케치",
+        "icon": "layout-grid",
+        "color": "emerald",
+        "stage": "pre_production",
+        "capsuleKey": "teaching.storyboard.create",
+        "endpoint": "/api/dimension/2d/create",
+        "creditCost": 10,
+    },
+    "image_tool": {
+        "toolId": "image_tool",
+        "dimension": "3D",
+        "displayName": "비주얼 리얼라이저",
+        "displayNameEn": "Visual Realizer",
+        "description": "Key Frame 고품질 생성",
+        "icon": "image",
+        "color": "amber",
+        "stage": "production",
+        "capsuleKey": "teaching.image.generate",
+        "endpoint": "/api/dimension/3d/generate",
+        "creditCost": 5,
+    },
+    "reference_analyzer": {
+        "toolId": "reference_analyzer",
+        "dimension": "4D",
+        "displayName": "레퍼런스 해석기",
+        "displayNameEn": "Reference Decoder",
+        "description": "조명, 색감, 연출의 전문가적 분석",
+        "icon": "film",
+        "color": "cyan",
+        "stage": "planning",
+        "capsuleKey": "teaching.reference.analyze",
+        "endpoint": "/api/dimension/4d/analyze",
+        "creditCost": 8,
+    },
+    # Extended Dimensions
+    "quality_check": {
+        "toolId": "quality_check",
+        "dimension": "QC",
+        "displayName": "퀄리티 디렉터",
+        "displayNameEn": "Quality Director",
+        "description": "시각적 일관성 및 품질 검수",
+        "icon": "check-circle",
+        "color": "rose",
+        "stage": "finishing",
+        "capsuleKey": "dimension.quality.check",
+        "endpoint": "/api/dimension/quality/check",
+        "creditCost": 8,
+    },
+    "aesthetic_direct": {
+        "toolId": "aesthetic_direct",
+        "dimension": "AD",
+        "displayName": "미학디렉터",
+        "displayNameEn": "Aesthetic Director",
+        "description": "시각적 스타일 가이드라인 생성",
+        "icon": "palette",
+        "color": "fuchsia",
+        "stage": "planning",
+        "capsuleKey": "dimension.aesthetic.direct",
+        "endpoint": "/api/dimension/aesthetic/direct",
+        "creditCost": 10,
+    },
+    "persona_analyze": {
+        "toolId": "persona_analyze",
+        "dimension": "AI",
+        "displayName": "심연의 거울",
+        "displayNameEn": "Abyss Mirror",
+        "description": "내면의 욕구와 감정 해석",
+        "icon": "moon",
+        "color": "indigo",
+        "stage": "planning",
+        "capsuleKey": "dimension.persona.analyze",
+        "endpoint": "/api/dimension/persona/analyze",
+        "creditCost": 5,
+    },
+    "veo_generate": {
+        "toolId": "veo_generate",
+        "dimension": "VEO",
+        "displayName": "비디오 메이커",
+        "displayNameEn": "Video Maker",
+        "description": "최종 AI 영상 생성",
+        "icon": "video",
+        "color": "sky",
+        "stage": "production",
+        "capsuleKey": "veo.video.generate",
+        "endpoint": "/api/dimension/veo/generate",
+        "creditCost": 200,
+    },
+    # Additional Tools
+    "story_architect": {
+        "toolId": "story_architect",
+        "dimension": "SA",
+        "displayName": "시나리오 생성기",
+        "displayNameEn": "Story Architect",
+        "description": "창작 시나리오 생성",
+        "icon": "book-open",
+        "color": "orange",
+        "stage": "planning",
+        "capsuleKey": "dimension.story.architect",
+        "endpoint": "/api/dimension/story/architect",
+        "creditCost": 10,
+    },
+    "sound_craft": {
+        "toolId": "sound_craft",
+        "dimension": "SC",
+        "displayName": "사운드 크래프터",
+        "displayNameEn": "Sound Crafter",
+        "description": "BGM 및 성우 내레이션 생성",
+        "icon": "music",
+        "color": "pink",
+        "stage": "pre_production",
+        "capsuleKey": "dimension.sound.craft",
+        "endpoint": "/api/dimension/sound/craft",
+        "creditCost": 8,
+    },
+}
+
+# Workflow stage order for recommendations
+STAGE_ORDER = ["planning", "pre_production", "production", "finishing"]
+
+# Initial dimension options (shown when no cars exist)
+INITIAL_DIMENSION_ORDER = [
+    "prompt_generator",    # 1D - 가장 일반적인 시작점
+    "reference_analyzer",  # 4D - 레퍼런스가 있는 경우
+    "aesthetic_direct",    # AD - 스타일 우선
+    "persona_analyze",     # AI - 창작 DNA 분석
+    "storyboard",          # 2D
+    "image_tool",          # 3D
+    "quality_check",       # QC
+    "veo_generate",        # VEO
+]
+
+
+def get_dimension_ui_config() -> Dict[str, Dict[str, Any]]:
+    """Return UI configuration for all dimension tools (SSoT for frontend)."""
+    return DIMENSION_UI_CONFIG
+
+
+def get_dimension_tools_for_frontend() -> List[Dict[str, Any]]:
+    """Return dimension tools list formatted for frontend consumption."""
+    tools = []
+    for tool_id in INITIAL_DIMENSION_ORDER:
+        config = DIMENSION_UI_CONFIG.get(tool_id)
+        if config:
+            tools.append(config)
+    return tools

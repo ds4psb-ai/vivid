@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
 import AppShell from "@/components/AppShell";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { TrainWorkflowView, TrainWorkflowHandle } from "@/components/train/TrainWorkflowView";
 import { AgentChatAccordion } from "@/components/AgentChatAccordion";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Copy, Check, Sparkles, LayoutGrid, Image as ImageIcon, Film, X, Download, Save, CheckCircle, Palette, Moon, Video } from "lucide-react";
 import { api } from "@/lib/api";
@@ -16,17 +17,16 @@ import type {
     WorkflowNode,
 } from "@/types/agent";
 
-// Tool ID to dimension info mapping
-const TOOL_TO_DIMENSION: Record<string, { displayName: string; icon: string; color: string; dimension: string }> = {
-    "generate_veo_prompt": { displayName: "프롬프트", icon: "sparkles", color: "violet", dimension: "1D" },
-    "create_storyboard": { displayName: "스토리보드", icon: "layout-grid", color: "emerald", dimension: "2D" },
-    "generate_image_prompt": { displayName: "비주얼", icon: "image", color: "amber", dimension: "3D" },
-    "analyze_reference": { displayName: "레퍼런스", icon: "film", color: "cyan", dimension: "4D" },
-    // Extended Dimension Capsules
-    "quality_check": { displayName: "퀄리티", icon: "check-circle", color: "rose", dimension: "QC" },
-    "aesthetic_direct": { displayName: "디렉팅", icon: "palette", color: "fuchsia", dimension: "AD" },
-    "persona_analyze": { displayName: "심연", icon: "moon", color: "indigo", dimension: "AI" },
-    "veo_generate": { displayName: "비디오", icon: "video", color: "sky", dimension: "VEO" },
+// Agent tool names to toolId mapping (for workflow events)
+const AGENT_TOOL_TO_TOOL_ID: Record<string, string> = {
+    "generate_veo_prompt": "prompt_generator",
+    "create_storyboard": "storyboard",
+    "generate_image_prompt": "image_tool",
+    "analyze_reference": "reference_analyzer",
+    "quality_check": "quality_check",
+    "aesthetic_direct": "aesthetic_direct",
+    "persona_analyze": "persona_analyze",
+    "veo_generate": "veo_generate",
 };
 
 // Icon components
@@ -154,6 +154,14 @@ export default function FlowPage() {
 
     const workflowRef = useRef<TrainWorkflowHandle>(null);
     const { language } = useLanguage();
+    const { toolsById } = useDimensionConfig();
+
+    // Helper: Get tool info from agent tool name
+    const getToolInfoFromAgentTool = useCallback((agentToolName: string) => {
+        const toolId = AGENT_TOOL_TO_TOOL_ID[agentToolName];
+        if (!toolId) return null;
+        return toolsById[toolId] || null;
+    }, [toolsById]);
 
     // Track agent-created cars for updating status
     const carIdMapRef = useRef<Map<number, string>>(new Map());
@@ -287,11 +295,11 @@ export default function FlowPage() {
 
         // Add cars from workflow nodes
         data.nodes.forEach((node, idx) => {
-            const toolInfo = TOOL_TO_DIMENSION[node.tool_name];
+            const toolInfo = getToolInfoFromAgentTool(node.tool_name);
             if (!toolInfo || !workflowRef.current) return;
 
             const carId = workflowRef.current.addCar({
-                toolId: node.tool_name,
+                toolId: AGENT_TOOL_TO_TOOL_ID[node.tool_name] || node.tool_name,
                 dimension: toolInfo.dimension as "1D" | "2D" | "3D" | "4D",
                 displayName: toolInfo.displayName,
                 icon: toolInfo.icon,
@@ -306,15 +314,16 @@ export default function FlowPage() {
         });
 
         console.log(`[Flow] Created ${data.nodes.length} cars from workflow structure`);
-    }, [clearWorkflowState]);
+    }, [clearWorkflowState, getToolInfoFromAgentTool]);
 
     const handleWorkflowStep = useCallback((event: WorkflowStepEvent) => {
         console.log("[Flow] Workflow step:", event);
 
         if (!workflowRef.current) return;
 
-        const toolInfo = TOOL_TO_DIMENSION[event.tool_name] || {
+        const toolInfo = getToolInfoFromAgentTool(event.tool_name) || {
             displayName: event.dimension_name,
+            displayNameEn: event.dimension_name,
             icon: "zap",
             color: "zinc",
             dimension: event.dimension,
@@ -323,7 +332,7 @@ export default function FlowPage() {
         if (event.status === "start") {
             // Add new car with executing status
             const carId = workflowRef.current.addCar({
-                toolId: event.tool_name,
+                toolId: AGENT_TOOL_TO_TOOL_ID[event.tool_name] || event.tool_name,
                 dimension: (toolInfo.dimension || event.dimension) as "1D" | "2D" | "3D" | "4D",
                 displayName: toolInfo.displayName,
                 icon: toolInfo.icon,
@@ -349,7 +358,7 @@ export default function FlowPage() {
                 workflowRef.current.updateCarStatus(carId, "failed");
             }
         }
-    }, []);
+    }, [getToolInfoFromAgentTool]);
 
     const handleWorkflowComplete = useCallback((data: { total_credits: number; success_count: number }) => {
         console.log("[Flow] Workflow completed:", data);
@@ -378,7 +387,8 @@ export default function FlowPage() {
 
         // Only process workflow tool results
         if (!name || typeof name !== 'string') return;
-        if (!TOOL_TO_DIMENSION[name]) return;
+        const toolInfo = getToolInfoFromAgentTool(name);
+        if (!toolInfo) return;
 
         // Accept both 'completed' and 'success' status (case-insensitive)
         const normalizedStatus = (status || '').toLowerCase();
@@ -393,8 +403,6 @@ export default function FlowPage() {
         const safeInputs = (toolArguments && typeof toolArguments === 'object' && !Array.isArray(toolArguments))
             ? toolArguments
             : {};
-
-        const toolInfo = TOOL_TO_DIMENSION[name];
 
         setWorkflowResults(prev => {
             try {
@@ -418,7 +426,7 @@ export default function FlowPage() {
                 return prev;
             }
         });
-    }, []);
+    }, [getToolInfoFromAgentTool]);
 
     // Render output value based on type with error handling
     const renderOutputValue = (key: string, value: unknown, resultId: string) => {
@@ -562,7 +570,7 @@ export default function FlowPage() {
                                             <div className="space-y-4">
                                                 {workflowResults.map((result) => {
                                                     const isExpanded = expandedResult === result.toolName;
-                                                    const toolInfo = TOOL_TO_DIMENSION[result.toolName];
+                                                    const toolInfo = getToolInfoFromAgentTool(result.toolName);
                                                     const Icon = ICON_COMPONENTS[toolInfo?.icon || "sparkles"];
 
                                                     return (
