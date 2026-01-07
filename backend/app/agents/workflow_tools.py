@@ -591,7 +591,7 @@ full_workflow=true 시 전체 8개 캡슐을 전략적으로 배치합니다."""
             "model": {
                 "type": "string",
                 "description": "AI 모델 선택",
-                "default": "gemini-3-flash-preview",
+                "default": "gemini-3.0-flash-preview",
             },
             "style": {
                 "type": "string",
@@ -669,7 +669,7 @@ async def _execute_workflow_handler(
 
     topic = args.get("topic", "") or ""
     dimensions = args.get("dimensions")  # None if not explicitly set
-    model = args.get("model") or "gemini-3-flash-preview"
+    model = args.get("model") or "gemini-3.0-flash-preview"
     attachments = args.get("attachments")
     full_workflow = args.get("full_workflow", False)
     user_message = args.get("user_message") or topic
@@ -959,6 +959,42 @@ async def _execute_workflow_handler(
                 logger.info(f"Cleaned up {cleaned}/{len(created_handles)} orphan handles for failed workflow {workflow_id}")
 
 
+def _estimate_scene_count(duration_str: str) -> int:
+    """duration 문자열에서 씬 수 추론 (5초당 1씬).
+
+    Args:
+        duration_str: 영상 길이 문자열 (예: "15 seconds", "1 minute", "30s")
+
+    Returns:
+        추정된 씬 수 (최소 3, 최대 20)
+    """
+    import re
+
+    if not duration_str or not isinstance(duration_str, str):
+        return 5  # default
+
+    duration_lower = duration_str.lower().strip()
+
+    # Extract numeric value
+    match = re.search(r"(\d+(?:\.\d+)?)", duration_lower)
+    if not match:
+        return 5  # default
+
+    seconds = float(match.group(1))
+
+    # Convert to seconds if needed
+    if "minute" in duration_lower or "min" in duration_lower:
+        seconds *= 60
+    elif "hour" in duration_lower or "hr" in duration_lower:
+        seconds *= 3600
+
+    # Calculate scene count (5 seconds per scene)
+    scene_count = int(seconds / 5)
+
+    # Clamp to valid range [3, 20]
+    return max(3, min(20, scene_count))
+
+
 def _prepare_dimension_inputs(
     dimension: str,
     topic: str,
@@ -1003,12 +1039,19 @@ def _prepare_dimension_inputs(
         concept = prev_output.get("prompt") or prev_output.get("description") or topic
         if not isinstance(concept, str):
             concept = str(concept) if concept else topic
-        
-        scene_count = prev_output.get("scene_count", 5)
+
+        # P0 Gap Fix: Dynamic scene_count based on duration
+        # Priority: explicit scene_count > duration-based > default 5
+        scene_count = prev_output.get("scene_count")
         if not isinstance(scene_count, int) or scene_count < 1:
-            scene_count = 5
+            # Try to estimate from duration (from 1D output or session)
+            duration = prev_output.get("duration") or prev_output.get("technical", {}).get("duration")
+            if duration:
+                scene_count = _estimate_scene_count(str(duration))
+            else:
+                scene_count = 5  # default
         scene_count = min(scene_count, 20)  # Cap at 20 scenes
-        
+
         return {
             "concept": concept,
             "scene_count": scene_count,
