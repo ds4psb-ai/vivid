@@ -1038,6 +1038,8 @@ INITIAL_DIMENSION_ORDER = [
     "image_tool",          # 3D
     "quality_check",       # QC
     "veo_generate",        # VEO
+    "story_architect",     # SA - 시나리오 생성기
+    "sound_craft",         # SC - 사운드 크래프터
 ]
 
 
