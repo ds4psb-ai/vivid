@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, forwardRef, useImperativeHandle, useCallback, useRef } from "react";
+import { useState, forwardRef, useImperativeHandle, useCallback, useRef, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { TrainCar } from "./TrainCar";
 import { ConnectionSelector } from "./ConnectionSelector";
 import { DimensionPortalModal } from "./DimensionPortalModal";
 import { Trash2, CheckCircle, XCircle } from "lucide-react";
 import { api, DimensionResponse } from "@/lib/api";
+import { useDimensionConfig, type ConnectionOption } from "@/contexts/DimensionConfigContext";
 
 // =============================================================================
 // Types
@@ -27,15 +28,7 @@ interface Car {
     creditCost?: number;
 }
 
-interface ConnectionOption {
-    id: string;
-    label: string;
-    description: string;
-    recommendedToolId: string;
-    icon: string;
-    color: string;
-    confidence: number;
-}
+// ConnectionOption is now imported from DimensionConfigContext
 
 export interface TrainWorkflowHandle {
     executeAll: () => Promise<void>;
@@ -54,266 +47,36 @@ interface TrainWorkflowViewProps {
 }
 
 // =============================================================================
-// Dimension Tool Definitions (SSoT)
+// Dimension Tool Definitions (Now fetched from DimensionConfigContext SSoT)
 // =============================================================================
 
-// Credit costs from dimension_capsules.py (gemini-3-flash-preview tier)
-const DIMENSION_CREDIT_COSTS: Record<string, number> = {
-    prompt_generator: 5,   // 1D
-    storyboard: 10,        // 2D
-    image_tool: 10,        // 3D
-    reference_analyzer: 10, // 4D
-    // Extended Dimension Capsules
-    quality_check: 8,      // QC
-    aesthetic_direct: 10,  // AD
-    persona_analyze: 12,   // AI (Abyss)
-    veo_generate: 20,      // VEO
+type DimensionType = "1D" | "2D" | "3D" | "4D" | "QC" | "AD" | "AI" | "VEO" | "SA" | "SC";
+
+// Display labels for dimension positions
+const DIMENSION_LABELS = ["Origin", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"];
+
+// =============================================================================
+// Context-Aware Recommendation Logic (confidence boosts based on workflow)
+// =============================================================================
+
+// Base confidence adjustments based on previous dimension
+const CONFIDENCE_BOOSTS: Partial<Record<DimensionType, Partial<Record<string, number>>>> = {
+    "1D": { storyboard: 0.2, aesthetic_direct: 0.15, quality_check: 0.05 },
+    "2D": { image_tool: 0.2, quality_check: 0.15, veo_generate: 0.1, aesthetic_direct: 0.1 },
+    "3D": { quality_check: 0.15, veo_generate: 0.15, reference_analyzer: 0.1 },
+    "4D": { prompt_generator: 0.2, aesthetic_direct: 0.15, storyboard: 0.1 },
+    "QC": { aesthetic_direct: 0.1, veo_generate: 0.1 },
+    "AD": { prompt_generator: 0.15, storyboard: 0.15, image_tool: 0.1 },
+    "AI": { prompt_generator: 0.2, storyboard: 0.1, aesthetic_direct: 0.1 },
+    "VEO": { quality_check: 0.15 },
 };
 
-// Initial dimension options - shows all 8 dimensions for first selection
-const INITIAL_DIMENSION_OPTIONS: ConnectionOption[] = [
-    {
-        id: "init-1d",
-        label: "프롬프트",
-        description: "아이디어를 언어로 구체화",
-        recommendedToolId: "prompt_generator",
-        icon: "sparkles",
-        color: "violet",
-        confidence: 0.95,
-    },
-    {
-        id: "init-4d",
-        label: "레퍼런스",
-        description: "참고 영상 심층 분석",
-        recommendedToolId: "reference_analyzer",
-        icon: "film",
-        color: "cyan",
-        confidence: 0.85,
-    },
-    {
-        id: "init-ad",
-        label: "디렉팅",
-        description: "거장들의 미학 적용",
-        recommendedToolId: "aesthetic_direct",
-        icon: "palette",
-        color: "fuchsia",
-        confidence: 0.80,
-    },
-    {
-        id: "init-ai",
-        label: "심연",
-        description: "내면의 운명 해석",
-        recommendedToolId: "persona_analyze",
-        icon: "moon",
-        color: "indigo",
-        confidence: 0.75,
-    },
-    {
-        id: "init-2d",
-        label: "스토리보드",
-        description: "전체 흐름 설계",
-        recommendedToolId: "storyboard",
-        icon: "layout-grid",
-        color: "emerald",
-        confidence: 0.70,
-    },
-    {
-        id: "init-3d",
-        label: "비주얼",
-        description: "시각적 디테일 완성",
-        recommendedToolId: "image_tool",
-        icon: "image",
-        color: "amber",
-        confidence: 0.65,
-    },
-    {
-        id: "init-qc",
-        label: "퀄리티",
-        description: "6가지 기준 품질 검증",
-        recommendedToolId: "quality_check",
-        icon: "check-circle",
-        color: "rose",
-        confidence: 0.60,
-    },
-    {
-        id: "init-veo",
-        label: "비디오",
-        description: "최종 AI 영상 생성",
-        recommendedToolId: "veo_generate",
-        icon: "video",
-        color: "sky",
-        confidence: 0.55,
-    },
-];
-
-// Connection options based on dimension progression
-const CONNECTION_OPTIONS: ConnectionOption[] = [
-    {
-        id: "opt-2d",
-        label: "스토리보드",
-        description: "전체 흐름 설계",
-        recommendedToolId: "storyboard",
-        icon: "layout-grid",
-        color: "emerald",
-        confidence: 0.95,
-    },
-    {
-        id: "opt-3d",
-        label: "비주얼",
-        description: "시각적 디테일 완성",
-        recommendedToolId: "image_tool",
-        icon: "image",
-        color: "amber",
-        confidence: 0.85,
-    },
-    {
-        id: "opt-4d",
-        label: "레퍼런스",
-        description: "참고 영상 심층 분석",
-        recommendedToolId: "reference_analyzer",
-        icon: "film",
-        color: "cyan",
-        confidence: 0.75,
-    },
-    // Extended Dimension Capsules
-    {
-        id: "opt-qc",
-        label: "퀄리티",
-        description: "6가지 기준 품질 검증",
-        recommendedToolId: "quality_check",
-        icon: "check-circle",
-        color: "rose",
-        confidence: 0.70,
-    },
-    {
-        id: "opt-ad",
-        label: "디렉팅",
-        description: "거장들의 미학 적용",
-        recommendedToolId: "aesthetic_direct",
-        icon: "palette",
-        color: "fuchsia",
-        confidence: 0.65,
-    },
-    {
-        id: "opt-ai",
-        label: "심연",
-        description: "내면의 운명 해석",
-        recommendedToolId: "persona_analyze",
-        icon: "moon",
-        color: "indigo",
-        confidence: 0.60,
-    },
-    {
-        id: "opt-veo",
-        label: "비디오",
-        description: "최종 AI 영상 생성",
-        recommendedToolId: "veo_generate",
-        icon: "video",
-        color: "sky",
-        confidence: 0.55,
-    },
-];
-
-type DimensionType = "1D" | "2D" | "3D" | "4D" | "QC" | "AD" | "AI" | "VEO";
-
-const TOOL_INFO: Record<string, { displayName: string; icon: string; color: string; dimension: DimensionType }> = {
-    prompt_generator: { displayName: "프롬프트", icon: "sparkles", color: "violet", dimension: "1D" },
-    storyboard: { displayName: "스토리보드", icon: "layout-grid", color: "emerald", dimension: "2D" },
-    image_tool: { displayName: "비주얼", icon: "image", color: "amber", dimension: "3D" },
-    reference_analyzer: { displayName: "레퍼런스", icon: "film", color: "cyan", dimension: "4D" },
-    // Extended Dimension Capsules
-    quality_check: { displayName: "퀄리티", icon: "check-circle", color: "rose", dimension: "QC" },
-    aesthetic_direct: { displayName: "디렉팅", icon: "palette", color: "fuchsia", dimension: "AD" },
-    persona_analyze: { displayName: "심연", icon: "moon", color: "indigo", dimension: "AI" },
-    veo_generate: { displayName: "비디오", icon: "video", color: "sky", dimension: "VEO" },
+// Output type-based adjustments
+const OUTPUT_TYPE_BOOSTS: Record<string, Partial<Record<string, number>>> = {
+    scenes: { veo_generate: 0.15, quality_check: 0.1 },
+    prompt: { storyboard: 0.1, image_tool: 0.1, aesthetic_direct: 0.05 },
+    style_guide: { prompt_generator: 0.1, storyboard: 0.1 },
 };
-
-// 차원 레이블
-const DIMENSION_LABELS = ["1D", "2D", "3D", "4D", "QC", "AD", "AI", "VEO"];
-
-// =============================================================================
-// Context-Aware Recommendation Logic
-// =============================================================================
-
-/**
- * 이전 차원 및 출력에 따라 다음 추천 차원의 신뢰도를 조정합니다.
- * @param prevDimension - 이전 차원 (예: "1D", "2D")
- * @param prevOutput - 이전 차원의 출력 데이터
- * @returns 조정된 CONNECTION_OPTIONS
- */
-function getContextAwareRecommendations(
-    prevDimension: DimensionType | undefined,
-    prevOutput: Record<string, unknown> | undefined,
-    usedDimensions: Set<DimensionType>
-): ConnectionOption[] {
-    // Base confidence adjustments based on previous dimension
-    const confidenceBoosts: Record<DimensionType, Partial<Record<string, number>>> = {
-        // After 1D (Prompt): Storyboard (2D), Aesthetic (AD) make sense
-        "1D": { storyboard: 0.2, aesthetic_direct: 0.15, quality_check: 0.05 },
-        // After 2D (Storyboard): Image (3D), QC, VEO are natural next steps
-        "2D": { image_tool: 0.2, quality_check: 0.15, veo_generate: 0.1, aesthetic_direct: 0.1 },
-        // After 3D (Image): QC, VEO for video generation
-        "3D": { quality_check: 0.15, veo_generate: 0.15, reference_analyzer: 0.1 },
-        // After 4D (Reference): Prompt (1D), Aesthetic (AD) to start creation
-        "4D": { prompt_generator: 0.2, aesthetic_direct: 0.15, storyboard: 0.1 },
-        // After QC: Can proceed to any creative step
-        "QC": { aesthetic_direct: 0.1, veo_generate: 0.1 },
-        // After AD (Aesthetic): Prompt or Storyboard with style guidance
-        "AD": { prompt_generator: 0.15, storyboard: 0.15, image_tool: 0.1 },
-        // After AI (Persona): Prompt generation based on persona
-        "AI": { prompt_generator: 0.2, storyboard: 0.1, aesthetic_direct: 0.1 },
-        // After VEO: Usually end of workflow, but QC can validate
-        "VEO": { quality_check: 0.15 },
-    };
-
-    // Output type-based adjustments
-    const outputTypeBoosts: Record<string, Partial<Record<string, number>>> = {
-        // If output has "scenes", video generation is recommended
-        scenes: { veo_generate: 0.15, quality_check: 0.1 },
-        // If output has "prompt", storyboard or image makes sense
-        prompt: { storyboard: 0.1, image_tool: 0.1, aesthetic_direct: 0.05 },
-        // If output has style/aesthetic info
-        style_guide: { prompt_generator: 0.1, storyboard: 0.1 },
-    };
-
-    // Calculate adjusted options
-    const adjustedOptions = CONNECTION_OPTIONS.map(opt => {
-        const optToolInfo = TOOL_INFO[opt.recommendedToolId];
-        if (!optToolInfo || usedDimensions.has(optToolInfo.dimension)) {
-            return null; // Filter out used dimensions
-        }
-
-        let adjustedConfidence = opt.confidence;
-
-        // Apply dimension-based boost
-        if (prevDimension && confidenceBoosts[prevDimension]) {
-            const boost = confidenceBoosts[prevDimension][opt.recommendedToolId] || 0;
-            adjustedConfidence += boost;
-        }
-
-        // Apply output type-based boost
-        if (prevOutput) {
-            Object.keys(outputTypeBoosts).forEach(key => {
-                if (prevOutput[key]) {
-                    const boost = outputTypeBoosts[key][opt.recommendedToolId] || 0;
-                    adjustedConfidence += boost;
-                }
-            });
-        }
-
-        // Cap confidence at 0.99
-        adjustedConfidence = Math.min(adjustedConfidence, 0.99);
-
-        return { ...opt, confidence: adjustedConfidence };
-    }).filter((opt): opt is ConnectionOption => opt !== null);
-
-    // Sort by adjusted confidence (highest first)
-    return adjustedOptions.sort((a, b) => b.confidence - a.confidence);
-}
-
-// =============================================================================
-// Component
-// =============================================================================
 
 // =============================================================================
 // Input Validation
@@ -360,16 +123,74 @@ function validateInputs(dimension: "1D" | "2D" | "3D" | "4D" | "QC" | "AD" | "AI
 
 export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowViewProps>(
     ({ onComplete }, ref) => {
+        // Get dimension config from context (SSoT)
+        const { toolsById, getInitialOptions, getConnectionOptions } = useDimensionConfig();
+
         const [cars, setCars] = useState<Car[]>([]);
-        const [pendingConnections, setPendingConnections] = useState<ConnectionOption[]>(INITIAL_DIMENSION_OPTIONS);
         const [isLoadingOptions, setIsLoadingOptions] = useState(false);
         const [activeCarIndex, setActiveCarIndex] = useState(0);
         const [isExecutingAll, setIsExecutingAll] = useState(false);
         const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
         const [portalCarId, setPortalCarId] = useState<string | null>(null);
 
+        // Initial connection options from context
+        const initialOptions = useMemo(() => getInitialOptions(), [getInitialOptions]);
+        const [pendingConnections, setPendingConnections] = useState<ConnectionOption[]>([]);
+
+        // Initialize pendingConnections when context loads
+        useMemo(() => {
+            if (initialOptions.length > 0 && pendingConnections.length === 0) {
+                setPendingConnections(initialOptions);
+            }
+        }, [initialOptions, pendingConnections.length]);
+
         // Track executing cars to prevent double-click
         const executingCarsRef = useRef<Set<string>>(new Set());
+
+        // Helper: Get tool info from context
+        const getToolInfo = useCallback((toolId: string) => {
+            return toolsById[toolId];
+        }, [toolsById]);
+
+        // Context-aware recommendations using context data
+        const getContextAwareRecommendations = useCallback((
+            prevDimension: DimensionType | undefined,
+            prevOutput: Record<string, unknown> | undefined,
+            usedDimensions: Set<DimensionType>
+        ): ConnectionOption[] => {
+            const usedToolIds = cars.map(c => c.toolId);
+            const allOptions = getConnectionOptions(usedToolIds);
+
+            const adjustedOptions = allOptions.map(opt => {
+                const optToolInfo = getToolInfo(opt.recommendedToolId);
+                if (!optToolInfo || usedDimensions.has(optToolInfo.dimension as DimensionType)) {
+                    return null;
+                }
+
+                let adjustedConfidence = opt.confidence;
+
+                // Apply dimension-based boost
+                if (prevDimension && CONFIDENCE_BOOSTS[prevDimension]) {
+                    const boost = CONFIDENCE_BOOSTS[prevDimension]?.[opt.recommendedToolId] || 0;
+                    adjustedConfidence += boost;
+                }
+
+                // Apply output type-based boost
+                if (prevOutput) {
+                    Object.keys(OUTPUT_TYPE_BOOSTS).forEach(key => {
+                        if (prevOutput[key]) {
+                            const boost = OUTPUT_TYPE_BOOSTS[key]?.[opt.recommendedToolId] || 0;
+                            adjustedConfidence += boost;
+                        }
+                    });
+                }
+
+                adjustedConfidence = Math.min(adjustedConfidence, 0.99);
+                return { ...opt, confidence: adjustedConfidence };
+            }).filter((opt): opt is ConnectionOption => opt !== null);
+
+            return adjustedOptions.sort((a, b) => b.confidence - a.confidence);
+        }, [cars, getConnectionOptions, getToolInfo]);
 
         // Auto-dismiss notification
         const showNotification = useCallback((type: "success" | "error", message: string) => {
@@ -512,9 +333,10 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
 
                 if (response.success) {
                     // 성공: output 저장 및 상태 업데이트
-                    // creditCost: API 응답에서 가져오거나 차원별 기본값 사용
+                    // creditCost: API 응답에서 가져오거나 context 기본값 사용
+                    const toolConfig = getToolInfo(car.toolId);
                     const actualCreditCost = response.metrics?.credit_cost
-                        ?? DIMENSION_CREDIT_COSTS[car.toolId]
+                        ?? toolConfig?.creditCost
                         ?? 10;
 
                     setCars((prev) =>
@@ -663,7 +485,7 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
             executeAll: handleExecuteAll,
             reset: () => {
                 setCars([]);
-                setPendingConnections(INITIAL_DIMENSION_OPTIONS);
+                setPendingConnections(initialOptions);
                 setActiveCarIndex(0);
             },
 
@@ -694,19 +516,19 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
             clearCars: () => {
                 setCars([]);
                 setActiveCarIndex(0);
-                setPendingConnections(CONNECTION_OPTIONS);
+                setPendingConnections(initialOptions);
             },
 
             getCars: () => cars,
-        }), [cars, handleExecuteAll]);
+        }), [cars, handleExecuteAll, initialOptions]);
 
         // 연결 옵션 선택 핸들러
         const handleSelectConnection = async (optionId: string) => {
             const selectedOption = pendingConnections.find((opt) => opt.id === optionId);
             if (!selectedOption) return;
 
-            const toolInfo = TOOL_INFO[selectedOption.recommendedToolId];
-            if (!toolInfo) return;
+            const toolConfig = getToolInfo(selectedOption.recommendedToolId);
+            if (!toolConfig) return;
 
             // 첫 번째 차원 선택인지 체크
             const isFirstCar = cars.length === 0;
@@ -717,11 +539,11 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
 
             // 이전 노드 output을 기반으로 다음 노드 inputs 설정
             if (prevCar?.output) {
-                if (toolInfo.dimension === "2D") {
+                if (toolConfig.dimension === "2D") {
                     baseInputs.concept = prevCar.output.prompt || prevCar.output.veo_prompt || "";
-                } else if (toolInfo.dimension === "3D") {
+                } else if (toolConfig.dimension === "3D") {
                     baseInputs.description = prevCar.output.prompt || "";
-                } else if (toolInfo.dimension === "4D") {
+                } else if (toolConfig.dimension === "4D") {
                     baseInputs.video_description = prevCar.output.prompt || prevCar.output.description || "";
                 }
             }
@@ -730,14 +552,14 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                 id: `car-${cars.length + 1}`,
                 order: cars.length,
                 toolId: selectedOption.recommendedToolId,
-                dimension: toolInfo.dimension,
-                displayName: toolInfo.displayName,
-                icon: toolInfo.icon,
-                color: toolInfo.color,
+                dimension: toolConfig.dimension as Car["dimension"],
+                displayName: toolConfig.displayName,
+                icon: toolConfig.icon,
+                color: toolConfig.color,
                 // 첫 번째 차원은 바로 ready 상태로
                 status: isFirstCar ? "ready" : "pending",
                 inputs: baseInputs,
-                creditCost: DIMENSION_CREDIT_COSTS[selectedOption.recommendedToolId],
+                creditCost: toolConfig.creditCost,
             };
 
             setCars((prev) => [...prev, newCar]);
@@ -748,10 +570,10 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
             await new Promise((resolve) => setTimeout(resolve, 300));
 
             // 이미 사용한 차원 제외하고 컨텍스트 기반 추천 생성
-            const usedDimensions = new Set([...cars.map(c => c.dimension), toolInfo.dimension]);
+            const usedDimensions = new Set([...cars.map(c => c.dimension), toolConfig.dimension as DimensionType]);
             const lastCar = cars[cars.length - 1];
             const nextOptions = getContextAwareRecommendations(
-                toolInfo.dimension,  // 방금 추가된 차원
+                toolConfig.dimension as DimensionType,  // 방금 추가된 차원
                 lastCar?.output,     // 마지막 차원의 출력
                 usedDimensions
             );
@@ -770,7 +592,7 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
 
             // 모든 노드가 삭제되면 초기 차원 선택 옵션 복원
             if (newCars.length === 0) {
-                setPendingConnections(INITIAL_DIMENSION_OPTIONS);
+                setPendingConnections(initialOptions);
                 setActiveCarIndex(0);
             } else {
                 setActiveCarIndex(Math.min(activeCarIndex, newCars.length - 1));
@@ -845,7 +667,7 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                                     onReRecommend={() => {
                                         setIsLoadingOptions(true);
                                         setTimeout(() => {
-                                            setPendingConnections(INITIAL_DIMENSION_OPTIONS);
+                                            setPendingConnections(initialOptions);
                                             setIsLoadingOptions(false);
                                         }, 300);
                                     }}
@@ -959,7 +781,7 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                                         예상 크레딧
                                     </span>
                                     <p className="text-lg font-bold text-amber-400">
-                                        {cars.reduce((sum, c) => sum + (c.creditCost ?? DIMENSION_CREDIT_COSTS[c.toolId] ?? 10), 0)}
+                                        {cars.reduce((sum, c) => sum + (c.creditCost ?? toolsById[c.toolId]?.creditCost ?? 10), 0)}
                                     </p>
                                 </div>
                             </div>
