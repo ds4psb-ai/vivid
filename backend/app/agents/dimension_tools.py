@@ -61,8 +61,9 @@ TOOL_TO_CAPSULE: Dict[str, str] = {
     # 4-Stage Workflow Capsules
     "story_architect": "dimension.story.architect",
     "sound_crafter": "dimension.sound.craft",
-    "reference_decoder": "dimension.reference.decode",
-    "visual_realizer": "dimension.visual.realize",
+    # Aliases for 4-Stage Workflow (map to existing capsules)
+    "reference_decoder": "teaching.reference.analyze",  # REF → 4D capsule
+    "visual_realizer": "teaching.image.generate",  # VIS → 3D capsule
 }
 
 CAPSULE_TO_TOOL: Dict[str, str] = {v: k for k, v in TOOL_TO_CAPSULE.items()}
