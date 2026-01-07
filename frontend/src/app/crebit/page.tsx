@@ -64,6 +64,7 @@ interface WorkflowStage {
     title: string;
     subtitle: string;
     color: "emerald" | "violet" | "amber" | "cyan";
+    stageKey: "planning" | "pre-production" | "production" | "finishing"; // For URL filtering
     steps: WorkflowStep[];
     tip?: string;
 }
@@ -76,6 +77,7 @@ const WORKFLOW_STAGES: WorkflowStage[] = [
         title: "기획",
         subtitle: "아이디어를 구체화하는 첫걸음",
         color: "emerald",
+        stageKey: "planning",
         steps: [
             { icon: Brain, title: "심연의 거울", desc: "나만의 취향과 창작 DNA 분석 (Gemini, NotebookLM)" },
             { icon: Search, title: "레퍼런스 해석기", desc: "조명, 색감, 연출의 전문가적 분석" },
@@ -87,6 +89,7 @@ const WORKFLOW_STAGES: WorkflowStage[] = [
         title: "사전 제작",
         subtitle: "시나리오를 시청각 설계도로 변환",
         color: "violet",
+        stageKey: "pre-production",
         steps: [
             { icon: Music, title: "사운드 크래프터", desc: "BGM 및 성우 내레이션 생성 (Suno, Udio)" },
             { icon: ImageIcon, title: "스토리보드 스케치", desc: "글을 시각적 컷으로 스케치" },
@@ -98,6 +101,7 @@ const WORKFLOW_STAGES: WorkflowStage[] = [
         title: "제작",
         subtitle: "상상을 현실로 구현",
         color: "amber",
+        stageKey: "production",
         steps: [
             { icon: ImageIcon, title: "비주얼 리얼라이저", desc: "Key Frame 고품질 생성 (Midjourney)" },
             { icon: Video, title: "비디오 메이커", desc: "영상 변환 및 모션 제어 (Veo 3.1, Kling)" },
@@ -108,6 +112,7 @@ const WORKFLOW_STAGES: WorkflowStage[] = [
         title: "완성",
         subtitle: "프로페셔널 퀄리티로 마무리",
         color: "cyan",
+        stageKey: "finishing",
         steps: [
             { icon: CheckCircle, title: "퀄리티 디렉터", desc: "시각적 일관성 및 동작 자연스러움 검수" },
         ],
@@ -363,6 +368,30 @@ function WorkflowCard({ stage }: WorkflowCardProps) {
                     </p>
                 </aside>
             )}
+
+            {/* Navigation Buttons */}
+            <div className="mt-6 flex flex-wrap gap-3">
+                <Link
+                    href={`/dimension?stage=${stage.stageKey}`}
+                    className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl
+                               bg-white/5 border border-white/10 text-sm font-medium text-slate-300
+                               hover:bg-white/10 hover:text-white hover:border-white/20
+                               transition-all duration-300`}
+                >
+                    <Layers className="w-4 h-4" />
+                    도구 둘러보기
+                </Link>
+                <Link
+                    href="/flow"
+                    className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl
+                               ${colors.bar} text-sm font-semibold text-white
+                               hover:opacity-90 shadow-lg
+                               transition-all duration-300`}
+                >
+                    <Zap className="w-4 h-4" />
+                    워크플로우 시작
+                </Link>
+            </div>
         </article>
     );
 }
