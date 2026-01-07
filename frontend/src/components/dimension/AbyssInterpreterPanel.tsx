@@ -55,7 +55,7 @@ const DEPTH_LEVELS = [
 ];
 
 const MODELS = [
-    { value: "gemini-3-flash-preview", label: "Flash (빠름)" },
+    { value: "gemini-3.0-flash-preview", label: "Flash (빠름)" },
     { value: "gemini-3.0-pro-preview", label: "Pro (깊이)" },
 ];
 

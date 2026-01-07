@@ -317,7 +317,7 @@ class GeminiCacheManager:
         return cls._genai
     
     @classmethod
-    def get_chokki_cache(cls, model_name: str = "gemini-3-flash-preview"):
+    def get_chokki_cache(cls, model_name: str = "gemini-3.0-flash-preview"):
         """
         Get or create cached content for Chokki agent.
         
@@ -407,7 +407,7 @@ class GeminiCacheManager:
                 cls._cache_expiry = None
     
     @classmethod
-    def get_model_from_cache(cls, model_name: str = "gemini-3-flash-preview"):
+    def get_model_from_cache(cls, model_name: str = "gemini-3.0-flash-preview"):
         """
         Get a GenerativeModel using cached content.
         
@@ -476,7 +476,7 @@ class GeminiCacheManager:
 # Convenience Functions
 # =============================================================================
 
-def get_cached_chokki_model(model_name: str = "gemini-3-flash-preview"):
+def get_cached_chokki_model(model_name: str = "gemini-3.0-flash-preview"):
     """
     Get Chokki model with caching enabled.
     

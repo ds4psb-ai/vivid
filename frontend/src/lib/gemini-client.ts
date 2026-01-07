@@ -4,7 +4,7 @@
  */
 
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models";
-const MODEL_NAME = "gemini-3-flash-preview"; // Preview 단계
+const MODEL_NAME = "gemini-3.0-flash-preview"; // Preview 단계
 
 interface GeminiMessage {
     role: "user" | "model";

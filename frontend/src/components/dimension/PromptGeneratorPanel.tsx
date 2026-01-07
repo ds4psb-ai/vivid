@@ -50,8 +50,8 @@ const DURATIONS = [
 ];
 
 const MODELS = [
-    { value: "gemini-3-flash-preview", label: "Flash (빠름)" },
-    { value: "gemini-2.5-pro", label: "Pro (고품질)" },
+    { value: "gemini-3.0-flash-preview", label: "Flash (빠름)" },
+    { value: "gemini-3.0-pro-preview", label: "Pro (고품질)" },
 ];
 
 export default function PromptGeneratorPanel() {
@@ -60,7 +60,7 @@ export default function PromptGeneratorPanel() {
     const [mood, setMood] = useState("neutral");
     const [duration, setDuration] = useState("15 seconds");
     const [language, setLanguage] = useState<"ko" | "en">("ko");
-    const [model, setModel] = useState("gemini-3-flash-preview");
+    const [model, setModel] = useState("gemini-3.0-flash-preview");
 
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<PromptResult | null>(null);

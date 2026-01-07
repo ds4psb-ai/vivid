@@ -37,7 +37,7 @@ class TeachingSettingsResponse(BaseModel):
     image_tool_data: dict = Field(default_factory=dict)
     shot_catch_data: dict = Field(default_factory=dict)
     language: str = "ko"
-    selected_model: str = "gemini-3-flash-preview"
+    selected_model: str = "gemini-3.0-flash-preview"
 
 
 @router.get("/teaching-settings", response_model=TeachingSettingsResponse)
@@ -73,7 +73,7 @@ async def get_teaching_settings(
         image_tool_data=settings.image_tool_data or {},
         shot_catch_data=settings.shot_catch_data or {},
         language=settings.language or "ko",
-        selected_model=settings.selected_model or "gemini-3-flash-preview",
+        selected_model=settings.selected_model or "gemini-3.0-flash-preview",
     )
 
 
@@ -140,7 +140,7 @@ async def update_teaching_settings(
         image_tool_data=settings.image_tool_data or {},
         shot_catch_data=settings.shot_catch_data or {},
         language=settings.language or "ko",
-        selected_model=settings.selected_model or "gemini-3-flash-preview",
+        selected_model=settings.selected_model or "gemini-3.0-flash-preview",
     )
 
 

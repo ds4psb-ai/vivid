@@ -60,7 +60,7 @@ export function TeachingSettingsProvider({ children }: TeachingSettingsProviderP
                 imageToolData: data.image_tool_data || {},
                 shotCatchData: data.shot_catch_data || {},
                 language: data.language || "ko",
-                selectedModel: data.selected_model || "gemini-3-flash-preview",
+                selectedModel: data.selected_model || "gemini-3.0-flash-preview",
             });
             setError(null);
         } catch (err) {
@@ -74,7 +74,7 @@ export function TeachingSettingsProvider({ children }: TeachingSettingsProviderP
                     imageToolData: {},
                     shotCatchData: {},
                     language: "ko",
-                    selectedModel: "gemini-3-flash-preview",
+                    selectedModel: "gemini-3.0-flash-preview",
                 });
             } else {
                 setError(err instanceof Error ? err.message : "Failed to load settings");

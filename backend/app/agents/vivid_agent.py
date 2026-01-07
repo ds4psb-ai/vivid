@@ -73,10 +73,22 @@ class MemoryManager:
                         content=f"[Page Context] 사용자가 현재 {page_hint}에 있습니다. 해당 페이지의 기능과 관련된 도움을 제공하세요.",
                     )
                 )
+
+        # Inject template context from Singularity (if present)
+        if state.metadata and state.metadata.get("template"):
+            template = state.metadata["template"]
+            template_hint = self._build_template_hint(template)
+            if template_hint:
+                context.append(
+                    AgentMessage(
+                        role=AgentRole.SYSTEM,
+                        content=template_hint,
+                    )
+                )
         
         if state.metadata:
-            # Filter out page_context from metadata string (already handled above)
-            filtered_metadata = {k: v for k, v in state.metadata.items() if k != "page_context"}
+            # Filter out page_context and template from metadata string (already handled above)
+            filtered_metadata = {k: v for k, v in state.metadata.items() if k not in ("page_context", "template")}
             if filtered_metadata:
                 try:
                     metadata_str = json.dumps(filtered_metadata, ensure_ascii=True)
@@ -93,6 +105,38 @@ class MemoryManager:
         context.extend(state.messages)
         return context
     
+    def _build_template_hint(self, template: dict) -> str:
+        """Build template context hint for Singularity templates."""
+        if not isinstance(template, dict):
+            return ""
+
+        title = template.get("title", "")
+        description = template.get("description", "")
+        tool_sequence = template.get("tool_sequence", [])
+        input_preset = template.get("input_preset", {})
+
+        if not title:
+            return ""
+
+        hint_parts = [
+            f"[Template Active] 싱귤래리티 템플릿 '{title}'이(가) 적용되어 있습니다."
+        ]
+
+        if description:
+            hint_parts.append(f"설명: {description}")
+
+        if tool_sequence:
+            sequence_str = " → ".join(tool_sequence)
+            hint_parts.append(f"워크플로우 순서: {sequence_str}")
+
+        if input_preset:
+            preset_keys = list(input_preset.keys())[:5]  # Limit to 5 keys
+            hint_parts.append(f"프리셋 입력: {', '.join(preset_keys)}")
+
+        hint_parts.append("사용자가 템플릿 워크플로우를 실행하거나 수정하려 할 수 있습니다. 적절히 안내해주세요.")
+
+        return "\n".join(hint_parts)
+
     def _get_page_hint(self, page_context: str) -> str:
         """Get human-readable page hint for context injection."""
         PAGE_HINTS = {

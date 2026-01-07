@@ -42,7 +42,7 @@ const CRITERIA_OPTIONS = [
 ];
 
 const MODELS = [
-    { value: "gemini-3-flash-preview", label: "Flash (빠름)" },
+    { value: "gemini-3.0-flash-preview", label: "Flash (빠름)" },
     { value: "gemini-3.0-pro-preview", label: "Pro (정확)" },
 ];
 

@@ -38,10 +38,9 @@ class KellyBasedCreditAllocator:
     
     # 기본 크레딧 비용 (모델별)
     DEFAULT_COSTS: Dict[str, int] = {
-        "gemini-2.0-flash-exp": 10,
-        "gemini-2.5-pro-preview-06-05": 25,
-        "veo-3": 100,
-        "veo-3.1": 120,
+        "gemini-3.0-flash-preview": 10,
+        "gemini-3.0-pro-preview": 25,
+        "veo-3.0": 100,
     }
     
     def calculate_kelly(

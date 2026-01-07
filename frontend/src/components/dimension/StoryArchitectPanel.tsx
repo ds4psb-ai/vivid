@@ -120,7 +120,7 @@ export default function StoryArchitectPanel() {
                 duration,
                 structure,
                 language: "ko",
-                model: "gemini-2.5-pro",
+                model: "gemini-3.0-pro-preview",
                 persona_data: personaData,
                 reference_analysis: referenceAnalysis,
             });

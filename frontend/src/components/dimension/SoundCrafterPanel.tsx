@@ -142,7 +142,7 @@ export default function SoundCrafterPanel() {
                 tempo,
                 target_platform: platform,
                 language: "ko",
-                model: "gemini-3-flash-preview",
+                model: "gemini-3.0-flash-preview",
                 storyboard: storyboardData.length > 0 ? storyboardData : undefined,
             });
 

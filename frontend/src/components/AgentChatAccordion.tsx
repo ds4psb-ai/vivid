@@ -27,6 +27,15 @@ interface Message {
     toolError?: string;
 }
 
+// Template context from Singularity
+interface TemplateContext {
+    id: string;
+    title: string;
+    description?: string;
+    tool_sequence?: string[];
+    input_preset?: Record<string, unknown>;
+}
+
 interface AgentChatAccordionProps {
     onExecuteAll?: () => void;
     onManualExecute?: () => void;
@@ -40,6 +49,8 @@ interface AgentChatAccordionProps {
     onWorkflowCreated?: (event: WorkflowCreatedEvent) => void;
     // Tool result callback for capturing dimension outputs
     onToolResult?: (result: ToolResultEvent) => void;
+    // Template context from Singularity gallery
+    templateContext?: TemplateContext | null;
 }
 
 export function AgentChatAccordion({
@@ -52,15 +63,24 @@ export function AgentChatAccordion({
     onWorkflowComplete,
     onWorkflowCreated,
     onToolResult,
+    templateContext,
 }: AgentChatAccordionProps) {
     const pathname = usePathname();
     const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
+
+    // Compute initial message based on template context
+    const computedInitialMessage = templateContext
+        ? `🎬 "${templateContext.title}" 템플릿이 적용되었습니다!\n\n` +
+          `${templateContext.tool_sequence.join(" → ")} 워크플로우가 준비되어 있어요.\n\n` +
+          `입력값을 넣고 "전체 실행"을 누르거나, 제가 도와드릴 내용이 있으면 말씀해주세요!`
+        : initialMessage;
+
     const [messages, setMessages] = useState<Message[]>([
         {
             id: "initial",
             role: "assistant",
-            content: initialMessage,
+            content: computedInitialMessage,
             timestamp: new Date(),
         },
     ]);
@@ -172,6 +192,7 @@ export function AgentChatAccordion({
                 message: userInput || (uploadedAttachments.length > 0 ? "File attached" : ""),
                 attachments: uploadedAttachments.length > 0 ? uploadedAttachments : undefined,
                 page_context: pathname,
+                metadata: templateContext ? { template: templateContext } : undefined,
             });
 
             if (!response.ok || !response.body) {

@@ -820,6 +820,7 @@ function FlowPageContent() {
                     onWorkflowComplete={handleWorkflowComplete}
                     onWorkflowCreated={handleWorkflowCreated}
                     onToolResult={handleToolResult}
+                    templateContext={loadedTemplate}
                 />
 
                 {/* 🆕 Template Save Modal */}
