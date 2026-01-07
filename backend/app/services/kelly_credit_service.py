@@ -68,8 +68,8 @@ class KellyIntegratedCreditService:
     
     # 모델별 기본 성공 확률 (초기값, 피드백으로 갱신)
     DEFAULT_SUCCESS_PROBS = {
-        "gemini-3.0-flash-preview": 0.8,
-        "gemini-3.0-pro-preview": 0.85,
+        "gemini-3-flash-preview": 0.8,
+        "gemini-3-pro-preview": 0.85,
         "veo-3.0": 0.7,
     }
     
@@ -78,7 +78,7 @@ class KellyIntegratedCreditService:
         db: AsyncSession,
         user_id: str,
         credit_cost: int,
-        model: str = "gemini-3.0-flash-preview",
+        model: str = "gemini-3-flash-preview",
         reward_ratio: float = 2.0,
     ) -> KellyDecision:
         """
@@ -231,7 +231,7 @@ class KellyIntegratedCreditService:
         db: AsyncSession,
         user_id: str,
         credit_cost: int,
-        model: str = "gemini-3.0-flash-preview",
+        model: str = "gemini-3-flash-preview",
     ) -> Dict[str, Any]:
         """
         최적 실행 횟수 계산

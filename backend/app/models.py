@@ -708,7 +708,7 @@ class UserTeachingSettings(Base):
     
     # User preferences
     language: Mapped[str] = mapped_column(String(8), default="ko")
-    selected_model: Mapped[str] = mapped_column(String(64), default="gemini-3.0-flash-preview")
+    selected_model: Mapped[str] = mapped_column(String(64), default="gemini-3-flash-preview")
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

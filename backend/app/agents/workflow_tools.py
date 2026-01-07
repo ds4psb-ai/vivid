@@ -591,7 +591,7 @@ full_workflow=true 시 전체 8개 캡슐을 전략적으로 배치합니다."""
             "model": {
                 "type": "string",
                 "description": "AI 모델 선택",
-                "default": "gemini-3.0-flash-preview",
+                "default": "gemini-3-flash-preview",
             },
             "style": {
                 "type": "string",
@@ -669,7 +669,7 @@ async def _execute_workflow_handler(
 
     topic = args.get("topic", "") or ""
     dimensions = args.get("dimensions")  # None if not explicitly set
-    model = args.get("model") or "gemini-3.0-flash-preview"
+    model = args.get("model") or "gemini-3-flash-preview"
     attachments = args.get("attachments")
     full_workflow = args.get("full_workflow", False)
     user_message = args.get("user_message") or topic

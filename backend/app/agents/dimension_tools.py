@@ -108,7 +108,7 @@ def get_credit_cost(capsule_key: str, model: str) -> int:
     
     Args:
         capsule_key: 캡슐 식별자 (예: "teaching.prompt.generate")
-        model: AI 모델명 (예: "gemini-3.0-flash-preview")
+        model: AI 모델명 (예: "gemini-3-flash-preview")
         
     Returns:
         크레딧 비용 (정수)
@@ -125,7 +125,7 @@ def get_credit_cost(capsule_key: str, model: str) -> int:
         return cost
     
     # Fallback to default model cost
-    default_cost = credit_costs.get("gemini-3.0-flash-preview", 5)
+    default_cost = credit_costs.get("gemini-3-flash-preview", 5)
     logger.debug(f"Model '{model}' not in credit_costs, using default: {default_cost}")
     return default_cost
 
@@ -212,7 +212,7 @@ def _capsule_to_tool_spec(capsule: Dict[str, Any]) -> ToolSpec:
         properties["model"] = {
             "type": "string",
             "description": "AI 모델 선택 (비용이 다름)",
-            "default": model_def.get("default", "gemini-3.0-flash-preview"),
+            "default": model_def.get("default", "gemini-3-flash-preview"),
         }
         if "options" in model_def:
             properties["model"]["enum"] = model_def["options"]
@@ -349,7 +349,7 @@ async def _dimension_tool_handler(
     # 모델 추출 (기본값 처리)
     spec = capsule["spec"]
     default_model = spec.get("params", {}).get("model", {}).get(
-        "default", "gemini-3.0-flash-preview"
+        "default", "gemini-3-flash-preview"
     )
     model = args.get("model", default_model)
     

@@ -63,8 +63,8 @@ def _get_model(use_video: bool = False):
     """Get or create the Gemini model instance.
     
     Args:
-        use_video: If True, use GEMINI_VIDEO_MODEL (gemini-3.0-pro) for video interpretation.
-                   If False, use GEMINI_MODEL (gemini-3.0-flash) for general tasks.
+        use_video: If True, use GEMINI_VIDEO_MODEL (gemini-3-pro-preview) for video interpretation.
+                   If False, use GEMINI_MODEL (gemini-3-flash-preview) for general tasks.
     """
     global _model
     model_name = settings.GEMINI_VIDEO_MODEL if use_video else settings.GEMINI_MODEL
@@ -106,7 +106,7 @@ def _get_model(use_video: bool = False):
 def _get_video_model():
     """Get Gemini model instance specifically for video file interpretation.
     
-    Uses GEMINI_VIDEO_MODEL (gemini-3.0-pro) which has advanced multimodal capabilities.
+    Uses GEMINI_VIDEO_MODEL (gemini-3-pro-preview) which has advanced multimodal capabilities.
     """
     return _get_model(use_video=True)
 
@@ -1103,7 +1103,7 @@ def test_connection() -> Dict[str, Any]:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Video Interpretation (uses gemini-3.0-pro)
+# Video Interpretation (uses gemini-3-pro-preview)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def interpret_video_file(
@@ -1112,7 +1112,7 @@ def interpret_video_file(
 ) -> Tuple[Dict[str, Any], Dict[str, int]]:
     """Interpret a video file using Gemini 3.0 Pro.
     
-    This function uses GEMINI_VIDEO_MODEL (gemini-3.0-pro) for advanced video understanding.
+    This function uses GEMINI_VIDEO_MODEL (gemini-3-pro-preview) for advanced video understanding.
     
     Args:
         video_file_path: Path to the video file to analyze.
@@ -1122,7 +1122,7 @@ def interpret_video_file(
         Tuple of (analysis_result, token_usage)
         
     Note:
-        This function uses gemini-3.0-pro which has enhanced multimodal capabilities
+        This function uses gemini-3-pro-preview which has enhanced multimodal capabilities
         specifically for video understanding tasks.
     """
     if not settings.GEMINI_ENABLED or not settings.GEMINI_API_KEY:
@@ -1131,7 +1131,7 @@ def interpret_video_file(
     configure_gemini()
     genai = _get_genai()
     
-    # Use video model (gemini-3.0-pro)
+    # Use video model (gemini-3-pro-preview)
     video_model = _get_video_model()
     logger.info(f"Using video model: {settings.GEMINI_VIDEO_MODEL} for video interpretation")
     
@@ -1175,14 +1175,14 @@ def interpret_video_file(
 # Model Protocol Summary
 # ─────────────────────────────────────────────────────────────────────────────
 #
-# GEMINI_MODEL (gemini-3.0-flash):
+# GEMINI_MODEL (gemini-3-flash-preview):
 #   - Default for all text/general tasks
 #   - Storyboard generation
 #   - Shot contract generation
 #   - NotebookLM analysis (Logic/Persona extraction)
 #   - Fast response, cost-effective
 #
-# GEMINI_VIDEO_MODEL (gemini-3.0-pro):
+# GEMINI_VIDEO_MODEL (gemini-3-pro-preview):
 #   - Video file interpretation only
 #   - Advanced multimodal understanding
 #   - Scene detection, visual structure analysis

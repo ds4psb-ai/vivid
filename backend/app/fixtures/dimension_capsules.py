@@ -30,8 +30,8 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
         "input_dimensions": ["story-architect", "storyboard-sketch"],
         "output_dimensions": ["visual-realizer", "video-maker"],
         "credit_costs": {
-            "gemini-3.0-flash-preview": 5,
-            "gemini-3.0-pro-preview": 15,
+            "gemini-3-flash-preview": 5,
+            "gemini-3-pro-preview": 15,
         },
         "spec": {
             "name": "프롬프트 연금술",
@@ -90,8 +90,8 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
             "params": {
                 "model": {
                     "type": "string",
-                    "default": "gemini-3.0-flash-preview",
-                    "options": ["gemini-3.0-flash-preview", "gemini-3.0-pro-preview"],
+                    "default": "gemini-3-flash-preview",
+                    "options": ["gemini-3-flash-preview", "gemini-3-pro-preview"],
                 },
             },
         },
@@ -107,8 +107,8 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
         "input_dimensions": ["story-architect", "reference-decoder"],
         "output_dimensions": ["sound-crafter", "prompt-alchemy"],
         "credit_costs": {
-            "gemini-3.0-flash-preview": 10,
-            "gemini-3.0-pro-preview": 25,
+            "gemini-3-flash-preview": 10,
+            "gemini-3-pro-preview": 25,
         },
         "spec": {
             "name": "스토리보드 스케치",
@@ -148,7 +148,7 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
             "params": {
                 "model": {
                     "type": "string",
-                    "default": "gemini-3.0-flash-preview",
+                    "default": "gemini-3-flash-preview",
                 },
             },
         },
@@ -164,8 +164,8 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
         "input_dimensions": ["prompt-alchemy", "storyboard-sketch"],
         "output_dimensions": ["video-maker", "quality-director"],
         "credit_costs": {
-            "gemini-3.0-flash-preview": 5,
-            "gemini-3.0-pro-preview": 12,
+            "gemini-3-flash-preview": 5,
+            "gemini-3-pro-preview": 12,
         },
         "spec": {
             "name": "비주얼 리얼라이저",
@@ -204,7 +204,7 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
             "params": {
                 "model": {
                     "type": "string",
-                    "default": "gemini-3.0-flash-preview",
+                    "default": "gemini-3-flash-preview",
                 },
             },
         },
@@ -220,8 +220,8 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
         "input_dimensions": ["abyss-mirror"],
         "output_dimensions": ["story-architect", "storyboard-sketch"],
         "credit_costs": {
-            "gemini-3.0-flash-preview": 8,
-            "gemini-3.0-pro-preview": 20,
+            "gemini-3-flash-preview": 8,
+            "gemini-3-pro-preview": 20,
         },
         "spec": {
             "name": "레퍼런스 해석기",
@@ -250,7 +250,7 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
             "params": {
                 "model": {
                     "type": "string",
-                    "default": "gemini-3.0-flash-preview",
+                    "default": "gemini-3-flash-preview",
                 },
             },
         },
@@ -269,8 +269,8 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
         "input_dimensions": ["video-maker", "visual-realizer"],
         "output_dimensions": [],
         "credit_costs": {
-            "gemini-3.0-flash-preview": 8,
-            "gemini-3.0-pro-preview": 20,
+            "gemini-3-flash-preview": 8,
+            "gemini-3-pro-preview": 20,
         },
         "spec": {
             "name": "퀄리티 디렉터",
@@ -325,8 +325,8 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
             "params": {
                 "model": {
                     "type": "string",
-                    "default": "gemini-3.0-pro-preview",
-                    "options": ["gemini-3.0-flash-preview", "gemini-3.0-pro-preview"],
+                    "default": "gemini-3-pro-preview",
+                    "options": ["gemini-3-flash-preview", "gemini-3-pro-preview"],
                     "description": "Pro 모델 권장 (정확도 우선)",
                 },
                 "threshold": {
@@ -352,8 +352,8 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
         "output_dimensions": ["story-architect", "visual-realizer"],
         "is_extended": True,
         "credit_costs": {
-            "gemini-3.0-flash-preview": 10,
-            "gemini-3.0-pro-preview": 25,
+            "gemini-3-flash-preview": 10,
+            "gemini-3-pro-preview": 25,
         },
         "spec": {
             "name": "미학디렉터",
@@ -409,8 +409,8 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
             "params": {
                 "model": {
                     "type": "string",
-                    "default": "gemini-3.0-pro-preview",
-                    "options": ["gemini-3.0-flash-preview", "gemini-3.0-pro-preview"],
+                    "default": "gemini-3-pro-preview",
+                    "options": ["gemini-3-flash-preview", "gemini-3-pro-preview"],
                 },
                 "use_rag": {
                     "type": "boolean",
@@ -434,8 +434,8 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
         "input_dimensions": [],
         "output_dimensions": ["reference-decoder", "story-architect", "aesthetic-director"],
         "credit_costs": {
-            "gemini-3.0-flash-preview": 5,
-            "gemini-3.0-pro-preview": 12,
+            "gemini-3-flash-preview": 5,
+            "gemini-3-pro-preview": 12,
         },
         "spec": {
             "name": "심연의 거울",
@@ -490,8 +490,8 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
             "params": {
                 "model": {
                     "type": "string",
-                    "default": "gemini-3.0-pro-preview",
-                    "options": ["gemini-3.0-flash-preview", "gemini-3.0-pro-preview"],
+                    "default": "gemini-3-pro-preview",
+                    "options": ["gemini-3-flash-preview", "gemini-3-pro-preview"],
                 },
                 "depth_level": {
                     "type": "string",
@@ -597,8 +597,8 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
         "input_dimensions": ["abyss-mirror", "reference-decoder"],
         "output_dimensions": ["storyboard-sketch", "sound-crafter", "prompt-alchemy"],
         "credit_costs": {
-            "gemini-3.0-flash-preview": 10,
-            "gemini-3.0-pro-preview": 25,
+            "gemini-3-flash-preview": 10,
+            "gemini-3-pro-preview": 25,
         },
         "spec": {
             "name": "시나리오 생성기",
@@ -688,8 +688,8 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
             "params": {
                 "model": {
                     "type": "string",
-                    "default": "gemini-3.0-pro-preview",
-                    "options": ["gemini-3.0-flash-preview", "gemini-3.0-pro-preview"],
+                    "default": "gemini-3-pro-preview",
+                    "options": ["gemini-3-flash-preview", "gemini-3-pro-preview"],
                 },
                 "use_rag": {
                     "type": "boolean",
@@ -713,8 +713,8 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
         "input_dimensions": ["story-architect", "storyboard-sketch"],
         "output_dimensions": ["video-maker"],
         "credit_costs": {
-            "gemini-3.0-flash-preview": 8,
-            "gemini-3.0-pro-preview": 18,
+            "gemini-3-flash-preview": 8,
+            "gemini-3-pro-preview": 18,
         },
         "spec": {
             "name": "사운드 크래프터",
@@ -826,8 +826,8 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
             "params": {
                 "model": {
                     "type": "string",
-                    "default": "gemini-3.0-flash-preview",
-                    "options": ["gemini-3.0-flash-preview", "gemini-3.0-pro-preview"],
+                    "default": "gemini-3-flash-preview",
+                    "options": ["gemini-3-flash-preview", "gemini-3-pro-preview"],
                 },
                 "use_rag": {
                     "type": "boolean",

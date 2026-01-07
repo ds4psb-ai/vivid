@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 # Constants
 GEMINI_TIMEOUT_SECONDS = 60
-ALLOWED_MODELS = {"gemini-3.0-flash-preview", "gemini-3.0-pro-preview"}
+ALLOWED_MODELS = {"gemini-3-flash-preview", "gemini-3-pro-preview"}
 
 
 @dataclass
@@ -89,7 +89,7 @@ async def _call_gemini_generic(
     prompt: str,
     system_prompt: str,
     api_key: Optional[str] = None,
-    model: str = "gemini-3.0-flash-preview",
+    model: str = "gemini-3-flash-preview",
     temperature: float = 0.7,
     timeout: float = GEMINI_TIMEOUT_SECONDS,
 ) -> tuple[Dict[str, Any], Dict[str, Any]]:
@@ -101,7 +101,7 @@ async def _call_gemini_generic(
     
     # Validate model
     if model not in ALLOWED_MODELS:
-        model = "gemini-3.0-flash-preview"
+        model = "gemini-3-flash-preview"
     
     key = api_key or settings.GEMINI_API_KEY
     if not key:
@@ -189,7 +189,7 @@ async def execute_dynamic_tool(
         DynamicToolResult with success status, output, and metrics
     """
     params = params or {}
-    model = params.get("model", "gemini-3.0-flash-preview")
+    model = params.get("model", "gemini-3-flash-preview")
     
     # Build prompts from schema
     system_prompt = _build_system_prompt(tool, schema)

@@ -64,7 +64,7 @@ class BatchJobConfig(BaseModel):
     """Configuration for a batch job."""
     job_type: BatchJobType
     display_name: Optional[str] = None
-    model: str = "gemini-3.0-flash-preview"
+    model: str = "gemini-3-flash-preview"
     temperature: float = 0.7
     max_output_tokens: int = 2048
     callback_url: Optional[str] = None

@@ -38,8 +38,8 @@ class KellyBasedCreditAllocator:
     
     # 기본 크레딧 비용 (모델별)
     DEFAULT_COSTS: Dict[str, int] = {
-        "gemini-3.0-flash-preview": 10,
-        "gemini-3.0-pro-preview": 25,
+        "gemini-3-flash-preview": 10,
+        "gemini-3-pro-preview": 25,
         "veo-3.0": 100,
     }
     

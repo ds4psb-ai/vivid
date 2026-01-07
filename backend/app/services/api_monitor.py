@@ -30,13 +30,13 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 GEMINI_PRICING = {
-    "gemini-3.0-flash-preview": {
+    "gemini-3-flash-preview": {
         "input": 0.075,       # $0.075 per 1M input tokens
         "output": 0.30,       # $0.30 per 1M output tokens
         "cached_input": 0.01875,  # 75% discount on cached
         "cache_storage": 1.00,    # $1.00 per 1M tokens per hour
     },
-    "gemini-3.0-pro-preview": {
+    "gemini-3-pro-preview": {
         "input": 1.25,
         "output": 10.00,
         "cached_input": 0.3125,
@@ -68,7 +68,7 @@ class UsageMetrics:
     @property
     def estimated_cost_usd(self) -> float:
         """Calculate estimated cost in USD."""
-        pricing = GEMINI_PRICING.get(self.model, GEMINI_PRICING["gemini-3.0-flash-preview"])
+        pricing = GEMINI_PRICING.get(self.model, GEMINI_PRICING["gemini-3-flash-preview"])
         
         # Calculate non-cached input tokens
         non_cached_input = max(0, self.prompt_tokens - self.cached_tokens)
@@ -227,7 +227,7 @@ class APIMonitor:
     def record_from_response(
         self,
         response: Any,
-        model: str = "gemini-3.0-flash-preview",
+        model: str = "gemini-3-flash-preview",
         is_batch: bool = False,
         latency_ms: float = 0.0,
     ) -> UsageMetrics:
@@ -416,7 +416,7 @@ class APIMonitor:
         # Calculate cache savings
         total_cost = sum(m.estimated_cost_usd for m in recent)
         total_cached_tokens = sum(m.cached_tokens for m in recent)
-        pricing = GEMINI_PRICING["gemini-3.0-flash-preview"]
+        pricing = GEMINI_PRICING["gemini-3-flash-preview"]
         cache_savings = (total_cached_tokens / 1_000_000) * (pricing["input"] - pricing["cached_input"])
         
         return AggregatedStats(
@@ -517,7 +517,7 @@ def get_api_monitor() -> APIMonitor:
 
 def record_gemini_usage(
     response: Any,
-    model: str = "gemini-3.0-flash-preview",
+    model: str = "gemini-3-flash-preview",
     is_batch: bool = False,
     latency_ms: float = 0.0,
 ) -> UsageMetrics:
@@ -526,7 +526,7 @@ def record_gemini_usage(
 
     Usage:
         response = model.generate_content(prompt)
-        record_gemini_usage(response, model="gemini-3.0-flash-preview")
+        record_gemini_usage(response, model="gemini-3-flash-preview")
     """
     return get_api_monitor().record_from_response(
         response, model, is_batch, latency_ms

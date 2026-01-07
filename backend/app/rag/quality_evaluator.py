@@ -121,7 +121,7 @@ class QualityEvaluator:
     - 캐싱 (동일 입출력 재평가 방지)
     """
 
-    def __init__(self, model: str = "gemini-3.0-flash-preview"):
+    def __init__(self, model: str = "gemini-3-flash-preview"):
         """Initialize evaluator.
 
         Args:
@@ -448,7 +448,7 @@ class QualityEvaluator:
 _quality_evaluator: Optional[QualityEvaluator] = None
 
 
-def get_quality_evaluator(model: str = "gemini-3.0-flash-preview") -> QualityEvaluator:
+def get_quality_evaluator(model: str = "gemini-3-flash-preview") -> QualityEvaluator:
     """Get QualityEvaluator singleton.
 
     Args:

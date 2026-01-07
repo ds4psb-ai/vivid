@@ -31,9 +31,9 @@ pgrep -f "uvicorn.*vivid/backend" | xargs -r kill 2>/dev/null || echo "No existi
 cd /Users/ted/vivid/backend && source venv/bin/activate && nohup uvicorn app.main:app --host 0.0.0.0 --port 8100 --reload > /tmp/vivid-backend.log 2>&1 &
 ```
 
-## 5. 백엔드 서버 확인 (3초 대기 후)
+## 5. 백엔드 서버 확인 (2초 대기 + 재시도)
 ```bash
-sleep 3 && curl -s -o /dev/null -w "Backend (8100): HTTP %{http_code}\n" http://localhost:8100/ || echo "Backend: Failed to connect"
+sleep 2 && curl -s -o /dev/null -w "Backend (8100): HTTP %{http_code}\n" http://localhost:8100/ || (sleep 1 && curl -s -o /dev/null -w "Backend (8100): HTTP %{http_code} (retry)\n" http://localhost:8100/) || echo "Backend: Failed to connect"
 ```
 
 ## 6. 포트 3100 Vivid 프론트엔드 확인/시작 (Bun 사용)
@@ -56,16 +56,15 @@ if lsof -i :3100 > /dev/null 2>&1; then
             fi
         fi
     done
-    sleep 1
 fi
 
 # 2. Vivid 프론트엔드 시작 (Bun 사용)
 cd /Users/ted/vivid/frontend && nohup bun run dev > /tmp/vivid-frontend.log 2>&1 &
 ```
 
-## 7. 전체 상태 확인 (5초 대기 - Bun 컴파일 시간)
+## 7. 전체 상태 확인 (3초 대기 - Bun 빠름)
 ```bash
-sleep 5 && echo "=== Vivid Server Status ===" && \
+sleep 3 && echo "=== Vivid Server Status ===" && \
 curl -s -o /dev/null -w "Backend (8100): HTTP %{http_code}\n" http://localhost:8100/ && \
 curl -s -o /dev/null -w "Frontend (3100): HTTP %{http_code}\n" http://localhost:3100/ && \
 curl -s -o /dev/null -w "Qdrant (6333): HTTP %{http_code}\n" http://localhost:6333/ 2>/dev/null || true
