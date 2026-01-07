@@ -579,8 +579,27 @@ async def _call_gemini(
         logger.error(f"Gemini API timeout after {timeout}s")
         raise TimeoutError(f"Request timed out after {timeout} seconds")
     except Exception as e:
-        logger.error(f"Gemini API error: {type(e).__name__}: {e}")
-        raise RuntimeError(f"AI service error: {type(e).__name__}")
+        error_str = str(e).lower()
+        error_type = type(e).__name__
+        logger.error(f"Gemini API error: {error_type}: {e}")
+
+        # Classify error for better user feedback
+        if "permission_denied" in error_str or "403" in error_str:
+            if "leaked" in error_str:
+                raise RuntimeError("API key needs rotation. Please contact support.")
+            raise RuntimeError("API access denied. Check your API key permissions.")
+        elif "quota" in error_str or "429" in error_str or "resource_exhausted" in error_str:
+            raise RuntimeError("API quota exceeded. Please try again later.")
+        elif "invalid_api_key" in error_str or "401" in error_str:
+            raise RuntimeError("Invalid API key. Please check your configuration.")
+        elif "model_not_found" in error_str or "404" in error_str:
+            raise RuntimeError(f"Model '{model}' not available. Try a different model.")
+        elif "safety" in error_str or "blocked" in error_str:
+            raise RuntimeError("Content blocked by safety filters. Please modify your input.")
+        elif "connection" in error_str or "network" in error_str:
+            raise RuntimeError("Network error. Please check your connection.")
+        else:
+            raise RuntimeError(f"AI service error: {error_type}")
     
     latency_ms = int((time.monotonic() - start_time) * 1000)
     
