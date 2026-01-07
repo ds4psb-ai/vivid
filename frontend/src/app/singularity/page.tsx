@@ -119,7 +119,7 @@ function BlackholeVisual() {
 // TAG FILTER - 태그 기반 필터
 // =============================================================================
 
-const POPULAR_TAGS = ["콘텐츠", "마케팅", "스토리", "비주얼", "브랜딩"];
+const POPULAR_TAGS = ["애니메이션", "광고", "숏폼", "VEO", "시네마틱"];
 
 function TagFilter({
     selectedTag,
