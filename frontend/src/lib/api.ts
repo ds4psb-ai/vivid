@@ -1811,6 +1811,131 @@ class ApiClient {
     });
   }
 
+  /**
+   * Execute Veo video generation with SSE progress streaming.
+   * Returns callbacks for progress updates, completion, and errors.
+   *
+   * @example
+   * const cleanup = api.executeVeoGenerateStream(
+   *   { prompt: "A sunset over the ocean" },
+   *   {
+   *     onProgress: (p) => console.log(`${p.status}: ${p.message}`),
+   *     onComplete: (result) => console.log(`Video: ${result.video_uri}`),
+   *     onError: (error) => console.error(error),
+   *   }
+   * );
+   * // Call cleanup() to abort the stream
+   */
+  executeVeoGenerateStream(
+    params: {
+      prompt: string;
+      negative_prompt?: string;
+      duration?: number;
+      aspect_ratio?: string;
+      style?: string;
+      model?: string;
+    },
+    callbacks: {
+      onProgress?: (progress: {
+        status: string;
+        elapsed_seconds: number;
+        estimated_remaining_seconds: number | null;
+        poll_count: number;
+        message: string;
+      }) => void;
+      onComplete?: (result: {
+        video_uri: string;
+        duration_ms: number;
+        credit_cost: number;
+        metadata: Record<string, unknown>;
+      }) => void;
+      onError?: (error: string) => void;
+      onHeartbeat?: () => void;
+    }
+  ): () => void {
+    const abortController = new AbortController();
+
+    const run = async () => {
+      try {
+        const baseUrl = this.resolveBaseUrl();
+        const response = await fetch(`${baseUrl}/api/dimension/veo/generate/stream`, {
+          method: "POST",
+          headers: this.buildHeaders(),
+          body: JSON.stringify(params),
+          signal: abortController.signal,
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          callbacks.onError?.(`HTTP ${response.status}: ${errorText}`);
+          return;
+        }
+
+        const reader = response.body?.getReader();
+        if (!reader) {
+          callbacks.onError?.("No response body");
+          return;
+        }
+
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                switch (data.type) {
+                  case "progress":
+                    callbacks.onProgress?.({
+                      status: data.status,
+                      elapsed_seconds: data.elapsed_seconds,
+                      estimated_remaining_seconds: data.estimated_remaining_seconds,
+                      poll_count: data.poll_count,
+                      message: data.message,
+                    });
+                    break;
+                  case "complete":
+                    callbacks.onComplete?.({
+                      video_uri: data.video_uri,
+                      duration_ms: data.duration_ms,
+                      credit_cost: data.credit_cost,
+                      metadata: data.metadata,
+                    });
+                    break;
+                  case "error":
+                    callbacks.onError?.(data.error);
+                    break;
+                  case "heartbeat":
+                    callbacks.onHeartbeat?.();
+                    break;
+                }
+              } catch {
+                // Ignore parse errors
+              }
+            }
+          }
+        }
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          callbacks.onError?.((error as Error).message || "Stream error");
+        }
+      }
+    };
+
+    run();
+
+    // Return cleanup function
+    return () => abortController.abort();
+  }
+
   // --- 4-Stage Workflow APIs ---
 
   async executeStoryArchitect(params: {

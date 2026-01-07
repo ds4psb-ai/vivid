@@ -15,7 +15,7 @@ import logging
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from app.config import settings
 
@@ -49,6 +49,42 @@ MAX_RETRIES = 3
 RETRY_DELAYS = [5, 15, 30]  # Progressive delays in seconds
 RETRYABLE_ERRORS = ["RATE_LIMIT", "UNAVAILABLE", "RESOURCE_EXHAUSTED", "DEADLINE_EXCEEDED"]
 
+# Polling retry configuration
+POLL_MAX_RETRIES = 3  # Max consecutive poll failures before giving up
+POLL_RETRY_DELAY = 5  # Seconds to wait before retrying a failed poll
+
+# User-friendly error messages (Korean)
+ERROR_MESSAGES = {
+    "RATE_LIMIT": "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.",
+    "QUOTA_EXCEEDED": "일일 사용량을 초과했습니다. 내일 다시 시도해주세요.",
+    "RESOURCE_EXHAUSTED": "서버가 바쁩니다. 잠시 후 다시 시도해주세요.",
+    "UNAVAILABLE": "서비스가 일시적으로 불안정합니다. 잠시 후 다시 시도해주세요.",
+    "DEADLINE_EXCEEDED": "요청 시간이 초과되었습니다. 다시 시도해주세요.",
+    "INVALID_ARGUMENT": "입력값이 올바르지 않습니다. 프롬프트를 확인해주세요.",
+    "PERMISSION_DENIED": "API 키가 유효하지 않거나 권한이 없습니다.",
+    "NOT_FOUND": "요청한 리소스를 찾을 수 없습니다.",
+    "CONTENT_POLICY": "콘텐츠 정책에 위배되는 내용이 감지되었습니다. 프롬프트를 수정해주세요.",
+    "SAFETY": "안전 정책에 위배되는 내용이 감지되었습니다. 프롬프트를 수정해주세요.",
+    "BLOCKED": "요청이 차단되었습니다. 프롬프트를 수정해주세요.",
+    "TIMEOUT": "영상 생성 시간이 초과되었습니다. 더 짧은 영상을 시도해보세요.",
+    "NETWORK": "네트워크 연결이 불안정합니다. 인터넷 연결을 확인해주세요.",
+}
+
+
+def _get_user_friendly_error(error: str) -> str:
+    """Convert technical error to user-friendly Korean message."""
+    error_upper = error.upper()
+
+    for key, message in ERROR_MESSAGES.items():
+        if key in error_upper:
+            return message
+
+    # Default message for unknown errors
+    if "error" in error.lower() or "exception" in error.lower():
+        return f"영상 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요. (상세: {error[:100]})"
+
+    return error
+
 
 @dataclass
 class VeoConfig:
@@ -65,6 +101,16 @@ class VeoConfig:
 
     # Safety settings
     person_generation: str = "dont_allow"  # "allow_adult" or "dont_allow"
+
+
+@dataclass
+class VeoProgress:
+    """Progress update during Veo video generation."""
+    status: str  # "submitting", "polling", "processing", "completed", "failed"
+    elapsed_seconds: float
+    estimated_remaining_seconds: Optional[float] = None
+    poll_count: int = 0
+    message: str = ""
 
 
 @dataclass
@@ -124,6 +170,7 @@ class VeoService:
         config: VeoConfig,
         max_wait_seconds: int = DEFAULT_MAX_WAIT_SECONDS,
         poll_interval: int = DEFAULT_POLL_INTERVAL,
+        progress_callback: Optional[Callable[[VeoProgress], None]] = None,
     ) -> VeoResult:
         """Generate video using Veo 3.1 with async polling.
 
@@ -134,6 +181,7 @@ class VeoService:
             config: VeoConfig with generation parameters
             max_wait_seconds: Maximum time to wait for completion (default 360s)
             poll_interval: Initial polling interval in seconds (default 10s)
+            progress_callback: Optional callback for progress updates
 
         Returns:
             VeoResult with video URI or error
@@ -155,7 +203,26 @@ class VeoService:
 
         credit_cost = VEO_CREDIT_COSTS.get(model, 200)
 
+        # Helper to emit progress updates
+        def emit_progress(status: str, message: str = "", poll_count: int = 0):
+            if progress_callback:
+                elapsed = time.monotonic() - start_time
+                # Estimate remaining time based on typical generation times
+                estimated_remaining = None
+                if status == "polling" and elapsed < max_wait_seconds:
+                    # Veo typically takes 60-180 seconds for fast model, 120-360 for standard
+                    avg_time = 90 if "fast" in model else 180
+                    estimated_remaining = max(0, avg_time - elapsed)
+                progress_callback(VeoProgress(
+                    status=status,
+                    elapsed_seconds=elapsed,
+                    estimated_remaining_seconds=estimated_remaining,
+                    poll_count=poll_count,
+                    message=message,
+                ))
+
         logger.info(f"Starting Veo generation: model={model}, duration={config.duration_seconds}s")
+        emit_progress("submitting", "영상 생성 요청 중...")
 
         try:
             # Build generation config
@@ -210,9 +277,13 @@ class VeoService:
             if operation is None:
                 raise VeoGenerationError(f"Failed to submit generation job: {last_error}")
 
-            # Poll for completion with exponential backoff
+            emit_progress("polling", "영상 생성 작업이 시작되었습니다. 잠시 기다려주세요...")
+
+            # Poll for completion with exponential backoff and retry
             elapsed = 0
             current_interval = poll_interval
+            consecutive_poll_failures = 0
+            poll_count = 0
 
             while elapsed < max_wait_seconds:
                 # Check if operation is done
@@ -222,16 +293,49 @@ class VeoService:
                 # Wait before next poll
                 await asyncio.sleep(current_interval)
                 elapsed = time.monotonic() - start_time
+                poll_count += 1
 
-                # Refresh operation status
-                try:
-                    if hasattr(operation, 'name'):
-                        operation = await asyncio.to_thread(
-                            client.operations.get,
-                            operation=operation,
+                # Emit progress update
+                emit_progress(
+                    "polling",
+                    f"영상 생성 중... ({int(elapsed)}초 경과)",
+                    poll_count
+                )
+
+                # Refresh operation status with retry logic
+                if hasattr(operation, 'name'):
+                    poll_success = False
+                    for poll_attempt in range(POLL_MAX_RETRIES):
+                        try:
+                            operation = await asyncio.to_thread(
+                                client.operations.get,
+                                operation=operation,
+                            )
+                            poll_success = True
+                            consecutive_poll_failures = 0  # Reset on success
+                            break
+                        except Exception as e:
+                            consecutive_poll_failures += 1
+                            if poll_attempt < POLL_MAX_RETRIES - 1:
+                                logger.warning(
+                                    f"Poll attempt {poll_attempt + 1}/{POLL_MAX_RETRIES} failed: {e}. "
+                                    f"Retrying in {POLL_RETRY_DELAY}s..."
+                                )
+                                await asyncio.sleep(POLL_RETRY_DELAY)
+                            else:
+                                logger.error(f"All poll attempts failed: {e}")
+
+                    # If too many consecutive failures, abort
+                    if consecutive_poll_failures >= POLL_MAX_RETRIES * 2:
+                        logger.error(f"Too many consecutive poll failures ({consecutive_poll_failures}), aborting")
+                        emit_progress("failed", "네트워크 연결이 불안정합니다.")
+                        return VeoResult(
+                            success=False,
+                            error="네트워크 연결이 불안정합니다. 잠시 후 다시 시도해주세요.",
+                            duration_ms=int((time.monotonic() - start_time) * 1000),
+                            model=model,
+                            credit_cost=0,
                         )
-                except Exception as e:
-                    logger.warning(f"Failed to get operation status: {e}")
 
                 # Exponential backoff
                 current_interval = min(current_interval * POLL_BACKOFF_FACTOR, MAX_POLL_INTERVAL)
@@ -242,9 +346,10 @@ class VeoService:
             # Check for timeout
             if elapsed >= max_wait_seconds:
                 logger.error(f"Veo generation timed out after {max_wait_seconds}s")
+                emit_progress("failed", "영상 생성 시간이 초과되었습니다.")
                 return VeoResult(
                     success=False,
-                    error=f"Video generation timed out after {max_wait_seconds} seconds",
+                    error=_get_user_friendly_error("TIMEOUT"),
                     duration_ms=duration_ms,
                     model=model,
                     credit_cost=0,  # No charge on timeout
@@ -261,6 +366,7 @@ class VeoService:
 
                     if video_uri:
                         logger.info(f"Veo generation completed in {duration_ms}ms")
+                        emit_progress("completed", "영상 생성이 완료되었습니다!")
                         return VeoResult(
                             success=True,
                             video_uri=video_uri,
@@ -278,18 +384,21 @@ class VeoService:
             if hasattr(operation, 'error') and operation.error:
                 error_msg = str(operation.error)
                 logger.error(f"Veo generation failed: {error_msg}")
+                user_friendly_error = _get_user_friendly_error(error_msg)
+                emit_progress("failed", user_friendly_error)
                 return VeoResult(
                     success=False,
-                    error=f"Video generation failed: {error_msg}",
+                    error=user_friendly_error,
                     duration_ms=duration_ms,
                     model=model,
                     credit_cost=0,  # No charge on error
                 )
 
             # Unknown state
+            emit_progress("failed", "영상 생성 결과를 받지 못했습니다.")
             return VeoResult(
                 success=False,
-                error="Video generation completed but no video was returned",
+                error="영상 생성은 완료되었으나 결과를 받지 못했습니다. 다시 시도해주세요.",
                 duration_ms=duration_ms,
                 model=model,
                 credit_cost=0,
@@ -298,9 +407,11 @@ class VeoService:
         except Exception as e:
             duration_ms = int((time.monotonic() - start_time) * 1000)
             logger.exception(f"Veo generation error: {e}")
+            user_friendly_error = _get_user_friendly_error(str(e))
+            emit_progress("failed", user_friendly_error)
             return VeoResult(
                 success=False,
-                error=f"Video generation error: {type(e).__name__}: {str(e)}",
+                error=user_friendly_error,
                 duration_ms=duration_ms,
                 model=model,
                 credit_cost=0,

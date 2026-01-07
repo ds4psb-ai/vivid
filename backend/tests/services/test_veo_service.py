@@ -129,7 +129,7 @@ class TestVeoServiceTimeout:
             )
 
             assert result.success is False
-            assert "timed out" in result.error.lower()
+            assert "시간" in result.error or "초과" in result.error  # Korean timeout message
             assert result.credit_cost == 0  # No charge on timeout
 
 
@@ -199,7 +199,7 @@ class TestVeoServiceRetry:
             result = await service.generate_video(veo_config)
 
             assert result.success is False
-            assert "INVALID_ARGUMENT" in result.error
+            assert "프롬프트" in result.error or "입력" in result.error  # Korean user-friendly message
             # Should have tried only once (no retries for non-retryable errors)
             assert mock_client.models.generate_videos.call_count == 1
 
@@ -217,7 +217,7 @@ class TestVeoServiceRetry:
                 result = await service.generate_video(veo_config)
 
             assert result.success is False
-            assert "RATE_LIMIT" in result.error
+            assert "요청" in result.error or "너무 많" in result.error  # Korean rate limit message
             assert mock_client.models.generate_videos.call_count == MAX_RETRIES
 
 
@@ -264,7 +264,7 @@ class TestVeoServiceErrorHandling:
             result = await service.generate_video(veo_config)
 
             assert result.success is False
-            assert "no video was returned" in result.error.lower()
+            assert "결과를 받지 못했습니다" in result.error  # Korean message
 
     @pytest.mark.asyncio
     async def test_invalid_model_falls_back(self):

@@ -19,6 +19,7 @@ import time
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -821,6 +822,139 @@ async def generate_veo_video(
         byok_key=byok_key,
         db=db,
         inputs_summary={"prompt": request.prompt[:100], "style": request.style},
+    )
+
+
+@router.post(
+    "/veo/generate/stream",
+    responses={
+        400: {"model": DimensionErrorResponse},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="Veo 3.1: Generate Video with SSE Progress",
+    description="Generate video using Veo 3.1 with real-time progress updates via SSE.",
+    tags=["Dimension Extended"],
+)
+async def generate_veo_video_stream(
+    request: VeoGenerateRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> StreamingResponse:
+    """Generate video with Veo 3.1 with SSE progress streaming."""
+    import json
+    from app.services.veo_service import VeoConfig, VeoProgress, get_veo_service
+    from app.fixtures.dimension_capsules import DIMENSION_CAPSULES
+
+    user_id = user.get("id", "anonymous")
+
+    # Get capsule info for credit cost
+    capsule_info = next(
+        (c for c in DIMENSION_CAPSULES if c["id"] == DimensionCapsuleId.VEO_VIDEO_GENERATE.value),
+        None
+    )
+    credit_cost = capsule_info["cost"] if capsule_info else 200
+
+    async def event_stream():
+        """SSE event generator with progress updates."""
+        credits_deducted = False
+
+        try:
+            # Check credits if not BYOK
+            if not byok_key:
+                user_credits = await get_or_create_user_credits(db, user_id)
+                if user_credits.total_credits < credit_cost:
+                    yield f"data: {json.dumps({'type': 'error', 'error': 'Insufficient credits', 'required': credit_cost, 'available': user_credits.total_credits})}\n\n"
+                    return
+
+                # Deduct credits upfront
+                success = await deduct_credits(
+                    db, user_id, credit_cost,
+                    f"Veo video generation: {request.prompt[:50]}...",
+                    {"capsule_id": DimensionCapsuleId.VEO_VIDEO_GENERATE.value}
+                )
+                if not success:
+                    yield f"data: {json.dumps({'type': 'error', 'error': 'Failed to deduct credits'})}\n\n"
+                    return
+                credits_deducted = True
+
+            # Build config
+            config = VeoConfig(
+                prompt=request.prompt,
+                model=request.model if request.model in ["veo-3.1-generate-preview", "veo-3.1-fast-generate-preview"] else "veo-3.1-generate-preview",
+                duration_seconds=min(max(request.duration, 4), 8),
+                aspect_ratio=request.aspect_ratio or "16:9",
+                negative_prompt=request.negative_prompt,
+                include_audio=True,
+            )
+
+            # Progress callback that yields SSE events
+            progress_queue: asyncio.Queue[VeoProgress] = asyncio.Queue()
+
+            def progress_callback(progress: VeoProgress):
+                try:
+                    progress_queue.put_nowait(progress)
+                except Exception:
+                    pass  # Queue full, skip this update
+
+            # Get service
+            service = get_veo_service(api_key=byok_key)
+
+            # Start generation in background task
+            generation_task = asyncio.create_task(
+                service.generate_video(
+                    config=config,
+                    progress_callback=progress_callback,
+                )
+            )
+
+            # Yield progress events while waiting for completion
+            while not generation_task.done():
+                try:
+                    # Wait for progress update with timeout
+                    progress = await asyncio.wait_for(
+                        progress_queue.get(),
+                        timeout=5.0
+                    )
+                    yield f"data: {json.dumps({'type': 'progress', 'status': progress.status, 'elapsed_seconds': round(progress.elapsed_seconds, 1), 'estimated_remaining_seconds': round(progress.estimated_remaining_seconds, 1) if progress.estimated_remaining_seconds else None, 'poll_count': progress.poll_count, 'message': progress.message})}\n\n"
+                except asyncio.TimeoutError:
+                    # Send heartbeat to keep connection alive
+                    yield f"data: {json.dumps({'type': 'heartbeat'})}\n\n"
+
+            # Get final result
+            result = await generation_task
+
+            if result.success:
+                yield f"data: {json.dumps({'type': 'complete', 'success': True, 'video_uri': result.video_uri, 'duration_ms': result.duration_ms, 'credit_cost': result.credit_cost, 'metadata': result.metadata})}\n\n"
+            else:
+                # Refund credits on failure
+                if credits_deducted:
+                    await _refund_with_retry(
+                        db, user_id, credit_cost,
+                        f"Veo generation failed: {result.error}",
+                        {"capsule_id": DimensionCapsuleId.VEO_VIDEO_GENERATE.value}
+                    )
+                yield f"data: {json.dumps({'type': 'error', 'success': False, 'error': result.error, 'duration_ms': result.duration_ms})}\n\n"
+
+        except Exception as e:
+            logger.exception(f"Veo SSE stream error: {e}")
+            # Refund on exception
+            if credits_deducted:
+                try:
+                    await _refund_with_retry(
+                        db, user_id, credit_cost,
+                        f"Veo generation error: {str(e)}",
+                        {"capsule_id": DimensionCapsuleId.VEO_VIDEO_GENERATE.value}
+                    )
+                except Exception:
+                    pass
+            yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
 
