@@ -86,7 +86,7 @@ INTENT_PATTERNS: Tuple[IntentPattern, ...] = (
     # High priority - explicit tool mentions
     IntentPattern(
         intent=Intent.GENERATE_PROMPT,
-        keywords=("프롬프트", "veo", "비디오 프롬프트", "영상 프롬프트"),
+        keywords=("프롬프트", "veo", "비디오 프롬프트", "영상 프롬프트", "트렌드", "trend", "prompt", "idea"),
         regex_patterns=(r"프롬프트.*생성", r"veo.*만들"),
         priority=10,
     ),
@@ -104,7 +104,7 @@ INTENT_PATTERNS: Tuple[IntentPattern, ...] = (
     ),
     IntentPattern(
         intent=Intent.ANALYZE_REFERENCE,
-        keywords=("레퍼런스", "분석", "참고", "이거처럼", "이 영상"),
+        keywords=("레퍼런스", "분석", "참고", "이거처럼", "이 영상", "analyze", "reference"),
         regex_patterns=(r"분석.*해", r"레퍼런스.*봐", r"이거.*처럼"),
         priority=10,
     ),
@@ -130,7 +130,7 @@ INTENT_PATTERNS: Tuple[IntentPattern, ...] = (
     IntentPattern(
         intent=Intent.WORKFLOW_REQUEST,
         keywords=(
-            "워크플로우", "전체 과정", "처음부터", "영상 만들기",
+            "워크플로우", "전체 과정", "처음부터", "영상 만들기", "workflow", "script", "스크립트",
             # AUTONOMOUS mode triggers
             "알아서 해줘", "만들어줘", "자동으로", "임의로",
             "니가 정해서", "바로 실행", "알아서 만들어",

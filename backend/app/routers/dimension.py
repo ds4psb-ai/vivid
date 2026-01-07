@@ -1319,7 +1319,7 @@ async def generate_veo_video_stream(
                     yield f"data: {json.dumps({'type': 'progress', 'status': progress.status, 'elapsed_seconds': round(progress.elapsed_seconds, 1), 'estimated_remaining_seconds': round(progress.estimated_remaining_seconds, 1) if progress.estimated_remaining_seconds else None, 'poll_count': progress.poll_count, 'message': progress.message})}\n\n"
                 except asyncio.TimeoutError:
                     # Send heartbeat to keep connection alive
-                    yield f"data: {json.dumps({'type': 'heartbeat'})}\n\n"
+                    yield sse_heartbeat()
 
             # Get final result
             result = await generation_task
@@ -1353,7 +1353,7 @@ async def generate_veo_video_stream(
     return StreamingResponse(
         event_stream(),
         media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        headers=get_sse_headers(),
     )
 
 

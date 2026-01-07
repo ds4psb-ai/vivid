@@ -176,7 +176,7 @@ class MemoryManager:
             if tool:
                 messages.append(AgentMessage(
                     role=AgentRole.SYSTEM,
-                    content=f"[Routing] Intent: {intent}, Suggested: {tool}",
+                    content=f"[Routing] User intent is '{intent}'. You MUST use the tool '{tool}' immediately. Do not ask for confirmation or mention buttons.",
                 ))
         
         # Other metadata (compressed)
