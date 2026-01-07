@@ -1,13 +1,18 @@
 """Shared agent types and tool registry primitives."""
 from __future__ import annotations
 
+import asyncio
 import json
+import logging
+import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Protocol
 
 from pydantic import BaseModel, Field
+
+logger = logging.getLogger(__name__)
 
 
 # =============================================================================
@@ -328,40 +333,194 @@ class ToolHandler(Protocol):
 
 @dataclass
 class ToolRegistry:
+    """Registry for agent tools with timeout support.
+    
+    P1-1: Enhanced with:
+    - Per-tool timeout configuration
+    - Execution metrics tracking
+    - Detailed error handling and logging
+    """
     _tools: Dict[str, ToolSpec] = field(default_factory=dict)
     _handlers: Dict[str, ToolHandler] = field(default_factory=dict)
-
-    def register(self, spec: ToolSpec, handler: ToolHandler) -> None:
+    _timeouts: Dict[str, float] = field(default_factory=dict)  # Per-tool timeouts
+    _execution_counts: Dict[str, int] = field(default_factory=dict)  # Metrics
+    _failure_counts: Dict[str, int] = field(default_factory=dict)  # Metrics
+    
+    # Default timeout for all tools (can be overridden per-tool)
+    DEFAULT_TIMEOUT_SECONDS: float = 120.0
+    
+    def register(
+        self, 
+        spec: ToolSpec, 
+        handler: ToolHandler,
+        timeout_seconds: Optional[float] = None,
+    ) -> None:
+        """Register a tool with optional custom timeout.
+        
+        Args:
+            spec: Tool specification
+            handler: Async handler function
+            timeout_seconds: Optional per-tool timeout (uses DEFAULT_TIMEOUT_SECONDS if not set)
+        """
         if spec.name in self._tools:
             raise ValueError(f"Tool '{spec.name}' already registered")
         self._tools[spec.name] = spec
         self._handlers[spec.name] = handler
+        if timeout_seconds is not None:
+            self._timeouts[spec.name] = timeout_seconds
+        self._execution_counts[spec.name] = 0
+        self._failure_counts[spec.name] = 0
 
     def specs(self) -> List[ToolSpec]:
         return list(self._tools.values())
+    
+    def get_timeout(self, tool_name: str) -> float:
+        """Get timeout for a specific tool."""
+        return self._timeouts.get(tool_name, self.DEFAULT_TIMEOUT_SECONDS)
+    
+    def set_timeout(self, tool_name: str, timeout_seconds: float) -> None:
+        """Set timeout for a specific tool."""
+        if tool_name not in self._tools:
+            raise ValueError(f"Unknown tool: {tool_name}")
+        self._timeouts[tool_name] = timeout_seconds
+    
+    def get_metrics(self) -> Dict[str, Dict[str, int]]:
+        """Get execution metrics for all tools."""
+        return {
+            name: {
+                "executions": self._execution_counts.get(name, 0),
+                "failures": self._failure_counts.get(name, 0),
+            }
+            for name in self._tools
+        }
 
-    async def execute(self, context: ToolContext, call: ToolCall) -> ToolResult:
+    async def execute(
+        self, 
+        context: ToolContext, 
+        call: ToolCall,
+        timeout_override: Optional[float] = None,
+    ) -> ToolResult:
+        """Execute a tool with timeout and comprehensive error handling.
+        
+        P1-1: Adds:
+        - Configurable timeout (per-tool or override)
+        - Execution time tracking
+        - Detailed error classification
+        - Metrics collection
+        
+        Args:
+            context: Tool execution context
+            call: Tool call with name and arguments
+            timeout_override: Optional timeout override for this execution
+            
+        Returns:
+            ToolResult with output or error
+        """
         handler = self._handlers.get(call.name)
         if handler is None:
+            logger.warning(f"Unknown tool requested: {call.name}")
             return ToolResult(
                 tool_call_id=call.id,
                 name=call.name,
                 status=ToolTaskState.FAILED,
                 error=f"Unknown tool: {call.name}",
             )
+        
+        # Determine timeout
+        timeout = timeout_override or self.get_timeout(call.name)
+        
+        # Track execution
+        self._execution_counts[call.name] = self._execution_counts.get(call.name, 0) + 1
+        start_time = time.monotonic()
+        
         try:
-            result = await handler(context, call)
+            # Execute with timeout
+            result = await asyncio.wait_for(
+                handler(context, call),
+                timeout=timeout,
+            )
+            
+            elapsed_ms = int((time.monotonic() - start_time) * 1000)
+            
+            # Validate result type
             if not isinstance(result, ToolResult):
+                logger.warning(
+                    f"Tool {call.name} returned non-ToolResult type: {type(result).__name__}"
+                )
                 return ToolResult(
                     tool_call_id=call.id,
                     name=call.name,
-                    output={"result": result},
+                    output={"result": result, "_execution_ms": elapsed_ms},
                 )
+            
+            # Track failures
+            if result.status == ToolTaskState.FAILED:
+                self._failure_counts[call.name] = self._failure_counts.get(call.name, 0) + 1
+                logger.warning(
+                    f"Tool {call.name} failed after {elapsed_ms}ms: {result.error}"
+                )
+            else:
+                logger.debug(
+                    f"Tool {call.name} completed in {elapsed_ms}ms"
+                )
+            
             return result
-        except Exception as exc:
+            
+        except asyncio.TimeoutError:
+            elapsed_ms = int((time.monotonic() - start_time) * 1000)
+            self._failure_counts[call.name] = self._failure_counts.get(call.name, 0) + 1
+            
+            error_msg = f"Tool execution timed out after {timeout}s"
+            logger.error(
+                f"Tool {call.name} TIMEOUT after {elapsed_ms}ms (limit: {timeout}s)",
+                extra={
+                    "tool_name": call.name,
+                    "timeout_seconds": timeout,
+                    "elapsed_ms": elapsed_ms,
+                }
+            )
+            
             return ToolResult(
                 tool_call_id=call.id,
                 name=call.name,
                 status=ToolTaskState.FAILED,
-                error=str(exc),
+                error=error_msg,
+            )
+            
+        except asyncio.CancelledError:
+            elapsed_ms = int((time.monotonic() - start_time) * 1000)
+            self._failure_counts[call.name] = self._failure_counts.get(call.name, 0) + 1
+            
+            logger.warning(
+                f"Tool {call.name} execution cancelled after {elapsed_ms}ms"
+            )
+            
+            return ToolResult(
+                tool_call_id=call.id,
+                name=call.name,
+                status=ToolTaskState.CANCELLED,
+                error="Tool execution was cancelled",
+            )
+            
+        except Exception as exc:
+            elapsed_ms = int((time.monotonic() - start_time) * 1000)
+            self._failure_counts[call.name] = self._failure_counts.get(call.name, 0) + 1
+            
+            error_type = type(exc).__name__
+            error_msg = f"{error_type}: {str(exc)}"
+            
+            logger.exception(
+                f"Tool {call.name} execution error after {elapsed_ms}ms: {error_msg}",
+                extra={
+                    "tool_name": call.name,
+                    "error_type": error_type,
+                    "elapsed_ms": elapsed_ms,
+                }
+            )
+            
+            return ToolResult(
+                tool_call_id=call.id,
+                name=call.name,
+                status=ToolTaskState.FAILED,
+                error=error_msg,
             )

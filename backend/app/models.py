@@ -796,3 +796,59 @@ class ToolDependency(Base):
     is_recommended: Mapped[bool] = mapped_column(Boolean, default=False)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+# =============================================================================
+# Workflow State Persistence (P1-4)
+# =============================================================================
+
+class WorkflowState(Base):
+    """P1-4: Persistent workflow state for agent session recovery.
+    
+    Stores agent workflow execution state, tool results, and context
+    to enable recovery from failures and cross-session continuity.
+    """
+    __tablename__ = "workflow_states"
+    __table_args__ = (
+        Index("ix_workflow_states_session_id", "session_id"),
+        Index("ix_workflow_states_user_id", "user_id"),
+        Index("ix_workflow_states_status", "status"),
+        Index("ix_workflow_states_updated_at", "updated_at"),
+        UniqueConstraint("session_id", name="uq_workflow_states_session"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_sessions.id"))
+    user_id: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)
+    
+    # Workflow status: pending | running | paused | completed | failed | cancelled
+    status: Mapped[str] = mapped_column(String(32), default="pending")
+    
+    # Current workflow step tracking
+    current_step_index: Mapped[int] = mapped_column(Integer, default=0)
+    total_steps: Mapped[int] = mapped_column(Integer, default=0)
+    current_tool: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    
+    # Workflow definition and state
+    workflow_definition: Mapped[dict] = mapped_column(JSONB, default=dict)  # Planned tools/steps
+    step_results: Mapped[list] = mapped_column(JSONB, default=list)  # Completed step results
+    
+    # Tiered context snapshot (for recovery)
+    context_snapshot: Mapped[dict] = mapped_column(JSONB, default=dict)  # TieredContext serialized
+    
+    # Execution metrics
+    started_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    total_credits_used: Mapped[int] = mapped_column(Integer, default=0)
+    total_execution_ms: Mapped[int] = mapped_column(Integer, default=0)
+    
+    # Error tracking
+    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    retry_count: Mapped[int] = mapped_column(Integer, default=0)
+    last_checkpoint_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    
+    # Metadata
+    meta: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

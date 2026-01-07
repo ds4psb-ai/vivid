@@ -3,22 +3,36 @@
 Provides explicit intent classification and tool routing logic.
 This module hardens the prompt-based routing with programmatic fallbacks.
 
-Features:
-- Keyword-based intent detection
-- Confidence scoring
-- Tool recommendation with fallbacks
-- Workflow chaining suggestions
+P1-2 Enhanced Features:
+- Keyword-based intent detection (primary)
+- LLM-based fallback for low-confidence cases
+- Classification result caching (TTL 5 min)
+- Hybrid confidence scoring
 """
 from __future__ import annotations
 
+import asyncio
+import hashlib
+import json
+import os
 import re
+import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+
+from cachetools import TTLCache
 
 from app.logging_config import get_logger
 
 logger = get_logger("intent_router")
+
+# P1-2: Classification cache (max 500 entries, 5 min TTL)
+_CLASSIFICATION_CACHE: TTLCache = TTLCache(maxsize=500, ttl=300)
+
+# P1-2: LLM classification thresholds
+LLM_FALLBACK_THRESHOLD = 0.6  # Use LLM if keyword confidence < this
+LLM_MIN_MESSAGE_LENGTH = 15    # Only use LLM for messages longer than this
 
 
 # =============================================================================
@@ -215,6 +229,20 @@ class RoutingResult:
         """Whether to trigger automatic workflow execution."""
         return self.auto_execute and self.is_confident
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize for caching."""
+        return {
+            "intent": self.intent.value,
+            "confidence": self.confidence,
+            "suggested_tool": self.suggested_tool,
+            "dimension": self.dimension.value if self.dimension else None,
+            "matched_keywords": self.matched_keywords,
+            "matched_patterns": self.matched_patterns,
+            "workflow_suggestion": self.workflow_suggestion,
+            "auto_execute": self.auto_execute,
+            "full_workflow": self.full_workflow,
+        }
+
 
 class IntentRouter:
     """Routes user intent to appropriate tools."""
@@ -365,6 +393,188 @@ class IntentRouter:
 
         return result
     
+    def classify_with_llm_fallback(self, user_message: str) -> RoutingResult:
+        """P1-2: Classify with LLM fallback for low-confidence cases.
+        
+        Uses keyword classification first, then falls back to LLM
+        if confidence is below threshold.
+        
+        Args:
+            user_message: User's input message
+            
+        Returns:
+            RoutingResult with potentially improved confidence
+        """
+        # Check cache first
+        cache_key = self._get_cache_key(user_message)
+        cached = _CLASSIFICATION_CACHE.get(cache_key)
+        if cached:
+            logger.debug(f"Intent cache hit: {cache_key[:16]}...")
+            return self._result_from_cache(cached)
+        
+        # Primary: keyword-based classification
+        keyword_result = self.classify(user_message)
+        
+        # Check if LLM fallback is needed
+        should_use_llm = (
+            keyword_result.confidence < LLM_FALLBACK_THRESHOLD
+            and len(user_message.strip()) >= LLM_MIN_MESSAGE_LENGTH
+            and keyword_result.intent not in (Intent.GENERAL_CHAT, Intent.UNKNOWN)
+        )
+        
+        if not should_use_llm:
+            # Cache and return keyword result
+            _CLASSIFICATION_CACHE[cache_key] = keyword_result.to_dict()
+            return keyword_result
+        
+        # LLM fallback (sync wrapper for async call)
+        try:
+            llm_result = self._classify_with_llm_sync(user_message)
+            if llm_result and llm_result.confidence > keyword_result.confidence:
+                logger.info(
+                    "LLM classification improved confidence",
+                    extra={
+                        "keyword_intent": keyword_result.intent.value,
+                        "keyword_confidence": keyword_result.confidence,
+                        "llm_intent": llm_result.intent.value,
+                        "llm_confidence": llm_result.confidence,
+                    }
+                )
+                # Merge workflow suggestions from keyword result
+                if not llm_result.workflow_suggestion and keyword_result.workflow_suggestion:
+                    llm_result = RoutingResult(
+                        intent=llm_result.intent,
+                        confidence=llm_result.confidence,
+                        suggested_tool=llm_result.suggested_tool,
+                        dimension=llm_result.dimension,
+                        matched_keywords=keyword_result.matched_keywords,
+                        matched_patterns=keyword_result.matched_patterns,
+                        workflow_suggestion=keyword_result.workflow_suggestion,
+                        auto_execute=keyword_result.auto_execute or llm_result.auto_execute,
+                        full_workflow=keyword_result.full_workflow or llm_result.full_workflow,
+                    )
+                _CLASSIFICATION_CACHE[cache_key] = llm_result.to_dict()
+                return llm_result
+        except Exception as e:
+            logger.warning(f"LLM classification failed, using keyword result: {e}")
+        
+        _CLASSIFICATION_CACHE[cache_key] = keyword_result.to_dict()
+        return keyword_result
+    
+    def _get_cache_key(self, message: str) -> str:
+        """Generate cache key from message."""
+        normalized = message.strip().lower()[:200]  # Limit length for efficiency
+        return hashlib.md5(normalized.encode()).hexdigest()
+    
+    def _result_from_cache(self, cached: Dict[str, Any]) -> RoutingResult:
+        """Reconstruct RoutingResult from cached dict."""
+        intent_str = cached.get("intent", "unknown")
+        try:
+            intent = Intent(intent_str)
+        except ValueError:
+            intent = Intent.UNKNOWN
+        
+        dimension_str = cached.get("dimension")
+        dimension = None
+        if dimension_str:
+            try:
+                dimension = Dimension(dimension_str)
+            except ValueError:
+                pass
+        
+        return RoutingResult(
+            intent=intent,
+            confidence=cached.get("confidence", 0.0),
+            suggested_tool=cached.get("suggested_tool"),
+            dimension=dimension,
+            matched_keywords=cached.get("matched_keywords", []),
+            matched_patterns=cached.get("matched_patterns", []),
+            workflow_suggestion=cached.get("workflow_suggestion"),
+            auto_execute=cached.get("auto_execute", False),
+            full_workflow=cached.get("full_workflow", False),
+        )
+    
+    def _classify_with_llm_sync(self, message: str) -> Optional[RoutingResult]:
+        """Synchronous LLM classification using Gemini Flash.
+        
+        P1-2: Uses lightweight model for cost efficiency.
+        """
+        try:
+            import google.generativeai as genai
+            from app.config import settings
+            
+            if not settings.GEMINI_API_KEY:
+                return None
+            
+            genai.configure(api_key=settings.GEMINI_API_KEY)
+            
+            # Use fast model for classification
+            model = genai.GenerativeModel("gemini-2.0-flash")
+            
+            # Build classification prompt
+            prompt = f"""Classify the user intent for a video creation assistant.
+
+User message: "{message[:300]}"
+
+Intent categories:
+- generate_prompt: Create video prompts for Veo
+- create_storyboard: Design scene sequences
+- generate_image: Create image prompts/thumbnails
+- analyze_reference: Analyze reference videos/images
+- quality_check: Review content quality
+- aesthetic_direct: Style/aesthetic guidance
+- persona_analyze: Character/persona analysis
+- veo_generate: Generate actual video
+- workflow_request: Full workflow execution
+- general_chat: General conversation/questions
+
+Respond with ONLY valid JSON:
+{{"intent": "<category>", "confidence": <0.0-1.0>}}"""
+            
+            response = model.generate_content(
+                prompt,
+                generation_config=genai.GenerationConfig(
+                    temperature=0.1,
+                    max_output_tokens=100,
+                )
+            )
+            
+            # Parse response
+            text = response.text.strip()
+            # Extract JSON from response
+            if "{" in text and "}" in text:
+                json_start = text.index("{")
+                json_end = text.rindex("}") + 1
+                json_str = text[json_start:json_end]
+                data = json.loads(json_str)
+                
+                intent_str = data.get("intent", "unknown")
+                confidence = float(data.get("confidence", 0.5))
+                
+                try:
+                    intent = Intent(intent_str)
+                except ValueError:
+                    intent = Intent.UNKNOWN
+                    confidence = 0.3
+                
+                return RoutingResult(
+                    intent=intent,
+                    confidence=confidence,
+                    suggested_tool=INTENT_TO_TOOL.get(intent),
+                    dimension=INTENT_TO_DIMENSION.get(intent),
+                    matched_keywords=[],
+                    matched_patterns=["llm_classification"],
+                    auto_execute=False,
+                    full_workflow=False,
+                )
+                
+        except ImportError:
+            logger.debug("google-generativeai not installed")
+        except Exception as e:
+            logger.warning(f"LLM classification error: {e}")
+        
+        return None
+    
     def _suggest_workflow(
         self,
         intent: Intent,
@@ -477,5 +687,30 @@ def get_intent_router() -> IntentRouter:
 
 
 def classify_intent(message: str) -> RoutingResult:
-    """Convenience function to classify intent."""
+    """Convenience function to classify intent (keyword-only, fast)."""
     return get_intent_router().classify(message)
+
+
+def classify_intent_hybrid(message: str) -> RoutingResult:
+    """P1-2: Hybrid classification with LLM fallback for low-confidence.
+    
+    Use this for higher accuracy when latency tolerance allows.
+    Falls back to LLM only when keyword confidence < 0.6.
+    Results are cached for 5 minutes.
+    """
+    return get_intent_router().classify_with_llm_fallback(message)
+
+
+def clear_classification_cache() -> None:
+    """Clear the classification cache."""
+    _CLASSIFICATION_CACHE.clear()
+    logger.info("Classification cache cleared")
+
+
+def get_cache_stats() -> Dict[str, int]:
+    """Get classification cache statistics."""
+    return {
+        "size": len(_CLASSIFICATION_CACHE),
+        "maxsize": _CLASSIFICATION_CACHE.maxsize,
+        "ttl": int(_CLASSIFICATION_CACHE.ttl),
+    }

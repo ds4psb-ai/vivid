@@ -8,6 +8,7 @@ import uuid
 from datetime import datetime
 from typing import AsyncGenerator, List, Optional
 
+from cachetools import TTLCache
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -58,16 +59,20 @@ def _build_agent(model_name: Optional[str] = None, use_cache: bool = True) -> Vi
     return VividAgent(model_client=StubModelClient())
 
 
-_AGENT_CACHE: dict[str, VividAgent] = {}
+# P0-3: TTLCache로 메모리 누수 방지 (최대 5개 모델, 1시간 TTL)
+_AGENT_CACHE: TTLCache = TTLCache(maxsize=5, ttl=3600)
+_AGENT_CACHE_LOCK = threading.Lock()
 
 
 def _get_agent(model_name: str) -> VividAgent:
-    cached = _AGENT_CACHE.get(model_name)
-    if cached is not None:
-        return cached
-    agent = _build_agent(model_name)
-    _AGENT_CACHE[model_name] = agent
-    return agent
+    """Get or create agent with thread-safe TTL caching."""
+    with _AGENT_CACHE_LOCK:
+        if model_name in _AGENT_CACHE:
+            return _AGENT_CACHE[model_name]
+        agent = _build_agent(model_name)
+        _AGENT_CACHE[model_name] = agent
+        logger.debug(f"Agent cached for model: {model_name}, cache size: {len(_AGENT_CACHE)}")
+        return agent
 
 
 class AgentChatRequest(BaseModel):
@@ -303,9 +308,72 @@ def _derive_missing_artifacts(artifacts: List[AgentArtifact]) -> List[AgentArtif
 
 
 class _StreamResult:
+    """Result holder for streaming thread."""
     def __init__(self) -> None:
         self.message: Optional[CoreAgentMessage] = None
         self.error: Optional[Exception] = None
+
+
+class StreamController:
+    """P0-1: Thread-safe streaming controller to prevent duplicate streams.
+    
+    Ensures only one streaming thread runs at a time per controller instance.
+    """
+    
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._active = False
+        self._thread: Optional[threading.Thread] = None
+    
+    def start_stream(
+        self,
+        model_client: GeminiModelClient,
+        messages: List[CoreAgentMessage],
+        tools: List,
+        queue: asyncio.Queue,
+        loop: asyncio.AbstractEventLoop,
+    ) -> _StreamResult:
+        """Start a streaming thread with mutex protection.
+        
+        Raises:
+            RuntimeError: If a stream is already active
+        """
+        with self._lock:
+            if self._active:
+                logger.warning("Attempted to start duplicate stream, blocking")
+                raise RuntimeError("Stream already active for this controller")
+            self._active = True
+        
+        result = _StreamResult()
+        
+        def _runner() -> None:
+            try:
+                generator = model_client.stream_generate(messages, tools)
+                while True:
+                    try:
+                        delta = next(generator)
+                    except StopIteration as stop:
+                        result.message = stop.value
+                        break
+                    if delta:
+                        loop.call_soon_threadsafe(queue.put_nowait, delta)
+            except Exception as exc:
+                result.error = exc
+                logger.error(f"Stream thread error: {type(exc).__name__}: {exc}")
+            finally:
+                with self._lock:
+                    self._active = False
+                loop.call_soon_threadsafe(queue.put_nowait, None)
+        
+        self._thread = threading.Thread(target=_runner, daemon=True)
+        self._thread.start()
+        return result
+    
+    @property
+    def is_active(self) -> bool:
+        """Check if a stream is currently active."""
+        with self._lock:
+            return self._active
 
 
 def _start_stream_thread(
@@ -316,6 +384,10 @@ def _start_stream_thread(
     result: _StreamResult,
     loop: asyncio.AbstractEventLoop,
 ) -> None:
+    """Legacy wrapper for backward compatibility.
+    
+    Note: New code should use StreamController directly for better safety.
+    """
     def _runner() -> None:
         try:
             generator = model_client.stream_generate(messages, tools)
@@ -329,6 +401,7 @@ def _start_stream_thread(
                     loop.call_soon_threadsafe(queue.put_nowait, delta)
         except Exception as exc:
             result.error = exc
+            logger.error(f"Stream thread error: {type(exc).__name__}: {exc}")
         finally:
             loop.call_soon_threadsafe(queue.put_nowait, None)
 

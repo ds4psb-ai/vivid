@@ -1,11 +1,26 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Bot, MoreHorizontal, Play, CheckCircle2, ChevronDown, Paperclip, X, File as FileIcon } from "lucide-react";
+import { Send, Bot, MoreHorizontal, Play, CheckCircle2, ChevronDown, Paperclip, X, File as FileIcon, RefreshCw } from "lucide-react";
 import { api } from "@/lib/api";
+import {
+    SSEEventBuffer,
+    SSEConnectionManager,
+    parseSSEEvent,
+    saveSession,
+    loadSession,
+    clearSession,
+    type EventHandlers,
+    type SSEConnectionState,
+} from "@/lib/sse-utils";
+import {
+    createEventHandlers,
+    type AgentEventContext,
+    type Message,
+} from "@/lib/agent-event-handlers";
 import type {
     WorkflowStepEvent,
     ToolResultEvent,
@@ -14,18 +29,7 @@ import type {
     WorkflowCompleteEvent,
 } from "@/types/agent";
 
-interface Message {
-    id: string;
-    role: "user" | "assistant" | "tool";
-    content: React.ReactNode;
-    timestamp: Date;
-    attachments?: { name: string; mime_type: string; file_uri: string }[];
-    // Tool-specific properties
-    toolName?: string;
-    toolStatus?: "pending" | "complete" | "error";
-    toolOutput?: Record<string, unknown>;
-    toolError?: string;
-}
+// Message type imported from @/lib/agent-event-handlers
 
 // Template context from Singularity
 interface TemplateContext {
@@ -122,6 +126,64 @@ export function AgentChatAccordion({
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
+
+    // P2: SSE connection state and session restoration
+    const [connectionState, setConnectionState] = useState<SSEConnectionState>("disconnected");
+    const [hasRestorableSession, setHasRestorableSession] = useState(false);
+    const [lastFailedInput, setLastFailedInput] = useState<string | null>(null);
+    const connectionManagerRef = useRef<SSEConnectionManager | null>(null);
+
+    // Initialize connection manager
+    useEffect(() => {
+        connectionManagerRef.current = new SSEConnectionManager({
+            maxRetries: 3,
+            baseDelay: 1000,
+            onStateChange: setConnectionState,
+        });
+    }, []);
+
+    // Check for restorable session on mount
+    useEffect(() => {
+        const stored = loadSession();
+        if (stored && stored.messages.length > 0) {
+            setHasRestorableSession(true);
+        }
+    }, []);
+
+    // Session restoration handler
+    const handleRestoreSession = useCallback(() => {
+        const stored = loadSession();
+        if (!stored) return;
+
+        const restoredMessages: Message[] = stored.messages.map(m => ({
+            id: m.id,
+            role: m.role as "user" | "assistant" | "tool",
+            content: m.content,
+            timestamp: new Date(m.timestamp),
+            toolName: m.toolName,
+            toolStatus: m.toolStatus as "pending" | "complete" | "error" | undefined,
+        }));
+
+        setMessages(restoredMessages);
+        setHasRestorableSession(false);
+        clearSession();
+    }, []);
+
+    // Dismiss restoration banner
+    const handleDismissRestore = useCallback(() => {
+        setHasRestorableSession(false);
+        clearSession();
+    }, []);
+
+    // Retry last failed request
+    const handleRetry = useCallback(() => {
+        if (lastFailedInput) {
+            setInput(lastFailedInput);
+            setLastFailedInput(null);
+            // Remove the last error message
+            setMessages(prev => prev.filter(m => !m.id.startsWith('error-')));
+        }
+    }, [lastFailedInput]);
 
     // Draggable FAB position state
     const [fabPosition, setFabPosition] = useState({ x: 0, y: 0 });
@@ -267,225 +329,83 @@ export function AgentChatAccordion({
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
-            let accumulatedContent = "";
 
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
+            // P4: AG-UI 표준 매퍼 - SSEEventBuffer 통합
+            const accumulatedContentRef = { current: "" };
 
-                const chunk = decoder.decode(value);
-                const lines = chunk.split("\n");
+            const eventContext: AgentEventContext = {
+                setMessages,
+                assistantMessageId: assistantMessage.id,
+                accumulatedContentRef,
+                onWorkflowStart,
+                onWorkflowStep,
+                onWorkflowComplete,
+                onWorkflowCreated,
+                onToolResult,
+                router,
+            };
 
-                for (const line of lines) {
-                    if (line.startsWith("data: ")) {
-                        try {
-                            const rawData = line.slice(6);
-                            if (!rawData || rawData === '[DONE]') continue;
+            const handlers = createEventHandlers(eventContext);
+            const eventBuffer = new SSEEventBuffer(handlers, { debug: false });
 
-                            const data = JSON.parse(rawData);
-                            if (!data || typeof data !== 'object') continue;
+            connectionManagerRef.current?.setState("connected");
 
-                            const eventType = data.type;
-                            const payload = data.payload;
+            try {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
 
-                            // Handle streaming delta events
-                            if (eventType === "agent.delta" && payload?.delta) {
-                                accumulatedContent += String(payload.delta || '');
-                                setMessages((prev) =>
-                                    prev.map(m => m.id === assistantMessage.id
-                                        ? { ...m, content: accumulatedContent }
-                                        : m
-                                    )
-                                );
+                    const chunk = decoder.decode(value);
+                    for (const line of chunk.split("\n")) {
+                        if (line.startsWith("data: ")) {
+                            const event = parseSSEEvent(line.slice(6));
+                            if (event) {
+                                eventBuffer.push(event);
                             }
-                            // Handle complete message events (fallback)
-                            else if (eventType === "agent.message" && payload?.content) {
-                                accumulatedContent = String(payload.content || '');
-                                setMessages((prev) =>
-                                    prev.map(m => m.id === assistantMessage.id
-                                        ? { ...m, content: accumulatedContent }
-                                        : m
-                                    )
-                                );
-                            }
-                            // 🆕 Handle tool_calls event - show pending cards immediately
-                            else if (eventType === "agent.tool_calls" && payload?.tool_calls) {
-                                const toolCalls = Array.isArray(payload.tool_calls) ? payload.tool_calls : [];
-                                toolCalls.forEach((call: { id?: string; name?: string }) => {
-                                    if (!call.name) return;
-                                    const pendingMessage: Message = {
-                                        id: `tool-pending-${call.id || Date.now()}`,
-                                        role: "tool",
-                                        content: "",
-                                        timestamp: new Date(),
-                                        toolName: call.name,
-                                        toolStatus: "pending",
-                                    };
-                                    setMessages(prev => [...prev, pendingMessage]);
-                                });
-                            }
-                            // === Workflow Events for Dimension Integration ===
-                            else if (eventType === "agent.workflow_start" && payload) {
-                                onWorkflowStart?.({
-                                    topic: String(payload.topic || ''),
-                                    dimensions: Array.isArray(payload.dimensions) ? payload.dimensions : [],
-                                    total_steps: Number(payload.total_steps) || 0,
-                                });
-                            }
-                            else if (eventType === "agent.workflow_step_start" && payload) {
-                                onWorkflowStep?.({
-                                    step: Number(payload.step) || 0,
-                                    total_steps: Number(payload.total_steps) || 0,
-                                    dimension: String(payload.dimension || ''),
-                                    dimension_name: String(payload.dimension_name || ''),
-                                    tool_name: String(payload.tool_name || ''),
-                                    status: "start",
-                                });
-                            }
-                            else if (eventType === "agent.workflow_step_complete" && payload) {
-                                onWorkflowStep?.({
-                                    step: Number(payload.step) || 0,
-                                    total_steps: Number(payload.total_steps) || 0,
-                                    dimension: String(payload.dimension || ''),
-                                    dimension_name: String(payload.dimension_name || ''),
-                                    tool_name: String(payload.tool_name || ''),
-                                    status: "complete",
-                                    output_preview: payload.output_preview ? String(payload.output_preview) : undefined,
-                                    credit_cost: typeof payload.credit_cost === 'number' ? payload.credit_cost : undefined,
-                                });
-                            }
-                            else if (eventType === "agent.workflow_step_error" && payload) {
-                                onWorkflowStep?.({
-                                    step: Number(payload.step) || 0,
-                                    total_steps: Number(payload.total_steps) || 0,
-                                    dimension: String(payload.dimension || ''),
-                                    dimension_name: String(payload.dimension_name || ''),
-                                    tool_name: String(payload.tool_name || ''),
-                                    status: "error",
-                                });
-                            }
-                            else if (eventType === "agent.workflow_complete" && payload) {
-                                onWorkflowComplete?.({
-                                    total_credits: typeof payload.total_credits === 'number' ? payload.total_credits : 0,
-                                    success_count: typeof payload.success_count === 'number' ? payload.success_count : 0,
-                                });
-                            }
-                            // Workflow created event (from create_workflow tool)
-                            else if (eventType === "agent.workflow_created" && payload) {
-                                // Extract nodes from workflow_spec if present
-                                const workflowSpec = payload.workflow_spec || payload;
-                                const nodes = Array.isArray(workflowSpec.nodes) ? workflowSpec.nodes : [];
-
-                                onWorkflowCreated?.({
-                                    workflow_id: String(payload.workflow_id || ''),
-                                    topic: String(payload.topic || ''),
-                                    dimensions: Array.isArray(payload.dimensions) ? payload.dimensions : [],
-                                    nodes: nodes.map((n: Record<string, unknown>) => ({
-                                        id: String(n.id || ''),
-                                        dimension: String(n.dimension || ''),
-                                        dimension_name: String(n.dimension_name || ''),
-                                        tool_name: String(n.tool_name || ''),
-                                        status: String(n.status || 'pending'),
-                                    })),
-                                });
-                            }
-                            // Tool result event - capture dimension outputs AND add to chat
-                            else if (eventType === "agent.tool_result" && payload) {
-                                const toolName = String(payload.name || 'tool');
-                                const toolCallId = payload.tool_call_id ? String(payload.tool_call_id) : null;
-                                const toolStatusValue = String(payload.status || 'complete');
-                                const toolOutput = (payload.output && typeof payload.output === 'object') ? payload.output : {};
-                                const toolArguments = (payload.arguments && typeof payload.arguments === 'object') ? payload.arguments : {};
-                                const toolError = payload.error ? String(payload.error) : undefined;
-                                const finalStatus = toolStatusValue === "error" ? "error" : "complete";
-
-                                // 🆕 Try to update existing pending card, or create new one
-                                setMessages(prev => {
-                                    const pendingIdx = prev.findIndex(
-                                        m => m.role === "tool" &&
-                                            m.toolName === toolName &&
-                                            m.toolStatus === "pending"
-                                    );
-
-                                    if (pendingIdx !== -1) {
-                                        // Update existing pending card
-                                        return prev.map((m, i) =>
-                                            i === pendingIdx
-                                                ? { ...m, toolStatus: finalStatus, toolOutput, toolError }
-                                                : m
-                                        );
-                                    } else {
-                                        // Create new card if no pending found
-                                        const toolMessage: Message = {
-                                            id: `tool-${Date.now()}-${toolName}`,
-                                            role: "tool",
-                                            content: "",
-                                            timestamp: new Date(),
-                                            toolName,
-                                            toolStatus: finalStatus,
-                                            toolOutput,
-                                            toolError,
-                                        };
-                                        return [...prev, toolMessage];
-                                    }
-                                });
-
-                                // Also trigger callback for flow page integration with arguments
-                                onToolResult?.({
-                                    name: toolName,
-                                    status: toolStatusValue,
-                                    output: toolOutput,
-                                    arguments: toolArguments,
-                                    error: toolError,
-                                });
-                            }
-                            // Navigation event - route user to requested page
-                            else if (eventType === "agent.navigation" && payload?.path) {
-                                const targetPath = String(payload.path);
-                                // Add navigation message to chat
-                                accumulatedContent += `\n\n🧭 ${targetPath} 페이지로 이동합니다...`;
-                                setMessages((prev) =>
-                                    prev.map(m => m.id === assistantMessage.id
-                                        ? { ...m, content: accumulatedContent }
-                                        : m
-                                    )
-                                );
-                                // Navigate after a short delay for UX
-                                setTimeout(() => {
-                                    router.push(targetPath);
-                                }, 500);
-                            }
-                            // Legacy format support
-                            else if (eventType === "content" && data.delta) {
-                                accumulatedContent += String(data.delta || '');
-                                setMessages((prev) =>
-                                    prev.map(m => m.id === assistantMessage.id
-                                        ? { ...m, content: accumulatedContent }
-                                        : m
-                                    )
-                                );
-                            }
-                        } catch (e) {
-                            // JSON parse error - log but don't crash
-                            console.debug('[AgentChat] SSE parse error:', e);
                         }
                     }
                 }
+            } finally {
+                connectionManagerRef.current?.setState("disconnected");
             }
 
-            // After stream, check for execution intents based on full content if needed
-            // (Similar to previous "Interactive Execute Prompt" logic, but now based on actual response)
-            // For now, removing the manual simple check or keeping logic simple.
+            // 세션 저장 - 최신 messages 상태 사용
+            setMessages(currentMessages => {
+                saveSession("vivid-agent", currentMessages.map(m => ({
+                    id: m.id,
+                    role: m.role,
+                    content: typeof m.content === 'string' ? m.content : accumulatedContentRef.current,
+                    timestamp: m.timestamp,
+                    toolName: m.toolName,
+                    toolStatus: m.toolStatus,
+                })));
+                return currentMessages;
+            });
 
         } catch (error) {
             console.error("Chat error:", error);
+
+            // 에러 유형 분류
+            const errorType = error instanceof TypeError ? "network"
+                : (error as Error)?.message?.includes("timeout") ? "timeout"
+                    : "server";
+
+            const errorMessageContent = errorType === "network"
+                ? "🌐 네트워크 연결을 확인해주세요."
+                : errorType === "timeout"
+                    ? "⏱️ 응답이 너무 오래 걸려요. 다시 시도해주세요."
+                    : "앗, 차원 이동 중 문제가 생겼어요. 다시 시도해주세요! 🐰";
+
             const errorMessage: Message = {
                 id: `error-${Date.now()}`,
                 role: "assistant",
-                content: "앗, 차원 이동 중 문제가 생겼어요. 다시 시도해주세요! 🐰",
+                content: errorMessageContent,
                 timestamp: new Date(),
             };
             setMessages((prev) => [...prev, errorMessage]);
+
+            // 마지막 실패 요청 저장 (재시도용)
+            setLastFailedInput(userInput);
         } finally {
             setIsLoading(false);
         }
@@ -682,6 +602,49 @@ export function AgentChatAccordion({
                             </div>
                         </div>
 
+                        {/* P2: Session Restoration Banner */}
+                        {hasRestorableSession && (
+                            <div className="mx-4 mt-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+                                <p className="text-xs text-amber-200 mb-2">
+                                    💬 이전 대화를 복원할 수 있습니다.
+                                </p>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={handleRestoreSession}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-amber-500 text-black rounded-lg hover:bg-amber-400 transition-colors"
+                                    >
+                                        <RefreshCw className="h-3 w-3" />
+                                        복원하기
+                                    </button>
+                                    <button
+                                        onClick={handleDismissRestore}
+                                        className="text-xs text-amber-300/70 hover:text-amber-300 underline transition-colors"
+                                    >
+                                        무시
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* P2: Connection Status Indicator */}
+                        {connectionState === "connecting" && (
+                            <div className="mx-4 mt-2 flex items-center gap-2 text-xs text-blue-400">
+                                <span className="animate-pulse">●</span>
+                                연결 중...
+                            </div>
+                        )}
+                        {connectionState === "reconnecting" && (
+                            <div className="mx-4 mt-2 flex items-center gap-2 text-xs text-yellow-400">
+                                <RefreshCw className="h-3 w-3 animate-spin" />
+                                재연결 중...
+                            </div>
+                        )}
+                        {connectionState === "error" && (
+                            <div className="mx-4 mt-2 text-xs text-red-400">
+                                ⚠️ 연결 오류가 발생했습니다
+                            </div>
+                        )}
+
                         {/* Messages */}
                         <div className="flex-1 overflow-y-auto p-5 space-y-6 scrollbar-thin scrollbar-thumb-zinc-700/50 scrollbar-track-transparent">
                             {messages.map((message) => {
@@ -842,6 +805,17 @@ export function AgentChatAccordion({
 
                         {/* Input Area */}
                         <div className="p-4 bg-black/40 backdrop-blur-md border-t border-white/5 space-y-3">
+                            {/* Retry Button - shown when last request failed */}
+                            {lastFailedInput && (
+                                <button
+                                    onClick={handleRetry}
+                                    className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-xl hover:bg-amber-500/20 transition-colors"
+                                >
+                                    <RefreshCw className="h-4 w-4" />
+                                    다시 시도하기
+                                </button>
+                            )}
+
                             {/* File Preview */}
                             {files.length > 0 && (
                                 <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
