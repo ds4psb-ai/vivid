@@ -541,6 +541,9 @@ async def _execute_dimension_tool_stream(
 
     Yields SSE events for progress, completion, and errors.
     Handles credit deduction and refund automatically.
+
+    IMPORTANT: Handles client disconnection (CancelledError) with proper
+    credit refund to prevent credit loss on connection drops.
     """
     start_time = time.time()
     user_id = user.get("id")
@@ -569,12 +572,23 @@ async def _execute_dimension_tool_stream(
                 )
                 return
 
-            await deduct_credits(
-                db, user_id, credit_cost,
-                description=f"Dimension: {tool_key}",
-                meta={"tool": tool_key, "model": model}
-            )
-            credits_deducted = True
+            try:
+                await deduct_credits(
+                    db, user_id, credit_cost,
+                    description=f"Dimension: {tool_key}",
+                    meta={"tool": tool_key, "model": model}
+                )
+                credits_deducted = True
+            except ValueError as e:
+                # Race condition - another request depleted credits
+                if "insufficient" in str(e).lower():
+                    yield sse_error(
+                        "크레딧이 부족합니다. (동시 요청으로 인한 잔액 변동)",
+                        code="INSUFFICIENT_CREDITS",
+                    )
+                else:
+                    yield sse_error(str(e), code="CREDIT_ERROR")
+                return
 
         yield sse_progress(10, f"{operation_name} 준비 중...", "processing")
 
@@ -648,6 +662,23 @@ async def _execute_dimension_tool_stream(
 
             yield sse_error(error_msg, code="EXECUTION_FAILED")
 
+    except asyncio.CancelledError:
+        # Client disconnected mid-stream - refund credits
+        logger.info(f"SSE client disconnected for {tool_key}, user={user_id}")
+        if credits_deducted:
+            try:
+                await _refund_with_retry(
+                    db=db,
+                    user_id=user_id,
+                    amount=credit_cost,
+                    description=f"{tool_key} client disconnected",
+                    meta={"tool": tool_key, "reason": "client_disconnect"},
+                )
+                logger.info(f"Refunded {credit_cost} credits for disconnected user {user_id}")
+            except Exception as refund_err:
+                logger.error(f"Failed to refund on disconnect: {refund_err}")
+        # Re-raise to let FastAPI handle the cleanup
+        raise
     except asyncio.TimeoutError:
         if credits_deducted:
             await _refund_with_retry(
@@ -1263,20 +1294,25 @@ async def generate_veo_video_stream(
             # Check credits if not BYOK
             if not byok_key:
                 user_credits = await get_or_create_user_credits(db, user_id)
-                if user_credits.total_credits < credit_cost:
-                    yield f"data: {json.dumps({'type': 'error', 'error': 'Insufficient credits', 'required': credit_cost, 'available': user_credits.total_credits})}\n\n"
+                if user_credits.balance < credit_cost:
+                    yield f"data: {json.dumps({'type': 'error', 'error': '크레딧이 부족합니다.', 'code': 'INSUFFICIENT_CREDITS', 'required': credit_cost, 'available': user_credits.balance})}\n\n"
                     return
 
-                # Deduct credits upfront
-                success = await deduct_credits(
-                    db, user_id, credit_cost,
-                    f"Veo video generation: {request.prompt[:50]}...",
-                    {"capsule_id": DimensionCapsuleId.VEO_VIDEO_GENERATE.value}
-                )
-                if not success:
-                    yield f"data: {json.dumps({'type': 'error', 'error': 'Failed to deduct credits'})}\n\n"
+                # Deduct credits upfront (raises ValueError on failure)
+                try:
+                    await deduct_credits(
+                        db, user_id, credit_cost,
+                        f"Veo video generation: {request.prompt[:50]}...",
+                        {"capsule_id": DimensionCapsuleId.VEO_VIDEO_GENERATE.value}
+                    )
+                    credits_deducted = True
+                except ValueError as e:
+                    # Race condition - another request depleted credits
+                    if "insufficient" in str(e).lower():
+                        yield f"data: {json.dumps({'type': 'error', 'error': '크레딧이 부족합니다. (동시 요청으로 인한 잔액 변동)', 'code': 'INSUFFICIENT_CREDITS'})}\n\n"
+                    else:
+                        yield f"data: {json.dumps({'type': 'error', 'error': str(e), 'code': 'CREDIT_ERROR'})}\n\n"
                     return
-                credits_deducted = True
 
             # Build config
             config = VeoConfig(
@@ -1336,6 +1372,22 @@ async def generate_veo_video_stream(
                     )
                 yield f"data: {json.dumps({'type': 'error', 'success': False, 'error': result.error, 'duration_ms': result.duration_ms})}\n\n"
 
+        except asyncio.CancelledError:
+            # Client disconnected mid-stream - cancel task and refund
+            logger.info(f"VEO SSE client disconnected, user={user_id}")
+            if 'generation_task' in locals() and not generation_task.done():
+                generation_task.cancel()
+            if credits_deducted:
+                try:
+                    await _refund_with_retry(
+                        db, user_id, credit_cost,
+                        "Veo client disconnected",
+                        {"capsule_id": DimensionCapsuleId.VEO_VIDEO_GENERATE.value, "reason": "client_disconnect"}
+                    )
+                    logger.info(f"Refunded {credit_cost} VEO credits for disconnected user {user_id}")
+                except Exception as refund_err:
+                    logger.error(f"Failed to refund VEO credits on disconnect: {refund_err}")
+            raise
         except Exception as e:
             logger.exception(f"Veo SSE stream error: {e}")
             # Refund on exception
