@@ -45,7 +45,7 @@ const MODELS = [
     { value: "gemini-2.5-pro", label: "Pro (고품질)" },
 ];
 
-export default function ImageToolPanel() {
+export default function VisualRealizerPanel() {
     const [description, setDescription] = useState("");
     const [style, setStyle] = useState("photorealistic");
     const [aspectRatio, setAspectRatio] = useState("16:9");

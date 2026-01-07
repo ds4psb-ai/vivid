@@ -332,12 +332,12 @@ const DIMENSION_CONFIG: Record<DimensionType, {
 const DIMENSION_ROUTES: Record<DimensionType, string> = {
     "1D": "/dimension/prompt",
     "2D": "/dimension/storyboard",
-    "3D": "/dimension/image-tool",
-    "4D": "/dimension/shot-catch",
+    "3D": "/dimension/visual-realizer",
+    "4D": "/dimension/reference-decoder",
     "QC": "/dimension/quality-check",
     "AD": "/dimension/aesthetic",
     "AI": "/dimension/abyss",
-    "VEO": "/dimension/veo-video",
+    "VEO": "/dimension/video-maker",
 };
 
 // =============================================================================

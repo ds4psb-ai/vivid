@@ -1,13 +1,13 @@
 "use client";
 
 import AppShell from "@/components/AppShell";
-import ReferenceCapturePanel from "@/components/dimension/ReferenceCapturePanel";
+import ReferenceDecoderPanel from "@/components/dimension/ReferenceDecoderPanel";
 
 export default function ReferenceDecoderPage() {
     return (
         <AppShell showTopBar={false}>
             <div className="h-screen">
-                <ReferenceCapturePanel />
+                <ReferenceDecoderPanel />
             </div>
         </AppShell>
     );

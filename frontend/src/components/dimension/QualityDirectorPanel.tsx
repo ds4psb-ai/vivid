@@ -46,7 +46,7 @@ const MODELS = [
     { value: "gemini-3.0-pro-preview", label: "Pro (정확)" },
 ];
 
-export default function QualityCheckerPanel() {
+export default function QualityDirectorPanel() {
     const [content, setContent] = useState("");
     const [contentType, setContentType] = useState("prompt");
     const [selectedCriteria, setSelectedCriteria] = useState<string[]>(["aesthetic", "consistency", "safety"]);

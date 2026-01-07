@@ -33,7 +33,7 @@ const MODELS = [
     { value: "gemini-2.5-pro", label: "Pro (고품질)" },
 ];
 
-export default function ReferenceCapturePanel() {
+export default function ReferenceDecoderPanel() {
     const [description, setDescription] = useState("");
     const [focusAreas, setFocusAreas] = useState<string[]>(["composition", "lighting", "color", "movement"]);
     const [model, setModel] = useState("gemini-3-flash-preview");

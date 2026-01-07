@@ -1,13 +1,13 @@
 "use client";
 
 import AppShell from "@/components/AppShell";
-import QualityCheckerPanel from "@/components/dimension/QualityCheckerPanel";
+import QualityDirectorPanel from "@/components/dimension/QualityDirectorPanel";
 
 export default function QualityCheckPage() {
     return (
         <AppShell showTopBar={false}>
             <div className="h-screen">
-                <QualityCheckerPanel />
+                <QualityDirectorPanel />
             </div>
         </AppShell>
     );
