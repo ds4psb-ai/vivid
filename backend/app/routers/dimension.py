@@ -119,6 +119,13 @@ DIMENSION_NAMES = {
     "2d": "Blueprint",   # Storyboard Creation
     "3d": "Ambience",    # Image Prompt Generation
     "4d": "Moment",      # Reference Analysis
+    # 4-Stage Workflow
+    "story": "Story Architect",
+    "sound": "Sound Crafter",
+    "quality": "Quality Director",
+    "aesthetic": "Aesthetic Director",
+    "persona": "Persona Analyzer",
+    "veo": "Video Maker",
 }
 
 
@@ -921,11 +928,28 @@ async def dimension_info() -> Dict[str, Any]:
     """List all dimensions and their purposes."""
     return {
         "dimensions": [
+            # Classic Dimensions
             {"id": "1d", "name": "Origin", "description": "Veo 프롬프트 생성 - 비디오의 시작점", "endpoint": "/api/dimension/1d/generate"},
             {"id": "2d", "name": "Blueprint", "description": "스토리보드 생성 - 구조와 흐름", "endpoint": "/api/dimension/2d/create"},
             {"id": "3d", "name": "Ambience", "description": "이미지 프롬프트 생성 - 분위기와 시각", "endpoint": "/api/dimension/3d/generate"},
             {"id": "4d", "name": "Moment", "description": "레퍼런스 분석 - 순간 포착", "endpoint": "/api/dimension/4d/analyze"},
-        ]
+        ],
+        "workflow_4stage": [
+            # Stage 1: Planning
+            {"id": "persona", "stage": "planning", "name": "Abyss Mirror", "description": "창작 DNA 분석", "endpoint": "/api/dimension/persona/analyze"},
+            {"id": "reference", "stage": "planning", "name": "Reference Decoder", "description": "레퍼런스 해석", "endpoint": "/api/dimension/4d/analyze"},
+            {"id": "story", "stage": "planning", "name": "Story Architect", "description": "시나리오 생성", "endpoint": "/api/dimension/story/architect"},
+            {"id": "aesthetic", "stage": "planning", "name": "Aesthetic Director", "description": "미학 디렉팅", "endpoint": "/api/dimension/aesthetic/direct"},
+            # Stage 2: Pre-production
+            {"id": "sound", "stage": "pre_production", "name": "Sound Crafter", "description": "사운드/음악 프롬프트", "endpoint": "/api/dimension/sound/craft"},
+            {"id": "storyboard", "stage": "pre_production", "name": "Storyboard Sketch", "description": "스토리보드 생성", "endpoint": "/api/dimension/2d/create"},
+            {"id": "prompt", "stage": "pre_production", "name": "Prompt Alchemy", "description": "이미지 프롬프트", "endpoint": "/api/dimension/3d/generate"},
+            # Stage 3: Production
+            {"id": "visual", "stage": "production", "name": "Visual Realizer", "description": "키프레임 생성", "endpoint": "/api/dimension/3d/generate"},
+            {"id": "video", "stage": "production", "name": "Video Maker", "description": "영상 생성", "endpoint": "/api/dimension/veo/generate"},
+            # Stage 4: Finishing
+            {"id": "quality", "stage": "finishing", "name": "Quality Director", "description": "품질 검수", "endpoint": "/api/dimension/quality/check"},
+        ],
     }
 
 
@@ -995,7 +1019,19 @@ async def get_metrics_summary() -> Dict[str, Any]:
     """Get aggregated metrics summary for all dimension tools."""
     from app.agents.evidence_loop import get_tool_metrics, get_evidence_stats
     
-    DIMENSION_TOOLS = {"1d": "generate_veo_prompt", "2d": "create_storyboard", "3d": "generate_image_prompt", "4d": "analyze_reference"}
+    DIMENSION_TOOLS = {
+        "1d": "generate_veo_prompt",
+        "2d": "create_storyboard",
+        "3d": "generate_image_prompt",
+        "4d": "analyze_reference",
+        # 4-Stage Workflow
+        "story": "story_architect",
+        "sound": "sound_craft",
+        "quality": "quality_check",
+        "aesthetic": "aesthetic_direct",
+        "persona": "persona_analyze",
+        "veo": "veo_generate",
+    }
     
     summary = {"dimensions": {}, "overall": get_evidence_stats()}
     for dim_id, tool_name in DIMENSION_TOOLS.items():
