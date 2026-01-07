@@ -1358,10 +1358,11 @@ def _build_history_context(tiered: TieredContext, max_steps: int = 2) -> str:
     recent_steps = tiered.history[-max_steps:] if len(tiered.history) > max_steps else tiered.history
 
     for step in recent_steps:
-        dim = step.get("dimension", "unknown")
-        success = step.get("success", False)
-        quality_score = step.get("quality_score")
-        output_preview = step.get("output_preview", "")
+        # StepSummary is a dataclass, not a dict - use attribute access
+        dim = getattr(step, "dimension", "unknown")
+        success = getattr(step, "success", False)
+        quality_score = getattr(step, "quality_score", None)
+        output_preview = getattr(step, "output_preview", "")
 
         # Build step summary
         step_info = f"Previous {dim}:"
