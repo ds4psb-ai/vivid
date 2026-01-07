@@ -1,15 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TeachingPanelLayout, { type ThemeColor } from "./DimensionPanelLayout";
 import { useBYOK } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
+import { useDimensionChainOptional, type ChainData } from "@/contexts/DimensionChainContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
+import ChainDataInput from "./ChainDataInput";
+import NextDimensionNav from "./NextDimensionNav";
 import { api } from "@/lib/api";
 import { Layers, ArrowRight, CheckCircle, AlertCircle } from "lucide-react";
 
 const CREDIT_COST = 10;
 const THEME_COLOR: ThemeColor = "emerald";
+const DIMENSION_KEY = "story-architect";
 
 interface StoryResult {
     title?: string;
@@ -61,6 +65,10 @@ export default function StoryArchitectPanel() {
     const [duration, setDuration] = useState("60s");
     const [structure, setStructure] = useState("3act");
 
+    // Chain data from previous dimensions
+    const [personaData, setPersonaData] = useState<Record<string, unknown>>({});
+    const [referenceAnalysis, setReferenceAnalysis] = useState<Record<string, unknown>>({});
+
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<StoryResult | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -68,6 +76,24 @@ export default function StoryArchitectPanel() {
 
     const { byokKey } = useBYOK();
     const creditCtx = useCreditContextOptional();
+    const chainCtx = useDimensionChainOptional();
+
+    // Set current dimension on mount
+    useEffect(() => {
+        if (chainCtx) {
+            chainCtx.setCurrentDimension(DIMENSION_KEY);
+        }
+    }, [chainCtx]);
+
+    // Handler to apply chain data from previous dimensions
+    const handleApplyChainData = (data: Record<string, ChainData>) => {
+        if (data["abyss-mirror"]) {
+            setPersonaData(data["abyss-mirror"].output);
+        }
+        if (data["reference-decoder"]) {
+            setReferenceAnalysis(data["reference-decoder"].output);
+        }
+    };
 
     const handleGenerate = async () => {
         if (!concept.trim() || concept.length < 10) {
@@ -95,10 +121,23 @@ export default function StoryArchitectPanel() {
                 structure,
                 language: "ko",
                 model: "gemini-2.5-pro",
+                persona_data: personaData,
+                reference_analysis: referenceAnalysis,
             });
 
             if (response.success && response.output) {
-                setResult(response.output as StoryResult);
+                const storyResult = response.output as StoryResult;
+                setResult(storyResult);
+
+                // Store in chain context for next dimensions
+                if (chainCtx) {
+                    chainCtx.setChainData(
+                        DIMENSION_KEY,
+                        response.output as Record<string, unknown>,
+                        storyResult.title || storyResult.logline || concept.slice(0, 50)
+                    );
+                }
+
                 // Refresh credits
                 if (creditCtx) {
                     creditCtx.refresh();
@@ -127,6 +166,13 @@ export default function StoryArchitectPanel() {
 
     const sidebarContent = (
         <div className="space-y-6">
+            {/* Chain Data Input */}
+            <ChainDataInput
+                currentDimension={DIMENSION_KEY}
+                onApplyData={handleApplyChainData}
+                themeColor={THEME_COLOR}
+            />
+
             {/* Concept Input */}
             <div className="space-y-2">
                 <label className="text-sm font-medium text-white/80">
@@ -349,13 +395,12 @@ export default function StoryArchitectPanel() {
                                 )}
                             </div>
 
-                            {/* Next Dimension */}
-                            {result.next_dimension && (
-                                <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
-                                    <span className="text-white/60 text-sm">다음 추천 단계</span>
-                                    <span className="text-emerald-400 font-medium">{result.next_dimension}</span>
-                                </div>
-                            )}
+                            {/* Next Dimension Navigation */}
+                            <NextDimensionNav
+                                currentDimension={DIMENSION_KEY}
+                                show={true}
+                                themeColor={THEME_COLOR}
+                            />
                         </div>
                     )}
 

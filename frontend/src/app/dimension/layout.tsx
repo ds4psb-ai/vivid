@@ -2,6 +2,7 @@
 
 import { TeachingSettingsProvider } from "@/contexts/DimensionSettingsContext";
 import { CreditProvider } from "@/contexts/CreditContext";
+import { DimensionChainProvider } from "@/contexts/DimensionChainContext";
 
 export default function TeachingLayout({
     children,
@@ -11,7 +12,9 @@ export default function TeachingLayout({
     return (
         <CreditProvider>
             <TeachingSettingsProvider>
-                {children}
+                <DimensionChainProvider>
+                    {children}
+                </DimensionChainProvider>
             </TeachingSettingsProvider>
         </CreditProvider>
     );

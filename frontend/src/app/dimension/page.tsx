@@ -5,7 +5,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Sparkles, LayoutGrid, Image as ImageIcon, Plus, Eye, LucideIcon,
-    CheckCircle, Palette, Moon, Film, ChevronRight,
+    CheckCircle, Palette, Moon, Film, ChevronRight, Link2, X, Trash2,
     Brain, Search, Layers, Music, Video, Wand2
 } from "lucide-react";
 import { AuroraBackground } from "@/components/AuroraBackground";
@@ -13,6 +13,7 @@ import { MiniAppSubmitModal } from "@/components/MiniAppSubmitModal";
 import { useParallaxScroll, useSmoothScroll } from "@/hooks/useLusionAnimations";
 import AppShell from "@/components/AppShell";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useDimensionChainOptional } from "@/contexts/DimensionChainContext";
 
 interface DimensionItemData {
     href: string;
@@ -228,10 +229,26 @@ const DIMENSION_ITEMS: DimensionItemData[] = [
 
 type StageKey = keyof typeof WORKFLOW_STAGES;
 
+// Route key mapping for chain context
+const ROUTE_KEYS: Record<string, string> = {
+    "/dimension/abyss": "abyss-mirror",
+    "/dimension/reference-decoder": "reference-decoder",
+    "/dimension/story-architect": "story-architect",
+    "/dimension/sound-crafter": "sound-crafter",
+    "/dimension/storyboard": "storyboard-sketch",
+    "/dimension/prompt": "prompt-alchemy",
+    "/dimension/visual-realizer": "visual-realizer",
+    "/dimension/video-maker": "video-maker",
+    "/dimension/quality-check": "quality-director",
+    "/dimension/aesthetic": "aesthetic-director",
+};
+
 export default function WorkshopHubPage() {
     const { language } = useLanguage();
     const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
     const [selectedStage, setSelectedStage] = useState<StageKey | null>(null);
+    const [showChainPanel, setShowChainPanel] = useState(false);
+    const chainCtx = useDimensionChainOptional();
     useSmoothScroll();
     useParallaxScroll();
 
@@ -240,6 +257,16 @@ export default function WorkshopHubPage() {
         : DIMENSION_ITEMS;
 
     const stageKeys = Object.keys(WORKFLOW_STAGES) as StageKey[];
+
+    // Chain data summary
+    const chainSummary = chainCtx?.getChainSummary() || [];
+    const hasChainData = chainSummary.length > 0;
+
+    // Check if a dimension has chain data
+    const hasDimensionData = (href: string): boolean => {
+        const routeKey = ROUTE_KEYS[href];
+        return routeKey ? chainCtx?.hasChainData(routeKey) || false : false;
+    };
 
     return (
         <AppShell>
@@ -293,6 +320,78 @@ export default function WorkshopHubPage() {
                             );
                         })}
                     </div>
+
+                    {/* Chain Status Bar */}
+                    <AnimatePresence>
+                        {hasChainData && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="mt-4 w-full max-w-2xl"
+                            >
+                                <div className="relative p-3 rounded-xl backdrop-blur-md bg-gradient-to-r from-emerald-500/10 via-violet-500/10 to-amber-500/10 border border-white/10">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Link2 className="w-4 h-4 text-emerald-400" />
+                                            <span className="text-sm font-medium text-white/80">
+                                                {language === 'ko' ? '워크플로우 진행 중' : 'Workflow in progress'}
+                                            </span>
+                                            <span className="text-xs text-white/40">
+                                                ({chainSummary.length} {language === 'ko' ? '단계 완료' : 'steps done'})
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => setShowChainPanel(!showChainPanel)}
+                                                className="text-xs text-white/60 hover:text-white px-2 py-1 rounded-lg hover:bg-white/10 transition-colors"
+                                            >
+                                                {showChainPanel ? (language === 'ko' ? '숨기기' : 'Hide') : (language === 'ko' ? '상세보기' : 'Details')}
+                                            </button>
+                                            <button
+                                                onClick={() => chainCtx?.clearChain()}
+                                                className="p-1 rounded-lg text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                                title={language === 'ko' ? '초기화' : 'Clear'}
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Expanded Chain Details */}
+                                    <AnimatePresence>
+                                        {showChainPanel && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: "auto", opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="pt-3 mt-3 border-t border-white/10 space-y-2">
+                                                    {chainSummary.map((item, idx) => (
+                                                        <div
+                                                            key={item.key}
+                                                            className="flex items-center gap-2 text-sm"
+                                                        >
+                                                            <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-bold">
+                                                                {idx + 1}
+                                                            </span>
+                                                            <span className="text-white/80 font-medium">{item.name}</span>
+                                                            {item.summary && (
+                                                                <span className="text-white/40 text-xs truncate max-w-[200px]">
+                                                                    - {item.summary}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </section>
 
                 {/* Content Section - Cards */}
@@ -329,6 +428,16 @@ export default function WorkshopHubPage() {
                                                     {dimension.isNew && (
                                                         <div className="absolute top-4 right-4 z-20 px-2 py-1 rounded-full bg-lime-500 text-black text-[10px] font-bold tracking-wider animate-pulse">
                                                             NEW
+                                                        </div>
+                                                    )}
+
+                                                    {/* Chain Data Indicator */}
+                                                    {hasDimensionData(dimension.href) && (
+                                                        <div className="absolute top-4 left-4 z-20 flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30">
+                                                            <CheckCircle className="w-3 h-3 text-emerald-400" />
+                                                            <span className="text-[10px] text-emerald-400 font-medium">
+                                                                {language === 'ko' ? '데이터' : 'Data'}
+                                                            </span>
                                                         </div>
                                                     )}
 
