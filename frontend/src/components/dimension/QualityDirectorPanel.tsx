@@ -252,7 +252,7 @@ export default function QualityDirectorPanel() {
     return (
         <>
             <TeachingPanelLayout
-                title="퀄리티 검수기"
+                title="퀄리티 디렉터"
                 sidebarContent={SidebarContent}
                 isLoading={isLoading}
                 themeColor={THEME_COLOR}

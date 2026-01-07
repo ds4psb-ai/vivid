@@ -236,7 +236,7 @@ export default function VisualRealizerPanel() {
     return (
         <>
             <TeachingPanelLayout
-                title="이미지 프롬프트 생성기"
+                title="비주얼 리얼라이저"
                 sidebarContent={SidebarContent}
                 isLoading={isLoading}
                 themeColor={THEME_COLOR}

@@ -8,10 +8,8 @@
  */
 
 import { useDimensionChainOptional } from "@/contexts/DimensionChainContext";
+import { THEME_COLOR_CLASSES, type ThemeColor } from "@/lib/dimension-theme";
 import { ArrowRight, Link2, CheckCircle } from "lucide-react";
-
-// Align with DimensionPanelLayout ThemeColor
-type ThemeColor = "violet" | "cyan" | "emerald" | "amber" | "rose" | "fuchsia" | "indigo" | "sky";
 
 interface NextDimensionNavProps {
     /** Current dimension's route key */
@@ -22,72 +20,13 @@ interface NextDimensionNavProps {
     themeColor?: ThemeColor;
 }
 
-const colorClasses: Record<ThemeColor, { bg: string; border: string; text: string; button: string; buttonActive: string }> = {
-    emerald: {
-        bg: "bg-emerald-500/10",
-        border: "border-emerald-500/20",
-        text: "text-emerald-400",
-        button: "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400",
-        buttonActive: "bg-emerald-500 text-black",
-    },
-    violet: {
-        bg: "bg-violet-500/10",
-        border: "border-violet-500/20",
-        text: "text-violet-400",
-        button: "bg-violet-500/20 hover:bg-violet-500/30 text-violet-400",
-        buttonActive: "bg-violet-500 text-black",
-    },
-    amber: {
-        bg: "bg-amber-500/10",
-        border: "border-amber-500/20",
-        text: "text-amber-400",
-        button: "bg-amber-500/20 hover:bg-amber-500/30 text-amber-400",
-        buttonActive: "bg-amber-500 text-black",
-    },
-    cyan: {
-        bg: "bg-cyan-500/10",
-        border: "border-cyan-500/20",
-        text: "text-cyan-400",
-        button: "bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400",
-        buttonActive: "bg-cyan-500 text-black",
-    },
-    rose: {
-        bg: "bg-rose-500/10",
-        border: "border-rose-500/20",
-        text: "text-rose-400",
-        button: "bg-rose-500/20 hover:bg-rose-500/30 text-rose-400",
-        buttonActive: "bg-rose-500 text-black",
-    },
-    fuchsia: {
-        bg: "bg-fuchsia-500/10",
-        border: "border-fuchsia-500/20",
-        text: "text-fuchsia-400",
-        button: "bg-fuchsia-500/20 hover:bg-fuchsia-500/30 text-fuchsia-400",
-        buttonActive: "bg-fuchsia-500 text-black",
-    },
-    indigo: {
-        bg: "bg-indigo-500/10",
-        border: "border-indigo-500/20",
-        text: "text-indigo-400",
-        button: "bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400",
-        buttonActive: "bg-indigo-500 text-black",
-    },
-    sky: {
-        bg: "bg-sky-500/10",
-        border: "border-sky-500/20",
-        text: "text-sky-400",
-        button: "bg-sky-500/20 hover:bg-sky-500/30 text-sky-400",
-        buttonActive: "bg-sky-500 text-black",
-    },
-};
-
 export default function NextDimensionNav({
     currentDimension,
     show,
     themeColor = "emerald",
 }: NextDimensionNavProps) {
     const chainContext = useDimensionChainOptional();
-    const colors = colorClasses[themeColor];
+    const colors = THEME_COLOR_CLASSES[themeColor];
 
     if (!show || !chainContext) return null;
 

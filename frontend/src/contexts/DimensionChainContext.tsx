@@ -9,48 +9,11 @@
 
 import { createContext, useContext, useCallback, useState, ReactNode } from "react";
 import { useRouter } from "next/navigation";
-
-// Route key to display name mapping
-const DIMENSION_DISPLAY_NAMES: Record<string, string> = {
-    "abyss-mirror": "심연의 거울",
-    "reference-decoder": "레퍼런스 해석기",
-    "story-architect": "시나리오 생성기",
-    "aesthetic-director": "미학디렉터",
-    "storyboard-sketch": "스토리보드 스케치",
-    "sound-crafter": "사운드 크래프터",
-    "prompt-alchemy": "프롬프트 연금술",
-    "visual-realizer": "비주얼 리얼라이저",
-    "video-maker": "비디오 메이커",
-    "quality-director": "퀄리티 디렉터",
-};
-
-// Stage metadata for ordering
-const DIMENSION_STAGES: Record<string, { stage: string; order: number }> = {
-    "abyss-mirror": { stage: "planning", order: 1 },
-    "reference-decoder": { stage: "planning", order: 2 },
-    "story-architect": { stage: "planning", order: 3 },
-    "aesthetic-director": { stage: "planning", order: 4 },
-    "storyboard-sketch": { stage: "pre_production", order: 2 },
-    "sound-crafter": { stage: "pre_production", order: 1 },
-    "prompt-alchemy": { stage: "pre_production", order: 3 },
-    "visual-realizer": { stage: "production", order: 1 },
-    "video-maker": { stage: "production", order: 2 },
-    "quality-director": { stage: "finishing", order: 1 },
-};
-
-// Connection map: dimension -> possible next dimensions
-const DIMENSION_CONNECTIONS: Record<string, string[]> = {
-    "abyss-mirror": ["reference-decoder", "story-architect", "aesthetic-director"],
-    "reference-decoder": ["story-architect", "storyboard-sketch"],
-    "story-architect": ["storyboard-sketch", "sound-crafter", "prompt-alchemy"],
-    "aesthetic-director": ["story-architect", "visual-realizer"],
-    "storyboard-sketch": ["sound-crafter", "prompt-alchemy"],
-    "sound-crafter": ["video-maker"],
-    "prompt-alchemy": ["visual-realizer", "video-maker"],
-    "visual-realizer": ["video-maker", "quality-director"],
-    "video-maker": ["quality-director"],
-    "quality-director": [],
-};
+import {
+    DIMENSION_DISPLAY_NAMES,
+    DIMENSION_STAGES,
+    DIMENSION_CONNECTIONS,
+} from "@/lib/dimension-theme";
 
 /** Chain data stored for each dimension */
 export interface ChainData {
@@ -256,5 +219,5 @@ export function useDimensionChainOptional(): DimensionChainContextValue | null {
     return useContext(DimensionChainContext);
 }
 
-// Export constants for use in components
+// Re-export constants for use in components (from shared utility)
 export { DIMENSION_DISPLAY_NAMES, DIMENSION_STAGES, DIMENSION_CONNECTIONS };

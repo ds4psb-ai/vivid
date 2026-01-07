@@ -8,11 +8,9 @@
  */
 
 import { useDimensionChainOptional, type ChainData } from "@/contexts/DimensionChainContext";
+import { THEME_COLOR_CLASSES, type ThemeColor } from "@/lib/dimension-theme";
 import { Database, ChevronDown, ChevronUp, Check } from "lucide-react";
 import { useState } from "react";
-
-// Align with DimensionPanelLayout ThemeColor
-type ThemeColor = "violet" | "cyan" | "emerald" | "amber" | "rose" | "fuchsia" | "indigo" | "sky";
 
 interface ChainDataInputProps {
     /** Current dimension's route key */
@@ -23,57 +21,6 @@ interface ChainDataInputProps {
     themeColor?: ThemeColor;
 }
 
-const colorClasses: Record<ThemeColor, { bg: string; border: string; text: string; button: string }> = {
-    emerald: {
-        bg: "bg-emerald-500/10",
-        border: "border-emerald-500/20",
-        text: "text-emerald-400",
-        button: "bg-emerald-500/20 hover:bg-emerald-500/30",
-    },
-    violet: {
-        bg: "bg-violet-500/10",
-        border: "border-violet-500/20",
-        text: "text-violet-400",
-        button: "bg-violet-500/20 hover:bg-violet-500/30",
-    },
-    amber: {
-        bg: "bg-amber-500/10",
-        border: "border-amber-500/20",
-        text: "text-amber-400",
-        button: "bg-amber-500/20 hover:bg-amber-500/30",
-    },
-    cyan: {
-        bg: "bg-cyan-500/10",
-        border: "border-cyan-500/20",
-        text: "text-cyan-400",
-        button: "bg-cyan-500/20 hover:bg-cyan-500/30",
-    },
-    rose: {
-        bg: "bg-rose-500/10",
-        border: "border-rose-500/20",
-        text: "text-rose-400",
-        button: "bg-rose-500/20 hover:bg-rose-500/30",
-    },
-    fuchsia: {
-        bg: "bg-fuchsia-500/10",
-        border: "border-fuchsia-500/20",
-        text: "text-fuchsia-400",
-        button: "bg-fuchsia-500/20 hover:bg-fuchsia-500/30",
-    },
-    indigo: {
-        bg: "bg-indigo-500/10",
-        border: "border-indigo-500/20",
-        text: "text-indigo-400",
-        button: "bg-indigo-500/20 hover:bg-indigo-500/30",
-    },
-    sky: {
-        bg: "bg-sky-500/10",
-        border: "border-sky-500/20",
-        text: "text-sky-400",
-        button: "bg-sky-500/20 hover:bg-sky-500/30",
-    },
-};
-
 export default function ChainDataInput({
     currentDimension,
     onApplyData,
@@ -82,7 +29,7 @@ export default function ChainDataInput({
     const chainContext = useDimensionChainOptional();
     const [isExpanded, setIsExpanded] = useState(false);
     const [applied, setApplied] = useState(false);
-    const colors = colorClasses[themeColor];
+    const colors = THEME_COLOR_CLASSES[themeColor];
 
     if (!chainContext) return null;
 

@@ -213,7 +213,7 @@ export default function ReferenceDecoderPanel() {
     return (
         <>
             <TeachingPanelLayout
-                title="레퍼런스 분석기"
+                title="레퍼런스 해석기"
                 sidebarContent={SidebarContent}
                 isLoading={isLoading}
                 themeColor={THEME_COLOR}
