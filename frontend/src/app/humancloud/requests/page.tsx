@@ -13,7 +13,6 @@ import {
     ArrowLeft,
     Briefcase,
     Search,
-    Filter,
     RefreshCw,
     AlertTriangle,
     ChevronRight,

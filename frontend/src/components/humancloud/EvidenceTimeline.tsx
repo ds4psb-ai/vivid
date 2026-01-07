@@ -8,7 +8,6 @@ import {
     DollarSign,
     User,
     Send,
-    AlertTriangle,
     Shield,
     Upload,
     Play,

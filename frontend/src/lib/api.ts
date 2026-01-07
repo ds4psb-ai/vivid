@@ -1665,11 +1665,11 @@ class ApiClient {
   }
 
   /**
-   * Execute dimension tool by dimension key (1D, 2D, 3D, 4D)
+   * Execute dimension tool by dimension key (1D, 2D, 3D, 4D, QC, AD, AI, VEO)
    * Unified interface for TrainWorkflowView
    */
   async executeDimension(
-    dimension: "1D" | "2D" | "3D" | "4D",
+    dimension: "1D" | "2D" | "3D" | "4D" | "QC" | "AD" | "AI" | "VEO",
     inputs: Record<string, unknown>,
     model: string = "gemini-3-flash-preview"
   ): Promise<DimensionResponse> {
@@ -1706,9 +1706,118 @@ class ApiClient {
             : ["composition", "lighting", "color", "movement"],
           model,
         });
+      // Extended Dimension Capsules
+      case "QC":
+        return this.executeQualityCheck({
+          content: String(inputs.content || inputs.description || ""),
+          content_type: String(inputs.content_type || "video_prompt"),
+          model,
+        });
+      case "AD":
+        return this.executeAestheticDirect({
+          concept: String(inputs.concept || inputs.description || ""),
+          reference_style: inputs.reference_style ? String(inputs.reference_style) : undefined,
+          model,
+        });
+      case "AI":
+        return this.executePersonaAnalyze({
+          subject: String(inputs.subject || inputs.description || ""),
+          depth: String(inputs.depth || "deep"),
+          model,
+        });
+      case "VEO":
+        return this.executeVeoGenerate({
+          prompt: String(inputs.prompt || inputs.description || ""),
+          duration: Number(inputs.duration) || 5,
+          aspect_ratio: String(inputs.aspect_ratio || "16:9"),
+          model,
+        });
       default:
         throw new Error(`Unknown dimension: ${dimension}`);
     }
+  }
+
+  // --- Extended Dimension Capsule APIs ---
+
+  async executeQualityCheck(params: {
+    content: string;
+    content_type?: string;
+    model?: string;
+  }): Promise<DimensionResponse> {
+    return this.request<DimensionResponse>("/api/dimension/quality/check", {
+      method: "POST",
+      body: JSON.stringify(params),
+    });
+  }
+
+  async executeAestheticDirect(params: {
+    concept: string;
+    reference_style?: string;
+    model?: string;
+  }): Promise<DimensionResponse> {
+    return this.request<DimensionResponse>("/api/dimension/aesthetic/direct", {
+      method: "POST",
+      body: JSON.stringify(params),
+    });
+  }
+
+  async executePersonaAnalyze(params: {
+    subject: string;
+    depth?: string;
+    model?: string;
+  }): Promise<DimensionResponse> {
+    return this.request<DimensionResponse>("/api/dimension/persona/analyze", {
+      method: "POST",
+      body: JSON.stringify(params),
+    });
+  }
+
+  async executeVeoGenerate(params: {
+    prompt: string;
+    duration?: number;
+    aspect_ratio?: string;
+    model?: string;
+  }): Promise<DimensionResponse> {
+    return this.request<DimensionResponse>("/api/dimension/veo/generate", {
+      method: "POST",
+      body: JSON.stringify(params),
+    });
+  }
+
+  // --- 4-Stage Workflow APIs ---
+
+  async executeStoryArchitect(params: {
+    concept: string;
+    persona_data?: Record<string, unknown>;
+    reference_analysis?: Record<string, unknown>;
+    genre?: string;
+    duration?: string;
+    structure?: string;
+    language?: string;
+    model?: string;
+  }): Promise<DimensionResponse> {
+    return this.request<DimensionResponse>("/api/dimension/story/architect", {
+      method: "POST",
+      body: JSON.stringify(params),
+    });
+  }
+
+  async executeSoundCraft(params: {
+    concept: string;
+    storyboard?: Record<string, unknown>[];
+    sound_type?: string;
+    mood?: string;
+    genre?: string;
+    tempo?: string;
+    duration?: string;
+    target_platform?: string;
+    language?: string;
+    model?: string;
+  }): Promise<DimensionResponse> {
+    return this.request<DimensionResponse>("/api/dimension/sound/craft", {
+      method: "POST",
+      body: JSON.stringify(params),
+    });
   }
 
   // --- Crebit API ---
@@ -2177,6 +2286,30 @@ export interface Dimension3DRequest {
 export interface Dimension4DRequest {
   video_description: string;
   focus_areas?: string[];
+  model?: string;
+}
+
+export interface StoryArchitectRequest {
+  concept: string;
+  persona_data?: Record<string, unknown>;
+  reference_analysis?: Record<string, unknown>;
+  genre?: string;
+  duration?: string;
+  structure?: string;
+  language?: string;
+  model?: string;
+}
+
+export interface SoundCraftRequest {
+  concept: string;
+  storyboard?: Record<string, unknown>[];
+  sound_type?: string;
+  mood?: string;
+  genre?: string;
+  tempo?: string;
+  duration?: string;
+  target_platform?: string;
+  language?: string;
   model?: string;
 }
 

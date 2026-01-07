@@ -4,7 +4,6 @@
  * Display statistic with icon, title, and value.
  */
 
-import { ReactNode } from "react";
 import { LucideIcon } from "lucide-react";
 
 interface StatCardProps {

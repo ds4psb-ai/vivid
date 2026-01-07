@@ -9,18 +9,24 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Copy, Check, Sparkles, LayoutGrid, Image as ImageIcon, Film, X, Download, Save, CheckCircle, Palette, Moon, Video } from "lucide-react";
 import { api } from "@/lib/api";
+import type {
+    WorkflowStartEvent,
+    WorkflowStepEvent,
+    WorkflowCreatedEvent,
+    WorkflowNode,
+} from "@/types/agent";
 
 // Tool ID to dimension info mapping
 const TOOL_TO_DIMENSION: Record<string, { displayName: string; icon: string; color: string; dimension: string }> = {
-    "generate_veo_prompt": { displayName: "Veo 프롬프트 생성기", icon: "sparkles", color: "violet", dimension: "1D" },
-    "create_storyboard": { displayName: "스토리보드 생성기", icon: "layout-grid", color: "emerald", dimension: "2D" },
-    "generate_image_prompt": { displayName: "이미지 프롬프트 생성기", icon: "image", color: "amber", dimension: "3D" },
-    "analyze_reference": { displayName: "레퍼런스 분석기", icon: "film", color: "cyan", dimension: "4D" },
+    "generate_veo_prompt": { displayName: "프롬프트", icon: "sparkles", color: "violet", dimension: "1D" },
+    "create_storyboard": { displayName: "스토리보드", icon: "layout-grid", color: "emerald", dimension: "2D" },
+    "generate_image_prompt": { displayName: "비주얼", icon: "image", color: "amber", dimension: "3D" },
+    "analyze_reference": { displayName: "레퍼런스", icon: "film", color: "cyan", dimension: "4D" },
     // Extended Dimension Capsules
-    "quality_check": { displayName: "퀄리티 검수기", icon: "check-circle", color: "rose", dimension: "QC" },
-    "aesthetic_direct": { displayName: "미학디렉터", icon: "palette", color: "fuchsia", dimension: "AD" },
-    "persona_analyze": { displayName: "심연해석기", icon: "moon", color: "indigo", dimension: "AI" },
-    "veo_generate": { displayName: "Veo 3.1 비디오", icon: "video", color: "sky", dimension: "VEO" },
+    "quality_check": { displayName: "퀄리티", icon: "check-circle", color: "rose", dimension: "QC" },
+    "aesthetic_direct": { displayName: "디렉팅", icon: "palette", color: "fuchsia", dimension: "AD" },
+    "persona_analyze": { displayName: "심연", icon: "moon", color: "indigo", dimension: "AI" },
+    "veo_generate": { displayName: "비디오", icon: "video", color: "sky", dimension: "VEO" },
 };
 
 // Icon components
@@ -237,16 +243,8 @@ export default function FlowPage() {
 
     // === Agent Workflow Event Handlers ===
 
-    const handleWorkflowStart = useCallback((data: { topic: string; dimensions: string[]; total_steps: number }) => {
-        console.log("[Flow] Workflow started:", data);
-
-        // Defensive: validate data
-        if (!data || typeof data !== 'object') {
-            console.warn('[Flow] Invalid workflow start data');
-            return;
-        }
-
-        // Clear existing cars and results
+    // Helper: Clear workflow state (shared by handleWorkflowStart and handleWorkflowCreated)
+    const clearWorkflowState = useCallback(() => {
         try {
             if (workflowRef.current) {
                 workflowRef.current.clearCars();
@@ -257,18 +255,60 @@ export default function FlowPage() {
             setExpandedResult(null);
         } catch (err) {
             console.error('[Flow] Error clearing workflow state:', err);
+            return false;
         }
+        return true;
     }, []);
 
-    const handleWorkflowStep = useCallback((event: {
-        step: number;
-        dimension: string;
-        dimension_name: string;
-        tool_name: string;
-        status?: "start" | "complete" | "error";
-        output_preview?: string;
-        credit_cost?: number;
-    }) => {
+    const handleWorkflowStart = useCallback((data: WorkflowStartEvent) => {
+        console.log("[Flow] Workflow started:", data);
+
+        // Defensive: validate data
+        if (!data || typeof data !== 'object') {
+            console.warn('[Flow] Invalid workflow start data');
+            return;
+        }
+
+        clearWorkflowState();
+    }, [clearWorkflowState]);
+
+    // Handle workflow structure created (from create_workflow tool)
+    const handleWorkflowCreated = useCallback((data: WorkflowCreatedEvent) => {
+        console.log("[Flow] Workflow created:", data);
+
+        // Defensive: validate data
+        if (!data || typeof data !== 'object' || !Array.isArray(data.nodes)) {
+            console.warn('[Flow] Invalid workflow created data');
+            return;
+        }
+
+        // Clear existing state
+        if (!clearWorkflowState()) return;
+
+        // Add cars from workflow nodes
+        data.nodes.forEach((node, idx) => {
+            const toolInfo = TOOL_TO_DIMENSION[node.tool_name];
+            if (!toolInfo || !workflowRef.current) return;
+
+            const carId = workflowRef.current.addCar({
+                toolId: node.tool_name,
+                dimension: toolInfo.dimension as "1D" | "2D" | "3D" | "4D",
+                displayName: toolInfo.displayName,
+                icon: toolInfo.icon,
+                color: toolInfo.color,
+                status: idx === 0 ? "ready" : "pending",
+                inputs: {},
+            });
+
+            if (carId) {
+                carIdMapRef.current.set(idx, carId);
+            }
+        });
+
+        console.log(`[Flow] Created ${data.nodes.length} cars from workflow structure`);
+    }, [clearWorkflowState]);
+
+    const handleWorkflowStep = useCallback((event: WorkflowStepEvent) => {
         console.log("[Flow] Workflow step:", event);
 
         if (!workflowRef.current) return;
@@ -649,6 +689,7 @@ export default function FlowPage() {
                     onWorkflowStart={handleWorkflowStart}
                     onWorkflowStep={handleWorkflowStep}
                     onWorkflowComplete={handleWorkflowComplete}
+                    onWorkflowCreated={handleWorkflowCreated}
                     onToolResult={handleToolResult}
                 />
 

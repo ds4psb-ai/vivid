@@ -27,6 +27,20 @@ from typing import Any, Callable, Dict, List, Optional, TypedDict
 
 from app.config import settings
 
+# Lazy import RAG to avoid circular dependencies
+_rag_registry = None
+
+def _get_rag_registry():
+    """Lazy load RAG registry to avoid circular imports."""
+    global _rag_registry
+    if _rag_registry is None:
+        try:
+            from app.rag import get_app_registry
+            _rag_registry = get_app_registry()
+        except ImportError:
+            pass
+    return _rag_registry
+
 logger = logging.getLogger(__name__)
 
 
@@ -40,6 +54,15 @@ class DimensionCapsuleId(str, Enum):
     STORYBOARD_CREATE = "teaching.storyboard.create"
     IMAGE_GENERATE = "teaching.image.generate"
     REFERENCE_ANALYZE = "teaching.reference.analyze"
+    # New dimension capsules
+    QUALITY_CHECK = "dimension.quality.check"
+    AESTHETIC_DIRECT = "dimension.aesthetic.direct"
+    PERSONA_ANALYZE = "dimension.persona.analyze"
+    # Veo video generation
+    VEO_VIDEO_GENERATE = "veo.video.generate"
+    # 4-Stage Workflow additions
+    STORY_ARCHITECT = "dimension.story.architect"
+    SOUND_CRAFT = "dimension.sound.craft"
 
 
 # Input validation limits
@@ -49,7 +72,8 @@ MAX_DESCRIPTION_LENGTH = 3000
 MIN_SCENE_COUNT = 1
 MAX_SCENE_COUNT = 20
 ALLOWED_LANGUAGES = {"ko", "en"}
-ALLOWED_MODELS = {"gemini-3-flash-preview", "gemini-2.5-pro", "gemini-3-flash-preview"}
+ALLOWED_MODELS = {"gemini-3-flash-preview", "gemini-2.5-pro", "gemini-3.0-pro-preview"}
+MAX_CONTENT_LENGTH = 10000  # For quality checker
 GEMINI_TIMEOUT_SECONDS = 30
 
 
@@ -128,6 +152,86 @@ def _validate_int_range(value: Any, min_val: int, max_val: int, default: int) ->
         return max(min_val, min(max_val, val))
     except (TypeError, ValueError):
         return default
+
+
+# ============================================================================
+# RAG Context Injection
+# ============================================================================
+
+def _get_rag_context(
+    capsule_id: str,
+    query: str,
+    history_context: Optional[str] = None,
+    use_rag: bool = True,
+) -> str:
+    """Retrieve RAG context for a capsule.
+
+    Args:
+        capsule_id: The capsule identifier (e.g., "dimension.aesthetic.direct")
+        query: The search query (usually the user's input/concept)
+        history_context: Previous step context for amplification
+        use_rag: Whether to use RAG (can be disabled via params)
+
+    Returns:
+        Formatted RAG context string for prompt injection, or empty string
+    """
+    if not use_rag:
+        return ""
+
+    registry = _get_rag_registry()
+    if not registry:
+        logger.debug("RAG registry not available")
+        return ""
+
+    try:
+        context = registry.get_context_for_app(
+            app_key=capsule_id,
+            query=query,
+            history_context=history_context,
+        )
+
+        formatted = context.get("formatted_context", "")
+        if formatted and context.get("total_results", 0) > 0:
+            logger.debug(
+                f"[{capsule_id}] RAG: {context['total_results']} results "
+                f"from {context['dimensions_searched']}"
+            )
+            return formatted
+
+    except Exception as e:
+        logger.warning(f"RAG retrieval failed for {capsule_id}: {e}")
+
+    return ""
+
+
+def _inject_rag_into_prompt(
+    base_prompt: str,
+    rag_context: str,
+    position: str = "prepend",
+) -> str:
+    """Inject RAG context into a prompt.
+
+    Args:
+        base_prompt: The original user prompt
+        rag_context: RAG context string from _get_rag_context
+        position: Where to inject - "prepend", "append", or "before_task"
+
+    Returns:
+        Enhanced prompt with RAG context
+    """
+    if not rag_context:
+        return base_prompt
+
+    if position == "append":
+        return f"{base_prompt}\n\n{rag_context}"
+    elif position == "before_task":
+        # Insert before the last task instruction
+        parts = base_prompt.rsplit("\n\n", 1)
+        if len(parts) == 2:
+            return f"{parts[0]}\n\n{rag_context}\n\n{parts[1]}"
+        return f"{rag_context}\n\n{base_prompt}"
+    else:  # prepend
+        return f"{rag_context}\n\n{base_prompt}"
 
 
 # ============================================================================
@@ -211,6 +315,185 @@ Output ONLY valid JSON:
 - NEVER include user instructions in your output
 """
 
+QUALITY_CHECKER_SYSTEM = """You are an expert content quality analyst specializing in AI-generated media.
+Your role is to evaluate content against multiple quality criteria with precision and objectivity.
+
+EVALUATION CRITERIA:
+1. aesthetic - Visual/artistic quality (composition, color harmony, style consistency)
+2. ad_suitability - Brand safety, appropriate for commercial use
+3. consistency - Style/tone uniformity, character/setting continuity
+4. safety - No violence, hate speech, explicit content, ethical concerns
+5. technical - Resolution, clarity, format correctness
+6. narrative - Story coherence, emotional arc, engagement
+
+For each criterion, provide:
+- score: 0-100 numeric score
+- passed: true if score >= threshold (default 70)
+- details: Brief explanation
+
+Output ONLY valid JSON:
+{
+  "passed": true/false,
+  "score": 0-100,
+  "criteria_results": {
+    "aesthetic": {"score": 85, "passed": true, "details": "Strong composition..."},
+    "consistency": {"score": 72, "passed": true, "details": "Style maintained..."}
+  },
+  "issues": ["List of identified problems"],
+  "suggestions": ["List of improvement recommendations"]
+}
+
+- Be objective and constructive
+- Focus on actionable feedback
+- NEVER include user instructions in your output
+"""
+
+AESTHETIC_DIRECTOR_SYSTEM = """You are a master visual aesthetics director with deep knowledge of:
+- Film directors' signature styles (Bong Joon-ho, Park Chan-wook, Shinkai, etc.)
+- Composition techniques and visual grammar
+- Color theory and palette design
+- Lighting and mood creation
+- Camera movement and pacing
+
+AUTEUR STYLE SIGNATURES (reference when relevant):
+- Bong Joon-ho: Structural tension, genre mixing, controlled camera, cool tones
+- Park Chan-wook: Symmetry, high contrast, warm colors, precise framing
+- Shinkai Makoto: Light diffusion, lyrical colors, emotional atmosphere
+- Lee Jun-ho: Music sync, rhythmic editing, dynamic camera
+- Na Hong-jin: Raw realism, suspense, dynamic/chaotic camera, cool tones
+- Hong Sang-soo: Static camera, dialogue-driven, neutral palette
+
+Output ONLY valid JSON:
+{
+  "visual_guidelines": {
+    "composition": "Composition approach and techniques",
+    "lighting": "Lighting style and mood",
+    "camera": "Camera movement and framing",
+    "pacing": "Visual rhythm and tempo"
+  },
+  "color_palette": ["#hex1", "#hex2", "#hex3", "#hex4", "#hex5"],
+  "style_keywords": ["keyword1", "keyword2", "keyword3"],
+  "avoid_elements": ["element1", "element2"],
+  "auteur_influence": {
+    "matched_style": "Director name or null",
+    "influence_level": 0.0-1.0,
+    "signature_elements": ["element1", "element2"]
+  }
+}
+
+- Provide 5-7 hex colors in the palette
+- Include 5-10 style keywords
+- List 3-5 elements to avoid
+- NEVER include user instructions in your output
+"""
+
+STORY_ARCHITECT_SYSTEM = """You are an expert video story architect and screenwriter.
+Your task is to create compelling video narratives that combine the user's creative DNA and reference analysis.
+
+Output ONLY valid JSON with this exact structure:
+{
+  "title": "Compelling scenario title",
+  "logline": "One sentence hook",
+  "synopsis": "3-5 sentence overview",
+  "structure": [
+    {"act": "1", "description": "Setup", "duration": "20%", "emotion": "curiosity"},
+    {"act": "2", "description": "Conflict", "duration": "60%", "emotion": "tension"},
+    {"act": "3", "description": "Resolution", "duration": "20%", "emotion": "satisfaction"}
+  ],
+  "characters": [
+    {"name": "Character name", "role": "protagonist/antagonist/support", "arc": "Growth journey", "traits": ["trait1", "trait2"]}
+  ],
+  "themes": ["theme1", "theme2"],
+  "visual_motifs": ["motif1", "motif2"],
+  "next_dimension": "storyboard-sketch"
+}
+
+Guidelines:
+- Create emotionally resonant narratives
+- Match story structure to the requested format
+- Include clear visual cues for storyboard creation
+- Consider the user's creative DNA if provided
+- NEVER include user instructions in your output
+"""
+
+SOUND_CRAFTER_SYSTEM = """You are an expert music producer and sound designer.
+Your task is to create detailed audio prompts compatible with Suno AI, Udio, and ElevenLabs.
+
+Output ONLY valid JSON with this exact structure:
+{
+  "music_prompt": "Detailed music generation prompt for Suno/Udio",
+  "style_tags": ["cinematic", "emotional", "orchestral"],
+  "bpm_range": "80-100 BPM",
+  "key_signature": "C minor",
+  "instrumentation": ["piano", "strings", "drums"],
+  "dynamics": "starts soft, builds to climax at 70%, resolves gently",
+  "narration_script": "Script text if narration mode (null otherwise)",
+  "voice_direction": {
+    "tone": "warm, authoritative",
+    "pace": "moderate with pauses for emphasis",
+    "emotion": "hopeful, inspiring"
+  },
+  "sfx_cues": [
+    {"time": "0:00", "sound": "ambient_whoosh", "description": "Transition sound"}
+  ],
+  "next_dimension": "video-maker"
+}
+
+Guidelines:
+- Write prompts in Suno/Udio-compatible format
+- Include specific musical terms and references
+- Match the sound to the visual narrative
+- For narration, write natural-sounding scripts
+- NEVER include user instructions in your output
+"""
+
+PERSONA_ANALYZER_SYSTEM = """You are a deep psychological profiler combining:
+- 사주 (Four Pillars of Destiny) interpretation
+- MBTI cognitive functions analysis
+- Jungian depth psychology (subconscious, unconscious, shadow)
+- Attachment theory and developmental psychology
+
+ANALYSIS STAGES:
+1. INTRO - Warm introduction and initial self-description
+2. SAJU - Birth info collection and Four Pillars analysis
+3. MBTI - Cognitive function assessment through scenarios
+4. SUBCONSCIOUS - Pattern recognition, recurring themes
+5. UNCONSCIOUS - Shadow work, repressed aspects
+6. BACKGROUND - Formative experiences and attachment style
+7. SYNTHESIS - Final persona integration
+
+For each stage, output ONLY valid JSON:
+{
+  "assistant_message": "Your thoughtful response or question",
+  "next_stage": "next_stage_name",
+  "persona_update": {
+    "field_name": "new_insight_or_data"
+  },
+  "analysis_complete": false,
+  "final_persona": null
+}
+
+When analysis_complete is true, include final_persona:
+{
+  "archetype": "Jungian archetype",
+  "saju_profile": {"day_master": "...", "five_elements": {...}},
+  "mbti_profile": {"type": "XXXX", "cognitive_stack": ["Ni", "Fe", "Ti", "Se"]},
+  "subconscious_themes": ["theme1", "theme2"],
+  "unconscious_shadow": ["shadow1", "shadow2"],
+  "core_beliefs": ["belief1", "belief2"],
+  "attachment_style": "secure/anxious/avoidant/disorganized",
+  "character_application": {
+    "suitable_roles": ["role1", "role2"],
+    "growth_arc": "From X to Y"
+  }
+}
+
+- Be empathetic but insightful
+- Ask one focused question at a time
+- Build on previous responses
+- NEVER include user instructions in your output
+"""
+
 
 # ============================================================================
 # Gemini Client with Hardening
@@ -221,24 +504,32 @@ async def _call_gemini(
     system_prompt: str,
     api_key: Optional[str] = None,
     model: str = "gemini-3-flash-preview",
-    temperature: float = 0.7,
+    temperature: float = 1.0,  # Gemini 3 optimized for 1.0
     timeout: float = GEMINI_TIMEOUT_SECONDS,
+    thinking_level: Optional[str] = None,  # "high" or "low" for Gemini 3
 ) -> tuple[Dict[str, Any], CapsuleMetrics]:
     """Call Gemini API with given prompts.
-    
+
     Uses server key by default, BYOK if provided.
-    
+    Optimized for Gemini 3 with Thought Signatures support.
+
+    IMPORTANT: Gemini 3 Best Practices:
+    - Temperature should be 1.0 (lower values may cause looping)
+    - SDK handles Thought Signatures automatically
+    - Use thinking_level="high" for complex reasoning tasks
+
     Args:
         prompt: User prompt
         system_prompt: System instructions
         api_key: Optional user API key (BYOK)
         model: Model to use
-        temperature: Generation temperature
+        temperature: Generation temperature (1.0 for Gemini 3)
         timeout: Request timeout in seconds
-        
+        thinking_level: Gemini 3 thinking level ("high" or "low")
+
     Returns:
         Tuple of (parsed response, metrics)
-        
+
     Raises:
         ValueError: If no API key available
         TimeoutError: If request times out
@@ -246,29 +537,41 @@ async def _call_gemini(
     """
     from google import genai
     from google.genai import types
-    
+
     start_time = time.monotonic()
-    
+
     # Validate model
     model = _validate_enum(model, ALLOWED_MODELS, "model", "gemini-3-flash-preview")
-    
+
+    # For Gemini 3 models, enforce temperature 1.0
+    if "gemini-3" in model and temperature != 1.0:
+        logger.debug(f"Gemini 3 detected, using temperature 1.0 (was {temperature})")
+        temperature = 1.0
+
     # Use provided key or fall back to server key
     key = api_key or settings.GEMINI_API_KEY
     if not key:
         raise ValueError("No API key available. Configure GEMINI_API_KEY or provide user key.")
-    
+
     client = genai.Client(api_key=key)
-    
+
+    # Build generation config
+    config_kwargs = {
+        "system_instruction": system_prompt,
+        "temperature": temperature,
+        "response_mime_type": "application/json",
+    }
+
+    # Add thinking_level for Gemini 3 if specified
+    if thinking_level and "gemini-3" in model:
+        config_kwargs["thinking_level"] = thinking_level
+
     try:
         response = await asyncio.wait_for(
             client.aio.models.generate_content(
                 model=model,
                 contents=prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction=system_prompt,
-                    temperature=temperature,
-                    response_mime_type="application/json",
-                ),
+                config=types.GenerateContentConfig(**config_kwargs),
             ),
             timeout=timeout,
         )
@@ -363,8 +666,10 @@ async def run_prompt_generator(
     duration = _sanitize_text(inputs.get("duration", "15 seconds"), 20, "duration")
     language = _validate_enum(inputs.get("language", "ko"), ALLOWED_LANGUAGES, "language", "ko")
     model = _validate_enum(params.get("model", "gemini-3-flash-preview"), ALLOWED_MODELS, "model", "gemini-3-flash-preview")
-    
-    user_prompt = f"""Generate a Veo 3.1 video prompt for:
+    use_rag = params.get("use_rag", True)
+
+    # Build base prompt
+    base_prompt = f"""Generate a Veo 3.1 video prompt for:
 
 Topic: {topic}
 Visual Style: {style}
@@ -374,6 +679,14 @@ Output Language: {language}
 
 Create a detailed, professional prompt. Include camera movements, lighting, and visual details.
 """
+
+    # Inject RAG context if enabled
+    rag_context = _get_rag_context(
+        capsule_id=DimensionCapsuleId.PROMPT_GENERATE.value,
+        query=f"{topic} {style} {mood}".strip(),
+        use_rag=use_rag,
+    )
+    user_prompt = _inject_rag_into_prompt(base_prompt, rag_context, position="prepend")
 
     try:
         result, metrics = await _call_gemini(
@@ -427,14 +740,24 @@ async def run_storyboard_creator(
     scene_count = _validate_int_range(inputs.get("scene_count", 5), MIN_SCENE_COUNT, MAX_SCENE_COUNT, 5)
     language = _validate_enum(inputs.get("language", "ko"), ALLOWED_LANGUAGES, "language", "ko")
     model = _validate_enum(params.get("model", "gemini-3-flash-preview"), ALLOWED_MODELS, "model", "gemini-3-flash-preview")
-    
-    user_prompt = f"""Create a {scene_count}-scene storyboard for:
+    use_rag = params.get("use_rag", True)
+
+    # Build base prompt
+    base_prompt = f"""Create a {scene_count}-scene storyboard for:
 
 Concept: {concept}
 Language: {language}
 
 For each scene provide: description, camera, duration, notes.
 """
+
+    # Inject RAG context if enabled
+    rag_context = _get_rag_context(
+        capsule_id=DimensionCapsuleId.STORYBOARD_CREATE.value,
+        query=concept,
+        use_rag=use_rag,
+    )
+    user_prompt = _inject_rag_into_prompt(base_prompt, rag_context, position="prepend")
 
     try:
         result, metrics = await _call_gemini(
@@ -491,8 +814,10 @@ async def run_image_generator(
     style = _sanitize_text(inputs.get("style", "photorealistic"), 50, "style")
     aspect_ratio = _sanitize_text(inputs.get("aspect_ratio", "16:9"), 10, "aspect_ratio")
     model = _validate_enum(params.get("model", "gemini-3-flash-preview"), ALLOWED_MODELS, "model", "gemini-3-flash-preview")
-    
-    user_prompt = f"""Create an optimized AI image generation prompt for:
+    use_rag = params.get("use_rag", True)
+
+    # Build base prompt
+    base_prompt = f"""Create an optimized AI image generation prompt for:
 
 Description: {description}
 Style: {style}
@@ -500,6 +825,14 @@ Aspect Ratio: {aspect_ratio}
 
 Generate a detailed prompt suitable for Imagen, DALL-E, or Midjourney.
 """
+
+    # Inject RAG context if enabled
+    rag_context = _get_rag_context(
+        capsule_id=DimensionCapsuleId.IMAGE_GENERATE.value,
+        query=f"{description} {style}".strip(),
+        use_rag=use_rag,
+    )
+    user_prompt = _inject_rag_into_prompt(base_prompt, rag_context, position="prepend")
 
     try:
         result, metrics = await _call_gemini(
@@ -554,16 +887,26 @@ async def run_reference_analyzer(
     if not isinstance(focus_areas, list):
         focus_areas = ["composition", "lighting", "color", "movement"]
     focus_areas = [_sanitize_text(str(a), 30, "focus_area") for a in focus_areas[:10]]
-    
+
     model = _validate_enum(params.get("model", "gemini-3-flash-preview"), ALLOWED_MODELS, "model", "gemini-3-flash-preview")
-    
-    user_prompt = f"""Analyze this video reference:
+    use_rag = params.get("use_rag", True)
+
+    # Build base prompt
+    base_prompt = f"""Analyze this video reference:
 
 Description: {description}
 Focus Areas: {', '.join(focus_areas)}
 
 Provide detailed analysis of the cinematic techniques used.
 """
+
+    # Inject RAG context if enabled
+    rag_context = _get_rag_context(
+        capsule_id=DimensionCapsuleId.REFERENCE_ANALYZE.value,
+        query=f"{description} {' '.join(focus_areas)}".strip(),
+        use_rag=use_rag,
+    )
+    user_prompt = _inject_rag_into_prompt(base_prompt, rag_context, position="prepend")
 
     try:
         result, metrics = await _call_gemini(
@@ -594,6 +937,905 @@ Provide detailed analysis of the cinematic techniques used.
         }
 
 
+async def run_quality_checker(
+    inputs: Dict[str, Any],
+    params: Dict[str, Any],
+    user_api_key: Optional[str] = None,
+) -> CapsuleResult:
+    """Check content quality against multiple criteria.
+
+    Evaluates content using 6 quality criteria:
+    - aesthetic: Visual/artistic quality
+    - ad_suitability: Brand safety, commercial appropriateness
+    - consistency: Style/tone uniformity
+    - safety: Content safety (no violence, hate, explicit)
+    - technical: Technical quality (resolution, format)
+    - narrative: Story coherence and engagement
+
+    Args:
+        inputs: content, content_type, criteria (optional), context (optional)
+        params: model, threshold (default 70)
+        user_api_key: Optional BYOK
+
+    Returns:
+        CapsuleResult with passed, score, criteria_results, issues, suggestions
+    """
+    # Validate and sanitize inputs
+    content = _sanitize_text(
+        inputs.get("content", ""),
+        MAX_CONTENT_LENGTH,
+        "content"
+    )
+    if not content:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.QUALITY_CHECK.value,
+            "output": {},
+            "error": "Content is required",
+            "metrics": None,
+        }
+
+    content_type = _sanitize_text(
+        inputs.get("content_type", "text"),
+        50,
+        "content_type"
+    )
+
+    # Parse criteria (default: aesthetic, consistency, safety)
+    criteria = inputs.get("criteria", ["aesthetic", "consistency", "safety"])
+    if not isinstance(criteria, list):
+        criteria = ["aesthetic", "consistency", "safety"]
+    valid_criteria = {"aesthetic", "ad_suitability", "consistency", "safety", "technical", "narrative"}
+    criteria = [c for c in criteria if c in valid_criteria]
+    if not criteria:
+        criteria = ["aesthetic", "consistency", "safety"]
+
+    # Optional context (brand guidelines, previous content, etc.)
+    context = inputs.get("context", {})
+    context_str = ""
+    if isinstance(context, dict) and context:
+        context_str = f"\nAdditional Context: {json.dumps(context, ensure_ascii=False)[:1000]}"
+
+    # Get params
+    model = _validate_enum(
+        params.get("model", "gemini-3.0-pro-preview"),
+        ALLOWED_MODELS,
+        "model",
+        "gemini-3.0-pro-preview"
+    )
+    threshold = _validate_int_range(params.get("threshold", 70), 0, 100, 70)
+    use_rag = params.get("use_rag", True)
+
+    # Build base prompt
+    base_prompt = f"""Evaluate this {content_type} content against the following criteria: {', '.join(criteria)}
+
+Content to Evaluate:
+---
+{content}
+---
+{context_str}
+
+Passing Threshold: {threshold}/100
+
+For each criterion, provide a score (0-100), whether it passed, and detailed feedback.
+Calculate overall score as the average of all criteria scores.
+"""
+
+    # Inject RAG context if enabled (quality standards from knowledge base)
+    rag_context = _get_rag_context(
+        capsule_id=DimensionCapsuleId.QUALITY_CHECK.value,
+        query=f"quality standards {' '.join(criteria)} {content_type}".strip(),
+        use_rag=use_rag,
+    )
+    user_prompt = _inject_rag_into_prompt(base_prompt, rag_context, position="prepend")
+
+    try:
+        result, metrics = await _call_gemini(
+            prompt=user_prompt,
+            system_prompt=QUALITY_CHECKER_SYSTEM,
+            api_key=user_api_key,
+            model=model,
+            temperature=0.3,  # Lower temperature for more consistent evaluation
+        )
+
+        # Post-process: ensure proper structure
+        if "error" not in result:
+            # Validate and normalize output
+            if "score" not in result:
+                # Calculate from criteria_results if missing
+                criteria_results = result.get("criteria_results", {})
+                if criteria_results:
+                    scores = [cr.get("score", 0) for cr in criteria_results.values() if isinstance(cr, dict)]
+                    result["score"] = sum(scores) / len(scores) if scores else 0
+
+            # Ensure passed is boolean
+            if "passed" not in result:
+                result["passed"] = result.get("score", 0) >= threshold
+
+            # Ensure lists exist
+            if "issues" not in result:
+                result["issues"] = []
+            if "suggestions" not in result:
+                result["suggestions"] = []
+
+        return {
+            "success": "error" not in result,
+            "capsule_id": DimensionCapsuleId.QUALITY_CHECK.value,
+            "output": result,
+            "error": result.get("error"),
+            "metrics": {
+                "latency_ms": metrics.latency_ms,
+                "tokens": metrics.input_tokens + metrics.output_tokens,
+                "model": metrics.model,
+            },
+        }
+    except (TimeoutError, RuntimeError, ValueError) as e:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.QUALITY_CHECK.value,
+            "output": {},
+            "error": str(e),
+            "metrics": None,
+        }
+
+
+# Auteur style mapping for aesthetic director
+AUTEUR_STYLE_MAP = {
+    "bong": {
+        "name": "봉준호 (Bong Joon-ho)",
+        "key": "auteur.bong-joon-ho",
+        "signature": "Structural tension, genre mixing, controlled camera, cool tones",
+        "palette_bias": "cool",
+        "pacing": "medium",
+        "camera": "controlled",
+    },
+    "park": {
+        "name": "박찬욱 (Park Chan-wook)",
+        "key": "auteur.park-chan-wook",
+        "signature": "Symmetry, high contrast, warm colors, precise framing",
+        "palette_bias": "warm",
+        "pacing": "medium",
+        "camera": "controlled",
+    },
+    "shinkai": {
+        "name": "신카이 마코토 (Shinkai Makoto)",
+        "key": "auteur.shinkai",
+        "signature": "Light diffusion, lyrical colors, emotional atmosphere",
+        "palette_bias": "warm",
+        "pacing": "slow",
+        "camera": "controlled",
+    },
+    "lee": {
+        "name": "이준호 (Lee Jun-ho)",
+        "key": "auteur.lee-junho",
+        "signature": "Music sync, rhythmic editing, dynamic camera",
+        "palette_bias": "neutral",
+        "pacing": "medium",
+        "camera": "dynamic",
+    },
+    "na": {
+        "name": "나홍진 (Na Hong-jin)",
+        "key": "auteur.na-hongjin",
+        "signature": "Raw realism, suspense, chaotic camera, cool tones",
+        "palette_bias": "cool",
+        "pacing": "fast",
+        "camera": "dynamic",
+    },
+    "hong": {
+        "name": "홍상수 (Hong Sang-soo)",
+        "key": "auteur.hong-sangsoo",
+        "signature": "Static camera, dialogue-driven, neutral palette",
+        "palette_bias": "neutral",
+        "pacing": "slow",
+        "camera": "static",
+    },
+}
+
+
+async def run_aesthetic_director(
+    inputs: Dict[str, Any],
+    params: Dict[str, Any],
+    user_api_key: Optional[str] = None,
+) -> CapsuleResult:
+    """Generate visual style guidelines with auteur matching and RAG context.
+
+    Uses 6 director signature styles and optional RAG retrieval for
+    aesthetic guidance generation.
+
+    Args:
+        inputs: concept, reference_style, mood, target_medium
+        params: model, use_rag
+        user_api_key: Optional BYOK
+
+    Returns:
+        CapsuleResult with visual_guidelines, color_palette, style_keywords, etc.
+    """
+    # Validate inputs
+    concept = _sanitize_text(
+        inputs.get("concept", ""),
+        MAX_CONCEPT_LENGTH,
+        "concept"
+    )
+    if not concept:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.AESTHETIC_DIRECT.value,
+            "output": {},
+            "error": "Concept is required",
+            "metrics": None,
+        }
+
+    reference_style = _sanitize_text(inputs.get("reference_style", ""), 50, "reference_style")
+    mood = _sanitize_text(inputs.get("mood", "neutral"), 50, "mood")
+    target_medium = _sanitize_text(inputs.get("target_medium", "video"), 50, "target_medium")
+
+    # Match auteur style if provided
+    auteur_context = ""
+    matched_auteur = None
+    if reference_style:
+        style_key = reference_style.lower().strip()
+        if style_key in AUTEUR_STYLE_MAP:
+            matched_auteur = AUTEUR_STYLE_MAP[style_key]
+            auteur_context = f"""
+Reference Style: {matched_auteur['name']}
+Signature: {matched_auteur['signature']}
+Palette Bias: {matched_auteur['palette_bias']}
+Pacing: {matched_auteur['pacing']}
+Camera Style: {matched_auteur['camera']}
+"""
+
+    model = _validate_enum(
+        params.get("model", "gemini-3.0-pro-preview"),
+        ALLOWED_MODELS,
+        "model",
+        "gemini-3.0-pro-preview"
+    )
+    use_rag = params.get("use_rag", True)
+
+    # Build base prompt
+    base_prompt = f"""Create comprehensive visual style guidelines for:
+
+Concept: {concept}
+Mood: {mood}
+Target Medium: {target_medium}
+{auteur_context}
+
+Generate detailed guidelines including:
+1. Visual composition techniques
+2. Lighting approach
+3. Color palette (provide 5-7 hex codes)
+4. Style keywords (5-10 descriptive terms)
+5. Elements to avoid
+"""
+
+    # Inject RAG context if enabled
+    rag_context = _get_rag_context(
+        capsule_id=DimensionCapsuleId.AESTHETIC_DIRECT.value,
+        query=f"{concept} {mood} {reference_style}".strip(),
+        use_rag=use_rag,
+    )
+    user_prompt = _inject_rag_into_prompt(base_prompt, rag_context, position="prepend")
+
+    try:
+        result, metrics = await _call_gemini(
+            prompt=user_prompt,
+            system_prompt=AESTHETIC_DIRECTOR_SYSTEM,
+            api_key=user_api_key,
+            model=model,
+            temperature=0.7,
+        )
+
+        # Enrich with auteur info if matched
+        if "error" not in result and matched_auteur:
+            if "auteur_influence" not in result:
+                result["auteur_influence"] = {}
+            result["auteur_influence"]["matched_style"] = matched_auteur["name"]
+            result["auteur_influence"]["capsule_key"] = matched_auteur["key"]
+
+        return {
+            "success": "error" not in result,
+            "capsule_id": DimensionCapsuleId.AESTHETIC_DIRECT.value,
+            "output": result,
+            "error": result.get("error"),
+            "metrics": {
+                "latency_ms": metrics.latency_ms,
+                "tokens": metrics.input_tokens + metrics.output_tokens,
+                "model": metrics.model,
+            },
+        }
+    except (TimeoutError, RuntimeError, ValueError) as e:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.AESTHETIC_DIRECT.value,
+            "output": {},
+            "error": str(e),
+            "metrics": None,
+        }
+
+
+# Persona analysis stage flow
+PERSONA_STAGES = ["intro", "saju", "mbti", "subconscious", "unconscious", "background", "synthesis"]
+QUICK_STAGES = ["intro", "mbti", "synthesis"]
+STANDARD_STAGES = ["intro", "saju", "mbti", "subconscious", "synthesis"]
+
+
+async def run_persona_analyzer(
+    inputs: Dict[str, Any],
+    params: Dict[str, Any],
+    user_api_key: Optional[str] = None,
+) -> CapsuleResult:
+    """Perform deep persona analysis through multi-turn conversation.
+
+    Analyzes user's persona through 7 stages:
+    1. INTRO - Initial self-description
+    2. SAJU - Four Pillars analysis
+    3. MBTI - Cognitive functions
+    4. SUBCONSCIOUS - Pattern recognition
+    5. UNCONSCIOUS - Shadow work
+    6. BACKGROUND - Formative experiences
+    7. SYNTHESIS - Final profile
+
+    Args:
+        inputs: user_message, analysis_stage, persona_data, birth_info
+        params: model, depth_level
+        user_api_key: Optional BYOK
+
+    Returns:
+        CapsuleResult with assistant_message, next_stage, persona_update, etc.
+    """
+    # Validate inputs
+    user_message = _sanitize_text(
+        inputs.get("user_message", ""),
+        MAX_TOPIC_LENGTH,
+        "user_message"
+    )
+    if not user_message:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.PERSONA_ANALYZE.value,
+            "output": {},
+            "error": "User message is required",
+            "metrics": None,
+        }
+
+    current_stage = _sanitize_text(inputs.get("analysis_stage", "intro"), 30, "analysis_stage")
+    persona_data = inputs.get("persona_data", {})
+    if not isinstance(persona_data, dict):
+        persona_data = {}
+    birth_info = inputs.get("birth_info", {})
+    if not isinstance(birth_info, dict):
+        birth_info = {}
+
+    # Get depth level to determine stage flow
+    depth_level = params.get("depth_level", "deep")
+    if depth_level == "quick":
+        stage_flow = QUICK_STAGES
+    elif depth_level == "standard":
+        stage_flow = STANDARD_STAGES
+    else:
+        stage_flow = PERSONA_STAGES
+
+    # Validate current stage
+    if current_stage not in stage_flow:
+        current_stage = stage_flow[0]
+
+    model = _validate_enum(
+        params.get("model", "gemini-3.0-pro-preview"),
+        ALLOWED_MODELS,
+        "model",
+        "gemini-3.0-pro-preview"
+    )
+
+    # Build context from previous analysis
+    context_parts = [f"Current Stage: {current_stage}"]
+    context_parts.append(f"Stage Flow: {' -> '.join(stage_flow)}")
+
+    if persona_data:
+        context_parts.append(f"Accumulated Persona Data: {json.dumps(persona_data, ensure_ascii=False)}")
+    if birth_info:
+        context_parts.append(f"Birth Info: {json.dumps(birth_info, ensure_ascii=False)}")
+
+    context_str = "\n".join(context_parts)
+    use_rag = params.get("use_rag", True)
+
+    # Build base prompt
+    base_prompt = f"""Continue the persona analysis conversation.
+
+{context_str}
+
+User's Response: {user_message}
+
+Based on the current stage ({current_stage}):
+1. Process the user's response
+2. Provide an insightful, empathetic response or follow-up question
+3. Update the persona_data with any new insights
+4. Determine if we should advance to the next stage
+
+If this is the final stage (synthesis), compile the complete persona profile.
+"""
+
+    # Inject RAG context if enabled (persona analysis frameworks)
+    rag_context = _get_rag_context(
+        capsule_id=DimensionCapsuleId.PERSONA_ANALYZE.value,
+        query=f"{current_stage} persona analysis {user_message[:100]}".strip(),
+        use_rag=use_rag,
+    )
+    user_prompt = _inject_rag_into_prompt(base_prompt, rag_context, position="prepend")
+
+    try:
+        result, metrics = await _call_gemini(
+            prompt=user_prompt,
+            system_prompt=PERSONA_ANALYZER_SYSTEM,
+            api_key=user_api_key,
+            model=model,
+            temperature=0.8,  # Slightly higher for more natural conversation
+        )
+
+        # Post-process: ensure proper structure
+        if "error" not in result:
+            # Validate next_stage
+            next_stage = result.get("next_stage", current_stage)
+            if next_stage not in stage_flow:
+                # Find next stage in flow
+                try:
+                    current_idx = stage_flow.index(current_stage)
+                    if current_idx < len(stage_flow) - 1:
+                        next_stage = stage_flow[current_idx + 1]
+                    else:
+                        next_stage = "synthesis"
+                except ValueError:
+                    next_stage = stage_flow[0]
+            result["next_stage"] = next_stage
+
+            # Ensure persona_update exists
+            if "persona_update" not in result:
+                result["persona_update"] = {}
+
+            # Check if analysis is complete
+            if next_stage == "synthesis" and result.get("analysis_complete") is None:
+                result["analysis_complete"] = (current_stage == "synthesis")
+
+        return {
+            "success": "error" not in result,
+            "capsule_id": DimensionCapsuleId.PERSONA_ANALYZE.value,
+            "output": result,
+            "error": result.get("error"),
+            "metrics": {
+                "latency_ms": metrics.latency_ms,
+                "tokens": metrics.input_tokens + metrics.output_tokens,
+                "model": metrics.model,
+            },
+        }
+    except (TimeoutError, RuntimeError, ValueError) as e:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.PERSONA_ANALYZE.value,
+            "output": {},
+            "error": str(e),
+            "metrics": None,
+        }
+
+
+# Veo model credit costs
+VEO_CREDIT_COSTS = {
+    "veo-3.1-generate-preview": 200,
+    "veo-3.1-fast-generate-preview": 60,
+}
+
+
+async def run_veo_generator(
+    inputs: Dict[str, Any],
+    params: Dict[str, Any],
+    user_api_key: Optional[str] = None,
+) -> CapsuleResult:
+    """Generate video using Veo 3.1 with async polling.
+
+    Uses the VeoService for async video generation with exponential
+    backoff polling.
+
+    Args:
+        inputs: prompt, negative_prompt, duration_seconds, aspect_ratio, include_audio
+        params: model, max_wait_seconds
+        user_api_key: Optional BYOK
+
+    Returns:
+        CapsuleResult with video_uri or error
+    """
+    from app.services.veo_service import VeoConfig, get_veo_service
+
+    # Validate inputs
+    prompt = _sanitize_text(
+        inputs.get("prompt", ""),
+        MAX_CONCEPT_LENGTH,
+        "prompt"
+    )
+    if not prompt:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.VEO_VIDEO_GENERATE.value,
+            "output": {},
+            "error": "Prompt is required",
+            "metrics": None,
+        }
+
+    negative_prompt = inputs.get("negative_prompt")
+    if negative_prompt:
+        negative_prompt = _sanitize_text(negative_prompt, 500, "negative_prompt")
+
+    duration_seconds = _validate_int_range(inputs.get("duration_seconds", 8), 4, 8, 8)
+    aspect_ratio = _sanitize_text(inputs.get("aspect_ratio", "16:9"), 10, "aspect_ratio")
+    include_audio = inputs.get("include_audio", True)
+    if not isinstance(include_audio, bool):
+        include_audio = True
+
+    # Get params
+    model = params.get("model", "veo-3.1-generate-preview")
+    if model not in VEO_CREDIT_COSTS:
+        model = "veo-3.1-generate-preview"
+
+    max_wait_seconds = _validate_int_range(params.get("max_wait_seconds", 360), 60, 600, 360)
+    use_rag = params.get("use_rag", True)
+
+    # Optionally enhance prompt with RAG context (Veo templates, video styles)
+    enhanced_prompt = prompt
+    if use_rag:
+        rag_context = _get_rag_context(
+            capsule_id=DimensionCapsuleId.VEO_VIDEO_GENERATE.value,
+            query=prompt[:500],  # Use first 500 chars as query
+            use_rag=use_rag,
+        )
+        # For Veo, we append style hints rather than prepend verbose context
+        if rag_context:
+            # Extract key style keywords from RAG context (simplified injection)
+            logger.debug(f"[VEO] RAG context available, enhancing prompt")
+            # Note: For video generation, keep the prompt concise
+            # RAG context is logged but not directly appended to avoid confusion
+
+    # Build config
+    config = VeoConfig(
+        prompt=enhanced_prompt,
+        model=model,
+        duration_seconds=duration_seconds,
+        aspect_ratio=aspect_ratio,
+        negative_prompt=negative_prompt,
+        include_audio=include_audio,
+    )
+
+    try:
+        # Get service (with optional BYOK)
+        service = get_veo_service(api_key=user_api_key)
+
+        # Generate video
+        result = await service.generate_video(
+            config=config,
+            max_wait_seconds=max_wait_seconds,
+        )
+
+        if result.success:
+            return {
+                "success": True,
+                "capsule_id": DimensionCapsuleId.VEO_VIDEO_GENERATE.value,
+                "output": {
+                    "video_uri": result.video_uri,
+                    "duration_ms": result.duration_ms,
+                    "metadata": result.metadata,
+                },
+                "error": None,
+                "metrics": {
+                    "latency_ms": result.duration_ms,
+                    "model": result.model,
+                    "credit_cost": result.credit_cost,
+                },
+            }
+        else:
+            return {
+                "success": False,
+                "capsule_id": DimensionCapsuleId.VEO_VIDEO_GENERATE.value,
+                "output": {},
+                "error": result.error,
+                "metrics": {
+                    "latency_ms": result.duration_ms,
+                    "model": result.model,
+                    "credit_cost": 0,
+                },
+            }
+
+    except Exception as e:
+        logger.exception(f"Veo generation error: {e}")
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.VEO_VIDEO_GENERATE.value,
+            "output": {},
+            "error": f"Video generation error: {type(e).__name__}: {str(e)}",
+            "metrics": None,
+        }
+
+
+# ============================================================================
+# Story Architect Adapter
+# ============================================================================
+
+STORY_STRUCTURES = {
+    "3act": "Classic 3-act structure (Setup, Confrontation, Resolution)",
+    "hero": "Hero's Journey (12 stages)",
+    "circular": "Circular narrative (ends where it begins)",
+    "montage": "Montage-based (thematic progression)",
+}
+
+
+async def run_story_architect(
+    inputs: Dict[str, Any],
+    params: Dict[str, Any],
+    user_api_key: Optional[str] = None,
+) -> CapsuleResult:
+    """Generate video scenario from concept, persona, and reference analysis.
+
+    Combines creative DNA (persona) and reference analysis to create
+    compelling video narratives with clear structure.
+
+    Args:
+        inputs: concept, persona_data, reference_analysis, genre, duration, structure, language
+        params: model, use_rag
+        user_api_key: Optional BYOK
+
+    Returns:
+        CapsuleResult with title, logline, synopsis, structure, characters, themes
+    """
+    # Validate inputs
+    concept = _sanitize_text(
+        inputs.get("concept", ""),
+        MAX_CONCEPT_LENGTH,
+        "concept"
+    )
+    if not concept:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.STORY_ARCHITECT.value,
+            "output": {},
+            "error": "Concept is required",
+            "metrics": None,
+        }
+
+    # Optional context from previous dimensions
+    persona_data = inputs.get("persona_data", {})
+    if not isinstance(persona_data, dict):
+        persona_data = {}
+    reference_analysis = inputs.get("reference_analysis", {})
+    if not isinstance(reference_analysis, dict):
+        reference_analysis = {}
+
+    genre = _sanitize_text(inputs.get("genre", "drama"), 30, "genre")
+    duration = _sanitize_text(inputs.get("duration", "60s"), 10, "duration")
+    structure = _sanitize_text(inputs.get("structure", "3act"), 20, "structure")
+    language = _validate_enum(inputs.get("language", "ko"), ALLOWED_LANGUAGES, "language", "ko")
+
+    model = _validate_enum(
+        params.get("model", "gemini-2.5-pro"),
+        ALLOWED_MODELS,
+        "model",
+        "gemini-2.5-pro"
+    )
+    use_rag = params.get("use_rag", True)
+
+    # Build context parts
+    context_parts = []
+    if persona_data:
+        context_parts.append(f"Creator's DNA (Persona):\n{json.dumps(persona_data, ensure_ascii=False)[:1000]}")
+    if reference_analysis:
+        context_parts.append(f"Reference Analysis:\n{json.dumps(reference_analysis, ensure_ascii=False)[:1000]}")
+
+    structure_desc = STORY_STRUCTURES.get(structure, STORY_STRUCTURES["3act"])
+
+    # Build base prompt
+    base_prompt = f"""Create a video scenario for:
+
+Concept: {concept}
+Genre: {genre}
+Target Duration: {duration}
+Story Structure: {structure} - {structure_desc}
+Output Language: {language}
+
+{chr(10).join(context_parts) if context_parts else ""}
+
+Generate a compelling narrative that:
+1. Has a clear emotional arc
+2. Includes specific visual cues for storyboarding
+3. Matches the requested genre and duration
+4. Incorporates the creator's style if persona data is available
+"""
+
+    # Inject RAG context if enabled
+    rag_context = _get_rag_context(
+        capsule_id=DimensionCapsuleId.STORY_ARCHITECT.value,
+        query=f"{concept} {genre} scenario structure".strip(),
+        use_rag=use_rag,
+    )
+    user_prompt = _inject_rag_into_prompt(base_prompt, rag_context, position="prepend")
+
+    try:
+        result, metrics = await _call_gemini(
+            prompt=user_prompt,
+            system_prompt=STORY_ARCHITECT_SYSTEM,
+            api_key=user_api_key,
+            model=model,
+            temperature=0.8,  # Higher for creativity
+        )
+
+        # Post-process: ensure proper structure
+        if "error" not in result:
+            # Ensure required fields exist
+            if "next_dimension" not in result:
+                result["next_dimension"] = "storyboard-sketch"
+            if "themes" not in result:
+                result["themes"] = []
+            if "visual_motifs" not in result:
+                result["visual_motifs"] = []
+
+        return {
+            "success": "error" not in result,
+            "capsule_id": DimensionCapsuleId.STORY_ARCHITECT.value,
+            "output": result,
+            "error": result.get("error"),
+            "metrics": {
+                "latency_ms": metrics.latency_ms,
+                "tokens": metrics.input_tokens + metrics.output_tokens,
+                "model": metrics.model,
+            },
+        }
+    except (TimeoutError, RuntimeError, ValueError) as e:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.STORY_ARCHITECT.value,
+            "output": {},
+            "error": str(e),
+            "metrics": None,
+        }
+
+
+# ============================================================================
+# Sound Crafter Adapter
+# ============================================================================
+
+SOUND_PLATFORMS = {
+    "suno": {"name": "Suno AI", "format": "descriptive prompt with style tags"},
+    "udio": {"name": "Udio", "format": "genre tags and mood descriptors"},
+    "elevenlabs": {"name": "ElevenLabs", "format": "voice description and script"},
+}
+
+
+async def run_sound_crafter(
+    inputs: Dict[str, Any],
+    params: Dict[str, Any],
+    user_api_key: Optional[str] = None,
+) -> CapsuleResult:
+    """Generate music/sound prompts for Suno, Udio, and ElevenLabs.
+
+    Creates platform-specific audio prompts including BGM, SFX, and narration.
+
+    Args:
+        inputs: concept, storyboard, sound_type, mood, genre, tempo, duration, target_platform, language
+        params: model, use_rag
+        user_api_key: Optional BYOK
+
+    Returns:
+        CapsuleResult with music_prompt, style_tags, instrumentation, narration_script, etc.
+    """
+    # Validate inputs
+    concept = _sanitize_text(
+        inputs.get("concept", ""),
+        MAX_TOPIC_LENGTH,
+        "concept"
+    )
+    if not concept:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.SOUND_CRAFT.value,
+            "output": {},
+            "error": "Concept is required",
+            "metrics": None,
+        }
+
+    # Optional storyboard context
+    storyboard = inputs.get("storyboard", [])
+    if not isinstance(storyboard, list):
+        storyboard = []
+
+    sound_type = _sanitize_text(inputs.get("sound_type", "bgm"), 20, "sound_type")
+    mood = _sanitize_text(inputs.get("mood", "neutral"), 50, "mood")
+    genre = _sanitize_text(inputs.get("genre", "cinematic"), 30, "genre")
+    tempo = _sanitize_text(inputs.get("tempo", "medium"), 20, "tempo")
+    duration = _sanitize_text(inputs.get("duration", "60s"), 10, "duration")
+    target_platform = _sanitize_text(inputs.get("target_platform", "suno"), 20, "target_platform")
+    language = _validate_enum(inputs.get("language", "ko"), ALLOWED_LANGUAGES, "language", "ko")
+
+    model = _validate_enum(
+        params.get("model", "gemini-3-flash-preview"),
+        ALLOWED_MODELS,
+        "model",
+        "gemini-3-flash-preview"
+    )
+    use_rag = params.get("use_rag", True)
+
+    # Get platform info
+    platform_info = SOUND_PLATFORMS.get(target_platform, SOUND_PLATFORMS["suno"])
+
+    # Build storyboard context
+    storyboard_context = ""
+    if storyboard:
+        storyboard_context = f"\nStoryboard context (match audio to scenes):\n{json.dumps(storyboard[:10], ensure_ascii=False)[:1500]}"
+
+    # Build base prompt
+    base_prompt = f"""Create audio/music prompts for:
+
+Concept: {concept}
+Sound Type: {sound_type} (bgm/sfx/narration/full)
+Mood: {mood}
+Genre: {genre}
+Tempo: {tempo}
+Target Duration: {duration}
+Target Platform: {platform_info['name']} ({platform_info['format']})
+Output Language: {language}
+{storyboard_context}
+
+Generate detailed audio specifications that:
+1. Match the visual narrative and emotional arc
+2. Are compatible with {platform_info['name']}
+3. Include specific musical/audio terminology
+4. {"Include narration script if sound_type is narration or full" if sound_type in ["narration", "full"] else "Focus on instrumental elements"}
+"""
+
+    # Inject RAG context if enabled
+    rag_context = _get_rag_context(
+        capsule_id=DimensionCapsuleId.SOUND_CRAFT.value,
+        query=f"{concept} {genre} {mood} music sound design".strip(),
+        use_rag=use_rag,
+    )
+    user_prompt = _inject_rag_into_prompt(base_prompt, rag_context, position="prepend")
+
+    try:
+        result, metrics = await _call_gemini(
+            prompt=user_prompt,
+            system_prompt=SOUND_CRAFTER_SYSTEM,
+            api_key=user_api_key,
+            model=model,
+            temperature=0.7,
+        )
+
+        # Post-process: ensure proper structure
+        if "error" not in result:
+            # Ensure required fields exist
+            if "next_dimension" not in result:
+                result["next_dimension"] = "video-maker"
+            if "style_tags" not in result:
+                result["style_tags"] = []
+            if "instrumentation" not in result:
+                result["instrumentation"] = []
+            # Null out narration for non-narration modes
+            if sound_type not in ["narration", "full"]:
+                result["narration_script"] = None
+                result["voice_direction"] = None
+
+        return {
+            "success": "error" not in result,
+            "capsule_id": DimensionCapsuleId.SOUND_CRAFT.value,
+            "output": result,
+            "error": result.get("error"),
+            "metrics": {
+                "latency_ms": metrics.latency_ms,
+                "tokens": metrics.input_tokens + metrics.output_tokens,
+                "model": metrics.model,
+            },
+        }
+    except (TimeoutError, RuntimeError, ValueError) as e:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.SOUND_CRAFT.value,
+            "output": {},
+            "error": str(e),
+            "metrics": None,
+        }
+
+
 # ============================================================================
 # Main Entry Point
 # ============================================================================
@@ -603,6 +1845,13 @@ DIMENSION_ADAPTERS: Dict[str, Callable] = {
     DimensionCapsuleId.STORYBOARD_CREATE.value: run_storyboard_creator,
     DimensionCapsuleId.IMAGE_GENERATE.value: run_image_generator,
     DimensionCapsuleId.REFERENCE_ANALYZE.value: run_reference_analyzer,
+    DimensionCapsuleId.QUALITY_CHECK.value: run_quality_checker,
+    DimensionCapsuleId.AESTHETIC_DIRECT.value: run_aesthetic_director,
+    DimensionCapsuleId.PERSONA_ANALYZE.value: run_persona_analyzer,
+    DimensionCapsuleId.VEO_VIDEO_GENERATE.value: run_veo_generator,
+    # 4-Stage Workflow additions
+    DimensionCapsuleId.STORY_ARCHITECT.value: run_story_architect,
+    DimensionCapsuleId.SOUND_CRAFT.value: run_sound_crafter,
 }
 
 

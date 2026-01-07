@@ -6,7 +6,7 @@ import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useBYOK } from "@/hooks/useBYOK";
 import BYOKSettingsModal from "./BYOKSettingsModal";
 
-export type ThemeColor = "violet" | "cyan" | "emerald" | "amber";
+export type ThemeColor = "violet" | "cyan" | "emerald" | "amber" | "rose" | "fuchsia" | "indigo" | "sky";
 
 const THEME_COLORS = {
     violet: {
@@ -48,6 +48,47 @@ const THEME_COLORS = {
         focus: "focus:border-amber-400/50 focus:ring-amber-400/20",
         button: "from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 shadow-amber-500/10 hover:shadow-amber-500/20",
         spinner: "border-t-amber-500 border-b-orange-500",
+    },
+    // New themes for additional capsules
+    rose: {
+        accent: "text-rose-400",
+        border: "border-rose-500/30",
+        bg: "bg-rose-500/10",
+        glow: "shadow-[0_0_30px_rgba(244,63,94,0.15)]",
+        gradient: "from-rose-500 to-pink-500",
+        focus: "focus:border-rose-400/50 focus:ring-rose-400/20",
+        button: "from-rose-500 to-pink-500 hover:from-rose-400 hover:to-pink-400 shadow-rose-500/10 hover:shadow-rose-500/20",
+        spinner: "border-t-rose-500 border-b-pink-500",
+    },
+    fuchsia: {
+        accent: "text-fuchsia-400",
+        border: "border-fuchsia-500/30",
+        bg: "bg-fuchsia-500/10",
+        glow: "shadow-[0_0_30px_rgba(217,70,239,0.15)]",
+        gradient: "from-fuchsia-500 to-purple-500",
+        focus: "focus:border-fuchsia-400/50 focus:ring-fuchsia-400/20",
+        button: "from-fuchsia-500 to-purple-500 hover:from-fuchsia-400 hover:to-purple-400 shadow-fuchsia-500/10 hover:shadow-fuchsia-500/20",
+        spinner: "border-t-fuchsia-500 border-b-purple-500",
+    },
+    indigo: {
+        accent: "text-indigo-400",
+        border: "border-indigo-500/30",
+        bg: "bg-indigo-500/10",
+        glow: "shadow-[0_0_30px_rgba(99,102,241,0.15)]",
+        gradient: "from-indigo-500 to-violet-500",
+        focus: "focus:border-indigo-400/50 focus:ring-indigo-400/20",
+        button: "from-indigo-500 to-violet-500 hover:from-indigo-400 hover:to-violet-400 shadow-indigo-500/10 hover:shadow-indigo-500/20",
+        spinner: "border-t-indigo-500 border-b-violet-500",
+    },
+    sky: {
+        accent: "text-sky-400",
+        border: "border-sky-500/30",
+        bg: "bg-sky-500/10",
+        glow: "shadow-[0_0_30px_rgba(14,165,233,0.15)]",
+        gradient: "from-sky-500 to-blue-500",
+        focus: "focus:border-sky-400/50 focus:ring-sky-400/20",
+        button: "from-sky-500 to-blue-500 hover:from-sky-400 hover:to-blue-400 shadow-sky-500/10 hover:shadow-sky-500/20",
+        spinner: "border-t-sky-500 border-b-blue-500",
     },
 };
 

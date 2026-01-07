@@ -1,0 +1,139 @@
+{
+  "title": "Storyboard Format Standards",
+  "version": "1.0.0",
+  "description": "스토리보드 제작 포맷 및 가이드라인",
+  "scene_structure": {
+    "required_fields": [
+      {
+        "field": "scene_number",
+        "type": "integer",
+        "description": "씬 순번"
+      },
+      {
+        "field": "description",
+        "type": "string",
+        "description": "시각적 설명 (무엇이 보이는가)",
+        "max_length": 500
+      },
+      {
+        "field": "camera",
+        "type": "string",
+        "description": "샷 타입과 카메라 움직임",
+        "example": "Medium shot, slow dolly forward"
+      },
+      {
+        "field": "duration",
+        "type": "string",
+        "description": "예상 길이 (초 단위)",
+        "example": "4-6 seconds"
+      }
+    ],
+    "optional_fields": [
+      {
+        "field": "notes",
+        "type": "string",
+        "description": "연출 노트, 특별 지시사항"
+      },
+      {
+        "field": "dialogue",
+        "type": "string",
+        "description": "대사 또는 내레이션"
+      },
+      {
+        "field": "sound",
+        "type": "string",
+        "description": "사운드/음악 지시"
+      },
+      {
+        "field": "transition",
+        "type": "string",
+        "description": "다음 씬으로의 전환 방식"
+      }
+    ]
+  },
+  "shot_types": {
+    "establishing": {
+      "abbreviation": "EST",
+      "purpose": "장소/시간 설정",
+      "typical_duration": "3-5 seconds",
+      "camera": "Wide shot, often static or slow pan"
+    },
+    "wide": {
+      "abbreviation": "WS",
+      "purpose": "환경과 인물 관계",
+      "typical_duration": "4-8 seconds",
+      "camera": "Full body visible, environment context"
+    },
+    "medium": {
+      "abbreviation": "MS",
+      "purpose": "대화, 행동",
+      "typical_duration": "3-6 seconds",
+      "camera": "Waist up, conversational distance"
+    },
+    "close_up": {
+      "abbreviation": "CU",
+      "purpose": "감정, 반응",
+      "typical_duration": "2-4 seconds",
+      "camera": "Face fills frame"
+    },
+    "insert": {
+      "abbreviation": "INS",
+      "purpose": "중요 오브젝트/디테일",
+      "typical_duration": "1-3 seconds",
+      "camera": "Tight focus on specific item"
+    },
+    "over_shoulder": {
+      "abbreviation": "OTS",
+      "purpose": "대화 시점",
+      "typical_duration": "3-5 seconds",
+      "camera": "Behind one character, facing another"
+    },
+    "point_of_view": {
+      "abbreviation": "POV",
+      "purpose": "캐릭터 시점",
+      "typical_duration": "2-5 seconds",
+      "camera": "What character sees"
+    }
+  },
+  "transitions": {
+    "cut": "즉시 전환 (가장 일반적)",
+    "dissolve": "점진적 겹침 (시간 경과, 연결)",
+    "fade_out": "검정으로 페이드 (장면 종료)",
+    "fade_in": "검정에서 시작 (장면 시작)",
+    "wipe": "한 이미지가 다른 이미지를 밀어냄",
+    "match_cut": "유사한 시각 요소로 연결"
+  },
+  "narrative_templates": {
+    "product_showcase": {
+      "structure": [
+        {"scene": 1, "type": "establishing", "purpose": "Context/lifestyle setting"},
+        {"scene": 2, "type": "medium", "purpose": "Product introduction"},
+        {"scene": 3, "type": "close_up", "purpose": "Feature highlight 1"},
+        {"scene": 4, "type": "insert", "purpose": "Feature highlight 2"},
+        {"scene": 5, "type": "wide", "purpose": "Product in use"},
+        {"scene": 6, "type": "medium", "purpose": "Benefit demonstration"},
+        {"scene": 7, "type": "close_up", "purpose": "Emotional payoff"},
+        {"scene": 8, "type": "wide", "purpose": "Final brand moment"}
+      ]
+    },
+    "story_arc": {
+      "structure": [
+        {"scene": 1, "type": "establishing", "purpose": "World introduction"},
+        {"scene": 2, "type": "medium", "purpose": "Character introduction"},
+        {"scene": 3, "type": "medium", "purpose": "Inciting incident"},
+        {"scene": 4, "type": "various", "purpose": "Rising action"},
+        {"scene": 5, "type": "close_up", "purpose": "Climax moment"},
+        {"scene": 6, "type": "wide", "purpose": "Resolution"}
+      ]
+    },
+    "mood_piece": {
+      "structure": [
+        {"scene": 1, "type": "establishing", "purpose": "Atmosphere setup"},
+        {"scene": 2, "type": "wide", "purpose": "Environmental detail"},
+        {"scene": 3, "type": "medium", "purpose": "Subject in environment"},
+        {"scene": 4, "type": "close_up", "purpose": "Intimate detail"},
+        {"scene": 5, "type": "wide", "purpose": "Pullback reveal"}
+      ]
+    }
+  }
+}

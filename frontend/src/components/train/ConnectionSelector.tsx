@@ -8,8 +8,13 @@ import {
     Image as ImageIcon,
     Film,
     ChevronRight,
+    ChevronDown,
     Compass,
-    RefreshCw
+    RefreshCw,
+    CheckCircle,
+    Palette,
+    Moon,
+    Video,
 } from "lucide-react";
 
 interface ConnectionOption {
@@ -27,6 +32,7 @@ interface ConnectionSelectorProps {
     onSelect: (optionId: string) => void;
     onReRecommend?: () => void;
     isLoading?: boolean;
+    isPrimarySelection?: boolean; // 초기 차원 선택 모드 (1D 강조)
 }
 
 const ICON_MAP: Record<string, React.ReactNode> = {
@@ -34,48 +40,93 @@ const ICON_MAP: Record<string, React.ReactNode> = {
     "layout-grid": <LayoutGrid className="h-5 w-5" />,
     image: <ImageIcon className="h-5 w-5" />,
     film: <Film className="h-5 w-5" />,
+    // Extended Dimension Icons
+    "check-circle": <CheckCircle className="h-5 w-5" />,
+    palette: <Palette className="h-5 w-5" />,
+    moon: <Moon className="h-5 w-5" />,
+    video: <Video className="h-5 w-5" />,
 };
 
-const COLOR_MAP: Record<string, { bg: string; border: string; text: string; hover: string }> = {
+const COLOR_MAP: Record<string, { bg: string; border: string; text: string; hover: string; glow: string }> = {
     violet: {
         bg: "bg-violet-500/10",
         border: "border-violet-500/30",
         text: "text-violet-400",
         hover: "hover:bg-violet-500/20 hover:border-violet-500/50",
+        glow: "shadow-[0_0_15px_rgba(139,92,246,0.2)]",
     },
     emerald: {
         bg: "bg-emerald-500/10",
         border: "border-emerald-500/30",
         text: "text-emerald-400",
         hover: "hover:bg-emerald-500/20 hover:border-emerald-500/50",
+        glow: "shadow-[0_0_15px_rgba(52,211,153,0.2)]",
     },
     amber: {
         bg: "bg-amber-500/10",
         border: "border-amber-500/30",
         text: "text-amber-400",
         hover: "hover:bg-amber-500/20 hover:border-amber-500/50",
+        glow: "shadow-[0_0_15px_rgba(251,191,36,0.2)]",
     },
     cyan: {
         bg: "bg-cyan-500/10",
         border: "border-cyan-500/30",
         text: "text-cyan-400",
         hover: "hover:bg-cyan-500/20 hover:border-cyan-500/50",
+        glow: "shadow-[0_0_15px_rgba(34,211,238,0.2)]",
     },
-    lime: {
-        bg: "bg-lime-400/10",
-        border: "border-lime-400/30",
-        text: "text-lime-400",
-        hover: "hover:bg-lime-400/20 hover:border-lime-400/50",
+    // Extended Dimension Colors
+    rose: {
+        bg: "bg-rose-500/10",
+        border: "border-rose-500/30",
+        text: "text-rose-400",
+        hover: "hover:bg-rose-500/20 hover:border-rose-500/50",
+        glow: "shadow-[0_0_15px_rgba(244,63,94,0.2)]",
+    },
+    fuchsia: {
+        bg: "bg-fuchsia-500/10",
+        border: "border-fuchsia-500/30",
+        text: "text-fuchsia-400",
+        hover: "hover:bg-fuchsia-500/20 hover:border-fuchsia-500/50",
+        glow: "shadow-[0_0_15px_rgba(217,70,239,0.2)]",
+    },
+    indigo: {
+        bg: "bg-indigo-500/10",
+        border: "border-indigo-500/30",
+        text: "text-indigo-400",
+        hover: "hover:bg-indigo-500/20 hover:border-indigo-500/50",
+        glow: "shadow-[0_0_15px_rgba(99,102,241,0.2)]",
+    },
+    sky: {
+        bg: "bg-sky-500/10",
+        border: "border-sky-500/30",
+        text: "text-sky-400",
+        hover: "hover:bg-sky-500/20 hover:border-sky-500/50",
+        glow: "shadow-[0_0_15px_rgba(14,165,233,0.2)]",
     },
 };
+
+// 추천 상위 N개
+const INITIAL_SHOW_COUNT = 3;
 
 export function ConnectionSelector({
     options,
     onSelect,
     onReRecommend,
     isLoading = false,
+    isPrimarySelection = false,
 }: ConnectionSelectorProps) {
     const [hoveredId, setHoveredId] = useState<string | null>(null);
+    const [showAll, setShowAll] = useState(false);
+
+    // confidence 기준으로 정렬
+    const sortedOptions = [...options].sort((a, b) => b.confidence - a.confidence);
+
+    // 표시할 옵션들 (Primary Selection 모드에서는 더 많이 보여줌)
+    const initialShowCount = isPrimarySelection ? 4 : INITIAL_SHOW_COUNT;
+    const visibleOptions = showAll ? sortedOptions : sortedOptions.slice(0, initialShowCount);
+    const hiddenCount = sortedOptions.length - initialShowCount;
 
     return (
         <div className="flex flex-col items-center gap-4">
@@ -92,7 +143,13 @@ export function ConnectionSelector({
                 <div className="h-px w-8 bg-gradient-to-l from-transparent via-violet-500/50 to-zinc-600" />
             </div>
 
-            {/* 3개 옵션 카드 */}
+            {/* 추천 라벨 */}
+            <div className="text-[10px] uppercase tracking-wider text-zinc-500 flex items-center gap-1.5">
+                <Sparkles className="h-3 w-3 text-violet-400" />
+                추천 차원
+            </div>
+
+            {/* 옵션 카드 */}
             <div className="flex flex-col gap-2 w-56">
                 <AnimatePresence mode="wait">
                     {isLoading ? (
@@ -110,67 +167,104 @@ export function ConnectionSelector({
                             ))}
                         </motion.div>
                     ) : (
-                        options.map((option, index) => {
-                            const colorScheme = COLOR_MAP[option.color] || COLOR_MAP.violet;
-                            const IconComponent = ICON_MAP[option.icon] || <Sparkles className="h-5 w-5" />;
-                            const isHovered = hoveredId === option.id;
+                        <>
+                            {visibleOptions.map((option, index) => {
+                                const colorScheme = COLOR_MAP[option.color] || COLOR_MAP.violet;
+                                const IconComponent = ICON_MAP[option.icon] || <Sparkles className="h-5 w-5" />;
+                                const isHovered = hoveredId === option.id;
+                                const isTopRecommend = index === 0;
+                                // Primary Selection 모드에서 1위 옵션은 더 강조
+                                const isPrimary = isPrimarySelection && isTopRecommend;
 
-                            return (
-                                <motion.button
-                                    key={option.id}
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: index * 0.1 }}
-                                    onClick={() => onSelect(option.id)}
-                                    onMouseEnter={() => setHoveredId(option.id)}
-                                    onMouseLeave={() => setHoveredId(null)}
-                                    className={`
-                                        relative flex items-center gap-3 p-3 rounded-xl
-                                        ${colorScheme.bg} ${colorScheme.border} border
-                                        ${colorScheme.hover}
-                                        transition-all duration-300
-                                        group cursor-pointer
-                                    `}
-                                >
-                                    {/* 옵션 번호 */}
-                                    <div className="absolute -left-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-zinc-900 border border-zinc-700 flex items-center justify-center text-[10px] font-bold text-zinc-400">
-                                        {index + 1}
-                                    </div>
+                                return (
+                                    <motion.button
+                                        key={option.id}
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{
+                                            opacity: isPrimarySelection && !isTopRecommend ? 0.7 : 1,
+                                            x: 0,
+                                            scale: isPrimary ? 1.02 : 1,
+                                        }}
+                                        whileHover={{ scale: 1.02, opacity: 1 }}
+                                        transition={{ delay: index * 0.08 }}
+                                        onClick={() => onSelect(option.id)}
+                                        onMouseEnter={() => setHoveredId(option.id)}
+                                        onMouseLeave={() => setHoveredId(null)}
+                                        className={`
+                                            relative flex items-center gap-3 rounded-xl
+                                            ${isPrimary ? "p-4" : "p-3"}
+                                            ${colorScheme.bg} ${colorScheme.border} border
+                                            ${colorScheme.hover}
+                                            ${isTopRecommend ? colorScheme.glow : ""}
+                                            ${isPrimary ? "shadow-[0_0_30px_rgba(139,92,246,0.4)] border-2" : ""}
+                                            transition-all duration-300
+                                            group cursor-pointer
+                                        `}
+                                    >
+                                        {/* 추천 뱃지 (1위만) */}
+                                        {isTopRecommend && (
+                                            <div className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 rounded-full bg-violet-500 text-[8px] font-bold text-white">
+                                                추천
+                                            </div>
+                                        )}
 
-                                    {/* 아이콘 */}
-                                    <div className={`${colorScheme.text}`}>
-                                        {IconComponent}
-                                    </div>
+                                        {/* 옵션 번호 */}
+                                        <div className={`
+                                            absolute -left-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full
+                                            ${isTopRecommend ? "bg-violet-500 border-violet-400 text-white" : "bg-zinc-900 border-zinc-700 text-zinc-400"}
+                                            border flex items-center justify-center text-[10px] font-bold
+                                        `}>
+                                            {index + 1}
+                                        </div>
 
-                                    {/* 텍스트 */}
-                                    <div className="flex-1 text-left">
-                                        <p className="text-sm font-medium text-white truncate">
-                                            {option.label}
-                                        </p>
-                                        <p className="text-[10px] text-zinc-500 truncate">
-                                            {option.description}
-                                        </p>
-                                    </div>
+                                        {/* 아이콘 */}
+                                        <div className={`${colorScheme.text}`}>
+                                            {IconComponent}
+                                        </div>
 
-                                    {/* 신뢰도 + 화살표 */}
-                                    <div className="flex items-center gap-1">
-                                        <span className="text-[10px] text-zinc-500">
-                                            {Math.round(option.confidence * 100)}%
-                                        </span>
-                                        <ChevronRight
-                                            className={`
-                                                h-4 w-4 text-zinc-500
-                                                transition-transform duration-300
-                                                ${isHovered ? "translate-x-1 text-white" : ""}
-                                            `}
-                                        />
-                                    </div>
-                                </motion.button>
-                            );
-                        })
+                                        {/* 텍스트 */}
+                                        <div className="flex-1 text-left">
+                                            <p className="text-sm font-medium text-white truncate">
+                                                {option.label}
+                                            </p>
+                                            <p className="text-[10px] text-zinc-500 truncate">
+                                                {option.description}
+                                            </p>
+                                        </div>
+
+                                        {/* 신뢰도 + 화살표 */}
+                                        <div className="flex items-center gap-1">
+                                            <span className={`text-[10px] ${isTopRecommend ? colorScheme.text : "text-zinc-500"}`}>
+                                                {Math.round(option.confidence * 100)}%
+                                            </span>
+                                            <ChevronRight
+                                                className={`
+                                                    h-4 w-4 text-zinc-500
+                                                    transition-transform duration-300
+                                                    ${isHovered ? "translate-x-1 text-white" : ""}
+                                                `}
+                                            />
+                                        </div>
+                                    </motion.button>
+                                );
+                            })}
+                        </>
                     )}
                 </AnimatePresence>
             </div>
+
+            {/* 더 보기 / 접기 버튼 */}
+            {hiddenCount > 0 && !isLoading && (
+                <motion.button
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    onClick={() => setShowAll(!showAll)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800/30 border border-zinc-700/50 text-zinc-400 text-xs hover:bg-zinc-800/50 hover:text-white transition-all"
+                >
+                    <ChevronDown className={`h-3 w-3 transition-transform ${showAll ? "rotate-180" : ""}`} />
+                    {showAll ? "접기" : `+${hiddenCount}개 더 보기`}
+                </motion.button>
+            )}
 
             {/* 재추천 버튼 */}
             {onReRecommend && !isLoading && (

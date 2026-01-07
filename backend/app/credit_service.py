@@ -135,24 +135,28 @@ async def deduct_credits(
         remaining -= topup_used
 
     user_credits.balance -= amount
-    await db.commit()
 
+    # Create ledger entry within same transaction (atomic)
     breakdown = {
         "promo": promo_used,
         "subscription": subscription_used,
         "topup": topup_used,
     }
     ledger_meta = {**(meta or {}), "breakdown": breakdown}
-    entry = await record_transaction(
-        db=db,
+    entry = CreditLedger(
         user_id=user_id,
         event_type="usage",
         amount=-amount,
-        new_balance=user_credits.balance,
+        balance_snapshot=user_credits.balance,
         description=description,
         capsule_run_id=capsule_run_id,
         meta=ledger_meta,
     )
+    db.add(entry)
+
+    # Single atomic commit for both balance update and ledger entry
+    await db.commit()
+    await db.refresh(entry)
     return entry
 
 
@@ -201,34 +205,39 @@ async def refund_credits(
 ) -> CreditLedger:
     """
     Refund credits for failed or cancelled capsule runs.
-    
+
     Credits are restored to topup_credits bucket (simplest refund strategy).
     A ledger entry is recorded with event_type='refund' for audit trail.
+
+    Uses atomic transaction: balance update + ledger entry in single commit.
     """
     if amount <= 0:
         raise ValueError("Refund amount must be positive")
 
     user_credits = await get_or_create_user_credits(db, user_id)
-    
+
     # Add back to topup bucket and total balance
     user_credits.topup_credits += amount
     user_credits.balance += amount
-    await db.commit()
 
+    # Create ledger entry within same transaction (atomic)
     refund_meta = {
         **(meta or {}),
         "refund_reason": description,
         "refund_to_bucket": "topup",
     }
-    
-    entry = await record_transaction(
-        db=db,
+    entry = CreditLedger(
         user_id=user_id,
         event_type="refund",
         amount=amount,
-        new_balance=user_credits.balance,
+        balance_snapshot=user_credits.balance,
         description=f"Refund: {description}",
         capsule_run_id=capsule_run_id,
         meta=refund_meta,
     )
+    db.add(entry)
+
+    # Single atomic commit for both balance update and ledger entry
+    await db.commit()
+    await db.refresh(entry)
     return entry

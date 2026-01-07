@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, LayoutGrid, Image as ImageIcon, Plus, Eye, Fingerprint, LucideIcon } from "lucide-react";
+import {
+    Sparkles, LayoutGrid, Image as ImageIcon, Plus, Eye, LucideIcon,
+    CheckCircle, Palette, Moon, Film, ChevronRight,
+    Brain, Search, Layers, Music, Video, Wand2
+} from "lucide-react";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { MiniAppSubmitModal } from "@/components/MiniAppSubmitModal";
 import { useParallaxScroll, useSmoothScroll } from "@/hooks/useLusionAnimations";
@@ -13,132 +17,229 @@ import { useLanguage } from "@/contexts/LanguageContext";
 interface DimensionItemData {
     href: string;
     icon: LucideIcon;
-    dimensionLabel: string;
-    sensoryName: string;
+    stage: "planning" | "pre_production" | "production" | "finishing" | "extended";
+    stageOrder: number;
     titleKo: string;
     titleEn: string;
     descKo: string;
     descEn: string;
-    essenceKo: string;
-    essenceEn: string;
     portalColor: string;
     borderColor: string;
     glowClass: string;
     activeBg: string;
     activeText: string;
     textColor: string;
+    gradient?: string;
+    isNew?: boolean;
 }
 
-// Lusion Style Sensory Dimensions
-// 1D Origin (Violet)
-// 2D Blueprint (Cyan)
-// 3D Ambience (Emerald)
-// 4D Moment (Amber)
-// 5D Soul (Electric Lime)
+// 4-Stage Workflow Structure
+const WORKFLOW_STAGES = {
+    planning: { order: 1, nameKo: "기획", nameEn: "Planning", color: "emerald" },
+    pre_production: { order: 2, nameKo: "사전 제작", nameEn: "Pre-production", color: "violet" },
+    production: { order: 3, nameKo: "제작", nameEn: "Production", color: "amber" },
+    finishing: { order: 4, nameKo: "완성", nameEn: "Finishing", color: "cyan" },
+    extended: { order: 5, nameKo: "확장", nameEn: "Extended", color: "fuchsia" },
+};
 
 const DIMENSION_ITEMS: DimensionItemData[] = [
+    // ========== Stage 1: 기획 (Planning) ==========
     {
-        href: "/dimension/prompt",
-        icon: Sparkles,
-        dimensionLabel: "1D",
-        sensoryName: "ORIGIN",
-        titleKo: "프롬프트 생성기",
-        titleEn: "Prompt Generator",
-        descKo: "무형의 생각이 언어라는 첫 번째 형태로 응축됩니다.",
-        descEn: "Intangible thoughts condense into the first form of language.",
-        essenceKo: "본질의 시작",
-        essenceEn: "The Seed of Thought",
-        portalColor: "border-violet-500/50",
-        borderColor: "border-violet-500",
-        glowClass: "glow-breathe glow-breathe-violet",
-        activeBg: "bg-violet-500",
-        activeText: "text-violet-100",
-        textColor: "text-violet-400",
+        href: "/dimension/abyss",
+        icon: Brain,
+        stage: "planning",
+        stageOrder: 1,
+        titleKo: "심연의 거울",
+        titleEn: "Abyss Mirror",
+        descKo: "나만의 취향과 창작 DNA 분석",
+        descEn: "Analyze your creative DNA",
+        portalColor: "border-indigo-500/50",
+        borderColor: "border-indigo-500",
+        glowClass: "glow-breathe glow-breathe-indigo",
+        activeBg: "bg-indigo-500",
+        activeText: "text-indigo-100",
+        textColor: "text-indigo-400",
+        gradient: "from-indigo-500 via-violet-500 to-blue-500",
     },
     {
-        href: "/dimension/storyboard",
-        icon: LayoutGrid,
-        dimensionLabel: "2D",
-        sensoryName: "BLUEPRINT",
-        titleKo: "스토리보드 아키텍트",
-        titleEn: "Storyboard Architect",
-        descKo: "흐릿한 맥락들이 구조화된 계획으로 설계됩니다.",
-        descEn: "Vague contexts are designed into structured plans.",
-        essenceKo: "구조와 맥락",
-        essenceEn: "Context & Structure",
-        portalColor: "border-cyan-500/50",
-        borderColor: "border-cyan-500",
-        glowClass: "glow-breathe glow-breathe-cyan",
-        activeBg: "bg-cyan-500",
-        activeText: "text-cyan-950",
-        textColor: "text-cyan-400",
-    },
-    {
-        href: "/dimension/image-tool",
-        icon: ImageIcon,
-        dimensionLabel: "3D",
-        sensoryName: "AMBIENCE",
-        titleKo: "비주얼 스튜디오",
-        titleEn: "Visual Studio",
-        descKo: "빛과 그림자, 깊이가 더해져 공간이 살아납니다.",
-        descEn: "Light, shadow, and depth breathe life into space.",
-        essenceKo: "깊이와 실재",
-        essenceEn: "Depth & Reality",
-        portalColor: "border-emerald-500/50",
-        borderColor: "border-emerald-500",
-        glowClass: "glow-breathe glow-breathe-emerald",
-        activeBg: "bg-emerald-500",
-        activeText: "text-emerald-950",
-        textColor: "text-emerald-400",
-    },
-    {
-        href: "/dimension/shot-catch",
-        icon: Eye,
-        dimensionLabel: "4D",
-        sensoryName: "MOMENT",
-        titleKo: "프레임 캐쳐",
-        titleEn: "Frame Catcher",
-        descKo: "흐르는 시간 속에서 결정적인 순간을 포착합니다.",
-        descEn: "Capturing the decisive moment within the flow of time.",
-        essenceKo: "흐름과 타이밍",
-        essenceEn: "Flow & Timing",
+        href: "/dimension/reference-decoder",
+        icon: Search,
+        stage: "planning",
+        stageOrder: 2,
+        titleKo: "레퍼런스 해석기",
+        titleEn: "Reference Decoder",
+        descKo: "조명, 색감, 연출의 전문가적 분석",
+        descEn: "Expert analysis of lighting, color, direction",
         portalColor: "border-amber-500/50",
         borderColor: "border-amber-500",
         glowClass: "glow-breathe glow-breathe-amber",
         activeBg: "bg-amber-500",
         activeText: "text-amber-950",
         textColor: "text-amber-400",
+        gradient: "from-amber-500 via-orange-500 to-red-500",
     },
     {
-        href: "/dimension/soul",
-        icon: Fingerprint,
-        dimensionLabel: "5D",
-        sensoryName: "SOUL",
-        titleKo: "장인의 아틀리에",
-        titleEn: "Artisan's Atelier",
-        descKo: "사주팔자처럼 고유한 운명과 정신을 불어넣습니다.",
-        descEn: "Infusing unique destiny and spirit, like a master's touch.",
-        essenceKo: "숨결과 초월",
-        essenceEn: "Breath & Transcendence",
-        portalColor: "border-lime-400/50",
-        borderColor: "border-lime-400",
-        glowClass: "glow-breathe glow-breathe-lime",
-        activeBg: "bg-lime-400",
-        activeText: "text-lime-950",
-        textColor: "text-lime-400",
+        href: "/dimension/story-architect",
+        icon: Layers,
+        stage: "planning",
+        stageOrder: 3,
+        titleKo: "시나리오 생성기",
+        titleEn: "Story Architect",
+        descKo: "DNA와 스타일을 결합한 시나리오 작성",
+        descEn: "Write scenarios combining DNA and style",
+        portalColor: "border-emerald-500/50",
+        borderColor: "border-emerald-500",
+        glowClass: "glow-breathe glow-breathe-emerald",
+        activeBg: "bg-emerald-500",
+        activeText: "text-emerald-950",
+        textColor: "text-emerald-400",
+        gradient: "from-emerald-500 via-green-500 to-lime-500",
+        isNew: true,
+    },
+
+    // ========== Stage 2: 사전 제작 (Pre-production) ==========
+    {
+        href: "/dimension/sound-crafter",
+        icon: Music,
+        stage: "pre_production",
+        stageOrder: 1,
+        titleKo: "사운드 크래프터",
+        titleEn: "Sound Crafter",
+        descKo: "BGM 및 성우 내레이션 생성 (Suno, Udio)",
+        descEn: "Generate BGM and narration (Suno, Udio)",
+        portalColor: "border-pink-500/50",
+        borderColor: "border-pink-500",
+        glowClass: "glow-breathe glow-breathe-pink",
+        activeBg: "bg-pink-500",
+        activeText: "text-pink-100",
+        textColor: "text-pink-400",
+        gradient: "from-pink-500 via-rose-500 to-red-500",
+        isNew: true,
+    },
+    {
+        href: "/dimension/storyboard",
+        icon: LayoutGrid,
+        stage: "pre_production",
+        stageOrder: 2,
+        titleKo: "스토리보드 스케치",
+        titleEn: "Storyboard Sketch",
+        descKo: "글을 시각적 컷으로 스케치",
+        descEn: "Sketch text into visual cuts",
+        portalColor: "border-cyan-500/50",
+        borderColor: "border-cyan-500",
+        glowClass: "glow-breathe glow-breathe-cyan",
+        activeBg: "bg-cyan-500",
+        activeText: "text-cyan-950",
+        textColor: "text-cyan-400",
+        gradient: "from-cyan-500 via-teal-500 to-emerald-500",
+    },
+    {
+        href: "/dimension/prompt",
+        icon: Wand2,
+        stage: "pre_production",
+        stageOrder: 3,
+        titleKo: "프롬프트 연금술",
+        titleEn: "Prompt Alchemy",
+        descKo: "AI가 이해하는 전문 언어로 번역",
+        descEn: "Translate to AI-native language",
+        portalColor: "border-violet-500/50",
+        borderColor: "border-violet-500",
+        glowClass: "glow-breathe glow-breathe-violet",
+        activeBg: "bg-violet-500",
+        activeText: "text-violet-100",
+        textColor: "text-violet-400",
+        gradient: "from-violet-500 via-purple-500 to-indigo-500",
+    },
+
+    // ========== Stage 3: 제작 (Production) ==========
+    {
+        href: "/dimension/visual-realizer",
+        icon: ImageIcon,
+        stage: "production",
+        stageOrder: 1,
+        titleKo: "비주얼 리얼라이저",
+        titleEn: "Visual Realizer",
+        descKo: "Key Frame 고품질 생성 (Midjourney)",
+        descEn: "Generate high-quality keyframes",
+        portalColor: "border-orange-500/50",
+        borderColor: "border-orange-500",
+        glowClass: "glow-breathe glow-breathe-orange",
+        activeBg: "bg-orange-500",
+        activeText: "text-orange-950",
+        textColor: "text-orange-400",
+        gradient: "from-orange-500 via-amber-500 to-yellow-500",
+    },
+    {
+        href: "/dimension/video-maker",
+        icon: Video,
+        stage: "production",
+        stageOrder: 2,
+        titleKo: "비디오 메이커",
+        titleEn: "Video Maker",
+        descKo: "영상 변환 및 모션 제어 (Veo 3.1, Kling)",
+        descEn: "Video conversion & motion control",
+        portalColor: "border-sky-500/50",
+        borderColor: "border-sky-500",
+        glowClass: "glow-breathe glow-breathe-sky",
+        activeBg: "bg-sky-500",
+        activeText: "text-sky-100",
+        textColor: "text-sky-400",
+        gradient: "from-sky-500 via-blue-500 to-indigo-500",
+    },
+
+    // ========== Stage 4: 완성 (Finishing) ==========
+    {
+        href: "/dimension/quality-check",
+        icon: CheckCircle,
+        stage: "finishing",
+        stageOrder: 1,
+        titleKo: "퀄리티 디렉터",
+        titleEn: "Quality Director",
+        descKo: "시각적 일관성 및 동작 자연스러움 검수",
+        descEn: "Check visual consistency & motion smoothness",
+        portalColor: "border-rose-500/50",
+        borderColor: "border-rose-500",
+        glowClass: "glow-breathe glow-breathe-rose",
+        activeBg: "bg-rose-500",
+        activeText: "text-rose-100",
+        textColor: "text-rose-400",
+        gradient: "from-rose-500 via-pink-500 to-red-500",
+    },
+
+    // ========== Extended Tools ==========
+    {
+        href: "/dimension/aesthetic",
+        icon: Palette,
+        stage: "extended",
+        stageOrder: 1,
+        titleKo: "미학디렉터",
+        titleEn: "Aesthetic Director",
+        descKo: "거장들의 미학을 적용합니다",
+        descEn: "Apply masters' aesthetics",
+        portalColor: "border-fuchsia-500/50",
+        borderColor: "border-fuchsia-500",
+        glowClass: "glow-breathe glow-breathe-fuchsia",
+        activeBg: "bg-fuchsia-500",
+        activeText: "text-fuchsia-100",
+        textColor: "text-fuchsia-400",
+        gradient: "from-fuchsia-500 via-purple-500 to-pink-500",
     },
 ];
+
+type StageKey = keyof typeof WORKFLOW_STAGES;
 
 export default function WorkshopHubPage() {
     const { language } = useLanguage();
     const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
-    const [selectedDimension, setSelectedDimension] = useState<string | null>(null);
+    const [selectedStage, setSelectedStage] = useState<StageKey | null>(null);
     useSmoothScroll();
     useParallaxScroll();
 
-    const filteredItems = selectedDimension
-        ? DIMENSION_ITEMS.filter(d => d.dimensionLabel === selectedDimension)
+    const filteredItems = selectedStage
+        ? DIMENSION_ITEMS.filter(d => d.stage === selectedStage)
         : DIMENSION_ITEMS;
+
+    const stageKeys = Object.keys(WORKFLOW_STAGES) as StageKey[];
 
     return (
         <AppShell>
@@ -154,31 +255,43 @@ export default function WorkshopHubPage() {
                 {/* Minimalist Hero Section (Toggle Only) */}
                 <section className="relative pt-32 pb-12 flex flex-col items-center justify-center overflow-hidden px-4">
 
-                    {/* Color-Coded Dimension Toggle */}
-                    <div className="flex flex-wrap justify-center items-center gap-3 p-2 rounded-full backdrop-blur-sm">
+                    {/* 4-Stage Workflow Toggle */}
+                    <div className="flex flex-wrap justify-center items-center gap-2 p-2 rounded-2xl backdrop-blur-sm bg-white/5">
                         <button
-                            onClick={() => setSelectedDimension(null)}
-                            className={`px-6 py-3 rounded-full text-xs font-bold tracking-widest uppercase transition-all duration-300 ${selectedDimension === null
+                            onClick={() => setSelectedStage(null)}
+                            className={`px-5 py-2.5 rounded-xl text-xs font-bold tracking-widest uppercase transition-all duration-300 ${selectedStage === null
                                 ? "bg-white text-black shadow-lg scale-105"
                                 : "text-white/40 hover:text-white"
                                 }`}
                         >
                             ALL
                         </button>
-                        {DIMENSION_ITEMS.map((dim) => (
-                            <button
-                                key={dim.dimensionLabel}
-                                onClick={() => setSelectedDimension(
-                                    selectedDimension === dim.dimensionLabel ? null : dim.dimensionLabel
-                                )}
-                                className={`px-6 py-3 rounded-full text-xs font-bold tracking-widest transition-all duration-300 flex items-center justify-center ${selectedDimension === dim.dimensionLabel
-                                    ? `${dim.activeBg} ${dim.activeText} shadow-lg scale-105`
-                                    : "text-white/40 hover:text-white bg-white/5 hover:bg-white/10"
-                                    }`}
-                            >
-                                <span>{dim.dimensionLabel}</span>
-                            </button>
-                        ))}
+                        {stageKeys.map((stageKey) => {
+                            const stage = WORKFLOW_STAGES[stageKey];
+                            const isSelected = selectedStage === stageKey;
+                            const stageColors: Record<string, { bg: string; text: string }> = {
+                                emerald: { bg: "bg-emerald-500", text: "text-emerald-950" },
+                                violet: { bg: "bg-violet-500", text: "text-violet-100" },
+                                amber: { bg: "bg-amber-500", text: "text-amber-950" },
+                                cyan: { bg: "bg-cyan-500", text: "text-cyan-950" },
+                                fuchsia: { bg: "bg-fuchsia-500", text: "text-fuchsia-100" },
+                            };
+                            const colors = stageColors[stage.color] || stageColors.emerald;
+
+                            return (
+                                <button
+                                    key={stageKey}
+                                    onClick={() => setSelectedStage(isSelected ? null : stageKey)}
+                                    className={`px-4 py-2.5 rounded-xl text-xs font-bold tracking-wide transition-all duration-300 flex items-center gap-2 ${isSelected
+                                        ? `${colors.bg} ${colors.text} shadow-lg scale-105`
+                                        : "text-white/50 hover:text-white bg-white/5 hover:bg-white/10"
+                                        }`}
+                                >
+                                    <span className="text-[10px] font-mono opacity-60">{stage.order}</span>
+                                    <span>{language === 'ko' ? stage.nameKo : stage.nameEn}</span>
+                                </button>
+                            );
+                        })}
                     </div>
                 </section>
 
@@ -191,36 +304,54 @@ export default function WorkshopHubPage() {
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-blue-600/10 blur-[150px] rounded-full pointer-events-none z-0 mix-blend-screen" />
 
                             <motion.div
-                                className={`grid gap-8 relative z-10 ${filteredItems.length === 1 ? "grid-cols-1 max-w-2xl mx-auto" : "sm:grid-cols-2 lg:grid-cols-3"}`}
+                                className={`grid gap-6 relative z-10 ${filteredItems.length === 1 ? "grid-cols-1 max-w-2xl mx-auto" : "sm:grid-cols-2 lg:grid-cols-4"}`}
                                 layout
                             >
                                 <AnimatePresence mode="popLayout">
-                                    {filteredItems.map((dimension) => {
+                                    {filteredItems.map((dimension, idx) => {
                                         const Icon = dimension.icon;
+                                        const stageInfo = WORKFLOW_STAGES[dimension.stage];
                                         return (
                                             <motion.div
-                                                key={dimension.dimensionLabel}
+                                                key={dimension.href}
                                                 layout
                                                 initial={{ opacity: 0, scale: 0.9 }}
                                                 animate={{ opacity: 1, scale: 1 }}
                                                 exit={{ opacity: 0, scale: 0.9 }}
-                                                transition={{ duration: 0.3 }}
+                                                transition={{ duration: 0.3, delay: idx * 0.05 }}
                                                 className="group relative"
                                             >
                                                 <Link
                                                     href={dimension.href}
                                                     className="block relative overflow-hidden rounded-[2rem] border border-white/5 bg-black/40 p-6 backdrop-blur-2xl hover:bg-white/[0.03] transition-all duration-700 hover:-translate-y-2"
                                                 >
+                                                    {/* NEW Badge */}
+                                                    {dimension.isNew && (
+                                                        <div className="absolute top-4 right-4 z-20 px-2 py-1 rounded-full bg-lime-500 text-black text-[10px] font-bold tracking-wider animate-pulse">
+                                                            NEW
+                                                        </div>
+                                                    )}
+
                                                     {/* Colored Border Reveal */}
                                                     <div className={`absolute inset-0 rounded-[2rem] border-2 ${dimension.borderColor} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+
+                                                    {/* Gradient Background */}
+                                                    <div className={`
+                                                        absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-700
+                                                        bg-gradient-to-br ${dimension.gradient || "from-white/10 to-transparent"}
+                                                    `} />
 
                                                     {/* Portal Ring Effect */}
                                                     <div className={`absolute -right-20 -top-20 h-64 w-64 rounded-full border-[1px] ${dimension.portalColor} ${dimension.glowClass} blur-[60px] opacity-20 group-hover:opacity-40 transition-opacity duration-700`} />
 
-                                                    <div className="relative flex items-start justify-between h-full flex-col gap-4 min-h-[180px]">
+                                                    <div className="relative flex items-start justify-between h-full flex-col gap-4 min-h-[140px]">
                                                         <div className="w-full flex items-start justify-between z-10">
                                                             <div className="flex flex-col gap-1">
-                                                                <h2 className="text-xl font-bold text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-white/70 transition-all duration-500">
+                                                                {/* Stage Label */}
+                                                                <span className={`text-[10px] font-mono tracking-wider ${dimension.textColor} opacity-60`}>
+                                                                    {stageInfo.order}.{dimension.stageOrder}
+                                                                </span>
+                                                                <h2 className="text-lg font-bold text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-white/70 transition-all duration-500">
                                                                     {language === 'ko' ? dimension.titleKo : dimension.titleEn}
                                                                 </h2>
                                                             </div>
@@ -231,19 +362,19 @@ export default function WorkshopHubPage() {
 
                                                         <div className="space-y-6 z-10 mt-auto">
                                                             <div className="space-y-2">
-                                                                <p className={`text-xs font-medium uppercase tracking-widest ${dimension.textColor} transition-colors`}>
-                                                                    {language === 'ko' ? dimension.essenceKo : dimension.essenceEn}
-                                                                </p>
                                                                 <p className="text-sm text-[var(--fg-muted)] leading-relaxed line-clamp-2 mix-blend-plus-lighter">
                                                                     {language === 'ko' ? dimension.descKo : dimension.descEn}
                                                                 </p>
                                                             </div>
-                                                            <div>
-                                                                <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm group-hover:bg-white group-hover:text-black transition-all duration-300">
-                                                                    <span className="text-[10px] font-bold tracking-[0.15em] uppercase">
-                                                                        {language === 'ko' ? '차원 진입' : 'EXPLORE'}
-                                                                    </span>
-                                                                    <div className={`h-1.5 w-1.5 rounded-full ${dimension.activeBg} opacity-80`} />
+                                                            {/* Arrow Action */}
+                                                            <div className="flex justify-end mt-4">
+                                                                <div className={`
+                                                                    flex items-center justify-center w-8 h-8 rounded-full
+                                                                    border border-white/10 bg-white/5 backdrop-blur-sm
+                                                                    text-white/40 group-hover:text-white group-hover:bg-white/20
+                                                                    transition-all duration-300 group-hover:scale-110
+                                                                `}>
+                                                                    <ChevronRight className="w-4 h-4" />
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -257,7 +388,7 @@ export default function WorkshopHubPage() {
                                 {/* Propose Button - Minimalist */}
                                 <button
                                     onClick={() => setIsSubmitModalOpen(true)}
-                                    className="group relative overflow-hidden rounded-[2rem] border border-dashed border-white/10 bg-transparent p-6 hover:bg-white/[0.02] hover:border-white/30 transition-all duration-500 flex flex-col items-center justify-center gap-4 min-h-[180px]"
+                                    className="group relative overflow-hidden rounded-[2rem] border border-dashed border-white/10 bg-transparent p-6 hover:bg-white/[0.02] hover:border-white/30 transition-all duration-500 flex flex-col items-center justify-center gap-4 min-h-[140px]"
                                 >
                                     <div className="relative">
                                         <div className="absolute inset-0 bg-lime-400/20 blur-[30px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />

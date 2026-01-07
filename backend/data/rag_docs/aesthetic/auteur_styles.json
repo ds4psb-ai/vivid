@@ -1,0 +1,206 @@
+{
+  "title": "Auteur Style Guide - Crebit Dimension System",
+  "version": "1.0.0",
+  "description": "6명의 오퇴르 감독 시각적 스타일 DNA",
+  "auteurs": {
+    "bong": {
+      "name": "봉준호 (Bong Joon-ho)",
+      "key": "auteur.bong-joon-ho",
+      "nationality": "Korean",
+      "signature": "Structural tension, genre mixing, controlled camera, cool tones",
+      "palette_bias": "cool",
+      "pacing": "medium",
+      "camera_style": "controlled",
+      "techniques": [
+        "deep focus",
+        "tracking shots",
+        "visual metaphor",
+        "architectural framing",
+        "class contrast through space"
+      ],
+      "avoid_elements": [
+        "excessive handheld",
+        "warm color dominance",
+        "fast cutting"
+      ],
+      "reference_films": [
+        "기생충 (Parasite, 2019)",
+        "살인의 추억 (Memories of Murder, 2003)",
+        "마더 (Mother, 2009)",
+        "옥자 (Okja, 2017)"
+      ],
+      "color_palette": ["#2C3E50", "#34495E", "#7F8C8D", "#BDC3C7", "#ECF0F1"],
+      "visual_grammar": {
+        "composition": "Geometric precision, stairs as class metaphor",
+        "lighting": "High contrast, motivated sources",
+        "depth": "Deep staging with foreground/background tension"
+      }
+    },
+    "park": {
+      "name": "박찬욱 (Park Chan-wook)",
+      "key": "auteur.park-chan-wook",
+      "nationality": "Korean",
+      "signature": "Symmetry, high contrast, warm colors, precise framing, revenge aesthetics",
+      "palette_bias": "warm",
+      "pacing": "medium",
+      "camera_style": "controlled",
+      "techniques": [
+        "split screen",
+        "extreme close-up",
+        "slow motion",
+        "symmetrical composition",
+        "baroque lighting"
+      ],
+      "avoid_elements": [
+        "handheld camera",
+        "desaturated colors",
+        "documentary style"
+      ],
+      "reference_films": [
+        "올드보이 (Oldboy, 2003)",
+        "아가씨 (The Handmaiden, 2016)",
+        "친절한 금자씨 (Lady Vengeance, 2005)",
+        "박쥐 (Thirst, 2009)"
+      ],
+      "color_palette": ["#8B0000", "#DAA520", "#2F4F4F", "#000000", "#FFFFF0"],
+      "visual_grammar": {
+        "composition": "Bilateral symmetry, frames within frames",
+        "lighting": "Chiaroscuro, dramatic shadows",
+        "movement": "Elegant tracking, reveal through movement"
+      }
+    },
+    "shinkai": {
+      "name": "신카이 마코토 (Shinkai Makoto)",
+      "key": "auteur.shinkai",
+      "nationality": "Japanese",
+      "signature": "Light diffusion, lyrical colors, emotional atmosphere, hyper-detailed backgrounds",
+      "palette_bias": "warm",
+      "pacing": "slow",
+      "camera_style": "controlled",
+      "techniques": [
+        "lens flare",
+        "sky gradients",
+        "detailed backgrounds",
+        "light particles",
+        "weather as emotion"
+      ],
+      "avoid_elements": [
+        "dark palettes",
+        "fast action",
+        "gritty realism"
+      ],
+      "reference_films": [
+        "너의 이름은 (Your Name, 2016)",
+        "날씨의 아이 (Weathering with You, 2019)",
+        "초속 5센티미터 (5 Centimeters Per Second, 2007)",
+        "스즈메의 문단속 (Suzume, 2022)"
+      ],
+      "color_palette": ["#87CEEB", "#FFB6C1", "#FFA07A", "#E6E6FA", "#98FB98"],
+      "visual_grammar": {
+        "composition": "Environmental storytelling, vast skies",
+        "lighting": "Golden hour, diffused light, magical realism",
+        "atmosphere": "Rain, clouds, twilight as narrative device"
+      }
+    },
+    "lee": {
+      "name": "이준호 (Lee Jun-ho)",
+      "key": "auteur.lee-junho",
+      "nationality": "Korean",
+      "signature": "Music sync, rhythmic editing, dynamic camera, vibrant energy",
+      "palette_bias": "neutral",
+      "pacing": "medium",
+      "camera_style": "dynamic",
+      "techniques": [
+        "match cuts",
+        "montage",
+        "handheld",
+        "music-driven editing",
+        "tracking through spaces"
+      ],
+      "avoid_elements": [
+        "static shots",
+        "slow pacing",
+        "muted colors"
+      ],
+      "reference_films": [
+        "20세기 소녀 (20th Century Girl, 2022)",
+        "키스씩스센스 (Kiss Sixth Sense, 2022)"
+      ],
+      "color_palette": ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7"],
+      "visual_grammar": {
+        "composition": "Dynamic diagonals, movement in frame",
+        "lighting": "Natural light, youthful glow",
+        "rhythm": "Edit to music, emotional beats"
+      }
+    },
+    "na": {
+      "name": "나홍진 (Na Hong-jin)",
+      "key": "auteur.na-hongjin",
+      "nationality": "Korean",
+      "signature": "Raw realism, suspense, chaotic camera, cool tones, visceral tension",
+      "palette_bias": "cool",
+      "pacing": "fast",
+      "camera_style": "dynamic",
+      "techniques": [
+        "long takes",
+        "natural lighting",
+        "documentary style",
+        "handheld intensity",
+        "location authenticity"
+      ],
+      "avoid_elements": [
+        "stylized lighting",
+        "warm palettes",
+        "slow pacing"
+      ],
+      "reference_films": [
+        "추격자 (The Chaser, 2008)",
+        "황해 (The Yellow Sea, 2010)",
+        "곡성 (The Wailing, 2016)"
+      ],
+      "color_palette": ["#2C3E50", "#34495E", "#5D6D7E", "#85929E", "#ABB2B9"],
+      "visual_grammar": {
+        "composition": "Claustrophobic framing, environmental realism",
+        "lighting": "Available light, gritty authenticity",
+        "movement": "Frantic pursuit, visceral action"
+      }
+    },
+    "hong": {
+      "name": "홍상수 (Hong Sang-soo)",
+      "key": "auteur.hong-sangsoo",
+      "nationality": "Korean",
+      "signature": "Static camera, dialogue-driven, neutral palette, minimalist, zoom aesthetics",
+      "palette_bias": "neutral",
+      "pacing": "slow",
+      "camera_style": "static",
+      "techniques": [
+        "zoom",
+        "static shots",
+        "natural sound",
+        "long takes",
+        "repetition with variation"
+      ],
+      "avoid_elements": [
+        "fast editing",
+        "dramatic lighting",
+        "action sequences"
+      ],
+      "reference_films": [
+        "지금은맞고그때는틀리다 (Right Now, Wrong Then, 2015)",
+        "도망친 여자 (The Woman Who Ran, 2020)",
+        "인트로덕션 (Introduction, 2021)"
+      ],
+      "color_palette": ["#D5D8DC", "#AEB6BF", "#85929E", "#5D6D7E", "#34495E"],
+      "visual_grammar": {
+        "composition": "Simple, functional framing",
+        "lighting": "Natural, unmanipulated",
+        "rhythm": "Conversational, observational"
+      }
+    }
+  },
+  "usage_guidelines": {
+    "matching": "Compare user concept keywords with auteur signatures",
+    "blending": "Can combine 2 auteur styles with primary/secondary weights",
+    "override": "User can explicitly select auteur style"
+  }
+}

@@ -150,15 +150,17 @@ analyze_reference: Analyze provided reference materials
 - Use when: User provides images, videos, or URLs for analysis
 - Arguments: { "reference_url": "url", "focus": ["composition", "color"] }
 
-create_workflow: Build a dimension workflow structure (AUTONOMOUS MODE)
-- Use when: User wants full workflow created automatically
-- Arguments: { "topic": "workflow topic", "dimensions": ["1D", "2D", "3D"], "auto_execute": true }
-- IMPORTANT: Use this in AUTONOMOUS mode when user says "만들어줘" or "알아서 해줘"
-
-execute_workflow: Execute a dimension workflow sequentially
-- Use when: Need to run multiple dimensions in sequence
+execute_workflow: Create AND execute a dimension workflow (기본 선택 - 99% 사용)
+- Use when: User asks for workflow creation with "만들어줘", "워크플로우 생성해줘", "알아서 해줘"
 - Arguments: { "topic": "topic", "dimensions": ["1D", "2D", "3D"] }
-- Chains outputs from each dimension to the next automatically
+- IMPORTANT: This is the DEFAULT choice. Creates structure AND executes immediately.
+- Chains outputs from each dimension to the next automatically.
+
+create_workflow: Preview workflow structure only (미리보기/수정용 - 드물게 사용)
+- Use when: User explicitly asks to "보여줘", "미리보기", "구조만" before execution
+- Arguments: { "topic": "workflow topic", "dimensions": ["1D", "2D", "3D"] }
+- Does NOT execute, only shows structure for user review.
+- Use only when user wants to see/edit structure before running.
 
 ## Intent-to-Tool Routing (자동 도구 선택)
 

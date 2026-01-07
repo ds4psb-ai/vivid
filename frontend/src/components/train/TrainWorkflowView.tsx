@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, forwardRef, useImperativeHandle, useCallback, useRef } from "react";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { TrainCar } from "./TrainCar";
 import { ConnectionSelector } from "./ConnectionSelector";
+import { DimensionPortalModal } from "./DimensionPortalModal";
 import { Trash2, CheckCircle, XCircle } from "lucide-react";
 import { api, DimensionResponse } from "@/lib/api";
 
@@ -15,7 +16,7 @@ interface Car {
     id: string;
     order: number;
     toolId: string;
-    dimension: "1D" | "2D" | "3D" | "4D";
+    dimension: "1D" | "2D" | "3D" | "4D" | "QC" | "AD" | "AI" | "VEO";
     displayName: string;
     icon: string;
     color: string;
@@ -62,27 +63,95 @@ const DIMENSION_CREDIT_COSTS: Record<string, number> = {
     storyboard: 10,        // 2D
     image_tool: 10,        // 3D
     reference_analyzer: 10, // 4D
+    // Extended Dimension Capsules
+    quality_check: 8,      // QC
+    aesthetic_direct: 10,  // AD
+    persona_analyze: 12,   // AI (Abyss)
+    veo_generate: 20,      // VEO
 };
 
-const INITIAL_CAR: Car = {
-    id: "car-1",
-    order: 0,
-    toolId: "prompt_generator",
-    dimension: "1D",
-    displayName: "Veo 프롬프트 생성기",
-    icon: "sparkles",
-    color: "violet",
-    status: "ready",
-    inputs: {},
-    creditCost: DIMENSION_CREDIT_COSTS["prompt_generator"],
-};
+// Initial dimension options - shows all 8 dimensions for first selection
+const INITIAL_DIMENSION_OPTIONS: ConnectionOption[] = [
+    {
+        id: "init-1d",
+        label: "프롬프트",
+        description: "아이디어를 언어로 구체화",
+        recommendedToolId: "prompt_generator",
+        icon: "sparkles",
+        color: "violet",
+        confidence: 0.95,
+    },
+    {
+        id: "init-4d",
+        label: "레퍼런스",
+        description: "참고 영상 심층 분석",
+        recommendedToolId: "reference_analyzer",
+        icon: "film",
+        color: "cyan",
+        confidence: 0.85,
+    },
+    {
+        id: "init-ad",
+        label: "디렉팅",
+        description: "거장들의 미학 적용",
+        recommendedToolId: "aesthetic_direct",
+        icon: "palette",
+        color: "fuchsia",
+        confidence: 0.80,
+    },
+    {
+        id: "init-ai",
+        label: "심연",
+        description: "내면의 운명 해석",
+        recommendedToolId: "persona_analyze",
+        icon: "moon",
+        color: "indigo",
+        confidence: 0.75,
+    },
+    {
+        id: "init-2d",
+        label: "스토리보드",
+        description: "전체 흐름 설계",
+        recommendedToolId: "storyboard",
+        icon: "layout-grid",
+        color: "emerald",
+        confidence: 0.70,
+    },
+    {
+        id: "init-3d",
+        label: "비주얼",
+        description: "시각적 디테일 완성",
+        recommendedToolId: "image_tool",
+        icon: "image",
+        color: "amber",
+        confidence: 0.65,
+    },
+    {
+        id: "init-qc",
+        label: "퀄리티",
+        description: "6가지 기준 품질 검증",
+        recommendedToolId: "quality_check",
+        icon: "check-circle",
+        color: "rose",
+        confidence: 0.60,
+    },
+    {
+        id: "init-veo",
+        label: "비디오",
+        description: "최종 AI 영상 생성",
+        recommendedToolId: "veo_generate",
+        icon: "video",
+        color: "sky",
+        confidence: 0.55,
+    },
+];
 
 // Connection options based on dimension progression
 const CONNECTION_OPTIONS: ConnectionOption[] = [
     {
         id: "opt-2d",
-        label: "2차원으로 확장",
-        description: "스토리보드 구조로 입체화",
+        label: "스토리보드",
+        description: "전체 흐름 설계",
         recommendedToolId: "storyboard",
         icon: "layout-grid",
         color: "emerald",
@@ -90,8 +159,8 @@ const CONNECTION_OPTIONS: ConnectionOption[] = [
     },
     {
         id: "opt-3d",
-        label: "3차원으로",
-        description: "이미지 프롬프트로 시각화",
+        label: "비주얼",
+        description: "시각적 디테일 완성",
         recommendedToolId: "image_tool",
         icon: "image",
         color: "amber",
@@ -99,24 +168,148 @@ const CONNECTION_OPTIONS: ConnectionOption[] = [
     },
     {
         id: "opt-4d",
-        label: "레퍼런스 차원 탐색",
-        description: "참고 영상 스타일 분석",
+        label: "레퍼런스",
+        description: "참고 영상 심층 분석",
         recommendedToolId: "reference_analyzer",
         icon: "film",
         color: "cyan",
         confidence: 0.75,
     },
+    // Extended Dimension Capsules
+    {
+        id: "opt-qc",
+        label: "퀄리티",
+        description: "6가지 기준 품질 검증",
+        recommendedToolId: "quality_check",
+        icon: "check-circle",
+        color: "rose",
+        confidence: 0.70,
+    },
+    {
+        id: "opt-ad",
+        label: "디렉팅",
+        description: "거장들의 미학 적용",
+        recommendedToolId: "aesthetic_direct",
+        icon: "palette",
+        color: "fuchsia",
+        confidence: 0.65,
+    },
+    {
+        id: "opt-ai",
+        label: "심연",
+        description: "내면의 운명 해석",
+        recommendedToolId: "persona_analyze",
+        icon: "moon",
+        color: "indigo",
+        confidence: 0.60,
+    },
+    {
+        id: "opt-veo",
+        label: "비디오",
+        description: "최종 AI 영상 생성",
+        recommendedToolId: "veo_generate",
+        icon: "video",
+        color: "sky",
+        confidence: 0.55,
+    },
 ];
 
-const TOOL_INFO: Record<string, { displayName: string; icon: string; color: string; dimension: "1D" | "2D" | "3D" | "4D" }> = {
-    prompt_generator: { displayName: "Veo 프롬프트 생성기", icon: "sparkles", color: "violet", dimension: "1D" },
-    storyboard: { displayName: "스토리보드 생성기", icon: "layout-grid", color: "emerald", dimension: "2D" },
-    image_tool: { displayName: "이미지 프롬프트 생성기", icon: "image", color: "amber", dimension: "3D" },
-    reference_analyzer: { displayName: "레퍼런스 분석기", icon: "film", color: "cyan", dimension: "4D" },
+type DimensionType = "1D" | "2D" | "3D" | "4D" | "QC" | "AD" | "AI" | "VEO";
+
+const TOOL_INFO: Record<string, { displayName: string; icon: string; color: string; dimension: DimensionType }> = {
+    prompt_generator: { displayName: "프롬프트", icon: "sparkles", color: "violet", dimension: "1D" },
+    storyboard: { displayName: "스토리보드", icon: "layout-grid", color: "emerald", dimension: "2D" },
+    image_tool: { displayName: "비주얼", icon: "image", color: "amber", dimension: "3D" },
+    reference_analyzer: { displayName: "레퍼런스", icon: "film", color: "cyan", dimension: "4D" },
+    // Extended Dimension Capsules
+    quality_check: { displayName: "퀄리티", icon: "check-circle", color: "rose", dimension: "QC" },
+    aesthetic_direct: { displayName: "디렉팅", icon: "palette", color: "fuchsia", dimension: "AD" },
+    persona_analyze: { displayName: "심연", icon: "moon", color: "indigo", dimension: "AI" },
+    veo_generate: { displayName: "비디오", icon: "video", color: "sky", dimension: "VEO" },
 };
 
 // 차원 레이블
-const DIMENSION_LABELS = ["1D", "2D", "3D", "4D", "5D"];
+const DIMENSION_LABELS = ["1D", "2D", "3D", "4D", "QC", "AD", "AI", "VEO"];
+
+// =============================================================================
+// Context-Aware Recommendation Logic
+// =============================================================================
+
+/**
+ * 이전 차원 및 출력에 따라 다음 추천 차원의 신뢰도를 조정합니다.
+ * @param prevDimension - 이전 차원 (예: "1D", "2D")
+ * @param prevOutput - 이전 차원의 출력 데이터
+ * @returns 조정된 CONNECTION_OPTIONS
+ */
+function getContextAwareRecommendations(
+    prevDimension: DimensionType | undefined,
+    prevOutput: Record<string, unknown> | undefined,
+    usedDimensions: Set<DimensionType>
+): ConnectionOption[] {
+    // Base confidence adjustments based on previous dimension
+    const confidenceBoosts: Record<DimensionType, Partial<Record<string, number>>> = {
+        // After 1D (Prompt): Storyboard (2D), Aesthetic (AD) make sense
+        "1D": { storyboard: 0.2, aesthetic_direct: 0.15, quality_check: 0.05 },
+        // After 2D (Storyboard): Image (3D), QC, VEO are natural next steps
+        "2D": { image_tool: 0.2, quality_check: 0.15, veo_generate: 0.1, aesthetic_direct: 0.1 },
+        // After 3D (Image): QC, VEO for video generation
+        "3D": { quality_check: 0.15, veo_generate: 0.15, reference_analyzer: 0.1 },
+        // After 4D (Reference): Prompt (1D), Aesthetic (AD) to start creation
+        "4D": { prompt_generator: 0.2, aesthetic_direct: 0.15, storyboard: 0.1 },
+        // After QC: Can proceed to any creative step
+        "QC": { aesthetic_direct: 0.1, veo_generate: 0.1 },
+        // After AD (Aesthetic): Prompt or Storyboard with style guidance
+        "AD": { prompt_generator: 0.15, storyboard: 0.15, image_tool: 0.1 },
+        // After AI (Persona): Prompt generation based on persona
+        "AI": { prompt_generator: 0.2, storyboard: 0.1, aesthetic_direct: 0.1 },
+        // After VEO: Usually end of workflow, but QC can validate
+        "VEO": { quality_check: 0.15 },
+    };
+
+    // Output type-based adjustments
+    const outputTypeBoosts: Record<string, Partial<Record<string, number>>> = {
+        // If output has "scenes", video generation is recommended
+        scenes: { veo_generate: 0.15, quality_check: 0.1 },
+        // If output has "prompt", storyboard or image makes sense
+        prompt: { storyboard: 0.1, image_tool: 0.1, aesthetic_direct: 0.05 },
+        // If output has style/aesthetic info
+        style_guide: { prompt_generator: 0.1, storyboard: 0.1 },
+    };
+
+    // Calculate adjusted options
+    const adjustedOptions = CONNECTION_OPTIONS.map(opt => {
+        const optToolInfo = TOOL_INFO[opt.recommendedToolId];
+        if (!optToolInfo || usedDimensions.has(optToolInfo.dimension)) {
+            return null; // Filter out used dimensions
+        }
+
+        let adjustedConfidence = opt.confidence;
+
+        // Apply dimension-based boost
+        if (prevDimension && confidenceBoosts[prevDimension]) {
+            const boost = confidenceBoosts[prevDimension][opt.recommendedToolId] || 0;
+            adjustedConfidence += boost;
+        }
+
+        // Apply output type-based boost
+        if (prevOutput) {
+            Object.keys(outputTypeBoosts).forEach(key => {
+                if (prevOutput[key]) {
+                    const boost = outputTypeBoosts[key][opt.recommendedToolId] || 0;
+                    adjustedConfidence += boost;
+                }
+            });
+        }
+
+        // Cap confidence at 0.99
+        adjustedConfidence = Math.min(adjustedConfidence, 0.99);
+
+        return { ...opt, confidence: adjustedConfidence };
+    }).filter((opt): opt is ConnectionOption => opt !== null);
+
+    // Sort by adjusted confidence (highest first)
+    return adjustedOptions.sort((a, b) => b.confidence - a.confidence);
+}
 
 // =============================================================================
 // Component
@@ -126,7 +319,7 @@ const DIMENSION_LABELS = ["1D", "2D", "3D", "4D", "5D"];
 // Input Validation
 // =============================================================================
 
-function validateInputs(dimension: "1D" | "2D" | "3D" | "4D", inputs: Record<string, unknown>): { valid: boolean; error?: string } {
+function validateInputs(dimension: "1D" | "2D" | "3D" | "4D" | "QC" | "AD" | "AI" | "VEO", inputs: Record<string, unknown>): { valid: boolean; error?: string } {
     switch (dimension) {
         case "1D": {
             const topic = String(inputs.topic || "").trim();
@@ -167,12 +360,13 @@ function validateInputs(dimension: "1D" | "2D" | "3D" | "4D", inputs: Record<str
 
 export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowViewProps>(
     ({ onComplete }, ref) => {
-        const [cars, setCars] = useState<Car[]>([INITIAL_CAR]);
-        const [pendingConnections, setPendingConnections] = useState<ConnectionOption[]>(CONNECTION_OPTIONS);
+        const [cars, setCars] = useState<Car[]>([]);
+        const [pendingConnections, setPendingConnections] = useState<ConnectionOption[]>(INITIAL_DIMENSION_OPTIONS);
         const [isLoadingOptions, setIsLoadingOptions] = useState(false);
         const [activeCarIndex, setActiveCarIndex] = useState(0);
         const [isExecutingAll, setIsExecutingAll] = useState(false);
         const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
+        const [portalCarId, setPortalCarId] = useState<string | null>(null);
 
         // Track executing cars to prevent double-click
         const executingCarsRef = useRef<Set<string>>(new Set());
@@ -185,7 +379,7 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
 
         // Output → Input 체이닝: 이전 노드 출력을 다음 노드 입력으로 변환
         const prepareInputsFromPreviousOutput = useCallback(
-            (dimension: "1D" | "2D" | "3D" | "4D", prevOutput: Record<string, unknown> | undefined, baseInputs: Record<string, unknown>) => {
+            (dimension: "1D" | "2D" | "3D" | "4D" | "QC" | "AD" | "AI" | "VEO", prevOutput: Record<string, unknown> | undefined, baseInputs: Record<string, unknown>) => {
                 if (!prevOutput) return baseInputs;
 
                 switch (dimension) {
@@ -214,6 +408,48 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                         return {
                             ...baseInputs,
                             video_description: prevOutput.prompt || prevOutput.description || baseInputs.video_description,
+                        };
+                    // Extended Dimension Capsules Input Chaining
+                    case "QC":
+                        // QC는 이전 output 전체를 content로 사용
+                        return {
+                            ...baseInputs,
+                            content: JSON.stringify(prevOutput, null, 2),
+                            content_type: prevOutput.scenes ? "storyboard" : prevOutput.prompt ? "prompt" : "general",
+                        };
+                    case "AD":
+                        // AD는 이전 prompt/concept을 미학 컨셉으로 사용
+                        return {
+                            ...baseInputs,
+                            concept: prevOutput.prompt || prevOutput.concept || prevOutput.description || baseInputs.concept,
+                            reference_style: prevOutput.style || prevOutput.visual_style,
+                        };
+                    case "AI":
+                        // AI는 이전 컨텐츠를 분석 대상으로 사용
+                        return {
+                            ...baseInputs,
+                            subject: prevOutput.prompt || prevOutput.concept || prevOutput.description || baseInputs.subject,
+                            depth: "comprehensive",
+                        };
+                    case "VEO":
+                        // VEO는 scenes (storyboard)나 prompt를 비디오 프롬프트로 사용
+                        if (prevOutput.scenes && Array.isArray(prevOutput.scenes)) {
+                            // Storyboard scenes를 비디오 프롬프트로 변환
+                            const scenesText = (prevOutput.scenes as Array<Record<string, unknown>>)
+                                .map((s, i) => `Scene ${i + 1}: ${s.description || s.visual || ""}`)
+                                .join("\n");
+                            return {
+                                ...baseInputs,
+                                prompt: scenesText,
+                                duration: 8,
+                                aspect_ratio: "16:9",
+                            };
+                        }
+                        return {
+                            ...baseInputs,
+                            prompt: prevOutput.prompt || prevOutput.veo_prompt || prevOutput.description || baseInputs.prompt,
+                            duration: 8,
+                            aspect_ratio: "16:9",
                         };
                     default:
                         return baseInputs;
@@ -350,10 +586,52 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
             );
             // 그 다음 실행
             setTimeout(() => handleExecuteCar(carId), 100);
+            // eslint-disable-next-line react-hooks/exhaustive-deps
         }, []);
 
+        // Portal modal handlers
+        const handlePortalInputChange = useCallback((carId: string, inputs: Record<string, unknown>) => {
+            setCars((prev) =>
+                prev.map((c) => c.id === carId ? { ...c, inputs } : c)
+            );
+        }, []);
+
+        const handlePortalOutputUpdate = useCallback((carId: string, output: Record<string, unknown>, creditCost?: number) => {
+            setCars((prev) =>
+                prev.map((c) =>
+                    c.id === carId
+                        ? { ...c, output, creditCost: creditCost ?? c.creditCost }
+                        : c
+                )
+            );
+        }, []);
+
+        const handlePortalStatusChange = useCallback((carId: string, status: Car["status"], error?: string) => {
+            setCars((prev) =>
+                prev.map((c) =>
+                    c.id === carId
+                        ? { ...c, status, error: error ?? undefined }
+                        : c
+                )
+            );
+            // Update active car index if needed
+            if (status === "completed") {
+                const carIndex = cars.findIndex(c => c.id === carId);
+                if (carIndex >= 0 && carIndex < cars.length - 1) {
+                    setActiveCarIndex(carIndex + 1);
+                    // Mark next car as ready
+                    setCars((prev) =>
+                        prev.map((c, i) => i === carIndex + 1 ? { ...c, status: "ready" } : c)
+                    );
+                }
+                showNotification("success", "차원 전개 완료!");
+            } else if (status === "failed") {
+                showNotification("error", error || "실행 실패");
+            }
+        }, [cars, showNotification]);
+
         // 전체 실행 핸들러 (하드닝 적용)
-        const handleExecuteAll = async () => {
+        const handleExecuteAll = useCallback(async () => {
             // [TIER2] 중복 전체 실행 방지
             if (isExecutingAll) {
                 console.warn("Already executing all, ignoring duplicate call");
@@ -377,12 +655,17 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
             } finally {
                 setIsExecutingAll(false);
             }
-        };
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, [cars, isExecutingAll, onComplete, showNotification]);
 
         // Expose methods to parent
         useImperativeHandle(ref, () => ({
             executeAll: handleExecuteAll,
-            reset: () => setCars([INITIAL_CAR]),
+            reset: () => {
+                setCars([]);
+                setPendingConnections(INITIAL_DIMENSION_OPTIONS);
+                setActiveCarIndex(0);
+            },
 
             // Agent integration methods
             addCar: (carData: Omit<Car, "id" | "order">) => {
@@ -425,8 +708,11 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
             const toolInfo = TOOL_INFO[selectedOption.recommendedToolId];
             if (!toolInfo) return;
 
+            // 첫 번째 차원 선택인지 체크
+            const isFirstCar = cars.length === 0;
+
             // 이전 노드의 output에서 기본 inputs 생성
-            const prevCar = cars[cars.length - 1];
+            const prevCar = cars.length > 0 ? cars[cars.length - 1] : undefined;
             const baseInputs: Record<string, unknown> = {};
 
             // 이전 노드 output을 기반으로 다음 노드 inputs 설정
@@ -448,25 +734,27 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                 displayName: toolInfo.displayName,
                 icon: toolInfo.icon,
                 color: toolInfo.color,
-                status: "pending",
+                // 첫 번째 차원은 바로 ready 상태로
+                status: isFirstCar ? "ready" : "pending",
                 inputs: baseInputs,
+                creditCost: DIMENSION_CREDIT_COSTS[selectedOption.recommendedToolId],
             };
 
             setCars((prev) => [...prev, newCar]);
             setActiveCarIndex(cars.length);
 
-            // 다음 연결 옵션 로드 - 사용한 차원 제외
+            // 다음 연결 옵션 로드 - 컨텍스트 인식 추천
             setIsLoadingOptions(true);
             await new Promise((resolve) => setTimeout(resolve, 300));
 
-            // 이미 사용한 차원 제외하고 다음 옵션 생성
+            // 이미 사용한 차원 제외하고 컨텍스트 기반 추천 생성
             const usedDimensions = new Set([...cars.map(c => c.dimension), toolInfo.dimension]);
-            const nextOptions = CONNECTION_OPTIONS.filter(
-                (opt) => {
-                    const optToolInfo = TOOL_INFO[opt.recommendedToolId];
-                    return optToolInfo && !usedDimensions.has(optToolInfo.dimension);
-                }
-            ).slice(0, 3);
+            const lastCar = cars[cars.length - 1];
+            const nextOptions = getContextAwareRecommendations(
+                toolInfo.dimension,  // 방금 추가된 차원
+                lastCar?.output,     // 마지막 차원의 출력
+                usedDimensions
+            );
 
             setPendingConnections(nextOptions);
             setIsLoadingOptions(false);
@@ -475,10 +763,27 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
         // 노드 삭제 핸들러
         const handleDeleteCar = (carId: string) => {
             const carIndex = cars.findIndex((c) => c.id === carId);
-            if (carIndex <= 0) return; // 첫 번째 노드는 삭제 불가
+            if (carIndex < 0) return;
 
-            setCars((prev) => prev.filter((c) => c.id !== carId));
-            setActiveCarIndex(Math.min(activeCarIndex, cars.length - 2));
+            const newCars = cars.filter((c) => c.id !== carId);
+            setCars(newCars);
+
+            // 모든 노드가 삭제되면 초기 차원 선택 옵션 복원
+            if (newCars.length === 0) {
+                setPendingConnections(INITIAL_DIMENSION_OPTIONS);
+                setActiveCarIndex(0);
+            } else {
+                setActiveCarIndex(Math.min(activeCarIndex, newCars.length - 1));
+                // 마지막 노드 삭제 후 연결 옵션 재계산
+                const usedDimensions = new Set(newCars.map(c => c.dimension));
+                const lastCar = newCars[newCars.length - 1];
+                const freshOptions = getContextAwareRecommendations(
+                    lastCar?.dimension,
+                    lastCar?.output,
+                    usedDimensions
+                );
+                setPendingConnections(freshOptions);
+            }
         };
 
         return (
@@ -522,6 +827,35 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                     <div className="absolute top-[120px] left-0 right-0 h-1 bg-gradient-to-r from-violet-500/30 via-emerald-500/30 to-amber-500/30 rounded-full" />
                     <div className="absolute top-[125px] left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-zinc-600 to-transparent rounded-full" />
 
+                    {/* 빈 상태: 중앙 집중형 스타터 */}
+                    <AnimatePresence mode="wait">
+                        {cars.length === 0 && (
+                            <motion.div
+                                key="starter"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, x: -100, scale: 0.9 }}
+                                transition={{ duration: 0.3 }}
+                                className="flex flex-col items-center justify-center h-[50vh] w-full"
+                            >
+                                {/* 중앙 배치된 ConnectionSelector */}
+                                <ConnectionSelector
+                                    options={pendingConnections}
+                                    onSelect={handleSelectConnection}
+                                    onReRecommend={() => {
+                                        setIsLoadingOptions(true);
+                                        setTimeout(() => {
+                                            setPendingConnections(INITIAL_DIMENSION_OPTIONS);
+                                            setIsLoadingOptions(false);
+                                        }, 300);
+                                    }}
+                                    isLoading={isLoadingOptions}
+                                    isPrimarySelection
+                                />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
                     {/* 차원 노드들 + 차원문 */}
                     <div className="flex items-start gap-4 overflow-x-auto pb-8 pt-4">
                         <AnimatePresence>
@@ -547,25 +881,27 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                                                     ? () => handleRetryCar(car.id)
                                                     : undefined
                                             }
+                                            onViewDetails={() => setPortalCarId(car.id)}
                                         />
 
-                                        {/* 삭제 버튼 (첫 번째 노드 제외, 실행 중 비활성화) */}
-                                        {index > 0 && (
-                                            <button
-                                                onClick={() => handleDeleteCar(car.id)}
-                                                disabled={car.status === "executing" || isExecutingAll}
-                                                className={`
-                                                    absolute -top-1 -right-1 h-6 w-6 rounded-full
-                                                    border flex items-center justify-center transition-all
-                                                    ${car.status === "executing" || isExecutingAll
-                                                        ? "bg-zinc-800/50 border-zinc-700 text-zinc-600 cursor-not-allowed"
-                                                        : "bg-red-500/20 border-red-500/50 text-red-400 hover:bg-red-500/30 opacity-0 group-hover:opacity-100"
-                                                    }
-                                                `}
-                                            >
-                                                <Trash2 className="h-3 w-3" />
-                                            </button>
-                                        )}
+                                        {/* 삭제 버튼 (실행 중 비활성화) */}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteCar(car.id);
+                                            }}
+                                            disabled={car.status === "executing" || isExecutingAll}
+                                            className={`
+                                                absolute -top-1 -right-1 h-6 w-6 rounded-full
+                                                border flex items-center justify-center transition-all
+                                                ${car.status === "executing" || isExecutingAll
+                                                    ? "bg-zinc-800/50 border-zinc-700 text-zinc-600 cursor-not-allowed"
+                                                    : "bg-red-500/20 border-red-500/50 text-red-400 hover:bg-red-500/30"
+                                                }
+                                            `}
+                                        >
+                                            <Trash2 className="h-3 w-3" />
+                                        </button>
                                     </div>
 
                                     {/* 차원문 (마지막 노드 후에만 표시) */}
@@ -576,7 +912,15 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                                             onReRecommend={() => {
                                                 setIsLoadingOptions(true);
                                                 setTimeout(() => {
-                                                    setPendingConnections(CONNECTION_OPTIONS);
+                                                    // 컨텍스트 인식 재추천
+                                                    const usedDimensions = new Set(cars.map(c => c.dimension));
+                                                    const lastCar = cars[cars.length - 1];
+                                                    const freshOptions = getContextAwareRecommendations(
+                                                        lastCar?.dimension,
+                                                        lastCar?.output,
+                                                        usedDimensions
+                                                    );
+                                                    setPendingConnections(freshOptions);
                                                     setIsLoadingOptions(false);
                                                 }, 500);
                                             }}
@@ -590,50 +934,67 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                 </div>
 
                 {/* 요약 패널 */}
-                <div className="mt-8 p-4 rounded-xl bg-zinc-900/50 border border-zinc-800">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-6">
-                            <div>
-                                <span className="text-[10px] text-zinc-500 uppercase tracking-widest">
-                                    현재 차원
-                                </span>
-                                <p className="text-lg font-bold text-white">{DIMENSION_LABELS[cars.length - 1] || `${cars.length}D`}</p>
+                {cars.length > 0 && (
+                    <div className="mt-8 p-4 rounded-xl bg-zinc-900/50 border border-zinc-800">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-6">
+                                <div>
+                                    <span className="text-[10px] text-zinc-500 uppercase tracking-widest">
+                                        현재 차원
+                                    </span>
+                                    <p className="text-lg font-bold text-white">
+                                        {cars[cars.length - 1]?.dimension || "—"}
+                                    </p>
+                                </div>
+                                <div>
+                                    <span className="text-[10px] text-zinc-500 uppercase tracking-widest">
+                                        완료됨
+                                    </span>
+                                    <p className="text-lg font-bold text-emerald-400">
+                                        {cars.filter((c) => c.status === "completed").length}
+                                    </p>
+                                </div>
+                                <div>
+                                    <span className="text-[10px] text-zinc-500 uppercase tracking-widest">
+                                        예상 크레딧
+                                    </span>
+                                    <p className="text-lg font-bold text-amber-400">
+                                        {cars.reduce((sum, c) => sum + (c.creditCost ?? DIMENSION_CREDIT_COSTS[c.toolId] ?? 10), 0)}
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <span className="text-[10px] text-zinc-500 uppercase tracking-widest">
-                                    완료됨
-                                </span>
-                                <p className="text-lg font-bold text-emerald-400">
-                                    {cars.filter((c) => c.status === "completed").length}
-                                </p>
-                            </div>
-                            <div>
-                                <span className="text-[10px] text-zinc-500 uppercase tracking-widest">
-                                    예상 크레딧
-                                </span>
-                                <p className="text-lg font-bold text-amber-400">
-                                    {cars.reduce((sum, c) => sum + (c.creditCost ?? DIMENSION_CREDIT_COSTS[c.toolId] ?? 10), 0)}
-                                </p>
-                            </div>
-                        </div>
 
-                        <div className="flex items-center gap-2">
-                            {cars.map((car, i) => (
-                                <div
-                                    key={car.id}
-                                    className={`
-                                    h-2 w-8 rounded-full transition-all
-                                    ${car.status === "completed" ? "bg-emerald-500" : ""}
-                                    ${car.status === "executing" ? "bg-amber-500 animate-pulse" : ""}
-                                    ${car.status === "ready" ? "bg-blue-500" : ""}
-                                    ${car.status === "pending" ? "bg-zinc-700" : ""}
-                                    ${car.status === "failed" ? "bg-red-500" : ""}
-                                `}
-                                />
-                            ))}
+                            <div className="flex items-center gap-2">
+                                {cars.map((car) => (
+                                    <div
+                                        key={car.id}
+                                        className={`
+                                        h-2 w-8 rounded-full transition-all
+                                        ${car.status === "completed" ? "bg-emerald-500" : ""}
+                                        ${car.status === "executing" ? "bg-amber-500 animate-pulse" : ""}
+                                        ${car.status === "ready" ? "bg-blue-500" : ""}
+                                        ${car.status === "pending" ? "bg-zinc-700" : ""}
+                                        ${car.status === "failed" ? "bg-red-500" : ""}
+                                    `}
+                                    />
+                                ))}
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
+
+                {/* Dimension Portal Modal */}
+                <DimensionPortalModal
+                    isOpen={!!portalCarId}
+                    onClose={() => setPortalCarId(null)}
+                    cars={cars}
+                    currentCarId={portalCarId || ""}
+                    onNavigate={setPortalCarId}
+                    onInputChange={handlePortalInputChange}
+                    onExecute={handleExecuteCar}
+                    onOutputUpdate={handlePortalOutputUpdate}
+                    onStatusChange={handlePortalStatusChange}
+                />
             </div>
         );
     }

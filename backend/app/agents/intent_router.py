@@ -26,11 +26,16 @@ logger = get_logger("intent_router")
 # =============================================================================
 
 class Dimension(Enum):
-    """Vivid 4D Framework Dimensions."""
+    """Vivid 4D Framework Dimensions + Extended Capsules."""
     ORIGIN = "1D"       # Prompt generation
     BLUEPRINT = "2D"    # Storyboard
     AMBIENCE = "3D"     # Image/Visual
     MOMENT = "4D"       # Reference analysis
+    # Extended Dimension Capsules
+    QUALITY = "QC"      # Quality Check
+    AESTHETIC = "AD"    # Aesthetic Director
+    ABYSS = "AI"        # Abyss Interpreter (Persona Analyze)
+    VIDEO = "VEO"       # Veo Video Generate
 
 
 # =============================================================================
@@ -46,6 +51,11 @@ class Intent(Enum):
     GENERAL_CHAT = "general_chat"
     WORKFLOW_REQUEST = "workflow_request"
     UNKNOWN = "unknown"
+    # Extended Dimension Capsule Intents
+    QUALITY_CHECK = "quality_check"
+    AESTHETIC_DIRECT = "aesthetic_direct"
+    PERSONA_ANALYZE = "persona_analyze"
+    VEO_GENERATE = "veo_generate"
 
 
 @dataclass(frozen=True)
@@ -108,11 +118,41 @@ INTENT_PATTERNS: Tuple[IntentPattern, ...] = (
         keywords=(
             "워크플로우", "전체 과정", "처음부터", "영상 만들기",
             # AUTONOMOUS mode triggers
-            "알아서 해줘", "만들어줘", "자동으로", "임의로", 
+            "알아서 해줘", "만들어줘", "자동으로", "임의로",
             "니가 정해서", "바로 실행", "알아서 만들어",
         ),
         regex_patterns=(r"처음.*끝까지", r"전체.*만들", r"알아서.*해"),
         priority=9,  # High priority for autonomous mode
+    ),
+
+    # Extended Dimension Capsule Patterns
+    # QC - Quality Check
+    IntentPattern(
+        intent=Intent.QUALITY_CHECK,
+        keywords=("검수", "품질", "검사", "평가", "퀄리티", "품질 확인", "적합성"),
+        regex_patterns=(r"품질.*확인", r"검수.*해", r"적합성.*검사", r"퀄리티.*체크"),
+        priority=8,
+    ),
+    # AD - Aesthetic Director
+    IntentPattern(
+        intent=Intent.AESTHETIC_DIRECT,
+        keywords=("미학", "스타일 가이드", "비주얼 가이드", "감독 스타일", "미적", "색감", "톤앤매너"),
+        regex_patterns=(r"스타일.*가이드", r"미학.*정의", r"시각.*스타일", r"감독.*스타일"),
+        priority=8,
+    ),
+    # AI - Abyss Interpreter (Persona Analyze)
+    IntentPattern(
+        intent=Intent.PERSONA_ANALYZE,
+        keywords=("페르소나", "심연", "성향 분석", "심층 분석", "성격 분석", "캐릭터 분석", "사주", "운명"),
+        regex_patterns=(r"페르소나.*분석", r"심층.*분석", r"성향.*알려", r"나.*분석"),
+        priority=8,
+    ),
+    # VEO - Veo Video Generate
+    IntentPattern(
+        intent=Intent.VEO_GENERATE,
+        keywords=("비디오 생성", "영상 생성", "동영상 만들", "veo 생성", "최종 영상", "비디오 제작"),
+        regex_patterns=(r"비디오.*만들", r"영상.*생성", r"동영상.*제작", r"veo.*생성"),
+        priority=8,
     ),
 )
 
@@ -123,6 +163,11 @@ INTENT_TO_TOOL: Dict[Intent, str] = {
     Intent.CREATE_STORYBOARD: "create_storyboard",
     Intent.GENERATE_IMAGE: "generate_image_prompt",
     Intent.ANALYZE_REFERENCE: "analyze_reference",
+    # Extended Dimension Capsules
+    Intent.QUALITY_CHECK: "quality_check",
+    Intent.AESTHETIC_DIRECT: "aesthetic_direct",
+    Intent.PERSONA_ANALYZE: "persona_analyze",
+    Intent.VEO_GENERATE: "veo_generate",
 }
 
 INTENT_TO_DIMENSION: Dict[Intent, Dimension] = {
@@ -130,6 +175,11 @@ INTENT_TO_DIMENSION: Dict[Intent, Dimension] = {
     Intent.CREATE_STORYBOARD: Dimension.BLUEPRINT,
     Intent.GENERATE_IMAGE: Dimension.AMBIENCE,
     Intent.ANALYZE_REFERENCE: Dimension.MOMENT,
+    # Extended Dimension Capsules
+    Intent.QUALITY_CHECK: Dimension.QUALITY,
+    Intent.AESTHETIC_DIRECT: Dimension.AESTHETIC,
+    Intent.PERSONA_ANALYZE: Dimension.ABYSS,
+    Intent.VEO_GENERATE: Dimension.VIDEO,
 }
 
 
@@ -147,16 +197,23 @@ class RoutingResult:
     matched_keywords: List[str]
     matched_patterns: List[str]
     workflow_suggestion: Optional[List[str]] = None
-    
+    auto_execute: bool = False  # True for AUTONOMOUS mode ("알아서 해줘")
+    full_workflow: bool = False  # True for "전체 워크플로우" requests
+
     @property
     def is_confident(self) -> bool:
         """Whether the routing is confident enough to auto-execute."""
         return self.confidence >= 0.7
-    
+
     @property
     def needs_clarification(self) -> bool:
         """Whether clarification is needed."""
         return self.confidence < 0.5
+
+    @property
+    def should_auto_execute(self) -> bool:
+        """Whether to trigger automatic workflow execution."""
+        return self.auto_execute and self.is_confident
 
 
 class IntentRouter:
@@ -260,7 +317,28 @@ class IntentRouter:
         
         # Generate workflow suggestion for complex requests
         workflow = self._suggest_workflow(best_intent, user_message)
-        
+
+        # AUTONOMOUS mode detection
+        auto_execute = False
+        full_workflow = False
+
+        if best_intent == Intent.WORKFLOW_REQUEST:
+            # Auto-execute triggers: 자동 실행 요청
+            auto_triggers = (
+                "알아서 해줘", "알아서 만들어", "만들어줘", "자동으로",
+                "니가 정해서", "바로 실행", "임의로", "그냥 해줘",
+            )
+            if any(t in message_lower for t in auto_triggers):
+                auto_execute = True
+
+            # Full workflow triggers: 전체 워크플로우 요청
+            full_triggers = (
+                "전체", "처음부터", "끝까지", "8개", "모든 차원",
+                "전부", "풀", "완전", "다 해줘",
+            )
+            if any(t in message_lower for t in full_triggers):
+                full_workflow = True
+
         result = RoutingResult(
             intent=best_intent,
             confidence=confidence,
@@ -269,8 +347,10 @@ class IntentRouter:
             matched_keywords=matched_keywords.get(best_intent, []),
             matched_patterns=matched_patterns.get(best_intent, []),
             workflow_suggestion=workflow,
+            auto_execute=auto_execute,
+            full_workflow=full_workflow,
         )
-        
+
         logger.info(
             "Intent classified",
             extra={
@@ -278,19 +358,21 @@ class IntentRouter:
                 "confidence": confidence,
                 "tool": suggested_tool,
                 "keywords": result.matched_keywords,
+                "auto_execute": auto_execute,
+                "full_workflow": full_workflow,
             },
         )
-        
+
         return result
     
     def _suggest_workflow(
-        self, 
-        intent: Intent, 
+        self,
+        intent: Intent,
         message: str
     ) -> Optional[List[str]]:
         """Suggest a workflow based on intent and context."""
         message_lower = message.lower()
-        
+
         # Reference-based workflow
         if intent == Intent.ANALYZE_REFERENCE:
             if any(kw in message_lower for kw in ("만들", "생성", "제작")):
@@ -299,15 +381,25 @@ class IntentRouter:
                     "generate_veo_prompt",
                     "create_storyboard",
                 ]
-        
-        # Full video workflow
+
+        # Full video workflow - enhanced with optional QC/AD/VEO
         if intent == Intent.WORKFLOW_REQUEST:
-            return [
+            workflow = [
                 "generate_veo_prompt",
                 "create_storyboard",
                 "generate_image_prompt",
             ]
-        
+            # Add aesthetic direction if style/aesthetic mentioned
+            if any(kw in message_lower for kw in ("스타일", "미학", "감독", "톤", "색감")):
+                workflow.insert(2, "aesthetic_direct")
+            # Add quality check if mentioned
+            if any(kw in message_lower for kw in ("검수", "품질", "검사", "퀄리티")):
+                workflow.append("quality_check")
+            # Add Veo video at end if video generation mentioned
+            if any(kw in message_lower for kw in ("비디오", "영상 생성", "동영상", "veo")):
+                workflow.append("veo_generate")
+            return workflow
+
         # Prompt to visual
         if intent == Intent.GENERATE_PROMPT:
             if any(kw in message_lower for kw in ("이미지", "비주얼", "썸네일")):
@@ -315,7 +407,32 @@ class IntentRouter:
                     "generate_veo_prompt",
                     "generate_image_prompt",
                 ]
-        
+
+        # Quality Check: suggest after content generation
+        if intent == Intent.QUALITY_CHECK:
+            if any(kw in message_lower for kw in ("스토리보드", "프롬프트", "이미지")):
+                return ["quality_check"]
+            # If standalone, suggest common chain: create then check
+            return ["create_storyboard", "quality_check"]
+
+        # Aesthetic Director: suggest style guide workflow
+        if intent == Intent.AESTHETIC_DIRECT:
+            if any(kw in message_lower for kw in ("영상", "비디오", "프롬프트")):
+                return ["aesthetic_direct", "generate_veo_prompt", "create_storyboard"]
+            return ["aesthetic_direct"]
+
+        # Persona Analyze: suggest persona-driven content workflow
+        if intent == Intent.PERSONA_ANALYZE:
+            if any(kw in message_lower for kw in ("콘텐츠", "영상", "프롬프트")):
+                return ["persona_analyze", "generate_veo_prompt", "create_storyboard"]
+            return ["persona_analyze"]
+
+        # Veo Generate: suggest full pipeline to video
+        if intent == Intent.VEO_GENERATE:
+            if any(kw in message_lower for kw in ("처음", "전체", "프롬프트")):
+                return ["generate_veo_prompt", "create_storyboard", "veo_generate"]
+            return ["veo_generate"]
+
         return None
     
     def get_routing_context(self, result: RoutingResult) -> str:

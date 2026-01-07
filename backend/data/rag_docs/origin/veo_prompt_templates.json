@@ -1,0 +1,118 @@
+{
+  "title": "Veo 3.1 Prompt Engineering Templates",
+  "version": "1.0.0",
+  "description": "AI 비디오 생성을 위한 프롬프트 템플릿 및 가이드라인",
+  "prompt_structure": {
+    "components": [
+      {
+        "name": "subject",
+        "description": "주요 피사체/캐릭터 설명",
+        "priority": "essential",
+        "example": "A young woman in a flowing red dress"
+      },
+      {
+        "name": "action",
+        "description": "피사체의 행동/동작",
+        "priority": "essential",
+        "example": "walks slowly through a misty forest"
+      },
+      {
+        "name": "setting",
+        "description": "장소/환경 설명",
+        "priority": "high",
+        "example": "in an ancient bamboo forest at dawn"
+      },
+      {
+        "name": "camera",
+        "description": "카메라 앵글/움직임",
+        "priority": "high",
+        "example": "tracking shot following from behind"
+      },
+      {
+        "name": "lighting",
+        "description": "조명 조건",
+        "priority": "medium",
+        "example": "soft golden light filtering through leaves"
+      },
+      {
+        "name": "style",
+        "description": "시각적 스타일",
+        "priority": "medium",
+        "example": "cinematic, anamorphic lens flare"
+      },
+      {
+        "name": "mood",
+        "description": "분위기/톤",
+        "priority": "medium",
+        "example": "mysterious, ethereal atmosphere"
+      }
+    ],
+    "formula": "[Subject] [Action] [Setting], [Camera], [Lighting], [Style], [Mood]"
+  },
+  "templates": {
+    "cinematic_portrait": {
+      "structure": "[Character description] [subtle action] in [location], [shot type], [lighting style], cinematic color grading, [mood]",
+      "example": "A contemplative elderly man with weathered hands holds an antique pocket watch in a dimly lit study, close-up shot, warm candlelight casting deep shadows, muted earth tones, melancholic atmosphere"
+    },
+    "action_sequence": {
+      "structure": "[Character] [dynamic action] through [environment], [camera movement], [lighting], high energy, [style]",
+      "example": "A parkour athlete leaps between rooftops in a neon-lit cyberpunk city at night, dynamic tracking shot, dramatic backlighting from holographic billboards, adrenaline-fueled intensity"
+    },
+    "landscape_mood": {
+      "structure": "[Establishing shot] of [location] during [time/weather], [camera], [atmosphere], [style]",
+      "example": "Sweeping aerial view of a volcanic coastline at sunrise with dramatic clouds, slow crane up, golden hour light reflecting on black sand beaches, epic scale, Terrence Malick inspired"
+    },
+    "intimate_moment": {
+      "structure": "[Characters] [intimate interaction] in [private space], [tight framing], [soft lighting], [emotional tone]",
+      "example": "Two dancers share a tender embrace in an empty rehearsal studio, intimate two-shot, soft window light, gentle movement, bittersweet longing"
+    }
+  },
+  "best_practices": [
+    {
+      "practice": "Be specific with descriptors",
+      "good": "worn leather jacket with brass buttons",
+      "bad": "jacket"
+    },
+    {
+      "practice": "Describe motion explicitly",
+      "good": "slowly turns to face the camera",
+      "bad": "turns around"
+    },
+    {
+      "practice": "Include camera direction",
+      "good": "low angle tracking shot rising to eye level",
+      "bad": "camera moves"
+    },
+    {
+      "practice": "Layer atmospheric details",
+      "good": "morning mist, dust particles catching light",
+      "bad": "foggy"
+    },
+    {
+      "practice": "Reference established styles when appropriate",
+      "good": "Wong Kar-wai step-printing effect",
+      "bad": "stylized slow motion"
+    }
+  ],
+  "negative_prompts": {
+    "common": [
+      "blurry",
+      "low quality",
+      "amateur",
+      "overexposed",
+      "underexposed",
+      "shaky",
+      "out of focus"
+    ],
+    "by_style": {
+      "cinematic": ["documentary style", "handheld", "webcam quality"],
+      "commercial": ["gritty", "dark", "disturbing"],
+      "artistic": ["generic", "stock footage", "corporate"]
+    }
+  },
+  "duration_guidelines": {
+    "4_seconds": "Single action, reaction shot, transition",
+    "6_seconds": "Short sequence, establishing shot",
+    "8_seconds": "Complete mini-narrative, full camera movement"
+  }
+}

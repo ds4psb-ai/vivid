@@ -9,9 +9,9 @@ import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import {
-    Package, Plus, Search, Filter, MoreHorizontal,
+    Package, Plus, Search,
     CheckCircle, Clock, AlertCircle, XCircle, Loader2,
-    Eye, Settings, Trash2, Play, Pause
+    Eye, Trash2, Play, Pause
 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { listApps, updateAppStatus, deleteApp, buildApp, type RegisteredApp } from "@/lib/admin-api";

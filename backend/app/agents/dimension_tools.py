@@ -1,13 +1,17 @@
-"""Teaching Tools for VividAgent.
+"""Dimension Tools for VividAgent.
 
-Agent가 사용할 수 있는 Teaching 캡슐 도구들.
+Agent가 사용할 수 있는 Dimension 캡슐 도구들.
 Single Source of Truth: DIMENSION_CAPSULES에서 ToolSpec을 동적으로 생성.
 
 사용 가능한 도구:
-- generate_veo_prompt: Veo 비디오 프롬프트 생성
-- create_storyboard: 스토리보드 생성
-- generate_image_prompt: 이미지 프롬프트 생성
-- analyze_reference: 레퍼런스 분석
+- generate_veo_prompt: Veo 비디오 프롬프트 생성 (1D)
+- create_storyboard: 스토리보드 생성 (2D)
+- generate_image_prompt: 이미지 프롬프트 생성 (3D)
+- analyze_reference: 레퍼런스 분석 (4D)
+- quality_check: 퀄리티 검수기 (QC) - 콘텐츠 품질 평가
+- aesthetic_direct: 미학디렉터 (AD) - 스타일 가이드 생성
+- persona_analyze: 심연해석기 (AI) - 페르소나 분석
+- veo_generate: Veo 3.1 비디오 생성 (VEO)
 """
 from __future__ import annotations
 
@@ -40,20 +44,32 @@ logger = get_logger("dimension_tools")
 
 # Agent 도구 이름과 캡슐 키 간의 매핑
 TOOL_TO_CAPSULE: Dict[str, str] = {
+    # Original 4 dimensions
     "generate_veo_prompt": "teaching.prompt.generate",
     "create_storyboard": "teaching.storyboard.create",
     "generate_image_prompt": "teaching.image.generate",
     "analyze_reference": "teaching.reference.analyze",
+    # Extended Dimension Capsules
+    "quality_check": "dimension.quality.check",
+    "aesthetic_direct": "dimension.aesthetic.direct",
+    "persona_analyze": "dimension.persona.analyze",
+    "veo_generate": "veo.video.generate",
 }
 
 CAPSULE_TO_TOOL: Dict[str, str] = {v: k for k, v in TOOL_TO_CAPSULE.items()}
 
 # Tool → Dimension 매핑 (Evidence Loop용)
 TOOL_TO_DIMENSION: Dict[str, str] = {
+    # Original 4 dimensions
     "generate_veo_prompt": "1D",
     "create_storyboard": "2D",
     "generate_image_prompt": "3D",
     "analyze_reference": "4D",
+    # Extended Dimension Capsules
+    "quality_check": "QC",
+    "aesthetic_direct": "AD",
+    "persona_analyze": "AI",
+    "veo_generate": "VEO",
 }
 
 

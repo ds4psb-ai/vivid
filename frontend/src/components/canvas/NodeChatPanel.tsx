@@ -1,10 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
     Bot,
     Send,
-    Square,
     Wand2,
     Eye,
     Undo2,
@@ -456,7 +455,7 @@ export default function NodeChatPanel({
                         노드를 어떻게 변경할지 말씀해주세요.
                         <br />
                         <span className="text-xs text-slate-500">
-                            예: "더 밝게", "극적으로 바꿔줘", "카메라 줌인"
+                            예: &quot;더 밝게&quot;, &quot;극적으로 바꿔줘&quot;, &quot;카메라 줌인&quot;
                         </span>
                     </div>
                 )}

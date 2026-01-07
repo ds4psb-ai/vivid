@@ -21,7 +21,6 @@ import {
     Check,
     AlertCircle,
     Info,
-    ChevronRight,
     Loader2,
     Eye,
     Code,
@@ -447,7 +446,7 @@ export default function CreateToolPage() {
                                         if (!url) return;
 
                                         // Convert GitHub URL to raw URL
-                                        let rawUrl = url
+                                        const rawUrl = url
                                             .replace('github.com', 'raw.githubusercontent.com')
                                             .replace('/blob/', '/');
 

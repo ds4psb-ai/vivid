@@ -57,3 +57,56 @@ export interface SceneSnapshot {
   status?: string;
   source?: string;
 }
+
+// === Workflow Event Types (shared across components) ===
+
+/** Node in a workflow structure */
+export interface WorkflowNode {
+  id: string;
+  dimension: string;
+  dimension_name: string;
+  tool_name: string;
+  status: string;
+}
+
+/** Workflow start event from execute_workflow */
+export interface WorkflowStartEvent {
+  topic: string;
+  dimensions: string[];
+  total_steps: number;
+}
+
+/** Workflow step event from agent */
+export interface WorkflowStepEvent {
+  step: number;
+  total_steps: number;
+  dimension: string;
+  dimension_name: string;
+  tool_name: string;
+  status?: "start" | "complete" | "error";
+  output_preview?: string;
+  credit_cost?: number;
+}
+
+/** Tool result event from agent */
+export interface ToolResultEvent {
+  name: string;
+  status: string;
+  output: Record<string, unknown>;
+  arguments?: Record<string, unknown>;
+  error?: string;
+}
+
+/** Workflow created event from create_workflow (structure only) */
+export interface WorkflowCreatedEvent {
+  workflow_id: string;
+  topic: string;
+  dimensions: string[];
+  nodes: WorkflowNode[];
+}
+
+/** Workflow complete event */
+export interface WorkflowCompleteEvent {
+  total_credits: number;
+  success_count: number;
+}

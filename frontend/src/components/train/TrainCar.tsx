@@ -12,12 +12,17 @@ import {
     Play,
     RotateCcw,
     AlertCircle,
+    Palette,
+    Moon,
+    Video,
+    Eye,
 } from "lucide-react";
 
 interface TrainCarProps {
     id: string;
     order: number;
     toolId: string;
+    dimension?: string;
     displayName: string;
     icon: string;
     color: string;
@@ -25,6 +30,7 @@ interface TrainCarProps {
     isActive?: boolean;
     onExecute?: () => void;
     onRetry?: () => void;
+    onViewDetails?: () => void;
     inputs?: Record<string, unknown>;
     output?: Record<string, unknown>;
     error?: string;
@@ -36,6 +42,12 @@ const ICON_MAP: Record<string, React.ReactNode> = {
     "layout-grid": <LayoutGrid className="h-6 w-6" />,
     image: <ImageIcon className="h-6 w-6" />,
     film: <Film className="h-6 w-6" />,
+    // Extended Dimension Icons
+    "check-circle": <CheckCircle className="h-6 w-6" />,
+    palette: <Palette className="h-6 w-6" />,
+    moon: <Moon className="h-6 w-6" />,
+    video: <Video className="h-6 w-6" />,
+    eye: <Eye className="h-6 w-6" />,
 };
 
 const COLOR_MAP: Record<string, { bg: string; border: string; text: string; glow: string; portalGlow: string }> = {
@@ -67,6 +79,35 @@ const COLOR_MAP: Record<string, { bg: string; border: string; text: string; glow
         glow: "shadow-[0_0_30px_rgba(6,182,212,0.3)]",
         portalGlow: "shadow-[0_0_60px_rgba(6,182,212,0.4),inset_0_0_30px_rgba(6,182,212,0.1)]",
     },
+    // Extended Dimension Colors
+    rose: {
+        bg: "bg-rose-500/20",
+        border: "border-rose-500/50",
+        text: "text-rose-400",
+        glow: "shadow-[0_0_30px_rgba(244,63,94,0.3)]",
+        portalGlow: "shadow-[0_0_60px_rgba(244,63,94,0.4),inset_0_0_30px_rgba(244,63,94,0.1)]",
+    },
+    fuchsia: {
+        bg: "bg-fuchsia-500/20",
+        border: "border-fuchsia-500/50",
+        text: "text-fuchsia-400",
+        glow: "shadow-[0_0_30px_rgba(217,70,239,0.3)]",
+        portalGlow: "shadow-[0_0_60px_rgba(217,70,239,0.4),inset_0_0_30px_rgba(217,70,239,0.1)]",
+    },
+    indigo: {
+        bg: "bg-indigo-500/20",
+        border: "border-indigo-500/50",
+        text: "text-indigo-400",
+        glow: "shadow-[0_0_30px_rgba(99,102,241,0.3)]",
+        portalGlow: "shadow-[0_0_60px_rgba(99,102,241,0.4),inset_0_0_30px_rgba(99,102,241,0.1)]",
+    },
+    sky: {
+        bg: "bg-sky-500/20",
+        border: "border-sky-500/50",
+        text: "text-sky-400",
+        glow: "shadow-[0_0_30px_rgba(14,165,233,0.3)]",
+        portalGlow: "shadow-[0_0_60px_rgba(14,165,233,0.4),inset_0_0_30px_rgba(14,165,233,0.1)]",
+    },
 };
 
 const STATUS_INDICATOR: Record<string, React.ReactNode> = {
@@ -80,6 +121,7 @@ const STATUS_INDICATOR: Record<string, React.ReactNode> = {
 export function TrainCar({
     order,
     toolId,
+    dimension: _dimension,
     displayName,
     icon,
     color,
@@ -87,6 +129,7 @@ export function TrainCar({
     isActive = false,
     onExecute,
     onRetry,
+    onViewDetails,
     output,
     error,
     creditCost,
@@ -105,8 +148,9 @@ export function TrainCar({
                 ${isActive ? "z-10" : "z-0"}
             `}
         >
-            {/* 차원 노드 본체 */}
+            {/* 차원 노드 본체 - 클릭하면 상세 보기 */}
             <div
+                onClick={onViewDetails}
                 className={`
                     relative w-40 h-48 rounded-3xl
                     ${colorScheme.bg} ${colorScheme.border} border-2
@@ -115,6 +159,7 @@ export function TrainCar({
                     transition-all duration-500
                     ${isActive ? colorScheme.portalGlow : colorScheme.glow}
                     ${status === "completed" ? "opacity-80" : ""}
+                    ${onViewDetails ? "cursor-pointer hover:scale-105" : ""}
                 `}
             >
                 {/* 포털 링 이펙트 */}
@@ -154,7 +199,10 @@ export function TrainCar({
                 {/* 실행 버튼 */}
                 {status === "ready" && onExecute && (
                     <button
-                        onClick={onExecute}
+                        onClick={(e) => {
+                            e.stopPropagation(); // Prevent triggering onViewDetails
+                            onExecute();
+                        }}
                         className={`
                             flex items-center gap-1.5 px-3 py-1.5 rounded-lg
                             bg-gradient-to-r from-violet-600 to-purple-600
@@ -192,7 +240,10 @@ export function TrainCar({
                     <div className="flex flex-col items-center gap-2">
                         {/* 에러 메시지 (클릭으로 확장) */}
                         <button
-                            onClick={() => setShowFullError(!showFullError)}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setShowFullError(!showFullError);
+                            }}
                             className="text-[10px] text-red-400 text-center px-2 flex items-center gap-1 hover:text-red-300 transition-colors"
                         >
                             <AlertCircle className="h-3 w-3 flex-shrink-0" />
@@ -204,7 +255,10 @@ export function TrainCar({
                         {/* 재시도 버튼 */}
                         {onRetry && (
                             <button
-                                onClick={onRetry}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onRetry();
+                                }}
                                 className={`
                                     flex items-center gap-1 px-2.5 py-1 rounded-lg
                                     bg-red-500/20 border border-red-500/50

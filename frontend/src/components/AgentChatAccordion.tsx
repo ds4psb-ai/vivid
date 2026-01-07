@@ -6,6 +6,13 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Bot, MoreHorizontal, Play, CheckCircle2, ChevronDown, Paperclip, X, File as FileIcon } from "lucide-react";
 import { api } from "@/lib/api";
+import type {
+    WorkflowStepEvent,
+    ToolResultEvent,
+    WorkflowCreatedEvent,
+    WorkflowStartEvent,
+    WorkflowCompleteEvent,
+} from "@/types/agent";
 
 interface Message {
     id: string;
@@ -20,36 +27,17 @@ interface Message {
     toolError?: string;
 }
 
-// Workflow step event from agent
-interface WorkflowStepEvent {
-    step: number;
-    total_steps: number;
-    dimension: string;
-    dimension_name: string;
-    tool_name: string;
-    status?: "start" | "complete" | "error";
-    output_preview?: string;
-    credit_cost?: number;
-}
-
-// Tool result event from agent
-interface ToolResultEvent {
-    name: string;
-    status: string;
-    output: Record<string, unknown>;
-    arguments?: Record<string, unknown>;  // 🆕 Tool inputs
-    error?: string;
-}
-
 interface AgentChatAccordionProps {
     onExecuteAll?: () => void;
     onManualExecute?: () => void;
     isExecuting?: boolean;
     initialMessage?: string;
     // Workflow event callbacks for dimension integration
-    onWorkflowStart?: (data: { topic: string; dimensions: string[]; total_steps: number }) => void;
+    onWorkflowStart?: (data: WorkflowStartEvent) => void;
     onWorkflowStep?: (event: WorkflowStepEvent) => void;
-    onWorkflowComplete?: (data: { total_credits: number; success_count: number }) => void;
+    onWorkflowComplete?: (data: WorkflowCompleteEvent) => void;
+    // Workflow created event (structure only, for manual execution)
+    onWorkflowCreated?: (event: WorkflowCreatedEvent) => void;
     // Tool result callback for capturing dimension outputs
     onToolResult?: (result: ToolResultEvent) => void;
 }
@@ -62,6 +50,7 @@ export function AgentChatAccordion({
     onWorkflowStart,
     onWorkflowStep,
     onWorkflowComplete,
+    onWorkflowCreated,
     onToolResult,
 }: AgentChatAccordionProps) {
     const pathname = usePathname();
@@ -301,6 +290,25 @@ export function AgentChatAccordion({
                                 onWorkflowComplete?.({
                                     total_credits: typeof payload.total_credits === 'number' ? payload.total_credits : 0,
                                     success_count: typeof payload.success_count === 'number' ? payload.success_count : 0,
+                                });
+                            }
+                            // Workflow created event (from create_workflow tool)
+                            else if (eventType === "agent.workflow_created" && payload) {
+                                // Extract nodes from workflow_spec if present
+                                const workflowSpec = payload.workflow_spec || payload;
+                                const nodes = Array.isArray(workflowSpec.nodes) ? workflowSpec.nodes : [];
+
+                                onWorkflowCreated?.({
+                                    workflow_id: String(payload.workflow_id || ''),
+                                    topic: String(payload.topic || ''),
+                                    dimensions: Array.isArray(payload.dimensions) ? payload.dimensions : [],
+                                    nodes: nodes.map((n: Record<string, unknown>) => ({
+                                        id: String(n.id || ''),
+                                        dimension: String(n.dimension || ''),
+                                        dimension_name: String(n.dimension_name || ''),
+                                        tool_name: String(n.tool_name || ''),
+                                        status: String(n.status || 'pending'),
+                                    })),
                                 });
                             }
                             // Tool result event - capture dimension outputs AND add to chat
@@ -630,10 +638,10 @@ export function AgentChatAccordion({
                                         <div key={message.id} className="flex gap-3">
                                             {/* Icon with glass effect */}
                                             <div className={`h-8 w-8 rounded-xl backdrop-blur-sm ${isPending
-                                                    ? "bg-amber-500/10 border-amber-500/20"
-                                                    : isComplete
-                                                        ? "bg-emerald-500/10 border-emerald-500/20"
-                                                        : "bg-red-500/10 border-red-500/20"
+                                                ? "bg-amber-500/10 border-amber-500/20"
+                                                : isComplete
+                                                    ? "bg-emerald-500/10 border-emerald-500/20"
+                                                    : "bg-red-500/10 border-red-500/20"
                                                 } border flex items-center justify-center shrink-0`}>
                                                 {isPending ? (
                                                     <span className="h-4 w-4 border-2 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" />

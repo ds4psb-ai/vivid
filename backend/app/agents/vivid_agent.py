@@ -107,6 +107,16 @@ class MemoryManager:
             "/credits": "크레딧 관리 페이지 - 충전, 사용 내역, BYOK",
             "/crebit": "Crebit 구독/결제 페이지",
             "/admin": "관리자 대시보드",
+            # Original Dimension Capsules
+            "/dimension/prompt": "1D 프롬프트 생성기 - Veo 영상 프롬프트 생성",
+            "/dimension/storyboard": "2D 스토리보드 아키텍트 - 씬 구조화",
+            "/dimension/image-tool": "3D 비주얼 스튜디오 - 이미지 프롬프트 생성",
+            "/dimension/shot-catch": "4D 프레임 캐쳐 - 레퍼런스 분석",
+            # Extended Dimension Capsules
+            "/dimension/quality-check": "QC 퀄리티 검수기 - 콘텐츠 품질 평가 (6가지 기준)",
+            "/dimension/aesthetic": "AD 미학디렉터 - 거장 감독 스타일 가이드 생성",
+            "/dimension/abyss": "AI 심연해석기 - 페르소나/심층 분석",
+            "/dimension/veo-video": "VEO 비디오 생성 - Veo 3.1 AI 영상 생성",
         }
         # Exact match first
         if page_context in PAGE_HINTS:

@@ -5,7 +5,7 @@
  * Shows version history for a template with use/revert actions.
  */
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { X, Check, RefreshCcw, History as HistoryIcon } from "lucide-react";
 import { Template, TemplateVersion } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";

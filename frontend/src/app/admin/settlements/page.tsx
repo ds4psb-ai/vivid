@@ -16,15 +16,12 @@ import {
     Clock,
     CheckCircle,
     AlertTriangle,
-    XCircle,
     PlayCircle,
-    RotateCcw,
     MessageSquare,
     RefreshCw,
     Loader2,
     ChevronRight,
     Zap,
-    Users,
 } from "lucide-react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";

@@ -25,11 +25,8 @@ import {
     SectionHeader,
     StatItem,
     PortfolioItem,
-    PipelineNode,
     CurriculumBox,
-    TrackCard,
     MentorProfile,
-    AgentVisualization,
 } from "./_components";
 
 export default function ATCPage() {

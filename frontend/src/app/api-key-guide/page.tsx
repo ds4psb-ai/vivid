@@ -74,7 +74,7 @@ export default function APIKeyGuidePage() {
                                     <div className="space-y-1">
                                         <p className="text-emerald-200 font-semibold text-sm">왜 필요한가요?</p>
                                         <p className="text-sm text-emerald-100/70 leading-relaxed">
-                                            '무료 체험판(Free Trial)' 계정은 사용량 제한이 없어 <strong>가장 빠르고 쾌적한 속도</strong>로 AI를 생성할 수 있습니다.
+                                            &apos;무료 체험판(Free Trial)&apos; 계정은 사용량 제한이 없어 <strong>가장 빠르고 쾌적한 속도</strong>로 AI를 생성할 수 있습니다.
                                         </p>
                                     </div>
                                 </div>

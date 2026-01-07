@@ -18,7 +18,6 @@ import {
     XCircle,
     Clock,
     Play,
-    ArrowRight,
     Inbox,
     Activity,
     Shield,

@@ -19,7 +19,6 @@ import {
     DollarSign,
     Calendar,
     Clock,
-    User,
     Shield,
     CheckCircle,
     AlertTriangle,

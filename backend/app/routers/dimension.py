@@ -135,6 +135,12 @@ def get_credit_cost(capsule_id: DimensionCapsuleId, model: str) -> int:
         DimensionCapsuleId.STORYBOARD_CREATE: "teaching.storyboard.create",
         DimensionCapsuleId.IMAGE_GENERATE: "teaching.image.generate",
         DimensionCapsuleId.REFERENCE_ANALYZE: "teaching.reference.analyze",
+        DimensionCapsuleId.QUALITY_CHECK: "dimension.quality.check",
+        DimensionCapsuleId.AESTHETIC_DIRECT: "dimension.aesthetic.direct",
+        DimensionCapsuleId.PERSONA_ANALYZE: "dimension.persona.analyze",
+        DimensionCapsuleId.VEO_VIDEO_GENERATE: "veo.video.generate",
+        DimensionCapsuleId.STORY_ARCHITECT: "dimension.story.architect",
+        DimensionCapsuleId.SOUND_CRAFT: "dimension.sound.craft",
     }
 
     capsule_key = capsule_key_map.get(capsule_id)
@@ -145,7 +151,7 @@ def get_credit_cost(capsule_id: DimensionCapsuleId, model: str) -> int:
         if capsule["capsule_key"] == capsule_key:
             credit_costs = capsule.get("credit_costs", {})
             return credit_costs.get(model, credit_costs.get("gemini-3-flash-preview", 5))
-    
+
     return 5
 
 
@@ -277,6 +283,56 @@ class VeoGenerateRequest(BaseModel):
     model: str = Field("veo-3.1", description="Veo model version")
 
 
+class StoryArchitectRequest(BaseModel):
+    """Request model for Story Architect (시나리오 생성기)."""
+    concept: str = Field(..., min_length=10, max_length=3000, description="Video concept or idea")
+    persona_data: Dict[str, Any] = Field(default_factory=dict, description="Persona data from Abyss Mirror")
+    reference_analysis: Dict[str, Any] = Field(default_factory=dict, description="Analysis from Reference Decoder")
+    genre: str = Field("drama", max_length=30, description="Genre: drama, ad, mv, documentary, short")
+    duration: str = Field("60s", max_length=10, description="Target duration: 15s, 30s, 60s, 3m, 5m")
+    structure: str = Field("3act", max_length=20, description="Story structure: 3act, hero, circular, montage")
+    language: str = Field("ko", description="Output language")
+    model: str = Field("gemini-2.5-pro", description="AI model")
+
+    @field_validator("genre")
+    @classmethod
+    def validate_genre(cls, v: str) -> str:
+        valid_genres = {"drama", "ad", "mv", "documentary", "short"}
+        return v.lower() if v.lower() in valid_genres else "drama"
+
+    @field_validator("structure")
+    @classmethod
+    def validate_structure(cls, v: str) -> str:
+        valid_structures = {"3act", "hero", "circular", "montage"}
+        return v.lower() if v.lower() in valid_structures else "3act"
+
+
+class SoundCraftRequest(BaseModel):
+    """Request model for Sound Crafter (사운드 크래프터)."""
+    concept: str = Field(..., min_length=10, max_length=2000, description="Sound concept or mood description")
+    storyboard: List[Dict[str, Any]] = Field(default_factory=list, description="Storyboard data for scene sync")
+    sound_type: str = Field("bgm", max_length=20, description="Sound type: bgm, sfx, narration, full")
+    mood: str = Field("neutral", max_length=50, description="Mood/atmosphere")
+    genre: str = Field("cinematic", max_length=30, description="Music genre")
+    tempo: str = Field("medium", max_length=20, description="Tempo: slow, medium, fast, dynamic")
+    duration: str = Field("60s", max_length=10, description="Target duration")
+    target_platform: str = Field("suno", max_length=20, description="Target platform: suno, udio, elevenlabs")
+    language: str = Field("ko", description="Output language")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
+
+    @field_validator("sound_type")
+    @classmethod
+    def validate_sound_type(cls, v: str) -> str:
+        valid_types = {"bgm", "sfx", "narration", "full"}
+        return v.lower() if v.lower() in valid_types else "bgm"
+
+    @field_validator("target_platform")
+    @classmethod
+    def validate_platform(cls, v: str) -> str:
+        valid_platforms = {"suno", "udio", "elevenlabs"}
+        return v.lower() if v.lower() in valid_platforms else "suno"
+
+
 # ============================================================================
 # Response Models
 # ============================================================================
@@ -329,8 +385,21 @@ async def _execute_dimension_tool(
     byok_key: Optional[str],
     db: AsyncSession,
     inputs_summary: Dict[str, Any],
+    params: Optional[Dict[str, Any]] = None,
 ) -> DimensionResponse:
-    """Execute dimension tool with credit deduction and telemetry."""
+    """Execute dimension tool with credit deduction and telemetry.
+
+    Args:
+        capsule_id: Dimension capsule identifier
+        tool_key: Tool name for telemetry
+        inputs: Input data for the capsule
+        model: AI model to use
+        user: Current user dict
+        byok_key: Optional BYOK API key
+        db: Database session
+        inputs_summary: Summary for telemetry
+        params: Additional parameters (use_rag, threshold, etc.)
+    """
     start_time = time.time()
     user_id = user.get("id")
     
@@ -366,11 +435,16 @@ async def _execute_dimension_tool(
     result = None
     error_msg = None
     
+    # Merge model into params
+    execution_params = {"model": model}
+    if params:
+        execution_params.update(params)
+
     try:
         result = await execute_dimension_capsule(
             capsule_id=capsule_id.value,
             inputs=inputs,
-            params={"model": model},
+            params=execution_params,
             user_api_key=byok_key,
         )
     except Exception as e:
@@ -740,6 +814,96 @@ async def generate_veo_video(
         byok_key=byok_key,
         db=db,
         inputs_summary={"prompt": request.prompt[:100], "style": request.style},
+    )
+
+
+# ============================================================================
+# 4-Stage Workflow: Story Architect
+# ============================================================================
+
+@router.post(
+    "/story/architect",
+    response_model=DimensionResponse,
+    responses={
+        400: {"model": DimensionErrorResponse},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="Story Architect: Generate Scenario",
+    description="Generate video scenario combining persona DNA and reference analysis.",
+    tags=["Dimension 4-Stage"],
+)
+async def architect_story(
+    request: StoryArchitectRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> DimensionResponse:
+    """Generate video scenario (Story Architect)."""
+    return await _execute_dimension_tool(
+        capsule_id=DimensionCapsuleId.STORY_ARCHITECT,
+        tool_key="story_architect",
+        inputs={
+            "concept": request.concept,
+            "persona_data": request.persona_data,
+            "reference_analysis": request.reference_analysis,
+            "genre": request.genre,
+            "duration": request.duration,
+            "structure": request.structure,
+            "language": request.language,
+        },
+        model=request.model,
+        user=user,
+        byok_key=byok_key,
+        db=db,
+        inputs_summary={"concept": request.concept[:100], "genre": request.genre, "structure": request.structure},
+        params={"use_rag": True},
+    )
+
+
+# ============================================================================
+# 4-Stage Workflow: Sound Crafter
+# ============================================================================
+
+@router.post(
+    "/sound/craft",
+    response_model=DimensionResponse,
+    responses={
+        400: {"model": DimensionErrorResponse},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="Sound Crafter: Generate Music Prompt",
+    description="Generate music/sound prompts for Suno, Udio, and ElevenLabs.",
+    tags=["Dimension 4-Stage"],
+)
+async def craft_sound(
+    request: SoundCraftRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> DimensionResponse:
+    """Generate music/sound prompts (Sound Crafter)."""
+    return await _execute_dimension_tool(
+        capsule_id=DimensionCapsuleId.SOUND_CRAFT,
+        tool_key="sound_craft",
+        inputs={
+            "concept": request.concept,
+            "storyboard": request.storyboard,
+            "sound_type": request.sound_type,
+            "mood": request.mood,
+            "genre": request.genre,
+            "tempo": request.tempo,
+            "duration": request.duration,
+            "target_platform": request.target_platform,
+            "language": request.language,
+        },
+        model=request.model,
+        user=user,
+        byok_key=byok_key,
+        db=db,
+        inputs_summary={"concept": request.concept[:100], "sound_type": request.sound_type, "platform": request.target_platform},
+        params={"use_rag": True},
     )
 
 

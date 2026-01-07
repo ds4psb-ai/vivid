@@ -14,7 +14,6 @@ import {
     Film,
     Image,
     Search,
-    Play,
     RefreshCw,
     Edit3,
     Check,

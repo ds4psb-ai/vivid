@@ -257,7 +257,8 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
     const NAV_ITEMS: { label: string; href: string; icon: React.ElementType; badge?: string }[] = [
         { label: "차원문", href: "/dimension", icon: Orbit },
         { label: "차원 흐름", href: "/flow", icon: Waypoints },
-        { label: "특이점", href: "/singularity", icon: CircleDashed, badge: "New" },
+        { label: "특이점", href: "/singularity", icon: CircleDashed },
+        { label: "별자리", href: "/constellation", icon: Sparkles, badge: "New" },
     ];
 
     const NAV_GROUPS = [

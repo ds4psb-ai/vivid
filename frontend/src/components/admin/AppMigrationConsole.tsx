@@ -10,18 +10,16 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
     Upload, Link as LinkIcon, CheckCircle, AlertCircle, Loader2,
     FileCode, Package, Rocket, Eye, Settings,
-    ChevronRight, X, Copy, ExternalLink, List
+    ChevronRight, X, Copy, List
 } from "lucide-react";
 import {
     registerAppWithFile,
     buildApp,
-    fileToBase64,
     type AppManifest
 } from "@/lib/admin-api";
 
@@ -151,7 +149,6 @@ interface AppMigrationConsoleProps {
 }
 
 export function AppMigrationConsole({ onDeploy }: AppMigrationConsoleProps) {
-    const router = useRouter();
     const [uploadMethod, setUploadMethod] = useState<UploadMethod>(null);
     const [url, setUrl] = useState("");
     const [isLoading, setIsLoading] = useState(false);

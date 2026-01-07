@@ -1,0 +1,182 @@
+{
+  "title": "Crebit Quality Criteria Standards",
+  "version": "1.0.0",
+  "description": "AI 생성 콘텐츠 품질 평가 기준",
+  "criteria": {
+    "aesthetic": {
+      "name": "Aesthetic Quality",
+      "weight": 0.25,
+      "description": "시각적/예술적 품질 평가",
+      "sub_criteria": [
+        {
+          "name": "composition",
+          "description": "구도와 프레이밍의 적절성",
+          "scoring": {
+            "90-100": "전문가 수준의 구도, 의도적 프레이밍",
+            "70-89": "양호한 구도, 기본 원칙 준수",
+            "50-69": "평범한 구도, 개선 가능",
+            "0-49": "부적절한 구도, 주요 결함"
+          }
+        },
+        {
+          "name": "color_harmony",
+          "description": "색상 조화와 팔레트 일관성",
+          "scoring": {
+            "90-100": "의도적 색상 스토리텔링",
+            "70-89": "조화로운 팔레트",
+            "50-69": "기본적 색상 사용",
+            "0-49": "색상 충돌 또는 부조화"
+          }
+        },
+        {
+          "name": "style_consistency",
+          "description": "시각적 스타일 일관성",
+          "scoring": {
+            "90-100": "완벽한 스타일 통일성",
+            "70-89": "대체로 일관된 스타일",
+            "50-69": "일부 스타일 불일치",
+            "0-49": "심각한 스타일 혼란"
+          }
+        }
+      ]
+    },
+    "ad_suitability": {
+      "name": "Advertising Suitability",
+      "weight": 0.15,
+      "description": "브랜드 세이프티 및 상업적 적합성",
+      "sub_criteria": [
+        {
+          "name": "brand_safety",
+          "description": "브랜드 가치와의 정렬",
+          "flags": ["violence", "adult_content", "political", "controversial"]
+        },
+        {
+          "name": "commercial_appeal",
+          "description": "상업적 매력도",
+          "factors": ["audience_appeal", "message_clarity", "call_to_action"]
+        },
+        {
+          "name": "platform_compliance",
+          "description": "플랫폼 정책 준수",
+          "platforms": ["youtube", "instagram", "tiktok", "broadcast"]
+        }
+      ]
+    },
+    "consistency": {
+      "name": "Consistency",
+      "weight": 0.20,
+      "description": "스타일/톤 균일성, 연속성",
+      "sub_criteria": [
+        {
+          "name": "visual_continuity",
+          "description": "시각적 연속성 (색조, 조명, 스타일)",
+          "checks": ["color_grading", "lighting_direction", "resolution"]
+        },
+        {
+          "name": "narrative_continuity",
+          "description": "서사적 연속성 (캐릭터, 설정)",
+          "checks": ["character_appearance", "setting_details", "timeline"]
+        },
+        {
+          "name": "tone_consistency",
+          "description": "톤과 분위기 일관성",
+          "checks": ["mood", "energy_level", "genre_conventions"]
+        }
+      ]
+    },
+    "safety": {
+      "name": "Content Safety",
+      "weight": 0.15,
+      "description": "콘텐츠 안전성 (폭력, 혐오, 명시적 내용)",
+      "categories": {
+        "violence": {
+          "levels": ["none", "mild", "moderate", "graphic"],
+          "threshold": "moderate",
+          "description": "폭력적 내용 수준"
+        },
+        "adult_content": {
+          "levels": ["none", "suggestive", "explicit"],
+          "threshold": "suggestive",
+          "description": "성인 콘텐츠 수준"
+        },
+        "hate_speech": {
+          "levels": ["none", "detected"],
+          "threshold": "none",
+          "description": "혐오 발언 포함 여부"
+        },
+        "dangerous_activity": {
+          "levels": ["none", "mild", "dangerous"],
+          "threshold": "mild",
+          "description": "위험한 활동 묘사"
+        }
+      }
+    },
+    "technical": {
+      "name": "Technical Quality",
+      "weight": 0.10,
+      "description": "기술적 품질 (해상도, 선명도, 포맷)",
+      "checks": [
+        {
+          "name": "resolution",
+          "minimum": "1080p",
+          "recommended": "4K",
+          "for_video": true
+        },
+        {
+          "name": "clarity",
+          "description": "선명도와 노이즈 수준",
+          "metrics": ["sharpness", "noise_level", "artifact_presence"]
+        },
+        {
+          "name": "format_compliance",
+          "description": "포맷 및 코덱 적합성",
+          "checks": ["aspect_ratio", "frame_rate", "codec_compatibility"]
+        }
+      ]
+    },
+    "narrative": {
+      "name": "Narrative Quality",
+      "weight": 0.15,
+      "description": "스토리 일관성, 감정적 호소력, 참여도",
+      "sub_criteria": [
+        {
+          "name": "story_coherence",
+          "description": "스토리의 논리적 일관성",
+          "checks": ["plot_logic", "character_motivation", "cause_effect"]
+        },
+        {
+          "name": "emotional_arc",
+          "description": "감정적 여정과 호소력",
+          "checks": ["emotional_buildup", "climax", "resolution"]
+        },
+        {
+          "name": "engagement",
+          "description": "시청자 참여도와 흥미",
+          "factors": ["hook", "pacing", "surprise", "satisfaction"]
+        }
+      ]
+    }
+  },
+  "scoring": {
+    "method": "weighted_average",
+    "pass_threshold": 70,
+    "excellence_threshold": 85,
+    "scale": {
+      "min": 0,
+      "max": 100
+    }
+  },
+  "output_format": {
+    "passed": "boolean",
+    "score": "number (0-100)",
+    "criteria_results": {
+      "criterion_name": {
+        "score": "number",
+        "passed": "boolean",
+        "details": "string"
+      }
+    },
+    "issues": ["array of identified problems"],
+    "suggestions": ["array of improvement recommendations"]
+  }
+}

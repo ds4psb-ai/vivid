@@ -439,6 +439,52 @@ async def chat_agent(
     await db.commit()
     await db.refresh(session)
 
+    # Auto-execution context injection for AUTONOMOUS mode
+    from app.agents.intent_router import classify_intent, Intent
+    from app.agents.attachment_analyzer import AttachmentAnalyzer
+
+    routing = classify_intent(user_content)
+
+    # Inject auto-execution context if AUTONOMOUS mode detected
+    if routing.should_auto_execute and routing.intent == Intent.WORKFLOW_REQUEST:
+        # Analyze attachments for workflow inference
+        attachment_suggestion = AttachmentAnalyzer.analyze(request.attachments)
+
+        auto_context = {
+            "auto_execute": True,
+            "intent": routing.intent.value,
+            "confidence": routing.confidence,
+            "suggested_dimensions": attachment_suggestion.dimensions,
+            "start_dimension": attachment_suggestion.start_dimension,
+            "full_workflow": routing.full_workflow,
+            "topic_hint": user_content[:100],
+            "attachment_reason": attachment_suggestion.reason,
+        }
+
+        session.meta = _merge_metadata(session.meta, {"auto_context": auto_context})
+        state.metadata = _merge_metadata(state.metadata or {}, {"auto_context": auto_context})
+
+        logger.info(
+            "Auto-execution context injected",
+            extra={
+                "session_id": str(session.id),
+                "intent": routing.intent.value,
+                "auto_execute": True,
+                "full_workflow": routing.full_workflow,
+                "dimensions": attachment_suggestion.dimensions,
+            },
+        )
+    elif routing.intent != Intent.GENERAL_CHAT:
+        # Inject routing hint even for non-auto-execute cases
+        routing_hint = {
+            "intent": routing.intent.value,
+            "confidence": routing.confidence,
+            "suggested_tool": routing.suggested_tool,
+            "workflow_suggestion": routing.workflow_suggestion,
+        }
+        session.meta = _merge_metadata(session.meta, {"routing_hint": routing_hint})
+        state.metadata = _merge_metadata(state.metadata or {}, {"routing_hint": routing_hint})
+
     async def _event_stream() -> AsyncGenerator[str, None]:
         seq = 0
         session_id = str(session.id)

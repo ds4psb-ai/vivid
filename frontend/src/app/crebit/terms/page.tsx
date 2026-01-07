@@ -8,7 +8,7 @@ import { ArrowLeft, FileText, Shield } from "lucide-react";
 
 export default function CrebitTermsPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen bg-[#050505] flex items-center justify-center text-white">Loading...</div>}>
+        <Suspense fallback={<div className="min-h-screen bg-[#0F0F1A] flex items-center justify-center text-white">Loading...</div>}>
             <CrebitTermsContent />
         </Suspense>
     );
@@ -23,9 +23,9 @@ function CrebitTermsContent() {
     const activeTab = manualTab ?? resolvedTab ?? "terms";
 
     return (
-        <div className="min-h-screen bg-[#050505] text-white">
+        <div className="min-h-screen bg-[#0F0F1A] text-white">
             {/* Header */}
-            <header className="border-b border-white/5 bg-[#050505]/80 backdrop-blur-xl sticky top-0 z-50">
+            <header className="border-b border-white/5 bg-[#0F0F1A]/80 backdrop-blur-xl sticky top-0 z-50">
                 <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
                     <Link href="/crebit" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
                         <ArrowLeft className="w-4 h-4" />
@@ -47,7 +47,7 @@ function CrebitTermsContent() {
                 <div className="flex gap-2 mb-8 p-1 rounded-xl bg-white/5 border border-white/10">
                     <button
                         onClick={() => setManualTab("terms")}
-                        className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all ${activeTab === "terms" ? "bg-[#4200FF] text-white" : "text-slate-400 hover:text-white"
+                        className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all ${activeTab === "terms" ? "bg-violet-500 text-white" : "text-slate-400 hover:text-white"
                             }`}
                     >
                         <FileText className="w-4 h-4 inline mr-2" />
@@ -55,7 +55,7 @@ function CrebitTermsContent() {
                     </button>
                     <button
                         onClick={() => setManualTab("privacy")}
-                        className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all ${activeTab === "privacy" ? "bg-[#4200FF] text-white" : "text-slate-400 hover:text-white"
+                        className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all ${activeTab === "privacy" ? "bg-violet-500 text-white" : "text-slate-400 hover:text-white"
                             }`}
                     >
                         <Shield className="w-4 h-4 inline mr-2" />
@@ -346,7 +346,7 @@ function RefundContent() {
                 <h2 className="text-xl font-bold text-white mb-4">4. 환불 신청 방법</h2>
                 <div className="bg-white/5 rounded-xl p-5 border border-white/10 space-y-3">
                     <p><strong>1단계:</strong> 아래 이메일로 환불 요청</p>
-                    <p className="pl-4 text-[#4200FF]">kaylee@page-academy.com</p>
+                    <p className="pl-4 text-violet-400">kaylee@page-academy.com</p>
                     <p><strong>2단계:</strong> 환불 사유 및 계좌 정보 기재</p>
                     <p><strong>3단계:</strong> 환불 승인 후 5-7영업일 내 입금</p>
                 </div>

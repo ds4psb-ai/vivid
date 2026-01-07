@@ -1,0 +1,130 @@
+{
+  "title": "Visual Design Grammar Standards",
+  "version": "1.0.0",
+  "description": "Crebit 시각적 디자인 문법 표준",
+  "composition": {
+    "rules": [
+      {
+        "name": "Rule of Thirds",
+        "description": "프레임을 9등분하여 교차점에 주요 피사체 배치",
+        "use_cases": ["landscapes", "portraits", "establishing shots"]
+      },
+      {
+        "name": "Golden Ratio",
+        "description": "1:1.618 비율을 활용한 자연스러운 시각적 균형",
+        "use_cases": ["artistic compositions", "emotional scenes"]
+      },
+      {
+        "name": "Leading Lines",
+        "description": "시선을 주요 피사체로 유도하는 선적 요소",
+        "use_cases": ["architectural shots", "journey sequences"]
+      },
+      {
+        "name": "Symmetry",
+        "description": "좌우 대칭을 통한 안정감과 권위 표현",
+        "use_cases": ["formal settings", "power dynamics"]
+      },
+      {
+        "name": "Frame Within Frame",
+        "description": "창문, 문틀 등을 활용한 중첩 프레이밍",
+        "use_cases": ["isolation", "voyeurism", "revelation"]
+      }
+    ]
+  },
+  "lighting": {
+    "types": [
+      {
+        "name": "High Key",
+        "description": "밝고 균일한 조명, 그림자 최소화",
+        "mood": ["optimistic", "romantic", "dreamlike"],
+        "techniques": ["fill lights", "diffusion", "bounce"]
+      },
+      {
+        "name": "Low Key",
+        "description": "강한 대비, 깊은 그림자",
+        "mood": ["mysterious", "dramatic", "noir"],
+        "techniques": ["single source", "negative fill", "practical lights"]
+      },
+      {
+        "name": "Chiaroscuro",
+        "description": "극적인 명암 대비",
+        "mood": ["theatrical", "painterly", "intense"],
+        "techniques": ["hard light", "minimal fill", "rim light"]
+      },
+      {
+        "name": "Natural/Available",
+        "description": "자연광 또는 실제 환경광 활용",
+        "mood": ["realistic", "documentary", "intimate"],
+        "techniques": ["window light", "practical sources", "bounce"]
+      }
+    ],
+    "color_temperature": {
+      "warm": {"kelvin": "2700-3500K", "mood": ["intimate", "nostalgic", "romantic"]},
+      "neutral": {"kelvin": "4000-5000K", "mood": ["natural", "balanced", "clear"]},
+      "cool": {"kelvin": "5500-7500K", "mood": ["clinical", "melancholic", "mysterious"]}
+    }
+  },
+  "camera": {
+    "shot_types": [
+      {"name": "Extreme Wide Shot", "abbreviation": "EWS", "purpose": "환경 확립, 인물의 왜소함"},
+      {"name": "Wide Shot", "abbreviation": "WS", "purpose": "장소와 인물 관계 설정"},
+      {"name": "Medium Shot", "abbreviation": "MS", "purpose": "대화, 행동 묘사"},
+      {"name": "Close-Up", "abbreviation": "CU", "purpose": "감정, 반응, 디테일"},
+      {"name": "Extreme Close-Up", "abbreviation": "ECU", "purpose": "강렬한 감정, 중요 디테일"}
+    ],
+    "movements": [
+      {"name": "Static", "purpose": "안정감, 관찰적 시점"},
+      {"name": "Pan", "purpose": "공간 탐색, 시선 따라가기"},
+      {"name": "Tilt", "purpose": "수직적 규모 표현"},
+      {"name": "Tracking/Dolly", "purpose": "인물과 함께 이동, 몰입"},
+      {"name": "Crane/Jib", "purpose": "웅장함, 전환, reveal"},
+      {"name": "Handheld", "purpose": "긴장감, 현장감, 친밀감"}
+    ],
+    "angles": [
+      {"name": "Eye Level", "effect": "중립적, 객관적"},
+      {"name": "High Angle", "effect": "취약함, 약함"},
+      {"name": "Low Angle", "effect": "권위, 위협"},
+      {"name": "Dutch Angle", "effect": "불안, 혼란"}
+    ]
+  },
+  "color": {
+    "psychology": [
+      {"color": "Red", "associations": ["passion", "danger", "power", "love"]},
+      {"color": "Blue", "associations": ["calm", "trust", "sadness", "cold"]},
+      {"color": "Green", "associations": ["nature", "growth", "envy", "peace"]},
+      {"color": "Yellow", "associations": ["happiness", "energy", "caution", "warmth"]},
+      {"color": "Orange", "associations": ["creativity", "enthusiasm", "warmth"]},
+      {"color": "Purple", "associations": ["royalty", "mystery", "spirituality"]},
+      {"color": "Black", "associations": ["elegance", "death", "mystery", "power"]},
+      {"color": "White", "associations": ["purity", "innocence", "cleanliness"]}
+    ],
+    "schemes": [
+      {"name": "Complementary", "description": "색상환 반대편 색상 조합"},
+      {"name": "Analogous", "description": "색상환 인접 색상 조합"},
+      {"name": "Triadic", "description": "색상환 120도 간격 3색"},
+      {"name": "Monochromatic", "description": "단일 색상의 명도/채도 변화"}
+    ]
+  },
+  "pacing": {
+    "types": [
+      {
+        "name": "Slow",
+        "avg_shot_length": "8-15 seconds",
+        "effect": "contemplative, atmospheric, artistic",
+        "use_cases": ["character moments", "establishing mood", "art films"]
+      },
+      {
+        "name": "Medium",
+        "avg_shot_length": "3-7 seconds",
+        "effect": "balanced, natural rhythm",
+        "use_cases": ["dialogue scenes", "narrative progression"]
+      },
+      {
+        "name": "Fast",
+        "avg_shot_length": "1-3 seconds",
+        "effect": "energetic, tense, exciting",
+        "use_cases": ["action", "montage", "climax"]
+      }
+    ]
+  }
+}

@@ -85,10 +85,22 @@ class Settings(BaseSettings):
     NICEPAY_API_URL: str = "https://sandbox-api.nicepay.co.kr"
     NICEPAY_MODE: str = "sandbox"  # sandbox | production
 
-    # NotebookLM Enterprise API
-    # License: arkain.info@gmail.com (Gemini Enterprise)
+    # Google Cloud Platform
+    # Project: gen-lang-client-0587915249 (Default Gemini Project)
+    # Account: arkain.info@gmail.com
+    GCP_PROJECT_ID: str = "gen-lang-client-0587915249"
+    GCP_PROJECT_NUMBER: str = "163373812492"
+    GCP_LOCATION: str = "europe-west4"  # RAG Engine available here (us-central1 restricted)
+    GCS_BUCKET: str = "crebit-rag-data"
+
+    # Vertex AI RAG Engine (Tier 0)
+    # Docs: https://cloud.google.com/vertex-ai/generative-ai/docs/rag-engine
+    VERTEX_RAG_EMBEDDING_MODEL: str = "text-embedding-005"
+    VERTEX_RAG_CHUNK_SIZE: int = 1024
+    VERTEX_RAG_CHUNK_OVERLAP: int = 200
+
+    # NotebookLM Enterprise API (Legacy - prefer Vertex AI RAG)
     # Project: vivid-canvas-482303
-    # Docs: https://docs.cloud.google.com/gemini/enterprise/notebooklm-enterprise/docs
     NOTEBOOKLM_PROJECT_NUMBER: str = "239259013228"  # vivid-canvas project
     NOTEBOOKLM_LOCATION: str = "global"  # global, us, eu
     NOTEBOOKLM_ENDPOINT: str = "global"  # API endpoint region
