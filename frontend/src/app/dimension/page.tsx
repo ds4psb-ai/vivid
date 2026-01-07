@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { MiniAppSubmitModal } from "@/components/MiniAppSubmitModal";
-import { useParallaxScroll, useSmoothScroll } from "@/hooks/useLusionAnimations";
+import { useParallaxScroll } from "@/hooks/useLusionAnimations";
 import AppShell from "@/components/AppShell";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDimensionChainOptional } from "@/contexts/DimensionChainContext";
@@ -249,7 +249,6 @@ export default function WorkshopHubPage() {
     const [selectedStage, setSelectedStage] = useState<StageKey | null>(null);
     const [showChainPanel, setShowChainPanel] = useState(false);
     const chainCtx = useDimensionChainOptional();
-    useSmoothScroll();
     useParallaxScroll();
 
     const filteredItems = selectedStage
@@ -269,7 +268,7 @@ export default function WorkshopHubPage() {
     };
 
     return (
-        <AppShell>
+        <AppShell showTopBar={false}>
             {/* Aurora Background (Fixed) */}
             <AuroraBackground />
 

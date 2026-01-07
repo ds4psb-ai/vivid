@@ -1,15 +1,20 @@
 "use client";
 
-import { ReactNode, useState, useCallback, useMemo } from "react";
+import { ReactNode, useState, useCallback, useMemo, lazy, Suspense } from "react";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import CollapsibleSidebar from "./CollapsibleSidebar";
 import TopBar from "./TopBar";
-import { AgentChatAccordion } from "./AgentChatAccordion";
+import { ChokkiFABSkeleton } from "./ChokkiFABSkeleton";
 import { X } from "lucide-react";
 import { useCreditBalance } from "@/hooks/useCreditBalance";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { CreditProvider } from "@/components/CreditGate";
+
+// Lazy load heavy AgentChatAccordion to reduce initial bundle
+const AgentChatAccordion = lazy(() =>
+    import("./AgentChatAccordion").then(mod => ({ default: mod.AgentChatAccordion }))
+);
 
 interface AppShellProps {
     children: ReactNode;
@@ -174,11 +179,13 @@ export default function AppShell({
                     {children}
                 </main>
 
-                {/* Global Chokki Agent */}
+                {/* Global Chokki Agent - Lazy Loaded */}
                 {showChokki && (
-                    <AgentChatAccordion
-                        initialMessage={chokkiInitialMessage}
-                    />
+                    <Suspense fallback={<ChokkiFABSkeleton />}>
+                        <AgentChatAccordion
+                            initialMessage={chokkiInitialMessage}
+                        />
+                    </Suspense>
                 )}
             </div>
         </CreditProvider>
