@@ -9,7 +9,7 @@ import { AgentChatAccordion } from "@/components/AgentChatAccordion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Copy, Check, Sparkles, LayoutGrid, Image as ImageIcon, Film, X, Download, Save, CheckCircle, Palette, Moon, Video, Loader2 } from "lucide-react";
+import { ChevronDown, Copy, Check, Sparkles, LayoutGrid, Image as ImageIcon, Film, X, Download, Save, CheckCircle, Palette, Moon, Video, Loader2, BookOpen, Music } from "lucide-react";
 import { api, SingularityTemplate } from "@/lib/api";
 import type {
     WorkflowStartEvent,
@@ -18,39 +18,46 @@ import type {
     WorkflowNode,
 } from "@/types/agent";
 
-// Agent tool names to toolId mapping (for workflow events)
+// Agent tool names to toolId mapping (for workflow events) - 10개 전체
 const AGENT_TOOL_TO_TOOL_ID: Record<string, string> = {
+    // Core Dimensions (1D-4D)
     "generate_veo_prompt": "prompt_generator",
     "create_storyboard": "storyboard",
     "generate_image_prompt": "image_tool",
     "analyze_reference": "reference_analyzer",
+    // Extended Dimensions
     "quality_check": "quality_check",
     "aesthetic_direct": "aesthetic_direct",
     "persona_analyze": "persona_analyze",
     "veo_generate": "veo_generate",
+    "story_architect": "story_architect",
+    "sound_craft": "sound_craft",
 };
 
-// Dimension code to toolId mapping (for template loading)
+// Dimension code to toolId mapping (for template loading) - 10개 전체
 const DIMENSION_TO_TOOL_ID: Record<string, string> = {
     // Core dimensions (1D-4D)
     "1D": "prompt_generator",
     "2D": "storyboard",
     "3D": "image_tool",
     "4D": "reference_analyzer",
-    // Extended dimensions
+    // Extended dimensions (10개 전체)
     "QC": "quality_check",
     "AD": "aesthetic_direct",
     "AI": "persona_analyze",
     "VEO": "veo_generate",
-    // 4-Stage Workflow dimensions
+    "SA": "story_architect",
+    "SC": "sound_craft",
+    // 4-Stage Workflow aliases
     "STORY": "story_architect",
-    "SOUND": "sound_crafter",
+    "SOUND": "sound_craft",
     "REF": "reference_decoder",
     "VIS": "visual_realizer",
 };
 
-// Icon components
+// Icon components - 10개 차원 전체
 const ICON_COMPONENTS: Record<string, React.ReactNode> = {
+    // Core Dimensions
     sparkles: <Sparkles className="h-5 w-5" />,
     "layout-grid": <LayoutGrid className="h-5 w-5" />,
     image: <ImageIcon className="h-5 w-5" />,
@@ -60,6 +67,8 @@ const ICON_COMPONENTS: Record<string, React.ReactNode> = {
     palette: <Palette className="h-5 w-5" />,
     moon: <Moon className="h-5 w-5" />,
     video: <Video className="h-5 w-5" />,
+    "book-open": <BookOpen className="h-5 w-5" />,  // SA: Story Architect
+    music: <Music className="h-5 w-5" />,           // SC: Sound Crafter
 };
 
 // Workflow result type

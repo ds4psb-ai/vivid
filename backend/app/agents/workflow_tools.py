@@ -77,51 +77,64 @@ async def _cleanup_handles(handle_refs: List[str]) -> int:
 # =============================================================================
 
 DIMENSION_TO_TOOL: Dict[str, str] = {
+    # Core Dimensions (1D-4D)
     "1D": "generate_veo_prompt",
     "2D": "create_storyboard",
     "3D": "generate_image_prompt",
     "4D": "analyze_reference",
-    # Extended Dimension Capsules
+    # Extended Dimension Capsules (10개 전체)
     "QC": "quality_check",
     "AD": "aesthetic_direct",
     "AI": "persona_analyze",
     "VEO": "veo_generate",
+    "SA": "story_architect",      # 시나리오 생성기
+    "SC": "sound_craft",          # 사운드 크래프터
 }
 
 DIMENSION_NAMES: Dict[str, str] = {
-    "1D": "Origin (프롬프트 생성)",
-    "2D": "Blueprint (스토리보드)",
-    "3D": "Ambience (이미지 생성)",
-    "4D": "Moment (레퍼런스 분석)",
-    # Extended Dimension Capsules
-    "QC": "Quality (품질 검수)",
-    "AD": "Aesthetic (미학 디렉터)",
-    "AI": "Abyss (심연 해석)",
-    "VEO": "Video (Veo 비디오)",
+    # Core Dimensions (1D-4D)
+    "1D": "Origin (프롬프트 연금술)",
+    "2D": "Blueprint (스토리보드 스케치)",
+    "3D": "Ambience (비주얼 리얼라이저)",
+    "4D": "Moment (레퍼런스 해석기)",
+    # Extended Dimension Capsules (10개 전체)
+    "QC": "Quality (퀄리티 디렉터)",
+    "AD": "Aesthetic (미학디렉터)",
+    "AI": "Abyss (심연의 거울)",
+    "VEO": "Video (비디오 메이커)",
+    "SA": "Story (시나리오 생성기)",
+    "SC": "Sound (사운드 크래프터)",
 }
 
 DIMENSION_COLORS: Dict[str, str] = {
+    # Core Dimensions (1D-4D)
     "1D": "#8B5CF6",  # Violet
     "2D": "#10B981",  # Emerald
     "3D": "#F59E0B",  # Amber
     "4D": "#06B6D4",  # Cyan
-    # Extended Dimension Capsules
+    # Extended Dimension Capsules (10개 전체)
     "QC": "#F43F5E",  # Rose
     "AD": "#D946EF",  # Fuchsia
     "AI": "#6366F1",  # Indigo
     "VEO": "#0EA5E9",  # Sky
+    "SA": "#F97316",  # Orange
+    "SC": "#EC4899",  # Pink
 }
 
 # T2 Hardening: Dimension to capsule mapping for quality checks
 DIMENSION_TO_CAPSULE: Dict[str, str] = {
+    # Core Dimensions (1D-4D)
     "1D": "teaching.prompt.generate",
     "2D": "teaching.storyboard.create",
     "3D": "teaching.image.generate",
     "4D": "teaching.reference.analyze",
+    # Extended Dimension Capsules (10개 전체)
     "QC": "dimension.quality.check",
     "AD": "dimension.aesthetic.direct",
     "AI": "dimension.persona.analyze",
     "VEO": "veo.video.generate",
+    "SA": "dimension.story.architect",
+    "SC": "dimension.sound.craft",
 }
 
 # T3 Hardening: Auteur style definitions for propagation across dimensions
@@ -425,8 +438,8 @@ CREATE_WORKFLOW_SPEC = ToolSpec(
             },
             "dimensions": {
                 "type": "array",
-                "items": {"type": "string", "enum": ["1D", "2D", "3D", "4D"]},
-                "description": "실행할 차원 순서 (기본값: ['1D', '2D', '3D'])",
+                "items": {"type": "string", "enum": ["1D", "2D", "3D", "4D", "QC", "AD", "AI", "VEO", "SA", "SC"]},
+                "description": "실행할 차원 순서 (10개): 1D-4D(기본), QC(품질), AD(미학), AI(심연), VEO(비디오), SA(시나리오), SC(사운드)",
                 "default": ["1D", "2D", "3D"],
             },
             "auto_execute": {
@@ -459,10 +472,11 @@ async def _create_workflow_handler(
     if not dimensions:
         return error_result(call, "최소 하나 이상의 차원을 지정해주세요.")
     
-    # Validate dimensions
+    # Validate dimensions (supports all 8 dimension capsules)
     invalid_dims = [d for d in dimensions if d not in DIMENSION_TO_TOOL]
     if invalid_dims:
-        return error_result(call, f"유효하지 않은 차원: {invalid_dims}. 사용 가능: 1D, 2D, 3D, 4D")
+        valid_dims = ", ".join(DIMENSION_TO_TOOL.keys())
+        return error_result(call, f"유효하지 않은 차원: {invalid_dims}. 사용 가능: {valid_dims}")
     
     workflow_id = str(uuid.uuid4())
     
@@ -509,13 +523,13 @@ async def _create_workflow_handler(
         "created_at": None,  # Will be set when saved
     }
     
-    # Emit workflow created event
+    # Emit workflow created event (must include full nodes array for frontend)
     emitter.emit("agent.workflow_created", {
         "workflow_id": workflow_id,
         "name": workflow_name,
         "topic": topic,
         "dimensions": dimensions,
-        "node_count": len(nodes),
+        "nodes": nodes,  # Frontend expects full nodes array, not just count
         "auto_execute": auto_execute,
     })
     
@@ -571,8 +585,8 @@ full_workflow=true 시 전체 8개 캡슐을 전략적으로 배치합니다."""
             },
             "dimensions": {
                 "type": "array",
-                "items": {"type": "string", "enum": ["1D", "2D", "3D", "4D", "QC", "AD", "AI", "VEO"]},
-                "description": "실행할 차원 순서. 미지정 시 자동 구성됨.",
+                "items": {"type": "string", "enum": ["1D", "2D", "3D", "4D", "QC", "AD", "AI", "VEO", "SA", "SC"]},
+                "description": "실행할 차원 순서 (10개). 미지정 시 자동 구성됨.",
             },
             "full_workflow": {
                 "type": "boolean",
