@@ -44,6 +44,11 @@ DEFAULT_POLL_INTERVAL = 10     # Start with 10 seconds
 MAX_POLL_INTERVAL = 30         # Cap at 30 seconds
 POLL_BACKOFF_FACTOR = 1.2      # Exponential backoff factor
 
+# Retry configuration for initial API call
+MAX_RETRIES = 3
+RETRY_DELAYS = [5, 15, 30]  # Progressive delays in seconds
+RETRYABLE_ERRORS = ["RATE_LIMIT", "UNAVAILABLE", "RESOURCE_EXHAUSTED", "DEADLINE_EXCEEDED"]
+
 
 @dataclass
 class VeoConfig:
@@ -168,16 +173,42 @@ class VeoService:
             if config.include_audio and "3.1" in model:
                 generate_config["include_audio"] = True
 
-            # Submit async generation job
-            # Note: Using aio for async operation
-            operation = await asyncio.to_thread(
-                client.models.generate_videos,
-                model=model,
-                prompt=config.prompt,
-                config=types.GenerateVideosConfig(**{
-                    k: v for k, v in generate_config.items() if k != "prompt"
-                }),
-            )
+            # Submit async generation job with retry logic
+            operation = None
+            last_error = None
+
+            for attempt in range(MAX_RETRIES):
+                try:
+                    operation = await asyncio.to_thread(
+                        client.models.generate_videos,
+                        model=model,
+                        prompt=config.prompt,
+                        config=types.GenerateVideosConfig(**{
+                            k: v for k, v in generate_config.items() if k != "prompt"
+                        }),
+                    )
+                    break  # Success, exit retry loop
+                except Exception as e:
+                    last_error = e
+                    error_str = str(e).upper()
+
+                    # Check if error is retryable
+                    is_retryable = any(err in error_str for err in RETRYABLE_ERRORS)
+
+                    if is_retryable and attempt < MAX_RETRIES - 1:
+                        delay = RETRY_DELAYS[attempt]
+                        logger.warning(
+                            f"Veo API error (attempt {attempt + 1}/{MAX_RETRIES}): {e}. "
+                            f"Retrying in {delay}s..."
+                        )
+                        await asyncio.sleep(delay)
+                        continue
+
+                    # Non-retryable or final attempt
+                    raise
+
+            if operation is None:
+                raise VeoGenerationError(f"Failed to submit generation job: {last_error}")
 
             # Poll for completion with exponential backoff
             elapsed = 0

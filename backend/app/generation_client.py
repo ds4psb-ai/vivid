@@ -193,114 +193,6 @@ async def _run_mock_generation(prompt: PromptContract) -> GenResult:
     )
 
 
-async def _run_veo_generation(prompt: PromptContract) -> GenResult:
-    """Run generation with Veo via Google Gen AI SDK.
-    
-    Veo generates 8-sec 720p/1080p videos with native audio.
-    Uses the same API key as Gemini (GEMINI_API_KEY).
-    
-    Note: As of Dec 2024, Veo is primarily available through:
-    - AI Studio web interface (aistudio.google.com)
-    - Vertex AI (requires GCP project)
-    
-    This implementation attempts API access and provides helpful
-    fallback information if not available.
-    """
-    import time
-    start_time = time.time()
-    
-    if not settings.GEMINI_API_KEY:
-        return GenResult(
-            shot_id=prompt.shot_id,
-            status="failed",
-            error="GEMINI_API_KEY not configured",
-            model_version="veo",
-        )
-    
-    try:
-        from google import genai
-        from google.genai import types
-        
-        # Configure client
-        client = genai.Client(api_key=settings.GEMINI_API_KEY)
-        
-        # Try available video models in order of preference
-        models_to_try = [
-            "veo-3.1-generate-preview",
-            "veo-3.0-generate-001", 
-            "veo-2.0-generate-001",
-        ]
-        
-        logger.info(f"[Veo] Generating shot {prompt.shot_id}")
-        logger.info(f"[Veo] Prompt: {prompt.prompt[:100]}...")
-        
-        for model_name in models_to_try:
-            try:
-                # Attempt video generation
-                operation = client.models.generate_videos(
-                    model=model_name,
-                    prompt=prompt.prompt,
-                    config=types.GenerateVideosConfig(
-                        aspect_ratio=prompt.aspect_ratio,  # Use as-is (16:9 format)
-                        duration_seconds=min(prompt.duration_sec, 8),
-                        number_of_videos=1,
-                    ),
-                )
-                
-                # If we get here, model exists - poll for completion
-                max_wait = 120
-                poll_interval = 5
-                elapsed = 0
-                
-                while not operation.done and elapsed < max_wait:
-                    await asyncio.sleep(poll_interval)
-                    operation = client.operations.get(operation)
-                    elapsed += poll_interval
-                    logger.debug(f"[Veo] Waiting... {elapsed}s")
-                
-                if operation.done and not operation.error:
-                    result = operation.result
-                    video_url = None
-                    if hasattr(result, 'generated_videos') and result.generated_videos:
-                        video = result.generated_videos[0]
-                        video_url = video.uri if hasattr(video, 'uri') else str(video)
-                    
-                    if video_url:
-                        return GenResult(
-                            shot_id=prompt.shot_id,
-                            status="success",
-                            output_url=video_url,
-                            iteration=1,
-                            latency_ms=int((time.time() - start_time) * 1000),
-                            cost_usd_est=0.05,
-                            model_version=model_name,
-                        )
-                        
-            except Exception as model_error:
-                if "NOT_FOUND" in str(model_error):
-                    continue  # Try next model
-                raise
-        
-        # No models worked - provide informative message
-        return GenResult(
-            shot_id=prompt.shot_id,
-            status="failed",
-            error="Veo not yet available via API. Use AI Studio web or Vertex AI.",
-            latency_ms=int((time.time() - start_time) * 1000),
-            model_version="veo-unavailable",
-        )
-        
-    except Exception as e:
-        logger.error(f"[Veo] Generation failed: {e}")
-        return GenResult(
-            shot_id=prompt.shot_id,
-            status="failed",
-            error=str(e),
-            latency_ms=int((time.time() - start_time) * 1000),
-            model_version="veo",
-        )
-
-
 async def _run_kling_generation(prompt: PromptContract) -> GenResult:
     """Run generation with Kling AI.
     
@@ -347,7 +239,22 @@ async def generate_shot(
             if provider == GenProvider.MOCK:
                 result = await _run_mock_generation(prompt_contract)
             elif provider == GenProvider.VEO:
-                result = await _run_veo_generation(prompt_contract)
+                # Use unified veo_service instead of legacy _run_veo_generation
+                from app.services.veo_service import generate_video
+                veo_result = await generate_video(
+                    prompt=prompt_contract.prompt,
+                    duration_seconds=min(prompt_contract.duration_sec, 8),
+                    aspect_ratio=prompt_contract.aspect_ratio,
+                )
+                result = GenResult(
+                    shot_id=prompt_contract.shot_id,
+                    status="success" if veo_result.success else "failed",
+                    output_url=veo_result.video_uri,
+                    error=veo_result.error,
+                    latency_ms=veo_result.duration_ms,
+                    cost_usd_est=0.05 if veo_result.success else 0.0,
+                    model_version=veo_result.model or "veo-3.1",
+                )
             elif provider == GenProvider.KLING:
                 result = await _run_kling_generation(prompt_contract)
             else:
