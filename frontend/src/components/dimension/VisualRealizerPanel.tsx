@@ -1,14 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { api } from "@/lib/api";
-import TeachingPanelLayout, { type ThemeColor } from "./DimensionPanelLayout";
+import { useState, useCallback } from "react";
+import TeachingPanelLayout, {
+    type ThemeColor,
+    useAsyncOperation,
+    useResultExport,
+} from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 
 const CREDIT_COST = 5;
 const THEME_COLOR: ThemeColor = "emerald";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 interface ImagePromptResult {
     prompt: string;
@@ -46,90 +50,93 @@ const MODELS = [
 ];
 
 export default function VisualRealizerPanel() {
+    // Form state
     const [description, setDescription] = useState("");
     const [style, setStyle] = useState("photorealistic");
     const [aspectRatio, setAspectRatio] = useState("16:9");
     const [model, setModel] = useState("gemini-3.0-flash-preview");
-
-    const [isLoading, setIsLoading] = useState(false);
-    const [result, setResult] = useState<ImagePromptResult | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [copiedField, setCopiedField] = useState<string | null>(null);
     const [showCreditModal, setShowCreditModal] = useState(false);
+    const [validationError, setValidationError] = useState<string | null>(null);
 
     // BYOK and credits
     const { byokKey } = useBYOK();
     const creditCtx = useCreditContextOptional();
 
-    const getErrorMessage = (err: unknown): string => {
-        if (err instanceof Error) {
-            const msg = err.message.toLowerCase();
-            if (msg.includes("timeout")) return "요청 시간이 초과되었습니다. 다시 시도해주세요.";
-            if (msg.includes("api key")) return "서비스 설정 오류입니다. 관리자에게 문의하세요.";
-            if (msg.includes("network") || msg.includes("fetch")) return "네트워크 오류입니다. 인터넷 연결을 확인해주세요.";
-            if (msg.includes("insufficient") || msg.includes("402")) return "크레딧이 부족합니다.";
-            return err.message;
-        }
-        return "알 수 없는 오류가 발생했습니다.";
-    };
+    // Export utilities
+    const { copyToClipboard, isCopied, exportJSON } = useResultExport();
 
-    const handleGenerate = async () => {
-        if (!description.trim()) {
-            setError("이미지 설명을 입력해주세요");
+    // Async operation hook with progress
+    const {
+        isLoading,
+        progress,
+        error,
+        data: result,
+        execute,
+        cancel,
+        retry,
+        canRetry,
+        currentRetryCount,
+    } = useAsyncOperation<{ success: boolean; output: ImagePromptResult; error?: string }>({
+        onSuccess: (data) => {
+            if (data.success && !byokKey && creditCtx) {
+                void creditCtx.refresh();
+            }
+        },
+        onError: (err) => {
+            if (err.message.includes("크레딧") || err.message.includes("402")) {
+                setShowCreditModal(true);
+            }
+        },
+        retryCount: 3,
+        retryDelay: 1000,
+        nonRetryableErrors: ["400", "401", "402", "403", "404", "크레딧", "부족"],
+    });
+
+    // Generate prompt
+    const MAX_DESCRIPTION_LENGTH = 2000;
+
+    const handleGenerate = useCallback(async () => {
+        const trimmedDescription = description.trim();
+        if (!trimmedDescription) {
+            setValidationError("이미지 설명을 입력해주세요");
             return;
         }
+        if (trimmedDescription.length > MAX_DESCRIPTION_LENGTH) {
+            setValidationError(`이미지 설명은 ${MAX_DESCRIPTION_LENGTH}자 이하로 입력해주세요`);
+            return;
+        }
+        setValidationError(null);
 
-        // Credit check (only when not using BYOK)
         if (!byokKey && creditCtx && !creditCtx.hasEnoughCredits(CREDIT_COST)) {
             setShowCreditModal(true);
             return;
         }
 
-        setIsLoading(true);
-        setError(null);
+        await execute(
+            `${API_BASE}/api/dimension/3d/generate`,
+            { description, style, aspect_ratio: aspectRatio, model },
+            getBYOKHeaders(byokKey)
+        );
+    }, [description, style, aspectRatio, model, byokKey, creditCtx, execute]);
 
-        try {
-            const response = await api.post<{
-                success: boolean;
-                output: ImagePromptResult;
-                error?: string;
-            }>("/api/dimension/3d/generate", {
-                description,
-                style,
-                aspect_ratio: aspectRatio,
-                model,
-            }, getBYOKHeaders(byokKey));
+    // Copy handler using useResultExport
+    const handleCopy = useCallback(
+        (text: string) => {
+            copyToClipboard(text);
+        },
+        [copyToClipboard]
+    );
 
-            if (response.success) {
-                setResult(response.output);
-                // Refresh credit balance
-                if (!byokKey && creditCtx) {
-                    void creditCtx.refresh();
-                }
-            } else {
-                setError(response.error || "생성 실패");
-            }
-        } catch (err) {
-            const errorMsg = getErrorMessage(err);
-            if (errorMsg.includes("크레딧")) {
-                setShowCreditModal(true);
-            } else {
-                setError(errorMsg);
-            }
-        } finally {
-            setIsLoading(false);
+    // Export result as JSON
+    const handleExportJSON = useCallback(() => {
+        if (result?.output) {
+            exportJSON(result.output, `image-prompt-${Date.now()}.json`);
         }
-    };
+    }, [result?.output, exportJSON]);
 
-    const handleCopy = async (text: string, field: string) => {
-        try {
-            await navigator.clipboard.writeText(text);
-            setCopiedField(field);
-            setTimeout(() => setCopiedField(null), 2000);
-        } catch {
-            setError("클립보드 복사에 실패했습니다.");
-        }
-    };
+    // Extracted result data for display
+    const displayResult = result?.success ? result.output : null;
+    const displayError = validationError || (result && !result.success ? result.error : error);
 
     const SidebarContent = (
         <>
@@ -225,9 +232,10 @@ export default function VisualRealizerPanel() {
                 </span>
             </button>
 
-            {error && (
+            {/* Validation error only - API errors shown in OperationProgress overlay */}
+            {validationError && (
                 <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs break-keep leading-relaxed animate-in fade-in slide-in-from-top-1">
-                    {error}
+                    {validationError}
                 </div>
             )}
         </>
@@ -240,8 +248,15 @@ export default function VisualRealizerPanel() {
                 sidebarContent={SidebarContent}
                 isLoading={isLoading}
                 themeColor={THEME_COLOR}
+                progress={progress}
+                onCancel={cancel}
+                onRetry={retry}
+                canRetry={canRetry}
+                error={error}
+                retryCount={currentRetryCount}
+                maxRetries={3}
             >
-                {result ? (
+                {displayResult ? (
                     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
                         {/* Main Prompt */}
                         <div className="group relative">
@@ -251,17 +266,26 @@ export default function VisualRealizerPanel() {
                                     <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
                                         Generated Prompt
                                     </h3>
-                                    <button
-                                        onClick={() => handleCopy(result.prompt, "prompt")}
-                                        className={`px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded-lg transition-all flex items-center gap-1.5 ${copiedField === "prompt"
-                                            ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                                            : "bg-white/5 text-zinc-500 hover:text-white hover:bg-white/10 border border-white/5 hover:border-white/10"
-                                            }`}
-                                    >
-                                        {copiedField === "prompt" ? "COPIED" : "COPY"}
-                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={handleExportJSON}
+                                            className="px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded-lg transition-all flex items-center gap-1.5 bg-white/5 text-zinc-500 hover:text-white hover:bg-white/10 border border-white/5 hover:border-white/10"
+                                            title="JSON으로 내보내기"
+                                        >
+                                            EXPORT
+                                        </button>
+                                        <button
+                                            onClick={() => handleCopy(displayResult.prompt)}
+                                            className={`px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded-lg transition-all flex items-center gap-1.5 ${isCopied
+                                                ? "bg-green-500/10 text-green-400 border border-green-500/20"
+                                                : "bg-white/5 text-zinc-500 hover:text-white hover:bg-white/10 border border-white/5 hover:border-white/10"
+                                                }`}
+                                        >
+                                            {isCopied ? "COPIED" : "COPY"}
+                                        </button>
+                                    </div>
                                 </div>
-                                {result.prompt}
+                                {displayResult.prompt}
                             </div>
                         </div>
 
@@ -273,26 +297,23 @@ export default function VisualRealizerPanel() {
                                     Negative Prompt
                                 </h3>
                                 <button
-                                    onClick={() => handleCopy(result.negative_prompt || "text, watermark", "negative")}
-                                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 ${copiedField === "negative"
-                                        ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                                        : "bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5 hover:border-white/10"
-                                        }`}
+                                    onClick={() => handleCopy(displayResult.negative_prompt || "text, watermark")}
+                                    className="px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5 hover:border-white/10"
                                 >
-                                    {copiedField === "negative" ? "Copied" : "Copy"}
+                                    Copy
                                 </button>
                             </div>
                             <div className="p-5 bg-[#18181b]/50 border border-white/10 rounded-xl shadow-inner font-mono text-sm leading-relaxed text-zinc-400 whitespace-pre-wrap group-hover:border-white/20 transition-colors">
-                                {result.negative_prompt || "text, watermark, low quality, blurred, distorted"}
+                                {displayResult.negative_prompt || "text, watermark, low quality, blurred, distorted"}
                             </div>
                         </div>
 
                         {/* Parameters Grid */}
-                        {result.parameters && (
+                        {displayResult.parameters && (
                             <div className="p-6 bg-white/[0.02] border border-white/5 rounded-xl space-y-4 hover:border-white/10 transition-colors">
                                 <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest border-b border-white/5 pb-3 mb-1">Parameters</h3>
                                 <div className="grid grid-cols-3 gap-6">
-                                    {Object.entries(result.parameters).map(([key, value]) => (
+                                    {Object.entries(displayResult.parameters).map(([key, value]) => (
                                         <div key={key} className="flex flex-col gap-1">
                                             <span className="text-xs text-zinc-500 capitalize">{key.replace(/_/g, " ")}</span>
                                             <span className="text-sm font-mono text-emerald-400/90">{value}</span>

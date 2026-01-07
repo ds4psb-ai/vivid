@@ -1,19 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import TeachingPanelLayout, { type ThemeColor } from "./DimensionPanelLayout";
-import { useBYOK } from "@/hooks/useBYOK";
+import { useState, useEffect, useCallback } from "react";
+import TeachingPanelLayout, {
+    type ThemeColor,
+    useAsyncOperation,
+    useResultExport,
+} from "./DimensionPanelLayout";
+import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useDimensionChainOptional, type ChainData } from "@/contexts/DimensionChainContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import ChainDataInput from "./ChainDataInput";
 import NextDimensionNav from "./NextDimensionNav";
-import { api } from "@/lib/api";
-import { Music, ArrowRight, CheckCircle, AlertCircle, Copy, Check } from "lucide-react";
+import { Music, ArrowRight, CheckCircle, AlertCircle, Copy, Check, Download } from "lucide-react";
 
 const CREDIT_COST = 8;
 const THEME_COLOR: ThemeColor = "rose";
 const DIMENSION_KEY = "sound-crafter";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 interface SoundResult {
     music_prompt?: string;
@@ -75,15 +79,54 @@ export default function SoundCrafterPanel() {
     // Chain data from previous dimensions
     const [storyboardData, setStoryboardData] = useState<Record<string, unknown>[]>([]);
 
-    const [isLoading, setIsLoading] = useState(false);
-    const [result, setResult] = useState<SoundResult | null>(null);
-    const [error, setError] = useState<string | null>(null);
     const [showCreditModal, setShowCreditModal] = useState(false);
+    const [validationError, setValidationError] = useState<string | null>(null);
     const [copiedField, setCopiedField] = useState<string | null>(null);
 
     const { byokKey } = useBYOK();
     const creditCtx = useCreditContextOptional();
     const chainCtx = useDimensionChainOptional();
+
+    // Export utilities
+    const { exportJSON, copyToClipboard } = useResultExport();
+
+    // Async operation hook
+    const {
+        isLoading,
+        progress,
+        error,
+        data: result,
+        execute,
+        cancel,
+        retry,
+        canRetry,
+        currentRetryCount,
+    } = useAsyncOperation<{ success: boolean; output: SoundResult; error?: string }>({
+        onSuccess: (data) => {
+            if (data.success && data.output) {
+                // Store in chain context for next dimensions
+                if (chainCtx) {
+                    chainCtx.setChainData(
+                        DIMENSION_KEY,
+                        data.output as unknown as Record<string, unknown>,
+                        data.output.music_prompt?.slice(0, 50) || concept.slice(0, 50)
+                    );
+                }
+                // Refresh credits
+                if (!byokKey && creditCtx) {
+                    void creditCtx.refresh();
+                }
+            }
+        },
+        onError: (err) => {
+            if (err.message.includes("크레딧") || err.message.includes("402")) {
+                setShowCreditModal(true);
+            }
+        },
+        retryCount: 3,
+        retryDelay: 1000,
+        nonRetryableErrors: ["400", "401", "402", "403", "404", "크레딧", "부족"],
+    });
 
     // Set current dimension on mount
     useEffect(() => {
@@ -106,36 +149,37 @@ export default function SoundCrafterPanel() {
         }
     };
 
-    const handleCopy = async (text: string, field: string) => {
-        try {
-            await navigator.clipboard.writeText(text);
+    const handleCopy = useCallback(async (text: string, field: string) => {
+        const success = await copyToClipboard(text);
+        if (success) {
             setCopiedField(field);
             setTimeout(() => setCopiedField(null), 2000);
-        } catch (err) {
-            console.error("Copy failed:", err);
         }
-    };
+    }, [copyToClipboard]);
 
-    const handleGenerate = async () => {
-        if (!concept.trim() || concept.length < 10) {
-            setError("컨셉을 10자 이상 입력해주세요.");
+    const MAX_CONCEPT_LENGTH = 2000;
+
+    const handleGenerate = useCallback(async () => {
+        const trimmedConcept = concept.trim();
+        if (!trimmedConcept || trimmedConcept.length < 10) {
+            setValidationError("컨셉을 10자 이상 입력해주세요.");
+            return;
+        }
+        if (trimmedConcept.length > MAX_CONCEPT_LENGTH) {
+            setValidationError(`컨셉은 ${MAX_CONCEPT_LENGTH}자 이하로 입력해주세요.`);
+            return;
+        }
+        setValidationError(null);
+
+        // Credit check
+        if (!byokKey && creditCtx && !creditCtx.hasEnoughCredits(CREDIT_COST)) {
+            setShowCreditModal(true);
             return;
         }
 
-        // Credit check
-        if (!byokKey && creditCtx) {
-            if (creditCtx.balance < CREDIT_COST) {
-                setShowCreditModal(true);
-                return;
-            }
-        }
-
-        setIsLoading(true);
-        setError(null);
-        setResult(null);
-
-        try {
-            const response = await api.executeSoundCraft({
+        await execute(
+            `${API_BASE}/api/dimension/sound-crafter/generate`,
+            {
                 concept,
                 sound_type: soundType,
                 genre,
@@ -144,46 +188,20 @@ export default function SoundCrafterPanel() {
                 language: "ko",
                 model: "gemini-3.0-flash-preview",
                 storyboard: storyboardData.length > 0 ? storyboardData : undefined,
-            });
+            },
+            getBYOKHeaders(byokKey)
+        );
+    }, [concept, soundType, genre, tempo, platform, storyboardData, byokKey, creditCtx, execute]);
 
-            if (response.success && response.output) {
-                const soundResult = response.output as SoundResult;
-                setResult(soundResult);
+    // Export result as JSON
+    const handleExportJson = useCallback(() => {
+        if (!result?.output) return;
+        exportJSON(result.output, `sound-crafter-${Date.now()}.json`);
+    }, [result?.output, exportJSON]);
 
-                // Store in chain context for next dimensions
-                if (chainCtx) {
-                    chainCtx.setChainData(
-                        DIMENSION_KEY,
-                        response.output as Record<string, unknown>,
-                        soundResult.music_prompt?.slice(0, 50) || concept.slice(0, 50)
-                    );
-                }
-
-                // Refresh credits
-                if (creditCtx) {
-                    creditCtx.refresh();
-                }
-            } else {
-                setError(response.error || "사운드 프롬프트 생성에 실패했습니다.");
-            }
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.";
-            // Error classification for better UX
-            if (errorMessage.includes("402") || errorMessage.includes("insufficient") || errorMessage.includes("INSUFFICIENT_CREDITS")) {
-                setShowCreditModal(true);
-            } else if (errorMessage.includes("timeout") || errorMessage.includes("504") || errorMessage.includes("TIMEOUT")) {
-                setError("요청 시간이 초과되었습니다. 다시 시도해주세요.");
-            } else if (errorMessage.includes("network") || errorMessage.includes("fetch") || errorMessage.includes("Failed to fetch")) {
-                setError("네트워크 연결을 확인해주세요.");
-            } else if (errorMessage.includes("401") || errorMessage.includes("unauthorized")) {
-                setError("로그인이 필요합니다.");
-            } else {
-                setError(errorMessage);
-            }
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    // Extracted result data for display
+    const displayResult = result?.success ? result.output : null;
+    const displayError = validationError || (result && !result.success ? result.error : error);
 
     const sidebarContent = (
         <div className="space-y-6">
@@ -326,25 +344,34 @@ export default function SoundCrafterPanel() {
                 themeColor={THEME_COLOR}
                 creditCost={CREDIT_COST}
                 isLoading={isLoading}
+                progress={progress}
+                onCancel={cancel}
+                onRetry={retry}
+                canRetry={canRetry}
+                error={displayError}
+                retryCount={currentRetryCount}
+                maxRetries={3}
             >
                 {/* Main Content */}
                 <div className="space-y-6">
-                    {/* Error Display */}
-                    {error && (
-                        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-3">
-                            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                            <div>
-                                <p className="text-red-400 font-medium">오류</p>
-                                <p className="text-white/60 text-sm">{error}</p>
-                            </div>
-                        </div>
-                    )}
+                    {/* Note: Error display moved to OperationProgress in DimensionPanelLayout */}
 
                     {/* Result Display */}
-                    {result && (
+                    {displayResult && (
                         <div className="space-y-6 animate-in fade-in duration-500">
+                            {/* Export Button */}
+                            <div className="flex justify-end">
+                                <button
+                                    onClick={handleExportJson}
+                                    className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg flex items-center gap-2 text-sm text-white/70 hover:text-white transition-all"
+                                >
+                                    <Download className="w-4 h-4" />
+                                    JSON 내보내기
+                                </button>
+                            </div>
+
                             {/* Music Prompt */}
-                            {result.music_prompt && (
+                            {displayResult.music_prompt && (
                                 <div className="p-6 rounded-2xl bg-rose-500/10 border border-rose-500/20">
                                     <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center gap-2">
@@ -354,7 +381,7 @@ export default function SoundCrafterPanel() {
                                             </span>
                                         </div>
                                         <button
-                                            onClick={() => handleCopy(result.music_prompt || "", "prompt")}
+                                            onClick={() => handleCopy(displayResult.music_prompt || "", "prompt")}
                                             className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
                                             title="복사"
                                         >
@@ -366,17 +393,17 @@ export default function SoundCrafterPanel() {
                                         </button>
                                     </div>
                                     <p className="text-white font-mono text-sm leading-relaxed bg-black/30 p-4 rounded-xl">
-                                        {result.music_prompt}
+                                        {displayResult.music_prompt}
                                     </p>
                                 </div>
                             )}
 
                             {/* Style Tags */}
-                            {result.style_tags && result.style_tags.length > 0 && (
+                            {displayResult.style_tags && displayResult.style_tags.length > 0 && (
                                 <div className="space-y-2">
                                     <h3 className="text-sm font-bold text-white/80">스타일 태그</h3>
                                     <div className="flex flex-wrap gap-2">
-                                        {result.style_tags.map((tag, i) => (
+                                        {displayResult.style_tags.map((tag, i) => (
                                             <span key={i} className="px-3 py-1 text-sm rounded-full bg-rose-500/20 text-rose-400">
                                                 {tag}
                                             </span>
@@ -387,26 +414,26 @@ export default function SoundCrafterPanel() {
 
                             {/* Technical Details */}
                             <div className="grid grid-cols-2 gap-4">
-                                {result.bpm_range && (
+                                {displayResult.bpm_range && (
                                     <div className="p-4 rounded-xl bg-white/5 border border-white/10">
                                         <span className="text-xs text-white/40 block mb-1">BPM</span>
-                                        <span className="text-white font-medium">{result.bpm_range}</span>
+                                        <span className="text-white font-medium">{displayResult.bpm_range}</span>
                                     </div>
                                 )}
-                                {result.key_signature && (
+                                {displayResult.key_signature && (
                                     <div className="p-4 rounded-xl bg-white/5 border border-white/10">
                                         <span className="text-xs text-white/40 block mb-1">조성</span>
-                                        <span className="text-white font-medium">{result.key_signature}</span>
+                                        <span className="text-white font-medium">{displayResult.key_signature}</span>
                                     </div>
                                 )}
                             </div>
 
                             {/* Instrumentation */}
-                            {result.instrumentation && result.instrumentation.length > 0 && (
+                            {displayResult.instrumentation && displayResult.instrumentation.length > 0 && (
                                 <div className="space-y-2">
                                     <h3 className="text-sm font-bold text-white/80">악기 구성</h3>
                                     <div className="flex flex-wrap gap-2">
-                                        {result.instrumentation.map((inst, i) => (
+                                        {displayResult.instrumentation.map((inst, i) => (
                                             <span key={i} className="px-3 py-1 text-sm rounded-full bg-white/10 text-white/70">
                                                 {inst}
                                             </span>
@@ -416,20 +443,20 @@ export default function SoundCrafterPanel() {
                             )}
 
                             {/* Dynamics */}
-                            {result.dynamics && (
+                            {displayResult.dynamics && (
                                 <div className="space-y-2">
                                     <h3 className="text-sm font-bold text-white/80">다이나믹</h3>
-                                    <p className="text-white/60 text-sm">{result.dynamics}</p>
+                                    <p className="text-white/60 text-sm">{displayResult.dynamics}</p>
                                 </div>
                             )}
 
                             {/* Narration Script (if applicable) */}
-                            {result.narration_script && (
+                            {displayResult.narration_script && (
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
                                         <h3 className="text-sm font-bold text-white/80">내레이션 스크립트</h3>
                                         <button
-                                            onClick={() => handleCopy(result.narration_script || "", "narration")}
+                                            onClick={() => handleCopy(displayResult.narration_script || "", "narration")}
                                             className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
                                         >
                                             {copiedField === "narration" ? (
@@ -441,36 +468,36 @@ export default function SoundCrafterPanel() {
                                     </div>
                                     <div className="p-4 rounded-xl bg-white/5 border border-white/10">
                                         <p className="text-white/70 text-sm leading-relaxed whitespace-pre-wrap">
-                                            {result.narration_script}
+                                            {displayResult.narration_script}
                                         </p>
                                     </div>
                                 </div>
                             )}
 
                             {/* Voice Direction (if applicable) */}
-                            {result.voice_direction && (
+                            {displayResult.voice_direction && (
                                 <div className="grid grid-cols-3 gap-3">
                                     <div className="p-3 rounded-xl bg-white/5 border border-white/10">
                                         <span className="text-xs text-white/40 block mb-1">톤</span>
-                                        <span className="text-white text-sm">{result.voice_direction.tone}</span>
+                                        <span className="text-white text-sm">{displayResult.voice_direction.tone}</span>
                                     </div>
                                     <div className="p-3 rounded-xl bg-white/5 border border-white/10">
                                         <span className="text-xs text-white/40 block mb-1">속도</span>
-                                        <span className="text-white text-sm">{result.voice_direction.pace}</span>
+                                        <span className="text-white text-sm">{displayResult.voice_direction.pace}</span>
                                     </div>
                                     <div className="p-3 rounded-xl bg-white/5 border border-white/10">
                                         <span className="text-xs text-white/40 block mb-1">감정</span>
-                                        <span className="text-white text-sm">{result.voice_direction.emotion}</span>
+                                        <span className="text-white text-sm">{displayResult.voice_direction.emotion}</span>
                                     </div>
                                 </div>
                             )}
 
                             {/* SFX Cues */}
-                            {result.sfx_cues && result.sfx_cues.length > 0 && (
+                            {displayResult.sfx_cues && displayResult.sfx_cues.length > 0 && (
                                 <div className="space-y-2">
                                     <h3 className="text-sm font-bold text-white/80">효과음 큐</h3>
                                     <div className="space-y-2">
-                                        {result.sfx_cues.map((cue, i) => (
+                                        {displayResult.sfx_cues.map((cue, i) => (
                                             <div key={i} className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-4">
                                                 <span className="text-rose-400 font-mono text-sm">{cue.time}</span>
                                                 <span className="text-white font-medium">{cue.sound}</span>
@@ -491,7 +518,7 @@ export default function SoundCrafterPanel() {
                     )}
 
                     {/* Empty State */}
-                    {!result && !error && (
+                    {!displayResult && !displayError && (
                         <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
                             <Music className="w-16 h-16 text-rose-400/30 mb-4" />
                             <h3 className="text-xl font-bold text-white/60 mb-2">사운드 크래프터</h3>

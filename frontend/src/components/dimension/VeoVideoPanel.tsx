@@ -1,14 +1,18 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { api } from "@/lib/api";
-import TeachingPanelLayout, { type ThemeColor } from "./DimensionPanelLayout";
+import { useState, useRef, useCallback } from "react";
+import TeachingPanelLayout, {
+    type ThemeColor,
+    useAsyncOperation,
+    useResultExport,
+} from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 
 const CREDIT_COST = 50;
 const THEME_COLOR: ThemeColor = "sky";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 interface VideoResult {
     video_url?: string;
@@ -44,6 +48,7 @@ const STYLES = [
 ];
 
 export default function VeoVideoPanel() {
+    // Form state
     const [prompt, setPrompt] = useState("");
     const [negativePrompt, setNegativePrompt] = useState("");
     const [aspectRatio, setAspectRatio] = useState("16:9");
@@ -51,150 +56,126 @@ export default function VeoVideoPanel() {
     const [style, setStyle] = useState("cinematic");
     const [seed, setSeed] = useState<number | undefined>(undefined);
     const [useRandomSeed, setUseRandomSeed] = useState(true);
-
-    const [isLoading, setIsLoading] = useState(false);
-    const [result, setResult] = useState<VideoResult | null>(null);
-    const [error, setError] = useState<string | null>(null);
     const [showCreditModal, setShowCreditModal] = useState(false);
-    const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+    const [validationError, setValidationError] = useState<string | null>(null);
 
     const videoRef = useRef<HTMLVideoElement>(null);
 
     const { byokKey } = useBYOK();
     const creditCtx = useCreditContextOptional();
 
-    // Cleanup polling on unmount
-    useEffect(() => {
-        return () => {
-            if (pollingInterval) {
-                clearInterval(pollingInterval);
+    // Export utilities (copy, download)
+    const { downloadFile, copyToClipboard, isCopied } = useResultExport();
+
+    // Async operation hook for SSE streaming with progress
+    const {
+        isLoading,
+        progress,
+        error,
+        data: result,
+        executeStream,
+        cancel,
+        retry,
+        canRetry,
+        currentRetryCount,
+    } = useAsyncOperation<VideoResult>({
+        onSuccess: (data) => {
+            // Refresh credits on successful generation
+            if (data.status === "completed" && !byokKey && creditCtx) {
+                void creditCtx.refresh();
             }
-        };
-    }, [pollingInterval]);
-
-    const getErrorMessage = (err: unknown): string => {
-        if (err instanceof Error) {
-            const msg = err.message.toLowerCase();
-            if (msg.includes("timeout")) return "비디오 생성 시간이 초과되었습니다. 다시 시도해주세요.";
-            if (msg.includes("api key")) return "서비스 설정 오류입니다. 관리자에게 문의하세요.";
-            if (msg.includes("network") || msg.includes("fetch")) return "네트워크 오류입니다. 인터넷 연결을 확인해주세요.";
-            if (msg.includes("insufficient") || msg.includes("402")) return "크레딧이 부족합니다.";
-            if (msg.includes("quota")) return "API 할당량이 초과되었습니다. 잠시 후 다시 시도해주세요.";
-            return err.message;
-        }
-        return "알 수 없는 오류가 발생했습니다.";
-    };
-
-    const pollVideoStatus = async (operationId: string) => {
-        try {
-            const response = await api.get<{
-                success: boolean;
-                output: VideoResult;
-                error?: string;
-            }>(`/api/dimension/veo/status/${operationId}`);
-
-            if (response.success) {
-                setResult(response.output);
-
-                if (response.output.status === "completed" || response.output.status === "failed") {
-                    if (pollingInterval) {
-                        clearInterval(pollingInterval);
-                        setPollingInterval(null);
-                    }
-                    setIsLoading(false);
-
-                    if (response.output.status === "completed" && !byokKey && creditCtx) {
-                        void creditCtx.refresh();
-                    }
-                }
+        },
+        onError: (err) => {
+            // Show credit modal for insufficient credits
+            if (err.message.includes("크레딧") || err.message.includes("402")) {
+                setShowCreditModal(true);
             }
-        } catch (err) {
-            console.error("Polling error:", err);
-        }
-    };
+        },
+        retryCount: 3,
+        retryDelay: 1000,
+        nonRetryableErrors: ["400", "401", "402", "403", "404", "크레딧", "부족"],
+    });
 
-    const handleGenerate = async () => {
-        if (!prompt.trim()) {
-            setError("프롬프트를 입력해주세요");
+    // Generate video using SSE streaming
+    const MAX_PROMPT_LENGTH = 2000;
+
+    const handleGenerate = useCallback(async () => {
+        // Validation
+        const trimmedPrompt = prompt.trim();
+        if (!trimmedPrompt) {
+            setValidationError("프롬프트를 입력해주세요");
             return;
         }
-
-        if (prompt.trim().length < 10) {
-            setError("프롬프트는 최소 10자 이상 입력해주세요");
+        if (trimmedPrompt.length < 10) {
+            setValidationError("프롬프트는 최소 10자 이상 입력해주세요");
             return;
         }
+        if (trimmedPrompt.length > MAX_PROMPT_LENGTH) {
+            setValidationError(`프롬프트는 ${MAX_PROMPT_LENGTH}자 이하로 입력해주세요`);
+            return;
+        }
+        setValidationError(null);
 
+        // Credit check
         if (!byokKey && creditCtx && !creditCtx.hasEnoughCredits(CREDIT_COST)) {
             setShowCreditModal(true);
             return;
         }
 
-        setIsLoading(true);
-        setError(null);
-        setResult(null);
-
-        try {
-            const response = await api.post<{
-                success: boolean;
-                output: VideoResult;
-                error?: string;
-            }>("/api/dimension/veo/generate", {
+        // Execute SSE streaming request
+        await executeStream(
+            `${API_BASE}/api/dimension/veo/generate/stream`,
+            {
                 prompt: prompt.trim(),
                 negative_prompt: negativePrompt.trim() || undefined,
                 aspect_ratio: aspectRatio,
                 duration: parseInt(duration),
                 style,
                 seed: useRandomSeed ? undefined : seed,
-            }, getBYOKHeaders(byokKey));
+            },
+            getBYOKHeaders(byokKey)
+        );
+    }, [
+        prompt,
+        negativePrompt,
+        aspectRatio,
+        duration,
+        style,
+        seed,
+        useRandomSeed,
+        byokKey,
+        creditCtx,
+        executeStream,
+    ]);
 
-            if (response.success) {
-                setResult(response.output);
-
-                // If async generation, start polling
-                if (response.output.operation_id && response.output.status === "processing") {
-                    const interval = setInterval(() => {
-                        pollVideoStatus(response.output.operation_id!);
-                    }, 3000);
-                    setPollingInterval(interval);
-                } else if (response.output.status === "completed") {
-                    setIsLoading(false);
-                    if (!byokKey && creditCtx) {
-                        void creditCtx.refresh();
-                    }
-                }
-            } else {
-                setError(response.error || "비디오 생성 실패");
-                setIsLoading(false);
-            }
-        } catch (err) {
-            const errorMsg = getErrorMessage(err);
-            if (errorMsg.includes("크레딧")) {
-                setShowCreditModal(true);
-            } else {
-                setError(errorMsg);
-            }
-            setIsLoading(false);
-        }
-    };
-
-    const handleDownload = async () => {
+    // Download video
+    const handleDownload = useCallback(async () => {
         if (!result?.video_url) return;
 
         try {
             const response = await fetch(result.video_url);
             const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
+            const content = await blob.text();
+            downloadFile(content, `veo-video-${Date.now()}.mp4`, "video/mp4");
+        } catch {
+            // Fallback: Direct link download
             const a = document.createElement("a");
-            a.href = url;
+            a.href = result.video_url;
             a.download = `veo-video-${Date.now()}.mp4`;
+            a.target = "_blank";
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-        } catch {
-            setError("다운로드에 실패했습니다.");
         }
-    };
+    }, [result?.video_url, downloadFile]);
+
+    // Copy prompt to clipboard
+    const handleCopyPrompt = useCallback(() => {
+        copyToClipboard(prompt);
+    }, [prompt, copyToClipboard]);
+
+    // Combined error (validation + operation error)
+    const displayError = validationError || error;
 
     const SidebarContent = (
         <>
@@ -341,9 +322,10 @@ export default function VeoVideoPanel() {
                 </span>
             </button>
 
-            {error && (
+            {/* Validation error only - API errors shown in OperationProgress overlay */}
+            {validationError && (
                 <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs break-keep leading-relaxed animate-in fade-in slide-in-from-top-1">
-                    {error}
+                    {validationError}
                 </div>
             )}
         </>
@@ -354,8 +336,16 @@ export default function VeoVideoPanel() {
             <TeachingPanelLayout
                 title="Veo 3.1 비디오"
                 sidebarContent={SidebarContent}
-                isLoading={isLoading && result?.status !== "processing"}
+                isLoading={isLoading}
                 themeColor={THEME_COLOR}
+                // New progress props for enhanced UX
+                progress={progress}
+                onCancel={cancel}
+                onRetry={retry}
+                canRetry={canRetry}
+                error={error}
+                retryCount={currentRetryCount}
+                maxRetries={3}
             >
                 {result ? (
                     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
@@ -409,10 +399,16 @@ export default function VeoVideoPanel() {
                                 <p className="text-red-400 font-medium mb-2">비디오 생성 실패</p>
                                 <p className="text-xs text-zinc-500">{result.error || "알 수 없는 오류가 발생했습니다"}</p>
                                 <button
-                                    onClick={handleGenerate}
-                                    className="mt-4 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm hover:bg-red-500/20 transition-colors"
+                                    onClick={canRetry ? retry : handleGenerate}
+                                    className="mt-4 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm hover:bg-red-500/20 transition-colors flex items-center gap-2"
                                 >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
                                     다시 시도
+                                    {canRetry && currentRetryCount > 0 && (
+                                        <span className="text-red-400/60">({currentRetryCount}/3)</span>
+                                    )}
                                 </button>
                             </div>
                         )}
@@ -450,7 +446,29 @@ export default function VeoVideoPanel() {
                         {/* Used Prompt */}
                         {result.status === "completed" && (
                             <div className="p-6 bg-white/[0.02] border border-white/5 rounded-xl">
-                                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3">사용된 프롬프트</h3>
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">사용된 프롬프트</h3>
+                                    <button
+                                        onClick={handleCopyPrompt}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 hover:border-white/20 transition-all"
+                                    >
+                                        {isCopied ? (
+                                            <>
+                                                <svg className="w-3.5 h-3.5 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                                <span className="text-sky-400">복사됨!</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                </svg>
+                                                복사
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
                                 <p className="text-sm text-zinc-300 leading-relaxed">{prompt}</p>
                             </div>
                         )}

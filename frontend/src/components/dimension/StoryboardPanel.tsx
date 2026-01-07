@@ -1,14 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { api } from "@/lib/api";
-import TeachingPanelLayout, { type ThemeColor } from "./DimensionPanelLayout";
+import { useState, useCallback } from "react";
+import TeachingPanelLayout, {
+    type ThemeColor,
+    useAsyncOperation,
+    useResultExport,
+} from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 
 const CREDIT_COST = 10;
 const THEME_COLOR: ThemeColor = "cyan";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 interface StoryboardScene {
     scene_number: number;
@@ -33,101 +37,93 @@ const MODELS = [
 ];
 
 export default function StoryboardPanel() {
+    // Form state
     const [script, setScript] = useState("");
     const [sceneCount, setSceneCount] = useState(5);
     const [language, setLanguage] = useState<"ko" | "en">("ko");
     const [model, setModel] = useState("gemini-3.0-flash-preview");
-
-    const [isLoading, setIsLoading] = useState(false);
-    const [result, setResult] = useState<StoryboardResult | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [copiedField, setCopiedField] = useState<string | null>(null);
     const [showCreditModal, setShowCreditModal] = useState(false);
+    const [validationError, setValidationError] = useState<string | null>(null);
 
     // BYOK and credits
     const { byokKey } = useBYOK();
     const creditCtx = useCreditContextOptional();
 
-    const getErrorMessage = (err: unknown): string => {
-        if (err instanceof Error) {
-            const msg = err.message.toLowerCase();
-            if (msg.includes("timeout")) return "요청 시간이 초과되었습니다. 다시 시도해주세요.";
-            if (msg.includes("api key")) return "서비스 설정 오류입니다. 관리자에게 문의하세요.";
-            if (msg.includes("network") || msg.includes("fetch")) return "네트워크 오류입니다. 인터넷 연결을 확인해주세요.";
-            if (msg.includes("insufficient") || msg.includes("402")) return "크레딧이 부족합니다.";
-            return err.message;
-        }
-        return "알 수 없는 오류가 발생했습니다.";
-    };
+    // Export utilities
+    const { copyToClipboard, isCopied, exportJSON } = useResultExport();
 
-    const handleGenerate = async () => {
-        if (!script.trim()) {
-            setError("스토리 컨셉을 입력해주세요");
+    // Async operation hook
+    const {
+        isLoading,
+        progress,
+        error,
+        data: result,
+        execute,
+        cancel,
+        retry,
+        canRetry,
+        currentRetryCount,
+    } = useAsyncOperation<{ success: boolean; output: StoryboardResult; error?: string }>({
+        onSuccess: (data) => {
+            if (data.success && !byokKey && creditCtx) {
+                void creditCtx.refresh();
+            }
+        },
+        onError: (err) => {
+            if (err.message.includes("크레딧") || err.message.includes("402")) {
+                setShowCreditModal(true);
+            }
+        },
+        retryCount: 3,
+        retryDelay: 1000,
+        nonRetryableErrors: ["400", "401", "402", "403", "404", "크레딧", "부족"],
+    });
+
+    // Generate storyboard
+    const MAX_SCRIPT_LENGTH = 3000;
+
+    const handleGenerate = useCallback(async () => {
+        const trimmedScript = script.trim();
+        if (!trimmedScript) {
+            setValidationError("스토리 컨셉을 입력해주세요");
             return;
         }
+        if (trimmedScript.length > MAX_SCRIPT_LENGTH) {
+            setValidationError(`스토리 컨셉은 ${MAX_SCRIPT_LENGTH}자 이하로 입력해주세요`);
+            return;
+        }
+        setValidationError(null);
 
-        // Credit check (only when not using BYOK)
         if (!byokKey && creditCtx && !creditCtx.hasEnoughCredits(CREDIT_COST)) {
             setShowCreditModal(true);
             return;
         }
 
-        setIsLoading(true);
-        setError(null);
+        await execute(
+            `${API_BASE}/api/dimension/2d/create`,
+            { concept: script, scene_count: sceneCount, language, model },
+            getBYOKHeaders(byokKey)
+        );
+    }, [script, sceneCount, language, model, byokKey, creditCtx, execute]);
 
-        try {
-            const response = await api.post<{
-                success: boolean;
-                output: StoryboardResult;
-                error?: string;
-            }>("/api/dimension/2d/create", {
-                concept: script,  // Map frontend 'script' to backend 'concept'
-                scene_count: sceneCount,
-                language,
-                model,
-            }, getBYOKHeaders(byokKey));
+    // Copy handler
+    const handleCopy = useCallback(
+        (text: string) => {
+            copyToClipboard(text);
+        },
+        [copyToClipboard]
+    );
 
-            if (response.success) {
-                setResult(response.output);
-                // Refresh credit balance
-                if (!byokKey && creditCtx) {
-                    void creditCtx.refresh();
-                }
-            } else {
-                setError(response.error || "생성 실패");
-            }
-        } catch (err) {
-            const errorMsg = getErrorMessage(err);
-            if (errorMsg.includes("크레딧")) {
-                setShowCreditModal(true);
-            } else {
-                setError(errorMsg);
-            }
-        } finally {
-            setIsLoading(false);
+    // Export result as JSON
+    const handleExportJson = useCallback(() => {
+        if (result?.output) {
+            exportJSON(result.output, `storyboard-${Date.now()}.json`);
         }
-    };
+    }, [result?.output, exportJSON]);
 
-    const handleCopy = async (text: string, field: string) => {
-        try {
-            await navigator.clipboard.writeText(text);
-            setCopiedField(field);
-            setTimeout(() => setCopiedField(null), 2000);
-        } catch {
-            setError("클립보드 복사에 실패했습니다.");
-        }
-    };
-
-    const handleExportJson = () => {
-        if (!result) return;
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(result, null, 2));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", "storyboard.json");
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
-    };
+    // Extracted result data for display
+    const displayResult = result?.success ? result.output : null;
+    const displayError = validationError || (result && !result.success ? result.error : error);
 
     const SidebarContent = (
         <>
@@ -229,9 +225,10 @@ export default function StoryboardPanel() {
                 </span>
             </button>
 
-            {error && (
+            {/* Validation error only - API errors shown in OperationProgress overlay */}
+            {validationError && (
                 <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs break-keep leading-relaxed animate-in fade-in slide-in-from-top-1">
-                    {error}
+                    {validationError}
                 </div>
             )}
         </>
@@ -244,13 +241,20 @@ export default function StoryboardPanel() {
                 sidebarContent={SidebarContent}
                 isLoading={isLoading}
                 themeColor={THEME_COLOR}
+                progress={progress}
+                onCancel={cancel}
+                onRetry={retry}
+                canRetry={canRetry}
+                error={error}
+                retryCount={currentRetryCount}
+                maxRetries={3}
             >
-                {result ? (
+                {displayResult ? (
                     <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
                         <div className="flex items-center justify-between px-1">
                             <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
-                                Generated Scenes ({result.scenes.length})
+                                Generated Scenes ({displayResult.scenes.length})
                             </h3>
                             <div className="flex gap-2">
                                 <button
@@ -266,7 +270,7 @@ export default function StoryboardPanel() {
                         </div>
 
                         <div className="grid grid-cols-1 gap-4">
-                            {result.scenes.map((scene, idx) => (
+                            {displayResult.scenes.map((scene, idx) => (
                                 <div key={idx} className="group relative">
                                     <div className="absolute inset-0 bg-cyan-500/5 blur-xl rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                                     <div className="relative h-full bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] p-6 hover:border-cyan-500/30 hover:bg-black/50 transition-all overflow-hidden flex flex-col">
@@ -289,22 +293,13 @@ export default function StoryboardPanel() {
                                                         {scene.description}
                                                     </p>
                                                     <button
-                                                        onClick={() => handleCopy(scene.description, `scene-description-${idx}`)}
-                                                        className={`flex-shrink-0 p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 ${copiedField === `scene-description-${idx}`
-                                                            ? "bg-green-500/10 text-green-400"
-                                                            : "bg-white/5 text-zinc-500 hover:text-white hover:bg-white/10"
-                                                            }`}
+                                                        onClick={() => handleCopy(scene.description)}
+                                                        className="flex-shrink-0 p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 bg-white/5 text-zinc-500 hover:text-white hover:bg-white/10"
                                                         title="Copy Scene Description"
                                                     >
-                                                        {copiedField === `scene-description-${idx}` ? (
-                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                            </svg>
-                                                        ) : (
-                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                                            </svg>
-                                                        )}
+                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                        </svg>
                                                     </button>
                                                 </div>
                                             </div>
@@ -316,22 +311,13 @@ export default function StoryboardPanel() {
                                                         <div className="flex items-start justify-between gap-4">
                                                             <p>{scene.visual_prompt}</p>
                                                             <button
-                                                                onClick={() => handleCopy(scene.visual_prompt!, `scene-visual-prompt-${idx}`)}
-                                                                className={`flex-shrink-0 p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 ${copiedField === `scene-visual-prompt-${idx}`
-                                                                    ? "bg-green-500/10 text-green-400"
-                                                                    : "bg-white/5 text-zinc-500 hover:text-white hover:bg-white/10"
-                                                                    }`}
+                                                                onClick={() => handleCopy(scene.visual_prompt!)}
+                                                                className="flex-shrink-0 p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 bg-white/5 text-zinc-500 hover:text-white hover:bg-white/10"
                                                                 title="Copy Visual Prompt"
                                                             >
-                                                                {copiedField === `scene-visual-prompt-${idx}` ? (
-                                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                                    </svg>
-                                                                ) : (
-                                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                                                    </svg>
-                                                                )}
+                                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                                </svg>
                                                             </button>
                                                         </div>
                                                     </div>

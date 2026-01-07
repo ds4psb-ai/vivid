@@ -1,15 +1,19 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { api } from "@/lib/api";
-import TeachingPanelLayout, { type ThemeColor } from "./DimensionPanelLayout";
+import { useState, useRef, useEffect, useCallback } from "react";
+import TeachingPanelLayout, {
+    type ThemeColor,
+    useAsyncOperation,
+    useResultExport,
+} from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
-import { Send, User, Bot, Sparkles } from "lucide-react";
+import { Send, User, Bot, Sparkles, Download } from "lucide-react";
 
 const CREDIT_COST = 5;
 const THEME_COLOR: ThemeColor = "indigo";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 interface Message {
     role: "user" | "assistant";
@@ -78,6 +82,21 @@ export default function AbyssInterpreterPanel() {
     const { byokKey } = useBYOK();
     const creditCtx = useCreditContextOptional();
 
+    // Export utilities
+    const { exportJSON } = useResultExport();
+
+    // Export conversation as JSON
+    const handleExportJson = useCallback(() => {
+        if (messages.length === 0 && !result?.final_persona) return;
+        exportJSON({
+            messages,
+            final_persona: result?.final_persona,
+            persona_data: personaData,
+            analysis_stage: currentStage,
+            completed_at: isComplete ? new Date().toISOString() : null,
+        }, `persona-analysis-${Date.now()}.json`);
+    }, [messages, result?.final_persona, personaData, currentStage, isComplete, exportJSON]);
+
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
@@ -90,7 +109,7 @@ export default function AbyssInterpreterPanel() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const startAnalysis = async () => {
+    const startAnalysis = useCallback(async () => {
         if (!byokKey && creditCtx && !creditCtx.hasEnoughCredits(CREDIT_COST)) {
             setShowCreditModal(true);
             return;
@@ -100,34 +119,39 @@ export default function AbyssInterpreterPanel() {
         setError(null);
 
         try {
-            const response = await api.post<{
-                success: boolean;
-                output: AnalysisResult;
-                error?: string;
-            }>("/api/dimension/persona/analyze", {
-                user_message: "분석을 시작합니다",
-                analysis_stage: "intro",
-                depth_level: depthLevel,
-                model,
-            }, getBYOKHeaders(byokKey));
+            const response = await fetch(`${API_BASE}/api/dimension/persona/analyze`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...getBYOKHeaders(byokKey),
+                },
+                body: JSON.stringify({
+                    user_message: "분석을 시작합니다",
+                    analysis_stage: "intro",
+                    depth_level: depthLevel,
+                    model,
+                }),
+            });
 
-            if (response.success) {
-                setMessages([{ role: "assistant", content: response.output.assistant_message }]);
-                setCurrentStage(response.output.next_stage);
+            const data = await response.json() as { success: boolean; output: AnalysisResult; error?: string };
+
+            if (data.success) {
+                setMessages([{ role: "assistant", content: data.output.assistant_message }]);
+                setCurrentStage(data.output.next_stage);
                 if (!byokKey && creditCtx) {
                     void creditCtx.refresh();
                 }
             } else {
-                setError(response.error || "시작 실패");
+                setError(data.error || "시작 실패");
             }
         } catch (err) {
             setError(err instanceof Error ? err.message : "알 수 없는 오류");
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [byokKey, creditCtx, depthLevel, model]);
 
-    const sendMessage = async () => {
+    const sendMessage = useCallback(async () => {
         if (!inputMessage.trim() || isLoading || isComplete) return;
 
         if (!byokKey && creditCtx && !creditCtx.hasEnoughCredits(CREDIT_COST)) {
@@ -142,41 +166,46 @@ export default function AbyssInterpreterPanel() {
         setError(null);
 
         try {
-            const response = await api.post<{
-                success: boolean;
-                output: AnalysisResult;
-                error?: string;
-            }>("/api/dimension/persona/analyze", {
-                user_message: userMessage,
-                analysis_stage: currentStage,
-                persona_data: personaData,
-                birth_info: currentStage === "saju" ? birthInfo : undefined,
-                depth_level: depthLevel,
-                model,
-            }, getBYOKHeaders(byokKey));
+            const response = await fetch(`${API_BASE}/api/dimension/persona/analyze`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...getBYOKHeaders(byokKey),
+                },
+                body: JSON.stringify({
+                    user_message: userMessage,
+                    analysis_stage: currentStage,
+                    persona_data: personaData,
+                    birth_info: currentStage === "saju" ? birthInfo : undefined,
+                    depth_level: depthLevel,
+                    model,
+                }),
+            });
 
-            if (response.success) {
-                setMessages(prev => [...prev, { role: "assistant", content: response.output.assistant_message }]);
-                setCurrentStage(response.output.next_stage);
-                if (response.output.persona_update) {
-                    setPersonaData(prev => ({ ...prev, ...response.output.persona_update }));
+            const data = await response.json() as { success: boolean; output: AnalysisResult; error?: string };
+
+            if (data.success) {
+                setMessages(prev => [...prev, { role: "assistant", content: data.output.assistant_message }]);
+                setCurrentStage(data.output.next_stage);
+                if (data.output.persona_update) {
+                    setPersonaData(prev => ({ ...prev, ...data.output.persona_update }));
                 }
-                if (response.output.analysis_complete) {
+                if (data.output.analysis_complete) {
                     setIsComplete(true);
-                    setResult(response.output);
+                    setResult(data.output);
                 }
                 if (!byokKey && creditCtx) {
                     void creditCtx.refresh();
                 }
             } else {
-                setError(response.error || "분석 실패");
+                setError(data.error || "분석 실패");
             }
         } catch (err) {
             setError(err instanceof Error ? err.message : "알 수 없는 오류");
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [inputMessage, isLoading, isComplete, byokKey, creditCtx, currentStage, personaData, birthInfo, depthLevel, model]);
 
     const resetAnalysis = () => {
         setMessages([]);
@@ -356,9 +385,18 @@ export default function AbyssInterpreterPanel() {
                         {/* Final Persona Result */}
                         {isComplete && result?.final_persona && (
                             <div className="mt-8 p-6 bg-gradient-to-br from-indigo-500/10 to-violet-500/10 border border-indigo-500/30 rounded-3xl animate-in fade-in slide-in-from-bottom-4">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <Sparkles className="w-6 h-6 text-indigo-400" />
-                                    <h3 className="text-lg font-bold text-white">페르소나 분석 완료</h3>
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <Sparkles className="w-6 h-6 text-indigo-400" />
+                                        <h3 className="text-lg font-bold text-white">페르소나 분석 완료</h3>
+                                    </div>
+                                    <button
+                                        onClick={handleExportJson}
+                                        className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg flex items-center gap-2 text-xs text-white/70 hover:text-white transition-all"
+                                    >
+                                        <Download className="w-3 h-3" />
+                                        JSON 내보내기
+                                    </button>
                                 </div>
                                 <p className="text-sm text-zinc-300 mb-6">{result.final_persona.summary}</p>
 

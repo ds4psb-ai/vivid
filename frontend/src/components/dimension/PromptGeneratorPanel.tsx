@@ -1,14 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { api } from "@/lib/api";
-import TeachingPanelLayout, { type ThemeColor } from "./DimensionPanelLayout";
+import { useState, useCallback } from "react";
+import TeachingPanelLayout, {
+    type ThemeColor,
+    useAsyncOperation,
+    useResultExport,
+} from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 
 const CREDIT_COST = 5;
 const THEME_COLOR: ThemeColor = "violet";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 interface PromptResult {
     prompt: string;
@@ -55,95 +59,95 @@ const MODELS = [
 ];
 
 export default function PromptGeneratorPanel() {
+    // Form state
     const [topic, setTopic] = useState("");
     const [style, setStyle] = useState("cinematic");
     const [mood, setMood] = useState("neutral");
     const [duration, setDuration] = useState("15 seconds");
     const [language, setLanguage] = useState<"ko" | "en">("ko");
     const [model, setModel] = useState("gemini-3.0-flash-preview");
-
-    const [isLoading, setIsLoading] = useState(false);
-    const [result, setResult] = useState<PromptResult | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [copiedField, setCopiedField] = useState<string | null>(null);
     const [showCreditModal, setShowCreditModal] = useState(false);
+    const [validationError, setValidationError] = useState<string | null>(null);
 
     // BYOK and credits
     const { byokKey } = useBYOK();
     const creditCtx = useCreditContextOptional();
 
-    // Map backend errors to user-friendly messages
-    const getErrorMessage = (err: unknown): string => {
-        if (err instanceof Error) {
-            const msg = err.message.toLowerCase();
-            if (msg.includes("timeout")) return "요청 시간이 초과되었습니다. 다시 시도해주세요.";
-            if (msg.includes("api key")) return "서비스 설정 오류입니다. 관리자에게 문의하세요.";
-            if (msg.includes("network") || msg.includes("fetch")) return "네트워크 오류입니다. 인터넷 연결을 확인해주세요.";
-            if (msg.includes("insufficient") || msg.includes("402")) return "크레딧이 부족합니다.";
-            return err.message;
-        }
-        return "알 수 없는 오류가 발생했습니다.";
-    };
+    // Export utilities (copy, download)
+    const { copyToClipboard, isCopied, exportJSON } = useResultExport();
 
-    const handleGenerate = async () => {
-        if (!topic.trim()) {
-            setError("주제를 입력해주세요");
+    // Async operation hook with progress
+    const {
+        isLoading,
+        progress,
+        error,
+        data: result,
+        execute,
+        cancel,
+        retry,
+        canRetry,
+        currentRetryCount,
+    } = useAsyncOperation<{ success: boolean; output: PromptResult; error?: string }>({
+        onSuccess: (data) => {
+            if (data.success && !byokKey && creditCtx) {
+                void creditCtx.refresh();
+            }
+        },
+        onError: (err) => {
+            if (err.message.includes("크레딧") || err.message.includes("402")) {
+                setShowCreditModal(true);
+            }
+        },
+        retryCount: 3,
+        retryDelay: 1000,
+        nonRetryableErrors: ["400", "401", "402", "403", "404", "크레딧", "부족"],
+    });
+
+    // Generate prompt
+    const MAX_TOPIC_LENGTH = 500;
+
+    const handleGenerate = useCallback(async () => {
+        const trimmedTopic = topic.trim();
+        if (!trimmedTopic) {
+            setValidationError("주제를 입력해주세요");
             return;
         }
+        if (trimmedTopic.length > MAX_TOPIC_LENGTH) {
+            setValidationError(`주제는 ${MAX_TOPIC_LENGTH}자 이하로 입력해주세요`);
+            return;
+        }
+        setValidationError(null);
 
-        // Credit check (only when not using BYOK)
         if (!byokKey && creditCtx && !creditCtx.hasEnoughCredits(CREDIT_COST)) {
             setShowCreditModal(true);
             return;
         }
 
-        setIsLoading(true);
-        setError(null);
+        await execute(
+            `${API_BASE}/api/dimension/1d/generate`,
+            { topic, style, mood, duration, language, model },
+            getBYOKHeaders(byokKey)
+        );
+    }, [topic, style, mood, duration, language, model, byokKey, creditCtx, execute]);
 
-        try {
-            const response = await api.post<{
-                success: boolean;
-                output: PromptResult;
-                error?: string;
-            }>("/api/dimension/1d/generate", {
-                topic,
-                style,
-                mood,
-                duration,
-                language,
-                model,
-            }, getBYOKHeaders(byokKey));
+    // Copy handler using useResultExport
+    const handleCopy = useCallback(
+        (text: string) => {
+            copyToClipboard(text);
+        },
+        [copyToClipboard]
+    );
 
-            if (response.success) {
-                setResult(response.output);
-                // Refresh credit balance after successful generation
-                if (!byokKey && creditCtx) {
-                    void creditCtx.refresh();
-                }
-            } else {
-                setError(response.error || "생성 실패");
-            }
-        } catch (err) {
-            const errorMsg = getErrorMessage(err);
-            if (errorMsg.includes("크레딧")) {
-                setShowCreditModal(true);
-            } else {
-                setError(errorMsg);
-            }
-        } finally {
-            setIsLoading(false);
+    // Export result as JSON
+    const handleExportJSON = useCallback(() => {
+        if (result?.output) {
+            exportJSON(result.output, `veo-prompt-${Date.now()}.json`);
         }
-    };
+    }, [result?.output, exportJSON]);
 
-    const handleCopy = async (text: string, field: string) => {
-        try {
-            await navigator.clipboard.writeText(text);
-            setCopiedField(field);
-            setTimeout(() => setCopiedField(null), 2000);
-        } catch {
-            setError("클립보드 복사에 실패했습니다.");
-        }
-    };
+    // Extracted result data for display
+    const displayResult = result?.success ? result.output : null;
+    const displayError = validationError || (result && !result.success ? result.error : error);
 
     const SidebarContent = (
         <>
@@ -285,9 +289,10 @@ export default function PromptGeneratorPanel() {
                 </span>
             </button>
 
-            {error && (
+            {/* Validation error only - API errors shown in OperationProgress overlay */}
+            {validationError && (
                 <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs break-keep leading-relaxed animate-in fade-in slide-in-from-top-1">
-                    {error}
+                    {validationError}
                 </div>
             )}
         </>
@@ -300,8 +305,16 @@ export default function PromptGeneratorPanel() {
                 sidebarContent={SidebarContent}
                 isLoading={isLoading}
                 themeColor={THEME_COLOR}
+                // New progress props for enhanced UX
+                progress={progress}
+                onCancel={cancel}
+                onRetry={retry}
+                canRetry={canRetry}
+                error={error}
+                retryCount={currentRetryCount}
+                maxRetries={3}
             >
-                {result ? (
+                {displayResult ? (
                     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
                         {/* Main Prompt */}
                         <div className="group relative">
@@ -310,38 +323,50 @@ export default function PromptGeneratorPanel() {
                                     <span className="w-1.5 h-1.5 rounded-full bg-violet-400"></span>
                                     Generated Prompt
                                 </h3>
-                                <button
-                                    onClick={() => handleCopy(result.prompt, "prompt")}
-                                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 ${copiedField === "prompt"
-                                        ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                                        : "bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5 hover:border-white/10"
-                                        }`}
-                                >
-                                    {copiedField === "prompt" ? (
-                                        <>
-                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            Copied
-                                        </>
-                                    ) : (
-                                        <>
-                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                            </svg>
-                                            Copy
-                                        </>
-                                    )}
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={handleExportJSON}
+                                        className="px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5 hover:border-white/10"
+                                        title="JSON으로 내보내기"
+                                    >
+                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                        </svg>
+                                        Export
+                                    </button>
+                                    <button
+                                        onClick={() => handleCopy(displayResult.prompt)}
+                                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 ${isCopied
+                                            ? "bg-green-500/10 text-green-400 border border-green-500/20"
+                                            : "bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5 hover:border-white/10"
+                                            }`}
+                                    >
+                                        {isCopied ? (
+                                            <>
+                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                                Copied
+                                            </>
+                                        ) : (
+                                            <>
+                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                </svg>
+                                                Copy
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                             <div className="p-8 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] font-mono text-base leading-relaxed text-zinc-100 whitespace-pre-wrap group-hover:border-violet-500/30 group-hover:bg-black/50 transition-all relative overflow-hidden">
                                 <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-violet-500 to-purple-500 shadow-[0_0_20px_#8B5CF6]"></div>
-                                {result.prompt}
+                                {displayResult.prompt}
                             </div>
                         </div>
 
                         {/* Negative Prompt */}
-                        {result.negative_prompt && (
+                        {displayResult.negative_prompt && (
                             <div className="group relative">
                                 <div className="flex items-center justify-between mb-3 px-1">
                                     <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
@@ -349,29 +374,26 @@ export default function PromptGeneratorPanel() {
                                         Negative Prompt
                                     </h3>
                                     <button
-                                        onClick={() => handleCopy(result.negative_prompt || "", "negative")}
-                                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 ${copiedField === "negative"
-                                            ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                                            : "bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5 hover:border-white/10"
-                                            }`}
+                                        onClick={() => handleCopy(displayResult.negative_prompt || "")}
+                                        className="px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5 hover:border-white/10"
                                     >
-                                        {copiedField === "negative" ? "Copied" : "Copy"}
+                                        Copy
                                     </button>
                                 </div>
                                 <div className="p-5 bg-black/30 backdrop-blur-md border border-white/10 rounded-xl shadow-inner font-mono text-sm leading-relaxed text-zinc-400 whitespace-pre-wrap group-hover:border-white/20 transition-colors">
-                                    {result.negative_prompt}
+                                    {displayResult.negative_prompt}
                                 </div>
                             </div>
                         )}
 
                         {/* Technical Details Grid */}
-                        {(result.style || result.technical) && (
+                        {(displayResult.style || displayResult.technical) && (
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                {result.style && (
+                                {displayResult.style && (
                                     <div className="p-6 bg-white/[0.03] backdrop-blur-sm border border-white/5 rounded-xl space-y-4 hover:border-white/10 transition-colors hover:bg-white/[0.05]">
                                         <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest border-b border-white/5 pb-3 mb-1">Style Parameters</h3>
                                         <div className="space-y-4">
-                                            {Object.entries(result.style).map(([key, value]) => (
+                                            {Object.entries(displayResult.style).map(([key, value]) => (
                                                 <div key={key} className="flex flex-col gap-1">
                                                     <span className="text-xs text-zinc-500 capitalize">{key.replace(/_/g, " ")}</span>
                                                     <span className="text-sm text-zinc-200 font-medium">{value}</span>
@@ -380,11 +402,11 @@ export default function PromptGeneratorPanel() {
                                         </div>
                                     </div>
                                 )}
-                                {result.technical && (
+                                {displayResult.technical && (
                                     <div className="p-6 bg-white/[0.03] backdrop-blur-sm border border-white/5 rounded-xl space-y-4 hover:border-white/10 transition-colors hover:bg-white/[0.05]">
                                         <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest border-b border-white/5 pb-3 mb-1">Technical Specs</h3>
                                         <div className="grid grid-cols-2 gap-6">
-                                            {Object.entries(result.technical).map(([key, value]) => (
+                                            {Object.entries(displayResult.technical).map(([key, value]) => (
                                                 <div key={key} className="flex flex-col gap-1">
                                                     <span className="text-xs text-zinc-500 capitalize">{key.replace(/_/g, " ")}</span>
                                                     <span className="text-sm font-mono text-violet-400/90">{value}</span>

@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useBYOK } from "@/hooks/useBYOK";
 import BYOKSettingsModal from "./BYOKSettingsModal";
+import OperationProgress from "@/components/shared/OperationProgress";
+import type { ProgressEvent } from "@/hooks/useAsyncOperation";
 
 export type ThemeColor = "violet" | "cyan" | "emerald" | "amber" | "rose" | "fuchsia" | "indigo" | "sky";
 
@@ -102,6 +104,22 @@ interface TeachingPanelLayoutProps {
     creditCost?: number;
     /** Theme color for this dimension */
     themeColor?: ThemeColor;
+
+    // New progress props (optional, backward compatible)
+    /** Current progress state */
+    progress?: ProgressEvent | null;
+    /** Called when user clicks cancel */
+    onCancel?: () => void;
+    /** Called when user clicks retry */
+    onRetry?: () => void;
+    /** Whether retry is available */
+    canRetry?: boolean;
+    /** Error message if operation failed */
+    error?: string | null;
+    /** Current retry count */
+    retryCount?: number;
+    /** Max retry count */
+    maxRetries?: number;
 }
 
 export default function TeachingPanelLayout({
@@ -112,6 +130,14 @@ export default function TeachingPanelLayout({
     isLoading = false,
     creditCost,
     themeColor = "amber",
+    // New progress props
+    progress,
+    onCancel,
+    onRetry,
+    canRetry = false,
+    error,
+    retryCount = 0,
+    maxRetries = 3,
 }: TeachingPanelLayoutProps) {
     const theme = THEME_COLORS[themeColor];
     const creditCtx = useCreditContextOptional();
@@ -215,22 +241,40 @@ export default function TeachingPanelLayout({
                 <div className="flex-1 overflow-y-auto p-8 relative scroll-smooth">
                     {children}
 
-                    {/* Loading Overlay - Premium with Theme Colors */}
-                    {isLoading && (
+                    {/* Loading/Error Overlay - Enhanced with OperationProgress */}
+                    {(isLoading || error) && (
                         <div className="absolute inset-0 bg-[#0F0F1A]/40 backdrop-blur-md flex items-center justify-center z-50 animate-in fade-in duration-300">
-                            <div className={`flex flex-col items-center gap-6 p-8 rounded-3xl bg-[#0F0F1A]/80 border ${theme.border} ${theme.glow} backdrop-blur-xl`}>
-                                <div className="relative w-16 h-16">
-                                    <div className="absolute inset-0 border-4 border-white/5 rounded-full"></div>
-                                    <div className={`absolute inset-0 border-4 ${theme.spinner.split(' ')[0]} border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin`}></div>
-                                    <div className={`absolute inset-0 border-4 ${theme.spinner.split(' ')[1]} border-t-transparent border-l-transparent border-r-transparent rounded-full animate-spin-reverse opacity-70`}></div>
+                            {/* Use OperationProgress if progress props are provided */}
+                            {(progress || error) && onCancel ? (
+                                <div className="w-full max-w-md px-4">
+                                    <OperationProgress
+                                        progress={progress ?? null}
+                                        isLoading={isLoading}
+                                        error={error ?? null}
+                                        onCancel={onCancel}
+                                        onRetry={onRetry ?? (() => {})}
+                                        canRetry={canRetry}
+                                        themeColor={themeColor}
+                                        retryCount={retryCount}
+                                        maxRetries={maxRetries}
+                                    />
                                 </div>
-                                <div className="flex flex-col items-center gap-1">
-                                    <span className={`text-sm font-bold ${theme.accent} tracking-widest uppercase animate-pulse`}>
-                                        Generating
-                                    </span>
-                                    <span className="text-xs text-white/40">Creating your masterpiece...</span>
+                            ) : (
+                                /* Fallback to legacy spinner for backward compatibility */
+                                <div className={`flex flex-col items-center gap-6 p-8 rounded-3xl bg-[#0F0F1A]/80 border ${theme.border} ${theme.glow} backdrop-blur-xl`}>
+                                    <div className="relative w-16 h-16">
+                                        <div className="absolute inset-0 border-4 border-white/5 rounded-full"></div>
+                                        <div className={`absolute inset-0 border-4 ${theme.spinner.split(' ')[0]} border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin`}></div>
+                                        <div className={`absolute inset-0 border-4 ${theme.spinner.split(' ')[1]} border-t-transparent border-l-transparent border-r-transparent rounded-full animate-spin-reverse opacity-70`}></div>
+                                    </div>
+                                    <div className="flex flex-col items-center gap-1">
+                                        <span className={`text-sm font-bold ${theme.accent} tracking-widest uppercase animate-pulse`}>
+                                            Generating
+                                        </span>
+                                        <span className="text-xs text-white/40">Creating your masterpiece...</span>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -243,3 +287,10 @@ export default function TeachingPanelLayout({
  * Export BYOK-related utilities for use in panel components
  */
 export { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
+
+/**
+ * Re-export progress types for convenience
+ */
+export type { ProgressEvent } from "@/hooks/useAsyncOperation";
+export { useAsyncOperation } from "@/hooks/useAsyncOperation";
+export { useResultExport } from "@/hooks/useResultExport";

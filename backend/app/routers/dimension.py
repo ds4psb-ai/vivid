@@ -39,6 +39,13 @@ from app.dimension_adapter import (
 )
 from app.services.telemetry_integration import record_tool_run
 from app.services.dlq_service import add_refund_failure_to_dlq
+from app.utils.sse_utils import (
+    sse_progress,
+    sse_complete,
+    sse_error,
+    sse_heartbeat,
+    get_sse_headers,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -515,6 +522,159 @@ async def _execute_dimension_tool(
 
 
 # ============================================================================
+# Streaming Execution Helper
+# ============================================================================
+
+async def _execute_dimension_tool_stream(
+    capsule_id: DimensionCapsuleId,
+    tool_key: str,
+    operation_name: str,
+    inputs: Dict[str, Any],
+    model: str,
+    user: dict,
+    byok_key: Optional[str],
+    db: AsyncSession,
+    inputs_summary: Dict[str, Any],
+    params: Optional[Dict[str, Any]] = None,
+):
+    """SSE streaming wrapper for dimension tool execution.
+
+    Yields SSE events for progress, completion, and errors.
+    Handles credit deduction and refund automatically.
+    """
+    start_time = time.time()
+    user_id = user.get("id")
+    credits_deducted = False
+    credit_cost = 0
+
+    # Initial progress
+    yield sse_progress(1, f"{operation_name} 시작...", "starting")
+
+    try:
+        # Validate user
+        if not user_id:
+            yield sse_error("유효하지 않은 사용자입니다.", code="INVALID_USER")
+            return
+
+        # Credit check (skip for BYOK users)
+        credit_cost = get_credit_cost(capsule_id, model)
+
+        if not byok_key:
+            user_credits = await get_or_create_user_credits(db, user_id)
+            if user_credits.balance < credit_cost:
+                yield sse_error(
+                    "크레딧이 부족합니다.",
+                    code="INSUFFICIENT_CREDITS",
+                    detail=f"필요: {credit_cost}, 보유: {user_credits.balance}",
+                )
+                return
+
+            await deduct_credits(
+                db, user_id, credit_cost,
+                description=f"Dimension: {tool_key}",
+                meta={"tool": tool_key, "model": model}
+            )
+            credits_deducted = True
+
+        yield sse_progress(10, f"{operation_name} 준비 중...", "processing")
+
+        # Merge model into params
+        execution_params = {"model": model}
+        if params:
+            execution_params.update(params)
+
+        yield sse_progress(30, f"{operation_name} 처리 중...", "processing")
+
+        # Execute the capsule
+        result = await execute_dimension_capsule(
+            capsule_id=capsule_id.value,
+            inputs=inputs,
+            params=execution_params,
+            user_api_key=byok_key,
+        )
+
+        yield sse_progress(90, f"{operation_name} 완료 중...", "finalizing")
+
+        latency_ms = int((time.time() - start_time) * 1000)
+
+        if result and result.get("success"):
+            # Record success telemetry
+            try:
+                await record_tool_run(
+                    db=db,
+                    tool_key=tool_key,
+                    user_id=user_id,
+                    inputs_summary={**inputs_summary, "model": model},
+                    outputs_summary={"success": True},
+                    status="success",
+                    latency_ms=latency_ms,
+                    credits_charged=credit_cost if credits_deducted else 0,
+                )
+            except Exception as tel_err:
+                logger.warning(f"Telemetry recording failed: {tel_err}")
+
+            metrics = result.get("metrics", {})
+            metrics["latency_ms"] = latency_ms
+            metrics["credits_charged"] = credit_cost if credits_deducted else 0
+            yield sse_complete(result.get("output", {}), metrics)
+        else:
+            error_msg = result.get("error", "Execution failed") if result else "Unknown error"
+
+            # Refund on failure
+            if credits_deducted:
+                await _refund_with_retry(
+                    db=db,
+                    user_id=user_id,
+                    amount=credit_cost,
+                    description=f"{tool_key} failed",
+                    meta={"tool": tool_key, "error": error_msg[:500]},
+                )
+
+            # Record failure telemetry
+            try:
+                await record_tool_run(
+                    db=db,
+                    tool_key=tool_key,
+                    user_id=user_id,
+                    inputs_summary=inputs_summary,
+                    outputs_summary={},
+                    status="failed",
+                    latency_ms=latency_ms,
+                    credits_charged=0,
+                    error_message=error_msg[:500],
+                )
+            except Exception as tel_err:
+                logger.warning(f"Telemetry recording failed: {tel_err}")
+
+            yield sse_error(error_msg, code="EXECUTION_FAILED")
+
+    except asyncio.TimeoutError:
+        if credits_deducted:
+            await _refund_with_retry(
+                db=db,
+                user_id=user_id,
+                amount=credit_cost,
+                description=f"{tool_key} timeout",
+                meta={"tool": tool_key},
+            )
+        yield sse_error(f"{operation_name} 시간 초과", code="TIMEOUT")
+    except Exception as e:
+        logger.exception(f"SSE stream error for {tool_key}: {e}")
+        if credits_deducted:
+            try:
+                await _refund_with_retry(
+                    db=db,
+                    user_id=user_id,
+                    amount=credit_cost,
+                    description=f"{tool_key} error",
+                    meta={"tool": tool_key, "error": str(e)[:500]},
+                )
+            except Exception:
+                pass
+        yield sse_error(str(e), code="INTERNAL_ERROR")
+
+
+# ============================================================================
 # 1D Origin - Veo Prompt Generation
 # ============================================================================
 
@@ -553,6 +713,47 @@ async def generate_1d_prompt(
         byok_key=byok_key,
         db=db,
         inputs_summary={"topic": request.topic[:100], "style": request.style},
+    )
+
+
+@router.post(
+    "/1d/generate/stream",
+    responses={
+        400: {"model": DimensionErrorResponse},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="1D Origin: Generate Veo Prompt (SSE Stream)",
+    description="Generate Veo prompt with real-time progress updates via SSE.",
+    tags=["Dimension 1D"],
+)
+async def generate_1d_prompt_stream(
+    request: PromptGenerateRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> StreamingResponse:
+    """Generate Veo video prompt with SSE streaming (1D Origin)."""
+    return StreamingResponse(
+        _execute_dimension_tool_stream(
+            capsule_id=DimensionCapsuleId.PROMPT_GENERATE,
+            tool_key="generate_veo_prompt",
+            operation_name="프롬프트 생성",
+            inputs={
+                "topic": request.topic,
+                "style": request.style,
+                "mood": request.mood,
+                "duration": request.duration,
+                "language": request.language,
+            },
+            model=request.model,
+            user=user,
+            byok_key=byok_key,
+            db=db,
+            inputs_summary={"topic": request.topic[:100], "style": request.style},
+        ),
+        media_type="text/event-stream",
+        headers=get_sse_headers(),
     )
 
 
@@ -596,6 +797,46 @@ async def create_2d_storyboard(
     )
 
 
+@router.post(
+    "/2d/create/stream",
+    responses={
+        400: {"model": DimensionErrorResponse},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="2D Blueprint: Create Storyboard (SSE Stream)",
+    description="Create storyboard with real-time progress updates via SSE.",
+    tags=["Dimension 2D"],
+)
+async def create_2d_storyboard_stream(
+    request: StoryboardCreateRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> StreamingResponse:
+    """Create storyboard cards with SSE streaming (2D Blueprint)."""
+    return StreamingResponse(
+        _execute_dimension_tool_stream(
+            capsule_id=DimensionCapsuleId.STORYBOARD_CREATE,
+            tool_key="create_storyboard",
+            operation_name="스토리보드 생성",
+            inputs={
+                "concept": request.concept,
+                "prompt": request.prompt,
+                "scene_count": request.scene_count,
+                "language": request.language,
+            },
+            model=request.model,
+            user=user,
+            byok_key=byok_key,
+            db=db,
+            inputs_summary={"concept": request.concept[:100] if request.concept else "", "scene_count": request.scene_count},
+        ),
+        media_type="text/event-stream",
+        headers=get_sse_headers(),
+    )
+
+
 # ============================================================================
 # 3D Ambience - Image Prompt Generation
 # ============================================================================
@@ -635,6 +876,45 @@ async def generate_3d_image_prompt(
     )
 
 
+@router.post(
+    "/3d/generate/stream",
+    responses={
+        400: {"model": DimensionErrorResponse},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="3D Ambience: Generate Image Prompt (SSE Stream)",
+    description="Generate image prompt with real-time progress updates via SSE.",
+    tags=["Dimension 3D"],
+)
+async def generate_3d_image_prompt_stream(
+    request: ImageGenerateRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> StreamingResponse:
+    """Generate optimized image prompt with SSE streaming (3D Ambience)."""
+    return StreamingResponse(
+        _execute_dimension_tool_stream(
+            capsule_id=DimensionCapsuleId.IMAGE_GENERATE,
+            tool_key="generate_image_prompt",
+            operation_name="이미지 프롬프트 생성",
+            inputs={
+                "description": request.description,
+                "style": request.style,
+                "aspect_ratio": request.aspect_ratio,
+            },
+            model=request.model,
+            user=user,
+            byok_key=byok_key,
+            db=db,
+            inputs_summary={"description": request.description[:100] if request.description else "", "style": request.style},
+        ),
+        media_type="text/event-stream",
+        headers=get_sse_headers(),
+    )
+
+
 # ============================================================================
 # 4D Moment - Reference Analysis
 # ============================================================================
@@ -670,6 +950,44 @@ async def analyze_4d_reference(
         byok_key=byok_key,
         db=db,
         inputs_summary={"video_description": request.video_description[:100] if request.video_description else ""},
+    )
+
+
+@router.post(
+    "/4d/analyze/stream",
+    responses={
+        400: {"model": DimensionErrorResponse},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="4D Moment: Analyze Reference (SSE Stream)",
+    description="Analyze video reference with real-time progress updates via SSE.",
+    tags=["Dimension 4D"],
+)
+async def analyze_4d_reference_stream(
+    request: ReferenceAnalyzeRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> StreamingResponse:
+    """Analyze video reference with SSE streaming (4D Moment)."""
+    return StreamingResponse(
+        _execute_dimension_tool_stream(
+            capsule_id=DimensionCapsuleId.REFERENCE_ANALYZE,
+            tool_key="analyze_reference",
+            operation_name="레퍼런스 분석",
+            inputs={
+                "video_description": request.video_description,
+                "focus_areas": request.focus_areas,
+            },
+            model=request.model,
+            user=user,
+            byok_key=byok_key,
+            db=db,
+            inputs_summary={"video_description": request.video_description[:100] if request.video_description else ""},
+        ),
+        media_type="text/event-stream",
+        headers=get_sse_headers(),
     )
 
 
@@ -714,6 +1032,46 @@ async def check_quality(
 
 
 @router.post(
+    "/quality/check/stream",
+    responses={
+        400: {"model": DimensionErrorResponse},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="Quality Checker: Evaluate Content (SSE Stream)",
+    description="Evaluate content quality with real-time progress updates via SSE.",
+    tags=["Dimension Extended"],
+)
+async def check_quality_stream(
+    request: QualityCheckRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> StreamingResponse:
+    """Check content quality with SSE streaming (QC)."""
+    return StreamingResponse(
+        _execute_dimension_tool_stream(
+            capsule_id=DimensionCapsuleId.QUALITY_CHECK,
+            tool_key="quality_check",
+            operation_name="품질 검수",
+            inputs={
+                "content": request.content,
+                "content_type": request.content_type,
+                "criteria": request.criteria,
+            },
+            model=request.model,
+            user=user,
+            byok_key=byok_key,
+            db=db,
+            inputs_summary={"content_type": request.content_type, "criteria": request.criteria},
+            params={"threshold": request.threshold},
+        ),
+        media_type="text/event-stream",
+        headers=get_sse_headers(),
+    )
+
+
+@router.post(
     "/aesthetic/direct",
     response_model=DimensionResponse,
     responses={
@@ -747,6 +1105,47 @@ async def direct_aesthetic(
         db=db,
         inputs_summary={"concept": request.concept[:100], "style": request.reference_style},
         params={"use_rag": request.use_rag},
+    )
+
+
+@router.post(
+    "/aesthetic/direct/stream",
+    responses={
+        400: {"model": DimensionErrorResponse},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="Aesthetic Director: Generate Style Guide (SSE Stream)",
+    description="Generate visual style guidelines with real-time progress updates via SSE.",
+    tags=["Dimension Extended"],
+)
+async def direct_aesthetic_stream(
+    request: AestheticDirectRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> StreamingResponse:
+    """Generate aesthetic style guide with SSE streaming (AD)."""
+    return StreamingResponse(
+        _execute_dimension_tool_stream(
+            capsule_id=DimensionCapsuleId.AESTHETIC_DIRECT,
+            tool_key="aesthetic_direct",
+            operation_name="스타일 가이드 생성",
+            inputs={
+                "concept": request.concept,
+                "reference_style": request.reference_style,
+                "mood": request.mood,
+                "target_medium": request.target_medium,
+            },
+            model=request.model,
+            user=user,
+            byok_key=byok_key,
+            db=db,
+            inputs_summary={"concept": request.concept[:100], "style": request.reference_style},
+            params={"use_rag": request.use_rag},
+        ),
+        media_type="text/event-stream",
+        headers=get_sse_headers(),
     )
 
 
@@ -1002,6 +1401,50 @@ async def architect_story(
     )
 
 
+@router.post(
+    "/story/architect/stream",
+    responses={
+        400: {"model": DimensionErrorResponse},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="Story Architect: Generate Scenario (SSE Stream)",
+    description="Generate video scenario with real-time progress updates via SSE.",
+    tags=["Dimension 4-Stage"],
+)
+async def architect_story_stream(
+    request: StoryArchitectRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> StreamingResponse:
+    """Generate video scenario with SSE streaming (Story Architect)."""
+    return StreamingResponse(
+        _execute_dimension_tool_stream(
+            capsule_id=DimensionCapsuleId.STORY_ARCHITECT,
+            tool_key="story_architect",
+            operation_name="시나리오 생성",
+            inputs={
+                "concept": request.concept,
+                "persona_data": request.persona_data,
+                "reference_analysis": request.reference_analysis,
+                "genre": request.genre,
+                "duration": request.duration,
+                "structure": request.structure,
+                "language": request.language,
+            },
+            model=request.model,
+            user=user,
+            byok_key=byok_key,
+            db=db,
+            inputs_summary={"concept": request.concept[:100], "genre": request.genre, "structure": request.structure},
+            params={"use_rag": True},
+        ),
+        media_type="text/event-stream",
+        headers=get_sse_headers(),
+    )
+
+
 # ============================================================================
 # 4-Stage Workflow: Sound Crafter
 # ============================================================================
@@ -1045,6 +1488,52 @@ async def craft_sound(
         db=db,
         inputs_summary={"concept": request.concept[:100], "sound_type": request.sound_type, "platform": request.target_platform},
         params={"use_rag": True},
+    )
+
+
+@router.post(
+    "/sound/craft/stream",
+    responses={
+        400: {"model": DimensionErrorResponse},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="Sound Crafter: Generate Music Prompt (SSE Stream)",
+    description="Generate music/sound prompts with real-time progress updates via SSE.",
+    tags=["Dimension 4-Stage"],
+)
+async def craft_sound_stream(
+    request: SoundCraftRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> StreamingResponse:
+    """Generate music/sound prompts with SSE streaming (Sound Crafter)."""
+    return StreamingResponse(
+        _execute_dimension_tool_stream(
+            capsule_id=DimensionCapsuleId.SOUND_CRAFT,
+            tool_key="sound_craft",
+            operation_name="사운드 프롬프트 생성",
+            inputs={
+                "concept": request.concept,
+                "storyboard": request.storyboard,
+                "sound_type": request.sound_type,
+                "mood": request.mood,
+                "genre": request.genre,
+                "tempo": request.tempo,
+                "duration": request.duration,
+                "target_platform": request.target_platform,
+                "language": request.language,
+            },
+            model=request.model,
+            user=user,
+            byok_key=byok_key,
+            db=db,
+            inputs_summary={"concept": request.concept[:100], "sound_type": request.sound_type, "platform": request.target_platform},
+            params={"use_rag": True},
+        ),
+        media_type="text/event-stream",
+        headers=get_sse_headers(),
     )
 
 

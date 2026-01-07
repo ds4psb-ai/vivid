@@ -1,19 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import TeachingPanelLayout, { type ThemeColor } from "./DimensionPanelLayout";
-import { useBYOK } from "@/hooks/useBYOK";
+import { useState, useEffect, useCallback } from "react";
+import TeachingPanelLayout, {
+    type ThemeColor,
+    useAsyncOperation,
+    useResultExport,
+} from "./DimensionPanelLayout";
+import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useDimensionChainOptional, type ChainData } from "@/contexts/DimensionChainContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import ChainDataInput from "./ChainDataInput";
 import NextDimensionNav from "./NextDimensionNav";
-import { api } from "@/lib/api";
-import { Layers, ArrowRight, CheckCircle, AlertCircle } from "lucide-react";
+import { Layers, ArrowRight, CheckCircle, AlertCircle, Download } from "lucide-react";
 
 const CREDIT_COST = 10;
 const THEME_COLOR: ThemeColor = "emerald";
 const DIMENSION_KEY = "story-architect";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 interface StoryResult {
     title?: string;
@@ -69,14 +73,53 @@ export default function StoryArchitectPanel() {
     const [personaData, setPersonaData] = useState<Record<string, unknown>>({});
     const [referenceAnalysis, setReferenceAnalysis] = useState<Record<string, unknown>>({});
 
-    const [isLoading, setIsLoading] = useState(false);
-    const [result, setResult] = useState<StoryResult | null>(null);
-    const [error, setError] = useState<string | null>(null);
     const [showCreditModal, setShowCreditModal] = useState(false);
+    const [validationError, setValidationError] = useState<string | null>(null);
 
     const { byokKey } = useBYOK();
     const creditCtx = useCreditContextOptional();
     const chainCtx = useDimensionChainOptional();
+
+    // Export utilities
+    const { exportJSON } = useResultExport();
+
+    // Async operation hook
+    const {
+        isLoading,
+        progress,
+        error,
+        data: result,
+        execute,
+        cancel,
+        retry,
+        canRetry,
+        currentRetryCount,
+    } = useAsyncOperation<{ success: boolean; output: StoryResult; error?: string }>({
+        onSuccess: (data) => {
+            if (data.success && data.output) {
+                // Store in chain context for next dimensions
+                if (chainCtx) {
+                    chainCtx.setChainData(
+                        DIMENSION_KEY,
+                        data.output as unknown as Record<string, unknown>,
+                        data.output.title || data.output.logline || concept.slice(0, 50)
+                    );
+                }
+                // Refresh credits
+                if (!byokKey && creditCtx) {
+                    void creditCtx.refresh();
+                }
+            }
+        },
+        onError: (err) => {
+            if (err.message.includes("크레딧") || err.message.includes("402")) {
+                setShowCreditModal(true);
+            }
+        },
+        retryCount: 3,
+        retryDelay: 1000,
+        nonRetryableErrors: ["400", "401", "402", "403", "404", "크레딧", "부족"],
+    });
 
     // Set current dimension on mount
     useEffect(() => {
@@ -95,26 +138,29 @@ export default function StoryArchitectPanel() {
         }
     };
 
-    const handleGenerate = async () => {
-        if (!concept.trim() || concept.length < 10) {
-            setError("컨셉을 10자 이상 입력해주세요.");
+    const MAX_CONCEPT_LENGTH = 3000;
+
+    const handleGenerate = useCallback(async () => {
+        const trimmedConcept = concept.trim();
+        if (!trimmedConcept || trimmedConcept.length < 10) {
+            setValidationError("컨셉을 10자 이상 입력해주세요.");
+            return;
+        }
+        if (trimmedConcept.length > MAX_CONCEPT_LENGTH) {
+            setValidationError(`컨셉은 ${MAX_CONCEPT_LENGTH}자 이하로 입력해주세요.`);
+            return;
+        }
+        setValidationError(null);
+
+        // Credit check
+        if (!byokKey && creditCtx && !creditCtx.hasEnoughCredits(CREDIT_COST)) {
+            setShowCreditModal(true);
             return;
         }
 
-        // Credit check
-        if (!byokKey && creditCtx) {
-            if (creditCtx.balance < CREDIT_COST) {
-                setShowCreditModal(true);
-                return;
-            }
-        }
-
-        setIsLoading(true);
-        setError(null);
-        setResult(null);
-
-        try {
-            const response = await api.executeStoryArchitect({
+        await execute(
+            `${API_BASE}/api/dimension/story-architect/generate`,
+            {
                 concept,
                 genre,
                 duration,
@@ -123,46 +169,20 @@ export default function StoryArchitectPanel() {
                 model: "gemini-3.0-pro-preview",
                 persona_data: personaData,
                 reference_analysis: referenceAnalysis,
-            });
+            },
+            getBYOKHeaders(byokKey)
+        );
+    }, [concept, genre, duration, structure, personaData, referenceAnalysis, byokKey, creditCtx, execute]);
 
-            if (response.success && response.output) {
-                const storyResult = response.output as StoryResult;
-                setResult(storyResult);
+    // Export result as JSON
+    const handleExportJson = useCallback(() => {
+        if (!result?.output) return;
+        exportJSON(result.output, `story-architect-${Date.now()}.json`);
+    }, [result?.output, exportJSON]);
 
-                // Store in chain context for next dimensions
-                if (chainCtx) {
-                    chainCtx.setChainData(
-                        DIMENSION_KEY,
-                        response.output as Record<string, unknown>,
-                        storyResult.title || storyResult.logline || concept.slice(0, 50)
-                    );
-                }
-
-                // Refresh credits
-                if (creditCtx) {
-                    creditCtx.refresh();
-                }
-            } else {
-                setError(response.error || "시나리오 생성에 실패했습니다.");
-            }
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.";
-            // Error classification for better UX
-            if (errorMessage.includes("402") || errorMessage.includes("insufficient") || errorMessage.includes("INSUFFICIENT_CREDITS")) {
-                setShowCreditModal(true);
-            } else if (errorMessage.includes("timeout") || errorMessage.includes("504") || errorMessage.includes("TIMEOUT")) {
-                setError("요청 시간이 초과되었습니다. 다시 시도해주세요.");
-            } else if (errorMessage.includes("network") || errorMessage.includes("fetch") || errorMessage.includes("Failed to fetch")) {
-                setError("네트워크 연결을 확인해주세요.");
-            } else if (errorMessage.includes("401") || errorMessage.includes("unauthorized")) {
-                setError("로그인이 필요합니다.");
-            } else {
-                setError(errorMessage);
-            }
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    // Extracted result data for display
+    const displayResult = result?.success ? result.output : null;
+    const displayError = validationError || (result && !result.success ? result.error : error);
 
     const sidebarContent = (
         <div className="space-y-6">
@@ -284,22 +304,20 @@ export default function StoryArchitectPanel() {
                 themeColor={THEME_COLOR}
                 creditCost={CREDIT_COST}
                 isLoading={isLoading}
+                progress={progress}
+                onCancel={cancel}
+                onRetry={retry}
+                canRetry={canRetry}
+                error={displayError}
+                retryCount={currentRetryCount}
+                maxRetries={3}
             >
                 {/* Main Content */}
                 <div className="space-y-6">
-                    {/* Error Display */}
-                    {error && (
-                        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-3">
-                            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                            <div>
-                                <p className="text-red-400 font-medium">오류</p>
-                                <p className="text-white/60 text-sm">{error}</p>
-                            </div>
-                        </div>
-                    )}
+                    {/* Note: Error display moved to OperationProgress in DimensionPanelLayout */}
 
                     {/* Result Display */}
-                    {result && (
+                    {displayResult && (
                         <div className="space-y-6 animate-in fade-in duration-500">
                             {/* Title & Logline */}
                             <div className="p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
@@ -307,24 +325,35 @@ export default function StoryArchitectPanel() {
                                     <CheckCircle className="w-5 h-5 text-emerald-400" />
                                     <span className="text-emerald-400 font-bold text-sm">생성 완료</span>
                                 </div>
-                                <h2 className="text-2xl font-bold text-white mb-2">{result.title}</h2>
-                                <p className="text-white/70 italic">&ldquo;{result.logline}&rdquo;</p>
+                                <h2 className="text-2xl font-bold text-white mb-2">{displayResult.title}</h2>
+                                <p className="text-white/70 italic">&ldquo;{displayResult.logline}&rdquo;</p>
+                            </div>
+
+                            {/* Export Button */}
+                            <div className="flex justify-end">
+                                <button
+                                    onClick={handleExportJson}
+                                    className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg flex items-center gap-2 text-sm text-white/70 hover:text-white transition-all"
+                                >
+                                    <Download className="w-4 h-4" />
+                                    JSON 내보내기
+                                </button>
                             </div>
 
                             {/* Synopsis */}
-                            {result.synopsis && (
+                            {displayResult.synopsis && (
                                 <div className="space-y-2">
                                     <h3 className="text-lg font-bold text-white">개요</h3>
-                                    <p className="text-white/70 leading-relaxed">{result.synopsis}</p>
+                                    <p className="text-white/70 leading-relaxed">{displayResult.synopsis}</p>
                                 </div>
                             )}
 
                             {/* Structure */}
-                            {result.structure && result.structure.length > 0 && (
+                            {displayResult.structure && displayResult.structure.length > 0 && (
                                 <div className="space-y-3">
                                     <h3 className="text-lg font-bold text-white">구조</h3>
                                     <div className="space-y-2">
-                                        {result.structure.map((act, i) => (
+                                        {displayResult.structure.map((act, i) => (
                                             <div key={i} className="p-4 rounded-xl bg-white/5 border border-white/10">
                                                 <div className="flex items-center justify-between mb-2">
                                                     <span className="text-emerald-400 font-bold">Act {act.act}</span>
@@ -341,11 +370,11 @@ export default function StoryArchitectPanel() {
                             )}
 
                             {/* Characters */}
-                            {result.characters && result.characters.length > 0 && (
+                            {displayResult.characters && displayResult.characters.length > 0 && (
                                 <div className="space-y-3">
                                     <h3 className="text-lg font-bold text-white">등장인물</h3>
                                     <div className="grid gap-3">
-                                        {result.characters.map((char, i) => (
+                                        {displayResult.characters.map((char, i) => (
                                             <div key={i} className="p-4 rounded-xl bg-white/5 border border-white/10">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <span className="text-white font-bold">{char.name}</span>
@@ -369,11 +398,11 @@ export default function StoryArchitectPanel() {
 
                             {/* Themes & Visual Motifs */}
                             <div className="grid grid-cols-2 gap-4">
-                                {result.themes && result.themes.length > 0 && (
+                                {displayResult.themes && displayResult.themes.length > 0 && (
                                     <div className="space-y-2">
                                         <h3 className="text-sm font-bold text-white/80">주제</h3>
                                         <div className="flex flex-wrap gap-1">
-                                            {result.themes.map((theme, i) => (
+                                            {displayResult.themes.map((theme, i) => (
                                                 <span key={i} className="text-xs px-2 py-1 rounded-full bg-white/10 text-white/70">
                                                     {theme}
                                                 </span>
@@ -381,11 +410,11 @@ export default function StoryArchitectPanel() {
                                         </div>
                                     </div>
                                 )}
-                                {result.visual_motifs && result.visual_motifs.length > 0 && (
+                                {displayResult.visual_motifs && displayResult.visual_motifs.length > 0 && (
                                     <div className="space-y-2">
                                         <h3 className="text-sm font-bold text-white/80">시각적 모티프</h3>
                                         <div className="flex flex-wrap gap-1">
-                                            {result.visual_motifs.map((motif, i) => (
+                                            {displayResult.visual_motifs.map((motif, i) => (
                                                 <span key={i} className="text-xs px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400">
                                                     {motif}
                                                 </span>
@@ -405,7 +434,7 @@ export default function StoryArchitectPanel() {
                     )}
 
                     {/* Empty State */}
-                    {!result && !error && (
+                    {!displayResult && !displayError && (
                         <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
                             <Layers className="w-16 h-16 text-emerald-400/30 mb-4" />
                             <h3 className="text-xl font-bold text-white/60 mb-2">시나리오 생성기</h3>

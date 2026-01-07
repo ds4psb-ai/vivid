@@ -1,15 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { api } from "@/lib/api";
-import TeachingPanelLayout, { type ThemeColor } from "./DimensionPanelLayout";
+import { useState, useCallback } from "react";
+import TeachingPanelLayout, {
+    type ThemeColor,
+    useAsyncOperation,
+    useResultExport,
+} from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
-import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { CheckCircle, XCircle, AlertTriangle, Download } from "lucide-react";
 
 const CREDIT_COST = 8;
 const THEME_COLOR: ThemeColor = "rose";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 interface CriterionResult {
     score: number;
@@ -53,13 +57,41 @@ export default function QualityDirectorPanel() {
     const [model, setModel] = useState("gemini-3.0-pro-preview");
     const [threshold, setThreshold] = useState(70);
 
-    const [isLoading, setIsLoading] = useState(false);
-    const [result, setResult] = useState<QualityResult | null>(null);
-    const [error, setError] = useState<string | null>(null);
     const [showCreditModal, setShowCreditModal] = useState(false);
+    const [validationError, setValidationError] = useState<string | null>(null);
 
     const { byokKey } = useBYOK();
     const creditCtx = useCreditContextOptional();
+
+    // Export utilities
+    const { exportJSON } = useResultExport();
+
+    // Async operation hook
+    const {
+        isLoading,
+        progress,
+        error,
+        data: result,
+        execute,
+        cancel,
+        retry,
+        canRetry,
+        currentRetryCount,
+    } = useAsyncOperation<{ success: boolean; output: QualityResult; error?: string }>({
+        onSuccess: (data) => {
+            if (data.success && !byokKey && creditCtx) {
+                void creditCtx.refresh();
+            }
+        },
+        onError: (err) => {
+            if (err.message.includes("크레딧") || err.message.includes("402")) {
+                setShowCreditModal(true);
+            }
+        },
+        retryCount: 3,
+        retryDelay: 1000,
+        nonRetryableErrors: ["400", "401", "402", "403", "404", "크레딧", "부족"],
+    });
 
     const toggleCriterion = (criterion: string) => {
         setSelectedCriteria(prev =>
@@ -69,51 +101,51 @@ export default function QualityDirectorPanel() {
         );
     };
 
-    const handleCheck = async () => {
-        if (!content.trim()) {
-            setError("검수할 콘텐츠를 입력해주세요");
+    const MAX_CONTENT_LENGTH = 5000;
+
+    const handleCheck = useCallback(async () => {
+        const trimmedContent = content.trim();
+        if (!trimmedContent) {
+            setValidationError("검수할 콘텐츠를 입력해주세요");
+            return;
+        }
+        if (trimmedContent.length > MAX_CONTENT_LENGTH) {
+            setValidationError(`콘텐츠는 ${MAX_CONTENT_LENGTH}자 이하로 입력해주세요`);
             return;
         }
         if (selectedCriteria.length === 0) {
-            setError("최소 하나의 검수 기준을 선택해주세요");
+            setValidationError("최소 하나의 검수 기준을 선택해주세요");
             return;
         }
+        setValidationError(null);
 
         if (!byokKey && creditCtx && !creditCtx.hasEnoughCredits(CREDIT_COST)) {
             setShowCreditModal(true);
             return;
         }
 
-        setIsLoading(true);
-        setError(null);
-
-        try {
-            const response = await api.post<{
-                success: boolean;
-                output: QualityResult;
-                error?: string;
-            }>("/api/dimension/quality/check", {
+        await execute(
+            `${API_BASE}/api/dimension/quality/check`,
+            {
                 content,
                 content_type: contentType,
                 criteria: selectedCriteria,
                 model,
                 threshold,
-            }, getBYOKHeaders(byokKey));
+            },
+            getBYOKHeaders(byokKey)
+        );
+    }, [content, contentType, selectedCriteria, model, threshold, byokKey, creditCtx, execute]);
 
-            if (response.success) {
-                setResult(response.output);
-                if (!byokKey && creditCtx) {
-                    void creditCtx.refresh();
-                }
-            } else {
-                setError(response.error || "검수 실패");
-            }
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "알 수 없는 오류");
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    // Export result as JSON
+    const handleExportJson = useCallback(() => {
+        if (!result?.output) return;
+        exportJSON(result.output, `quality-check-${Date.now()}.json`);
+    }, [result?.output, exportJSON]);
+
+    // Extracted result data for display
+    const displayResult = result?.success ? result.output : null;
+    const displayError = validationError || (result && !result.success ? result.error : error);
 
     const getScoreColor = (score: number) => {
         if (score >= 80) return "text-emerald-400";
@@ -241,9 +273,10 @@ export default function QualityDirectorPanel() {
                 )}
             </button>
 
-            {error && (
+            {/* Validation error only - API errors shown in OperationProgress overlay */}
+            {validationError && (
                 <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs">
-                    {error}
+                    {validationError}
                 </div>
             )}
         </>
@@ -256,22 +289,40 @@ export default function QualityDirectorPanel() {
                 sidebarContent={SidebarContent}
                 isLoading={isLoading}
                 themeColor={THEME_COLOR}
+                progress={progress}
+                onCancel={cancel}
+                onRetry={retry}
+                canRetry={canRetry}
+                error={displayError}
+                retryCount={currentRetryCount}
+                maxRetries={3}
             >
-                {result ? (
+                {displayResult ? (
                     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
+                        {/* Export Button */}
+                        <div className="flex justify-end">
+                            <button
+                                onClick={handleExportJson}
+                                className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg flex items-center gap-2 text-sm text-white/70 hover:text-white transition-all"
+                            >
+                                <Download className="w-4 h-4" />
+                                JSON 내보내기
+                            </button>
+                        </div>
+
                         {/* Overall Score */}
                         <div className="relative overflow-hidden rounded-3xl bg-black/40 backdrop-blur-xl border border-white/10 p-8">
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-500 to-pink-500" />
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    {result.passed ? (
+                                    {displayResult.passed ? (
                                         <CheckCircle className="w-16 h-16 text-emerald-400" />
                                     ) : (
                                         <XCircle className="w-16 h-16 text-rose-400" />
                                     )}
                                     <div>
                                         <h2 className="text-2xl font-bold text-white">
-                                            {result.passed ? "검수 통과" : "검수 미통과"}
+                                            {displayResult.passed ? "검수 통과" : "검수 미통과"}
                                         </h2>
                                         <p className="text-sm text-zinc-400">
                                             {selectedCriteria.length}개 기준 검사 완료
@@ -279,8 +330,8 @@ export default function QualityDirectorPanel() {
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <div className={`text-5xl font-bold ${getScoreColor(result.score)}`}>
-                                        {result.score}
+                                    <div className={`text-5xl font-bold ${getScoreColor(displayResult.score)}`}>
+                                        {displayResult.score}
                                     </div>
                                     <div className="text-xs text-zinc-500 uppercase tracking-wider">/ 100</div>
                                 </div>
@@ -289,7 +340,7 @@ export default function QualityDirectorPanel() {
 
                         {/* Criteria Results */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {Object.entries(result.criteria_results).map(([key, criterion]) => (
+                            {Object.entries(displayResult.criteria_results).map(([key, criterion]) => (
                                 <div
                                     key={key}
                                     className={`p-5 rounded-2xl border backdrop-blur-sm transition-all ${
@@ -319,14 +370,14 @@ export default function QualityDirectorPanel() {
                         </div>
 
                         {/* Issues */}
-                        {result.issues.length > 0 && (
+                        {displayResult.issues.length > 0 && (
                             <div className="p-6 bg-rose-500/5 border border-rose-500/20 rounded-2xl">
                                 <h3 className="text-sm font-bold text-rose-400 uppercase tracking-wider mb-4 flex items-center gap-2">
                                     <XCircle className="w-4 h-4" />
                                     발견된 문제점
                                 </h3>
                                 <ul className="space-y-2">
-                                    {result.issues.map((issue, i) => (
+                                    {displayResult.issues.map((issue, i) => (
                                         <li key={i} className="text-sm text-zinc-300 flex items-start gap-2">
                                             <span className="text-rose-400 mt-1">•</span>
                                             {issue}
@@ -337,14 +388,14 @@ export default function QualityDirectorPanel() {
                         )}
 
                         {/* Suggestions */}
-                        {result.suggestions.length > 0 && (
+                        {displayResult.suggestions.length > 0 && (
                             <div className="p-6 bg-sky-500/5 border border-sky-500/20 rounded-2xl">
                                 <h3 className="text-sm font-bold text-sky-400 uppercase tracking-wider mb-4 flex items-center gap-2">
                                     <AlertTriangle className="w-4 h-4" />
                                     개선 제안
                                 </h3>
                                 <ul className="space-y-2">
-                                    {result.suggestions.map((suggestion, i) => (
+                                    {displayResult.suggestions.map((suggestion, i) => (
                                         <li key={i} className="text-sm text-zinc-300 flex items-start gap-2">
                                             <span className="text-sky-400 mt-1">→</span>
                                             {suggestion}

@@ -1,14 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { api } from "@/lib/api";
-import TeachingPanelLayout, { type ThemeColor } from "./DimensionPanelLayout";
+import { useState, useCallback } from "react";
+import TeachingPanelLayout, {
+    type ThemeColor,
+    useAsyncOperation,
+    useResultExport,
+} from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 
 const CREDIT_COST = 8;
 const THEME_COLOR: ThemeColor = "amber";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 interface AnalysisResult {
     composition?: string;
@@ -34,30 +38,46 @@ const MODELS = [
 ];
 
 export default function ReferenceDecoderPanel() {
+    // Form state
     const [description, setDescription] = useState("");
     const [focusAreas, setFocusAreas] = useState<string[]>(["composition", "lighting", "color", "movement"]);
     const [model, setModel] = useState("gemini-3.0-flash-preview");
-
-    const [isLoading, setIsLoading] = useState(false);
-    const [result, setResult] = useState<AnalysisResult | null>(null);
-    const [error, setError] = useState<string | null>(null);
     const [showCreditModal, setShowCreditModal] = useState(false);
+    const [validationError, setValidationError] = useState<string | null>(null);
 
     // BYOK and credits
     const { byokKey } = useBYOK();
     const creditCtx = useCreditContextOptional();
 
-    const getErrorMessage = (err: unknown): string => {
-        if (err instanceof Error) {
-            const msg = err.message.toLowerCase();
-            if (msg.includes("timeout")) return "요청 시간이 초과되었습니다. 다시 시도해주세요.";
-            if (msg.includes("api key")) return "서비스 설정 오류입니다. 관리자에게 문의하세요.";
-            if (msg.includes("network") || msg.includes("fetch")) return "네트워크 오류입니다. 인터넷 연결을 확인해주세요.";
-            if (msg.includes("insufficient") || msg.includes("402")) return "크레딧이 부족합니다.";
-            return err.message;
-        }
-        return "알 수 없는 오류가 발생했습니다.";
-    };
+    // Export utilities
+    const { exportJSON } = useResultExport();
+
+    // Async operation hook
+    const {
+        isLoading,
+        progress,
+        error,
+        data: result,
+        execute,
+        cancel,
+        retry,
+        canRetry,
+        currentRetryCount,
+    } = useAsyncOperation<{ success: boolean; output: AnalysisResult; error?: string }>({
+        onSuccess: (data) => {
+            if (data.success && !byokKey && creditCtx) {
+                void creditCtx.refresh();
+            }
+        },
+        onError: (err) => {
+            if (err.message.includes("크레딧") || err.message.includes("402")) {
+                setShowCreditModal(true);
+            }
+        },
+        retryCount: 3,
+        retryDelay: 1000,
+        nonRetryableErrors: ["400", "401", "402", "403", "404", "크레딧", "부족"],
+    });
 
     const toggleFocusArea = (area: string) => {
         setFocusAreas((prev) =>
@@ -65,67 +85,46 @@ export default function ReferenceDecoderPanel() {
         );
     };
 
-    const handleAnalyze = async () => {
-        if (!description.trim()) {
-            setError("영상 설명을 입력해주세요");
+    // Analyze handler
+    const MAX_DESCRIPTION_LENGTH = 3000;
+
+    const handleAnalyze = useCallback(async () => {
+        const trimmedDescription = description.trim();
+        if (!trimmedDescription) {
+            setValidationError("영상 설명을 입력해주세요");
+            return;
+        }
+        if (trimmedDescription.length > MAX_DESCRIPTION_LENGTH) {
+            setValidationError(`영상 설명은 ${MAX_DESCRIPTION_LENGTH}자 이하로 입력해주세요`);
             return;
         }
         if (focusAreas.length === 0) {
-            setError("최소 하나의 분석 영역을 선택해주세요");
+            setValidationError("최소 하나의 분석 영역을 선택해주세요");
             return;
         }
+        setValidationError(null);
 
-        // Credit check (only when not using BYOK)
         if (!byokKey && creditCtx && !creditCtx.hasEnoughCredits(CREDIT_COST)) {
             setShowCreditModal(true);
             return;
         }
 
-        setIsLoading(true);
-        setError(null);
+        await execute(
+            `${API_BASE}/api/dimension/4d/analyze`,
+            { video_description: description, focus_areas: focusAreas, model },
+            getBYOKHeaders(byokKey)
+        );
+    }, [description, focusAreas, model, byokKey, creditCtx, execute]);
 
-        try {
-            const response = await api.post<{
-                success: boolean;
-                output: AnalysisResult;
-                error?: string;
-            }>("/api/dimension/4d/analyze", {
-                video_description: description,
-                focus_areas: focusAreas,
-                model,
-            }, getBYOKHeaders(byokKey));
+    // Export result as JSON
+    const handleExportJson = useCallback(() => {
+        if (!result?.output) return;
+        exportJSON(result.output, `reference-analysis-${Date.now()}.json`);
+    }, [result?.output, exportJSON]);
 
-            if (response.success) {
-                setResult(response.output);
-                // Refresh credit balance
-                if (!byokKey && creditCtx) {
-                    void creditCtx.refresh();
-                }
-            } else {
-                setError(response.error || "분석 실패");
-            }
-        } catch (err) {
-            const errorMsg = getErrorMessage(err);
-            if (errorMsg.includes("크레딧")) {
-                setShowCreditModal(true);
-            } else {
-                setError(errorMsg);
-            }
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleExportJson = () => {
-        if (!result) return;
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(result, null, 2));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", "analysis_result.json");
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
-    };
+    // Extracted result data for display
+    const displayResult = result?.success ? result.output : null;
+    const displayError = validationError || (result && !result.success ? result.error : error);
 
     const SidebarContent = (
         <>
@@ -202,9 +201,10 @@ export default function ReferenceDecoderPanel() {
                 </span>
             </button>
 
-            {error && (
+            {/* Validation error only - API errors shown in OperationProgress overlay */}
+            {validationError && (
                 <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs break-keep leading-relaxed animate-in fade-in slide-in-from-top-1">
-                    {error}
+                    {validationError}
                 </div>
             )}
         </>
@@ -217,8 +217,15 @@ export default function ReferenceDecoderPanel() {
                 sidebarContent={SidebarContent}
                 isLoading={isLoading}
                 themeColor={THEME_COLOR}
+                progress={progress}
+                onCancel={cancel}
+                onRetry={retry}
+                canRetry={canRetry}
+                error={displayError}
+                retryCount={currentRetryCount}
+                maxRetries={3}
             >
-                {result ? (
+                {displayResult ? (
                     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
                         <div className="flex items-center justify-between px-1">
                             <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
@@ -238,7 +245,7 @@ export default function ReferenceDecoderPanel() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Analysis Sections */}
-                            {Object.entries(result).map(([key, value]) => {
+                            {Object.entries(displayResult).map(([key, value]) => {
                                 if (key === "recommendations") return null;
                                 const title = FOCUS_AREAS.find(f => f.value === key)?.label || key;
 
@@ -259,7 +266,7 @@ export default function ReferenceDecoderPanel() {
                         </div>
 
                         {/* Recommendations */}
-                        {result.recommendations && result.recommendations.length > 0 && (
+                        {displayResult.recommendations && displayResult.recommendations.length > 0 && (
                             <div className="group relative">
                                 <div className="p-8 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] font-mono text-base leading-relaxed text-zinc-100 whitespace-pre-wrap group-hover:border-amber-500/30 group-hover:bg-black/50 transition-all relative overflow-hidden">
                                     <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-amber-500 to-orange-500 shadow-[0_0_20px_#f59e0b]"></div>
@@ -270,7 +277,7 @@ export default function ReferenceDecoderPanel() {
                                         Key Recommendations
                                     </h4>
                                     <ul className="space-y-3">
-                                        {result.recommendations.map((rec, idx) => (
+                                        {displayResult.recommendations.map((rec, idx) => (
                                             <li key={idx} className="flex items-start gap-3 text-sm text-zinc-200">
                                                 <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-500/50 flex-shrink-0"></span>
                                                 <span className="leading-relaxed">{rec}</span>

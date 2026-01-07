@@ -1,15 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { api } from "@/lib/api";
-import TeachingPanelLayout, { type ThemeColor } from "./DimensionPanelLayout";
+import { useState, useCallback } from "react";
+import TeachingPanelLayout, {
+    type ThemeColor,
+    useAsyncOperation,
+    useResultExport,
+} from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
-import { Palette, Copy, Check } from "lucide-react";
+import { Palette, Copy, Check, Download } from "lucide-react";
 
 const CREDIT_COST = 10;
 const THEME_COLOR: ThemeColor = "fuchsia";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 interface AestheticResult {
     visual_guidelines: {
@@ -67,67 +71,93 @@ export default function AestheticDirectorPanel() {
     const [model, setModel] = useState("gemini-3.0-pro-preview");
     const [useRag, setUseRag] = useState(true);
 
-    const [isLoading, setIsLoading] = useState(false);
-    const [result, setResult] = useState<AestheticResult | null>(null);
-    const [error, setError] = useState<string | null>(null);
     const [copiedField, setCopiedField] = useState<string | null>(null);
     const [showCreditModal, setShowCreditModal] = useState(false);
+    const [validationError, setValidationError] = useState<string | null>(null);
 
     const { byokKey } = useBYOK();
     const creditCtx = useCreditContextOptional();
 
-    const handleGenerate = async () => {
-        if (!concept.trim()) {
-            setError("컨셉을 입력해주세요");
+    // Export utilities
+    const { exportJSON, copyToClipboard } = useResultExport();
+
+    // Async operation hook
+    const {
+        isLoading,
+        progress,
+        error,
+        data: result,
+        execute,
+        cancel,
+        retry,
+        canRetry,
+        currentRetryCount,
+    } = useAsyncOperation<{ success: boolean; output: AestheticResult; error?: string }>({
+        onSuccess: (data) => {
+            if (data.success && !byokKey && creditCtx) {
+                void creditCtx.refresh();
+            }
+        },
+        onError: (err) => {
+            if (err.message.includes("크레딧") || err.message.includes("402")) {
+                setShowCreditModal(true);
+            }
+        },
+        retryCount: 3,
+        retryDelay: 1000,
+        nonRetryableErrors: ["400", "401", "402", "403", "404", "크레딧", "부족"],
+    });
+
+    const MAX_CONCEPT_LENGTH = 2000;
+
+    const handleGenerate = useCallback(async () => {
+        const trimmedConcept = concept.trim();
+        if (!trimmedConcept) {
+            setValidationError("컨셉을 입력해주세요");
             return;
         }
+        if (trimmedConcept.length > MAX_CONCEPT_LENGTH) {
+            setValidationError(`컨셉은 ${MAX_CONCEPT_LENGTH}자 이하로 입력해주세요`);
+            return;
+        }
+        setValidationError(null);
 
         if (!byokKey && creditCtx && !creditCtx.hasEnoughCredits(CREDIT_COST)) {
             setShowCreditModal(true);
             return;
         }
 
-        setIsLoading(true);
-        setError(null);
-
-        try {
-            const response = await api.post<{
-                success: boolean;
-                output: AestheticResult;
-                error?: string;
-            }>("/api/dimension/aesthetic/direct", {
+        await execute(
+            `${API_BASE}/api/dimension/aesthetic/direct`,
+            {
                 concept,
                 reference_style: referenceStyle || undefined,
                 mood,
                 target_medium: targetMedium,
                 model,
                 use_rag: useRag,
-            }, getBYOKHeaders(byokKey));
+            },
+            getBYOKHeaders(byokKey)
+        );
+    }, [concept, referenceStyle, mood, targetMedium, model, useRag, byokKey, creditCtx, execute]);
 
-            if (response.success) {
-                setResult(response.output);
-                if (!byokKey && creditCtx) {
-                    void creditCtx.refresh();
-                }
-            } else {
-                setError(response.error || "생성 실패");
-            }
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "알 수 없는 오류");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleCopy = async (text: string, field: string) => {
-        try {
-            await navigator.clipboard.writeText(text);
+    const handleCopy = useCallback(async (text: string, field: string) => {
+        const success = await copyToClipboard(text);
+        if (success) {
             setCopiedField(field);
             setTimeout(() => setCopiedField(null), 2000);
-        } catch {
-            setError("클립보드 복사 실패");
         }
-    };
+    }, [copyToClipboard]);
+
+    // Export result as JSON
+    const handleExportJson = useCallback(() => {
+        if (!result?.output) return;
+        exportJSON(result.output, `aesthetic-director-${Date.now()}.json`);
+    }, [result?.output, exportJSON]);
+
+    // Extracted result data for display
+    const displayResult = result?.success ? result.output : null;
+    const displayError = validationError || (result && !result.success ? result.error : error);
 
     const SidebarContent = (
         <>
@@ -254,9 +284,10 @@ export default function AestheticDirectorPanel() {
                 )}
             </button>
 
-            {error && (
+            {/* Validation error only - API errors shown in OperationProgress overlay */}
+            {validationError && (
                 <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs">
-                    {error}
+                    {validationError}
                 </div>
             )}
         </>
@@ -269,17 +300,35 @@ export default function AestheticDirectorPanel() {
                 sidebarContent={SidebarContent}
                 isLoading={isLoading}
                 themeColor={THEME_COLOR}
+                progress={progress}
+                onCancel={cancel}
+                onRetry={retry}
+                canRetry={canRetry}
+                error={displayError}
+                retryCount={currentRetryCount}
+                maxRetries={3}
             >
-                {result ? (
+                {displayResult ? (
                     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
+                        {/* Export Button */}
+                        <div className="flex justify-end">
+                            <button
+                                onClick={handleExportJson}
+                                className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg flex items-center gap-2 text-sm text-white/70 hover:text-white transition-all"
+                            >
+                                <Download className="w-4 h-4" />
+                                JSON 내보내기
+                            </button>
+                        </div>
+
                         {/* Auteur Influence (if present) */}
-                        {result.auteur_influence && (
+                        {displayResult.auteur_influence && (
                             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-fuchsia-500/10 to-purple-500/10 border border-fuchsia-500/20 p-6">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-fuchsia-500/20 blur-[60px] rounded-full" />
-                                <h3 className="text-lg font-bold text-fuchsia-400 mb-2">{result.auteur_influence.name}</h3>
-                                <p className="text-sm text-zinc-300 mb-4">{result.auteur_influence.style_summary}</p>
+                                <h3 className="text-lg font-bold text-fuchsia-400 mb-2">{displayResult.auteur_influence.name}</h3>
+                                <p className="text-sm text-zinc-300 mb-4">{displayResult.auteur_influence.style_summary}</p>
                                 <div className="flex flex-wrap gap-2">
-                                    {result.auteur_influence.signature_elements.map((elem, i) => (
+                                    {displayResult.auteur_influence.signature_elements.map((elem, i) => (
                                         <span key={i} className="px-3 py-1 rounded-full bg-fuchsia-500/20 text-fuchsia-300 text-xs">
                                             {elem}
                                         </span>
@@ -296,7 +345,7 @@ export default function AestheticDirectorPanel() {
                                     Color Palette
                                 </h3>
                                 <button
-                                    onClick={() => handleCopy(result.color_palette.join(", "), "palette")}
+                                    onClick={() => handleCopy(displayResult.color_palette.join(", "), "palette")}
                                     className="text-xs text-zinc-500 hover:text-white flex items-center gap-1"
                                 >
                                     {copiedField === "palette" ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
@@ -304,7 +353,7 @@ export default function AestheticDirectorPanel() {
                                 </button>
                             </div>
                             <div className="flex gap-3 flex-wrap">
-                                {result.color_palette.map((color, i) => (
+                                {displayResult.color_palette.map((color, i) => (
                                     <div key={i} className="flex flex-col items-center gap-2">
                                         <div
                                             className="w-16 h-16 rounded-xl shadow-lg border border-white/10"
@@ -318,7 +367,7 @@ export default function AestheticDirectorPanel() {
 
                         {/* Visual Guidelines */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {Object.entries(result.visual_guidelines).map(([key, value]) => (
+                            {Object.entries(displayResult.visual_guidelines).map(([key, value]) => (
                                 <div key={key} className="p-5 bg-white/[0.03] border border-white/10 rounded-xl hover:border-fuchsia-500/30 transition-colors">
                                     <h4 className="text-xs font-bold text-fuchsia-400 uppercase tracking-wider mb-2 capitalize">
                                         {key.replace(/_/g, " ")}
@@ -332,7 +381,7 @@ export default function AestheticDirectorPanel() {
                         <div className="p-6 bg-white/[0.03] border border-white/10 rounded-2xl">
                             <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-4">Style Keywords</h3>
                             <div className="flex flex-wrap gap-2">
-                                {result.style_keywords.map((keyword, i) => (
+                                {displayResult.style_keywords.map((keyword, i) => (
                                     <span key={i} className="px-4 py-2 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/20 text-fuchsia-300 text-sm">
                                         {keyword}
                                     </span>
@@ -341,11 +390,11 @@ export default function AestheticDirectorPanel() {
                         </div>
 
                         {/* Avoid Elements */}
-                        {result.avoid_elements.length > 0 && (
+                        {displayResult.avoid_elements.length > 0 && (
                             <div className="p-6 bg-rose-500/5 border border-rose-500/20 rounded-2xl">
                                 <h3 className="text-sm font-bold text-rose-400 uppercase tracking-wider mb-4">피해야 할 요소</h3>
                                 <ul className="space-y-2">
-                                    {result.avoid_elements.map((elem, i) => (
+                                    {displayResult.avoid_elements.map((elem, i) => (
                                         <li key={i} className="text-sm text-zinc-300 flex items-start gap-2">
                                             <span className="text-rose-400">✕</span>
                                             {elem}
