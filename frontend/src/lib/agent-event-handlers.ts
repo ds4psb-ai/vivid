@@ -172,19 +172,48 @@ function handleMessage(ctx: AgentEventContext, payload: Record<string, unknown>)
 function handleToolCalls(ctx: AgentEventContext, payload: Record<string, unknown>): void {
     const toolCalls = Array.isArray(payload.tool_calls) ? payload.tool_calls : [];
 
+    // Timeout for pending tools (30 seconds)
+    const TOOL_TIMEOUT_MS = 30_000;
+
     toolCalls.forEach((call: { id?: string; name?: string }) => {
         if (!call.name) return;
 
+        const messageId = `tool-pending-${call.id || Date.now()}`;
+        const toolName = call.name;
+
         const pendingMessage: Message = {
-            id: `tool-pending-${call.id || Date.now()}`,
+            id: messageId,
             role: "tool",
             content: "",
             timestamp: new Date(),
-            toolName: call.name,
+            toolName,
             toolStatus: "pending",
         };
 
         ctx.setMessages(prev => [...prev, pendingMessage]);
+
+        // Set timeout to auto-fail if no result received
+        setTimeout(() => {
+            ctx.setMessages(prev => {
+                const pendingIdx = prev.findIndex(
+                    m => m.id === messageId && m.toolStatus === "pending"
+                );
+
+                if (pendingIdx !== -1) {
+                    // Still pending after timeout - mark as error
+                    return prev.map((m, i) =>
+                        i === pendingIdx
+                            ? {
+                                ...m,
+                                toolStatus: "error" as const,
+                                toolError: "⏱️ 응답 시간 초과 (30초)"
+                            }
+                            : m
+                    );
+                }
+                return prev;
+            });
+        }, TOOL_TIMEOUT_MS);
     });
 }
 
