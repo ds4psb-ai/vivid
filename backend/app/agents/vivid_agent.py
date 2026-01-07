@@ -106,36 +106,66 @@ class MemoryManager:
         return context
     
     def _build_template_hint(self, template: dict) -> str:
-        """Build template context hint for Singularity templates."""
-        if not isinstance(template, dict):
+        """Build template context hint for Singularity templates.
+
+        Hardened with:
+        - Type validation for all fields
+        - Size limits to prevent context bloat
+        - Try-except wrapper for safety
+        """
+        try:
+            if not isinstance(template, dict):
+                return ""
+
+            # Extract and validate title (required, max 100 chars)
+            title = template.get("title")
+            if not title or not isinstance(title, str):
+                return ""
+            title = title.strip()[:100]
+            if not title:
+                return ""
+
+            hint_parts = [
+                f"[Template Active] 싱귤래리티 템플릿 '{title}'이(가) 적용되어 있습니다."
+            ]
+
+            # Extract and validate description (optional, max 300 chars)
+            description = template.get("description")
+            if description and isinstance(description, str):
+                safe_desc = description.strip()[:300]
+                if safe_desc:
+                    hint_parts.append(f"설명: {safe_desc}")
+
+            # Extract and validate tool_sequence (optional, max 10 items, 20 chars each)
+            tool_sequence = template.get("tool_sequence")
+            if tool_sequence and isinstance(tool_sequence, list):
+                safe_sequence = []
+                for item in tool_sequence[:10]:
+                    if isinstance(item, str):
+                        safe_item = item.strip()[:20]
+                        if safe_item:
+                            safe_sequence.append(safe_item)
+                if safe_sequence:
+                    sequence_str = " → ".join(safe_sequence)
+                    hint_parts.append(f"워크플로우 순서: {sequence_str}")
+
+            # Extract and validate input_preset keys (optional, max 5 keys)
+            input_preset = template.get("input_preset")
+            if input_preset and isinstance(input_preset, dict):
+                preset_keys = [
+                    str(k)[:30] for k in list(input_preset.keys())[:5]
+                    if isinstance(k, str)
+                ]
+                if preset_keys:
+                    hint_parts.append(f"프리셋 입력: {', '.join(preset_keys)}")
+
+            hint_parts.append("사용자가 템플릿 워크플로우를 실행하거나 수정하려 할 수 있습니다. 적절히 안내해주세요.")
+
+            return "\n".join(hint_parts)
+
+        except Exception as e:
+            logger.warning(f"Failed to build template hint: {e}")
             return ""
-
-        title = template.get("title", "")
-        description = template.get("description", "")
-        tool_sequence = template.get("tool_sequence", [])
-        input_preset = template.get("input_preset", {})
-
-        if not title:
-            return ""
-
-        hint_parts = [
-            f"[Template Active] 싱귤래리티 템플릿 '{title}'이(가) 적용되어 있습니다."
-        ]
-
-        if description:
-            hint_parts.append(f"설명: {description}")
-
-        if tool_sequence:
-            sequence_str = " → ".join(tool_sequence)
-            hint_parts.append(f"워크플로우 순서: {sequence_str}")
-
-        if input_preset:
-            preset_keys = list(input_preset.keys())[:5]  # Limit to 5 keys
-            hint_parts.append(f"프리셋 입력: {', '.join(preset_keys)}")
-
-        hint_parts.append("사용자가 템플릿 워크플로우를 실행하거나 수정하려 할 수 있습니다. 적절히 안내해주세요.")
-
-        return "\n".join(hint_parts)
 
     def _get_page_hint(self, page_context: str) -> str:
         """Get human-readable page hint for context injection."""

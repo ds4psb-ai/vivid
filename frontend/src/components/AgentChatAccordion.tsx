@@ -69,23 +69,56 @@ export function AgentChatAccordion({
     const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
 
-    // Compute initial message based on template context
-    const computedInitialMessage = templateContext
-        ? `🎬 "${templateContext.title}" 템플릿이 적용되었습니다!\n\n` +
-          (templateContext.tool_sequence?.length
-              ? `${templateContext.tool_sequence.join(" → ")} 워크플로우가 준비되어 있어요.\n\n`
-              : "") +
-          `입력값을 넣고 "전체 실행"을 누르거나, 제가 도와드릴 내용이 있으면 말씀해주세요!`
-        : initialMessage;
+    // Safely build template-aware initial message
+    const computedInitialMessage = useMemo(() => {
+        if (!templateContext?.title) return initialMessage;
+
+        // Sanitize and truncate title (max 50 chars)
+        const safeTitle = String(templateContext.title || "")
+            .replace(/[<>]/g, "")
+            .slice(0, 50);
+
+        if (!safeTitle) return initialMessage;
+
+        const parts = [`🎬 "${safeTitle}" 템플릿이 적용되었습니다!\n\n`];
+
+        // Safely handle tool_sequence
+        if (Array.isArray(templateContext.tool_sequence) && templateContext.tool_sequence.length > 0) {
+            const safeSequence = templateContext.tool_sequence
+                .filter((s): s is string => typeof s === "string")
+                .slice(0, 10)  // Max 10 steps
+                .map(s => s.slice(0, 20));  // Max 20 chars per step
+            if (safeSequence.length > 0) {
+                parts.push(`${safeSequence.join(" → ")} 워크플로우가 준비되어 있어요.\n\n`);
+            }
+        }
+
+        parts.push(`입력값을 넣고 "전체 실행"을 누르거나, 제가 도와드릴 내용이 있으면 말씀해주세요!`);
+        return parts.join("");
+    }, [templateContext, initialMessage]);
 
     const [messages, setMessages] = useState<Message[]>([
         {
             id: "initial",
             role: "assistant",
-            content: computedInitialMessage,
+            content: initialMessage,  // Start with default, update via effect
             timestamp: new Date(),
         },
     ]);
+
+    // Update initial message when template context changes
+    useEffect(() => {
+        setMessages(prev => {
+            const newMessages = [...prev];
+            if (newMessages[0]?.id === "initial") {
+                newMessages[0] = {
+                    ...newMessages[0],
+                    content: computedInitialMessage,
+                };
+            }
+            return newMessages;
+        });
+    }, [computedInitialMessage]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
@@ -189,12 +222,34 @@ export function AgentChatAccordion({
         setIsLoading(true);
 
         try {
+            // Safely build template metadata (avoid circular refs, limit size)
+            let safeMetadata: Record<string, unknown> | undefined;
+            if (templateContext?.id && templateContext?.title) {
+                try {
+                    safeMetadata = {
+                        template: {
+                            id: String(templateContext.id).slice(0, 100),
+                            title: String(templateContext.title).slice(0, 100),
+                            description: templateContext.description
+                                ? String(templateContext.description).slice(0, 500)
+                                : undefined,
+                            tool_sequence: Array.isArray(templateContext.tool_sequence)
+                                ? templateContext.tool_sequence.slice(0, 10).map(s => String(s).slice(0, 20))
+                                : undefined,
+                            // Omit input_preset to avoid large payloads - backend can fetch if needed
+                        },
+                    };
+                } catch {
+                    console.warn("[AgentChat] Failed to build template metadata");
+                }
+            }
+
             // Call Backend API
             const response = await api.openAgentChatStream({
                 message: userInput || (uploadedAttachments.length > 0 ? "File attached" : ""),
                 attachments: uploadedAttachments.length > 0 ? uploadedAttachments : undefined,
                 page_context: pathname,
-                metadata: templateContext ? { template: templateContext } : undefined,
+                metadata: safeMetadata,
             });
 
             if (!response.ok || !response.body) {

@@ -189,19 +189,50 @@ function FlowPageContent() {
         return toolsById[toolId] || null;
     }, [toolsById]);
 
-    // Load template from URL parameter
+    // Template loading error state
+    const [templateLoadError, setTemplateLoadError] = useState<string | null>(null);
+
+    // Load template from URL parameter with validation
     useEffect(() => {
         const templateId = searchParams.get("template");
         if (!templateId || templateApplied || isConfigLoading) return;
 
+        // Validate template ID format (basic UUID/alphanumeric check)
+        const isValidId = /^[a-zA-Z0-9_-]{1,100}$/.test(templateId);
+        if (!isValidId) {
+            console.warn("[Flow] Invalid template ID format:", templateId);
+            setTemplateLoadError("잘못된 템플릿 ID 형식입니다.");
+            return;
+        }
+
         const loadTemplate = async () => {
             setIsLoadingTemplate(true);
+            setTemplateLoadError(null);
             try {
                 const template = await api.getSingularityTemplate(templateId);
+
+                // Validate template structure
+                if (!template || typeof template !== "object") {
+                    throw new Error("Invalid template response");
+                }
+                if (!template.title || typeof template.title !== "string") {
+                    throw new Error("Template missing title");
+                }
+
+                // Validate tool_sequence or dimension_sequence exists
+                const sequence = template.tool_sequence || template.dimension_sequence;
+                if (!Array.isArray(sequence) || sequence.length === 0) {
+                    console.warn("[Flow] Template has no tool sequence:", template.title);
+                    // Still allow loading, but log warning
+                }
+
                 setLoadedTemplate(template);
                 console.log("[Flow] Loaded template:", template.title);
             } catch (err) {
+                const errorMessage = err instanceof Error ? err.message : "템플릿 로드 실패";
                 console.error("[Flow] Failed to load template:", err);
+                setTemplateLoadError(errorMessage);
+                setLoadedTemplate(null);
             } finally {
                 setIsLoadingTemplate(false);
             }
@@ -600,6 +631,29 @@ function FlowPageContent() {
                             <div className="card-glass p-4 mb-4 flex items-center gap-3">
                                 <Loader2 className="w-5 h-5 animate-spin text-violet-400" />
                                 <span className="text-sm text-slate-400">템플릿을 불러오는 중...</span>
+                            </div>
+                        )}
+
+                        {/* Template Load Error */}
+                        {templateLoadError && !isLoadingTemplate && (
+                            <div className="card-glass p-4 mb-4 border border-red-500/30 bg-red-500/5">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
+                                            <X className="w-5 h-5 text-red-400" />
+                                        </div>
+                                        <div>
+                                            <div className="text-sm font-bold text-red-300">템플릿 로드 실패</div>
+                                            <div className="text-xs text-red-400/70">{templateLoadError}</div>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setTemplateLoadError(null)}
+                                        className="text-xs text-slate-500 hover:text-white transition-colors"
+                                    >
+                                        닫기
+                                    </button>
+                                </div>
                             </div>
                         )}
 
