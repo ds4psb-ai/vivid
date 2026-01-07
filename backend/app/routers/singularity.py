@@ -559,6 +559,79 @@ async def seed_templates(
             "is_featured": False,
             "is_approved": True,
         },
+
+        # =============================================================================
+        # 4-Stage Workflow 템플릿 (신규 차원 활용)
+        # =============================================================================
+        {
+            "title": "프로덕션 풀스택",
+            "description": "기획(STORY)부터 사전제작(SOUND), 제작(VIS), 완성(QC)까지. 전문 프로덕션 팀의 4단계 워크플로우를 AI로 자동화합니다.",
+            "thumbnail_url": "/images/portfolio_production.png",
+            "dimension_source": "STORY",
+            "tool_sequence": ["STORY", "2D", "SOUND", "VIS", "VEO", "QC"],
+            "input_preset": {
+                "genre": "drama",
+                "duration": "60s",
+                "structure": "3act",
+                "sound_type": "full",
+            },
+            "output_example": {
+                "story_structure": {"acts": 3, "scenes": 6},
+                "sound_design": {"bgm": True, "sfx": True, "narration": False},
+                "quality_score": 92,
+            },
+            "tags": ["프로덕션", "4단계", "풀스택", "전문가"],
+            "category": "production",
+            "creator_name": "Crebit Studio",
+            "is_featured": True,
+            "is_approved": True,
+        },
+        {
+            "title": "뮤직비디오 사운드 디자인",
+            "description": "스토리보드에 맞는 BGM 프롬프트와 효과음 타이밍을 자동 생성. Suno, Udio 호환 출력.",
+            "thumbnail_url": "/images/portfolio_sound.png",
+            "dimension_source": "2D",
+            "tool_sequence": ["2D", "SOUND", "3D", "VEO"],
+            "input_preset": {
+                "sound_type": "bgm",
+                "genre": "cinematic",
+                "tempo": "dynamic",
+                "target_platform": "suno",
+            },
+            "output_example": {
+                "music_prompt": "Cinematic orchestral, building tension, 120 BPM...",
+                "style_tags": ["epic", "emotional", "crescendo"],
+                "sfx_cues": 8,
+            },
+            "tags": ["사운드", "BGM", "뮤직비디오", "Suno"],
+            "category": "creative",
+            "creator_name": "Crebit Studio",
+            "is_featured": True,
+            "is_approved": True,
+        },
+        {
+            "title": "시나리오 중심 영상 기획",
+            "description": "심연해석기로 캐릭터 DNA를 분석하고, 시나리오 생성기가 3막 구조의 시나리오를 자동 작성합니다.",
+            "thumbnail_url": "/images/portfolio_scenario.png",
+            "dimension_source": "AI",
+            "tool_sequence": ["AI", "STORY", "2D", "SOUND"],
+            "input_preset": {
+                "depth": "deep",
+                "genre": "drama",
+                "structure": "3act",
+                "sound_type": "narration",
+            },
+            "output_example": {
+                "archetype": "영웅의 여정",
+                "logline": "한 문장으로 정리된 스토리",
+                "voice_direction": {"tone": "warm", "pace": "moderate"},
+            },
+            "tags": ["시나리오", "기획", "캐릭터", "내러티브"],
+            "category": "production",
+            "creator_name": "Crebit Studio",
+            "is_featured": False,
+            "is_approved": True,
+        },
     ]
     
     created = []

@@ -12,6 +12,10 @@ Single Source of Truth: DIMENSION_CAPSULES에서 ToolSpec을 동적으로 생성
 - aesthetic_direct: 미학디렉터 (AD) - 스타일 가이드 생성
 - persona_analyze: 심연해석기 (AI) - 페르소나 분석
 - veo_generate: Veo 3.1 비디오 생성 (VEO)
+- story_architect: 시나리오 생성기 (STORY) - 스토리 구조 설계
+- sound_crafter: 사운드 크래프터 (SOUND) - 음악/효과음 프롬프트
+- reference_decoder: 레퍼런스 해석기 (REF) - 참조 이미지 분석
+- visual_realizer: 비주얼 리얼라이저 (VIS) - 이미지 생성
 """
 from __future__ import annotations
 
@@ -54,6 +58,11 @@ TOOL_TO_CAPSULE: Dict[str, str] = {
     "aesthetic_direct": "dimension.aesthetic.direct",
     "persona_analyze": "dimension.persona.analyze",
     "veo_generate": "veo.video.generate",
+    # 4-Stage Workflow Capsules
+    "story_architect": "dimension.story.architect",
+    "sound_crafter": "dimension.sound.craft",
+    "reference_decoder": "dimension.reference.decode",
+    "visual_realizer": "dimension.visual.realize",
 }
 
 CAPSULE_TO_TOOL: Dict[str, str] = {v: k for k, v in TOOL_TO_CAPSULE.items()}
@@ -70,6 +79,11 @@ TOOL_TO_DIMENSION: Dict[str, str] = {
     "aesthetic_direct": "AD",
     "persona_analyze": "AI",
     "veo_generate": "VEO",
+    # 4-Stage Workflow Dimensions
+    "story_architect": "STORY",
+    "sound_crafter": "SOUND",
+    "reference_decoder": "REF",
+    "visual_realizer": "VIS",
 }
 
 

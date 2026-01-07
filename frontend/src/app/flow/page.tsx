@@ -32,14 +32,21 @@ const AGENT_TOOL_TO_TOOL_ID: Record<string, string> = {
 
 // Dimension code to toolId mapping (for template loading)
 const DIMENSION_TO_TOOL_ID: Record<string, string> = {
+    // Core dimensions (1D-4D)
     "1D": "prompt_generator",
     "2D": "storyboard",
     "3D": "image_tool",
     "4D": "reference_analyzer",
+    // Extended dimensions
     "QC": "quality_check",
     "AD": "aesthetic_direct",
     "AI": "persona_analyze",
     "VEO": "veo_generate",
+    // 4-Stage Workflow dimensions
+    "STORY": "story_architect",
+    "SOUND": "sound_crafter",
+    "REF": "reference_decoder",
+    "VIS": "visual_realizer",
 };
 
 // Icon components
