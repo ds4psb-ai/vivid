@@ -245,12 +245,13 @@ cd frontend && bun test
 
 ## 7. Known Issues
 
-| 이슈 | 영향 | 해결 방법 |
-|------|------|----------|
-| Agent SSE 중복 스레드 | 이벤트 중복 가능 | `vivid_agent.py` 리팩토링 필요 |
-| Global Chokki Accordion 레거시 파서 | `agent.*` 이벤트 불일치 | AG-UI 표준 매퍼 적용 |
-| `aiofiles` 의존성 누락 | 일부 환경 import 실패 | `requirements.txt`에 추가 |
-| Affiliate API 404 | `_deprecated`에만 존재 | 라우터 마운트 필요 |
+| 이슈 | 영향 | 상태 |
+|------|------|------|
+| ~~Agent SSE 중복 스레드~~ | ~~이벤트 중복 가능~~ | ✅ 해결 (StreamController) |
+| ~~Global Chokki Accordion 레거시 파서~~ | ~~`agent.*` 이벤트 불일치~~ | ✅ 해결 (AG-UI 표준 매퍼) |
+| ~~`aiofiles` 의존성 누락~~ | ~~일부 환경 import 실패~~ | ✅ 이미 추가됨 (L22) |
+| ~~Affiliate API 404~~ | ~~`_deprecated`에만 존재~~ | ✅ 이미 마운트됨 (main.py L215) |
+| Pending tool UI stuck | 결과 없으면 영구 대기 | ✅ 해결 (30초 타임아웃) |
 
 ---
 
