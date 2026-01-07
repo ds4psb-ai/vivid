@@ -74,8 +74,8 @@ export function AuroraBackground() {
                 }}
             />
 
-            {/* Noise Overlay for Texture */}
-            <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay" />
+            {/* Noise Overlay for Texture - disabled (file not found) */}
+            {/* <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay" /> */}
 
             {/* Vignette */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#000000_100%)] opacity-80" />
