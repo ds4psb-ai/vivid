@@ -37,28 +37,27 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 # ============================================================================
-# MCP Client (notebooklm-mcp - Selenium-based)
+# MCP Client (jacob-bd/notebooklm-mcp-server - RPC-based)
 # ============================================================================
 
 # Try to import NotebookLM MCP client for real API access
-# Note: The client uses Selenium/undetected-chromedriver, requires browser
+# Note: Uses reverse-engineered RPC endpoints, no browser needed
 MCP_AVAILABLE = False
 MCPClient = None
+load_cached_tokens = None
 
 try:
-    from notebooklm_mcp import NotebookLMClient as _MCPClient
-    from notebooklm_mcp import ServerConfig, AuthConfig
+    from notebooklm_mcp.api_client import NotebookLMClient as _MCPClient
+    from notebooklm_mcp.auth import load_cached_tokens as _load_tokens
     MCPClient = _MCPClient
+    load_cached_tokens = _load_tokens
     MCP_AVAILABLE = True
-    logger.info("[NotebookLM] MCP client available (Selenium-based)")
+    logger.info("[NotebookLM] MCP RPC client available (jacob-bd)")
 except ImportError:
-    ServerConfig = None
-    AuthConfig = None
-    logger.info("[NotebookLM] notebooklm-mcp not installed - using simulation mode")
+    logger.info("[NotebookLM] notebooklm-mcp-server not installed - using simulation mode")
 
 # Auth file paths (notebooklm-mcp stores cookies here)
 AUTH_FILE_PATH = Path.home() / ".notebooklm-mcp" / "auth.json"
-LEGACY_CONFIG_PATH = Path.home() / ".notebooklm" / "config.json"
 
 
 # ============================================================================
@@ -430,9 +429,10 @@ class NotebookLMService:
         query: str,
         notebook_info: Dict[str, Any],
     ) -> NotebookQueryResult:
-        """쿠키 기반 NotebookLM API 쿼리.
+        """jacob-bd RPC 클라이언트로 NotebookLM 쿼리.
 
-        ~/.notebooklm-mcp/auth.json의 쿠키를 사용하여 직접 API 호출.
+        notebooklm-mcp-server 패키지의 리버스 엔지니어링된 RPC API 사용.
+        브라우저 자동화 없이 직접 HTTP/RPC 호출.
 
         Args:
             notebook_id: 실제 노트북 UUID
@@ -443,52 +443,66 @@ class NotebookLMService:
             NotebookQueryResult with grounded answer and sources
         """
         try:
-            import json
-            import httpx
+            if not MCP_AVAILABLE or MCPClient is None or load_cached_tokens is None:
+                raise RuntimeError("MCP client not available")
 
-            # auth.json에서 쿠키 로드
-            if not AUTH_FILE_PATH.exists():
+            # 캐시된 토큰 로드
+            tokens = load_cached_tokens()
+            if tokens is None:
                 raise RuntimeError(
-                    f"No auth file found at {AUTH_FILE_PATH}. "
-                    "Extract cookies from NotebookLM browser session."
+                    "No cached tokens. Run: notebooklm-mcp-auth"
                 )
 
-            auth_data = json.loads(AUTH_FILE_PATH.read_text())
-            cookies = auth_data.get("cookies", {})
+            # RPC 클라이언트 생성
+            client = MCPClient(
+                cookies=tokens.cookies,
+                csrf_token=tokens.csrf_token or "",
+                session_id=tokens.session_id or "",
+            )
 
-            if not cookies:
-                raise RuntimeError("No cookies found in auth.json")
+            # 쿼리 실행 (동기 → 비동기 변환)
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: client.query(notebook_id=notebook_id, query_text=query)
+            )
 
-            # 쿠키 문자열 생성
-            cookie_str = "; ".join(f"{k}={v}" for k, v in cookies.items())
+            if not response:
+                raise RuntimeError("Empty response from RPC client")
 
-            # NotebookLM API 호출 (chat endpoint)
-            notebook_url = f"https://notebooklm.google.com/notebook/{notebook_id}"
+            # 응답 파싱
+            answer = response.get("answer", "")
+            sources = []
 
-            headers = {
-                "Cookie": cookie_str,
-                "Content-Type": "application/json",
-                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-                "Origin": "https://notebooklm.google.com",
-                "Referer": notebook_url,
-            }
+            # 인용 추출 (NotebookLM 응답에서 [1], [2] 형식)
+            import re
+            citation_pattern = r'\[(\d+)\]'
+            citations = re.findall(citation_pattern, answer)
+            unique_citations = list(dict.fromkeys(citations))[:5]
+            for i, _ in enumerate(unique_citations):
+                sources.append(NotebookSource(
+                    source_id=f"nlm_{i}",
+                    title=f"Source {i+1}",
+                    excerpt="Grounded citation from NotebookLM",
+                    relevance_score=0.95 - (i * 0.05),
+                    citation_text=f"[{i+1}]",
+                ))
 
-            # NotebookLM은 REST API가 아닌 gRPC/internal API 사용
-            # 현재는 시뮬레이션 모드로 폴백하되, 쿠키 유효성만 확인
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                # 노트북 페이지 접근 가능 여부 확인
-                response = await client.get(notebook_url, headers=headers, follow_redirects=True)
+            logger.info(
+                f"[NotebookLM] RPC query success: {len(answer)} chars, "
+                f"{len(sources)} citations"
+            )
 
-                if response.status_code == 200 and "notebooklm" in response.text.lower():
-                    logger.info(f"[NotebookLM] Cookie auth valid for notebook {notebook_id}")
-                    # API 직접 호출은 gRPC 프로토콜 필요 - 시뮬레이션으로 대체
-                    # TODO: gRPC 클라이언트 구현 시 실제 쿼리 가능
-                    return await self._simulate_query(notebook_id, query, notebook_info)
-                else:
-                    raise RuntimeError(f"Auth failed: status={response.status_code}")
+            return NotebookQueryResult(
+                answer=answer,
+                sources=sources,
+                confidence=0.92 if sources else 0.85,
+                grounded=True,
+                notebook_id=notebook_id,
+            )
 
         except Exception as e:
-            logger.warning(f"[NotebookLM] Cookie-based query failed: {e}")
+            logger.warning(f"[NotebookLM] RPC query failed: {e}")
             return await self._simulate_query(notebook_id, query, notebook_info)
 
     async def _simulate_query(
