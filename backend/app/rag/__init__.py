@@ -135,6 +135,34 @@ from app.rag.hybrid_rag import (
     reset_hybrid_rag_service,
     AUTEUR_KEY_TO_NOTEBOOK,
 )
+# ============ Phase 4: Observability ============
+from app.rag.observability import (
+    trace_rag,
+    get_langfuse,
+    trace_retrieval,
+    trace_generation,
+)
+# ============ Phase 5: Advanced Retrieval ============
+from app.rag.graph_rag import (
+    graph_query,
+    build_auteur_graph,
+    get_all_auteurs,
+    get_graph_stats,
+    GraphRAGResult,
+    AuteurGraph,
+    Entity as GraphEntity,
+    Relationship as GraphRelationship,
+)
+from app.rag.reranker import (
+    VertexReranker,
+    RerankResult,
+    DocumentToRank,
+)
+from app.rag.query_expansion import (
+    expand_query,
+    get_expanded_queries,
+)
+
 from app.rag.schemas import (
     DimensionType,
     RAGTier,
@@ -287,4 +315,25 @@ __all__ = [
     "DimensionChainContext",
     "WorkflowRAGRequest",
     "WorkflowRAGResponse",
+
+    # ============ Phase 4: Observability ============
+    "trace_rag",
+    "get_langfuse",
+    "trace_retrieval",
+    "trace_generation",
+
+    # ============ Phase 5: Advanced Retrieval ============
+    "graph_query",
+    "build_auteur_graph",
+    "get_all_auteurs",
+    "get_graph_stats",
+    "GraphRAGResult",
+    "AuteurGraph",
+    "GraphEntity",
+    "GraphRelationship",
+    "VertexReranker",
+    "RerankResult",
+    "DocumentToRank",
+    "expand_query",
+    "get_expanded_queries",
 ]

@@ -28,7 +28,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from app.rag.tier0_notebooklm import (
     get_notebooklm_service,
@@ -131,19 +131,27 @@ async def hybrid_query(
     auteur_key: Optional[str] = None,
     dimension: Optional[str] = None,
     use_google_search: bool = True,
+    strategy: Literal["vector", "graph", "hybrid"] = "vector",
 ) -> HybridRAGResult:
     """하이브리드 RAG 쿼리 실행.
 
-    Strategy:
+    Strategy Options:
+    - "vector": Traditional vector similarity search (default)
+    - "graph": GraphRAG entity/relationship traversal
+    - "hybrid": Combine both vector and graph results
+
+    Flow:
     1. auteur_key 있으면: NotebookLM 우선 → Vertex AI 폴백
     2. dimension 있으면: Vertex AI + Google Search Grounding
     3. 둘 다 없으면: 병렬 실행 → 결과 병합
+    4. strategy="graph": GraphRAG 엔티티 검색
 
     Args:
         query: 검색 쿼리
         auteur_key: 거장 키 (예: "bong", "봉준호")
         dimension: 차원 코드 (예: "1D", "2D", "AD")
         use_google_search: Google Search Grounding 사용 여부
+        strategy: 검색 전략 ("vector" | "graph" | "hybrid")
 
     Returns:
         HybridRAGResult with combined answer and sources
@@ -151,7 +159,52 @@ async def hybrid_query(
     import time
     start_time = time.monotonic()
 
-    # 전략 결정
+    # === Strategy: Graph-only ===
+    if strategy == "graph":
+        auteur_keys = [auteur_key] if auteur_key else None
+        graph_result = await _graph_query(query, auteur_keys=auteur_keys)
+        result = HybridRAGResult(
+            answer=graph_result.answer,
+            strategy_used="graph",
+            graph_entities=[{"id": e.id, "type": e.type, "name": e.name} for e in graph_result.entities],
+            graph_relationships=list(graph_result.relationships),
+            retrieval_count=len(graph_result.entities),
+        )
+        result.query_time_ms = int((time.monotonic() - start_time) * 1000)
+        result.auteur_key = auteur_key
+        result.dimension = dimension
+        return result
+    
+    # === Strategy: Hybrid (graph + vector) ===
+    if strategy == "hybrid":
+        auteur_keys = [auteur_key] if auteur_key else None
+        # Run graph and vector in parallel
+        graph_task = _graph_query(query, auteur_keys=auteur_keys)
+        if auteur_key:
+            vector_task = _query_auteur_first(query, auteur_key, use_google_search)
+        elif dimension:
+            vector_task = _query_dimension(query, dimension, use_google_search)
+        else:
+            vector_task = _query_parallel(query, use_google_search)
+        
+        graph_result, result = await asyncio.gather(graph_task, vector_task)
+        
+        # Merge graph results into vector result
+        result.graph_entities = [{"id": e.id, "type": e.type, "name": e.name} for e in graph_result.entities]
+        result.graph_relationships = list(graph_result.relationships)
+        result.strategy_used = "hybrid"
+        result.query_time_ms = int((time.monotonic() - start_time) * 1000)
+        result.auteur_key = auteur_key
+        result.dimension = dimension
+        result.retrieval_count = (
+            len(result.notebooklm_sources) + 
+            len(result.vertex_sources) + 
+            len(result.grounding_sources) +
+            len(graph_result.entities)
+        )
+        return result
+
+    # === Strategy: Vector (default) ===
     if auteur_key:
         result = await _query_auteur_first(query, auteur_key, use_google_search)
     elif dimension:
@@ -169,6 +222,7 @@ async def hybrid_query(
         len(result.vertex_sources) + 
         len(result.grounding_sources)
     )
+
 
     # Enhanced logging with metrics
     logger.info(
