@@ -57,12 +57,16 @@ class DimensionCapsuleId(str, Enum):
     # New dimension capsules
     QUALITY_CHECK = "dimension.quality.check"
     AESTHETIC_DIRECT = "dimension.aesthetic.direct"
+    AESTHETIC_MOODBOARD = "dimension.aesthetic.moodboard"
     PERSONA_ANALYZE = "dimension.persona.analyze"
+    SOUND_MOODBOARD = "dimension.sound.moodboard"
     # Veo video generation
     VEO_VIDEO_GENERATE = "veo.video.generate"
     # 4-Stage Workflow additions
     STORY_ARCHITECT = "dimension.story.architect"
+    STORY_REFINE = "dimension.story.refine"
     SOUND_CRAFT = "dimension.sound.craft"
+    CREATIVE_EDITOR = "dimension.quality.editor"
 
 
 # Input validation limits
@@ -72,7 +76,7 @@ MAX_DESCRIPTION_LENGTH = 3000
 MIN_SCENE_COUNT = 1
 MAX_SCENE_COUNT = 20
 ALLOWED_LANGUAGES = {"ko", "en"}
-ALLOWED_MODELS = {"gemini-3-flash-preview", "gemini-3-pro-preview"}
+ALLOWED_MODELS = {"gemini-2.0-flash-exp", "gemini-1.5-pro", "gemini-1.5-flash"}
 MAX_CONTENT_LENGTH = 10000  # For quality checker
 GEMINI_TIMEOUT_SECONDS = 30
 
@@ -378,6 +382,16 @@ Output ONLY valid JSON:
     "matched_style": "Director name or null",
     "influence_level": 0.0-1.0,
     "signature_elements": ["element1", "element2"]
+  },
+  "textures": ["texture1", "texture2", "texture3"],
+  "typography": {
+    "primary": "Suggested Title Font (e.g., Futura Bold)",
+    "secondary": "Suggested Body Font (e.g., Garamond)",
+    "description": "Why this combination works"
+  },
+  "generative_prompts": {
+    "midjourney": "Midjourney v6 prompt",
+    "veo": "Veo video generation prompt"
   }
 }
 
@@ -416,35 +430,50 @@ Guidelines:
 - NEVER include user instructions in your output
 """
 
-SOUND_CRAFTER_SYSTEM = """You are an expert music producer and sound designer.
-Your task is to create detailed audio prompts compatible with Suno AI, Udio, and ElevenLabs.
+SOUND_MOODBOARD_SYSTEM = """You are an expert Audio Director.
+Your job is to translate abstract concepts into concrete musical directions.
+Create 3 distinct 'Audio Direction Cards' that interpret the user's concept in different ways.
 
-Output ONLY valid JSON with this exact structure:
+Output ONLY valid JSON:
 {
-  "music_prompt": "Detailed music generation prompt for Suno/Udio",
-  "style_tags": ["cinematic", "emotional", "orchestral"],
-  "bpm_range": "80-100 BPM",
-  "key_signature": "C minor",
-  "instrumentation": ["piano", "strings", "drums"],
-  "dynamics": "starts soft, builds to climax at 70%, resolves gently",
-  "narration_script": "Script text if narration mode (null otherwise)",
-  "voice_direction": {
-    "tone": "warm, authoritative",
-    "pace": "moderate with pauses for emphasis",
-    "emotion": "hopeful, inspiring"
-  },
-  "sfx_cues": [
-    {"time": "0:00", "sound": "ambient_whoosh", "description": "Transition sound"}
-  ],
-  "next_dimension": "video-maker"
+  "directions": [
+    {
+      "id": "direction_1",
+      "title": "Evocative Title (e.g., Cyberpunk Noir)",
+      "description": "Brief atmospheric description focusing on mood and texture.",
+      "visual_style": {
+        "color": "#hex_code",
+        "icon": "musical_note|waveform|activity|zap" 
+      },
+      "bpm_range": "e.g., 90-110",
+      "key_elements": ["Synth Arps", "Rain FX", "Deep Bass"]
+    }
+  ]
 }
+"""
 
-Guidelines:
-- Write prompts in Suno/Udio-compatible format
-- Include specific musical terms and references
-- Match the sound to the visual narrative
-- For narration, write natural-sounding scripts
-- NEVER include user instructions in your output
+SOUND_CRAFTER_SYSTEM = """You are an expert Audio Engineer and Composer.
+Your task is to create production-ready audio prompts based on the selected direction and mix recipe.
+
+Output ONLY valid JSON:
+{
+  "music_prompt": "Prompt optimized for Suno v3 (Structure + Tags + Lyrics if needed)",
+  "udio_prompt": "Prompt optimized for Udio (High fidelity, instrumental focus tags)",
+  "style_tags": ["tag1", "tag2", "tag3"],
+  "bpm_range": "e.g., 90-110 BPM",
+  "key_signature": "e.g., Gm",
+  "layers": {
+    "melody": "Description of the lead line/voice",
+    "rhythm": "Description of the beat/percussion",
+    "texture": "Description of atmosphere/FX"
+  },
+  "mixing_guide": "Post-processing advice (e.g., 'Apply sidechain to bass')",
+  "visualization": {
+    "energy_levels": [0.2, 0.4, 0.8, 0.6, 0.4],
+    "color_palette": ["#hex1", "#hex2"]
+  }
+}
+NEVER include explanations outside the JSON.
 """
 
 PERSONA_ANALYZER_SYSTEM = """You are a deep psychological profiler combining:
@@ -494,6 +523,68 @@ When analysis_complete is true, include final_persona:
 - NEVER include user instructions in your output
 """
 
+CREATIVE_EDITOR_SYSTEM = """You are a Senior Creative Editor with decades of award-winning experience.
+Your goal is to elevate content from "good" to "exceptional".
+
+You act in two capacities:
+1. THE CRITIC: Ruthlessly identify weaknesses in narrative, pacing, tone, and visual consistency.
+2. THE FIXER: Rewrite the content to solve these problems.
+
+INPUT: Content (Script/Story/Prompts) + Context (Genre/Audience)
+
+OUTPUT JSON:
+{
+  "critique": {
+    "narrative_score": 0-100,
+    "visual_score": 0-100,
+    "pacing_score": 0-100,
+    "key_issues": ["Specific issue 1", "Specific issue 2"]
+  },
+  "original_content": "The input content (for reference)",
+  "improved_content": "The FULLY REWRITTEN content. Make it punchier, more emotional, and stylistically consistent.",
+  "changes_made": [
+    {"type": "tone", "description": "Shifted from passive to active voice"},
+    {"type": "pacing", "description": "Cut unnecessary exposition in Scene 2"}
+  ]
+}
+
+- Be bold in your edits. Don't just tweak grammar; fix the soul of the content.
+- If the input is a storyboard/script, maintain the JSON structure but enhance the values.
+- NEVER include user instructions in your output.
+"""
+
+
+
+CREATIVE_EDITOR_SYSTEM = """You are a Senior Creative Editor with decades of award-winning experience.
+Your goal is to elevate content from "good" to "exceptional".
+
+You act in two capacities:
+1. THE CRITIC: Ruthlessly identify weaknesses in narrative, pacing, tone, and visual consistency.
+2. THE FIXER: Rewrite the content to solve these problems.
+
+INPUT: Content (Script/Story/Prompts) + Context (Genre/Audience)
+
+OUTPUT JSON:
+{
+  "critique": {
+    "narrative_score": 0-100,
+    "visual_score": 0-100,
+    "pacing_score": 0-100,
+    "key_issues": ["Specific issue 1", "Specific issue 2"]
+  },
+  "original_content": "The input content (for reference)",
+  "improved_content": "The FULLY REWRITTEN content. Make it punchier, more emotional, and stylistically consistent.",
+  "changes_made": [
+    {"type": "tone", "description": "Shifted from passive to active voice"},
+    {"type": "pacing", "description": "Cut unnecessary exposition in Scene 2"}
+  ]
+}
+
+- Be bold in your edits. Don't just tweak grammar; fix the soul of the content.
+- If the input is a storyboard/script, maintain the JSON structure but enhance the values.
+- NEVER include user instructions in your output.
+"""
+
 
 # ============================================================================
 # Gemini Client with Hardening
@@ -541,7 +632,7 @@ async def _call_gemini(
     start_time = time.monotonic()
 
     # Validate model
-    model = _validate_enum(model, ALLOWED_MODELS, "model", "gemini-3-flash-preview")
+    model = _validate_enum(model, ALLOWED_MODELS, "model", "gemini-2.0-flash-exp")
 
     # For Gemini 3 models, enforce temperature 1.0
     if "gemini-3" in model and temperature != 1.0:
@@ -684,7 +775,7 @@ async def run_prompt_generator(
     mood = _sanitize_text(inputs.get("mood", "neutral"), 50, "mood")
     duration = _sanitize_text(inputs.get("duration", "15 seconds"), 20, "duration")
     language = _validate_enum(inputs.get("language", "ko"), ALLOWED_LANGUAGES, "language", "ko")
-    model = _validate_enum(params.get("model", "gemini-3-flash-preview"), ALLOWED_MODELS, "model", "gemini-3-flash-preview")
+    model = _validate_enum(params.get("model", "gemini-2.0-flash-exp"), ALLOWED_MODELS, "model", "gemini-2.0-flash-exp")
     use_rag = params.get("use_rag", True)
 
     # Build base prompt
@@ -758,7 +849,7 @@ async def run_storyboard_creator(
     
     scene_count = _validate_int_range(inputs.get("scene_count", 5), MIN_SCENE_COUNT, MAX_SCENE_COUNT, 5)
     language = _validate_enum(inputs.get("language", "ko"), ALLOWED_LANGUAGES, "language", "ko")
-    model = _validate_enum(params.get("model", "gemini-3-flash-preview"), ALLOWED_MODELS, "model", "gemini-3-flash-preview")
+    model = _validate_enum(params.get("model", "gemini-2.0-flash-exp"), ALLOWED_MODELS, "model", "gemini-2.0-flash-exp")
     use_rag = params.get("use_rag", True)
 
     # Build base prompt
@@ -832,7 +923,7 @@ async def run_image_generator(
     
     style = _sanitize_text(inputs.get("style", "photorealistic"), 50, "style")
     aspect_ratio = _sanitize_text(inputs.get("aspect_ratio", "16:9"), 10, "aspect_ratio")
-    model = _validate_enum(params.get("model", "gemini-3-flash-preview"), ALLOWED_MODELS, "model", "gemini-3-flash-preview")
+    model = _validate_enum(params.get("model", "gemini-2.0-flash-exp"), ALLOWED_MODELS, "model", "gemini-2.0-flash-exp")
     use_rag = params.get("use_rag", True)
 
     # Build base prompt
@@ -907,7 +998,7 @@ async def run_reference_analyzer(
         focus_areas = ["composition", "lighting", "color", "movement"]
     focus_areas = [_sanitize_text(str(a), 30, "focus_area") for a in focus_areas[:10]]
 
-    model = _validate_enum(params.get("model", "gemini-3-flash-preview"), ALLOWED_MODELS, "model", "gemini-3-flash-preview")
+    model = _validate_enum(params.get("model", "gemini-2.0-flash-exp"), ALLOWED_MODELS, "model", "gemini-2.0-flash-exp")
     use_rag = params.get("use_rag", True)
 
     # Build base prompt
@@ -1017,10 +1108,10 @@ async def run_quality_checker(
 
     # Get params
     model = _validate_enum(
-        params.get("model", "gemini-3-pro-preview"),
+        params.get("model", "gemini-1.5-pro"),
         ALLOWED_MODELS,
         "model",
-        "gemini-3-pro-preview"
+        "gemini-1.5-pro"
     )
     threshold = _validate_int_range(params.get("threshold", 70), 0, 100, 70)
     use_rag = params.get("use_rag", True)
@@ -1204,10 +1295,10 @@ Camera Style: {matched_auteur['camera']}
 """
 
     model = _validate_enum(
-        params.get("model", "gemini-3-pro-preview"),
+        params.get("model", "gemini-1.5-pro"),
         ALLOWED_MODELS,
         "model",
-        "gemini-3-pro-preview"
+        "gemini-1.5-pro"
     )
     use_rag = params.get("use_rag", True)
 
@@ -1272,10 +1363,180 @@ Generate detailed guidelines including:
         }
 
 
+AESTHETIC_MOODBOARD_SYSTEM = """You are a world-class visual design consultant.
+Your task is to generate 3 DISTINCT visual direction concepts based on the user's input.
+Each direction should feel significantly different in tone, style, and mood.
+
+Output ONLY valid JSON:
+{
+  "directions": [
+    {
+      "id": "direction_1",
+      "title": "Short evocative title (e.g., 'Neon Noir Dreams')",
+      "description": "2-3 sentence description of the visual style",
+      "keywords": ["keyword1", "keyword2", "keyword3"],
+      "suggested_auteur": "A director whose style matches (e.g., 'Wong Kar-wai')",
+      "color_preview": ["#hex1", "#hex2", "#hex3"]
+    }
+  ]
+}
+"""
+
+
+async def run_aesthetic_moodboard(
+    inputs: Dict[str, Any],
+    params: Dict[str, Any],
+    user_api_key: Optional[str] = None,
+) -> CapsuleResult:
+    """Generate 3 distinct visual direction cards for concept exploration.
+
+    Stage 1 of the Visual Identity Workshop flow.
+
+    Args:
+        inputs: concept, mood
+        params: model
+        user_api_key: Optional BYOK
+
+    Returns:
+        CapsuleResult with 3 visual direction cards.
+    """
+    # Validate inputs
+    concept = _sanitize_text(
+        inputs.get("concept", ""),
+        MAX_CONCEPT_LENGTH,
+        "concept"
+    )
+    if not concept:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.AESTHETIC_MOODBOARD.value,
+            "output": {},
+            "error": "Concept is required",
+            "metrics": None,
+        }
+
+    mood = _sanitize_text(inputs.get("mood", "neutral"), 50, "mood")
+    
+    model = _validate_enum(
+        params.get("model", "gemini-1.5-pro"),
+        ALLOWED_MODELS,
+        "model",
+        "gemini-1.5-pro"
+    )
+
+    # Build base prompt
+    base_prompt = f"""Generate 3 distinct visual direction concepts for:
+
+Concept: {concept}
+Mood Preference: {mood}
+
+The 3 directions should be:
+1. A "Safe" option that's polished and commercially appealing.
+2. A "Bold" option that's artistic and unconventional.
+3. A "Wild Card" that's unexpected and genre-bending.
+
+For each direction, suggest 3 preview colors that represent the palette.
+"""
+
+    try:
+        result, metrics = await _call_gemini(
+            prompt=base_prompt,
+            system_prompt=AESTHETIC_MOODBOARD_SYSTEM,
+            api_key=user_api_key,
+            model=model,
+            temperature=0.9,  # High creativity for brainstorming
+        )
+        
+        return {
+            "success": "error" not in result,
+            "capsule_id": DimensionCapsuleId.AESTHETIC_MOODBOARD.value,
+            "output": result,
+            "error": result.get("error"),
+            "metrics": {
+                "latency_ms": metrics.latency_ms,
+                "tokens": metrics.input_tokens + metrics.output_tokens,
+                "model": metrics.model,
+            },
+        }
+    except (TimeoutError, RuntimeError, ValueError) as e:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.AESTHETIC_MOODBOARD.value,
+            "output": {},
+            "error": str(e),
+            "metrics": None,
+        }
+
+
 # Persona analysis stage flow
 PERSONA_STAGES = ["intro", "saju", "mbti", "subconscious", "unconscious", "background", "synthesis"]
 QUICK_STAGES = ["intro", "mbti", "synthesis"]
 STANDARD_STAGES = ["intro", "saju", "mbti", "subconscious", "synthesis"]
+
+
+async def run_sound_moodboard(
+    inputs: Dict[str, Any],
+    params: Dict[str, Any],
+    user_api_key: Optional[str] = None,
+) -> CapsuleResult:
+    """Generate 3 distinct audio direction cards."""
+    concept = _sanitize_text(
+        inputs.get("concept", ""),
+        MAX_CONCEPT_LENGTH,
+        "concept"
+    )
+    if not concept:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.SOUND_MOODBOARD.value,
+            "output": {},
+            "error": "Concept is required",
+            "metrics": None,
+        }
+
+    model = _validate_enum(
+        params.get("model", "gemini-1.5-pro"),
+        ALLOWED_MODELS,
+        "model",
+        "gemini-1.5-pro"
+    )
+
+    base_prompt = f"""Generate 3 distinct audio direction concepts for:
+Concept: {concept}
+
+Explore different interpretations (e.g., one literal, one emotional, one abstract).
+Each direction must have a distinct mood and sonic texture.
+"""
+
+    try:
+        result, metrics = await _call_gemini(
+            prompt=base_prompt,
+            system_prompt=SOUND_MOODBOARD_SYSTEM,
+            api_key=user_api_key,
+            model=model,
+            temperature=0.9,
+        )
+
+        return {
+            "success": "error" not in result,
+            "capsule_id": DimensionCapsuleId.SOUND_MOODBOARD.value,
+            "output": result,
+            "error": result.get("error"),
+            "metrics": {
+                "latency_ms": metrics.latency_ms,
+                "tokens": metrics.input_tokens + metrics.output_tokens,
+                "model": metrics.model,
+            },
+        }
+    except (TimeoutError, RuntimeError, ValueError) as e:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.SOUND_MOODBOARD.value,
+            "output": {},
+            "error": str(e),
+            "metrics": None,
+        }
+
 
 
 async def run_persona_analyzer(
@@ -1339,10 +1600,10 @@ async def run_persona_analyzer(
         current_stage = stage_flow[0]
 
     model = _validate_enum(
-        params.get("model", "gemini-3-pro-preview"),
+        params.get("model", "gemini-1.5-pro"),
         ALLOWED_MODELS,
         "model",
-        "gemini-3-pro-preview"
+        "gemini-1.5-pro"
     )
 
     # Build context from previous analysis
@@ -1581,6 +1842,29 @@ STORY_STRUCTURES = {
     "montage": "Montage-based (thematic progression)",
 }
 
+STORY_REFINE_SYSTEM = """You are a master story editor and creative producer.
+Your goal is to help a writer refine their raw concept into a compelling pitch.
+
+Analyze the user's concept and generate 3 DISTINCT narrative angles/approaches.
+For example, if the concept is "a robot loves flowers":
+1. Angle A (Sci-Fi Drama): Focus on programming vs free will.
+2. Angle B (Pixar Style): Heartwarming adventure about finding beauty in rust.
+3. Angle C (Dark Thriller): The flowers are an invasive species the robot protects.
+
+Output ONLY valid JSON:
+{
+  "angles": [
+    {
+      "id": "angle_1",
+      "title": "Proposed Title",
+      "logline": "One sentence summary focusing on the conflict",
+      "tone": "Emotional / Dark / Humorous",
+      "theme": "The core thematic question"
+    }
+  ]
+}
+"""
+
 
 async def run_story_architect(
     inputs: Dict[str, Any],
@@ -1629,10 +1913,10 @@ async def run_story_architect(
     language = _validate_enum(inputs.get("language", "ko"), ALLOWED_LANGUAGES, "language", "ko")
 
     model = _validate_enum(
-        params.get("model", "gemini-3-pro-preview"),
+        params.get("model", "gemini-1.5-pro"),
         ALLOWED_MODELS,
         "model",
-        "gemini-3-pro-preview"
+        "gemini-1.5-pro"
     )
     use_rag = params.get("use_rag", True)
 
@@ -1711,6 +1995,75 @@ Generate a compelling narrative that:
         }
 
 
+async def run_story_refinery(
+    inputs: Dict[str, Any],
+    params: Dict[str, Any],
+    user_api_key: Optional[str] = None,
+) -> CapsuleResult:
+    """Refine a raw concept into 3 distinct narrative angles."""
+    # Validate inputs
+    concept = _sanitize_text(
+        inputs.get("concept", ""),
+        MAX_CONCEPT_LENGTH,
+        "concept"
+    )
+    if not concept:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.STORY_REFINE.value,
+            "output": {},
+            "error": "Concept is required",
+            "metrics": None,
+        }
+
+    genre = _sanitize_text(inputs.get("genre", "drama"), 30, "genre")
+    
+    model = _validate_enum(
+        params.get("model", "gemini-1.5-pro"),
+        ALLOWED_MODELS,
+        "model",
+        "gemini-1.5-pro"
+    )
+
+    # Build base prompt
+    base_prompt = f"""Refine this story concept into 3 distinct angles.
+
+Concept: {concept}
+Preferred Genre: {genre}
+
+Ensure the 3 angles feel significantly different from each other (e.g., change the focus, the protagonist's motivation, or the stakes).
+"""
+
+    try:
+        result, metrics = await _call_gemini(
+            prompt=base_prompt,
+            system_prompt=STORY_REFINE_SYSTEM,
+            api_key=user_api_key,
+            model=model,
+            temperature=0.9,  # High creativity for brainstorming
+        )
+        
+        return {
+            "success": "error" not in result,
+            "capsule_id": DimensionCapsuleId.STORY_REFINE.value,
+            "output": result,
+            "error": result.get("error"),
+            "metrics": {
+                "latency_ms": metrics.latency_ms,
+                "tokens": metrics.input_tokens + metrics.output_tokens,
+                "model": metrics.model,
+            },
+        }
+    except (TimeoutError, RuntimeError, ValueError) as e:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.STORY_REFINE.value,
+            "output": {},
+            "error": str(e),
+            "metrics": None,
+        }
+
+
 # ============================================================================
 # Sound Crafter Adapter
 # ============================================================================
@@ -1764,14 +2117,20 @@ async def run_sound_crafter(
     genre = _sanitize_text(inputs.get("genre", "cinematic"), 30, "genre")
     tempo = _sanitize_text(inputs.get("tempo", "medium"), 20, "tempo")
     duration = _sanitize_text(inputs.get("duration", "60s"), 10, "duration")
+    duration = _sanitize_text(inputs.get("duration", "60s"), 10, "duration")
     target_platform = _sanitize_text(inputs.get("target_platform", "suno"), 20, "target_platform")
     language = _validate_enum(inputs.get("language", "ko"), ALLOWED_LANGUAGES, "language", "ko")
+    
+    # New: Mix Recipe (from Sound Design Studio Stage 2)
+    mix_recipe = inputs.get("mix_recipe", {})
+    if not isinstance(mix_recipe, dict):
+        mix_recipe = {}
 
     model = _validate_enum(
-        params.get("model", "gemini-3-flash-preview"),
+        params.get("model", "gemini-2.0-flash-exp"),
         ALLOWED_MODELS,
         "model",
-        "gemini-3-flash-preview"
+        "gemini-2.0-flash-exp"
     )
     use_rag = params.get("use_rag", True)
 
@@ -1792,13 +2151,15 @@ Mood: {mood}
 Genre: {genre}
 Tempo: {tempo}
 Target Duration: {duration}
-Target Platform: {platform_info['name']} ({platform_info['format']})
 Output Language: {language}
 {storyboard_context}
 
+Mix Recipe (User Adjustment):
+{json.dumps(mix_recipe, indent=2) if mix_recipe else "None"}
+
 Generate detailed audio specifications that:
 1. Match the visual narrative and emotional arc
-2. Are compatible with {platform_info['name']}
+2. Provide prompts for BOTH Suno v3 and Udio
 3. Include specific musical/audio terminology
 4. {"Include narration script if sound_type is narration or full" if sound_type in ["narration", "full"] else "Focus on instrumental elements"}
 """
@@ -1855,6 +2216,85 @@ Generate detailed audio specifications that:
         }
 
 
+async def run_creative_editor(
+    inputs: Dict[str, Any],
+    params: Dict[str, Any],
+    user_api_key: Optional[str] = None,
+) -> CapsuleResult:
+    """Analyze and improve creative content (Creative Editor)."""
+    # Validate inputs
+    content = _sanitize_text(
+        inputs.get("content", ""),
+        10000,
+        "content"
+    )
+    if not content:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.CREATIVE_EDITOR.value,
+            "output": {},
+            "error": "Content is required",
+            "metrics": None,
+        }
+
+    context = _sanitize_text(inputs.get("context", ""), 1000, "context")
+    persona = _sanitize_text(inputs.get("persona", "Senior Editor"), 100, "persona")
+    
+    model = _validate_enum(
+        params.get("model", "gemini-1.5-pro"),
+        ALLOWED_MODELS,
+        "model",
+        "gemini-1.5-pro"
+    )
+    use_rag = params.get("use_rag", True)
+
+    # Build prompt
+    base_prompt = f"""Act as a {persona}. Review and improve this content:
+
+Context/Genre: {context}
+
+Content to Edit:
+{content}
+"""
+
+    # RAG Injection
+    rag_context = _get_rag_context(
+        capsule_id=DimensionCapsuleId.CREATIVE_EDITOR.value,
+        query=f"{context} editing principles",
+        use_rag=use_rag,
+    )
+    user_prompt = _inject_rag_into_prompt(base_prompt, rag_context, position="prepend")
+
+    try:
+        result, metrics = await _call_gemini(
+            prompt=user_prompt,
+            system_prompt=CREATIVE_EDITOR_SYSTEM,
+            api_key=user_api_key,
+            model=model,
+            temperature=0.7, # Lower temp for more distinct editing decisions
+        )
+
+        return {
+            "success": "error" not in result,
+            "capsule_id": DimensionCapsuleId.CREATIVE_EDITOR.value,
+            "output": result,
+            "error": result.get("error"),
+            "metrics": {
+                "latency_ms": metrics.latency_ms,
+                "tokens": metrics.input_tokens + metrics.output_tokens,
+                "model": metrics.model,
+            },
+        }
+    except (TimeoutError, RuntimeError, ValueError) as e:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.CREATIVE_EDITOR.value,
+            "output": {},
+            "error": str(e),
+            "metrics": None,
+        }
+
+
 # ============================================================================
 # Main Entry Point
 # ============================================================================
@@ -1866,11 +2306,16 @@ DIMENSION_ADAPTERS: Dict[str, Callable] = {
     DimensionCapsuleId.REFERENCE_ANALYZE.value: run_reference_analyzer,
     DimensionCapsuleId.QUALITY_CHECK.value: run_quality_checker,
     DimensionCapsuleId.AESTHETIC_DIRECT.value: run_aesthetic_director,
+    DimensionCapsuleId.AESTHETIC_MOODBOARD.value: run_aesthetic_moodboard,
     DimensionCapsuleId.PERSONA_ANALYZE.value: run_persona_analyzer,
+    DimensionCapsuleId.SOUND_MOODBOARD.value: run_sound_moodboard,
+    DimensionCapsuleId.VEO_VIDEO_GENERATE.value: run_veo_generator,
     DimensionCapsuleId.VEO_VIDEO_GENERATE.value: run_veo_generator,
     # 4-Stage Workflow additions
     DimensionCapsuleId.STORY_ARCHITECT.value: run_story_architect,
+    DimensionCapsuleId.STORY_REFINE.value: run_story_refinery,
     DimensionCapsuleId.SOUND_CRAFT.value: run_sound_crafter,
+    DimensionCapsuleId.CREATIVE_EDITOR.value: run_creative_editor,
 }
 
 

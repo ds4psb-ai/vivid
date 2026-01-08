@@ -156,6 +156,8 @@ def get_credit_cost(capsule_id: DimensionCapsuleId, model: str) -> int:
         DimensionCapsuleId.VEO_VIDEO_GENERATE: "veo.video.generate",
         DimensionCapsuleId.STORY_ARCHITECT: "dimension.story.architect",
         DimensionCapsuleId.SOUND_CRAFT: "dimension.sound.craft",
+        DimensionCapsuleId.SOUND_MOODBOARD: "dimension.sound.moodboard",
+        DimensionCapsuleId.CREATIVE_EDITOR: "dimension.quality.editor",
     }
 
     capsule_key = capsule_key_map.get(capsule_id)
@@ -165,9 +167,65 @@ def get_credit_cost(capsule_id: DimensionCapsuleId, model: str) -> int:
     for capsule in DIMENSION_CAPSULES:
         if capsule["capsule_key"] == capsule_key:
             credit_costs = capsule.get("credit_costs", {})
-            return credit_costs.get(model, credit_costs.get("gemini-3-flash-preview", 5))
+            return credit_costs.get(model, credit_costs.get("gemini-2.0-flash-exp", 5))
 
     return 5
+
+
+# ============================================================================
+# Validation Constants
+# ============================================================================
+
+ALLOWED_ASPECT_RATIOS = {"16:9", "9:16", "1:1", "4:3", "3:4"}
+ALLOWED_DURATIONS_VEO = {5, 10}  # Veo video durations in seconds
+ALLOWED_STYLES = {"cinematic", "realistic", "artistic", "anime", "documentary", "commercial"}
+ALLOWED_GENRES = {"drama", "ad", "mv", "documentary", "short", "comedy", "horror", "romance"}
+ALLOWED_STRUCTURES = {"3act", "hero", "circular", "montage", "linear"}
+ALLOWED_SOUND_TYPES = {"bgm", "sfx", "narration", "full", "ambient"}
+ALLOWED_PLATFORMS = {"suno", "udio", "elevenlabs", "mubert"}
+ALLOWED_TEMPOS = {"slow", "medium", "fast", "dynamic", "variable"}
+ALLOWED_DEPTH_LEVELS = {"quick", "medium", "deep"}
+ALLOWED_CONTENT_TYPES = {"text", "prompt", "storyboard", "image_prompt", "script"}
+
+
+# ============================================================================
+# Shared Validators (Korean Error Messages)
+# ============================================================================
+
+def _validate_language(v: str) -> str:
+    """Validate language code."""
+    v = v.strip().lower()
+    if v not in ALLOWED_LANGUAGES:
+        raise ValueError(f"지원하지 않는 언어입니다. 가능한 값: {', '.join(sorted(ALLOWED_LANGUAGES))}")
+    return v
+
+
+def _validate_model(v: str) -> str:
+    """Validate AI model name."""
+    v = v.strip()
+    if v not in ALLOWED_MODELS:
+        raise ValueError(f"지원하지 않는 모델입니다. 가능한 값: {', '.join(sorted(ALLOWED_MODELS))}")
+    return v
+
+
+def _validate_aspect_ratio(v: str) -> str:
+    """Validate aspect ratio."""
+    v = v.strip()
+    if v not in ALLOWED_ASPECT_RATIOS:
+        raise ValueError(f"지원하지 않는 화면비입니다. 가능한 값: {', '.join(sorted(ALLOWED_ASPECT_RATIOS))}")
+    return v
+
+
+def _validate_veo_duration(v: int) -> int:
+    """Validate Veo video duration."""
+    if v not in ALLOWED_DURATIONS_VEO:
+        raise ValueError(f"지원하지 않는 영상 길이입니다. 가능한 값: {', '.join(map(str, sorted(ALLOWED_DURATIONS_VEO)))}초")
+    return v
+
+
+def _strip_string(v: str) -> str:
+    """Strip whitespace from string."""
+    return v.strip() if isinstance(v, str) else v
 
 
 # ============================================================================
@@ -181,21 +239,22 @@ class PromptGenerateRequest(BaseModel):
     mood: str = Field("neutral", max_length=50, description="Mood/tone")
     duration: str = Field("15 seconds", max_length=20, description="Target duration")
     language: str = Field("ko", description="Output language")
-    model: str = Field("gemini-3-flash-preview", description="AI model")
-    
+    model: str = Field("gemini-2.0-flash-exp", description="AI model")
+
+    @field_validator("topic", "style", "mood", "duration", mode="before")
+    @classmethod
+    def strip_strings(cls, v: str) -> str:
+        return _strip_string(v)
+
     @field_validator("language")
     @classmethod
     def validate_language(cls, v: str) -> str:
-        if v not in ALLOWED_LANGUAGES:
-            raise ValueError(f"Language must be one of: {ALLOWED_LANGUAGES}")
-        return v
-    
+        return _validate_language(v)
+
     @field_validator("model")
     @classmethod
     def validate_model(cls, v: str) -> str:
-        if v not in ALLOWED_MODELS:
-            raise ValueError(f"Model must be one of: {ALLOWED_MODELS}")
-        return v
+        return _validate_model(v)
 
 
 class StoryboardCreateRequest(BaseModel):
@@ -204,14 +263,22 @@ class StoryboardCreateRequest(BaseModel):
     prompt: Optional[str] = Field(None, max_length=MAX_TOPIC_LENGTH, description="Optional Veo prompt")
     scene_count: int = Field(5, ge=MIN_SCENE_COUNT, le=MAX_SCENE_COUNT, description="Number of scenes")
     language: str = Field("ko", description="Output language")
-    model: str = Field("gemini-3-flash-preview", description="AI model")
-    
+    model: str = Field("gemini-2.0-flash-exp", description="AI model")
+
+    @field_validator("concept", mode="before")
+    @classmethod
+    def strip_concept(cls, v: str) -> str:
+        return _strip_string(v)
+
     @field_validator("language")
     @classmethod
     def validate_language(cls, v: str) -> str:
-        if v not in ALLOWED_LANGUAGES:
-            raise ValueError(f"Language must be one of: {ALLOWED_LANGUAGES}")
-        return v
+        return _validate_language(v)
+
+    @field_validator("model")
+    @classmethod
+    def validate_model(cls, v: str) -> str:
+        return _validate_model(v)
 
 
 class ImageGenerateRequest(BaseModel):
@@ -219,7 +286,22 @@ class ImageGenerateRequest(BaseModel):
     description: str = Field(..., min_length=1, max_length=MAX_DESCRIPTION_LENGTH, description="Image description")
     style: str = Field("photorealistic", max_length=50, description="Art style")
     aspect_ratio: str = Field("16:9", max_length=10, description="Image aspect ratio")
-    model: str = Field("gemini-3-flash-preview", description="AI model")
+    model: str = Field("gemini-2.0-flash-exp", description="AI model")
+
+    @field_validator("description", "style", mode="before")
+    @classmethod
+    def strip_strings(cls, v: str) -> str:
+        return _strip_string(v)
+
+    @field_validator("aspect_ratio")
+    @classmethod
+    def validate_aspect_ratio(cls, v: str) -> str:
+        return _validate_aspect_ratio(v)
+
+    @field_validator("model")
+    @classmethod
+    def validate_model(cls, v: str) -> str:
+        return _validate_model(v)
 
 
 class ReferenceAnalyzeRequest(BaseModel):
@@ -230,12 +312,22 @@ class ReferenceAnalyzeRequest(BaseModel):
         max_length=10,
         description="Analysis focus areas"
     )
-    model: str = Field("gemini-3-flash-preview", description="AI model")
+    model: str = Field("gemini-2.0-flash-exp", description="AI model")
+
+    @field_validator("video_description", mode="before")
+    @classmethod
+    def strip_description(cls, v: str) -> str:
+        return _strip_string(v)
 
     @field_validator("focus_areas")
     @classmethod
     def validate_focus_areas(cls, v: List[str]) -> List[str]:
-        return [area[:30] for area in v[:10]]
+        return [area.strip()[:30] for area in v[:10] if area.strip()]
+
+    @field_validator("model")
+    @classmethod
+    def validate_model(cls, v: str) -> str:
+        return _validate_model(v)
 
 
 # ============================================================================
@@ -252,13 +344,31 @@ class QualityCheckRequest(BaseModel):
         description="Quality criteria to evaluate"
     )
     threshold: int = Field(70, ge=0, le=100, description="Minimum passing score")
-    model: str = Field("gemini-3-flash-preview", description="AI model")
+    model: str = Field("gemini-1.5-pro", description="AI model")
+
+    @field_validator("content", mode="before")
+    @classmethod
+    def strip_content(cls, v: str) -> str:
+        return _strip_string(v)
+
+    @field_validator("content_type")
+    @classmethod
+    def validate_content_type(cls, v: str) -> str:
+        v = v.strip().lower()
+        if v not in ALLOWED_CONTENT_TYPES:
+            raise ValueError(f"지원하지 않는 콘텐츠 타입입니다. 가능한 값: {', '.join(sorted(ALLOWED_CONTENT_TYPES))}")
+        return v
 
     @field_validator("criteria")
     @classmethod
     def validate_criteria(cls, v: List[str]) -> List[str]:
         valid = {"aesthetic", "ad_suitability", "consistency", "safety", "technical", "narrative"}
         return [c for c in v if c in valid][:6]
+
+    @field_validator("model")
+    @classmethod
+    def validate_model(cls, v: str) -> str:
+        return _validate_model(v)
 
 
 class AestheticDirectRequest(BaseModel):
@@ -268,7 +378,34 @@ class AestheticDirectRequest(BaseModel):
     mood: str = Field("neutral", max_length=50, description="Mood/atmosphere")
     target_medium: str = Field("video", max_length=30, description="Target medium: video, image, animation")
     use_rag: bool = Field(False, description="Use RAG for aesthetic references")
-    model: str = Field("gemini-3-flash-preview", description="AI model")
+    model: str = Field("gemini-1.5-pro", description="AI model")
+
+    @field_validator("concept", "mood", mode="before")
+    @classmethod
+    def strip_strings(cls, v: str) -> str:
+        return _strip_string(v)
+
+    @field_validator("model")
+    @classmethod
+    def validate_model(cls, v: str) -> str:
+        return _validate_model(v)
+
+
+class AestheticMoodboardRequest(BaseModel):
+    """Request model for Aesthetic Moodboard (Visual Direction Discovery)."""
+    concept: str = Field(..., min_length=1, max_length=MAX_CONCEPT_LENGTH, description="Creative concept")
+    mood: str = Field("neutral", max_length=50, description="Mood/atmosphere")
+    model: str = Field("gemini-1.5-pro", description="AI model")
+
+    @field_validator("concept", "mood", mode="before")
+    @classmethod
+    def strip_strings(cls, v: str) -> str:
+        return _strip_string(v)
+
+    @field_validator("model")
+    @classmethod
+    def validate_model(cls, v: str) -> str:
+        return _validate_model(v)
 
 
 class PersonaAnalyzeRequest(BaseModel):
@@ -278,13 +415,34 @@ class PersonaAnalyzeRequest(BaseModel):
     persona_data: Dict[str, Any] = Field(default_factory=dict, description="Accumulated persona data")
     birth_info: Dict[str, Any] = Field(default_factory=dict, description="Birth info for Saju analysis")
     depth_level: str = Field("deep", max_length=20, description="Analysis depth: quick, medium, deep")
-    model: str = Field("gemini-3-flash-preview", description="AI model")
+    model: str = Field("gemini-1.5-pro", description="AI model")
+
+    @field_validator("user_message", mode="before")
+    @classmethod
+    def strip_message(cls, v: str) -> str:
+        return _strip_string(v)
 
     @field_validator("analysis_stage")
     @classmethod
     def validate_stage(cls, v: str) -> str:
         valid_stages = {"intro", "saju", "mbti", "subconscious", "unconscious", "background", "synthesis"}
-        return v.lower() if v.lower() in valid_stages else "intro"
+        v = v.strip().lower()
+        if v not in valid_stages:
+            raise ValueError(f"지원하지 않는 분석 단계입니다. 가능한 값: {', '.join(sorted(valid_stages))}")
+        return v
+
+    @field_validator("depth_level")
+    @classmethod
+    def validate_depth(cls, v: str) -> str:
+        v = v.strip().lower()
+        if v not in ALLOWED_DEPTH_LEVELS:
+            raise ValueError(f"지원하지 않는 분석 깊이입니다. 가능한 값: {', '.join(sorted(ALLOWED_DEPTH_LEVELS))}")
+        return v
+
+    @field_validator("model")
+    @classmethod
+    def validate_model(cls, v: str) -> str:
+        return _validate_model(v)
 
 
 class VeoGenerateRequest(BaseModel):
@@ -297,6 +455,29 @@ class VeoGenerateRequest(BaseModel):
     seed: Optional[int] = Field(None, ge=0, description="Random seed for reproducibility")
     model: str = Field("veo-3.1", description="Veo model version")
 
+    @field_validator("prompt", mode="before")
+    @classmethod
+    def strip_prompt(cls, v: str) -> str:
+        return _strip_string(v)
+
+    @field_validator("aspect_ratio")
+    @classmethod
+    def validate_aspect_ratio(cls, v: str) -> str:
+        return _validate_aspect_ratio(v)
+
+    @field_validator("duration")
+    @classmethod
+    def validate_duration(cls, v: int) -> int:
+        return _validate_veo_duration(v)
+
+    @field_validator("style")
+    @classmethod
+    def validate_style(cls, v: str) -> str:
+        v = v.strip().lower()
+        if v not in ALLOWED_STYLES:
+            raise ValueError(f"지원하지 않는 스타일입니다. 가능한 값: {', '.join(sorted(ALLOWED_STYLES))}")
+        return v
+
 
 class StoryArchitectRequest(BaseModel):
     """Request model for Story Architect (시나리오 생성기)."""
@@ -307,19 +488,63 @@ class StoryArchitectRequest(BaseModel):
     duration: str = Field("60s", max_length=10, description="Target duration: 15s, 30s, 60s, 3m, 5m")
     structure: str = Field("3act", max_length=20, description="Story structure: 3act, hero, circular, montage")
     language: str = Field("ko", description="Output language")
-    model: str = Field("gemini-3-pro-preview", description="AI model")
+    model: str = Field("gemini-1.5-pro", description="AI model")
+
+    @field_validator("concept", mode="before")
+    @classmethod
+    def strip_concept(cls, v: str) -> str:
+        return _strip_string(v)
 
     @field_validator("genre")
     @classmethod
     def validate_genre(cls, v: str) -> str:
-        valid_genres = {"drama", "ad", "mv", "documentary", "short"}
-        return v.lower() if v.lower() in valid_genres else "drama"
+        v = v.strip().lower()
+        if v not in ALLOWED_GENRES:
+            raise ValueError(f"지원하지 않는 장르입니다. 가능한 값: {', '.join(sorted(ALLOWED_GENRES))}")
+        return v
 
     @field_validator("structure")
     @classmethod
     def validate_structure(cls, v: str) -> str:
-        valid_structures = {"3act", "hero", "circular", "montage"}
-        return v.lower() if v.lower() in valid_structures else "3act"
+        v = v.strip().lower()
+        if v not in ALLOWED_STRUCTURES:
+            raise ValueError(f"지원하지 않는 구조입니다. 가능한 값: {', '.join(sorted(ALLOWED_STRUCTURES))}")
+        return v
+
+    @field_validator("language")
+    @classmethod
+    def validate_language(cls, v: str) -> str:
+        return _validate_language(v)
+
+    @field_validator("model")
+    @classmethod
+    def validate_model(cls, v: str) -> str:
+        return _validate_model(v)
+
+
+class StoryRefineRequest(BaseModel):
+    """Request model for story refinement (Stage 1)."""
+    concept: str = Field(..., min_length=10, max_length=3000, description="Raw concept")
+    genre: str = Field("drama", max_length=30, description="Target genre")
+    model: str = Field("gemini-1.5-pro", description="AI model")
+
+    @field_validator("concept", mode="before")
+    @classmethod
+    def strip_concept(cls, v: str) -> str:
+        return _strip_string(v)
+
+    @field_validator("genre")
+    @classmethod
+    def validate_genre(cls, v: str) -> str:
+        v = v.strip().lower()
+        if v not in ALLOWED_GENRES:
+            raise ValueError(f"지원하지 않는 장르입니다. 가능한 값: {', '.join(sorted(ALLOWED_GENRES))}")
+        return v
+
+    @field_validator("model")
+    @classmethod
+    def validate_model(cls, v: str) -> str:
+        return _validate_model(v)
 
 
 class SoundCraftRequest(BaseModel):
@@ -333,19 +558,81 @@ class SoundCraftRequest(BaseModel):
     duration: str = Field("60s", max_length=10, description="Target duration")
     target_platform: str = Field("suno", max_length=20, description="Target platform: suno, udio, elevenlabs")
     language: str = Field("ko", description="Output language")
-    model: str = Field("gemini-3-flash-preview", description="AI model")
+    model: str = Field("gemini-2.0-flash-exp", description="AI model")
+
+    @field_validator("concept", "mood", mode="before")
+    @classmethod
+    def strip_strings(cls, v: str) -> str:
+        return _strip_string(v)
 
     @field_validator("sound_type")
     @classmethod
     def validate_sound_type(cls, v: str) -> str:
-        valid_types = {"bgm", "sfx", "narration", "full"}
-        return v.lower() if v.lower() in valid_types else "bgm"
+        v = v.strip().lower()
+        if v not in ALLOWED_SOUND_TYPES:
+            raise ValueError(f"지원하지 않는 사운드 타입입니다. 가능한 값: {', '.join(sorted(ALLOWED_SOUND_TYPES))}")
+        return v
+
+    @field_validator("tempo")
+    @classmethod
+    def validate_tempo(cls, v: str) -> str:
+        v = v.strip().lower()
+        if v not in ALLOWED_TEMPOS:
+            raise ValueError(f"지원하지 않는 템포입니다. 가능한 값: {', '.join(sorted(ALLOWED_TEMPOS))}")
+        return v
 
     @field_validator("target_platform")
     @classmethod
     def validate_platform(cls, v: str) -> str:
-        valid_platforms = {"suno", "udio", "elevenlabs"}
-        return v.lower() if v.lower() in valid_platforms else "suno"
+        v = v.strip().lower()
+        if v not in ALLOWED_PLATFORMS:
+            raise ValueError(f"지원하지 않는 플랫폼입니다. 가능한 값: {', '.join(sorted(ALLOWED_PLATFORMS))}")
+        return v
+
+    @field_validator("language")
+    @classmethod
+    def validate_language(cls, v: str) -> str:
+        return _validate_language(v)
+
+    @field_validator("model")
+    @classmethod
+    def validate_model(cls, v: str) -> str:
+        return _validate_model(v)
+
+
+class SoundMoodboardRequest(BaseModel):
+    """Request model for Sound Moodboard (Stage 1)."""
+    concept: str = Field(..., min_length=1, max_length=MAX_CONCEPT_LENGTH, description="Sound concept")
+    model: str = Field("gemini-1.5-pro", description="AI model")
+
+    @field_validator("concept", mode="before")
+    @classmethod
+    def strip_concept(cls, v: str) -> str:
+        return _strip_string(v)
+
+    @field_validator("model")
+    @classmethod
+    def validate_model(cls, v: str) -> str:
+        return _validate_model(v)
+
+
+class CreativeEditorRequest(BaseModel):
+    """Request model for Creative Editor."""
+    content: str = Field(..., min_length=1, max_length=10000, description="Content to improve")
+    context: str = Field(..., min_length=1, max_length=1000, description="Context/Genre/Audience")
+    persona: str = Field("Senior Editor", max_length=100, description="Editorial persona")
+    use_rag: bool = Field(True, description="Use RAG for editing principles")
+    model: str = Field("gemini-1.5-pro", description="AI model")
+
+    @field_validator("content", "context", mode="before")
+    @classmethod
+    def strip_strings(cls, v: str) -> str:
+        return _strip_string(v)
+
+    @field_validator("model")
+    @classmethod
+    def validate_model(cls, v: str) -> str:
+        return _validate_model(v)
 
 
 # ============================================================================
@@ -1140,6 +1427,40 @@ async def direct_aesthetic(
 
 
 @router.post(
+    "/aesthetic/moodboard",
+    response_model=DimensionResponse,
+    responses={
+        400: {"model": DimensionErrorResponse},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="Aesthetic Director: Generate Mood Board",
+    description="Stage 1: Generate 3 distinct visual direction cards.",
+    tags=["Dimension Extended"],
+)
+async def generate_aesthetic_moodboard(
+    request: AestheticMoodboardRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> DimensionResponse:
+    """Generate visual direction cards for concept exploration."""
+    return await _execute_dimension_tool(
+        capsule_id=DimensionCapsuleId.AESTHETIC_MOODBOARD,
+        tool_key="aesthetic_moodboard",
+        inputs={
+            "concept": request.concept,
+            "mood": request.mood,
+        },
+        model=request.model,
+        user=user,
+        byok_key=byok_key,
+        db=db,
+        inputs_summary={"concept": request.concept[:100], "mood": request.mood},
+    )
+
+
+@router.post(
     "/aesthetic/direct/stream",
     responses={
         400: {"model": DimensionErrorResponse},
@@ -1454,6 +1775,40 @@ async def architect_story(
 
 
 @router.post(
+    "/story/refine",
+    response_model=DimensionResponse,
+    responses={
+        400: {"model": DimensionErrorResponse},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="Story Architect: Refine Concept",
+    description="Stage 1: Refine raw concept into distinct narrative angles.",
+    tags=["Dimension 4-Stage"],
+)
+async def refine_story(
+    request: StoryRefineRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> DimensionResponse:
+    """Refine concept into narrative angles."""
+    return await _execute_dimension_tool(
+        capsule_id=DimensionCapsuleId.STORY_REFINE,
+        tool_key="story_refine",
+        inputs={
+            "concept": request.concept,
+            "genre": request.genre,
+        },
+        model=request.model,
+        user=user,
+        byok_key=byok_key,
+        db=db,
+        inputs_summary={"concept": request.concept[:100], "genre": request.genre},
+    )
+
+
+@router.post(
     "/story/architect/stream",
     responses={
         400: {"model": DimensionErrorResponse},
@@ -1586,6 +1941,70 @@ async def craft_sound_stream(
         ),
         media_type="text/event-stream",
         headers=get_sse_headers(),
+    )
+
+
+@router.post(
+    "/sound/moodboard",
+    response_model=DimensionResponse,
+    responses={
+        400: {"model": DimensionErrorResponse},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="Sound Moodboard: Audio Direction Discovery",
+    description="Stage 1: Generate distinct audio direction cards from concept.",
+    tags=["Dimension 4-Stage"],
+)
+async def craft_sound_moodboard(
+    request: SoundMoodboardRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> DimensionResponse:
+    """Generate audio direction cards (Sound Moodboard)."""
+    return await _execute_dimension_tool(
+        capsule_id=DimensionCapsuleId.SOUND_MOODBOARD,
+        tool_key="sound_moodboard",
+        inputs={
+            "concept": request.concept,
+        },
+        model=request.model,
+        user=user,
+        byok_key=byok_key,
+        db=db,
+        inputs_summary={"concept": request.concept[:100]},
+    )
+
+
+@router.post(
+    "/quality/editor",
+    response_model=DimensionResponse,
+    summary="Creative Editor: Improve Content",
+    description="Analyze and rewrite content using an editorial persona.",
+    tags=["Dimension Quality"],
+)
+async def run_creative_editor(
+    request: CreativeEditorRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> DimensionResponse:
+    """Run Creative Editor."""
+    return await _execute_dimension_tool(
+        capsule_id=DimensionCapsuleId.CREATIVE_EDITOR,
+        tool_key="run_creative_editor",
+        inputs={
+            "content": request.content,
+            "context": request.context,
+            "persona": request.persona,
+        },
+        params={"use_rag": request.use_rag},
+        model=request.model,
+        user=user,
+        byok_key=byok_key,
+        db=db,
+        inputs_summary={"content_len": len(request.content), "persona": request.persona},
     )
 
 
