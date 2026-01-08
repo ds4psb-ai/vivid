@@ -49,12 +49,46 @@ load_cached_tokens = None
 try:
     from notebooklm_mcp.api_client import NotebookLMClient as _MCPClient
     from notebooklm_mcp.auth import load_cached_tokens as _load_tokens
-    MCPClient = _MCPClient
+    
+    class CachedMCPClient(_MCPClient):
+        """MCPClient that uses cached CSRF token instead of fetching page.
+        
+        The original MCPClient always refreshes CSRF by fetching NotebookLM page,
+        but Google rejects cookies from different IP/client. We override to use
+        cached tokens extracted from browser.
+        """
+        
+        def _refresh_auth_tokens(self) -> None:
+            """Skip refresh - use cached CSRF token from browser extraction."""
+            # Don't fetch page - just use what we already have
+            # This is set in __init__ via csrf_token parameter
+            if not self.csrf_token:
+                raise ValueError(
+                    "CSRF token required. Run 'notebooklm-mcp-auth' and extract from browser."
+                )
+            logger.debug(f"[NotebookLM] Using cached CSRF token: {self.csrf_token[:20]}...")
+    
+    MCPClient = CachedMCPClient
     load_cached_tokens = _load_tokens
     MCP_AVAILABLE = True
-    logger.info("[NotebookLM] MCP RPC client available (jacob-bd)")
+    logger.info("[NotebookLM] MCP RPC client available (jacob-bd) with cached auth")
 except ImportError:
     logger.info("[NotebookLM] notebooklm-mcp-server not installed - using simulation mode")
+
+# ============================================================================
+# Playwright Client (Browser-based fallback)
+# ============================================================================
+
+PLAYWRIGHT_AVAILABLE = False
+playwright_query = None
+
+try:
+    from app.rag.notebooklm_playwright import playwright_query as _playwright_query
+    playwright_query = _playwright_query
+    PLAYWRIGHT_AVAILABLE = True
+    logger.info("[NotebookLM] Playwright browser client available")
+except ImportError:
+    logger.debug("[NotebookLM] Playwright not available for browser-based queries")
 
 # Auth file paths (notebooklm-mcp stores cookies here)
 AUTH_FILE_PATH = Path.home() / ".notebooklm-mcp" / "auth.json"
@@ -492,6 +526,13 @@ class NotebookLMService:
                 f"[NotebookLM] RPC query success: {len(answer)} chars, "
                 f"{len(sources)} citations"
             )
+            
+            # Record success for auth tracking
+            try:
+                from app.rag.notebooklm_auth import get_auth_service
+                get_auth_service().record_success()
+            except Exception:
+                pass  # Auth tracking is optional
 
             return NotebookQueryResult(
                 answer=answer,
@@ -503,6 +544,39 @@ class NotebookLMService:
 
         except Exception as e:
             logger.warning(f"[NotebookLM] RPC query failed: {e}")
+            
+            # Record failure for auth tracking
+            try:
+                from app.rag.notebooklm_auth import get_auth_service
+                auth_service = get_auth_service()
+                auth_service.record_failure(str(e))
+                
+                # Check if we should skip to simulation (3+ failures)
+                if auth_service.should_fallback():
+                    logger.warning("[NotebookLM] 3+ consecutive failures, using simulation mode")
+                    return await self._simulate_query(notebook_id, query, notebook_info)
+            except Exception:
+                pass  # Auth tracking is optional
+            
+            # Try Playwright browser fallback
+            if PLAYWRIGHT_AVAILABLE and playwright_query:
+                try:
+                    logger.info("[NotebookLM] Trying Playwright browser fallback...")
+                    pw_result = await playwright_query(notebook_id, query)
+                    
+                    if pw_result and pw_result.get("success"):
+                        answer = pw_result.get("answer", "")
+                        if answer:
+                            return NotebookQueryResult(
+                                answer=answer,
+                                sources=[],  # TODO: parse sources from pw_result
+                                confidence=0.90,
+                                grounded=True,
+                                notebook_id=notebook_id,
+                            )
+                except Exception as pw_error:
+                    logger.warning(f"[NotebookLM] Playwright fallback failed: {pw_error}")
+            
             return await self._simulate_query(notebook_id, query, notebook_info)
 
     async def _simulate_query(

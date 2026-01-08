@@ -240,6 +240,57 @@ async def _refund_with_retry(
 
 
 # ============================================================================
+# Helper: Extract Auteur Key
+# ============================================================================
+
+# 지원되는 거장 키 목록
+AUTEUR_KEYS = ["bong", "nolan", "villeneuve", "wong", "tarantino", "park", "shinkai"]
+
+
+def _extract_auteur_key(
+    inputs: Dict[str, Any],
+    intent: Optional[Any] = None,
+) -> Optional[str]:
+    """inputs와 intent에서 거장 키 추출.
+    
+    Args:
+        inputs: 도구 입력
+        intent: CreativeIntent (선택적)
+        
+    Returns:
+        거장 키 또는 None
+    """
+    auteur_key = None
+    
+    # 1. Intent에서 추출
+    if intent:
+        rag_hints = getattr(intent, "rag_source_hints", None)
+        if rag_hints:
+            for hint in rag_hints:
+                if isinstance(hint, str):
+                    if hint.startswith("auteur."):
+                        auteur_key = hint.replace("auteur.", "")
+                        break
+                    elif hint in AUTEUR_KEYS:
+                        auteur_key = hint
+                        break
+    
+    # 2. Inputs에서 추출 (capsule_id, style 등)
+    if not auteur_key:
+        for field in ["capsule_id", "style", "auteur", "director"]:
+            value = inputs.get(field, "") or ""
+            value_lower = str(value).lower()
+            for key in AUTEUR_KEYS:
+                if key in value_lower:
+                    auteur_key = key
+                    break
+            if auteur_key:
+                break
+    
+    return auteur_key
+
+
+# ============================================================================
 # Helper: Execute with Credit Logic
 # ============================================================================
 
@@ -296,22 +347,66 @@ async def _execute_dimension_tool(
     if params:
         execution_params.update(params)
 
-    # Intent-Resolver Integration
+    # Unified RAG → Resolver Pipeline
+    dimension_code = CAPSULE_TO_DIMENSION.get(capsule_id, "1D")
+    rag_context = None
+    
+    # Step 1: RAG Context 수집 (프리셋 기반)
+    try:
+        from app.rag.rag_presets import get_rag_preset, should_enable_rag
+        from app.rag.rag_cache import get_rag_cache
+        
+        # 거장 키 추출
+        auteur_key = _extract_auteur_key(inputs, intent)
+        preset = get_rag_preset(dimension_code)
+        
+        if should_enable_rag(preset, auteur_key):
+            topic = inputs.get("topic") or inputs.get("concept") or inputs.get("description") or ""
+            if topic:
+                query = f"{topic[:200]} - 시각적 스타일과 촬영 기법 참조"
+                result = await get_rag_cache().get_or_query(
+                    query=query,
+                    auteur_key=auteur_key,
+                    dimension=dimension_code if dimension_code != "AD" else None,
+                    use_google_search=preset.use_google_search,
+                )
+                
+                if result.confidence >= preset.confidence_threshold:
+                    rag_context = {
+                        "auteur_reference": result.answer[:preset.answer_max_length] if result.answer else None,
+                        "sources": [
+                            {"id": s.source_id, "title": s.title}
+                            for s in (result.notebooklm_sources or [])[:preset.max_sources]
+                        ],
+                        "strategy": result.strategy_used,
+                        "confidence": result.confidence,
+                        "preset": dimension_code,
+                    }
+                    logger.debug(f"[{tool_key}] RAG context prepared: strategy={result.strategy_used}")
+    except Exception as e:
+        logger.debug(f"[{tool_key}] RAG context collection failed: {e}")
+    
+    # Step 2: Intent-Resolver Integration (with RAG context)
     if intent:
         try:
             from app.resolvers.integration import prepare_dimension_params
-            dimension_code = CAPSULE_TO_DIMENSION.get(capsule_id, "1D")
             inputs, execution_params = await prepare_dimension_params(
                 dimension_code=dimension_code,
                 inputs=inputs,
                 params=execution_params,
                 intent=intent,
+                rag_context=rag_context,  # RAG 컨텍스트 전달
             )
-            logger.debug(f"[{tool_key}] Intent-resolved params applied: {dimension_code}")
+            logger.debug(f"[{tool_key}] Intent-resolved with RAG: {dimension_code}")
         except ImportError:
             logger.debug(f"[{tool_key}] Resolver integration not available")
         except Exception as e:
             logger.warning(f"[{tool_key}] Intent resolution failed: {e}")
+    
+    # Step 3: RAG 컨텍스트를 inputs에도 추가 (캡슐에서 직접 사용 가능)
+    if rag_context:
+        inputs["_rag_context"] = rag_context
+
 
     try:
         result = await execute_dimension_capsule(
@@ -453,20 +548,61 @@ async def _execute_dimension_tool_stream(
         if params:
             execution_params.update(params)
 
-        # Intent-Resolver Integration
+        # Unified RAG → Resolver Pipeline (matches non-streaming)
+        dimension_code = CAPSULE_TO_DIMENSION.get(capsule_id, "1D")
+        rag_context = None
+        
+        # Step 1: RAG Context 수집 (프리셋 기반)
+        try:
+            from app.rag.rag_presets import get_rag_preset, should_enable_rag
+            from app.rag.rag_cache import get_rag_cache
+            
+            auteur_key = _extract_auteur_key(inputs, intent)
+            preset = get_rag_preset(dimension_code)
+            
+            if should_enable_rag(preset, auteur_key):
+                topic = inputs.get("topic") or inputs.get("concept") or inputs.get("description") or ""
+                if topic:
+                    query = f"{topic[:200]} - 시각적 스타일과 촬영 기법 참조"
+                    result = await get_rag_cache().get_or_query(
+                        query=query,
+                        auteur_key=auteur_key,
+                        dimension=dimension_code if dimension_code != "AD" else None,
+                        use_google_search=preset.use_google_search,
+                    )
+                    
+                    if result.confidence >= preset.confidence_threshold:
+                        rag_context = {
+                            "auteur_reference": result.answer[:preset.answer_max_length] if result.answer else None,
+                            "sources": [
+                                {"id": s.source_id, "title": s.title}
+                                for s in (result.notebooklm_sources or [])[:preset.max_sources]
+                            ],
+                            "strategy": result.strategy_used,
+                            "confidence": result.confidence,
+                            "preset": dimension_code,
+                        }
+        except Exception as e:
+            logger.debug(f"[{tool_key}] Stream: RAG collection failed: {e}")
+        
+        # Step 2: Intent-Resolver Integration (with RAG context)
         if intent:
             try:
                 from app.resolvers.integration import prepare_dimension_params
-                dimension_code = CAPSULE_TO_DIMENSION.get(capsule_id, "1D")
                 inputs, execution_params = await prepare_dimension_params(
                     dimension_code=dimension_code,
                     inputs=inputs,
                     params=execution_params,
                     intent=intent,
+                    rag_context=rag_context,
                 )
-                logger.debug(f"[{tool_key}] Stream: Intent-resolved params applied")
+                logger.debug(f"[{tool_key}] Stream: Intent-resolved with RAG")
             except Exception as e:
                 logger.warning(f"[{tool_key}] Stream: Intent resolution failed: {e}")
+        
+        # Step 3: RAG 컨텍스트를 inputs에도 추가
+        if rag_context:
+            inputs["_rag_context"] = rag_context
 
         yield sse_progress(30, f"{operation_name} 처리 중...", "processing")
 

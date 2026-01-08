@@ -116,3 +116,61 @@ async def readiness_probe(db: AsyncSession = Depends(get_db)) -> dict:
     except Exception as e:
         from fastapi import HTTPException
         raise HTTPException(status_code=503, detail=f"Not ready: {str(e)}")
+
+
+@router.get("/health/notebooklm")
+async def notebooklm_health() -> dict:
+    """
+    NotebookLM RAG health check.
+    
+    Reports:
+    - Cookie authentication status
+    - Last successful query time
+    - Consecutive failures count
+    - Current mode (live/simulation)
+    """
+    try:
+        from app.rag.notebooklm_auth import get_auth_service
+        auth_service = get_auth_service()
+        health = auth_service.get_health_dict()
+        
+        # Add mode info
+        from app.rag.tier0_notebooklm import MCP_AVAILABLE, PLAYWRIGHT_AVAILABLE
+        health["mcp_available"] = MCP_AVAILABLE
+        health["playwright_available"] = PLAYWRIGHT_AVAILABLE
+        health["mode"] = "live" if MCP_AVAILABLE or PLAYWRIGHT_AVAILABLE else "simulation"
+        
+        return health
+    except Exception as e:
+        return {
+            "status": "unknown",
+            "auth_status": "error",
+            "error": str(e),
+            "mode": "simulation"
+        }
+
+
+@router.get("/health/rag-cache")
+async def rag_cache_health() -> dict:
+    """
+    RAG Cache health check.
+    
+    Reports:
+    - Cache size and max capacity
+    - Hit/miss counts and hit rate
+    - TTL configuration
+    """
+    try:
+        from app.rag.rag_cache import get_rag_cache
+        cache = get_rag_cache()
+        stats = cache.get_stats()
+        
+        return {
+            "status": "healthy",
+            **stats
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e)
+        }

@@ -267,6 +267,73 @@ async def _list_notebooks_handler(
         return error_result(call, f"Notebook listing failed: {e}")
 
 
+async def _rag_query_handler(
+    context: ToolContext,
+    call: ToolCall,
+) -> ToolResult:
+    """거장 DNA 또는 차원별 지식 베이스를 검색합니다.
+    
+    캠시드 RAG 쿼리를 실행하여 관련 정보를 검색합니다.
+    NotebookLM + Vertex AI 하이브리드 시스템을 사용합니다.
+    """
+    args = call.arguments
+    query = args.get("query")
+    auteur_key = args.get("auteur_key")
+    dimension = args.get("dimension")
+    
+    if not query:
+        return validation_error(call, "query")
+    
+    try:
+        from app.rag.rag_cache import get_rag_cache
+        
+        result = await get_rag_cache().get_or_query(
+            query=query,
+            auteur_key=auteur_key,
+            dimension=dimension,
+            use_google_search=args.get("use_google_search", False),
+        )
+        
+        # 소스 정보 추출
+        sources = []
+        if result.notebooklm_sources:
+            sources = [
+                {"id": s.source_id, "title": s.title}
+                for s in result.notebooklm_sources[:5]
+            ]
+        elif result.vertex_sources:
+            sources = [
+                {"chunk_id": s.chunk_id, "display_name": s.display_name}
+                for s in result.vertex_sources[:5]
+            ]
+        
+        logger.info("RAG query executed", extra={
+            "session_id": context.session_id,
+            "auteur_key": auteur_key,
+            "dimension": dimension,
+            "confidence": result.confidence,
+            "strategy": result.strategy_used,
+        })
+        
+        return success_result(call, {
+            "answer": result.answer,
+            "confidence": result.confidence,
+            "strategy": result.strategy_used,
+            "sources": sources,
+            "auteur_key": auteur_key,
+            "dimension": dimension,
+        })
+        
+    except ImportError as e:
+        logger.warning(f"RAG module not available: {e}")
+        return error_result(call, "RAG module not available")
+    except Exception as e:
+        logger.exception("RAG query failed", extra={
+            "session_id": context.session_id, "error": str(e)
+        })
+        return error_result(call, f"RAG query failed: {e}")
+
+
 # =============================================================================
 # Tool Specifications
 # =============================================================================
@@ -340,6 +407,35 @@ _SPECS = [
             },
         },
     ),
+    ToolSpec(
+        name="rag_query",
+        description="거장 DNA 또는 차원별 지식 베이스를 검색합니다. 봉준호, 놀란 등 거장의 영화적 스타일이나 차원별 레퍼런스를 검색할 때 사용합니다.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "검색 질의 (예: '봉준호 감독의 시각적 스타일')",
+                },
+                "auteur_key": {
+                    "type": "string",
+                    "description": "거장 키 (선택적): bong, nolan, villeneuve, wong, tarantino, park, shinkai",
+                    "enum": ["bong", "nolan", "villeneuve", "wong", "tarantino", "park", "shinkai"],
+                },
+                "dimension": {
+                    "type": "string",
+                    "description": "차원 코드 (선택적): 1D, 2D, 3D, 4D, AD, QC, STORY",
+                    "enum": ["1D", "2D", "3D", "4D", "AD", "QC", "STORY"],
+                },
+                "use_google_search": {
+                    "type": "boolean",
+                    "description": "Google Search Grounding 사용 여부",
+                    "default": False,
+                },
+            },
+            "required": ["query"],
+        },
+    ),
 ]
 
 _HANDLERS = {
@@ -347,6 +443,7 @@ _HANDLERS = {
     "add_sources": _add_sources_handler,
     "generate_audio_overview": _generate_audio_overview_handler,
     "list_notebooks": _list_notebooks_handler,
+    "rag_query": _rag_query_handler,
 }
 
 

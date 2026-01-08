@@ -173,19 +173,56 @@ class BaseCapsuleResolver(ABC):
         params: Dict[str, Any],
         rag_context: Optional[Dict[str, Any]],
     ) -> Dict[str, Any]:
-        """RAG 컨텍스트에서 힌트 적용"""
+        """RAG 컨텍스트에서 힌트 적용.
+        
+        거장 레퍼런스, 시각적 스타일, 촬영 기법 등을 파라미터에 반영.
+        """
         if not rag_context:
             return params
         
-        # dimension_code에 해당하는 힌트 찾기
+        result = params.copy()
+        
+        # 1. dimension_code에 해당하는 직접 힌트 적용
         hints_key = f"{self.dimension_code.lower()}_hints"
         hints = rag_context.get(hints_key, {})
-        
         if hints:
             logger.debug(f"Applying RAG hints for {self.dimension_code}: {hints}")
-            return {**params, **hints}
+            result.update(hints)
         
-        return params
+        # 2. 거장 레퍼런스에서 스타일 힌트 추출
+        auteur_ref = rag_context.get("auteur_reference", "")
+        if auteur_ref:
+            # 거장별 시각적 스타일 매핑
+            AUTEUR_STYLE_HINTS = {
+                "봉준호": {"camera_style": "tracking", "aspect_ratio": "2.35:1"},
+                "bong": {"camera_style": "tracking", "aspect_ratio": "2.35:1"},
+                "nolan": {"camera_style": "stable", "lens_style": "anamorphic", "fps": 24},
+                "놀란": {"camera_style": "stable", "lens_style": "anamorphic"},
+                "villeneuve": {"camera_style": "slow", "color_grade": "desaturated"},
+                "빌뇌브": {"camera_style": "slow", "color_grade": "desaturated"},
+                "wong": {"camera_style": "handheld", "color_grade": "saturated"},
+                "왕가위": {"camera_style": "handheld", "color_grade": "saturated"},
+                "tarantino": {"camera_style": "dynamic", "editing_style": "nonlinear"},
+                "타란티노": {"camera_style": "dynamic", "editing_style": "nonlinear"},
+            }
+            
+            auteur_ref_lower = auteur_ref.lower()
+            for auteur_key, style_hints in AUTEUR_STYLE_HINTS.items():
+                if auteur_key.lower() in auteur_ref_lower:
+                    for k, v in style_hints.items():
+                        if k not in result:  # 기존 값 우선
+                            result[k] = v
+                    logger.debug(f"Applied auteur style from RAG: {auteur_key}")
+                    break
+        
+        # 3. RAG 신뢰도 기반 가중치 조절
+        confidence = rag_context.get("confidence", 0)
+        if confidence >= 0.8:
+            result["_rag_confidence"] = "high"
+        elif confidence >= 0.5:
+            result["_rag_confidence"] = "medium"
+        
+        return result
     
     async def resolve_with_fallback(
         self,

@@ -385,6 +385,53 @@ async def _dimension_tool_handler(
         # 입력 준비 (model은 params로 분리)
         inputs = {k: v for k, v in args.items() if k != "model"}
         params = {"model": model}
+        rag_context = None
+        
+        # === Phase 3-5: Auto-RAG Context Collection ===
+        # 거장/차원 관련 쿼리 시 자동으로 RAG 컨텍스트 수집
+        dimension_code = TOOL_TO_DIMENSION.get(tool_name)
+        try:
+            from app.rag.rag_presets import get_rag_preset, should_enable_rag
+            from app.rag.rag_cache import get_rag_cache
+            
+            # 거장 키 추출
+            auteur_key = None
+            for field in ["style", "auteur", "director", "capsule_id"]:
+                value = str(inputs.get(field, "")).lower()
+                for key in ["bong", "nolan", "villeneuve", "wong", "tarantino", "park", "shinkai"]:
+                    if key in value:
+                        auteur_key = key
+                        break
+                if auteur_key:
+                    break
+            
+            preset = get_rag_preset(dimension_code) if dimension_code else None
+            
+            if preset and should_enable_rag(preset, auteur_key):
+                # 쿼리 소재 추출
+                topic = inputs.get("topic") or inputs.get("concept") or inputs.get("description") or ""
+                if topic:
+                    query = f"{topic[:200]} - 시각적 스타일과 촬영 기법 참조"
+                    result = await get_rag_cache().get_or_query(
+                        query=query,
+                        auteur_key=auteur_key,
+                        dimension=dimension_code,
+                        use_google_search=preset.use_google_search,
+                    )
+                    
+                    if result.confidence >= preset.confidence_threshold:
+                        rag_context = {
+                            "auteur_reference": result.answer[:preset.answer_max_length] if result.answer else None,
+                            "sources": [
+                                {"id": s.source_id, "title": s.title}
+                                for s in (result.notebooklm_sources or [])[:preset.max_sources]
+                            ],
+                            "strategy": result.strategy_used,
+                            "confidence": result.confidence,
+                        }
+                        logger.info(f"[{tool_name}] Auto-RAG: strategy={result.strategy_used}, confidence={result.confidence:.2f}")
+        except Exception as e:
+            logger.debug(f"[{tool_name}] Auto-RAG collection skipped: {e}")
         
         # === Phase 3: Intent-Resolver Integration ===
         # 템플릿에서 input_preset이 전달되면 Intent 기반으로 params 확장
@@ -392,18 +439,22 @@ async def _dimension_tool_handler(
         if template_preset:
             try:
                 from app.resolvers.integration import prepare_dimension_params
-                dimension_code = TOOL_TO_DIMENSION.get(tool_name)
                 if dimension_code:
                     inputs, params = await prepare_dimension_params(
                         dimension_code=dimension_code,
                         inputs=inputs,
                         params={**params, **template_preset},
+                        rag_context=rag_context,
                     )
                     logger.debug(f"[{tool_name}] Intent-resolved params applied from template")
             except ImportError:
                 logger.debug(f"[{tool_name}] Resolver integration not available")
             except Exception as e:
                 logger.warning(f"[{tool_name}] Resolver integration failed: {e}")
+        
+        # RAG 컨텍스트를 inputs에 추가 (캡슐에서 직접 사용 가능)
+        if rag_context:
+            inputs["_rag_context"] = rag_context
         
         # Teaching 캡슐 실행
         result = await execute_dimension_capsule(
