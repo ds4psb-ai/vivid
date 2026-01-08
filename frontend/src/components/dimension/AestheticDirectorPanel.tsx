@@ -9,7 +9,7 @@ import TeachingPanelLayout, {
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
-import { Palette, Copy, Check, Download } from "lucide-react";
+import { Palette, Copy, Check, Download, Sparkles, Eye, Wand2, Code, Type, Layers } from "lucide-react";
 
 const CREDIT_COST = 10;
 const THEME_COLOR: ThemeColor = "fuchsia";
@@ -30,17 +30,32 @@ interface AestheticResult {
         style_summary: string;
         signature_elements: string[];
     };
+    textures?: string[];
+    typography?: {
+        primary: string;
+        secondary: string;
+        description: string;
+    };
+    generative_prompts?: {
+        midjourney: string;
+        veo: string;
+    };
 }
 
-const AUTEUR_STYLES = [
-    { value: "", label: "자동 추천" },
-    { value: "bong", label: "봉준호 (Bong Joon-ho)", desc: "사회 비평, 장르 혼합" },
-    { value: "park", label: "박찬욱 (Park Chan-wook)", desc: "미학적 폭력, 복수극" },
-    { value: "shinkai", label: "신카이 마코토 (Shinkai)", desc: "아련한 풍경, 청춘" },
-    { value: "lee", label: "이창동 (Lee Chang-dong)", desc: "리얼리즘, 인간 탐구" },
-    { value: "na", label: "나홍진 (Na Hong-jin)", desc: "긴장감, 추격 서사" },
-    { value: "hong", label: "홍상수 (Hong Sang-soo)", desc: "일상, 대화 중심" },
-];
+interface VisualDirection {
+    id: string;
+    title: string;
+    description: string;
+    keywords: string[];
+    suggested_auteur: string;
+    color_preview: string[];
+}
+
+interface MoodboardResult {
+    directions: VisualDirection[];
+}
+
+type Stage = "moodboard" | "palette" | "guide";
 
 const MOODS = [
     { value: "neutral", label: "중립" },
@@ -58,18 +73,16 @@ const TARGET_MEDIUMS = [
     { value: "animation", label: "애니메이션" },
 ];
 
-const MODELS = [
-    { value: "gemini-3.0-flash-preview", label: "Flash (빠름)" },
-    { value: "gemini-3.0-pro-preview", label: "Pro (상세)" },
-];
-
 export default function AestheticDirectorPanel() {
     const [concept, setConcept] = useState("");
-    const [referenceStyle, setReferenceStyle] = useState("");
     const [mood, setMood] = useState("neutral");
     const [targetMedium, setTargetMedium] = useState("video");
-    const [model, setModel] = useState("gemini-3.0-pro-preview");
     const [useRag, setUseRag] = useState(true);
+
+    // Visual Identity Workshop State
+    const [stage, setStage] = useState<Stage>("moodboard");
+    const [directions, setDirections] = useState<VisualDirection[]>([]);
+    const [selectedDirection, setSelectedDirection] = useState<VisualDirection | null>(null);
 
     const [copiedField, setCopiedField] = useState<string | null>(null);
     const [showCreditModal, setShowCreditModal] = useState(false);
@@ -110,16 +123,34 @@ export default function AestheticDirectorPanel() {
 
     const MAX_CONCEPT_LENGTH = 2000;
 
-    const handleGenerate = useCallback(async () => {
+    // Stage 1: Generate Moodboard (Visual Directions)
+    const handleGenerateMoodboard = useCallback(async () => {
         const trimmedConcept = concept.trim();
         if (!trimmedConcept) {
             setValidationError("컨셉을 입력해주세요");
             return;
         }
-        if (trimmedConcept.length > MAX_CONCEPT_LENGTH) {
-            setValidationError(`컨셉은 ${MAX_CONCEPT_LENGTH}자 이하로 입력해주세요`);
-            return;
-        }
+        setValidationError(null);
+
+        await execute(
+            `${API_BASE}/api/dimension/aesthetic/moodboard`,
+            {
+                concept,
+                mood,
+                model: "gemini-1.5-pro",
+            },
+            getBYOKHeaders(byokKey)
+        ).then((res) => {
+            if (res && res.success && res.output && (res.output as any).directions) {
+                setDirections((res.output as any).directions);
+                setStage("palette");
+            }
+        });
+    }, [concept, mood, byokKey, execute]);
+
+    // Stage 2 -> 3: Generate Full Style Guide
+    const handleGenerateGuide = useCallback(async () => {
+        if (!selectedDirection) return;
         setValidationError(null);
 
         if (!byokKey && creditCtx && !creditCtx.hasEnoughCredits(CREDIT_COST)) {
@@ -127,19 +158,26 @@ export default function AestheticDirectorPanel() {
             return;
         }
 
+        // Use the selected direction to generate the full guide
+        const enrichedConcept = `${concept}\n\nSelected Visual Direction: ${selectedDirection.title}\n${selectedDirection.description}\nKeywords: ${selectedDirection.keywords.join(", ")}\nSuggested Auteur: ${selectedDirection.suggested_auteur}`;
+
         await execute(
             `${API_BASE}/api/dimension/aesthetic/direct`,
             {
-                concept,
-                reference_style: referenceStyle || undefined,
+                concept: enrichedConcept,
+                reference_style: selectedDirection.suggested_auteur.toLowerCase().split(" ")[0] || "",
                 mood,
                 target_medium: targetMedium,
-                model,
+                model: "gemini-1.5-pro",
                 use_rag: useRag,
             },
             getBYOKHeaders(byokKey)
-        );
-    }, [concept, referenceStyle, mood, targetMedium, model, useRag, byokKey, creditCtx, execute]);
+        ).then((res) => {
+            if (res && res.success) {
+                setStage("guide");
+            }
+        });
+    }, [concept, mood, targetMedium, useRag, byokKey, creditCtx, execute, selectedDirection]);
 
     const handleCopy = useCallback(async (text: string, field: string) => {
         const success = await copyToClipboard(text);
@@ -161,6 +199,15 @@ export default function AestheticDirectorPanel() {
 
     const SidebarContent = (
         <>
+            {/* Stage Indicator */}
+            <div className="flex items-center justify-between text-xs text-white/50 mb-4">
+                <span className={stage === "moodboard" ? "text-fuchsia-400 font-bold" : ""}>1. 영감</span>
+                <span>→</span>
+                <span className={stage === "palette" ? "text-fuchsia-400 font-bold" : ""}>2. 팔레트</span>
+                <span>→</span>
+                <span className={stage === "guide" ? "text-fuchsia-400 font-bold" : ""}>3. 가이드</span>
+            </div>
+
             {/* Concept Input */}
             <div className="space-y-2 group">
                 <label className="text-[10px] font-bold text-[var(--fg-muted)] uppercase tracking-widest ml-1">컨셉 / 주제</label>
@@ -168,37 +215,13 @@ export default function AestheticDirectorPanel() {
                     value={concept}
                     onChange={(e) => setConcept(e.target.value)}
                     placeholder="시각적 스타일을 정의할 컨셉을 입력하세요..."
-                    className="w-full h-32 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:border-fuchsia-400/50 focus:bg-white/[0.07] focus:ring-4 focus:ring-fuchsia-400/5 transition-all resize-none text-sm font-light leading-relaxed"
+                    className="w-full h-32 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:border-fuchsia-400/50 focus:bg-white/[0.07] focus:ring-4 focus:ring-fuchsia-400/5 transition-all resize-none text-sm font-light leading-relaxed disabled:opacity-50"
+                    disabled={isLoading || stage !== "moodboard"}
                 />
             </div>
 
-            {/* Auteur Style */}
-            <div className="space-y-2">
-                <label className="text-[10px] font-bold text-[var(--fg-muted)] uppercase tracking-widest ml-1">감독 스타일</label>
-                <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
-                    {AUTEUR_STYLES.map((style) => (
-                        <button
-                            key={style.value}
-                            onClick={() => setReferenceStyle(style.value)}
-                            className={`w-full flex flex-col px-4 py-3 rounded-xl text-left transition-all ${
-                                referenceStyle === style.value
-                                    ? "bg-fuchsia-500/10 border border-fuchsia-500/30"
-                                    : "bg-white/5 border border-white/10 hover:border-white/20"
-                            }`}
-                        >
-                            <span className={`text-sm font-medium ${referenceStyle === style.value ? "text-fuchsia-400" : "text-zinc-300"}`}>
-                                {style.label}
-                            </span>
-                            {style.desc && (
-                                <span className="text-[10px] text-zinc-500">{style.desc}</span>
-                            )}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* Mood & Medium */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* Mood Selector (Stage 1 only) */}
+            {stage === "moodboard" && (
                 <div className="space-y-2">
                     <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">분위기</label>
                     <div className="relative">
@@ -216,6 +239,23 @@ export default function AestheticDirectorPanel() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Selected Direction Display (Stage 2) */}
+            {stage === "palette" && selectedDirection && (
+                <div className="p-4 bg-fuchsia-500/10 border border-fuchsia-500/20 rounded-xl">
+                    <h4 className="text-fuchsia-400 text-sm font-bold mb-1">선택된 방향</h4>
+                    <p className="text-white font-medium text-sm">{selectedDirection.title}</p>
+                    <div className="flex gap-1 mt-2">
+                        {selectedDirection.color_preview.map((color, i) => (
+                            <div key={i} className="w-6 h-6 rounded-full border border-white/10" style={{ backgroundColor: color }} />
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Medium Selector (Stage 2) */}
+            {stage === "palette" && (
                 <div className="space-y-2">
                     <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">미디어</label>
                     <div className="relative">
@@ -233,61 +273,85 @@ export default function AestheticDirectorPanel() {
                         </div>
                     </div>
                 </div>
-            </div>
+            )}
 
-            {/* RAG Toggle */}
-            <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10">
-                <div>
-                    <div className="text-sm font-medium text-zinc-300">RAG 컨텍스트</div>
-                    <div className="text-[10px] text-zinc-500">레퍼런스 검색 활성화</div>
-                </div>
-                <button
-                    onClick={() => setUseRag(!useRag)}
-                    className={`relative w-12 h-6 rounded-full transition-all ${useRag ? "bg-fuchsia-500" : "bg-white/10"}`}
-                >
-                    <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${useRag ? "left-7" : "left-1"}`} />
-                </button>
-            </div>
-
-            {/* Model Select */}
-            <div className="space-y-2 pt-4 border-t border-white/5">
-                <label className="text-[10px] font-bold text-[var(--fg-muted)] uppercase tracking-widest ml-1">AI 모델</label>
-                <div className="relative">
-                    <select
-                        value={model}
-                        onChange={(e) => setModel(e.target.value)}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-fuchsia-400/50 transition-all appearance-none cursor-pointer font-mono"
-                    >
-                        {MODELS.map((m) => (
-                            <option key={m.value} value={m.value} className="bg-[#0F0F1A]">{m.label}</option>
-                        ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-white/30">
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+            {/* RAG Toggle (Stage 2) */}
+            {stage === "palette" && (
+                <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10">
+                    <div>
+                        <div className="text-sm font-medium text-zinc-300">RAG 컨텍스트</div>
+                        <div className="text-[10px] text-zinc-500">레퍼런스 검색 활성화</div>
                     </div>
+                    <button
+                        onClick={() => setUseRag(!useRag)}
+                        className={`relative w-12 h-6 rounded-full transition-all ${useRag ? "bg-fuchsia-500" : "bg-white/10"}`}
+                    >
+                        <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${useRag ? "left-7" : "left-1"}`} />
+                    </button>
                 </div>
-            </div>
+            )}
 
-            {/* Generate Button */}
-            <button
-                onClick={handleGenerate}
-                disabled={isLoading || !concept.trim()}
-                className="w-full py-4 mt-6 bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-600 text-white font-bold text-base rounded-xl shadow-[0_0_30px_rgba(217,70,239,0.3)] hover:shadow-[0_0_50px_rgba(217,70,239,0.5)] transition-all active:scale-[0.98]"
-            >
-                {isLoading ? (
-                    <span className="flex items-center justify-center gap-2">
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        생성 중...
-                    </span>
-                ) : (
-                    <span className="tracking-widest uppercase">스타일 가이드 생성</span>
-                )}
-            </button>
+            {/* Action Buttons */}
+            {stage === "moodboard" && (
+                <button
+                    onClick={handleGenerateMoodboard}
+                    disabled={isLoading || !concept.trim()}
+                    className="w-full py-4 mt-6 bg-fuchsia-500 hover:bg-fuchsia-400 disabled:bg-slate-800 disabled:text-slate-600 text-black font-bold text-base rounded-xl transition-all active:scale-[0.98]"
+                >
+                    {isLoading ? (
+                        <span className="flex items-center justify-center gap-2">
+                            <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                            영감 찾는 중...
+                        </span>
+                    ) : (
+                        <span className="flex items-center justify-center gap-2">
+                            <Sparkles className="w-4 h-4" />
+                            비주얼 방향 탐색
+                        </span>
+                    )}
+                </button>
+            )}
 
-            {/* Validation error only - API errors shown in OperationProgress overlay */}
+            {stage === "palette" && (
+                <button
+                    onClick={handleGenerateGuide}
+                    disabled={isLoading || !selectedDirection}
+                    className="w-full py-4 mt-6 bg-fuchsia-500 hover:bg-fuchsia-400 disabled:bg-slate-800 disabled:text-slate-600 text-black font-bold text-base rounded-xl transition-all active:scale-[0.98]"
+                >
+                    {isLoading ? (
+                        <span className="flex items-center justify-center gap-2">
+                            <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                            스타일 가이드 생성 중...
+                        </span>
+                    ) : (
+                        <span className="flex items-center justify-center gap-2">
+                            <Wand2 className="w-4 h-4" />
+                            스타일 가이드 완성
+                        </span>
+                    )}
+                </button>
+            )}
+
+            {stage === "guide" && (
+                <button
+                    onClick={() => setStage("palette")}
+                    className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 transition-all font-medium"
+                >
+                    ◀ 다른 방향 선택하기
+                </button>
+            )}
+
+            {/* Validation error only */}
             {validationError && (
                 <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs">
                     {validationError}
+                </div>
+            )}
+
+            {/* Credit Cost */}
+            {!byokKey && (
+                <div className="text-xs text-white/40 text-center mt-4">
+                    예상 비용: {stage === "moodboard" ? "5" : CREDIT_COST} 크레딧
                 </div>
             )}
         </>
@@ -308,7 +372,76 @@ export default function AestheticDirectorPanel() {
                 retryCount={currentRetryCount}
                 maxRetries={3}
             >
-                {displayResult ? (
+                {/* Stage 1: Moodboard (Initial State) */}
+                {stage === "moodboard" && !isLoading && (
+                    <div className="flex flex-col items-center justify-center h-full text-zinc-500 space-y-8">
+                        <div className="relative group">
+                            <div className="absolute inset-0 bg-fuchsia-500/20 blur-[80px] rounded-full" />
+                            <div className="w-32 h-32 rounded-[2rem] bg-white/[0.02] border border-white/10 flex items-center justify-center backdrop-blur-md relative">
+                                <Eye className="w-12 h-12 text-white/20 group-hover:text-fuchsia-400 transition-colors" />
+                            </div>
+                        </div>
+                        <div className="text-center space-y-3">
+                            <h3 className="text-2xl font-bold text-white tracking-tight">Visual Identity Workshop</h3>
+                            <p className="text-sm text-[var(--fg-muted)] max-w-xs mx-auto font-light leading-relaxed">
+                                컨셉을 입력하면 AI가<br />
+                                <span className="text-fuchsia-400 font-medium">3가지 시각적 방향</span>을 제안합니다.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Stage 2: Palette Lab (Select Direction) */}
+                {stage === "palette" && (
+                    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500">
+                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                            <Eye className="w-5 h-5 text-fuchsia-400" />
+                            시각적 방향을 선택하세요
+                        </h3>
+                        <div className="grid gap-4 md:grid-cols-3">
+                            {directions.map((dir) => (
+                                <button
+                                    key={dir.id}
+                                    onClick={() => setSelectedDirection(dir)}
+                                    className={`text-left p-6 rounded-2xl border transition-all relative overflow-hidden group
+                                        ${selectedDirection?.id === dir.id
+                                            ? "bg-fuchsia-500/20 border-fuchsia-500/50 ring-2 ring-fuchsia-500/30"
+                                            : "bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10"
+                                        }`}
+                                >
+                                    {/* Color Preview Bar */}
+                                    <div className="flex gap-1 mb-4">
+                                        {dir.color_preview.map((color, i) => (
+                                            <div key={i} className="w-8 h-8 rounded-lg border border-white/10 shadow-lg" style={{ backgroundColor: color }} />
+                                        ))}
+                                    </div>
+
+                                    <h4 className={`text-lg font-bold mb-2 ${selectedDirection?.id === dir.id ? "text-fuchsia-300" : "text-white"}`}>
+                                        {dir.title}
+                                    </h4>
+                                    <p className="text-sm text-white/70 leading-relaxed mb-4">
+                                        {dir.description}
+                                    </p>
+                                    <div className="flex flex-wrap gap-1 mb-3">
+                                        {dir.keywords.slice(0, 3).map((kw, i) => (
+                                            <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/60">
+                                                {kw}
+                                            </span>
+                                        ))}
+                                    </div>
+                                    <div className="pt-3 border-t border-white/5">
+                                        <p className="text-xs text-white/40 italic">
+                                            추천 감독: {dir.suggested_auteur}
+                                        </p>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Stage 3: Style Guide (Result) */}
+                {stage === "guide" && displayResult && (
                     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
                         {/* Export Button */}
                         <div className="flex justify-end">
@@ -389,6 +522,95 @@ export default function AestheticDirectorPanel() {
                             </div>
                         </div>
 
+                        {/* Generative Tech Pack */}
+                        {displayResult.generative_prompts && (
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+                                    <Code className="w-4 h-4 text-fuchsia-400" />
+                                    Generative Tech Pack
+                                </h3>
+
+                                {/* Midjourney */}
+                                <div className="p-4 bg-white/[0.03] border border-white/10 rounded-xl">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-xs font-bold text-zinc-300">Midjourney v6</span>
+                                        <button
+                                            onClick={() => handleCopy(displayResult.generative_prompts!.midjourney, "mj")}
+                                            className="text-xs text-fuchsia-400 hover:text-fuchsia-300 flex items-center gap-1"
+                                        >
+                                            {copiedField === "mj" ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                                            {copiedField === "mj" ? "Copied" : "Copy"}
+                                        </button>
+                                    </div>
+                                    <code className="block p-3 bg-black/50 rounded-lg text-xs text-white/70 font-mono break-all leading-relaxed">
+                                        {displayResult.generative_prompts.midjourney}
+                                    </code>
+                                </div>
+
+                                {/* Veo */}
+                                <div className="p-4 bg-white/[0.03] border border-white/10 rounded-xl">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-xs font-bold text-zinc-300">Google Veo</span>
+                                        <button
+                                            onClick={() => handleCopy(displayResult.generative_prompts!.veo, "veo")}
+                                            className="text-xs text-fuchsia-400 hover:text-fuchsia-300 flex items-center gap-1"
+                                        >
+                                            {copiedField === "veo" ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                                            {copiedField === "veo" ? "Copied" : "Copy"}
+                                        </button>
+                                    </div>
+                                    <code className="block p-3 bg-black/50 rounded-lg text-xs text-white/70 font-mono break-all leading-relaxed">
+                                        {displayResult.generative_prompts.veo}
+                                    </code>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Texture & Typography */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Textures */}
+                            {displayResult.textures && displayResult.textures.length > 0 && (
+                                <div className="space-y-4">
+                                    <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+                                        <Layers className="w-4 h-4 text-fuchsia-400" />
+                                        Texture Elements
+                                    </h3>
+                                    <div className="space-y-2">
+                                        {displayResult.textures.map((texture, i) => (
+                                            <div key={i} className="group relative p-4 bg-white/[0.03] border border-white/10 rounded-xl hover:bg-white/[0.05] transition-colors">
+                                                <div className="absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-fuchsia-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                <span className="text-sm text-zinc-200">{texture}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Typography */}
+                            {displayResult.typography && (
+                                <div className="space-y-4">
+                                    <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+                                        <Type className="w-4 h-4 text-fuchsia-400" />
+                                        Typography
+                                    </h3>
+                                    <div className="p-5 bg-white/[0.03] border border-white/10 rounded-xl space-y-4">
+                                        <div>
+                                            <span className="text-[10px] text-zinc-500 uppercase tracking-widest">Primary Title</span>
+                                            <p className="text-2xl font-bold text-white mt-1">{displayResult.typography.primary}</p>
+                                        </div>
+                                        <div className="h-px bg-white/5" />
+                                        <div>
+                                            <span className="text-[10px] text-zinc-500 uppercase tracking-widest">Secondary Body</span>
+                                            <p className="text-base text-zinc-300 mt-1 font-serif">{displayResult.typography.secondary}</p>
+                                        </div>
+                                        <p className="text-xs text-white/40 italic pt-2">
+                                            "{displayResult.typography.description}"
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
                         {/* Avoid Elements */}
                         {displayResult.avoid_elements.length > 0 && (
                             <div className="p-6 bg-rose-500/5 border border-rose-500/20 rounded-2xl">
@@ -404,22 +626,6 @@ export default function AestheticDirectorPanel() {
                             </div>
                         )}
                     </div>
-                ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-zinc-500 space-y-8">
-                        <div className="relative group">
-                            <div className="absolute inset-0 bg-fuchsia-500/20 blur-[80px] rounded-full" />
-                            <div className="w-32 h-32 rounded-[2rem] bg-white/[0.02] border border-white/10 flex items-center justify-center backdrop-blur-md relative">
-                                <Palette className="w-12 h-12 text-white/20 group-hover:text-fuchsia-400 transition-colors" />
-                            </div>
-                        </div>
-                        <div className="text-center space-y-3">
-                            <h3 className="text-2xl font-bold text-white tracking-tight">스타일 가이드 생성</h3>
-                            <p className="text-sm text-[var(--fg-muted)] max-w-xs mx-auto font-light leading-relaxed">
-                                컨셉을 입력하고<br />
-                                <span className="text-fuchsia-400 font-medium">6명의 감독 스타일</span>을 참고한 미학 가이드를 생성하세요.
-                            </p>
-                        </div>
-                    </div>
                 )}
             </TeachingPanelLayout>
 
@@ -428,7 +634,7 @@ export default function AestheticDirectorPanel() {
                 onClose={() => setShowCreditModal(false)}
                 requiredCredits={CREDIT_COST}
                 currentBalance={creditCtx?.balance ?? 0}
-                onRetry={handleGenerate}
+                onRetry={handleGenerateGuide}
             />
         </>
     );

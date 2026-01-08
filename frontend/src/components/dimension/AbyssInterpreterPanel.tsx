@@ -43,13 +43,14 @@ interface AnalysisResult {
 }
 
 const STAGE_NAMES: Record<string, string> = {
-    intro: "시작",
-    saju: "사주 분석",
-    mbti: "MBTI 탐색",
-    subconscious: "잠재의식",
-    unconscious: "무의식",
-    background: "성장 배경",
-    synthesis: "종합 분석",
+    intro: "기본 정보",
+    self_expression: "자기 표현",
+    maslow: "욕구 탐색",
+    formative: "성장 배경",
+    attachment: "애착 패턴",
+    shadow: "그림자 탐색",
+    archetype: "원형 매칭",
+    synthesis: "창작 DNA",
 };
 
 const DEPTH_LEVELS = [
@@ -59,8 +60,8 @@ const DEPTH_LEVELS = [
 ];
 
 const MODELS = [
-    { value: "gemini-3.0-flash-preview", label: "Flash (빠름)" },
-    { value: "gemini-3.0-pro-preview", label: "Pro (깊이)" },
+    { value: "gemini-3-flash-preview", label: "Flash (빠름)" },
+    { value: "gemini-3-pro-preview", label: "Pro (깊이)" },
 ];
 
 export default function AbyssInterpreterPanel() {
@@ -69,7 +70,7 @@ export default function AbyssInterpreterPanel() {
     const [currentStage, setCurrentStage] = useState("intro");
     const [personaData, setPersonaData] = useState<PersonaData>({});
     const [depthLevel, setDepthLevel] = useState("standard");
-    const [model, setModel] = useState("gemini-3.0-pro-preview");
+    const [model, setModel] = useState("gemini-3-flash-preview");
     const [birthInfo, setBirthInfo] = useState({ year: "", month: "", day: "", hour: "" });
 
     const [isLoading, setIsLoading] = useState(false);
@@ -101,13 +102,15 @@ export default function AbyssInterpreterPanel() {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    // Start analysis on mount
+    // Start analysis on mount - Wait for credits to load
     useEffect(() => {
+        if (!byokKey && creditCtx?.isLoading) return;
+
         if (messages.length === 0) {
-            startAnalysis();
+            void startAnalysis();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [byokKey, creditCtx?.isLoading]);
 
     const startAnalysis = useCallback(async () => {
         if (!byokKey && creditCtx && !creditCtx.hasEnoughCredits(CREDIT_COST)) {
@@ -132,6 +135,10 @@ export default function AbyssInterpreterPanel() {
                     model,
                 }),
             });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
 
             const data = await response.json() as { success: boolean; output: AnalysisResult; error?: string };
 
@@ -182,6 +189,10 @@ export default function AbyssInterpreterPanel() {
                 }),
             });
 
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
             const data = await response.json() as { success: boolean; output: AnalysisResult; error?: string };
 
             if (data.success) {
@@ -207,14 +218,15 @@ export default function AbyssInterpreterPanel() {
         }
     }, [inputMessage, isLoading, isComplete, byokKey, creditCtx, currentStage, personaData, birthInfo, depthLevel, model]);
 
-    const resetAnalysis = () => {
+    const resetAnalysis = useCallback(() => {
         setMessages([]);
         setCurrentStage("intro");
         setPersonaData({});
         setResult(null);
         setIsComplete(false);
-        setTimeout(() => startAnalysis(), 100);
-    };
+        setError(null);
+        // Trigger re-mount effect instead of directly calling startAnalysis
+    }, []);
 
     const SidebarContent = (
         <>
@@ -232,11 +244,10 @@ export default function AbyssInterpreterPanel() {
                         {Object.keys(STAGE_NAMES).map((stage, i) => (
                             <div
                                 key={stage}
-                                className={`flex-1 h-1 rounded-full transition-all ${
-                                    Object.keys(STAGE_NAMES).indexOf(currentStage) >= i
-                                        ? "bg-indigo-500"
-                                        : "bg-white/10"
-                                }`}
+                                className={`flex-1 h-1 rounded-full transition-all ${Object.keys(STAGE_NAMES).indexOf(currentStage) >= i
+                                    ? "bg-indigo-500"
+                                    : "bg-white/10"
+                                    }`}
                             />
                         ))}
                     </div>
@@ -289,11 +300,10 @@ export default function AbyssInterpreterPanel() {
                             key={level.value}
                             onClick={() => setDepthLevel(level.value)}
                             disabled={messages.length > 0}
-                            className={`w-full flex flex-col px-4 py-3 rounded-xl text-left transition-all ${
-                                depthLevel === level.value
-                                    ? "bg-indigo-500/10 border border-indigo-500/30"
-                                    : "bg-white/5 border border-white/10 hover:border-white/20"
-                            } ${messages.length > 0 ? "opacity-50 cursor-not-allowed" : ""}`}
+                            className={`w-full flex flex-col px-4 py-3 rounded-xl text-left transition-all ${depthLevel === level.value
+                                ? "bg-indigo-500/10 border border-indigo-500/30"
+                                : "bg-white/5 border border-white/10 hover:border-white/20"
+                                } ${messages.length > 0 ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             <span className={`text-sm font-medium ${depthLevel === level.value ? "text-indigo-400" : "text-zinc-300"}`}>
                                 {level.label}
@@ -364,11 +374,10 @@ export default function AbyssInterpreterPanel() {
                                     </div>
                                 )}
                                 <div
-                                    className={`max-w-[80%] p-4 rounded-2xl ${
-                                        msg.role === "user"
-                                            ? "bg-indigo-500/20 border border-indigo-500/30"
-                                            : "bg-white/5 border border-white/10"
-                                    }`}
+                                    className={`max-w-[80%] p-4 rounded-2xl ${msg.role === "user"
+                                        ? "bg-indigo-500/20 border border-indigo-500/30"
+                                        : "bg-white/5 border border-white/10"
+                                        }`}
                                 >
                                     <p className="text-sm text-zinc-200 leading-relaxed whitespace-pre-wrap">
                                         {msg.content}
@@ -449,7 +458,7 @@ export default function AbyssInterpreterPanel() {
                                     type="text"
                                     value={inputMessage}
                                     onChange={(e) => setInputMessage(e.target.value)}
-                                    onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+                                    onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && void sendMessage()}
                                     placeholder="답변을 입력하세요..."
                                     disabled={isLoading}
                                     className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-indigo-400/50 transition-all disabled:opacity-50"

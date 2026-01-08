@@ -32,8 +32,8 @@ interface StoryboardResult {
 const SCENE_COUNTS = [3, 5, 7, 10, 15, 20];
 
 const MODELS = [
-    { value: "gemini-3.0-flash-preview", label: "Flash (빠름)" },
-    { value: "gemini-3.0-pro-preview", label: "Pro (고품질)" },
+    { value: "gemini-2.0-flash-exp", label: "Flash (빠름)" },
+    { value: "gemini-1.5-pro", label: "Pro (고품질)" },
 ];
 
 export default function StoryboardPanel() {
@@ -41,7 +41,7 @@ export default function StoryboardPanel() {
     const [script, setScript] = useState("");
     const [sceneCount, setSceneCount] = useState(5);
     const [language, setLanguage] = useState<"ko" | "en">("ko");
-    const [model, setModel] = useState("gemini-3.0-flash-preview");
+    const [model, setModel] = useState("gemini-2.0-flash-exp");
     const [showCreditModal, setShowCreditModal] = useState(false);
     const [validationError, setValidationError] = useState<string | null>(null);
 

@@ -12,7 +12,7 @@ import { useDimensionChainOptional, type ChainData } from "@/contexts/DimensionC
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import ChainDataInput from "./ChainDataInput";
 import NextDimensionNav from "./NextDimensionNav";
-import { Layers, ArrowRight, CheckCircle, AlertCircle, Download } from "lucide-react";
+import { Layers, ArrowRight, CheckCircle, AlertCircle, Download, Sparkles, BookOpen } from "lucide-react";
 
 const CREDIT_COST = 10;
 const THEME_COLOR: ThemeColor = "emerald";
@@ -39,6 +39,20 @@ interface StoryResult {
     visual_motifs?: string[];
     next_dimension?: string;
 }
+
+interface NarrativeAngle {
+    id: string;
+    title: string;
+    logline: string;
+    tone: string;
+    theme: string;
+}
+
+interface StoryRefineResult {
+    angles: NarrativeAngle[];
+}
+
+type Stage = "pitch" | "blueprint" | "script";
 
 const GENRES = [
     { value: "drama", label: "드라마" },
@@ -68,6 +82,11 @@ export default function StoryArchitectPanel() {
     const [genre, setGenre] = useState("drama");
     const [duration, setDuration] = useState("60s");
     const [structure, setStructure] = useState("3act");
+
+    // Writer's Room Workflow State
+    const [stage, setStage] = useState<Stage>("pitch");
+    const [angles, setAngles] = useState<NarrativeAngle[]>([]);
+    const [selectedAngle, setSelectedAngle] = useState<NarrativeAngle | null>(null);
 
     // Chain data from previous dimensions
     const [personaData, setPersonaData] = useState<Record<string, unknown>>({});
@@ -140,7 +159,36 @@ export default function StoryArchitectPanel() {
 
     const MAX_CONCEPT_LENGTH = 3000;
 
+    const handleRefine = useCallback(async () => {
+        const trimmedConcept = concept.trim();
+        if (!trimmedConcept || trimmedConcept.length < 5) {
+            setValidationError("컨셉을 입력해주세요.");
+            return;
+        }
+        setValidationError(null);
+
+        // Call refine endpoint
+        await execute(
+            `${API_BASE}/api/dimension/story/refine`,
+            {
+                concept,
+                genre,
+                model: "gemini-1.5-pro",
+            },
+            getBYOKHeaders(byokKey)
+        ).then((res) => {
+            if (res && res.success && res.output && (res.output as any).angles) {
+                setAngles((res.output as any).angles);
+                setStage("blueprint");
+            }
+        });
+    }, [concept, genre, byokKey, execute]);
+
     const handleGenerate = useCallback(async () => {
+        if (!selectedAngle && stage !== "pitch") {
+            // Fallback if no angle selected in blueprint mode
+        }
+
         const trimmedConcept = concept.trim();
         if (!trimmedConcept || trimmedConcept.length < 10) {
             setValidationError("컨셉을 10자 이상 입력해주세요.");
@@ -158,21 +206,30 @@ export default function StoryArchitectPanel() {
             return;
         }
 
+        // Combine original concept with selected angle
+        const finalConcept = selectedAngle
+            ? `Original Concept: ${trimmedConcept}\nSelected Angle: ${selectedAngle.title} - ${selectedAngle.logline}\nTone: ${selectedAngle.tone}\nTheme: ${selectedAngle.theme}`
+            : trimmedConcept;
+
         await execute(
-            `${API_BASE}/api/dimension/story-architect/generate`,
+            `${API_BASE}/api/dimension/story/architect`,
             {
-                concept,
+                concept: finalConcept,
                 genre,
                 duration,
                 structure,
                 language: "ko",
-                model: "gemini-3.0-pro-preview",
+                model: "gemini-1.5-pro",
                 persona_data: personaData,
                 reference_analysis: referenceAnalysis,
             },
             getBYOKHeaders(byokKey)
-        );
-    }, [concept, genre, duration, structure, personaData, referenceAnalysis, byokKey, creditCtx, execute]);
+        ).then((res) => {
+            if (res && res.success) {
+                setStage("script");
+            }
+        });
+    }, [concept, genre, duration, structure, personaData, referenceAnalysis, byokKey, creditCtx, execute, selectedAngle, stage]);
 
     // Export result as JSON
     const handleExportJson = useCallback(() => {
@@ -193,7 +250,16 @@ export default function StoryArchitectPanel() {
                 themeColor={THEME_COLOR}
             />
 
-            {/* Concept Input */}
+            {/* Stage Indicator */}
+            <div className="flex items-center justify-between text-xs text-white/50 mb-2">
+                <span className={stage === "pitch" ? "text-emerald-400 font-bold" : ""}>1. 발상</span>
+                <span>→</span>
+                <span className={stage === "blueprint" ? "text-emerald-400 font-bold" : ""}>2. 설계</span>
+                <span>→</span>
+                <span className={stage === "script" ? "text-emerald-400 font-bold" : ""}>3. 집필</span>
+            </div>
+
+            {/* Concept Input (Always visible but disabled in later stages) */}
             <div className="space-y-2">
                 <label className="text-sm font-medium text-white/80">
                     영상 컨셉
@@ -204,93 +270,137 @@ export default function StoryArchitectPanel() {
                     placeholder="어떤 영상을 만들고 싶으신가요? 아이디어, 분위기, 메시지 등을 자유롭게 적어주세요..."
                     className="w-full h-32 px-4 py-3 bg-white/5 border border-white/10 rounded-xl
                               text-white placeholder:text-white/30 resize-none
-                              focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                    disabled={isLoading}
+                              focus:outline-none focus:ring-2 focus:ring-emerald-500/50 disabled:opacity-50"
+                    disabled={isLoading || stage !== "pitch"}
                 />
                 <div className="text-xs text-white/40 text-right">{concept.length}/3000</div>
             </div>
 
-            {/* Genre */}
-            <div className="space-y-2">
-                <label className="text-sm font-medium text-white/80">장르</label>
-                <select
-                    value={genre}
-                    onChange={(e) => setGenre(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl
-                              text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                    disabled={isLoading}
-                >
-                    {GENRES.map((g) => (
-                        <option key={g.value} value={g.value} className="bg-black">
-                            {g.label}
-                        </option>
-                    ))}
-                </select>
-            </div>
+            {/* Stage Actions */}
+            {stage === "pitch" && (
+                <>
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-white/80">선호 장르</label>
+                        <select
+                            value={genre}
+                            onChange={(e) => setGenre(e.target.value)}
+                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl
+                                  text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                            disabled={isLoading}
+                        >
+                            {GENRES.map((g) => (
+                                <option key={g.value} value={g.value} className="bg-black">
+                                    {g.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
 
-            {/* Duration */}
-            <div className="space-y-2">
-                <label className="text-sm font-medium text-white/80">길이</label>
-                <select
-                    value={duration}
-                    onChange={(e) => setDuration(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl
-                              text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                    disabled={isLoading}
-                >
-                    {DURATIONS.map((d) => (
-                        <option key={d.value} value={d.value} className="bg-black">
-                            {d.label}
-                        </option>
-                    ))}
-                </select>
-            </div>
+                    <button
+                        onClick={handleRefine}
+                        disabled={isLoading || concept.length < 5}
+                        className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all
+                              ${isLoading || concept.length < 5
+                                ? "bg-emerald-500/20 text-emerald-400/50 cursor-not-allowed"
+                                : "bg-emerald-500 text-black hover:bg-emerald-400"
+                            }`}
+                    >
+                        {isLoading ? (
+                            <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                        ) : (
+                            <>
+                                <Sparkles className="w-4 h-4" />
+                                아이디어 다듬기 (Pitch)
+                            </>
+                        )}
+                    </button>
+                </>
+            )}
 
-            {/* Structure */}
-            <div className="space-y-2">
-                <label className="text-sm font-medium text-white/80">스토리 구조</label>
-                <select
-                    value={structure}
-                    onChange={(e) => setStructure(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl
-                              text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                    disabled={isLoading}
-                >
-                    {STRUCTURES.map((s) => (
-                        <option key={s.value} value={s.value} className="bg-black">
-                            {s.label}
-                        </option>
-                    ))}
-                </select>
-            </div>
+            {stage === "blueprint" && (
+                <>
+                    <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                        <h4 className="text-emerald-400 text-sm font-bold mb-1">선택된 앵글</h4>
+                        <p className="text-white font-medium text-sm">{selectedAngle?.title}</p>
+                    </div>
 
-            {/* Generate Button */}
-            <button
-                onClick={handleGenerate}
-                disabled={isLoading || concept.length < 10}
-                className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all
-                          ${isLoading || concept.length < 10
-                              ? "bg-emerald-500/20 text-emerald-400/50 cursor-not-allowed"
-                              : "bg-gradient-to-r from-emerald-500 to-teal-500 text-black hover:from-emerald-400 hover:to-teal-400"
-                          }`}
-            >
-                {isLoading ? (
-                    <>
-                        <div className="w-5 h-5 border-2 border-emerald-400/30 border-t-emerald-400 rounded-full animate-spin" />
-                        생성 중...
-                    </>
-                ) : (
-                    <>
-                        시나리오 생성하기
-                        <ArrowRight className="w-4 h-4" />
-                    </>
-                )}
-            </button>
+                    {/* Duration */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-white/80">길이</label>
+                        <select
+                            value={duration}
+                            onChange={(e) => setDuration(e.target.value)}
+                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl
+                                  text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                            disabled={isLoading}
+                        >
+                            {DURATIONS.map((d) => (
+                                <option key={d.value} value={d.value} className="bg-black">
+                                    {d.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Structure */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-white/80">스토리 구조</label>
+                        <select
+                            value={structure}
+                            onChange={(e) => setStructure(e.target.value)}
+                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl
+                                  text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                            disabled={isLoading}
+                        >
+                            {STRUCTURES.map((s) => (
+                                <option key={s.value} value={s.value} className="bg-black">
+                                    {s.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <button
+                        onClick={handleGenerate}
+                        disabled={isLoading || !selectedAngle}
+                        className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all
+                            ${isLoading || !selectedAngle
+                                ? "bg-emerald-500/20 text-emerald-400/50 cursor-not-allowed"
+                                : "bg-emerald-500 text-black hover:bg-emerald-400"
+                            }`}
+                    >
+                        {isLoading ? (
+                            <>
+                                <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                                시나리오 쓰는 중...
+                            </>
+                        ) : (
+                            <>
+                                시나리오 완성하기
+                                <ArrowRight className="w-4 h-4" />
+                            </>
+                        )}
+                    </button>
+                </>
+            )}
+
+            {/* Refine / Reset (Stage 3) */}
+            {stage === "script" && (
+                <button
+                    onClick={() => {
+                        setStage("blueprint");
+                        // We keep the selected angle
+                    }}
+                    className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 transition-all font-medium"
+                >
+                    ◀ 다시 설계하기
+                </button>
+            )}
 
             {/* Credit Cost */}
             {!byokKey && (
-                <div className="text-xs text-white/40 text-center">
-                    예상 비용: {CREDIT_COST} 크레딧
+                <div className="text-xs text-white/40 text-center mt-4">
+                    예상 비용: {stage === "pitch" ? "무료 (BYOK)" : CREDIT_COST} 크레딧
                 </div>
             )}
         </div>
@@ -316,8 +426,65 @@ export default function StoryArchitectPanel() {
                 <div className="space-y-6">
                     {/* Note: Error display moved to OperationProgress in DimensionPanelLayout */}
 
-                    {/* Result Display */}
-                    {displayResult && (
+                    {/* Stage 1: Pitch (Initial State) */}
+                    {stage === "pitch" && !isLoading && (
+                        <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center p-8">
+                            <div className="w-20 h-20 rounded-full bg-emerald-500/10 flex items-center justify-center mb-6">
+                                <Sparkles className="w-10 h-10 text-emerald-400" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-white mb-2">Writer's Room에 오신 것을 환영합니다</h3>
+                            <p className="text-white/60 max-w-md leading-relaxed">
+                                단순한 문장이 위대한 스토리로 발전하는 공간입니다.<br />
+                                먼저 떠오르는 영감을 좌측에 적어주세요.<br />
+                                AI가 3가지 다른 이야기 방향을 제안해드립니다.
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Stage 2: Blueprint (Select Angle) */}
+                    {stage === "blueprint" && (
+                        <div className="space-y-6 animate-in fade-in duration-500">
+                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                <BookOpen className="w-5 h-5 text-emerald-400" />
+                                이야기의 방향을 선택하세요
+                            </h3>
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                {angles.map((angle) => (
+                                    <button
+                                        key={angle.id}
+                                        onClick={() => setSelectedAngle(angle)}
+                                        className={`text-left p-6 rounded-2xl border transition-all relative overflow-hidden group
+                                            ${selectedAngle?.id === angle.id
+                                                ? "bg-emerald-500/20 border-emerald-500/50 ring-2 ring-emerald-500/30"
+                                                : "bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10"
+                                            }`}
+                                    >
+                                        <div className="relative z-10">
+                                            <div className="mb-4">
+                                                <span className="text-xs font-bold px-2 py-1 rounded-full bg-white/10 text-white/70">
+                                                    {angle.tone}
+                                                </span>
+                                            </div>
+                                            <h4 className={`text-lg font-bold mb-2 ${selectedAngle?.id === angle.id ? "text-emerald-300" : "text-white"}`}>
+                                                {angle.title}
+                                            </h4>
+                                            <p className="text-sm text-white/70 leading-relaxed mb-4">
+                                                {angle.logline}
+                                            </p>
+                                            <div className="pt-4 border-t border-white/5">
+                                                <p className="text-xs text-white/40 italic">
+                                                    핵심 테마: {angle.theme}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Stage 3: Script (Result Display) */}
+                    {stage === "script" && displayResult && (
                         <div className="space-y-6 animate-in fade-in duration-500">
                             {/* Title & Logline */}
                             <div className="p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
@@ -434,7 +601,7 @@ export default function StoryArchitectPanel() {
                     )}
 
                     {/* Empty State */}
-                    {!displayResult && !displayError && (
+                    {!stage && !displayResult && !displayError && (
                         <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
                             <Layers className="w-16 h-16 text-emerald-400/30 mb-4" />
                             <h3 className="text-xl font-bold text-white/60 mb-2">시나리오 생성기</h3>

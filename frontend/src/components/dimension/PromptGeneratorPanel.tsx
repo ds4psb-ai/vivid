@@ -54,8 +54,8 @@ const DURATIONS = [
 ];
 
 const MODELS = [
-    { value: "gemini-3.0-flash-preview", label: "Flash (빠름)" },
-    { value: "gemini-3.0-pro-preview", label: "Pro (고품질)" },
+    { value: "gemini-2.0-flash-exp", label: "Flash (빠름)" },
+    { value: "gemini-1.5-pro", label: "Pro (고품질)" },
 ];
 
 export default function PromptGeneratorPanel() {
@@ -65,7 +65,7 @@ export default function PromptGeneratorPanel() {
     const [mood, setMood] = useState("neutral");
     const [duration, setDuration] = useState("15 seconds");
     const [language, setLanguage] = useState<"ko" | "en">("ko");
-    const [model, setModel] = useState("gemini-3.0-flash-preview");
+    const [model, setModel] = useState("gemini-2.0-flash-exp");
     const [showCreditModal, setShowCreditModal] = useState(false);
     const [validationError, setValidationError] = useState<string | null>(null);
 

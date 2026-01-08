@@ -46,15 +46,15 @@ const CRITERIA_OPTIONS = [
 ];
 
 const MODELS = [
-    { value: "gemini-3.0-flash-preview", label: "Flash (빠름)" },
-    { value: "gemini-3.0-pro-preview", label: "Pro (정확)" },
+    { value: "gemini-2.0-flash-exp", label: "Flash (빠름)" },
+    { value: "gemini-1.5-pro", label: "Pro (정확)" },
 ];
 
 export default function QualityDirectorPanel() {
     const [content, setContent] = useState("");
     const [contentType, setContentType] = useState("prompt");
     const [selectedCriteria, setSelectedCriteria] = useState<string[]>(["aesthetic", "consistency", "safety"]);
-    const [model, setModel] = useState("gemini-3.0-pro-preview");
+    const [model, setModel] = useState("gemini-1.5-pro");
     const [threshold, setThreshold] = useState(70);
 
     const [showCreditModal, setShowCreditModal] = useState(false);
@@ -174,11 +174,10 @@ export default function QualityDirectorPanel() {
                         <button
                             key={type.value}
                             onClick={() => setContentType(type.value)}
-                            className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                                contentType === type.value
-                                    ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
-                                    : "bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-transparent"
-                            }`}
+                            className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${contentType === type.value
+                                ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                                : "bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-transparent"
+                                }`}
                         >
                             {type.label}
                         </button>
@@ -194,11 +193,10 @@ export default function QualityDirectorPanel() {
                         <button
                             key={criterion.value}
                             onClick={() => toggleCriterion(criterion.value)}
-                            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-all ${
-                                selectedCriteria.includes(criterion.value)
-                                    ? "bg-rose-500/10 border border-rose-500/30"
-                                    : "bg-white/5 border border-white/10 hover:border-white/20"
-                            }`}
+                            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-all ${selectedCriteria.includes(criterion.value)
+                                ? "bg-rose-500/10 border border-rose-500/30"
+                                : "bg-white/5 border border-white/10 hover:border-white/20"
+                                }`}
                         >
                             <div>
                                 <div className={`text-sm font-medium ${selectedCriteria.includes(criterion.value) ? "text-rose-400" : "text-zinc-300"}`}>
@@ -206,11 +204,10 @@ export default function QualityDirectorPanel() {
                                 </div>
                                 <div className="text-[10px] text-zinc-500">{criterion.desc}</div>
                             </div>
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                                selectedCriteria.includes(criterion.value)
-                                    ? "border-rose-500 bg-rose-500"
-                                    : "border-white/20"
-                            }`}>
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${selectedCriteria.includes(criterion.value)
+                                ? "border-rose-500 bg-rose-500"
+                                : "border-white/20"
+                                }`}>
                                 {selectedCriteria.includes(criterion.value) && (
                                     <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -343,11 +340,10 @@ export default function QualityDirectorPanel() {
                             {Object.entries(displayResult.criteria_results).map(([key, criterion]) => (
                                 <div
                                     key={key}
-                                    className={`p-5 rounded-2xl border backdrop-blur-sm transition-all ${
-                                        criterion.passed
-                                            ? "bg-emerald-500/5 border-emerald-500/20"
-                                            : "bg-rose-500/5 border-rose-500/20"
-                                    }`}
+                                    className={`p-5 rounded-2xl border backdrop-blur-sm transition-all ${criterion.passed
+                                        ? "bg-emerald-500/5 border-emerald-500/20"
+                                        : "bg-rose-500/5 border-rose-500/20"
+                                        }`}
                                 >
                                     <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center gap-2">
