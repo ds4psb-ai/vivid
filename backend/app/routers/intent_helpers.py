@@ -188,7 +188,7 @@ def infer_intent_from_request(
     pace = CreativePace.DYNAMIC  # default
     if tempo:
         pace = TEMPO_TO_PACE.get(tempo.lower().strip(), CreativePace.DYNAMIC)
-    elif creative_mood == CreativeMood.INTENSE:
+    elif creative_mood == CreativeMood.ENERGETIC:
         pace = CreativePace.FAST
     elif creative_mood == CreativeMood.CALM:
         pace = CreativePace.SLOW
