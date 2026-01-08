@@ -63,6 +63,23 @@ def _build_agent(model_name: Optional[str] = None, use_cache: bool = True) -> Vi
 _AGENT_CACHE: TTLCache = TTLCache(maxsize=5, ttl=3600)
 _AGENT_CACHE_LOCK = threading.Lock()
 
+# P0-1: Session-based StreamController cache to prevent duplicate streams
+_STREAM_CONTROLLERS: TTLCache = TTLCache(maxsize=100, ttl=600)  # 10분 TTL
+_STREAM_CONTROLLERS_LOCK = threading.Lock()
+
+
+def _get_stream_controller(session_id: str) -> "StreamController":
+    """Get or create a StreamController for a session.
+
+    Thread-safe cache lookup with lazy initialization.
+    Prevents duplicate stream threads for the same session.
+    """
+    with _STREAM_CONTROLLERS_LOCK:
+        if session_id not in _STREAM_CONTROLLERS:
+            _STREAM_CONTROLLERS[session_id] = StreamController()
+            logger.debug(f"Created StreamController for session {session_id}")
+        return _STREAM_CONTROLLERS[session_id]
+
 
 def _get_agent(model_name: str) -> VividAgent:
     """Get or create agent with thread-safe TTL caching."""
@@ -613,16 +630,33 @@ async def chat_agent(
 
             if isinstance(model_client, GeminiModelClient) and hasattr(model_client, "stream_generate"):
                 queue: asyncio.Queue = asyncio.Queue()
-                result = _StreamResult()
                 loop = asyncio.get_running_loop()
-                _start_stream_thread(
-                    model_client,
-                    context,
-                    tool_registry.specs(),
-                    queue,
-                    result,
-                    loop,
-                )
+
+                # P0-1: Use session-based StreamController to prevent duplicate streams
+                stream_controller = _get_stream_controller(session_id)
+                try:
+                    result = stream_controller.start_stream(
+                        model_client,
+                        context,
+                        tool_registry.specs(),
+                        queue,
+                        loop,
+                    )
+                except RuntimeError as e:
+                    # Stream already active for this session - reject duplicate request
+                    logger.warning(
+                        "Duplicate stream request blocked",
+                        extra={"session_id": session_id, "error": str(e)},
+                    )
+                    yield _next_event(
+                        "agent.error",
+                        {
+                            "code": "STREAM_ALREADY_ACTIVE",
+                            "message": "이미 처리 중인 요청이 있습니다. 완료될 때까지 기다려주세요.",
+                        },
+                    )
+                    return
+
                 while True:
                     delta = await queue.get()
                     if delta is None:
