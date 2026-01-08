@@ -1,0 +1,60 @@
+$schema: "vivid-app/v2"
+
+metadata:
+  name: park
+  type: auteur
+  version: "1.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "박찬욱"
+  name_en: "Park Chan-wook"
+  icon: "🗡️"
+  description: "올드보이, 아가씨 감독. 복수와 미학의 거장."
+
+capabilities:
+  - name: rag
+    enabled: true
+    config:
+      mode: auteur_only
+      confidence_threshold: 0.7
+      retrieval:
+        strategy: hybrid
+        top_k: 10
+
+  - name: cache
+    enabled: true
+    config:
+      ttl: 7200
+
+extensions:
+  auteur:
+    corpus_type: v-shape
+    sources:
+      - type: source_pack
+        path: data/source_packs/park/*.json
+      - type: vertex_ai
+        corpus_name: auteur_park
+        
+    style_hints:
+      camera_style: elaborate
+      color_grade: stylized
+      symmetry: true
+      violence: aesthetic
+      
+    themes:
+      - 복수와 구원
+      - 탐미주의
+      - 금기의 사랑
+      - 대칭적 구도
+
+keywords:
+  patterns:
+    - "park"
+    - "박찬욱"
+    - "올드보이"
+    - "oldboy"
+    - "아가씨"
+    - "handmaiden"
+    - "친절한 금자씨"
+    - "헤어질 결심"

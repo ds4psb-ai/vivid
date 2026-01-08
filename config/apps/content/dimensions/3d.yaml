@@ -1,0 +1,35 @@
+$schema: "vivid-app/v2"
+
+metadata:
+  name: 3d
+  type: dimension
+  version: "1.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "이미지 생성기"
+  name_en: "Image Generator"
+  icon: "🖼️"
+
+capabilities:
+  - name: rag
+    enabled: true
+    config:
+      mode: auteur_only
+      auteur_mode: true
+      confidence_threshold: 0.5
+
+  - name: cache
+    enabled: true
+    config:
+      ttl: 3600
+
+extensions:
+  dimension:
+    tool_type: generation
+
+keywords:
+  patterns:
+    - "3d"
+    - "이미지"
+    - "image"

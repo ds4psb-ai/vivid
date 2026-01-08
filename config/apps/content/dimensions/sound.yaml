@@ -1,0 +1,32 @@
+$schema: "vivid-app/v2"
+
+metadata:
+  name: sound
+  type: dimension
+  version: "1.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "사운드 디자이너"
+  name_en: "Sound Designer"
+  icon: "🔊"
+
+capabilities:
+  - name: rag
+    enabled: false  # 사운드는 RAG 불필요
+
+  - name: cache
+    enabled: true
+    config:
+      ttl: 3600
+
+extensions:
+  dimension:
+    tool_type: generation
+
+keywords:
+  patterns:
+    - "sound"
+    - "사운드"
+    - "오디오"
+    - "음악"

@@ -1,0 +1,60 @@
+$schema: "vivid-app/v2"
+
+metadata:
+  name: tarantino
+  type: auteur
+  version: "1.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "쿠엔틴 타란티노"
+  name_en: "Quentin Tarantino"
+  icon: "🎯"
+  description: "펄프 픽션, 킬 빌 감독. 대화와 폭력의 마에스트로."
+
+capabilities:
+  - name: rag
+    enabled: true
+    config:
+      mode: auteur_only
+      confidence_threshold: 0.7
+      retrieval:
+        strategy: hybrid
+        top_k: 10
+
+  - name: cache
+    enabled: true
+    config:
+      ttl: 7200
+
+extensions:
+  auteur:
+    corpus_type: v-shape
+    sources:
+      - type: source_pack
+        path: data/source_packs/tarantino/*.json
+      - type: vertex_ai
+        corpus_name: auteur_tarantino
+        
+    style_hints:
+      camera_style: dynamic
+      editing_style: nonlinear
+      dialogue: verbose
+      soundtrack: needle_drop
+      
+    themes:
+      - 비선형 서사
+      - 긴 대화 신
+      - 음악과 폭력
+      - 장르 오마주
+
+keywords:
+  patterns:
+    - "tarantino"
+    - "타란티노"
+    - "펄프.*픽션"
+    - "pulp.*fiction"
+    - "킬.*빌"
+    - "kill.*bill"
+    - "장고.*언체인드"
+    - "django"

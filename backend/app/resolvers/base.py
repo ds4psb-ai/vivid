@@ -175,6 +175,7 @@ class BaseCapsuleResolver(ABC):
     ) -> Dict[str, Any]:
         """RAG 컨텍스트에서 힌트 적용.
         
+        v2: YAML 기반 동적 스타일 힌트 조회.
         거장 레퍼런스, 시각적 스타일, 촬영 기법 등을 파라미터에 반영.
         """
         if not rag_context:
@@ -189,30 +190,40 @@ class BaseCapsuleResolver(ABC):
             logger.debug(f"Applying RAG hints for {self.dimension_code}: {hints}")
             result.update(hints)
         
-        # 2. 거장 레퍼런스에서 스타일 힌트 추출
+        # 2. 거장 레퍼런스에서 스타일 힌트 추출 (v2: YAML 기반 동적 조회)
         auteur_ref = rag_context.get("auteur_reference", "")
         if auteur_ref:
-            # 거장별 시각적 스타일 매핑
-            AUTEUR_STYLE_HINTS = {
-                "봉준호": {"camera_style": "tracking", "aspect_ratio": "2.35:1"},
-                "bong": {"camera_style": "tracking", "aspect_ratio": "2.35:1"},
-                "nolan": {"camera_style": "stable", "lens_style": "anamorphic", "fps": 24},
-                "놀란": {"camera_style": "stable", "lens_style": "anamorphic"},
-                "villeneuve": {"camera_style": "slow", "color_grade": "desaturated"},
-                "빌뇌브": {"camera_style": "slow", "color_grade": "desaturated"},
-                "wong": {"camera_style": "handheld", "color_grade": "saturated"},
-                "왕가위": {"camera_style": "handheld", "color_grade": "saturated"},
-                "tarantino": {"camera_style": "dynamic", "editing_style": "nonlinear"},
-                "타란티노": {"camera_style": "dynamic", "editing_style": "nonlinear"},
-            }
+            # v2: Registry에서 동적으로 스타일 힌트 조회
+            from app.rag.rag_presets import get_auteur_style_hints
+            
+            # 알려진 거장 키 목록 (Registry에서 조회)
+            KNOWN_AUTEURS = ["bong", "nolan", "villeneuve", "wong", "tarantino", "park", "shinkai"]
             
             auteur_ref_lower = auteur_ref.lower()
-            for auteur_key, style_hints in AUTEUR_STYLE_HINTS.items():
-                if auteur_key.lower() in auteur_ref_lower:
-                    for k, v in style_hints.items():
-                        if k not in result:  # 기존 값 우선
-                            result[k] = v
-                    logger.debug(f"Applied auteur style from RAG: {auteur_key}")
+            for auteur_key in KNOWN_AUTEURS:
+                if auteur_key in auteur_ref_lower:
+                    # YAML에서 스타일 힌트 가져오기
+                    style_hints = get_auteur_style_hints(auteur_key)
+                    if style_hints:
+                        for k, v in style_hints.items():
+                            if k not in result:  # 기존 값 우선
+                                result[k] = v
+                        logger.debug(f"Applied auteur style from YAML: {auteur_key} -> {list(style_hints.keys())}")
+                    break
+            
+            # 한글 이름 매핑 (YAML keywords 기반으로 확장 가능)
+            KOREAN_AUTEUR_MAPPING = {
+                "봉준호": "bong", "놀란": "nolan", "빌뇌브": "villeneuve",
+                "왕가위": "wong", "타란티노": "tarantino", "박찬욱": "park", "신카이": "shinkai",
+            }
+            for korean_name, auteur_key in KOREAN_AUTEUR_MAPPING.items():
+                if korean_name in auteur_ref_lower:
+                    style_hints = get_auteur_style_hints(auteur_key)
+                    if style_hints:
+                        for k, v in style_hints.items():
+                            if k not in result:
+                                result[k] = v
+                        logger.debug(f"Applied auteur style from YAML (Korean): {korean_name} -> {auteur_key}")
                     break
         
         # 3. RAG 신뢰도 기반 가중치 조절

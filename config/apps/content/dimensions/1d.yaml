@@ -1,0 +1,37 @@
+$schema: "vivid-app/v2"
+
+metadata:
+  name: 1d
+  type: dimension
+  version: "1.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "프롬프트 생성기"
+  name_en: "Prompt Generator"
+  icon: "✍️"
+  description: "VEO 프롬프트를 생성합니다."
+
+capabilities:
+  - name: rag
+    enabled: true
+    config:
+      mode: auteur_only  # 거장 키 있을 때만
+      auteur_mode: true
+      confidence_threshold: 0.5
+
+  - name: cache
+    enabled: true
+    config:
+      ttl: 3600
+
+extensions:
+  dimension:
+    tool_type: generation
+    supports_streaming: true
+
+keywords:
+  patterns:
+    - "1d"
+    - "프롬프트"
+    - "prompt"

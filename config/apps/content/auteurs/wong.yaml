@@ -1,0 +1,61 @@
+$schema: "vivid-app/v2"
+
+metadata:
+  name: wong
+  type: auteur
+  version: "1.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "왕가위"
+  name_en: "Wong Kar-wai"
+  icon: "🌃"
+  description: "화양연화, 중경삼림 감독. 색채와 감정의 시인."
+
+capabilities:
+  - name: rag
+    enabled: true
+    config:
+      mode: auteur_only
+      confidence_threshold: 0.7
+      retrieval:
+        strategy: hybrid
+        top_k: 10
+
+  - name: cache
+    enabled: true
+    config:
+      ttl: 7200
+
+extensions:
+  auteur:
+    corpus_type: v-shape
+    sources:
+      - type: source_pack
+        path: data/source_packs/wong/*.json
+      - type: vertex_ai
+        corpus_name: auteur_wong
+        
+    style_hints:
+      camera_style: handheld
+      color_grade: saturated
+      step_printing: true
+      slow_motion: true
+      neon_lights: true
+      
+    themes:
+      - 사랑과 그리움
+      - 시간과 기억
+      - 도시의 고독
+      - 감정의 순간 포착
+
+keywords:
+  patterns:
+    - "wong"
+    - "왕가위"
+    - "화양연화"
+    - "in.*the.*mood"
+    - "중경삼림"
+    - "chungking"
+    - "타락천사"
+    - "해피.*투게더"

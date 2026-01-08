@@ -1,0 +1,46 @@
+$schema: "vivid-app/v2"
+
+metadata:
+  name: ad
+  type: dimension
+  version: "1.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "Aesthetic Director"
+  name_en: "Aesthetic Director"
+  icon: "🎨"
+  description: "거장의 시각적 DNA를 분석하고 스타일을 생성합니다."
+
+capabilities:
+  - name: rag
+    enabled: true
+    config:
+      mode: always  # 항상 RAG 활성화
+      auteur_mode: true  # NotebookLM 거장 DNA 우선
+      confidence_threshold: 0.7
+      use_google_search: false
+      cache_ttl: 7200
+      max_sources: 5
+      answer_max_length: 600
+      retrieval:
+        strategy: hybrid
+        top_k: 10
+
+  - name: cache
+    enabled: true
+    config:
+      ttl: 7200
+
+extensions:
+  dimension:
+    corpus: ""  # 거장에 따라 동적
+    tool_type: generation
+    supports_streaming: true
+
+keywords:
+  patterns:
+    - "aesthetic"
+    - "시각적"
+    - "스타일"
+    - "비주얼"

@@ -1,0 +1,31 @@
+$schema: "vivid-app/v2"
+
+metadata:
+  name: ai
+  type: dimension
+  version: "1.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "AI 페르소나"
+  name_en: "AI Persona"
+  icon: "🤖"
+
+capabilities:
+  - name: rag
+    enabled: false  # AI 페르소나는 RAG 불필요
+
+  - name: cache
+    enabled: true
+    config:
+      ttl: 3600
+
+extensions:
+  dimension:
+    tool_type: generation
+
+keywords:
+  patterns:
+    - "ai"
+    - "페르소나"
+    - "persona"

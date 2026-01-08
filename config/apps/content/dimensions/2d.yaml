@@ -1,0 +1,39 @@
+$schema: "vivid-app/v2"
+
+metadata:
+  name: 2d
+  type: dimension
+  version: "1.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "스토리보드 생성기"
+  name_en: "Storyboard Generator"
+  icon: "🎞️"
+  description: "시각적 스토리보드를 생성합니다."
+
+capabilities:
+  - name: rag
+    enabled: true
+    config:
+      mode: auteur_only
+      auteur_mode: true
+      confidence_threshold: 0.5
+      corpus: storyboard_templates
+
+  - name: cache
+    enabled: true
+    config:
+      ttl: 3600
+
+extensions:
+  dimension:
+    corpus: storyboard_templates
+    tool_type: generation
+    supports_streaming: false
+
+keywords:
+  patterns:
+    - "2d"
+    - "스토리보드"
+    - "storyboard"

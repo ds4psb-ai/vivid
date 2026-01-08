@@ -1,0 +1,36 @@
+$schema: "vivid-app/v2"
+
+metadata:
+  name: veo
+  type: dimension
+  version: "1.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "VEO 비디오 생성기"
+  name_en: "VEO Video Generator"
+  icon: "🎬"
+
+capabilities:
+  - name: rag
+    enabled: true
+    config:
+      mode: auteur_only
+      auteur_mode: true
+      confidence_threshold: 0.6
+
+  - name: cache
+    enabled: true
+    config:
+      ttl: 3600
+
+extensions:
+  dimension:
+    tool_type: generation
+    supports_streaming: false
+
+keywords:
+  patterns:
+    - "veo"
+    - "비디오"
+    - "video"

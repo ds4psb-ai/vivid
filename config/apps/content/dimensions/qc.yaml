@@ -1,0 +1,39 @@
+$schema: "vivid-app/v2"
+
+metadata:
+  name: qc
+  type: dimension
+  version: "1.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "품질 검사관"
+  name_en: "Quality Controller"
+  icon: "🔍"
+  description: "영화적 품질과 메타 불변량을 검증합니다."
+
+capabilities:
+  - name: rag
+    enabled: true
+    config:
+      mode: always
+      auteur_mode: false
+      confidence_threshold: 0.6
+      corpus: meta_invariants
+
+  - name: cache
+    enabled: true
+    config:
+      ttl: 3600
+
+extensions:
+  dimension:
+    corpus: meta_invariants
+    tool_type: analysis
+
+keywords:
+  patterns:
+    - "qc"
+    - "품질"
+    - "검사"
+    - "검증"

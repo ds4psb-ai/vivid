@@ -1,0 +1,44 @@
+$schema: "vivid-app/v2"
+
+metadata:
+  name: story
+  type: dimension
+  version: "1.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "스토리 아키텍트"
+  name_en: "Story Architect"
+  icon: "📝"
+  description: "시나리오와 스토리 구조를 생성합니다."
+
+capabilities:
+  - name: rag
+    enabled: true
+    config:
+      mode: always
+      auteur_mode: false
+      confidence_threshold: 0.5
+      use_google_search: true  # 트렌드/레퍼런스 검색
+      corpus: story_templates
+      retrieval:
+        strategy: hybrid
+        top_k: 10
+
+  - name: cache
+    enabled: true
+    config:
+      ttl: 3600
+
+extensions:
+  dimension:
+    corpus: story_templates
+    tool_type: generation
+    supports_streaming: true
+
+keywords:
+  patterns:
+    - "story"
+    - "스토리"
+    - "시나리오"
+    - "플롯"

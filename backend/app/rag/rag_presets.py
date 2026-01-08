@@ -3,20 +3,105 @@
 차원별 최적화된 RAG 설정 프리셋.
 각 앱이 자동으로 적절한 RAG 전략을 적용하도록 표준화.
 
+v2: AppRegistry 통합 - YAML 기반 동적 로딩 지원.
+
 Usage:
     from app.rag.rag_presets import get_rag_preset, should_enable_rag
     
     preset = get_rag_preset("AD")  # Aesthetic Director 프리셋
     if should_enable_rag(preset, auteur_key="bong"):
         # RAG 쿼리 실행
+    
+    # v2: Registry 기반 거장 조회
+    auteur = get_auteur_config("bong")
+    if auteur:
+        style_hints = auteur.extensions.auteur.style_hints
 """
 from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
+
+# =============================================================================
+# v2: Registry Integration (Lazy Loading)
+# =============================================================================
+
+_registry_initialized = False
+
+def _ensure_registry():
+    """Registry 초기화 (lazy loading)."""
+    global _registry_initialized
+    if _registry_initialized:
+        return
+    
+    try:
+        import sys
+        # config 경로 추가
+        config_path = Path(__file__).parent.parent.parent.parent / "config" / "apps"
+        if config_path.exists():
+            sys.path.insert(0, str(config_path.parent))
+            from app.core.app_registry import AppRegistry
+            AppRegistry.discover(config_path)
+            _registry_initialized = True
+            logger.info(f"AppRegistry initialized from {config_path}")
+    except Exception as e:
+        logger.debug(f"Registry initialization skipped: {e}")
+
+
+def get_auteur_config(auteur_key: str) -> Optional[Any]:
+    """v2: Registry에서 거장 설정 조회.
+    
+    Args:
+        auteur_key: 거장 키 (예: "bong", "nolan")
+        
+    Returns:
+        AppConfig or None
+    """
+    _ensure_registry()
+    
+    try:
+        from app.core.app_registry import AppRegistry
+        return AppRegistry.get_by_name(auteur_key)
+    except Exception:
+        return None
+
+
+def get_auteur_style_hints(auteur_key: str) -> Dict[str, Any]:
+    """v2: 거장의 스타일 힌트 조회.
+    
+    Args:
+        auteur_key: 거장 키
+        
+    Returns:
+        스타일 힌트 딕셔너리
+    """
+    config = get_auteur_config(auteur_key)
+    if config and config.extensions.auteur:
+        return config.extensions.auteur.style_hints
+    return {}
+
+
+def get_dimension_config(dimension_code: str) -> Optional[Any]:
+    """v2: Registry에서 차원 설정 조회.
+    
+    Args:
+        dimension_code: 차원 코드 (예: "AD", "1D")
+        
+    Returns:
+        AppConfig or None
+    """
+    _ensure_registry()
+    
+    try:
+        from app.core.app_registry import AppRegistry
+        # 대소문자 무관 검색
+        return AppRegistry.get_by_name(dimension_code.lower())
+    except Exception:
+        return None
 
 
 @dataclass
@@ -150,12 +235,42 @@ DEFAULT_PRESET = RAGPreset(
 def get_rag_preset(dimension_code: str) -> RAGPreset:
     """차원 코드로 RAG 프리셋 조회.
     
+    v2: Registry 기반 동적 조회 우선, 하드코딩된 프리셋으로 폴백.
+    
     Args:
         dimension_code: 차원 코드 (예: "AD", "1D")
         
     Returns:
         해당 차원의 RAGPreset
     """
+    # v2: Registry에서 먼저 조회 시도
+    config = get_dimension_config(dimension_code)
+    if config and config.has_capability("rag"):
+        rag_cap = config.get_capability("rag")
+        rag_config = rag_cap.config if rag_cap else {}
+        
+        # YAML config에서 RAGPreset 생성
+        mode = rag_config.get("mode", "auteur_only")
+        if mode == "always":
+            rag_enabled = True
+        elif mode == "disabled" or not rag_cap.enabled:
+            rag_enabled = False
+        else:
+            rag_enabled = "auteur_only"
+        
+        return RAGPreset(
+            rag_enabled=rag_enabled,
+            auteur_mode=rag_config.get("auteur_mode", False),
+            confidence_threshold=rag_config.get("confidence_threshold", 0.5),
+            use_google_search=rag_config.get("use_google_search", False),
+            dimension_corpus=rag_config.get("corpus"),
+            cache_ttl=rag_config.get("cache_ttl", 3600),
+            cache_enabled=True,
+            max_sources=rag_config.get("max_sources", 5),
+            answer_max_length=rag_config.get("answer_max_length", 500),
+        )
+    
+    # 폴백: 하드코딩된 프리셋
     return DIMENSION_RAG_PRESETS.get(dimension_code.upper(), DEFAULT_PRESET)
 
 
