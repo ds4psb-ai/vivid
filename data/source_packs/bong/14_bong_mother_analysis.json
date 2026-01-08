@@ -1,0 +1,79 @@
+{
+    "source_id": "bong_mother_analysis",
+    "auteur": "Bong Joon-ho",
+    "category": "film_analysis",
+    "title": "Bong Joon-ho Mother (2009) Visual and Thematic Analysis",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "noonesopinion.com",
+            "topic": "Cinematography analysis"
+        },
+        {
+            "name": "youtube.com",
+            "topic": "Telephoto profile shot technique"
+        },
+        {
+            "name": "studentfilmreviews.org",
+            "topic": "Maternal sacrifice theme"
+        },
+        {
+            "name": "scifijapan.com",
+            "topic": "Bong interview on motherhood"
+        }
+    ],
+    "content": {
+        "technical_specs": {
+            "cinematographer": "Hong Kyung-pyo",
+            "camera": "ARRICAM",
+            "lenses": "Hawk V-Lite/V-Series",
+            "aspect_ratio": "2.39:1"
+        },
+        "cinematography_techniques": {
+            "telephoto_profile_shot": {
+                "usage": "Significant story moments",
+                "effect": "Positions viewer further from characters",
+                "emotion_access": "Makes emotions less accessible",
+                "audience_role": "Turns viewer into witness who cannot intervene"
+            },
+            "minimizing_cuts": {
+                "technique": "Coordinated blocking + camera pans instead of cuts",
+                "dialogue_scenes": "Avoids traditional shot-reverse-shot",
+                "effect": "Greater environmental depth and spatial awareness"
+            },
+            "telephoto_compression": {
+                "urban_settings": "Cramped spaces despite wide aspect ratio",
+                "visual_effect": "Compressed visual space"
+            },
+            "shot_reverse_shot_usage": {
+                "frequency": "Sparingly used, especially in later scenes",
+                "effect": "When used, carries more gravity and tension"
+            }
+        },
+        "maternal_sacrifice_theme": {
+            "protagonist": "Kim Hye-ja as Mother",
+            "son": "Intellectually disabled Yoon Do-joon",
+            "core_conflict": "Proving son's innocence in murder case",
+            "bong_perspective": {
+                "excessive_love": "Can become madness",
+                "corruption": "Motherly love becomes morally compromising"
+            },
+            "subversion": "Challenges traditional image of motherhood"
+        },
+        "psychological_thriller_elements": {
+            "ambiguity": "Visual techniques reinforce unreliable truth",
+            "mystery": "Audience attempts to understand with limited info",
+            "moral_complexity": "Mother's actions increasingly compromising",
+            "dark_humor": "Interwoven with tension throughout"
+        },
+        "veo_prompt_keywords": [
+            "telephoto profile distance",
+            "minimal cuts pan blocking",
+            "maternal madness obsession",
+            "compressed urban space",
+            "witness not participant",
+            "psychological thriller ambiguity",
+            "moral corruption motherhood"
+        ]
+    }
+}

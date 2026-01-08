@@ -1,0 +1,101 @@
+# 봉준호 클러스터 - Layer 0: Raw Evidence
+
+# 봉준호 클러스터 - 원본 영상 분석 결과 (Layer 0)
+
+클러스터 ID: CL_BONG_01
+감독: 봉준호
+생성일: 2025-12-29T16:50:00Z
+
+## 샷 분석 청크 (총 5개)
+
+### 기생충 - HOOK
+- **청크 ID**: bong_parasite_hook_c001
+- **씬 범위**: 00:01:30-00:01:45
+- **대사/설명**: 반지하 창문으로 보이는 골목. 취객이 소변을 본다.
+
+#### 시각 분석
+- 구도: vertical_blocking
+- 조명: low_key
+- 카메라: static
+- 페이싱: slow
+
+#### 모티프: basement, window, class_divide
+
+---
+
+### 기생충 - BUILD
+- **청크 ID**: bong_parasite_build_c001
+- **씬 범위**: 00:25:00-00:25:20
+- **대사/설명**: 기우가 박 사장 집 계단을 오른다. 카메라가 따라 올라간다.
+
+#### 시각 분석
+- 구도: staircase_motif
+- 조명: high_key_contrast
+- 카메라: controlled
+- 페이싱: medium
+
+#### 모티프: staircase, class_ascent, infiltration
+
+---
+
+### 기생충 - PAYOFF
+- **청크 ID**: bong_parasite_payoff_c001
+- **씬 범위**: 01:12:00-01:12:30
+- **대사/설명**: 폭우 속 기택 가족이 반지하로 돌아온다. 물이 차오른다.
+
+#### 시각 분석
+- 구도: vertical_blocking
+- 조명: low_key_rain
+- 카메라: handheld
+- 페이싱: fast
+
+#### 모티프: flood, descent, class_collapse
+
+---
+
+### 설국열차 - HOOK
+- **청크 ID**: bong_snowpiercer_hook_c001
+- **씬 범위**: 00:05:00-00:05:30
+- **대사/설명**: 꼬리칸의 비참한 환경. 좁고 어두운 공간에 수백명.
+
+#### 시각 분석
+- 구도: horizontal_blocking
+- 조명: minimal
+- 카메라: static
+- 페이싱: slow
+
+#### 모티프: train, class_division, horizontal_space
+
+---
+
+### 살인의 추억 - HOOK
+- **청크 ID**: bong_memories_hook_c001
+- **씬 범위**: 00:02:00-00:02:30
+- **대사/설명**: 비 오는 들판. 시체 발견 현장. 형사가 도착한다.
+
+#### 시각 분석
+- 구도: wide_establishing
+- 조명: overcast_natural
+- 카메라: controlled
+- 페이싱: slow
+
+#### 모티프: rain, field, crime_scene
+
+---
+
+## 반복 모티프 레지스트리
+
+### 수직 공간 구조
+- **의미**: 계급 구조의 물리적 시각화
+- **빈도**: high
+- **등장**: 기생충 계단, 설국열차 칸
+
+### 비 (Rain)
+- **의미**: 정화/파괴/진실 은폐
+- **빈도**: high
+- **등장**: 기생충 폭우, 살인의 추억 들판
+
+### 창문/문 프레임
+- **의미**: 세상을 바라보는 제한된 시선
+- **빈도**: medium
+- **등장**: 기생충 반지하 창문

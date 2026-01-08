@@ -1,0 +1,108 @@
+{
+    "source_id": "tarantino_visual_motifs",
+    "auteur": "Quentin Tarantino",
+    "category": "visual_style",
+    "title": "Quentin Tarantino Visual Motifs and Recurring Elements",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "screenrant.com",
+            "topic": "Recurring visual elements"
+        },
+        {
+            "name": "fandomwire.com",
+            "topic": "Filmography motif analysis"
+        },
+        {
+            "name": "movieweb.com",
+            "topic": "Signature shots"
+        },
+        {
+            "name": "youtube.com",
+            "topic": "Visual style breakdown"
+        }
+    ],
+    "content": {
+        "recurring_visual_motifs": {
+            "trunk_shot": {
+                "description": "Camera positioned inside car trunk looking up at characters",
+                "films": [
+                    "Reservoir Dogs",
+                    "Pulp Fiction",
+                    "Jackie Brown",
+                    "Kill Bill",
+                    "Death Proof"
+                ],
+                "function": "POV of victim, power dynamic, Tarantino signature"
+            },
+            "feet_shots": {
+                "frequency": "Recurring across filmography",
+                "tarantino_view": "Artistic choice",
+                "comparison": "Buñuel, Hitchcock, Coppola also featured feet"
+            },
+            "low_angle_shots": {
+                "effect": "Characters appear powerful, imposing",
+                "usage": "Key confrontations and character introductions"
+            },
+            "long_take_dialogue": {
+                "style": "Extended unbroken shots during conversations",
+                "function": "Build tension, reveal character"
+            }
+        },
+        "feet_examples": {
+            "pulp_fiction": {
+                "elements": [
+                    "Uma Thurman barefoot",
+                    "Foot massage dialogue"
+                ],
+                "significance": "Establishes motif early in career"
+            },
+            "kill_bill": {
+                "scene": "Bride wiggling big toe after coma",
+                "symbolism": "Regaining control and will"
+            },
+            "jackie_brown": {
+                "elements": [
+                    "Bridget Fonda close-ups",
+                    "Toe rings"
+                ],
+                "style": "Casual, intimate framing"
+            },
+            "death_proof": {
+                "elements": [
+                    "Dashboard feet opening",
+                    "Foot tickling scene"
+                ],
+                "abundance": "Multiple prominent foot shots"
+            },
+            "once_upon_a_time_in_hollywood": {
+                "note": "Particularly abundant",
+                "characters": [
+                    "Sharon Tate (Margot Robbie)",
+                    "Pussycat (Margaret Qualley)"
+                ],
+                "interpretation": "Dirty feet = connection to real world despite fame"
+            },
+            "inglourious_basterds": {
+                "scene": "Hans Landa examining Bridget's foot and shoe",
+                "function": "Tension and threat"
+            }
+        },
+        "other_signatures": {
+            "red_apple_cigarettes": "Fictional brand across films",
+            "big_kahuna_burger": "Fictional restaurant chain",
+            "chapter_titles": "Literary structure",
+            "mexican_standoff": "Multiple parties aiming at each other"
+        },
+        "veo_prompt_keywords": [
+            "trunk shot POV",
+            "barefoot close-up",
+            "low angle imposing",
+            "long take dialogue",
+            "wiggle toe recovery",
+            "foot examination tension",
+            "Mexican standoff",
+            "Red Apple cigarettes"
+        ]
+    }
+}

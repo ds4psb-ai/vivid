@@ -208,15 +208,14 @@ def validate_document_paths(paths: List[str]) -> None:
 class VertexRAGConfig:
     """Vertex AI RAG Engine 설정."""
     project_id: str = field(default_factory=lambda: getattr(settings, "GCP_PROJECT_ID", "gen-lang-client-0587915249"))
-    location: str = field(default_factory=lambda: getattr(settings, "GCP_LOCATION", "us-central1"))
+    # Use 'global' endpoint for gemini-3-flash-preview access (available since Dec 17, 2025)
+    location: str = field(default_factory=lambda: getattr(settings, "GCP_LOCATION", "global"))
     # RAG 설정
     embedding_model: str = "text-embedding-005"
     chunk_size: int = 1024
     chunk_overlap: int = 200
-    # Gemini 설정 (Vertex AI model names differ from API)
-    # Vertex AI: gemini-2.0-flash-001, gemini-2.0-pro-001
-    # API: gemini-3-flash-preview, gemini-3-pro-preview
-    gemini_model: str = field(default_factory=lambda: getattr(settings, "VERTEX_GEMINI_MODEL", "gemini-2.0-flash-001"))
+    # Gemini 설정 - gemini-3-flash-preview available via global endpoint
+    gemini_model: str = field(default_factory=lambda: getattr(settings, "VERTEX_GEMINI_MODEL", "gemini-3-flash-preview"))
     # GCS 버킷
     gcs_bucket: str = "crebit-rag-data"
     # Grounding
@@ -682,29 +681,22 @@ class VertexRAGService:
                     except Exception as e:
                         logger.warning(f"[VertexRAG] Failed to create retrieval tool: {e}")
 
-                # Google Search Grounding 추가
+                # Google Search Grounding 추가 (2026 API: use google_search instead of google_search_retrieval)
                 if use_grounding and self.config.enable_google_search:
                     try:
-                        google_search_tool = Tool.from_google_search_retrieval(
-                            grounding_module.GoogleSearchRetrieval(
-                                dynamic_retrieval_config=grounding_module.DynamicRetrievalConfig(
-                                    mode=grounding_module.DynamicRetrievalConfig.Mode.MODE_DYNAMIC,
-                                    dynamic_threshold=0.3,
-                                )
-                            )
-                        )
+                        # Try new API first (google_search)
+                        from google.genai import types
+                        google_search_tool = types.Tool(google_search=types.GoogleSearch())
                         tools.append(google_search_tool)
-                    except AttributeError:
+                    except (ImportError, AttributeError):
                         try:
-                            from vertexai.generative_models import grounding as grounding_new
+                            # Fallback to legacy API
                             google_search_tool = Tool.from_google_search_retrieval(
-                                grounding_new.GoogleSearchRetrieval()
+                                grounding_module.GoogleSearchRetrieval()
                             )
                             tools.append(google_search_tool)
                         except Exception as e2:
                             logger.warning(f"[VertexRAG] Google Search grounding not available: {e2}")
-                    except Exception as e:
-                        logger.warning(f"[VertexRAG] Failed to add Google Search grounding: {e}")
 
                 # Gemini 모델로 생성
                 model = GenerativeModel(

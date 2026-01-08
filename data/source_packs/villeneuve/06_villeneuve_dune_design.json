@@ -1,0 +1,91 @@
+{
+    "source_id": "villeneuve_dune_design",
+    "auteur": "Denis Villeneuve",
+    "category": "film_analysis",
+    "title": "Denis Villeneuve Dune - Sandworm Design and Desert Cinematography",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "birthmoviesdeath.com",
+            "topic": "Sandworm VFX interview"
+        },
+        {
+            "name": "latimes.com",
+            "topic": "Creature design philosophy"
+        },
+        {
+            "name": "atomtickets.com",
+            "topic": "Greig Fraser interview"
+        },
+        {
+            "name": "youtube.com",
+            "topic": "Desert cinematography breakdown"
+        }
+    ],
+    "content": {
+        "sandworm_design": {
+            "development_time": "Full year dedicated to design",
+            "design_philosophy": {
+                "goal": "Believable prehistoric beast",
+                "details": [
+                    "Skin texture",
+                    "Mouth mechanics",
+                    "Feeding system in sand"
+                ]
+            },
+            "aesthetic_vision": {
+                "comparison": "Prehistoric whale, not just worm",
+                "qualities": "Ancient and majestic, god-like"
+            },
+            "vfx_supervisor": "Paul Lambert",
+            "animation_approach": {
+                "movement": "Slow but powerful",
+                "sand_interaction": "Crucial for conveying scale",
+                "inspiration": "Whales cresting through waves (sand whale effect)",
+                "rejected": "Snake-like or earthworm-like animations"
+            },
+            "physical_design": {
+                "structure": "Rigid plates with soft accordion-like membrane",
+                "effect": "Allows subtle movement and tangible appearance"
+            },
+            "fremen_perspective": {
+                "perception": "God-like, sacred creatures",
+                "symbolism": "Earth, creation, power beyond human comprehension"
+            }
+        },
+        "greig_fraser_cinematography": {
+            "format_choices": {
+                "exteriors": "Full IMAX for vastness",
+                "interiors": "2.39 aspect ratio"
+            },
+            "desert_approach": {
+                "lighting": "Natural light wherever possible",
+                "technique": "Light shapers to create shadows",
+                "locations": "Jordan and Abu Dhabi deserts"
+            },
+            "camera_philosophy": {
+                "positions": "Natural, achievable in real-world scenario",
+                "creative_thought": "Contemplated placing camera on another sandworm"
+            },
+            "part_two_additions": {
+                "variety": "Eclipses and black sand for Arrakis landscape",
+                "visual_language": "Balance epic wide shots with intimate close-ups"
+            },
+            "spielberg_observation": "Unique visual language noted"
+        },
+        "collaboration": {
+            "villeneuve_storyboards": "Detailed, provided strong foundation",
+            "vfx_principle": "Good VFX during day = good lighting during filming"
+        },
+        "veo_prompt_keywords": [
+            "prehistoric sand whale",
+            "god-like sandworm",
+            "rigid plates membrane",
+            "IMAX desert vastness",
+            "natural desert light",
+            "Arrakis black sand eclipse",
+            "slow powerful movement",
+            "epic wide intimate close"
+        ]
+    }
+}

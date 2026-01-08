@@ -1,0 +1,61 @@
+{
+    "source_id": "tarantino_kinetic_motion_ai",
+    "auteur": "Quentin Tarantino",
+    "category": "expert_analysis",
+    "title": "Quentin Tarantino Kinetic Motion Vectors and Snap Zoom AI Replication",
+    "version": "2026.1",
+    "sources": [
+        {
+            "name": "fal.ai",
+            "topic": "AI kinetic camera control"
+        },
+        {
+            "name": "reelmind.ai",
+            "topic": "Deconstructing directorial visual styles"
+        },
+        {
+            "name": "springerprofessional.de",
+            "topic": "Crash zoom visual semantics"
+        },
+        {
+            "name": "researchgate.net",
+            "topic": "Motion vector analysis of camera movement"
+        }
+    ],
+    "content": {
+        "expert_analysis": {
+            "motion_vector_signature": {
+                "snap_zoom_physics": "Instantaneous focal length change (Zoom In/Out) within <0.5s",
+                "circular_dolly_metrics": "360-degree orbital velocity maintaining center-frame character lock",
+                "kinetic_energy_graph": "Spikes in motion vectors correlated with dialogue beats or violence initiation"
+            },
+            "visual_punctuation": {
+                "camera_as_narrator": "The camera is an active participant, not an observer",
+                "gods_eye_view": "Top-down geometric framing vs Trunk shot low-angle confinement"
+            }
+        },
+        "ai_video_generation_implications": {
+            "camera_control_prompting": {
+                "snap_zoom": "Explicit prompts: 'violent crash zoom into eyes', 'whip pan transition', 'instant focal length shift'",
+                "parameter_tuning": "High motion bucket settings, low temporal smoothing for 'snap' effect"
+            },
+            "motion_loras": {
+                "concept": "Training Low-Rank Adaptation visual models specifically on 'Tarantino Camera' motion data",
+                "result": "Generating video that inherently understands the 'circular dialogue' tracking shot without complex prompting"
+            },
+            "subject_lock_stabilization": {
+                "technique": "AI stabilization that locks onto subject eyes while background whips rapidly (matching step-printing/dolly interaction)"
+            }
+        },
+        "veo_prompt_keywords": [
+            "violent crash zoom",
+            "360-degree circular dolly",
+            "god-eye top down geometry",
+            "trunk shot low angle",
+            "whip pan transition",
+            "kinetic motion vectors",
+            "active narrator camera",
+            "instant focal shift"
+        ]
+    }
+}

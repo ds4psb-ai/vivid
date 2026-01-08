@@ -1,0 +1,91 @@
+{
+    "source_id": "villeneuve_blade_runner_2049",
+    "auteur": "Denis Villeneuve",
+    "category": "film_analysis",
+    "title": "Denis Villeneuve Blade Runner 2049 - World Building and Cinematography",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "theasc.com",
+            "topic": "Deakins cinematography interview"
+        },
+        {
+            "name": "awardsdaily.com",
+            "topic": "Practical sets approach"
+        },
+        {
+            "name": "medium.com",
+            "topic": "Dystopia design analysis"
+        },
+        {
+            "name": "filmmakermagazine.com",
+            "topic": "Deakins camera choices"
+        }
+    ],
+    "content": {
+        "world_building_philosophy": {
+            "approach": "Period movie - natural progression from 1982 original",
+            "environment_as_character": true,
+            "dystopia_vision": {
+                "quality": "Brutality - harsh environment vs imposing architecture",
+                "inspiration": "Smog-laden cities like Beijing",
+                "architecture": "Stark minimal Brutalist style"
+            },
+            "evolution_from_original": "More desolate, bleaker, somber atmosphere",
+            "neon_streets": "Still iconic but with bleaker tone"
+        },
+        "practical_sets": {
+            "percentage": "90% constructed practically",
+            "rationale": {
+                "actors": "Perform within tangible environment",
+                "vfx": "Integrate seamlessly, appear real"
+            },
+            "pre_production": {
+                "storyboarding": "Weeks with Deakins and 2 artists in Montreal",
+                "tool_preference": "Pencils for concept art"
+            }
+        },
+        "winter_elements": {
+            "choice": "Pervasive snow in LA 2049",
+            "villeneuve_influence": "Canadian background",
+            "thematic_function": "Reinforces brutality theme"
+        },
+        "temporal_distancing": {
+            "technique": "Defunct company advertisements (Pan Am, Atari)",
+            "effect": "Sense of distance from present, alternate history"
+        },
+        "roger_deakins_cinematography": {
+            "collaboration": "Third with Villeneuve",
+            "description": "Most technically demanding project",
+            "control": "Full artistic control, rejected multi-camera setups",
+            "aesthetic": "Noir-ish with masterful light and color"
+        },
+        "color_palettes": {
+            "contrast": {
+                "city": "Stark black and blue",
+                "desert": "Warm orange hues"
+            },
+            "function": "Delineate environments and themes",
+            "in_camera": "Achieved color effects primarily in-camera"
+        },
+        "camera_specs": {
+            "camera": "Arri Alexa Plus",
+            "focal_lengths": "Mid-range preferred, wide as 14mm for space",
+            "effects": "Extensive fog and atmospheric"
+        },
+        "lighting_integration": {
+            "collaboration": "Deakins + production designer Dennis Gassner",
+            "method": "Lighting integrated directly into set design"
+        },
+        "veo_prompt_keywords": [
+            "Brutalist dystopia architecture",
+            "90% practical sets",
+            "noir-ish color contrast",
+            "snow LA 2049 brutality",
+            "fog atmospheric noir",
+            "black blue city orange desert",
+            "Deakins in-camera color",
+            "tangible environment VFX"
+        ]
+    }
+}

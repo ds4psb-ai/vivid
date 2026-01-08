@@ -1,0 +1,66 @@
+{
+    "source_id": "nolan_non_linear_narrative_viz",
+    "auteur": "Christopher Nolan",
+    "category": "expert_analysis",
+    "title": "Christopher Nolan Non-Linear Narrative Mapping and Temporal Visualization",
+    "version": "2026.1",
+    "sources": [
+        {
+            "name": "storybrunch.com",
+            "topic": "Inception narrative map analysis"
+        },
+        {
+            "name": "campus.sg",
+            "topic": "Nolan's diagrammatic writing process"
+        },
+        {
+            "name": "arxiv.org",
+            "topic": "Temporal graph structures in narrative generation"
+        },
+        {
+            "name": "researchgate.net",
+            "topic": "Visualizing non-linear time in cinema"
+        }
+    ],
+    "content": {
+        "expert_analysis": {
+            "temporal_architectures": {
+                "construct": "Time as a spatial dimension (geometry) rather than a linear flow",
+                "topology": {
+                    "inception": "Nested concentric rings of time dilation (1:20 ratio)",
+                    "dunkirk": "Asymptotic convergence of 3 timelines (Week, Day, Hour)",
+                    "tenet": "Palindromic temporal inversion (forward/backward symmetry)"
+                },
+                "visual_matching": "Cross-cutting based on emotional resonance, not chronological adjacency"
+            },
+            "recursion_mechanics": {
+                "visual_motif": "Shepard Tone principle applied to visual pacing (infinite rising tension)",
+                "fractal_nature": "Self-similar narrative structures at different scales"
+            }
+        },
+        "ai_video_generation_implications": {
+            "multi_timeline_generation": {
+                "challenge": "AI models struggle with long-term temporal coherence across non-linear jumps",
+                "solution": "Generating distinct 'Timeline Tokens' and interleaving them via post-processing or specialized attention masks",
+                "prompting": "Defining specific 'temporal speeds' for different parts of the frame"
+            },
+            "reverse_entropy_visualization": {
+                "tenet_effect": "Prompting for 'reverse thermodynamics', 'inverted causality', 'puddle un-splashing'",
+                "technique": "Generating forward sequence, reversing specific object masks, compositing"
+            },
+            "shepard_tone_pacing": {
+                "editing_ai": "AI editors trained to cut progressively faster sequences without resolving tension until the very end"
+            }
+        },
+        "veo_prompt_keywords": [
+            "nested time dilation",
+            "converging timelines editing",
+            "reverse entropy motion",
+            "fractal narrative structure",
+            "infinite rising tension visual",
+            "temporal cross-cutting",
+            "shepard tone pacing",
+            "palindromic visual symmetry"
+        ]
+    }
+}

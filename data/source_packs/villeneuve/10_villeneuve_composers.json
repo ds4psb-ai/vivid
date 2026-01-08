@@ -1,0 +1,107 @@
+{
+    "source_id": "villeneuve_composer_collaborations",
+    "auteur": "Denis Villeneuve",
+    "category": "sound_and_score",
+    "title": "Denis Villeneuve Composer Collaborations - Johannsson and Zimmer",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "screencraft.org",
+            "topic": "Villeneuve music philosophy"
+        },
+        {
+            "name": "lwlies.com",
+            "topic": "Johannsson collaboration"
+        },
+        {
+            "name": "cuttingroommusic.com",
+            "topic": "Zimmer Blade Runner interview"
+        },
+        {
+            "name": "youtube.com",
+            "topic": "Dune score creation"
+        }
+    ],
+    "content": {
+        "villeneuve_music_philosophy": {
+            "view": "Music as crucial storytelling tool",
+            "goal": "Immerse audience, evoke specific emotions",
+            "approach": "Composers brought in early, given creative freedom",
+            "blur_technique": "Lines between reality and unreality in sound"
+        },
+        "johann_johannsson": {
+            "films": [
+                "Prisoners (2013)",
+                "Sicario (2015)",
+                "Arrival (2016)"
+            ],
+            "style": {
+                "blend": "Traditional orchestration with electronic elements",
+                "characteristics": [
+                    "Minimalist",
+                    "Unusual chords",
+                    "Tense",
+                    "Somber",
+                    "Profound"
+                ]
+            },
+            "prisoners": {
+                "elements": [
+                    "Low drones",
+                    "Distinctive cello melody",
+                    "Choral/hymnal approach"
+                ],
+                "themes": "Grief and despair"
+            },
+            "sicario": {
+                "request": "Subtle war music",
+                "result": "Brooding, brutal, intense, relentless",
+                "technique": "Layering acoustical strings with electronica"
+            },
+            "arrival": {
+                "elements": [
+                    "Orchestral",
+                    "Experimental",
+                    "Human voices",
+                    "Otherworldly tones"
+                ],
+                "themes": "Communication and time"
+            },
+            "texture_obsession": "Striving for minimal forms, emotional resonance"
+        },
+        "blade_runner_2049_transition": {
+            "original_composer": "Johannsson",
+            "outcome": "Parted ways",
+            "reason": "Film needed something different, closer to Vangelis"
+        },
+        "hans_zimmer": {
+            "films": [
+                "Blade Runner 2049 (with Wallfisch)",
+                "Dune (2021)",
+                "Dune Part Two (2024)"
+            ],
+            "approach": "Method composer - immerse in film's world",
+            "technique": "Blur scoring and sound design"
+        },
+        "dune_score": {
+            "goal": "Reflect alien planet and future",
+            "rejection": "Traditional European orchestra sounds",
+            "innovations": {
+                "instruments": "Invented instruments and sounds that didn't exist",
+                "voices": "Manipulated female voices as base",
+                "language": "Developed unique musical language"
+            },
+            "effect": "Emotion through sometimes simple harmonies"
+        },
+        "veo_prompt_keywords": [
+            "Johannsson minimalist drone",
+            "layered strings electronica",
+            "otherworldly vocal tone",
+            "Zimmer invented instrument",
+            "female voice manipulation",
+            "alien score soundscape",
+            "blur scoring sound design",
+            "subtle war music"
+        ]
+    }
+}

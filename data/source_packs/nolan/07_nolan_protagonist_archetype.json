@@ -1,0 +1,89 @@
+{
+    "source_id": "nolan_protagonist_archetype",
+    "auteur": "Christopher Nolan",
+    "category": "thematic_analysis",
+    "title": "Christopher Nolan Protagonist Archetype - Obsession and Identity",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "medium.com",
+            "topic": "Nolan protagonist analysis"
+        },
+        {
+            "name": "shmoop.com",
+            "topic": "Cobb character study"
+        },
+        {
+            "name": "wordpress.com",
+            "topic": "Batman identity analysis"
+        },
+        {
+            "name": "ign.com",
+            "topic": "Broken men chasing obsessions"
+        }
+    ],
+    "content": {
+        "archetype_overview": {
+            "characteristics": [
+                "Emotionally disturbed",
+                "Obsessive",
+                "Morally ambiguous"
+            ],
+            "driving_force": "Singular focus fueled by guilt, trauma, or pursuit of ideal",
+            "pattern": "Broken men chasing obsessions and constructing identities"
+        },
+        "dom_cobb": {
+            "film": "Inception",
+            "obsession": "Overwhelming guilt over wife Mal's death, desire to return to children",
+            "origin": {
+                "exploration": "Shared dream exploration with Mal",
+                "limbo": "Got lost exploring all possibilities"
+            },
+            "inception_on_mal": {
+                "act": "Convinced her dream world wasn't real",
+                "consequence": "Led to her suicide in real world"
+            },
+            "manifestation": {
+                "mal_projection": "Powerful subconscious guilt",
+                "sabotage": "Haunts and sabotages his missions"
+            },
+            "ending_choice": "Emotional truth over objective reality - doesn't verify if awake"
+        },
+        "bruce_wayne_batman": {
+            "films": "The Dark Knight Trilogy",
+            "obsession": "Eradicate crime and corruption in Gotham",
+            "trauma": "Witnessing parents' murder",
+            "symbol_creation": {
+                "using_fear": "Uses childhood fear of bats",
+                "belief": "People need dramatic examples to shake them from apathy",
+                "goal": "Incorruptible, everlasting symbol"
+            },
+            "dual_identity": {
+                "facade": "Public Bruce Wayne persona",
+                "truth": "True driven self as Batman"
+            },
+            "sacrifice": "Limits personal relationships, bears weight of city's sins"
+        },
+        "shared_traits": {
+            "trauma_catalyst": "Foundational personal trauma drives action",
+            "identity_construction": "Build/hide behind identity linked to obsession",
+            "internal_conflict": "Battle between right/wrong, reality/illusion",
+            "emotional_guardedness": "Suppress or avoid emotional needs",
+            "existential_exploration": "Questions about reality, memory, identity"
+        },
+        "narrative_function": {
+            "not_plot_device": "Central to psychological makeup",
+            "serves_as": "Engine of narrative and crucible of moral/existential dilemmas"
+        },
+        "veo_prompt_keywords": [
+            "obsession-driven protagonist",
+            "guilt haunted hero",
+            "trauma forged identity",
+            "symbol over man",
+            "emotional truth vs objective",
+            "internal conflict morality",
+            "broken man chasing",
+            "dual identity facade"
+        ]
+    }
+}

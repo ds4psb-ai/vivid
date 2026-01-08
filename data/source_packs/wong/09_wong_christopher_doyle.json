@@ -1,0 +1,83 @@
+{
+    "source_id": "wong_christopher_doyle",
+    "auteur": "Wong Kar-wai",
+    "category": "collaboration",
+    "title": "Wong Kar-wai and Christopher Doyle Cinematography Collaboration",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "bfi.org.uk",
+            "topic": "Doyle interview on Chungking Express"
+        },
+        {
+            "name": "colorculture.org",
+            "topic": "Handheld camera analysis"
+        },
+        {
+            "name": "interviewmagazine.com",
+            "topic": "Wong/Doyle partnership"
+        },
+        {
+            "name": "youtube.com",
+            "topic": "Hong Kong shooting conditions"
+        }
+    ],
+    "content": {
+        "partnership": {
+            "began": "Days of Being Wild (1990)",
+            "films_together": [
+                "Days of Being Wild",
+                "Chungking Express",
+                "Fallen Angels",
+                "Happy Together",
+                "In the Mood for Love",
+                "2046"
+            ],
+            "recognition": "Seamless blend of visuals and storytelling"
+        },
+        "chungking_express_style": {
+            "quality": "Raw, intimate, emotional",
+            "techniques": {
+                "handheld_camera": {
+                    "feel": "Spontaneous, almost voyeuristic",
+                    "effect": "Immersion in Hong Kong's urban chaos"
+                },
+                "natural_lighting": true,
+                "bold_color_palettes": true
+            },
+            "dreamy_neon_drenched": {
+                "contribution": "Neon lights and saturated colors",
+                "aesthetic": "Surreal"
+            }
+        },
+        "color_philosophy": {
+            "yellows_and_greens": "Hope, nostalgia, longing",
+            "influence": "Hong Kong's neon-lit streets"
+        },
+        "improvisation_approach": {
+            "script_status": "Production began before script complete",
+            "chungking_example": "Wong wrote second story in single day",
+            "actor_direction": "Encouraged improvisation, let characters develop naturally",
+            "focus": "Changing situations rather than dictating performances"
+        },
+        "shooting_conditions": {
+            "hong_kong_challenges": "Busy locations, limited control",
+            "doyle_quote": "Get what we could and not what we wanted sometimes",
+            "style_origin": "Often dictated by circumstances",
+            "chungking_production": "Shot quickly with big energy"
+        },
+        "intuitive_method": {
+            "approach": "Organic and intuitive",
+            "result": "Distinctive visual language born from constraints"
+        },
+        "veo_prompt_keywords": [
+            "handheld voyeuristic camera",
+            "neon dreamy saturated",
+            "improvised organic filming",
+            "Hong Kong urban chaos",
+            "yellow green nostalgia",
+            "circumstance-born style",
+            "raw intimate emotional"
+        ]
+    }
+}

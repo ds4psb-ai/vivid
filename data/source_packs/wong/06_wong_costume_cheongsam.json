@@ -1,0 +1,86 @@
+{
+    "source_id": "wong_costume_cheongsam",
+    "auteur": "Wong Kar-wai",
+    "category": "costume_design",
+    "title": "Wong Kar-wai Costume Design - Cheongsam in In the Mood for Love",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "youtube.com",
+            "topic": "Cheongsam visual analysis"
+        },
+        {
+            "name": "medium.com",
+            "topic": "Fashion impact study"
+        },
+        {
+            "name": "fashionista.com",
+            "topic": "William Chang costume design"
+        },
+        {
+            "name": "cinemaescapist.com",
+            "topic": "Cultural context"
+        }
+    ],
+    "content": {
+        "cheongsam_as_narrative": {
+            "function": "Silent dialogue conveying internal emotional state",
+            "wong_quote": "The dress is Maggie's character's mood - she wears her emotions",
+            "production_facts": {
+                "total_made": 46,
+                "worn_in_film": 21,
+                "significance": "Each new dress signals new day/night and new emotion"
+            }
+        },
+        "color_symbolism": {
+            "red": "Longing and desire",
+            "green": "Jealousy",
+            "white": "Perceived innocence",
+            "progression": "Colors evolve with character's emotional journey"
+        },
+        "design_tension": {
+            "feminine_elements": [
+                "Soft fabrics",
+                "Vulnerable patterns"
+            ],
+            "restrictive_elements": [
+                "High collars",
+                "Rigid cuts",
+                "Tightness"
+            ],
+            "meaning": "Tension between allure and societal restriction",
+            "metaphor": "Tightness = constricted feelings and social obligations"
+        },
+        "character_arc_through_costume": {
+            "beginning": "High collar, elaborate patterns = constraint",
+            "end": "Lower collar, simpler cut = resignation and acceptance",
+            "passage_of_time": "Each dress marks time in film with scarce overt markers"
+        },
+        "mr_chow_contrast": {
+            "attire": "Elegant suits conveying restraint",
+            "visual_symmetry": "Mirrors Mrs. Chan's emotional arc through clothing",
+            "disheveledness": "Moments reveal emotional decline"
+        },
+        "cultural_context": {
+            "era": "1960s Hong Kong",
+            "evolution": "Looser cut → form-fitting, body-accentuating style",
+            "symbolism": "Blend of Eastern and Western cultures, economic prosperity",
+            "diaspora_resonance": "Deep connection with Hong Kong locals and Chinese diaspora"
+        },
+        "fashion_impact": {
+            "designer": "William Chang (costume designer)",
+            "legacy": "Inspired global fashion, runway collections",
+            "quote": "Style IS the story - clothing integral to narrative"
+        },
+        "veo_prompt_keywords": [
+            "cheongsam emotional color",
+            "red longing dress",
+            "green jealousy costume",
+            "high collar restraint",
+            "1960s Hong Kong fashion",
+            "costume as character",
+            "tight dress confinement",
+            "elegant suit symmetry"
+        ]
+    }
+}

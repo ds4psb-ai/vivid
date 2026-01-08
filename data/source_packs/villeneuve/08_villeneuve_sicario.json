@@ -1,0 +1,81 @@
+{
+    "source_id": "villeneuve_sicario",
+    "auteur": "Denis Villeneuve",
+    "category": "film_analysis",
+    "title": "Denis Villeneuve Sicario - Border Tension and Cinematography",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "filmmakermagazine.com",
+            "topic": "Deakins Sicario interview"
+        },
+        {
+            "name": "screencrush.com",
+            "topic": "Night vision technique"
+        },
+        {
+            "name": "studiobinder.com",
+            "topic": "Violence portrayal"
+        },
+        {
+            "name": "hazlitt.net",
+            "topic": "Lean style analysis"
+        }
+    ],
+    "content": {
+        "visual_approach": {
+            "cinematographer": "Roger Deakins",
+            "core_contrast": "Cruel harshness of sunlight vs menacing unknown of shadows",
+            "villeneuve_quote": "Could shoot with a shoe and it would look great"
+        },
+        "border_tension": {
+            "landscape_as_character": "Vast imposing Mexican border",
+            "effect": "Overwhelming chaos",
+            "wide_shots": {
+                "example": "Raid team disappearing over ridge",
+                "planning": "Storyboarded weeks in advance",
+                "description": "Disappearing into the blackness"
+            }
+        },
+        "violence_portrayal": {
+            "perspective": "Point of view of victims",
+            "approach": "Shows brutality without glorifying"
+        },
+        "tunnel_sequence": {
+            "night_vision_approach": {
+                "equipment": "Actual thermal vision cameras + night vision lens enhancers",
+                "rationale": "Characters would rely on these in darkness",
+                "commitment": "Edgy reality over faked moonlight"
+            },
+            "thermal_imaging": {
+                "character": "Alejandro (Benicio Del Toro)",
+                "distinction": "Different from standard green night vision",
+                "purpose": "Distinguish his viewpoint"
+            },
+            "minimal_lighting": {
+                "setup": "Single 1k lamp at large reflector",
+                "result": "Just enough shape for image-enhancing devices"
+            }
+        },
+        "tension_building": {
+            "technique": "Holding shots",
+            "effect": "Let audience feel suspense vs rapid cuts",
+            "example": "Team descent held until they disappear"
+        },
+        "lean_style": {
+            "focus": "What is important without extraneous elements",
+            "single_camera": "Deakins' preferred method",
+            "pre_production": "Considerable storyboarding and discussion"
+        },
+        "veo_prompt_keywords": [
+            "thermal night vision",
+            "border tension wide shot",
+            "held shot suspense",
+            "disappearing into darkness",
+            "harsh sunlight menacing shadow",
+            "lean style minimal",
+            "victim perspective violence",
+            "green night vision tunnel"
+        ]
+    }
+}

@@ -1,0 +1,104 @@
+{
+    "source_id": "tarantino_actor_ensemble",
+    "auteur": "Quentin Tarantino",
+    "category": "collaboration",
+    "title": "Quentin Tarantino Actor Ensemble and Recurring Collaborators",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "movieweb.com",
+            "topic": "Ensemble casting approach"
+        },
+        {
+            "name": "screenrant.com",
+            "topic": "Samuel L Jackson roles"
+        },
+        {
+            "name": "wikipedia.org",
+            "topic": "Thurman/Tarantino collaboration"
+        },
+        {
+            "name": "cbr.com",
+            "topic": "Actor universe"
+        }
+    ],
+    "content": {
+        "ensemble_approach": {
+            "philosophy": "Build worlds around trusted actor voices and styles",
+            "effect": "Memorable, defining roles for performers"
+        },
+        "samuel_l_jackson": {
+            "status": "Most prolific collaborator, cornerstone of film universe",
+            "pulp_fiction_impact": {
+                "role": "Jules Winnfield - fast-talking, bible-quoting hitman",
+                "awards": [
+                    "BAFTA Best Supporting Actor",
+                    "Oscar nomination"
+                ],
+                "significance": "Career turning point"
+            },
+            "films": {
+                "pulp_fiction": "Jules Winnfield (1994)",
+                "jackie_brown": "Ordell Robbie - gun runner (1997)",
+                "kill_bill_vol_2": "Rufus - wedding musician cameo (2004)",
+                "inglourious_basterds": "Narrator - voice only (2009)",
+                "django_unchained": "Stephen - repugnant house slave villain (2012)",
+                "hateful_eight": "Major Marquis Warren - vengeful gunslinger (2015)"
+            },
+            "range": "Anti-heroic to despicable roles"
+        },
+        "uma_thurman": {
+            "status": "Considered Tarantino's muse, especially for Kill Bill",
+            "mia_wallace": {
+                "role": "Glamorous, mysterious mob boss wife",
+                "film": "Pulp Fiction (1994)",
+                "awards": "Oscar nomination",
+                "significance": "International prominence"
+            },
+            "beatrix_kiddo": {
+                "alias": [
+                    "The Bride",
+                    "Black Mamba"
+                ],
+                "films": "Kill Bill Vol 1 & 2 (2003-2004)",
+                "origin": "Conceived together during Pulp Fiction filming",
+                "awards": [
+                    "BAFTA nomination",
+                    "Golden Globe nomination"
+                ],
+                "preparation": "Watched Coffy, Lady Snowblood"
+            },
+            "significance": "One of most iconic director-actor duos in Hollywood"
+        },
+        "other_recurring_actors": {
+            "tim_roth": [
+                "Reservoir Dogs",
+                "Pulp Fiction",
+                "Hateful Eight"
+            ],
+            "michael_madsen": [
+                "Reservoir Dogs",
+                "Kill Bill",
+                "Hateful Eight"
+            ],
+            "christoph_waltz": [
+                "Inglourious Basterds",
+                "Django Unchained"
+            ],
+            "harvey_keitel": [
+                "Reservoir Dogs",
+                "Pulp Fiction"
+            ]
+        },
+        "veo_prompt_keywords": [
+            "ensemble trusted voices",
+            "Samuel L Jackson bible quote",
+            "Uma Thurman muse",
+            "recurring actor universe",
+            "Jules Winnfield hitman",
+            "Beatrix Kiddo revenge",
+            "iconic director-actor duo",
+            "defining career role"
+        ]
+    }
+}

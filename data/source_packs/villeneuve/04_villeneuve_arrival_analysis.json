@@ -1,0 +1,91 @@
+{
+    "source_id": "villeneuve_arrival_language",
+    "auteur": "Denis Villeneuve",
+    "category": "film_analysis",
+    "title": "Denis Villeneuve Arrival - Language, Time, and Alien Design",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "slashfilm.com",
+            "topic": "Heptapod design interview"
+        },
+        {
+            "name": "swansea.ac.uk",
+            "topic": "Linguist consultant article"
+        },
+        {
+            "name": "screenrant.com",
+            "topic": "Alien concept art"
+        },
+        {
+            "name": "saturation.io",
+            "topic": "Circular time analysis"
+        }
+    ],
+    "content": {
+        "heptapod_language": {
+            "design": {
+                "type": "Circular, non-linear",
+                "contrast": "Human linear languages",
+                "creator": "Martine Bertrand (Villeneuve's wife) - aesthetics"
+            },
+            "linguistic_consultant": {
+                "name": "Jessica Coon",
+                "role": "Advised on field linguistics approach",
+                "actor_prep": "Met with Amy Adams to discuss linguistics work"
+            },
+            "sapir_whorf_hypothesis": {
+                "concept": "Language shapes perception and thought",
+                "application": "Learning Heptapod B rewires brain for non-linear time"
+            }
+        },
+        "circular_time": {
+            "heptapod_perception": "Past, present, future experienced simultaneously",
+            "no_beginning_or_end": "All of time at once",
+            "louise_transformation": {
+                "process": "Immersion in Heptapod B",
+                "result": "Experiences memories of future (flash-forwards)"
+            },
+            "editing_technique": {
+                "deliberate_non_linear": "What appear as flashbacks are future glimpses",
+                "purpose": "Immerse audience in altered time perception"
+            }
+        },
+        "heptapod_design": {
+            "goal": "Truly alien, distinct from typical cinematic aliens",
+            "tone": "Sympathetic yet subtly unsettling",
+            "inspirations": {
+                "creatures": [
+                    "Cuttlefish",
+                    "Squids",
+                    "Microscopic organisms"
+                ],
+                "eyes": "Thoughtful qualities of horse eyes",
+                "daughter": "Villeneuve's daughter's octopus drawing"
+            },
+            "final_design": {
+                "form": "Massive seven-legged creatures (Heptapods)",
+                "communication": "Six-limbed 'hand' + inky black circular symbols",
+                "presentation": "Mostly through hand behind mist"
+            }
+        },
+        "spaceship_design": {
+            "initial_concept": "Oyster-shaped",
+            "final_design": {
+                "shape": "Oval inspired by exoplanet Haumea",
+                "orientation": "Vertical, hovering",
+                "purpose": "Emphasize human journey upward to meet them"
+            }
+        },
+        "veo_prompt_keywords": [
+            "circular alien language",
+            "non-linear time perception",
+            "Sapir-Whorf rewiring",
+            "cuttlefish alien design",
+            "inky black logograms",
+            "flash-forward memory",
+            "vertical hovering ship",
+            "sympathetic unsettling alien"
+        ]
+    }
+}

@@ -1,0 +1,88 @@
+{
+    "source_id": "villeneuve_silence_stillness",
+    "auteur": "Denis Villeneuve",
+    "category": "visual_style",
+    "title": "Denis Villeneuve Silence, Stillness, and Negative Space",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "youtube.com",
+            "topic": "Visual unease techniques"
+        },
+        {
+            "name": "purposestudios.in",
+            "topic": "Negative space analysis"
+        },
+        {
+            "name": "filmfolly.com",
+            "topic": "Prisoners atmosphere"
+        },
+        {
+            "name": "filmcomment.com",
+            "topic": "Enemy color analysis"
+        }
+    ],
+    "content": {
+        "unsettling_atmosphere": {
+            "core_approach": "Something ominous looms without explicit events",
+            "ambiguity": "Designed to keep viewers in uncertainty",
+            "psychological_effect": "Pervasive sense of dread and unease"
+        },
+        "silence_and_stillness": {
+            "technique": "Pauses magnify impact of subsequent loud moments",
+            "prisoners": {
+                "rhythm": "Calm underlined by constant tension",
+                "atmosphere": "Gloomy and oppressive throughout"
+            },
+            "sicario": {
+                "calm_before_storm": "Perfect calm established before intense action",
+                "example": "Shot of drapes with dust motes as stillness beat"
+            },
+            "insert_shots": {
+                "prisoners_tree": "Last moment of calm before everything goes wrong",
+                "function": "Convey mood and symbolize terror in ordinary settings"
+            }
+        },
+        "negative_space": {
+            "purpose": "Foster vulnerability and anxiety during crisis",
+            "enemy": {
+                "framing": "Abundance of empty space above or behind subject",
+                "effect": "Diminishes physical presence, injects mystery"
+            },
+            "sicario": {
+                "kate_framing": "Significant negative space around protagonist",
+                "effect": "Emphasizes isolation and diminished agency"
+            },
+            "off_center_composition": {
+                "technique": "Characters placed off-center creating unbalanced frames",
+                "subconscious_effect": "Feeling of unease"
+            }
+        },
+        "minimalist_color_palette": {
+            "prisoners": {
+                "cinematographer": "Roger Deakins",
+                "palette": "Bleak greys and browns",
+                "effect": "Limitless atmospheric menace"
+            },
+            "enemy": {
+                "color": "Sickly yellow wash throughout",
+                "effect": "Strips away familiarity and safety",
+                "city": "Smoggy, jaundiced town with minimal warmth"
+            },
+            "sicario": {
+                "description": "Textured reality: sparse, hard, cruel",
+                "style": "Tight, tense, understated"
+            }
+        },
+        "veo_prompt_keywords": [
+            "negative space isolation",
+            "calm before storm stillness",
+            "sickly yellow wash",
+            "off-center unbalanced frame",
+            "oppressive silence",
+            "bleak grey brown palette",
+            "empty space anxiety",
+            "minimalist dread"
+        ]
+    }
+}

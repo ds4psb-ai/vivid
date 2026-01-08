@@ -1,0 +1,62 @@
+{
+    "source_id": "villeneuve_volumetric_texture_ai",
+    "auteur": "Denis Villeneuve",
+    "category": "expert_analysis",
+    "title": "Denis Villeneuve Volumetric Atmosphere and Generative Texture Grain",
+    "version": "2026.1",
+    "sources": [
+        {
+            "name": "framestore.com",
+            "topic": "Blade Runner 2049 asset texturing"
+        },
+        {
+            "name": "studiobinder.com",
+            "topic": "Deakins volumetric lighting analysis"
+        },
+        {
+            "name": "meshy.ai",
+            "topic": "AI generative 3D textures"
+        },
+        {
+            "name": "arxiv.org",
+            "topic": "Diffusion model noise scheduling for grain"
+        }
+    ],
+    "content": {
+        "expert_analysis": {
+            "volumetric_architecture": {
+                "concept": "Atmosphere as physical structure (fog, dust, smog)",
+                "lighting_physics": "Light must travel 'through' matter, creating visible beams (god rays)",
+                "scale_through_obscurity": "Using atmospheric haze to purposefully obscure distant details, implying infinite scale"
+            },
+            "textural_brutalism": {
+                "surface_detail": "Concrete weathering, sand grain physics, industrial decay",
+                "visual_tactility": "High-frequency detail in low-contrast environments"
+            }
+        },
+        "ai_video_generation_implications": {
+            "noise_scheduler_tuning": {
+                "grain_simulation": "Injecting specific Gaussian noise distributions at final diffusion steps to mimic Kodak film stocks",
+                "prompting_texture": "'Volumetric fog', 'suspended dust particles', 'haptic texture', 'concrete porosity'"
+            },
+            "depth_haziness": {
+                "z_depth_fog": "Conditioning generation with depth maps where far-field density > near-field",
+                "color_grading": "Desaturated palettes (orange/teal) applied at latent generation level"
+            },
+            "generative_upscaling": {
+                "risk": "AI upscalers often 'clean' texture; Villeneuve style requires preserving 'dirty' industrial textures",
+                "technique": "Texture-aware upscaling trained on brutalist architectural datasets"
+            }
+        },
+        "veo_prompt_keywords": [
+            "volumetric fog god-rays",
+            "brutalist concrete texture",
+            "suspended dust atmosphere",
+            "scale through obscurity",
+            "haptic visual tactility",
+            "industrial decay weathering",
+            "orange mist silhouette",
+            "monolithic architecture haze"
+        ]
+    }
+}

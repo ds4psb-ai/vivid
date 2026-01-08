@@ -1,0 +1,71 @@
+{
+    "source_id": "nolan_interstellar_tesseract",
+    "auteur": "Christopher Nolan",
+    "category": "film_analysis",
+    "title": "Christopher Nolan Interstellar - Tesseract, Love, and Practical Set Design",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "collider.com",
+            "topic": "Nolan tesseract interview"
+        },
+        {
+            "name": "medium.com",
+            "topic": "Love as dimension analysis"
+        },
+        {
+            "name": "youtube.com",
+            "topic": "Practical set construction"
+        },
+        {
+            "name": "fandom.com",
+            "topic": "Tesseract explanation"
+        }
+    ],
+    "content": {
+        "tesseract_concept": {
+            "description": "Hyper-cubic grid-like structure in 5D hyperspace",
+            "creators": "Advanced future humans (bulk beings)",
+            "function": "Time as navigable physical dimension",
+            "effect": "Cooper perceives every moment in Murph's room simultaneously"
+        },
+        "love_as_dimension": {
+            "dr_brand_view": "Artifact of higher dimension humans can't consciously perceive",
+            "narrative_function": "Transcending force allowing tesseract navigation",
+            "coordinate_system": "Guides Cooper to specific moments in Murph's timeline",
+            "theme": "Parent-child bond connects across time and space"
+        },
+        "gravity_communication": {
+            "method": "Gravitational waves across time",
+            "book_pushing": "Cooper was the ghost all along",
+            "watch_manipulation": "Transmits crucial data via second hand"
+        },
+        "practical_set_design": {
+            "mcconaughey_position": "Suspended 60ft off concrete floor",
+            "projection_technique": {
+                "method": "Projectors cast Murph's bedroom onto tesseract surfaces",
+                "effect": "Actor physically interacts with projected scenes"
+            },
+            "bookshelf_construction": {
+                "technique": "Cardboard pieces cut into shapes",
+                "attachment": "Attached to miniature bookshelves",
+                "effect": "Illusion of infinite space and warped dimensions"
+            }
+        },
+        "nolan_approach": {
+            "goal": "Feel real to cast and audience",
+            "combination": "Old techniques (miniatures, motion control) with modern tech",
+            "mcconaughey_experience": "Physical demands, emotional weight of isolation"
+        },
+        "veo_prompt_keywords": [
+            "tesseract 5D hyperspace",
+            "love transcends dimension",
+            "gravity wave communication",
+            "bookshelf infinite warp",
+            "projected bedroom interaction",
+            "suspended practical set",
+            "ghost communication time",
+            "parent child cosmic bond"
+        ]
+    }
+}

@@ -1,0 +1,105 @@
+{
+    "source_id": "tarantino_dialogue_style",
+    "auteur": "Quentin Tarantino",
+    "category": "writing_style",
+    "title": "Quentin Tarantino Dialogue Style and Pop Culture References",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "aiinscreentrade.com",
+            "topic": "Dialogue technique analysis"
+        },
+        {
+            "name": "screenrant.com",
+            "topic": "Pop culture references"
+        },
+        {
+            "name": "medium.com",
+            "topic": "Character development through dialogue"
+        },
+        {
+            "name": "godaddysites.com",
+            "topic": "Pulp Fiction dialogue breakdown"
+        }
+    ],
+    "content": {
+        "dialogue_philosophy": {
+            "authenticity": {
+                "approach": "Mirrors real-life interactions",
+                "characteristics": [
+                    "Not always polished",
+                    "Conversations meander",
+                    "Seemingly unrelated topics"
+                ],
+                "process": "Allows characters to speak to him"
+            },
+            "rhythm": "Rhythmic quality makes characters relatable"
+        },
+        "pop_culture_references": {
+            "hallmark": "Defining element of screenplays",
+            "integration": "Seamlessly woven into dialogue",
+            "functions": {
+                "define_characters": true,
+                "comic_relief": true,
+                "grounding": "Grounds larger-than-life archetypes in recognizable reality"
+            },
+            "examples": {
+                "royale_with_cheese": {
+                    "scene": "Vincent explains European fast food to Jules",
+                    "purpose": "Establishes rapport and distinct personalities"
+                },
+                "categories": [
+                    "Celebrities",
+                    "Films",
+                    "TV shows",
+                    "Music"
+                ]
+            }
+        },
+        "long_conversation_scenes": {
+            "surface": "May appear mundane or non-plot-related",
+            "reality": "Far from arbitrary",
+            "functions": {
+                "character_development": {
+                    "reveals": [
+                        "Personalities",
+                        "Interests",
+                        "Motivations",
+                        "Inner lives"
+                    ],
+                    "effect": "Adds depth and authenticity"
+                },
+                "subtle_plot_advancement": {
+                    "techniques": [
+                        "Build suspense",
+                        "Provide background"
+                    ],
+                    "example": "Hamburger discussion sets up Jules' connoisseurship"
+                },
+                "tone_establishment": {
+                    "juxtaposition": "Casual banter with impending danger",
+                    "effect": "Unique tone, audience unsure what happens next"
+                },
+                "conflict_generation": {
+                    "method": "Differing opinions in conversations",
+                    "effect": "Keeps viewers invested, reveals character depth"
+                }
+            }
+        },
+        "ezekiel_monologue": {
+            "scene": "Jules' biblical speech",
+            "function": "Pivotal moment defining character arc",
+            "theme": "Desire for redemption"
+        },
+        "veo_prompt_keywords": [
+            "pop culture dialogue",
+            "meandering conversation",
+            "mundane to meaningful",
+            "casual dangerous juxtaposition",
+            "rhythmic authentic speech",
+            "character revealing talk",
+            "conflict through opinion",
+            "grounding archetype reality"
+        ]
+    }
+}

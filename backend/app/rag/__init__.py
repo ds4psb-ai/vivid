@@ -127,6 +127,14 @@ from app.rag.pattern_promoter import (
     PromotionType,
     get_pattern_promoter,
 )
+from app.rag.hybrid_rag import (
+    HybridRAGResult,
+    HybridRAGService,
+    hybrid_query,
+    get_hybrid_rag_service,
+    reset_hybrid_rag_service,
+    AUTEUR_KEY_TO_NOTEBOOK,
+)
 from app.rag.schemas import (
     DimensionType,
     RAGTier,
@@ -245,6 +253,14 @@ __all__ = [
     "PromotionResult",
     "PromotionType",
     "get_pattern_promoter",
+
+    # ============ Hybrid RAG ============
+    "HybridRAGResult",
+    "HybridRAGService",
+    "hybrid_query",
+    "get_hybrid_rag_service",
+    "reset_hybrid_rag_service",
+    "AUTEUR_KEY_TO_NOTEBOOK",
 
     # ============ Schemas ============
     "DimensionType",

@@ -1,0 +1,72 @@
+{
+    "source_id": "bong_vertical_depth_ai",
+    "auteur": "Bong Joon-ho",
+    "category": "expert_analysis",
+    "title": "Bong Joon-ho Vertical Architecture and AI Depth Map Analysis",
+    "version": "2026.1",
+    "sources": [
+        {
+            "name": "architizer.com",
+            "topic": "Parasite architectural cross-section"
+        },
+        {
+            "name": "medium.com",
+            "topic": "Verticality as class metaphor"
+        },
+        {
+            "name": "researchgate.net",
+            "topic": "Visual depth in social stratification"
+        },
+        {
+            "name": "ficklesorts.com",
+            "topic": "Semi-basement visual analysis"
+        }
+    ],
+    "content": {
+        "expert_analysis": {
+            "spatial_verticality": {
+                "concept": "Architecture as rigid social stratification",
+                "technique": "Extreme high/low angle compositions relative to ground level",
+                "parasite_mechanics": {
+                    "banjiha_depth": "Semi-basement creates 'sub-surface' visual linguistics",
+                    "mansion_elevation": "Modernist glass walls as transparency of power",
+                    "staircase_motif": "Physical labor of social mobility"
+                },
+                "snowpiercer_linearity": {
+                    "shift": "Transformation of vertical class structure to horizontal linearity",
+                    "motion_vector": "Left-to-right constant progression vs static verticality"
+                }
+            },
+            "lighting_semantics": {
+                "natural_light_privilege": "Direct correlation between lux/lumens and social class",
+                "subterranean_lighting": "Green/tungsten biased, high-noise floor aesthetics",
+                "shadow_architecture": "Shadows used not just for mood but for 'hiding' class markers"
+            }
+        },
+        "ai_video_generation_implications": {
+            "depth_map_conditioning": {
+                "strategy": "Use high-contrast depth maps to enforce vertical hierarchy in generation",
+                "prompting": "Condition Z-axis distinct layers: 'subterranean foreground, street-level midground, elevated modernist background'",
+                "controlnet_guidance": "Architectural cross-section control for multi-level storytelling"
+            },
+            "lighting_as_class_token": {
+                "rich_token": "sun-drenched, volumetric god-rays, 5400K daylight balance, noise-free",
+                "poor_token": "fluorescent flicker, sodium vapor street light bleed, high ISO grain simulation"
+            },
+            "camera_movement_prompts": {
+                "descending_tracking": "Continuous vertical tilt-down or jib-down to reveal lower stratas",
+                "lateral_tracking": "Unbroken horizontal tracking for linear struggle (Snowpiercer style)"
+            }
+        },
+        "veo_prompt_keywords": [
+            "vertical architecture cross-section",
+            "semi-basement perspective window",
+            "modernist mansion hilltop depth",
+            "staircase descent rainstorm",
+            "class-conditional lighting",
+            "linear train carriage progression",
+            "subterranean green-tungsten cast",
+            "sun-drenched open plan glass"
+        ]
+    }
+}

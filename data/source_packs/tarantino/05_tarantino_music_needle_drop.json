@@ -1,0 +1,95 @@
+{
+    "source_id": "tarantino_music_needle_drop",
+    "auteur": "Quentin Tarantino",
+    "category": "sound_and_score",
+    "title": "Quentin Tarantino Music Selection and Needle Drop Philosophy",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "youtube.com",
+            "topic": "Tarantino music selection process"
+        },
+        {
+            "name": "collider.com",
+            "topic": "Needle drop technique"
+        },
+        {
+            "name": "slashfilm.com",
+            "topic": "Morricone collaboration"
+        },
+        {
+            "name": "screenrant.com",
+            "topic": "Django soundtrack analysis"
+        }
+    ],
+    "content": {
+        "needle_drop_philosophy": {
+            "definition": "Integrating pre-existing songs into film soundtrack",
+            "process": {
+                "source": "Personal extensive record collection",
+                "timing": "Often during writing phase",
+                "selection": "Tracks that embody personality and spirit of film"
+            },
+            "song_preference": {
+                "type": "Deep cuts, obscure tracks from past eras",
+                "belief": "Established songs carry more emotional weight than new score",
+                "quality": "Timeless coolness"
+            },
+            "function": "Not background - powerful storytelling tool",
+            "techniques": [
+                "Set mood",
+                "Enhance narrative",
+                "Create memorable scenes",
+                "Ironic juxtaposition"
+            ]
+        },
+        "ennio_morricone_relationship": {
+            "tarantino_view": "Favorite composer",
+            "early_usage": {
+                "films": [
+                    "Kill Bill",
+                    "Inglourious Basterds",
+                    "Django Unchained"
+                ],
+                "technique": "Using existing Morricone compositions"
+            },
+            "django_controversy": {
+                "morricone_initial": "Without coherence",
+                "morricone_statement": "Wouldn't like to work with him again",
+                "later_clarification": "Respect for Tarantino, artistic brotherhood"
+            }
+        },
+        "kill_bill_music": {
+            "volume_1": "'Death Rides A Horse' during Crazy 88 fight",
+            "volume_2": "'Il Mercenario (L'Arena)'",
+            "other_needle_drops": "Gheorghe Zamfir's 'The Lonely Shepherd'"
+        },
+        "django_unchained_soundtrack": {
+            "influence": "Spaghetti western",
+            "morricone_tracks": [
+                "The Braying Mule",
+                "Rito Finale",
+                "Norme Con Ironie",
+                "The Big Risk",
+                "Minacciosamente Lontano",
+                "Dopo La Congiura",
+                "Un Monumento"
+            ]
+        },
+        "hateful_eight_collaboration": {
+            "significance": "First original Morricone score for Tarantino",
+            "morricone_note": "First Western score in 40 years",
+            "creative_freedom": "Tarantino gave significant freedom",
+            "result": "Academy Award for Morricone"
+        },
+        "veo_prompt_keywords": [
+            "needle drop soundtrack",
+            "record collection selection",
+            "Morricone spaghetti western",
+            "ironic music juxtaposition",
+            "deep cut obscure track",
+            "writing phase music",
+            "timeless coolness sound"
+        ]
+    }
+}

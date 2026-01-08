@@ -1,0 +1,100 @@
+{
+    "source_id": "tarantino_chapter_structure",
+    "auteur": "Quentin Tarantino",
+    "category": "narrative_structure",
+    "title": "Quentin Tarantino Chapter Structure and Literary Filmmaking",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "screencraft.org",
+            "topic": "Title card analysis"
+        },
+        {
+            "name": "screenrant.com",
+            "topic": "Chapter structure breakdown"
+        },
+        {
+            "name": "glcoverage.com",
+            "topic": "Literary influences"
+        },
+        {
+            "name": "umich.edu",
+            "topic": "Historiographic metafiction"
+        }
+    ],
+    "content": {
+        "chapter_structure": {
+            "technique": "Title cards dividing films into chapters",
+            "effect": "Novelistic feel",
+            "films": {
+                "kill_bill": "Explicit chapter divisions for epic story",
+                "inglourious_basterds": "Navigate multiple perspectives across Nazi Europe"
+            },
+            "functions": {
+                "narrative_progression": "Signal changes in scene/time/place/character",
+                "emotional": [
+                    "Inject humor",
+                    "Create mystery",
+                    "Build suspense"
+                ]
+            },
+            "departure": "From classical linear narrative style"
+        },
+        "literary_filmmaking": {
+            "influence": "Deep literary traditions",
+            "self_view": "More novelist crafting screenplays",
+            "techniques": {
+                "non_linear_narrative": "Build intrigue and suspense",
+                "patchwork_quilt": "Intricately interwoven stories",
+                "layered_storytelling": "Weave distinct plot threads"
+            },
+            "dialogue_quality": [
+                "Vibrant",
+                "Purposeful",
+                "Character complexity",
+                "Humor",
+                "Tension",
+                "Insights"
+            ]
+        },
+        "narrative_devices": {
+            "stories_within_stories": true,
+            "unreliable_narrators": true
+        },
+        "title_card_functions": {
+            "segmentation": "Divide story into chapters",
+            "pacing": {
+                "slow_down": "Emphasis",
+                "heighten": "Grandeur of impending situation"
+            },
+            "character_intro": "Clarify identities and relationships",
+            "tone_setting": "'Once upon a Time... in Nazi-occupied France'"
+        },
+        "historiographic_metafiction": {
+            "example": "Inglourious Basterds",
+            "definition": "Bending historical narratives",
+            "effect": "Challenges cultural memory",
+            "portrayal": "Highly stylized revisionist WWII"
+        },
+        "kill_bill_notes": {
+            "intent": "Single film despite two-volume release",
+            "genre_blend": [
+                "Martial arts",
+                "Japanese period drama",
+                "Spaghetti Western",
+                "Italian horror"
+            ],
+            "tarantino_quote": "Film I was born to make"
+        },
+        "veo_prompt_keywords": [
+            "novelistic chapter structure",
+            "title card transition",
+            "patchwork quilt narrative",
+            "non-linear intrigue",
+            "historiographic revisionist",
+            "genre blend epic",
+            "stories within stories",
+            "once upon a time"
+        ]
+    }
+}

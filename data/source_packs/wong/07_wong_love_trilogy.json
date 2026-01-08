@@ -1,0 +1,102 @@
+{
+    "source_id": "wong_love_trilogy",
+    "auteur": "Wong Kar-wai",
+    "category": "filmography",
+    "title": "Wong Kar-wai Love Trilogy - Days of Being Wild, ITMFL, 2046",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "collider.com",
+            "topic": "Trilogy structure analysis"
+        },
+        {
+            "name": "pdx.edu",
+            "topic": "Time and memory themes"
+        },
+        {
+            "name": "iu.edu",
+            "topic": "Character connections"
+        },
+        {
+            "name": "cairn.info",
+            "topic": "Narrative analysis"
+        }
+    ],
+    "content": {
+        "trilogy_structure": {
+            "films": [
+                "Days of Being Wild (1990)",
+                "In the Mood for Love (2000)",
+                "2046 (2004)"
+            ],
+            "wong_note": "Independent existence with subtle interconnections",
+            "common_setting": "1960s Hong Kong",
+            "themes": [
+                "Love",
+                "Loss",
+                "Longing",
+                "Memory",
+                "Transient relationships"
+            ]
+        },
+        "days_of_being_wild": {
+            "protagonist": "Yuddy (Leslie Cheung) - rebellious playboy",
+            "characters": {
+                "su_li_zhen": "Maggie Cheung - becomes Mrs. Chan later",
+                "lulu_mimi": "Carina Lau",
+                "chow_mo_wan": "Tony Leung (brief cameo, intended sequel setup)"
+            },
+            "themes": "Love trauma, search for identity"
+        },
+        "in_the_mood_for_love": {
+            "protagonists": [
+                "Chow Mo-wan (Tony Leung)",
+                "Su Li-zhen (Maggie Cheung)"
+            ],
+            "situation": "Neighbors discovering spouses' affair",
+            "relationship": "Unconsummated affection",
+            "direct_connection": "Feeds into narrative of 2046"
+        },
+        "2046": {
+            "protagonist": "Chow Mo-wan (now a writer)",
+            "returning_characters": "Lulu from Days of Being Wild",
+            "room_symbolism": {
+                "number": "2046",
+                "origin": "Hotel room from In the Mood for Love",
+                "meaning": "Place where memories sought but never recovered",
+                "sci_fi_novel": "Futuristic train to 2046 - nobody ever returns"
+            },
+            "echoes": "New characters resembling Su Li-zhen"
+        },
+        "narrative_technique": {
+            "nonlinear_timeline": "Jumps between periods and perspectives",
+            "fragmentation": "Reflects elusive nature of memory",
+            "layers": "Reality and imagination intertwined in 2046"
+        },
+        "recurring_motifs": {
+            "visual": [
+                "Clocks",
+                "Mirrors",
+                "Hotels",
+                "Trains"
+            ],
+            "symbolism": "Passage of time, introspection, transient spaces",
+            "step_printing": "Stretches emotional states, dreamlike atmosphere"
+        },
+        "character_repetition": {
+            "tony_leung": "Chow Mo-wan throughout",
+            "maggie_cheung": "Su Li-zhen (different characters, same name)",
+            "effect": "Parallel lives, echoes of past relationships"
+        },
+        "veo_prompt_keywords": [
+            "1960s Hong Kong nostalgia",
+            "love trilogy connection",
+            "room 2046 memory",
+            "unconsummated affair",
+            "futuristic train metaphor",
+            "character echo repetition",
+            "fragmented memory timeline",
+            "clock mirror hotel motif"
+        ]
+    }
+}

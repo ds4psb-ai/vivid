@@ -1,0 +1,86 @@
+{
+    "source_id": "tarantino_reservoir_dogs",
+    "auteur": "Quentin Tarantino",
+    "category": "filmography",
+    "title": "Quentin Tarantino Reservoir Dogs - Debut and Independent Vision",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "indiefilmhustle.com",
+            "topic": "Debut filmmaking"
+        },
+        {
+            "name": "larsenonfilm.com",
+            "topic": "Dialogue analysis"
+        },
+        {
+            "name": "screenplayhowto.com",
+            "topic": "Nonlinear structure"
+        },
+        {
+            "name": "medium.com",
+            "topic": "Opening scene breakdown"
+        }
+    ],
+    "content": {
+        "debut_significance": {
+            "premiere": "Sundance Film Festival 1992",
+            "impact": "Profoundly influenced independent cinema",
+            "recognition": "One of best independent films of all time"
+        },
+        "budget_evolution": {
+            "initial_concept": "$30,000",
+            "final_budget": "$1.5 million",
+            "catalyst": "Harvey Keitel involvement as actor/co-producer"
+        },
+        "contained_setting": {
+            "location": "Primarily warehouse",
+            "reason": "Practical choice from low budget",
+            "effect": "Intensified drama and character focus"
+        },
+        "dialogue_as_engine": {
+            "description": "Action movie comprised almost entirely of words",
+            "function": "Primary engine for character development and tension",
+            "characteristics": [
+                "Sharp",
+                "Extensive",
+                "Often profane"
+            ]
+        },
+        "opening_diner_scene": {
+            "topics": [
+                "Madonna's 'Like a Virgin' meaning",
+                "Tipping debate"
+            ],
+            "purpose": "Reveal character personalities without advancing plot",
+            "mr_pink": "Anti-tipping stance highlights character",
+            "effect": "Establishes crew dynamic"
+        },
+        "non_linear_structure": {
+            "omission": "Actual diamond heist never shown",
+            "focus": "Aftermath and psychological breakdown",
+            "technique": "Piecing together through flashbacks and accusations",
+            "theme": "Broken trust irreversible, past intensifies present pain"
+        },
+        "signature_elements_introduced": {
+            "list": [
+                "Graphic violence",
+                "Pop culture references",
+                "Memorable soundtrack",
+                "Non-linear narrative",
+                "Sharp dialogue"
+            ],
+            "legacy": "Became hallmarks of Tarantino style"
+        },
+        "veo_prompt_keywords": [
+            "indie debut warehouse",
+            "action movie of words",
+            "diner scene character",
+            "heist never shown",
+            "flashback accusation",
+            "broken trust tension",
+            "sharp profane dialogue",
+            "low budget contained"
+        ]
+    }
+}

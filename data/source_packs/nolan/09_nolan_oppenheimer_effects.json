@@ -1,0 +1,97 @@
+{
+    "source_id": "nolan_oppenheimer_effects",
+    "auteur": "Christopher Nolan",
+    "category": "film_analysis",
+    "title": "Christopher Nolan Oppenheimer - Trinity Practical Effects and Color/B&W",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "screencraft.org",
+            "topic": "Trinity sequence techniques"
+        },
+        {
+            "name": "ign.com",
+            "topic": "Practical effects interview"
+        },
+        {
+            "name": "screenrant.com",
+            "topic": "Color vs B&W meaning"
+        },
+        {
+            "name": "slashfilm.com",
+            "topic": "Fission and Fusion labels"
+        }
+    ],
+    "content": {
+        "trinity_sequence": {
+            "goal": "Make event threatening, nasty, frightening",
+            "approach": "Avoid CGI, primarily practical effects",
+            "sfx_supervisor": "Scott R. Fisher",
+            "vfx_supervisor": "Andrew Jackson"
+        },
+        "practical_effects_techniques": {
+            "macro_elements": {
+                "ping_pong_balls": "Smashed for visual texture",
+                "paint": "Hurled against walls",
+                "magnesium_solutions": "Luminous for blinding flashes"
+            },
+            "pyrotechnics": {
+                "gasoline_detonations": true,
+                "magnesium_flares": true,
+                "miniature_explosions": true,
+                "chemical_reactions": "Filmed in macro"
+            },
+            "brightness_simulation": "Aluminum powder and magnesium added",
+            "experimental_techniques": {
+                "aquariums": "Built with power elements",
+                "silver_particles": "Dropped for visual effect",
+                "metallic_balloons": "Molded, lit from within",
+                "variable_frame_rates": true,
+                "different_shutters": true
+            }
+        },
+        "filming_approach": {
+            "collage_method": "Based on firsthand accounts",
+            "not_attempting": "Single iconic shot from existing photos/film",
+            "scale_range": "Microscopic to large desert explosions"
+        },
+        "cgi_usage": {
+            "minimal": true,
+            "purpose": "Amplify visual impact",
+            "vfx_shots": "~100",
+            "practical_elements": "~400"
+        },
+        "color_vs_black_and_white": {
+            "color_scenes": {
+                "label": "Fission",
+                "perspective": "Oppenheimer's subjective experience",
+                "focus": [
+                    "Personal journey",
+                    "Emotional state",
+                    "Scientific process"
+                ]
+            },
+            "black_and_white": {
+                "label": "Fusion",
+                "perspective": "Objective view, primarily Lewis Strauss",
+                "focus": [
+                    "Historical hearings",
+                    "Political events",
+                    "Post-deployment"
+                ],
+                "technical": "Specially shot on IMAX film, developed by Kodak/Photo Cam"
+            },
+            "cultural_reflection": "B&W reflects McCarthyism and Cold War atmosphere"
+        },
+        "veo_prompt_keywords": [
+            "Trinity practical explosion",
+            "magnesium flash brightness",
+            "collage firsthand account",
+            "subjective color objective BW",
+            "Fission Fusion labels",
+            "macro chemical reaction",
+            "aluminum powder brightness",
+            "variable frame rate"
+        ]
+    }
+}

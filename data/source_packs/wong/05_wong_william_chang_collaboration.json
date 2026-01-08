@@ -1,0 +1,85 @@
+{
+    "source_id": "wong_william_chang_collaboration",
+    "auteur": "Wong Kar-wai",
+    "category": "collaboration",
+    "title": "Wong Kar-wai and William Chang Suk-ping Collaboration",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "wikipedia.org",
+            "topic": "William Chang biography"
+        },
+        {
+            "name": "filmarchive.gov.hk",
+            "topic": "Hong Kong Film Awards"
+        },
+        {
+            "name": "indepthcine.com",
+            "topic": "Step-printing technique"
+        },
+        {
+            "name": "hashtaglegend.com",
+            "topic": "Chang collaboration interview"
+        }
+    ],
+    "content": {
+        "collaborator_profile": {
+            "name": "William Chang Suk-ping",
+            "roles": [
+                "Production Designer",
+                "Costume Designer",
+                "Film Editor"
+            ],
+            "films_together": "Every Wong Kar-wai film",
+            "description": "Trusted confidant and visual architect"
+        },
+        "editing_achievements": {
+            "chungking_express": {
+                "award": "Best Film Editing - 14th Hong Kong Film Awards",
+                "technique": "Non-linear storytelling with step-printing"
+            },
+            "fallen_angels": {
+                "award": "Best Film Editing - 32nd Golden Horse Awards",
+                "technique": "Nocturnal alienation through visual rhythm"
+            }
+        },
+        "step_printing_technique": {
+            "process": {
+                "shooting": "Film at lower frame rates",
+                "post": "Duplicate frames during printing"
+            },
+            "visual_effect": {
+                "dreamlike": "Surreal quality",
+                "motion_blur": "Pronounced blur on movement",
+                "jerky_slow_motion": "Distinctive stutter effect"
+            },
+            "thematic_use": "Highlights character isolation against bustling Hong Kong"
+        },
+        "collaborative_workflow": {
+            "visual_style_development": "Instrumental in developing Wong's aesthetic",
+            "set_design": "Creates environments that reflect emotional states",
+            "costume_design": "Wardrobe as character extension",
+            "editing_rhythm": "Shapes narrative through rhythmic cutting"
+        },
+        "chungking_express_style": {
+            "camera": "Hand-held with wide-angle lenses",
+            "feel": "Chaotic yet emotionally resonant",
+            "editing": "Swift, shaky sequences for chaos"
+        },
+        "fallen_angels_style": {
+            "relationship": "Companion piece to Chungking Express",
+            "exploration": "Nocturnal alienation and city's pulse",
+            "further_development": "Extended step-printing and stylistic elements"
+        },
+        "veo_prompt_keywords": [
+            "William Chang editing",
+            "step-printing isolation",
+            "dreamlike motion blur",
+            "Hong Kong urban chaos",
+            "non-linear urban edit",
+            "nocturnal alienation",
+            "costume as character",
+            "hand-held wide angle"
+        ]
+    }
+}

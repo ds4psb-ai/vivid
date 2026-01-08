@@ -1,0 +1,82 @@
+{
+    "source_id": "nolan_inception_practical",
+    "auteur": "Christopher Nolan",
+    "category": "film_analysis",
+    "title": "Christopher Nolan Inception - Dream Architecture and Practical Effects",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "slate.com",
+            "topic": "Rotating hallway construction"
+        },
+        {
+            "name": "looper.com",
+            "topic": "Joseph Gordon-Levitt stunts"
+        },
+        {
+            "name": "mediafactory.org.au",
+            "topic": "Practical effects breakdown"
+        },
+        {
+            "name": "screenrant.com",
+            "topic": "Dream levels analysis"
+        }
+    ],
+    "content": {
+        "dream_architecture": {
+            "concept": "Architects create elaborate environments for dream infiltration",
+            "example_character": "Ariadne designs intricate dream worlds",
+            "time_mechanism": "Time slows considerably with each deeper level",
+            "nolan_goal": "Explore levels of reality and perceptions of reality"
+        },
+        "visual_coding": {
+            "level_1": "Grays, dark blues, blacks",
+            "level_2": "Warm oranges and browns",
+            "level_3": "Bright whites and grays",
+            "purpose": "Help audience follow multi-level narrative"
+        },
+        "rotating_hallway_scene": {
+            "construction": {
+                "size": "100-foot-long rotating set (giant centrifuge)",
+                "structure": "Hotel corridor built inside rotating drum",
+                "filming_time": "Full 3 weeks"
+            },
+            "camera_technique": {
+                "placement": "Mounted directly onto rotating set",
+                "effect": "Seamless zero-gravity simulation",
+                "lighting": "Integrated into set due to continuous rotation"
+            },
+            "additional_rigs": [
+                "Vertical rotating sets",
+                "Steel trolleys"
+            ]
+        },
+        "joseph_gordon_levitt": {
+            "stunt_performance": "Performed own stunts",
+            "training": "2 weeks rigorous preparation with stunt team",
+            "techniques": [
+                "Wire work",
+                "Adapting to spinning set"
+            ],
+            "no_green_screen": "Genuine off-balance movements from real rotation",
+            "precision_method": "Sang Bach to hit marks",
+            "no_motion_sickness": "Impressed directors who tried set"
+        },
+        "practical_effects_philosophy": {
+            "nolan_approach": "Practical effects over CGI",
+            "cgi_role": "Enhance rather than create fundamental elements",
+            "bistro_explosion": "High-pressure nitrogen + VFX enhancement",
+            "limbo_city": "Artist sketches + miniatures",
+            "paris_folding": "Green screen + CGI for impossible architecture"
+        },
+        "veo_prompt_keywords": [
+            "rotating hallway zero gravity",
+            "dream architecture levels",
+            "100ft centrifuge set",
+            "practical stunt wire work",
+            "warm orange dream level",
+            "miniature limbo city",
+            "impossible folding architecture"
+        ]
+    }
+}

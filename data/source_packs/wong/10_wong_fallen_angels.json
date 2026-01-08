@@ -1,0 +1,89 @@
+{
+    "source_id": "wong_fallen_angels",
+    "auteur": "Wong Kar-wai",
+    "category": "film_analysis",
+    "title": "Wong Kar-wai Fallen Angels - Urban Alienation and Visual Style",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "wikipedia.org",
+            "topic": "Production and visual techniques"
+        },
+        {
+            "name": "calxylian.com",
+            "topic": "Urban alienation themes"
+        },
+        {
+            "name": "hasta-standrews.com",
+            "topic": "Cinematography analysis"
+        },
+        {
+            "name": "medium.com",
+            "topic": "Wide-angle lens study"
+        }
+    ],
+    "content": {
+        "film_context": {
+            "year": "1995",
+            "setting": "Pre-Handover Hong Kong",
+            "themes": [
+                "Loneliness",
+                "Isolation",
+                "Yearning for connection",
+                "Urban alienation"
+            ]
+        },
+        "urban_alienation": {
+            "character_state": "Profoundly alienated despite proximity in bustling city",
+            "city_as_factor": "Intense demanding nature creates blasé protective mechanism",
+            "effect": "Forfeiture of individuality, distortion of love's meaning"
+        },
+        "cinematography": {
+            "cinematographer": "Christopher Doyle",
+            "night_setting": "Shot almost exclusively at night",
+            "wide_angle_lenses": {
+                "focal_length": "9.8mm or 6.8mm (ultra-wide)",
+                "effect": "Distorts faces and environment",
+                "paradox": "Distance-in-proximity, wide-angle claustrophobia",
+                "function": "Emphasize solitude and isolation"
+            }
+        },
+        "neon_aesthetic": {
+            "atmosphere": "Feverish nightscape",
+            "mood": "Romantic, mysterious Hong Kong",
+            "contribution": "Dreamlike ambiance",
+            "colors": [
+                "Neon orange",
+                "Green",
+                "Blue"
+            ]
+        },
+        "camera_techniques": {
+            "handheld": {
+                "style": "Meticulous movement following characters",
+                "effect": "Dynamic, restless energy"
+            },
+            "step_printing": {
+                "also_called": "Smudge-motion",
+                "effect": "Moving bodies leave spectral trail",
+                "connection": "Romanticism's obsession with transience"
+            }
+        },
+        "visual_style_effects": {
+            "frantic_visuals": "Out-of-focus, claustrophobic shots",
+            "green_filter": "1990s grunge aesthetic",
+            "fragmented_narrative": "Mood and atmosphere over structure",
+            "voiceover": "Replaces direct dialogue"
+        },
+        "veo_prompt_keywords": [
+            "ultra-wide distortion",
+            "neon feverish nightscape",
+            "step-printing spectral trail",
+            "wide-angle claustrophobia",
+            "urban alienation isolation",
+            "handheld restless energy",
+            "green grunge filter",
+            "dreamlike Hong Kong night"
+        ]
+    }
+}

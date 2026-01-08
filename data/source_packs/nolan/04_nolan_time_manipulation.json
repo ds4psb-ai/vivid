@@ -1,0 +1,95 @@
+{
+    "source_id": "nolan_time_manipulation",
+    "auteur": "Christopher Nolan",
+    "category": "narrative_structure",
+    "title": "Christopher Nolan Time Manipulation and Narrative Philosophy",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "wikipedia.org",
+            "topic": "Nolan filmmaking style"
+        },
+        {
+            "name": "screenrant.com",
+            "topic": "Time themes analysis"
+        },
+        {
+            "name": "observer.com",
+            "topic": "Tenet time inversion explained"
+        },
+        {
+            "name": "medium.com",
+            "topic": "Memento structure analysis"
+        }
+    ],
+    "content": {
+        "time_philosophy": {
+            "core_view": "Time as fundamental part of human experience",
+            "cinematic_approach": "Uniquely cinematic subject to explore",
+            "existential_themes": [
+                "Subjective experience",
+                "Memory distortion",
+                "Causality",
+                "Personal identity construction"
+            ]
+        },
+        "memento": {
+            "protagonist": "Leonard Shelby - anterograde amnesia",
+            "dual_timelines": {
+                "black_and_white": "Chronological progression",
+                "color": "Reverse chronological order"
+            },
+            "audience_effect": "Same disorientation as protagonist",
+            "themes": [
+                "Memory unreliability",
+                "Identity fragmented",
+                "Perception distortion"
+            ]
+        },
+        "tenet": {
+            "time_inversion": {
+                "concept": "Entropy of objects/individuals reversed",
+                "mechanism": "Turnstiles - futuristic devices enabling inversion"
+            },
+            "temporal_pincer": {
+                "definition": "Attack event from forward AND inverted directions simultaneously",
+                "effect": "Mind-bending action sequences"
+            },
+            "causality_challenge": {
+                "philosophy": "Effects precede causes from normal temporal viewpoint",
+                "inverted_entities": "Move backward through time"
+            }
+        },
+        "interstellar": {
+            "scientific_basis": "Einstein's theories of relativity",
+            "time_dilation": {
+                "cause": "Strong gravitational fields (near black hole)",
+                "effect": "Time passes slower for those near gravity source"
+            },
+            "emotional_consequence": {
+                "aging_rates": "Vast differences between characters",
+                "themes": [
+                    "Mortality",
+                    "Loss",
+                    "Preciousness of time"
+                ]
+            }
+        },
+        "editing_techniques": {
+            "elliptical_editing": true,
+            "cross_cutting": "Between different time frames",
+            "purpose": "Mirror complex nature of time"
+        },
+        "veo_prompt_keywords": [
+            "non-linear time structure",
+            "reverse chronological",
+            "time inversion entropy",
+            "temporal pincer attack",
+            "gravitational time dilation",
+            "memory fragmented identity",
+            "turnstile passage",
+            "cross-cut timelines",
+            "subjective time perception"
+        ]
+    }
+}

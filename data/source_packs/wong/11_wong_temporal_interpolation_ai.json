@@ -1,0 +1,64 @@
+{
+    "source_id": "wong_temporal_interpolation_ai",
+    "auteur": "Wong Kar-wai",
+    "category": "expert_analysis",
+    "title": "Wong Kar-wai Step-Printing and AI Temporal Interpolation Aesthetics",
+    "version": "2026.1",
+    "sources": [
+        {
+            "name": "indepthcine.com",
+            "topic": "Step printing process analysis"
+        },
+        {
+            "name": "austinschmidt.com",
+            "topic": "Undercranking and shutter angle physics"
+        },
+        {
+            "name": "tensorpix.ai",
+            "topic": "AI video interpolation mechanisms"
+        },
+        {
+            "name": "neuralframes.com",
+            "topic": "AI temporal guidance"
+        }
+    ],
+    "content": {
+        "expert_analysis": {
+            "temporal_distortion_physics": {
+                "step_printing_mechanism": "Duplicating frames (e.g., 1-1-2-2-3-3) to stretch time while maintaining kinetic energy",
+                "undercranking_physics": "Shooting 6-12 fps with 360-degree shutter",
+                "visual_result": "Smearing motion blur + jagged strobing cadence",
+                "emotional_function": "Subjective time dilation, memory fragmentation, urban isolation"
+            },
+            "frame_rate_psychology": {
+                "smoothness_paradox": "Rejection of 24fps/60fps realism for subjective expressionism",
+                "blur_as_emotion": "Motion blur magnitude correlates with character internal chaos"
+            }
+        },
+        "ai_video_generation_implications": {
+            "interpolation_counter_strategy": {
+                "challenge": "Standard AI (RIFE, FILM) aims for smoothing, destroying Wong's aesthetic",
+                "solution": "Reverse-engineering step-printing via 'frame-dropping' post-generation",
+                "prompting_stuter": "Prompting 'low frame rate', 'stroboscopic motion', 'long exposure shutter'"
+            },
+            "style_transfer_tokens": {
+                "temporal_tokens": "step-printing, smear motion, ghosting trails, 12fps playback",
+                "color_latency": "Latent space color bleeding between frames to simulate film chemical transitions"
+            },
+            "generative_workflow": {
+                "technique": "Generate at normal speed -> Algorithmically remove frames -> Apply optical flow smear -> Re-time to 24fps",
+                "glitch_aesthetic": "Intentional utilization of interpolation artifacts to mimic 'memory decay'"
+            }
+        },
+        "veo_prompt_keywords": [
+            "step-printing stroboscopic effect",
+            "long shutter smear motion",
+            "6fps undercranked aesthetic",
+            "neon ghosting trails",
+            "temporal distortion blur",
+            "fragmented memory sequence",
+            "jagged motion cadence",
+            "urban isolation time dilation"
+        ]
+    }
+}

@@ -1,0 +1,103 @@
+{
+    "source_id": "tarantino_violence_aesthetics",
+    "auteur": "Quentin Tarantino",
+    "category": "thematic_analysis",
+    "title": "Quentin Tarantino Violence Aesthetics and Philosophy",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "youtube.com",
+            "topic": "Tarantino violence interview"
+        },
+        {
+            "name": "hlrecord.org",
+            "topic": "Violence as aesthetic experience"
+        },
+        {
+            "name": "medium.com",
+            "topic": "Django Unchained violence analysis"
+        },
+        {
+            "name": "sleek-mag.com",
+            "topic": "Kill Bill violence style"
+        }
+    ],
+    "content": {
+        "violence_philosophy": {
+            "self_view": "Orchestra conductor manipulating audience emotions",
+            "goals": [
+                "Catharsis",
+                "Laughter",
+                "Sometimes horror"
+            ],
+            "core_belief": "If violence executed effectively, it's good cinema",
+            "realism_preference": "Characters bleeding like stuck pig, not just red dot",
+            "real_world_link": "Declines to link on-screen to real-world violence"
+        },
+        "aestheticization": {
+            "transformation": "Violence becomes aesthetic experience and expressive art",
+            "characteristics": [
+                "Physically graceful",
+                "Visually dazzling",
+                "Meticulously executed"
+            ],
+            "audience_reaction": "Wonder and awe, not horror",
+            "inspirations": [
+                "Asian martial arts films",
+                "Spaghetti westerns",
+                "Grindhouse"
+            ]
+        },
+        "kill_bill": {
+            "violence_style": {
+                "form": "Martial-arts based",
+                "scale": "Grindhouse scale (swords severing limbs, blood volcanoes)"
+            },
+            "thematic_purpose": {
+                "narrative_driver": "Advances revenge plot",
+                "empowerment": "Female empowerment theme"
+            },
+            "bw_flashback_technique": {
+                "purpose": "Helped with film rating",
+                "effect": "Emphasizes motive for revenge over explicit gore"
+            },
+            "interpretation": "Gesture of self-realization, not moral reprehensibility"
+        },
+        "django_unchained": {
+            "dual_violence_types": {
+                "brutal_reality": {
+                    "depiction": "Sobering reality of slavery",
+                    "scenes": [
+                        "Mandingo fights",
+                        "Dog attacks"
+                    ],
+                    "purpose": "Immerse 21st century audience in antebellum South horrors"
+                },
+                "cathartic_movie_violence": {
+                    "character": "Django's retribution",
+                    "effect": "Victims ultimately victorious",
+                    "purpose": "Provide catharsis"
+                }
+            },
+            "violence_levels": {
+                "differentiation": "Correlated with character type",
+                "categories": [
+                    "Cannon fodder",
+                    "Enslaved people",
+                    "Victims of vengeance"
+                ]
+            }
+        },
+        "veo_prompt_keywords": [
+            "aestheticized violence",
+            "graceful martial arts violence",
+            "blood volcano stylized",
+            "cathartic revenge violence",
+            "grindhouse scale",
+            "wonder not horror",
+            "orchestra conductor emotion",
+            "dual violence types",
+            "expressive art violence"
+        ]
+    }
+}

@@ -1,0 +1,83 @@
+{
+    "source_id": "nolan_imax_aspect_ratio",
+    "auteur": "Christopher Nolan",
+    "category": "visual_style",
+    "title": "Christopher Nolan IMAX Aspect Ratio Philosophy",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "cineworld.co.uk",
+            "topic": "Dark Knight IMAX impact"
+        },
+        {
+            "name": "colorculture.org",
+            "topic": "IMAX cinematography analysis"
+        },
+        {
+            "name": "youtube.com",
+            "topic": "Aspect ratio transitions"
+        },
+        {
+            "name": "wikipedia.org",
+            "topic": "Dark Knight production details"
+        }
+    ],
+    "content": {
+        "pioneering_achievement": {
+            "significance": "First major narrative feature extensively integrating IMAX",
+            "impact": "Game-changer for Hollywood blockbusters",
+            "dark_knight_stats": {
+                "imax_footage": "28 minutes (~15-20% of runtime)",
+                "standard_footage": "35mm with Panavision anamorphic lenses"
+            }
+        },
+        "aspect_ratio_philosophy": {
+            "dynamic_transitions": {
+                "35mm_ratio": "2.39:1 or 2.40:1 (wider, cinematic)",
+                "imax_ratio": "1.43:1 or 1.78:1 (taller, filling screen)",
+                "effect": "Visual expansion during key moments"
+            },
+            "storytelling_purpose": {
+                "selection_criteria": "Moments demanding enhanced immersion",
+                "function": "Heighten importance of scenes"
+            }
+        },
+        "dark_knight_examples": {
+            "opening_bank_robbery": {
+                "format": "IMAX",
+                "purpose": "Establish distinct sense of scope vs Batman Begins"
+            },
+            "convoy_chase": "IMAX for vehicular action",
+            "batpod_sequences": "Expanded format for vehicle introduction",
+            "hong_kong_sequences": {
+                "technique": "IMAX for exteriors, 35mm for interiors",
+                "justification": "Justified switching between ratios"
+            }
+        },
+        "immersion_goals": {
+            "gotham_portrayal": "Width and depth - metropolis on brink of chaos",
+            "visual_realism": "Naturalistic subtle filmic realism",
+            "audience_experience": "Feel like active participants in action",
+            "perspective": "On the ground perspective"
+        },
+        "technical_challenges": {
+            "camera_issues": [
+                "Bulky",
+                "Noisy",
+                "Costly"
+            ],
+            "cinematographer": "Wally Pfister",
+            "solution": "Movement motivated by narrative throughout"
+        },
+        "veo_prompt_keywords": [
+            "IMAX aspect ratio transition",
+            "expanded frame immersion",
+            "35mm to IMAX switch",
+            "heightened scene importance",
+            "Gotham width depth",
+            "naturalistic filmic realism",
+            "ground perspective action",
+            "dynamic ratio storytelling"
+        ]
+    }
+}

@@ -1,0 +1,92 @@
+{
+    "source_id": "villeneuve_incendies",
+    "auteur": "Denis Villeneuve",
+    "category": "filmography",
+    "title": "Denis Villeneuve Incendies - Quebec Roots and Pre-Hollywood Vision",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "cbc.ca",
+            "topic": "Film impact on Quebec cinema"
+        },
+        {
+            "name": "wikipedia.org",
+            "topic": "Production and themes"
+        },
+        {
+            "name": "thecanadianencyclopedia.ca",
+            "topic": "Canadian perspective"
+        },
+        {
+            "name": "mainakmisra.com",
+            "topic": "Narrative analysis"
+        }
+    ],
+    "content": {
+        "film_significance": {
+            "year": "2010",
+            "impact": "Gave wings to Quebec cinema",
+            "recognition": "Academy Award nomination for Best Foreign Language Film",
+            "launch": "Propelled Villeneuve to international stage"
+        },
+        "quebec_cinema_qualities": {
+            "described_as": "Strong, open to the world, generous and ambitious",
+            "built_on": "Solid stories and bold directing",
+            "earlier_films": [
+                "Polytechnique",
+                "Maelström"
+            ]
+        },
+        "source_material": {
+            "adapted_from": "Play by Wajdi Mouawad",
+            "playwright": "Lebanese-born Quebecois",
+            "setting": "Unnamed Middle Eastern country (implied Lebanon)"
+        },
+        "narrative_structure": {
+            "starting_point": "Quebec, Canada",
+            "twins": "Jeanne and Simon Marwan",
+            "quest": "Uncover mother's mysterious past",
+            "perspective": "North American vantage point discovering heritage"
+        },
+        "themes": {
+            "identity_search": {
+                "tradition": "Central to Canadian/Quebecois storytelling",
+                "in_film": "Twins grapple with heritage and origins"
+            },
+            "intergenerational_trauma": {
+                "exploration": "Lasting impact of war across generations",
+                "resonance": "Immigrant communities in Canada"
+            },
+            "resilience_reconciliation": {
+                "despite": "Brutal civil war depiction",
+                "leans_toward": "Love, peace, potential for reconciliation"
+            },
+            "strong_female_characters": {
+                "nawal": "Immense strength, integrity, resilience",
+                "pattern": "Recurring element in Villeneuve's work"
+            },
+            "greek_tragedy": {
+                "villeneuve_acknowledged": "Greek tragedy element",
+                "effect": "Universal, timeless quality"
+            }
+        },
+        "pre_hollywood_style": {
+            "techniques": [
+                "Long takes",
+                "Precise mise-en-scène"
+            ],
+            "focus": "Atmospheric mood over excessive dialogue",
+            "approach": "Intimate, character-driven narratives"
+        },
+        "veo_prompt_keywords": [
+            "Quebec cinema roots",
+            "intergenerational trauma",
+            "identity quest narrative",
+            "Greek tragedy modern",
+            "civil war resilience",
+            "North American heritage",
+            "long take atmosphere",
+            "pre-Hollywood intimate"
+        ]
+    }
+}

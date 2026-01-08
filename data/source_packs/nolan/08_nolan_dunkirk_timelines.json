@@ -1,0 +1,82 @@
+{
+    "source_id": "nolan_dunkirk_timelines",
+    "auteur": "Christopher Nolan",
+    "category": "film_analysis",
+    "title": "Christopher Nolan Dunkirk - Three Timelines and IMAX Immersion",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "narrativefirst.com",
+            "topic": "Timeline structure analysis"
+        },
+        {
+            "name": "collider.com",
+            "topic": "IMAX filming interview"
+        },
+        {
+            "name": "movieweb.com",
+            "topic": "Duration breakdown"
+        },
+        {
+            "name": "youtube.com",
+            "topic": "Spitfire filming"
+        }
+    ],
+    "content": {
+        "timeline_structure": {
+            "innovation": "Three distinct timelines at different temporal paces",
+            "convergence": "Timelines converge toward singular climax",
+            "rationale": "Represent different temporal experiences of Dunkirk evacuation"
+        },
+        "three_timelines": {
+            "the_mole_land": {
+                "focus": "Soldiers trapped on beach",
+                "duration": "One week",
+                "color_coding": "Earth tones, grey"
+            },
+            "the_sea": {
+                "focus": "Civilian boats in rescue effort",
+                "duration": "One day",
+                "color_coding": "Blue ocean tones"
+            },
+            "the_air": {
+                "focus": "RAF Spitfire pilots in aerial combat",
+                "duration": "One hour",
+                "color_coding": "Sky blues, cockpit intimacy"
+            }
+        },
+        "spitfire_importance": {
+            "historical_role": "Provided crucial air cover for evacuation",
+            "nolan_view": "Iconic symbol, extraordinary machine",
+            "personal_experience": "Flew Spitfire during pre-production",
+            "goal": "Convey visceral dogfight experience to audience"
+        },
+        "imax_approach": {
+            "percentage": "Most of movie filmed in IMAX",
+            "purpose": "Highly visceral, experiential two hours",
+            "challenges": {
+                "cockpit_filming": "Large cameras in confined Spitfire space",
+                "solution": "Developed tricks over long IMAX history"
+            },
+            "qualities": "Incredible resolution, color depth, analog quality"
+        },
+        "audience_placement": {
+            "goal": "Place audience directly into action",
+            "locations": [
+                "Beach",
+                "Sea",
+                "Air"
+            ],
+            "effect": "Immersive war experience"
+        },
+        "veo_prompt_keywords": [
+            "three timeline convergence",
+            "week day hour structure",
+            "Spitfire cockpit IMAX",
+            "beach evacuation grey",
+            "civilian boat rescue",
+            "aerial dogfight immersion",
+            "temporal pace variation"
+        ]
+    }
+}

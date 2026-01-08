@@ -1,0 +1,84 @@
+{
+    "source_id": "wong_happy_together",
+    "auteur": "Wong Kar-wai",
+    "category": "film_analysis",
+    "title": "Wong Kar-wai Happy Together - Exile and Color in Buenos Aires",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "sensesatlas.com",
+            "topic": "Buenos Aires exile themes"
+        },
+        {
+            "name": "textandcolor.com",
+            "topic": "Color cinematography analysis"
+        },
+        {
+            "name": "thequietus.com",
+            "topic": "1997 handover context"
+        },
+        {
+            "name": "substack.com",
+            "topic": "Christopher Doyle techniques"
+        }
+    ],
+    "content": {
+        "setting": {
+            "location": "Buenos Aires, Argentina",
+            "significance": "Geographical and metaphorical antipode of Hong Kong",
+            "symbolism": "Opposite of home, displacement",
+            "aesthetic": "Late-night neon vibe similar to Hong Kong with melancholy aura"
+        },
+        "protagonists": {
+            "ho_po_wing": "Leslie Cheung",
+            "lai_yiu_fai": "Tony Leung Chiu-wai",
+            "relationship": "Tumultuous romance, attempt to rekindle",
+            "goal": "Visit Iguazu Falls"
+        },
+        "cinematography": {
+            "cinematographer": "Christopher Doyle",
+            "style": {
+                "color": "Vivid, oversaturated, impressionistic",
+                "contrast": "Juxtaposed with high-contrast black-and-white"
+            },
+            "techniques": {
+                "gels": "Applied to lenses to intensify colors",
+                "lenses": "Extreme wide-angle"
+            },
+            "color_symbolism": {
+                "yellow": "Urban living and certain emotions",
+                "red": "Melodrama and passion"
+            },
+            "temporal_function": "Shifts between past and present, underscores emotional states"
+        },
+        "exile_theme": {
+            "geographic": "Lost in Argentina, far from home",
+            "emotional": "Isolated from familiar social and emotional contexts",
+            "manifestations": [
+                "Marginalization",
+                "Uprooting",
+                "Loneliness",
+                "Suffocation in foreign urban environment"
+            ]
+        },
+        "1997_handover_context": {
+            "historical": "Hong Kong handover to China imminent during filming",
+            "reflection": "Migration and displacement anxieties of Hong Kongers",
+            "emotional_instability": "Key aspect of Argentine exile narrative"
+        },
+        "locations": {
+            "la_boca": "Colorful neighborhood featured",
+            "obelisco": "Shown in sped-up footage representing swift time passage"
+        },
+        "veo_prompt_keywords": [
+            "Buenos Aires exile",
+            "saturated color B&W contrast",
+            "handover anxiety diaspora",
+            "neon melancholy urban",
+            "Iguazu Falls journey",
+            "yellow urban emotion",
+            "antipode displacement",
+            "Christopher Doyle gels"
+        ]
+    }
+}
