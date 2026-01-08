@@ -832,19 +832,24 @@ async def get_session(
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    messages_result = await db.execute(
-        select(AgentMessageRecord)
-        .where(AgentMessageRecord.session_id == session_uuid)
-        .order_by(AgentMessageRecord.created_at.asc())
-    )
-    messages = messages_result.scalars().all()
+    # Performance optimization: parallel queries for messages and artifacts
+    async def _fetch_messages():
+        r = await db.execute(
+            select(AgentMessageRecord)
+            .where(AgentMessageRecord.session_id == session_uuid)
+            .order_by(AgentMessageRecord.created_at.asc())
+        )
+        return r.scalars().all()
 
-    artifacts_result = await db.execute(
-        select(AgentArtifact)
-        .where(AgentArtifact.session_id == session_uuid)
-        .order_by(AgentArtifact.created_at.asc())
-    )
-    artifacts = artifacts_result.scalars().all()
+    async def _fetch_artifacts():
+        r = await db.execute(
+            select(AgentArtifact)
+            .where(AgentArtifact.session_id == session_uuid)
+            .order_by(AgentArtifact.created_at.asc())
+        )
+        return r.scalars().all()
+
+    messages, artifacts = await asyncio.gather(_fetch_messages(), _fetch_artifacts())
 
     artifact_responses = [
         AgentArtifactResponse(

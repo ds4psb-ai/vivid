@@ -11,6 +11,11 @@ engine = create_async_engine(
     settings.DATABASE_URL,
     pool_pre_ping=True,
     echo=settings.ENVIRONMENT == "development",
+    # Performance tuning: connection pool configuration
+    pool_size=10,           # Maintain 10 persistent connections
+    max_overflow=20,        # Allow up to 20 extra connections during peak
+    pool_recycle=1800,      # Recycle connections after 30 minutes (prevent stale)
+    pool_timeout=30,        # Wait max 30s for available connection
 )
 
 AsyncSessionLocal = async_sessionmaker(
