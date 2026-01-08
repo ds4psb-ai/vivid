@@ -121,6 +121,13 @@ class Settings(BaseSettings):
     
     # Logging
     LOG_LEVEL: str = "INFO"  # DEBUG, INFO, WARNING, ERROR
+    
+    # Langfuse Observability (Phase 4)
+    # Get keys from https://langfuse.com
+    LANGFUSE_SECRET_KEY: str = ""
+    LANGFUSE_PUBLIC_KEY: str = ""
+    LANGFUSE_HOST: str = "https://cloud.langfuse.com"
+    LANGFUSE_ENABLED: bool = True
 
     @property
     def DATABASE_URL(self) -> str:

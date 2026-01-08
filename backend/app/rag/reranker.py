@@ -27,6 +27,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Literal, Optional, TYPE_CHECKING
 
 from app.config import settings
+from app.rag.observability import trace_rag
 
 logger = logging.getLogger(__name__)
 
@@ -111,6 +112,7 @@ class VertexReranker:
             f"/rankingConfigs/default_ranking_config"
         )
     
+    @trace_rag(name="vertex_rerank", tags=["rag", "reranker"])
     async def rerank(
         self,
         query: str,

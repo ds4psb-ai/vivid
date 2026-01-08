@@ -24,6 +24,7 @@ from google import genai
 from google.genai import types
 
 from app.config import settings
+from app.rag.observability import trace_rag
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +68,7 @@ HYDE_SYSTEM_PROMPT = """당신은 문서 생성 전문가입니다.
 # Query Expansion Functions
 # ============================================================================
 
+@trace_rag(name="query_expansion", tags=["rag", "expansion"])
 async def expand_query(
     query: str,
     strategy: EXPANSION_STRATEGIES = DEFAULT_STRATEGY,

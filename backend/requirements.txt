@@ -20,3 +20,5 @@ notion-to-md-py>=0.1.4
 qdrant-client>=1.7.0
 sentence-transformers>=2.2.2
 aiofiles
+# Observability (Phase 4)
+langfuse>=2.0.0

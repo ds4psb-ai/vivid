@@ -41,6 +41,7 @@ from app.rag.tier0_vertex_rag import (
     VertexRAGResult,
     RAGSource,
 )
+from app.rag.observability import trace_rag
 
 logger = logging.getLogger(__name__)
 
@@ -120,6 +121,7 @@ DIMENSION_TO_CORPUS: Dict[str, str] = {
 # Hybrid Query Functions
 # ============================================================================
 
+@trace_rag(name="hybrid_query", tags=["rag", "hybrid"])
 async def hybrid_query(
     query: str,
     auteur_key: Optional[str] = None,
