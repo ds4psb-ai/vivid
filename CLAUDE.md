@@ -2,6 +2,34 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+---
+
+## ⚡ Quick Rules (반드시 지킬 것)
+
+### 검증 명령어
+```bash
+# Backend 변경 후 (필수)
+cd backend && source venv/bin/activate && pytest --tb=short -q
+
+# Frontend 변경 후 (필수)
+cd frontend && npm run build
+```
+
+### 핵심 원칙
+1. **확인 후 코딩**: `Grep`/`Read`로 파일 존재 확인 → 코드 작성
+2. **테스트 동반**: 새 기능 추가 시 테스트도 함께 작성
+3. **에러 처리 포함**: try-except, rollback 패턴 적용
+4. **타입 명시**: Python type hints, TypeScript strict
+
+### 환각 금지
+```
+❌ 존재하지 않는 파일/함수 참조 금지
+❌ 추측으로 import 작성 금지
+✅ 불확실하면 Grep으로 먼저 검색
+```
+
+---
+
 ## Project Overview
 
 **Crebit Studio** - A full-stack platform for creative AI content generation.
