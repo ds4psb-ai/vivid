@@ -90,6 +90,45 @@ class WebhookCapabilityConfig:
 
 
 # =============================================================================
+# Pipeline Configuration (RAG-as-a-Service)
+# =============================================================================
+
+@dataclass
+class IngestionConfig:
+    """데이터 수집 파이프라인 설정."""
+    source: str  # 소스 경로 (gcs://, s3://, file://)
+    strategy: str = "semantic"  # semantic, markdown_header, recursive_char
+    chunk_size: int = 1024
+    chunk_overlap: int = 100
+    file_patterns: List[str] = field(default_factory=lambda: ["*.md", "*.txt", "*.pdf"])
+
+@dataclass
+class RetrievalConfig:
+    """검색 전략 설정."""
+    strategy: str = "hybrid"  # hybrid, semantic, keyword
+    top_k: int = 10
+    score_threshold: float = 0.7
+    reranker: Optional[str] = None  # cohere, cross-encoder, vertex
+    include_metadata: bool = True
+
+@dataclass
+class GenerationConfig:
+    """생성 설정."""
+    template: str = "default"  # 프롬프트 템플릿 이름 (templates/rag/)
+    model: str = "gemini-2.0-flash-exp"  # 기본 모델
+    temperature: float = 0.7
+    max_tokens: int = 2048
+    system_instruction: Optional[str] = None
+
+@dataclass
+class PipelineConfig:
+    """선언형 RAG 파이프라인 (Level 4)."""
+    ingestion: Optional[IngestionConfig] = None
+    retrieval: Optional[RetrievalConfig] = None
+    generation: Optional[GenerationConfig] = None
+
+
+# =============================================================================
 # Extensions (Hexagonal Adapters - Domain-specific)
 # =============================================================================
 
@@ -176,6 +215,8 @@ class AppConfig:
     display: Display = field(default_factory=Display)
     capabilities: List[Capability] = field(default_factory=list)
     extensions: Extensions = field(default_factory=Extensions)
+    extensions: Extensions = field(default_factory=Extensions)
+    pipeline: Optional[PipelineConfig] = None
     keywords: Keywords = field(default_factory=Keywords)
     
     # 내부 상태
@@ -269,12 +310,60 @@ class AppConfig:
         kw_data = data.get("keywords", {})
         keywords = Keywords(patterns=kw_data.get("patterns", []))
         
+        # Pipeline
+        pipeline = None
+        if "pipeline" in data:
+            pipe_data = data["pipeline"]
+            
+            # Ingestion
+            ingestion = None
+            if "ingestion" in pipe_data:
+                ing_data = pipe_data["ingestion"]
+                ingestion = IngestionConfig(
+                    source=ing_data.get("source", ""),
+                    strategy=ing_data.get("strategy", "semantic"),
+                    chunk_size=ing_data.get("chunk_size", 1024),
+                    chunk_overlap=ing_data.get("chunk_overlap", 100),
+                    file_patterns=ing_data.get("file_patterns", ["*.md", "*.txt", "*.pdf"]),
+                )
+                
+            # Retrieval
+            retrieval = None
+            if "retrieval" in pipe_data:
+                ret_data = pipe_data["retrieval"]
+                retrieval = RetrievalConfig(
+                    strategy=ret_data.get("strategy", "hybrid"),
+                    top_k=ret_data.get("top_k", 10),
+                    score_threshold=ret_data.get("score_threshold", 0.7),
+                    reranker=ret_data.get("reranker"),
+                    include_metadata=ret_data.get("include_metadata", True),
+                )
+                
+            # Generation
+            generation = None
+            if "generation" in pipe_data:
+                gen_data = pipe_data["generation"]
+                generation = GenerationConfig(
+                    template=gen_data.get("template", "default"),
+                    model=gen_data.get("model", "gemini-2.0-flash-exp"),
+                    temperature=gen_data.get("temperature", 0.7),
+                    max_tokens=gen_data.get("max_tokens", 2048),
+                    system_instruction=gen_data.get("system_instruction"),
+                )
+            
+            pipeline = PipelineConfig(
+                ingestion=ingestion,
+                retrieval=retrieval,
+                generation=generation,
+            )
+        
         return cls(
             schema_version=data.get("$schema", "vivid-app/v2"),
             metadata=metadata,
             display=display,
             capabilities=capabilities,
             extensions=extensions,
+            pipeline=pipeline,
             keywords=keywords,
         )
     
@@ -299,6 +388,34 @@ class AppConfig:
             ],
             "keywords": {"patterns": self.keywords.patterns},
         }
+        
+        if self.pipeline:
+            pipe_dict = {}
+            if self.pipeline.ingestion:
+                pipe_dict["ingestion"] = {
+                    "source": self.pipeline.ingestion.source,
+                    "strategy": self.pipeline.ingestion.strategy,
+                    "chunk_size": self.pipeline.ingestion.chunk_size,
+                    "chunk_overlap": self.pipeline.ingestion.chunk_overlap,
+                    "file_patterns": self.pipeline.ingestion.file_patterns,
+                }
+            if self.pipeline.retrieval:
+                pipe_dict["retrieval"] = {
+                    "strategy": self.pipeline.retrieval.strategy,
+                    "top_k": self.pipeline.retrieval.top_k,
+                    "score_threshold": self.pipeline.retrieval.score_threshold,
+                    "reranker": self.pipeline.retrieval.reranker,
+                    "include_metadata": self.pipeline.retrieval.include_metadata,
+                }
+            if self.pipeline.generation:
+                pipe_dict["generation"] = {
+                    "template": self.pipeline.generation.template,
+                    "model": self.pipeline.generation.model,
+                    "temperature": self.pipeline.generation.temperature,
+                    "max_tokens": self.pipeline.generation.max_tokens,
+                    "system_instruction": self.pipeline.generation.system_instruction,
+                }
+            result["pipeline"] = pipe_dict
         
         if self.extensions.auteur:
             result["extensions"] = {
@@ -348,7 +465,13 @@ __all__ = [
     "RAGCapabilityConfig",
     "AuteurExtension",
     "AnalyticsExtension",
+    "AuteurExtension",
+    "AnalyticsExtension",
     "Extensions",
+    "IngestionConfig",
+    "RetrievalConfig",
+    "GenerationConfig",
+    "PipelineConfig",
     "AppMetadata",
     "Display",
     "Keywords",

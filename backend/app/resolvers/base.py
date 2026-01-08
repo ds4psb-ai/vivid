@@ -191,8 +191,13 @@ class BaseCapsuleResolver(ABC):
             result.update(hints)
         
         # 2. 거장 레퍼런스에서 스타일 힌트 추출 (v2: YAML 기반 동적 조회)
+        # ⚠️ ISOLATION: content 컨텍스트에서만 거장 스타일 적용 (다른 앱 타입으로 누출 방지)
         auteur_ref = rag_context.get("auteur_reference", "")
-        if auteur_ref:
+        apply_auteur_style = rag_context.get("apply_auteur_style", True)  # 명시적 비활성화 가능
+        bounded_context = rag_context.get("bounded_context", "content")  # 기본: content
+        
+        # 격리 조건: content 컨텍스트가 아니거나 명시적으로 비활성화된 경우 스킵
+        if auteur_ref and apply_auteur_style and bounded_context == "content":
             # v2: Registry에서 동적으로 스타일 힌트 조회
             from app.rag.rag_presets import get_auteur_style_hints
             

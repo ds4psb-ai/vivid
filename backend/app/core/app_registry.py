@@ -103,8 +103,15 @@ class AppRegistry:
         logger.info(f"AppRegistry initialized: {len(cls._apps)} apps registered")
     
     @classmethod
+    def _ensure_initialized(cls) -> None:
+        """자동 초기화."""
+        if not cls._initialized:
+            cls.discover()
+    
+    @classmethod
     def get_by_name(cls, name: str) -> Optional[AppConfig]:
         """이름으로 앱 조회."""
+        cls._ensure_initialized()
         return cls._apps.get(name)
     
     @classmethod

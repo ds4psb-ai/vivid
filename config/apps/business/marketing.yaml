@@ -1,0 +1,48 @@
+# Marketing Advisor App
+# 선언형 RAG 파이프라인 예시
+
+$schema: vivid-app/v2
+
+metadata:
+  name: marketing_advisor
+  type: utility
+  version: "1.0.0"
+  bounded_context: content
+
+display:
+  name_ko: 마케팅 어드바이저
+  name_en: Marketing Advisor
+  icon: 📈
+  description: 마케팅 전략 및 카피라이팅 조언 제공
+
+pipeline:
+  ingestion:
+    source: "gcs://vivid-data/marketing/"
+    strategy: markdown_header
+    chunk_size: 512
+    chunk_overlap: 50
+    
+  retrieval:
+    strategy: hybrid
+    top_k: 5
+    score_threshold: 0.7
+    reranker: null
+    
+  generation:
+    template: default
+    model: gemini-2.0-flash-exp
+    temperature: 0.8
+    max_tokens: 2048
+
+capabilities:
+  - name: rag
+    enabled: true
+    config:
+      mode: always
+
+keywords:
+  patterns:
+    - 마케팅
+    - 광고
+    - 카피
+    - 브랜딩
