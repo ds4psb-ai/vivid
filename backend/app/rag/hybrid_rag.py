@@ -66,6 +66,11 @@ class HybridRAGResult:
     auteur_key: Optional[str] = None
     dimension: Optional[str] = None
     grounded: bool = False
+    # === NEW: Reranker & Metrics ===
+    reranked: bool = False
+    rerank_model: Optional[str] = None
+    retrieval_count: int = 0  # 검색된 문서 수
+    source_scores: List[float] = field(default_factory=list)  # 각 소스의 점수
 
 
 # ============================================================================
@@ -151,10 +156,22 @@ async def hybrid_query(
     result.query_time_ms = int((time.monotonic() - start_time) * 1000)
     result.auteur_key = auteur_key
     result.dimension = dimension
+    
+    # Calculate retrieval count
+    result.retrieval_count = (
+        len(result.notebooklm_sources) + 
+        len(result.vertex_sources) + 
+        len(result.grounding_sources)
+    )
 
+    # Enhanced logging with metrics
     logger.info(
-        f"[HybridRAG] Query completed: strategy={result.strategy_used}, "
-        f"confidence={result.confidence:.2f}, time={result.query_time_ms}ms"
+        f"[HybridRAG] Query completed | "
+        f"strategy={result.strategy_used} | "
+        f"confidence={result.confidence:.2f} | "
+        f"time={result.query_time_ms}ms | "
+        f"sources={result.retrieval_count} | "
+        f"reranked={result.reranked}"
     )
 
     return result
