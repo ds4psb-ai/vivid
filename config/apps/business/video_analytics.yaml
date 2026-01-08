@@ -1,0 +1,59 @@
+# Video Analytics App
+# 비디오 분석 대시보드 앱 예시
+
+$schema: "vivid-app/v2"
+
+metadata:
+  name: video_analytics
+  type: analytics
+  version: "1.0.0"
+  bounded_context: analytics
+
+display:
+  name_ko: "비디오 분석"
+  name_en: "Video Analytics"
+  icon: "📊"
+  description: "비디오 퍼포먼스 및 사용자 행동을 분석합니다."
+
+capabilities:
+  - name: rag
+    enabled: false  # 분석 앱은 RAG 불필요
+    
+  - name: export
+    enabled: true
+    config:
+      formats:
+        - pdf
+        - csv
+        - json
+        
+  - name: scheduler
+    enabled: true
+    config:
+      cron: "0 9 * * 1"  # 매주 월요일 9시
+
+  - name: cache
+    enabled: true
+    config:
+      ttl: 3600  # 1시간
+
+extensions:
+  analytics:
+    metrics:
+      - view_count
+      - engagement_rate
+      - completion_rate
+      - share_count
+      - like_ratio
+    dashboards:
+      - weekly_summary
+      - auteur_comparison
+      - dimension_breakdown
+    retention_days: 90
+
+keywords:
+  patterns:
+    - "analytics"
+    - "분석"
+    - "대시보드"
+    - "통계"

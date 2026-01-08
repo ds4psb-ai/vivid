@@ -1,0 +1,52 @@
+# Slack Notifier Integration App
+# 외부 서비스 연동 앱 예시
+
+$schema: "vivid-app/v2"
+
+metadata:
+  name: slack_notifier
+  type: integration
+  version: "1.0.0"
+  bounded_context: integrations
+
+display:
+  name_ko: "Slack 알림"
+  name_en: "Slack Notifier"
+  icon: "💬"
+  description: "비디오 생성 완료 시 Slack 채널로 알림을 전송합니다."
+
+capabilities:
+  - name: webhook
+    enabled: true
+    config:
+      events:
+        - generation_complete
+        - generation_failed
+        - review_requested
+      
+  - name: notification
+    enabled: true
+    config:
+      channels:
+        - general
+        - vivid-alerts
+      mention_on_error: true
+
+  - name: cache
+    enabled: false
+
+extensions:
+  integration:
+    provider: slack
+    auth_type: oauth2
+    webhook_url: "${SLACK_WEBHOOK_URL}"
+    rate_limit_per_minute: 60
+    events:
+      - generation_complete
+      - generation_failed
+
+keywords:
+  patterns:
+    - "slack"
+    - "알림"
+    - "notification"

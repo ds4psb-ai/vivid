@@ -154,6 +154,22 @@ class AuteurExtension:
 
 
 @dataclass
+class DimensionExtension:
+    """Dimension 도메인 확장 (차원 앱 전용).
+    
+    10개의 dimension 앱에서 사용:
+    - 1D, 2D, 3D, 4D (생성 파이프라인)
+    - AD (Aesthetic Director)
+    - VEO, QC, STORY, SOUND, AI
+    """
+    corpus: str = ""  # 거장에 따라 동적 결정
+    tool_type: str = "generation"  # generation, analysis, evaluation
+    supports_streaming: bool = True
+    input_dimensions: List[str] = field(default_factory=list)  # 의존하는 차원
+    output_dimensions: List[str] = field(default_factory=list)  # 생성하는 차원
+
+
+@dataclass
 class AnalyticsExtension:
     """Analytics 도메인 확장."""
     metrics: List[str] = field(default_factory=list)
@@ -162,10 +178,47 @@ class AnalyticsExtension:
 
 
 @dataclass
+class IntegrationExtension:
+    """Integration 도메인 확장 (외부 서비스 연동).
+    
+    사용 예: Slack, Zapier, Webhook 등
+    """
+    provider: str = ""  # slack, zapier, notion, etc.
+    auth_type: str = "api_key"  # oauth2, api_key, bearer
+    webhook_url: Optional[str] = None
+    rate_limit_per_minute: int = 100
+    events: List[str] = field(default_factory=list)  # 구독할 이벤트
+
+
+@dataclass
+class UtilityExtension:
+    """Utility 도메인 확장 (범용 유틸리티 앱).
+    
+    사용 예: 마케팅 어드바이저, 리포트 생성기 등
+    """
+    service_type: str = "advisor"  # advisor, processor, generator
+    input_schema: Dict[str, Any] = field(default_factory=dict)
+    output_schema: Dict[str, Any] = field(default_factory=dict)
+    requires_auth: bool = False
+
+
+@dataclass
 class Extensions:
-    """도메인별 확장 컨테이너."""
+    """도메인별 확장 컨테이너.
+    
+    각 앱 타입에 맞는 확장을 선택적으로 사용:
+    - auteur: Auteur 앱용 (거장 DNA)
+    - dimension: Dimension 앱용 (1D-4D, AD, VEO 등)
+    - analytics: Analytics 앱용 (대시보드, 메트릭)
+    - integration: Integration 앱용 (외부 서비스)
+    - utility: Utility 앱용 (범용 유틸리티)
+    """
     auteur: Optional[AuteurExtension] = None
+    dimension: Optional[DimensionExtension] = None
     analytics: Optional[AnalyticsExtension] = None
+    integration: Optional[IntegrationExtension] = None
+    utility: Optional[UtilityExtension] = None
+
 
 
 # =============================================================================
@@ -304,6 +357,47 @@ class AppConfig:
                 sources=sources,
                 style_hints=auteur_data.get("style_hints", {}),
                 themes=auteur_data.get("themes", []),
+            )
+        
+        # Dimension extension
+        if "dimension" in ext_data:
+            dim_data = ext_data["dimension"]
+            extensions.dimension = DimensionExtension(
+                corpus=dim_data.get("corpus", ""),
+                tool_type=dim_data.get("tool_type", "generation"),
+                supports_streaming=dim_data.get("supports_streaming", True),
+                input_dimensions=dim_data.get("input_dimensions", []),
+                output_dimensions=dim_data.get("output_dimensions", []),
+            )
+        
+        # Analytics extension
+        if "analytics" in ext_data:
+            ana_data = ext_data["analytics"]
+            extensions.analytics = AnalyticsExtension(
+                metrics=ana_data.get("metrics", []),
+                dashboards=ana_data.get("dashboards", []),
+                retention_days=ana_data.get("retention_days", 90),
+            )
+        
+        # Integration extension
+        if "integration" in ext_data:
+            int_data = ext_data["integration"]
+            extensions.integration = IntegrationExtension(
+                provider=int_data.get("provider", ""),
+                auth_type=int_data.get("auth_type", "api_key"),
+                webhook_url=int_data.get("webhook_url"),
+                rate_limit_per_minute=int_data.get("rate_limit_per_minute", 100),
+                events=int_data.get("events", []),
+            )
+        
+        # Utility extension
+        if "utility" in ext_data:
+            util_data = ext_data["utility"]
+            extensions.utility = UtilityExtension(
+                service_type=util_data.get("service_type", "advisor"),
+                input_schema=util_data.get("input_schema", {}),
+                output_schema=util_data.get("output_schema", {}),
+                requires_auth=util_data.get("requires_auth", False),
             )
         
         # Keywords

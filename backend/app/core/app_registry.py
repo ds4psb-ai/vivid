@@ -142,6 +142,25 @@ class AppRegistry:
         ]
     
     @classmethod
+    def get_by_extension(cls, extension_type: str) -> List[AppConfig]:
+        """특정 Extension이 설정된 앱 조회.
+        
+        Args:
+            extension_type: 확장 타입 ("auteur", "dimension", "analytics", 
+                           "integration", "utility")
+        
+        Returns:
+            해당 확장이 있는 앱 목록
+        """
+        cls._ensure_initialized()
+        result = []
+        for app in cls._apps.values():
+            ext = getattr(app.extensions, extension_type, None)
+            if ext is not None:
+                result.append(app)
+        return result
+    
+    @classmethod
     def get_by_keyword(cls, text: str) -> Optional[AppConfig]:
         """텍스트에서 앱 자동 감지 (키워드 패턴 매칭)."""
         cls._ensure_initialized()
