@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import AsyncGenerator, List, Optional
 
 from cachetools import TTLCache
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import select
@@ -820,6 +820,8 @@ async def chat_agent(
 @router.get("/sessions/{session_id}", response_model=AgentSessionResponse)
 async def get_session(
     session_id: str,
+    message_limit: int = Query(default=200, ge=1, le=500, description="Max messages to return"),
+    artifact_limit: int = Query(default=100, ge=1, le=200, description="Max artifacts to return"),
     db: AsyncSession = Depends(get_db),
 ) -> AgentSessionResponse:
     try:
@@ -832,12 +834,13 @@ async def get_session(
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    # Performance optimization: parallel queries for messages and artifacts
+    # Performance optimization: parallel queries with limits
     async def _fetch_messages():
         r = await db.execute(
             select(AgentMessageRecord)
             .where(AgentMessageRecord.session_id == session_uuid)
             .order_by(AgentMessageRecord.created_at.asc())
+            .limit(message_limit)
         )
         return r.scalars().all()
 
@@ -846,6 +849,7 @@ async def get_session(
             select(AgentArtifact)
             .where(AgentArtifact.session_id == session_uuid)
             .order_by(AgentArtifact.created_at.asc())
+            .limit(artifact_limit)
         )
         return r.scalars().all()
 

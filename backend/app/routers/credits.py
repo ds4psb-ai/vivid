@@ -5,7 +5,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import select, desc
+from sqlalchemy import select, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.credit_service import (
@@ -115,11 +115,11 @@ async def get_transactions(
     )
     transactions = result.scalars().all()
     
-    # Count total
+    # Count total (optimized: use COUNT instead of loading all rows)
     count_result = await db.execute(
-        select(CreditLedger).where(CreditLedger.user_id == user_id)
+        select(func.count(CreditLedger.id)).where(CreditLedger.user_id == user_id)
     )
-    total = len(count_result.scalars().all())
+    total = count_result.scalar() or 0
     
     return TransactionsListResponse(
         transactions=[

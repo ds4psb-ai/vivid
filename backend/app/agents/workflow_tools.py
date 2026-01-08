@@ -16,6 +16,8 @@ import asyncio
 import uuid
 from typing import Any, Dict, List, Optional, Set
 
+from cachetools import TTLCache
+
 from app.agents.agent_types import (
     TieredContext,
     ToolCall,
@@ -34,14 +36,20 @@ logger = get_logger("workflow_tools")
 
 # =============================================================================
 # T2-2: Workflow Execution Lock (per session)
+# Memory leak fix: Use TTLCache instead of unbounded dict
 # =============================================================================
 
-_workflow_locks: Dict[str, asyncio.Lock] = {}
+# TTLCache: max 200 sessions, 30 min TTL (prevents unbounded growth)
+_workflow_locks: TTLCache = TTLCache(maxsize=200, ttl=1800)
 _active_workflows: Set[str] = set()  # Track workflow_ids currently executing
 
 
 def _get_workflow_lock(session_id: str) -> asyncio.Lock:
-    """Get or create a lock for the given session."""
+    """Get or create a lock for the given session.
+
+    Uses TTLCache to prevent unbounded memory growth.
+    Locks are evicted after 30 minutes of inactivity.
+    """
     if session_id not in _workflow_locks:
         _workflow_locks[session_id] = asyncio.Lock()
     return _workflow_locks[session_id]
