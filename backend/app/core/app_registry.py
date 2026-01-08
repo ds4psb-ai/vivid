@@ -22,16 +22,17 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 import sys
 
-# config.apps가 Python path에 없을 수 있으므로 동적 추가
-CONFIG_DIR = Path(__file__).parent.parent.parent.parent / "config" / "apps"
-sys.path.insert(0, str(CONFIG_DIR.parent))
-
-from config.apps.schema import (
+# schema는 이제 backend/app/core/app_schema.py에 위치
+from app.core.app_schema import (
     AppConfig,
     AppType,
     BoundedContext,
     validate_config,
 )
+
+# CONFIG_DIR is now relative to project root
+CONFIG_DIR = Path(__file__).resolve().parent.parent.parent.parent / "config" / "apps"
+
 
 logger = logging.getLogger(__name__)
 

@@ -40,14 +40,31 @@ def _ensure_registry():
     
     try:
         import sys
-        # config 경로 추가
-        config_path = Path(__file__).parent.parent.parent.parent / "config" / "apps"
-        if config_path.exists():
+        # config 경로 추가 - backend/app/rag/rag_presets.py 기준
+        # backend → vivid (프로젝트 루트) → config/apps
+        rag_presets_path = Path(__file__).resolve()
+        
+        # 여러 경로 시도
+        possible_paths = [
+            rag_presets_path.parent.parent.parent.parent / "config" / "apps",  # vivid/config/apps
+            rag_presets_path.parent.parent.parent / "config" / "apps",  # backend/../config/apps
+            Path("/Users/ted/vivid/config/apps"),  # 절대 경로 폴백
+        ]
+        
+        config_path = None
+        for path in possible_paths:
+            if path.exists():
+                config_path = path
+                break
+        
+        if config_path:
             sys.path.insert(0, str(config_path.parent))
             from app.core.app_registry import AppRegistry
             AppRegistry.discover(config_path)
             _registry_initialized = True
             logger.info(f"AppRegistry initialized from {config_path}")
+        else:
+            logger.warning(f"Config path not found. Tried: {possible_paths}")
     except Exception as e:
         logger.debug(f"Registry initialization skipped: {e}")
 
