@@ -136,6 +136,35 @@ export function createEventHandlers(ctx: AgentEventContext): EventHandlers {
         "agent.navigation": (payload) => handleNavigation(ctx, payload),
 
         // ---------------------------------------------------------------------
+        // Teaching / Dimension Tool Events (Mapped to Workflow UI)
+        // ---------------------------------------------------------------------
+
+        "agent.teaching_start": (payload) => handleWorkflowStep(ctx, {
+            ...payload,
+            step: 1,
+            total_steps: 1,
+            dimension: "Teaching",
+            tool_name: payload.tool_name,
+        }, "start"),
+
+        "agent.teaching_complete": (payload) => handleWorkflowStep(ctx, {
+            ...payload,
+            step: 1,
+            total_steps: 1,
+            dimension: "Teaching",
+            tool_name: payload.tool_name,
+            output_preview: "Teaching complete",
+        }, "complete"),
+
+        "agent.teaching_error": (payload) => handleWorkflowStep(ctx, {
+            ...payload,
+            step: 1,
+            total_steps: 1,
+            dimension: "Teaching",
+            tool_name: payload.tool_name,
+        }, "error"),
+
+        // ---------------------------------------------------------------------
         // Legacy Support (deprecated)
         // ---------------------------------------------------------------------
 

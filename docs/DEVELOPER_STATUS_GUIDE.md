@@ -251,7 +251,10 @@ cd frontend && bun test
 | ~~Global Chokki Accordion 레거시 파서~~ | ~~`agent.*` 이벤트 불일치~~ | ✅ 해결 (AG-UI 표준 매퍼) |
 | ~~`aiofiles` 의존성 누락~~ | ~~일부 환경 import 실패~~ | ✅ 이미 추가됨 (L22) |
 | ~~Affiliate API 404~~ | ~~`_deprecated`에만 존재~~ | ✅ 이미 마운트됨 (main.py L215) |
-| Pending tool UI stuck | 결과 없으면 영구 대기 | ✅ 해결 (30초 타임아웃) |
+| ~~Pending tool UI stuck~~ | ~~결과 없으면 영구 대기~~ | ✅ 해결 (30초 타임아웃) |
+| ~~Ghost Button Hallucination~~ | ~~가짜 UI 버튼 언급~~ | ✅ 해결 (Prompt Routing Hint 강화) |
+| ~~Intent Router Miss~~ | ~~영어/트렌드 키워드 인식 실패~~ | ✅ 해결 (키워드/Regex 확장) |
+| ~~Dimension Event Missing~~ | ~~Teaching Tool 실행 시 무응답~~ | ✅ 해결 (Event Handler 매핑 추가) |
 
 ---
 

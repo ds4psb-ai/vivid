@@ -31,12 +31,19 @@ This repo builds the chat-first agent, dimension miniapps, and train-style workf
 
 **핵심 타입**: `frontend/src/types/storyFirst.ts` (HookVariant, NarrativeArc, Sequence 등)
 
-## Agent Chat (Chokki)
+## Agent Chat (Chokki) - **Hardened v2 (2026-01-08)**
 
+- **Framework**: Tool-aware chat agent with standard SSE streaming.
+- **Robustness**: 
+  - Thread-safe event loop with `RLock` and bounded buffers.
+  - Memory leak protection via extensive `weakref` usage and periodic scavenging.
+  - **Peripheral Integration**: Full event mapping for Dimension/HumanCloud tools (`agent.teaching_*`, `agent.workflow_*`).
+- **UX**: 
+  - Adaptive intent routing (Korean/English/Trend keywords).
+  - Explicit UI feedback for all tool executions (no "ghost" actions).
+  - Session restoration and state persistence.
 - Global chat accordion is available in `AppShell` (all pages).
-- Streaming SSE events update assistant messages, tool results, and artifacts.
-- Audio Overview artifacts are wired; Storyboard/Shot List/Data Table are legacy capsule artifacts.
-- Train workflow integration is in progress (Flow UI currently uses mock options).
+- Train workflow integration is live (Flow UI uses agent events).
 
 ## Tech baseline
 
@@ -49,7 +56,14 @@ This repo builds the chat-first agent, dimension miniapps, and train-style workf
 
 - 문서 맵: `00_DOCS_INDEX.md`
 
-Canonical anchors:
+**Developer Guides (NEW 2026-01-08)**:
+- [`docs/AGENT_ARCHITECTURE.md`](docs/AGENT_ARCHITECTURE.md) - Agent system architecture with Mermaid diagrams
+- [`docs/API_REFERENCE.md`](docs/API_REFERENCE.md) - Complete API documentation with curl examples
+- [`docs/FRONTEND_COMPONENTS.md`](docs/FRONTEND_COMPONENTS.md) - Dimension panel component guide
+- [`docs/TESTING_GUIDE.md`](docs/TESTING_GUIDE.md) - Testing strategy and examples
+- [`docs/DEVELOPER_STATUS_GUIDE.md`](docs/DEVELOPER_STATUS_GUIDE.md) - Current development status
+
+**Canonical Anchors**:
 - `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
 - `08_PIPELINES_AND_USER_FLOWS.md`
 - `04_CAPSULE_NODE_SPEC.md`

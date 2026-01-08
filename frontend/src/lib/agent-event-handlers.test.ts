@@ -221,6 +221,46 @@ describe('createEventHandlers', () => {
         });
     });
 
+    describe('agent.teaching_* (Dimension Tools)', () => {
+        test('teaching events map to workflow_step handler', () => {
+            const onWorkflowStep = vi.fn();
+            mockContext.onWorkflowStep = onWorkflowStep;
+
+            const handlers = createEventHandlers(mockContext);
+            const basePayload = {
+                tool_name: 'generate_veo_prompt',
+                capsule_key: 'teaching.prompt.generate',
+            };
+
+            // Test teaching_start -> workflow_step start
+            handlers["agent.teaching_start"](basePayload);
+            expect(onWorkflowStep).toHaveBeenCalledWith(expect.objectContaining({
+                status: 'start',
+                dimension: 'Teaching',
+                step: 1,
+            }));
+
+            // Test teaching_complete -> workflow_step complete
+            handlers["agent.teaching_complete"]({
+                ...basePayload,
+                latency_ms: 1500,
+            });
+            expect(onWorkflowStep).toHaveBeenCalledWith(expect.objectContaining({
+                status: 'complete',
+                output_preview: 'Teaching complete',
+            }));
+
+            // Test teaching_error -> workflow_step error
+            handlers["agent.teaching_error"]({
+                ...basePayload,
+                error: 'Failed',
+            });
+            expect(onWorkflowStep).toHaveBeenCalledWith(expect.objectContaining({
+                status: 'error',
+            }));
+        });
+    });
+
     describe('agent.navigation', () => {
         test('appends navigation message and routes', () => {
             vi.useFakeTimers();
