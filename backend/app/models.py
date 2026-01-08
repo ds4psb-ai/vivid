@@ -502,6 +502,8 @@ class AffiliateReferral(Base):
             "referee_user_id",
             name="uq_affiliate_referrals_pair",
         ),
+        Index("ix_affiliate_referrals_referrer", "referrer_user_id"),
+        Index("ix_affiliate_referrals_referrer_created", "referrer_user_id", "created_at"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

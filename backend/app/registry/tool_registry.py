@@ -9,7 +9,8 @@ References:
 - OpenAI Function Calling: https://platform.openai.com/docs/guides/function-calling
 """
 
-from typing import Any, Dict, List, Optional, Literal
+from functools import lru_cache
+from typing import Any, Dict, List, Optional, Literal, Tuple
 from pydantic import BaseModel, Field
 from enum import Enum
 
