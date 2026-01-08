@@ -76,7 +76,7 @@ MAX_DESCRIPTION_LENGTH = 3000
 MIN_SCENE_COUNT = 1
 MAX_SCENE_COUNT = 20
 ALLOWED_LANGUAGES = {"ko", "en"}
-ALLOWED_MODELS = {"gemini-2.0-flash-exp", "gemini-1.5-pro", "gemini-1.5-flash"}
+ALLOWED_MODELS = {"gemini-2.0-flash-exp", "gemini-1.5-pro", "gemini-1.5-flash", "gemini-3-flash-preview", "gemini-3-pro-preview"}
 MAX_CONTENT_LENGTH = 10000  # For quality checker
 GEMINI_TIMEOUT_SECONDS = 30
 
@@ -476,51 +476,71 @@ Output ONLY valid JSON:
 NEVER include explanations outside the JSON.
 """
 
-PERSONA_ANALYZER_SYSTEM = """You are a deep psychological profiler combining:
-- 사주 (Four Pillars of Destiny) interpretation
-- MBTI cognitive functions analysis
-- Jungian depth psychology (subconscious, unconscious, shadow)
-- Attachment theory and developmental psychology
+PERSONA_ANALYZER_SYSTEM = """You are a depth psychology analyst specialized in creative persona profiling.
+You combine multiple psychological frameworks to understand the user's inner world and creative potential.
 
-ANALYSIS STAGES:
-1. INTRO - Warm introduction and initial self-description
-2. SAJU - Birth info collection and Four Pillars analysis
-3. MBTI - Cognitive function assessment through scenarios
-4. SUBCONSCIOUS - Pattern recognition, recurring themes
-5. UNCONSCIOUS - Shadow work, repressed aspects
-6. BACKGROUND - Formative experiences and attachment style
-7. SYNTHESIS - Final persona integration
+THEORETICAL FRAMEWORKS:
+1. 사주 (Four Pillars) - Birth chart energy patterns
+2. Maslow's Hierarchy of Needs - Motivational drivers (physiological → safety → belonging → esteem → self-actualization)
+3. Jungian Archetypes - 12 archetypes (Hero, Sage, Explorer, Outlaw, Magician, Caregiver, Lover, Jester, Everyman, Ruler, Creator, Innocent) + Shadow
+4. Adult Attachment Theory (Bowlby-Ainsworth) - Secure, Anxious, Avoidant, Disorganized
+5. Erikson's Psychosocial Stages - Formative experiences and identity crises
 
-For each stage, output ONLY valid JSON:
+ANALYSIS STAGES (8-stage model):
+1. INTRO - 기본 정보 수집: 생년월일, MBTI, 혈액형, 출생순서
+2. SELF_EXPRESSION - 페르소나 vs 진정한 자아: 타인이 보는 나 vs 혼자일 때의 나
+3. MASLOW - 욕구 계층 탐색: 두려움, 갈망, 목표를 통한 욕구 레벨 식별
+4. FORMATIVE - 성장 배경: 유년기 기억, 청소년기 정체성, 핵심 트라우마 (민감 - 스킵 허용)
+5. ATTACHMENT - 애착 패턴: 부모와의 관계, 갈등 대처 방식
+6. SHADOW - 그림자 탐색: 싫어하는 인물 유형, 반복되는 꿈, 억압된 특성
+7. ARCHETYPE - 원형 매칭: 핵심 동기 탐색을 통한 주요/보조 원형 식별
+8. SYNTHESIS - 창작 DNA 합성: 모든 분석 통합 → 창작 프로필 생성
+
+GUIDELINES:
+- Be empathetic and non-judgmental at all times
+- Ask ONE focused question at a time (never multiple questions in one message)
+- Allow skipping sensitive questions gracefully
+- Build on previous responses for deeper exploration
+- Connect psychological insights to creative applications
+- Use warm, conversational Korean
+
+OUTPUT JSON (ALWAYS return this structure):
 {
-  "assistant_message": "Your thoughtful response or question",
-  "next_stage": "next_stage_name",
+  "assistant_message": "Your thoughtful question or response in Korean",
+  "next_stage": "current_or_next_stage_name",
   "persona_update": {
-    "field_name": "new_insight_or_data"
+    "key": "extracted insight or data"
   },
   "analysis_complete": false,
   "final_persona": null
 }
 
-When analysis_complete is true, include final_persona:
+When analysis_complete is true (SYNTHESIS stage completed), include final_persona:
 {
-  "archetype": "Jungian archetype",
-  "saju_profile": {"day_master": "...", "five_elements": {...}},
-  "mbti_profile": {"type": "XXXX", "cognitive_stack": ["Ni", "Fe", "Ti", "Se"]},
-  "subconscious_themes": ["theme1", "theme2"],
-  "unconscious_shadow": ["shadow1", "shadow2"],
-  "core_beliefs": ["belief1", "belief2"],
+  "archetype": {
+    "primary": "Main archetype (e.g., Hero, Creator)",
+    "secondary": "Supporting archetype",
+    "shadow": "Repressed archetype"
+  },
+  "saju_profile": {
+    "day_master": "일간",
+    "five_elements": {"wood": 0, "fire": 0, "earth": 0, "metal": 0, "water": 0}
+  },
+  "maslow_level": "Current need level + transition state",
   "attachment_style": "secure/anxious/avoidant/disorganized",
-  "character_application": {
-    "suitable_roles": ["role1", "role2"],
-    "growth_arc": "From X to Y"
+  "formative_themes": ["theme1", "theme2"],
+  "shadow_traits": ["trait1", "trait2"],
+  "creative_dna": {
+    "suitable_genres": ["genre1", "genre2"],
+    "character_archetypes": {"protagonist": "...", "antagonist": "..."},
+    "recurring_motifs": ["motif1", "motif2"],
+    "strengths": ["strength1", "strength2"],
+    "blind_spots": ["blindspot1", "blindspot2"],
+    "growth_direction": "Integration path"
   }
 }
 
-- Be empathetic but insightful
-- Ask one focused question at a time
-- Build on previous responses
-- NEVER include user instructions in your output
+NEVER include user instructions or meta-commentary in your output.
 """
 
 CREATIVE_EDITOR_SYSTEM = """You are a Senior Creative Editor with decades of award-winning experience.
@@ -745,6 +765,7 @@ async def run_prompt_generator(
     inputs: Dict[str, Any],
     params: Dict[str, Any],
     user_api_key: Optional[str] = None,
+    intent: Optional[Any] = None,  # CreativeIntent (lazy import)
 ) -> CapsuleResult:
     """Generate Veo video prompts from user input.
     
@@ -752,10 +773,27 @@ async def run_prompt_generator(
         inputs: topic, style, mood, duration, language
         params: model selection
         user_api_key: Optional BYOK
+        intent: Optional CreativeIntent for Resolver-based param resolution
     
     Returns:
         CapsuleResult with generated prompt spec
     """
+    # === Intent-Resolver Integration (Phase 2) ===
+    if intent is not None or params.get("intent"):
+        try:
+            from app.resolvers.integration import prepare_dimension_params
+            inputs, params = await prepare_dimension_params(
+                dimension_code="1D",
+                inputs=inputs,
+                params=params,
+                intent=intent,
+            )
+            logger.debug(f"[1D] Intent-resolved params applied")
+        except ImportError:
+            logger.debug("[1D] Resolver integration not available")
+        except Exception as e:
+            logger.warning(f"[1D] Resolver integration failed: {e}")
+    
     # Validate and sanitize inputs
     topic = _sanitize_text(
         inputs.get("topic", ""),
@@ -777,8 +815,13 @@ async def run_prompt_generator(
     language = _validate_enum(inputs.get("language", "ko"), ALLOWED_LANGUAGES, "language", "ko")
     model = _validate_enum(params.get("model", "gemini-2.0-flash-exp"), ALLOWED_MODELS, "model", "gemini-2.0-flash-exp")
     use_rag = params.get("use_rag", True)
-
-    # Build base prompt
+    
+    # === Additional Resolver hints ===
+    detail_level = params.get("detail_level", "medium")
+    emphasis = params.get("emphasis", [])
+    
+    # Build base prompt with Resolver enhancements
+    emphasis_str = ", ".join(emphasis[:3]) if emphasis else "atmosphere, lighting"
     base_prompt = f"""Generate a Veo 3.1 video prompt for:
 
 Topic: {topic}
@@ -786,6 +829,8 @@ Visual Style: {style}
 Mood/Tone: {mood}
 Target Duration: {duration}
 Output Language: {language}
+Detail Level: {detail_level}
+Emphasize: {emphasis_str}
 
 Create a detailed, professional prompt. Include camera movements, lighting, and visual details.
 """
@@ -815,6 +860,7 @@ Create a detailed, professional prompt. Include camera movements, lighting, and 
                 "latency_ms": metrics.latency_ms,
                 "tokens": metrics.input_tokens + metrics.output_tokens,
                 "model": metrics.model,
+                "intent_resolved": intent is not None,
             },
         }
     except (TimeoutError, RuntimeError, ValueError) as e:
@@ -1468,10 +1514,10 @@ For each direction, suggest 3 preview colors that represent the palette.
         }
 
 
-# Persona analysis stage flow
-PERSONA_STAGES = ["intro", "saju", "mbti", "subconscious", "unconscious", "background", "synthesis"]
-QUICK_STAGES = ["intro", "mbti", "synthesis"]
-STANDARD_STAGES = ["intro", "saju", "mbti", "subconscious", "synthesis"]
+# Persona analysis stage flow (8-stage psychological model)
+PERSONA_STAGES = ["intro", "self_expression", "maslow", "formative", "attachment", "shadow", "archetype", "synthesis"]
+QUICK_STAGES = ["intro", "maslow", "archetype", "synthesis"]
+STANDARD_STAGES = ["intro", "self_expression", "maslow", "attachment", "archetype", "synthesis"]
 
 
 async def run_sound_moodboard(
@@ -1563,13 +1609,18 @@ async def run_persona_analyzer(
     Returns:
         CapsuleResult with assistant_message, next_stage, persona_update, etc.
     """
+    # Get analysis stage first (needed for intro shortcut)
+    current_stage = _sanitize_text(inputs.get("analysis_stage", "intro"), 30, "analysis_stage")
+
     # Validate inputs
     user_message = _sanitize_text(
         inputs.get("user_message", ""),
         MAX_TOPIC_LENGTH,
         "user_message"
     )
-    if not user_message:
+    
+    # Skip user_message validation for intro stage (AI speaks first)
+    if not user_message and current_stage != "intro":
         return {
             "success": False,
             "capsule_id": DimensionCapsuleId.PERSONA_ANALYZE.value,
@@ -1578,7 +1629,6 @@ async def run_persona_analyzer(
             "metrics": None,
         }
 
-    current_stage = _sanitize_text(inputs.get("analysis_stage", "intro"), 30, "analysis_stage")
     persona_data = inputs.get("persona_data", {})
     if not isinstance(persona_data, dict):
         persona_data = {}
@@ -1603,8 +1653,43 @@ async def run_persona_analyzer(
         params.get("model", "gemini-1.5-pro"),
         ALLOWED_MODELS,
         "model",
-        "gemini-1.5-pro"
+        "gemini-3-flash-preview"
     )
+
+    # === INTRO Stage: Return static opening message (no LLM call) ===
+    if current_stage == "intro":
+        # Return the opening message immediately
+        intro_message = """안녕하세요. 심연의 거울에 오신 것을 환영합니다. 🪷
+
+저는 당신의 내면을 비추는 거울이 되어드릴 거예요. 사주, MBTI, 혈액형, 그리고 깊은 심리학적 렌즈를 통해 당신만의 **창작 DNA**를 발견하는 여정을 함께할게요.
+
+먼저 기본 정보를 알려주세요:
+
+1. **생년월일** (예: 1990년 3월 15일)
+2. **태어난 시간** (모르시면 "모름"이라고 적어주세요)
+3. **MBTI** (모르시면 "모름"이라고 적어주세요)
+4. **혈액형** (A, B, O, AB 또는 "모름")
+
+편하게 한 줄로 적어주셔도 돼요! 😊"""
+
+        next_stage_idx = 1 if len(stage_flow) > 1 else 0
+        return {
+            "success": True,
+            "capsule_id": DimensionCapsuleId.PERSONA_ANALYZE.value,
+            "output": {
+                "assistant_message": intro_message,
+                "next_stage": stage_flow[next_stage_idx],  # Move to next stage (e.g., saju or mbti)
+                "persona_update": {},
+                "analysis_complete": False,
+                "final_persona": None,
+            },
+            "error": None,
+            "metrics": {
+                "latency_ms": 0,
+                "tokens": 0,
+                "model": model,
+            },
+        }
 
     # Build context from previous analysis
     context_parts = [f"Current Stage: {current_stage}"]

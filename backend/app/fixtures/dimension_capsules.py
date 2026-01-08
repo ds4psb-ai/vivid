@@ -256,83 +256,72 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
         },
     },
     # ==========================================================================
-    # Quality Director (퀄리티 디렉터) - Stage 4: Finishing
+    # Creative Editor (크리에이티브 에디터) - Stage 4: Finishing
     # ==========================================================================
     {
-        "capsule_key": "dimension.quality.check",
-        "version": "1.0.0",
+        "capsule_key": "dimension.quality.editor",
+        "version": "2.0.0",
         "stage": "finishing",
         "stage_order": 1,
-        "display_name": "퀄리티 디렉터",
-        "display_name_en": "Quality Director",
-        "route_key": "quality-director",
-        "input_dimensions": ["video-maker", "visual-realizer"],
+        "display_name": "크리에이티브 에디터",
+        "display_name_en": "Creative Editor",
+        "route_key": "quality-check",
+        "input_dimensions": ["video-maker", "visual-realizer", "story-architect", "prompt-alchemy"],
         "output_dimensions": [],
         "credit_costs": {
-            "gemini-3-flash-preview": 8,
-            "gemini-3-pro-preview": 20,
+            "gemini-1.5-pro": 5,
         },
         "spec": {
-            "name": "퀄리티 디렉터",
-            "description": "시각적 일관성 및 동작 자연스러움 검수",
+            "name": "크리에이티브 에디터",
+            "description": "콘텐츠 비평 및 에디토리얼 수정 (Senior Editor Persona)",
             "category": "dimension",
             "adapter": "quality",
             "inputs": {
                 "content": {
                     "type": "string",
                     "required": True,
-                    "description": "검수할 콘텐츠 (프롬프트, 스크립트, 설명 등)",
-                },
-                "content_type": {
-                    "type": "string",
-                    "required": True,
-                    "description": "콘텐츠 유형 (prompt, storyboard, script, image_prompt)",
-                },
-                "criteria": {
-                    "type": "array",
-                    "required": False,
-                    "default": ["aesthetic", "consistency", "safety"],
-                    "description": "검수 기준 (aesthetic, ad_suitability, consistency, safety, technical, narrative)",
+                    "description": "검토할 콘텐츠 (시나리오, 프롬프트 등)",
                 },
                 "context": {
-                    "type": "object",
+                    "type": "string",
+                    "required": True,
+                    "description": "장르 및 맥락 (예: SF 스릴러 영화)",
+                },
+                "persona": {
+                    "type": "string",
                     "required": False,
-                    "description": "추가 컨텍스트 (브랜드 가이드, 이전 콘텐츠 등)",
+                    "default": "Senior Editor",
+                    "enum": ["Senior Editor", "Ruthless Critic", "Commercial Producer", "Artistic Director"],
+                    "description": "에디토리얼 페르소나",
+                },
+                "use_rag": {
+                    "type": "boolean",
+                    "default": True,
+                    "description": "RAG 사용 여부",
                 },
             },
             "outputs": {
-                "passed": {
-                    "type": "boolean",
-                    "description": "전체 검수 통과 여부",
-                },
-                "score": {
-                    "type": "number",
-                    "description": "종합 점수 (0-100)",
-                },
-                "criteria_results": {
+                "critique": {
                     "type": "object",
-                    "description": "기준별 상세 결과 {criterion: {score, passed, details}}",
+                    "description": "비평 점수 및 이슈 (narrative, visual, pacing)",
                 },
-                "issues": {
-                    "type": "array",
-                    "description": "발견된 문제점 목록",
+                "original_content": {
+                    "type": "string",
+                    "description": "원본 콘텐츠",
                 },
-                "suggestions": {
+                "improved_content": {
+                    "type": "string",
+                    "description": "수정된 콘텐츠 (Editor's Cut)",
+                },
+                "changes_made": {
                     "type": "array",
-                    "description": "개선 제안 목록",
+                    "description": "변경 사항 로그",
                 },
             },
             "params": {
                 "model": {
                     "type": "string",
-                    "default": "gemini-3-pro-preview",
-                    "options": ["gemini-3-flash-preview", "gemini-3-pro-preview"],
-                    "description": "Pro 모델 권장 (정확도 우선)",
-                },
-                "threshold": {
-                    "type": "number",
-                    "default": 70,
-                    "description": "통과 임계값 (0-100)",
+                    "default": "gemini-1.5-pro",
                 },
             },
         },

@@ -1,0 +1,290 @@
+"""
+Capsule Resolver Base Classes and Interfaces
+
+Intent → Capsule Resolver 패턴의 핵심 인터페이스 정의.
+각 Dimension Capsule은 이 베이스 클래스를 상속받아 구현합니다.
+
+Design Goals:
+- 명시적 인터페이스: resolve_from_intent() 시그니처 표준화
+- 확장 가능: RAG 컨텍스트, 캐싱 훅 제공
+- 타입 안전: Pydantic 모델 활용
+"""
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from typing import Any, Dict, Optional, Type, TypeVar
+from dataclasses import dataclass, field
+import logging
+
+from app.schemas.creative_intent import CreativeIntent, CreativeMood, CreativePace, TargetAudience
+
+logger = logging.getLogger(__name__)
+
+
+# =========================================================================
+# Result Types
+# =========================================================================
+
+@dataclass
+class ResolvedParams:
+    """Resolver가 반환하는 해석된 파라미터"""
+    
+    # 캡슐 실행에 필요한 파라미터
+    params: Dict[str, Any] = field(default_factory=dict)
+    
+    # RAG에서 가져온 추가 컨텍스트
+    rag_context: Optional[Dict[str, Any]] = None
+    
+    # 해석 메타데이터
+    resolved_from: str = "intent"  # "intent", "legacy", "fallback"
+    confidence: float = 1.0
+    
+    # 디버그/추적 정보
+    resolution_notes: list = field(default_factory=list)
+    
+    def merge_with(self, other: Dict[str, Any]) -> "ResolvedParams":
+        """다른 파라미터와 병합 (other가 우선)"""
+        merged_params = {**self.params, **other}
+        return ResolvedParams(
+            params=merged_params,
+            rag_context=self.rag_context,
+            resolved_from=self.resolved_from,
+            confidence=self.confidence,
+            resolution_notes=self.resolution_notes + [f"merged: {list(other.keys())}"]
+        )
+
+
+# =========================================================================
+# Base Resolver Interface
+# =========================================================================
+
+class BaseCapsuleResolver(ABC):
+    """
+    모든 Dimension Resolver의 베이스 클래스
+    
+    각 Dimension은 이 클래스를 상속받아:
+    1. INTENT_MAP 정의: mood/pace/target → params 매핑
+    2. resolve_from_intent() 구현: Intent + RAG → 최종 파라미터
+    3. get_default_params() 구현: 기본값 반환
+    
+    Example:
+        ```python
+        class VEOResolver(BaseCapsuleResolver):
+            dimension_code = "VEO"
+            
+            INTENT_MAP = {
+                "cinematic": {"lens": "anamorphic", "fps": 24},
+                "energetic": {"lens": "wide", "fps": 60},
+            }
+            
+            async def resolve_from_intent(self, intent, rag_context):
+                base = self.INTENT_MAP.get(intent.mood.value, {})
+                return ResolvedParams(params=base)
+        ```
+    """
+    
+    # 서브클래스에서 정의
+    dimension_code: str = "UNKNOWN"
+    dimension_name: str = "Unknown Dimension"
+    
+    # Intent → Base Params 매핑 (서브클래스에서 오버라이드)
+    INTENT_MAP: Dict[str, Dict[str, Any]] = {}
+    
+    # Pace별 조정 맵
+    PACE_ADJUSTMENTS: Dict[str, Dict[str, Any]] = {
+        "fast": {},
+        "slow": {},
+        "dynamic": {},
+        "contemplative": {},
+    }
+    
+    # Target별 조정 맵
+    TARGET_ADJUSTMENTS: Dict[str, Dict[str, Any]] = {
+        "expert": {},
+        "beginner": {},
+        "general": {},
+        "kids": {},
+        "professional": {},
+    }
+    
+    # =========================================================================
+    # Abstract Methods - 서브클래스에서 구현 필수
+    # =========================================================================
+    
+    @abstractmethod
+    async def resolve_from_intent(
+        self,
+        intent: CreativeIntent,
+        rag_context: Optional[Dict[str, Any]] = None,
+    ) -> ResolvedParams:
+        """
+        Intent를 캡슐 실행 파라미터로 변환
+        
+        Args:
+            intent: 창작 의도 (mood, pace, target 등)
+            rag_context: RAG 소스에서 가져온 추가 컨텍스트
+            
+        Returns:
+            ResolvedParams: 해석된 파라미터 + 메타데이터
+        """
+        pass
+    
+    @abstractmethod
+    def get_default_params(self) -> Dict[str, Any]:
+        """
+        기본 파라미터 반환
+        
+        Intent가 없거나 해석 실패 시 사용할 fallback 값
+        """
+        pass
+    
+    # =========================================================================
+    # Template Methods - 공통 로직
+    # =========================================================================
+    
+    def get_intent_map(self) -> Dict[str, Dict[str, Any]]:
+        """현재 Intent 매핑 테이블 반환 (검사용)"""
+        return self.INTENT_MAP
+    
+    def _get_base_params(self, mood: CreativeMood) -> Dict[str, Any]:
+        """Mood에 대한 기본 파라미터 가져오기"""
+        return self.INTENT_MAP.get(mood.value, self.get_default_params())
+    
+    def _apply_pace_adjustments(
+        self, 
+        params: Dict[str, Any], 
+        pace: CreativePace
+    ) -> Dict[str, Any]:
+        """Pace에 따른 조정 적용"""
+        adjustments = self.PACE_ADJUSTMENTS.get(pace.value, {})
+        return {**params, **adjustments}
+    
+    def _apply_target_adjustments(
+        self,
+        params: Dict[str, Any],
+        target: TargetAudience
+    ) -> Dict[str, Any]:
+        """Target Audience에 따른 조정 적용"""
+        adjustments = self.TARGET_ADJUSTMENTS.get(target.value, {})
+        return {**params, **adjustments}
+    
+    def _apply_rag_hints(
+        self,
+        params: Dict[str, Any],
+        rag_context: Optional[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        """RAG 컨텍스트에서 힌트 적용"""
+        if not rag_context:
+            return params
+        
+        # dimension_code에 해당하는 힌트 찾기
+        hints_key = f"{self.dimension_code.lower()}_hints"
+        hints = rag_context.get(hints_key, {})
+        
+        if hints:
+            logger.debug(f"Applying RAG hints for {self.dimension_code}: {hints}")
+            return {**params, **hints}
+        
+        return params
+    
+    async def resolve_with_fallback(
+        self,
+        intent: Optional[CreativeIntent],
+        rag_context: Optional[Dict[str, Any]] = None,
+        legacy_params: Optional[Dict[str, Any]] = None,
+    ) -> ResolvedParams:
+        """
+        Fallback 로직이 포함된 해석
+        
+        우선순위:
+        1. legacy_params가 있으면 그대로 사용 (마이그레이션 호환)
+        2. intent가 있으면 resolve_from_intent 호출
+        3. 둘 다 없으면 default_params 사용
+        """
+        # 1. Legacy 우선 (마이그레이션 기간)
+        if legacy_params:
+            logger.debug(f"{self.dimension_code}: Using legacy params")
+            return ResolvedParams(
+                params=legacy_params,
+                resolved_from="legacy",
+                resolution_notes=["Using legacy params for backward compatibility"]
+            )
+        
+        # 2. Intent 기반 해석
+        if intent:
+            try:
+                result = await self.resolve_from_intent(intent, rag_context)
+                return result
+            except Exception as e:
+                logger.warning(f"{self.dimension_code}: Intent resolution failed: {e}")
+                # Fallback to default
+        
+        # 3. Default
+        return ResolvedParams(
+            params=self.get_default_params(),
+            resolved_from="fallback",
+            resolution_notes=["No intent provided, using default params"]
+        )
+
+
+# =========================================================================
+# Type Helpers
+# =========================================================================
+
+T = TypeVar("T", bound=BaseCapsuleResolver)
+
+
+def create_resolver_class(
+    dimension_code: str,
+    dimension_name: str,
+    intent_map: Dict[str, Dict[str, Any]],
+    default_params: Dict[str, Any],
+) -> Type[BaseCapsuleResolver]:
+    """
+    동적 Resolver 클래스 생성 헬퍼
+    
+    간단한 매핑만 필요한 Dimension용
+    """
+    class DynamicResolver(BaseCapsuleResolver):
+        pass
+    
+    DynamicResolver.dimension_code = dimension_code
+    DynamicResolver.dimension_name = dimension_name
+    DynamicResolver.INTENT_MAP = intent_map
+    DynamicResolver._default_params = default_params
+    
+    async def resolve_impl(
+        self, 
+        intent: CreativeIntent,
+        rag_context: Optional[Dict[str, Any]] = None
+    ) -> ResolvedParams:
+        params = self._get_base_params(intent.mood)
+        params = self._apply_pace_adjustments(params, intent.pace)
+        params = self._apply_target_adjustments(params, intent.target)
+        params = self._apply_rag_hints(params, rag_context)
+        
+        return ResolvedParams(
+            params=params,
+            rag_context=rag_context,
+            resolved_from="intent",
+            resolution_notes=[f"Resolved from mood={intent.mood.value}"]
+        )
+    
+    def get_default_impl(self) -> Dict[str, Any]:
+        return self._default_params.copy()
+    
+    DynamicResolver.resolve_from_intent = resolve_impl
+    DynamicResolver.get_default_params = get_default_impl
+    
+    return DynamicResolver
+
+
+# =========================================================================
+# Exports
+# =========================================================================
+
+__all__ = [
+    "BaseCapsuleResolver",
+    "ResolvedParams",
+    "create_resolver_class",
+]

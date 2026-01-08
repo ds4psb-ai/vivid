@@ -386,6 +386,25 @@ async def _dimension_tool_handler(
         inputs = {k: v for k, v in args.items() if k != "model"}
         params = {"model": model}
         
+        # === Phase 3: Intent-Resolver Integration ===
+        # 템플릿에서 input_preset이 전달되면 Intent 기반으로 params 확장
+        template_preset = args.get("_template_preset")  # 내부 전달용
+        if template_preset:
+            try:
+                from app.resolvers.integration import prepare_dimension_params
+                dimension_code = TOOL_TO_DIMENSION.get(tool_name)
+                if dimension_code:
+                    inputs, params = await prepare_dimension_params(
+                        dimension_code=dimension_code,
+                        inputs=inputs,
+                        params={**params, **template_preset},
+                    )
+                    logger.debug(f"[{tool_name}] Intent-resolved params applied from template")
+            except ImportError:
+                logger.debug(f"[{tool_name}] Resolver integration not available")
+            except Exception as e:
+                logger.warning(f"[{tool_name}] Resolver integration failed: {e}")
+        
         # Teaching 캡슐 실행
         result = await execute_dimension_capsule(
             capsule_id=capsule_key,

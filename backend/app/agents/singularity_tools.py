@@ -161,7 +161,11 @@ async def _search_templates_handler(context: ToolContext, call: ToolCall) -> Too
 
 
 async def _apply_template_handler(context: ToolContext, call: ToolCall) -> ToolResult:
-    """템플릿 적용 핸들러."""
+    """템플릿 적용 핸들러.
+    
+    Phase 3: Intent-based 템플릿은 input_preset에서 intent를 추출하여
+    downstream tool 호출에서 활용할 수 있도록 반환합니다.
+    """
     template_id = call.arguments.get("template_id")
     template_name = call.arguments.get("template_name")
     
@@ -191,20 +195,45 @@ async def _apply_template_handler(context: ToolContext, call: ToolCall) -> ToolR
             template.use_count = (template.use_count or 0) + 1
             await db.commit()
             
+            # === Phase 3: Intent Extraction ===
+            input_preset = template.input_preset or {}
+            extracted_intent = None
+            
+            try:
+                from app.resolvers.integration import extract_intent_from_preset
+                intent, legacy_params = extract_intent_from_preset(input_preset)
+                if intent:
+                    extracted_intent = intent.model_dump()
+                    logger.debug(
+                        "Intent extracted from template",
+                        extra={"template_id": str(template.id), "mood": intent.mood.value},
+                    )
+            except ImportError:
+                logger.debug("Resolver integration not available")
+            except Exception as e:
+                logger.warning(f"Intent extraction failed: {e}")
+            
             # 네비게이션 이벤트 전송 (Flow 페이지로)
             if context.emit_event:
                 context.emit_event("agent.navigation", {"path": "/flow"})
             
             logger.info(
                 "Template applied",
-                extra={"template_id": str(template.id), "title": template.title},
+                extra={
+                    "template_id": str(template.id), 
+                    "title": template.title,
+                    "has_intent": extracted_intent is not None,
+                },
             )
             
             return success_result(call, {
                 "template_id": str(template.id),
                 "title": template.title,
                 "tool_sequence": template.tool_sequence or [],
-                "input_preset": template.input_preset or {},
+                "input_preset": input_preset,
+                # Phase 3: Intent 정보 추가 (downstream tool에서 활용)
+                "_extracted_intent": extracted_intent,
+                "_template_preset": input_preset,  # dimension_tools에서 사용
                 "applied": True,
                 "message": f"'{template.title}' 템플릿이 적용되었습니다. Flow 페이지로 이동합니다.",
             })
