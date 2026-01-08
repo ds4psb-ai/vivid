@@ -1,0 +1,62 @@
+$schema: "vivid-app/v2"
+
+metadata:
+  name: nolan
+  type: auteur
+  version: "1.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "크리스토퍼 놀란"
+  name_en: "Christopher Nolan"
+  icon: "🎥"
+  description: "인셉션, 인터스텔라, 오펜하이머 감독. 시간과 공간의 마법사."
+
+capabilities:
+  - name: rag
+    enabled: true
+    config:
+      mode: auteur_only
+      confidence_threshold: 0.7
+      retrieval:
+        strategy: hybrid
+        top_k: 10
+
+  - name: cache
+    enabled: true
+    config:
+      ttl: 7200
+
+extensions:
+  auteur:
+    corpus_type: v-shape
+    sources:
+      - type: source_pack
+        path: data/source_packs/nolan/*.json
+      - type: vertex_ai
+        corpus_name: auteur_nolan
+        
+    style_hints:
+      camera_style: stable
+      lens_style: anamorphic
+      aspect_ratio: "2.20:1"
+      fps: 24
+      film_stock: imax
+      
+    themes:
+      - 시간 조작과 비선형 서사
+      - 실용 효과와 IMAX
+      - 과학과 철학의 교차
+      - 아버지와 아들의 관계
+
+keywords:
+  patterns:
+    - "nolan"
+    - "놀란"
+    - "인셉션"
+    - "inception"
+    - "인터스텔라"
+    - "interstellar"
+    - "오펜하이머"
+    - "dunkirk"
+    - "tenet"

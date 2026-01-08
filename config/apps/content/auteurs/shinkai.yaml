@@ -1,0 +1,61 @@
+$schema: "vivid-app/v2"
+
+metadata:
+  name: shinkai
+  type: auteur
+  version: "1.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "신카이 마코토"
+  name_en: "Makoto Shinkai"
+  icon: "🌸"
+  description: "너의 이름은, 날씨의 아이 감독. 아름다운 하늘과 청춘 서사의 거장."
+
+capabilities:
+  - name: rag
+    enabled: true
+    config:
+      mode: auteur_only
+      confidence_threshold: 0.6
+      retrieval:
+        strategy: hybrid
+        top_k: 10
+
+  - name: cache
+    enabled: true
+    config:
+      ttl: 7200
+
+extensions:
+  auteur:
+    corpus_type: v-shape
+    sources:
+      - type: source_pack
+        path: data/source_packs/shinkai/*.json
+      - type: vertex_ai
+        corpus_name: auteur_shinkai
+        
+    style_hints:
+      camera_style: contemplative
+      color_grade: vivid
+      lens_style: wide
+      sky_emphasis: true
+      light_rays: true
+      
+    themes:
+      - 청춘과 상실
+      - 시공간 초월
+      - 아름다운 하늘과 빛
+      - 운명과 만남
+
+keywords:
+  patterns:
+    - "shinkai"
+    - "신카이"
+    - "마코토"
+    - "너의.*이름"
+    - "your.*name"
+    - "날씨의.*아이"
+    - "weathering"
+    - "언어의.*정원"
