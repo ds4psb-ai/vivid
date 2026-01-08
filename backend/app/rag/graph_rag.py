@@ -143,8 +143,271 @@ def cache_graph(graph: AuteurGraph):
 
 
 # ============================================================================
-# Entity Extraction
+# Entity Extraction (Hardened - 2025/2026 Best Practices)
 # ============================================================================
+
+# Comprehensive film database for entity extraction
+FILM_DATABASE = {
+    # Bong Joon-ho
+    "parasite": {"korean": "기생충", "year": 2019, "auteur": "bong"},
+    "memories_of_murder": {"korean": "살인의 추억", "year": 2003, "auteur": "bong"},
+    "mother": {"korean": "마더", "year": 2009, "auteur": "bong"},
+    "snowpiercer": {"korean": "설국열차", "year": 2013, "auteur": "bong"},
+    "okja": {"korean": "옥자", "year": 2017, "auteur": "bong"},
+    "the_host": {"korean": "괴물", "year": 2006, "auteur": "bong"},
+    "barking_dogs": {"korean": "플란다스의 개", "year": 2000, "auteur": "bong"},
+    # Christopher Nolan
+    "inception": {"korean": "인셉션", "year": 2010, "auteur": "nolan"},
+    "interstellar": {"korean": "인터스텔라", "year": 2014, "auteur": "nolan"},
+    "dunkirk": {"korean": "덩케르크", "year": 2017, "auteur": "nolan"},
+    "oppenheimer": {"korean": "오펜하이머", "year": 2023, "auteur": "nolan"},
+    "tenet": {"korean": "테넷", "year": 2020, "auteur": "nolan"},
+    "memento": {"korean": "메멘토", "year": 2000, "auteur": "nolan"},
+    "the_dark_knight": {"korean": "다크 나이트", "year": 2008, "auteur": "nolan"},
+    "the_dark_knight_rises": {"korean": "다크 나이트 라이즈", "year": 2012, "auteur": "nolan"},
+    # Quentin Tarantino
+    "pulp_fiction": {"korean": "펄프 픽션", "year": 1994, "auteur": "tarantino"},
+    "kill_bill": {"korean": "킬 빌", "year": 2003, "auteur": "tarantino"},
+    "kill_bill_vol_2": {"korean": "킬 빌 2", "year": 2004, "auteur": "tarantino"},
+    "django_unchained": {"korean": "장고: 분노의 추적자", "year": 2012, "auteur": "tarantino"},
+    "inglourious_basterds": {"korean": "바스터즈: 거친 녀석들", "year": 2009, "auteur": "tarantino"},
+    "reservoir_dogs": {"korean": "저수지의 개들", "year": 1992, "auteur": "tarantino"},
+    "once_upon_a_time_in_hollywood": {"korean": "원스 어폰 어 타임 인 할리우드", "year": 2019, "auteur": "tarantino"},
+    # Denis Villeneuve
+    "dune": {"korean": "듄", "year": 2021, "auteur": "villeneuve"},
+    "dune_part_two": {"korean": "듄: 파트 2", "year": 2024, "auteur": "villeneuve"},
+    "blade_runner_2049": {"korean": "블레이드 러너 2049", "year": 2017, "auteur": "villeneuve"},
+    "arrival": {"korean": "컨택트", "year": 2016, "auteur": "villeneuve"},
+    "sicario": {"korean": "시카리오", "year": 2015, "auteur": "villeneuve"},
+    "incendies": {"korean": "그을린 사랑", "year": 2010, "auteur": "villeneuve"},
+    "prisoners": {"korean": "프리즈너스", "year": 2013, "auteur": "villeneuve"},
+    # Wong Kar-wai
+    "in_the_mood_for_love": {"korean": "화양연화", "year": 2000, "auteur": "wong"},
+    "chungking_express": {"korean": "중경삼림", "year": 1994, "auteur": "wong"},
+    "fallen_angels": {"korean": "타락천사", "year": 1995, "auteur": "wong"},
+    "happy_together": {"korean": "해피투게더", "year": 1997, "auteur": "wong"},
+    "2046": {"korean": "2046", "year": 2004, "auteur": "wong"},
+    "days_of_being_wild": {"korean": "아비정전", "year": 1990, "auteur": "wong"},
+    "ashes_of_time": {"korean": "동사서독", "year": 1994, "auteur": "wong"},
+    # Park Chan-wook
+    "oldboy": {"korean": "올드보이", "year": 2003, "auteur": "park"},
+    "the_handmaiden": {"korean": "아가씨", "year": 2016, "auteur": "park"},
+    "decision_to_leave": {"korean": "헤어질 결심", "year": 2022, "auteur": "park"},
+    "sympathy_for_mr_vengeance": {"korean": "복수는 나의 것", "year": 2002, "auteur": "park"},
+}
+
+# Known collaborator database for cross-auteur linking
+COLLABORATOR_DATABASE = {
+    "hong_kyung_pyo": {"name": "홍경표", "role": "Cinematographer", "worked_with": ["bong"]},
+    "hoyte_van_hoytema": {"name": "Hoyte van Hoytema", "role": "Cinematographer", "worked_with": ["nolan", "villeneuve"]},
+    "wally_pfister": {"name": "Wally Pfister", "role": "Cinematographer", "worked_with": ["nolan"]},
+    "roger_deakins": {"name": "Roger Deakins", "role": "Cinematographer", "worked_with": ["villeneuve"]},
+    "christopher_doyle": {"name": "Christopher Doyle", "role": "Cinematographer", "worked_with": ["wong", "park"]},
+    "hans_zimmer": {"name": "Hans Zimmer", "role": "Composer", "worked_with": ["nolan", "villeneuve"]},
+    "johnny_greenwood": {"name": "Jonny Greenwood", "role": "Composer", "worked_with": ["villeneuve"]},
+    "william_chang": {"name": "William Chang", "role": "Editor/Production Designer", "worked_with": ["wong"]},
+    "robert_richardson": {"name": "Robert Richardson", "role": "Cinematographer", "worked_with": ["tarantino"]},
+    "sally_menke": {"name": "Sally Menke", "role": "Editor", "worked_with": ["tarantino"]},
+    "jung_jung_hoon": {"name": "정정훈", "role": "Composer", "worked_with": ["bong"]},
+    "tilda_swinton": {"name": "Tilda Swinton", "role": "Actor", "worked_with": ["bong"]},
+    "song_kang_ho": {"name": "송강호", "role": "Actor", "worked_with": ["bong", "park"]},
+}
+
+
+def _normalize_film_name(name: str) -> Optional[str]:
+    """Normalize film name to database key."""
+    name_lower = name.lower().strip()
+    
+    # Direct match
+    if name_lower in FILM_DATABASE:
+        return name_lower
+    
+    # Match by Korean name
+    for film_id, data in FILM_DATABASE.items():
+        if name == data["korean"] or name_lower == data["korean"].lower():
+            return film_id
+    
+    # Fuzzy match (remove common words)
+    name_clean = name_lower.replace("the ", "").replace(" ", "_")
+    for film_id in FILM_DATABASE:
+        if name_clean in film_id or film_id in name_clean:
+            return film_id
+    
+    return None
+
+
+def _extract_films_from_text(text: str, auteur_key: str) -> List[Tuple[str, str]]:
+    """Extract film references from text content."""
+    films = []
+    text_lower = text.lower()
+    
+    for film_id, data in FILM_DATABASE.items():
+        # Check Korean name
+        if data["korean"] in text:
+            films.append((film_id, data["korean"]))
+        # Check English name (with underscores as spaces)
+        english_name = film_id.replace("_", " ")
+        if english_name in text_lower:
+            films.append((film_id, data["korean"]))
+    
+    return list(set(films))
+
+
+def _extract_collaborators_from_section(
+    collaborators_data: Dict[str, Any],
+    auteur_id: str,
+) -> Tuple[List[Entity], List[Relationship]]:
+    """Extract collaborators from explicit collaborators section."""
+    entities = []
+    relationships = []
+    
+    for collab_key, collab_data in collaborators_data.items():
+        if isinstance(collab_data, dict):
+            collab_id = f"collaborator:{collab_key}"
+            collab_name = collab_key.replace("_", " ").title()
+            role = collab_data.get("role", "Unknown")
+            
+            # Check if in database for canonical name
+            if collab_key in COLLABORATOR_DATABASE:
+                db_entry = COLLABORATOR_DATABASE[collab_key]
+                collab_name = db_entry["name"]
+                role = db_entry["role"]
+            
+            collab_entity = Entity(
+                id=collab_id,
+                type="Collaborator",
+                name=collab_name,
+                properties={
+                    "role": role,
+                    "contribution": collab_data.get("contribution", ""),
+                    "films": collab_data.get("films", []),
+                },
+            )
+            entities.append(collab_entity)
+            relationships.append(Relationship(
+                source_id=auteur_id,
+                target_id=collab_id,
+                type="COLLABORATES_WITH",
+                properties={"role": role},
+            ))
+    
+    return entities, relationships
+
+
+def _extract_films_from_array(
+    films_array: List[str],
+    auteur_id: str,
+) -> Tuple[List[Entity], List[Relationship]]:
+    """Extract films from films_together or similar arrays."""
+    entities = []
+    relationships = []
+    
+    for film_name in films_array:
+        film_id_key = _normalize_film_name(film_name)
+        if film_id_key:
+            film_id = f"film:{film_id_key}"
+            film_data = FILM_DATABASE.get(film_id_key, {})
+            film_entity = Entity(
+                id=film_id,
+                type="Film",
+                name=film_data.get("korean", film_name),
+                properties={
+                    "english_id": film_id_key,
+                    "year": film_data.get("year"),
+                },
+            )
+            entities.append(film_entity)
+            relationships.append(Relationship(
+                source_id=auteur_id,
+                target_id=film_id,
+                type="DIRECTED",
+            ))
+        else:
+            # Unknown film - still add with normalized ID
+            clean_name = film_name.lower().replace(" ", "_").replace("'", "")
+            film_id = f"film:{clean_name}"
+            film_entity = Entity(
+                id=film_id,
+                type="Film",
+                name=film_name,
+                properties={"english_id": clean_name},
+            )
+            entities.append(film_entity)
+            relationships.append(Relationship(
+                source_id=auteur_id,
+                target_id=film_id,
+                type="DIRECTED",
+            ))
+    
+    return entities, relationships
+
+
+def _deep_extract_films_from_content(
+    content: Dict[str, Any],
+    auteur_id: str,
+    auteur_key: str,
+) -> Tuple[List[Entity], List[Relationship]]:
+    """Deep extraction of films from nested content structures."""
+    entities = []
+    relationships = []
+    content_str = json.dumps(content, ensure_ascii=False)
+    
+    # Extract from all examples sections
+    def find_examples(obj, path=""):
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                if key == "examples" and isinstance(value, (dict, list)):
+                    if isinstance(value, dict):
+                        for film_ref in value.keys():
+                            film_id_key = _normalize_film_name(film_ref)
+                            if film_id_key:
+                                yield (film_id_key, FILM_DATABASE.get(film_id_key, {}).get("korean", film_ref))
+                    elif isinstance(value, list):
+                        for item in value:
+                            if isinstance(item, str):
+                                # Extract film name from strings like "Rotating hallway (Inception)"
+                                import re
+                                match = re.search(r'\(([^)]+)\)', item)
+                                if match:
+                                    film_name = match.group(1)
+                                    film_id_key = _normalize_film_name(film_name)
+                                    if film_id_key:
+                                        yield (film_id_key, FILM_DATABASE.get(film_id_key, {}).get("korean", film_name))
+                else:
+                    yield from find_examples(value, f"{path}.{key}")
+        elif isinstance(obj, list):
+            for i, item in enumerate(obj):
+                yield from find_examples(item, f"{path}[{i}]")
+    
+    found_films = set(find_examples(content))
+    
+    # Also search the entire content string for known films
+    for film_id_key, data in FILM_DATABASE.items():
+        if data.get("auteur") == auteur_key:
+            if data["korean"] in content_str or film_id_key.replace("_", " ") in content_str.lower():
+                found_films.add((film_id_key, data["korean"]))
+    
+    for film_id_key, film_name in found_films:
+        film_id = f"film:{film_id_key}"
+        film_data = FILM_DATABASE.get(film_id_key, {})
+        film_entity = Entity(
+            id=film_id,
+            type="Film",
+            name=film_name,
+            properties={
+                "english_id": film_id_key,
+                "year": film_data.get("year"),
+            },
+        )
+        entities.append(film_entity)
+        relationships.append(Relationship(
+            source_id=auteur_id,
+            target_id=film_id,
+            type="DIRECTED",
+        ))
+    
+    return entities, relationships
+
 
 def extract_entities_from_source_pack(
     source_pack: Dict[str, Any],
@@ -152,6 +415,12 @@ def extract_entities_from_source_pack(
 ) -> Tuple[List[Entity], List[Relationship]]:
     """
     Extract entities and relationships from a source pack JSON.
+    
+    Hardened version with deep extraction for:
+    - Explicit collaborators sections
+    - films_together arrays
+    - Examples with film references
+    - Cross-auteur collaborator linking
     
     Args:
         source_pack: Loaded source pack JSON
@@ -170,13 +439,16 @@ def extract_entities_from_source_pack(
         id=auteur_id,
         type="Auteur",
         name=auteur_name,
-        properties={"key": auteur_key},
+        properties={
+            "key": auteur_key,
+            "category": source_pack.get("category", "unknown"),
+        },
     )
     entities.append(auteur_entity)
     
     content = source_pack.get("content", {})
     
-    # Extract camera/equipment entities
+    # === 1. Extract Camera/Equipment ===
     if "camera_equipment" in content:
         equip = content["camera_equipment"]
         if "camera" in equip:
@@ -185,7 +457,10 @@ def extract_entities_from_source_pack(
                 id=camera_id,
                 type="Camera",
                 name=equip["camera"],
-                properties={"lenses": equip.get("lenses", "")},
+                properties={
+                    "lenses": equip.get("lenses", ""),
+                    "effect": equip.get("effect", ""),
+                },
             )
             entities.append(camera_entity)
             relationships.append(Relationship(
@@ -194,101 +469,100 @@ def extract_entities_from_source_pack(
                 type="USES_CAMERA",
             ))
     
-    # Extract techniques from various sections
+    # === 2. Extract Techniques (Deep) ===
     technique_sections = [
         "camera_movement_symbolism",
-        "composition_techniques",
+        "composition_techniques", 
         "cinematography_techniques",
+        "cinematography_signature",
         "lighting_techniques",
+        "lighting_approach",
         "editing_techniques",
+        "narrative_structure",
+        "mathematical_imagery",
+        "thematic_obsessions",
+        "genre_hybridity",
+        "dark_comedy",
+        "thriller_elements",
+        "horror_elements",
+        "tone_shifts",
+        "color_philosophy",
+        "improvisation_approach",
     ]
     
     for section_name in technique_sections:
         if section_name in content:
             section = content[section_name]
-            for tech_key, tech_data in section.items():
-                if isinstance(tech_data, dict):
-                    tech_id = f"technique:{tech_key}"
-                    tech_name = tech_key.replace("_", " ").title()
-                    
-                    tech_entity = Entity(
-                        id=tech_id,
-                        type="Technique",
-                        name=tech_name,
-                        properties={
-                            "description": tech_data.get("technique", tech_data.get("description", "")),
-                            "meaning": tech_data.get("meaning", ""),
-                            "effect": tech_data.get("effect", ""),
-                        },
-                    )
-                    entities.append(tech_entity)
-                    relationships.append(Relationship(
-                        source_id=auteur_id,
-                        target_id=tech_id,
-                        type="USES_TECHNIQUE",
-                    ))
+            if isinstance(section, dict):
+                for tech_key, tech_data in section.items():
+                    if isinstance(tech_data, dict):
+                        tech_id = f"technique:{section_name}_{tech_key}"
+                        tech_name = f"{section_name.replace('_', ' ').title()}: {tech_key.replace('_', ' ').title()}"
+                        
+                        tech_entity = Entity(
+                            id=tech_id,
+                            type="Technique",
+                            name=tech_name,
+                            properties={
+                                "category": section_name,
+                                "description": tech_data.get("technique", tech_data.get("description", tech_data.get("philosophy", ""))),
+                                "meaning": tech_data.get("meaning", ""),
+                                "effect": tech_data.get("effect", tech_data.get("purpose", "")),
+                                "examples": tech_data.get("examples", []),
+                            },
+                        )
+                        entities.append(tech_entity)
+                        relationships.append(Relationship(
+                            source_id=auteur_id,
+                            target_id=tech_id,
+                            type="USES_TECHNIQUE",
+                        ))
     
-    # Extract films from various references
-    film_refs = set()
-    
-    # Look for film names in the content
-    content_str = json.dumps(content, ensure_ascii=False)
-    
-    # Known film patterns (could be expanded)
-    known_films = {
-        "기생충": "parasite",
-        "살인의 추억": "memories_of_murder",
-        "마더": "mother",
-        "설국열차": "snowpiercer",
-        "옥자": "okja",
-        "인셉션": "inception",
-        "인터스텔라": "interstellar",
-        "덩케르크": "dunkirk",
-        "오펜하이머": "oppenheimer",
-        "테넷": "tenet",
-        "펄프 픽션": "pulp_fiction",
-        "킬 빌": "kill_bill",
-        "듄": "dune",
-        "블레이드 러너 2049": "blade_runner_2049",
-        "화양연화": "in_the_mood_for_love",
-    }
-    
-    for korean_name, english_id in known_films.items():
-        if korean_name in content_str:
-            film_refs.add((korean_name, english_id))
-    
-    for korean_name, english_id in film_refs:
-        film_id = f"film:{english_id}"
-        film_entity = Entity(
-            id=film_id,
-            type="Film",
-            name=korean_name,
-            properties={"english_id": english_id},
+    # === 3. Extract Collaborators (Explicit Section) ===
+    if "collaborators" in content:
+        collab_entities, collab_rels = _extract_collaborators_from_section(
+            content["collaborators"], auteur_id
         )
-        entities.append(film_entity)
+        entities.extend(collab_entities)
+        relationships.extend(collab_rels)
+    
+    # === 4. Extract Partnership/Collaboration ===
+    if "partnership" in content:
+        partnership = content["partnership"]
+        # Extract films_together
+        if "films_together" in partnership:
+            film_entities, film_rels = _extract_films_from_array(
+                partnership["films_together"], auteur_id
+            )
+            entities.extend(film_entities)
+            relationships.extend(film_rels)
+    
+    # === 5. Deep Film Extraction ===
+    film_entities, film_rels = _deep_extract_films_from_content(
+        content, auteur_id, auteur_key
+    )
+    entities.extend(film_entities)
+    relationships.extend(film_rels)
+    
+    # === 6. Extract Veo Prompt Keywords as Styles (Limit 8) ===
+    veo_keys = content.get("veo_prompt_keywords", content.get("prompt_generation_keywords", []))
+    for keyword in veo_keys[:8]:
+        style_id = f"style:{auteur_key}_{keyword.lower().replace(' ', '_')}"
+        style_entity = Entity(
+            id=style_id,
+            type="Style",
+            name=keyword,
+            properties={"auteur": auteur_key},
+        )
+        entities.append(style_entity)
         relationships.append(Relationship(
             source_id=auteur_id,
-            target_id=film_id,
-            type="DIRECTED",
+            target_id=style_id,
+            type="HAS_STYLE",
         ))
     
-    # Extract Veo prompt keywords as style traits
-    if "veo_prompt_keywords" in content:
-        for keyword in content["veo_prompt_keywords"][:5]:  # Limit to top 5
-            style_id = f"style:{keyword.lower().replace(' ', '_')}"
-            style_entity = Entity(
-                id=style_id,
-                type="Style",
-                name=keyword,
-            )
-            entities.append(style_entity)
-            relationships.append(Relationship(
-                source_id=auteur_id,
-                target_id=style_id,
-                type="HAS_STYLE",
-            ))
-    
     return entities, relationships
+
 
 
 # ============================================================================
