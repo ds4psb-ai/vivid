@@ -117,6 +117,7 @@ class AppRegistry:
     @classmethod
     def get_by_type(cls, app_type: AppType) -> List[AppConfig]:
         """앱 타입으로 조회."""
+        cls._ensure_initialized()
         return [
             app for app in cls._apps.values()
             if app.metadata.type == app_type
@@ -125,6 +126,7 @@ class AppRegistry:
     @classmethod
     def get_by_capability(cls, capability: str) -> List[AppConfig]:
         """특정 Capability가 활성화된 앱 조회."""
+        cls._ensure_initialized()
         return [
             app for app in cls._apps.values()
             if app.has_capability(capability)
@@ -133,6 +135,7 @@ class AppRegistry:
     @classmethod
     def get_by_context(cls, context: BoundedContext) -> List[AppConfig]:
         """Bounded Context로 앱 조회."""
+        cls._ensure_initialized()
         return [
             app for app in cls._apps.values()
             if app.metadata.bounded_context == context
@@ -141,6 +144,7 @@ class AppRegistry:
     @classmethod
     def get_by_keyword(cls, text: str) -> Optional[AppConfig]:
         """텍스트에서 앱 자동 감지 (키워드 패턴 매칭)."""
+        cls._ensure_initialized()
         text_lower = text.lower()
         
         for pattern, app_name in cls._keyword_index.items():
@@ -157,6 +161,7 @@ class AppRegistry:
     @classmethod
     def get_all(cls) -> List[AppConfig]:
         """모든 앱 조회."""
+        cls._ensure_initialized()
         return list(cls._apps.values())
     
     @classmethod
@@ -168,6 +173,7 @@ class AppRegistry:
     @classmethod
     def get_stats(cls) -> Dict[str, Any]:
         """레지스트리 통계."""
+        cls._ensure_initialized()
         type_counts = {}
         for app in cls._apps.values():
             type_name = app.metadata.type.value
