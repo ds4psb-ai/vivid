@@ -39,24 +39,68 @@ def _get_genai():
     return _genai
 
 
-def configure_gemini() -> bool:
+_active_api_key: Optional[str] = None  # Track which key is currently active
+
+
+def configure_gemini(force_fallback: bool = False) -> bool:
     """Configure Gemini API with the API key from settings.
-    
+
+    Supports automatic fallback to GEMINI_API_KEY_FALLBACK if primary key fails.
+
+    Args:
+        force_fallback: If True, skip primary key and use fallback directly.
+
     Returns:
         True if configuration successful, False otherwise.
     """
-    if not settings.GEMINI_API_KEY:
+    global _active_api_key
+
+    primary_key = settings.GEMINI_API_KEY
+    fallback_key = getattr(settings, 'GEMINI_API_KEY_FALLBACK', '')
+
+    if not primary_key and not fallback_key:
         logger.warning("GEMINI_API_KEY not set, Gemini features disabled")
         return False
-    
-    try:
-        genai = _get_genai()
-        genai.configure(api_key=settings.GEMINI_API_KEY)
-        logger.info(f"Gemini configured with model: {settings.GEMINI_MODEL}")
-        return True
-    except Exception as e:
-        logger.error(f"Failed to configure Gemini: {e}")
+
+    # Determine which key to try
+    keys_to_try = []
+    if not force_fallback and primary_key:
+        keys_to_try.append(("primary", primary_key))
+    if fallback_key:
+        keys_to_try.append(("fallback", fallback_key))
+
+    genai = _get_genai()
+
+    for key_name, api_key in keys_to_try:
+        try:
+            genai.configure(api_key=api_key)
+            _active_api_key = api_key
+            logger.info(f"Gemini configured with {key_name} key, model: {settings.GEMINI_MODEL}")
+            return True
+        except Exception as e:
+            logger.warning(f"Failed to configure Gemini with {key_name} key: {e}")
+            continue
+
+    logger.error("All Gemini API keys failed")
+    return False
+
+
+def rotate_to_fallback_key() -> bool:
+    """Rotate to fallback API key. Call this when primary key fails at runtime."""
+    global _active_api_key, _model
+
+    fallback_key = getattr(settings, 'GEMINI_API_KEY_FALLBACK', '')
+    if not fallback_key:
+        logger.error("No fallback key configured")
         return False
+
+    if _active_api_key == fallback_key:
+        logger.warning("Already using fallback key")
+        return False
+
+    _model = None  # Reset cached model
+    logger.info("Rotating to fallback Gemini API key")
+    return configure_gemini(force_fallback=True)
 
 
 def _get_model(use_video: bool = False):
