@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, Field
 
 from app.storyboard_utils import normalize_storyboard_cards
+from app.agents.tool_utils import filter_evidence_refs
 
 class ArtifactType(str, Enum):
     """Supported artifact types."""
@@ -457,12 +458,13 @@ def _build_claim_row(
     statement = claim.get("statement") or claim.get("claim_text") or ""
     claim_type = claim.get("claim_type") or _infer_claim_type(claim_id)
     
-    evidence_refs = claim.get("evidence_refs")
-    if isinstance(evidence_refs, str):
-        evidence_refs = [evidence_refs]
-    elif not isinstance(evidence_refs, list):
-        evidence_refs = []
-    evidence_refs = [ref for ref in evidence_refs if isinstance(ref, str)]
+    # Extract and filter evidence refs
+    raw_refs = claim.get("evidence_refs")
+    if isinstance(raw_refs, str):
+        raw_refs = [raw_refs]
+    elif not isinstance(raw_refs, list):
+        raw_refs = []
+    evidence_refs, _ = filter_evidence_refs(raw_refs, max_refs=20)
     
     return {
         "claim_id": str(claim_id),
@@ -513,10 +515,11 @@ def create_data_table_from_claims(
         if (row := _build_claim_row(claim, idx, summary, token_usage)) is not None
     ]
 
-    evidence_refs = summary.get("evidence_refs", [])
-    if isinstance(evidence_refs, str):
-        evidence_refs = [evidence_refs]
-    source_refs = [ref for ref in evidence_refs if isinstance(ref, str)] if isinstance(evidence_refs, list) else []
+    # Filter evidence refs for source_refs
+    raw_refs = summary.get("evidence_refs", [])
+    if isinstance(raw_refs, str):
+        raw_refs = [raw_refs]
+    source_refs, _ = filter_evidence_refs(raw_refs if isinstance(raw_refs, list) else [], max_refs=50)
 
     return DataTableArtifact(
         artifact_id=artifact_id,
