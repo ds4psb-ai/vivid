@@ -43,8 +43,20 @@ from app.rag.tier0_vertex_rag import (
 )
 from app.rag.observability import trace_rag
 from app.rag.graph_rag import graph_query as _graph_query, GraphRAGResult
+from app.rag.query_expansion import expand_query as _expand_query
+from app.rag.reranker import VertexReranker, DocumentToRank
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# Type Definitions
+# ============================================================================
+
+# PipelineHints simplified version (avoid circular import)
+class PipelineHintsDict:
+    """Simplified PipelineHints for hybrid_query."""
+    pass
 
 
 # ============================================================================
@@ -132,6 +144,7 @@ async def hybrid_query(
     dimension: Optional[str] = None,
     use_google_search: bool = True,
     strategy: Literal["vector", "graph", "hybrid"] = "vector",
+    pipeline_hints: Optional[Dict[str, Any]] = None,
 ) -> HybridRAGResult:
     """하이브리드 RAG 쿼리 실행.
 
@@ -140,11 +153,20 @@ async def hybrid_query(
     - "graph": GraphRAG entity/relationship traversal
     - "hybrid": Combine both vector and graph results
 
+    Pipeline Hints (when provided):
+    - use_expansion: bool - Enable query expansion via LLM
+    - expansion_strategy: "llm" | "hyde" | "none"
+    - use_reranker: bool - Enable vertex reranker
+    - reranker_model: "semantic-ranker-default-v1"
+    - top_k: int - Number of results to return
+
     Flow:
-    1. auteur_key 있으면: NotebookLM 우선 → Vertex AI 폴백
-    2. dimension 있으면: Vertex AI + Google Search Grounding
-    3. 둘 다 없으면: 병렬 실행 → 결과 병합
-    4. strategy="graph": GraphRAG 엔티티 검색
+    1. Query Expansion (if hints.use_expansion)
+    2. auteur_key 있으면: NotebookLM 우선 → Vertex AI 폴백
+    3. dimension 있으면: Vertex AI + Google Search Grounding
+    4. 둘 다 없으면: 병렬 실행 → 결과 병합
+    5. strategy="graph": GraphRAG 엔티티 검색
+    6. Reranking (if hints.use_reranker)
 
     Args:
         query: 검색 쿼리
@@ -152,14 +174,42 @@ async def hybrid_query(
         dimension: 차원 코드 (예: "1D", "2D", "AD")
         use_google_search: Google Search Grounding 사용 여부
         strategy: 검색 전략 ("vector" | "graph" | "hybrid")
+        pipeline_hints: 파이프라인 힌트 딕셔너리
 
     Returns:
         HybridRAGResult with combined answer and sources
     """
+
     import time
     start_time = time.monotonic()
+    
+    # === Parse Pipeline Hints ===
+    hints = pipeline_hints or {}
+    use_expansion = hints.get("use_expansion", False)
+    expansion_strategy = hints.get("expansion_strategy", "llm")
+    use_reranker = hints.get("use_reranker", False)
+    reranker_model = hints.get("reranker_model", "semantic-ranker-default-v1@latest")
+    top_k = hints.get("top_k", 10)
+    
+    # === Step 1: Query Expansion ===
+    effective_query = query
+    expanded_queries: List[str] = []
+    if use_expansion and strategy != "graph":
+        try:
+            expanded_queries = await _expand_query(
+                query=query,
+                strategy=expansion_strategy,
+                max_expansions=3,
+            )
+            logger.info(f"[HybridRAG] Expanded query: {len(expanded_queries)} variations")
+            # Use first expansion as effective query (original is included)
+            effective_query = expanded_queries[0] if expanded_queries else query
+        except Exception as e:
+            logger.warning(f"[HybridRAG] Query expansion failed: {e}")
+            expanded_queries = [query]
 
     # === Strategy: Graph-only ===
+
     if strategy == "graph":
         auteur_keys = [auteur_key] if auteur_key else None
         graph_result = await _graph_query(query, auteur_keys=auteur_keys)
@@ -222,7 +272,49 @@ async def hybrid_query(
         len(result.vertex_sources) + 
         len(result.grounding_sources)
     )
-
+    
+    # === Step N: Reranking ===
+    if use_reranker and result.retrieval_count > 0:
+        try:
+            reranker = VertexReranker(model=reranker_model)
+            
+            # Prepare documents for reranking
+            docs_to_rerank: List[DocumentToRank] = []
+            
+            # Add NotebookLM sources
+            for src in result.notebooklm_sources:
+                docs_to_rerank.append(DocumentToRank(
+                    id=f"nlm_{src.source_id}",
+                    content=src.text[:1000],  # Truncate for reranker
+                    metadata={"source": "notebooklm"}
+                ))
+            
+            # Add Vertex sources
+            for src in result.vertex_sources:
+                docs_to_rerank.append(DocumentToRank(
+                    id=f"vtx_{src.source_id}",
+                    content=src.text[:1000],
+                    metadata={"source": "vertex"}
+                ))
+            
+            if docs_to_rerank:
+                rerank_result = await reranker.rerank(
+                    query=effective_query,
+                    documents=docs_to_rerank,
+                    top_k=min(top_k, len(docs_to_rerank))
+                )
+                
+                # Update result metadata
+                result.reranked = True
+                result.rerank_model = reranker_model
+                result.source_scores = [doc.score for doc in rerank_result.documents]
+                
+                logger.info(
+                    f"[HybridRAG] Reranked {len(docs_to_rerank)} docs | "
+                    f"top_score={rerank_result.documents[0].score if rerank_result.documents else 0:.3f}"
+                )
+        except Exception as e:
+            logger.warning(f"[HybridRAG] Reranking failed: {e}")
 
     # Enhanced logging with metrics
     logger.info(
