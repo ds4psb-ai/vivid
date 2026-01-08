@@ -168,6 +168,48 @@ class AestheticHints(BaseModel):
 
 
 # =========================================================================
+# Pipeline Hints - 새 도메인 앱을 위한 RAG 파이프라인 힌트
+# =========================================================================
+
+class PipelineHints(BaseModel):
+    """RAG 파이프라인 힌트 - 새 도메인 앱 확장용.
+    
+    기존 auteur/dimension 앱은 기본 설정을 사용하지만,
+    새로운 도메인 앱(마케팅, 법률 등)은 이 힌트로 파이프라인을 커스터마이즈합니다.
+    """
+    
+    # Retrieval 설정
+    retrieval_strategy: Literal["hybrid", "semantic", "keyword"] = Field(
+        default="hybrid",
+        description="검색 전략"
+    )
+    top_k: int = Field(default=10, ge=1, le=50, description="검색 결과 수")
+    score_threshold: float = Field(default=0.7, ge=0.0, le=1.0, description="최소 점수")
+    reranker: Optional[Literal["cohere", "cross-encoder", "vertex"]] = Field(
+        default=None,
+        description="리랭커 모델"
+    )
+    
+    # Generation 설정
+    generation_template: str = Field(
+        default="default",
+        description="프롬프트 템플릿 이름 (templates/rag/)"
+    )
+    temperature: float = Field(default=0.7, ge=0.0, le=2.0)
+    max_tokens: int = Field(default=2048, ge=256, le=8192)
+    
+    # 소스 설정
+    corpus_name: Optional[str] = Field(
+        default=None,
+        description="명시적 Corpus 이름 (None이면 자동 결정)"
+    )
+    include_web_search: bool = Field(
+        default=True,
+        description="Google Search Grounding 포함 여부"
+    )
+
+
+# =========================================================================
 # CreativeIntent - 핵심 스키마
 # =========================================================================
 
@@ -225,6 +267,12 @@ class CreativeIntent(BaseModel):
     aesthetic_hints: Optional[AestheticHints] = Field(
         default=None,
         description="미학적 힌트 (색감, 조명, 구도 등)"
+    )
+    
+    # === Pipeline Hints (새 도메인 앱용) ===
+    pipeline_hints: Optional[PipelineHints] = Field(
+        default=None,
+        description="RAG 파이프라인 커스터마이징 (마케팅, 법률 등 새 도메인)"
     )
     
     # === Descriptive Hints (자유형식) ===
@@ -288,6 +336,7 @@ class CreativeIntent(BaseModel):
             "domain_sources": [d.value for d in self.domain_sources],
             "output_format": self.output_format.value,
             "aesthetic_hints": self.aesthetic_hints.model_dump() if self.aesthetic_hints else None,
+            "pipeline_hints": self.pipeline_hints.model_dump() if self.pipeline_hints else None,
             "keywords": self.keywords,
             "custom_notes": self.custom_notes,
         }
@@ -440,6 +489,7 @@ __all__ = [
     
     # Supporting Models
     "AestheticHints",
+    "PipelineHints",
     "IntentMetadata",
     "TemplateIntentPreset",
     
