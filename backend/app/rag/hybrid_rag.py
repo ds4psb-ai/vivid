@@ -42,6 +42,7 @@ from app.rag.tier0_vertex_rag import (
     RAGSource,
 )
 from app.rag.observability import trace_rag
+from app.rag.graph_rag import graph_query as _graph_query, GraphRAGResult
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +73,9 @@ class HybridRAGResult:
     rerank_model: Optional[str] = None
     retrieval_count: int = 0  # 검색된 문서 수
     source_scores: List[float] = field(default_factory=list)  # 각 소스의 점수
+    # === NEW: GraphRAG (Phase 5) ===
+    graph_entities: List[Dict[str, Any]] = field(default_factory=list)
+    graph_relationships: List[tuple] = field(default_factory=list)
 
 
 # ============================================================================

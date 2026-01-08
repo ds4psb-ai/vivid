@@ -22,3 +22,5 @@ sentence-transformers>=2.2.2
 aiofiles
 # Observability (Phase 4)
 langfuse>=2.0.0
+# GraphRAG (Phase 5)
+lightrag-hku>=0.0.8
