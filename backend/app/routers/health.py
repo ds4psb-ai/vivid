@@ -62,10 +62,10 @@ async def health_check(db: AsyncSession = Depends(get_db)) -> HealthStatus:
     
     # Redis check (optional)
     try:
-        import aioredis
+        from redis.asyncio import from_url as redis_from_url
         redis_url = settings.REDIS_URL
         start = time.perf_counter()
-        redis = await aioredis.from_url(redis_url, socket_timeout=2)
+        redis = redis_from_url(redis_url, socket_timeout=2)
         await redis.ping()
         await redis.close()
         redis_latency = (time.perf_counter() - start) * 1000
