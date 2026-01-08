@@ -1,0 +1,92 @@
+{
+    "source_id": "bong_genre_blending",
+    "auteur": "Bong Joon-ho",
+    "category": "filmmaking_style",
+    "title": "Bong Joon-ho Genre Blending and Tone Shifts",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "criticfilm.com",
+            "topic": "Genre hybrid analysis"
+        },
+        {
+            "name": "nextbestpicture.com",
+            "topic": "Dark comedy elements"
+        },
+        {
+            "name": "variety.com",
+            "topic": "Genre subversion"
+        },
+        {
+            "name": "gaylydreadful.com",
+            "topic": "Horror elements analysis"
+        }
+    ],
+    "content": {
+        "genre_hybridity": {
+            "signature_approach": "Seamlessly mixes disparate genres within single narrative",
+            "genres_combined": [
+                "Thriller",
+                "Drama",
+                "Comedy",
+                "Horror",
+                "Social commentary"
+            ],
+            "technique": {
+                "subversion": "Takes established conventions and deconstructs them",
+                "result": "Narratives that are familiar yet entirely novel"
+            }
+        },
+        "dark_comedy": {
+            "integration": "Dark humor infused naturally into dire situations",
+            "function": "Adds layers of depth to characters",
+            "examples": {
+                "parasite": "Dark humor interlinked with tense moments",
+                "mother": "Deeply funny moments amidst dramatic thriller",
+                "snowpiercer": "Tilda Swinton character provides dark humor"
+            }
+        },
+        "thriller_elements": {
+            "consistent_presence": "Suspenseful elements across filmography",
+            "memories_of_murder": "Evolves from light comedy to dark crime thriller",
+            "parasite": "Suspenseful exploration of class disparity",
+            "visual_contribution": "Meticulous planning creates chilling atmosphere"
+        },
+        "horror_elements": {
+            "approach": "Not exclusively horror, but incorporates touches",
+            "the_host": {
+                "genre": "Monster movie / environmental horror",
+                "blend": "Horror + dark comedy + socio-political satire"
+            },
+            "barking_dogs": "Debut contains horror elements",
+            "mundane_horror": {
+                "focus": "Mundane rather than supernatural horrors",
+                "rooted_in": [
+                    "Class",
+                    "Politics",
+                    "Social anxieties"
+                ]
+            },
+            "future_plans": "Korean film with horror and action in Seoul subway"
+        },
+        "tone_shifts": {
+            "sudden_shifts": "Signature element of filmmaking",
+            "purpose": {
+                "social_commentary": "Deliver sharp insights",
+                "complex_characters": "Explore depth",
+                "novel_perspectives": "Fresh views on human condition"
+            },
+            "natural_emergence": "Bong says shifts emerge naturally, not consciously engineered"
+        },
+        "veo_prompt_keywords": [
+            "genre hybrid blend",
+            "dark comedy thriller",
+            "sudden tone shift",
+            "horror social commentary",
+            "mundane horror class",
+            "genre subversion familiar-novel",
+            "monster socio-political satire",
+            "absurd humor dire situations"
+        ]
+    }
+}

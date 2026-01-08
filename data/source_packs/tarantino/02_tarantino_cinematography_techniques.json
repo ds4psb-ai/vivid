@@ -1,0 +1,113 @@
+{
+    "source_id": "tarantino_cinematography_techniques",
+    "auteur": "Quentin Tarantino",
+    "category": "cinematography",
+    "title": "Quentin Tarantino Cinematography Techniques - Robert Richardson Collaboration",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "studiobinder.com",
+            "topic": "Richardson lighting breakdown"
+        },
+        {
+            "name": "panavision.com",
+            "topic": "Once Upon a Time lens choice"
+        },
+        {
+            "name": "thefilmstage.com",
+            "topic": "Richardson interview"
+        },
+        {
+            "name": "filmcomment.com",
+            "topic": "No video village philosophy"
+        }
+    ],
+    "content": {
+        "collaboration": {
+            "cinematographer": "Robert Richardson (since Kill Bill)",
+            "films": [
+                "Kill Bill Vol. 1 & 2",
+                "Inglourious Basterds",
+                "Django Unchained",
+                "The Hateful Eight",
+                "Once Upon a Time in Hollywood"
+            ],
+            "dynamic": "Tarantino specific about shots, Richardson executes"
+        },
+        "richardson_style": {
+            "bold_lighting": {
+                "signature": "Strong rim lighting with top lights",
+                "effect": "Halo effect around subjects",
+                "technique": "Overexpose rim light (especially effective on film)",
+                "unmotivated": "Not always seeking motivated lighting"
+            },
+            "operator_philosophy": {
+                "approach": "Personally operates camera (rides Pegasus crane)",
+                "reason": "Intimate connection to visual storytelling",
+                "actor_eye_contact": "Crucial for understanding performance"
+            }
+        },
+        "signature_shots": {
+            "trunk_shot": {
+                "description": "Low-angle POV from car trunk",
+                "effect": "Characters appear intimidating",
+                "focus": "Dialogue and performance by limiting background",
+                "essence": "Low-angle POV, not strictly inside trunk",
+                "films": [
+                    "Reservoir Dogs",
+                    "Pulp Fiction",
+                    "Kill Bill",
+                    "Jackie Brown"
+                ]
+            },
+            "long_takes": {
+                "planning": "Decided early in pre-production",
+                "camera_movement": "Complex movements (high-angle following actor)",
+                "tarantino_role": "Writes visuals into script"
+            }
+        },
+        "working_process": {
+            "no_video_village": {
+                "tarantino_method": "Observes actors directly beside camera",
+                "focus": "Actor performance over playback",
+                "trust": "Implicit trust in Richardson as operator"
+            },
+            "script_integration": {
+                "visuals_written": "Camera and composition in script",
+                "psychological_impact": "Specific about camera height effect"
+            }
+        },
+        "lens_choices": {
+            "once_upon_time": {
+                "camera": "Panaflex Millennium XL2",
+                "lenses": [
+                    "Panavision Ts",
+                    "Gs",
+                    "Cs",
+                    "Es",
+                    "Primos"
+                ],
+                "aesthetic": "1970s retro, slightly off balance with modern twist",
+                "format": "35mm (for zoom shots, not possible on 70mm)"
+            },
+            "hateful_eight": {
+                "format": "Ultra Panavision 70 (65mm film)",
+                "aspect_ratio": "2.76:1 (widest available)",
+                "purpose": "Landscapes out of faces, multiple characters in frame"
+            },
+            "preference": "Panavision cameras and lenses"
+        },
+        "veo_prompt_keywords": [
+            "trunk shot POV",
+            "strong rim lighting halo",
+            "top light drama",
+            "long take dialogue",
+            "Panavision anamorphic",
+            "Ultra Panavision 70",
+            "2.76:1 ultra wide",
+            "1970s retro grade",
+            "operator-beside-camera",
+            "overexposed rim light"
+        ]
+    }
+}

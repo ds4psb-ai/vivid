@@ -1,0 +1,84 @@
+{
+    "source_id": "villeneuve_pacing_narrative",
+    "auteur": "Denis Villeneuve",
+    "category": "editing_narrative",
+    "title": "Denis Villeneuve Pacing and Narrative Structure",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "tasteray.com",
+            "topic": "Slow-burn pacing analysis"
+        },
+        {
+            "name": "youtube.com",
+            "topic": "Joe Walker editing collaboration"
+        },
+        {
+            "name": "film-east.com",
+            "topic": "Dune visual storytelling"
+        },
+        {
+            "name": "purposestudios.in",
+            "topic": "Visual poetry style"
+        }
+    ],
+    "content": {
+        "pacing_philosophy": {
+            "slow_burn": {
+                "approach": "Deliberate, patient storytelling",
+                "contrast": "Fast-paced contemporary blockbusters",
+                "effect": "Deeper, meditative experience"
+            },
+            "breathing_moments": "Scenes allowed to unfold gradually",
+            "grand_gestures": "Grand moments given time to resonate",
+            "restrained_poetry": "Atmosphere through still images and negative space"
+        },
+        "joe_walker_collaboration": {
+            "editor": "Joe Walker (Arrival, Blade Runner 2049, Dune)",
+            "focus": "Emotional continuity over action continuity",
+            "technique": {
+                "no_audio_review": "Scenes reviewed without audio first",
+                "purpose": "Ensure visual narrative and emotional impact clear"
+            },
+            "rhythm_control": {
+                "longer_shots": "Contribute to slower pace",
+                "shot_scale_variation": "Establish visual rhythm",
+                "audience_focus": "Control where attention goes"
+            }
+        },
+        "visual_storytelling": {
+            "dialogue_minimal": "Less exposition, more visual communication",
+            "cinematography_first": "Visuals carry narrative weight",
+            "sound_integration": "Sound design conveys information and emotion",
+            "visual_poetry": "Breathtaking visuals build ambience and meaning"
+        },
+        "dune_structure": {
+            "two_film_decision": {
+                "purpose": "Patient exploration of complex narrative",
+                "result": "Richer without sacrificing nuance or pacing"
+            },
+            "macro_pacing": "World-building, character motivation, themes given space",
+            "scale_contrast": {
+                "wide_shots": "Humanity small against Arrakis vastness",
+                "extreme_closeups": "Intimacy with Paul Atreides"
+            }
+        },
+        "tempo_fluctuation": {
+            "tension_building": "Pace varies to build tension",
+            "character_development": "Slower moments for depth",
+            "dramatic_payoff": "Patience makes climax more satisfying"
+        },
+        "veo_prompt_keywords": [
+            "slow-burn pacing",
+            "patient storytelling",
+            "visual poetry",
+            "negative space breathing",
+            "emotional continuity",
+            "minimal dialogue",
+            "vast wide shot scale",
+            "extreme closeup intimacy",
+            "meditative atmosphere",
+            "restrained poetry"
+        ]
+    }
+}

@@ -19,11 +19,21 @@ type Template = SingularityTemplate;
 // =============================================================================
 
 const DIMENSION_COLORS: Record<string, { bg: string; text: string; glow: string }> = {
+    // Core Dimensions (1D-4D)
     "1D": { bg: "bg-violet-500/20", text: "text-violet-400", glow: "shadow-violet-500/30" },
-    "2D": { bg: "bg-cyan-500/20", text: "text-cyan-400", glow: "shadow-cyan-500/30" },
-    "3D": { bg: "bg-emerald-500/20", text: "text-emerald-400", glow: "shadow-emerald-500/30" },
-    "4D": { bg: "bg-amber-500/20", text: "text-amber-400", glow: "shadow-amber-500/30" },
-    "5D": { bg: "bg-lime-400/20", text: "text-lime-400", glow: "shadow-lime-400/30" },
+    "2D": { bg: "bg-emerald-500/20", text: "text-emerald-400", glow: "shadow-emerald-500/30" },
+    "3D": { bg: "bg-amber-500/20", text: "text-amber-400", glow: "shadow-amber-500/30" },
+    "4D": { bg: "bg-cyan-500/20", text: "text-cyan-400", glow: "shadow-cyan-500/30" },
+    // Extended Dimensions (10개 전체)
+    "AI": { bg: "bg-indigo-500/20", text: "text-indigo-400", glow: "shadow-indigo-500/30" },
+    "AD": { bg: "bg-fuchsia-500/20", text: "text-fuchsia-400", glow: "shadow-fuchsia-500/30" },
+    "STORY": { bg: "bg-orange-500/20", text: "text-orange-400", glow: "shadow-orange-500/30" },
+    "SOUND": { bg: "bg-pink-500/20", text: "text-pink-400", glow: "shadow-pink-500/30" },
+    "VEO": { bg: "bg-sky-500/20", text: "text-sky-400", glow: "shadow-sky-500/30" },
+    "QC": { bg: "bg-rose-500/20", text: "text-rose-400", glow: "shadow-rose-500/30" },
+    // Aliases
+    "VIS": { bg: "bg-amber-500/20", text: "text-amber-400", glow: "shadow-amber-500/30" },
+    "REF": { bg: "bg-cyan-500/20", text: "text-cyan-400", glow: "shadow-cyan-500/30" },
 };
 
 function DimensionFlow({ dimensions }: { dimensions: string[] }) {
@@ -119,7 +129,7 @@ function BlackholeVisual() {
 // TAG FILTER - 태그 기반 필터
 // =============================================================================
 
-const POPULAR_TAGS = ["애니메이션", "광고", "숏폼", "VEO", "시네마틱"];
+const POPULAR_TAGS = ["풀스택", "초스피드", "감독스타일", "숏폼", "사운드", "품질검수"];
 
 function TagFilter({
     selectedTag,

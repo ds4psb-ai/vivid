@@ -1,0 +1,104 @@
+{
+    "source_id": "nolan_zimmer_collaboration",
+    "auteur": "Christopher Nolan",
+    "category": "sound_and_score",
+    "title": "Christopher Nolan Sound Design and Hans Zimmer Collaboration",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "kottke.org",
+            "topic": "Shepard Tone in Dunkirk"
+        },
+        {
+            "name": "theringer.com",
+            "topic": "Zimmer score analysis"
+        },
+        {
+            "name": "enhanced.media",
+            "topic": "Interstellar sound design"
+        },
+        {
+            "name": "vulture.com",
+            "topic": "Oppenheimer score interview"
+        }
+    ],
+    "content": {
+        "collaboration_philosophy": {
+            "nolan_view": "Music fundamental, filmmaking akin to opera",
+            "zimmer_role": "Co-creator, not just composer",
+            "approach": "Evolving, experimental soundscapes",
+            "blend": "Electronic elements with traditional orchestral"
+        },
+        "zimmer_signature": {
+            "hypnotic_minimalism": true,
+            "chugging_ostinatos": "Repeating musical phrases",
+            "cyclical_patterns": "Build tension through repetition",
+            "unique_palettes": "Tailored sonic world for each film"
+        },
+        "dunkirk_techniques": {
+            "shepard_tone": {
+                "definition": "Auditory illusion of continuously rising/falling pitch",
+                "application": "Mirrored escalating tension across three timelines",
+                "effect": "Constant sense of unease and urgency"
+            },
+            "ticking_watch": {
+                "source": "Nolan's personal pocket watch recording",
+                "function": "Sonic backbone throughout film",
+                "effect": "Amplifies feeling of time running out"
+            },
+            "sirens_and_strings": {
+                "purpose": "Evoke anxieties of war",
+                "result": "Unified storytelling: sound + music + visuals merge"
+            }
+        },
+        "interstellar_techniques": {
+            "pipe_organ": {
+                "choice": "Central, distinctive instrument",
+                "departure": "Moved away from conventional sci-fi orchestral",
+                "meaning": "Profound human emotions, love, vast space",
+                "grounding": "Religious, human effort despite cosmic scale"
+            },
+            "ticking_at_60bpm": {
+                "purpose": "Underscore time dilation theme",
+                "context": "Miller's planet vs Earth time perception"
+            },
+            "dialogue_as_soundscape": {
+                "technique": "Sometimes mixed below ambient sounds",
+                "purpose": "Highlight immersive sonic environment"
+            },
+            "planet_sounds": {
+                "water_planet": "Specific splashing sounds",
+                "ice_planet": "Crunchy ice sounds",
+                "designer": "Richard King"
+            }
+        },
+        "oppenheimer_techniques": {
+            "composer": "Ludwig Göransson (Zimmer committed to Dune)",
+            "violin_manipulation": {
+                "purpose": "Capture Oppenheimer's complex persona",
+                "range": "Romantic to intensely neurotic"
+            },
+            "no_drums": {
+                "reason": "Inauthentic to Oppenheimer's character",
+                "effect": "Unconventional tension building"
+            },
+            "gradual_buildup": "Solo instruments to full ensembles"
+        },
+        "nolan_sound_philosophy": {
+            "production_sound": "Prioritized over ADR",
+            "visceral_experience": "Physical auditory sensation for audience",
+            "immersion": "Sound deeply integrated into visual narrative"
+        },
+        "veo_prompt_keywords": [
+            "Shepard tone rising",
+            "ticking pocket watch",
+            "pipe organ cosmic",
+            "60 BPM time dilation",
+            "dialogue as atmosphere",
+            "chugging ostinato",
+            "violin neurosis",
+            "no drums tension",
+            "production sound visceral"
+        ]
+    }
+}

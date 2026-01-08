@@ -150,6 +150,66 @@ NotebookLM 소스 구성/가이드 추출 프로토콜은 아래 정본에서 �
 
 ---
 
+## 3.6 Intent → Capsule Resolver Pattern (2026-01)
+
+### Design Philosophy
+
+템플릿이 앱의 세부 파라미터를 직접 알지 않고, **"의도(Intent)"만 선언**한다.  
+각 Dimension Capsule이 자체 **Resolver**를 통해 Intent를 해석하여 최적 파라미터를 결정한다.
+
+```
+Template → Intent(mood, pace, target) → Capsule Resolver → Params → Execution
+```
+
+### Intent Schema
+
+모든 파이프라인이 공유하는 창작 의도 스키마:
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `mood` | enum | cinematic, energetic, calm, documentary, experimental |
+| `pace` | enum | fast, slow, dynamic, contemplative |
+| `target` | enum | expert, beginner, general, kids |
+| `domain_sources` | list | RAG 소스 힌트 (거장명, 장르, saju 등) |
+
+### Per-Capsule Resolver
+
+각 Dimension App은 `resolve_from_intent(intent, rag_context) → params` 함수를 구현:
+
+- **VEO Resolver**: mood=cinematic → lens=anamorphic, fps=24
+- **Sound Resolver**: mood=cinematic → genre=orchestral, reverb=hall
+- **Prompt Resolver**: mood + target → 프롬프트 톤/복잡도 조절
+
+### Extended RAG Sources (Collective Intelligence)
+
+NotebookLM Library 이외의 지식 소스를 통합하여 **집단지성 활용**:
+
+| Source Type | Use Case | 기여 주체 |
+|-------------|----------|----------|
+| NotebookLM | 거장 페르소나, 작품 분석 | 큐레이터/전문가 |
+| Papers | 영화 이론, 시각 연구 | 학술 기여자 |
+| 사주/주역 DB | 시간/공간 기반 창작 가이드 | 동양철학 전문가 |
+| Books | 예술/철학/교양 | 바이브 코더/일반 사용자 |
+
+### Integration with Evidence Loop
+
+Intent-Quality 관계가 Evidence Loop에 기록되어 GA/RL 학습에 활용:
+
+```
+Intent → Resolved Params → Execution → Quality Score → Evidence
+                                                        ↓
+                                               Template Learning
+```
+
+### Benefits
+
+1. **결합도 감소**: 앱 변경 시 템플릿 수정 불필요
+2. **집단지성**: 비개발자가 RAG 소스에 지식 축적 → 시스템이 자동 활용
+3. **확장성**: 새 RAG 소스 추가 시 Resolver만 확장
+4. **일관성**: 하나의 Intent로 전체 파이프라인 톤앤매너 통일
+
+---
+
 ## 4) NotebookLM -> DB (Canonicalization Pipeline)
 
 **Goal**: turn NotebookLM outputs into stable, queryable, learnable data.
@@ -172,6 +232,8 @@ Flow:
 - `docs/archive/12_PATTERN_PROMOTION_CRITERIA_V1.md`
 
 ---
+
+
 
 ## 5) Capsule Node Contract (What must be true)
 

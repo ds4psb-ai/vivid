@@ -1,0 +1,95 @@
+{
+    "source_id": "tarantino_visual_dna",
+    "auteur": "Quentin Tarantino",
+    "category": "visual_dna",
+    "title": "Quentin Tarantino Visual DNA - Signature Elements",
+    "version": "1.0",
+    "content": {
+        "cinematography_signature": {
+            "trunk_shot": {
+                "technique": "Low-angle from inside car trunk",
+                "purpose": "Power dynamic, POV of victim",
+                "films": [
+                    "Reservoir Dogs",
+                    "Pulp Fiction",
+                    "Kill Bill",
+                    "Jackie Brown"
+                ]
+            },
+            "long_takes": {
+                "purpose": "Build tension through unbroken scenes",
+                "dialogue_scenes": "Extended conversations, theatrical staging"
+            },
+            "lighting_approach": {
+                "style": "Classic Hollywood backlighting",
+                "hard_light": "Strong shadows, dramatic contrast",
+                "focus": "Character-centric, not environmental realism"
+            },
+            "camera_angles": {
+                "low_angle": "Power, menace",
+                "dutch_angle": "Unease, stylization",
+                "crash_zoom": "Dramatic emphasis, grindhouse homage"
+            }
+        },
+        "grindhouse_influence": {
+            "exploitation_films": "Raw aesthetic, B-movie energy",
+            "violence_stylization": "Exaggerated, almost cartoonish",
+            "chapter_structure": "Title cards, episodic narrative"
+        },
+        "dialogue_philosophy": {
+            "extended_conversations": "Tension through talk",
+            "pop_culture_references": "Music, movies, brands",
+            "profanity_as_rhythm": "Musicality of vulgar language",
+            "mundane_to_violent": "Sudden tonal shifts"
+        },
+        "thematic_obsessions": {
+            "revenge": "Elaborate payback narratives",
+            "honor_among_thieves": "Criminal codes",
+            "feet": "Recurring visual motif",
+            "nostalgia": "1970s culture, vinyl, classic cars"
+        },
+        "collaborators": {
+            "robert_richardson": {
+                "role": "Cinematographer (Kill Bill, Django, Hateful Eight)",
+                "contribution": "70mm, vivid colors, dramatic lighting"
+            },
+            "sally_menke": {
+                "role": "Editor (1992-2010)",
+                "contribution": "Non-linear structure, rhythmic pacing"
+            }
+        },
+        "prompt_generation_keywords": [
+            "trunk shot",
+            "long take",
+            "dialogue-driven",
+            "70s aesthetic",
+            "hard backlighting",
+            "grindhouse",
+            "pop culture",
+            "revenge",
+            "stylized violence",
+            "chapter titles",
+            "crash zoom"
+        ],
+        "veo_prompt_patterns": {
+            "mood_descriptors": [
+                "pulpy",
+                "stylized",
+                "retro",
+                "tense",
+                "violent"
+            ],
+            "visual_references": [
+                "trunk POV",
+                "diner booth",
+                "Mexican standoff",
+                "title card"
+            ],
+            "color_instructions": [
+                "vivid saturated",
+                "70s color grade",
+                "hard shadows"
+            ]
+        }
+    }
+}

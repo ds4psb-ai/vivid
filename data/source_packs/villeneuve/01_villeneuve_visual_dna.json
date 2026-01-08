@@ -1,0 +1,90 @@
+{
+    "source_id": "villeneuve_visual_dna",
+    "auteur": "Denis Villeneuve",
+    "category": "visual_dna",
+    "title": "Denis Villeneuve Visual DNA - Signature Elements",
+    "version": "1.0",
+    "content": {
+        "cinematography_signature": {
+            "color_philosophy": {
+                "approach": "Desaturated, muted palettes with strategic bursts",
+                "purpose": "Ground viewer in reality, enhance thematic tension",
+                "warm_vs_cool": "Technology (cold) vs Humanity (warm)",
+                "key_films": [
+                    "Blade Runner 2049",
+                    "Dune",
+                    "Arrival",
+                    "Sicario"
+                ]
+            },
+            "negative_space": {
+                "technique": "Empty space around characters in crisis",
+                "emotional_effect": "Vulnerability, anxiety, isolation",
+                "composition": "Characters dwarfed by environments"
+            },
+            "silhouette_shots": {
+                "usage": "Characters against light, identity ambiguity",
+                "purpose": "Visual poetry, mystery, contemplation"
+            },
+            "framing_techniques": {
+                "off_center": "Asymmetrical compositions for unease",
+                "inverted_angles": "Disorientation, perspective shifts",
+                "wide_shots": "Landscape as character, scale emphasis"
+            }
+        },
+        "visual_philosophy": {
+            "core_belief": "Pure image and sound are the power of cinema",
+            "dialogue_approach": "Minimal - visuals carry narrative",
+            "cgi_integration": "Subtle, seamless, never draws attention"
+        },
+        "thematic_obsessions": {
+            "humanity_vs_technology": "Blade Runner 2049, AI themes",
+            "communication": "Arrival - language as worldview",
+            "environment_as_character": "Dune desert, Sicario border",
+            "moral_ambiguity": "No clear heroes or villains"
+        },
+        "collaborators": {
+            "roger_deakins": {
+                "role": "Cinematographer (Blade Runner 2049, Sicario, Prisoners)",
+                "contribution": "Chiaroscuro lighting, precise framing"
+            },
+            "greig_fraser": {
+                "role": "Cinematographer (Dune)",
+                "contribution": "Natural light, infrared filming"
+            }
+        },
+        "prompt_generation_keywords": [
+            "desaturated",
+            "muted palette",
+            "negative space",
+            "silhouette",
+            "vast landscape",
+            "minimal",
+            "contemplative",
+            "warm vs cool",
+            "asymmetrical",
+            "atmospheric",
+            "epic scale"
+        ],
+        "veo_prompt_patterns": {
+            "mood_descriptors": [
+                "contemplative",
+                "atmospheric",
+                "epic",
+                "minimal",
+                "haunting"
+            ],
+            "visual_references": [
+                "vast desert",
+                "silhouette against light",
+                "empty spaces",
+                "dust particles"
+            ],
+            "color_instructions": [
+                "desaturated earth tones",
+                "orange and teal",
+                "warm interiors cold exteriors"
+            ]
+        }
+    }
+}

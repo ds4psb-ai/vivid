@@ -1,0 +1,120 @@
+{
+    "source_id": "wong_cinematography_techniques",
+    "auteur": "Wong Kar-wai",
+    "category": "cinematography",
+    "title": "Wong Kar-wai Cinematography Techniques - Christopher Doyle Collaboration",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "colorculture.org",
+            "topic": "In the Mood for Love visual analysis"
+        },
+        {
+            "name": "cinematography.net",
+            "topic": "Step-printing technique"
+        },
+        {
+            "name": "studiofenice.net",
+            "topic": "Framing and composition"
+        },
+        {
+            "name": "i-d.co",
+            "topic": "Christopher Doyle interview"
+        }
+    ],
+    "content": {
+        "signature_techniques": {
+            "step_printing": {
+                "definition": "Printing individual frames multiple times in optical printer",
+                "effect": "Stuttering slow-motion, dreamlike quality",
+                "films": [
+                    "Chungking Express",
+                    "Happy Together",
+                    "In the Mood for Love"
+                ],
+                "example": "Wide shot of protagonists standing in rain"
+            },
+            "undercranking": {
+                "definition": "Shooting at lower frame rate than 24fps",
+                "typical_rate": "4-8 fps (Doyle: around 4-8fps for step-printing)",
+                "effect": "When played at 24fps: sped up, frenzied, motion blur",
+                "combined_with": "Step-printing for stuttering effect with blur"
+            },
+            "time_manipulation": {
+                "purpose": "Stretch, fragment, or intensify moments",
+                "themes": "Unfulfilled desire, lingering memories"
+            }
+        },
+        "framing_composition": {
+            "frames_within_frames": {
+                "elements": "Doorways, windows, mirrors",
+                "purpose": "Emotional confinement and isolation",
+                "effect": "Characters trapped within visual boundaries"
+            },
+            "off_center_positioning": {
+                "technique": "Characters at edges of frame",
+                "negative_space": "Surrounding emptiness = emotional distance",
+                "barriers": "Visual representation of emotional walls"
+            },
+            "long_lenses": {
+                "effect": "Compress space for intimacy despite emotional distance",
+                "feeling": "Close yet apart"
+            },
+            "voyeuristic_framing": {
+                "method": "Grilled windows, partially obstructed views",
+                "tracking_shots": "Eye-level shots of characters' backsides",
+                "audience_feeling": "Spying on intimate moments"
+            },
+            "proscenium_framing": {
+                "style": "Static shots, slow pans, subtle tracking",
+                "handheld": "Sparingly used for emotional tension peaks"
+            }
+        },
+        "lighting_and_color": {
+            "low_key_lighting": {
+                "method": "Single light source, deep shadows",
+                "mood": "Melancholy, intimacy"
+            },
+            "tungsten_dominance": {
+                "warmth": "Golden interior tones",
+                "palette": "Heavy magenta and cyan influx"
+            },
+            "monochromatic_stretching": {
+                "technique": "One color stretched across luminance in single frame",
+                "signature_colors": "Deep reds, burnt oranges, jade greens"
+            }
+        },
+        "collaborators": {
+            "christopher_doyle": {
+                "period": "Long-term collaborator",
+                "contribution": "Handheld energy, saturated colors, step-printing"
+            },
+            "mark_lee_ping_bin": {
+                "film": "In the Mood for Love (equal credit)",
+                "note": "Replaced Doyle during production due to scheduling"
+            },
+            "william_chang": {
+                "role": "Art director, costume designer, editor",
+                "contribution": "Visual cohesion, 1960s period accuracy"
+            }
+        },
+        "creative_process": {
+            "improvisation": "Works from story outline, not full script",
+            "on_set_decisions": "Shooting as rehearsal",
+            "aesthetic_born_necessity": "Limited space/budget creates style"
+        },
+        "veo_prompt_keywords": [
+            "step-printing stutter",
+            "undercranked motion blur",
+            "frames within frames",
+            "off-center composition",
+            "long lens compression",
+            "voyeuristic framing",
+            "tungsten warmth",
+            "magenta cyan palette",
+            "deep red burnt orange",
+            "jade green accents",
+            "single source shadows"
+        ]
+    }
+}

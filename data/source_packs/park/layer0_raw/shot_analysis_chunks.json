@@ -1,0 +1,117 @@
+{
+    "schema_version": "layer0-v1",
+    "cluster_id": "CL_PARK_01",
+    "auteur": "박찬욱",
+    "layer": "layer0_raw",
+    "description": "박찬욱 감독 시각 스타일 분석 - Raw Evidence",
+    "chunks": [
+        {
+            "chunk_id": "park_oldboy_corridor_c001",
+            "metadata": {
+                "source_id": "park-2003-oldboy",
+                "temporal_phase": "HOOK",
+                "scene_range": "00:55:00-00:58:00",
+                "content_type": "shot_analysis",
+                "film_title": "올드보이",
+                "film_year": 2003
+            },
+            "content": {
+                "transcript": "좁은 복도에서의 장도리 액션. 횡스크롤 게임처럼 좌우로 이동하며 다수의 적을 상대한다.",
+                "visual_schema": {
+                    "composition": "horizontal_tracking_profile",
+                    "lighting": "dirty_green_fluorescent",
+                    "color_palette": [
+                        "#2F4F4F",
+                        "#556B2F",
+                        "#000000",
+                        "#8B4513"
+                    ],
+                    "camera_motion": "tracking_side",
+                    "blocking": "2D_plane_action",
+                    "pacing": "unrelenting"
+                },
+                "audio_schema": {
+                    "sound_design": "bone_crunch_impact",
+                    "music_mood": "melancholy_w_violence"
+                },
+                "motifs": [
+                    "hammer",
+                    "corridor",
+                    "exhaustion"
+                ]
+            }
+        },
+        {
+            "chunk_id": "park_handmaiden_bath_c001",
+            "metadata": {
+                "source_id": "park-2016-handmaiden",
+                "temporal_phase": "BUILD",
+                "scene_range": "00:35:00-00:38:00",
+                "content_type": "shot_analysis",
+                "film_title": "아가씨",
+                "film_year": 2016
+            },
+            "content": {
+                "transcript": "히데코의 이를 갈아주는 숙희. 욕조 안의 친밀감과 긴장감. 시선의 교차.",
+                "visual_schema": {
+                    "composition": "symmetrical_two_shot",
+                    "lighting": "soft_diffused_warm",
+                    "color_palette": [
+                        "#DAA520",
+                        "#DEB887",
+                        "#FFF8DC",
+                        "#8B0000"
+                    ],
+                    "camera_motion": "subtle_push_in",
+                    "blocking": "intimate_proximity",
+                    "pacing": "slow_sensual"
+                },
+                "audio_schema": {
+                    "sound_design": "water_ripples_grinding",
+                    "music_mood": "erotic_tension"
+                },
+                "motifs": [
+                    "water",
+                    "mirror",
+                    "touch"
+                ]
+            }
+        },
+        {
+            "chunk_id": "park_lady_vengeance_snow_c001",
+            "metadata": {
+                "source_id": "park-2005-lady-vengeance",
+                "temporal_phase": "PAYOFF",
+                "scene_range": "01:45:00-01:48:00",
+                "content_type": "shot_analysis",
+                "film_title": "친절한 금자씨",
+                "film_year": 2005
+            },
+            "content": {
+                "transcript": "눈 속에서 두부 케이크를 먹는 금자. 복수의 끝, 허무함과 구원.",
+                "visual_schema": {
+                    "composition": "centered_isolation",
+                    "lighting": "high_key_overexposed_white",
+                    "color_palette": [
+                        "#FFFFFF",
+                        "#F0FFFF",
+                        "#DC143C",
+                        "#000000"
+                    ],
+                    "camera_motion": "static_w_falling_snow",
+                    "blocking": "centered_figure",
+                    "pacing": "meditative"
+                },
+                "audio_schema": {
+                    "sound_design": "wind_silence",
+                    "music_mood": "operatic_redemption"
+                },
+                "motifs": [
+                    "snow",
+                    "cake",
+                    "white"
+                ]
+            }
+        }
+    ]
+}

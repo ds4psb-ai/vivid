@@ -1,0 +1,88 @@
+{
+    "source_id": "bong_cinematography_techniques",
+    "auteur": "Bong Joon-ho",
+    "category": "cinematography",
+    "title": "Bong Joon-ho Cinematography Techniques - Hong Kyung-pyo Collaboration",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "colorculture.org",
+            "topic": "Parasite camera work analysis"
+        },
+        {
+            "name": "filmmakersacademy.com",
+            "topic": "Cinematography breakdown"
+        },
+        {
+            "name": "premiumbeat.com",
+            "topic": "Visual language analysis"
+        }
+    ],
+    "content": {
+        "camera_equipment": {
+            "camera": "ARRI ALEXA 65",
+            "lenses": "ARRI Rental Prime DNA lenses + Hasselblad",
+            "effect": "Almost anamorphic feel with deep depth of field",
+            "field_of_view": "25mm equivalent on 35mm format, optical character of 50mm"
+        },
+        "camera_movement_symbolism": {
+            "infiltration_motion": {
+                "technique": "Subtle forward camera motion (imperceptible)",
+                "meaning": "Kim family's calculated infiltration and growing influence",
+                "creates": "Sense of foreboding"
+            },
+            "chaos_moments": {
+                "technique": "Erratic handheld camera work",
+                "example": "Return of the ousted housekeeper"
+            },
+            "class_distinction": {
+                "park_family": "Steadicam + fluid movements = freedom and vastness",
+                "kim_family": "Locked-off shots = confinement and limitation"
+            },
+            "long_takes": {
+                "description": "Seamlessly combine wide, medium, close-up without cuts",
+                "purpose": "Naturalistic perspective, objective viewpoint"
+            }
+        },
+        "composition_techniques": {
+            "spatial_division": {
+                "method": "Physical boundaries (windows, walls, height variations)",
+                "purpose": "Visual separation of families within frame"
+            },
+            "stairs_metaphor": {
+                "upward": "Social climbing, aspiration",
+                "downward": "Descent into nothingness, failure",
+                "source_inspiration": "Akira Kurosawa's 'High and Low'"
+            },
+            "window_symbolism": {
+                "kim_basement": "Small window with restricted view",
+                "park_mansion": "Large expansive window (2.39:1 ratio), overlooks garden",
+                "bong_description": "Window mimics a CinemaScope screen"
+            },
+            "framing_by_class": {
+                "poor": "Close-ups, tight framing = limitations",
+                "rich": "Medium/wide shots, fluid camera = affluence"
+            },
+            "decalcomania": {
+                "meaning": "Technique creating symmetrical images",
+                "application": "Geometric patterns, lines, shapes for narrative"
+            },
+            "proscenium_framing": {
+                "style": "Front-on framing like stage play",
+                "effect": "Impartial viewpoint for audience"
+            }
+        },
+        "veo_prompt_keywords": [
+            "subtle forward dolly",
+            "Steadicam wealth",
+            "handheld chaos",
+            "locked-off poverty",
+            "stairs as social metaphor",
+            "CinemaScope window",
+            "geometric symmetry",
+            "proscenium framing",
+            "layered composition",
+            "ALEXA 65 large format"
+        ]
+    }
+}

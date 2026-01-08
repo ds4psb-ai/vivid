@@ -1,0 +1,97 @@
+{
+    "source_id": "nolan_visual_dna",
+    "auteur": "Christopher Nolan",
+    "category": "visual_dna",
+    "title": "Christopher Nolan Visual DNA - Signature Elements",
+    "version": "1.0",
+    "content": {
+        "cinematography_signature": {
+            "practical_effects": {
+                "philosophy": "Real over CGI whenever possible",
+                "examples": [
+                    "Rotating hallway (Inception)",
+                    "Real explosion (Tenet)",
+                    "Crowd scenes (Dark Knight)"
+                ],
+                "purpose": "Tangible reality, heightened immersion"
+            },
+            "lighting_approach": {
+                "style": "Deep evocative shadows, documentary-style",
+                "key_technique": "Low-key lighting with strong contrast",
+                "color_influence": "Red-green color blindness shapes palette"
+            },
+            "camera_work": {
+                "handheld": "Documentary feel for intensity",
+                "imax": "Large format for scale and clarity",
+                "natural_settings": "Real locations over studio"
+            }
+        },
+        "mathematical_imagery": {
+            "visual_motifs": {
+                "penrose_stairs": "Impossible architecture (Inception)",
+                "droste_effect": "Recursive imagery (Memento poster)",
+                "mazes": "Labyrinthine narrative structures",
+                "time_loops": "Circular narratives (Tenet, Interstellar)"
+            },
+            "purpose": "Intellectual engagement through visual puzzles"
+        },
+        "narrative_structure": {
+            "non_linear": "Fragmented timeline as storytelling device",
+            "parallel_editing": "Multiple storylines converging",
+            "elliptical_editing": "Skip time, force audience engagement"
+        },
+        "thematic_obsessions": {
+            "time": "Manipulation, perception, relativity",
+            "identity": "Memory, persona, reality",
+            "duality": "Order vs chaos, hero vs villain",
+            "obsession": "Characters driven by singular purpose"
+        },
+        "collaborators": {
+            "hoyte_van_hoytema": {
+                "role": "Cinematographer (Interstellar, Dunkirk, Oppenheimer)",
+                "contribution": "IMAX mastery, natural light"
+            },
+            "wally_pfister": {
+                "role": "Cinematographer (Dark Knight trilogy, Inception)",
+                "contribution": "Gritty realism, shadow work"
+            },
+            "hans_zimmer": {
+                "role": "Composer",
+                "contribution": "Immersive soundscapes, ticking clocks"
+            }
+        },
+        "prompt_generation_keywords": [
+            "practical effects",
+            "IMAX scale",
+            "deep shadows",
+            "non-linear",
+            "time manipulation",
+            "documentary style",
+            "gritty realism",
+            "mathematical",
+            "puzzle narrative",
+            "immersive",
+            "epic scale"
+        ],
+        "veo_prompt_patterns": {
+            "mood_descriptors": [
+                "intense",
+                "cerebral",
+                "epic",
+                "gritty",
+                "immersive"
+            ],
+            "visual_references": [
+                "IMAX wide shot",
+                "practical explosion",
+                "deep shadows",
+                "maze architecture"
+            ],
+            "color_instructions": [
+                "high contrast",
+                "muted blacks and grays",
+                "natural lighting"
+            ]
+        }
+    }
+}

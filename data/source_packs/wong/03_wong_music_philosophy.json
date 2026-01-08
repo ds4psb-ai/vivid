@@ -1,0 +1,77 @@
+{
+    "source_id": "wong_music_philosophy",
+    "auteur": "Wong Kar-wai",
+    "category": "music",
+    "title": "Wong Kar-wai Music Philosophy and Soundtrack Selection",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "takeonecinema.net",
+            "topic": "Yumeji's Theme analysis"
+        },
+        {
+            "name": "mubi.com",
+            "topic": "Music on set interview"
+        },
+        {
+            "name": "soundoflife.com",
+            "topic": "Music as unseen character"
+        },
+        {
+            "name": "medium.com",
+            "topic": "Soundtrack selection process"
+        }
+    ],
+    "content": {
+        "music_philosophy": {
+            "core_concept": "Music as unseen character",
+            "function": "Provides non-verbal dialogue",
+            "emotional_role": "Crucial anchor within fragmented narratives",
+            "selection_timing": "Chosen during pre-production, shapes overall mood"
+        },
+        "in_the_mood_for_love": {
+            "yumejis_theme": {
+                "composer": "Shigeru Umebayashi",
+                "original_film": "Yumeji (1991, Seijun Suzuki)",
+                "usage_count": "9 times throughout film",
+                "emotional_effect": "Unspoken longing, unrequited love"
+            },
+            "on_set_usage": {
+                "technique": "Played on set during filming",
+                "purpose": "Imbue cast/crew with intended atmosphere",
+                "influence": "Shaped camerawork and visual rhythm"
+            },
+            "slow_motion_pairing": {
+                "technique": "Haunting strings with slow-motion sequences",
+                "effect": "Amplifies emotional complexity of interactions"
+            }
+        },
+        "re_contextualization": {
+            "approach": "Frequently re-contextualizes pre-existing music",
+            "effect": "Songs from different eras than film's setting",
+            "purpose": "Creates ambiguity and complexity"
+        },
+        "recurring_musical_elements": {
+            "nat_king_cole": "Spanish language songs in Chungking Express",
+            "michael_galasso": "Original compositions for In the Mood for Love",
+            "latin_music": "Dreamers' escape and romantic longing",
+            "pop_songs": "Contemporary emotional resonance"
+        },
+        "emotional_anchoring": {
+            "fragmented_narrative": "Music provides coherence",
+            "temporal_displacement": "Era-mismatched songs enhance nostalgia",
+            "repetition": "Same theme repeated builds emotional association"
+        },
+        "veo_prompt_keywords": [
+            "Yumeji's Theme strings",
+            "music as unseen character",
+            "slow motion longing",
+            "pre-production soundtrack",
+            "era-mismatched nostalgia",
+            "haunting waltz",
+            "non-verbal dialogue",
+            "repeated theme emotion",
+            "Latin romantic escape"
+        ]
+    }
+}

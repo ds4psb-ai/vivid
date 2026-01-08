@@ -1,0 +1,114 @@
+{
+    "source_id": "nolan_imax_techniques",
+    "auteur": "Christopher Nolan",
+    "category": "cinematography",
+    "title": "Christopher Nolan IMAX & Practical Effects Techniques",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "studiobinder.com",
+            "topic": "Oppenheimer VFX breakdown"
+        },
+        {
+            "name": "collider.com",
+            "topic": "Hoyte van Hoytema interview"
+        },
+        {
+            "name": "premiumbeat.com",
+            "topic": "Dark Knight IMAX techniques"
+        },
+        {
+            "name": "neiloseman.com",
+            "topic": "Dunkirk behind the scenes"
+        }
+    ],
+    "content": {
+        "philosophy": {
+            "practical_over_cgi": "Creates more authentic, visceral experience",
+            "film_over_digital": "Unparalleled resolution and depth",
+            "single_camera": "Focused approach, one camera on set"
+        },
+        "collaborators": {
+            "hoyte_van_hoytema": {
+                "films": [
+                    "Interstellar",
+                    "Dunkirk",
+                    "Tenet",
+                    "Oppenheimer"
+                ],
+                "note": "Primary cinematographer after Pfister"
+            },
+            "wally_pfister": {
+                "films": [
+                    "Memento",
+                    "Dark Knight trilogy",
+                    "Inception"
+                ],
+                "achievement": "Pioneered IMAX in blockbusters"
+            }
+        },
+        "oppenheimer_techniques": {
+            "imax_intimate": {
+                "approach": "IMAX for intimate character scenes, not just spectacle",
+                "philosophy": "Human face as landscape to explore",
+                "innovation": "First-ever IMAX black-and-white analog film stock (with Kodak)"
+            },
+            "trinity_test": {
+                "method": "Practical effects, no CGI",
+                "components": [
+                    "Miniatures",
+                    "Pyrotechnics",
+                    "Creative lighting"
+                ],
+                "camera_trick": "Bomb placed closer to camera for perceived size",
+                "filming": "Multiple explosions at high speeds"
+            },
+            "subatomic_visualization": {
+                "method": "Cloud tanks with physical objects",
+                "objects": [
+                    "Spinning beads",
+                    "Ball bearings",
+                    "Aluminum flakes",
+                    "Ping-pong balls"
+                ]
+            },
+            "custom_lenses": {
+                "collaborator": "Panavision + van Hoytema",
+                "type": "Custom macro snorkel lenses for IMAX",
+                "effect": "Capture microscopic details with wide-angle perspective"
+            }
+        },
+        "dunkirk_techniques": {
+            "imax_percentage": "70-75% shot in IMAX 65mm",
+            "dialogue_solution": {
+                "problem": "IMAX cameras too loud for dialogue",
+                "solution": "65mm cameras for quiet scenes"
+            },
+            "camera_innovation": {
+                "spitfire_cockpit": "Custom rigs, periscope lenses",
+                "airplane_wing": "IMAX mounted on wing for aerial shots"
+            },
+            "extreme_practical": {
+                "hero_shot": "IMAX camera inside stunt plane crashed into ocean",
+                "result": "Film retrieved after 90 minutes underwater, successfully developed"
+            }
+        },
+        "dark_knight_techniques": {
+            "pioneer": "First major use of IMAX in blockbuster",
+            "footage": "50+ minutes of IMAX in Dark Knight Rises",
+            "aspect_ratio": "Anamorphic + IMAX combined, central framing for smooth transitions"
+        },
+        "veo_prompt_keywords": [
+            "IMAX large format",
+            "practical explosion",
+            "first IMAX black and white",
+            "macro snorkel lens",
+            "cloud tank particles",
+            "miniature pyrotechnics",
+            "70mm film grain",
+            "cockpit periscope",
+            "extreme practical effects",
+            "anamorphic IMAX blend"
+        ]
+    }
+}

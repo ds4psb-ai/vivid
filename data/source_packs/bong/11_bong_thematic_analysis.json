@@ -1,0 +1,86 @@
+{
+    "source_id": "bong_thematic_analysis",
+    "auteur": "Bong Joon-ho",
+    "category": "thematic_analysis",
+    "title": "Bong Joon-ho Thematic Analysis - Class, Capitalism, and Monsters",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "theasiancut.com",
+            "topic": "Recurring themes analysis"
+        },
+        {
+            "name": "lareviewofbooks.org",
+            "topic": "Capitalism critique"
+        },
+        {
+            "name": "theguardian.com",
+            "topic": "Monster genre analysis"
+        },
+        {
+            "name": "atlantis-press.com",
+            "topic": "Social observation"
+        }
+    ],
+    "content": {
+        "class_struggle": {
+            "core_conflict": "Eternal battle between rich vs poor, haves vs have-nots",
+            "approach": "Often literalized through physical separation",
+            "snowpiercer": {
+                "metaphor": "Train as microcosm of capitalist class division",
+                "wealthy": "Luxurious front cars",
+                "poor": "Squalid tail section",
+                "theme": "Rich maintain power by keeping poor in place"
+            },
+            "parasite": {
+                "setting": "Domestic infiltration",
+                "nuance": "Complex coexistence of different classes",
+                "bong_quote": "Fear that gap won't be resolved in future",
+                "staircase_symbolism": "Divisions of social class, power struggles",
+                "critique": "System implicates everyone - poor want to become rich, not dismantle system"
+            },
+            "pattern": "Sons from impoverished families become scapegoats (Memories, Mother)"
+        },
+        "capitalism_critique": {
+            "approach": "Sharp social commentary on failings of contemporary capitalism",
+            "avoids": "Overt moralizing",
+            "parasite_insight": "Class aspirationalism, political divide from economic disparity",
+            "upward_mobility_hostility": "Desire to climb, contempt for those below",
+            "system_reproduction": "Anti-capitalist narratives focusing on individual can reproduce capitalism's logic"
+        },
+        "monster_genre_subversion": {
+            "purpose": "Monster as metaphor for societal ills",
+            "the_host": {
+                "literal_monster": "Creature mutated by toxic waste (Han River formaldehyde)",
+                "real_monster": "Hidden in mutated minds of those in power",
+                "critique": "Government incompetence, arbitrary actions of powerful entities",
+                "family_focus": "Resilience vs failure of official systems"
+            },
+            "okja": {
+                "real_monster": "Multi-national corporation, not the giant pig",
+                "theme": "Corporate capitalism's impact on individuals and environment"
+            },
+            "technique": "Personify systemic problems within genre conventions",
+            "blend": "Sci-fi horror + political satire + family drama"
+        },
+        "social_observation": {
+            "balance": "Reality and metaphor in narratives",
+            "korean_context": {
+                "shame_culture": "Prevalent in Korean society",
+                "underclass": "Alienation of underclass survivors"
+            },
+            "accurate_observer": true
+        },
+        "veo_prompt_keywords": [
+            "class divide visual",
+            "staircase social metaphor",
+            "capitalism nightmare",
+            "monster as system",
+            "family vs institution",
+            "rich vs poor separation",
+            "upward mobility hostility",
+            "government incompetence satire",
+            "genre subversion social"
+        ]
+    }
+}

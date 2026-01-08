@@ -1,0 +1,85 @@
+{
+    "source_id": "wong_visual_dna",
+    "auteur": "Wong Kar-wai",
+    "category": "visual_dna",
+    "title": "Wong Kar-wai Visual DNA - Signature Elements",
+    "version": "1.0",
+    "content": {
+        "cinematography_signature": {
+            "smudge_motion": {
+                "technique": "Step-printing and undercranking",
+                "effect": "Colors seamlessly blend and blur",
+                "emotional_purpose": "Creates dreamlike, memory-like quality",
+                "key_films": [
+                    "Chungking Express",
+                    "Fallen Angels",
+                    "In the Mood for Love"
+                ]
+            },
+            "color_as_montage": {
+                "philosophy": "Color carries narrative and emotional weight",
+                "primary_palette": {
+                    "deep_reds": "Inner stirrings, fervent emotions, passion",
+                    "cool_blues": "Melancholy, distance, urban isolation",
+                    "greens": "Sadness, crumbling relationships",
+                    "neon_saturated": "Urban energy, fleeting connections"
+                },
+                "contrast_strategy": "Juxtapose warm passion against cool loneliness"
+            },
+            "framing_techniques": {
+                "reflections": "Mirrors, windows to fragment identity",
+                "obstructed_views": "Frames within frames, voyeuristic perspective",
+                "tight_spaces": "Cramped corridors, small apartments for intimacy"
+            }
+        },
+        "thematic_obsessions": {
+            "time_and_memory": "Non-linear storytelling, dates as chapter markers",
+            "urban_loneliness": "Hong Kong as character, neon-lit isolation",
+            "missed_connections": "Ships passing in the night, unrequited love",
+            "nostalgia": "1960s Hong Kong, period costumes, retro music"
+        },
+        "collaborators": {
+            "christopher_doyle": {
+                "role": "Primary cinematographer (1994-2000)",
+                "contribution": "Handheld energy, saturated colors, step-printing"
+            },
+            "william_chang": {
+                "role": "Art director, costume designer, editor",
+                "contribution": "Visual cohesion, period accuracy, rhythmic editing"
+            }
+        },
+        "prompt_generation_keywords": [
+            "smudge motion",
+            "neon-lit",
+            "saturated colors",
+            "Hong Kong urban",
+            "1960s nostalgia",
+            "deep reds and blues",
+            "step-printing",
+            "melancholic",
+            "reflections",
+            "cramped interiors",
+            "unrequited longing"
+        ],
+        "veo_prompt_patterns": {
+            "mood_descriptors": [
+                "dreamy",
+                "melancholic",
+                "nostalgic",
+                "intimate",
+                "lonely"
+            ],
+            "visual_references": [
+                "neon reflections",
+                "rain-soaked streets",
+                "cigarette smoke",
+                "slow motion"
+            ],
+            "color_instructions": [
+                "saturated reds and blues",
+                "warm tungsten interiors",
+                "cool urban exteriors"
+            ]
+        }
+    }
+}

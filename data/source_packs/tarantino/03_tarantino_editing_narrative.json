@@ -1,0 +1,92 @@
+{
+    "source_id": "tarantino_editing_narrative",
+    "auteur": "Quentin Tarantino",
+    "category": "editing_narrative",
+    "title": "Quentin Tarantino Editing and Narrative Structure",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "videomaker.com",
+            "topic": "Sally Menke editing style"
+        },
+        {
+            "name": "wordpress.com",
+            "topic": "Mexican standoff analysis"
+        },
+        {
+            "name": "studycorgi.com",
+            "topic": "Nonlinear narrative study"
+        },
+        {
+            "name": "medium.com",
+            "topic": "Dialogue tension technique"
+        }
+    ],
+    "content": {
+        "sally_menke_collaboration": {
+            "relationship": "Sole editor for all films until her passing (2010)",
+            "tarantino_quote": "Only truly genuine collaborator",
+            "editing_signature": {
+                "balance": "Slow dialogue-driven scenes + fast-cut action",
+                "rhythm": "Dynamic flow enhancing storytelling and tension",
+                "self_contained": "Individual scenes engaging within complex narrative"
+            },
+            "recontextualization": "Mimicking and recontextualizing styles",
+            "chronology_handling": "Made sense of complex timelines, fresh and dynamic"
+        },
+        "dialogue_tension": {
+            "philosophy": "Conversations more thrilling than traditional action",
+            "technique": {
+                "slow_pace": "Filled with subtext",
+                "psychological_battle": "Words carry significant weight",
+                "simmering": "Tension allowed to build slowly"
+            },
+            "character_depth": "Dialogue reveals character even when not advancing plot",
+            "rhythm_and_voice": "Unique character voices, rhythmic speech",
+            "conflict_generation": "Characters expressing differing opinions"
+        },
+        "mexican_standoff": {
+            "definition": "Multiple armed parties, no one can shoot first without risk",
+            "function": "Generates anxiety and anticipation",
+            "visual_technique": "Dramatic camera angles amplify tension",
+            "nature": "Lose-lose situation, inherent tension",
+            "films": [
+                "Reservoir Dogs",
+                "Pulp Fiction",
+                "Inglourious Basterds"
+            ],
+            "self_awareness": "Inglourious Basterds defines and satirizes the concept"
+        },
+        "nonlinear_narrative": {
+            "purpose": {
+                "mystery": "Enhances mystery and engagement",
+                "plot_twists": "Facilitates unexpected revelations",
+                "audience_participation": "Viewers piece together narrative"
+            },
+            "technique": {
+                "time_jumps": "Back and forth in time",
+                "out_of_order": "Events presented non-chronologically",
+                "interwoven": "Multiple storylines, shifting perspectives"
+            },
+            "pulp_fiction": {
+                "structure": "Fragmented with interwoven storylines",
+                "effect": "Intrigue, compels re-watching"
+            },
+            "reservoir_dogs": {
+                "purpose": "Amplify tension, build mystery, reveal character dynamics"
+            },
+            "kill_bill": "Broken chronology throughout"
+        },
+        "veo_prompt_keywords": [
+            "slow dialogue tension",
+            "Mexican standoff framing",
+            "nonlinear time jump",
+            "fast-cut action",
+            "rhythmic editing",
+            "psychological conversation",
+            "interwoven storylines",
+            "self-contained scene",
+            "dramatic angle standoff"
+        ]
+    }
+}

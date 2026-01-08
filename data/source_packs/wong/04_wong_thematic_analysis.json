@@ -1,0 +1,96 @@
+{
+    "source_id": "wong_thematic_analysis",
+    "auteur": "Wong Kar-wai",
+    "category": "thematic_analysis",
+    "title": "Wong Kar-wai Thematic Analysis - Time, Memory, and Urban Nostalgia",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "wsp-publishing.com",
+            "topic": "Time and memory analysis"
+        },
+        {
+            "name": "acmi.net.au",
+            "topic": "Urban alienation study"
+        },
+        {
+            "name": "intersectionsonline.in",
+            "topic": "Hong Kong nostalgia and identity"
+        },
+        {
+            "name": "clausiuspress.com",
+            "topic": "Aesthetic significance of time"
+        }
+    ],
+    "content": {
+        "time_and_memory": {
+            "central_role": "Time as deeply explored theme",
+            "narrative_technique": {
+                "non_linear": "Non-linear narratives",
+                "flashbacks": "Frequent use of flashbacks",
+                "juxtapositions": "Disrupt traditional storytelling"
+            },
+            "aesthetic_significance": {
+                "fate": "Time reveals fate",
+                "deadlines": "Arbitrary but significant",
+                "missed_opportunities": "Ships passing in night",
+                "traces": "Lasting traces of memory"
+            },
+            "existential_memory": {
+                "approach": "Existential rather than merely experiential",
+                "focus": "Universal human conditions: anguish, loss"
+            },
+            "haunted_characters": "Unable to forget previous loves, yearning for bygone era"
+        },
+        "loneliness_and_alienation": {
+            "fundamental_theme": "Loneliness core to narratives",
+            "character_types": {
+                "broken_hearts": "Broken hearts and personalities",
+                "isolation": "Confronting isolation and confusion",
+                "searching": "Looking for place in evolving world"
+            },
+            "urban_paradox": "Vibrant nightlife amplifies isolation",
+            "visual_symbols": {
+                "frames": "Doors, windows, walls frame characters",
+                "effect": "Claustrophobia, emotional containment"
+            }
+        },
+        "1960s_nostalgia": {
+            "films": [
+                "Days of Being Wild",
+                "In the Mood for Love",
+                "2046"
+            ],
+            "not_romanticized": "Deeply intertwined with Hong Kong post-colonial context",
+            "1997_handover": "Anxieties reflected in period settings",
+            "evocation": {
+                "music": "Period-appropriate selections",
+                "setting": "1960s Hong Kong locations",
+                "themes": "Reminiscence, unrequited love"
+            },
+            "reflective_nostalgia": {
+                "challenges": "Official historical narratives",
+                "focus": "Subjective experiences, fluid identities",
+                "mobile_space": "Characters in transition"
+            }
+        },
+        "hong_kong_identity": {
+            "post_colonial": "Films reflect post-colonial anxieties",
+            "urban_landscape": "Hong Kong as character",
+            "emotional_fluidity": "Characters navigating rapid change",
+            "self_identity_search": "Core emotional journey"
+        },
+        "veo_prompt_keywords": [
+            "non-linear memory",
+            "1960s Hong Kong nostalgia",
+            "urban loneliness neon",
+            "missed connection fate",
+            "claustrophobic framing",
+            "haunted by past love",
+            "post-colonial anxiety",
+            "vibrant isolation",
+            "fluid identity search",
+            "melancholic reminiscence"
+        ]
+    }
+}

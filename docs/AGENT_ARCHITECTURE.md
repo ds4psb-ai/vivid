@@ -201,7 +201,43 @@ classDiagram
 - **AG-UI Standard Mapper**: Frontend unifies all tool events into a standard UI feedback model.
 - **Dimension Mapping**: `agent.teaching_*` events are mapped to `handleWorkflowStep`, ensuring that when the agent runs a "Dimension Tool", the user sees a "Step" progress bar in the chat UI.
 
+### 3.4 Intent → Capsule Resolver (Planned)
+
+> **Status**: Migration planned for 2026-Q1
+
+각 Dimension Tool은 `resolve_from_intent()` 함수를 통해 Intent를 해석합니다:
+
+```mermaid
+flowchart LR
+    Template["Template<br/>(Intent Only)"]
+    Intent["CreativeIntent<br/>(mood, pace, target)"]
+    Resolver["Dimension Resolver"]
+    RAG["RAG Sources<br/>(NotebookLM, Papers, 사주)"]
+    Params["Resolved Params"]
+    Capsule["Capsule Execution"]
+    
+    Template --> Intent
+    Intent --> Resolver
+    RAG --> Resolver
+    Resolver --> Params
+    Params --> Capsule
+```
+
+**Per-Dimension Resolver Mapping**:
+| Dimension | Resolver Class | Intent → Params Example |
+|-----------|----------------|-------------------------|
+| 1D | `PromptResolver` | mood=cinematic → tone=dramatic |
+| VEO | `VEOResolver` | mood=cinematic → lens=anamorphic, fps=24 |
+| SOUND | `SoundResolver` | mood=cinematic → genre=orchestral |
+| AD | `AestheticResolver` | mood + target → style_complexity |
+
+**Benefits**:
+- 템플릿은 앱 파라미터를 몰라도 됨 (결합도 감소)
+- 집단지성 활용: 비개발자가 RAG 소스에 지식 축적 → 시스템 자동 활용
+- 새 앱 추가 시 Resolver만 구현
+
 ---
+
 
 ## 4. Workflow Execution Flow
 

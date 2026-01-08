@@ -1,0 +1,117 @@
+{
+    "source_id": "bong_sound_design",
+    "auteur": "Bong Joon-ho",
+    "category": "sound_design",
+    "title": "Bong Joon-ho Sound Design and Film Score",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "medium.com",
+            "topic": "Parasite sound analysis"
+        },
+        {
+            "name": "asoundeffect.com",
+            "topic": "Parasite sound design interview"
+        },
+        {
+            "name": "thefilmscorer.com",
+            "topic": "Jung Jae-il score analysis"
+        },
+        {
+            "name": "youtube.com",
+            "topic": "Memories of Murder score analysis"
+        }
+    ],
+    "content": {
+        "parasite_sound_design": {
+            "sound_designer": "Ralph Tae Young Choi",
+            "philosophy": {
+                "minimalism": "Tension through minimal sound or deliberate silence",
+                "footsteps": "Subtle noises carry significant weight"
+            },
+            "class_through_sound": {
+                "kim_basement": {
+                    "environment": "Constant buzz of streets, intricate background noise",
+                    "meaning": "Lack of privacy, urban poverty"
+                },
+                "park_mansion": {
+                    "environment": "Relative silence",
+                    "meaning": "Insulated wealth, privilege"
+                }
+            },
+            "rain_metaphor": {
+                "park_perspective": "Pleasant background tick",
+                "kim_perspective": "Heralds despair and destruction (flooding)"
+            },
+            "door_sounds": {
+                "technique": "Various door sounds in Park house",
+                "symbolism": "Divide between haves and have-nots"
+            },
+            "artificial_ambient": {
+                "method": "Most ambient noise artificially created",
+                "techniques": [
+                    "Speakers during filming",
+                    "Extensive post-production editing"
+                ]
+            }
+        },
+        "parasite_score": {
+            "composer": "Jung Jae-il",
+            "theme": "Class inequality and tension",
+            "musical_progression": {
+                "opening": "Sparse, somber ascending piano motif",
+                "meaning": "Aspiration of upward mobility"
+            },
+            "baroque_elements": {
+                "piece": "The Belt of Faith",
+                "usage": "Accompanies Kim family schemes",
+                "meaning": "Pursuit of wealth, elaborate conspiracy"
+            },
+            "descent_transition": {
+                "elements": "Darker, atmospheric, discordant",
+                "hints": "Horror elements",
+                "bong_description": "Nightmare of capitalism"
+            },
+            "conciliation_trilogy": {
+                "function": "Parallels Kim family's evolving conspiracy",
+                "effect": "Tonal texture and audial symbolism"
+            },
+            "classical_usage": {
+                "piece": "Aria from Rodelinda (opera)",
+                "scene": "Garden party",
+                "effect": "Creates alienation, references usurpation"
+            }
+        },
+        "memories_of_murder_sound": {
+            "characteristics": {
+                "predominant": "Dialogues and natural sound effects",
+                "atmosphere": "Continuity maintained",
+                "silence": "Strategic for suspense generation"
+            },
+            "audio_team": "Live Tone",
+            "bong_philosophy": "Realistic with impacts",
+            "unsettling_absence": "Silence emphasizes killer still at large"
+        },
+        "memories_of_murder_score": {
+            "composer": "Taro Iwashiro",
+            "collaboration": "20+ demo tapes, multiple meetings with Bong",
+            "rhythm_style": "Almost connected, yet disconnected rhythms",
+            "purpose": "Reflects fragmented police investigation, missing information",
+            "emotional_function": {
+                "tense_scenes": "Stark, haunting melodies",
+                "emotional_toll": "Softer, melancholic tunes"
+            }
+        },
+        "veo_prompt_keywords": [
+            "silence as class divide",
+            "ascending piano motif",
+            "Baroque conspiracy score",
+            "rain as despair",
+            "minimal tension sound",
+            "discordant horror hints",
+            "opera alienation",
+            "disconnected rhythm",
+            "haunting strings"
+        ]
+    }
+}

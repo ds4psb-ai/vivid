@@ -1,0 +1,96 @@
+{
+    "source_id": "villeneuve_lighting_techniques",
+    "auteur": "Denis Villeneuve",
+    "category": "cinematography",
+    "title": "Denis Villeneuve Lighting Techniques - Roger Deakins Collaboration",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "premiumbeat.com",
+            "topic": "Blade Runner 2049 lighting breakdown"
+        },
+        {
+            "name": "theasc.com",
+            "topic": "American Cinematographer interview"
+        },
+        {
+            "name": "studiobinder.com",
+            "topic": "Visual analysis"
+        },
+        {
+            "name": "collider.com",
+            "topic": "Dune influence interview"
+        }
+    ],
+    "content": {
+        "blade_runner_2049": {
+            "collaboration": {
+                "cinematographer": "Roger Deakins (Academy Award winner)",
+                "integration": "Lighting designed with set architecture from Day One",
+                "vfx_involvement": "Deakins supervised VFX for visual integrity"
+            },
+            "lighting_philosophy": {
+                "naturalistic_stylized": "Natural look in highly stylized futuristic world",
+                "in_camera": "Achieve color effects in-camera, not post",
+                "practical_emphasis": "Custom fixtures designed for each set"
+            },
+            "signature_techniques": {
+                "moving_light": {
+                    "purpose": "Create sense of artificiality and dynamism",
+                    "context": "Dystopian techno-future with scarce natural sunlight",
+                    "effect": "Constant movement = artificial world"
+                },
+                "water_caustics": {
+                    "location": "Wallace's office (platform surrounded by water)",
+                    "equipment": "10K Fresnel lamps high above water",
+                    "effect": "Moving light patterns on walls",
+                    "enhancement": "Steam from heated water for atmosphere"
+                },
+                "ring_lights": {
+                    "location": "Niander Wallace office",
+                    "construction": "256 ARRI 300-watt Fresnels in concentric circles",
+                    "programming": "Slow chase effect mimicking skylight sunlight",
+                    "effect": "Soft broad light with focused intensity"
+                }
+            },
+            "camera_techniques": {
+                "wide_lenses": {
+                    "usage": "14mm lenses to exaggerate scale",
+                    "purpose": "Convey vastness of futuristic environments",
+                    "sets": "Very large, built on stages"
+                },
+                "silhouette_design": {
+                    "example": "Opening scene: Gosling kept in silhouette",
+                    "method": "Lighting + architecture combined"
+                },
+                "fog_and_mist": {
+                    "prevalence": "Heavy use throughout interior/exterior",
+                    "effect": "Oppressive, mysterious atmosphere"
+                }
+            }
+        },
+        "dune_influence": {
+            "cinematographer": "Greig Fraser",
+            "villeneuve_quote": "Working with Deakins was formative experience",
+            "lasting_impact": "Instinctively thinking about light during VFX",
+            "fraser_approach": "Optimize emotional quality of light, character-based lens choices"
+        },
+        "deakins_principles": {
+            "practical_sources": "Motivate light from existing or custom sources",
+            "minimal_post": "Heavy emphasis on in-camera capture",
+            "detail_preservation": "Practical shooting maintains weight and detail"
+        },
+        "veo_prompt_keywords": [
+            "water caustic reflections",
+            "ring light concentric",
+            "moving artificial light",
+            "silhouette against architecture",
+            "wide 14mm lens scale",
+            "fog mist atmosphere",
+            "practical light motivation",
+            "dystopian future lighting",
+            "Deakins naturalistic stylized",
+            "slow chase light effect"
+        ]
+    }
+}

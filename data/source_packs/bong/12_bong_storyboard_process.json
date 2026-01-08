@@ -1,0 +1,82 @@
+{
+    "source_id": "bong_storyboard_process",
+    "auteur": "Bong Joon-ho",
+    "category": "filmmaking_process",
+    "title": "Bong Joon-ho Storyboard and Pre-visualization Process",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "koreaherald.com",
+            "topic": "Storyboard process interview"
+        },
+        {
+            "name": "kottke.org",
+            "topic": "Parasite storyboard book"
+        },
+        {
+            "name": "slashfilm.com",
+            "topic": "Pre-visualization approach"
+        },
+        {
+            "name": "janaoncamera.com",
+            "topic": "Storyboard filmmaking style"
+        }
+    ],
+    "content": {
+        "storyboard_philosophy": {
+            "meticulous_approach": "Hand-draws comprehensive storyboards for every single shot",
+            "detail_level": {
+                "includes": [
+                    "Background settings",
+                    "Kinetic compositions",
+                    "Mise-en-scène",
+                    "Camera angles",
+                    "Actor movements"
+                ],
+                "resembles": "Manga-style visual novels"
+            },
+            "personality_driven": {
+                "bong_quote": "Has to draw storyboards due to anxious personality",
+                "function": "Reduces anxiety, provides clear roadmap"
+            }
+        },
+        "pre_visualization": {
+            "mental_pre_edit": {
+                "approach": "Draws entire movie in brain from offset",
+                "technique": "Pre-edits film through storyboards"
+            },
+            "on_set_efficiency": {
+                "minimal_coverage": "Only captures necessary, planned takes",
+                "minimal_improv": "Follows storyboards closely during filming"
+            },
+            "crew_communication": {
+                "distribution": "Actors and crew receive storyboard packets",
+                "visual_blueprint": "Complete visual plan of entire film"
+            }
+        },
+        "parasite_storyboards": {
+            "compilation": "Published as graphic novel",
+            "detail": "So complete they function as standalone narrative",
+            "production_use": "Crew used as reference throughout production"
+        },
+        "preparation_timeline": {
+            "concept_development": "Years before script (4 years for Parasite concept)",
+            "script_writing": "Relatively fast (4 months for Parasite)",
+            "set_mockups": "Creates mock-ups during writing for production design"
+        },
+        "actor_perspective": {
+            "song_kang_ho_view": "Allows full concentration on performance",
+            "chris_evans_view": "Frees actors from technical worries",
+            "trust": "Actors trust storyboard precision"
+        },
+        "veo_prompt_keywords": [
+            "manga storyboard style",
+            "meticulous pre-visualization",
+            "pre-edited in mind",
+            "minimal on-set coverage",
+            "visual blueprint planning",
+            "anxious precision",
+            "graphic novel storyboard"
+        ]
+    }
+}

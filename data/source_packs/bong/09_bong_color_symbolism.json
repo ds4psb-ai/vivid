@@ -1,0 +1,101 @@
+{
+    "source_id": "bong_color_symbolism",
+    "auteur": "Bong Joon-ho",
+    "category": "color_theory",
+    "title": "Bong Joon-ho Color Symbolism and Grading",
+    "version": "1.0",
+    "sources": [
+        {
+            "name": "youtube.com",
+            "topic": "Color analysis Parasite"
+        },
+        {
+            "name": "filmfables.com",
+            "topic": "Orange neurosis meaning"
+        },
+        {
+            "name": "medium.com",
+            "topic": "Memories of Murder color theory"
+        },
+        {
+            "name": "electricsheepmagazine.co.uk",
+            "topic": "Mother color interview"
+        }
+    ],
+    "content": {
+        "color_philosophy": {
+            "core_principle": "Color as class division marker and psychological signal",
+            "approach": "Contrasting palettes between social classes",
+            "desaturation": "Often muted to appear less obvious, then reveals meaning"
+        },
+        "parasite_colors": {
+            "warm_golden": {
+                "location": "Park family mansion",
+                "meaning": "Comfort, affluence, carefree lifestyle",
+                "lighting": "Abundant natural light"
+            },
+            "cool_muted": {
+                "location": "Kim family semi-basement",
+                "meaning": "Poverty, struggle, confinement",
+                "lighting": "Fluorescent greenish, dim tungsten"
+            },
+            "green": {
+                "symbolism": "Wealth, deception, transformation",
+                "contrast": "Park mansion = natural subdued green, Kim home = artificial sickly green",
+                "object": "Peach as green fruit = tension between characters"
+            },
+            "red": {
+                "symbolism": "Danger, violence, passion",
+                "trigger": "Appears when Kim plan goes awry",
+                "final_scene": "Ki-taek consumed by red and shadows = irreversible action"
+            },
+            "blue": {
+                "symbolism": "Sadness, depression, deception, illusion",
+                "usage": "When poor family is introduced to wealthy family",
+                "character": "Housekeeper's failure and despair"
+            },
+            "orange": {
+                "bong_quote": "Wanted scarlet-orange color as accent",
+                "meaning": "Unnerving vibration, imbalance, neurosis",
+                "theme": "Distress from dysfunctional capitalism",
+                "location": "Character Min, near basement door"
+            }
+        },
+        "memories_of_murder_colors": {
+            "overall_palette": "Muted and desaturated, dark and gloomy",
+            "green": {
+                "meaning": "Mystery, malady, suspicion, blame",
+                "locations": "Green field (victims), interrogation room green door"
+            },
+            "red": {
+                "dual_meaning": "Identifies potential victims AND marks red herrings",
+                "purpose": "Generate confusion and mystery"
+            },
+            "blue": {
+                "meaning": "Neutral observers, bystanding townspeople",
+                "visual": "Blue sky overlooking events"
+            },
+            "restoration": "Criterion added green tint (Bong-approved)"
+        },
+        "mother_colors": {
+            "palette": "Muted browns, greens, blues = dreary atmosphere",
+            "purple": {
+                "usage": "Mother's 'weird purple clothes' in opening",
+                "meaning": "Madness, fate, tragedy"
+            },
+            "wide_shots": "Mother small against landscape = isolation",
+            "bw_version": "Release suggests noir and Hitchcockian elements"
+        },
+        "veo_prompt_keywords": [
+            "warm golden affluence",
+            "sickly fluorescent green",
+            "muted earthy poverty",
+            "scarlet-orange neurosis",
+            "desaturated mystery",
+            "blue deception",
+            "purple madness",
+            "class division through color",
+            "natural vs artificial light"
+        ]
+    }
+}

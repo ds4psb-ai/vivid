@@ -1,0 +1,105 @@
+{
+    "schema_version": "layer1-v1",
+    "cluster_id": "CL_PARK_01",
+    "auteur": "박찬욱",
+    "layer": "layer1_structured",
+    "description": "구조화된 지식 - Park Chan-wook Visual DNA",
+    "logic_vector": {
+        "logic_id": "logic_CL_PARK_01",
+        "cadence": {
+            "shot_length_ms": {
+                "median": 4500,
+                "signature": "리듬감 있는 정적인 미장센"
+            },
+            "transition_types": {
+                "match_cut": 0.30,
+                "dissolve": 0.10,
+                "whip_pan": 0.15,
+                "hard_cut": 0.45
+            }
+        },
+        "composition": {
+            "primary_strategy": "perfect_symmetry",
+            "symmetry_score": 0.95,
+            "depth_usage": "flat_staging_w_depth_cues",
+            "signature_compositions": [
+                "center_weighted",
+                "frame_within_frame",
+                "split_diopter_effect"
+            ]
+        },
+        "camera_motion": {
+            "dolly": 0.40,
+            "zoom": 0.20,
+            "static": 0.30,
+            "whip_pan": 0.10,
+            "signature": "우아하고 기계적인 움직임, 감정을 배제한 관찰자 시점"
+        },
+        "rendering_specs": {
+            "lens": "Anamorphic primes (distortion at edges)",
+            "film_stock": "Kodak Vision3 500T (fine grain)",
+            "color_process": "Bleach bypass (desaturated shadows, high contrast)",
+            "lighting_style": "Baroque/Chiaroscuro",
+            "texture_prompts": [
+                "wallpaper pattern",
+                "rich fabric",
+                "velvet",
+                "blood"
+            ]
+        }
+    },
+    "persona_vector": {
+        "persona_id": "persona_CL_PARK_01",
+        "tone": [
+            "baroque_elegant",
+            "grotesque_beauty",
+            "dry_humor",
+            "operatic"
+        ],
+        "emotion_arc": [
+            {
+                "t": 0.0,
+                "label": "억압된 욕망",
+                "valence": -0.3
+            },
+            {
+                "t": 0.3,
+                "label": "금기 위반",
+                "valence": 0.5
+            },
+            {
+                "t": 0.6,
+                "label": "파국적 폭력",
+                "valence": -0.6
+            },
+            {
+                "t": 0.9,
+                "label": "아이러니한 구원",
+                "valence": 0.1
+            }
+        ],
+        "interpretation_frame": [
+            "revenge",
+            "guilt",
+            "redemption",
+            "taboo"
+        ]
+    },
+    "pattern_rules": [
+        {
+            "name": "WallPaper Camouflage",
+            "description": "인물이 복잡한 패턴의 벽지와 시각적으로 융화되거나 압도됨. 환경이 심리를 지배.",
+            "application_condition": "인물의 심리적 고립 표현 시"
+        },
+        {
+            "name": "The Match Cut",
+            "description": "서로 다른 시공간의 유사한 형태/동작을 연결하여 인과의 필연성 강조.",
+            "application_condition": "과거와 현재의 인과관계 설명 시"
+        },
+        {
+            "name": "Green/Red Duality",
+            "description": "초록(부패/광기)과 빨강(열정/피)의 강렬한 보색 대비.",
+            "application_condition": "클라이막스 또는 중요한 감정 전환 시"
+        }
+    ]
+}
