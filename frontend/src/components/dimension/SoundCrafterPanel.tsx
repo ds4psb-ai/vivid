@@ -7,6 +7,7 @@ import TeachingPanelLayout, {
     useResultExport,
 } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
+import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useDimensionChainOptional, type ChainData } from "@/contexts/DimensionChainContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
@@ -26,8 +27,8 @@ import {
 } from "lucide-react";
 
 // --- Constants ---
-const CREDIT_COST_MOOD = 5; // Cheaper for brainstorming
-const CREDIT_COST_CRAFT = 8; // Final generation
+// const CREDIT_COST_MOOD = 5; // REMOVED - Dynamic
+// const CREDIT_COST_CRAFT = 8; // REMOVED - Dynamic
 const THEME_COLOR: ThemeColor = "rose";
 const DIMENSION_KEY = "sound-crafter";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
@@ -100,13 +101,19 @@ export default function SoundCrafterPanel() {
     const [activePlatform, setActivePlatform] = useState<"suno" | "udio">("suno");
 
     const [showCreditModal, setShowCreditModal] = useState(false);
-    const [requiredCredits, setRequiredCredits] = useState(CREDIT_COST_MOOD);
-    const [validationError, setValidationError] = useState<string | null>(null);
-    const [copiedField, setCopiedField] = useState<string | null>(null);
-
     const { byokKey } = useBYOK();
     const creditCtx = useCreditContextOptional();
     const chainCtx = useDimensionChainOptional();
+
+    // SSoT: Get tool config for Sound Crafter (SC)
+    const { getToolByDimension } = useDimensionConfig();
+    const toolConfig = getToolByDimension("SC"); // Might be undefined if not in list
+    const CREDIT_COST_CRAFT = toolConfig?.creditCost ?? 8;
+    const CREDIT_COST_MOOD = Math.max(1, Math.round(CREDIT_COST_CRAFT * 0.625)); // ~5/8 ratio
+
+    const [requiredCredits, setRequiredCredits] = useState(CREDIT_COST_MOOD);
+    const [validationError, setValidationError] = useState<string | null>(null);
+    const [copiedField, setCopiedField] = useState<string | null>(null);
 
     // Export utilities
     const { exportJSON, copyToClipboard } = useResultExport();

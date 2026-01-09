@@ -8,9 +8,11 @@ import TeachingPanelLayout, {
 } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
+import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 
-const CREDIT_COST = 5;
+// SSoT: Use context instead of hardcode
+// const CREDIT_COST = 5; // REMOVED
 const THEME_COLOR: ThemeColor = "emerald";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
@@ -61,6 +63,9 @@ export default function VisualRealizerPanel() {
     // BYOK and credits
     const { byokKey } = useBYOK();
     const creditCtx = useCreditContextOptional();
+    const { getToolByDimension } = useDimensionConfig();
+    const toolConfig = getToolByDimension("3D");
+    const CREDIT_COST = toolConfig?.creditCost ?? 5;
 
     // Export utilities
     const { copyToClipboard, isCopied, exportJSON } = useResultExport();

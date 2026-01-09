@@ -8,10 +8,11 @@ import TeachingPanelLayout, {
 } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
+import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import { CheckCircle, XCircle, AlertTriangle, Download } from "lucide-react";
 
-const CREDIT_COST = 8;
+// const CREDIT_COST = 8; // REMOVED
 const THEME_COLOR: ThemeColor = "rose";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
@@ -62,6 +63,9 @@ export default function QualityDirectorPanel() {
 
     const { byokKey } = useBYOK();
     const creditCtx = useCreditContextOptional();
+    const { getToolByDimension } = useDimensionConfig();
+    const toolConfig = getToolByDimension("QC");
+    const CREDIT_COST = toolConfig?.creditCost ?? 8;
 
     // Export utilities
     const { exportJSON } = useResultExport();

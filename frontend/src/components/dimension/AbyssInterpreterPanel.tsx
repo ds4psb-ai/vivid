@@ -8,10 +8,11 @@ import TeachingPanelLayout, {
 } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
+import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import { Send, User, Bot, Sparkles, Download } from "lucide-react";
 
-const CREDIT_COST = 5;
+// const CREDIT_COST = 5; // REMOVED
 const THEME_COLOR: ThemeColor = "indigo";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
@@ -82,6 +83,9 @@ export default function AbyssInterpreterPanel() {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const { byokKey } = useBYOK();
     const creditCtx = useCreditContextOptional();
+    const { getToolByDimension } = useDimensionConfig();
+    const toolConfig = getToolByDimension("AI");
+    const CREDIT_COST = toolConfig?.creditCost ?? 5;
 
     // Export utilities
     const { exportJSON } = useResultExport();
@@ -129,9 +133,11 @@ export default function AbyssInterpreterPanel() {
                     ...getBYOKHeaders(byokKey),
                 },
                 body: JSON.stringify({
+                    subject: "심연해석 페르소나 분석",
                     user_message: "분석을 시작합니다",
-                    analysis_stage: "intro",
-                    depth_level: depthLevel,
+                    current_stage: "intro",
+                    persona_data: {},
+                    birth_info: {},
                     model,
                 }),
             });
@@ -180,11 +186,11 @@ export default function AbyssInterpreterPanel() {
                     ...getBYOKHeaders(byokKey),
                 },
                 body: JSON.stringify({
+                    subject: "심연해석 페르소나 분석",
                     user_message: userMessage,
-                    analysis_stage: currentStage,
+                    current_stage: currentStage,
                     persona_data: personaData,
-                    birth_info: currentStage === "saju" ? birthInfo : undefined,
-                    depth_level: depthLevel,
+                    birth_info: currentStage === "saju" ? birthInfo : {},
                     model,
                 }),
             });

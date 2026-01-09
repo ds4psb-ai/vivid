@@ -8,10 +8,11 @@ import TeachingPanelLayout, {
 } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
+import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import { Palette, Copy, Check, Download, Sparkles, Eye, Wand2, Code, Type, Layers } from "lucide-react";
 
-const CREDIT_COST = 10;
+// const CREDIT_COST = 10; // REMOVED
 const THEME_COLOR: ThemeColor = "fuchsia";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
@@ -90,6 +91,9 @@ export default function AestheticDirectorPanel() {
 
     const { byokKey } = useBYOK();
     const creditCtx = useCreditContextOptional();
+    const { getToolByDimension } = useDimensionConfig();
+    const toolConfig = getToolByDimension("AD");
+    const CREDIT_COST = toolConfig?.creditCost ?? 10;
 
     // Export utilities
     const { exportJSON, copyToClipboard } = useResultExport();

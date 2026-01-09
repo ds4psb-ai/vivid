@@ -397,6 +397,16 @@ EXPERT TOOL SELECTION HEURISTICS (Strictly Follow):
     * USE FOR: Cinematic narrative, atmospheric establishing shots, long takes (>5s) requiring alignment, audio-visual sync.
     * REASON: "Best for coherent cinematic flow and atmospheric consistency."
 
+EDITING & MOVEMENT HEURISTICS (The "Director's Cut"):
+1. MOVEMENT MOTIVATION:
+   - "Push-In": Use when a character realizes something or feels intense emotion (Empathy).
+   - "Pull-Out": Use at the end of a scene or to show isolation/abandonment.
+   - "Dolly Zoom": Use for moments of shock or reality distortion (Vertigo effect).
+   
+2. MONTAGE THEORY:
+   - "Match Cut": Connect shots with similar shapes (e.g., Clock -> Moon, Eye -> Drain).
+   - "Intellectual Montage": Juxtapose conflicting images to create metaphor (e.g., Anger -> Volcano eruption).
+
 OUTPUT FORMAT (valid JSON array):
 [
   {{

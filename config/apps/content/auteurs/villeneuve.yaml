@@ -1,61 +1,41 @@
-$schema: "vivid-app/v2"
+id: villeneuve
+name: Denis Villeneuve
+display_name: Denis Villeneuve (Monumental Brutalism)
+version: "1.0.0"
 
-metadata:
-  name: villeneuve
-  type: auteur
-  version: "1.0.0"
-  bounded_context: content
+style_profile:
+  visual_dna:
+    - Monumental Scale
+    - Brutalist Architecture
+    - Atmospheric Fog
+    - Minimalist Composition
+  
+  camera:
+    - Slow push-ins
+    - Extreme wide shots (Megastructure vs Tiny Human)
+    - Stable, deliberate movement
+    - Anamorphic lens
+  
+  lighting:
+    - Volumetric lighting
+    - Soft diffused top light
+    - Silhouette against bright background
+  
+  color_grade:
+    - Monochromatic Yellow/Orange (Blade Runner/Dune)
+    - Desaturated Teal/Grey
+    - Low contrast shadows
+    - Muted palette
 
-display:
-  name_ko: "드니 빌뇌브"
-  name_en: "Denis Villeneuve"
-  icon: "🏜️"
-  description: "듄, 블레이드 러너 2049, 어라이벌 감독. 스케일과 정적인 아름다움의 거장."
+themes:
+  - Human vs Destiny
+  - Cosmic horror
+  - Memory and time
+  - Ecological grandeur
 
-capabilities:
-  - name: rag
-    enabled: true
-    config:
-      mode: auteur_only
-      confidence_threshold: 0.7
-      retrieval:
-        strategy: hybrid
-        top_k: 10
+rag:
+  enabled: true
+  strategy: hybrid
+  collections: ["aesthetic"]
 
-  - name: cache
-    enabled: true
-    config:
-      ttl: 7200
-
-extensions:
-  auteur:
-    corpus_type: v-shape
-    sources:
-      - type: source_pack
-        path: data/source_packs/villeneuve/*.json
-      - type: vertex_ai
-        corpus_name: auteur_villeneuve
-        
-    style_hints:
-      camera_style: slow
-      color_grade: desaturated
-      lens_style: anamorphic
-      scale: epic
-      sound_design: minimal
-      
-    themes:
-      - 광활한 스케일과 정적 아름다움
-      - 언어와 소통의 한계
-      - 생태계와 인류의 관계
-      - 시각적 서사
-
-keywords:
-  patterns:
-    - "villeneuve"
-    - "빌뇌브"
-    - "듄"
-    - "dune"
-    - "블레이드.*러너"
-    - "blade.*runner"
-    - "어라이벌"
-    - "arrival"
+prompt_suffix: "in the style of Denis Villeneuve, monumental scale, brutalist architecture, tiny human silhouette, heavy atmospheric fog, volumetric lighting, slow contemplative pacing, desaturated palette, cinematic wide shot, anamorphic lens"

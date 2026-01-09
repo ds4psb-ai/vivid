@@ -2,6 +2,11 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
 import { api, DimensionToolConfig, DimensionToolsConfig } from "@/lib/api";
+import {
+    getInputFieldsByDimension as getInputFields,
+    getDefaultInputValues as getDefaults,
+    type InputFieldConfig,
+} from "@/lib/dimension-input-schemas";
 
 // =============================================================================
 // Types
@@ -35,6 +40,8 @@ interface DimensionConfigContextType {
     getToolById: (toolId: string) => DimensionToolConfig | undefined;
     getInitialOptions: () => ConnectionOption[];
     getConnectionOptions: (excludeToolIds?: string[]) => ConnectionOption[];
+    getInputFieldsByDimension: (dimension: string) => InputFieldConfig[];
+    getDefaultInputValues: (dimension: string) => Record<string, string>;
 
     // Refresh function
     refresh: () => Promise<void>;
@@ -155,6 +162,8 @@ export function DimensionConfigProvider({ children }: { children: React.ReactNod
         getToolById,
         getInitialOptions,
         getConnectionOptions,
+        getInputFieldsByDimension: getInputFields,
+        getDefaultInputValues: getDefaults,
         refresh: fetchConfig,
     };
 
@@ -177,4 +186,4 @@ export function useDimensionConfig(): DimensionConfigContextType {
 // Export types
 // =============================================================================
 
-export type { DimensionToolConfig, ConnectionOption };
+export type { DimensionToolConfig, ConnectionOption, InputFieldConfig };

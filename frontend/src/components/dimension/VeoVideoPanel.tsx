@@ -7,10 +7,12 @@ import TeachingPanelLayout, {
     useResultExport,
 } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
+import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 
-const CREDIT_COST = 50;
+// SSoT: Use context instead of hardcode
+// const CREDIT_COST = 50; // REMOVED
 const THEME_COLOR: ThemeColor = "sky";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
@@ -63,6 +65,9 @@ export default function VeoVideoPanel() {
 
     const { byokKey } = useBYOK();
     const creditCtx = useCreditContextOptional();
+    const { getToolByDimension } = useDimensionConfig();
+    const toolConfig = getToolByDimension("VEO");
+    const creditCost = toolConfig?.creditCost ?? 200; // SSoT with fallback
 
     // Export utilities (copy, download)
     const { downloadFile, copyToClipboard, isCopied } = useResultExport();
@@ -117,7 +122,7 @@ export default function VeoVideoPanel() {
         setValidationError(null);
 
         // Credit check
-        if (!byokKey && creditCtx && !creditCtx.hasEnoughCredits(CREDIT_COST)) {
+        if (!byokKey && creditCtx && !creditCtx.hasEnoughCredits(creditCost)) {
             setShowCreditModal(true);
             return;
         }
@@ -253,8 +258,8 @@ export default function VeoVideoPanel() {
                             key={s.value}
                             onClick={() => setStyle(s.value)}
                             className={`px-4 py-3 rounded-xl text-sm font-medium transition-all border ${style === s.value
-                                    ? "bg-sky-500/20 border-sky-500/40 text-sky-400 shadow-[0_0_15px_rgba(14,165,233,0.2)]"
-                                    : "bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10 hover:text-white"
+                                ? "bg-sky-500/20 border-sky-500/40 text-sky-400 shadow-[0_0_15px_rgba(14,165,233,0.2)]"
+                                : "bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10 hover:text-white"
                                 }`}
                         >
                             {s.label}
@@ -295,7 +300,7 @@ export default function VeoVideoPanel() {
                 <svg className="w-4 h-4 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                <span className="text-xs text-sky-400 font-medium">{CREDIT_COST} 크레딧 소모</span>
+                <span className="text-xs text-sky-400 font-medium">{creditCost} 크레딧 소모</span>
             </div>
 
             {/* Generate Button */}
@@ -503,7 +508,7 @@ export default function VeoVideoPanel() {
             <InsufficientCreditsModal
                 isOpen={showCreditModal}
                 onClose={() => setShowCreditModal(false)}
-                requiredCredits={CREDIT_COST}
+                requiredCredits={creditCost}
                 currentBalance={creditCtx?.balance ?? 0}
                 onRetry={handleGenerate}
             />

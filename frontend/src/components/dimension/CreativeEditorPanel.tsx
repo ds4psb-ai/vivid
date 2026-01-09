@@ -8,6 +8,7 @@ import TeachingPanelLayout, {
 } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
+import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import {
     PenTool,
@@ -22,7 +23,7 @@ import {
     RefreshCw
 } from "lucide-react";
 
-const CREDIT_COST = 5;
+// const CREDIT_COST = 5; // REMOVED
 const THEME_COLOR: ThemeColor = "rose";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
@@ -64,6 +65,10 @@ export default function CreativeEditorPanel() {
 
     const { byokKey } = useBYOK();
     const creditCtx = useCreditContextOptional();
+    const { getToolByDimension } = useDimensionConfig();
+    // Using "CE" as potential future dimension key
+    const toolConfig = getToolByDimension("CE");
+    const CREDIT_COST = toolConfig?.creditCost ?? 5;
     const { exportJSON, copyToClipboard } = useResultExport();
 
     // Async Op
@@ -152,8 +157,8 @@ export default function CreativeEditorPanel() {
                             key={p.value}
                             onClick={() => setPersona(p.value)}
                             className={`w-full p-3 rounded-xl border text-left transition-all ${persona === p.value
-                                    ? "bg-rose-500/10 border-rose-500/50"
-                                    : "bg-white/5 border-white/10 hover:bg-white/10"
+                                ? "bg-rose-500/10 border-rose-500/50"
+                                : "bg-white/5 border-white/10 hover:bg-white/10"
                                 }`}
                         >
                             <div className={`text-sm font-bold ${persona === p.value ? "text-rose-400" : "text-white"}`}>

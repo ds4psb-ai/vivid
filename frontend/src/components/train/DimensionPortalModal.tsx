@@ -28,6 +28,7 @@ import {
 import { api, DimensionResponse } from "@/lib/api";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
+import { useDimensionConfig, type InputFieldConfig } from "@/contexts/DimensionConfigContext";
 
 // =============================================================================
 // Types
@@ -370,6 +371,11 @@ export function DimensionPortalModal({
     const { byokKey } = useBYOK();
     const creditCtx = useCreditContextOptional();
 
+    // SSoT: Get tool config and input fields from context
+    const { getToolByDimension, getInputFieldsByDimension } = useDimensionConfig();
+    const toolConfig = currentCar ? getToolByDimension(currentCar.dimension) : undefined;
+    const inputFields = currentCar ? getInputFieldsByDimension(currentCar.dimension) : [];
+
     // Sync local inputs with car inputs when car changes
     useEffect(() => {
         if (currentCar) {
@@ -407,26 +413,23 @@ export function DimensionPortalModal({
 
     // Execute dimension
     const handleExecute = useCallback(async () => {
-        if (!currentCar) return;
-
-        const config = DIMENSION_CONFIG[currentCar.dimension];
-        if (!config) return;
+        if (!currentCar || !toolConfig) return;
 
         // Can't execute if not ready
         if (currentCar.status !== "ready" && currentCar.status !== "failed") return;
 
-        // Validate required fields
-        const missingFields = config.inputFields
-            .filter(f => f.required && !localInputs[f.key])
-            .map(f => f.label);
+        // Validate required fields using SSoT inputFields
+        const missingFields = inputFields
+            .filter((f: InputFieldConfig) => f.required && !localInputs[f.key])
+            .map((f: InputFieldConfig) => f.label);
 
         if (missingFields.length > 0) {
             onStatusChange(currentCar.id, "failed", `필수 입력: ${missingFields.join(", ")}`);
             return;
         }
 
-        // Credit check
-        if (!byokKey && creditCtx && !creditCtx.hasEnoughCredits(config.creditCost)) {
+        // Credit check - Use SSoT creditCost from toolConfig
+        if (!byokKey && creditCtx && !creditCtx.hasEnoughCredits(toolConfig.creditCost)) {
             onStatusChange(currentCar.id, "failed", "크레딧이 부족합니다");
             return;
         }
@@ -435,14 +438,15 @@ export function DimensionPortalModal({
         onStatusChange(currentCar.id, "executing");
 
         try {
+            // Use SSoT endpoint from toolConfig
             const response = await api.post<DimensionResponse>(
-                config.apiEndpoint,
+                toolConfig.endpoint,
                 localInputs,
                 getBYOKHeaders(byokKey)
             );
 
             if (response.success && response.output) {
-                onOutputUpdate(currentCar.id, response.output, config.creditCost);
+                onOutputUpdate(currentCar.id, response.output, toolConfig.creditCost);
                 onStatusChange(currentCar.id, "completed");
 
                 // Refresh credits
@@ -458,7 +462,7 @@ export function DimensionPortalModal({
         } finally {
             setIsExecuting(false);
         }
-    }, [currentCar, localInputs, byokKey, creditCtx, onOutputUpdate, onStatusChange]);
+    }, [currentCar, toolConfig, inputFields, localInputs, byokKey, creditCtx, onOutputUpdate, onStatusChange]);
 
     // Retry (reset to ready and execute)
     const handleRetry = useCallback(() => {
@@ -531,10 +535,10 @@ export function DimensionPortalModal({
         return JSON.stringify(value, null, 2);
     };
 
-    // Early return if no car
-    if (!currentCar || !isOpen) return null;
+    // Early return if no car or no config from SSoT
+    if (!currentCar || !isOpen || !toolConfig) return null;
 
-    const config = DIMENSION_CONFIG[currentCar.dimension];
+    // SSoT: Use toolConfig from context instead of hardcoded DIMENSION_CONFIG
     const colorClass = COLOR_CLASSES[currentCar.color] || COLOR_CLASSES.violet;
     const focusClass = FOCUS_CLASSES[currentCar.color] || FOCUS_CLASSES.violet;
     const dimensionRoute = DIMENSION_ROUTES[currentCar.dimension];
@@ -605,7 +609,7 @@ export function DimensionPortalModal({
                                         {ICON_MAP[currentCar.icon] || <Sparkles className="h-6 w-6" />}
                                     </div>
                                     <div>
-                                        <h2 className="text-lg font-bold text-white">{config?.title}</h2>
+                                        <h2 className="text-lg font-bold text-white">{toolConfig.displayName}</h2>
                                         <p className="text-xs text-zinc-500">{currentCar.dimension} · {currentIndex + 1}/{cars.length}</p>
                                     </div>
                                 </div>
@@ -704,11 +708,12 @@ export function DimensionPortalModal({
                                 <div className="p-6 space-y-5">
                                     {/* Description */}
                                     <p className="text-sm text-zinc-400 leading-relaxed">
-                                        {config?.description}
+                                        {toolConfig.description}
                                     </p>
 
                                     {/* Input Fields */}
-                                    {config?.inputFields.map((field) => (
+                                    {/* SSoT: Use inputFields from context */}
+                                    {inputFields.map((field) => (
                                         <div key={field.key} className="space-y-2">
                                             <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">
                                                 {field.label}
@@ -790,7 +795,7 @@ export function DimensionPortalModal({
                                             >
                                                 <Play className="h-5 w-5" />
                                                 실행하기
-                                                <span className="text-xs opacity-70">({config?.creditCost} 크레딧)</span>
+                                                <span className="text-xs opacity-70">({toolConfig.creditCost} 크레딧)</span>
                                             </button>
                                         )}
 
