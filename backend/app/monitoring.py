@@ -104,13 +104,10 @@ def setup_prometheus(app: FastAPI) -> bool:
         instrumentator.add(
             latency(
                 buckets=[0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 10.0],
-                namespace="crebit",
             )
         )
         instrumentator.add(
-            requests(
-                namespace="crebit",
-            )
+            requests()
         )
         
         # Instrument the app
