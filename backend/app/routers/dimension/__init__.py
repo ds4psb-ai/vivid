@@ -119,6 +119,7 @@ async def credits_info() -> Dict[str, Any]:
 )
 async def get_tools_config() -> Dict[str, Any]:
     """Return tool configuration for frontend DimensionConfigContext."""
+    # Hardcoded credit costs (avoiding broken get_credit_cost import)
     tools = [
         {
             "toolId": "prompt_generator",
@@ -131,7 +132,7 @@ async def get_tools_config() -> Dict[str, Any]:
             "stage": "pre_production",
             "capsuleKey": "teaching.prompt.generate",
             "endpoint": "/api/dimension/1d/generate",
-            "creditCost": get_credit_cost(DimensionCapsuleId.PROMPT_GENERATE, "gemini-2.0-flash-exp"),
+            "creditCost": 5,
         },
         {
             "toolId": "storyboard",
@@ -144,7 +145,7 @@ async def get_tools_config() -> Dict[str, Any]:
             "stage": "pre_production",
             "capsuleKey": "teaching.storyboard.create",
             "endpoint": "/api/dimension/2d/create",
-            "creditCost": get_credit_cost(DimensionCapsuleId.STORYBOARD_CREATE, "gemini-2.0-flash-exp"),
+            "creditCost": 10,
         },
         {
             "toolId": "image_tool",
@@ -157,7 +158,7 @@ async def get_tools_config() -> Dict[str, Any]:
             "stage": "production",
             "capsuleKey": "teaching.image.generate",
             "endpoint": "/api/dimension/3d/generate",
-            "creditCost": get_credit_cost(DimensionCapsuleId.IMAGE_GENERATE, "gemini-2.0-flash-exp"),
+            "creditCost": 5,
         },
         {
             "toolId": "reference_analyzer",
@@ -170,7 +171,7 @@ async def get_tools_config() -> Dict[str, Any]:
             "stage": "planning",
             "capsuleKey": "teaching.reference.analyze",
             "endpoint": "/api/dimension/4d/analyze",
-            "creditCost": get_credit_cost(DimensionCapsuleId.REFERENCE_ANALYZE, "gemini-2.0-flash-exp"),
+            "creditCost": 8,
         },
         {
             "toolId": "quality_check",
@@ -183,7 +184,7 @@ async def get_tools_config() -> Dict[str, Any]:
             "stage": "finishing",
             "capsuleKey": "dimension.quality.check",
             "endpoint": "/api/dimension/quality/check",
-            "creditCost": get_credit_cost(DimensionCapsuleId.QUALITY_CHECK, "gemini-2.0-flash-exp"),
+            "creditCost": 8,
         },
         {
             "toolId": "aesthetic_direct",
@@ -196,7 +197,7 @@ async def get_tools_config() -> Dict[str, Any]:
             "stage": "planning",
             "capsuleKey": "dimension.aesthetic.direct",
             "endpoint": "/api/dimension/aesthetic/direct",
-            "creditCost": get_credit_cost(DimensionCapsuleId.AESTHETIC_DIRECT, "gemini-2.0-flash-exp"),
+            "creditCost": 10,
         },
         {
             "toolId": "persona_analyze",
@@ -209,7 +210,7 @@ async def get_tools_config() -> Dict[str, Any]:
             "stage": "planning",
             "capsuleKey": "dimension.persona.analyze",
             "endpoint": "/api/dimension/persona/analyze",
-            "creditCost": get_credit_cost(DimensionCapsuleId.PERSONA_ANALYZE, "gemini-2.0-flash-exp"),
+            "creditCost": 5,
         },
         {
             "toolId": "veo_generate",
@@ -222,7 +223,7 @@ async def get_tools_config() -> Dict[str, Any]:
             "stage": "production",
             "capsuleKey": "veo.video.generate",
             "endpoint": "/api/dimension/veo/generate",
-            "creditCost": get_credit_cost(DimensionCapsuleId.VEO_VIDEO_GENERATE, "gemini-2.0-flash-exp"),
+            "creditCost": 200,
         },
     ]
     
