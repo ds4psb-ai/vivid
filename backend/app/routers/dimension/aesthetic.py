@@ -253,3 +253,108 @@ async def generate_aesthetic_moodboard_stream(
         media_type="text/event-stream",
         headers=get_sse_headers(),
     )
+
+
+# ============================================================================
+# AI Persona Analyzer (Abyss Interpreter)
+# ============================================================================
+
+class PersonaAnalyzeRequest(BaseModel):
+    """Request model for AI Persona Analyzer."""
+    subject: str = Field(..., min_length=1, max_length=1000, description="Subject to analyze")
+    user_message: str = Field("", max_length=2000, description="User message in conversation")
+    persona_data: dict = Field(default_factory=dict, description="Accumulated persona data")
+    birth_info: dict = Field(default_factory=dict, description="Birth info for saju analysis")
+    current_stage: str = Field("intro", description="Current analysis stage")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
+
+    @field_validator("subject", "user_message", mode="before")
+    @classmethod
+    def strip_strings(cls, v: str) -> str:
+        return _strip_string(v)
+
+    @field_validator("model")
+    @classmethod
+    def validate_model(cls, v: str) -> str:
+        return _validate_model(v)
+
+
+@router.post(
+    "/persona/analyze",
+    response_model=DimensionResponse,
+    responses={
+        400: {"model": DimensionErrorResponse},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="AI Persona: Abyss Interpreter",
+    description="Analyze creative persona through deep psychology interpretation.",
+    tags=["Dimension Extended"],
+)
+async def analyze_persona(
+    request: PersonaAnalyzeRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> DimensionResponse:
+    """Analyze persona with Intent-Resolver integration."""
+    return await _execute_dimension_tool(
+        capsule_id=DimensionCapsuleId.PERSONA_ANALYZE,
+        tool_key="persona_analyze",
+        inputs={
+            "subject": request.subject,
+            "user_message": request.user_message,
+            "persona_data": request.persona_data,
+            "birth_info": request.birth_info,
+            "current_stage": request.current_stage,
+        },
+        model=request.model,
+        user=user,
+        byok_key=byok_key,
+        db=db,
+        inputs_summary={"subject": request.subject[:100], "stage": request.current_stage},
+        params={"use_rag": False},
+    )
+
+
+@router.post(
+    "/persona/analyze/stream",
+    responses={
+        400: {"model": DimensionErrorResponse},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="AI Persona: Abyss Interpreter (SSE Stream)",
+    description="Analyze creative persona with real-time progress updates via SSE.",
+    tags=["Dimension Extended"],
+)
+async def analyze_persona_stream(
+    request: PersonaAnalyzeRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> StreamingResponse:
+    """Analyze persona with SSE streaming."""
+    return StreamingResponse(
+        _execute_dimension_tool_stream(
+            capsule_id=DimensionCapsuleId.PERSONA_ANALYZE,
+            tool_key="persona_analyze",
+            operation_name="페르소나 분석",
+            inputs={
+                "subject": request.subject,
+                "user_message": request.user_message,
+                "persona_data": request.persona_data,
+                "birth_info": request.birth_info,
+                "current_stage": request.current_stage,
+            },
+            model=request.model,
+            user=user,
+            byok_key=byok_key,
+            db=db,
+            inputs_summary={"subject": request.subject[:100], "stage": request.current_stage},
+            params={"use_rag": False},
+        ),
+        media_type="text/event-stream",
+        headers=get_sse_headers(),
+    )
+
