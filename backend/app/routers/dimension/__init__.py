@@ -111,6 +111,131 @@ async def credits_info() -> Dict[str, Any]:
     }
 
 
+@router.get(
+    "/tools",
+    summary="Dimension Tools Config",
+    description="Get all dimension tools configuration for frontend.",
+    tags=["Dimension Info"],
+)
+async def get_tools_config() -> Dict[str, Any]:
+    """Return tool configuration for frontend DimensionConfigContext."""
+    tools = [
+        {
+            "toolId": "prompt_generator",
+            "dimension": "1D",
+            "displayName": "프롬프트 연금술",
+            "displayNameEn": "Prompt Alchemy",
+            "description": "AI가 이해하는 전문 언어로 번역",
+            "icon": "sparkles",
+            "color": "violet",
+            "stage": "pre_production",
+            "capsuleKey": "teaching.prompt.generate",
+            "endpoint": "/api/dimension/1d/generate",
+            "creditCost": get_credit_cost(DimensionCapsuleId.PROMPT_GENERATE, "gemini-2.0-flash-exp"),
+        },
+        {
+            "toolId": "storyboard",
+            "dimension": "2D",
+            "displayName": "스토리보드 스케치",
+            "displayNameEn": "Storyboard Sketch",
+            "description": "글을 시각적 컷으로 스케치",
+            "icon": "layout-grid",
+            "color": "emerald",
+            "stage": "pre_production",
+            "capsuleKey": "teaching.storyboard.create",
+            "endpoint": "/api/dimension/2d/create",
+            "creditCost": get_credit_cost(DimensionCapsuleId.STORYBOARD_CREATE, "gemini-2.0-flash-exp"),
+        },
+        {
+            "toolId": "image_tool",
+            "dimension": "3D",
+            "displayName": "비주얼 리얼라이저",
+            "displayNameEn": "Visual Realizer",
+            "description": "Key Frame 고품질 생성",
+            "icon": "image",
+            "color": "amber",
+            "stage": "production",
+            "capsuleKey": "teaching.image.generate",
+            "endpoint": "/api/dimension/3d/generate",
+            "creditCost": get_credit_cost(DimensionCapsuleId.IMAGE_GENERATE, "gemini-2.0-flash-exp"),
+        },
+        {
+            "toolId": "reference_analyzer",
+            "dimension": "4D",
+            "displayName": "레퍼런스 해석기",
+            "displayNameEn": "Reference Decoder",
+            "description": "조명, 색감, 연출의 전문가적 분석",
+            "icon": "film",
+            "color": "cyan",
+            "stage": "planning",
+            "capsuleKey": "teaching.reference.analyze",
+            "endpoint": "/api/dimension/4d/analyze",
+            "creditCost": get_credit_cost(DimensionCapsuleId.REFERENCE_ANALYZE, "gemini-2.0-flash-exp"),
+        },
+        {
+            "toolId": "quality_check",
+            "dimension": "QC",
+            "displayName": "퀄리티 디렉터",
+            "displayNameEn": "Quality Director",
+            "description": "시각적 일관성 및 품질 검수",
+            "icon": "check-circle",
+            "color": "rose",
+            "stage": "finishing",
+            "capsuleKey": "dimension.quality.check",
+            "endpoint": "/api/dimension/quality/check",
+            "creditCost": get_credit_cost(DimensionCapsuleId.QUALITY_CHECK, "gemini-2.0-flash-exp"),
+        },
+        {
+            "toolId": "aesthetic_direct",
+            "dimension": "AD",
+            "displayName": "미학디렉터",
+            "displayNameEn": "Aesthetic Director",
+            "description": "시각적 스타일 가이드라인 생성",
+            "icon": "palette",
+            "color": "fuchsia",
+            "stage": "planning",
+            "capsuleKey": "dimension.aesthetic.direct",
+            "endpoint": "/api/dimension/aesthetic/direct",
+            "creditCost": get_credit_cost(DimensionCapsuleId.AESTHETIC_DIRECT, "gemini-2.0-flash-exp"),
+        },
+        {
+            "toolId": "persona_analyze",
+            "dimension": "AI",
+            "displayName": "심연의 거울",
+            "displayNameEn": "Abyss Mirror",
+            "description": "내면의 욕구와 감정 해석",
+            "icon": "moon",
+            "color": "indigo",
+            "stage": "planning",
+            "capsuleKey": "dimension.persona.analyze",
+            "endpoint": "/api/dimension/persona/analyze",
+            "creditCost": get_credit_cost(DimensionCapsuleId.PERSONA_ANALYZE, "gemini-2.0-flash-exp"),
+        },
+        {
+            "toolId": "veo_generate",
+            "dimension": "VEO",
+            "displayName": "비디오 메이커",
+            "displayNameEn": "Video Maker",
+            "description": "최종 AI 영상 생성",
+            "icon": "video",
+            "color": "sky",
+            "stage": "production",
+            "capsuleKey": "veo.video.generate",
+            "endpoint": "/api/dimension/veo/generate",
+            "creditCost": get_credit_cost(DimensionCapsuleId.VEO_VIDEO_GENERATE, "gemini-2.0-flash-exp"),
+        },
+    ]
+    
+    # Build toolsById map
+    tools_by_id = {tool["toolId"]: tool for tool in tools}
+    
+    return {
+        "tools": tools,
+        "toolsById": tools_by_id,
+        "stageOrder": ["planning", "pre_production", "production", "finishing"],
+    }
+
+
 # ============================================================================
 # Exports
 # ============================================================================
