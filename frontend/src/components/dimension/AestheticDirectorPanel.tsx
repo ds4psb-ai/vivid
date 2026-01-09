@@ -137,7 +137,7 @@ export default function AestheticDirectorPanel() {
             {
                 concept,
                 mood,
-                model: "gemini-1.5-pro",
+                model: "gemini-2.0-flash-exp",
             },
             getBYOKHeaders(byokKey)
         ).then((res) => {

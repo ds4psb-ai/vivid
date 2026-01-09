@@ -68,13 +68,21 @@ export function DimensionConfigProvider({ children }: { children: React.ReactNod
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchConfig = useCallback(async () => {
+    const fetchConfig = useCallback(async (retryCount = 0) => {
+        const MAX_RETRIES = 2;
         try {
             setIsLoading(true);
             setError(null);
             const data = await api.getDimensionToolsConfig();
             setConfig(data);
         } catch (err) {
+            // Retry on timeout or network errors
+            if (retryCount < MAX_RETRIES && err instanceof Error &&
+                (err.message.includes("시간이 초과") || err.message.includes("연결"))) {
+                console.warn(`[DimensionConfig] Retry ${retryCount + 1}/${MAX_RETRIES}...`);
+                await new Promise(r => setTimeout(r, 1000 * (retryCount + 1)));
+                return fetchConfig(retryCount + 1);
+            }
             console.error("[DimensionConfig] Failed to fetch config:", err);
             setError(err instanceof Error ? err.message : "Failed to load dimension config");
             // Use fallback on error

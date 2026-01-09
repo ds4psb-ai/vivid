@@ -491,7 +491,9 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
 
             // Agent integration methods
             addCar: (carData: Omit<Car, "id" | "order">) => {
-                const newId = `agent-car-${Date.now()}`;
+                // Use combination of timestamp, order, and random suffix for truly unique IDs
+                const uniqueSuffix = Math.random().toString(36).substring(2, 8);
+                const newId = `agent-car-${Date.now()}-${cars.length}-${uniqueSuffix}`;
                 const newCar: Car = {
                     ...carData,
                     id: newId,

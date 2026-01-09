@@ -95,17 +95,46 @@ CAPSULE_TO_DIMENSION: Dict[DimensionCapsuleId, str] = {
 
 def get_credit_cost(capsule_id: DimensionCapsuleId, model: str) -> int:
     """캡슐과 모델에 따른 동적 크레딧 비용 계산."""
-    from app.capsules.teaching_capsules import (
-        MODEL_TIERS,
-        MODEL_CREDIT_MULTIPLIERS,
-        BASE_CREDIT_COSTS,
-        DEFAULT_BASE_CREDIT_COST,
-    )
-    
+    # Model tier classification
+    MODEL_TIERS = {
+        "gemini-1.5-flash": "flash",
+        "gemini-1.5-pro": "pro",
+        "gemini-2.0-flash": "flash",
+        "gemini-2.5-flash": "flash",
+        "gemini-2.5-pro": "pro",
+        "gemini-3-flash-preview": "flash",
+        "gemini-3-pro-preview": "pro",
+    }
+
+    # Credit multipliers per tier
+    MODEL_CREDIT_MULTIPLIERS = {
+        "flash": 1.0,
+        "pro": 3.0,
+    }
+
+    # Base credit costs per capsule
+    BASE_CREDIT_COSTS = {
+        DimensionCapsuleId.PROMPT_GENERATE: 5,
+        DimensionCapsuleId.STORYBOARD_CREATE: 10,
+        DimensionCapsuleId.IMAGE_GENERATE: 5,
+        DimensionCapsuleId.REFERENCE_ANALYZE: 8,
+        DimensionCapsuleId.QUALITY_CHECK: 8,
+        DimensionCapsuleId.CREATIVE_EDITOR: 8,
+        DimensionCapsuleId.AESTHETIC_DIRECT: 10,
+        DimensionCapsuleId.AESTHETIC_MOODBOARD: 5,  # Lower cost for moodboard
+        DimensionCapsuleId.PERSONA_ANALYZE: 5,
+        DimensionCapsuleId.VEO_VIDEO_GENERATE: 200,
+        DimensionCapsuleId.STORY_ARCHITECT: 10,
+        DimensionCapsuleId.STORY_REFINE: 8,
+        DimensionCapsuleId.SOUND_CRAFT: 8,
+        DimensionCapsuleId.SOUND_MOODBOARD: 5,
+    }
+    DEFAULT_BASE_CREDIT_COST = 5
+
     tier = MODEL_TIERS.get(model, "flash")
     multiplier = MODEL_CREDIT_MULTIPLIERS.get(tier, 1.0)
     base_cost = BASE_CREDIT_COSTS.get(capsule_id, DEFAULT_BASE_CREDIT_COST)
-    
+
     return int(base_cost * multiplier)
 
 
