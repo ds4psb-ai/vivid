@@ -227,3 +227,46 @@ async def logout() -> JSONResponse:
     response = JSONResponse({"success": True})
     response.delete_cookie(settings.SESSION_COOKIE_NAME)
     return response
+
+
+@router.get("/users/me")
+async def get_current_user_profile(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> JSONResponse:
+    """Get current user profile.
+    
+    Returns the authenticated user's profile from the database.
+    """
+    token = request.cookies.get(settings.SESSION_COOKIE_NAME)
+    if not token and request.headers.get("Authorization", "").lower().startswith("bearer "):
+        token = request.headers.get("Authorization").split(" ", 1)[1].strip()
+    
+    payload = decode_token(token, settings.SESSION_SECRET) if token else None
+    if not payload:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    user_id = payload.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid session")
+    
+    # Get full user profile from DB
+    result = await db.execute(
+        select(UserAccount).where(UserAccount.user_id == user_id)
+    )
+    account = result.scalar_one_or_none()
+    
+    if not account:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return JSONResponse({
+        "user_id": account.user_id,
+        "email": account.email,
+        "name": account.name,
+        "avatar_url": account.avatar_url,
+        "role": account.role,
+        "is_active": account.is_active,
+        "created_at": account.created_at.isoformat() if account.created_at else None,
+        "last_login_at": account.last_login_at.isoformat() if account.last_login_at else None,
+    })
+

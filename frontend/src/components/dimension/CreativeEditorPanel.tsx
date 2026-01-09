@@ -109,7 +109,7 @@ export default function CreativeEditorPanel() {
                 content: trimmedContent,
                 context: context || "General Creative Content",
                 persona,
-                model: "gemini-1.5-pro",
+                model: "gemini-3-pro-preview",
                 use_rag: true
             },
             getBYOKHeaders(byokKey)

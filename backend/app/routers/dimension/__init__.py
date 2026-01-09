@@ -99,8 +99,8 @@ async def credits_info() -> Dict[str, Any]:
     for capsule_id in DimensionCapsuleId:
         try:
             credit_costs[capsule_id.value] = {
-                "flash": get_credit_cost(capsule_id, "gemini-2.0-flash-exp"),
-                "pro": get_credit_cost(capsule_id, "gemini-1.5-pro"),
+                "flash": get_credit_cost(capsule_id, "gemini-3-flash-preview"),
+                "pro": get_credit_cost(capsule_id, "gemini-3-pro-preview"),
             }
         except Exception:
             pass

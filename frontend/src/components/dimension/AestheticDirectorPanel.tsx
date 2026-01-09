@@ -137,7 +137,7 @@ export default function AestheticDirectorPanel() {
             {
                 concept,
                 mood,
-                model: "gemini-2.0-flash-exp",
+                model: "gemini-3-flash-preview",
             },
             getBYOKHeaders(byokKey)
         ).then((res) => {
@@ -168,7 +168,7 @@ export default function AestheticDirectorPanel() {
                 reference_style: selectedDirection.suggested_auteur.toLowerCase().split(" ")[0] || "",
                 mood,
                 target_medium: targetMedium,
-                model: "gemini-1.5-pro",
+                model: "gemini-3-pro-preview",
                 use_rag: useRag,
             },
             getBYOKHeaders(byokKey)

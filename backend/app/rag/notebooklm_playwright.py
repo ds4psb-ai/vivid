@@ -197,8 +197,8 @@ class PlaywrightNotebookLMClient:
             # Just relying on URL being notebooklm.google.com is strong enough indicator usually
             try:
                 await self._page.wait_for_selector("text=Recent Notebooks", timeout=3000)
-            except:
-                pass
+            except Exception:
+                pass  # Selector not found, that's OK
                 
             if "notebooklm.google.com" in current_url:
                 logger.info("[NotebookLM-Playwright] Logged in successfully (URL check)")
@@ -408,8 +408,8 @@ class PlaywrightNotebookLMClient:
                     try:
                         decoded = s.encode('utf-8').decode('unicode_escape')
                         candidates.append(decoded)
-                    except:
-                        pass
+                    except Exception:
+                        pass  # Unicode decode error, skip
             
             if candidates:
                 # Prioritize strings with Korean chars if possible, but length is good heuristic

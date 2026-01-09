@@ -30,6 +30,44 @@ VALID_STAR_STATUSES = {"pending", "generating", "done", "error"}
 
 
 # =============================================================================
+# STATUS ENDPOINT
+# =============================================================================
+
+@router.get("/status")
+async def get_constellation_status(db: AsyncSession = Depends(get_db)):
+    """Get constellation service status.
+    
+    Returns system health and basic statistics.
+    """
+    try:
+        # Count total constellations
+        count_result = await db.execute(select(func.count()).select_from(Constellation))
+        total_count = count_result.scalar() or 0
+        
+        # Count public constellations
+        public_result = await db.execute(
+            select(func.count()).select_from(Constellation).where(Constellation.is_public == True)
+        )
+        public_count = public_result.scalar() or 0
+        
+        return {
+            "status": "healthy",
+            "service": "constellation",
+            "statistics": {
+                "total_constellations": total_count,
+                "public_constellations": public_count,
+            },
+        }
+    except Exception as e:
+        logger.error(f"Constellation status check failed: {e}")
+        return {
+            "status": "degraded",
+            "service": "constellation",
+            "error": str(e),
+        }
+
+
+# =============================================================================
 # SCHEMAS
 # =============================================================================
 

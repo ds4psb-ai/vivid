@@ -173,7 +173,7 @@ export default function StoryArchitectPanel() {
             {
                 concept,
                 genre,
-                model: "gemini-1.5-pro",
+                model: "gemini-3-pro-preview",
             },
             getBYOKHeaders(byokKey)
         ).then((res) => {
@@ -219,7 +219,7 @@ export default function StoryArchitectPanel() {
                 duration,
                 structure,
                 language: "ko",
-                model: "gemini-1.5-pro",
+                model: "gemini-3-pro-preview",
                 persona_data: personaData,
                 reference_analysis: referenceAnalysis,
             },

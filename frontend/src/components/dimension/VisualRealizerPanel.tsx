@@ -45,8 +45,8 @@ const ASPECT_RATIOS = [
 ];
 
 const MODELS = [
-    { value: "gemini-2.0-flash-exp", label: "Flash (빠름)" },
-    { value: "gemini-1.5-pro", label: "Pro (고품질)" },
+    { value: "gemini-3-flash-preview", label: "Flash (빠름)" },
+    { value: "gemini-3-pro-preview", label: "Pro (고품질)" },
 ];
 
 export default function VisualRealizerPanel() {
@@ -54,7 +54,7 @@ export default function VisualRealizerPanel() {
     const [description, setDescription] = useState("");
     const [style, setStyle] = useState("photorealistic");
     const [aspectRatio, setAspectRatio] = useState("16:9");
-    const [model, setModel] = useState("gemini-2.0-flash-exp");
+    const [model, setModel] = useState("gemini-3-flash-preview");
     const [showCreditModal, setShowCreditModal] = useState(false);
     const [validationError, setValidationError] = useState<string | null>(null);
 

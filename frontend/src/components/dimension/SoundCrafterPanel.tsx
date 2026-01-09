@@ -189,7 +189,7 @@ export default function SoundCrafterPanel() {
 
         await moodOp.execute(
             `${API_BASE}/api/dimension/sound/moodboard`,
-            { concept: trimmed, model: "gemini-1.5-pro" },
+            { concept: trimmed, model: "gemini-3-pro-preview" },
             getBYOKHeaders(byokKey)
         );
     }, [concept, byokKey, creditCtx, moodOp]);
@@ -217,7 +217,7 @@ export default function SoundCrafterPanel() {
                 mood: selectedDirection.description,
                 mix_recipe: mixRecipe, // Sending the user's mix
                 target_platform: "suno", // Default (backend handles both)
-                model: "gemini-2.0-flash-exp",
+                model: "gemini-3-flash-preview",
             },
             getBYOKHeaders(byokKey)
         );

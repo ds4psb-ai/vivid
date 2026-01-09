@@ -95,15 +95,19 @@ CAPSULE_TO_DIMENSION: Dict[DimensionCapsuleId, str] = {
 
 def get_credit_cost(capsule_id: DimensionCapsuleId, model: str) -> int:
     """캡슐과 모델에 따른 동적 크레딧 비용 계산."""
-    # Model tier classification
+    # Model tier classification (2026 updated)
     MODEL_TIERS = {
+        # Legacy models (deprecated)
         "gemini-1.5-flash": "flash",
         "gemini-1.5-pro": "pro",
-        "gemini-2.0-flash": "flash",
-        "gemini-2.5-flash": "flash",
-        "gemini-2.5-pro": "pro",
+        "gemini-2.0-flash-exp": "flash",
+        # Current models (2025-2026)
         "gemini-3-flash-preview": "flash",
         "gemini-3-pro-preview": "pro",
+        # Video generation
+        "veo-3.1-generate-preview": "pro",
+        # Image generation (Nano Banana Pro)
+        "gemini-3-pro-image-preview": "pro",
     }
 
     # Credit multipliers per tier

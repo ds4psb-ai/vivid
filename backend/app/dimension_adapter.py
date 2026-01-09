@@ -76,7 +76,20 @@ MAX_DESCRIPTION_LENGTH = 3000
 MIN_SCENE_COUNT = 1
 MAX_SCENE_COUNT = 20
 ALLOWED_LANGUAGES = {"ko", "en"}
-ALLOWED_MODELS = {"gemini-2.0-flash-exp", "gemini-1.5-pro", "gemini-1.5-flash", "gemini-3-flash-preview", "gemini-3-pro-preview"}
+# 2026 Updated: Gemini 3 models as primary, legacy for backwards compatibility
+ALLOWED_MODELS = {
+    # Primary models (2025-2026)
+    "gemini-3-flash-preview",
+    "gemini-3-pro-preview",
+    # Video generation
+    "veo-3.1-generate-preview",
+    # Image generation (Nano Banana Pro)
+    "gemini-3-pro-image-preview",
+    # Legacy (deprecated but still supported)
+    "gemini-3-flash-preview",
+    "gemini-1.5-pro",
+    "gemini-1.5-flash",
+}
 MAX_CONTENT_LENGTH = 10000  # For quality checker
 GEMINI_TIMEOUT_SECONDS = 30
 
@@ -652,7 +665,7 @@ async def _call_gemini(
     start_time = time.monotonic()
 
     # Validate model
-    model = _validate_enum(model, ALLOWED_MODELS, "model", "gemini-2.0-flash-exp")
+    model = _validate_enum(model, ALLOWED_MODELS, "model", "gemini-3-flash-preview")
 
     # For Gemini 3 models, enforce temperature 1.0
     if "gemini-3" in model and temperature != 1.0:
@@ -813,7 +826,7 @@ async def run_prompt_generator(
     mood = _sanitize_text(inputs.get("mood", "neutral"), 50, "mood")
     duration = _sanitize_text(inputs.get("duration", "15 seconds"), 20, "duration")
     language = _validate_enum(inputs.get("language", "ko"), ALLOWED_LANGUAGES, "language", "ko")
-    model = _validate_enum(params.get("model", "gemini-2.0-flash-exp"), ALLOWED_MODELS, "model", "gemini-2.0-flash-exp")
+    model = _validate_enum(params.get("model", "gemini-3-flash-preview"), ALLOWED_MODELS, "model", "gemini-3-flash-preview")
     use_rag = params.get("use_rag", True)
     
     # === Additional Resolver hints ===
@@ -895,7 +908,7 @@ async def run_storyboard_creator(
     
     scene_count = _validate_int_range(inputs.get("scene_count", 5), MIN_SCENE_COUNT, MAX_SCENE_COUNT, 5)
     language = _validate_enum(inputs.get("language", "ko"), ALLOWED_LANGUAGES, "language", "ko")
-    model = _validate_enum(params.get("model", "gemini-2.0-flash-exp"), ALLOWED_MODELS, "model", "gemini-2.0-flash-exp")
+    model = _validate_enum(params.get("model", "gemini-3-flash-preview"), ALLOWED_MODELS, "model", "gemini-3-flash-preview")
     use_rag = params.get("use_rag", True)
 
     # Build base prompt
@@ -969,7 +982,7 @@ async def run_image_generator(
     
     style = _sanitize_text(inputs.get("style", "photorealistic"), 50, "style")
     aspect_ratio = _sanitize_text(inputs.get("aspect_ratio", "16:9"), 10, "aspect_ratio")
-    model = _validate_enum(params.get("model", "gemini-2.0-flash-exp"), ALLOWED_MODELS, "model", "gemini-2.0-flash-exp")
+    model = _validate_enum(params.get("model", "gemini-3-flash-preview"), ALLOWED_MODELS, "model", "gemini-3-flash-preview")
     use_rag = params.get("use_rag", True)
 
     # Build base prompt
@@ -1054,7 +1067,7 @@ async def run_reference_analyzer(
         focus_areas = ["composition", "lighting", "color", "movement"]
     focus_areas = [_sanitize_text(str(a), 30, "focus_area") for a in focus_areas[:10]]
 
-    model = _validate_enum(params.get("model", "gemini-2.0-flash-exp"), ALLOWED_MODELS, "model", "gemini-2.0-flash-exp")
+    model = _validate_enum(params.get("model", "gemini-3-flash-preview"), ALLOWED_MODELS, "model", "gemini-3-flash-preview")
     use_rag = params.get("use_rag", True)
 
     # Build base prompt
@@ -1164,10 +1177,10 @@ async def run_quality_checker(
 
     # Get params
     model = _validate_enum(
-        params.get("model", "gemini-1.5-pro"),
+        params.get("model", "gemini-3-pro-preview"),
         ALLOWED_MODELS,
         "model",
-        "gemini-1.5-pro"
+        "gemini-3-pro-preview"
     )
     threshold = _validate_int_range(params.get("threshold", 70), 0, 100, 70)
     use_rag = params.get("use_rag", True)
@@ -1351,10 +1364,10 @@ Camera Style: {matched_auteur['camera']}
 """
 
     model = _validate_enum(
-        params.get("model", "gemini-1.5-pro"),
+        params.get("model", "gemini-3-pro-preview"),
         ALLOWED_MODELS,
         "model",
-        "gemini-1.5-pro"
+        "gemini-3-pro-preview"
     )
     use_rag = params.get("use_rag", True)
 
@@ -1474,10 +1487,10 @@ async def run_aesthetic_moodboard(
     mood = _sanitize_text(inputs.get("mood", "neutral"), 50, "mood")
     
     model = _validate_enum(
-        params.get("model", "gemini-1.5-pro"),
+        params.get("model", "gemini-3-pro-preview"),
         ALLOWED_MODELS,
         "model",
-        "gemini-1.5-pro"
+        "gemini-3-pro-preview"
     )
 
     # Build base prompt
@@ -1551,10 +1564,10 @@ async def run_sound_moodboard(
         }
 
     model = _validate_enum(
-        params.get("model", "gemini-1.5-pro"),
+        params.get("model", "gemini-3-pro-preview"),
         ALLOWED_MODELS,
         "model",
-        "gemini-1.5-pro"
+        "gemini-3-pro-preview"
     )
 
     base_prompt = f"""Generate 3 distinct audio direction concepts for:
@@ -1660,7 +1673,7 @@ async def run_persona_analyzer(
         current_stage = stage_flow[0]
 
     model = _validate_enum(
-        params.get("model", "gemini-1.5-pro"),
+        params.get("model", "gemini-3-pro-preview"),
         ALLOWED_MODELS,
         "model",
         "gemini-3-flash-preview"
@@ -2008,10 +2021,10 @@ async def run_story_architect(
     language = _validate_enum(inputs.get("language", "ko"), ALLOWED_LANGUAGES, "language", "ko")
 
     model = _validate_enum(
-        params.get("model", "gemini-1.5-pro"),
+        params.get("model", "gemini-3-pro-preview"),
         ALLOWED_MODELS,
         "model",
-        "gemini-1.5-pro"
+        "gemini-3-pro-preview"
     )
     use_rag = params.get("use_rag", True)
 
@@ -2124,10 +2137,10 @@ async def run_story_refinery(
     genre = _sanitize_text(inputs.get("genre", "drama"), 30, "genre")
     
     model = _validate_enum(
-        params.get("model", "gemini-1.5-pro"),
+        params.get("model", "gemini-3-pro-preview"),
         ALLOWED_MODELS,
         "model",
-        "gemini-1.5-pro"
+        "gemini-3-pro-preview"
     )
 
     # Build base prompt
@@ -2232,10 +2245,10 @@ async def run_sound_crafter(
         mix_recipe = {}
 
     model = _validate_enum(
-        params.get("model", "gemini-2.0-flash-exp"),
+        params.get("model", "gemini-3-flash-preview"),
         ALLOWED_MODELS,
         "model",
-        "gemini-2.0-flash-exp"
+        "gemini-3-flash-preview"
     )
     use_rag = params.get("use_rag", True)
 
@@ -2346,10 +2359,10 @@ async def run_creative_editor(
     persona = _sanitize_text(inputs.get("persona", "Senior Editor"), 100, "persona")
     
     model = _validate_enum(
-        params.get("model", "gemini-1.5-pro"),
+        params.get("model", "gemini-3-pro-preview"),
         ALLOWED_MODELS,
         "model",
-        "gemini-1.5-pro"
+        "gemini-3-pro-preview"
     )
     use_rag = params.get("use_rag", True)
 

@@ -33,15 +33,15 @@ const FOCUS_AREAS = [
 ];
 
 const MODELS = [
-    { value: "gemini-2.0-flash-exp", label: "Flash (빠름)" },
-    { value: "gemini-1.5-pro", label: "Pro (고품질)" },
+    { value: "gemini-3-flash-preview", label: "Flash (빠름)" },
+    { value: "gemini-3-pro-preview", label: "Pro (고품질)" },
 ];
 
 export default function ReferenceDecoderPanel() {
     // Form state
     const [description, setDescription] = useState("");
     const [focusAreas, setFocusAreas] = useState<string[]>(["composition", "lighting", "color", "movement"]);
-    const [model, setModel] = useState("gemini-2.0-flash-exp");
+    const [model, setModel] = useState("gemini-3-flash-preview");
     const [showCreditModal, setShowCreditModal] = useState(false);
     const [validationError, setValidationError] = useState<string | null>(null);
 

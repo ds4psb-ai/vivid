@@ -46,15 +46,15 @@ const CRITERIA_OPTIONS = [
 ];
 
 const MODELS = [
-    { value: "gemini-2.0-flash-exp", label: "Flash (빠름)" },
-    { value: "gemini-1.5-pro", label: "Pro (정확)" },
+    { value: "gemini-3-flash-preview", label: "Flash (빠름)" },
+    { value: "gemini-3-pro-preview", label: "Pro (정확)" },
 ];
 
 export default function QualityDirectorPanel() {
     const [content, setContent] = useState("");
     const [contentType, setContentType] = useState("prompt");
     const [selectedCriteria, setSelectedCriteria] = useState<string[]>(["aesthetic", "consistency", "safety"]);
-    const [model, setModel] = useState("gemini-1.5-pro");
+    const [model, setModel] = useState("gemini-3-pro-preview");
     const [threshold, setThreshold] = useState(70);
 
     const [showCreditModal, setShowCreditModal] = useState(false);
