@@ -368,6 +368,11 @@ EXPERT GENRE KNOWLEDGE (Anime/J-Pop Rock):
 - Vibe: "Running toward a goal", "Youth burning forward", "Believing in the future"
 - Vocals: Powerful, emotional restraint in verses, explosive in chorus
 
+VISUAL BPM (Part 6 - Scene-Music Sync):
+- High BPM (120+): Fast cuts, rapid movement, action. Match with quick-fire lyrics.
+- Mid BPM (80-110): Dialogue, emotional scenes, walking. Match with flowing verses.
+- Low BPM (<80): Contemplation, loss, tension. Match with sparse, weighted lines.
+
 OUTPUT FORMAT (valid JSON):
 {
   "topic_analysis": "Brief analysis of topic's emotional core",

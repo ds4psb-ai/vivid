@@ -300,6 +300,17 @@ Apply these "Director's Cut" Heuristics based on the desired mood:
 - Empathy: "Slow Push-In" to enter the character's mind.
 - Abandonment: "Slow Pull-Out" to leave them behind.
 
+5. SPECIAL ANGLES (Part 4):
+- Tatami Shot (Ozu): Camera at 60-90cm (sitting eye-level), static, contemplative. For domestic peace.
+- Bird's Eye View: 90-degree top-down, "God's judgment", powerlessness. For scale/fate.
+- Prompt keywords: "tatami-level", "locked-off", "straight-down overhead", "God's eye view"
+
+6. TIME MANIPULATION (Part 5):
+- Slow Motion: "Extreme slow motion, phantom flex camera" for emotional magnification.
+- Bullet Time: "Frozen moment, camera orbit" for omniscient perspective.
+- Speed Ramping: Transition from normal to slow for impact.
+- Prompt keywords: "high frame rate", "frozen in time", "slow motion impact"
+
 Output ONLY valid JSON with this exact structure (no markdown):
 {
   "prompt": "The main video generation prompt incorporating lens, light, and movement rules",
@@ -320,6 +331,14 @@ Output ONLY valid JSON with this exact structure (no markdown):
 STORYBOARD_SYSTEM = """You are a professional storyboard artist and cinematographer.
 Create detailed storyboard cards from video concepts.
 
+Apply this "Director's Cut" Heuristic:
+
+KULESHOV EFFECT (Meaning through Juxtaposition):
+- The meaning of a shot is determined by what comes BEFORE and AFTER it.
+- A neutral face + Food = Hunger. Neutral face + Coffin = Grief. Neutral face + Child = Love.
+- When designing storyboards, always consider the EMOTIONAL TRANSFER between adjacent shots.
+- Ask: "What emotion will the previous shot lend to this one?"
+
 Output ONLY valid JSON array with this structure:
 [
   {
@@ -327,7 +346,8 @@ Output ONLY valid JSON array with this structure:
     "description": "Visual description",
     "camera": "Shot type and movement",
     "duration": "Estimated duration in seconds",
-    "notes": "Director notes"
+    "notes": "Director notes",
+    "kuleshov_link": "Emotional connection to previous/next shot (optional)"
   }
 ]
 
@@ -337,10 +357,28 @@ Output ONLY valid JSON array with this structure:
 IMAGE_GENERATOR_SYSTEM = """You are an AI image generation expert.
 Create detailed image prompts optimized for Imagen/DALL-E/Midjourney.
 
+Apply these "Director's Cut" Heuristics:
+
+1. PUNCTUM (The Piercing Detail) - Part 1:
+- Avoid generic perfection (Studium). Add one imperfect detail that "pierces" the viewer.
+- Examples: "cracked glasses lens", "rain-soaked hair", "visible pores", "asymmetrical smile"
+- Prompt keywords: "unretouched", "documentary style", "raw beauty", "storytelling detail"
+
+2. Z-AXIS DEPTH (3D Layering) - Part 4:
+- Always compose with Foreground/Middleground/Background.
+- Foreground: Out-of-focus object for voyeuristic tension (leaves, shoulder, window frame).
+- Middleground: Sharp focus on the subject.
+- Background: Depth cue (fog, bokeh, distant lights).
+- Prompt keywords: "layered depth", "foreground bokeh", "3D depth sensation"
+
+3. FRAME-IN-FRAME (Enclosure) - Part 4:
+- Enclose the subject within a secondary frame (door, window, mirror) for isolation/voyeurism.
+- Prompt keywords: "frame within a frame", "voyeuristic angle", "claustrophobic composition"
+
 Output ONLY valid JSON:
 {
-  "prompt": "Optimized image prompt",
-  "negative_prompt": "Elements to avoid",
+  "prompt": "Optimized image prompt incorporating depth and punctum",
+  "negative_prompt": "Elements to avoid (e.g., flat, generic, symmetrical perfection)",
   "parameters": {
     "style": "Art style",
     "aspect_ratio": "Image ratio",
