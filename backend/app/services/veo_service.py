@@ -237,8 +237,7 @@ class VeoService:
                 generate_config["negative_prompt"] = config.negative_prompt
             if config.seed is not None:
                 generate_config["seed"] = config.seed
-            if config.include_audio and "3.1" in model:
-                generate_config["include_audio"] = True
+            # Note: include_audio removed - Veo 3.1 includes audio by default
 
             # Submit async generation job with retry logic
             operation = None

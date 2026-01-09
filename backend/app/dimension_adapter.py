@@ -998,11 +998,21 @@ Generate a detailed prompt suitable for Imagen, DALL-E, or Midjourney.
             model=model,
         )
         
+        # Normalize output format (Gemini may return list or dict)
+        if isinstance(result, list):
+            output = {"prompts": result, "prompt": result[0] if result else ""}
+            has_error = False
+            error_msg = None
+        else:
+            output = result
+            has_error = "error" in result
+            error_msg = result.get("error")
+        
         return {
-            "success": "error" not in result,
+            "success": not has_error,
             "capsule_id": DimensionCapsuleId.IMAGE_GENERATE.value,
-            "output": result,
-            "error": result.get("error"),
+            "output": output,
+            "error": error_msg,
             "metrics": {
                 "latency_ms": metrics.latency_ms,
                 "tokens": metrics.input_tokens + metrics.output_tokens,
@@ -2059,11 +2069,21 @@ Generate a compelling narrative that:
             if "visual_motifs" not in result:
                 result["visual_motifs"] = []
 
+        # Normalize output format (Gemini may return list or dict)
+        if isinstance(result, list):
+            output = {"story_elements": result, "title": result[0].get("title", "Untitled") if result and isinstance(result[0], dict) else "Untitled"}
+            has_error = False
+            error_msg = None
+        else:
+            output = result
+            has_error = "error" in result
+            error_msg = result.get("error")
+
         return {
-            "success": "error" not in result,
+            "success": not has_error,
             "capsule_id": DimensionCapsuleId.STORY_ARCHITECT.value,
-            "output": result,
-            "error": result.get("error"),
+            "output": output,
+            "error": error_msg,
             "metrics": {
                 "latency_ms": metrics.latency_ms,
                 "tokens": metrics.input_tokens + metrics.output_tokens,

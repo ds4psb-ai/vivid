@@ -217,6 +217,37 @@ Include camera movements, transitions, and visual effects guidance.
             "content_type": ["veo_template", "video_style", "camera_movement"],
         },
     ),
+
+    # ========================================
+    # Sound & Story Dimensions
+    # ========================================
+    "dimension.sound.craft": AppRAGManifest(
+        app_key="dimension.sound.craft",
+        dimensions=["6D", "SOUND"],
+        search_limit=5,
+        min_score=0.5,
+        amplify_with_history=True,
+        prompt_injection_template="""
+## Sound Design & Music Guidelines (Retrieved)
+{rag_results}
+
+Apply these audio principles for sound generation.
+""",
+    ),
+
+    "dimension.story.architect": AppRAGManifest(
+        app_key="dimension.story.architect",
+        dimensions=["STORY", "2D"],
+        search_limit=5,
+        min_score=0.55,
+        amplify_with_history=True,
+        prompt_injection_template="""
+## Story Structure & Narrative Guidelines (Retrieved)
+{rag_results}
+
+Use these narrative frameworks for story architecture.
+""",
+    ),
 }
 
 
