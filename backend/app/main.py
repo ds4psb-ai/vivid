@@ -85,6 +85,9 @@ from app.routers.internal import router as internal_router
 # MiniApps (Dimension Portal Submissions)
 from app.routers.miniapps import router as miniapps_router
 
+# Context Library (Expert Workflow - Context Injection)
+from app.routers.context import router as context_router
+
 from app.middleware.rate_limit import setup_rate_limiting
 from app.middleware.mtls import MTLSMiddleware
 from app.logging_config import setup_logging, LoggingMiddleware
@@ -234,6 +237,9 @@ app.include_router(internal_router, prefix="/api/v1", tags=["internal"])
 
 # MiniApps (Dimension Portal Submissions)
 app.include_router(miniapps_router, prefix="/api/v1", tags=["miniapps"])
+
+# Context Library (Expert Workflow - Context Injection)
+app.include_router(context_router, prefix="/api/v1", tags=["context"])
 
 # Infrastructure
 app.include_router(health_router, prefix="", tags=["health"])

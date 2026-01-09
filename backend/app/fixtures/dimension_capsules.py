@@ -826,6 +826,227 @@ DIMENSION_CAPSULES: List[Dict[str, Any]] = [
             },
         },
     },
+    # ==========================================================================
+    # Expert Workflow Tools (2026-01)
+    # ==========================================================================
+    # Character DNA Generator (AD)
+    {
+        "capsule_key": "dimension.aesthetic.character_dna",
+        "version": "1.0.0",
+        "stage": "planning",
+        "stage_order": 2,
+        "display_name": "캐릭터 DNA 생성기",
+        "display_name_en": "Character DNA Generator",
+        "route_key": "character-dna",
+        "input_dimensions": ["persona-analyze"],
+        "output_dimensions": ["visual-realizer", "video-maker"],
+        "credit_costs": {
+            "gemini-3-flash-preview": 8,
+            "gemini-3-pro-preview": 18,
+        },
+        "spec": {
+            "name": "캐릭터 DNA 생성기",
+            "description": "캐릭터의 일관된 Visual DNA 프롬프트 생성 (Expert Workflow)",
+            "category": "dimension",
+            "adapter": "aesthetic",
+            "inputs": {
+                "name": {
+                    "type": "string",
+                    "required": True,
+                    "description": "캐릭터 이름",
+                },
+                "role": {
+                    "type": "string",
+                    "required": False,
+                    "description": "캐릭터 역할/직업 설명",
+                },
+                "personality": {
+                    "type": "string",
+                    "required": False,
+                    "description": "성격 특성",
+                },
+                "physical_traits": {
+                    "type": "string",
+                    "required": False,
+                    "description": "신체적 특징",
+                },
+                "wiki_context": {
+                    "type": "string",
+                    "required": False,
+                    "description": "위키/문서 컨텍스트",
+                },
+                "style_reference": {
+                    "type": "string",
+                    "required": False,
+                    "default": "anime",
+                    "enum": ["anime", "realistic", "comic", "3d", "watercolor"],
+                    "description": "시각적 스타일 참조",
+                },
+            },
+            "outputs": {
+                "character_dna": {
+                    "type": "string",
+                    "description": "재사용 가능한 캐릭터 프롬프트",
+                },
+                "style_prompt": {
+                    "type": "string",
+                    "description": "스타일 프리픽스",
+                },
+                "full_prompt": {
+                    "type": "string",
+                    "description": "스타일 + DNA 결합 프롬프트",
+                },
+            },
+            "params": {
+                "model": {
+                    "type": "string",
+                    "default": "gemini-3-flash-preview",
+                    "options": ["gemini-3-flash-preview", "gemini-3-pro-preview"],
+                },
+            },
+        },
+    },
+    # Timeline Shot List Generator (STORY)
+    {
+        "capsule_key": "dimension.story.shot_list",
+        "version": "1.0.0",
+        "stage": "planning",
+        "stage_order": 3,
+        "display_name": "샷 리스트 생성기",
+        "display_name_en": "Shot List Generator",
+        "route_key": "shot-list",
+        "input_dimensions": ["story-architect"],
+        "output_dimensions": ["video-maker", "sound-crafter"],
+        "credit_costs": {
+            "gemini-3-flash-preview": 10,
+            "gemini-3-pro-preview": 25,
+        },
+        "spec": {
+            "name": "샷 리스트 생성기",
+            "description": "시나리오를 ≤8초 샷으로 분할 + 도구 추천 (Expert Workflow)",
+            "category": "dimension",
+            "adapter": "story",
+            "inputs": {
+                "scenario": {
+                    "type": "string",
+                    "required": True,
+                    "description": "분할할 시나리오/스토리",
+                },
+                "total_duration": {
+                    "type": "integer",
+                    "required": False,
+                    "default": 60,
+                    "description": "총 목표 길이 (초)",
+                },
+                "max_shot_duration": {
+                    "type": "integer",
+                    "required": False,
+                    "default": 8,
+                    "description": "최대 샷 길이 (초)",
+                },
+                "style_preference": {
+                    "type": "string",
+                    "required": False,
+                    "description": "스타일 선호도",
+                },
+            },
+            "outputs": {
+                "shots": {
+                    "type": "array",
+                    "description": "샷 리스트 [{shot_number, time_range, description, recommended_tool}]",
+                },
+                "total_shots": {
+                    "type": "integer",
+                    "description": "총 샷 수",
+                },
+                "tool_summary": {
+                    "type": "object",
+                    "description": "도구별 추천 횟수 {kling: N, sora: M, veo: K}",
+                },
+            },
+            "params": {
+                "model": {
+                    "type": "string",
+                    "default": "gemini-3-flash-preview",
+                    "options": ["gemini-3-flash-preview", "gemini-3-pro-preview"],
+                },
+            },
+        },
+    },
+    # Iterative Lyrics Generator (SOUND)
+    {
+        "capsule_key": "dimension.sound.lyrics",
+        "version": "1.0.0",
+        "stage": "pre_production",
+        "stage_order": 2,
+        "display_name": "가사 생성기",
+        "display_name_en": "Lyrics Generator",
+        "route_key": "lyrics",
+        "input_dimensions": ["story-architect", "sound-crafter"],
+        "output_dimensions": ["sound-crafter"],
+        "credit_costs": {
+            "gemini-3-flash-preview": 8,
+            "gemini-3-pro-preview": 18,
+        },
+        "spec": {
+            "name": "가사 생성기",
+            "description": "Suno/Udio 호환 가사 + 메타태그 생성 (Expert Workflow)",
+            "category": "dimension",
+            "adapter": "sound",
+            "inputs": {
+                "topic": {
+                    "type": "string",
+                    "required": True,
+                    "description": "노래 주제/테마",
+                },
+                "context_documents": {
+                    "type": "array",
+                    "required": False,
+                    "description": "컨텍스트 문서 (위키, 기사 등)",
+                },
+                "style_guide": {
+                    "type": "object",
+                    "required": False,
+                    "description": "스타일 가이드 {genre, tempo, mood, vocal_style}",
+                },
+                "song_structure": {
+                    "type": "string",
+                    "required": False,
+                    "default": "verse-chorus-verse-chorus-bridge-chorus",
+                    "description": "노래 구조",
+                },
+            },
+            "outputs": {
+                "topic_analysis": {
+                    "type": "string",
+                    "description": "주제 분석",
+                },
+                "lyrics_sections": {
+                    "type": "array",
+                    "description": "가사 섹션 [{type, content, notes}]",
+                },
+                "full_lyrics": {
+                    "type": "string",
+                    "description": "메타태그 포함 전체 가사",
+                },
+                "suno_prompt": {
+                    "type": "string",
+                    "description": "Suno 호환 프롬프트",
+                },
+                "udio_prompt": {
+                    "type": "string",
+                    "description": "Udio 호환 프롬프트",
+                },
+            },
+            "params": {
+                "model": {
+                    "type": "string",
+                    "default": "gemini-3-flash-preview",
+                    "options": ["gemini-3-flash-preview", "gemini-3-pro-preview"],
+                },
+            },
+        },
+    },
 ]
 
 
@@ -1011,6 +1232,46 @@ DIMENSION_UI_CONFIG: Dict[str, Dict[str, Any]] = {
         "capsuleKey": "teaching.image.generate",
         "endpoint": "/api/dimension/3d/generate",
         "creditCost": 5,
+    },
+    # === Expert Workflow Tools (2026-01) ===
+    "character_dna": {
+        "toolId": "character_dna",
+        "dimension": "AD",
+        "displayName": "캐릭터 DNA 생성기",
+        "displayNameEn": "Character DNA Generator",
+        "description": "일관된 캐릭터 Visual DNA 프롬프트 생성",
+        "icon": "user-circle",
+        "color": "emerald",
+        "stage": "planning",
+        "capsuleKey": "dimension.aesthetic.character_dna",
+        "endpoint": "/api/dimension/aesthetic/character-dna",
+        "creditCost": 8,
+    },
+    "shot_list": {
+        "toolId": "shot_list",
+        "dimension": "STORY",
+        "displayName": "샷 리스트 생성기",
+        "displayNameEn": "Shot List Generator",
+        "description": "≤8초 샷 분할 + Kling/Sora/Veo 추천",
+        "icon": "film",
+        "color": "orange",
+        "stage": "planning",
+        "capsuleKey": "dimension.story.shot_list",
+        "endpoint": "/api/dimension/story/shot-list",
+        "creditCost": 10,
+    },
+    "lyrics_generator": {
+        "toolId": "lyrics_generator",
+        "dimension": "SOUND",
+        "displayName": "가사 생성기",
+        "displayNameEn": "Lyrics Generator",
+        "description": "Suno/Udio 호환 가사 + 메타태그",
+        "icon": "music",
+        "color": "pink",
+        "stage": "pre_production",
+        "capsuleKey": "dimension.sound.lyrics",
+        "endpoint": "/api/dimension/sound/lyrics",
+        "creditCost": 8,
     },
 }
 

@@ -290,3 +290,216 @@ async def refine_story_stream(
         media_type="text/event-stream",
         headers=get_sse_headers(),
     )
+
+
+# ============================================================================
+# Timeline Shot List Generator (Expert Workflow Pattern)
+# ============================================================================
+
+class ShotListRequest(BaseModel):
+    """Request model for Timeline Shot List generation.
+    
+    Breaks down a scenario into precise shot segments for AI video generation,
+    following the Expert Workflow pattern (0-2s, 3-5s, etc.).
+    """
+    scenario: str = Field(..., min_length=10, max_length=10000, description="Full scenario or storyboard text")
+    total_duration: int = Field(60, ge=10, le=300, description="Total video duration in seconds")
+    max_shot_duration: int = Field(8, ge=4, le=10, description="Maximum duration per shot (AI video limit)")
+    style_preference: str = Field("cinematic", max_length=100, description="Visual style preference")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
+
+    @field_validator("scenario", mode="before")
+    @classmethod
+    def strip_scenario(cls, v: str) -> str:
+        return _strip_string(v)
+
+    @field_validator("model")
+    @classmethod
+    def validate_model(cls, v: str) -> str:
+        return _validate_model(v)
+
+
+class TimelineShot(BaseModel):
+    """A single shot in the timeline."""
+    shot_number: int
+    time_range: str  # e.g., "0:00-0:02"
+    start_seconds: float
+    end_seconds: float
+    duration: float
+    shot_type: str  # wide, medium, close-up, extreme-close-up
+    description: str
+    camera_movement: str  # static, pan, zoom, dolly, tracking
+    recommended_tool: str  # veo, kling, sora
+    tool_reason: str
+    audio_notes: str = ""
+
+
+class ShotListResponse(BaseModel):
+    """Response for Timeline Shot List generation."""
+    success: bool
+    total_shots: int
+    total_duration: float
+    shots: list[TimelineShot]
+    tool_summary: dict  # Count of each tool recommendation
+
+
+@router.post(
+    "/story/shot-list",
+    response_model=ShotListResponse,
+    responses={
+        400: {"model": DimensionErrorResponse},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="Story Architect: Generate Shot List",
+    description="Break down scenario into precise timeline shots (≤8s each) with AI tool recommendations.",
+    tags=["Dimension Extended"],
+)
+async def generate_shot_list(
+    request: ShotListRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+) -> ShotListResponse:
+    """Generate Timeline Shot List following the Expert Workflow pattern.
+    
+    Breaks down the scenario into shots that are:
+    1. ≤8 seconds each (AI video generation limit)
+    2. Optimized for specific tools (Kling, Sora, Veo)
+    3. Include camera movements and audio notes
+    
+    Tool Selection Guide:
+    - Kling: Close-ups, low motion, high detail, start/end frame control
+    - Sora: Action, transitions, dynamic scenes, montage sequences
+    - Veo: Cinematic, narrative, audio sync, longer continuity
+    """
+    from google import genai
+    from google.genai import types
+    from app.config import settings
+    import json
+    
+    system_prompt = f"""You are a Professional Storyboard Director for AI video generation.
+Break down the scenario into precise SHOT SEGMENTS for Veo/Kling/Sora.
+
+CRITICAL RULES:
+1. Each shot must be ≤{request.max_shot_duration} seconds (AI video limit)
+2. Shots must cover the ENTIRE {request.total_duration} second duration
+3. Use precise time ranges: "0:00-0:02", "0:03-0:05", etc.
+
+EXPERT TOOL SELECTION HEURISTICS (Strictly Follow):
+- kling:
+    * USE FOR: Extreme close-ups (face, hands, food), shots with minimal movement, high-fidelity texture shots.
+    * REASON: "Best for preserving high facial fidelity and texture in static/slow-motion shots."
+    * EXAMPLE: "Eye close-up", "Chopping vegetables (hands only)", "Food plating detail".
+- sora:
+    * USE FOR: High motion, fighting/action scenes, rapid cuts, complex background transitions, full-body movement.
+    * REASON: "Best for temporal consistency in complex motion and dynamic camera work."
+    * EXAMPLE: "Running sequence", "Battle animation", "Kitchen panorama with many chefs moving".
+- veo:
+    * USE FOR: Cinematic narrative, atmospheric establishing shots, long takes (>5s) requiring alignment, audio-visual sync.
+    * REASON: "Best for coherent cinematic flow and atmospheric consistency."
+
+OUTPUT FORMAT (valid JSON array):
+[
+  {{
+    "shot_number": 1,
+    "time_range": "0:00-0:03",
+    "start_seconds": 0,
+    "end_seconds": 3,
+    "duration": 3,
+    "shot_type": "wide",
+    "description": "Detailed visual description",
+    "camera_movement": "static",
+    "recommended_tool": "veo",
+    "tool_reason": "Establishing shot with atmosphere",
+    "audio_notes": "Ambient kitchen sounds"
+  }}
+]
+
+Be specific with descriptions. Include character actions, expressions, and visual details."""
+
+    user_prompt = f"""Break down this scenario into timeline shots:
+
+SCENARIO:
+{request.scenario}
+
+REQUIREMENTS:
+- Total Duration: {request.total_duration} seconds
+- Max Shot Duration: {request.max_shot_duration} seconds
+- Visual Style: {request.style_preference}
+
+Generate a complete shot list covering the entire duration."""
+
+    try:
+        api_key = byok_key or settings.GEMINI_API_KEY
+        client = genai.Client(api_key=api_key)
+        
+        response = await client.aio.models.generate_content(
+            model=request.model,
+            contents=user_prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                temperature=0.7,
+                response_mime_type="application/json",
+            ),
+        )
+        
+        # Parse response
+        text = response.text.strip()
+        if text.startswith("```"):
+            lines = text.split("\n")
+            text = "\n".join(lines[1:-1] if lines[-1] == "```" else lines[1:])
+            if text.startswith("json"):
+                text = text[4:].strip()
+        
+        shots_data = json.loads(text)
+        
+        # Convert to TimelineShot objects
+        shots = []
+        tool_counts = {"veo": 0, "kling": 0, "sora": 0}
+        
+        for shot_data in shots_data:
+            shot = TimelineShot(
+                shot_number=shot_data.get("shot_number", len(shots) + 1),
+                time_range=shot_data.get("time_range", ""),
+                start_seconds=shot_data.get("start_seconds", 0),
+                end_seconds=shot_data.get("end_seconds", 0),
+                duration=shot_data.get("duration", 0),
+                shot_type=shot_data.get("shot_type", "medium"),
+                description=shot_data.get("description", ""),
+                camera_movement=shot_data.get("camera_movement", "static"),
+                recommended_tool=shot_data.get("recommended_tool", "veo"),
+                tool_reason=shot_data.get("tool_reason", ""),
+                audio_notes=shot_data.get("audio_notes", ""),
+            )
+            shots.append(shot)
+            
+            tool = shot.recommended_tool.lower()
+            if tool in tool_counts:
+                tool_counts[tool] += 1
+        
+        total_duration = sum(s.duration for s in shots)
+        
+        return ShotListResponse(
+            success=True,
+            total_shots=len(shots),
+            total_duration=total_duration,
+            shots=shots,
+            tool_summary=tool_counts,
+        )
+        
+    except json.JSONDecodeError as e:
+        return ShotListResponse(
+            success=False,
+            total_shots=0,
+            total_duration=0,
+            shots=[],
+            tool_summary={"error": str(e)},
+        )
+    except Exception as e:
+        return ShotListResponse(
+            success=False,
+            total_shots=0,
+            total_duration=0,
+            shots=[],
+            tool_summary={"error": str(e)},
+        )
+

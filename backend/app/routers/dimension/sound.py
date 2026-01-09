@@ -255,3 +255,219 @@ async def generate_sound_moodboard(
         inputs_summary={"concept": request.concept[:100]},
         intent=intent,
     )
+
+
+# ============================================================================
+# Iterative Lyrics Workflow (Expert Workflow Pattern)
+# ============================================================================
+
+class LyricsStyleGuide(BaseModel):
+    """Style guide for lyrics generation."""
+    genre: str = Field("J-POP rock", description="Music genre (e.g., 'Japanese anime opening')")
+    tempo: str = Field("fast", description="Tempo (slow, medium, fast)")
+    mood: str = Field("hopeful", description="Mood/emotion (e.g., 'hopeful, determined')")
+    vocal_style: str = Field("powerful male rock vocal", description="Vocal style description")
+    language_mix: str = Field("korean", description="Language: korean, english, mixed")
+    reference_songs: list[str] = Field(default_factory=list, description="Reference song styles")
+
+
+class LyricsRequest(BaseModel):
+    """Request model for Iterative Lyrics generation.
+    
+    Implements the Expert Workflow's 4-step lyrics process:
+    1. Topic Analysis
+    2. Context Injection (Wiki/articles)
+    3. Style Guide Application
+    4. Final Generation with Suno metatags
+    """
+    topic: str = Field(..., min_length=1, max_length=500, description="Song topic or theme")
+    context_documents: list[str] = Field(default_factory=list, description="External context (Wiki, articles, research)")
+    style_guide: LyricsStyleGuide = Field(default_factory=LyricsStyleGuide, description="Style guide for the song")
+    song_structure: str = Field("verse-chorus-verse-chorus-bridge-chorus", description="Song structure")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
+
+    @field_validator("topic", mode="before")
+    @classmethod
+    def strip_topic(cls, v: str) -> str:
+        return _strip_string(v)
+
+    @field_validator("model")
+    @classmethod
+    def validate_model(cls, v: str) -> str:
+        return _validate_model(v)
+
+
+class LyricsSection(BaseModel):
+    """A section of the song."""
+    type: str  # verse, chorus, bridge, intro, outro
+    content: str
+    notes: str = ""
+
+
+class LyricsResponse(BaseModel):
+    """Response for Iterative Lyrics generation."""
+    success: bool
+    topic_analysis: str
+    lyrics_sections: list[LyricsSection]
+    full_lyrics: str  # Complete lyrics with metatags
+    suno_prompt: str  # Suno-compatible generation prompt
+    udio_prompt: str  # Udio-compatible prompt
+    style_summary: str
+
+
+@router.post(
+    "/sound/lyrics",
+    response_model=LyricsResponse,
+    responses={
+        400: {"model": DimensionErrorResponse},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="Sound Crafter: Generate Lyrics (Expert Workflow)",
+    description="Generate professional lyrics using the 4-step Expert Workflow with context injection and Suno-compatible output.",
+    tags=["Dimension Extended"],
+)
+async def generate_lyrics(
+    request: LyricsRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+) -> LyricsResponse:
+    """Generate lyrics following the Expert Workflow pattern.
+    
+    The 4-step process:
+    1. ANALYZE: Understand topic's emotional core and cultural resonance
+    2. INCORPORATE: Inject external context (Wiki, articles)
+    3. APPLY: Use style guide (genre, tempo, vocal style)
+    4. OUTPUT: Structured lyrics with Suno/Udio metatags
+    """
+    from google import genai
+    from google.genai import types
+    from app.config import settings
+    import json
+    
+    # Build context block from documents
+    context_block = ""
+    if request.context_documents:
+        context_lines = []
+        for i, doc in enumerate(request.context_documents[:5], 1):
+            context_lines.append(f"### Context Document {i}\n{doc[:2000]}")
+        context_block = "\n\n".join(context_lines)
+    
+    # Build reference songs hint
+    ref_songs = ", ".join(request.style_guide.reference_songs[:3]) if request.style_guide.reference_songs else "None provided"
+    
+    system_prompt = """You are a Master Lyricist and Music Producer.
+Follow the Expert Workflow for lyrics generation:
+
+STEP 1 - ANALYZE: Understand the topic's emotional core and cultural resonance
+STEP 2 - INCORPORATE: Use provided context to ground the lyrics
+STEP 3 - APPLY: Match the style guide specifications
+STEP 4 - OUTPUT: Generate structured lyrics with metatags
+
+EXPERT GENRE KNOWLEDGE (Anime/J-Pop Rock):
+- Structure: Soft Intro -> Driving Verse -> Build-up Pre-Chorus -> Explosive Chorus -> Emotional Bridge -> Key-up Final Chorus
+- Vibe: "Running toward a goal", "Youth burning forward", "Believing in the future"
+- Vocals: Powerful, emotional restraint in verses, explosive in chorus
+
+OUTPUT FORMAT (valid JSON):
+{
+  "topic_analysis": "Brief analysis of topic's emotional core",
+  "lyrics_sections": [
+    {"type": "verse", "content": "Lyrics here...", "notes": "Performance note"},
+    {"type": "chorus", "content": "Lyrics here...", "notes": ""},
+    {"type": "bridge", "content": "Lyrics here...", "notes": ""}
+  ],
+  "full_lyrics": "[Verse 1]\\nLyrics...\\n\\n[Chorus]\\nLyrics...",
+  "suno_prompt": "Genre: ... Style: ... Tempo: ... Mood: ... Vocals: ...",
+  "udio_prompt": "Instrumental focus prompt...",
+  "style_summary": "Brief summary of the style direction"
+}
+
+CRITICAL RULES:
+- Use metatags: [Verse], [Chorus], [Bridge], [Intro], [Outro]
+- Keep lines 6-10 syllables for singability
+- Avoid clichés and overused AI phrases
+- Match the language_mix specification"""
+
+    user_prompt = f"""Generate professional lyrics for:
+
+TOPIC: {request.topic}
+
+CONTEXT (User-Provided Knowledge):
+{context_block if context_block else "No additional context provided."}
+
+STYLE GUIDE:
+- Genre: {request.style_guide.genre}
+- Tempo: {request.style_guide.tempo}
+- Mood: {request.style_guide.mood}
+- Vocal Style: {request.style_guide.vocal_style}
+- Language: {request.style_guide.language_mix}
+- Reference Songs: {ref_songs}
+
+SONG STRUCTURE: {request.song_structure}
+
+Generate complete, singable lyrics with Suno-compatible formatting."""
+
+    try:
+        api_key = byok_key or settings.GEMINI_API_KEY
+        client = genai.Client(api_key=api_key)
+        
+        response = await client.aio.models.generate_content(
+            model=request.model,
+            contents=user_prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                temperature=0.8,
+                response_mime_type="application/json",
+            ),
+        )
+        
+        # Parse response
+        text = response.text.strip()
+        if text.startswith("```"):
+            lines = text.split("\n")
+            text = "\n".join(lines[1:-1] if lines[-1] == "```" else lines[1:])
+            if text.startswith("json"):
+                text = text[4:].strip()
+        
+        data = json.loads(text)
+        
+        # Convert sections
+        sections = []
+        for section_data in data.get("lyrics_sections", []):
+            sections.append(LyricsSection(
+                type=section_data.get("type", "verse"),
+                content=section_data.get("content", ""),
+                notes=section_data.get("notes", ""),
+            ))
+        
+        return LyricsResponse(
+            success=True,
+            topic_analysis=data.get("topic_analysis", ""),
+            lyrics_sections=sections,
+            full_lyrics=data.get("full_lyrics", ""),
+            suno_prompt=data.get("suno_prompt", ""),
+            udio_prompt=data.get("udio_prompt", ""),
+            style_summary=data.get("style_summary", ""),
+        )
+        
+    except json.JSONDecodeError as e:
+        return LyricsResponse(
+            success=False,
+            topic_analysis=f"JSON parsing error: {str(e)}",
+            lyrics_sections=[],
+            full_lyrics="",
+            suno_prompt="",
+            udio_prompt="",
+            style_summary="",
+        )
+    except Exception as e:
+        return LyricsResponse(
+            success=False,
+            topic_analysis=f"Error: {str(e)}",
+            lyrics_sections=[],
+            full_lyrics="",
+            suno_prompt="",
+            udio_prompt="",
+            style_summary="",
+        )
+

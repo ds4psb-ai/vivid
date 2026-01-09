@@ -180,6 +180,7 @@ def _get_rag_context(
     query: str,
     history_context: Optional[str] = None,
     use_rag: bool = True,
+    session_id: Optional[str] = None,
 ) -> str:
     """Retrieve RAG context for a capsule.
 
@@ -188,6 +189,7 @@ def _get_rag_context(
         query: The search query (usually the user's input/concept)
         history_context: Previous step context for amplification
         use_rag: Whether to use RAG (can be disabled via params)
+        session_id: Optional user session ID for Context Library lookup
 
     Returns:
         Formatted RAG context string for prompt injection, or empty string
@@ -195,10 +197,31 @@ def _get_rag_context(
     if not use_rag:
         return ""
 
+    combined_context = ""
+
+    # === Expert Workflow: Context Library (User-Injected Knowledge) ===
+    if session_id:
+        try:
+            from app.rag.context_library import get_context_library
+            library = get_context_library()
+            ctx_result = library.get_context_for_query(
+                session_id=session_id,
+                query=query,
+                max_documents=3,
+            )
+            if ctx_result.formatted_context:
+                combined_context += ctx_result.formatted_context + "\n\n"
+                logger.debug(
+                    f"[{capsule_id}] Context Library: {ctx_result.total_matched} docs injected"
+                )
+        except Exception as e:
+            logger.warning(f"Context Library retrieval failed: {e}")
+
+    # === Standard RAG: App Registry ===
     registry = _get_rag_registry()
     if not registry:
         logger.debug("RAG registry not available")
-        return ""
+        return combined_context
 
     try:
         context = registry.get_context_for_app(
@@ -213,12 +236,12 @@ def _get_rag_context(
                 f"[{capsule_id}] RAG: {context['total_results']} results "
                 f"from {context['dimensions_searched']}"
             )
-            return formatted
+            combined_context += formatted
 
     except Exception as e:
         logger.warning(f"RAG retrieval failed for {capsule_id}: {e}")
 
-    return ""
+    return combined_context
 
 
 def _inject_rag_into_prompt(

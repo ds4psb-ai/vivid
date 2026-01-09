@@ -358,3 +358,177 @@ async def analyze_persona_stream(
         headers=get_sse_headers(),
     )
 
+
+# ============================================================================
+# Character DNA Generator (Expert Workflow Pattern)
+# ============================================================================
+
+class CharacterDNARequest(BaseModel):
+    """Request model for Character DNA generation.
+    
+    Generates a reusable "Visual DNA" prompt string for character consistency,
+    following the Expert Workflow pattern.
+    """
+    name: str = Field(..., min_length=1, max_length=100, description="Character name")
+    role: str = Field(..., min_length=1, max_length=200, description="Character role (e.g., '48-year-old master chef')")
+    personality: str = Field("", max_length=1000, description="Personality traits and behaviors")
+    physical_traits: str = Field("", max_length=1000, description="Physical appearance details")
+    wiki_context: str = Field("", max_length=5000, description="External context (Wiki, articles) about the character")
+    style_reference: str = Field("anime", max_length=100, description="Visual style (anime, realistic, stylized)")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
+
+    @field_validator("name", "role", "personality", "physical_traits", "wiki_context", mode="before")
+    @classmethod
+    def strip_strings(cls, v: str) -> str:
+        return _strip_string(v)
+
+    @field_validator("model")
+    @classmethod
+    def validate_model(cls, v: str) -> str:
+        return _validate_model(v)
+
+
+class CharacterDNAResponse(BaseModel):
+    """Response for Character DNA generation."""
+    success: bool
+    character_name: str
+    character_dna: str  # The reusable prompt string
+    style_prompt: str   # Style-specific prefix
+    full_prompt: str    # Combined: style + dna
+    usage_hint: str
+
+
+@router.post(
+    "/aesthetic/character-dna",
+    response_model=CharacterDNAResponse,
+    responses={
+        400: {"model": DimensionErrorResponse},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="Character DNA: Generate Visual DNA",
+    description="Generate a reusable 'Visual DNA' prompt string for consistent character generation across multiple images/videos.",
+    tags=["Dimension Extended"],
+)
+async def generate_character_dna(
+    request: CharacterDNARequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+) -> CharacterDNAResponse:
+    """Generate Character DNA following the Expert Workflow pattern.
+    
+    Creates a detailed, reusable prompt string that captures:
+    1. Physical traits (age, build, distinguishing features)
+    2. Personality traits (how they move, speak, express)
+    3. Costume/Style details
+    4. Performance notes
+    
+    Usage: Prepend this DNA string to every image/video prompt
+    to maintain character consistency.
+    """
+    from google import genai
+    from google.genai import types
+    from app.config import settings
+    
+    # Build context from inputs
+    context_parts = []
+    if request.wiki_context:
+        context_parts.append(f"### External Context (Wiki/Research)\n{request.wiki_context}")
+    if request.physical_traits:
+        context_parts.append(f"### Physical Traits\n{request.physical_traits}")
+    if request.personality:
+        context_parts.append(f"### Personality\n{request.personality}")
+    
+    context_block = "\n\n".join(context_parts) if context_parts else ""
+    
+    # System prompt for Character DNA generation
+    system_prompt = """You are a Character Design Expert for AI image/video generation.
+Generate a "Visual DNA" prompt string that will be REUSED across all generations.
+
+The output should be a SINGLE BLOCK of descriptive text (not JSON) that can be
+copy-pasted as a prompt prefix. It should capture TWO layers:
+
+LAYER 1: VISUAL PERCEPTION (Pixels)
+- Physical details (age, gender, build, skin tone)
+- Costume/Texture (clothing, accessories, colors)
+
+LAYER 2: PSYCHOLOGICAL ACTING (Motion/Vibe)
+- "Appears awkward/inarticulate" (Acting direction)
+- "Thinking faster than speaking" (Subtext)
+- "Subtle intensity beneath gentle exterior" (Micro-expression)
+
+The output should read like this example:
+"48-year-old male chef character, quiet and introverted master craftsman type,
+appears awkward and inarticulate when speaking, often hesitates mid-sentence,
+calm eyes, reserved expression, subtle intensity beneath a gentle exterior,
+white chef uniform with subtle stains from work, strong weathered hands,
+gives the impression of someone constantly searching for the right word."
+
+DO NOT include:
+- JSON formatting
+- Numbered lists
+- Headers or sections
+- Style instructions (that's separate)
+
+JUST the character description as a continuous prompt string that combines visual and psychological traits."""
+
+    user_prompt = f"""Create a Visual DNA prompt string for:
+
+Character Name: {request.name}
+Role: {request.role}
+Visual Style Target: {request.style_reference}
+
+{context_block}
+
+Generate a detailed, reusable character prompt string."""
+
+    try:
+        api_key = byok_key or settings.GEMINI_API_KEY
+        client = genai.Client(api_key=api_key)
+        
+        response = await client.aio.models.generate_content(
+            model=request.model,
+            contents=user_prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                temperature=0.7,
+            ),
+        )
+        
+        character_dna = response.text.strip()
+        
+        # Generate style-specific prefix based on style_reference
+        style_prompts = {
+            "anime": "Japanese TV anime style illustration, clean and sharp lineart, thin and consistent black outlines, digital cel-shaded coloring, large expressive anime eyes, anime-style hair with large defined clumps, high saturation, modern anime screenshot look, no realism, no 3D",
+            "realistic": "Photorealistic style, natural lighting, detailed skin texture, realistic proportions, cinematic composition, shallow depth of field, professional photography look",
+            "stylized": "Stylized digital art, bold colors, strong silhouettes, graphic design aesthetics, clean lines, modern illustration style",
+            "cinematic": "Cinematic film still, anamorphic lens, movie color grading, dramatic lighting, professional cinematography, 35mm film texture",
+        }
+        
+        style_prompt = style_prompts.get(
+            request.style_reference.lower(),
+            style_prompts["cinematic"]
+        )
+        
+        # Combine for full prompt
+        full_prompt = f"{style_prompt}, {character_dna}"
+        
+        return CharacterDNAResponse(
+            success=True,
+            character_name=request.name,
+            character_dna=character_dna,
+            style_prompt=style_prompt,
+            full_prompt=full_prompt,
+            usage_hint="Copy the 'full_prompt' and use it as a prefix for all image/video generations of this character.",
+        )
+        
+    except Exception as e:
+        return CharacterDNAResponse(
+            success=False,
+            character_name=request.name,
+            character_dna="",
+            style_prompt="",
+            full_prompt="",
+            usage_hint=f"Error: {str(e)}",
+        )
+
+

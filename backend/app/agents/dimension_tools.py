@@ -16,6 +16,11 @@ Single Source of Truth: DIMENSION_CAPSULES에서 ToolSpec을 동적으로 생성
 - sound_crafter: 사운드 크래프터 (SOUND) - 음악/효과음 프롬프트
 - reference_decoder: 레퍼런스 해석기 (REF) - 참조 이미지 분석
 - visual_realizer: 비주얼 리얼라이저 (VIS) - 이미지 생성
+
+=== Expert Workflow Tools ===
+- generate_character_dna: 캐릭터 Visual DNA 생성 (AD) - 일관된 캐릭터 프롬프트
+- generate_shot_list: 타임라인 샷 리스트 생성 (STORY) - ≤8s 세그먼트 + 도구 추천
+- generate_lyrics: 가사 생성기 (SOUND) - Suno/Udio 호환 가사 + 메타태그
 """
 from __future__ import annotations
 
@@ -64,6 +69,10 @@ TOOL_TO_CAPSULE: Dict[str, str] = {
     # Aliases for 4-Stage Workflow (map to existing capsules)
     "reference_decoder": "teaching.reference.analyze",  # REF → 4D capsule
     "visual_realizer": "teaching.image.generate",  # VIS → 3D capsule
+    # === Expert Workflow Tools (2026-01) ===
+    "generate_character_dna": "dimension.aesthetic.character_dna",
+    "generate_shot_list": "dimension.story.shot_list",
+    "generate_lyrics": "dimension.sound.lyrics",
 }
 
 CAPSULE_TO_TOOL: Dict[str, str] = {v: k for k, v in TOOL_TO_CAPSULE.items()}
@@ -85,6 +94,10 @@ TOOL_TO_DIMENSION: Dict[str, str] = {
     "sound_crafter": "SOUND",
     "reference_decoder": "REF",
     "visual_realizer": "VIS",
+    # === Expert Workflow Tools (2026-01) ===
+    "generate_character_dna": "AD",  # Character DNA is aesthetic-related
+    "generate_shot_list": "STORY",  # Shot list is story-related
+    "generate_lyrics": "SOUND",  # Lyrics is sound-related
 }
 
 
