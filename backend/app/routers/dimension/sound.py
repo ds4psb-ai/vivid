@@ -47,9 +47,9 @@ class SoundCraftRequest(BaseModel):
     genre: str = Field("drama", max_length=50, description="Genre")
     tempo: str = Field("medium", max_length=50, description="Tempo")
     duration: int = Field(60, ge=10, le=300, description="Duration in seconds")
-    target_platform: str = Field("youtube", description="Target platform")
+    target_platform: str = Field("suno", description="Target audio platform (suno/udio/elevenlabs)")
     language: str = Field("ko", description="Output language")
-    model: str = Field("gemini-1.5-pro", description="AI model")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
 
     @field_validator("concept", "storyboard", "mood", mode="before")
     @classmethod
@@ -91,7 +91,7 @@ class SoundCraftRequest(BaseModel):
 class SoundMoodboardRequest(BaseModel):
     """Request model for Sound Moodboard (Stage 1)."""
     concept: str = Field(..., min_length=1, max_length=MAX_CONCEPT_LENGTH, description="Sound concept")
-    model: str = Field("gemini-1.5-pro", description="AI model")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
 
     @field_validator("concept", mode="before")
     @classmethod
@@ -146,7 +146,7 @@ async def craft_sound(
             "mood": request.mood,
             "genre": request.genre,
             "tempo": request.tempo,
-            "duration": request.duration,
+            "duration": f"{request.duration}s",  # Convert int to string format
             "target_platform": request.target_platform,
             "language": request.language,
         },
@@ -199,7 +199,7 @@ async def craft_sound_stream(
                 "mood": request.mood,
                 "genre": request.genre,
                 "tempo": request.tempo,
-                "duration": request.duration,
+                "duration": f"{request.duration}s",  # Convert int to string format
                 "target_platform": request.target_platform,
                 "language": request.language,
             },

@@ -41,7 +41,7 @@ class AestheticDirectRequest(BaseModel):
     mood: str = Field("cinematic", max_length=100, description="Visual mood")
     target_medium: str = Field("video", max_length=50, description="Target medium")
     use_rag: bool = Field(True, description="Use RAG for auteur knowledge")
-    model: str = Field("gemini-1.5-pro", description="AI model")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
 
     @field_validator("concept", "reference_style", "mood", mode="before")
     @classmethod
@@ -58,7 +58,7 @@ class AestheticMoodboardRequest(BaseModel):
     """Request model for Aesthetic Moodboard generation."""
     concept: str = Field(..., min_length=1, max_length=MAX_CONCEPT_LENGTH, description="Visual concept")
     mood: str = Field("cinematic", max_length=100, description="Visual mood")
-    model: str = Field("gemini-2.0-flash-exp", description="AI model")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
 
     @field_validator("concept", "mood", mode="before")
     @classmethod

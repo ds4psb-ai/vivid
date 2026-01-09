@@ -48,7 +48,7 @@ class StoryArchitectRequest(BaseModel):
     duration: int = Field(60, ge=10, le=600, description="Target duration in seconds")
     structure: str = Field("3-act", description="Narrative structure")
     language: str = Field("ko", description="Output language")
-    model: str = Field("gemini-1.5-pro", description="AI model")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
 
     @field_validator("concept", "persona_data", "reference_analysis", mode="before")
     @classmethod
@@ -84,7 +84,7 @@ class StoryRefineRequest(BaseModel):
     """Request model for Story Refine concept refinement."""
     concept: str = Field(..., min_length=1, max_length=MAX_CONCEPT_LENGTH, description="Raw concept")
     genre: str = Field("drama", max_length=50, description="Target genre")
-    model: str = Field("gemini-1.5-pro", description="AI model")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
 
     @field_validator("concept", mode="before")
     @classmethod
@@ -142,7 +142,7 @@ async def architect_story(
             "persona_data": request.persona_data,
             "reference_analysis": request.reference_analysis,
             "genre": request.genre,
-            "duration": request.duration,
+            "duration": f"{request.duration}s",  # Convert int to string format
             "structure": request.structure,
             "language": request.language,
         },
@@ -191,7 +191,7 @@ async def architect_story_stream(
                 "persona_data": request.persona_data,
                 "reference_analysis": request.reference_analysis,
                 "genre": request.genre,
-                "duration": request.duration,
+                "duration": f"{request.duration}s",  # Convert int to string format
                 "structure": request.structure,
                 "language": request.language,
             },

@@ -44,7 +44,7 @@ class QualityCheckRequest(BaseModel):
         description="Evaluation criteria"
     )
     threshold: float = Field(0.7, ge=0.0, le=1.0, description="Quality threshold")
-    model: str = Field("gemini-1.5-pro", description="AI model")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
 
     @field_validator("content", mode="before")
     @classmethod
@@ -63,7 +63,7 @@ class CreativeEditorRequest(BaseModel):
     context: str = Field(..., min_length=1, max_length=1000, description="Context/Genre/Audience")
     persona: str = Field("Senior Editor", max_length=100, description="Editorial persona")
     use_rag: bool = Field(True, description="Use RAG for editing principles")
-    model: str = Field("gemini-1.5-pro", description="AI model")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
 
     @field_validator("content", "context", mode="before")
     @classmethod

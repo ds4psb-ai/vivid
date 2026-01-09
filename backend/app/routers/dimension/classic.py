@@ -50,7 +50,7 @@ class PromptGenerateRequest(BaseModel):
     mood: str = Field("neutral", max_length=100, description="Mood or atmosphere")
     duration: int = Field(6, ge=4, le=8, description="Video duration in seconds")
     language: str = Field("ko", description="Output language")
-    model: str = Field("gemini-2.0-flash-exp", description="AI model")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
 
     @field_validator("topic", "style", "mood", mode="before")
     @classmethod
@@ -74,7 +74,7 @@ class StoryboardCreateRequest(BaseModel):
     prompt: str = Field("", max_length=500, description="Additional storyboard guidance")
     scene_count: int = Field(4, ge=MIN_SCENE_COUNT, le=MAX_SCENE_COUNT, description="Number of scenes")
     language: str = Field("ko", description="Output language")
-    model: str = Field("gemini-2.0-flash-exp", description="AI model")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
 
     @field_validator("concept", mode="before")
     @classmethod
@@ -97,7 +97,7 @@ class ImageGenerateRequest(BaseModel):
     description: str = Field(..., min_length=1, max_length=MAX_DESCRIPTION_LENGTH, description="Image description")
     style: str = Field("photorealistic", max_length=100, description="Image style")
     aspect_ratio: str = Field("16:9", description="Aspect ratio")
-    model: str = Field("gemini-2.0-flash-exp", description="AI model")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
 
     @field_validator("description", "style", mode="before")
     @classmethod
@@ -122,7 +122,7 @@ class ReferenceAnalyzeRequest(BaseModel):
         default=["cinematography", "editing", "color", "sound"],
         description="Areas to focus analysis on"
     )
-    model: str = Field("gemini-2.0-flash-exp", description="AI model")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
 
     @field_validator("video_description", mode="before")
     @classmethod
@@ -168,7 +168,7 @@ async def generate_1d_prompt(
             "topic": request.topic,
             "style": request.style,
             "mood": request.mood,
-            "duration": request.duration,
+            "duration": f"{request.duration} seconds",  # Convert int to string format
             "language": request.language,
         },
         model=request.model,
@@ -210,7 +210,7 @@ async def generate_1d_prompt_stream(
                 "topic": request.topic,
                 "style": request.style,
                 "mood": request.mood,
-                "duration": request.duration,
+                "duration": f"{request.duration} seconds",  # Convert int to string format
                 "language": request.language,
             },
             model=request.model,
