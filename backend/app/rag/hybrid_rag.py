@@ -51,6 +51,7 @@ from app.rag.bm25_search import (
     get_dimension_bm25_index,
     FusedResult,
 )
+from app.rag.metrics import record_rag_query, record_rag_error
 
 logger = logging.getLogger(__name__)
 
@@ -335,6 +336,23 @@ async def hybrid_query(
         f"time={result.query_time_ms}ms | "
         f"sources={result.retrieval_count} | "
         f"reranked={result.reranked}"
+    )
+    
+    # Record Prometheus metrics
+    source_type = "notebooklm" if result.notebooklm_sources else (
+        "vertex" if result.vertex_sources else "grounding"
+    )
+    record_rag_query(
+        dimension=dimension or "unknown",
+        strategy=result.strategy_used,
+        source_type=source_type,
+        latency_ms=result.query_time_ms,
+        results_count=result.retrieval_count,
+        confidence=result.confidence,
+        cache_hit=False,
+        auteur_key=result.auteur_key,
+        grounded=result.grounded,
+        rrf_enabled=result.rrf_enabled,
     )
 
     return result

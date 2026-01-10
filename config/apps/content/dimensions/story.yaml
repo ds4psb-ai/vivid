@@ -21,9 +21,12 @@ capabilities:
       confidence_threshold: 0.5
       use_google_search: true  # 트렌드/레퍼런스 검색
       corpus: story_templates
+      cache_ttl: 3600
+      max_sources: 8
       retrieval:
         strategy: hybrid
         top_k: 10
+        rrf_k: 60
 
   - name: cache
     enabled: true

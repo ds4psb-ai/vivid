@@ -26,6 +26,7 @@ capabilities:
       retrieval:
         strategy: hybrid
         top_k: 10
+        rrf_k: 60
 
   - name: cache
     enabled: true

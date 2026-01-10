@@ -66,6 +66,11 @@ class ContentDomain(str, Enum):
     AUTEUR_NOLAN = "nolan"
     AUTEUR_VILLENEUVE = "villeneuve"
     AUTEUR_WONG = "wong-kar-wai"
+    AUTEUR_NA = "na-hong-jin"
+    AUTEUR_HONG = "hong-sang-soo"
+    AUTEUR_SHINKAI = "shinkai-makoto"
+    AUTEUR_LEE = "lee-chang-dong"
+    AUTEUR_PARK = "park-chan-wook"
     
     # 장르
     GENRE_THRILLER = "thriller"
@@ -472,6 +477,198 @@ class IntentFactory:
             ],
             keywords=["harmony", "natural-flow", "seasonal"]
         )
+    
+    # === 신규 거장 프리셋 ===
+    
+    @staticmethod
+    def cinematic_nolan() -> CreativeIntent:
+        """크리스토퍼 놀란 스타일"""
+        return CreativeIntent(
+            mood=CreativeMood.CINEMATIC,
+            pace=CreativePace.DYNAMIC,
+            target=TargetAudience.EXPERT,
+            domain_sources=[
+                ContentDomain.AUTEUR_NOLAN,
+                ContentDomain.GENRE_SCIFI,
+            ],
+            aesthetic_hints=AestheticHints(
+                aspect_ratio="2.39:1",
+                lighting_style="dramatic",
+                composition_style="dynamic",
+            ),
+            keywords=["time", "non-linear", "practical-effects"]
+        )
+    
+    @staticmethod
+    def cinematic_villeneuve() -> CreativeIntent:
+        """드니 빌뇌브 스타일"""
+        return CreativeIntent(
+            mood=CreativeMood.CINEMATIC,
+            pace=CreativePace.CONTEMPLATIVE,
+            target=TargetAudience.EXPERT,
+            domain_sources=[
+                ContentDomain.AUTEUR_VILLENEUVE,
+                ContentDomain.GENRE_SCIFI,
+            ],
+            aesthetic_hints=AestheticHints(
+                aspect_ratio="2.39:1",
+                lighting_style="natural",
+                composition_style="symmetrical",
+            ),
+            keywords=["atmosphere", "scale", "silence"]
+        )
+    
+    @staticmethod
+    def cinematic_wong() -> CreativeIntent:
+        """왕가위 스타일"""
+        return CreativeIntent(
+            mood=CreativeMood.NOSTALGIC,
+            pace=CreativePace.CONTEMPLATIVE,
+            target=TargetAudience.EXPERT,
+            domain_sources=[ContentDomain.AUTEUR_WONG],
+            aesthetic_hints=AestheticHints(
+                color_palette=["neon", "saturated"],
+                lighting_style="dramatic",
+            ),
+            keywords=["longing", "urban", "memory"]
+        )
+    
+    @staticmethod
+    def horror_na() -> CreativeIntent:
+        """나홍진 공포/스릴러"""
+        return CreativeIntent(
+            mood=CreativeMood.DARK,
+            pace=CreativePace.FAST,
+            target=TargetAudience.EXPERT,
+            domain_sources=[
+                ContentDomain.AUTEUR_NA,
+                ContentDomain.GENRE_HORROR,
+            ],
+            aesthetic_hints=AestheticHints(
+                lighting_style="low-key",
+                color_temperature="cool",
+            ),
+            keywords=["tension", "supernatural", "rural"]
+        )
+    
+    @staticmethod
+    def arthouse_hong() -> CreativeIntent:
+        """홍상수 예술영화"""
+        return CreativeIntent(
+            mood=CreativeMood.DOCUMENTARY,
+            pace=CreativePace.CONTEMPLATIVE,
+            target=TargetAudience.EXPERT,
+            domain_sources=[ContentDomain.AUTEUR_HONG],
+            aesthetic_hints=AestheticHints(
+                composition_style="minimalist",
+                lighting_style="natural",
+            ),
+            keywords=["dialogue", "zoom", "repetition"]
+        )
+    
+    @staticmethod
+    def animation_shinkai() -> CreativeIntent:
+        """신카이 마코토 애니메이션"""
+        return CreativeIntent(
+            mood=CreativeMood.WHIMSICAL,
+            pace=CreativePace.DYNAMIC,
+            target=TargetAudience.GENERAL,
+            domain_sources=[ContentDomain.AUTEUR_SHINKAI],
+            aesthetic_hints=AestheticHints(
+                color_palette=["pastel", "sky-blue"],
+                lighting_style="soft",
+            ),
+            keywords=["sky", "weather", "youth", "distance"]
+        )
+    
+    # === 플랫폼/포맷 프리셋 ===
+    
+    @staticmethod
+    def music_video() -> CreativeIntent:
+        """뮤직비디오"""
+        return CreativeIntent(
+            mood=CreativeMood.ENERGETIC,
+            pace=CreativePace.FAST,
+            target=TargetAudience.GENERAL,
+            output_format=OutputFormat.VIDEO,
+            aesthetic_hints=AestheticHints(
+                color_palette=["vibrant", "high-saturation"],
+            ),
+            keywords=["rhythm", "sync", "performance"]
+        )
+    
+    @staticmethod
+    def youtube_tutorial() -> CreativeIntent:
+        """유튜브 튜토리얼"""
+        return CreativeIntent(
+            mood=CreativeMood.DOCUMENTARY,
+            pace=CreativePace.DYNAMIC,
+            target=TargetAudience.GENERAL,
+            domain_sources=[ContentDomain.PLATFORM_YOUTUBE],
+            keywords=["clear", "step-by-step", "engaging"]
+        )
+    
+    @staticmethod
+    def instagram_reel() -> CreativeIntent:
+        """인스타그램 릴스"""
+        return CreativeIntent(
+            mood=CreativeMood.ENERGETIC,
+            pace=CreativePace.FAST,
+            target=TargetAudience.GENERAL,
+            domain_sources=[ContentDomain.PLATFORM_INSTAGRAM],
+            output_format=OutputFormat.VIDEO,
+            aesthetic_hints=AestheticHints(
+                aspect_ratio="9:16",
+                color_palette=["trendy", "pastel"],
+            ),
+            keywords=["hook", "trending", "aesthetic"]
+        )
+    
+    @staticmethod
+    def commercial_product() -> CreativeIntent:
+        """제품 광고"""
+        return CreativeIntent(
+            mood=CreativeMood.CINEMATIC,
+            pace=CreativePace.DYNAMIC,
+            target=TargetAudience.GENERAL,
+            aesthetic_hints=AestheticHints(
+                lighting_style="high-key",
+                composition_style="minimalist",
+            ),
+            keywords=["premium", "clean", "aspirational"]
+        )
+    
+    # === 헬퍼 메서드 ===
+    
+    @classmethod
+    def get_all_presets(cls) -> dict:
+        """모든 프리셋 목록 반환"""
+        return {
+            # 기존 4개
+            "cinematic_bong": cls.cinematic_bong,
+            "documentary_calm": cls.documentary_calm,
+            "shortform_energetic": cls.shortform_energetic,
+            "saju_guided": cls.saju_guided,
+            # 신규 거장 6개
+            "cinematic_nolan": cls.cinematic_nolan,
+            "cinematic_villeneuve": cls.cinematic_villeneuve,
+            "cinematic_wong": cls.cinematic_wong,
+            "horror_na": cls.horror_na,
+            "arthouse_hong": cls.arthouse_hong,
+            "animation_shinkai": cls.animation_shinkai,
+            # 신규 플랫폼 4개
+            "music_video": cls.music_video,
+            "youtube_tutorial": cls.youtube_tutorial,
+            "instagram_reel": cls.instagram_reel,
+            "commercial_product": cls.commercial_product,
+        }
+    
+    @classmethod
+    def get_by_name(cls, name: str) -> Optional["CreativeIntent"]:
+        """이름으로 프리셋 가져오기"""
+        presets = cls.get_all_presets()
+        factory_fn = presets.get(name)
+        return factory_fn() if factory_fn else None
 
 
 # =========================================================================

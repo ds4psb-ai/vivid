@@ -15,10 +15,16 @@ capabilities:
   - name: rag
     enabled: true
     config:
-      mode: auteur_only
+      mode: always  # 레퍼런스 분석은 항상 RAG 사용
       auteur_mode: false  # 분석은 거장 모드 불필요
       confidence_threshold: 0.4
       use_google_search: true  # 영화 정보 검색
+      cache_ttl: 3600
+      max_sources: 8
+      retrieval:
+        strategy: hybrid
+        top_k: 15
+        rrf_k: 60
 
   - name: cache
     enabled: true

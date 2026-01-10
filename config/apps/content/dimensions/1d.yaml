@@ -19,6 +19,12 @@ capabilities:
       mode: auteur_only  # 거장 키 있을 때만
       auteur_mode: true
       confidence_threshold: 0.5
+      cache_ttl: 3600
+      max_sources: 5
+      retrieval:
+        strategy: hybrid
+        top_k: 10
+        rrf_k: 60
 
   - name: cache
     enabled: true
