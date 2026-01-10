@@ -31,8 +31,9 @@ test.describe('Dimension Hub', () => {
 test.describe('Story Architect', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/dimension/story-architect');
-        // Wait for panel to load
-        await page.waitForLoadState('networkidle');
+        // Wait for DOM to load, then wait for textarea (avoids networkidle polling issue)
+        await page.waitForLoadState('domcontentloaded');
+        await page.waitForSelector('textarea', { state: 'visible' });
     });
 
     test('should display Story Architect panel', async ({ page }) => {
@@ -82,7 +83,9 @@ test.describe('Story Architect', () => {
 test.describe('Aesthetic Director', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/dimension/aesthetic');
-        await page.waitForLoadState('networkidle');
+        // Wait for DOM to load, then wait for textarea (avoids networkidle polling issue)
+        await page.waitForLoadState('domcontentloaded');
+        await page.waitForSelector('textarea', { state: 'visible' });
     });
 
     test('should display Aesthetic Director panel', async ({ page }) => {

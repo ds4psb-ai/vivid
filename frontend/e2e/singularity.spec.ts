@@ -84,12 +84,14 @@ test.describe('Singularity Preset Integration', () => {
         });
 
         await page.goto('/singularity');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
+        await page.waitForSelector('button:has-text("전체")', { state: 'visible' });
     });
 
     test('should filter by preset when clicked', async ({ page }) => {
         await page.goto('/singularity');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
+        await page.waitForSelector('button:has-text("전체")', { state: 'visible' });
 
         // Click on a preset
         const presetBtn = page.locator('button:has-text("봉준호")');

@@ -46,7 +46,7 @@ test.describe('Flow Page', () => {
 test.describe('Flow Dimension Modal', () => {
     test('should open modal when adding dimension', async ({ page }) => {
         await page.goto('/flow');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Try to trigger modal
         const addButton = page.locator('button:has-text("+")').or(
@@ -75,7 +75,7 @@ test.describe('Flow Template Integration', () => {
     test('should load template when query param provided', async ({ page }) => {
         // Navigate with template query
         await page.goto('/flow?template=test-template-id');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Page should still load without error
         await expect(page).toHaveURL(/flow/);
@@ -83,7 +83,7 @@ test.describe('Flow Template Integration', () => {
 
     test('should have save workflow button', async ({ page }) => {
         await page.goto('/flow');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Look for save/export button
         const saveBtn = page.locator('button:has-text("저장")').or(
@@ -99,7 +99,7 @@ test.describe('Flow Template Integration', () => {
 test.describe('Flow Workflow Execution', () => {
     test('should show results area after execution', async ({ page }) => {
         await page.goto('/flow');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Results area should exist (even if empty initially)
         const resultsArea = page.locator('[data-testid="workflow-results"]').or(
