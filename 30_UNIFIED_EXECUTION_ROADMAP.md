@@ -1,7 +1,7 @@
 # Crebit Execution Roadmap (통합본)
 
 **작성**: 2025-12-30 (통합)  
-**Updated**: 2026-01-01 (Agent Studio 반영)  
+**Updated**: 2026-01-10 (앱 고도화 로드맵 추가)  
 **통합 대상**: `03`, `07`, `19` 로드맵 문서  
 **상태**: ACTIVE (현재 코드베이스 기준)
 
@@ -41,24 +41,29 @@
 
 ## 단기 로드맵 (1~4주)
 
-### Week 1-2: Story-First 완성 (legacy UI)
-- [ ] `MetricsDashboard` 백엔드 API 연결 (`/content-metrics`)
-- [ ] `SequenceEditor` Canvas 통합 (legacy)
-- [ ] `DNAComplianceViewer` 콜백 구현 (regenerateShot, applyAllSuggestions)
+### Week 1-2: Dimension 앱 고도화 (NEW 2026-01-10)
+- [ ] 각 앱별 프리셋 옵션 시스템 개선
+- [ ] Singularity 템플릿 동적 프리셋 연동
+- [ ] QC 앱 다중 검수 모드 (이미지/영상/일관성)
+- [ ] RAG 컨텍스트 품질 강화
 
 ### Week 3-4: 안정화 및 최적화
 - [ ] Capsule 실행 입력 계약 엄격 검증
 - [ ] Evidence refs 필터링 강화
 - [ ] 성능 최적화 (Preview < 500ms 목표)
 
+> ⚠️ Story-First (legacy UI)는 우선순위 하향 조정됨
+
 ---
 
 ## Known Issues (Non-blocking)
 
-- Agent streaming 스레드가 중복 시작되는 코드가 존재 (SSE 중복 이벤트 가능성).
-- AG-UI 매퍼는 존재하지만 채팅 UI는 `agent.*` 이벤트를 직접 처리하며 완전 전환은 미완성.
-- `aiofiles` 의존성이 명시되지 않아 서버 환경에 따라 import 실패 가능.
-- Affiliate API는 메인 앱에 마운트되어 있으며 archive 문서에 legacy 표기가 남아 있음.
+> ✅ **2026-01-08 기준 모든 Known Issues 해결됨** ([DEVELOPER_STATUS_GUIDE.md](docs/DEVELOPER_STATUS_GUIDE.md#known-issues) 참조)
+
+- ~~Agent streaming 스레드 중복~~ → StreamController로 해결
+- ~~AG-UI 매퍼 불완전~~ → 완전 전환 완료
+- ~~`aiofiles` 의존성 누락~~ → 이미 추가됨
+- ~~Affiliate API legacy 표기~~ → 문서 정리 완료
 
 ## 중기 로드맵 (1~3개월)
 

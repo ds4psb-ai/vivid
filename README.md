@@ -57,6 +57,7 @@ This repo builds the chat-first agent, dimension miniapps, and train-style workf
 - 문서 맵: `00_DOCS_INDEX.md`
 
 **Developer Guides (NEW 2026-01-08)**:
+- [`docs/DIMENSION_APP_DEVELOPER_GUIDE.md`](docs/DIMENSION_APP_DEVELOPER_GUIDE.md) - **앱 개발자 공통 가이드 (SSoT)**
 - [`docs/AGENT_ARCHITECTURE.md`](docs/AGENT_ARCHITECTURE.md) - Agent system architecture with Mermaid diagrams
 - [`docs/API_REFERENCE.md`](docs/API_REFERENCE.md) - Complete API documentation with curl examples
 - [`docs/FRONTEND_COMPONENTS.md`](docs/FRONTEND_COMPONENTS.md) - Dimension panel component guide

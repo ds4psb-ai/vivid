@@ -31,6 +31,7 @@
 | **A2UI 검증기** | `frontend/src/lib/a2ui/validator.ts` | 화이트리스트 위젯 검증 |
 | **Dimension Tools** | `backend/app/agents/dimension_tools.py` | 15개 도구 (core + expert/alias 포함) |
 | **Singularity (특이점)** | `frontend/src/app/singularity/` | 차원 조합 템플릿 갤러리 |
+| **앱 개발자 가이드** | `docs/DIMENSION_APP_DEVELOPER_GUIDE.md` | 앱 개발자 공통 가이드 (SSoT) |
 
 ---
 
