@@ -711,6 +711,22 @@ export interface SingularityTemplateParams {
   pageSize?: number;
 }
 
+// --- Intent Preset Types ---
+
+export interface IntentPresetSummary {
+  name: string;
+  description: string;
+  mood: string;
+  pace: string;
+  target: string;
+  keywords: string[];
+}
+
+export interface IntentPresetListResponse {
+  count: number;
+  presets: IntentPresetSummary[];
+}
+
 // --- Constellation (별자리) Types ---
 
 export interface StarPoint {
@@ -1065,6 +1081,16 @@ class ApiClient {
       method: "POST",
       body: JSON.stringify(data),
     });
+  }
+
+  // --- Intent Preset API ---
+
+  async listIntentPresets(): Promise<IntentPresetListResponse> {
+    return this.request<IntentPresetListResponse>("/api/v1/intent/presets");
+  }
+
+  async listIntentPresetsByCategory(category: "auteur" | "platform" | "general"): Promise<IntentPresetListResponse> {
+    return this.request<IntentPresetListResponse>(`/api/v1/intent/presets/by-category/${category}`);
   }
 
   // --- Constellation (별자리) API ---
