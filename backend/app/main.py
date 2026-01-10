@@ -88,6 +88,9 @@ from app.routers.miniapps import router as miniapps_router
 # Context Library (Expert Workflow - Context Injection)
 from app.routers.context import router as context_router
 
+# Intent Presets (Creative Intent API)
+from app.routers.intent import router as intent_router
+
 from app.middleware.rate_limit import setup_rate_limiting
 from app.middleware.mtls import MTLSMiddleware
 from app.logging_config import setup_logging, LoggingMiddleware
@@ -210,6 +213,9 @@ app.include_router(singularity_router, prefix="/api/v1", tags=["singularity"])
 
 # Constellation (Multi-scene Projects - 별자리)
 app.include_router(constellation_router, prefix="/api/v1", tags=["constellation"])
+
+# Intent Presets (Creative Intent API)
+app.include_router(intent_router, prefix="/api/v1", tags=["intent"])
 
 # Content Metrics (Viral/Engagement Tracking)
 app.include_router(content_metrics_router, prefix="/api/v1", tags=["content-metrics"])
