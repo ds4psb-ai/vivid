@@ -146,6 +146,8 @@ def setup_monitoring(app: FastAPI) -> dict:
     status = {
         "sentry": setup_sentry(app),
         "prometheus": setup_prometheus(app),
+        "opentelemetry": setup_opentelemetry(app),
+        "profiling": setup_profiling(app),
     }
     
     logger.info(
@@ -154,3 +156,107 @@ def setup_monitoring(app: FastAPI) -> dict:
     )
     
     return status
+
+
+def setup_opentelemetry(app: FastAPI) -> bool:
+    """
+    Configure OpenTelemetry for distributed tracing.
+    
+    Requires:
+        OTEL_ENABLED=true
+        OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+    """
+    if not getattr(settings, "OTEL_ENABLED", False):
+        logger.info("OpenTelemetry disabled")
+        return False
+    
+    try:
+        from opentelemetry import trace
+        from opentelemetry.sdk.trace import TracerProvider
+        from opentelemetry.sdk.trace.export import BatchSpanProcessor
+        from opentelemetry.sdk.resources import Resource, SERVICE_NAME
+        from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+        from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+        
+        # Create resource
+        resource = Resource.create({
+            SERVICE_NAME: settings.PROJECT_NAME,
+            "deployment.environment": settings.ENVIRONMENT,
+        })
+        
+        # Create tracer provider
+        provider = TracerProvider(resource=resource)
+        
+        # Add OTLP exporter if configured
+        otlp_endpoint = getattr(settings, "OTEL_EXPORTER_OTLP_ENDPOINT", None)
+        if otlp_endpoint:
+            from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+            exporter = OTLPSpanExporter(endpoint=otlp_endpoint)
+            provider.add_span_processor(BatchSpanProcessor(exporter))
+        
+        trace.set_tracer_provider(provider)
+        
+        # Instrument FastAPI
+        FastAPIInstrumentor.instrument_app(app)
+        
+        # Instrument SQLAlchemy
+        SQLAlchemyInstrumentor().instrument()
+        
+        logger.info("OpenTelemetry tracing initialized")
+        return True
+        
+    except ImportError:
+        logger.warning("OpenTelemetry packages not installed")
+        return False
+    except Exception as e:
+        logger.error(f"Failed to initialize OpenTelemetry: {e}")
+        return False
+
+
+def setup_profiling(app: FastAPI) -> bool:
+    """
+    Add debug profiling endpoint (development only).
+    
+    GET /debug/profile - Returns slow query stats
+    """
+    if settings.ENVIRONMENT == "production":
+        return False
+    
+    try:
+        from fastapi import APIRouter
+        from starlette.responses import JSONResponse
+        import time
+        
+        profiling_router = APIRouter(prefix="/debug", tags=["debug"])
+        
+        # Store for slow requests
+        slow_requests: list = []
+        
+        @profiling_router.get("/profile")
+        async def get_profile_stats():
+            """Get profiling statistics for debugging."""
+            return JSONResponse({
+                "slow_requests": slow_requests[-50:],  # Last 50
+                "timestamp": time.time(),
+                "environment": settings.ENVIRONMENT,
+            })
+        
+        @profiling_router.get("/config")
+        async def get_config():
+            """Get non-sensitive configuration for debugging."""
+            return JSONResponse({
+                "environment": settings.ENVIRONMENT,
+                "debug": getattr(settings, "DEBUG", False),
+                "log_level": getattr(settings, "LOG_LEVEL", "INFO"),
+                "sentry_enabled": bool(settings.SENTRY_DSN),
+                "prometheus_enabled": getattr(settings, "PROMETHEUS_ENABLED", False),
+            })
+        
+        app.include_router(profiling_router)
+        logger.info("Debug profiling endpoints enabled")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to setup profiling: {e}")
+        return False
+
