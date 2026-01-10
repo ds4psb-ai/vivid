@@ -127,6 +127,27 @@ export default function AestheticDirectorPanel() {
 
     const MAX_CONCEPT_LENGTH = 2000;
 
+    // Async operation hook for moodboard (returns directions)
+    const {
+        isLoading: isMoodboardLoading,
+        execute: executeMoodboard,
+    } = useAsyncOperation<{ success: boolean; output: MoodboardResult; error?: string }>({
+        onSuccess: (data) => {
+            if (data.success && data.output?.directions) {
+                setDirections(data.output.directions);
+                setStage("palette");
+            }
+        },
+        onError: (err) => {
+            if (err.message.includes("크레딧") || err.message.includes("402")) {
+                setShowCreditModal(true);
+            }
+        },
+        retryCount: 3,
+        retryDelay: 1000,
+        nonRetryableErrors: ["400", "401", "402", "403", "404", "크레딧", "부족"],
+    });
+
     // Stage 1: Generate Moodboard (Visual Directions)
     const handleGenerateMoodboard = useCallback(async () => {
         const trimmedConcept = concept.trim();
@@ -136,7 +157,7 @@ export default function AestheticDirectorPanel() {
         }
         setValidationError(null);
 
-        await execute(
+        await executeMoodboard(
             `${API_BASE}/api/dimension/aesthetic/moodboard`,
             {
                 concept,
@@ -144,13 +165,8 @@ export default function AestheticDirectorPanel() {
                 model: "gemini-3-flash-preview",
             },
             getBYOKHeaders(byokKey)
-        ).then((res) => {
-            if (res && res.success && res.output && (res.output as any).directions) {
-                setDirections((res.output as any).directions);
-                setStage("palette");
-            }
-        });
-    }, [concept, mood, byokKey, execute]);
+        );
+    }, [concept, mood, byokKey, executeMoodboard]);
 
     // Stage 2 -> 3: Generate Full Style Guide
     const handleGenerateGuide = useCallback(async () => {

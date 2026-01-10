@@ -164,6 +164,27 @@ export default function StoryArchitectPanel() {
 
     const MAX_CONCEPT_LENGTH = 3000;
 
+    // Async operation hook for refine (returns angles)
+    const {
+        isLoading: isRefineLoading,
+        execute: executeRefine,
+    } = useAsyncOperation<{ success: boolean; output: StoryRefineResult; error?: string }>({
+        onSuccess: (data) => {
+            if (data.success && data.output?.angles) {
+                setAngles(data.output.angles);
+                setStage("blueprint");
+            }
+        },
+        onError: (err) => {
+            if (err.message.includes("크레딧") || err.message.includes("402")) {
+                setShowCreditModal(true);
+            }
+        },
+        retryCount: 3,
+        retryDelay: 1000,
+        nonRetryableErrors: ["400", "401", "402", "403", "404", "크레딧", "부족"],
+    });
+
     const handleRefine = useCallback(async () => {
         const trimmedConcept = concept.trim();
         if (!trimmedConcept || trimmedConcept.length < 5) {
@@ -173,7 +194,7 @@ export default function StoryArchitectPanel() {
         setValidationError(null);
 
         // Call refine endpoint
-        await execute(
+        await executeRefine(
             `${API_BASE}/api/dimension/story/refine`,
             {
                 concept,
@@ -181,13 +202,8 @@ export default function StoryArchitectPanel() {
                 model: "gemini-3-pro-preview",
             },
             getBYOKHeaders(byokKey)
-        ).then((res) => {
-            if (res && res.success && res.output && (res.output as any).angles) {
-                setAngles((res.output as any).angles);
-                setStage("blueprint");
-            }
-        });
-    }, [concept, genre, byokKey, execute]);
+        );
+    }, [concept, genre, byokKey, executeRefine]);
 
     const handleGenerate = useCallback(async () => {
         if (!selectedAngle && stage !== "pitch") {
