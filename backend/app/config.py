@@ -42,7 +42,17 @@ class Settings(BaseSettings):
     GEMINI_AGENT_MODELS: str = "gemini-3-flash-preview,gemini-3-pro-preview"
     GEMINI_IMAGE_MODEL: str = "gemini-3-flash-preview"
 
-    # Tavily API (Exa alternative for web search)
+    # Kling AI API (Video Generation)
+    # Get API key from: https://klingai.com/developer or third-party providers
+    # Provider options: klingai.com, kie.ai, piapi.ai, novita.ai
+    KLING_API_KEY: str = ""
+    KLING_API_BASE_URL: str = "https://api.klingai.com/v1"  # Or provider URL
+    
+    # Suno AI API (Music Generation)
+    # Uses third-party providers (no official API)
+    # Provider options: sunoapi.org, musicapi.ai, laozhang.ai
+    SUNO_API_KEY: str = ""
+    SUNO_API_BASE_URL: str = "https://api.sunoapi.org/api/v1"
     # Get free key at https://tavily.com (1,000 credits/month)
     TAVILY_API_KEY: str = ""
 

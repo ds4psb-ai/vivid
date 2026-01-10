@@ -25,6 +25,8 @@ from .sound import router as sound_router
 from .story import router as story_router
 from .quality import router as quality_router
 from .veo import router as veo_router
+from .kling import router as kling_router
+from .suno import router as suno_router
 
 # Re-export from _base for backward compatibility
 from ._base import (
@@ -49,6 +51,8 @@ router.include_router(sound_router)
 router.include_router(story_router)
 router.include_router(quality_router)
 router.include_router(veo_router)
+router.include_router(kling_router)
+router.include_router(suno_router)
 
 
 # ============================================================================
