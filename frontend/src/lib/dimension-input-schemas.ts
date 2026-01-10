@@ -275,6 +275,123 @@ export const DIMENSION_INPUT_SCHEMAS: Record<string, DimensionInputSchema> = {
             },
         ],
     },
+
+    "STORY": {
+        inputFields: [
+            {
+                key: "concept",
+                label: "컨셉",
+                type: "textarea",
+                placeholder: "시나리오로 만들 아이디어를 설명하세요",
+                required: true,
+            },
+            {
+                key: "genre",
+                label: "장르",
+                type: "select",
+                defaultValue: "drama",
+                options: [
+                    { value: "drama", label: "드라마" },
+                    { value: "thriller", label: "스릴러" },
+                    { value: "comedy", label: "코미디" },
+                    { value: "documentary", label: "다큐멘터리" },
+                    { value: "horror", label: "호러" },
+                    { value: "scifi", label: "SF" },
+                    { value: "ad", label: "광고" },
+                    { value: "mv", label: "뮤직비디오" },
+                    { value: "short", label: "숏폼" },
+                ],
+            },
+            {
+                key: "structure",
+                label: "구조",
+                type: "select",
+                defaultValue: "3-act",
+                options: [
+                    { value: "3-act", label: "3막 구조" },
+                    { value: "5-act", label: "5막 구조" },
+                    { value: "hero-journey", label: "영웅의 여정" },
+                    { value: "hook-body-cta", label: "훅-본론-CTA" },
+                    { value: "problem-solution", label: "문제-해결" },
+                    { value: "story-arc", label: "스토리 아크" },
+                    { value: "nonlinear", label: "비선형" },
+                    { value: "slice-of-life", label: "일상물" },
+                    { value: "montage", label: "몽타주" },
+                ],
+            },
+            {
+                key: "duration",
+                label: "목표 길이",
+                type: "select",
+                defaultValue: "60",
+                options: [
+                    { value: "15", label: "15초 (숏폼)" },
+                    { value: "30", label: "30초" },
+                    { value: "60", label: "1분" },
+                    { value: "180", label: "3분" },
+                    { value: "300", label: "5분" },
+                ],
+            },
+            {
+                key: "language",
+                label: "언어",
+                type: "select",
+                defaultValue: "ko",
+                options: [
+                    { value: "ko", label: "한국어" },
+                    { value: "en", label: "English" },
+                ],
+            },
+        ],
+    },
+
+    "SOUND": {
+        inputFields: [
+            {
+                key: "description",
+                label: "사운드 설명",
+                type: "textarea",
+                placeholder: "원하는 사운드/음악을 설명하세요",
+                required: true,
+            },
+            {
+                key: "sound_type",
+                label: "사운드 유형",
+                type: "select",
+                defaultValue: "bgm",
+                options: [
+                    { value: "bgm", label: "배경음악" },
+                    { value: "sfx", label: "효과음" },
+                    { value: "ambient", label: "앰비언트" },
+                    { value: "voice", label: "보이스오버" },
+                ],
+            },
+            {
+                key: "mood",
+                label: "무드",
+                type: "select",
+                defaultValue: "neutral",
+                options: [
+                    { value: "neutral", label: "중립" },
+                    { value: "tense", label: "긴장감" },
+                    { value: "upbeat", label: "경쾌함" },
+                    { value: "melancholic", label: "멜랑콜릭" },
+                    { value: "epic", label: "웅장함" },
+                ],
+            },
+            {
+                key: "tempo",
+                label: "템포",
+                type: "select",
+                defaultValue: "medium",
+                options: [
+                    { value: "slow", label: "느림" },
+                    { value: "medium", label: "보통" },
+                    { value: "fast", label: "빠름" },
+                ],
+            },
+        ],
+    },
 };
 
 // =============================================================================

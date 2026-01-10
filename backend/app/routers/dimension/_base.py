@@ -188,7 +188,7 @@ ALLOWED_ASPECT_RATIOS = {"16:9", "9:16", "1:1", "4:3", "3:4"}
 ALLOWED_GENRES = {"drama", "thriller", "comedy", "documentary", "horror", "scifi", "ad", "mv", "short"}
 ALLOWED_SOUND_TYPES = {"bgm", "sfx", "voiceover", "full_mix"}
 ALLOWED_PLATFORMS = {"youtube", "instagram", "tiktok", "shorts", "vimeo", "general"}
-ALLOWED_STRUCTURES = {"3-act", "hook-body-cta", "problem-solution", "story-arc", "montage", "interview"}
+ALLOWED_STRUCTURES = {"3-act", "5-act", "hook-body-cta", "problem-solution", "story-arc", "montage", "interview", "hero-journey", "nonlinear", "slice-of-life"}
 ALLOWED_VEO_DURATIONS = {4, 5, 6, 7, 8}
 
 
