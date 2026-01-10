@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Agent Chat UI', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
     });
 
     test('should display chat interface', async ({ page }) => {
@@ -96,7 +96,7 @@ test.describe('Singularity (Template Gallery)', () => {
         await page.goto('/singularity');
 
         // Wait for templates to load
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Check for template cards
         const templateCards = page.locator('[data-testid^="template-card"]').or(
@@ -111,7 +111,7 @@ test.describe('Singularity (Template Gallery)', () => {
 
     test('should filter templates by tag', async ({ page }) => {
         await page.goto('/singularity');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Look for filter buttons/tabs
         const filterBtns = page.locator('[data-testid*="filter"]').or(

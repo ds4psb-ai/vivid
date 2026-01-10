@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Credits Page', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/credits');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
     });
 
     test('should load credits page', async ({ page }) => {
@@ -47,7 +47,7 @@ test.describe('Credits Page', () => {
 test.describe('Credit Top-up', () => {
     test('should display top-up options', async ({ page }) => {
         await page.goto('/credits');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Look for top-up/충전 button or section
         const topupBtn = page.locator('button:has-text("충전")').or(
@@ -64,7 +64,7 @@ test.describe('Credit Top-up', () => {
 test.describe('Credit Cost Display', () => {
     test('should show credit cost in dimension panels', async ({ page }) => {
         await page.goto('/dimension/story-architect');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Check for credit cost display
         const costDisplay = page.locator('text=크레딧').or(
@@ -81,7 +81,7 @@ test.describe('Credit Cost Display', () => {
 test.describe('BYOK Mode', () => {
     test('should show BYOK option in settings', async ({ page }) => {
         await page.goto('/settings');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Look for BYOK or API key option
         const byokOption = page.locator('text=BYOK').or(
