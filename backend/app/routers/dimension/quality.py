@@ -39,6 +39,7 @@ class QualityCheckRequest(BaseModel):
     """Request model for Quality Check evaluation."""
     content: str = Field(..., min_length=1, max_length=10000, description="Content to evaluate")
     content_type: str = Field("prompt", max_length=50, description="Type of content")
+    inspection_mode: str = Field("comprehensive", max_length=50, description="Inspection mode (comprehensive, quick, cinematic, consistency)")
     criteria: List[str] = Field(
         default=["clarity", "specificity", "creativity", "coherence", "grammar", "impact"],
         description="Evaluation criteria"
@@ -108,13 +109,14 @@ async def check_quality(
         inputs={
             "content": request.content,
             "content_type": request.content_type,
+            "inspection_mode": request.inspection_mode,
             "criteria": request.criteria,
         },
         model=request.model,
         user=user,
         byok_key=byok_key,
         db=db,
-        inputs_summary={"content_type": request.content_type, "criteria": request.criteria},
+        inputs_summary={"content_type": request.content_type, "inspection_mode": request.inspection_mode, "criteria": request.criteria},
         params={"threshold": request.threshold},
         intent=intent,
     )
@@ -149,13 +151,14 @@ async def check_quality_stream(
             inputs={
                 "content": request.content,
                 "content_type": request.content_type,
+                "inspection_mode": request.inspection_mode,
                 "criteria": request.criteria,
             },
             model=request.model,
             user=user,
             byok_key=byok_key,
             db=db,
-            inputs_summary={"content_type": request.content_type, "criteria": request.criteria},
+            inputs_summary={"content_type": request.content_type, "inspection_mode": request.inspection_mode, "criteria": request.criteria},
             params={"threshold": request.threshold},
             intent=intent,
         ),

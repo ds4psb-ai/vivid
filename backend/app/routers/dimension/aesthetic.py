@@ -37,13 +37,15 @@ router = APIRouter()
 class AestheticDirectRequest(BaseModel):
     """Request model for Aesthetic Director style guide generation."""
     concept: str = Field(..., min_length=1, max_length=MAX_CONCEPT_LENGTH, description="Visual concept")
-    reference_style: str = Field("wong", max_length=100, description="Auteur reference style")
+    reference_style: str = Field("bong", max_length=100, description="Auteur reference style")
     mood: str = Field("cinematic", max_length=100, description="Visual mood")
+    lighting_style: str = Field("natural", max_length=50, description="Lighting style (natural, high-key, low-key, dramatic, soft)")
+    color_mood: str = Field("neutral", max_length=50, description="Color mood (neutral, warm, cool, desaturated, vibrant)")
     target_medium: str = Field("video", max_length=50, description="Target medium")
     use_rag: bool = Field(True, description="Use RAG for auteur knowledge")
     model: str = Field("gemini-3-flash-preview", description="AI model")
 
-    @field_validator("concept", "reference_style", "mood", mode="before")
+    @field_validator("concept", "reference_style", "mood", "lighting_style", "color_mood", mode="before")
     @classmethod
     def strip_strings(cls, v: str) -> str:
         return _strip_string(v)
@@ -109,13 +111,15 @@ async def direct_aesthetic(
             "concept": request.concept,
             "reference_style": request.reference_style,
             "mood": request.mood,
+            "lighting_style": request.lighting_style,
+            "color_mood": request.color_mood,
             "target_medium": request.target_medium,
         },
         model=request.model,
         user=user,
         byok_key=byok_key,
         db=db,
-        inputs_summary={"concept": request.concept[:100], "style": request.reference_style},
+        inputs_summary={"concept": request.concept[:100], "style": request.reference_style, "lighting": request.lighting_style},
         params={"use_rag": request.use_rag},
         intent=intent,
     )
@@ -156,13 +160,15 @@ async def direct_aesthetic_stream(
                 "concept": request.concept,
                 "reference_style": request.reference_style,
                 "mood": request.mood,
+                "lighting_style": request.lighting_style,
+                "color_mood": request.color_mood,
                 "target_medium": request.target_medium,
             },
             model=request.model,
             user=user,
             byok_key=byok_key,
             db=db,
-            inputs_summary={"concept": request.concept[:100], "style": request.reference_style},
+            inputs_summary={"concept": request.concept[:100], "style": request.reference_style, "lighting": request.lighting_style},
             params={"use_rag": request.use_rag},
             intent=intent,
         ),

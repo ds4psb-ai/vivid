@@ -122,6 +122,8 @@ class ReferenceAnalyzeRequest(BaseModel):
         default=["cinematography", "editing", "color", "sound"],
         description="Areas to focus analysis on"
     )
+    analysis_depth: str = Field("standard", max_length=50, description="Analysis depth (quick, standard, deep)")
+    output_format: str = Field("structured", max_length=50, description="Output format (structured, narrative, bullet)")
     model: str = Field("gemini-3-flash-preview", description="AI model")
 
     @field_validator("video_description", mode="before")
@@ -431,12 +433,14 @@ async def analyze_4d_reference(
         inputs={
             "video_description": request.video_description,
             "focus_areas": request.focus_areas,
+            "analysis_depth": request.analysis_depth,
+            "output_format": request.output_format,
         },
         model=request.model,
         user=user,
         byok_key=byok_key,
         db=db,
-        inputs_summary={"video_description": request.video_description[:100] if request.video_description else ""},
+        inputs_summary={"video_description": request.video_description[:100] if request.video_description else "", "analysis_depth": request.analysis_depth},
         intent=intent,
     )
 
@@ -470,12 +474,14 @@ async def analyze_4d_reference_stream(
             inputs={
                 "video_description": request.video_description,
                 "focus_areas": request.focus_areas,
+                "analysis_depth": request.analysis_depth,
+                "output_format": request.output_format,
             },
             model=request.model,
             user=user,
             byok_key=byok_key,
             db=db,
-            inputs_summary={"video_description": request.video_description[:100] if request.video_description else ""},
+            inputs_summary={"video_description": request.video_description[:100] if request.video_description else "", "analysis_depth": request.analysis_depth},
             intent=intent,
         ),
         media_type="text/event-stream",
