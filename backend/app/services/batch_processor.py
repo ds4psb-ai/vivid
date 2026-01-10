@@ -322,8 +322,8 @@ class BatchProcessor:
                 parts = content.get("parts", [])
                 if parts:
                     return parts[0].get("text", "")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"[_extract_content] Failed to extract content: {e}")
         return ""
     
     @classmethod

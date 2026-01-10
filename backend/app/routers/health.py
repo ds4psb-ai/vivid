@@ -73,8 +73,9 @@ async def health_check(db: AsyncSession = Depends(get_db)) -> HealthStatus:
             "status": "healthy",
             "latency_ms": round(redis_latency, 2),
         }
-    except Exception:
+    except Exception as e:
         # Redis is optional, so degraded instead of unhealthy
+        logger.debug(f"[Health] Redis check failed: {e}")
         checks["redis"] = {
             "status": "unavailable",
             "message": "Redis not configured or unreachable",

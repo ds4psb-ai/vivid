@@ -1432,7 +1432,8 @@ def _should_use_handle(output: Dict[str, Any]) -> bool:
         import json
         size = len(json.dumps(output, ensure_ascii=False))
         return size > 5000  # 5KB threshold
-    except Exception:
+    except Exception as e:
+        logger.debug(f"[_should_use_handle] Size estimation failed: {e}")
         return False
 
 
@@ -1479,7 +1480,8 @@ def _get_output_preview(output: Dict[str, Any], max_length: int = 100) -> str:
                     break
             if not preview:
                 preview = f"{len(output)}개 필드"
-    except Exception:
+    except Exception as e:
+        logger.debug(f"[_get_output_preview] Preview generation failed: {e}")
         preview = "(미리보기 생성 실패)"
     
     # Ensure preview is a string

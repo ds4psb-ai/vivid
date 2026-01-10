@@ -150,8 +150,8 @@ def get_credit_cost(capsule_id: DimensionCapsuleId, model: str) -> int:
                 exec_cap = app_config.get_capability("execution")
                 if exec_cap and exec_cap.config:
                     base_cost = exec_cap.config.get("credit_cost")
-    except Exception:
-        pass  # Fall through to hardcoded values
+    except Exception as e:
+        logger.debug(f"[get_credit_cost] Dynamic config lookup failed, using hardcoded: {e}")
     
     # Fallback: hardcoded base credit costs
     if base_cost is None:
@@ -339,8 +339,8 @@ def _get_auteur_keys() -> List[str]:
         if auteur_apps:
             _auteur_keys_cache = [app.metadata.name for app in auteur_apps]
             return _auteur_keys_cache
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"[get_auteur_keys] Registry lookup failed, using fallback: {e}")
     
     return _FALLBACK_AUTEUR_KEYS
 

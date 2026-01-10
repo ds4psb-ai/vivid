@@ -102,8 +102,8 @@ async def credits_info() -> Dict[str, Any]:
                 "flash": get_credit_cost(capsule_id, "gemini-3-flash-preview"),
                 "pro": get_credit_cost(capsule_id, "gemini-3-pro-preview"),
             }
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"[credits_info] Failed to get cost for {capsule_id}: {e}")
     
     return {
         "costs": credit_costs,
