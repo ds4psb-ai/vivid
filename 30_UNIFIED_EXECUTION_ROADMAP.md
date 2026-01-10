@@ -20,7 +20,7 @@
 | **Dimension Tools** | `/api/dimension/*` 기반 프롬프트/스토리보드/이미지/레퍼런스 실행 | ✅ |
 | **Template** | 카탈로그, 버전 관리, 공개/비공개 | ✅ |
 | **Credits** | 지갑, 원장, 구독/탑업/프로모 분리 | ✅ |
-| **Affiliate** | 리퍼럴 추적, 리워드 지급 (legacy API, 미마운트) | ⚠️ |
+| **Affiliate** | 리퍼럴 추적, 리워드 지급 (라우터 마운트됨, 일부 문서 legacy 표기) | ⚠️ |
 | **Auth** | Google OAuth, 세션 관리 | ✅ |
 | **Ingest** | Raw/Derive/Pattern 파이프라인 | ✅ |
 | **VDG 2-Pass** | SemanticPass, VisualPass, Merger, DirectorCompiler | ✅ |
@@ -56,9 +56,9 @@
 ## Known Issues (Non-blocking)
 
 - Agent streaming 스레드가 중복 시작되는 코드가 존재 (SSE 중복 이벤트 가능성).
-- Global Chokki Accordion은 legacy SSE 파서를 사용하여 `agent.*` 이벤트와 불일치.
+- AG-UI 매퍼는 존재하지만 채팅 UI는 `agent.*` 이벤트를 직접 처리하며 완전 전환은 미완성.
 - `aiofiles` 의존성이 명시되지 않아 서버 환경에 따라 import 실패 가능.
-- Affiliate API 라우터가 `_deprecated`에만 존재하여 `/api/v1/affiliate/*` 호출이 404일 수 있음.
+- Affiliate API는 메인 앱에 마운트되어 있으며 archive 문서에 legacy 표기가 남아 있음.
 
 ## 중기 로드맵 (1~3개월)
 

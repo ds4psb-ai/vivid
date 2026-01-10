@@ -1,8 +1,8 @@
 # Vivid Frontend Components Guide
 
 > **Version**: 1.0
-> **Framework**: Next.js 15 + TypeScript + TailwindCSS
-> **Package Manager**: Bun
+> **Framework**: Next.js 16.1 + TypeScript + TailwindCSS
+> **Package Manager**: npm
 
 ---
 
@@ -21,8 +21,9 @@
 ```
 frontend/src/
 ├── app/                    # Next.js App Router pages
-│   ├── dimension/          # Dimension miniapp routes
-│   │   └── [slug]/page.tsx # Dynamic dimension page
+│   ├── dimension/          # Dimension hub + static routes
+│   │   ├── page.tsx        # Dimension hub
+│   │   └── */page.tsx      # Static dimension pages
 │   ├── flow/               # Workflow (Train) pages
 │   └── singularity/        # Template gallery
 ├── components/
@@ -120,7 +121,7 @@ Each theme provides:
 
 ---
 
-### 2.3 The 10 Dimension Panels
+### 2.3 Dimension Panels (11 total, Creative Editor 포함)
 
 | Panel | File | Theme | API Endpoint |
 |-------|------|-------|--------------|
@@ -128,12 +129,13 @@ Each theme provides:
 | Storyboard Sketch | `StoryboardPanel.tsx` | emerald | `/api/dimension/2d/create` |
 | Visual Realizer | `VisualRealizerPanel.tsx` | amber | `/api/dimension/3d/generate` |
 | Reference Decoder | `ReferenceDecoderPanel.tsx` | cyan | `/api/dimension/4d/analyze` |
-| Quality Director | `QualityDirectorPanel.tsx` | rose | `/api/dimension/qc/check` |
-| Aesthetic Director | `AestheticDirectorPanel.tsx` | fuchsia | `/api/dimension/ad/style` |
-| Abyss Interpreter | `AbyssInterpreterPanel.tsx` | indigo | `/api/dimension/ai/analyze` |
+| Quality Director | `QualityDirectorPanel.tsx` | rose | `/api/dimension/quality/check` |
+| Creative Editor | `CreativeEditorPanel.tsx` | rose | `/api/dimension/quality/editor` |
+| Aesthetic Director | `AestheticDirectorPanel.tsx` | fuchsia | `/api/dimension/aesthetic/direct` |
+| Abyss Interpreter | `AbyssInterpreterPanel.tsx` | indigo | `/api/dimension/persona/analyze` |
 | Video Maker | `VeoVideoPanel.tsx` | sky | `/api/dimension/veo/generate/stream` |
-| Story Architect | `StoryArchitectPanel.tsx` | amber | `/api/dimension/story/create` |
-| Sound Crafter | `SoundCrafterPanel.tsx` | rose | `/api/dimension/sound/generate` |
+| Story Architect | `StoryArchitectPanel.tsx` | emerald | `/api/dimension/story/architect` |
+| Sound Crafter | `SoundCrafterPanel.tsx` | rose | `/api/dimension/sound/craft` |
 
 ---
 

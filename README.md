@@ -36,7 +36,7 @@ This repo builds the chat-first agent, dimension miniapps, and train-style workf
 - **Framework**: Tool-aware chat agent with standard SSE streaming.
 - **Robustness**: 
   - Thread-safe event loop with `RLock` and bounded buffers.
-  - Memory leak protection via extensive `weakref` usage and periodic scavenging.
+  - Memory leak protection via bounded buffers and TTL-based cleanup.
   - **Peripheral Integration**: Full event mapping for Dimension/HumanCloud tools (`agent.teaching_*`, `agent.workflow_*`).
 - **UX**: 
   - Adaptive intent routing (Korean/English/Trend keywords).
@@ -66,16 +66,16 @@ This repo builds the chat-first agent, dimension miniapps, and train-style workf
 **Canonical Anchors**:
 - `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
 - `08_PIPELINES_AND_USER_FLOWS.md`
-- `04_CAPSULE_NODE_SPEC.md`
-- `19_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
-- `06_SHEETS_SCHEMA_V1.md`
-- `07_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
-- `09_DB_PROMOTION_RULES_V1.md`
-- `24_CLAIM_EVIDENCE_TRACE_SPEC_V1.md`
+- `docs/archive/04_CAPSULE_NODE_SPEC.md`
+- `docs/archive/19_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
+- `docs/archive/06_SHEETS_SCHEMA_V1.md`
+- `docs/archive/07_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
+- `docs/archive/09_DB_PROMOTION_RULES_V1.md`
+- `docs/archive/24_CLAIM_EVIDENCE_TRACE_SPEC_V1.md`
 
 ## Local setup
 
-### 1) Infra (Postgres only)
+### 1) Infra (Postgres + Redis + Qdrant)
 
 ```bash
 docker-compose up -d

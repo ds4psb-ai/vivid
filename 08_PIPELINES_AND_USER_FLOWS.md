@@ -12,8 +12,8 @@
 이 문서는 **흐름/역할의 단일 기준**입니다.  
 다른 문서는 이 내용을 반복하지 않고 링크로 참조합니다.
 원칙/철학은 `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`에서 고정한다.
-E2E 상세 파이프라인은 `21_AUTEUR_PIPELINE_E2E_CODEX.md`를 참조한다.
-프로덕션(샷 생성/후반) 상세는 `22_AI_PRODUCTION_PIPELINE_CODEX.md`를 참조한다.
+E2E 상세 파이프라인은 `docs/archive/21_AUTEUR_PIPELINE_E2E_CODEX.md`를 참조한다.
+프로덕션(샷 생성/후반) 상세는 `docs/archive/22_AI_PRODUCTION_PIPELINE_CODEX.md`를 참조한다.
 
 ---
 
@@ -22,7 +22,7 @@ E2E 상세 파이프라인은 `21_AUTEUR_PIPELINE_E2E_CODEX.md`를 참조한다.
 - **Gemini 3 Pro/Flash**: 영상 구조화(JSON Schema) 전용 엔진  
   - ASR + 샷/키프레임 기반의 **scene/shot schema** 생성  
   - 결과는 **DB SoR(Video Schema)**에 적재 (NotebookLM 소스는 DB 요약본)  
-  - 상세 스펙: `19_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
+  - 상세 스펙: `docs/archive/19_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
 - **NotebookLM**: 지식/가이드 레이어 (Light RAG)  
   - 거장/장르 **클러스터 노트북** 운영  
   - 요약/오마주/변주/템플릿 적합도 가이드 출력  
@@ -31,14 +31,14 @@ E2E 상세 파이프라인은 `21_AUTEUR_PIPELINE_E2E_CODEX.md`를 참조한다.
   - 업로드 소스는 SoR가 아니며, 결과는 Sheets Bus → DB 승격 규칙을 따른다  
   - Ultra 구독 기준 다중 출력/대량 처리에 유리  
   - Mega-Notebook은 **발굴/집계/운영 레이어**로만 사용하며, 캡슐은 **phase-locked pack**에서만 승격  
-  - 출력 규격: `07_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
-  - 소스팩/프롬프트 프로토콜: `25_NOTEBOOKLM_SOURCE_PACK_PROTOCOL_CODEX.md`
+  - 출력 규격: `docs/archive/07_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
+  - 소스팩/프롬프트 프로토콜: `docs/archive/25_NOTEBOOKLM_SOURCE_PACK_PROTOCOL_CODEX.md`
 - **Opal**: 템플릿 시드 + 내부 워크플로 자동화  
   - 라벨링/QA/프롬프트 체인 도구화  
   - 캡슐 노드 내부 서브그래프로만 실행
 - **Sheets Bus**: 운영/검수용 스테이징  
   - DB SoR가 **증명/학습의 정본**  
-  - 승격 규칙: `09_DB_PROMOTION_RULES_V1.md`
+  - 승격 규칙: `docs/archive/09_DB_PROMOTION_RULES_V1.md`
 
 ---
 

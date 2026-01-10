@@ -10,7 +10,7 @@ Vivid Agent ("Chokki") is a robust, event-driven AI agent designed for chat-base
 ### Core Philosophy
 - **Explicit over Implicit**: All state changes and tool executions produce explicit events.
 - **Resilience**: The system is designed to recover from network failures, tool timeouts, and LLM hallucinations.
-- **Safety**: Strict thread safety (`RLock`), memory boundaries (`weakref`), and rate limiting.
+- **Safety**: Thread safety (`RLock`), bounded buffers, and rate limiting.
 
 ### System Overview Diagram
 
@@ -269,8 +269,8 @@ flowchart TD
 ## 5. Hardening Measures (2026-01)
 
 ### 5.1 Memory Management
-- **Weak References**: Event emitters use `weakref` to allow garbage collection of closed connections.
-- **Periodic Scavenging**: Background tasks clean up stale sessions and evidence buffers.
+- **Bounded Buffers**: EvidenceCollector uses maxlen buffers to cap memory growth.
+- **TTL/Cleanup Helpers**: Workflow execution locks use TTLCache; rate limiter cleanup helpers exist (periodic scheduling TBD).
 
 ### 5.2 Concurrency Control
 - **Session Locking**: Critical sections (like Workflow Execution) acquire per-session locks to prevent race conditions.
@@ -295,4 +295,3 @@ flowchart TD
 | **Intent** | `agents/intent_router.py` | User intent classification |
 | **Frontend** | `lib/agent-event-handlers.ts` | SSE event processing |
 | **Frontend** | `components/AgentChatAccordion.tsx` | Chat UI component |
-

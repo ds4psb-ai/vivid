@@ -38,7 +38,7 @@ curl -X POST http://localhost:8100/api/v1/agent/chat \
     "session_id": null,
     "model": "gemini-3-flash-preview",
     "attachments": [],
-    "page_context": "/dimension/prompt-alchemy"
+    "page_context": "/dimension/prompt"
   }'
 ```
 
@@ -269,15 +269,282 @@ Analyze uploaded reference images/videos for style extraction.
 
 ---
 
-### 2.5 Quality Check (QC)
+### 2.5 Aesthetic Director (AD)
 
-**Endpoint**: `POST /api/dimension/qc/check`
+**Endpoint**: `POST /api/dimension/aesthetic/direct`
 
-Evaluate content quality across 6 criteria.
+Generate visual style guidelines with auteur matching (6 directors: Bong, Park, Shinkai, etc.).
+
+#### Request
+
+```bash
+curl -X POST http://localhost:8100/api/dimension/aesthetic/direct \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: user123" \
+  -d '{
+    "concept": "추격 씬이 있는 도시 느와르 스릴러",
+    "reference_style": "bong",
+    "mood": "tense",
+    "target_medium": "video",
+    "model": "gemini-3-pro-preview"
+  }'
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "output": {
+    "visual_guidelines": {
+      "composition": "Deep focus with foreground/background tension",
+      "lighting": "High contrast chiaroscuro with neon accents",
+      "camera": "Wide masters, sudden tight close-ups",
+      "pacing": "Slow build to explosive action"
+    },
+    "color_palette": ["#1a1a2e", "#16213e", "#e94560", "#f1f1f1"],
+    "style_keywords": ["noir", "urban", "tense", "symmetric framing"],
+    "avoid_elements": ["handheld shaky cam", "oversaturated colors"],
+    "auteur_influence": {
+      "name": "봉준호",
+      "key_techniques": ["Genre blending", "Class hierarchy symbolism"],
+      "reference_works": ["기생충", "살인의 추억"]
+    }
+  },
+  "credit_cost": 10
+}
+```
 
 ---
 
-### 2.6 Veo Video Generation (VEO)
+### 2.6 Persona Analysis (Abyss Mirror)
+
+**Endpoint**: `POST /api/dimension/persona/analyze`
+
+7-stage creative persona analysis using Gemini.
+
+#### Request
+
+```bash
+curl -X POST http://localhost:8100/api/dimension/persona/analyze \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: user123" \
+  -d '{
+    "user_message": "저는 우울한 분위기의 영화를 좋아해요",
+    "analysis_stage": "intro",
+    "persona_data": {},
+    "depth_level": "deep",
+    "model": "gemini-3-pro-preview"
+  }'
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "output": {
+    "assistant_message": "우울한 분위기를 선호하시군요. 어떤 종류의 우울함이 끌리시나요? 고독감, 상실감, 아니면 멜랑콜리한 아름다움?",
+    "next_stage": "subconscious",
+    "persona_update": {
+      "mood_preference": "melancholic",
+      "narrative_affinity": ["introspection", "loss"]
+    },
+    "analysis_complete": false
+  },
+  "credit_cost": 5
+}
+```
+
+---
+
+### 2.7 Story Architect (STORY)
+
+**Endpoint**: `POST /api/dimension/story/architect`
+
+Generate structured scenarios with 3-act/hero/circular structures.
+
+#### Request
+
+```bash
+curl -X POST http://localhost:8100/api/dimension/story/architect \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: user123" \
+  -d '{
+    "concept": "외로운 로봇이 감정을 배우는 이야기",
+    "genre": "drama",
+    "duration": "60s",
+    "structure": "3act",
+    "language": "ko",
+    "model": "gemini-3-pro-preview"
+  }'
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "output": {
+    "title": "기계의 눈물",
+    "logline": "폐공장의 로봇이 버려진 강아지를 만나 처음으로 슬픔을 경험한다.",
+    "synopsis": "먼지 쌓인 공장에서 혼자 작동하는 로봇 유닛-7. 어느 날 비 내리는 밤, 상자 속 떨고 있는 강아지를 발견한다...",
+    "structure": [
+      {"act": 1, "description": "일상 속 고독", "duration": "15s", "emotion": "lonely"},
+      {"act": 2, "description": "만남과 변화", "duration": "30s", "emotion": "curious"},
+      {"act": 3, "description": "이별과 깨달음", "duration": "15s", "emotion": "bittersweet"}
+    ],
+    "characters": [
+      {"name": "유닛-7", "role": "protagonist", "arc": "flat→growth", "traits": ["curious", "innocent"]}
+    ],
+    "themes": ["고독", "감정의 발견", "인간성"],
+    "visual_motifs": ["비", "녹슨 금속", "따뜻한 빛"],
+    "next_dimension": "storyboard-sketch"
+  },
+  "credit_cost": 10
+}
+```
+
+---
+
+### 2.8 Sound Crafter (SOUND)
+
+**Endpoint**: `POST /api/dimension/sound/craft`
+
+Generate music/sound prompts for Suno, Udio, and ElevenLabs.
+
+#### Request
+
+```bash
+curl -X POST http://localhost:8100/api/dimension/sound/craft \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: user123" \
+  -d '{
+    "concept": "로봇의 슬픔을 표현하는 감성 피아노 음악",
+    "sound_type": "bgm",
+    "mood": "melancholic",
+    "genre": "cinematic",
+    "tempo": "slow",
+    "duration": "60s",
+    "target_platform": "suno",
+    "language": "ko"
+  }'
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "output": {
+    "music_prompt": "Melancholic solo piano with soft strings, building emotional tension, cinematic atmosphere, gentle arpeggios fading into silence",
+    "style_tags": ["cinematic", "emotional", "piano", "ambient", "sad"],
+    "bpm_range": "60-80 BPM",
+    "key_signature": "D minor",
+    "instrumentation": ["piano", "strings", "ambient pads"],
+    "dynamics": "Starts pianissimo, builds to mezzo-forte climax, fades to silence"
+  },
+  "credit_cost": 8
+}
+```
+
+---
+
+### 2.9 Quality Check (QC)
+
+**Endpoint**: `POST /api/dimension/quality/check`
+
+Evaluate content quality across 6 criteria: clarity, creativity, consistency, technical accuracy, emotional impact, and narrative flow.
+
+#### Request
+
+```bash
+curl -X POST http://localhost:8100/api/dimension/quality/check \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: user123" \
+  -d '{
+    "content": "A cinematic shot of a lonely robot...",
+    "content_type": "prompt",
+    "criteria": ["clarity", "creativity", "consistency"]
+  }'
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "output": {
+    "overall_score": 82,
+    "criteria_scores": {
+      "clarity": 85,
+      "creativity": 80,
+      "consistency": 81
+    },
+    "issues": [
+      {"severity": "minor", "description": "Lighting direction could be more specific"}
+    ],
+    "suggestions": [
+      "Add specific time of day for lighting consistency",
+      "Consider adding camera movement descriptor"
+    ]
+  },
+  "credit_cost": 3
+}
+```
+
+---
+
+### 2.10 Creative Editor (CE)
+
+**Endpoint**: `POST /api/dimension/quality/editor`
+
+Generate editorial critique and revision suggestions with 4 persona modes.
+
+#### Request
+
+```bash
+curl -X POST http://localhost:8100/api/dimension/quality/editor \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: user123" \
+  -d '{
+    "content": "폐공장에서 로봇이 강아지를 만나 슬퍼한다.",
+    "context": "SF 감성 드라마, 60초 쇼트폼",
+    "persona": "Senior Editor",
+    "use_rag": true
+  }'
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "output": {
+    "critique": {
+      "narrative_score": 75,
+      "visual_score": 60,
+      "pacing_score": 70,
+      "issues": [
+        "시각적 디테일 부족",
+        "감정 전개가 급함"
+      ]
+    },
+    "original_content": "폐공장에서 로봇이 강아지를 만나 슬퍼한다.",
+    "improved_content": "녹슨 기어가 굴러다니는 폐공장. 유닛-7의 광학 센서가 비에 젖은 상자를 감지한다. 안에서 미약한 체온 신호. 강아지다. 로봇의 서보 모터가 처음으로 멈칫한다.",
+    "changes_made": [
+      "배경 디테일 추가",
+      "로봇 시점 서술 강화",
+      "감정 암시적 표현"
+    ]
+  },
+  "credit_cost": 5
+}
+```
+
+---
+
+### 2.11 Veo Video Generation (VEO)
 
 **Endpoint**: `POST /api/dimension/veo/generate/stream`
 

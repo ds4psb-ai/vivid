@@ -24,7 +24,7 @@
 
 | 레이어 | 기술 |
 |--------|------|
-| **Frontend** | Next.js 15, TypeScript, Bun, TailwindCSS |
+| **Frontend** | Next.js 16.1, TypeScript, npm, TailwindCSS |
 | **Backend** | Python 3.11, FastAPI, SQLAlchemy, Pydantic |
 | **Database** | PostgreSQL (Main), Redis (Cache), Qdrant (Vector) |
 | **AI** | Google Gemini 3 Pro/Flash, Google Veo 3.1, Claude 4.5 |
@@ -93,8 +93,8 @@
 
 | 파일/모듈 | 설명 | 완성도 |
 |-----------|------|--------|
-| `app/dimension/[slug]/page.tsx` | 개별 차원 앱 페이지 | 90% |
-| `components/dimension/*.tsx` | 10개 차원 패널 컴포넌트 | 85% |
+| `app/dimension/*/page.tsx` | 개별 차원 앱 페이지 (static routes) | 90% |
+| `components/dimension/*.tsx` | 11개 차원 패널 컴포넌트 (Creative Editor 포함) | 85% |
 | `components/train/TrainWorkflowView.tsx` | 열차 워크플로우 UI | 80% |
 | `app/flow/page.tsx` | Flow 메인 페이지 | 80% |
 | `app/singularity/page.tsx` | 템플릿 갤러리 | 70% |
@@ -104,16 +104,16 @@
 
 | # | 앱 이름 | 라우트 | Backend | Frontend | 비고 |
 |---|--------|--------|---------|----------|------|
-| 1 | 심연해석기 | `/dimension/abyss-mirror` | ✅ 90% | ✅ 90% | 7단계 대화형 페르소나 분석 |
+| 1 | 심연해석기 | `/dimension/abyss` | ✅ 90% | ✅ 90% | 7단계 대화형 페르소나 분석 |
 | 2 | 레퍼런스 해석기 | `/dimension/reference-decoder` | ✅ 90% | ✅ 90% | 동작 |
 | 3 | 시나리오 생성기 | `/dimension/story-architect` | ✅ 85% | ✅ 85% | 동작 |
-| 4 | 미학 디렉터 | `/dimension/aesthetic-director` | ✅ 85% | ✅ 85% | RAG 연동 완료 (6 auteurs) |
-| 5 | 스토리보드 스케치 | `/dimension/storyboard-sketch` | ✅ 85% | ✅ 85% | 동작 |
+| 4 | 미학 디렉터 | `/dimension/aesthetic` | ✅ 85% | ✅ 85% | RAG 연동 완료 (6 auteurs) |
+| 5 | 스토리보드 스케치 | `/dimension/storyboard` | ✅ 85% | ✅ 85% | 동작 |
 | 6 | 사운드 크래프터 | `/dimension/sound-crafter` | ✅ 80% | ✅ 80% | 동작 |
-| 7 | 프롬프트 연금술 | `/dimension/prompt-alchemy` | ✅ 90% | ✅ 90% | 동작 |
+| 7 | 프롬프트 연금술 | `/dimension/prompt` | ✅ 90% | ✅ 90% | 동작 |
 | 8 | 비주얼 리얼라이저 | `/dimension/visual-realizer` | ✅ 85% | ✅ 85% | Midjourney 연동 |
 | 9 | 비디오 메이커 | `/dimension/video-maker` | ✅ 90% | ✅ 85% | Veo 3.1 SSE 스트리밍 완료 |
-| 10 | 퀄리티 디렉터 | `/dimension/quality-director` | ✅ 90% | ✅ 85% | 6가지 검수 기준 구현 |
+| 10 | 퀄리티 디렉터 | `/dimension/quality-check` | ✅ 90% | ✅ 85% | Creative Editor 패널이 기본 페이지에 연결 |
 
 ### 3.3 미구현 / 진행 중 ❌🔄
 
@@ -189,9 +189,9 @@ cd /Users/ted/vivid/backend
 source venv/bin/activate
 uvicorn app.main:app --host 0.0.0.0 --port 8100 --reload
 
-# 3. Frontend (포트 3100, Bun 사용)
+# 3. Frontend (포트 3100, npm 사용)
 cd /Users/ted/vivid/frontend
-bun run dev
+npm run dev
 ```
 
 ### 5.2 로그 위치
@@ -206,7 +206,7 @@ bun run dev
 cd backend && pytest -v
 
 # Frontend 테스트
-cd frontend && bun test
+cd frontend && npm run test:e2e
 ```
 
 ---
