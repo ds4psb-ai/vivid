@@ -57,32 +57,41 @@ type Stage = "pitch" | "blueprint" | "script";
 
 const GENRES = [
     { value: "drama", label: "드라마" },
+    { value: "thriller", label: "스릴러" },
+    { value: "comedy", label: "코미디" },
+    { value: "documentary", label: "다큐멘터리" },
+    { value: "horror", label: "호러" },
+    { value: "scifi", label: "SF" },
     { value: "ad", label: "광고" },
     { value: "mv", label: "뮤직비디오" },
-    { value: "documentary", label: "다큐멘터리" },
     { value: "short", label: "숏폼" },
 ];
 
 const DURATIONS = [
-    { value: "15s", label: "15초" },
-    { value: "30s", label: "30초" },
-    { value: "60s", label: "1분" },
-    { value: "3m", label: "3분" },
-    { value: "5m", label: "5분" },
+    { value: "15", label: "15초 (숏폼)" },
+    { value: "30", label: "30초" },
+    { value: "60", label: "1분" },
+    { value: "180", label: "3분" },
+    { value: "300", label: "5분" },
 ];
 
 const STRUCTURES = [
-    { value: "3act", label: "3막 구조" },
-    { value: "hero", label: "영웅의 여정" },
-    { value: "circular", label: "순환 구조" },
+    { value: "3-act", label: "3막 구조" },
+    { value: "5-act", label: "5막 구조" },
+    { value: "hero-journey", label: "영웅의 여정" },
+    { value: "hook-body-cta", label: "훅-본론-CTA" },
+    { value: "problem-solution", label: "문제-해결" },
+    { value: "story-arc", label: "스토리 아크" },
+    { value: "nonlinear", label: "비선형" },
+    { value: "slice-of-life", label: "일상물" },
     { value: "montage", label: "몽타주" },
 ];
 
 export default function StoryArchitectPanel() {
     const [concept, setConcept] = useState("");
     const [genre, setGenre] = useState("drama");
-    const [duration, setDuration] = useState("60s");
-    const [structure, setStructure] = useState("3act");
+    const [duration, setDuration] = useState("60");
+    const [structure, setStructure] = useState("3-act");
 
     // Writer's Room Workflow State
     const [stage, setStage] = useState<Stage>("pitch");
