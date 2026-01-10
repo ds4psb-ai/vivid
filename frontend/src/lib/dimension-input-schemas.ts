@@ -68,6 +68,39 @@ export const DIMENSION_INPUT_SCHEMAS: Record<string, DimensionInputSchema> = {
                     { value: "melancholic", label: "멜랑콜릭" },
                 ],
             },
+            {
+                key: "duration",
+                label: "길이",
+                type: "select",
+                defaultValue: "15 seconds",
+                options: [
+                    { value: "5 seconds", label: "5초" },
+                    { value: "10 seconds", label: "10초" },
+                    { value: "15 seconds", label: "15초" },
+                    { value: "30 seconds", label: "30초" },
+                    { value: "60 seconds", label: "60초" },
+                ],
+            },
+            {
+                key: "language",
+                label: "언어",
+                type: "select",
+                defaultValue: "ko",
+                options: [
+                    { value: "ko", label: "한국어" },
+                    { value: "en", label: "English" },
+                ],
+            },
+            {
+                key: "model",
+                label: "AI 모델",
+                type: "select",
+                defaultValue: "gemini-3-flash-preview",
+                options: [
+                    { value: "gemini-3-flash-preview", label: "Flash (빠름)" },
+                    { value: "gemini-3-pro-preview", label: "Pro (고품질)" },
+                ],
+            },
         ],
     },
 
