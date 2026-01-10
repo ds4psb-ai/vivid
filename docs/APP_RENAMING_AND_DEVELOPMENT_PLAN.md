@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-현재 8개의 Dimension 앱이 구현되어 있으며, 4-Stage Workflow에 맞추어 **리네이밍 3건**, **신규 개발 2건**이 필요합니다.
+현재 10개의 Dimension 앱이 구현되어 있으며, 4-Stage Workflow 기준의 슬러그/라우트 정합화가 필요합니다.
 
 ---
 
@@ -10,30 +10,30 @@
 
 ### Stage 1: 기획 (Planning)
 
-| 신규 이름 | 현재 상태 | 액션 | 현재 키 | 신규 키 |
+| 신규 이름 | 현재 상태 | 액션 | Route slug | Workflow key |
 |----------|---------|------|--------|--------|
 | **심연의 거울** | ✅ 구현됨 | 유지 | `abyss` | `abyss-mirror` |
-| **레퍼런스 해석기** | ✅ 구현됨 | 리네이밍 | `shot-catch` (4D) | `reference-decoder` |
-| **시나리오 생성기** | ❌ 없음 | **신규 개발** | - | `story-architect` |
+| **레퍼런스 해석기** | ✅ 구현됨 | 유지 | `reference-decoder` | `reference-decoder` |
+| **시나리오 생성기** | ✅ 구현됨 | 유지 | `story-architect` | `story-architect` |
 
 ### Stage 2: 사전 제작 (Pre-production)
 
-| 신규 이름 | 현재 상태 | 액션 | 현재 키 | 신규 키 |
+| 신규 이름 | 현재 상태 | 액션 | Route slug | Workflow key |
 |----------|---------|------|--------|--------|
-| **사운드 크래프터** | ❌ 없음 | **신규 개발** | - | `sound-crafter` |
-| **스토리보드 스케치** | ✅ 구현됨 | 유지 | `storyboard` (2D) | `storyboard-sketch` |
-| **프롬프트 연금술** | ✅ 구현됨 | 통합 | `prompt` (1D) + `image-tool` (3D) | `prompt-alchemy` |
+| **사운드 크래프터** | ✅ 구현됨 | 유지 | `sound-crafter` | `sound-crafter` |
+| **스토리보드 스케치** | ✅ 구현됨 | 유지 | `storyboard` | `storyboard-sketch` |
+| **프롬프트 연금술** | ✅ 구현됨 | 유지 | `prompt` | `prompt-alchemy` |
 
 ### Stage 3: 제작 (Production)
 
-| 신규 이름 | 현재 상태 | 액션 | 현재 키 | 신규 키 |
+| 신규 이름 | 현재 상태 | 액션 | Route slug | Workflow key |
 |----------|---------|------|--------|--------|
-| **비주얼 리얼라이저** | ✅ 구현됨 | 리네이밍 | `image-tool` (3D) | `visual-realizer` |
-| **비디오 메이커** | ✅ 구현됨 | 리네이밍 | `veo-video` | `video-maker` |
+| **비주얼 리얼라이저** | ✅ 구현됨 | 유지 | `visual-realizer` | `visual-realizer` |
+| **비디오 메이커** | ✅ 구현됨 | 유지 | `video-maker` | `video-maker` |
 
 ### Stage 4: 완성 (Finishing)
 
-| 신규 이름 | 현재 상태 | 액션 | 현재 키 | 신규 키 |
+| 신규 이름 | 현재 상태 | 액션 | Route slug | Workflow key |
 |----------|---------|------|--------|--------|
 | **퀄리티 디렉터** | ✅ 구현됨 | 유지 | `quality-check` | `quality-director` |
 
@@ -41,42 +41,23 @@
 
 ## 2. 리네이밍 상세
 
-### 2.1 shot-catch → reference-decoder
+### 2.1 reference-decoder (현행)
 
-**현재**:
-- Frontend: `/dimension/shot-catch` → `ReferenceCapturePanel.tsx`
+- Frontend: `/dimension/reference-decoder` → `ReferenceDecoderPanel.tsx`
 - API: `POST /api/dimension/4d/analyze`
 - Capsule: `teaching.reference.analyze`
 
-**변경**:
-- Frontend: `/dimension/reference-decoder` → `ReferenceDecoderPanel.tsx`
-- API: `POST /api/dimension/reference/decode` (신규) + 기존 유지 (호환)
-- Capsule: `dimension.reference.decode`
-- 표시명: "레퍼런스 해석기"
+### 2.2 visual-realizer (현행)
 
-### 2.2 image-tool → visual-realizer
-
-**현재**:
-- Frontend: `/dimension/image-tool` → `ImageToolPanel.tsx`
-- API: `POST /api/dimension/3d/generate`
-
-**변경**:
 - Frontend: `/dimension/visual-realizer` → `VisualRealizerPanel.tsx`
-- API: `POST /api/dimension/visual/realize` (신규)
-- 표시명: "비주얼 리얼라이저"
-- 기능 확장: Midjourney 스타일 프리셋 추가
+- API: `POST /api/dimension/3d/generate`
+- Capsule: `teaching.image.generate`
 
-### 2.3 veo-video → video-maker
+### 2.3 video-maker (현행)
 
-**현재**:
-- Frontend: `/dimension/veo-video` → `VeoVideoPanel.tsx`
-- API: `POST /api/dimension/veo/generate`
-
-**변경**:
-- Frontend: `/dimension/video-maker` → `VideoMakerPanel.tsx`
-- API: `POST /api/dimension/video/make` (신규)
-- 표시명: "비디오 메이커"
-- 기능 확장: Veo 3.1 + Kling 모드 선택
+- Frontend: `/dimension/video-maker` → `VeoVideoPanel.tsx`
+- API: `POST /api/dimension/veo/generate` (SSE: `/api/dimension/veo/generate/stream`)
+- Capsule: `veo.video.generate`
 
 ---
 
@@ -109,7 +90,7 @@ class StoryArchitectResponse(BaseModel):
     characters: list[dict]  # [{name, role, arc, traits}]
     themes: list[str]
     visual_motifs: list[str]  # 레퍼런스 연결
-    next_dimension: str  # 추천 다음 단계 (storyboard-sketch)
+    next_dimension: str  # 추천 다음 단계 (workflow key: storyboard-sketch)
 ```
 
 **크레딧**: 10 (Flash) / 25 (Pro)
@@ -151,7 +132,7 @@ class SoundCrafterResponse(BaseModel):
     narration_script: Optional[str]  # 내레이션 스크립트
     voice_direction: Optional[dict]  # {tone, pace, emotion}
     sfx_cues: list[dict]  # [{time, sound, description}]
-    next_dimension: str  # 추천 다음 단계
+    next_dimension: str  # 추천 다음 단계 (workflow key)
 ```
 
 **크레딧**: 8 (Flash) / 18 (Pro)
@@ -297,7 +278,7 @@ const DimensionChainContext = createContext<{
 // 사용 예시
 const { setOutput } = useDimensionChain();
 
-// 심연의 거울 완료 시
+// 심연의 거울 완료 시 (workflow key 사용, route slug는 /dimension/abyss)
 setOutput("abyss-mirror", personaData);
 
 // 시나리오 생성기에서 사용
@@ -313,10 +294,10 @@ const personaData = getInput("abyss-mirror");
 
 | 순서 | 작업 | 파일 수 | 난이도 |
 |-----|------|--------|-------|
-| 1 | shot-catch → reference-decoder | ~5 | 낮음 |
-| 2 | image-tool → visual-realizer | ~5 | 낮음 |
-| 3 | veo-video → video-maker | ~5 | 낮음 |
-| 4 | 기타 이름 정리 (abyss → abyss-mirror 등) | ~10 | 낮음 |
+| 1 | reference-decoder 라우트 정합화 | ~5 | 낮음 |
+| 2 | visual-realizer 라우트 정합화 | ~5 | 낮음 |
+| 3 | video-maker 라우트 정합화 | ~5 | 낮음 |
+| 4 | route slug 일관화 (abyss/storyboard/prompt/quality-check) | ~10 | 낮음 |
 
 ### Phase 2: 신규 개발 (3-5일)
 
