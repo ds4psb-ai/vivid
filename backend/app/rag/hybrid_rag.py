@@ -45,6 +45,12 @@ from app.rag.observability import trace_rag
 from app.rag.graph_rag import graph_query as _graph_query, GraphRAGResult
 from app.rag.query_expansion import expand_query as _expand_query
 from app.rag.reranker import VertexReranker, DocumentToRank
+from app.rag.bm25_search import (
+    BM25Index,
+    hybrid_search_with_rrf,
+    get_dimension_bm25_index,
+    FusedResult,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -74,20 +80,25 @@ class HybridRAGResult:
     # Google Search Grounding 소스
     grounding_sources: List[Dict[str, Any]] = field(default_factory=list)
     confidence: float = 0.0
-    strategy_used: str = "unknown"  # "auteur_first" | "dimension" | "parallel" | "fallback"
+    strategy_used: str = "unknown"  # "auteur_first" | "dimension" | "parallel" | "fallback" | "rrf_hybrid"
     query_time_ms: int = 0
     # 메타데이터
     auteur_key: Optional[str] = None
     dimension: Optional[str] = None
     grounded: bool = False
-    # === NEW: Reranker & Metrics ===
+    # === Reranker & Metrics ===
     reranked: bool = False
     rerank_model: Optional[str] = None
     retrieval_count: int = 0  # 검색된 문서 수
     source_scores: List[float] = field(default_factory=list)  # 각 소스의 점수
-    # === NEW: GraphRAG (Phase 5) ===
+    # === GraphRAG ===
     graph_entities: List[Dict[str, Any]] = field(default_factory=list)
     graph_relationships: List[tuple] = field(default_factory=list)
+    # === RRF Hybrid Search (Phase 1) ===
+    rrf_enabled: bool = False
+    keyword_results_count: int = 0
+    vector_results_count: int = 0
+    fused_results: List[Dict[str, Any]] = field(default_factory=list)  # RRF fused results
 
 
 # ============================================================================
@@ -541,6 +552,112 @@ class HybridRAGService:
             use_google_search=use_google_search,
         )
 
+    async def rrf_query(
+        self,
+        query: str,
+        dimension: Optional[str] = None,
+        use_bm25: bool = True,
+        use_vector: bool = True,
+        rrf_k: int = 60,
+        top_k: int = 10,
+    ) -> HybridRAGResult:
+        """BM25 + 벡터 검색 RRF 융합 쿼리.
+        
+        Args:
+            query: 검색 쿼리
+            dimension: 차원 코드 (예: "1D", "AD")
+            use_bm25: BM25 키워드 검색 사용
+            use_vector: 벡터 시맨틱 검색 사용
+            rrf_k: RRF 상수 (높을수록 상위 결과 보정 약화)
+            top_k: 반환할 최대 결과 수
+            
+        Returns:
+            HybridRAGResult with RRF fused results
+        """
+        import time
+        start_time = time.monotonic()
+        
+        keyword_results = []
+        vector_results = []
+        
+        # BM25 키워드 검색
+        if use_bm25 and dimension:
+            try:
+                bm25_index = get_dimension_bm25_index(dimension)
+                if bm25_index.size > 0:
+                    bm25_results = bm25_index.search(query, top_k=top_k * 2)
+                    keyword_results = [
+                        {"id": r.id, "text": r.text, "score": r.score}
+                        for r in bm25_results
+                    ]
+                    logger.info(f"[RRF] BM25 returned {len(keyword_results)} results")
+            except Exception as e:
+                logger.warning(f"[RRF] BM25 search failed: {e}")
+        
+        # 벡터 시맨틱 검색
+        if use_vector:
+            try:
+                vertex_service = get_vertex_rag_service()
+                corpus_name = DIMENSION_TO_CORPUS.get(dimension.upper()) if dimension else None
+                vertex_result = await vertex_service.query(
+                    query=query,
+                    corpus_name=corpus_name,
+                    use_grounding=False,  # RRF에서는 grounding 비활성화
+                )
+                vector_results = [
+                    {"id": src.source_id, "text": src.text, "score": src.score}
+                    for src in vertex_result.sources
+                ]
+                logger.info(f"[RRF] Vector returned {len(vector_results)} results")
+            except Exception as e:
+                logger.warning(f"[RRF] Vector search failed: {e}")
+        
+        # RRF 융합
+        fused_results = []
+        if keyword_results or vector_results:
+            from app.rag.bm25_search import reciprocal_rank_fusion
+            
+            result_lists = []
+            if keyword_results:
+                result_lists.append(keyword_results)
+            if vector_results:
+                result_lists.append(vector_results)
+            
+            fused = reciprocal_rank_fusion(result_lists, k=rrf_k)
+            fused_results = [
+                {
+                    "id": f.id,
+                    "text": f.text,
+                    "rrf_score": f.rrf_score,
+                    "keyword_score": f.keyword_score,
+                    "vector_score": f.vector_score,
+                }
+                for f in fused[:top_k]
+            ]
+        
+        # 결과 생성
+        query_time_ms = int((time.monotonic() - start_time) * 1000)
+        
+        # 답변 생성 (상위 결과 기반)
+        if fused_results:
+            context = "\n".join([f["text"][:500] for f in fused_results[:3]])
+            answer = f"검색 결과 {len(fused_results)}건을 찾았습니다.\n\n{context[:1000]}"
+        else:
+            answer = "검색 결과를 찾을 수 없습니다."
+        
+        return HybridRAGResult(
+            answer=answer,
+            strategy_used="rrf_hybrid",
+            query_time_ms=query_time_ms,
+            dimension=dimension,
+            retrieval_count=len(fused_results),
+            rrf_enabled=True,
+            keyword_results_count=len(keyword_results),
+            vector_results_count=len(vector_results),
+            fused_results=fused_results,
+            confidence=fused_results[0]["rrf_score"] if fused_results else 0.0,
+        )
+
     def get_available_auteurs(self) -> List[str]:
         """사용 가능한 거장 키 목록."""
         return list(set(AUTEUR_KEY_TO_NOTEBOOK.values()))
@@ -565,3 +682,4 @@ def reset_hybrid_rag_service() -> None:
     """서비스 리셋 (테스트용)."""
     global _hybrid_rag_service
     _hybrid_rag_service = None
+
