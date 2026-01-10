@@ -1158,16 +1158,36 @@ async def run_reference_analyzer(
     if not isinstance(focus_areas, list):
         focus_areas = ["composition", "lighting", "color", "movement"]
     focus_areas = [_sanitize_text(str(a), 30, "focus_area") for a in focus_areas[:10]]
+    
+    # Get analysis depth and output format
+    analysis_depth = _sanitize_text(inputs.get("analysis_depth", "standard"), 30, "analysis_depth")
+    output_format = _sanitize_text(inputs.get("output_format", "structured"), 30, "output_format")
 
     model = _validate_enum(params.get("model", "gemini-3-flash-preview"), ALLOWED_MODELS, "model", "gemini-3-flash-preview")
     use_rag = params.get("use_rag", True)
 
-    # Build base prompt
+    # Build depth instruction
+    depth_instruction = ""
+    if analysis_depth == "deep":
+        depth_instruction = "\nProvide an exhaustive, detailed analysis covering every aspect of the cinematic techniques."
+    elif analysis_depth == "quick":
+        depth_instruction = "\nProvide a brief summary of the key techniques only."
+    
+    # Build format instruction
+    format_instruction = ""
+    if output_format == "bullet":
+        format_instruction = "\nFormat the output as bullet points for each focus area."
+    elif output_format == "narrative":
+        format_instruction = "\nFormat the output as a flowing narrative essay."
+
+    # Build base prompt with depth and format
     base_prompt = f"""Analyze this video reference:
 
 Description: {description}
 Focus Areas: {', '.join(focus_areas)}
-
+Analysis Depth: {analysis_depth}
+{depth_instruction}
+{format_instruction}
 Provide detailed analysis of the cinematic techniques used.
 """
 
@@ -1251,6 +1271,13 @@ async def run_quality_checker(
         50,
         "content_type"
     )
+    
+    # Get inspection mode (affects evaluation focus)
+    inspection_mode = _sanitize_text(
+        inputs.get("inspection_mode", "comprehensive"),
+        50,
+        "inspection_mode"
+    )
 
     # Parse criteria (default: aesthetic, consistency, safety)
     criteria = inputs.get("criteria", ["aesthetic", "consistency", "safety"])
@@ -1260,6 +1287,14 @@ async def run_quality_checker(
     criteria = [c for c in criteria if c in valid_criteria]
     if not criteria:
         criteria = ["aesthetic", "consistency", "safety"]
+    
+    # Adjust criteria based on inspection mode
+    if inspection_mode == "cinematic":
+        criteria = ["aesthetic", "narrative", "technical"]
+    elif inspection_mode == "quick":
+        criteria = criteria[:2]  # Only first 2 criteria
+    elif inspection_mode == "consistency":
+        criteria = ["consistency", "technical"]
 
     # Optional context (brand guidelines, previous content, etc.)
     context = inputs.get("context", {})
@@ -1277,9 +1312,17 @@ async def run_quality_checker(
     threshold = _validate_int_range(params.get("threshold", 70), 0, 100, 70)
     use_rag = params.get("use_rag", True)
 
-    # Build base prompt
+    # Build base prompt with inspection mode
+    mode_instruction = ""
+    if inspection_mode == "cinematic":
+        mode_instruction = "\nEvaluate with focus on cinematic quality, visual storytelling, and professional production standards."
+    elif inspection_mode == "quick":
+        mode_instruction = "\nProvide a brief, focused evaluation highlighting only critical issues."
+    elif inspection_mode == "consistency":
+        mode_instruction = "\nFocus on evaluating consistency across style, tone, and technical specifications."
+    
     base_prompt = f"""Evaluate this {content_type} content against the following criteria: {', '.join(criteria)}
-
+{mode_instruction}
 Content to Evaluate:
 ---
 {content}
@@ -1438,6 +1481,8 @@ async def run_aesthetic_director(
 
     reference_style = _sanitize_text(inputs.get("reference_style", ""), 50, "reference_style")
     mood = _sanitize_text(inputs.get("mood", "neutral"), 50, "mood")
+    lighting_style = _sanitize_text(inputs.get("lighting_style", "natural"), 50, "lighting_style")
+    color_mood = _sanitize_text(inputs.get("color_mood", "neutral"), 50, "color_mood")
     target_medium = _sanitize_text(inputs.get("target_medium", "video"), 50, "target_medium")
 
     # Match auteur style if provided
@@ -1463,18 +1508,20 @@ Camera Style: {matched_auteur['camera']}
     )
     use_rag = params.get("use_rag", True)
 
-    # Build base prompt
+    # Build base prompt with all style parameters
     base_prompt = f"""Create comprehensive visual style guidelines for:
 
 Concept: {concept}
 Mood: {mood}
+Lighting Style: {lighting_style}
+Color Mood: {color_mood}
 Target Medium: {target_medium}
 {auteur_context}
 
 Generate detailed guidelines including:
 1. Visual composition techniques
-2. Lighting approach
-3. Color palette (provide 5-7 hex codes)
+2. Lighting approach (focusing on {lighting_style} style)
+3. Color palette (provide 5-7 hex codes matching {color_mood} mood)
 4. Style keywords (5-10 descriptive terms)
 5. Elements to avoid
 """
