@@ -57,10 +57,11 @@ done
 
 ## 5. 프론트엔드 서버 종료 및 재시작
 ```bash
-# 1. 기존 Vivid 프론트엔드 종료
-pkill -f "bun.*vivid/frontend" 2>/dev/null || true
-pkill -f "next.*vivid" 2>/dev/null || true
-lsof -ti :3100 | xargs -r kill 2>/dev/null || true
+# 1. 기존 Vivid 프론트엔드 종료 + lock 파일 제거
+pkill -9 -f "bun.*vivid" 2>/dev/null || true
+pkill -9 -f "next.*vivid" 2>/dev/null || true
+lsof -ti :3100 | xargs -r kill -9 2>/dev/null || true
+rm -rf /Users/ted/vivid/frontend/.next/dev/lock 2>/dev/null || true
 sleep 1
 
 # 2. 프론트엔드 시작 (Bun)
