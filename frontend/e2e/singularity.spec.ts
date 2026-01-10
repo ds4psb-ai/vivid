@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Singularity Gallery', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/singularity');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
     });
 
     test('should display Singularity page with blackhole visual', async ({ page }) => {

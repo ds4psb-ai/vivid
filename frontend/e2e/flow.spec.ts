@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Flow Page', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/flow');
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
     });
 
     test('should display Flow page with basic UI', async ({ page }) => {
