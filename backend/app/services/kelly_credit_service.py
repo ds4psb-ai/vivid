@@ -147,6 +147,7 @@ class KellyIntegratedCreditService:
         execute_args: Dict[str, Any],
         rule_ids: list[str] = None,
         byok_key: Optional[str] = None,
+        credit_only: bool = False,  # For external APIs (Kling, Suno) that always require credits
     ) -> Tuple[Any, ExecutionResult]:
         """
         Kelly 통합 캡슐 실행
@@ -160,7 +161,8 @@ class KellyIntegratedCreditService:
             execute_fn: 실행 함수
             execute_args: 실행 인자
             rule_ids: 관련 규칙 ID 목록
-            byok_key: BYOK 키 (있으면 크레딧 차감 안 함)
+            byok_key: BYOK 키 (있으면 크레딧 차감 안 함, credit_only=False인 경우에만)
+            credit_only: True면 BYOK 여부와 관계없이 항상 크레딧 차감 (Kling, Suno 등 외부 API)
         
         Returns:
             (실행 결과, ExecutionResult)
@@ -170,9 +172,12 @@ class KellyIntegratedCreditService:
             db, user_id, credit_cost, model
         )
         
-        # 2. 크레딧 차감 (BYOK 아닌 경우)
+        # 2. 크레딧 차감: BYOK 없거나, credit_only=True인 경우 차감
+        # credit_only: 외부 API(Kling, Suno)는 사용자 키를 받을 수 없으므로 항상 크레딧 차감
         credits_deducted = 0
-        if not byok_key:
+        should_charge = credit_only or not byok_key
+        
+        if should_charge:
             if not kelly_decision.should_execute:
                 return None, ExecutionResult(
                     success=False,

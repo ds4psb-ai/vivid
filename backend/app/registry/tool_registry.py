@@ -61,6 +61,8 @@ class ToolDefinition(BaseModel):
     endpoint: str = Field(..., description="API endpoint path")
     credit_cost: int = Field(..., ge=0, description="Credit cost per invocation")
     supports_byok: bool = Field(default=True, description="Supports Bring Your Own Key")
+    credit_only: bool = Field(default=False, description="Always requires credits (external API like Kling, Suno)")
+    provider: str = Field(default="gemini", description="API provider (gemini|kling|suno|midjourney)")
     auto_executable: bool = Field(default=True, description="Can be auto-executed by agent")
     
     # === UI ===
