@@ -117,7 +117,9 @@ def get_capsule_by_key(capsule_key: str) -> Optional[Dict[str, Any]]:
 def get_credit_cost(capsule_key: str, model: str) -> int:
     """캡슐과 모델에 따른 크레딧 비용 계산.
     
-    Single Source of Truth: DIMENSION_CAPSULES에서 credit_costs 조회.
+    Single Source of Truth Priority:
+    1. config/apps YAML (via AppRegistry) - SSoT
+    2. fixtures/dimension_capsules.py - Fallback for unmigrated capsules
     
     Args:
         capsule_key: 캡슐 식별자 (예: "teaching.prompt.generate")
@@ -126,6 +128,28 @@ def get_credit_cost(capsule_key: str, model: str) -> int:
     Returns:
         크레딧 비용 (정수)
     """
+    # SSoT: Try AppRegistry first (config/apps YAML)
+    try:
+        from app.core.app_registry import AppRegistry
+        app_config = AppRegistry.get_by_capsule_key(capsule_key)
+        if app_config:
+            exec_cap = app_config.get_capability("execution")
+            if exec_cap:
+                cost = exec_cap.config.get("credit_cost")
+                if isinstance(cost, dict):
+                    # Model-specific costs: {"gemini-3-flash-preview": 5, ...}
+                    model_cost = cost.get(model)
+                    if model_cost is not None:
+                        return model_cost
+                    # Fallback to flash model cost
+                    return cost.get("gemini-3-flash-preview", 5)
+                elif isinstance(cost, int):
+                    # Single cost for all models
+                    return cost
+    except Exception as e:
+        logger.debug(f"[get_credit_cost] AppRegistry lookup failed: {e}")
+    
+    # Fallback: fixtures/dimension_capsules.py
     capsule = get_capsule_by_key(capsule_key)
     if not capsule:
         logger.warning(f"Unknown capsule key: {capsule_key}, using default cost 5")

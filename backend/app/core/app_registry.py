@@ -178,6 +178,25 @@ class AppRegistry:
         return None
     
     @classmethod
+    def get_by_capsule_key(cls, capsule_key: str) -> Optional[AppConfig]:
+        """Find app by capsule_key in execution capability.
+        
+        Used for SSoT credit cost lookup.
+        
+        Args:
+            capsule_key: Capsule key (e.g., "teaching.prompt.generate")
+            
+        Returns:
+            AppConfig if found, None otherwise
+        """
+        cls._ensure_initialized()
+        for app in cls._apps.values():
+            exec_cap = app.get_capability("execution")
+            if exec_cap and exec_cap.config.get("capsule_key") == capsule_key:
+                return app
+        return None
+    
+    @classmethod
     def get_all(cls) -> List[AppConfig]:
         """모든 앱 조회."""
         cls._ensure_initialized()
