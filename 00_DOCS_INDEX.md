@@ -17,6 +17,7 @@
 | 15 | CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md | 아키텍처 철학 | ✅ |
 | 27 | MCP_INTEGRATION_SPEC_V1.md | MCP 통합 | ✅ |
 | 30 | UNIFIED_EXECUTION_ROADMAP.md | 실행 로드맵 | ✅ |
+| **31** | **[DIMENSION_APP_DEVELOPER_GUIDE.md](docs/DIMENSION_APP_DEVELOPER_GUIDE.md)** | **앱 개발자 가이드 (SSoT)** | ✅ |
 | - | README.md | 프로젝트 소개 | ✅ |
 | - | PRIVACY_POLICY.md / TERMS_OF_SERVICE.md | 법률 문서 | ✅ |
 
