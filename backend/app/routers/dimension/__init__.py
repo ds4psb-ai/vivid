@@ -118,8 +118,70 @@ async def credits_info() -> Dict[str, Any]:
     tags=["Dimension Info"],
 )
 async def get_tools_config() -> Dict[str, Any]:
-    """Return tool configuration for frontend DimensionConfigContext."""
-    # Hardcoded credit costs (avoiding broken get_credit_cost import)
+    """Return tool configuration for frontend DimensionConfigContext.
+    
+    v2: AppRegistry SSoT 기반 동적 로딩 (하드코딩 폴백 유지).
+    """
+    tools = []
+    
+    # Try AppRegistry first (SSoT)
+    try:
+        from app.core.app_registry import AppRegistry
+        from app.core.app_schema import AppType
+        
+        dimension_apps = AppRegistry.get_by_type(AppType.DIMENSION)
+        
+        # Display settings per dimension
+        DIMENSION_DISPLAY = {
+            "1d": {"toolId": "prompt_generator", "displayName": "프롬프트 연금술", "displayNameEn": "Prompt Alchemy", "icon": "sparkles", "color": "violet", "stage": "pre_production"},
+            "2d": {"toolId": "storyboard", "displayName": "스토리보드 스케치", "displayNameEn": "Storyboard Sketch", "icon": "layout-grid", "color": "emerald", "stage": "pre_production"},
+            "3d": {"toolId": "image_tool", "displayName": "비주얼 리얼라이저", "displayNameEn": "Visual Realizer", "icon": "image", "color": "amber", "stage": "production"},
+            "4d": {"toolId": "reference_analyzer", "displayName": "레퍼런스 해석기", "displayNameEn": "Reference Decoder", "icon": "film", "color": "cyan", "stage": "planning"},
+            "qc": {"toolId": "quality_check", "displayName": "퀄리티 디렉터", "displayNameEn": "Quality Director", "icon": "check-circle", "color": "rose", "stage": "finishing"},
+            "ad": {"toolId": "aesthetic_direct", "displayName": "미학디렉터", "displayNameEn": "Aesthetic Director", "icon": "palette", "color": "fuchsia", "stage": "planning"},
+            "ai": {"toolId": "persona_analyze", "displayName": "심연의 거울", "displayNameEn": "Abyss Mirror", "icon": "moon", "color": "indigo", "stage": "planning"},
+            "veo": {"toolId": "veo_generate", "displayName": "비디오 메이커", "displayNameEn": "Video Maker", "icon": "video", "color": "sky", "stage": "production"},
+            "sound": {"toolId": "sound_craft", "displayName": "사운드 크래프터", "displayNameEn": "Sound Crafter", "icon": "music", "color": "purple", "stage": "production"},
+            "story": {"toolId": "story_architect", "displayName": "스토리 아키텍트", "displayNameEn": "Story Architect", "icon": "book-open", "color": "emerald", "stage": "planning"},
+        }
+        
+        for app in dimension_apps:
+            name = app.metadata.name.lower()
+            display_info = DIMENSION_DISPLAY.get(name, {})
+            
+            # Get execution capability config
+            exec_cap = app.get_capability("execution")
+            exec_config = exec_cap.config if exec_cap else {}
+            
+            tool = {
+                "toolId": display_info.get("toolId", name),
+                "dimension": name.upper(),
+                "displayName": display_info.get("displayName", app.display.name_ko),
+                "displayNameEn": display_info.get("displayNameEn", app.display.name_en),
+                "description": app.display.description or "",
+                "icon": display_info.get("icon", "sparkles"),
+                "color": display_info.get("color", "gray"),
+                "stage": display_info.get("stage", "production"),
+                "capsuleKey": exec_config.get("capsule_key", ""),
+                "endpoint": exec_config.get("endpoint", ""),
+                "creditCost": exec_config.get("credit_cost", 5),
+            }
+            tools.append(tool)
+        
+        if tools:
+            # Build toolsById map
+            tools_by_id = {tool["toolId"]: tool for tool in tools}
+            return {
+                "tools": tools,
+                "toolsById": tools_by_id,
+                "stageOrder": ["planning", "pre_production", "production", "finishing"],
+                "source": "appregistry",  # Debug: indicate SSoT source
+            }
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"AppRegistry load failed, using fallback: {e}")
+    
+    # Fallback: hardcoded tools (for backward compatibility)
     tools = [
         {
             "toolId": "prompt_generator",
@@ -234,6 +296,7 @@ async def get_tools_config() -> Dict[str, Any]:
         "tools": tools,
         "toolsById": tools_by_id,
         "stageOrder": ["planning", "pre_production", "production", "finishing"],
+        "source": "fallback",  # Debug: indicate fallback was used
     }
 
 

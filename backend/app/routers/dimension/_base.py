@@ -93,8 +93,29 @@ CAPSULE_TO_DIMENSION: Dict[DimensionCapsuleId, str] = {
 # Credit Costs
 # ============================================================================
 
+# CapsuleId → Dimension Code mapping for SSoT lookup
+_CAPSULE_TO_DIMENSION_CODE = {
+    DimensionCapsuleId.PROMPT_GENERATE: "1d",
+    DimensionCapsuleId.STORYBOARD_CREATE: "2d",
+    DimensionCapsuleId.IMAGE_GENERATE: "3d",
+    DimensionCapsuleId.REFERENCE_ANALYZE: "4d",
+    DimensionCapsuleId.AESTHETIC_DIRECT: "ad",
+    DimensionCapsuleId.AESTHETIC_MOODBOARD: "ad",
+    DimensionCapsuleId.SOUND_CRAFT: "sound",
+    DimensionCapsuleId.SOUND_MOODBOARD: "sound",
+    DimensionCapsuleId.VEO_VIDEO_GENERATE: "veo",
+    DimensionCapsuleId.STORY_ARCHITECT: "story",
+    DimensionCapsuleId.STORY_REFINE: "story",
+    DimensionCapsuleId.QUALITY_CHECK: "qc",
+    DimensionCapsuleId.PERSONA_ANALYZE: "ai",
+    DimensionCapsuleId.CREATIVE_EDITOR: "qc",
+}
+
 def get_credit_cost(capsule_id: DimensionCapsuleId, model: str) -> int:
-    """캡슐과 모델에 따른 동적 크레딧 비용 계산."""
+    """캡슐과 모델에 따른 동적 크레딧 비용 계산.
+    
+    v2: AppRegistry SSoT 기반 동적 로딩 (하드코딩 폴백 유지).
+    """
     # Model tier classification (2026 updated)
     MODEL_TIERS = {
         # Legacy models (deprecated)
@@ -115,29 +136,46 @@ def get_credit_cost(capsule_id: DimensionCapsuleId, model: str) -> int:
         "flash": 1.0,
         "pro": 3.0,
     }
-
-    # Base credit costs per capsule
-    BASE_CREDIT_COSTS = {
-        DimensionCapsuleId.PROMPT_GENERATE: 5,
-        DimensionCapsuleId.STORYBOARD_CREATE: 10,
-        DimensionCapsuleId.IMAGE_GENERATE: 5,
-        DimensionCapsuleId.REFERENCE_ANALYZE: 8,
-        DimensionCapsuleId.QUALITY_CHECK: 8,
-        DimensionCapsuleId.CREATIVE_EDITOR: 8,
-        DimensionCapsuleId.AESTHETIC_DIRECT: 10,
-        DimensionCapsuleId.AESTHETIC_MOODBOARD: 5,  # Lower cost for moodboard
-        DimensionCapsuleId.PERSONA_ANALYZE: 5,
-        DimensionCapsuleId.VEO_VIDEO_GENERATE: 200,
-        DimensionCapsuleId.STORY_ARCHITECT: 10,
-        DimensionCapsuleId.STORY_REFINE: 8,
-        DimensionCapsuleId.SOUND_CRAFT: 8,
-        DimensionCapsuleId.SOUND_MOODBOARD: 5,
-    }
-    DEFAULT_BASE_CREDIT_COST = 5
+    
+    base_cost = None
+    
+    # Try AppRegistry SSoT first
+    try:
+        from app.core.app_registry import AppRegistry
+        
+        dimension_code = _CAPSULE_TO_DIMENSION_CODE.get(capsule_id)
+        if dimension_code:
+            app_config = AppRegistry.get_by_name(dimension_code)
+            if app_config:
+                exec_cap = app_config.get_capability("execution")
+                if exec_cap and exec_cap.config:
+                    base_cost = exec_cap.config.get("credit_cost")
+    except Exception:
+        pass  # Fall through to hardcoded values
+    
+    # Fallback: hardcoded base credit costs
+    if base_cost is None:
+        BASE_CREDIT_COSTS = {
+            DimensionCapsuleId.PROMPT_GENERATE: 5,
+            DimensionCapsuleId.STORYBOARD_CREATE: 10,
+            DimensionCapsuleId.IMAGE_GENERATE: 5,
+            DimensionCapsuleId.REFERENCE_ANALYZE: 8,
+            DimensionCapsuleId.QUALITY_CHECK: 8,
+            DimensionCapsuleId.CREATIVE_EDITOR: 8,
+            DimensionCapsuleId.AESTHETIC_DIRECT: 10,
+            DimensionCapsuleId.AESTHETIC_MOODBOARD: 5,
+            DimensionCapsuleId.PERSONA_ANALYZE: 5,
+            DimensionCapsuleId.VEO_VIDEO_GENERATE: 200,
+            DimensionCapsuleId.STORY_ARCHITECT: 10,
+            DimensionCapsuleId.STORY_REFINE: 8,
+            DimensionCapsuleId.SOUND_CRAFT: 8,
+            DimensionCapsuleId.SOUND_MOODBOARD: 5,
+        }
+        DEFAULT_BASE_CREDIT_COST = 5
+        base_cost = BASE_CREDIT_COSTS.get(capsule_id, DEFAULT_BASE_CREDIT_COST)
 
     tier = MODEL_TIERS.get(model, "flash")
     multiplier = MODEL_CREDIT_MULTIPLIERS.get(tier, 1.0)
-    base_cost = BASE_CREDIT_COSTS.get(capsule_id, DEFAULT_BASE_CREDIT_COST)
 
     return int(base_cost * multiplier)
 
@@ -276,8 +314,35 @@ async def _refund_with_retry(
 # Helper: Extract Auteur Key
 # ============================================================================
 
-# 지원되는 거장 키 목록
-AUTEUR_KEYS = ["bong", "nolan", "villeneuve", "wong", "tarantino", "park", "shinkai"]
+# Fallback auteur keys (used when AppRegistry unavailable)
+_FALLBACK_AUTEUR_KEYS = ["bong", "nolan", "wong", "tarantino", "park", "shinkai"]
+
+# Cache for dynamic auteur keys
+_auteur_keys_cache: Optional[List[str]] = None
+
+def _get_auteur_keys() -> List[str]:
+    """SSoT: AppRegistry에서 거장 키 동적 조회 (캐싱 + 폴백).
+    
+    Returns:
+        등록된 거장 키 목록
+    """
+    global _auteur_keys_cache
+    
+    if _auteur_keys_cache is not None:
+        return _auteur_keys_cache
+    
+    try:
+        from app.core.app_registry import AppRegistry
+        from app.core.app_schema import AppType
+        
+        auteur_apps = AppRegistry.get_by_type(AppType.AUTEUR)
+        if auteur_apps:
+            _auteur_keys_cache = [app.metadata.name for app in auteur_apps]
+            return _auteur_keys_cache
+    except Exception:
+        pass
+    
+    return _FALLBACK_AUTEUR_KEYS
 
 
 def _extract_auteur_key(
@@ -294,6 +359,7 @@ def _extract_auteur_key(
         거장 키 또는 None
     """
     auteur_key = None
+    auteur_keys = _get_auteur_keys()  # SSoT dynamic lookup
     
     # 1. Intent에서 추출
     if intent:
@@ -304,7 +370,7 @@ def _extract_auteur_key(
                     if hint.startswith("auteur."):
                         auteur_key = hint.replace("auteur.", "")
                         break
-                    elif hint in AUTEUR_KEYS:
+                    elif hint in auteur_keys:
                         auteur_key = hint
                         break
     
@@ -313,7 +379,7 @@ def _extract_auteur_key(
         for field in ["capsule_id", "style", "auteur", "director"]:
             value = inputs.get(field, "") or ""
             value_lower = str(value).lower()
-            for key in AUTEUR_KEYS:
+            for key in auteur_keys:
                 if key in value_lower:
                     auteur_key = key
                     break

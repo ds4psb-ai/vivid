@@ -108,16 +108,27 @@ Notes:
 
 ## 5.1) Dimension Apps Credit Model
 
-> **Added**: 2026-01-01, **Updated**: 2026-01-05 (Teaching → Dimension)
+> **Added**: 2026-01-01, **Updated**: 2026-01-09 (SSoT 통합)
 
-Dimension Apps는 **모델별 동적 비용**을 사용 (SSoT: `backend/app/fixtures/dimension_capsules.py`):
+Dimension Apps는 **YAML 기반 SSoT**를 사용:
+- **SSoT 위치**: `config/apps/content/dimensions/*.yaml` → `execution.credit_cost`
+- **백엔드**: `get_credit_cost()` → AppRegistry SSoT 우선, 하드코딩 폴백
+- **프론트엔드**: `/api/dimension/tools` → AppRegistry에서 동적 로딩
 
-| API Endpoint | Credits | Description |
-|-------------|---------|-------------|
-| `/api/dimension/1d/generate` | 5 (기본값) | 1D Origin - Veo 프롬프트 생성 |
-| `/api/dimension/2d/create` | 10 (기본값) | 2D Blueprint - 스토리보드 생성 |
-| `/api/dimension/3d/generate` | 5 (기본값) | 3D Ambience - 이미지 프롬프트 생성 |
-| `/api/dimension/4d/analyze` | 8 (기본값) | 4D Moment - 레퍼런스 분석 |
+| API Endpoint | Credits | Dimension | Description |
+|-------------|---------|-----------|-------------|
+| `/api/dimension/1d/generate` | 5 | 1D | Veo 프롬프트 생성 |
+| `/api/dimension/2d/create` | 10 | 2D | 스토리보드 생성 |
+| `/api/dimension/3d/generate` | 5 | 3D | 이미지 프롬프트 생성 |
+| `/api/dimension/4d/analyze` | 8 | 4D | 레퍼런스 분석 |
+| `/api/dimension/quality/check` | 8 | QC | 품질 검수 |
+| `/api/dimension/aesthetic/direct` | 10 | AD | 미학 디렉터 |
+| `/api/dimension/persona/analyze` | 5 | AI | 심연 해석 |
+| `/api/dimension/story/architect` | 10 | STORY | 스토리 아키텍트 |
+| `/api/dimension/sound/craft` | 8 | SOUND | 사운드 크래프터 |
+| `/api/dimension/veo/generate` | 200 | VEO | AI 비디오 생성 |
+
+> **Pro 모델 사용 시 3x 비용** (예: 1D Pro = 15 credits)
 
 ### BYOK (Bring Your Own Key)
 

@@ -25,6 +25,13 @@ capabilities:
     config:
       ttl: 3600
 
+  - name: execution
+    enabled: true
+    config:
+      credit_cost: 8
+      endpoint: "/api/dimension/4d/analyze"
+      capsule_key: "teaching.reference.analyze"
+
 extensions:
   dimension:
     tool_type: analysis

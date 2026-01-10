@@ -60,6 +60,10 @@ const FALLBACK_TOOLS: DimensionToolConfig[] = [
     { toolId: "aesthetic_direct", dimension: "AD", displayName: "미학디렉터", displayNameEn: "Aesthetic Director", description: "시각적 스타일 가이드라인 생성", icon: "palette", color: "fuchsia", stage: "planning", capsuleKey: "dimension.aesthetic.direct", endpoint: "/api/dimension/aesthetic/direct", creditCost: 10 },
     { toolId: "persona_analyze", dimension: "AI", displayName: "심연의 거울", displayNameEn: "Abyss Mirror", description: "내면의 욕구와 감정 해석", icon: "moon", color: "indigo", stage: "planning", capsuleKey: "dimension.persona.analyze", endpoint: "/api/dimension/persona/analyze", creditCost: 5 },
     { toolId: "veo_generate", dimension: "VEO", displayName: "비디오 메이커", displayNameEn: "Video Maker", description: "최종 AI 영상 생성", icon: "video", color: "sky", stage: "production", capsuleKey: "veo.video.generate", endpoint: "/api/dimension/veo/generate", creditCost: 200 },
+    // SC, SA, CE - added for SSoT consistency with 10 dimension YAMLs
+    { toolId: "sound_craft", dimension: "SC", displayName: "사운드 크래프터", displayNameEn: "Sound Crafter", description: "AI 사운드 디자인 생성", icon: "music", color: "purple", stage: "production", capsuleKey: "dimension.sound.craft", endpoint: "/api/dimension/sound/craft", creditCost: 8 },
+    { toolId: "story_architect", dimension: "SA", displayName: "스토리 아키텍트", displayNameEn: "Story Architect", description: "시나리오 구조 설계", icon: "book-open", color: "emerald", stage: "planning", capsuleKey: "dimension.story.architect", endpoint: "/api/dimension/story/architect", creditCost: 10 },
+    { toolId: "creative_editor", dimension: "CE", displayName: "크리에이티브 에디터", displayNameEn: "Creative Editor", description: "콘텐츠 최종 편집", icon: "edit", color: "orange", stage: "finishing", capsuleKey: "dimension.quality.editor", endpoint: "/api/dimension/quality/editor", creditCost: 8 },
 ];
 
 const FALLBACK_STAGE_ORDER = ["planning", "pre_production", "production", "finishing"];

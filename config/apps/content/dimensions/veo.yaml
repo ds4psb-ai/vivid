@@ -24,6 +24,13 @@ capabilities:
     config:
       ttl: 3600
 
+  - name: execution
+    enabled: true
+    config:
+      credit_cost: 200
+      endpoint: "/api/dimension/veo/generate"
+      capsule_key: "veo.video.generate"
+
 extensions:
   dimension:
     tool_type: generation

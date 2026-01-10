@@ -30,6 +30,13 @@ capabilities:
     config:
       ttl: 3600
 
+  - name: execution
+    enabled: true
+    config:
+      credit_cost: 10
+      endpoint: "/api/dimension/story/architect"
+      capsule_key: "dimension.story.architect"
+
 extensions:
   dimension:
     corpus: story_templates

@@ -1,6 +1,6 @@
 # Docs Index (정본)
 
-**Updated**: 2026-01-05  
+**Updated**: 2026-01-09  
 **총 문서**: 10개 (핵심), 35개 (archive)
 
 ---
@@ -26,9 +26,10 @@
 
 | 항목 | 위치 | 설명 |
 |------|------|------|
+| **AppRegistry SSoT** | `config/apps/README.md` | YAML 기반 앱 설정 통합 (크레딧 비용 SSoT) |
 | **AG-UI 이벤트 매퍼** | `frontend/src/lib/agui/` | SSE → AG-UI 표준 이벤트 매핑 |
 | **A2UI 검증기** | `frontend/src/lib/a2ui/validator.ts` | 화이트리스트 위젯 검증 |
-| **Dimension Tools** | `backend/app/agents/dimension_tools.py` | 4개 도구 |
+| **Dimension Tools** | `backend/app/agents/dimension_tools.py` | 10개 도구 |
 | **Singularity (특이점)** | `frontend/src/app/singularity/` | 차원 조합 템플릿 갤러리 |
 
 ---

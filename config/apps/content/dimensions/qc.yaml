@@ -26,6 +26,13 @@ capabilities:
     config:
       ttl: 3600
 
+  - name: execution
+    enabled: true
+    config:
+      credit_cost: 8
+      endpoint: "/api/dimension/quality/check"
+      capsule_key: "dimension.quality.check"
+
 extensions:
   dimension:
     corpus: meta_invariants

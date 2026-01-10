@@ -20,6 +20,13 @@ capabilities:
     config:
       ttl: 3600
 
+  - name: execution
+    enabled: true
+    config:
+      credit_cost: 8
+      endpoint: "/api/dimension/sound/craft"
+      capsule_key: "dimension.sound.craft"
+
 extensions:
   dimension:
     tool_type: generation

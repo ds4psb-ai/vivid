@@ -25,6 +25,13 @@ capabilities:
     config:
       ttl: 3600
 
+  - name: execution
+    enabled: true
+    config:
+      credit_cost: 5
+      endpoint: "/api/dimension/1d/generate"
+      capsule_key: "teaching.prompt.generate"
+
 extensions:
   dimension:
     tool_type: generation

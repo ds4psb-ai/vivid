@@ -1,0 +1,80 @@
+$schema: "vivid-app/v2"
+
+# ===== 공통 메타데이터 =====
+metadata:
+  name: villeneuve
+  type: auteur
+  version: "1.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "드니 빌뇌브"
+  name_en: "Denis Villeneuve"
+  icon: "🎥"
+  description: "듄, 블레이드 러너 2049, 컨택트 감독. 장대한 스케일과 철학적 SF의 거장."
+
+# ===== Capability 플러그인 =====
+capabilities:
+  - name: rag
+    enabled: true
+    config:
+      mode: auteur_only
+      confidence_threshold: 0.7
+      use_google_search: false
+      retrieval:
+        strategy: hybrid
+        top_k: 10
+        rerank: true
+
+  - name: cache
+    enabled: true
+    config:
+      ttl: 7200  # 2시간
+
+  - name: webhook
+    enabled: false
+
+# ===== 도메인 확장 (Auteur 전용) =====
+extensions:
+  auteur:
+    corpus_type: v-shape
+    sources:
+      - type: source_pack
+        path: data/source_packs/villeneuve/*.json
+      - type: notebooklm
+        notebook_id: villeneuve_visual_dna
+      - type: vertex_ai
+        corpus_name: auteur_villeneuve
+        
+    style_hints:
+      camera_style: epic_slow
+      aspect_ratio: "2.39:1"
+      color_grade: desaturated
+      lens_style: anamorphic
+      lighting: natural_diffused
+      scale: monumental
+      
+    themes:
+      - 인류의 존재론적 질문
+      - 시간과 인과의 비선형성
+      - 거대한 스케일과 고독
+      - 언어와 커뮤니케이션
+      - 환경과 생존
+
+# ===== 키워드 패턴 =====
+keywords:
+  patterns:
+    - "villeneuve"
+    - "빌뇌브"
+    - "드니"
+    - "denis"
+    - "듄"
+    - "dune"
+    - "블레이드.*러너"
+    - "blade.*runner"
+    - "컨택트"
+    - "arrival"
+    - "시카리오"
+    - "sicario"
+    - "프리즈너스"
+    - "인큐베이션"

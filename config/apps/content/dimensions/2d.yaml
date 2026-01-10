@@ -26,6 +26,13 @@ capabilities:
     config:
       ttl: 3600
 
+  - name: execution
+    enabled: true
+    config:
+      credit_cost: 10
+      endpoint: "/api/dimension/2d/create"
+      capsule_key: "teaching.storyboard.create"
+
 extensions:
   dimension:
     corpus: storyboard_templates

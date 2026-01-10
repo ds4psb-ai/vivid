@@ -32,6 +32,13 @@ capabilities:
     config:
       ttl: 7200
 
+  - name: execution
+    enabled: true
+    config:
+      credit_cost: 10
+      endpoint: "/api/dimension/aesthetic/direct"
+      capsule_key: "dimension.aesthetic.direct"
+
 extensions:
   dimension:
     corpus: ""  # 거장에 따라 동적
