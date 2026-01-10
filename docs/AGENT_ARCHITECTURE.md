@@ -5,7 +5,7 @@
 
 ## 1. Overview
 
-Vivid Agent ("Chokki") is a robust, event-driven AI agent designed for chat-based video production workflows. It orchestrates 10 different "Dimension" tools (miniapps) through a unified natural language interface.
+Vivid Agent ("Chokki") is a robust, event-driven AI agent designed for chat-based video production workflows. It orchestrates 15+ "Dimension" tools (miniapps) through a unified natural language interface.
 
 ### Core Philosophy
 - **Explicit over Implicit**: All state changes and tool executions produce explicit events.
@@ -195,15 +195,17 @@ classDiagram
 | AD | `aesthetic_direct` | `dimension.aesthetic.direct` | 미학 디렉터 |
 | AI | `persona_analyze` | `dimension.persona.analyze` | 심연 해석 |
 | VEO | `veo_generate` | `veo.video.generate` | 비디오 생성 |
+| STORY | `story_architect` | `dimension.story.architect` | 시나리오 설계 |
+| SOUND | `sound_crafter` | `dimension.sound.craft` | 사운드 프롬프트 |
 
 ### 3.3 Frontend Integration
 
 - **AG-UI Standard Mapper**: Frontend unifies all tool events into a standard UI feedback model.
 - **Dimension Mapping**: `agent.teaching_*` events are mapped to `handleWorkflowStep`, ensuring that when the agent runs a "Dimension Tool", the user sees a "Step" progress bar in the chat UI.
 
-### 3.4 Intent → Capsule Resolver (Planned)
+### 3.4 Intent → Capsule Resolver
 
-> **Status**: Migration planned for 2026-Q1
+> **Status**: VEO, SOUND, 1D 구현 완료. AD는 Router 직접 통합.
 
 각 Dimension Tool은 `resolve_from_intent()` 함수를 통해 Intent를 해석합니다:
 
@@ -229,7 +231,7 @@ flowchart LR
 | 1D | `PromptResolver` | mood=cinematic → tone=dramatic |
 | VEO | `VEOResolver` | mood=cinematic → lens=anamorphic, fps=24 |
 | SOUND | `SoundResolver` | mood=cinematic → genre=orchestral |
-| AD | `AestheticResolver` | mood + target → style_complexity |
+| AD | Router 직접 통합 | `aesthetic.py`에서 Intent 처리 |
 
 **Benefits**:
 - 템플릿은 앱 파라미터를 몰라도 됨 (결합도 감소)
