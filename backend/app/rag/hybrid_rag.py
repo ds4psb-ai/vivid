@@ -51,7 +51,7 @@ from app.rag.bm25_search import (
     get_dimension_bm25_index,
     FusedResult,
 )
-from app.rag.metrics import record_rag_query, record_rag_error, track_rag_operation
+from app.rag.metrics import record_rag_query, record_rag_error, track_rag_operation, log_router_decision
 from app.rag.semantic_cache import get_semantic_cache
 
 logger = logging.getLogger(__name__)
@@ -159,7 +159,7 @@ def _determine_strategy(
     auteur_key: Optional[str],
     dimension: Optional[str],
     use_google_search: bool,
-) -> Tuple[str, bool, bool]:
+) -> Tuple[str, bool, bool, int]:
     """경량 Router: 쿼리 복잡도 기반 전략 결정.
     
     LangGraph 없이 heuristic 기반으로 최적 전략 선택.
@@ -171,14 +171,15 @@ def _determine_strategy(
         use_google_search: Google Search 사용 여부
         
     Returns:
-        Tuple of (strategy, use_reranker, force_grounding)
+        Tuple of (strategy, use_reranker, force_grounding, complexity_score)
         - strategy: "auteur_first" | "hybrid" | "vector"
         - use_reranker: 리랭커 사용 여부
         - force_grounding: Google Grounding 강제 여부
+        - complexity_score: 복잡도 점수 (0-4, 로깅/메트릭용)
     """
     score = 0
     
-    # 길이 기반 복잡도
+    # 길이 기반 복잡도 (char count)
     if len(query) > 120:
         score += 1
     
@@ -190,17 +191,21 @@ def _determine_strategy(
     # dimension 힌트 (Story, 4D는 복잡도 높음)
     if dimension and dimension.lower() in ("story", "4d"):
         score += 1
+    
+    # auteur 지정 시 +1
+    if auteur_key:
+        score += 1
         
     # 결정 로직
     if auteur_key:
         # 거장 키 있으면 auteur_first, 복잡도에 따라 rerank/grounding
-        return ("auteur_first", score >= 2, score >= 3)
+        return ("auteur_first", score >= 2, score >= 3, score)
     elif score >= 2:
         # 복잡한 쿼리 → hybrid + rerank
-        return ("hybrid", True, score >= 3)
+        return ("hybrid", True, score >= 3, score)
     else:
         # 단순 쿼리 → vector only
-        return ("vector", False, use_google_search)
+        return ("vector", False, use_google_search, score)
 
 
 # ============================================================================
@@ -255,6 +260,7 @@ async def hybrid_query(
     start_time = time.monotonic()
     
     # === Step 0: Semantic Cache Check (90%+ hit rate) ===
+    cached_result = None  # Initialize for later reference in log_router_decision
     if use_semantic_cache:
         try:
             cache = get_semantic_cache()
@@ -297,7 +303,7 @@ async def hybrid_query(
     
     # === Apply Lightweight Router (2025 Best Practice) ===
     # _determine_strategy를 통해 복잡도 기반 전략 자동 조정
-    router_strategy, router_reranker, router_grounding = _determine_strategy(
+    router_strategy, router_reranker, router_grounding, router_score = _determine_strategy(
         query=query,
         auteur_key=auteur_key,
         dimension=dimension,
@@ -321,9 +327,17 @@ async def hybrid_query(
     if router_grounding:
         use_google_search = True
     
-    logger.debug(
-        f"[HybridRAG] Router: router_strategy={router_strategy}, "
-        f"effective_strategy={strategy}, reranker={use_reranker}, grounding={use_google_search}"
+    # === Week 3: Structured Router Decision Log (OTel Best Practice) ===
+    # router_score는 _determine_strategy에서 계산됨 (중복 계산 제거)
+    log_router_decision(
+        query=query,
+        dimension=dimension,
+        auteur_key=auteur_key,
+        router_score=router_score,
+        strategy=strategy,
+        use_reranker=use_reranker,
+        use_grounding=use_google_search,
+        cache_hit=cached_result is not None,  # Step 0에서 정의된 변수
     )
     
     # === Step 1: Query Expansion ===

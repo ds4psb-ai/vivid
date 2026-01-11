@@ -101,6 +101,20 @@ try:
         buckets=[25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 30000]
     )
     
+    # === Week 3: Router Decision Telemetry ===
+    _rag_router_decisions_total = Counter(
+        "rag_router_decisions_total",
+        "Router strategy decisions count",
+        ["strategy", "dimension"]  # strategy: vector, hybrid, auteur_first
+    )
+    
+    _rag_router_score = Histogram(
+        "rag_router_score",
+        "Router complexity score distribution",
+        ["dimension"],
+        buckets=[0, 1, 2, 3, 4]
+    )
+    
     _metrics_enabled = True
     logger.info("RAG Prometheus metrics initialized")
     
@@ -268,6 +282,89 @@ def record_semantic_cache_op(
             ).inc()
         if '_semantic_cache_latency' in globals() and latency_ms > 0:
             _semantic_cache_latency.labels(operation=operation).observe(latency_ms)
+
+
+# =============================================================================
+# Router Decision Log (Week 3 - OpenTelemetry Best Practice)
+# =============================================================================
+
+import hashlib
+import uuid
+from datetime import datetime, timezone
+
+def _make_query_hash(query: str, auteur_key: Optional[str], dimension: Optional[str]) -> str:
+    """Generate query hash for router decision log (no PII)."""
+    content = f"{query[:500]}|{auteur_key or ''}|{dimension or ''}"
+    return hashlib.sha256(content.encode()).hexdigest()[:16]
+
+
+def _get_trace_context() -> tuple:
+    """Get trace_id and span_id from OpenTelemetry context."""
+    try:
+        from opentelemetry import trace
+        span = trace.get_current_span()
+        ctx = span.get_span_context()
+        if ctx.is_valid:
+            return format(ctx.trace_id, '032x'), format(ctx.span_id, '016x')
+    except ImportError:
+        pass
+    except Exception:
+        pass
+    # Fallback: generate UUID-based IDs
+    fallback = uuid.uuid4().hex
+    return fallback[:32], fallback[:16]
+
+
+def log_router_decision(
+    query: str,
+    dimension: Optional[str],
+    auteur_key: Optional[str],
+    router_score: int,
+    strategy: str,
+    use_reranker: bool,
+    use_grounding: bool,
+    cache_hit: Optional[bool] = None,
+) -> None:
+    """Log router decision with OpenTelemetry correlation.
+    
+    따르는 원칙:
+    - 고카디널리티 금지: query 원문 대신 query_hash 사용
+    - trace_id 포함: OTel span context에서 추출
+    - 1회 기록: hybrid_query에서 router 결정 직후
+    """
+    trace_id, span_id = _get_trace_context()
+    query_hash = _make_query_hash(query, auteur_key, dimension)
+    
+    # Prometheus 메트릭
+    if _metrics_enabled:
+        if '_rag_router_decisions_total' in globals():
+            _rag_router_decisions_total.labels(
+                strategy=strategy,
+                dimension=dimension or "unknown",
+            ).inc()
+        if '_rag_router_score' in globals():
+            _rag_router_score.labels(
+                dimension=dimension or "unknown",
+            ).observe(router_score)
+    
+    # Structured log (OpenTelemetry aligned)
+    logger.info(
+        "Router decision",
+        extra={
+            "event_type": "rag.router.decision",
+            "trace_id": trace_id,
+            "span_id": span_id,
+            "query_hash": query_hash,
+            "dimension": dimension or "unknown",
+            "auteur_key": auteur_key,
+            "router_score": router_score,
+            "strategy": strategy,
+            "use_reranker": use_reranker,
+            "use_grounding": use_grounding,
+            "cache_hit": cache_hit,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+    )
 
 
 # =============================================================================
