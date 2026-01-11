@@ -37,6 +37,22 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 # ============================================================================
+# Circuit Breaker for NotebookLM Reliability
+# ============================================================================
+
+try:
+    from circuitbreaker import circuit, CircuitBreakerError
+    CIRCUIT_BREAKER_AVAILABLE = True
+except ImportError:
+    CIRCUIT_BREAKER_AVAILABLE = False
+    CircuitBreakerError = Exception  # Fallback
+    logger.debug("[NotebookLM] circuitbreaker not installed, running without circuit protection")
+
+# Circuit breaker config: 3 failures → 60s cooldown → half-open
+NOTEBOOKLM_FAILURE_THRESHOLD = 3
+NOTEBOOKLM_RECOVERY_TIMEOUT = 60
+
+# ============================================================================
 # MCP Client (jacob-bd/notebooklm-mcp-server - RPC-based)
 # ============================================================================
 
@@ -76,22 +92,64 @@ except ImportError:
     logger.info("[NotebookLM] notebooklm-mcp-server not installed - using simulation mode")
 
 # ============================================================================
-# Playwright Client (Browser-based fallback)
+# Playwright Client (Browser-based - PRIMARY for CRUD)
 # ============================================================================
 
 PLAYWRIGHT_AVAILABLE = False
+PlaywrightClient = None
 playwright_query = None
 
 try:
-    from app.rag.notebooklm_playwright import playwright_query as _playwright_query
+    from app.rag.notebooklm_playwright import (
+        PlaywrightNotebookLMClient,
+        playwright_query as _playwright_query,
+        get_playwright_client as _get_pw_client,
+    )
+    PlaywrightClient = PlaywrightNotebookLMClient
     playwright_query = _playwright_query
     PLAYWRIGHT_AVAILABLE = True
-    logger.info("[NotebookLM] Playwright browser client available")
-except ImportError:
-    logger.debug("[NotebookLM] Playwright not available for browser-based queries")
+    logger.info("[NotebookLM] Playwright browser client available (full CRUD)")
+except ImportError as e:
+    logger.debug(f"[NotebookLM] Playwright not available: {e}")
+
+# Playwright singleton for tier0 service
+_tier0_playwright_client: Optional["PlaywrightNotebookLMClient"] = None
+
+
+async def get_tier0_playwright_client() -> Optional["PlaywrightNotebookLMClient"]:
+    """Get or create Playwright client singleton for tier0 service.
+    
+    Returns initialized client if CDP is available, None otherwise.
+    """
+    global _tier0_playwright_client
+    
+    if not PLAYWRIGHT_AVAILABLE or PlaywrightClient is None:
+        return None
+    
+    if _tier0_playwright_client is None:
+        try:
+            _tier0_playwright_client = PlaywrightClient(cdp_port=9223)
+            await _tier0_playwright_client.connect()
+            logger.info("[NotebookLM] Tier0 Playwright client connected")
+        except Exception as e:
+            logger.warning(f"[NotebookLM] Tier0 Playwright init failed: {e}")
+            return None
+    
+    return _tier0_playwright_client
+
+
+async def close_tier0_playwright_client() -> None:
+    """Close Playwright client singleton."""
+    global _tier0_playwright_client
+    if _tier0_playwright_client:
+        await _tier0_playwright_client.close()
+        _tier0_playwright_client = None
+        logger.info("[NotebookLM] Tier0 Playwright client closed")
+
 
 # Auth file paths (notebooklm-mcp stores cookies here)
 AUTH_FILE_PATH = Path.home() / ".notebooklm-mcp" / "auth.json"
+
 
 
 # ============================================================================
@@ -427,19 +485,30 @@ class NotebookLMService:
         import time
         start_time = time.monotonic()
 
-        # 실제 API 호출 가능 여부 확인 (MCP 클라이언트 사용)
+        # 실제 API 호출 가능 여부 확인
         is_real_notebook = (
             resolved_id not in ("SIMULATION", "PENDING") 
             and not resolved_id.startswith("notebooklm://")
-            and MCP_AVAILABLE
         )
 
+        result = None
+        method_used = "SIMULATION"
+
         if is_real_notebook:
-            # MCP 클라이언트로 실제 API 호출
-            result = await self._query_with_mcp(resolved_id, query, notebook_info)
-        else:
-            # 시뮬레이션 모드
+            # 1. Playwright-first (CDP)
+            result = await self._query_with_playwright(resolved_id, query, notebook_info)
+            if result and result.confidence > 0.5:
+                method_used = "PLAYWRIGHT"
+            else:
+                # 2. MCP fallback
+                result = await self._query_with_mcp(resolved_id, query, notebook_info)
+                if result and result.confidence > 0.5:
+                    method_used = "MCP"
+        
+        # 3. Simulation fallback
+        if result is None or result.confidence <= 0.5:
             result = await self._simulate_query(resolved_id, query, notebook_info)
+            method_used = "SIMULATION"
 
         query_time_ms = int((time.monotonic() - start_time) * 1000)
         result.query_time_ms = query_time_ms
@@ -451,11 +520,147 @@ class NotebookLMService:
 
         logger.info(
             f"[NotebookLM] Query completed: {notebook_id} "
-            f"({result.confidence:.2f} confidence, {len(result.sources)} sources, {query_time_ms}ms)"
-            f"{' [REAL API]' if is_real_notebook else ' [SIMULATION]'}"
+            f"({result.confidence:.2f} confidence, {len(result.sources)} sources, {query_time_ms}ms) "
+            f"[{method_used}]"
         )
 
         return result
+
+    # =========================================================================
+    # Playwright-based Methods (PRIMARY)
+    # =========================================================================
+
+    async def _query_with_playwright(
+        self,
+        notebook_id: str,
+        query: str,
+        notebook_info: Dict[str, Any],
+    ) -> NotebookQueryResult:
+        """Query using Playwright browser automation (CDP).
+        
+        This is the primary method - executes in authenticated Chrome context.
+        """
+        try:
+            client = await get_tier0_playwright_client()
+            if client is None:
+                logger.debug("[NotebookLM] Playwright client not available")
+                return NotebookQueryResult(answer="", confidence=0.0, grounded=False)
+            
+            result = await client.query(notebook_id, query)
+            
+            if result and result.get("success"):
+                answer = result.get("answer", "")
+                sources = []
+                
+                # Parse citations from answer
+                import re
+                citation_pattern = r'\[(\d+)\]'
+                citations = re.findall(citation_pattern, answer)
+                unique_citations = list(dict.fromkeys(citations))[:5]
+                for i, _ in enumerate(unique_citations):
+                    sources.append(NotebookSource(
+                        source_id=f"pw_{i}",
+                        title=f"Source {i+1}",
+                        excerpt="Grounded citation via Playwright",
+                        relevance_score=0.95 - (i * 0.05),
+                        citation_text=f"[{i+1}]",
+                    ))
+                
+                logger.info(f"[NotebookLM] Playwright query success: {len(answer)} chars")
+                return NotebookQueryResult(
+                    answer=answer,
+                    sources=sources,
+                    confidence=0.92 if sources else 0.88,
+                    grounded=True,
+                    notebook_id=notebook_id,
+                )
+            
+            return NotebookQueryResult(answer="", confidence=0.0, grounded=False)
+            
+        except Exception as e:
+            logger.warning(f"[NotebookLM] Playwright query failed: {e}")
+            return NotebookQueryResult(answer="", confidence=0.0, grounded=False)
+
+    async def create_notebook_async(self, title: str) -> Optional[str]:
+        """Create a new NotebookLM notebook.
+        
+        Args:
+            title: Notebook title
+            
+        Returns:
+            notebook_id (UUID) on success, None on failure
+        """
+        try:
+            client = await get_tier0_playwright_client()
+            if client is None:
+                logger.warning("[NotebookLM] Playwright not available for create")
+                return None
+            
+            notebook_id = await client.create_notebook(title)
+            logger.info(f"[NotebookLM] Created notebook: {notebook_id}")
+            return notebook_id
+            
+        except Exception as e:
+            logger.error(f"[NotebookLM] Create notebook failed: {e}")
+            return None
+
+    async def add_source_async(
+        self,
+        notebook_id: str,
+        title: str,
+        content: str,
+    ) -> Optional[str]:
+        """Add a text source to a notebook.
+        
+        Args:
+            notebook_id: Target notebook UUID
+            title: Source title
+            content: Source text content
+            
+        Returns:
+            source_id on success, None on failure
+        """
+        try:
+            client = await get_tier0_playwright_client()
+            if client is None:
+                logger.warning("[NotebookLM] Playwright not available for add_source")
+                return None
+            
+            source_id = await client.add_text_source(notebook_id, title, content)
+            logger.info(f"[NotebookLM] Added source: {title} (id: {source_id})")
+            return source_id
+            
+        except Exception as e:
+            logger.error(f"[NotebookLM] Add source failed: {e}")
+            return None
+
+    async def delete_notebook_async(self, notebook_id: str) -> bool:
+        """Delete a notebook.
+        
+        Args:
+            notebook_id: Notebook UUID to delete
+            
+        Returns:
+            True on success, False on failure
+        """
+        try:
+            client = await get_tier0_playwright_client()
+            if client is None:
+                logger.warning("[NotebookLM] Playwright not available for delete")
+                return False
+            
+            success = await client.delete_notebook(notebook_id)
+            if success:
+                logger.info(f"[NotebookLM] Deleted notebook: {notebook_id}")
+            return success
+            
+        except Exception as e:
+            logger.error(f"[NotebookLM] Delete notebook failed: {e}")
+            return False
+
+    # =========================================================================
+    # MCP-based Methods (FALLBACK)
+    # =========================================================================
 
     async def _query_with_mcp(
         self,

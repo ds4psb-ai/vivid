@@ -25,3 +25,5 @@ langfuse>=2.0.0
 # GraphRAG (Phase 5)
 lightrag-hku>=0.0.8
 pgvector>=0.2.0
+# Reliability (Phase 6)
+circuitbreaker>=2.0.0
