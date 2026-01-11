@@ -59,12 +59,13 @@ class SSEError:
 # SSE Event Formatters
 # ============================================================================
 
-def sse_event(event_type: str, data: Any) -> str:
+def sse_event(event_type: str, data: Any, *, use_event_line: bool = False) -> str:
     """Format data as an SSE event string.
 
     Args:
-        event_type: Type of event (progress, complete, error, heartbeat)
+        event_type: Type of event (progress, complete, error, heartbeat, run.*)
         data: Event payload (will be JSON serialized)
+        use_event_line: If True, include SSE `event:` line for EventSource.addEventListener
 
     Returns:
         Formatted SSE event string
@@ -76,7 +77,25 @@ def sse_event(event_type: str, data: Any) -> str:
     else:
         payload = {"type": event_type, "data": data}
 
-    return f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
+    data_line = f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
+    
+    if use_event_line:
+        # SSE standard format for EventSource.addEventListener
+        return f"event: {event_type}\n{data_line}"
+    return data_line
+
+
+def sse_run_event(event_type: str, data: Dict[str, Any]) -> str:
+    """Create a run.* SSE event with event: line for EventSource.
+
+    Args:
+        event_type: Event type (run.started, run.completed, run.failed, etc.)
+        data: Event payload
+
+    Returns:
+        Formatted SSE event with event: line
+    """
+    return sse_event(event_type, data, use_event_line=True)
 
 
 def sse_progress(percent: int, message: str, stage: str = "processing") -> str:

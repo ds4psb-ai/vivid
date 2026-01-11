@@ -91,6 +91,9 @@ from app.routers.context import router as context_router
 # Intent Presets (Creative Intent API)
 from app.routers.intent import router as intent_router
 
+# Capsules (Direct Capsule Execution - P5)
+from app.routers.capsules import router as capsules_router
+
 from app.middleware.rate_limit import setup_rate_limiting
 from app.middleware.mtls import MTLSMiddleware
 from app.logging_config import setup_logging, LoggingMiddleware
@@ -216,6 +219,9 @@ app.include_router(constellation_router, prefix="/api/v1", tags=["constellation"
 
 # Intent Presets (Creative Intent API)
 app.include_router(intent_router, prefix="/api/v1", tags=["intent"])
+
+# Capsules (Direct Capsule Execution - P5)
+app.include_router(capsules_router, tags=["capsules"])
 
 # Content Metrics (Viral/Engagement Tracking)
 app.include_router(content_metrics_router, prefix="/api/v1", tags=["content-metrics"])
