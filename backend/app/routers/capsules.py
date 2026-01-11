@@ -30,6 +30,11 @@ from app.dependencies import get_current_user
 from app.models import CapsuleRun
 from app.run_events import run_event_hub
 from app.utils.sse_utils import sse_run_event, get_sse_headers
+from app.credit_service import (
+    get_or_create_user_credits,
+    deduct_credits as deduct_user_credits,
+    refund_credits as refund_user_credits,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -144,15 +149,57 @@ async def run_capsule(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
 ):
-    """Execute a capsule."""
+    """Execute a capsule with credit management.
+    
+    Credit flow:
+    1. Check user has sufficient credits
+    2. Deduct credits before execution
+    3. Refund on failure/cancellation
+    """
     run_id = str(uuid.uuid4())
+    user_id = user.get("id")
+    credit_cost = 0
+    credits_deducted = False
+    
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid user")
     
     try:
         from app.services.capsule_executor import execute_capsule
-        from app.services.capsule_specs import parse_capsule_id
+        from app.services.capsule_specs import parse_capsule_id, get_spec
         
         # Parse capsule_id
         capsule_key, version = parse_capsule_id(request.capsule_id)
+        
+        # Get spec for credit cost
+        spec = await get_spec(db, capsule_key, version)
+        if spec and spec.credit_costs:
+            # Use model from params or default
+            model = request.params.get("model", "gemini-3-flash-preview")
+            credit_cost = spec.credit_costs.get(model, 5)
+        else:
+            credit_cost = 10  # Default cost
+        
+        # Check credits (402 if insufficient)
+        user_credits = await get_or_create_user_credits(db, user_id)
+        if user_credits.balance < credit_cost:
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail={
+                    "code": "INSUFFICIENT_CREDITS",
+                    "message": "크레딧이 부족합니다.",
+                    "required": credit_cost,
+                    "balance": user_credits.balance,
+                }
+            )
+        
+        # Deduct credits before execution
+        await deduct_user_credits(
+            db, user_id, credit_cost,
+            description=f"Capsule: {capsule_key}",
+            meta={"run_id": run_id, "capsule_key": capsule_key},
+        )
+        credits_deducted = True
         
         # Create run record (queued)
         run_record = CapsuleRun(
@@ -197,6 +244,14 @@ async def run_capsule(
         run_record.capsule_version = result.version
         await db.commit()
         
+        # Refund on failure
+        if result.status == "failed" and credits_deducted:
+            await refund_user_credits(
+                db, user_id, credit_cost,
+                description=f"Capsule failed: {capsule_key}",
+                meta={"run_id": run_id, "error": result.error or "Unknown"},
+            )
+        
         # Publish completion event
         if result.status == "done":
             await run_event_hub.publish(run_id, "run.completed", result.to_dict())
@@ -208,8 +263,33 @@ async def run_capsule(
         
         return RunResponse(**result.to_dict())
         
+    except HTTPException:
+        # Re-raise HTTP exceptions (including 402)
+        if credits_deducted:
+            try:
+                await refund_user_credits(
+                    db, user_id, credit_cost,
+                    description=f"Capsule error refund: {capsule_key}",
+                    meta={"run_id": run_id},
+                )
+            except Exception as refund_err:
+                logger.error(f"Refund failed: {refund_err}")
+        raise
+        
     except Exception as e:
         logger.error(f"Run execution failed: {e}")
+        
+        # Refund on error
+        if credits_deducted:
+            try:
+                await refund_user_credits(
+                    db, user_id, credit_cost,
+                    description=f"Capsule error refund",
+                    meta={"run_id": run_id, "error": str(e)},
+                )
+            except Exception as refund_err:
+                logger.error(f"Refund failed: {refund_err}")
+        
         # Update record to failed
         try:
             run_record = await db.get(CapsuleRun, uuid.UUID(run_id))
