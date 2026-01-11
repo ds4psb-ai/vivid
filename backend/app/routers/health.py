@@ -125,29 +125,29 @@ async def notebooklm_health() -> dict:
     NotebookLM RAG health check.
     
     Reports:
-    - Cookie authentication status
-    - Last successful query time
-    - Consecutive failures count
-    - Current mode (live/simulation)
+    - Circuit breaker state (closed/open/half-open/degraded)
+    - Registry stats (real vs simulation notebooks)
+    - Client availability (Playwright, MCP, CircuitBreaker)
+    - Cache statistics
+    - Auth status (if available)
     """
     try:
-        from app.rag.notebooklm_auth import get_auth_service
-        auth_service = get_auth_service()
-        health = auth_service.get_health_dict()
+        from app.rag.tier0_notebooklm import get_notebooklm_health
+        health = get_notebooklm_health()
         
-        # Add mode info
-        from app.rag.tier0_notebooklm import MCP_AVAILABLE, PLAYWRIGHT_AVAILABLE
-        health["mcp_available"] = MCP_AVAILABLE
-        health["playwright_available"] = PLAYWRIGHT_AVAILABLE
-        health["mode"] = "live" if MCP_AVAILABLE or PLAYWRIGHT_AVAILABLE else "simulation"
+        # Add auth info if available
+        try:
+            from app.rag.notebooklm_auth import get_auth_service
+            auth_service = get_auth_service()
+            health["auth"] = auth_service.get_health_dict()
+        except Exception:
+            health["auth"] = {"status": "unavailable"}
         
         return health
     except Exception as e:
         return {
-            "status": "unknown",
-            "auth_status": "error",
+            "status": "error",
             "error": str(e),
-            "mode": "simulation"
         }
 
 

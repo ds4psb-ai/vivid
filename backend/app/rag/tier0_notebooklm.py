@@ -1068,6 +1068,68 @@ def reset_notebooklm_service() -> None:
     _notebooklm_service = None
 
 
+def get_notebooklm_health() -> Dict[str, Any]:
+    """Get comprehensive NotebookLM health status.
+    
+    Returns:
+        Dict with circuit state, registry stats, and client availability.
+    """
+    import time
+    
+    service = get_notebooklm_service()
+    
+    # Circuit breaker state
+    circuit_state = "closed"
+    failure_count = getattr(service, '_circuit_failure_count', 0)
+    circuit_open_time = getattr(service, '_circuit_open_time', None)
+    seconds_until_halfopen = None
+    
+    if failure_count >= NOTEBOOKLM_FAILURE_THRESHOLD and circuit_open_time:
+        elapsed = time.monotonic() - circuit_open_time
+        if elapsed < NOTEBOOKLM_RECOVERY_TIMEOUT:
+            circuit_state = "open"
+            seconds_until_halfopen = int(NOTEBOOKLM_RECOVERY_TIMEOUT - elapsed)
+        else:
+            circuit_state = "half_open"
+    elif failure_count > 0:
+        circuit_state = "degraded"
+    
+    # Registry stats
+    real_notebooks = [
+        key for key, info in NOTEBOOK_REGISTRY.items()
+        if info.get("notebook_id") not in ("SIMULATION", "PENDING")
+        and not info.get("notebook_id", "").startswith("notebooklm://")
+    ]
+    simulation_notebooks = [
+        key for key, info in NOTEBOOK_REGISTRY.items()
+        if info.get("notebook_id") == "SIMULATION"
+    ]
+    
+    return {
+        "status": "healthy" if circuit_state == "closed" else "degraded",
+        "circuit_breaker": {
+            "state": circuit_state,
+            "failure_count": failure_count,
+            "threshold": NOTEBOOKLM_FAILURE_THRESHOLD,
+            "recovery_timeout_seconds": NOTEBOOKLM_RECOVERY_TIMEOUT,
+            "seconds_until_halfopen": seconds_until_halfopen,
+        },
+        "registry": {
+            "total": len(NOTEBOOK_REGISTRY),
+            "real": len(real_notebooks),
+            "simulation": len(simulation_notebooks),
+            "real_notebooks": real_notebooks,
+            "simulation_notebooks": simulation_notebooks,
+        },
+        "clients": {
+            "playwright_available": PLAYWRIGHT_AVAILABLE,
+            "mcp_available": MCP_AVAILABLE,
+            "circuit_breaker_available": CIRCUIT_BREAKER_AVAILABLE,
+        },
+        "cache": service.get_cache_stats(),
+    }
+
+
 # ============================================================================
 # Convenience Functions
 # ============================================================================

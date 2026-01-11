@@ -1,13 +1,27 @@
 """NotebookLM Client using Gemini API for Logic/Persona extraction.
 
-Since NotebookLM has no public API, we use Gemini API to replicate
-the core functionality: Logic Vector extraction, Persona Vector extraction,
-and Guide generation with claim-evidence structure.
+DEPRECATION NOTICE (2026-01-12):
+--------------------------------
+This module name is MISLEADING. It does NOT connect to NotebookLM.
+Instead, it uses Gemini API to replicate NotebookLM-style analysis.
+
+For actual NotebookLM integration (Playwright/MCP), use:
+    from app.rag.tier0_notebooklm import get_notebooklm_service
+
+This module will be renamed to 'gemini_analysis_client.py' in a future release.
+
+Current Functionality:
+- Logic Vector extraction (shot cadence, composition, camera motion)
+- Persona Vector extraction (tone, emotion arc, interpretation frame)
+- Variation Guide generation
+- Claim-Evidence generation
+- Story beats and storyboard cards generation
 """
 from __future__ import annotations
 
 import json
 import logging
+import warnings
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -16,6 +30,14 @@ from app.utils.narrative import normalize_story_beats, normalize_storyboard_card
 from app.services.persona_service import build_persona_context, build_visual_context, get_thematic_weights
 
 logger = logging.getLogger(__name__)
+
+# Emit deprecation warning on import
+warnings.warn(
+    "notebooklm_client is deprecated and will be renamed to gemini_analysis_client. "
+    "For NotebookLM web integration, use app.rag.tier0_notebooklm instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 # System prompts for Logic/Persona extraction
 LOGIC_EXTRACTION_PROMPT = """당신은 영상 분석 전문가입니다. 주어진 Source Pack 데이터를 분석하여 Logic Vector를 추출하세요.
