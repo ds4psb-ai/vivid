@@ -1,6 +1,6 @@
 # Docs Index (정본)
 
-**Updated**: 2026-01-10  
+**Updated**: 2026-01-11  
 **총 문서**: 10개 (핵심), 35개 (archive)
 
 ---
@@ -33,6 +33,8 @@
 | **Dimension Tools** | `backend/app/agents/dimension_tools.py` | 15개 도구 (core + expert/alias 포함) |
 | **Singularity (특이점)** | `frontend/src/app/singularity/` | 차원 조합 템플릿 갤러리 |
 | **앱 개발자 가이드** | `docs/DIMENSION_APP_DEVELOPER_GUIDE.md` | 앱 개발자 공통 가이드 (SSoT) |
+| **RAG Reliability** | [`docs/RAG_RELIABILITY.md`](docs/RAG_RELIABILITY.md) | Circuit Breaker, CRAG, 캐시 |
+| **NotebookLM Playwright** | [`docs/NOTEBOOKLM_PLAYWRIGHT.md`](docs/NOTEBOOKLM_PLAYWRIGHT.md) | RPC/UI 폴백 자동화 |
 
 ---
 
