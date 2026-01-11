@@ -203,6 +203,29 @@ class TestSeedFirstNodeInputs:
         assert result is False
 
 
+    def test_seed_first_node_priority(self):
+        """초기 파라미터가 기존 세션 파라미터를 덮어쓰는지 확인."""
+        session = workflow_session_manager.create_session(
+            user_id="test",
+            template_id="test",
+            template_name="Test",
+            template_description="Test",
+            nodes=[{"id": "n1", "tool_id": "test", "data": {"inputs": {}}}],
+            connections=[],
+            original_request="req",
+            extracted_params={"topic": "Old Topic", "style": "Old Style"},
+            estimated_credits=10,
+        )
+        
+        # Act: New params should overwrite Old
+        seed_first_node_inputs(session.id, {"topic": "New Topic"})
+        
+        updated = workflow_session_manager.get_session(session.id)
+        assert updated.extracted_params["topic"] == "New Topic"  # Overwritten
+        assert updated.extracted_params["style"] == "Old Style"  # Preserved
+        assert updated.nodes[0].inputs["topic"] == "New Topic"
+
+
 # =============================================================================
 # Integration Tests: execute_step (Mocked)
 # =============================================================================
@@ -243,11 +266,16 @@ class TestExecuteStep:
     @pytest.mark.asyncio
     async def test_execute_step_success(self, test_session, mock_db, mock_user):
         """성공적인 스텝 실행."""
+        # Fix: metrics needs to be an object to support dot notation (AttributeError fix test)
+        mock_metrics = MagicMock()
+        mock_metrics.credits_charged = 10
+        mock_metrics.latency_ms = 500
+        
         mock_result = MagicMock(
             success=True,
             output={"prompt": "A cyberpunk cityscape at night...", "negative_prompt": "blurry"},
             error=None,
-            metrics={"credit_cost": 10, "latency_ms": 500},
+            metrics=mock_metrics,
         )
         
         with patch("app.services.workflow_executor._execute_dimension_tool", return_value=mock_result):

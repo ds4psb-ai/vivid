@@ -343,7 +343,12 @@ async def execute_step(
     
     if result.success:
         # 성공: 노드 완료 + 출력 전파
-        credits_used = result.metrics.get("credit_cost", 0) if result.metrics else spec["credit_cost"]
+        if result.metrics:
+            credits_used = result.metrics.credits_charged
+        else:
+            # Fallback (should not happen on success)
+            credits_used = 0
+            logger.warning(f"Step {node.tool_id} succeeded but missing metrics")
         
         workflow_session_manager.mark_node_completed(
             session_id=session.id,
@@ -480,8 +485,8 @@ def seed_first_node_inputs(
     merged = {**initial_params, **first_node.inputs}
     first_node.inputs = merged
     
-    # extracted_params도 업데이트 (전체 세션에 적용)
-    session.extracted_params = {**initial_params, **session.extracted_params}
+    # extracted_params도 업데이트 (초기 파라미터가 우선)
+    session.extracted_params = {**session.extracted_params, **initial_params}
     
     workflow_session_manager.update_session(session)
     

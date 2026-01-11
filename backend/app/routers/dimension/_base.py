@@ -238,6 +238,7 @@ class MetricsResponse(BaseModel):
     latency_ms: int
     tokens: int
     model: str
+    credits_charged: int = 0  # Added for accurate cost tracking
 
 
 class DimensionResponse(BaseModel):
@@ -547,6 +548,7 @@ async def _execute_dimension_tool(
                 latency_ms=latency_ms,
                 tokens=result.get("metrics", {}).get("tokens", 0),
                 model=model,
+                credits_charged=credit_cost if credits_deducted else 0,
             ),
         )
     else:
