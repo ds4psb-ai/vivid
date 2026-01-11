@@ -20,7 +20,8 @@ from app.schemas.workflow_session import (
     WorkflowStatus,
     workflow_session_manager,
 )
-from app.dependencies import get_current_user_optional, get_current_user, get_db
+from app.dependencies import get_current_user_optional, get_current_user
+from app.database import get_db
 from app.routers.dimension._base import get_byok_key
 
 
