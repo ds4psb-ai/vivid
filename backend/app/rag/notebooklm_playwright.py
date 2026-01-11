@@ -923,6 +923,10 @@ class PlaywrightNotebookLMClient:
                     )
                     await asyncio.sleep(2)
                 
+                # Count existing messages BEFORE sending query (for detecting new response)
+                messages_before = self._page.locator('.message-content')
+                msg_count_before = await messages_before.count()
+                
                 # Find chat input
                 chat_input = self._page.locator('textarea[placeholder*="typing"], textarea[placeholder*="Start"], textarea.chat-input')
                 if await chat_input.count() == 0:
@@ -930,6 +934,9 @@ class PlaywrightNotebookLMClient:
                     chat_input = self._page.locator('textarea:visible').last
                 
                 if await chat_input.count() > 0:
+                    # Clear existing text first (for consecutive queries)
+                    await chat_input.clear()
+                    await asyncio.sleep(0.2)
                     await chat_input.fill(query_text)
                     await asyncio.sleep(0.3)
                     
@@ -941,14 +948,15 @@ class PlaywrightNotebookLMClient:
                         await chat_input.press("Enter")
                     
                     # Wait for response (NotebookLM can take 10-15 seconds)
-                    await asyncio.sleep(12)
+                    await asyncio.sleep(15)
                     
                     # Extract answer from chat history
                     # .message-content contains the actual message text
-                    # Last one should be the AI response
+                    # Look for NEW messages (count should have increased)
                     messages = self._page.locator('.message-content')
                     msg_count = await messages.count()
-                    if msg_count >= 2:
+                    
+                    if msg_count > msg_count_before:
                         # Last message should be the AI response
                         last_msg = messages.nth(msg_count - 1)
                         ui_answer = await last_msg.text_content()
