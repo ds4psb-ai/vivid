@@ -530,6 +530,7 @@ async def _query_auteur_first(
     query: str,
     auteur_key: str,
     use_google_search: bool = True,
+    dimension: str = "AD",  # Medium fix: for correct metric labeling
 ) -> HybridRAGResult:
     """거장 쿼리: NotebookLM 우선 → Vertex AI 폴백.
 
@@ -625,6 +626,7 @@ async def _query_dimension(
 async def _query_parallel(
     query: str,
     use_google_search: bool = True,
+    dimension: str = "general",  # Medium fix: for correct metric labeling
 ) -> HybridRAGResult:
     """병렬 쿼리: NotebookLM + Vertex AI 동시 실행.
 

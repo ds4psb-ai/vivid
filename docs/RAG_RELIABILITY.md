@@ -134,14 +134,26 @@ capabilities:
 #### Latency Percentiles
 
 ```promql
-# p50 RAG Latency by Dimension
+# p50 RAG Latency by Dimension (e2e)
 histogram_quantile(0.50, sum(rate(rag_query_latency_ms_bucket[5m])) by (le, dimension))
 
-# p95 RAG Latency by Dimension
+# p95 RAG Latency by Dimension (e2e)
 histogram_quantile(0.95, sum(rate(rag_query_latency_ms_bucket[5m])) by (le, dimension))
 
 # p99 RAG Latency (overall)
 histogram_quantile(0.99, sum(rate(rag_query_latency_ms_bucket[5m])) by (le))
+```
+
+#### Cache-Hit vs Live Latency (Medium Fix)
+
+```promql
+# p95 Cache HIT Latency (semantic_cache strategy only)
+# NOTE: Filter by strategy label when available in rag_query_latency_ms
+# Use semantic_cache_latency_ms for more precise cache-only timing:
+histogram_quantile(0.95, sum(rate(rag_semantic_cache_latency_ms_bucket{operation="get"}[5m])) by (le))
+
+# p95 Stage Latency by Operation (separate from e2e)
+histogram_quantile(0.95, sum(rate(rag_stage_latency_ms_bucket[5m])) by (le, stage))
 ```
 
 #### Error Rate
