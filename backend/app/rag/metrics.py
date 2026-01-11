@@ -37,12 +37,12 @@ try:
         ["dimension"]
     )
     
-    # Histograms
+    # Histograms (optimized buckets for long-tail, 2025 best practice)
     _rag_latency = Histogram(
         "rag_query_latency_ms",
         "RAG query latency in milliseconds",
         ["dimension"],
-        buckets=[50, 100, 200, 500, 1000, 2000, 5000]
+        buckets=[25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 30000]
     )
     
     _rag_results_count = Histogram(

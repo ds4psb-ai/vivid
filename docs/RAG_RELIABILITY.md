@@ -127,9 +127,105 @@ capabilities:
 [HybridRAG] NotebookLM circuit open, falling back to Vertex AI
 ```
 
+## Observability & SLOs (2025 Best Practices)
+
+### PromQL Queries for Grafana
+
+#### Latency Percentiles
+
+```promql
+# p50 RAG Latency by Dimension
+histogram_quantile(0.50, sum(rate(rag_query_latency_ms_bucket[5m])) by (le, dimension))
+
+# p95 RAG Latency by Dimension
+histogram_quantile(0.95, sum(rate(rag_query_latency_ms_bucket[5m])) by (le, dimension))
+
+# p99 RAG Latency (overall)
+histogram_quantile(0.99, sum(rate(rag_query_latency_ms_bucket[5m])) by (le))
+```
+
+#### Error Rate
+
+```promql
+# Error Rate by Dimension (errors per second)
+sum(rate(rag_errors_total[5m])) by (dimension, error_type)
+
+# Error Ratio (%)
+sum(rate(rag_errors_total[5m])) / sum(rate(rag_query_total[5m])) * 100
+```
+
+#### Cache Performance
+
+```promql
+# Cache Hit Rate (%)
+sum(rate(rag_semantic_cache_ops_total{result=~"exact|semantic"}[5m])) 
+  / sum(rate(rag_semantic_cache_ops_total{operation="get"}[5m])) * 100
+
+# Cache Hit by Type
+sum(rate(rag_semantic_cache_ops_total{operation="get"}[5m])) by (result)
+```
+
+#### Circuit Breaker
+
+```promql
+# Circuit Open Events
+sum(increase(rag_circuit_breaker_state_total{state="open"}[1h]))
+
+# Backend Failures by Service
+sum(rate(rag_circuit_breaker_failures_total[5m])) by (backend)
+```
+
+### SLO Targets
+
+| SLO | Target | Alert Threshold |
+|-----|--------|-----------------|
+| p95 Latency (cache hit) | < 500ms | > 1s |
+| p95 Latency (live RAG) | < 5s | > 10s |
+| Error Rate | < 1% | > 5% |
+| Cache Hit Rate | 30-50% | < 20% |
+| Circuit Open | < 3/day | > 5/hour |
+
+### Grafana Dashboard Layout
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ ROW 1: Global Status                                        │
+├───────────────┬───────────────┬─────────────────────────────┤
+│ Error Rate %  │ Cache Hit %   │ p95 Latency (overall)       │
+│ (stat panel)  │ (gauge)       │ (time series)               │
+├───────────────┴───────────────┴─────────────────────────────┤
+│ ROW 2: Latency Details                                      │
+├─────────────────────────────────────────────────────────────┤
+│ p50/p95/p99 Latency by Dimension (time series + heatmap)    │
+├─────────────────────────────────────────────────────────────┤
+│ ROW 3: Components                                           │
+├───────────────┬───────────────┬─────────────────────────────┤
+│ NotebookLM    │ Vertex AI     │ Cache Ops                   │
+│ (circuit/err) │ (latency)     │ (hit/miss breakdown)        │
+├───────────────┴───────────────┴─────────────────────────────┤
+│ ROW 4: Alerts & Events                                      │
+│ Circuit Breaker State Changes (annotations)                 │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Histogram Bucket Configuration (Optimized)
+
+```python
+# metrics.py - 권장 bucket (long-tail 커버)
+_rag_latency = Histogram(
+    "rag_query_latency_ms",
+    "RAG query latency (ms)",
+    ["dimension"],
+    buckets=[25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 30000]
+)
+```
+
+---
+
 ## Related Files
 
 - [hybrid_rag.py](file:///Users/ted/vivid/backend/app/rag/hybrid_rag.py)
 - [tier0_notebooklm.py](file:///Users/ted/vivid/backend/app/rag/tier0_notebooklm.py)
 - [semantic_cache.py](file:///Users/ted/vivid/backend/app/rag/semantic_cache.py)
-- [notebooklm_playwright.py](file:///Users/ted/vivid/backend/app/rag/notebooklm_playwright.py)
+- [metrics.py](file:///Users/ted/vivid/backend/app/rag/metrics.py)
+
