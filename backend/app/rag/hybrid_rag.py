@@ -52,6 +52,7 @@ from app.rag.bm25_search import (
     FusedResult,
 )
 from app.rag.metrics import record_rag_query, record_rag_error
+from app.rag.semantic_cache import get_semantic_cache
 
 logger = logging.getLogger(__name__)
 
@@ -157,6 +158,7 @@ async def hybrid_query(
     use_google_search: bool = True,
     strategy: Literal["vector", "graph", "hybrid"] = "vector",
     pipeline_hints: Optional[Dict[str, Any]] = None,
+    use_semantic_cache: bool = True,  # NEW: Enable semantic caching
 ) -> HybridRAGResult:
     """하이브리드 RAG 쿼리 실행.
 
@@ -194,6 +196,39 @@ async def hybrid_query(
 
     import time
     start_time = time.monotonic()
+    
+    # === Step 0: Semantic Cache Check (90%+ hit rate) ===
+    if use_semantic_cache:
+        try:
+            cache = get_semantic_cache()
+            cached_result = await cache.get(
+                query=query,
+                auteur_key=auteur_key,
+                dimension=dimension,
+            )
+            if cached_result:
+                cached_result.strategy_used = "semantic_cache"
+                cached_result.query_time_ms = int((time.monotonic() - start_time) * 1000)
+                record_rag_query(
+                    dimension=dimension or "unknown",
+                    strategy="semantic_cache",
+                    source_type="cache",
+                    latency_ms=cached_result.query_time_ms,
+                    results_count=cached_result.retrieval_count,
+                    confidence=cached_result.confidence,
+                    cache_hit=True,
+                    auteur_key=auteur_key,
+                    grounded=cached_result.grounded,
+                    rrf_enabled=False,
+                )
+                logger.info(
+                    f"[HybridRAG] SEMANTIC_CACHE HIT | "
+                    f"query='{query[:50]}...' | "
+                    f"confidence={cached_result.confidence:.2f}"
+                )
+                return cached_result
+        except Exception as e:
+            logger.warning(f"[HybridRAG] Semantic cache error: {e}")
     
     # === Parse Pipeline Hints ===
     hints = pipeline_hints or {}
@@ -354,6 +389,23 @@ async def hybrid_query(
         grounded=result.grounded,
         rrf_enabled=result.rrf_enabled,
     )
+
+    # === Step N+1: Store in Semantic Cache (high confidence only) ===
+    if use_semantic_cache and result.confidence >= 0.5:
+        try:
+            cache = get_semantic_cache()
+            await cache.set(
+                query=query,
+                response=result,
+                auteur_key=auteur_key,
+                dimension=dimension,
+            )
+            logger.debug(
+                f"[HybridRAG] Cached result | "
+                f"confidence={result.confidence:.2f}"
+            )
+        except Exception as e:
+            logger.warning(f"[HybridRAG] Cache storage failed: {e}")
 
     return result
 

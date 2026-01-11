@@ -5,10 +5,11 @@ Feedback Loop API Router
 """
 import logging
 from typing import Optional
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
 from app.services.feedback_processor import feedback_processor
+from app.dependencies import get_current_user, require_admin
 from app.schemas.feedback_schemas import (
     ProductionResult, UserFeedback, ResultOutcome,
     FeedbackSummary, LearningCycle,
@@ -67,7 +68,10 @@ class RuleRegistrationRequest(BaseModel):
 # =========================================================================
 
 @router.post("/production-result")
-async def process_production_result(request: ProductionResultRequest):
+async def process_production_result(
+    request: ProductionResultRequest,
+    user: dict = Depends(get_current_user),  # P1: Auth required
+):
     """프로덕션 결과 처리"""
     logger.info(f"Processing production result: {request.outcome}")
     
@@ -91,7 +95,10 @@ async def process_production_result(request: ProductionResultRequest):
 
 
 @router.post("/user-feedback")
-async def process_user_feedback(request: UserFeedbackRequest):
+async def process_user_feedback(
+    request: UserFeedbackRequest,
+    user: dict = Depends(get_current_user),  # P1: Auth required
+):
     """사용자 피드백 처리"""
     logger.info(f"Processing user feedback: rating={request.rating}")
     
@@ -114,7 +121,10 @@ async def process_user_feedback(request: UserFeedbackRequest):
 
 
 @router.post("/metric-update")
-async def process_metric_update(request: MetricUpdateRequest):
+async def process_metric_update(
+    request: MetricUpdateRequest,
+    user: dict = Depends(require_admin),  # P1: Admin only
+):
     """메트릭 업데이트 처리"""
     logger.info(f"Processing metric: {request.metric_name}={request.metric_value}")
     
@@ -139,7 +149,10 @@ async def process_metric_update(request: MetricUpdateRequest):
 
 
 @router.post("/register-rule")
-async def register_rule(request: RuleRegistrationRequest):
+async def register_rule(
+    request: RuleRegistrationRequest,
+    user: dict = Depends(require_admin),  # P1: Admin only
+):
     """학습용 규칙 등록"""
     rule = DNAInvariant(
         rule_id=request.rule_id,

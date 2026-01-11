@@ -282,21 +282,21 @@ interface WorkflowItemProps {
     colorClass?: string;
 }
 
-function WorkflowItem({ Icon, title, desc, colorClass = "text-slate-300" }: WorkflowItemProps) {
+function WorkflowItem({ Icon, title, desc, colorClass = "text-slate-600 dark:text-slate-300" }: WorkflowItemProps) {
     return (
         <div className="flex items-start gap-4 group/item">
-            <div className={`p-2.5 rounded-xl bg-white/5 border border-white/5 
-                           group-hover/item:bg-white/10 group-hover/item:border-white/10 
+            <div className={`p-2.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 
+                           group-hover/item:bg-black/10 dark:group-hover/item:bg-white/10 group-hover/item:border-black/10 dark:group-hover/item:border-white/10 
                            transition-all duration-300 ${colorClass}`}>
                 <Icon size={18} aria-hidden="true" />
             </div>
             <div className="flex-1 min-w-0">
-                <h4 className="text-white font-semibold text-[15px] mb-1 
-                              group-hover/item:text-emerald-50 transition-colors">
+                <h4 className="text-gray-900 dark:text-white font-semibold text-[15px] mb-1 
+                              group-hover/item:text-emerald-600 dark:group-hover/item:text-emerald-50 transition-colors">
                     {title}
                 </h4>
-                <p className="text-slate-400 text-xs leading-relaxed 
-                             group-hover/item:text-slate-300 transition-colors">
+                <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed 
+                             group-hover/item:text-slate-700 dark:group-hover/item:text-slate-300 transition-colors">
                     {desc}
                 </p>
             </div>
@@ -313,9 +313,9 @@ function WorkflowCard({ stage }: WorkflowCardProps) {
 
     return (
         <article
-            className={`group relative p-8 rounded-3xl bg-white/[0.02] backdrop-blur-sm
-                       border border-white/10 ${colors.border} 
-                       transition-all duration-500 hover:bg-white/[0.04]`}
+            className={`group relative p-8 rounded-3xl bg-black/[0.02] dark:bg-white/[0.02] backdrop-blur-sm
+                       border border-black/10 dark:border-white/10 ${colors.border} 
+                       transition-all duration-500 hover:bg-black/[0.04] dark:hover:bg-white/[0.04]`}
             role="article"
             aria-labelledby={`stage-${stage.number}-title`}
         >
@@ -331,14 +331,14 @@ function WorkflowCard({ stage }: WorkflowCardProps) {
             <header className="mb-8">
                 <h3
                     id={`stage-${stage.number}-title`}
-                    className="text-2xl font-black text-white mb-2 flex items-center gap-3"
+                    className="text-2xl font-black text-gray-900 dark:text-white mb-2 flex items-center gap-3"
                 >
                     <span className={`${colors.text} text-lg font-mono tabular-nums`}>
                         {stage.number}
                     </span>
                     {stage.title}
                 </h3>
-                <p className="text-slate-400 text-sm">{stage.subtitle}</p>
+                <p className="text-slate-600 dark:text-slate-400 text-sm">{stage.subtitle}</p>
             </header>
 
             {/* Workflow steps */}
@@ -374,8 +374,8 @@ function WorkflowCard({ stage }: WorkflowCardProps) {
                 <Link
                     href={`/dimension?stage=${stage.stageKey}`}
                     className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl
-                               bg-white/5 border border-white/10 text-sm font-medium text-slate-300
-                               hover:bg-white/10 hover:text-white hover:border-white/20
+                               bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-sm font-medium text-slate-600 dark:text-slate-300
+                               hover:bg-black/10 dark:hover:bg-white/10 hover:text-black dark:hover:text-white hover:border-black/20 dark:hover:border-white/20
                                transition-all duration-300`}
                 >
                     <Layers className="w-4 h-4" />
@@ -405,7 +405,7 @@ const CountdownDisplay = React.memo(function CountdownDisplay({ timeLeft }: Coun
 
     return (
         <div
-            className="font-mono text-xl text-white font-bold tracking-widest"
+            className="font-mono text-xl text-gray-900 dark:text-white font-bold tracking-widest"
             role="timer"
             aria-label="마감까지 남은 시간"
         >
@@ -453,7 +453,7 @@ function SocialProofBanner() {
                 <span
                     key={idx}
                     className="px-3 py-1.5 rounded-full text-xs font-medium
-                              bg-white/5 border border-white/10 text-slate-300"
+                              bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-slate-600 dark:text-slate-300"
                 >
                     {badge}
                 </span>
@@ -478,8 +478,8 @@ function AccordionCurriculum({ section, title, items, isOpen, onToggle }: Accord
         <div
             className={`rounded-2xl border transition-all duration-300 overflow-hidden
                        ${isOpen
-                    ? 'bg-white/[0.04] border-emerald-500/30'
-                    : 'bg-white/[0.02] border-white/10 hover:border-white/20'}`}
+                    ? 'bg-black/[0.04] dark:bg-white/[0.04] border-emerald-500/30'
+                    : 'bg-black/[0.02] dark:bg-white/[0.02] border-black/10 dark:border-white/10 hover:border-black/20 dark:hover:border-white/20'}`}
         >
             <button
                 onClick={onToggle}
@@ -492,7 +492,7 @@ function AccordionCurriculum({ section, title, items, isOpen, onToggle }: Accord
                                    tabular-nums min-w-[2rem]">
                         {section}
                     </span>
-                    <span className="text-white font-semibold text-base sm:text-lg">
+                    <span className="text-gray-900 dark:text-white font-semibold text-base sm:text-lg">
                         {title}
                     </span>
                 </div>
@@ -513,12 +513,12 @@ function AccordionCurriculum({ section, title, items, isOpen, onToggle }: Accord
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.3, ease: "easeInOut" }}
                     >
-                        <div className="px-6 pb-5 pt-2 border-t border-white/5">
+                        <div className="px-6 pb-5 pt-2 border-t border-black/5 dark:border-white/5">
                             <ul className="space-y-3">
                                 {items.map((item, idx) => (
                                     <li
                                         key={idx}
-                                        className="flex gap-3 text-slate-300 text-sm"
+                                        className="flex gap-3 text-slate-600 dark:text-slate-300 text-sm"
                                     >
                                         <span className="text-emerald-500 flex-shrink-0">•</span>
                                         <span>{item}</span>
@@ -553,7 +553,7 @@ function PriceDisplay() {
                 <span className="text-slate-500 line-through text-sm">
                     ₩{formatPrice(original)}
                 </span>
-                <span className="text-white font-bold text-xl">
+                <span className="text-gray-900 dark:text-white font-bold text-xl">
                     ₩{formatPrice(discounted)}
                 </span>
             </div>
@@ -588,7 +588,7 @@ export default function AIVideoWorkflowMasterPage() {
             <AuroraBackground />
             <CrebitGuideBadge />
 
-            <div className="min-h-screen relative overflow-x-hidden selection:bg-emerald-500/30 font-sans text-slate-200">
+            <div className="min-h-screen relative overflow-x-hidden selection:bg-emerald-500/30 font-sans text-slate-700 dark:text-slate-200">
 
                 {/* ==================== HERO SECTION ==================== */}
                 <section
@@ -628,7 +628,7 @@ export default function AIVideoWorkflowMasterPage() {
                                             AI 영상 제작 워크플로우
                                         </span>
                                     </h1>
-                                    <p className="text-xl md:text-2xl lg:text-3xl font-light text-slate-300 
+                                    <p className="text-xl md:text-2xl lg:text-3xl font-light text-slate-600 dark:text-slate-300 
                                                  tracking-tight max-w-4xl mx-auto leading-relaxed">
                                         "매주 하나의 완성된 영상을 만들면서, AI 도구를 자연스럽게 체득합니다."
                                     </p>
@@ -662,12 +662,12 @@ export default function AIVideoWorkflowMasterPage() {
                                 <button
                                     onClick={() => handleCTAClick("hero")}
                                     className="stagger-reveal stagger-3 group relative px-10 py-5 sm:px-12 sm:py-6
-                                              bg-white text-black text-base sm:text-lg font-bold rounded-full
-                                              hover:bg-emerald-50 transition-all duration-300
+                                              bg-black dark:bg-white text-white dark:text-black text-base sm:text-lg font-bold rounded-full
+                                              hover:bg-gray-800 dark:hover:bg-emerald-50 transition-all duration-300
                                               transform hover:scale-[1.02] active:scale-[0.98]
                                               shadow-[0_0_40px_rgba(16,185,129,0.3)]
                                               focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2
-                                              focus:ring-offset-black"
+                                              focus:ring-offset-white dark:focus:ring-offset-black"
                                     aria-label="마스터 클래스 합류 신청"
                                 >
                                     <span className="relative z-10 flex items-center gap-3">
@@ -720,15 +720,15 @@ export default function AIVideoWorkflowMasterPage() {
                         <div className="mt-12 lg:mt-16 grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
                             {/* Before Card */}
                             <div
-                                className="p-8 lg:p-10 rounded-3xl bg-red-950/20 border border-red-500/20 
+                                className="p-8 lg:p-10 rounded-3xl bg-red-100/50 dark:bg-red-950/20 border border-red-300/50 dark:border-red-500/20 
                                           opacity-80 hover:opacity-100 transition-opacity duration-300"
                                 role="region"
                                 aria-label="수강 전 상태"
                             >
-                                <h3 className="text-xl font-bold text-red-400 mb-6">Before</h3>
+                                <h3 className="text-xl font-bold text-red-500 dark:text-red-400 mb-6">Before</h3>
                                 <ul className="space-y-4" role="list">
                                     {BEFORE_ITEMS.map((item, idx) => (
-                                        <li key={idx} className="flex gap-3 text-slate-400 text-[15px]">
+                                        <li key={idx} className="flex gap-3 text-slate-600 dark:text-slate-400 text-[15px]">
                                             <span className="text-red-500/60 flex-shrink-0" aria-hidden="true">✕</span>
                                             <span>{item}</span>
                                         </li>
@@ -738,7 +738,7 @@ export default function AIVideoWorkflowMasterPage() {
 
                             {/* After Card */}
                             <div
-                                className="p-8 lg:p-10 rounded-3xl bg-emerald-950/30 border border-emerald-500/30 
+                                className="p-8 lg:p-10 rounded-3xl bg-emerald-100/50 dark:bg-emerald-950/30 border border-emerald-300/50 dark:border-emerald-500/30 
                                           relative overflow-hidden"
                                 role="region"
                                 aria-label="수강 후 상태"
@@ -748,12 +748,12 @@ export default function AIVideoWorkflowMasterPage() {
                                     style={{ animationDuration: "3s" }}
                                     aria-hidden="true"
                                 />
-                                <h3 className="text-xl font-bold text-emerald-400 mb-6 relative">After</h3>
+                                <h3 className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mb-6 relative">After</h3>
                                 <ul className="space-y-4 relative" role="list">
                                     {AFTER_ITEMS.map((item, idx) => (
-                                        <li key={idx} className="flex gap-3 text-white text-[15px]">
+                                        <li key={idx} className="flex gap-3 text-gray-900 dark:text-white text-[15px]">
                                             <CheckCircle
-                                                className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5"
+                                                className="w-5 h-5 text-emerald-500 dark:text-emerald-400 flex-shrink-0 mt-0.5"
                                                 aria-hidden="true"
                                             />
                                             <span className={item.bold ? "font-semibold" : ""}>
@@ -770,7 +770,7 @@ export default function AIVideoWorkflowMasterPage() {
                 {/* ==================== CURRICULUM SECTION ==================== */}
                 <section
                     id="curriculum"
-                    className="py-20 lg:py-32 border-t border-white/5 relative z-10 px-6 lg:px-[--base-padding-x]"
+                    className="py-20 lg:py-32 border-t border-black/5 dark:border-white/5 relative z-10 px-6 lg:px-[--base-padding-x]"
                     aria-labelledby="curriculum-title"
                 >
                     <div className="max-w-5xl mx-auto">
@@ -780,11 +780,11 @@ export default function AIVideoWorkflowMasterPage() {
                             </span>
                             <h2
                                 id="curriculum-title"
-                                className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight"
+                                className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 dark:text-white tracking-tight"
                             >
                                 4주 마스터 과정
                             </h2>
-                            <p className="text-slate-400 text-base lg:text-lg font-light">
+                            <p className="text-slate-600 dark:text-slate-400 text-base lg:text-lg font-light">
                                 매주 하나의 포트폴리오를 완성합니다.
                             </p>
                         </header>
@@ -806,8 +806,8 @@ export default function AIVideoWorkflowMasterPage() {
 
                 {/* ==================== FOOTER ==================== */}
                 <footer
-                    className="py-16 lg:py-20 relative z-10 border-t border-white/5 
-                              bg-black/40 backdrop-blur-xl"
+                    className="py-16 lg:py-20 relative z-10 border-t border-black/5 dark:border-white/5 
+                              bg-white/40 dark:bg-black/40 backdrop-blur-xl"
                     role="contentinfo"
                 >
                     <div className="max-w-6xl mx-auto px-6">
@@ -816,13 +816,13 @@ export default function AIVideoWorkflowMasterPage() {
                             <nav className="flex gap-6" aria-label="Footer navigation">
                                 <Link
                                     href="/crebit/terms?tab=terms"
-                                    className="hover:text-white transition-colors"
+                                    className="hover:text-black dark:hover:text-white transition-colors"
                                 >
                                     이용약관
                                 </Link>
                                 <Link
                                     href="/crebit/terms?tab=privacy"
-                                    className="hover:text-white transition-colors"
+                                    className="hover:text-black dark:hover:text-white transition-colors"
                                 >
                                     개인정보처리방침
                                 </Link>
@@ -835,7 +835,7 @@ export default function AIVideoWorkflowMasterPage() {
                 <div
                     id="apply"
                     className="fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-5
-                              border-t border-white/10 bg-black/95 backdrop-blur-xl"
+                              border-t border-black/10 dark:border-white/10 bg-white/95 dark:bg-black/95 backdrop-blur-xl"
                     role="region"
                     aria-label="수강 신청 바"
                 >
@@ -851,10 +851,10 @@ export default function AIVideoWorkflowMasterPage() {
                                 <CountdownDisplay timeLeft={timeLeft} />
                             </div>
                             {/* Urgency indicator */}
-                            <div className="h-12 w-px bg-white/10" />
-                            <div className="flex items-center gap-2 text-sm text-slate-400">
-                                <Users className="w-4 h-4 text-amber-400" />
-                                <span><span className="text-amber-400 font-bold">{SOCIAL_PROOF.totalStudents}명</span> 수강 중</span>
+                            <div className="h-12 w-px bg-black/10 dark:bg-white/10" />
+                            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                                <Users className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+                                <span><span className="text-amber-600 dark:text-amber-400 font-bold">{SOCIAL_PROOF.totalStudents}명</span> 수강 중</span>
                             </div>
                         </div>
 

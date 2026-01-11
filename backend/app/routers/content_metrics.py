@@ -19,7 +19,7 @@ from typing import Any, Dict, List, Optional
 import logging
 import uuid
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from app.schemas.metrics_collection import (
@@ -36,6 +36,7 @@ from app.schemas.metrics_collection import (
     calculate_performance_grade,
     compare_to_benchmark,
 )
+from app.dependencies import get_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +78,10 @@ class InsightsResponse(BaseModel):
 # =============================================================================
 
 @router.post("", response_model=MetricsResponse)
-async def submit_metrics(submission: MetricsSubmission):
+async def submit_metrics(
+    submission: MetricsSubmission,
+    user: dict = Depends(get_current_user),  # P1: Auth required
+):
     """
     콘텐츠 메트릭 제출
     

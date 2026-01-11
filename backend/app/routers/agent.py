@@ -421,14 +421,14 @@ def _start_stream_thread(
             logger.error(f"Stream thread error: {type(exc).__name__}: {exc}")
         finally:
             loop.call_soon_threadsafe(queue.put_nowait, None)
-
-    thread = threading.Thread(target=_runner, daemon=True)
+        thread = threading.Thread(target=_runner, daemon=True)
     thread.start()
 
 
 @router.post("/upload")
 async def upload_file(
     file: UploadFile = File(...),
+    user: dict = Depends(get_current_user),  # P0: Auth required - prevent API abuse
 ):
     """Upload a file to Gemini File API."""
     genai = _ensure_genai()
@@ -476,14 +476,20 @@ async def chat_agent(
         session = result.scalars().first()
         if not session:
             raise HTTPException(status_code=404, detail="Session not found")
+        # P0 BOLA: Verify session ownership to prevent message injection
+        user_id = user.get("id") or user.get("sub")
+        if session.owner_id and session.owner_id != user_id:
+            raise HTTPException(status_code=403, detail="Access denied")
     else:
         title = (request.message or "").strip()
         if len(title) > 80:
             title = f"{title[:77]}..."
+        user_id = user.get("id") or user.get("sub")
         session = AgentSession(
             status="active",
             title=title or None,
             meta=request.metadata or {},
+            owner_id=user_id,  # P0 BOLA: Store owner for access control
         )
         db.add(session)
         await db.flush()
@@ -822,6 +828,7 @@ async def get_session(
     session_id: str,
     message_limit: int = Query(default=200, ge=1, le=500, description="Max messages to return"),
     artifact_limit: int = Query(default=100, ge=1, le=200, description="Max artifacts to return"),
+    user: dict = Depends(get_current_user),  # P0 BOLA: Auth required
     db: AsyncSession = Depends(get_db),
 ) -> AgentSessionResponse:
     try:
@@ -833,6 +840,11 @@ async def get_session(
     session = result.scalars().first()
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
+    
+    # P0 BOLA: Owner verification
+    user_id = user.get("id") or user.get("sub")
+    if session.owner_id and session.owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Access denied")
 
     # Performance optimization: parallel queries with limits
     async def _fetch_messages():
@@ -900,9 +912,10 @@ async def get_session(
 async def approve_session(
     session_id: str,
     request: AgentDecisionRequest,
+    user: dict = Depends(get_current_user),  # P0 BOLA: Auth required
     db: AsyncSession = Depends(get_db),
 ) -> AgentSessionStatusResponse:
-    session = await _load_session(session_id, db)
+    session = await _load_session(session_id, db, user)
     session.status = "approved"
     session.meta = _merge_metadata(session.meta, request.metadata)
     if request.note:
@@ -925,9 +938,10 @@ async def approve_session(
 async def reject_session(
     session_id: str,
     request: AgentDecisionRequest,
+    user: dict = Depends(get_current_user),  # P0 BOLA: Auth required
     db: AsyncSession = Depends(get_db),
 ) -> AgentSessionStatusResponse:
-    session = await _load_session(session_id, db)
+    session = await _load_session(session_id, db, user)
     session.status = "rejected"
     session.meta = _merge_metadata(session.meta, request.metadata)
     if request.note:
@@ -946,7 +960,8 @@ async def reject_session(
     )
 
 
-async def _load_session(session_id: str, db: AsyncSession) -> AgentSession:
+async def _load_session(session_id: str, db: AsyncSession, user: dict) -> AgentSession:
+    """Load session with ownership verification."""
     try:
         session_uuid = uuid.UUID(session_id)
     except ValueError as exc:
@@ -955,4 +970,8 @@ async def _load_session(session_id: str, db: AsyncSession) -> AgentSession:
     session = result.scalars().first()
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
+    # P0 BOLA: Owner verification
+    user_id = user.get("id") or user.get("sub")
+    if session.owner_id and session.owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Access denied")
     return session

@@ -19,7 +19,7 @@ from app.schemas.workflow_session import (
     WorkflowStatus,
     workflow_session_manager,
 )
-from app.dependencies import get_current_user_optional
+from app.dependencies import get_current_user_optional, get_current_user
 
 
 router = APIRouter(prefix="/workflow", tags=["workflow"])
@@ -174,13 +174,18 @@ async def list_available_tools():
 @router.get("/session/{session_id}", response_model=WorkflowStatusResponse)
 async def get_workflow_status(
     session_id: str,
-    user: dict = Depends(get_current_user_optional),
+    user: dict = Depends(get_current_user),  # P0 BOLA: Auth required
 ):
     """워크플로우 세션 상태 조회"""
     session = workflow_session_manager.get_session(session_id)
     
     if not session:
         raise HTTPException(status_code=404, detail="세션을 찾을 수 없습니다.")
+    
+    # P0 BOLA: Owner verification
+    user_id = user.get("id") or user.get("sub")
+    if session.user_id != user_id:
+        raise HTTPException(status_code=403, detail="접근 권한이 없습니다.")
     
     return WorkflowStatusResponse(
         session_id=session.id,
@@ -205,13 +210,19 @@ async def get_workflow_status(
 @router.post("/session/{session_id}/advance")
 async def advance_workflow_step(
     session_id: str,
-    user: dict = Depends(get_current_user_optional),
+    user: dict = Depends(get_current_user),  # P0 BOLA: Auth required
 ):
     """워크플로우 다음 단계로 진행"""
-    session = workflow_session_manager.advance_step(session_id)
-    
-    if not session:
+    # P0 BOLA: Check ownership first
+    existing_session = workflow_session_manager.get_session(session_id)
+    if not existing_session:
         raise HTTPException(status_code=404, detail="세션을 찾을 수 없습니다.")
+    
+    user_id = user.get("id") or user.get("sub")
+    if existing_session.user_id != user_id:
+        raise HTTPException(status_code=403, detail="접근 권한이 없습니다.")
+    
+    session = workflow_session_manager.advance_step(session_id)
     
     return {
         "success": True,

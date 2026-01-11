@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models_singularity import BlackholeTemplate, BlackholeUsage
-from app.dependencies import get_optional_user_id
+from app.dependencies import get_optional_user_id, get_current_user, require_admin
 
 router = APIRouter(prefix="/singularity", tags=["singularity"])
 
@@ -218,10 +218,11 @@ async def get_template(
 @router.post("/templates/{template_id}/use")
 async def use_template(
     template_id: UUID,
-    user_id: Optional[str] = Depends(get_optional_user_id),
+    user: dict = Depends(get_current_user),  # P1: Auth required - prevent abuse
     db: AsyncSession = Depends(get_db),
 ):
     """Record template usage and return template data for applying."""
+    user_id = user.get("id") or user.get("sub")
     result = await db.execute(
         select(BlackholeTemplate).where(BlackholeTemplate.id == template_id)
     )
@@ -254,10 +255,11 @@ async def use_template(
 async def rate_template(
     template_id: UUID,
     rating_data: TemplateRating,
-    user_id: Optional[str] = Depends(get_optional_user_id),
+    user: dict = Depends(get_current_user),  # P1: Auth required - prevent abuse
     db: AsyncSession = Depends(get_db),
 ):
     """Rate a template after using it."""
+    user_id = user.get("id") or user.get("sub")
     result = await db.execute(
         select(BlackholeTemplate).where(BlackholeTemplate.id == template_id)
     )
@@ -298,10 +300,11 @@ async def rate_template(
 @router.post("/templates", response_model=TemplateDetail)
 async def create_template(
     template_data: TemplateCreate,
-    user_id: Optional[str] = Depends(get_optional_user_id),
+    user: dict = Depends(get_current_user),  # P1: Auth required
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new template (requires approval for public visibility)."""
+    user_id = user.get("id") or user.get("sub")
     template = BlackholeTemplate(
         title=template_data.title,
         description=template_data.description,
@@ -342,6 +345,7 @@ async def create_template(
 
 @router.post("/seed")
 async def seed_templates(
+    user: dict = Depends(require_admin),  # P1: Admin only
     db: AsyncSession = Depends(get_db),
 ):
     """Seed initial templates for development/demo purposes.

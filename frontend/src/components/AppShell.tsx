@@ -65,7 +65,7 @@ const PAGE_CONTEXT_MESSAGES: Record<string, string> = {
 export default function AppShell({
     children,
     showSidebar = true,
-    showTopBar = true,
+    showTopBar = false,
     showChokki = true,
     projectName = "Untitled Canvas",
     creditBalance,

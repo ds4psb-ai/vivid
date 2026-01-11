@@ -15,6 +15,12 @@ import { useToast } from "@/components/Toast";
 // CONSTELLATION VISUAL - 별자리 비주얼
 // =============================================================================
 
+// Seeded random for deterministic star positions
+function seededRandom(seed: number): number {
+    const x = Math.sin(seed * 9999) * 10000;
+    return x - Math.floor(x);
+}
+
 function ConstellationVisual() {
     return (
         <div className="relative w-full h-[400px] flex items-center justify-center overflow-hidden">
@@ -26,14 +32,14 @@ function ConstellationVisual() {
                         initial={{ opacity: 0.2 }}
                         animate={{ opacity: [0.2, 0.8, 0.2] }}
                         transition={{
-                            duration: 2 + Math.random() * 3,
+                            duration: 2 + seededRandom(i * 3) * 3,
                             repeat: Infinity,
-                            delay: Math.random() * 2,
+                            delay: seededRandom(i * 7) * 2,
                         }}
                         className="absolute w-1 h-1 bg-white rounded-full"
                         style={{
-                            left: `${Math.random() * 100}%`,
-                            top: `${Math.random() * 100}%`,
+                            left: `${seededRandom(i * 13) * 100}%`,
+                            top: `${seededRandom(i * 17) * 100}%`,
                         }}
                     />
                 ))}
@@ -120,11 +126,10 @@ function PresetFilter({
         <div className="flex flex-wrap items-center justify-center gap-2 mb-12">
             <button
                 onClick={() => onPresetChange("")}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    !selectedPreset
-                        ? "bg-white text-black shadow-lg"
-                        : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
-                }`}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${!selectedPreset
+                    ? "bg-black dark:bg-white text-white dark:text-black shadow-lg"
+                    : "bg-black/5 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-black/10 dark:hover:bg-white/10 hover:text-black dark:hover:text-white"
+                    }`}
             >
                 전체
             </button>
@@ -135,11 +140,10 @@ function PresetFilter({
                     <button
                         key={preset}
                         onClick={() => onPresetChange(preset === selectedPreset ? "" : preset)}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
-                            preset === selectedPreset
-                                ? `bg-gradient-to-r ${config.color} text-white shadow-lg`
-                                : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
-                        }`}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${preset === selectedPreset
+                            ? `bg-gradient-to-r ${config.color} text-white shadow-lg`
+                            : "bg-black/5 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-black/10 dark:hover:bg-white/10 hover:text-black dark:hover:text-white"
+                            }`}
                     >
                         <Icon className="w-4 h-4" />
                         {config.label}
@@ -174,7 +178,7 @@ function ConstellationCard({
             transition={{ delay: index * 0.08 }}
             whileHover={{ y: -8, scale: 1.02 }}
             onClick={onClick}
-            className="group relative bg-gradient-to-b from-white/[0.04] to-transparent border border-white/10 rounded-3xl overflow-hidden cursor-pointer
+            className="group relative bg-gradient-to-b from-black/[0.04] dark:from-white/[0.04] to-transparent border border-black/10 dark:border-white/10 rounded-3xl overflow-hidden cursor-pointer
                        hover:border-cyan-500/40 hover:shadow-[0_0_60px_rgba(6,182,212,0.15)] transition-all duration-500"
         >
             {/* Thumbnail / Star Pattern */}
@@ -233,20 +237,20 @@ function ConstellationCard({
 
             {/* Content */}
             <div className="p-6">
-                <h3 className="text-lg font-bold text-white mb-2 group-hover:text-cyan-300 transition-colors line-clamp-1">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-cyan-600 dark:group-hover:text-cyan-300 transition-colors line-clamp-1">
                     {constellation.name}
                 </h3>
-                <p className="text-sm text-slate-500 mb-4 line-clamp-2 leading-relaxed">
+                <p className="text-sm text-gray-600 dark:text-slate-500 mb-4 line-clamp-2 leading-relaxed">
                     {constellation.description || "별자리 설명이 없습니다"}
                 </p>
 
                 {/* Progress Bar */}
                 <div className="mb-4">
-                    <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+                    <div className="flex items-center justify-between text-xs text-gray-600 dark:text-slate-500 mb-1">
                         <span>진행률</span>
                         <span>{progressPercent}%</span>
                     </div>
-                    <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-black/5 dark:bg-white/5 rounded-full overflow-hidden">
                         <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${progressPercent}%` }}
@@ -373,11 +377,10 @@ function CreateModal({
                                             setPreset(key);
                                             setTargetCount(config.defaultSceneCount);
                                         }}
-                                        className={`flex flex-col items-center gap-1 p-3 rounded-xl border transition-all ${
-                                            preset === key
-                                                ? `bg-gradient-to-br ${config.color} border-transparent`
-                                                : "bg-white/5 border-white/10 hover:bg-white/10"
-                                        }`}
+                                        className={`flex flex-col items-center gap-1 p-3 rounded-xl border transition-all ${preset === key
+                                            ? `bg-gradient-to-br ${config.color} border-transparent`
+                                            : "bg-white/5 border-white/10 hover:bg-white/10"
+                                            }`}
                                     >
                                         <Icon className="w-4 h-4 text-white" />
                                         <span className="text-xs text-white">{config.label}</span>
@@ -524,7 +527,7 @@ function ConstellationPageContent() {
             <Suspense fallback={null}>
                 <SearchParamsHandler onNewWithSingularity={handleNewWithSingularity} />
             </Suspense>
-            <div className="min-h-screen bg-black">
+            <div className="min-h-screen bg-[var(--bg-0)]">
                 {/* Visual Header */}
                 <ConstellationVisual />
 

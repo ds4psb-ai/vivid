@@ -147,8 +147,8 @@ function TagFilter({
             <button
                 onClick={() => onTagChange("")}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${!selectedTag
-                    ? "bg-white text-black shadow-lg"
-                    : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
+                    ? "bg-black dark:bg-white text-white dark:text-black shadow-lg"
+                    : "bg-black/5 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-black/10 dark:hover:bg-white/10 hover:text-black dark:hover:text-white"
                     }`}
             >
                 전체
@@ -159,7 +159,7 @@ function TagFilter({
                     onClick={() => onTagChange(tag === selectedTag ? "" : tag)}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${tag === selectedTag
                         ? "bg-violet-500 text-white shadow-lg shadow-violet-500/25"
-                        : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
+                        : "bg-black/5 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-black/10 dark:hover:bg-white/10 hover:text-black dark:hover:text-white"
                         }`}
                 >
                     #{tag}
@@ -168,8 +168,8 @@ function TagFilter({
             <button
                 onClick={() => onFeaturedChange(!featuredOnly)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${featuredOnly
-                    ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                    : "bg-white/5 text-slate-400 hover:bg-white/10"
+                    ? "bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30"
+                    : "bg-black/5 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-black/10 dark:hover:bg-white/10"
                     }`}
             >
                 <Star className="w-4 h-4" />
@@ -283,7 +283,7 @@ function TemplateCard({
             transition={{ delay: index * 0.08 }}
             whileHover={{ y: -8, scale: 1.02 }}
             onClick={onClick}
-            className="group relative bg-gradient-to-b from-white/[0.04] to-transparent border border-white/10 rounded-3xl overflow-hidden cursor-pointer
+            className="group relative bg-gradient-to-b from-black/[0.04] dark:from-white/[0.04] to-transparent border border-black/10 dark:border-white/10 rounded-3xl overflow-hidden cursor-pointer
                        hover:border-violet-500/40 hover:shadow-[0_0_60px_rgba(139,92,246,0.15)] transition-all duration-500"
         >
             {/* Featured Glow */}
@@ -326,17 +326,17 @@ function TemplateCard({
 
             {/* Content */}
             <div className="p-6">
-                <h3 className="text-lg font-bold text-white mb-2 group-hover:text-violet-300 transition-colors line-clamp-1">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-violet-600 dark:group-hover:text-violet-300 transition-colors line-clamp-1">
                     {template.title}
                 </h3>
-                <p className="text-sm text-slate-500 mb-4 line-clamp-2 leading-relaxed">
+                <p className="text-sm text-gray-600 dark:text-slate-500 mb-4 line-clamp-2 leading-relaxed">
                     {template.description}
                 </p>
 
                 {/* Tags */}
                 <div className="flex flex-wrap gap-1.5 mb-4">
                     {template.tags.slice(0, 3).map(tag => (
-                        <span key={tag} className="px-2 py-0.5 rounded-full bg-white/5 text-[10px] text-slate-500">
+                        <span key={tag} className="px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/5 text-[10px] text-gray-600 dark:text-slate-500">
                             #{tag}
                         </span>
                     ))}
@@ -582,7 +582,7 @@ export default function SingularityPage() {
 
     return (
         <AppShell>
-            <div className="min-h-screen bg-black">
+            <div className="min-h-screen bg-[var(--bg-0)]">
                 {/* Blackhole Visual Header */}
                 <BlackholeVisual />
 

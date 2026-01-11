@@ -282,12 +282,12 @@ export default function WorkshopHubPage() {
                 <section className="relative pt-32 pb-12 flex flex-col items-center justify-center overflow-hidden px-4">
 
                     {/* 4-Stage Workflow Toggle */}
-                    <div className="flex flex-wrap justify-center items-center gap-2 p-2 rounded-2xl backdrop-blur-sm bg-white/5">
+                    <div className="flex flex-wrap justify-center items-center gap-2 p-2 rounded-2xl backdrop-blur-sm bg-black/5 dark:bg-white/5">
                         <button
                             onClick={() => setSelectedStage(null)}
                             className={`px-5 py-2.5 rounded-xl text-xs font-bold tracking-widest uppercase transition-all duration-300 ${selectedStage === null
-                                ? "bg-white text-black shadow-lg scale-105"
-                                : "text-white/40 hover:text-white"
+                                ? "bg-black dark:bg-white text-white dark:text-black shadow-lg scale-105"
+                                : "text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white"
                                 }`}
                         >
                             ALL
@@ -310,7 +310,7 @@ export default function WorkshopHubPage() {
                                     onClick={() => setSelectedStage(isSelected ? null : stageKey)}
                                     className={`px-4 py-2.5 rounded-xl text-xs font-bold tracking-wide transition-all duration-300 flex items-center gap-2 ${isSelected
                                         ? `${colors.bg} ${colors.text} shadow-lg scale-105`
-                                        : "text-white/50 hover:text-white bg-white/5 hover:bg-white/10"
+                                        : "text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10"
                                         }`}
                                 >
                                     <span className="text-[10px] font-mono opacity-60">{stage.order}</span>
@@ -421,7 +421,7 @@ export default function WorkshopHubPage() {
                                             >
                                                 <Link
                                                     href={dimension.href}
-                                                    className="block relative overflow-hidden rounded-[2rem] border border-white/5 bg-black/40 p-6 backdrop-blur-2xl hover:bg-white/[0.03] transition-all duration-700 hover:-translate-y-2"
+                                                    className="block relative overflow-hidden rounded-[2rem] border border-black/5 dark:border-white/5 bg-white/60 dark:bg-black/40 p-6 backdrop-blur-2xl hover:bg-white/80 dark:hover:bg-white/[0.03] transition-all duration-700 hover:-translate-y-2 shadow-lg dark:shadow-none"
                                                 >
                                                     {/* NEW Badge */}
                                                     {dimension.isNew && (
@@ -459,18 +459,18 @@ export default function WorkshopHubPage() {
                                                                 <span className={`text-[10px] font-mono tracking-wider ${dimension.textColor} opacity-60`}>
                                                                     {stageInfo.order}.{dimension.stageOrder}
                                                                 </span>
-                                                                <h2 className="text-lg font-bold text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-white/70 transition-all duration-500">
+                                                                <h2 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-gray-900 group-hover:to-gray-600 dark:group-hover:from-white dark:group-hover:to-white/70 transition-all duration-500">
                                                                     {language === 'ko' ? dimension.titleKo : dimension.titleEn}
                                                                 </h2>
                                                             </div>
-                                                            <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-white/5 border border-white/10 backdrop-blur-md transition-all duration-500 group-hover:scale-110 group-hover:bg-white/10`}>
+                                                            <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 backdrop-blur-md transition-all duration-500 group-hover:scale-110 group-hover:bg-black/10 dark:group-hover:bg-white/10`}>
                                                                 <Icon className={`h-4 w-4 ${dimension.textColor}`} aria-hidden="true" />
                                                             </div>
                                                         </div>
 
                                                         <div className="space-y-6 z-10 mt-auto">
                                                             <div className="space-y-2">
-                                                                <p className="text-sm text-[var(--fg-muted)] leading-relaxed line-clamp-2 mix-blend-plus-lighter">
+                                                                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed line-clamp-2">
                                                                     {language === 'ko' ? dimension.descKo : dimension.descEn}
                                                                 </p>
                                                             </div>
@@ -478,8 +478,8 @@ export default function WorkshopHubPage() {
                                                             <div className="flex justify-end mt-4">
                                                                 <div className={`
                                                                     flex items-center justify-center w-8 h-8 rounded-full
-                                                                    border border-white/10 bg-white/5 backdrop-blur-sm
-                                                                    text-white/40 group-hover:text-white group-hover:bg-white/20
+                                                                    border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 backdrop-blur-sm
+                                                                    text-black/40 dark:text-white/40 group-hover:text-black dark:group-hover:text-white group-hover:bg-black/10 dark:group-hover:bg-white/20
                                                                     transition-all duration-300 group-hover:scale-110
                                                                 `}>
                                                                     <ChevronRight className="w-4 h-4" />
@@ -496,12 +496,12 @@ export default function WorkshopHubPage() {
                                 {/* Propose Button - Minimalist */}
                                 <button
                                     onClick={() => setIsSubmitModalOpen(true)}
-                                    className="group relative overflow-hidden rounded-[2rem] border border-dashed border-white/10 bg-transparent p-6 hover:bg-white/[0.02] hover:border-white/30 transition-all duration-500 flex flex-col items-center justify-center gap-4 min-h-[140px]"
+                                    className="group relative overflow-hidden rounded-[2rem] border border-dashed border-black/10 dark:border-white/10 bg-transparent p-6 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] hover:border-black/30 dark:hover:border-white/30 transition-all duration-500 flex flex-col items-center justify-center gap-4 min-h-[140px]"
                                 >
                                     <div className="relative">
                                         <div className="absolute inset-0 bg-lime-400/20 blur-[30px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                                        <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white/5 border border-white/10 transition-all duration-500 group-hover:scale-110">
-                                            <Plus className="h-6 w-6 text-zinc-500 group-hover:text-white transition-colors duration-300" />
+                                        <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 transition-all duration-500 group-hover:scale-110">
+                                            <Plus className="h-6 w-6 text-zinc-500 group-hover:text-black dark:group-hover:text-white transition-colors duration-300" />
                                         </div>
                                     </div>
 

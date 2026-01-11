@@ -21,6 +21,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { SessionProvider } from "@/contexts/SessionContext";
 import { DimensionConfigProvider } from "@/contexts/DimensionConfigContext";
 import { ToastProvider } from "@/components/Toast";
+import { ThemeProvider } from "@/components/theme-provider";
 
 export default function RootLayout({
   children,
@@ -30,15 +31,22 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} antialiased`} suppressHydrationWarning>
-        <SessionProvider>
-          <LanguageProvider>
-            <DimensionConfigProvider>
-              <ToastProvider>
-                {children}
-              </ToastProvider>
-            </DimensionConfigProvider>
-          </LanguageProvider>
-        </SessionProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <SessionProvider>
+            <LanguageProvider>
+              <DimensionConfigProvider>
+                <ToastProvider>
+                  {children}
+                </ToastProvider>
+              </DimensionConfigProvider>
+            </LanguageProvider>
+          </SessionProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

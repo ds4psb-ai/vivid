@@ -4,15 +4,53 @@
 
   /* Lusion-style Glass Card (Standardized) */
   .card-glass {
-    @apply relative overflow-hidden bg-black/40 backdrop-blur-xl border border-white/5 rounded-[1.5rem];
+    @apply relative overflow-hidden bg-black/40 backdrop-blur-xl border border-white/5 rounded-[1.5rem] dark:bg-black/40 dark:border-white/5 bg-white/40 border-black/5;
   }
 
   .card-glass-hover {
-    @apply hover:bg-white/[0.03] hover:border-white/10 hover:shadow-2xl hover:shadow-violet-500/5 transition-all duration-500 ease-out;
+    @apply hover:bg-white/[0.03] hover:border-white/10 hover:shadow-2xl hover:shadow-violet-500/5 transition-all duration-500 ease-out dark:hover:bg-white/[0.03] hover:bg-black/5;
   }
 }
 
 :root {
+  /* ─── LIGHT MODE (Midday AI Style) ─── */
+  /* Clean, crisp, professional */
+  --bg-0: #ffffff;
+  --bg-1: #FAFAFA;
+  /* Very subtle grey for contrast */
+  --bg-2: #F4F4F5;
+  /* Surface/Panels */
+
+  --fg-0: #09090B;
+  /* Deep Black for primary text */
+  --fg-muted: #71717A;
+  /* Zinc-500 for secondary */
+
+  /* Crebit Accents - Retained for Brand Identity but adjusted for Light Mode contrast */
+  --accent: #7C3AED;
+  /* Slightly darker Violet for light background visibility */
+  --accent-glow: rgba(124, 58, 237, 0.2);
+  --accent-2: #D97706;
+  /* Amber-600 */
+
+  /* Surfaces & Glass */
+  --surface-1: rgba(255, 255, 255, 0.8);
+  --surface-2: rgba(244, 244, 245, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-highlight: rgba(0, 0, 0, 0.03);
+
+  --border-muted: rgba(0, 0, 0, 0.1);
+  --border-subtle: rgba(0, 0, 0, 0.05);
+
+  /* Semantic */
+  --success: #059669;
+  --warning: #D97706;
+  --error: #DC2626;
+  --info: #2563EB;
+}
+
+.dark {
+  /* ─── DARK MODE (Existing Deep Space Theme) ─── */
   /* 2025 Deep Space Theme - Reduced Eye Strain */
   --bg-0: #0F0F1A;
   /* Deep Blue-Gray (Primary Background) */
@@ -48,43 +86,19 @@
   --error: #ef4444;
   --info: #3b82f6;
 
-  /* Coloso V2 Design Tokens (Pixel-Perfect) */
-  --coloso-bg: #050505;
-  --coloso-surface: #0a0a0c;
-  --coloso-surface-highlight: #1a1a1c;
-  --coloso-primary: #4200FF;
-  --coloso-primary-hover: #5500FF;
-  --coloso-accent-red: #ED2040;
-  --coloso-bg-light: #F8F8F8;
-  --coloso-text-dark: #333333;
-  --coloso-text-muted: #666666;
-  --coloso-text-secondary: #9CA3AF;
+  /* Cinematic Aurora Gradient */
+  --bg-image-gradient:
+    radial-gradient(circle at 15% 0%, rgba(56, 189, 248, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 85% 10%, rgba(245, 158, 11, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(56, 189, 248, 0.03) 0%, transparent 60%);
+}
 
-  /* ─── Card System (Coloso V2 Style) ─── */
-  --card-bg: rgba(26, 26, 28, 0.6);
-  --card-bg-hover: rgba(30, 30, 35, 0.8);
-  --card-border: rgba(255, 255, 255, 0.05);
-  --card-border-hover: rgba(255, 255, 255, 0.2);
-  --card-radius: 24px;
-  --card-inner-radius: 16px;
-  --card-padding: 16px;
+/* Common Variables (Layout, typography, animations - mostly shared) */
+:root {
+  /* Coloso V2 Design Tokens (Pixel-Perfect) - These might need light mode tweaks, mapping them safely */
+  /* For now keeping them as is, but overridden if they use vars above */
 
-  /* Layered shadows for depth */
-  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.02);
-  --card-shadow-hover: 0 20px 50px rgba(0, 0, 0, 0.6),
-    0 8px 24px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.08);
-
-  /* Auteur glow effects */
-  --glow-sky: 0 0 50px rgba(56, 189, 248, 0.18);
-  --glow-amber: 0 0 50px rgba(245, 158, 11, 0.18);
-  --glow-rose: 0 0 50px rgba(244, 63, 94, 0.18);
-  --glow-emerald: 0 0 50px rgba(16, 185, 129, 0.18);
-  --glow-violet: 0 0 50px rgba(139, 92, 246, 0.18);
-
-  /* ═══ LUSION DESIGN SYSTEM (HARDENED) ═══ */
-  /* Colors - Exact matches from lusion.co spec */
+  /* Lusion Design System Colors - Fixed values */
   --lusion-blue: #1a2ffb;
   --lusion-dark-blue: #071bdf;
   --lusion-green: #c1ff00;
@@ -94,84 +108,50 @@
   --lusion-white: #ffffff;
   --lusion-off-white: #f0f1fa;
   --lusion-dark-white: #e4e6ef;
+
   /* Vivid Dimension Colors (Hardened) */
   --vivid-violet: #8B5CF6;
-  /* Prompt */
   --vivid-cyan: #1A2FFB;
-  /* Shot Catch (Using Lusion Blue for impact) */
   --vivid-emerald: #C1FF00;
-  /* Storyboard (Using Lusion Green for impact) */
   --vivid-amber: #F59E0B;
-  /* Image Tool */
 
-  /* Typography - Aggressive Fluid Sizing (Lusion Spec) */
+  /* Typography */
   --text-hero: clamp(3rem, 8vw, 8rem);
   --text-heading: clamp(2rem, 4vw, 4rem);
   --text-subheading: clamp(1.25rem, 2vw, 2rem);
   --text-body: clamp(0.875rem, 1vw, 1.125rem);
   --text-caption: clamp(0.75rem, 0.8vw, 0.875rem);
 
-  /* Easing Functions - Premium Feel */
+  /* Easing */
   --ease-lusion: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
-  /* Legacy mapping */
   --ease-out-expo: var(--ease-lusion);
 
-  /* Lusion Spacing Tokens */
   --radius-lusion: 20px;
   --global-border-radius: 20px;
-  --base-padding-x: max(5vw, 40px);
-  --base-padding-y: clamp(30px, 4vw, 50px);
-  --grid-gap: 2vw;
-  --section-gap: clamp(60px, 10vh, 120px);
-
-  /* ═══ LUSION ENHANCED GLOW SYSTEM (HARDENED) ═══ */
-  /* Multi-layer glow for depth (3 layers: intense → medium → ambient) */
-  --glow-violet-intense:
-    0 0 40px rgba(139, 92, 246, 0.5),
-    0 0 80px rgba(139, 92, 246, 0.3),
-    0 0 160px rgba(139, 92, 246, 0.15);
-
-  --glow-cyan-intense:
-    0 0 40px rgba(26, 47, 251, 0.5),
-    /* Lusion Blue base */
-    0 0 80px rgba(26, 47, 251, 0.3),
-    0 0 160px rgba(26, 47, 251, 0.15);
-
-  --glow-emerald-intense:
-    0 0 40px rgba(193, 255, 0, 0.45),
-    /* Lusion Green base */
-    0 0 80px rgba(193, 255, 0, 0.25),
-    0 0 160px rgba(193, 255, 0, 0.1);
-
-  --glow-amber-intense:
-    0 0 40px rgba(245, 158, 11, 0.5),
-    0 0 80px rgba(245, 158, 11, 0.3),
-    0 0 160px rgba(245, 158, 11, 0.15);
-
-  /* RGB values for dynamic glow composition */
-  --color-violet-rgb: 139, 92, 246;
-  --color-cyan-rgb: 26, 47, 251;
-  /* Lusion Blue */
-  --color-emerald-rgb: 193, 255, 0;
-  /* Lusion Green */
-  --color-amber-rgb: 245, 158, 11;
 }
+
 
 body {
   min-height: 100vh;
   color: var(--fg-0);
   background-color: var(--bg-0);
-  /* Cinematic Aurora Gradient */
-  background-image:
-    radial-gradient(circle at 15% 0%, rgba(56, 189, 248, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 85% 10%, rgba(245, 158, 11, 0.05) 0%, transparent 40%),
-    radial-gradient(circle at 50% 100%, rgba(56, 189, 248, 0.03) 0%, transparent 60%);
+  background-image: none;
+  /* Light mode */
   background-attachment: fixed;
   font-family: var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: color 0.3s, background-color 0.3s;
+}
+
+/* Dark mode body uses the aurora gradient */
+html.dark body {
+  background-image:
+    radial-gradient(circle at 15% 0%, rgba(56, 189, 248, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 85% 10%, rgba(245, 158, 11, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(56, 189, 248, 0.03) 0%, transparent 60%);
 }
 
 code,
@@ -190,16 +170,24 @@ pre {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.1);
   border-radius: 99px;
   transition: background 0.2s;
 }
 
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+
 ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* React Flow Overrides for Cinematic Look */
+/* React Flow Overrides */
 .react-flow__handle {
   width: 8px;
   height: 8px;
@@ -217,11 +205,17 @@ pre {
 .react-flow__controls {
   border-radius: 12px;
   border: 1px solid var(--glass-border);
-  background: rgba(10, 10, 12, 0.8);
+  background: rgba(255, 255, 255, 0.8);
+  /* Light mode default */
   backdrop-filter: blur(12px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   padding: 2px;
+}
+
+.dark .react-flow__controls {
+  background: rgba(10, 10, 12, 0.8);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 .react-flow__controls-button {
@@ -234,8 +228,12 @@ pre {
 }
 
 .react-flow__controls-button:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.05);
   color: var(--fg-0);
+}
+
+.dark .react-flow__controls-button:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .react-flow__controls-button svg {
@@ -256,6 +254,7 @@ pre {
 .react-flow__node-default {
   background: transparent !important;
   border: none !important;
+  width: auto !important;
 }
 
 /* Edge Animations */
@@ -328,15 +327,6 @@ pre {
    LUSION ANIMATION LAYER
    Based on lusion.co design patterns
    ═══════════════════════════════════════════════════════════════════════════ */
-
-/* ─── Easing Functions (Lusion Style) ─── */
-:root {
-  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-inertia: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ease-snap: cubic-bezier(0.25, 0.1, 0.25, 1);
-}
 
 /* ─── Smooth Scroll with Inertia ─── */
 html {
@@ -524,7 +514,6 @@ html.lenis body {
 }
 
 /* ─── Card Hover Micro-interactions (Lusion Style) ─── */
-/* ─── Card Hover Micro-interactions (Lusion Style) ─── */
 .card-lusion {
   position: relative;
   transition:
@@ -537,20 +526,28 @@ html.lenis body {
 
 /* Premium Card Upgrade (Phase C) */
 .card-premium {
-  /* Glassmorphism Base */
-  background: rgba(255, 255, 255, 0.03);
+  /* Glassmorphism Base - Light Mode Default */
+  background: rgba(255, 255, 255, 0.4);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  /* slightly stronger border for light */
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.05),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.dark .card-premium {
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow:
     0 4px 20px rgba(0, 0, 0, 0.2),
     inset 0 0 0 1px rgba(255, 255, 255, 0.05);
-  /* Inner stroke */
-
-  /* Lusion Interaction Props */
-  transform-style: preserve-3d;
-  perspective: 1000px;
 }
+
 
 .card-premium::before {
   content: '';
@@ -558,8 +555,8 @@ html.lenis body {
   inset: 0;
   border-radius: inherit;
   background: linear-gradient(160deg,
-      rgba(255, 255, 255, 0.1) 0%,
-      rgba(255, 255, 255, 0.02) 40%,
+      rgba(255, 255, 255, 0.4) 0%,
+      rgba(255, 255, 255, 0.1) 40%,
       rgba(255, 255, 255, 0) 100%);
   opacity: 0.5;
   pointer-events: none;
@@ -569,17 +566,22 @@ html.lenis body {
 
 .card-premium:hover {
   transform: translateY(-8px) scale(1.02);
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 20px 40px -5px rgba(0, 0, 0, 0.1),
+    0 10px 15px -3px rgba(0, 0, 0, 0.05),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+.dark .card-premium:hover {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.2);
-
-  /* Deep Lusion Shadow */
   box-shadow:
     0 20px 40px -5px rgba(0, 0, 0, 0.4),
     0 10px 15px -3px rgba(0, 0, 0, 0.2),
     0 0 0 1px rgba(255, 255, 255, 0.15),
-    /* Brighter inner rim */
     0 0 30px rgba(var(--glow-color-rgb, 255, 255, 255), 0.1);
-  /* Ambient glow spill */
 }
 
 .card-premium:hover::before {
@@ -603,12 +605,19 @@ html.lenis body {
   border-radius: inherit;
   background: linear-gradient(135deg,
       transparent 0%,
-      rgba(255, 255, 255, 0.1) 50%,
+      rgba(0, 0, 0, 0.05) 50%,
       transparent 100%);
   opacity: 0;
   transition: opacity 0.5s var(--ease-out-expo);
   pointer-events: none;
   z-index: -1;
+}
+
+.dark .card-lusion-glow {
+  background: linear-gradient(135deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      transparent 100%);
 }
 
 .card-lusion:hover .card-lusion-glow {
@@ -684,7 +693,6 @@ html.lenis body {
   animation: glow-pulse 4s ease-in-out infinite;
 }
 
-/* ─── Glow Breathe Animation (Multi-layer) ─── */
 /* ─── Glow Breathe Animation (Dynamic) ─── */
 @keyframes glow-breathe {
 
@@ -772,8 +780,9 @@ html.lenis body {
   gap: 8px;
   padding: 12px 24px;
   border-radius: 999px;
-  background: var(--lusion-white);
-  color: var(--lusion-black);
+  background: var(--lusion-black);
+  /* Dark for light mode contrast */
+  color: var(--lusion-white);
   font-weight: 500;
   font-size: 0.875rem;
   letter-spacing: 0.05em;
@@ -782,8 +791,14 @@ html.lenis body {
   cursor: pointer;
 }
 
+.dark .button-primary {
+  background: var(--lusion-white);
+  color: var(--lusion-black);
+}
+
 .button-primary:hover {
   background: var(--lusion-green);
+  color: var(--lusion-black);
   transform: translateY(-2px);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
@@ -796,166 +811,4 @@ html.lenis body {
   background: currentColor;
   opacity: 0;
   transition: opacity 0.2s;
-}
-
-.button-primary:hover::before {
-  opacity: 1;
-}
-
-/* ─── Fluid Typography Utilities ─── */
-.text-hero {
-  font-size: var(--text-hero);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.05;
-  text-transform: uppercase;
-  /* Hardened: Lusion mostly uses uppercase for hero */
-}
-
-.text-display {
-  font-size: var(--text-display);
-  font-weight: 600;
-  letter-spacing: -0.015em;
-  line-height: 1.1;
-}
-
-.text-heading {
-  font-size: var(--text-heading);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
-}
-
-.text-subheading {
-  font-size: var(--text-subheading);
-  font-weight: 500;
-  line-height: 1.4;
-}
-
-/* ─── Portal Card Glow Utility ─── */
-.portal-glow-violet {
-  box-shadow: var(--glow-violet-intense);
-}
-
-.portal-glow-cyan {
-  box-shadow: var(--glow-cyan-intense);
-}
-
-.portal-glow-emerald {
-  box-shadow: var(--glow-emerald-intense);
-}
-
-.portal-glow-amber {
-  box-shadow: var(--glow-amber-intense);
-}
-
-/* Hover variant with enhanced intensity */
-.portal-glow-hover:hover {
-  box-shadow:
-    0 0 50px rgba(var(--glow-color-rgb), 0.6),
-    0 0 100px rgba(var(--glow-color-rgb), 0.4),
-    0 0 200px rgba(var(--glow-color-rgb), 0.2);
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   MOTION BEST PRACTICES (2025)
-   - Short transitions: 300ms max
-   - GPU-accelerated only: opacity, transform
-   - Progressive enhancement for scroll-driven
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* ─── Motion Timing Constraints ─── */
-:root {
-  --motion-instant: 100ms;
-  --motion-fast: 200ms;
-  --motion-normal: 300ms;
-  /* Max recommended for UI transitions */
-}
-
-/* ─── Standard Fade/Slide Transitions ─── */
-.motion-fade {
-  opacity: 0;
-  transition: opacity var(--motion-normal) var(--ease-out-expo);
-}
-
-.motion-fade.is-visible {
-  opacity: 1;
-}
-
-.motion-slide-up {
-  opacity: 0;
-  transform: translateY(20px);
-  transition:
-    opacity var(--motion-normal) var(--ease-out-expo),
-    transform var(--motion-normal) var(--ease-out-expo);
-}
-
-.motion-slide-up.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* ─── Scroll-Driven Animations (Progressive Enhancement) ─── */
-@supports (animation-timeline: view()) {
-  @keyframes scroll-fade-in {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .scroll-reveal {
-    animation: scroll-fade-in linear both;
-    animation-timeline: view();
-    animation-range: entry 10% cover 40%;
-  }
-
-  .scroll-reveal-slow {
-    animation: scroll-fade-in linear both;
-    animation-timeline: view();
-    animation-range: entry 0% cover 50%;
-  }
-
-  /* Stagger for grid items */
-  .scroll-reveal-grid>* {
-    animation: scroll-fade-in linear both;
-    animation-timeline: view();
-    animation-range: entry 5% cover 35%;
-  }
-
-  .scroll-reveal-grid>*:nth-child(2) {
-    animation-range: entry 8% cover 38%;
-  }
-
-  .scroll-reveal-grid>*:nth-child(3) {
-    animation-range: entry 11% cover 41%;
-  }
-
-  .scroll-reveal-grid>*:nth-child(4) {
-    animation-range: entry 14% cover 44%;
-  }
-
-  .scroll-reveal-grid>*:nth-child(5) {
-    animation-range: entry 17% cover 47%;
-  }
-
-  .scroll-reveal-grid>*:nth-child(6) {
-    animation-range: entry 20% cover 50%;
-  }
-}
-
-/* Fallback for browsers without scroll-driven support */
-@supports not (animation-timeline: view()) {
-
-  .scroll-reveal,
-  .scroll-reveal-slow,
-  .scroll-reveal-grid>* {
-    opacity: 1;
-    transform: none;
-  }
 }

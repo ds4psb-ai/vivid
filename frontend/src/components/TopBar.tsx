@@ -19,6 +19,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { api, AuthSession } from "@/lib/api";
 import { getAuthStartUrl } from "@/lib/auth";
 import { formatNumber } from "@/lib/formatters";
+import { ModeToggle } from "./mode-toggle";
 
 interface TopBarProps {
     projectName?: string;
@@ -104,7 +105,7 @@ export default function TopBar({
 
     return (
         <header
-            className="fixed left-60 right-0 top-0 z-30 flex h-14 items-center justify-between border-b border-white/10 bg-[var(--bg-0)]/80 px-4 backdrop-blur-xl"
+            className="fixed left-60 right-0 top-0 z-30 flex h-14 items-center justify-between border-b border-black/10 dark:border-white/10 bg-[var(--bg-0)]/80 px-4 backdrop-blur-xl"
             role="banner"
         >
             {/* Left Section */}
@@ -122,7 +123,7 @@ export default function TopBar({
                 {onMenuToggle && (
                     <button
                         onClick={onMenuToggle}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--fg-muted)] transition-colors hover:bg-white/10 hover:text-[var(--fg-0)] lg:hidden"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--fg-muted)] transition-colors hover:bg-black/5 dark:hover:bg-white/10 hover:text-[var(--fg-0)] lg:hidden"
                         aria-label={getLabel("toggleMenu", "Toggle menu")}
                         aria-expanded="false"
                     >
@@ -162,11 +163,11 @@ export default function TopBar({
             {/* Right Section */}
             <div className="flex items-center gap-3">
                 {isAuthenticated ? (
-                    <div className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-1.5 text-sm">
+                    <div className="flex items-center gap-2 rounded-lg bg-black/5 dark:bg-white/5 px-3 py-1.5 text-sm">
                         <UserCircle className="h-4 w-4 text-[var(--fg-muted)]" aria-hidden="true" />
                         <span className="max-w-[160px] truncate">{userLabel}</span>
                         {session?.user?.role && (
-                            <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-[var(--fg-muted)]">
+                            <span className="rounded-full bg-black/10 dark:bg-white/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-[var(--fg-muted)]">
                                 {session.user.role}
                             </span>
                         )}
@@ -174,7 +175,7 @@ export default function TopBar({
                 ) : (
                     <Link
                         href={authStartUrl}
-                        className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-[var(--fg-0)] transition-colors hover:bg-white/10"
+                        className="flex items-center gap-2 rounded-lg border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 px-3 py-1.5 text-sm text-[var(--fg-0)] transition-colors hover:bg-black/10 dark:hover:bg-white/10"
                     >
                         <LogIn className="h-4 w-4" aria-hidden="true" />
                         {getLabel("signIn", "Sign in")}
@@ -185,7 +186,7 @@ export default function TopBar({
                     <button
                         onClick={handleLogout}
                         disabled={isLoggingOut}
-                        className="flex h-9 items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 text-sm font-medium transition-colors hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex h-9 items-center gap-2 rounded-lg border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 px-4 text-sm font-medium transition-colors hover:bg-black/10 dark:hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
                         aria-label={getLabel("signOut", "Sign out")}
                     >
                         {isLoggingOut ? (
@@ -197,10 +198,12 @@ export default function TopBar({
                     </button>
                 )}
 
+                <ModeToggle />
+
                 {/* Credit Balance */}
                 <Link
                     href="/credits"
-                    className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-1.5 text-sm transition-colors hover:bg-white/10"
+                    className="flex items-center gap-2 rounded-lg bg-black/5 dark:bg-white/5 px-3 py-1.5 text-sm transition-colors hover:bg-black/10 dark:hover:bg-white/10"
                     aria-label={`${formatNumber(creditBalance)} ${getLabel("credits", "credits")} available`}
                 >
                     <CreditCard className="h-4 w-4 text-[var(--accent)]" aria-hidden="true" />
@@ -212,7 +215,7 @@ export default function TopBar({
                     <button
                         onClick={onSave}
                         disabled={isSaving}
-                        className="flex h-9 items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-4 text-sm font-medium transition-colors hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex h-9 items-center gap-2 rounded-lg border border-black/20 dark:border-white/20 bg-black/5 dark:bg-white/5 px-4 text-sm font-medium transition-colors hover:bg-black/10 dark:hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
                         aria-label={isSaving ? getLabel("saving", "Saving...") : getLabel("save", "Save")}
                     >
                         {isSaving ? (
