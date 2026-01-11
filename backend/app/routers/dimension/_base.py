@@ -453,7 +453,8 @@ async def _execute_dimension_tool(
     # Step 1: RAG Context 수집 (프리셋 기반)
     try:
         from app.rag.rag_presets import get_rag_preset, should_enable_rag
-        from app.rag.rag_cache import get_rag_cache
+        # === Legacy Cleanup: migrate from get_rag_cache → hybrid_query ===
+        from app.rag.hybrid_rag import hybrid_query
         
         # 거장 키 추출
         auteur_key = _extract_auteur_key(inputs, intent)
@@ -463,11 +464,12 @@ async def _execute_dimension_tool(
             topic = inputs.get("topic") or inputs.get("concept") or inputs.get("description") or ""
             if topic:
                 query = f"{topic[:200]} - 시각적 스타일과 촬영 기법 참조"
-                result = await get_rag_cache().get_or_query(
+                result = await hybrid_query(
                     query=query,
                     auteur_key=auteur_key,
                     dimension=dimension_code if dimension_code != "AD" else None,
                     use_google_search=preset.use_google_search,
+                    use_semantic_cache=True,
                 )
                 
                 if result.confidence >= preset.confidence_threshold:
@@ -654,7 +656,8 @@ async def _execute_dimension_tool_stream(
         # Step 1: RAG Context 수집 (프리셋 기반)
         try:
             from app.rag.rag_presets import get_rag_preset, should_enable_rag
-            from app.rag.rag_cache import get_rag_cache
+            # === Legacy Cleanup: migrate from get_rag_cache → hybrid_query ===
+            from app.rag.hybrid_rag import hybrid_query
             
             auteur_key = _extract_auteur_key(inputs, intent)
             preset = get_rag_preset(dimension_code)
@@ -663,11 +666,12 @@ async def _execute_dimension_tool_stream(
                 topic = inputs.get("topic") or inputs.get("concept") or inputs.get("description") or ""
                 if topic:
                     query = f"{topic[:200]} - 시각적 스타일과 촬영 기법 참조"
-                    result = await get_rag_cache().get_or_query(
+                    result = await hybrid_query(
                         query=query,
                         auteur_key=auteur_key,
                         dimension=dimension_code if dimension_code != "AD" else None,
                         use_google_search=preset.use_google_search,
+                        use_semantic_cache=True,
                     )
                     
                     if result.confidence >= preset.confidence_threshold:

@@ -162,13 +162,15 @@ async def rag_cache_health() -> dict:
     - TTL configuration
     """
     try:
-        from app.rag.rag_cache import get_rag_cache
-        cache = get_rag_cache()
+        # === Legacy Cleanup: migrate from get_rag_cache → semantic_cache ===
+        from app.rag.semantic_cache import get_semantic_cache
+        cache = get_semantic_cache()
         stats = cache.get_stats()
         
         return {
             "status": "healthy",
-            **stats
+            "cache_type": "semantic",
+            **stats.__dict__,  # CacheStats dataclass
         }
     except Exception as e:
         return {

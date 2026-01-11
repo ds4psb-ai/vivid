@@ -429,7 +429,8 @@ async def _dimension_tool_handler(
         dimension_code = TOOL_TO_DIMENSION.get(tool_name)
         try:
             from app.rag.rag_presets import get_rag_preset, should_enable_rag
-            from app.rag.rag_cache import get_rag_cache
+            # === Legacy Cleanup: migrate from get_rag_cache → hybrid_query ===
+            from app.rag.hybrid_rag import hybrid_query
             
             # 거장 키 추출
             auteur_key = None
@@ -449,11 +450,12 @@ async def _dimension_tool_handler(
                 topic = inputs.get("topic") or inputs.get("concept") or inputs.get("description") or ""
                 if topic:
                     query = f"{topic[:200]} - 시각적 스타일과 촬영 기법 참조"
-                    result = await get_rag_cache().get_or_query(
+                    result = await hybrid_query(
                         query=query,
                         auteur_key=auteur_key,
                         dimension=dimension_code,
                         use_google_search=preset.use_google_search,
+                        use_semantic_cache=True,
                     )
                     
                     if result.confidence >= preset.confidence_threshold:

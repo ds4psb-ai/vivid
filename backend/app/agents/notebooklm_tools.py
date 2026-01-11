@@ -285,13 +285,15 @@ async def _rag_query_handler(
         return validation_error(call, "query")
     
     try:
-        from app.rag.rag_cache import get_rag_cache
+        # === Legacy Cleanup: migrate from get_rag_cache → hybrid_query ===
+        from app.rag.hybrid_rag import hybrid_query
         
-        result = await get_rag_cache().get_or_query(
+        result = await hybrid_query(
             query=query,
             auteur_key=auteur_key,
             dimension=dimension,
             use_google_search=args.get("use_google_search", False),
+            use_semantic_cache=True,  # 캐시 사용 (기본값)
         )
         
         # 소스 정보 추출
