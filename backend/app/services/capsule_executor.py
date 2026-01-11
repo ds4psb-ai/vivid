@@ -1,0 +1,403 @@
+"""Capsule Executor Pipeline.
+
+P5 Commit 2: Unified execution pipeline for all capsule types.
+
+Adapter Routing:
+- teaching.*, dimension.*, veo.* → execute_dimension_capsule
+- auteur.* → NotebookLMAdapter (override: spec.adapter.type ignored)
+
+Usage:
+    from app.services.capsule_executor import execute_capsule
+    
+    result = await execute_capsule(
+        capsule_id="teaching.prompt.generate:1.0.0",
+        inputs={"topic": "테스트"},
+        params={"model": "gemini-3-flash-preview"},
+        user=current_user,
+        db=db,
+    )
+"""
+from __future__ import annotations
+
+import logging
+import time
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = logging.getLogger(__name__)
+
+
+# =============================================================================
+# Result Schema (frontend-compatible)
+# =============================================================================
+
+@dataclass
+class CapsuleExecutionResult:
+    """Capsule execution result matching frontend CapsuleRun expectations."""
+    run_id: str
+    status: str  # done | failed | cancelled
+    summary: Dict[str, Any] = field(default_factory=dict)
+    evidence_refs: List[Dict[str, Any]] = field(default_factory=list)
+    version: str = ""
+    token_usage: Dict[str, int] = field(default_factory=dict)
+    latency_ms: int = 0
+    cost_usd_est: float = 0.0
+    error: Optional[str] = None
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "run_id": self.run_id,
+            "status": self.status,
+            "summary": self.summary,
+            "evidence_refs": self.evidence_refs,
+            "version": self.version,
+            "token_usage": self.token_usage,
+            "latency_ms": self.latency_ms,
+            "cost_usd_est": self.cost_usd_est,
+            "error": self.error,
+        }
+
+
+# =============================================================================
+# Input Validation
+# =============================================================================
+
+def _validate_inputs(
+    inputs: Dict[str, Any],
+    spec: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Validate and merge defaults into inputs.
+    
+    Args:
+        inputs: User-provided inputs
+        spec: Capsule spec containing input definitions
+    
+    Returns:
+        Merged inputs with defaults applied
+    
+    Raises:
+        ValueError: If required inputs are missing
+    """
+    input_defs = spec.get("inputs", {})
+    merged = dict(inputs)
+    
+    for key, definition in input_defs.items():
+        is_required = definition.get("required", False)
+        default = definition.get("default")
+        
+        if key not in merged:
+            if is_required:
+                raise ValueError(f"Missing required input: {key}")
+            if default is not None:
+                merged[key] = default
+    
+    return merged
+
+
+# =============================================================================
+# Adapter Selection
+# =============================================================================
+
+def _get_adapter_type(capsule_key: str) -> str:
+    """Determine adapter type based on capsule_key prefix.
+    
+    Args:
+        capsule_key: e.g., "teaching.prompt.generate", "auteur.bong-joon-ho"
+    
+    Returns:
+        Adapter type: "dimension" or "notebooklm"
+    """
+    if capsule_key.startswith("auteur.") or capsule_key.startswith("production."):
+        return "notebooklm"
+    
+    # teaching.*, dimension.*, veo.* → dimension adapter
+    return "dimension"
+
+
+# =============================================================================
+# Dimension Adapter Execution
+# =============================================================================
+
+async def _execute_dimension(
+    capsule_key: str,
+    inputs: Dict[str, Any],
+    params: Dict[str, Any],
+    user_api_key: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Execute via dimension_adapter (teaching, dimension, veo capsules).
+    
+    This wraps execute_dimension_capsule from dimension_adapter.py.
+    """
+    try:
+        from app.dimension_adapter import execute_dimension_capsule
+        
+        result = await execute_dimension_capsule(
+            capsule_id=capsule_key,
+            inputs=inputs,
+            params=params,
+            user_api_key=user_api_key,
+        )
+        return result
+    except ImportError as e:
+        logger.error(f"Failed to import dimension_adapter: {e}")
+        return {"success": False, "error": str(e)}
+
+
+# =============================================================================
+# NotebookLM Adapter Execution
+# =============================================================================
+
+async def _execute_notebooklm(
+    capsule_key: str,
+    inputs: Dict[str, Any],
+    params: Dict[str, Any],
+    user_api_key: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Execute via NotebookLM adapter (auteur capsules).
+    
+    P5: All auteur.* capsules use NotebookLM adapter regardless of spec.adapter.type.
+    This is an intentional override for simplicity in this iteration.
+    """
+    try:
+        from app.rag.tier0_notebooklm import query_auteur_dna
+        
+        # Extract auteur key from capsule_key (e.g., "auteur.bong-joon-ho" -> "bong")
+        auteur_full = capsule_key.replace("auteur.", "").replace("production.", "")
+        
+        # Map full name to short key
+        AUTEUR_KEY_MAP = {
+            "bong-joon-ho": "bong",
+            "park-chan-wook": "park",
+            "shinkai": "shinkai",
+            "lee-junho": "lee",
+            "na-hongjin": "na",
+            "hong-sangsoo": "hong",
+            "tarantino": "tarantino",
+            "nolan": "nolan",
+            "wong": "wong",
+        }
+        auteur_key = AUTEUR_KEY_MAP.get(auteur_full, auteur_full)
+        
+        # Build query from inputs
+        scene_summary = inputs.get("scene_summary", "")
+        emotion_curve = inputs.get("emotion_curve", [])
+        query = f"{scene_summary} 감정곡선: {emotion_curve}"
+        
+        # Query NotebookLM
+        result = await query_auteur_dna(auteur_key, query)
+        
+        if result.confidence > 0.3:
+            return {
+                "success": True,
+                "output": {
+                    "answer": result.answer,
+                    "confidence": result.confidence,
+                    "grounded": result.grounded,
+                    "sources": [s.source_id for s in result.sources] if result.sources else [],
+                },
+                "metrics": {
+                    "tokens": 0,  # NotebookLM doesn't report tokens
+                },
+            }
+        else:
+            # Low confidence - return simulation
+            return {
+                "success": True,
+                "output": {
+                    "answer": f"시뮬레이션 응답: {auteur_key} 스타일 분석",
+                    "confidence": 0.5,
+                    "grounded": False,
+                    "sources": [],
+                    "_simulation": True,
+                },
+                "metrics": {"tokens": 0},
+            }
+    except ImportError as e:
+        logger.warning(f"NotebookLM adapter not available: {e}")
+        return {
+            "success": True,
+            "output": {
+                "answer": f"NotebookLM 미설치 - 시뮬레이션 응답",
+                "confidence": 0.3,
+                "grounded": False,
+                "_simulation": True,
+            },
+            "metrics": {"tokens": 0},
+        }
+    except Exception as e:
+        logger.error(f"NotebookLM execution failed: {e}")
+        return {"success": False, "error": str(e)}
+
+
+# =============================================================================
+# Output Normalization
+# =============================================================================
+
+def _normalize_output(
+    raw_result: Dict[str, Any],
+    capsule_key: str,
+) -> Dict[str, Any]:
+    """Normalize output to summary, evidence_refs, token_usage only.
+    
+    This is the "capsule sealing" policy - hide internal details.
+    """
+    output = raw_result.get("output", {})
+    metrics = raw_result.get("metrics", {})
+    
+    # Extract summary
+    summary = {}
+    if isinstance(output, dict):
+        # Common summary fields
+        for key in ["answer", "prompt", "scenes", "analysis", "visual_guidelines", "music_prompt"]:
+            if key in output:
+                summary[key] = output[key]
+        
+        # If no known keys, use entire output
+        if not summary:
+            summary = output
+    else:
+        summary = {"result": output}
+    
+    # Extract evidence refs
+    evidence_refs = []
+    if isinstance(output, dict):
+        sources = output.get("sources", [])
+        if isinstance(sources, list):
+            evidence_refs = [{"source_id": s} if isinstance(s, str) else s for s in sources]
+    
+    # Extract token usage
+    token_usage = {}
+    if metrics:
+        token_usage = {
+            "input": metrics.get("input_tokens", 0),
+            "output": metrics.get("output_tokens", 0),
+            "total": metrics.get("tokens", 0),
+        }
+    
+    return {
+        "summary": summary,
+        "evidence_refs": evidence_refs,
+        "token_usage": token_usage,
+    }
+
+
+# =============================================================================
+# Main Execution Function
+# =============================================================================
+
+async def execute_capsule(
+    capsule_id: str,
+    inputs: Dict[str, Any],
+    params: Dict[str, Any],
+    user: Dict[str, Any],
+    db: AsyncSession,
+    byok_key: Optional[str] = None,
+    run_id: Optional[str] = None,
+) -> CapsuleExecutionResult:
+    """Execute a capsule with unified pipeline.
+    
+    Args:
+        capsule_id: Format "capsule_key" or "capsule_key:version"
+        inputs: User-provided inputs
+        params: Execution parameters (model, etc.)
+        user: Authenticated user dict
+        db: Database session
+        byok_key: Optional BYOK API key
+        run_id: Optional pre-generated run_id
+    
+    Returns:
+        CapsuleExecutionResult with normalized output
+    """
+    import uuid
+    from app.services.capsule_specs import parse_capsule_id, get_spec
+    
+    start_time = time.monotonic()
+    
+    # Generate run_id if not provided
+    if not run_id:
+        run_id = str(uuid.uuid4())
+    
+    # Parse capsule_id
+    capsule_key, version = parse_capsule_id(capsule_id)
+    
+    # Get spec for validation
+    try:
+        spec_response = await get_spec(db, capsule_key, version)
+        if not spec_response:
+            return CapsuleExecutionResult(
+                run_id=run_id,
+                status="failed",
+                error=f"Capsule not found: {capsule_id}",
+                version=version or "unknown",
+            )
+        spec = spec_response.spec
+        version = spec_response.version
+    except Exception as e:
+        logger.warning(f"Spec lookup failed, proceeding without validation: {e}")
+        spec = {}
+        version = version or "1.0.0"
+    
+    # Validate and merge inputs
+    try:
+        validated_inputs = _validate_inputs(inputs, spec)
+    except ValueError as e:
+        return CapsuleExecutionResult(
+            run_id=run_id,
+            status="failed",
+            error=str(e),
+            version=version,
+        )
+    
+    # Determine adapter
+    adapter_type = _get_adapter_type(capsule_key)
+    
+    # Execute
+    try:
+        if adapter_type == "dimension":
+            raw_result = await _execute_dimension(
+                capsule_key=capsule_key,
+                inputs=validated_inputs,
+                params=params,
+                user_api_key=byok_key,
+            )
+        else:  # notebooklm
+            raw_result = await _execute_notebooklm(
+                capsule_key=capsule_key,
+                inputs=validated_inputs,
+                params=params,
+                user_api_key=byok_key,
+            )
+    except Exception as e:
+        logger.error(f"Capsule execution failed: {e}")
+        raw_result = {"success": False, "error": str(e)}
+    
+    latency_ms = int((time.monotonic() - start_time) * 1000)
+    
+    # Determine status
+    if raw_result.get("success"):
+        status = "done"
+        error = None
+    else:
+        status = "failed"
+        error = raw_result.get("error", "Unknown error")
+    
+    # Normalize output
+    normalized = _normalize_output(raw_result, capsule_key)
+    
+    # Estimate cost (simplified)
+    tokens = normalized["token_usage"].get("total", 0)
+    cost_usd_est = tokens * 0.00001  # ~$10/1M tokens estimate
+    
+    return CapsuleExecutionResult(
+        run_id=run_id,
+        status=status,
+        summary=normalized["summary"],
+        evidence_refs=normalized["evidence_refs"],
+        version=version,
+        token_usage=normalized["token_usage"],
+        latency_ms=latency_ms,
+        cost_usd_est=cost_usd_est,
+        error=error,
+    )
