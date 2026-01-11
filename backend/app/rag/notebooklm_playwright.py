@@ -947,33 +947,47 @@ class PlaywrightNotebookLMClient:
                     else:
                         await chat_input.press("Enter")
                     
-                    # Wait for response (NotebookLM can take 10-15 seconds)
-                    await asyncio.sleep(15)
+                    # Wait for response with polling (max 20 seconds)
+                    max_wait = 20
+                    poll_interval = 1
+                    elapsed = 0
+                    new_answer = None
                     
-                    # Extract answer from chat history
-                    # .message-content contains the actual message text
-                    # Look for NEW messages (count should have increased)
-                    messages = self._page.locator('.message-content')
-                    msg_count = await messages.count()
+                    while elapsed < max_wait:
+                        await asyncio.sleep(poll_interval)
+                        elapsed += poll_interval
+                        
+                        # Check if new messages appeared
+                        messages_now = self._page.locator('.message-content')
+                        msg_count_now = await messages_now.count()
+                        
+                        # We expect at least 2 new messages: user query + AI response
+                        if msg_count_now >= msg_count_before + 2:
+                            # Get the last message (should be AI response)
+                            last_msg = messages_now.nth(msg_count_now - 1)
+                            ui_answer = await last_msg.text_content()
+                            
+                            # Verify it's not just "Loading..." or similar
+                            if ui_answer and len(ui_answer) > 50 and "loading" not in ui_answer.lower():
+                                new_answer = ui_answer.strip()
+                                logger.info(f"[NotebookLM-Playwright] Got answer via UI after {elapsed}s ({len(new_answer)} chars)")
+                                break
                     
-                    if msg_count > msg_count_before:
-                        # Last message should be the AI response
-                        last_msg = messages.nth(msg_count - 1)
-                        ui_answer = await last_msg.text_content()
-                        if ui_answer and len(ui_answer) > 50:
-                            result["answer"] = ui_answer.strip()
-                            logger.info(f"[NotebookLM-Playwright] Got answer via UI .message-content ({len(ui_answer)} chars)")
-                    
-                    # Fallback: try <p> tags which contain the actual response text
-                    if not result.get("answer") or len(result.get("answer", "")) < 50:
+                    if new_answer:
+                        result["answer"] = new_answer
+                    else:
+                        # Fallback: try <p> tags which contain the actual response text
                         p_tags = self._page.locator('.message-content p, [class*="response"] p')
-                        if await p_tags.count() > 0:
-                            # Get the last paragraph which should be from the response
-                            last_p = p_tags.last
-                            p_text = await last_p.text_content()
-                            if p_text and len(p_text) > 50:
-                                result["answer"] = p_text.strip()
-                                logger.info(f"[NotebookLM-Playwright] Got answer via UI <p> tag ({len(p_text)} chars)")
+                        p_count = await p_tags.count()
+                        if p_count > 0:
+                            # Try to get the last few paragraphs
+                            for i in range(min(3, p_count)):
+                                p_elem = p_tags.nth(p_count - 1 - i)
+                                p_text = await p_elem.text_content()
+                                if p_text and len(p_text) > 50:
+                                    result["answer"] = p_text.strip()
+                                    logger.info(f"[NotebookLM-Playwright] Got answer via UI <p> tag ({len(p_text)} chars)")
+                                    break
 
             except Exception as e:
                 logger.error(f"[NotebookLM-Playwright] UI query fallback failed: {e}")
