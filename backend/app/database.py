@@ -273,7 +273,37 @@ async def init_db(drop_all: bool = False) -> None:
             await conn.execute(
                 text("CREATE INDEX IF NOT EXISTS ix_rag_cache_embedding ON rag_semantic_cache USING hnsw (embedding vector_cosine_ops)")
             )
-        except Exception:
             # Fallback for older pgvector or if index creation fails
             pass
+
+        # Studio Artifacts storage (Week 2.5)
+        await conn.execute(
+            text("""
+                CREATE TABLE IF NOT EXISTS studio_artifacts (
+                    id VARCHAR(64) PRIMARY KEY,
+                    artifact_type VARCHAR(32) NOT NULL,
+                    auteur_key VARCHAR(64),
+                    focus_topic TEXT NOT NULL,
+                    status VARCHAR(32) NOT NULL,
+                    storage_path VARCHAR(500) NOT NULL,
+                    storage_url VARCHAR(500),
+                    file_size_bytes INTEGER DEFAULT 0,
+                    mime_type VARCHAR(100),
+                    notebook_id VARCHAR(64),
+                    source_ids JSONB DEFAULT '[]'::jsonb,
+                    generation_params JSONB DEFAULT '{}'::jsonb,
+                    access_count INTEGER DEFAULT 0,
+                    last_accessed_at TIMESTAMP,
+                    expires_at TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+        )
+        await conn.execute(
+            text("CREATE INDEX IF NOT EXISTS ix_artifacts_key ON studio_artifacts(auteur_key, artifact_type)")
+        )
+        await conn.execute(
+            text("CREATE INDEX IF NOT EXISTS ix_artifacts_expires ON studio_artifacts(expires_at)")
+        )
 

@@ -170,7 +170,7 @@ class ArtifactStorage:
         self._gcs_available = False
         self._gcs_client = None
         
-        # In-memory artifact registry (DB in production)
+        # L1 Cache (Memory)
         self._artifacts: Dict[str, StudioArtifact] = {}
         self._stats = ArtifactStats()
         
@@ -187,12 +187,13 @@ class ArtifactStorage:
         
         try:
             from google.cloud import storage
+            # GCS calls will fail if no auth is present
             self._gcs_client = storage.Client()
             self._gcs_available = True
             logger.info(f"[ArtifactStorage] GCS available: {GCS_BUCKET}")
             return True
         except Exception as e:
-            logger.warning(f"[ArtifactStorage] GCS not available: {e}")
+            logger.warning(f"[ArtifactStorage] GCS not available (fallback to local): {e}")
             self._gcs_available = False
             return False
     
@@ -268,19 +269,64 @@ class ArtifactStorage:
     ) -> Optional[StudioArtifact]:
         """Get existing artifact if available.
         
-        Returns:
-            StudioArtifact if exists and not expired, None otherwise
+        Checks Memory -> DB -> Return
         """
         artifact_id = self._generate_artifact_id(artifact_type, auteur_key, focus_topic)
         
+        # 1. Memory Check
         artifact = self._artifacts.get(artifact_id)
-        if artifact and artifact.is_ready:
-            artifact.access_count += 1
-            artifact.last_accessed_at = datetime.now()
-            self._stats.total_accesses += 1
-            logger.debug(f"[ArtifactStorage] HIT: {artifact_id[:8]}... (accesses={artifact.access_count})")
-            return artifact
+        if artifact:
+            if artifact.is_expired:
+                del self._artifacts[artifact_id]
+                return None
+            
+            if artifact.is_ready:
+                artifact.access_count += 1
+                artifact.last_accessed_at = datetime.now()
+                self._stats.total_accesses += 1
+                logger.debug(f"[ArtifactStorage] MEM HIT: {artifact_id[:8]}...")
+                return artifact
         
+        # 2. DB Check
+        try:
+            from app.database import get_db_context
+            from app.models import StudioArtifactModel
+            from sqlalchemy import select, update
+            
+            async with get_db_context() as session:
+                stmt = select(StudioArtifactModel).where(
+                    StudioArtifactModel.id == artifact_id,
+                    StudioArtifactModel.expires_at > datetime.now()
+                )
+                result = await session.execute(stmt)
+                db_entry = result.scalar_one_or_none()
+                
+                if db_entry:
+                    # Update access stats
+                    await session.execute(
+                        update(StudioArtifactModel)
+                        .where(StudioArtifactModel.id == artifact_id)
+                        .values(
+                            access_count=StudioArtifactModel.access_count + 1,
+                            last_accessed_at=datetime.now()
+                        )
+                    )
+                    
+                    # Convert to domain object
+                    artifact = self._model_to_domain(db_entry)
+                    if artifact.is_expired:
+                         return None
+
+                    # Hydrate memory
+                    self._artifacts[artifact_id] = artifact
+                    self._update_stats(artifact)
+                    
+                    logger.debug(f"[ArtifactStorage] DB HIT: {artifact_id[:8]}...")
+                    return artifact
+                    
+        except Exception as e:
+            logger.warning(f"[ArtifactStorage] DB Lookup failed: {e}")
+            
         return None
     
     async def store_artifact(
@@ -293,26 +339,13 @@ class ArtifactStorage:
         source_ids: Optional[List[str]] = None,
         generation_params: Optional[Dict[str, Any]] = None,
     ) -> StudioArtifact:
-        """Store a new artifact.
-        
-        Args:
-            artifact_type: Type of artifact
-            data: Binary data to store
-            auteur_key: Optional auteur key
-            focus_topic: Topic/prompt used for generation
-            notebook_id: Source notebook ID
-            source_ids: Source document IDs
-            generation_params: Generation parameters
-            
-        Returns:
-            StudioArtifact metadata
-        """
+        """Store a new artifact to Storage and Metadata DB."""
         artifact_id = self._generate_artifact_id(artifact_type, auteur_key, focus_topic)
         extension = self._get_extension(artifact_type)
         storage_path = self._get_storage_path(artifact_type, auteur_key, artifact_id, extension)
         
-        # Check if already exists
-        existing = self._artifacts.get(artifact_id)
+        # Check if already exists (Mem/DB) by calling get_artifact
+        existing = await self.get_artifact(auteur_key, artifact_type, focus_topic)
         if existing and existing.is_ready:
             logger.info(f"[ArtifactStorage] Already exists: {artifact_id[:8]}...")
             return existing
@@ -343,7 +376,7 @@ class ArtifactStorage:
         ttl_days = self._get_ttl_days(artifact_type)
         expires_at = datetime.now() + timedelta(days=ttl_days)
         
-        # Create artifact metadata
+        # Create artifact metadata domain object
         artifact = StudioArtifact(
             artifact_id=artifact_id,
             artifact_type=artifact_type,
@@ -361,8 +394,47 @@ class ArtifactStorage:
             expires_at=expires_at,
         )
         
+        # Update Memory
         self._artifacts[artifact_id] = artifact
         self._update_stats(artifact)
+        
+        # Update DB
+        try:
+            from app.database import get_db_context
+            from app.models import StudioArtifactModel
+            from sqlalchemy.dialects.postgresql import insert
+            
+            async with get_db_context() as session:
+                # Upsert to DB
+                stmt = insert(StudioArtifactModel).values(
+                    id=artifact.artifact_id,
+                    artifact_type=artifact.artifact_type.value,
+                    auteur_key=artifact.auteur_key,
+                    focus_topic=artifact.focus_topic,
+                    status=artifact.status.value,
+                    storage_path=artifact.storage_path,
+                    storage_url=artifact.storage_url,
+                    file_size_bytes=artifact.file_size_bytes,
+                    mime_type=artifact.mime_type,
+                    notebook_id=artifact.notebook_id,
+                    source_ids=artifact.source_ids,
+                    generation_params=artifact.generation_params,
+                    access_count=0,
+                    expires_at=artifact.expires_at,
+                    created_at=artifact.created_at,
+                    updated_at=datetime.now()
+                ).on_conflict_do_update(
+                    index_elements=['id'],
+                    set_={
+                        "storage_url": artifact.storage_url,
+                        "updated_at": datetime.now(),
+                        "expires_at": artifact.expires_at
+                    }
+                )
+                await session.execute(stmt)
+                logger.debug(f"[ArtifactStorage] Persisted: {artifact_id[:8]}")
+        except Exception as e:
+            logger.error(f"[ArtifactStorage] DB Write failed: {e}")
         
         return artifact
     
@@ -484,12 +556,26 @@ class ArtifactStorage:
         )
     
     async def download_artifact(self, artifact_id: str) -> Optional[bytes]:
-        """Download artifact data.
-        
-        Returns:
-            Binary data or None if not found
-        """
+        """Download artifact data."""
+        # Check Memory
         artifact = self._artifacts.get(artifact_id)
+        
+        # If not in Memory, check DB and hydrate
+        if not artifact:
+             try:
+                from app.database import get_db_context
+                from app.models import StudioArtifactModel
+                from sqlalchemy import select
+                async with get_db_context() as session:
+                    stmt = select(StudioArtifactModel).where(StudioArtifactModel.id == artifact_id)
+                    result = await session.execute(stmt)
+                    db_entry = result.scalar_one_or_none()
+                    if db_entry:
+                        artifact = self._model_to_domain(db_entry)
+                        self._artifacts[artifact_id] = artifact
+             except Exception as e:
+                logger.warning(f"[ArtifactStorage] DL Metadata lookup failed: {e}")
+                
         if not artifact or not artifact.is_ready:
             return None
         
@@ -513,6 +599,27 @@ class ArtifactStorage:
                 return local_path.read_bytes()
         
         return None
+    
+    def _model_to_domain(self, model: Any) -> StudioArtifact:
+        """Convert DB model to Domain object."""
+        return StudioArtifact(
+            artifact_id=model.id,
+            artifact_type=ArtifactType(model.artifact_type),
+            auteur_key=model.auteur_key,
+            focus_topic=model.focus_topic,
+            status=ArtifactStatus(model.status),
+            storage_path=model.storage_path,
+            storage_url=model.storage_url,
+            file_size_bytes=model.file_size_bytes,
+            mime_type=model.mime_type,
+            notebook_id=model.notebook_id,
+            source_ids=model.source_ids,
+            generation_params=model.generation_params,
+            created_at=model.created_at,
+            expires_at=model.expires_at,
+            access_count=model.access_count,
+            last_accessed_at=model.last_accessed_at,
+        )
     
     def _update_stats(self, artifact: StudioArtifact) -> None:
         """Update storage statistics."""

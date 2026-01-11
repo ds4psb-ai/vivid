@@ -878,3 +878,35 @@ class RagSemanticCache(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class StudioArtifactModel(Base):
+    """Studio Artifact metadata storage."""
+    __tablename__ = "studio_artifacts"
+    __table_args__ = (
+        Index("ix_artifacts_key", "auteur_key", "artifact_type"),
+        Index("ix_artifacts_created", "created_at"),
+        Index("ix_artifacts_expires", "expires_at"),
+    )
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)  # SHA256 hash or UUID
+    artifact_type: Mapped[str] = mapped_column(String(32))
+    auteur_key: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    focus_topic: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(32))
+    
+    storage_path: Mapped[str] = mapped_column(String(500))
+    storage_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    file_size_bytes: Mapped[int] = mapped_column(Integer, default=0)
+    mime_type: Mapped[str] = mapped_column(String(100), default="")
+    
+    notebook_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    source_ids: Mapped[list] = mapped_column(JSONB, default=list)
+    generation_params: Mapped[dict] = mapped_column(JSONB, default=dict)
+    
+    access_count: Mapped[int] = mapped_column(Integer, default=0)
+    last_accessed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
