@@ -1019,3 +1019,99 @@ async def warm_semantic_cache(
         logger.error(f"[SemanticCache] Warm error: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to warm cache: {e}")
 
+
+# ============================================================================
+# Studio Artifact Storage Endpoints
+# ============================================================================
+
+@router.get("/artifacts/stats")
+async def get_artifact_stats(
+    current_user: Dict[str, Any] = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """Studio 산출물 저장소 통계 조회.
+    
+    Returns:
+        총 산출물 수, 유형별/거장별 분류, 총 용량
+    """
+    try:
+        from app.rag.artifact_storage import get_artifact_storage
+        
+        storage = get_artifact_storage()
+        return storage.get_stats()
+    except Exception as e:
+        logger.error(f"[ArtifactStorage] Stats error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get artifact stats: {e}")
+
+
+@router.get("/artifacts/list")
+async def list_artifacts(
+    auteur_key: Optional[str] = Query(None, description="거장 필터"),
+    artifact_type: Optional[str] = Query(None, description="유형 필터 (audio, infographic, etc)"),
+    limit: int = Query(20, ge=1, le=100, description="반환할 산출물 수"),
+    current_user: Dict[str, Any] = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """Studio 산출물 목록 조회.
+    
+    Returns:
+        산출물 목록 (메타데이터만, 실제 데이터 아님)
+    """
+    try:
+        from app.rag.artifact_storage import get_artifact_storage, ArtifactType
+        
+        storage = get_artifact_storage()
+        
+        type_enum = None
+        if artifact_type:
+            try:
+                type_enum = ArtifactType(artifact_type)
+            except ValueError:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Invalid artifact type: {artifact_type}. Valid: audio, infographic, slide_deck, mind_map, report"
+                )
+        
+        artifacts = storage.list_artifacts(
+            auteur_key=auteur_key,
+            artifact_type=type_enum,
+            limit=limit,
+        )
+        
+        return {
+            "artifacts": [a.to_dict() for a in artifacts],
+            "total": len(artifacts),
+            "filters": {
+                "auteur_key": auteur_key,
+                "artifact_type": artifact_type,
+            },
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[ArtifactStorage] List error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to list artifacts: {e}")
+
+
+@router.post("/artifacts/cleanup")
+async def cleanup_expired_artifacts(
+    current_user: Dict[str, Any] = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """만료된 산출물 정리.
+    
+    Returns:
+        정리된 산출물 수
+    """
+    try:
+        from app.rag.artifact_storage import get_artifact_storage
+        
+        storage = get_artifact_storage()
+        count = storage.cleanup_expired()
+        
+        return {
+            "message": f"Cleaned up {count} expired artifacts",
+            "removed_count": count,
+        }
+    except Exception as e:
+        logger.error(f"[ArtifactStorage] Cleanup error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to cleanup artifacts: {e}")
+
+
