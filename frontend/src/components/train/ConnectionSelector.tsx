@@ -144,8 +144,8 @@ export function ConnectionSelector({
             </div>
 
             {/* 추천 라벨 */}
-            <div className="text-[10px] uppercase tracking-wider text-zinc-500 flex items-center gap-1.5">
-                <Sparkles className="h-3 w-3 text-violet-400" />
+            <div className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-zinc-500 flex items-center gap-1.5">
+                <Sparkles className="h-3 w-3 text-violet-500 dark:text-violet-400" />
                 추천 차원
             </div>
 
@@ -224,10 +224,10 @@ export function ConnectionSelector({
 
                                         {/* 텍스트 */}
                                         <div className="flex-1 text-left">
-                                            <p className="text-sm font-medium text-white truncate">
+                                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                                                 {option.label}
                                             </p>
-                                            <p className="text-[10px] text-zinc-500 truncate">
+                                            <p className="text-[10px] text-gray-500 dark:text-zinc-500 truncate">
                                                 {option.description}
                                             </p>
                                         </div>
@@ -259,7 +259,7 @@ export function ConnectionSelector({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     onClick={() => setShowAll(!showAll)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800/30 border border-zinc-700/50 text-zinc-400 text-xs hover:bg-zinc-800/50 hover:text-white transition-all"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-200/50 dark:bg-zinc-800/30 border border-gray-300/50 dark:border-zinc-700/50 text-gray-600 dark:text-zinc-400 text-xs hover:bg-gray-200 dark:hover:bg-zinc-800/50 hover:text-gray-900 dark:hover:text-white transition-all"
                 >
                     <ChevronDown className={`h-3 w-3 transition-transform ${showAll ? "rotate-180" : ""}`} />
                     {showAll ? "접기" : `+${hiddenCount}개 더 보기`}
@@ -270,7 +270,7 @@ export function ConnectionSelector({
             {onReRecommend && !isLoading && (
                 <button
                     onClick={onReRecommend}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800/50 border border-zinc-700 text-zinc-400 text-xs hover:bg-zinc-800 hover:text-white transition-all"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-200/50 dark:bg-zinc-800/50 border border-gray-300 dark:border-zinc-700 text-gray-600 dark:text-zinc-400 text-xs hover:bg-gray-200 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-white transition-all"
                 >
                     <RefreshCw className="h-3 w-3" />
                     다른 차원 탐색

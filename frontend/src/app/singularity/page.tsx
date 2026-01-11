@@ -9,6 +9,7 @@ import {
 import AppShell from "@/components/AppShell";
 import { api, SingularityTemplate, IntentPresetSummary } from "@/lib/api";
 import { useToast } from "@/components/Toast";
+import { RatingModal } from "@/components/ui/StarRating";
 
 // Template type alias for local use
 type Template = SingularityTemplate;
@@ -116,7 +117,7 @@ function BlackholeVisual() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="text-slate-400 text-lg max-w-xl mx-auto"
+                    className="text-gray-600 dark:text-slate-400 text-lg max-w-xl mx-auto"
                 >
                     여러 차원을 관통한 워크플로우가 이곳으로 수렴합니다
                 </motion.p>
@@ -226,14 +227,14 @@ function PresetSelector({
         <div className="mb-8">
             <div className="flex items-center justify-center gap-2 mb-4">
                 <Wand2 className="w-4 h-4 text-violet-400" />
-                <span className="text-sm font-medium text-slate-400">크리에이티브 프리셋</span>
+                <span className="text-sm font-medium text-gray-600 dark:text-slate-400">크리에이티브 프리셋</span>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-2">
                 <button
                     onClick={() => onPresetChange(null)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${!selectedPreset
-                        ? "bg-violet-500/20 text-violet-400 ring-1 ring-violet-500/50"
-                        : "bg-white/5 text-slate-500 hover:bg-white/10 hover:text-slate-300"
+                        ? "bg-violet-500/20 text-violet-600 dark:text-violet-400 ring-1 ring-violet-500/50"
+                        : "bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-slate-500 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-slate-300"
                         }`}
                 >
                     전체
@@ -517,6 +518,10 @@ export default function SingularityPage() {
     const [presetsLoading, setPresetsLoading] = useState(true);
     const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
 
+    // Rating Modal State
+    const [ratingModalOpen, setRatingModalOpen] = useState(false);
+    const [ratingTemplate, setRatingTemplate] = useState<Template | null>(null);
+
     // Load presets on mount
     useEffect(() => {
         const loadPresets = async () => {
@@ -571,7 +576,9 @@ export default function SingularityPage() {
         try {
             await api.useSingularityTemplate(template.id);
             setSelectedTemplate(null);
-            router.push(`/flow?template=${template.id}`);
+            // Show rating modal before redirect
+            setRatingTemplate(template);
+            setRatingModalOpen(true);
         } catch (err) {
             const message = err instanceof Error ? err.message : "템플릿 적용에 실패했습니다";
             toast.error(message);
@@ -580,11 +587,28 @@ export default function SingularityPage() {
         }
     };
 
+    const handleRatingSubmit = async (rating: number, feedback: string) => {
+        if (!ratingTemplate) return;
+        try {
+            await api.rateSingularityTemplate(ratingTemplate.id, rating, feedback);
+            toast.success("평가가 등록되었습니다!");
+        } catch (err) {
+            console.error("Rating failed:", err);
+        }
+        // Navigate to flow after rating
+        router.push(`/flow?template=${ratingTemplate.id}`);
+    };
+
+    const handleRatingSkip = () => {
+        setRatingModalOpen(false);
+        if (ratingTemplate) {
+            router.push(`/flow?template=${ratingTemplate.id}`);
+        }
+    };
+
     return (
         <AppShell>
-            <div className="min-h-screen bg-[var(--bg-0)]">
-                {/* Blackhole Visual Header */}
-                <BlackholeVisual />
+            <div className="min-h-screen bg-[var(--bg-0)] pt-8">
 
                 {/* Content */}
                 <div className="max-w-7xl mx-auto px-6 pb-24">
@@ -641,7 +665,7 @@ export default function SingularityPage() {
                                 onClick={() => router.push("/dimension")}
                                 className="px-6 py-3 bg-violet-500 hover:bg-violet-400 text-white font-semibold rounded-xl transition-colors"
                             >
-                                차원문 열기
+                                차원 앱 열기
                             </button>
                         </div>
                     )}
@@ -672,6 +696,14 @@ export default function SingularityPage() {
                         />
                     )}
                 </AnimatePresence>
+
+                {/* Rating Modal */}
+                <RatingModal
+                    isOpen={ratingModalOpen}
+                    onClose={handleRatingSkip}
+                    onSubmit={handleRatingSubmit}
+                    templateTitle={ratingTemplate?.title || ""}
+                />
             </div>
         </AppShell>
     );

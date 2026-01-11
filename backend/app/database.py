@@ -273,6 +273,7 @@ async def init_db(drop_all: bool = False) -> None:
             await conn.execute(
                 text("CREATE INDEX IF NOT EXISTS ix_rag_cache_embedding ON rag_semantic_cache USING hnsw (embedding vector_cosine_ops)")
             )
+        except Exception:
             # Fallback for older pgvector or if index creation fails
             pass
 

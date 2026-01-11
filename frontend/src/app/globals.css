@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 @layer components {
 
@@ -11,6 +12,53 @@
     @apply hover:bg-white/[0.03] hover:border-white/10 hover:shadow-2xl hover:shadow-violet-500/5 transition-all duration-500 ease-out dark:hover:bg-white/[0.03] hover:bg-black/5;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LIGHT MODE BORDER FIX - Override transparent white borders for visibility
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Light mode: Make borders visible with stronger gray colors */
+:root:not(.dark) [class*="border-white\/5"],
+:root:not(.dark) [class*="border-white\/10"],
+:root:not(.dark) [class*="border-white\/20"],
+html:not(.dark) [class*="border-white\/5"],
+html:not(.dark) [class*="border-white\/10"],
+html:not(.dark) [class*="border-white\/20"] {
+  border-color: rgb(209 213 219) !important;
+  /* gray-300 - more visible */
+}
+
+/* Light mode: Fix backgrounds too */
+:root:not(.dark) [class*="bg-white\/\[0.02\]"],
+:root:not(.dark) [class*="bg-white\/\[0.04\]"],
+:root:not(.dark) [class*="bg-white\/5"],
+html:not(.dark) [class*="bg-white\/\[0.02\]"],
+html:not(.dark) [class*="bg-white\/\[0.04\]"],
+html:not(.dark) [class*="bg-white\/5"] {
+  background-color: rgb(249 250 251) !important;
+  /* gray-50 */
+}
+
+/* Light mode: Fix text visibility */
+:root:not(.dark) [class*="text-white"]:not([class*="dark:"]),
+html:not(.dark) [class*="text-white"]:not([class*="dark:"]) {
+  color: rgb(17 24 39) !important;
+  /* gray-900 */
+}
+
+:root:not(.dark) [class*="text-zinc-400"]:not([class*="dark:"]),
+:root:not(.dark) [class*="text-zinc-500"]:not([class*="dark:"]),
+:root:not(.dark) [class*="text-slate-400"]:not([class*="dark:"]),
+:root:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]),
+html:not(.dark) [class*="text-zinc-400"]:not([class*="dark:"]),
+html:not(.dark) [class*="text-zinc-500"]:not([class*="dark:"]),
+html:not(.dark) [class*="text-slate-400"]:not([class*="dark:"]),
+html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
+  color: rgb(107 114 128) !important;
+  /* gray-500 */
+}
+
+
 
 :root {
   /* ─── LIGHT MODE (Midday AI Style) ─── */

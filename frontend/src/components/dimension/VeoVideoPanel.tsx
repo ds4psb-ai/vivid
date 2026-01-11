@@ -186,63 +186,63 @@ export default function VeoVideoPanel() {
         <>
             {/* Prompt Input */}
             <div className="space-y-2 group">
-                <label className="text-[10px] font-bold text-[var(--fg-muted)] uppercase tracking-widest ml-1 group-focus-within:text-sky-400/80 transition-colors">
+                <label className="text-[10px] font-bold text-slate-500 dark:text-[var(--fg-muted)] uppercase tracking-widest ml-1 group-focus-within:text-sky-500 dark:group-focus-within:text-sky-400/80 transition-colors">
                     프롬프트
                 </label>
                 <textarea
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     placeholder="생성할 비디오를 상세히 설명하세요...&#10;예: A cinematic shot of a sunrise over mountains, golden light casting long shadows..."
-                    className="w-full h-36 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:border-sky-400/50 focus:bg-white/[0.07] focus:ring-4 focus:ring-sky-400/5 transition-all resize-none text-sm font-light leading-relaxed"
+                    className="w-full h-36 px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400/50 focus:bg-white dark:focus:bg-white/[0.07] focus:ring-4 focus:ring-sky-500/10 dark:focus:ring-sky-400/5 transition-all resize-none text-sm font-light leading-relaxed"
                 />
-                <div className="text-[10px] text-zinc-500 text-right">{prompt.length} / 1000</div>
+                <div className="text-[10px] text-slate-500 dark:text-zinc-500 text-right">{prompt.length} / 1000</div>
             </div>
 
             {/* Negative Prompt */}
             <div className="space-y-2 group">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1 group-focus-within:text-sky-400/80 transition-colors">
+                <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1 group-focus-within:text-sky-500 dark:group-focus-within:text-sky-400/80 transition-colors">
                     네거티브 프롬프트 (선택)
                 </label>
                 <textarea
                     value={negativePrompt}
                     onChange={(e) => setNegativePrompt(e.target.value)}
                     placeholder="제외할 요소를 입력하세요..."
-                    className="w-full h-20 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:border-sky-400/50 focus:bg-white/[0.07] focus:ring-4 focus:ring-sky-400/5 transition-all resize-none text-sm font-light"
+                    className="w-full h-20 px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400/50 focus:bg-white dark:focus:bg-white/[0.07] focus:ring-4 focus:ring-sky-500/10 dark:focus:ring-sky-400/5 transition-all resize-none text-sm font-light"
                 />
             </div>
 
             {/* Aspect Ratio & Duration */}
             <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2 group">
-                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">비율</label>
+                    <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">비율</label>
                     <div className="relative">
                         <select
                             value={aspectRatio}
                             onChange={(e) => setAspectRatio(e.target.value)}
-                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-sky-400/50 focus:bg-white/[0.07] focus:ring-4 focus:ring-sky-400/5 transition-all appearance-none cursor-pointer"
+                            className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-400/50 focus:bg-white dark:focus:bg-white/[0.07] focus:ring-4 focus:ring-sky-500/10 dark:focus:ring-sky-400/5 transition-all appearance-none cursor-pointer"
                         >
                             {ASPECT_RATIOS.map((r) => (
-                                <option key={r.value} value={r.value} className="bg-[#0F0F1A] text-white">{r.label}</option>
+                                <option key={r.value} value={r.value} className="bg-white dark:bg-[#0F0F1A] text-slate-900 dark:text-white">{r.label}</option>
                             ))}
                         </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-white/30">
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 dark:text-white/30">
                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
                         </div>
                     </div>
                 </div>
                 <div className="space-y-2 group">
-                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">길이</label>
+                    <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">길이</label>
                     <div className="relative">
                         <select
                             value={duration}
                             onChange={(e) => setDuration(e.target.value)}
-                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-sky-400/50 focus:bg-white/[0.07] focus:ring-4 focus:ring-sky-400/5 transition-all appearance-none cursor-pointer"
+                            className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm focus:outline-none focus:border-sky-500 dark:focus:border-sky-400/50 focus:bg-white dark:focus:bg-white/[0.07] focus:ring-4 focus:ring-sky-500/10 dark:focus:ring-sky-400/5 transition-all appearance-none cursor-pointer"
                         >
                             {DURATIONS.map((d) => (
-                                <option key={d.value} value={d.value} className="bg-[#0F0F1A] text-white">{d.label}</option>
+                                <option key={d.value} value={d.value} className="bg-white dark:bg-[#0F0F1A] text-slate-900 dark:text-white">{d.label}</option>
                             ))}
                         </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-white/30">
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 dark:text-white/30">
                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
                         </div>
                     </div>
@@ -251,15 +251,15 @@ export default function VeoVideoPanel() {
 
             {/* Style */}
             <div className="space-y-2 group">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">스타일</label>
+                <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">스타일</label>
                 <div className="grid grid-cols-2 gap-2">
                     {STYLES.map((s) => (
                         <button
                             key={s.value}
                             onClick={() => setStyle(s.value)}
                             className={`px-4 py-3 rounded-xl text-sm font-medium transition-all border ${style === s.value
-                                ? "bg-sky-500/20 border-sky-500/40 text-sky-400 shadow-[0_0_15px_rgba(14,165,233,0.2)]"
-                                : "bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10 hover:text-white"
+                                ? "bg-sky-100 dark:bg-sky-500/20 border-sky-400 dark:border-sky-500/40 text-sky-600 dark:text-sky-400 shadow-[0_0_15px_rgba(14,165,233,0.2)]"
+                                : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white"
                                 }`}
                         >
                             {s.label}
@@ -269,12 +269,12 @@ export default function VeoVideoPanel() {
             </div>
 
             {/* Seed Control */}
-            <div className="space-y-3 pt-4 border-t border-white/5 mt-2">
+            <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-white/5 mt-2">
                 <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">시드 설정</label>
+                    <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest">시드 설정</label>
                     <button
                         onClick={() => setUseRandomSeed(!useRandomSeed)}
-                        className={`relative w-10 h-5 rounded-full transition-all ${useRandomSeed ? "bg-sky-500" : "bg-white/10"
+                        className={`relative w-10 h-5 rounded-full transition-all ${useRandomSeed ? "bg-sky-500" : "bg-slate-200 dark:bg-white/10"
                             }`}
                     >
                         <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${useRandomSeed ? "left-5" : "left-0.5"
@@ -287,10 +287,10 @@ export default function VeoVideoPanel() {
                         value={seed ?? ""}
                         onChange={(e) => setSeed(e.target.value ? parseInt(e.target.value) : undefined)}
                         placeholder="시드 값 입력..."
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:border-sky-400/50 text-sm font-mono"
+                        className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400/50 text-sm font-mono"
                     />
                 )}
-                <p className="text-[10px] text-zinc-600">
+                <p className="text-[10px] text-slate-500 dark:text-zinc-600">
                     {useRandomSeed ? "매번 새로운 결과 생성" : "동일한 시드로 재현 가능한 결과"}
                 </p>
             </div>
@@ -479,26 +479,26 @@ export default function VeoVideoPanel() {
                         )}
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-zinc-500 space-y-8 animate-in fade-in zoom-in-95 duration-700">
+                    <div className="flex flex-col items-center justify-center h-full text-slate-500 dark:text-zinc-500 space-y-8 animate-in fade-in zoom-in-95 duration-700">
                         <div className="relative group">
                             <div className="absolute inset-0 bg-sky-500/20 blur-[80px] rounded-full group-hover:bg-sky-500/30 transition-colors duration-1000" />
-                            <div className="w-32 h-32 rounded-[2rem] bg-white/[0.02] border border-white/10 flex items-center justify-center shadow-[0_0_60px_rgba(0,0,0,0.3)] backdrop-blur-md relative transform group-hover:scale-105 transition-all duration-500 group-hover:border-sky-500/20">
-                                <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent rounded-[2rem]" />
-                                <svg className="w-12 h-12 text-white/20 group-hover:text-sky-400 transition-colors duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div className="w-32 h-32 rounded-[2rem] bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 flex items-center justify-center shadow-lg dark:shadow-[0_0_60px_rgba(0,0,0,0.3)] backdrop-blur-md relative transform group-hover:scale-105 transition-all duration-500 group-hover:border-sky-300 dark:group-hover:border-sky-500/20">
+                                <div className="absolute inset-0 bg-gradient-to-tr from-sky-500/5 to-transparent rounded-[2rem]" />
+                                <svg className="w-12 h-12 text-slate-300 dark:text-white/20 group-hover:text-sky-500 dark:group-hover:text-sky-400 transition-colors duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                 </svg>
                             </div>
                         </div>
                         <div className="text-center space-y-3">
-                            <h3 className="text-2xl font-bold text-white tracking-tight">Veo 3.1 Video Generation</h3>
-                            <p className="text-sm text-[var(--fg-muted)] max-w-xs mx-auto font-light leading-relaxed">
+                            <h3 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Veo 3.1 Video Generation</h3>
+                            <p className="text-sm text-slate-500 dark:text-[var(--fg-muted)] max-w-xs mx-auto font-light leading-relaxed">
                                 프롬프트를 입력하고<br />
-                                <span className="text-sky-400 font-medium">AI 비디오</span>를 생성하세요.
+                                <span className="text-sky-600 dark:text-sky-400 font-medium">AI 비디오</span>를 생성하세요.
                             </p>
                             <div className="flex items-center justify-center gap-2 pt-2">
-                                <span className="px-2 py-1 bg-sky-500/10 border border-sky-500/20 rounded text-[10px] text-sky-400 font-medium">Veo 3.1</span>
-                                <span className="px-2 py-1 bg-white/5 border border-white/10 rounded text-[10px] text-zinc-500">HD Quality</span>
-                                <span className="px-2 py-1 bg-white/5 border border-white/10 rounded text-[10px] text-zinc-500">4-8초</span>
+                                <span className="px-2 py-1 bg-sky-100 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/20 rounded text-[10px] text-sky-600 dark:text-sky-400 font-medium">Veo 3.1</span>
+                                <span className="px-2 py-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded text-[10px] text-slate-500 dark:text-zinc-500">HD Quality</span>
+                                <span className="px-2 py-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded text-[10px] text-slate-500 dark:text-zinc-500">4-8초</span>
                             </div>
                         </div>
                     </div>

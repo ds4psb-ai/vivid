@@ -34,6 +34,7 @@ import {
     Orbit,
     Waypoints,
     CircleDashed,
+    Globe,
 } from "lucide-react";
 import { CreditDisplay, ProfileSettingsPanel } from "@/components/CreditDisplay";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -167,8 +168,8 @@ function NavGroup({ label, icon: Icon, items, isExpanded, pathname }: NavGroupPr
                 onClick={() => isExpanded && setIsOpen(!isOpen)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 border-l-2
                     ${isGroupActive
-                        ? 'bg-gradient-to-r from-white/10 to-transparent text-white border-white/40'
-                        : 'text-slate-400 hover:bg-white/5 hover:text-white border-transparent hover:border-white/20'}
+                        ? 'bg-gradient-to-r from-black/10 dark:from-white/10 to-transparent text-black dark:text-white border-black/40 dark:border-white/40'
+                        : 'text-gray-600 dark:text-slate-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white border-transparent hover:border-black/20 dark:hover:border-white/20'}
                 `}
             >
                 <Icon className="w-5 h-5 shrink-0" />
@@ -252,38 +253,28 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
     const pathname = usePathname();
     const [isLogoHovered, setIsLogoHovered] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-    const { t } = useLanguage();
+    const { t, language, setLanguage } = useLanguage();
 
     // 핵심 네비게이션 - 단일 링크 아이템
     const NAV_ITEMS: { label: string; href: string; icon: React.ElementType; badge?: string }[] = [
-        { label: "차원문", href: "/dimension", icon: Orbit },
-        { label: "차원 흐름", href: "/flow", icon: Waypoints },
-        { label: "특이점", href: "/singularity", icon: CircleDashed },
-        { label: "별자리", href: "/constellation", icon: Sparkles, badge: "New" },
+        { label: "홈", href: "/", icon: Home },
+        { label: "차원 앱", href: "/dimension", icon: Orbit },
+        { label: "차원 플로우", href: "/flow", icon: Waypoints },
+        { label: "차원 템플릿", href: "/singularity", icon: CircleDashed },
+        { label: "Crebit ATC 1기", href: "/crebit", icon: Moon, badge: "Hot" },
     ];
 
     const NAV_GROUPS = [
         {
-            id: "credits",
-            label: "크레딧",
+            id: "account",
+            label: "계정",
             icon: TrendingUp,
             items: [
-                { label: "사용량", href: "/credits", icon: Activity },
+                { label: "크레딧", href: "/credits", icon: Activity },
                 { label: "설정", href: "/settings", icon: Settings },
             ],
         },
-        {
-            id: "earnings",
-            label: "수익",
-            icon: DollarSign,
-            items: [
-                { label: "내 정산", href: "/settlements", icon: TrendingUp },
-            ],
-        },
     ];
-
-    const ACADEMY_ITEM = { label: "Crebit ATC 1기", href: "/crebit", icon: Moon, badge: "Hot" };
-    const BOTTOM_ITEM = null; // 제휴 프로그램 제거
 
     const FLYOUT_CONTENT = {
         affiliate: {
@@ -321,39 +312,22 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
                     aria-label={isExpanded ? "사이드바 축소" : "사이드바 확장"}
                     aria-expanded={isExpanded}
                 >
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#4200FF] to-[#8F00FF] 
-                                flex items-center justify-center shrink-0 shadow-lg shadow-[#4200FF]/20 relative overflow-hidden">
-                        <AnimatePresence mode="wait">
-                            {isLogoHovered ? (
-                                <motion.div
-                                    key="moon"
-                                    initial={{ opacity: 0, scale: 0.5, rotate: -30 }}
-                                    animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                                    exit={{ opacity: 0, scale: 0.5, rotate: 30 }}
-                                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                                >
-                                    <Moon className="w-5 h-5 text-yellow-300" />
-                                </motion.div>
-                            ) : (
-                                <motion.div
-                                    key="rabbit"
-                                    initial={{ opacity: 0, scale: 0.5, rotate: 30 }}
-                                    animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                                    exit={{ opacity: 0, scale: 0.5, rotate: -30 }}
-                                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                                    className="w-full h-full flex items-center justify-center bg-black"
-                                >
-                                    <Image
-                                        src="/assets/characters/chokki.png"
-                                        alt="Chokki"
-                                        width={32}
-                                        height={32}
-                                        className="object-cover w-full h-full"
-                                        unoptimized
-                                    />
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                    <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-900
+                                flex items-center justify-center shrink-0 shadow-lg shadow-black/10 dark:shadow-white/5 relative overflow-hidden border border-black/10 dark:border-white/10">
+                        <motion.div
+                            animate={{ scale: isLogoHovered ? 1.2 : 1 }}
+                            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                            className="w-full h-full flex items-center justify-center"
+                        >
+                            <Image
+                                src="/assets/characters/crebit-logo.png"
+                                alt="Crebit"
+                                width={24}
+                                height={24}
+                                className="object-contain dark:invert"
+                                unoptimized
+                            />
+                        </motion.div>
                     </div>
                     <AnimatePresence>
                         {isExpanded && (
@@ -409,34 +383,43 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
                             pathname={pathname}
                         />
                     ))}
-
-                    {/* Divider */}
-                    <div className="my-2 mx-1 border-t border-white/5" />
-
-                    {/* Academy (Crebit) */}
-                    <div className="pt-1">
-                        {isExpanded && (
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                className="px-3 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider"
-                            >
-                                아카데미
-                            </motion.div>
-                        )}
-                        <NavItem
-                            icon={ACADEMY_ITEM.icon}
-                            label={ACADEMY_ITEM.label}
-                            href={ACADEMY_ITEM.href}
-                            isExpanded={isExpanded}
-                            isActive={pathname === ACADEMY_ITEM.href}
-                            badge={ACADEMY_ITEM.badge}
-                        />
-                    </div>
                 </nav>
 
                 {/* Bottom Section with Credits */}
-                <div className="p-2 border-t border-black/5 dark:border-white/5 space-y-1">
+                <div className="p-2 border-t border-slate-200 dark:border-white/5 space-y-1">
+                    {/* Theme Toggle */}
+                    <div className="flex items-center gap-3 px-3 py-2.5">
+                        <ModeToggle />
+                        {isExpanded && (
+                            <motion.span
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -10 }}
+                                className="text-sm text-slate-600 dark:text-slate-400 font-medium whitespace-nowrap"
+                            >
+                                테마 변경
+                            </motion.span>
+                        )}
+                    </div>
+
+                    {/* Language Toggle */}
+                    <button
+                        onClick={() => setLanguage(language === "ko" ? "en" : "ko")}
+                        className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-violet-500 hover:bg-black/5 dark:hover:bg-white/5 w-full"
+                    >
+                        <Globe className="h-5 w-5 flex-shrink-0" />
+                        {isExpanded && (
+                            <motion.span
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -10 }}
+                                className="whitespace-nowrap"
+                            >
+                                {language === "ko" ? "English" : "한국어"}
+                            </motion.span>
+                        )}
+                    </button>
+
                     {/* Credit Display */}
                     <CreditDisplay
                         isExpanded={isExpanded}
@@ -474,21 +457,6 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
                             </div>
                         </FlyoutPanel>
                     </div>
-
-                    {/* Theme Toggle */}
-                    <div className="flex items-center gap-3 px-3 py-2.5">
-                        <ModeToggle />
-                        {isExpanded && (
-                            <motion.span
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -10 }}
-                                className="text-sm text-slate-600 dark:text-slate-400 font-medium whitespace-nowrap"
-                            >
-                                테마 변경
-                            </motion.span>
-                        )}
-                    </div>
                 </div>
 
                 {/* Bottom Branding */}
@@ -498,9 +466,9 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="p-3 border-t border-black/5 dark:border-white/5"
+                            className="p-3 border-t border-slate-200 dark:border-white/5"
                         >
-                            <p className="text-[10px] text-slate-500 text-center">
+                            <p className="text-[10px] text-slate-600 text-center">
                                 © 2025 Crebit
                             </p>
                         </motion.div>

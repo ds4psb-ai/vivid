@@ -319,23 +319,25 @@ const personaData = getInput("abyss-mirror");
 
 ## 6. 최종 4-Stage Workflow 구조
 
+표기 기준: **Route slug**는 `/dimension/...` 경로, **Workflow key**는 체이닝용 식별자입니다.
+
 ```
 Stage 1: 기획 (Planning)
-├── 심연의 거울 (abyss-mirror) ──────────┐
-├── 레퍼런스 해석기 (reference-decoder) ──┼──▶ Stage 2
-└── 시나리오 생성기 (story-architect) ◀──┘
+├── 심연의 거울 (/dimension/abyss, abyss-mirror) ──────────┐
+├── 레퍼런스 해석기 (/dimension/reference-decoder, reference-decoder) ──┼──▶ Stage 2
+└── 시나리오 생성기 (/dimension/story-architect, story-architect) ◀──┘
 
 Stage 2: 사전 제작 (Pre-production)
-├── 사운드 크래프터 (sound-crafter) ─────┐
-├── 스토리보드 스케치 (storyboard-sketch)┼──▶ Stage 3
-└── 프롬프트 연금술 (prompt-alchemy) ◀───┘
+├── 사운드 크래프터 (/dimension/sound-crafter, sound-crafter) ─────┐
+├── 스토리보드 스케치 (/dimension/storyboard, storyboard-sketch) ──┼──▶ Stage 3
+└── 프롬프트 연금술 (/dimension/prompt, prompt-alchemy) ◀──────────┘
 
 Stage 3: 제작 (Production)
-├── 비주얼 리얼라이저 (visual-realizer) ──┬──▶ Stage 4
-└── 비디오 메이커 (video-maker) ◀─────────┘
+├── 비주얼 리얼라이저 (/dimension/visual-realizer, visual-realizer) ──┬──▶ Stage 4
+└── 비디오 메이커 (/dimension/video-maker, video-maker) ◀─────────────┘
 
 Stage 4: 완성 (Finishing)
-└── 퀄리티 디렉터 (quality-director) ──▶ 완료
+└── 퀄리티 디렉터 (/dimension/quality-check, quality-director) ──▶ 완료
 ```
 
 ---
@@ -357,9 +359,9 @@ Stage 4: 완성 (Finishing)
 |-----|---------|
 | `app/dimension/story-architect/page.tsx` | 신규 |
 | `app/dimension/sound-crafter/page.tsx` | 신규 |
-| `app/dimension/reference-decoder/page.tsx` | 리네이밍 (shot-catch 리다이렉트) |
-| `app/dimension/visual-realizer/page.tsx` | 리네이밍 (image-tool 리다이렉트) |
-| `app/dimension/video-maker/page.tsx` | 리네이밍 (veo-video 리다이렉트) |
+| `app/dimension/reference-decoder/page.tsx` | 리네이밍 (legacy route 정리: `/dimension/shot-catch`) |
+| `app/dimension/visual-realizer/page.tsx` | 리네이밍 (legacy route 정리: `/dimension/image-tool`) |
+| `app/dimension/video-maker/page.tsx` | 리네이밍 (legacy route 정리: `/dimension/veo-video`) |
 | `components/dimension/StoryArchitectPanel.tsx` | 신규 |
 | `components/dimension/SoundCrafterPanel.tsx` | 신규 |
 | `app/dimension/page.tsx` | Hub 업데이트 (4-Stage 구조) |

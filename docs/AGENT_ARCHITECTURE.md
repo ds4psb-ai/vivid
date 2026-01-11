@@ -198,10 +198,12 @@ classDiagram
 | STORY | `story_architect` | `dimension.story.architect` | 시나리오 설계 |
 | SOUND | `sound_crafter` | `dimension.sound.craft` | 사운드 프롬프트 |
 
-### 3.3 Frontend Integration
+### 3.3 Frontend Integration (AG-UI Transition)
 
-- **AG-UI Standard Mapper**: Frontend unifies all tool events into a standard UI feedback model.
-- **Dimension Mapping**: `agent.teaching_*` events are mapped to `handleWorkflowStep`, ensuring that when the agent runs a "Dimension Tool", the user sees a "Step" progress bar in the chat UI.
+- **현재 런타임 경로**: `frontend/src/components/AgentChatAccordion.tsx` + `frontend/src/lib/agent-event-handlers.ts`가 `agent.*` SSE 이벤트를 직접 처리합니다.
+- **직처리 화면 경계**: 채팅 메인 UI와 `frontend/src/app/flow/page.tsx`(Train Workflow)에서 동일 이벤트 체인을 사용합니다.
+- **AG-UI 매퍼 상태**: `frontend/src/lib/agui/eventMapper.ts`가 존재하지만 `mapToAgui()`를 사용하는 프로덕션 경로가 아직 없습니다.
+- **A2UI 스택 상태**: `frontend/src/lib/a2ui/validator.ts`, `frontend/src/lib/a2ui/renderer.tsx`는 준비되어 있으나 SSE 이벤트와 미연결입니다.
 
 ### 3.4 Intent → Capsule Resolver
 

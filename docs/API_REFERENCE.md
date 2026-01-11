@@ -164,7 +164,7 @@ curl -X POST http://localhost:8100/api/dimension/1d/generate \
     "topic": "감성적인 도시 야경",
     "style": "cinematic",
     "mood": "dramatic",
-    "duration": "15 seconds",
+    "duration": 6,
     "language": "en",
     "model": "gemini-3-flash-preview"
   }'
@@ -177,7 +177,7 @@ curl -X POST http://localhost:8100/api/dimension/1d/generate \
 | `topic` | string | ✅ | - | Video topic (max 500 chars) |
 | `style` | string | ❌ | `"cinematic"` | Visual style |
 | `mood` | string | ❌ | `"neutral"` | Emotional tone |
-| `duration` | string | ❌ | `"15 seconds"` | Video duration hint |
+| `duration` | integer | ❌ | `6` | Video duration in seconds (4-8) |
 | `language` | string | ❌ | `"ko"` | Output language (ko/en) |
 | `model` | string | ❌ | `"gemini-3-flash-preview"` | AI model |
 
@@ -186,6 +186,7 @@ curl -X POST http://localhost:8100/api/dimension/1d/generate \
 ```json
 {
   "success": true,
+  "capsule_id": "teaching.prompt.generate",
   "output": {
     "prompt": "Cinematic aerial shot of a glowing cityscape...",
     "negative_prompt": "blurry, low quality, distorted...",
@@ -196,13 +197,14 @@ curl -X POST http://localhost:8100/api/dimension/1d/generate \
     },
     "technical": {
       "aspect_ratio": "16:9",
-      "duration": "15 seconds",
+      "duration": "6 seconds",
       "fps": "24"
     }
   },
-  "credit_cost": 5,
   "metrics": {
-    "latency_ms": 1234
+    "latency_ms": 1234,
+    "tokens": 842,
+    "model": "gemini-3-flash-preview"
   }
 }
 ```
@@ -223,6 +225,7 @@ curl -X POST http://localhost:8100/api/dimension/2d/create \
   -H "X-User-Id: user123" \
   -d '{
     "concept": "도시 야경을 배경으로 한 감성 브이로그",
+    "prompt": "핸드헬드 감성, 야간 네온, 인물 클로즈업 강조",
     "scene_count": 5,
     "language": "ko",
     "model": "gemini-3-flash-preview"
@@ -234,6 +237,7 @@ curl -X POST http://localhost:8100/api/dimension/2d/create \
 ```json
 {
   "success": true,
+  "capsule_id": "teaching.storyboard.create",
   "output": {
     "scenes": [
       {
@@ -247,7 +251,11 @@ curl -X POST http://localhost:8100/api/dimension/2d/create \
     ],
     "total_duration": "15s"
   },
-  "credit_cost": 8
+  "metrics": {
+    "latency_ms": 1460,
+    "tokens": 1034,
+    "model": "gemini-3-flash-preview"
+  }
 }
 ```
 
@@ -259,6 +267,40 @@ curl -X POST http://localhost:8100/api/dimension/2d/create \
 
 Generate detailed image prompts for Midjourney/DALL-E.
 
+#### Request
+
+```bash
+curl -X POST http://localhost:8100/api/dimension/3d/generate \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: user123" \
+  -d '{
+    "description": "비 오는 밤, 네온 간판이 반사되는 좁은 골목",
+    "style": "photorealistic",
+    "aspect_ratio": "16:9",
+    "model": "gemini-3-flash-preview"
+  }'
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "capsule_id": "teaching.image.generate",
+  "output": {
+    "prompt": "Photorealistic rainy night alley with neon reflections, wet pavement, cinematic depth of field...",
+    "negative_prompt": "overexposed, noisy, low detail",
+    "style_notes": "moody, glossy surfaces, high contrast",
+    "aspect_ratio": "16:9"
+  },
+  "metrics": {
+    "latency_ms": 1180,
+    "tokens": 760,
+    "model": "gemini-3-flash-preview"
+  }
+}
+```
+
 ---
 
 ### 2.4 Reference Analysis (4D Moment)
@@ -266,6 +308,40 @@ Generate detailed image prompts for Midjourney/DALL-E.
 **Endpoint**: `POST /api/dimension/4d/analyze`
 
 Analyze uploaded reference images/videos for style extraction.
+
+#### Request
+
+```bash
+curl -X POST http://localhost:8100/api/dimension/4d/analyze \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: user123" \
+  -d '{
+    "video_description": "느릿한 롱테이크로 인물의 고독을 보여주는 흑백 단편",
+    "focus_areas": ["cinematography", "editing", "color"],
+    "analysis_depth": "standard",
+    "output_format": "structured",
+    "model": "gemini-3-flash-preview"
+  }'
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "capsule_id": "teaching.reference.analyze",
+  "output": {
+    "cinematography": "Static wide frames, long holds to emphasize isolation.",
+    "editing": "Minimal cuts, dissolve used only for time shifts.",
+    "color": "Monochrome with high contrast, crushed blacks."
+  },
+  "metrics": {
+    "latency_ms": 1735,
+    "tokens": 1290,
+    "model": "gemini-3-flash-preview"
+  }
+}
+```
 
 ---
 
@@ -285,7 +361,10 @@ curl -X POST http://localhost:8100/api/dimension/aesthetic/direct \
     "concept": "추격 씬이 있는 도시 느와르 스릴러",
     "reference_style": "bong",
     "mood": "tense",
+    "lighting_style": "low-key",
+    "color_mood": "cool",
     "target_medium": "video",
+    "use_rag": true,
     "model": "gemini-3-pro-preview"
   }'
 ```
@@ -295,6 +374,7 @@ curl -X POST http://localhost:8100/api/dimension/aesthetic/direct \
 ```json
 {
   "success": true,
+  "capsule_id": "dimension.aesthetic.direct",
   "output": {
     "visual_guidelines": {
       "composition": "Deep focus with foreground/background tension",
@@ -311,7 +391,11 @@ curl -X POST http://localhost:8100/api/dimension/aesthetic/direct \
       "reference_works": ["기생충", "살인의 추억"]
     }
   },
-  "credit_cost": 10
+  "metrics": {
+    "latency_ms": 1682,
+    "tokens": 1210,
+    "model": "gemini-3-pro-preview"
+  }
 }
 ```
 
@@ -330,10 +414,11 @@ curl -X POST http://localhost:8100/api/dimension/persona/analyze \
   -H "Content-Type: application/json" \
   -H "X-User-Id: user123" \
   -d '{
+    "subject": "창작자 성향 분석",
     "user_message": "저는 우울한 분위기의 영화를 좋아해요",
-    "analysis_stage": "intro",
     "persona_data": {},
-    "depth_level": "deep",
+    "birth_info": {"birthdate": "1994-03-21", "birth_time": "09:30"},
+    "current_stage": "intro",
     "model": "gemini-3-pro-preview"
   }'
 ```
@@ -343,6 +428,7 @@ curl -X POST http://localhost:8100/api/dimension/persona/analyze \
 ```json
 {
   "success": true,
+  "capsule_id": "dimension.persona.analyze",
   "output": {
     "assistant_message": "우울한 분위기를 선호하시군요. 어떤 종류의 우울함이 끌리시나요? 고독감, 상실감, 아니면 멜랑콜리한 아름다움?",
     "next_stage": "subconscious",
@@ -352,7 +438,11 @@ curl -X POST http://localhost:8100/api/dimension/persona/analyze \
     },
     "analysis_complete": false
   },
-  "credit_cost": 5
+  "metrics": {
+    "latency_ms": 1405,
+    "tokens": 980,
+    "model": "gemini-3-pro-preview"
+  }
 }
 ```
 
@@ -372,9 +462,11 @@ curl -X POST http://localhost:8100/api/dimension/story/architect \
   -H "X-User-Id: user123" \
   -d '{
     "concept": "외로운 로봇이 감정을 배우는 이야기",
+    "persona_data": "창작 DNA: melancholic, introspective",
+    "reference_analysis": "레퍼런스: 네온 누아르, 롱테이크",
     "genre": "drama",
-    "duration": "60s",
-    "structure": "3act",
+    "duration": 60,
+    "structure": "3-act",
     "language": "ko",
     "model": "gemini-3-pro-preview"
   }'
@@ -385,6 +477,7 @@ curl -X POST http://localhost:8100/api/dimension/story/architect \
 ```json
 {
   "success": true,
+  "capsule_id": "dimension.story.architect",
   "output": {
     "title": "기계의 눈물",
     "logline": "폐공장의 로봇이 버려진 강아지를 만나 처음으로 슬픔을 경험한다.",
@@ -401,7 +494,11 @@ curl -X POST http://localhost:8100/api/dimension/story/architect \
     "visual_motifs": ["비", "녹슨 금속", "따뜻한 빛"],
     "next_dimension": "storyboard-sketch"
   },
-  "credit_cost": 10
+  "metrics": {
+    "latency_ms": 2100,
+    "tokens": 1620,
+    "model": "gemini-3-pro-preview"
+  }
 }
 ```
 
@@ -411,7 +508,7 @@ curl -X POST http://localhost:8100/api/dimension/story/architect \
 
 **Endpoint**: `POST /api/dimension/sound/craft`
 
-Generate music/sound prompts for Suno, Udio, and ElevenLabs.
+Generate music/sound prompts with platform-optimized guidance.
 
 #### Request
 
@@ -421,13 +518,15 @@ curl -X POST http://localhost:8100/api/dimension/sound/craft \
   -H "X-User-Id: user123" \
   -d '{
     "concept": "로봇의 슬픔을 표현하는 감성 피아노 음악",
+    "storyboard": "장면 1: 비 오는 폐공장, 장면 2: 로봇의 멈칫",
     "sound_type": "bgm",
-    "mood": "melancholic",
-    "genre": "cinematic",
+    "mood": "cinematic",
+    "genre": "drama",
     "tempo": "slow",
-    "duration": "60s",
-    "target_platform": "suno",
-    "language": "ko"
+    "duration": 60,
+    "target_platform": "youtube",
+    "language": "ko",
+    "model": "gemini-3-flash-preview"
   }'
 ```
 
@@ -436,6 +535,7 @@ curl -X POST http://localhost:8100/api/dimension/sound/craft \
 ```json
 {
   "success": true,
+  "capsule_id": "dimension.sound.craft",
   "output": {
     "music_prompt": "Melancholic solo piano with soft strings, building emotional tension, cinematic atmosphere, gentle arpeggios fading into silence",
     "style_tags": ["cinematic", "emotional", "piano", "ambient", "sad"],
@@ -444,7 +544,11 @@ curl -X POST http://localhost:8100/api/dimension/sound/craft \
     "instrumentation": ["piano", "strings", "ambient pads"],
     "dynamics": "Starts pianissimo, builds to mezzo-forte climax, fades to silence"
   },
-  "credit_cost": 8
+  "metrics": {
+    "latency_ms": 1320,
+    "tokens": 910,
+    "model": "gemini-3-flash-preview"
+  }
 }
 ```
 
@@ -454,7 +558,7 @@ curl -X POST http://localhost:8100/api/dimension/sound/craft \
 
 **Endpoint**: `POST /api/dimension/quality/check`
 
-Evaluate content quality across 6 criteria: clarity, creativity, consistency, technical accuracy, emotional impact, and narrative flow.
+Evaluate content quality across 6 criteria: clarity, specificity, creativity, coherence, grammar, and impact.
 
 #### Request
 
@@ -465,7 +569,10 @@ curl -X POST http://localhost:8100/api/dimension/quality/check \
   -d '{
     "content": "A cinematic shot of a lonely robot...",
     "content_type": "prompt",
-    "criteria": ["clarity", "creativity", "consistency"]
+    "inspection_mode": "comprehensive",
+    "criteria": ["clarity", "creativity", "coherence"],
+    "threshold": 0.7,
+    "model": "gemini-3-flash-preview"
   }'
 ```
 
@@ -474,12 +581,13 @@ curl -X POST http://localhost:8100/api/dimension/quality/check \
 ```json
 {
   "success": true,
+  "capsule_id": "dimension.quality.check",
   "output": {
     "overall_score": 82,
     "criteria_scores": {
       "clarity": 85,
       "creativity": 80,
-      "consistency": 81
+      "coherence": 81
     },
     "issues": [
       {"severity": "minor", "description": "Lighting direction could be more specific"}
@@ -489,7 +597,11 @@ curl -X POST http://localhost:8100/api/dimension/quality/check \
       "Consider adding camera movement descriptor"
     ]
   },
-  "credit_cost": 3
+  "metrics": {
+    "latency_ms": 980,
+    "tokens": 640,
+    "model": "gemini-3-flash-preview"
+  }
 }
 ```
 
@@ -511,7 +623,8 @@ curl -X POST http://localhost:8100/api/dimension/quality/editor \
     "content": "폐공장에서 로봇이 강아지를 만나 슬퍼한다.",
     "context": "SF 감성 드라마, 60초 쇼트폼",
     "persona": "Senior Editor",
-    "use_rag": true
+    "use_rag": true,
+    "model": "gemini-3-flash-preview"
   }'
 ```
 
@@ -520,6 +633,7 @@ curl -X POST http://localhost:8100/api/dimension/quality/editor \
 ```json
 {
   "success": true,
+  "capsule_id": "dimension.quality.editor",
   "output": {
     "critique": {
       "narrative_score": 75,
@@ -538,7 +652,11 @@ curl -X POST http://localhost:8100/api/dimension/quality/editor \
       "감정 암시적 표현"
     ]
   },
-  "credit_cost": 5
+  "metrics": {
+    "latency_ms": 1120,
+    "tokens": 720,
+    "model": "gemini-3-flash-preview"
+  }
 }
 ```
 
@@ -546,9 +664,57 @@ curl -X POST http://localhost:8100/api/dimension/quality/editor \
 
 ### 2.11 Veo Video Generation (VEO)
 
-**Endpoint**: `POST /api/dimension/veo/generate/stream`
+**Endpoint**: `POST /api/dimension/veo/generate`  
+**Endpoint (SSE)**: `POST /api/dimension/veo/generate/stream`
 
 Generate actual videos using Veo 3.1 (SSE streaming for progress).
+
+#### Request
+
+```bash
+curl -X POST http://localhost:8100/api/dimension/veo/generate \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: user123" \
+  -d '{
+    "prompt": "A slow dolly-in on a neon-lit alley, rain reflections, cinematic mood",
+    "negative_prompt": "blurry, low quality",
+    "aspect_ratio": "16:9",
+    "duration": 6,
+    "style": "cinematic",
+    "seed": 42,
+    "model": "veo-3.1-generate-preview"
+  }'
+```
+
+#### Response (Non-Streaming)
+
+```json
+{
+  "success": true,
+  "capsule_id": "veo.video.generate",
+  "output": {
+    "video_uri": "gs://bucket/videos/user123/veo_abc123.mp4",
+    "duration_ms": 6000,
+    "metadata": {
+      "aspect_ratio": "16:9",
+      "fps": 24
+    }
+  },
+  "metrics": {
+    "latency_ms": 6000,
+    "tokens": 0,
+    "model": "veo-3.1-generate-preview"
+  }
+}
+```
+
+#### SSE Stream Example
+
+```
+data: {"type":"progress","progress":0.1,"message":"요청 접수"}
+data: {"type":"progress","progress":0.6,"message":"렌더링 중"}
+data: {"type":"result","output":{"video_uri":"gs://bucket/videos/user123/veo_abc123.mp4","duration_ms":6000}}
+```
 
 ---
 

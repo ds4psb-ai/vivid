@@ -631,16 +631,7 @@ function FlowPageContent() {
                 <div className="relative z-10 min-h-screen px-4 py-6 sm:px-6 sm:py-8">
                     <div className="mx-auto max-w-7xl">
 
-                        {/* Minimal Header */}
-                        <div className="flex flex-col items-center mb-12">
-                            {/* Subtle Badge */}
-                            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-4">
-                                <span className="text-lg">🌊</span>
-                                <span className="text-sm font-medium text-[var(--fg-muted)]">
-                                    {labels.badge}
-                                </span>
-                            </div>
-                        </div>
+
 
                         {/* Template Loading Indicator */}
                         {isLoadingTemplate && (

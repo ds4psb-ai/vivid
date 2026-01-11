@@ -34,13 +34,17 @@ interface StoryboardResult {
 const SCENE_COUNTS = [3, 5, 7, 10, 15, 20];
 
 const MODELS = [
-    { value: "gemini-3-flash-preview", label: "Flash (빠름)" },
     { value: "gemini-3-pro-preview", label: "Pro (고품질)" },
+];
+
+const VISUAL_STYLES = [
+    "Cinematic", "Anime", "3D Render", "Watercolor", "Cyberpunk", "Noir", "Realistic", "Fantasy"
 ];
 
 export default function StoryboardPanel() {
     // Form state
     const [script, setScript] = useState("");
+    const [style, setStyle] = useState("Cinematic");
     const [sceneCount, setSceneCount] = useState(5);
     const [language, setLanguage] = useState<"ko" | "en">("ko");
     const [model, setModel] = useState("gemini-3-flash-preview");
@@ -126,37 +130,80 @@ export default function StoryboardPanel() {
         }
     }, [result?.output, exportJSON]);
 
+    // Helper to format duration
+    const formatTime = (duration: string | undefined) => {
+        if (!duration) return "N/A";
+        const match = duration.match(/(\d+)([smh])/);
+        if (match) {
+            const value = parseInt(match[1]);
+            const unit = match[2];
+            if (unit === 's') return `${value}s`;
+            if (unit === 'm') return `${value}m`;
+            if (unit === 'h') return `${value}h`;
+        }
+        return duration;
+    };
+
     // Extracted result data for display
     const displayResult = result?.success ? result.output : null;
     const displayError = validationError || (result && !result.success ? result.error : error);
 
     const SidebarContent = (
         <>
-            {/* Concept Input */}
-            <div className="space-y-2 group">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1 group-focus-within:text-cyan-400/80 transition-colors">스토리 개요 (Script)</label>
+            {/* Script Input */}
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-white/80">
+                    스크립트 입력
+                </label>
                 <textarea
                     value={script}
                     onChange={(e) => setScript(e.target.value)}
-                    placeholder="영상의 전체적인 흐름이나 스크립트를 입력하세요..."
-                    className="w-full h-32 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:border-cyan-400/50 focus:bg-white/[0.07] focus:ring-4 focus:ring-cyan-400/5 transition-all resize-none text-sm font-light leading-relaxed"
+                    placeholder="시각화할 스크립트나 시나리오를 입력하세요..."
+                    className="w-full h-48 px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl
+                              text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 resize-none
+                              focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                    disabled={isLoading}
                 />
+                <div className="text-xs text-slate-400 dark:text-white/40 text-right">{script.length}/3000</div>
             </div>
 
             {/* Scene Count */}
-            <div className="space-y-2 group">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1 group-focus-within:text-cyan-400/80 transition-colors">장면 수</label>
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-white/80">장면 수</label>
                 <div className="relative">
                     <select
                         value={sceneCount}
                         onChange={(e) => setSceneCount(Number(e.target.value))}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-cyan-400/50 focus:bg-white/[0.07] focus:ring-4 focus:ring-cyan-400/5 transition-all appearance-none cursor-pointer hover:bg-white/[0.07]"
+                        className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl
+                              text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                        disabled={isLoading}
                     >
-                        {SCENE_COUNTS.map((count) => (
-                            <option key={count} value={count} className="bg-[#0F0F1A] text-white py-2">{count}개 장면</option>
+                        <option value={4} className="bg-white dark:bg-black text-slate-900 dark:text-white">4 장면 (Short)</option>
+                        <option value={6} className="bg-white dark:bg-black text-slate-900 dark:text-white">6 장면 (Standard)</option>
+                        <option value={8} className="bg-white dark:bg-black text-slate-900 dark:text-white">8 장면 (Extended)</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 dark:text-white/30">
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                    </div>
+                </div>
+            </div>
+
+            {/* Visual Style */}
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-white/80">비주얼 스타일</label>
+                <div className="relative">
+                    <select
+                        value={style}
+                        onChange={(e) => setStyle(e.target.value)}
+                        className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl
+                              text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                        disabled={isLoading}
+                    >
+                        {VISUAL_STYLES.map((s) => (
+                            <option key={s} value={s} className="bg-white dark:bg-black text-slate-900 dark:text-white">{s}</option>
                         ))}
                     </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-white/30 group-focus-within:text-cyan-400/50">
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 dark:text-white/30">
                         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
                     </div>
                 </div>
@@ -251,7 +298,7 @@ export default function StoryboardPanel() {
                 onRetry={retry}
                 canRetry={canRetry}
                 error={error}
-                retryCount={currentRetryCount}
+                retryCount={3}
                 maxRetries={3}
             >
                 {displayResult ? (
@@ -278,69 +325,53 @@ export default function StoryboardPanel() {
                             {displayResult.scenes.map((scene, idx) => (
                                 <div key={idx} className="group relative">
                                     <div className="absolute inset-0 bg-cyan-500/5 blur-xl rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                                    <div className="relative h-full bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] p-6 hover:border-cyan-500/30 hover:bg-black/50 transition-all overflow-hidden flex flex-col">
-                                        <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-cyan-500 to-sky-500 shadow-[0_0_20px_#06b6d4]"></div>
+                                    <div className="p-4 bg-white/80 dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] font-mono text-base leading-relaxed text-slate-800 dark:text-zinc-100 group-hover:border-cyan-400/50 dark:group-hover:border-cyan-500/30 group-hover:bg-white dark:group-hover:bg-black/50 transition-all relative overflow-hidden h-full">
+                                        <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-cyan-400 to-blue-500 dark:from-cyan-500 dark:to-blue-500 shadow-[0_0_20px_#06b6d4]"></div>
 
-                                        <div className="flex items-center justify-between mb-4 pl-3">
-                                            <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                                                Scene {scene.scene_number}
-                                            </h3>
-                                            <span className="text-[10px] font-mono text-cyan-400/80 bg-cyan-500/10 px-2 py-1 rounded-md border border-cyan-500/20">
-                                                {scene.duration || "5s"}
+                                        {/* Scene Header */}
+                                        <div className="flex justify-between items-center mb-4 border-b border-slate-100 dark:border-white/5 pb-2">
+                                            <h4 className="text-[12px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest group-hover:text-cyan-600 dark:group-hover:text-cyan-400/80 transition-colors">
+                                                Scene #{scene.scene_number}
+                                            </h4>
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/30">
+                                                {formatTime(scene.duration)}
                                             </span>
                                         </div>
 
-                                        <div className="space-y-4 pl-3 flex-1 flex flex-col">
-                                            <div>
-                                                <label className="text-[9px] font-bold text-zinc-600 uppercase tracking-wider mb-1 block">Description</label>
-                                                <div className="flex items-start justify-between gap-4">
-                                                    <p className="text-sm font-light leading-relaxed text-zinc-200">
-                                                        {scene.description}
-                                                    </p>
-                                                    <button
-                                                        onClick={() => handleCopy(scene.description)}
-                                                        className="flex-shrink-0 p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 bg-white/5 text-zinc-500 hover:text-white hover:bg-white/10"
-                                                        title="Copy Scene Description"
-                                                    >
-                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                                        </svg>
-                                                    </button>
+                                        {/* Content Grid */}
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <span className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase tracking-wider block mb-1">Visual</span>
+                                                    <p className="text-sm text-slate-700 dark:text-white/90 leading-relaxed font-light">{scene.description}</p>
+                                                </div>
+                                                <div>
+                                                    <span className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase tracking-wider block mb-1">Audio</span>
+                                                    <div className="flex gap-2 items-start">
+                                                        <span className="text-xs bg-slate-100 dark:bg-white/5 px-2 py-1 rounded text-slate-600 dark:text-zinc-400 whitespace-nowrap">SFX</span>
+                                                        <p className="text-xs text-slate-600 dark:text-zinc-400 italic leading-relaxed pt-0.5">{scene.audio_cues}</p>
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                            {scene.visual_prompt && (
-                                                <div>
-                                                    <label className="text-[9px] font-bold text-zinc-600 uppercase tracking-wider mb-1 block group-hover:text-cyan-500/70 transition-colors">Visual Prompt</label>
-                                                    <div className="p-3 bg-white/5 rounded-lg border border-white/5 text-xs font-mono text-zinc-400 leading-relaxed group-hover:border-cyan-500/20 transition-colors">
-                                                        <div className="flex items-start justify-between gap-4">
-                                                            <p>{scene.visual_prompt}</p>
-                                                            <button
-                                                                onClick={() => handleCopy(scene.visual_prompt!)}
-                                                                className="flex-shrink-0 p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 bg-white/5 text-zinc-500 hover:text-white hover:bg-white/10"
-                                                                title="Copy Visual Prompt"
-                                                            >
-                                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                                                </svg>
-                                                            </button>
-                                                        </div>
+                                            <div className="space-y-3 pt-3 lg:pt-0 lg:pl-4 lg:border-l lg:border-slate-100 dark:lg:border-white/5">
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-2 text-center">
+                                                        <span className="text-[10px] text-slate-400 dark:text-zinc-500 block mb-1">Camera</span>
+                                                        <span className="text-xs text-cyan-700 dark:text-cyan-300 font-medium">{scene.camera_angle}</span>
+                                                    </div>
+                                                    <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-2 text-center">
+                                                        <span className="text-[10px] text-slate-400 dark:text-zinc-500 block mb-1">Movement</span>
+                                                        <span className="text-xs text-cyan-700 dark:text-cyan-300 font-medium">{scene.camera_movement}</span>
                                                     </div>
                                                 </div>
-                                            )}
 
-                                            <div className="pt-2 mt-auto border-t border-white/5 flex gap-2">
-                                                <span className="px-2 py-1 bg-white/5 rounded text-[10px] text-zinc-500 font-mono border border-white/5">
-                                                    {scene.shot_type || "Wide"}
-                                                </span>
-                                                <span className="px-2 py-1 bg-white/5 rounded text-[10px] text-zinc-500 font-mono border border-white/5">
-                                                    {scene.camera_movement || "Static"}
-                                                </span>
-                                                {scene.notes && (
-                                                    <span className="px-2 py-1 bg-blue-500/5 rounded text-[10px] text-blue-200 font-mono border border-blue-500/10">
-                                                        {scene.notes}
-                                                    </span>
-                                                )}
+                                                <div className="bg-gradient-to-br from-slate-900/5 to-slate-900/10 dark:from-black/40 dark:to-black/60 rounded-lg p-3 border border-slate-200 dark:border-white/5">
+                                                    <span className="text-[10px] text-slate-400 dark:text-zinc-600 block mb-1 text-center">Prompt Preview</span>
+                                                    <p className="text-[10px] text-slate-500 dark:text-zinc-400 line-clamp-3 font-mono leading-tight opacity-70">
+                                                        {scene.midjourney_prompt}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -360,10 +391,10 @@ export default function StoryboardPanel() {
                             </div>
                         </div>
                         <div className="text-center space-y-3">
-                            <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40 tracking-tight">Ready to Create</h3>
-                            <p className="text-sm text-zinc-500 max-w-xs mx-auto font-light leading-relaxed">
-                                스토리 아이디어를 입력하고<br />
-                                <span className="text-cyan-500/80 font-medium">자동화된 씬 리스트</span>를 생성하세요.
+                            <h3 className="text-2xl font-bold text-slate-900 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-b dark:from-white dark:to-white/40 tracking-tight">Ready to Visualize</h3>
+                            <p className="text-sm text-slate-500 dark:text-zinc-500 max-w-xs mx-auto font-light leading-relaxed">
+                                스토리를 장면 단위로 시각화하고<br />
+                                <span className="text-cyan-600 dark:text-cyan-500/80 font-medium">Midjourney & Runway 프롬프트</span>를 자동 생성합니다.
                             </p>
                         </div>
                     </div>

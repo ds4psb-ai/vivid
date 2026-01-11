@@ -638,9 +638,9 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                 {/* 헤더 */}
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h2 className="text-xl font-bold text-white">차원 확장 워크플로우</h2>
-                        <p className="text-sm text-zinc-500 mt-1">
-                            차원문을 선택하여 아이디어를 확장하세요
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">차원 확장 워크플로우</h2>
+                        <p className="text-sm text-gray-500 dark:text-zinc-500 mt-1">
+                            차원 앱을 선택하여 아이디어를 확장하세요
                         </p>
                     </div>
                 </div>
@@ -759,30 +759,30 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
 
                 {/* 요약 패널 */}
                 {cars.length > 0 && (
-                    <div className="mt-8 p-4 rounded-xl bg-zinc-900/50 border border-zinc-800">
+                    <div className="mt-8 p-4 rounded-xl bg-gray-100 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-6">
                                 <div>
-                                    <span className="text-[10px] text-zinc-500 uppercase tracking-widest">
+                                    <span className="text-[10px] text-gray-500 dark:text-zinc-500 uppercase tracking-widest">
                                         현재 차원
                                     </span>
-                                    <p className="text-lg font-bold text-white">
+                                    <p className="text-lg font-bold text-gray-900 dark:text-white">
                                         {cars[cars.length - 1]?.dimension || "—"}
                                     </p>
                                 </div>
                                 <div>
-                                    <span className="text-[10px] text-zinc-500 uppercase tracking-widest">
+                                    <span className="text-[10px] text-gray-500 dark:text-zinc-500 uppercase tracking-widest">
                                         완료됨
                                     </span>
-                                    <p className="text-lg font-bold text-emerald-400">
+                                    <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
                                         {cars.filter((c) => c.status === "completed").length}
                                     </p>
                                 </div>
                                 <div>
-                                    <span className="text-[10px] text-zinc-500 uppercase tracking-widest">
+                                    <span className="text-[10px] text-gray-500 dark:text-zinc-500 uppercase tracking-widest">
                                         예상 크레딧
                                     </span>
-                                    <p className="text-lg font-bold text-amber-400">
+                                    <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
                                         {cars.reduce((sum, c) => sum + (c.creditCost ?? toolsById[c.toolId]?.creditCost ?? 10), 0)}
                                     </p>
                                 </div>

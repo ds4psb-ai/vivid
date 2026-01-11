@@ -16,7 +16,6 @@ const PROTECTED_ROUTES = [
     "/usage",
     "/teaching",
     "/ainspire",
-    "/assets",
 ];
 
 const PUBLIC_ROUTES = [
@@ -25,10 +24,11 @@ const PUBLIC_ROUTES = [
     "/api",
     "/_next",
     "/images",
+    "/assets",
     "/favicon",
 ];
 
-const PRIVATE_MEDIA_ROUTES = ["/teaching", "/ainspire", "/assets"];
+const PRIVATE_MEDIA_ROUTES = ["/teaching", "/ainspire"];
 
 const SESSION_COOKIE_NAME = "crebit_session";
 
@@ -80,6 +80,5 @@ export const config = {
         "/usage/:path*",
         "/teaching/:path*",
         "/ainspire/:path*",
-        "/assets/:path*",
     ],
 };

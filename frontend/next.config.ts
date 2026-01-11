@@ -54,13 +54,8 @@ const nextConfig: NextConfig = {
     ];
   },
   async redirects() {
-    return [
-      {
-        source: "/",
-        destination: "/dimension",
-        permanent: false,
-      },
-    ];
+    // Removed: / -> /dimension redirect (unified home now handles this)
+    return [];
   },
   async rewrites() {
     return [

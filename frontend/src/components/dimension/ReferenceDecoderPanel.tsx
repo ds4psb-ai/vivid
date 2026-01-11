@@ -135,26 +135,26 @@ export default function ReferenceDecoderPanel() {
         <>
             {/* Description Input */}
             <div className="space-y-2 group">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1 group-focus-within:text-amber-400/80 transition-colors">레퍼런스 영상 설명</label>
+                <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1 group-focus-within:text-amber-600 dark:group-focus-within:text-amber-400/80 transition-colors">레퍼런스 영상 설명</label>
                 <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="분석하고 싶은 영상의 장면이나 특징을 상세히 설명하세요..."
-                    className="w-full h-32 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:border-amber-400/50 focus:bg-white/[0.07] focus:ring-4 focus:ring-amber-400/5 transition-all resize-none text-sm font-light leading-relaxed"
+                    className="w-full h-32 px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400/50 focus:bg-white dark:focus:bg-white/[0.07] focus:ring-4 focus:ring-amber-500/10 dark:focus:ring-amber-400/5 transition-all resize-none text-sm font-light leading-relaxed"
                 />
             </div>
 
             {/* Focus Areas */}
             <div className="space-y-2 group">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1 group-focus-within:text-amber-400/80 transition-colors">분석 집중 영역</label>
+                <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1 group-focus-within:text-amber-600 dark:group-focus-within:text-amber-400/80 transition-colors">분석 집중 영역</label>
                 <div className="flex flex-wrap gap-2">
                     {FOCUS_AREAS.map((area) => (
                         <button
                             key={area.value}
                             onClick={() => toggleFocusArea(area.value)}
                             className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${focusAreas.includes(area.value)
-                                ? "bg-amber-400/20 border-amber-400/50 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.1)]"
-                                : "bg-white/5 border-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
+                                ? "bg-amber-100 dark:bg-amber-400/20 border-amber-500 dark:border-amber-400/50 text-amber-700 dark:text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.1)]"
+                                : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white"
                                 }`}
                         >
                             {area.label}
@@ -164,19 +164,19 @@ export default function ReferenceDecoderPanel() {
             </div>
 
             {/* Model Select */}
-            <div className="space-y-2 pt-4 border-t border-white/5 mt-4 group">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1 group-focus-within:text-amber-400/80 transition-colors">AI 모델</label>
+            <div className="space-y-2 pt-4 border-t border-slate-200 dark:border-white/5 mt-4 group">
+                <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1 group-focus-within:text-amber-600 dark:group-focus-within:text-amber-400/80 transition-colors">AI 모델</label>
                 <div className="relative">
                     <select
                         value={model}
                         onChange={(e) => setModel(e.target.value)}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/50 focus:bg-white/[0.07] focus:ring-4 focus:ring-amber-400/5 transition-all appearance-none cursor-pointer hover:bg-white/[0.07]"
+                        className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm focus:outline-none focus:border-amber-500 dark:focus:border-amber-400/50 focus:bg-white dark:focus:bg-white/[0.07] focus:ring-4 focus:ring-amber-500/10 dark:focus:ring-amber-400/5 transition-all appearance-none cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.07]"
                     >
                         {MODELS.map((m) => (
-                            <option key={m.value} value={m.value} className="bg-[#0F0F1A] text-white py-2">{m.label}</option>
+                            <option key={m.value} value={m.value} className="bg-white dark:bg-[#0F0F1A] text-slate-900 dark:text-white py-2">{m.label}</option>
                         ))}
                     </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-white/30 group-focus-within:text-amber-400/50">
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 dark:text-white/30 group-focus-within:text-amber-500 dark:group-focus-within:text-amber-400/50">
                         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
                     </div>
                 </div>
@@ -239,9 +239,9 @@ export default function ReferenceDecoderPanel() {
                             </h3>
                             <button
                                 onClick={handleExportJson}
-                                className="px-3 py-1.5 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-white text-xs font-medium rounded-lg transition-all flex items-center gap-2"
+                                className="px-3 py-1.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 hover:border-slate-300 dark:hover:border-white/20 text-slate-600 dark:text-white text-xs font-medium rounded-lg transition-all flex items-center gap-2"
                             >
-                                <svg className="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg className="w-4 h-4 text-slate-500 dark:text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                 </svg>
                                 JSON Export
@@ -256,12 +256,12 @@ export default function ReferenceDecoderPanel() {
 
                                 return (
                                     <div key={key} className="group relative">
-                                        <div className="p-8 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] font-mono text-base leading-relaxed text-zinc-100 whitespace-pre-wrap group-hover:border-amber-500/30 group-hover:bg-black/50 transition-all relative overflow-hidden">
-                                            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-amber-500 to-orange-500 shadow-[0_0_20px_#f59e0b]"></div>
-                                            <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3 border-b border-white/5 pb-2 group-hover:text-amber-400/80 transition-colors">
+                                        <div className="p-8 bg-white/80 dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] font-mono text-base leading-relaxed text-slate-800 dark:text-zinc-100 whitespace-pre-wrap group-hover:border-amber-400/50 dark:group-hover:border-amber-500/30 group-hover:bg-white dark:group-hover:bg-black/50 transition-all relative overflow-hidden">
+                                            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-amber-400 to-orange-500 dark:from-amber-500 dark:to-orange-500 shadow-[0_0_20px_#f59e0b]"></div>
+                                            <h4 className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest mb-3 border-b border-slate-100 dark:border-white/5 pb-2 group-hover:text-amber-600 dark:group-hover:text-amber-400/80 transition-colors">
                                                 {title}
                                             </h4>
-                                            <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">
+                                            <p className="text-slate-700 dark:text-white/90 text-sm leading-relaxed whitespace-pre-wrap">
                                                 {value as string}
                                             </p>
                                         </div>
@@ -273,9 +273,9 @@ export default function ReferenceDecoderPanel() {
                         {/* Recommendations */}
                         {displayResult.recommendations && displayResult.recommendations.length > 0 && (
                             <div className="group relative">
-                                <div className="p-8 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] font-mono text-base leading-relaxed text-zinc-100 whitespace-pre-wrap group-hover:border-amber-500/30 group-hover:bg-black/50 transition-all relative overflow-hidden">
-                                    <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-amber-500 to-orange-500 shadow-[0_0_20px_#f59e0b]"></div>
-                                    <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2 group-hover:text-amber-400/80 transition-colors">
+                                <div className="p-8 bg-white/80 dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] font-mono text-base leading-relaxed text-slate-800 dark:text-zinc-100 whitespace-pre-wrap group-hover:border-amber-400/50 dark:group-hover:border-amber-500/30 group-hover:bg-white dark:group-hover:bg-black/50 transition-all relative overflow-hidden">
+                                    <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-amber-400 to-orange-500 dark:from-amber-500 dark:to-orange-500 shadow-[0_0_20px_#f59e0b]"></div>
+                                    <h4 className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2 group-hover:text-amber-600 dark:group-hover:text-amber-400/80 transition-colors">
                                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                         </svg>
@@ -283,7 +283,7 @@ export default function ReferenceDecoderPanel() {
                                     </h4>
                                     <ul className="space-y-3">
                                         {displayResult.recommendations.map((rec, idx) => (
-                                            <li key={idx} className="flex items-start gap-3 text-sm text-zinc-200">
+                                            <li key={idx} className="flex items-start gap-3 text-sm text-slate-700 dark:text-zinc-200">
                                                 <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-500/50 flex-shrink-0"></span>
                                                 <span className="leading-relaxed">{rec}</span>
                                             </li>
@@ -305,10 +305,10 @@ export default function ReferenceDecoderPanel() {
                             </div>
                         </div>
                         <div className="text-center space-y-3">
-                            <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40 tracking-tight">Ready to Analyze</h3>
-                            <p className="text-sm text-zinc-500 max-w-xs mx-auto font-light leading-relaxed">
+                            <h3 className="text-2xl font-bold text-slate-900 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-b dark:from-white dark:to-white/40 tracking-tight">Ready to Analyze</h3>
+                            <p className="text-sm text-slate-500 dark:text-zinc-500 max-w-xs mx-auto font-light leading-relaxed">
                                 영상의 특징을 설명하고<br />
-                                <span className="text-amber-500/80 font-medium">AI 기반의 심층 시네마틱 분석</span>을 받아보세요.
+                                <span className="text-amber-600 dark:text-amber-500/80 font-medium">AI 기반의 심층 시네마틱 분석</span>을 받아보세요.
                             </p>
                         </div>
                     </div>

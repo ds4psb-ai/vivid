@@ -237,12 +237,13 @@ export default function AbyssInterpreterPanel() {
     const SidebarContent = (
         <>
             {/* Stage Progress */}
+            {/* Stage Progress */}
             <div className="space-y-2">
-                <label className="text-[10px] font-bold text-[var(--fg-muted)] uppercase tracking-widest ml-1">분석 단계</label>
-                <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                <label className="text-[10px] font-bold text-slate-500 dark:text-[var(--fg-muted)] uppercase tracking-widest ml-1">분석 단계</label>
+                <div className="p-4 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10">
                     <div className="flex items-center gap-2 mb-3">
-                        <div className={`w-2 h-2 rounded-full ${isComplete ? "bg-emerald-400" : "bg-indigo-400 animate-pulse"}`} />
-                        <span className="text-sm font-medium text-white">
+                        <div className={`w-2 h-2 rounded-full ${isComplete ? "bg-emerald-500 dark:bg-emerald-400" : "bg-indigo-500 dark:bg-indigo-400 animate-pulse"}`} />
+                        <span className="text-sm font-medium text-slate-900 dark:text-white">
                             {STAGE_NAMES[currentStage] || currentStage}
                         </span>
                     </div>
@@ -252,7 +253,7 @@ export default function AbyssInterpreterPanel() {
                                 key={stage}
                                 className={`flex-1 h-1 rounded-full transition-all ${Object.keys(STAGE_NAMES).indexOf(currentStage) >= i
                                     ? "bg-indigo-500"
-                                    : "bg-white/10"
+                                    : "bg-slate-200 dark:bg-white/10"
                                     }`}
                             />
                         ))}
@@ -270,28 +271,28 @@ export default function AbyssInterpreterPanel() {
                             placeholder="년"
                             value={birthInfo.year}
                             onChange={(e) => setBirthInfo(prev => ({ ...prev, year: e.target.value }))}
-                            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm text-center focus:outline-none focus:border-indigo-400/50"
+                            className="px-3 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white text-sm text-center focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400/50 placeholder-slate-400 dark:placeholder-white/30"
                         />
                         <input
                             type="text"
                             placeholder="월"
                             value={birthInfo.month}
                             onChange={(e) => setBirthInfo(prev => ({ ...prev, month: e.target.value }))}
-                            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm text-center focus:outline-none focus:border-indigo-400/50"
+                            className="px-3 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white text-sm text-center focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400/50 placeholder-slate-400 dark:placeholder-white/30"
                         />
                         <input
                             type="text"
                             placeholder="일"
                             value={birthInfo.day}
                             onChange={(e) => setBirthInfo(prev => ({ ...prev, day: e.target.value }))}
-                            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm text-center focus:outline-none focus:border-indigo-400/50"
+                            className="px-3 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white text-sm text-center focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400/50 placeholder-slate-400 dark:placeholder-white/30"
                         />
                         <input
                             type="text"
                             placeholder="시"
                             value={birthInfo.hour}
                             onChange={(e) => setBirthInfo(prev => ({ ...prev, hour: e.target.value }))}
-                            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm text-center focus:outline-none focus:border-indigo-400/50"
+                            className="px-3 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white text-sm text-center focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400/50 placeholder-slate-400 dark:placeholder-white/30"
                         />
                     </div>
                 </div>
@@ -299,7 +300,7 @@ export default function AbyssInterpreterPanel() {
 
             {/* Depth Level */}
             <div className="space-y-2">
-                <label className="text-[10px] font-bold text-[var(--fg-muted)] uppercase tracking-widest ml-1">분석 깊이</label>
+                <label className="text-[10px] font-bold text-slate-500 dark:text-[var(--fg-muted)] uppercase tracking-widest ml-1">분석 깊이</label>
                 <div className="space-y-2">
                     {DEPTH_LEVELS.map((level) => (
                         <button
@@ -308,33 +309,33 @@ export default function AbyssInterpreterPanel() {
                             disabled={messages.length > 0}
                             className={`w-full flex flex-col px-4 py-3 rounded-xl text-left transition-all ${depthLevel === level.value
                                 ? "bg-indigo-500/10 border border-indigo-500/30"
-                                : "bg-white/5 border border-white/10 hover:border-white/20"
+                                : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20"
                                 } ${messages.length > 0 ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
-                            <span className={`text-sm font-medium ${depthLevel === level.value ? "text-indigo-400" : "text-zinc-300"}`}>
+                            <span className={`text-sm font-medium ${depthLevel === level.value ? "text-indigo-600 dark:text-indigo-400" : "text-slate-700 dark:text-zinc-300"}`}>
                                 {level.label}
                             </span>
-                            <span className="text-[10px] text-zinc-500">{level.desc}</span>
+                            <span className="text-[10px] text-slate-500 dark:text-zinc-500">{level.desc}</span>
                         </button>
                     ))}
                 </div>
             </div>
 
             {/* Model Select */}
-            <div className="space-y-2 pt-4 border-t border-white/5">
-                <label className="text-[10px] font-bold text-[var(--fg-muted)] uppercase tracking-widest ml-1">AI 모델</label>
+            <div className="space-y-2 pt-4 border-t border-slate-200 dark:border-white/5">
+                <label className="text-[10px] font-bold text-slate-500 dark:text-[var(--fg-muted)] uppercase tracking-widest ml-1">AI 모델</label>
                 <div className="relative">
                     <select
                         value={model}
                         onChange={(e) => setModel(e.target.value)}
                         disabled={messages.length > 0}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-400/50 transition-all appearance-none cursor-pointer font-mono disabled:opacity-50"
+                        className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400/50 transition-all appearance-none cursor-pointer font-mono disabled:opacity-50"
                     >
                         {MODELS.map((m) => (
-                            <option key={m.value} value={m.value} className="bg-[#0F0F1A]">{m.label}</option>
+                            <option key={m.value} value={m.value} className="bg-white dark:bg-[#0F0F1A] text-slate-900 dark:text-white">{m.label}</option>
                         ))}
                     </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-white/30">
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500 dark:text-white/30">
                         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
                     </div>
                 </div>
@@ -344,7 +345,7 @@ export default function AbyssInterpreterPanel() {
             {messages.length > 0 && (
                 <button
                     onClick={resetAnalysis}
-                    className="w-full py-3 mt-4 border border-white/10 text-zinc-400 hover:text-white hover:border-white/30 rounded-xl transition-all text-sm"
+                    className="w-full py-3 mt-4 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-white/30 rounded-xl transition-all text-sm"
                 >
                     처음부터 다시 시작
                 </button>
@@ -376,22 +377,22 @@ export default function AbyssInterpreterPanel() {
                             >
                                 {msg.role === "assistant" && (
                                     <div className="w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center flex-shrink-0">
-                                        <Bot className="w-4 h-4 text-indigo-400" />
+                                        <Bot className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                                     </div>
                                 )}
                                 <div
                                     className={`max-w-[80%] p-4 rounded-2xl ${msg.role === "user"
                                         ? "bg-indigo-500/20 border border-indigo-500/30"
-                                        : "bg-white/5 border border-white/10"
+                                        : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-none"
                                         }`}
                                 >
-                                    <p className="text-sm text-zinc-200 leading-relaxed whitespace-pre-wrap">
+                                    <p className="text-sm text-slate-700 dark:text-zinc-200 leading-relaxed whitespace-pre-wrap">
                                         {msg.content}
                                     </p>
                                 </div>
                                 {msg.role === "user" && (
-                                    <div className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center flex-shrink-0">
-                                        <User className="w-4 h-4 text-zinc-400" />
+                                    <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-white/10 border border-slate-300 dark:border-white/20 flex items-center justify-center flex-shrink-0">
+                                        <User className="w-4 h-4 text-slate-500 dark:text-zinc-400" />
                                     </div>
                                 )}
                             </div>
@@ -458,7 +459,7 @@ export default function AbyssInterpreterPanel() {
 
                     {/* Input Area */}
                     {!isComplete && (
-                        <div className="flex-shrink-0 p-4 border-t border-white/10 bg-black/20 backdrop-blur-sm rounded-b-2xl">
+                        <div className="flex-shrink-0 p-4 border-t border-slate-200 dark:border-white/10 bg-white/80 dark:bg-black/20 backdrop-blur-sm rounded-b-2xl">
                             <div className="flex gap-3">
                                 <input
                                     type="text"
@@ -467,12 +468,12 @@ export default function AbyssInterpreterPanel() {
                                     onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && void sendMessage()}
                                     placeholder="답변을 입력하세요..."
                                     disabled={isLoading}
-                                    className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-indigo-400/50 transition-all disabled:opacity-50"
+                                    className="flex-1 px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400/50 transition-all disabled:opacity-50"
                                 />
                                 <button
                                     onClick={sendMessage}
                                     disabled={isLoading || !inputMessage.trim()}
-                                    className="px-6 py-3 bg-indigo-500 hover:bg-indigo-400 disabled:bg-white/10 disabled:text-white/30 text-white rounded-xl transition-all"
+                                    className="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 dark:hover:bg-indigo-400 disabled:bg-slate-200 dark:disabled:bg-white/10 disabled:text-slate-400 dark:disabled:text-white/30 text-white rounded-xl transition-all"
                                 >
                                     <Send className="w-5 h-5" />
                                 </button>

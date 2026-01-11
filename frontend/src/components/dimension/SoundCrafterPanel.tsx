@@ -242,8 +242,8 @@ export default function SoundCrafterPanel() {
 
     const renderMoodStage = () => (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Activity className="w-5 h-5 text-rose-400" />
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Activity className="w-5 h-5 text-rose-500 dark:text-rose-400" />
                 1단계: 오디오 디렉션 선택
             </h3>
 
@@ -252,23 +252,23 @@ export default function SoundCrafterPanel() {
                     <button
                         key={dir.id}
                         onClick={() => handleSelectDirection(dir)}
-                        className="group relative p-5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 
-                                 text-left transition-all hover:border-rose-500/50 hover:shadow-lg hover:shadow-rose-500/10"
+                        className="group relative p-5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 
+                                 text-left transition-all hover:border-rose-300 dark:hover:border-rose-500/50 hover:shadow-lg hover:shadow-rose-500/10"
                     >
                         <div className="flex justify-between items-start mb-2">
-                            <h4 className="text-lg font-bold text-rose-400 group-hover:text-rose-300 transition-colors">
+                            <h4 className="text-lg font-bold text-rose-600 dark:text-rose-400 group-hover:text-rose-500 dark:group-hover:text-rose-300 transition-colors">
                                 {dir.title}
                             </h4>
-                            <span className="text-xs px-2 py-1 rounded-full bg-black/50 text-white/50 border border-white/10">
+                            <span className="text-xs px-2 py-1 rounded-full bg-slate-100 dark:bg-black/50 text-slate-600 dark:text-white/50 border border-slate-200 dark:border-white/10">
                                 {dir.bpm_range} BPM
                             </span>
                         </div>
-                        <p className="text-white/70 text-sm mb-4 leading-relaxed">
+                        <p className="text-slate-600 dark:text-white/70 text-sm mb-4 leading-relaxed">
                             {dir.description}
                         </p>
                         <div className="flex flex-wrap gap-2">
                             {dir.key_elements.map((el, i) => (
-                                <span key={i} className="text-xs px-2 py-1 rounded bg-rose-500/10 text-rose-300/70">
+                                <span key={i} className="text-xs px-2 py-1 rounded bg-rose-100 dark:bg-rose-500/10 text-rose-600 dark:text-rose-300/70">
                                     {el}
                                 </span>
                             ))}
@@ -282,7 +282,7 @@ export default function SoundCrafterPanel() {
                     setMoodResult(null);
                     setCurrentStage("intro");
                 }}
-                className="text-sm text-white/40 hover:text-white underline"
+                className="text-sm text-slate-500 dark:text-white/40 hover:text-slate-900 dark:hover:text-white underline"
             >
                 다시 컨셉 입력하기
             </button>
@@ -291,19 +291,19 @@ export default function SoundCrafterPanel() {
 
     const renderLayersStage = () => (
         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Sliders className="w-5 h-5 text-rose-400" />
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Sliders className="w-5 h-5 text-rose-500 dark:text-rose-400" />
                 2단계: 사운드 레이어 믹싱
             </h3>
 
-            <div className="bg-white/5 border border-white/10 rounded-xl p-6 space-y-6">
-                <div className="flex items-center gap-4 pb-4 border-b border-white/10">
-                    <div className="w-12 h-12 rounded-lg bg-rose-500/20 flex items-center justify-center">
-                        <Music className="w-6 h-6 text-rose-400" />
+            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-6 space-y-6">
+                <div className="flex items-center gap-4 pb-4 border-b border-slate-200 dark:border-white/10">
+                    <div className="w-12 h-12 rounded-lg bg-rose-100 dark:bg-rose-500/20 flex items-center justify-center">
+                        <Music className="w-6 h-6 text-rose-500 dark:text-rose-400" />
                     </div>
                     <div>
-                        <h4 className="font-bold text-white">{selectedDirection?.title}</h4>
-                        <p className="text-sm text-white/50">{selectedDirection?.description}</p>
+                        <h4 className="font-bold text-slate-900 dark:text-white">{selectedDirection?.title}</h4>
+                        <p className="text-sm text-slate-500 dark:text-white/50">{selectedDirection?.description}</p>
                     </div>
                 </div>
 
@@ -311,44 +311,44 @@ export default function SoundCrafterPanel() {
                 <div className="space-y-6">
                     <div className="space-y-3">
                         <div className="flex justify-between text-sm">
-                            <label className="text-white/80 font-medium">멜로디 포커스</label>
-                            <span className="text-rose-400">{mixRecipe.melody_focus * 10}%</span>
+                            <label className="text-slate-700 dark:text-white/80 font-medium">멜로디 포커스</label>
+                            <span className="text-rose-600 dark:text-rose-400">{mixRecipe.melody_focus * 10}%</span>
                         </div>
                         <input
                             type="range" min="0" max="10"
                             value={mixRecipe.melody_focus}
                             onChange={(e) => setMixRecipe({ ...mixRecipe, melody_focus: parseInt(e.target.value) })}
-                            className="w-full accent-rose-500 bg-white/10 h-2 rounded-lg appearance-none cursor-pointer"
+                            className="w-full accent-rose-500 bg-slate-200 dark:bg-white/10 h-2 rounded-lg appearance-none cursor-pointer"
                         />
-                        <p className="text-xs text-white/40">높을수록 멜로디라인이 강조됩니다.</p>
+                        <p className="text-xs text-slate-500 dark:text-white/40">높을수록 멜로디라인이 강조됩니다.</p>
                     </div>
 
                     <div className="space-y-3">
                         <div className="flex justify-between text-sm">
-                            <label className="text-white/80 font-medium">리듬 인텐시티</label>
-                            <span className="text-rose-400">{mixRecipe.rhythm_intensity * 10}%</span>
+                            <label className="text-slate-700 dark:text-white/80 font-medium">리듬 인텐시티</label>
+                            <span className="text-rose-600 dark:text-rose-400">{mixRecipe.rhythm_intensity * 10}%</span>
                         </div>
                         <input
                             type="range" min="0" max="10"
                             value={mixRecipe.rhythm_intensity}
                             onChange={(e) => setMixRecipe({ ...mixRecipe, rhythm_intensity: parseInt(e.target.value) })}
-                            className="w-full accent-rose-500 bg-white/10 h-2 rounded-lg appearance-none cursor-pointer"
+                            className="w-full accent-rose-500 bg-slate-200 dark:bg-white/10 h-2 rounded-lg appearance-none cursor-pointer"
                         />
-                        <p className="text-xs text-white/40">비트와 퍼커션의 강도를 조절합니다.</p>
+                        <p className="text-xs text-slate-500 dark:text-white/40">비트와 퍼커션의 강도를 조절합니다.</p>
                     </div>
 
                     <div className="space-y-3">
                         <div className="flex justify-between text-sm">
-                            <label className="text-white/80 font-medium">텍스처 밀도</label>
-                            <span className="text-rose-400">{mixRecipe.texture_density * 10}%</span>
+                            <label className="text-slate-700 dark:text-white/80 font-medium">텍스처 밀도</label>
+                            <span className="text-rose-600 dark:text-rose-400">{mixRecipe.texture_density * 10}%</span>
                         </div>
                         <input
                             type="range" min="0" max="10"
                             value={mixRecipe.texture_density}
                             onChange={(e) => setMixRecipe({ ...mixRecipe, texture_density: parseInt(e.target.value) })}
-                            className="w-full accent-rose-500 bg-white/10 h-2 rounded-lg appearance-none cursor-pointer"
+                            className="w-full accent-rose-500 bg-slate-200 dark:bg-white/10 h-2 rounded-lg appearance-none cursor-pointer"
                         />
-                        <p className="text-xs text-white/40">배경음과 앰비언스의 풍부함을 조절합니다.</p>
+                        <p className="text-xs text-slate-500 dark:text-white/40">배경음과 앨비언스의 풍부함을 조절합니다.</p>
                     </div>
                 </div>
             </div>
@@ -356,19 +356,19 @@ export default function SoundCrafterPanel() {
             <div className="flex gap-3">
                 <button
                     onClick={() => setCurrentStage("mood")}
-                    className="flex-1 py-4 rounded-xl border border-white/10 text-white/60 hover:bg-white/5 transition-all font-medium"
+                    className="flex-1 py-4 rounded-xl border border-slate-200 dark:border-white/10 text-slate-500 dark:text-white/60 hover:bg-slate-50 dark:hover:bg-white/5 transition-all font-medium"
                 >
                     이전
                 </button>
                 <button
                     onClick={handleGenerateFinal}
                     disabled={craftOp.isLoading}
-                    className="flex-[2] py-4 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 text-black font-bold 
+                    className="flex-[2] py-4 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold 
                              hover:from-rose-400 hover:to-pink-400 transition-all flex items-center justify-center gap-2"
                 >
                     {craftOp.isLoading ? (
                         <>
-                            <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             최종 프롬프트 생성 중...
                         </>
                     ) : (
@@ -381,7 +381,7 @@ export default function SoundCrafterPanel() {
             </div>
 
             {!byokKey && (
-                <div className="text-xs text-center text-white/30">
+                <div className="text-xs text-center text-slate-400 dark:text-white/30">
                     최종 생성 비용: {CREDIT_COST_CRAFT} 크레딧
                 </div>
             )}
@@ -530,27 +530,27 @@ export default function SoundCrafterPanel() {
             {/* Concept Input - Only editable in early stages */}
             {currentStage === "intro" && (
                 <div className="space-y-2 animate-in fade-in">
-                    <label className="text-sm font-medium text-white/80">
+                    <label className="text-sm font-medium text-slate-700 dark:text-white/80">
                         사운드 컨셉
                     </label>
                     <textarea
                         value={concept}
                         onChange={(e) => setConcept(e.target.value)}
-                        placeholder="어떤 분위기의 사운드가 필요한가요? (예: 비 오는 네오 도쿄의 사이버펑크 재즈)"
-                        className="w-full h-40 px-4 py-3 bg-white/5 border border-white/10 rounded-xl
-                                  text-white placeholder:text-white/30 resize-none
+                        placeholder="어떤 분위기의 사운드가 필요한가요? (예: 비 오는 네오 도쿄의 사이버펀크 재즈)"
+                        className="w-full h-40 px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl
+                                  text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 resize-none
                                   focus:outline-none focus:ring-2 focus:ring-rose-500/50"
                         disabled={moodOp.isLoading}
                     />
-                    <div className="text-xs text-white/40 text-right">{concept.length}/2000</div>
+                    <div className="text-xs text-slate-400 dark:text-white/40 text-right">{concept.length}/2000</div>
 
                     <button
                         onClick={handleGenerateMood}
                         disabled={moodOp.isLoading || concept.length < 5}
                         className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all mt-4
                                   ${moodOp.isLoading || concept.length < 5
-                                ? "bg-rose-500/20 text-rose-400/50 cursor-not-allowed"
-                                : "bg-gradient-to-r from-rose-500 to-pink-500 text-black hover:from-rose-400 hover:to-pink-400"
+                                ? "bg-rose-100 dark:bg-rose-500/20 text-rose-400 dark:text-rose-400/50 cursor-not-allowed"
+                                : "bg-gradient-to-r from-rose-500 to-pink-500 text-white hover:from-rose-400 hover:to-pink-400"
                             }`}
                     >
                         {moodOp.isLoading ? (
@@ -566,7 +566,7 @@ export default function SoundCrafterPanel() {
                         )}
                     </button>
                     {!byokKey && (
-                        <div className="text-xs text-center text-white/30 mt-2">
+                        <div className="text-xs text-center text-slate-400 dark:text-white/30 mt-2">
                             예상 비용: {CREDIT_COST_MOOD} 크레딧
                         </div>
                     )}
@@ -600,9 +600,9 @@ export default function SoundCrafterPanel() {
                 <div className="h-full flex flex-col justify-center">
                     {currentStage === "intro" ? (
                         <div className="flex flex-col items-center justify-center text-center opacity-50">
-                            <Music className="w-16 h-16 text-rose-400 mb-6" />
-                            <h2 className="text-2xl font-bold text-white mb-2">사운드 디자인 스튜디오</h2>
-                            <p className="text-white/50 max-w-md">
+                            <Music className="w-16 h-16 text-rose-500 dark:text-rose-400 mb-6" />
+                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">사운드 디자인 스튜디오</h2>
+                            <p className="text-slate-500 dark:text-white/50 max-w-md">
                                 추상적인 아이디어를 구체적인 사운드 텍스처로 변환하세요.<br />
                                 Suno 및 Udio 용 전문 프롬프트가 생성됩니다.
                             </p>

@@ -12,9 +12,9 @@ export type ThemeColor = "violet" | "cyan" | "emerald" | "amber" | "rose" | "fuc
 
 const THEME_COLORS = {
     violet: {
-        accent: "text-violet-400",
-        border: "border-violet-500/30",
-        bg: "bg-violet-500/10",
+        accent: "text-violet-600 dark:text-violet-400",
+        border: "border-violet-200 dark:border-violet-500/30",
+        bg: "bg-violet-500/5 dark:bg-violet-500/10",
         glow: "shadow-[0_0_30px_rgba(139,92,246,0.15)]",
         gradient: "from-violet-500 to-purple-500",
         focus: "focus:border-violet-400/50 focus:ring-violet-400/20",
@@ -22,9 +22,9 @@ const THEME_COLORS = {
         spinner: "border-t-violet-500 border-b-purple-500",
     },
     cyan: {
-        accent: "text-cyan-400",
-        border: "border-cyan-500/30",
-        bg: "bg-cyan-500/10",
+        accent: "text-cyan-600 dark:text-cyan-400",
+        border: "border-cyan-200 dark:border-cyan-500/30",
+        bg: "bg-cyan-500/5 dark:bg-cyan-500/10",
         glow: "shadow-[0_0_30px_rgba(6,182,212,0.15)]",
         gradient: "from-cyan-500 to-blue-500",
         focus: "focus:border-cyan-400/50 focus:ring-cyan-400/20",
@@ -32,9 +32,9 @@ const THEME_COLORS = {
         spinner: "border-t-cyan-500 border-b-blue-500",
     },
     emerald: {
-        accent: "text-emerald-400",
-        border: "border-emerald-500/30",
-        bg: "bg-emerald-500/10",
+        accent: "text-emerald-600 dark:text-emerald-400",
+        border: "border-emerald-200 dark:border-emerald-500/30",
+        bg: "bg-emerald-500/5 dark:bg-emerald-500/10",
         glow: "shadow-[0_0_30px_rgba(16,185,129,0.15)]",
         gradient: "from-emerald-500 to-teal-500",
         focus: "focus:border-emerald-400/50 focus:ring-emerald-400/20",
@@ -42,20 +42,19 @@ const THEME_COLORS = {
         spinner: "border-t-emerald-500 border-b-teal-500",
     },
     amber: {
-        accent: "text-amber-400",
-        border: "border-amber-500/30",
-        bg: "bg-amber-500/10",
+        accent: "text-amber-600 dark:text-amber-400",
+        border: "border-amber-200 dark:border-amber-500/30",
+        bg: "bg-amber-500/5 dark:bg-amber-500/10",
         glow: "shadow-[0_0_30px_rgba(245,158,11,0.15)]",
         gradient: "from-amber-400 to-amber-500",
         focus: "focus:border-amber-400/50 focus:ring-amber-400/20",
         button: "from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 shadow-amber-500/10 hover:shadow-amber-500/20",
         spinner: "border-t-amber-500 border-b-orange-500",
     },
-    // New themes for additional capsules
     rose: {
-        accent: "text-rose-400",
-        border: "border-rose-500/30",
-        bg: "bg-rose-500/10",
+        accent: "text-rose-600 dark:text-rose-400",
+        border: "border-rose-200 dark:border-rose-500/30",
+        bg: "bg-rose-500/5 dark:bg-rose-500/10",
         glow: "shadow-[0_0_30px_rgba(244,63,94,0.15)]",
         gradient: "from-rose-500 to-pink-500",
         focus: "focus:border-rose-400/50 focus:ring-rose-400/20",
@@ -63,9 +62,9 @@ const THEME_COLORS = {
         spinner: "border-t-rose-500 border-b-pink-500",
     },
     fuchsia: {
-        accent: "text-fuchsia-400",
-        border: "border-fuchsia-500/30",
-        bg: "bg-fuchsia-500/10",
+        accent: "text-fuchsia-600 dark:text-fuchsia-400",
+        border: "border-fuchsia-200 dark:border-fuchsia-500/30",
+        bg: "bg-fuchsia-500/5 dark:bg-fuchsia-500/10",
         glow: "shadow-[0_0_30px_rgba(217,70,239,0.15)]",
         gradient: "from-fuchsia-500 to-purple-500",
         focus: "focus:border-fuchsia-400/50 focus:ring-fuchsia-400/20",
@@ -73,9 +72,9 @@ const THEME_COLORS = {
         spinner: "border-t-fuchsia-500 border-b-purple-500",
     },
     indigo: {
-        accent: "text-indigo-400",
-        border: "border-indigo-500/30",
-        bg: "bg-indigo-500/10",
+        accent: "text-indigo-600 dark:text-indigo-400",
+        border: "border-indigo-200 dark:border-indigo-500/30",
+        bg: "bg-indigo-500/5 dark:bg-indigo-500/10",
         glow: "shadow-[0_0_30px_rgba(99,102,241,0.15)]",
         gradient: "from-indigo-500 to-violet-500",
         focus: "focus:border-indigo-400/50 focus:ring-indigo-400/20",
@@ -83,9 +82,9 @@ const THEME_COLORS = {
         spinner: "border-t-indigo-500 border-b-violet-500",
     },
     sky: {
-        accent: "text-sky-400",
-        border: "border-sky-500/30",
-        bg: "bg-sky-500/10",
+        accent: "text-sky-600 dark:text-sky-400",
+        border: "border-sky-200 dark:border-sky-500/30",
+        bg: "bg-sky-500/5 dark:bg-sky-500/10",
         glow: "shadow-[0_0_30px_rgba(14,165,233,0.15)]",
         gradient: "from-sky-500 to-blue-500",
         focus: "focus:border-sky-400/50 focus:ring-sky-400/20",
@@ -149,7 +148,7 @@ export default function TeachingPanelLayout({
             {/* Ambient Background handles by AppShell or Global Aurora */}
 
             {/* Sidebar (Input Panel) - Unified Glass Style */}
-            <div className="w-[380px] flex-shrink-0 flex flex-col border-r border-white/10 bg-slate-900/60 backdrop-blur-xl relative z-20">
+            <div className="w-[380px] flex-shrink-0 flex flex-col border-r border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-slate-900/60 backdrop-blur-xl relative z-20">
                 {/* Portal Glow Effect - Removed to clean up visual noise */}
 
                 {/* Sidebar Header */}
@@ -157,27 +156,27 @@ export default function TeachingPanelLayout({
                     <div className="flex items-center gap-3">
                         <Link
                             href="/dimension"
-                            className="p-2 rounded-lg text-white/50 hover:text-white hover:bg-white/5 transition-colors"
+                            className="p-2 rounded-lg text-slate-500 dark:text-white/50 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                             title="Back to Dimension"
                         >
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                             </svg>
                         </Link>
-                        <h1 className="text-lg font-bold tracking-tight text-white/90">{title}</h1>
+                        <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white/90">{title}</h1>
                     </div>
 
                     {/* Credit Display */}
                     {creditCtx && !isBYOKEnabled && (
                         <Link
                             href="/credits"
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 transition-all group"
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border border-black/5 dark:border-white/5 hover:border-black/10 dark:hover:border-white/10 transition-all group"
                             title="크레딧 충전하기"
                         >
-                            <svg className="w-3.5 h-3.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                             </svg>
-                            <span className="text-xs font-bold text-white/80 group-hover:text-white font-mono">
+                            <span className="text-xs font-bold text-slate-700 dark:text-white/80 group-hover:text-black dark:group-hover:text-white font-mono">
                                 {creditCtx.isLoading ? "..." : creditCtx.balance.toLocaleString()}
                             </span>
                         </Link>
@@ -203,7 +202,7 @@ export default function TeachingPanelLayout({
                 </div>
 
                 {/* Sidebar Footer - BYOK Status */}
-                <div className="border-t border-white/5 p-4 bg-transparent">
+                <div className="border-t border-slate-200 dark:border-white/5 p-4 bg-transparent">
                     <button
                         onClick={() => setShowBYOKModal(true)}
                         className="w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-white/5 transition-all group border border-transparent hover:border-white/5"
@@ -215,10 +214,10 @@ export default function TeachingPanelLayout({
                                 </svg>
                             </div>
                             <div className="flex flex-col text-left">
-                                <span className="text-xs font-semibold text-zinc-400 group-hover:text-white transition-colors">
+                                <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 group-hover:text-slate-800 dark:group-hover:text-white transition-colors">
                                     API Key
                                 </span>
-                                <span className={`text-[10px] ${isBYOKEnabled ? 'text-violet-400' : 'text-zinc-600'} group-hover:text-zinc-400`}>
+                                <span className={`text-[10px] ${isBYOKEnabled ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400 dark:text-zinc-600'} group-hover:text-slate-500 dark:group-hover:text-zinc-400`}>
                                     {isBYOKEnabled ? "✓ 내 키 사용 중" : "클릭하여 등록하기"}
                                 </span>
                             </div>
@@ -252,7 +251,7 @@ export default function TeachingPanelLayout({
                                         isLoading={isLoading}
                                         error={error ?? null}
                                         onCancel={onCancel}
-                                        onRetry={onRetry ?? (() => {})}
+                                        onRetry={onRetry ?? (() => { })}
                                         canRetry={canRetry}
                                         themeColor={themeColor}
                                         retryCount={retryCount}

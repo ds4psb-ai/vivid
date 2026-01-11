@@ -158,47 +158,47 @@ export default function PromptGeneratorPanel() {
         <>
             {/* Topic Input */}
             <div className="space-y-2 group">
-                <label className="text-[10px] font-bold text-[var(--fg-muted)] uppercase tracking-widest ml-1 group-focus-within:text-violet-400/80 transition-colors">주제 (Topic)</label>
+                <label className="text-[10px] font-bold text-slate-500 dark:text-[var(--fg-muted)] uppercase tracking-widest ml-1 group-focus-within:text-violet-600 dark:group-focus-within:text-violet-400/80 transition-colors">주제 (Topic)</label>
                 <textarea
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
                     placeholder="영상의 핵심 주제를 입력하세요..."
-                    className="w-full h-32 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:border-violet-400/50 focus:bg-white/[0.07] focus:ring-4 focus:ring-violet-400/5 transition-all resize-none text-sm font-light leading-relaxed"
+                    className="w-full h-32 px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:outline-none focus:border-violet-500 dark:focus:border-violet-400/50 focus:bg-white dark:focus:bg-white/[0.07] focus:ring-4 focus:ring-violet-500/10 dark:focus:ring-violet-400/5 transition-all resize-none text-sm font-light leading-relaxed"
                 />
             </div>
 
             {/* Style & Mood */}
             <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2 group">
-                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1 group-focus-within:text-violet-400/80 transition-colors">스타일</label>
+                    <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1 group-focus-within:text-violet-600 dark:group-focus-within:text-violet-400/80 transition-colors">스타일</label>
                     <div className="relative">
                         <select
                             value={style}
                             onChange={(e) => setStyle(e.target.value)}
-                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-violet-400/50 focus:bg-white/[0.07] focus:ring-4 focus:ring-violet-400/5 transition-all appearance-none cursor-pointer hover:bg-white/[0.07]"
+                            className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm focus:outline-none focus:border-violet-500 dark:focus:border-violet-400/50 focus:bg-white dark:focus:bg-white/[0.07] focus:ring-4 focus:ring-violet-500/10 dark:focus:ring-violet-400/5 transition-all appearance-none cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.07]"
                         >
                             {STYLES.map((s) => (
-                                <option key={s.value} value={s.value} className="bg-[#0F0F1A] text-white py-2">{s.label}</option>
+                                <option key={s.value} value={s.value} className="bg-white dark:bg-[#0F0F1A] text-slate-900 dark:text-white py-2">{s.label}</option>
                             ))}
                         </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-white/30 group-focus-within:text-violet-400/50">
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 dark:text-white/30 group-focus-within:text-violet-500 dark:group-focus-within:text-violet-400/50">
                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
                         </div>
                     </div>
                 </div>
                 <div className="space-y-2">
-                    <label className="text-xs font-medium text-zinc-400 uppercase tracking-wider">무드</label>
+                    <label className="text-xs font-medium text-slate-500 dark:text-zinc-400 uppercase tracking-wider">무드</label>
                     <div className="relative">
                         <select
                             value={mood}
                             onChange={(e) => setMood(e.target.value)}
-                            className="w-full px-2 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-violet-400/50 focus:ring-1 focus:ring-violet-400/20 transition-all appearance-none"
+                            className="w-full px-2 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white text-sm focus:outline-none focus:border-violet-500 dark:focus:border-violet-400/50 focus:ring-1 focus:ring-violet-500/20 dark:focus:ring-violet-400/20 transition-all appearance-none"
                         >
                             {MOODS.map((m) => (
-                                <option key={m.value} value={m.value}>{m.label}</option>
+                                <option key={m.value} value={m.value} className="bg-white dark:bg-[#0F0F1A] text-slate-900 dark:text-white">{m.label}</option>
                             ))}
                         </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/50">
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400 dark:text-white/50">
                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
                         </div>
                     </div>
@@ -208,30 +208,30 @@ export default function PromptGeneratorPanel() {
             {/* Duration & Language */}
             <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                    <label className="text-xs font-medium text-zinc-400 uppercase tracking-wider">길이</label>
+                    <label className="text-xs font-medium text-slate-500 dark:text-zinc-400 uppercase tracking-wider">길이</label>
                     <div className="relative">
                         <select
                             value={duration}
                             onChange={(e) => setDuration(e.target.value)}
-                            className="w-full px-2 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-violet-400/50 focus:ring-1 focus:ring-violet-400/20 transition-all appearance-none"
+                            className="w-full px-2 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white text-sm focus:outline-none focus:border-violet-500 dark:focus:border-violet-400/50 focus:ring-1 focus:ring-violet-500/20 dark:focus:ring-violet-400/20 transition-all appearance-none"
                         >
                             {DURATIONS.map((d) => (
-                                <option key={d.value} value={d.value}>{d.label}</option>
+                                <option key={d.value} value={d.value} className="bg-white dark:bg-[#0F0F1A] text-slate-900 dark:text-white">{d.label}</option>
                             ))}
                         </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/50">
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400 dark:text-white/50">
                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
                         </div>
                     </div>
                 </div>
                 <div className="space-y-2">
-                    <label className="text-xs font-medium text-zinc-400 uppercase tracking-wider">언어</label>
-                    <div className="flex gap-1 p-1 bg-white/5 rounded-lg border border-white/10">
+                    <label className="text-xs font-medium text-slate-500 dark:text-zinc-400 uppercase tracking-wider">언어</label>
+                    <div className="flex bg-slate-100 dark:bg-white/5 rounded-lg p-0.5 border border-slate-200 dark:border-white/10">
                         <button
                             onClick={() => setLanguage("ko")}
                             className={`flex-1 py-1 rounded-md text-xs font-medium transition-all ${language === "ko"
-                                ? "bg-violet-500 text-white shadow-sm"
-                                : "text-zinc-400 hover:text-white hover:bg-white/5"
+                                ? "bg-violet-600 dark:bg-violet-500 text-white shadow-sm"
+                                : "text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/5"
                                 }`}
                         >
                             KO
@@ -239,8 +239,8 @@ export default function PromptGeneratorPanel() {
                         <button
                             onClick={() => setLanguage("en")}
                             className={`flex-1 py-1 rounded-md text-xs font-medium transition-all ${language === "en"
-                                ? "bg-violet-500 text-white shadow-sm"
-                                : "text-zinc-400 hover:text-white hover:bg-white/5"
+                                ? "bg-violet-600 dark:bg-violet-500 text-white shadow-sm"
+                                : "text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/5"
                                 }`}
                         >
                             EN
@@ -250,20 +250,20 @@ export default function PromptGeneratorPanel() {
             </div>
 
             {/* Model Select */}
-            <div className="space-y-4 pt-4 border-t border-white/5 mt-4">
+            <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-white/5 mt-4">
                 <div className="space-y-2 group">
-                    <label className="text-[10px] font-bold text-[var(--fg-muted)] uppercase tracking-widest ml-1 group-focus-within:text-violet-400/80 transition-colors">AI 모델 Engine</label>
+                    <label className="text-[10px] font-bold text-slate-500 dark:text-[var(--fg-muted)] uppercase tracking-widest ml-1 group-focus-within:text-violet-600 dark:group-focus-within:text-violet-400/80 transition-colors">AI 모델 Engine</label>
                     <div className="relative">
                         <select
                             value={model}
                             onChange={(e) => setModel(e.target.value)}
-                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-violet-400/50 focus:bg-white/[0.07] focus:ring-4 focus:ring-violet-400/5 transition-all appearance-none cursor-pointer font-mono"
+                            className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm focus:outline-none focus:border-violet-500 dark:focus:border-violet-400/50 focus:bg-white dark:focus:bg-white/[0.07] focus:ring-4 focus:ring-violet-500/10 dark:focus:ring-violet-400/5 transition-all appearance-none cursor-pointer font-mono"
                         >
                             {MODELS.map((m) => (
-                                <option key={m.value} value={m.value} className="bg-[#0F0F1A] text-white">{m.label}</option>
+                                <option key={m.value} value={m.value} className="bg-white dark:bg-[#0F0F1A] text-slate-900 dark:text-white">{m.label}</option>
                             ))}
                         </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-white/30">
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 dark:text-white/30">
                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
                         </div>
                     </div>
@@ -324,14 +324,14 @@ export default function PromptGeneratorPanel() {
                         {/* Main Prompt */}
                         <div className="group relative">
                             <div className="flex items-center justify-between mb-3 px-1">
-                                <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-violet-400"></span>
+                                <h3 className="text-sm font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-violet-500"></span>
                                     Generated Prompt
                                 </h3>
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={handleExportJSON}
-                                        className="px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5 hover:border-white/10"
+                                        className="px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10"
                                         title="JSON으로 내보내기"
                                     >
                                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -339,116 +339,89 @@ export default function PromptGeneratorPanel() {
                                         </svg>
                                         Export
                                     </button>
-                                    <button
-                                        onClick={() => handleCopy(displayResult.prompt)}
-                                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 ${isCopied
-                                            ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                                            : "bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5 hover:border-white/10"
-                                            }`}
-                                    >
-                                        {isCopied ? (
-                                            <>
-                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                </svg>
-                                                Copied
-                                            </>
-                                        ) : (
-                                            <>
-                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                </div>
+                            </div>
+                            <div className="relative group/card h-full">
+                                <div className="absolute inset-0 bg-violet-500/5 blur-xl rounded-2xl opacity-0 group-hover/card:opacity-100 transition-opacity" />
+                                <div className="relative h-full p-6 bg-white dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:border-violet-300 dark:hover:border-violet-500/30 transition-all flex flex-col">
+                                    {/* Header */}
+                                    <div className="flex items-center justify-between mb-4 border-b border-slate-100 dark:border-white/5 pb-4">
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-2 h-2 rounded-full bg-violet-500" />
+                                            <span className="text-xs font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest">
+                                                Prompt Result
+                                            </span>
+                                        </div>
+                                        <button
+                                            onClick={() => handleCopy(displayResult.prompt)}
+                                            className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-zinc-400 hover:bg-violet-100 dark:hover:bg-violet-500/20 hover:text-violet-600 dark:hover:text-violet-400 transition-all"
+                                            title="Copy Prompt"
+                                        >
+                                            {isCopied ? (
+                                                <span className="text-green-500 font-bold text-xs">COPIED</span>
+                                            ) : (
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                                 </svg>
-                                                Copy
-                                            </>
+                                            )}
+                                        </button>
+                                    </div>
+
+                                    {/* Prompt Content */}
+                                    <div className="flex-1 space-y-4">
+                                        <div className="bg-slate-50 dark:bg-black/50 rounded-xl p-4 border border-slate-100 dark:border-white/5 font-mono text-sm leading-relaxed text-slate-700 dark:text-white/90">
+                                            {displayResult.prompt}
+                                        </div>
+
+                                        {displayResult.negative_prompt && (
+                                            <div className="space-y-1">
+                                                <span className="text-[10px] font-bold text-red-500 dark:text-red-400 uppercase tracking-wider">Negative</span>
+                                                <div className="bg-red-50 dark:bg-red-500/5 rounded-xl p-3 border border-red-100 dark:border-red-500/10 font-mono text-xs leading-relaxed text-red-600 dark:text-red-200/70">
+                                                    {displayResult.negative_prompt}
+                                                </div>
+                                            </div>
                                         )}
-                                    </button>
+
+                                        <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100 dark:border-white/5">
+                                            {displayResult.technical && Object.entries(displayResult.technical).map(([key, value]) => (
+                                                <div key={key} className="bg-slate-50 dark:bg-white/5 rounded-lg p-2 text-center border border-slate-100 dark:border-white/5">
+                                                    <span className="text-[10px] text-slate-400 dark:text-zinc-500 block mb-1 uppercase">{key}</span>
+                                                    <span className="text-xs text-violet-600 dark:text-violet-300 font-medium">{value as string}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="p-8 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] font-mono text-base leading-relaxed text-zinc-100 whitespace-pre-wrap group-hover:border-violet-500/30 group-hover:bg-black/50 transition-all relative overflow-hidden">
-                                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-violet-500 to-purple-500 shadow-[0_0_20px_#8B5CF6]"></div>
-                                {displayResult.prompt}
                             </div>
                         </div>
-
-                        {/* Negative Prompt */}
-                        {displayResult.negative_prompt && (
-                            <div className="group relative">
-                                <div className="flex items-center justify-between mb-3 px-1">
-                                    <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-red-400/50"></span>
-                                        Negative Prompt
-                                    </h3>
-                                    <button
-                                        onClick={() => handleCopy(displayResult.negative_prompt || "")}
-                                        className="px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5 hover:border-white/10"
-                                    >
-                                        Copy
-                                    </button>
-                                </div>
-                                <div className="p-5 bg-black/30 backdrop-blur-md border border-white/10 rounded-xl shadow-inner font-mono text-sm leading-relaxed text-zinc-400 whitespace-pre-wrap group-hover:border-white/20 transition-colors">
-                                    {displayResult.negative_prompt}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Technical Details Grid */}
-                        {(displayResult.style || displayResult.technical) && (
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                {displayResult.style && (
-                                    <div className="p-6 bg-white/[0.03] backdrop-blur-sm border border-white/5 rounded-xl space-y-4 hover:border-white/10 transition-colors hover:bg-white/[0.05]">
-                                        <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest border-b border-white/5 pb-3 mb-1">Style Parameters</h3>
-                                        <div className="space-y-4">
-                                            {Object.entries(displayResult.style).map(([key, value]) => (
-                                                <div key={key} className="flex flex-col gap-1">
-                                                    <span className="text-xs text-zinc-500 capitalize">{key.replace(/_/g, " ")}</span>
-                                                    <span className="text-sm text-zinc-200 font-medium">{value}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                                {displayResult.technical && (
-                                    <div className="p-6 bg-white/[0.03] backdrop-blur-sm border border-white/5 rounded-xl space-y-4 hover:border-white/10 transition-colors hover:bg-white/[0.05]">
-                                        <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest border-b border-white/5 pb-3 mb-1">Technical Specs</h3>
-                                        <div className="grid grid-cols-2 gap-6">
-                                            {Object.entries(displayResult.technical).map(([key, value]) => (
-                                                <div key={key} className="flex flex-col gap-1">
-                                                    <span className="text-xs text-zinc-500 capitalize">{key.replace(/_/g, " ")}</span>
-                                                    <span className="text-sm font-mono text-violet-400/90">{value}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-zinc-500 space-y-8 animate-in fade-in zoom-in-95 duration-700">
+                    <div className="flex flex-col items-center justify-center h-full text-slate-500 dark:text-zinc-500 space-y-8 animate-in fade-in zoom-in-95 duration-700">
                         <div className="relative group">
                             <div className="absolute inset-0 bg-violet-500/20 blur-[80px] rounded-full group-hover:bg-violet-500/30 transition-colors duration-1000" />
-                            <div className="w-32 h-32 rounded-[2rem] bg-white/[0.02] border border-white/10 flex items-center justify-center shadow-[0_0_60px_rgba(0,0,0,0.3)] backdrop-blur-md relative transform group-hover:scale-105 transition-all duration-500 group-hover:border-violet-500/20">
-                                <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent rounded-[2rem]" />
-                                <svg className="w-12 h-12 text-white/20 group-hover:text-violet-400 transition-colors duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div className="w-32 h-32 rounded-[2rem] bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 flex items-center justify-center shadow-lg dark:shadow-[0_0_60px_rgba(0,0,0,0.3)] backdrop-blur-md relative transform group-hover:scale-105 transition-all duration-500 group-hover:border-violet-300 dark:group-hover:border-violet-500/20">
+                                <div className="absolute inset-0 bg-gradient-to-tr from-violet-500/5 to-transparent rounded-[2rem]" />
+                                <svg className="w-12 h-12 text-slate-300 dark:text-white/20 group-hover:text-violet-500 dark:group-hover:text-violet-400 transition-colors duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                 </svg>
                             </div>
                         </div>
                         <div className="text-center space-y-3">
-                            <h3 className="text-2xl font-bold text-white tracking-tight">Ready to Generate</h3>
-                            <p className="text-sm text-[var(--fg-muted)] max-w-xs mx-auto font-light leading-relaxed">
-                                좌측 패널에서 설정을 완료하고<br />
-                                <span className="text-violet-400 font-medium">Veo 시네마틱 프롬프트</span>를 생성하세요.
+                            <h3 className="text-2xl font-bold text-slate-900 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-b dark:from-white dark:to-white/40 tracking-tight">Ready to Generate</h3>
+                            <p className="text-sm text-slate-500 dark:text-zinc-500 max-w-xs mx-auto font-light leading-relaxed">
+                                상상을 현실로 만드는 프롬프트.<br />
+                                <span className="text-violet-600 dark:text-violet-500/80 font-medium">최적화된 AI 프롬프트</span>를 생성해보세요.
                             </p>
                         </div>
                     </div>
                 )}
-            </TeachingPanelLayout>
+            </TeachingPanelLayout >
 
             {/* Credit Modal */}
-            <InsufficientCreditsModal
+            < InsufficientCreditsModal
                 isOpen={showCreditModal}
-                onClose={() => setShowCreditModal(false)}
+                onClose={() => setShowCreditModal(false)
+                }
                 requiredCredits={CREDIT_COST}
                 currentBalance={creditCtx?.balance ?? 0}
                 onRetry={handleGenerate}

@@ -287,7 +287,7 @@ export default function WorkshopHubPage() {
                             onClick={() => setSelectedStage(null)}
                             className={`px-5 py-2.5 rounded-xl text-xs font-bold tracking-widest uppercase transition-all duration-300 ${selectedStage === null
                                 ? "bg-black dark:bg-white text-white dark:text-black shadow-lg scale-105"
-                                : "text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white"
+                                : "text-slate-600 dark:text-white/40 hover:text-black dark:hover:text-white"
                                 }`}
                         >
                             ALL
@@ -332,11 +332,11 @@ export default function WorkshopHubPage() {
                                 <div className="relative p-3 rounded-xl backdrop-blur-md bg-gradient-to-r from-emerald-500/10 via-violet-500/10 to-amber-500/10 border border-white/10">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
-                                            <Link2 className="w-4 h-4 text-emerald-400" />
-                                            <span className="text-sm font-medium text-white/80">
+                                            <Link2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                            <span className="text-sm font-medium text-gray-800 dark:text-white/80">
                                                 {language === 'ko' ? '워크플로우 진행 중' : 'Workflow in progress'}
                                             </span>
-                                            <span className="text-xs text-white/40">
+                                            <span className="text-xs text-gray-500 dark:text-white/40">
                                                 ({chainSummary.length} {language === 'ko' ? '단계 완료' : 'steps done'})
                                             </span>
                                         </div>
@@ -421,7 +421,7 @@ export default function WorkshopHubPage() {
                                             >
                                                 <Link
                                                     href={dimension.href}
-                                                    className="block relative overflow-hidden rounded-[2rem] border border-black/5 dark:border-white/5 bg-white/60 dark:bg-black/40 p-6 backdrop-blur-2xl hover:bg-white/80 dark:hover:bg-white/[0.03] transition-all duration-700 hover:-translate-y-2 shadow-lg dark:shadow-none"
+                                                    className="block relative overflow-hidden rounded-[2rem] border border-slate-200 dark:border-white/5 bg-white/60 dark:bg-black/40 p-6 backdrop-blur-2xl hover:bg-white/80 dark:hover:bg-white/[0.03] transition-all duration-700 hover:-translate-y-2 shadow-lg dark:shadow-none"
                                                 >
                                                     {/* NEW Badge */}
                                                     {dimension.isNew && (
@@ -470,7 +470,7 @@ export default function WorkshopHubPage() {
 
                                                         <div className="space-y-6 z-10 mt-auto">
                                                             <div className="space-y-2">
-                                                                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed line-clamp-2">
+                                                                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-2">
                                                                     {language === 'ko' ? dimension.descKo : dimension.descEn}
                                                                 </p>
                                                             </div>
@@ -496,20 +496,20 @@ export default function WorkshopHubPage() {
                                 {/* Propose Button - Minimalist */}
                                 <button
                                     onClick={() => setIsSubmitModalOpen(true)}
-                                    className="group relative overflow-hidden rounded-[2rem] border border-dashed border-black/10 dark:border-white/10 bg-transparent p-6 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] hover:border-black/30 dark:hover:border-white/30 transition-all duration-500 flex flex-col items-center justify-center gap-4 min-h-[140px]"
+                                    className="group relative overflow-hidden rounded-[2rem] border border-dashed border-slate-300 dark:border-white/10 bg-transparent p-6 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] hover:border-black/30 dark:hover:border-white/30 transition-all duration-500 flex flex-col items-center justify-center gap-4 min-h-[140px]"
                                 >
                                     <div className="relative">
                                         <div className="absolute inset-0 bg-lime-400/20 blur-[30px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                                        <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 transition-all duration-500 group-hover:scale-110">
+                                        <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-white/5 border border-black/10 dark:border-white/10 transition-all duration-500 group-hover:scale-110">
                                             <Plus className="h-6 w-6 text-zinc-500 group-hover:text-black dark:group-hover:text-white transition-colors duration-300" />
                                         </div>
                                     </div>
 
                                     <div className="text-center space-y-2">
-                                        <span className="text-xs font-bold tracking-[0.2em] text-zinc-600 uppercase group-hover:text-lime-400 transition-colors">
+                                        <span className="text-xs font-bold tracking-[0.2em] text-gray-700 dark:text-zinc-600 uppercase group-hover:text-lime-600 dark:group-hover:text-lime-400 transition-colors">
                                             ∞D INFINITE
                                         </span>
-                                        <p className="text-sm text-zinc-500 group-hover:text-zinc-300 transition-colors max-w-[200px]">
+                                        <p className="text-sm text-gray-500 dark:text-zinc-500 group-hover:text-gray-700 dark:group-hover:text-zinc-300 transition-colors max-w-[200px]">
                                             {language === "ko" ? "새로운 차원을 제안하세요" : "Propose a new dimension"}
                                         </p>
                                     </div>

@@ -87,6 +87,42 @@ cd frontend && npm run dev  # localhost:3100
 - **AI**: Google Gemini API
 - **Auth**: Google OAuth 2.0 (dev fallback: `X-User-Id` header)
 
+### NotebookLM Integration (Playwright Automation)
+
+All NotebookLM interactions (Create, Add Source, Query, Delete) are handled by `notebooklm_playwright.py` using **Chrome DevTools Protocol (CDP)**.
+This bypasses the lack of an official API by executing internal RPC calls directly within an authenticated browser session.
+
+#### Prerequisites
+1. Chrome running: `--remote-debugging-port=9222`
+2. User logged into NotebookLM in that Chrome session
+3. `playwright` package installed
+
+#### RPC Reference (verified 2026-01)
+| RPC ID | Method | Parameters |
+|--------|--------|------------|
+| `CCqFvf` | CreateNotebook | `[title]` |
+| `izAoDd` | AddSource | `[[[text, title, null, 1]], notebook_id, ...]` |
+| `WWINqb` | DeleteNotebook | `[[notebook_id], [2]]` |
+| `wXbhsf` | ListNotebooks | `[null, 1, null, [2]]` |
+| `GenerateFreeFormStreamed` | Query | `[sources_array, query, null, [2,null,[1]], conv_id]` |
+
+#### Key API
+```python
+async with PlaywrightNotebookLMClient(cdp_port=9222) as client:
+    nb_id = await client.create_notebook("Title")
+    source_id = await client.add_text_source(nb_id, "Doc", "Content...")
+    result = await client.query(nb_id, "Question?", source_ids=[source_id])
+    await client.delete_notebook(nb_id)
+```
+
+#### Troubleshooting
+| Error | Cause | Fix |
+|-------|-------|-----|
+| 401/403 | Cookie fingerprint mismatch | Use CDP, not direct HTTP |
+| 400 | Wrong source ID format | Use `[[sid]]` per source (2 brackets) |
+| Login required | Session expired | Re-login in Chrome |
+
+
 ### API Endpoints (Primary)
 
 | Endpoint | Handler | Description |
