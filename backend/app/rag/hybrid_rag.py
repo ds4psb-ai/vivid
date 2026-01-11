@@ -304,15 +304,26 @@ async def hybrid_query(
         use_google_search=use_google_search,
     )
     
-    # Router 결과 반영 (hints가 없으면 router 결정 사용)
+    # Router 결과 반영
+    # HIGH FIX: router_strategy도 실제 strategy에 반영 (기본값일 때)
+    if strategy == "vector":  # default 값이면 router 결정 사용
+        # auteur_first → auteur가 있으면 auteur_first 경로로
+        # hybrid → hybrid 전략 사용
+        # vector → 그대로 유지
+        if router_strategy == "auteur_first" and auteur_key:
+            # auteur_first는 실제 hybrid를 쓰지 않고 auteur 경로로 감
+            pass  # auteur_key가 있으면 자동으로 auteur 경로 선택됨
+        elif router_strategy == "hybrid":
+            strategy = "hybrid"  # 복잡한 쿼리 → hybrid 전략 사용
+    
     if not hints.get("use_reranker"):
         use_reranker = router_reranker
     if router_grounding:
         use_google_search = True
     
     logger.debug(
-        f"[HybridRAG] Router: strategy={router_strategy}, "
-        f"reranker={use_reranker}, grounding={use_google_search}"
+        f"[HybridRAG] Router: router_strategy={router_strategy}, "
+        f"effective_strategy={strategy}, reranker={use_reranker}, grounding={use_google_search}"
     )
     
     # === Step 1: Query Expansion ===
@@ -380,11 +391,11 @@ async def hybrid_query(
 
     # === Strategy: Vector (default) ===
     if auteur_key:
-        result = await _query_auteur_first(query, auteur_key, use_google_search)
+        result = await _query_auteur_first(query, auteur_key, use_google_search, dimension=dimension or "AD")
     elif dimension:
         result = await _query_dimension(query, dimension, use_google_search)
     else:
-        result = await _query_parallel(query, use_google_search)
+        result = await _query_parallel(query, use_google_search, dimension="general")
 
     result.query_time_ms = int((time.monotonic() - start_time) * 1000)
     result.auteur_key = auteur_key
@@ -546,7 +557,8 @@ async def _query_auteur_first(
     notebook_key = AUTEUR_KEY_TO_NOTEBOOK.get(auteur_key.lower())
     if not notebook_key:
         logger.warning(f"[HybridRAG] Unknown auteur key: {auteur_key}")
-        return await _query_parallel(query, use_google_search)
+        # LOW FIX: dimension 전달하여 메트릭에서 "general" 대신 실제 dimension 기록
+        return await _query_parallel(query, use_google_search, dimension=dimension)
 
     # NotebookLM 쿼리
     notebooklm_service = get_notebooklm_service()
