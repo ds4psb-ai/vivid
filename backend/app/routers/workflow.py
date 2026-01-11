@@ -7,6 +7,7 @@ Endpoints for workflow planning and session management.
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.workflow_planner import (
     match_workflow_template,
@@ -19,7 +20,9 @@ from app.schemas.workflow_session import (
     WorkflowStatus,
     workflow_session_manager,
 )
-from app.dependencies import get_current_user_optional, get_current_user
+from app.dependencies import get_current_user_optional, get_current_user, get_db
+from app.routers.dimension._base import get_byok_key
+
 
 
 router = APIRouter(prefix="/workflow", tags=["workflow"])
@@ -211,8 +214,15 @@ async def get_workflow_status(
 async def advance_workflow_step(
     session_id: str,
     user: dict = Depends(get_current_user),  # P0 BOLA: Auth required
+    db: AsyncSession = Depends(get_db),
+    byok_key: Optional[str] = Depends(get_byok_key),
 ):
-    """워크플로우 다음 단계로 진행"""
+    """워크플로우 현재 단계 실행 후 다음 단계로 진행.
+    
+    P2: 실제 Dimension 도구 실행 + 크레딧 차감.
+    """
+    from app.services.workflow_executor import execute_step
+    
     # P0 BOLA: Check ownership first
     existing_session = workflow_session_manager.get_session(session_id)
     if not existing_session:
@@ -222,12 +232,116 @@ async def advance_workflow_step(
     if existing_session.user_id != user_id:
         raise HTTPException(status_code=403, detail="접근 권한이 없습니다.")
     
-    session = workflow_session_manager.advance_step(session_id)
+    # 세션 상태 검증
+    if existing_session.status == WorkflowStatus.COMPLETED:
+        return {
+            "success": True,
+            "message": "워크플로우가 이미 완료되었습니다.",
+            "current_step": existing_session.current_step,
+            "status": "completed",
+        }
+    
+    if existing_session.status == WorkflowStatus.FAILED:
+        raise HTTPException(status_code=400, detail="워크플로우가 실패 상태입니다. 새 세션을 시작하세요.")
+    
+    # P2: 실제 도구 실행
+    try:
+        result = await execute_step(
+            session_id=session_id,
+            user=user,
+            db=db,
+            byok_key=byok_key,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    # 업데이트된 세션 조회
+    session = workflow_session_manager.get_session(session_id)
+    
+    return {
+        "success": result.success,
+        "node_id": result.node_id,
+        "tool_id": result.tool_id,
+        "output": result.output if result.success else None,
+        "error": result.error,
+        "credits_used": result.credits_used,
+        "latency_ms": result.latency_ms,
+        "current_step": session.current_step,
+        "total_steps": session.total_steps,
+        "status": session.status.value if isinstance(session.status, WorkflowStatus) else session.status,
+    }
+
+
+@router.post("/session/{session_id}/execute")
+async def execute_workflow_all(
+    session_id: str,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    byok_key: Optional[str] = Depends(get_byok_key),
+):
+    """워크플로우 전체 자동 실행 (1D → 2D → 3D → ...).
+    
+    모든 남은 스텝을 순차 실행. 중간 실패 시 이전 결과 보존.
+    """
+    from app.services.workflow_executor import execute_all_steps
+    
+    # P0 BOLA: Check ownership
+    existing_session = workflow_session_manager.get_session(session_id)
+    if not existing_session:
+        raise HTTPException(status_code=404, detail="세션을 찾을 수 없습니다.")
+    
+    user_id = user.get("id") or user.get("sub")
+    if existing_session.user_id != user_id:
+        raise HTTPException(status_code=403, detail="접근 권한이 없습니다.")
+    
+    # 실행
+    try:
+        summary = await execute_all_steps(
+            session_id=session_id,
+            user=user,
+            db=db,
+            byok_key=byok_key,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    return summary
+
+
+@router.post("/session/{session_id}/start")
+async def start_workflow(
+    session_id: str,
+    request: StartWorkflowRequest,
+    user: dict = Depends(get_current_user),
+):
+    """워크플로우 시작: 첫 노드에 초기 파라미터 주입.
+    
+    /plan으로 세션 생성 후, /advance 전에 호출하여 초기값 설정.
+    """
+    from app.services.workflow_executor import seed_first_node_inputs
+    
+    # P0 BOLA: Check ownership
+    existing_session = workflow_session_manager.get_session(session_id)
+    if not existing_session:
+        raise HTTPException(status_code=404, detail="세션을 찾을 수 없습니다.")
+    
+    user_id = user.get("id") or user.get("sub")
+    if existing_session.user_id != user_id:
+        raise HTTPException(status_code=403, detail="접근 권한이 없습니다.")
+    
+    # 초기 파라미터 주입
+    if request.initial_params:
+        success = seed_first_node_inputs(session_id, request.initial_params)
+        if not success:
+            raise HTTPException(status_code=400, detail="초기 파라미터 주입 실패")
+    
+    session = workflow_session_manager.get_session(session_id)
     
     return {
         "success": True,
-        "current_step": session.current_step,
+        "session_id": session_id,
         "status": session.status.value if isinstance(session.status, WorkflowStatus) else session.status,
+        "first_node_inputs": session.nodes[0].inputs if session.nodes else {},
     }
 
 
@@ -250,8 +364,10 @@ async def get_user_workflow_sessions(
                 "status": s.status.value if isinstance(s.status, WorkflowStatus) else s.status,
                 "current_step": s.current_step,
                 "total_steps": s.total_steps,
+                "consumed_credits": s.consumed_credits,
                 "created_at": s.created_at.isoformat(),
             }
             for s in sessions
         ]
     }
+

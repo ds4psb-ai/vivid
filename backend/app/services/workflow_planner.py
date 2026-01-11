@@ -38,7 +38,8 @@ WORKFLOW_TEMPLATES: Dict[str, WorkflowTemplate] = {
         description_ko="프롬프트 생성 → 스토리보드 → 이미지까지 전체 콘텐츠 제작",
         tools=["prompt_generator", "storyboard", "image_tool"],
         connections=[
-            {"from": "prompt_generator.prompt", "to": "storyboard.script"},
+            # FIX: prompt_generator.prompt → storyboard.concept (not .script)
+            {"from": "prompt_generator.prompt", "to": "storyboard.concept"},
             {"from": "storyboard.scenes[0].description", "to": "image_tool.description"},
         ],
         keywords=[
@@ -56,9 +57,11 @@ WORKFLOW_TEMPLATES: Dict[str, WorkflowTemplate] = {
         description_ko="기존 영상을 분석하고 유사한 스타일로 새 콘텐츠 제작",
         tools=["reference_analyzer", "prompt_generator", "storyboard"],
         connections=[
-            {"from": "reference_analyzer.style", "to": "prompt_generator.style"},
-            {"from": "reference_analyzer.mood", "to": "prompt_generator.mood"},
-            {"from": "prompt_generator.prompt", "to": "storyboard.script"},
+            # FIX: 4D outputs composition/lighting/color, not style/mood
+            # We extract style hints from 'recommendations' array
+            {"from": "reference_analyzer.recommendations[0]", "to": "prompt_generator.style"},
+            {"from": "reference_analyzer.color", "to": "prompt_generator.mood"},
+            {"from": "prompt_generator.prompt", "to": "storyboard.concept"},
         ],
         keywords=[
             "레퍼런스", "분석", "참고", "비슷하게", "스타일", "따라",
@@ -121,8 +124,8 @@ TOOL_METADATA = {
         "display_name_ko": "Veo 프롬프트 생성기",
         "icon": "sparkles",
         "color": "violet",
-        "input_ports": ["topic", "style", "mood", "duration"],
-        "output_ports": ["prompt", "negative_prompt", "technical"],
+        "input_ports": ["topic", "style", "mood", "duration", "language"],
+        "output_ports": ["prompt", "negative_prompt", "style", "technical"],
         "endpoint": "/api/dimension/1d/generate",
     },
     "storyboard": {
@@ -130,7 +133,8 @@ TOOL_METADATA = {
         "display_name_ko": "스토리보드 생성기",
         "icon": "layout-grid",
         "color": "emerald",
-        "input_ports": ["script", "scene_count", "language"],
+        # FIX: API uses 'concept' (required) and 'prompt' (optional), not 'script'
+        "input_ports": ["concept", "prompt", "scene_count", "language"],
         "output_ports": ["scenes"],
         "endpoint": "/api/dimension/2d/create",
     },
@@ -148,8 +152,10 @@ TOOL_METADATA = {
         "display_name_ko": "레퍼런스 분석기",
         "icon": "film",
         "color": "cyan",
-        "input_ports": ["video_url", "focus_areas"],
-        "output_ports": ["analysis", "style", "mood", "recommendations"],
+        # FIX: API uses 'video_description' not 'video_url'
+        "input_ports": ["video_description", "focus_areas", "analysis_depth", "output_format"],
+        # FIX: Actual 4D outputs from dimension_adapter.py
+        "output_ports": ["composition", "lighting", "color", "movement", "narrative", "recommendations"],
         "endpoint": "/api/dimension/4d/analyze",
     },
 }
