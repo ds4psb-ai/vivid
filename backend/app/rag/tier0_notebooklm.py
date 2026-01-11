@@ -52,6 +52,13 @@ except ImportError:
 NOTEBOOKLM_FAILURE_THRESHOLD = 3
 NOTEBOOKLM_RECOVERY_TIMEOUT = 60
 
+# Import circuit breaker metrics
+try:
+    from app.rag.metrics import record_circuit_state, record_circuit_failure
+except ImportError:
+    def record_circuit_state(state: str) -> None: pass
+    def record_circuit_failure(backend: str) -> None: pass
+
 # ============================================================================
 # MCP Client (jacob-bd/notebooklm-mcp-server - RPC-based)
 # ============================================================================
@@ -493,22 +500,72 @@ class NotebookLMService:
 
         result = None
         method_used = "SIMULATION"
+        circuit_open = False
 
         if is_real_notebook:
-            # 1. Playwright-first (CDP)
-            result = await self._query_with_playwright(resolved_id, query, notebook_info)
-            if result and result.confidence > 0.5:
-                method_used = "PLAYWRIGHT"
-            else:
-                # 2. MCP fallback
-                result = await self._query_with_mcp(resolved_id, query, notebook_info)
-                if result and result.confidence > 0.5:
-                    method_used = "MCP"
+            # Circuit Breaker Protected Query Chain
+            try:
+                # Check if circuit is open (too many failures)
+                if CIRCUIT_BREAKER_AVAILABLE and hasattr(self, '_circuit_failure_count'):
+                    if self._circuit_failure_count >= NOTEBOOKLM_FAILURE_THRESHOLD:
+                        # Check if recovery timeout passed
+                        if hasattr(self, '_circuit_open_time'):
+                            elapsed = time.monotonic() - self._circuit_open_time
+                            if elapsed < NOTEBOOKLM_RECOVERY_TIMEOUT:
+                                circuit_open = True
+                                logger.warning(
+                                    f"[NotebookLM] Circuit OPEN - {NOTEBOOKLM_RECOVERY_TIMEOUT - int(elapsed)}s until half-open"
+                                )
+                            else:
+                                # Half-open: try one request
+                                logger.info("[NotebookLM] Circuit HALF-OPEN - testing with one request")
+                                record_circuit_state("half_open")
+                                self._circuit_failure_count = NOTEBOOKLM_FAILURE_THRESHOLD - 1
+                
+                if not circuit_open:
+                    # 1. Playwright-first (CDP)
+                    result = await self._query_with_playwright(resolved_id, query, notebook_info)
+                    if result and result.confidence > 0.5:
+                        method_used = "PLAYWRIGHT"
+                        # Reset failure counter on success
+                        if hasattr(self, '_circuit_failure_count') and self._circuit_failure_count > 0:
+                            record_circuit_state("closed")
+                        self._circuit_failure_count = 0
+                    else:
+                        # 2. MCP fallback
+                        result = await self._query_with_mcp(resolved_id, query, notebook_info)
+                        if result and result.confidence > 0.5:
+                            method_used = "MCP"
+                            self._circuit_failure_count = 0
+                        else:
+                            # Both failed - increment failure counter
+                            if not hasattr(self, '_circuit_failure_count'):
+                                self._circuit_failure_count = 0
+                            self._circuit_failure_count += 1
+                            logger.warning(
+                                f"[NotebookLM] Query failed - failure count: {self._circuit_failure_count}/{NOTEBOOKLM_FAILURE_THRESHOLD}"
+                            )
+                            if self._circuit_failure_count >= NOTEBOOKLM_FAILURE_THRESHOLD:
+                                self._circuit_open_time = time.monotonic()
+                                record_circuit_state("open")
+                                record_circuit_failure("notebooklm")
+                                logger.error(
+                                    f"[NotebookLM] Circuit OPENED - falling back to simulation for {NOTEBOOKLM_RECOVERY_TIMEOUT}s"
+                                )
+                                
+            except Exception as e:
+                # Any exception counts as failure
+                if not hasattr(self, '_circuit_failure_count'):
+                    self._circuit_failure_count = 0
+                self._circuit_failure_count += 1
+                logger.error(f"[NotebookLM] Exception in query chain: {e} - failure count: {self._circuit_failure_count}")
+                if self._circuit_failure_count >= NOTEBOOKLM_FAILURE_THRESHOLD:
+                    self._circuit_open_time = time.monotonic()
         
-        # 3. Simulation fallback
+        # 3. Simulation fallback (when circuit open OR low confidence)
         if result is None or result.confidence <= 0.5:
             result = await self._simulate_query(resolved_id, query, notebook_info)
-            method_used = "SIMULATION"
+            method_used = "CIRCUIT_OPEN" if circuit_open else "SIMULATION"
 
         query_time_ms = int((time.monotonic() - start_time) * 1000)
         result.query_time_ms = query_time_ms

@@ -59,6 +59,33 @@ try:
         buckets=[0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 1.0]
     )
     
+    # Circuit Breaker 메트릭 (2025 Best Practice)
+    _circuit_breaker_state = Counter(
+        "rag_circuit_breaker_state_total",
+        "Circuit breaker state transitions",
+        ["state"]  # open, half_open, closed
+    )
+    
+    _circuit_breaker_failures = Counter(
+        "rag_circuit_breaker_failures_total",
+        "Circuit breaker failure count",
+        ["backend"]  # notebooklm, vertex, mcp
+    )
+    
+    # Semantic Cache 메트릭
+    _semantic_cache_operations = Counter(
+        "rag_semantic_cache_ops_total",
+        "Semantic cache operations",
+        ["operation", "result"]  # operation: get/set, result: hit/miss/exact/semantic
+    )
+    
+    _semantic_cache_latency = Histogram(
+        "rag_semantic_cache_latency_ms",
+        "Semantic cache operation latency",
+        ["operation"],
+        buckets=[1, 5, 10, 25, 50, 100, 250]
+    )
+    
     _metrics_enabled = True
     logger.info("RAG Prometheus metrics initialized")
     
@@ -158,3 +185,54 @@ def get_metrics_summary() -> dict:
         "metrics_enabled": _metrics_enabled,
         "prometheus_available": _rag_query_total is not None,
     }
+
+
+# =============================================================================
+# Circuit Breaker 메트릭 (2025 Best Practice)
+# =============================================================================
+
+def record_circuit_state(state: str) -> None:
+    """Circuit breaker 상태 변경 기록.
+    
+    Args:
+        state: "open", "half_open", "closed"
+    """
+    if _metrics_enabled and '_circuit_breaker_state' in globals():
+        _circuit_breaker_state.labels(state=state).inc()
+    logger.info(f"Circuit breaker state: {state}")
+
+
+def record_circuit_failure(backend: str) -> None:
+    """Circuit breaker 실패 기록.
+    
+    Args:
+        backend: "notebooklm", "vertex", "mcp"
+    """
+    if _metrics_enabled and '_circuit_breaker_failures' in globals():
+        _circuit_breaker_failures.labels(backend=backend).inc()
+
+
+# =============================================================================
+# Semantic Cache 메트릭
+# =============================================================================
+
+def record_semantic_cache_op(
+    operation: str,
+    result: str,
+    latency_ms: float = 0.0,
+) -> None:
+    """Semantic cache 연산 기록.
+    
+    Args:
+        operation: "get" or "set"
+        result: "hit", "miss", "exact", "semantic"
+        latency_ms: 연산 소요 시간
+    """
+    if _metrics_enabled:
+        if '_semantic_cache_operations' in globals():
+            _semantic_cache_operations.labels(
+                operation=operation,
+                result=result
+            ).inc()
+        if '_semantic_cache_latency' in globals() and latency_ms > 0:
+            _semantic_cache_latency.labels(operation=operation).observe(latency_ms)
