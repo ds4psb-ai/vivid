@@ -1556,25 +1556,42 @@ async def run_quality_checker(
     )
 
     # === Build backward-compatible output ===
-    output = {
-        # Top-level for legacy UI (from primary mode)
-        "passed": primary.get("passed", overall_passed),
-        "score": primary.get("score", overall_score),
-        "criteria_results": primary.get("criteria_results", {}),
-        "issues": merged_issues,
-        "suggestions": merged_suggestions,
-    }
-
-    # Multi-mode: add modes map and overall summary
-    if len(inspection_modes) > 1:
-        output["modes"] = modes_results
-        output["overall"] = {
+    is_multimode = len(inspection_modes) > 1
+    
+    if is_multimode:
+        # Multi-mode: top-level uses OVERALL (safer for UI)
+        output = {
             "passed": overall_passed,
             "score": round(overall_score, 2),
-            "mode_count": len(inspection_modes),
-            "successful_modes": successful_modes,
-            "failed_modes": [m for m in inspection_modes if m not in successful_modes],
+            "criteria_results": primary.get("criteria_results", {}),  # From primary for detail
+            "issues": merged_issues,
+            "suggestions": merged_suggestions,
+            # P3: Primary mode separate for reference
+            "primary_mode": primary_mode,
+            "primary": {
+                "passed": primary.get("passed"),
+                "score": primary.get("score"),
+                "criteria_results": primary.get("criteria_results", {}),
+            },
+            "modes": modes_results,
+            "overall": {
+                "passed": overall_passed,
+                "score": round(overall_score, 2),
+                "mode_count": len(inspection_modes),
+                "successful_modes": successful_modes,
+                "failed_modes": [m for m in inspection_modes if m not in successful_modes],
+            },
         }
+    else:
+        # Single-mode: top-level from primary (backward compat, no modes/overall)
+        output = {
+            "passed": primary.get("passed", overall_passed),
+            "score": primary.get("score", overall_score),
+            "criteria_results": primary.get("criteria_results", {}),
+            "issues": merged_issues,
+            "suggestions": merged_suggestions,
+        }
+
 
     logger.info(
         f"[QC] Completed: modes={len(inspection_modes)}, "
