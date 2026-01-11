@@ -1228,30 +1228,192 @@ Provide detailed analysis of the cinematic techniques used.
         }
 
 
+# =============================================================================
+# P3: Multi-mode QC Constants and Helpers
+# =============================================================================
+
+VALID_INSPECTION_MODES = {"comprehensive", "quick", "cinematic", "consistency"}
+DEFAULT_CRITERIA = ["aesthetic", "consistency", "safety"]
+
+# Mode → (criteria, instruction) mapping
+MODE_CONFIGS = {
+    "comprehensive": {
+        "criteria": None,  # Use base criteria
+        "instruction": "",
+    },
+    "cinematic": {
+        "criteria": ["aesthetic", "narrative", "technical"],
+        "instruction": "\nEvaluate with focus on cinematic quality, visual storytelling, and professional production standards.",
+    },
+    "quick": {
+        "criteria_limit": 2,  # First 2 of base criteria
+        "instruction": "\nProvide a brief, focused evaluation highlighting only critical issues.",
+    },
+    "consistency": {
+        "criteria": ["consistency", "technical"],
+        "instruction": "\nFocus on evaluating consistency across style, tone, and technical specifications.",
+    },
+}
+
+
+def _normalize_modes(inputs: Dict[str, Any]) -> List[str]:
+    """Normalize inspection_modes: dedupe, validate, no silent fallback."""
+    raw = inputs.get("inspection_modes") or [inputs.get("inspection_mode", "comprehensive")]
+    seen = set()
+    result = []
+    for m in raw:
+        if isinstance(m, str) and m in VALID_INSPECTION_MODES and m not in seen:
+            result.append(m)
+            seen.add(m)
+    return result
+
+
+def _normalize_threshold_qc(params: Dict[str, Any]) -> int:
+    """Normalize threshold: 0-1 → 0-100."""
+    raw = params.get("threshold", 70)
+    try:
+        val = float(raw)
+    except (TypeError, ValueError):
+        return 70
+    if 0 <= val <= 1:
+        return int(val * 100)
+    return max(0, min(100, int(val)))
+
+
+def _get_mode_config(mode: str, base_criteria: List[str]) -> Tuple[List[str], str]:
+    """Get (criteria, instruction) for a mode."""
+    config = MODE_CONFIGS.get(mode, MODE_CONFIGS["comprehensive"])
+    
+    if "criteria" in config and config["criteria"]:
+        criteria = config["criteria"]
+    elif "criteria_limit" in config:
+        criteria = base_criteria[:config["criteria_limit"]]
+    else:
+        criteria = base_criteria
+    
+    return criteria, config.get("instruction", "")
+
+
+def _dedupe_list(items: List[str]) -> List[str]:
+    """Deduplicate while preserving order."""
+    seen = set()
+    result = []
+    for item in items:
+        if item not in seen:
+            result.append(item)
+            seen.add(item)
+    return result
+
+
+def _aggregate_metrics(
+    mode_metrics: Dict[str, Optional[CapsuleMetrics]]
+) -> Dict[str, Any]:
+    """Aggregate metrics across modes: sum tokens, total latency."""
+    total_tokens = 0
+    total_latency = 0
+    model = None
+    
+    for m in mode_metrics.values():
+        if m:
+            total_tokens += m.input_tokens + m.output_tokens
+            total_latency += m.latency_ms
+            if not model:
+                model = m.model
+    
+    return {
+        "latency_ms": total_latency,
+        "tokens": total_tokens,
+        "model": model or "unknown",
+    }
+
+
+async def _evaluate_quality_single_mode(
+    content: str,
+    content_type: str,
+    criteria: List[str],
+    mode_instruction: str,
+    threshold: int,
+    model: str,
+    rag_context: str,
+    context_str: str,
+    user_api_key: Optional[str],
+) -> Tuple[Dict[str, Any], Optional[CapsuleMetrics]]:
+    """Evaluate content for a single inspection mode.
+    
+    Returns:
+        Tuple of (result_dict, metrics or None on error)
+    """
+    base_prompt = f"""Evaluate this {content_type} content against the following criteria: {', '.join(criteria)}
+{mode_instruction}
+Content to Evaluate:
+---
+{content}
+---
+{context_str}
+
+Passing Threshold: {threshold}/100
+
+For each criterion, provide a score (0-100), whether it passed, and detailed feedback.
+Calculate overall score as the average of all criteria scores.
+"""
+    user_prompt = _inject_rag_into_prompt(base_prompt, rag_context, position="prepend")
+
+    try:
+        result, metrics = await _call_gemini(
+            prompt=user_prompt,
+            system_prompt=QUALITY_CHECKER_SYSTEM,
+            api_key=user_api_key,
+            model=model,
+            temperature=0.3,
+        )
+    except (TimeoutError, RuntimeError, ValueError) as e:
+        return {"error": str(e)}, None
+
+    # Normalize result structure
+    if "error" in result:
+        return result, metrics
+    
+    # Ensure criteria_results exists
+    if "criteria_results" not in result:
+        result["criteria_results"] = {}
+
+    # Calculate score from criteria if missing
+    if "score" not in result:
+        cr = result.get("criteria_results", {})
+        scores = [c.get("score", 0) for c in cr.values() if isinstance(c, dict)]
+        result["score"] = sum(scores) / len(scores) if scores else 0
+
+    # Derive passed from score if missing
+    if "passed" not in result:
+        result["passed"] = result.get("score", 0) >= threshold
+
+    # Ensure lists exist
+    result.setdefault("issues", [])
+    result.setdefault("suggestions", [])
+
+    return result, metrics
+
+
 async def run_quality_checker(
     inputs: Dict[str, Any],
     params: Dict[str, Any],
     user_api_key: Optional[str] = None,
 ) -> CapsuleResult:
-    """Check content quality against multiple criteria.
-
-    Evaluates content using 6 quality criteria:
-    - aesthetic: Visual/artistic quality
-    - ad_suitability: Brand safety, commercial appropriateness
-    - consistency: Style/tone uniformity
-    - safety: Content safety (no violence, hate, explicit)
-    - technical: Technical quality (resolution, format)
-    - narrative: Story coherence and engagement
-
+    """Check content quality (P3: multi-mode support).
+    
+    Evaluates content against multiple quality criteria across multiple inspection modes.
+    Returns backward-compatible output with optional modes/overall for multi-mode.
+    
     Args:
-        inputs: content, content_type, criteria (optional), context (optional)
-        params: model, threshold (default 70)
+        inputs: content, content_type, inspection_modes (P3), criteria, context
+        params: model, threshold (0-100 or 0-1)
         user_api_key: Optional BYOK
 
     Returns:
         CapsuleResult with passed, score, criteria_results, issues, suggestions
+        Multi-mode adds: modes (per-mode results), overall (aggregate summary)
     """
-    # Validate and sanitize inputs
+    # === Input Validation (unchanged) ===
     content = _sanitize_text(
         inputs.get("content", ""),
         MAX_CONTENT_LENGTH,
@@ -1271,126 +1433,161 @@ async def run_quality_checker(
         50,
         "content_type"
     )
-    
-    # Get inspection mode (affects evaluation focus)
-    inspection_mode = _sanitize_text(
-        inputs.get("inspection_mode", "comprehensive"),
-        50,
-        "inspection_mode"
-    )
 
-    # Parse criteria (default: aesthetic, consistency, safety)
-    criteria = inputs.get("criteria", ["aesthetic", "consistency", "safety"])
-    if not isinstance(criteria, list):
-        criteria = ["aesthetic", "consistency", "safety"]
+    # === P3: Normalize modes and threshold ===
+    inspection_modes = _normalize_modes(inputs)
+    threshold = _normalize_threshold_qc(params)
+    
+    # Handle invalid modes (no valid modes after filtering)
+    if not inspection_modes:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.QUALITY_CHECK.value,
+            "output": {},
+            "error": "Invalid inspection modes",
+            "metrics": None,
+        }
+    
+    # Base criteria (can be overridden per mode)
+    base_criteria = inputs.get("criteria", DEFAULT_CRITERIA)
+    if not isinstance(base_criteria, list):
+        base_criteria = DEFAULT_CRITERIA
     valid_criteria = {"aesthetic", "ad_suitability", "consistency", "safety", "technical", "narrative"}
-    criteria = [c for c in criteria if c in valid_criteria]
-    if not criteria:
-        criteria = ["aesthetic", "consistency", "safety"]
-    
-    # Adjust criteria based on inspection mode
-    if inspection_mode == "cinematic":
-        criteria = ["aesthetic", "narrative", "technical"]
-    elif inspection_mode == "quick":
-        criteria = criteria[:2]  # Only first 2 criteria
-    elif inspection_mode == "consistency":
-        criteria = ["consistency", "technical"]
+    base_criteria = [c for c in base_criteria if c in valid_criteria]
+    if not base_criteria:
+        base_criteria = DEFAULT_CRITERIA
 
-    # Optional context (brand guidelines, previous content, etc.)
+    # Context string (shared across modes)
     context = inputs.get("context", {})
     context_str = ""
     if isinstance(context, dict) and context:
         context_str = f"\nAdditional Context: {json.dumps(context, ensure_ascii=False)[:1000]}"
 
-    # Get params
+    # Model selection
     model = _validate_enum(
         params.get("model", "gemini-3-pro-preview"),
         ALLOWED_MODELS,
         "model",
         "gemini-3-pro-preview"
     )
-    threshold = _validate_int_range(params.get("threshold", 70), 0, 100, 70)
     use_rag = params.get("use_rag", True)
 
-    # Build base prompt with inspection mode
-    mode_instruction = ""
-    if inspection_mode == "cinematic":
-        mode_instruction = "\nEvaluate with focus on cinematic quality, visual storytelling, and professional production standards."
-    elif inspection_mode == "quick":
-        mode_instruction = "\nProvide a brief, focused evaluation highlighting only critical issues."
-    elif inspection_mode == "consistency":
-        mode_instruction = "\nFocus on evaluating consistency across style, tone, and technical specifications."
+    # === Build unified RAG context (all criteria union) ===
+    criteria_union = set()
+    for mode in inspection_modes:
+        mode_criteria, _ = _get_mode_config(mode, base_criteria)
+        criteria_union.update(mode_criteria)
     
-    base_prompt = f"""Evaluate this {content_type} content against the following criteria: {', '.join(criteria)}
-{mode_instruction}
-Content to Evaluate:
----
-{content}
----
-{context_str}
-
-Passing Threshold: {threshold}/100
-
-For each criterion, provide a score (0-100), whether it passed, and detailed feedback.
-Calculate overall score as the average of all criteria scores.
-"""
-
-    # Inject RAG context if enabled (quality standards from knowledge base)
     rag_context = _get_rag_context(
         capsule_id=DimensionCapsuleId.QUALITY_CHECK.value,
-        query=f"quality standards {' '.join(criteria)} {content_type}".strip(),
+        query=f"quality standards {' '.join(sorted(criteria_union))} {content_type}".strip(),
         use_rag=use_rag,
     )
-    user_prompt = _inject_rag_into_prompt(base_prompt, rag_context, position="prepend")
 
-    try:
-        result, metrics = await _call_gemini(
-            prompt=user_prompt,
-            system_prompt=QUALITY_CHECKER_SYSTEM,
-            api_key=user_api_key,
+    # === Multi-mode evaluation loop ===
+    modes_results: Dict[str, Dict[str, Any]] = {}
+    mode_metrics: Dict[str, Optional[CapsuleMetrics]] = {}
+    successful_modes: List[str] = []
+
+    logger.info(f"[QC] Starting multi-mode evaluation: modes={inspection_modes}")
+
+    for mode in inspection_modes:
+        mode_criteria, mode_instruction = _get_mode_config(mode, base_criteria)
+        
+        result, metrics = await _evaluate_quality_single_mode(
+            content=content,
+            content_type=content_type,
+            criteria=mode_criteria,
+            mode_instruction=mode_instruction,
+            threshold=threshold,
             model=model,
-            temperature=0.3,  # Lower temperature for more consistent evaluation
+            rag_context=rag_context,
+            context_str=context_str,
+            user_api_key=user_api_key,
         )
-
-        # Post-process: ensure proper structure
+        
+        modes_results[mode] = result
+        mode_metrics[mode] = metrics
+        
         if "error" not in result:
-            # Validate and normalize output
-            if "score" not in result:
-                # Calculate from criteria_results if missing
-                criteria_results = result.get("criteria_results", {})
-                if criteria_results:
-                    scores = [cr.get("score", 0) for cr in criteria_results.values() if isinstance(cr, dict)]
-                    result["score"] = sum(scores) / len(scores) if scores else 0
+            successful_modes.append(mode)
+            logger.debug(f"[QC] Mode '{mode}' succeeded: score={result.get('score')}")
+        else:
+            logger.warning(f"[QC] Mode '{mode}' failed: {result.get('error')}")
 
-            # Ensure passed is boolean
-            if "passed" not in result:
-                result["passed"] = result.get("score", 0) >= threshold
-
-            # Ensure lists exist
-            if "issues" not in result:
-                result["issues"] = []
-            if "suggestions" not in result:
-                result["suggestions"] = []
-
-        return {
-            "success": "error" not in result,
-            "capsule_id": DimensionCapsuleId.QUALITY_CHECK.value,
-            "output": result,
-            "error": result.get("error"),
-            "metrics": {
-                "latency_ms": metrics.latency_ms,
-                "tokens": metrics.input_tokens + metrics.output_tokens,
-                "model": metrics.model,
-            },
-        }
-    except (TimeoutError, RuntimeError, ValueError) as e:
+    # === Handle all modes failed ===
+    if not successful_modes:
+        aggregated = _aggregate_metrics(mode_metrics)
         return {
             "success": False,
             "capsule_id": DimensionCapsuleId.QUALITY_CHECK.value,
-            "output": {},
-            "error": str(e),
-            "metrics": None,
+            "output": {"modes": modes_results} if len(inspection_modes) > 1 else {},
+            "error": "All inspection modes failed",
+            "metrics": aggregated if any(mode_metrics.values()) else None,
         }
+
+    # === Primary mode selection (prefer comprehensive) ===
+    if "comprehensive" in successful_modes:
+        primary_mode = "comprehensive"
+    else:
+        primary_mode = successful_modes[0]
+    
+    primary = modes_results[primary_mode]
+
+    # === Merge issues/suggestions from successful modes ===
+    merged_issues = _dedupe_list([
+        issue
+        for mode in successful_modes
+        for issue in modes_results[mode].get("issues", [])
+    ])
+    merged_suggestions = _dedupe_list([
+        suggestion
+        for mode in successful_modes
+        for suggestion in modes_results[mode].get("suggestions", [])
+    ])
+
+    # === Calculate overall from all modes (P3: all must pass for overall pass) ===
+    overall_score = sum(
+        modes_results[m].get("score", 0) for m in successful_modes
+    ) / len(successful_modes)
+    overall_passed = (
+        all(modes_results[m].get("passed", False) for m in successful_modes)
+        and len(successful_modes) == len(inspection_modes)  # No failed modes
+    )
+
+    # === Build backward-compatible output ===
+    output = {
+        # Top-level for legacy UI (from primary mode)
+        "passed": primary.get("passed", overall_passed),
+        "score": primary.get("score", overall_score),
+        "criteria_results": primary.get("criteria_results", {}),
+        "issues": merged_issues,
+        "suggestions": merged_suggestions,
+    }
+
+    # Multi-mode: add modes map and overall summary
+    if len(inspection_modes) > 1:
+        output["modes"] = modes_results
+        output["overall"] = {
+            "passed": overall_passed,
+            "score": round(overall_score, 2),
+            "mode_count": len(inspection_modes),
+            "successful_modes": successful_modes,
+            "failed_modes": [m for m in inspection_modes if m not in successful_modes],
+        }
+
+    logger.info(
+        f"[QC] Completed: modes={len(inspection_modes)}, "
+        f"success={len(successful_modes)}, overall_score={overall_score:.1f}"
+    )
+
+    return {
+        "success": True,
+        "capsule_id": DimensionCapsuleId.QUALITY_CHECK.value,
+        "output": output,
+        "error": None,
+        "metrics": _aggregate_metrics(mode_metrics),
+    }
 
 
 # Auteur style mapping for aesthetic director
