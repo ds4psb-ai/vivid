@@ -45,9 +45,10 @@ class QualityCheckRequest(BaseModel):
     content_type: str = Field("prompt", max_length=50, description="Type of content")
     inspection_mode: str = Field("comprehensive", max_length=50, description="Inspection mode (backward compat)")
     inspection_modes: Optional[List[str]] = Field(None, description="Multi-mode list (P3)")
+    # P3: Align with engine's DEFAULT_CRITERIA
     criteria: List[str] = Field(
-        default=["clarity", "specificity", "creativity", "coherence", "grammar", "impact"],
-        description="Evaluation criteria"
+        default=["aesthetic", "consistency", "safety"],
+        description="Evaluation criteria (aesthetic, consistency, safety, technical, narrative, ad_suitability)"
     )
     threshold: int = Field(70, ge=0, le=100, description="Quality threshold (0-100)")
     model: str = Field("gemini-3-flash-preview", description="AI model")
@@ -72,15 +73,16 @@ class QualityCheckRequest(BaseModel):
     @field_validator("inspection_modes", mode="before")
     @classmethod
     def normalize_modes(cls, v, info) -> Optional[List[str]]:
-        """Normalize: filter invalid, fallback to inspection_mode if None."""
+        """Normalize: filter invalid, NO silent fallback (engine handles error)."""
         if v is None:
-            # Use single mode as fallback
+            # Use single mode (from inspection_mode field)
             single = info.data.get("inspection_mode", "comprehensive")
-            return [single] if single in VALID_INSPECTION_MODES else ["comprehensive"]
+            # If single mode is invalid, return empty → engine returns error
+            return [single] if single in VALID_INSPECTION_MODES else []
         if isinstance(v, list):
-            valid = [m for m in v if m in VALID_INSPECTION_MODES]
-            return valid if valid else ["comprehensive"]
-        return ["comprehensive"]
+            # Filter to valid modes only, no fallback
+            return [m for m in v if m in VALID_INSPECTION_MODES]
+        return []
 
     @field_validator("model")
     @classmethod
