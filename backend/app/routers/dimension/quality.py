@@ -35,22 +35,52 @@ router = APIRouter()
 # Request Models
 # ============================================================================
 
+# P3: Valid inspection modes
+VALID_INSPECTION_MODES = {"comprehensive", "quick", "cinematic", "consistency"}
+
+
 class QualityCheckRequest(BaseModel):
     """Request model for Quality Check evaluation."""
     content: str = Field(..., min_length=1, max_length=10000, description="Content to evaluate")
     content_type: str = Field("prompt", max_length=50, description="Type of content")
-    inspection_mode: str = Field("comprehensive", max_length=50, description="Inspection mode (comprehensive, quick, cinematic, consistency)")
+    inspection_mode: str = Field("comprehensive", max_length=50, description="Inspection mode (backward compat)")
+    inspection_modes: Optional[List[str]] = Field(None, description="Multi-mode list (P3)")
     criteria: List[str] = Field(
         default=["clarity", "specificity", "creativity", "coherence", "grammar", "impact"],
         description="Evaluation criteria"
     )
-    threshold: float = Field(0.7, ge=0.0, le=1.0, description="Quality threshold")
+    threshold: int = Field(70, ge=0, le=100, description="Quality threshold (0-100)")
     model: str = Field("gemini-3-flash-preview", description="AI model")
 
     @field_validator("content", mode="before")
     @classmethod
     def strip_content(cls, v: str) -> str:
         return _strip_string(v)
+
+    @field_validator("threshold", mode="before")
+    @classmethod
+    def normalize_threshold(cls, v) -> int:
+        """Normalize threshold: 0-1 scale → 0-100."""
+        try:
+            val = float(v)
+        except (TypeError, ValueError):
+            return 70
+        if 0 <= val <= 1:
+            return int(val * 100)
+        return max(0, min(100, int(val)))
+
+    @field_validator("inspection_modes", mode="before")
+    @classmethod
+    def normalize_modes(cls, v, info) -> Optional[List[str]]:
+        """Normalize: filter invalid, fallback to inspection_mode if None."""
+        if v is None:
+            # Use single mode as fallback
+            single = info.data.get("inspection_mode", "comprehensive")
+            return [single] if single in VALID_INSPECTION_MODES else ["comprehensive"]
+        if isinstance(v, list):
+            valid = [m for m in v if m in VALID_INSPECTION_MODES]
+            return valid if valid else ["comprehensive"]
+        return ["comprehensive"]
 
     @field_validator("model")
     @classmethod
@@ -99,9 +129,14 @@ async def check_quality(
     byok_key: Optional[str] = Depends(get_byok_key),
     db: AsyncSession = Depends(get_db),
 ) -> DimensionResponse:
-    """Check content quality with Intent-Resolver integration."""
+    """Check content quality with Intent-Resolver integration (P3: multi-mode support)."""
     from app.routers.intent_helpers import infer_intent_from_request
     intent = infer_intent_from_request()
+    
+    # P3: Calculate credit multiplier based on mode count
+    modes = request.inspection_modes or [request.inspection_mode]
+    mode_count = len(modes)
+    credit_multiplier = 1 + 0.5 * (mode_count - 1)  # 1→1.0, 2→1.5, 3→2.0, 4→2.5
     
     return await _execute_dimension_tool(
         capsule_id=DimensionCapsuleId.QUALITY_CHECK,
@@ -109,17 +144,27 @@ async def check_quality(
         inputs={
             "content": request.content,
             "content_type": request.content_type,
-            "inspection_mode": request.inspection_mode,
+            "inspection_mode": request.inspection_mode,  # Legacy
+            "inspection_modes": modes,  # P3: multi-mode
             "criteria": request.criteria,
         },
         model=request.model,
         user=user,
         byok_key=byok_key,
         db=db,
-        inputs_summary={"content_type": request.content_type, "inspection_mode": request.inspection_mode, "criteria": request.criteria},
-        params={"threshold": request.threshold},
+        inputs_summary={
+            "content_type": request.content_type,
+            "inspection_modes": modes,
+            "mode_count": mode_count,
+            "criteria": request.criteria,
+        },
+        params={
+            "threshold": request.threshold,
+            "credit_multiplier": credit_multiplier,
+        },
         intent=intent,
     )
+
 
 
 @router.post(
@@ -139,9 +184,14 @@ async def check_quality_stream(
     byok_key: Optional[str] = Depends(get_byok_key),
     db: AsyncSession = Depends(get_db),
 ) -> StreamingResponse:
-    """Check content quality with SSE streaming."""
+    """Check content quality with SSE streaming (P3: multi-mode support)."""
     from app.routers.intent_helpers import infer_intent_from_request
     intent = infer_intent_from_request()
+    
+    # P3: Calculate credit multiplier based on mode count
+    modes = request.inspection_modes or [request.inspection_mode]
+    mode_count = len(modes)
+    credit_multiplier = 1 + 0.5 * (mode_count - 1)
     
     return StreamingResponse(
         _execute_dimension_tool_stream(
@@ -151,20 +201,30 @@ async def check_quality_stream(
             inputs={
                 "content": request.content,
                 "content_type": request.content_type,
-                "inspection_mode": request.inspection_mode,
+                "inspection_mode": request.inspection_mode,  # Legacy
+                "inspection_modes": modes,  # P3: multi-mode
                 "criteria": request.criteria,
             },
             model=request.model,
             user=user,
             byok_key=byok_key,
             db=db,
-            inputs_summary={"content_type": request.content_type, "inspection_mode": request.inspection_mode, "criteria": request.criteria},
-            params={"threshold": request.threshold},
+            inputs_summary={
+                "content_type": request.content_type,
+                "inspection_modes": modes,
+                "mode_count": mode_count,
+                "criteria": request.criteria,
+            },
+            params={
+                "threshold": request.threshold,
+                "credit_multiplier": credit_multiplier,
+            },
             intent=intent,
         ),
         media_type="text/event-stream",
         headers=get_sse_headers(),
     )
+
 
 
 # ============================================================================

@@ -111,10 +111,15 @@ _CAPSULE_TO_DIMENSION_CODE = {
     DimensionCapsuleId.CREATIVE_EDITOR: "qc",
 }
 
-def get_credit_cost(capsule_id: DimensionCapsuleId, model: str) -> int:
+def get_credit_cost(
+    capsule_id: DimensionCapsuleId, 
+    model: str,
+    credit_multiplier: float = 1.0,  # P3: Multi-mode multiplier
+) -> int:
     """캡슐과 모델에 따른 동적 크레딧 비용 계산.
     
     v2: AppRegistry SSoT 기반 동적 로딩 (하드코딩 폴백 유지).
+    v3: credit_multiplier 지원 (P3 multi-mode QC).
     """
     # Model tier classification (2026 updated)
     MODEL_TIERS = {
@@ -175,9 +180,10 @@ def get_credit_cost(capsule_id: DimensionCapsuleId, model: str) -> int:
         base_cost = BASE_CREDIT_COSTS.get(capsule_id, DEFAULT_BASE_CREDIT_COST)
 
     tier = MODEL_TIERS.get(model, "flash")
-    multiplier = MODEL_CREDIT_MULTIPLIERS.get(tier, 1.0)
+    model_multiplier = MODEL_CREDIT_MULTIPLIERS.get(tier, 1.0)
 
-    return int(base_cost * multiplier)
+    # Apply both model tier multiplier and credit_multiplier (P3)
+    return int(base_cost * model_multiplier * credit_multiplier)
 
 
 # ============================================================================
@@ -416,9 +422,13 @@ async def _execute_dimension_tool(
             detail={"code": "INVALID_USER", "message": "유효하지 않은 사용자입니다."}
         )
     
+    # P3: Get credit_multiplier from params (default 1.0)
+    credit_multiplier = (params or {}).get("credit_multiplier", 1.0)
+    
     # Credit check (skip for BYOK users)
-    credit_cost = get_credit_cost(capsule_id, model)
+    credit_cost = get_credit_cost(capsule_id, model, credit_multiplier)
     credits_deducted = False
+
     
     if not byok_key:
         user_credits = await get_or_create_user_credits(db, user_id)
@@ -615,7 +625,9 @@ async def _execute_dimension_tool_stream(
             yield sse_error("유효하지 않은 사용자입니다.", code="INVALID_USER")
             return
 
-        credit_cost = get_credit_cost(capsule_id, model)
+        # P3: Get credit_multiplier from params (default 1.0)
+        credit_multiplier = (params or {}).get("credit_multiplier", 1.0)
+        credit_cost = get_credit_cost(capsule_id, model, credit_multiplier)
 
         if not byok_key:
             user_credits = await get_or_create_user_credits(db, user_id)
