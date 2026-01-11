@@ -61,7 +61,7 @@ class NotebookLMAdapter(BaseAdapter):
         )
         
         try:
-            from app._deprecated.narrative_utils import normalize_story_beats, normalize_storyboard_cards
+            from app.utils.narrative import normalize_story_beats, normalize_storyboard_cards
             from app.notebooklm_client import (
                 generate_story_beats,
                 generate_storyboard_cards,

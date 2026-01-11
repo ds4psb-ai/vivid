@@ -6,12 +6,28 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.fixtures.auteur_capsules import CAPSULE_SPECS
+from app.fixtures.auteur_capsules import CAPSULE_SPECS, PATTERN_VERSION
 from app.fixtures.auteur_templates import TEMPLATES
 from app.database import AsyncSessionLocal
-from app.models import CapsuleSpec, Template, TemplateVersion
+from app.models import CapsuleSpec, PatternVersion, Template, TemplateVersion
 from app.graph_utils import ensure_pattern_version
-from app._deprecated.patterns import get_latest_pattern_version
+
+
+async def _get_pattern_version(db: AsyncSession) -> str:
+    """Get pattern version with SSoT fallback.
+    
+    Uses PATTERN_VERSION constant as SSoT, with optional DB override.
+    """
+    try:
+        result = await db.execute(
+            select(PatternVersion).order_by(PatternVersion.created_at.desc())
+        )
+        record = result.scalars().first()
+        if record and record.version:
+            return record.version
+    except Exception:
+        pass
+    return PATTERN_VERSION
 
 
 async def seed_capsules(session: AsyncSession) -> int:
@@ -81,7 +97,7 @@ async def seed_capsules(session: AsyncSession) -> int:
 
 async def seed_templates(session: AsyncSession) -> int:
     created = 0
-    pattern_version = await get_latest_pattern_version(session)
+    pattern_version = await _get_pattern_version(session)
     for template in TEMPLATES:
         result = await session.execute(
             select(Template).where(Template.slug == template["slug"])

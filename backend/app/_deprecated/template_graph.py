@@ -1,7 +1,24 @@
-"""Template graph builder for seeded canvases."""
+"""Template graph builder for seeded canvases.
+
+DEPRECATED: This module is scheduled for removal after 7 days of 0 usage.
+Monitor with: grep "DEPRECATED template_graph" in logs.
+Removal date: 2026-01-18 (if 0 usage confirmed)
+"""
 from __future__ import annotations
 
+import logging
+import warnings
 from typing import Dict, List, Optional
+
+_logger = logging.getLogger(__name__)
+
+# Emit warning on module import
+warnings.warn(
+    "app._deprecated.template_graph is deprecated. "
+    "Canvas legacy code - will be removed 2026-01-18 if 0 usage confirmed.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 
 def build_template_graph(
