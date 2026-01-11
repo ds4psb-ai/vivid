@@ -63,6 +63,23 @@ TTL_DEFAULT = 3600              # 1 hour - general queries
 # Maximum cache size (in-memory fallback)
 MAX_MEMORY_CACHE_SIZE = 500
 
+# =============================================================================
+# Cache Poisoning Security (2025 Best Practice)
+# =============================================================================
+
+# Source trust levels for cache entries
+# Higher level = more trusted, less likely to be poisoned
+TRUST_LEVEL_VERIFIED = 3    # Internal verified sources (e.g., NotebookLM DNA)
+TRUST_LEVEL_CURATED = 2     # Curated external sources
+TRUST_LEVEL_EXTERNAL = 1    # Unverified external sources
+
+# Minimum confidence to cache by trust level
+CACHE_CONFIDENCE_BY_TRUST = {
+    TRUST_LEVEL_VERIFIED: 0.4,  # Allow lower confidence for verified sources
+    TRUST_LEVEL_CURATED: 0.5,   # Standard threshold
+    TRUST_LEVEL_EXTERNAL: 0.7,  # Higher bar for external sources
+}
+
 
 # =============================================================================
 # Data Classes
@@ -82,6 +99,7 @@ class SemanticCacheEntry:
     created_at: datetime
     expires_at: datetime
     hit_count: int = 0
+    source_trust_level: int = TRUST_LEVEL_CURATED  # Cache Poisoning Protection
     
     @property
     def is_expired(self) -> bool:
@@ -97,6 +115,7 @@ class SemanticCacheEntry:
             "created_at": self.created_at.isoformat(),
             "expires_at": self.expires_at.isoformat(),
             "hit_count": self.hit_count,
+            "source_trust_level": self.source_trust_level,
         }
 
 
