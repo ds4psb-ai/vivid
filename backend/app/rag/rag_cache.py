@@ -84,6 +84,11 @@ class CacheEntry:
 class RAGCache:
     """LRU + TTL 기반 RAG 결과 캐시.
     
+    .. deprecated::
+        `hybrid_query`는 이미 내부적으로 `semantic_cache`를 사용합니다.
+        새 코드는 `hybrid_query(use_semantic_cache=True)`를 직접 사용하세요.
+        이 클래스는 하위 호환성을 위해 유지됩니다.
+    
     Features:
     - LRU (Least Recently Used) 제거 정책
     - TTL 기반 자동 만료

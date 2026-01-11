@@ -390,6 +390,44 @@ async def hybrid_query(
         rrf_enabled=result.rrf_enabled,
     )
 
+    # === CRAG Pattern: Corrective RAG (2025 Best Practice) ===
+    # If confidence is low, automatically trigger Google Search Grounding as fallback
+    CRAG_CONFIDENCE_THRESHOLD = 0.5
+    if result.confidence < CRAG_CONFIDENCE_THRESHOLD and not result.grounding_sources:
+        logger.info(
+            f"[HybridRAG] CRAG triggered | confidence={result.confidence:.2f} < {CRAG_CONFIDENCE_THRESHOLD} | "
+            f"Falling back to Google Search Grounding"
+        )
+        try:
+            from app.rag.tier0_vertex_rag import query_with_google_grounding
+            
+            grounding_result = await query_with_google_grounding(
+                query=query,
+                model="gemini-2.0-flash",
+            )
+            
+            if grounding_result and hasattr(grounding_result, 'sources'):
+                # Merge grounding sources into result
+                result.grounding_sources.extend(grounding_result.sources)
+                result.retrieval_count += len(grounding_result.sources)
+                
+                # Boost confidence if we got good grounding results
+                if len(grounding_result.sources) > 0:
+                    result.confidence = min(result.confidence + 0.2, 0.9)
+                    result.grounded = True
+                    
+                    # Append grounding answer if primary answer is weak
+                    if len(result.answer) < 100 and grounding_result.answer:
+                        result.answer = f"{result.answer}\n\n[Grounding 보완]\n{grounding_result.answer}"
+                
+                logger.info(
+                    f"[HybridRAG] CRAG success | "
+                    f"grounding_sources={len(grounding_result.sources)} | "
+                    f"new_confidence={result.confidence:.2f}"
+                )
+        except Exception as e:
+            logger.warning(f"[HybridRAG] CRAG grounding failed: {e}")
+
     # === Step N+1: Store in Semantic Cache (high confidence only) ===
     if use_semantic_cache and result.confidence >= 0.5:
         try:
