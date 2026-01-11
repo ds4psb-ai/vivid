@@ -220,7 +220,7 @@ NOTEBOOK_REGISTRY: Dict[str, Dict[str, Any]] = {
         "source_count": 11,
     },
     "DNA_쿠엔틴타란티노": {
-        "notebook_id": "PENDING",  # TODO: 업로드 후 ID 추가
+        "notebook_id": "ec799223-0d8e-4c0d-af9b-5517501ef29f",  # Verified in NotebookLM 2026-01-11
         "display_name": "Quentin Tarantino Source Packs 2026",
         "dimension": "AD",
         "category": "auteur",
