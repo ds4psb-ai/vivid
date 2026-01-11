@@ -234,10 +234,39 @@ _rag_latency = Histogram(
 
 ---
 
+## Grafana Dashboard Import
+
+### JSON File Location
+[`config/grafana/rag_overview.json`](file:///Users/ted/vivid/config/grafana/rag_overview.json)
+
+### Import Steps
+1. Open Grafana → Dashboards → Import
+2. Upload JSON file or paste contents
+3. Select Prometheus datasource for `${DS_PROMETHEUS}`
+4. Click Import
+
+### Dashboard Panels (15)
+| Row | Panel | Type |
+|-----|-------|------|
+| Global Status | Error Rate % | stat |
+| | Cache Hit Rate % | gauge |
+| | p95 Latency | timeseries |
+| Latency Details | Latency by Dimension (p50/p95) | timeseries |
+| | Stage Latency (p95) | timeseries |
+| Router Decisions | Strategy Distribution | piechart |
+| | Score Distribution | histogram |
+| | Cache Hit Types | barchart |
+| Errors | Errors by Dimension | timeseries |
+| | Circuit Breaker Events | stat |
+| | Backend Failures | timeseries |
+
+---
+
 ## Related Files
 
 - [hybrid_rag.py](file:///Users/ted/vivid/backend/app/rag/hybrid_rag.py)
 - [tier0_notebooklm.py](file:///Users/ted/vivid/backend/app/rag/tier0_notebooklm.py)
 - [semantic_cache.py](file:///Users/ted/vivid/backend/app/rag/semantic_cache.py)
 - [metrics.py](file:///Users/ted/vivid/backend/app/rag/metrics.py)
+
 

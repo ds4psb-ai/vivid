@@ -1,0 +1,486 @@
+{
+    "annotations": {
+        "list": []
+    },
+    "description": "RAG Pipeline Overview - Latency, Error Rate, Cache Hit Rate",
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": null,
+    "links": [],
+    "liveNow": false,
+    "panels": [
+        {
+            "id": 1,
+            "title": "📊 Global Status",
+            "type": "row",
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            }
+        },
+        {
+            "id": 2,
+            "title": "Error Rate %",
+            "type": "stat",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 0,
+                "y": 1
+            },
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                }
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "percent",
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 1
+                            },
+                            {
+                                "color": "red",
+                                "value": 5
+                            }
+                        ]
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(rag_errors_total[5m])) / sum(rate(rag_query_total[5m])) * 100",
+                    "legendFormat": "Error Rate"
+                }
+            ]
+        },
+        {
+            "id": 3,
+            "title": "Cache Hit Rate %",
+            "type": "gauge",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 6,
+                "y": 1
+            },
+            "options": {
+                "orientation": "auto",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                },
+                "showThresholdLabels": false,
+                "showThresholdMarkers": true
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "percent",
+                    "min": 0,
+                    "max": 100,
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "red",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 20
+                            },
+                            {
+                                "color": "green",
+                                "value": 30
+                            }
+                        ]
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(rag_semantic_cache_ops_total{result=~\"exact|semantic\"}[5m])) / sum(rate(rag_semantic_cache_ops_total{operation=\"get\"}[5m])) * 100",
+                    "legendFormat": "Hit Rate"
+                }
+            ]
+        },
+        {
+            "id": 4,
+            "title": "p95 Latency (Overall)",
+            "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 12,
+                "x": 12,
+                "y": 1
+            },
+            "options": {
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "bottom"
+                }
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "ms",
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 5000
+                            },
+                            {
+                                "color": "red",
+                                "value": 10000
+                            }
+                        ]
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.95, sum(rate(rag_query_latency_ms_bucket[5m])) by (le))",
+                    "legendFormat": "p95"
+                }
+            ]
+        },
+        {
+            "id": 5,
+            "title": "⏱️ Latency Details",
+            "type": "row",
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 5
+            }
+        },
+        {
+            "id": 6,
+            "title": "Latency by Dimension (p50/p95/p99)",
+            "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 12,
+                "x": 0,
+                "y": 6
+            },
+            "options": {
+                "legend": {
+                    "displayMode": "table",
+                    "placement": "right",
+                    "showLegend": true
+                }
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "ms"
+                }
+            },
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.50, sum(rate(rag_query_latency_ms_bucket[5m])) by (le, dimension))",
+                    "legendFormat": "{{dimension}} p50"
+                },
+                {
+                    "expr": "histogram_quantile(0.95, sum(rate(rag_query_latency_ms_bucket[5m])) by (le, dimension))",
+                    "legendFormat": "{{dimension}} p95"
+                }
+            ]
+        },
+        {
+            "id": 7,
+            "title": "Stage Latency (p95)",
+            "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 12,
+                "x": 12,
+                "y": 6
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "ms"
+                }
+            },
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.95, sum(rate(rag_stage_latency_ms_bucket[5m])) by (le, stage))",
+                    "legendFormat": "{{stage}}"
+                }
+            ]
+        },
+        {
+            "id": 8,
+            "title": "🔄 Router Decisions",
+            "type": "row",
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 12
+            }
+        },
+        {
+            "id": 9,
+            "title": "Router Decision Distribution",
+            "type": "piechart",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 8,
+                "x": 0,
+                "y": 13
+            },
+            "options": {
+                "legend": {
+                    "displayMode": "table",
+                    "placement": "right"
+                },
+                "pieType": "pie"
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(rag_router_decisions_total[5m])) by (strategy)",
+                    "legendFormat": "{{strategy}}"
+                }
+            ]
+        },
+        {
+            "id": 10,
+            "title": "Router Score Distribution",
+            "type": "histogram",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 8,
+                "x": 8,
+                "y": 13
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(rag_router_score_bucket[5m])) by (le)",
+                    "legendFormat": "Score"
+                }
+            ]
+        },
+        {
+            "id": 11,
+            "title": "Cache Hit Types",
+            "type": "barchart",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 8,
+                "x": 16,
+                "y": 13
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(rag_semantic_cache_ops_total{operation=\"get\"}[5m])) by (result)",
+                    "legendFormat": "{{result}}"
+                }
+            ]
+        },
+        {
+            "id": 12,
+            "title": "🚨 Errors & Circuit Breaker",
+            "type": "row",
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 19
+            }
+        },
+        {
+            "id": 13,
+            "title": "Errors by Dimension",
+            "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 12,
+                "x": 0,
+                "y": 20
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "short"
+                }
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(rag_errors_total[5m])) by (dimension, error_type)",
+                    "legendFormat": "{{dimension}} - {{error_type}}"
+                }
+            ]
+        },
+        {
+            "id": 14,
+            "title": "Circuit Breaker Events",
+            "type": "stat",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 6,
+                "x": 12,
+                "y": 20
+            },
+            "options": {
+                "colorMode": "background",
+                "graphMode": "area"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 3
+                            },
+                            {
+                                "color": "red",
+                                "value": 5
+                            }
+                        ]
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "expr": "sum(increase(rag_circuit_breaker_state_total{state=\"open\"}[1h]))",
+                    "legendFormat": "Circuit Opens (1h)"
+                }
+            ]
+        },
+        {
+            "id": 15,
+            "title": "Backend Failures",
+            "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 6,
+                "x": 18,
+                "y": 20
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(rag_circuit_breaker_failures_total[5m])) by (backend)",
+                    "legendFormat": "{{backend}}"
+                }
+            ]
+        }
+    ],
+    "refresh": "30s",
+    "schemaVersion": 39,
+    "tags": [
+        "rag",
+        "observability",
+        "vivid"
+    ],
+    "templating": {
+        "list": [
+            {
+                "current": {
+                    "selected": false,
+                    "text": "prometheus",
+                    "value": "prometheus"
+                },
+                "hide": 0,
+                "includeAll": false,
+                "label": "Prometheus",
+                "multi": false,
+                "name": "DS_PROMETHEUS",
+                "options": [],
+                "query": "prometheus",
+                "refresh": 1,
+                "regex": "",
+                "skipUrlSync": false,
+                "type": "datasource"
+            }
+        ]
+    },
+    "time": {
+        "from": "now-6h",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "RAG Overview",
+    "uid": "rag-overview-001",
+    "version": 1
+}
