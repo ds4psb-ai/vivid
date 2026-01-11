@@ -86,6 +86,21 @@ try:
         buckets=[1, 5, 10, 25, 50, 100, 250]
     )
     
+    # === Critical Fix: Error Counter (Codex feedback) ===
+    _rag_errors_total = Counter(
+        "rag_errors_total",
+        "Total RAG errors",
+        ["dimension", "error_type", "stage"]  # stage: notebooklm, vertex, cache, etc.
+    )
+    
+    # === Critical Fix: Stage Latency (separate from e2e) ===
+    _rag_stage_latency = Histogram(
+        "rag_stage_latency_ms",
+        "RAG stage-specific latency (not e2e)",
+        ["stage", "dimension"],  # stage: auteur_first, dimension_query, parallel_query
+        buckets=[25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 30000]
+    )
+    
     _metrics_enabled = True
     logger.info("RAG Prometheus metrics initialized")
     
@@ -165,8 +180,24 @@ def record_rag_error(
     dimension: str,
     error_type: str,
     error_message: str,
+    stage: str = "unknown",  # NEW: stage parameter
 ) -> None:
-    """RAG 오류 기록."""
+    """RAG 오류 기록.
+    
+    Args:
+        dimension: 차원 코드
+        error_type: 에러 타입 (e.g., TimeoutError)
+        error_message: 에러 메시지
+        stage: 에러 발생 단계 (notebooklm, vertex, cache, etc.)
+    """
+    # === Critical Fix: Increment Counter ===
+    if _metrics_enabled and '_rag_errors_total' in globals():
+        _rag_errors_total.labels(
+            dimension=dimension or "unknown",
+            error_type=error_type,
+            stage=stage,
+        ).inc()
+    
     logger.warning(
         "RAG query error",
         extra={
@@ -174,6 +205,7 @@ def record_rag_error(
             "dimension": dimension,
             "error_type": error_type,
             "error_message": error_message[:200] if error_message else "",
+            "stage": stage,
         }
     )
 
@@ -260,23 +292,29 @@ def track_rag_operation(operation_name: str) -> Callable:
             ...
     
     Effects:
-        - 성공 시: latency 기록
-        - 실패 시: record_rag_error 자동 호출
+        - 성공 시: stage latency 기록 (NOT e2e)
+        - 실패 시: record_rag_error 자동 호출 with stage
         - 로그: 연산 완료/실패 기록
+    
+    NOTE: e2e latency는 hybrid_query에서 record_rag_query로 별도 기록됨
     """
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs):
             start = time.monotonic()
+            # Dimension can come from kwargs OR be extracted from result
             dimension = kwargs.get("dimension", "unknown")
             
             try:
                 result = await func(*args, **kwargs)
                 latency_ms = (time.monotonic() - start) * 1000
                 
-                # 성공 메트릭
-                if _metrics_enabled and _rag_latency is not None:
-                    _rag_latency.labels(dimension=dimension).observe(latency_ms)
+                # === Critical Fix: Use STAGE latency, NOT e2e ===
+                if _metrics_enabled and '_rag_stage_latency' in globals():
+                    _rag_stage_latency.labels(
+                        stage=operation_name,
+                        dimension=dimension,
+                    ).observe(latency_ms)
                 
                 logger.debug(
                     f"[RAG-Track] {operation_name} completed | "
@@ -287,11 +325,12 @@ def track_rag_operation(operation_name: str) -> Callable:
             except Exception as e:
                 latency_ms = (time.monotonic() - start) * 1000
                 
-                # 실패 메트릭 자동 기록
+                # === Critical Fix: Include stage in error ===
                 record_rag_error(
                     dimension=dimension,
                     error_type=type(e).__name__,
                     error_message=str(e)[:200],
+                    stage=operation_name,  # NEW: stage parameter
                 )
                 
                 logger.warning(

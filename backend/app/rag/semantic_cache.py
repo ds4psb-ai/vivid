@@ -296,6 +296,7 @@ class SemanticCache:
                     
                     self._stats.hits += 1
                     self._stats.exact_hits += 1
+                    _get_record_metric()("get", "exact", 0.0)  # HIGH FIX: DB exact hit
                     return self._deserialize_result(db_entry.response_json)
                     
                 # 3. DB Semantic Search (if exact match fails)
