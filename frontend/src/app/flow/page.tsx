@@ -270,10 +270,44 @@ function FlowPageContent() {
         // Clear existing cars
         workflowRef.current.clearCars();
 
+        // P1: Extract dimension-specific presets from input_preset
+        // Format: { "1d_topic": "value", "2d_style": "value", ... }
+        // Priority: user_input > preset > defaults
+        const extractDimensionPreset = (dimCode: string, fullPreset: Record<string, unknown> = {}): Record<string, unknown> => {
+            const prefix = dimCode.toLowerCase() + "_";
+            const dimensionPreset: Record<string, unknown> = {};
+
+            // Extract prefixed keys for this dimension
+            Object.entries(fullPreset).forEach(([key, value]) => {
+                if (key.toLowerCase().startsWith(prefix)) {
+                    // Remove prefix: "1d_topic" -> "topic"
+                    const fieldName = key.slice(prefix.length);
+                    dimensionPreset[fieldName] = value;
+                }
+            });
+
+            // Also include non-prefixed keys as defaults (for backward compatibility)
+            Object.entries(fullPreset).forEach(([key, value]) => {
+                const lowerKey = key.toLowerCase();
+                // Skip if already has a prefix for any dimension
+                if (!lowerKey.match(/^[0-9]d_|^qc_|^ad_|^ai_|^veo_|^sa_|^sc_/)) {
+                    // Only add if not already set by prefixed version
+                    if (!(key in dimensionPreset)) {
+                        dimensionPreset[key] = value;
+                    }
+                }
+            });
+
+            return dimensionPreset;
+        };
+
         // Add cars from template's tool sequence
         toolSequence.forEach((dimCode, idx) => {
             const toolInfo = getToolInfoFromDimension(dimCode);
             if (!toolInfo || !workflowRef.current) return;
+
+            // P1: Apply dimension-specific preset instead of full preset
+            const dimensionPreset = extractDimensionPreset(dimCode, loadedTemplate.input_preset);
 
             workflowRef.current.addCar({
                 toolId: DIMENSION_TO_TOOL_ID[dimCode] || dimCode,
@@ -282,12 +316,12 @@ function FlowPageContent() {
                 icon: toolInfo.icon,
                 color: toolInfo.color,
                 status: idx === 0 ? "ready" : "pending",
-                inputs: loadedTemplate.input_preset || {},
+                inputs: dimensionPreset,  // P1: dimension-specific preset
             });
         });
 
         setTemplateApplied(true);
-        console.log(`[Flow] Applied ${toolSequence.length} cars from template`);
+        console.log(`[Flow] Applied ${toolSequence.length} cars from template with dimension-specific presets`);
     }, [loadedTemplate, templateApplied, toolsById, isConfigLoading, getToolInfoFromDimension]);
 
     // Track agent-created cars for updating status
