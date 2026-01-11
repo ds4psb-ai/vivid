@@ -35,6 +35,8 @@
 | **앱 개발자 가이드** | `docs/DIMENSION_APP_DEVELOPER_GUIDE.md` | 앱 개발자 공통 가이드 (SSoT) |
 | **RAG Reliability** | [`docs/RAG_RELIABILITY.md`](docs/RAG_RELIABILITY.md) | Circuit Breaker, CRAG, 캐시 |
 | **NotebookLM Playwright** | [`docs/NOTEBOOKLM_PLAYWRIGHT.md`](docs/NOTEBOOKLM_PLAYWRIGHT.md) | RPC/UI 폴백 자동화 |
+| **Grafana Dashboard** | `config/grafana/rag_overview.json` | RAG 모니터링 15패널 (**NEW 2026-01-11**) |
+| **Chrome CDP Workflow** | `.agent/workflows/chrome-debug.md` | 9223 포트 사용 가이드 (**NEW**) |
 
 ---
 

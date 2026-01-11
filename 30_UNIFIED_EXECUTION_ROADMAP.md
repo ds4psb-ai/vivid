@@ -1,7 +1,7 @@
 # Crebit Execution Roadmap (통합본)
 
 **작성**: 2025-12-30 (통합)  
-**Updated**: 2026-01-10 (앱 고도화 로드맵 추가)  
+**Updated**: 2026-01-11 (RAG Observability Week 3-4 반영)  
 **통합 대상**: `03`, `07`, `19` 로드맵 문서  
 **상태**: ACTIVE (현재 코드베이스 기준)
 
@@ -31,11 +31,12 @@
 
 | 영역 | 내용 | 상태 |
 |------|------|------|
-| NotebookLM Adapter | 실제 API 연동 (현재 stub) | 🔄 |
+| NotebookLM Adapter | Playwright RPC/UI 폴백 구현, 5/7 auteur 활성화 | ✅ |
 | GA/RL 학습 | 프로토타입 존재, 실제 학습 루프 미완성 | 🔄 |
 | Event-driven Queue | Redis/Arq 설계됨, 운영용 API는 `_deprecated` | 🔄 |
 | Audio Coach | API 설계됨, 통합 진행 중 | 🔄 |
 | Teaching Artifact Derivation | Teaching 도구 결과를 Storyboard/Shot List/Data Table로 파생 | 🔄 |
+| **RAG Observability** | Router Decision Log, Grafana Dashboard, Quality Harness | ✅ **NEW** |
 
 ---
 
