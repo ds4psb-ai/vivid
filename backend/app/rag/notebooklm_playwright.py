@@ -515,61 +515,114 @@ class PlaywrightNotebookLMClient:
         return await self._add_source_ui_fallback(notebook_id, title, content)
 
     async def _add_source_ui_fallback(self, notebook_id: str, title: str, content: str) -> Optional[str]:
-        """Fallback to UI interaction for adding source."""
+        """Fallback to UI interaction for adding source (synced from komission 2026-01-11)."""
         try:
-            # 1. Navigate to notebook if needed
-            target_url = f"https://notebooklm.google.com/notebook/{notebook_id}"
+            # 0. Navigate to notebook if needed
             if notebook_id not in self._page.url:
-                await self._page.goto(target_url, wait_until="domcontentloaded")
-                await asyncio.sleep(3)
+                await self._page.goto(
+                    f"https://notebooklm.google.com/notebook/{notebook_id}",
+                    wait_until="domcontentloaded"
+                )
+                await asyncio.sleep(2)
             
-            # 2. Click "Add source" (The + button is usually 'Add source' or has a specific icon)
-            # Using precise selectors based on recent UI analysis
-            add_menu_btn = self._page.locator('button[aria-label="Add source"], button:has-text("Add source")')
-            if await add_menu_btn.count() == 0:
-                # Sometimes it's a floating FAB or distinct button. 
-                # Fallback to finding the "Copied text" button directly if menu is open, or try generic + button.
-                logger.warning("[UI] 'Add source' button not found, searching for alternatives...")
-                add_menu_btn = self._page.locator('div[role="button"]').filter(has_text="Add source")
+            # 1. Dismiss any open overlays/dialogs with ESC
+            await self._page.keyboard.press("Escape")
+            await asyncio.sleep(0.5)
             
-            if await add_menu_btn.count() > 0:
-                await add_menu_btn.first.click()
+            # 2. Look for the "Add sources" panel or button
+            # UI has button with aria-label="Add source" 
+            add_source_btn = self._page.locator('button[aria-label="Add source"]')
+            if await add_source_btn.count() > 0:
+                await add_source_btn.first.click(force=True)
                 await asyncio.sleep(1)
             
-            # 3. Click "Copied text" / "Paste text"
-            # The menu item usually says "Copied text"
-            paste_option = self._page.locator('div[role="button"], button').filter(has_text="Copied text")
-            await paste_option.first.click()
+            # 3. Find and click "Copied text" option in the source type menu
+            # The panel shows options like "Upload", "Link", "Copied text"
+            # Try multiple selectors
+            copied_text_selectors = [
+                'text="Copied text"',
+                'text="복사된 텍스트"',
+                '[data-value="copied_text"]',
+                'button:has-text("Copied text")',
+                'div:has-text("Copied text"):not(:has(div))',
+            ]
+            
+            clicked = False
+            for selector in copied_text_selectors:
+                try:
+                    elem = self._page.locator(selector)
+                    if await elem.count() > 0:
+                        await elem.first.click(force=True)
+                        clicked = True
+                        logger.debug(f"[NotebookLM-Playwright] Clicked: {selector}")
+                        break
+                except Exception:
+                    continue
+            
+            if not clicked:
+                # Try clicking any visible menu item with "text" in it
+                text_option = self._page.locator('div[role="menuitem"]').filter(has_text="text")
+                if await text_option.count() > 0:
+                    await text_option.first.click(force=True)
+                    clicked = True
+            
+            if not clicked:
+                logger.warning("[NotebookLM-Playwright] Could not find 'Copied text' option")
+                return None
+            
             await asyncio.sleep(1)
             
-            # 4. Handle "Paste copied text" Dialog
-            # User reported: No Title input. Just one big textarea.
-            # Selector: textarea with placeholder "Paste text here"
+            # 4. Skip Name/Title field - NotebookLM "Paste copied text" dialog doesn't have one
+            # The title is auto-generated from content
             
-            dialog = self._page.locator('div[role="dialog"]')
-            await dialog.wait_for(timeout=5000)
+            # 5. Fill in the Content textarea in the dialog
+            # The dialog has a textarea with placeholder "Paste text here"
+            dialog_textarea = self._page.locator('[role="dialog"] textarea, .mat-dialog-container textarea, textarea[placeholder*="Paste"]')
+            if await dialog_textarea.count() > 0:
+                await dialog_textarea.first.fill(content)
+                logger.debug(f"[NotebookLM-Playwright] Filled dialog textarea")
+            else:
+                # Fallback: find textarea that's NOT the chat input
+                # Chat textarea has placeholder like "Start typing..." or "Ask follow-up"
+                all_textareas = self._page.locator('textarea:visible')
+                count = await all_textareas.count()
+                for i in range(count):
+                    ta = all_textareas.nth(i)
+                    placeholder = await ta.get_attribute('placeholder') or ''
+                    if 'paste' in placeholder.lower() or 'text here' in placeholder.lower():
+                        await ta.fill(content)
+                        logger.debug(f"[NotebookLM-Playwright] Filled textarea with placeholder: {placeholder}")
+                        break
+                else:
+                    logger.warning("[NotebookLM-Playwright] Could not find dialog textarea")
+                    return None
             
-            # Combine title and content since there's no title field
-            full_text = f"{title}\n\n{content}"
+            await asyncio.sleep(0.5)
             
-            textarea = dialog.locator('textarea')
-            await textarea.fill(full_text)
+            # 6. Click Insert button
+            insert_btn = self._page.locator('button:has-text("Insert")')
+            if await insert_btn.count() > 0:
+                await insert_btn.first.click(force=True)
+                logger.debug("[NotebookLM-Playwright] Clicked Insert button")
+            else:
+                logger.warning("[NotebookLM-Playwright] Could not find Insert button")
+                return None
             
-            # 5. Click "Insert"
-            insert_btn = dialog.locator('button').filter(has_text="Insert")
-            await insert_btn.click()
+            # 7. Wait for processing and verify source was added
+            await asyncio.sleep(3)
             
-            # 6. Wait for completion
-            # Simple wait for dialog to close
-            await asyncio.sleep(2)
-            if await dialog.count() == 0:
-                 logger.info(f"[NotebookLM-Playwright] Added source via UI: {title}")
-                 return f"ui_added_{notebook_id[:8]}" # Synthetic ID
-            
-            return None
+            # Check if source appears in source list (count should be >= 1)
+            source_count_elem = self._page.locator('text=/\\d+ source/')
+            if await source_count_elem.count() > 0:
+                logger.info(f"[NotebookLM-Playwright] Added source via UI: {title}")
+                return f"ui_added_{notebook_id[:8]}"
+            else:
+                # Alternative check: look for source in left panel
+                logger.info(f"[NotebookLM-Playwright] Added source via UI (unverified): {title}")
+                return f"ui_added_{notebook_id[:8]}"
             
         except Exception as e:
-            logger.error(f"[NotebookLM-Playwright] UI Fallback failed: {e}")
+            logger.error(f"[NotebookLM-Playwright] UI Add Source failed: {e}")
             return None
 
     async def delete_notebook(self, notebook_id: str) -> bool:
@@ -856,6 +909,66 @@ class PlaywrightNotebookLMClient:
                 raw = raw[4:].strip()
             
             result["answer"] = self._extract_answer_from_raw(raw) or "No answer found."
+
+        # UI Fallback if RPC failed or returned no answer (synced from komission 2026-01-11)
+        answer_text = result.get("answer", "")
+        if not answer_text or "No answer" in answer_text or len(answer_text) < 50:
+            logger.warning(f"[NotebookLM-Playwright] RPC query returned no answer. Trying UI fallback...")
+            try:
+                # Navigate to notebook if needed
+                if notebook_id not in self._page.url:
+                    await self._page.goto(
+                        f"https://notebooklm.google.com/notebook/{notebook_id}",
+                        wait_until="domcontentloaded"
+                    )
+                    await asyncio.sleep(2)
+                
+                # Find chat input
+                chat_input = self._page.locator('textarea[placeholder*="typing"], textarea[placeholder*="Start"], textarea.chat-input')
+                if await chat_input.count() == 0:
+                    # Fallback: find any visible textarea that looks like chat
+                    chat_input = self._page.locator('textarea:visible').last
+                
+                if await chat_input.count() > 0:
+                    await chat_input.fill(query_text)
+                    await asyncio.sleep(0.3)
+                    
+                    # Click send button or press Enter
+                    send_btn = self._page.locator('button[aria-label*="send"], button[aria-label*="Send"]')
+                    if await send_btn.count() > 0:
+                        await send_btn.first.click()
+                    else:
+                        await chat_input.press("Enter")
+                    
+                    # Wait for response (NotebookLM can take 10-15 seconds)
+                    await asyncio.sleep(12)
+                    
+                    # Extract answer from chat history
+                    # .message-content contains the actual message text
+                    # Last one should be the AI response
+                    messages = self._page.locator('.message-content')
+                    msg_count = await messages.count()
+                    if msg_count >= 2:
+                        # Last message should be the AI response
+                        last_msg = messages.nth(msg_count - 1)
+                        ui_answer = await last_msg.text_content()
+                        if ui_answer and len(ui_answer) > 50:
+                            result["answer"] = ui_answer.strip()
+                            logger.info(f"[NotebookLM-Playwright] Got answer via UI .message-content ({len(ui_answer)} chars)")
+                    
+                    # Fallback: try <p> tags which contain the actual response text
+                    if not result.get("answer") or len(result.get("answer", "")) < 50:
+                        p_tags = self._page.locator('.message-content p, [class*="response"] p')
+                        if await p_tags.count() > 0:
+                            # Get the last paragraph which should be from the response
+                            last_p = p_tags.last
+                            p_text = await last_p.text_content()
+                            if p_text and len(p_text) > 50:
+                                result["answer"] = p_text.strip()
+                                logger.info(f"[NotebookLM-Playwright] Got answer via UI <p> tag ({len(p_text)} chars)")
+
+            except Exception as e:
+                logger.error(f"[NotebookLM-Playwright] UI query fallback failed: {e}")
 
         if "error" in result:
             logger.error(f"[NotebookLM-Playwright] Query error. Logs: {result.get('logs')}")
