@@ -50,6 +50,9 @@ Scope: Observability + quality evaluation + deprecation cleanup + operational ha
   - If `confidence < threshold` AND `not grounded`, force grounding.
 - **Automated A/B or shadow logging**
   - Log router decisions and compare against “would-have-used” strategy.
+- **Privacy & cardinality guard (mandatory)**
+  - Log `query_hash` only; never log raw query text.
+  - Keep labels bounded (dimension, strategy, stage only).
 
 **Deliverables**
 - `RouterDecisionLog` schema (dimension, score, chosen_strategy, latency, confidence).
@@ -104,6 +107,7 @@ Scope: Observability + quality evaluation + deprecation cleanup + operational ha
 **Deliverables**
 - `rg notebooklm_client` = 0
 - `rg get_rag_cache` only in tests/compat
+- **SSoT for deprecation safety**: `/Users/ted/.gemini/antigravity/brain/2d64b1b5-d57e-45e5-a082-32b2a90bf6a2/implementation_plan.md.resolved`
 
 **Inventory (surveyed)**
 | Location | Files | Size |
@@ -126,6 +130,7 @@ Scope: Observability + quality evaluation + deprecation cleanup + operational ha
 2) Confirm no doc refs: `rg "_deprecated|motion-legacy" docs`
 3) Delete empty folders and dead assets
 4) `rg` re-run to ensure zero references
+**Go Criteria**: import=0 AND doc refs=0
 
 **P1 Checklist (2–4h)**
 1) Identify all importers (see Import Report template below)
@@ -133,6 +138,7 @@ Scope: Observability + quality evaluation + deprecation cleanup + operational ha
 3) Add `DeprecationWarning` or structured log at shim boundary
 4) Update importers to new module
 5) Remove shim only after `rg` shows no usage
+**Go Criteria**: shim route verified + existing API smoke passes
 
 **P2 Checklist (4–8h)**
 1) Build legacy route mapping (see template below)
@@ -140,6 +146,7 @@ Scope: Observability + quality evaluation + deprecation cleanup + operational ha
 3) Add compatibility layer if needed (thin adapter)
 4) Migrate traffic + add logging
 5) Remove legacy endpoints after 1–2 release cycles
+**Go Criteria**: mapping complete + smoke tests pass + 1–2 release cycles elapsed
 
 **Import Usage Report Template**
 ```
@@ -167,6 +174,11 @@ Title: Legacy Router Mapping (capsules.py / ops.py)
 **Frontend Deprecation Notes**
 - Confirm route tree and lazy imports before delete.
 - Avoid removing shared components until import graph is clean.
+- Require 1-week telemetry on deprecated usage before deletion.
+
+**Test Gates (minimum)**
+- `cd backend && pytest -v tests/routers/test_dimension_sse.py`
+- `cd backend && pytest -v tests/e2e/test_rag_reliability.py`
 
 ---
 
