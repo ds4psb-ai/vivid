@@ -6,6 +6,7 @@ from typing import Optional
 from sqlalchemy import String, Boolean, DateTime, UniqueConstraint, ForeignKey, Integer, Text, Float, Index
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
+from pgvector.sqlalchemy import Vector
 
 from app.database import Base
 
@@ -852,5 +853,28 @@ class WorkflowState(Base):
     # Metadata
     meta: Mapped[dict] = mapped_column(JSONB, default=dict)
 
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class RagSemanticCache(Base):
+    """Semantic Cache storage with pgvector."""
+    __tablename__ = "rag_semantic_cache"
+    __table_args__ = (
+        Index("ix_rag_cache_created", "created_at"),
+        Index("ix_rag_cache_expires", "expires_at"),
+        # HNSW index for fast vector search (requires pgvector 0.5.0+)
+        # Index("ix_rag_cache_embedding", "embedding", postgresql_using="hnsw", postgresql_with={"m": 16, "ef_construction": 64}),
+    )
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)  # SHA256 hash
+    query_text: Mapped[str] = mapped_column(Text)
+    embedding: Mapped[Optional[list[float]]] = mapped_column(Vector(768), nullable=True)  # Vertex AI embedding size
+    response_json: Mapped[dict] = mapped_column(JSONB, default=dict)
+    auteur_key: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    dimension: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)
+    hit_count: Mapped[int] = mapped_column(Integer, default=0)
+    
+    expires_at: Mapped[datetime] = mapped_column(DateTime)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

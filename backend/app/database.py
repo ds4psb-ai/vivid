@@ -242,3 +242,38 @@ async def init_db(drop_all: bool = False) -> None:
             text("CREATE INDEX IF NOT EXISTS idx_analytics_events_created ON analytics_events(created_at)")
         )
 
+        # RAG Semantic Cache with pgvector (Week 2.5)
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+        
+        await conn.execute(
+            text("""
+                CREATE TABLE IF NOT EXISTS rag_semantic_cache (
+                    id VARCHAR(64) PRIMARY KEY,
+                    query_text TEXT NOT NULL,
+                    embedding vector(768),
+                    response_json JSONB DEFAULT '{}'::jsonb,
+                    auteur_key VARCHAR(64),
+                    dimension VARCHAR(16),
+                    hit_count INTEGER DEFAULT 0,
+                    expires_at TIMESTAMP NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+        )
+        
+        await conn.execute(
+            text("CREATE INDEX IF NOT EXISTS ix_rag_cache_created ON rag_semantic_cache(created_at)")
+        )
+        await conn.execute(
+            text("CREATE INDEX IF NOT EXISTS ix_rag_cache_expires ON rag_semantic_cache(expires_at)")
+        )
+        # HNSW index for fast vector search (requires pgvector 0.5.0+)
+        try:
+            await conn.execute(
+                text("CREATE INDEX IF NOT EXISTS ix_rag_cache_embedding ON rag_semantic_cache USING hnsw (embedding vector_cosine_ops)")
+            )
+        except Exception:
+            # Fallback for older pgvector or if index creation fails
+            pass
+
