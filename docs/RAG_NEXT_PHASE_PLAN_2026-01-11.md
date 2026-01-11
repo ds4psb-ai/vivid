@@ -105,6 +105,69 @@ Scope: Observability + quality evaluation + deprecation cleanup + operational ha
 - `rg notebooklm_client` = 0
 - `rg get_rag_cache` only in tests/compat
 
+**Inventory (surveyed)**
+| Location | Files | Size |
+| --- | --- | --- |
+| `backend/app/_deprecated/` | 23 | ~180KB |
+| `backend/app/routers/_deprecated/` | 20 | ~320KB |
+| `backend/app/agents/_deprecated/` | 7 | ~105KB |
+| `frontend` (4 dirs) | 24+ | ~200KB |
+| **Total** | **70+** | **~823KB** |
+
+**Risk Tiers**
+| Tier | Scope | Reason |
+| --- | --- | --- |
+| P0 | Empty folders + `motion-legacy` | Safe to delete once unused |
+| P1 | 5 high-risk files (auteur_templates/seed/adapters) | Still imported |
+| P2 | `capsules.py` (70KB), `ops.py` (52KB) | Large, complex |
+
+**P0 Checklist (10–20m)**
+1) Confirm no live imports: `rg "(_deprecated|motion-legacy)" backend frontend`
+2) Confirm no doc refs: `rg "_deprecated|motion-legacy" docs`
+3) Delete empty folders and dead assets
+4) `rg` re-run to ensure zero references
+
+**P1 Checklist (2–4h)**
+1) Identify all importers (see Import Report template below)
+2) Create shim or re-route to new module with same public API
+3) Add `DeprecationWarning` or structured log at shim boundary
+4) Update importers to new module
+5) Remove shim only after `rg` shows no usage
+
+**P2 Checklist (4–8h)**
+1) Build legacy route mapping (see template below)
+2) Define replacement endpoints + schemas
+3) Add compatibility layer if needed (thin adapter)
+4) Migrate traffic + add logging
+5) Remove legacy endpoints after 1–2 release cycles
+
+**Import Usage Report Template**
+```
+Title: Deprecated Import Report (YYYY-MM-DD)
+
+Commands:
+  rg --files -g '*_deprecated*'
+  rg "from .*_deprecated|import .*_deprecated|_deprecated" backend frontend
+
+Findings:
+| File | Import Path | Used By | Status | Notes |
+| --- | --- | --- | --- | --- |
+| path/to/file.py | app._deprecated.foo | backend/app/x.py | migrate | maps to app/foo.py |
+```
+
+**Large Router Mapping Template**
+```
+Title: Legacy Router Mapping (capsules.py / ops.py)
+
+| Legacy Route | Method | New Route | Request Schema | Response Schema | Dependencies | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| /api/legacy/capsule/run | POST | /api/dimension/run | RunRequest | RunResponse | rag_cache | planned |
+```
+
+**Frontend Deprecation Notes**
+- Confirm route tree and lazy imports before delete.
+- Avoid removing shared components until import graph is clean.
+
 ---
 
 ## 3) Metrics Targets (Initial)
@@ -134,4 +197,3 @@ Scope: Observability + quality evaluation + deprecation cleanup + operational ha
 1. Add error counter + p95/p99 dashboards
 2. Add RouterDecisionLog and telemetry export
 3. Launch cache tuning report
-
