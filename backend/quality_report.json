@@ -1,0 +1,30 @@
+{
+  "date": "2026-01-11",
+  "total_queries": 3,
+  "avg_confidence": 0.6,
+  "avg_groundedness": 0.6666666666666666,
+  "avg_relevance": 0.3333333333333333,
+  "details": [
+    {
+      "query": "봉준호 감독 스타일",
+      "confidence": 0.88,
+      "groundedness": 1.0,
+      "relevance": 1.0,
+      "strategy": "auteur_first"
+    },
+    {
+      "query": "왕가위 감독의 색감",
+      "confidence": 0.92,
+      "groundedness": 1.0,
+      "relevance": 0.0,
+      "strategy": "auteur_first"
+    },
+    {
+      "query": "스토리보드 제작 가이드",
+      "confidence": 0.0,
+      "groundedness": 0.0,
+      "relevance": 0.0,
+      "strategy": "dimension"
+    }
+  ]
+}
