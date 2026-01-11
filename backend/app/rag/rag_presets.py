@@ -344,7 +344,10 @@ def get_rag_preset(dimension_code: str) -> RAGPreset:
     config = get_dimension_config(dimension_code)
     if config and config.has_capability("rag"):
         rag_cap = config.get_capability("rag")
-        rag_config = rag_cap.config if rag_cap else {}
+        rag_yaml = rag_cap.config if rag_cap else {}
+        
+        # === 2025 Best Practice: 전역 default + YAML override ===
+        rag_config = merge_rag_config(rag_yaml)
         
         # YAML config에서 RAGPreset 생성
         mode = rag_config.get("mode", "auteur_only")

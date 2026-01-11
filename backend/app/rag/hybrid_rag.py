@@ -51,7 +51,7 @@ from app.rag.bm25_search import (
     get_dimension_bm25_index,
     FusedResult,
 )
-from app.rag.metrics import record_rag_query, record_rag_error
+from app.rag.metrics import record_rag_query, record_rag_error, track_rag_operation
 from app.rag.semantic_cache import get_semantic_cache
 
 logger = logging.getLogger(__name__)
@@ -295,6 +295,26 @@ async def hybrid_query(
     reranker_model = hints.get("reranker_model", "semantic-ranker-default-v1@latest")
     top_k = hints.get("top_k", 10)
     
+    # === Apply Lightweight Router (2025 Best Practice) ===
+    # _determine_strategy를 통해 복잡도 기반 전략 자동 조정
+    router_strategy, router_reranker, router_grounding = _determine_strategy(
+        query=query,
+        auteur_key=auteur_key,
+        dimension=dimension,
+        use_google_search=use_google_search,
+    )
+    
+    # Router 결과 반영 (hints가 없으면 router 결정 사용)
+    if not hints.get("use_reranker"):
+        use_reranker = router_reranker
+    if router_grounding:
+        use_google_search = True
+    
+    logger.debug(
+        f"[HybridRAG] Router: strategy={router_strategy}, "
+        f"reranker={use_reranker}, grounding={use_google_search}"
+    )
+    
     # === Step 1: Query Expansion ===
     effective_query = query
     expanded_queries: List[str] = []
@@ -505,6 +525,7 @@ async def hybrid_query(
     return result
 
 
+@track_rag_operation("auteur_first")
 async def _query_auteur_first(
     query: str,
     auteur_key: str,
@@ -565,6 +586,7 @@ async def _query_auteur_first(
     )
 
 
+@track_rag_operation("dimension_query")
 async def _query_dimension(
     query: str,
     dimension: str,
@@ -599,6 +621,7 @@ async def _query_dimension(
     )
 
 
+@track_rag_operation("parallel_query")
 async def _query_parallel(
     query: str,
     use_google_search: bool = True,
