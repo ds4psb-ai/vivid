@@ -1,16 +1,35 @@
 """
-Playwright-based NotebookLM Query Client
+Playwright-based NotebookLM Automation Client
 
-Uses real browser context to execute RPC queries, bypassing TLS fingerprint checks.
-Google binds cookies to browser fingerprint, so Python HTTP clients fail with 401.
-This module uses Playwright to run queries in a real Chromium browser context.
+Uses real browser context via Chrome DevTools Protocol (CDP) to execute RPC calls,
+bypassing Google's TLS fingerprint checks that reject Python HTTP clients.
+
+Architecture:
+    - Connects to Chrome with --remote-debugging-port=9223
+    - Reuses authenticated browser session (user must be logged into NotebookLM)
+    - Executes internal RPC calls via page.evaluate() JavaScript injection
+
+RPC Reference (verified 2026-01):
+    - CCqFvf: CreateNotebook
+    - izAoDd: AddSource (text, URL, YouTube)
+    - WWINqb: DeleteNotebook (params: [[notebook_id], [2]])
+    - wXbhsf: ListNotebooks
+    - GenerateFreeFormStreamed: Query (streaming endpoint)
 
 Usage:
     from app.rag.notebooklm_playwright import PlaywrightNotebookLMClient
     
-    async with PlaywrightNotebookLMClient() as client:
-        result = await client.query("ae5eb68f-...", "기생충에서 계단의 의미는?")
+    async with PlaywrightNotebookLMClient(cdp_port=9223) as client:
+        nb_id = await client.create_notebook("My Notebook")
+        source_id = await client.add_text_source(nb_id, "Title", "Content...")
+        result = await client.query(nb_id, "Question?", source_ids=[source_id])
         print(result["answer"])
+        await client.delete_notebook(nb_id)
+
+Prerequisites:
+    1. Chrome running with: --remote-debugging-port=9223
+    2. User logged into NotebookLM in that Chrome session
+    3. playwright package installed
 """
 
 import asyncio
@@ -18,13 +37,104 @@ import json
 import logging
 import os
 import re
+from functools import wraps
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, List, Optional, TypeVar
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
+# =============================================================================
+# Constants
+# =============================================================================
+
 # User data directory for persistent browser session
 BROWSER_DATA_DIR = Path.home() / ".notebooklm-mcp" / "playwright-profile"
+
+# RPC IDs - Verified 2026-01 (subject to change by Google)
+RPC_CREATE_NOTEBOOK = "CCqFvf"
+RPC_ADD_SOURCE = "izAoDd"
+RPC_DELETE_NOTEBOOK = "WWINqb"
+RPC_LIST_NOTEBOOKS = "wXbhsf"
+QUERY_ENDPOINT = "GenerateFreeFormStreamed"
+
+# Timeouts (milliseconds)
+DEFAULT_QUERY_TIMEOUT_MS = 60000
+DEFAULT_CRUD_TIMEOUT_MS = 30000
+
+# Retry configuration
+MAX_RETRIES = 3
+RETRY_DELAY_SECONDS = 1.0
+
+
+# =============================================================================
+# Exception Classes
+# =============================================================================
+
+class NotebookLMError(Exception):
+    """Base exception for NotebookLM operations."""
+    pass
+
+
+class NotebookLMAuthError(NotebookLMError):
+    """Authentication/login required."""
+    pass
+
+
+class NotebookLMRPCError(NotebookLMError):
+    """RPC call failed (400, 500, etc)."""
+    def __init__(self, message: str, status_code: int = 0, rpc_id: str = ""):
+        super().__init__(message)
+        self.status_code = status_code
+        self.rpc_id = rpc_id
+
+
+class NotebookLMTimeoutError(NotebookLMError):
+    """Operation timed out."""
+    pass
+
+
+# =============================================================================
+# Retry Decorator
+# =============================================================================
+
+T = TypeVar("T")
+
+
+def with_retry(
+    max_retries: int = MAX_RETRIES,
+    delay: float = RETRY_DELAY_SECONDS,
+    exceptions: tuple = (NotebookLMRPCError,),
+) -> Callable:
+    """Decorator for retrying async functions with exponential backoff."""
+    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        @wraps(func)
+        async def wrapper(*args, **kwargs) -> T:
+            last_exception = None
+            for attempt in range(max_retries):
+                try:
+                    return await func(*args, **kwargs)
+                except exceptions as e:
+                    last_exception = e
+                    if attempt < max_retries - 1:
+                        wait_time = delay * (2 ** attempt)
+                        logger.warning(
+                            f"[NotebookLM] {func.__name__} failed (attempt {attempt + 1}/{max_retries}): {e}. "
+                            f"Retrying in {wait_time:.1f}s..."
+                        )
+                        await asyncio.sleep(wait_time)
+            raise last_exception
+        return wrapper
+    return decorator
+
+
+
+
+@dataclass
+class NotebookInfo:
+    """Simple notebook info container."""
+    notebook_id: str
+    title: str
 
 
 class PlaywrightNotebookLMClient:
@@ -62,6 +172,10 @@ class PlaywrightNotebookLMClient:
     
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.close()
+
+    async def connect(self):
+        """Alias for _init_browser for API compatibility."""
+        await self._init_browser()
     
     async def _init_browser(self):
         """Initialize Playwright browser - CDP or persistent context."""
@@ -75,7 +189,7 @@ class PlaywrightNotebookLMClient:
             
             if self._use_cdp:
                 # CDP mode: Connect to existing Chrome with remote debugging
-                logger.info(f"[NotebookLM-Playwright] Connecting to Chrome CDP port {self.cdp_port}")
+                logger.info(f"[NotebookLM-CDP] Connecting to port {self.cdp_port}...")
                 self._browser = await self._playwright.chromium.connect_over_cdp(
                     f"http://localhost:{self.cdp_port}"
                 )
@@ -84,43 +198,42 @@ class PlaywrightNotebookLMClient:
                 contexts = self._browser.contexts
                 if contexts:
                     self._context = contexts[0]
-                    # Find NotebookLM page or use first page
-                    for page in self._context.pages:
-                        if "notebooklm.google.com" in page.url:
-                            self._page = page
-                            break
-                    if not self._page and self._context.pages:
-                        self._page = self._context.pages[0]
+                    # Find NotebookLM page (must be exact match)
+                    self._page = await self._find_notebooklm_page()
+                    
+                    if not self._page:
+                        # Create new page and navigate
+                        self._page = await self._context.new_page()
+                        await self._page.goto("https://notebooklm.google.com/", wait_until="domcontentloaded")
+                        await asyncio.sleep(2)
                 
                 if not self._page:
-                    self._page = await self._context.new_page()
+                    raise RuntimeError("No NotebookLM page available in CDP mode")
                     
-                logger.info(f"[NotebookLM-Playwright] Connected via CDP, page: {self._page.url}")
+                logger.info(f"[NotebookLM-CDP] Found existing tab: {self._page.url}")
                 
-                # Inject cookies from cached auth.json (Try auto-login)
-                await self._inject_cached_cookies()
             else:
-                # Standalone mode: Launch new browser with persistent profile
+                # Standalone mode: Launch real Chrome with persistent profile
                 BROWSER_DATA_DIR.mkdir(parents=True, exist_ok=True)
                 
                 self._context = await self._playwright.chromium.launch_persistent_context(
                     user_data_dir=str(BROWSER_DATA_DIR),
                     headless=self.headless,
+                    channel="chrome",
                     args=[
                         "--disable-blink-features=AutomationControlled",
                         "--no-sandbox",
                     ],
                     viewport={"width": 1280, "height": 800},
                     locale="ko-KR",
+                    ignore_https_errors=True,
                 )
                 
-                # Get or create page
                 if self._context.pages:
                     self._page = self._context.pages[0]
                 else:
                     self._page = await self._context.new_page()
                 
-                # Inject cookies from cached auth.json if available
                 await self._inject_cached_cookies()
             
             self._initialized = True
@@ -130,9 +243,22 @@ class PlaywrightNotebookLMClient:
             logger.error(f"[NotebookLM-Playwright] Failed to init browser: {e}")
             raise
     
+    async def _find_notebooklm_page(self):
+        """Find existing NotebookLM page in CDP context."""
+        if not self._context:
+            return None
+        
+        for page in self._context.pages:
+            url = page.url.lower()
+            is_nlm = ("notebooklm.google" in url) and ("accounts.google.com" not in url)
+            if is_nlm:
+                return page
+        
+        return None
+
     async def close(self):
         """Close browser and cleanup."""
-        if self._context:
+        if self._context and not self._use_cdp:
             await self._context.close()
         if self._playwright:
             await self._playwright.stop()
@@ -144,7 +270,6 @@ class PlaywrightNotebookLMClient:
         auth_file = Path.home() / ".notebooklm-mcp" / "auth.json"
         
         if not auth_file.exists():
-            logger.debug("[NotebookLM-Playwright] No cached auth.json found")
             return
         
         try:
@@ -155,65 +280,408 @@ class PlaywrightNotebookLMClient:
             if not cookies:
                 return
             
-            # Convert to Playwright cookie format
+            import time
             playwright_cookies = []
             for name, value in cookies.items():
-                playwright_cookies.append({
+                domain = "notebooklm.google.com" if name.startswith("__Host-") else ".google.com"
+                cookie = {
                     "name": name,
                     "value": value,
-                    "domain": ".google.com",
+                    "domain": domain,
                     "path": "/",
+                    "expires": time.time() + 86400 * 30,
                     "httpOnly": name.startswith("__Secure") or name in ("SID", "HSID", "SSID"),
-                    "secure": name.startswith("__Secure") or name in ("SID", "HSID", "SSID", "SIDCC"),
-                })
+                    "secure": True,
+                    "sameSite": "None" if name.startswith("__Secure-3P") else "Lax",
+                }
+                playwright_cookies.append(cookie)
             
-            # Add cookies to context
             await self._context.add_cookies(playwright_cookies)
-            logger.info(f"[NotebookLM-Playwright] Injected {len(playwright_cookies)} cookies from cache")
+            logger.info(f"[NotebookLM-Playwright] Injected {len(playwright_cookies)} cookies")
             
         except Exception as e:
             logger.warning(f"[NotebookLM-Playwright] Failed to inject cookies: {e}")
     
     async def ensure_logged_in(self) -> bool:
-        """
-        Check if logged into NotebookLM and navigate to it.
-        
-        Returns:
-            True if logged in, False if login required
-        """
+        """Check if logged into NotebookLM."""
         if "notebooklm.google.com" not in self._page.url:
              await self._page.goto("https://notebooklm.google.com/", wait_until="domcontentloaded")
-             await asyncio.sleep(2) # Wait for redirects
+             await asyncio.sleep(2)
         
-        # Check if redirected to login
         current_url = self._page.url
         if "accounts.google.com" in current_url or "signin" in current_url:
-            logger.warning("[NotebookLM-Playwright] Login required (redirected to accounts)")
+            logger.warning("[NotebookLM-Playwright] Login required")
             return False
         
-        # Check for notebook list or welcome page
+        return "notebooklm.google.com" in current_url
+
+    async def create_notebook(self, title: str = "Pattern Analysis") -> str:
+        """Create a new notebook."""
+        if not self._initialized:
+            await self._init_browser()
+        
+        if "notebooklm.google" not in self._page.url.lower():
+            raise RuntimeError("NotebookLM 탭이 필요합니다.")
+        
+        # Navigate to homepage if currently inside a notebook
+        if "/notebook/" in self._page.url:
+            await self._page.goto("https://notebooklm.google.com/", wait_until="domcontentloaded")
+            await asyncio.sleep(2)
+        
+        js_create = """
+            async () => {
+                const logs = [];
+                function log(msg) { logs.push(msg); }
+                
+                try {
+                    const pageSource = document.documentElement.outerHTML;
+                    const csrfMatch = pageSource.match(/"SNlM0e":"([^"]+)"/);
+                    const csrf = csrfMatch ? csrfMatch[1] : null;
+                    const sidMatch = pageSource.match(/"FdrFJe":"([^"]+)"/);
+                    const sid = sidMatch ? sidMatch[1] : null;
+                    
+                    const bl = (window.WIZ_global_data && window.WIZ_global_data.cfb2h) 
+                        ? window.WIZ_global_data.cfb2h 
+                        : "boq_labs-tailwind-frontend_20251221.14_p0";
+                    
+                    if (!csrf) return { error: "CSRF token not found", logs: logs };
+                    
+                    const reqIdBase = Math.floor(Math.random() * 900000) + 100000;
+                    const title = TITLE_PLACEHOLDER;
+                    
+                    // CCqFvf RPC for create notebook (verified working)
+                    // Params: [title, null, null, [2], [1, null*13, [1]]]
+                    const defaults = [1].concat(Array(13).fill(null)).concat([[1]]);
+                    const params = [title, null, null, [2], defaults];
+                    const rpcEnvelope = [[["CCqFvf", JSON.stringify(params), null, "generic"]]];
+                    
+                    const rpcBody = new URLSearchParams();
+                    rpcBody.append("f.req", JSON.stringify(rpcEnvelope));
+                    rpcBody.append("at", csrf);
+                    
+                    const rpcUrl = `https://notebooklm.google.com/_/LabsTailwindUi/data/batchexecute?rpcids=CCqFvf&source-path=/&f.sid=${sid}&bl=${bl}&hl=en&_reqid=${reqIdBase}&rt=c`;
+                    
+                    log("Sending CCqFvf CreateNotebook RPC...");
+                    const rpcRes = await fetch(rpcUrl, {
+                        method: "POST",
+                        headers: {"Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"},
+                        body: rpcBody.toString(),
+                        credentials: "include"
+                    });
+                    
+                    const rpcText = await rpcRes.text();
+                    log(`RPC Response length: ${rpcText.length}`);
+                    
+                    // Parse response to extract notebook ID
+                    const cleaned = rpcText.replace(/^\\)\\]\\}'\\n/, '');
+                    const lines = cleaned.split('\\n');
+                    
+                    for (const line of lines) {
+                        try {
+                            const parsed = JSON.parse(line);
+                            if (parsed[0] && parsed[0][1] === "CCqFvf") {
+                                const data = JSON.parse(parsed[0][2]);
+                                // Structure: [title, sources, notebook_id, ...]
+                                if (data && data.length >= 3 && data[2]) {
+                                    return { success: true, notebook_id: data[2], logs: logs };
+                                }
+                            }
+                        } catch(e) {}
+                    }
+                    
+                    // Fallback: regex UUID
+                    const uuidPattern = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+                    const matches = rpcText.match(uuidPattern);
+                    if (matches && matches.length > 0) {
+                        return { success: true, notebook_id: matches[0], logs: logs };
+                    }
+                    
+                    return { error: "No notebook ID in response", raw: rpcText.substring(0, 500), logs: logs };
+                    
+                } catch (e) {
+                    return { error: e.message, logs: logs };
+                }
+            }
+        """
+        
+        js_create = js_create.replace("TITLE_PLACEHOLDER", json.dumps(title))
+        result = await self._page.evaluate(js_create)
+        
+        if result.get("success") and result.get("notebook_id"):
+            notebook_id = result.get("notebook_id")
+            logger.info(f"[NotebookLM-Playwright] Created notebook: {notebook_id}")
+            return notebook_id
+            
+        if result.get("error"):
+            raise RuntimeError(f"Create notebook failed: {result['error']}")
+        raise RuntimeError("Create notebook failed (Unknown)")
+
+    async def add_text_source(self, notebook_id: str, title: str, content: str) -> Optional[str]:
+        """
+        Add a text source to a notebook.
+        
+        Returns:
+            source_id (str) on success, None on failure
+        """
+        if not self._initialized:
+            await self._init_browser()
+        
+        js_add_source = """
+            async () => {
+                try {
+                    const pageSource = document.documentElement.outerHTML;
+                    const csrfMatch = pageSource.match(/"SNlM0e":"([^"]+)"/);
+                    const csrf = csrfMatch ? csrfMatch[1] : null;
+                    const sidMatch = pageSource.match(/"FdrFJe":"([^"]+)"/);
+                    const sid = sidMatch ? sidMatch[1] : null;
+                    
+                    const bl = (window.WIZ_global_data && window.WIZ_global_data.cfb2h) 
+                        ? window.WIZ_global_data.cfb2h 
+                        : "boq_labs-tailwind-frontend_20251221.14_p0";
+                    
+                    if (!csrf) return { error: "CSRF token not found" };
+                    
+                    const notebookId = "NOTEBOOK_ID_PLACEHOLDER";
+                    const sourceTitle = SOURCE_TITLE_PLACEHOLDER;
+                    const sourceContent = SOURCE_CONTENT_PLACEHOLDER;
+                    
+                    const reqIdBase = Math.floor(Math.random() * 900000) + 100000;
+                    
+                    // izAoDd RPC for add text source
+                    const sourceData = [null, [sourceTitle, sourceContent], null, 2, null, null, null, null, null, null, 1];
+                    const defaults = [1].concat(Array(9).fill(null)).concat([[1]]);
+                    const params = [[sourceData], notebookId, [2], defaults];
+                    
+                    const rpcEnvelope = [[["izAoDd", JSON.stringify(params), null, "generic"]]];
+                    
+                    const rpcBody = new URLSearchParams();
+                    rpcBody.append("f.req", JSON.stringify(rpcEnvelope));
+                    rpcBody.append("at", csrf);
+                    
+                    const rpcUrl = `https://notebooklm.google.com/_/LabsTailwindUi/data/batchexecute?rpcids=izAoDd&source-path=/notebook/${notebookId}&f.sid=${sid}&bl=${bl}&hl=en&_reqid=${reqIdBase}&rt=c`;
+                    
+                    const rpcRes = await fetch(rpcUrl, {
+                        method: "POST",
+                        headers: {"Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"},
+                        body: rpcBody.toString(),
+                        credentials: "include"
+                    });
+                    
+                    if (!rpcRes.ok) {
+                        return { error: `HTTP ${rpcRes.status}` };
+                    }
+                    
+                    // Parse response to extract source_id
+                    const rpcText = await rpcRes.text();
+                    const cleaned = rpcText.replace(/^\\)\\]\\}'\\n/, '');
+                    const lines = cleaned.split('\\n');
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('[')) {
+                            try {
+                                const parsed = JSON.parse(line);
+                                if (parsed[0] && parsed[0][1] === "izAoDd") {
+                                    const data = JSON.parse(parsed[0][2]);
+                                    // Structure: [[[[source_id], title, ...], ...]]
+                                    if (data && data[0] && data[0][0] && data[0][0][0] && data[0][0][0][0]) {
+                                        const sourceId = data[0][0][0][0];
+                                        return { success: true, source_id: sourceId };
+                                    }
+                                }
+                            } catch(e) {}
+                        }
+                    }
+                    
+                    return { success: true, source_id: null };  // Added but couldn't extract ID
+                    
+                } catch (e) {
+                    return { error: e.message };
+                }
+            }
+        """
+        
+        js_add_source = js_add_source.replace("NOTEBOOK_ID_PLACEHOLDER", notebook_id)
+        js_add_source = js_add_source.replace("SOURCE_TITLE_PLACEHOLDER", json.dumps(title))
+        js_add_source = js_add_source.replace("SOURCE_CONTENT_PLACEHOLDER", json.dumps(content))
+        
+        result = await self._page.evaluate(js_add_source)
+        
+        if result.get("success"):
+            source_id = result.get("source_id")
+            logger.info(f"[NotebookLM-Playwright] Added source: {title} (id: {source_id})")
+            return source_id
+        
+        logger.warning(f"[NotebookLM-Playwright] RPC Add source failed: {result}. Trying UI fallback...")
+        return await self._add_source_ui_fallback(notebook_id, title, content)
+
+    async def _add_source_ui_fallback(self, notebook_id: str, title: str, content: str) -> Optional[str]:
+        """Fallback to UI interaction for adding source."""
         try:
-            # Try to wait for common elements, but don't fail if not found immediately
-            # Just relying on URL being notebooklm.google.com is strong enough indicator usually
-            try:
-                await self._page.wait_for_selector("text=Recent Notebooks", timeout=3000)
-            except Exception:
-                pass  # Selector not found, that's OK
-                
-            if "notebooklm.google.com" in current_url:
-                logger.info("[NotebookLM-Playwright] Logged in successfully (URL check)")
-                return True
-                
-            logger.warning("[NotebookLM-Playwright] Not on NotebookLM URL")
-            return False
+            # 1. Navigate to notebook if needed
+            target_url = f"https://notebooklm.google.com/notebook/{notebook_id}"
+            if notebook_id not in self._page.url:
+                await self._page.goto(target_url, wait_until="domcontentloaded")
+                await asyncio.sleep(3)
+            
+            # 2. Click "Add source" (The + button is usually 'Add source' or has a specific icon)
+            # Using precise selectors based on recent UI analysis
+            add_menu_btn = self._page.locator('button[aria-label="Add source"], button:has-text("Add source")')
+            if await add_menu_btn.count() == 0:
+                # Sometimes it's a floating FAB or distinct button. 
+                # Fallback to finding the "Copied text" button directly if menu is open, or try generic + button.
+                logger.warning("[UI] 'Add source' button not found, searching for alternatives...")
+                add_menu_btn = self._page.locator('div[role="button"]').filter(has_text="Add source")
+            
+            if await add_menu_btn.count() > 0:
+                await add_menu_btn.first.click()
+                await asyncio.sleep(1)
+            
+            # 3. Click "Copied text" / "Paste text"
+            # The menu item usually says "Copied text"
+            paste_option = self._page.locator('div[role="button"], button').filter(has_text="Copied text")
+            await paste_option.first.click()
+            await asyncio.sleep(1)
+            
+            # 4. Handle "Paste copied text" Dialog
+            # User reported: No Title input. Just one big textarea.
+            # Selector: textarea with placeholder "Paste text here"
+            
+            dialog = self._page.locator('div[role="dialog"]')
+            await dialog.wait_for(timeout=5000)
+            
+            # Combine title and content since there's no title field
+            full_text = f"{title}\n\n{content}"
+            
+            textarea = dialog.locator('textarea')
+            await textarea.fill(full_text)
+            
+            # 5. Click "Insert"
+            insert_btn = dialog.locator('button').filter(has_text="Insert")
+            await insert_btn.click()
+            
+            # 6. Wait for completion
+            # Simple wait for dialog to close
+            await asyncio.sleep(2)
+            if await dialog.count() == 0:
+                 logger.info(f"[NotebookLM-Playwright] Added source via UI: {title}")
+                 return f"ui_added_{notebook_id[:8]}" # Synthetic ID
+            
+            return None
+            
         except Exception as e:
-            # Fallback
-            return "notebooklm.google.com" in current_url
+            logger.error(f"[NotebookLM-Playwright] UI Fallback failed: {e}")
+            return None
+
+    async def delete_notebook(self, notebook_id: str) -> bool:
+        """Delete a notebook with RPC first, then UI fallback."""
+        if not self._initialized:
+            await self._init_browser()
+        
+        # Try RPC first
+        js_delete = """
+            async () => {
+                const logs = [];
+                function log(msg) { logs.push(msg); }
+                
+                try {
+                    const pageSource = document.documentElement.outerHTML;
+                    const csrfMatch = pageSource.match(/"SNlM0e":"([^"]+)"/);
+                    const csrf = csrfMatch ? csrfMatch[1] : null;
+                    const sidMatch = pageSource.match(/"FdrFJe":"([^"]+)"/);
+                    const sid = sidMatch ? sidMatch[1] : null;
+                    
+                    const bl = (window.WIZ_global_data && window.WIZ_global_data.cfb2h) 
+                        ? window.WIZ_global_data.cfb2h 
+                        : "boq_labs-tailwind-frontend_20251221.14_p0";
+                    
+                    const notebookId = "NOTEBOOK_ID_PLACEHOLDER";
+                    const reqIdBase = Math.floor(Math.random() * 900000) + 100000;
+                    
+                    log(`Deleting notebook: ${notebookId}`);
+                    
+                    // Try A0x2ad (archive) and WWINqb (delete) RPCs
+                    const params = [[notebookId], [2]];  // Wrapped format
+                    const rpcEnvelope = [[["WWINqb", JSON.stringify(params), null, "generic"]]];
+                    
+                    const rpcBody = new URLSearchParams();
+                    rpcBody.append("f.req", JSON.stringify(rpcEnvelope));
+                    rpcBody.append("at", csrf);
+                    
+                    const rpcUrl = `https://notebooklm.google.com/_/LabsTailwindUi/data/batchexecute?rpcids=WWINqb&f.sid=${sid}&bl=${bl}&hl=en&_reqid=${reqIdBase}&rt=c`;
+                    
+                    const rpcRes = await fetch(rpcUrl, {
+                        method: "POST",
+                        headers: {"Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"},
+                        body: rpcBody.toString(),
+                        credentials: "include"
+                    });
+                    
+                    log(`RPC Status: ${rpcRes.status}, Length: ${(await rpcRes.clone().text()).length}`);
+                    
+                    return { success: rpcRes.ok, status: rpcRes.status, logs: logs };
+                } catch (e) {
+                    return { error: e.message, logs: logs };
+                }
+            }
+        """
+        
+        js_delete = js_delete.replace("NOTEBOOK_ID_PLACEHOLDER", notebook_id)
+        result = await self._page.evaluate(js_delete)
+        
+        if result.get("success"):
+            logger.info(f"[NotebookLM-Playwright] Deleted notebook via RPC: {notebook_id}")
+            return True
+        
+        # RPC failed, try UI fallback
+        logger.warning(f"[NotebookLM-Playwright] RPC Delete failed: {result}. Trying UI fallback...")
+        
+        try:
+            # 1. Navigate to home page
+            await self._page.goto("https://notebooklm.google.com/", wait_until="domcontentloaded")
+            await asyncio.sleep(2)
+            
+            # 2. Find and click the first "Project Actions Menu" button (most recent notebook)
+            menu_buttons = self._page.locator('button[aria-label="Project Actions Menu"]')
+            count = await menu_buttons.count()
+            
+            if count == 0:
+                logger.warning("[NotebookLM-Playwright] No notebook menu buttons found")
+                return False
+            
+            # Click first menu (most recently created notebook)
+            await menu_buttons.first.click(force=True)
+            await asyncio.sleep(0.5)
+            
+            # 3. Click "Delete" option - menu text is "delete\nDelete" (icon + text)
+            delete_option = self._page.locator('[role="menuitem"]').filter(has_text="Delete")
+            
+            if await delete_option.count() > 0:
+                await delete_option.first.click(force=True)
+                await asyncio.sleep(1)
+                
+                # 4. Confirm deletion if dialog appears
+                confirm_btn = self._page.locator('button:has-text("Delete"), button:has-text("삭제"), button:has-text("Confirm")')
+                if await confirm_btn.count() > 0:
+                    await confirm_btn.first.click(force=True)
+                    await asyncio.sleep(1)
+                
+                logger.info(f"[NotebookLM-Playwright] Deleted notebook via UI: {notebook_id}")
+                return True
+            else:
+                # Close menu
+                await self._page.keyboard.press("Escape")
+                logger.warning("[NotebookLM-Playwright] 'Delete' option not found in menu")
+                return False
+            
+        except Exception as e:
+            logger.error(f"[NotebookLM-Playwright] UI Delete failed: {e}")
+            return False
 
     async def query(
         self,
         notebook_id: str,
         query_text: str,
+        source_ids: Optional[List[str]] = None,
         timeout_ms: int = 60000,
     ) -> Dict[str, Any]:
         """
@@ -222,7 +690,8 @@ class PlaywrightNotebookLMClient:
         Args:
             notebook_id: The notebook UUID
             query_text: The question to ask
-            timeout_ms: Query timeout in milliseconds (increased for research/streaming)
+            source_ids: Optional list of source IDs to query (bypasses auto-detection)
+            timeout_ms: Query timeout in milliseconds
             
         Returns:
             Dict with answer, sources, and metadata
@@ -230,9 +699,8 @@ class PlaywrightNotebookLMClient:
         if not self._initialized:
             await self._init_browser()
         
-        # Navigate to notebook if needed
+        # *** CRITICAL: Navigate to notebook page before querying ***
         notebook_url = f"https://notebooklm.google.com/notebook/{notebook_id}"
-        # Only navigate if strict match fails (ignoring params)
         if notebook_id not in self._page.url:
             await self._page.goto(notebook_url, wait_until="domcontentloaded")
             await asyncio.sleep(2)
@@ -241,8 +709,10 @@ class PlaywrightNotebookLMClient:
         if "accounts.google.com" in self._page.url:
             raise RuntimeError("Login required. Run interactive login first.")
         
+        # If source_ids provided, use them directly (cleanest path, avoids owner ID confusion)
+        source_ids_json = json.dumps(source_ids if source_ids else [])
+        
         # Execute RPC query via JavaScript in browser context
-        # Use format() instead of f-string to avoid escaping issues with JS code
         js_code = """
             async () => {
                 const logs = [];
@@ -251,91 +721,88 @@ class PlaywrightNotebookLMClient:
                 try {
                     log("Starting query...");
                     
-                    // Extract tokens & BL version
                     const pageSource = document.documentElement.outerHTML;
                     const csrfMatch = pageSource.match(/"SNlM0e":"([^"]+)"/);
                     const csrf = csrfMatch ? csrfMatch[1] : null;
                     const sidMatch = pageSource.match(/"FdrFJe":"([^"]+)"/);
                     const sid = sidMatch ? sidMatch[1] : null;
                     
-                    // Get dynamic backend version (bl)
                     const bl = (window.WIZ_global_data && window.WIZ_global_data.cfb2h) 
                         ? window.WIZ_global_data.cfb2h 
-                        : "boq_labs-tailwind-frontend_20251221.14_p0"; // Fallback
+                        : "boq_labs-tailwind-frontend_20251221.14_p0";
                     
                     log("BL Version: " + bl);
 
-                    if (!csrf) {
-                        return { error: "CSRF token not found", logs: logs };
-                    }
+                    if (!csrf) return { error: "CSRF token not found", logs: logs };
 
                     const notebookId = "NOTEBOOK_ID_PLACEHOLDER";
                     const query = QUERY_PLACEHOLDER;
+                    const providedSourceIds = PROVIDED_SOURCE_IDS_PLACEHOLDER;
                     const reqIdBase = Math.floor(Math.random() * 900000) + 100000;
 
-                    // 1. Fetch Source IDs using rLM1Ne (GetNotebook)
-                    let sourceIds = [];
-                    try {
-                        log("Fetching Source IDs via rLM1Ne...");
-                        const getNotebookParams = [notebookId, null, [2], null, 0];
-                        const rpcEnvelope = [[["rLM1Ne", JSON.stringify(getNotebookParams), null, "generic"]]];
-                        
-                        const rpcBody = new URLSearchParams();
-                        rpcBody.append("f.req", JSON.stringify(rpcEnvelope));
-                        rpcBody.append("at", csrf);
-                        
-                        const rpcUrl = `https://notebooklm.google.com/_/LabsTailwindUi/data/batchexecute?rpcids=rLM1Ne&source-path=/notebook/${notebookId}&f.sid=${sid}&bl=${bl}&hl=en&_reqid=${reqIdBase}&rt=c`;
-                        
-                        const rpcRes = await fetch(rpcUrl, {
-                            method: "POST",
-                            headers: {"Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"},
-                            body: rpcBody.toString(),
-                            credentials: "include"
-                        });
-                        
-                        const rpcText = await rpcRes.text();
-                        const cleaned = rpcText.replace(/^\\)\\]\\}'\\n/, '');
-                        const lines = cleaned.split('\\n');
-                        
-                        for (const line of lines) {
-                            if (line.startsWith('[')) {
-                                const parsed = JSON.parse(line);
-                                if (parsed[0] && parsed[0][1] === "rLM1Ne") {
-                                    log("Found rLM1Ne response chunk");
-                                    const data1 = JSON.parse(parsed[0][2]);
-                                    
-                                    // Robust Regex Extraction for UUIDs
-                                    // Structure parsing is fragile, so we find all UUIDs in the JSON string
-                                    // and assume they are source IDs (except the notebook ID itself)
-                                    const dataStr = JSON.stringify(data1);
-                                    // Regex for UUIDs
-                                    const uuidPattern = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
-                                    const matches = dataStr.match(uuidPattern);
-                                    
-                                    if (matches) {
-                                        const found = new Set(matches);
-                                        found.delete(notebookId); // Remove notebook ID
-                                        sourceIds = Array.from(found);
-                                    }
+                    // Use provided source_ids if available, else fetch via wXbhsf
+                    let sourceIds = providedSourceIds;
+                    
+                    if (sourceIds.length === 0) {
+                        log("No source_ids provided, fetching via wXbhsf...");
+                        try {
+                            const listParams = [null, 1, null, [2]];
+                            const rpcEnvelope = [[["wXbhsf", JSON.stringify(listParams), null, "generic"]]];
+                            
+                            const rpcBody = new URLSearchParams();
+                            rpcBody.append("f.req", JSON.stringify(rpcEnvelope));
+                            rpcBody.append("at", csrf);
+                            
+                            const rpcUrl = `https://notebooklm.google.com/_/LabsTailwindUi/data/batchexecute?rpcids=wXbhsf&source-path=/&f.sid=${sid}&bl=${bl}&hl=en&_reqid=${reqIdBase}&rt=c`;
+                            
+                            const rpcRes = await fetch(rpcUrl, {
+                                method: "POST",
+                                headers: {"Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"},
+                                body: rpcBody.toString(),
+                                credentials: "include"
+                            });
+                            
+                            const rpcText = await rpcRes.text();
+                            const cleaned = rpcText.replace(/^\\)\\]\\}'\\n/, '');
+                            const lines = cleaned.split('\\n');
+                            
+                            for (const line of lines) {
+                                if (line.startsWith('[')) {
+                                    try {
+                                        const parsed = JSON.parse(line);
+                                        if (parsed[0] && parsed[0][1] === "wXbhsf") {
+                                            const data = JSON.parse(parsed[0][2]);
+                                            if (data && data[0] && Array.isArray(data[0])) {
+                                                const notebook = data[0].find(nb => nb && nb[2] === notebookId);
+                                                if (notebook && notebook[1] && Array.isArray(notebook[1])) {
+                                                    sourceIds = notebook[1].map(s => {
+                                                        if (s && s[0] && Array.isArray(s[0])) return s[0][0];
+                                                        return null;
+                                                    }).filter(id => id);
+                                                }
+                                            }
+                                        }
+                                    } catch(e) {}
                                 }
                             }
+                        } catch (e) {
+                            log(`wXbhsf Error: ${e.message}`);
                         }
-                    } catch (e) {
-                         log(`RPC Error: ${e.message}`);
+                    } else {
+                        log(`Using ${sourceIds.length} provided source IDs`);
                     }
                     
-                    log(`Extracted Source IDs: ${sourceIds.length} found`);
+                    log(`Source IDs: ${sourceIds.length} total`);
 
                     // 2. Execute Query using GenerateFreeFormStreamed
                     const conversationId = crypto.randomUUID();
-
-                    // Sources structure: [[[sid]]] for each
-                    const sourcesArray = sourceIds.map(sid => [[[sid]]]);
+                    // Sources structure: [[sid]] per item (2 brackets, wrapped in outer array becomes 3)
+                    const sourcesArray = sourceIds.map(sid => [[sid]]);
 
                     const params = [
                         sourcesArray,
                         query,
-                        null,  // conversation history (null for new)
+                        null,  // conversation history
                         [2, null, [1]],
                         conversationId
                     ];
@@ -351,7 +818,10 @@ class PlaywrightNotebookLMClient:
                     log("Sending Stream Query...");
                     const response = await fetch(url, {
                         method: "POST",
-                        headers: {"Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"},
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+                            "X-Same-Domain": "1"
+                        },
                         body: formData.toString(),
                         credentials: "include"
                     });
@@ -363,7 +833,7 @@ class PlaywrightNotebookLMClient:
                         status: response.status,
                         success: response.ok,
                         source_count: sourceIds.length,
-                        raw_response: text.substring(0, 50000), // Larger buffer
+                        raw_response: text.substring(text.length > 100000 ? text.length - 100000 : 0),
                         notebook_id: notebookId,
                         logs: logs
                     };
@@ -373,9 +843,9 @@ class PlaywrightNotebookLMClient:
             }
         """
 
-        # Replace placeholders
         js_code = js_code.replace("NOTEBOOK_ID_PLACEHOLDER", notebook_id)
         js_code = js_code.replace("QUERY_PLACEHOLDER", json.dumps(query_text))
+        js_code = js_code.replace("PROVIDED_SOURCE_IDS_PLACEHOLDER", source_ids_json)
 
         result = await self._page.evaluate(js_code)
         
@@ -385,7 +855,7 @@ class PlaywrightNotebookLMClient:
             if raw.startswith(")]}'"):
                 raw = raw[4:].strip()
             
-            result["answer"] = self._extract_answer_from_raw(raw) or "No answer found (extraction failed)."
+            result["answer"] = self._extract_answer_from_raw(raw) or "No answer found."
 
         if "error" in result:
             logger.error(f"[NotebookLM-Playwright] Query error. Logs: {result.get('logs')}")
@@ -395,43 +865,80 @@ class PlaywrightNotebookLMClient:
         return result
 
     def _extract_answer_from_raw(self, raw_text: str) -> Optional[str]:
-        """Attempt to extract the main answer text from the complex JSON stream."""
+        """Extract the main answer text from the complex JSON stream.
+        
+        NotebookLM returns JSON-escaped markdown in streaming chunks.
+        The final answer is typically in the last chunks.
+        """
         try:
-            # Find all string literals > 50 chars
-            strings = re.findall(r'"([^"]{50,})"', raw_text)
-            if not strings:
-                return None
+            # Method 1: Look for wrb.fr response pattern with markdown content
+            # Pattern: ["wrb.fr",null,"[[\"**Answer text...
+            import json
             
+            # Find all wrb.fr chunks
+            wrb_pattern = r'\["wrb\.fr",null,"(\[\[.*?)"\]'
+            matches = re.findall(wrb_pattern, raw_text)
+            
+            all_text = []
+            for match in matches:
+                try:
+                    # Unescape the JSON string
+                    unescaped = match.replace('\\n', '\n').replace('\\"', '"')
+                    # Try to parse the inner JSON
+                    inner = json.loads(unescaped)
+                    if inner and isinstance(inner, list) and len(inner) > 0:
+                        # Extract text from nested structure
+                        if isinstance(inner[0], str):
+                            all_text.append(inner[0])
+                        elif isinstance(inner[0], list) and len(inner[0]) > 0:
+                            if isinstance(inner[0][0], str):
+                                all_text.append(inner[0][0])
+                except Exception:
+                    pass
+            
+            if all_text:
+                # Combine all chunks and clean up markdown
+                combined = ''.join(all_text)
+                # Remove escape sequences
+                combined = combined.replace('\\n', '\n').replace('\\"', '"')
+                return combined if len(combined) > 20 else None
+            
+            # Method 2: Fallback - find longest string with markdown indicators
+            strings = re.findall(r'"([^"]{100,})"', raw_text)
+            markdown_strings = [s for s in strings if '**' in s or '##' in s or '\\n' in s]
+            
+            if markdown_strings:
+                longest = max(markdown_strings, key=len)
+                decoded = longest.replace('\\n', '\n').replace('\\"', '"')
+                return decoded
+            
+            # Method 3: Original fallback
             candidates = []
             for s in strings:
-                if ' ' in s: 
+                if ' ' in s:
                     try:
                         decoded = s.encode('utf-8').decode('unicode_escape')
                         candidates.append(decoded)
                     except Exception:
-                        pass  # Unicode decode error, skip
+                        pass
             
             if candidates:
-                # Prioritize strings with Korean chars if possible, but length is good heuristic
                 candidates.sort(key=len, reverse=True)
                 return candidates[0]
                 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Answer extraction error: {e}")
         return None
 
     async def interactive_login(self):
-        """Interactive login - (Same as before)"""
+        """Interactive login - opens browser for manual Google login."""
         if not self._initialized:
             self.headless = False
             await self._init_browser()
         
         await self._page.goto("https://notebooklm.google.com/")
         input("Press Enter after login...")
-        if await self.ensure_logged_in():
-            print("Login success")
-            return True
-        return False
+        return await self.ensure_logged_in()
 
 
 # Singleton instance
