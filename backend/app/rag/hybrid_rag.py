@@ -28,7 +28,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Tuple
 
 from app.rag.tier0_notebooklm import (
     get_notebooklm_service,
@@ -144,6 +144,63 @@ DIMENSION_TO_CORPUS: Dict[str, str] = {
     "AD": "auteur_dna",
     "QC": "meta_invariants",
 }
+
+
+# ============================================================================
+# Lightweight Query Router (2025 Best Practice)
+# ============================================================================
+
+# 최신성 판단 키워드
+RECENCY_KEYWORDS = ["오늘", "최근", "2026", "현재", "뉴스", "latest", "today", "now"]
+
+
+def _determine_strategy(
+    query: str,
+    auteur_key: Optional[str],
+    dimension: Optional[str],
+    use_google_search: bool,
+) -> Tuple[str, bool, bool]:
+    """경량 Router: 쿼리 복잡도 기반 전략 결정.
+    
+    LangGraph 없이 heuristic 기반으로 최적 전략 선택.
+    
+    Args:
+        query: 검색 쿼리
+        auteur_key: 거장 키
+        dimension: 차원 코드
+        use_google_search: Google Search 사용 여부
+        
+    Returns:
+        Tuple of (strategy, use_reranker, force_grounding)
+        - strategy: "auteur_first" | "hybrid" | "vector"
+        - use_reranker: 리랭커 사용 여부
+        - force_grounding: Google Grounding 강제 여부
+    """
+    score = 0
+    
+    # 길이 기반 복잡도
+    if len(query) > 120:
+        score += 1
+    
+    # 최신성 키워드
+    query_lower = query.lower()
+    if any(kw in query_lower for kw in RECENCY_KEYWORDS):
+        score += 1
+        
+    # dimension 힌트 (Story, 4D는 복잡도 높음)
+    if dimension and dimension.lower() in ("story", "4d"):
+        score += 1
+        
+    # 결정 로직
+    if auteur_key:
+        # 거장 키 있으면 auteur_first, 복잡도에 따라 rerank/grounding
+        return ("auteur_first", score >= 2, score >= 3)
+    elif score >= 2:
+        # 복잡한 쿼리 → hybrid + rerank
+        return ("hybrid", True, score >= 3)
+    else:
+        # 단순 쿼리 → vector only
+        return ("vector", False, use_google_search)
 
 
 # ============================================================================

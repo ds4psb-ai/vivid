@@ -32,6 +32,20 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# Metrics import (lazy to avoid circular import)
+_record_metric = None
+
+def _get_record_metric():
+    """Lazy load metrics function to avoid circular import."""
+    global _record_metric
+    if _record_metric is None:
+        try:
+            from app.rag.metrics import record_semantic_cache_op
+            _record_metric = record_semantic_cache_op
+        except ImportError:
+            _record_metric = lambda *args, **kwargs: None  # No-op fallback
+    return _record_metric
+
 
 # =============================================================================
 # Configuration
@@ -231,12 +245,14 @@ class SemanticCache:
                 self._memory_cache.move_to_end(query_hash)
                 self._stats.hits += 1
                 self._stats.exact_hits += 1
+                _get_record_metric()("get", "exact", 0.1)  # Memory hit is fast
                 return self._deserialize_result(entry.response_json)
             else:
                 del self._memory_cache[query_hash]
         
         if not self._db_available:
             self._stats.misses += 1
+            _get_record_metric()("get", "miss", 0.0)
             return None
 
         # 2. DB Exact Match
@@ -302,6 +318,7 @@ class SemanticCache:
                                     
                                     self._stats.hits += 1
                                     self._stats.semantic_hits += 1
+                                    _get_record_metric()("get", "semantic", 0.0)
                                     logger.info(f"[SemanticCache] SEMANTIC HIT (DB): {sim:.3f}")
                                     return self._deserialize_result(best_match.response_json)
 
@@ -309,6 +326,7 @@ class SemanticCache:
             logger.error(f"[SemanticCache] DB Lookup Error: {e}")
             
         self._stats.misses += 1
+        _get_record_metric()("get", "miss", 0.0)
         return None
     
     async def set(
@@ -383,8 +401,10 @@ class SemanticCache:
                         }
                     )
                     await session.execute(stmt)
+                    _get_record_metric()("set", "success", 0.0)
                     logger.debug(f"[SemanticCache] Persisted: {query_hash[:8]}")
             except Exception as e:
+                _get_record_metric()("set", "error", 0.0)
                 logger.error(f"[SemanticCache] DB Write Error: {e}")
 
     def _cache_in_memory(self, db_entry: Any) -> None:

@@ -26,6 +26,86 @@ from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
+
+# =============================================================================
+# Global RAG Defaults (2025 Best Practice)
+# =============================================================================
+
+DEFAULT_RAG_CONFIG: Dict[str, Any] = {
+    # 신뢰도 임계값
+    "confidence_threshold": 0.5,
+    
+    # 캐시
+    "cache_ttl": 3600,  # 1시간
+    "use_semantic_cache": True,
+    
+    # 검색
+    "top_k": 10,
+    "rrf_k": 60,
+    "use_reranker": False,
+    "reranker_model": "semantic-ranker-default-v1@latest",
+    "max_sources": 5,
+    "answer_max_length": 600,
+    
+    # 전략
+    "strategy": "vector",
+    "use_google_search": True,
+    
+    # 폴백
+    "fallback_enabled": True,
+    "crag_threshold": 0.5,  # CRAG 트리거 임계값
+    
+    # retrieval 서브설정
+    "retrieval": {
+        "strategy": "hybrid",
+        "top_k": 10,
+        "rrf_k": 60,
+    },
+}
+
+
+def merge_rag_config(yaml_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """전역 default + 앱 YAML 설정 병합.
+    
+    Args:
+        yaml_config: 앱 YAML의 capabilities.rag.config
+        
+    Returns:
+        병합된 설정 (YAML이 우선)
+        
+    Example:
+        # 앱 YAML
+        capabilities:
+          - name: rag
+            config:
+              confidence_threshold: 0.7
+              cache_ttl: 7200
+              
+        # 결과
+        merge_rag_config(yaml_config) -> {
+            **DEFAULT_RAG_CONFIG,
+            confidence_threshold: 0.7,
+            cache_ttl: 7200,
+        }
+    """
+    if not yaml_config:
+        return DEFAULT_RAG_CONFIG.copy()
+    
+    merged = DEFAULT_RAG_CONFIG.copy()
+    
+    # 1차 병합
+    for key, value in yaml_config.items():
+        if key == "retrieval" and isinstance(value, dict):
+            # 중첩 객체 병합
+            merged["retrieval"] = {
+                **DEFAULT_RAG_CONFIG.get("retrieval", {}),
+                **value
+            }
+        else:
+            merged[key] = value
+    
+    return merged
+
 # =============================================================================
 # v2: Registry Integration (Lazy Loading)
 # =============================================================================

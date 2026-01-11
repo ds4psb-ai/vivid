@@ -236,3 +236,69 @@ def record_semantic_cache_op(
             ).inc()
         if '_semantic_cache_latency' in globals() and latency_ms > 0:
             _semantic_cache_latency.labels(operation=operation).observe(latency_ms)
+
+
+# =============================================================================
+# RAG Operation Tracking Decorator (2025 Best Practice)
+# =============================================================================
+
+import time
+from functools import wraps
+from typing import Callable, TypeVar
+
+T = TypeVar("T")
+
+
+def track_rag_operation(operation_name: str) -> Callable:
+    """RAG 연산 자동 추적 데코레이터.
+    
+    모든 RAG 함수에 일관된 latency/error 측정을 적용합니다.
+    
+    Usage:
+        @track_rag_operation("notebooklm_query")
+        async def _query_auteur_first(...):
+            ...
+    
+    Effects:
+        - 성공 시: latency 기록
+        - 실패 시: record_rag_error 자동 호출
+        - 로그: 연산 완료/실패 기록
+    """
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            start = time.monotonic()
+            dimension = kwargs.get("dimension", "unknown")
+            
+            try:
+                result = await func(*args, **kwargs)
+                latency_ms = (time.monotonic() - start) * 1000
+                
+                # 성공 메트릭
+                if _metrics_enabled and _rag_latency is not None:
+                    _rag_latency.labels(dimension=dimension).observe(latency_ms)
+                
+                logger.debug(
+                    f"[RAG-Track] {operation_name} completed | "
+                    f"latency={latency_ms:.1f}ms | dimension={dimension}"
+                )
+                return result
+                
+            except Exception as e:
+                latency_ms = (time.monotonic() - start) * 1000
+                
+                # 실패 메트릭 자동 기록
+                record_rag_error(
+                    dimension=dimension,
+                    error_type=type(e).__name__,
+                    error_message=str(e)[:200],
+                )
+                
+                logger.warning(
+                    f"[RAG-Track] {operation_name} failed | "
+                    f"error={type(e).__name__} | latency={latency_ms:.1f}ms"
+                )
+                raise
+                
+        return wrapper
+    return decorator
