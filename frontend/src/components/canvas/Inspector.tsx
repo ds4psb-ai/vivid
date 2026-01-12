@@ -739,7 +739,7 @@ export function Inspector({
           streamControllerRef.current?.close();
           streamControllerRef.current = null;
         },
-      });
+      }, "sse");  // P2: Force SSE transport (no WS endpoint)
 
       return;
     },

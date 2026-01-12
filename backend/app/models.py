@@ -108,9 +108,11 @@ class CapsuleRun(Base):
         Index("ix_capsule_runs_status", "status"),
         Index("ix_capsule_runs_created_at", "created_at"),
         Index("ix_capsule_runs_key_status", "capsule_key", "status"),  # Composite index
+        Index("ix_capsule_runs_user_id", "user_id"),  # P5 hardening: BOLA prevention
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)  # P5: owner for BOLA
     capsule_key: Mapped[str] = mapped_column(String(160))
     capsule_version: Mapped[str] = mapped_column(String(32))
     status: Mapped[str] = mapped_column(String(32), default="queued")

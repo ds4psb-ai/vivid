@@ -39,7 +39,7 @@ class CapsuleExecutionResult:
     run_id: str
     status: str  # done | failed | cancelled
     summary: Dict[str, Any] = field(default_factory=dict)
-    evidence_refs: List[Dict[str, Any]] = field(default_factory=list)
+    evidence_refs: List[str] = field(default_factory=list)  # P1: string[] for frontend
     version: str = ""
     token_usage: Dict[str, int] = field(default_factory=dict)
     latency_ms: int = 0
@@ -260,12 +260,16 @@ def _normalize_output(
     else:
         summary = {"result": output}
     
-    # Extract evidence refs
-    evidence_refs = []
+    # Extract evidence refs as string[] (P1: simple source_id list)
+    evidence_refs: List[str] = []
     if isinstance(output, dict):
         sources = output.get("sources", [])
         if isinstance(sources, list):
-            evidence_refs = [{"source_id": s} if isinstance(s, str) else s for s in sources]
+            for s in sources:
+                if isinstance(s, str):
+                    evidence_refs.append(s)
+                elif isinstance(s, dict) and "source_id" in s:
+                    evidence_refs.append(s["source_id"])
     
     # Extract token usage
     token_usage = {}

@@ -35,6 +35,7 @@ from app.credit_service import (
     deduct_credits as deduct_user_credits,
     refund_credits as refund_user_credits,
 )
+from app.routers.run_token import verify_run_token
 
 logger = logging.getLogger(__name__)
 
@@ -61,8 +62,12 @@ class CapsuleSpecResponse(BaseModel):
 class RunRequest(BaseModel):
     """Run execution request."""
     capsule_id: str = Field(..., description="capsule_key or capsule_key:version")
+    capsule_version: Optional[str] = Field(None, description="Explicit version override")
     inputs: Dict[str, Any] = Field(default_factory=dict)
     params: Dict[str, Any] = Field(default_factory=dict)
+    canvas_id: Optional[str] = Field(None, description="Source canvas ID")
+    node_id: Optional[str] = Field(None, description="Executing node ID")
+    upstream_context: Optional[Dict[str, Any]] = Field(None, description="Context from upstream nodes")
 
 
 class RunResponse(BaseModel):
@@ -70,7 +75,7 @@ class RunResponse(BaseModel):
     run_id: str
     status: str
     summary: Dict[str, Any] = Field(default_factory=dict)
-    evidence_refs: List[Dict[str, Any]] = Field(default_factory=list)
+    evidence_refs: List[str] = Field(default_factory=list)  # P1: string[] for frontend compatibility
     version: str = ""
     token_usage: Dict[str, int] = Field(default_factory=dict)
     latency_ms: int = 0
@@ -85,7 +90,7 @@ class RunStatusResponse(BaseModel):
     version: str
     status: str
     summary: Dict[str, Any] = Field(default_factory=dict)
-    evidence_refs: List[Dict[str, Any]] = Field(default_factory=list)
+    evidence_refs: List[str] = Field(default_factory=list)  # P1: string[] for frontend compatibility
     token_usage: Dict[str, int] = Field(default_factory=dict)
     latency_ms: Optional[int] = None
     cost_usd_est: Optional[float] = None
@@ -201,14 +206,23 @@ async def run_capsule(
         )
         credits_deducted = True
         
-        # Create run record (queued)
+        # Use explicit version from request if provided
+        effective_version = request.capsule_version or version or "latest"
+        
+        # Store credit cost in params for cancel refund
+        stored_params = dict(request.params)
+        stored_params["_credit_cost"] = credit_cost
+        
+        # Create run record (queued) with user_id for BOLA
         run_record = CapsuleRun(
             id=uuid.UUID(run_id),
+            user_id=user_id,  # P0 BOLA: track owner
             capsule_key=capsule_key,
-            capsule_version=version or "latest",
+            capsule_version=effective_version,
             status="queued",
             inputs=request.inputs,
-            params=request.params,
+            params=stored_params,
+            upstream_context=request.upstream_context or {},
         )
         db.add(run_record)
         await db.commit()
@@ -323,6 +337,13 @@ async def get_run_status(
     if not run_record:
         raise HTTPException(status_code=404, detail=f"Run not found: {run_id}")
     
+    # P0 BOLA: Verify ownership (NULL user_id = admin only)
+    user_id = user.get("id")
+    if run_record.user_id and run_record.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    if not run_record.user_id and not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
     return RunStatusResponse(
         run_id=str(run_record.id),
         capsule_key=run_record.capsule_key,
@@ -344,10 +365,14 @@ async def get_run_history(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
 ):
-    """Get run history for a capsule."""
+    """Get run history for a capsule (own runs only)."""
+    user_id = user.get("id")
+    
+    # P0 BOLA: Only return user's own runs
     query = (
         select(CapsuleRun)
         .where(CapsuleRun.capsule_key == capsule_key)
+        .where(CapsuleRun.user_id == user_id)  # BOLA filter
         .order_by(CapsuleRun.created_at.desc())
         .limit(limit)
     )
@@ -381,6 +406,11 @@ async def cancel_run(
     if not run_record:
         raise HTTPException(status_code=404, detail=f"Run not found: {run_id}")
     
+    # P0 BOLA: Verify ownership
+    user_id = user.get("id")
+    if run_record.user_id and run_record.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
     if run_record.status not in ("queued", "running"):
         raise HTTPException(
             status_code=400,
@@ -391,9 +421,21 @@ async def cancel_run(
     run_record.status = "cancelled"
     await db.commit()
     
-    # Notify hub
+    # Notify hub + trigger refund (credits already deducted)
     run_event_hub.cancel(run_id)
     await run_event_hub.publish(run_id, "run.cancelled", {"run_id": run_id})
+    
+    # P2: Refund credits on cancel
+    try:
+        # Get credit cost from params or default
+        credit_cost = run_record.params.get("_credit_cost", 10)
+        await refund_user_credits(
+            db, user_id, credit_cost,
+            description=f"Capsule cancelled: {run_record.capsule_key}",
+            meta={"run_id": run_id},
+        )
+    except Exception as refund_err:
+        logger.warning(f"Cancel refund failed: {refund_err}")
     
     return {"run_id": run_id, "status": "cancelled"}
 
