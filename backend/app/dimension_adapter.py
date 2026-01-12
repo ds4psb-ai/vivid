@@ -1986,7 +1986,12 @@ async def run_persona_analyzer(
         CapsuleResult with assistant_message, next_stage, persona_update, etc.
     """
     # Get analysis stage first (needed for intro shortcut)
-    current_stage = _sanitize_text(inputs.get("analysis_stage", "intro"), 30, "analysis_stage")
+    # Accept both "analysis_stage" (backend convention) and "current_stage" (frontend convention)
+    current_stage = _sanitize_text(
+        inputs.get("analysis_stage") or inputs.get("current_stage", "intro"),
+        30,
+        "analysis_stage"
+    )
 
     # Validate inputs
     user_message = _sanitize_text(
