@@ -48,6 +48,9 @@ class AppRAGManifest:
     dataset_selection_rules: Dict[str, List[str]] = field(default_factory=dict)
     max_datasets: int = 2
     default_dataset: str = ""  # Fallback dataset when no rules match
+    # P1.5: Cross-dataset fusion
+    cross_dataset_template: str = ""  # Template for multi-dataset results
+    dataset_labels: Dict[str, str] = field(default_factory=dict)  # dataset_id -> human-readable label
 
     def __post_init__(self):
         """검증 및 기본값 설정."""
@@ -274,6 +277,20 @@ Use these narrative frameworks for story architecture.
         },
         max_datasets=2,
         default_dataset="psych_core",  # Fallback to core psychology
+        # P1.5: Cross-dataset fusion
+        dataset_labels={
+            "psych_core": "핵심 심리 이론",
+            "mbti": "MBTI 성격 유형",
+            "attachment": "애착 이론",
+            "enneagram": "에니어그램",
+        },
+        cross_dataset_template="""
+## Psychology & Personality Context
+
+{datasets}
+
+Use these psychological frameworks to analyze the character. Consider how different theories complement each other.
+""",
         prompt_injection_template="""
 ## Psychology & Personality Context (Retrieved)
 {rag_results}

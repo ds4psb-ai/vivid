@@ -183,7 +183,11 @@ class AppRAGRegistry:
         if not results:
             return ""
 
-        # 결과를 차원별로 그룹화
+        # P1.5: cross_dataset_template가 있으면 dataset별 그룹화
+        if manifest.cross_dataset_template and manifest.dataset_labels:
+            return self._format_by_dataset(results, manifest)
+
+        # 기존 로직: 차원별 그룹화
         by_dimension: Dict[str, List[Dict]] = {}
         for r in results:
             dim = r.get("source_dimension", "unknown")
@@ -207,6 +211,50 @@ class AppRAGRegistry:
         if manifest.prompt_injection_template:
             return manifest.prompt_injection_template.format(rag_results=rag_results)
         return rag_results
+
+    def _format_by_dataset(
+        self,
+        results: List[Dict[str, Any]],
+        manifest: AppRAGManifest,
+    ) -> str:
+        """P1.5: Dataset별 그룹화 + 라벨링.
+        
+        Args:
+            results: 검색 결과 리스트
+            manifest: 앱 매니페스트
+            
+        Returns:
+            cross_dataset_template가 적용된 포맷 문자열
+        """
+        # Dataset별 그룹화
+        by_dataset: Dict[str, List[Dict]] = {}
+        for r in results:
+            dataset_id = r.get("metadata", {}).get("dataset_id", "unknown")
+            if dataset_id not in by_dataset:
+                by_dataset[dataset_id] = []
+            by_dataset[dataset_id].append(r)
+        
+        # 각 dataset 섹션 생성
+        dataset_sections = []
+        for dataset_id, items in by_dataset.items():
+            # 라벨 가져오기 (없으면 dataset_id 사용)
+            label = manifest.dataset_labels.get(dataset_id, dataset_id)
+            
+            section_lines = [f"### {label}"]
+            for i, item in enumerate(items[:3], 1):  # dataset당 최대 3개
+                content = item.get("content", "")[:400]
+                score = item.get("score", 0)
+                # P1.6 준비: dataset 라벨 포함
+                section_lines.append(f"{i}. (dataset={dataset_id}) [Score: {score:.2f}] {content}")
+            
+            dataset_sections.append("\n".join(section_lines))
+        
+        # 템플릿에 주입
+        datasets_content = "\n\n".join(dataset_sections)
+        
+        if manifest.cross_dataset_template:
+            return manifest.cross_dataset_template.format(datasets=datasets_content)
+        return datasets_content
 
     def inject_context(
         self,
