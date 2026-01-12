@@ -203,13 +203,20 @@ class SemanticCache:
                 logger.warning(f"[SemanticCache] DB context not available: {e}")
                 self._db_available = False
     
-    def _make_hash(self, query: str, auteur_key: Optional[str], dimension: Optional[str]) -> str:
+    def _make_hash(
+        self,
+        query: str,
+        auteur_key: Optional[str],
+        dimension: Optional[str],
+        dataset_ids: Optional[List[str]] = None,  # P1: dataset routing
+    ) -> str:
         """Create hash key for exact matching."""
         key_data = {
             "q": query.strip().lower()[:500],  # Normalize
             "a": auteur_key,
             "d": dimension,
             "m": self._embeddings_model,  # P0: 모델 버전 포함 (2026-01-13)
+            "ds": sorted(dataset_ids) if dataset_ids else None,  # P1: dataset_ids (2026-01-13)
         }
         key_str = json.dumps(key_data, sort_keys=True)
         return hashlib.sha256(key_str.encode()).hexdigest()[:32]
@@ -245,6 +252,7 @@ class SemanticCache:
         query: str,
         auteur_key: Optional[str] = None,
         dimension: Optional[str] = None,
+        dataset_ids: Optional[List[str]] = None,  # P1: dataset routing
     ) -> Optional[Any]:
         """Get cached response for query.
         
@@ -255,7 +263,7 @@ class SemanticCache:
         """
         await self._ensure_initialized()
         
-        query_hash = self._make_hash(query, auteur_key, dimension)
+        query_hash = self._make_hash(query, auteur_key, dimension, dataset_ids)
         
         # 1. Memory Cache Check (Fastest)
         if query_hash in self._memory_cache:
@@ -356,6 +364,7 @@ class SemanticCache:
         response: Any,
         auteur_key: Optional[str] = None,
         dimension: Optional[str] = None,
+        dataset_ids: Optional[List[str]] = None,  # P1: dataset routing
     ) -> None:
         """Cache response to Memory and DB."""
         await self._ensure_initialized()
@@ -364,7 +373,7 @@ class SemanticCache:
         if confidence < 0.5:
             return
             
-        query_hash = self._make_hash(query, auteur_key, dimension)
+        query_hash = self._make_hash(query, auteur_key, dimension, dataset_ids)
         
         grounded = getattr(response, "grounded", False)
         ttl = self._calculate_ttl(auteur_key, grounded)

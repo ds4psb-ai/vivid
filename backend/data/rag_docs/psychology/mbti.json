@@ -1,0 +1,28 @@
+[
+    {
+        "id": "mbti_001",
+        "dataset_id": "mbti",
+        "dataset_tags": [
+            "psychology",
+            "mbti",
+            "personality"
+        ],
+        "title": "MBTI 성격 유형 기초",
+        "content": "MBTI는 외향(E)-내향(I), 감각(S)-직관(N), 사고(T)-감정(F), 판단(J)-인식(P)의 4가지 선호 지표로 16가지 성격 유형을 분류한다. 캐릭터 설계 시 MBTI 유형을 참고하면 일관된 행동 패턴과 의사결정 방식을 구축할 수 있다.",
+        "source": "MBTI_Foundation",
+        "author": "Myers-Briggs"
+    },
+    {
+        "id": "mbti_002",
+        "dataset_id": "mbti",
+        "dataset_tags": [
+            "psychology",
+            "mbti",
+            "intj"
+        ],
+        "title": "INTJ 유형 캐릭터",
+        "content": "INTJ 유형 캐릭터의 특성: 전략적 사고, 독립성, 완벽주의 성향. 감정 표현이 절제되어 있고, 비효율성에 대한 낮은 인내심을 보인다. 영화적 표현으로는 계획을 세우는 장면, 혼자 연구하는 모습, 감정적 상황에서의 어색함 등이 특징적이다. 대표적 캐릭터: 다크나이트의 배트맨, 인터스텔라의 쿠퍼.",
+        "source": "MBTI_Character_Guide",
+        "author": "Character Design Lab"
+    }
+]

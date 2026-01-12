@@ -43,6 +43,11 @@ class AppRAGManifest:
     prompt_injection_template: str = ""
     fallback_enabled: bool = True
     metadata_filters: Dict[str, Any] = field(default_factory=dict)
+    # P1: Dataset-level routing
+    dataset_candidates: List[str] = field(default_factory=list)
+    dataset_selection_rules: Dict[str, List[str]] = field(default_factory=dict)
+    max_datasets: int = 2
+    default_dataset: str = ""  # Fallback dataset when no rules match
 
     def __post_init__(self):
         """검증 및 기본값 설정."""
@@ -189,14 +194,18 @@ Include specific shot compositions, color palettes, and mood references.
     "dimension.persona.analyze": AppRAGManifest(
         app_key="dimension.persona.analyze",
         dimensions=["AI"],
-        search_limit=5,
-        min_score=0.5,
-        amplify_with_history=False,  # 페르소나 분석은 독립적
+        search_limit=7,  # 더 많은 심리학 레퍼런스
+        min_score=0.45,  # 심리학 이론은 넓은 범위 허용
+        amplify_with_history=True,  # 이전 대화 맥락 중요
         prompt_injection_template="""
-## Persona Analysis Framework (Retrieved)
+## 심리학적 분석 프레임워크 (Retrieved Knowledge)
 {rag_results}
 
-Use this psychological framework for persona interpretation.
+## 적용 지침
+- 위의 심리학 이론/프레임워크를 바탕으로 사용자의 답변을 분석하세요.
+- 학술 용어는 쉬운 표현으로 바꾸되, 분석의 깊이는 유지하세요.
+- 이론의 핵심 개념을 자연스럽게 탐색하는 질문을 생성하세요.
+- 사용자가 자신의 무의식/잠재의식을 스스로 발견하도록 유도하세요.
 """,
     ),
 
@@ -246,6 +255,30 @@ Apply these audio principles for sound generation.
 {rag_results}
 
 Use these narrative frameworks for story architecture.
+""",
+    ),
+
+    # P1: Persona Analyzer with dataset routing
+    "dimension.persona.analyze": AppRAGManifest(
+        app_key="dimension.persona.analyze",
+        dimensions=["AI"],
+        search_limit=5,
+        min_score=0.5,
+        amplify_with_history=True,
+        # P1: Dataset routing configuration
+        dataset_candidates=["psych_core", "mbti", "attachment", "enneagram"],
+        dataset_selection_rules={
+            r"mbti|성격|유형|intj|enfp|infp|entj": ["mbti"],
+            r"애착|불안|회피|안정|관계|의존": ["attachment"],
+            r"에니어그램|1번|2번|3번|4번|5번|6번|7번|8번|9번": ["enneagram"],
+        },
+        max_datasets=2,
+        default_dataset="psych_core",  # Fallback to core psychology
+        prompt_injection_template="""
+## Psychology & Personality Context (Retrieved)
+{rag_results}
+
+Apply these psychological frameworks to enhance persona analysis.
 """,
     ),
 }

@@ -1,0 +1,26 @@
+[
+    {
+        "id": "psych_core_001",
+        "dataset_id": "psych_core",
+        "dataset_tags": [
+            "psychology",
+            "core_theory"
+        ],
+        "title": "기본 심리학 이론",
+        "content": "동기부여 이론의 핵심은 내적 동기와 외적 동기의 상호작용에 있다. 매슬로우의 욕구위계설에 따르면 인간의 욕구는 생리적 욕구, 안전 욕구, 소속 욕구, 존경 욕구, 자아실현 욕구의 5단계로 구성된다. 창작 과정에서 이러한 심리적 동인을 이해하면 캐릭터의 행동 동기를 더 깊이 있게 설계할 수 있다.",
+        "source": "Psychology_Core_2024",
+        "author": "Psychology Team"
+    },
+    {
+        "id": "psych_core_002",
+        "dataset_id": "psych_core",
+        "dataset_tags": [
+            "psychology",
+            "emotion"
+        ],
+        "title": "감정 심리학",
+        "content": "폴 에크만의 기본 감정 이론에 따르면 인간의 보편적 감정은 행복, 슬픔, 분노, 공포, 놀람, 혐오의 6가지이다. 이러한 기본 감정은 문화를 초월하여 얼굴 표정으로 나타난다. 시나리오에서 캐릭터의 감정 변화를 설계할 때 이 기본 감정들의 조합과 전환을 고려해야 한다.",
+        "source": "Ekman_Basic_Emotions",
+        "author": "Paul Ekman"
+    }
+]

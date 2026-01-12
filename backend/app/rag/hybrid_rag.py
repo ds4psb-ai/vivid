@@ -147,6 +147,89 @@ DIMENSION_TO_CORPUS: Dict[str, str] = {
 
 
 # ============================================================================
+# P1: Dataset-Level Routing (2026-01-13)
+# ============================================================================
+
+import re
+from app.rag.app_manifest import AppRAGManifest, get_manifest
+
+
+def _select_datasets(
+    query: str,
+    manifest: AppRAGManifest,
+) -> List[str]:
+    """P1: 입력 쿼리 기반으로 dataset 선택.
+    
+    Same dimension 내에서 1~2개 dataset만 선택하여 검색 범위 축소.
+    
+    Args:
+        query: 검색 쿼리
+        manifest: 앱 매니페스트 (dataset_candidates, dataset_selection_rules 포함)
+        
+    Returns:
+        선택된 dataset_id 목록 (최대 max_datasets개)
+    """
+    if not manifest.dataset_candidates:
+        return []  # Dataset routing 미사용
+    
+    selected = []
+    query_lower = query.lower()
+    
+    # 규칙 기반 매칭
+    for pattern, datasets in manifest.dataset_selection_rules.items():
+        try:
+            if re.search(pattern, query_lower):
+                selected.extend(datasets)
+        except re.error as e:
+            logger.warning(f"[DatasetRouter] Invalid regex pattern '{pattern}': {e}")
+    
+    # 중복 제거 + 제한
+    selected = list(dict.fromkeys(selected))[:manifest.max_datasets]
+    
+    # Fallback: 매칭 없으면 기본값 (psych_core 또는 첫 번째 후보)
+    if not selected:
+        fallback = manifest.default_dataset or (
+            manifest.dataset_candidates[0] if manifest.dataset_candidates else None
+        )
+        if fallback:
+            selected = [fallback]
+            logger.info(f"[DatasetRouter] No rules matched, using fallback: {fallback}")
+    
+    logger.info(
+        f"[DatasetRouter] Selected datasets: {selected} | "
+        f"query: '{query[:50]}...' | candidates: {manifest.dataset_candidates}"
+    )
+    
+    return selected
+
+
+def _apply_dataset_filter(
+    metadata_filters: Dict[str, Any],
+    selected_datasets: List[str],
+) -> Dict[str, Any]:
+    """P1: Qdrant 필터에 dataset_id 조건 추가.
+    
+    Args:
+        metadata_filters: 기존 메타데이터 필터
+        selected_datasets: 선택된 dataset_id 목록
+        
+    Returns:
+        dataset_id 필터가 추가된 메타데이터 필터
+    """
+    if not selected_datasets:
+        return metadata_filters
+    
+    filters = metadata_filters.copy() if metadata_filters else {}
+    
+    if len(selected_datasets) == 1:
+        filters["dataset_id"] = selected_datasets[0]
+    else:
+        filters["dataset_id"] = {"$in": selected_datasets}
+    
+    return filters
+
+
+# ============================================================================
 # Lightweight Query Router (2025 Best Practice)
 # ============================================================================
 
