@@ -19,7 +19,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import select
@@ -68,6 +68,7 @@ class RunRequest(BaseModel):
     canvas_id: Optional[str] = Field(None, description="Source canvas ID")
     node_id: Optional[str] = Field(None, description="Executing node ID")
     upstream_context: Optional[Dict[str, Any]] = Field(None, description="Context from upstream nodes")
+    async_mode: bool = Field(False, description="If true, return immediately with run_id")
 
 
 class RunResponse(BaseModel):
@@ -146,6 +147,110 @@ async def get_capsule(
     except Exception as e:
         logger.error(f"Failed to get spec: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+async def _execute_capsule_background(
+    run_id: str,
+    capsule_id: str,
+    inputs: Dict[str, Any],
+    params: Dict[str, Any],
+    user: Dict[str, Any],
+    capsule_key: str,
+    credit_cost: int,
+    effective_version: str,
+) -> None:
+    """Background task for async capsule execution.
+    
+    Creates its own DB session and handles the full execution lifecycle.
+    """
+    from app.database import get_db_context
+    from app.services.capsule_executor import execute_capsule
+    
+    user_id = user.get("id")
+    
+    try:
+        async with get_db_context() as db:
+            # Get run record
+            run_record = await db.get(CapsuleRun, uuid.UUID(run_id))
+            if not run_record:
+                logger.error(f"Run record not found: {run_id}")
+                return
+            
+            # Check if cancelled before starting
+            if run_event_hub.is_cancelled(run_id):
+                run_record.status = "cancelled"
+                await db.commit()
+                await run_event_hub.publish(run_id, "run.cancelled", {"run_id": run_id})
+                # Refund credits
+                if user_id:
+                    await refund_user_credits(
+                        db, user_id, credit_cost,
+                        description=f"Capsule cancelled: {capsule_key}",
+                        meta={"run_id": run_id},
+                    )
+                return
+            
+            # Update to running
+            run_record.status = "running"
+            await db.commit()
+            await run_event_hub.publish(run_id, "run.started", {"run_id": run_id})
+            
+            # Execute
+            result = await execute_capsule(
+                capsule_id=capsule_id,
+                inputs=inputs,
+                params=params,
+                user=user,
+                db=db,
+                run_id=run_id,
+            )
+            
+            # Check if cancelled during execution
+            if run_event_hub.is_cancelled(run_id):
+                run_record.status = "cancelled"
+                await db.commit()
+                await run_event_hub.publish(run_id, "run.cancelled", {"run_id": run_id})
+                if user_id:
+                    await refund_user_credits(
+                        db, user_id, credit_cost,
+                        description=f"Capsule cancelled: {capsule_key}",
+                        meta={"run_id": run_id},
+                    )
+                return
+            
+            # Update record
+            run_record.status = result.status
+            run_record.summary = result.summary
+            run_record.evidence_refs = result.evidence_refs
+            run_record.token_usage = result.token_usage
+            run_record.latency_ms = result.latency_ms
+            run_record.cost_usd_est = result.cost_usd_est
+            run_record.capsule_version = result.version
+            await db.commit()
+            
+            # Refund on failure
+            if result.status == "failed" and user_id:
+                await refund_user_credits(
+                    db, user_id, credit_cost,
+                    description=f"Capsule failed: {capsule_key}",
+                    meta={"run_id": run_id, "error": result.error or "Unknown"},
+                )
+            
+            # Publish completion event
+            if result.status == "done":
+                await run_event_hub.publish(run_id, "run.completed", result.to_dict())
+            else:
+                await run_event_hub.publish(run_id, "run.failed", {
+                    "run_id": run_id,
+                    "error": result.error,
+                })
+                
+    except Exception as e:
+        logger.error(f"Background execution failed: {e}")
+        await run_event_hub.publish(run_id, "run.failed", {
+            "run_id": run_id,
+            "error": str(e),
+        })
 
 
 @router.post("/run", response_model=RunResponse)
@@ -233,10 +338,52 @@ async def run_capsule(
             "capsule_key": capsule_key,
         })
         
-        # Update to running
+        # P2: async_mode - return immediately, execute in background
+        if request.async_mode:
+            # Return queued response immediately
+            asyncio.create_task(_execute_capsule_background(
+                run_id=run_id,
+                capsule_id=request.capsule_id,
+                inputs=request.inputs,
+                params=request.params,
+                user=user,
+                capsule_key=capsule_key,
+                credit_cost=credit_cost,
+                effective_version=effective_version,
+            ))
+            return RunResponse(
+                run_id=run_id,
+                status="queued",
+                summary={},
+                evidence_refs=[],
+                version=effective_version,
+                token_usage={},
+                latency_ms=0,
+                cost_usd_est=0.0,
+                error=None,
+            )
+        
+        # Sync mode: Update to running
         run_record.status = "running"
         await db.commit()
         await run_event_hub.publish(run_id, "run.started", {"run_id": run_id})
+        
+        # Check if cancelled before execution
+        if run_event_hub.is_cancelled(run_id):
+            run_record.status = "cancelled"
+            await db.commit()
+            await run_event_hub.publish(run_id, "run.cancelled", {"run_id": run_id})
+            return RunResponse(
+                run_id=run_id,
+                status="cancelled",
+                summary={},
+                evidence_refs=[],
+                version=effective_version,
+                token_usage={},
+                latency_ms=0,
+                cost_usd_est=0.0,
+                error=None,
+            )
         
         # Execute
         result = await execute_capsule(
