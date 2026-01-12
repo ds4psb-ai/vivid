@@ -273,6 +273,7 @@ class PersonaAnalyzeRequest(BaseModel):
     birth_info: dict = Field(default_factory=dict, description="Birth info for saju analysis")
     current_stage: str = Field("intro", description="Current analysis stage")
     model: str = Field("gemini-3-flash-preview", description="AI model")
+    params: dict = Field(default_factory=dict, description="Additional parameters (depth_level, etc.)")
 
     @field_validator("subject", "user_message", mode="before")
     @classmethod
@@ -319,7 +320,7 @@ async def analyze_persona(
         byok_key=byok_key,
         db=db,
         inputs_summary={"subject": request.subject[:100], "stage": request.current_stage},
-        params={"use_rag": False},
+        params=request.params,
     )
 
 
@@ -358,7 +359,7 @@ async def analyze_persona_stream(
             byok_key=byok_key,
             db=db,
             inputs_summary={"subject": request.subject[:100], "stage": request.current_stage},
-            params={"use_rag": False},
+            params=request.params,
         ),
         media_type="text/event-stream",
         headers=get_sse_headers(),

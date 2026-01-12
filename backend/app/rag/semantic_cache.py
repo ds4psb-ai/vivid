@@ -209,6 +209,7 @@ class SemanticCache:
             "q": query.strip().lower()[:500],  # Normalize
             "a": auteur_key,
             "d": dimension,
+            "m": self._embeddings_model,  # P0: 모델 버전 포함 (2026-01-13)
         }
         key_str = json.dumps(key_data, sort_keys=True)
         return hashlib.sha256(key_str.encode()).hexdigest()[:32]

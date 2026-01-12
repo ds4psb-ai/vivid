@@ -13,7 +13,7 @@ display:
 
 capabilities:
   - name: rag
-    enabled: false  # AI 페르소나는 RAG 불필요
+    enabled: true  # P0: preset과 정렬 (2026-01-13)
 
   - name: cache
     enabled: true

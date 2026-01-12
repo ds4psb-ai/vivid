@@ -313,7 +313,7 @@ DIMENSION_RAG_PRESETS: Dict[str, RAGPreset] = {
     ),
     
     "AI": RAGPreset(
-        rag_enabled=False,  # AI 페르소나는 RAG 불필요
+        rag_enabled=True,  # P0: AI 페르소나 RAG 활성화 (2026-01-13)
     ),
 }
 
