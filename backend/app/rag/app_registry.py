@@ -35,6 +35,8 @@ from app.rag.app_manifest import (
     AppRAGManifest,
     get_manifest,
 )
+# P1: Dataset routing
+from app.rag.hybrid_rag import _select_datasets, _apply_dataset_filter
 
 logger = logging.getLogger(__name__)
 
@@ -118,12 +120,19 @@ class AppRAGRegistry:
                     **(metadata_filters or {}),
                 }
 
+                # P1: Dataset routing - 선택된 dataset으로 필터
+                selected_datasets = _select_datasets(enhanced_query, manifest)
+                if selected_datasets:
+                    combined_filters = _apply_dataset_filter(combined_filters, selected_datasets)
+                    logger.debug(f"[{app_key}] Dataset filter applied: {selected_datasets}")
+
                 # 검색 실행
                 results = rag.search(
                     query=enhanced_query,
                     limit=manifest.search_limit,
                     app_key=app_key if combined_filters else None,
                     min_score=manifest.min_score,
+                    metadata_filters=combined_filters if combined_filters else None,  # P1: 필터 전달
                 )
 
                 for r in results:

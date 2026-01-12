@@ -232,6 +232,7 @@ class Tier1DimensionRAG:
         limit: int = 5,
         app_key: Optional[str] = None,
         min_score: float = 0.5,
+        metadata_filters: Optional[Dict[str, Any]] = None,  # P1: dataset routing
     ) -> List[Dict[str, Any]]:
         """유사도 검색 (앱별 필터링 지원).
 
@@ -240,6 +241,7 @@ class Tier1DimensionRAG:
             limit: 최대 결과 수
             app_key: 앱 키로 필터링 (선택)
             min_score: 최소 유사도 점수
+            metadata_filters: P1 - 추가 메타데이터 필터 (dataset_id 등)
 
         Returns:
             검색 결과 리스트 [{content, score, metadata}, ...]
@@ -253,17 +255,39 @@ class Tier1DimensionRAG:
             # 쿼리 임베딩
             query_vector = self.embedder.embed(query)
 
-            # 필터 조건
-            filter_conditions = None
+            # 필터 조건 구성
+            must_conditions = []
+            
+            # 기존 app_key 필터
             if app_key:
-                filter_conditions = qdrant_models.Filter(
-                    must=[
-                        qdrant_models.FieldCondition(
-                            key="app_key",
-                            match=qdrant_models.MatchValue(value=app_key),
-                        )
-                    ]
+                must_conditions.append(
+                    qdrant_models.FieldCondition(
+                        key="app_key",
+                        match=qdrant_models.MatchValue(value=app_key),
+                    )
                 )
+            
+            # P1: metadata_filters 처리 (dataset_id 등)
+            if metadata_filters:
+                for key, value in metadata_filters.items():
+                    if isinstance(value, dict) and "$in" in value:
+                        # $in 연산자: 여러 값 중 하나 매칭
+                        must_conditions.append(
+                            qdrant_models.FieldCondition(
+                                key=key,
+                                match=qdrant_models.MatchAny(any=value["$in"]),
+                            )
+                        )
+                    else:
+                        # 단일 값 매칭
+                        must_conditions.append(
+                            qdrant_models.FieldCondition(
+                                key=key,
+                                match=qdrant_models.MatchValue(value=value),
+                            )
+                        )
+            
+            filter_conditions = qdrant_models.Filter(must=must_conditions) if must_conditions else None
 
             # 검색 (qdrant-client 1.16+ uses query_points instead of search)
             response = client.query_points(
