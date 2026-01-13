@@ -21,6 +21,38 @@ RAG(Retrieval-Augmented Generation) 품질 평가 파이프라인:
 
 ---
 
+## 운영 OKR 기준
+
+### 주간 품질 리포트 통과 기준
+
+| 지표 | 기준 | 등급 |
+|------|------|------|
+| Pass Rate | ≥ 70% | PASS |
+| Pass Rate | 60-69% | WARNING |
+| Pass Rate | < 60% | FAIL |
+| Avg Groundedness | ≥ 0.6 | 정상 |
+| Avg Relevance | ≥ 0.5 | 정상 |
+
+### 알림 규칙
+
+| 조건 | 액션 |
+|------|------|
+| Pass Rate < 70% | Slack 알림 + 원인 분석 |
+| Pass Rate < 60% | 긴급 리뷰 |
+| Groundedness < 0.5 | 데이터셋 점검 |
+
+### 분기 OKR (Q1 2026)
+
+| Objective | Key Result | 현재 |
+|-----------|-----------|------|
+| RAG 검색 품질 개선 | Pass Rate ≥ 80% | 87.5% ✅ |
+| 소스 근거 신뢰도 | Avg Groundedness ≥ 0.7 | 0.62 ⚠️ |
+| 검색 관련성 | Avg Relevance ≥ 0.6 | 0.27 ⚠️ |
+
+> **참고**: Relevance가 낮은 것은 테스트 쿼리가 실제 인덱싱된 콘텐츠와 다르기 때문. 실 데이터 인제스션 후 재측정 필요.
+
+---
+
 ## 실행 방법
 
 ### 1. 평가 케이스 확인
