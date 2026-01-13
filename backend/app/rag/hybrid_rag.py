@@ -575,10 +575,15 @@ async def hybrid_query(
         rrf_enabled=result.rrf_enabled,
     )
 
+    # === Load preset for CRAG and Cache thresholds ===
+    from app.rag.rag_presets import get_rag_preset
+    preset_dim = dimension or ("AD" if auteur_key else "1D")
+    preset = get_rag_preset(preset_dim)
+
     # === CRAG Pattern: Corrective RAG (2025 Best Practice) ===
     # If confidence is low, automatically trigger Google Search Grounding as fallback
     # P6 SSoT: Use preset-based threshold instead of hardcoded value
-    crag_threshold = preset.confidence_threshold  # preset already loaded above for cache
+    crag_threshold = preset.confidence_threshold
     if result.confidence < crag_threshold and not result.grounding_sources:
         logger.info(
             f"[HybridRAG] CRAG triggered | confidence={result.confidence:.2f} < {crag_threshold} | "
@@ -616,9 +621,7 @@ async def hybrid_query(
 
     # === Step N+1: Store in Semantic Cache (preset-based gating) ===
     # P6-1 Refinement: Use dimension-based threshold from YAML SSoT
-    from app.rag.rag_presets import get_rag_preset
-    preset_dim = dimension or ("AD" if auteur_key else "1D")
-    preset = get_rag_preset(preset_dim)
+    # preset already loaded above for CRAG
     
     if use_semantic_cache and preset.cache_enabled and result.confidence >= preset.confidence_threshold:
         try:
