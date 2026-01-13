@@ -120,6 +120,18 @@ Apply these aesthetic principles to the image prompt.
         search_limit=5,
         min_score=0.55,
         amplify_with_history=True,
+        # P1: Video reference dataset routing
+        dataset_candidates=["video_ref", "film_analysis"],
+        dataset_selection_rules={
+            r"영화|레퍼런스|분석|촬영|구도|감독": ["video_ref"],
+            r"장면|샷|시퀀스|편집|씬": ["video_ref"],
+            r"봉준호|박찬욱|김기영|이창동": ["video_ref"],
+        },
+        default_dataset="film_analysis",
+        dataset_labels={
+            "video_ref": "비디오 레퍼런스",
+            "film_analysis": "영화 분석 이론",
+        },
         prompt_injection_template="""
 ## Analysis Framework (Retrieved)
 {rag_results}

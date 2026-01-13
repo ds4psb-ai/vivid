@@ -1,0 +1,35 @@
+[
+    {
+        "source_id": "parasite_001",
+        "title": "Parasite (기생충)",
+        "director": "Bong Joon-ho",
+        "year": 2019,
+        "duration_sec": 7920,
+        "segments": [
+            "seg_opening",
+            "seg_infiltration",
+            "seg_climax"
+        ],
+        "metrics": {
+            "shot_count": 247,
+            "avg_shot_duration_sec": 32
+        },
+        "notes": "Academy Award Best Picture 2020"
+    },
+    {
+        "source_id": "oldboy_001",
+        "title": "Oldboy (올드보이)",
+        "director": "Park Chan-wook",
+        "year": 2003,
+        "duration_sec": 7200,
+        "segments": [
+            "seg_corridor",
+            "seg_twist"
+        ],
+        "metrics": {
+            "shot_count": 312,
+            "avg_shot_duration_sec": 23
+        },
+        "notes": "Grand Prix at Cannes 2004"
+    }
+]
