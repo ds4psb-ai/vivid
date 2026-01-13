@@ -221,6 +221,57 @@ NEXT_PUBLIC_USER_ID=demo-user   # Dev override
 
 ---
 
+## RAG Integration (P1-P4 2026-01)
+
+### evidence_refs SoR (Source of Record)
+
+```
+evidence_refs: List[str] = ["db:capsule_runs:{run_id}"]
+```
+
+| 형식 | 설명 |
+|------|------|
+| `db:capsule_runs:{uuid}` | CapsuleRun 기반 증거 |
+| `db:rag_docs:4D:video_ref:{doc_id}` | 비디오 레퍼런스 |
+| `db:rag_docs:3D:image_grid:{doc_id}` | 이미지 그리드 |
+
+### Dataset Routing
+
+| 앱 | Dimension | Datasets |
+|----|-----------|----------|
+| `teaching.reference.analyze` | 4D | `video_ref`, `film_analysis` |
+| `teaching.image.generate` | 3D | `image_grid`, `visual_style` |
+
+### Ingestion Scripts
+
+```bash
+# Video Reference 인제스션
+python scripts/ingest_video_reference.py --input ../data/source_packs/video_refs.json
+
+# Image Grid 인제스션
+python scripts/ingest_image_grid.py --input ../data/source_packs/grids.json
+
+# RAG 품질 리포트
+python scripts/run_rag_quality_report.py --no-llm
+```
+
+### Key Files
+
+| File | Role |
+|------|------|
+| `app/rag/app_manifest.py` | Dataset routing rules |
+| `app/rag/tier1_dimension_rag.py` | Qdrant indexing |
+| `app/rag/rag_suggestion_service.py` | evidence_refs 생성 |
+| `scripts/ingest_video_reference.py` | 비디오 인제스션 |
+| `scripts/ingest_image_grid.py` | 그리드 인제스션 |
+| `scripts/run_rag_quality_report.py` | 품질 평가 CLI |
+
+### Documentation
+
+- [RAG_QUALITY.md](file:///Users/ted/vivid/docs/RAG_QUALITY.md) - 품질 평가 가이드
+
+---
+
 ## Notes
 
 - Legacy canvas code: `frontend/src/app/_deprecated/`

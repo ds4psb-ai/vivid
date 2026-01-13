@@ -16,6 +16,15 @@ import InsufficientCreditsModal from "./InsufficientCreditsModal";
 const THEME_COLOR: ThemeColor = "amber";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
+// P4: Evidence refs types
+interface EvidenceRef {
+    ref_id: string;
+    source?: string;
+    content_preview?: string;
+    dataset_id?: string;
+    score?: number;
+}
+
 interface AnalysisResult {
     composition?: string;
     lighting?: string;
@@ -23,6 +32,48 @@ interface AnalysisResult {
     movement?: string;
     narrative?: string;
     recommendations?: string[];
+    evidence_refs?: EvidenceRef[];  // P4: Added
+}
+
+// P4: Inline evidence display component
+function EvidenceDisplay({ refs }: { refs: EvidenceRef[] }) {
+    const [expanded, setExpanded] = useState(false);
+
+    if (!refs || refs.length === 0) return null;
+
+    return (
+        <div className="mt-4 p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-xl">
+            <button
+                onClick={() => setExpanded(!expanded)}
+                className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 transition-colors"
+            >
+                <span>{expanded ? "▼" : "▶"}</span>
+                <span>📚 소스 증거 ({refs.length}개)</span>
+            </button>
+
+            {expanded && (
+                <div className="mt-3 space-y-2">
+                    {refs.slice(0, 5).map((ref, idx) => (
+                        <div key={idx} className="p-3 bg-white dark:bg-black/20 rounded-lg text-sm">
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-200 dark:bg-amber-800/50 text-amber-800 dark:text-amber-200">
+                                    {ref.dataset_id || "video_ref"}
+                                </span>
+                                {ref.score && (
+                                    <span className="text-[10px] text-slate-400 dark:text-zinc-500">
+                                        {(ref.score * 100).toFixed(0)}% match
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-slate-600 dark:text-zinc-300 line-clamp-2">
+                                {ref.content_preview || ref.ref_id}
+                            </p>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
 }
 
 const FOCUS_AREAS = [
@@ -291,6 +342,11 @@ export default function ReferenceDecoderPanel() {
                                     </ul>
                                 </div>
                             </div>
+                        )}
+
+                        {/* P4: Evidence Sources */}
+                        {displayResult.evidence_refs && displayResult.evidence_refs.length > 0 && (
+                            <EvidenceDisplay refs={displayResult.evidence_refs} />
                         )}
                     </div>
                 ) : (
