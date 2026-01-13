@@ -10,6 +10,7 @@ import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
+import EvidenceDisplay, { type EvidenceRef } from "./EvidenceDisplay";  // P5: Shared component
 
 // SSoT: Use context instead of hardcode
 // const CREDIT_COST = 5; // REMOVED
@@ -24,6 +25,8 @@ interface ImagePromptResult {
         aspect_ratio?: string;
         quality?: string;
     };
+    evidence_refs?: EvidenceRef[];  // P5: Added
+    confidence?: number;
 }
 
 const STYLES = [
@@ -327,6 +330,13 @@ export default function VisualRealizerPanel() {
                                 </div>
                             </div>
                         )}
+
+                        {/* P5: Evidence Sources */}
+                        <EvidenceDisplay
+                            refs={displayResult.evidence_refs}
+                            confidence={displayResult.confidence}
+                            themeColor="emerald"
+                        />
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center h-full text-slate-500 dark:text-zinc-500 space-y-8 animate-in fade-in zoom-in-95 duration-700">
