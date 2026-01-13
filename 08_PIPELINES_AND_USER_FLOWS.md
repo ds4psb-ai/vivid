@@ -70,7 +70,11 @@ Admin Ingest
 - Persona/Profile 및 Synapse Logic은 **guide_type=persona/synapse**로 구분해 축적
 - Story/Beat/Storyboard는 **guide_type=story/beat_sheet/storyboard**로 구분하고 `story_beats`/`storyboard_cards`에 저장
 - DB에 승격되는 것은 **검증된 패턴**만
-- `evidence_refs`는 `sheet:` 또는 `db:` 포맷만 허용 (서버에서 필터링)
+- `evidence_refs` 포맷 (2026-01-13):
+  - `db:capsule_runs:{uuid}` - CapsuleRun 기반 증거
+  - `db:rag_docs:{dimension}:{dataset_id}:{doc_id}` - RAG 검색 결과
+  - **지원 데이터셋**: `video_ref`, `image_grid`, `film_analysis`, `visual_style`
+  - 서버에서 형식 보장 (`build_evidence_ref_id` 함수)
 - 모든 결과는 **source_id + prompt/model/version**로 추적
 - 승격 기준은 `docs/archive/12_PATTERN_PROMOTION_CRITERIA_V1.md`
 

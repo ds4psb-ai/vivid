@@ -1,7 +1,7 @@
 # Docs Index (정본)
 
-**Updated**: 2026-01-11  
-**총 문서**: 10개 (핵심), 35개 (archive)
+**Updated**: 2026-01-13  
+**총 문서**: 12개 (핵심), 35개 (archive)
 
 ---
 
@@ -35,8 +35,21 @@
 | **앱 개발자 가이드** | `docs/DIMENSION_APP_DEVELOPER_GUIDE.md` | 앱 개발자 공통 가이드 (SSoT) |
 | **RAG Reliability** | [`docs/RAG_RELIABILITY.md`](docs/RAG_RELIABILITY.md) | Circuit Breaker, CRAG, 캐시 |
 | **NotebookLM Playwright** | [`docs/NOTEBOOKLM_PLAYWRIGHT.md`](docs/NOTEBOOKLM_PLAYWRIGHT.md) | RPC/UI 폴백 자동화 |
-| **Grafana Dashboard** | `config/grafana/rag_overview.json` | RAG 모니터링 15패널 (**NEW 2026-01-11**) |
-| **Chrome CDP Workflow** | `.agent/workflows/chrome-debug.md` | 9223 포트 사용 가이드 (**NEW**) |
+| **Grafana Dashboard** | `config/grafana/rag_overview.json` | RAG 모니터링 15패널 |
+| **Chrome CDP Workflow** | `.agent/workflows/chrome-debug.md` | 9223 포트 사용 가이드 |
+
+---
+
+## 2026-01-13 신규 (RAG P1-P5)
+
+| 항목 | 위치 | 설명 |
+|------|------|------|
+| **RAG Quality Guide** | [`docs/RAG_QUALITY.md`](docs/RAG_QUALITY.md) | 품질 평가 + OKR 기준 (**NEW**) |
+| **EvidenceDisplay UX** | [`docs/EVIDENCE_DISPLAY_UX.md`](docs/EVIDENCE_DISPLAY_UX.md) | 패널별 적용 규칙 (**NEW**) |
+| **Video Ref 인제스션** | `backend/scripts/ingest_video_reference.py` | video_ref → Qdrant |
+| **Image Grid 인제스션** | `backend/scripts/ingest_image_grid.py` | image_grid → Qdrant |
+| **RAG Quality CLI** | `backend/scripts/run_rag_quality_report.py` | 품질 리포트 생성 |
+| **EvidenceDisplay 공유** | `frontend/src/components/dimension/EvidenceDisplay.tsx` | AI 근거 표시 표준 컴포넌트 |
 
 ---
 

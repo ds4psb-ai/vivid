@@ -1,7 +1,7 @@
 # Vivid Dimension 앱 개발자 공통 가이드
 
-> **버전**: 2.0  
-> **작성일**: 2026-01-10  
+> **버전**: 2.1  
+> **작성일**: 2026-01-13  
 > **대상**: 개별 Dimension 앱 개발자  
 > **목적**: 에코시스템 일관성 유지를 위한 단일 진실 문서
 
@@ -288,6 +288,57 @@ result = await service.rrf_query(
 # result.rrf_enabled = True
 # result.keyword_results_count, result.vector_results_count
 ```
+
+### 6.4 Evidence Refs (AI 근거) (**NEW 2026-01-13**)
+
+API 응답에 `evidence_refs` 필드를 포함하면 UI에 자동으로 "AI 근거" 섹션이 표시됩니다.
+
+#### 형식
+
+```python
+from app.rag.rag_suggestion import EvidenceRef, build_evidence_ref_id
+
+# ref_id 생성 함수 (보장된 포맷)
+ref_id = build_evidence_ref_id(
+    dimension="4D",           # 차원 코드
+    dataset_id="video_ref",   # 데이터셋 ID
+    doc_id="doc_123",         # 문서 ID
+)
+# 결과: "db:rag_docs:4D:video_ref:doc_123"
+
+# EvidenceRef 구조
+evidence = EvidenceRef(
+    ref_id=ref_id,
+    source="db",
+    content_preview="봉준호 감독의 트래킹 샷 분석...",
+    dataset_id="video_ref",
+    dataset_label="영화 레퍼런스",  # 사용자 친화적 라벨
+    score=0.85,  # 0.0 ~ 1.0
+)
+```
+
+#### 사용 가능한 데이터셋
+
+| 차원 | Dataset ID | 라벨 | 용도 |
+|------|-----------|------|------|
+| 4D | `video_ref` | 영화 레퍼런스 | 영상 분석 |
+| 4D | `film_analysis` | 분석 자료 | 기법 참조 |
+| 3D | `image_grid` | 이미지 그리드 | 스타일 참조 |
+| 3D | `visual_style` | 비주얼 스타일 | 컬러/조명 |
+
+#### UI 동작 규칙
+
+| 조건 | UI 동작 |
+|------|--------|
+| `evidence_refs` 있음 | "AI 근거" 섹션 표시 |
+| `evidence_refs` 없음 | 섹션 숨김 |
+| `confidence < 0.5` | 섹션 기본 접힘 |
+| refs > 3개 | "더보기" 버튼 표시 |
+
+#### 관련 문서
+
+- [EvidenceDisplay UX 가이드](file:///Users/ted/vivid/docs/EVIDENCE_DISPLAY_UX.md)
+- [RAG Quality 평가](file:///Users/ted/vivid/docs/RAG_QUALITY.md)
 
 ---
 
