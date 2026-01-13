@@ -120,22 +120,44 @@ class RAGSuggestionService:
         results: List[Dict[str, Any]],
         manifest,
     ) -> List[EvidenceRef]:
-        """검색 결과에서 Evidence refs 생성."""
+        """검색 결과에서 Evidence refs 생성.
+        
+        P5+ Hardening:
+        - ref_id format guaranteed: db:rag_docs:{dim}:{dataset}:{doc_id}
+        - score None/NaN protection: defaults to 0.0
+        - dataset_label fallback: dataset_id if label missing
+        """
         evidence_refs = []
+        seen_ref_ids = set()  # Dedup at backend level too
         
         for r in results[:5]:  # 최대 5개
             metadata = r.get("metadata", {})
             doc_id = r.get("doc_id") or metadata.get("doc_id", "unknown")
             dataset_id = metadata.get("dataset_id", "unknown")
-            dimension = r.get("source_dimension", "unknown")
+            dimension = r.get("source_dimension") or metadata.get("dimension", "unknown")
             
-            # Human-readable label
-            dataset_label = manifest.dataset_labels.get(dataset_id, dataset_id)
-            
-            # Content preview (최대 200자)
-            content = r.get("content", "")[:200]
-            
+            # P5: Guaranteed ref_id format
             ref_id = build_evidence_ref_id(dimension, dataset_id, doc_id)
+            
+            # Dedup
+            if ref_id in seen_ref_ids:
+                continue
+            seen_ref_ids.add(ref_id)
+            
+            # P5: dataset_label fallback
+            dataset_label = manifest.dataset_labels.get(dataset_id, dataset_id) if manifest else dataset_id
+            
+            # Content preview (최대 200자, strip whitespace)
+            content = (r.get("content", "") or "")[:200].strip()
+            
+            # P5: Score validation - protect against None, NaN
+            raw_score = r.get("score")
+            if raw_score is None or not isinstance(raw_score, (int, float)):
+                score = 0.0
+            elif raw_score != raw_score:  # NaN check
+                score = 0.0
+            else:
+                score = float(raw_score)
             
             evidence_refs.append(EvidenceRef(
                 ref_id=ref_id,
@@ -143,8 +165,11 @@ class RAGSuggestionService:
                 content_preview=content,
                 dataset_id=dataset_id,
                 dataset_label=dataset_label,
-                score=r.get("score", 0),
+                score=score,
             ))
+        
+        # Sort by score descending
+        evidence_refs.sort(key=lambda x: x.score, reverse=True)
         
         return evidence_refs
     
