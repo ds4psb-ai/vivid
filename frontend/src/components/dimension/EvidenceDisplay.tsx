@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * EvidenceDisplay - P5: 공통 AI 근거 표시 컴포넌트 (Hardened)
+ * EvidenceDisplay - P5+P6: 공통 AI 근거 표시 컴포넌트 (Hardened)
  *
  * 사용법:
  *   <EvidenceDisplay refs={result.evidence_refs} confidence={result.confidence} />
@@ -20,9 +20,24 @@
  * - Score NaN/undefined protection
  * - React.memo for performance
  * - No dangerouslySetInnerHTML (XSS safe)
+ *
+ * P6-2: Zod schema validation
+ * - Runtime validation of EvidenceRef structure
+ * - Invalid refs dropped with console.warn
  */
 
 import React, { useState, useEffect, useMemo, memo } from "react";
+import { z } from "zod";
+
+// P6-2: Zod schema for EvidenceRef validation
+const EvidenceRefSchema = z.object({
+    ref_id: z.string().min(1),
+    source: z.string().optional(),
+    content_preview: z.string().optional(),
+    dataset_id: z.string().optional(),
+    dataset_label: z.string().optional(),
+    score: z.number().nullable().optional(),
+});
 
 export interface EvidenceRef {
     ref_id: string;
@@ -86,12 +101,23 @@ function formatScore(score: number | undefined | null): string | null {
 }
 
 /**
- * Process refs: deduplicate by ref_id, sort by score desc
+ * Process refs: validate with Zod, deduplicate by ref_id, sort by score desc
  */
-function processRefs(refs: EvidenceRef[]): EvidenceRef[] {
+function processRefs(refs: unknown[]): EvidenceRef[] {
+    // P6-2: Validate each ref with Zod
+    const validated: EvidenceRef[] = [];
+    for (const ref of refs) {
+        const result = EvidenceRefSchema.safeParse(ref);
+        if (result.success) {
+            validated.push(result.data as EvidenceRef);
+        } else {
+            console.warn("[EvidenceDisplay] Invalid ref dropped:", ref, result.error.issues);
+        }
+    }
+
     // Deduplicate by ref_id
     const seen = new Set<string>();
-    const deduped = refs.filter((ref) => {
+    const deduped = validated.filter((ref) => {
         if (!ref.ref_id || seen.has(ref.ref_id)) return false;
         seen.add(ref.ref_id);
         return true;
