@@ -166,3 +166,105 @@ async def rag_health():
     except Exception as e:
         logger.error(f"RAG health check failed: {e}")
         raise HTTPException(status_code=503, detail=f"RAG unhealthy: {e}")
+
+
+# === P1.6: Suggestion Endpoint ===
+
+class EvidenceRefResponse(BaseModel):
+    """Evidence reference for suggestion."""
+    ref_id: str
+    source: str = "db"
+    content_preview: str = ""
+    dataset_id: str = ""
+    dataset_label: str = ""
+    score: float = 0.0
+
+
+class PromptChipResponse(BaseModel):
+    """Quick insert chip."""
+    label: str
+    insert_text: str
+    chip_type: str = "keyword"
+
+
+class SuggestRequest(BaseModel):
+    """P1.6: RAG suggestion request."""
+    app_key: str = Field(..., description="App identifier (e.g., 'dimension.persona.analyze')")
+    query: str = Field(..., min_length=1, max_length=1000, description="User query")
+    history_context: Optional[str] = Field(None, description="Previous conversation context")
+    inputs: Optional[Dict[str, Any]] = Field(None, description="Additional inputs")
+
+
+class SuggestResponse(BaseModel):
+    """P1.6: RAG suggestion response."""
+    has_suggestion: bool = False
+    confidence: float = 0.0
+    confidence_level: str = "low"  # "high" | "medium" | "low"
+    evidence_refs: List[EvidenceRefResponse] = []
+    prompt_chips: List[PromptChipResponse] = []
+    suggested_context: str = ""
+    datasets_used: List[str] = []
+    total_results: int = 0
+
+
+@router.post("/suggest", response_model=SuggestResponse)
+async def get_rag_suggestion(request: SuggestRequest):
+    """
+    P1.6: Get RAG-based suggestion with confidence and evidence.
+    
+    Returns a suggestion card that the user can choose to apply or dismiss.
+    Does NOT auto-apply - requires explicit user action.
+    
+    Example:
+        POST /rag/suggest
+        {"app_key": "dimension.persona.analyze", "query": "INTJ 성격의 캐릭터 분석"}
+        
+    Response:
+        - has_suggestion: Whether there's a relevant suggestion
+        - confidence_level: "high" | "medium" | "low" (user-friendly labels)
+        - evidence_refs: Sources with previews
+        - prompt_chips: Quick-insert suggestions
+    """
+    from app.rag.rag_suggestion_service import get_suggestion_service
+    
+    try:
+        service = get_suggestion_service()
+        suggestion = service.get_suggestion(
+            app_key=request.app_key,
+            query=request.query,
+            history_context=request.history_context,
+            inputs=request.inputs,
+        )
+        
+        # Convert dataclass to Pydantic response
+        return SuggestResponse(
+            has_suggestion=suggestion.has_suggestion,
+            confidence=suggestion.confidence,
+            confidence_level=suggestion.confidence_level.value,
+            evidence_refs=[
+                EvidenceRefResponse(
+                    ref_id=e.ref_id,
+                    source=e.source,
+                    content_preview=e.content_preview,
+                    dataset_id=e.dataset_id,
+                    dataset_label=e.dataset_label,
+                    score=e.score,
+                )
+                for e in suggestion.evidence_refs
+            ],
+            prompt_chips=[
+                PromptChipResponse(
+                    label=c.label,
+                    insert_text=c.insert_text,
+                    chip_type=c.chip_type,
+                )
+                for c in suggestion.prompt_chips
+            ],
+            suggested_context=suggestion.suggested_context,
+            datasets_used=suggestion.datasets_used,
+            total_results=suggestion.total_results,
+        )
+    except Exception as e:
+        logger.error(f"Suggestion request failed: {e}")
+        return SuggestResponse(has_suggestion=False)
+
