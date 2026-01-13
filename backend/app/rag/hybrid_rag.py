@@ -577,10 +577,11 @@ async def hybrid_query(
 
     # === CRAG Pattern: Corrective RAG (2025 Best Practice) ===
     # If confidence is low, automatically trigger Google Search Grounding as fallback
-    CRAG_CONFIDENCE_THRESHOLD = 0.5
-    if result.confidence < CRAG_CONFIDENCE_THRESHOLD and not result.grounding_sources:
+    # P6 SSoT: Use preset-based threshold instead of hardcoded value
+    crag_threshold = preset.confidence_threshold  # preset already loaded above for cache
+    if result.confidence < crag_threshold and not result.grounding_sources:
         logger.info(
-            f"[HybridRAG] CRAG triggered | confidence={result.confidence:.2f} < {CRAG_CONFIDENCE_THRESHOLD} | "
+            f"[HybridRAG] CRAG triggered | confidence={result.confidence:.2f} < {crag_threshold} | "
             f"Falling back to Google Search Grounding"
         )
         try:

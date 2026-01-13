@@ -205,6 +205,7 @@ class SuggestResponse(BaseModel):
     suggested_context: str = ""
     datasets_used: List[str] = []
     total_results: int = 0
+    trace_id: Optional[str] = None  # P6-6: Observability
 
 
 @router.post("/suggest", response_model=SuggestResponse)
@@ -263,6 +264,7 @@ async def get_rag_suggestion(request: SuggestRequest):
             suggested_context=suggestion.suggested_context,
             datasets_used=suggestion.datasets_used,
             total_results=suggestion.total_results,
+            trace_id=suggestion.trace_id,  # P6-6
         )
     except Exception as e:
         logger.error(f"Suggestion request failed: {e}")

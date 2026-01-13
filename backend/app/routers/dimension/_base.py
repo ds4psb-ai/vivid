@@ -600,10 +600,22 @@ async def _execute_dimension_tool(
             except Exception as run_err:
                 logger.warning(f"CapsuleRun save failed (non-blocking): {run_err}")
         
+        # P6-2: Sanitize evidence_refs in output before returning
+        output = result.get("output", {})
+        if "evidence_refs" in output and isinstance(output.get("evidence_refs"), list):
+            try:
+                from app.agents.tool_utils import filter_evidence_refs
+                filtered_refs, warnings = filter_evidence_refs(output["evidence_refs"])
+                output["evidence_refs"] = filtered_refs
+                if warnings:
+                    logger.debug(f"[P6-2] evidence_refs filtered: {warnings}")
+            except Exception as filter_err:
+                logger.warning(f"[P6-2] filter_evidence_refs failed: {filter_err}")
+        
         return DimensionResponse(
             success=True,
             capsule_id=capsule_id.value,
-            output=result.get("output", {}),
+            output=output,
             metrics=MetricsResponse(
                 latency_ms=latency_ms,
                 tokens=result.get("metrics", {}).get("tokens", 0),
