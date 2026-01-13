@@ -565,12 +565,10 @@ async def _execute_dimension_tool(
                 from app.models import CapsuleRun
                 from app.core.app_registry import AppRegistry
                 
-                # capsule_version: AppRegistry 우선, latest 폴백
+                # capsule_version: capsule_key로 조회, latest 폴백
                 capsule_version = "latest"
                 try:
-                    app_config = AppRegistry.get_by_name(
-                        CAPSULE_TO_DIMENSION.get(capsule_id, "3D").lower()
-                    )
+                    app_config = AppRegistry.get_by_capsule_key(capsule_id.value)
                     if app_config and app_config.metadata:
                         capsule_version = app_config.metadata.version or "latest"
                 except Exception:
@@ -596,7 +594,7 @@ async def _execute_dimension_tool(
                 
                 # evidence_refs를 실제 ID로 교체 (응답 + CapsuleRun 동기화)
                 canonical_ref = f"db:capsule_runs:{capsule_run.id}"
-                result["output"]["evidence_refs"] = [canonical_ref]
+                result.setdefault("output", {})["evidence_refs"] = [canonical_ref]
                 capsule_run.evidence_refs = [canonical_ref]
                 
             except Exception as run_err:
