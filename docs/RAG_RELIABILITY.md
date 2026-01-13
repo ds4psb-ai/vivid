@@ -1,8 +1,21 @@
 # RAG Reliability Guide
 
 > **Status**: Production  
-> **Last Updated**: 2026-01-11  
+> **Last Updated**: 2026-01-13 (P6 Hardening Complete)  
 > **Based on**: 2025 RAG Best Practices Research
+
+## P6 Hardening (2026-01-13) ✅
+
+| Item | Status |
+|------|--------|
+| confidence_threshold SSoT | ✅ YAML preset 기반 |
+| evidence_refs 서버 정규화 | ✅ filter_evidence_refs() |
+| Qdrant Circuit Breaker | ✅ QDRANT_BREAKER |
+| Cache TTL Override | ✅ min_confidence + cache_ttl |
+| SLO Alert Rules | ✅ rag_alerts.yml |
+| trace_id 응답 | ✅ SuggestResponse.trace_id |
+| CRAG threshold SSoT | ✅ preset.confidence_threshold |
+| Zod Frontend Validation | ✅ EvidenceRefSchema |
 
 ## Overview
 
