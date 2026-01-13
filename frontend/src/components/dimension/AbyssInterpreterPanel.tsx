@@ -91,12 +91,16 @@ export default function AbyssInterpreterPanel() {
     const toolConfig = getToolByDimension("AI");
     const CREDIT_COST = toolConfig?.creditCost ?? 5;
 
-    // P1.6: RAG Suggestion
+    // P1.6/P1.7: RAG Suggestion
     const {
         suggestion: ragSuggestion,
         isLoading: ragLoading,
+        isOverridden: ragOverridden,
         fetchSuggestion,
         dismissSuggestion,
+        applyContext,
+        markAsOverridden,
+        restoreSuggestion,
     } = useRAGSuggestion({ appKey: "dimension.persona.analyze" });
 
     // Export utilities
@@ -479,18 +483,19 @@ export default function AbyssInterpreterPanel() {
                         {/* Input Area (Sticky Bottom) */}
                         {!isComplete && (
                             <div className="flex-shrink-0 p-6 border-t border-slate-200 dark:border-white/5 bg-white/80 dark:bg-slate-900/90 backdrop-blur-md">
-                                {/* P1.6: RAG Suggestion Card */}
-                                {(ragSuggestion?.has_suggestion || ragLoading) && (
+                                {/* P1.6/P1.7: RAG Suggestion Card */}
+                                {(ragSuggestion?.has_suggestion || ragLoading || ragOverridden) && (
                                     <div className="max-w-4xl mx-auto mb-4">
                                         <RAGSuggestionCard
                                             suggestion={ragSuggestion}
                                             isLoading={ragLoading}
+                                            isOverridden={ragOverridden}
                                             onDismiss={dismissSuggestion}
+                                            onRestore={restoreSuggestion}
                                             onChipClick={(text) => setInputMessage(prev => prev + text)}
                                             onApply={(context) => {
-                                                // Optional: inject context into next message
+                                                applyContext(context);
                                                 setInputMessage(prev => prev + "\n(RAG 컨텍스트 적용됨)");
-                                                dismissSuggestion();
                                             }}
                                         />
                                     </div>
@@ -499,7 +504,11 @@ export default function AbyssInterpreterPanel() {
                                     <input
                                         type="text"
                                         value={inputMessage}
-                                        onChange={(e) => setInputMessage(e.target.value)}
+                                        onChange={(e) => {
+                                            setInputMessage(e.target.value);
+                                            // P1.7: 적용 후 편집 시 override
+                                            markAsOverridden();
+                                        }}
                                         onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && void sendMessage()}
                                         placeholder="답변을 입력하세요..."
                                         disabled={isLoading}

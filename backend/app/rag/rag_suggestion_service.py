@@ -78,7 +78,7 @@ class RAGSuggestionService:
         confidence_level = calculate_confidence_level(confidence)
         
         # 낮은 신뢰도면 빈 추천 반환
-        if confidence < 0.4:
+        if confidence < 0.5:
             logger.info(f"[SuggestionService] Low confidence ({confidence:.2f}), skipping")
             return RAGSuggestion(
                 has_suggestion=False,

@@ -1,11 +1,20 @@
 /**
- * useRAGSuggestion - P1.6: RAG 추천 API 호출 훅
+ * useRAGSuggestion - P1.6/P1.7: RAG 추천 API 호출 훅
+ * 
+ * P1.7 Features:
+ * - MIN_QUERY_LENGTH: 30자 미만 쿼리는 API 호출 건너뛰기
+ * - appliedContext: 적용된 컨텍스트 추적
+ * - isOverridden: 적용 후 편집 시 override 상태
+ * - restoreSuggestion: override 상태에서 복원
  */
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8100';
+
+// P1.7: 30자 미만 쿼리는 추천 건너뛰기
+const MIN_QUERY_LENGTH = 30;
 
 // Types (mirror backend response)
 export interface EvidenceRef {
@@ -43,15 +52,26 @@ export function useRAGSuggestion({ appKey }: UseRAGSuggestionOptions) {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // P1.7: Override 상태 관리
+    const [appliedContext, setAppliedContext] = useState<string | null>(null);
+    const [isOverridden, setIsOverridden] = useState(false);
+    const lastQueryRef = useRef<string>('');
+
     const fetchSuggestion = useCallback(async (
         query: string,
         historyContext?: string,
     ) => {
-        if (!query.trim()) {
+        // P1.7: 새 쿼리 시 override 상태 초기화
+        setIsOverridden(false);
+        setAppliedContext(null);
+
+        // P1.7: 30자 미만 쿼리는 건너뛰기
+        if (query.trim().length < MIN_QUERY_LENGTH) {
             setSuggestion(null);
             return;
         }
 
+        lastQueryRef.current = query;
         setIsLoading(true);
         setError(null);
 
@@ -80,9 +100,34 @@ export function useRAGSuggestion({ appKey }: UseRAGSuggestionOptions) {
         }
     }, [appKey]);
 
+    // P1.7: dismiss는 현재 suggestion만 숨김 (override와 분리)
     const dismissSuggestion = useCallback(() => {
         setSuggestion(null);
+        // override 상태는 변경하지 않음 - 새 입력 시 다시 추천 허용
     }, []);
+
+    // P1.7: 컨텍스트 적용
+    const applyContext = useCallback((context: string) => {
+        setAppliedContext(context);
+        dismissSuggestion();
+    }, [dismissSuggestion]);
+
+    // P1.7: 적용 후 편집 감지 → override 설정
+    const markAsOverridden = useCallback(() => {
+        if (appliedContext) {
+            setIsOverridden(true);
+        }
+    }, [appliedContext]);
+
+    // P1.7: override 상태에서 복원
+    const restoreSuggestion = useCallback(async () => {
+        setIsOverridden(false);
+        setAppliedContext(null);
+        // 마지막 쿼리로 다시 fetch
+        if (lastQueryRef.current) {
+            await fetchSuggestion(lastQueryRef.current);
+        }
+    }, [fetchSuggestion]);
 
     const clearError = useCallback(() => {
         setError(null);
@@ -92,10 +137,19 @@ export function useRAGSuggestion({ appKey }: UseRAGSuggestionOptions) {
         suggestion,
         isLoading,
         error,
+        // P1.7: 확장된 상태
+        appliedContext,
+        isOverridden,
+        // 기존 함수
         fetchSuggestion,
         dismissSuggestion,
         clearError,
+        // P1.7: 새 함수
+        applyContext,
+        markAsOverridden,
+        restoreSuggestion,
     };
 }
 
 export default useRAGSuggestion;
+

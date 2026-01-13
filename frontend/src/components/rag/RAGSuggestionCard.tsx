@@ -1,5 +1,5 @@
 /**
- * RAGSuggestionCard - P1.6: RAG 기반 추천 카드 컴포넌트
+ * RAGSuggestionCard - P1.6/P1.7: RAG 기반 추천 카드 컴포넌트
  * 
  * 2025-2026 UX Best Practices:
  * - 자동 적용 없음 - 사용자가 명시적으로 "적용" 클릭
@@ -7,6 +7,10 @@
  * - 원숫자 대신 라벨 ("높음", "보통", "낮음")
  * - 근거(evidence) 미리보기
  * - Prompt chips로 빠른 삽입
+ * 
+ * P1.7 Features:
+ * - isOverridden: 적용 후 편집 시 override 상태
+ * - onRestore: override 상태에서 복원
  */
 'use client';
 
@@ -45,6 +49,9 @@ interface RAGSuggestionCardProps {
     onDismiss?: () => void;
     onChipClick?: (insertText: string) => void;
     isLoading?: boolean;
+    // P1.7: Override/Restore
+    isOverridden?: boolean;
+    onRestore?: () => void;
 }
 
 // Confidence Level 배지 설정
@@ -78,8 +85,30 @@ export function RAGSuggestionCard({
     onDismiss,
     onChipClick,
     isLoading = false,
+    // P1.7
+    isOverridden = false,
+    onRestore,
 }: RAGSuggestionCardProps) {
     const [expandedEvidence, setExpandedEvidence] = useState(false);
+
+    // P1.7: Override 상태일 때 - 축소된 복원 버튼만 표시
+    if (isOverridden && onRestore) {
+        return (
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-3">
+                <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                        🔄 AI 추천이 수정되었습니다
+                    </span>
+                    <button
+                        onClick={onRestore}
+                        className="px-3 py-1 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                    >
+                        추천 복원
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     // 로딩 중
     if (isLoading) {
@@ -147,8 +176,8 @@ export function RAGSuggestionCard({
                                 key={idx}
                                 onClick={() => onChipClick?.(chip.insert_text)}
                                 className={`px-3 py-1.5 rounded-full text-sm border transition-all hover:scale-105 ${chip.chip_type === 'context'
-                                        ? 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300'
-                                        : 'bg-gray-50 border-gray-200 text-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300'
+                                    ? 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300'
+                                    : 'bg-gray-50 border-gray-200 text-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300'
                                     }`}
                             >
                                 {chip.label}
