@@ -141,6 +141,7 @@ def index_to_qdrant(
                 # Metadata for RAG filtering
                 metadata = {
                     "dataset_id": DATASET_ID,
+                    "app_key": "teaching.image.generate",  # P3: required for RAG routing
                     "source_id": source_id,
                     "pack_id": pack_id,
                     "row": row,

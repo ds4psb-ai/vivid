@@ -74,6 +74,7 @@ def index_to_qdrant(references: List[Dict[str, Any]], dry_run: bool = False) -> 
             # Metadata for RAG filtering
             metadata = {
                 "dataset_id": DATASET_ID,
+                "app_key": "teaching.reference.analyze",  # P3: required for RAG routing
                 "source_id": source_id,
                 "pack_id": doc_id,
                 "director": ref.get("director"),
