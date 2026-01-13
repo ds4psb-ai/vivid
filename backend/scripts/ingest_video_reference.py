@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""Ingest video reference data into source_packs.
+"""Ingest video reference data into source_packs and Qdrant.
 
 Converts video reference JSON exports to SourcePack records for RAG routing.
+Also indexes to Qdrant with dataset_id metadata for RAG search.
 
 Usage:
     python scripts/ingest_video_reference.py --input data/source_packs/video_refs.json
     python scripts/ingest_video_reference.py --input data/source_packs/video_refs.json --dry-run
+    python scripts/ingest_video_reference.py --input data/source_packs/video_refs.json --no-qdrant
 """
 from __future__ import annotations
 
@@ -28,19 +30,84 @@ from sqlalchemy import select
 from app.database import AsyncSessionLocal, init_db
 from app.models import SourcePack
 
+# Qdrant RAG Dimension (4D = Reference Analyze)
+QDRANT_DIMENSION = "4D"
+DATASET_ID = "video_ref"
+
+
+def index_to_qdrant(references: List[Dict[str, Any]], dry_run: bool = False) -> int:
+    """Index video references to Qdrant with dataset_id metadata.
+    
+    Args:
+        references: List of video reference objects
+        dry_run: If True, skip actual indexing
+    
+    Returns:
+        Number of documents indexed
+    """
+    if dry_run:
+        print(f"[DRY RUN] Would index {len(references)} documents to Qdrant")
+        return 0
+    
+    try:
+        from app.rag.tier1_dimension_rag import get_dimension_rag
+        
+        rag = get_dimension_rag(QDRANT_DIMENSION)
+        indexed = 0
+        
+        for ref in references:
+            source_id = ref.get("source_id")
+            if not source_id:
+                continue
+            
+            doc_id = f"video_ref_{source_id}"
+            
+            # Build searchable content
+            content_parts = [
+                ref.get("title", ""),
+                f"Director: {ref.get('director', 'Unknown')}",
+                f"Year: {ref.get('year', '')}",
+                ref.get("notes", ""),
+            ]
+            content = " | ".join(filter(None, content_parts))
+            
+            # Metadata for RAG filtering
+            metadata = {
+                "dataset_id": DATASET_ID,
+                "source_id": source_id,
+                "pack_id": doc_id,
+                "director": ref.get("director"),
+                "year": ref.get("year"),
+                "tier": "source_pack",
+            }
+            
+            success = rag.index_document(doc_id, content, metadata)
+            if success:
+                indexed += 1
+                print(f"🔍 Indexed to Qdrant: {doc_id}")
+            else:
+                print(f"⚠️  Qdrant indexing failed: {doc_id}")
+        
+        return indexed
+    except Exception as e:
+        print(f"⚠️  Qdrant indexing skipped: {e}")
+        return 0
+
 
 async def ingest_video_reference(
     data: List[Dict[str, Any]],
     dry_run: bool = False,
+    skip_qdrant: bool = False,
 ) -> Dict[str, int]:
     """Convert video reference JSON to SourcePack records.
     
     Args:
         data: List of video reference objects
         dry_run: If True, don't commit changes
+        skip_qdrant: If True, skip Qdrant indexing
     
     Returns:
-        Dict with created/updated/skipped counts
+        Dict with created/updated/skipped/indexed counts
     """
     await init_db()
     
@@ -109,19 +176,29 @@ async def ingest_video_reference(
         
         if not dry_run:
             await session.commit()
-            print(f"\n=== Summary ===")
-            print(f"Created: {created}, Updated: {updated}, Skipped: {skipped}")
-        else:
-            print(f"\n=== Dry Run Summary ===")
-            print(f"Would create: {created}, Would update: {updated}, Skipped: {skipped}")
+        
+    # Qdrant indexing (after DB commit)
+    indexed = 0
+    if not skip_qdrant:
+        indexed = index_to_qdrant(data, dry_run=dry_run)
     
-    return {"created": created, "updated": updated, "skipped": skipped}
+    # Summary
+    if not dry_run:
+        print(f"\n=== Summary ===")
+        print(f"DB: Created: {created}, Updated: {updated}, Skipped: {skipped}")
+        print(f"Qdrant: Indexed: {indexed}")
+    else:
+        print(f"\n=== Dry Run Summary ===")
+        print(f"DB: Would create: {created}, Would update: {updated}, Skipped: {skipped}")
+    
+    return {"created": created, "updated": updated, "skipped": skipped, "indexed": indexed}
 
 
 async def main():
-    parser = argparse.ArgumentParser(description="Ingest video references into source_packs")
+    parser = argparse.ArgumentParser(description="Ingest video references into source_packs + Qdrant")
     parser.add_argument("--input", required=True, help="JSON file path or directory")
     parser.add_argument("--dry-run", action="store_true", help="Don't commit changes")
+    parser.add_argument("--no-qdrant", action="store_true", help="Skip Qdrant indexing")
     args = parser.parse_args()
     
     input_path = Path(args.input)
@@ -142,7 +219,7 @@ async def main():
                 else:
                     all_data.append(file_data)
         
-        await ingest_video_reference(all_data, dry_run=args.dry_run)
+        await ingest_video_reference(all_data, dry_run=args.dry_run, skip_qdrant=args.no_qdrant)
     else:
         # Process single file
         with open(input_path, "r", encoding="utf-8") as f:
@@ -151,8 +228,9 @@ async def main():
         if not isinstance(data, list):
             data = [data]
         
-        await ingest_video_reference(data, dry_run=args.dry_run)
+        await ingest_video_reference(data, dry_run=args.dry_run, skip_qdrant=args.no_qdrant)
 
 
 if __name__ == "__main__":
     asyncio.run(main())
+
