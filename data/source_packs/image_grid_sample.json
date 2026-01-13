@@ -1,0 +1,89 @@
+[
+    {
+        "source_id": "lookbook_001",
+        "title": "Character Design Lookbook",
+        "grid": {
+            "rows": 2,
+            "cols": 2
+        },
+        "tiles": [
+            {
+                "row": 0,
+                "col": 0,
+                "label": "Front view - character standing pose"
+            },
+            {
+                "row": 0,
+                "col": 1,
+                "label": "Side view - profile silhouette"
+            },
+            {
+                "row": 1,
+                "col": 0,
+                "label": "Back view - costume details"
+            },
+            {
+                "row": 1,
+                "col": 1,
+                "label": "Close-up - face and expression"
+            }
+        ],
+        "notes": "4-tile character reference grid for animation"
+    },
+    {
+        "source_id": "color_palette_001",
+        "title": "Cinematic Color Palette",
+        "grid": {
+            "rows": 3,
+            "cols": 3
+        },
+        "tiles": [
+            {
+                "row": 0,
+                "col": 0,
+                "label": "Primary - deep blue"
+            },
+            {
+                "row": 0,
+                "col": 1,
+                "label": "Primary - warm orange"
+            },
+            {
+                "row": 0,
+                "col": 2,
+                "label": "Primary - desaturated green"
+            },
+            {
+                "row": 1,
+                "col": 0,
+                "label": "Secondary - golden highlight"
+            },
+            {
+                "row": 1,
+                "col": 1,
+                "label": "Secondary - cool shadow"
+            },
+            {
+                "row": 1,
+                "col": 2,
+                "label": "Secondary - neutral gray"
+            },
+            {
+                "row": 2,
+                "col": 0,
+                "label": "Accent - neon pink"
+            },
+            {
+                "row": 2,
+                "col": 1,
+                "label": "Accent - electric cyan"
+            },
+            {
+                "row": 2,
+                "col": 2,
+                "label": "Accent - muted purple"
+            }
+        ],
+        "notes": "9-tile color reference for cyberpunk aesthetic"
+    }
+]

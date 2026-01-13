@@ -106,6 +106,17 @@ Use these narrative frameworks for storyboard structure.
         search_limit=5,
         min_score=0.6,
         amplify_with_history=True,
+        # P2: Image grid dataset routing
+        dataset_candidates=["image_grid", "visual_style"],
+        dataset_selection_rules={
+            r"그리드|모자이크|타일|룩북|레퍼런스": ["image_grid"],
+            r"스프라이트|grid|tile|mosaic|lookbook": ["image_grid"],
+        },
+        default_dataset="visual_style",
+        dataset_labels={
+            "image_grid": "이미지 그리드",
+            "visual_style": "비주얼 스타일",
+        },
         prompt_injection_template="""
 ## Visual Style Guidelines (Retrieved)
 {rag_results}
