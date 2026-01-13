@@ -67,6 +67,8 @@ class DimensionCapsuleId(str, Enum):
     STORY_REFINE = "dimension.story.refine"
     SOUND_CRAFT = "dimension.sound.craft"
     CREATIVE_EDITOR = "dimension.quality.editor"
+    # JSON Generator adapter
+    JSON_GEN_CONVERT = "dimension.json_gen.convert"
 
 
 # Input validation limits
@@ -607,7 +609,10 @@ GUIDELINES:
 - Allow skipping sensitive questions gracefully
 - Build on previous responses for deeper exploration
 - Connect psychological insights to creative applications
+- Connect psychological insights to creative applications
 - Use warm, conversational Korean
+- If 'is_deep_mode' is true and 'turn_count' is 0, ask a digging/follow-up question to explore deeper.
+- If 'is_deep_mode' is true and 'turn_count' is 1, summarize and move to next topic.
 
 OUTPUT JSON (ALWAYS return this structure):
 {
@@ -2026,6 +2031,44 @@ async def run_persona_analyzer(
     else:
         stage_flow = PERSONA_STAGES
 
+    # Determine max turns based on depth
+    max_turns = 2 if depth_level == "deep" else 1
+
+    # Extract meta info
+    meta_info = persona_data.get("_meta", {})
+    # Reset turn count if stage changed (detected by client sending different stage than last meta)
+    # But since client sends back what we sent, we rely on our return value logic.
+    # We need to rely on the input 'current_stage' vs 'meta.last_stage' check if possible,
+    # or just trust the client keeps state.
+    # Simpler: client sends persona_data. If we see _meta, we use it.
+    
+    current_turn = meta_info.get("stage_turn_count", 0)
+    
+    # If this is a new stage (based on some heuristic or just 0), it's turn 1 (response to intro)
+    # Actually, "intro" returns next_stage="saju".
+    # User sends "saju" + User Input. This is Turn 1 for Saju.
+    # So if we receive "saju", it means we are processing the user's answer to our previous question.
+    # So we are at least at Turn 1.
+    
+    # Logic:
+    # 1. User answers previous question.
+    # 2. We analyze answer.
+    # 3. If turn < max_turns:
+    #      Ask follow-up question.
+    #      Return next_stage = current_stage.
+    #      Update _meta.turn = current_turn + 1.
+    # 4. If turn >= max_turns:
+    #      Conclude this stage.
+    #      Return next_stage = actual_next_stage.
+    #      Update _meta.turn = 0.
+
+    # However, for 'saju' stage, the first input is birth info.
+    # This is effectively the answer to "Intro" stage's question.
+    # Let's count this as Turn 1.
+    
+    # Increase turn count for this processing step
+    current_turn += 1
+
     # Validate current stage
     if current_stage not in stage_flow:
         current_stage = stage_flow[0]
@@ -2081,6 +2124,37 @@ async def run_persona_analyzer(
     if birth_info:
         context_parts.append(f"Birth Info: {json.dumps(birth_info, ensure_ascii=False)}")
 
+    # Deep Mode Logic: Determine Prompt Strategy
+    if current_turn < max_turns and current_stage != "synthesis":
+        # STAY in current stage, ask follow-up
+        next_stage_logic = current_stage
+        next_meta = {"stage_turn_count": current_turn, "last_stage": current_stage}
+        prompt_instruction = f"""
+Current Stage: {current_stage} (Turn {current_turn}/{max_turns})
+This is a DEEP MODE analysis. The user just answered your primary question.
+DO NOT move to the next stage yet.
+Ask a provocative, insightful FOLLOW-UP question to dig deeper into their answer.
+Objective: Uncover hidden motivations, contradictions, or specific examples.
+"""
+    else:
+        # MOVE to next stage
+        try:
+            current_idx = stage_flow.index(current_stage)
+            if current_idx + 1 < len(stage_flow):
+                next_stage_logic = stage_flow[current_idx + 1]
+            else:
+                next_stage_logic = "synthesis"
+        except ValueError:
+            next_stage_logic = "synthesis"
+        
+        next_meta = {"stage_turn_count": 0, "last_stage": next_stage_logic}
+        prompt_instruction = f"""
+Current Stage: {current_stage} (Final Turn)
+Analyze the user's response and consolidate insights.
+Then, move to the NEXT STAGE: {next_stage_logic}.
+Ask the opening question for the {next_stage_logic} stage.
+"""
+
     context_str = "\n".join(context_parts)
     use_rag = params.get("use_rag", True)
 
@@ -2091,19 +2165,29 @@ async def run_persona_analyzer(
 
 User's Response: {user_message}
 
-Based on the current stage ({current_stage}):
-1. Process the user's response
-2. Provide an insightful, empathetic response or follow-up question
-3. Update the persona_data with any new insights
-4. Determine if we should advance to the next stage
+{prompt_instruction}
 
-If this is the final stage (synthesis), compile the complete persona profile.
+Ensure your response is valid JSON.
 """
 
     # Inject RAG context if enabled (persona analysis frameworks)
+    # Stage-specific psychology query keywords
+    stage_rag_keywords = {
+        "self_expression": "자기표현 창작 동기 심리 분석",
+        "maslow": "매슬로우 욕구 계층 자아실현 결핍 동기",
+        "formative": "발달심리학 성장배경 원가족 형성기 경험",
+        "attachment": "애착이론 볼비 안전기지 애착유형 관계패턴",
+        "shadow": "융 그림자 무의식 억압 투사 통합",
+        "archetype": "융 원형 집단무의식 페르소나 아니마 아니무스",
+        "synthesis": "통합 자기실현 창작DNA 심리프로파일",
+    }
+    rag_query = stage_rag_keywords.get(current_stage, f"{current_stage} 심리 분석")
+    if user_message:
+        rag_query = f"{rag_query} {user_message[:80]}"
+
     rag_context = _get_rag_context(
         capsule_id=DimensionCapsuleId.PERSONA_ANALYZE.value,
-        query=f"{current_stage} persona analysis {user_message[:100]}".strip(),
+        query=rag_query.strip(),
         use_rag=use_rag,
     )
     user_prompt = _inject_rag_into_prompt(base_prompt, rag_context, position="prepend")
@@ -2119,26 +2203,20 @@ If this is the final stage (synthesis), compile the complete persona profile.
 
         # Post-process: ensure proper structure
         if "error" not in result:
-            # Validate next_stage
-            next_stage = result.get("next_stage", current_stage)
-            if next_stage not in stage_flow:
-                # Find next stage in flow
-                try:
-                    current_idx = stage_flow.index(current_stage)
-                    if current_idx < len(stage_flow) - 1:
-                        next_stage = stage_flow[current_idx + 1]
-                    else:
-                        next_stage = "synthesis"
-                except ValueError:
-                    next_stage = stage_flow[0]
-            result["next_stage"] = next_stage
+            # Force next_stage from our logic (prevent LLM hallucination on stage flow)
+            result["next_stage"] = next_stage_logic
 
             # Ensure persona_update exists
             if "persona_update" not in result:
                 result["persona_update"] = {}
+                
+            # Inject _meta into persona_update
+            if not isinstance(result["persona_update"], dict):
+                result["persona_update"] = {}
+            result["persona_update"]["_meta"] = next_meta
 
             # Check if analysis is complete
-            if next_stage == "synthesis" and result.get("analysis_complete") is None:
+            if next_stage_logic == "synthesis" and result.get("analysis_complete") is None:
                 result["analysis_complete"] = (current_stage == "synthesis")
 
         return {
@@ -2771,6 +2849,67 @@ Content to Edit:
         }
 
 
+async def run_json_gen_convert(
+    inputs: Dict[str, Any],
+    params: Dict[str, Any],
+    user_api_key: Optional[str] = None,
+) -> CapsuleResult:
+    """Convert JSON Generator output to ShotContract.
+    
+    This is a lightweight adapter that doesn't call LLM - just data transformation.
+    """
+    import time
+    from app.services.json_generator_adapter import json_generator_to_shot_contract
+    
+    start_time = time.monotonic()
+    
+    json_blocks = inputs.get("json_blocks", {})
+    shot_id = inputs.get("shot_id", "shot-001")
+    sequence_id = inputs.get("sequence_id", "seq-01")
+    scene_id = inputs.get("scene_id", "scene-01")
+    
+    if not json_blocks:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.JSON_GEN_CONVERT.value,
+            "output": {},
+            "error": "json_blocks is required",
+            "metrics": None,
+        }
+    
+    try:
+        shot_contract = json_generator_to_shot_contract(
+            json_blocks=json_blocks,
+            shot_id=shot_id,
+            sequence_id=sequence_id,
+            scene_id=scene_id,
+        )
+        
+        latency_ms = int((time.monotonic() - start_time) * 1000)
+        
+        return {
+            "success": True,
+            "capsule_id": DimensionCapsuleId.JSON_GEN_CONVERT.value,
+            "output": {
+                "shot_contract": shot_contract.to_dict(),
+                "evidence_refs": [f"db:shot_contracts:{shot_id}"],
+            },
+            "metrics": {
+                "latency_ms": latency_ms,
+                "tokens": 0,  # No LLM call
+            },
+        }
+    except Exception as e:
+        logger.error(f"JSON Generator conversion failed: {e}")
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.JSON_GEN_CONVERT.value,
+            "output": {},
+            "error": str(e),
+            "metrics": None,
+        }
+
+
 # ============================================================================
 # Main Entry Point
 # ============================================================================
@@ -2792,6 +2931,7 @@ DIMENSION_ADAPTERS: Dict[str, Callable] = {
     DimensionCapsuleId.STORY_REFINE.value: run_story_refinery,
     DimensionCapsuleId.SOUND_CRAFT.value: run_sound_crafter,
     DimensionCapsuleId.CREATIVE_EDITOR.value: run_creative_editor,
+    DimensionCapsuleId.JSON_GEN_CONVERT.value: run_json_gen_convert,
 }
 
 

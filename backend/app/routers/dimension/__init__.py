@@ -27,6 +27,7 @@ from .quality import router as quality_router
 from .veo import router as veo_router
 from .kling import router as kling_router
 from .suno import router as suno_router
+from .json_gen import router as json_gen_router
 
 # Re-export from _base for backward compatibility
 from ._base import (
@@ -53,6 +54,7 @@ router.include_router(quality_router)
 router.include_router(veo_router)
 router.include_router(kling_router)
 router.include_router(suno_router)
+router.include_router(json_gen_router)
 
 
 # ============================================================================

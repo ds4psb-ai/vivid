@@ -267,10 +267,10 @@ export default function TeachingPanelLayout({
                                         <div className={`absolute inset-0 border-4 ${theme.spinner.split(' ')[1]} border-t-transparent border-l-transparent border-r-transparent rounded-full animate-spin-reverse opacity-70`}></div>
                                     </div>
                                     <div className="flex flex-col items-center gap-1">
-                                        <span className={`text-sm font-bold ${theme.accent} tracking-widest uppercase animate-pulse`}>
-                                            Generating
+                                        <span className={`text-sm font-medium ${theme.accent} tracking-wide`}>
+                                            처리 중
                                         </span>
-                                        <span className="text-xs text-white/40">Creating your masterpiece...</span>
+                                        <span className="text-[10px] text-white/30">잠시만 기다려주세요</span>
                                     </div>
                                 </div>
                             )}

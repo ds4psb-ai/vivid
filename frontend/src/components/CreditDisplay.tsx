@@ -19,7 +19,7 @@ export function CreditDisplay({ isExpanded, onOpenSettings }: CreditDisplayProps
         <div className="relative group/credit">
             <button
                 onClick={onOpenSettings}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${isLowCredits
+                className={`w-full flex items-center py-2.5 rounded-xl transition-all duration-200 ${isExpanded ? "gap-3 px-3 justify-start" : "px-0 justify-center"} ${isLowCredits
                     ? "bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20"
                     : "hover:bg-white/5"
                     }`}

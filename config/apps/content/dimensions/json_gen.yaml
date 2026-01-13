@@ -1,0 +1,36 @@
+$schema: "vivid-app/v2"
+
+metadata:
+  name: json_gen
+  type: dimension
+  version: "1.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "JSON 변환기"
+  name_en: "JSON Generator Adapter"
+  icon: "📝"
+  description: "11개 JSON 카테고리를 ShotContract로 변환합니다."
+
+capabilities:
+  - name: execution
+    enabled: true
+    config:
+      credit_cost: 10
+      endpoint: "/api/dimension/json-gen/convert"
+      capsule_key: "dimension.json_gen.convert"
+
+  - name: cache
+    enabled: true
+    config:
+      ttl: 1800
+
+extensions:
+  dimension:
+    tool_type: adapter
+
+keywords:
+  patterns:
+    - "json"
+    - "generator"
+    - "shot contract"

@@ -388,7 +388,9 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
                 {/* Bottom Section with Credits */}
                 <div className="p-2 border-t border-slate-200 dark:border-white/5 space-y-1">
                     {/* Theme Toggle */}
-                    <div className="flex items-center gap-3 px-3 py-2.5">
+                    <div
+                        className={`flex w-full items-center py-2.5 ${isExpanded ? "gap-3 px-3 justify-start" : "px-0 justify-center"}`}
+                    >
                         <ModeToggle />
                         {isExpanded && (
                             <motion.span

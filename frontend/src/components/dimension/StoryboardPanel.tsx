@@ -25,6 +25,9 @@ interface StoryboardScene {
     visual_prompt?: string;
     shot_type?: string;
     camera_movement?: string;
+    audio_cues?: string;
+    camera_angle?: string;
+    midjourney_prompt?: string;
 }
 
 interface StoryboardResult {
