@@ -8,11 +8,39 @@ RAG Quality Evaluation Harness (LLM-as-Judge)
 
 Usage:
     pytest backend/tests/e2e/test_rag_quality.py -v
+    
+P4 Integration:
+- Loads evaluation cases from data/rag_eval/rag_quality_cases.json
+- Skips LLM-as-Judge if GEMINI_API_KEY not available
 """
+import json
+import os
 import pytest
 import asyncio
-from typing import List, Dict, Any
+from pathlib import Path
+from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
+
+# P4: Check LLM availability
+LLM_AVAILABLE = bool(os.environ.get("GEMINI_API_KEY"))
+EVAL_CASES_PATH = Path(__file__).resolve().parents[3] / "data" / "rag_eval" / "rag_quality_cases.json"
+
+
+def load_eval_cases() -> Dict[str, Any]:
+    """Load evaluation cases from JSON file."""
+    if EVAL_CASES_PATH.exists():
+        with open(EVAL_CASES_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {"cases": [], "thresholds": {}}
+
+
+EVAL_DATA = load_eval_cases()
+THRESHOLDS = EVAL_DATA.get("thresholds", {
+    "min_groundedness": 0.6,
+    "min_relevance": 0.5,
+    "deflection_evidence_threshold": 2,
+    "pass_rate": 0.7,
+})
 
 
 # =============================================================================

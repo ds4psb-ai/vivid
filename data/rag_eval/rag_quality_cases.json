@@ -1,0 +1,124 @@
+{
+    "version": "1.0",
+    "description": "RAG Quality Evaluation Cases for P4 Pipeline",
+    "cases": [
+        {
+            "id": "video_ref_001",
+            "app_key": "teaching.reference.analyze",
+            "dimension": "4D",
+            "query": "봉준호 감독의 촬영 기법 분석",
+            "expected_datasets": [
+                "video_ref"
+            ],
+            "expected_keywords": [
+                "봉준호",
+                "촬영",
+                "감독"
+            ],
+            "type": "retrieval"
+        },
+        {
+            "id": "video_ref_002",
+            "app_key": "teaching.reference.analyze",
+            "dimension": "4D",
+            "query": "박찬욱 영화 레퍼런스",
+            "expected_datasets": [
+                "video_ref"
+            ],
+            "expected_keywords": [
+                "박찬욱",
+                "영화"
+            ],
+            "type": "retrieval"
+        },
+        {
+            "id": "image_grid_001",
+            "app_key": "teaching.image.generate",
+            "dimension": "3D",
+            "query": "캐릭터 룩북 그리드 레퍼런스",
+            "expected_datasets": [
+                "image_grid"
+            ],
+            "expected_keywords": [
+                "그리드",
+                "룩북",
+                "캐릭터"
+            ],
+            "type": "retrieval"
+        },
+        {
+            "id": "image_grid_002",
+            "app_key": "teaching.image.generate",
+            "dimension": "3D",
+            "query": "컬러 팔레트 타일 스타일",
+            "expected_datasets": [
+                "image_grid"
+            ],
+            "expected_keywords": [
+                "컬러",
+                "타일"
+            ],
+            "type": "retrieval"
+        },
+        {
+            "id": "fallback_001",
+            "app_key": "teaching.reference.analyze",
+            "dimension": "4D",
+            "query": "영화 편집 이론",
+            "expected_datasets": [
+                "film_analysis"
+            ],
+            "expected_keywords": [
+                "편집",
+                "이론"
+            ],
+            "type": "fallback",
+            "notes": "No video_ref match expected, should fallback to film_analysis"
+        },
+        {
+            "id": "deflection_001",
+            "app_key": "teaching.reference.analyze",
+            "dimension": "4D",
+            "query": "화성에서 감자 재배하는 방법",
+            "expected_datasets": [],
+            "expected_keywords": [],
+            "type": "deflection",
+            "notes": "Out-of-domain query, system should deflect gracefully"
+        },
+        {
+            "id": "mixed_001",
+            "app_key": "teaching.image.generate",
+            "dimension": "3D",
+            "query": "모자이크 스프라이트 시트",
+            "expected_datasets": [
+                "image_grid"
+            ],
+            "expected_keywords": [
+                "모자이크",
+                "스프라이트"
+            ],
+            "type": "retrieval"
+        },
+        {
+            "id": "groundedness_001",
+            "app_key": "teaching.reference.analyze",
+            "dimension": "4D",
+            "query": "기생충 영화의 계층 구도",
+            "expected_datasets": [
+                "video_ref"
+            ],
+            "expected_keywords": [
+                "기생충",
+                "계층"
+            ],
+            "type": "groundedness",
+            "notes": "Check if response is grounded in actual video_ref sources"
+        }
+    ],
+    "thresholds": {
+        "min_groundedness": 0.6,
+        "min_relevance": 0.5,
+        "deflection_evidence_threshold": 2,
+        "pass_rate": 0.7
+    }
+}
