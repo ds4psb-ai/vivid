@@ -37,6 +37,22 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # Local monitoring (optional) - use: docker-compose --profile monitoring up
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: vivid-prometheus
+    profiles: ["monitoring"]
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus:/etc/prometheus:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.enable-lifecycle'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
 volumes:
   crebit_postgres_data:
   crebit_qdrant_data:

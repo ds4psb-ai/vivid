@@ -1,0 +1,68 @@
+[
+    {
+        "id": "ad_bong_lighting",
+        "query": "봉준호 감독의 조명 스타일은?",
+        "dimension": "AD",
+        "auteur_key": "bong",
+        "expected": {
+            "grounded": true,
+            "min_confidence": 0.6,
+            "keywords": [
+                "조명",
+                "어둠",
+                "명암",
+                "그림자"
+            ]
+        }
+    },
+    {
+        "id": "1d_cinematic_prompt",
+        "query": "시네마틱한 영상 프롬프트 작성법",
+        "dimension": "1D",
+        "auteur_key": null,
+        "expected": {
+            "grounded": true,
+            "min_confidence": 0.5,
+            "keywords": [
+                "프롬프트",
+                "시네마틱",
+                "영상"
+            ]
+        }
+    },
+    {
+        "id": "ad_nolan_time",
+        "query": "크리스토퍼 놀란의 시간 활용법",
+        "dimension": "AD",
+        "auteur_key": "nolan",
+        "expected": {
+            "grounded": true,
+            "min_confidence": 0.6,
+            "keywords": [
+                "시간",
+                "비선형",
+                "구조"
+            ]
+        }
+    },
+    {
+        "id": "2d_storyboard",
+        "query": "스토리보드 프레이밍 기법",
+        "dimension": "2D",
+        "auteur_key": null,
+        "expected": {
+            "grounded": true,
+            "min_confidence": 0.5
+        }
+    },
+    {
+        "id": "negative_unknown_auteur",
+        "query": "알 수 없는 감독의 스타일",
+        "dimension": "AD",
+        "auteur_key": "unknown_director",
+        "expected": {
+            "grounded": false,
+            "max_confidence": 0.3
+        }
+    }
+]

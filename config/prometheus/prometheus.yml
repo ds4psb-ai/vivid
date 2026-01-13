@@ -1,0 +1,24 @@
+# Prometheus Configuration - Local Development Only
+# Production uses Cloud Monitoring (GCP)
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "rag_alerts.yml"
+
+# Alertmanager disabled for local dev
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: ['alertmanager:9093']
+
+scrape_configs:
+  - job_name: 'vivid-backend'
+    static_configs:
+      # macOS: host.docker.internal
+      # Linux: use extra_hosts in docker-compose
+      - targets: ['host.docker.internal:8000']
+    metrics_path: '/metrics'
+    scrape_timeout: 10s

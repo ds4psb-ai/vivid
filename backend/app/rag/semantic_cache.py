@@ -273,14 +273,14 @@ class SemanticCache:
                 self._memory_cache.move_to_end(query_hash)
                 self._stats.hits += 1
                 self._stats.exact_hits += 1
-                _get_record_metric()("get", "exact", 0.1)  # Memory hit is fast
+                _get_record_metric()("get", "exact", 0.1, dimension=dimension or "unknown")  # Memory hit is fast
                 return self._deserialize_result(entry.response_json)
             else:
                 del self._memory_cache[query_hash]
         
         if not self._db_available:
             self._stats.misses += 1
-            _get_record_metric()("get", "miss", 0.0)
+            _get_record_metric()("get", "miss", 0.0, dimension=dimension or "unknown")
             return None
 
         # 2. DB Exact Match
@@ -305,7 +305,7 @@ class SemanticCache:
                     
                     self._stats.hits += 1
                     self._stats.exact_hits += 1
-                    _get_record_metric()("get", "exact", 0.0)  # HIGH FIX: DB exact hit
+                    _get_record_metric()("get", "exact", 0.0, dimension=dimension or "unknown")  # HIGH FIX: DB exact hit
                     return self._deserialize_result(db_entry.response_json)
                     
                 # 3. DB Semantic Search (if exact match fails)
@@ -347,7 +347,7 @@ class SemanticCache:
                                     
                                     self._stats.hits += 1
                                     self._stats.semantic_hits += 1
-                                    _get_record_metric()("get", "semantic", 0.0)
+                                    _get_record_metric()("get", "semantic", 0.0, dimension=dimension or "unknown")
                                     logger.info(f"[SemanticCache] SEMANTIC HIT (DB): {sim:.3f}")
                                     return self._deserialize_result(best_match.response_json)
 
@@ -355,7 +355,7 @@ class SemanticCache:
             logger.error(f"[SemanticCache] DB Lookup Error: {e}")
             
         self._stats.misses += 1
-        _get_record_metric()("get", "miss", 0.0)
+        _get_record_metric()("get", "miss", 0.0, dimension=dimension or "unknown")
         return None
     
     async def set(
@@ -441,10 +441,10 @@ class SemanticCache:
                         }
                     )
                     await session.execute(stmt)
-                    _get_record_metric()("set", "success", 0.0)
+                    _get_record_metric()("set", "success", 0.0, dimension=dimension or "unknown")
                     logger.debug(f"[SemanticCache] Persisted: {query_hash[:8]}")
             except Exception as e:
-                _get_record_metric()("set", "error", 0.0)
+                _get_record_metric()("set", "error", 0.0, dimension=dimension or "unknown")
                 logger.error(f"[SemanticCache] DB Write Error: {e}")
 
     def _cache_in_memory(self, db_entry: Any) -> None:

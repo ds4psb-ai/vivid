@@ -76,7 +76,7 @@ try:
     _semantic_cache_operations = Counter(
         "rag_semantic_cache_ops_total",
         "Semantic cache operations",
-        ["operation", "result"]  # operation: get/set, result: hit/miss/exact/semantic
+        ["operation", "result", "dimension"]  # P7: Added dimension for tuning reports
     )
     
     _semantic_cache_latency = Histogram(
@@ -266,6 +266,7 @@ def record_semantic_cache_op(
     operation: str,
     result: str,
     latency_ms: float = 0.0,
+    dimension: str = "unknown",  # P7: Added for per-dimension cache reports
 ) -> None:
     """Semantic cache 연산 기록.
     
@@ -273,12 +274,14 @@ def record_semantic_cache_op(
         operation: "get" or "set"
         result: "hit", "miss", "exact", "semantic"
         latency_ms: 연산 소요 시간
+        dimension: 차원 코드 (예: "1D", "AD")
     """
     if _metrics_enabled:
         if '_semantic_cache_operations' in globals():
             _semantic_cache_operations.labels(
                 operation=operation,
-                result=result
+                result=result,
+                dimension=dimension,  # P7
             ).inc()
         if '_semantic_cache_latency' in globals() and latency_ms > 0:
             _semantic_cache_latency.labels(operation=operation).observe(latency_ms)

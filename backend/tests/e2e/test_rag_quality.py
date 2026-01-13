@@ -7,10 +7,11 @@ RAG Quality Evaluation Harness (LLM-as-Judge)
 - Deflection correctness (when evidence is weak)
 
 Usage:
-    pytest backend/tests/e2e/test_rag_quality.py -v
+    RAG_QUALITY_EVAL=1 pytest backend/tests/e2e/test_rag_quality.py -v
     
 P4 Integration:
-- Loads evaluation cases from data/rag_eval/rag_quality_cases.json
+- Loads evaluation cases from data/rag_eval/quality_cases.json
+- Skips entirely if RAG_QUALITY_EVAL != "1"
 - Skips LLM-as-Judge if GEMINI_API_KEY not available
 """
 import json
@@ -21,26 +22,35 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 
+# P7: Explicit module-level skip unless enabled
+# This prevents flaky CI when API keys are not available
+pytestmark = pytest.mark.skipif(
+    os.getenv("RAG_QUALITY_EVAL") != "1",
+    reason="RAG quality eval disabled (set RAG_QUALITY_EVAL=1 to enable)"
+)
+
 # P4: Check LLM availability
 LLM_AVAILABLE = bool(os.environ.get("GEMINI_API_KEY"))
-EVAL_CASES_PATH = Path(__file__).resolve().parents[3] / "data" / "rag_eval" / "rag_quality_cases.json"
+
+# P7: Updated path to new dataset location
+EVAL_CASES_PATH = Path(__file__).resolve().parents[2] / "data" / "rag_eval" / "quality_cases.json"
 
 
-def load_eval_cases() -> Dict[str, Any]:
+def load_eval_cases() -> List[Dict[str, Any]]:
     """Load evaluation cases from JSON file."""
     if EVAL_CASES_PATH.exists():
         with open(EVAL_CASES_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
-    return {"cases": [], "thresholds": {}}
+    return []
 
 
-EVAL_DATA = load_eval_cases()
-THRESHOLDS = EVAL_DATA.get("thresholds", {
+EVAL_CASES = load_eval_cases()
+THRESHOLDS = {
     "min_groundedness": 0.6,
     "min_relevance": 0.5,
     "deflection_evidence_threshold": 2,
     "pass_rate": 0.7,
-})
+}
 
 
 # =============================================================================
