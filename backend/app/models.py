@@ -912,3 +912,28 @@ class StudioArtifactModel(Base):
     
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class RouterDecisionLog(Base):
+    """Router decision log for RAG tuning analysis (Phase 2)."""
+    __tablename__ = "router_decision_logs"
+    __table_args__ = (
+        Index("ix_router_decision_logs_created_at", "created_at"),
+        Index("ix_router_decision_logs_dimension", "dimension"),
+    )
+    
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    trace_id: Mapped[str] = mapped_column(String(64), index=True)
+    query_hash: Mapped[str] = mapped_column(String(64), index=True)  # SHA256 full
+    dimension: Mapped[Optional[str]] = mapped_column(String(20))
+    auteur_key: Mapped[Optional[str]] = mapped_column(String(50))
+    strategy: Mapped[str] = mapped_column(String(30))
+    router_score: Mapped[int] = mapped_column(Integer)
+    use_reranker: Mapped[bool] = mapped_column(Boolean, default=False)
+    use_grounding: Mapped[bool] = mapped_column(Boolean, default=False)
+    cache_hit: Mapped[Optional[bool]] = mapped_column(Boolean)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow
+    )

@@ -291,14 +291,61 @@ def record_semantic_cache_op(
 # Router Decision Log (Week 3 - OpenTelemetry Best Practice)
 # =============================================================================
 
+import asyncio
 import hashlib
+import os
 import uuid
 from datetime import datetime, timezone
+
+
+def _handle_task_exception(task: asyncio.Task) -> None:
+    """Callback to log exceptions from fire-and-forget tasks."""
+    try:
+        exc = task.exception()
+        if exc:
+            logger.warning(f"RouterDecisionLog task failed: {exc}")
+    except asyncio.CancelledError:
+        pass
+
+
+async def _save_router_decision_async(
+    trace_id: str,
+    query_hash: str,
+    dimension: Optional[str],
+    auteur_key: Optional[str],
+    strategy: str,
+    router_score: int,
+    use_reranker: bool,
+    use_grounding: bool,
+    cache_hit: Optional[bool],
+) -> None:
+    """Fire-and-forget DB write for router decisions."""
+    try:
+        from app.database import get_db_context
+        from app.models import RouterDecisionLog
+        
+        async with get_db_context() as db:
+            log = RouterDecisionLog(
+                trace_id=trace_id,
+                query_hash=query_hash,
+                dimension=dimension,
+                auteur_key=auteur_key,
+                strategy=strategy,
+                router_score=router_score,
+                use_reranker=use_reranker,
+                use_grounding=use_grounding,
+                cache_hit=cache_hit,
+            )
+            db.add(log)
+            await db.commit()
+    except Exception as e:
+        logger.warning(f"RouterDecisionLog DB write failed: {e}")
+
 
 def _make_query_hash(query: str, auteur_key: Optional[str], dimension: Optional[str]) -> str:
     """Generate query hash for router decision log (no PII)."""
     content = f"{query[:500]}|{auteur_key or ''}|{dimension or ''}"
-    return hashlib.sha256(content.encode()).hexdigest()[:16]
+    return hashlib.sha256(content.encode()).hexdigest()  # Full 64 chars (Phase 2)
 
 
 def _get_trace_context() -> tuple:
@@ -368,6 +415,26 @@ def log_router_decision(
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
     )
+    
+    # Phase 2: DB write (fire-and-forget with exception handling)
+    if os.getenv("RAG_ROUTER_LOG_SINK") == "db":
+        try:
+            loop = asyncio.get_running_loop()
+            task = loop.create_task(_save_router_decision_async(
+                trace_id=trace_id,
+                query_hash=query_hash,
+                dimension=dimension,
+                auteur_key=auteur_key,
+                strategy=strategy,
+                router_score=router_score,
+                use_reranker=use_reranker,
+                use_grounding=use_grounding,
+                cache_hit=cache_hit,
+            ))
+            task.add_done_callback(_handle_task_exception)
+        except RuntimeError:
+            # No event loop (sync context) - skip silently
+            pass
 
 
 # =============================================================================
