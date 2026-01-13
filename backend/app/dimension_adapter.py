@@ -69,6 +69,8 @@ class DimensionCapsuleId(str, Enum):
     CREATIVE_EDITOR = "dimension.quality.editor"
     # JSON Generator adapter
     JSON_GEN_CONVERT = "dimension.json_gen.convert"
+    # Nanobanana Editor adapter
+    NANOBANANA_CONVERT = "dimension.nanobanana.convert"
 
 
 # Input validation limits
@@ -2910,6 +2912,69 @@ async def run_json_gen_convert(
         }
 
 
+async def run_nanobanana_convert(
+    inputs: Dict[str, Any],
+    params: Dict[str, Any],
+    user_api_key: Optional[str] = None,
+) -> CapsuleResult:
+    """Convert Nanobanana Editor state to ShotContract.
+    
+    Lightweight adapter that doesn't call LLM - just data transformation.
+    Preserves camera angle/direction in pose_motion field.
+    Uses full lighting descriptions instead of just keys.
+    """
+    import time
+    from app.services.nanobanana_adapter import nanobanana_to_shot_contract
+    
+    start_time = time.monotonic()
+    
+    editor_state = inputs.get("editor_state", {})
+    shot_id = inputs.get("shot_id", "shot-001")
+    sequence_id = inputs.get("sequence_id", "seq-01")
+    scene_id = inputs.get("scene_id", "scene-01")
+    
+    if not editor_state:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.NANOBANANA_CONVERT.value,
+            "output": {},
+            "error": "editor_state is required",
+            "metrics": None,
+        }
+    
+    try:
+        shot_contract = nanobanana_to_shot_contract(
+            editor_state=editor_state,
+            shot_id=shot_id,
+            sequence_id=sequence_id,
+            scene_id=scene_id,
+        )
+        
+        latency_ms = int((time.monotonic() - start_time) * 1000)
+        
+        return {
+            "success": True,
+            "capsule_id": DimensionCapsuleId.NANOBANANA_CONVERT.value,
+            "output": {
+                "shot_contract": shot_contract.to_dict(),
+                "evidence_refs": [f"db:nanobanana:{shot_id}"],
+            },
+            "metrics": {
+                "latency_ms": latency_ms,
+                "tokens": 0,  # No LLM call
+            },
+        }
+    except Exception as e:
+        logger.error(f"Nanobanana conversion failed: {e}")
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.NANOBANANA_CONVERT.value,
+            "output": {},
+            "error": str(e),
+            "metrics": None,
+        }
+
+
 # ============================================================================
 # Main Entry Point
 # ============================================================================
@@ -2932,6 +2997,7 @@ DIMENSION_ADAPTERS: Dict[str, Callable] = {
     DimensionCapsuleId.SOUND_CRAFT.value: run_sound_crafter,
     DimensionCapsuleId.CREATIVE_EDITOR.value: run_creative_editor,
     DimensionCapsuleId.JSON_GEN_CONVERT.value: run_json_gen_convert,
+    DimensionCapsuleId.NANOBANANA_CONVERT.value: run_nanobanana_convert,
 }
 
 

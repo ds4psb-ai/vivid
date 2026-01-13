@@ -87,6 +87,7 @@ CAPSULE_TO_DIMENSION: Dict[DimensionCapsuleId, str] = {
     DimensionCapsuleId.PERSONA_ANALYZE: "AI",
     DimensionCapsuleId.CREATIVE_EDITOR: "QC",
     DimensionCapsuleId.JSON_GEN_CONVERT: "JSON_GEN",
+    DimensionCapsuleId.NANOBANANA_CONVERT: "3D",  # Reuse 3D Resolver
 }
 
 
@@ -111,6 +112,7 @@ _CAPSULE_TO_DIMENSION_CODE = {
     DimensionCapsuleId.PERSONA_ANALYZE: "ai",
     DimensionCapsuleId.CREATIVE_EDITOR: "qc",
     DimensionCapsuleId.JSON_GEN_CONVERT: "json_gen",
+    DimensionCapsuleId.NANOBANANA_CONVERT: "nanobanana",
 }
 
 def get_credit_cost(

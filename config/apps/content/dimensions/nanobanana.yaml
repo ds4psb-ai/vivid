@@ -1,0 +1,36 @@
+$schema: "vivid-app/v2"
+
+metadata:
+  name: nanobanana
+  type: dimension
+  version: "1.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "나노바나나 에디터"
+  name_en: "Nanobanana Editor Adapter"
+  icon: "🍌"
+  description: "조명/카메라 프리셋을 ShotContract로 변환"
+
+capabilities:
+  - name: execution
+    enabled: true
+    config:
+      credit_cost: 10
+      endpoint: "/api/dimension/nanobanana/convert"
+      capsule_key: "dimension.nanobanana.convert"
+
+  - name: cache
+    enabled: true
+    config:
+      ttl: 1800
+
+extensions:
+  dimension:
+    tool_type: adapter
+
+keywords:
+  patterns:
+    - "nanobanana"
+    - "lighting"
+    - "camera"
