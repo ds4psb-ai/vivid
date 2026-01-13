@@ -554,6 +554,54 @@ async def _execute_dimension_tool(
         except Exception as tel_err:
             logger.warning(f"Telemetry recording failed: {tel_err}")
         
+        # === evidence_refs SoR 연결 (JSON Gen + Nanobanana만) ===
+        ADAPTER_CAPSULES = {
+            DimensionCapsuleId.JSON_GEN_CONVERT,
+            DimensionCapsuleId.NANOBANANA_CONVERT,
+        }
+        
+        if capsule_id in ADAPTER_CAPSULES:
+            try:
+                from app.models import CapsuleRun
+                from app.core.app_registry import AppRegistry
+                
+                # capsule_version: AppRegistry 우선, latest 폴백
+                capsule_version = "latest"
+                try:
+                    app_config = AppRegistry.get_by_name(
+                        CAPSULE_TO_DIMENSION.get(capsule_id, "3D").lower()
+                    )
+                    if app_config and app_config.metadata:
+                        capsule_version = app_config.metadata.version or "latest"
+                except Exception:
+                    pass
+                
+                # inputs_summary 보강 (shot/scene/sequence 누락 시)
+                run_inputs = dict(inputs_summary)
+                for key in ("shot_id", "sequence_id", "scene_id"):
+                    if key not in run_inputs and key in inputs:
+                        run_inputs[key] = inputs[key]
+                
+                capsule_run = CapsuleRun(
+                    user_id=user_id,
+                    capsule_key=capsule_id.value,
+                    capsule_version=capsule_version,
+                    status="done",
+                    inputs=run_inputs,
+                    summary={"shot_contract": result.get("output", {}).get("shot_contract")},
+                    evidence_refs=[],  # 임시, flush 후 갱신
+                )
+                db.add(capsule_run)
+                await db.flush()
+                
+                # evidence_refs를 실제 ID로 교체 (응답 + CapsuleRun 동기화)
+                canonical_ref = f"db:capsule_runs:{capsule_run.id}"
+                result["output"]["evidence_refs"] = [canonical_ref]
+                capsule_run.evidence_refs = [canonical_ref]
+                
+            except Exception as run_err:
+                logger.warning(f"CapsuleRun save failed (non-blocking): {run_err}")
+        
         return DimensionResponse(
             success=True,
             capsule_id=capsule_id.value,
