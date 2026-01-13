@@ -79,6 +79,7 @@ class RAGSuggestion:
     datasets_used: List[str] = field(default_factory=list)
     total_results: int = 0
     alternatives: List[Dict[str, Any]] = field(default_factory=list)
+    trace_id: Optional[str] = None  # P6-6: Observability
 
 
 def calculate_confidence_level(score: float) -> ConfidenceLevel:

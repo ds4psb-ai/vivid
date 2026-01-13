@@ -1,0 +1,60 @@
+groups:
+  - name: rag_alerts
+    rules:
+      # P6-5: RAG SLO Alert Rules
+      
+      # Cache hit rate below 20%
+      - alert: RAGCacheHitLow
+        expr: |
+          (
+            sum(rate(rag_semantic_cache_ops_total{result=~"exact|semantic"}[5m])) 
+            / sum(rate(rag_semantic_cache_ops_total{operation="get"}[5m]))
+          ) * 100 < 20
+        for: 5m
+        labels:
+          severity: warning
+          component: rag
+        annotations:
+          summary: "RAG cache hit rate below 20%"
+          description: "Cache hit rate is {{ $value | printf \"%.1f\" }}%, target is > 20%"
+      
+      # Error rate above 5%
+      - alert: RAGErrorRateHigh
+        expr: |
+          (
+            sum(rate(rag_errors_total[5m])) 
+            / sum(rate(rag_query_total[5m]))
+          ) * 100 > 5
+        for: 5m
+        labels:
+          severity: critical
+          component: rag
+        annotations:
+          summary: "RAG error rate above 5%"
+          description: "Error rate is {{ $value | printf \"%.1f\" }}%, target is < 5%"
+      
+      # p95 latency above 10 seconds
+      - alert: RAGLatencyHigh
+        expr: |
+          histogram_quantile(0.95, 
+            sum(rate(rag_query_latency_ms_bucket[5m])) by (le)
+          ) > 10000
+        for: 5m
+        labels:
+          severity: warning
+          component: rag
+        annotations:
+          summary: "RAG p95 latency above 10s"
+          description: "p95 latency is {{ $value | printf \"%.0f\" }}ms, target is < 10000ms"
+      
+      # Circuit breaker open events > 5/hour
+      - alert: RAGCircuitBreakerOpen
+        expr: |
+          sum(increase(rag_circuit_breaker_state_total{state="open"}[1h])) > 5
+        for: 1m
+        labels:
+          severity: critical
+          component: rag
+        annotations:
+          summary: "RAG circuit breaker opened > 5 times in 1 hour"
+          description: "Circuit opened {{ $value | printf \"%.0f\" }} times, check Qdrant/NotebookLM health"

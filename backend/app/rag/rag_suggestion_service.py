@@ -3,12 +3,18 @@
 P1.6: RAG 검색 결과를 추천 카드 형태로 변환.
 - 자동 적용 없이 사용자가 선택/거부 가능
 - 근거(evidence) + 신뢰도(confidence) 제공
+
+P6: Hardening
+- confidence_threshold from YAML preset (not hardcoded 0.5)
+- trace_id for observability
 """
 import logging
 from typing import Any, Dict, List, Optional
 
 from app.rag.app_registry import get_app_registry
 from app.rag.app_manifest import get_manifest
+from app.rag.rag_presets import get_rag_preset  # P6-1
+from app.rag.metrics import _get_trace_context  # P6-6
 from app.rag.rag_suggestion import (
     RAGSuggestion,
     EvidenceRef,
@@ -77,9 +83,14 @@ class RAGSuggestionService:
         confidence = max_score  # 최고 점수 기준
         confidence_level = calculate_confidence_level(confidence)
         
+        # P6-1: 차원별 confidence_threshold 적용 (YAML SSoT)
+        dimension = results[0].get("source_dimension") or results[0].get("metadata", {}).get("dimension", "1D") if results else "1D"
+        preset = get_rag_preset(dimension)
+        threshold = preset.confidence_threshold
+        
         # 낮은 신뢰도면 빈 추천 반환
-        if confidence < 0.5:
-            logger.info(f"[SuggestionService] Low confidence ({confidence:.2f}), skipping")
+        if confidence < threshold:
+            logger.info(f"[SuggestionService] Low confidence ({confidence:.2f} < {threshold}), skipping")
             return RAGSuggestion(
                 has_suggestion=False,
                 confidence=confidence,
@@ -104,6 +115,9 @@ class RAGSuggestionService:
             f"evidence={len(evidence_refs)} | chips={len(prompt_chips)}"
         )
         
+        # P6-6: trace_id 추가
+        trace_id, _ = _get_trace_context()
+        
         return RAGSuggestion(
             has_suggestion=True,
             confidence=confidence,
@@ -113,6 +127,7 @@ class RAGSuggestionService:
             suggested_context=rag_result.get("formatted_context", ""),
             datasets_used=datasets_used,
             total_results=len(results),
+            trace_id=trace_id,
         )
     
     def _build_evidence_refs(

@@ -365,18 +365,28 @@ class SemanticCache:
         auteur_key: Optional[str] = None,
         dimension: Optional[str] = None,
         dataset_ids: Optional[List[str]] = None,  # P1: dataset routing
+        min_confidence: Optional[float] = None,    # P6-1: preset-based threshold
+        cache_ttl: Optional[int] = None,           # P6-4: TTL override
     ) -> None:
-        """Cache response to Memory and DB."""
+        """Cache response to Memory and DB.
+        
+        P6 Hardening:
+        - min_confidence: Skip caching if response.confidence < min_confidence
+        - cache_ttl: Override dynamic TTL calculation if provided
+        """
         await self._ensure_initialized()
         
         confidence = getattr(response, "confidence", 0.0)
-        if confidence < 0.5:
+        threshold = min_confidence if min_confidence is not None else 0.5
+        if confidence < threshold:
+            logger.debug(f"[SemanticCache] Skip low confidence: {confidence:.2f} < {threshold}")
             return
             
         query_hash = self._make_hash(query, auteur_key, dimension, dataset_ids)
         
         grounded = getattr(response, "grounded", False)
-        ttl = self._calculate_ttl(auteur_key, grounded)
+        # P6-4: cache_ttl override takes precedence
+        ttl = cache_ttl if cache_ttl is not None else self._calculate_ttl(auteur_key, grounded)
         expires_at = datetime.now() + timedelta(seconds=ttl)
         response_json = self._serialize_result(response)
         

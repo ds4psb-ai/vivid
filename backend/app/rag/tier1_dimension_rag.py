@@ -23,6 +23,7 @@ from qdrant_client.http.exceptions import UnexpectedResponse
 
 from app.config import settings
 from app.services.embedder import get_embedder
+from app.services.circuit_breaker import QDRANT_BREAKER, CircuitBreakerOpen  # P6-3
 
 logger = logging.getLogger(__name__)
 
@@ -188,6 +189,13 @@ class Tier1DimensionRAG:
         Returns:
             True if successful
         """
+        # P6-3: Circuit breaker check
+        try:
+            QDRANT_BREAKER.check_state()
+        except CircuitBreakerOpen:
+            logger.warning(f"[{self.dimension}] Qdrant circuit open, skipping index")
+            return False
+            
         client = self.client
         if client is None:
             logger.warning(f"[{self.dimension}] Qdrant unavailable, skipping index")
@@ -220,9 +228,11 @@ class Tier1DimensionRAG:
                     )
                 ],
             )
+            QDRANT_BREAKER.record_success()  # P6-3
             logger.debug(f"[{self.dimension}] Indexed: {doc_id}")
             return True
         except Exception as e:
+            QDRANT_BREAKER.record_failure(e)  # P6-3
             logger.error(f"[{self.dimension}] Index failed for {doc_id}: {e}")
             return False
 
@@ -246,6 +256,13 @@ class Tier1DimensionRAG:
         Returns:
             검색 결과 리스트 [{content, score, metadata}, ...]
         """
+        # P6-3: Circuit breaker check
+        try:
+            QDRANT_BREAKER.check_state()
+        except CircuitBreakerOpen:
+            logger.warning(f"[{self.dimension}] Qdrant circuit open, returning empty")
+            return []
+            
         client = self.client
         if client is None:
             logger.debug(f"[{self.dimension}] Qdrant unavailable, returning empty")
@@ -299,6 +316,7 @@ class Tier1DimensionRAG:
                 with_payload=True,
             )
 
+            QDRANT_BREAKER.record_success()  # P6-3
             return [
                 {
                     "content": r.payload.get("content", "") if r.payload else "",
@@ -312,6 +330,7 @@ class Tier1DimensionRAG:
                 for r in response.points
             ]
         except Exception as e:
+            QDRANT_BREAKER.record_failure(e)  # P6-3
             logger.error(f"[{self.dimension}] Search failed: {e}")
             return []
 

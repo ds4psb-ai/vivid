@@ -105,6 +105,18 @@ capabilities:
         rrf_k: 60
 ```
 
+### TTL Override Precedence (P6-4)
+
+캐시 TTL은 다음 우선순위로 결정됩니다:
+
+| 순위 | 소스 | 예시 |
+|------|------|------|
+| 1 | 함수 인자 `cache_ttl` | `cache.set(..., cache_ttl=7200)` |
+| 2 | YAML `capabilities.rag.config.cache_ttl` | `cache_ttl: 3600` |
+| 3 | 동적 계산 `_calculate_ttl()` | auteur=7일, grounded=1일, default=1시간 |
+
+> **P6 참고**: `semantic_cache.set()`에서 `cache_ttl` 인자가 명시되면 YAML/동적 계산을 무시합니다.
+
 ## Monitoring
 
 ### Key Metrics

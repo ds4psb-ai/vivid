@@ -271,3 +271,14 @@ VIDEO_GEN_BREAKER = CircuitBreaker(
         half_open_max_calls=1,
     )
 )
+
+# P6-3: Qdrant vector database circuit breaker
+QDRANT_BREAKER = CircuitBreaker(
+    "qdrant",
+    CircuitBreakerConfig(
+        failure_threshold=3,      # Trip after 3 failures
+        success_threshold=2,      # Require 2 successes to close
+        timeout_seconds=60.0,     # 60 second cooldown
+        half_open_max_calls=2,    # Test with 2 calls
+    )
+)
