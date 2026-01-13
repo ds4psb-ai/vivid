@@ -75,43 +75,52 @@ class RAGSuggestionService:
             logger.info(f"[SuggestionService] No results for query: {query[:50]}")
             return RAGSuggestion(has_suggestion=False)
         
-        # 신뢰도 계산 (최고 점수 기준)
-        scores = [r.get("score", 0) for r in results]
-        max_score = max(scores) if scores else 0
-        avg_score = sum(scores) / len(scores) if scores else 0
-        
-        confidence = max_score  # 최고 점수 기준
-        confidence_level = calculate_confidence_level(confidence)
-        
-        # P6-1: 차원별 confidence_threshold 적용 (YAML SSoT)
-        dimension = results[0].get("source_dimension") or results[0].get("metadata", {}).get("dimension", "1D") if results else "1D"
+        # P6-1 Refined: Filter results by dimension-based threshold FIRST (CRAG pattern)
+        # Step 1: Determine dimension for threshold lookup
+        dimension = (
+            results[0].get("source_dimension") or 
+            results[0].get("metadata", {}).get("dimension") or
+            (manifest.dimensions[0] if hasattr(manifest, 'dimensions') and manifest.dimensions else "1D")
+        )
         preset = get_rag_preset(dimension)
         threshold = preset.confidence_threshold
         
-        # 낮은 신뢰도면 빈 추천 반환
-        if confidence < threshold:
-            logger.info(f"[SuggestionService] Low confidence ({confidence:.2f} < {threshold}), skipping")
+        # Step 2: Filter results by threshold
+        filtered_results = [
+            r for r in results
+            if (r.get("score") or 0) >= threshold
+        ]
+        
+        # Step 3: If no results pass threshold, return empty suggestion
+        if not filtered_results:
+            logger.info(f"[SuggestionService] No results above threshold ({threshold}), skipping")
             return RAGSuggestion(
                 has_suggestion=False,
-                confidence=confidence,
-                confidence_level=confidence_level,
+                confidence=max((r.get("score", 0) for r in results), default=0),
+                confidence_level=ConfidenceLevel.LOW,
             )
         
-        # Evidence refs 생성
-        evidence_refs = self._build_evidence_refs(results, manifest)
+        # Step 4: Calculate confidence from FILTERED results only
+        scores = [r.get("score", 0) for r in filtered_results]
+        confidence = max(scores) if scores else 0
+        confidence_level = calculate_confidence_level(confidence)
         
-        # Prompt chips 생성
-        prompt_chips = self._build_prompt_chips(results, manifest)
+        # Evidence refs 생성 (filtered results 기준)
+        evidence_refs = self._build_evidence_refs(filtered_results, manifest)
         
-        # 사용된 datasets 추출
+        # Prompt chips 생성 (filtered results 기준)
+        prompt_chips = self._build_prompt_chips(filtered_results, manifest)
+        
+        # 사용된 datasets 추출 (filtered results 기준)
         datasets_used = list(set(
             r.get("metadata", {}).get("dataset_id", "unknown")
-            for r in results
+            for r in filtered_results
         ))
         
         logger.info(
             f"[SuggestionService] Suggestion ready | "
             f"confidence={confidence:.2f} ({confidence_level.value}) | "
+            f"filtered={len(filtered_results)}/{len(results)} | "
             f"evidence={len(evidence_refs)} | chips={len(prompt_chips)}"
         )
         
@@ -126,7 +135,7 @@ class RAGSuggestionService:
             prompt_chips=prompt_chips,
             suggested_context=rag_result.get("formatted_context", ""),
             datasets_used=datasets_used,
-            total_results=len(results),
+            total_results=len(filtered_results),
             trace_id=trace_id,
         )
     

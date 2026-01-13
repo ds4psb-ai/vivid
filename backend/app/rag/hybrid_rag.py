@@ -613,8 +613,13 @@ async def hybrid_query(
         except Exception as e:
             logger.warning(f"[HybridRAG] CRAG grounding failed: {e}")
 
-    # === Step N+1: Store in Semantic Cache (high confidence only) ===
-    if use_semantic_cache and result.confidence >= 0.5:
+    # === Step N+1: Store in Semantic Cache (preset-based gating) ===
+    # P6-1 Refinement: Use dimension-based threshold from YAML SSoT
+    from app.rag.rag_presets import get_rag_preset
+    preset_dim = dimension or ("AD" if auteur_key else "1D")
+    preset = get_rag_preset(preset_dim)
+    
+    if use_semantic_cache and preset.cache_enabled and result.confidence >= preset.confidence_threshold:
         try:
             cache = get_semantic_cache()
             await cache.set(
@@ -622,10 +627,14 @@ async def hybrid_query(
                 response=result,
                 auteur_key=auteur_key,
                 dimension=dimension,
+                min_confidence=preset.confidence_threshold,  # P6-1
+                cache_ttl=preset.cache_ttl,                  # P6-4
             )
             logger.debug(
                 f"[HybridRAG] Cached result | "
-                f"confidence={result.confidence:.2f}"
+                f"confidence={result.confidence:.2f} | "
+                f"threshold={preset.confidence_threshold} | "
+                f"ttl={preset.cache_ttl}s"
             )
         except Exception as e:
             logger.warning(f"[HybridRAG] Cache storage failed: {e}")
