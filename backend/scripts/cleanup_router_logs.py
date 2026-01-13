@@ -45,7 +45,7 @@ async def cleanup(days: int = 7, dry_run: bool = False) -> int:
             RouterDecisionLog.created_at < cutoff
         )
         result = await db.execute(delete_stmt)
-        await db.commit()
+        # commit handled by get_db_context()
         
         print(f"🗑️  Deleted {result.rowcount} router logs older than {days} days")
         return result.rowcount

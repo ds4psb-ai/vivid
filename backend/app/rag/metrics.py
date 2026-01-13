@@ -337,7 +337,7 @@ async def _save_router_decision_async(
                 cache_hit=cache_hit,
             )
             db.add(log)
-            await db.commit()
+            # commit handled by get_db_context()
     except Exception as e:
         logger.warning(f"RouterDecisionLog DB write failed: {e}")
 

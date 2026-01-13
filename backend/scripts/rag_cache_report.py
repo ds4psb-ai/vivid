@@ -71,16 +71,32 @@ async def generate_report(dry_run: bool = False) -> dict:
             for r in top_result.all()
         ]
         
-        # Summary stats
+        # Summary stats with weighted average (best practice from web search)
+        total_entries = sum(d["total_entries"] for d in report["by_dimension"])
+        total_stale = sum(d["stale_entries"] for d in report["by_dimension"])
+        
+        HIGH_STALE_THRESHOLD = 30  # percentage
+        
         report["summary"] = {
-            "total_entries": sum(d["total_entries"] for d in report["by_dimension"]),
-            "total_stale": sum(d["stale_entries"] for d in report["by_dimension"]),
-            "avg_stale_rate": round(
+            "total_entries": total_entries,
+            "total_stale": total_stale,
+            "simple_stale_rate": round(
                 sum(d["stale_rate"] for d in report["by_dimension"]) / len(report["by_dimension"])
                 if report["by_dimension"] else 0,
                 1
             ),
+            "weighted_stale_rate": round(
+                total_stale / total_entries * 100 if total_entries > 0 else 0,
+                1
+            ),
         }
+        
+        # High-stale dimension alerts
+        report["alerts"] = [
+            {"dimension": d["dimension"], "stale_rate": d["stale_rate"]}
+            for d in report["by_dimension"]
+            if d["stale_rate"] > HIGH_STALE_THRESHOLD
+        ]
         
     if not dry_run:
         # Write to repo root / data / reports
