@@ -8,17 +8,13 @@ global:
 rule_files:
   - "rag_alerts.yml"
 
-# Alertmanager disabled for local dev
-# alerting:
-#   alertmanagers:
-#     - static_configs:
-#         - targets: ['alertmanager:9093']
+# Alertmanager disabled for local dev (no alerting: block needed)
 
 scrape_configs:
   - job_name: 'vivid-backend'
     static_configs:
-      # macOS: host.docker.internal
-      # Linux: use extra_hosts in docker-compose
-      - targets: ['host.docker.internal:8000']
+      # macOS: host.docker.internal works
+      # Linux: docker-compose extra_hosts adds host.docker.internal:host-gateway
+      - targets: ['host.docker.internal:8100']  # Backend runs on 8100
     metrics_path: '/metrics'
     scrape_timeout: 10s
