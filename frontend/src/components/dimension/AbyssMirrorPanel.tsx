@@ -25,7 +25,8 @@ import { RAGSuggestionCard } from "@/components/rag/RAGSuggestionCard";
 import { useRAGSuggestion, type EvidenceRef } from "@/hooks/useRAGSuggestion";
 import { usePersonaPreset, type TraceEntry, type PersonaPreset } from "@/hooks/usePersonaPreset";
 import { initMirror, chatMirror, type MirrorChatResponse } from "@/lib/mirrorApi";
-import { Send, User, Bot, Sparkles, Download, ArrowLeft, Zap, Upload, RefreshCw } from "lucide-react";
+import { useDimensionChainOptional } from "@/contexts/DimensionChainContext";
+import { Send, User, Bot, Sparkles, Download, ArrowLeft, Zap, Upload, RefreshCw, AlertTriangle } from "lucide-react";
 
 const THEME_COLOR: ThemeColor = "violet";
 
@@ -39,6 +40,7 @@ interface Message {
     trace_id?: string;
     evidence_refs?: EvidenceRef[];
     confidence?: number;
+    isCrisis?: boolean;  // 위기 메시지 플래그
 }
 
 type Phase = "input" | "chat" | "complete";
@@ -125,6 +127,9 @@ export default function AbyssMirrorPanel() {
         listPresets,
         resumeSession,
     } = usePersonaPreset({});
+
+    // ChainContext for workflow integration (optional)
+    const chainContext = useDimensionChainOptional();
 
     // Auto-scroll
     useEffect(() => {
@@ -215,6 +220,19 @@ export default function AbyssMirrorPanel() {
             }, byokKey);
 
             if (response.success) {
+                // 위기 메시지 처리
+                const isCrisis = !!(response as Record<string, unknown>).is_crisis;
+                if (isCrisis) {
+                    const crisisMessage: Message = {
+                        role: "assistant",
+                        content: response.ai_response,
+                        isCrisis: true,
+                    };
+                    setMessages(prev => [...prev, crisisMessage]);
+                    setIsLoading(false);
+                    return;
+                }
+
                 const assistantMessage: Message = {
                     role: "assistant",
                     content: response.ai_response,
@@ -240,6 +258,14 @@ export default function AbyssMirrorPanel() {
                 // Check completion
                 if (response.is_complete) {
                     setPhase("complete");
+                    // ChainContext에 저장 (다음 차원으로 전달)
+                    if (chainContext) {
+                        chainContext.setChainData(
+                            "abyss-mirror",
+                            response.persona_data,
+                            response.persona_data?.persona?.summary || "심연의 거울 분석 완료"
+                        );
+                    }
                     // Save preset
                     saveLocal({
                         meta: {
@@ -501,13 +527,32 @@ export default function AbyssMirrorPanel() {
                                 </div>
                             )}
                             <div className={`max-w-[85%] space-y-2`}>
-                                <div className={`p-4 rounded-2xl ${msg.role === "user"
-                                    ? "bg-violet-500/20 border border-violet-500/30"
-                                    : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"
+                                <div className={`p-4 rounded-2xl ${msg.isCrisis
+                                        ? "bg-red-500/20 border-2 border-red-500/50"
+                                        : msg.role === "user"
+                                            ? "bg-violet-500/20 border border-violet-500/30"
+                                            : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"
                                     }`}>
-                                    <p className="text-sm text-slate-700 dark:text-zinc-200 leading-relaxed whitespace-pre-wrap">
+                                    {msg.isCrisis && (
+                                        <div className="flex items-center gap-2 mb-2 text-red-400">
+                                            <AlertTriangle className="w-4 h-4" />
+                                            <span className="text-xs font-medium">안전 알림</span>
+                                        </div>
+                                    )}
+                                    <p className={`text-sm leading-relaxed whitespace-pre-wrap ${msg.isCrisis ? "text-red-50" : "text-slate-700 dark:text-zinc-200"
+                                        }`}>
                                         {msg.content}
                                     </p>
+                                    {msg.isCrisis && (
+                                        <a
+                                            href="https://www.mentalhealth.go.kr"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="block mt-3 text-sm text-red-300 hover:text-red-200 underline"
+                                        >
+                                            전문 상담 바로가기 →
+                                        </a>
+                                    )}
                                 </div>
                                 {/* Evidence Display for assistant messages */}
                                 {msg.role === "assistant" && msg.evidence_refs && msg.evidence_refs.length > 0 && (

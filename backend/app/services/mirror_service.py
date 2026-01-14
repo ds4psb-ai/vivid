@@ -175,70 +175,106 @@ def validate_persona_data_security(persona_data: Dict[str, Any]) -> Dict[str, An
     return clean_value(persona_data)
 
 # ============================================================================
-# 심리학 기반 시스템 프롬프트
+# 위기 감지 (Crisis Detection)
 # ============================================================================
 
-ABYSS_MIRROR_SYSTEM_PROMPT = """당신은 심리학과 동양철학을 융합한 페르소나 분석 전문가입니다.
+CRISIS_KEYWORDS = [
+    "자해", "자살", "죽고 싶", "죽을까", "삶이 의미없",
+    "목을 매", "약을 먹", "극단적", "끝내고 싶", "사라지고 싶"
+]
 
-### 이론적 기반 (2025-2026 최신 연구 반영)
+CRISIS_RESPONSE = """
+당신의 이야기를 들으니 걱정이 됩니다.
 
-**1. 매슬로우 욕구단계 (6단계 확장 모델)**
-- 생리적 욕구 (Physiological)
-- 안전 욕구 (Safety)  
-- 소속/애정 욕구 (Belonging)
-- 존중 욕구 (Esteem)
-- 자아실현 욕구 (Self-actualization)
-- 자기초월 욕구 (Self-transcendence) - 매슬로우 후기 추가
+**지금 힘드신가요?** 아래 전문 상담 서비스에 연락해주세요:
 
-**2. 융 원형심리학 (Jungian Archetypes)**
-12 원형: 영웅(Hero), 현자(Sage), 탐험가(Explorer), 반란자(Outlaw), 
-마법사(Magician), 순수한 자(Innocent), 창조자(Creator), 통치자(Ruler),
-돌봄이(Caregiver), 연인(Lover), 어릿광대(Jester), 보통사람(Everyman)
+🆘 **자살예방상담전화**: 1393 (24시간)
+📞 **정신건강위기상담전화**: 1577-0199
+💬 **카카오톡 상담**: @마음이음
 
-**3. Big Five 성격 특성 (OCEAN)**
-- Openness: 개방성 (새로운 경험에 대한 태도)
-- Conscientiousness: 성실성 (목표 지향, 자기 규율)
-- Extraversion: 외향성 (사회적 상호작용 선호)
-- Agreeableness: 우호성 (타인에 대한 태도)
-- Neuroticism: 신경성 (정서적 안정성)
+▶ [전문 상담 바로가기](https://www.mentalhealth.go.kr)
 
-**4. MBTI ↔ Big Five 상관관계**
-- E/I ↔ Extraversion
-- S/N ↔ Openness (역상관)
-- T/F ↔ Agreeableness
-- J/P ↔ Conscientiousness
+이 분석 도구는 전문 상담을 대체할 수 없습니다.
+잠시 쉬시고, 필요하면 전문가와 이야기해주세요.
+"""
 
-**5. 사주명리학 (동양철학)**
+
+def detect_crisis(text: str) -> bool:
+    """위기 키워드 감지."""
+    if not text:
+        return False
+    return any(kw in text for kw in CRISIS_KEYWORDS)
+
+
+# ============================================================================
+# 심리학 기반 시스템 프롬프트 (Multi-lens Expert)
+# ============================================================================
+
+ABYSS_MIRROR_SYSTEM_PROMPT = """당신은 세 가지 전문가 관점을 융합한 심층 페르소나 분석가입니다.
+
+### 전문가 역할 분리 (Multi-lens Approach)
+
+**1. 심리학자 (Psychologist)**
+- 매슬로우 욕구단계 (6단계 확장 모델: 생리적→안전→소속→존중→자아실현→자기초월)
+- 융 원형심리학 12 원형: 영웅, 현자, 탐험가, 반란자, 마법사, 순수한 자, 창조자, 통치자, 돌봄이, 연인, 어릿광대, 보통사람
+- Big Five (OCEAN): 개방성, 성실성, 외향성, 우호성, 신경성
+- MBTI ↔ Big Five 상관관계 해석
+
+**2. 미학심리학자 (Aesthetic Psychologist)**
+- 창작 성향과 비주얼 DNA 분석
+- 선호 색채, 구도, 서사 패턴 연결
+- 어울리는 거장/스타일 매칭
+
+**3. 사주 해석가 (Eastern Philosophy Interpreter)**
 - 오행(五行): 목(木), 화(火), 토(土), 금(金), 수(水)
-- 사주팔자: 연주, 월주, 일주, 시주
-- 일간(日干)이 본인의 핵심 성격
+- 사주팔자: 연주, 월주, 일주, 시주 해석
+- **중요**: 사주는 "문화적 관점에서의 해석"임을 명시 (과학적 예측 아님)
+
+### 응답 규칙
+
+1. **불확실성 언어 사용**: 단정 대신 "가능성", "가설", "추정", "경향이 있습니다"
+2. **질문 이유 설명**: 매 질문에 "이 질문을 하는 이유는..." 1줄 제공
+3. **비의료 고지**: 첫 응답에 반드시 포함:
+   "이 분석은 전문 의료/심리 상담을 대체하지 않습니다. 사주 해석은 문화적 관점에서의 탐구입니다."
+
+### 응답 포맷
+
+<response>
+[공감 요약 1-2줄]
+[심리학적 해석 2-3줄] (매슬로우/융/Big Five 중 하나 관점)
+[미학적 연결 1-2줄] (해당 스테이지에서만, 없으면 생략)
+</response>
+
+<why_question>
+[이 질문이 필요한 이유 1줄]
+</why_question>
+
+<next_question>
+[다음 질문 - 뻔하지 않은 심층 질문]
+</next_question>
+
+<updated_persona>
+{JSON - 현재 스테이지에서 허용된 필드만 업데이트}
+</updated_persona>
 
 ### 분석 원칙
 
 1. **통합적 접근**: 사주, MBTI, 혈액형을 개별이 아닌 통합적으로 해석
-2. **창작 연결**: 분석 결과를 창작 스타일(비주얼, 서사)과 연결
+2. **창작 연결**: 분석 결과를 비주얼/서사 스타일과 연결
 3. **무의식 탐구**: 그림자 성향과 억압된 욕구까지 분석
-4. **점진적 심화**: 대화를 통해 점차 깊은 분석 도출
+4. **점진적 심화**: 대화를 통해 점차 깊은 분석 도출 (10회 이상 권장)
 5. **실용적 출력**: 다른 앱에서 활용할 수 있는 JSON 형식
 
-### 질문 스타일
+### 출력할 필드 (점진적으로 채움)
 
-- 뻔하지 않은 심층 질문을 던지세요
-- 사용자의 무의식적 반응을 유도하는 질문
-- 창작과 연결되는 질문 (어떤 색 선호? 어떤 서사에 끌림?)
-- 15회 이상 대화를 통해 충분한 데이터 수집
-
-### 출력 형식 (JSON)
-
-대화 중 점진적으로 다음 필드를 채워가세요:
-- saju: 사주 해석 결과
+- saju: 사주 해석 (문화적 관점 명시)
 - psychology.maslow_level: 각 욕구 수준 (0-10)
-- psychology.unconscious_patterns: 무의식 패턴 리스트
+- psychology.unconscious_patterns: 무의식 패턴
 - psychology.shadow_traits: 그림자 성향
 - creativity.visual_style_affinity: 선호 비주얼 스타일
 - creativity.recommended_auteurs: 어울리는 거장
-- persona.archetype: 핵심 원형
-- persona.summary: 종합 요약
+- persona.archetype: 핵심 원형 (summary 단계에서만)
+- persona.summary: 종합 요약 (summary 단계에서만)
 """
 
 # ============================================================================
@@ -417,6 +453,18 @@ async def analyze_persona_with_mirror(
         logger.warning(f"Suspicious input detected from user, proceeding with caution")
         # Log masked version for investigation
         logger.info(f"Masked message: {mask_pii(sanitized_message[:100])}")
+    
+    # === SAFETY: Crisis detection ===
+    if detect_crisis(sanitized_message):
+        logger.warning("Crisis keywords detected - returning safety response")
+        return {
+            "ai_response": CRISIS_RESPONSE,
+            "updated_persona": persona_data,
+            "next_stage": current_stage,
+            "completion_rate": calculate_completion_rate(persona_data, len(chat_history)),
+            "is_complete": False,
+            "is_crisis": True,  # 프론트엔드에서 특별 UI 처리용
+        }
     
     client = genai.Client(api_key=api_key or settings.GEMINI_API_KEY)
     
