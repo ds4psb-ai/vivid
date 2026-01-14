@@ -24,7 +24,8 @@ import EvidenceDisplay from "./EvidenceDisplay";
 import { RAGSuggestionCard } from "@/components/rag/RAGSuggestionCard";
 import { useRAGSuggestion, type EvidenceRef } from "@/hooks/useRAGSuggestion";
 import { usePersonaPreset, type TraceEntry, type PersonaPreset } from "@/hooks/usePersonaPreset";
-import { initMirror, chatMirror, issueRunToken, type MirrorChatResponse } from "@/lib/mirrorApi";
+import { initMirror, chatMirror, type MirrorChatResponse } from "@/lib/mirrorApi";
+import { issueRunToken } from "@/lib/run-token-api";  // P5-1: SSoT
 import { Send, User, Bot, Sparkles, Download, ArrowLeft, Zap, Upload, RefreshCw } from "lucide-react";
 
 const THEME_COLOR: ThemeColor = "violet";
@@ -103,6 +104,7 @@ export default function AbyssMirrorPanel() {
     const { exportJSON } = useResultExport();
 
     // RAG
+    const ragEnabled = false;  // P5-4: LLM-only 모드
     const {
         suggestion: ragSuggestion,
         isLoading: ragLoading,
@@ -151,7 +153,8 @@ export default function AbyssMirrorPanel() {
 
         try {
             // P4: Run-Token 발급 (chat 시작 전)
-            const tokenResponse = await issueRunToken({ app_id: "ai" });
+            // P5-1: SSoT - run-token-api.ts 사용, appId (camelCase)
+            const tokenResponse = await issueRunToken({ appId: "ai" });
             if (!tokenResponse.success || !tokenResponse.token) {
                 throw new Error(tokenResponse.error || "토큰 발급 실패");
             }
@@ -204,8 +207,10 @@ export default function AbyssMirrorPanel() {
         setIsLoading(true);
         setError(null);
 
-        // RAG suggestion
-        void fetchSuggestion(userMessage, messages.map(m => m.content).join("\n").slice(-500));
+        // P5-4: LLM-only 모드 - RAG 호출 가드
+        if (ragEnabled) {
+            void fetchSuggestion(userMessage, messages.map(m => m.content).join("\n").slice(-500));
+        }
 
         try {
             // P4: Run-Token 전달
@@ -553,8 +558,8 @@ export default function AbyssMirrorPanel() {
                 {/* Input Area */}
                 {phase !== "complete" && (
                     <div className="flex-shrink-0 p-4 border-t border-slate-200 dark:border-white/5 bg-white/80 dark:bg-slate-900/90 backdrop-blur-md">
-                        {/* RAG Suggestion */}
-                        {(ragSuggestion?.has_suggestion || ragLoading || ragOverridden) && (
+                        {/* RAG Suggestion - P5-4: LLM-only 모드 가드 */}
+                        {ragEnabled && (ragSuggestion?.has_suggestion || ragLoading || ragOverridden) && (
                             <div className="mb-4">
                                 <RAGSuggestionCard
                                     suggestion={ragSuggestion}

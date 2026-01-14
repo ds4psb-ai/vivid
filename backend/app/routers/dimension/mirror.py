@@ -43,6 +43,11 @@ class MirrorInitRequest(BaseModel):
     birth_hour: int = Field(12, ge=0, le=23, description="출생 시간 (0-23)")
     gender: str = Field("", max_length=10, description="성별 (M/F/Other)")
     model: str = Field("gemini-3-flash-preview", description="AI 모델")
+    
+    # P5-3: 워크플로우 재진입 필드
+    session_id: Optional[str] = Field(None, description="기존 세션 ID (재진입)")
+    seed_preset: Optional[Dict[str, Any]] = Field(None, description="시드 프리셋 데이터")
+    prior_outputs: Optional[List[Dict[str, Any]]] = Field(None, description="이전 출력 목록")
 
     @field_validator("mbti", mode="before")
     @classmethod
@@ -159,8 +164,9 @@ async def init_mirror(
         validate_persona_preset,
     )
     
-    # 세션 ID 생성
-    session_id = str(uuid.uuid4())
+    # 세션 ID 생성 (또는 재사용)
+    # P5-3: 기존 세션 ID가 있으면 재사용
+    session_id = request.session_id if request.session_id else str(uuid.uuid4())
     
     # 사주 계산
     saju = calculate_saju_pillars(
@@ -180,6 +186,14 @@ async def init_mirror(
         },
         "saju": saju,
     })
+    
+    # P5-3: seed_preset 병합 (화이트리스트 필터링)
+    # 우선순위: seed_preset < 사용자 입력 (위에서 계산된 saju 등)
+    if request.seed_preset:
+        ALLOWED_SEED_FIELDS = {"persona", "saju", "psychology", "creativity", "preferences"}
+        filtered_seed = {k: v for k, v in request.seed_preset.items() if k in ALLOWED_SEED_FIELDS}
+        # filtered_seed가 기본, persona_data가 덮어쓴다
+        persona_data = {**filtered_seed, **persona_data}
     
     # 초기 메시지 생성
     element_names = {

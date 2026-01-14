@@ -78,55 +78,9 @@ export interface MirrorExportResponse {
 }
 
 // ============================================================================
-// Run Token Types & API (P4)
-// ============================================================================
-
-export interface IssueTokenRequest {
-    app_id: string;
-    credits_to_reserve?: number;
-    permissions?: string[];
-}
-
-export interface IssueTokenResponse {
-    success: boolean;
-    token?: string;
-    run_id?: string;
-    expires_at?: string;
-    credits_reserved?: number;
-    error?: string;
-}
-
-/**
- * Run Token 발급
- * 
- * 2025-2026 Best Practice:
- * - Short-lived token (30분 TTL)
- * - Memory 저장 (XSS 방지)
- * - 발급 실패 시 명시적 에러
- */
-export async function issueRunToken(
-    request: IssueTokenRequest
-): Promise<IssueTokenResponse> {
-    const response = await fetch(`${API_BASE}/api/v1/run-token/issue`, {  // P4.1: 경로 수정
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(request),
-    });
-
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || `HTTP ${response.status}`);
-    }
-
-    return response.json();
-}
-
-// ============================================================================
 // API Functions
 // ============================================================================
+// P5-1: issueRunToken moved to run-token-api.ts (SSoT)
 
 export async function initMirror(
     request: MirrorInitRequest,
