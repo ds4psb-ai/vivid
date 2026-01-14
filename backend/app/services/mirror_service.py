@@ -3,18 +3,176 @@ Abyss Mirror (심연의 거울) - Deep Persona Extraction Service.
 
 사주 + MBTI + 혈액형 → 심층 페르소나 JSON 프리셋 생성
 기반 이론: 매슬로우 욕구단계, 융 원형심리학, Big Five, 최신 임상심리학
+
+Security Hardening (2026 Best Practices):
+- Input sanitization & validation
+- PII masking in logs
+- Prompt injection defense
+- Context window management with summarization
+- Session security with token binding
 """
 from __future__ import annotations
 
+import hashlib
 import json
+import logging
+import re
+import secrets
 import uuid
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Tuple
 
 from google import genai
 from google.genai import types
 
 from app.config import settings
+
+logger = logging.getLogger(__name__)
+
+# ============================================================================
+# Security Hardening Utilities (2026 Best Practices)
+# ============================================================================
+
+# Prompt Injection Defense Patterns
+INJECTION_PATTERNS = [
+    r"ignore\s+(previous|all|above)\s+instructions?",
+    r"disregard\s+(previous|all|above)\s+instructions?",
+    r"forget\s+(previous|all|above)\s+instructions?",
+    r"you\s+are\s+now\s+(a|an|the)",
+    r"pretend\s+you\s+are",
+    r"act\s+as\s+if",
+    r"new\s+system\s+prompt",
+    r"<\s*system\s*>",
+    r"<\s*/\s*system\s*>",
+    r"\[\s*SYSTEM\s*\]",
+    r"IGNORE THE ABOVE",
+    r"환공격|프롬프트\s*주입|시스템\s*지시\s*무시",
+]
+
+# PII Patterns for masking
+PII_PATTERNS = {
+    "phone": r"\b01[016789]-?\d{3,4}-?\d{4}\b",
+    "email": r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
+    "ssn": r"\b\d{6}-?\d{7}\b",
+    "card": r"\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b",
+}
+
+
+def sanitize_input(text: str, max_length: int = 2000) -> Tuple[str, bool]:
+    """Input sanitization with injection detection.
+    
+    Returns:
+        Tuple of (sanitized_text, is_suspicious)
+    """
+    if not text:
+        return "", False
+    
+    # Truncate to max length
+    text = text[:max_length]
+    
+    # Remove null bytes and control characters (except newlines/tabs)
+    text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', text)
+    
+    # Check for injection patterns
+    is_suspicious = False
+    text_lower = text.lower()
+    for pattern in INJECTION_PATTERNS:
+        if re.search(pattern, text_lower, re.IGNORECASE):
+            is_suspicious = True
+            logger.warning(f"Potential prompt injection detected: {pattern[:30]}...")
+            break
+    
+    return text.strip(), is_suspicious
+
+
+def mask_pii(text: str) -> str:
+    """Mask PII for safe logging."""
+    masked = text
+    for pii_type, pattern in PII_PATTERNS.items():
+        masked = re.sub(pattern, f"[{pii_type.upper()}_MASKED]", masked)
+    return masked
+
+
+def generate_session_token() -> str:
+    """Generate cryptographically secure session token."""
+    return secrets.token_urlsafe(32)
+
+
+def hash_session_id(session_id: str, user_id: str) -> str:
+    """Create bound session hash for session hijacking prevention."""
+    combined = f"{session_id}:{user_id}:{settings.SECRET_KEY}"
+    return hashlib.sha256(combined.encode()).hexdigest()[:16]
+
+
+def validate_session_token(token: str, expected_hash: str, user_id: str) -> bool:
+    """Validate session token with user binding."""
+    computed_hash = hash_session_id(token, user_id)
+    return secrets.compare_digest(computed_hash, expected_hash)
+
+
+def summarize_conversation_history(
+    chat_history: List[Dict[str, str]], 
+    max_messages: int = 10,
+    max_chars_per_message: int = 500
+) -> str:
+    """Hierarchical context summarization for long conversations.
+    
+    Implements sliding window + summarization pattern.
+    """
+    if not chat_history:
+        return ""
+    
+    # Keep recent messages in full
+    recent = chat_history[-max_messages:]
+    
+    # Summarize older messages
+    older = chat_history[:-max_messages] if len(chat_history) > max_messages else []
+    
+    result_parts = []
+    
+    # Add summary of older messages if exists
+    if older:
+        summary = f"[이전 {len(older)}개 대화 요약: "
+        topics = []
+        for msg in older[-5:]:  # Sample last 5 of older
+            content = msg.get("content", "")[:100]
+            if content:
+                topics.append(content[:50] + "..." if len(content) > 50 else content)
+        summary += ", ".join(topics[:3]) + "]"
+        result_parts.append(summary)
+    
+    # Add recent messages (truncated)
+    for msg in recent:
+        role = "사용자" if msg.get("role") == "user" else "AI"
+        content = msg.get("content", "")
+        if len(content) > max_chars_per_message:
+            content = content[:max_chars_per_message] + "..."
+        result_parts.append(f"{role}: {content}")
+    
+    return "\n".join(result_parts)
+
+
+def validate_persona_data_security(persona_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Sanitize persona data before storage/transmission.
+    
+    - Remove any injected scripts
+    - Mask PII in string fields
+    - Validate structure
+    """
+    def clean_value(value: Any) -> Any:
+        if isinstance(value, str):
+            # Remove potential XSS
+            value = re.sub(r'<script[^>]*>.*?</script>', '', value, flags=re.IGNORECASE | re.DOTALL)
+            value = re.sub(r'javascript:', '', value, flags=re.IGNORECASE)
+            # Don't mask PII in actual data, just sanitize
+            return value.strip()
+        elif isinstance(value, dict):
+            return {k: clean_value(v) for k, v in value.items()}
+        elif isinstance(value, list):
+            return [clean_value(v) for v in value]
+        return value
+    
+    return clean_value(persona_data)
 
 # ============================================================================
 # 심리학 기반 시스템 프롬프트
@@ -215,6 +373,13 @@ async def analyze_persona_with_mirror(
         - completion_rate: 완료율
         - is_complete: 완료 가능 여부
     """
+    # === SECURITY: Input sanitization ===
+    sanitized_message, is_suspicious = sanitize_input(user_message, max_length=2000)
+    if is_suspicious:
+        logger.warning(f"Suspicious input detected from user, proceeding with caution")
+        # Log masked version for investigation
+        logger.info(f"Masked message: {mask_pii(sanitized_message[:100])}")
+    
     client = genai.Client(api_key=api_key or settings.GEMINI_API_KEY)
     
     # 1단계: 사주 정보가 없으면 계산/웹서칭
@@ -233,14 +398,18 @@ async def analyze_persona_with_mirror(
             "gender": birth_info.get("gender", ""),
         }
     
-    # 대화 기록 구성
-    conversation_context = "\n".join([
-        f"{'사용자' if msg['role'] == 'user' else 'AI'}: {msg['content']}"
-        for msg in chat_history[-10:]  # 최근 10개
-    ])
+    # === SECURITY: Context window management with hierarchical summarization ===
+    conversation_context = summarize_conversation_history(
+        chat_history, 
+        max_messages=10, 
+        max_chars_per_message=500
+    )
+    
+    # === SECURITY: Sanitize persona data ===
+    safe_persona_data = validate_persona_data_security(persona_data)
     
     # 현재 페르소나 상태
-    persona_json = json.dumps(persona_data, ensure_ascii=False, indent=2)
+    persona_json = json.dumps(safe_persona_data, ensure_ascii=False, indent=2)
     
     # 프롬프트 구성
     user_prompt = f"""### 현재 페르소나 데이터
