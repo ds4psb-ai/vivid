@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Dna, Fingerprint, Brain, Database, Heart, Sparkles, Activity } from "lucide-react";
+import { Dna, Fingerprint, Brain, Database, Heart, Sparkles, Activity, Palette, Crown } from "lucide-react";
 
 interface PersonaData {
     saju?: Record<string, unknown>;
@@ -9,6 +9,8 @@ interface PersonaData {
     subconscious?: Record<string, unknown>;
     unconscious?: Record<string, unknown>;
     background?: Record<string, unknown>;
+    creativity?: Record<string, unknown>;
+    persona?: Record<string, unknown>;
     [key: string]: unknown;
 }
 
@@ -23,6 +25,8 @@ const SECTION_ICONS: Record<string, React.ReactNode> = {
     subconscious: <Database className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />,
     unconscious: <Fingerprint className="w-4 h-4 text-rose-600 dark:text-rose-400" />,
     background: <Heart className="w-4 h-4 text-amber-600 dark:text-amber-400" />,
+    creativity: <Palette className="w-4 h-4 text-pink-600 dark:text-pink-400" />,
+    persona: <Crown className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />,
 };
 
 const SECTION_LABELS: Record<string, string> = {
@@ -31,11 +35,15 @@ const SECTION_LABELS: Record<string, string> = {
     subconscious: "잠재의식 (Subconscious)",
     unconscious: "그림자 (Shadow)",
     background: "성장 배경 (Origins)",
+    creativity: "창작 DNA (Creative)",
+    persona: "페르소나 (Archetype)",
 };
 
+const SECTION_ORDER = ["persona", "saju", "mbti", "subconscious", "unconscious", "background", "creativity"];
+
 export default function PersonaGenome({ data, stage }: PersonaGenomeProps) {
-    const sections = Object.keys(data).filter(key =>
-        ["saju", "mbti", "subconscious", "unconscious", "background"].includes(key)
+    const sections = SECTION_ORDER.filter(key =>
+        SECTION_ORDER.includes(key) && data[key] !== undefined
     );
 
     return (
@@ -119,7 +127,7 @@ function renderRecursive(obj: Record<string, unknown>, depth = 0): React.ReactNo
                             renderRecursive(value as Record<string, unknown>, depth + 1)
                         )
                     ) : (
-                        <span className="text-amber-700 dark:text-amber-100/70">"{String(value)}"</span>
+                        <span className="text-amber-700 dark:text-amber-100/70">&quot;{String(value)}&quot;</span>
                     )}
                 </li>
             ))}
