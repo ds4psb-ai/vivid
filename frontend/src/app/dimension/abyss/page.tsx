@@ -1,13 +1,13 @@
 "use client";
 
 import AppShell from "@/components/AppShell";
-import AbyssInterpreterPanel from "@/components/dimension/AbyssInterpreterPanel";
+import AbyssMirrorPanel from "@/components/dimension/AbyssMirrorPanel";
 
 export default function AbyssPage() {
     return (
         <AppShell showTopBar={false}>
             <div className="h-screen">
-                <AbyssInterpreterPanel />
+                <AbyssMirrorPanel />
             </div>
         </AppShell>
     );

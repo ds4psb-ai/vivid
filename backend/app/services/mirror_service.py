@@ -292,9 +292,14 @@ def calculate_saju_pillars(year: int, month: int, day: int, hour: int = 12) -> D
     }
 
 
-# ============================================================================
-# 진행률 계산
-# ============================================================================
+# 스테이지별 허용 필드 (게이팅)
+STAGE_ALLOWED_FIELDS = {
+    "intro": ["input"],
+    "saju": ["input", "saju"],
+    "psychology": ["input", "saju", "psychology"],
+    "creativity": ["input", "saju", "psychology", "creativity"],
+    "summary": ["input", "saju", "psychology", "creativity", "persona"],  # 최종 단계에서만 persona 허용
+}
 
 REQUIRED_FIELDS = [
     "input.mbti",
@@ -311,12 +316,34 @@ REQUIRED_FIELDS = [
 ]
 
 
+def filter_persona_update_by_stage(persona_update: Dict[str, Any], current_stage: str) -> Dict[str, Any]:
+    """현재 스테이지에서 허용된 필드만 업데이트.
+    
+    LLM이 스테이지와 무관하게 모든 필드를 채우는 것을 방지.
+    """
+    allowed_prefixes = STAGE_ALLOWED_FIELDS.get(current_stage, [])
+    filtered = {}
+    
+    for key, value in persona_update.items():
+        if key.startswith("_"):  # _meta 등 내부 필드는 허용
+            filtered[key] = value
+        elif any(key.startswith(prefix) for prefix in allowed_prefixes):
+            filtered[key] = value
+        # else: 현재 스테이지에서 허용되지 않은 필드는 무시
+    
+    return filtered
+
+
 def calculate_completion_rate(persona_data: Dict[str, Any], chat_count: int) -> float:
     """진행률 계산.
     
-    - 사주 웹서칭 완료: 25%
-    - 필드 채움 정도: 25-75%
-    - 최소 15회 채팅: 추가 5%
+    개선된 공식 (2026-01):
+    - 사주 기본: 20%
+    - 필드 채움: 최대 50% (11개 필드 기준)
+    - 채팅 횟수: 최대 30% (10회 이상)
+    
+    이전: 필드 75% + 채팅 5% → 4번 대화에 89% 도달
+    개선: 필드 50% + 채팅 30% → 10+회 대화 필요
     """
     filled_count = 0
     
@@ -331,13 +358,24 @@ def calculate_completion_rate(persona_data: Dict[str, Any], chat_count: int) -> 
         except (AttributeError, TypeError):
             pass
     
-    field_rate = (filled_count / len(REQUIRED_FIELDS)) * 75
-    chat_bonus = min(chat_count / 15, 1.0) * 5
+    # 개선된 가중치
+    field_rate = (filled_count / len(REQUIRED_FIELDS)) * 50  # 50% (이전: 75%)
+    chat_bonus = min(chat_count / 10, 1.0) * 30  # 30% at 10회 (이전: 5% at 15회)
     
     # 사주 있으면 기본 20%
     base = 20 if persona_data.get("saju", {}).get("dominant_element") else 0
     
     return min(base + field_rate + chat_bonus, 100)
+
+
+def can_complete(completion_rate: float, chat_count: int) -> bool:
+    """분석 완료 가능 여부.
+    
+    조건:
+    - 완료율 80% 이상
+    - 최소 8회 이상 채팅
+    """
+    return completion_rate >= 80 and chat_count >= 8
 
 
 # ============================================================================
@@ -472,7 +510,10 @@ async def analyze_persona_with_mirror(
         if "<updated_persona>" in response_text and "</updated_persona>" in response_text:
             try:
                 json_str = response_text.split("<updated_persona>")[1].split("</updated_persona>")[0].strip()
-                updated_persona = json.loads(json_str)
+                llm_update = json.loads(json_str)
+                # 스테이지 게이팅 적용: 현재 스테이지에서 허용된 필드만 업데이트
+                filtered_update = filter_persona_update_by_stage(llm_update, current_stage)
+                updated_persona.update(filtered_update)
             except json.JSONDecodeError:
                 pass  # 파싱 실패 시 기존 유지
         
@@ -512,7 +553,8 @@ async def analyze_persona_with_mirror(
             "updated_persona": updated_persona,
             "next_stage": next_stage,
             "completion_rate": completion_rate,
-            "is_complete": completion_rate >= 80,
+            "is_complete": can_complete(completion_rate, chat_count),  # 최소 8회 채팅 필요
+            "chat_count": chat_count,  # 디버깅용
         }
         
     except Exception as e:

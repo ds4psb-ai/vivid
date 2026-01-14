@@ -118,14 +118,12 @@ export async function initMirror(
 
 export async function chatMirror(
     request: MirrorChatRequest,
-    byokKey?: string | null,
-    runToken?: string | null  // P3.5: Run-Token 추가
+    byokKey?: string | null
 ): Promise<MirrorChatResponse> {
     const response = await fetch(`${API_BASE}/api/dimension/mirror/chat`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            ...(runToken ? { Authorization: `Bearer ${runToken}` } : {}),  // P3.5
             ...getBYOKHeaders(byokKey ?? null),
         },
         body: JSON.stringify({

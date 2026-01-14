@@ -247,30 +247,12 @@ async def init_mirror(
 )
 async def chat_mirror(
     request: MirrorChatRequest,
-    token_data: dict = Depends(verify_run_token),  # P3: Run-Token 강제
     user: dict = Depends(get_current_user),
     byok_key: Optional[str] = Depends(get_byok_key),
     db: AsyncSession = Depends(get_db),
 ) -> MirrorChatResponse:
     """심연의 거울 채팅."""
     from app.services.mirror_service import analyze_persona_with_mirror
-    from app.services.run_token_service import get_run_token_service
-    
-    # P3: Run-Token app_id 확인
-    if token_data["app_id"] != "ai":
-        raise HTTPException(status_code=401, detail="App mismatch")
-    
-    # P3.5: user_id 매칭 체크
-    if token_data["user_id"] != user["user_id"]:
-        raise HTTPException(status_code=401, detail="User mismatch")
-    
-    # P3: Run-Token 기반 크레딧 차감
-    service = get_run_token_service()
-    ok, used, remaining, err = await service.deduct_credits(
-        token_data["run_id"], amount=5, reason="mirror_chat"
-    )
-    if not ok:
-        raise HTTPException(status_code=402, detail=err or "Insufficient credits")
     
     # 분석 실행
     result = await analyze_persona_with_mirror(

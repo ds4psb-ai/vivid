@@ -25,7 +25,6 @@ import { RAGSuggestionCard } from "@/components/rag/RAGSuggestionCard";
 import { useRAGSuggestion, type EvidenceRef } from "@/hooks/useRAGSuggestion";
 import { usePersonaPreset, type TraceEntry, type PersonaPreset } from "@/hooks/usePersonaPreset";
 import { initMirror, chatMirror, type MirrorChatResponse } from "@/lib/mirrorApi";
-import { issueRunToken } from "@/lib/run-token-api";  // P5-1: SSoT
 import { Send, User, Bot, Sparkles, Download, ArrowLeft, Zap, Upload, RefreshCw } from "lucide-react";
 
 const THEME_COLOR: ThemeColor = "violet";
@@ -65,7 +64,7 @@ export default function AbyssMirrorPanel() {
     // Phase state
     const [phase, setPhase] = useState<Phase>("input");
     const [sessionId, setSessionId] = useState<string | null>(null);
-    const [runToken, setRunToken] = useState<string | null>(null);  // P4: Run-Token state
+
 
     // Input form state
     const [birthInfo, setBirthInfo] = useState({
@@ -152,14 +151,6 @@ export default function AbyssMirrorPanel() {
         setError(null);
 
         try {
-            // P4: Run-Token 발급 (chat 시작 전)
-            // P5-1: SSoT - run-token-api.ts 사용, appId (camelCase)
-            const tokenResponse = await issueRunToken({ appId: "ai" });
-            if (!tokenResponse.success || !tokenResponse.token) {
-                throw new Error(tokenResponse.error || "토큰 발급 실패");
-            }
-            setRunToken(tokenResponse.token);
-
             const response = await initMirror({
                 birth_year: quick ? 1990 : parseInt(birthInfo.year),
                 birth_month: quick ? 1 : parseInt(birthInfo.month),
@@ -221,7 +212,7 @@ export default function AbyssMirrorPanel() {
                 chat_history: messages.map(m => ({ role: m.role, content: m.content })),
                 current_stage: currentStage,
                 model,
-            }, byokKey, runToken);
+            }, byokKey);
 
             if (response.success) {
                 const assistantMessage: Message = {
@@ -272,8 +263,7 @@ export default function AbyssMirrorPanel() {
             // P4: 401/402 에러 처리
             if (err instanceof Error) {
                 if (err.message.includes("401") || err.message.includes("Unauthorized")) {
-                    setRunToken(null);
-                    setError("세션이 만료되었습니다. 다시 시작해주세요.");
+                    setError("인증 오류가 발생했습니다. 다시 시작해주세요.");
                 } else if (err.message.includes("402")) {
                     setError("크레딧이 부족합니다.");
                     setShowCreditModal(true);
@@ -286,7 +276,7 @@ export default function AbyssMirrorPanel() {
         } finally {
             setIsLoading(false);
         }
-    }, [inputMessage, isLoading, sessionId, byokKey, creditCtx, messages, personaData, currentStage, model, CREDIT_COST, fetchSuggestion, addTrace, saveLocal, runToken]);
+    }, [inputMessage, isLoading, sessionId, byokKey, creditCtx, messages, personaData, currentStage, model, CREDIT_COST, fetchSuggestion, addTrace, saveLocal]);
 
     // Export JSON
     const handleExportJson = useCallback(() => {
