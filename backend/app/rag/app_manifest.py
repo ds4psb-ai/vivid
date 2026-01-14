@@ -217,23 +217,7 @@ Include specific shot compositions, color palettes, and mood references.
         },
     ),
 
-    "dimension.persona.analyze": AppRAGManifest(
-        app_key="dimension.persona.analyze",
-        dimensions=["AI"],
-        search_limit=7,  # 더 많은 심리학 레퍼런스
-        min_score=0.45,  # 심리학 이론은 넓은 범위 허용
-        amplify_with_history=True,  # 이전 대화 맥락 중요
-        prompt_injection_template="""
-## 심리학적 분석 프레임워크 (Retrieved Knowledge)
-{rag_results}
-
-## 적용 지침
-- 위의 심리학 이론/프레임워크를 바탕으로 사용자의 답변을 분석하세요.
-- 학술 용어는 쉬운 표현으로 바꾸되, 분석의 깊이는 유지하세요.
-- 이론의 핵심 개념을 자연스럽게 탐색하는 질문을 생성하세요.
-- 사용자가 자신의 무의식/잠재의식을 스스로 발견하도록 유도하세요.
-""",
-    ),
+    # NOTE: dimension.persona.analyze moved to P1 section with dataset routing (line ~288)
 
     "veo.video.generate": AppRAGManifest(
         app_key="veo.video.generate",
@@ -258,7 +242,7 @@ Include camera movements, transitions, and visual effects guidance.
     # ========================================
     "dimension.sound.craft": AppRAGManifest(
         app_key="dimension.sound.craft",
-        dimensions=["6D", "SOUND"],
+        dimensions=["6D"],  # Fixed: SOUND→6D (no separate SOUND collection)
         search_limit=5,
         min_score=0.5,
         amplify_with_history=True,
@@ -272,7 +256,7 @@ Apply these audio principles for sound generation.
 
     "dimension.story.architect": AppRAGManifest(
         app_key="dimension.story.architect",
-        dimensions=["STORY", "2D"],
+        dimensions=["2D"],  # Fixed: STORY→2D (no separate STORY collection)
         search_limit=5,
         min_score=0.55,
         amplify_with_history=True,
