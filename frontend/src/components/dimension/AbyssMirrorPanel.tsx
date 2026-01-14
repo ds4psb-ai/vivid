@@ -24,7 +24,7 @@ import EvidenceDisplay from "./EvidenceDisplay";
 import { RAGSuggestionCard } from "@/components/rag/RAGSuggestionCard";
 import { useRAGSuggestion, type EvidenceRef } from "@/hooks/useRAGSuggestion";
 import { usePersonaPreset, type TraceEntry, type PersonaPreset } from "@/hooks/usePersonaPreset";
-import { initMirror, chatMirror, type MirrorChatResponse } from "@/lib/mirrorApi";
+import { initMirror, chatMirror, issueRunToken, type MirrorChatResponse } from "@/lib/mirrorApi";
 import { Send, User, Bot, Sparkles, Download, ArrowLeft, Zap, Upload, RefreshCw } from "lucide-react";
 
 const THEME_COLOR: ThemeColor = "violet";
@@ -64,6 +64,7 @@ export default function AbyssMirrorPanel() {
     // Phase state
     const [phase, setPhase] = useState<Phase>("input");
     const [sessionId, setSessionId] = useState<string | null>(null);
+    const [runToken, setRunToken] = useState<string | null>(null);  // P4: Run-Token state
 
     // Input form state
     const [birthInfo, setBirthInfo] = useState({
@@ -149,6 +150,13 @@ export default function AbyssMirrorPanel() {
         setError(null);
 
         try {
+            // P4: Run-Token 발급 (chat 시작 전)
+            const tokenResponse = await issueRunToken({ app_id: "ai" });
+            if (!tokenResponse.success || !tokenResponse.token) {
+                throw new Error(tokenResponse.error || "토큰 발급 실패");
+            }
+            setRunToken(tokenResponse.token);
+
             const response = await initMirror({
                 birth_year: quick ? 1990 : parseInt(birthInfo.year),
                 birth_month: quick ? 1 : parseInt(birthInfo.month),
@@ -200,6 +208,7 @@ export default function AbyssMirrorPanel() {
         void fetchSuggestion(userMessage, messages.map(m => m.content).join("\n").slice(-500));
 
         try {
+            // P4: Run-Token 전달
             const response: MirrorChatResponse = await chatMirror({
                 session_id: sessionId,
                 user_message: userMessage,
@@ -207,7 +216,7 @@ export default function AbyssMirrorPanel() {
                 chat_history: messages.map(m => ({ role: m.role, content: m.content })),
                 current_stage: currentStage,
                 model,
-            }, byokKey);
+            }, byokKey, runToken);
 
             if (response.success) {
                 const assistantMessage: Message = {
@@ -255,11 +264,24 @@ export default function AbyssMirrorPanel() {
                 setError(response.error || "분석 실패");
             }
         } catch (err) {
-            setError(err instanceof Error ? err.message : "알 수 없는 오류");
+            // P4: 401/402 에러 처리
+            if (err instanceof Error) {
+                if (err.message.includes("401") || err.message.includes("Unauthorized")) {
+                    setRunToken(null);
+                    setError("세션이 만료되었습니다. 다시 시작해주세요.");
+                } else if (err.message.includes("402")) {
+                    setError("크레딧이 부족합니다.");
+                    setShowCreditModal(true);
+                } else {
+                    setError(err.message);
+                }
+            } else {
+                setError("알 수 없는 오류");
+            }
         } finally {
             setIsLoading(false);
         }
-    }, [inputMessage, isLoading, sessionId, byokKey, creditCtx, messages, personaData, currentStage, model, CREDIT_COST, fetchSuggestion, addTrace, saveLocal]);
+    }, [inputMessage, isLoading, sessionId, byokKey, creditCtx, messages, personaData, currentStage, model, CREDIT_COST, fetchSuggestion, addTrace, saveLocal, runToken]);
 
     // Export JSON
     const handleExportJson = useCallback(() => {
@@ -485,8 +507,8 @@ export default function AbyssMirrorPanel() {
                             )}
                             <div className={`max-w-[85%] space-y-2`}>
                                 <div className={`p-4 rounded-2xl ${msg.role === "user"
-                                        ? "bg-violet-500/20 border border-violet-500/30"
-                                        : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"
+                                    ? "bg-violet-500/20 border border-violet-500/30"
+                                    : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"
                                     }`}>
                                     <p className="text-sm text-slate-700 dark:text-zinc-200 leading-relaxed whitespace-pre-wrap">
                                         {msg.content}
