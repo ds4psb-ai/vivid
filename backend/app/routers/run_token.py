@@ -176,18 +176,33 @@ async def issue_run_token(
     앱 실행 전에 호출하여 토큰을 발급받습니다.
     Fingerprint 바인딩으로 토큰 도용을 방지합니다.
     """
+    from app.core.app_registry import AppRegistry as ConfigRegistry
+    
     # 1. 앱 존재 및 활성 상태 확인
     app = registry.get_app(request_body.app_id)
-    if not app:
-        return IssueTokenResponse(success=False, error="App not found")
-    
-    if app.status != AppStatus.ACTIVE:
-        return IssueTokenResponse(success=False, error=f"App is {app.status.value}")
-    
-    # 2. 크레딧 예약
+    config_app = None
     credits_to_reserve = request_body.credits_to_reserve
-    if credits_to_reserve == 0 and app.manifest.credits:
-        credits_to_reserve = app.manifest.credits.per_run
+    permissions = request_body.permissions or []
+    
+    if not app:
+        # P2: Fallback - Config YAML에서 앱 조회
+        config_app = ConfigRegistry.get_by_name(request_body.app_id)
+        if not config_app:
+            return IssueTokenResponse(success=False, error="App not found")
+        
+        # Config에서 credit_cost 추출
+        exec_cap = config_app.get_capability("execution")
+        if credits_to_reserve == 0 and exec_cap:
+            credits_to_reserve = exec_cap.config.get("credit_cost", 0)
+    else:
+        if app.status != AppStatus.ACTIVE:
+            return IssueTokenResponse(success=False, error=f"App is {app.status.value}")
+        
+        # 2. 크레딧 예약
+        if credits_to_reserve == 0 and app.manifest.credits:
+            credits_to_reserve = app.manifest.credits.per_run
+        
+        permissions = permissions or app.manifest.permissions
     
     # 3. Fingerprint 생성
     fingerprint = get_fingerprint(request)
@@ -197,14 +212,14 @@ async def issue_run_token(
         user_id=user_id,
         app_id=request_body.app_id,
         credits_to_reserve=credits_to_reserve,
-        permissions=request_body.permissions or app.manifest.permissions,
+        permissions=permissions,
         fingerprint=fingerprint,
     )
     
     if not success:
         return IssueTokenResponse(success=False, error=error)
     
-    # 4. 만료 시간 조회
+    # 5. 만료 시간 조회
     run_status = await service.get_run_status(run_id)
     
     return IssueTokenResponse(
@@ -214,6 +229,7 @@ async def issue_run_token(
         expires_at=run_status.get("expires_at") if run_status else None,
         credits_reserved=credits_to_reserve,
     )
+
 
 
 @router.post("/validate", response_model=ValidateTokenResponse)

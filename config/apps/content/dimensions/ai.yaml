@@ -5,6 +5,7 @@ metadata:
   type: dimension
   version: "1.0.0"
   bounded_context: content
+  description: "AI 페르소나 + 심연의 거울 통합"
 
 display:
   name_ko: "AI 페르소나"
@@ -13,7 +14,7 @@ display:
 
 capabilities:
   - name: rag
-    enabled: true  # P0: preset과 정렬 (2026-01-13)
+    enabled: false  # P1: LLM-only 모드
 
   - name: cache
     enabled: true
@@ -24,15 +25,21 @@ capabilities:
     enabled: true
     config:
       credit_cost: 5
-      endpoint: "/api/dimension/persona/analyze"
-      capsule_key: "dimension.persona.analyze"
+      endpoint: "/api/dimension/mirror/chat"  # P1: mirror 엔드포인트
+      capsule_key: "dimension.mirror.analyze"
 
 extensions:
   dimension:
     tool_type: generation
+    # P1: mirror 엔드포인트 확장
+    init_endpoint: "/api/dimension/mirror/init"
+    stream_endpoint: "/api/dimension/mirror/chat/stream"
 
 keywords:
   patterns:
     - "ai"
     - "페르소나"
     - "persona"
+    - "거울"
+    - "mirror"
+

@@ -7,11 +7,13 @@ Abyss Mirror (심연의 거울) Dimension Endpoints.
 from __future__ import annotations
 
 import uuid
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Any, Dict, List
+
+from app.routers.run_token import verify_run_token  # P3
 
 from ._base import (
     get_db,
@@ -231,34 +233,26 @@ async def init_mirror(
 )
 async def chat_mirror(
     request: MirrorChatRequest,
+    token_data: dict = Depends(verify_run_token),  # P3: Run-Token 강제
     user: dict = Depends(get_current_user),
     byok_key: Optional[str] = Depends(get_byok_key),
     db: AsyncSession = Depends(get_db),
 ) -> MirrorChatResponse:
     """심연의 거울 채팅."""
     from app.services.mirror_service import analyze_persona_with_mirror
-    from app.core.credit_manager import check_and_deduct_credit
+    from app.services.run_token_service import get_run_token_service
     
-    # 크레딧 차감 (5크레딧)
-    try:
-        await check_and_deduct_credit(
-            db=db,
-            user_id=user["user_id"],
-            amount=5,
-            description="Abyss Mirror: 페르소나 분석",
-            tool="mirror_chat",
-            model=request.model,
-        )
-    except Exception as e:
-        return MirrorChatResponse(
-            success=False,
-            ai_response="",
-            persona_data=request.persona_data,
-            completion_rate=0,
-            current_stage=request.current_stage,
-            is_complete=False,
-            error=f"크레딧 부족: {str(e)}",
-        )
+    # P3: Run-Token app_id 확인
+    if token_data["app_id"] != "ai":
+        raise HTTPException(status_code=401, detail="App mismatch")
+    
+    # P3: Run-Token 기반 크레딧 차감
+    service = get_run_token_service()
+    ok, used, remaining, err = await service.deduct_credits(
+        token_data["run_id"], amount=5, reason="mirror_chat"
+    )
+    if not ok:
+        raise HTTPException(status_code=402, detail=err or "Insufficient credits")
     
     # 분석 실행
     result = await analyze_persona_with_mirror(
@@ -271,31 +265,9 @@ async def chat_mirror(
         model=request.model,
     )
     
-    # RAG Protocol: Generate trace_id and evidence_refs
+    # P6: LLM-only 모드 - 빈 evidence_refs
     trace_id = str(uuid.uuid4())
-    evidence_refs = [
-        EvidenceRef(
-            ref_id=str(uuid.uuid4()),
-            source="심리학 이론 (Maslow/Jung/BigFive)",
-            content_preview="매슬로우 욕구단계, 융 원형심리학 기반 분석",
-            dataset_id="psychology_theories",
-            dataset_label="심리학 데이터셋",
-            score=result.get("completion_rate", 0) / 100,
-        ),
-    ]
-    
-    # Add saju evidence if available
-    if result.get("updated_persona", {}).get("saju", {}).get("dominant_element"):
-        evidence_refs.append(
-            EvidenceRef(
-                ref_id=str(uuid.uuid4()),
-                source="사주명리학 (Four Pillars)",
-                content_preview=f"일간 오행: {result['updated_persona']['saju']['dominant_element']}",
-                dataset_id="saju_analysis",
-                dataset_label="사주 데이터셋",
-                score=0.85,
-            )
-        )
+    evidence_refs: List[EvidenceRef] = []  # LLM-only: 빈 배열
     
     return MirrorChatResponse(
         success="error" not in result,
@@ -304,10 +276,10 @@ async def chat_mirror(
         completion_rate=result["completion_rate"],
         current_stage=result["next_stage"],
         is_complete=result["is_complete"],
-        # RAG Protocol
+        # RAG Protocol (LLM-only)
         trace_id=trace_id,
         evidence_refs=evidence_refs,
-        confidence=min(result.get("completion_rate", 0) / 100, 1.0),
+        confidence=0.0,  # LLM-only
         error=result.get("error"),
     )
 
