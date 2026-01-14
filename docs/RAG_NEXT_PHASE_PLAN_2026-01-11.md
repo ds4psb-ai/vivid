@@ -6,6 +6,21 @@ Scope: Observability + quality evaluation + deprecation cleanup + operational ha
 
 ---
 
+## Status Update (2026-01-14)
+
+**Completed**
+- Observability + SLOs (Grafana + PromQL + alerts)
+- RouterDecisionLog + reports (`router_decision_report.py`)
+- Cache report (`rag_cache_report.py`) + retention (`cleanup_router_logs.py`)
+- Qdrant 384-dim reindex + real embeddings
+
+**Remaining (data-dependent)**
+- NotebookLM Park/Shinkai registration (source pack pending)
+- Cache TTL tuning after traffic accumulation
+- Cron setup (ops)
+
+---
+
 ## 0) Baseline State (Completed)
 - Router heuristic wired into `hybrid_rag.py`
 - `@track_rag_operation` applied to core query functions

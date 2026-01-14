@@ -144,9 +144,9 @@ keywords:
 
 | 모드 | 조건 | 사용 앱 |
 |------|------|---------|
-| `always` | 항상 RAG 활성화 | Story, AD, QC, 4D |
+| `always` | 항상 RAG 활성화 | Story, AD, QC, 4D, AI |
 | `auteur_only` | `auteur_key` 있을 때만 | 1D, 2D, 3D, VEO |
-| `never` | RAG 비활성화 | AI (페르소나), Sound |
+| `never` | RAG 비활성화 | Sound |
 
 ---
 
@@ -242,10 +242,16 @@ return {
 ### 6.1 거장 스타일 주입
 
 ```python
-from app.rag.rag_presets import get_auteur_style_hints, get_auteur_keys
+from app.rag.rag_presets import get_auteur_style_hints
+from app.core.app_registry import AppRegistry
 
-# 사용 가능한 거장 목록
-auteurs = get_auteur_keys()  # ['bong', 'nolan', 'villeneuve', ...]
+# 사용 가능한 거장 목록 (AppRegistry 기반)
+AppRegistry.discover()
+auteurs = [
+    app.metadata.name
+    for app in AppRegistry.get_all()
+    if app.metadata.type.value == "auteur"
+]
 
 # 거장 스타일 힌트 가져오기
 hints = get_auteur_style_hints("bong")

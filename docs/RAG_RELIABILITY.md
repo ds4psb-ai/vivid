@@ -1,7 +1,7 @@
 # RAG Reliability Guide
 
 > **Status**: Production  
-> **Last Updated**: 2026-01-13 (P6 Hardening Complete)  
+> **Last Updated**: 2026-01-14 (P6 Hardening + Qdrant Reindex)  
 > **Based on**: 2025 RAG Best Practices Research
 
 ## P6 Hardening (2026-01-13) ✅
@@ -16,6 +16,15 @@
 | trace_id 응답 | ✅ SuggestResponse.trace_id |
 | CRAG threshold SSoT | ✅ preset.confidence_threshold |
 | Zod Frontend Validation | ✅ EvidenceRefSchema |
+
+## P6 Ops Addendum (2026-01-14) ✅
+
+| Item | Status |
+|------|--------|
+| RouterDecisionLog | ✅ DB 테이블 + 리포트 스크립트 |
+| Cache Report | ✅ rag_cache_report.py |
+| Cleanup Script | ✅ cleanup_router_logs.py |
+| Qdrant Vector Alignment | ✅ 384 dim 재인덱싱 |
 
 ## Overview
 
@@ -36,6 +45,26 @@ Vivid의 Hybrid RAG 시스템 신뢰도 확보를 위한 가이드입니다.
 │ L3: Google Search Grounding (실시간 정보)                    │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+## Qdrant Vector Alignment (2026-01-14)
+
+Reindex is required whenever embedding model or vector size changes.
+
+**Current standard**
+- Embedder: `all-MiniLM-L6-v2`
+- Vector dim: **384**
+
+**Collections (384 dim)**
+- dimension_1d_contexts
+- dimension_2d_contexts
+- dimension_3d_contexts
+- dimension_4d_contexts
+- dimension_5d_contexts
+- dimension_6d_contexts
+- dimension_ad_contexts
+- dimension_ai_contexts
+- dimension_qc_contexts
+- dimension_veo_contexts
 
 ## Reliability Patterns
 
@@ -139,6 +168,15 @@ capabilities:
 | Cache Hit Rate | 30-50% | < 20% |
 | NotebookLM Latency | < 15s | > 30s |
 | Circuit Open Events | 0/day | > 3/hour |
+
+### Metrics Endpoint Prereq
+
+Prometheus 수집이 안 될 경우 아래 환경 변수를 확인합니다:
+
+```bash
+PROMETHEUS_ENABLED=true
+ENABLE_METRICS=true
+```
 
 ### Log Patterns
 
@@ -293,5 +331,3 @@ _rag_latency = Histogram(
 - [tier0_notebooklm.py](file:///Users/ted/vivid/backend/app/rag/tier0_notebooklm.py)
 - [semantic_cache.py](file:///Users/ted/vivid/backend/app/rag/semantic_cache.py)
 - [metrics.py](file:///Users/ted/vivid/backend/app/rag/metrics.py)
-
-

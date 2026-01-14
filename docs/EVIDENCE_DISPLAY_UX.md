@@ -7,6 +7,8 @@
 | ReferenceDecoderPanel | 4D | amber | `evidence_refs` 있을 때 |
 | VisualRealizerPanel | 3D | emerald | `evidence_refs` 있을 때 |
 | PromptGeneratorPanel | 1D | violet | `evidence_refs` 있을 때 |
+| AestheticDirectorPanel | AD | - | *(현재 미연결)* |
+| QualityDirectorPanel | QC | - | *(현재 미연결)* |
 
 ---
 
@@ -29,6 +31,11 @@
 | "근거 없음" 메시지 표시 | ❌ | 사용자 혼란 방지 |
 
 > **결정**: Evidence가 없으면 섹션 자체를 렌더링하지 않음. 이는 RAG 결과가 없거나 신뢰도가 너무 낮아 추천을 스킵한 경우에 해당.
+
+### 2.1 미연결 패널 안내
+
+AD/QC 패널은 현재 RAG suggest API를 호출하지 않으므로 EvidenceDisplay가 노출되지 않습니다.  
+필요 시 `RAGSuggestionCard` 연동 후 동일 규칙을 적용합니다.
 
 ### 3. 렌더링 조건 정리
 

@@ -1,6 +1,6 @@
 # Docs Index (정본)
 
-**Updated**: 2026-01-13  
+**Updated**: 2026-01-14  
 **총 문서**: 12개 (핵심), 35개 (archive)
 
 ---
@@ -50,6 +50,17 @@
 | **Image Grid 인제스션** | `backend/scripts/ingest_image_grid.py` | image_grid → Qdrant |
 | **RAG Quality CLI** | `backend/scripts/run_rag_quality_report.py` | 품질 리포트 생성 |
 | **EvidenceDisplay 공유** | `frontend/src/components/dimension/EvidenceDisplay.tsx` | AI 근거 표시 표준 컴포넌트 |
+
+---
+
+## 2026-01-14 RAG Ops (P6)
+
+| 항목 | 위치 | 설명 |
+|------|------|------|
+| **Router Decision Report** | `backend/scripts/router_decision_report.py` | 라우터 전략/캐시 히트 분석 |
+| **Cache Tuning Report** | `backend/scripts/rag_cache_report.py` | stale/avg_hit 리포트 |
+| **Retention Cleanup** | `backend/scripts/cleanup_router_logs.py` | RouterDecisionLog 보존 정책 |
+| **Qdrant Reindex Note** | `docs/RAG_RELIABILITY.md` | 384 dim 정합성 & 재인덱싱 |
 
 ---
 

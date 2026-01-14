@@ -55,6 +55,14 @@ RAG(Retrieval-Augmented Generation) 품질 평가 파이프라인:
 
 ## 실행 방법
 
+### 0. 환경 변수
+
+기본값에서는 LLM 평가가 비활성화되어 테스트가 skip될 수 있습니다.
+
+```bash
+export RAG_QUALITY_EVAL=1
+```
+
 ### 1. 평가 케이스 확인
 
 ```bash
