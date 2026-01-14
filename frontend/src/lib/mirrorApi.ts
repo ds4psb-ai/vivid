@@ -101,6 +101,10 @@ export async function initMirror(
             birth_hour: request.birth_hour ?? 12,
             gender: request.gender ?? '',
             model: request.model ?? 'gemini-3-flash-preview',
+            // P5-3: 워크플로우 재진입 필드
+            session_id: request.session_id,
+            seed_preset: request.seed_preset,
+            prior_outputs: request.prior_outputs,
         }),
     });
 
