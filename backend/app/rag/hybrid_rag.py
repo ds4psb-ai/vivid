@@ -262,6 +262,18 @@ def _determine_strategy(
     """
     score = 0
     
+    # === Phase 6: Dimension-specific complexity boost (2026 Best Practice) ===
+    # Per-dimension scoring to balance strategy distribution
+    DIMENSION_COMPLEXITY_BOOST = {
+        "STORY": 2,  # Narrative complexity - force higher strategy
+        "4D": 2,     # Analysis depth
+        "AD": 1,     # Auteur-focused
+        "QC": 1,     # Meta invariants
+        "1D": 0,     # Standard visual
+        "2D": 0,     # Storyboard
+        "3D": 0,     # Sequence
+    }
+    
     # 길이 기반 복잡도 (char count)
     if len(query) > 120:
         score += 1
@@ -271,9 +283,9 @@ def _determine_strategy(
     if any(kw in query_lower for kw in RECENCY_KEYWORDS):
         score += 1
         
-    # dimension 힌트 (Story, 4D는 복잡도 높음)
-    if dimension and dimension.lower() in ("story", "4d"):
-        score += 1
+    # dimension 복잡도 부스트 (Phase 6: per-dimension map)
+    if dimension:
+        score += DIMENSION_COMPLEXITY_BOOST.get(dimension.upper(), 0)
     
     # auteur 지정 시 +1
     if auteur_key:
