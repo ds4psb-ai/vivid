@@ -246,6 +246,10 @@ async def chat_mirror(
     if token_data["app_id"] != "ai":
         raise HTTPException(status_code=401, detail="App mismatch")
     
+    # P3.5: user_id 매칭 체크
+    if token_data["user_id"] != user["user_id"]:
+        raise HTTPException(status_code=401, detail="User mismatch")
+    
     # P3: Run-Token 기반 크레딧 차감
     service = get_run_token_service()
     ok, used, remaining, err = await service.deduct_credits(
@@ -324,6 +328,7 @@ async def export_mirror_preset(
     "/mirror/chat/stream",
     responses={
         400: {"model": DimensionErrorResponse},
+        401: {"model": DimensionErrorResponse, "description": "Unauthorized"},
         402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
         500: {"model": DimensionErrorResponse},
     },
@@ -333,30 +338,33 @@ async def export_mirror_preset(
 )
 async def chat_mirror_stream(
     request: MirrorChatRequest,
+    token_data: dict = Depends(verify_run_token),  # P3.5: Run-Token 강제
     user: dict = Depends(get_current_user),
     byok_key: Optional[str] = Depends(get_byok_key),
     db: AsyncSession = Depends(get_db),
 ) -> StreamingResponse:
     """심연의 거울 채팅 스트리밍."""
     import json
+    from app.services.run_token_service import get_run_token_service
+    
+    # P3.5: Run-Token 검증
+    if token_data["app_id"] != "ai":
+        raise HTTPException(status_code=401, detail="App mismatch")
+    
+    # P3.5: user_id 매칭 체크
+    if token_data["user_id"] != user["user_id"]:
+        raise HTTPException(status_code=401, detail="User mismatch")
+    
+    # P3.5: Run-Token 기반 크레딧 차감
+    service = get_run_token_service()
+    ok, used, remaining, err = await service.deduct_credits(
+        token_data["run_id"], amount=5, reason="mirror_chat_stream"
+    )
+    if not ok:
+        raise HTTPException(status_code=402, detail=err or "Insufficient credits")
     
     async def generate_stream():
         from app.services.mirror_service import analyze_persona_with_mirror
-        from app.core.credit_manager import check_and_deduct_credit
-        
-        # 크레딧 차감
-        try:
-            await check_and_deduct_credit(
-                db=db,
-                user_id=user["user_id"],
-                amount=5,
-                description="Abyss Mirror: 페르소나 분석",
-                tool="mirror_chat",
-                model=request.model,
-            )
-        except Exception as e:
-            yield f"data: {json.dumps({'error': str(e)}, ensure_ascii=False)}\n\n"
-            return
         
         # 분석 실행
         result = await analyze_persona_with_mirror(
@@ -369,33 +377,11 @@ async def chat_mirror_stream(
             model=request.model,
         )
         
-        # RAG Protocol: Add trace_id and evidence_refs
+        # P6: LLM-only 모드 - 빈 evidence_refs
         trace_id = str(uuid.uuid4())
-        evidence_refs = [
-            {
-                "ref_id": str(uuid.uuid4()),
-                "source": "심리학 이론 (Maslow/Jung/BigFive)",
-                "content_preview": "매슬로우 욕구단계, 융 원형심리학 기반 분석",
-                "dataset_id": "psychology_theories",
-                "dataset_label": "심리학 데이터셋",
-                "score": result.get("completion_rate", 0) / 100,
-            },
-        ]
-        
-        if result.get("updated_persona", {}).get("saju", {}).get("dominant_element"):
-            evidence_refs.append({
-                "ref_id": str(uuid.uuid4()),
-                "source": "사주명리학 (Four Pillars)",
-                "content_preview": f"일간 오행: {result['updated_persona']['saju']['dominant_element']}",
-                "dataset_id": "saju_analysis",
-                "dataset_label": "사주 데이터셋",
-                "score": 0.85,
-            })
-        
-        # Enhance result with RAG protocol fields
         result["trace_id"] = trace_id
-        result["evidence_refs"] = evidence_refs
-        result["confidence"] = min(result.get("completion_rate", 0) / 100, 1.0)
+        result["evidence_refs"] = []  # LLM-only
+        result["confidence"] = 0.0
         
         # 스트리밍 전송
         yield f"data: {json.dumps(result, ensure_ascii=False)}\n\n"
@@ -405,3 +391,4 @@ async def chat_mirror_stream(
         media_type="text/event-stream",
         headers=get_sse_headers(),
     )
+
