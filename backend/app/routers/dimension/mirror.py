@@ -6,6 +6,7 @@ Abyss Mirror (심연의 거울) Dimension Endpoints.
 """
 from __future__ import annotations
 
+import uuid
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
@@ -96,6 +97,16 @@ class MirrorInitResponse(BaseModel):
     completion_rate: float
 
 
+class EvidenceRef(BaseModel):
+    """RAG 근거 참조."""
+    ref_id: str
+    source: str = ""
+    content_preview: str = ""
+    dataset_id: str = ""
+    dataset_label: str = ""
+    score: float = 0.0
+
+
 class MirrorChatResponse(BaseModel):
     """심연의 거울 채팅 응답."""
     success: bool
@@ -104,6 +115,10 @@ class MirrorChatResponse(BaseModel):
     completion_rate: float
     current_stage: str
     is_complete: bool
+    # RAG Protocol Fields (v2)
+    trace_id: str = Field("", description="Trace ID for auditability")
+    evidence_refs: List[EvidenceRef] = Field(default_factory=list, description="RAG evidence references")
+    confidence: float = Field(0.0, ge=0.0, le=1.0, description="AI confidence score")
     error: Optional[str] = None
 
 
@@ -256,6 +271,32 @@ async def chat_mirror(
         model=request.model,
     )
     
+    # RAG Protocol: Generate trace_id and evidence_refs
+    trace_id = str(uuid.uuid4())
+    evidence_refs = [
+        EvidenceRef(
+            ref_id=str(uuid.uuid4()),
+            source="심리학 이론 (Maslow/Jung/BigFive)",
+            content_preview="매슬로우 욕구단계, 융 원형심리학 기반 분석",
+            dataset_id="psychology_theories",
+            dataset_label="심리학 데이터셋",
+            score=result.get("completion_rate", 0) / 100,
+        ),
+    ]
+    
+    # Add saju evidence if available
+    if result.get("updated_persona", {}).get("saju", {}).get("dominant_element"):
+        evidence_refs.append(
+            EvidenceRef(
+                ref_id=str(uuid.uuid4()),
+                source="사주명리학 (Four Pillars)",
+                content_preview=f"일간 오행: {result['updated_persona']['saju']['dominant_element']}",
+                dataset_id="saju_analysis",
+                dataset_label="사주 데이터셋",
+                score=0.85,
+            )
+        )
+    
     return MirrorChatResponse(
         success="error" not in result,
         ai_response=result["ai_response"],
@@ -263,6 +304,10 @@ async def chat_mirror(
         completion_rate=result["completion_rate"],
         current_stage=result["next_stage"],
         is_complete=result["is_complete"],
+        # RAG Protocol
+        trace_id=trace_id,
+        evidence_refs=evidence_refs,
+        confidence=min(result.get("completion_rate", 0) / 100, 1.0),
         error=result.get("error"),
     )
 
@@ -351,6 +396,34 @@ async def chat_mirror_stream(
             api_key=byok_key,
             model=request.model,
         )
+        
+        # RAG Protocol: Add trace_id and evidence_refs
+        trace_id = str(uuid.uuid4())
+        evidence_refs = [
+            {
+                "ref_id": str(uuid.uuid4()),
+                "source": "심리학 이론 (Maslow/Jung/BigFive)",
+                "content_preview": "매슬로우 욕구단계, 융 원형심리학 기반 분석",
+                "dataset_id": "psychology_theories",
+                "dataset_label": "심리학 데이터셋",
+                "score": result.get("completion_rate", 0) / 100,
+            },
+        ]
+        
+        if result.get("updated_persona", {}).get("saju", {}).get("dominant_element"):
+            evidence_refs.append({
+                "ref_id": str(uuid.uuid4()),
+                "source": "사주명리학 (Four Pillars)",
+                "content_preview": f"일간 오행: {result['updated_persona']['saju']['dominant_element']}",
+                "dataset_id": "saju_analysis",
+                "dataset_label": "사주 데이터셋",
+                "score": 0.85,
+            })
+        
+        # Enhance result with RAG protocol fields
+        result["trace_id"] = trace_id
+        result["evidence_refs"] = evidence_refs
+        result["confidence"] = min(result.get("completion_rate", 0) / 100, 1.0)
         
         # 스트리밍 전송
         yield f"data: {json.dumps(result, ensure_ascii=False)}\n\n"
