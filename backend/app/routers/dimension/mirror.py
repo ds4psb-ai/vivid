@@ -1,0 +1,362 @@
+"""
+Abyss Mirror (심연의 거울) Dimension Endpoints.
+
+사주 + MBTI + 혈액형 → 심층 페르소나 JSON 프리셋 생성
+채팅 기반 다중 턴 분석 (최소 15회)
+"""
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, Field, field_validator
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict, List
+
+from ._base import (
+    get_db,
+    get_current_user,
+    get_byok_key,
+    _validate_model,
+    _strip_string,
+    DimensionErrorResponse,
+    get_sse_headers,
+    Optional,
+)
+
+router = APIRouter()
+
+
+# ============================================================================
+# Request/Response Models
+# ============================================================================
+
+class MirrorInitRequest(BaseModel):
+    """심연의 거울 초기화 요청."""
+    mbti: str = Field("", max_length=4, description="MBTI 유형 (예: INTJ)")
+    blood_type: str = Field("", max_length=2, description="혈액형 (A/B/O/AB)")
+    birth_year: int = Field(..., ge=1900, le=2100, description="출생 연도")
+    birth_month: int = Field(..., ge=1, le=12, description="출생 월")
+    birth_day: int = Field(..., ge=1, le=31, description="출생 일")
+    birth_hour: int = Field(12, ge=0, le=23, description="출생 시간 (0-23)")
+    gender: str = Field("", max_length=10, description="성별 (M/F/Other)")
+    model: str = Field("gemini-3-flash-preview", description="AI 모델")
+
+    @field_validator("mbti", mode="before")
+    @classmethod
+    def validate_mbti(cls, v: str) -> str:
+        v = v.upper().strip()
+        if v and len(v) == 4:
+            valid_chars = [
+                ["E", "I"],
+                ["S", "N"],
+                ["T", "F"],
+                ["J", "P"],
+            ]
+            for i, char in enumerate(v):
+                if char not in valid_chars[i]:
+                    return ""
+        return v
+
+    @field_validator("blood_type", mode="before")
+    @classmethod
+    def validate_blood_type(cls, v: str) -> str:
+        v = v.upper().strip()
+        if v in ["A", "B", "O", "AB"]:
+            return v
+        return ""
+
+
+class MirrorChatRequest(BaseModel):
+    """심연의 거울 채팅 요청."""
+    session_id: str = Field(..., min_length=1, description="세션 ID")
+    user_message: str = Field(..., min_length=1, max_length=2000, description="사용자 메시지")
+    persona_data: Dict[str, Any] = Field(default_factory=dict, description="누적된 페르소나 데이터")
+    chat_history: List[Dict[str, str]] = Field(default_factory=list, description="대화 기록")
+    current_stage: str = Field("intro", description="현재 분석 단계")
+    model: str = Field("gemini-3-flash-preview", description="AI 모델")
+
+    @field_validator("user_message", mode="before")
+    @classmethod
+    def strip_message(cls, v: str) -> str:
+        return _strip_string(v)
+
+    @field_validator("model")
+    @classmethod
+    def validate_model(cls, v: str) -> str:
+        return _validate_model(v)
+
+
+class MirrorInitResponse(BaseModel):
+    """심연의 거울 초기화 응답."""
+    success: bool
+    session_id: str
+    saju: Dict[str, str]
+    initial_message: str
+    persona_data: Dict[str, Any]
+    completion_rate: float
+
+
+class MirrorChatResponse(BaseModel):
+    """심연의 거울 채팅 응답."""
+    success: bool
+    ai_response: str
+    persona_data: Dict[str, Any]
+    completion_rate: float
+    current_stage: str
+    is_complete: bool
+    error: Optional[str] = None
+
+
+class MirrorExportResponse(BaseModel):
+    """페르소나 프리셋 내보내기 응답."""
+    success: bool
+    preset_json: str
+    download_filename: str
+
+
+# ============================================================================
+# Endpoints
+# ============================================================================
+
+@router.post(
+    "/mirror/init",
+    response_model=MirrorInitResponse,
+    responses={
+        400: {"model": DimensionErrorResponse},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="심연의 거울: 분석 시작",
+    description="사주/MBTI/혈액형 입력으로 페르소나 분석 세션 시작",
+    tags=["Dimension Extended"],
+)
+async def init_mirror(
+    request: MirrorInitRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> MirrorInitResponse:
+    """심연의 거울 분석 세션 초기화."""
+    import uuid
+    from app.services.mirror_service import (
+        calculate_saju_pillars,
+        validate_persona_preset,
+    )
+    
+    # 세션 ID 생성
+    session_id = str(uuid.uuid4())
+    
+    # 사주 계산
+    saju = calculate_saju_pillars(
+        year=request.birth_year,
+        month=request.birth_month,
+        day=request.birth_day,
+        hour=request.birth_hour,
+    )
+    
+    # 초기 페르소나 데이터
+    persona_data = validate_persona_preset({
+        "input": {
+            "mbti": request.mbti,
+            "blood_type": request.blood_type,
+            "birth_datetime": f"{request.birth_year}-{request.birth_month:02d}-{request.birth_day:02d}T{request.birth_hour:02d}:00:00",
+            "gender": request.gender,
+        },
+        "saju": saju,
+    })
+    
+    # 초기 메시지 생성
+    element_names = {
+        "목": "나무(木)", "화": "불(火)", "토": "흙(土)", 
+        "금": "쇠(金)", "수": "물(水)"
+    }
+    element_desc = element_names.get(saju.get("dominant_element", ""), "")
+    
+    mbti_intro = f"MBTI {request.mbti} 유형이시군요! " if request.mbti else ""
+    blood_intro = f"혈액형 {request.blood_type}형의 특성과 " if request.blood_type else ""
+    
+    initial_message = f"""🪞 **심연의 거울에 오신 것을 환영합니다.**
+
+{mbti_intro}{blood_intro}당신의 사주를 분석했습니다.
+
+**사주팔자 분석:**
+- 연주: {saju['year_pillar']}
+- 월주: {saju['month_pillar']}
+- 일주: {saju['day_pillar']} (본인의 핵심)
+- 시주: {saju['hour_pillar']}
+
+당신의 일간(日干)은 **{element_desc}** 기운이 강합니다.
+
+이제 당신의 심층 페르소나를 탐구해볼까요? 🔮
+
+**첫 번째 질문:**
+어린 시절, 가장 몰입했던 놀이나 활동이 있다면 무엇이었나요? 
+(이것은 당신의 핵심 욕구와 창작 성향을 드러냅니다)"""
+
+    return MirrorInitResponse(
+        success=True,
+        session_id=session_id,
+        saju=saju,
+        initial_message=initial_message,
+        persona_data=persona_data,
+        completion_rate=25.0,  # 사주 완료 = 25%
+    )
+
+
+@router.post(
+    "/mirror/chat",
+    response_model=MirrorChatResponse,
+    responses={
+        400: {"model": DimensionErrorResponse},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="심연의 거울: 채팅 진행",
+    description="페르소나 분석 대화 진행 (진행률 업데이트)",
+    tags=["Dimension Extended"],
+)
+async def chat_mirror(
+    request: MirrorChatRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> MirrorChatResponse:
+    """심연의 거울 채팅."""
+    from app.services.mirror_service import analyze_persona_with_mirror
+    from app.core.credit_manager import check_and_deduct_credit
+    
+    # 크레딧 차감 (5크레딧)
+    try:
+        await check_and_deduct_credit(
+            db=db,
+            user_id=user["user_id"],
+            amount=5,
+            description="Abyss Mirror: 페르소나 분석",
+            tool="mirror_chat",
+            model=request.model,
+        )
+    except Exception as e:
+        return MirrorChatResponse(
+            success=False,
+            ai_response="",
+            persona_data=request.persona_data,
+            completion_rate=0,
+            current_stage=request.current_stage,
+            is_complete=False,
+            error=f"크레딧 부족: {str(e)}",
+        )
+    
+    # 분석 실행
+    result = await analyze_persona_with_mirror(
+        user_message=request.user_message,
+        persona_data=request.persona_data,
+        birth_info={},  # 이미 persona_data에 포함
+        current_stage=request.current_stage,
+        chat_history=request.chat_history,
+        api_key=byok_key,
+        model=request.model,
+    )
+    
+    return MirrorChatResponse(
+        success="error" not in result,
+        ai_response=result["ai_response"],
+        persona_data=result["updated_persona"],
+        completion_rate=result["completion_rate"],
+        current_stage=result["next_stage"],
+        is_complete=result["is_complete"],
+        error=result.get("error"),
+    )
+
+
+@router.post(
+    "/mirror/export",
+    response_model=MirrorExportResponse,
+    responses={
+        400: {"model": DimensionErrorResponse},
+    },
+    summary="심연의 거울: 프리셋 내보내기",
+    description="완성된 페르소나 프리셋을 JSON으로 내보내기",
+    tags=["Dimension Extended"],
+)
+async def export_mirror_preset(
+    persona_data: Dict[str, Any],
+    user: dict = Depends(get_current_user),
+) -> MirrorExportResponse:
+    """페르소나 프리셋 내보내기."""
+    from app.services.mirror_service import export_persona_preset, validate_persona_preset
+    from datetime import datetime
+    
+    # 유효성 검사 및 기본값 채우기
+    validated = validate_persona_preset(persona_data)
+    
+    # JSON 문자열 생성
+    preset_json = export_persona_preset(validated)
+    
+    # 파일명 생성
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    archetype = validated.get("persona", {}).get("archetype", "persona")
+    filename = f"abyss_mirror_{archetype}_{timestamp}.json"
+    
+    return MirrorExportResponse(
+        success=True,
+        preset_json=preset_json,
+        download_filename=filename,
+    )
+
+
+@router.post(
+    "/mirror/chat/stream",
+    responses={
+        400: {"model": DimensionErrorResponse},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="심연의 거울: 채팅 진행 (SSE Stream)",
+    description="페르소나 분석 대화 진행 (실시간 스트리밍)",
+    tags=["Dimension Extended"],
+)
+async def chat_mirror_stream(
+    request: MirrorChatRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> StreamingResponse:
+    """심연의 거울 채팅 스트리밍."""
+    import json
+    
+    async def generate_stream():
+        from app.services.mirror_service import analyze_persona_with_mirror
+        from app.core.credit_manager import check_and_deduct_credit
+        
+        # 크레딧 차감
+        try:
+            await check_and_deduct_credit(
+                db=db,
+                user_id=user["user_id"],
+                amount=5,
+                description="Abyss Mirror: 페르소나 분석",
+                tool="mirror_chat",
+                model=request.model,
+            )
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)}, ensure_ascii=False)}\n\n"
+            return
+        
+        # 분석 실행
+        result = await analyze_persona_with_mirror(
+            user_message=request.user_message,
+            persona_data=request.persona_data,
+            birth_info={},
+            current_stage=request.current_stage,
+            chat_history=request.chat_history,
+            api_key=byok_key,
+            model=request.model,
+        )
+        
+        # 스트리밍 전송
+        yield f"data: {json.dumps(result, ensure_ascii=False)}\n\n"
+    
+    return StreamingResponse(
+        generate_stream(),
+        media_type="text/event-stream",
+        headers=get_sse_headers(),
+    )

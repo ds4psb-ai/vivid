@@ -1,0 +1,86 @@
+$schema: "vivid-app/v2"
+
+metadata:
+  name: mirror
+  type: dimension
+  version: "1.0.0"
+  bounded_context: content
+  description: "심연의 거울 - 사주/MBTI/혈액형 기반 심층 페르소나 추출"
+
+display:
+  name_ko: "심연의 거울"
+  name_en: "Abyss Mirror"
+  icon: "🪞"
+
+capabilities:
+  - name: rag
+    enabled: false  # 페르소나는 개인별 데이터라 RAG 불필요
+
+  - name: cache
+    enabled: true
+    config:
+      ttl: 86400  # 24시간 (장기 세션)
+
+  - name: execution
+    enabled: true
+    config:
+      credit_cost: 5  # 채팅당
+      endpoint: "/api/dimension/mirror/analyze"
+      capsule_key: "dimension.mirror.analyze"
+
+  - name: web_search
+    enabled: true
+    config:
+      purpose: "사주 해석 및 심리학 이론 검색"
+
+extensions:
+  dimension:
+    tool_type: analysis
+    multi_turn: true  # 다중 대화 지원
+    min_turns: 15
+    progress_tracking: true
+
+settings:
+  # 심리학 이론 기반 설정
+  psychology_models:
+    - maslow_6_level  # 6단계 확장 모델
+    - jung_archetypes  # 12원형
+    - big_five  # OCEAN
+    - shadow_work  # 그림자 작업
+
+  # 사주 관련
+  saju:
+    source: "web_search"  # 웹서칭으로 만세력 검색
+    fallback: "internal"  # 실패 시 내부 계산
+
+  # 출력 형식
+  output:
+    format: "json_preset"
+    fields:
+      - meta
+      - input
+      - saju
+      - psychology
+      - creativity
+      - persona
+
+  # 진행률 임계값
+  progress:
+    saju_complete: 25
+    psychology_complete: 50
+    creativity_complete: 75
+    ready_to_finish: 80
+    complete: 100
+
+keywords:
+  patterns:
+    - "거울"
+    - "mirror"
+    - "페르소나"
+    - "persona"
+    - "심연"
+    - "abyss"
+    - "사주"
+    - "mbti"
+    - "혈액형"
+    - "자기분석"
