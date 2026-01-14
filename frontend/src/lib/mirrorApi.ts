@@ -107,7 +107,7 @@ export interface IssueTokenResponse {
 export async function issueRunToken(
     request: IssueTokenRequest
 ): Promise<IssueTokenResponse> {
-    const response = await fetch(`${API_BASE}/api/run-token/issue`, {
+    const response = await fetch(`${API_BASE}/api/v1/run-token/issue`, {  // P4.1: 경로 수정
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
