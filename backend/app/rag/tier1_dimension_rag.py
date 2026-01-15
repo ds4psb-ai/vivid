@@ -45,55 +45,76 @@ def _get_sparse_embedder():
 logger = logging.getLogger(__name__)
 
 # 차원별 컬렉션 정의
+# P0.5: use_hybrid 플래그로 Hybrid 컬렉션 자동 선택
 DIMENSION_COLLECTIONS: Dict[str, Dict[str, Any]] = {
     "1D": {
         "name": "dimension_1d_contexts",
+        "name_hybrid": "dimension_1d_contexts_hybrid",
+        "use_hybrid": True,
         "description": "프롬프트, 미학, 페르소나 컨텍스트",
         "vector_size": 384,
     },
     "2D": {
         "name": "dimension_2d_contexts",
+        "name_hybrid": "dimension_2d_contexts_hybrid",
+        "use_hybrid": True,
         "description": "스토리보드, 서사 구조 컨텍스트",
         "vector_size": 384,
     },
     "3D": {
         "name": "dimension_3d_contexts",
+        "name_hybrid": "dimension_3d_contexts_hybrid",
+        "use_hybrid": True,
         "description": "이미지 스타일, 비주얼 가이드 컨텍스트",
         "vector_size": 384,
     },
     "4D": {
         "name": "dimension_4d_contexts",
+        "name_hybrid": "dimension_4d_contexts_hybrid",
+        "use_hybrid": True,
         "description": "분석 프레임워크, VDG 기준 컨텍스트",
         "vector_size": 384,
     },
     "5D": {
         "name": "dimension_5d_contexts",
+        "name_hybrid": "dimension_5d_contexts_hybrid",
+        "use_hybrid": True,
         "description": "영상 생성, 카메라 무브먼트 컨텍스트",
         "vector_size": 384,
     },
     "6D": {
         "name": "dimension_6d_contexts",
+        "name_hybrid": "dimension_6d_contexts_hybrid",
+        "use_hybrid": True,
         "description": "음악, 사운드 디자인 컨텍스트",
         "vector_size": 384,
     },
     # Extended dimensions
     "QC": {
         "name": "dimension_qc_contexts",
+        "name_hybrid": "dimension_qc_contexts_hybrid",
+        "use_hybrid": True,
         "description": "품질 검증 기준, VDG 스탠다드",
         "vector_size": 384,
     },
     "AD": {
         "name": "dimension_ad_contexts",
+        "name_hybrid": "dimension_ad_contexts_hybrid",
+        "use_hybrid": True,
         "description": "미학 이론, 거장 스타일 가이드",
         "vector_size": 384,
     },
     "AI": {
         "name": "dimension_ai_contexts",
+        "name_hybrid": "dimension_ai_contexts_hybrid",
+        "use_hybrid": True,
         "description": "페르소나 분석, MBTI/사주 이론",
         "vector_size": 384,
     },
     "VEO": {
         "name": "dimension_veo_contexts",
+        "name_hybrid": "dimension_veo_contexts_hybrid",
+        "use_hybrid": True,
         "description": "Veo 프롬프트 템플릿, 영상 스타일",
         "vector_size": 384,
     },
@@ -408,6 +429,12 @@ class Tier1DimensionRAG:
             return []
 
         try:
+            # P0.5: use_hybrid 플래그에 따라 컬렉션 선택
+            if self.collection_config.get("use_hybrid"):
+                collection_name = self.collection_config.get("name_hybrid", self.collection_name)
+            else:
+                collection_name = self.collection_name
+
             # 임베딩 생성 (Dense + Sparse)
             dense_vector = self.embedder.embed(query)
             sparse_indices, sparse_values = sparse_embedder.embed(query)
@@ -442,7 +469,7 @@ class Tier1DimensionRAG:
 
             # Qdrant Native Hybrid Search with Prefetch + RRF Fusion
             response = client.query_points(
-                collection_name=self.collection_name,
+                collection_name=collection_name,
                 prefetch=[
                     # Dense search prefetch
                     models.Prefetch(
@@ -482,8 +509,8 @@ class Tier1DimensionRAG:
             ]
 
             logger.debug(
-                f"[{self.dimension}] Hybrid search: query='{query[:30]}...' "
-                f"prefetch={prefetch_limit} results={len(results)}"
+                f"[{self.dimension}] Hybrid search: collection={collection_name} "
+                f"query='{query[:30]}...' prefetch={prefetch_limit} results={len(results)}"
             )
             return results
 
