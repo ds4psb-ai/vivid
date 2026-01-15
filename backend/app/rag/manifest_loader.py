@@ -38,6 +38,22 @@ _loaded = False
 # ============================================================================
 
 
+class BackendConfig(BaseModel):
+    """백엔드 설정 (P2 Feature).
+
+    Attributes:
+        id: 백엔드 식별자 (qdrant_hybrid, notebooklm, vertex_grounding)
+        weight: RRF 융합 시 가중치 (0.0 ~ 1.0)
+        enabled: 활성화 여부
+        config: 백엔드별 추가 설정
+    """
+
+    id: str
+    weight: float = Field(default=1.0, ge=0, le=1)
+    enabled: bool = True
+    config: Dict[str, Any] = Field(default_factory=dict)
+
+
 class DatasetRoutingRule(BaseModel):
     """Dataset 라우팅 규칙."""
 
@@ -128,6 +144,9 @@ class YAMLManifest(BaseModel):
     fallback_enabled: bool = True
     metadata_filters: Dict[str, Any] = Field(default_factory=dict)
     dataset_routing: Optional[DatasetRouting] = None
+
+    # P2: Backend 설정
+    backends: List[BackendConfig] = Field(default_factory=list)
 
     # Legacy compatibility fields (from AppRAGManifest)
     dataset_candidates: List[str] = Field(default_factory=list)
