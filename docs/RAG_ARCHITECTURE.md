@@ -1,8 +1,8 @@
 # Vivid RAG Architecture
 
-> **Version**: 2.0 (Plugin-Registry)  
+> **Version**: 2.1 (Backend ABC)  
 > **Last Updated**: 2026-01-15  
-> **Status**: Production + Upgrade Planned
+> **Status**: P0-P2 완료, P3 진행 예정
 
 ---
 
@@ -162,49 +162,42 @@ capabilities:
 
 | Phase | 작업 | 예상 노력 | 효과 |
 |-------|------|----------|------|
-| **P0** | BM25 검색 활성화 | 1-2h | 검색 정확도 +48% |
-| **P1** | YAML Manifest 도입 | 2-3h | 앱 추가 = YAML 1개 |
-| **P2** | Backend Auto-discovery | 3-4h | 백엔드 플러그인화 |
-| **P3** | Ensemble Retriever (병렬) | 2h | 지연시간 -50% |
-| P4 | LLM Selector (Optional) | 2h | 복잡한 쿼리 라우팅 |
-| P5 | Cross-encoder Reranker | 3h | 상위 결과 정밀도 |
+| **P0** | Qdrant Native Sparse 활성화 | 1-2h | ✅ 완료 (`0128b669`) |
+| **P0.5** | Hybrid 컬렉션 마이그레이션 | 2h | ✅ 완료 (`9af9f182`) |
+| **P1** | YAML Manifest 도입 | 2-3h | ✅ 완료 (`ad6250e6`) |
+| **P2** | Backend ABC + Auto-discovery | 3-4h | ✅ **개발중** 👈 |
+| **P3** | Ensemble Retriever (병렬) | 2h | ⏳ 대기 |
+| P4 | LLM Selector (Optional) | 2h | ⏳ 대기 |
+| P5 | Cross-encoder Reranker | 3h | ⏳ 대기 |
 
 ---
 
 ## 7. Directory Structure
 
-### 현재
+### 현재 (P2 진행중)
 ```
 backend/app/rag/
+├── manifests/                 # ✅ P1 완료 (12개 YAML)
+│   ├── _schema.yaml
+│   └── *.yaml
+│
+├── backends/                  # 🔄 P2 개발중 (BaseBackend ABC)
+│   ├── __init__.py           # Auto-discovery Registry
+│   ├── base.py               # BaseBackend ABC + RetrievalResult
+│   ├── qdrant_hybrid.py      # Qdrant Dense + Sparse (tier1 래핑)
+│   ├── notebooklm.py         # NotebookLM (tier0 래핑)
+│   └── vertex_grounding.py   # Vertex AI + Google Search
+│
+├── sparse/                    # Sparse Embedder
+│   └── fastembed_sparse.py
+│
 ├── hybrid_rag.py              # 오케스트레이터
-├── tier0_notebooklm.py        # 거장 DNA
-├── tier1_dimension_rag.py     # Qdrant Vector
-├── bm25_search.py             # BM25 Keyword ⭐ (구현됨, 미연동)
-├── semantic_cache.py          # 캐시
-├── metrics.py                 # 메트릭
-└── rag_presets.py             # 프리셋
+├── tier0_notebooklm.py        # 거장 DNA (Backend에서 래핑)
+├── tier1_dimension_rag.py     # Qdrant Hybrid (Backend에서 래핑)
+└── tier0_vertex_rag.py        # Vertex AI (Backend에서 래핑)
 ```
 
-### 계획 (Plugin-Registry)
-```
-backend/app/rag/
-├── manifests/                 # YAML 기반 앱 설정
-│   ├── _schema.yaml
-│   ├── dimension.persona.yaml
-│   └── dimension.aesthetic.yaml
-│
-├── backends/                  # 백엔드 플러그인
-│   ├── __init__.py           # auto-discovery
-│   ├── base.py               # BaseBackend ABC
-│   ├── qdrant_dense.py
-│   ├── bm25_sparse.py
-│   └── notebooklm.py
-│
-├── fusion/                    # 결과 융합
-│   └── weighted_rrf.py
-│
-└── hybrid_rag.py             # 간소화된 오케스트레이터
-```
+> **참조**: [P2 Backend ABC SPEC](./specs/P2_BACKEND_ABC_SPEC.md)
 
 ---
 

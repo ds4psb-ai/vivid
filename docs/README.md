@@ -47,6 +47,7 @@
 | 문서 | 설명 |
 |------|------|
 | [abyss-mirror.md](./specs/abyss-mirror.md) | 심연의 거울 (페르소나 분석) SPEC |
+| [P2_BACKEND_ABC_SPEC.md](./specs/P2_BACKEND_ABC_SPEC.md) | **🔥 Backend ABC + Auto-discovery SPEC** |
 | [TEMPLATE_SPEC.md](./specs/TEMPLATE_SPEC.md) | SPEC 템플릿 |
 | [README.md](./specs/README.md) | SPEC 작성 가이드 |
 
@@ -98,12 +99,13 @@
 
 | Phase | 작업 | 예상 노력 | 상태 |
 |-------|------|----------|------|
-| P0 | BM25 검색 활성화 | 1-2h | ⏳ 대기 |
-| P1 | YAML Manifest 도입 | 2-3h | ⏳ 대기 |
-| P2 | Backend Auto-discovery | 3-4h | ⏳ 대기 |
+| P0 | Qdrant Native Sparse | 1-2h | ✅ 완료 (`0128b669`) |
+| P0.5 | Hybrid 컬렉션 마이그레이션 | 2h | ✅ 완료 (`9af9f182`) |
+| P1 | YAML Manifest 도입 | 2-3h | ✅ 완료 (`ad6250e6`) |
+| P2 | Backend ABC + Auto-discovery | 3-4h | 🔥 **개발중** |
 | P3 | Ensemble Retriever (병렬) | 2h | ⏳ 대기 |
 
-> **상세 계획**: [Implementation Plan](../.gemini/antigravity/brain/fd50d920-5052-44e8-a0ad-c5b0bc32d4f9/implementation_plan.md)
+> **P2 상세**: [P2_BACKEND_ABC_SPEC.md](./specs/P2_BACKEND_ABC_SPEC.md)
 
 ---
 
