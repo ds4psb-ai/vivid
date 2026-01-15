@@ -18,6 +18,215 @@ WORKFLOW_STAGES = {
     "finishing": {"order": 4, "name_ko": "완성", "name_en": "Finishing"},
 }
 
+# =============================================================================
+# UQSL Quality Selection Configuration (2026 Best Practice)
+# =============================================================================
+# Per-app quality selection settings for UQSL (Universal Quality Selection Layer)
+# Each app can customize weights, strategies, and bandit arms
+
+DEFAULT_QUALITY_WEIGHTS = {
+    "groundedness": 0.30,  # RAG 기반 그라운딩 정확도
+    "relevance": 0.25,     # 쿼리 관련도
+    "coherence": 0.20,     # 일관성
+    "creativity": 0.15,    # 창의성
+    "safety": 0.10,        # 안전성
+}
+
+DEFAULT_BANDIT_ARMS = [
+    "backend:qdrant_hybrid",
+    "backend:notebooklm",
+    "ensemble:ab",
+]
+
+# App-specific UQSL configurations
+UQSL_APP_CONFIGS: Dict[str, Dict[str, Any]] = {
+    # 1D Prompt Alchemy - Higher creativity for prompt generation
+    "teaching.prompt.generate": {
+        "enabled": True,
+        "n_candidates": 3,
+        "selection_strategy": "auto",
+        "auto_threshold": 0.85,
+        "top_k_for_hitl": 2,
+        "quality_weights": {
+            "groundedness": 0.20,
+            "relevance": 0.25,
+            "coherence": 0.20,
+            "creativity": 0.25,  # Higher for creative prompts
+            "safety": 0.10,
+        },
+        "bandit_arms": DEFAULT_BANDIT_ARMS,
+        "tier": "free",
+    },
+    # AD Aesthetic Director - Higher groundedness for auteur style matching
+    "dimension.aesthetic.direct": {
+        "enabled": True,
+        "n_candidates": 3,
+        "selection_strategy": "hybrid",  # HITL for aesthetic choices
+        "auto_threshold": 0.80,
+        "top_k_for_hitl": 3,
+        "quality_weights": {
+            "groundedness": 0.40,  # Higher for auteur DNA matching
+            "relevance": 0.20,
+            "coherence": 0.15,
+            "creativity": 0.15,
+            "safety": 0.10,
+        },
+        "bandit_arms": [
+            "backend:qdrant_hybrid",
+            "backend:notebooklm",
+            "ensemble:ab",
+            "backend:auteur_rag",
+        ],
+        "tier": "premium",
+    },
+    # AI Abyss Mirror - Balanced for persona analysis
+    "dimension.persona.analyze": {
+        "enabled": True,
+        "n_candidates": 2,
+        "selection_strategy": "auto",
+        "auto_threshold": 0.90,
+        "top_k_for_hitl": 2,
+        "quality_weights": DEFAULT_QUALITY_WEIGHTS,
+        "bandit_arms": ["backend:qdrant_hybrid"],
+        "tier": "free",
+    },
+    # QC Quality Director - Higher coherence for quality checks
+    "dimension.quality.editor": {
+        "enabled": True,
+        "n_candidates": 3,
+        "selection_strategy": "llm_judge",
+        "auto_threshold": 0.85,
+        "top_k_for_hitl": 2,
+        "quality_weights": {
+            "groundedness": 0.25,
+            "relevance": 0.20,
+            "coherence": 0.30,  # Higher for quality consistency
+            "creativity": 0.10,
+            "safety": 0.15,
+        },
+        "bandit_arms": DEFAULT_BANDIT_ARMS,
+        "tier": "premium",
+    },
+    # VEO Video Maker - Balanced with safety emphasis
+    "veo.video.generate": {
+        "enabled": True,
+        "n_candidates": 2,  # Lower due to high cost
+        "selection_strategy": "hitl",  # Always human review for video
+        "auto_threshold": 0.95,
+        "top_k_for_hitl": 2,
+        "quality_weights": {
+            "groundedness": 0.25,
+            "relevance": 0.25,
+            "coherence": 0.20,
+            "creativity": 0.15,
+            "safety": 0.15,  # Higher for video content
+        },
+        "bandit_arms": ["backend:qdrant_hybrid"],
+        "tier": "premium",
+    },
+    # Story Architect - Higher creativity and coherence
+    "dimension.story.architect": {
+        "enabled": True,
+        "n_candidates": 3,
+        "selection_strategy": "hybrid",
+        "auto_threshold": 0.85,
+        "top_k_for_hitl": 2,
+        "quality_weights": {
+            "groundedness": 0.20,
+            "relevance": 0.20,
+            "coherence": 0.25,  # Higher for narrative flow
+            "creativity": 0.25,  # Higher for story generation
+            "safety": 0.10,
+        },
+        "bandit_arms": DEFAULT_BANDIT_ARMS,
+        "tier": "free",
+    },
+    # Sound Crafter - Balanced for audio generation
+    "dimension.sound.craft": {
+        "enabled": True,
+        "n_candidates": 3,
+        "selection_strategy": "auto",
+        "auto_threshold": 0.85,
+        "top_k_for_hitl": 2,
+        "quality_weights": {
+            "groundedness": 0.25,
+            "relevance": 0.30,  # Higher for music prompt relevance
+            "coherence": 0.20,
+            "creativity": 0.15,
+            "safety": 0.10,
+        },
+        "bandit_arms": DEFAULT_BANDIT_ARMS,
+        "tier": "free",
+    },
+    # 2D Storyboard - Higher coherence for visual flow
+    "teaching.storyboard.create": {
+        "enabled": True,
+        "n_candidates": 3,
+        "selection_strategy": "auto",
+        "auto_threshold": 0.85,
+        "top_k_for_hitl": 2,
+        "quality_weights": {
+            "groundedness": 0.25,
+            "relevance": 0.20,
+            "coherence": 0.30,  # Higher for scene flow
+            "creativity": 0.15,
+            "safety": 0.10,
+        },
+        "bandit_arms": DEFAULT_BANDIT_ARMS,
+        "tier": "free",
+    },
+    # 3D Visual Realizer - Balanced for image generation
+    "teaching.image.generate": {
+        "enabled": True,
+        "n_candidates": 3,
+        "selection_strategy": "auto",
+        "auto_threshold": 0.85,
+        "top_k_for_hitl": 2,
+        "quality_weights": DEFAULT_QUALITY_WEIGHTS,
+        "bandit_arms": DEFAULT_BANDIT_ARMS,
+        "tier": "free",
+    },
+    # 4D Reference Decoder - Higher groundedness for analysis
+    "teaching.reference.analyze": {
+        "enabled": True,
+        "n_candidates": 2,
+        "selection_strategy": "auto",
+        "auto_threshold": 0.90,
+        "top_k_for_hitl": 2,
+        "quality_weights": {
+            "groundedness": 0.35,  # Higher for accurate analysis
+            "relevance": 0.25,
+            "coherence": 0.20,
+            "creativity": 0.10,
+            "safety": 0.10,
+        },
+        "bandit_arms": DEFAULT_BANDIT_ARMS,
+        "tier": "free",
+    },
+}
+
+
+def get_uqsl_config(capsule_key: str) -> Dict[str, Any]:
+    """
+    Get UQSL configuration for a capsule.
+
+    Returns app-specific config or default if not found.
+    """
+    if capsule_key in UQSL_APP_CONFIGS:
+        return UQSL_APP_CONFIGS[capsule_key]
+
+    # Default configuration
+    return {
+        "enabled": True,
+        "n_candidates": 3,
+        "selection_strategy": "auto",
+        "auto_threshold": 0.85,
+        "top_k_for_hitl": 2,
+        "quality_weights": DEFAULT_QUALITY_WEIGHTS,
+        "bandit_arms": DEFAULT_BANDIT_ARMS,
+        "tier": "free",
+    }
+
 DIMENSION_CAPSULES: List[Dict[str, Any]] = [
     {
         "capsule_key": "teaching.prompt.generate",

@@ -129,20 +129,24 @@ class TestSelectEndpoint:
     @pytest.mark.asyncio
     async def test_select_success(self, async_client):
         """Test successful selection with pre-created session."""
-        # Pre-populate session to avoid 404
+        # Pre-populate session using Redis-backed cache
         import app.routers.uqsl as uqsl_module
-        from app.uqsl.models import CandidateResult
+        from app.uqsl.session_cache import get_session_cache
 
         test_session_id = "test-session-123"
-        uqsl_module._sessions[test_session_id] = {
+        session_cache = get_session_cache()
+
+        # Store session data (as dicts, not Pydantic models)
+        await session_cache.set(test_session_id, {
             "candidates": [
-                CandidateResult(idx=0, content="Result 0", backend_used="backend_a"),
-                CandidateResult(idx=1, content="Result 1", backend_used="backend_b"),
+                {"idx": 0, "content": "Result 0", "backend_used": "backend_a", "metadata": {}, "latency_ms": 0},
+                {"idx": 1, "content": "Result 1", "backend_used": "backend_b", "metadata": {}, "latency_ms": 0},
             ],
             "scores": [],
             "app_key": "test_app",
             "arms_used": ["backend:backend_a", "backend:backend_b"],
-        }
+            "created_at": "2026-01-16T00:00:00",
+        })
 
         try:
             response = await async_client.post(
@@ -159,7 +163,7 @@ class TestSelectEndpoint:
             assert data["session_id"] == test_session_id
         finally:
             # Cleanup
-            uqsl_module._sessions.pop(test_session_id, None)
+            await session_cache.delete(test_session_id)
 
     @pytest.mark.asyncio
     async def test_select_session_not_found(self, async_client):

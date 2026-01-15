@@ -52,11 +52,17 @@ from app.uqsl.multi_generate import get_multi_generate_engine
 from app.uqsl.quality_evaluator import get_quality_evaluator
 from app.uqsl.best_selector import get_best_selector
 from app.uqsl.thompson_sampling import get_thompson_sampling_router, get_initialized_router
+from app.uqsl.session_cache import get_session_cache, UQSLSessionCache
 
 router = APIRouter(prefix="/api/v1/uqsl", tags=["uqsl"])
 
-# In-memory session store (replace with Redis in production)
-_sessions: dict[str, dict] = {}
+# Redis-backed session cache (2026 Best Practice)
+# Fallback to in-memory if Redis unavailable
+_session_cache: UQSLSessionCache = get_session_cache()
+
+# Legacy compatibility alias (for imports from other modules)
+# Use _session_cache.get/set instead of direct dict access
+_sessions: dict[str, dict] = {}  # Deprecated: Use _session_cache
 
 
 @router.post("/generate", response_model=GenerateCandidatesResponse)
@@ -97,18 +103,18 @@ async def generate_candidates(
         strategy=request.strategy,
     )
 
-    # 4. Store session for potential HITL
+    # 4. Store session for potential HITL (Redis-backed, 2026 Best Practice)
     prompt_hash = hashlib.sha256(request.prompt.encode()).hexdigest()[:64]
-    _sessions[result.session_id] = {
-        "candidates": candidates,
-        "scores": scores,
+    await _session_cache.set(result.session_id, {
+        "candidates": [c.model_dump() for c in candidates],
+        "scores": [s.model_dump() for s in scores],
         "prompt_hash": prompt_hash,
         "prompt_preview": request.prompt[:200],
         "app_key": request.app_key,
         "strategy": request.strategy,
         "arms_used": result.arms_used,
-        "created_at": datetime.utcnow(),
-    }
+        "created_at": datetime.utcnow().isoformat(),
+    })
 
     # 5. Record selection history
     try:
@@ -265,18 +271,18 @@ async def generate_candidates_stream(
 
             yield sse_progress(95, "세션 저장 중...", "finalizing")
 
-            # Store session
+            # Store session (Redis-backed, 2026 Best Practice)
             prompt_hash = hashlib.sha256(request.prompt.encode()).hexdigest()[:64]
-            _sessions[session_id] = {
-                "candidates": candidates,
-                "scores": scores,
+            await _session_cache.set(session_id, {
+                "candidates": [c.model_dump() for c in candidates],
+                "scores": [s.model_dump() for s in scores],
                 "prompt_hash": prompt_hash,
                 "prompt_preview": request.prompt[:200],
                 "app_key": request.app_key,
                 "strategy": request.strategy,
                 "arms_used": result.arms_used,
-                "created_at": datetime.utcnow(),
-            }
+                "created_at": datetime.utcnow().isoformat(),
+            })
 
             # Record history (non-blocking)
             try:
@@ -487,7 +493,7 @@ async def select_candidate(
     Called when user selects from presented candidates.
     Updates Thompson Sampling arms based on selection.
     """
-    session = _sessions.get(request.session_id)
+    session = await _session_cache.get(request.session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found or expired")
 
@@ -498,17 +504,21 @@ async def select_candidate(
     # Update Thompson Sampling for selected arm
     ts_router = await get_initialized_router(db)
     selected = candidates[request.selected_idx]
-    if selected.backend_used and selected.backend_used != "default":
-        await ts_router.update(db, f"backend:{selected.backend_used}", reward=True)
+    backend_used = selected.get("backend_used") if isinstance(selected, dict) else getattr(selected, "backend_used", None)
+    if backend_used and backend_used != "default":
+        await ts_router.update(db, f"backend:{backend_used}", reward=True)
 
     # Update non-selected arms
     for i, c in enumerate(candidates):
-        if i != request.selected_idx and c.backend_used != "default":
-            await ts_router.update(db, f"backend:{c.backend_used}", reward=False)
+        c_backend = c.get("backend_used") if isinstance(c, dict) else getattr(c, "backend_used", None)
+        if i != request.selected_idx and c_backend and c_backend != "default":
+            await ts_router.update(db, f"backend:{c_backend}", reward=False)
 
-    # Update session
-    _sessions[request.session_id]["selected_idx"] = request.selected_idx
-    _sessions[request.session_id]["selection_time"] = datetime.utcnow()
+    # Update session (Redis-backed)
+    await _session_cache.update(request.session_id, {
+        "selected_idx": request.selected_idx,
+        "selection_time": datetime.utcnow().isoformat(),
+    })
 
     return {
         "status": "selected",
@@ -540,8 +550,8 @@ async def submit_feedback(
         history = None
 
     if not history:
-        # Try session-based lookup
-        session = _sessions.get(request.selection_id)
+        # Try session-based lookup (Redis-backed)
+        session = await _session_cache.get(request.selection_id)
         if session:
             arms_used = session.get("arms_used", [])
         else:
@@ -833,4 +843,18 @@ async def update_config(
         "selection_strategy": config.selection_strategy,
         "tier": config.tier,
         "enabled": config.enabled,
+    }
+
+
+@router.get("/cache/stats")
+async def get_cache_stats():
+    """
+    Get UQSL session cache statistics.
+
+    2026 Best Practice: Monitor cache health and performance.
+    """
+    stats = await _session_cache.get_stats()
+    return {
+        "session_cache": stats,
+        "status": "healthy" if stats.get("redis_healthy") else "degraded",
     }
