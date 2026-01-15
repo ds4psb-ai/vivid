@@ -100,6 +100,9 @@ from app.routers.intent import router as intent_router
 # Capsules (Direct Capsule Execution - P5)
 from app.routers.capsules import router as capsules_router
 
+# GraphQL Gateway (2026 Best Practices - P3.3)
+from app.graphql import graphql_router
+
 from app.middleware.rate_limit import setup_rate_limiting
 from app.middleware.mtls import MTLSMiddleware
 from app.middleware.security import setup_security_middleware
@@ -276,6 +279,9 @@ app.include_router(miniapps_router, prefix="/api/v1", tags=["miniapps"])
 
 # Context Library (Expert Workflow - Context Injection)
 app.include_router(context_router, prefix="/api/v1", tags=["context"])
+
+# GraphQL Gateway (2026 Best Practices - P3.3)
+app.include_router(graphql_router, prefix="/graphql", tags=["graphql"])
 
 # Infrastructure
 app.include_router(health_router, prefix="", tags=["health"])
