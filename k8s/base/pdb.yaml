@@ -1,0 +1,30 @@
+---
+# Pod Disruption Budget - Backend
+# 2026 Best Practice: Ensure minimum availability during cluster maintenance
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: vivid-backend-pdb
+  namespace: vivid
+  labels:
+    app.kubernetes.io/name: vivid-backend
+spec:
+  # Always keep at least 50% of pods running
+  minAvailable: "50%"
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vivid-backend
+---
+# Pod Disruption Budget - Frontend
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: vivid-frontend-pdb
+  namespace: vivid
+  labels:
+    app.kubernetes.io/name: vivid-frontend
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vivid-frontend

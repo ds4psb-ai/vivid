@@ -1,0 +1,78 @@
+# Kustomize Production Overlay
+# 2026 Best Practice: Environment-specific configurations via overlays
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: vivid-production
+
+namespace: vivid
+
+resources:
+  - ../../base
+
+# Production-specific labels
+commonLabels:
+  environment: production
+
+# Production images (override with actual registry)
+images:
+  - name: vivid-backend
+    newName: gcr.io/vivid-production/backend
+    newTag: latest
+  - name: vivid-frontend
+    newName: gcr.io/vivid-production/frontend
+    newTag: latest
+
+# Production replicas
+replicas:
+  - name: vivid-backend
+    count: 3
+  - name: vivid-frontend
+    count: 2
+
+# Production ConfigMaps
+configMapGenerator:
+  - name: vivid-backend-config
+    behavior: replace
+    literals:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=WARNING
+      - OTEL_ENABLED=true
+      - RAG_EVAL_ENABLED=true
+      - SECURITY_HEADERS_ENABLED=true
+  - name: vivid-frontend-config
+    behavior: replace
+    literals:
+      - NEXT_PUBLIC_API_URL=https://api.vivid.crebit.ai
+
+# Production patches
+patches:
+  # Increase backend resources for production
+  - target:
+      kind: Deployment
+      name: vivid-backend
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "500m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "1Gi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "2"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "4Gi"
+  # Increase HPA maxReplicas for production
+  - target:
+      kind: HorizontalPodAutoscaler
+      name: vivid-backend-hpa
+    patch: |-
+      - op: replace
+        path: /spec/maxReplicas
+        value: 50
+      - op: replace
+        path: /spec/minReplicas
+        value: 3

@@ -1,0 +1,10 @@
+---
+# Vivid Namespace
+# 2026 Best Practice: Use dedicated namespaces for isolation
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vivid
+  labels:
+    app.kubernetes.io/name: vivid
+    app.kubernetes.io/managed-by: kustomize

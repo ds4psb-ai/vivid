@@ -1,0 +1,63 @@
+---
+# Vertical Pod Autoscaler - Backend
+# 2026 Best Practice: Auto-adjust resource requests based on actual usage
+# Requires VPA controller: https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: vivid-backend-vpa
+  namespace: vivid
+  labels:
+    app.kubernetes.io/name: vivid-backend
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: vivid-backend
+  # UpdateMode options:
+  # - "Off": VPA only provides recommendations
+  # - "Auto": VPA automatically applies recommendations (may cause pod restarts)
+  # - "Initial": VPA only sets resources on pod creation
+  updatePolicy:
+    updateMode: "Auto"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: backend
+        # Minimum and maximum resource bounds
+        minAllowed:
+          cpu: "100m"
+          memory: "256Mi"
+        maxAllowed:
+          cpu: "4"
+          memory: "8Gi"
+        # Which resources to scale
+        controlledResources: ["cpu", "memory"]
+        # Mode for each resource
+        controlledValues: RequestsAndLimits
+---
+# Vertical Pod Autoscaler - Frontend
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: vivid-frontend-vpa
+  namespace: vivid
+  labels:
+    app.kubernetes.io/name: vivid-frontend
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: vivid-frontend
+  updatePolicy:
+    updateMode: "Auto"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: frontend
+        minAllowed:
+          cpu: "50m"
+          memory: "128Mi"
+        maxAllowed:
+          cpu: "2"
+          memory: "4Gi"
+        controlledResources: ["cpu", "memory"]
+        controlledValues: RequestsAndLimits

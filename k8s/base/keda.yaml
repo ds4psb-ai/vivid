@@ -1,0 +1,116 @@
+---
+# KEDA ScaledObject - Backend
+# 2026 Best Practice: Event-driven auto-scaling for queue-based workloads
+# Requires KEDA: https://keda.sh/docs/2.12/deploy/
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: vivid-backend-keda
+  namespace: vivid
+  labels:
+    app.kubernetes.io/name: vivid-backend
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: vivid-backend
+  # Polling interval for checking triggers
+  pollingInterval: 30
+  # Cooldown period after scaling down
+  cooldownPeriod: 300
+  # Min/max replica bounds
+  minReplicaCount: 2
+  maxReplicaCount: 20
+  # Advanced settings
+  advanced:
+    # Don't scale to zero (always keep minReplicas running)
+    restoreToOriginalReplicaCount: false
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 60
+          policies:
+            - type: Percent
+              value: 100
+              periodSeconds: 60
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+            - type: Percent
+              value: 25
+              periodSeconds: 120
+  triggers:
+    # Redis queue depth trigger
+    - type: redis
+      metadata:
+        # Redis connection (from TriggerAuthentication)
+        address: redis:6379
+        # Queue name pattern for arq tasks
+        listName: arq:queue:default
+        listLength: "10"
+        databaseIndex: "0"
+      authenticationRef:
+        name: vivid-redis-auth
+    # Prometheus metric trigger (HTTP request rate)
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus.monitoring.svc:9090
+        metricName: http_requests_total
+        threshold: "100"
+        query: |
+          sum(rate(http_requests_total{
+            namespace="vivid",
+            service="vivid-backend"
+          }[1m]))
+---
+# KEDA ScaledObject - Worker (Arq Background Jobs)
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: vivid-worker-keda
+  namespace: vivid
+  labels:
+    app.kubernetes.io/name: vivid-worker
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: vivid-worker
+  pollingInterval: 15
+  cooldownPeriod: 300
+  minReplicaCount: 1
+  maxReplicaCount: 10
+  # Allow scaling to zero when no jobs
+  idleReplicaCount: 0
+  triggers:
+    # Scale based on Redis queue depth
+    - type: redis
+      metadata:
+        address: redis:6379
+        listName: arq:queue:default
+        # Scale up when queue has more than 5 items
+        listLength: "5"
+        databaseIndex: "0"
+      authenticationRef:
+        name: vivid-redis-auth
+    # Additional trigger for batch API queue
+    - type: redis
+      metadata:
+        address: redis:6379
+        listName: arq:queue:batch
+        listLength: "3"
+        databaseIndex: "0"
+      authenticationRef:
+        name: vivid-redis-auth
+---
+# Trigger Authentication for Redis
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: vivid-redis-auth
+  namespace: vivid
+spec:
+  secretTargetRef:
+    - parameter: password
+      name: vivid-redis-secrets
+      key: redis-password

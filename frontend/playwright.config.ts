@@ -31,6 +31,20 @@ export default defineConfig({
             name: 'webkit',
             use: { ...devices['Desktop Safari'] },
         },
+        // Mobile viewports for responsive testing (2026 Best Practice)
+        {
+            name: 'mobile-chrome',
+            use: { ...devices['Pixel 7'] },
+        },
+        {
+            name: 'mobile-safari',
+            use: { ...devices['iPhone 14'] },
+        },
+        // Tablet viewport
+        {
+            name: 'tablet',
+            use: { ...devices['iPad Pro 11'] },
+        },
     ],
 
     // Only start webServer in CI - in development, servers should be running externally

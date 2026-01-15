@@ -3,7 +3,16 @@ import type { NextConfig } from "next";
 const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 const nextConfig: NextConfig = {
+  // React Compiler - 2026 Best Practice for automatic memoization
+  // Requires babel-plugin-react-compiler (installed)
+  compiler: {
+    // Note: React Compiler is automatically enabled in Next.js 16 with React 19
+  },
+  // Cache Components (formerly PPR) - disabled for now due to Suspense boundary requirements
+  // Enable incrementally per-route once all pages are updated
+  // cacheComponents: true,
   experimental: {
+    // React 19 View Transitions API
     viewTransition: true,
   },
   async headers() {

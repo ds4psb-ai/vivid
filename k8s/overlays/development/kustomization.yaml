@@ -1,0 +1,87 @@
+# Kustomize Development Overlay
+# 2026 Best Practice: Minimal resources for development/testing
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: vivid-development
+
+namespace: vivid-dev
+
+resources:
+  - ../../base
+
+# Development-specific labels
+commonLabels:
+  environment: development
+
+# Development images (local registry)
+images:
+  - name: vivid-backend
+    newName: localhost:5000/vivid-backend
+    newTag: dev
+  - name: vivid-frontend
+    newName: localhost:5000/vivid-frontend
+    newTag: dev
+
+# Development replicas (minimal)
+replicas:
+  - name: vivid-backend
+    count: 1
+  - name: vivid-frontend
+    count: 1
+
+# Development ConfigMaps
+configMapGenerator:
+  - name: vivid-backend-config
+    behavior: replace
+    literals:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+      - OTEL_ENABLED=true
+      - OTEL_SAMPLE_RATE=1.0
+      - RAG_EVAL_ENABLED=true
+      - SECURITY_HEADERS_ENABLED=false
+  - name: vivid-frontend-config
+    behavior: replace
+    literals:
+      - NEXT_PUBLIC_API_URL=http://localhost:8100
+
+# Development patches
+patches:
+  # Reduce resources for development
+  - target:
+      kind: Deployment
+      name: vivid-backend
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "100m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "256Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "500m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "1Gi"
+  # Disable HPA for development (manual scaling)
+  - target:
+      kind: HorizontalPodAutoscaler
+      name: vivid-backend-hpa
+    patch: |-
+      - op: replace
+        path: /spec/minReplicas
+        value: 1
+      - op: replace
+        path: /spec/maxReplicas
+        value: 2
+  # VPA in recommendation mode only for development
+  - target:
+      kind: VerticalPodAutoscaler
+      name: vivid-backend-vpa
+    patch: |-
+      - op: replace
+        path: /spec/updatePolicy/updateMode
+        value: "Off"

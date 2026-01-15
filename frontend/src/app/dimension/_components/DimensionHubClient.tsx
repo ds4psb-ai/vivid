@@ -1,0 +1,445 @@
+"use client";
+
+/**
+ * DimensionHubClient - Interactive Client Component
+ * =================================================
+ *
+ * Contains all interactive UI logic for the Dimension Hub:
+ * - Stage filter toggle
+ * - Chain context integration
+ * - Animation effects
+ *
+ * Static data is imported from lib/dimension-data.ts
+ */
+
+import { useState } from "react";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Plus,
+  CheckCircle,
+  ChevronRight,
+  Link2,
+  Trash2,
+} from "lucide-react";
+import { AuroraBackground } from "@/components/AuroraBackground";
+import { MiniAppSubmitModal } from "@/components/MiniAppSubmitModal";
+import { useParallaxScroll } from "@/hooks/useLusionAnimations";
+import AppShell from "@/components/AppShell";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useDimensionChainOptional } from "@/contexts/DimensionChainContext";
+import {
+  type DimensionStage,
+  type DimensionItemData,
+  DIMENSION_ITEMS,
+  WORKFLOW_STAGES,
+  ROUTE_KEYS,
+  getDimensionIcon,
+} from "@/lib/dimension-data";
+
+// Stage color mappings for toggle buttons
+const STAGE_COLORS: Record<string, { bg: string; text: string }> = {
+  emerald: { bg: "bg-emerald-500", text: "text-emerald-950" },
+  violet: { bg: "bg-violet-500", text: "text-violet-100" },
+  amber: { bg: "bg-amber-500", text: "text-amber-950" },
+  cyan: { bg: "bg-cyan-500", text: "text-cyan-950" },
+  fuchsia: { bg: "bg-fuchsia-500", text: "text-fuchsia-100" },
+};
+
+export default function DimensionHubClient() {
+  const { language } = useLanguage();
+  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
+  const [selectedStage, setSelectedStage] = useState<DimensionStage | null>(
+    null
+  );
+  const [showChainPanel, setShowChainPanel] = useState(false);
+  const chainCtx = useDimensionChainOptional();
+  useParallaxScroll();
+
+  const filteredItems = selectedStage
+    ? DIMENSION_ITEMS.filter((d) => d.stage === selectedStage)
+    : DIMENSION_ITEMS;
+
+  const stageKeys = Object.keys(WORKFLOW_STAGES) as DimensionStage[];
+
+  // Chain data summary
+  const chainSummary = chainCtx?.getChainSummary() || [];
+  const hasChainData = chainSummary.length > 0;
+
+  // Check if a dimension has chain data
+  const hasDimensionData = (href: string): boolean => {
+    const routeKey = ROUTE_KEYS[href];
+    return routeKey ? chainCtx?.hasChainData(routeKey) || false : false;
+  };
+
+  return (
+    <AppShell showTopBar={false}>
+      {/* Aurora Background (Fixed) */}
+      <AuroraBackground />
+
+      {/* Mini App Submit Modal */}
+      <MiniAppSubmitModal
+        isOpen={isSubmitModalOpen}
+        onClose={() => setIsSubmitModalOpen(false)}
+      />
+
+      <div className="min-h-screen relative">
+        {/* Minimalist Hero Section (Toggle Only) */}
+        <section className="relative pt-32 pb-12 flex flex-col items-center justify-center overflow-hidden px-4">
+          {/* 4-Stage Workflow Toggle */}
+          <StageToggle
+            stageKeys={stageKeys}
+            selectedStage={selectedStage}
+            onStageChange={setSelectedStage}
+            language={language}
+          />
+
+          {/* Chain Status Bar */}
+          <AnimatePresence>
+            {hasChainData && (
+              <ChainStatusBar
+                chainSummary={chainSummary}
+                showChainPanel={showChainPanel}
+                onTogglePanel={() => setShowChainPanel(!showChainPanel)}
+                onClearChain={() => chainCtx?.clearChain()}
+                language={language}
+              />
+            )}
+          </AnimatePresence>
+        </section>
+
+        {/* Content Section - Cards */}
+        <section className="relative z-10 pb-40 px-4 sm:px-6">
+          <div className="mx-auto max-w-7xl">
+            <DimensionPortalGrid
+              items={filteredItems}
+              hasDimensionData={hasDimensionData}
+              onOpenSubmitModal={() => setIsSubmitModalOpen(true)}
+              language={language}
+            />
+          </div>
+        </section>
+      </div>
+    </AppShell>
+  );
+}
+
+// =============================================================================
+// SUB-COMPONENTS
+// =============================================================================
+
+interface StageToggleProps {
+  stageKeys: DimensionStage[];
+  selectedStage: DimensionStage | null;
+  onStageChange: (stage: DimensionStage | null) => void;
+  language: string;
+}
+
+function StageToggle({
+  stageKeys,
+  selectedStage,
+  onStageChange,
+  language,
+}: StageToggleProps) {
+  return (
+    <div className="flex flex-wrap justify-center items-center gap-2 p-2 rounded-2xl backdrop-blur-sm bg-black/5 dark:bg-white/5">
+      <button
+        onClick={() => onStageChange(null)}
+        className={`px-5 py-2.5 rounded-xl text-xs font-bold tracking-widest uppercase transition-all duration-300 ${
+          selectedStage === null
+            ? "bg-black dark:bg-white text-white dark:text-black shadow-lg scale-105"
+            : "text-slate-600 dark:text-white/40 hover:text-black dark:hover:text-white"
+        }`}
+      >
+        ALL
+      </button>
+      {stageKeys.map((stageKey) => {
+        const stage = WORKFLOW_STAGES[stageKey];
+        const isSelected = selectedStage === stageKey;
+        const colors = STAGE_COLORS[stage.color] || STAGE_COLORS.emerald;
+
+        return (
+          <button
+            key={stageKey}
+            onClick={() => onStageChange(isSelected ? null : stageKey)}
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold tracking-wide transition-all duration-300 flex items-center gap-2 ${
+              isSelected
+                ? `${colors.bg} ${colors.text} shadow-lg scale-105`
+                : "text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10"
+            }`}
+          >
+            <span className="text-[10px] font-mono opacity-60">
+              {stage.order}
+            </span>
+            <span>{language === "ko" ? stage.nameKo : stage.nameEn}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+interface ChainStatusBarProps {
+  chainSummary: Array<{ key: string; name: string; summary?: string }>;
+  showChainPanel: boolean;
+  onTogglePanel: () => void;
+  onClearChain: () => void;
+  language: string;
+}
+
+function ChainStatusBar({
+  chainSummary,
+  showChainPanel,
+  onTogglePanel,
+  onClearChain,
+  language,
+}: ChainStatusBarProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      className="mt-4 w-full max-w-2xl"
+    >
+      <div className="relative p-3 rounded-xl backdrop-blur-md bg-gradient-to-r from-emerald-500/10 via-violet-500/10 to-amber-500/10 border border-white/10">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Link2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <span className="text-sm font-medium text-gray-800 dark:text-white/80">
+              {language === "ko" ? "워크플로우 진행 중" : "Workflow in progress"}
+            </span>
+            <span className="text-xs text-gray-500 dark:text-white/40">
+              ({chainSummary.length}{" "}
+              {language === "ko" ? "단계 완료" : "steps done"})
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onTogglePanel}
+              className="text-xs text-white/60 hover:text-white px-2 py-1 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              {showChainPanel
+                ? language === "ko"
+                  ? "숨기기"
+                  : "Hide"
+                : language === "ko"
+                  ? "상세보기"
+                  : "Details"}
+            </button>
+            <button
+              onClick={onClearChain}
+              className="p-1 rounded-lg text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+              title={language === "ko" ? "초기화" : "Clear"}
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Expanded Chain Details */}
+        <AnimatePresence>
+          {showChainPanel && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="pt-3 mt-3 border-t border-white/10 space-y-2">
+                {chainSummary.map((item, idx) => (
+                  <div key={item.key} className="flex items-center gap-2 text-sm">
+                    <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-bold">
+                      {idx + 1}
+                    </span>
+                    <span className="text-white/80 font-medium">{item.name}</span>
+                    {item.summary && (
+                      <span className="text-white/40 text-xs truncate max-w-[200px]">
+                        - {item.summary}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
+  );
+}
+
+interface DimensionPortalGridProps {
+  items: DimensionItemData[];
+  hasDimensionData: (href: string) => boolean;
+  onOpenSubmitModal: () => void;
+  language: string;
+}
+
+function DimensionPortalGrid({
+  items,
+  hasDimensionData,
+  onOpenSubmitModal,
+  language,
+}: DimensionPortalGridProps) {
+  return (
+    <div className="relative">
+      {/* Background Atmosphere Spot */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-blue-600/10 blur-[150px] rounded-full pointer-events-none z-0 mix-blend-screen" />
+
+      <motion.div
+        className={`grid gap-6 relative z-10 ${
+          items.length === 1
+            ? "grid-cols-1 max-w-2xl mx-auto"
+            : "sm:grid-cols-2 lg:grid-cols-4"
+        }`}
+        layout
+      >
+        <AnimatePresence mode="popLayout">
+          {items.map((dimension, idx) => (
+            <DimensionCard
+              key={dimension.href}
+              dimension={dimension}
+              index={idx}
+              hasData={hasDimensionData(dimension.href)}
+              language={language}
+            />
+          ))}
+        </AnimatePresence>
+
+        {/* Propose Button */}
+        <ProposeButton onOpenSubmitModal={onOpenSubmitModal} language={language} />
+      </motion.div>
+    </div>
+  );
+}
+
+interface DimensionCardProps {
+  dimension: DimensionItemData;
+  index: number;
+  hasData: boolean;
+  language: string;
+}
+
+function DimensionCard({
+  dimension,
+  index,
+  hasData,
+  language,
+}: DimensionCardProps) {
+  const Icon = getDimensionIcon(dimension.iconName);
+  const stageInfo = WORKFLOW_STAGES[dimension.stage];
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      transition={{ duration: 0.3, delay: index * 0.05 }}
+      className="group relative"
+    >
+      <Link
+        href={dimension.href}
+        className="block relative overflow-hidden rounded-[2rem] border border-slate-200 dark:border-white/5 bg-white/60 dark:bg-black/40 p-6 backdrop-blur-2xl hover:bg-white/80 dark:hover:bg-white/[0.03] transition-all duration-700 hover:-translate-y-2 shadow-lg dark:shadow-none"
+      >
+        {/* NEW Badge */}
+        {dimension.isNew && (
+          <div className="absolute top-4 right-4 z-20 px-2 py-1 rounded-full bg-lime-500 text-black text-[10px] font-bold tracking-wider animate-pulse">
+            NEW
+          </div>
+        )}
+
+        {/* Chain Data Indicator */}
+        {hasData && (
+          <div className="absolute top-4 left-4 z-20 flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30">
+            <CheckCircle className="w-3 h-3 text-emerald-400" />
+            <span className="text-[10px] text-emerald-400 font-medium">
+              {language === "ko" ? "데이터" : "Data"}
+            </span>
+          </div>
+        )}
+
+        {/* Colored Border Reveal */}
+        <div
+          className={`absolute inset-0 rounded-[2rem] border-2 ${dimension.borderColor} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
+        />
+
+        {/* Gradient Background */}
+        <div
+          className={`absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-700 bg-gradient-to-br ${dimension.gradient || "from-white/10 to-transparent"}`}
+        />
+
+        {/* Portal Ring Effect */}
+        <div
+          className={`absolute -right-20 -top-20 h-64 w-64 rounded-full border-[1px] ${dimension.portalColor} ${dimension.glowClass} blur-[60px] opacity-20 group-hover:opacity-40 transition-opacity duration-700`}
+        />
+
+        <div className="relative flex items-start justify-between h-full flex-col gap-4 min-h-[140px]">
+          <div className="w-full flex items-start justify-between z-10">
+            <div className="flex flex-col gap-1">
+              {/* Stage Label */}
+              <span
+                className={`text-[10px] font-mono tracking-wider ${dimension.textColor} opacity-60`}
+              >
+                {stageInfo.order}.{dimension.stageOrder}
+              </span>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-gray-900 group-hover:to-gray-600 dark:group-hover:from-white dark:group-hover:to-white/70 transition-all duration-500">
+                {language === "ko" ? dimension.titleKo : dimension.titleEn}
+              </h2>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 backdrop-blur-md transition-all duration-500 group-hover:scale-110 group-hover:bg-black/10 dark:group-hover:bg-white/10">
+              <Icon
+                className={`h-4 w-4 ${dimension.textColor}`}
+                aria-hidden="true"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-6 z-10 mt-auto">
+            <div className="space-y-2">
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-2">
+                {language === "ko" ? dimension.descKo : dimension.descEn}
+              </p>
+            </div>
+            {/* Arrow Action */}
+            <div className="flex justify-end mt-4">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 backdrop-blur-sm text-black/40 dark:text-white/40 group-hover:text-black dark:group-hover:text-white group-hover:bg-black/10 dark:group-hover:bg-white/20 transition-all duration-300 group-hover:scale-110">
+                <ChevronRight className="w-4 h-4" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Link>
+    </motion.div>
+  );
+}
+
+interface ProposeButtonProps {
+  onOpenSubmitModal: () => void;
+  language: string;
+}
+
+function ProposeButton({ onOpenSubmitModal, language }: ProposeButtonProps) {
+  return (
+    <button
+      onClick={onOpenSubmitModal}
+      className="group relative overflow-hidden rounded-[2rem] border border-dashed border-slate-300 dark:border-white/10 bg-transparent p-6 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] hover:border-black/30 dark:hover:border-white/30 transition-all duration-500 flex flex-col items-center justify-center gap-4 min-h-[140px]"
+    >
+      <div className="relative">
+        <div className="absolute inset-0 bg-lime-400/20 blur-[30px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-white/5 border border-black/10 dark:border-white/10 transition-all duration-500 group-hover:scale-110">
+          <Plus className="h-6 w-6 text-zinc-500 group-hover:text-black dark:group-hover:text-white transition-colors duration-300" />
+        </div>
+      </div>
+
+      <div className="text-center space-y-2">
+        <span className="text-xs font-bold tracking-[0.2em] text-gray-700 dark:text-zinc-600 uppercase group-hover:text-lime-600 dark:group-hover:text-lime-400 transition-colors">
+          ∞D INFINITE
+        </span>
+        <p className="text-sm text-gray-500 dark:text-zinc-500 group-hover:text-gray-700 dark:group-hover:text-zinc-300 transition-colors max-w-[200px]">
+          {language === "ko" ? "새로운 차원을 제안하세요" : "Propose a new dimension"}
+        </p>
+      </div>
+    </button>
+  );
+}
