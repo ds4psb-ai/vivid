@@ -97,6 +97,12 @@ class HybridRAGResult:
     keyword_results_count: int = 0
     vector_results_count: int = 0
     fused_results: List[Dict[str, Any]] = field(default_factory=list)  # RRF fused results
+    # === P6: Feedback Tracking ===
+    response_id: Optional[str] = None  # UUID string for feedback linking
+    query_type: Optional[str] = None  # P5 classification result
+    classification_confidence: Optional[float] = None
+    retrieval_skipped: bool = False
+    crag_triggered: bool = False
 
 
 # ============================================================================

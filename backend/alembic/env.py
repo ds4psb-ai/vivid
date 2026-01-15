@@ -12,6 +12,7 @@ from alembic import context
 from app.database import Base
 from app.models import *  # noqa: F401, F403
 from app.models_telemetry import *  # noqa: F401, F403
+from app.models_feedback import *  # noqa: F401, F403  # P6: RAG Feedback
 
 # Load settings
 from app.config import settings

@@ -28,6 +28,9 @@ from app.routers.payment import router as payment_router
 # Telemetry (4-Layer Ecosystem)
 from app.routers.telemetry import router as telemetry_router
 
+# RAG Feedback (P6: Feedback Collection)
+from app.routers.rag_feedback import router as rag_feedback_router
+
 # Settlements (Revenue Distribution)
 from app.routers.settlements import router as settlements_router
 
@@ -186,6 +189,9 @@ app.include_router(payment_router, prefix="/api/v1/payment", tags=["payment"])
 
 # Telemetry (4-Layer Ecosystem: Tool tracking, Forks, Attribution)
 app.include_router(telemetry_router, prefix="/api/v1/telemetry", tags=["telemetry"])
+
+# RAG Feedback (P6: Feedback Collection for P7/P8)
+app.include_router(rag_feedback_router, prefix="/api/v1", tags=["rag-feedback"])
 
 # Settlements (Revenue Distribution)
 app.include_router(settlements_router, prefix="/api/v1", tags=["settlements"])
