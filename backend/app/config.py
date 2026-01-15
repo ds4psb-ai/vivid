@@ -146,6 +146,27 @@ class Settings(BaseSettings):
     LANGFUSE_HOST: str = "https://cloud.langfuse.com"
     LANGFUSE_ENABLED: bool = True
 
+    # OpenTelemetry Configuration (2026 Best Practices)
+    # Enable distributed tracing with OTLP exporter
+    OTEL_ENABLED: bool = False  # Set to True to enable OpenTelemetry
+    OTEL_EXPORTER_OTLP_ENDPOINT: str = "localhost:4317"  # Jaeger/Tempo/OTEL Collector
+    OTEL_SAMPLE_RATE: float = 0.1  # 10% sampling in production
+    OTEL_USE_GRPC: bool = True  # Use gRPC for better performance
+    OTEL_SERVICE_NAME: str = "vivid-backend"
+    OTEL_SERVICE_VERSION: str = "2.0.0"
+
+    # RAG Evaluation Configuration
+    RAG_EVAL_ENABLED: bool = False  # Enable RAG quality evaluation
+    RAG_EVAL_SAMPLE_RATE: float = 0.01  # 1% of production traffic
+    RAG_EVAL_ALERT_THRESHOLD: float = 0.6  # Alert if avg score drops below
+    RAG_EVAL_LLM_MODEL: str = "gpt-4o-mini"  # LLM for evaluation
+
+    # Security Hardening
+    SECURITY_HEADERS_ENABLED: bool = True
+    SECURITY_REQUEST_ID_ENABLED: bool = True
+    SECURITY_SUSPICIOUS_DETECTION: bool = True
+    SECURITY_MAX_BODY_SIZE: int = 10485760  # 10MB max request body
+
     @property
     def DATABASE_URL(self) -> str:
         return (

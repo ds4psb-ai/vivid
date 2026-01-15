@@ -102,6 +102,7 @@ from app.routers.capsules import router as capsules_router
 
 from app.middleware.rate_limit import setup_rate_limiting
 from app.middleware.mtls import MTLSMiddleware
+from app.middleware.security import setup_security_middleware
 from app.logging_config import setup_logging, LoggingMiddleware
 from app.monitoring import setup_monitoring
 
@@ -151,13 +152,24 @@ app.add_middleware(SecureLoggingMiddleware)
 # Add mTLS middleware (for internal S2S routes)
 app.add_middleware(MTLSMiddleware)
 
+# Setup security middleware (2026 Best Practices)
+# Order: Security Headers → Request ID → Timing → Suspicious Detection
+if settings.SECURITY_HEADERS_ENABLED:
+    setup_security_middleware(
+        app,
+        enable_security_headers=settings.SECURITY_HEADERS_ENABLED,
+        enable_request_id=settings.SECURITY_REQUEST_ID_ENABLED,
+        enable_timing=True,
+        enable_suspicious_detection=settings.SECURITY_SUSPICIOUS_DETECTION,
+    )
+
 # Setup rate limiting
 setup_rate_limiting(app)
 
 # Initialize structured logging
 setup_logging(settings.LOG_LEVEL if hasattr(settings, 'LOG_LEVEL') else "INFO")
 
-# Setup Sentry and Prometheus monitoring
+# Setup Sentry, Prometheus, and OpenTelemetry monitoring
 setup_monitoring(app)
 
 # =============================================================================
