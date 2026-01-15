@@ -6,7 +6,7 @@
  * Form for clients to create creative requests.
  */
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -42,7 +42,7 @@ export default function CreateRequestPage() {
         budget_credits: 1000,
         deadline: "",
     });
-    const [submitting, setSubmitting] = useState(false);
+    const [isPending, startTransition] = useTransition();
     const [error, setError] = useState<string | null>(null);
 
     const labels = {
@@ -64,36 +64,35 @@ export default function CreateRequestPage() {
             : "75% goes to creator, 25% platform fee",
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.title || !formData.description) return;
 
-        setSubmitting(true);
         setError(null);
 
-        try {
-            const payload: Record<string, unknown> = {
-                title: formData.title,
-                description: formData.description,
-                category: formData.category,
-                budget_credits: formData.budget_credits,
-            };
-            if (formData.deadline) {
-                payload.deadline = new Date(formData.deadline).toISOString();
+        startTransition(async () => {
+            try {
+                const payload: Record<string, unknown> = {
+                    title: formData.title,
+                    description: formData.description,
+                    category: formData.category,
+                    budget_credits: formData.budget_credits,
+                };
+                if (formData.deadline) {
+                    payload.deadline = new Date(formData.deadline).toISOString();
+                }
+
+                const result = await fetchWithAuth("/api/v1/humancloud/requests", {
+                    method: "POST",
+                    body: JSON.stringify(payload),
+                }) as { id: string };
+
+                // Redirect to request detail or publish
+                router.push(`/humancloud/requests/${result.id}`);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : "Failed to create request");
             }
-
-            const result = await fetchWithAuth("/api/v1/humancloud/requests", {
-                method: "POST",
-                body: JSON.stringify(payload),
-            }) as { id: string };
-
-            // Redirect to request detail or publish
-            router.push(`/humancloud/requests/${result.id}`);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to create request");
-        } finally {
-            setSubmitting(false);
-        }
+        });
     };
 
     return (
@@ -223,12 +222,12 @@ export default function CreateRequestPage() {
                         {/* Submit */}
                         <button
                             type="submit"
-                            disabled={submitting || !formData.title || !formData.description}
-                            className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-violet-600 
+                            disabled={isPending || !formData.title || !formData.description}
+                            className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-violet-600
                                 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed
                                 text-white font-medium rounded-xl transition-colors"
                         >
-                            {submitting ? (
+                            {isPending ? (
                                 <>
                                     <Loader2 className="w-5 h-5 animate-spin" />
                                     {labels.submitting}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Fragment } from "react";
+import { useState, Fragment, useTransition } from "react";
 import { X, Plus, Sparkles, Loader2, CheckCircle, Github, Upload, FileArchive, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
@@ -27,7 +27,7 @@ const AI_TOOLS = [
 
 export function MiniAppSubmitModal({ isOpen, onClose }: MiniAppSubmitModalProps) {
     const [step, setStep] = useState<"form" | "success">("form");
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isPending, startTransition] = useTransition();
     const [submitError, setSubmitError] = useState<string | null>(null);
 
     // Form state
@@ -57,28 +57,27 @@ export function MiniAppSubmitModal({ isOpen, onClose }: MiniAppSubmitModalProps)
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setIsSubmitting(true);
         setSubmitError(null);
 
-        try {
-            await api.submitMiniApp({
-                app_name: appName,
-                category,
-                source_type: sourceType,
-                github_url: sourceType === "github" ? githubUrl : undefined,
-                zip_file_uri: sourceType === "zip" ? zipFileUri || undefined : undefined,
-                description,
-                ai_tool: aiTool || undefined,
-            });
-            setStep("success");
-        } catch (error) {
-            console.error("MiniApp submission failed:", error);
-            setSubmitError(error instanceof Error ? error.message : "제출에 실패했습니다. 다시 시도해주세요.");
-        } finally {
-            setIsSubmitting(false);
-        }
+        startTransition(async () => {
+            try {
+                await api.submitMiniApp({
+                    app_name: appName,
+                    category,
+                    source_type: sourceType,
+                    github_url: sourceType === "github" ? githubUrl : undefined,
+                    zip_file_uri: sourceType === "zip" ? zipFileUri || undefined : undefined,
+                    description,
+                    ai_tool: aiTool || undefined,
+                });
+                setStep("success");
+            } catch (error) {
+                console.error("MiniApp submission failed:", error);
+                setSubmitError(error instanceof Error ? error.message : "제출에 실패했습니다. 다시 시도해주세요.");
+            }
+        });
     };
 
     const handleClose = () => {
@@ -96,7 +95,7 @@ export function MiniAppSubmitModal({ isOpen, onClose }: MiniAppSubmitModalProps)
     };
 
     const isFormValid = appName && category && description &&
-        (sourceType === "github" ? githubUrl : (zipFile && zipFileUri && !isUploadingZip));
+        (sourceType === "github" ? githubUrl : (zipFile && zipFileUri && !isUploadingZip)) && !isPending;
 
     return (
         <AnimatePresence>
@@ -319,12 +318,12 @@ export function MiniAppSubmitModal({ isOpen, onClose }: MiniAppSubmitModalProps)
                                         {/* Submit Button */}
                                         <button
                                             type="submit"
-                                            disabled={!isFormValid || isSubmitting}
+                                            disabled={!isFormValid}
                                             className="w-full relative group overflow-hidden rounded-xl py-4 text-base font-bold tracking-wide text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 bg-gradient-to-r from-violet-600 to-purple-600 shadow-[0_0_30px_rgba(139,92,246,0.3)] hover:shadow-[0_0_50px_rgba(139,92,246,0.5)]"
                                         >
                                             <span className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
                                             <span className="relative z-10 flex items-center justify-center gap-2">
-                                                {isSubmitting ? (
+                                                {isPending ? (
                                                     <>
                                                         <Loader2 className="h-5 w-5 animate-spin" />
                                                         제출 중...
