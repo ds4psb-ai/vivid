@@ -686,7 +686,273 @@ curl -X POST http://localhost:8100/api/dimension/1d/generate \
   -d '{"topic": "도시 야경", "style": "cinematic"}'
 ```
 
+### 14.5 Resolver 단위 테스트 ⭐ NEW
+
+Resolver는 Intent→Params 변환 로직의 핵심이므로 반드시 테스트해야 합니다.
+
+#### 기본 테스트 템플릿
+
+```python
+# tests/resolvers/test_my_app_resolver.py
+import pytest
+from app.resolvers.my_app_resolver import MyAppResolver
+from app.schemas.creative_intent import (
+    CreativeIntent, CreativeMood, CreativePace, TargetAudience
+)
+
+@pytest.fixture
+def resolver():
+    return MyAppResolver()
+
+@pytest.fixture
+def cinematic_intent():
+    return CreativeIntent(
+        mood=CreativeMood.CINEMATIC,
+        pace=CreativePace.SLOW,
+        target=TargetAudience.EXPERT,
+    )
+
+class TestMyAppResolver:
+    """MyApp Resolver 단위 테스트."""
+    
+    @pytest.mark.asyncio
+    async def test_resolve_cinematic_mood(self, resolver, cinematic_intent):
+        """cinematic 무드 해석 테스트."""
+        result = await resolver.resolve_from_intent(cinematic_intent)
+        
+        assert result.resolved_from == "intent"
+        assert result.confidence > 0.8
+        assert "param1" in result.params
+        # cinematic에 맞는 값 검증
+        assert result.params.get("aspect_ratio") == "21:9"
+    
+    @pytest.mark.asyncio
+    async def test_resolve_with_rag_context(self, resolver, cinematic_intent):
+        """RAG 컨텍스트 적용 테스트."""
+        rag_context = {
+            "auteur_reference": "봉준호",
+            "confidence": 0.9,
+            "myapp_hints": {"special_param": "value"},
+        }
+        
+        result = await resolver.resolve_from_intent(
+            cinematic_intent, rag_context
+        )
+        
+        # RAG 힌트가 적용되었는지 확인
+        assert result.params.get("special_param") == "value"
+        assert result.rag_context is not None
+    
+    def test_get_default_params(self, resolver):
+        """기본 파라미터 테스트."""
+        defaults = resolver.get_default_params()
+        
+        assert isinstance(defaults, dict)
+        assert len(defaults) > 0
+    
+    @pytest.mark.asyncio
+    async def test_resolve_with_fallback(self, resolver):
+        """Fallback 로직 테스트."""
+        # Intent 없이 legacy_params만
+        result = await resolver.resolve_with_fallback(
+            intent=None,
+            legacy_params={"legacy_key": "legacy_value"},
+        )
+        
+        assert result.resolved_from == "legacy"
+        assert result.params.get("legacy_key") == "legacy_value"
+    
+    @pytest.mark.parametrize("mood", [
+        CreativeMood.CINEMATIC,
+        CreativeMood.ENERGETIC,
+        CreativeMood.CALM,
+        CreativeMood.DOCUMENTARY,
+    ])
+    @pytest.mark.asyncio
+    async def test_all_moods_resolve(self, resolver, mood):
+        """모든 무드가 해석 가능한지 테스트."""
+        intent = CreativeIntent(mood=mood)
+        result = await resolver.resolve_from_intent(intent)
+        
+        assert result.params is not None
+        assert len(result.params) > 0
+```
+
+#### 테스트 실행
+
+```bash
+# 특정 Resolver 테스트
+cd backend && pytest -v tests/resolvers/test_my_app_resolver.py
+
+# 모든 Resolver 테스트
+cd backend && pytest -v tests/resolvers/
+
+# 커버리지 포함
+cd backend && pytest --cov=app.resolvers tests/resolvers/
+```
+
 ---
+
+## 14-A. Resolver 개발자 템플릿 ⭐ NEW
+
+### 새 Resolver 추가 순서
+
+1. `backend/app/resolvers/my_app_resolver.py` 생성
+2. `BaseCapsuleResolver` 상속
+3. `INTENT_MAP` 정의
+4. `resolve_from_intent()` 구현
+5. `@resolver_for()` 데코레이터 적용 → 자동 등록
+
+### 전체 템플릿
+
+```python
+# backend/app/resolvers/my_app_resolver.py
+"""
+MyApp Capsule Resolver
+
+MyApp 캡슐의 Intent → Params 해석기.
+"""
+from __future__ import annotations
+
+from typing import Any, Dict, Optional
+import logging
+
+from app.resolvers.base import BaseCapsuleResolver, ResolvedParams
+from app.resolvers.registry import resolver_for
+from app.schemas.creative_intent import (
+    CreativeIntent, 
+    CreativeMood, 
+    CreativePace, 
+    TargetAudience,
+)
+
+logger = logging.getLogger(__name__)
+
+
+@resolver_for("MY_APP")  # 여러 코드 등록: @resolver_for("MY_APP", "ALIAS")
+class MyAppResolver(BaseCapsuleResolver):
+    """
+    MyApp Dimension Resolver
+    
+    mood/pace/target에 따라 최적의 파라미터를 결정합니다.
+    """
+    
+    dimension_code = "MY_APP"
+    dimension_name = "내 앱"
+    
+    # =========================================================================
+    # Intent → Params 매핑
+    # =========================================================================
+    
+    INTENT_MAP = {
+        "cinematic": {
+            "aspect_ratio": "21:9",
+            "style": "dramatic",
+            "quality": "high",
+        },
+        "energetic": {
+            "aspect_ratio": "16:9",
+            "style": "dynamic",
+            "quality": "medium",
+        },
+        "calm": {
+            "aspect_ratio": "16:9",
+            "style": "serene",
+            "quality": "medium",
+        },
+        "documentary": {
+            "aspect_ratio": "16:9",
+            "style": "natural",
+            "quality": "high",
+        },
+    }
+    
+    PACE_ADJUSTMENTS = {
+        "fast": {"tempo": "quick"},
+        "slow": {"tempo": "leisurely"},
+        "dynamic": {"tempo": "variable"},
+    }
+    
+    TARGET_ADJUSTMENTS = {
+        "expert": {"detail_level": "high", "technical_terms": True},
+        "beginner": {"detail_level": "low", "simplify": True},
+        "general": {"detail_level": "medium"},
+    }
+    
+    # =========================================================================
+    # 구현
+    # =========================================================================
+    
+    def get_default_params(self) -> Dict[str, Any]:
+        """기본 파라미터."""
+        return {
+            "aspect_ratio": "16:9",
+            "style": "neutral",
+            "quality": "medium",
+        }
+    
+    async def resolve_from_intent(
+        self,
+        intent: CreativeIntent,
+        rag_context: Optional[Dict[str, Any]] = None,
+    ) -> ResolvedParams:
+        """Intent를 파라미터로 변환."""
+        notes = []
+        
+        # 1. Mood → 기본 파라미터
+        params = self._get_base_params(intent.mood)
+        notes.append(f"mood={intent.mood.value}")
+        
+        # 2. Pace 조정
+        params = self._apply_pace_adjustments(params, intent.pace)
+        notes.append(f"pace={intent.pace.value}")
+        
+        # 3. Target 조정
+        params = self._apply_target_adjustments(params, intent.target)
+        notes.append(f"target={intent.target.value}")
+        
+        # 4. RAG 힌트 적용 (자동)
+        params = self._apply_rag_hints(params, rag_context)
+        if rag_context:
+            notes.append("RAG context applied")
+        
+        # 5. 키워드 반영
+        if intent.keywords:
+            params["keywords"] = intent.keywords[:5]
+            notes.append(f"keywords: {intent.keywords[:3]}")
+        
+        return ResolvedParams(
+            params=params,
+            rag_context=rag_context,
+            resolved_from="intent",
+            confidence=0.9,
+            resolution_notes=notes,
+        )
+
+
+# Singleton (선택적)
+my_app_resolver = MyAppResolver()
+```
+
+### 레지스트리에서 사용
+
+```python
+from app.resolvers import get_resolver, resolve_intent_for_dimension
+
+# 방법 1: Resolver 직접 사용
+resolver = get_resolver("MY_APP")
+params = await resolver.resolve_from_intent(intent, rag_context)
+
+# 방법 2: 헬퍼 함수 사용
+params = await resolve_intent_for_dimension("MY_APP", intent, rag_context)
+
+# 방법 3: 전체 Dimension 동시 해석
+all_params = await resolve_intent_for_all(intent, rag_context)
+my_params = all_params["MY_APP"]
+```
+
+---
+
 
 ## 15. 디버깅
 
