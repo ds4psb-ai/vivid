@@ -1,0 +1,29 @@
+# Veo Video Generator RAG Configuration
+# Veo 3.1 prompt templates and video style guidelines
+
+app_key: veo.video.generate
+version: "1.0"
+description: "Veo 3.1 prompt templates and video style guidelines"
+
+dimensions:
+  - VEO # Veo style guides
+  - 5D  # Video contexts
+  - 1D  # Prompt contexts
+
+search_limit: 7  # Higher limit for comprehensive Veo guidance
+min_score: 0.6
+amplify_with_history: true
+fallback_enabled: true
+
+metadata_filters:
+  content_type:
+    - veo_template
+    - video_style
+    - camera_movement
+
+prompt_injection_template: |
+  ## Veo 3.1 Prompt Templates & Video Style Guidelines (Retrieved)
+  {rag_results}
+
+  Apply these Veo-specific prompt patterns and cinematic techniques.
+  Include camera movements, transitions, and visual effects guidance.

@@ -1,0 +1,21 @@
+# Teaching Prompt Generator RAG Configuration
+# Veo prompt style guide retrieval for cinematic prompts
+
+app_key: teaching.prompt.generate
+version: "1.0"
+description: "Veo 프롬프트 스타일 가이드 검색"
+
+dimensions:
+  - 1D  # Prompt contexts
+  - VEO # Veo style guides
+
+search_limit: 5
+min_score: 0.6
+amplify_with_history: true
+fallback_enabled: true
+
+prompt_injection_template: |
+  ## Veo Prompt Style Guidelines (Retrieved)
+  {rag_results}
+
+  Apply these guidelines to generate a cinematic Veo prompt.

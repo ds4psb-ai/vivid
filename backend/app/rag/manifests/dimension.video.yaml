@@ -1,0 +1,22 @@
+# Dimension Video Generator RAG Configuration
+# Video generation and camera movement guidelines
+
+app_key: dimension.video.generate
+version: "1.0"
+description: "Video generation and camera movement guidelines"
+
+dimensions:
+  - 5D  # Video contexts
+  - VEO # Veo style guides
+  - 1D  # Prompt contexts
+
+search_limit: 5
+min_score: 0.6
+amplify_with_history: true
+fallback_enabled: true
+
+prompt_injection_template: |
+  ## Video Generation & Camera Movement Guidelines (Retrieved)
+  {rag_results}
+
+  Apply these cinematic principles to video generation.

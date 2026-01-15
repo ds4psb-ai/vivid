@@ -1,0 +1,39 @@
+# Teaching Reference Analyzer RAG Configuration
+# Film analysis and video reference retrieval
+
+app_key: teaching.reference.analyze
+version: "1.0"
+description: "영화 분석 및 비디오 레퍼런스 검색"
+
+dimensions:
+  - 4D  # Analysis contexts
+  - QC  # Quality criteria
+
+search_limit: 5
+min_score: 0.55
+amplify_with_history: true
+fallback_enabled: true
+
+# P1: Video reference dataset routing
+dataset_routing:
+  candidates:
+    - video_ref
+    - film_analysis
+  rules:
+    - pattern: "\\uc601\\ud654|\\ub808\\ud37c\\ub7f0\\uc2a4|\\ubd84\\uc11d|\\ucd2c\\uc601|\\uad6c\\ub3c4|\\uac10\\ub3c5"
+      datasets: [video_ref]
+    - pattern: "\\uc7a5\\uba74|\\uc0f7|\\uc2dc\\ud000\\uc2a4|\\ud3b8\\uc9d1|\\uc52c"
+      datasets: [video_ref]
+    - pattern: "\\ubd09\\uc900\\ud638|\\ubc15\\ucc2c\\uc6b1|\\uae40\\uae30\\uc601|\\uc774\\ucc3d\\ub3d9"
+      datasets: [video_ref]
+  default: film_analysis
+  max_select: 2
+  labels:
+    video_ref: "Video Reference"
+    film_analysis: "Film Analysis Theory"
+
+prompt_injection_template: |
+  ## Analysis Framework (Retrieved)
+  {rag_results}
+
+  Use this framework for comprehensive reference analysis.

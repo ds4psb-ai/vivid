@@ -1,0 +1,20 @@
+# Story Architect RAG Configuration
+# Narrative structure and story frameworks
+
+app_key: dimension.story.architect
+version: "1.0"
+description: "Narrative structure and story frameworks"
+
+dimensions:
+  - 2D  # Storyboard contexts (no separate STORY collection)
+
+search_limit: 5
+min_score: 0.55
+amplify_with_history: true
+fallback_enabled: true
+
+prompt_injection_template: |
+  ## Story Structure & Narrative Guidelines (Retrieved)
+  {rag_results}
+
+  Use these narrative frameworks for story architecture.

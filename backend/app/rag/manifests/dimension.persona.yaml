@@ -1,0 +1,49 @@
+# Abyss Mirror (Persona Analyzer) RAG Configuration
+# Psychology frameworks for persona analysis
+
+app_key: dimension.persona.analyze
+version: "1.0"
+description: "Psychology frameworks for persona analysis"
+
+dimensions:
+  - AI  # Persona analysis, MBTI/psychology contexts
+
+search_limit: 5
+min_score: 0.5
+amplify_with_history: true
+fallback_enabled: true
+
+# P1: Dataset routing for psychology domains
+dataset_routing:
+  candidates:
+    - psych_core
+    - mbti
+    - attachment
+    - enneagram
+  rules:
+    - pattern: "mbti|\\uc131\\uaca9|\\uc720\\ud615|intj|enfp|infp|entj"
+      datasets: [mbti]
+    - pattern: "\\uc560\\ucc29|\\ubd88\\uc548|\\ud68c\\ud53c|\\uc548\\uc815|\\uad00\\uacc4|\\uc758\\uc874"
+      datasets: [attachment]
+    - pattern: "\\uc5d0\\ub2c8\\uc5b4\\uadf8\\ub7a8|1\\ubc88|2\\ubc88|3\\ubc88|4\\ubc88|5\\ubc88|6\\ubc88|7\\ubc88|8\\ubc88|9\\ubc88"
+      datasets: [enneagram]
+  default: psych_core
+  max_select: 2
+  labels:
+    psych_core: "Core Psychology"
+    mbti: "MBTI Personality Types"
+    attachment: "Attachment Theory"
+    enneagram: "Enneagram"
+  cross_template: |
+    ## Psychology & Personality Context
+
+    {datasets}
+
+    Use these psychological frameworks to analyze the character.
+    Consider how different theories complement each other.
+
+prompt_injection_template: |
+  ## Psychology & Personality Context (Retrieved)
+  {rag_results}
+
+  Apply these psychological frameworks to enhance persona analysis.

@@ -1,0 +1,29 @@
+# Aesthetic Director RAG Configuration
+# Auteur style guides and aesthetic theory retrieval
+
+app_key: dimension.aesthetic.direct
+version: "1.0"
+description: "Auteur style guides and aesthetic theory"
+
+dimensions:
+  - AD  # Aesthetic director (auteur styles)
+  - 1D  # Prompt contexts
+  - 3D  # Visual contexts
+
+search_limit: 7  # Higher limit for comprehensive style references
+min_score: 0.55
+amplify_with_history: true
+fallback_enabled: true
+
+metadata_filters:
+  content_type:
+    - auteur_style
+    - aesthetic_theory
+    - visual_guide
+
+prompt_injection_template: |
+  ## Auteur Style Guidelines & Aesthetic Theory (Retrieved)
+  {rag_results}
+
+  Channel these masters' visual languages and aesthetic principles.
+  Include specific shot compositions, color palettes, and mood references.

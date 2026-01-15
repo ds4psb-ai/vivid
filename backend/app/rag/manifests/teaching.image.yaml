@@ -1,0 +1,37 @@
+# Teaching Image Generator RAG Configuration
+# Visual style and aesthetic retrieval with image grid support
+
+app_key: teaching.image.generate
+version: "1.0"
+description: "비주얼 스타일 및 미학 가이드 검색"
+
+dimensions:
+  - 3D  # Visual contexts
+  - AD  # Aesthetic director
+
+search_limit: 5
+min_score: 0.6
+amplify_with_history: true
+fallback_enabled: true
+
+# P1: Image grid dataset routing
+dataset_routing:
+  candidates:
+    - image_grid
+    - visual_style
+  rules:
+    - pattern: "\\uadf8\\ub9ac\\ub4dc|\\ubaa8\\uc790\\uc774\\ud06c|\\ud0c0\\uc77c|\\ub8e9\\ubd81|\\ub808\\ud37c\\ub7f0\\uc2a4"
+      datasets: [image_grid]
+    - pattern: "\\uc2a4\\ud504\\ub77c\\uc774\\ud2b8|grid|tile|mosaic|lookbook"
+      datasets: [image_grid]
+  default: visual_style
+  max_select: 2
+  labels:
+    image_grid: "Image Grid"
+    visual_style: "Visual Style"
+
+prompt_injection_template: |
+  ## Visual Style Guidelines (Retrieved)
+  {rag_results}
+
+  Apply these aesthetic principles to the image prompt.

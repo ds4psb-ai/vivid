@@ -147,12 +147,12 @@ DIMENSION_TO_CORPUS: Dict[str, str] = {
 # ============================================================================
 
 import re
-from app.rag.app_manifest import AppRAGManifest, get_manifest
+from app.rag.manifest_loader import YAMLManifest, get_manifest
 
 
 def _select_datasets(
     query: str,
-    manifest: AppRAGManifest,
+    manifest: YAMLManifest,
 ) -> List[str]:
     """P1: 입력 쿼리 기반으로 dataset 선택.
     

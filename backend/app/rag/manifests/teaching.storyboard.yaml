@@ -1,0 +1,21 @@
+# Teaching Storyboard Creator RAG Configuration
+# Narrative and storyboard framework retrieval
+
+app_key: teaching.storyboard.create
+version: "1.0"
+description: "스토리보드 및 내러티브 프레임워크 검색"
+
+dimensions:
+  - 2D  # Storyboard contexts
+  - 1D  # Prompt contexts
+
+search_limit: 5
+min_score: 0.55
+amplify_with_history: true
+fallback_enabled: true
+
+prompt_injection_template: |
+  ## Storyboard & Narrative Guidelines (Retrieved)
+  {rag_results}
+
+  Use these narrative frameworks for storyboard structure.

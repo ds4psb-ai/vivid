@@ -1,0 +1,117 @@
+# Vivid RAG App Manifest Schema
+# Version: 1.0
+# Generated: 2026-01-15
+#
+# This schema defines the structure for YAML-based app RAG configurations.
+# Apps can be added by creating a new YAML file in this directory.
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: "Vivid RAG App Manifest"
+description: "App-level RAG configuration for Vivid Dimension apps"
+type: object
+
+required:
+  - app_key
+  - version
+
+properties:
+  app_key:
+    type: string
+    pattern: "^[a-z]+\\.[a-z]+\\.[a-z]+$"
+    description: "Unique app identifier (e.g., dimension.persona.analyze)"
+    examples:
+      - "dimension.aesthetic.direct"
+      - "teaching.prompt.generate"
+      - "veo.video.generate"
+
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+$"
+    description: "Manifest version (SemVer major.minor)"
+    default: "1.0"
+
+  description:
+    type: string
+    description: "Human-readable app description"
+
+  dimensions:
+    type: array
+    items:
+      type: string
+      enum: [1D, 2D, 3D, 4D, 5D, 6D, QC, AD, AI, VEO]
+    default: [1D]
+    description: "List of dimension collections to search"
+
+  search_limit:
+    type: integer
+    minimum: 1
+    maximum: 20
+    default: 5
+    description: "Maximum documents to retrieve per dimension"
+
+  min_score:
+    type: number
+    minimum: 0
+    maximum: 1
+    default: 0.5
+    description: "Minimum similarity score threshold"
+
+  amplify_with_history:
+    type: boolean
+    default: true
+    description: "Include previous step history in context"
+
+  prompt_injection_template:
+    type: string
+    description: "Template for injecting RAG results into prompts"
+
+  fallback_enabled:
+    type: boolean
+    default: true
+    description: "Enable fallback behavior on RAG failure"
+
+  metadata_filters:
+    type: object
+    additionalProperties: true
+    description: "Additional metadata filter conditions for Qdrant"
+
+  # Dataset routing (P1 feature)
+  dataset_routing:
+    type: object
+    description: "P1: Dataset-level routing configuration"
+    properties:
+      candidates:
+        type: array
+        items:
+          type: string
+        description: "Available dataset IDs for this app"
+      rules:
+        type: array
+        items:
+          type: object
+          properties:
+            pattern:
+              type: string
+              description: "Regex pattern to match against query"
+            datasets:
+              type: array
+              items:
+                type: string
+              description: "Dataset IDs to use when pattern matches"
+          required: [pattern, datasets]
+        description: "Pattern-based dataset selection rules"
+      default:
+        type: string
+        description: "Fallback dataset when no rules match"
+      max_select:
+        type: integer
+        default: 2
+        description: "Maximum datasets to select"
+      labels:
+        type: object
+        additionalProperties:
+          type: string
+        description: "Human-readable labels for datasets"
+      cross_template:
+        type: string
+        description: "Template for multi-dataset result fusion"
