@@ -104,6 +104,19 @@ class Settings(BaseSettings):
     GCP_LOCATION: str = "europe-west4"  # RAG Engine available here (us-central1 restricted)
     GCS_BUCKET: str = "crebit-rag-data"
 
+    # Cloud SQL (2026 Best Practice: cloud-sql-python-connector)
+    # Format: project:region:instance
+    # Leave empty to use local PostgreSQL
+    CLOUD_SQL_INSTANCE: str = ""
+    CLOUD_SQL_USER: str = ""
+    CLOUD_SQL_PASSWORD: str = ""
+    CLOUD_SQL_DB: str = ""
+    CLOUD_SQL_IAM_AUTH: bool = False  # Use IAM authentication instead of password
+
+    # BigQuery Analytics (UQSL events pipeline)
+    BIGQUERY_DATASET: str = ""  # Leave empty to disable BigQuery sync
+    BIGQUERY_TABLE_UQSL_EVENTS: str = "uqsl_events"
+
     # NotebookLM Enterprise API (Tier 0)
     # Project: vivid-canvas-482303
     NOTEBOOKLM_PROJECT_NUMBER: str = "239259013228"  # vivid-canvas project

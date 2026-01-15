@@ -122,6 +122,121 @@ class RoutingManifestConfig(BaseModel):
         )
 
 
+# ============================================================================
+# UQSL Configuration Models (2026 Best Practice)
+# ============================================================================
+
+
+class UQSLMultiGenerateConfig(BaseModel):
+    """UQSL Multi-Generate configuration."""
+
+    candidates: int = Field(default=3, ge=1, le=5)
+    parallel: bool = True
+    diversity_factor: float = Field(default=0.3, ge=0.0, le=1.0)
+    timeout_per_candidate_ms: int = Field(default=30000, ge=1000, le=60000)
+
+
+class UQSLQualityWeights(BaseModel):
+    """Quality dimension weights (should sum to 1.0)."""
+
+    groundedness: float = Field(default=0.30, ge=0.0, le=1.0)
+    relevance: float = Field(default=0.25, ge=0.0, le=1.0)
+    coherence: float = Field(default=0.20, ge=0.0, le=1.0)
+    creativity: float = Field(default=0.15, ge=0.0, le=1.0)
+    safety: float = Field(default=0.10, ge=0.0, le=1.0)
+
+    def to_dict(self) -> Dict[str, float]:
+        """Convert to dictionary for use in QualityScore."""
+        return {
+            "groundedness": self.groundedness,
+            "relevance": self.relevance,
+            "coherence": self.coherence,
+            "creativity": self.creativity,
+            "safety": self.safety,
+        }
+
+
+class UQSLSelectionConfig(BaseModel):
+    """Selection strategy configuration."""
+
+    strategy: str = Field(default="auto")  # auto, hitl, hybrid, llm_judge
+    auto_threshold: float = Field(default=0.85, ge=0.0, le=1.0)
+    top_k_for_hitl: int = Field(default=2, ge=2, le=5)
+
+
+class UQSLBanditConfig(BaseModel):
+    """Thompson Sampling bandit configuration."""
+
+    enabled: bool = True
+    arms: List[str] = Field(
+        default_factory=lambda: ["backend:qdrant_hybrid", "backend:notebooklm"]
+    )
+    min_exploration_rate: float = Field(default=0.05, ge=0.0, le=0.5)
+    decay_factor: float = Field(default=0.99, ge=0.9, le=1.0)
+
+
+class UQSLEnsemblePlusPlusConfig(BaseModel):
+    """Ensemble++ 3-way comparison configuration."""
+
+    enabled: bool = False
+    backend_a: str = "qdrant_hybrid"
+    backend_b: str = "notebooklm"
+    merge_strategy: str = "concat"  # concat, interleave, weighted, llm_fuse
+
+
+class UQSLFeedbackConfig(BaseModel):
+    """Feedback collection configuration."""
+
+    enabled: bool = True
+    implicit: bool = True
+    explicit: bool = True
+    bigquery_sync: bool = False
+    sync_interval_seconds: int = Field(default=300, ge=60, le=3600)
+
+
+class UQSLConfig(BaseModel):
+    """UQSL (Universal Quality Selection Layer) configuration.
+
+    2026 Best Practice: Full UQSL configuration from _uqsl_schema.yaml.
+
+    Attributes:
+        enabled: Enable UQSL quality selection
+        tier: UQSL tier (free, premium, dev)
+        multi_generate: Multi-candidate generation config
+        quality_weights: Quality dimension weights
+        selection: Selection strategy config
+        bandit: Thompson Sampling config
+        ensemble_plus_plus: Ensemble++ 3-way config
+        feedback: Feedback collection config
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    enabled: bool = False
+    tier: str = Field(default="free")  # free, premium, dev
+
+    multi_generate: Optional[UQSLMultiGenerateConfig] = None
+    quality_weights: Optional[UQSLQualityWeights] = None
+    selection: Optional[UQSLSelectionConfig] = None
+    bandit: Optional[UQSLBanditConfig] = None
+    ensemble_plus_plus: Optional[UQSLEnsemblePlusPlusConfig] = None
+    feedback: Optional[UQSLFeedbackConfig] = None
+
+    def model_post_init(self, __context: Any) -> None:
+        """Set defaults for nested configs."""
+        if self.enabled:
+            if self.multi_generate is None:
+                self.multi_generate = UQSLMultiGenerateConfig()
+            if self.quality_weights is None:
+                self.quality_weights = UQSLQualityWeights()
+            if self.selection is None:
+                self.selection = UQSLSelectionConfig()
+            if self.bandit is None:
+                self.bandit = UQSLBanditConfig()
+            if self.feedback is None:
+                self.feedback = UQSLFeedbackConfig()
+
+
 class DatasetRoutingRule(BaseModel):
     """Dataset 라우팅 규칙."""
 
@@ -221,6 +336,9 @@ class YAMLManifest(BaseModel):
 
     # P5: Routing 설정 (Adaptive RAG)
     routing: Optional["RoutingManifestConfig"] = None
+
+    # UQSL: Universal Quality Selection Layer (2026)
+    quality_selection: Optional[UQSLConfig] = None
 
     # Legacy compatibility fields (from AppRAGManifest)
     dataset_candidates: List[str] = Field(default_factory=list)
