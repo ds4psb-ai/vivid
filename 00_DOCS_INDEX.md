@@ -1,7 +1,7 @@
 # Docs Index (정본)
 
-**Updated**: 2026-01-15  
-**총 문서**: 12개 (핵심), 35개 (archive)
+**Updated**: 2026-01-16
+**총 문서**: 14개 (핵심), 35개 (archive)
 
 ---
 
@@ -61,6 +61,69 @@
 | **Cache Tuning Report** | `backend/scripts/rag_cache_report.py` | stale/avg_hit 리포트 |
 | **Retention Cleanup** | `backend/scripts/cleanup_router_logs.py` | RouterDecisionLog 보존 정책 |
 | **Qdrant Reindex Note** | `docs/RAG_RELIABILITY.md` | 384 dim 정합성 & 재인덱싱 |
+
+---
+
+## 2026-01-16 UQSL & UI Unity (Major Release)
+
+> **20개 커밋, 10,000+ LOC 추가**
+
+### UQSL (Universal Quality Selection Layer) - COMPLETE
+
+| 항목 | 위치 | 설명 |
+|------|------|------|
+| **UQSL Implementation Spec** | [`docs/UQSL_IMPLEMENTATION_SPEC.md`](docs/UQSL_IMPLEMENTATION_SPEC.md) | **전체 구현 문서 (SSoT)** |
+| **UQSL Core Module** | `backend/app/uqsl/` | 9개 모듈 (3,500+ lines) |
+| **Multi-Generate Engine** | `app/uqsl/multi_generate.py` | N개 후보 병렬 생성 |
+| **Quality Evaluator** | `app/uqsl/quality_evaluator.py` | 5가지 품질 지표 평가 |
+| **Best Selector** | `app/uqsl/best_selector.py` | auto/hitl/hybrid/llm_judge |
+| **Thompson Sampling** | `app/uqsl/thompson_sampling.py` | Beta 분포 기반 MAB |
+| **Ensemble++ 3-Way** | `app/uqsl/ensemble_plus_plus.py` | A vs B vs A+B (NeurIPS 2025) |
+| **UQSL API** | `app/routers/uqsl.py` | REST endpoints (960 lines) |
+| **UQSL Metrics** | `app/uqsl/metrics.py` | Prometheus 메트릭 (492 lines) |
+| **Cloud Integration** | `app/uqsl/cloud_integration.py` | Cloud SQL/BigQuery/Redis (581 lines) |
+| **DB Migration** | `alembic/versions/012_add_uqsl_tables.py` | 4개 테이블 (192 lines) |
+| **SQLAlchemy Models** | `app/models_uqsl.py` | ORM 모델 (225 lines) |
+| **UQSL Tests** | `tests/uqsl/` | 124 테스트 통과 |
+
+### Frontend UQSL Components
+
+| 항목 | 위치 | 설명 |
+|------|------|------|
+| **ABComparisonCard** | `components/dimension/ABComparisonCard.tsx` | A/B 비교 카드 |
+| **QualityScorecard** | `components/dimension/QualityScorecard.tsx` | 품질 점수 표시 |
+| **ThreeWayComparison** | `components/dimension/ThreeWayComparison.tsx` | 3-Way 비교 UI |
+| **useUQSL Hook** | `hooks/useUQSL.ts` | React 훅 (563 lines) |
+| **UQSL API Client** | `lib/api.ts` | TypeScript API (563 lines 추가) |
+| **E2E Tests** | `e2e/uqsl.spec.ts` | Playwright E2E (342 lines) |
+
+### Panel Design Unity - COMPLETE
+
+| 항목 | 위치 | 설명 |
+|------|------|------|
+| **Panel Design Unity Spec** | [`docs/PANEL_DESIGN_UNITY_SPEC.md`](docs/PANEL_DESIGN_UNITY_SPEC.md) | Compound Component 설계 |
+| **DimensionPanel** | `components/dimension/panel/DimensionPanel.tsx` | Root Compound Component |
+| **11개 패널 마이그레이션** | `components/dimension/*.tsx` | 모든 Dimension 패널 통합 |
+| **Design Tokens** | `lib/tokens.ts` | W3C DTCG 2025.10 기반 |
+
+### Cloud Integration (2026 Best Practices)
+
+| 항목 | 위치 | 설명 |
+|------|------|------|
+| **Cloud SQL Connector** | `app/uqsl/cloud_integration.py` | google-cloud-sql-connector + asyncpg |
+| **BigQuery Pipeline** | `app/uqsl/cloud_integration.py` | Buffered batch inserts |
+| **Redis Session Cache** | `app/uqsl/cloud_integration.py` | redis.asyncio + connection pool |
+| **Config Settings** | `app/config.py` | CLOUD_SQL_*, BIGQUERY_* 설정 |
+| **Cloud Run Dockerfile** | `backend/Dockerfile` | Production container (101 lines) |
+| **Health Check** | `app/routers/health.py` | Cloud Run health endpoint |
+
+### RAG Improvements
+
+| 항목 | 위치 | 설명 |
+|------|------|------|
+| **Vertex RAG 제거** | `app/rag/` | NotebookLM + Qdrant 듀얼 체계 확립 |
+| **YAML Manifest UQSL** | `app/rag/manifest_loader.py` | quality_selection 블록 추가 |
+| **UQSL Schema** | `app/rag/manifests/_uqsl_schema.yaml` | JSON Schema (228 lines) |
 
 ---
 

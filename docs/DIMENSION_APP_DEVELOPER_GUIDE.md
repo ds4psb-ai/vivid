@@ -148,6 +148,60 @@ keywords:
 | `auteur_only` | `auteur_key` 있을 때만 | 1D, 2D, 3D, VEO |
 | `never` | RAG 비활성화 | Sound |
 
+### 3.3 Quality Selection (UQSL) 설정
+
+> **NEW 2026-01-16**: Universal Quality Selection Layer 통합
+
+```yaml
+quality_selection:
+  enabled: true
+  tier: premium  # free | premium | dev
+
+  multi_generate:
+    candidates: 3          # 생성할 후보 수 (1-5)
+    parallel: true         # 병렬 생성 여부
+    diversity_factor: 0.3  # 다양성 인자 (0.0-1.0)
+
+  quality_weights:
+    groundedness: 0.35     # RAG 소스 기반 근거
+    relevance: 0.25        # 프롬프트 관련성
+    coherence: 0.15        # 논리적 일관성
+    creativity: 0.15       # 창의성
+    fluency: 0.10          # 유창성
+
+  selection:
+    strategy: hybrid       # auto | hitl | hybrid | llm_judge
+    auto_threshold: 0.85   # hybrid 모드 자동 선택 임계값
+
+  bandit:
+    enabled: true
+    exploration_rate: 0.1
+    arms:
+      - backend:qdrant_hybrid
+      - backend:notebooklm
+
+  ensemble_plus_plus:
+    enabled: true
+    backend_a: qdrant_hybrid
+    backend_b: notebooklm
+
+  feedback:
+    enabled: true
+    implicit: true         # 클릭/시간 기반 암묵적 피드백
+    explicit: true         # 버튼 기반 명시적 피드백
+    bigquery_sync: false   # BigQuery 동기화 (production)
+```
+
+**Tier별 기능:**
+
+| Tier | 기능 | 비용 |
+|------|------|------|
+| `free` | A/B 비교, Thompson Sampling, 규칙 기반 점수 | $0~2/월 |
+| `premium` | Multi-Generate, 거장 DNA 분석 | $20~100/월 |
+| `dev` | LLM-as-Judge, Ensemble++ 3-Way | $50~200/월 |
+
+상세 문서: [`docs/UQSL_IMPLEMENTATION_SPEC.md`](UQSL_IMPLEMENTATION_SPEC.md)
+
 ---
 
 ## 4. 입력 전파 규칙
