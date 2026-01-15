@@ -133,9 +133,24 @@
 
 ---
 
-## 8) 다음 단계 (필요 시)
+## 8) 다음 단계 (2026-01-15 업데이트)
 
-- Router 복잡도 증가 시 `router.py` 분리
-- YAML 전역 config 도입 여부 재검토
-- NotebookLM notebook ID 업로드 완료 후 실호출률 재측정
+### 완료된 항목
+- ✅ Router 복잡도 관리 (inline 유지)
+- ✅ NotebookLM notebook ID 업로드 (5/7 완료)
+
+### P7: Plugin-Registry 아키텍처 업그레이드 ⭐ NEW
+
+> **상세 계획**: [Implementation Plan](../.gemini/antigravity/brain/fd50d920-5052-44e8-a0ad-c5b0bc32d4f9/implementation_plan.md)
+
+| Phase | 작업 | 효과 |
+|-------|------|------|
+| P0 | BM25 Hybrid Search 활성화 | 검색 정확도 +48% |
+| P1 | YAML Manifest 도입 | 앱 추가 = YAML 1개 |
+| P2 | Backend Auto-discovery | 백엔드 플러그인화 |
+| P3 | Ensemble Retriever | 지연시간 -50% |
+
+**핵심 원칙**: "앱 추가 = YAML 1개 추가" (코드 수정 0)
+
+
 

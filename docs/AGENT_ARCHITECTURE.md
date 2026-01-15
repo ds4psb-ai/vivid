@@ -39,6 +39,7 @@ graph TB
         PG[(PostgreSQL)]
         Redis[(Redis Cache)]
         Qdrant[(Qdrant Vector)]
+        BM25[(BM25 Index)]
     end
 
     UI -->|SSE Stream| Agent
@@ -48,11 +49,13 @@ graph TB
     TR --> WT
     DT -->|Video Gen| Veo
     DT -->|RAG Query| Qdrant
+    DT -->|Keyword Search| BM25
     Agent -->|Telemetry| EL
     EL -->|Persist| PG
     Agent -->|Session| Redis
     EH -->|UI Update| DP
 ```
+
 
 ---
 

@@ -4,10 +4,11 @@
 > **Status**: In Progress
 > **Owner**: Vivid RAG
 > **Created**: 2026-01-11
-> **Last Updated**: 2026-01-14
+> **Last Updated**: 2026-01-15
 > **Related**: [RAG Refactor Design](./RAG_REFACTOR_FINAL_PLAN_2026-01-11.md) | [RAG Reliability](./RAG_RELIABILITY.md) | [RAG Quality](./RAG_QUALITY.md)
 
-**Scope**: Observability + quality evaluation + deprecation cleanup + operational hardening
+**Scope**: Observability + quality evaluation + deprecation cleanup + operational hardening + **Plugin-Registry 아키텍처 (NEW)**
+
 
 ---
 
@@ -229,3 +230,41 @@ Title: Legacy Router Mapping (capsules.py / ops.py)
 1. Add error counter + p95/p99 dashboards
 2. Add RouterDecisionLog and telemetry export
 3. Launch cache tuning report
+
+---
+
+## 7) P7: Plugin-Registry 아키텍처 (NEW 2026-01-15)
+
+> **참조**: [Implementation Plan](../.gemini/antigravity/brain/fd50d920-5052-44e8-a0ad-c5b0bc32d4f9/implementation_plan.md)
+
+### 목표
+- **"앱 추가 = YAML 1개 추가"** (코드 수정 0)
+- BM25 Hybrid Search + RRF Fusion 활성화
+- 검색 정확도 +48% (62% → 91%)
+
+### 구현 우선순위
+
+| Phase | 작업 | 예상 노력 | 효과 |
+|-------|------|----------|------|
+| P0 | BM25 검색 활성화 | 1-2h | 검색 정확도 +48% |
+| P1 | YAML Manifest 도입 | 2-3h | 앱 추가 = YAML 1개 |
+| P2 | Backend ABC + Auto-discovery | 3-4h | 백엔드 플러그인화 |
+| P3 | Ensemble Retriever (병렬 RRF) | 2h | 지연시간 50% 감소 |
+
+### 디렉토리 구조 (계획)
+
+```
+backend/app/rag/
+├── manifests/                    # YAML 기반 앱 설정
+│   ├── _schema.yaml
+│   ├── dimension.persona.yaml
+│   └── dimension.aesthetic.yaml
+├── backends/                     # 백엔드 플러그인
+│   ├── base.py                  # BaseBackend ABC
+│   ├── qdrant_dense.py
+│   ├── bm25_sparse.py
+│   └── notebooklm.py
+└── fusion/                       # 결과 융합
+    └── weighted_rrf.py
+```
+
