@@ -5,6 +5,7 @@ Tests for UQSL API endpoints.
 """
 
 import pytest
+import pytest_asyncio
 from unittest.mock import AsyncMock, patch, MagicMock
 from httpx import AsyncClient, ASGITransport
 
@@ -16,7 +17,7 @@ from app.uqsl.models import (
 )
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def async_client():
     """Create async test client."""
     transport = ASGITransport(app=app)

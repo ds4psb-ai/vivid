@@ -13,6 +13,7 @@ from app.database import Base
 from app.models import *  # noqa: F401, F403
 from app.models_telemetry import *  # noqa: F401, F403
 from app.models_feedback import *  # noqa: F401, F403  # P6: RAG Feedback
+from app.models_uqsl import *  # noqa: F401, F403  # UQSL: Quality Selection Layer
 
 # Load settings
 from app.config import settings
