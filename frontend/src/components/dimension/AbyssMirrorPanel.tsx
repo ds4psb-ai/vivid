@@ -266,7 +266,7 @@ export default function AbyssMirrorPanel() {
                             response.persona_data?.persona?.summary || "심연의 거울 분석 완료"
                         );
                     }
-                    // Save preset
+                    // Save preset with messages
                     saveLocal({
                         meta: {
                             id: sessionId,
@@ -276,6 +276,11 @@ export default function AbyssMirrorPanel() {
                             schema_version: "2026-01-14",
                         },
                         ...response.persona_data,
+                        _messages: [...messages, {
+                            role: "assistant",
+                            content: response.ai_response,
+                        }],  // 메시지 히스토리 저장
+                        _current_stage: response.current_stage,
                     } as PersonaPreset);
                 }
 
@@ -321,6 +326,17 @@ export default function AbyssMirrorPanel() {
         if (found) {
             setPersonaData(found);
             setCompletionRate(found.meta.completion_rate);
+            // 메시지 히스토리 복원
+            const savedMessages = (found as Record<string, unknown>)._messages as Message[] | undefined;
+            if (savedMessages && savedMessages.length > 0) {
+                setMessages(savedMessages);
+            }
+            // 스테이지 복원
+            const savedStage = (found as Record<string, unknown>)._current_stage as string | undefined;
+            if (savedStage) {
+                setCurrentStage(savedStage);
+            }
+            setSessionId(found.meta.id);
             setPhase("chat");
             setShowPresetList(false);
         }
@@ -528,10 +544,10 @@ export default function AbyssMirrorPanel() {
                             )}
                             <div className={`max-w-[85%] space-y-2`}>
                                 <div className={`p-4 rounded-2xl ${msg.isCrisis
-                                        ? "bg-red-500/20 border-2 border-red-500/50"
-                                        : msg.role === "user"
-                                            ? "bg-violet-500/20 border border-violet-500/30"
-                                            : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"
+                                    ? "bg-red-500/20 border-2 border-red-500/50"
+                                    : msg.role === "user"
+                                        ? "bg-violet-500/20 border border-violet-500/30"
+                                        : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"
                                     }`}>
                                     {msg.isCrisis && (
                                         <div className="flex items-center gap-2 mb-2 text-red-400">
@@ -714,7 +730,17 @@ export default function AbyssMirrorPanel() {
                     </label>
                     <div className="max-h-40 overflow-y-auto space-y-1">
                         {traces.slice(0, 5).map((t, i) => (
-                            <div key={i} className="px-3 py-2 bg-white dark:bg-white/5 rounded-lg text-xs">
+                            <button
+                                key={i}
+                                onClick={() => {
+                                    // 가장 최근 세션 찾아서 resume
+                                    const latestPreset = presets[0];
+                                    if (latestPreset) {
+                                        handleResumePreset(latestPreset.meta.id);
+                                    }
+                                }}
+                                className="w-full px-3 py-2 bg-white dark:bg-white/5 rounded-lg text-xs hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-colors cursor-pointer text-left"
+                            >
                                 <div className="flex justify-between">
                                     <span className="text-violet-600 dark:text-violet-400 font-mono">
                                         {t.trace_id.slice(0, 8)}...
@@ -723,7 +749,7 @@ export default function AbyssMirrorPanel() {
                                         {t.stage}
                                     </span>
                                 </div>
-                            </div>
+                            </button>
                         ))}
                     </div>
                 </div>
