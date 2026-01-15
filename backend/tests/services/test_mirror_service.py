@@ -214,18 +214,19 @@ class TestCalculateCompletionRate:
 
 class TestCanComplete:
     """완료 가능 여부 테스트."""
-    
+
     def test_can_complete(self):
-        """80% 이상 + 8회 이상이면 완료 가능."""
-        assert can_complete(80, 8) is True
-        assert can_complete(85, 10) is True
-    
+        """80% 이상 + 10회 이상이면 완료 가능."""
+        assert can_complete(80, 10) is True
+        assert can_complete(85, 12) is True
+
     def test_cannot_complete_low_rate(self):
         """완료율 부족."""
         assert can_complete(70, 10) is False
-    
+
     def test_cannot_complete_low_chat(self):
-        """채팅 횟수 부족."""
+        """채팅 횟수 부족 (10회 미만)."""
+        assert can_complete(90, 8) is False
         assert can_complete(90, 5) is False
 
 

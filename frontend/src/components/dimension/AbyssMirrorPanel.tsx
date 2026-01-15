@@ -262,10 +262,11 @@ export default function AbyssMirrorPanel() {
                     setPhase("complete");
                     // ChainContext에 저장 (다음 차원으로 전달)
                     if (chainContext) {
+                        const personaSummary = (response.persona_data as Record<string, Record<string, string>>)?.persona?.summary;
                         chainContext.setChainData(
                             "abyss-mirror",
                             response.persona_data,
-                            response.persona_data?.persona?.summary || "심연의 거울 분석 완료"
+                            personaSummary || "심연의 거울 분석 완료"
                         );
                     }
                     // Save preset with messages
@@ -527,7 +528,7 @@ export default function AbyssMirrorPanel() {
                     </div>
                     <div className="flex justify-between mt-1">
                         <span className="text-[10px] text-slate-400 dark:text-white/30">
-                            {messages.length} 대화
+                            {messages.filter(m => m.role === "user").length} 답변
                         </span>
                         <span className="text-[10px] text-slate-400 dark:text-white/30">
                             {traces.length} traces
@@ -592,14 +593,14 @@ export default function AbyssMirrorPanel() {
 
                     {isLoading && (
                         <div className="flex gap-3">
-                            <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-500/20 border border-violet-300 dark:border-violet-500/30 flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-500/20 border border-violet-300 dark:border-violet-500/30 flex items-center justify-center animate-pulse">
                                 <Bot className="w-4 h-4 text-violet-600 dark:text-violet-400" />
                             </div>
-                            <div className="px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl">
-                                <div className="flex gap-1">
-                                    <span className="w-2 h-2 bg-violet-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                                    <span className="w-2 h-2 bg-violet-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                                    <span className="w-2 h-2 bg-violet-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                            <div className="flex-1 max-w-[70%] p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl">
+                                <div className="animate-pulse space-y-2">
+                                    <div className="h-3 bg-violet-200 dark:bg-violet-500/30 rounded w-3/4"></div>
+                                    <div className="h-3 bg-violet-200 dark:bg-violet-500/30 rounded w-1/2"></div>
+                                    <div className="h-3 bg-violet-200 dark:bg-violet-500/30 rounded w-2/3"></div>
                                 </div>
                             </div>
                         </div>
@@ -809,12 +810,15 @@ export default function AbyssMirrorPanel() {
     // Main Render
     // ========================================================================
 
+    // P7: 채팅 중에는 inline 로딩만 표시 (전체 화면 로딩 X)
+    const showFullscreenLoading = phase === "input" && isLoading;
+
     return (
         <>
             <TeachingPanelLayout
                 title="심연의 거울"
                 sidebarContent={SidebarContent}
-                isLoading={isLoading}
+                isLoading={showFullscreenLoading}
                 themeColor={THEME_COLOR}
             >
                 {phase === "input" ? renderInputForm() : renderChatInterface()}

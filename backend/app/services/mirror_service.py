@@ -372,17 +372,16 @@ def filter_persona_update_by_stage(persona_update: Dict[str, Any], current_stage
 
 def calculate_completion_rate(persona_data: Dict[str, Any], chat_count: int) -> float:
     """진행률 계산.
-    
-    개선된 공식 (2026-01):
-    - 사주 기본: 20%
-    - 필드 채움: 최대 50% (11개 필드 기준)
-    - 채팅 횟수: 최대 30% (10회 이상)
-    
-    이전: 필드 75% + 채팅 5% → 4번 대화에 89% 도달
-    개선: 필드 50% + 채팅 30% → 10+회 대화 필요
+
+    강화된 공식 (2026-01-15 v2):
+    - 사주 기본: 5%
+    - 필드 채움: 최대 15% (11개 필드 기준)
+    - 채팅 횟수: 최대 80% (18회 기준) - 대화가 핵심
+
+    목표: 3회 대화 → 약 30%, 15회 대화 → 80%+ 완료 가능
     """
     filled_count = 0
-    
+
     for field_path in REQUIRED_FIELDS:
         parts = field_path.split(".")
         value = persona_data
@@ -393,25 +392,25 @@ def calculate_completion_rate(persona_data: Dict[str, Any], chat_count: int) -> 
                 filled_count += 1
         except (AttributeError, TypeError):
             pass
-    
-    # 개선된 가중치
-    field_rate = (filled_count / len(REQUIRED_FIELDS)) * 50  # 50% (이전: 75%)
-    chat_bonus = min(chat_count / 10, 1.0) * 30  # 30% at 10회 (이전: 5% at 15회)
-    
-    # 사주 있으면 기본 20%
-    base = 20 if persona_data.get("saju", {}).get("dominant_element") else 0
-    
+
+    # 채팅 중심 가중치 (대화가 핵심)
+    field_rate = (filled_count / len(REQUIRED_FIELDS)) * 15  # 15%
+    chat_bonus = min(chat_count / 18, 1.0) * 80  # 80% at 18회
+
+    # 사주 있으면 기본 5%
+    base = 5 if persona_data.get("saju", {}).get("dominant_element") else 0
+
     return min(base + field_rate + chat_bonus, 100)
 
 
 def can_complete(completion_rate: float, chat_count: int) -> bool:
     """분석 완료 가능 여부.
-    
+
     조건:
     - 완료율 80% 이상
-    - 최소 8회 이상 채팅
+    - 최소 10회 이상 채팅 (사용자 답변 기준)
     """
-    return completion_rate >= 80 and chat_count >= 8
+    return completion_rate >= 80 and chat_count >= 10
 
 
 # ============================================================================
