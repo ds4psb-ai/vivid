@@ -1,0 +1,228 @@
+# UQSL Schema Extension for App Manifests
+# Version: 1.0
+# Generated: 2026-01-16
+#
+# This schema extends the base _schema.yaml with UQSL
+# (Universal Quality Selection Layer) configuration.
+#
+# UQSL Tiers:
+# - free: Rule-based quality evaluation (LLM cost $0)
+# - premium: LLM-as-Judge quality evaluation
+# - dev: Full analytics + BigQuery sync
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: "UQSL Configuration Schema"
+description: "Quality Selection Layer configuration for Vivid apps"
+
+# Add to root properties of _schema.yaml
+quality_selection:
+  type: object
+  description: "UQSL (Universal Quality Selection Layer) configuration"
+  properties:
+    enabled:
+      type: boolean
+      default: false
+      description: "Enable UQSL quality selection"
+
+    tier:
+      type: string
+      enum: [free, premium, dev]
+      default: free
+      description: |
+        UQSL tier level:
+        - free: Rule-based scoring, no LLM cost
+        - premium: LLM-as-Judge scoring
+        - dev: Full analytics + BigQuery sync
+
+    multi_generate:
+      type: object
+      description: "Multi-candidate generation configuration"
+      properties:
+        candidates:
+          type: integer
+          minimum: 1
+          maximum: 5
+          default: 3
+          description: "Number of candidates to generate"
+        parallel:
+          type: boolean
+          default: true
+          description: "Generate candidates in parallel"
+        diversity_factor:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.3
+          description: "Temperature variation between candidates"
+        timeout_per_candidate_ms:
+          type: integer
+          minimum: 1000
+          maximum: 60000
+          default: 30000
+          description: "Timeout per candidate generation"
+
+    quality_weights:
+      type: object
+      description: "Weights for quality score dimensions (sum should be 1.0)"
+      properties:
+        groundedness:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.30
+          description: "Weight for RAG grounding score"
+        relevance:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.25
+          description: "Weight for query relevance score"
+        coherence:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.20
+          description: "Weight for output coherence score"
+        creativity:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.15
+          description: "Weight for creative output score"
+        safety:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.10
+          description: "Weight for safety/policy compliance score"
+
+    selection:
+      type: object
+      description: "Selection strategy configuration"
+      properties:
+        strategy:
+          type: string
+          enum: [auto, hitl, hybrid, llm_judge]
+          default: auto
+          description: |
+            Selection strategy:
+            - auto: Best by quality score
+            - hitl: Human-in-the-loop selection
+            - hybrid: Auto if score > threshold, else HITL
+            - llm_judge: LLM selects best candidate
+        auto_threshold:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.85
+          description: "Auto-select threshold for hybrid mode"
+        top_k_for_hitl:
+          type: integer
+          minimum: 2
+          maximum: 5
+          default: 2
+          description: "Top K candidates to show for HITL"
+
+    bandit:
+      type: object
+      description: "Thompson Sampling bandit configuration"
+      properties:
+        enabled:
+          type: boolean
+          default: true
+          description: "Enable Thompson Sampling arm selection"
+        arms:
+          type: array
+          items:
+            type: string
+            pattern: "^[a-z_]+:[a-z_]+$"
+          default:
+            - backend:qdrant_hybrid
+            - backend:notebooklm
+          description: "Bandit arms to manage (type:id format)"
+          examples:
+            - backend:qdrant_hybrid
+            - backend:notebooklm
+            - reranker:local_cross_encoder
+            - generation:temperature_high
+        min_exploration_rate:
+          type: number
+          minimum: 0
+          maximum: 0.5
+          default: 0.05
+          description: "Minimum random exploration rate"
+        decay_factor:
+          type: number
+          minimum: 0.9
+          maximum: 1.0
+          default: 0.99
+          description: "Decay factor for non-stationary environments"
+
+    ensemble_plus_plus:
+      type: object
+      description: "Ensemble++ 3-way comparison configuration (NeurIPS 2025)"
+      properties:
+        enabled:
+          type: boolean
+          default: false
+          description: "Enable 3-way comparison (A vs B vs A+B)"
+        backend_a:
+          type: string
+          default: qdrant_hybrid
+          description: "Backend A identifier"
+        backend_b:
+          type: string
+          default: notebooklm
+          description: "Backend B identifier"
+        merge_strategy:
+          type: string
+          enum: [concat, interleave, weighted, llm_fuse]
+          default: concat
+          description: "Strategy for merging A+B results"
+
+    feedback:
+      type: object
+      description: "Feedback collection configuration"
+      properties:
+        enabled:
+          type: boolean
+          default: true
+          description: "Enable feedback collection"
+        implicit:
+          type: boolean
+          default: true
+          description: "Collect implicit feedback (dwell time, edits)"
+        explicit:
+          type: boolean
+          default: true
+          description: "Collect explicit feedback (thumbs up/down)"
+        bigquery_sync:
+          type: boolean
+          default: false
+          description: "Sync feedback to BigQuery (dev tier only)"
+        sync_interval_seconds:
+          type: integer
+          minimum: 60
+          maximum: 3600
+          default: 300
+          description: "BigQuery sync interval"
+
+# Example usage in app manifest:
+#
+# quality_selection:
+#   enabled: true
+#   tier: free
+#   multi_generate:
+#     candidates: 3
+#     parallel: true
+#   quality_weights:
+#     groundedness: 0.35
+#     relevance: 0.25
+#   selection:
+#     strategy: hybrid
+#     auto_threshold: 0.85
+#   bandit:
+#     enabled: true
+#     arms:
+#       - backend:qdrant_hybrid
+#       - backend:notebooklm

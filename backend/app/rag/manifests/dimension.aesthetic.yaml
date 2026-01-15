@@ -50,3 +50,46 @@ backends:
     config:
       corpus_name: auteur_dna
       use_grounding: true
+
+# UQSL (Universal Quality Selection Layer) Configuration
+# See _uqsl_schema.yaml for full schema
+quality_selection:
+  enabled: true
+  tier: premium  # LLM-as-Judge for aesthetic quality
+
+  multi_generate:
+    candidates: 3
+    parallel: true
+    diversity_factor: 0.3
+
+  quality_weights:
+    groundedness: 0.35   # Higher weight for auteur DNA grounding
+    relevance: 0.25
+    coherence: 0.20
+    creativity: 0.15
+    safety: 0.05
+
+  selection:
+    strategy: hybrid     # Auto if high confidence, else HITL
+    auto_threshold: 0.85
+    top_k_for_hitl: 2
+
+  bandit:
+    enabled: true
+    arms:
+      - backend:qdrant_hybrid
+      - backend:notebooklm
+      - reranker:local_cross_encoder
+    min_exploration_rate: 0.05
+
+  ensemble_plus_plus:
+    enabled: true
+    backend_a: qdrant_hybrid
+    backend_b: notebooklm
+    merge_strategy: concat
+
+  feedback:
+    enabled: true
+    implicit: true
+    explicit: true
+    bigquery_sync: false

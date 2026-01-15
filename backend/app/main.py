@@ -31,6 +31,9 @@ from app.routers.telemetry import router as telemetry_router
 # RAG Feedback (P6: Feedback Collection)
 from app.routers.rag_feedback import router as rag_feedback_router
 
+# UQSL (Universal Quality Selection Layer)
+from app.routers.uqsl import router as uqsl_router
+
 # Settlements (Revenue Distribution)
 from app.routers.settlements import router as settlements_router
 
@@ -213,6 +216,9 @@ app.include_router(rag_router, prefix="/api/v1", tags=["rag"])
 
 # RAG Pipeline (3-Tier Administration)
 app.include_router(rag_pipeline_router, prefix="/api/v1", tags=["rag-pipeline"])
+
+# UQSL (Universal Quality Selection Layer)
+app.include_router(uqsl_router, prefix="/api/v1", tags=["uqsl"])
 
 # Workflow (Tool Chain Orchestration)
 app.include_router(workflow_router, prefix="/api/v1", tags=["workflow"])

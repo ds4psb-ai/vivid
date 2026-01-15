@@ -2004,6 +2004,63 @@ class ApiClient {
     return this.request<DimensionToolsConfig>("/api/dimension/tools");
   }
 
+  // --- UQSL (Universal Quality Selection Layer) API ---
+
+  /**
+   * Generate N candidates for a given prompt with quality scores
+   * Uses multi-generate engine and quality evaluator
+   */
+  async uqslGenerateCandidates(
+    request: UQSLGenerateCandidatesRequest
+  ): Promise<UQSLGenerateCandidatesResponse> {
+    return this.request<UQSLGenerateCandidatesResponse>("/api/v1/uqsl/generate", {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
+  }
+
+  /**
+   * Submit user selection for HITL mode
+   */
+  async uqslSelectBest(request: UQSLSelectBestRequest): Promise<{ status: string; session_id: string }> {
+    return this.request<{ status: string; session_id: string }>("/api/v1/uqsl/select", {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
+  }
+
+  /**
+   * Submit feedback for Thompson Sampling update
+   * Free tier: $0 cost (no LLM calls)
+   */
+  async uqslSubmitFeedback(request: UQSLFeedbackRequest): Promise<{
+    status: string;
+    updated_arms: string[];
+  }> {
+    return this.request<{ status: string; updated_arms: string[] }>("/api/v1/uqsl/feedback", {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
+  }
+
+  /**
+   * Get three-way comparison results (Ensemble++ NeurIPS 2025)
+   * Returns A vs B vs A+B with recommended option
+   */
+  async uqslThreeWayComparison(request: UQSLThreeWayRequest): Promise<UQSLThreeWayResponse> {
+    return this.request<UQSLThreeWayResponse>("/api/v1/uqsl/three-way", {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
+  }
+
+  /**
+   * Get quality metrics for an app
+   */
+  async uqslGetQualityMetrics(appKey: string): Promise<UQSLQualityMetrics> {
+    return this.request<UQSLQualityMetrics>(`/api/v1/uqsl/metrics/${encodeURIComponent(appKey)}`);
+  }
+
   // --- Crebit API ---
 
   async applyCrebit(data: CrebitApplicationRequest): Promise<CrebitApplication> {
@@ -2510,6 +2567,95 @@ export interface DimensionResponse {
   output: Record<string, unknown>;
   error?: string;
   metrics?: DimensionMetrics;
+}
+
+// --- UQSL (Universal Quality Selection Layer) Types ---
+
+export interface UQSLQualityScore {
+  /** 거장 DNA 기반 그라운딩 (0-1) */
+  groundedness: number;
+  /** RAG 관련도 (0-1) */
+  relevance: number;
+  /** 일관성 (0-1) */
+  coherence: number;
+  /** 창의성 (0-1) */
+  creativity: number;
+  /** 안전성 (0-1) */
+  safety: number;
+  /** 가중 평균 총점 */
+  total_score: number;
+}
+
+export interface UQSLCandidateResult {
+  /** Candidate index */
+  idx: number;
+  /** Generated content */
+  content: string;
+  /** Metadata (seed, run_id, etc.) */
+  metadata: Record<string, unknown>;
+  /** Quality score */
+  quality_score?: UQSLQualityScore;
+  /** Latency in milliseconds */
+  latency_ms: number;
+  /** Backend used (e.g., "qdrant_hybrid", "notebooklm") */
+  backend_used: string;
+}
+
+export interface UQSLGenerateCandidatesRequest {
+  prompt: string;
+  app_key: string;
+  n_candidates?: number;
+  strategy?: "auto" | "hitl" | "hybrid" | "llm_judge";
+}
+
+export interface UQSLGenerateCandidatesResponse {
+  session_id: string;
+  candidates: UQSLCandidateResult[];
+  quality_scores: UQSLQualityScore[];
+  recommended_idx: number;
+  method: string;
+}
+
+export interface UQSLSelectBestRequest {
+  session_id: string;
+  selected_idx: number;
+}
+
+export interface UQSLFeedbackRequest {
+  selection_id: string;
+  feedback: "positive" | "negative";
+  quality_override?: Partial<UQSLQualityScore>;
+}
+
+export interface UQSLThreeWayCandidateData {
+  id: string;
+  content: string;
+  confidence?: number;
+  backend_used?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface UQSLThreeWayRequest {
+  query: string;
+  dimension: string;
+  auteur_key?: string;
+}
+
+export interface UQSLThreeWayResponse {
+  results: {
+    a: UQSLThreeWayCandidateData;
+    b: UQSLThreeWayCandidateData;
+    ab: UQSLThreeWayCandidateData;
+  };
+  recommended: "a" | "b" | "ab";
+  arms_stats: Record<string, { alpha: number; beta: number }>;
+}
+
+export interface UQSLQualityMetrics {
+  app_key: string;
+  total_selections: number;
+  positive_rate: number;
+  avg_quality_score: number;
 }
 
 export const api = new ApiClient();
