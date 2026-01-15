@@ -27,3 +27,26 @@ prompt_injection_template: |
 
   Channel these masters' visual languages and aesthetic principles.
   Include specific shot compositions, color palettes, and mood references.
+
+# P2: Backend configuration for ensemble retrieval (P3 ready)
+backends:
+  - id: qdrant_hybrid
+    weight: 0.6
+    enabled: true
+    config:
+      dimension: AD
+      prefetch_limit: 30
+      min_score: 0.45
+
+  - id: notebooklm
+    weight: 0.3
+    enabled: true
+    config:
+      notebook_id: DNA_봉준호  # Default auteur, overridden by auteur_key
+
+  - id: vertex_grounding
+    weight: 0.1
+    enabled: false  # Enable when Google Search context needed
+    config:
+      corpus_name: auteur_dna
+      use_grounding: true

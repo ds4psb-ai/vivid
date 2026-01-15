@@ -115,3 +115,48 @@ properties:
       cross_template:
         type: string
         description: "Template for multi-dataset result fusion"
+
+  # Backend configuration (P2 feature)
+  backends:
+    type: array
+    description: "P2: Backend configuration for ensemble retrieval"
+    items:
+      type: object
+      properties:
+        id:
+          type: string
+          enum: [qdrant_hybrid, notebooklm, vertex_grounding]
+          description: "Backend ID (auto-discovered from backends/ directory)"
+        weight:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 1.0
+          description: "Weight for RRF fusion (0.0 ~ 1.0)"
+        enabled:
+          type: boolean
+          default: true
+          description: "Whether this backend is enabled"
+        config:
+          type: object
+          additionalProperties: true
+          description: "Backend-specific configuration"
+          properties:
+            dimension:
+              type: string
+              description: "Dimension code for Qdrant backend"
+            prefetch_limit:
+              type: integer
+              default: 20
+              description: "Prefetch limit for hybrid search"
+            notebook_id:
+              type: string
+              description: "NotebookLM notebook ID"
+            corpus_name:
+              type: string
+              description: "Vertex AI corpus name"
+            use_grounding:
+              type: boolean
+              default: true
+              description: "Enable Google Search Grounding"
+      required: [id]
