@@ -44,6 +44,9 @@ import { EvidenceWrapper } from "./EvidenceWrapper";
 import { FeedbackWrapper } from "./FeedbackWrapper";
 import { NextNavWrapper } from "./NextNavWrapper";
 import { FileUploadWrapper } from "./FileUploadWrapper";
+import { ABComparisonWrapper } from "./ABComparisonWrapper";
+import { ThreeWayComparisonWrapper } from "./ThreeWayComparisonWrapper";
+import { MultiGenerateWrapper } from "./MultiGenerateWrapper";
 
 // =============================================================================
 // ROOT COMPONENT
@@ -121,6 +124,11 @@ export const DimensionPanel = Object.assign(DimensionPanelRoot, {
   Evidence: EvidenceWrapper,
   Feedback: FeedbackWrapper,
   NextNav: NextNavWrapper,
+
+  // UQSL Quality Selection Components
+  ABComparison: ABComparisonWrapper,
+  ThreeWay: ThreeWayComparisonWrapper,
+  MultiGenerate: MultiGenerateWrapper,
 });
 
 // =============================================================================

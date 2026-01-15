@@ -218,7 +218,7 @@ class TestEnsemblePlusPlusRouter:
         assert "거장 인사이트" in merged.answer
 
     def test_smart_merge_confidence(self):
-        """Test smart merge calculates correct confidence."""
+        """Test smart merge calculates correct confidence with b_primary strategy."""
         router = EnsemblePlusPlusRouter()
 
         result_a = router._mock_result("test", "a")
@@ -227,11 +227,40 @@ class TestEnsemblePlusPlusRouter:
         result_b = router._mock_result("test", "b")
         result_b.confidence = 0.8
 
-        merged = router._smart_merge(result_a, result_b, "test")
+        # Use explicit b_primary strategy to test original formula
+        merged = router._smart_merge(result_a, result_b, "test", strategy="b_primary")
 
         # Merged confidence = (0.6 + 0.8) / 2 + 0.1 = 0.8
         expected = (0.6 + 0.8) / 2 + 0.1
         assert abs(merged.confidence - expected) < 0.01
+
+    def test_smart_merge_adaptive_strategy_selection(self):
+        """Test adaptive strategy selects correct merge strategy based on query."""
+        router = EnsemblePlusPlusRouter()
+
+        # 거장 키워드 → b_primary
+        strategy = router._select_adaptive_strategy(
+            "봉준호 스타일", 0.6, 0.8, "short", "short"
+        )
+        assert strategy == "b_primary"
+
+        # 기술 키워드 → quality_gate
+        strategy = router._select_adaptive_strategy(
+            "how to implement this", 0.6, 0.8, "short", "short"
+        )
+        assert strategy == "quality_gate"
+
+        # 짧은 답변 → weighted_blend
+        strategy = router._select_adaptive_strategy(
+            "general query", 0.6, 0.6, "short", "short"
+        )
+        assert strategy == "weighted_blend"
+
+        # 신뢰도 차이 큼 → quality_gate
+        strategy = router._select_adaptive_strategy(
+            "some query", 0.3, 0.9, "long answer" * 50, "long answer" * 50
+        )
+        assert strategy == "quality_gate"
 
 
 class TestSingleton:

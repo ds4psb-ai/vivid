@@ -166,7 +166,7 @@ class ThreeWayResult(BaseModel):
     query: str = Field(description="Original query")
     results: dict[Literal["a", "b", "ab"], CandidateResult] = Field(description="Three-way results")
     recommended: Literal["a", "b", "ab"] = Field(description="Recommended option")
-    arms_stats: dict[str, dict[str, int]] = Field(description="Thompson Sampling arm statistics")
+    arms_stats: dict[str, dict[str, float | int]] = Field(description="Thompson Sampling arm statistics")
 
     class Config:
         json_schema_extra = {

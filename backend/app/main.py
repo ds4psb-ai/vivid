@@ -217,8 +217,8 @@ app.include_router(rag_router, prefix="/api/v1", tags=["rag"])
 # RAG Pipeline (3-Tier Administration)
 app.include_router(rag_pipeline_router, prefix="/api/v1", tags=["rag-pipeline"])
 
-# UQSL (Universal Quality Selection Layer)
-app.include_router(uqsl_router, prefix="/api/v1", tags=["uqsl"])
+# UQSL (Universal Quality Selection Layer) - prefix already in router
+app.include_router(uqsl_router, tags=["uqsl"])
 
 # Workflow (Tool Chain Orchestration)
 app.include_router(workflow_router, prefix="/api/v1", tags=["workflow"])

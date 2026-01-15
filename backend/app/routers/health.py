@@ -3,10 +3,13 @@ Health Check Router
 
 Provides system health endpoints for monitoring and load balancer checks.
 """
+import logging
 from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends
+
+logger = logging.getLogger(__name__)
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -177,3 +180,86 @@ async def rag_cache_health() -> dict:
             "status": "error",
             "error": str(e)
         }
+
+
+@router.get("/health/uqsl")
+async def uqsl_health(db: AsyncSession = Depends(get_db)) -> dict:
+    """
+    UQSL (Universal Quality Selection Layer) health check.
+
+    Reports:
+    - Thompson Sampling router status
+    - Active sessions count
+    - Metrics collection status
+    - Arm statistics summary
+    """
+    health_data = {
+        "status": "healthy",
+        "components": {},
+    }
+
+    # Check metrics
+    try:
+        from app.uqsl.metrics import get_uqsl_metrics_summary
+        health_data["components"]["metrics"] = get_uqsl_metrics_summary()
+    except Exception as e:
+        health_data["components"]["metrics"] = {
+            "status": "error",
+            "error": str(e),
+        }
+
+    # Check Thompson Sampling router
+    try:
+        from app.uqsl.thompson_sampling import get_initialized_router
+        ts_router = await get_initialized_router(db)
+        arm_stats = ts_router.get_all_stats()
+
+        total_trials = sum(
+            s.get("total_trials", 0)
+            for s in arm_stats.values()
+        )
+
+        health_data["components"]["thompson_sampling"] = {
+            "status": "healthy",
+            "total_arms": len(arm_stats),
+            "total_trials": total_trials,
+            "arms": list(arm_stats.keys()),
+        }
+    except Exception as e:
+        health_data["components"]["thompson_sampling"] = {
+            "status": "error",
+            "error": str(e),
+        }
+        health_data["status"] = "degraded"
+
+    # Check active sessions
+    try:
+        from app.routers.uqsl import _sessions
+        session_count = len(_sessions)
+        health_data["components"]["sessions"] = {
+            "status": "healthy",
+            "active_sessions": session_count,
+        }
+    except Exception as e:
+        health_data["components"]["sessions"] = {
+            "status": "unknown",
+            "error": str(e),
+        }
+
+    # Check Ensemble++ router
+    try:
+        from app.uqsl.ensemble_plus_plus import get_ensemble_router
+        ensemble = get_ensemble_router()
+        health_data["components"]["ensemble_plus_plus"] = {
+            "status": "healthy",
+            "arms": list(ensemble.arms.keys()),
+        }
+    except Exception as e:
+        health_data["components"]["ensemble_plus_plus"] = {
+            "status": "error",
+            "error": str(e),
+        }
+        if health_data["status"] == "healthy":
+            health_data["status"] = "degraded"
+
+    return health_data

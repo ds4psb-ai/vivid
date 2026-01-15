@@ -235,8 +235,9 @@ class TestLLMJudge:
 
     @pytest.mark.asyncio
     async def test_premium_evaluate_uses_llm_methods(self):
-        """Test premium tier calls LLM judge methods."""
-        evaluator = QualityEvaluator(use_llm_judge=True, tier="premium")
+        """Test premium tier with G-Eval disabled calls LLM judge methods."""
+        # G-Eval disabled to test legacy llm_simple mode
+        evaluator = QualityEvaluator(use_llm_judge=True, tier="premium", use_geval=False)
         candidate = CandidateResult(idx=0, content="Test content with multiple sentences. It should be evaluated.")
 
         with patch.object(evaluator, '_llm_judge_creativity', new_callable=AsyncMock) as mock_creativity, \
@@ -247,11 +248,35 @@ class TestLLMJudge:
 
             score = await evaluator.evaluate(candidate, context=None)
 
-            # LLM judge should be called for premium tier
+            # LLM judge should be called for premium tier (llm_simple mode)
             mock_creativity.assert_called_once()
             mock_coherence.assert_called_once()
             assert score.creativity == 0.8
             assert score.coherence == 0.9
+
+    @pytest.mark.asyncio
+    async def test_premium_evaluate_uses_geval(self):
+        """Test premium tier with G-Eval enabled uses G-Eval evaluation."""
+        evaluator = QualityEvaluator(use_llm_judge=True, tier="premium", use_geval=True)
+        candidate = CandidateResult(idx=0, content="Test content with multiple sentences. It should be evaluated.")
+
+        # Check that evaluation mode is geval
+        assert evaluator.evaluation_mode == "geval"
+
+        with patch.object(evaluator, '_geval_evaluate', new_callable=AsyncMock) as mock_geval:
+            mock_geval.return_value = {
+                "groundedness": 0.7,
+                "relevance": 0.8,
+                "coherence": 0.9,
+                "creativity": 0.85,
+            }
+
+            score = await evaluator.evaluate(candidate, context=None)
+
+            # G-Eval should be called for premium tier
+            mock_geval.assert_called_once()
+            assert score.coherence == 0.9
+            assert score.creativity == 0.85
 
     @pytest.mark.asyncio
     async def test_free_tier_no_llm(self):

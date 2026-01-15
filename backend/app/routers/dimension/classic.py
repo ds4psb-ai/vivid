@@ -19,6 +19,8 @@ from ._base import (
     get_byok_key,
     _execute_dimension_tool,
     _execute_dimension_tool_stream,
+    _execute_dimension_tool_multi,
+    _execute_dimension_tool_multi_stream,
     _validate_language,
     _validate_model,
     _validate_aspect_ratio,
@@ -220,6 +222,131 @@ async def generate_1d_prompt_stream(
             byok_key=byok_key,
             db=db,
             inputs_summary={"topic": request.topic[:100], "style": request.style},
+            intent=intent,
+        ),
+        media_type="text/event-stream",
+        headers=get_sse_headers(),
+    )
+
+
+# ============================================================================
+# 1D Origin - UQSL Multi-Generate
+# ============================================================================
+
+class PromptMultiGenerateRequest(BaseModel):
+    """Request model for 1D Origin UQSL multi-candidate generation."""
+    topic: str = Field(..., min_length=1, max_length=MAX_TOPIC_LENGTH, description="Video topic or concept")
+    style: str = Field("cinematic", max_length=100, description="Visual style")
+    mood: str = Field("neutral", max_length=100, description="Mood or atmosphere")
+    duration: int = Field(6, ge=4, le=8, description="Video duration in seconds")
+    language: str = Field("ko", description="Output language")
+    model: str = Field("gemini-3-flash-preview", description="AI model")
+    # UQSL specific
+    n_candidates: int = Field(3, ge=2, le=5, description="Number of candidates to generate")
+    strategy: str = Field("auto", description="Selection strategy: auto, quality, hitl")
+
+    @field_validator("topic", "style", "mood", mode="before")
+    @classmethod
+    def strip_strings(cls, v: str) -> str:
+        return _strip_string(v)
+
+    @field_validator("language")
+    @classmethod
+    def validate_language(cls, v: str) -> str:
+        return _validate_language(v)
+
+    @field_validator("model")
+    @classmethod
+    def validate_model(cls, v: str) -> str:
+        return _validate_model(v)
+
+
+@router.post(
+    "/1d/multi-generate",
+    summary="1D Origin: UQSL Multi-Generate",
+    description="Generate multiple Veo prompt candidates with quality evaluation.",
+    tags=["Dimension 1D", "UQSL"],
+)
+async def generate_1d_prompt_multi(
+    request: PromptMultiGenerateRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    UQSL Multi-Generate for 1D Origin.
+
+    Generates N candidates in parallel, evaluates quality scores, and
+    recommends the best candidate using Thompson Sampling.
+    """
+    from app.routers.intent_helpers import with_intent
+    intent = with_intent(request)
+
+    return await _execute_dimension_tool_multi(
+        capsule_id=DimensionCapsuleId.PROMPT_GENERATE,
+        tool_key="generate_veo_prompt",
+        inputs={
+            "topic": request.topic,
+            "style": request.style,
+            "mood": request.mood,
+            "duration": f"{request.duration} seconds",
+            "language": request.language,
+        },
+        model=request.model,
+        user=user,
+        byok_key=byok_key,
+        db=db,
+        inputs_summary={"topic": request.topic[:100], "style": request.style},
+        n_candidates=request.n_candidates,
+        strategy=request.strategy,
+        intent=intent,
+    )
+
+
+@router.post(
+    "/1d/multi-generate/stream",
+    summary="1D Origin: UQSL Multi-Generate (SSE Stream)",
+    description="Generate multiple Veo prompts with real-time streaming.",
+    tags=["Dimension 1D", "UQSL"],
+)
+async def generate_1d_prompt_multi_stream(
+    request: PromptMultiGenerateRequest,
+    user: dict = Depends(get_current_user),
+    byok_key: Optional[str] = Depends(get_byok_key),
+    db: AsyncSession = Depends(get_db),
+) -> StreamingResponse:
+    """
+    UQSL Multi-Generate SSE Streaming for 1D Origin.
+
+    Events:
+    - progress: Generation progress
+    - candidate: Individual candidate result
+    - quality: Quality score for candidate
+    - selection: Final selection with recommendation
+    - complete: Final response
+    """
+    from app.routers.intent_helpers import with_intent
+    intent = with_intent(request)
+
+    return StreamingResponse(
+        _execute_dimension_tool_multi_stream(
+            capsule_id=DimensionCapsuleId.PROMPT_GENERATE,
+            tool_key="generate_veo_prompt",
+            operation_name="프롬프트 다중 생성",
+            inputs={
+                "topic": request.topic,
+                "style": request.style,
+                "mood": request.mood,
+                "duration": f"{request.duration} seconds",
+                "language": request.language,
+            },
+            model=request.model,
+            user=user,
+            byok_key=byok_key,
+            db=db,
+            inputs_summary={"topic": request.topic[:100], "style": request.style},
+            n_candidates=request.n_candidates,
+            strategy=request.strategy,
             intent=intent,
         ),
         media_type="text/event-stream",

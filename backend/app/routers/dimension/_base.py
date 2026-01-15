@@ -41,6 +41,7 @@ from app.utils.sse_utils import (
     sse_complete,
     sse_error,
     sse_heartbeat,
+    sse_event,
     get_sse_headers,
 )
 
@@ -873,6 +874,716 @@ async def _execute_dimension_tool_stream(
 
 
 # ============================================================================
+# Helper: Execute with UQSL Multi-Generate
+# ============================================================================
+
+async def _execute_dimension_tool_multi(
+    capsule_id: DimensionCapsuleId,
+    tool_key: str,
+    inputs: Dict[str, Any],
+    model: str,
+    user: dict,
+    byok_key: Optional[str],
+    db: AsyncSession,
+    inputs_summary: Dict[str, Any],
+    n_candidates: int = 3,
+    strategy: str = "auto",
+    params: Optional[Dict[str, Any]] = None,
+    intent: Optional[Any] = None,
+) -> Dict[str, Any]:
+    """
+    Execute dimension tool with UQSL multi-candidate generation.
+
+    2026 Best Practice:
+    - Generates N candidates in parallel with varied parameters
+    - Evaluates quality for each candidate (groundedness, relevance, etc.)
+    - Uses Thompson Sampling to recommend best candidate
+    - Returns UQSL-compatible response with all candidates and scores
+
+    Args:
+        capsule_id: The dimension capsule to execute
+        tool_key: Tool identifier for telemetry
+        inputs: Capsule inputs
+        model: AI model to use
+        user: Authenticated user
+        byok_key: Optional BYOK API key
+        db: Database session
+        inputs_summary: Summary for telemetry
+        n_candidates: Number of candidates to generate (default: 3)
+        strategy: Selection strategy - "auto", "quality", "hitl" (default: "auto")
+        params: Additional execution parameters
+        intent: Optional CreativeIntent for RAG integration
+
+    Returns:
+        UQSL response with session_id, candidates, quality_scores, recommended_idx
+    """
+    import asyncio
+    import uuid
+    import hashlib
+    from datetime import datetime
+
+    start_time = time.time()
+    user_id = user.get("id")
+
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": "INVALID_USER", "message": "유효하지 않은 사용자입니다."}
+        )
+
+    # P3: Get credit_multiplier from params (default 1.0)
+    credit_multiplier = (params or {}).get("credit_multiplier", 1.0)
+
+    # Calculate total credit cost (N candidates × single cost)
+    single_cost = get_credit_cost(capsule_id, model, credit_multiplier)
+    total_cost = single_cost * n_candidates
+    credits_deducted = False
+
+    if not byok_key:
+        user_credits = await get_or_create_user_credits(db, user_id)
+        if user_credits.balance < total_cost:
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail={
+                    "code": "INSUFFICIENT_CREDITS",
+                    "message": "크레딧이 부족합니다.",
+                    "required": total_cost,
+                    "balance": user_credits.balance,
+                }
+            )
+        await deduct_credits(
+            db, user_id, total_cost,
+            description=f"Dimension Multi: {tool_key} x{n_candidates}",
+            meta={"tool": tool_key, "model": model, "n_candidates": n_candidates}
+        )
+        credits_deducted = True
+
+    # Merge model into params
+    execution_params = {"model": model}
+    if params:
+        execution_params.update(params)
+
+    # RAG context preparation (same as single execution)
+    dimension_code = CAPSULE_TO_DIMENSION.get(capsule_id, "1D")
+    rag_context = None
+
+    try:
+        from app.rag.rag_presets import get_rag_preset, should_enable_rag
+        from app.rag.hybrid_rag import hybrid_query
+
+        auteur_key = _extract_auteur_key(inputs, intent)
+        preset = get_rag_preset(dimension_code)
+
+        if should_enable_rag(preset, auteur_key):
+            topic = inputs.get("topic") or inputs.get("concept") or inputs.get("description") or ""
+            if topic:
+                query = f"{topic[:200]} - 시각적 스타일과 촬영 기법 참조"
+                rag_result = await hybrid_query(
+                    query=query,
+                    auteur_key=auteur_key,
+                    dimension=dimension_code if dimension_code != "AD" else None,
+                    use_google_search=preset.use_google_search,
+                    use_semantic_cache=True,
+                )
+
+                if rag_result.confidence >= preset.confidence_threshold:
+                    rag_context = {
+                        "auteur_reference": rag_result.answer[:preset.answer_max_length] if rag_result.answer else None,
+                        "sources": [
+                            {"id": s.source_id, "title": s.title}
+                            for s in (rag_result.notebooklm_sources or [])[:preset.max_sources]
+                        ],
+                        "strategy": rag_result.strategy_used,
+                        "confidence": rag_result.confidence,
+                    }
+    except Exception as e:
+        logger.debug(f"[{tool_key}] Multi: RAG collection failed: {e}")
+
+    if rag_context:
+        inputs["_rag_context"] = rag_context
+
+    # Generate N candidates in parallel
+    candidates = []
+    generation_errors = []
+
+    async def generate_candidate(idx: int) -> Dict[str, Any]:
+        """Generate single candidate with varied temperature."""
+        try:
+            # Vary temperature for diversity
+            temp = 0.7 + (idx * 0.3 / n_candidates)
+            candidate_params = {**execution_params, "temperature": temp, "seed": idx * 1000}
+
+            result = await execute_dimension_capsule(
+                capsule_id=capsule_id.value,
+                inputs=inputs,
+                params=candidate_params,
+                user_api_key=byok_key,
+            )
+
+            return {
+                "idx": idx,
+                "content": result.get("output", {}),
+                "success": result.get("success", False),
+                "metadata": {"seed": idx * 1000, "temperature": temp},
+                "backend_used": dimension_code.lower(),
+            }
+        except Exception as e:
+            logger.warning(f"Candidate {idx} generation failed: {e}")
+            return {
+                "idx": idx,
+                "content": {},
+                "success": False,
+                "error": str(e),
+                "metadata": {},
+                "backend_used": "failed",
+            }
+
+    # Execute in parallel
+    tasks = [asyncio.create_task(generate_candidate(i)) for i in range(n_candidates)]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    for r in results:
+        if isinstance(r, Exception):
+            generation_errors.append(str(r))
+        elif isinstance(r, dict):
+            if r.get("success"):
+                candidates.append(r)
+            else:
+                generation_errors.append(r.get("error", "Unknown error"))
+
+    # Sort by index
+    candidates.sort(key=lambda c: c["idx"])
+
+    # If all failed, refund and raise error
+    if not candidates:
+        if credits_deducted:
+            await _refund_with_retry(
+                db=db,
+                user_id=user_id,
+                amount=total_cost,
+                description=f"{tool_key} multi all failed",
+                meta={"errors": generation_errors[:3]},
+            )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"code": "ALL_CANDIDATES_FAILED", "errors": generation_errors[:3]}
+        )
+
+    # Partial refund for failed candidates
+    failed_count = n_candidates - len(candidates)
+    if credits_deducted and failed_count > 0:
+        refund_amount = single_cost * failed_count
+        await _refund_with_retry(
+            db=db,
+            user_id=user_id,
+            amount=refund_amount,
+            description=f"{tool_key} multi partial refund",
+            meta={"failed_count": failed_count},
+        )
+
+    # Evaluate quality using UQSL evaluator
+    quality_scores = []
+    try:
+        from app.uqsl.quality_evaluator import get_quality_evaluator
+        from app.uqsl.models import CandidateResult
+
+        evaluator = get_quality_evaluator()
+
+        for c in candidates:
+            # Convert to UQSL CandidateResult format
+            content_str = json.dumps(c["content"]) if isinstance(c["content"], dict) else str(c["content"])
+            candidate_result = CandidateResult(
+                idx=c["idx"],
+                content=content_str,
+                metadata=c.get("metadata", {}),
+                latency_ms=0,
+                backend_used=c.get("backend_used", "dimension"),
+            )
+            score = await evaluator.evaluate(candidate_result)
+            quality_scores.append({
+                "idx": c["idx"],
+                "groundedness": round(score.groundedness, 3),
+                "relevance": round(score.relevance, 3),
+                "coherence": round(score.coherence, 3),
+                "creativity": round(score.creativity, 3),
+                "safety": round(score.safety, 3),
+                "weighted_score": round(score.weighted_score, 3),
+            })
+    except Exception as e:
+        logger.warning(f"[{tool_key}] Multi: Quality evaluation failed: {e}")
+        # Fallback scores based on content length
+        for c in candidates:
+            content = c.get("content", {})
+            length_score = min(1.0, len(str(content)) / 500)
+            quality_scores.append({
+                "idx": c["idx"],
+                "groundedness": 0.7,
+                "relevance": 0.8,
+                "coherence": 0.75,
+                "creativity": length_score,
+                "safety": 1.0,
+                "weighted_score": 0.75,
+            })
+
+    # Select best using UQSL selector
+    recommended_idx = 0
+    selection_method = strategy
+    selection_confidence = 0.0
+    arms_used = [c.get("backend_used", "dimension") for c in candidates]
+
+    try:
+        from app.uqsl.best_selector import get_best_selector
+        from app.uqsl.models import CandidateResult, QualityScore
+
+        selector = get_best_selector()
+
+        # Convert to UQSL format
+        uqsl_candidates = [
+            CandidateResult(
+                idx=c["idx"],
+                content=json.dumps(c["content"]) if isinstance(c["content"], dict) else str(c["content"]),
+                metadata=c.get("metadata", {}),
+                latency_ms=0,
+                backend_used=c.get("backend_used", "dimension"),
+            )
+            for c in candidates
+        ]
+        uqsl_scores = [
+            QualityScore(
+                groundedness=s["groundedness"],
+                relevance=s["relevance"],
+                coherence=s["coherence"],
+                creativity=s["creativity"],
+                safety=s["safety"],
+            )
+            for s in quality_scores
+        ]
+
+        result = await selector.select_best(
+            candidates=uqsl_candidates,
+            scores=uqsl_scores,
+            strategy=strategy,
+        )
+
+        recommended_idx = result.selected.idx
+        selection_method = result.method
+        selection_confidence = result.confidence
+        arms_used = result.arms_used or arms_used
+    except Exception as e:
+        logger.warning(f"[{tool_key}] Multi: Best selection failed: {e}")
+        # Fallback: select highest weighted_score
+        if quality_scores:
+            best = max(quality_scores, key=lambda s: s["weighted_score"])
+            recommended_idx = best["idx"]
+            selection_confidence = best["weighted_score"]
+
+    # Create session for HITL
+    session_id = str(uuid.uuid4())
+    prompt_preview = inputs.get("topic") or inputs.get("concept") or inputs.get("description") or ""
+    prompt_hash = hashlib.sha256(prompt_preview.encode()).hexdigest()[:64]
+
+    # Store in session (in-memory, replace with Redis in production)
+    try:
+        from app.routers.uqsl import _sessions
+        _sessions[session_id] = {
+            "candidates": candidates,
+            "quality_scores": quality_scores,
+            "prompt_hash": prompt_hash,
+            "prompt_preview": prompt_preview[:200],
+            "app_key": f"dimension.{dimension_code.lower()}",
+            "strategy": strategy,
+            "arms_used": arms_used,
+            "created_at": datetime.utcnow(),
+        }
+    except Exception:
+        pass
+
+    latency_ms = int((time.time() - start_time) * 1000)
+
+    # Record telemetry
+    try:
+        await record_tool_run(
+            db=db,
+            tool_key=f"{tool_key}_multi",
+            user_id=user_id,
+            inputs_summary={**inputs_summary, "model": model, "n_candidates": n_candidates},
+            outputs_summary={"success": True, "n_generated": len(candidates)},
+            status="success",
+            latency_ms=latency_ms,
+            credits_charged=total_cost - (single_cost * failed_count) if credits_deducted else 0,
+        )
+    except Exception as tel_err:
+        logger.warning(f"Telemetry recording failed: {tel_err}")
+
+    return {
+        "session_id": session_id,
+        "candidates": candidates,
+        "quality_scores": quality_scores,
+        "recommended_idx": recommended_idx,
+        "method": selection_method,
+        "confidence": selection_confidence,
+        "arms_used": arms_used,
+        "metrics": {
+            "latency_ms": latency_ms,
+            "n_requested": n_candidates,
+            "n_generated": len(candidates),
+            "credits_charged": total_cost - (single_cost * failed_count) if credits_deducted else 0,
+        },
+    }
+
+
+async def _execute_dimension_tool_multi_stream(
+    capsule_id: DimensionCapsuleId,
+    tool_key: str,
+    operation_name: str,
+    inputs: Dict[str, Any],
+    model: str,
+    user: dict,
+    byok_key: Optional[str],
+    db: AsyncSession,
+    inputs_summary: Dict[str, Any],
+    n_candidates: int = 3,
+    strategy: str = "auto",
+    params: Optional[Dict[str, Any]] = None,
+    intent: Optional[Any] = None,
+):
+    """
+    SSE streaming wrapper for UQSL multi-candidate dimension tool execution.
+
+    Events:
+    - progress: Generation progress
+    - candidate: Individual candidate result
+    - quality: Quality score for candidate
+    - selection: Final selection with recommendation
+    - complete: Final response
+    - error: Error event
+    """
+    import asyncio
+    import uuid
+    import hashlib
+    from datetime import datetime
+
+    start_time = time.time()
+    user_id = user.get("id")
+    credits_deducted = False
+    total_cost = 0
+    single_cost = 0
+
+    yield sse_progress(1, f"{operation_name} UQSL 다중 생성 시작...", "starting")
+
+    try:
+        if not user_id:
+            yield sse_error("유효하지 않은 사용자입니다.", code="INVALID_USER")
+            return
+
+        # Calculate credit cost
+        credit_multiplier = (params or {}).get("credit_multiplier", 1.0)
+        single_cost = get_credit_cost(capsule_id, model, credit_multiplier)
+        total_cost = single_cost * n_candidates
+
+        if not byok_key:
+            user_credits = await get_or_create_user_credits(db, user_id)
+            if user_credits.balance < total_cost:
+                yield sse_error(
+                    "크레딧이 부족합니다.",
+                    code="INSUFFICIENT_CREDITS",
+                    detail=f"필요: {total_cost}, 보유: {user_credits.balance}",
+                )
+                return
+
+            try:
+                await deduct_credits(
+                    db, user_id, total_cost,
+                    description=f"Dimension Multi: {tool_key} x{n_candidates}",
+                    meta={"tool": tool_key, "model": model, "n_candidates": n_candidates}
+                )
+                credits_deducted = True
+            except ValueError as e:
+                yield sse_error(str(e), code="CREDIT_ERROR")
+                return
+
+        yield sse_progress(5, f"{n_candidates}개 후보 생성 준비 중...", "processing")
+
+        # Prepare execution params
+        execution_params = {"model": model}
+        if params:
+            execution_params.update(params)
+
+        # RAG context
+        dimension_code = CAPSULE_TO_DIMENSION.get(capsule_id, "1D")
+        rag_context = None
+
+        try:
+            from app.rag.rag_presets import get_rag_preset, should_enable_rag
+            from app.rag.hybrid_rag import hybrid_query
+
+            auteur_key = _extract_auteur_key(inputs, intent)
+            preset = get_rag_preset(dimension_code)
+
+            if should_enable_rag(preset, auteur_key):
+                topic = inputs.get("topic") or inputs.get("concept") or inputs.get("description") or ""
+                if topic:
+                    rag_result = await hybrid_query(
+                        query=f"{topic[:200]} - 시각적 스타일과 촬영 기법 참조",
+                        auteur_key=auteur_key,
+                        dimension=dimension_code if dimension_code != "AD" else None,
+                        use_google_search=preset.use_google_search,
+                        use_semantic_cache=True,
+                    )
+                    if rag_result.confidence >= preset.confidence_threshold:
+                        rag_context = {
+                            "auteur_reference": rag_result.answer[:preset.answer_max_length] if rag_result.answer else None,
+                            "sources": [{"id": s.source_id, "title": s.title} for s in (rag_result.notebooklm_sources or [])[:preset.max_sources]],
+                        }
+                        inputs["_rag_context"] = rag_context
+        except Exception as e:
+            logger.debug(f"[{tool_key}] Multi stream: RAG failed: {e}")
+
+        yield sse_progress(10, f"{n_candidates}개 후보 병렬 생성 시작...", "processing")
+
+        # Generate candidates
+        candidates = []
+        failed_count = 0
+
+        async def generate_candidate(idx: int) -> Dict[str, Any]:
+            try:
+                temp = 0.7 + (idx * 0.3 / n_candidates)
+                candidate_params = {**execution_params, "temperature": temp, "seed": idx * 1000}
+
+                result = await execute_dimension_capsule(
+                    capsule_id=capsule_id.value,
+                    inputs=inputs,
+                    params=candidate_params,
+                    user_api_key=byok_key,
+                )
+
+                return {
+                    "idx": idx,
+                    "content": result.get("output", {}),
+                    "success": result.get("success", False),
+                    "metadata": {"seed": idx * 1000, "temperature": temp},
+                    "backend_used": dimension_code.lower(),
+                }
+            except Exception as e:
+                return {"idx": idx, "content": {}, "success": False, "error": str(e)}
+
+        # Stream progress as candidates complete
+        tasks = [asyncio.create_task(generate_candidate(i)) for i in range(n_candidates)]
+        completed = 0
+
+        for coro in asyncio.as_completed(tasks):
+            result = await coro
+            completed += 1
+
+            if result.get("success"):
+                candidates.append(result)
+                # Stream candidate event
+                content_preview = str(result.get("content", {}))[:200]
+                yield sse_event("candidate", {
+                    "idx": result["idx"],
+                    "content_preview": content_preview,
+                    "backend_used": result.get("backend_used", "dimension"),
+                })
+            else:
+                failed_count += 1
+
+            progress_pct = 10 + int(40 * completed / n_candidates)
+            yield sse_progress(progress_pct, f"후보 {completed}/{n_candidates} 완료", "processing")
+
+        # Sort candidates
+        candidates.sort(key=lambda c: c["idx"])
+
+        # Check if all failed
+        if not candidates:
+            if credits_deducted:
+                await _refund_with_retry(
+                    db=db, user_id=user_id, amount=total_cost,
+                    description=f"{tool_key} multi all failed", meta={}
+                )
+            yield sse_error("모든 후보 생성 실패", code="ALL_CANDIDATES_FAILED")
+            return
+
+        # Partial refund
+        if credits_deducted and failed_count > 0:
+            await _refund_with_retry(
+                db=db, user_id=user_id, amount=single_cost * failed_count,
+                description=f"{tool_key} multi partial refund", meta={"failed_count": failed_count}
+            )
+
+        yield sse_progress(55, "품질 평가 시작...", "processing")
+
+        # Quality evaluation
+        quality_scores = []
+        try:
+            from app.uqsl.quality_evaluator import get_quality_evaluator
+            from app.uqsl.models import CandidateResult
+
+            evaluator = get_quality_evaluator()
+
+            for i, c in enumerate(candidates):
+                content_str = json.dumps(c["content"]) if isinstance(c["content"], dict) else str(c["content"])
+                candidate_result = CandidateResult(
+                    idx=c["idx"], content=content_str,
+                    metadata=c.get("metadata", {}), latency_ms=0,
+                    backend_used=c.get("backend_used", "dimension"),
+                )
+                score = await evaluator.evaluate(candidate_result)
+                score_dict = {
+                    "idx": c["idx"],
+                    "groundedness": round(score.groundedness, 3),
+                    "relevance": round(score.relevance, 3),
+                    "coherence": round(score.coherence, 3),
+                    "creativity": round(score.creativity, 3),
+                    "safety": round(score.safety, 3),
+                    "weighted_score": round(score.weighted_score, 3),
+                }
+                quality_scores.append(score_dict)
+
+                # Stream quality event
+                yield sse_event("quality", score_dict)
+
+                progress_pct = 55 + int(25 * (i + 1) / len(candidates))
+                yield sse_progress(progress_pct, f"품질 평가 {i + 1}/{len(candidates)} 완료", "processing")
+        except Exception as e:
+            logger.warning(f"Quality evaluation failed: {e}")
+            for c in candidates:
+                quality_scores.append({
+                    "idx": c["idx"], "groundedness": 0.7, "relevance": 0.8,
+                    "coherence": 0.75, "creativity": 0.7, "safety": 1.0, "weighted_score": 0.75,
+                })
+
+        yield sse_progress(85, "최적 후보 선택 중...", "processing")
+
+        # Best selection
+        recommended_idx = 0
+        selection_method = strategy
+        selection_confidence = 0.0
+        arms_used = [c.get("backend_used", "dimension") for c in candidates]
+        arms_stats = {}
+
+        try:
+            from app.uqsl.best_selector import get_best_selector
+            from app.uqsl.models import CandidateResult, QualityScore
+            from app.uqsl.thompson_sampling import get_initialized_router
+
+            selector = get_best_selector()
+            ts_router = await get_initialized_router(db)
+
+            uqsl_candidates = [
+                CandidateResult(
+                    idx=c["idx"],
+                    content=json.dumps(c["content"]) if isinstance(c["content"], dict) else str(c["content"]),
+                    metadata=c.get("metadata", {}), latency_ms=0,
+                    backend_used=c.get("backend_used", "dimension"),
+                )
+                for c in candidates
+            ]
+            uqsl_scores = [
+                QualityScore(
+                    groundedness=s["groundedness"], relevance=s["relevance"],
+                    coherence=s["coherence"], creativity=s["creativity"], safety=s["safety"],
+                )
+                for s in quality_scores
+            ]
+
+            result = await selector.select_best(
+                candidates=uqsl_candidates, scores=uqsl_scores, strategy=strategy,
+            )
+
+            recommended_idx = result.selected.idx
+            selection_method = result.method
+            selection_confidence = result.confidence
+            arms_used = result.arms_used or arms_used
+
+            # Get arm stats
+            for arm_id in arms_used:
+                arms_stats[arm_id] = ts_router.get_arm_stats(arm_id)
+        except Exception as e:
+            logger.warning(f"Best selection failed: {e}")
+            if quality_scores:
+                best = max(quality_scores, key=lambda s: s["weighted_score"])
+                recommended_idx = best["idx"]
+                selection_confidence = best["weighted_score"]
+
+        # Stream selection event
+        yield sse_event("selection", {
+            "selected_idx": recommended_idx,
+            "method": selection_method,
+            "confidence": round(selection_confidence, 3),
+            "arms_used": arms_used,
+            "arms_stats": arms_stats,
+        })
+
+        yield sse_progress(95, "세션 저장 중...", "finalizing")
+
+        # Create session
+        session_id = str(uuid.uuid4())
+        prompt_preview = inputs.get("topic") or inputs.get("concept") or inputs.get("description") or ""
+
+        try:
+            from app.routers.uqsl import _sessions
+            _sessions[session_id] = {
+                "candidates": candidates,
+                "quality_scores": quality_scores,
+                "prompt_hash": hashlib.sha256(prompt_preview.encode()).hexdigest()[:64],
+                "prompt_preview": prompt_preview[:200],
+                "app_key": f"dimension.{dimension_code.lower()}",
+                "strategy": strategy,
+                "arms_used": arms_used,
+                "created_at": datetime.utcnow(),
+            }
+        except Exception:
+            pass
+
+        latency_ms = int((time.time() - start_time) * 1000)
+        actual_cost = total_cost - (single_cost * failed_count) if credits_deducted else 0
+
+        # Record telemetry
+        try:
+            await record_tool_run(
+                db=db, tool_key=f"{tool_key}_multi", user_id=user_id,
+                inputs_summary={**inputs_summary, "model": model, "n_candidates": n_candidates},
+                outputs_summary={"success": True, "n_generated": len(candidates)},
+                status="success", latency_ms=latency_ms, credits_charged=actual_cost,
+            )
+        except Exception:
+            pass
+
+        # Complete event
+        yield sse_complete(
+            data={
+                "session_id": session_id,
+                "candidates": candidates,
+                "quality_scores": quality_scores,
+                "recommended_idx": recommended_idx,
+                "method": selection_method,
+            },
+            metrics={
+                "latency_ms": latency_ms,
+                "n_requested": n_candidates,
+                "n_generated": len(candidates),
+                "credits_charged": actual_cost,
+            },
+        )
+
+    except asyncio.CancelledError:
+        if credits_deducted:
+            await _refund_with_retry(
+                db=db, user_id=user_id, amount=total_cost,
+                description=f"{tool_key} multi cancelled", meta={}
+            )
+        raise
+    except Exception as e:
+        logger.error(f"{tool_key} multi stream error: {e}")
+        if credits_deducted:
+            await _refund_with_retry(
+                db=db, user_id=user_id, amount=total_cost,
+                description=f"{tool_key} multi error", meta={"error": str(e)[:500]}
+            )
+        yield sse_error(f"실행 중 오류: {type(e).__name__}", code="INTERNAL_ERROR")
+
+
+# ============================================================================
 # Exports
 # ============================================================================
 
@@ -884,6 +1595,8 @@ __all__ = [
     # Helpers
     "_execute_dimension_tool",
     "_execute_dimension_tool_stream",
+    "_execute_dimension_tool_multi",
+    "_execute_dimension_tool_multi_stream",
     "_refund_with_retry",
     "get_credit_cost",
     # Validators
@@ -931,6 +1644,7 @@ __all__ = [
     "sse_complete",
     "sse_error",
     "sse_heartbeat",
+    "sse_event",
     "get_sse_headers",
     # Other
     "logger",

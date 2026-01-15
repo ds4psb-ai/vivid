@@ -1,322 +1,836 @@
 """
-UQSL API Router - Universal Quality Selection Layer Endpoints
+UQSL Router - Universal Quality Selection Layer API
 
 Endpoints:
-- POST /generate: Generate N candidates with quality scores
-- POST /select: HITL selection
-- POST /feedback: Submit feedback for Thompson Sampling
+- POST /generate: Generate N candidates and select best
+- POST /select: HITL selection (human-in-the-loop)
+- POST /feedback: Submit user feedback for Thompson Sampling
 - POST /three-way: Ensemble++ 3-way comparison
 - GET /metrics/{app_key}: Quality metrics for app
-
-2026 Best Practice:
-- BackgroundTasks for async history saving
-- Pydantic v2 response models
-- Proper error handling with HTTPException
+- GET /arms: Get Thompson Sampling arm statistics
 """
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
+import json
+import logging
+import time
 import uuid
-from typing import Literal
+from typing import Optional, AsyncGenerator
+from datetime import datetime
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import BaseModel, Field
 
 from app.database import get_db
+from app.utils.sse_utils import (
+    sse_progress,
+    sse_complete,
+    sse_error,
+    sse_heartbeat,
+    sse_event,
+    get_sse_headers,
+)
+
+logger = logging.getLogger(__name__)
+from app.models_uqsl import SelectionHistory, EnsembleComparison, BanditArm, UQSLConfig
 from app.uqsl.models import (
-    CandidateResult,
-    QualityScore,
     GenerateCandidatesRequest,
     GenerateCandidatesResponse,
     SelectBestRequest,
     SubmitFeedbackRequest,
     ThreeWayComparisonRequest,
+    ThreeWayResult,
+    QualityScore,
+    CandidateResult,
 )
 from app.uqsl.multi_generate import get_multi_generate_engine
 from app.uqsl.quality_evaluator import get_quality_evaluator
 from app.uqsl.best_selector import get_best_selector
-from app.uqsl.thompson_sampling import get_thompson_sampling_router
-from app.uqsl.ensemble_plus_plus import get_ensemble_router
+from app.uqsl.thompson_sampling import get_thompson_sampling_router, get_initialized_router
 
-router = APIRouter(prefix="/uqsl", tags=["UQSL"])
+router = APIRouter(prefix="/api/v1/uqsl", tags=["uqsl"])
 
+# In-memory session store (replace with Redis in production)
+_sessions: dict[str, dict] = {}
 
-# ============================================================================
-# Response Models
-# ============================================================================
-
-class SelectResponse(BaseModel):
-    status: str
-    session_id: str
-
-
-class FeedbackResponse(BaseModel):
-    status: str
-    updated_arms: list[str]
-
-
-class ThreeWayResponse(BaseModel):
-    results: dict
-    recommended: Literal["a", "b", "ab"]
-    arms_stats: dict
-
-
-class QualityMetricsResponse(BaseModel):
-    app_key: str
-    total_selections: int
-    positive_rate: float
-    avg_quality_score: float
-
-
-# ============================================================================
-# Endpoints
-# ============================================================================
 
 @router.post("/generate", response_model=GenerateCandidatesResponse)
 async def generate_candidates(
     request: GenerateCandidatesRequest,
-    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
     """
-    동일 프롬프트로 N개 후보 생성 후 품질 평가
+    Generate N candidates and optionally auto-select best.
 
-    - Free tier: 규칙 기반 품질 평가 (LLM 비용 $0)
-    - Premium tier: LLM-as-Judge 품질 평가
+    Flow:
+    1. MultiGenerateEngine generates N candidates in parallel
+    2. QualityEvaluator scores each candidate
+    3. BestSelector chooses best based on strategy
+    4. Results stored in session for HITL if needed
     """
+    engine = get_multi_generate_engine()
+    evaluator = get_quality_evaluator()
+    selector = get_best_selector()
+
+    # Initialize Thompson Sampling router
+    ts_router = await get_initialized_router(db)
+
+    # 1. Generate candidates
+    candidates = await engine.generate_candidates(
+        prompt=request.prompt,
+        app_key=request.app_key,
+        n_candidates=request.n_candidates,
+    )
+
+    # 2. Evaluate quality
+    scores = await evaluator.evaluate_batch(candidates)
+
+    # 3. Select best
+    result = await selector.select_best(
+        candidates=candidates,
+        scores=scores,
+        strategy=request.strategy,
+    )
+
+    # 4. Store session for potential HITL
+    prompt_hash = hashlib.sha256(request.prompt.encode()).hexdigest()[:64]
+    _sessions[result.session_id] = {
+        "candidates": candidates,
+        "scores": scores,
+        "prompt_hash": prompt_hash,
+        "prompt_preview": request.prompt[:200],
+        "app_key": request.app_key,
+        "strategy": request.strategy,
+        "arms_used": result.arms_used,
+        "created_at": datetime.utcnow(),
+    }
+
+    # 5. Record selection history
     try:
-        # 1. Get engines
-        engine = get_multi_generate_engine()
-        evaluator = get_quality_evaluator(tier="free")  # TODO: Get from app config
-        selector = get_best_selector()
-
-        # 2. Generate N candidates
-        candidates = await engine.generate_candidates(
-            prompt=request.prompt,
+        history = SelectionHistory(
             app_key=request.app_key,
-            n_candidates=request.n_candidates,
+            prompt_hash=prompt_hash,
+            prompt_preview=request.prompt[:200],
+            n_candidates=len(candidates),
+            candidates_data={"candidates": [c.model_dump() for c in candidates]},
+            quality_scores={"scores": [s.model_dump() for s in scores]},
+            selected_idx=result.selected.idx,
+            selection_method=result.method,
+            selection_confidence=result.confidence,
+            arms_used=result.arms_used,
+            dimension=request.app_key.split(".")[-1] if "." in request.app_key else None,
         )
+        db.add(history)
+        await db.commit()
+    except Exception:
+        # Don't fail request if history recording fails
+        pass
 
-        # 3. Get RAG context for quality evaluation (optional)
-        context = None
+    return GenerateCandidatesResponse(
+        session_id=result.session_id,
+        candidates=result.all_candidates,
+        quality_scores=scores,
+        recommended_idx=result.selected.idx,
+        method=result.method,
+    )
+
+
+@router.post("/generate/stream")
+async def generate_candidates_stream(
+    request: GenerateCandidatesRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    SSE streaming endpoint for N-candidate generation with real-time updates.
+
+    2026 Best Practice:
+    - Real-time progress for each candidate generation
+    - Quality score streaming as evaluated
+    - Thompson Sampling arm selection events
+
+    Events:
+    - progress: Generation progress (percent, message, stage)
+    - candidate: Individual candidate result
+    - quality: Quality score for candidate
+    - selection: Final selection with recommendation
+    - complete: Final response
+    - error: Error event
+    """
+    async def generate_stream() -> AsyncGenerator[str, None]:
+        start_time = time.perf_counter()
+        session_id = str(uuid.uuid4())
+
         try:
-            from app.rag.hybrid_rag import hybrid_query
-            context = await hybrid_query(
-                query=request.prompt,
-                app_key=request.app_key,
+            yield sse_progress(1, "UQSL 생성 시작...", "starting")
+
+            engine = get_multi_generate_engine()
+            evaluator = get_quality_evaluator()
+            selector = get_best_selector()
+            ts_router = await get_initialized_router(db)
+
+            yield sse_progress(5, "Thompson Sampling 라우터 초기화 완료", "processing")
+
+            # Generate candidates with streaming updates
+            n = request.n_candidates
+            candidates = []
+            scores = []
+
+            yield sse_progress(10, f"{n}개 후보 생성 시작...", "processing")
+
+            # Generate candidates in parallel with progress updates
+            async def generate_single(idx: int) -> tuple[int, CandidateResult]:
+                candidate = await engine._execute_generation(
+                    prompt=request.prompt,
+                    app_key=request.app_key,
+                    seed=idx * 1000,
+                    temperature=0.7 + (idx * 0.3 / n),
+                    timeout=30.0,
+                )
+                return idx, CandidateResult(
+                    idx=idx,
+                    content=candidate.get("output", ""),
+                    metadata={"seed": idx * 1000},
+                    latency_ms=0,
+                    backend_used=candidate.get("backend_used", "default"),
+                )
+
+            # Stream candidate generation
+            tasks = [asyncio.create_task(generate_single(i)) for i in range(n)]
+            completed = 0
+
+            for coro in asyncio.as_completed(tasks):
+                idx, candidate = await coro
+                completed += 1
+                candidates.append(candidate)
+
+                # Stream candidate result
+                progress_pct = 10 + int(40 * completed / n)
+                yield sse_event("candidate", {
+                    "idx": idx,
+                    "content_preview": candidate.content[:200] if candidate.content else "",
+                    "backend_used": candidate.backend_used,
+                })
+                yield sse_progress(progress_pct, f"후보 {completed}/{n} 생성 완료", "processing")
+
+            # Sort candidates by index
+            candidates.sort(key=lambda c: c.idx)
+
+            yield sse_progress(55, "품질 평가 시작...", "processing")
+
+            # Evaluate quality with streaming
+            for i, candidate in enumerate(candidates):
+                score = await evaluator.evaluate(candidate)
+                scores.append(score)
+
+                # Stream quality score
+                yield sse_event("quality", {
+                    "idx": i,
+                    "groundedness": round(score.groundedness, 3),
+                    "relevance": round(score.relevance, 3),
+                    "coherence": round(score.coherence, 3),
+                    "creativity": round(score.creativity, 3),
+                    "safety": round(score.safety, 3),
+                    "weighted_score": round(score.weighted_score, 3),
+                })
+
+                progress_pct = 55 + int(25 * (i + 1) / n)
+                yield sse_progress(progress_pct, f"후보 {i + 1}/{n} 품질 평가 완료", "processing")
+
+            yield sse_progress(85, "최적 후보 선택 중...", "processing")
+
+            # Select best candidate
+            result = await selector.select_best(
+                candidates=candidates,
+                scores=scores,
+                strategy=request.strategy,
             )
-        except Exception:
-            pass  # Continue without context
 
-        # 4. Quality evaluation
-        scores = await evaluator.evaluate_batch(candidates, context)
+            # Stream selection event with Thompson Sampling stats
+            arms_stats = {}
+            for arm_id in result.arms_used or []:
+                arms_stats[arm_id] = ts_router.get_arm_stats(arm_id)
 
-        # 5. Best selection
-        result = await selector.select_best(
-            candidates,
-            scores,
-            request.strategy,
-        )
+            yield sse_event("selection", {
+                "selected_idx": result.selected.idx,
+                "method": result.method,
+                "confidence": round(result.confidence, 3),
+                "arms_used": result.arms_used,
+                "arms_stats": arms_stats,
+            })
 
-        # 6. Save history (background)
-        background_tasks.add_task(
-            _save_selection_history,
-            db,
-            result.session_id,
-            request.app_key,
-            request.prompt,
-            candidates,
-            scores,
-            result.selected.idx,
-            result.method,
-        )
+            yield sse_progress(95, "세션 저장 중...", "finalizing")
 
-        return GenerateCandidatesResponse(
-            session_id=result.session_id,
-            candidates=result.all_candidates,
-            quality_scores=scores,
-            recommended_idx=result.selected.idx,
-            method=result.method,
-        )
+            # Store session
+            prompt_hash = hashlib.sha256(request.prompt.encode()).hexdigest()[:64]
+            _sessions[session_id] = {
+                "candidates": candidates,
+                "scores": scores,
+                "prompt_hash": prompt_hash,
+                "prompt_preview": request.prompt[:200],
+                "app_key": request.app_key,
+                "strategy": request.strategy,
+                "arms_used": result.arms_used,
+                "created_at": datetime.utcnow(),
+            }
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Generation failed: {str(e)}")
+            # Record history (non-blocking)
+            try:
+                history = SelectionHistory(
+                    app_key=request.app_key,
+                    prompt_hash=prompt_hash,
+                    prompt_preview=request.prompt[:200],
+                    n_candidates=len(candidates),
+                    candidates_data={"candidates": [c.model_dump() for c in candidates]},
+                    quality_scores={"scores": [s.model_dump() for s in scores]},
+                    selected_idx=result.selected.idx,
+                    selection_method=result.method,
+                    selection_confidence=result.confidence,
+                    arms_used=result.arms_used,
+                    dimension=request.app_key.split(".")[-1] if "." in request.app_key else None,
+                )
+                db.add(history)
+                await db.commit()
+            except Exception as e:
+                logger.warning(f"History recording failed: {e}")
+
+            latency_ms = int((time.perf_counter() - start_time) * 1000)
+
+            # Final complete event
+            yield sse_complete(
+                data={
+                    "session_id": session_id,
+                    "candidates": [c.model_dump() for c in result.all_candidates],
+                    "quality_scores": [s.model_dump() for s in scores],
+                    "recommended_idx": result.selected.idx,
+                    "method": result.method,
+                },
+                metrics={
+                    "latency_ms": latency_ms,
+                    "n_candidates": n,
+                    "strategy": request.strategy,
+                },
+            )
+
+        except asyncio.CancelledError:
+            yield sse_error("요청이 취소되었습니다", code="CANCELLED")
+        except Exception as e:
+            logger.exception(f"UQSL stream error: {e}")
+            yield sse_error(f"생성 오류: {type(e).__name__}", code="INTERNAL_ERROR")
+
+    return StreamingResponse(
+        generate_stream(),
+        media_type="text/event-stream",
+        headers=get_sse_headers(),
+    )
 
 
-@router.post("/select", response_model=SelectResponse)
-async def select_best(
+@router.post("/three-way/stream")
+async def three_way_comparison_stream(
+    request: ThreeWayComparisonRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    SSE streaming for Ensemble++ 3-way comparison.
+
+    Streams:
+    - Individual backend results (A, B)
+    - Ensemble merge result (A+B)
+    - Thompson Sampling recommendation
+    """
+    async def stream_three_way() -> AsyncGenerator[str, None]:
+        start_time = time.perf_counter()
+
+        try:
+            yield sse_progress(1, "Ensemble++ 3-way 비교 시작...", "starting")
+
+            from app.uqsl.ensemble_plus_plus import get_ensemble_router
+
+            ensemble = get_ensemble_router()
+            ts_router = await get_initialized_router(db)
+
+            yield sse_progress(10, "Qdrant 검색 중 (옵션 A)...", "processing")
+
+            # Get results in parallel but stream as they complete
+            async def get_qdrant_result():
+                return await ensemble.get_qdrant_only_result(
+                    query=request.query,
+                    dimension=request.dimension,
+                )
+
+            async def get_notebooklm_result():
+                return await ensemble.get_notebooklm_only_result(
+                    query=request.query,
+                    auteur_key=request.auteur_key,
+                )
+
+            results = {}
+
+            # Execute in parallel
+            tasks = {
+                "a": asyncio.create_task(get_qdrant_result()),
+                "b": asyncio.create_task(get_notebooklm_result()),
+            }
+
+            for key, task in tasks.items():
+                try:
+                    result = await task
+                    results[key] = result
+                    yield sse_event(f"result_{key}", {
+                        "option": key.upper(),
+                        "source": "qdrant" if key == "a" else "notebooklm",
+                        "data": result.model_dump() if result else None,
+                    })
+                    yield sse_progress(
+                        30 if key == "a" else 60,
+                        f"옵션 {key.upper()} 완료",
+                        "processing",
+                    )
+                except Exception as e:
+                    logger.warning(f"Result {key} failed: {e}")
+                    results[key] = None
+
+            yield sse_progress(70, "앙상블 병합 중 (옵션 A+B)...", "processing")
+
+            # Ensemble merge
+            try:
+                results["ab"] = await ensemble.merge_results(
+                    qdrant_result=results.get("a"),
+                    notebooklm_result=results.get("b"),
+                )
+                yield sse_event("result_ab", {
+                    "option": "A+B",
+                    "source": "ensemble",
+                    "data": results["ab"].model_dump() if results["ab"] else None,
+                })
+            except Exception as e:
+                logger.warning(f"Ensemble merge failed: {e}")
+                results["ab"] = None
+
+            yield sse_progress(85, "Thompson Sampling 추천 계산 중...", "processing")
+
+            # Get recommendation
+            recommended = await ensemble.select_best_arm()
+
+            # Get arm statistics
+            arms_stats = {
+                "qdrant_only": ts_router.get_arm_stats("backend:qdrant_hybrid"),
+                "notebooklm_only": ts_router.get_arm_stats("backend:notebooklm"),
+                "ensemble_ab": ts_router.get_arm_stats("ensemble:ab"),
+            }
+
+            yield sse_event("recommendation", {
+                "recommended": recommended,
+                "arms_stats": arms_stats,
+            })
+
+            # Record comparison
+            try:
+                query_hash = hashlib.sha256(request.query.encode()).hexdigest()[:64]
+                comparison = EnsembleComparison(
+                    query=request.query,
+                    query_hash=query_hash,
+                    dimension=request.dimension,
+                    auteur_key=request.auteur_key,
+                    result_a=results["a"].model_dump() if results.get("a") else {},
+                    result_b=results["b"].model_dump() if results.get("b") else {},
+                    result_ab=results["ab"].model_dump() if results.get("ab") else {},
+                    recommended=recommended,
+                    arms_stats_before=arms_stats,
+                )
+                db.add(comparison)
+                await db.commit()
+            except Exception as e:
+                logger.warning(f"Comparison recording failed: {e}")
+
+            latency_ms = int((time.perf_counter() - start_time) * 1000)
+
+            yield sse_complete(
+                data={
+                    "query": request.query,
+                    "results": {
+                        "a": results["a"].model_dump() if results.get("a") else None,
+                        "b": results["b"].model_dump() if results.get("b") else None,
+                        "ab": results["ab"].model_dump() if results.get("ab") else None,
+                    },
+                    "recommended": recommended,
+                    "arms_stats": arms_stats,
+                },
+                metrics={"latency_ms": latency_ms},
+            )
+
+        except asyncio.CancelledError:
+            yield sse_error("요청이 취소되었습니다", code="CANCELLED")
+        except Exception as e:
+            logger.exception(f"Three-way stream error: {e}")
+            yield sse_error(f"비교 오류: {type(e).__name__}", code="INTERNAL_ERROR")
+
+    return StreamingResponse(
+        stream_three_way(),
+        media_type="text/event-stream",
+        headers=get_sse_headers(),
+    )
+
+
+@router.post("/select")
+async def select_candidate(
     request: SelectBestRequest,
     db: AsyncSession = Depends(get_db),
 ):
     """
-    사용자가 HITL로 최종 선택
+    HITL selection endpoint.
 
-    Updates the selection history with user's choice.
+    Called when user selects from presented candidates.
+    Updates Thompson Sampling arms based on selection.
     """
-    try:
-        # Update selection history with user choice
-        # In a full implementation, this would update the database record
-        # For now, we just acknowledge the selection
+    session = _sessions.get(request.session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found or expired")
 
-        return SelectResponse(
-            status="selected",
-            session_id=request.session_id,
-        )
+    candidates = session.get("candidates", [])
+    if request.selected_idx >= len(candidates):
+        raise HTTPException(status_code=400, detail="Invalid candidate index")
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Selection failed: {str(e)}")
+    # Update Thompson Sampling for selected arm
+    ts_router = await get_initialized_router(db)
+    selected = candidates[request.selected_idx]
+    if selected.backend_used and selected.backend_used != "default":
+        await ts_router.update(db, f"backend:{selected.backend_used}", reward=True)
+
+    # Update non-selected arms
+    for i, c in enumerate(candidates):
+        if i != request.selected_idx and c.backend_used != "default":
+            await ts_router.update(db, f"backend:{c.backend_used}", reward=False)
+
+    # Update session
+    _sessions[request.session_id]["selected_idx"] = request.selected_idx
+    _sessions[request.session_id]["selection_time"] = datetime.utcnow()
+
+    return {
+        "status": "selected",
+        "session_id": request.session_id,
+        "selected_idx": request.selected_idx,
+    }
 
 
-@router.post("/feedback", response_model=FeedbackResponse)
+@router.post("/feedback")
 async def submit_feedback(
     request: SubmitFeedbackRequest,
-    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
     """
-    피드백 제출 + Thompson Sampling 업데이트
+    Submit user feedback for Thompson Sampling updates.
 
-    Free tier: 비용 $0 (LLM 호출 없음)
+    Positive feedback increases alpha, negative increases beta
+    for the arm that generated the selected candidate.
     """
+    # Find selection in history
     try:
-        # 1. Get Thompson Sampling router
-        ts_router = get_thompson_sampling_router()
-
-        # 2. Convert feedback to reward
-        reward = request.feedback == "positive"
-
-        # 3. Update arms (in-memory for now)
-        # In production, this would also update the database
-        updated_arms = []
-
-        # Update default arms based on feedback
-        default_arms = ["backend:qdrant_hybrid", "backend:notebooklm"]
-        for arm_id in default_arms:
-            await ts_router.update(None, arm_id, reward)
-            updated_arms.append(arm_id)
-
-        # 4. Sync to BigQuery (background)
-        background_tasks.add_task(
-            _sync_feedback_to_bigquery,
-            request.selection_id,
-            request.feedback,
+        selection_uuid = uuid.UUID(request.selection_id)
+        result = await db.execute(
+            select(SelectionHistory)
+            .where(SelectionHistory.id == selection_uuid)
         )
+        history = result.scalar_one_or_none()
+    except ValueError:
+        history = None
 
-        return FeedbackResponse(
-            status="recorded",
-            updated_arms=updated_arms,
-        )
+    if not history:
+        # Try session-based lookup
+        session = _sessions.get(request.selection_id)
+        if session:
+            arms_used = session.get("arms_used", [])
+        else:
+            # Accept feedback anyway for forward compatibility
+            arms_used = []
+    else:
+        arms_used = history.arms_used or []
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Feedback submission failed: {str(e)}")
+    # Update Thompson Sampling
+    ts_router = await get_initialized_router(db)
+    reward = request.feedback == "positive"
+
+    for arm_id in arms_used:
+        await ts_router.update(db, arm_id, reward=reward)
+
+    # Update history record if found
+    if history:
+        history.user_feedback = request.feedback
+        history.feedback_timestamp = datetime.utcnow()
+        await db.commit()
+
+    return {
+        "status": "recorded",
+        "feedback": request.feedback,
+        "arms_updated": arms_used,
+    }
 
 
-@router.post("/three-way", response_model=ThreeWayResponse)
+@router.post("/three-way", response_model=ThreeWayResult)
 async def three_way_comparison(
     request: ThreeWayComparisonRequest,
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Ensemble++ 3-Way 비교 (A vs B vs A+B)
+    Ensemble++ 3-way comparison (NeurIPS 2025).
 
-    NeurIPS 2025 기반 최신 앙상블 접근법
+    Returns results from:
+    - A: Qdrant only
+    - B: NotebookLM only
+    - AB: Ensemble merged
     """
-    try:
-        # Get Ensemble++ router
-        ensemble_router = get_ensemble_router()
+    from app.uqsl.ensemble_plus_plus import get_ensemble_router
 
-        # Get three-way results
-        results = await ensemble_router.get_three_way_results(
+    ensemble = get_ensemble_router()
+    ts_router = await get_initialized_router(db)
+
+    # Get 3-way results
+    results = await ensemble.get_three_way_results(
+        query=request.query,
+        dimension=request.dimension,
+        auteur_key=request.auteur_key,
+    )
+
+    # Get recommended option based on Thompson Sampling
+    recommended = await ensemble.select_best_arm()
+
+    # Get arm statistics
+    arms_stats = {
+        "qdrant_only": ts_router.get_arm_stats("backend:qdrant_hybrid"),
+        "notebooklm_only": ts_router.get_arm_stats("backend:notebooklm"),
+        "ensemble_ab": ts_router.get_arm_stats("ensemble:ab"),
+    }
+
+    # Record comparison
+    try:
+        query_hash = hashlib.sha256(request.query.encode()).hexdigest()[:64]
+        comparison = EnsembleComparison(
             query=request.query,
+            query_hash=query_hash,
             dimension=request.dimension,
             auteur_key=request.auteur_key,
-        )
-
-        # Get recommended arm
-        recommended = await ensemble_router.select_best_arm()
-
-        # Get arm stats
-        arm_stats = ensemble_router.get_arm_stats()
-
-        return ThreeWayResponse(
-            results={
-                "a": results["a"].model_dump(),
-                "b": results["b"].model_dump(),
-                "ab": results["ab"].model_dump(),
-            },
+            result_a=results["a"].model_dump() if results.get("a") else {},
+            result_b=results["b"].model_dump() if results.get("b") else {},
+            result_ab=results["ab"].model_dump() if results.get("ab") else {},
             recommended=recommended,
-            arms_stats=arm_stats,
+            arms_stats_before=arms_stats,
         )
+        db.add(comparison)
+        await db.commit()
+    except Exception:
+        pass
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Three-way comparison failed: {str(e)}")
+    return ThreeWayResult(
+        query=request.query,
+        results=results,
+        recommended=recommended,
+        arms_stats=arms_stats,
+    )
 
 
-@router.get("/metrics/{app_key}", response_model=QualityMetricsResponse)
-async def get_quality_metrics(
+@router.post("/three-way/select")
+async def select_three_way(
+    comparison_id: str,
+    selected: str,  # "a", "b", "ab", "skip"
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Record user selection from 3-way comparison.
+
+    Updates Thompson Sampling based on selection.
+    """
+    ts_router = await get_initialized_router(db)
+
+    # Map selection to arm
+    arm_map = {
+        "a": "backend:qdrant_hybrid",
+        "b": "backend:notebooklm",
+        "ab": "ensemble:ab",
+    }
+
+    if selected in arm_map:
+        # Reward selected arm
+        await ts_router.update(db, arm_map[selected], reward=True)
+
+        # Penalize non-selected arms
+        for key, arm_id in arm_map.items():
+            if key != selected:
+                await ts_router.update(db, arm_id, reward=False)
+
+    # Update comparison record
+    try:
+        comparison_uuid = uuid.UUID(comparison_id)
+        result = await db.execute(
+            select(EnsembleComparison).where(
+                EnsembleComparison.id == comparison_uuid
+            )
+        )
+        comparison = result.scalar_one_or_none()
+        if comparison:
+            comparison.user_selected = selected
+            comparison.selection_match = (comparison.recommended == selected)
+            comparison.arms_stats_after = ts_router.get_all_stats()
+            await db.commit()
+    except Exception:
+        pass
+
+    return {
+        "status": "recorded",
+        "selected": selected,
+    }
+
+
+@router.get("/metrics/{app_key}")
+async def get_metrics(
     app_key: str,
     db: AsyncSession = Depends(get_db),
 ):
     """
-    앱별 품질 메트릭 조회
+    Get quality metrics for an app.
 
-    Returns aggregated quality metrics for the app.
+    Returns aggregated statistics from selection history.
     """
-    try:
-        # In a full implementation, this would query from the database
-        # For now, return mock metrics
+    # Get total selections
+    total_result = await db.execute(
+        select(func.count(SelectionHistory.id))
+        .where(SelectionHistory.app_key == app_key)
+    )
+    total_selections = total_result.scalar() or 0
 
-        return QualityMetricsResponse(
-            app_key=app_key,
-            total_selections=100,  # Mock
-            positive_rate=0.75,    # Mock
-            avg_quality_score=0.82, # Mock
-        )
+    # Get positive rate
+    positive_result = await db.execute(
+        select(func.count(SelectionHistory.id))
+        .where(SelectionHistory.app_key == app_key)
+        .where(SelectionHistory.user_feedback == "positive")
+    )
+    positive_count = positive_result.scalar() or 0
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Metrics retrieval failed: {str(e)}")
+    feedback_result = await db.execute(
+        select(func.count(SelectionHistory.id))
+        .where(SelectionHistory.app_key == app_key)
+        .where(SelectionHistory.user_feedback.isnot(None))
+    )
+    feedback_count = feedback_result.scalar() or 0
+
+    positive_rate = positive_count / feedback_count if feedback_count > 0 else 0.0
+
+    # Get average quality score (from confidence as proxy)
+    avg_result = await db.execute(
+        select(func.avg(SelectionHistory.selection_confidence))
+        .where(SelectionHistory.app_key == app_key)
+    )
+    avg_quality_score = avg_result.scalar() or 0.0
+
+    return {
+        "app_key": app_key,
+        "total_selections": total_selections,
+        "positive_rate": round(positive_rate, 3),
+        "avg_quality_score": round(float(avg_quality_score), 3),
+        "feedback_count": feedback_count,
+    }
 
 
-# ============================================================================
-# Background Tasks
-# ============================================================================
+@router.get("/arms")
+async def get_arm_statistics(
+    arm_type: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get Thompson Sampling arm statistics.
 
-async def _save_selection_history(
-    db: AsyncSession,
-    session_id: str,
+    Returns current alpha/beta parameters and success rates.
+    """
+    ts_router = await get_initialized_router(db)
+    stats = ts_router.get_all_stats(arm_type)
+
+    return {
+        "arms": stats,
+        "total_arms": len(stats),
+    }
+
+
+@router.get("/config/{app_key}")
+async def get_config(
     app_key: str,
-    prompt: str,
-    candidates: list[CandidateResult],
-    scores: list[QualityScore],
-    selected_idx: int,
-    method: str,
+    db: AsyncSession = Depends(get_db),
 ):
-    """Save selection history to database (background task)"""
-    try:
-        # In production, this would insert into SelectionHistory table
-        # For now, just log
-        import logging
-        logging.info(
-            f"UQSL Selection: session={session_id}, app={app_key}, "
-            f"candidates={len(candidates)}, selected={selected_idx}, method={method}"
-        )
-    except Exception as e:
-        import logging
-        logging.error(f"Failed to save selection history: {e}")
+    """
+    Get UQSL configuration for an app.
+    """
+    result = await db.execute(
+        select(UQSLConfig).where(UQSLConfig.app_key == app_key)
+    )
+    config = result.scalar_one_or_none()
+
+    if not config:
+        # Return default config
+        return {
+            "app_key": app_key,
+            "n_candidates": 3,
+            "selection_strategy": "auto",
+            "tier": "free",
+            "enabled": True,
+            "auto_threshold": 0.85,
+            "top_k_for_hitl": 2,
+        }
+
+    return {
+        "app_key": config.app_key,
+        "n_candidates": config.n_candidates,
+        "selection_strategy": config.selection_strategy,
+        "quality_weights": config.quality_weights,
+        "bandit_arms": config.bandit_arms,
+        "tier": config.tier,
+        "enabled": config.enabled,
+        "auto_threshold": config.auto_threshold,
+        "top_k_for_hitl": config.top_k_for_hitl,
+    }
 
 
-async def _sync_feedback_to_bigquery(
-    selection_id: str,
-    feedback: str,
+@router.put("/config/{app_key}")
+async def update_config(
+    app_key: str,
+    n_candidates: Optional[int] = None,
+    selection_strategy: Optional[str] = None,
+    tier: Optional[str] = None,
+    enabled: Optional[bool] = None,
+    db: AsyncSession = Depends(get_db),
 ):
-    """Sync feedback to BigQuery (background task)"""
-    try:
-        # In production, this would stream to BigQuery
-        # For now, just log
-        import logging
-        logging.info(f"UQSL Feedback: selection={selection_id}, feedback={feedback}")
-    except Exception as e:
-        import logging
-        logging.error(f"Failed to sync feedback to BigQuery: {e}")
+    """
+    Update UQSL configuration for an app.
+    """
+    result = await db.execute(
+        select(UQSLConfig).where(UQSLConfig.app_key == app_key)
+    )
+    config = result.scalar_one_or_none()
+
+    if not config:
+        # Create new config
+        config = UQSLConfig(app_key=app_key)
+        db.add(config)
+
+    # Update fields
+    if n_candidates is not None:
+        config.n_candidates = n_candidates
+    if selection_strategy is not None:
+        config.selection_strategy = selection_strategy
+    if tier is not None:
+        config.tier = tier
+    if enabled is not None:
+        config.enabled = enabled
+
+    await db.commit()
+    await db.refresh(config)
+
+    return {
+        "status": "updated",
+        "app_key": config.app_key,
+        "n_candidates": config.n_candidates,
+        "selection_strategy": config.selection_strategy,
+        "tier": config.tier,
+        "enabled": config.enabled,
+    }

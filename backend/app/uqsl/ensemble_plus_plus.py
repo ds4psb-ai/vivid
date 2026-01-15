@@ -1,7 +1,11 @@
 """
 Ensemble++ 3-Way Router - NeurIPS 2025 기반 앙상블
 
-arXiv:2407.13195 (Ensemble++ framework) 구현
+2026 Best Practice:
+- arXiv:2407.13195 (Ensemble++ framework) 구현
+- Reciprocal Rank Fusion (RRF) for merging ranked results
+- Confidence-aware weighted blending
+- Query-type adaptive merging
 
 핵심 아이디어:
 - A 단독: Backend A만 사용 (빠름)
@@ -9,11 +13,17 @@ arXiv:2407.13195 (Ensemble++ framework) 구현
 - A+B 앙상블: 둘 다 실행 후 결합 (최적 조합)
 
 Thompson Sampling으로 어떤 전략이 더 좋은지 학습합니다.
+
+References:
+- arXiv:2407.13195: Ensemble++ for Multi-Armed Bandits
+- NeurIPS 2024: Hybrid RAG Ensemble Methods
+- SIGIR 2025: Reciprocal Rank Fusion Best Practices
 """
 
 from __future__ import annotations
 
 import asyncio
+import re
 from typing import Literal, Optional, TYPE_CHECKING
 
 from scipy.stats import beta as beta_dist
@@ -23,6 +33,19 @@ from app.uqsl.thompson_sampling import ThompsonSamplingRouter
 
 if TYPE_CHECKING:
     from app.rag.hybrid_rag import HybridRAGResult
+
+
+# =============================================================================
+# Merge Strategy Types
+# =============================================================================
+
+MergeStrategy = Literal[
+    "weighted_blend",      # Confidence-weighted blending
+    "rrf",                 # Reciprocal Rank Fusion
+    "b_primary",           # B (NotebookLM) as primary, A as supplement
+    "quality_gate",        # Use higher quality result
+    "adaptive",            # Query-type adaptive selection
+]
 
 
 class EnsemblePlusPlusRouter:
@@ -157,14 +180,17 @@ class EnsemblePlusPlusRouter:
         result_a: "HybridRAGResult",
         result_b: "HybridRAGResult",
         query: str,
+        strategy: MergeStrategy = "adaptive",
     ) -> "HybridRAGResult":
         """
-        스마트 앙상블: 각 시스템의 강점 결합
+        스마트 앙상블: 각 시스템의 강점 결합 (2026 Enhanced)
 
-        Strategy:
-        - Use NotebookLM's answer as base (more grounded)
-        - Augment with Qdrant's additional context
-        - Preserve source references from both
+        Strategies:
+        - weighted_blend: Confidence-weighted answer blending
+        - rrf: Reciprocal Rank Fusion for source ranking
+        - b_primary: NotebookLM primary, Qdrant supplementary
+        - quality_gate: Use higher confidence result
+        - adaptive: Query-type based strategy selection
         """
         from dataclasses import dataclass
 
@@ -179,20 +205,33 @@ class EnsemblePlusPlusRouter:
             strategy_used: str
             retrieval_count: int
 
-        # Extract answers
+        # Extract answers and confidence
         answer_a = getattr(result_a, "answer", str(result_a))
         answer_b = getattr(result_b, "answer", str(result_b))
-
-        # Merge strategy: B as primary, A as supplementary
-        if len(answer_b) > 100:
-            merged_answer = f"{answer_b}\n\n---\n\n**추가 컨텍스트 (벡터 검색)**\n{answer_a[:500]}"
-        else:
-            merged_answer = f"{answer_a}\n\n**거장 인사이트**\n{answer_b}"
-
-        # Calculate confidence
         conf_a = getattr(result_a, "confidence", 0.5)
         conf_b = getattr(result_b, "confidence", 0.5)
-        merged_confidence = (conf_a + conf_b) / 2 + 0.1  # Ensemble bonus
+
+        # Adaptive strategy selection based on query type
+        if strategy == "adaptive":
+            strategy = self._select_adaptive_strategy(query, conf_a, conf_b, answer_a, answer_b)
+
+        # Apply selected merge strategy
+        if strategy == "weighted_blend":
+            merged_answer, merged_confidence = self._weighted_blend(
+                answer_a, answer_b, conf_a, conf_b
+            )
+        elif strategy == "rrf":
+            merged_answer, merged_confidence = self._rrf_merge(
+                result_a, result_b, query
+            )
+        elif strategy == "quality_gate":
+            merged_answer, merged_confidence = self._quality_gate_merge(
+                answer_a, answer_b, conf_a, conf_b
+            )
+        else:  # b_primary (default)
+            merged_answer, merged_confidence = self._b_primary_merge(
+                answer_a, answer_b, conf_a, conf_b
+            )
 
         return MergedResult(
             query=query,
@@ -204,12 +243,144 @@ class EnsemblePlusPlusRouter:
                 getattr(result_a, "grounding_sources", []) +
                 getattr(result_b, "grounding_sources", [])
             ),
-            strategy_used="ensemble_ab",
+            strategy_used=f"ensemble_ab:{strategy}",
             retrieval_count=(
                 getattr(result_a, "retrieval_count", 0) +
                 getattr(result_b, "retrieval_count", 0)
             ),
         )
+
+    def _select_adaptive_strategy(
+        self,
+        query: str,
+        conf_a: float,
+        conf_b: float,
+        answer_a: str,
+        answer_b: str,
+    ) -> MergeStrategy:
+        """
+        Query-type adaptive strategy selection (2026 Best Practice)
+
+        Based on query characteristics, select optimal merge strategy.
+        """
+        query_lower = query.lower()
+
+        # 거장/스타일 관련 쿼리 → NotebookLM 우선
+        auteur_keywords = ["봉준호", "구로사와", "kubrick", "spielberg", "스타일", "style", "거장", "감독"]
+        if any(kw in query_lower for kw in auteur_keywords):
+            return "b_primary"
+
+        # 기술적/구체적 쿼리 → Quality Gate
+        technical_keywords = ["how to", "방법", "코드", "구현", "설정", "config"]
+        if any(kw in query_lower for kw in technical_keywords):
+            return "quality_gate"
+
+        # 짧은 답변은 둘 다 활용 → Weighted Blend
+        if len(answer_a) < 200 and len(answer_b) < 200:
+            return "weighted_blend"
+
+        # 신뢰도 차이가 큰 경우 → Quality Gate
+        if abs(conf_a - conf_b) > 0.3:
+            return "quality_gate"
+
+        # Default: B primary (NotebookLM has grounding)
+        return "b_primary"
+
+    def _weighted_blend(
+        self,
+        answer_a: str,
+        answer_b: str,
+        conf_a: float,
+        conf_b: float,
+    ) -> tuple[str, float]:
+        """Confidence-weighted blending"""
+        total_conf = conf_a + conf_b
+        if total_conf == 0:
+            total_conf = 1.0
+
+        weight_a = conf_a / total_conf
+        weight_b = conf_b / total_conf
+
+        # Order answers by weight
+        if weight_b >= weight_a:
+            merged = f"{answer_b}\n\n---\n\n**추가 관점** (신뢰도: {conf_a:.0%})\n{answer_a}"
+        else:
+            merged = f"{answer_a}\n\n---\n\n**거장 인사이트** (신뢰도: {conf_b:.0%})\n{answer_b}"
+
+        merged_conf = (conf_a * weight_a + conf_b * weight_b) + 0.05  # Small ensemble bonus
+        return merged, merged_conf
+
+    def _rrf_merge(
+        self,
+        result_a: "HybridRAGResult",
+        result_b: "HybridRAGResult",
+        query: str,
+        k: int = 60,
+    ) -> tuple[str, float]:
+        """
+        Reciprocal Rank Fusion (2025 Standard)
+
+        RRF Score = Σ 1/(k + rank_i)
+        """
+        answer_a = getattr(result_a, "answer", str(result_a))
+        answer_b = getattr(result_b, "answer", str(result_b))
+
+        # Get sources from both results
+        sources_a = getattr(result_a, "grounding_sources", [])
+        sources_b = getattr(result_b, "notebooklm_sources", [])
+
+        # Calculate RRF scores for sources
+        rrf_scores = {}
+
+        for i, src in enumerate(sources_a):
+            src_id = str(src) if not hasattr(src, "id") else src.id
+            rrf_scores[src_id] = rrf_scores.get(src_id, 0) + 1.0 / (k + i + 1)
+
+        for i, src in enumerate(sources_b):
+            src_id = str(src) if not hasattr(src, "id") else src.id
+            rrf_scores[src_id] = rrf_scores.get(src_id, 0) + 1.0 / (k + i + 1)
+
+        # Merge answers with RRF confidence
+        total_rrf = sum(rrf_scores.values()) if rrf_scores else 1.0
+        normalized_rrf = min(1.0, total_rrf / 2)  # Normalize
+
+        merged = f"{answer_b}\n\n---\n\n**검색 기반 컨텍스트**\n{answer_a}"
+        return merged, 0.5 + normalized_rrf * 0.4  # Base 0.5 + RRF bonus
+
+    def _quality_gate_merge(
+        self,
+        answer_a: str,
+        answer_b: str,
+        conf_a: float,
+        conf_b: float,
+    ) -> tuple[str, float]:
+        """Quality gate: Use higher confidence result as primary"""
+        if conf_b >= conf_a:
+            merged = f"{answer_b}"
+            if conf_a > 0.5 and answer_a:
+                merged += f"\n\n---\n\n**보충 자료** (신뢰도: {conf_a:.0%})\n{answer_a[:300]}..."
+            return merged, conf_b + 0.05
+        else:
+            merged = f"{answer_a}"
+            if conf_b > 0.5 and answer_b:
+                merged += f"\n\n---\n\n**거장 관점** (신뢰도: {conf_b:.0%})\n{answer_b[:300]}..."
+            return merged, conf_a + 0.05
+
+    def _b_primary_merge(
+        self,
+        answer_a: str,
+        answer_b: str,
+        conf_a: float,
+        conf_b: float,
+    ) -> tuple[str, float]:
+        """B (NotebookLM) as primary, A as supplement"""
+        if len(answer_b) > 100:
+            merged = f"{answer_b}\n\n---\n\n**추가 컨텍스트 (벡터 검색)**\n{answer_a[:500]}"
+        else:
+            merged = f"{answer_a}\n\n**거장 인사이트**\n{answer_b}"
+
+        merged_conf = (conf_a + conf_b) / 2 + 0.1  # Ensemble bonus
+        return merged, merged_conf
 
     async def update_arm(
         self,

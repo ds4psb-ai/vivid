@@ -2004,6 +2004,99 @@ class ApiClient {
     return this.request<DimensionToolsConfig>("/api/dimension/tools");
   }
 
+  // --- Dimension Multi-Generate API (2026 UQSL Integration) ---
+
+  /**
+   * Generate N candidates for 1D Prompt with UQSL quality selection
+   * Uses 2026 Diversified Sampling strategies
+   */
+  async dimension1DMultiGenerate(
+    request: DimensionMultiGenerateRequest
+  ): Promise<DimensionMultiGenerateResponse> {
+    return this.request<DimensionMultiGenerateResponse>("/api/dimension/1d/multi-generate", {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
+  }
+
+  /**
+   * SSE Streaming for 1D Multi-Generate
+   * Yields events: progress, candidate, quality, selection, complete
+   */
+  async *dimension1DMultiGenerateStream(
+    request: DimensionMultiGenerateRequest
+  ): AsyncGenerator<DimensionMultiGenerateSSEEvent> {
+    const baseUrl = this.resolveBaseUrl();
+    const response = await fetch(`${baseUrl}/api/dimension/1d/multi-generate/stream`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "text/event-stream",
+      },
+      credentials: "include",
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error("No response body");
+
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const jsonStr = line.slice(6).trim();
+            if (jsonStr && jsonStr !== "[DONE]") {
+              try {
+                const event = JSON.parse(jsonStr) as DimensionMultiGenerateSSEEvent;
+                yield event;
+              } catch {
+                // Skip malformed JSON
+              }
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  }
+
+  /**
+   * Submit selection for multi-generate session
+   * Updates Thompson Sampling bandit arms
+   */
+  async dimension1DMultiGenerateSelect(
+    sessionId: string,
+    selectedIdx: number,
+    rating?: number
+  ): Promise<{ status: string; updated_arms: string[] }> {
+    return this.request<{ status: string; updated_arms: string[] }>(
+      `/api/dimension/1d/multi-generate/select`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          session_id: sessionId,
+          selected_idx: selectedIdx,
+          rating,
+        }),
+      }
+    );
+  }
+
   // --- UQSL (Universal Quality Selection Layer) API ---
 
   /**
@@ -2059,6 +2152,158 @@ class ApiClient {
    */
   async uqslGetQualityMetrics(appKey: string): Promise<UQSLQualityMetrics> {
     return this.request<UQSLQualityMetrics>(`/api/v1/uqsl/metrics/${encodeURIComponent(appKey)}`);
+  }
+
+  /**
+   * Stream N-candidate generation with real-time progress updates
+   *
+   * 2026 Best Practice:
+   * - Real-time candidate generation streaming
+   * - Quality score streaming as evaluated
+   * - Thompson Sampling arm selection events
+   *
+   * @param request Generation request
+   * @returns AsyncGenerator of SSE events
+   */
+  async *uqslGenerateCandidatesStream(
+    request: UQSLGenerateCandidatesRequest
+  ): AsyncGenerator<UQSLStreamEvent, void, unknown> {
+    const baseUrl = API_BASE_URL || DEFAULT_API_BASE_URL;
+    const response = await fetch(`${baseUrl}/api/v1/uqsl/generate/stream`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "text/event-stream",
+        ...(USER_ID ? { "X-User-ID": USER_ID } : {}),
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: "Unknown error" }));
+      throw new Error(error.detail || `HTTP ${response.status}`);
+    }
+
+    if (!response.body) {
+      throw new Error("No response body");
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              yield data as UQSLStreamEvent;
+            } catch {
+              // Ignore parse errors
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  }
+
+  /**
+   * Stream three-way comparison with real-time updates
+   *
+   * Streams:
+   * - Individual backend results (A, B)
+   * - Ensemble merge result (A+B)
+   * - Thompson Sampling recommendation
+   *
+   * @param request Three-way comparison request
+   * @returns AsyncGenerator of SSE events
+   */
+  async *uqslThreeWayComparisonStream(
+    request: UQSLThreeWayRequest
+  ): AsyncGenerator<UQSLStreamEvent, void, unknown> {
+    const baseUrl = API_BASE_URL || DEFAULT_API_BASE_URL;
+    const response = await fetch(`${baseUrl}/api/v1/uqsl/three-way/stream`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "text/event-stream",
+        ...(USER_ID ? { "X-User-ID": USER_ID } : {}),
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: "Unknown error" }));
+      throw new Error(error.detail || `HTTP ${response.status}`);
+    }
+
+    if (!response.body) {
+      throw new Error("No response body");
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              yield data as UQSLStreamEvent;
+            } catch {
+              // Ignore parse errors
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  }
+
+  /**
+   * Get Thompson Sampling arm statistics
+   *
+   * @param armType Optional filter by arm type (e.g., "backend", "reranker")
+   */
+  async uqslGetArmStats(armType?: string): Promise<UQSLArmStatsResponse> {
+    const params = armType ? `?arm_type=${encodeURIComponent(armType)}` : "";
+    return this.request<UQSLArmStatsResponse>(`/api/v1/uqsl/arms${params}`);
+  }
+
+  /**
+   * Submit three-way selection for Thompson Sampling update
+   *
+   * @param comparisonId Comparison ID
+   * @param selected Selected option ("a", "b", "ab", "skip")
+   */
+  async uqslSelectThreeWay(
+    comparisonId: string,
+    selected: "a" | "b" | "ab" | "skip"
+  ): Promise<{ status: string; selected: string }> {
+    return this.request<{ status: string; selected: string }>(
+      `/api/v1/uqsl/three-way/select?comparison_id=${encodeURIComponent(comparisonId)}&selected=${selected}`,
+      { method: "POST" }
+    );
   }
 
   // --- Crebit API ---
@@ -2569,6 +2814,63 @@ export interface DimensionResponse {
   metrics?: DimensionMetrics;
 }
 
+// --- Dimension Multi-Generate Types (2026 UQSL Integration) ---
+
+export type DimensionDiversityStrategy = "standard" | "verbalized" | "diversified" | "compute_optimal";
+
+export interface DimensionMultiGenerateRequest {
+  topic: string;
+  style?: string;
+  mood?: string;
+  duration?: string;
+  language?: string;
+  model?: string;
+  /** Number of candidates (2-5) */
+  n_candidates?: number;
+  /** Diversity strategy */
+  strategy?: DimensionDiversityStrategy;
+}
+
+export interface DimensionMultiGenerateCandidate {
+  idx: number;
+  content: string;
+  metadata: {
+    seed: number;
+    temperature: number;
+    run_id?: string;
+    strategy?: string;
+    prompt_varied?: boolean;
+  };
+  latency_ms: number;
+  backend_used: string;
+  quality_score?: UQSLQualityScore;
+}
+
+export interface DimensionMultiGenerateResponse {
+  success: boolean;
+  session_id: string;
+  candidates: DimensionMultiGenerateCandidate[];
+  recommended_idx: number;
+  thompson_arm: string;
+  total_latency_ms: number;
+  strategy_used: string;
+}
+
+/** SSE Event types for multi-generate streaming */
+export type DimensionMultiGenerateEventType =
+  | "progress"
+  | "candidate"
+  | "quality"
+  | "selection"
+  | "complete"
+  | "error";
+
+export interface DimensionMultiGenerateSSEEvent {
+  type: DimensionMultiGenerateEventType;
+  data: Record<string, unknown>;
+  timestamp?: string;
+}
+
 // --- UQSL (Universal Quality Selection Layer) Types ---
 
 export interface UQSLQualityScore {
@@ -2582,6 +2884,8 @@ export interface UQSLQualityScore {
   creativity: number;
   /** 안전성 (0-1) */
   safety: number;
+  /** 가중 합산 점수 (0-1, optional) */
+  weighted_score?: number;
   /** 가중 평균 총점 */
   total_score: number;
 }
@@ -2656,6 +2960,119 @@ export interface UQSLQualityMetrics {
   total_selections: number;
   positive_rate: number;
   avg_quality_score: number;
+}
+
+// --- UQSL SSE Event Types (2026 Best Practice) ---
+
+/** Base SSE event structure */
+export interface UQSLStreamEventBase {
+  type: string;
+}
+
+/** Progress event */
+export interface UQSLStreamProgressEvent extends UQSLStreamEventBase {
+  type: "progress";
+  percent: number;
+  message: string;
+  stage: "starting" | "processing" | "finalizing";
+}
+
+/** Individual candidate generation event */
+export interface UQSLStreamCandidateEvent extends UQSLStreamEventBase {
+  type: "candidate";
+  idx: number;
+  content_preview: string;
+  backend_used: string;
+}
+
+/** Quality score event for individual candidate */
+export interface UQSLStreamQualityEvent extends UQSLStreamEventBase {
+  type: "quality";
+  idx: number;
+  groundedness: number;
+  relevance: number;
+  coherence: number;
+  creativity: number;
+  safety: number;
+  weighted_score: number;
+}
+
+/** Final selection event with Thompson Sampling stats */
+export interface UQSLStreamSelectionEvent extends UQSLStreamEventBase {
+  type: "selection";
+  selected_idx: number;
+  method: string;
+  confidence: number;
+  arms_used: string[];
+  arms_stats: Record<string, UQSLArmStats>;
+}
+
+/** Three-way result event (A, B, or A+B) */
+export interface UQSLStreamResultEvent extends UQSLStreamEventBase {
+  type: "result_a" | "result_b" | "result_ab";
+  option: "A" | "B" | "A+B";
+  source: "qdrant" | "notebooklm" | "ensemble";
+  data: UQSLThreeWayCandidateData | null;
+}
+
+/** Thompson Sampling recommendation event */
+export interface UQSLStreamRecommendationEvent extends UQSLStreamEventBase {
+  type: "recommendation";
+  recommended: "a" | "b" | "ab";
+  arms_stats: Record<string, UQSLArmStats>;
+}
+
+/** Completion event with final data */
+export interface UQSLStreamCompleteEvent extends UQSLStreamEventBase {
+  type: "complete";
+  success: boolean;
+  data: Record<string, unknown>;
+  metrics?: {
+    latency_ms: number;
+    n_candidates?: number;
+    strategy?: string;
+  };
+}
+
+/** Error event */
+export interface UQSLStreamErrorEvent extends UQSLStreamEventBase {
+  type: "error";
+  error: string;
+  code?: string;
+  detail?: string;
+}
+
+/** Heartbeat event */
+export interface UQSLStreamHeartbeatEvent extends UQSLStreamEventBase {
+  type: "heartbeat";
+  timestamp: number;
+}
+
+/** Union type for all UQSL SSE events */
+export type UQSLStreamEvent =
+  | UQSLStreamProgressEvent
+  | UQSLStreamCandidateEvent
+  | UQSLStreamQualityEvent
+  | UQSLStreamSelectionEvent
+  | UQSLStreamResultEvent
+  | UQSLStreamRecommendationEvent
+  | UQSLStreamCompleteEvent
+  | UQSLStreamErrorEvent
+  | UQSLStreamHeartbeatEvent;
+
+/** Thompson Sampling arm statistics */
+export interface UQSLArmStats {
+  success_rate: number;
+  confidence: number;
+  total_trials: number;
+  alpha: number;
+  beta: number;
+}
+
+/** Arms statistics response */
+export interface UQSLArmStatsResponse {
+  arms: Record<string, UQSLArmStats>;
+  total_arms: number;
 }
 
 export const api = new ApiClient();
