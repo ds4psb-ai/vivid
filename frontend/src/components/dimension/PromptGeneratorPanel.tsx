@@ -10,11 +10,13 @@ import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
+import NextDimensionNav from "./NextDimensionNav";
 import EvidenceDisplay, { type EvidenceRef } from "./EvidenceDisplay";  // P5: Shared component
 
 // SSoT: Use context instead of hardcode
 // const CREDIT_COST = 5; // REMOVED
 const THEME_COLOR: ThemeColor = "violet";
+const DIMENSION_KEY = "prompt-alchemy";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 interface PromptResult {
@@ -403,6 +405,13 @@ export default function PromptGeneratorPanel() {
                             refs={displayResult.evidence_refs}
                             confidence={displayResult.confidence}
                             themeColor="violet"
+                        />
+
+                        {/* Next Dimension Navigation */}
+                        <NextDimensionNav
+                            currentDimension={DIMENSION_KEY}
+                            show={true}
+                            themeColor={THEME_COLOR}
                         />
                     </div>
                 ) : (

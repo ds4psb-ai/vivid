@@ -26,9 +26,11 @@ import { useRAGSuggestion, type EvidenceRef } from "@/hooks/useRAGSuggestion";
 import { usePersonaPreset, type TraceEntry, type PersonaPreset } from "@/hooks/usePersonaPreset";
 import { initMirror, chatMirror, type MirrorChatResponse } from "@/lib/mirrorApi";
 import { useDimensionChainOptional } from "@/contexts/DimensionChainContext";
+import NextDimensionNav from "./NextDimensionNav";
 import { Send, User, Bot, Sparkles, Download, ArrowLeft, Zap, Upload, RefreshCw, AlertTriangle } from "lucide-react";
 
 const THEME_COLOR: ThemeColor = "violet";
+const DIMENSION_KEY = "abyss-mirror";
 
 // ============================================================================
 // Types
@@ -678,6 +680,14 @@ export default function AbyssMirrorPanel() {
                                     새로 시작
                                 </button>
                             </div>
+                        </div>
+                        {/* Next Dimension Navigation */}
+                        <div className="mt-4 px-6">
+                            <NextDimensionNav
+                                currentDimension={DIMENSION_KEY}
+                                show={true}
+                                themeColor={THEME_COLOR}
+                            />
                         </div>
                     </div>
                 )}

@@ -10,10 +10,12 @@ import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
+import NextDimensionNav from "./NextDimensionNav";
 import { CheckCircle, XCircle, AlertTriangle, Download } from "lucide-react";
 
 // const CREDIT_COST = 8; // REMOVED
 const THEME_COLOR: ThemeColor = "rose";
+const DIMENSION_KEY = "quality-director";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 interface CriterionResult {
@@ -404,6 +406,13 @@ export default function QualityDirectorPanel() {
                                 </ul>
                             </div>
                         )}
+
+                        {/* Next Dimension Navigation */}
+                        <NextDimensionNav
+                            currentDimension={DIMENSION_KEY}
+                            show={true}
+                            themeColor={THEME_COLOR}
+                        />
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center h-full text-zinc-500 space-y-8">

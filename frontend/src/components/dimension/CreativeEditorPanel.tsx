@@ -10,6 +10,7 @@ import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
+import NextDimensionNav from "./NextDimensionNav";
 import {
     PenTool,
     GitCompare,
@@ -25,6 +26,7 @@ import {
 
 // const CREDIT_COST = 5; // REMOVED
 const THEME_COLOR: ThemeColor = "rose";
+const DIMENSION_KEY = "creative-editor";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 interface EditorialCritique {
@@ -348,6 +350,13 @@ export default function CreativeEditorPanel() {
                             ))}
                         </div>
                     </div>
+
+                    {/* Next Dimension Navigation */}
+                    <NextDimensionNav
+                        currentDimension={DIMENSION_KEY}
+                        show={true}
+                        themeColor={THEME_COLOR}
+                    />
                 </div>
             )}
         </TeachingPanelLayout>

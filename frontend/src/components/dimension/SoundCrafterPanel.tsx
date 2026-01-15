@@ -485,6 +485,13 @@ export default function SoundCrafterPanel() {
                     다시 믹싱하기
                 </button>
             </div>
+
+            {/* Next Dimension Navigation */}
+            <NextDimensionNav
+                currentDimension={DIMENSION_KEY}
+                show={true}
+                themeColor={THEME_COLOR}
+            />
         </div>
     );
 

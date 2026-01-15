@@ -10,10 +10,12 @@ import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
+import NextDimensionNav from "./NextDimensionNav";
 
 // SSoT: Use context instead of hardcode
 // const CREDIT_COST = 10; // REMOVED
 const THEME_COLOR: ThemeColor = "cyan";
+const DIMENSION_KEY = "storyboard";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 interface StoryboardScene {
@@ -381,6 +383,13 @@ export default function StoryboardPanel() {
                                 </div>
                             ))}
                         </div>
+
+                        {/* Next Dimension Navigation */}
+                        <NextDimensionNav
+                            currentDimension={DIMENSION_KEY}
+                            show={true}
+                            themeColor={THEME_COLOR}
+                        />
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center h-full text-zinc-500 space-y-8 animate-in fade-in zoom-in-95 duration-700">

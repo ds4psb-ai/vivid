@@ -10,10 +10,12 @@ import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
+import NextDimensionNav from "./NextDimensionNav";
 
 // SSoT: Use context instead of hardcode
 // const CREDIT_COST = 50; // REMOVED
 const THEME_COLOR: ThemeColor = "sky";
+const DIMENSION_KEY = "video-maker";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 interface VideoResult {
@@ -476,6 +478,15 @@ export default function VeoVideoPanel() {
                                 </div>
                                 <p className="text-sm text-zinc-300 leading-relaxed">{prompt}</p>
                             </div>
+                        )}
+
+                        {/* Next Dimension Navigation */}
+                        {result.status === "completed" && (
+                            <NextDimensionNav
+                                currentDimension={DIMENSION_KEY}
+                                show={true}
+                                themeColor={THEME_COLOR}
+                            />
                         )}
                     </div>
                 ) : (

@@ -10,10 +10,12 @@ import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
+import NextDimensionNav from "./NextDimensionNav";
 import { Palette, Copy, Check, Download, Sparkles, Eye, Wand2, Code, Type, Layers } from "lucide-react";
 
 // const CREDIT_COST = 10; // REMOVED
 const THEME_COLOR: ThemeColor = "fuchsia";
+const DIMENSION_KEY = "aesthetic-director";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 interface AestheticResult {
@@ -645,6 +647,13 @@ export default function AestheticDirectorPanel() {
                                 </ul>
                             </div>
                         )}
+
+                        {/* Next Dimension Navigation */}
+                        <NextDimensionNav
+                            currentDimension={DIMENSION_KEY}
+                            show={true}
+                            themeColor={THEME_COLOR}
+                        />
                     </div>
                 )}
             </TeachingPanelLayout>
