@@ -886,7 +886,22 @@ class HybridRAGService:
         top_k: int = 10,
     ) -> HybridRAGResult:
         """BM25 + 벡터 검색 RRF 융합 쿼리.
-        
+
+        .. deprecated:: 2026-01-15
+            Use :meth:`app.rag.tier1_dimension_rag.Tier1DimensionRAG.hybrid_search`
+            instead. This method uses application-level BM25 which is slower than
+            Qdrant Native Sparse Vectors with server-side RRF fusion.
+
+            Migration::
+
+                # OLD (this method)
+                result = await service.rrf_query(query, dimension="AD")
+
+                # NEW (recommended)
+                from app.rag.tier1_dimension_rag import get_dimension_rag
+                rag = get_dimension_rag("AD")
+                results = rag.hybrid_search(query)
+
         Args:
             query: 검색 쿼리
             dimension: 차원 코드 (예: "1D", "AD")
@@ -894,11 +909,18 @@ class HybridRAGService:
             use_vector: 벡터 시맨틱 검색 사용
             rrf_k: RRF 상수 (높을수록 상위 결과 보정 약화)
             top_k: 반환할 최대 결과 수
-            
+
         Returns:
             HybridRAGResult with RRF fused results
         """
         import time
+        import warnings
+        warnings.warn(
+            "rrf_query() is deprecated. Use tier1_dimension_rag.hybrid_search() "
+            "for Qdrant Native Sparse Vector search with server-side RRF.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         start_time = time.monotonic()
         
         keyword_results = []

@@ -1,5 +1,31 @@
 """BM25 Keyword Search with Reciprocal Rank Fusion (RRF).
 
+.. deprecated:: 2026-01-15
+    This module uses application-level BM25 via `rank_bm25` library.
+    Use :meth:`app.rag.tier1_dimension_rag.Tier1DimensionRAG.hybrid_search`
+    instead, which provides Qdrant Native Sparse Vectors with server-side
+    IDF calculation and RRF fusion.
+
+Migration Guide::
+
+    # OLD (Application-level BM25) - DEPRECATED
+    from app.rag.bm25_search import BM25Index, hybrid_search_with_rrf
+    index = BM25Index()
+    index.add_documents(docs)
+    results = hybrid_search_with_rrf(keyword_results, vector_results)
+
+    # NEW (Qdrant Native Sparse Vector) - RECOMMENDED
+    from app.rag.tier1_dimension_rag import get_dimension_rag
+    rag = get_dimension_rag("AD")
+    results = rag.hybrid_search("봉준호 계단 상징")
+    # Benefits: Server-side IDF, single network call, 8x better accuracy
+
+This module is kept for backwards compatibility and will be removed in v3.0.
+
+---
+
+Original docstring:
+
 Provides keyword-based search to complement vector similarity search.
 Combines results using Reciprocal Rank Fusion for optimal hybrid retrieval.
 
@@ -8,26 +34,6 @@ Key Features:
 - Real-time index updates
 - RRF fusion for combining keyword + vector results
 - Dimension-specific indexes
-
-Usage:
-    from app.rag.bm25_search import BM25Index, reciprocal_rank_fusion
-    
-    # Create index
-    index = BM25Index()
-    index.add_documents([
-        {"id": "1", "text": "봉준호 감독의 계단 상징"},
-        {"id": "2", "text": "기생충 영화 분석"},
-    ])
-    
-    # Search
-    results = index.search("봉준호 계단", top_k=5)
-    
-    # Combine with vector search via RRF
-    hybrid = reciprocal_rank_fusion(
-        keyword_results=keyword_results,
-        vector_results=vector_results,
-        k=60
-    )
 """
 from __future__ import annotations
 
