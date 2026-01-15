@@ -19,6 +19,7 @@ notion-to-md-py>=0.1.4
 # RAG / Vector Search
 qdrant-client>=1.7.0
 sentence-transformers>=2.2.2
+fastembed>=0.4.0  # Sparse embedding for hybrid search
 aiofiles
 # Observability (Phase 4)
 langfuse>=2.0.0
