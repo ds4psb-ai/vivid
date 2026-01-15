@@ -345,6 +345,114 @@ export function getDimensionThemeClasses(code: DimensionCode): ThemeColorClasses
 }
 
 // =============================================================================
+// PANEL DESIGN UNITY UTILITIES (2026)
+// =============================================================================
+
+/**
+ * Gradient definitions for dimension generate buttons
+ * Uses Tailwind gradient classes with dimension-specific colors
+ */
+const DIMENSION_GRADIENTS: Record<DimensionCode, string> = {
+  "1d": "bg-gradient-to-r from-violet-500 to-purple-600",
+  "2d": "bg-gradient-to-r from-cyan-500 to-teal-600",
+  "3d": "bg-gradient-to-r from-emerald-500 to-green-600",
+  "4d": "bg-gradient-to-r from-amber-500 to-orange-600",
+  "ad": "bg-gradient-to-r from-rose-500 to-pink-600",
+  "ai": "bg-gradient-to-r from-indigo-500 to-blue-600",
+  "qc": "bg-gradient-to-r from-red-500 to-rose-600",
+  "veo": "bg-gradient-to-r from-sky-500 to-blue-600",
+  "story": "bg-gradient-to-r from-fuchsia-500 to-purple-600",
+  "mirror": "bg-gradient-to-r from-purple-500 to-violet-600",
+};
+
+/**
+ * Get gradient classes for dimension buttons
+ * @example getDimensionGradient("ad") => "bg-gradient-to-r from-rose-500 to-pink-600"
+ */
+export function getDimensionGradient(code: DimensionCode): string {
+  return DIMENSION_GRADIENTS[code];
+}
+
+/**
+ * Glow shadow sizes
+ */
+type GlowSize = "sm" | "md" | "lg";
+
+/**
+ * Get glow shadow classes by size
+ * @example getDimensionGlow("ad", "lg") => "shadow-[0_0_30px] shadow-dimension-ad/40"
+ */
+export function getDimensionGlow(code: DimensionCode, size: GlowSize = "md"): string {
+  const key = DIMENSION_TOKENS[code].tailwindKey;
+  const sizes: Record<GlowSize, string> = {
+    sm: `shadow-[0_0_10px] shadow-${key}/20`,
+    md: `shadow-[0_0_20px] shadow-${key}/30`,
+    lg: `shadow-[0_0_30px] shadow-${key}/40`,
+  };
+  return sizes[size];
+}
+
+/**
+ * Get glassmorphism panel classes
+ * Includes backdrop-blur and dimension-colored border
+ * @example getDimensionGlassStyle("ad") => "bg-black/40 backdrop-blur-xl border border-dimension-ad/20 rounded-2xl"
+ */
+export function getDimensionGlassStyle(code: DimensionCode): string {
+  const key = DIMENSION_TOKENS[code].tailwindKey;
+  return `bg-black/40 backdrop-blur-xl border border-${key}/20 rounded-2xl`;
+}
+
+/**
+ * Get unified input field classes with dimension focus ring
+ * @example getDimensionInputStyle("ad") => "bg-white/5 border border-white/10 ... focus:border-dimension-ad/50 ..."
+ */
+export function getDimensionInputStyle(code: DimensionCode): string {
+  const key = DIMENSION_TOKENS[code].tailwindKey;
+  return [
+    "bg-white/5 border border-white/10 rounded-lg px-4 py-3",
+    "text-white placeholder:text-white/40",
+    `focus:border-${key}/50 focus:ring-1 focus:ring-${key}/30`,
+    "focus:outline-none transition-colors duration-200",
+  ].join(" ");
+}
+
+/**
+ * Get generate button classes with gradient and glow
+ * @example getDimensionButtonStyle("ad") => full button classes with gradient + glow
+ */
+export function getDimensionButtonStyle(code: DimensionCode): string {
+  return [
+    "relative overflow-hidden px-6 py-3 rounded-xl font-semibold text-white",
+    "transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed",
+    getDimensionGradient(code),
+    getDimensionGlow(code, "lg"),
+    "hover:scale-[1.02]",
+  ].join(" ");
+}
+
+/**
+ * Get result card classes (glassmorphism with dimension accent)
+ */
+export function getDimensionResultStyle(code: DimensionCode): string {
+  const key = DIMENSION_TOKENS[code].tailwindKey;
+  return `bg-black/40 backdrop-blur-xl border border-${key}/20 rounded-2xl p-6 space-y-4`;
+}
+
+/**
+ * Get skeleton loading classes
+ */
+export function getSkeletonStyle(): string {
+  return "animate-pulse bg-white/10 rounded-lg";
+}
+
+/**
+ * Get error alert classes
+ */
+export function getErrorStyle(): string {
+  return "bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-red-400";
+}
+
+// =============================================================================
 // EXPORTS
 // =============================================================================
 
