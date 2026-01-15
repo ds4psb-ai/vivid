@@ -1,5 +1,8 @@
 # Pipelines & User Flows (2025-12)
 
+<details open>
+<summary>한국어</summary>
+
 **작성**: 2025-12-24  
 **Updated**: 2026-01-01 (Chat-First Studio 추가)  
 **대상**: Product / Design / Engineering  
@@ -177,3 +180,188 @@ Agent Chat (Global)
 - `capsule.run` → `capsule.stream` → `preview.generate` → `final.generate`
 - `capsule.cancel` → `run.cancelled` (사용자 중단)
 - 모든 이벤트는 trace_id로 연결
+
+</details>
+
+<details>
+<summary>English</summary>
+
+**Created**: 2025-12-24  
+**Updated**: 2026-01-01 (Chat-First Studio added)  
+**Audience**: Product / Design / Engineering  
+**Goal**: Summarize the dataization pipeline and user workflow flows on one page
+
+---
+
+## 0) Canonical Scope
+
+This document is the **single source of truth for flows and roles**.  
+Other documents should link to it rather than repeating the content.
+Principles/philosophy are fixed in `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`.
+E2E pipeline details are in `docs/archive/21_AUTEUR_PIPELINE_E2E_CODEX.md`.
+Production (shot generation/post) details are in `docs/archive/22_AI_PRODUCTION_PIPELINE_CODEX.md`.
+
+---
+
+## 0.1 System Roles (Gemini / NotebookLM / Opal / DB SoR)
+
+- **Gemini 3 Pro/Flash**: dedicated engine for video structuring (JSON Schema)  
+  - Create **scene/shot schema** based on ASR + shots/keyframes  
+  - Results are stored in **DB SoR (Video Schema)** (NotebookLM sources are DB summaries)  
+  - Detailed spec: `docs/archive/19_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
+- **NotebookLM**: knowledge/guide layer (light RAG)  
+  - Operate **auteur/genre cluster notebooks**  
+  - Output summary/homage/variation/template fit guides  
+  - Store Persona/Synapse Logic with guide_type=persona/synapse  
+  - Studio multi-outputs (Video/Audio/Mind Map) + output language selection strengthen guides  
+  - Uploaded sources are not SoR; results follow Sheets Bus → DB promotion rules  
+  - Ultra subscription is better for multi-output/batch processing  
+  - Mega-Notebook is **discovery/aggregation/ops only**, and capsules are promoted only from **phase-locked packs**  
+  - Output spec: `docs/archive/07_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
+  - Source pack/prompt protocol: `docs/archive/25_NOTEBOOKLM_SOURCE_PACK_PROTOCOL_CODEX.md`
+- **Opal**: template seeds + internal workflow automation  
+  - Labeling/QA/prompt-chain tooling  
+  - Runs only as a subgraph inside capsule nodes
+- **Sheets Bus**: staging for ops and review  
+  - DB SoR is the **canonical source for proof and learning**  
+  - Promotion rules: `docs/archive/09_DB_PROMOTION_RULES_V1.md`
+
+---
+
+## 1) Dataization Pipeline (Evidence Loop)
+
+```
+Admin Ingest
+  → Preprocess (ASR/Shot/Keyframe)
+  → Gemini Structured Output (Video Schema)
+  → DB SoR (Video Schema)
+  → (Optional) Mega-Notebook (Discovery/Ops)
+  → NotebookLM Source Pack Builder (cluster_id + temporal_phase)
+  → NotebookLM/Opal (Guide)
+  → Notebook Library (Private)
+  → Notebook Assets (Private)
+  → Sheets Bus (Derived)
+  → Review/Normalize
+  → DB SoR (Pattern Library/Trace)
+  → Capsule Spec Update
+```
+
+Key rules:
+- NotebookLM/Opal handle **summaries and labels only**
+- Raw videos are not fed directly into NotebookLM; convert to **structured data (DB SoR)** first
+- Notebook Library is a **private knowledge base** and never exposed to users
+- Notebook Assets are **asset links referenced by notebooks** and are admin-only
+- NotebookLM is the **knowledge/guide layer** that provides cluster summaries, homage/variation guides, and template fit suggestions
+- Mega-Notebook is **discovery/aggregation/ops only**, and capsule promotion happens only via **phase-locked packs**
+- Persona/Profile and Synapse Logic are stored under **guide_type=persona/synapse**
+- Story/Beat/Storyboard are stored under **guide_type=story/beat_sheet/storyboard** in `story_beats`/`storyboard_cards`
+- Only **verified patterns** are promoted into the DB
+- `evidence_refs` format (2026-01-13):
+  - `db:capsule_runs:{uuid}` - evidence from CapsuleRun
+  - `db:rag_docs:{dimension}:{dataset_id}:{doc_id}` - RAG search results
+  - **Supported datasets**: `video_ref`, `image_grid`, `film_analysis`, `visual_style`
+  - Format guaranteed server-side (`build_evidence_ref_id` function)
+- All results are tracked by **source_id + prompt/model/version**
+- Promotion criteria: `docs/archive/12_PATTERN_PROMOTION_CRITERIA_V1.md`
+
+---
+
+## 2) Creator Pipeline (Flow → Execute)
+
+```
+Flow (Train UI)
+  → Select connection link (3 options)
+  → Execute Teaching Tool
+  → Review/retry results
+  → (If needed) supplement with Dimension mini-apps
+```
+
+Key rules:
+- Connection links are limited to one of three options
+- Each tool executes via the Dimension API (`/api/dimension/*`)
+- Flow UI currently uses **mock options**; `/api/v1/workflow` integration is in progress
+
+> Legacy: Canvas-based pipelines are kept only under the `_deprecated` path.
+
+### 2.0.1 Story-First Creator Flow (Legacy)
+
+Story-driven viral content creation flow:
+
+```
+Canvas Load (legacy)
+  → CanvasNarrativePanel enable
+  → Design dissonance (familiar ↔ unfamiliar)
+  → Set emotional arc (start/climax/end)
+  → Choose hook style (8 types)
+  → [Optional] Select A/B test variants (2~4)
+  → Capsule Run (with Story-First params)
+  → DNAComplianceViewer (check DNA compliance)
+  → Preview / Generate
+  → MetricsDashboard (performance analysis)
+```
+
+Key rules:
+- **Story-First params**: pass `narrative_arc` and `hook_variant` to the capsule
+- **A/B testing**: generate and compare multiple hook variants
+- **DNA compliance**: auto-suggest fixes on brand guideline violations
+
+### 2.1 Production Pipeline (AI Video)
+
+```
+Beat Sheet
+  → Shot List
+  → Storyboard (Nano-banana Pro)
+  → Prompt Contract (Shot Contract-based)
+  → Gen Run (Veo 3.1 / Kling)
+  → Continuity QC
+  → Edit / Sound / Color / Final Export
+```
+
+Operational rules:
+- **Shot-level generation** is the default; Scenes/Sequences group shots together
+- Prompts are run in parallel in **batches of 5~10** and then curated
+- **Consistency-first** uses Image-to-Video; **dynamism-first** uses Text-to-Video
+- Follow `22_AI_PRODUCTION_PIPELINE_CODEX.md` for detailed specs
+
+### 2.2 Agent Chat (Chokki)
+
+```
+Agent Chat (Global)
+  → /api/v1/agent/chat (SSE)
+  → Tool calls + artifacts
+  → (optional) Generate workflow plan
+```
+
+Key rules:
+- Chat is provided as a global component (Chokki).
+- Streaming uses SSE events to update tool results and artifacts immediately.
+- Canvas sync is currently disabled (legacy UI only).
+
+---
+
+## 3) User Roles & Responsibilities
+
+- **Admin/Curator**: ingest sources, run NotebookLM, decide promotion
+- **Librarian**: organize Notebook Library and manage source linking
+- **Creator (Self-Style)**: collect personal materials into notebooks, generate personal style guides
+- **Creator**: select templates, adjust capsule params, preview/generate
+- **Reviewer**: evaluate quality, provide evidence for reuse/promotion
+- **Ops**: check status/Sheets sync/quarantine/pattern promotion/template seeds/run logs in the Pipeline Ops view
+
+### 3.1 Access & Session Gate (Auth)
+
+- Admin/Ops screens are gated by **session-based roles**.
+- When unauthenticated, show **admin-only + login CTA**.
+- **Public editing is not allowed** for capsules/templates (enforced server-side).
+- Auth uses **Google OAuth + session cookies**; `X-User-Id` is dev-only fallback.
+
+---
+
+## 4) Event Boundaries (Scaling Points)
+
+- `ingest.raw` → `derive.summary` → `promote.pattern`
+- `capsule.run` → `capsule.stream` → `preview.generate` → `final.generate`
+- `capsule.cancel` → `run.cancelled` (user-initiated stop)
+- All events are connected by trace_id
+
+</details>

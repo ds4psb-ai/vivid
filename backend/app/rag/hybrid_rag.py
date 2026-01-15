@@ -226,6 +226,93 @@ def _apply_dataset_filter(
 
 
 # ============================================================================
+# P5: Adaptive RAG - Skip Retrieval Check
+# ============================================================================
+
+
+async def _check_skip_retrieval(
+    query: str,
+    app_key: Optional[str] = None,
+    auteur_key: Optional[str] = None,
+    dimension: Optional[str] = None,
+) -> Optional[HybridRAGResult]:
+    """P5 Skip Retrieval 판단.
+
+    단순 쿼리 (simple_factual, creative)는 검색을 생략하고 LLM 직접 응답.
+    단, 도메인 특화 컨텍스트가 있으면 (auteur_key, dimension) skip하지 않음.
+
+    Args:
+        query: 검색 쿼리
+        app_key: 앱 키 (매니페스트 기반 설정)
+        auteur_key: 거장 키가 있으면 skip 안함
+        dimension: 차원 코드가 있으면 skip 안함
+
+    Returns:
+        HybridRAGResult if skip retrieval, None otherwise
+    """
+    # 도메인 특화 컨텍스트가 있으면 skip하지 않음
+    if auteur_key or dimension:
+        logger.debug(
+            f"[P5] Skip retrieval disabled: auteur_key={auteur_key}, dimension={dimension}"
+        )
+        return None
+
+    try:
+        # Get routing config from manifest (if available)
+        routing_config = None
+        if app_key:
+            from app.rag.manifest_loader import get_manifest
+
+            manifest = get_manifest(app_key)
+            if manifest and manifest.routing:
+                routing_config = manifest.routing.to_routing_config()
+
+        # Import P5 modules
+        from app.rag.query_classifier import (
+            QueryType,
+            RoutingConfig,
+            classify_query,
+            should_skip_retrieval,
+        )
+
+        if routing_config is None:
+            routing_config = RoutingConfig()
+
+        if not routing_config.enabled:
+            logger.debug("[P5] Adaptive RAG disabled in config")
+            return None
+
+        # Classify query
+        query_type, confidence = await classify_query(query, routing_config)
+
+        # Check if should skip retrieval
+        if not should_skip_retrieval(query_type, routing_config):
+            logger.debug(
+                f"[P5] Not skipping: query_type={query_type.value}, confidence={confidence:.2f}"
+            )
+            return None
+
+        logger.info(
+            f"[P5] Skipping retrieval: query_type={query_type.value}, confidence={confidence:.2f}"
+        )
+
+        # Generate direct LLM response
+        from app.rag.direct_llm import direct_llm_response
+
+        direct_result = await direct_llm_response(
+            query=query,
+            query_type=query_type,
+        )
+
+        # Convert to HybridRAGResult
+        return direct_result.to_hybrid_result()
+
+    except Exception as e:
+        logger.warning(f"[P5] Skip retrieval check failed: {e}")
+        return None
+
+
+# ============================================================================
 # Lightweight Query Router (2025 Best Practice)
 # ============================================================================
 
@@ -389,7 +476,35 @@ async def hybrid_query(
                 return cached_result
         except Exception as e:
             logger.warning(f"[HybridRAG] Semantic cache error: {e}")
-    
+
+    # === P5: Adaptive RAG - Skip Retrieval Check ===
+    skip_result = await _check_skip_retrieval(
+        query=query,
+        app_key=app_key,
+        auteur_key=auteur_key,
+        dimension=dimension,
+    )
+    if skip_result is not None:
+        skip_result.query_time_ms = int((time.monotonic() - start_time) * 1000)
+        record_rag_query(
+            dimension=dimension or "unknown",
+            strategy="direct_llm",
+            source_type="skip_retrieval",
+            latency_ms=skip_result.query_time_ms,
+            results_count=0,
+            confidence=skip_result.confidence,
+            cache_hit=False,
+            auteur_key=auteur_key,
+            grounded=False,
+            rrf_enabled=False,
+        )
+        logger.info(
+            f"[HybridRAG] P5 SKIP_RETRIEVAL | "
+            f"query='{query[:50]}...' | "
+            f"strategy={skip_result.strategy_used}"
+        )
+        return skip_result
+
     # === Parse Pipeline Hints ===
     hints = pipeline_hints or {}
     use_expansion = hints.get("use_expansion", False)

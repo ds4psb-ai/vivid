@@ -153,14 +153,47 @@ from app.rag.graph_rag import (
     Entity as GraphEntity,
     Relationship as GraphRelationship,
 )
-from app.rag.reranker import (
-    VertexReranker,
+# P4: Reranker module (Plugin-Registry pattern)
+from app.rag.rerankers import (
+    BaseReranker,
     RerankResult,
-    DocumentToRank,
+    DocumentToRerank,
+    get_reranker,
+    list_rerankers,
 )
+from app.rag.rerankers.vertex import VertexReranker
+from app.rag.rerankers.cross_encoder import LocalCrossEncoderReranker
 from app.rag.query_expansion import (
     expand_query,
     get_expanded_queries,
+)
+# ============ Phase 5: Adaptive RAG ============
+from app.rag.query_classifier import (
+    QueryType,
+    QueryClassificationResult,
+    RoutingConfig,
+    classify_query,
+    get_classification_result,
+    get_strategy,
+    should_skip_retrieval,
+)
+from app.rag.semantic_router import (
+    SemanticRouter,
+    get_semantic_router,
+    reset_semantic_router,
+    reload_routes,
+)
+from app.rag.strategy_selector import (
+    Strategy,
+    StrategySelectionResult,
+    select_strategy,
+    select_strategy_with_details,
+    get_strategy_for_query_type,
+    list_strategies,
+)
+from app.rag.direct_llm import (
+    DirectLLMResult,
+    direct_llm_response,
 )
 
 from app.rag.schemas import (
@@ -331,9 +364,34 @@ __all__ = [
     "AuteurGraph",
     "GraphEntity",
     "GraphRelationship",
+    # P4: Rerankers (Plugin-Registry)
+    "BaseReranker",
     "VertexReranker",
+    "LocalCrossEncoderReranker",
     "RerankResult",
-    "DocumentToRank",
+    "DocumentToRerank",
+    "get_reranker",
+    "list_rerankers",
     "expand_query",
     "get_expanded_queries",
+    # ============ Phase 5: Adaptive RAG ============
+    "QueryType",
+    "QueryClassificationResult",
+    "RoutingConfig",
+    "classify_query",
+    "get_classification_result",
+    "get_strategy",
+    "should_skip_retrieval",
+    "SemanticRouter",
+    "get_semantic_router",
+    "reset_semantic_router",
+    "reload_routes",
+    "Strategy",
+    "StrategySelectionResult",
+    "select_strategy",
+    "select_strategy_with_details",
+    "get_strategy_for_query_type",
+    "list_strategies",
+    "DirectLLMResult",
+    "direct_llm_response",
 ]

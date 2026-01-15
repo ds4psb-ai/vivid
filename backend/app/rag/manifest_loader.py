@@ -83,6 +83,45 @@ class RerankerConfig(BaseModel):
         return self.config.get("min_score", 0.0)
 
 
+class RoutingManifestConfig(BaseModel):
+    """P5 Adaptive RAG 라우팅 설정.
+
+    Attributes:
+        enabled: P5 Adaptive RAG 활성화 여부
+        semantic_threshold: SemanticRouter 최소 신뢰도 임계값
+        llm_fallback: LLM Classifier 폴백 활성화 여부
+        skip_retrieval_types: 검색을 생략할 쿼리 유형 목록
+        cache_embeddings: Route examples 임베딩 캐싱 여부
+    """
+
+    enabled: bool = True
+    semantic_threshold: float = Field(default=0.7, ge=0.0, le=1.0)
+    llm_fallback: bool = True
+    skip_retrieval_types: List[str] = Field(
+        default_factory=lambda: ["simple_factual", "creative"]
+    )
+    cache_embeddings: bool = True
+
+    def to_routing_config(self) -> "RoutingConfig":
+        """query_classifier.RoutingConfig로 변환."""
+        from app.rag.query_classifier import QueryType, RoutingConfig
+
+        skip_types = []
+        for type_str in self.skip_retrieval_types:
+            try:
+                skip_types.append(QueryType(type_str))
+            except ValueError:
+                pass
+
+        return RoutingConfig(
+            enabled=self.enabled,
+            semantic_threshold=self.semantic_threshold,
+            llm_fallback=self.llm_fallback,
+            skip_retrieval_types=skip_types,
+            cache_embeddings=self.cache_embeddings,
+        )
+
+
 class DatasetRoutingRule(BaseModel):
     """Dataset 라우팅 규칙."""
 
@@ -179,6 +218,9 @@ class YAMLManifest(BaseModel):
 
     # P4: Reranker 설정
     reranker: Optional[RerankerConfig] = None
+
+    # P5: Routing 설정 (Adaptive RAG)
+    routing: Optional["RoutingManifestConfig"] = None
 
     # Legacy compatibility fields (from AppRAGManifest)
     dataset_candidates: List[str] = Field(default_factory=list)

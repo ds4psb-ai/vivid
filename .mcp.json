@@ -58,7 +58,7 @@
         "tavily-mcp@latest"
       ],
       "env": {
-        "TAVILY_API_KEY": "${TAVILY_API_KEY}"
+        "TAVILY_API_KEY": "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"
       }
     },
     "postgres": {

@@ -1,5 +1,8 @@
 # UI Design Guide (2025-12, Crebit)
 
+<details open>
+<summary>한국어</summary>
+
 **작성**: 2025-12-28 (Last Updated: 2026-01-01 - Agent Studio 추가)  
 **대상**: Product / Design / Frontend  
 **목표**: 최신 UI/UX 기준과 기술 트렌드를 반영한 Crebit 전용 UI 가이드
@@ -343,3 +346,354 @@ Story-First 컴포넌트 전반에 적용된 Premium 디자인 시스템.
 - 캡슐 실행 후 요약/근거가 한 화면에서 확인 가능
 - Storyboard/Preview는 다중 출력 전환 가능
 - 모든 주요 UI는 키보드만으로 조작 가능
+
+</details>
+
+<details>
+<summary>English</summary>
+
+**Created**: 2025-12-28 (Last Updated: 2026-01-01 - Agent Studio added)  
+**Audience**: Product / Design / Frontend  
+**Goal**: A Crebit-specific UI guide reflecting the latest UI/UX standards and technology trends
+
+---
+
+> **Status (2026-01)**  
+> The main UI centers on **Dimension (/dimension)** and **Flow (train UI, /flow)**, while Canvas UI remains legacy.
+
+## 1) Research baseline (2025-12)
+
+### UI/UX fundamentals
+- **WCAG 2.2**: Accessibility standards are based on the four principles Perceivable/Operable/Understandable/Robust, ensuring readability, operability, and clarity across the UI.  
+  https://www.w3.org/WAI/standards-guidelines/wcag/
+
+### Modern UI engineering primitives (web)
+- **Container Queries**: Design components to respond to their container size.  
+  https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_container_queries
+- **View Transitions API**: Effective for preserving context and reducing cognitive load during transitions.  
+  https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API
+- **OKLCH + color-mix()**: Useful for perceptually uniform color interpolation and combinations.  
+  https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/oklch  
+  https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/color-mix
+- **accent-color**: Helps maintain consistent system control styling.  
+  https://developer.mozilla.org/en-US/docs/Web/CSS/accent-color
+
+### Product context (NotebookLM/Opal)
+- Role definitions follow `08_PIPELINES_AND_USER_FLOWS.md`.  
+- NotebookLM Studio multi-output/multilingual should be reflected as **multi-result cards and language switch UI**.  
+- Opal workflows connect to capsule specs via **review/labeling panels**.  
+  (See `03_RESEARCH_SOURCES_2025-12.md` for sources)
+
+### Benchmark UI notes
+- Virlo Content Studio benchmark findings: `16_VIRLO_CONTENT_STUDIO_RESEARCH.md`
+
+---
+
+## 2) Crebit UI Direction (Project Fit)
+
+Key keywords:
+- **Studio-grade**: deep layered structure like a production tool
+- **Evidence-first**: evidence/pattern/version info is naturally visible in the UI
+- **Capsule-first**: core logic is sealed; users adjust inputs/parameters only
+- **Low-friction**: template select → capsule run → preview in 3-5 clicks
+
+---
+
+## 3) Layout blueprint
+
+Default structure (current):
+- **Top bar**: status/credits + run CTA
+- **Left rail**: Dimension / Flow / Credits / Settlements / Settings
+- **Main**: Train Workflow (Flow) or Dimension mini-apps
+- **Right inspector**: selected tool/card summary (optional)
+- **Bottom panel**: artifact preview/logs (optional)
+
+Legacy Canvas layout:
+- Keep node/edge editing + Inspector + Bottom Preview, but only under the `_deprecated` path
+
+Mobile/small screens:
+- Left/right panels become **swipe drawers**
+- Canvas provides a **read-only compact view**
+
+---
+
+## 4) Visual system (tokens)
+
+Base theme aligns with `globals.css`:
+
+Color tokens (examples):
+- `--bg-0/#0b0e13`, `--bg-1/#0f172a`, `--bg-2/#111827`
+- `--fg-0/#e2e8f0`, `--fg-muted` 65% alpha
+- `--accent/#38bdf8`, `--accent-2/#f59e0b`
+
+Extended tokens:
+- `--surface-1`: color-mix(in oklch, var(--bg-2) 80%, white 20%)
+- `--surface-2`: color-mix(in oklch, var(--bg-1) 70%, white 30%)
+- `--border-muted`: rgba(148, 163, 184, 0.25)
+
+Rules:
+- Maintain **multi-layer gradients** for backgrounds
+- Use **accent colors only** for focus/selection (avoid purple)
+- Add depth with **subtle glow + borders** on cards/nodes
+
+---
+
+## 5) Typography
+
+Aligned with current fonts:
+- UI body: **Space Grotesk**
+- Code/IDs: **JetBrains Mono**
+
+Scale suggestions:
+- Display 24/28
+- Title 18/24
+- Body 14/20
+- Meta 12/16
+
+Rules:
+- Limit long text to **max 60 characters/line**
+- Inspector labels fixed at **12-13px**
+
+---
+
+## 6) Component guidelines
+
+### 6.1 Template Cards
+- Card header: title/tagline
+- Card footer: Start button + mini preview
+- Play preview_video_url on hover (muted)
+- If evidence refs exist, show an **evidence badge** (count)
+
+### 6.2 Capsule Node
+
+**Visual Identity:**
+- Lock icon + "Sealed" badge (default)
+- Parameters use sliders/dropdowns
+- Evidence refs shown as a **collapsible list**
+
+**Node FSM (Virlo-based 5-State Machine):**
+
+| State       | Visual Cue                                      | UX Behavior                                    |
+|-------------|-------------------------------------------------|------------------------------------------------|
+| `Idle`      | `--border-muted`, lock icon                     | Await input, parameters editable               |
+| `Loading`   | `--accent` pulse border, spinner                | Wait for server response after input commit    |
+| `Streaming` | `--accent-2` glow, partial text reveal          | Show chunked results (SSE/WebSocket)           |
+| `Complete`  | `--accent` solid border, checkmark badge        | Finalize output, show summary card             |
+| `Error`     | `--red-500` border, warning icon                | Error message + Retry CTA                      |
+| `Cancelled` | `--muted` border, neutral badge                 | User cancelled, show Cancelled badge           |
+
+```mermaid
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Loading : Run Click
+    Loading --> Streaming : First Chunk Received
+    Loading --> Error : Timeout / API Error
+    Loading --> Cancelled : Cancel
+    Streaming --> Complete : Stream End
+    Streaming --> Error : Stream Error
+    Streaming --> Cancelled : Cancel
+    Complete --> Idle : Reset / New Run
+    Error --> Idle : Dismiss / Retry
+    Cancelled --> Idle : Retry / New Run
+```
+
+**Implementation Notes:**
+- Provide visual feedback within **500ms** when entering `Loading`.
+- Disable input fields during `Streaming` to avoid conflicts.
+- On `Error`, Retry should rerun with the last parameters.
+
+### 6.3 Inspector
+- Section split: Params / Evidence / Runs
+- Evidence displays fixed `source_id + patternVersion`
+
+### 6.4 Admin Panels (Optional)
+- Notebook Library view is admin-only
+- Evidence/Pattern Trace tables are read-only with filters
+- Pipeline Ops: step status cards + quarantine summary + template seed actions + ops run logs
+- Template Provenance: per-template guide_sources + evidence_refs summary cards + missing count badge
+- Templates Stage Card: public templates + missing evidence count
+- Pattern Version History card (latest 5 versions + notes)
+- Quarantine sample cards (sheet/reason/row)
+- Admin-only message: show **admin-only** hint + login CTA when unauthorized
+
+### 6.5 Preview Panel
+- Storyboard cards (cuts, color, rhythm)
+- Multi-output switch: Video/Audio/Mind Map (NotebookLM Ultra)
+
+### 6.6 Onboarding / Empty State (Detailed)
+- **Primary Action**: "Get Data" or "Create First Workflow" (clear, singular CTA)
+- **Empty Workflow State**:
+  - Show a "Seed Flow" selection (e.g., "Start with YouTube Repurposing", "Start with PDF Analysis").
+  - Do not show a completely blank grid; guide the first tool placement.
+- **Visuals**:
+  - Use "Input / Processor / Output" conceptual icons in the empty state.
+  - See `virlo_content_studio_canvas` for reference on clear node ports (legacy canvas reference).
+- Compose cards for Core Components / What You Can Build / How It Works
+
+### 6.7 Story-First Components (NEW: 2025-12-30)
+
+Story-First control components integrated into the right panel of the legacy Canvas UI:
+
+#### 6.7.1 CanvasNarrativePanel
+Expandable panel for narrative structure and hook design.
+
+**Structure:**
+- **Header**: Story-First DNA toggle + current settings summary
+- **3-Tab layout**:
+  - `Dissonance Design`: combine familiar/unfamiliar (Cognitive Dissonance)
+  - `Emotional Arc`: set start/climax/end emotions
+  - `Hook Style`: HookVariantSelector integration
+
+**Style:**
+- Glassmorphism container (`bg-[#0A0A0C]/90 backdrop-blur-xl`)
+- Motion Tab (Framer Motion `layoutId`)
+- Gradient buttons (`from-yellow-600 to-orange-600`, etc.)
+
+#### 6.7.2 HookVariantSelector
+Select one of 8 hook styles and set A/B testing.
+
+**Hook styles (8):**
+| Style     | Label       | Color       | Description                 |
+|-----------|-------------|-------------|-----------------------------|
+| shock     | Shock       | red-400     | Start with a strong visual  |
+| curiosity | Curiosity   | purple-400  | Trigger mystery and interest|
+| emotion   | Emotion     | pink-400    | Start with emotional tie-in |
+| question  | Question    | blue-400    | Start with a direct question|
+| paradox   | Paradox     | yellow-400  | Subvert expectations        |
+| tease     | Tease       | cyan-400    | Show the result first       |
+| action    | Action      | orange-400  | Jump into action immediately|
+| calm      | Calm        | emerald-400 | Set a relaxed mood          |
+
+**VariantCard styles:**
+- Default: `bg-white/5 border-white/5 hover:bg-white/10`
+- Selected: colored background + glow (`shadow-lg`)
+- A/B mode: `ring-2 ring-blue-500`
+
+#### 6.7.3 DNAComplianceViewer
+Visually indicates compliance with brand DNA guidelines.
+
+**Structure:**
+- **Summary Card**: compliance rate + compliant/partial/violation counts
+- **Shot Reports**: expandable per-shot reports
+- **Action Items**: AI fixes + regenerate button
+
+**Level badges:**
+| Level      | Icon           | Color        |
+|------------|----------------|--------------|
+| compliant  | CheckCircle    | emerald-400  |
+| partial    | AlertTriangle  | yellow-400   |
+| violation  | XCircle        | red-400      |
+| unknown    | HelpCircle     | gray-400     |
+
+#### 6.7.4 MetricsDashboard
+Dashboard for viral performance and A/B test results.
+
+**Tabs:**
+- `Overview`: total views/content/engagement/viral score + hook style bar chart
+- `A/B Tests`: per-test variant comparison cards
+- `Insights`: AI-driven insights + recommended actions
+
+**Style:**
+- StatCard: `bg-white/5 backdrop-blur-md rounded-2xl`
+- Bar charts: motion animation (`width: 0 → X%`)
+- Insight cards: purple glow on hover
+
+---
+
+## 6.8 Agent Studio (Chat-first) (NEW: 2026-01-01)
+
+Agent Studio UI guide for the chat-first entry point.
+
+**Principles:**
+- **Simple / Expert** toggle: Simple focuses on results (artifacts/text), Expert shows tools/meta/session info.
+- **Chat Panel**: role separation (User/Agent/Tool) + SSE streaming state.
+- **Tool Result Card**: failure/refusal uses explicit colors/text, success summarizes payload.
+- **Artifact Preview**: Audio Overview is live; Storyboard/Shot List/Data Table are generated only via **legacy capsule paths** and Flow/Teaching integration is planned.
+- **Canvas Sync**: apply/ignore on workflow receipt + auto-apply toggle (currently disabled).
+
+Recommended tone:
+- Agent messages use **soft card contrast** and generous line spacing for readability.
+- Tool results use **compact dense cards**, artifacts use **large preview cards**.
+
+## 6.9 Glassmorphism Design System (NEW: 2025-12-30)
+
+Premium design system applied across Story-First components.
+
+### Core principles
+
+1. **Opacity hierarchy**
+   - Background: `bg-[#0A0A0C]/90` or `bg-white/5`
+   - Border: `border-white/5` → `border-white/10` → `border-white/20`
+   - Hover: `hover:bg-white/10`
+
+2. **Backdrop blur**
+   - Base panels: `backdrop-blur-xl`
+   - Modals/overlays: `backdrop-blur-md`
+   - Cards: `backdrop-blur-sm`
+
+3. **Shadows and glow**
+   - Selected/active: `shadow-lg shadow-{color}-500/20`
+   - Panel shadow: `shadow-2xl`
+   - Glow ring: `ring-1 ring-{color}-500/50`
+
+### Color palette (Story-First only)
+
+```css
+/* Primary Actions */
+--sf-purple: #a855f7;  /* purple-500 */
+--sf-pink: #ec4899;    /* pink-500 */
+
+/* Status Colors */
+--sf-success: #10b981; /* emerald-500 */
+--sf-warning: #f59e0b; /* amber-500 */
+--sf-error: #ef4444;   /* red-500 */
+
+/* Neutral */
+--sf-bg-base: #0A0A0C;
+--sf-border-muted: rgba(255, 255, 255, 0.05);
+--sf-border-default: rgba(255, 255, 255, 0.10);
+```
+
+### Interaction patterns
+
+1. **Tab transitions**: shared layout animation via `layoutId`
+2. **Card hover**: `scale: 1.02, y: -2` (Framer Motion)
+3. **Button hover**: gradient shift + stronger shadow
+4. **Input focus**: `border-purple-500/50` + `ring-1 ring-purple-500/20`
+
+---
+
+## 7) Motion & Interaction
+
+- **View Transition**: panel transitions, template → workflow navigation
+- **Reduced motion**: disable animations with `prefers-reduced-motion`
+- Drag/Drop maintains **sub-100ms responsiveness**
+
+---
+
+## 8) Accessibility (WCAG 2.2 compliant)
+
+- Text contrast **>= 4.5:1**
+- All primary actions **keyboard accessible**
+- State changes indicated by **color + text**
+- Focus rings are **clear and consistent**
+
+---
+
+## 9) Implementation notes (frontend)
+
+- Use `container-type: inline-size` for responsive Inspector/Preview panels
+- Use `accent-color` to align checkbox/slider tones
+- Color calculations via `oklch` + `color-mix()`
+- Enable View Transitions only where supported (with fallbacks)
+
+---
+
+## 10) Acceptance checklist
+
+- Template card → workflow transition completes within 1 second
+- After a capsule run, summary/evidence are visible in one view
+- Storyboard/Preview support multi-output switching
+- All key UI is operable via keyboard only
+
+</details>

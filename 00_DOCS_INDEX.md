@@ -1,6 +1,6 @@
 # Docs Index (정본)
 
-**Updated**: 2026-01-14  
+**Updated**: 2026-01-15  
 **총 문서**: 12개 (핵심), 35개 (archive)
 
 ---
@@ -64,6 +64,22 @@
 
 ---
 
+## Security and Policy (docs/)
+
+| Document | Location | Description |
+| --- | --- | --- |
+| Security Overview | `docs/SECURITY_OVERVIEW.md` | Top-level security posture and scope |
+| Security Controls Baseline | `docs/SECURITY_CONTROLS_BASELINE.md` | Minimum control requirements and mapping template |
+| Data Governance Policy | `docs/DATA_GOVERNANCE_POLICY.md` | Classification, handling, retention, deletion |
+| AI and RAG Security Policy | `docs/AI_RAG_SECURITY_POLICY.md` | RAG threat model and guardrails |
+| Secure SDLC Policy | `docs/SECURE_SDLC_POLICY.md` | SSDF-aligned development requirements |
+| Incident Response and BCP | `docs/INCIDENT_RESPONSE_AND_BCP.md` | Incident handling and continuity plan |
+| Access Control Policy | `docs/ACCESS_CONTROL_POLICY.md` | Authentication and authorization rules |
+| Logging and Monitoring Policy | `docs/LOGGING_MONITORING_POLICY.md` | Logging, monitoring, and alerting requirements |
+| Vendor Risk Policy | `docs/VENDOR_RISK_POLICY.md` | Third-party risk management |
+
+---
+
 ## 전략 문서 (docs/strategic/)
 
 | 문서 | 역할 |
@@ -83,3 +99,4 @@
 ## 기타
 
 - `task.md` / `walkthrough.md` - 개발 로그
+- 문서 언어 토글은 `<details>` 기반이며 기본 열림은 한국어

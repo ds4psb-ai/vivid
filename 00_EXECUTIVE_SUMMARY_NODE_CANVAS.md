@@ -1,10 +1,13 @@
 # Crebit Node Canvas: Executive Summary (Official)
 
+<details open>
+<summary>한국어</summary>
+
 **작성**: 2025-12-24  
 **Updated**: 2026-01-01 (Agent Studio 반영)  
 **버전**: 정본 v1.1  
 **대상**: CEO / 투자자 / 파트너  
-**핵심**: Dimension Tools + Train Workflow + Agent Chat (Canvas는 레거시)  
+**핵심**: Dimension Tools + Train Workflow + Agent Chat (Canvas는 레거시)
 
 ---
 
@@ -55,7 +58,7 @@
 
 ---
 
-## 5) 대표 거장 템플릿 (v1)
+## 5) Representative Auteur Templates (v1)
 
 - 봉준호 (구조적 긴장, 장르 혼합)
 - 박찬욱 (강한 미장센, 대칭 구도)
@@ -117,3 +120,128 @@
 ## 11) 결론
 
 Crebit는 Flow/Agent Chat + 최적화 학습의 결합으로, **"창작 설계 시간을 최소화하고 결과 품질을 자동 개선하는"** 차세대 창작 스튜디오를 목표로 한다.
+
+</details>
+
+<details>
+<summary>English</summary>
+
+**Created**: 2025-12-24  
+**Updated**: 2026-01-01 (Agent Studio reflected)  
+**Version**: Canonical v1.1  
+**Audience**: CEO / Investors / Partners  
+**Core**: Dimension Tools + Train Workflow + Agent Chat (Canvas is legacy)
+
+---
+
+## 1) Three-Sentence Vision
+
+1. Model auteur-style creative patterns as tools and workflows.  
+2. Users connect tools in **Flow (train UI)**, and Canvas is reserved for internal/legacy editing when needed.  
+3. GA/RL optimization automatically recommends better results over time.
+
+---
+
+## 2) What We Are Building (One-Line Definition)
+
+**"An AI content studio that connects tools through chat + train workflows, while keeping Canvas for internal/legacy use."**
+
+---
+
+## 3) Core Components (Latest Architecture)
+
+- **Notebook Library (Private)**: accumulate auteur/popular notebooks as a private knowledge base
+- **Data Ingestion & Evidence Loop**: reference collection → structuring (ASR/shot/keyframe) → summary/label → verify/promote
+- **Pattern Library/Trace**: manage repeatable patterns as provable "formulas"
+- **Tong Dataset (Synapse)**: store Visual + Persona + transformation rules as explainable "auteur formulas"
+- **Dimension Tools**: mini apps (prompt/storyboard/image/reference)
+- **Flow UI (Train)**: train-style workflow editing/execution
+- **Agent Chat (Chokki)**: tool calls + artifact previews (SSE, Audio Overview first)
+- **Canvas UI (Legacy)**: node/edge editing (currently hidden)
+- **Spec Engine**: node computation + rule-based composition + pipeline snapshots
+- **Optimization**: GA (combinatorial search) + RL/bandit (feedback learning)
+- **Model Gateway**: unified calls across video/image/audio/text models
+- **Asset & Provenance**: output metadata, version/copyright tracking
+- **Observability & Evaluation**: run tracing, cost/latency, quality metrics, evidence links
+- **Event-driven Pipeline**: async separation of ingest/summary/generation flows
+- **RAG/LLMOps baseline**: chunking/embedding/hybrid retrieval + evaluation, prompt/chain versioning
+- **Marketplace**: template distribution, sharing, revenue share
+
+---
+
+## 4) Key User Flows (Summary)
+
+- **Flow**: create train workflows → select connection links → run sequentially
+- **Dimension**: select mini app → input → execute
+- **Agent Chat**: chat input → tool execution → artifact preview (Audio Overview first)
+- **Canvas (Legacy)**: internal/legacy editing and reference
+- Capsule nodes are **Sealed** (only inputs/outputs/exposed params are public)
+- Detailed pipelines/roles are canonized in `08_PIPELINES_AND_USER_FLOWS.md`
+- Video structuring (ASR/shot/keyframe → Gemini) reference: `19_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
+
+---
+
+## 5) 대표 거장 템플릿 (v1)
+
+- Bong Joon-ho (structural tension, genre blending)
+- Park Chan-wook (strong mise-en-scene, symmetrical framing)
+- Shinkai (emotional arc, light/color)
+- Lee Jun-ho (music sync, rhythmic pacing)
+- Na Hong-jin (suspense, gritty realism)
+- Hong Sang-soo (minimal dialogue, static staging)
+
+---
+
+## 6) NotebookLM / Google Opal Strategy (Summary)
+
+- **Gemini structuring → DB SoR** is the canonical source for video understanding (NotebookLM is summary/guide only)
+- **NotebookLM**: knowledge/guide layer (cluster notebooks, homage/variation, template fit)
+- **Opal**: template seed and QA workflow automation (capsule-internal subgraph)
+- See `08_PIPELINES_AND_USER_FLOWS.md` for detailed roles/specs
+
+---
+
+## 7) MVP Scope (Must-Haves)
+
+- Flow (Train) workflow creation/editing
+- Dimension mini-app execution (Prompt/Storyboard/Image/Reference)
+- Agent Studio (chat-first) + SSE streaming
+- Artifact previews (Audio Overview + legacy Storyboard/Shot List/Data Table)
+- Spec JSON generation and storage
+- Basic rule-based computation + GA prototype
+- Template storage/sharing (initial public/private)
+- Canvas editing remains only on legacy paths
+
+---
+
+## 8) Expansion Roadmap (Summary)
+
+- **Phase 1 (0-3 months)**: Complete Flow/Dimension MVP
+- **Phase 2 (3-6 months)**: GA/RL optimization + template marketplace
+- **Phase 3 (6-12 months)**: AI short drama/short film/short animation pipelines
+- **Phase 4 (12+ months)**: OTT-grade personalized recommendation/distribution/monetization
+
+---
+
+## 9) Revenue Model Overview
+
+- **SaaS subscriptions**: Free/Pro/Studio/Enterprise
+- **Template marketplace**: revenue share on sales
+- **API/production services**: model call/rendering cost-based pricing
+
+---
+
+## 10) Success Metrics (Initial)
+
+- Average workflow completion time < 10 minutes
+- Recommended spec selection rate > 40%
+- Template reuse rate > 25%
+- Paid conversion rate > 5%
+
+---
+
+## 11) Conclusion
+
+Crebit aims to become a next-generation creation studio that **"minimizes creative design time and automatically improves output quality"** by combining Flow/Agent Chat with optimization learning.
+
+</details>

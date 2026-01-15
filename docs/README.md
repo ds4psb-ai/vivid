@@ -7,6 +7,10 @@
 
 ## 📚 Quick Navigation
 
+### Language Toggle
+- 문서 내 `<details>` 섹션에서 한국어/English를 전환합니다. 기본 열림은 한국어입니다.
+- Use the `<details>` sections labeled 한국어/English to switch languages. Default open is 한국어.
+
 ### Core Architecture
 | 문서 | 설명 | 상태 |
 |------|------|------|
