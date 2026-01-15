@@ -22,6 +22,10 @@ export interface GenerateButtonProps
   fullWidth?: boolean;
   /** Additional className */
   className?: string;
+  /** Icon to display before text */
+  icon?: ReactNode;
+  /** Text to show when loading */
+  loadingText?: string;
 }
 
 export function GenerateButton({
@@ -32,6 +36,8 @@ export function GenerateButton({
   className = "",
   disabled,
   onClick,
+  icon,
+  loadingText = "처리 중...",
   ...props
 }: GenerateButtonProps) {
   const { styles, isLoading, classes } = useDimensionPanel();
@@ -54,10 +60,11 @@ export function GenerateButton({
       {isLoadingState ? (
         <span className="flex items-center justify-center gap-2">
           <Loader2 className="w-5 h-5 animate-spin" />
-          <span>처리 중...</span>
+          <span>{loadingText}</span>
         </span>
       ) : (
         <span className="flex items-center justify-center gap-2">
+          {icon}
           {children || "생성하기"}
           {creditCost !== undefined && (
             <span className="text-xs opacity-70">({creditCost} 크레딧)</span>

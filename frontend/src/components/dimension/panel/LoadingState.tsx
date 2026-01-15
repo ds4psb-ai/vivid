@@ -15,8 +15,12 @@ export interface LoadingStateProps {
   message?: string;
   /** Show progress indicator (0-100) */
   progress?: number;
-  /** Show skeleton instead of spinner */
+  /** Show skeleton instead of spinner (deprecated: use variant="skeleton") */
   skeleton?: boolean;
+  /** Display variant: "spinner" (default) or "skeleton" */
+  variant?: "spinner" | "skeleton";
+  /** Cancel callback */
+  onCancel?: () => void;
   /** Additional className */
   className?: string;
 }
@@ -25,6 +29,8 @@ export function LoadingState({
   message = "처리 중...",
   progress,
   skeleton = false,
+  variant,
+  onCancel,
   className = "",
 }: LoadingStateProps) {
   const { isLoading, classes, styles } = useDimensionPanel();
@@ -32,7 +38,10 @@ export function LoadingState({
   // Only render when loading
   if (!isLoading) return null;
 
-  if (skeleton) {
+  // Support both skeleton prop and variant="skeleton"
+  const showSkeleton = skeleton || variant === "skeleton";
+
+  if (showSkeleton) {
     return (
       <div className={`space-y-4 animate-pulse ${className}`}>
         <div className="h-8 bg-white/10 rounded-lg w-3/4" />
@@ -72,6 +81,16 @@ export function LoadingState({
             style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
           />
         </div>
+      )}
+
+      {/* Cancel Button */}
+      {onCancel && (
+        <button
+          onClick={onCancel}
+          className="mt-4 px-4 py-2 text-sm text-white/60 hover:text-white border border-white/10 hover:border-white/20 rounded-lg transition-all"
+        >
+          취소
+        </button>
       )}
 
       <span className="sr-only">{message}</span>
