@@ -44,7 +44,7 @@ from app.rag.tier0_vertex_rag import (
 from app.rag.observability import trace_rag
 from app.rag.graph_rag import graph_query as _graph_query, GraphRAGResult
 from app.rag.query_expansion import expand_query as _expand_query
-from app.rag.reranker import VertexReranker, DocumentToRank
+from app.rag.rerankers import get_reranker, DocumentToRerank
 # P0.5: Application-level BM25 deprecated in favor of Qdrant Native Sparse
 # See: tier1_dimension_rag.hybrid_search() for new implementation
 from app.rag.metrics import record_rag_query, record_rag_error, track_rag_operation, log_router_decision
@@ -309,9 +309,10 @@ async def hybrid_query(
     auteur_key: Optional[str] = None,
     dimension: Optional[str] = None,
     use_google_search: bool = True,
-    strategy: Literal["vector", "graph", "hybrid"] = "vector",
+    strategy: Literal["vector", "graph", "hybrid", "ensemble"] = "vector",
     pipeline_hints: Optional[Dict[str, Any]] = None,
     use_semantic_cache: bool = True,  # NEW: Enable semantic caching
+    app_key: Optional[str] = None,  # P3: For ensemble retrieval
 ) -> HybridRAGResult:
     """하이브리드 RAG 쿼리 실행.
 
@@ -319,6 +320,7 @@ async def hybrid_query(
     - "vector": Traditional vector similarity search (default)
     - "graph": GraphRAG entity/relationship traversal
     - "hybrid": Combine both vector and graph results
+    - "ensemble": P3 Weighted RRF Fusion (requires app_key)
 
     Pipeline Hints (when provided):
     - use_expansion: bool - Enable query expansion via LLM
@@ -326,22 +328,26 @@ async def hybrid_query(
     - use_reranker: bool - Enable vertex reranker
     - reranker_model: "semantic-ranker-default-v1"
     - top_k: int - Number of results to return
+    - use_ensemble: bool - Force ensemble retrieval (P3)
+    - rrf_k: int - RRF constant (default 60)
 
     Flow:
     1. Query Expansion (if hints.use_expansion)
-    2. auteur_key 있으면: NotebookLM 우선 → Vertex AI 폴백
-    3. dimension 있으면: Vertex AI + Google Search Grounding
-    4. 둘 다 없으면: 병렬 실행 → 결과 병합
-    5. strategy="graph": GraphRAG 엔티티 검색
-    6. Reranking (if hints.use_reranker)
+    2. strategy="ensemble": Multi-backend parallel + Weighted RRF
+    3. auteur_key 있으면: NotebookLM 우선 → Vertex AI 폴백
+    4. dimension 있으면: Vertex AI + Google Search Grounding
+    5. 둘 다 없으면: 병렬 실행 → 결과 병합
+    6. strategy="graph": GraphRAG 엔티티 검색
+    7. Reranking (if hints.use_reranker)
 
     Args:
         query: 검색 쿼리
         auteur_key: 거장 키 (예: "bong", "봉준호")
         dimension: 차원 코드 (예: "1D", "2D", "AD")
         use_google_search: Google Search Grounding 사용 여부
-        strategy: 검색 전략 ("vector" | "graph" | "hybrid")
+        strategy: 검색 전략 ("vector" | "graph" | "hybrid" | "ensemble")
         pipeline_hints: 파이프라인 힌트 딕셔너리
+        app_key: 앱 키 (ensemble 전략 시 필수, e.g., "dimension.aesthetic.direct")
 
     Returns:
         HybridRAGResult with combined answer and sources
@@ -448,6 +454,48 @@ async def hybrid_query(
             logger.warning(f"[HybridRAG] Query expansion failed: {e}")
             expanded_queries = [query]
 
+    # === Strategy: Ensemble (P3: Multi-backend + Weighted RRF) ===
+    hints = pipeline_hints or {}
+    use_ensemble = hints.get("use_ensemble", False) or strategy == "ensemble"
+
+    if use_ensemble:
+        # app_key 결정: 명시적 전달 > dimension 기반 추론 > auteur 기반 추론
+        effective_app_key = app_key
+        if not effective_app_key and dimension:
+            # dimension에서 app_key 추론 (예: AD -> dimension.aesthetic.direct)
+            dimension_to_app = {
+                "AD": "dimension.aesthetic.direct",
+                "1D": "teaching.prompt.generate",
+                "2D": "teaching.storyboard.create",
+                "3D": "teaching.image.generate",
+                "4D": "teaching.reference.analyze",
+                "VEO": "veo.video.generate",
+                "AI": "dimension.persona.analyze",
+                "QC": "dimension.quality.check",
+                "STORY": "dimension.story.generate",
+            }
+            effective_app_key = dimension_to_app.get(dimension.upper())
+
+        if not effective_app_key:
+            # 기본값: dimension.aesthetic.direct (가장 일반적)
+            effective_app_key = "dimension.aesthetic.direct"
+            logger.warning(f"[HybridRAG] No app_key for ensemble, using default: {effective_app_key}")
+
+        rrf_k = hints.get("rrf_k", 60)
+        top_k = hints.get("top_k", 5)
+
+        result = await ensemble_retrieve(
+            query=effective_query,
+            app_key=effective_app_key,
+            limit=top_k,
+            rrf_k=rrf_k,
+            auteur_key=auteur_key,
+            filters={"dimension": dimension} if dimension else None,
+        )
+        result.query_time_ms = int((time.monotonic() - start_time) * 1000)
+        result.dimension = dimension
+        return result
+
     # === Strategy: Graph-only ===
 
     if strategy == "graph":
@@ -513,46 +561,52 @@ async def hybrid_query(
         len(result.grounding_sources)
     )
     
-    # === Step N: Reranking ===
+    # === Step N: Reranking (P4: Updated to use new rerankers module) ===
     if use_reranker and result.retrieval_count > 0:
         try:
-            reranker = VertexReranker(model=reranker_model)
-            
-            # Prepare documents for reranking
-            docs_to_rerank: List[DocumentToRank] = []
-            
-            # Add NotebookLM sources
-            for src in result.notebooklm_sources:
-                docs_to_rerank.append(DocumentToRank(
-                    id=f"nlm_{src.source_id}",
-                    content=src.text[:1000],  # Truncate for reranker
-                    metadata={"source": "notebooklm"}
-                ))
-            
-            # Add Vertex sources
-            for src in result.vertex_sources:
-                docs_to_rerank.append(DocumentToRank(
-                    id=f"vtx_{src.source_id}",
-                    content=src.text[:1000],
-                    metadata={"source": "vertex"}
-                ))
-            
-            if docs_to_rerank:
-                rerank_result = await reranker.rerank(
-                    query=effective_query,
-                    documents=docs_to_rerank,
-                    top_k=min(top_k, len(docs_to_rerank))
-                )
-                
-                # Update result metadata
-                result.reranked = True
-                result.rerank_model = reranker_model
-                result.source_scores = [doc.score for doc in rerank_result.documents]
-                
-                logger.info(
-                    f"[HybridRAG] Reranked {len(docs_to_rerank)} docs | "
-                    f"top_score={rerank_result.documents[0].score if rerank_result.documents else 0:.3f}"
-                )
+            # P4: Use get_reranker with backend preference
+            # Default to vertex for backward compatibility
+            reranker = get_reranker("vertex")
+            if not reranker:
+                reranker = get_reranker("local_cross_encoder")
+
+            if reranker:
+                # Prepare documents for reranking
+                docs_to_rerank: List[DocumentToRerank] = []
+
+                # Add NotebookLM sources
+                for src in result.notebooklm_sources:
+                    docs_to_rerank.append(DocumentToRerank(
+                        id=f"nlm_{src.source_id}",
+                        text=src.text[:1000],  # Truncate for reranker
+                        metadata={"source": "notebooklm"}
+                    ))
+
+                # Add Vertex sources
+                for src in result.vertex_sources:
+                    docs_to_rerank.append(DocumentToRerank(
+                        id=f"vtx_{src.source_id}",
+                        text=src.text[:1000],
+                        metadata={"source": "vertex"}
+                    ))
+
+                if docs_to_rerank:
+                    rerank_result = await reranker.rerank(
+                        query=effective_query,
+                        documents=docs_to_rerank,
+                        top_k=min(top_k, len(docs_to_rerank))
+                    )
+
+                    # Update result metadata
+                    result.reranked = True
+                    result.rerank_model = rerank_result.model
+                    result.source_scores = [doc["rerank_score"] for doc in rerank_result.documents]
+
+                    logger.info(
+                        f"[HybridRAG] Reranked {len(docs_to_rerank)} docs | "
+                        f"model={rerank_result.model} | "
+                        f"top_score={rerank_result.documents[0]['rerank_score'] if rerank_result.documents else 0:.3f}"
+                    )
         except Exception as e:
             logger.warning(f"[HybridRAG] Reranking failed: {e}")
 
@@ -898,4 +952,499 @@ def reset_hybrid_rag_service() -> None:
     """서비스 리셋 (테스트용)."""
     global _hybrid_rag_service
     _hybrid_rag_service = None
+
+
+# ============================================================================
+# P3: Ensemble Retriever (Weighted RRF Fusion)
+# ============================================================================
+
+from app.rag.backends.base import RetrievalResult
+from app.rag.manifest_loader import BackendConfig
+
+
+def _weighted_rrf_fusion(
+    backend_results: List[Tuple[str, float, List[RetrievalResult]]],
+    *,
+    k: int = 60,
+    limit: int = 10,
+    min_score: float = 0.0,
+) -> List[RetrievalResult]:
+    """Weighted Reciprocal Rank Fusion 알고리즘.
+
+    다중 백엔드 결과를 Weighted RRF로 통합합니다.
+
+    Args:
+        backend_results: [(backend_id, weight, results), ...] 형식
+        k: RRF 상수 (기본값 60, 순위 차이 완화)
+        limit: 반환할 최대 문서 수
+        min_score: 최소 RRF 스코어 임계값
+
+    Returns:
+        RRF 스코어로 정렬된 RetrievalResult 리스트
+
+    Algorithm:
+        Weighted_RRF(d) = Σ w_i / (k + rank_i(d))
+
+        where:
+        - w_i = weight of retriever i (from YAML config)
+        - rank_i(d) = 1-based rank of document d in retriever i
+        - k = smoothing constant (60 by default)
+
+    Note:
+        k=60은 empirically proven 값으로:
+        - 상위 순위와 하위 순위 사이의 점수 차이 완화
+        - 단일 retriever의 지배 방지
+        - 여러 retriever에서 일관되게 등장하는 문서 선호
+    """
+    # doc_id -> {rrf_score, best_result, sources}
+    doc_scores: Dict[str, Dict[str, Any]] = {}
+
+    for backend_id, weight, results in backend_results:
+        for rank, result in enumerate(results, start=1):
+            doc_id = result.doc_id
+            rrf_contribution = weight / (k + rank)
+
+            if doc_id not in doc_scores:
+                doc_scores[doc_id] = {
+                    "rrf_score": 0.0,
+                    "best_result": result,
+                    "sources": [],
+                    "max_original_score": result.score,
+                }
+
+            doc_scores[doc_id]["rrf_score"] += rrf_contribution
+            doc_scores[doc_id]["sources"].append(backend_id)
+
+            # 가장 높은 원본 스코어를 가진 결과 보존
+            if result.score > doc_scores[doc_id]["max_original_score"]:
+                doc_scores[doc_id]["best_result"] = result
+                doc_scores[doc_id]["max_original_score"] = result.score
+
+    # RRF 스코어로 정렬
+    sorted_docs = sorted(
+        doc_scores.items(),
+        key=lambda x: x[1]["rrf_score"],
+        reverse=True,
+    )
+
+    # min_score 필터링 및 limit 적용
+    fused_results: List[RetrievalResult] = []
+    for doc_id, data in sorted_docs[:limit]:
+        if data["rrf_score"] < min_score:
+            continue
+
+        best = data["best_result"]
+        # 새 RetrievalResult 객체 생성 (원본 수정 방지)
+        fused_result = RetrievalResult(
+            doc_id=best.doc_id,
+            text=best.text,
+            score=data["rrf_score"],  # RRF 스코어 사용
+            source=best.source,
+            rank=0,  # 아래에서 재설정
+            metadata={
+                **best.metadata,
+                "rrf_score": data["rrf_score"],
+                "fusion_sources": data["sources"],
+                "original_score": data["max_original_score"],
+            },
+        )
+        fused_results.append(fused_result)
+
+    # 최종 순위 재설정
+    for i, result in enumerate(fused_results, start=1):
+        result.rank = i
+
+    logger.debug(
+        f"[RRF] Fused {len(backend_results)} backends -> {len(fused_results)} results | "
+        f"unique_docs={len(doc_scores)} | k={k}"
+    )
+
+    return fused_results
+
+
+def _convert_ensemble_to_hybrid_result(
+    fused_results: List[RetrievalResult],
+    query: str,
+) -> HybridRAGResult:
+    """RetrievalResult 리스트를 HybridRAGResult로 변환.
+
+    기존 hybrid_query() API와의 하위 호환성을 유지합니다.
+
+    Args:
+        fused_results: RRF fusion된 RetrievalResult 리스트
+        query: 원본 검색 쿼리
+
+    Returns:
+        HybridRAGResult 인스턴스 (기존 API 호환)
+    """
+    from app.rag.tier0_notebooklm import NotebookSource
+    from app.rag.tier0_vertex_rag import RAGSource
+
+    notebooklm_sources: List[NotebookSource] = []
+    vertex_sources: List[RAGSource] = []
+    grounding_sources: List[Dict[str, Any]] = []
+
+    # 소스별 분류
+    for result in fused_results:
+        source_type = result.source
+
+        if source_type == "notebooklm":
+            notebooklm_sources.append(
+                NotebookSource(
+                    source_id=result.doc_id,
+                    title=result.metadata.get("title", ""),
+                    excerpt=result.text[:500] if result.text else "",
+                    relevance_score=result.metadata.get("original_score", result.score),
+                    citation_text=result.text[:200] if result.text else "",
+                )
+            )
+        elif source_type in ("qdrant_hybrid", "vertex_grounding"):
+            vertex_sources.append(
+                RAGSource(
+                    source_id=result.doc_id,
+                    content=result.text,
+                    relevance_score=result.metadata.get("original_score", result.score),
+                    document_name=result.metadata.get("document_name", ""),
+                    metadata=result.metadata,
+                )
+            )
+            # Google Search Grounding 결과 분리
+            if result.metadata.get("type") == "google_search":
+                grounding_sources.append({
+                    "uri": result.metadata.get("url", ""),
+                    "source": result.text,
+                })
+
+    # 신뢰도 계산 (RRF 스코어 기반)
+    avg_confidence = 0.0
+    if fused_results:
+        # RRF 스코어는 작으므로 정규화 (0.1 이상이면 높은 신뢰도)
+        max_rrf = max(r.score for r in fused_results)
+        avg_confidence = min(0.95, max_rrf * 50)  # 스케일 조정
+
+    # Answer 생성 (상위 결과 기반)
+    answer_parts = []
+    for result in fused_results[:3]:  # 상위 3개
+        if result.text:
+            answer_parts.append(result.text[:300])
+    answer = "\n\n".join(answer_parts) if answer_parts else "검색 결과를 찾을 수 없습니다."
+
+    return HybridRAGResult(
+        answer=answer,
+        notebooklm_sources=notebooklm_sources,
+        vertex_sources=vertex_sources,
+        grounding_sources=grounding_sources,
+        confidence=avg_confidence,
+        strategy_used="ensemble_rrf",
+        grounded=bool(notebooklm_sources) or bool(grounding_sources),
+        rrf_enabled=True,
+        fused_results=[
+            {
+                "doc_id": r.doc_id,
+                "score": r.score,
+                "source": r.source,
+                "fusion_sources": r.metadata.get("fusion_sources", []),
+            }
+            for r in fused_results
+        ],
+    )
+
+
+async def _fallback_single_backend_query(
+    query: str,
+    app_key: str,
+    limit: int,
+    min_score: float,
+    filters: Optional[Dict[str, Any]],
+) -> HybridRAGResult:
+    """backends 설정이 없을 때 기본 Qdrant 검색으로 폴백.
+
+    Args:
+        query: 검색 쿼리
+        app_key: 앱 식별자
+        limit: 최대 결과 수
+        min_score: 최소 스코어
+        filters: 메타데이터 필터
+
+    Returns:
+        HybridRAGResult (단일 백엔드 결과)
+    """
+    from app.rag.backends import get_backend
+
+    backend = get_backend("qdrant_hybrid")
+    if not backend:
+        return HybridRAGResult(
+            answer="RAG 백엔드를 찾을 수 없습니다.",
+            confidence=0.0,
+            strategy_used="fallback_error",
+        )
+
+    # app_key에서 dimension 추출 (예: dimension.aesthetic.direct -> AD)
+    manifest = get_manifest(app_key)
+    dimension = manifest.dimensions[0] if manifest and manifest.dimensions else "1D"
+
+    try:
+        results = await backend.retrieve(
+            query=query,
+            limit=limit,
+            filters=filters,
+            config={"dimension": dimension, "min_score": min_score},
+        )
+
+        return _convert_ensemble_to_hybrid_result(results, query)
+    except Exception as e:
+        logger.error(f"[EnsembleRetriever] Fallback query failed: {e}")
+        return HybridRAGResult(
+            answer="검색 중 오류가 발생했습니다.",
+            confidence=0.0,
+            strategy_used="fallback_error",
+        )
+
+
+@trace_rag(name="ensemble_retrieve", tags=["rag", "ensemble", "rrf"])
+async def ensemble_retrieve(
+    query: str,
+    app_key: str,
+    *,
+    limit: int = 5,
+    min_score: float = 0.0,
+    filters: Optional[Dict[str, Any]] = None,
+    rrf_k: int = 60,
+    auteur_key: Optional[str] = None,
+) -> HybridRAGResult:
+    """P3: Ensemble Retrieval with Weighted RRF Fusion.
+
+    YAML Manifest의 backends 설정에 따라 다중 백엔드를 병렬 실행하고
+    Weighted RRF로 결과를 통합합니다.
+
+    Args:
+        query: 검색 쿼리
+        app_key: 앱 식별자 (e.g., "dimension.aesthetic.direct")
+        limit: 최종 반환할 최대 문서 수
+        min_score: 최소 RRF 스코어 임계값
+        filters: 추가 메타데이터 필터
+        rrf_k: RRF 상수 (기본값 60)
+        auteur_key: 거장 키 (NotebookLM notebook_id 오버라이드용)
+
+    Returns:
+        HybridRAGResult: 통합된 검색 결과
+
+    Example:
+        >>> result = await ensemble_retrieve(
+        ...     query="봉준호 롱테이크 기법",
+        ...     app_key="dimension.aesthetic.direct",
+        ...     limit=7,
+        ...     auteur_key="bong",
+        ... )
+        >>> print(result.strategy_used)  # "ensemble_rrf"
+        >>> for item in result.fused_results:
+        ...     print(f"{item['source']}: {item['doc_id']}")
+
+    Notes:
+        - 거장 DNA 외 다른 백엔드 타입도 동일하게 지원
+        - 새 백엔드 추가 시 backends/ 디렉토리에 구현체만 추가하면 됨
+        - YAML에서 weight, enabled, config 조정으로 튜닝 가능
+    """
+    import time
+    from app.rag.backends import get_backend
+
+    start_time = time.monotonic()
+
+    # 1. Manifest 로드
+    manifest = get_manifest(app_key)
+    if not manifest or not manifest.backends:
+        logger.warning(f"[EnsembleRetriever] No backends configured for {app_key}, falling back to default")
+        return await _fallback_single_backend_query(query, app_key, limit, min_score, filters)
+
+    # 2. enabled=true인 백엔드만 필터링
+    enabled_backends = [b for b in manifest.backends if b.enabled]
+    if not enabled_backends:
+        logger.warning(f"[EnsembleRetriever] No enabled backends for {app_key}")
+        return HybridRAGResult(
+            answer="활성화된 RAG 백엔드가 없습니다.",
+            confidence=0.0,
+            strategy_used="ensemble_no_backends",
+        )
+
+    logger.info(
+        f"[EnsembleRetriever] Starting | app={app_key} | "
+        f"backends={[b.id for b in enabled_backends]} | "
+        f"query='{query[:50]}...'"
+    )
+
+    # 3. 병렬 실행 태스크 생성
+    async def _execute_backend(
+        backend_config: BackendConfig,
+    ) -> Tuple[str, float, List[RetrievalResult]]:
+        """단일 백엔드 실행 및 결과 반환."""
+        try:
+            backend = get_backend(backend_config.id)
+            if not backend:
+                logger.warning(f"[EnsembleRetriever] Backend not found: {backend_config.id}")
+                return (backend_config.id, backend_config.weight, [])
+
+            # NotebookLM의 경우 auteur_key로 notebook_id 오버라이드
+            config = dict(backend_config.config)
+            if backend_config.id == "notebooklm" and auteur_key:
+                notebook_key = AUTEUR_KEY_TO_NOTEBOOK.get(auteur_key.lower())
+                if notebook_key:
+                    config["notebook_id"] = notebook_key
+
+            results = await asyncio.wait_for(
+                backend.retrieve(
+                    query=query,
+                    limit=limit * 2,  # Over-fetch for fusion
+                    filters=filters,
+                    config=config,
+                ),
+                timeout=10.0,  # 개별 백엔드 타임아웃 10초
+            )
+
+            logger.debug(
+                f"[EnsembleRetriever] Backend {backend_config.id} returned {len(results)} results"
+            )
+            return (backend_config.id, backend_config.weight, results)
+
+        except asyncio.TimeoutError:
+            logger.warning(f"[EnsembleRetriever] Backend {backend_config.id} timed out")
+            return (backend_config.id, backend_config.weight, [])
+        except Exception as e:
+            logger.error(f"[EnsembleRetriever] Backend {backend_config.id} failed: {e}")
+            return (backend_config.id, backend_config.weight, [])
+
+    # 4. asyncio.gather()로 병렬 실행
+    tasks = [_execute_backend(b) for b in enabled_backends]
+    backend_results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    # 5. 예외 필터링
+    valid_results: List[Tuple[str, float, List[RetrievalResult]]] = []
+    for result in backend_results:
+        if isinstance(result, Exception):
+            logger.error(f"[EnsembleRetriever] Unexpected error: {result}")
+            continue
+        valid_results.append(result)
+
+    if not valid_results:
+        logger.warning("[EnsembleRetriever] All backends failed")
+        return HybridRAGResult(
+            answer="모든 RAG 백엔드가 실패했습니다.",
+            confidence=0.0,
+            strategy_used="ensemble_all_failed",
+        )
+
+    # 총 검색된 문서 수
+    total_retrieved = sum(len(r[2]) for r in valid_results)
+
+    # 6. Weighted RRF Fusion
+    fused_results = _weighted_rrf_fusion(
+        valid_results, k=rrf_k, limit=limit, min_score=min_score
+    )
+
+    # 7. P4: Reranker Stage (YAML manifest 설정 기반)
+    reranked = False
+    rerank_model: Optional[str] = None
+
+    if manifest.reranker and manifest.reranker.enabled and fused_results:
+        try:
+            reranker = get_reranker(
+                manifest.reranker.backend,
+                model=manifest.reranker.model,
+            )
+
+            if reranker:
+                # RetrievalResult -> DocumentToRerank 변환
+                docs_to_rerank = [
+                    DocumentToRerank(
+                        id=r.doc_id,
+                        text=r.text[:1000],  # Truncate for reranker
+                        metadata=r.metadata,
+                    )
+                    for r in fused_results
+                ]
+
+                rerank_result = await reranker.rerank(
+                    query=query,
+                    documents=docs_to_rerank,
+                    top_k=manifest.reranker.top_k or limit,
+                )
+
+                # RRF 결과를 rerank 스코어로 재정렬
+                reranked_ids = [doc["id"] for doc in rerank_result.documents]
+                reranked_scores = {
+                    doc["id"]: doc["rerank_score"]
+                    for doc in rerank_result.documents
+                }
+
+                # min_score 필터링
+                min_rerank_score = manifest.reranker.min_score
+                filtered_results = []
+                for r in fused_results:
+                    if r.doc_id in reranked_scores:
+                        score = reranked_scores[r.doc_id]
+                        if score >= min_rerank_score:
+                            # 새 RetrievalResult 생성 (rerank_score 추가)
+                            reranked_r = RetrievalResult(
+                                doc_id=r.doc_id,
+                                text=r.text,
+                                score=r.score,
+                                source=r.source,
+                                rank=0,
+                                metadata={
+                                    **r.metadata,
+                                    "rerank_score": score,
+                                },
+                            )
+                            filtered_results.append((score, reranked_r))
+
+                # rerank 스코어로 정렬
+                filtered_results.sort(key=lambda x: x[0], reverse=True)
+                fused_results = [r for _, r in filtered_results]
+
+                # 순위 재설정
+                for i, r in enumerate(fused_results, start=1):
+                    r.rank = i
+
+                reranked = True
+                rerank_model = rerank_result.model
+
+                logger.info(
+                    f"[EnsembleRetriever] Reranked {len(docs_to_rerank)} -> {len(fused_results)} docs | "
+                    f"model={rerank_model} | "
+                    f"min_score={min_rerank_score}"
+                )
+
+        except Exception as e:
+            logger.warning(f"[EnsembleRetriever] Reranking failed: {e}")
+
+    # 8. HybridRAGResult 형식으로 변환
+    result = _convert_ensemble_to_hybrid_result(fused_results, query)
+    result.reranked = reranked
+    result.rerank_model = rerank_model
+    result.query_time_ms = int((time.monotonic() - start_time) * 1000)
+    result.auteur_key = auteur_key
+    result.retrieval_count = len(fused_results)
+
+    # Prometheus 메트릭 기록
+    record_rag_query(
+        dimension=manifest.dimensions[0] if manifest.dimensions else "unknown",
+        strategy="ensemble_rrf",
+        source_type="ensemble",
+        latency_ms=result.query_time_ms,
+        results_count=result.retrieval_count,
+        confidence=result.confidence,
+        cache_hit=False,
+        auteur_key=auteur_key,
+        grounded=result.grounded,
+        rrf_enabled=True,
+    )
+
+    logger.info(
+        f"[EnsembleRetriever] Completed | "
+        f"backends={len(valid_results)}/{len(enabled_backends)} | "
+        f"retrieved={total_retrieved} -> fused={len(fused_results)} | "
+        f"time={result.query_time_ms}ms | "
+        f"confidence={result.confidence:.2f}"
+    )
+
+    return result
 

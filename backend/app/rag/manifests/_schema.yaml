@@ -160,3 +160,39 @@ properties:
               default: true
               description: "Enable Google Search Grounding"
       required: [id]
+
+  # Reranker configuration (P4 feature)
+  reranker:
+    type: object
+    description: "P4: Reranker configuration for result re-ranking"
+    properties:
+      enabled:
+        type: boolean
+        default: false
+        description: "Whether reranking is enabled"
+      backend:
+        type: string
+        enum: [vertex, local_cross_encoder]
+        default: "local_cross_encoder"
+        description: "Reranker backend ID"
+      config:
+        type: object
+        additionalProperties: true
+        description: "Reranker-specific configuration"
+        properties:
+          model:
+            type: string
+            default: "bge-base"
+            description: "Model name or alias (bge-base, bge-large, ms-marco)"
+          top_k:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 5
+            description: "Number of documents to return after reranking"
+          min_score:
+            type: number
+            minimum: 0
+            maximum: 1
+            default: 0.0
+            description: "Minimum rerank score threshold"

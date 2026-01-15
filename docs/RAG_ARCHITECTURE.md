@@ -1,8 +1,11 @@
 # Vivid RAG Architecture
 
-> **Version**: 2.1 (Backend ABC)  
-> **Last Updated**: 2026-01-15  
-> **Status**: P0-P2 완료, P3 진행 예정
+<details open>
+<summary>한국어</summary>
+
+> **Version**: 2.2 (P4 Reranker)
+> **Last Updated**: 2026-01-15
+> **Status**: P0-P4 완료, P5 계획중
 
 ---
 
@@ -165,33 +168,40 @@ capabilities:
 | **P0** | Qdrant Native Sparse 활성화 | 1-2h | ✅ 완료 (`0128b669`) |
 | **P0.5** | Hybrid 컬렉션 마이그레이션 | 2h | ✅ 완료 (`9af9f182`) |
 | **P1** | YAML Manifest 도입 | 2-3h | ✅ 완료 (`ad6250e6`) |
-| **P2** | Backend ABC + Auto-discovery | 3-4h | ✅ **개발중** 👈 |
-| **P3** | Ensemble Retriever (병렬) | 2h | ⏳ 대기 |
-| P4 | LLM Selector (Optional) | 2h | ⏳ 대기 |
-| P5 | Cross-encoder Reranker | 3h | ⏳ 대기 |
+| **P2** | Backend ABC + Auto-discovery | 3-4h | ✅ 완료 (`bebeedb9`) |
+| **P3** | Ensemble Retriever (Weighted RRF) | 3h | ✅ 완료 |
+| **P4** | Reranker Backend + Integration | 4h | ✅ **완료** 👈 |
+| P5 | Adaptive RAG / LLM Selector | 3h | ⏳ 계획중 |
 
 ---
 
 ## 7. Directory Structure
 
-### 현재 (P2 진행중)
+### 현재 (P4 완료)
 ```
 backend/app/rag/
-├── manifests/                 # ✅ P1 완료 (12개 YAML)
-│   ├── _schema.yaml
-│   └── *.yaml
+├── manifests/                 # ✅ P1 완료 (13개 YAML)
+│   ├── _schema.yaml           # YAML 스키마 (reranker 포함)
+│   └── *.yaml                 # 앱별 RAG 설정
 │
-├── backends/                  # 🔄 P2 개발중 (BaseBackend ABC)
+├── backends/                  # ✅ P2 완료 (BaseBackend ABC)
 │   ├── __init__.py           # Auto-discovery Registry
 │   ├── base.py               # BaseBackend ABC + RetrievalResult
-│   ├── qdrant_hybrid.py      # Qdrant Dense + Sparse (tier1 래핑)
-│   ├── notebooklm.py         # NotebookLM (tier0 래핑)
+│   ├── qdrant_hybrid.py      # Qdrant Dense + Sparse
+│   ├── notebooklm.py         # NotebookLM Playwright
 │   └── vertex_grounding.py   # Vertex AI + Google Search
+│
+├── rerankers/                 # ✅ P4 완료 (BaseReranker ABC)
+│   ├── __init__.py           # Auto-discovery Registry
+│   ├── base.py               # BaseReranker ABC + RerankResult
+│   ├── vertex.py             # Vertex AI Ranking API
+│   └── cross_encoder.py      # Local BGE/ms-marco CrossEncoder
 │
 ├── sparse/                    # Sparse Embedder
 │   └── fastembed_sparse.py
 │
-├── hybrid_rag.py              # 오케스트레이터
+├── hybrid_rag.py              # 오케스트레이터 (P3 Ensemble + P4 Reranker)
+├── manifest_loader.py         # YAML Manifest Loader (RerankerConfig 포함)
 ├── tier0_notebooklm.py        # 거장 DNA (Backend에서 래핑)
 ├── tier1_dimension_rag.py     # Qdrant Hybrid (Backend에서 래핑)
 └── tier0_vertex_rag.py        # Vertex AI (Backend에서 래핑)
@@ -217,10 +227,244 @@ backend/app/rag/
 
 | 파일 | 설명 |
 |------|------|
-| `rag/hybrid_rag.py` | 메인 오케스트레이터 |
+| `rag/hybrid_rag.py` | 메인 오케스트레이터 (ensemble_retrieve, hybrid_query) |
+| `rag/manifest_loader.py` | YAML Manifest Loader (P1) |
+| `rag/backends/__init__.py` | Backend Registry (P2) |
+| `rag/rerankers/__init__.py` | Reranker Registry (P4) |
 | `rag/tier1_dimension_rag.py` | Qdrant 벡터 검색 |
-| `rag/bm25_search.py` | BM25 키워드 검색 |
 | `rag/tier0_notebooklm.py` | NotebookLM 연동 |
 | `rag/semantic_cache.py` | 시맨틱 캐시 |
 | `rag/rag_presets.py` | RAG 프리셋 |
 | `rag/metrics.py` | Prometheus 메트릭 |
+
+</details>
+
+<details>
+<summary>English</summary>
+
+> **Version**: 2.2 (P4 Reranker)
+> **Last Updated**: 2026-01-15
+> **Status**: P0-P4 complete, P5 planned
+
+---
+
+## 1. Overview
+
+Vivid RAG is a hybrid retrieval-augmented generation system based on the **Plugin-Registry** pattern.
+
+### Key Features
+
+| Feature | Description |
+|------|------|
+| **Plugin-Registry** | YAML-based app config; add apps without code changes |
+| **Hybrid Search** | Dense (Qdrant) + Sparse (BM25) + RRF fusion |
+| **Multi-Tier** | Cache → Qdrant → NotebookLM → Google Search |
+| **Graceful Degradation** | Circuit breaker + fallback chain |
+
+---
+
+## 2. Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│              Vivid Plugin-Registry RAG Architecture             │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌───────────────┐    ┌───────────────┐    ┌───────────────┐   │
+│  │ YAML Manifest │───▶│ Query Router  │───▶│ Backend Pool  │   │
+│  │ (Hot-reload)  │    │ (Selector)    │    │ (Auto-discover)│   │
+│  └───────────────┘    └───────────────┘    └───────────────┘   │
+│                                                                 │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  L0: Semantic Cache                                             │
+│      ├─ Memory LRU (1h TTL)                                    │
+│      └─ PostgreSQL + pgvector (1-7d TTL)                       │
+│                                                                 │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  L1: Hybrid Vector Search                                       │
+│      ├─ L1a: Dense (Qdrant, 384-dim)                           │
+│      ├─ L1b: Sparse (BM25 Keyword) ⭐                           │
+│      └─ → RRF Fusion (k=60, Weighted)                          │
+│                                                                 │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  L2: NotebookLM Playwright                                      │
+│      ├─ Auteur DNA (Bong Joon-ho, Nolan, Villeneuve, Wong Kar-wai, Tarantino)
+│      └─ Circuit Breaker: 3 failures → 60s cooldown             │
+│                                                                 │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  L3: Google Search Grounding (CRAG Pattern)                     │
+│      └─ Auto-enabled when confidence < 0.5                      │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 3. Search Quality
+
+### BM25 Hybrid Impact
+
+| Metric | Dense Only | Dense + BM25 + RRF | Improvement |
+|--------|-----------|-------------------|--------|
+| Search accuracy | 62% | **91%** | +48% |
+| Domain term match | 55% | **95%** | +73% |
+| NDCG score | baseline | +26~31% | - |
+| Hallucination reduction | baseline | meaningful drop | ✅ |
+
+### RRF (Reciprocal Rank Fusion)
+
+```
+RRF_score(d) = Σ weight_i / (k + rank_i(d))
+
+# Example (Dense 0.7, BM25 0.3, k=60):
+Doc A: Dense rank=1, BM25 rank=5
+W_RRF(A) = 0.7/(60+1) + 0.3/(60+5) = 0.0161
+```
+
+---
+
+## 4. Qdrant Collections
+
+| Dimension | Collection | Use | Vector Dim |
+|------|-----------|------|------------|
+| 1D | dimension_1d_contexts | Prompt | 384 |
+| 2D | dimension_2d_contexts | Storyboard | 384 |
+| 3D | dimension_3d_contexts | Image | 384 |
+| 4D | dimension_4d_contexts | Reference | 384 |
+| 5D | dimension_5d_contexts | - | 384 |
+| 6D | dimension_6d_contexts | - | 384 |
+| AD | dimension_ad_contexts | Aesthetics | 384 |
+| AI | dimension_ai_contexts | Persona/MBTI/Saju | 384 |
+| QC | dimension_qc_contexts | Quality review | 384 |
+| VEO | dimension_veo_contexts | Video style | 384 |
+
+---
+
+## 5. Configuration
+
+### YAML Manifest (Planned)
+
+```yaml
+# manifests/dimension.persona.yaml
+app_key: dimension.persona.analyze
+version: "1.0"
+
+backends:
+  - id: qdrant_dense
+    weight: 0.5
+    enabled: true
+    config:
+      collection: "dimension_ai_contexts"
+  
+  - id: bm25_sparse
+    weight: 0.3
+    enabled: true
+    config:
+      dimension: "AI"
+  
+  - id: notebooklm
+    weight: 0.2
+    enabled: true
+
+dataset_routing:
+  candidates: [psych_core, mbti, attachment, saju_oheng]
+  rules:
+    - pattern: "mbti|intj|enfp"
+      datasets: [mbti]
+    - pattern: "사주|오행|갑자"
+      datasets: [saju_oheng]
+  default: psych_core
+```
+
+### Current YAML (Capabilities)
+
+```yaml
+capabilities:
+  - name: rag
+    enabled: true
+    config:
+      mode: auteur_only          # auteur_only | always | never
+      confidence_threshold: 0.7
+      cache_ttl: 3600
+      retrieval:
+        strategy: hybrid         # hybrid | vector | keyword
+        top_k: 10
+        rrf_k: 60
+        bm25_weight: 0.3
+        dense_weight: 0.7
+```
+
+---
+
+## 6. Implementation Roadmap
+
+| Phase | Work | Effort | Impact |
+|-------|------|----------|------|
+| **P0** | Enable Qdrant native sparse | 1-2h | ✅ Done (`0128b669`) |
+| **P0.5** | Hybrid collection migration | 2h | ✅ Done (`9af9f182`) |
+| **P1** | YAML manifest adoption | 2-3h | ✅ Done (`ad6250e6`) |
+| **P2** | Backend ABC + auto-discovery | 3-4h | ✅ **In progress** 👈 |
+| **P3** | Ensemble retriever (parallel) | 2h | ⏳ Pending |
+| P4 | LLM selector (optional) | 2h | ⏳ Pending |
+| P5 | Cross-encoder reranker | 3h | ⏳ Pending |
+
+---
+
+## 7. Directory Structure
+
+### Current (P2 in progress)
+```
+backend/app/rag/
+├── manifests/                 # ✅ P1 done (12 YAML)
+│   ├── _schema.yaml
+│   └── *.yaml
+│
+├── backends/                  # 🔄 P2 in progress (BaseBackend ABC)
+│   ├── __init__.py           # Auto-discovery registry
+│   ├── base.py               # BaseBackend ABC + RetrievalResult
+│   ├── qdrant_hybrid.py      # Qdrant Dense + Sparse (tier1 wrapper)
+│   ├── notebooklm.py         # NotebookLM (tier0 wrapper)
+│   └── vertex_grounding.py   # Vertex AI + Google Search
+│
+├── sparse/                    # Sparse embedder
+│   └── fastembed_sparse.py
+│
+├── hybrid_rag.py              # Orchestrator
+├── tier0_notebooklm.py        # Auteur DNA (backend wrapper)
+├── tier1_dimension_rag.py     # Qdrant Hybrid (backend wrapper)
+└── tier0_vertex_rag.py        # Vertex AI (backend wrapper)
+```
+
+> **Reference**: [P2 Backend ABC SPEC](./specs/P2_BACKEND_ABC_SPEC.md)
+
+---
+
+## 8. Related Documents
+
+| Document | Description |
+|------|------|
+| [RAG_RELIABILITY.md](./RAG_RELIABILITY.md) | Operations guide + SLO |
+| [RAG_QUALITY.md](./RAG_QUALITY.md) | Quality evaluation pipeline |
+| [RAG_NEXT_PHASE_PLAN](./RAG_NEXT_PHASE_PLAN_2026-01-11.md) | Execution plan |
+| [DIMENSION_APP_DEVELOPER_GUIDE.md](./DIMENSION_APP_DEVELOPER_GUIDE.md) | Developer guide |
+| [NOTEBOOKLM_PLAYWRIGHT.md](./NOTEBOOKLM_PLAYWRIGHT.md) | NotebookLM automation |
+
+---
+
+## 9. Key Files (Backend)
+
+| File | Description |
+|------|------|
+| `rag/hybrid_rag.py` | Main orchestrator |
+| `rag/tier1_dimension_rag.py` | Qdrant vector search |
+| `rag/bm25_search.py` | BM25 keyword search |
+| `rag/tier0_notebooklm.py` | NotebookLM integration |
+| `rag/semantic_cache.py` | Semantic cache |
+| `rag/rag_presets.py` | RAG presets |
+| `rag/metrics.py` | Prometheus metrics |
+
+</details>

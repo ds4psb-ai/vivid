@@ -54,6 +54,35 @@ class BackendConfig(BaseModel):
     config: Dict[str, Any] = Field(default_factory=dict)
 
 
+class RerankerConfig(BaseModel):
+    """리랭커 설정 (P4 Feature).
+
+    Attributes:
+        enabled: 리랭킹 활성화 여부
+        backend: 리랭커 백엔드 ID (vertex, local_cross_encoder)
+        config: 리랭커별 추가 설정 (model, top_k, min_score)
+    """
+
+    enabled: bool = False
+    backend: str = "local_cross_encoder"
+    config: Dict[str, Any] = Field(default_factory=dict)
+
+    @property
+    def model(self) -> str:
+        """리랭커 모델 이름."""
+        return self.config.get("model", "bge-base")
+
+    @property
+    def top_k(self) -> int:
+        """리랭킹 후 반환할 문서 수."""
+        return self.config.get("top_k", 5)
+
+    @property
+    def min_score(self) -> float:
+        """최소 리랭크 스코어."""
+        return self.config.get("min_score", 0.0)
+
+
 class DatasetRoutingRule(BaseModel):
     """Dataset 라우팅 규칙."""
 
@@ -147,6 +176,9 @@ class YAMLManifest(BaseModel):
 
     # P2: Backend 설정
     backends: List[BackendConfig] = Field(default_factory=list)
+
+    # P4: Reranker 설정
+    reranker: Optional[RerankerConfig] = None
 
     # Legacy compatibility fields (from AppRAGManifest)
     dataset_candidates: List[str] = Field(default_factory=list)
