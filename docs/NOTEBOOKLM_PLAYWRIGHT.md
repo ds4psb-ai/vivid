@@ -231,5 +231,5 @@ backend/scripts/
 - RPC-based operations with basic UI fallback
 
 ## Related Files
-- [tier0_notebooklm.py](file:///Users/ted/vivid/backend/app/rag/tier0_notebooklm.py) - Service layer with MCP/Playwright fallback
-- [semantic_cache.py](file:///Users/ted/vivid/backend/app/rag/semantic_cache.py) - Query result caching
+- `backend/app/rag/tier0_notebooklm.py` - Service layer with MCP/Playwright fallback
+- `backend/app/rag/semantic_cache.py` - Query result caching

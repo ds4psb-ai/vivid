@@ -1,0 +1,195 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash(rm -rf *)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'BLOCKED: Dangerous rm -rf command' && exit 2"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(*GEMINI_API_KEY*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'BLOCKED: API key exposure attempt' && exit 2"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(*generativelanguage.googleapis.com*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'BLOCKED: Direct Gemini API call violates Sealed Capsule principle' && exit 2"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write(*.py)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/ted/vivid/backend && source venv/bin/activate && ruff check --fix \"$CLAUDE_FILE_PATH\" 2>/dev/null || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit(*.py)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/ted/vivid/backend && source venv/bin/activate && ruff check --fix \"$CLAUDE_FILE_PATH\" 2>/dev/null || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Write(*.ts)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/ted/vivid/frontend && npx eslint --fix \"$CLAUDE_FILE_PATH\" 2>/dev/null || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Write(*.tsx)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/ted/vivid/frontend && npx eslint --fix \"$CLAUDE_FILE_PATH\" 2>/dev/null || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit(*.ts)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/ted/vivid/frontend && npx eslint --fix \"$CLAUDE_FILE_PATH\" 2>/dev/null || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit(*.tsx)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/ted/vivid/frontend && npx eslint --fix \"$CLAUDE_FILE_PATH\" 2>/dev/null || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Write(**/routers/**/*.py)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'REMINDER: Update AppRegistry YAML if adding new endpoint'"
+          }
+        ]
+      },
+      {
+        "matcher": "Write(**/tests/**/*.py)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/ted/vivid/backend && source venv/bin/activate && pytest \"$CLAUDE_FILE_PATH\" -x -q --tb=short 2>/dev/null || echo 'WARNING: Test file has failures'"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit(**/tests/**/*.py)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/ted/vivid/backend && source venv/bin/activate && pytest \"$CLAUDE_FILE_PATH\" -x -q --tb=short 2>/dev/null || echo 'WARNING: Test file has failures'"
+          }
+        ]
+      },
+      {
+        "matcher": "Write(**/*_service.py)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'REMINDER: Verify evidence_refs is List[str] format, not dict array'"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit(**/*_service.py)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'REMINDER: Verify evidence_refs is List[str] format, not dict array'"
+          }
+        ]
+      },
+      {
+        "matcher": "Write(**/fixtures/*.py)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'REMINDER: fixtures/dimension_capsules.py is SSoT for credit costs'"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(pytest:*)",
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
+      "Bash(npm run build)",
+      "Bash(npm run lint)",
+      "Bash(docker ps:*)",
+      "Bash(docker-compose:*)",
+      "Bash(alembic:*)",
+      "Bash(ruff:*)",
+      "Bash(pyright:*)",
+      "WebSearch"
+    ],
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(sudo rm -rf:*)",
+      "Bash(chmod 777:*)",
+      "Bash(git push --force:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(alembic stamp:*)",
+      "Bash(*reserve_credits*)",
+      "Bash(*commit_credits*)",
+      "Bash(*GEMINI_API_KEY*)",
+      "Bash(*curl*generativelanguage*)",
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(*.pem)",
+      "Read(*.key)",
+      "Read(*credentials*)",
+      "Read(**/secrets/**)",
+      "Read(**/prompts/internal/**)",
+      "Read(**/internal_chains/**)"
+    ]
+  },
+  "env": {
+    "VIVID_PROJECT_ROOT": "/Users/ted/vivid",
+    "BACKEND_VENV": "/Users/ted/vivid/backend/venv/bin/activate"
+  }
+}

@@ -1,8 +1,12 @@
 # 최종 RAG 리팩토링 플랜 (Codex 분석 + 보완 통합)
 
-- Date: 2026-01-11
-- Scope: Hybrid RAG 경량화, 관측성 보강, 레거시 정리
-- Principle: 모놀리식 유지 + 모듈 경계 강화 (분리 최소화)
+> **Type**: Technical Design Document (Reference)
+> **Status**: Finalized
+> **Created**: 2026-01-11
+> **Related**: [RAG Execution Plan](./RAG_NEXT_PHASE_PLAN_2026-01-11.md) | [RAG Reliability](./RAG_RELIABILITY.md)
+
+**Scope**: Hybrid RAG 경량화, 관측성 보강, 레거시 정리
+**Principle**: 모놀리식 유지 + 모듈 경계 강화 (분리 최소화)
 
 ---
 

@@ -1,6 +1,17 @@
 # 🎯 Crebit 4-Layer 생태계 통합 전략
 
-> **검증 완료 (2026-01-02)**: 컨설팅 리포트의 핵심 주장들을 웹 검색으로 검증함
+> **Status**: Canonical (정본)
+> **Created**: 2026-01-02
+> **Verified**: 2026-01-02 (컨설팅 리포트 핵심 주장 웹 검색 검증)
+
+## 📚 관련 문서
+
+| 문서 | 역할 | 상태 |
+|------|------|------|
+| [PJ 인사이트 분석](./pj_insights_gap_analysis.md) | 이 문서의 배경 분석 | 참조용 |
+| [3-Layer 로드맵](./story_first_architecture_roadmap.md) | 초기 로드맵 (대체됨) | Superseded |
+
+---
 
 ---
 

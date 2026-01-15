@@ -223,7 +223,7 @@ export function chatMirrorStream(
                     if (line.startsWith('data: ')) {
                         try {
                             const data = JSON.parse(line.slice(6));
-                            onMessage(data);
+                            onMessage?.(data);
                         } catch {
                             // Skip invalid JSON
                         }
@@ -231,10 +231,10 @@ export function chatMirrorStream(
                 }
             }
 
-            onComplete();
+            onComplete?.();
         } catch (err) {
             if (err instanceof Error && err.name !== 'AbortError') {
-                onError(err);
+                onError?.(err);
             }
         }
     })();

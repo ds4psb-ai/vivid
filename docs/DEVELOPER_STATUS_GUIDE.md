@@ -1,7 +1,7 @@
 # Vivid 프로젝트 개발 현황 및 작업 가이드
 
-> **작성일**: 2026-01-07  
-> **버전**: 1.0  
+> **작성일**: 2026-01-07 (마지막 업데이트: 2026-01-15)
+> **버전**: 1.1
 > **대상**: 개발자 온보딩 및 현황 파악용
 
 ---
@@ -81,8 +81,8 @@
 
 | 파일/모듈 | 설명 | 완성도 |
 |-----------|------|--------|
-| `dimension_adapter.py` | 10개 Dimension 캡슐 실행 로직 | 85% |
-| `routers/dimension.py` | `/api/dimension/*` 엔드포인트 | 90% |
+| `dimension_adapter.py` | 13개 Dimension 캡슐 실행 로직 (16개 핸들러) | 95% |
+| `routers/dimension/` | `/api/dimension/*` 엔드포인트 (디렉토리, 13개 모듈) | 95% |
 | `routers/auth.py` | Google OAuth 인증 | 95% |
 | `credit_service.py` | 크레딧 지갑/원장 시스템 | 90% |
 | `services/vector_service.py` | Qdrant RAG 검색 | 80% |
@@ -266,4 +266,4 @@ cd frontend && npm run test:e2e
 
 ---
 
-*이 문서는 2026-01-08 기준으로 업데이트되었습니다. P0/P1 완료.*
+*이 문서는 2026-01-15 기준으로 업데이트되었습니다. 4-Layer 아키텍처 반영, Abyss Mirror 완료.*

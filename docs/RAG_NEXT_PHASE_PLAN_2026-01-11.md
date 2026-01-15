@@ -1,8 +1,13 @@
 # RAG Next-Phase Plan (Post-Wiring)
 
-Date: 2026-01-11
-Owner: Vivid RAG
-Scope: Observability + quality evaluation + deprecation cleanup + operational hardening
+> **Type**: Execution Plan (Active)
+> **Status**: In Progress
+> **Owner**: Vivid RAG
+> **Created**: 2026-01-11
+> **Last Updated**: 2026-01-14
+> **Related**: [RAG Refactor Design](./RAG_REFACTOR_FINAL_PLAN_2026-01-11.md) | [RAG Reliability](./RAG_RELIABILITY.md) | [RAG Quality](./RAG_QUALITY.md)
+
+**Scope**: Observability + quality evaluation + deprecation cleanup + operational hardening
 
 ---
 
@@ -52,7 +57,7 @@ Scope: Observability + quality evaluation + deprecation cleanup + operational ha
   - e.g., `rag_errors_total{stage=notebooklm|vertex|cache}`.
 
 **Deliverables**
-- ✅ Grafana dashboard: `RAG Overview` (15 panels) - [rag_overview.json](file:///Users/ted/vivid/config/grafana/rag_overview.json)
+- ✅ Grafana dashboard: `RAG Overview` (15 panels) - `config/grafana/rag_overview.json`
 - ✅ PromQL snippets documented in `docs/RAG_RELIABILITY.md`
 
 ---

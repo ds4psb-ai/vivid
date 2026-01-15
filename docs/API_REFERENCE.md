@@ -401,50 +401,122 @@ curl -X POST http://localhost:8100/api/dimension/aesthetic/direct \
 
 ---
 
-### 2.6 Persona Analysis (Abyss Mirror)
+### 2.6 Persona Analysis (Abyss Mirror / 심연의 거울)
 
-**Endpoint**: `POST /api/dimension/persona/analyze`
+Multi-turn creative persona analysis using MBTI, blood type, and Saju (사주).
 
-7-stage creative persona analysis using Gemini.
+> **Flow**: `/mirror/init` → `/mirror/chat` (15+ turns) → `/mirror/export`
 
-#### Request
+#### 2.6.1 Initialize Session
+
+**Endpoint**: `POST /api/dimension/mirror/init`
+
+Start a new persona analysis session with birth info.
 
 ```bash
-curl -X POST http://localhost:8100/api/dimension/persona/analyze \
+curl -X POST http://localhost:8100/api/dimension/mirror/init \
   -H "Content-Type: application/json" \
   -H "X-User-Id: user123" \
   -d '{
-    "subject": "창작자 성향 분석",
-    "user_message": "저는 우울한 분위기의 영화를 좋아해요",
-    "persona_data": {},
-    "birth_info": {"birthdate": "1994-03-21", "birth_time": "09:30"},
-    "current_stage": "intro",
-    "model": "gemini-3-pro-preview"
+    "mbti": "INTJ",
+    "blood_type": "A",
+    "birth_year": 1994,
+    "birth_month": 3,
+    "birth_day": 21,
+    "birth_hour": 9,
+    "gender": "M",
+    "model": "gemini-3-flash-preview"
   }'
 ```
 
-#### Response
-
+**Response**:
 ```json
 {
   "success": true,
-  "capsule_id": "dimension.persona.analyze",
-  "output": {
-    "assistant_message": "우울한 분위기를 선호하시군요. 어떤 종류의 우울함이 끌리시나요? 고독감, 상실감, 아니면 멜랑콜리한 아름다움?",
-    "next_stage": "subconscious",
-    "persona_update": {
-      "mood_preference": "melancholic",
-      "narrative_affinity": ["introspection", "loss"]
-    },
-    "analysis_complete": false
+  "session_id": "abc-123-uuid",
+  "saju": {
+    "year_pillar": "甲戌",
+    "month_pillar": "丁卯",
+    "day_pillar": "庚午",
+    "hour_pillar": "辛巳",
+    "dominant_element": "금"
   },
-  "metrics": {
-    "latency_ms": 1405,
-    "tokens": 980,
-    "model": "gemini-3-pro-preview"
-  }
+  "initial_message": "🪞 **심연의 거울에 오신 것을 환영합니다.**\n...",
+  "persona_data": {...},
+  "completion_rate": 25.0
 }
 ```
+
+#### 2.6.2 Chat (Multi-turn)
+
+**Endpoint**: `POST /api/dimension/mirror/chat`
+
+Continue persona analysis conversation (minimum 15 turns for completion).
+
+```bash
+curl -X POST http://localhost:8100/api/dimension/mirror/chat \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: user123" \
+  -d '{
+    "session_id": "abc-123-uuid",
+    "user_message": "어린 시절 레고 조립에 몰입했어요",
+    "persona_data": {...},
+    "chat_history": [...],
+    "current_stage": "intro",
+    "model": "gemini-3-flash-preview"
+  }'
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "ai_response": "레고 조립이군요! 구조적 사고와 창작의 결합...",
+  "persona_data": {
+    "psychology": {"maslow_level": {...}, "core_values": ["structure", "creation"]},
+    "creativity": {"visual_style_affinity": ["architectural", "geometric"]}
+  },
+  "completion_rate": 35.0,
+  "current_stage": "maslow",
+  "is_complete": false,
+  "trace_id": "trace-uuid",
+  "evidence_refs": [],
+  "confidence": 0.0,
+  "is_crisis": false
+}
+```
+
+#### 2.6.3 Export Preset
+
+**Endpoint**: `POST /api/dimension/mirror/export`
+
+Export completed persona as JSON preset.
+
+```bash
+curl -X POST http://localhost:8100/api/dimension/mirror/export \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: user123" \
+  -d '{
+    "persona_data": {...}
+  }'
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "preset_json": "{\"meta\": {...}, \"psychology\": {...}, \"creativity\": {...}, \"persona\": {...}}",
+  "download_filename": "abyss_mirror_creator_20260115_123456.json"
+}
+```
+
+#### 2.6.4 Chat Stream (SSE)
+
+**Endpoint**: `POST /api/dimension/mirror/chat/stream`
+
+Real-time streaming version of chat (requires Run-Token).
+
+> **Note**: Requires `X-Run-Token` header from Run-Token API.
 
 ---
 

@@ -1,18 +1,15 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+> Claude Code 설정 파일 - Crebit Studio (Vivid)
 
 ---
 
-## ⚡ Quick Rules (반드시 지킬 것)
+## Quick Rules
 
-### 검증 명령어
+### 검증 명령어 (필수)
 ```bash
-# Backend 변경 후 (필수)
-cd backend && source venv/bin/activate && pytest --tb=short -q
-
-# Frontend 변경 후 (필수)
-cd frontend && npm run build
+cd backend && source venv/bin/activate && pytest --tb=short -q  # Backend
+cd frontend && npm run build  # Frontend
 ```
 
 ### 핵심 원칙
@@ -22,50 +19,40 @@ cd frontend && npm run build
 4. **타입 명시**: Python type hints, TypeScript strict
 
 ### 환각 금지
-```
-❌ 존재하지 않는 파일/함수 참조 금지
-❌ 추측으로 import 작성 금지
-✅ 불확실하면 Grep으로 먼저 검색
-```
+- 존재하지 않는 파일/함수 참조 금지
+- 추측으로 import 작성 금지
+- 불확실하면 Grep으로 먼저 검색
 
 ---
 
 ## Project Overview
 
-**Crebit Studio** - A full-stack platform for creative AI content generation.
+**Crebit Studio** - 크리에이티브 AI 콘텐츠 생성 풀스택 플랫폼
+
+### 4-Layer 생태계 아키텍처
 
 | Layer | Component | Description |
-|-------|-----------|-------------|
-| **1** | Dimension Miniapps | 1D Origin, 2D Blueprint, 3D Ambience, 4D Moment |
-| **2** | Agent Chat | Vivid Agent (Chokki) - chat-first orchestration |
-| **3** | Workflow (Flow UI) | Train-based step execution |
-| **∞** | Singularity | Template gallery for dimension combinations |
+|:-----:|-----------|-------------|
+| **4** | Trust & Governance | Tool Tier (Experimental→Verified→Certified), Sandbox, Audit |
+| **3** | RAG (Knowledge) | NotebookLM Workbench + Qdrant Production |
+| **2** | Human Cloud | 의뢰→크리에이터 매칭→납품 (75/25) |
+| **1** | Tool Workshop | Dimension Apps, Fork 수익분배 (60/30/10) |
 
-> **Canonical Docs**: See [00_DOCS_INDEX.md](file:///Users/ted/vivid/00_DOCS_INDEX.md) for the full documentation map.
+### UI Layer
 
----
+| Component | Description |
+|-----------|-------------|
+| Dimension Miniapps | 13개 앱 (1D~4D, AD, AI, QC, VEO 등) |
+| Agent Chat | Vivid Agent (초끼) |
+| Train Workflow | Train-based step execution |
+| Singularity | Template gallery |
+| Human Cloud | 의뢰-제작 플로우 |
 
-## Quick Start
-
-### Infrastructure
-```bash
-docker-compose up -d  # postgres:5433, redis:6380, qdrant:6333
-```
-
-### Backend
-```bash
-cd backend && source venv/bin/activate
-uvicorn app.main:app --reload --port 8100
-
-# DB
-alembic upgrade head
-python scripts/seed_auteur_data.py
-```
-
-### Frontend
-```bash
-cd frontend && npm run dev  # localhost:3100
-```
+### Tech Stack
+- **Frontend**: Next.js 16, React 19, TypeScript, Tailwind
+- **Backend**: FastAPI, Python 3.11, SQLAlchemy 2.0 async
+- **Database**: PostgreSQL 16, Qdrant, Redis
+- **AI**: Google Gemini API
 
 ### Ports
 | Service | Port |
@@ -78,203 +65,161 @@ cd frontend && npm run dev  # localhost:3100
 
 ---
 
-## Architecture
+## Vivid 핵심 규칙 (P0)
 
-### Tech Stack
-- **Frontend**: Next.js 16, React 19, TypeScript, Tailwind, @xyflow/react
-- **Backend**: FastAPI, Python 3.11, SQLAlchemy 2.0 async, Pydantic v2
-- **Database**: PostgreSQL 16, Qdrant, Redis
-- **AI**: Google Gemini API
-- **Auth**: Google OAuth 2.0 (dev fallback: `X-User-Id` header)
-
-### NotebookLM Integration (Playwright Automation)
-
-All NotebookLM interactions (Create, Add Source, Query, Delete) are handled by `notebooklm_playwright.py` using **Chrome DevTools Protocol (CDP)**.
-This bypasses the lack of an official API by executing internal RPC calls directly within an authenticated browser session.
-
-#### Prerequisites
-1. Chrome running: `--remote-debugging-port=9222`
-2. User logged into NotebookLM in that Chrome session
-3. `playwright` package installed
-
-#### RPC Reference (verified 2026-01)
-| RPC ID | Method | Parameters |
-|--------|--------|------------|
-| `CCqFvf` | CreateNotebook | `[title]` |
-| `izAoDd` | AddSource | `[[[text, title, null, 1]], notebook_id, ...]` |
-| `WWINqb` | DeleteNotebook | `[[notebook_id], [2]]` |
-| `wXbhsf` | ListNotebooks | `[null, 1, null, [2]]` |
-| `GenerateFreeFormStreamed` | Query | `[sources_array, query, null, [2,null,[1]], conv_id]` |
-
-#### Key API
+### 1. evidence_refs 타입
 ```python
-async with PlaywrightNotebookLMClient(cdp_port=9222) as client:
-    nb_id = await client.create_notebook("Title")
-    source_id = await client.add_text_source(nb_id, "Doc", "Content...")
-    result = await client.query(nb_id, "Question?", source_ids=[source_id])
-    await client.delete_notebook(nb_id)
+# ✅ 올바름 - List[str]
+evidence_refs = ["db:capsule_runs:uuid", "db:rag_docs:4D:video_ref:doc_id"]
+
+# ❌ 틀림 - dict 배열
+evidence_refs = [{"source": "...", "ref_id": "..."}]
 ```
 
-#### Troubleshooting
-| Error | Cause | Fix |
-|-------|-------|-----|
-| 401/403 | Cookie fingerprint mismatch | Use CDP, not direct HTTP |
-| 400 | Wrong source ID format | Use `[[sid]]` per source (2 brackets) |
-| Login required | Session expired | Re-login in Chrome |
+### 2. Run-Token 흐름
+```
+issue() → 캡슐 실행 → deduct()/refund()
+```
+- `reserve_credits()`/`commit_credits()` 직접 호출 금지
 
+### 3. Sealed Capsule 원칙
+- 프론트엔드에서 Gemini 직접 호출 금지
+- 모든 LLM 호출은 서버 캡슐 내부에서
 
-### API Endpoints (Primary)
+---
 
-| Endpoint | Handler | Description |
-|----------|---------|-------------|
-| `POST /api/dimension/1d/generate` | `dimension_adapter.py` | Veo Prompt (Origin) |
-| `POST /api/dimension/2d/create` | `dimension_adapter.py` | Storyboard (Blueprint) |
-| `POST /api/dimension/3d/generate` | `dimension_adapter.py` | Image Prompt (Ambience) |
-| `POST /api/dimension/4d/analyze` | `dimension_adapter.py` | Reference Analysis (Moment) |
-| `POST /api/v1/agent/chat` | `vivid_agent.py` | SSE Agent Chat |
-| `POST /api/v1/workflow/plan` | `workflow_planner.py` | Workflow Planning |
+## Slash Commands
+
+| Command | 설명 |
+|---------|------|
+| `/spec-interview` | 심층 인터뷰로 SPEC 문서 작성 |
+| `/spec-execute` | SPEC 기반 구현 |
+| `/spec-verify` | SPEC 대비 검증 |
+| `/review` | 코드 리뷰 |
+| `/test` | 테스트 실행 |
+| `/catchup` | 브랜치 변경사항 분석 |
+| `/deploy` | 배포 체크리스트 |
+| `/server` | 개발 서버 관리 |
+| `/app-create` | Dimension 앱 생성 |
+| `/rag-quality` | RAG 품질 평가 |
+| `/evidence` | evidence_refs 검증 |
+
+---
+
+## 상세 가이드 (하위 CLAUDE.md)
+
+| 경로 | 내용 |
+|------|------|
+| `backend/CLAUDE.md` | FastAPI, Python, DB 가이드 |
+| `frontend/CLAUDE.md` | Next.js, React, TypeScript 가이드 |
+| `CLAUDE.local.md` | 개인 설정 (gitignore) |
 
 ---
 
 ## Key Files
 
-### Backend
-| File | Role |
+| 파일 | 역할 |
 |------|------|
-| `main.py` | App bootstrap, 40+ routers |
-| `config.py` | Pydantic settings |
-| `dimension_adapter.py` | Capsule execution + credit deduction |
-| `fixtures/dimension_capsules.py` | **SSoT for capsule specs & credit costs** |
-| `vivid_agent.py` | Agent loop + memory |
-| `credit_service.py` | Credit deduction/refund logic |
+| `backend/app/generation_client.py` | Shot/Prompt Contract |
+| `backend/app/agents/dimension_tools.py` | Dimension Tools |
+| `backend/app/routers/run_token.py` | Run Token |
+| `backend/app/services/capsule_executor.py` | Capsule Executor |
+| `frontend/src/lib/api.ts` | Typed API Client |
 
-### Frontend
-| File | Role |
+---
+
+## SSoT Documents
+
+| 문서 | 내용 |
 |------|------|
-| `lib/api.ts` | Typed API client |
-| `components/AppShell.tsx` | Global layout |
-| `contexts/DimensionSettingsContext.tsx` | Tool state |
+| `00_DOCS_INDEX.md` | 문서 맵 |
+| `13_CREDITS_AND_BILLING_SPEC_V1.md` | 크레딧 시스템 |
+| `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md` | 아키텍처 철학 |
+| `docs/DIMENSION_APP_DEVELOPER_GUIDE.md` | 앱 개발 가이드 |
 
 ---
 
-## Legacy vs New
+## RAG 시스템
 
-> [!WARNING]
-> The codebase has migrated from "Teaching" to "Dimension" naming.
+### Tier 구조
+| Tier | 시스템 | 용도 |
+|------|--------|------|
+| Tier0 | NotebookLM (CDP) | 거장 지식베이스 |
+| Tier1 | Qdrant + BM25 | 하이브리드 검색 |
 
-| Component | Legacy (v1) | Current (v2) |
-|-----------|-------------|--------------|
-| Router | `routers/teaching.py` | `routers/dimension.py` |
-| Adapter | `teaching_adapter.py` | `dimension_adapter.py` |
-| Fixtures | ❌ (deleted) | `fixtures/dimension_capsules.py` |
-| Endpoints | `/api/teaching/*` | `/api/dimension/*` |
+### 사용법
+```python
+from app.rag.hybrid_rag import hybrid_query
 
-**The legacy `teaching.py` router has been deleted.** All functionality now lives in `dimension.py`.
-
----
-
-## Adding New Features
-
-### New Dimension Tool
-1. Add request/response models → `routers/dimension.py`
-2. Implement handler → `dimension_adapter.py`
-3. Register tool → `agents/dimension_tools.py`
-4. Add credit cost → `fixtures/dimension_capsules.py` (`DIMENSION_CAPSULES` list)
-
-### New Agent Tool
-1. Create handler in `agents/` directory
-2. Register with `ToolRegistry` in `vivid_agent.py`
-3. Define `ToolSpec` with `input_schema`
-
-### New API Route
-1. Create `routers/my_feature.py`
-2. Include in `main.py` with prefix
-3. Use `Depends(get_current_user)` for auth
-
----
-
-## Environment Variables
-
-### Backend `.env`
-```bash
-GEMINI_API_KEY=...
-POSTGRES_USER=... POSTGRES_PASSWORD=... POSTGRES_DB=... POSTGRES_HOST=... POSTGRES_PORT=...
-REDIS_URL=redis://localhost:6380
-GOOGLE_CLIENT_ID=... GOOGLE_CLIENT_SECRET=...
-SESSION_SECRET=...
+result = await hybrid_query(
+    query="봉준호 스타일",
+    dimension="AD",
+    auteur_key="bong",
+)
+# result.notebooklm_sources, result.vertex_sources
 ```
 
-### Frontend `.env.local`
-```bash
-NEXT_PUBLIC_API_URL=http://127.0.0.1:8100
-NEXT_PUBLIC_USER_ID=demo-user   # Dev override
-```
-
----
-
-## Credits System
-
-- **SSoT**: [13_CREDITS_AND_BILLING_SPEC_V1.md](file:///Users/ted/vivid/13_CREDITS_AND_BILLING_SPEC_V1.md)
-- **Consumption Order**: Promo → Subscription → Topup
-- **BYOK**: Pass `X-Gemini-API-Key` header to bypass billing
-- **Refund**: Automatic on failed generation
-
----
-
-## RAG Integration (P1-P4 2026-01)
-
-### evidence_refs SoR (Source of Record)
-
-```
-evidence_refs: List[str] = ["db:capsule_runs:{run_id}"]
-```
-
-| 형식 | 설명 |
+### 핵심 파일
+| 파일 | 역할 |
 |------|------|
-| `db:capsule_runs:{uuid}` | CapsuleRun 기반 증거 |
-| `db:rag_docs:4D:video_ref:{doc_id}` | 비디오 레퍼런스 |
-| `db:rag_docs:3D:image_grid:{doc_id}` | 이미지 그리드 |
-
-### Dataset Routing
-
-| 앱 | Dimension | Datasets |
-|----|-----------|----------|
-| `teaching.reference.analyze` | 4D | `video_ref`, `film_analysis` |
-| `teaching.image.generate` | 3D | `image_grid`, `visual_style` |
-
-### Ingestion Scripts
-
-```bash
-# Video Reference 인제스션
-python scripts/ingest_video_reference.py --input ../data/source_packs/video_refs.json
-
-# Image Grid 인제스션
-python scripts/ingest_image_grid.py --input ../data/source_packs/grids.json
-
-# RAG 품질 리포트
-python scripts/run_rag_quality_report.py --no-llm
-```
-
-### Key Files
-
-| File | Role |
-|------|------|
-| `app/rag/app_manifest.py` | Dataset routing rules |
-| `app/rag/tier1_dimension_rag.py` | Qdrant indexing |
+| `app/rag/hybrid_rag.py` | 하이브리드 RAG |
+| `app/rag/rag_presets.py` | 거장 스타일 힌트 |
 | `app/rag/rag_suggestion_service.py` | evidence_refs 생성 |
-| `scripts/ingest_video_reference.py` | 비디오 인제스션 |
-| `scripts/ingest_image_grid.py` | 그리드 인제스션 |
-| `scripts/run_rag_quality_report.py` | 품질 평가 CLI |
-
-### Documentation
-
-- [RAG_QUALITY.md](file:///Users/ted/vivid/docs/RAG_QUALITY.md) - 품질 평가 가이드
 
 ---
 
-## Notes
+## Intent 시스템
 
-- Legacy canvas code: `frontend/src/app/_deprecated/`
-- Agent memory: 24-message cap + auto-summary
-- Dev auth: `X-User-Id: dev-user-001` header
-- Architecture philosophy: [15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md](file:///Users/ted/vivid/15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md)
+### IntentFactory Presets
+```python
+from app.agents.intent_factory import IntentFactory
+
+intent = IntentFactory.teaching_reference_analyze(
+    topic="영화 분석",
+    auteur_key="kubrick",
+)
+# intent.app, intent.action, intent.dimension, intent.rag_hint
+```
+
+### 주요 프리셋 (14개)
+| 프리셋 | Dimension | RAG |
+|--------|-----------|-----|
+| `teaching_reference_analyze` | 4D | ✅ |
+| `teaching_image_generate` | 3D | ✅ |
+| `teaching_story_write` | Story | ✅ |
+| `veo_generate` | VEO | ✅ |
+
+---
+
+## TieredContext
+
+### 계층 구조
+```
+SessionContext (전역)
+  └── StepContext (단계별)
+       └── InputContext (입력)
+```
+
+### 사용법
+```python
+from app.workflow.tiered_context import TieredContext
+
+ctx = TieredContext(session_id="...")
+ctx.set_session("auteur_key", "bong")
+ctx.set_step("step_1", "topic", "영화 장면")
+resolved = ctx.resolve("step_1", "auteur_key")  # "bong"
+```
+
+---
+
+## 서브에이전트 (.claude/agents/)
+
+| Agent | 용도 |
+|-------|------|
+| `code-reviewer` | PR 리뷰 |
+| `test-runner` | 테스트 실행/분석 |
+| `vivid-expert` | Vivid 도메인 전문가 |
+| `db-migrator` | DB 마이그레이션 |
+| `rag-expert` | RAG 시스템 (Tier0/Tier1) |
+| `evidence-checker` | evidence_refs 검증 |
+| `app-creator` | Dimension 앱 생성 |

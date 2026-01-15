@@ -1,8 +1,8 @@
 # SPEC: 심연의 거울 (Abyss Mirror)
 
-> **생성일**: 2026-01-14  
-> **인터뷰 세션**: 15766a54-191c  
-> **상태**: `IMPLEMENTING` (Backend 완료, Frontend 예정)
+> **생성일**: 2026-01-14
+> **인터뷰 세션**: 15766a54-191c
+> **상태**: `DONE` (2026-01-15 완료)
 
 ---
 
@@ -267,10 +267,10 @@
 
 ## 10. 최종 체크리스트
 
-- [ ] Backend 라우터/서비스 구현
-- [ ] Frontend 패널/채팅 구현
-- [ ] 진행률 시스템 구현
-- [ ] 웹서칭 연동
-- [ ] JSON 프리셋 저장/로드
-- [ ] 테스트 작성
-- [ ] 검증 완료
+- [x] Backend 라우터/서비스 구현 (`routers/dimension/mirror.py`, `services/mirror_service.py`)
+- [x] Frontend 패널/채팅 구현 (`AbyssMirrorPanel.tsx`, `abyss/page.tsx`)
+- [x] 진행률 시스템 구현
+- [x] 웹서칭 연동
+- [x] JSON 프리셋 저장/로드
+- [x] 테스트 작성 (`test_mirror_service.py`, `test_mirror_run_token.py`)
+- [x] 검증 완료 (2026-01-15)

@@ -22,3 +22,10 @@ dist/
 .vscode/
 .idea/
 scripts/ppt_screenshots/
+
+# Claude Code (personal settings - don't commit)
+.claude/settings.local.json
+CLAUDE.local.md
+
+# MCP credentials (if any)
+.mcp-credentials/

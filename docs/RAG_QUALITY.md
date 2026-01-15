@@ -1,5 +1,12 @@
 # RAG Quality Evaluation Guide
 
+> **Type**: Quality Standards (Static)
+> **Status**: Active
+> **Last Updated**: 2026-01-14
+> **Related**: [RAG Reliability](./RAG_RELIABILITY.md) | [RAG Execution Plan](./RAG_NEXT_PHASE_PLAN_2026-01-11.md)
+
+---
+
 ## 개요
 
 RAG(Retrieval-Augmented Generation) 품질 평가 파이프라인:

@@ -1,7 +1,24 @@
 # 🚀 Arcane 3-Layer Ecosystem 아키텍처 로드맵
 
-**작성일**: 2026-01-02  
+> **Status**: ⚠️ Superseded (대체됨)
+> **Created**: 2026-01-02
+> **Superseded By**: [4-Layer 전략](./unified_4layer_strategy.md)
+
 **목적**: 3-Layer 생태계 (도구 Fork + Human Cloud + RAG 지식) 구현
+
+> [!WARNING]
+> 이 문서는 **4-Layer 전략**으로 대체되었습니다.
+> 최신 아키텍처는 [unified_4layer_strategy.md](./unified_4layer_strategy.md)를 참조하세요.
+> Layer 4 (Trust & Governance)가 추가되었습니다.
+
+## 📚 관련 문서
+
+| 문서 | 역할 | 상태 |
+|------|------|------|
+| [4-Layer 전략](./unified_4layer_strategy.md) | 현재 정본 | Canonical |
+| [PJ 인사이트 분석](./pj_insights_gap_analysis.md) | 배경 분석 | Reference |
+
+---
 
 ---
 

@@ -1,8 +1,10 @@
 # RAG Reliability Guide
 
-> **Status**: Production  
-> **Last Updated**: 2026-01-14 (P6 Hardening + Qdrant Reindex)  
+> **Type**: Operations Guide (Static)
+> **Status**: Production
+> **Last Updated**: 2026-01-14 (P6 Hardening + Qdrant Reindex)
 > **Based on**: 2025 RAG Best Practices Research
+> **Related**: [RAG Quality](./RAG_QUALITY.md) | [RAG Execution Plan](./RAG_NEXT_PHASE_PLAN_2026-01-11.md)
 
 ## P6 Hardening (2026-01-13) ✅
 
@@ -300,7 +302,7 @@ _rag_latency = Histogram(
 ## Grafana Dashboard Import
 
 ### JSON File Location
-[`config/grafana/rag_overview.json`](file:///Users/ted/vivid/config/grafana/rag_overview.json)
+`config/grafana/rag_overview.json`
 
 ### Import Steps
 1. Open Grafana → Dashboards → Import
@@ -327,7 +329,7 @@ _rag_latency = Histogram(
 
 ## Related Files
 
-- [hybrid_rag.py](file:///Users/ted/vivid/backend/app/rag/hybrid_rag.py)
-- [tier0_notebooklm.py](file:///Users/ted/vivid/backend/app/rag/tier0_notebooklm.py)
-- [semantic_cache.py](file:///Users/ted/vivid/backend/app/rag/semantic_cache.py)
-- [metrics.py](file:///Users/ted/vivid/backend/app/rag/metrics.py)
+- `backend/app/rag/hybrid_rag.py`
+- `backend/app/rag/tier0_notebooklm.py`
+- `backend/app/rag/semantic_cache.py`
+- `backend/app/rag/metrics.py`

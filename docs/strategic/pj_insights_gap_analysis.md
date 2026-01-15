@@ -1,8 +1,19 @@
 # 🎯 전략적 인사이트 분석: 현재 로드맵 vs PJ 팟캐스트 핵심 통찰
 
-**작성일**: 2025-12-30  
-**최종 업데이트**: 2026-01-02  
+> **Status**: Reference (배경 분석)
+> **Created**: 2025-12-30
+> **Last Updated**: 2026-01-02
+
 **목적**: AI 영상 제작 산업 인사이트를 바탕으로 현재 DirectorPack/Crebit 로드맵의 방향성 점검
+
+## 📚 관련 문서
+
+| 문서 | 역할 | 상태 |
+|------|------|------|
+| [4-Layer 전략](./unified_4layer_strategy.md) | 이 분석을 바탕으로 수립된 전략 | Canonical |
+| [3-Layer 로드맵](./story_first_architecture_roadmap.md) | 초기 로드맵 | Superseded |
+
+---
 
 > [!TIP]
 > **2026-01-02 Progress**: Agent Chat → Node 생성 통합 완료. 채팅으로 Teaching 도구 호출 → 내부 그래프 노드 자동 생성 (Canvas UI는 legacy).

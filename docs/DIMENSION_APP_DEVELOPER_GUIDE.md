@@ -76,9 +76,9 @@ frontend/src/lib/dimension-input-schemas.ts     ← 입력 필드 정의 [공유
 
 | 앱 | YAML | 라우터 | UI |
 |----|------|--------|-----|
-| 1D | [1d.yaml](file:///Users/ted/vivid/config/apps/content/dimensions/1d.yaml) | [__init__.py](file:///Users/ted/vivid/backend/app/routers/dimension/__init__.py) | `PromptGeneratorPanel.tsx` |
-| Story | [story.yaml](file:///Users/ted/vivid/config/apps/content/dimensions/story.yaml) | [story.py](file:///Users/ted/vivid/backend/app/routers/dimension/story.py) | `StoryArchitectPanel.tsx` |
-| AD | [ad.yaml](file:///Users/ted/vivid/config/apps/content/dimensions/ad.yaml) | `aesthetic.py` | `AestheticDirectorPanel.tsx` |
+| 1D | `config/apps/content/dimensions/1d.yaml` | `backend/app/routers/dimension/__init__.py` | `PromptGeneratorPanel.tsx` |
+| Story | `config/apps/content/dimensions/story.yaml` | `backend/app/routers/dimension/story.py` | `StoryArchitectPanel.tsx` |
+| AD | `config/apps/content/dimensions/ad.yaml` | `backend/app/routers/dimension/aesthetic.py` | `AestheticDirectorPanel.tsx` |
 
 ---
 
@@ -343,8 +343,8 @@ evidence = EvidenceRef(
 
 #### 관련 문서
 
-- [EvidenceDisplay UX 가이드](file:///Users/ted/vivid/docs/EVIDENCE_DISPLAY_UX.md)
-- [RAG Quality 평가](file:///Users/ted/vivid/docs/RAG_QUALITY.md)
+- [EvidenceDisplay UX 가이드](./EVIDENCE_DISPLAY_UX.md)
+- [RAG Quality 평가](./RAG_QUALITY.md)
 
 ---
 
@@ -708,13 +708,13 @@ logger.debug(f"TieredContext history: {tiered.history}")
 
 | 문서 | 경로 | 설명 |
 |------|------|------|
-| 앱 설정 SSoT | [config/apps/README.md](file:///Users/ted/vivid/config/apps/README.md) | YAML 스키마 정의 |
-| 파이프라인 흐름 | [08_PIPELINES_AND_USER_FLOWS.md](file:///Users/ted/vivid/08_PIPELINES_AND_USER_FLOWS.md) | 전체 파이프라인 |
-| 아키텍처 철학 | [15_CREBIT_ARCHITECTURE.md](file:///Users/ted/vivid/15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md) | Non-negotiable 원칙 |
-| 개발 현황 | [DEVELOPER_STATUS_GUIDE.md](file:///Users/ted/vivid/docs/DEVELOPER_STATUS_GUIDE.md) | 완성도, Known Issues |
-| Intent 스키마 | [creative_intent.py](file:///Users/ted/vivid/backend/app/schemas/creative_intent.py) | Intent/Preset 정의 |
-| 워크플로우 도구 | [workflow_tools.py](file:///Users/ted/vivid/backend/app/agents/workflow_tools.py) | 체이닝 로직 |
-| 입력 필드 스키마 | [dimension-input-schemas.ts](file:///Users/ted/vivid/frontend/src/lib/dimension-input-schemas.ts) | 프론트엔드 필드 정의 |
+| 앱 설정 SSoT | `config/apps/README.md` | YAML 스키마 정의 |
+| 파이프라인 흐름 | `docs/archive/08_PIPELINES_AND_USER_FLOWS.md` | 전체 파이프라인 |
+| 아키텍처 철학 | `docs/archive/15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md` | Non-negotiable 원칙 |
+| 개발 현황 | [DEVELOPER_STATUS_GUIDE.md](./DEVELOPER_STATUS_GUIDE.md) | 완성도, Known Issues |
+| Intent 스키마 | `backend/app/schemas/creative_intent.py` | Intent/Preset 정의 |
+| 워크플로우 도구 | `backend/app/agents/workflow_tools.py` | 체이닝 로직 |
+| 입력 필드 스키마 | `frontend/src/lib/dimension-input-schemas.ts` | 프론트엔드 필드 정의 |
 
 ---
 
