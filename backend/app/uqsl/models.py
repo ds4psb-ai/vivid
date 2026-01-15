@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from enum import Enum
 from typing import Literal, Optional
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 
 class QualityDimension(str, Enum):
@@ -62,8 +62,8 @@ class QualityScore(BaseModel):
         new_score._weights = {**self._weights, **weights}
         return new_score
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "groundedness": 0.85,
                 "relevance": 0.90,
@@ -72,6 +72,7 @@ class QualityScore(BaseModel):
                 "safety": 0.95,
             }
         }
+    )
 
 
 class CandidateResult(BaseModel):
@@ -83,8 +84,8 @@ class CandidateResult(BaseModel):
     latency_ms: int = Field(default=0, description="Generation latency in milliseconds")
     backend_used: str = Field(default="default", description="Backend identifier")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "idx": 0,
                 "content": "A cinematic shot of a sunset over the ocean...",
@@ -93,6 +94,7 @@ class CandidateResult(BaseModel):
                 "backend_used": "qdrant_hybrid",
             }
         }
+    )
 
 
 class SelectionResult(BaseModel):
@@ -104,8 +106,8 @@ class SelectionResult(BaseModel):
     arms_used: list[str] = Field(default_factory=list, description="Thompson Sampling arms used")
     all_candidates: list[CandidateResult] = Field(default_factory=list, description="All generated candidates")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "session_id": "uqsl-sess-abc123",
                 "selected": {
@@ -119,6 +121,7 @@ class SelectionResult(BaseModel):
                 "arms_used": ["backend:qdrant_hybrid", "backend:notebooklm"],
             }
         }
+    )
 
 
 class UQSLConfig(BaseModel):
@@ -149,8 +152,8 @@ class UQSLConfig(BaseModel):
     )
     top_k_for_hitl: int = Field(default=2, ge=2, le=5, description="Top K candidates for HITL")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "app_key": "dimension.aesthetic.direct",
                 "n_candidates": 3,
@@ -159,6 +162,7 @@ class UQSLConfig(BaseModel):
                 "enabled": True,
             }
         }
+    )
 
 
 class ThreeWayResult(BaseModel):
@@ -168,8 +172,8 @@ class ThreeWayResult(BaseModel):
     recommended: Literal["a", "b", "ab"] = Field(description="Recommended option")
     arms_stats: dict[str, dict[str, float | int]] = Field(description="Thompson Sampling arm statistics")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "query": "봉준호 스타일의 영화 장면",
                 "recommended": "ab",
@@ -180,6 +184,7 @@ class ThreeWayResult(BaseModel):
                 },
             }
         }
+    )
 
 
 # Request/Response models for API endpoints
