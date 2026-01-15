@@ -123,6 +123,8 @@ export default function AbyssMirrorPanel() {
         presets,
         traces,
         saveLocal,
+        deleteLocal,
+        clearLocal,
         addTrace,
         listPresets,
         resumeSession,
@@ -752,6 +754,46 @@ export default function AbyssMirrorPanel() {
                             </button>
                         ))}
                     </div>
+                </div>
+            )}
+
+            {/* History Management Buttons */}
+            {(presets.length > 0 || messages.length > 0) && (
+                <div className="mt-6 space-y-2">
+                    <label className="text-[10px] font-bold text-slate-500 dark:text-white/50 uppercase tracking-widest">
+                        히스토리 관리
+                    </label>
+                    <div className="flex gap-2">
+                        {presets.length > 0 && (
+                            <button
+                                onClick={() => {
+                                    const latestPreset = presets[0];
+                                    if (latestPreset) {
+                                        handleResumePreset(latestPreset.meta.id);
+                                    }
+                                }}
+                                className="flex-1 px-3 py-2 bg-violet-500/20 hover:bg-violet-500/30 border border-violet-500/30 rounded-lg text-xs text-violet-600 dark:text-violet-400 transition-colors"
+                            >
+                                ⏪ 이전 세션
+                            </button>
+                        )}
+                        <button
+                            onClick={() => {
+                                if (confirm("모든 히스토리를 삭제하고 처음부터 시작하시겠습니까?")) {
+                                    clearLocal();
+                                    handleReset();
+                                }
+                            }}
+                            className="flex-1 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg text-xs text-red-500 dark:text-red-400 transition-colors"
+                        >
+                            🗑️ 초기화
+                        </button>
+                    </div>
+                    {presets.length > 1 && (
+                        <p className="text-[10px] text-slate-400 dark:text-white/30">
+                            저장된 세션: {presets.length}개
+                        </p>
+                    )}
                 </div>
             )}
 
