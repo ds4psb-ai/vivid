@@ -210,11 +210,11 @@ class TestFeedbackLoop:
         loop2 = get_feedback_loop()
         assert loop1 is loop2
 
-    def test_quality_threshold(self):
-        """품질 임계값 확인."""
+    def test_index_threshold(self):
+        """인덱싱 임계값 확인."""
         from app.rag.feedback_loop import FeedbackLoop
 
-        assert FeedbackLoop.MIN_QUALITY_THRESHOLD == 0.7
+        assert FeedbackLoop.MIN_INDEX_THRESHOLD == 0.7
 
     def test_capsule_to_dimension_mapping(self):
         """캡슐-차원 매핑 확인."""

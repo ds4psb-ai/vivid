@@ -119,8 +119,6 @@ class FeedbackLoopRAG:
 
     # 인덱싱 임계값 (is_indexable: overall >= 0.70)
     MIN_INDEX_THRESHOLD = 0.70
-    # 레거시 호환성 별칭 (deprecated: use MIN_INDEX_THRESHOLD)
-    MIN_QUALITY_THRESHOLD = 0.70
     # 승격 임계값 (is_promotion_eligible: overall >= 0.85 AND user_accepted)
     MIN_PROMOTION_THRESHOLD = 0.85
 
@@ -504,10 +502,10 @@ class FeedbackLoopRAG:
             True if indexed successfully
         """
         # 품질 임계값 확인
-        if quality_score < self.MIN_QUALITY_THRESHOLD:
+        if quality_score < self.MIN_INDEX_THRESHOLD:
             logger.debug(
                 f"[FeedbackLoop] Skipping {capsule_id}: "
-                f"quality {quality_score} < {self.MIN_QUALITY_THRESHOLD}"
+                f"quality {quality_score} < {self.MIN_INDEX_THRESHOLD}"
             )
             self._skipped_count += 1
             return False
@@ -625,7 +623,7 @@ class FeedbackLoopRAG:
             "total_indexed": self._indexed_count,
             "total_skipped": self._skipped_count,
             "total_errors": self._error_count,
-            "quality_threshold": self.MIN_QUALITY_THRESHOLD,
+            "quality_threshold": self.MIN_INDEX_THRESHOLD,
             "supported_capsules": list(self.CAPSULE_TO_DIMENSION.keys()),
         }
 
