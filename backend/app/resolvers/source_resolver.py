@@ -2,7 +2,7 @@
 Source Type Resolver
 
 domain_sources (ContentDomain) → 적절한 RAG 소스 라우팅.
-Intent의 domain_sources 값에 따라 NotebookLM, VertexRAG, 또는 특수 소스를 선택합니다.
+Intent의 domain_sources 값에 따라 NotebookLM, Dimension RAG, 또는 특수 소스를 선택합니다.
 
 Architecture:
     CreativeIntent.domain_sources 
@@ -29,7 +29,6 @@ logger = logging.getLogger(__name__)
 class RAGSourceType(str, Enum):
     """사용 가능한 RAG 소스 타입"""
     NOTEBOOKLM = "notebooklm"       # Tier 0: NotebookLM
-    VERTEX_RAG = "vertex_rag"       # Tier 0: Vertex AI RAG
     DIMENSION_RAG = "dimension"     # Tier 1: Dimension-specific
     LIGHTRAG = "lightrag"           # Graph-based entity search
     SAJU_DB = "saju"                # Future: 사주 데이터베이스
@@ -71,11 +70,6 @@ DOMAIN_TO_SOURCES: Dict[ContentDomain, List[ResolvedSource]] = {
             notebook_id="DNA_봉준호",
             query_hints=["visual grammar", "composition", "tension"],
             priority=10,
-        ),
-        ResolvedSource(
-            source_type=RAGSourceType.VERTEX_RAG,
-            corpus_id="auteur_dna",
-            priority=5,
         ),
     ],
     ContentDomain.AUTEUR_TARANTINO: [
@@ -222,7 +216,6 @@ class SourceTypeResolver:
     def __init__(self):
         self._available_sources: Set[RAGSourceType] = {
             RAGSourceType.NOTEBOOKLM,
-            RAGSourceType.VERTEX_RAG,
             RAGSourceType.DIMENSION_RAG,
             RAGSourceType.LIGHTRAG,
         }
@@ -331,10 +324,7 @@ class SourceTypeResolver:
         
         if source.source_type == RAGSourceType.NOTEBOOKLM:
             return await self._query_notebooklm(source.notebook_id, enhanced_query)
-        
-        elif source.source_type == RAGSourceType.VERTEX_RAG:
-            return await self._query_vertex_rag(source.corpus_id, enhanced_query)
-        
+
         elif source.source_type == RAGSourceType.DIMENSION_RAG:
             return await self._query_dimension_rag(source.dimension_code, enhanced_query)
         
@@ -366,28 +356,7 @@ class SourceTypeResolver:
         except Exception as e:
             logger.debug(f"NotebookLM query failed: {e}")
             return None
-    
-    async def _query_vertex_rag(
-        self, 
-        corpus_id: Optional[str], 
-        query: str
-    ) -> Optional[Dict[str, Any]]:
-        """Vertex RAG 쿼리"""
-        try:
-            from app.rag import get_vertex_rag_service
-            service = get_vertex_rag_service()
-            
-            result = await service.query(query, corpus_name=corpus_id)
-            
-            return {
-                "formatted": result.formatted_context if hasattr(result, 'formatted_context') else str(result),
-                "count": result.result_count if hasattr(result, 'result_count') else 1,
-                "source": "vertex_rag",
-            }
-        except Exception as e:
-            logger.debug(f"VertexRAG query failed: {e}")
-            return None
-    
+
     async def _query_dimension_rag(
         self, 
         dimension_code: Optional[str], 

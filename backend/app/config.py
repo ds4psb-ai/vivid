@@ -97,20 +97,14 @@ class Settings(BaseSettings):
     NICEPAY_MODE: str = "sandbox"  # sandbox | production
 
     # Google Cloud Platform
-    # Project: gen-lang-client-0587915249 (Default Gemini Project)
+    # Project: vivid-canvas-482303 (Production Project)
     # Account: arkain.info@gmail.com
-    GCP_PROJECT_ID: str = "gen-lang-client-0587915249"
-    GCP_PROJECT_NUMBER: str = "163373812492"
+    GCP_PROJECT_ID: str = "vivid-canvas-482303"
+    GCP_PROJECT_NUMBER: str = "239259013228"
     GCP_LOCATION: str = "europe-west4"  # RAG Engine available here (us-central1 restricted)
     GCS_BUCKET: str = "crebit-rag-data"
 
-    # Vertex AI RAG Engine (Tier 0)
-    # Docs: https://cloud.google.com/vertex-ai/generative-ai/docs/rag-engine
-    VERTEX_RAG_EMBEDDING_MODEL: str = "text-embedding-005"
-    VERTEX_RAG_CHUNK_SIZE: int = 1024
-    VERTEX_RAG_CHUNK_OVERLAP: int = 200
-
-    # NotebookLM Enterprise API (Legacy - prefer Vertex AI RAG)
+    # NotebookLM Enterprise API (Tier 0)
     # Project: vivid-canvas-482303
     NOTEBOOKLM_PROJECT_NUMBER: str = "239259013228"  # vivid-canvas project
     NOTEBOOKLM_LOCATION: str = "global"  # global, us, eu

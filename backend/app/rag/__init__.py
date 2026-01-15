@@ -78,19 +78,6 @@ from app.rag.tier0_notebooklm import (
     query_dimension_guide as notebooklm_query_dimension_guide,
     NOTEBOOK_REGISTRY,
 )
-from app.rag.tier0_vertex_rag import (
-    VertexRAGService,
-    VertexRAGConfig,
-    VertexRAGResult,
-    get_vertex_rag_service,
-    reset_vertex_rag_service,
-    query_auteur_dna,
-    query_dimension_guide,
-    query_hybrid,
-    cascaded_query,
-    create_deep_podcast,
-    CORPUS_REGISTRY,
-)
 from app.rag.podcast_service import (
     PodcastService,
     PodcastConfig,
@@ -224,19 +211,6 @@ from app.rag.schemas import (
 )
 
 __all__ = [
-    # ============ Tier 0: Vertex AI RAG (Primary) ============
-    "VertexRAGService",
-    "VertexRAGConfig",
-    "VertexRAGResult",
-    "get_vertex_rag_service",
-    "reset_vertex_rag_service",
-    "query_auteur_dna",
-    "query_dimension_guide",
-    "query_hybrid",
-    "cascaded_query",
-    "create_deep_podcast",
-    "CORPUS_REGISTRY",
-
     # ============ Podcast Service (Discovery Engine) ============
     "PodcastService",
     "PodcastConfig",
@@ -250,7 +224,7 @@ __all__ = [
     "generate_deep_dive_podcast",
     "generate_debate_podcast",
 
-    # ============ Tier 0: NotebookLM (Legacy) ============
+    # ============ Tier 0: NotebookLM ============
     "NotebookLMService",
     "NotebookLMConfig",
     "NotebookQueryResult",

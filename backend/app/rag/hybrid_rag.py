@@ -1,23 +1,23 @@
 """Hybrid RAG Orchestrator.
 
-NotebookLM (거장 DNA, Grounded RAG) + Vertex AI (실시간 검색, Google Search Grounding)
+NotebookLM (거장 DNA, Grounded RAG) + Qdrant (차원별 지식)
 하이브리드 RAG 아키텍처 구현.
 
 Strategy:
-- 거장 쿼리: NotebookLM 우선 → Vertex AI 폴백
-- 차원 쿼리: Vertex AI + Google Search Grounding
-- 일반 쿼리: 병렬 실행 → 결과 병합
+- 거장 쿼리: NotebookLM (Tier 0)
+- 차원 쿼리: Qdrant Hybrid (Tier 1)
+- 일반 쿼리: NotebookLM → Qdrant 폴백
 
 Usage:
     from app.rag.hybrid_rag import hybrid_query, get_hybrid_rag_service
 
-    # 거장 DNA 쿼리 (NotebookLM 우선)
+    # 거장 DNA 쿼리 (NotebookLM)
     result = await hybrid_query(
         query="봉준호 감독의 계단 상징",
         auteur_key="bong",
     )
 
-    # 차원 쿼리 (Vertex AI + Grounding)
+    # 차원 쿼리 (Qdrant Hybrid)
     result = await hybrid_query(
         query="스토리보드 제작 가이드",
         dimension="2D",
@@ -36,11 +36,18 @@ from app.rag.tier0_notebooklm import (
     NotebookSource,
     NOTEBOOK_REGISTRY,
 )
-from app.rag.tier0_vertex_rag import (
-    get_vertex_rag_service,
-    VertexRAGResult,
-    RAGSource,
-)
+
+
+# RAGSource for backward compatibility (previously from tier0_vertex_rag)
+@dataclass
+class RAGSource:
+    """RAG 검색 소스 (backward compat)."""
+    source_id: str = ""
+    content: str = ""
+    relevance_score: float = 0.0
+    document_name: str = ""
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
 from app.rag.observability import trace_rag
 from app.rag.graph_rag import graph_query as _graph_query, GraphRAGResult
 from app.rag.query_expansion import expand_query as _expand_query
@@ -758,54 +765,13 @@ async def hybrid_query(
         rrf_enabled=result.rrf_enabled,
     )
 
-    # === Load preset for CRAG and Cache thresholds ===
+    # === Load preset for Cache thresholds ===
     from app.rag.rag_presets import get_rag_preset
     preset_dim = dimension or ("AD" if auteur_key else "1D")
     preset = get_rag_preset(preset_dim)
 
-    # === CRAG Pattern: Corrective RAG (2025 Best Practice) ===
-    # If confidence is low, automatically trigger Google Search Grounding as fallback
-    # P6 SSoT: Use preset-based threshold instead of hardcoded value
-    crag_threshold = preset.confidence_threshold
-    if result.confidence < crag_threshold and not result.grounding_sources:
-        logger.info(
-            f"[HybridRAG] CRAG triggered | confidence={result.confidence:.2f} < {crag_threshold} | "
-            f"Falling back to Google Search Grounding"
-        )
-        try:
-            from app.rag.tier0_vertex_rag import query_with_google_grounding
-            
-            grounding_result = await query_with_google_grounding(
-                query=query,
-                model="gemini-2.0-flash",
-            )
-            
-            if grounding_result and hasattr(grounding_result, 'sources'):
-                # Merge grounding sources into result
-                result.grounding_sources.extend(grounding_result.sources)
-                result.retrieval_count += len(grounding_result.sources)
-                
-                # Boost confidence if we got good grounding results
-                if len(grounding_result.sources) > 0:
-                    result.confidence = min(result.confidence + 0.2, 0.9)
-                    result.grounded = True
-                    
-                    # Append grounding answer if primary answer is weak
-                    if len(result.answer) < 100 and grounding_result.answer:
-                        result.answer = f"{result.answer}\n\n[Grounding 보완]\n{grounding_result.answer}"
-                
-                logger.info(
-                    f"[HybridRAG] CRAG success | "
-                    f"grounding_sources={len(grounding_result.sources)} | "
-                    f"new_confidence={result.confidence:.2f}"
-                )
-        except Exception as e:
-            logger.warning(f"[HybridRAG] CRAG grounding failed: {e}")
-
     # === Step N+1: Store in Semantic Cache (preset-based gating) ===
     # P6-1 Refinement: Use dimension-based threshold from YAML SSoT
-    # preset already loaded above for CRAG
-    
     if use_semantic_cache and preset.cache_enabled and result.confidence >= preset.confidence_threshold:
         try:
             cache = get_semantic_cache()
@@ -836,12 +802,12 @@ async def _query_auteur_first(
     use_google_search: bool = True,
     dimension: str = "AD",  # Medium fix: for correct metric labeling
 ) -> HybridRAGResult:
-    """거장 쿼리: NotebookLM 우선 → Vertex AI 폴백.
+    """거장 쿼리: NotebookLM (Tier 0) 전용.
 
     Args:
         query: 검색 쿼리
         auteur_key: 거장 키
-        use_google_search: Google Search Grounding 사용 여부
+        use_google_search: (deprecated, ignored)
 
     Returns:
         HybridRAGResult
@@ -850,8 +816,8 @@ async def _query_auteur_first(
     notebook_key = AUTEUR_KEY_TO_NOTEBOOK.get(auteur_key.lower())
     if not notebook_key:
         logger.warning(f"[HybridRAG] Unknown auteur key: {auteur_key}")
-        # LOW FIX: dimension 전달하여 메트릭에서 "general" 대신 실제 dimension 기록
-        return await _query_parallel(query, use_google_search, dimension=dimension)
+        # Fallback to NotebookLM general query
+        return await _query_notebooklm_only(query, dimension=dimension)
 
     # NotebookLM 쿼리
     notebooklm_service = get_notebooklm_service()
@@ -860,35 +826,13 @@ async def _query_auteur_first(
         query=query,
     )
 
-    # 신뢰도가 높으면 NotebookLM 결과만 사용
-    if notebooklm_result.confidence >= 0.75:
-        return HybridRAGResult(
-            answer=notebooklm_result.answer,
-            notebooklm_sources=notebooklm_result.sources,
-            confidence=notebooklm_result.confidence,
-            strategy_used="auteur_first",
-            grounded=notebooklm_result.grounded,
-        )
-
-    # 신뢰도가 낮으면 Vertex AI로 보강
-    vertex_service = get_vertex_rag_service()
-    vertex_result = await vertex_service.query(
-        query=f"{NOTEBOOK_REGISTRY.get(notebook_key, {}).get('description', '')} {query}",
-        corpus_name="auteur_dna",
-        use_grounding=use_google_search,
-    )
-
-    # 결과 병합
-    combined_answer = f"{notebooklm_result.answer}\n\n---\n\n**추가 정보 (Vertex AI):**\n{vertex_result.answer}"
-
     return HybridRAGResult(
-        answer=combined_answer,
+        answer=notebooklm_result.answer,
         notebooklm_sources=notebooklm_result.sources,
-        vertex_sources=vertex_result.sources,
-        grounding_sources=vertex_result.grounding_sources,
-        confidence=(notebooklm_result.confidence + vertex_result.confidence) / 2,
+        confidence=notebooklm_result.confidence,
         strategy_used="auteur_first",
-        grounded=True,
+        grounded=notebooklm_result.grounded,
+        auteur_key=auteur_key,
     )
 
 
@@ -898,53 +842,72 @@ async def _query_dimension(
     dimension: str,
     use_google_search: bool = True,
 ) -> HybridRAGResult:
-    """차원별 쿼리: Vertex AI + Google Search Grounding.
+    """차원별 쿼리: Qdrant Hybrid (Tier 1).
 
     Args:
         query: 검색 쿼리
         dimension: 차원 코드
-        use_google_search: Google Search Grounding 사용 여부
+        use_google_search: (deprecated, ignored)
 
     Returns:
         HybridRAGResult
     """
-    corpus_name = DIMENSION_TO_CORPUS.get(dimension.upper())
+    try:
+        from app.rag.tier1_dimension_rag import get_dimension_rag
 
-    vertex_service = get_vertex_rag_service()
-    vertex_result = await vertex_service.query(
-        query=query,
-        corpus_name=corpus_name,
-        use_grounding=use_google_search,
-    )
+        rag = get_dimension_rag(dimension.upper())
+        results = rag.hybrid_search(query=query, limit=10)
 
-    return HybridRAGResult(
-        answer=vertex_result.answer,
-        vertex_sources=vertex_result.sources,
-        grounding_sources=vertex_result.grounding_sources,
-        confidence=vertex_result.confidence,
-        strategy_used="dimension",
-        grounded=vertex_result.grounded,
-    )
+        # Convert Qdrant results to RAGSource format
+        sources = [
+            RAGSource(
+                source_id=r.get("doc_id", ""),
+                content=r.get("content", ""),
+                relevance_score=r.get("score", 0.0),
+                document_name=r.get("metadata", {}).get("source", ""),
+                metadata=r.get("metadata", {}),
+            )
+            for r in results
+        ]
+
+        # Synthesize answer from top results
+        answer = "\n\n".join(
+            r.get("content", "")[:500] for r in results[:3]
+        ) if results else "검색 결과를 찾을 수 없습니다."
+
+        return HybridRAGResult(
+            answer=answer,
+            vertex_sources=sources,  # Using vertex_sources for backward compat
+            confidence=results[0].get("score", 0.0) if results else 0.0,
+            strategy_used="dimension",
+            dimension=dimension,
+            grounded=False,
+        )
+    except Exception as e:
+        logger.error(f"[HybridRAG] Dimension query error: {e}")
+        return HybridRAGResult(
+            answer="차원별 검색에 실패했습니다.",
+            confidence=0.0,
+            strategy_used="dimension",
+            dimension=dimension,
+            grounded=False,
+        )
 
 
-@track_rag_operation("parallel_query")
-async def _query_parallel(
+async def _query_notebooklm_only(
     query: str,
-    use_google_search: bool = True,
-    dimension: str = "general",  # Medium fix: for correct metric labeling
+    dimension: str = "general",
 ) -> HybridRAGResult:
-    """병렬 쿼리: NotebookLM + Vertex AI 동시 실행.
+    """NotebookLM 전용 쿼리.
 
     Args:
         query: 검색 쿼리
-        use_google_search: Google Search Grounding 사용 여부
+        dimension: 차원 코드 (for metric labeling)
 
     Returns:
-        HybridRAGResult with merged results
+        HybridRAGResult
     """
-    # 병렬 실행
     notebooklm_service = get_notebooklm_service()
-    vertex_service = get_vertex_rag_service()
 
     # AD 카테고리 노트북들 검색
     auteur_notebooks = notebooklm_service.get_notebooks_by_category("auteur")
@@ -955,74 +918,48 @@ async def _query_parallel(
     else:
         notebook_key = "DNA_봉준호"  # 기본값
 
-    # 병렬 실행
-    notebooklm_task = notebooklm_service.query_notebook(
-        notebook_id=notebook_key,
-        query=query,
-    )
-    vertex_task = vertex_service.query(
-        query=query,
-        use_grounding=use_google_search,
-    )
-
-    notebooklm_result, vertex_result = await asyncio.gather(
-        notebooklm_task,
-        vertex_task,
-        return_exceptions=True,
-    )
-
-    # 에러 처리
-    if isinstance(notebooklm_result, Exception):
-        logger.warning(f"[HybridRAG] NotebookLM error: {notebooklm_result}")
-        notebooklm_result = None
-    if isinstance(vertex_result, Exception):
-        logger.warning(f"[HybridRAG] Vertex AI error: {vertex_result}")
-        vertex_result = None
-
-    # 결과 병합
-    if notebooklm_result and vertex_result:
-        # 둘 다 성공 → 병합
-        if notebooklm_result.confidence > vertex_result.confidence:
-            answer = notebooklm_result.answer
-        else:
-            answer = vertex_result.answer
-
-        return HybridRAGResult(
-            answer=answer,
-            notebooklm_sources=notebooklm_result.sources if notebooklm_result else [],
-            vertex_sources=vertex_result.sources if vertex_result else [],
-            grounding_sources=vertex_result.grounding_sources if vertex_result else [],
-            confidence=max(
-                notebooklm_result.confidence if notebooklm_result else 0,
-                vertex_result.confidence if vertex_result else 0,
-            ),
-            strategy_used="parallel",
-            grounded=True,
+    try:
+        notebooklm_result = await notebooklm_service.query_notebook(
+            notebook_id=notebook_key,
+            query=query,
         )
-    elif notebooklm_result:
+
         return HybridRAGResult(
             answer=notebooklm_result.answer,
             notebooklm_sources=notebooklm_result.sources,
             confidence=notebooklm_result.confidence,
-            strategy_used="fallback",
+            strategy_used="notebooklm_only",
             grounded=notebooklm_result.grounded,
+            dimension=dimension,
         )
-    elif vertex_result:
-        return HybridRAGResult(
-            answer=vertex_result.answer,
-            vertex_sources=vertex_result.sources,
-            grounding_sources=vertex_result.grounding_sources,
-            confidence=vertex_result.confidence,
-            strategy_used="fallback",
-            grounded=vertex_result.grounded,
-        )
-    else:
+    except Exception as e:
+        logger.error(f"[HybridRAG] NotebookLM error: {e}")
         return HybridRAGResult(
             answer="검색 결과를 찾을 수 없습니다.",
             confidence=0.0,
             strategy_used="fallback",
             grounded=False,
+            dimension=dimension,
         )
+
+
+@track_rag_operation("parallel_query")
+async def _query_parallel(
+    query: str,
+    use_google_search: bool = True,
+    dimension: str = "general",  # Medium fix: for correct metric labeling
+) -> HybridRAGResult:
+    """범용 쿼리: NotebookLM 우선.
+
+    Args:
+        query: 검색 쿼리
+        use_google_search: (deprecated, ignored)
+        dimension: 차원 코드 (for metric labeling)
+
+    Returns:
+        HybridRAGResult
+    """
+    return await _query_notebooklm_only(query, dimension=dimension)
 
 
 # ============================================================================
@@ -1199,10 +1136,9 @@ def _convert_ensemble_to_hybrid_result(
         HybridRAGResult 인스턴스 (기존 API 호환)
     """
     from app.rag.tier0_notebooklm import NotebookSource
-    from app.rag.tier0_vertex_rag import RAGSource
 
     notebooklm_sources: List[NotebookSource] = []
-    vertex_sources: List[RAGSource] = []
+    vertex_sources: List[RAGSource] = []  # Using local RAGSource for backward compat
     grounding_sources: List[Dict[str, Any]] = []
 
     # 소스별 분류

@@ -17,11 +17,10 @@ class TestBackendRegistry:
 
         backends = list_backends()
 
-        # 3개 백엔드가 발견되어야 함
+        # 2개 백엔드가 발견되어야 함 (Vertex RAG removed)
         assert "qdrant_hybrid" in backends
         assert "notebooklm" in backends
-        assert "vertex_grounding" in backends
-        assert len(backends) >= 3
+        assert len(backends) >= 2
 
     def test_get_backend_returns_instance(self):
         """백엔드 인스턴스 가져오기 테스트."""
@@ -65,7 +64,7 @@ class TestBackendRegistry:
 
         count = reload_backends()
 
-        assert count >= 3
+        assert count >= 2
         assert len(list_backends()) == count
 
 

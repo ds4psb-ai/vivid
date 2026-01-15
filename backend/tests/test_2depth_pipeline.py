@@ -1,8 +1,6 @@
-"""2-Depth Cascaded RAG Pipeline E2E Tests.
+"""Podcast Service Tests.
 
-Tests the complete pipeline:
-- Depth 1: Vertex AI RAG Engine (core knowledge extraction)
-- Depth 2: Discovery Engine Podcast API (audio generation)
+Tests the Podcast API functionality.
 
 Run with:
     pytest tests/test_2depth_pipeline.py -v
@@ -18,18 +16,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 # Unit Tests (No API calls)
 # ============================================================================
 
-class TestCascadedQuery:
-    """Cascaded Query 단위 테스트."""
-
-    def test_cascaded_query_import(self):
-        """cascaded_query 함수 import 확인."""
-        from app.rag import cascaded_query
-        assert callable(cascaded_query)
-
-    def test_create_deep_podcast_import(self):
-        """create_deep_podcast 함수 import 확인."""
-        from app.rag import create_deep_podcast
-        assert callable(create_deep_podcast)
+class TestPodcastService:
+    """Podcast 서비스 단위 테스트."""
 
     def test_podcast_service_imports(self):
         """Podcast 서비스 imports 확인."""
@@ -79,97 +67,6 @@ class TestCascadedQuery:
         assert service1 is service2
 
 
-class TestVertexRAGHardening:
-    """Vertex RAG 하드닝 테스트."""
-
-    def test_validation_functions_exist(self):
-        """Validation 함수 존재 확인."""
-        from app.rag.tier0_vertex_rag import (
-            validate_query,
-            validate_corpus_name,
-            validate_document_paths,
-        )
-        assert callable(validate_query)
-        assert callable(validate_corpus_name)
-        assert callable(validate_document_paths)
-
-    def test_validate_query_empty(self):
-        """빈 쿼리 검증."""
-        from app.rag.tier0_vertex_rag import validate_query
-
-        with pytest.raises(ValueError, match="cannot be empty"):
-            validate_query("")
-        with pytest.raises(ValueError, match="cannot be empty"):
-            validate_query("   ")
-
-    def test_validate_query_too_long(self):
-        """쿼리 길이 초과 검증."""
-        from app.rag.tier0_vertex_rag import validate_query, MAX_QUERY_LENGTH
-
-        long_query = "a" * (MAX_QUERY_LENGTH + 1)
-        with pytest.raises(ValueError, match="maximum length"):
-            validate_query(long_query)
-
-    def test_validate_query_null_bytes(self):
-        """Null 바이트 검증."""
-        from app.rag.tier0_vertex_rag import validate_query
-
-        with pytest.raises(ValueError, match="null bytes"):
-            validate_query("test\x00query")
-
-    def test_validate_corpus_name_empty(self):
-        """빈 코퍼스 이름 검증."""
-        from app.rag.tier0_vertex_rag import validate_corpus_name
-
-        with pytest.raises(ValueError, match="cannot be empty"):
-            validate_corpus_name("")
-
-    def test_validate_corpus_name_invalid_chars(self):
-        """잘못된 코퍼스 이름 문자 검증."""
-        from app.rag.tier0_vertex_rag import validate_corpus_name
-
-        with pytest.raises(ValueError, match="invalid characters"):
-            validate_corpus_name("corpus/name")
-        with pytest.raises(ValueError, match="invalid characters"):
-            validate_corpus_name("corpus name")
-
-    def test_validate_document_paths_empty(self):
-        """빈 경로 목록 검증."""
-        from app.rag.tier0_vertex_rag import validate_document_paths
-
-        with pytest.raises(ValueError, match="At least one"):
-            validate_document_paths([])
-
-    def test_validate_document_paths_traversal(self):
-        """경로 순회 공격 검증."""
-        from app.rag.tier0_vertex_rag import validate_document_paths
-
-        with pytest.raises(ValueError, match="traversal"):
-            validate_document_paths(["../../../etc/passwd"])
-
-    def test_constants_defined(self):
-        """상수 정의 확인."""
-        from app.rag.tier0_vertex_rag import (
-            VERTEX_INIT_TIMEOUT,
-            CORPUS_CREATE_TIMEOUT,
-            FILE_IMPORT_TIMEOUT,
-            QUERY_TIMEOUT,
-            MAX_RETRIES,
-            MAX_QUERY_LENGTH,
-            MAX_CORPUS_COUNT,
-            MAX_TOP_K,
-        )
-
-        assert VERTEX_INIT_TIMEOUT > 0
-        assert CORPUS_CREATE_TIMEOUT > 0
-        assert FILE_IMPORT_TIMEOUT > 0
-        assert QUERY_TIMEOUT > 0
-        assert MAX_RETRIES >= 1
-        assert MAX_QUERY_LENGTH > 0
-        assert MAX_CORPUS_COUNT > 0
-        assert MAX_TOP_K > 0
-
-
 class TestPodcastServiceFocusPrompt:
     """Podcast focus prompt 테스트."""
 
@@ -202,98 +99,8 @@ class TestPodcastServiceFocusPrompt:
 
 
 # ============================================================================
-# Integration Tests (Mock API calls)
-# ============================================================================
-
-class TestCascadedQueryMocked:
-    """Mocked cascaded query 테스트."""
-
-    @pytest.mark.asyncio
-    async def test_cascaded_query_structure(self):
-        """cascaded_query 반환 구조 테스트."""
-        from app.rag.tier0_vertex_rag import cascaded_query, VertexRAGResult
-
-        # Mock the query method
-        mock_result = VertexRAGResult(
-            answer="봉준호 감독의 시각적 특징은 deep focus와 tracking shot입니다.",
-            confidence=0.85,
-            sources=[],
-            grounding_sources=[],
-        )
-
-        with patch("app.rag.tier0_vertex_rag.get_vertex_rag_service") as mock_service:
-            mock_service.return_value.query = AsyncMock(return_value=mock_result)
-
-            result = await cascaded_query("봉준호 감독의 시각적 특징")
-
-            assert "depth1_results" in result
-            assert "depth2_ready" in result
-            assert "podcast_eligible" in result
-            assert "query" in result
-
-    @pytest.mark.asyncio
-    async def test_create_deep_podcast_structure(self):
-        """create_deep_podcast 반환 구조 테스트."""
-        from app.rag.tier0_vertex_rag import create_deep_podcast, VertexRAGResult
-        from app.rag.podcast_service import PodcastResult, PodcastStatus
-
-        # Mock cascaded query
-        mock_rag_result = VertexRAGResult(
-            answer="봉준호 감독의 시각적 특징은...",
-            confidence=0.85,
-            sources=[],
-        )
-
-        mock_podcast_result = PodcastResult(
-            operation_name="projects/test/locations/global/operations/123",
-            status=PodcastStatus.PROCESSING,
-            title="Test",
-        )
-
-        with patch("app.rag.tier0_vertex_rag.cascaded_query") as mock_cascaded:
-            mock_cascaded.return_value = {
-                "depth1_results": mock_rag_result,
-                "depth1_documents": [{"content": "doc1"}, {"content": "doc2"}],
-                "depth2_ready": True,
-                "podcast_eligible": True,
-            }
-
-            with patch("app.rag.podcast_service.get_podcast_service") as mock_ps:
-                mock_ps.return_value.generate_podcast = AsyncMock(
-                    return_value=mock_podcast_result
-                )
-
-                result = await create_deep_podcast("거장 분석", mode="debate")
-
-                assert "status" in result
-                assert "operation_name" in result or "error" in result
-
-
-# ============================================================================
 # Live API Tests (Requires GCP auth)
 # ============================================================================
-
-@pytest.mark.live
-class TestLiveVertexRAG:
-    """Live Vertex AI RAG 테스트 (GCP 인증 필요)."""
-
-    @pytest.mark.asyncio
-    async def test_live_query(self):
-        """Live RAG 쿼리 테스트."""
-        from app.rag import get_vertex_rag_service
-
-        service = get_vertex_rag_service()
-        result = await service.query(
-            query="봉준호 감독의 시각적 특징",
-            use_grounding=False,
-            top_k=5,
-        )
-
-        # Just check that it returns something
-        assert result is not None
-        assert hasattr(result, "answer")
-        assert hasattr(result, "confidence")
-
 
 @pytest.mark.live
 class TestLivePodcast:
