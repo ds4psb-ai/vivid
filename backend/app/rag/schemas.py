@@ -52,6 +52,15 @@ class EvidenceStatus(str, Enum):
 # Base Schemas
 # ============================================================================
 
+class EvidenceRefSchema(BaseModel):
+    """RAG 근거 참조 (SSoT)."""
+    ref_id: str = Field(..., description="Unique reference ID")
+    source: str = Field(default="", description="Evidence source")
+    content_preview: str = Field(default="", description="Content preview text")
+    dataset_id: str = Field(default="", description="Dataset ID")
+    dataset_label: str = Field(default="", description="Dataset label")
+    score: float = Field(default=0.0, ge=0.0, le=1.0, description="Relevance score")
+
 class RAGDocument(BaseModel):
     """RAG 문서 스키마."""
     doc_id: str = Field(..., description="고유 문서 ID")

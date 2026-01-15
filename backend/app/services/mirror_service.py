@@ -507,7 +507,7 @@ async def analyze_persona_with_mirror(
 {conversation_context}
 
 ### 사용자 메시지
-{user_message}
+{sanitized_message}
 
 ### 지시사항
 1. 사용자 메시지에 자연스럽게 응답하세요

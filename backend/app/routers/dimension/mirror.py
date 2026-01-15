@@ -25,6 +25,7 @@ from ._base import (
     get_sse_headers,
     Optional,
 )
+from app.rag.schemas import EvidenceRefSchema as EvidenceRef
 
 router = APIRouter()
 
@@ -104,15 +105,6 @@ class MirrorInitResponse(BaseModel):
     completion_rate: float
 
 
-class EvidenceRef(BaseModel):
-    """RAG 근거 참조."""
-    ref_id: str
-    source: str = ""
-    content_preview: str = ""
-    dataset_id: str = ""
-    dataset_label: str = ""
-    score: float = 0.0
-
 
 class MirrorChatResponse(BaseModel):
     """심연의 거울 채팅 응답."""
@@ -126,6 +118,7 @@ class MirrorChatResponse(BaseModel):
     trace_id: str = Field("", description="Trace ID for auditability")
     evidence_refs: List[EvidenceRef] = Field(default_factory=list, description="RAG evidence references")
     confidence: float = Field(0.0, ge=0.0, le=1.0, description="AI confidence score")
+    is_crisis: bool = Field(False, description="Crisis keyword detected - safety response")
     error: Optional[str] = None
 
 
@@ -280,6 +273,7 @@ async def chat_mirror(
         trace_id=trace_id,
         evidence_refs=evidence_refs,
         confidence=0.0,  # LLM-only
+        is_crisis=result.get("is_crisis", False),  # Crisis flag
         error=result.get("error"),
     )
 

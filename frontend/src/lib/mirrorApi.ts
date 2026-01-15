@@ -68,6 +68,7 @@ export interface MirrorChatResponse {
     trace_id: string;
     evidence_refs: EvidenceRef[];
     confidence: number;
+    is_crisis?: boolean;  // Crisis keyword detected
     error?: string;
 }
 

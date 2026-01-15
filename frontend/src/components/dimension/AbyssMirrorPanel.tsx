@@ -221,7 +221,7 @@ export default function AbyssMirrorPanel() {
 
             if (response.success) {
                 // 위기 메시지 처리
-                const isCrisis = !!(response as Record<string, unknown>).is_crisis;
+                const isCrisis = response.is_crisis ?? false;
                 if (isCrisis) {
                     const crisisMessage: Message = {
                         role: "assistant",
