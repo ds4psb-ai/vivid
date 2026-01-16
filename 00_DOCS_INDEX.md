@@ -46,6 +46,7 @@
 |------|------|------|
 | **앱 개발자 가이드 v3.0** | [`docs/DIMENSION_APP_DEVELOPER_GUIDE.md`](docs/DIMENSION_APP_DEVELOPER_GUIDE.md) | React 19, File Upload, SSE Streaming, UQSL (**MAJOR UPGRADE**) |
 | **RAG 데이터 큐레이터 가이드** | [`docs/RAG_DATA_CURATOR_GUIDE.md`](docs/RAG_DATA_CURATOR_GUIDE.md) | 데이터 적재 담당자용 (**NEW**) |
+| **Pre-Development 체크리스트** | [`docs/PRE_DEVELOPMENT_CHECKLIST.md`](docs/PRE_DEVELOPMENT_CHECKLIST.md) | 개발자/큐레이터 사전 준비 (**NEW**) |
 
 ---
 
