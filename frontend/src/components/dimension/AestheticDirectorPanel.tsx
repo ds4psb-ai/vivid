@@ -3,21 +3,37 @@
 /**
  * AestheticDirectorPanel - 미학디렉터 (AD)
  *
- * 3-Stage Visual Identity Workshop:
- * 1. Moodboard: 컨셉 입력 → 3가지 Visual Direction 생성
- * 2. Palette: 방향 선택 + 추가 설정
- * 3. Guide: 최종 Style Guide 결과
+ * 2026 Golden App: UQSL Full Integration
  *
- * Migrated to Panel Design Unity Compound Component System.
+ * 3-Stage Visual Identity Workshop:
+ * 1. Moodboard: UQSL Multi-Generate → 3 Visual Directions (SSE Streaming)
+ * 2. Palette: Direction Selection → Thompson Sampling Feedback
+ * 3. Guide: Final Style Guide → useOptimistic + Evidence Display
+ *
+ * Features:
+ * - SSE Streaming for real-time progress
+ * - Quality Scores (5-Dimension) visualization
+ * - Thompson Sampling feedback loop
+ * - Optimistic UI updates (React 19)
+ * - Evidence refs display
+ *
+ * @see UQSL_SPEC.md
  * @see docs/PANEL_DESIGN_UNITY_SPEC.md
  */
 
-import { useState, useCallback, type ReactNode } from "react";
+import {
+  useState,
+  useCallback,
+  useOptimistic,
+  useTransition,
+  type ReactNode,
+} from "react";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
+import { useUQSLGenerate, useUQSLFeedback } from "@/hooks/useUQSL";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import {
   Palette,
@@ -30,6 +46,9 @@ import {
   Code,
   Type,
   Layers,
+  TrendingUp,
+  Zap,
+  FileText,
 } from "lucide-react";
 
 // ============================================================================
@@ -64,19 +83,26 @@ interface AestheticResult {
     midjourney: string;
     veo: string;
   };
+  evidence_refs?: string[];
 }
 
 interface VisualDirection {
   id: string;
+  idx: number;
   title: string;
   description: string;
   keywords: string[];
   suggested_auteur: string;
   color_preview: string[];
-}
-
-interface MoodboardResult {
-  directions: VisualDirection[];
+  qualityScore?: {
+    groundedness: number;
+    relevance: number;
+    coherence: number;
+    creativity: number;
+    safety: number;
+    total_score: number;
+  };
+  isRecommended?: boolean;
 }
 
 type Stage = "moodboard" | "palette" | "guide";
@@ -114,7 +140,8 @@ export default function AestheticDirectorPanel() {
 // ============================================================================
 
 function AestheticDirectorContent() {
-  const { token, setLoading, setResult, setError: setContextError } = useDimensionPanel();
+  const { token, setLoading, setResult, setError: setContextError } =
+    useDimensionPanel();
 
   // Form state
   const [concept, setConcept] = useState("");
@@ -127,11 +154,19 @@ function AestheticDirectorContent() {
   const [directions, setDirections] = useState<VisualDirection[]>([]);
   const [selectedDirection, setSelectedDirection] =
     useState<VisualDirection | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
+  // React 19: useTransition for non-blocking stage transitions
+  const [isTransitionPending, startTransition] = useTransition();
+
+  // Optimistic UI state (React 19)
+  const [optimisticResult, setOptimisticResult] = useOptimistic<AestheticResult | null>(null);
 
   // UI state
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [showQualityScores, setShowQualityScores] = useState(true);
 
   // Hooks
   const { byokKey } = useBYOK();
@@ -142,6 +177,76 @@ function AestheticDirectorContent() {
 
   // Export utilities
   const { exportJSON, copyToClipboard } = useResultExport();
+
+  // UQSL Hooks (2026 Best Practice)
+  const {
+    progress: uqslProgress,
+    message: uqslMessage,
+    stage: uqslStage,
+    candidates: uqslCandidates,
+    qualityScores: uqslQualityScores,
+    recommendedIdx,
+    armsStats,
+    isLoading: isUqslLoading,
+    error: uqslError,
+    generate: generateUQSL,
+    abort: abortUQSL,
+    reset: resetUQSL,
+  } = useUQSLGenerate({
+    onComplete: (response) => {
+      // Transform UQSL candidates to VisualDirections
+      const newDirections: VisualDirection[] = response.candidates.map(
+        (candidate, idx) => {
+          // Parse the content to extract visual direction data
+          const content =
+            typeof candidate.content === "string"
+              ? JSON.parse(candidate.content)
+              : candidate.content;
+
+          return {
+            id: `direction-${idx}`,
+            idx,
+            title: content.title || `Direction ${idx + 1}`,
+            description: content.description || "",
+            keywords: content.keywords || [],
+            suggested_auteur: content.suggested_auteur || "",
+            color_preview: content.color_preview || [
+              "#3B82F6",
+              "#8B5CF6",
+              "#EC4899",
+            ],
+            qualityScore: response.quality_scores[idx]
+              ? {
+                  groundedness: response.quality_scores[idx].groundedness,
+                  relevance: response.quality_scores[idx].relevance,
+                  coherence: response.quality_scores[idx].coherence,
+                  creativity: response.quality_scores[idx].creativity,
+                  safety: response.quality_scores[idx].safety,
+                  total_score:
+                    response.quality_scores[idx].weighted_score ||
+                    response.quality_scores[idx].total_score,
+                }
+              : undefined,
+            isRecommended: idx === response.recommended_idx,
+          };
+        }
+      );
+
+      setDirections(newDirections);
+      setSessionId(response.session_id);
+      setStage("palette");
+    },
+    onError: (error) => {
+      if (error.includes("크레딧") || error.includes("402")) {
+        setShowCreditModal(true);
+      }
+      setContextError(new Error(error));
+    },
+  });
+
+  // UQSL Feedback Hook (Thompson Sampling)
+  const { selectCandidate, submitFeedback, isSubmitting: isFeedbackSubmitting } =
+    useUQSLFeedback();
 
   // Async operation for final guide
   const {
@@ -178,37 +283,10 @@ function AestheticDirectorContent() {
     nonRetryableErrors: ["400", "401", "402", "403", "404", "크레딧", "부족"],
   });
 
-  // Async operation for moodboard
-  const { isLoading: isMoodboardLoading, execute: executeMoodboard } =
-    useAsyncOperation<{
-      success: boolean;
-      output: MoodboardResult;
-      error?: string;
-    }>({
-      onSuccess: (data) => {
-        if (data.success && data.output?.directions) {
-          setDirections(data.output.directions);
-          setStage("palette");
-        }
-      },
-      onError: (err) => {
-        if (err.message.includes("크레딧") || err.message.includes("402")) {
-          setShowCreditModal(true);
-        }
-        setContextError(err);
-      },
-      retryCount: 3,
-      retryDelay: 1000,
-      nonRetryableErrors: ["400", "401", "402", "403", "404", "크레딧", "부족"],
-    });
+  // Sync loading state with context (include transition pending for 2026 UX)
+  const combinedLoading = isLoading || isUqslLoading || isTransitionPending;
 
-  // Sync loading state with context
-  const combinedLoading = isLoading || isMoodboardLoading;
-  useState(() => {
-    setLoading(combinedLoading);
-  });
-
-  // Stage 1: Generate Moodboard (Visual Directions)
+  // Stage 1: Generate Moodboard with UQSL (2026 Best Practice)
   const handleGenerateMoodboard = useCallback(async () => {
     const trimmedConcept = concept.trim();
     if (!trimmedConcept) {
@@ -217,21 +295,54 @@ function AestheticDirectorContent() {
     }
     setValidationError(null);
     setLoading(true);
+    resetUQSL();
 
-    await executeMoodboard(
-      `${API_BASE}/api/dimension/aesthetic/moodboard`,
-      {
-        concept,
-        mood,
-        model: "gemini-3-flash-preview",
-      },
-      getBYOKHeaders(byokKey)
-    );
+    // Use UQSL Multi-Generate for 3 Visual Directions
+    // React 19: async transitions with automatic isPending handling
+    await generateUQSL({
+      prompt: `Create 3 distinct visual directions for the following creative concept.
+
+Concept: ${trimmedConcept}
+Mood: ${mood}
+
+For each direction, provide:
+- title: A compelling 2-4 word title
+- description: 2-3 sentences describing the visual approach
+- keywords: 4-6 style keywords
+- suggested_auteur: A film director whose style matches this direction
+- color_preview: 3 hex color codes that represent this direction
+
+Output as JSON array with 3 objects.`,
+      app_key: "dimension.ad.moodboard",
+      n_candidates: 3,
+      strategy: "hitl",
+    });
 
     setLoading(false);
-  }, [concept, mood, byokKey, executeMoodboard, setLoading]);
+  }, [concept, mood, generateUQSL, resetUQSL, setLoading]);
 
-  // Stage 2 -> 3: Generate Full Style Guide
+  // Stage 2: Handle Direction Selection with Thompson Sampling Feedback
+  // React 19: useTransition for non-blocking selection updates
+  const handleSelectDirection = useCallback(
+    async (dir: VisualDirection) => {
+      // Use transition for smooth UI update
+      startTransition(() => {
+        setSelectedDirection(dir);
+      });
+
+      // Record selection for Thompson Sampling (2026 Best Practice)
+      // Fire-and-forget pattern for feedback - don't block UI
+      if (sessionId) {
+        selectCandidate(sessionId, dir.idx).catch(() => {
+          // Non-blocking - continue even if feedback fails
+          console.warn("Thompson Sampling feedback failed");
+        });
+      }
+    },
+    [sessionId, selectCandidate, startTransition]
+  );
+
+  // Stage 2 -> 3: Generate Full Style Guide with Optimistic UI
   const handleGenerateGuide = useCallback(async () => {
     if (!selectedDirection) return;
     setValidationError(null);
@@ -243,10 +354,34 @@ function AestheticDirectorContent() {
 
     setLoading(true);
 
-    // Use the selected direction to generate the full guide
-    const enrichedConcept = `${concept}\n\nSelected Visual Direction: ${selectedDirection.title}\n${selectedDirection.description}\nKeywords: ${selectedDirection.keywords.join(", ")}\nSuggested Auteur: ${selectedDirection.suggested_auteur}`;
+    // Optimistic UI Update (React 19 Best Practice)
+    setOptimisticResult({
+      visual_guidelines: {
+        composition: "Generating...",
+        lighting: "Generating...",
+        camera: "Generating...",
+        pacing: "Generating...",
+      },
+      color_palette: selectedDirection.color_preview,
+      style_keywords: selectedDirection.keywords,
+      avoid_elements: [],
+      auteur_influence: {
+        name: selectedDirection.suggested_auteur,
+        style_summary: "Loading style analysis...",
+        signature_elements: [],
+      },
+    });
+    setStage("guide");
 
-    await execute(
+    // Use the selected direction to generate the full guide
+    const enrichedConcept = `${concept}
+
+Selected Visual Direction: ${selectedDirection.title}
+${selectedDirection.description}
+Keywords: ${selectedDirection.keywords.join(", ")}
+Suggested Auteur: ${selectedDirection.suggested_auteur}`;
+
+    const res = await execute(
       `${API_BASE}/api/dimension/aesthetic/direct`,
       {
         concept: enrichedConcept,
@@ -258,11 +393,13 @@ function AestheticDirectorContent() {
         use_rag: useRag,
       },
       getBYOKHeaders(byokKey)
-    ).then((res) => {
-      if (res && res.success) {
-        setStage("guide");
-      }
-    });
+    );
+
+    if (!res || !res.success) {
+      // Revert optimistic update on failure
+      setOptimisticResult(null);
+      setStage("palette");
+    }
 
     setLoading(false);
   }, [
@@ -276,7 +413,22 @@ function AestheticDirectorContent() {
     selectedDirection,
     CREDIT_COST,
     setLoading,
+    setOptimisticResult,
   ]);
+
+  // Handle feedback submission (P6 Feedback API)
+  const handleFeedback = useCallback(
+    async (type: "positive" | "negative") => {
+      if (sessionId && selectedDirection) {
+        try {
+          await submitFeedback(sessionId, type);
+        } catch {
+          // Non-blocking
+        }
+      }
+    },
+    [sessionId, selectedDirection, submitFeedback]
+  );
 
   const handleCopy = useCallback(
     async (text: string, field: string) => {
@@ -296,17 +448,24 @@ function AestheticDirectorContent() {
   }, [result?.output, exportJSON]);
 
   // Extracted result data for display
-  const displayResult = result?.success ? result.output : null;
+  const displayResult = optimisticResult || (result?.success ? result.output : null);
   const displayError =
-    validationError || (result && !result.success ? result.error : error);
+    validationError ||
+    uqslError ||
+    (result && !result.success ? result.error : error);
 
   return (
     <>
       <DimensionPanel.Header title="미학디렉터" creditCost={CREDIT_COST} />
 
       <DimensionPanel.Sidebar>
-        {/* Stage Indicator */}
-        <StageIndicator stage={stage} themeColor={token.themeColor} />
+        {/* Stage Indicator with UQSL Progress */}
+        <StageIndicator
+          stage={stage}
+          themeColor={token.themeColor}
+          uqslProgress={isUqslLoading ? uqslProgress : undefined}
+          uqslMessage={isUqslLoading ? uqslMessage : undefined}
+        />
 
         {/* Concept Input */}
         <DimensionPanel.Textarea
@@ -330,7 +489,10 @@ function AestheticDirectorContent() {
 
         {/* Selected Direction Display (Stage 2) */}
         {stage === "palette" && selectedDirection && (
-          <SelectedDirectionCard direction={selectedDirection} />
+          <SelectedDirectionCard
+            direction={selectedDirection}
+            onFeedback={handleFeedback}
+          />
         )}
 
         {/* Medium Selector (Stage 2) */}
@@ -348,16 +510,24 @@ function AestheticDirectorContent() {
           <RagToggle useRag={useRag} onToggle={() => setUseRag(!useRag)} />
         )}
 
+        {/* Quality Scores Toggle (Stage 2) */}
+        {stage === "palette" && directions.length > 0 && (
+          <QualityScoresToggle
+            showQualityScores={showQualityScores}
+            onToggle={() => setShowQualityScores(!showQualityScores)}
+          />
+        )}
+
         {/* Action Buttons */}
         {stage === "moodboard" && (
           <DimensionPanel.GenerateButton
             onClick={handleGenerateMoodboard}
             disabled={combinedLoading || !concept.trim()}
-            loading={isMoodboardLoading}
-            loadingText="영감 찾는 중..."
+            loading={isUqslLoading}
+            loadingText={uqslMessage || "영감 찾는 중..."}
             icon={<Sparkles className="w-4 h-4" />}
           >
-            비주얼 방향 탐색
+            비주얼 방향 탐색 (UQSL)
           </DimensionPanel.GenerateButton>
         )}
 
@@ -375,11 +545,27 @@ function AestheticDirectorContent() {
 
         {stage === "guide" && (
           <button
-            onClick={() => setStage("palette")}
+            onClick={() => {
+              // React 19: Use transition for smooth stage change
+              startTransition(() => {
+                setOptimisticResult(null);
+                setStage("palette");
+              });
+            }}
             className="w-full py-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-white border border-slate-200 dark:border-white/10 transition-all font-medium"
           >
             ◀ 다른 방향 선택하기
           </button>
+        )}
+
+        {/* UQSL Progress Bar (when streaming) */}
+        {isUqslLoading && (
+          <UQSLProgressBar progress={uqslProgress} stage={uqslStage} />
+        )}
+
+        {/* Thompson Sampling Stats (Stage 2) */}
+        {stage === "palette" && Object.keys(armsStats).length > 0 && (
+          <ThompsonSamplingStats stats={armsStats} />
         )}
 
         {/* Validation error */}
@@ -391,7 +577,7 @@ function AestheticDirectorContent() {
 
         {/* Credit Cost */}
         {!byokKey && (
-          <div className="text-xs text-white/40 text-center mt-4">
+          <div className="text-xs text-slate-500 dark:text-white/40 text-center mt-4">
             예상 비용: {stage === "moodboard" ? "5" : CREDIT_COST} 크레딧
           </div>
         )}
@@ -399,16 +585,24 @@ function AestheticDirectorContent() {
 
       <DimensionPanel.Content>
         {/* Stage 1: Moodboard (Initial State) */}
-        {stage === "moodboard" && !isMoodboardLoading && (
+        {stage === "moodboard" && !isUqslLoading && (
           <MoodboardEmptyState />
         )}
 
-        {/* Loading State */}
-        {(isMoodboardLoading || isLoading) && (
-          <DimensionPanel.Loading
-            onCancel={cancel}
-            variant="skeleton"
+        {/* UQSL Streaming Loading State */}
+        {isUqslLoading && (
+          <UQSLStreamingState
+            progress={uqslProgress}
+            message={uqslMessage}
+            candidates={uqslCandidates}
+            qualityScores={uqslQualityScores}
+            onCancel={abortUQSL}
           />
+        )}
+
+        {/* Regular Loading State */}
+        {isLoading && !isUqslLoading && (
+          <DimensionPanel.Loading onCancel={cancel} variant="skeleton" />
         )}
 
         {/* Error State */}
@@ -419,12 +613,14 @@ function AestheticDirectorContent() {
           />
         )}
 
-        {/* Stage 2: Palette Lab (Select Direction) */}
-        {stage === "palette" && !isLoading && (
-          <PaletteLabStage
+        {/* Stage 2: Palette Lab (Select Direction) - UQSL Enhanced */}
+        {stage === "palette" && !isLoading && !isUqslLoading && (
+          <PaletteLabStageUQSL
             directions={directions}
             selectedDirection={selectedDirection}
-            onSelectDirection={setSelectedDirection}
+            onSelectDirection={handleSelectDirection}
+            recommendedIdx={recommendedIdx}
+            showQualityScores={showQualityScores}
           />
         )}
 
@@ -435,11 +631,20 @@ function AestheticDirectorContent() {
             copiedField={copiedField}
             onCopy={handleCopy}
             onExportJson={handleExportJson}
+            isOptimistic={!!optimisticResult && !result?.success}
+          />
+        )}
+
+        {/* Feedback for Final Result */}
+        {stage === "guide" && result?.success && (
+          <FeedbackSection
+            sessionId={sessionId}
+            onFeedback={handleFeedback}
           />
         )}
 
         {/* NextNav for final result */}
-        {stage === "guide" && displayResult && <DimensionPanel.NextNav />}
+        {stage === "guide" && result?.success && <DimensionPanel.NextNav />}
       </DimensionPanel.Content>
 
       <InsufficientCreditsModal
@@ -454,45 +659,225 @@ function AestheticDirectorContent() {
 }
 
 // ============================================================================
-// Sub-Components
+// Sub-Components (2026 Best Practice)
 // ============================================================================
 
 function StageIndicator({
   stage,
   themeColor,
+  uqslProgress,
+  uqslMessage,
 }: {
   stage: Stage;
   themeColor: string;
+  uqslProgress?: number;
+  uqslMessage?: string;
 }) {
   const activeClass = `text-${themeColor}-400 font-bold`;
   return (
-    <div className="flex items-center justify-between text-xs text-white/50 mb-4">
-      <span className={stage === "moodboard" ? activeClass : ""}>1. 영감</span>
-      <span>→</span>
-      <span className={stage === "palette" ? activeClass : ""}>2. 팔레트</span>
-      <span>→</span>
-      <span className={stage === "guide" ? activeClass : ""}>3. 가이드</span>
+    <div className="space-y-2">
+      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-white/50">
+        <span className={stage === "moodboard" ? activeClass : ""}>
+          1. 영감 {stage === "moodboard" && uqslProgress ? `(${uqslProgress}%)` : ""}
+        </span>
+        <span>→</span>
+        <span className={stage === "palette" ? activeClass : ""}>2. 팔레트</span>
+        <span>→</span>
+        <span className={stage === "guide" ? activeClass : ""}>3. 가이드</span>
+      </div>
+      {uqslMessage && (
+        <div className="text-xs text-fuchsia-400 dark:text-fuchsia-300 animate-pulse">
+          {uqslMessage}
+        </div>
+      )}
     </div>
   );
 }
 
-function SelectedDirectionCard({ direction }: { direction: VisualDirection }) {
+function UQSLProgressBar({
+  progress,
+  stage,
+}: {
+  progress: number;
+  stage: string;
+}) {
   return (
-    <div className="p-4 bg-fuchsia-100 dark:bg-fuchsia-500/10 border border-fuchsia-200 dark:border-fuchsia-500/20 rounded-xl">
-      <h4 className="text-fuchsia-600 dark:text-fuchsia-400 text-sm font-bold mb-1">
-        선택된 방향
-      </h4>
-      <p className="text-slate-900 dark:text-white font-medium text-sm">
-        {direction.title}
-      </p>
-      <div className="flex gap-1 mt-2">
+    <div className="space-y-2 p-3 bg-fuchsia-500/5 dark:bg-fuchsia-500/10 rounded-xl border border-fuchsia-500/20">
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-fuchsia-600 dark:text-fuchsia-300 font-medium">
+          UQSL Generation
+        </span>
+        <span className="text-fuchsia-500">{progress}%</span>
+      </div>
+      <div className="h-1.5 bg-fuchsia-500/20 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-gradient-to-r from-fuchsia-500 to-violet-500 rounded-full transition-all duration-300"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+      <div className="text-[10px] text-fuchsia-400 capitalize">{stage}</div>
+    </div>
+  );
+}
+
+function ThompsonSamplingStats({
+  stats,
+}: {
+  stats: Record<string, { alpha: number; beta: number; success_rate: number; confidence: number; total_trials: number }>;
+}) {
+  return (
+    <div className="p-3 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-xl border border-emerald-500/20">
+      <div className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-300 font-medium mb-2">
+        <TrendingUp className="w-3 h-3" />
+        Thompson Sampling
+      </div>
+      <div className="space-y-1">
+        {Object.entries(stats).slice(0, 3).map(([arm, data]) => (
+          <div key={arm} className="flex items-center justify-between text-[10px]">
+            <span className="text-slate-500 dark:text-white/50 truncate max-w-[100px]">
+              {arm}
+            </span>
+            <span className="text-emerald-500">{(data.success_rate * 100).toFixed(1)}%</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function UQSLStreamingState({
+  progress,
+  message,
+  candidates,
+  qualityScores,
+  onCancel,
+}: {
+  progress: number;
+  message: string;
+  candidates: Array<{ idx: number; content: string }>;
+  qualityScores: Array<{ weighted_score?: number; total_score: number }>;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500">
+      {/* Progress Header */}
+      <div className="text-center space-y-4">
+        <div className="relative inline-flex">
+          <div className="absolute inset-0 bg-fuchsia-500/20 blur-[40px] rounded-full" />
+          <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-fuchsia-500/20 to-violet-500/20 border border-fuchsia-500/30 flex items-center justify-center">
+            <span className="text-3xl font-bold text-fuchsia-400">{progress}%</span>
+          </div>
+        </div>
+        <div className="space-y-1">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+            UQSL Multi-Generate
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-fuchsia-300/70 animate-pulse">
+            {message}
+          </p>
+        </div>
+      </div>
+
+      {/* Streaming Candidates Preview */}
+      {candidates.length > 0 && (
+        <div className="grid gap-4 md:grid-cols-3">
+          {candidates.map((candidate, idx) => (
+            <div
+              key={idx}
+              className="p-4 rounded-xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 animate-in slide-in-from-bottom-4 duration-500"
+              style={{ animationDelay: `${idx * 100}ms` }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-slate-500 dark:text-white/50">
+                  Direction {idx + 1}
+                </span>
+                {qualityScores[idx] && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500">
+                    {((qualityScores[idx].weighted_score ?? qualityScores[idx].total_score) * 100).toFixed(0)}%
+                  </span>
+                )}
+              </div>
+              <div className="h-2 bg-slate-200/50 dark:bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-fuchsia-500 to-violet-500 animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Cancel Button */}
+      <div className="flex justify-center">
+        <button
+          onClick={onCancel}
+          className="px-4 py-2 text-sm text-slate-500 dark:text-white/50 hover:text-slate-700 dark:hover:text-white border border-slate-200 dark:border-white/10 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
+        >
+          취소
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SelectedDirectionCard({
+  direction,
+  onFeedback,
+}: {
+  direction: VisualDirection;
+  onFeedback: (type: "positive" | "negative") => void;
+}) {
+  return (
+    <div className="p-4 bg-fuchsia-50 dark:bg-fuchsia-500/10 border border-fuchsia-200 dark:border-fuchsia-500/20 rounded-xl space-y-3">
+      <div className="flex items-start justify-between">
+        <div>
+          <h4 className="text-fuchsia-600 dark:text-fuchsia-400 text-sm font-bold">
+            선택된 방향
+          </h4>
+          <p className="text-slate-900 dark:text-white font-medium text-sm mt-1">
+            {direction.title}
+          </p>
+        </div>
+        {direction.isRecommended && (
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 font-medium">
+            AI 추천
+          </span>
+        )}
+      </div>
+
+      {/* Color Preview */}
+      <div className="flex gap-1">
         {direction.color_preview.map((color, i) => (
           <div
             key={i}
-            className="w-6 h-6 rounded-full border border-slate-200 dark:border-white/10"
+            className="w-6 h-6 rounded-full border border-slate-200 dark:border-white/10 shadow-sm"
             style={{ backgroundColor: color }}
           />
         ))}
+      </div>
+
+      {/* Quality Score Mini */}
+      {direction.qualityScore && (
+        <div className="flex items-center gap-2 text-[10px]">
+          <span className="text-slate-500 dark:text-white/50">Quality:</span>
+          <span className="text-emerald-500 font-medium">
+            {(direction.qualityScore.total_score * 100).toFixed(0)}%
+          </span>
+        </div>
+      )}
+
+      {/* Feedback Buttons */}
+      <div className="flex gap-2 pt-2 border-t border-fuchsia-200 dark:border-fuchsia-500/20">
+        <button
+          onClick={() => onFeedback("positive")}
+          className="flex-1 py-1.5 text-xs rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+        >
+          👍 좋아요
+        </button>
+        <button
+          onClick={() => onFeedback("negative")}
+          className="flex-1 py-1.5 text-xs rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 transition-colors"
+        >
+          👎 아쉬워요
+        </button>
       </div>
     </div>
   );
@@ -517,10 +902,48 @@ function RagToggle({
       </div>
       <button
         onClick={onToggle}
-        className={`relative w-12 h-6 rounded-full transition-all ${useRag ? "bg-fuchsia-500" : "bg-slate-200 dark:bg-white/10"}`}
+        className={`relative w-12 h-6 rounded-full transition-all ${
+          useRag ? "bg-fuchsia-500" : "bg-slate-200 dark:bg-white/10"
+        }`}
       >
         <div
-          className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${useRag ? "left-7" : "left-1"}`}
+          className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${
+            useRag ? "left-7" : "left-1"
+          }`}
+        />
+      </button>
+    </div>
+  );
+}
+
+function QualityScoresToggle({
+  showQualityScores,
+  onToggle,
+}: {
+  showQualityScores: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between p-4 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10">
+      <div>
+        <div className="text-sm font-medium text-slate-900 dark:text-zinc-300 flex items-center gap-2">
+          <Zap className="w-3.5 h-3.5 text-amber-500" />
+          Quality Scores
+        </div>
+        <div className="text-[10px] text-slate-500 dark:text-zinc-500">
+          5차원 품질 점수 표시
+        </div>
+      </div>
+      <button
+        onClick={onToggle}
+        className={`relative w-12 h-6 rounded-full transition-all ${
+          showQualityScores ? "bg-amber-500" : "bg-slate-200 dark:bg-white/10"
+        }`}
+      >
+        <div
+          className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${
+            showQualityScores ? "left-7" : "left-1"
+          }`}
         />
       </button>
     </div>
@@ -544,30 +967,52 @@ function MoodboardEmptyState() {
           컨셉을 입력하면 AI가
           <br />
           <span className="text-fuchsia-600 dark:text-fuchsia-400 font-medium">
-            3가지 시각적 방향
+            UQSL로 3가지 시각적 방향
           </span>
           을 제안합니다.
         </p>
+        <div className="flex items-center justify-center gap-4 pt-4 text-[10px] text-slate-400 dark:text-white/30">
+          <span className="flex items-center gap-1">
+            <Zap className="w-3 h-3" />
+            Quality Scores
+          </span>
+          <span className="flex items-center gap-1">
+            <TrendingUp className="w-3 h-3" />
+            Thompson Sampling
+          </span>
+        </div>
       </div>
     </div>
   );
 }
 
-function PaletteLabStage({
+function PaletteLabStageUQSL({
   directions,
   selectedDirection,
   onSelectDirection,
+  recommendedIdx,
+  showQualityScores,
 }: {
   directions: VisualDirection[];
   selectedDirection: VisualDirection | null;
   onSelectDirection: (dir: VisualDirection) => void;
+  recommendedIdx: number | null;
+  showQualityScores: boolean;
 }) {
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500">
-      <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-        <Eye className="w-5 h-5 text-fuchsia-500 dark:text-fuchsia-400" />
-        시각적 방향을 선택하세요
-      </h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <Eye className="w-5 h-5 text-fuchsia-500 dark:text-fuchsia-400" />
+          시각적 방향을 선택하세요
+        </h3>
+        {recommendedIdx !== null && (
+          <span className="text-xs px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+            AI 추천: Direction {recommendedIdx + 1}
+          </span>
+        )}
+      </div>
+
       <div className="grid gap-4 md:grid-cols-3">
         {directions.map((dir) => (
           <button
@@ -576,29 +1021,46 @@ function PaletteLabStage({
             className={`text-left p-6 rounded-2xl border transition-all relative overflow-hidden group
               ${
                 selectedDirection?.id === dir.id
-                  ? "bg-fuchsia-100 dark:bg-fuchsia-500/20 border-fuchsia-400 dark:border-fuchsia-500/50 ring-2 ring-fuchsia-500/30"
-                  : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/10"
+                  ? "bg-fuchsia-50 dark:bg-fuchsia-500/20 border-fuchsia-400 dark:border-fuchsia-500/50 ring-2 ring-fuchsia-500/30"
+                  : dir.isRecommended
+                    ? "bg-amber-50/50 dark:bg-amber-500/5 border-amber-300 dark:border-amber-500/30 hover:border-amber-400 dark:hover:border-amber-500/50"
+                    : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/10"
               }`}
           >
+            {/* Recommended Badge */}
+            {dir.isRecommended && (
+              <div className="absolute top-3 right-3 z-10">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 font-medium animate-pulse">
+                  ⭐ 추천
+                </span>
+              </div>
+            )}
+
             {/* Color Preview Bar */}
             <div className="flex gap-1 mb-4">
               {dir.color_preview.map((color, i) => (
                 <div
                   key={i}
-                  className="w-8 h-8 rounded-lg border border-white/10 shadow-lg"
+                  className="w-8 h-8 rounded-lg border border-white/20 shadow-lg"
                   style={{ backgroundColor: color }}
                 />
               ))}
             </div>
 
             <h4
-              className={`text-lg font-bold mb-2 ${selectedDirection?.id === dir.id ? "text-fuchsia-700 dark:text-fuchsia-300" : "text-slate-900 dark:text-white"}`}
+              className={`text-lg font-bold mb-2 ${
+                selectedDirection?.id === dir.id
+                  ? "text-fuchsia-700 dark:text-fuchsia-300"
+                  : "text-slate-900 dark:text-white"
+              }`}
             >
               {dir.title}
             </h4>
-            <p className="text-sm text-slate-600 dark:text-white/70 leading-relaxed mb-4">
+            <p className="text-sm text-slate-600 dark:text-white/70 leading-relaxed mb-4 line-clamp-3">
               {dir.description}
             </p>
+
+            {/* Keywords */}
             <div className="flex flex-wrap gap-1 mb-3">
               {dir.keywords.slice(0, 3).map((kw, i) => (
                 <span
@@ -609,6 +1071,15 @@ function PaletteLabStage({
                 </span>
               ))}
             </div>
+
+            {/* Quality Score (2026 UQSL) */}
+            {showQualityScores && dir.qualityScore && (
+              <div className="mt-3 pt-3 border-t border-slate-200 dark:border-white/10 space-y-2">
+                <QualityScoresMini scores={dir.qualityScore} />
+              </div>
+            )}
+
+            {/* Auteur */}
             <div className="pt-3 border-t border-slate-200 dark:border-white/5">
               <p className="text-xs text-slate-400 dark:text-white/40 italic">
                 추천 감독: {dir.suggested_auteur}
@@ -621,45 +1092,161 @@ function PaletteLabStage({
   );
 }
 
+function QualityScoresMini({
+  scores,
+}: {
+  scores: {
+    groundedness: number;
+    relevance: number;
+    coherence: number;
+    creativity: number;
+    safety: number;
+    total_score: number;
+  };
+}) {
+  const dimensions = [
+    { key: "groundedness", label: "근거", color: "bg-emerald-500" },
+    { key: "relevance", label: "관련", color: "bg-cyan-500" },
+    { key: "coherence", label: "일관", color: "bg-violet-500" },
+    { key: "creativity", label: "창의", color: "bg-amber-500" },
+    { key: "safety", label: "안전", color: "bg-rose-500" },
+  ] as const;
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between text-[10px]">
+        <span className="text-slate-500 dark:text-white/50">Quality Score</span>
+        <span className="font-medium text-emerald-500">
+          {(scores.total_score * 100).toFixed(0)}%
+        </span>
+      </div>
+      <div className="grid grid-cols-5 gap-1">
+        {dimensions.map((dim) => (
+          <div key={dim.key} className="space-y-0.5">
+            <div className="h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+              <div
+                className={`h-full ${dim.color} transition-all duration-500`}
+                style={{
+                  width: `${scores[dim.key] * 100}%`,
+                }}
+              />
+            </div>
+            <div className="text-[8px] text-center text-slate-400 dark:text-white/40">
+              {dim.label}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function FeedbackSection({
+  sessionId,
+  onFeedback,
+}: {
+  sessionId: string | null;
+  onFeedback: (type: "positive" | "negative") => void;
+}) {
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleFeedback = (type: "positive" | "negative") => {
+    onFeedback(type);
+    setSubmitted(true);
+  };
+
+  if (submitted) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-4 text-sm text-emerald-500">
+        <Check className="w-4 h-4" />
+        피드백이 저장되었습니다
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-center gap-4 py-6 border-t border-slate-200 dark:border-white/10">
+      <span className="text-sm text-slate-500 dark:text-white/50">
+        결과가 만족스러우셨나요?
+      </span>
+      <button
+        onClick={() => handleFeedback("positive")}
+        className="px-4 py-2 text-sm rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+      >
+        👍 좋아요
+      </button>
+      <button
+        onClick={() => handleFeedback("negative")}
+        className="px-4 py-2 text-sm rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 transition-colors"
+      >
+        👎 아쉬워요
+      </button>
+    </div>
+  );
+}
+
 function StyleGuideResult({
   result,
   copiedField,
   onCopy,
   onExportJson,
+  isOptimistic,
 }: {
   result: AestheticResult;
   copiedField: string | null;
   onCopy: (text: string, field: string) => void;
   onExportJson: () => void;
+  isOptimistic: boolean;
 }) {
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
-      {/* Export Button */}
-      <div className="flex justify-end">
-        <button
-          onClick={onExportJson}
-          className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg flex items-center gap-2 text-sm text-white/70 hover:text-white transition-all"
-        >
-          <Download className="w-4 h-4" />
-          JSON 내보내기
-        </button>
-      </div>
+    <div
+      className={`max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10 ${
+        isOptimistic ? "opacity-70" : ""
+      }`}
+    >
+      {/* Optimistic Loading Indicator */}
+      {isOptimistic && (
+        <div className="flex items-center justify-center gap-2 py-2 px-4 bg-fuchsia-500/10 rounded-lg border border-fuchsia-500/20">
+          <div className="w-3 h-3 rounded-full bg-fuchsia-500 animate-pulse" />
+          <span className="text-sm text-fuchsia-600 dark:text-fuchsia-300">
+            스타일 가이드 생성 중...
+          </span>
+        </div>
+      )}
 
-      {/* Auteur Influence (if present) */}
+      {/* Export Button */}
+      {!isOptimistic && (
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={onExportJson}
+            className="px-4 py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg flex items-center gap-2 text-sm text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white transition-all"
+          >
+            <Download className="w-4 h-4" />
+            JSON 내보내기
+          </button>
+        </div>
+      )}
+
+      {/* Evidence Refs (2026 Best Practice) */}
+      {result.evidence_refs && result.evidence_refs.length > 0 && (
+        <EvidenceRefsDisplay refs={result.evidence_refs} />
+      )}
+
+      {/* Auteur Influence */}
       {result.auteur_influence && (
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-fuchsia-500/10 to-purple-500/10 border border-fuchsia-500/20 p-6">
           <div className="absolute top-0 right-0 w-32 h-32 bg-fuchsia-500/20 blur-[60px] rounded-full" />
-          <h3 className="text-lg font-bold text-fuchsia-400 mb-2">
+          <h3 className="text-lg font-bold text-fuchsia-600 dark:text-fuchsia-400 mb-2">
             {result.auteur_influence.name}
           </h3>
-          <p className="text-sm text-zinc-300 mb-4">
+          <p className="text-sm text-slate-600 dark:text-zinc-300 mb-4">
             {result.auteur_influence.style_summary}
           </p>
           <div className="flex flex-wrap gap-2">
             {result.auteur_influence.signature_elements.map((elem, i) => (
               <span
                 key={i}
-                className="px-3 py-1 rounded-full bg-fuchsia-500/20 text-fuchsia-300 text-xs"
+                className="px-3 py-1 rounded-full bg-fuchsia-500/20 text-fuchsia-600 dark:text-fuchsia-300 text-xs"
               >
                 {elem}
               </span>
@@ -669,15 +1256,15 @@ function StyleGuideResult({
       )}
 
       {/* Color Palette */}
-      <div className="p-6 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl">
+      <div className="p-6 bg-white dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
-            <Palette className="w-4 h-4 text-fuchsia-400" />
+          <h3 className="text-sm font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+            <Palette className="w-4 h-4 text-fuchsia-500 dark:text-fuchsia-400" />
             Color Palette
           </h3>
           <button
             onClick={() => onCopy(result.color_palette.join(", "), "palette")}
-            className="text-xs text-zinc-500 hover:text-white flex items-center gap-1"
+            className="text-xs text-slate-400 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white flex items-center gap-1"
           >
             {copiedField === "palette" ? (
               <Check className="w-3 h-3" />
@@ -691,10 +1278,12 @@ function StyleGuideResult({
           {result.color_palette.map((color, i) => (
             <div key={i} className="flex flex-col items-center gap-2">
               <div
-                className="w-16 h-16 rounded-xl shadow-lg border border-white/10"
+                className="w-16 h-16 rounded-xl shadow-lg border border-slate-200 dark:border-white/10"
                 style={{ backgroundColor: color }}
               />
-              <span className="text-xs font-mono text-zinc-400">{color}</span>
+              <span className="text-xs font-mono text-slate-500 dark:text-zinc-400">
+                {color}
+              </span>
             </div>
           ))}
         </div>
@@ -705,26 +1294,28 @@ function StyleGuideResult({
         {Object.entries(result.visual_guidelines).map(([key, value]) => (
           <div
             key={key}
-            className="p-5 bg-white/[0.03] border border-white/10 rounded-xl hover:border-fuchsia-500/30 transition-colors"
+            className="p-5 bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl hover:border-fuchsia-500/30 transition-colors"
           >
-            <h4 className="text-xs font-bold text-fuchsia-400 uppercase tracking-wider mb-2 capitalize">
+            <h4 className="text-xs font-bold text-fuchsia-600 dark:text-fuchsia-400 uppercase tracking-wider mb-2 capitalize">
               {key.replace(/_/g, " ")}
             </h4>
-            <p className="text-sm text-zinc-300 leading-relaxed">{value}</p>
+            <p className="text-sm text-slate-600 dark:text-zinc-300 leading-relaxed">
+              {value}
+            </p>
           </div>
         ))}
       </div>
 
       {/* Style Keywords */}
-      <div className="p-6 bg-white/[0.03] border border-white/10 rounded-2xl">
-        <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-4">
+      <div className="p-6 bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-2xl">
+        <h3 className="text-sm font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-4">
           Style Keywords
         </h3>
         <div className="flex flex-wrap gap-2">
           {result.style_keywords.map((keyword, i) => (
             <span
               key={i}
-              className="px-4 py-2 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/20 text-fuchsia-300 text-sm"
+              className="px-4 py-2 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/20 text-fuchsia-600 dark:text-fuchsia-300 text-sm"
             >
               {keyword}
             </span>
@@ -735,22 +1326,22 @@ function StyleGuideResult({
       {/* Generative Tech Pack */}
       {result.generative_prompts && (
         <div className="space-y-4">
-          <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
-            <Code className="w-4 h-4 text-fuchsia-400" />
+          <h3 className="text-sm font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+            <Code className="w-4 h-4 text-fuchsia-500 dark:text-fuchsia-400" />
             Generative Tech Pack
           </h3>
 
           {/* Midjourney */}
-          <div className="p-4 bg-white/[0.03] border border-white/10 rounded-xl">
+          <div className="p-4 bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-zinc-300">
+              <span className="text-xs font-bold text-slate-600 dark:text-zinc-300">
                 Midjourney v6
               </span>
               <button
                 onClick={() =>
                   onCopy(result.generative_prompts!.midjourney, "mj")
                 }
-                className="text-xs text-fuchsia-400 hover:text-fuchsia-300 flex items-center gap-1"
+                className="text-xs text-fuchsia-500 dark:text-fuchsia-400 hover:text-fuchsia-600 dark:hover:text-fuchsia-300 flex items-center gap-1"
               >
                 {copiedField === "mj" ? (
                   <Check className="w-3 h-3" />
@@ -760,18 +1351,20 @@ function StyleGuideResult({
                 {copiedField === "mj" ? "Copied" : "Copy"}
               </button>
             </div>
-            <code className="block p-3 bg-black/50 rounded-lg text-xs text-white/70 font-mono break-all leading-relaxed">
+            <code className="block p-3 bg-slate-100 dark:bg-black/50 rounded-lg text-xs text-slate-600 dark:text-white/70 font-mono break-all leading-relaxed">
               {result.generative_prompts.midjourney}
             </code>
           </div>
 
           {/* Veo */}
-          <div className="p-4 bg-white/[0.03] border border-white/10 rounded-xl">
+          <div className="p-4 bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-zinc-300">Google Veo</span>
+              <span className="text-xs font-bold text-slate-600 dark:text-zinc-300">
+                Google Veo
+              </span>
               <button
                 onClick={() => onCopy(result.generative_prompts!.veo, "veo")}
-                className="text-xs text-fuchsia-400 hover:text-fuchsia-300 flex items-center gap-1"
+                className="text-xs text-fuchsia-500 dark:text-fuchsia-400 hover:text-fuchsia-600 dark:hover:text-fuchsia-300 flex items-center gap-1"
               >
                 {copiedField === "veo" ? (
                   <Check className="w-3 h-3" />
@@ -781,7 +1374,7 @@ function StyleGuideResult({
                 {copiedField === "veo" ? "Copied" : "Copy"}
               </button>
             </div>
-            <code className="block p-3 bg-black/50 rounded-lg text-xs text-white/70 font-mono break-all leading-relaxed">
+            <code className="block p-3 bg-slate-100 dark:bg-black/50 rounded-lg text-xs text-slate-600 dark:text-white/70 font-mono break-all leading-relaxed">
               {result.generative_prompts.veo}
             </code>
           </div>
@@ -793,18 +1386,20 @@ function StyleGuideResult({
         {/* Textures */}
         {result.textures && result.textures.length > 0 && (
           <div className="space-y-4">
-            <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
-              <Layers className="w-4 h-4 text-fuchsia-400" />
+            <h3 className="text-sm font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+              <Layers className="w-4 h-4 text-fuchsia-500 dark:text-fuchsia-400" />
               Texture Elements
             </h3>
             <div className="space-y-2">
               {result.textures.map((texture, i) => (
                 <div
                   key={i}
-                  className="group relative p-4 bg-white/[0.03] border border-white/10 rounded-xl hover:bg-white/[0.05] transition-colors"
+                  className="group relative p-4 bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors"
                 >
                   <div className="absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-fuchsia-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <span className="text-sm text-zinc-200">{texture}</span>
+                  <span className="text-sm text-slate-600 dark:text-zinc-200">
+                    {texture}
+                  </span>
                 </div>
               ))}
             </div>
@@ -814,29 +1409,29 @@ function StyleGuideResult({
         {/* Typography */}
         {result.typography && (
           <div className="space-y-4">
-            <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
-              <Type className="w-4 h-4 text-fuchsia-400" />
+            <h3 className="text-sm font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+              <Type className="w-4 h-4 text-fuchsia-500 dark:text-fuchsia-400" />
               Typography
             </h3>
-            <div className="p-5 bg-white/[0.03] border border-white/10 rounded-xl space-y-4">
+            <div className="p-5 bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl space-y-4">
               <div>
-                <span className="text-[10px] text-zinc-500 uppercase tracking-widest">
+                <span className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
                   Primary Title
                 </span>
-                <p className="text-2xl font-bold text-white mt-1">
+                <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
                   {result.typography.primary}
                 </p>
               </div>
-              <div className="h-px bg-white/5" />
+              <div className="h-px bg-slate-200 dark:bg-white/5" />
               <div>
-                <span className="text-[10px] text-zinc-500 uppercase tracking-widest">
+                <span className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
                   Secondary Body
                 </span>
-                <p className="text-base text-zinc-300 mt-1 font-serif">
+                <p className="text-base text-slate-600 dark:text-zinc-300 mt-1 font-serif">
                   {result.typography.secondary}
                 </p>
               </div>
-              <p className="text-xs text-white/40 italic pt-2">
+              <p className="text-xs text-slate-400 dark:text-white/40 italic pt-2">
                 "{result.typography.description}"
               </p>
             </div>
@@ -846,23 +1441,44 @@ function StyleGuideResult({
 
       {/* Avoid Elements */}
       {result.avoid_elements.length > 0 && (
-        <div className="p-6 bg-rose-500/5 border border-rose-500/20 rounded-2xl">
-          <h3 className="text-sm font-bold text-rose-400 uppercase tracking-wider mb-4">
+        <div className="p-6 bg-rose-50 dark:bg-rose-500/5 border border-rose-200 dark:border-rose-500/20 rounded-2xl">
+          <h3 className="text-sm font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider mb-4">
             피해야 할 요소
           </h3>
           <ul className="space-y-2">
             {result.avoid_elements.map((elem, i) => (
               <li
                 key={i}
-                className="text-sm text-zinc-300 flex items-start gap-2"
+                className="text-sm text-slate-600 dark:text-zinc-300 flex items-start gap-2"
               >
-                <span className="text-rose-400">✕</span>
+                <span className="text-rose-500 dark:text-rose-400">✕</span>
                 {elem}
               </li>
             ))}
           </ul>
         </div>
       )}
+    </div>
+  );
+}
+
+function EvidenceRefsDisplay({ refs }: { refs: string[] }) {
+  return (
+    <div className="p-4 bg-cyan-50 dark:bg-cyan-500/5 border border-cyan-200 dark:border-cyan-500/20 rounded-xl">
+      <h3 className="text-sm font-bold text-cyan-600 dark:text-cyan-400 flex items-center gap-2 mb-3">
+        <FileText className="w-4 h-4" />
+        Evidence Sources
+      </h3>
+      <div className="flex flex-wrap gap-2">
+        {refs.map((ref, i) => (
+          <span
+            key={i}
+            className="text-xs px-2 py-1 rounded bg-cyan-100 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 font-mono"
+          >
+            {ref}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
