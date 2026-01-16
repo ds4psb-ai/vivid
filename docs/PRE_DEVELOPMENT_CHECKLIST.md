@@ -1,6 +1,6 @@
 # Pre-Development Checklist (2026 Best Practices)
 
-> **버전**: 1.1
+> **버전**: 1.2
 > **최종 검증일**: 2026-01-16
 > **대상**: Dimension 앱 개발자, RAG 데이터 큐레이터
 > **목적**: 본격적인 개발 시작 전 필수 준비사항 체크리스트
@@ -490,7 +490,287 @@ METADATA_SCHEMA = {
 
 ---
 
-## Part C: 공통 보안 및 컴플라이언스 체크리스트
+## Part C: UX/UI/디자인 체크리스트 (2026 Best Practices)
+
+### Phase 1: 디자인 시스템 기반 (필수)
+
+#### 1.1 Tailwind CSS + Design Tokens
+
+```javascript
+// tailwind.config.js - Design Token 체계
+module.exports = {
+  theme: {
+    extend: {
+      colors: {
+        // Semantic Colors (Vivid 브랜드)
+        primary: 'var(--color-primary)',
+        secondary: 'var(--color-secondary)',
+        surface: 'var(--color-surface)',
+        error: 'var(--color-error)',
+      },
+      spacing: {
+        // 8pt Grid System
+        'xs': '4px',
+        'sm': '8px',
+        'md': '16px',
+        'lg': '24px',
+        'xl': '32px',
+      },
+    },
+  },
+}
+```
+
+- [ ] Design Token 시스템 확인 (`tailwind.config.ts`)
+- [ ] 시맨틱 컬러 변수 사용 (하드코딩 금지)
+- [ ] 8pt Grid 시스템 준수
+- [ ] 다크모드 지원 확인 (`dark:` 클래스)
+
+#### 1.2 컴포넌트 라이브러리
+
+| 라이브러리 | 용도 | 경로 |
+|-----------|------|------|
+| **DimensionPanel** | Dimension 앱 UI | `frontend/src/components/dimension/` |
+| **shadcn/ui** | 기본 UI 컴포넌트 | `frontend/src/components/ui/` |
+| **Headless UI** | 접근성 컴포넌트 | (Tailwind 제공) |
+
+- [ ] DimensionPanel Compound Component 구조 이해
+- [ ] shadcn/ui 컴포넌트 사용법 확인
+- [ ] 재사용 가능한 컴포넌트 우선 사용
+
+---
+
+### Phase 2: 접근성 (WCAG 2.2 AA 준수)
+
+#### 2.1 WCAG 2.2 필수 체크리스트
+
+| 항목 | 기준 | 확인 방법 |
+|------|------|----------|
+| **색상 대비** | 4.5:1 (일반 텍스트), 3:1 (대형 텍스트) | Chrome DevTools Lighthouse |
+| **키보드 탐색** | Tab 순서 논리적, Focus visible | Tab 키 테스트 |
+| **포커스 표시** | 2.4.11 Focus Not Obscured | Focus가 다른 요소에 가려지지 않음 |
+| **터치 타겟** | 2.5.8 최소 24x24px (권장 44x44px) | 버튼/링크 크기 확인 |
+| **대체 텍스트** | 모든 이미지에 alt 속성 | `<img alt="">` 확인 |
+| **폼 라벨** | 모든 입력 필드에 label 연결 | `htmlFor` 속성 확인 |
+
+```tsx
+// 2026 접근성 Best Practice 예시
+<Button
+  className="min-h-[44px] min-w-[44px] focus:ring-2 focus:ring-primary focus:outline-none"
+  aria-label="생성 시작"
+>
+  생성하기
+</Button>
+```
+
+- [ ] Lighthouse Accessibility 점수 90+ 확인
+- [ ] 키보드만으로 전체 기능 사용 가능
+- [ ] 스크린 리더 기본 테스트 (VoiceOver/NVDA)
+- [ ] 색상만으로 정보 전달하지 않음
+
+#### 2.2 WCAG 2.2 신규 기준 (2024 추가)
+
+| 기준 | 설명 | 구현 |
+|------|------|------|
+| **3.2.6 Consistent Help** | 도움말 위치 일관성 | 헤더/푸터에 Help 링크 고정 |
+| **3.3.7 Redundant Entry** | 중복 입력 방지 | 자동 완성, 이전 값 유지 |
+| **3.3.8 Accessible Auth** | 인지 테스트 없는 인증 | 비밀번호만 요구하지 않음 |
+
+- [ ] Help/FAQ 링크 일관된 위치에 배치
+- [ ] 폼에서 이전 입력값 자동 완성 지원
+- [ ] 인증 시 CAPTCHA 대안 제공
+
+---
+
+### Phase 3: 성능 (Core Web Vitals)
+
+#### 3.1 Core Web Vitals 목표 (2026)
+
+| 메트릭 | 기준 (Good) | 현재 | 목표 |
+|--------|------------|------|------|
+| **LCP** (Largest Contentful Paint) | < 2.5s | ? | < 2.0s |
+| **INP** (Interaction to Next Paint) | < 200ms | ? | < 150ms |
+| **CLS** (Cumulative Layout Shift) | < 0.1 | ? | < 0.05 |
+
+```bash
+# Core Web Vitals 측정
+npx lighthouse http://localhost:3100 --only-categories=performance --view
+
+# 또는 크롬에서: F12 → Lighthouse → Performance
+```
+
+- [ ] LCP < 2.5초 달성
+- [ ] INP < 200ms 달성
+- [ ] CLS < 0.1 달성
+
+#### 3.2 성능 최적화 체크리스트
+
+**LCP 최적화**
+- [ ] 히어로 이미지 `priority` 또는 `fetchpriority="high"` 적용
+- [ ] 이미지 WebP/AVIF 포맷 사용
+- [ ] Critical CSS 인라인화 (Next.js 자동)
+- [ ] `<link rel="preload">` 중요 리소스에 적용
+
+**INP 최적화**
+- [ ] 긴 JavaScript 태스크 분할 (50ms 이하)
+- [ ] `useTransition` 사용하여 UI 블로킹 방지
+- [ ] 서드파티 스크립트 지연 로딩
+
+**CLS 최적화**
+- [ ] 이미지/비디오에 `width`/`height` 또는 `aspect-ratio` 명시
+- [ ] 폰트 로딩 시 `font-display: swap` 사용
+- [ ] 동적 콘텐츠에 Skeleton UI 적용
+
+---
+
+### Phase 4: 로딩/에러 상태 (React 19)
+
+#### 4.1 로딩 상태 패턴
+
+```tsx
+// 2026 Best Practice: Suspense + Skeleton
+import { Suspense } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
+
+function DimensionApp() {
+  return (
+    <Suspense fallback={<DimensionSkeleton />}>
+      <DimensionContent />
+    </Suspense>
+  );
+}
+
+// Skeleton 컴포넌트 예시
+function DimensionSkeleton() {
+  return (
+    <div className="space-y-4">
+      <Skeleton className="h-12 w-full" />
+      <Skeleton className="h-32 w-full" />
+      <Skeleton className="h-10 w-1/3" />
+    </div>
+  );
+}
+```
+
+- [ ] 모든 비동기 영역에 Suspense 경계 설정
+- [ ] Skeleton UI로 레이아웃 유지 (CLS 방지)
+- [ ] 로딩 시간 3초 초과 시 진행 표시 추가
+
+#### 4.2 에러 경계 패턴
+
+```tsx
+// 2026 Best Practice: Error Boundary + Fallback UI
+import { ErrorBoundary } from 'react-error-boundary';
+
+function DimensionApp() {
+  return (
+    <ErrorBoundary
+      fallback={<ErrorFallback />}
+      onError={(error, info) => logError(error, info)}
+    >
+      <DimensionContent />
+    </ErrorBoundary>
+  );
+}
+
+function ErrorFallback({ error, resetErrorBoundary }) {
+  return (
+    <div className="p-4 border border-error rounded-lg">
+      <h2>문제가 발생했습니다</h2>
+      <p className="text-sm text-muted">{error.message}</p>
+      <Button onClick={resetErrorBoundary}>다시 시도</Button>
+    </div>
+  );
+}
+```
+
+- [ ] 각 독립 기능 영역에 Error Boundary 적용
+- [ ] 에러 발생 시 복구 버튼 제공
+- [ ] 에러 로깅 (텔레메트리) 연동
+
+---
+
+### Phase 5: 반응형 디자인
+
+#### 5.1 브레이크포인트
+
+| 브레이크포인트 | 크기 | 주요 변경 |
+|---------------|------|----------|
+| **sm** | ≥640px | 2-column 그리드 |
+| **md** | ≥768px | 사이드바 표시 |
+| **lg** | ≥1024px | 3-column 그리드 |
+| **xl** | ≥1280px | 전체 레이아웃 |
+
+```tsx
+// 반응형 그리드 예시
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  {items.map(item => <Card key={item.id} />)}
+</div>
+```
+
+- [ ] 모바일 우선 접근 (base → sm → md → lg → xl)
+- [ ] 터치 타겟 44px 이상 (모바일)
+- [ ] 가로 스크롤 없음 확인
+
+#### 5.2 모바일 특수 고려사항
+
+- [ ] 햄버거 메뉴 키보드 접근 가능
+- [ ] 입력 시 가상 키보드로 인한 레이아웃 shift 방지
+- [ ] 긴 텍스트 터치 스크롤 가능
+
+---
+
+### Phase 6: UI 일관성 검증
+
+#### 6.1 Visual QA 체크리스트
+
+| 항목 | 확인 사항 |
+|------|----------|
+| **타이포그래피** | 폰트 크기, 줄 높이 일관성 |
+| **스페이싱** | 마진/패딩 8pt 그리드 준수 |
+| **컬러** | 시맨틱 컬러 일관 사용 |
+| **아이콘** | 크기, 스타일 통일 (lucide-react) |
+| **버튼** | Primary/Secondary 스타일 구분 |
+| **폼** | Label, Placeholder, Error 스타일 |
+
+- [ ] Storybook 또는 직접 컴포넌트 시각 검사
+- [ ] 다크모드 전환 시 깨짐 없음
+- [ ] 다국어(한/영) 전환 시 레이아웃 유지
+
+#### 6.2 크로스 브라우저 테스트
+
+| 브라우저 | 최소 지원 버전 |
+|---------|--------------|
+| Chrome | 120+ |
+| Firefox | 120+ |
+| Safari | 17+ |
+| Edge | 120+ |
+
+- [ ] Chrome 최신 테스트
+- [ ] Safari 테스트 (특히 iOS)
+- [ ] Firefox 기본 테스트
+
+---
+
+### Quick Reference: UX/UI 체크 명령어
+
+```bash
+# 1. Lighthouse 접근성/성능 측정
+npx lighthouse http://localhost:3100 --view
+
+# 2. Bundle 분석
+cd frontend && npm run build && npx @next/bundle-analyzer
+
+# 3. TypeScript 타입 체크
+npm run typecheck
+
+# 4. 접근성 자동 검사 (axe-core)
+npx @axe-core/cli http://localhost:3100
+```
+
+---
+
+## Part D: 공통 보안 및 컴플라이언스 체크리스트
 
 ### 보안 필수 사항
 
@@ -598,16 +878,16 @@ cd backend && python scripts/run_rag_quality_report.py --dimension {YOUR_DIM}
 |-----------|--------|------|
 | 1D | 53 | ✅ |
 | 2D | 52 | ✅ |
-| 3D | 1 | ⚠️ 데이터 부족 |
-| 4D | 1 | ⚠️ 데이터 부족 |
-| 5D | 0 | ❌ 비어있음 |
-| 6D | 0 | ❌ 비어있음 |
+| 3D | 9 | ✅ 적재 완료 |
+| 4D | 10 | ✅ 적재 완료 |
+| 5D | 11 | ✅ 적재 완료 |
+| 6D | 5 | ✅ 적재 완료 |
 | AD | 60 | ✅ |
-| AI | 0 | ❌ 비어있음 |
+| AI | 8 | ✅ 적재 완료 |
 | QC | 52 | ✅ |
 | VEO | 52 | ✅ |
 
-**Action Required**: 3D, 4D, 5D, 6D, AI 컬렉션에 데이터 적재 필요
+**완료**: `backend/scripts/seed_all_dimension_rag.py` 실행으로 3D/4D/5D/6D/AI 컬렉션 적재 완료 (2026-01-16)
 
 ### 인제스션 스크립트 (8개)
 
@@ -667,5 +947,6 @@ backend/scripts/
 
 | 버전 | 날짜 | 변경 내용 |
 |------|------|----------|
-| 1.1 | 2026-01-16 | 실제 검증 결과 추가 (Appendix A, B) |
+| 1.2 | 2026-01-16 | Part C: UX/UI/디자인 체크리스트 추가 (WCAG 2.2, Core Web Vitals, React 19 패턴) |
+| 1.1 | 2026-01-16 | 실제 검증 결과 추가 (Appendix A, B), Qdrant 컬렉션 적재 완료 |
 | 1.0 | 2026-01-16 | 초기 버전 (2026 Best Practices 기반) |

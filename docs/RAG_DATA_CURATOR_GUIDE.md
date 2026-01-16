@@ -1,9 +1,10 @@
 # RAG 데이터 큐레이터 가이드
 
-> **버전**: 1.0
-> **작성일**: 2026-01-16
+> **버전**: 1.1
+> **최종 업데이트**: 2026-01-16
 > **대상**: RAG 데이터 적재 담당자, NotebookLM 운영자
 > **목적**: 고품질 RAG 지식베이스 구축을 위한 단일 진실 문서
+> **관련 문서**: [`PRE_DEVELOPMENT_CHECKLIST.md`](./PRE_DEVELOPMENT_CHECKLIST.md) Part B 참조
 
 ---
 
@@ -218,6 +219,29 @@ client.create_collection(
 | `video_reference` | 4D | 영상 분석 레퍼런스 |
 | `visual_style` | 3D | 비주얼 스타일 참조 |
 | `prompt_examples` | 1D, 2D | 프롬프트 예시 |
+
+### 5.3 현재 컬렉션 현황 (2026-01-16)
+
+| Dimension | 문서 수 | 상태 | 주요 데이터 |
+|-----------|--------|------|-------------|
+| 1D | 53 | ✅ | 프롬프트 예시, 거장 프롬프트 |
+| 2D | 52 | ✅ | 스토리보드 예시, 씬 구성 |
+| 3D | 9 | ✅ | 촬영 기법, Visual DNA, 조명 |
+| 4D | 10 | ✅ | 테마 분석, 품질 기준, 레퍼런스 |
+| 5D | 11 | ✅ | VEO 템플릿, 카메라 무브먼트 |
+| 6D | 5 | ✅ | 사운드 디자인, 음악 철학 |
+| AD | 60 | ✅ | 거장 미학 분석, 스타일 가이드 |
+| AI | 8 | ✅ | MBTI, 심리학, 페르소나 벡터 |
+| QC | 52 | ✅ | 품질 평가 기준, 체크리스트 |
+| VEO | 52 | ✅ | 영상 생성 레퍼런스 |
+
+**인제스션 스크립트**: `backend/scripts/seed_all_dimension_rag.py`
+
+```bash
+# 전체 Dimension RAG 데이터 적재
+cd backend && source venv/bin/activate
+python scripts/seed_all_dimension_rag.py
+```
 
 ### 5.3 데이터 적재
 
@@ -528,4 +552,5 @@ async def run_quality_test(queries: list[dict]) -> dict:
 
 | 버전 | 날짜 | 변경 내용 |
 |------|------|----------|
+| 1.1 | 2026-01-16 | 현재 Qdrant 컬렉션 현황 추가, 인제스션 스크립트 참조 |
 | 1.0 | 2026-01-16 | 초기 버전 (2026 Best Practices 반영) |

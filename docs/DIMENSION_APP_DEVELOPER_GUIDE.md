@@ -1,10 +1,11 @@
 # Vivid Dimension 앱 개발자 공통 가이드
 
-> **버전**: 3.0 (Major Upgrade)
-> **작성일**: 2026-01-16
+> **버전**: 3.1
+> **최종 업데이트**: 2026-01-16
 > **대상**: 개별 Dimension 앱 개발자
 > **목적**: 에코시스템 일관성 유지를 위한 단일 진실 문서
-> **변경사항**: React 19 Best Practices, File Upload, UQSL 통합, SSE Streaming
+> **변경사항**: React 19 Best Practices, File Upload, UQSL 통합, SSE Streaming, UX/UI 체크리스트
+> **관련 문서**: [`PRE_DEVELOPMENT_CHECKLIST.md`](./PRE_DEVELOPMENT_CHECKLIST.md) Part A/C 참조
 
 ---
 
@@ -852,6 +853,68 @@ export function DimensionPanelClient({ config }) {
 
 **원칙**: 데이터 페칭은 Server Component에서, 인터랙션은 Client Component에서
 
+### 10.9 UX/UI 체크리스트 (2026 Best Practices)
+
+모든 Dimension 앱은 다음 UX/UI 기준을 충족해야 합니다:
+
+#### WCAG 2.2 AA 필수 항목
+
+| 항목 | 기준 | 구현 방법 |
+|------|------|----------|
+| **색상 대비** | 4.5:1 이상 | Tailwind 시맨틱 컬러 사용 |
+| **터치 타겟** | 최소 44x44px | `min-h-[44px] min-w-[44px]` |
+| **포커스 표시** | 시각적 표시 필수 | `focus:ring-2 focus:outline-none` |
+| **키보드 탐색** | Tab 순서 논리적 | `tabIndex`, `aria-` 속성 |
+
+```tsx
+// 2026 Accessibility Best Practice
+<Button
+  className="min-h-[44px] min-w-[44px] focus:ring-2 focus:ring-primary focus:outline-none"
+  aria-label="생성 시작"
+>
+  생성하기
+</Button>
+```
+
+#### Core Web Vitals 목표
+
+| 메트릭 | 목표 | 최적화 방법 |
+|--------|------|-------------|
+| **LCP** | < 2.5s | 이미지 `priority`, preload |
+| **INP** | < 200ms | `useTransition`, 태스크 분할 |
+| **CLS** | < 0.1 | `width`/`height` 명시, Skeleton |
+
+#### 로딩/에러 상태 필수 패턴
+
+```tsx
+// 2026 Best Practice: Suspense + Skeleton + Error Boundary
+import { Suspense } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
+
+function MyDimensionApp() {
+  return (
+    <ErrorBoundary fallback={<ErrorFallback />}>
+      <Suspense fallback={<DimensionSkeleton />}>
+        <DimensionContent />
+      </Suspense>
+    </ErrorBoundary>
+  );
+}
+```
+
+#### Golden App 예시
+
+**AestheticDirectorPanel** (`frontend/src/components/dimension/AestheticDirectorPanel.tsx`)은 2026 Best Practices를 완벽히 구현한 참조 앱입니다:
+
+- ✅ React 19: `useTransition`, `useOptimistic`
+- ✅ UQSL: Multi-Generate, Thompson Sampling Feedback
+- ✅ SSE Streaming: 실시간 진행 표시
+- ✅ Evidence Display: AI 근거 표시
+- ✅ Optimistic UI: 즉시 결과 미리보기
+- ✅ 접근성: WCAG 2.2 AA 준수
+
+**상세 체크리스트**: [`PRE_DEVELOPMENT_CHECKLIST.md`](./PRE_DEVELOPMENT_CHECKLIST.md) Part C 참조
+
 ---
 
 ## 11. TieredContext 활용
@@ -1451,6 +1514,7 @@ multi_generate:
 
 | 버전 | 날짜 | 변경 내용 |
 |------|------|----------|
+| 3.1 | 2026-01-16 | UX/UI 체크리스트 섹션 추가, Golden App 참조, PRE_DEVELOPMENT_CHECKLIST 연동 |
 | 3.0 | 2026-01-16 | React 19 Best Practices, File Upload, UQSL 통합, SSE Streaming |
 | 2.1 | 2026-01-13 | Evidence Refs, Resolver 템플릿 추가 |
 | 2.0 | 2026-01-10 | UQSL 설정, BM25+RRF 하이브리드 검색 |
