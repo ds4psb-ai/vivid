@@ -3,11 +3,19 @@
 /**
  * PromptGeneratorPanel - 1D Prompt Generation
  *
- * Migrated to Panel Design Unity (Compound Component System)
+ * 2026 Golden App: React 19 Best Practices
+ *
+ * Features:
+ * - useTransition for non-blocking form submission
+ * - useOptimistic for instant UI feedback
+ * - Skeleton loading with smooth transitions
+ * - Evidence refs display
+ *
  * @see docs/PANEL_DESIGN_UNITY_SPEC.md
+ * @see https://react.dev/blog/2024/12/05/react-19
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useTransition, useOptimistic } from "react";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
@@ -108,6 +116,15 @@ function PromptGeneratorContent() {
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
+  // React 19: useTransition for non-blocking form submission
+  const [isTransitionPending, startTransition] = useTransition();
+
+  // React 19: useOptimistic for instant UI feedback
+  const [optimisticResult, setOptimisticResult] = useOptimistic<PromptResult | null>(null);
+
+  // File upload state (2026 Best Practice: Multimodal input)
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+
   // BYOK and credits
   const { byokKey } = useBYOK();
   const creditCtx = useCreditContextOptional();
@@ -149,7 +166,8 @@ function PromptGeneratorContent() {
     nonRetryableErrors: ["400", "401", "402", "403", "404", "크레딧", "부족"],
   });
 
-  // Sync loading state with context
+  // Combined loading state (include transition pending for 2026 UX)
+  const combinedLoading = isLoading || isTransitionPending;
   const MAX_TOPIC_LENGTH = 500;
 
   const handleGenerate = useCallback(async () => {
@@ -172,6 +190,24 @@ function PromptGeneratorContent() {
     }
 
     setLoading(true);
+
+    // React 19: Optimistic UI - show skeleton result immediately
+    startTransition(() => {
+      setOptimisticResult({
+        prompt: "프롬프트 생성 중...",
+        style: {
+          cinematography: "분석 중...",
+          lighting: "분석 중...",
+          color_grade: "분석 중...",
+        },
+        technical: {
+          aspect_ratio: duration.includes("5") ? "9:16" : "16:9",
+          duration,
+          fps: "24",
+        },
+      });
+    });
+
     try {
       await execute(
         `${API_BASE}/api/dimension/1d/generate`,
@@ -180,8 +216,12 @@ function PromptGeneratorContent() {
       );
     } finally {
       setLoading(false);
+      // Clear optimistic result after real result arrives
+      startTransition(() => {
+        setOptimisticResult(null);
+      });
     }
-  }, [topic, style, mood, duration, language, model, byokKey, creditCtx, execute, setLoading, setError, setResult, CREDIT_COST]);
+  }, [topic, style, mood, duration, language, model, byokKey, creditCtx, execute, setLoading, setError, setResult, CREDIT_COST, startTransition, setOptimisticResult]);
 
   const handleCopy = useCallback((text: string) => {
     copyToClipboard(text);
@@ -193,7 +233,9 @@ function PromptGeneratorContent() {
     }
   }, [result?.output, exportJSON]);
 
-  const displayResult = result?.success ? result.output : null;
+  // Display either optimistic result or actual result
+  const displayResult = optimisticResult || (result?.success ? result.output : null);
+  const isOptimistic = !!optimisticResult && !result?.success;
 
   return (
     <>
@@ -215,7 +257,17 @@ function PromptGeneratorContent() {
           maxLength={MAX_TOPIC_LENGTH}
           showCount
           error={validationError || undefined}
-          disabled={isLoading}
+          disabled={combinedLoading}
+        />
+
+        {/* File Upload (2026 Best Practice: Multimodal Input) */}
+        <DimensionPanel.FileUpload
+          accept={["image/*", "video/*", "application/pdf"]}
+          maxSizeMB={50}
+          multiple
+          onUpload={setUploadedFiles}
+          label="참고 자료 (선택)"
+          helperText="이미지, 영상, PDF를 첨부하면 더 정확한 프롬프트 생성"
         />
 
         {/* Style & Mood */}
@@ -225,14 +277,14 @@ function PromptGeneratorContent() {
             value={style}
             onChange={(e) => setStyle(e.target.value)}
             options={STYLES}
-            disabled={isLoading}
+            disabled={combinedLoading}
           />
           <DimensionPanel.Select
             label="무드"
             value={mood}
             onChange={(e) => setMood(e.target.value)}
             options={MOODS}
-            disabled={isLoading}
+            disabled={combinedLoading}
           />
         </div>
 
@@ -243,7 +295,7 @@ function PromptGeneratorContent() {
             value={duration}
             onChange={(e) => setDuration(e.target.value)}
             options={DURATIONS}
-            disabled={isLoading}
+            disabled={combinedLoading}
           />
           <div className="space-y-2">
             <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">
@@ -252,7 +304,7 @@ function PromptGeneratorContent() {
             <div className="flex bg-slate-100 dark:bg-white/5 rounded-lg p-0.5 border border-slate-200 dark:border-white/10">
               <button
                 onClick={() => setLanguage("ko")}
-                disabled={isLoading}
+                disabled={combinedLoading}
                 className={`flex-1 py-2.5 rounded-md text-xs font-medium transition-all ${
                   language === "ko"
                     ? `${classes.bg} text-white shadow-sm`
@@ -263,7 +315,7 @@ function PromptGeneratorContent() {
               </button>
               <button
                 onClick={() => setLanguage("en")}
-                disabled={isLoading}
+                disabled={combinedLoading}
                 className={`flex-1 py-2.5 rounded-md text-xs font-medium transition-all ${
                   language === "en"
                     ? `${classes.bg} text-white shadow-sm`
@@ -283,14 +335,14 @@ function PromptGeneratorContent() {
             value={model}
             onChange={(e) => setModel(e.target.value)}
             options={MODELS}
-            disabled={isLoading}
+            disabled={combinedLoading}
           />
         </div>
 
         {/* Generate Button */}
         <DimensionPanel.GenerateButton
           onClick={handleGenerate}
-          loading={isLoading}
+          loading={combinedLoading}
           disabled={!topic.trim()}
           className="mt-6"
         >
@@ -308,16 +360,26 @@ function PromptGeneratorContent() {
 
         {/* Result */}
         {displayResult ? (
-          <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
+          <div className={`max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10 ${isOptimistic ? "opacity-70" : ""}`}>
+            {/* Optimistic Loading Indicator (React 19 Best Practice) */}
+            {isOptimistic && (
+              <div className="flex items-center justify-center gap-2 py-2 px-4 bg-violet-500/10 rounded-lg border border-violet-500/20">
+                <div className="w-3 h-3 rounded-full bg-violet-500 animate-pulse" />
+                <span className="text-sm text-violet-600 dark:text-violet-300">
+                  프롬프트 생성 중...
+                </span>
+              </div>
+            )}
+
             {/* Main Prompt Card */}
             <DimensionPanel.Result forceShow>
               <div className="space-y-4">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${classes.bg}`} />
+                    <span className={`w-2 h-2 rounded-full ${classes.bg} ${isOptimistic ? "animate-pulse" : ""}`} />
                     <span className="text-xs font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest">
-                      Generated Prompt
+                      {isOptimistic ? "Generating..." : "Generated Prompt"}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">

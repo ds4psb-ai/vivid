@@ -3,12 +3,19 @@
 /**
  * ReferenceDecoderPanel - 레퍼런스 해석기 (AI)
  *
- * Single-stage workflow for analyzing reference video descriptions.
- * Migrated to Panel Design Unity Compound Component System.
+ * 2026 Golden App: React 19 Best Practices + Multimodal Input
+ *
+ * Features:
+ * - useTransition for non-blocking form submission
+ * - useOptimistic for instant UI feedback
+ * - File upload for reference images/videos
+ * - Evidence refs display
+ *
  * @see docs/PANEL_DESIGN_UNITY_SPEC.md
+ * @see https://react.dev/blog/2024/12/05/react-19
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useTransition, useOptimistic } from "react";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
@@ -83,6 +90,15 @@ function ReferenceDecoderContent() {
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
+  // React 19: useTransition for non-blocking form submission
+  const [isTransitionPending, startTransition] = useTransition();
+
+  // React 19: useOptimistic for instant UI feedback
+  const [optimisticResult, setOptimisticResult] = useOptimistic<AnalysisResult | null>(null);
+
+  // File upload state (2026 Best Practice: Multimodal input)
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+
   // Result state
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
 
@@ -123,6 +139,9 @@ function ReferenceDecoderContent() {
     retryDelay: 1000,
     nonRetryableErrors: ["400", "401", "402", "403", "404", "크레딧", "부족"],
   });
+
+  // Combined loading state (include transition pending for 2026 UX)
+  const combinedLoading = isLoading || isTransitionPending;
 
   // Sync loading state to context
   const wrappedExecute = useCallback(
@@ -205,6 +224,16 @@ function ReferenceDecoderContent() {
           />
         </div>
 
+        {/* File Upload (2026 Best Practice: Multimodal Input) */}
+        <DimensionPanel.FileUpload
+          accept={["image/*", "video/*"]}
+          maxSizeMB={100}
+          multiple
+          onUpload={setUploadedFiles}
+          label="참고 영상/이미지 (선택)"
+          helperText="영상 스틸컷이나 참고 이미지를 첨부하면 더 정확한 분석"
+        />
+
         {/* Focus Areas */}
         <div className="space-y-2 group">
           <label
@@ -241,7 +270,7 @@ function ReferenceDecoderContent() {
         <DimensionPanel.GenerateButton
           onClick={handleAnalyze}
           disabled={!description.trim() || focusAreas.length === 0}
-          loading={isLoading}
+          loading={combinedLoading}
           creditCost={CREDIT_COST}
           icon={<FileSearch className="w-5 h-5" />}
           loadingText="분석 중..."

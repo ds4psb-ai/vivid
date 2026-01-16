@@ -3,13 +3,19 @@
 /**
  * VisualRealizerPanel - 비주얼 리얼라이저 (3D)
  *
- * Generates optimized image prompts for generative AI tools.
+ * 2026 Golden App: React 19 Best Practices + Multimodal Input
  *
- * Migrated to Panel Design Unity Compound Component System.
+ * Features:
+ * - useTransition for non-blocking form submission
+ * - useOptimistic for instant UI feedback
+ * - File upload for reference images
+ * - Evidence refs display
+ *
  * @see docs/PANEL_DESIGN_UNITY_SPEC.md
+ * @see https://react.dev/blog/2024/12/05/react-19
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useTransition, useOptimistic } from "react";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";

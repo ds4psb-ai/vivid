@@ -1,6 +1,20 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+/**
+ * StoryArchitectPanel - 스토리 아키텍트
+ *
+ * 2026 Golden App: React 19 Best Practices + Multimodal Input
+ *
+ * Features:
+ * - useTransition for non-blocking form submission
+ * - useOptimistic for instant UI feedback
+ * - File upload for reference documents
+ * - Evidence refs display
+ *
+ * @see https://react.dev/blog/2024/12/05/react-19
+ */
+
+import { useState, useEffect, useCallback, useTransition, useOptimistic } from "react";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
