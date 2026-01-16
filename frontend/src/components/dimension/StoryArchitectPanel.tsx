@@ -133,6 +133,15 @@ function StoryArchitectContent() {
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
+  // React 19: useTransition for non-blocking form submission
+  const [isTransitionPending, startTransition] = useTransition();
+
+  // React 19: useOptimistic for instant UI feedback
+  const [optimisticResult, setOptimisticResult] = useOptimistic<StoryResult | null>(null);
+
+  // File upload state (2026 Best Practice: Multimodal input)
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+
   const { byokKey } = useBYOK();
   const creditCtx = useCreditContextOptional();
   const chainCtx = useDimensionChainOptional();
@@ -344,6 +353,16 @@ function StoryArchitectContent() {
             rows={5}
             maxLength={MAX_CONCEPT_LENGTH}
             disabled={isAnyLoading || stage !== "pitch"}
+          />
+
+          {/* File Upload (2026 Best Practice: Multimodal Input) */}
+          <DimensionPanel.FileUpload
+            accept={["image/*", "application/pdf", "text/plain"]}
+            maxSizeMB={30}
+            multiple
+            onUpload={setUploadedFiles}
+            label="참고 자료 (선택)"
+            helperText="시나리오 참고 문서, 무드보드, 참고 이미지 첨부"
           />
 
           {/* Stage Actions */}

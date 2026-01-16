@@ -75,6 +75,15 @@ function VeoVideoContent() {
   const [validationError, setValidationError] = useState<string | null>(null);
   const [videoResult, setVideoResult] = useState<VideoResult | null>(null);
 
+  // React 19: useTransition for non-blocking form submission
+  const [isTransitionPending, startTransition] = useTransition();
+
+  // React 19: useOptimistic for instant UI feedback
+  const [optimisticResult, setOptimisticResult] = useOptimistic<VideoResult | null>(null);
+
+  // File upload state (2026 Best Practice: Multimodal input)
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const { byokKey } = useBYOK();
@@ -217,6 +226,16 @@ function VeoVideoContent() {
             placeholder="생성할 비디오를 상세히 설명하세요...&#10;예: A cinematic shot of a sunrise over mountains, golden light casting long shadows..."
             rows={6}
             maxLength={MAX_PROMPT_LENGTH}
+          />
+
+          {/* File Upload (2026 Best Practice: Multimodal Input) */}
+          <DimensionPanel.FileUpload
+            accept={["image/*", "video/*"]}
+            maxSizeMB={100}
+            multiple
+            onUpload={setUploadedFiles}
+            label="참고 이미지/영상 (선택)"
+            helperText="스타일 참고용 이미지나 영상 첨부 (Image-to-Video)"
           />
 
           {/* Negative Prompt */}

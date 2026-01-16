@@ -97,6 +97,15 @@ function VisualRealizerContent() {
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
+  // React 19: useTransition for non-blocking form submission
+  const [isTransitionPending, startTransition] = useTransition();
+
+  // React 19: useOptimistic for instant UI feedback
+  const [optimisticResult, setOptimisticResult] = useOptimistic<ImagePromptResult | null>(null);
+
+  // File upload state (2026 Best Practice: Multimodal input)
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+
   // Hooks
   const { byokKey } = useBYOK();
   const creditCtx = useCreditContextOptional();
@@ -214,6 +223,16 @@ function VisualRealizerContent() {
           placeholder="생성하고 싶은 이미지를 상세히 설명하세요..."
           rows={5}
           disabled={isLoading}
+        />
+
+        {/* File Upload (2026 Best Practice: Multimodal Input) */}
+        <DimensionPanel.FileUpload
+          accept={["image/*"]}
+          maxSizeMB={20}
+          multiple
+          onUpload={setUploadedFiles}
+          label="참고 이미지 (선택)"
+          helperText="스타일 참고용 이미지를 첨부하면 더 정확한 프롬프트 생성"
         />
 
         {/* Style Select */}
