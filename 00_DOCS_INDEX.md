@@ -40,12 +40,21 @@
 
 ---
 
+## 2026-01-16 Documentation Upgrade
+
+| 항목 | 위치 | 설명 |
+|------|------|------|
+| **앱 개발자 가이드 v3.0** | [`docs/DIMENSION_APP_DEVELOPER_GUIDE.md`](docs/DIMENSION_APP_DEVELOPER_GUIDE.md) | React 19, File Upload, SSE Streaming, UQSL (**MAJOR UPGRADE**) |
+| **RAG 데이터 큐레이터 가이드** | [`docs/RAG_DATA_CURATOR_GUIDE.md`](docs/RAG_DATA_CURATOR_GUIDE.md) | 데이터 적재 담당자용 (**NEW**) |
+
+---
+
 ## 2026-01-13 신규 (RAG P1-P5)
 
 | 항목 | 위치 | 설명 |
 |------|------|------|
-| **RAG Quality Guide** | [`docs/RAG_QUALITY.md`](docs/RAG_QUALITY.md) | 품질 평가 + OKR 기준 (**NEW**) |
-| **EvidenceDisplay UX** | [`docs/EVIDENCE_DISPLAY_UX.md`](docs/EVIDENCE_DISPLAY_UX.md) | 패널별 적용 규칙 (**NEW**) |
+| **RAG Quality Guide** | [`docs/RAG_QUALITY.md`](docs/RAG_QUALITY.md) | 품질 평가 + OKR 기준 |
+| **EvidenceDisplay UX** | [`docs/EVIDENCE_DISPLAY_UX.md`](docs/EVIDENCE_DISPLAY_UX.md) | 패널별 적용 규칙 |
 | **Video Ref 인제스션** | `backend/scripts/ingest_video_reference.py` | video_ref → Qdrant |
 | **Image Grid 인제스션** | `backend/scripts/ingest_image_grid.py` | image_grid → Qdrant |
 | **RAG Quality CLI** | `backend/scripts/run_rag_quality_report.py` | 품질 리포트 생성 |

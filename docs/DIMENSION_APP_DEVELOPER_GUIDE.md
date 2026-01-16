@@ -1,9 +1,10 @@
 # Vivid Dimension 앱 개발자 공통 가이드
 
-> **버전**: 2.1  
-> **작성일**: 2026-01-13  
-> **대상**: 개별 Dimension 앱 개발자  
+> **버전**: 3.0 (Major Upgrade)
+> **작성일**: 2026-01-16
+> **대상**: 개별 Dimension 앱 개발자
 > **목적**: 에코시스템 일관성 유지를 위한 단일 진실 문서
+> **변경사항**: React 19 Best Practices, File Upload, UQSL 통합, SSE Streaming
 
 ---
 
@@ -18,7 +19,7 @@
 7. [Intent 프리셋 시스템](#7-intent-프리셋-시스템)
 8. [크레딧 비용](#8-크레딧-비용)
 9. [Singularity 템플릿 연동](#9-singularity-템플릿-연동)
-10. [프론트엔드 연동](#10-프론트엔드-연동)
+10. [프론트엔드 연동 (React 19 Best Practices)](#10-프론트엔드-연동-react-19-best-practices) ⭐ **UPGRADED**
 11. [TieredContext 활용](#11-tieredcontext-활용)
 12. [에러 처리](#12-에러-처리)
 13. [메트릭 및 모니터링](#13-메트릭-및-모니터링)
@@ -27,6 +28,18 @@
 16. [옵션 추가 체크리스트](#16-옵션-추가-체크리스트)
 17. [참고 문서](#17-참고-문서)
 18. [FAQ](#18-faq)
+
+---
+
+## Quick Reference Card (2026)
+
+| 항목 | 2026 Best Practice |
+|------|-------------------|
+| **React Hooks** | `useTransition`, `useOptimistic`, `startTransition` |
+| **파일 업로드** | `DimensionPanel.FileUpload` Compound Component |
+| **SSE 스트리밍** | `eventsource-parser`, 청크 단위 UI 업데이트 |
+| **품질 선택** | UQSL (Thompson Sampling + Multi-Generate) |
+| **Server Components** | 데이터 페칭은 서버, 인터랙션만 클라이언트 |
 
 ---
 
@@ -551,9 +564,244 @@ else:
 
 ---
 
-## 10. 프론트엔드 연동
+## 10. 프론트엔드 연동 (React 19 Best Practices)
 
-### 10.1 입력 스키마 동기화
+> **2026-01-16 Major Upgrade**: React 19 + Next.js 16 기반 최신 패턴 적용
+
+### 10.1 React 19 핵심 훅 (필수)
+
+모든 Dimension 패널은 다음 훅을 사용해야 합니다:
+
+```typescript
+import { useState, useCallback, useTransition, useOptimistic, startTransition } from "react";
+
+function MyDimensionPanel() {
+  // ✅ useTransition: 무거운 상태 업데이트를 비차단으로 처리
+  const [isTransitionPending, startTransition] = useTransition();
+
+  // ✅ useOptimistic: 서버 응답 전에 UI 즉시 업데이트
+  const [optimisticResult, setOptimisticResult] = useOptimistic<ResultType | null>(null);
+
+  const handleGenerate = useCallback(async () => {
+    // 1. Optimistic UI 업데이트 (즉시)
+    setOptimisticResult({ status: "generating", preview: "..." });
+
+    // 2. 실제 API 호출은 Transition 내부에서
+    startTransition(async () => {
+      const response = await api.dimension.generate(params);
+      // 응답이 오면 실제 상태로 교체됨
+    });
+  }, [params]);
+}
+```
+
+#### useTransition vs startTransition
+
+| 훅 | 용도 | 예시 |
+|----|------|------|
+| `useTransition` | 컴포넌트 내부 비동기 작업 | 생성 버튼 클릭, 스테이지 전환 |
+| `startTransition` | 콜백 내부 상태 업데이트 | SSE 스트리밍 청크 처리 |
+
+```typescript
+// SSE 스트리밍에서 startTransition 사용
+useEffect(() => {
+  const eventSource = new EventSource(url);
+
+  eventSource.onmessage = (e) => {
+    startTransition(() => {
+      // 청크 단위로 UI 업데이트 (논블로킹)
+      setStreamedContent(prev => prev + e.data);
+    });
+  };
+}, []);
+```
+
+### 10.2 DimensionPanel Compound Component System
+
+모든 패널은 `DimensionPanel` 컴파운드 컴포넌트를 사용합니다:
+
+```typescript
+import { DimensionPanel } from "@/components/dimension/DimensionPanel";
+
+function MyDimensionPanel() {
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+
+  return (
+    <DimensionPanel title="내 앱" icon="🎬" creditCost={10}>
+      {/* 입력 필드 */}
+      <DimensionPanel.Input
+        name="topic"
+        label="주제"
+        placeholder="프롬프트를 입력하세요"
+        required
+      />
+
+      {/* ⭐ 파일 업로드 (NEW 2026-01-16) */}
+      <DimensionPanel.FileUpload
+        accept={["image/*", "video/*", "application/pdf"]}
+        maxSizeMB={50}
+        multiple
+        onUpload={setUploadedFiles}
+        label="참고 자료 (선택)"
+        helperText="이미지, 영상, PDF를 첨부하면 더 정확한 결과 생성"
+      />
+
+      {/* 생성 버튼 */}
+      <DimensionPanel.GenerateButton
+        onClick={handleGenerate}
+        loading={isTransitionPending}
+      />
+
+      {/* 결과 영역 */}
+      <DimensionPanel.Result data={result} />
+
+      {/* AI 근거 (자동 렌더링) */}
+      <DimensionPanel.EvidenceRefs refs={evidenceRefs} />
+    </DimensionPanel>
+  );
+}
+```
+
+### 10.3 파일 업로드 (Multimodal Input) ⭐ NEW
+
+모든 Dimension 앱은 멀티모달 입력을 지원해야 합니다:
+
+#### 지원 파일 타입별 설정
+
+| 앱 | 파일 타입 | maxSizeMB | 용도 |
+|----|----------|-----------|------|
+| 1D | image, video, pdf | 50 | 프롬프트 생성 참고 |
+| 2D | image, video, pdf | 50 | 스토리보드 참고 |
+| 3D | image | 20 | 스타일 참고 이미지 |
+| 4D | video | 100 | 영상 분석 |
+| AD | image, video | 100 | 미학 분석 |
+| Story | image, pdf, text | 30 | 시나리오 참고 |
+| VEO | image, video | 100 | Image-to-Video |
+
+#### 파일 업로드 구현 패턴
+
+```typescript
+// 1. 상태 선언
+const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+
+// 2. API 호출 시 FormData로 변환
+const handleGenerate = useCallback(async () => {
+  const formData = new FormData();
+  formData.append("params", JSON.stringify(params));
+
+  // 파일 첨부
+  uploadedFiles.forEach((file, idx) => {
+    formData.append(`file_${idx}`, file);
+  });
+
+  // multipart/form-data로 전송
+  const response = await api.dimension.generateWithFiles(formData);
+}, [params, uploadedFiles]);
+
+// 3. FileUpload 컴포넌트 사용
+<DimensionPanel.FileUpload
+  accept={["image/*", "video/*", "application/pdf"]}
+  maxSizeMB={50}
+  multiple
+  onUpload={setUploadedFiles}
+  label="참고 자료 (선택)"
+  helperText="이미지, 영상, PDF를 첨부하면 더 정확한 결과 생성"
+/>
+```
+
+### 10.4 SSE 스트리밍 패턴 (2026 Best Practice)
+
+실시간 생성 결과를 위한 SSE 스트리밍:
+
+```typescript
+import { EventSourceParserStream } from "eventsource-parser/stream";
+
+function useSSEGenerate() {
+  const [streamedContent, setStreamedContent] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
+
+  const startStreaming = useCallback(async (params: GenerateParams) => {
+    setIsStreaming(true);
+    setStreamedContent("");
+
+    try {
+      const response = await fetch("/api/dimension/generate/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+      });
+
+      const reader = response.body
+        ?.pipeThrough(new TextDecoderStream())
+        .pipeThrough(new EventSourceParserStream())
+        .getReader();
+
+      if (!reader) return;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        if (value.type === "event" && value.data) {
+          // ✅ startTransition으로 청크 업데이트 (논블로킹)
+          startTransition(() => {
+            setStreamedContent(prev => prev + value.data);
+          });
+        }
+      }
+    } finally {
+      setIsStreaming(false);
+    }
+  }, []);
+
+  return { streamedContent, isStreaming, startStreaming };
+}
+```
+
+### 10.5 UQSL 통합 패턴 (품질 선택 레이어)
+
+```typescript
+import { useUQSLGenerate, useUQSLFeedback } from "@/hooks/useUQSL";
+
+function MyDimensionPanel() {
+  const {
+    candidates,        // 생성된 후보들
+    selectedId,        // 선택된 후보 ID
+    qualityScores,     // 품질 점수 배열
+    isGenerating,
+    generateCandidates,
+    selectCandidate,
+  } = useUQSLGenerate("MY_APP");
+
+  const { submitFeedback } = useUQSLFeedback();
+
+  const handleSelect = (candidateId: string) => {
+    selectCandidate(candidateId);
+
+    // 암묵적 피드백 (선택)
+    submitFeedback({
+      candidateId,
+      feedbackType: "implicit",
+      action: "select",
+    });
+  };
+
+  return (
+    <>
+      {/* Multi-Generate 결과 표시 */}
+      {candidates.map((candidate, idx) => (
+        <div key={candidate.id} onClick={() => handleSelect(candidate.id)}>
+          <span>후보 {idx + 1}</span>
+          <span>점수: {qualityScores[idx]?.toFixed(2)}</span>
+          <div>{candidate.content}</div>
+        </div>
+      ))}
+    </>
+  );
+}
+```
+
+### 10.6 입력 스키마 동기화
 
 `frontend/src/lib/dimension-input-schemas.ts`에서 입력 필드를 정의합니다:
 
@@ -566,16 +814,43 @@ export const DimensionInputSchemas: Record<string, DimensionField[]> = {
     { key: "duration", label: "길이", type: "select", options: [...] },
     { key: "language", label: "언어", type: "select", options: [...] },
     { key: "model", label: "AI 모델", type: "select", options: [...] },
+    // ⭐ NEW: 파일 업로드 필드
+    { key: "files", label: "참고 자료", type: "file", accept: ["image/*", "video/*", "application/pdf"], maxSizeMB: 50 },
   ],
   // ...
 }
 ```
 
-### 10.2 새 필드 추가 시
+### 10.7 새 필드 추가 시 체크리스트
 
-1. YAML에 필드 정의
-2. `dimension-input-schemas.ts`에 필드 추가
-3. 패널 컴포넌트에서 사용
+1. ✅ YAML에 필드 정의
+2. ✅ `dimension-input-schemas.ts`에 필드 추가
+3. ✅ 패널 컴포넌트에서 DimensionPanel 서브컴포넌트 사용
+4. ✅ useTransition/useOptimistic 훅 적용
+5. ✅ 파일 업로드 필요 시 FileUpload 컴포넌트 추가
+
+### 10.8 Server Component vs Client Component 구분
+
+```typescript
+// ✅ Server Component (데이터 페칭, 시크릿 접근)
+// app/dimension/[id]/page.tsx
+export default async function DimensionPage({ params }) {
+  const config = await fetchDimensionConfig(params.id);  // 서버에서 직접 fetch
+  return <DimensionPanelClient config={config} />;
+}
+
+// ✅ Client Component (인터랙션, 상태, 브라우저 API)
+// components/dimension/DimensionPanelClient.tsx
+"use client";
+import { useState, useTransition } from "react";
+
+export function DimensionPanelClient({ config }) {
+  const [result, setResult] = useState(null);
+  // 인터랙티브 로직...
+}
+```
+
+**원칙**: 데이터 페칭은 Server Component에서, 인터랙션은 Client Component에서
 
 ---
 
@@ -1091,14 +1366,14 @@ logger.debug(f"TieredContext history: {tiered.history}")
 
 ### Q: RAG가 느릴 때 어떻게 하나요?
 
-**A**: 
+**A**:
 1. BM25 인덱스 캐시 확인 (`cache_ttl` 설정)
 2. `top_k` 줄이기
 3. `confidence_threshold` 높이기
 
 ### Q: 새 앱을 처음부터 만들려면?
 
-**A**: 
+**A**:
 ```bash
 # 1. YAML 생성
 python scripts/vivid_app.py create dimension my-app \
@@ -1109,3 +1384,74 @@ python scripts/vivid_app.py create dimension my-app \
 # 3. 프론트엔드 패널 생성
 # 4. dimension-input-schemas.ts에 추가
 ```
+
+---
+
+## 19. React 19 FAQ (2026 추가)
+
+### Q: useTransition과 useOptimistic의 차이는?
+
+**A**:
+- **useTransition**: 무거운 상태 업데이트를 백그라운드로 밀어 UI 응답성 유지 (로딩 상태 추적 가능)
+- **useOptimistic**: 서버 응답 전에 UI를 즉시 업데이트, 실패 시 자동 롤백
+
+```typescript
+// useTransition: "생성 중..." 로딩 표시
+const [isPending, startTransition] = useTransition();
+
+// useOptimistic: 바로 결과 미리보기 표시
+const [optimistic, addOptimistic] = useOptimistic(actual, (state, newVal) => newVal);
+```
+
+### Q: 파일 업로드 시 용량 제한은?
+
+**A**:
+| 파일 타입 | 권장 최대 용량 | 이유 |
+|----------|---------------|------|
+| 이미지 | 20MB | 빠른 업로드 |
+| 영상 | 100MB | VEO 처리 한계 |
+| PDF | 30MB | 텍스트 추출 최적화 |
+
+### Q: SSE 스트리밍이 끊길 때?
+
+**A**:
+1. 네트워크 타임아웃 확인 (기본 30초)
+2. 서버 측 `keep-alive` 설정 확인
+3. 프록시/로드밸런서 버퍼링 비활성화
+
+```typescript
+// 재연결 패턴
+const reconnect = useCallback(() => {
+  setTimeout(() => startStreaming(params), 1000);
+}, [params]);
+```
+
+### Q: Server Component에서 Client Component로 데이터 전달?
+
+**A**: props로 직렬화 가능한 데이터만 전달:
+```typescript
+// ✅ OK: 문자열, 숫자, 객체, 배열
+<ClientComponent data={{ name: "test", count: 5 }} />
+
+// ❌ NO: 함수, 클래스 인스턴스
+<ClientComponent onClick={handleClick} />  // Server Action 사용
+```
+
+### Q: UQSL Multi-Generate 후보 수 설정은?
+
+**A**: YAML의 `quality_selection.multi_generate.candidates` 값 변경:
+```yaml
+multi_generate:
+  candidates: 3  # 1-5 권장, 많을수록 크레딧 소모 증가
+```
+
+---
+
+## 20. 변경 이력
+
+| 버전 | 날짜 | 변경 내용 |
+|------|------|----------|
+| 3.0 | 2026-01-16 | React 19 Best Practices, File Upload, UQSL 통합, SSE Streaming |
+| 2.1 | 2026-01-13 | Evidence Refs, Resolver 템플릿 추가 |
+| 2.0 | 2026-01-10 | UQSL 설정, BM25+RRF 하이브리드 검색 |
+| 1.0 | 2025-12-01 | 초기 버전 |
