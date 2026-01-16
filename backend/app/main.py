@@ -34,6 +34,12 @@ from app.routers.rag_feedback import router as rag_feedback_router
 # UQSL (Universal Quality Selection Layer)
 from app.routers.uqsl import router as uqsl_router
 
+# Feature Flags (Self-hosted, Redis-backed)
+from app.features.router import router as feature_flags_router
+
+# A/B Testing (Experimentation Infrastructure)
+from app.experiments.router import router as experiments_router
+
 # Settlements (Revenue Distribution)
 from app.routers.settlements import router as settlements_router
 
@@ -234,6 +240,12 @@ app.include_router(rag_pipeline_router, prefix="/api/v1", tags=["rag-pipeline"])
 
 # UQSL (Universal Quality Selection Layer) - prefix already in router
 app.include_router(uqsl_router, tags=["uqsl"])
+
+# Feature Flags (Self-hosted Feature Management) - prefix already in router
+app.include_router(feature_flags_router, tags=["feature-flags"])
+
+# A/B Testing (Experimentation Infrastructure) - prefix already in router
+app.include_router(experiments_router, tags=["ab-testing"])
 
 # Workflow (Tool Chain Orchestration)
 app.include_router(workflow_router, prefix="/api/v1", tags=["workflow"])
