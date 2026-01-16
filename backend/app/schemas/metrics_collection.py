@@ -16,7 +16,7 @@ License: arkain.info@gmail.com
 """
 
 from typing import Dict, List, Optional, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from enum import Enum
 
@@ -174,9 +174,8 @@ class ContentMetrics(BaseModel):
     
     # 태그
     tags: List[str] = Field(default_factory=list)
-    
-    class Config:
-        use_enum_values = True
+
+    model_config = ConfigDict(use_enum_values=True)
 
 
 # =============================================================================

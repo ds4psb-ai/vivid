@@ -1,7 +1,7 @@
 # Pre-Development Checklist (2026 Best Practices)
 
-> **버전**: 1.0
-> **작성일**: 2026-01-16
+> **버전**: 1.1
+> **최종 검증일**: 2026-01-16
 > **대상**: Dimension 앱 개발자, RAG 데이터 큐레이터
 > **목적**: 본격적인 개발 시작 전 필수 준비사항 체크리스트
 
@@ -26,15 +26,18 @@
 
 | 항목 | 최소 요구사항 | 권장 |
 |------|-------------|------|
-| **Node.js** | 20.x | 22.x LTS |
+| **Node.js/Bun** | Node 20.x 또는 Bun 1.x | Bun 1.3+ (권장) |
 | **Python** | 3.11 | 3.12+ |
-| **Docker** | 24.x | 25.x |
+| **Docker** | 24.x | 25.x+ |
 | **Git** | 2.40+ | 최신 |
 | **RAM** | 8GB | 16GB+ |
 | **Disk** | 20GB 여유 | SSD 50GB+ |
 
 ```bash
-# 버전 확인 명령어
+# 버전 확인 명령어 (Bun 환경)
+bun --version && python3 --version && docker --version && git --version
+
+# Node.js 환경인 경우
 node -v && python3 --version && docker --version && git --version
 ```
 
@@ -549,8 +552,120 @@ cd backend && python scripts/run_rag_quality_report.py --dimension {YOUR_DIM}
 
 ---
 
+## Appendix A: 2026-01-16 실제 검증 결과
+
+> 시니어 디렉터가 체크리스트를 실행하며 발견한 사항
+
+### 환경 설정
+
+| 항목 | 검증 결과 | 비고 |
+|------|----------|------|
+| **Runtime** | Bun 1.3.5 | Node.js 대신 Bun 사용 |
+| **Python** | 3.11.14 (venv) | ✅ 요구사항 충족 |
+| **Docker** | 29.1.3 | ✅ 요구사항 충족 |
+| **Git** | 2.50.1 | ✅ 요구사항 충족 |
+
+### 프레임워크 버전
+
+| 항목 | 버전 | 상태 |
+|------|------|------|
+| Next.js | 16.1.0 | ✅ 최신 |
+| React | 19.2.3 | ✅ 최신 |
+| FastAPI | 0.127.0 | ✅ |
+| SQLAlchemy | 2.0.45 | ✅ |
+| Pydantic | 2.12.5 | ✅ |
+
+### Docker 서비스
+
+| 서비스 | 포트 | 상태 |
+|--------|------|------|
+| PostgreSQL (pgvector:pg16) | 5433 | ⚠️ 수동 시작 필요: `docker compose up -d postgres` |
+| Redis | 6380 | ✅ 실행중 |
+| Qdrant | 6333 | ✅ 실행중 |
+| Prometheus | 9090 | ✅ 실행중 |
+
+### 빌드/테스트
+
+| 항목 | 결과 | 비고 |
+|------|------|------|
+| **Frontend build** | ✅ 성공 | |
+| **Backend pytest** | 1079 통과 (98%) | 23 실패, 13 에러 (통합 테스트) |
+| **Pydantic v2** | ⚠️ 마이그레이션 수행됨 | `class Config` → `model_config = ConfigDict()` |
+
+### Qdrant 컬렉션 현황
+
+| Dimension | 문서 수 | 상태 |
+|-----------|--------|------|
+| 1D | 53 | ✅ |
+| 2D | 52 | ✅ |
+| 3D | 1 | ⚠️ 데이터 부족 |
+| 4D | 1 | ⚠️ 데이터 부족 |
+| 5D | 0 | ❌ 비어있음 |
+| 6D | 0 | ❌ 비어있음 |
+| AD | 60 | ✅ |
+| AI | 0 | ❌ 비어있음 |
+| QC | 52 | ✅ |
+| VEO | 52 | ✅ |
+
+**Action Required**: 3D, 4D, 5D, 6D, AI 컬렉션에 데이터 적재 필요
+
+### 인제스션 스크립트 (8개)
+
+```bash
+backend/scripts/
+├── ingest_source_packs.py      # 소스팩 인제스션
+├── ingest_video_reference.py   # 비디오 레퍼런스
+├── ingest_image_grid.py        # 이미지 그리드
+├── ingest_notebook_artifact.py # 노트북 아티팩트
+├── ingest_notebook_library.py  # 노트북 라이브러리
+├── ingest_raw_assets.py        # Raw 에셋
+├── ingest_pattern_candidates.py # 패턴 후보
+└── ingest_derived_insights.py  # 파생 인사이트
+```
+
+### NotebookLM MCP
+
+- **상태**: ❌ 인증 만료
+- **해결**: `notebooklm-mcp-auth` 실행 필요
+
+### 보안 체크
+
+| 항목 | 상태 |
+|------|------|
+| `.env` in .gitignore | ✅ |
+| 시크릿 git 추적 없음 | ✅ |
+| 하드코딩 API 키 없음 | ✅ |
+| 보안 문서 존재 | ✅ (9개) |
+
+---
+
+## Appendix B: 수정된 파일 목록
+
+### Phase 2에서 수정된 파일 (Pydantic v2 마이그레이션)
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `backend/pytest.ini` | 신규 생성 - scripts/ 제외 |
+| `backend/tests/conftest.py` | 신규 생성 - PYTHONPATH 설정 |
+| `app/routers/batch.py` | `min_items` → `min_length` |
+| `app/schemas/metrics_collection.py` | `class Config` → `model_config` |
+| `app/schemas/tools.py` | `class Config` → `model_config` |
+| `app/routers/miniapps.py` | `class Config` → `model_config` |
+| `app/rag/query_classifier.py` | `class Config` → `model_config` |
+| `app/schemas/rag_feedback_schemas.py` | `class Config` → `model_config` |
+| `app/schemas/workflow_session.py` | `class Config` → `model_config` |
+| `app/schemas/director_pack.py` | `class Config` → `model_config` |
+| `app/routers/mcp.py` | `@validator` → `@field_validator` |
+| `app/routers/crebit.py` | `class Config` → `model_config` |
+| `app/schemas/telemetry_schemas.py` | `class Config` → `model_config` |
+| `app/schemas/settlement_schemas.py` | `class Config` → `model_config` |
+| `app/schemas/versioning_schemas.py` | `class Config` → `model_config` |
+
+---
+
 ## 변경 이력
 
 | 버전 | 날짜 | 변경 내용 |
 |------|------|----------|
+| 1.1 | 2026-01-16 | 실제 검증 결과 추가 (Appendix A, B) |
 | 1.0 | 2026-01-16 | 초기 버전 (2026 Best Practices 기반) |

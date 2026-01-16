@@ -50,18 +50,18 @@ class SubmitBatchRequest(BaseModel):
 
 class ContentReviewRequest(BaseModel):
     """Request for content review batch job."""
-    contents: List[str] = Field(..., min_items=1, max_items=100)
+    contents: List[str] = Field(..., min_length=1, max_length=100)
 
 
 class BulkAnalysisRequest(BaseModel):
     """Request for bulk analysis batch job."""
-    items: List[dict] = Field(..., min_items=1, max_items=100)
+    items: List[dict] = Field(..., min_length=1, max_length=100)
     analysis_prompt: str = Field(..., min_length=10)
 
 
 class StoryboardGenerationRequest(BaseModel):
     """Request for bulk storyboard generation."""
-    concepts: List[str] = Field(..., min_items=1, max_items=50)
+    concepts: List[str] = Field(..., min_length=1, max_length=50)
     scene_count: int = Field(default=5, ge=3, le=20)
 
 

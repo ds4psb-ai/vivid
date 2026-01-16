@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Optional, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 # =============================================================================
@@ -97,9 +97,8 @@ class ToolManifestResponse(BaseModel):
     
     created_at: datetime
     updated_at: datetime
-    
-    class Config:
-        from_attributes = True
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =============================================================================
@@ -176,9 +175,8 @@ class ToolRunEventResponse(BaseModel):
     
     created_at: datetime
     completed_at: Optional[datetime] = None
-    
-    class Config:
-        from_attributes = True
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ToolRunFeedback(BaseModel):
@@ -246,9 +244,8 @@ class ForkEventResponse(BaseModel):
     
     created_at: datetime
     updated_at: datetime
-    
-    class Config:
-        from_attributes = True
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ForkTestResult(BaseModel):
@@ -319,9 +316,8 @@ class MetricEventResponse(BaseModel):
     meta: dict
     
     created_at: datetime
-    
-    class Config:
-        from_attributes = True
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =============================================================================

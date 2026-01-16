@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 from enum import Enum
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 # =============================================================================
@@ -79,8 +79,8 @@ class ExplicitFeedbackCreate(BaseModel):
         """At least one feedback field must be provided."""
         return v
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "response_id": "550e8400-e29b-41d4-a716-446655440000",
                 "rating": 4,
@@ -88,6 +88,7 @@ class ExplicitFeedbackCreate(BaseModel):
                 "comment": "정확한 답변이었습니다."
             }
         }
+    )
 
 
 class ImplicitFeedbackCreate(BaseModel):
@@ -138,8 +139,8 @@ class ImplicitFeedbackCreate(BaseModel):
         description="복사한 텍스트 길이"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "response_id": "550e8400-e29b-41d4-a716-446655440000",
                 "event_type": "source_click",
@@ -148,6 +149,7 @@ class ImplicitFeedbackCreate(BaseModel):
                 "duration_ms": 5000
             }
         }
+    )
 
 
 class RAGResponseCreate(BaseModel):
@@ -230,8 +232,7 @@ class RAGResponseRead(BaseModel):
     feedback_count: int = 0
     avg_rating: Optional[float] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RAGFeedbackRead(BaseModel):
@@ -252,8 +253,7 @@ class RAGFeedbackRead(BaseModel):
 
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FeedbackSubmitResponse(BaseModel):
@@ -301,8 +301,8 @@ class FeedbackMetrics(BaseModel):
     query_type_distribution: Dict[str, int]
     strategy_distribution: Dict[str, int]
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "app_key": "dimension.aesthetic.direct",
                 "period_days": 7,
@@ -335,6 +335,7 @@ class FeedbackMetrics(BaseModel):
                 }
             }
         }
+    )
 
 
 class ClassificationAccuracyMetrics(BaseModel):
@@ -383,5 +384,4 @@ class DailyStatsRead(BaseModel):
     source_click_rate: Optional[float]
     reformulation_rate: Optional[float]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

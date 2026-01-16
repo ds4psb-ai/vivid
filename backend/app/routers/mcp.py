@@ -13,7 +13,7 @@ Hardening:
 import logging
 from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Depends, Query
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,9 +34,10 @@ class ToolCallRequest(BaseModel):
     """MCP Tool 호출 요청"""
     tool_name: str = Field(..., min_length=1, max_length=100)
     arguments: Dict[str, Any] = Field(default_factory=dict)
-    
-    @validator("tool_name")
-    def validate_tool_name(cls, v):
+
+    @field_validator("tool_name")
+    @classmethod
+    def validate_tool_name(cls, v: str) -> str:
         allowed = ["compute_stpf", "analyze_sensitivity", "update_confidence", "calculate_kelly"]
         if v not in allowed:
             raise ValueError(f"Unknown tool: {v}. Allowed: {allowed}")

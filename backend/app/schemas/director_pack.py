@@ -12,7 +12,7 @@ Philosophy:
 License: arkain.info@gmail.com (Gemini Enterprise)
 """
 from typing import Dict, List, Optional, Any, Tuple
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from enum import Enum
 from datetime import datetime
 
@@ -322,8 +322,9 @@ class DirectorPack(BaseModel):
     def rule_count(self) -> int:
         """Total rule count."""
         return len(self.dna_invariants) + len(self.forbidden_mutations)
-    
-    class Config:
-        json_encoders = {
+
+    model_config = ConfigDict(
+        json_encoders={
             datetime: lambda v: v.isoformat()
         }
+    )

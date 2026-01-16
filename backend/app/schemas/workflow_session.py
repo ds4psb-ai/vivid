@@ -5,7 +5,7 @@ Defines the session state for workflow orchestration.
 """
 
 from typing import List, Dict, Any, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from enum import Enum
 from datetime import datetime
 import uuid
@@ -75,9 +75,8 @@ class WorkflowSession(BaseModel):
     # Canvas Integration
     canvas_session_id: Optional[str] = None
     created_node_ids: List[str] = Field(default_factory=list)
-    
-    class Config:
-        use_enum_values = True
+
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class WorkflowSessionManager:

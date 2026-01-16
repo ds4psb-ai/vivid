@@ -32,7 +32,7 @@ import logging
 from enum import Enum
 from typing import Optional, Tuple
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 logger = logging.getLogger(__name__)
 
@@ -123,8 +123,8 @@ class QueryClassificationResult(BaseModel):
     latency_ms: Optional[int] = None
     """분류 지연 시간 (밀리초)."""
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "query_type": "domain_specific",
                 "confidence": 0.87,
@@ -133,6 +133,7 @@ class QueryClassificationResult(BaseModel):
                 "latency_ms": 12,
             }
         }
+    )
 
 
 class RoutingConfig(BaseModel):
@@ -171,8 +172,8 @@ class RoutingConfig(BaseModel):
     cache_embeddings: bool = True
     """Route examples 임베딩 캐싱 여부 (성능 최적화)."""
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "enabled": True,
                 "semantic_threshold": 0.7,
@@ -181,6 +182,7 @@ class RoutingConfig(BaseModel):
                 "cache_embeddings": True,
             }
         }
+    )
 
 
 # ============================================================================
