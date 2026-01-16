@@ -3,14 +3,19 @@
 /**
  * AbyssMirrorPanel - 심연의 거울 메인 패널
  *
- * Phase 3: Implementation Plan v2
- * - 입력 폼 + 빠른 시작 + 불러오기
- * - 채팅 인터페이스 with RAG (EvidenceDisplay, useRAGSuggestion)
- * - 진행률 바 (% + stage)
- * - trace_id 히스토리 통합
+ * 2026 Golden App: React 19 Best Practices + Multi-phase Chat Interface
+ *
+ * Features:
+ * - useTransition for non-blocking form submission
+ * - useOptimistic for instant UI feedback
+ * - Multi-phase flow: input → chat → complete
+ * - RAG integration with EvidenceDisplay
+ * - trace_id history tracking
+ *
+ * @see https://react.dev/blog/2024/12/05/react-19
  */
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useTransition, useOptimistic } from "react";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
@@ -93,6 +98,18 @@ function AbyssMirrorContent() {
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [showPresetList, setShowPresetList] = useState(false);
 
+  // React 19: useTransition for non-blocking operations
+  const [isTransitionPending, startTransition] = useTransition();
+
+  // React 19: useOptimistic for instant UI feedback on messages
+  const [optimisticMessages, addOptimisticMessage] = useOptimistic(
+    messages,
+    (currentMessages: Message[], newMessage: Message) => [...currentMessages, newMessage]
+  );
+
+  // Combined pending state
+  const isPending = isLoading || isTransitionPending;
+
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -140,7 +157,7 @@ function AbyssMirrorContent() {
   // Handlers
   // ========================================================================
 
-  const handleStartAnalysis = useCallback(async (quick = false) => {
+  const handleStartAnalysis = useCallback((quick = false) => {
     if (!quick && (!birthInfo.year || !birthInfo.month || !birthInfo.day)) {
       setError("생년월일을 입력해주세요");
       return;
@@ -151,46 +168,49 @@ function AbyssMirrorContent() {
       return;
     }
 
-    setIsLoadingLocal(true);
-    setLoading(true);
-    setError(null);
+    // React 19: Non-blocking transition
+    startTransition(async () => {
+      setIsLoadingLocal(true);
+      setLoading(true);
+      setError(null);
 
-    try {
-      const response = await initMirror({
-        birth_year: quick ? 1990 : parseInt(birthInfo.year),
-        birth_month: quick ? 1 : parseInt(birthInfo.month),
-        birth_day: quick ? 1 : parseInt(birthInfo.day),
-        birth_hour: parseInt(birthInfo.hour) || 12,
-        mbti: birthInfo.mbti.toUpperCase(),
-        blood_type: birthInfo.bloodType.toUpperCase(),
-        gender: birthInfo.gender,
-        model,
-      }, byokKey);
+      try {
+        const response = await initMirror({
+          birth_year: quick ? 1990 : parseInt(birthInfo.year),
+          birth_month: quick ? 1 : parseInt(birthInfo.month),
+          birth_day: quick ? 1 : parseInt(birthInfo.day),
+          birth_hour: parseInt(birthInfo.hour) || 12,
+          mbti: birthInfo.mbti.toUpperCase(),
+          blood_type: birthInfo.bloodType.toUpperCase(),
+          gender: birthInfo.gender,
+          model,
+        }, byokKey);
 
-      if (response.success) {
-        setSessionId(response.session_id);
-        setPersonaData(response.persona_data);
-        setCompletionRate(response.completion_rate);
-        setMessages([{
-          role: "assistant",
-          content: response.initial_message,
-        }]);
-        setPhase("chat");
+        if (response.success) {
+          setSessionId(response.session_id);
+          setPersonaData(response.persona_data);
+          setCompletionRate(response.completion_rate);
+          setMessages([{
+            role: "assistant",
+            content: response.initial_message,
+          }]);
+          setPhase("chat");
 
-        if (!byokKey && creditCtx) {
-          void creditCtx.refresh();
+          if (!byokKey && creditCtx) {
+            void creditCtx.refresh();
+          }
         }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "초기화 실패");
+      } finally {
+        setIsLoadingLocal(false);
+        setLoading(false);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "초기화 실패");
-    } finally {
-      setIsLoadingLocal(false);
-      setLoading(false);
-    }
-  }, [birthInfo, byokKey, creditCtx, model, creditCost, setLoading]);
+    });
+  }, [birthInfo, byokKey, creditCtx, model, creditCost, setLoading, startTransition]);
 
-  const handleSendMessage = useCallback(async () => {
-    if (!inputMessage.trim() || isLoading || !sessionId) return;
+  const handleSendMessage = useCallback(() => {
+    if (!inputMessage.trim() || isPending || !sessionId) return;
 
     if (!byokKey && creditCtx && !creditCtx.hasEnoughCredits(creditCost)) {
       setShowCreditModal(true);
@@ -199,105 +219,113 @@ function AbyssMirrorContent() {
 
     const userMessage = inputMessage.trim();
     setInputMessage("");
-    setMessages(prev => [...prev, { role: "user", content: userMessage }]);
-    setIsLoadingLocal(true);
-    setError(null);
+
+    // React 19: Optimistic update - show user message immediately
+    const userMessageObj: Message = { role: "user", content: userMessage };
+    addOptimisticMessage(userMessageObj);
+    setMessages(prev => [...prev, userMessageObj]);
 
     if (ragEnabled) {
       void fetchSuggestion(userMessage, messages.map(m => m.content).join("\n").slice(-500));
     }
 
-    try {
-      const response: MirrorChatResponse = await chatMirror({
-        session_id: sessionId,
-        user_message: userMessage,
-        persona_data: personaData,
-        chat_history: messages.map(m => ({ role: m.role, content: m.content })),
-        current_stage: currentStage,
-        model,
-      }, byokKey);
+    // React 19: Non-blocking transition
+    startTransition(async () => {
+      setIsLoadingLocal(true);
+      setError(null);
 
-      if (response.success) {
-        const isCrisis = response.is_crisis ?? false;
-        if (isCrisis) {
-          const crisisMessage: Message = {
+      try {
+        const response: MirrorChatResponse = await chatMirror({
+          session_id: sessionId,
+          user_message: userMessage,
+          persona_data: personaData,
+          chat_history: messages.map(m => ({ role: m.role, content: m.content })),
+          current_stage: currentStage,
+          model,
+        }, byokKey);
+
+        if (response.success) {
+          const isCrisis = response.is_crisis ?? false;
+          if (isCrisis) {
+            const crisisMessage: Message = {
+              role: "assistant",
+              content: response.ai_response,
+              isCrisis: true,
+            };
+            setMessages(prev => [...prev, crisisMessage]);
+            setIsLoadingLocal(false);
+            return;
+          }
+
+          const assistantMessage: Message = {
             role: "assistant",
             content: response.ai_response,
-            isCrisis: true,
+            trace_id: response.trace_id,
+            evidence_refs: response.evidence_refs,
+            confidence: response.confidence,
           };
-          setMessages(prev => [...prev, crisisMessage]);
-          setIsLoadingLocal(false);
-          return;
-        }
 
-        const assistantMessage: Message = {
-          role: "assistant",
-          content: response.ai_response,
-          trace_id: response.trace_id,
-          evidence_refs: response.evidence_refs,
-          confidence: response.confidence,
-        };
+          setMessages(prev => [...prev, assistantMessage]);
+          setPersonaData(response.persona_data);
+          setCompletionRate(response.completion_rate);
+          setCurrentStage(response.current_stage);
 
-        setMessages(prev => [...prev, assistantMessage]);
-        setPersonaData(response.persona_data);
-        setCompletionRate(response.completion_rate);
-        setCurrentStage(response.current_stage);
+          addTrace({
+            trace_id: response.trace_id,
+            timestamp: new Date().toISOString(),
+            stage: response.current_stage,
+            evidence_refs: response.evidence_refs,
+            user_message_preview: userMessage.slice(0, 50),
+          });
 
-        addTrace({
-          trace_id: response.trace_id,
-          timestamp: new Date().toISOString(),
-          stage: response.current_stage,
-          evidence_refs: response.evidence_refs,
-          user_message_preview: userMessage.slice(0, 50),
-        });
-
-        if (response.is_complete) {
-          setPhase("complete");
-          if (chainContext) {
-            const personaSummary = (response.persona_data as Record<string, Record<string, string>>)?.persona?.summary;
-            chainContext.setChainData(
-              "abyss-mirror",
-              response.persona_data,
-              personaSummary || "심연의 거울 분석 완료"
-            );
+          if (response.is_complete) {
+            setPhase("complete");
+            if (chainContext) {
+              const personaSummary = (response.persona_data as Record<string, Record<string, string>>)?.persona?.summary;
+              chainContext.setChainData(
+                "abyss-mirror",
+                response.persona_data,
+                personaSummary || "심연의 거울 분석 완료"
+              );
+            }
+            saveLocal({
+              meta: {
+                id: sessionId,
+                created_at: new Date().toISOString(),
+                version: "1.0",
+                completion_rate: response.completion_rate,
+                schema_version: "2026-01-14",
+              },
+              ...response.persona_data,
+              _messages: [...messages, { role: "assistant", content: response.ai_response }],
+              _current_stage: response.current_stage,
+            } as PersonaPreset);
           }
-          saveLocal({
-            meta: {
-              id: sessionId,
-              created_at: new Date().toISOString(),
-              version: "1.0",
-              completion_rate: response.completion_rate,
-              schema_version: "2026-01-14",
-            },
-            ...response.persona_data,
-            _messages: [...messages, { role: "assistant", content: response.ai_response }],
-            _current_stage: response.current_stage,
-          } as PersonaPreset);
-        }
 
-        if (!byokKey && creditCtx) {
-          void creditCtx.refresh();
-        }
-      } else {
-        setError(response.error || "분석 실패");
-      }
-    } catch (err) {
-      if (err instanceof Error) {
-        if (err.message.includes("401") || err.message.includes("Unauthorized")) {
-          setError("인증 오류가 발생했습니다. 다시 시작해주세요.");
-        } else if (err.message.includes("402")) {
-          setError("크레딧이 부족합니다.");
-          setShowCreditModal(true);
+          if (!byokKey && creditCtx) {
+            void creditCtx.refresh();
+          }
         } else {
-          setError(err.message);
+          setError(response.error || "분석 실패");
         }
-      } else {
-        setError("알 수 없는 오류");
+      } catch (err) {
+        if (err instanceof Error) {
+          if (err.message.includes("401") || err.message.includes("Unauthorized")) {
+            setError("인증 오류가 발생했습니다. 다시 시작해주세요.");
+          } else if (err.message.includes("402")) {
+            setError("크레딧이 부족합니다.");
+            setShowCreditModal(true);
+          } else {
+            setError(err.message);
+          }
+        } else {
+          setError("알 수 없는 오류");
+        }
+      } finally {
+        setIsLoadingLocal(false);
       }
-    } finally {
-      setIsLoadingLocal(false);
-    }
-  }, [inputMessage, isLoading, sessionId, byokKey, creditCtx, messages, personaData, currentStage, model, creditCost, fetchSuggestion, addTrace, saveLocal, chainContext, ragEnabled]);
+    });
+  }, [inputMessage, isPending, sessionId, byokKey, creditCtx, messages, personaData, currentStage, model, creditCost, fetchSuggestion, addTrace, saveLocal, chainContext, ragEnabled, addOptimisticMessage, startTransition]);
 
   const handleExportJson = useCallback(() => {
     if (Object.keys(personaData).length === 0) return;
@@ -425,19 +453,28 @@ function AbyssMirrorContent() {
           </div>
         </div>
 
-        {/* Buttons */}
+        {/* Buttons - React 19: Use isPending for combined state */}
         <div className="flex gap-3 pt-4">
           <button
             onClick={() => handleStartAnalysis(false)}
-            disabled={isLoading}
+            disabled={isPending}
             className={`flex-1 py-3 bg-gradient-to-r from-${token.themeColor}-500 to-purple-600 hover:from-${token.themeColor}-600 hover:to-purple-700 text-white font-medium rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2`}
           >
-            <Sparkles className="w-4 h-4" />
-            분석 시작
+            {isPending ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                분석 중...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                분석 시작
+              </>
+            )}
           </button>
           <button
             onClick={() => handleStartAnalysis(true)}
-            disabled={isLoading}
+            disabled={isPending}
             className="px-4 py-3 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white/70 font-medium rounded-xl transition-all disabled:opacity-50 flex items-center gap-2"
             title="기본값으로 빠르게 시작"
           >
@@ -518,9 +555,9 @@ function AbyssMirrorContent() {
           </div>
         </div>
 
-        {/* Messages */}
+        {/* Messages - React 19: Use optimisticMessages for instant feedback */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
-          {messages.map((msg, i) => (
+          {optimisticMessages.map((msg, i) => (
             <div key={i} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               {msg.role === "assistant" && (
                 <div className={`w-8 h-8 rounded-full bg-${token.themeColor}-100 dark:bg-${token.themeColor}-500/20 border border-${token.themeColor}-300 dark:border-${token.themeColor}-500/30 flex items-center justify-center flex-shrink-0`}>
@@ -571,7 +608,8 @@ function AbyssMirrorContent() {
             </div>
           ))}
 
-          {isLoading && (
+          {/* React 19: Show loading during transition */}
+          {isPending && (
             <div className="flex gap-3">
               <div className={`w-8 h-8 rounded-full bg-${token.themeColor}-100 dark:bg-${token.themeColor}-500/20 border border-${token.themeColor}-300 dark:border-${token.themeColor}-500/30 flex items-center justify-center animate-pulse`}>
                 <Bot className={`w-4 h-4 text-${token.themeColor}-600 dark:text-${token.themeColor}-400`} />
@@ -609,6 +647,7 @@ function AbyssMirrorContent() {
               </div>
             )}
 
+            {/* React 19: Use isPending for combined state */}
             <div className="flex gap-3">
               <input
                 type="text"
@@ -617,14 +656,14 @@ function AbyssMirrorContent() {
                   setInputMessage(e.target.value);
                   markAsOverridden();
                 }}
-                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
+                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && void handleSendMessage()}
                 placeholder="답변을 입력하세요..."
-                disabled={isLoading}
+                disabled={isPending}
                 className={`flex-1 px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 focus:outline-none focus:border-${token.themeColor}-500 transition-all disabled:opacity-50`}
               />
               <button
                 onClick={handleSendMessage}
-                disabled={isLoading || !inputMessage.trim()}
+                disabled={isPending || !inputMessage.trim()}
                 className={`px-6 py-3 bg-${token.themeColor}-500 hover:bg-${token.themeColor}-600 disabled:bg-slate-200 dark:disabled:bg-white/10 text-white disabled:text-slate-400 dark:disabled:text-white/30 rounded-xl transition-all`}
               >
                 <Send className="w-5 h-5" />
@@ -677,7 +716,8 @@ function AbyssMirrorContent() {
   // Main Render
   // ========================================================================
 
-  const showFullscreenLoading = phase === "input" && isLoading;
+  // React 19: Combined pending state for fullscreen loading
+  const showFullscreenLoading = phase === "input" && isPending;
 
   return (
     <>

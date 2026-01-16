@@ -3,12 +3,18 @@
 /**
  * QualityDirectorPanel - 퀄리티 디렉터 (QC)
  *
- * Multi-criteria quality assessment for creative content.
- * Migrated to Panel Design Unity Compound Component System.
+ * 2026 Golden App: React 19 Best Practices + Multi-criteria Assessment
+ *
+ * Features:
+ * - useTransition for non-blocking form submission
+ * - useOptimistic for instant UI feedback
+ * - Multi-criteria quality assessment
+ *
+ * @see https://react.dev/blog/2024/12/05/react-19
  * @see docs/PANEL_DESIGN_UNITY_SPEC.md
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useTransition, useOptimistic } from "react";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
@@ -96,6 +102,12 @@ function QualityDirectorContent() {
   // Result state
   const [qualityResult, setQualityResult] = useState<QualityResult | null>(null);
 
+  // React 19: useTransition for non-blocking form submission
+  const [isTransitionPending, startTransition] = useTransition();
+
+  // React 19: useOptimistic for instant UI feedback
+  const [optimisticStatus, setOptimisticStatus] = useOptimistic<"idle" | "checking" | "done">("idle");
+
   // BYOK and credits
   const { byokKey } = useBYOK();
   const creditCtx = useCreditContextOptional();
@@ -153,7 +165,7 @@ function QualityDirectorContent() {
     );
   };
 
-  const handleCheck = useCallback(async () => {
+  const handleCheck = useCallback(() => {
     const trimmedContent = content.trim();
     if (!trimmedContent) {
       setValidationError("검수할 콘텐츠를 입력해주세요");
@@ -174,17 +186,22 @@ function QualityDirectorContent() {
       return;
     }
 
-    await wrappedExecute(
-      `${API_BASE}/api/dimension/quality/check`,
-      {
-        content,
-        content_type: contentType,
-        criteria: selectedCriteria,
-        model,
-        threshold,
-      },
-      getBYOKHeaders(byokKey)
-    );
+    // React 19: Non-blocking transition with optimistic UI
+    startTransition(async () => {
+      setOptimisticStatus("checking");
+      await wrappedExecute(
+        `${API_BASE}/api/dimension/quality/check`,
+        {
+          content,
+          content_type: contentType,
+          criteria: selectedCriteria,
+          model,
+          threshold,
+        },
+        getBYOKHeaders(byokKey)
+      );
+      setOptimisticStatus("done");
+    });
   }, [
     content,
     contentType,
@@ -195,6 +212,8 @@ function QualityDirectorContent() {
     creditCtx,
     wrappedExecute,
     CREDIT_COST,
+    startTransition,
+    setOptimisticStatus,
   ]);
 
   // Export result as JSON
@@ -203,6 +222,8 @@ function QualityDirectorContent() {
     exportJSON(qualityResult, `quality-check-${Date.now()}.json`);
   }, [qualityResult, exportJSON]);
 
+  // Combined loading state: async operation OR React 19 transition
+  const isPending = isLoading || isTransitionPending;
   const displayError = validationError || error;
 
   const getScoreColor = (score: number) => {
@@ -335,14 +356,14 @@ function QualityDirectorContent() {
           options={MODELS}
         />
 
-        {/* Generate Button */}
+        {/* Generate Button - React 19: Combined pending state */}
         <DimensionPanel.GenerateButton
           onClick={handleCheck}
           disabled={!content.trim() || selectedCriteria.length === 0}
-          loading={isLoading}
+          loading={isPending}
           creditCost={CREDIT_COST}
           icon={<Shield className="w-5 h-5" />}
-          loadingText="검수 중..."
+          loadingText={optimisticStatus === "checking" ? "품질 검수 중..." : "검수 중..."}
         >
           품질 검수 시작
         </DimensionPanel.GenerateButton>
@@ -356,11 +377,11 @@ function QualityDirectorContent() {
       </DimensionPanel.Sidebar>
 
       <DimensionPanel.Content>
-        {/* Loading State */}
-        <DimensionPanel.Loading message="품질 검수 중..." />
+        {/* Loading State - React 19: Shows during transition */}
+        <DimensionPanel.Loading message={optimisticStatus === "checking" ? "품질 기준별 검수 중..." : "품질 검수 중..."} />
 
         {/* Error State */}
-        {displayError && !isLoading && (
+        {displayError && !isPending && (
           <DimensionPanel.Error
             error={displayError}
             onRetry={canRetry ? () => void retry() : undefined}
@@ -368,7 +389,7 @@ function QualityDirectorContent() {
         )}
 
         {/* Result Display */}
-        {qualityResult && !isLoading && (
+        {qualityResult && !isPending && (
           <QualityResultDisplay
             result={qualityResult}
             onExport={handleExportJson}
@@ -379,7 +400,7 @@ function QualityDirectorContent() {
         )}
 
         {/* Empty State */}
-        {!qualityResult && !isLoading && !displayError && (
+        {!qualityResult && !isPending && !displayError && (
           <EmptyState themeColor={token.themeColor} />
         )}
 

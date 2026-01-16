@@ -3,12 +3,18 @@
 /**
  * StoryboardPanel - 스토리보드 생성기
  *
- * Generates visual storyboard scenes from scripts.
- * Migrated to Panel Design Unity Compound Component System.
+ * 2026 Golden App: React 19 Best Practices
+ *
+ * Features:
+ * - useTransition for non-blocking form submission
+ * - useOptimistic for instant UI feedback
+ * - Visual storyboard scene generation
+ *
+ * @see https://react.dev/blog/2024/12/05/react-19
  * @see docs/PANEL_DESIGN_UNITY_SPEC.md
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useTransition, useOptimistic } from "react";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
@@ -88,6 +94,12 @@ function StoryboardContent() {
   // Result state
   const [storyboardResult, setStoryboardResult] = useState<StoryboardResult | null>(null);
 
+  // React 19: useTransition for non-blocking form submission
+  const [isTransitionPending, startTransition] = useTransition();
+
+  // React 19: useOptimistic for instant UI feedback
+  const [optimisticResult, setOptimisticResult] = useOptimistic<StoryboardResult | null>(null);
+
   // BYOK and credits
   const { byokKey } = useBYOK();
   const creditCtx = useCreditContextOptional();
@@ -137,8 +149,11 @@ function StoryboardContent() {
     [execute, setLoading]
   );
 
+  // Combined loading state (React 19)
+  const isPending = isLoading || isTransitionPending;
+
   // Generate storyboard
-  const handleGenerate = useCallback(async () => {
+  const handleGenerate = useCallback(() => {
     const trimmedScript = script.trim();
     if (!trimmedScript) {
       setValidationError("스토리 컨셉을 입력해주세요");
@@ -155,12 +170,27 @@ function StoryboardContent() {
       return;
     }
 
-    await wrappedExecute(
-      `${API_BASE}/api/dimension/2d/create`,
-      { concept: script, scene_count: sceneCount, language, model },
-      getBYOKHeaders(byokKey)
-    );
-  }, [script, sceneCount, language, model, byokKey, creditCtx, wrappedExecute, CREDIT_COST]);
+    // React 19: Non-blocking transition with optimistic UI
+    startTransition(async () => {
+      // Optimistic: Show placeholder scenes immediately
+      setOptimisticResult({
+        scenes: Array.from({ length: sceneCount }, (_, i) => ({
+          scene_number: i + 1,
+          description: "생성 중...",
+          camera: "분석 중...",
+          duration: "...",
+        })),
+      });
+
+      await wrappedExecute(
+        `${API_BASE}/api/dimension/2d/create`,
+        { concept: script, scene_count: sceneCount, language, model },
+        getBYOKHeaders(byokKey)
+      );
+
+      setOptimisticResult(null);
+    });
+  }, [script, sceneCount, language, model, byokKey, creditCtx, wrappedExecute, CREDIT_COST, startTransition, setOptimisticResult]);
 
   // Export result as JSON
   const handleExportJson = useCallback(() => {
@@ -264,14 +294,14 @@ function StoryboardContent() {
           options={MODELS}
         />
 
-        {/* Generate Button */}
+        {/* Generate Button - React 19: Combined pending state */}
         <DimensionPanel.GenerateButton
           onClick={handleGenerate}
           disabled={!script.trim()}
-          loading={isLoading}
+          loading={isPending}
           creditCost={CREDIT_COST}
           icon={<Layout className="w-5 h-5" />}
-          loadingText="생성 중..."
+          loadingText="스토리보드 생성 중..."
         >
           Create Storyboard
         </DimensionPanel.GenerateButton>
@@ -285,19 +315,45 @@ function StoryboardContent() {
       </DimensionPanel.Sidebar>
 
       <DimensionPanel.Content>
-        {/* Loading State */}
+        {/* Loading State - React 19: Shows during transition */}
         <DimensionPanel.Loading message="스토리보드 생성 중..." />
 
         {/* Error State */}
-        {displayError && !isLoading && (
+        {displayError && !isPending && (
           <DimensionPanel.Error
             error={displayError}
             onRetry={canRetry ? () => void retry() : undefined}
           />
         )}
 
+        {/* Optimistic Result Display (React 19) */}
+        {optimisticResult && isPending && (
+          <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-300 pb-20 opacity-60">
+            <div className="flex items-center justify-center gap-2 py-3 px-4 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
+              <div className="w-3 h-3 rounded-full bg-cyan-500 animate-pulse" />
+              <span className="text-sm text-cyan-600 dark:text-cyan-300">
+                {sceneCount}개 장면 생성 중...
+              </span>
+            </div>
+            <div className="grid grid-cols-1 gap-4">
+              {optimisticResult.scenes.map((scene, idx) => (
+                <div key={idx} className="p-4 bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-2xl animate-pulse">
+                  <div className="flex justify-between mb-4">
+                    <div className="h-4 w-24 bg-slate-200 dark:bg-white/10 rounded" />
+                    <div className="h-4 w-12 bg-slate-200 dark:bg-white/10 rounded" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-3 w-full bg-slate-200 dark:bg-white/10 rounded" />
+                    <div className="h-3 w-3/4 bg-slate-200 dark:bg-white/10 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Result Display */}
-        {storyboardResult && !isLoading && (
+        {storyboardResult && !isPending && (
           <StoryboardResultDisplay
             result={storyboardResult}
             onExport={handleExportJson}
@@ -307,7 +363,7 @@ function StoryboardContent() {
         )}
 
         {/* Empty State */}
-        {!storyboardResult && !isLoading && !displayError && (
+        {!storyboardResult && !isPending && !displayError && !optimisticResult && (
           <EmptyState themeColor={token.themeColor} />
         )}
 

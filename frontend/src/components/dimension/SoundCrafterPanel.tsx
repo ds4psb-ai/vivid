@@ -3,17 +3,23 @@
 /**
  * SoundCrafterPanel - 사운드 디자인 스튜디오 (SC)
  *
+ * 2026 Golden App: React 19 Best Practices
+ *
  * 4-Stage Sound Design Workflow:
  * 1. Intro: 컨셉 입력
  * 2. Mood: Audio Direction 선택
  * 3. Layers: Mix Recipe 조절
  * 4. Mastering: 최종 결과 표시
  *
- * Migrated to Panel Design Unity Compound Component System.
+ * Features:
+ * - useTransition for non-blocking form submission
+ * - useOptimistic for instant UI feedback
+ *
+ * @see https://react.dev/blog/2024/12/05/react-19
  * @see docs/PANEL_DESIGN_UNITY_SPEC.md
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useTransition, useOptimistic } from "react";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
@@ -164,6 +170,13 @@ function SoundCrafterContent() {
   // Export utilities
   const { exportJSON, copyToClipboard } = useResultExport();
 
+  // React 19: useTransition for non-blocking operations
+  const [isTransitionPending, startTransition] = useTransition();
+
+  // React 19: useOptimistic for instant UI feedback
+  const [optimisticMoodResult, setOptimisticMoodResult] = useOptimistic<MoodboardResult | null>(null);
+  const [optimisticFinalResult, setOptimisticFinalResult] = useOptimistic<SoundResult | null>(null);
+
   // Set current dimension on mount
   useEffect(() => {
     if (chainCtx) {
@@ -225,7 +238,8 @@ function SoundCrafterContent() {
     },
   });
 
-  const combinedLoading = moodOp.isLoading || craftOp.isLoading;
+  // Combined loading state (React 19: includes transition pending)
+  const combinedLoading = moodOp.isLoading || craftOp.isLoading || isTransitionPending;
 
   // Update context loading state
   useEffect(() => {
@@ -242,7 +256,7 @@ function SoundCrafterContent() {
     }
   };
 
-  const handleGenerateMood = useCallback(async () => {
+  const handleGenerateMood = useCallback(() => {
     const trimmed = concept.trim();
     if (trimmed.length < 5) {
       setValidationError("컨셉을 5자 이상 입력해주세요.");
@@ -260,19 +274,36 @@ function SoundCrafterContent() {
       return;
     }
 
-    await moodOp.execute(
-      `${API_BASE}/api/dimension/sound/moodboard`,
-      { concept: trimmed, model: "gemini-3-pro-preview" },
-      getBYOKHeaders(byokKey)
-    );
-  }, [concept, byokKey, creditCtx, moodOp, CREDIT_COST_MOOD]);
+    // React 19: Non-blocking transition with optimistic UI
+    startTransition(async () => {
+      // Optimistic: Show placeholder directions immediately
+      setOptimisticMoodResult({
+        directions: Array.from({ length: 3 }, (_, i) => ({
+          id: `placeholder-${i}`,
+          title: "분석 중...",
+          description: "사운드 디렉션을 생성하고 있습니다...",
+          visual_style: { color: "#f43f5e", icon: "music" },
+          bpm_range: "...",
+          key_elements: ["분석 중..."],
+        })),
+      });
+
+      await moodOp.execute(
+        `${API_BASE}/api/dimension/sound/moodboard`,
+        { concept: trimmed, model: "gemini-3-pro-preview" },
+        getBYOKHeaders(byokKey)
+      );
+
+      setOptimisticMoodResult(null);
+    });
+  }, [concept, byokKey, creditCtx, moodOp, CREDIT_COST_MOOD, startTransition, setOptimisticMoodResult]);
 
   const handleSelectDirection = (direction: AudioDirection) => {
     setSelectedDirection(direction);
     setCurrentStage("layers");
   };
 
-  const handleGenerateFinal = useCallback(async () => {
+  const handleGenerateFinal = useCallback(() => {
     if (!selectedDirection) return;
 
     if (
@@ -285,18 +316,36 @@ function SoundCrafterContent() {
       return;
     }
 
-    await craftOp.execute(
-      `${API_BASE}/api/dimension/sound/craft`,
-      {
-        concept: `${concept} (Style: ${selectedDirection.title})`,
-        sound_type: "full",
-        mood: selectedDirection.description,
-        mix_recipe: mixRecipe,
-        target_platform: "suno",
-        model: "gemini-3-flash-preview",
-      },
-      getBYOKHeaders(byokKey)
-    );
+    // React 19: Non-blocking transition with optimistic UI
+    startTransition(async () => {
+      // Optimistic: Show placeholder result immediately
+      setOptimisticFinalResult({
+        music_prompt: "프롬프트 생성 중...",
+        udio_prompt: "프롬프트 생성 중...",
+        style_tags: ["분석 중..."],
+        bpm_range: "...",
+        layers: {
+          melody: "생성 중...",
+          rhythm: "생성 중...",
+          texture: "생성 중...",
+        },
+      });
+
+      await craftOp.execute(
+        `${API_BASE}/api/dimension/sound/craft`,
+        {
+          concept: `${concept} (Style: ${selectedDirection.title})`,
+          sound_type: "full",
+          mood: selectedDirection.description,
+          mix_recipe: mixRecipe,
+          target_platform: "suno",
+          model: "gemini-3-flash-preview",
+        },
+        getBYOKHeaders(byokKey)
+      );
+
+      setOptimisticFinalResult(null);
+    });
   }, [
     concept,
     selectedDirection,
@@ -305,6 +354,8 @@ function SoundCrafterContent() {
     creditCtx,
     craftOp,
     CREDIT_COST_CRAFT,
+    startTransition,
+    setOptimisticFinalResult,
   ]);
 
   const handleCopy = useCallback(
@@ -384,6 +435,29 @@ function SoundCrafterContent() {
         {/* Intro Stage */}
         {currentStage === "intro" && !combinedLoading && <IntroEmptyState />}
 
+        {/* Optimistic Mood Stage (React 19) */}
+        {currentStage === "intro" && combinedLoading && optimisticMoodResult && (
+          <div className="space-y-6 animate-in fade-in duration-300 opacity-60">
+            <div className="flex items-center justify-center gap-2 py-3 px-4 bg-rose-500/10 rounded-lg border border-rose-500/20">
+              <div className="w-3 h-3 rounded-full bg-rose-500 animate-pulse" />
+              <span className="text-sm text-rose-600 dark:text-rose-300">
+                사운드 디렉션 분석 중...
+              </span>
+            </div>
+            <div className="grid grid-cols-1 gap-4">
+              {optimisticMoodResult.directions.map((dir, idx) => (
+                <div key={idx} className="p-5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 animate-pulse">
+                  <div className="h-5 w-32 bg-slate-200 dark:bg-white/10 rounded mb-3" />
+                  <div className="space-y-2">
+                    <div className="h-3 w-full bg-slate-200 dark:bg-white/10 rounded" />
+                    <div className="h-3 w-3/4 bg-slate-200 dark:bg-white/10 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Mood Stage */}
         {currentStage === "mood" && !combinedLoading && moodResult && (
           <MoodStage
@@ -402,12 +476,40 @@ function SoundCrafterContent() {
             selectedDirection={selectedDirection}
             mixRecipe={mixRecipe}
             setMixRecipe={setMixRecipe}
-            isLoading={craftOp.isLoading}
+            isLoading={craftOp.isLoading || isTransitionPending}
             onGoBack={() => setCurrentStage("mood")}
             onGenerate={handleGenerateFinal}
             creditCost={CREDIT_COST_CRAFT}
             byokKey={byokKey}
           />
+        )}
+
+        {/* Optimistic Mastering Stage (React 19) */}
+        {currentStage === "layers" && combinedLoading && optimisticFinalResult && (
+          <div className="space-y-6 animate-in fade-in duration-300 opacity-60">
+            <div className="flex items-center justify-center gap-2 py-3 px-4 bg-rose-500/10 rounded-lg border border-rose-500/20">
+              <div className="w-3 h-3 rounded-full bg-rose-500 animate-pulse" />
+              <span className="text-sm text-rose-600 dark:text-rose-300">
+                사운드 테크 팩 생성 중...
+              </span>
+            </div>
+            <div className="p-6 rounded-2xl bg-gradient-to-br from-rose-500/10 to-black border border-rose-500/20 animate-pulse">
+              <div className="h-4 w-24 bg-rose-500/20 rounded mb-4" />
+              <div className="space-y-2">
+                <div className="h-3 w-full bg-white/10 rounded" />
+                <div className="h-3 w-5/6 bg-white/10 rounded" />
+                <div className="h-3 w-4/6 bg-white/10 rounded" />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {["멜로디", "리듬", "텍스처"].map((label, i) => (
+                <div key={i} className="p-4 rounded-xl bg-white/5 border border-white/10 animate-pulse">
+                  <div className="h-3 w-16 bg-rose-400/20 rounded mb-2" />
+                  <div className="h-3 w-full bg-white/10 rounded" />
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* Mastering Stage */}
