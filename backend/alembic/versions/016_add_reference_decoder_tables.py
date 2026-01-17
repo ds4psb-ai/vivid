@@ -166,8 +166,7 @@ def upgrade() -> None:
         sa.Column('updated_at', sa.DateTime(), onupdate=sa.func.now(), nullable=True),
     )
 
-    # Indexes for style_presets
-    op.create_index('ix_style_presets_user_id', 'style_presets', ['user_id'])
+    # Indexes for style_presets (user_id already indexed via index=True)
     op.create_index('ix_style_presets_tags', 'style_presets',
                     ['tags'], postgresql_using='gin')
     op.create_index('ix_style_presets_lighting', 'style_presets', ['lighting'])
@@ -251,8 +250,7 @@ def upgrade() -> None:
         sa.Column('updated_at', sa.DateTime(), onupdate=sa.func.now(), nullable=True),
     )
 
-    # Indexes for reference_scenes
-    op.create_index('ix_reference_scenes_director', 'reference_scenes', ['director'])
+    # Indexes for reference_scenes (director, cinematographer already indexed via index=True)
     op.create_index('ix_reference_scenes_film', 'reference_scenes', ['film_title'])
     op.create_index('ix_reference_scenes_year', 'reference_scenes', ['film_year'])
     op.create_index('ix_reference_scenes_auteur_tags', 'reference_scenes',
@@ -329,8 +327,7 @@ def upgrade() -> None:
         ),
     )
 
-    # Indexes for cinematography_techniques
-    op.create_index('ix_cine_techniques_category', 'cinematography_techniques', ['category'])
+    # Indexes for cinematography_techniques (category already indexed via index=True)
     op.create_index('ix_cine_techniques_aliases', 'cinematography_techniques',
                     ['aliases'], postgresql_using='gin')
     op.create_index('ix_cine_techniques_emotional', 'cinematography_techniques',
