@@ -966,6 +966,43 @@ class TestProfileQualityAssessment:
                 overall_score=50,
             )
 
+    def test_empty_dicts_dont_inflate_completeness(self):
+        """Empty dicts (with empty string values) should not contribute to completeness.
+
+        Regression test for P2 issue: validate_persona_preset seeds with empty dicts.
+        """
+        quality = assess_mirror_profile_quality(
+            mbti="INTJ",  # 25 points
+            persona_data={
+                "saju": {"year_pillar": "", "month_pillar": ""},  # Empty strings, 0 points
+                "input": {"mbti": ""},  # Empty string, 0 points
+                "persona": {},  # Empty dict, 0 points
+                "preferences": {},  # Empty dict, 0 points
+            },
+            completion_rate=50.0,
+            chat_turn_count=5,
+        )
+        # Only MBTI should contribute (25 points)
+        assert quality.completeness_score == 25
+        # Should suggest completing saju
+        assert any("saju" in s.lower() for s in quality.suggestions)
+
+    def test_meaningful_data_adds_completeness(self):
+        """Only meaningful (non-empty) values should contribute to completeness."""
+        quality = assess_mirror_profile_quality(
+            mbti="INTJ",  # 25 points
+            persona_data={
+                "saju": {"year_pillar": "甲子", "month_pillar": ""},  # One meaningful value, 25 points
+                "input": {"mbti": "INTJ", "blood_type": ""},  # One meaningful value, 15 points
+                "persona": {"archetype": ""},  # All empty, 0 points
+                "preferences": {"genre": "sci-fi"},  # One meaningful value, 15 points
+            },
+            completion_rate=50.0,
+            chat_turn_count=5,
+        )
+        # MBTI + saju + input + preferences = 25+25+15+15 = 80
+        assert quality.completeness_score == 80
+
 
 # ============================================================================
 # 2026 Enhancements: Response Model Tests

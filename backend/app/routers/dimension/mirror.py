@@ -263,20 +263,34 @@ def assess_mirror_profile_quality(
     else:
         suggestions.append("Provide MBTI type for better creative style matching")
 
-    # Check saju data
-    if persona_data.get("saju"):
+    # Check saju data - verify meaningful content, not just dict presence
+    saju_data = persona_data.get("saju", {})
+    if isinstance(saju_data, dict) and any(
+        v for v in saju_data.values() if isinstance(v, str) and v.strip()
+    ):
         completeness_factors.append(25)
+    else:
+        suggestions.append("Complete saju (四柱) analysis for deeper insights")
 
-    # Check input data
-    if persona_data.get("input"):
+    # Check input data - verify at least one meaningful value
+    input_data = persona_data.get("input", {})
+    if isinstance(input_data, dict) and any(
+        v for v in input_data.values() if isinstance(v, str) and v.strip()
+    ):
         completeness_factors.append(15)
 
-    # Check persona insights
-    if persona_data.get("persona"):
+    # Check persona insights - verify meaningful content
+    persona_insights = persona_data.get("persona", {})
+    if isinstance(persona_insights, dict) and any(
+        v for v in persona_insights.values() if isinstance(v, str) and v.strip()
+    ):
         completeness_factors.append(20)
 
-    # Check preferences
-    if persona_data.get("preferences"):
+    # Check preferences - verify meaningful content
+    preferences = persona_data.get("preferences", {})
+    if isinstance(preferences, dict) and any(
+        v for v in preferences.values() if v  # Any truthy value
+    ):
         completeness_factors.append(15)
 
     completeness_score = sum(completeness_factors)

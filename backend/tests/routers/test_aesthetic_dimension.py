@@ -1084,6 +1084,43 @@ class TestAuteurVisualKeywords:
         nolan_keywords = AUTEUR_VISUAL_KEYWORDS["nolan"]
         assert "IMAX scale" in nolan_keywords or any("imax" in kw.lower() for kw in nolan_keywords)
 
+    def test_keywords_align_with_compatibility_matrix(self):
+        """Regression test for P3 issue: all compatibility matrix auteurs must have keywords.
+
+        AUTEUR_VISUAL_KEYWORDS must have entries for all auteurs in AUTEUR_COMPATIBILITY_MATRIX.
+        """
+        # Collect all auteurs from compatibility matrix
+        matrix_auteurs = set()
+        for primary, secondaries in AUTEUR_COMPATIBILITY_MATRIX.items():
+            matrix_auteurs.add(primary)
+            matrix_auteurs.update(secondaries.keys())
+
+        # All matrix auteurs should have keyword entries
+        keywords_auteurs = set(AUTEUR_VISUAL_KEYWORDS.keys())
+        missing = matrix_auteurs - keywords_auteurs
+        assert len(missing) == 0, f"Missing keywords for: {missing}"
+
+    def test_spielberg_keywords_exist(self):
+        """Test Spielberg keywords exist (previously missing)."""
+        assert "spielberg" in AUTEUR_VISUAL_KEYWORDS
+        assert len(AUTEUR_VISUAL_KEYWORDS["spielberg"]) >= 3
+
+    def test_cameron_keywords_exist(self):
+        """Test Cameron keywords exist (previously missing)."""
+        assert "cameron" in AUTEUR_VISUAL_KEYWORDS
+        assert any("blue" in kw.lower() for kw in AUTEUR_VISUAL_KEYWORDS["cameron"])
+
+    def test_shinkai_keywords_exist(self):
+        """Test Shinkai keywords exist (previously missing)."""
+        assert "shinkai" in AUTEUR_VISUAL_KEYWORDS
+        assert any("background" in kw.lower() or "light" in kw.lower() for kw in AUTEUR_VISUAL_KEYWORDS["shinkai"])
+
+    def test_blend_with_spielberg_has_keywords(self):
+        """Test blending with Spielberg now returns visual keywords."""
+        result = blend_auteur_styles("spielberg", "cameron")
+        assert len(result.visual_keywords) >= 2
+        assert result.compatibility_score > 0
+
 
 class TestGetAuteurCompatibility:
     """Test get_auteur_compatibility function."""

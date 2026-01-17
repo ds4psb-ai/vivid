@@ -779,6 +779,7 @@ AUTEUR_COMPATIBILITY_MATRIX: dict[str, dict[str, float]] = {
 }
 
 # Visual style keywords for each auteur
+# Must align with AUTEUR_COMPATIBILITY_MATRIX keys
 AUTEUR_VISUAL_KEYWORDS: dict[str, List[str]] = {
     "bong": ["layered framing", "class symbolism", "muted palette", "vertical depth", "social tension"],
     "nolan": ["IMAX scale", "temporal complexity", "practical effects", "blue-gold palette", "geometric precision"],
@@ -788,6 +789,19 @@ AUTEUR_VISUAL_KEYWORDS: dict[str, List[str]] = {
     "miyazaki": ["hand-drawn warmth", "nature harmony", "flight sequences", "watercolor backgrounds", "child wonder"],
     "kubrick": ["one-point perspective", "symmetrical composition", "cold precision", "long takes", "existential dread"],
     "fincher": ["dark atmosphere", "desaturated palette", "forensic detail", "shadow play", "meticulous control"],
+    # Added to align with AUTEUR_COMPATIBILITY_MATRIX
+    "spielberg": ["lens flare", "wonder shots", "suburban americana", "emotional crescendo", "child perspective"],
+    "cameron": ["blue palette", "technological sublime", "underwater imagery", "strong female leads", "epic scale"],
+    "ridley_scott": ["smoke and light", "industrial decay", "historical epic", "rain noir", "textured environments"],
+    "guy_ritchie": ["snappy editing", "British gangster aesthetic", "split-screen montage", "kinetic camera", "masculine ensemble"],
+    "shinkai": ["photorealistic backgrounds", "light rays", "cloud formations", "urban loneliness", "romantic melancholy"],
+    "rodriguez": ["grindhouse aesthetic", "high contrast", "practical gore", "low-budget inventiveness", "action rhythm"],
+    "zemeckis": ["motion capture innovation", "time travel motifs", "visual effects integration", "nostalgic americana", "Boomer appeal"],
+    "hosoda": ["family bonds", "digital worlds", "summer settings", "coming-of-age warmth", "vibrant colors"],
+    "isao": ["naturalistic movement", "quiet observation", "wartime memory", "pastoral beauty", "emotional restraint"],
+    "kar_wai": ["neon expressionism", "handheld intimacy", "color saturation", "reflection shots", "time distortion"],
+    "wong_kar_wai": ["neon expressionism", "handheld intimacy", "color saturation", "reflection shots", "time distortion"],
+    "ghibli": ["hand-drawn warmth", "nature harmony", "flight sequences", "watercolor backgrounds", "child wonder"],
 }
 
 # Mathematical aesthetics constants
