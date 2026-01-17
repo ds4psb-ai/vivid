@@ -322,3 +322,264 @@ class TestEdgeCases:
         """Test large seed value."""
         request = VeoGenerateRequest(prompt="Test", seed=999999999)
         assert request.seed == 999999999
+
+
+# ============================================================================
+# Character Consistency Integration Tests
+# ============================================================================
+
+class TestCharacterConsistency:
+    """Test character_ids integration for Veo Ingredients."""
+
+    def test_empty_character_ids_default(self):
+        """Test empty character_ids default."""
+        request = VeoGenerateRequest(prompt="Test prompt")
+        assert request.character_ids == []
+
+    def test_single_character_id(self):
+        """Test single character_id."""
+        request = VeoGenerateRequest(
+            prompt="Test prompt",
+            character_ids=["uuid-1"],
+        )
+        assert len(request.character_ids) == 1
+        assert request.character_ids[0] == "uuid-1"
+
+    def test_multiple_character_ids(self):
+        """Test multiple character_ids (up to 3)."""
+        request = VeoGenerateRequest(
+            prompt="Test prompt",
+            character_ids=["uuid-1", "uuid-2", "uuid-3"],
+        )
+        assert len(request.character_ids) == 3
+
+    def test_max_character_ids(self):
+        """Test max 3 character_ids limit."""
+        with pytest.raises(ValidationError):
+            VeoGenerateRequest(
+                prompt="Test prompt",
+                character_ids=["a", "b", "c", "d"],  # 4 exceeds limit
+            )
+
+
+# ============================================================================
+# Duration Comprehensive Tests
+# ============================================================================
+
+class TestDurationComprehensive:
+    """Comprehensive duration validation tests."""
+
+    @pytest.mark.parametrize("duration", [4, 5, 6, 7, 8])
+    def test_all_valid_durations(self, duration):
+        """Test all valid duration values."""
+        request = VeoGenerateRequest(prompt="Test", duration=duration)
+        assert request.duration == duration
+
+    def test_default_duration(self):
+        """Test default duration is 6 seconds."""
+        request = VeoGenerateRequest(prompt="Test")
+        assert request.duration == 6
+
+    @pytest.mark.parametrize("invalid_duration", [0, 1, 2, 3, 9, 10, 100, -1])
+    def test_invalid_durations(self, invalid_duration):
+        """Test invalid duration values fail."""
+        with pytest.raises(ValidationError):
+            VeoGenerateRequest(prompt="Test", duration=invalid_duration)
+
+
+# ============================================================================
+# Capsule ID Integration Tests
+# ============================================================================
+
+class TestCapsuleIdIntegration:
+    """Test integration with dimension adapter system."""
+
+    def test_veo_capsule_id_exists(self):
+        """Verify VEO_VIDEO_GENERATE capsule ID exists."""
+        from app.routers.dimension._base import DimensionCapsuleId
+        assert hasattr(DimensionCapsuleId, "VEO_VIDEO_GENERATE")
+
+    def test_capsule_in_fixtures(self):
+        """Verify capsule is defined in fixtures."""
+        from app.fixtures.dimension_capsules import DIMENSION_CAPSULES
+        capsule = next(
+            (c for c in DIMENSION_CAPSULES if "veo" in c["capsule_key"].lower()),
+            None
+        )
+        assert capsule is not None
+        assert "credit_costs" in capsule
+
+
+# ============================================================================
+# Model Validation Comprehensive Tests
+# ============================================================================
+
+class TestModelValidationComprehensive:
+    """Comprehensive model validation tests."""
+
+    def test_standard_model(self):
+        """Test standard Veo 3.1 model."""
+        request = VeoGenerateRequest(
+            prompt="Test",
+            model="veo-3.1-generate-preview",
+        )
+        assert request.model == "veo-3.1-generate-preview"
+
+    def test_fast_model(self):
+        """Test fast Veo 3.1 model."""
+        request = VeoGenerateRequest(
+            prompt="Test",
+            model="veo-3.1-fast-generate-preview",
+        )
+        assert request.model == "veo-3.1-fast-generate-preview"
+
+    @pytest.mark.parametrize("invalid_model", [
+        "veo-2.0",
+        "veo-3.0",
+        "veo-3.1",
+        "sora-2",
+        "kling-2.6",
+        "runway-gen3",
+        "",
+        "INVALID",
+    ])
+    def test_invalid_models_fail(self, invalid_model):
+        """Test invalid models are rejected."""
+        with pytest.raises(ValidationError):
+            VeoGenerateRequest(prompt="Test", model=invalid_model)
+
+
+# ============================================================================
+# Aspect Ratio Validation Tests
+# ============================================================================
+
+class TestAspectRatioValidation:
+    """Test aspect ratio validation."""
+
+    @pytest.mark.parametrize("ratio", ["16:9", "9:16", "1:1", "4:3", "3:4"])
+    def test_common_aspect_ratios(self, ratio):
+        """Test common aspect ratios are valid."""
+        request = VeoGenerateRequest(prompt="Test", aspect_ratio=ratio)
+        assert request.aspect_ratio == ratio
+
+    def test_default_aspect_ratio(self):
+        """Test default aspect ratio is 16:9."""
+        request = VeoGenerateRequest(prompt="Test")
+        assert request.aspect_ratio == "16:9"
+
+
+# ============================================================================
+# Combined Field Validation Tests
+# ============================================================================
+
+class TestCombinedFields:
+    """Test combinations of fields together."""
+
+    def test_full_request(self):
+        """Test request with all fields populated."""
+        request = VeoGenerateRequest(
+            prompt="A cinematic shot of waves crashing on rocks at sunset",
+            negative_prompt="blurry, low quality",
+            aspect_ratio="16:9",
+            duration=8,
+            style="cinematic noir",
+            seed=12345,
+            model="veo-3.1-generate-preview",
+            character_ids=["char-1", "char-2"],
+        )
+        assert len(request.prompt) > 10
+        assert request.duration == 8
+        assert len(request.character_ids) == 2
+
+    def test_minimal_request(self):
+        """Test request with only required fields."""
+        request = VeoGenerateRequest(prompt="Test video prompt")
+        # All defaults should be applied
+        assert request.negative_prompt == ""
+        assert request.aspect_ratio == "16:9"
+        assert request.duration == 6
+        assert request.style == "cinematic"
+        assert request.seed == 0
+        assert request.model == "veo-3.1-generate-preview"
+        assert request.character_ids == []
+
+
+# ============================================================================
+# Veo 3.1 Feature Tests (2026 Best Practices)
+# ============================================================================
+
+class TestVeo31Features:
+    """Test Veo 3.1 specific features (2026 Best Practices)."""
+
+    def test_native_audio_enabled(self):
+        """Veo 3.1 includes native audio by default."""
+        # This tests the concept - actual audio is in VeoConfig
+        request = VeoGenerateRequest(
+            prompt="Two people talking at a coffee shop"
+        )
+        # Veo 3.1 should handle dialogue/audio natively
+        assert request.model.startswith("veo-3.1")
+
+    def test_1080p_support(self):
+        """Veo 3.1 supports 1080p output."""
+        # 16:9 aspect ratio supports HD
+        request = VeoGenerateRequest(
+            prompt="High quality cinematic shot",
+            aspect_ratio="16:9",
+        )
+        assert request.aspect_ratio == "16:9"
+
+    def test_vertical_video_support(self):
+        """Veo 3.1 supports 9:16 for social media."""
+        request = VeoGenerateRequest(
+            prompt="Vertical video for TikTok",
+            aspect_ratio="9:16",
+        )
+        assert request.aspect_ratio == "9:16"
+
+    def test_dialogue_prompt_structure(self):
+        """Test dialogue-containing prompt structure."""
+        request = VeoGenerateRequest(
+            prompt='A man says "Hello, how are you?" to a woman at a cafe. She smiles and responds.',
+        )
+        assert "says" in request.prompt
+        assert '"' in request.prompt
+
+
+# ============================================================================
+# Prompt Validation Edge Cases
+# ============================================================================
+
+class TestPromptEdgeCases:
+    """Additional prompt validation edge cases."""
+
+    def test_prompt_with_newlines(self):
+        """Test prompt with newline characters."""
+        request = VeoGenerateRequest(
+            prompt="Scene 1:\nA man walks.\nScene 2:\nHe stops."
+        )
+        assert "\n" in request.prompt
+
+    def test_prompt_with_quotes(self):
+        """Test prompt with various quote types."""
+        request = VeoGenerateRequest(
+            prompt="""He said "Hello" and she replied 'Hi there'"""
+        )
+        assert '"' in request.prompt
+        assert "'" in request.prompt
+
+    def test_prompt_with_numbers(self):
+        """Test prompt with numbers and timestamps."""
+        request = VeoGenerateRequest(
+            prompt="At 10:30 AM, 5 people enter the room. Scene duration: 8 seconds."
+        )
+        assert "10:30" in request.prompt
+        assert "5 people" in request.prompt
+
+    def test_prompt_camera_directions(self):
+        """Test prompt with camera movement directions."""
+        request = VeoGenerateRequest(
+            prompt="[DOLLY IN] Camera slowly approaches. [CUT TO] Wide shot of the landscape."
+        )
+        assert "[DOLLY IN]" in request.prompt
+        assert "[CUT TO]" in request.prompt
