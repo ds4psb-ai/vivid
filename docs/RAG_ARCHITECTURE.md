@@ -3,64 +3,75 @@
 <details open>
 <summary>한국어</summary>
 
-> **Version**: 2.2 (P4 Reranker)
-> **Last Updated**: 2026-01-15
-> **Status**: P0-P4 완료, P5 계획중
+> **Version**: 3.0 (Multi-RAG Router)
+> **Last Updated**: 2026-01-17
+> **Status**: P0-P7 모두 완료 ✅
 
 ---
 
 ## 1. Overview
 
-Vivid RAG는 **Plugin-Registry 패턴** 기반의 Hybrid Retrieval-Augmented Generation 시스템입니다.
+Vivid RAG는 **Multi-RAG Router 패턴** 기반의 Hybrid Retrieval-Augmented Generation 시스템입니다.
 
 ### 핵심 특징
 
 | 특징 | 설명 |
 |------|------|
+| **Multi-RAG Router** | 쿼리 의도 분석 → 최적 백엔드 자동 라우팅 |
 | **Plugin-Registry** | YAML 기반 앱 설정, 코드 수정 없이 앱 추가 |
-| **Hybrid Search** | Dense (Qdrant) + Sparse (BM25) + RRF Fusion |
+| **Hybrid Search** | Dense (Qdrant Named Vectors) + Sparse (BM25 Native) + RRF Fusion |
 | **Multi-Tier** | Cache → Qdrant → NotebookLM → Google Search |
 | **Graceful Degradation** | Circuit Breaker + Fallback Chain |
+| **Adaptive RAG** | Query Classification → 동적 전략 선택 |
 
 ---
 
 ## 2. Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│              Vivid Plugin-Registry RAG Architecture             │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌───────────────┐    ┌───────────────┐    ┌───────────────┐   │
-│  │ YAML Manifest │───▶│ Query Router  │───▶│ Backend Pool  │   │
-│  │ (Hot-reload)  │    │ (Selector)    │    │ (Auto-discover)│   │
-│  └───────────────┘    └───────────────┘    └───────────────┘   │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  L0: Semantic Cache                                             │
-│      ├─ Memory LRU (1h TTL)                                    │
-│      └─ PostgreSQL + pgvector (1-7d TTL)                       │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  L1: Hybrid Vector Search                                       │
-│      ├─ L1a: Dense (Qdrant, 384-dim)                           │
-│      ├─ L1b: Sparse (BM25 Keyword) ⭐                           │
-│      └─ → RRF Fusion (k=60, Weighted)                          │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  L2: NotebookLM Playwright                                      │
-│      ├─ 거장 DNA (봉준호, 놀란, 빌뇌브, 왕가위, 타란티노)         │
-│      └─ Circuit Breaker: 3 failures → 60s cooldown             │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  L3: Google Search Grounding (CRAG Pattern)                     │
-│      └─ confidence < 0.5 시 자동 활성화                         │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    Vivid Multi-RAG Router Architecture                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│   ┌─────────────┐    ┌──────────────────┐    ┌──────────────────┐           │
+│   │    Query    │───▶│  Multi-RAG Router │───▶│  Backend Pool    │           │
+│   │             │    │  (Intelligent)    │    │  (Auto-discover) │           │
+│   └─────────────┘    └──────────────────┘    └──────────────────┘           │
+│                              │                                               │
+│                              ▼                                               │
+│   ┌──────────────────────────────────────────────────────────────┐          │
+│   │ Route Decision: NotebookLM | Qdrant | Hybrid | Skip          │          │
+│   └──────────────────────────────────────────────────────────────┘          │
+│                                                                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ L0: Semantic Cache (pgvector + Memory LRU + Redis)                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ L1: Hybrid Vector Search                                                     │
+│     ├─ Dense (Qdrant, 384-dim, Named Vectors)                               │
+│     ├─ Sparse (BM25 Native) ⭐                                               │
+│     └─ RRF Fusion (k=60, Weighted)                                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ L2: NotebookLM Playwright (거장 DNA - 봉준호, 놀란, 빌뇌브, 왕가위, 타란티노)  │
+│     └─ Circuit Breaker: 3 failures → 60s cooldown                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ L3: Google Search Grounding (CRAG Pattern)                                   │
+│     └─ confidence < 0.5 시 자동 활성화                                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Multi-RAG Router 로직
+
+```python
+# 쿼리 의도 → 라우팅 결정
+def route_query(query: str, dimension: str) -> RouteDecision:
+    if is_auteur_style_query(query):
+        return RouteDecision.NOTEBOOKLM  # 거장 DNA
+    elif is_technical_query(query):
+        return RouteDecision.QDRANT_HYBRID  # 전문 용어 검색
+    elif is_creative_query(query):
+        return RouteDecision.HYBRID  # 둘 다 사용
+    else:
+        return RouteDecision.SKIP  # RAG 불필요
 ```
 
 ---
@@ -73,7 +84,7 @@ Vivid RAG는 **Plugin-Registry 패턴** 기반의 Hybrid Retrieval-Augmented Gen
 |--------|-----------|-------------------|--------|
 | 검색 정확도 | 62% | **91%** | +48% |
 | 전문 용어 매칭 | 55% | **95%** | +73% |
-| NDCG 점수 | 기준 | +26~31% | - |
+| NDCG 점수 | 기준 | +26~31% | ✅ |
 | 환각 감소 | 기준 | 유의미 감소 | ✅ |
 
 ### RRF (Reciprocal Rank Fusion)
@@ -90,24 +101,26 @@ W_RRF(A) = 0.7/(60+1) + 0.3/(60+5) = 0.0161
 
 ## 4. Qdrant Collections
 
-| 차원 | 컬렉션 이름 | 용도 | Vector Dim |
-|------|-----------|------|------------|
-| 1D | dimension_1d_contexts | 프롬프트 | 384 |
-| 2D | dimension_2d_contexts | 스토리보드 | 384 |
-| 3D | dimension_3d_contexts | 이미지 | 384 |
-| 4D | dimension_4d_contexts | 레퍼런스 | 384 |
-| 5D | dimension_5d_contexts | - | 384 |
-| 6D | dimension_6d_contexts | - | 384 |
-| AD | dimension_ad_contexts | 미학 | 384 |
-| AI | dimension_ai_contexts | 페르소나/MBTI/사주 | 384 |
-| QC | dimension_qc_contexts | 품질 검수 | 384 |
-| VEO | dimension_veo_contexts | 영상 스타일 | 384 |
+### Named Vectors 구조 (P0.5 마이그레이션 완료)
+
+| 차원 | 컬렉션 이름 | 용도 | Dense | Sparse |
+|------|-----------|------|-------|--------|
+| 1D | dimension_1d_contexts | 프롬프트 최적화 | 384 | ✅ |
+| 2D | dimension_2d_contexts | 스토리보드 | 384 | ✅ |
+| 3D | dimension_3d_contexts | 이미지 프롬프트 | 384 | ✅ |
+| 4D | dimension_4d_contexts | 레퍼런스 분석 | 384 | ✅ |
+| AD | dimension_ad_contexts | 미학 감독 | 384 | ✅ |
+| AI | dimension_ai_contexts | 페르소나/MBTI/사주 | 384 | ✅ |
+| QC | dimension_qc_contexts | 품질 검수 | 384 | ✅ |
+| VEO | dimension_veo_contexts | 영상 스타일 | 384 | ✅ |
+| Story | dimension_story_contexts | 시나리오 | 384 | ✅ |
+| CC | dimension_cc_contexts | 캐릭터 일관성 | 384 | ✅ |
 
 ---
 
 ## 5. Configuration
 
-### YAML Manifest (계획)
+### YAML Manifest (P1 완료)
 
 ```yaml
 # manifests/dimension.persona.yaml
@@ -115,33 +128,30 @@ app_key: dimension.persona.analyze
 version: "1.0"
 
 backends:
-  - id: qdrant_dense
-    weight: 0.5
+  - id: qdrant_hybrid
+    weight: 0.7
     enabled: true
     config:
       collection: "dimension_ai_contexts"
-  
-  - id: bm25_sparse
+      use_sparse: true
+
+  - id: notebooklm
     weight: 0.3
     enabled: true
     config:
-      dimension: "AI"
-  
-  - id: notebooklm
-    weight: 0.2
-    enabled: true
+      auteur_keys: ["bong", "nolan", "villeneuve"]
 
-dataset_routing:
-  candidates: [psych_core, mbti, attachment, saju_oheng]
-  rules:
-    - pattern: "mbti|intj|enfp"
-      datasets: [mbti]
-    - pattern: "사주|오행|갑자"
-      datasets: [saju_oheng]
-  default: psych_core
+reranker:
+  id: vertex
+  enabled: true
+  top_k: 5
+
+routing:
+  strategy: adaptive  # adaptive | always_hybrid | skip_notebooklm
+  confidence_threshold: 0.7
 ```
 
-### 현재 YAML (capabilities)
+### 현재 capabilities 설정
 
 ```yaml
 capabilities:
@@ -157,37 +167,43 @@ capabilities:
         rrf_k: 60
         bm25_weight: 0.3
         dense_weight: 0.7
+      reranker:
+        enabled: true
+        model: vertex            # vertex | cross_encoder
+        top_k: 5
 ```
 
 ---
 
 ## 6. Implementation Roadmap
 
-| Phase | 작업 | 예상 노력 | 효과 |
-|-------|------|----------|------|
-| **P0** | Qdrant Native Sparse 활성화 | 1-2h | ✅ 완료 (`0128b669`) |
-| **P0.5** | Hybrid 컬렉션 마이그레이션 | 2h | ✅ 완료 (`9af9f182`) |
-| **P1** | YAML Manifest 도입 | 2-3h | ✅ 완료 (`ad6250e6`) |
-| **P2** | Backend ABC + Auto-discovery | 3-4h | ✅ 완료 (`bebeedb9`) |
-| **P3** | Ensemble Retriever (Weighted RRF) | 3h | ✅ 완료 |
-| **P4** | Reranker Backend + Integration | 4h | ✅ **완료** 👈 |
-| P5 | Adaptive RAG / LLM Selector | 3h | ⏳ 계획중 |
+| Phase | 작업 | 상태 |
+|-------|------|------|
+| **P0** | Qdrant Native Sparse 활성화 | ✅ 완료 |
+| **P0.5** | Hybrid 컬렉션 마이그레이션 (Named Vectors) | ✅ 완료 |
+| **P1** | YAML Manifest 도입 | ✅ 완료 |
+| **P2** | Backend ABC + Auto-discovery | ✅ 완료 |
+| **P3** | Ensemble Retriever (Weighted RRF) | ✅ 완료 |
+| **P4** | Reranker Backend + Integration | ✅ 완료 |
+| **P5** | Adaptive RAG (Query Classification) | ✅ 완료 |
+| **P6** | Feedback Collection | ✅ 완료 |
+| **P7** | Multi-RAG Router | ✅ 완료 |
 
 ---
 
 ## 7. Directory Structure
 
-### 현재 (P4 완료)
+### 현재 (P7 완료)
 ```
 backend/app/rag/
-├── manifests/                 # ✅ P1 완료 (13개 YAML)
-│   ├── _schema.yaml           # YAML 스키마 (reranker 포함)
+├── manifests/                 # ✅ P1 완료 (13개+ YAML)
+│   ├── _schema.yaml           # YAML 스키마
 │   └── *.yaml                 # 앱별 RAG 설정
 │
 ├── backends/                  # ✅ P2 완료 (BaseBackend ABC)
 │   ├── __init__.py           # Auto-discovery Registry
 │   ├── base.py               # BaseBackend ABC + RetrievalResult
-│   ├── qdrant_hybrid.py      # Qdrant Dense + Sparse
+│   ├── qdrant_hybrid.py      # Qdrant Dense + Sparse (Named Vectors)
 │   ├── notebooklm.py         # NotebookLM Playwright
 │   └── vertex_grounding.py   # Vertex AI + Google Search
 │
@@ -197,17 +213,27 @@ backend/app/rag/
 │   ├── vertex.py             # Vertex AI Ranking API
 │   └── cross_encoder.py      # Local BGE/ms-marco CrossEncoder
 │
+├── router/                    # ✅ P7 완료 (Multi-RAG Router)
+│   ├── __init__.py
+│   ├── query_classifier.py   # 쿼리 의도 분류
+│   └── route_selector.py     # 라우팅 결정
+│
+├── feedback/                  # ✅ P6 완료 (Feedback Collection)
+│   ├── __init__.py
+│   └── collector.py          # 피드백 수집 + 분석
+│
 ├── sparse/                    # Sparse Embedder
 │   └── fastembed_sparse.py
 │
-├── hybrid_rag.py              # 오케스트레이터 (P3 Ensemble + P4 Reranker)
-├── manifest_loader.py         # YAML Manifest Loader (RerankerConfig 포함)
-├── tier0_notebooklm.py        # 거장 DNA (Backend에서 래핑)
-├── tier1_dimension_rag.py     # Qdrant Hybrid (Backend에서 래핑)
-└── tier0_vertex_rag.py        # Vertex AI (Backend에서 래핑)
+├── hybrid_rag.py              # 메인 오케스트레이터
+├── manifest_loader.py         # YAML Manifest Loader
+├── tier0_notebooklm.py        # 거장 DNA
+├── tier1_dimension_rag.py     # Qdrant Hybrid
+├── tier0_vertex_rag.py        # Vertex AI
+├── semantic_cache.py          # L0 캐시
+├── rag_presets.py             # 거장 스타일 힌트
+└── metrics.py                 # Prometheus 메트릭
 ```
-
-> **참조**: [P2 Backend ABC SPEC](./specs/P2_BACKEND_ABC_SPEC.md)
 
 ---
 
@@ -216,10 +242,10 @@ backend/app/rag/
 | 문서 | 설명 |
 |------|------|
 | [RAG_RELIABILITY.md](./RAG_RELIABILITY.md) | 운영 가이드 + SLO |
-| [RAG_QUALITY.md](./RAG_QUALITY.md) | 품질 평가 파이프라인 |
-| [RAG_NEXT_PHASE_PLAN](./RAG_NEXT_PHASE_PLAN_2026-01-11.md) | 실행 계획 |
 | [DIMENSION_APP_DEVELOPER_GUIDE.md](./DIMENSION_APP_DEVELOPER_GUIDE.md) | 개발자 가이드 |
 | [NOTEBOOKLM_PLAYWRIGHT.md](./NOTEBOOKLM_PLAYWRIGHT.md) | NotebookLM 자동화 |
+
+> **Archived**: P2/P3 SPEC 문서는 `docs/archive/specs/`로 이동됨
 
 ---
 
@@ -228,78 +254,90 @@ backend/app/rag/
 | 파일 | 설명 |
 |------|------|
 | `rag/hybrid_rag.py` | 메인 오케스트레이터 (ensemble_retrieve, hybrid_query) |
-| `rag/manifest_loader.py` | YAML Manifest Loader (P1) |
-| `rag/backends/__init__.py` | Backend Registry (P2) |
-| `rag/rerankers/__init__.py` | Reranker Registry (P4) |
+| `rag/router/query_classifier.py` | P5 쿼리 분류기 |
+| `rag/router/route_selector.py` | P7 라우팅 결정 |
+| `rag/manifest_loader.py` | YAML Manifest Loader |
+| `rag/backends/__init__.py` | Backend Registry |
+| `rag/rerankers/__init__.py` | Reranker Registry |
+| `rag/feedback/collector.py` | P6 피드백 수집 |
 | `rag/tier1_dimension_rag.py` | Qdrant 벡터 검색 |
 | `rag/tier0_notebooklm.py` | NotebookLM 연동 |
 | `rag/semantic_cache.py` | 시맨틱 캐시 |
-| `rag/rag_presets.py` | RAG 프리셋 |
-| `rag/metrics.py` | Prometheus 메트릭 |
 
 </details>
 
 <details>
 <summary>English</summary>
 
-> **Version**: 2.2 (P4 Reranker)
-> **Last Updated**: 2026-01-15
-> **Status**: P0-P4 complete, P5 planned
+> **Version**: 3.0 (Multi-RAG Router)
+> **Last Updated**: 2026-01-17
+> **Status**: P0-P7 All Complete ✅
 
 ---
 
 ## 1. Overview
 
-Vivid RAG is a hybrid retrieval-augmented generation system based on the **Plugin-Registry** pattern.
+Vivid RAG is a hybrid retrieval-augmented generation system based on the **Multi-RAG Router** pattern.
 
 ### Key Features
 
 | Feature | Description |
-|------|------|
+|---------|-------------|
+| **Multi-RAG Router** | Query intent analysis → Automatic optimal backend routing |
 | **Plugin-Registry** | YAML-based app config; add apps without code changes |
-| **Hybrid Search** | Dense (Qdrant) + Sparse (BM25) + RRF fusion |
+| **Hybrid Search** | Dense (Qdrant Named Vectors) + Sparse (BM25 Native) + RRF Fusion |
 | **Multi-Tier** | Cache → Qdrant → NotebookLM → Google Search |
-| **Graceful Degradation** | Circuit breaker + fallback chain |
+| **Graceful Degradation** | Circuit Breaker + Fallback Chain |
+| **Adaptive RAG** | Query Classification → Dynamic strategy selection |
 
 ---
 
 ## 2. Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│              Vivid Plugin-Registry RAG Architecture             │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌───────────────┐    ┌───────────────┐    ┌───────────────┐   │
-│  │ YAML Manifest │───▶│ Query Router  │───▶│ Backend Pool  │   │
-│  │ (Hot-reload)  │    │ (Selector)    │    │ (Auto-discover)│   │
-│  └───────────────┘    └───────────────┘    └───────────────┘   │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  L0: Semantic Cache                                             │
-│      ├─ Memory LRU (1h TTL)                                    │
-│      └─ PostgreSQL + pgvector (1-7d TTL)                       │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  L1: Hybrid Vector Search                                       │
-│      ├─ L1a: Dense (Qdrant, 384-dim)                           │
-│      ├─ L1b: Sparse (BM25 Keyword) ⭐                           │
-│      └─ → RRF Fusion (k=60, Weighted)                          │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  L2: NotebookLM Playwright                                      │
-│      ├─ Auteur DNA (Bong Joon-ho, Nolan, Villeneuve, Wong Kar-wai, Tarantino)
-│      └─ Circuit Breaker: 3 failures → 60s cooldown             │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  L3: Google Search Grounding (CRAG Pattern)                     │
-│      └─ Auto-enabled when confidence < 0.5                      │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    Vivid Multi-RAG Router Architecture                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│   ┌─────────────┐    ┌──────────────────┐    ┌──────────────────┐           │
+│   │    Query    │───▶│  Multi-RAG Router │───▶│  Backend Pool    │           │
+│   │             │    │  (Intelligent)    │    │  (Auto-discover) │           │
+│   └─────────────┘    └──────────────────┘    └──────────────────┘           │
+│                              │                                               │
+│                              ▼                                               │
+│   ┌──────────────────────────────────────────────────────────────┐          │
+│   │ Route Decision: NotebookLM | Qdrant | Hybrid | Skip          │          │
+│   └──────────────────────────────────────────────────────────────┘          │
+│                                                                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ L0: Semantic Cache (pgvector + Memory LRU + Redis)                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ L1: Hybrid Vector Search                                                     │
+│     ├─ Dense (Qdrant, 384-dim, Named Vectors)                               │
+│     ├─ Sparse (BM25 Native) ⭐                                               │
+│     └─ RRF Fusion (k=60, Weighted)                                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ L2: NotebookLM Playwright (Auteur DNA - Bong, Nolan, Villeneuve, WKW, QT)   │
+│     └─ Circuit Breaker: 3 failures → 60s cooldown                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ L3: Google Search Grounding (CRAG Pattern)                                   │
+│     └─ Auto-enabled when confidence < 0.5                                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Multi-RAG Router Logic
+
+```python
+# Query intent → Routing decision
+def route_query(query: str, dimension: str) -> RouteDecision:
+    if is_auteur_style_query(query):
+        return RouteDecision.NOTEBOOKLM  # Auteur DNA
+    elif is_technical_query(query):
+        return RouteDecision.QDRANT_HYBRID  # Technical term search
+    elif is_creative_query(query):
+        return RouteDecision.HYBRID  # Use both
+    else:
+        return RouteDecision.SKIP  # RAG not needed
 ```
 
 ---
@@ -309,10 +347,10 @@ Vivid RAG is a hybrid retrieval-augmented generation system based on the **Plugi
 ### BM25 Hybrid Impact
 
 | Metric | Dense Only | Dense + BM25 + RRF | Improvement |
-|--------|-----------|-------------------|--------|
+|--------|-----------|-------------------|-------------|
 | Search accuracy | 62% | **91%** | +48% |
 | Domain term match | 55% | **95%** | +73% |
-| NDCG score | baseline | +26~31% | - |
+| NDCG score | baseline | +26~31% | ✅ |
 | Hallucination reduction | baseline | meaningful drop | ✅ |
 
 ### RRF (Reciprocal Rank Fusion)
@@ -329,24 +367,26 @@ W_RRF(A) = 0.7/(60+1) + 0.3/(60+5) = 0.0161
 
 ## 4. Qdrant Collections
 
-| Dimension | Collection | Use | Vector Dim |
-|------|-----------|------|------------|
-| 1D | dimension_1d_contexts | Prompt | 384 |
-| 2D | dimension_2d_contexts | Storyboard | 384 |
-| 3D | dimension_3d_contexts | Image | 384 |
-| 4D | dimension_4d_contexts | Reference | 384 |
-| 5D | dimension_5d_contexts | - | 384 |
-| 6D | dimension_6d_contexts | - | 384 |
-| AD | dimension_ad_contexts | Aesthetics | 384 |
-| AI | dimension_ai_contexts | Persona/MBTI/Saju | 384 |
-| QC | dimension_qc_contexts | Quality review | 384 |
-| VEO | dimension_veo_contexts | Video style | 384 |
+### Named Vectors Structure (P0.5 Migration Complete)
+
+| Dimension | Collection | Use | Dense | Sparse |
+|-----------|-----------|-----|-------|--------|
+| 1D | dimension_1d_contexts | Prompt optimization | 384 | ✅ |
+| 2D | dimension_2d_contexts | Storyboard | 384 | ✅ |
+| 3D | dimension_3d_contexts | Image prompts | 384 | ✅ |
+| 4D | dimension_4d_contexts | Reference analysis | 384 | ✅ |
+| AD | dimension_ad_contexts | Aesthetics | 384 | ✅ |
+| AI | dimension_ai_contexts | Persona/MBTI/Saju | 384 | ✅ |
+| QC | dimension_qc_contexts | Quality review | 384 | ✅ |
+| VEO | dimension_veo_contexts | Video style | 384 | ✅ |
+| Story | dimension_story_contexts | Scenario | 384 | ✅ |
+| CC | dimension_cc_contexts | Character consistency | 384 | ✅ |
 
 ---
 
 ## 5. Configuration
 
-### YAML Manifest (Planned)
+### YAML Manifest (P1 Complete)
 
 ```yaml
 # manifests/dimension.persona.yaml
@@ -354,33 +394,30 @@ app_key: dimension.persona.analyze
 version: "1.0"
 
 backends:
-  - id: qdrant_dense
-    weight: 0.5
+  - id: qdrant_hybrid
+    weight: 0.7
     enabled: true
     config:
       collection: "dimension_ai_contexts"
-  
-  - id: bm25_sparse
+      use_sparse: true
+
+  - id: notebooklm
     weight: 0.3
     enabled: true
     config:
-      dimension: "AI"
-  
-  - id: notebooklm
-    weight: 0.2
-    enabled: true
+      auteur_keys: ["bong", "nolan", "villeneuve"]
 
-dataset_routing:
-  candidates: [psych_core, mbti, attachment, saju_oheng]
-  rules:
-    - pattern: "mbti|intj|enfp"
-      datasets: [mbti]
-    - pattern: "사주|오행|갑자"
-      datasets: [saju_oheng]
-  default: psych_core
+reranker:
+  id: vertex
+  enabled: true
+  top_k: 5
+
+routing:
+  strategy: adaptive  # adaptive | always_hybrid | skip_notebooklm
+  confidence_threshold: 0.7
 ```
 
-### Current YAML (Capabilities)
+### Current Capabilities Config
 
 ```yaml
 capabilities:
@@ -396,75 +433,101 @@ capabilities:
         rrf_k: 60
         bm25_weight: 0.3
         dense_weight: 0.7
+      reranker:
+        enabled: true
+        model: vertex            # vertex | cross_encoder
+        top_k: 5
 ```
 
 ---
 
 ## 6. Implementation Roadmap
 
-| Phase | Work | Effort | Impact |
-|-------|------|----------|------|
-| **P0** | Enable Qdrant native sparse | 1-2h | ✅ Done (`0128b669`) |
-| **P0.5** | Hybrid collection migration | 2h | ✅ Done (`9af9f182`) |
-| **P1** | YAML manifest adoption | 2-3h | ✅ Done (`ad6250e6`) |
-| **P2** | Backend ABC + auto-discovery | 3-4h | ✅ **In progress** 👈 |
-| **P3** | Ensemble retriever (parallel) | 2h | ⏳ Pending |
-| P4 | LLM selector (optional) | 2h | ⏳ Pending |
-| P5 | Cross-encoder reranker | 3h | ⏳ Pending |
+| Phase | Work | Status |
+|-------|------|--------|
+| **P0** | Enable Qdrant Native Sparse | ✅ Complete |
+| **P0.5** | Hybrid collection migration (Named Vectors) | ✅ Complete |
+| **P1** | YAML Manifest adoption | ✅ Complete |
+| **P2** | Backend ABC + Auto-discovery | ✅ Complete |
+| **P3** | Ensemble Retriever (Weighted RRF) | ✅ Complete |
+| **P4** | Reranker Backend + Integration | ✅ Complete |
+| **P5** | Adaptive RAG (Query Classification) | ✅ Complete |
+| **P6** | Feedback Collection | ✅ Complete |
+| **P7** | Multi-RAG Router | ✅ Complete |
 
 ---
 
 ## 7. Directory Structure
 
-### Current (P2 in progress)
+### Current (P7 Complete)
 ```
 backend/app/rag/
-├── manifests/                 # ✅ P1 done (12 YAML)
-│   ├── _schema.yaml
-│   └── *.yaml
+├── manifests/                 # ✅ P1 done (13+ YAML)
+│   ├── _schema.yaml           # YAML schema
+│   └── *.yaml                 # Per-app RAG configs
 │
-├── backends/                  # 🔄 P2 in progress (BaseBackend ABC)
-│   ├── __init__.py           # Auto-discovery registry
+├── backends/                  # ✅ P2 done (BaseBackend ABC)
+│   ├── __init__.py           # Auto-discovery Registry
 │   ├── base.py               # BaseBackend ABC + RetrievalResult
-│   ├── qdrant_hybrid.py      # Qdrant Dense + Sparse (tier1 wrapper)
-│   ├── notebooklm.py         # NotebookLM (tier0 wrapper)
+│   ├── qdrant_hybrid.py      # Qdrant Dense + Sparse (Named Vectors)
+│   ├── notebooklm.py         # NotebookLM Playwright
 │   └── vertex_grounding.py   # Vertex AI + Google Search
 │
-├── sparse/                    # Sparse embedder
+├── rerankers/                 # ✅ P4 done (BaseReranker ABC)
+│   ├── __init__.py           # Auto-discovery Registry
+│   ├── base.py               # BaseReranker ABC + RerankResult
+│   ├── vertex.py             # Vertex AI Ranking API
+│   └── cross_encoder.py      # Local BGE/ms-marco CrossEncoder
+│
+├── router/                    # ✅ P7 done (Multi-RAG Router)
+│   ├── __init__.py
+│   ├── query_classifier.py   # Query intent classification
+│   └── route_selector.py     # Routing decision
+│
+├── feedback/                  # ✅ P6 done (Feedback Collection)
+│   ├── __init__.py
+│   └── collector.py          # Feedback collection + analysis
+│
+├── sparse/                    # Sparse Embedder
 │   └── fastembed_sparse.py
 │
-├── hybrid_rag.py              # Orchestrator
-├── tier0_notebooklm.py        # Auteur DNA (backend wrapper)
-├── tier1_dimension_rag.py     # Qdrant Hybrid (backend wrapper)
-└── tier0_vertex_rag.py        # Vertex AI (backend wrapper)
+├── hybrid_rag.py              # Main orchestrator
+├── manifest_loader.py         # YAML Manifest Loader
+├── tier0_notebooklm.py        # Auteur DNA
+├── tier1_dimension_rag.py     # Qdrant Hybrid
+├── tier0_vertex_rag.py        # Vertex AI
+├── semantic_cache.py          # L0 cache
+├── rag_presets.py             # Auteur style hints
+└── metrics.py                 # Prometheus metrics
 ```
-
-> **Reference**: [P2 Backend ABC SPEC](./specs/P2_BACKEND_ABC_SPEC.md)
 
 ---
 
 ## 8. Related Documents
 
 | Document | Description |
-|------|------|
+|----------|-------------|
 | [RAG_RELIABILITY.md](./RAG_RELIABILITY.md) | Operations guide + SLO |
-| [RAG_QUALITY.md](./RAG_QUALITY.md) | Quality evaluation pipeline |
-| [RAG_NEXT_PHASE_PLAN](./RAG_NEXT_PHASE_PLAN_2026-01-11.md) | Execution plan |
 | [DIMENSION_APP_DEVELOPER_GUIDE.md](./DIMENSION_APP_DEVELOPER_GUIDE.md) | Developer guide |
 | [NOTEBOOKLM_PLAYWRIGHT.md](./NOTEBOOKLM_PLAYWRIGHT.md) | NotebookLM automation |
+
+> **Archived**: P2/P3 SPEC docs moved to `docs/archive/specs/`
 
 ---
 
 ## 9. Key Files (Backend)
 
 | File | Description |
-|------|------|
-| `rag/hybrid_rag.py` | Main orchestrator |
+|------|-------------|
+| `rag/hybrid_rag.py` | Main orchestrator (ensemble_retrieve, hybrid_query) |
+| `rag/router/query_classifier.py` | P5 Query classifier |
+| `rag/router/route_selector.py` | P7 Routing decision |
+| `rag/manifest_loader.py` | YAML Manifest Loader |
+| `rag/backends/__init__.py` | Backend Registry |
+| `rag/rerankers/__init__.py` | Reranker Registry |
+| `rag/feedback/collector.py` | P6 Feedback collection |
 | `rag/tier1_dimension_rag.py` | Qdrant vector search |
-| `rag/bm25_search.py` | BM25 keyword search |
 | `rag/tier0_notebooklm.py` | NotebookLM integration |
 | `rag/semantic_cache.py` | Semantic cache |
-| `rag/rag_presets.py` | RAG presets |
-| `rag/metrics.py` | Prometheus metrics |
 
 </details>

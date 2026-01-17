@@ -1,10 +1,10 @@
 # Vivid Dimension 앱 개발자 공통 가이드
 
-> **버전**: 3.1
-> **최종 업데이트**: 2026-01-16
+> **버전**: 3.2
+> **최종 업데이트**: 2026-01-17
 > **대상**: 개별 Dimension 앱 개발자
 > **목적**: 에코시스템 일관성 유지를 위한 단일 진실 문서
-> **변경사항**: React 19 Best Practices, File Upload, UQSL 통합, SSE Streaming, UX/UI 체크리스트
+> **변경사항**: 앱 테이블 최신화 (13개 앱), i18n 지원, Multi-RAG Router 완료
 > **관련 문서**: [`PRE_DEVELOPMENT_CHECKLIST.md`](./PRE_DEVELOPMENT_CHECKLIST.md) Part A/C 참조
 
 ---
@@ -86,13 +86,25 @@ frontend/src/components/dimension/{App}Panel.tsx ← UI 패널 [필수]
 frontend/src/lib/dimension-input-schemas.ts     ← 입력 필드 정의 [공유]
 ```
 
-### 2.2 실제 파일 예시
+### 2.2 현재 활성화된 앱 (13개)
 
-| 앱 | YAML | 라우터 | UI |
-|----|------|--------|-----|
-| 1D | `config/apps/content/dimensions/1d.yaml` | `backend/app/routers/dimension/__init__.py` | `PromptGeneratorPanel.tsx` |
-| Story | `config/apps/content/dimensions/story.yaml` | `backend/app/routers/dimension/story.py` | `StoryArchitectPanel.tsx` |
-| AD | `config/apps/content/dimensions/ad.yaml` | `backend/app/routers/dimension/aesthetic.py` | `AestheticDirectorPanel.tsx` |
+| 차원 | 앱 이름 | YAML | UI 패널 | 상태 |
+|------|--------|------|---------|------|
+| 1D | Prompt Alchemy | `1d.yaml` | `PromptGeneratorPanel.tsx` | ✅ Production |
+| 2D | Storyboard Sketcher | `2d.yaml` | `StoryboardPanel.tsx` | ✅ Production |
+| 3D | Visual Realizer | `3d.yaml` | `VisualRealizerPanel.tsx` | ✅ Production |
+| 4D | Reference Decoder | `4d.yaml` | `ReferenceDecoderPanel.tsx` | ✅ Production |
+| Story | Story Architect | `story.yaml` | `StoryArchitectPanel.tsx` | ✅ Production |
+| AD | Aesthetic Director | `ad.yaml` | `AestheticDirectorPanel.tsx` | ✅ Production |
+| QC | Quality Director | `qc.yaml` | `QualityDirectorPanel.tsx` | ✅ Production |
+| AI | Abyss Mirror | `ai.yaml` | `AbyssMirrorPanel.tsx` | ✅ Production |
+| VEO | Video Maker | `veo.yaml` | `VeoVideoPanel.tsx` | ✅ Production |
+| CC | Character Consistency | `cc.yaml` | `CharacterConsistencyPanel.tsx` | ✅ Production |
+| Suno | Suno AI Music | `suno.yaml` | `SunoMusicPanel.tsx` | ✅ Production |
+| Kling | Kling 2.6 Video | `kling.yaml` | `KlingVideoPanel.tsx` | ✅ Production |
+| Sound | Sound Crafter | `sound.yaml` | `SoundCrafterPanel.tsx` | 🔧 Development |
+
+> **Note**: 모든 Production 앱은 i18n (한국어/English) 지원
 
 ---
 
@@ -158,9 +170,9 @@ keywords:
 
 | 모드 | 조건 | 사용 앱 |
 |------|------|---------|
-| `always` | 항상 RAG 활성화 | Story, AD, QC, 4D, AI |
-| `auteur_only` | `auteur_key` 있을 때만 | 1D, 2D, 3D, VEO |
-| `never` | RAG 비활성화 | Sound |
+| `always` | 항상 RAG 활성화 | Story, AD, QC, 4D, AI, CC |
+| `auteur_only` | `auteur_key` 있을 때만 | 1D, 2D, 3D, VEO, Kling |
+| `never` | RAG 비활성화 | Sound, Suno |
 
 ### 3.3 Quality Selection (UQSL) 설정
 
@@ -348,11 +360,11 @@ result = await hybrid_query(
 # result.confidence, result.strategy_used
 ```
 
-### 6.3 BM25 + RRF Hybrid Search ⭐ UPGRADED
+### 6.3 BM25 + RRF Hybrid Search (Multi-RAG Router)
 
-> **2026-01-15 업데이트**: Plugin-Registry 아키텍처로 전환 예정
+> **2026-01-17**: P0-P7 완료, Multi-RAG Router 아키텍처 적용
 
-#### 현재 사용법 (기존)
+#### 현재 사용법
 
 ```python
 from app.rag.hybrid_rag import HybridRAGService
@@ -365,6 +377,7 @@ result = await service.rrf_query(
 )
 # result.rrf_enabled = True
 # result.keyword_results_count, result.vector_results_count
+# result.route_decision: NotebookLM | Qdrant | Hybrid | Skip
 ```
 
 #### 품질 개선 효과
@@ -375,20 +388,23 @@ result = await service.rrf_query(
 | 전문 용어 매칭 | 55% | **95%** |
 | NDCG 향상 | - | **+26~31%** |
 
-#### Plugin-Registry 패턴 (예정)
+#### Multi-RAG Router Manifest (P7 완료)
 
 ```yaml
 # manifests/dimension.aesthetic.yaml
 backends:
-  - id: qdrant_dense
-    weight: 0.5
+  - id: qdrant_hybrid
+    weight: 0.7
     enabled: true
-  - id: bm25_sparse
+    config:
+      use_sparse: true
+  - id: notebooklm
     weight: 0.3
     enabled: true
-  - id: notebooklm
-    weight: 0.2
-    enabled: true
+
+routing:
+  strategy: adaptive  # adaptive | always_hybrid | skip_notebooklm
+  confidence_threshold: 0.7
 ```
 
 
@@ -512,17 +528,21 @@ cost = exec_cap.config.get("credit_cost", 5)
 
 ### 8.2 현재 앱별 비용
 
-| 앱 | 크레딧 비용 |
-|----|-------------|
-| 1D | 5 |
-| 2D | 10 |
-| 3D | 5 |
-| 4D | 8 |
-| AD | 10 |
-| Story | 10 |
-| Sound | 8 |
-| QC | 8 |
-| VEO | **200** |
+| 앱 | 크레딧 비용 | 비고 |
+|----|-------------|------|
+| 1D | 5 | 프롬프트 생성 |
+| 2D | 10 | 스토리보드 |
+| 3D | 5 | 이미지 프롬프트 |
+| 4D | 8 | 레퍼런스 분석 |
+| Story | 10 | 시나리오 |
+| AD | 10 | 미학 분석 |
+| QC | 8 | 품질 검수 |
+| AI | 10 | 페르소나 분석 |
+| VEO | **200** | Google VEO 3.1 |
+| CC | 15 | 캐릭터 일관성 |
+| Suno | **150** | AI 음악 생성 |
+| Kling | **180** | Kling 2.6 비디오 |
+| Sound | 8 | 사운드 제작 |
 
 ---
 
@@ -912,6 +932,7 @@ function MyDimensionApp() {
 - ✅ Evidence Display: AI 근거 표시
 - ✅ Optimistic UI: 즉시 결과 미리보기
 - ✅ 접근성: WCAG 2.2 AA 준수
+- ✅ i18n: 한국어/English 전환 지원 (`useLanguage` 훅)
 
 **상세 체크리스트**: [`PRE_DEVELOPMENT_CHECKLIST.md`](./PRE_DEVELOPMENT_CHECKLIST.md) Part C 참조
 
@@ -1514,6 +1535,7 @@ multi_generate:
 
 | 버전 | 날짜 | 변경 내용 |
 |------|------|----------|
+| 3.2 | 2026-01-17 | 앱 테이블 최신화 (13개 앱), i18n 지원, Multi-RAG Router (P7) 완료 반영 |
 | 3.1 | 2026-01-16 | UX/UI 체크리스트 섹션 추가, Golden App 참조, PRE_DEVELOPMENT_CHECKLIST 연동 |
 | 3.0 | 2026-01-16 | React 19 Best Practices, File Upload, UQSL 통합, SSE Streaming |
 | 2.1 | 2026-01-13 | Evidence Refs, Resolver 템플릿 추가 |

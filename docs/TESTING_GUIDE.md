@@ -1,7 +1,7 @@
 # Vivid Testing Guide
 
-> **Version**: 1.0
-> **Last Updated**: 2026-01-08
+> **Version**: 2.0
+> **Last Updated**: 2026-01-17
 
 ---
 
@@ -22,9 +22,20 @@
 
 | Layer | Framework | Config File | Coverage |
 |-------|-----------|-------------|----------|
-| Backend | pytest | `pytest.ini` | ~60% |
-| Frontend | Vitest | `vitest.config.ts` | ~40% |
-| E2E | (Planned) Playwright | - | - |
+| Backend | pytest | `pytest.ini` | ~75% |
+| Frontend | Vitest | `vitest.config.ts` | ~60% |
+| E2E | Playwright | `playwright.config.ts` | Active |
+
+### Current Test Coverage (2026-01-17)
+
+| 영역 | 테스트 수 | 상태 |
+|------|----------|------|
+| Dimension Apps Security | 653+ | ✅ |
+| VEO Video Maker | 85 | ✅ |
+| Abyss Mirror | 67 | ✅ |
+| Character Consistency | 40+ | ✅ |
+| RAG System | 100+ | ✅ |
+| UQSL | 124 | ✅ |
 
 ### Key Testing Principles
 
@@ -427,12 +438,37 @@ describe('YourComponent/Function', () => {
 
 ---
 
-## Appendix: Test Coverage Goals
+## Appendix: Test Coverage Summary (2026-01-17)
+
+### Backend Test Counts
+
+| 영역 | 테스트 수 | 핵심 파일 |
+|------|----------|----------|
+| Dimension Apps Security | 653+ | `tests/security/` |
+| VEO Video Maker | 85 | `tests/routers/test_veo.py` |
+| Abyss Mirror | 67 | `tests/routers/test_abyss_mirror.py` |
+| Character Consistency | 40+ | `tests/routers/test_character_consistency.py` |
+| RAG System | 100+ | `tests/rag/` |
+| UQSL | 124 | `tests/uqsl/` |
+| Agent Core | 50+ | `tests/agents/` |
+| Credit Service | 30+ | `tests/services/test_credit_service.py` |
+
+### Coverage Goals
 
 | Area | Current | Target |
 |------|---------|--------|
-| Agent Core | 65% | 80% |
-| Intent Router | 70% | 90% |
-| Dimension Tools | 50% | 70% |
-| Event Handlers | 75% | 85% |
-| Credit Service | 60% | 80% |
+| Agent Core | 75% | 85% |
+| Intent Router | 85% | 90% |
+| Dimension Tools | 70% | 80% |
+| RAG System | 80% | 90% |
+| Credit Service | 75% | 85% |
+| VEO/Video | 90% | 95% |
+
+### E2E Test Files
+
+| 영역 | 파일 | 상태 |
+|------|------|------|
+| Dimension | `e2e/dimension.spec.ts` | ✅ |
+| Credits | `e2e/credits.spec.ts` | ✅ |
+| Agent Chat | `e2e/agent-chat.spec.ts` | ✅ |
+| Flow | `e2e/flow.spec.ts` | ✅ |
