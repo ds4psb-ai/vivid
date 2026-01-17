@@ -1,0 +1,215 @@
+$schema: "vivid-app/v2"
+
+metadata:
+  name: suno
+  type: dimension
+  version: "5.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "수노 뮤직"
+  name_en: "Suno Music"
+  icon: "🎵"
+  description: "Suno AI로 고품질 음악과 BGM을 생성합니다."
+
+capabilities:
+  - name: cache
+    enabled: true
+    config:
+      ttl: 3600
+
+  - name: execution
+    enabled: true
+    config:
+      credit_cost: 20  # Base cost (V5)
+      endpoint: "/api/dimension/suno/generate"
+      capsule_key: "suno.music.generate"
+      credit_only: true  # No BYOK support
+      wait_for_completion: true
+
+  - name: telemetry
+    enabled: true
+    config:
+      log_level: info
+
+extensions:
+  dimension:
+    tool_type: generation
+    supports_streaming: false  # Suno uses polling
+
+  # Suno V5 전용 확장
+  suno_music:
+    # 모델 버전
+    models:
+      - id: "V5"
+        name: "Suno V5"
+        default: true
+        features: ["vocals", "instrumental", "custom_lyrics", "style_control"]
+        credit_cost: 20
+      - id: "V4_5PLUS"
+        name: "Suno V4.5 Plus"
+        features: ["vocals", "instrumental", "custom_lyrics"]
+        credit_cost: 15
+      - id: "V4_5ALL"
+        name: "Suno V4.5 All"
+        features: ["vocals", "instrumental"]
+        credit_cost: 15
+      - id: "V4_5"
+        name: "Suno V4.5"
+        features: ["vocals", "instrumental"]
+        credit_cost: 12
+      - id: "V4"
+        name: "Suno V4"
+        features: ["vocals", "instrumental"]
+        credit_cost: 10
+
+    # 생성 설정
+    generation:
+      songs_per_generation: 2
+      max_duration_seconds: 240  # 4 minutes
+      min_prompt_length: 10
+      max_prompt_length: 2000
+      max_title_length: 100
+      max_style_length: 500
+
+    # 모드
+    modes:
+      - id: "custom"
+        name: "커스텀 모드"
+        description: "제목, 스타일, 가사를 직접 지정"
+        default: true
+        fields: ["title", "style", "prompt"]
+      - id: "simple"
+        name: "심플 모드"
+        description: "설명만으로 음악 생성"
+        fields: ["prompt"]
+
+    # 악기 모드
+    instrumental:
+      enabled: true
+      description: "보컬 없이 인스트루멘탈만 생성"
+
+    # 장르 프리셋
+    genres:
+      - id: "pop"
+        name: "팝"
+        style_hint: "Catchy pop melody, upbeat rhythm, modern production"
+      - id: "kpop"
+        name: "K-Pop"
+        style_hint: "K-pop, electronic dance pop, catchy hooks, powerful vocals"
+      - id: "cinematic"
+        name: "시네마틱"
+        style_hint: "Epic cinematic orchestral, dramatic, emotional"
+      - id: "lofi"
+        name: "Lo-Fi"
+        style_hint: "Lo-fi hip hop, chill beats, relaxing, nostalgic"
+      - id: "edm"
+        name: "EDM"
+        style_hint: "Electronic dance music, energetic drops, synth heavy"
+      - id: "rock"
+        name: "록"
+        style_hint: "Rock, electric guitar, powerful drums, energetic"
+      - id: "acoustic"
+        name: "어쿠스틱"
+        style_hint: "Acoustic, gentle guitar, warm vocals, intimate"
+      - id: "rnb"
+        name: "R&B"
+        style_hint: "R&B, smooth vocals, soulful, groovy"
+      - id: "hiphop"
+        name: "힙합"
+        style_hint: "Hip hop, rhythmic flow, bass heavy, urban"
+      - id: "jazz"
+        name: "재즈"
+        style_hint: "Jazz, smooth, sophisticated, brass and piano"
+      - id: "classical"
+        name: "클래식"
+        style_hint: "Classical orchestral, elegant, timeless"
+      - id: "ambient"
+        name: "앰비언트"
+        style_hint: "Ambient, atmospheric, ethereal, meditative"
+
+    # 분위기 프리셋
+    moods:
+      - id: "happy"
+        name: "행복"
+        keywords: ["upbeat", "joyful", "bright", "energetic"]
+      - id: "sad"
+        name: "슬픔"
+        keywords: ["melancholy", "emotional", "touching", "heartfelt"]
+      - id: "epic"
+        name: "웅장"
+        keywords: ["grand", "powerful", "dramatic", "heroic"]
+      - id: "romantic"
+        name: "로맨틱"
+        keywords: ["love", "tender", "sweet", "intimate"]
+      - id: "mysterious"
+        name: "미스터리"
+        keywords: ["dark", "suspenseful", "enigmatic", "haunting"]
+      - id: "relaxing"
+        name: "편안"
+        keywords: ["calm", "peaceful", "soothing", "gentle"]
+      - id: "energetic"
+        name: "에너제틱"
+        keywords: ["high-energy", "driving", "intense", "pumping"]
+
+    # 템포 프리셋
+    tempos:
+      - id: "slow"
+        name: "느림"
+        bpm_range: "60-80"
+        description: "발라드, 앰비언트"
+      - id: "medium"
+        name: "보통"
+        bpm_range: "80-120"
+        description: "팝, R&B, 재즈"
+        default: true
+      - id: "fast"
+        name: "빠름"
+        bpm_range: "120-160"
+        description: "댄스, 록, EDM"
+      - id: "very_fast"
+        name: "매우 빠름"
+        bpm_range: "160-200"
+        description: "드럼앤베이스, 하드코어"
+
+    # Native Audio 통합 전략 (Sound Crafter 연계)
+    native_audio_integration:
+      tier: "tier2_bgm"
+      description: "BGM/테마곡 전문 생성 (Native Audio는 Veo/Kling에서)"
+      use_cases:
+        - "MV 메인 트랙"
+        - "테마곡"
+        - "저작권 귀속 필요 시"
+        - "정밀한 음악 제어"
+      hybrid_workflow:
+        step1: "Suno로 BGM 생성"
+        step2: "Kling 2.6로 영상과 동기화"
+        step3: "후처리 믹싱"
+
+    # 작곡가 스타일 프리셋
+    composer_styles:
+      - id: "hans_zimmer"
+        name: "한스 짐머"
+        style_hint: "Epic cinematic orchestral, Hans Zimmer style, dramatic brass, layered synths, building tension"
+      - id: "joe_hisaishi"
+        name: "조 히사이시"
+        style_hint: "Minimalist piano, Joe Hisaishi style, Ghibli-inspired, gentle strings, nostalgic"
+      - id: "ennio_morricone"
+        name: "엔니오 모리코네"
+        style_hint: "Western epic, Ennio Morricone style, trumpet, dramatic orchestration"
+      - id: "john_williams"
+        name: "존 윌리엄스"
+        style_hint: "Grand orchestral, John Williams style, heroic brass, sweeping strings"
+
+quality_selection:
+  enabled: false  # UQSL not applicable to music generation
+
+keywords:
+  patterns:
+    - "suno"
+    - "수노"
+    - "music"
+    - "음악"
+    - "bgm"
+    - "soundtrack"
+    - "작곡"

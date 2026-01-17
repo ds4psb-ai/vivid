@@ -25,7 +25,12 @@ export type DimensionCode =
   | "qc"
   | "veo"
   | "story"
-  | "mirror";
+  | "mirror"
+  | "sound"
+  | "suno"
+  | "kling"
+  | "character"
+  | "prompt";
 
 /**
  * Theme color type (for Tailwind class mapping)
@@ -161,6 +166,51 @@ export const DIMENSION_TOKENS: Record<DimensionCode, DimensionToken> = {
     label: "Abyss Mirror",
     labelKo: "심연의 거울",
     description: "Self-reflection and creative exploration",
+  },
+  sound: {
+    code: "sound",
+    cssVar: "--color-dimension-2d",
+    tailwindKey: "dimension-2d",
+    themeColor: "cyan",
+    label: "Sound Crafter",
+    labelKo: "사운드 크래프터",
+    description: "Advanced audio and music generation",
+  },
+  suno: {
+    code: "suno",
+    cssVar: "--color-dimension-2d",
+    tailwindKey: "dimension-2d",
+    themeColor: "cyan",
+    label: "Suno Music",
+    labelKo: "수노 뮤직",
+    description: "AI music and song generation",
+  },
+  kling: {
+    code: "kling",
+    cssVar: "--color-dimension-4d",
+    tailwindKey: "dimension-4d",
+    themeColor: "amber",
+    label: "Kling Video",
+    labelKo: "클링 비디오",
+    description: "AI video generation with Kling 2.6",
+  },
+  character: {
+    code: "character",
+    cssVar: "--color-dimension-3d",
+    tailwindKey: "dimension-3d",
+    themeColor: "emerald",
+    label: "Character Consistency",
+    labelKo: "캐릭터 일관성",
+    description: "Consistent character generation across images",
+  },
+  prompt: {
+    code: "prompt",
+    cssVar: "--color-dimension-1d",
+    tailwindKey: "dimension-1d",
+    themeColor: "violet",
+    label: "Prompt Alchemy",
+    labelKo: "프롬프트 연금술",
+    description: "Advanced prompt optimization and transformation",
   },
 };
 
@@ -363,6 +413,11 @@ const DIMENSION_GRADIENTS: Record<DimensionCode, string> = {
   "veo": "bg-gradient-to-r from-sky-500 to-blue-600",
   "story": "bg-gradient-to-r from-fuchsia-500 to-purple-600",
   "mirror": "bg-gradient-to-r from-purple-500 to-violet-600",
+  "sound": "bg-gradient-to-r from-cyan-500 to-teal-600",
+  "suno": "bg-gradient-to-r from-cyan-500 to-teal-600",
+  "kling": "bg-gradient-to-r from-amber-500 to-orange-600",
+  "character": "bg-gradient-to-r from-emerald-500 to-green-600",
+  "prompt": "bg-gradient-to-r from-violet-500 to-purple-600",
 };
 
 /**
