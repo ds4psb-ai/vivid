@@ -16,6 +16,7 @@ from app.routers.credits import router as credits_router
 from app.routers.dimension import router as dimension_router
 from app.routers.agent import router as agent_router
 from app.routers.mcp import router as mcp_router
+from app.routers.mcp_v2 import router as mcp_v2_router
 from app.routers.health import router as health_router
 from app.routers.user_settings import router as user_settings_router
 from app.routers.dashboard import router as dashboard_router
@@ -197,6 +198,7 @@ app.include_router(agent_router, prefix="/api/v1", tags=["agent"])
 
 # Layer 3: MCP (Model Context Protocol)
 app.include_router(mcp_router, prefix="/api/v1", tags=["mcp"])
+app.include_router(mcp_v2_router, prefix="/api/v1", tags=["mcp-v2"])
 
 # Auth & Credits
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])

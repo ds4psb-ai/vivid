@@ -167,6 +167,53 @@ class Settings(BaseSettings):
     SECURITY_SUSPICIOUS_DETECTION: bool = True
     SECURITY_MAX_BODY_SIZE: int = 10485760  # 10MB max request body
 
+    # ==========================================================================
+    # MCP (Model Context Protocol) Configuration - Phase 4 2026
+    # ==========================================================================
+    # Core MCP Settings
+    MCP_ENABLED: bool = True
+    MCP_DEFAULT_TIMEOUT_SECONDS: int = 30
+    MCP_MAX_RETRIES: int = 3
+    MCP_RETRY_DELAY_MS: int = 1000
+
+    # MCP Gateway Settings
+    MCP_GATEWAY_ENABLED: bool = True
+    MCP_GATEWAY_RATE_LIMIT_RPM: int = 60  # Requests per minute
+    MCP_GATEWAY_RATE_LIMIT_RPH: int = 1000  # Requests per hour
+    MCP_GATEWAY_RATE_LIMIT_RPD: int = 10000  # Requests per day
+    MCP_GATEWAY_AUDIT_ENABLED: bool = True
+    MCP_GATEWAY_AUDIT_LEVEL: str = "basic"  # none, basic, full
+
+    # External MCP Servers
+    # Tavily AI Search (Free tier: 1000 searches/month)
+    # TAVILY_API_KEY already defined above
+
+    # Playwright Browser MCP (Resource-heavy, disabled by default)
+    MCP_PLAYWRIGHT_ENABLED: bool = False
+    MCP_PLAYWRIGHT_HEADLESS: bool = True
+
+    # Filesystem MCP (Security-sensitive, disabled by default)
+    MCP_FILESYSTEM_ENABLED: bool = False
+    MCP_FILESYSTEM_ALLOWED_PATHS: str = "/tmp/vivid-workspace"
+
+    # GitHub MCP
+    MCP_GITHUB_ENABLED: bool = False
+    MCP_GITHUB_TOKEN: str = ""
+
+    # Internal MCP Server (Dimension Tools exposure)
+    MCP_INTERNAL_SERVER_ENABLED: bool = True
+    MCP_INTERNAL_SERVER_PORT: int = 8200
+
+    # MCP Circuit Breaker
+    MCP_CIRCUIT_BREAKER_THRESHOLD: int = 5
+    MCP_CIRCUIT_BREAKER_TIMEOUT_SECONDS: int = 60
+
+    # MCP Credit Costs (per call)
+    MCP_CREDIT_COST_DEFAULT: int = 1
+    MCP_CREDIT_COST_TAVILY: int = 2
+    MCP_CREDIT_COST_PLAYWRIGHT: int = 5
+    MCP_CREDIT_COST_QDRANT: int = 1
+
     @property
     def DATABASE_URL(self) -> str:
         return (
