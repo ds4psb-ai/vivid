@@ -14,10 +14,12 @@ import {
   Search,
   Layers,
   Music,
+  Music2,
   LayoutGrid,
   Wand2,
   Image as ImageIcon,
   Video,
+  Film,
   CheckCircle,
   Palette,
   FlaskConical,
@@ -67,10 +69,12 @@ export type DimensionIconName =
   | "search"
   | "layers"
   | "music"
+  | "music2"
   | "layout-grid"
   | "wand"
   | "image"
   | "video"
+  | "film"
   | "check"
   | "palette"
   | "flask"
@@ -102,10 +106,12 @@ export const DIMENSION_ICONS: Record<DimensionIconName, LucideIcon> = {
   search: Search,
   layers: Layers,
   music: Music,
+  music2: Music2,
   "layout-grid": LayoutGrid,
   wand: Wand2,
   image: ImageIcon,
   video: Video,
+  film: Film,
   check: CheckCircle,
   palette: Palette,
   flask: FlaskConical,
@@ -346,6 +352,44 @@ export const DIMENSION_ITEMS: DimensionItemData[] = [
     gradient: "from-teal-500 via-cyan-500 to-sky-500",
     isNew: true,
   },
+  {
+    id: "suno-music",
+    href: "/dimension/suno",
+    iconName: "music2",
+    stage: "extended",
+    stageOrder: 3,
+    titleKo: "Suno 음악",
+    titleEn: "Suno Music",
+    descKo: "AI 음악 생성 (작사/작곡)",
+    descEn: "AI music generation (lyrics/composition)",
+    portalColor: "border-lime-500/50",
+    borderColor: "border-lime-500",
+    glowClass: "glow-breathe glow-breathe-lime",
+    activeBg: "bg-lime-500",
+    activeText: "text-lime-950",
+    textColor: "text-lime-400",
+    gradient: "from-lime-500 via-green-500 to-emerald-500",
+    isNew: true,
+  },
+  {
+    id: "kling-video",
+    href: "/dimension/kling",
+    iconName: "film",
+    stage: "extended",
+    stageOrder: 4,
+    titleKo: "Kling 2.6",
+    titleEn: "Kling Video",
+    descKo: "고품질 시네마틱 비디오 생성",
+    descEn: "High-quality cinematic video generation",
+    portalColor: "border-amber-500/50",
+    borderColor: "border-amber-500",
+    glowClass: "glow-breathe glow-breathe-amber",
+    activeBg: "bg-amber-500",
+    activeText: "text-amber-950",
+    textColor: "text-amber-400",
+    gradient: "from-amber-500 via-orange-500 to-red-500",
+    isNew: true,
+  },
 ];
 
 // =============================================================================
@@ -365,6 +409,8 @@ export const ROUTE_KEYS: Record<string, string> = {
   "/dimension/quality-check": "quality-director",
   "/dimension/aesthetic": "aesthetic-director",
   "/dimension/character-consistency": "character-consistency",
+  "/dimension/suno": "suno-music",
+  "/dimension/kling": "kling-video",
 };
 
 // =============================================================================
