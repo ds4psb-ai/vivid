@@ -5,8 +5,19 @@ Classic Dimension Endpoints - 1D, 2D, 3D, 4D.
 - 2D Blueprint: Storyboard Creation
 - 3D Ambience: Image Prompt Generation
 - 4D Moment: Reference Analysis
+
+Security:
+- XSS sanitization for style/mood fields
+- Enum validation for analysis_depth/output_format/strategy
+- Focus areas whitelist validation
 """
 from __future__ import annotations
+
+import html
+import logging
+import re
+from enum import Enum
+from typing import List
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
@@ -38,7 +49,167 @@ from ._base import (
     Optional,
 )
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
+
+
+# ============================================================================
+# Constants & Enums
+# ============================================================================
+
+class AnalysisDepth(str, Enum):
+    """4D analysis depth levels."""
+    QUICK = "quick"
+    STANDARD = "standard"
+    DEEP = "deep"
+
+
+class OutputFormat(str, Enum):
+    """4D output format options."""
+    STRUCTURED = "structured"
+    NARRATIVE = "narrative"
+    BULLET = "bullet"
+
+
+class UQSLStrategy(str, Enum):
+    """UQSL selection strategy."""
+    AUTO = "auto"
+    QUALITY = "quality"
+    HITL = "hitl"
+
+
+ALLOWED_FOCUS_AREAS = frozenset([
+    "cinematography", "editing", "color", "sound", "lighting",
+    "composition", "movement", "pacing", "narrative", "mood",
+    "performance", "dialogue", "vfx", "production_design",
+])
+
+DEFAULT_FOCUS_AREAS = ["cinematography", "editing", "color", "sound"]
+
+
+# ============================================================================
+# Sanitization Helpers
+# ============================================================================
+
+def _sanitize_style_mood(value: str, default: str = "cinematic") -> str:
+    """Sanitize style/mood field to prevent XSS and injection attacks.
+
+    Args:
+        value: Raw style or mood input
+        default: Default value if empty
+
+    Returns:
+        Sanitized string
+    """
+    if not value:
+        return default
+    # Strip whitespace
+    value = value.strip()
+    # Remove HTML tags
+    value = re.sub(r"<[^>]+>", "", value)
+    # Escape HTML entities
+    value = html.escape(value)
+    # Remove script/javascript patterns
+    value = re.sub(r"(?i)javascript\s*:", "", value)
+    value = re.sub(r"(?i)on\w+\s*=", "", value)
+    # Limit to reasonable characters (alphanumeric, spaces, Korean, basic punctuation)
+    value = re.sub(r"[^\w\s가-힣\-_.,]", "", value)
+    return value[:100] or default
+
+
+def _validate_analysis_depth(value: str) -> str:
+    """Validate analysis_depth is one of allowed values.
+
+    Args:
+        value: Raw analysis depth
+
+    Returns:
+        Validated analysis depth
+
+    Raises:
+        ValueError: If not in allowed values
+    """
+    value = value.strip().lower()
+    try:
+        return AnalysisDepth(value).value
+    except ValueError:
+        allowed = [d.value for d in AnalysisDepth]
+        raise ValueError(f"Invalid analysis_depth: {value}. Allowed: {allowed}")
+
+
+def _validate_output_format(value: str) -> str:
+    """Validate output_format is one of allowed values.
+
+    Args:
+        value: Raw output format
+
+    Returns:
+        Validated output format
+
+    Raises:
+        ValueError: If not in allowed values
+    """
+    value = value.strip().lower()
+    try:
+        return OutputFormat(value).value
+    except ValueError:
+        allowed = [f.value for f in OutputFormat]
+        raise ValueError(f"Invalid output_format: {value}. Allowed: {allowed}")
+
+
+def _validate_focus_areas(areas: List[str]) -> List[str]:
+    """Validate and sanitize focus_areas list.
+
+    Args:
+        areas: Raw focus areas list
+
+    Returns:
+        Validated focus areas list
+
+    Raises:
+        ValueError: If invalid areas found
+    """
+    if not areas:
+        return DEFAULT_FOCUS_AREAS.copy()
+
+    # Normalize and validate
+    normalized = []
+    invalid = []
+    for area in areas:
+        clean = area.strip().lower().replace(" ", "_")
+        if clean in ALLOWED_FOCUS_AREAS:
+            if clean not in normalized:  # Deduplicate
+                normalized.append(clean)
+        else:
+            invalid.append(area)
+
+    if invalid:
+        raise ValueError(
+            f"Invalid focus_areas: {invalid}. Allowed: {sorted(ALLOWED_FOCUS_AREAS)}"
+        )
+
+    return normalized or DEFAULT_FOCUS_AREAS.copy()
+
+
+def _validate_strategy(value: str) -> str:
+    """Validate UQSL strategy is one of allowed values.
+
+    Args:
+        value: Raw strategy
+
+    Returns:
+        Validated strategy
+
+    Raises:
+        ValueError: If not in allowed values
+    """
+    value = value.strip().lower()
+    try:
+        return UQSLStrategy(value).value
+    except ValueError:
+        allowed = [s.value for s in UQSLStrategy]
+        raise ValueError(f"Invalid strategy: {value}. Allowed: {allowed}")
 
 
 # ============================================================================
@@ -46,18 +217,33 @@ router = APIRouter()
 # ============================================================================
 
 class PromptGenerateRequest(BaseModel):
-    """Request model for 1D Origin prompt generation."""
+    """Request model for 1D Origin prompt generation.
+
+    Includes XSS sanitization for style/mood fields.
+    """
     topic: str = Field(..., min_length=1, max_length=MAX_TOPIC_LENGTH, description="Video topic or concept")
-    style: str = Field("cinematic", max_length=100, description="Visual style")
-    mood: str = Field("neutral", max_length=100, description="Mood or atmosphere")
+    style: str = Field("cinematic", max_length=100, description="Visual style (sanitized)")
+    mood: str = Field("neutral", max_length=100, description="Mood or atmosphere (sanitized)")
     duration: int = Field(6, ge=4, le=8, description="Video duration in seconds")
     language: str = Field("ko", description="Output language")
     model: str = Field("gemini-3-flash-preview", description="AI model")
 
-    @field_validator("topic", "style", "mood", mode="before")
+    @field_validator("topic", mode="before")
     @classmethod
-    def strip_strings(cls, v: str) -> str:
+    def strip_topic(cls, v: str) -> str:
         return _strip_string(v)
+
+    @field_validator("style", mode="before")
+    @classmethod
+    def sanitize_style(cls, v: str) -> str:
+        """Sanitize style to prevent XSS attacks."""
+        return _sanitize_style_mood(v, default="cinematic")
+
+    @field_validator("mood", mode="before")
+    @classmethod
+    def sanitize_mood(cls, v: str) -> str:
+        """Sanitize mood to prevent XSS attacks."""
+        return _sanitize_style_mood(v, default="neutral")
 
     @field_validator("language")
     @classmethod
@@ -95,16 +281,25 @@ class StoryboardCreateRequest(BaseModel):
 
 
 class ImageGenerateRequest(BaseModel):
-    """Request model for 3D Ambience image prompt generation."""
+    """Request model for 3D Ambience image prompt generation.
+
+    Includes XSS sanitization for style field.
+    """
     description: str = Field(..., min_length=1, max_length=MAX_DESCRIPTION_LENGTH, description="Image description")
-    style: str = Field("photorealistic", max_length=100, description="Image style")
+    style: str = Field("photorealistic", max_length=100, description="Image style (sanitized)")
     aspect_ratio: str = Field("16:9", description="Aspect ratio")
     model: str = Field("gemini-3-flash-preview", description="AI model")
 
-    @field_validator("description", "style", mode="before")
+    @field_validator("description", mode="before")
     @classmethod
-    def strip_strings(cls, v: str) -> str:
+    def strip_description(cls, v: str) -> str:
         return _strip_string(v)
+
+    @field_validator("style", mode="before")
+    @classmethod
+    def sanitize_style(cls, v: str) -> str:
+        """Sanitize style to prevent XSS attacks."""
+        return _sanitize_style_mood(v, default="photorealistic")
 
     @field_validator("aspect_ratio")
     @classmethod
@@ -118,20 +313,43 @@ class ImageGenerateRequest(BaseModel):
 
 
 class ReferenceAnalyzeRequest(BaseModel):
-    """Request model for 4D Moment reference analysis."""
+    """Request model for 4D Moment reference analysis.
+
+    Includes:
+    - Enum validation for analysis_depth and output_format
+    - Whitelist validation for focus_areas
+    """
     video_description: str = Field(..., min_length=1, max_length=MAX_DESCRIPTION_LENGTH, description="Video to analyze")
-    focus_areas: list[str] = Field(
-        default=["cinematography", "editing", "color", "sound"],
-        description="Areas to focus analysis on"
+    focus_areas: List[str] = Field(
+        default_factory=lambda: DEFAULT_FOCUS_AREAS.copy(),
+        description=f"Areas to focus analysis on. Allowed: {sorted(ALLOWED_FOCUS_AREAS)}"
     )
-    analysis_depth: str = Field("standard", max_length=50, description="Analysis depth (quick, standard, deep)")
-    output_format: str = Field("structured", max_length=50, description="Output format (structured, narrative, bullet)")
+    analysis_depth: str = Field("standard", description="Analysis depth: quick, standard, deep")
+    output_format: str = Field("structured", description="Output format: structured, narrative, bullet")
     model: str = Field("gemini-3-flash-preview", description="AI model")
 
     @field_validator("video_description", mode="before")
     @classmethod
     def strip_description(cls, v: str) -> str:
         return _strip_string(v)
+
+    @field_validator("focus_areas")
+    @classmethod
+    def validate_focus_areas(cls, v: List[str]) -> List[str]:
+        """Validate focus_areas against whitelist."""
+        return _validate_focus_areas(v)
+
+    @field_validator("analysis_depth")
+    @classmethod
+    def validate_analysis_depth(cls, v: str) -> str:
+        """Validate analysis_depth is one of allowed enum values."""
+        return _validate_analysis_depth(v)
+
+    @field_validator("output_format")
+    @classmethod
+    def validate_output_format(cls, v: str) -> str:
+        """Validate output_format is one of allowed enum values."""
+        return _validate_output_format(v)
 
     @field_validator("model")
     @classmethod
@@ -162,9 +380,15 @@ async def generate_1d_prompt(
     db: AsyncSession = Depends(get_db),
 ) -> DimensionResponse:
     """Generate Veo video prompt (1D Origin) with Intent-Resolver integration."""
+    user_id = user.get("id", "unknown")
+    logger.info(
+        f"[1D_GENERATE] user={user_id} topic_len={len(request.topic)} "
+        f"style={request.style} mood={request.mood} duration={request.duration}s"
+    )
+
     from app.routers.intent_helpers import with_intent
     intent = with_intent(request)
-    
+
     return await _execute_dimension_tool(
         capsule_id=DimensionCapsuleId.PROMPT_GENERATE,
         tool_key="generate_veo_prompt",
@@ -234,10 +458,15 @@ async def generate_1d_prompt_stream(
 # ============================================================================
 
 class PromptMultiGenerateRequest(BaseModel):
-    """Request model for 1D Origin UQSL multi-candidate generation."""
+    """Request model for 1D Origin UQSL multi-candidate generation.
+
+    Includes:
+    - XSS sanitization for style/mood fields
+    - Enum validation for strategy
+    """
     topic: str = Field(..., min_length=1, max_length=MAX_TOPIC_LENGTH, description="Video topic or concept")
-    style: str = Field("cinematic", max_length=100, description="Visual style")
-    mood: str = Field("neutral", max_length=100, description="Mood or atmosphere")
+    style: str = Field("cinematic", max_length=100, description="Visual style (sanitized)")
+    mood: str = Field("neutral", max_length=100, description="Mood or atmosphere (sanitized)")
     duration: int = Field(6, ge=4, le=8, description="Video duration in seconds")
     language: str = Field("ko", description="Output language")
     model: str = Field("gemini-3-flash-preview", description="AI model")
@@ -245,10 +474,22 @@ class PromptMultiGenerateRequest(BaseModel):
     n_candidates: int = Field(3, ge=2, le=5, description="Number of candidates to generate")
     strategy: str = Field("auto", description="Selection strategy: auto, quality, hitl")
 
-    @field_validator("topic", "style", "mood", mode="before")
+    @field_validator("topic", mode="before")
     @classmethod
-    def strip_strings(cls, v: str) -> str:
+    def strip_topic(cls, v: str) -> str:
         return _strip_string(v)
+
+    @field_validator("style", mode="before")
+    @classmethod
+    def sanitize_style(cls, v: str) -> str:
+        """Sanitize style to prevent XSS attacks."""
+        return _sanitize_style_mood(v, default="cinematic")
+
+    @field_validator("mood", mode="before")
+    @classmethod
+    def sanitize_mood(cls, v: str) -> str:
+        """Sanitize mood to prevent XSS attacks."""
+        return _sanitize_style_mood(v, default="neutral")
 
     @field_validator("language")
     @classmethod
@@ -259,6 +500,12 @@ class PromptMultiGenerateRequest(BaseModel):
     @classmethod
     def validate_model(cls, v: str) -> str:
         return _validate_model(v)
+
+    @field_validator("strategy")
+    @classmethod
+    def validate_strategy(cls, v: str) -> str:
+        """Validate UQSL strategy is one of allowed values."""
+        return _validate_strategy(v)
 
 
 @router.post(
@@ -279,6 +526,12 @@ async def generate_1d_prompt_multi(
     Generates N candidates in parallel, evaluates quality scores, and
     recommends the best candidate using Thompson Sampling.
     """
+    user_id = user.get("id", "unknown")
+    logger.info(
+        f"[1D_MULTI] user={user_id} topic_len={len(request.topic)} "
+        f"n_candidates={request.n_candidates} strategy={request.strategy}"
+    )
+
     from app.routers.intent_helpers import with_intent
     intent = with_intent(request)
 
@@ -377,9 +630,15 @@ async def create_2d_storyboard(
     db: AsyncSession = Depends(get_db),
 ) -> DimensionResponse:
     """Create storyboard cards with Intent-Resolver integration."""
+    user_id = user.get("id", "unknown")
+    logger.info(
+        f"[2D_CREATE] user={user_id} concept_len={len(request.concept)} "
+        f"scene_count={request.scene_count}"
+    )
+
     from app.routers.intent_helpers import with_intent
     intent = with_intent(request)
-    
+
     return await _execute_dimension_tool(
         capsule_id=DimensionCapsuleId.STORYBOARD_CREATE,
         tool_key="create_storyboard",
@@ -465,9 +724,15 @@ async def generate_3d_image_prompt(
     db: AsyncSession = Depends(get_db),
 ) -> DimensionResponse:
     """Generate optimized image prompt with Intent-Resolver integration."""
+    user_id = user.get("id", "unknown")
+    logger.info(
+        f"[3D_GENERATE] user={user_id} desc_len={len(request.description)} "
+        f"style={request.style} aspect_ratio={request.aspect_ratio}"
+    )
+
     from app.routers.intent_helpers import with_intent
     intent = with_intent(request)
-    
+
     return await _execute_dimension_tool(
         capsule_id=DimensionCapsuleId.IMAGE_GENERATE,
         tool_key="generate_image_prompt",
@@ -551,9 +816,16 @@ async def analyze_4d_reference(
     db: AsyncSession = Depends(get_db),
 ) -> DimensionResponse:
     """Analyze video reference with Intent-Resolver integration."""
+    user_id = user.get("id", "unknown")
+    logger.info(
+        f"[4D_ANALYZE] user={user_id} desc_len={len(request.video_description)} "
+        f"depth={request.analysis_depth} format={request.output_format} "
+        f"focus_areas={request.focus_areas}"
+    )
+
     from app.routers.intent_helpers import with_intent
     intent = with_intent(request)
-    
+
     return await _execute_dimension_tool(
         capsule_id=DimensionCapsuleId.REFERENCE_ANALYZE,
         tool_key="analyze_reference",

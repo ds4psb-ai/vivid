@@ -8,15 +8,19 @@ Endpoints:
 - POST /api/v1/dimension/kling/generate - Generate video
 - GET /api/v1/dimension/kling/status/{task_id} - Get task status
 
-License: arkain.info@gmail.com (Gemini Enterprise)
+Security:
+- XSS sanitization for prompt and negative_prompt
+- Enum validation for duration, aspect_ratio, resolution, mode
 """
 from __future__ import annotations
 
+import html
 import logging
+import re
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -40,20 +44,161 @@ router = APIRouter(prefix="/kling", tags=["Kling AI"])
 
 
 # =============================================================================
+# Sanitization Helpers
+# =============================================================================
+
+def _sanitize_prompt(value: str) -> str:
+    """Sanitize prompt field to prevent XSS.
+
+    Args:
+        value: Raw prompt input
+
+    Returns:
+        Sanitized string
+    """
+    if not value:
+        return value
+    value = value.strip()
+    # Remove HTML tags
+    value = re.sub(r"<[^>]+>", "", value)
+    # Escape HTML entities
+    value = html.escape(value)
+    # Remove script/javascript patterns
+    value = re.sub(r"(?i)javascript\s*:", "", value)
+    value = re.sub(r"(?i)on\w+\s*=", "", value)
+    return value
+
+
+def _validate_duration(value: str) -> str:
+    """Validate duration is 5 or 10.
+
+    Args:
+        value: Raw duration
+
+    Returns:
+        Validated duration
+
+    Raises:
+        ValueError: If not 5 or 10
+    """
+    allowed = ["5", "10"]
+    if value not in allowed:
+        raise ValueError(f"Invalid duration: {value}. Allowed: {allowed}")
+    return value
+
+
+def _validate_aspect_ratio(value: str) -> str:
+    """Validate aspect ratio is supported.
+
+    Args:
+        value: Raw aspect ratio
+
+    Returns:
+        Validated aspect ratio
+
+    Raises:
+        ValueError: If not supported
+    """
+    allowed = ["16:9", "9:16", "1:1"]
+    if value not in allowed:
+        raise ValueError(f"Invalid aspect_ratio: {value}. Allowed: {allowed}")
+    return value
+
+
+def _validate_resolution(value: str) -> str:
+    """Validate resolution is 720p or 1080p.
+
+    Args:
+        value: Raw resolution
+
+    Returns:
+        Validated resolution
+
+    Raises:
+        ValueError: If not 720p or 1080p
+    """
+    allowed = ["720p", "1080p"]
+    if value not in allowed:
+        raise ValueError(f"Invalid resolution: {value}. Allowed: {allowed}")
+    return value
+
+
+def _validate_mode(value: str) -> str:
+    """Validate mode is std or pro.
+
+    Args:
+        value: Raw mode
+
+    Returns:
+        Validated mode
+
+    Raises:
+        ValueError: If not std or pro
+    """
+    allowed = ["std", "pro"]
+    if value not in allowed:
+        raise ValueError(f"Invalid mode: {value}. Allowed: {allowed}")
+    return value
+
+
+# =============================================================================
 # Request/Response Models
 # =============================================================================
 
 class KlingGenerateRequest(BaseModel):
-    """API request for Kling video generation."""
-    
-    prompt: str = Field(..., min_length=1, max_length=2500, description="Video description")
-    negative_prompt: Optional[str] = Field(None, max_length=500, description="Elements to avoid")
+    """API request for Kling video generation.
+
+    Includes:
+    - XSS sanitization for prompt and negative_prompt
+    - Enum validation for duration, aspect_ratio, resolution, mode
+    """
+
+    prompt: str = Field(..., min_length=1, max_length=2500, description="Video description (sanitized)")
+    negative_prompt: Optional[str] = Field(None, max_length=500, description="Elements to avoid (sanitized)")
     duration: str = Field(default="5", description="Duration: 5 or 10 seconds")
-    aspect_ratio: str = Field(default="16:9", description="Aspect ratio")
+    aspect_ratio: str = Field(default="16:9", description="Aspect ratio: 16:9, 9:16, 1:1")
     resolution: str = Field(default="1080p", description="Resolution: 720p or 1080p")
     mode: str = Field(default="std", description="Mode: std or pro")
     enable_audio: bool = Field(default=False, description="Enable audio generation")
     image_url: Optional[str] = Field(None, description="Initial image for image-to-video")
+
+    @field_validator("prompt", mode="before")
+    @classmethod
+    def sanitize_prompt(cls, v: str) -> str:
+        """Sanitize prompt to prevent XSS."""
+        return _sanitize_prompt(v)
+
+    @field_validator("negative_prompt", mode="before")
+    @classmethod
+    def sanitize_negative_prompt(cls, v: Optional[str]) -> Optional[str]:
+        """Sanitize negative_prompt to prevent XSS."""
+        if v is None:
+            return None
+        return _sanitize_prompt(v)
+
+    @field_validator("duration")
+    @classmethod
+    def validate_duration(cls, v: str) -> str:
+        """Validate duration is 5 or 10."""
+        return _validate_duration(v)
+
+    @field_validator("aspect_ratio")
+    @classmethod
+    def validate_aspect_ratio(cls, v: str) -> str:
+        """Validate aspect_ratio is supported."""
+        return _validate_aspect_ratio(v)
+
+    @field_validator("resolution")
+    @classmethod
+    def validate_resolution(cls, v: str) -> str:
+        """Validate resolution is 720p or 1080p."""
+        return _validate_resolution(v)
+
+    @field_validator("mode")
+    @classmethod
+    def validate_mode(cls, v: str) -> str:
+        """Validate mode is std or pro."""
+        return _validate_mode(v)
 
 
 class KlingGenerateResponse(BaseModel):
@@ -110,8 +255,13 @@ async def generate_video(
     """Generate video using Kling AI."""
     import time
     start_time = time.time()
-    
+
     user_id = user.get("id")
+    logger.info(
+        f"[KLING_GENERATE] user={user_id} prompt_len={len(request.prompt)} "
+        f"duration={request.duration}s resolution={request.resolution} mode={request.mode}"
+    )
+
     if not user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

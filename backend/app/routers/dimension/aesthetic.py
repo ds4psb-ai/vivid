@@ -3,8 +3,17 @@ Aesthetic Dimension Endpoints - Aesthetic Director.
 
 - Aesthetic Direct: Generate style guide with auteur matching
 - Aesthetic Moodboard: Generate visual direction cards
+
+Security:
+- XSS sanitization for mood, style, and text fields
+- Enum validation for lighting_style, color_mood, style_reference, target_medium
 """
 from __future__ import annotations
+
+import html
+import logging
+import re
+from enum import Enum
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
@@ -29,26 +38,240 @@ from ._base import (
 
 router = APIRouter()
 
+# Module logger
+aesthetic_logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# Constants & Enums
+# ============================================================================
+
+class LightingStyle(str, Enum):
+    """Supported lighting styles for aesthetic direction."""
+    NATURAL = "natural"
+    HIGH_KEY = "high-key"
+    LOW_KEY = "low-key"
+    DRAMATIC = "dramatic"
+    SOFT = "soft"
+
+
+class ColorMood(str, Enum):
+    """Supported color moods for aesthetic direction."""
+    NEUTRAL = "neutral"
+    WARM = "warm"
+    COOL = "cool"
+    DESATURATED = "desaturated"
+    VIBRANT = "vibrant"
+
+
+class StyleReference(str, Enum):
+    """Supported visual style references for character DNA."""
+    ANIME = "anime"
+    REALISTIC = "realistic"
+    STYLIZED = "stylized"
+    CINEMATIC = "cinematic"
+
+
+class PersonaStage(str, Enum):
+    """Persona analysis stages."""
+    INTRO = "intro"
+    BIRTH = "birth"
+    SAJU = "saju"
+    SYNTHESIS = "synthesis"
+    FINAL = "final"
+
+
+ALLOWED_LIGHTING_STYLES = frozenset([s.value for s in LightingStyle])
+ALLOWED_COLOR_MOODS = frozenset([c.value for c in ColorMood])
+ALLOWED_STYLE_REFERENCES = frozenset([s.value for s in StyleReference])
+ALLOWED_PERSONA_STAGES = frozenset([s.value for s in PersonaStage])
+ALLOWED_TARGET_MEDIUMS = frozenset(["video", "image", "animation", "web", "print", "social"])
+
+
+# ============================================================================
+# Sanitization Helpers
+# ============================================================================
+
+def _sanitize_text_field(value: str, default: str = "") -> str:
+    """Sanitize text fields to prevent XSS.
+
+    Args:
+        value: Raw text input
+        default: Default value if empty
+
+    Returns:
+        Sanitized string
+    """
+    if not value:
+        return default
+    value = value.strip()
+    if not value:
+        return default
+    # Remove HTML tags
+    value = re.sub(r"<[^>]+>", "", value)
+    # Escape HTML entities
+    value = html.escape(value)
+    # Remove script/javascript patterns
+    value = re.sub(r"(?i)javascript\s*:", "", value)
+    value = re.sub(r"(?i)on\w+\s*=", "", value)
+    return value or default
+
+
+def _validate_lighting_style(value: str) -> str:
+    """Validate lighting style is in allowed list.
+
+    Args:
+        value: Raw lighting style
+
+    Returns:
+        Validated lighting style
+
+    Raises:
+        ValueError: If not in allowed list
+    """
+    value = value.strip().lower()
+    if value not in ALLOWED_LIGHTING_STYLES:
+        raise ValueError(
+            f"Invalid lighting_style: {value}. Allowed: {sorted(ALLOWED_LIGHTING_STYLES)}"
+        )
+    return value
+
+
+def _validate_color_mood(value: str) -> str:
+    """Validate color mood is in allowed list.
+
+    Args:
+        value: Raw color mood
+
+    Returns:
+        Validated color mood
+
+    Raises:
+        ValueError: If not in allowed list
+    """
+    value = value.strip().lower()
+    if value not in ALLOWED_COLOR_MOODS:
+        raise ValueError(
+            f"Invalid color_mood: {value}. Allowed: {sorted(ALLOWED_COLOR_MOODS)}"
+        )
+    return value
+
+
+def _validate_style_reference(value: str) -> str:
+    """Validate style reference is in allowed list.
+
+    Args:
+        value: Raw style reference
+
+    Returns:
+        Validated style reference
+
+    Raises:
+        ValueError: If not in allowed list
+    """
+    value = value.strip().lower()
+    if value not in ALLOWED_STYLE_REFERENCES:
+        raise ValueError(
+            f"Invalid style_reference: {value}. Allowed: {sorted(ALLOWED_STYLE_REFERENCES)}"
+        )
+    return value
+
+
+def _validate_target_medium(value: str) -> str:
+    """Validate target medium is in allowed list.
+
+    Args:
+        value: Raw target medium
+
+    Returns:
+        Validated target medium
+
+    Raises:
+        ValueError: If not in allowed list
+    """
+    value = value.strip().lower()
+    if value not in ALLOWED_TARGET_MEDIUMS:
+        raise ValueError(
+            f"Invalid target_medium: {value}. Allowed: {sorted(ALLOWED_TARGET_MEDIUMS)}"
+        )
+    return value
+
+
+def _validate_persona_stage(value: str) -> str:
+    """Validate persona stage is in allowed list.
+
+    Args:
+        value: Raw persona stage
+
+    Returns:
+        Validated persona stage
+
+    Raises:
+        ValueError: If not in allowed list
+    """
+    value = value.strip().lower()
+    if value not in ALLOWED_PERSONA_STAGES:
+        raise ValueError(
+            f"Invalid current_stage: {value}. Allowed: {sorted(ALLOWED_PERSONA_STAGES)}"
+        )
+    return value
+
 
 # ============================================================================
 # Request Models
 # ============================================================================
 
 class AestheticDirectRequest(BaseModel):
-    """Request model for Aesthetic Director style guide generation."""
-    concept: str = Field(..., min_length=1, max_length=MAX_CONCEPT_LENGTH, description="Visual concept")
-    reference_style: str = Field("bong", max_length=100, description="Auteur reference style")
-    mood: str = Field("cinematic", max_length=100, description="Visual mood")
-    lighting_style: str = Field("natural", max_length=50, description="Lighting style (natural, high-key, low-key, dramatic, soft)")
-    color_mood: str = Field("neutral", max_length=50, description="Color mood (neutral, warm, cool, desaturated, vibrant)")
-    target_medium: str = Field("video", max_length=50, description="Target medium")
+    """Request model for Aesthetic Director style guide generation.
+
+    Includes:
+    - XSS sanitization for concept, reference_style, mood
+    - Enum validation for lighting_style, color_mood, target_medium
+    """
+    concept: str = Field(..., min_length=1, max_length=MAX_CONCEPT_LENGTH, description="Visual concept (sanitized)")
+    reference_style: str = Field("bong", max_length=100, description="Auteur reference style (sanitized)")
+    mood: str = Field("cinematic", max_length=100, description="Visual mood (sanitized)")
+    lighting_style: str = Field("natural", max_length=50, description="Lighting style: natural, high-key, low-key, dramatic, soft")
+    color_mood: str = Field("neutral", max_length=50, description="Color mood: neutral, warm, cool, desaturated, vibrant")
+    target_medium: str = Field("video", max_length=50, description="Target medium: video, image, animation, web, print, social")
     use_rag: bool = Field(True, description="Use RAG for auteur knowledge")
     model: str = Field("gemini-3-flash-preview", description="AI model")
 
-    @field_validator("concept", "reference_style", "mood", "lighting_style", "color_mood", mode="before")
+    @field_validator("concept", mode="before")
     @classmethod
-    def strip_strings(cls, v: str) -> str:
-        return _strip_string(v)
+    def sanitize_concept(cls, v: str) -> str:
+        """Sanitize concept to prevent XSS."""
+        return _sanitize_text_field(v)
+
+    @field_validator("reference_style", mode="before")
+    @classmethod
+    def sanitize_reference_style(cls, v: str) -> str:
+        """Sanitize reference_style to prevent XSS."""
+        return _sanitize_text_field(v, default="bong")
+
+    @field_validator("mood", mode="before")
+    @classmethod
+    def sanitize_mood(cls, v: str) -> str:
+        """Sanitize mood to prevent XSS."""
+        return _sanitize_text_field(v, default="cinematic")
+
+    @field_validator("lighting_style")
+    @classmethod
+    def validate_lighting_style(cls, v: str) -> str:
+        """Validate lighting_style is in allowed list."""
+        return _validate_lighting_style(v)
+
+    @field_validator("color_mood")
+    @classmethod
+    def validate_color_mood(cls, v: str) -> str:
+        """Validate color_mood is in allowed list."""
+        return _validate_color_mood(v)
+
+    @field_validator("target_medium")
+    @classmethod
+    def validate_target_medium(cls, v: str) -> str:
+        """Validate target_medium is in allowed list."""
+        return _validate_target_medium(v)
 
     @field_validator("model")
     @classmethod
@@ -57,15 +280,26 @@ class AestheticDirectRequest(BaseModel):
 
 
 class AestheticMoodboardRequest(BaseModel):
-    """Request model for Aesthetic Moodboard generation."""
-    concept: str = Field(..., min_length=1, max_length=MAX_CONCEPT_LENGTH, description="Visual concept")
-    mood: str = Field("cinematic", max_length=100, description="Visual mood")
+    """Request model for Aesthetic Moodboard generation.
+
+    Includes:
+    - XSS sanitization for concept and mood
+    """
+    concept: str = Field(..., min_length=1, max_length=MAX_CONCEPT_LENGTH, description="Visual concept (sanitized)")
+    mood: str = Field("cinematic", max_length=100, description="Visual mood (sanitized)")
     model: str = Field("gemini-3-flash-preview", description="AI model")
 
-    @field_validator("concept", "mood", mode="before")
+    @field_validator("concept", mode="before")
     @classmethod
-    def strip_strings(cls, v: str) -> str:
-        return _strip_string(v)
+    def sanitize_concept(cls, v: str) -> str:
+        """Sanitize concept to prevent XSS."""
+        return _sanitize_text_field(v)
+
+    @field_validator("mood", mode="before")
+    @classmethod
+    def sanitize_mood(cls, v: str) -> str:
+        """Sanitize mood to prevent XSS."""
+        return _sanitize_text_field(v, default="cinematic")
 
     @field_validator("model")
     @classmethod
@@ -96,6 +330,13 @@ async def direct_aesthetic(
     db: AsyncSession = Depends(get_db),
 ) -> DimensionResponse:
     """Generate aesthetic style guide with Intent-Resolver integration."""
+    user_id = user.get("id", "unknown")
+    aesthetic_logger.info(
+        f"[AESTHETIC_DIRECT] user={user_id} concept_len={len(request.concept)} "
+        f"style={request.reference_style} lighting={request.lighting_style} "
+        f"color={request.color_mood} medium={request.target_medium}"
+    )
+
     from app.routers.intent_helpers import infer_intent_for_aesthetic
     intent = infer_intent_for_aesthetic(
         concept=request.concept,
@@ -143,6 +384,12 @@ async def direct_aesthetic_stream(
     db: AsyncSession = Depends(get_db),
 ) -> StreamingResponse:
     """Generate aesthetic style guide with SSE streaming."""
+    user_id = user.get("id", "unknown")
+    aesthetic_logger.info(
+        f"[AESTHETIC_DIRECT_STREAM] user={user_id} concept_len={len(request.concept)} "
+        f"style={request.reference_style} lighting={request.lighting_style}"
+    )
+
     from app.routers.intent_helpers import infer_intent_for_aesthetic
     intent = infer_intent_for_aesthetic(
         concept=request.concept,
@@ -200,6 +447,11 @@ async def generate_aesthetic_moodboard(
     db: AsyncSession = Depends(get_db),
 ) -> DimensionResponse:
     """Generate visual direction cards with Intent-Resolver integration."""
+    user_id = user.get("id", "unknown")
+    aesthetic_logger.info(
+        f"[AESTHETIC_MOODBOARD] user={user_id} concept_len={len(request.concept)} mood={request.mood}"
+    )
+
     from app.routers.intent_helpers import with_intent
     intent = with_intent(request, "aesthetic")
     
@@ -237,6 +489,11 @@ async def generate_aesthetic_moodboard_stream(
     db: AsyncSession = Depends(get_db),
 ) -> StreamingResponse:
     """Generate visual direction cards with SSE streaming."""
+    user_id = user.get("id", "unknown")
+    aesthetic_logger.info(
+        f"[AESTHETIC_MOODBOARD_STREAM] user={user_id} concept_len={len(request.concept)} mood={request.mood}"
+    )
+
     from app.routers.intent_helpers import with_intent
     intent = with_intent(request, "aesthetic")
     
@@ -266,19 +523,37 @@ async def generate_aesthetic_moodboard_stream(
 # ============================================================================
 
 class PersonaAnalyzeRequest(BaseModel):
-    """Request model for AI Persona Analyzer."""
-    subject: str = Field(..., min_length=1, max_length=1000, description="Subject to analyze")
-    user_message: str = Field("", max_length=2000, description="User message in conversation")
+    """Request model for AI Persona Analyzer.
+
+    Includes:
+    - XSS sanitization for subject and user_message
+    - Enum validation for current_stage
+    """
+    subject: str = Field(..., min_length=1, max_length=1000, description="Subject to analyze (sanitized)")
+    user_message: str = Field("", max_length=2000, description="User message in conversation (sanitized)")
     persona_data: dict = Field(default_factory=dict, description="Accumulated persona data")
     birth_info: dict = Field(default_factory=dict, description="Birth info for saju analysis")
-    current_stage: str = Field("intro", description="Current analysis stage")
+    current_stage: str = Field("intro", description="Current analysis stage: intro, birth, saju, synthesis, final")
     model: str = Field("gemini-3-flash-preview", description="AI model")
     params: dict = Field(default_factory=dict, description="Additional parameters (depth_level, etc.)")
 
-    @field_validator("subject", "user_message", mode="before")
+    @field_validator("subject", mode="before")
     @classmethod
-    def strip_strings(cls, v: str) -> str:
-        return _strip_string(v)
+    def sanitize_subject(cls, v: str) -> str:
+        """Sanitize subject to prevent XSS."""
+        return _sanitize_text_field(v)
+
+    @field_validator("user_message", mode="before")
+    @classmethod
+    def sanitize_user_message(cls, v: str) -> str:
+        """Sanitize user_message to prevent XSS."""
+        return _sanitize_text_field(v, default="")
+
+    @field_validator("current_stage")
+    @classmethod
+    def validate_current_stage(cls, v: str) -> str:
+        """Validate current_stage is in allowed list."""
+        return _validate_persona_stage(v)
 
     @field_validator("model")
     @classmethod
@@ -305,6 +580,11 @@ async def analyze_persona(
     db: AsyncSession = Depends(get_db),
 ) -> DimensionResponse:
     """Analyze persona with Intent-Resolver integration."""
+    user_id = user.get("id", "unknown")
+    aesthetic_logger.info(
+        f"[PERSONA_ANALYZE] user={user_id} subject_len={len(request.subject)} stage={request.current_stage}"
+    )
+
     return await _execute_dimension_tool(
         capsule_id=DimensionCapsuleId.PERSONA_ANALYZE,
         tool_key="persona_analyze",
@@ -342,6 +622,11 @@ async def analyze_persona_stream(
     db: AsyncSession = Depends(get_db),
 ) -> StreamingResponse:
     """Analyze persona with SSE streaming."""
+    user_id = user.get("id", "unknown")
+    aesthetic_logger.info(
+        f"[PERSONA_ANALYZE_STREAM] user={user_id} subject_len={len(request.subject)} stage={request.current_stage}"
+    )
+
     return StreamingResponse(
         _execute_dimension_tool_stream(
             capsule_id=DimensionCapsuleId.PERSONA_ANALYZE,
@@ -372,22 +657,57 @@ async def analyze_persona_stream(
 
 class CharacterDNARequest(BaseModel):
     """Request model for Character DNA generation.
-    
+
     Generates a reusable "Visual DNA" prompt string for character consistency,
     following the Expert Workflow pattern.
+
+    Includes:
+    - XSS sanitization for name, role, personality, physical_traits, wiki_context
+    - Enum validation for style_reference
     """
-    name: str = Field(..., min_length=1, max_length=100, description="Character name")
-    role: str = Field(..., min_length=1, max_length=200, description="Character role (e.g., '48-year-old master chef')")
-    personality: str = Field("", max_length=1000, description="Personality traits and behaviors")
-    physical_traits: str = Field("", max_length=1000, description="Physical appearance details")
-    wiki_context: str = Field("", max_length=5000, description="External context (Wiki, articles) about the character")
-    style_reference: str = Field("anime", max_length=100, description="Visual style (anime, realistic, stylized)")
+    name: str = Field(..., min_length=1, max_length=100, description="Character name (sanitized)")
+    role: str = Field(..., min_length=1, max_length=200, description="Character role (sanitized)")
+    personality: str = Field("", max_length=1000, description="Personality traits and behaviors (sanitized)")
+    physical_traits: str = Field("", max_length=1000, description="Physical appearance details (sanitized)")
+    wiki_context: str = Field("", max_length=5000, description="External context (sanitized)")
+    style_reference: str = Field("anime", max_length=100, description="Visual style: anime, realistic, stylized, cinematic")
     model: str = Field("gemini-3-flash-preview", description="AI model")
 
-    @field_validator("name", "role", "personality", "physical_traits", "wiki_context", mode="before")
+    @field_validator("name", mode="before")
     @classmethod
-    def strip_strings(cls, v: str) -> str:
-        return _strip_string(v)
+    def sanitize_name(cls, v: str) -> str:
+        """Sanitize name to prevent XSS."""
+        return _sanitize_text_field(v)
+
+    @field_validator("role", mode="before")
+    @classmethod
+    def sanitize_role(cls, v: str) -> str:
+        """Sanitize role to prevent XSS."""
+        return _sanitize_text_field(v)
+
+    @field_validator("personality", mode="before")
+    @classmethod
+    def sanitize_personality(cls, v: str) -> str:
+        """Sanitize personality to prevent XSS."""
+        return _sanitize_text_field(v, default="")
+
+    @field_validator("physical_traits", mode="before")
+    @classmethod
+    def sanitize_physical_traits(cls, v: str) -> str:
+        """Sanitize physical_traits to prevent XSS."""
+        return _sanitize_text_field(v, default="")
+
+    @field_validator("wiki_context", mode="before")
+    @classmethod
+    def sanitize_wiki_context(cls, v: str) -> str:
+        """Sanitize wiki_context to prevent XSS."""
+        return _sanitize_text_field(v, default="")
+
+    @field_validator("style_reference")
+    @classmethod
+    def validate_style_reference(cls, v: str) -> str:
+        """Validate style_reference is in allowed list."""
+        return _validate_style_reference(v)
 
     @field_validator("model")
     @classmethod
@@ -422,7 +742,7 @@ async def generate_character_dna(
     byok_key: Optional[str] = Depends(get_byok_key),
 ) -> CharacterDNAResponse:
     """Generate Character DNA following the Expert Workflow pattern.
-    
+
     Creates a detailed, reusable prompt string that captures:
     1. Physical traits (age, build, distinguishing features)
     2. Personality traits (how they move, speak, express)
@@ -432,6 +752,12 @@ async def generate_character_dna(
     Usage: Prepend this DNA string to every image/video prompt
     to maintain character consistency.
     """
+    user_id = user.get("id", "unknown")
+    aesthetic_logger.info(
+        f"[CHARACTER_DNA] user={user_id} name={request.name} role_len={len(request.role)} "
+        f"style={request.style_reference}"
+    )
+
     from google import genai
     from google.genai import types
     from app.config import settings

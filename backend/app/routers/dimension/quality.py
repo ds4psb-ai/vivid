@@ -3,9 +3,16 @@ Quality Dimension Endpoints - Quality Check & Creative Editor.
 
 - Quality Check: Evaluate content quality across 6 criteria
 - Creative Editor: Analyze and rewrite content using an editorial persona
+
+Security:
+- XSS sanitization for content, context, persona
+- Enum validation for content_type, inspection_mode, criteria
 """
 from __future__ import annotations
 
+import html
+import logging
+import re
 from typing import List
 
 from fastapi import APIRouter, Depends
@@ -30,18 +37,156 @@ from ._base import (
 
 router = APIRouter()
 
+# Module logger
+quality_logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# Constants
+# ============================================================================
+
+ALLOWED_CONTENT_TYPES = frozenset({
+    "prompt", "scenario", "script", "description", "dialogue", "narration", "ad_copy"
+})
+ALLOWED_INSPECTION_MODES = frozenset({"comprehensive", "quick", "cinematic", "consistency"})
+ALLOWED_CRITERIA = frozenset({
+    "aesthetic", "consistency", "safety", "technical", "narrative", "ad_suitability"
+})
+ALLOWED_PERSONAS = frozenset({
+    "Senior Editor", "Script Doctor", "Creative Director", "Copy Editor", "Story Analyst"
+})
+
+
+# ============================================================================
+# Sanitization Helpers
+# ============================================================================
+
+def _sanitize_text_field(value: str, default: str = "") -> str:
+    """Sanitize text fields to prevent XSS.
+
+    Args:
+        value: Raw text input
+        default: Default value if empty
+
+    Returns:
+        Sanitized string
+    """
+    if not value:
+        return default
+    value = value.strip()
+    if not value:
+        return default
+    # Remove HTML tags
+    value = re.sub(r"<[^>]+>", "", value)
+    # Escape HTML entities
+    value = html.escape(value)
+    # Remove script/javascript patterns
+    value = re.sub(r"(?i)javascript\s*:", "", value)
+    value = re.sub(r"(?i)on\w+\s*=", "", value)
+    return value or default
+
+
+def _validate_content_type(value: str) -> str:
+    """Validate content_type is in allowed list.
+
+    Args:
+        value: Raw content_type
+
+    Returns:
+        Validated content_type
+
+    Raises:
+        ValueError: If not in allowed list
+    """
+    value = value.strip().lower()
+    if value not in ALLOWED_CONTENT_TYPES:
+        raise ValueError(
+            f"지원하지 않는 콘텐츠 타입: {value}. Allowed: {sorted(ALLOWED_CONTENT_TYPES)}"
+        )
+    return value
+
+
+def _validate_inspection_mode(value: str) -> str:
+    """Validate inspection_mode is in allowed list.
+
+    Args:
+        value: Raw inspection_mode
+
+    Returns:
+        Validated inspection_mode
+
+    Raises:
+        ValueError: If not in allowed list
+    """
+    value = value.strip().lower()
+    if value not in ALLOWED_INSPECTION_MODES:
+        raise ValueError(
+            f"지원하지 않는 검수 모드: {value}. Allowed: {sorted(ALLOWED_INSPECTION_MODES)}"
+        )
+    return value
+
+
+def _validate_criteria_list(values: List[str]) -> List[str]:
+    """Validate criteria list contains only allowed values.
+
+    Args:
+        values: Raw criteria list
+
+    Returns:
+        Validated criteria list
+
+    Raises:
+        ValueError: If any value not in allowed list
+    """
+    validated = []
+    for v in values:
+        v_clean = v.strip().lower()
+        if v_clean not in ALLOWED_CRITERIA:
+            raise ValueError(
+                f"지원하지 않는 평가 기준: {v_clean}. Allowed: {sorted(ALLOWED_CRITERIA)}"
+            )
+        validated.append(v_clean)
+    return validated
+
+
+def _validate_persona(value: str) -> str:
+    """Validate persona is in allowed list.
+
+    Args:
+        value: Raw persona
+
+    Returns:
+        Validated persona (original case preserved)
+
+    Raises:
+        ValueError: If not in allowed list
+    """
+    value_clean = value.strip()
+    # Check case-insensitively
+    if value_clean.lower() not in {p.lower() for p in ALLOWED_PERSONAS}:
+        raise ValueError(
+            f"지원하지 않는 페르소나: {value_clean}. Allowed: {sorted(ALLOWED_PERSONAS)}"
+        )
+    # Return matching persona with original case
+    for p in ALLOWED_PERSONAS:
+        if p.lower() == value_clean.lower():
+            return p
+    return value_clean
+
 
 # ============================================================================
 # Request Models
 # ============================================================================
 
-# P3: Valid inspection modes
-VALID_INSPECTION_MODES = {"comprehensive", "quick", "cinematic", "consistency"}
-
 
 class QualityCheckRequest(BaseModel):
-    """Request model for Quality Check evaluation."""
-    content: str = Field(..., min_length=1, max_length=10000, description="Content to evaluate")
+    """Request model for Quality Check evaluation.
+
+    Includes:
+    - XSS sanitization for content
+    - Enum validation for content_type, inspection_mode, criteria
+    """
+    content: str = Field(..., min_length=1, max_length=10000, description="Content to evaluate (sanitized)")
     content_type: str = Field("prompt", max_length=50, description="Type of content")
     inspection_mode: str = Field("comprehensive", max_length=50, description="Inspection mode (backward compat)")
     inspection_modes: Optional[List[str]] = Field(None, description="Multi-mode list (P3)")
@@ -55,8 +200,27 @@ class QualityCheckRequest(BaseModel):
 
     @field_validator("content", mode="before")
     @classmethod
-    def strip_content(cls, v: str) -> str:
-        return _strip_string(v)
+    def sanitize_content(cls, v: str) -> str:
+        """Sanitize content to prevent XSS."""
+        return _sanitize_text_field(v)
+
+    @field_validator("content_type")
+    @classmethod
+    def validate_content_type(cls, v: str) -> str:
+        """Validate content_type is in allowed list."""
+        return _validate_content_type(v)
+
+    @field_validator("inspection_mode")
+    @classmethod
+    def validate_inspection_mode(cls, v: str) -> str:
+        """Validate inspection_mode is in allowed list."""
+        return _validate_inspection_mode(v)
+
+    @field_validator("criteria")
+    @classmethod
+    def validate_criteria(cls, v: List[str]) -> List[str]:
+        """Validate criteria list contains only allowed values."""
+        return _validate_criteria_list(v)
 
     @field_validator("threshold", mode="before")
     @classmethod
@@ -78,10 +242,10 @@ class QualityCheckRequest(BaseModel):
             # Use single mode (from inspection_mode field)
             single = info.data.get("inspection_mode", "comprehensive")
             # If single mode is invalid, return empty → engine returns error
-            return [single] if single in VALID_INSPECTION_MODES else []
+            return [single] if single in ALLOWED_INSPECTION_MODES else []
         if isinstance(v, list):
             # Filter to valid modes only, no fallback
-            return [m for m in v if m in VALID_INSPECTION_MODES]
+            return [m for m in v if m in ALLOWED_INSPECTION_MODES]
         return []
 
     @field_validator("model")
@@ -91,17 +255,35 @@ class QualityCheckRequest(BaseModel):
 
 
 class CreativeEditorRequest(BaseModel):
-    """Request model for Creative Editor."""
-    content: str = Field(..., min_length=1, max_length=10000, description="Content to improve")
-    context: str = Field(..., min_length=1, max_length=1000, description="Context/Genre/Audience")
+    """Request model for Creative Editor.
+
+    Includes:
+    - XSS sanitization for content, context
+    - Enum validation for persona
+    """
+    content: str = Field(..., min_length=1, max_length=10000, description="Content to improve (sanitized)")
+    context: str = Field(..., min_length=1, max_length=1000, description="Context/Genre/Audience (sanitized)")
     persona: str = Field("Senior Editor", max_length=100, description="Editorial persona")
     use_rag: bool = Field(True, description="Use RAG for editing principles")
     model: str = Field("gemini-3-flash-preview", description="AI model")
 
-    @field_validator("content", "context", mode="before")
+    @field_validator("content", mode="before")
     @classmethod
-    def strip_strings(cls, v: str) -> str:
-        return _strip_string(v)
+    def sanitize_content(cls, v: str) -> str:
+        """Sanitize content to prevent XSS."""
+        return _sanitize_text_field(v)
+
+    @field_validator("context", mode="before")
+    @classmethod
+    def sanitize_context(cls, v: str) -> str:
+        """Sanitize context to prevent XSS."""
+        return _sanitize_text_field(v)
+
+    @field_validator("persona")
+    @classmethod
+    def validate_persona(cls, v: str) -> str:
+        """Validate persona is in allowed list."""
+        return _validate_persona(v)
 
     @field_validator("model")
     @classmethod
@@ -132,6 +314,12 @@ async def check_quality(
     db: AsyncSession = Depends(get_db),
 ) -> DimensionResponse:
     """Check content quality with Intent-Resolver integration (P3: multi-mode support)."""
+    user_id = user.get("id", "unknown")
+    quality_logger.info(
+        f"[QUALITY_CHECK] user={user_id} content_len={len(request.content)} "
+        f"type={request.content_type} mode={request.inspection_mode} threshold={request.threshold}"
+    )
+
     from app.routers.intent_helpers import infer_intent_from_request
     intent = infer_intent_from_request()
     
@@ -187,6 +375,12 @@ async def check_quality_stream(
     db: AsyncSession = Depends(get_db),
 ) -> StreamingResponse:
     """Check content quality with SSE streaming (P3: multi-mode support)."""
+    user_id = user.get("id", "unknown")
+    quality_logger.info(
+        f"[QUALITY_CHECK_STREAM] user={user_id} content_len={len(request.content)} "
+        f"type={request.content_type} mode={request.inspection_mode}"
+    )
+
     from app.routers.intent_helpers import infer_intent_from_request
     intent = infer_intent_from_request()
     
@@ -247,6 +441,12 @@ async def run_creative_editor(
     db: AsyncSession = Depends(get_db),
 ) -> DimensionResponse:
     """Run Creative Editor with Intent-Resolver integration."""
+    user_id = user.get("id", "unknown")
+    quality_logger.info(
+        f"[CREATIVE_EDITOR] user={user_id} content_len={len(request.content)} "
+        f"persona={request.persona} use_rag={request.use_rag}"
+    )
+
     from app.routers.intent_helpers import infer_intent_from_request
     intent = infer_intent_from_request()
     
@@ -286,6 +486,12 @@ async def run_creative_editor_stream(
     db: AsyncSession = Depends(get_db),
 ) -> StreamingResponse:
     """Run Creative Editor with SSE streaming."""
+    user_id = user.get("id", "unknown")
+    quality_logger.info(
+        f"[CREATIVE_EDITOR_STREAM] user={user_id} content_len={len(request.content)} "
+        f"persona={request.persona}"
+    )
+
     from app.routers.intent_helpers import infer_intent_from_request
     intent = infer_intent_from_request()
     

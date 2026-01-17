@@ -8,15 +8,19 @@ Endpoints:
 - POST /api/v1/dimension/suno/generate - Generate music
 - GET /api/v1/dimension/suno/status/{task_id} - Get task status
 
-License: arkain.info@gmail.com (Gemini Enterprise)
+Security:
+- XSS sanitization for prompt, title, style
+- Model whitelist validation
 """
 from __future__ import annotations
 
+import html
 import logging
+import re
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -38,17 +42,99 @@ router = APIRouter(prefix="/suno", tags=["Suno AI"])
 
 
 # =============================================================================
+# Constants & Validation
+# =============================================================================
+
+ALLOWED_SUNO_MODELS = frozenset(["V5", "V4_5PLUS", "V4_5ALL", "V4_5", "V4"])
+
+
+# =============================================================================
+# Sanitization Helpers
+# =============================================================================
+
+def _sanitize_text(value: str) -> str:
+    """Sanitize text fields to prevent XSS.
+
+    Args:
+        value: Raw text input
+
+    Returns:
+        Sanitized string
+    """
+    if not value:
+        return value
+    value = value.strip()
+    # Remove HTML tags
+    value = re.sub(r"<[^>]+>", "", value)
+    # Escape HTML entities
+    value = html.escape(value)
+    # Remove script/javascript patterns
+    value = re.sub(r"(?i)javascript\s*:", "", value)
+    value = re.sub(r"(?i)on\w+\s*=", "", value)
+    return value
+
+
+def _validate_suno_model(value: str) -> str:
+    """Validate Suno model is in allowed list.
+
+    Args:
+        value: Raw model name
+
+    Returns:
+        Validated model name
+
+    Raises:
+        ValueError: If not in allowed list
+    """
+    value = value.strip()
+    if value not in ALLOWED_SUNO_MODELS:
+        raise ValueError(
+            f"Invalid model: {value}. Allowed: {sorted(ALLOWED_SUNO_MODELS)}"
+        )
+    return value
+
+
+# =============================================================================
 # Request/Response Models
 # =============================================================================
 
 class SunoGenerateRequest(BaseModel):
-    """API request for Suno music generation."""
-    
-    prompt: str = Field(..., min_length=1, max_length=2000, description="Music description or lyrics")
-    title: str = Field(..., min_length=1, max_length=100, description="Song title")
-    style: str = Field(..., min_length=1, max_length=500, description="Music style/genre (e.g., 'Jazz, Smooth, Relaxing')")
+    """API request for Suno music generation.
+
+    Includes:
+    - XSS sanitization for prompt, title, style
+    - Model whitelist validation
+    """
+
+    prompt: str = Field(..., min_length=1, max_length=2000, description="Music description or lyrics (sanitized)")
+    title: str = Field(..., min_length=1, max_length=100, description="Song title (sanitized)")
+    style: str = Field(..., min_length=1, max_length=500, description="Music style/genre (sanitized)")
     instrumental: bool = Field(default=False, description="Instrumental only (no vocals)")
-    model: str = Field(default="V5", description="Model: V5, V4_5PLUS, V4_5, V4")
+    model: str = Field(default="V5", description="Model: V5, V4_5PLUS, V4_5ALL, V4_5, V4")
+
+    @field_validator("prompt", mode="before")
+    @classmethod
+    def sanitize_prompt(cls, v: str) -> str:
+        """Sanitize prompt to prevent XSS."""
+        return _sanitize_text(v)
+
+    @field_validator("title", mode="before")
+    @classmethod
+    def sanitize_title(cls, v: str) -> str:
+        """Sanitize title to prevent XSS."""
+        return _sanitize_text(v)
+
+    @field_validator("style", mode="before")
+    @classmethod
+    def sanitize_style(cls, v: str) -> str:
+        """Sanitize style to prevent XSS."""
+        return _sanitize_text(v)
+
+    @field_validator("model")
+    @classmethod
+    def validate_model(cls, v: str) -> str:
+        """Validate model is in allowed whitelist."""
+        return _validate_suno_model(v)
 
 
 class SunoSongResponse(BaseModel):
@@ -116,8 +202,13 @@ async def generate_music(
     """Generate music using Suno AI."""
     import time
     start_time = time.time()
-    
+
     user_id = user.get("id")
+    logger.info(
+        f"[SUNO_GENERATE] user={user_id} title={request.title[:50]} "
+        f"style={request.style[:50]} model={request.model} instrumental={request.instrumental}"
+    )
+
     if not user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

@@ -3,8 +3,16 @@ Sound Dimension Endpoints - Sound Crafter.
 
 - Sound Craft: Generate music/sound prompts
 - Sound Moodboard: Generate sound direction cards
+
+Security:
+- XSS sanitization for concept, storyboard, mood, topic
+- Enum validation for sound_type, genre, target_platform, tempo
 """
 from __future__ import annotations
+
+import html
+import logging
+import re
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
@@ -33,17 +41,151 @@ from ._base import (
 
 router = APIRouter()
 
+# Module logger
+sound_logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# Constants
+# ============================================================================
+
+ALLOWED_TEMPOS = frozenset({"slow", "medium", "fast", "very-slow", "very-fast"})
+ALLOWED_AUDIO_PLATFORMS = frozenset({"suno", "udio", "elevenlabs"})
+ALLOWED_LANGUAGE_MIX = frozenset({"korean", "english", "japanese", "mixed"})
+ALLOWED_SONG_STRUCTURES = frozenset({
+    "verse-chorus-verse-chorus-bridge-chorus",
+    "verse-chorus-verse-chorus",
+    "intro-verse-chorus-verse-chorus-outro",
+    "aaba",
+    "ababcb",
+    "custom",
+})
+
+
+# ============================================================================
+# Sanitization Helpers
+# ============================================================================
+
+def _sanitize_text_field(value: str, default: str = "") -> str:
+    """Sanitize text fields to prevent XSS.
+
+    Args:
+        value: Raw text input
+        default: Default value if empty
+
+    Returns:
+        Sanitized string
+    """
+    if not value:
+        return default
+    value = value.strip()
+    if not value:
+        return default
+    # Remove HTML tags
+    value = re.sub(r"<[^>]+>", "", value)
+    # Escape HTML entities
+    value = html.escape(value)
+    # Remove script/javascript patterns
+    value = re.sub(r"(?i)javascript\s*:", "", value)
+    value = re.sub(r"(?i)on\w+\s*=", "", value)
+    return value or default
+
+
+def _validate_tempo(value: str) -> str:
+    """Validate tempo is in allowed list.
+
+    Args:
+        value: Raw tempo
+
+    Returns:
+        Validated tempo
+
+    Raises:
+        ValueError: If not in allowed list
+    """
+    value = value.strip().lower()
+    if value not in ALLOWED_TEMPOS:
+        raise ValueError(
+            f"지원하지 않는 템포: {value}. Allowed: {sorted(ALLOWED_TEMPOS)}"
+        )
+    return value
+
+
+def _validate_sound_type(value: str) -> str:
+    """Validate sound_type is in allowed list.
+
+    Args:
+        value: Raw sound_type
+
+    Returns:
+        Validated sound_type
+
+    Raises:
+        ValueError: If not in allowed list
+    """
+    value = value.strip().lower()
+    if value not in ALLOWED_SOUND_TYPES:
+        raise ValueError(
+            f"지원하지 않는 사운드 타입: {value}. Allowed: {sorted(ALLOWED_SOUND_TYPES)}"
+        )
+    return value
+
+
+def _validate_genre(value: str) -> str:
+    """Validate genre is in allowed list.
+
+    Args:
+        value: Raw genre
+
+    Returns:
+        Validated genre
+
+    Raises:
+        ValueError: If not in allowed list
+    """
+    value = value.strip().lower()
+    if value not in ALLOWED_GENRES:
+        raise ValueError(
+            f"지원하지 않는 장르: {value}. Allowed: {sorted(ALLOWED_GENRES)}"
+        )
+    return value
+
+
+def _validate_audio_platform(value: str) -> str:
+    """Validate target_platform is in allowed audio platform list.
+
+    Args:
+        value: Raw platform
+
+    Returns:
+        Validated platform
+
+    Raises:
+        ValueError: If not in allowed list
+    """
+    value = value.strip().lower()
+    if value not in ALLOWED_AUDIO_PLATFORMS:
+        raise ValueError(
+            f"지원하지 않는 오디오 플랫폼: {value}. Allowed: {sorted(ALLOWED_AUDIO_PLATFORMS)}"
+        )
+    return value
+
 
 # ============================================================================
 # Request Models
 # ============================================================================
 
 class SoundCraftRequest(BaseModel):
-    """Request model for Sound Crafter music prompt generation."""
-    concept: str = Field(..., min_length=1, max_length=MAX_CONCEPT_LENGTH, description="Music concept")
-    storyboard: str = Field("", max_length=5000, description="Optional storyboard for sync")
+    """Request model for Sound Crafter music prompt generation.
+
+    Includes:
+    - XSS sanitization for concept, storyboard, mood
+    - Enum validation for sound_type, genre, target_platform, tempo
+    """
+    concept: str = Field(..., min_length=1, max_length=MAX_CONCEPT_LENGTH, description="Music concept (sanitized)")
+    storyboard: str = Field("", max_length=5000, description="Optional storyboard for sync (sanitized)")
     sound_type: str = Field("bgm", description="Type of sound")
-    mood: str = Field("cinematic", max_length=100, description="Music mood")
+    mood: str = Field("cinematic", max_length=100, description="Music mood (sanitized)")
     genre: str = Field("drama", max_length=50, description="Genre")
     tempo: str = Field("medium", max_length=50, description="Tempo")
     duration: int = Field(60, ge=10, le=300, description="Duration in seconds")
@@ -51,31 +193,47 @@ class SoundCraftRequest(BaseModel):
     language: str = Field("ko", description="Output language")
     model: str = Field("gemini-3-flash-preview", description="AI model")
 
-    @field_validator("concept", "storyboard", "mood", mode="before")
+    @field_validator("concept", mode="before")
     @classmethod
-    def strip_strings(cls, v: str) -> str:
-        return _strip_string(v)
+    def sanitize_concept(cls, v: str) -> str:
+        """Sanitize concept to prevent XSS."""
+        return _sanitize_text_field(v)
+
+    @field_validator("storyboard", mode="before")
+    @classmethod
+    def sanitize_storyboard(cls, v: str) -> str:
+        """Sanitize storyboard to prevent XSS."""
+        return _sanitize_text_field(v, default="")
+
+    @field_validator("mood", mode="before")
+    @classmethod
+    def sanitize_mood(cls, v: str) -> str:
+        """Sanitize mood to prevent XSS."""
+        return _sanitize_text_field(v, default="cinematic")
 
     @field_validator("sound_type")
     @classmethod
     def validate_sound_type(cls, v: str) -> str:
-        if v not in ALLOWED_SOUND_TYPES:
-            raise ValueError(f"지원하지 않는 사운드 타입: {v}")
-        return v
+        """Validate sound_type is in allowed list."""
+        return _validate_sound_type(v)
 
     @field_validator("genre")
     @classmethod
     def validate_genre(cls, v: str) -> str:
-        if v not in ALLOWED_GENRES:
-            raise ValueError(f"지원하지 않는 장르: {v}")
-        return v
+        """Validate genre is in allowed list."""
+        return _validate_genre(v)
+
+    @field_validator("tempo")
+    @classmethod
+    def validate_tempo(cls, v: str) -> str:
+        """Validate tempo is in allowed list."""
+        return _validate_tempo(v)
 
     @field_validator("target_platform")
     @classmethod
     def validate_platform(cls, v: str) -> str:
-        if v not in ALLOWED_PLATFORMS:
-            raise ValueError(f"지원하지 않는 플랫폼: {v}")
-        return v
+        """Validate target_platform is in allowed audio platform list."""
+        return _validate_audio_platform(v)
 
     @field_validator("language")
     @classmethod
@@ -89,14 +247,19 @@ class SoundCraftRequest(BaseModel):
 
 
 class SoundMoodboardRequest(BaseModel):
-    """Request model for Sound Moodboard (Stage 1)."""
-    concept: str = Field(..., min_length=1, max_length=MAX_CONCEPT_LENGTH, description="Sound concept")
+    """Request model for Sound Moodboard (Stage 1).
+
+    Includes:
+    - XSS sanitization for concept
+    """
+    concept: str = Field(..., min_length=1, max_length=MAX_CONCEPT_LENGTH, description="Sound concept (sanitized)")
     model: str = Field("gemini-3-flash-preview", description="AI model")
 
     @field_validator("concept", mode="before")
     @classmethod
-    def strip_concept(cls, v: str) -> str:
-        return _strip_string(v)
+    def sanitize_concept(cls, v: str) -> str:
+        """Sanitize concept to prevent XSS."""
+        return _sanitize_text_field(v)
 
     @field_validator("model")
     @classmethod
@@ -127,6 +290,12 @@ async def craft_sound(
     db: AsyncSession = Depends(get_db),
 ) -> DimensionResponse:
     """Generate music/sound prompts with Intent-Resolver integration."""
+    user_id = user.get("id", "unknown")
+    sound_logger.info(
+        f"[SOUND_CRAFT] user={user_id} concept_len={len(request.concept)} "
+        f"type={request.sound_type} genre={request.genre} tempo={request.tempo} platform={request.target_platform}"
+    )
+
     from app.routers.intent_helpers import infer_intent_for_sound
     intent = infer_intent_for_sound(
         concept=request.concept,
@@ -178,6 +347,12 @@ async def craft_sound_stream(
     db: AsyncSession = Depends(get_db),
 ) -> StreamingResponse:
     """Generate music/sound prompts with SSE streaming."""
+    user_id = user.get("id", "unknown")
+    sound_logger.info(
+        f"[SOUND_CRAFT_STREAM] user={user_id} concept_len={len(request.concept)} "
+        f"type={request.sound_type} genre={request.genre} platform={request.target_platform}"
+    )
+
     from app.routers.intent_helpers import infer_intent_for_sound
     intent = infer_intent_for_sound(
         concept=request.concept,
@@ -239,6 +414,11 @@ async def generate_sound_moodboard(
     db: AsyncSession = Depends(get_db),
 ) -> DimensionResponse:
     """Generate sound direction cards with Intent-Resolver integration."""
+    user_id = user.get("id", "unknown")
+    sound_logger.info(
+        f"[SOUND_MOODBOARD] user={user_id} concept_len={len(request.concept)}"
+    )
+
     from app.routers.intent_helpers import with_intent
     intent = with_intent(request)
     
@@ -273,14 +453,17 @@ class LyricsStyleGuide(BaseModel):
 
 class LyricsRequest(BaseModel):
     """Request model for Iterative Lyrics generation.
-    
+
     Implements the Expert Workflow's 4-step lyrics process:
     1. Topic Analysis
     2. Context Injection (Wiki/articles)
     3. Style Guide Application
     4. Final Generation with Suno metatags
+
+    Includes:
+    - XSS sanitization for topic
     """
-    topic: str = Field(..., min_length=1, max_length=500, description="Song topic or theme")
+    topic: str = Field(..., min_length=1, max_length=500, description="Song topic or theme (sanitized)")
     context_documents: list[str] = Field(default_factory=list, description="External context (Wiki, articles, research)")
     style_guide: LyricsStyleGuide = Field(default_factory=LyricsStyleGuide, description="Style guide for the song")
     song_structure: str = Field("verse-chorus-verse-chorus-bridge-chorus", description="Song structure")
@@ -288,8 +471,9 @@ class LyricsRequest(BaseModel):
 
     @field_validator("topic", mode="before")
     @classmethod
-    def strip_topic(cls, v: str) -> str:
-        return _strip_string(v)
+    def sanitize_topic(cls, v: str) -> str:
+        """Sanitize topic to prevent XSS."""
+        return _sanitize_text_field(v)
 
     @field_validator("model")
     @classmethod
@@ -332,13 +516,19 @@ async def generate_lyrics(
     byok_key: Optional[str] = Depends(get_byok_key),
 ) -> LyricsResponse:
     """Generate lyrics following the Expert Workflow pattern.
-    
+
     The 4-step process:
     1. ANALYZE: Understand topic's emotional core and cultural resonance
     2. INCORPORATE: Inject external context (Wiki, articles)
     3. APPLY: Use style guide (genre, tempo, vocal style)
     4. OUTPUT: Structured lyrics with Suno/Udio metatags
     """
+    user_id = user.get("id", "unknown")
+    sound_logger.info(
+        f"[LYRICS_GENERATE] user={user_id} topic_len={len(request.topic)} "
+        f"genre={request.style_guide.genre} tempo={request.style_guide.tempo}"
+    )
+
     from google import genai
     from google.genai import types
     from app.config import settings

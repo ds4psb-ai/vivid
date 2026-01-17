@@ -3,11 +3,19 @@ VEO Dimension Endpoints - Video Generation.
 
 - VEO Generate: Generate video using Veo 3.1
 - VEO Generate Stream: SSE streaming version with progress
+
+Security:
+- XSS sanitization for style and negative_prompt fields
+- Veo model whitelist validation
 """
 from __future__ import annotations
 
 import asyncio
+import html
 import json
+import logging
+import re
+from enum import Enum
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
@@ -36,25 +44,108 @@ from app.credit_service import deduct_credits, get_or_create_user_credits
 
 router = APIRouter()
 
+# Module logger
+veo_logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# Constants & Enums
+# ============================================================================
+
+class VeoModel(str, Enum):
+    """Supported Veo 3.1 models."""
+    GENERATE_PREVIEW = "veo-3.1-generate-preview"
+    FAST_GENERATE_PREVIEW = "veo-3.1-fast-generate-preview"
+
+
+ALLOWED_VEO_MODELS = frozenset([m.value for m in VeoModel])
+
+
+# ============================================================================
+# Sanitization Helpers
+# ============================================================================
+
+def _sanitize_text_field(value: str, default: str = "") -> str:
+    """Sanitize text fields (style, negative_prompt) to prevent XSS.
+
+    Args:
+        value: Raw text input
+        default: Default value if empty
+
+    Returns:
+        Sanitized string
+    """
+    if not value:
+        return default
+    # Strip whitespace
+    value = value.strip()
+    if not value:
+        return default
+    # Remove HTML tags
+    value = re.sub(r"<[^>]+>", "", value)
+    # Escape HTML entities
+    value = html.escape(value)
+    # Remove script/javascript patterns
+    value = re.sub(r"(?i)javascript\s*:", "", value)
+    value = re.sub(r"(?i)on\w+\s*=", "", value)
+    return value or default
+
+
+def _validate_veo_model(value: str) -> str:
+    """Validate Veo model is in allowed list.
+
+    Args:
+        value: Raw model name
+
+    Returns:
+        Validated model name
+
+    Raises:
+        ValueError: If not in allowed list
+    """
+    value = value.strip()
+    if value not in ALLOWED_VEO_MODELS:
+        raise ValueError(
+            f"Invalid Veo model: {value}. Allowed: {sorted(ALLOWED_VEO_MODELS)}"
+        )
+    return value
+
 
 # ============================================================================
 # Request Models
 # ============================================================================
 
 class VeoGenerateRequest(BaseModel):
-    """Request model for Veo 3.1 video generation."""
+    """Request model for Veo 3.1 video generation.
+
+    Includes:
+    - XSS sanitization for style and negative_prompt
+    - Veo model whitelist validation
+    """
     prompt: str = Field(..., min_length=1, max_length=5000, description="Video generation prompt")
-    negative_prompt: str = Field("", max_length=1000, description="Negative prompt")
+    negative_prompt: str = Field("", max_length=1000, description="Negative prompt (sanitized)")
     aspect_ratio: str = Field("16:9", description="Aspect ratio")
     duration: int = Field(6, ge=4, le=8, description="Video duration (4-8 seconds)")
-    style: str = Field("cinematic", max_length=100, description="Visual style")
+    style: str = Field("cinematic", max_length=100, description="Visual style (sanitized)")
     seed: int = Field(0, ge=0, description="Random seed (0 for random)")
     model: str = Field("veo-3.1-generate-preview", description="Veo model")
 
-    @field_validator("prompt", "negative_prompt", "style", mode="before")
+    @field_validator("prompt", mode="before")
     @classmethod
-    def strip_strings(cls, v: str) -> str:
+    def strip_prompt(cls, v: str) -> str:
         return _strip_string(v)
+
+    @field_validator("negative_prompt", mode="before")
+    @classmethod
+    def sanitize_negative_prompt(cls, v: str) -> str:
+        """Sanitize negative_prompt to prevent XSS."""
+        return _sanitize_text_field(v, default="")
+
+    @field_validator("style", mode="before")
+    @classmethod
+    def sanitize_style(cls, v: str) -> str:
+        """Sanitize style to prevent XSS."""
+        return _sanitize_text_field(v, default="cinematic")
 
     @field_validator("aspect_ratio")
     @classmethod
@@ -65,6 +156,12 @@ class VeoGenerateRequest(BaseModel):
     @classmethod
     def validate_duration(cls, v: int) -> int:
         return _validate_veo_duration(v)
+
+    @field_validator("model")
+    @classmethod
+    def validate_veo_model(cls, v: str) -> str:
+        """Validate Veo model is in allowed whitelist."""
+        return _validate_veo_model(v)
 
 
 # ============================================================================
@@ -90,9 +187,15 @@ async def generate_veo_video(
     db: AsyncSession = Depends(get_db),
 ) -> DimensionResponse:
     """Generate video with Veo 3.1 with Intent-Resolver integration."""
+    user_id = user.get("id", "unknown")
+    veo_logger.info(
+        f"[VEO_GENERATE] user={user_id} prompt_len={len(request.prompt)} "
+        f"duration={request.duration}s aspect={request.aspect_ratio} model={request.model}"
+    )
+
     from app.routers.intent_helpers import with_intent
     intent = with_intent(request)
-    
+
     return await _execute_dimension_tool(
         capsule_id=DimensionCapsuleId.VEO_VIDEO_GENERATE,
         tool_key="veo_generate",
@@ -138,11 +241,15 @@ async def generate_veo_video_stream(
     from app.services.veo_service import VeoConfig, VeoProgress, get_veo_service
     from app.fixtures.dimension_capsules import DIMENSION_CAPSULES
     from app.routers.intent_helpers import with_intent
-    
+
+    user_id = user.get("id", "anonymous")
+    veo_logger.info(
+        f"[VEO_STREAM] user={user_id} prompt_len={len(request.prompt)} "
+        f"duration={request.duration}s aspect={request.aspect_ratio} model={request.model}"
+    )
+
     # Intent inference for RAG context
     intent = with_intent(request)
-    
-    user_id = user.get("id", "anonymous")
 
     # Get capsule info for credit cost
     capsule_info = next(

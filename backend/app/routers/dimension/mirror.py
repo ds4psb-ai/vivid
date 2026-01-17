@@ -3,9 +3,16 @@ Abyss Mirror (심연의 거울) Dimension Endpoints.
 
 사주 + MBTI + 혈액형 → 심층 페르소나 JSON 프리셋 생성
 채팅 기반 다중 턴 분석 (최소 15회)
+
+Security:
+- XSS sanitization for user_message
+- Enum validation for mbti, blood_type, gender, current_stage
 """
 from __future__ import annotations
 
+import html
+import logging
+import re
 import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -29,13 +36,140 @@ from app.rag.schemas import EvidenceRefSchema as EvidenceRef
 
 router = APIRouter()
 
+# Module logger
+mirror_logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# Constants
+# ============================================================================
+
+ALLOWED_BLOOD_TYPES = frozenset({"A", "B", "O", "AB", ""})
+ALLOWED_GENDERS = frozenset({"M", "F", "Other", ""})
+ALLOWED_STAGES = frozenset({
+    "intro", "birth", "saju", "psychology", "creativity",
+    "preferences", "synthesis", "final"
+})
+VALID_MBTI_CHARS = [
+    frozenset({"E", "I"}),
+    frozenset({"S", "N"}),
+    frozenset({"T", "F"}),
+    frozenset({"J", "P"}),
+]
+
+
+# ============================================================================
+# Sanitization Helpers
+# ============================================================================
+
+def _sanitize_text_field(value: str, default: str = "") -> str:
+    """Sanitize text fields to prevent XSS.
+
+    Args:
+        value: Raw text input
+        default: Default value if empty
+
+    Returns:
+        Sanitized string
+    """
+    if not value:
+        return default
+    value = value.strip()
+    if not value:
+        return default
+    # Remove HTML tags
+    value = re.sub(r"<[^>]+>", "", value)
+    # Escape HTML entities
+    value = html.escape(value)
+    # Remove script/javascript patterns
+    value = re.sub(r"(?i)javascript\s*:", "", value)
+    value = re.sub(r"(?i)on\w+\s*=", "", value)
+    return value or default
+
+
+def _validate_mbti(value: str) -> str:
+    """Validate MBTI type.
+
+    Args:
+        value: Raw MBTI
+
+    Returns:
+        Validated MBTI (uppercase) or empty string if invalid
+    """
+    value = value.upper().strip()
+    if not value:
+        return ""
+    if len(value) != 4:
+        return ""
+    for i, char in enumerate(value):
+        if char not in VALID_MBTI_CHARS[i]:
+            return ""
+    return value
+
+
+def _validate_blood_type(value: str) -> str:
+    """Validate blood type.
+
+    Args:
+        value: Raw blood type
+
+    Returns:
+        Validated blood type (uppercase) or empty string if invalid
+    """
+    value = value.upper().strip()
+    if value in ALLOWED_BLOOD_TYPES:
+        return value
+    return ""
+
+
+def _validate_gender(value: str) -> str:
+    """Validate gender.
+
+    Args:
+        value: Raw gender
+
+    Returns:
+        Validated gender or empty string if invalid
+    """
+    value = value.strip()
+    # Case-insensitive check
+    value_normalized = value.upper() if value else ""
+    for g in ALLOWED_GENDERS:
+        if g.upper() == value_normalized:
+            return g
+    return ""
+
+
+def _validate_stage(value: str) -> str:
+    """Validate current stage.
+
+    Args:
+        value: Raw stage
+
+    Returns:
+        Validated stage
+
+    Raises:
+        ValueError: If not in allowed list
+    """
+    value = value.strip().lower()
+    if value not in ALLOWED_STAGES:
+        raise ValueError(
+            f"지원하지 않는 단계: {value}. Allowed: {sorted(ALLOWED_STAGES)}"
+        )
+    return value
+
 
 # ============================================================================
 # Request/Response Models
 # ============================================================================
 
 class MirrorInitRequest(BaseModel):
-    """심연의 거울 초기화 요청."""
+    """심연의 거울 초기화 요청.
+
+    Includes:
+    - Validation for mbti, blood_type, gender
+    """
     mbti: str = Field("", max_length=4, description="MBTI 유형 (예: INTJ)")
     blood_type: str = Field("", max_length=2, description="혈액형 (A/B/O/AB)")
     birth_year: int = Field(..., ge=1900, le=2100, description="출생 연도")
@@ -44,7 +178,7 @@ class MirrorInitRequest(BaseModel):
     birth_hour: int = Field(12, ge=0, le=23, description="출생 시간 (0-23)")
     gender: str = Field("", max_length=10, description="성별 (M/F/Other)")
     model: str = Field("gemini-3-flash-preview", description="AI 모델")
-    
+
     # P5-3: 워크플로우 재진입 필드
     session_id: Optional[str] = Field(None, description="기존 세션 ID (재진입)")
     seed_preset: Optional[Dict[str, Any]] = Field(None, description="시드 프리셋 데이터")
@@ -52,33 +186,37 @@ class MirrorInitRequest(BaseModel):
 
     @field_validator("mbti", mode="before")
     @classmethod
-    def validate_mbti(cls, v: str) -> str:
-        v = v.upper().strip()
-        if v and len(v) == 4:
-            valid_chars = [
-                ["E", "I"],
-                ["S", "N"],
-                ["T", "F"],
-                ["J", "P"],
-            ]
-            for i, char in enumerate(v):
-                if char not in valid_chars[i]:
-                    return ""
-        return v
+    def validate_mbti_field(cls, v: str) -> str:
+        """Validate MBTI type."""
+        return _validate_mbti(v) if v else ""
 
     @field_validator("blood_type", mode="before")
     @classmethod
-    def validate_blood_type(cls, v: str) -> str:
-        v = v.upper().strip()
-        if v in ["A", "B", "O", "AB"]:
-            return v
-        return ""
+    def validate_blood_type_field(cls, v: str) -> str:
+        """Validate blood type."""
+        return _validate_blood_type(v) if v else ""
+
+    @field_validator("gender", mode="before")
+    @classmethod
+    def validate_gender_field(cls, v: str) -> str:
+        """Validate gender."""
+        return _validate_gender(v) if v else ""
+
+    @field_validator("model")
+    @classmethod
+    def validate_model(cls, v: str) -> str:
+        return _validate_model(v)
 
 
 class MirrorChatRequest(BaseModel):
-    """심연의 거울 채팅 요청."""
+    """심연의 거울 채팅 요청.
+
+    Includes:
+    - XSS sanitization for user_message
+    - Enum validation for current_stage
+    """
     session_id: str = Field(..., min_length=1, description="세션 ID")
-    user_message: str = Field(..., min_length=1, max_length=2000, description="사용자 메시지")
+    user_message: str = Field(..., min_length=1, max_length=2000, description="사용자 메시지 (sanitized)")
     persona_data: Dict[str, Any] = Field(default_factory=dict, description="누적된 페르소나 데이터")
     chat_history: List[Dict[str, str]] = Field(default_factory=list, description="대화 기록")
     current_stage: str = Field("intro", description="현재 분석 단계")
@@ -86,8 +224,15 @@ class MirrorChatRequest(BaseModel):
 
     @field_validator("user_message", mode="before")
     @classmethod
-    def strip_message(cls, v: str) -> str:
-        return _strip_string(v)
+    def sanitize_user_message(cls, v: str) -> str:
+        """Sanitize user_message to prevent XSS."""
+        return _sanitize_text_field(v)
+
+    @field_validator("current_stage")
+    @classmethod
+    def validate_stage(cls, v: str) -> str:
+        """Validate current_stage is in allowed list."""
+        return _validate_stage(v)
 
     @field_validator("model")
     @classmethod
@@ -151,6 +296,11 @@ async def init_mirror(
     db: AsyncSession = Depends(get_db),
 ) -> MirrorInitResponse:
     """심연의 거울 분석 세션 초기화."""
+    user_id = user.get("id", "unknown")
+    mirror_logger.info(
+        f"[MIRROR_INIT] user={user_id} mbti={request.mbti} blood={request.blood_type} "
+        f"birth={request.birth_year}-{request.birth_month:02d}-{request.birth_day:02d} gender={request.gender}"
+    )
     import uuid
     from app.services.mirror_service import (
         calculate_saju_pillars,
@@ -245,6 +395,11 @@ async def chat_mirror(
     db: AsyncSession = Depends(get_db),
 ) -> MirrorChatResponse:
     """심연의 거울 채팅."""
+    user_id = user.get("id", "unknown")
+    mirror_logger.info(
+        f"[MIRROR_CHAT] user={user_id} session={request.session_id} "
+        f"stage={request.current_stage} msg_len={len(request.user_message)}"
+    )
     from app.services.mirror_service import analyze_persona_with_mirror
     
     # 분석 실행
@@ -293,6 +448,10 @@ async def export_mirror_preset(
     user: dict = Depends(get_current_user),
 ) -> MirrorExportResponse:
     """페르소나 프리셋 내보내기."""
+    user_id = user.get("id", "unknown")
+    mirror_logger.info(
+        f"[MIRROR_EXPORT] user={user_id} persona_keys={list(persona_data.keys())}"
+    )
     from app.services.mirror_service import export_persona_preset, validate_persona_preset
     from datetime import datetime
     
@@ -334,6 +493,11 @@ async def chat_mirror_stream(
     db: AsyncSession = Depends(get_db),
 ) -> StreamingResponse:
     """심연의 거울 채팅 스트리밍."""
+    user_id = user.get("id", "unknown")
+    mirror_logger.info(
+        f"[MIRROR_CHAT_STREAM] user={user_id} session={request.session_id} "
+        f"stage={request.current_stage} msg_len={len(request.user_message)}"
+    )
     import json
     from app.services.run_token_service import get_run_token_service
     
