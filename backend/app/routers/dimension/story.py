@@ -1,12 +1,27 @@
-"""
-Story Dimension Endpoints - Story Architect.
+"""Story Dimension Endpoints - Story Architect.
 
-- Story Architect: Generate video scenarios
-- Story Refine: Refine concepts into narrative angles
+API endpoints for AI-powered scenario and shot list generation.
+
+Features:
+- Story Architect: Generate video scenarios from concepts
+- Story Refine: Refine raw concepts into distinct narrative angles
+- Shot List Generation: Break down scenarios into timeline shots with tool recommendations
+
+2026 Best Practices:
+- Script-to-storyboard generation flow
+- Tool selection heuristics (Veo, Kling, Sora)
+- Camera movement and montage theory integration
+- Director's cut editing patterns
 
 Security:
 - XSS sanitization for concept, persona_data, reference_analysis, scenario, style_preference
 - Enum validation for genre, structure
+
+References:
+- LTX Studio: Script-to-storyboard functionality
+- DomoAI: Frame-to-video storytelling
+- Mootion: Script-to-video platform (65% faster in 2026)
+- DIMENSION_APP_MACRO_PLANNING_2026.md Part 11
 """
 from __future__ import annotations
 
@@ -467,12 +482,22 @@ class TimelineShot(BaseModel):
 
 
 class ShotListResponse(BaseModel):
-    """Response for Timeline Shot List generation."""
+    """Response for Timeline Shot List generation.
+
+    2026 Best Practices:
+    - Tool recommendations based on expert heuristics
+    - Camera movement theory integration
+    - Montage editing patterns
+    """
     success: bool
     total_shots: int
     total_duration: float
     shots: list[TimelineShot]
     tool_summary: dict  # Count of each tool recommendation
+    evidence_refs: list[str] = Field(
+        default_factory=list,
+        description="Evidence references: [\"db:scenarios:uuid\", \"rag:cinematography:technique_id\"]",
+    )
 
 
 @router.post(
@@ -626,14 +651,24 @@ Generate a complete shot list covering the entire duration."""
         
         total_duration = sum(s.duration for s in shots)
         
+        # Build evidence refs (Vivid convention: List[str])
+        evidence_refs = [
+            "rag:cinematography:expert_heuristics",
+            "rag:cinematography:montage_theory",
+        ]
+        for shot in shots:
+            tool = shot.recommended_tool.lower()
+            evidence_refs.append(f"rag:tool_selection:{tool}")
+
         return ShotListResponse(
             success=True,
             total_shots=len(shots),
             total_duration=total_duration,
             shots=shots,
             tool_summary=tool_counts,
+            evidence_refs=list(set(evidence_refs)),  # Deduplicate
         )
-        
+
     except json.JSONDecodeError as e:
         return ShotListResponse(
             success=False,
@@ -641,6 +676,7 @@ Generate a complete shot list covering the entire duration."""
             total_duration=0,
             shots=[],
             tool_summary={"error": str(e)},
+            evidence_refs=[],
         )
     except Exception as e:
         return ShotListResponse(
@@ -649,5 +685,6 @@ Generate a complete shot list covering the entire duration."""
             total_duration=0,
             shots=[],
             tool_summary={"error": str(e)},
+            evidence_refs=[],
         )
 
