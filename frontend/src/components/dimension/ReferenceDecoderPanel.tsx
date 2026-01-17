@@ -287,7 +287,8 @@ export default function ReferenceDecoderPanel() {
 
 function ReferenceDecoderContent() {
   const { token, setLoading, setResult, setError, classes } = useDimensionPanel();
-  const { isKorean } = useLanguage();
+  const { language } = useLanguage();
+  const isKorean = language === "ko";
   const t = useMemo(() => getI18n(isKorean), [isKorean]);
 
   // Mode state

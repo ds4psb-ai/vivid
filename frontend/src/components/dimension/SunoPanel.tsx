@@ -209,7 +209,7 @@ function SunoContent() {
       try {
         const finalStyle = buildStyleString();
 
-        const response = await fetch(`${API_BASE}/api/v1/dimension/suno/generate`, {
+        const response = await fetch(`${API_BASE}/api/dimension/suno/generate`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
