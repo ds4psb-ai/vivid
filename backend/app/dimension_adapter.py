@@ -71,6 +71,8 @@ class DimensionCapsuleId(str, Enum):
     JSON_GEN_CONVERT = "dimension.json_gen.convert"
     # Nanobanana Editor adapter
     NANOBANANA_CONVERT = "dimension.nanobanana.convert"
+    # Prompt Alchemy - AI Video Platform Prompt Translator
+    PROMPT_TRANSLATE = "prompt.alchemy.translate"
 
 
 # Input validation limits
@@ -2976,6 +2978,238 @@ async def run_nanobanana_convert(
 
 
 # ============================================================================
+# Prompt Alchemy - AI Video Platform Prompt Translator
+# ============================================================================
+
+# Platform-specific prompt templates (2026 Best Practices)
+PROMPT_ALCHEMY_PLATFORMS = {
+    "veo_31": {
+        "name": "Google Veo 3.1",
+        "template": """[Visual Description]: {visual}
+[Dialogue]: {dialogue}
+[Ambient]: {ambient}
+[Mood]: {mood}
+No subtitles.""",
+        "requires_dialogue": True,
+        "max_duration": 8,
+        "native_audio": True,
+    },
+    "kling_26": {
+        "name": "Kling 2.6",
+        "template": """[Subject]: {subject}
+[Action]: {action}
+[Context]: {context}
+[Style]: {style}
+[Camera]: {camera}""",
+        "requires_dialogue": False,
+        "max_duration": 120,
+        "native_audio": False,
+    },
+    "sora_max_2pro": {
+        "name": "Sora Max 2 Pro",
+        "template": """[Style]: {animation_style}
+[Character]: {character}
+[Scene]: {scene}
+[Action]: {action}
+[Mood]: {mood}""",
+        "requires_dialogue": False,
+        "max_duration": 20,
+        "native_audio": True,
+    },
+}
+
+PROMPT_ALCHEMY_SYSTEM = """You are Prompt Alchemy, an expert AI video prompt translator.
+
+Your task is to transform scene descriptions into optimized prompts for specific AI video generation platforms.
+
+## Platform Expertise:
+1. **Veo 3.1**: Dialogue/narration-heavy viral videos. Always include "No subtitles." at the end.
+2. **Kling 2.6**: High-quality silent cinematic videos. Remove dialogue, focus on visual storytelling.
+3. **Sora Max 2 Pro**: Animation-style videos. Emphasize artistic style and character design.
+
+## Output Rules:
+- Return a JSON object with the translated prompt
+- Include quality_score (0-1) indicating confidence in the translation
+- Include platform_specific_tips for the target platform
+- Preserve the artistic intent while optimizing for the platform's strengths
+"""
+
+
+async def run_prompt_translator(
+    inputs: Dict[str, Any],
+    params: Dict[str, Any],
+    user_api_key: Optional[str] = None,
+    intent: Optional[Any] = None,
+) -> CapsuleResult:
+    """Translate scene descriptions to platform-specific AI video prompts.
+
+    Supports Crebit's 3 official platforms:
+    - veo_31: Dialogue/narration-heavy viral videos
+    - kling_26: High-quality silent cinematic videos (recommended default)
+    - sora_max_2pro: Animation-style videos
+
+    Args:
+        inputs: scene_description, target_platform, style, auteur_key
+        params: model selection, auto_select (bool)
+        user_api_key: Optional BYOK
+        intent: Optional CreativeIntent for RAG integration
+
+    Returns:
+        CapsuleResult with translated prompt and metadata
+    """
+    # Intent-Resolver Integration
+    if intent is not None or params.get("intent"):
+        try:
+            from app.resolvers.integration import prepare_dimension_params
+            inputs, params = await prepare_dimension_params(
+                dimension_code="PROMPT",
+                inputs=inputs,
+                params=params,
+                intent=intent,
+            )
+            logger.debug("[PROMPT] Intent-resolved params applied")
+        except ImportError:
+            logger.debug("[PROMPT] Resolver integration not available")
+        except Exception as e:
+            logger.warning(f"[PROMPT] Resolver integration failed: {e}")
+
+    # Validate inputs
+    scene_description = _sanitize_text(
+        inputs.get("scene_description", inputs.get("description", "")),
+        MAX_DESCRIPTION_LENGTH,
+        "scene_description"
+    )
+    if not scene_description:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.PROMPT_TRANSLATE.value,
+            "output": {},
+            "error": "Scene description is required",
+            "metrics": None,
+        }
+
+    # Platform selection (auto or explicit)
+    auto_select = params.get("auto_select", True)
+    target_platform = inputs.get("target_platform", "")
+
+    if auto_select and not target_platform:
+        # Auto-selection logic based on scene content
+        has_dialogue = any(kw in scene_description.lower() for kw in [
+            "대화", "말하", "dialogue", "speak", "say", "narration",
+            "나레이션", "dictation", "voice", "음성", "대사"
+        ])
+        is_animation = any(kw in scene_description.lower() for kw in [
+            "animation", "애니메이션", "cartoon", "만화", "2d", "illustrated",
+            "일러스트", "anime", "애니"
+        ])
+
+        if has_dialogue:
+            target_platform = "veo_31"
+        elif is_animation:
+            target_platform = "sora_max_2pro"
+        else:
+            target_platform = "kling_26"  # Default: Kling recommended
+
+    target_platform = target_platform or "kling_26"
+
+    if target_platform not in PROMPT_ALCHEMY_PLATFORMS:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.PROMPT_TRANSLATE.value,
+            "output": {},
+            "error": f"Unsupported platform: {target_platform}. Supported: {list(PROMPT_ALCHEMY_PLATFORMS.keys())}",
+            "metrics": None,
+        }
+
+    platform_config = PROMPT_ALCHEMY_PLATFORMS[target_platform]
+
+    # Additional inputs
+    style = _sanitize_text(inputs.get("style", "cinematic"), 100, "style")
+    auteur_key = inputs.get("auteur_key", "")
+    duration = inputs.get("duration", platform_config["max_duration"])
+    language = _validate_enum(inputs.get("language", "ko"), ALLOWED_LANGUAGES, "language", "ko")
+    model = _validate_enum(params.get("model", "gemini-3-flash-preview"), ALLOWED_MODELS, "model", "gemini-3-flash-preview")
+
+    # RAG context for auteur style
+    rag_context = None
+    if auteur_key:
+        rag_context = _get_rag_context(
+            capsule_id=DimensionCapsuleId.PROMPT_TRANSLATE.value,
+            query=f"{scene_description} {auteur_key} style",
+            use_rag=True,
+        )
+
+    # Build translation prompt
+    user_prompt = f"""Translate the following scene description into an optimized prompt for {platform_config['name']}.
+
+## Scene Description:
+{scene_description}
+
+## Target Platform: {platform_config['name']}
+## Visual Style: {style}
+## Duration: {duration} seconds
+## Language: {language}
+{"## Auteur Reference: " + auteur_key if auteur_key else ""}
+
+## Platform Template:
+{platform_config['template']}
+
+## Requirements:
+1. Follow the platform template structure exactly
+2. {"Include dialogue/narration markers" if platform_config.get("requires_dialogue") else "Remove any dialogue, focus on visual storytelling"}
+3. Optimize for the platform's strengths
+4. {"Add 'No subtitles.' at the end" if target_platform == "veo_31" else ""}
+
+Return a JSON object with:
+- "translated_prompt": The optimized prompt
+- "quality_score": Your confidence (0-1)
+- "platform_tips": Array of optimization tips
+- "detected_elements": {{ "has_dialogue": bool, "is_animation": bool, "mood": str }}
+"""
+
+    if rag_context:
+        user_prompt = _inject_rag_into_prompt(user_prompt, rag_context, position="prepend")
+
+    try:
+        result, metrics = await _call_gemini(
+            prompt=user_prompt,
+            system_prompt=PROMPT_ALCHEMY_SYSTEM,
+            api_key=user_api_key,
+            model=model,
+        )
+
+        # Ensure output structure
+        output = result if isinstance(result, dict) else {"translated_prompt": str(result)}
+        output["target_platform"] = target_platform
+        output["platform_name"] = platform_config["name"]
+        output["auto_selected"] = auto_select and not inputs.get("target_platform")
+        output["max_duration"] = platform_config["max_duration"]
+        output["native_audio"] = platform_config["native_audio"]
+
+        return {
+            "success": "error" not in result,
+            "capsule_id": DimensionCapsuleId.PROMPT_TRANSLATE.value,
+            "output": output,
+            "error": result.get("error") if isinstance(result, dict) else None,
+            "metrics": {
+                "latency_ms": metrics.latency_ms,
+                "tokens": metrics.input_tokens + metrics.output_tokens,
+                "model": metrics.model,
+                "intent_resolved": intent is not None,
+                "platform": target_platform,
+            },
+        }
+    except (TimeoutError, RuntimeError, ValueError) as e:
+        return {
+            "success": False,
+            "capsule_id": DimensionCapsuleId.PROMPT_TRANSLATE.value,
+            "output": {},
+            "error": str(e),
+            "metrics": None,
+        }
+
+
+# ============================================================================
 # Main Entry Point
 # ============================================================================
 
@@ -2998,6 +3232,8 @@ DIMENSION_ADAPTERS: Dict[str, Callable] = {
     DimensionCapsuleId.CREATIVE_EDITOR.value: run_creative_editor,
     DimensionCapsuleId.JSON_GEN_CONVERT.value: run_json_gen_convert,
     DimensionCapsuleId.NANOBANANA_CONVERT.value: run_nanobanana_convert,
+    # Prompt Alchemy - AI Video Platform Prompt Translator
+    DimensionCapsuleId.PROMPT_TRANSLATE.value: run_prompt_translator,
 }
 
 

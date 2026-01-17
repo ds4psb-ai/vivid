@@ -89,6 +89,7 @@ CAPSULE_TO_DIMENSION: Dict[DimensionCapsuleId, str] = {
     DimensionCapsuleId.CREATIVE_EDITOR: "QC",
     DimensionCapsuleId.JSON_GEN_CONVERT: "JSON_GEN",
     DimensionCapsuleId.NANOBANANA_CONVERT: "3D",  # Reuse 3D Resolver
+    DimensionCapsuleId.PROMPT_TRANSLATE: "PROMPT",  # Prompt Alchemy
 }
 
 
@@ -114,6 +115,7 @@ _CAPSULE_TO_DIMENSION_CODE = {
     DimensionCapsuleId.CREATIVE_EDITOR: "qc",
     DimensionCapsuleId.JSON_GEN_CONVERT: "json_gen",
     DimensionCapsuleId.NANOBANANA_CONVERT: "nanobanana",
+    DimensionCapsuleId.PROMPT_TRANSLATE: "prompt",  # Prompt Alchemy
 }
 
 def get_credit_cost(
@@ -180,6 +182,7 @@ def get_credit_cost(
             DimensionCapsuleId.STORY_REFINE: 8,
             DimensionCapsuleId.SOUND_CRAFT: 8,
             DimensionCapsuleId.SOUND_MOODBOARD: 5,
+            DimensionCapsuleId.PROMPT_TRANSLATE: 5,  # Prompt Alchemy
         }
         DEFAULT_BASE_CREDIT_COST = 5
         base_cost = BASE_CREDIT_COSTS.get(capsule_id, DEFAULT_BASE_CREDIT_COST)

@@ -20,6 +20,7 @@ import {
   Video,
   CheckCircle,
   Palette,
+  FlaskConical,
 } from "lucide-react";
 
 // =============================================================================
@@ -70,7 +71,8 @@ export type DimensionIconName =
   | "image"
   | "video"
   | "check"
-  | "palette";
+  | "palette"
+  | "flask";
 
 // =============================================================================
 // WORKFLOW STAGES
@@ -104,6 +106,7 @@ export const DIMENSION_ICONS: Record<DimensionIconName, LucideIcon> = {
   video: Video,
   check: CheckCircle,
   palette: Palette,
+  flask: FlaskConical,
 };
 
 // =============================================================================
@@ -224,6 +227,25 @@ export const DIMENSION_ITEMS: DimensionItemData[] = [
     textColor: "text-violet-400",
     gradient: "from-violet-500 via-purple-500 to-indigo-500",
   },
+  {
+    id: "platform-translator",
+    href: "/dimension/prompt-alchemy",
+    iconName: "flask",
+    stage: "pre_production",
+    stageOrder: 4,
+    titleKo: "플랫폼 번역기",
+    titleEn: "Platform Translator",
+    descKo: "Veo, Kling, Sora 최적화 프롬프트",
+    descEn: "Optimized prompts for Veo, Kling, Sora",
+    portalColor: "border-purple-500/50",
+    borderColor: "border-purple-500",
+    glowClass: "glow-breathe glow-breathe-purple",
+    activeBg: "bg-purple-500",
+    activeText: "text-purple-100",
+    textColor: "text-purple-400",
+    gradient: "from-purple-500 via-violet-500 to-fuchsia-500",
+    isNew: true,
+  },
 
   // ========== Stage 3: 제작 (Production) ==========
   {
@@ -315,6 +337,7 @@ export const ROUTE_KEYS: Record<string, string> = {
   "/dimension/sound-crafter": "sound-crafter",
   "/dimension/storyboard": "storyboard-sketch",
   "/dimension/prompt": "prompt-alchemy",
+  "/dimension/prompt-alchemy": "platform-translator",
   "/dimension/visual-realizer": "visual-realizer",
   "/dimension/video-maker": "video-maker",
   "/dimension/quality-check": "quality-director",
