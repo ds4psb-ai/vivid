@@ -4,22 +4,29 @@ Classic Dimension Endpoints - 1D, 2D, 3D, 4D.
 - 1D Origin: Veo Prompt Generation
 - 2D Blueprint: Storyboard Creation
 - 3D Ambience: Image Prompt Generation
-- 4D Moment: Reference Analysis
+- 4D Moment: Reference Analysis (Enhanced with 2026 Expert Workflow)
 
 Security:
 - XSS sanitization for style/mood fields
 - Enum validation for analysis_depth/output_format/strategy
 - Focus areas whitelist validation
+
+4D Hardening (2026):
+- Style extraction from reference images
+- Video frame-by-frame analysis
+- Shot list generation for recreation
+- Moodboard generation
 """
 from __future__ import annotations
 
+import base64
 import html
 import logging
 import re
 from enum import Enum
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -864,7 +871,7 @@ async def analyze_4d_reference_stream(
     """Analyze video reference with SSE streaming (4D Moment)."""
     from app.routers.intent_helpers import with_intent
     intent = with_intent(request)
-    
+
     return StreamingResponse(
         _execute_dimension_tool_stream(
             capsule_id=DimensionCapsuleId.REFERENCE_ANALYZE,
@@ -886,3 +893,321 @@ async def analyze_4d_reference_stream(
         media_type="text/event-stream",
         headers=get_sse_headers(),
     )
+
+
+# ============================================================================
+# 4D Moment - Enhanced Reference Analysis (2026 Expert Workflow)
+# ============================================================================
+
+# Allowed MIME types for file uploads
+ALLOWED_IMAGE_TYPES = frozenset([
+    "image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"
+])
+ALLOWED_VIDEO_TYPES = frozenset([
+    "video/mp4", "video/webm", "video/quicktime", "video/x-msvideo"
+])
+
+MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10MB
+MAX_VIDEO_SIZE = 100 * 1024 * 1024  # 100MB
+
+
+class StyleExtractionResponse(BaseModel):
+    """Response for style extraction endpoint."""
+    success: bool = True
+    style_tags: List[str] = Field(default_factory=list)
+    style_prompt: str = ""
+    color_palette: List[str] = Field(default_factory=list)
+    lighting: str = ""
+    composition: str = ""
+    mood: str = ""
+    camera_angle: Optional[str] = None
+    reference_artists: List[str] = Field(default_factory=list)
+    confidence: float = 0.0
+    evidence_refs: List[str] = Field(default_factory=list)
+
+
+class VideoAnalysisResponse(BaseModel):
+    """Response for video reference analysis endpoint."""
+    success: bool = True
+    total_duration: float = 0.0
+    frame_count: int = 0
+    frames: List[dict] = Field(default_factory=list)
+    scenes: List[dict] = Field(default_factory=list)
+    style: dict = Field(default_factory=dict)
+    suggested_shots: List[dict] = Field(default_factory=list)
+    moodboard_frames: List[str] = Field(default_factory=list)
+    confidence: float = 0.0
+    evidence_refs: List[str] = Field(default_factory=list)
+
+
+class ImageAnalysisResponse(BaseModel):
+    """Response for image reference analysis endpoint."""
+    success: bool = True
+    description: str = ""
+    style: dict = Field(default_factory=dict)
+    objects: List[str] = Field(default_factory=list)
+    composition_analysis: str = ""
+    recreation_prompt: str = ""
+    similar_references: List[str] = Field(default_factory=list)
+    evidence_refs: List[str] = Field(default_factory=list)
+
+
+@router.post(
+    "/4d/extract-style",
+    response_model=StyleExtractionResponse,
+    responses={
+        400: {"model": DimensionErrorResponse, "description": "Invalid file type or size"},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="4D Moment: Extract Style from Reference Image",
+    description="""
+    Extract reusable visual style from a reference image.
+
+    Expert Workflow (2026): "스타일 프롬프트라고 따로 둬요... 일관성을 위해서"
+
+    Returns:
+    - style_tags: Visual style descriptors
+    - style_prompt: Reusable prompt for consistent style
+    - color_palette: Dominant colors (K-Means extracted)
+    - lighting, composition, mood analysis
+    - reference_artists: Similar known styles
+    """,
+    tags=["Dimension 4D", "Style Extraction"],
+)
+async def extract_style_from_image(
+    file: UploadFile = File(..., description="Reference image (JPEG, PNG, WebP)"),
+    context: Optional[str] = None,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> StyleExtractionResponse:
+    """Extract style from reference image (2026 Expert Workflow)."""
+    from app.services.ai.style_extractor import get_style_extractor, StyleExtractionError
+
+    user_id = user.get("id", "unknown")
+
+    # Validate file type
+    content_type = file.content_type or ""
+    if content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid image type: {content_type}. Allowed: {list(ALLOWED_IMAGE_TYPES)}"
+        )
+
+    # Read and validate size
+    image_bytes = await file.read()
+    if len(image_bytes) > MAX_IMAGE_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Image too large. Maximum size: {MAX_IMAGE_SIZE // (1024*1024)}MB"
+        )
+
+    logger.info(
+        f"[4D_STYLE_EXTRACT] user={user_id} file={file.filename} "
+        f"size={len(image_bytes)} type={content_type}"
+    )
+
+    try:
+        # Extract style using the new service
+        extractor = get_style_extractor()
+        result = await extractor.extract_style(
+            image_bytes=image_bytes,
+            additional_context=context,
+            mime_type=content_type,
+        )
+
+        return StyleExtractionResponse(
+            success=True,
+            style_tags=result.style_tags,
+            style_prompt=result.style_prompt,
+            color_palette=result.color_palette,
+            lighting=result.lighting,
+            composition=result.composition,
+            mood=result.mood,
+            camera_angle=result.camera_angle,
+            reference_artists=result.reference_artists,
+            confidence=result.confidence,
+            evidence_refs=[f"db:style_extractions:{user_id}:{file.filename}"],
+        )
+
+    except StyleExtractionError as e:
+        logger.error(f"Style extraction failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        logger.exception(f"Unexpected error in style extraction: {e}")
+        raise HTTPException(status_code=500, detail="스타일 추출 중 오류가 발생했습니다.")
+
+
+@router.post(
+    "/4d/analyze-video",
+    response_model=VideoAnalysisResponse,
+    responses={
+        400: {"model": DimensionErrorResponse, "description": "Invalid file type or size"},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="4D Moment: Analyze Video Reference",
+    description="""
+    Comprehensive video reference analysis with frame-by-frame breakdown.
+
+    Expert Workflow (2026): "레퍼런스 영상을 프레임별로 분석해서 샷 리스트를 만들어요"
+
+    Returns:
+    - Frame-by-frame analysis (objects, actions, camera movement)
+    - Scene segmentation
+    - Style extraction
+    - Shot list for recreation
+    - Moodboard frames (base64)
+    """,
+    tags=["Dimension 4D", "Video Analysis"],
+)
+async def analyze_video_reference(
+    file: UploadFile = File(..., description="Video file (MP4, WebM, MOV)"),
+    analysis_depth: str = "detailed",
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> VideoAnalysisResponse:
+    """Analyze video reference frame-by-frame (2026 Expert Workflow)."""
+    from app.services.ai.reference_analyzer import (
+        get_reference_analyzer,
+        ReferenceAnalysisError,
+    )
+
+    user_id = user.get("id", "unknown")
+
+    # Validate depth
+    try:
+        analysis_depth = _validate_analysis_depth(analysis_depth)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # Validate file type
+    content_type = file.content_type or ""
+    if content_type not in ALLOWED_VIDEO_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid video type: {content_type}. Allowed: {list(ALLOWED_VIDEO_TYPES)}"
+        )
+
+    # Read and validate size
+    video_bytes = await file.read()
+    if len(video_bytes) > MAX_VIDEO_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Video too large. Maximum size: {MAX_VIDEO_SIZE // (1024*1024)}MB"
+        )
+
+    logger.info(
+        f"[4D_VIDEO_ANALYZE] user={user_id} file={file.filename} "
+        f"size={len(video_bytes)} depth={analysis_depth}"
+    )
+
+    try:
+        # Analyze video using the new service
+        analyzer = get_reference_analyzer()
+        result = await analyzer.analyze_video_reference(
+            video_bytes=video_bytes,
+            analysis_depth=analysis_depth,
+        )
+
+        return VideoAnalysisResponse(
+            success=True,
+            total_duration=result.total_duration,
+            frame_count=result.frame_count,
+            frames=[f.model_dump() for f in result.frames],
+            scenes=[s.model_dump() for s in result.scenes],
+            style=result.style.model_dump(),
+            suggested_shots=[s.model_dump() for s in result.suggested_shots],
+            moodboard_frames=result.moodboard_frames,
+            confidence=result.confidence,
+            evidence_refs=[f"db:video_analyses:{user_id}:{file.filename}"],
+        )
+
+    except ReferenceAnalysisError as e:
+        logger.error(f"Video analysis failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        logger.exception(f"Unexpected error in video analysis: {e}")
+        raise HTTPException(status_code=500, detail="비디오 분석 중 오류가 발생했습니다.")
+
+
+@router.post(
+    "/4d/analyze-image",
+    response_model=ImageAnalysisResponse,
+    responses={
+        400: {"model": DimensionErrorResponse, "description": "Invalid file type or size"},
+        402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
+        500: {"model": DimensionErrorResponse},
+    },
+    summary="4D Moment: Analyze Image Reference",
+    description="""
+    Detailed image reference analysis with recreation prompt.
+
+    Returns:
+    - Detailed description
+    - Style extraction
+    - Object detection
+    - Composition analysis
+    - Recreation prompt for AI generation
+    """,
+    tags=["Dimension 4D", "Image Analysis"],
+)
+async def analyze_image_reference(
+    file: UploadFile = File(..., description="Reference image (JPEG, PNG, WebP)"),
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ImageAnalysisResponse:
+    """Analyze image reference with recreation prompt (2026 Expert Workflow)."""
+    from app.services.ai.reference_analyzer import (
+        get_reference_analyzer,
+        ReferenceAnalysisError,
+    )
+
+    user_id = user.get("id", "unknown")
+
+    # Validate file type
+    content_type = file.content_type or ""
+    if content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid image type: {content_type}. Allowed: {list(ALLOWED_IMAGE_TYPES)}"
+        )
+
+    # Read and validate size
+    image_bytes = await file.read()
+    if len(image_bytes) > MAX_IMAGE_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Image too large. Maximum size: {MAX_IMAGE_SIZE // (1024*1024)}MB"
+        )
+
+    logger.info(
+        f"[4D_IMAGE_ANALYZE] user={user_id} file={file.filename} "
+        f"size={len(image_bytes)} type={content_type}"
+    )
+
+    try:
+        # Analyze image using the new service
+        analyzer = get_reference_analyzer()
+        result = await analyzer.analyze_image_reference(
+            image_bytes=image_bytes,
+            mime_type=content_type,
+        )
+
+        return ImageAnalysisResponse(
+            success=True,
+            description=result.description,
+            style=result.style.model_dump(),
+            objects=result.objects,
+            composition_analysis=result.composition_analysis,
+            recreation_prompt=result.recreation_prompt,
+            similar_references=result.similar_references,
+            evidence_refs=[f"db:image_analyses:{user_id}:{file.filename}"],
+        )
+
+    except ReferenceAnalysisError as e:
+        logger.error(f"Image analysis failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        logger.exception(f"Unexpected error in image analysis: {e}")
+        raise HTTPException(status_code=500, detail="이미지 분석 중 오류가 발생했습니다.")
