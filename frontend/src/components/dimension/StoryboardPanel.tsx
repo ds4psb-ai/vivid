@@ -14,7 +14,8 @@
  * @see docs/PANEL_DESIGN_UNITY_SPEC.md
  */
 
-import { useState, useCallback, useTransition, useOptimistic } from "react";
+import { useState, useCallback, useTransition, useOptimistic, useMemo } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
@@ -50,7 +51,9 @@ interface StoryboardResult {
   scenes: StoryboardScene[];
 }
 
-const MODELS = [{ value: "gemini-3-pro-preview", label: "Pro (고품질)" }];
+const getModels = (isKo: boolean) => [
+  { value: "gemini-3-pro-preview", label: isKo ? "Pro (고품질)" : "Pro (High Quality)" },
+];
 
 const VISUAL_STYLES = [
   "Cinematic",
@@ -81,12 +84,45 @@ export default function StoryboardPanel() {
 
 function StoryboardContent() {
   const { token, setLoading, setResult, setError, classes } = useDimensionPanel();
+  const { language: appLanguage } = useLanguage();
+  const isKo = appLanguage === "ko";
+
+  // i18n labels
+  const labels = useMemo(() => ({
+    title: isKo ? "스토리보드 생성기" : "Storyboard Generator",
+    scriptLabel: isKo ? "스크립트 입력" : "Script Input",
+    scriptPlaceholder: isKo ? "시각화할 스크립트나 시나리오를 입력하세요..." : "Enter a script or scenario to visualize...",
+    referenceLabel: isKo ? "참고 자료 (선택)" : "Reference Materials (Optional)",
+    referenceHelper: isKo ? "기존 스토리보드, 무드보드 이미지 또는 PDF" : "Existing storyboards, moodboard images, or PDFs",
+    sceneCountLabel: isKo ? "장면 수" : "Scene Count",
+    visualStyleLabel: isKo ? "비주얼 스타일" : "Visual Style",
+    languageLabel: isKo ? "언어" : "Language",
+    aiModelLabel: isKo ? "AI 모델" : "AI Model",
+    generateButton: isKo ? "스토리보드 생성" : "Create Storyboard",
+    generating: isKo ? "스토리보드 생성 중..." : "Generating storyboard...",
+    enterScript: isKo ? "스토리 컨셉을 입력해주세요" : "Please enter a story concept",
+    scriptTooLong: (max: number) => isKo ? `스토리 컨셉은 ${max}자 이하로 입력해주세요` : `Story concept must be ${max} characters or less`,
+    generatingScenes: (count: number) => isKo ? `${count}개 장면 생성 중...` : `Generating ${count} scenes...`,
+    exportJson: isKo ? "JSON 내보내기" : "Export JSON",
+    scene: isKo ? "장면" : "Scene",
+    camera: isKo ? "카메라" : "Camera",
+    audio: isKo ? "오디오" : "Audio",
+    cameraAngle: isKo ? "앵글" : "Angle",
+    promptPreview: isKo ? "프롬프트 미리보기" : "Prompt Preview",
+    copyPrompt: isKo ? "프롬프트 복사" : "Copy Prompt",
+    short: "Short",
+    standard: "Standard",
+    extended: "Extended",
+  }), [isKo]);
+
+  // Model options
+  const MODELS = useMemo(() => getModels(isKo), [isKo]);
 
   // Form state
   const [script, setScript] = useState("");
   const [style, setStyle] = useState("Cinematic");
   const [sceneCount, setSceneCount] = useState(5);
-  const [language, setLanguage] = useState<"ko" | "en">("ko");
+  const [outputLanguage, setOutputLanguage] = useState<"ko" | "en">("ko");
   const [model, setModel] = useState("gemini-3-flash-preview");
   const [files, setFiles] = useState<File[]>([]);
   const [showCreditModal, setShowCreditModal] = useState(false);
@@ -157,11 +193,11 @@ function StoryboardContent() {
   const handleGenerate = useCallback(() => {
     const trimmedScript = script.trim();
     if (!trimmedScript) {
-      setValidationError("스토리 컨셉을 입력해주세요");
+      setValidationError(labels.enterScript);
       return;
     }
     if (trimmedScript.length > MAX_SCRIPT_LENGTH) {
-      setValidationError(`스토리 컨셉은 ${MAX_SCRIPT_LENGTH}자 이하로 입력해주세요`);
+      setValidationError(labels.scriptTooLong(MAX_SCRIPT_LENGTH));
       return;
     }
     setValidationError(null);
@@ -185,13 +221,13 @@ function StoryboardContent() {
 
       await wrappedExecute(
         `${API_BASE}/api/dimension/2d/create`,
-        { concept: script, scene_count: sceneCount, language, model },
+        { concept: script, scene_count: sceneCount, language: outputLanguage, model },
         getBYOKHeaders(byokKey)
       );
 
       setOptimisticResult(null);
     });
-  }, [script, sceneCount, language, model, byokKey, creditCtx, wrappedExecute, CREDIT_COST, startTransition, setOptimisticResult]);
+  }, [script, sceneCount, outputLanguage, model, byokKey, creditCtx, wrappedExecute, CREDIT_COST, startTransition, setOptimisticResult]);
 
   // Export result as JSON
   const handleExportJson = useCallback(() => {
@@ -218,18 +254,18 @@ function StoryboardContent() {
 
   return (
     <>
-      <DimensionPanel.Header title="스토리보드 생성기" creditCost={CREDIT_COST} />
+      <DimensionPanel.Header title={labels.title} creditCost={CREDIT_COST} />
 
       <DimensionPanel.Sidebar>
         {/* Script Input */}
         <div className="space-y-2">
           <label className={`text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1`}>
-            스크립트 입력
+            {labels.scriptLabel}
           </label>
           <textarea
             value={script}
             onChange={(e) => setScript(e.target.value)}
-            placeholder="시각화할 스크립트나 시나리오를 입력하세요..."
+            placeholder={labels.scriptPlaceholder}
             className={`w-full h-48 px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 resize-none focus:outline-none focus:ring-2 focus:ring-${token.themeColor}-500/50`}
             disabled={isLoading}
           />
@@ -244,25 +280,25 @@ function StoryboardContent() {
           maxSizeMB={100}
           multiple
           onUpload={setFiles}
-          label="참고 자료 (선택)"
-          helperText="기존 스토리보드, 무드보드 이미지 또는 PDF"
+          label={labels.referenceLabel}
+          helperText={labels.referenceHelper}
         />
 
         {/* Scene Count */}
         <DimensionPanel.Select
-          label="장면 수"
+          label={labels.sceneCountLabel}
           value={String(sceneCount)}
           onChange={(e) => setSceneCount(Number(e.target.value))}
           options={[
-            { value: "4", label: "4 장면 (Short)" },
-            { value: "6", label: "6 장면 (Standard)" },
-            { value: "8", label: "8 장면 (Extended)" },
+            { value: "4", label: isKo ? "4 장면 (Short)" : "4 Scenes (Short)" },
+            { value: "6", label: isKo ? "6 장면 (Standard)" : "6 Scenes (Standard)" },
+            { value: "8", label: isKo ? "8 장면 (Extended)" : "8 Scenes (Extended)" },
           ]}
         />
 
         {/* Visual Style */}
         <DimensionPanel.Select
-          label="비주얼 스타일"
+          label={labels.visualStyleLabel}
           value={style}
           onChange={(e) => setStyle(e.target.value)}
           options={VISUAL_STYLES.map((s) => ({ value: s, label: s }))}
@@ -271,13 +307,13 @@ function StoryboardContent() {
         {/* Language Toggle */}
         <div className="space-y-2 group">
           <label className={`text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1`}>
-            언어
+            {labels.languageLabel}
           </label>
           <div className="flex gap-1 p-1 bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10">
             <button
-              onClick={() => setLanguage("ko")}
+              onClick={() => setOutputLanguage("ko")}
               className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
-                language === "ko"
+                outputLanguage === "ko"
                   ? `${classes.bg} text-black shadow-sm`
                   : "text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/5"
               }`}
@@ -285,9 +321,9 @@ function StoryboardContent() {
               KO
             </button>
             <button
-              onClick={() => setLanguage("en")}
+              onClick={() => setOutputLanguage("en")}
               className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
-                language === "en"
+                outputLanguage === "en"
                   ? `${classes.bg} text-black shadow-sm`
                   : "text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/5"
               }`}
@@ -299,7 +335,7 @@ function StoryboardContent() {
 
         {/* Model Select */}
         <DimensionPanel.Select
-          label="AI 모델"
+          label={labels.aiModelLabel}
           value={model}
           onChange={(e) => setModel(e.target.value)}
           options={MODELS}
@@ -312,9 +348,9 @@ function StoryboardContent() {
           loading={isPending}
           creditCost={CREDIT_COST}
           icon={<Layout className="w-5 h-5" />}
-          loadingText="스토리보드 생성 중..."
+          loadingText={labels.generating}
         >
-          Create Storyboard
+          {labels.generateButton}
         </DimensionPanel.GenerateButton>
 
         {/* Validation Error */}
@@ -327,7 +363,7 @@ function StoryboardContent() {
 
       <DimensionPanel.Content>
         {/* Loading State - React 19: Shows during transition */}
-        <DimensionPanel.Loading message="스토리보드 생성 중..." />
+        <DimensionPanel.Loading message={labels.generating} />
 
         {/* Error State */}
         {displayError && !isPending && (
@@ -343,7 +379,7 @@ function StoryboardContent() {
             <div className="flex items-center justify-center gap-2 py-3 px-4 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
               <div className="w-3 h-3 rounded-full bg-cyan-500 animate-pulse" />
               <span className="text-sm text-cyan-600 dark:text-cyan-300">
-                {sceneCount}개 장면 생성 중...
+                {labels.generatingScenes(sceneCount)}
               </span>
             </div>
             <div className="grid grid-cols-1 gap-4">

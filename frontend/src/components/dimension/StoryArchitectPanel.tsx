@@ -14,7 +14,8 @@
  * @see https://react.dev/blog/2024/12/05/react-19
  */
 
-import { useState, useEffect, useCallback, useTransition, useOptimistic } from "react";
+import { useState, useEffect, useCallback, useTransition, useOptimistic, useMemo } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
@@ -79,41 +80,113 @@ interface StoryRefineResult {
 
 type Stage = "pitch" | "blueprint" | "script";
 
-const GENRES = [
-  { value: "drama", label: "드라마" },
-  { value: "thriller", label: "스릴러" },
-  { value: "comedy", label: "코미디" },
-  { value: "documentary", label: "다큐멘터리" },
-  { value: "horror", label: "호러" },
+const getGenres = (isKo: boolean) => [
+  { value: "drama", label: isKo ? "드라마" : "Drama" },
+  { value: "thriller", label: isKo ? "스릴러" : "Thriller" },
+  { value: "comedy", label: isKo ? "코미디" : "Comedy" },
+  { value: "documentary", label: isKo ? "다큐멘터리" : "Documentary" },
+  { value: "horror", label: isKo ? "호러" : "Horror" },
   { value: "scifi", label: "SF" },
-  { value: "ad", label: "광고" },
-  { value: "mv", label: "뮤직비디오" },
-  { value: "short", label: "숏폼" },
+  { value: "ad", label: isKo ? "광고" : "Advertisement" },
+  { value: "mv", label: isKo ? "뮤직비디오" : "Music Video" },
+  { value: "short", label: isKo ? "숏폼" : "Short Form" },
 ];
 
-const DURATIONS = [
-  { value: "15", label: "15초 (숏폼)" },
-  { value: "30", label: "30초" },
-  { value: "60", label: "1분" },
-  { value: "180", label: "3분" },
-  { value: "300", label: "5분" },
+const getDurations = (isKo: boolean) => [
+  { value: "15", label: isKo ? "15초 (숏폼)" : "15s (Short)" },
+  { value: "30", label: isKo ? "30초" : "30s" },
+  { value: "60", label: isKo ? "1분" : "1 min" },
+  { value: "180", label: isKo ? "3분" : "3 min" },
+  { value: "300", label: isKo ? "5분" : "5 min" },
 ];
 
-const STRUCTURES = [
-  { value: "3-act", label: "3막 구조" },
-  { value: "5-act", label: "5막 구조" },
-  { value: "hero-journey", label: "영웅의 여정" },
-  { value: "hook-body-cta", label: "훅-본론-CTA" },
-  { value: "problem-solution", label: "문제-해결" },
-  { value: "story-arc", label: "스토리 아크" },
-  { value: "nonlinear", label: "비선형" },
-  { value: "slice-of-life", label: "일상물" },
-  { value: "montage", label: "몽타주" },
+const getStructures = (isKo: boolean) => [
+  { value: "3-act", label: isKo ? "3막 구조" : "3-Act Structure" },
+  { value: "5-act", label: isKo ? "5막 구조" : "5-Act Structure" },
+  { value: "hero-journey", label: isKo ? "영웅의 여정" : "Hero's Journey" },
+  { value: "hook-body-cta", label: isKo ? "훅-본론-CTA" : "Hook-Body-CTA" },
+  { value: "problem-solution", label: isKo ? "문제-해결" : "Problem-Solution" },
+  { value: "story-arc", label: isKo ? "스토리 아크" : "Story Arc" },
+  { value: "nonlinear", label: isKo ? "비선형" : "Nonlinear" },
+  { value: "slice-of-life", label: isKo ? "일상물" : "Slice of Life" },
+  { value: "montage", label: isKo ? "몽타주" : "Montage" },
 ];
 
 // === Content Component ===
 function StoryArchitectContent() {
   const { token, setLoading, setResult, setError } = useDimensionPanel();
+  const { language } = useLanguage();
+  const isKo = language === "ko";
+
+  // i18n labels
+  const labels = useMemo(() => ({
+    title: isKo ? "시나리오 생성기" : "Scenario Generator",
+    conceptLabel: isKo ? "컨셉" : "Concept",
+    conceptPlaceholder: isKo ? "스토리 컨셉을 자유롭게 입력하세요..." : "Enter your story concept freely...",
+    genreLabel: isKo ? "장르" : "Genre",
+    durationLabel: isKo ? "영상 길이" : "Video Length",
+    structureLabel: isKo ? "구조" : "Structure",
+    referenceLabel: isKo ? "참고자료 업로드" : "Upload Reference",
+    referenceHelper: isKo ? "PDF, 이미지, 문서 등 참고자료" : "PDFs, images, documents, etc.",
+    refineButton: isKo ? "다양한 시각 찾기" : "Find Different Angles",
+    refining: isKo ? "시각 탐색 중..." : "Exploring angles...",
+    generateButton: isKo ? "시나리오 생성" : "Generate Scenario",
+    generating: isKo ? "시나리오 생성 중..." : "Generating scenario...",
+    enterConcept: isKo ? "컨셉을 입력해주세요." : "Please enter a concept.",
+    enterLongerConcept: isKo ? "컨셉을 10자 이상 입력해주세요." : "Please enter at least 10 characters.",
+    conceptTooLong: (max: number) => isKo ? `컨셉은 ${max}자 이하로 입력해주세요.` : `Concept must be ${max} characters or less.`,
+    stagePitch: isKo ? "발상" : "Pitch",
+    stageBlueprint: isKo ? "설계" : "Blueprint",
+    stageScript: isKo ? "집필" : "Script",
+    selectAngle: isKo ? "시각 선택" : "Select Angle",
+    changeAngle: isKo ? "시각 변경" : "Change Angle",
+    selected: isKo ? "선택됨" : "Selected",
+    choose: isKo ? "선택" : "Choose",
+    exportJson: isKo ? "JSON 내보내기" : "Export JSON",
+    logline: "Logline",
+    synopsis: isKo ? "시놉시스" : "Synopsis",
+    narrativeStructure: isKo ? "서사 구조" : "Narrative Structure",
+    characters: isKo ? "등장인물" : "Characters",
+    themes: isKo ? "테마" : "Themes",
+    visualMotifs: isKo ? "시각적 모티프" : "Visual Motifs",
+    act: isKo ? "막" : "Act",
+    duration: isKo ? "시간" : "Duration",
+    emotion: isKo ? "감정" : "Emotion",
+    role: isKo ? "역할" : "Role",
+    arc: isKo ? "아크" : "Arc",
+    traits: isKo ? "특성" : "Traits",
+    emptyStateTitle: isKo ? "스토리 아키텍트" : "Story Architect",
+    emptyStateDesc: isKo ? "컨셉을 입력하고 시나리오를 생성하세요" : "Enter a concept and generate a scenario",
+    // Pitch stage
+    pitchWelcome: isKo ? "Writer's Room에 오신 것을 환영합니다" : "Welcome to the Writer's Room",
+    pitchDesc1: isKo ? "단순한 문장이 위대한 스토리로 발전하는 공간입니다." : "A space where simple sentences evolve into great stories.",
+    pitchDesc2: isKo ? "먼저 떠오르는 영감을 좌측에 적어주세요." : "Start by writing your inspiration on the left.",
+    pitchDesc3: isKo ? "AI가 3가지 다른 이야기 방향을 제안해드립니다." : "AI will suggest 3 different story directions.",
+    // Blueprint stage
+    selectDirection: isKo ? "이야기의 방향을 선택하세요" : "Select a story direction",
+    coreTheme: isKo ? "핵심 테마" : "Core Theme",
+    // Script stage
+    generationComplete: isKo ? "생성 완료" : "Generation Complete",
+    overviewLabel: isKo ? "개요" : "Overview",
+    charactersLabel: isKo ? "등장인물" : "Characters",
+    themesLabel: isKo ? "주제" : "Themes",
+    visualMotifsLabel: isKo ? "시각적 모티프" : "Visual Motifs",
+    // Sidebar
+    selectedAngleLabel: isKo ? "선택된 앵글" : "Selected Angle",
+    notSelectedYet: isKo ? "아직 선택 안됨" : "Not selected yet",
+    backToDesign: isKo ? "◀ 다시 설계하기" : "◀ Back to Design",
+    estimatedCost: isKo ? "예상 비용" : "Estimated cost",
+    freeByok: isKo ? "무료 (BYOK)" : "Free (BYOK)",
+    credits: isKo ? "크레딧" : "credits",
+    emptyStateDesc2: isKo
+      ? "영상 컨셉을 입력하면 당신만의 스토리를 자동으로 작성합니다. 장르와 구조를 선택하여 맞춤형 시나리오를 만들어보세요."
+      : "Enter your video concept to automatically write your own story. Choose genre and structure to create a customized scenario.",
+  }), [isKo]);
+
+  // i18n presets
+  const GENRES = useMemo(() => getGenres(isKo), [isKo]);
+  const DURATIONS = useMemo(() => getDurations(isKo), [isKo]);
+  const STRUCTURES = useMemo(() => getStructures(isKo), [isKo]);
 
   const [concept, setConcept] = useState("");
   const [genre, setGenre] = useState("drama");
@@ -258,7 +331,7 @@ function StoryArchitectContent() {
   const handleRefine = useCallback(async () => {
     const trimmedConcept = concept.trim();
     if (!trimmedConcept || trimmedConcept.length < 5) {
-      setValidationError("컨셉을 입력해주세요.");
+      setValidationError(labels.enterConcept);
       return;
     }
     setValidationError(null);
@@ -277,11 +350,11 @@ function StoryArchitectContent() {
   const handleGenerate = useCallback(async () => {
     const trimmedConcept = concept.trim();
     if (!trimmedConcept || trimmedConcept.length < 10) {
-      setValidationError("컨셉을 10자 이상 입력해주세요.");
+      setValidationError(labels.enterLongerConcept);
       return;
     }
     if (trimmedConcept.length > MAX_CONCEPT_LENGTH) {
-      setValidationError(`컨셉은 ${MAX_CONCEPT_LENGTH}자 이하로 입력해주세요.`);
+      setValidationError(labels.conceptTooLong(MAX_CONCEPT_LENGTH));
       return;
     }
     setValidationError(null);
@@ -324,7 +397,7 @@ function StoryArchitectContent() {
 
   return (
     <>
-      <DimensionPanel.Header title="시나리오 생성기" />
+      <DimensionPanel.Header title={labels.title} />
 
       <div className="flex flex-1 min-h-0">
         <DimensionPanel.Sidebar>
@@ -337,19 +410,19 @@ function StoryArchitectContent() {
 
           {/* Stage Indicator */}
           <div className="flex items-center justify-between text-xs text-slate-400 dark:text-white/50 mb-2">
-            <span className={stage === "pitch" ? `text-${token.themeColor}-600 dark:text-${token.themeColor}-400 font-bold` : ""}>1. 발상</span>
+            <span className={stage === "pitch" ? `text-${token.themeColor}-600 dark:text-${token.themeColor}-400 font-bold` : ""}>1. {labels.stagePitch}</span>
             <span>→</span>
-            <span className={stage === "blueprint" ? `text-${token.themeColor}-600 dark:text-${token.themeColor}-400 font-bold` : ""}>2. 설계</span>
+            <span className={stage === "blueprint" ? `text-${token.themeColor}-600 dark:text-${token.themeColor}-400 font-bold` : ""}>2. {labels.stageBlueprint}</span>
             <span>→</span>
-            <span className={stage === "script" ? `text-${token.themeColor}-600 dark:text-${token.themeColor}-400 font-bold` : ""}>3. 집필</span>
+            <span className={stage === "script" ? `text-${token.themeColor}-600 dark:text-${token.themeColor}-400 font-bold` : ""}>3. {labels.stageScript}</span>
           </div>
 
           {/* Concept Input */}
           <DimensionPanel.Textarea
-            label="영상 컨셉"
+            label={isKo ? "영상 컨셉" : "Video Concept"}
             value={concept}
             onChange={(e) => setConcept(e.target.value)}
-            placeholder="어떤 영상을 만들고 싶으신가요? 아이디어, 분위기, 메시지 등을 자유롭게 적어주세요..."
+            placeholder={isKo ? "어떤 영상을 만들고 싶으신가요? 아이디어, 분위기, 메시지 등을 자유롭게 적어주세요..." : "What kind of video do you want to create? Feel free to describe your ideas, mood, message, etc."}
             rows={5}
             maxLength={MAX_CONCEPT_LENGTH}
             disabled={isAnyLoading || stage !== "pitch"}
@@ -361,15 +434,15 @@ function StoryArchitectContent() {
             maxSizeMB={100}
             multiple
             onUpload={setUploadedFiles}
-            label="참고 자료 (선택)"
-            helperText="시나리오 참고 문서, 무드보드, 참고 이미지 첨부"
+            label={isKo ? "참고 자료 (선택)" : "Reference (Optional)"}
+            helperText={isKo ? "시나리오 참고 문서, 무드보드, 참고 이미지 첨부" : "Scenario reference docs, moodboards, images"}
           />
 
           {/* Stage Actions */}
           {stage === "pitch" && (
             <>
               <DimensionPanel.Select
-                label="선호 장르"
+                label={isKo ? "선호 장르" : "Preferred Genre"}
                 value={genre}
                 onChange={(e) => setGenre(e.target.value)}
                 options={GENRES}
@@ -380,10 +453,10 @@ function StoryArchitectContent() {
                 onClick={handleRefine}
                 disabled={isAnyLoading || concept.length < 5}
                 loading={isRefineLoading}
-                loadingText="분석 중..."
+                loadingText={isKo ? "분석 중..." : "Analyzing..."}
                 icon={<Sparkles className="w-4 h-4" />}
               >
-                아이디어 다듬기 (Pitch)
+                {isKo ? "아이디어 다듬기 (Pitch)" : "Refine Ideas (Pitch)"}
               </DimensionPanel.GenerateButton>
             </>
           )}
@@ -391,12 +464,12 @@ function StoryArchitectContent() {
           {stage === "blueprint" && (
             <>
               <div className={`p-4 bg-${token.themeColor}-100 dark:bg-${token.themeColor}-500/10 border border-${token.themeColor}-200 dark:border-${token.themeColor}-500/20 rounded-xl`}>
-                <h4 className={`text-${token.themeColor}-600 dark:text-${token.themeColor}-400 text-sm font-bold mb-1`}>선택된 앵글</h4>
-                <p className="text-slate-800 dark:text-white font-medium text-sm">{selectedAngle?.title || "아직 선택 안됨"}</p>
+                <h4 className={`text-${token.themeColor}-600 dark:text-${token.themeColor}-400 text-sm font-bold mb-1`}>{labels.selectedAngleLabel}</h4>
+                <p className="text-slate-800 dark:text-white font-medium text-sm">{selectedAngle?.title || labels.notSelectedYet}</p>
               </div>
 
               <DimensionPanel.Select
-                label="길이"
+                label={isKo ? "길이" : "Length"}
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
                 options={DURATIONS}
@@ -404,7 +477,7 @@ function StoryArchitectContent() {
               />
 
               <DimensionPanel.Select
-                label="스토리 구조"
+                label={isKo ? "스토리 구조" : "Story Structure"}
                 value={structure}
                 onChange={(e) => setStructure(e.target.value)}
                 options={STRUCTURES}
@@ -415,10 +488,10 @@ function StoryArchitectContent() {
                 onClick={handleGenerate}
                 disabled={isAnyLoading || !selectedAngle}
                 loading={isLoading}
-                loadingText="시나리오 쓰는 중..."
+                loadingText={isKo ? "시나리오 쓰는 중..." : "Writing scenario..."}
                 icon={<ArrowRight className="w-4 h-4" />}
               >
-                시나리오 완성하기
+                {isKo ? "시나리오 완성하기" : "Complete Scenario"}
               </DimensionPanel.GenerateButton>
             </>
           )}
@@ -428,14 +501,14 @@ function StoryArchitectContent() {
               onClick={() => setStage("blueprint")}
               className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 transition-all font-medium"
             >
-              ◀ 다시 설계하기
+              {labels.backToDesign}
             </button>
           )}
 
           {/* Credit Cost */}
           {!byokKey && (
             <div className="text-xs text-slate-500 dark:text-white/40 text-center mt-4">
-              예상 비용: {stage === "pitch" ? "무료 (BYOK)" : creditCost} 크레딧
+              {labels.estimatedCost}: {stage === "pitch" ? labels.freeByok : `${creditCost} ${labels.credits}`}
             </div>
           )}
         </DimensionPanel.Sidebar>
@@ -450,11 +523,11 @@ function StoryArchitectContent() {
               <div className={`w-20 h-20 rounded-full bg-${token.themeColor}-500/10 flex items-center justify-center mb-6`}>
                 <Sparkles className={`w-10 h-10 text-${token.themeColor}-600 dark:text-${token.themeColor}-400`} />
               </div>
-              <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Writer's Room에 오신 것을 환영합니다</h3>
+              <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">{labels.pitchWelcome}</h3>
               <p className="text-slate-600 dark:text-white/60 max-w-md leading-relaxed">
-                단순한 문장이 위대한 스토리로 발전하는 공간입니다.<br />
-                먼저 떠오르는 영감을 좌측에 적어주세요.<br />
-                AI가 3가지 다른 이야기 방향을 제안해드립니다.
+                {labels.pitchDesc1}<br />
+                {labels.pitchDesc2}<br />
+                {labels.pitchDesc3}
               </p>
             </div>
           )}
@@ -464,7 +537,7 @@ function StoryArchitectContent() {
             <div className="space-y-6 animate-in fade-in duration-500">
               <h3 className="text-xl font-bold text-white flex items-center gap-2">
                 <BookOpen className={`w-5 h-5 text-${token.themeColor}-400`} />
-                이야기의 방향을 선택하세요
+                {labels.selectDirection}
               </h3>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {angles.map((angle) => (
@@ -491,7 +564,7 @@ function StoryArchitectContent() {
                       </p>
                       <div className="pt-4 border-t border-black/5 dark:border-white/5">
                         <p className="text-xs text-slate-400 dark:text-white/40 italic">
-                          핵심 테마: {angle.theme}
+                          {labels.coreTheme}: {angle.theme}
                         </p>
                       </div>
                     </div>
@@ -508,7 +581,7 @@ function StoryArchitectContent() {
               <div className={`p-6 rounded-2xl bg-${token.themeColor}-50 dark:bg-${token.themeColor}-500/10 border border-${token.themeColor}-100 dark:border-${token.themeColor}-500/20`}>
                 <div className="flex items-center gap-2 mb-3">
                   <CheckCircle className={`w-5 h-5 text-${token.themeColor}-600 dark:text-${token.themeColor}-400`} />
-                  <span className={`text-${token.themeColor}-700 dark:text-${token.themeColor}-400 font-bold text-sm`}>생성 완료</span>
+                  <span className={`text-${token.themeColor}-700 dark:text-${token.themeColor}-400 font-bold text-sm`}>{labels.generationComplete}</span>
                 </div>
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{storyResult.title}</h2>
                 <p className="text-slate-600 dark:text-white/70 italic">&ldquo;{storyResult.logline}&rdquo;</p>
@@ -521,14 +594,14 @@ function StoryArchitectContent() {
                   className="px-4 py-2 bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg flex items-center gap-2 text-sm text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white transition-all"
                 >
                   <Download className="w-4 h-4" />
-                  JSON 내보내기
+                  {labels.exportJson}
                 </button>
               </div>
 
               {/* Synopsis */}
               {storyResult.synopsis && (
                 <div className="space-y-2">
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-white">개요</h3>
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-white">{labels.overviewLabel}</h3>
                   <p className="text-slate-600 dark:text-white/70 leading-relaxed">{storyResult.synopsis}</p>
                 </div>
               )}
@@ -536,7 +609,7 @@ function StoryArchitectContent() {
               {/* Structure */}
               {storyResult.structure && storyResult.structure.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-white">구조</h3>
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-white">{labels.structureLabel}</h3>
                   <div className="space-y-2">
                     {storyResult.structure.map((act, i) => (
                       <div key={i} className="p-4 rounded-xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10">
@@ -557,7 +630,7 @@ function StoryArchitectContent() {
               {/* Characters */}
               {storyResult.characters && storyResult.characters.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-white">등장인물</h3>
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-white">{labels.charactersLabel}</h3>
                   <div className="grid gap-3">
                     {storyResult.characters.map((char, i) => (
                       <div key={i} className="p-4 rounded-xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10">
@@ -585,7 +658,7 @@ function StoryArchitectContent() {
               <div className="grid grid-cols-2 gap-4">
                 {storyResult.themes && storyResult.themes.length > 0 && (
                   <div className="space-y-2">
-                    <h3 className="text-sm font-bold text-slate-700 dark:text-white/80">주제</h3>
+                    <h3 className="text-sm font-bold text-slate-700 dark:text-white/80">{labels.themesLabel}</h3>
                     <div className="flex flex-wrap gap-1">
                       {storyResult.themes.map((theme, i) => (
                         <span key={i} className="text-xs px-2 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-white/70">
@@ -597,7 +670,7 @@ function StoryArchitectContent() {
                 )}
                 {storyResult.visual_motifs && storyResult.visual_motifs.length > 0 && (
                   <div className="space-y-2">
-                    <h3 className="text-sm font-bold text-slate-700 dark:text-white/80">시각적 모티프</h3>
+                    <h3 className="text-sm font-bold text-slate-700 dark:text-white/80">{labels.visualMotifsLabel}</h3>
                     <div className="flex flex-wrap gap-1">
                       {storyResult.visual_motifs.map((motif, i) => (
                         <span key={i} className={`text-xs px-2 py-1 rounded-full bg-${token.themeColor}-100 dark:bg-${token.themeColor}-500/10 text-${token.themeColor}-700 dark:text-${token.themeColor}-400`}>
@@ -618,10 +691,9 @@ function StoryArchitectContent() {
           {!stage && !storyResult && !displayError && (
             <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
               <Layers className={`w-16 h-16 text-${token.themeColor}-500/30 dark:text-${token.themeColor}-400/30 mb-4`} />
-              <h3 className="text-xl font-bold text-slate-400 dark:text-white/60 mb-2">시나리오 생성기</h3>
+              <h3 className="text-xl font-bold text-slate-400 dark:text-white/60 mb-2">{labels.emptyStateTitle}</h3>
               <p className="text-slate-400 dark:text-white/40 text-sm max-w-md">
-                영상 컨셉을 입력하면 당신만의 스토리를 자동으로 작성합니다.
-                장르와 구조를 선택하여 맞춤형 시나리오를 만들어보세요.
+                {labels.emptyStateDesc2}
               </p>
             </div>
           )}

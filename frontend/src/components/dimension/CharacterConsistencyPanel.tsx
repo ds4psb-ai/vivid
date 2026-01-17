@@ -14,7 +14,8 @@
  * @see https://arxiv.org/abs/2512.19539 - StoryMem Paper
  */
 
-import { useState, useCallback, useTransition, useEffect } from "react";
+import { useState, useCallback, useTransition, useEffect, useMemo } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -186,9 +187,12 @@ interface CharacterCardProps {
   onEdit?: () => void;
   onDelete?: () => void;
   selected?: boolean;
+  labels: {
+    primary: string;
+  };
 }
 
-function CharacterCard({ character, onSelect, onEdit, onDelete, selected }: CharacterCardProps) {
+function CharacterCard({ character, onSelect, onEdit, onDelete, selected, labels }: CharacterCardProps) {
   return (
     <div
       className={cn(
@@ -281,9 +285,17 @@ function CharacterCard({ character, onSelect, onEdit, onDelete, selected }: Char
 interface MemoryBankVisualizerProps {
   character: Character;
   onKeyframeSelect?: (keyframe: MemoryKeyframe) => void;
+  labels: {
+    longTermMemory: string;
+    recent: string;
+    bestKeyframesDescription: string;
+    noKeyframesYet: string;
+    slidingWindowDescription: string;
+    noRecentKeyframes: string;
+  };
 }
 
-function MemoryBankVisualizer({ character, onKeyframeSelect }: MemoryBankVisualizerProps) {
+function MemoryBankVisualizer({ character, onKeyframeSelect, labels }: MemoryBankVisualizerProps) {
   const longTermKeyframes = character.memory_keyframes.filter(k => k.is_long_term);
   const recentKeyframes = character.memory_keyframes.filter(k => !k.is_long_term);
 
@@ -292,21 +304,21 @@ function MemoryBankVisualizer({ character, onKeyframeSelect }: MemoryBankVisuali
       <Tabs defaultValue="long-term">
         <TabsList>
           <TabsTrigger value="long-term">
-            Long-term Memory ({longTermKeyframes.length})
+            {labels.longTermMemory} ({longTermKeyframes.length})
           </TabsTrigger>
           <TabsTrigger value="recent">
-            Recent ({recentKeyframes.length})
+            {labels.recent} ({recentKeyframes.length})
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="long-term" className="mt-4">
           <p className="text-sm text-gray-500 mb-3">
-            Best keyframes selected by CLIP similarity and aesthetic quality.
+            {labels.bestKeyframesDescription}
           </p>
           {longTermKeyframes.length === 0 ? (
             <div className="text-center py-8 text-gray-400">
               <Brain className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>No keyframes yet. Generate videos to build memory.</p>
+              <p>{labels.noKeyframesYet}</p>
             </div>
           ) : (
             <div className="grid grid-cols-4 gap-2">
@@ -323,12 +335,12 @@ function MemoryBankVisualizer({ character, onKeyframeSelect }: MemoryBankVisuali
 
         <TabsContent value="recent" className="mt-4">
           <p className="text-sm text-gray-500 mb-3">
-            Sliding window of recent generation keyframes.
+            {labels.slidingWindowDescription}
           </p>
           {recentKeyframes.length === 0 ? (
             <div className="text-center py-8 text-gray-400">
               <RefreshCw className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>No recent keyframes.</p>
+              <p>{labels.noRecentKeyframes}</p>
             </div>
           ) : (
             <div className="grid grid-cols-4 gap-2">
@@ -377,9 +389,16 @@ interface PlatformSyncPanelProps {
   character: Character;
   token: string;
   onSyncComplete: () => void;
+  labels: {
+    platformSync: string;
+    platformSyncDescription: string;
+    synced: string;
+    reSync: string;
+    sync: string;
+  };
 }
 
-function PlatformSyncPanel({ character, token, onSyncComplete }: PlatformSyncPanelProps) {
+function PlatformSyncPanel({ character, token, onSyncComplete, labels }: PlatformSyncPanelProps) {
   const [syncing, setSyncing] = useState<PlatformType | null>(null);
 
   const handleSync = async (platform: PlatformType) => {
@@ -402,9 +421,9 @@ function PlatformSyncPanel({ character, token, onSyncComplete }: PlatformSyncPan
 
   return (
     <div className="space-y-4">
-      <h4 className="font-medium">Platform Sync</h4>
+      <h4 className="font-medium">{labels.platformSync}</h4>
       <p className="text-sm text-gray-500">
-        Sync this character to video generation platforms for consistent results.
+        {labels.platformSyncDescription}
       </p>
 
       <div className="grid grid-cols-3 gap-3">
@@ -425,7 +444,7 @@ function PlatformSyncPanel({ character, token, onSyncComplete }: PlatformSyncPan
                   <div className="space-y-2">
                     <div className="flex items-center gap-1 text-green-600 text-sm">
                       <Check className="w-4 h-4" />
-                      Synced
+                      {labels.synced}
                     </div>
                     <p className="text-xs text-gray-500">
                       {ref.last_sync ? new Date(ref.last_sync).toLocaleDateString() : "N/A"}
@@ -437,7 +456,7 @@ function PlatformSyncPanel({ character, token, onSyncComplete }: PlatformSyncPan
                       onClick={() => handleSync(platform.id)}
                       disabled={isSyncing}
                     >
-                      {isSyncing ? <RefreshCw className="w-4 h-4 animate-spin" /> : "Re-sync"}
+                      {isSyncing ? <RefreshCw className="w-4 h-4 animate-spin" /> : labels.reSync}
                     </Button>
                   </div>
                 ) : (
@@ -452,7 +471,7 @@ function PlatformSyncPanel({ character, token, onSyncComplete }: PlatformSyncPan
                     ) : (
                       <Cloud className="w-4 h-4 mr-2" />
                     )}
-                    Sync
+                    {labels.sync}
                   </Button>
                 )}
               </CardContent>
@@ -477,6 +496,63 @@ export default function CharacterConsistencyPanel({
   projectId,
   onSelectCharacter,
 }: CharacterConsistencyPanelProps) {
+  const { language } = useLanguage();
+  const isKo = language === "ko";
+
+  const labels = useMemo(() => ({
+    // Header and navigation
+    characterLibrary: isKo ? "캐릭터 라이브러리" : "Character Library",
+    newCharacter: isKo ? "새 캐릭터" : "New Character",
+    searchCharacters: isKo ? "캐릭터 검색..." : "Search characters...",
+
+    // Loading and empty states
+    loadingCharacters: isKo ? "캐릭터 로딩 중..." : "Loading characters...",
+    noCharactersYet: isKo ? "아직 캐릭터가 없습니다" : "No characters yet",
+    createFirstCharacter: isKo ? "첫 캐릭터 만들기" : "Create your first character",
+    selectCharacterToView: isKo ? "캐릭터를 선택하여 상세정보 확인" : "Select a character to view details",
+
+    // Memory bank
+    longTermMemory: isKo ? "장기 기억" : "Long-term Memory",
+    recent: isKo ? "최근" : "Recent",
+    bestKeyframesDescription: isKo ? "CLIP 유사도와 미적 품질로 선택된 최고의 키프레임입니다." : "Best keyframes selected by CLIP similarity and aesthetic quality.",
+    noKeyframesYet: isKo ? "아직 키프레임이 없습니다. 비디오를 생성하여 메모리를 구축하세요." : "No keyframes yet. Generate videos to build memory.",
+    slidingWindowDescription: isKo ? "최근 생성 키프레임의 슬라이딩 윈도우입니다." : "Sliding window of recent generation keyframes.",
+    noRecentKeyframes: isKo ? "최근 키프레임이 없습니다." : "No recent keyframes.",
+
+    // Platform sync
+    platformSync: isKo ? "플랫폼 동기화" : "Platform Sync",
+    platformSyncDescription: isKo ? "이 캐릭터를 비디오 생성 플랫폼에 동기화하여 일관된 결과를 얻으세요." : "Sync this character to video generation platforms for consistent results.",
+    synced: isKo ? "동기화됨" : "Synced",
+    reSync: isKo ? "재동기화" : "Re-sync",
+    sync: isKo ? "동기화" : "Sync",
+
+    // Tabs
+    memoryBank: isKo ? "메모리 뱅크" : "Memory Bank",
+    platforms: isKo ? "플랫폼" : "Platforms",
+    sourceImages: isKo ? "소스 이미지" : "Source Images",
+    addImages: isKo ? "이미지 추가" : "Add Images",
+
+    // Create modal
+    createNewCharacter: isKo ? "새 캐릭터 만들기" : "Create New Character",
+    addCharacterDescription: isKo ? "라이브러리에 캐릭터를 추가하여 일관된 비디오 생성을 하세요." : "Add a character to your library for consistent video generation.",
+    name: isKo ? "이름" : "Name",
+    description: isKo ? "설명" : "Description",
+    tags: isKo ? "태그" : "Tags",
+    referenceImage: isKo ? "참조 이미지" : "Reference Image",
+    characterNamePlaceholder: isKo ? "캐릭터 이름" : "Character name",
+    briefDescriptionPlaceholder: isKo ? "간단한 설명" : "Brief description",
+    tagsPlaceholder: isKo ? "주인공, 인간, 여성" : "protagonist, human, female",
+    tagsCommaSeparated: isKo ? "태그 (쉼표로 구분)" : "Tags (comma-separated)",
+    clickToUpload: isKo ? "클릭하여 업로드" : "Click to upload",
+    cancel: isKo ? "취소" : "Cancel",
+    create: isKo ? "생성" : "Create",
+
+    // Misc
+    deleteConfirm: isKo ? "이 캐릭터를 삭제하시겠습니까?" : "Are you sure you want to delete this character?",
+    primary: isKo ? "기본" : "Primary",
+    created: isKo ? "생성일" : "Created",
+  }), [isKo]);
+
   // State
   const [characters, setCharacters] = useState<CharacterSummary[]>([]);
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
@@ -550,7 +626,7 @@ export default function CharacterConsistencyPanel({
 
   // Handle delete character
   const handleDeleteCharacter = async (characterId: string) => {
-    if (!confirm("Are you sure you want to delete this character?")) return;
+    if (!confirm(labels.deleteConfirm)) return;
     try {
       await deleteCharacter(token, characterId);
       if (selectedCharacter?.id === characterId) {
@@ -586,10 +662,10 @@ export default function CharacterConsistencyPanel({
       <div className="w-1/2 border-r p-4 overflow-y-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Character Library</h2>
+          <h2 className="text-lg font-semibold">{labels.characterLibrary}</h2>
           <Button onClick={() => setShowCreateModal(true)}>
             <Plus className="w-4 h-4 mr-2" />
-            New Character
+            {labels.newCharacter}
           </Button>
         </div>
 
@@ -597,7 +673,7 @@ export default function CharacterConsistencyPanel({
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
-            placeholder="Search characters..."
+            placeholder={labels.searchCharacters}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -615,7 +691,7 @@ export default function CharacterConsistencyPanel({
         {isLoading && (
           <div className="text-center py-8 text-gray-400">
             <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2" />
-            Loading characters...
+            {labels.loadingCharacters}
           </div>
         )}
 
@@ -623,10 +699,10 @@ export default function CharacterConsistencyPanel({
         {!isLoading && characters.length === 0 && (
           <div className="text-center py-12 text-gray-400">
             <Layers className="w-16 h-16 mx-auto mb-4 opacity-50" />
-            <p className="mb-4">No characters yet</p>
+            <p className="mb-4">{labels.noCharactersYet}</p>
             <Button onClick={() => setShowCreateModal(true)}>
               <Plus className="w-4 h-4 mr-2" />
-              Create your first character
+              {labels.createFirstCharacter}
             </Button>
           </div>
         )}
@@ -642,6 +718,7 @@ export default function CharacterConsistencyPanel({
                 onSelect={handleSelectCharacter}
                 onEdit={() => handleSelectCharacter(character)}
                 onDelete={() => handleDeleteCharacter(character.id)}
+                labels={{ primary: labels.primary }}
               />
             ))}
           </div>
@@ -688,15 +765,23 @@ export default function CharacterConsistencyPanel({
             {/* Tabs for different sections */}
             <Tabs defaultValue="memory">
               <TabsList>
-                <TabsTrigger value="memory">Memory Bank</TabsTrigger>
-                <TabsTrigger value="platforms">Platforms</TabsTrigger>
-                <TabsTrigger value="images">Source Images</TabsTrigger>
+                <TabsTrigger value="memory">{labels.memoryBank}</TabsTrigger>
+                <TabsTrigger value="platforms">{labels.platforms}</TabsTrigger>
+                <TabsTrigger value="images">{labels.sourceImages}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="memory" className="mt-4">
                 <MemoryBankVisualizer
                   character={selectedCharacter}
                   onKeyframeSelect={(kf) => console.log("Selected keyframe:", kf)}
+                  labels={{
+                    longTermMemory: labels.longTermMemory,
+                    recent: labels.recent,
+                    bestKeyframesDescription: labels.bestKeyframesDescription,
+                    noKeyframesYet: labels.noKeyframesYet,
+                    slidingWindowDescription: labels.slidingWindowDescription,
+                    noRecentKeyframes: labels.noRecentKeyframes,
+                  }}
                 />
               </TabsContent>
 
@@ -708,16 +793,23 @@ export default function CharacterConsistencyPanel({
                     const updated = await fetchCharacter(token, selectedCharacter.id);
                     setSelectedCharacter(updated);
                   }}
+                  labels={{
+                    platformSync: labels.platformSync,
+                    platformSyncDescription: labels.platformSyncDescription,
+                    synced: labels.synced,
+                    reSync: labels.reSync,
+                    sync: labels.sync,
+                  }}
                 />
               </TabsContent>
 
               <TabsContent value="images" className="mt-4">
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <h4 className="font-medium">Source Images ({selectedCharacter.source_images.length})</h4>
+                    <h4 className="font-medium">{labels.sourceImages} ({selectedCharacter.source_images.length})</h4>
                     <Button variant="outline" size="sm">
                       <Upload className="w-4 h-4 mr-2" />
-                      Add Images
+                      {labels.addImages}
                     </Button>
                   </div>
                   <div className="grid grid-cols-4 gap-2">
@@ -725,7 +817,7 @@ export default function CharacterConsistencyPanel({
                       <div key={idx} className="relative aspect-square rounded overflow-hidden bg-gray-100">
                         <Image src={img.url} alt="" fill className="object-cover" />
                         {img.is_primary && (
-                          <Badge className="absolute top-1 left-1 bg-blue-600 text-xs">Primary</Badge>
+                          <Badge className="absolute top-1 left-1 bg-blue-600 text-xs">{labels.primary}</Badge>
                         )}
                       </div>
                     ))}
@@ -738,7 +830,7 @@ export default function CharacterConsistencyPanel({
           <div className="h-full flex items-center justify-center text-gray-400">
             <div className="text-center">
               <Layers className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p>Select a character to view details</p>
+              <p>{labels.selectCharacterToView}</p>
             </div>
           </div>
         )}
@@ -748,45 +840,45 @@ export default function CharacterConsistencyPanel({
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Create New Character</DialogTitle>
+            <DialogTitle>{labels.createNewCharacter}</DialogTitle>
             <DialogDescription>
-              Add a character to your library for consistent video generation.
+              {labels.addCharacterDescription}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">{labels.name}</Label>
               <Input
                 id="name"
-                placeholder="Character name"
+                placeholder={labels.characterNamePlaceholder}
                 value={newCharacterName}
                 onChange={(e) => setNewCharacterName(e.target.value)}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">{labels.description}</Label>
               <Input
                 id="description"
-                placeholder="Brief description"
+                placeholder={labels.briefDescriptionPlaceholder}
                 value={newCharacterDescription}
                 onChange={(e) => setNewCharacterDescription(e.target.value)}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tags">Tags (comma-separated)</Label>
+              <Label htmlFor="tags">{labels.tagsCommaSeparated}</Label>
               <Input
                 id="tags"
-                placeholder="protagonist, human, female"
+                placeholder={labels.tagsPlaceholder}
                 value={newCharacterTags}
                 onChange={(e) => setNewCharacterTags(e.target.value)}
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Reference Image</Label>
+              <Label>{labels.referenceImage}</Label>
               <div className="border-2 border-dashed rounded-lg p-4 text-center">
                 {uploadedImage ? (
                   <div className="relative">
@@ -807,7 +899,7 @@ export default function CharacterConsistencyPanel({
                 ) : (
                   <label className="cursor-pointer">
                     <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm text-gray-500">Click to upload</p>
+                    <p className="text-sm text-gray-500">{labels.clickToUpload}</p>
                     <input
                       type="file"
                       accept="image/*"
@@ -822,7 +914,7 @@ export default function CharacterConsistencyPanel({
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreateModal(false)}>
-              Cancel
+              {labels.cancel}
             </Button>
             <Button
               onClick={handleCreateCharacter}
@@ -833,7 +925,7 @@ export default function CharacterConsistencyPanel({
               ) : (
                 <Plus className="w-4 h-4 mr-2" />
               )}
-              Create
+              {labels.create}
             </Button>
           </DialogFooter>
         </DialogContent>

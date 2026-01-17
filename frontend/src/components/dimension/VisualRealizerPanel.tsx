@@ -15,7 +15,8 @@
  * @see https://react.dev/blog/2024/12/05/react-19
  */
 
-import { useState, useCallback, useTransition, useOptimistic } from "react";
+import { useState, useCallback, useTransition, useOptimistic, useMemo } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
@@ -44,29 +45,29 @@ interface ImagePromptResult {
   confidence?: number;
 }
 
-const STYLES = [
-  { value: "photorealistic", label: "포토리얼리스틱" },
-  { value: "cinematic", label: "시네마틱" },
-  { value: "anime", label: "애니메이션" },
-  { value: "illustration", label: "일러스트" },
-  { value: "3d-render", label: "3D 렌더" },
-  { value: "oil-painting", label: "유화" },
-  { value: "watercolor", label: "수채화" },
-  { value: "digital-art", label: "디지털 아트" },
+const getStyles = (isKo: boolean) => [
+  { value: "photorealistic", label: isKo ? "포토리얼리스틱" : "Photorealistic" },
+  { value: "cinematic", label: isKo ? "시네마틱" : "Cinematic" },
+  { value: "anime", label: isKo ? "애니메이션" : "Anime" },
+  { value: "illustration", label: isKo ? "일러스트" : "Illustration" },
+  { value: "3d-render", label: isKo ? "3D 렌더" : "3D Render" },
+  { value: "oil-painting", label: isKo ? "유화" : "Oil Painting" },
+  { value: "watercolor", label: isKo ? "수채화" : "Watercolor" },
+  { value: "digital-art", label: isKo ? "디지털 아트" : "Digital Art" },
 ];
 
-const ASPECT_RATIOS = [
-  { value: "16:9", label: "16:9 (와이드)" },
-  { value: "9:16", label: "9:16 (세로)" },
-  { value: "1:1", label: "1:1 (정사각형)" },
-  { value: "4:3", label: "4:3 (스탠다드)" },
-  { value: "3:2", label: "3:2 (사진)" },
-  { value: "21:9", label: "21:9 (울트라와이드)" },
+const getAspectRatios = (isKo: boolean) => [
+  { value: "16:9", label: isKo ? "16:9 (와이드)" : "16:9 (Wide)" },
+  { value: "9:16", label: isKo ? "9:16 (세로)" : "9:16 (Portrait)" },
+  { value: "1:1", label: isKo ? "1:1 (정사각형)" : "1:1 (Square)" },
+  { value: "4:3", label: isKo ? "4:3 (스탠다드)" : "4:3 (Standard)" },
+  { value: "3:2", label: isKo ? "3:2 (사진)" : "3:2 (Photo)" },
+  { value: "21:9", label: isKo ? "21:9 (울트라와이드)" : "21:9 (Ultrawide)" },
 ];
 
-const MODELS = [
-  { value: "gemini-3-flash-preview", label: "Flash (빠름)" },
-  { value: "gemini-3-pro-preview", label: "Pro (고품질)" },
+const getModels = (isKo: boolean) => [
+  { value: "gemini-3-flash-preview", label: isKo ? "Flash (빠름)" : "Flash (Fast)" },
+  { value: "gemini-3-pro-preview", label: isKo ? "Pro (고품질)" : "Pro (High Quality)" },
 ];
 
 // ============================================================================
@@ -88,6 +89,40 @@ export default function VisualRealizerPanel() {
 function VisualRealizerContent() {
   const { token, setLoading, setResult, setError: setContextError } =
     useDimensionPanel();
+  const { language } = useLanguage();
+  const isKo = language === "ko";
+
+  // i18n labels
+  const labels = useMemo(() => ({
+    title: isKo ? "비주얼 리얼라이저" : "Visual Realizer",
+    descriptionLabel: isKo ? "이미지 설명 (Prompt)" : "Image Description (Prompt)",
+    descriptionPlaceholder: isKo ? "생성하고 싶은 이미지를 상세히 설명하세요..." : "Describe the image you want to generate in detail...",
+    referenceLabel: isKo ? "참고 이미지 (선택)" : "Reference Image (Optional)",
+    referenceHelper: isKo ? "스타일 참고용 이미지를 첨부하면 더 정확한 프롬프트 생성" : "Attach reference images for more accurate prompt generation",
+    styleLabel: isKo ? "스타일 (Style)" : "Style",
+    aspectRatioLabel: isKo ? "비율 (Aspect Ratio)" : "Aspect Ratio",
+    modelLabel: isKo ? "AI 모델 Engine" : "AI Model Engine",
+    generateButton: "Generate Prompt",
+    generating: "GENERATING...",
+    enterDescription: isKo ? "이미지 설명을 입력해주세요" : "Please enter an image description",
+    descriptionTooLong: (max: number) => isKo ? `이미지 설명은 ${max}자 이하로 입력해주세요` : `Description must be ${max} characters or less`,
+    generatedPrompt: "Generated Prompt",
+    export: "EXPORT",
+    copy: "COPY",
+    copied: "COPIED",
+    negativePrompt: "Negative Prompt",
+    parameters: "Parameters",
+    emptyStateTitle: "Ready to Generate",
+    emptyStateDesc1: isKo ? "이미지를 설명하고 생성형 AI를 위한" : "Describe an image and receive an",
+    emptyStateDesc2: isKo ? "최적화된 프롬프트" : "optimized prompt",
+    emptyStateDesc3: isKo ? "를 받아보세요." : "for generative AI.",
+    exportTooltip: isKo ? "JSON으로 내보내기" : "Export as JSON",
+  }), [isKo]);
+
+  // i18n presets
+  const STYLES = useMemo(() => getStyles(isKo), [isKo]);
+  const ASPECT_RATIOS = useMemo(() => getAspectRatios(isKo), [isKo]);
+  const MODELS = useMemo(() => getModels(isKo), [isKo]);
 
   // Form state
   const [description, setDescription] = useState("");
@@ -155,13 +190,11 @@ function VisualRealizerContent() {
   const handleGenerate = useCallback(async () => {
     const trimmedDescription = description.trim();
     if (!trimmedDescription) {
-      setValidationError("이미지 설명을 입력해주세요");
+      setValidationError(labels.enterDescription);
       return;
     }
     if (trimmedDescription.length > MAX_DESCRIPTION_LENGTH) {
-      setValidationError(
-        `이미지 설명은 ${MAX_DESCRIPTION_LENGTH}자 이하로 입력해주세요`
-      );
+      setValidationError(labels.descriptionTooLong(MAX_DESCRIPTION_LENGTH));
       return;
     }
     setValidationError(null);
@@ -212,15 +245,15 @@ function VisualRealizerContent() {
 
   return (
     <>
-      <DimensionPanel.Header title="비주얼 리얼라이저" creditCost={CREDIT_COST} />
+      <DimensionPanel.Header title={labels.title} creditCost={CREDIT_COST} />
 
       <DimensionPanel.Sidebar>
         {/* Description Input */}
         <DimensionPanel.Textarea
-          label="이미지 설명 (Prompt)"
+          label={labels.descriptionLabel}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="생성하고 싶은 이미지를 상세히 설명하세요..."
+          placeholder={labels.descriptionPlaceholder}
           rows={5}
           disabled={isLoading}
         />
@@ -231,13 +264,13 @@ function VisualRealizerContent() {
           maxSizeMB={100}
           multiple
           onUpload={setUploadedFiles}
-          label="참고 이미지 (선택)"
-          helperText="스타일 참고용 이미지를 첨부하면 더 정확한 프롬프트 생성"
+          label={labels.referenceLabel}
+          helperText={labels.referenceHelper}
         />
 
         {/* Style Select */}
         <DimensionPanel.Select
-          label="스타일 (Style)"
+          label={labels.styleLabel}
           value={style}
           onChange={(e) => setStyle(e.target.value)}
           options={STYLES}
@@ -248,12 +281,14 @@ function VisualRealizerContent() {
           value={aspectRatio}
           onChange={setAspectRatio}
           themeColor={token.themeColor}
+          label={labels.aspectRatioLabel}
+          options={ASPECT_RATIOS}
         />
 
         {/* Model Select */}
         <div className="pt-4 border-t border-slate-200 dark:border-white/5 mt-4">
           <DimensionPanel.Select
-            label="AI 모델 Engine"
+            label={labels.modelLabel}
             value={model}
             onChange={(e) => setModel(e.target.value)}
             options={MODELS}
@@ -265,9 +300,9 @@ function VisualRealizerContent() {
           onClick={handleGenerate}
           disabled={isLoading || !description.trim()}
           loading={isLoading}
-          loadingText="GENERATING..."
+          loadingText={labels.generating}
         >
-          Generate Prompt
+          {labels.generateButton}
         </DimensionPanel.GenerateButton>
 
         {/* Validation Error */}
@@ -298,6 +333,15 @@ function VisualRealizerContent() {
             onCopy={handleCopy}
             onExport={handleExportJSON}
             themeColor={token.themeColor}
+            labels={{
+              generatedPrompt: labels.generatedPrompt,
+              export: labels.export,
+              exportTooltip: labels.exportTooltip,
+              copy: labels.copy,
+              copied: labels.copied,
+              negativePrompt: labels.negativePrompt,
+              parameters: labels.parameters,
+            }}
           />
         )}
 
@@ -313,7 +357,16 @@ function VisualRealizerContent() {
         {displayResult && <DimensionPanel.NextNav />}
 
         {/* Empty State */}
-        {!displayResult && !isLoading && !displayError && <EmptyState />}
+        {!displayResult && !isLoading && !displayError && (
+          <EmptyState
+            labels={{
+              title: labels.emptyStateTitle,
+              desc1: labels.emptyStateDesc1,
+              desc2: labels.emptyStateDesc2,
+              desc3: labels.emptyStateDesc3,
+            }}
+          />
+        )}
       </DimensionPanel.Content>
 
       {/* Credit Modal */}
@@ -336,18 +389,22 @@ function AspectRatioGrid({
   value,
   onChange,
   themeColor,
+  label,
+  options,
 }: {
   value: string;
   onChange: (v: string) => void;
   themeColor: string;
+  label: string;
+  options: { value: string; label: string }[];
 }) {
   return (
     <div className="space-y-2 group">
       <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">
-        비율 (Aspect Ratio)
+        {label}
       </label>
       <div className="grid grid-cols-2 gap-2">
-        {ASPECT_RATIOS.map((ratio) => (
+        {options.map((ratio) => (
           <button
             key={ratio.value}
             onClick={() => onChange(ratio.value)}
@@ -371,12 +428,22 @@ function PromptResultDisplay({
   onCopy,
   onExport,
   themeColor,
+  labels,
 }: {
   result: ImagePromptResult;
   isCopied: boolean;
   onCopy: (text: string) => void;
   onExport: () => void;
   themeColor: string;
+  labels: {
+    generatedPrompt: string;
+    export: string;
+    exportTooltip: string;
+    copy: string;
+    copied: string;
+    negativePrompt: string;
+    parameters: string;
+  };
 }) {
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
@@ -386,15 +453,15 @@ function PromptResultDisplay({
           <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-emerald-500 to-teal-500 shadow-[0_0_20px_#10b981]" />
           <div className="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-white/5 pb-3">
             <h3 className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-              Generated Prompt
+              {labels.generatedPrompt}
             </h3>
             <div className="flex items-center gap-2">
               <button
                 onClick={onExport}
                 className="px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded-lg transition-all flex items-center gap-1.5 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10"
-                title="JSON으로 내보내기"
+                title={labels.exportTooltip}
               >
-                EXPORT
+                {labels.export}
               </button>
               <button
                 onClick={() => onCopy(result.prompt)}
@@ -404,7 +471,7 @@ function PromptResultDisplay({
                     : "bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10"
                 }`}
               >
-                {isCopied ? "COPIED" : "COPY"}
+                {isCopied ? labels.copied : labels.copy}
               </button>
             </div>
           </div>
@@ -417,7 +484,7 @@ function PromptResultDisplay({
         <div className="flex items-center justify-between mb-3 px-1">
           <h3 className="text-sm font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-red-400/50" />
-            Negative Prompt
+            {labels.negativePrompt}
           </h3>
           <button
             onClick={() =>
@@ -425,7 +492,7 @@ function PromptResultDisplay({
             }
             className="px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10"
           >
-            Copy
+            {labels.copy}
           </button>
         </div>
         <div className="p-5 bg-slate-50 dark:bg-[#18181b]/50 border border-slate-200 dark:border-white/10 rounded-xl shadow-inner font-mono text-sm leading-relaxed text-slate-600 dark:text-zinc-400 whitespace-pre-wrap group-hover:border-slate-300 dark:group-hover:border-white/20 transition-colors">
@@ -438,7 +505,7 @@ function PromptResultDisplay({
       {result.parameters && (
         <div className="p-6 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl space-y-4 hover:border-emerald-300 dark:hover:border-white/10 transition-colors">
           <h3 className="text-xs font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest border-b border-slate-200 dark:border-white/5 pb-3 mb-1">
-            Parameters
+            {labels.parameters}
           </h3>
           <div className="grid grid-cols-3 gap-6">
             {Object.entries(result.parameters).map(([key, value]) => (
@@ -458,7 +525,16 @@ function PromptResultDisplay({
   );
 }
 
-function EmptyState() {
+function EmptyState({
+  labels,
+}: {
+  labels: {
+    title: string;
+    desc1: string;
+    desc2: string;
+    desc3: string;
+  };
+}) {
   return (
     <div className="flex flex-col items-center justify-center h-full text-slate-500 dark:text-zinc-500 space-y-8 animate-in fade-in zoom-in-95 duration-700">
       <div className="relative group">
@@ -470,15 +546,15 @@ function EmptyState() {
       </div>
       <div className="text-center space-y-3">
         <h3 className="text-2xl font-bold text-slate-900 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-b dark:from-white dark:to-white/40 tracking-tight">
-          Ready to Generate
+          {labels.title}
         </h3>
         <p className="text-sm text-slate-500 dark:text-zinc-500 max-w-xs mx-auto font-light leading-relaxed">
-          이미지를 설명하고 생성형 AI를 위한
+          {labels.desc1}
           <br />
           <span className="text-emerald-600 dark:text-emerald-500/80 font-medium">
-            최적화된 프롬프트
+            {labels.desc2}
           </span>
-          를 받아보세요.
+          {" "}{labels.desc3}
         </p>
       </div>
     </div>

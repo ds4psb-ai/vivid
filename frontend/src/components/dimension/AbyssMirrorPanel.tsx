@@ -15,12 +15,13 @@
  * @see https://react.dev/blog/2024/12/05/react-19
  */
 
-import { useState, useCallback, useEffect, useRef, useTransition, useOptimistic } from "react";
+import { useState, useCallback, useEffect, useRef, useTransition, useOptimistic, useMemo } from "react";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import PersonaGenome from "./PersonaGenome";
 import EvidenceDisplay from "./EvidenceDisplay";
@@ -49,17 +50,17 @@ interface Message {
 
 type Phase = "input" | "chat" | "complete";
 
-const STAGE_LABELS: Record<string, string> = {
-  intro: "기본 정보",
-  saju: "사주 분석",
-  psychology: "심리 탐구",
-  creativity: "창작 DNA",
-  summary: "종합 정리",
-};
+const getStageLabels = (isKo: boolean): Record<string, string> => ({
+  intro: isKo ? "기본 정보" : "Basic Info",
+  saju: isKo ? "사주 분석" : "Birth Chart Analysis",
+  psychology: isKo ? "심리 탐구" : "Psychology Exploration",
+  creativity: isKo ? "창작 DNA" : "Creative DNA",
+  summary: isKo ? "종합 정리" : "Summary",
+});
 
-const MODELS = [
-  { value: "gemini-3-flash-preview", label: "Flash (빠름)" },
-  { value: "gemini-3-pro-preview", label: "Pro (깊이)" },
+const getModels = (isKo: boolean) => [
+  { value: "gemini-3-flash-preview", label: isKo ? "Flash (빠름)" : "Flash (Fast)" },
+  { value: "gemini-3-pro-preview", label: isKo ? "Pro (깊이)" : "Pro (Deep)" },
 ];
 
 // ============================================================================
@@ -68,6 +69,80 @@ const MODELS = [
 
 function AbyssMirrorContent() {
   const { token, setLoading } = useDimensionPanel();
+  const { language } = useLanguage();
+  const isKo = language === "ko";
+
+  // Memoized presets based on language
+  const STAGE_LABELS = useMemo(() => getStageLabels(isKo), [isKo]);
+  const MODELS = useMemo(() => getModels(isKo), [isKo]);
+
+  // i18n labels
+  const labels = useMemo(() => ({
+    // Header
+    title: isKo ? "심연의 거울" : "Abyss Mirror",
+    subtitle: isKo ? "당신의 심층 페르소나를 탐구합니다" : "Explore your deep persona",
+
+    // Input Form
+    birthDate: isKo ? "생년월일 (필수)" : "Birth Date (Required)",
+    year: isKo ? "년" : "Year",
+    month: isKo ? "월" : "Month",
+    day: isKo ? "일" : "Day",
+    hour: isKo ? "시" : "Hour",
+    mbti: isKo ? "MBTI (선택)" : "MBTI (Optional)",
+    mbtiPlaceholder: isKo ? "예: INTJ" : "e.g., INTJ",
+    bloodType: isKo ? "혈액형 (선택)" : "Blood Type (Optional)",
+    select: isKo ? "선택" : "Select",
+    typeA: isKo ? "A형" : "Type A",
+    typeB: isKo ? "B형" : "Type B",
+    typeO: isKo ? "O형" : "Type O",
+    typeAB: isKo ? "AB형" : "Type AB",
+
+    // Buttons
+    analyzing: isKo ? "분석 중..." : "Analyzing...",
+    startAnalysis: isKo ? "분석 시작" : "Start Analysis",
+    quickStartTooltip: isKo ? "기본값으로 빠르게 시작" : "Quick start with defaults",
+    loadPreset: (count: number) => isKo ? `기존 프리셋 불러오기 (${count}개)` : `Load Existing Preset (${count})`,
+    persona: isKo ? "페르소나" : "Persona",
+
+    // Sidebar
+    aiModel: isKo ? "AI 모델" : "AI Model",
+    inspirationImage: isKo ? "영감 이미지 (선택)" : "Inspiration Image (Optional)",
+    inspirationHelperText: isKo ? "취향이 담긴 이미지, 좋아하는 포스터 등" : "Images reflecting your taste, favorite posters, etc.",
+    traceHistory: isKo ? "Trace 히스토리" : "Trace History",
+    historyManagement: isKo ? "히스토리 관리" : "History Management",
+    previousSession: isKo ? "이전 세션" : "Previous Session",
+    reset: isKo ? "초기화" : "Reset",
+    savedSessions: (count: number) => isKo ? `저장된 세션: ${count}개` : `Saved Sessions: ${count}`,
+    goBack: isKo ? "처음으로" : "Go Back",
+
+    // Chat Interface
+    answers: isKo ? "답변" : "answers",
+    traces: "traces",
+    safetyAlert: isKo ? "안전 알림" : "Safety Alert",
+    counselingLink: isKo ? "전문 상담 바로가기" : "Professional Counseling",
+
+    // Complete State
+    analysisComplete: isKo ? "페르소나 분석 완료!" : "Persona Analysis Complete!",
+    exportJson: isKo ? "JSON 내보내기" : "Export JSON",
+    newSession: isKo ? "새로 시작" : "New Session",
+
+    // Input placeholder
+    inputPlaceholder: isKo ? "답변을 입력하세요..." : "Enter your answer...",
+
+    // Confirm dialogs
+    confirmReset: isKo ? "모든 히스토리를 삭제하고 처음부터 시작하시겠습니까?" : "Delete all history and start over?",
+
+    // Chain context message
+    chainCompleteMessage: isKo ? "심연의 거울 분석 완료" : "Abyss Mirror analysis complete",
+
+    // Error messages
+    errorBirthDate: isKo ? "생년월일을 입력해주세요" : "Please enter your birth date",
+    errorInit: isKo ? "초기화 실패" : "Initialization failed",
+    errorAnalysis: isKo ? "분석 실패" : "Analysis failed",
+    errorAuth: isKo ? "인증 오류가 발생했습니다. 다시 시작해주세요." : "Authentication error. Please start again.",
+    errorCredits: isKo ? "크레딧이 부족합니다." : "Insufficient credits.",
+    errorUnknown: isKo ? "알 수 없는 오류" : "Unknown error",
+  }), [isKo]);
 
   // Phase state
   const [phase, setPhase] = useState<Phase>("input");
@@ -160,7 +235,7 @@ function AbyssMirrorContent() {
 
   const handleStartAnalysis = useCallback((quick = false) => {
     if (!quick && (!birthInfo.year || !birthInfo.month || !birthInfo.day)) {
-      setError("생년월일을 입력해주세요");
+      setError(labels.errorBirthDate);
       return;
     }
 
@@ -202,13 +277,13 @@ function AbyssMirrorContent() {
           }
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "초기화 실패");
+        setError(err instanceof Error ? err.message : labels.errorInit);
       } finally {
         setIsLoadingLocal(false);
         setLoading(false);
       }
     });
-  }, [birthInfo, byokKey, creditCtx, model, creditCost, setLoading, startTransition]);
+  }, [birthInfo, byokKey, creditCtx, model, creditCost, setLoading, startTransition, labels]);
 
   const handleSendMessage = useCallback(() => {
     if (!inputMessage.trim() || isPending || !sessionId) return;
@@ -286,7 +361,7 @@ function AbyssMirrorContent() {
               chainContext.setChainData(
                 "abyss-mirror",
                 response.persona_data,
-                personaSummary || "심연의 거울 분석 완료"
+                personaSummary || labels.chainCompleteMessage
               );
             }
             saveLocal({
@@ -307,26 +382,26 @@ function AbyssMirrorContent() {
             void creditCtx.refresh();
           }
         } else {
-          setError(response.error || "분석 실패");
+          setError(response.error || labels.errorAnalysis);
         }
       } catch (err) {
         if (err instanceof Error) {
           if (err.message.includes("401") || err.message.includes("Unauthorized")) {
-            setError("인증 오류가 발생했습니다. 다시 시작해주세요.");
+            setError(labels.errorAuth);
           } else if (err.message.includes("402")) {
-            setError("크레딧이 부족합니다.");
+            setError(labels.errorCredits);
             setShowCreditModal(true);
           } else {
             setError(err.message);
           }
         } else {
-          setError("알 수 없는 오류");
+          setError(labels.errorUnknown);
         }
       } finally {
         setIsLoadingLocal(false);
       }
     });
-  }, [inputMessage, isPending, sessionId, byokKey, creditCtx, messages, personaData, currentStage, model, creditCost, fetchSuggestion, addTrace, saveLocal, chainContext, ragEnabled, addOptimisticMessage, startTransition]);
+  }, [inputMessage, isPending, sessionId, byokKey, creditCtx, messages, personaData, currentStage, model, creditCost, fetchSuggestion, addTrace, saveLocal, chainContext, ragEnabled, addOptimisticMessage, startTransition, labels]);
 
   const handleExportJson = useCallback(() => {
     if (Object.keys(personaData).length === 0) return;
@@ -378,42 +453,42 @@ function AbyssMirrorContent() {
           <div className={`w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-${token.themeColor}-500 to-purple-600 flex items-center justify-center`}>
             <Sparkles className="w-10 h-10 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">심연의 거울</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{labels.title}</h2>
           <p className="text-sm text-slate-500 dark:text-white/50 mt-2">
-            당신의 심층 페르소나를 탐구합니다
+            {labels.subtitle}
           </p>
         </div>
 
         {/* Birth Date */}
         <div className="space-y-2">
           <label className="text-xs font-bold text-slate-500 dark:text-white/50 uppercase">
-            생년월일 (필수)
+            {labels.birthDate}
           </label>
           <div className="grid grid-cols-4 gap-2">
             <input
               type="text"
-              placeholder="년"
+              placeholder={labels.year}
               value={birthInfo.year}
               onChange={e => setBirthInfo(prev => ({ ...prev, year: e.target.value }))}
               className={`px-3 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-center focus:outline-none focus:border-${token.themeColor}-500`}
             />
             <input
               type="text"
-              placeholder="월"
+              placeholder={labels.month}
               value={birthInfo.month}
               onChange={e => setBirthInfo(prev => ({ ...prev, month: e.target.value }))}
               className={`px-3 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-center focus:outline-none focus:border-${token.themeColor}-500`}
             />
             <input
               type="text"
-              placeholder="일"
+              placeholder={labels.day}
               value={birthInfo.day}
               onChange={e => setBirthInfo(prev => ({ ...prev, day: e.target.value }))}
               className={`px-3 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-center focus:outline-none focus:border-${token.themeColor}-500`}
             />
             <input
               type="text"
-              placeholder="시"
+              placeholder={labels.hour}
               value={birthInfo.hour}
               onChange={e => setBirthInfo(prev => ({ ...prev, hour: e.target.value }))}
               className={`px-3 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-center focus:outline-none focus:border-${token.themeColor}-500`}
@@ -425,11 +500,11 @@ function AbyssMirrorContent() {
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-500 dark:text-white/50 uppercase">
-              MBTI (선택)
+              {labels.mbti}
             </label>
             <input
               type="text"
-              placeholder="예: INTJ"
+              placeholder={labels.mbtiPlaceholder}
               maxLength={4}
               value={birthInfo.mbti}
               onChange={e => setBirthInfo(prev => ({ ...prev, mbti: e.target.value }))}
@@ -438,18 +513,18 @@ function AbyssMirrorContent() {
           </div>
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-500 dark:text-white/50 uppercase">
-              혈액형 (선택)
+              {labels.bloodType}
             </label>
             <select
               value={birthInfo.bloodType}
               onChange={e => setBirthInfo(prev => ({ ...prev, bloodType: e.target.value }))}
               className={`w-full px-3 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-${token.themeColor}-500`}
             >
-              <option value="">선택</option>
-              <option value="A">A형</option>
-              <option value="B">B형</option>
-              <option value="O">O형</option>
-              <option value="AB">AB형</option>
+              <option value="">{labels.select}</option>
+              <option value="A">{labels.typeA}</option>
+              <option value="B">{labels.typeB}</option>
+              <option value="O">{labels.typeO}</option>
+              <option value="AB">{labels.typeAB}</option>
             </select>
           </div>
         </div>
@@ -464,12 +539,12 @@ function AbyssMirrorContent() {
             {isPending ? (
               <>
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                분석 중...
+                {labels.analyzing}
               </>
             ) : (
               <>
                 <Sparkles className="w-4 h-4" />
-                분석 시작
+                {labels.startAnalysis}
               </>
             )}
           </button>
@@ -477,7 +552,7 @@ function AbyssMirrorContent() {
             onClick={() => handleStartAnalysis(true)}
             disabled={isPending}
             className="px-4 py-3 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white/70 font-medium rounded-xl transition-all disabled:opacity-50 flex items-center gap-2"
-            title="기본값으로 빠르게 시작"
+            title={labels.quickStartTooltip}
           >
             <Zap className="w-4 h-4" />
           </button>
@@ -490,7 +565,7 @@ function AbyssMirrorContent() {
             className={`w-full py-2 text-sm text-${token.themeColor}-600 dark:text-${token.themeColor}-400 hover:underline flex items-center justify-center gap-2`}
           >
             <Upload className="w-4 h-4" />
-            기존 프리셋 불러오기 ({presets.length}개)
+            {labels.loadPreset(presets.length)}
           </button>
         )}
 
@@ -503,7 +578,7 @@ function AbyssMirrorContent() {
                 className="w-full px-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-left hover:bg-slate-50 dark:hover:bg-white/10 transition-all"
               >
                 <div className="text-sm font-medium text-slate-900 dark:text-white">
-                  {p.persona?.archetype as string || "페르소나"}
+                  {p.persona?.archetype as string || labels.persona}
                 </div>
                 <div className="text-xs text-slate-500 dark:text-white/40">
                   {Math.round(p.meta.completion_rate)}% • {new Date(p.meta.created_at).toLocaleDateString()}
@@ -548,10 +623,10 @@ function AbyssMirrorContent() {
           </div>
           <div className="flex justify-between mt-1">
             <span className="text-[10px] text-slate-400 dark:text-white/30">
-              {messages.filter(m => m.role === "user").length} 답변
+              {messages.filter(m => m.role === "user").length} {labels.answers}
             </span>
             <span className="text-[10px] text-slate-400 dark:text-white/30">
-              {traces.length} traces
+              {traces.length} {labels.traces}
             </span>
           </div>
         </div>
@@ -575,7 +650,7 @@ function AbyssMirrorContent() {
                   {msg.isCrisis && (
                     <div className="flex items-center gap-2 mb-2 text-red-400">
                       <AlertTriangle className="w-4 h-4" />
-                      <span className="text-xs font-medium">안전 알림</span>
+                      <span className="text-xs font-medium">{labels.safetyAlert}</span>
                     </div>
                   )}
                   <p className={`text-sm leading-relaxed whitespace-pre-wrap ${msg.isCrisis ? "text-red-50" : "text-slate-700 dark:text-zinc-200"}`}>
@@ -588,7 +663,7 @@ function AbyssMirrorContent() {
                       rel="noopener noreferrer"
                       className="block mt-3 text-sm text-red-300 hover:text-red-200 underline"
                     >
-                      전문 상담 바로가기 →
+                      {labels.counselingLink} →
                     </a>
                   )}
                 </div>
@@ -658,7 +733,7 @@ function AbyssMirrorContent() {
                   markAsOverridden();
                 }}
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && void handleSendMessage()}
-                placeholder="답변을 입력하세요..."
+                placeholder={labels.inputPlaceholder}
                 disabled={isPending}
                 className={`flex-1 px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 focus:outline-none focus:border-${token.themeColor}-500 transition-all disabled:opacity-50`}
               />

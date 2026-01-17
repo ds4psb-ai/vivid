@@ -14,13 +14,14 @@
  * @see https://react.dev/blog/2024/12/05/react-19
  */
 
-import { useState, useRef, useCallback, useTransition, useOptimistic } from "react";
+import { useState, useRef, useCallback, useTransition, useOptimistic, useMemo } from "react";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const DIMENSION_CODE = "veo";
 const DIMENSION_KEY = "video-maker";
@@ -46,10 +47,10 @@ const ASPECT_RATIOS = [
   { value: "4:3", label: "4:3 (Classic)" },
 ];
 
-const DURATIONS = [
-  { value: "4", label: "4초" },
-  { value: "6", label: "6초" },
-  { value: "8", label: "8초" },
+const getDurations = (isKo: boolean) => [
+  { value: "4", label: isKo ? "4초" : "4s" },
+  { value: "6", label: isKo ? "6초" : "6s" },
+  { value: "8", label: isKo ? "8초" : "8s" },
 ];
 
 const STYLES = [
@@ -62,6 +63,51 @@ const STYLES = [
 // === Content Component ===
 function VeoVideoContent() {
   const { token, setLoading, setResult, setError } = useDimensionPanel();
+  const { language } = useLanguage();
+  const isKo = language === "ko";
+
+  // i18n labels
+  const labels = useMemo(() => ({
+    title: isKo ? "Veo 3.1 비디오" : "Veo 3.1 Video",
+    promptLabel: isKo ? "프롬프트" : "Prompt",
+    promptPlaceholder: isKo
+      ? "생성할 비디오를 상세히 설명하세요...\n예: A cinematic shot of a sunrise over mountains, golden light casting long shadows..."
+      : "Describe the video you want to generate in detail...\nExample: A cinematic shot of a sunrise over mountains, golden light casting long shadows...",
+    referenceLabel: isKo ? "참고 이미지/영상 (선택)" : "Reference Image/Video (Optional)",
+    referenceHelper: isKo ? "스타일 참고용 이미지나 영상 첨부 (Image-to-Video)" : "Attach images or videos for style reference (Image-to-Video)",
+    negativePromptLabel: isKo ? "네거티브 프롬프트 (선택)" : "Negative Prompt (Optional)",
+    negativePromptPlaceholder: isKo ? "제외할 요소를 입력하세요..." : "Enter elements to exclude...",
+    aspectRatioLabel: isKo ? "비율" : "Aspect Ratio",
+    durationLabel: isKo ? "길이" : "Duration",
+    styleLabel: isKo ? "스타일" : "Style",
+    seedLabel: isKo ? "시드 설정" : "Seed Setting",
+    seedPlaceholder: isKo ? "시드 값 입력..." : "Enter seed value...",
+    seedRandomDesc: isKo ? "매번 새로운 결과 생성" : "Generate new results each time",
+    seedFixedDesc: isKo ? "동일한 시드로 재현 가능한 결과" : "Reproducible results with the same seed",
+    creditCost: isKo ? "크레딧 소모" : "credits consumed",
+    generateButton: isKo ? "비디오 생성" : "Generate Video",
+    generating: isKo ? "생성 중..." : "Generating...",
+    enterPrompt: isKo ? "프롬프트를 입력해주세요" : "Please enter a prompt",
+    promptTooShort: isKo ? "프롬프트는 최소 10자 이상 입력해주세요" : "Please enter at least 10 characters",
+    promptTooLong: (max: number) => isKo ? `프롬프트는 ${max}자 이하로 입력해주세요` : `Prompt must be ${max} characters or less`,
+    processing: isKo ? "비디오 생성 중..." : "Generating video...",
+    processingDesc: isKo ? "Veo 3.1이 영상을 렌더링하고 있습니다" : "Veo 3.1 is rendering your video",
+    download: isKo ? "다운로드" : "Download",
+    generationFailed: isKo ? "비디오 생성 실패" : "Video generation failed",
+    unknownError: isKo ? "알 수 없는 오류가 발생했습니다" : "An unknown error occurred",
+    retryButton: isKo ? "다시 시도" : "Retry",
+    usedPrompt: isKo ? "사용된 프롬프트" : "Used Prompt",
+    copy: isKo ? "복사" : "Copy",
+    copied: isKo ? "복사됨!" : "Copied!",
+    emptyStateTitle: "Veo 3.1 Video Generation",
+    emptyStateDesc1: isKo ? "프롬프트를 입력하고" : "Enter a prompt and",
+    emptyStateDesc2: isKo ? "AI 비디오" : "AI video",
+    emptyStateDesc3: isKo ? "를 생성하세요." : "generate.",
+    durationRange: isKo ? "4-8초" : "4-8s",
+  }), [isKo]);
+
+  // i18n presets
+  const DURATIONS = useMemo(() => getDurations(isKo), [isKo]);
 
   // Form state
   const [prompt, setPrompt] = useState("");
@@ -142,15 +188,15 @@ function VeoVideoContent() {
   const handleGenerate = useCallback(async () => {
     const trimmedPrompt = prompt.trim();
     if (!trimmedPrompt) {
-      setValidationError("프롬프트를 입력해주세요");
+      setValidationError(labels.enterPrompt);
       return;
     }
     if (trimmedPrompt.length < 10) {
-      setValidationError("프롬프트는 최소 10자 이상 입력해주세요");
+      setValidationError(labels.promptTooShort);
       return;
     }
     if (trimmedPrompt.length > MAX_PROMPT_LENGTH) {
-      setValidationError(`프롬프트는 ${MAX_PROMPT_LENGTH}자 이하로 입력해주세요`);
+      setValidationError(labels.promptTooLong(MAX_PROMPT_LENGTH));
       return;
     }
     setValidationError(null);
@@ -213,17 +259,17 @@ function VeoVideoContent() {
 
   return (
     <>
-      <DimensionPanel.Header title="Veo 3.1 비디오" />
+      <DimensionPanel.Header title={labels.title} />
 
       <div className="flex flex-1 min-h-0">
         {/* Sidebar */}
         <DimensionPanel.Sidebar>
           {/* Prompt Input */}
           <DimensionPanel.Textarea
-            label="프롬프트"
+            label={labels.promptLabel}
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="생성할 비디오를 상세히 설명하세요...&#10;예: A cinematic shot of a sunrise over mountains, golden light casting long shadows..."
+            placeholder={labels.promptPlaceholder}
             rows={6}
             maxLength={MAX_PROMPT_LENGTH}
           />
@@ -234,29 +280,29 @@ function VeoVideoContent() {
             maxSizeMB={100}
             multiple
             onUpload={setUploadedFiles}
-            label="참고 이미지/영상 (선택)"
-            helperText="스타일 참고용 이미지나 영상 첨부 (Image-to-Video)"
+            label={labels.referenceLabel}
+            helperText={labels.referenceHelper}
           />
 
           {/* Negative Prompt */}
           <DimensionPanel.Textarea
-            label="네거티브 프롬프트 (선택)"
+            label={labels.negativePromptLabel}
             value={negativePrompt}
             onChange={(e) => setNegativePrompt(e.target.value)}
-            placeholder="제외할 요소를 입력하세요..."
+            placeholder={labels.negativePromptPlaceholder}
             rows={3}
           />
 
           {/* Aspect Ratio & Duration */}
           <div className="grid grid-cols-2 gap-3">
             <DimensionPanel.Select
-              label="비율"
+              label={labels.aspectRatioLabel}
               value={aspectRatio}
               onChange={(e) => setAspectRatio(e.target.value)}
               options={ASPECT_RATIOS}
             />
             <DimensionPanel.Select
-              label="길이"
+              label={labels.durationLabel}
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
               options={DURATIONS}
@@ -265,7 +311,7 @@ function VeoVideoContent() {
 
           {/* Style */}
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">스타일</label>
+            <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">{labels.styleLabel}</label>
             <div className="grid grid-cols-2 gap-2">
               {STYLES.map((s) => (
                 <button
@@ -286,7 +332,7 @@ function VeoVideoContent() {
           {/* Seed Control */}
           <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-white/5 mt-2">
             <div className="flex items-center justify-between">
-              <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">시드 설정</label>
+              <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">{labels.seedLabel}</label>
               <button
                 onClick={() => setUseRandomSeed(!useRandomSeed)}
                 className={`relative w-10 h-5 rounded-full transition-all ${
@@ -305,12 +351,12 @@ function VeoVideoContent() {
                 type="number"
                 value={seed ?? ""}
                 onChange={(e) => setSeed(e.target.value ? parseInt(e.target.value) : undefined)}
-                placeholder="시드 값 입력..."
+                placeholder={labels.seedPlaceholder}
                 className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400/50 text-sm font-mono"
               />
             )}
             <p className="text-[10px] text-slate-500 dark:text-zinc-600">
-              {useRandomSeed ? "매번 새로운 결과 생성" : "동일한 시드로 재현 가능한 결과"}
+              {useRandomSeed ? labels.seedRandomDesc : labels.seedFixedDesc}
             </p>
           </div>
 
@@ -319,7 +365,7 @@ function VeoVideoContent() {
             <svg className={`w-4 h-4 text-${token.themeColor}-400`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
-            <span className={`text-xs text-${token.themeColor}-400 font-medium`}>{creditCost} 크레딧 소모</span>
+            <span className={`text-xs text-${token.themeColor}-400 font-medium`}>{creditCost} {labels.creditCost}</span>
           </div>
 
           {/* Generate Button */}
@@ -327,14 +373,14 @@ function VeoVideoContent() {
             onClick={handleGenerate}
             disabled={isLoading || !prompt.trim()}
             loading={isLoading}
-            loadingText="생성 중..."
+            loadingText={labels.generating}
             icon={
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
             }
           >
-            비디오 생성
+            {labels.generateButton}
           </DimensionPanel.GenerateButton>
 
           {/* Validation Error */}
@@ -357,8 +403,8 @@ function VeoVideoContent() {
                 <div className={`flex items-center justify-center gap-3 p-6 bg-${token.themeColor}-500/10 border border-${token.themeColor}-500/20 rounded-2xl`}>
                   <div className={`w-6 h-6 border-2 border-${token.themeColor}-400/30 border-t-${token.themeColor}-400 rounded-full animate-spin`} />
                   <div className="text-center">
-                    <p className={`text-${token.themeColor}-400 font-medium`}>비디오 생성 중...</p>
-                    <p className="text-xs text-zinc-500 mt-1">Veo 3.1이 영상을 렌더링하고 있습니다</p>
+                    <p className={`text-${token.themeColor}-400 font-medium`}>{labels.processing}</p>
+                    <p className="text-xs text-zinc-500 mt-1">{labels.processingDesc}</p>
                   </div>
                 </div>
               )}
@@ -387,7 +433,7 @@ function VeoVideoContent() {
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                       </svg>
-                      다운로드
+                      {labels.download}
                     </button>
                   </div>
                 </div>
@@ -399,8 +445,8 @@ function VeoVideoContent() {
                   <svg className="w-16 h-16 text-red-400/50 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
-                  <p className="text-red-400 font-medium mb-2">비디오 생성 실패</p>
-                  <p className="text-xs text-zinc-500">{videoResult.error || "알 수 없는 오류가 발생했습니다"}</p>
+                  <p className="text-red-400 font-medium mb-2">{labels.generationFailed}</p>
+                  <p className="text-xs text-zinc-500">{videoResult.error || labels.unknownError}</p>
                   <button
                     onClick={canRetry ? retry : handleGenerate}
                     className="mt-4 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm hover:bg-red-500/20 transition-colors flex items-center gap-2"
@@ -408,7 +454,7 @@ function VeoVideoContent() {
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
-                    다시 시도
+                    {labels.retryButton}
                     {canRetry && currentRetryCount > 0 && (
                       <span className="text-red-400/60">({currentRetryCount}/3)</span>
                     )}
@@ -450,7 +496,7 @@ function VeoVideoContent() {
               {videoResult.status === "completed" && (
                 <div className="p-6 bg-white/[0.02] border border-white/5 rounded-xl">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">사용된 프롬프트</h3>
+                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">{labels.usedPrompt}</h3>
                     <button
                       onClick={handleCopyPrompt}
                       className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 hover:border-white/20 transition-all"
@@ -460,14 +506,14 @@ function VeoVideoContent() {
                           <svg className={`w-3.5 h-3.5 text-${token.themeColor}-400`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
-                          <span className={`text-${token.themeColor}-400`}>복사됨!</span>
+                          <span className={`text-${token.themeColor}-400`}>{labels.copied}</span>
                         </>
                       ) : (
                         <>
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                           </svg>
-                          복사
+                          {labels.copy}
                         </>
                       )}
                     </button>
@@ -494,15 +540,15 @@ function VeoVideoContent() {
                 </div>
               </div>
               <div className="text-center space-y-3">
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Veo 3.1 Video Generation</h3>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{labels.emptyStateTitle}</h3>
                 <p className="text-sm text-slate-500 dark:text-[var(--fg-muted)] max-w-xs mx-auto font-light leading-relaxed">
-                  프롬프트를 입력하고<br />
-                  <span className={`text-${token.themeColor}-600 dark:text-${token.themeColor}-400 font-medium`}>AI 비디오</span>를 생성하세요.
+                  {labels.emptyStateDesc1}<br />
+                  <span className={`text-${token.themeColor}-600 dark:text-${token.themeColor}-400 font-medium`}>{labels.emptyStateDesc2}</span> {labels.emptyStateDesc3}
                 </p>
                 <div className="flex items-center justify-center gap-2 pt-2">
                   <span className={`px-2 py-1 bg-${token.themeColor}-100 dark:bg-${token.themeColor}-500/10 border border-${token.themeColor}-200 dark:border-${token.themeColor}-500/20 rounded text-[10px] text-${token.themeColor}-600 dark:text-${token.themeColor}-400 font-medium`}>Veo 3.1</span>
                   <span className="px-2 py-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded text-[10px] text-slate-500 dark:text-zinc-500">HD Quality</span>
-                  <span className="px-2 py-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded text-[10px] text-slate-500 dark:text-zinc-500">4-8초</span>
+                  <span className="px-2 py-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded text-[10px] text-slate-500 dark:text-zinc-500">{labels.durationRange}</span>
                 </div>
               </div>
             </div>

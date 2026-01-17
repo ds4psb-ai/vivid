@@ -8,12 +8,13 @@
  * @see docs/PANEL_DESIGN_UNITY_SPEC.md
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import {
   PenTool,
@@ -50,26 +51,30 @@ interface EditorResult {
   changes_made: Change[];
 }
 
-const PERSONAS = [
+// =============================================================================
+// PRESETS (Dynamic based on language)
+// =============================================================================
+
+const getPersonas = (isKo: boolean) => [
   {
     value: "Senior Editor",
-    label: "수석 에디터 (밸런스 중시)",
-    desc: "전체적인 완성도와 흐름을 개선합니다.",
+    label: isKo ? "수석 에디터 (밸런스 중시)" : "Senior Editor (Balanced)",
+    desc: isKo ? "전체적인 완성도와 흐름을 개선합니다." : "Improves overall completeness and flow.",
   },
   {
     value: "Ruthless Critic",
-    label: "냉철한 비평가 (약점 공략)",
-    desc: "논리적 허점과 개연성을 집중 타격합니다.",
+    label: isKo ? "냉철한 비평가 (약점 공략)" : "Ruthless Critic (Weakness Focus)",
+    desc: isKo ? "논리적 허점과 개연성을 집중 타격합니다." : "Targets logical gaps and plausibility issues.",
   },
   {
     value: "Commercial Producer",
-    label: "흥행 프로듀서 (대중성)",
-    desc: "임팩트와 대중적 재미를 극대화합니다.",
+    label: isKo ? "흥행 프로듀서 (대중성)" : "Commercial Producer (Mass Appeal)",
+    desc: isKo ? "임팩트와 대중적 재미를 극대화합니다." : "Maximizes impact and mainstream appeal.",
   },
   {
     value: "Artistic Director",
-    label: "예술 감독 (미학)",
-    desc: "표현의 깊이와 예술적 가치를 높입니다.",
+    label: isKo ? "예술 감독 (미학)" : "Artistic Director (Aesthetics)",
+    desc: isKo ? "표현의 깊이와 예술적 가치를 높입니다." : "Enhances depth and artistic value.",
   },
 ];
 
@@ -91,6 +96,39 @@ export default function CreativeEditorPanel() {
 
 function CreativeEditorContent() {
   const { token, setLoading, setResult, setError, classes } = useDimensionPanel();
+  const { language } = useLanguage();
+  const isKo = language === "ko";
+
+  // Memoized presets based on language
+  const PERSONAS = useMemo(() => getPersonas(isKo), [isKo]);
+
+  // i18n labels
+  const labels = useMemo(() => ({
+    title: isKo ? "크리에이티브 에디터" : "Creative Editor",
+    genreContext: isKo ? "장르 / 맥락" : "Genre / Context",
+    genrePlaceholder: isKo ? "예: SF 스릴러 영화, 30초 TV 광고" : "e.g., Sci-Fi thriller movie, 30-second TV ad",
+    editorialPersona: isKo ? "에디토리얼 페르소나" : "Editorial Persona",
+    runEditor: isKo ? "에디터 실행" : "Run Editor",
+    analyzing: isKo ? "분석 및 수정 중..." : "Analyzing and editing...",
+    analyzingContent: isKo ? "콘텐츠 분석 및 수정 중..." : "Analyzing and editing content...",
+    originalContent: isKo ? "검토할 원본 콘텐츠" : "Original Content to Review",
+    contentPlaceholder: isKo ? "여기에 시나리오, 프롬프트, 혹은 아이디어를 입력하세요..." : "Enter your scenario, prompt, or idea here...",
+    editorDescription: isKo
+      ? "단순한 오타 수정이 아닙니다. 전문 에디터가 당신의 글을 더 강력하고 매력적으로 다시 써드립니다."
+      : "More than just typo fixes. A professional editor will rewrite your content to be more powerful and engaging.",
+    startInput: isKo ? "콘텐츠 입력 시작하기" : "Start Entering Content",
+    narrative: isKo ? "내러티브" : "Narrative",
+    visual: isKo ? "비주얼" : "Visual",
+    pacing: isKo ? "페이스" : "Pacing",
+    keyIssues: "Key Issues",
+    original: isKo ? "원본 (Original)" : "Original",
+    editorsCut: isKo ? "수정본 (Editor's Cut)" : "Editor's Cut",
+    copyEdited: isKo ? "수정본 복사" : "Copy Edited Version",
+    downloadReport: isKo ? "리포트 다운로드" : "Download Report",
+    regenerate: isKo ? "다시 제안받기" : "Get New Suggestions",
+    changeLog: isKo ? "변경 내역 로그" : "Change Log",
+    validationError: isKo ? "검토할 콘텐츠를 입력해주세요." : "Please enter content to review.",
+  }), [isKo]);
 
   // Form state
   const [content, setContent] = useState("");
@@ -152,7 +190,7 @@ function CreativeEditorContent() {
   const handleRunEditor = useCallback(async () => {
     const trimmedContent = content.trim();
     if (!trimmedContent) {
-      setValidationError("검토할 콘텐츠를 입력해주세요.");
+      setValidationError(labels.validationError);
       return;
     }
     setValidationError(null);
@@ -173,7 +211,7 @@ function CreativeEditorContent() {
       },
       getBYOKHeaders(byokKey)
     );
-  }, [content, context, persona, byokKey, creditCtx, wrappedExecute, CREDIT_COST]);
+  }, [content, context, persona, byokKey, creditCtx, wrappedExecute, CREDIT_COST, labels.validationError]);
 
   const displayError = validationError || error;
 
@@ -185,7 +223,7 @@ function CreativeEditorContent() {
 
   return (
     <>
-      <DimensionPanel.Header title="크리에이티브 에디터" creditCost={CREDIT_COST} />
+      <DimensionPanel.Header title={labels.title} creditCost={CREDIT_COST} />
 
       <DimensionPanel.Sidebar>
         {/* Context Input */}
@@ -193,13 +231,13 @@ function CreativeEditorContent() {
           <label
             className={`text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1`}
           >
-            장르 / 맥락
+            {labels.genreContext}
           </label>
           <input
             type="text"
             value={context}
             onChange={(e) => setContext(e.target.value)}
-            placeholder="예: SF 스릴러 영화, 30초 TV 광고"
+            placeholder={labels.genrePlaceholder}
             className={`w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 text-sm focus:outline-none focus:border-${token.themeColor}-500/50 transition-all`}
           />
         </div>
@@ -209,7 +247,7 @@ function CreativeEditorContent() {
           <label
             className={`text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1`}
           >
-            에디토리얼 페르소나
+            {labels.editorialPersona}
           </label>
           <div className="space-y-2">
             {PERSONAS.map((p) => (
@@ -242,15 +280,15 @@ function CreativeEditorContent() {
           loading={isLoading}
           creditCost={CREDIT_COST}
           icon={<PenTool className="w-5 h-5" />}
-          loadingText="분석 및 수정 중..."
+          loadingText={labels.analyzing}
         >
-          에디터 실행
+          {labels.runEditor}
         </DimensionPanel.GenerateButton>
       </DimensionPanel.Sidebar>
 
       <DimensionPanel.Content>
         {/* Loading State */}
-        <DimensionPanel.Loading message="콘텐츠 분석 및 수정 중..." />
+        <DimensionPanel.Loading message={labels.analyzingContent} />
 
         {/* Error State */}
         {displayError && !isLoading && (
@@ -266,6 +304,7 @@ function CreativeEditorContent() {
             content={content}
             setContent={setContent}
             themeColor={token.themeColor}
+            labels={labels}
           />
         )}
 
@@ -277,6 +316,7 @@ function CreativeEditorContent() {
             onExport={() => exportJSON(editorResult, "edit-report.json")}
             onRegenerate={handleRunEditor}
             getScoreColor={getScoreColor}
+            labels={labels}
           />
         )}
 
@@ -299,26 +339,53 @@ function CreativeEditorContent() {
 // Sub-Components
 // ============================================================================
 
+interface Labels {
+  title: string;
+  genreContext: string;
+  genrePlaceholder: string;
+  editorialPersona: string;
+  runEditor: string;
+  analyzing: string;
+  analyzingContent: string;
+  originalContent: string;
+  contentPlaceholder: string;
+  editorDescription: string;
+  startInput: string;
+  narrative: string;
+  visual: string;
+  pacing: string;
+  keyIssues: string;
+  original: string;
+  editorsCut: string;
+  copyEdited: string;
+  downloadReport: string;
+  regenerate: string;
+  changeLog: string;
+  validationError: string;
+}
+
 function ContentInputArea({
   content,
   setContent,
   themeColor,
+  labels,
 }: {
   content: string;
   setContent: (v: string) => void;
   themeColor: string;
+  labels: Labels;
 }) {
   if (content) {
     return (
       <div className="h-full flex flex-col items-center justify-center max-w-2xl mx-auto w-full">
         <div className="w-full h-full p-4">
           <label className="text-xs font-bold text-slate-500 dark:text-white/50 uppercase tracking-widest mb-2 block">
-            검토할 원본 콘텐츠
+            {labels.originalContent}
           </label>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="여기에 시나리오, 프롬프트, 혹은 아이디어를 입력하세요..."
+            placeholder={labels.contentPlaceholder}
             className={`w-full h-[60vh] p-6 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white resize-none focus:outline-none focus:border-${themeColor}-500/50 text-lg leading-relaxed font-serif`}
           />
         </div>
@@ -333,15 +400,13 @@ function ContentInputArea({
       </div>
       <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Creative Editor</h2>
       <p className="text-slate-500 dark:text-white/50 max-w-md text-center">
-        단순한 오타 수정이 아닙니다.
-        <br />
-        전문 에디터가 당신의 글을 더 강력하고 매력적으로 다시 써드립니다.
+        {labels.editorDescription}
       </p>
       <button
         onClick={() => setContent(" ")}
         className="px-6 py-3 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 rounded-xl text-slate-900 dark:text-white font-medium transition-all"
       >
-        콘텐츠 입력 시작하기
+        {labels.startInput}
       </button>
     </div>
   );
@@ -353,12 +418,14 @@ function EditorResultDisplay({
   onExport,
   onRegenerate,
   getScoreColor,
+  labels,
 }: {
   result: EditorResult;
   onCopy: () => void;
   onExport: () => void;
   onRegenerate: () => void;
   getScoreColor: (score: number) => string;
+  labels: Labels;
 }) {
   return (
     <div className="h-full flex flex-col space-y-4 animate-in fade-in">
@@ -366,19 +433,19 @@ function EditorResultDisplay({
       <div className="bg-white/80 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl p-4 flex items-center justify-between shrink-0">
         <div className="flex gap-6">
           <div className="text-center">
-            <div className="text-xs text-slate-500 dark:text-white/40 mb-1">내러티브</div>
+            <div className="text-xs text-slate-500 dark:text-white/40 mb-1">{labels.narrative}</div>
             <div className={`text-xl font-bold ${getScoreColor(result.critique.narrative_score)}`}>
               {result.critique.narrative_score}
             </div>
           </div>
           <div className="text-center">
-            <div className="text-xs text-slate-500 dark:text-white/40 mb-1">비주얼</div>
+            <div className="text-xs text-slate-500 dark:text-white/40 mb-1">{labels.visual}</div>
             <div className={`text-xl font-bold ${getScoreColor(result.critique.visual_score)}`}>
               {result.critique.visual_score}
             </div>
           </div>
           <div className="text-center">
-            <div className="text-xs text-slate-500 dark:text-white/40 mb-1">페이스</div>
+            <div className="text-xs text-slate-500 dark:text-white/40 mb-1">{labels.pacing}</div>
             <div className={`text-xl font-bold ${getScoreColor(result.critique.pacing_score)}`}>
               {result.critique.pacing_score}
             </div>
@@ -386,7 +453,7 @@ function EditorResultDisplay({
         </div>
         <div className="flex-1 ml-8 pl-8 border-l border-slate-200 dark:border-white/10 overflow-hidden">
           <div className="text-xs font-bold text-rose-600 dark:text-rose-400 mb-1 uppercase">
-            Key Issues
+            {labels.keyIssues}
           </div>
           <div className="flex gap-2 overflow-x-auto no-scrollbar">
             {result.critique.key_issues.map((issue, i) => (
@@ -394,7 +461,7 @@ function EditorResultDisplay({
                 key={i}
                 className="text-xs px-2 py-1 bg-slate-100 dark:bg-white/5 rounded text-slate-600 dark:text-white/70 whitespace-nowrap"
               >
-                • {issue}
+                {issue}
               </span>
             ))}
           </div>
@@ -403,14 +470,14 @@ function EditorResultDisplay({
           <button
             onClick={onCopy}
             className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-500 dark:text-white/70 hover:text-slate-900 dark:hover:text-white"
-            title="수정본 복사"
+            title={labels.copyEdited}
           >
             <Copy className="w-5 h-5" />
           </button>
           <button
             onClick={onExport}
             className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-500 dark:text-white/70 hover:text-slate-900 dark:hover:text-white"
-            title="리포트 다운로드"
+            title={labels.downloadReport}
           >
             <Download className="w-5 h-5" />
           </button>
@@ -422,7 +489,7 @@ function EditorResultDisplay({
         {/* Original */}
         <div className="rounded-xl bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex flex-col overflow-hidden">
           <div className="px-4 py-3 border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 flex justify-between items-center">
-            <span className="text-sm font-bold text-slate-600 dark:text-white/70">원본 (Original)</span>
+            <span className="text-sm font-bold text-slate-600 dark:text-white/70">{labels.original}</span>
           </div>
           <div className="flex-1 p-6 overflow-y-auto whitespace-pre-wrap text-slate-600 dark:text-white/60 leading-relaxed font-serif">
             {result.original_content}
@@ -434,7 +501,7 @@ function EditorResultDisplay({
           <div className="px-4 py-3 border-b border-emerald-200 dark:border-emerald-500/20 bg-emerald-100/50 dark:bg-emerald-500/10 flex justify-between items-center">
             <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
               <Check className="w-4 h-4" />
-              수정본 (Editor&apos;s Cut)
+              {labels.editorsCut}
             </span>
           </div>
           <div className="flex-1 p-6 overflow-y-auto whitespace-pre-wrap text-slate-900 dark:text-white leading-relaxed font-serif">
@@ -448,7 +515,7 @@ function EditorResultDisplay({
               className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg shadow-lg flex items-center gap-2"
             >
               <RefreshCw className="w-4 h-4" />
-              다시 제안받기
+              {labels.regenerate}
             </button>
           </div>
         </div>
@@ -457,7 +524,7 @@ function EditorResultDisplay({
       {/* Change Log */}
       <div className="h-32 shrink-0 bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 overflow-y-auto">
         <h4 className="text-xs font-bold text-slate-500 dark:text-white/40 uppercase mb-2">
-          변경 내역 로그
+          {labels.changeLog}
         </h4>
         <div className="space-y-1">
           {result.changes_made.map((change, i) => (

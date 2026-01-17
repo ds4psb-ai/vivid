@@ -26,6 +26,7 @@ import {
   useCallback,
   useOptimistic,
   useTransition,
+  useMemo,
   type ReactNode,
 } from "react";
 import { DimensionPanel, useDimensionPanel } from "./panel";
@@ -33,6 +34,7 @@ import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useUQSLGenerate, useUQSLFeedback } from "@/hooks/useUQSL";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import {
@@ -107,20 +109,20 @@ interface VisualDirection {
 
 type Stage = "moodboard" | "palette" | "guide";
 
-const MOODS = [
-  { value: "neutral", label: "중립" },
-  { value: "dramatic", label: "드라마틱" },
-  { value: "calm", label: "차분함" },
-  { value: "energetic", label: "에너지틱" },
-  { value: "melancholic", label: "멜랑콜릭" },
-  { value: "mysterious", label: "미스터리" },
-  { value: "romantic", label: "로맨틱" },
+const getMoods = (isKo: boolean) => [
+  { value: "neutral", label: isKo ? "중립" : "Neutral" },
+  { value: "dramatic", label: isKo ? "드라마틱" : "Dramatic" },
+  { value: "calm", label: isKo ? "차분함" : "Calm" },
+  { value: "energetic", label: isKo ? "에너지틱" : "Energetic" },
+  { value: "melancholic", label: isKo ? "멜랑콜릭" : "Melancholic" },
+  { value: "mysterious", label: isKo ? "미스터리" : "Mysterious" },
+  { value: "romantic", label: isKo ? "로맨틱" : "Romantic" },
 ];
 
-const TARGET_MEDIUMS = [
-  { value: "video", label: "비디오" },
-  { value: "image", label: "이미지" },
-  { value: "animation", label: "애니메이션" },
+const getTargetMediums = (isKo: boolean) => [
+  { value: "video", label: isKo ? "비디오" : "Video" },
+  { value: "image", label: isKo ? "이미지" : "Image" },
+  { value: "animation", label: isKo ? "애니메이션" : "Animation" },
 ];
 
 // ============================================================================
@@ -142,6 +144,86 @@ export default function AestheticDirectorPanel() {
 function AestheticDirectorContent() {
   const { token, setLoading, setResult, setError: setContextError } =
     useDimensionPanel();
+  const { language } = useLanguage();
+  const isKo = language === "ko";
+
+  // i18n presets
+  const MOODS = useMemo(() => getMoods(isKo), [isKo]);
+  const TARGET_MEDIUMS = useMemo(() => getTargetMediums(isKo), [isKo]);
+
+  // i18n labels
+  const labels = useMemo(() => ({
+    // Header
+    title: isKo ? "미학디렉터" : "Aesthetic Director",
+
+    // Stages
+    stageInspiration: isKo ? "영감" : "Inspiration",
+    stagePalette: isKo ? "팔레트" : "Palette",
+    stageGuide: isKo ? "가이드" : "Guide",
+
+    // Inputs
+    conceptLabel: isKo ? "컨셉 / 주제" : "Concept / Theme",
+    conceptPlaceholder: isKo ? "시각적 스타일을 정의할 컨셉을 입력하세요..." : "Enter a concept to define the visual style...",
+    referenceLabel: isKo ? "레퍼런스 (선택)" : "Reference (Optional)",
+    referenceHelper: isKo ? "무드보드, 컬러 레퍼런스, 영상 스틸" : "Moodboards, color references, video stills",
+    moodLabel: isKo ? "분위기" : "Mood",
+    mediaLabel: isKo ? "미디어" : "Media",
+
+    // RAG Toggle
+    ragContext: isKo ? "RAG 컨텍스트" : "RAG Context",
+    ragDescription: isKo ? "레퍼런스 검색 활성화" : "Enable reference search",
+
+    // Quality Scores Toggle
+    qualityScores: isKo ? "5차원 품질 점수 표시" : "Show 5D Quality Scores",
+
+    // Buttons
+    exploreDirections: isKo ? "비주얼 방향 탐색 (UQSL)" : "Explore Visual Directions (UQSL)",
+    findingInspiration: isKo ? "영감 찾는 중..." : "Finding inspiration...",
+    completeStyleGuide: isKo ? "스타일 가이드 완성" : "Complete Style Guide",
+    generatingStyleGuide: isKo ? "스타일 가이드 생성 중..." : "Generating style guide...",
+    selectOtherDirection: isKo ? "다른 방향 선택하기" : "Select Another Direction",
+    cancel: isKo ? "취소" : "Cancel",
+
+    // Credit Cost
+    estimatedCost: (cost: string | number) => isKo ? `예상 비용: ${cost} 크레딧` : `Estimated cost: ${cost} credits`,
+
+    // Selected Direction Card
+    selectedDirection: isKo ? "선택된 방향" : "Selected Direction",
+    aiRecommended: isKo ? "AI 추천" : "AI Recommended",
+    likeIt: isKo ? "좋아요" : "Like",
+    notGreat: isKo ? "아쉬워요" : "Not Great",
+
+    // Palette Lab
+    selectVisualDirection: isKo ? "시각적 방향을 선택하세요" : "Select a Visual Direction",
+    aiRecommendedDirection: (idx: number) => isKo ? `AI 추천: Direction ${idx + 1}` : `AI Recommended: Direction ${idx + 1}`,
+    suggestedDirector: isKo ? "추천 감독:" : "Suggested director:",
+    recommended: isKo ? "추천" : "Recommended",
+
+    // Quality Score Labels
+    groundedness: isKo ? "근거" : "Groundedness",
+    relevance: isKo ? "관련" : "Relevance",
+    coherence: isKo ? "일관" : "Coherence",
+    creativity: isKo ? "창의" : "Creativity",
+    safety: isKo ? "안전" : "Safety",
+
+    // Feedback Section
+    feedbackSaved: isKo ? "피드백이 저장되었습니다" : "Feedback saved",
+    satisfiedWithResults: isKo ? "결과가 만족스러우셨나요?" : "Were you satisfied with the results?",
+
+    // Style Guide
+    generatingGuide: isKo ? "스타일 가이드 생성 중..." : "Generating style guide...",
+    exportJson: isKo ? "JSON 내보내기" : "Export JSON",
+    avoidElements: isKo ? "피해야 할 요소" : "Elements to Avoid",
+
+    // Validation
+    enterConcept: isKo ? "컨셉을 입력해주세요" : "Please enter a concept",
+
+    // Empty State
+    emptyStateTitle: isKo ? "Visual Identity Workshop" : "Visual Identity Workshop",
+    emptyStateDescription: isKo ? "컨셉을 입력하면 AI가" : "Enter a concept and AI will",
+    emptyStateHighlight: isKo ? "UQSL로 3가지 시각적 방향" : "suggest 3 visual directions with UQSL",
+    emptyStateSuffix: isKo ? "을 제안합니다." : ".",
+  }), [isKo]);
 
   // Form state
   const [concept, setConcept] = useState("");
@@ -291,7 +373,7 @@ function AestheticDirectorContent() {
   const handleGenerateMoodboard = useCallback(async () => {
     const trimmedConcept = concept.trim();
     if (!trimmedConcept) {
-      setValidationError("컨셉을 입력해주세요");
+      setValidationError(labels.enterConcept);
       return;
     }
     setValidationError(null);
@@ -457,7 +539,7 @@ Suggested Auteur: ${selectedDirection.suggested_auteur}`;
 
   return (
     <>
-      <DimensionPanel.Header title="미학디렉터" creditCost={CREDIT_COST} />
+      <DimensionPanel.Header title={labels.title} creditCost={CREDIT_COST} />
 
       <DimensionPanel.Sidebar>
         {/* Stage Indicator with UQSL Progress */}
@@ -466,14 +548,19 @@ Suggested Auteur: ${selectedDirection.suggested_auteur}`;
           themeColor={token.themeColor}
           uqslProgress={isUqslLoading ? uqslProgress : undefined}
           uqslMessage={isUqslLoading ? uqslMessage : undefined}
+          labels={{
+            inspiration: labels.stageInspiration,
+            palette: labels.stagePalette,
+            guide: labels.stageGuide,
+          }}
         />
 
         {/* Concept Input */}
         <DimensionPanel.Textarea
-          label="컨셉 / 주제"
+          label={labels.conceptLabel}
           value={concept}
           onChange={(e) => setConcept(e.target.value)}
-          placeholder="시각적 스타일을 정의할 컨셉을 입력하세요..."
+          placeholder={labels.conceptPlaceholder}
           rows={5}
           disabled={combinedLoading || stage !== "moodboard"}
         />
@@ -485,15 +572,15 @@ Suggested Auteur: ${selectedDirection.suggested_auteur}`;
             maxSizeMB={100}
             multiple
             onUpload={setFiles}
-            label="레퍼런스 (선택)"
-            helperText="무드보드, 컬러 레퍼런스, 영상 스틸"
+            label={labels.referenceLabel}
+            helperText={labels.referenceHelper}
           />
         )}
 
         {/* Mood Selector (Stage 1 only) */}
         {stage === "moodboard" && (
           <DimensionPanel.Select
-            label="분위기"
+            label={labels.moodLabel}
             value={mood}
             onChange={(e) => setMood(e.target.value)}
             options={MOODS}
@@ -505,13 +592,19 @@ Suggested Auteur: ${selectedDirection.suggested_auteur}`;
           <SelectedDirectionCard
             direction={selectedDirection}
             onFeedback={handleFeedback}
+            labels={{
+              selectedDirection: labels.selectedDirection,
+              aiRecommended: labels.aiRecommended,
+              likeIt: labels.likeIt,
+              notGreat: labels.notGreat,
+            }}
           />
         )}
 
         {/* Medium Selector (Stage 2) */}
         {stage === "palette" && (
           <DimensionPanel.Select
-            label="미디어"
+            label={labels.mediaLabel}
             value={targetMedium}
             onChange={(e) => setTargetMedium(e.target.value)}
             options={TARGET_MEDIUMS}
@@ -520,7 +613,14 @@ Suggested Auteur: ${selectedDirection.suggested_auteur}`;
 
         {/* RAG Toggle (Stage 2) */}
         {stage === "palette" && (
-          <RagToggle useRag={useRag} onToggle={() => setUseRag(!useRag)} />
+          <RagToggle
+            useRag={useRag}
+            onToggle={() => setUseRag(!useRag)}
+            labels={{
+              ragContext: labels.ragContext,
+              ragDescription: labels.ragDescription,
+            }}
+          />
         )}
 
         {/* Quality Scores Toggle (Stage 2) */}
@@ -528,6 +628,7 @@ Suggested Auteur: ${selectedDirection.suggested_auteur}`;
           <QualityScoresToggle
             showQualityScores={showQualityScores}
             onToggle={() => setShowQualityScores(!showQualityScores)}
+            qualityScoresLabel={labels.qualityScores}
           />
         )}
 
@@ -537,10 +638,10 @@ Suggested Auteur: ${selectedDirection.suggested_auteur}`;
             onClick={handleGenerateMoodboard}
             disabled={combinedLoading || !concept.trim()}
             loading={isUqslLoading}
-            loadingText={uqslMessage || "영감 찾는 중..."}
+            loadingText={uqslMessage || labels.findingInspiration}
             icon={<Sparkles className="w-4 h-4" />}
           >
-            비주얼 방향 탐색 (UQSL)
+            {labels.exploreDirections}
           </DimensionPanel.GenerateButton>
         )}
 
@@ -549,10 +650,10 @@ Suggested Auteur: ${selectedDirection.suggested_auteur}`;
             onClick={handleGenerateGuide}
             disabled={isLoading || !selectedDirection}
             loading={isLoading}
-            loadingText="스타일 가이드 생성 중..."
+            loadingText={labels.generatingStyleGuide}
             icon={<Wand2 className="w-4 h-4" />}
           >
-            스타일 가이드 완성
+            {labels.completeStyleGuide}
           </DimensionPanel.GenerateButton>
         )}
 
@@ -567,7 +668,7 @@ Suggested Auteur: ${selectedDirection.suggested_auteur}`;
             }}
             className="w-full py-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-white border border-slate-200 dark:border-white/10 transition-all font-medium"
           >
-            ◀ 다른 방향 선택하기
+            {`\u25C0 ${labels.selectOtherDirection}`}
           </button>
         )}
 
@@ -591,7 +692,7 @@ Suggested Auteur: ${selectedDirection.suggested_auteur}`;
         {/* Credit Cost */}
         {!byokKey && (
           <div className="text-xs text-slate-500 dark:text-white/40 text-center mt-4">
-            예상 비용: {stage === "moodboard" ? "5" : CREDIT_COST} 크레딧
+            {labels.estimatedCost(stage === "moodboard" ? "5" : CREDIT_COST)}
           </div>
         )}
       </DimensionPanel.Sidebar>
@@ -599,7 +700,14 @@ Suggested Auteur: ${selectedDirection.suggested_auteur}`;
       <DimensionPanel.Content>
         {/* Stage 1: Moodboard (Initial State) */}
         {stage === "moodboard" && !isUqslLoading && (
-          <MoodboardEmptyState />
+          <MoodboardEmptyState
+            labels={{
+              title: labels.emptyStateTitle,
+              description: labels.emptyStateDescription,
+              highlight: labels.emptyStateHighlight,
+              suffix: labels.emptyStateSuffix,
+            }}
+          />
         )}
 
         {/* UQSL Streaming Loading State */}
@@ -610,6 +718,7 @@ Suggested Auteur: ${selectedDirection.suggested_auteur}`;
             candidates={uqslCandidates}
             qualityScores={uqslQualityScores}
             onCancel={abortUQSL}
+            cancelLabel={labels.cancel}
           />
         )}
 
@@ -634,6 +743,12 @@ Suggested Auteur: ${selectedDirection.suggested_auteur}`;
             onSelectDirection={handleSelectDirection}
             recommendedIdx={recommendedIdx}
             showQualityScores={showQualityScores}
+            labels={{
+              selectVisualDirection: labels.selectVisualDirection,
+              aiRecommendedDirection: labels.aiRecommendedDirection,
+              recommended: labels.recommended,
+              suggestedDirector: labels.suggestedDirector,
+            }}
           />
         )}
 
@@ -645,6 +760,11 @@ Suggested Auteur: ${selectedDirection.suggested_auteur}`;
             onCopy={handleCopy}
             onExportJson={handleExportJson}
             isOptimistic={!!optimisticResult && !result?.success}
+            labels={{
+              generatingGuide: labels.generatingGuide,
+              exportJson: labels.exportJson,
+              avoidElements: labels.avoidElements,
+            }}
           />
         )}
 
@@ -653,6 +773,12 @@ Suggested Auteur: ${selectedDirection.suggested_auteur}`;
           <FeedbackSection
             sessionId={sessionId}
             onFeedback={handleFeedback}
+            labels={{
+              feedbackSaved: labels.feedbackSaved,
+              satisfiedWithResults: labels.satisfiedWithResults,
+              likeIt: labels.likeIt,
+              notGreat: labels.notGreat,
+            }}
           />
         )}
 
@@ -680,23 +806,29 @@ function StageIndicator({
   themeColor,
   uqslProgress,
   uqslMessage,
+  labels,
 }: {
   stage: Stage;
   themeColor: string;
   uqslProgress?: number;
   uqslMessage?: string;
+  labels: {
+    inspiration: string;
+    palette: string;
+    guide: string;
+  };
 }) {
   const activeClass = `text-${themeColor}-400 font-bold`;
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between text-xs text-slate-500 dark:text-white/50">
         <span className={stage === "moodboard" ? activeClass : ""}>
-          1. 영감 {stage === "moodboard" && uqslProgress ? `(${uqslProgress}%)` : ""}
+          1. {labels.inspiration} {stage === "moodboard" && uqslProgress ? `(${uqslProgress}%)` : ""}
         </span>
         <span>→</span>
-        <span className={stage === "palette" ? activeClass : ""}>2. 팔레트</span>
+        <span className={stage === "palette" ? activeClass : ""}>2. {labels.palette}</span>
         <span>→</span>
-        <span className={stage === "guide" ? activeClass : ""}>3. 가이드</span>
+        <span className={stage === "guide" ? activeClass : ""}>3. {labels.guide}</span>
       </div>
       {uqslMessage && (
         <div className="text-xs text-fuchsia-400 dark:text-fuchsia-300 animate-pulse">
@@ -764,12 +896,14 @@ function UQSLStreamingState({
   candidates,
   qualityScores,
   onCancel,
+  cancelLabel,
 }: {
   progress: number;
   message: string;
   candidates: Array<{ idx: number; content: string }>;
   qualityScores: Array<{ weighted_score?: number; total_score: number }>;
   onCancel: () => void;
+  cancelLabel: string;
 }) {
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500">
@@ -824,7 +958,7 @@ function UQSLStreamingState({
           onClick={onCancel}
           className="px-4 py-2 text-sm text-slate-500 dark:text-white/50 hover:text-slate-700 dark:hover:text-white border border-slate-200 dark:border-white/10 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
         >
-          취소
+          {cancelLabel}
         </button>
       </div>
     </div>
@@ -834,16 +968,23 @@ function UQSLStreamingState({
 function SelectedDirectionCard({
   direction,
   onFeedback,
+  labels,
 }: {
   direction: VisualDirection;
   onFeedback: (type: "positive" | "negative") => void;
+  labels: {
+    selectedDirection: string;
+    aiRecommended: string;
+    likeIt: string;
+    notGreat: string;
+  };
 }) {
   return (
     <div className="p-4 bg-fuchsia-50 dark:bg-fuchsia-500/10 border border-fuchsia-200 dark:border-fuchsia-500/20 rounded-xl space-y-3">
       <div className="flex items-start justify-between">
         <div>
           <h4 className="text-fuchsia-600 dark:text-fuchsia-400 text-sm font-bold">
-            선택된 방향
+            {labels.selectedDirection}
           </h4>
           <p className="text-slate-900 dark:text-white font-medium text-sm mt-1">
             {direction.title}
@@ -851,7 +992,7 @@ function SelectedDirectionCard({
         </div>
         {direction.isRecommended && (
           <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 font-medium">
-            AI 추천
+            {labels.aiRecommended}
           </span>
         )}
       </div>
@@ -883,13 +1024,13 @@ function SelectedDirectionCard({
           onClick={() => onFeedback("positive")}
           className="flex-1 py-1.5 text-xs rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
         >
-          👍 좋아요
+          👍 {labels.likeIt}
         </button>
         <button
           onClick={() => onFeedback("negative")}
           className="flex-1 py-1.5 text-xs rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 transition-colors"
         >
-          👎 아쉬워요
+          👎 {labels.notGreat}
         </button>
       </div>
     </div>
@@ -899,18 +1040,23 @@ function SelectedDirectionCard({
 function RagToggle({
   useRag,
   onToggle,
+  labels,
 }: {
   useRag: boolean;
   onToggle: () => void;
+  labels: {
+    ragContext: string;
+    ragDescription: string;
+  };
 }) {
   return (
     <div className="flex items-center justify-between p-4 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10">
       <div>
         <div className="text-sm font-medium text-slate-900 dark:text-zinc-300">
-          RAG 컨텍스트
+          {labels.ragContext}
         </div>
         <div className="text-[10px] text-slate-500 dark:text-zinc-500">
-          레퍼런스 검색 활성화
+          {labels.ragDescription}
         </div>
       </div>
       <button
@@ -932,9 +1078,11 @@ function RagToggle({
 function QualityScoresToggle({
   showQualityScores,
   onToggle,
+  qualityScoresLabel,
 }: {
   showQualityScores: boolean;
   onToggle: () => void;
+  qualityScoresLabel: string;
 }) {
   return (
     <div className="flex items-center justify-between p-4 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10">
@@ -944,7 +1092,7 @@ function QualityScoresToggle({
           Quality Scores
         </div>
         <div className="text-[10px] text-slate-500 dark:text-zinc-500">
-          5차원 품질 점수 표시
+          {qualityScoresLabel}
         </div>
       </div>
       <button
@@ -963,7 +1111,16 @@ function QualityScoresToggle({
   );
 }
 
-function MoodboardEmptyState() {
+function MoodboardEmptyState({
+  labels,
+}: {
+  labels: {
+    title: string;
+    description: string;
+    highlight: string;
+    suffix: string;
+  };
+}) {
   return (
     <div className="flex flex-col items-center justify-center h-full text-slate-500 dark:text-zinc-500 space-y-8">
       <div className="relative group">
@@ -974,15 +1131,15 @@ function MoodboardEmptyState() {
       </div>
       <div className="text-center space-y-3">
         <h3 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-          Visual Identity Workshop
+          {labels.title}
         </h3>
         <p className="text-sm text-slate-500 dark:text-[var(--fg-muted)] max-w-xs mx-auto font-light leading-relaxed">
-          컨셉을 입력하면 AI가
+          {labels.description}
           <br />
           <span className="text-fuchsia-600 dark:text-fuchsia-400 font-medium">
-            UQSL로 3가지 시각적 방향
+            {labels.highlight}
           </span>
-          을 제안합니다.
+          {labels.suffix}
         </p>
         <div className="flex items-center justify-center gap-4 pt-4 text-[10px] text-slate-400 dark:text-white/30">
           <span className="flex items-center gap-1">
@@ -1005,23 +1162,30 @@ function PaletteLabStageUQSL({
   onSelectDirection,
   recommendedIdx,
   showQualityScores,
+  labels,
 }: {
   directions: VisualDirection[];
   selectedDirection: VisualDirection | null;
   onSelectDirection: (dir: VisualDirection) => void;
   recommendedIdx: number | null;
   showQualityScores: boolean;
+  labels: {
+    selectVisualDirection: string;
+    aiRecommendedDirection: (idx: number) => string;
+    recommended: string;
+    suggestedDirector: string;
+  };
 }) {
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <Eye className="w-5 h-5 text-fuchsia-500 dark:text-fuchsia-400" />
-          시각적 방향을 선택하세요
+          {labels.selectVisualDirection}
         </h3>
         {recommendedIdx !== null && (
           <span className="text-xs px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-            AI 추천: Direction {recommendedIdx + 1}
+            {labels.aiRecommendedDirection(recommendedIdx)}
           </span>
         )}
       </div>
@@ -1044,7 +1208,7 @@ function PaletteLabStageUQSL({
             {dir.isRecommended && (
               <div className="absolute top-3 right-3 z-10">
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 font-medium animate-pulse">
-                  ⭐ 추천
+                  ⭐ {labels.recommended}
                 </span>
               </div>
             )}
@@ -1095,7 +1259,7 @@ function PaletteLabStageUQSL({
             {/* Auteur */}
             <div className="pt-3 border-t border-slate-200 dark:border-white/5">
               <p className="text-xs text-slate-400 dark:text-white/40 italic">
-                추천 감독: {dir.suggested_auteur}
+                {labels.suggestedDirector} {dir.suggested_auteur}
               </p>
             </div>
           </button>
@@ -1107,6 +1271,7 @@ function PaletteLabStageUQSL({
 
 function QualityScoresMini({
   scores,
+  labels,
 }: {
   scores: {
     groundedness: number;
@@ -1116,13 +1281,28 @@ function QualityScoresMini({
     safety: number;
     total_score: number;
   };
+  labels?: {
+    groundedness: string;
+    relevance: string;
+    coherence: string;
+    creativity: string;
+    safety: string;
+  };
 }) {
+  const defaultLabels = {
+    groundedness: "근거",
+    relevance: "관련",
+    coherence: "일관",
+    creativity: "창의",
+    safety: "안전",
+  };
+  const l = labels || defaultLabels;
   const dimensions = [
-    { key: "groundedness", label: "근거", color: "bg-emerald-500" },
-    { key: "relevance", label: "관련", color: "bg-cyan-500" },
-    { key: "coherence", label: "일관", color: "bg-violet-500" },
-    { key: "creativity", label: "창의", color: "bg-amber-500" },
-    { key: "safety", label: "안전", color: "bg-rose-500" },
+    { key: "groundedness", label: l.groundedness, color: "bg-emerald-500" },
+    { key: "relevance", label: l.relevance, color: "bg-cyan-500" },
+    { key: "coherence", label: l.coherence, color: "bg-violet-500" },
+    { key: "creativity", label: l.creativity, color: "bg-amber-500" },
+    { key: "safety", label: l.safety, color: "bg-rose-500" },
   ] as const;
 
   return (
@@ -1157,11 +1337,25 @@ function QualityScoresMini({
 function FeedbackSection({
   sessionId,
   onFeedback,
+  labels,
 }: {
   sessionId: string | null;
   onFeedback: (type: "positive" | "negative") => void;
+  labels?: {
+    feedbackSaved: string;
+    satisfiedWithResults: string;
+    likeIt: string;
+    notGreat: string;
+  };
 }) {
   const [submitted, setSubmitted] = useState(false);
+  const defaultLabels = {
+    feedbackSaved: "피드백이 저장되었습니다",
+    satisfiedWithResults: "결과가 만족스러우셨나요?",
+    likeIt: "좋아요",
+    notGreat: "아쉬워요",
+  };
+  const l = labels || defaultLabels;
 
   const handleFeedback = (type: "positive" | "negative") => {
     onFeedback(type);
@@ -1172,7 +1366,7 @@ function FeedbackSection({
     return (
       <div className="flex items-center justify-center gap-2 py-4 text-sm text-emerald-500">
         <Check className="w-4 h-4" />
-        피드백이 저장되었습니다
+        {l.feedbackSaved}
       </div>
     );
   }
@@ -1180,19 +1374,19 @@ function FeedbackSection({
   return (
     <div className="flex items-center justify-center gap-4 py-6 border-t border-slate-200 dark:border-white/10">
       <span className="text-sm text-slate-500 dark:text-white/50">
-        결과가 만족스러우셨나요?
+        {l.satisfiedWithResults}
       </span>
       <button
         onClick={() => handleFeedback("positive")}
         className="px-4 py-2 text-sm rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
       >
-        👍 좋아요
+        👍 {l.likeIt}
       </button>
       <button
         onClick={() => handleFeedback("negative")}
         className="px-4 py-2 text-sm rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 transition-colors"
       >
-        👎 아쉬워요
+        👎 {l.notGreat}
       </button>
     </div>
   );
@@ -1204,13 +1398,26 @@ function StyleGuideResult({
   onCopy,
   onExportJson,
   isOptimistic,
+  labels,
 }: {
   result: AestheticResult;
   copiedField: string | null;
   onCopy: (text: string, field: string) => void;
   onExportJson: () => void;
   isOptimistic: boolean;
+  labels?: {
+    generatingGuide: string;
+    exportJson: string;
+    avoidElements: string;
+  };
 }) {
+  const defaultLabels = {
+    generatingGuide: "스타일 가이드 생성 중...",
+    exportJson: "JSON 내보내기",
+    avoidElements: "피해야 할 요소",
+  };
+  const l = labels || defaultLabels;
+
   return (
     <div
       className={`max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10 ${
@@ -1222,7 +1429,7 @@ function StyleGuideResult({
         <div className="flex items-center justify-center gap-2 py-2 px-4 bg-fuchsia-500/10 rounded-lg border border-fuchsia-500/20">
           <div className="w-3 h-3 rounded-full bg-fuchsia-500 animate-pulse" />
           <span className="text-sm text-fuchsia-600 dark:text-fuchsia-300">
-            스타일 가이드 생성 중...
+            {l.generatingGuide}
           </span>
         </div>
       )}
@@ -1235,7 +1442,7 @@ function StyleGuideResult({
             className="px-4 py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg flex items-center gap-2 text-sm text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white transition-all"
           >
             <Download className="w-4 h-4" />
-            JSON 내보내기
+            {l.exportJson}
           </button>
         </div>
       )}
@@ -1456,7 +1663,7 @@ function StyleGuideResult({
       {result.avoid_elements.length > 0 && (
         <div className="p-6 bg-rose-50 dark:bg-rose-500/5 border border-rose-200 dark:border-rose-500/20 rounded-2xl">
           <h3 className="text-sm font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider mb-4">
-            피해야 할 요소
+            {l.avoidElements}
           </h3>
           <ul className="space-y-2">
             {result.avoid_elements.map((elem, i) => (
