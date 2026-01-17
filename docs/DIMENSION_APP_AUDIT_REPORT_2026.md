@@ -1,8 +1,8 @@
 # Vivid Dimension Apps - Comprehensive Audit Report
 
-> **Version**: 1.0
+> **Version**: 2.0
 > **Date**: 2026-01-18
-> **Purpose**: AI MV 전문가 워크플로우 vs Vivid 앱 비교 분석 및 2026 하드닝 권고
+> **Purpose**: AI MV 전문가 워크플로우 vs Vivid 앱 비교 분석 + 2026 백엔드 구현 가이드
 
 ---
 
@@ -700,6 +700,1069 @@ function ComparisonView({ candidates, onSelect }: ComparisonViewProps) {
 
 ---
 
+## Part 7: Backend Implementation Guide (2026 Best Practices)
+
+> **Based on 2026 Web Research**: FastAPI LLM patterns, Veo 3.1 API, Kling 2.6 API, Suno API
+
+---
+
+### 7.1 FastAPI 2026 Best Practices for AI Services
+
+#### 7.1.1 Project Structure
+
+```
+backend/app/
+├── services/
+│   ├── ai/
+│   │   ├── __init__.py
+│   │   ├── base.py              # AIServiceBase ABC
+│   │   ├── veo_service.py       # Veo 3.1 integration
+│   │   ├── kling_service.py     # Kling 2.6 integration
+│   │   ├── suno_service.py      # Suno music integration
+│   │   ├── style_extractor.py   # Style extraction service
+│   │   └── reference_analyzer.py # Reference analysis service
+│   └── ...
+├── routers/
+│   └── dimension/
+│       ├── _base.py             # Common utilities
+│       ├── reference_decoder.py  # 4D - Enhanced
+│       ├── visual_realizer.py    # 3D - Style/Scene split
+│       ├── veo.py               # VEO - First/Last frame
+│       ├── kling.py             # Kling - Start/End frame
+│       └── suno.py              # Suno - Cover/Remix
+└── schemas/
+    └── ai/
+        ├── video.py             # Video generation schemas
+        ├── music.py             # Music generation schemas
+        └── style.py             # Style extraction schemas
+```
+
+#### 7.1.2 AI Service Base Class
+
+```python
+# backend/app/services/ai/base.py
+from abc import ABC, abstractmethod
+from typing import Generic, TypeVar, Optional
+from pydantic import BaseModel
+import httpx
+import asyncio
+from contextlib import asynccontextmanager
+
+T = TypeVar("T", bound=BaseModel)
+R = TypeVar("R", bound=BaseModel)
+
+class AIServiceBase(ABC, Generic[T, R]):
+    """Base class for all AI service integrations (2026 pattern)."""
+
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        timeout: float = 300.0,  # 5 minutes for video generation
+        max_retries: int = 3,
+    ):
+        self.base_url = base_url
+        self.api_key = api_key
+        self.timeout = timeout
+        self.max_retries = max_retries
+        self._client: Optional[httpx.AsyncClient] = None
+
+    @asynccontextmanager
+    async def get_client(self):
+        """Async context manager for httpx client reuse."""
+        if self._client is None:
+            self._client = httpx.AsyncClient(
+                base_url=self.base_url,
+                timeout=httpx.Timeout(self.timeout),
+                headers={"Authorization": f"Bearer {self.api_key}"}
+            )
+        try:
+            yield self._client
+        finally:
+            pass  # Keep client alive for reuse
+
+    async def close(self):
+        """Close the client connection."""
+        if self._client:
+            await self._client.aclose()
+            self._client = None
+
+    @abstractmethod
+    async def generate(self, request: T) -> R:
+        """Generate content - implemented by subclasses."""
+        pass
+
+    async def poll_operation(
+        self,
+        operation_id: str,
+        poll_interval: float = 15.0,
+        max_wait: float = 600.0,
+    ) -> dict:
+        """Poll long-running operation until completion."""
+        elapsed = 0.0
+        while elapsed < max_wait:
+            async with self.get_client() as client:
+                response = await client.get(f"/operations/{operation_id}")
+                data = response.json()
+
+                if data.get("done"):
+                    return data.get("response", data)
+
+                await asyncio.sleep(poll_interval)
+                elapsed += poll_interval
+
+        raise TimeoutError(f"Operation {operation_id} timed out after {max_wait}s")
+```
+
+#### 7.1.3 Streaming Response Pattern (SSE)
+
+```python
+# backend/app/routers/dimension/_base.py
+from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
+import json
+import asyncio
+
+async def stream_generation_progress(
+    operation_id: str,
+    service: AIServiceBase,
+    poll_interval: float = 5.0,
+):
+    """SSE streaming for long-running AI operations."""
+    yield f"data: {json.dumps({'type': 'started', 'operation_id': operation_id})}\n\n"
+
+    elapsed = 0.0
+    max_wait = 600.0
+
+    while elapsed < max_wait:
+        try:
+            status = await service.get_operation_status(operation_id)
+
+            if status.get("done"):
+                yield f"data: {json.dumps({'type': 'completed', 'result': status.get('response')})}\n\n"
+                return
+
+            # Progress update
+            progress = status.get("progress", 0)
+            yield f"data: {json.dumps({'type': 'progress', 'progress': progress})}\n\n"
+
+            await asyncio.sleep(poll_interval)
+            elapsed += poll_interval
+
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+            return
+
+    yield f"data: {json.dumps({'type': 'timeout'})}\n\n"
+```
+
+---
+
+### 7.2 Veo 3.1 First/Last Frame API Integration
+
+> **2026 Discovery**: Veo 3.1 supports `first_frame` and `last_frame` parameters for interpolation!
+
+#### 7.2.1 Veo Service Implementation
+
+```python
+# backend/app/services/ai/veo_service.py
+from google import genai
+from google.genai import types
+from pydantic import BaseModel
+from typing import Optional
+import time
+import base64
+
+class VeoGenerationRequest(BaseModel):
+    prompt: str
+    first_frame: Optional[str] = None   # base64 encoded image
+    last_frame: Optional[str] = None    # base64 encoded image
+    aspect_ratio: str = "16:9"
+    resolution: str = "720p"
+    duration_seconds: int = 8
+    seed: Optional[int] = None
+
+class VeoGenerationResponse(BaseModel):
+    video_url: str
+    duration: float
+    operation_id: str
+
+class VeoService:
+    """Veo 3.1 Service with First/Last Frame Support (2026)."""
+
+    def __init__(self):
+        self.client = genai.Client()
+        self.model = "veo-3.1-generate-preview"
+
+    async def generate_video(
+        self,
+        request: VeoGenerationRequest,
+    ) -> VeoGenerationResponse:
+        """Generate video with optional first/last frame interpolation."""
+
+        # Build config
+        config = types.GenerateVideosConfig(
+            aspect_ratio=request.aspect_ratio,
+            resolution=request.resolution,
+            duration_seconds=request.duration_seconds,
+        )
+
+        # Add last frame if provided (for interpolation)
+        if request.last_frame:
+            last_image = self._decode_image(request.last_frame)
+            config.last_frame = last_image
+
+        # Build generation params
+        gen_params = {
+            "model": self.model,
+            "prompt": request.prompt,
+            "config": config,
+        }
+
+        # Add first frame if provided
+        if request.first_frame:
+            first_image = self._decode_image(request.first_frame)
+            gen_params["image"] = first_image
+
+        # Start generation (async operation)
+        operation = self.client.models.generate_videos(**gen_params)
+
+        # Poll until complete
+        while not operation.done:
+            time.sleep(15)
+            operation = self.client.operations.get(operation)
+
+        # Get result
+        video = operation.response.generated_videos[0]
+
+        return VeoGenerationResponse(
+            video_url=video.video.uri,
+            duration=request.duration_seconds,
+            operation_id=str(operation.name),
+        )
+
+    def _decode_image(self, base64_str: str) -> types.Image:
+        """Decode base64 image for API."""
+        image_bytes = base64.b64decode(base64_str)
+        return types.Image(image_bytes=image_bytes)
+```
+
+#### 7.2.2 VEO Router with First/Last Frame
+
+```python
+# backend/app/routers/dimension/veo.py
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi.responses import StreamingResponse
+from app.services.ai.veo_service import VeoService, VeoGenerationRequest
+from app.services.credit_service import CreditService
+from app.auth import get_current_user
+import base64
+
+router = APIRouter(prefix="/veo", tags=["VEO Video"])
+
+@router.post("/generate")
+async def generate_video(
+    prompt: str = Form(...),
+    first_frame: Optional[UploadFile] = File(None),
+    last_frame: Optional[UploadFile] = File(None),
+    aspect_ratio: str = Form("16:9"),
+    duration: int = Form(8),
+    user_id: str = Depends(get_current_user),
+    credit_service: CreditService = Depends(),
+    veo_service: VeoService = Depends(),
+):
+    """Generate video with optional first/last frame for character consistency."""
+
+    # Check credits
+    cost = 50 if duration <= 8 else 100
+    await credit_service.check_and_reserve(user_id, cost)
+
+    try:
+        # Encode frames if provided
+        first_frame_b64 = None
+        last_frame_b64 = None
+
+        if first_frame:
+            content = await first_frame.read()
+            first_frame_b64 = base64.b64encode(content).decode()
+
+        if last_frame:
+            content = await last_frame.read()
+            last_frame_b64 = base64.b64encode(content).decode()
+
+        request = VeoGenerationRequest(
+            prompt=prompt,
+            first_frame=first_frame_b64,
+            last_frame=last_frame_b64,
+            aspect_ratio=aspect_ratio,
+            duration_seconds=duration,
+        )
+
+        result = await veo_service.generate_video(request)
+        await credit_service.commit(user_id, cost)
+
+        return {
+            "success": True,
+            "video_url": result.video_url,
+            "evidence_refs": [f"db:veo_generations:{result.operation_id}"],
+        }
+
+    except Exception as e:
+        await credit_service.refund(user_id, cost)
+        raise HTTPException(status_code=500, detail=str(e))
+```
+
+---
+
+### 7.3 Kling 2.6 Start/End Frame Integration
+
+> **2026 Discovery**: Kling 2.6 has native Start/End Frame support via fal.ai API
+
+#### 7.3.1 Kling Service Implementation
+
+```python
+# backend/app/services/ai/kling_service.py
+import httpx
+from pydantic import BaseModel
+from typing import Optional
+import asyncio
+
+class KlingGenerationRequest(BaseModel):
+    prompt: str
+    start_image_url: Optional[str] = None   # URL or base64
+    end_image_url: Optional[str] = None     # URL or base64 - KEY FEATURE!
+    duration: str = "5"                      # "5" or "10" seconds
+    negative_prompt: str = "blur, distort, low quality"
+    generate_audio: bool = True              # Native audio in 2.6!
+    aspect_ratio: str = "16:9"
+
+class KlingService:
+    """Kling 2.6 Service via fal.ai (2026)."""
+
+    FAL_API_URL = "https://fal.run/fal-ai/kling-video/v2.6/pro/image-to-video"
+
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+
+    async def generate_video(
+        self,
+        request: KlingGenerationRequest,
+    ) -> dict:
+        """Generate video with Start/End Frame interpolation."""
+
+        payload = {
+            "prompt": request.prompt,
+            "duration": request.duration,
+            "negative_prompt": request.negative_prompt,
+            "generate_audio": request.generate_audio,
+        }
+
+        # Add start frame (image-to-video)
+        if request.start_image_url:
+            payload["start_image_url"] = request.start_image_url
+
+        # Add end frame (KEY: character consistency!)
+        if request.end_image_url:
+            payload["end_image_url"] = request.end_image_url
+
+        async with httpx.AsyncClient() as client:
+            # Submit request
+            response = await client.post(
+                self.FAL_API_URL,
+                json=payload,
+                headers={"Authorization": f"Key {self.api_key}"},
+                timeout=30.0,
+            )
+
+            if response.status_code != 200:
+                raise Exception(f"Kling API error: {response.text}")
+
+            result = response.json()
+
+            # If queue-based, poll for result
+            if "request_id" in result:
+                return await self._poll_result(client, result["request_id"])
+
+            return result
+
+    async def _poll_result(
+        self,
+        client: httpx.AsyncClient,
+        request_id: str,
+        max_attempts: int = 40,
+    ) -> dict:
+        """Poll for result (Kling takes ~2-5 minutes)."""
+
+        status_url = f"https://fal.run/fal-ai/kling-video/v2.6/pro/requests/{request_id}/status"
+
+        for _ in range(max_attempts):
+            response = await client.get(
+                status_url,
+                headers={"Authorization": f"Key {self.api_key}"},
+            )
+
+            data = response.json()
+
+            if data.get("status") == "COMPLETED":
+                return data.get("response", data)
+
+            if data.get("status") == "FAILED":
+                raise Exception(f"Generation failed: {data.get('error')}")
+
+            await asyncio.sleep(15)  # 15 seconds between polls
+
+        raise TimeoutError("Kling generation timed out")
+```
+
+#### 7.3.2 Kling Router
+
+```python
+# backend/app/routers/dimension/kling.py
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from app.services.ai.kling_service import KlingService, KlingGenerationRequest
+from app.services.storage_service import StorageService
+from app.auth import get_current_user
+
+router = APIRouter(prefix="/kling", tags=["Kling Video"])
+
+@router.post("/generate")
+async def generate_kling_video(
+    prompt: str = Form(...),
+    start_frame: Optional[UploadFile] = File(None),
+    end_frame: Optional[UploadFile] = File(None),
+    duration: str = Form("5"),
+    generate_audio: bool = Form(True),
+    user_id: str = Depends(get_current_user),
+    kling_service: KlingService = Depends(),
+    storage: StorageService = Depends(),
+):
+    """Generate Kling video with Start/End Frame for perfect character consistency."""
+
+    # Upload frames to get URLs
+    start_url = None
+    end_url = None
+
+    if start_frame:
+        start_url = await storage.upload_temp(await start_frame.read(), "image/jpeg")
+
+    if end_frame:
+        end_url = await storage.upload_temp(await end_frame.read(), "image/jpeg")
+
+    request = KlingGenerationRequest(
+        prompt=prompt,
+        start_image_url=start_url,
+        end_image_url=end_url,
+        duration=duration,
+        generate_audio=generate_audio,
+    )
+
+    result = await kling_service.generate_video(request)
+
+    return {
+        "success": True,
+        "video": result.get("video", {}).get("url"),
+        "audio_included": generate_audio,
+        "evidence_refs": [f"db:kling_generations:{result.get('id')}"],
+    }
+```
+
+---
+
+### 7.4 Suno API Integration (Music Generation)
+
+> **2026 Note**: Suno has no official API. Use sunoapi.org or AIMLAPI for integration.
+
+#### 7.4.1 Suno Service Implementation
+
+```python
+# backend/app/services/ai/suno_service.py
+import httpx
+from pydantic import BaseModel
+from typing import Optional, Literal
+from enum import Enum
+import asyncio
+
+class SunoMode(str, Enum):
+    CREATE = "create"
+    COVER = "cover"       # NEW: Cover generation
+    REMIX = "remix"       # NEW: Remix generation
+    EXTEND = "extend"     # Extend existing track
+
+class SunoGenerationRequest(BaseModel):
+    prompt: str
+    mode: SunoMode = SunoMode.CREATE
+    reference_url: Optional[str] = None    # For cover/remix
+    model: str = "chirp-v3-5"              # or "chirp-v4", "chirp-v5"
+    instrumental: bool = False
+    custom_lyrics: Optional[str] = None
+    style_of_music: Optional[str] = None
+    persona: Optional[str] = None          # NEW: Saved style persona
+
+class SunoService:
+    """Suno Music Service via sunoapi.org (2026)."""
+
+    BASE_URL = "https://api.sunoapi.org/api/v1"
+
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+
+    async def generate_music(
+        self,
+        request: SunoGenerationRequest,
+    ) -> dict:
+        """Generate music with various modes."""
+
+        payload = {
+            "prompt": request.prompt,
+            "model": request.model,
+            "instrumental": request.instrumental,
+        }
+
+        if request.custom_lyrics:
+            payload["lyrics"] = request.custom_lyrics
+
+        if request.style_of_music:
+            payload["style"] = request.style_of_music
+
+        # Mode-specific handling
+        if request.mode == SunoMode.COVER:
+            payload["cover_url"] = request.reference_url
+            endpoint = "/cover"
+        elif request.mode == SunoMode.REMIX:
+            payload["remix_url"] = request.reference_url
+            endpoint = "/remix"
+        elif request.mode == SunoMode.EXTEND:
+            payload["extend_from"] = request.reference_url
+            endpoint = "/extend"
+        else:
+            endpoint = "/generate"
+
+        async with httpx.AsyncClient() as client:
+            # Submit generation
+            response = await client.post(
+                f"{self.BASE_URL}{endpoint}",
+                json=payload,
+                headers={"Authorization": f"Bearer {self.api_key}"},
+                timeout=30.0,
+            )
+
+            data = response.json()
+
+            if data.get("code") != 200:
+                raise Exception(f"Suno API error: {data.get('msg')}")
+
+            task_id = data.get("data", {}).get("taskId")
+
+            # Poll for result (music generation takes 30-60s)
+            return await self._poll_result(client, task_id)
+
+    async def _poll_result(
+        self,
+        client: httpx.AsyncClient,
+        task_id: str,
+        max_attempts: int = 20,
+    ) -> dict:
+        """Poll for music generation result."""
+
+        for _ in range(max_attempts):
+            response = await client.get(
+                f"{self.BASE_URL}/status/{task_id}",
+                headers={"Authorization": f"Bearer {self.api_key}"},
+            )
+
+            data = response.json()
+            status = data.get("data", {}).get("status")
+
+            if status == "SUCCESS":
+                return data.get("data", {})
+
+            if status == "FAILED":
+                raise Exception(f"Music generation failed")
+
+            await asyncio.sleep(30)  # 30 seconds as recommended
+
+        raise TimeoutError("Suno generation timed out")
+
+    async def get_stems(self, song_id: str) -> dict:
+        """Download separated stems (vocals, drums, bass, etc.)."""
+
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{self.BASE_URL}/generate_stems",
+                json={"song_id": song_id},
+                headers={"Authorization": f"Bearer {self.api_key}"},
+            )
+
+            return response.json()
+```
+
+#### 7.4.2 Suno Router with Cover/Remix
+
+```python
+# backend/app/routers/dimension/suno.py
+from fastapi import APIRouter, Depends, HTTPException, Form
+from app.services.ai.suno_service import SunoService, SunoGenerationRequest, SunoMode
+from app.auth import get_current_user
+
+router = APIRouter(prefix="/suno", tags=["Suno Music"])
+
+@router.post("/generate")
+async def generate_music(
+    prompt: str = Form(...),
+    mode: SunoMode = Form(SunoMode.CREATE),
+    reference_url: Optional[str] = Form(None),
+    style: Optional[str] = Form(None),
+    instrumental: bool = Form(False),
+    lyrics: Optional[str] = Form(None),
+    user_id: str = Depends(get_current_user),
+    suno_service: SunoService = Depends(),
+):
+    """Generate music with Create, Cover, or Remix modes."""
+
+    request = SunoGenerationRequest(
+        prompt=prompt,
+        mode=mode,
+        reference_url=reference_url,
+        style_of_music=style,
+        instrumental=instrumental,
+        custom_lyrics=lyrics,
+    )
+
+    result = await suno_service.generate_music(request)
+
+    return {
+        "success": True,
+        "tracks": result.get("songs", []),
+        "mode": mode,
+        "evidence_refs": [f"db:suno_generations:{result.get('id')}"],
+    }
+
+@router.post("/stems/{song_id}")
+async def get_stems(
+    song_id: str,
+    user_id: str = Depends(get_current_user),
+    suno_service: SunoService = Depends(),
+):
+    """Get separated stems for a generated song."""
+
+    result = await suno_service.get_stems(song_id)
+
+    return {
+        "success": True,
+        "stems": result.get("stems", {}),
+    }
+```
+
+---
+
+### 7.5 Style Extraction Service (4D/3D Core Feature)
+
+> **Expert Insight**: "스타일 프롬프트라고 따로 둬요... 일관성을 위해서"
+
+#### 7.5.1 Style Extraction Service
+
+```python
+# backend/app/services/ai/style_extractor.py
+from pydantic import BaseModel
+from typing import List, Optional
+from app.gemini_client import GeminiClient
+import json
+
+class StyleExtractionResult(BaseModel):
+    style_tags: List[str]           # ["anime", "cel-shading", "vibrant", "high-contrast"]
+    style_prompt: str               # Reusable style prompt
+    color_palette: List[str]        # ["#FF5733", "#33FF57", ...]
+    lighting: str                   # "dramatic", "soft", "neon"
+    composition: str                # "centered", "rule-of-thirds", "symmetrical"
+    mood: str                       # "energetic", "melancholic", "mysterious"
+    camera_angle: Optional[str]     # "low-angle", "eye-level", "bird's-eye"
+    reference_artists: List[str]    # Similar known artists/styles
+
+class StyleExtractor:
+    """Extract reusable style from reference images (2026 Expert Workflow)."""
+
+    EXTRACTION_PROMPT = """Analyze this reference image and extract style information.
+
+Return a JSON object with:
+1. style_tags: List of style descriptors (anime, photorealistic, cel-shading, etc.)
+2. style_prompt: A reusable prompt that captures this exact visual style (50-100 words)
+3. color_palette: List of 5-7 dominant colors as hex codes
+4. lighting: Type of lighting (dramatic, soft, neon, natural, etc.)
+5. composition: Composition style (centered, rule-of-thirds, etc.)
+6. mood: Overall mood/atmosphere
+7. camera_angle: If applicable
+8. reference_artists: Similar known artists or styles this resembles
+
+The style_prompt should be detailed enough to recreate this visual style consistently
+across different scenes. Focus on technical aspects like rendering style, color grading,
+line work, shading technique, and atmosphere.
+
+Return ONLY valid JSON, no markdown."""
+
+    def __init__(self, gemini_client: GeminiClient):
+        self.gemini = gemini_client
+
+    async def extract_style(
+        self,
+        image_bytes: bytes,
+        additional_context: Optional[str] = None,
+    ) -> StyleExtractionResult:
+        """Extract style from reference image."""
+
+        prompt = self.EXTRACTION_PROMPT
+        if additional_context:
+            prompt += f"\n\nAdditional context: {additional_context}"
+
+        response = await self.gemini.analyze_image(
+            image_bytes=image_bytes,
+            prompt=prompt,
+            response_format="json",
+        )
+
+        # Parse JSON response
+        try:
+            data = json.loads(response)
+            return StyleExtractionResult.model_validate(data)
+        except json.JSONDecodeError:
+            # Fallback parsing
+            return self._fallback_parse(response)
+
+    async def extract_from_video_frames(
+        self,
+        video_url: str,
+        num_frames: int = 5,
+    ) -> StyleExtractionResult:
+        """Extract consistent style from video key frames."""
+
+        # Extract key frames
+        frames = await self._extract_key_frames(video_url, num_frames)
+
+        # Analyze each frame
+        results = []
+        for frame in frames:
+            result = await self.extract_style(frame)
+            results.append(result)
+
+        # Merge results (find common elements)
+        return self._merge_style_results(results)
+
+    def _merge_style_results(
+        self,
+        results: List[StyleExtractionResult],
+    ) -> StyleExtractionResult:
+        """Merge multiple style extractions into consistent result."""
+
+        # Find common style tags
+        all_tags = [set(r.style_tags) for r in results]
+        common_tags = list(set.intersection(*all_tags)) if all_tags else []
+
+        # Use first result as base, augment with common elements
+        base = results[0]
+        base.style_tags = common_tags or base.style_tags
+
+        return base
+```
+
+#### 7.5.2 Reference Analyzer Service (4D Enhancement)
+
+```python
+# backend/app/services/ai/reference_analyzer.py
+from pydantic import BaseModel
+from typing import List, Optional
+from app.services.ai.style_extractor import StyleExtractor, StyleExtractionResult
+import cv2
+import numpy as np
+from io import BytesIO
+
+class FrameAnalysis(BaseModel):
+    timestamp: float
+    description: str
+    objects: List[str]
+    actions: List[str]
+    camera_movement: Optional[str]
+
+class VideoReferenceAnalysis(BaseModel):
+    total_duration: float
+    frame_count: int
+    frames: List[FrameAnalysis]
+    style: StyleExtractionResult
+    suggested_shot_list: List[dict]
+    moodboard_images: List[str]      # Key frame URLs for moodboard
+
+class ReferenceAnalyzer:
+    """Comprehensive reference analysis (Expert Workflow Core)."""
+
+    def __init__(
+        self,
+        style_extractor: StyleExtractor,
+        gemini_client: GeminiClient,
+    ):
+        self.style_extractor = style_extractor
+        self.gemini = gemini_client
+
+    async def analyze_video_reference(
+        self,
+        video_bytes: bytes,
+        analysis_depth: str = "detailed",  # "quick", "detailed", "comprehensive"
+    ) -> VideoReferenceAnalysis:
+        """Analyze video reference frame by frame."""
+
+        # Extract key frames
+        frames, timestamps = self._extract_key_frames(
+            video_bytes,
+            num_frames=10 if analysis_depth == "quick" else 20,
+        )
+
+        # Analyze each frame
+        frame_analyses = []
+        for frame, timestamp in zip(frames, timestamps):
+            analysis = await self._analyze_frame(frame, timestamp)
+            frame_analyses.append(analysis)
+
+        # Extract overall style
+        style = await self.style_extractor.extract_style(frames[0])
+
+        # Generate shot list suggestions
+        shot_list = await self._generate_shot_list(frame_analyses)
+
+        # Select best frames for moodboard
+        moodboard = self._select_moodboard_frames(frames, frame_analyses)
+
+        return VideoReferenceAnalysis(
+            total_duration=timestamps[-1] if timestamps else 0,
+            frame_count=len(frames),
+            frames=frame_analyses,
+            style=style,
+            suggested_shot_list=shot_list,
+            moodboard_images=moodboard,
+        )
+
+    def _extract_key_frames(
+        self,
+        video_bytes: bytes,
+        num_frames: int = 10,
+    ) -> tuple[List[bytes], List[float]]:
+        """Extract key frames from video."""
+
+        # Write to temp file for OpenCV
+        import tempfile
+        with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as f:
+            f.write(video_bytes)
+            temp_path = f.name
+
+        cap = cv2.VideoCapture(temp_path)
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        fps = cap.get(cv2.CAP_PROP_FPS)
+
+        # Calculate frame intervals
+        interval = max(1, total_frames // num_frames)
+
+        frames = []
+        timestamps = []
+
+        for i in range(0, total_frames, interval):
+            cap.set(cv2.CAP_PROP_POS_FRAMES, i)
+            ret, frame = cap.read()
+
+            if ret:
+                # Encode frame as JPEG bytes
+                _, buffer = cv2.imencode(".jpg", frame)
+                frames.append(buffer.tobytes())
+                timestamps.append(i / fps)
+
+        cap.release()
+        return frames[:num_frames], timestamps[:num_frames]
+
+    async def _analyze_frame(
+        self,
+        frame_bytes: bytes,
+        timestamp: float,
+    ) -> FrameAnalysis:
+        """Analyze single frame."""
+
+        response = await self.gemini.analyze_image(
+            image_bytes=frame_bytes,
+            prompt="""Analyze this video frame and return JSON:
+            {
+                "description": "Brief scene description",
+                "objects": ["list", "of", "objects"],
+                "actions": ["list", "of", "actions"],
+                "camera_movement": "pan/tilt/zoom/static/etc or null"
+            }""",
+        )
+
+        data = json.loads(response)
+        data["timestamp"] = timestamp
+        return FrameAnalysis.model_validate(data)
+
+    async def _generate_shot_list(
+        self,
+        frame_analyses: List[FrameAnalysis],
+    ) -> List[dict]:
+        """Generate shot list from frame analyses."""
+
+        # Group similar frames into shots
+        shots = []
+        current_shot = {"frames": [], "start": 0}
+
+        for i, frame in enumerate(frame_analyses):
+            if i == 0:
+                current_shot["frames"].append(frame)
+                continue
+
+            # Check if scene changed
+            prev = frame_analyses[i-1]
+            if self._is_scene_change(prev, frame):
+                current_shot["end"] = prev.timestamp
+                shots.append(self._create_shot_entry(current_shot))
+                current_shot = {"frames": [frame], "start": frame.timestamp}
+            else:
+                current_shot["frames"].append(frame)
+
+        # Add last shot
+        if current_shot["frames"]:
+            current_shot["end"] = frame_analyses[-1].timestamp
+            shots.append(self._create_shot_entry(current_shot))
+
+        return shots
+```
+
+---
+
+### 7.6 Multi-Model Router Pattern
+
+> **2026 Best Practice**: Route to different AI models based on task complexity and cost
+
+```python
+# backend/app/services/ai/model_router.py
+from typing import Literal, Optional
+from pydantic import BaseModel
+import os
+
+class ModelRouter:
+    """Route AI requests to appropriate models based on task."""
+
+    # Video model tiers
+    VIDEO_MODELS = {
+        "fast": "veo-3.1-generate-preview",      # Fast, lower quality
+        "balanced": "kling-video@2.6-pro",        # Good quality, reasonable speed
+        "premium": "sora-2",                       # Best quality, slow
+    }
+
+    # Image model tiers
+    IMAGE_MODELS = {
+        "fast": "gemini-2.5-flash-image",
+        "balanced": "flux-2-pro",
+        "premium": "dall-e-3",
+    }
+
+    @classmethod
+    def select_video_model(
+        cls,
+        task_type: str,
+        priority: Literal["speed", "quality", "cost"] = "balanced",
+        has_reference_frames: bool = False,
+    ) -> str:
+        """Select appropriate video model for task."""
+
+        # If using Start/End frames, prefer Kling (best support)
+        if has_reference_frames and priority != "premium":
+            return cls.VIDEO_MODELS["balanced"]  # Kling
+
+        if priority == "speed":
+            return cls.VIDEO_MODELS["fast"]
+        elif priority == "premium":
+            return cls.VIDEO_MODELS["premium"]
+        else:
+            return cls.VIDEO_MODELS["balanced"]
+
+    @classmethod
+    def estimate_cost(cls, model: str, duration: int) -> int:
+        """Estimate credit cost for generation."""
+
+        costs = {
+            "veo-3.1-generate-preview": 50,
+            "kling-video@2.6-pro": 80,
+            "sora-2": 150,
+        }
+
+        base_cost = costs.get(model, 50)
+
+        # Scale by duration
+        if duration > 8:
+            base_cost = int(base_cost * 1.5)
+
+        return base_cost
+```
+
+---
+
+### 7.7 Database Schema Updates
+
+```python
+# backend/app/models/style_library.py
+from sqlalchemy import Column, String, JSON, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
+from app.database import Base
+from datetime import datetime
+
+class StylePreset(Base):
+    """User-saved style presets (Expert Workflow)."""
+
+    __tablename__ = "style_presets"
+
+    id = Column(String, primary_key=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    name = Column(String(100), nullable=False)
+    style_prompt = Column(String(2000), nullable=False)
+    style_tags = Column(JSON, default=list)
+    color_palette = Column(JSON, default=list)
+    reference_image_url = Column(String(500))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    usage_count = Column(Integer, default=0)
+
+    user = relationship("User", back_populates="style_presets")
+
+
+class ReferenceLibrary(Base):
+    """User reference library with tagging."""
+
+    __tablename__ = "reference_library"
+
+    id = Column(String, primary_key=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    title = Column(String(200))
+    type = Column(String(20))  # "image", "video"
+    url = Column(String(500), nullable=False)
+    thumbnail_url = Column(String(500))
+    tags = Column(JSON, default=list)
+    extracted_style_id = Column(String, ForeignKey("style_presets.id"))
+    analysis = Column(JSON)  # Cached analysis result
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="references")
+    extracted_style = relationship("StylePreset")
+```
+
+---
+
+### 7.8 API Endpoints Summary
+
+| Endpoint | Method | Description | Priority |
+|----------|--------|-------------|----------|
+| `/api/dimension/4d/analyze-frames` | POST | Frame-by-frame video analysis | P0 |
+| `/api/dimension/4d/extract-style` | POST | Style extraction from reference | P0 |
+| `/api/dimension/3d/generate` | POST | Image with Style/Scene split | P0 |
+| `/api/dimension/veo/generate` | POST | Video with first/last frame | P1 |
+| `/api/dimension/kling/generate` | POST | Video with start/end frame | P1 |
+| `/api/dimension/suno/generate` | POST | Music with cover/remix modes | P1 |
+| `/api/dimension/suno/stems/{id}` | POST | Get separated stems | P1 |
+| `/api/dimension/qc/batch-generate` | POST | Batch generation for A/B | P2 |
+| `/api/style-presets` | CRUD | Style preset management | P0 |
+| `/api/reference-library` | CRUD | Reference library management | P0 |
+
+---
+
 ## Appendix: 참조 자료
 
 ### A. 전문가 강의 원문 주요 발췌
@@ -712,20 +1775,65 @@ function ComparisonView({ candidates, onSelect }: ComparisonViewProps) {
 5. "처음부터 내가 원하는 이미지가 나오는 경우는 거의 없어요"
 ```
 
-### B. 2026 Tavily 리서치 소스
+### B. 2026 Tavily 웹 리서치 소스
 
-- AI Video: Kling 2.6, Veo 3.1, Sora 2 비교
-- AI Music: Suno Studio, Udio 기능 분석
-- Character Consistency: Reference Pro, LoRA, Seed Locking
+#### B.1 FastAPI & AI Integration
+
+| Source | URL | Key Insight |
+|--------|-----|-------------|
+| Nucamp AI APIs 2026 | nucamp.co/blog/integrating-ai-apis-in-2026 | MCP protocol, model routing |
+| Medium: FastAPI LLM Architecture | medium.com/@moradikor296 | DDD, async patterns, ProcessPoolExecutor |
+| Zestminds FastAPI 2026 | zestminds.com/blog/fastapi-requirements-setup-guide | Weaviate + OpenAI integration |
+| DataCamp FastAPI AI Course | datacamp.com/courses/deploying-ai-into-production | Rate limiting, API versioning |
+
+#### B.2 Video Generation APIs
+
+| Source | URL | Key Insight |
+|--------|-----|-------------|
+| Google Veo 3.1 Docs | ai.google.dev/gemini-api/docs/video | First/last frame interpolation |
+| fal.ai Kling 2.6 Pro | fal.ai/models/fal-ai/kling-video/v2.6/pro | start_image_url, end_image_url params |
+| Pixazo Best I2V APIs | pixazo.ai/blog/best-image-to-video-api | Kling vs Veo vs Runway comparison |
+| WaveSpeed AI Video 2026 | wavespeed.ai/blog/posts/best-ai-video-generators-2026 | Multi-model API approach |
+| Leonardo AI Kling Docs | docs.leonardo.ai/docs/generate-with-kling-2-6 | guidances.start_frame schema |
+
+#### B.3 Music Generation APIs
+
+| Source | URL | Key Insight |
+|--------|-----|-------------|
+| Suno Official Hub | suno.com/hub/create-music-with-ai | Suno Studio DAW, Persona feature |
+| AIMLAPI Suno | aimlapi.com/suno-ai-api | chirp-v3-5, chirp-v4 models |
+| sunoapi.org Docs | docs.sunoapi.org | Cover, Remix, Stems endpoints |
+| GitHub gcui-art/suno-api | github.com/gcui-art/suno-api | generate_stems, extend_audio |
+
+#### B.4 Style Extraction & Analysis
+
+| Source | URL | Key Insight |
+|--------|-----|-------------|
+| WaveSpeed Style Transfer | wavespeed.ai/blog/posts/complete-guide-ai-image-apis-2026 | style_reference + style_strength |
+| Index.dev AI API Tools | index.dev/blog/best-ai-tools-for-api-development-testing | Claude for nuanced analysis |
+| Firecrawl Semantic Search | firecrawl.dev/blog/best-semantic-search-apis | RAG backbone for AI apps |
 
 ### C. Vivid 현황 분석 파일
 
 - `frontend/src/components/dimension/VeoVideoPanel.tsx`
 - `frontend/src/components/dimension/CharacterConsistencyPanel.tsx`
 - `frontend/src/components/dimension/VisualRealizerPanel.tsx`
+- `frontend/src/components/dimension/StoryArchitectPanel.tsx`
+- `frontend/src/components/dimension/AbyssMirrorPanel.tsx`
 - `backend/app/routers/dimension/*.py`
+- `backend/app/services/veo_service.py`
+- `backend/app/services/credit_service.py`
+
+### D. 관련 Vivid 문서
+
+- `docs/DIMENSION_APP_DEVELOPER_GUIDE.md` - 앱 개발 가이드
+- `docs/RAG_ARCHITECTURE.md` - Multi-RAG Router 아키텍처
+- `docs/TESTING_GUIDE.md` - 테스트 작성 가이드
+- `backend/CLAUDE.md` - Backend 개발 패턴
 
 ---
 
 *Report generated: 2026-01-18*
+*Report version: 2.0 (Backend Implementation Guide 추가)*
 *Author: Claude Code + Vivid Expert Agent*
+*Research: Tavily MCP Web Search (2026-01-18)*
