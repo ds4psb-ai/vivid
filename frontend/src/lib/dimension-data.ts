@@ -21,6 +21,7 @@ import {
   CheckCircle,
   Palette,
   FlaskConical,
+  Users,
 } from "lucide-react";
 
 // =============================================================================
@@ -72,7 +73,8 @@ export type DimensionIconName =
   | "video"
   | "check"
   | "palette"
-  | "flask";
+  | "flask"
+  | "users";
 
 // =============================================================================
 // WORKFLOW STAGES
@@ -107,6 +109,7 @@ export const DIMENSION_ICONS: Record<DimensionIconName, LucideIcon> = {
   check: CheckCircle,
   palette: Palette,
   flask: FlaskConical,
+  users: Users,
 };
 
 // =============================================================================
@@ -324,6 +327,25 @@ export const DIMENSION_ITEMS: DimensionItemData[] = [
     textColor: "text-fuchsia-400",
     gradient: "from-fuchsia-500 via-purple-500 to-pink-500",
   },
+  {
+    id: "character-consistency",
+    href: "/dimension/character-consistency",
+    iconName: "users",
+    stage: "extended",
+    stageOrder: 2,
+    titleKo: "캐릭터 일관성",
+    titleEn: "Character Consistency",
+    descKo: "StoryMem 캐릭터 라이브러리 관리",
+    descEn: "StoryMem character library management",
+    portalColor: "border-teal-500/50",
+    borderColor: "border-teal-500",
+    glowClass: "glow-breathe glow-breathe-teal",
+    activeBg: "bg-teal-500",
+    activeText: "text-teal-100",
+    textColor: "text-teal-400",
+    gradient: "from-teal-500 via-cyan-500 to-sky-500",
+    isNew: true,
+  },
 ];
 
 // =============================================================================
@@ -342,6 +364,7 @@ export const ROUTE_KEYS: Record<string, string> = {
   "/dimension/video-maker": "video-maker",
   "/dimension/quality-check": "quality-director",
   "/dimension/aesthetic": "aesthetic-director",
+  "/dimension/character-consistency": "character-consistency",
 };
 
 // =============================================================================
