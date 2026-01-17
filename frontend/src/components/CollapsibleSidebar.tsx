@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { FLOW_ENABLED } from "@/lib/feature-flags";
 import {
     Rabbit,
     Home,
@@ -259,7 +260,8 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
     const NAV_ITEMS: { label: string; href: string; icon: React.ElementType; badge?: string }[] = [
         { label: "홈", href: "/", icon: Home },
         { label: "차원 앱", href: "/dimension", icon: Orbit },
-        { label: "차원 플로우", href: "/flow", icon: Waypoints },
+        // Flow is gated by feature flag
+        ...(FLOW_ENABLED ? [{ label: "차원 플로우", href: "/flow", icon: Waypoints }] : []),
         { label: "차원 템플릿", href: "/singularity", icon: CircleDashed },
         { label: "Crebit ATC 1기", href: "/crebit", icon: Moon, badge: "Hot" },
     ];

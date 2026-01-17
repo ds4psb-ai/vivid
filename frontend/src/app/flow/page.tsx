@@ -9,8 +9,10 @@ import { AgentChatAccordion } from "@/components/AgentChatAccordion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Copy, Check, Sparkles, LayoutGrid, Image as ImageIcon, Film, X, Download, Save, CheckCircle, Palette, Moon, Video, Loader2, BookOpen, Music } from "lucide-react";
+import { ChevronDown, Copy, Check, Sparkles, LayoutGrid, Image as ImageIcon, Film, X, Download, Save, CheckCircle, Palette, Moon, Video, Loader2, BookOpen, Music, Construction, ArrowLeft } from "lucide-react";
 import { api, SingularityTemplate } from "@/lib/api";
+import { FLOW_ENABLED } from "@/lib/feature-flags";
+import Link from "next/link";
 import type {
     WorkflowStartEvent,
     WorkflowStepEvent,
@@ -1085,8 +1087,50 @@ function FlowPageContent() {
     );
 }
 
+// Coming Soon page for when Flow is disabled
+function FlowComingSoon() {
+    return (
+        <AppShell>
+            <AuroraBackground />
+            <div className="min-h-screen flex items-center justify-center p-8 relative z-10">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="max-w-md text-center"
+                >
+                    <div className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center mb-6 border border-violet-500/20">
+                        <Construction className="w-10 h-10 text-violet-400" />
+                    </div>
+                    <h1 className="text-3xl font-bold text-white mb-3">
+                        차원 플로우
+                    </h1>
+                    <p className="text-lg text-violet-200 mb-2">
+                        Coming Soon
+                    </p>
+                    <p className="text-slate-400 mb-8">
+                        차원 플로우 기능은 현재 개발 중입니다.<br />
+                        곧 여러 차원 도구를 조합하여 나만의 AI 파이프라인을 만들 수 있습니다.
+                    </p>
+                    <Link
+                        href="/dimension"
+                        className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-medium transition-colors"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        차원 앱으로 돌아가기
+                    </Link>
+                </motion.div>
+            </div>
+        </AppShell>
+    );
+}
+
 // Wrap with Suspense for useSearchParams
 export default function FlowPage() {
+    // Feature gate: show Coming Soon when Flow is disabled
+    if (!FLOW_ENABLED) {
+        return <FlowComingSoon />;
+    }
+
     return (
         <Suspense fallback={
             <AppShell>

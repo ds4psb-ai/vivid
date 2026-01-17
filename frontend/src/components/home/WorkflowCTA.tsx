@@ -2,15 +2,18 @@
 
 /**
  * WorkflowCTA - Call-to-action for custom workflow creation
- * 
+ *
  * Encourages users to explore the Flow page for building
  * custom dimension chains.
+ *
+ * Gated by FLOW_ENABLED feature flag - returns null when disabled.
  */
 
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Workflow, Zap } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { FLOW_ENABLED } from "@/lib/feature-flags";
 
 interface WorkflowCTAProps {
     variant?: "default" | "compact";
@@ -18,6 +21,11 @@ interface WorkflowCTAProps {
 
 export function WorkflowCTA({ variant = "default" }: WorkflowCTAProps) {
     const { language } = useLanguage();
+
+    // Feature gate: hide entire CTA when Flow is disabled
+    if (!FLOW_ENABLED) {
+        return null;
+    }
 
     if (variant === "compact") {
         return (

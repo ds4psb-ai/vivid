@@ -28,6 +28,7 @@ import {
     Clock,
     type LucideIcon
 } from "lucide-react";
+import { FLOW_ENABLED } from "@/lib/feature-flags";
 import AppShell from "@/components/AppShell";
 import ApplicationModal from "@/components/ApplicationModal";
 import { AuroraBackground } from "@/components/AuroraBackground";
@@ -381,16 +382,18 @@ function WorkflowCard({ stage }: WorkflowCardProps) {
                     <Layers className="w-4 h-4" />
                     도구 둘러보기
                 </Link>
-                <Link
-                    href="/flow"
-                    className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl
-                               ${colors.bar} text-sm font-semibold text-white
-                               hover:opacity-90 shadow-lg
-                               transition-all duration-300`}
-                >
-                    <Zap className="w-4 h-4" />
-                    워크플로우 시작
-                </Link>
+                {FLOW_ENABLED && (
+                    <Link
+                        href="/flow"
+                        className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl
+                                   ${colors.bar} text-sm font-semibold text-white
+                                   hover:opacity-90 shadow-lg
+                                   transition-all duration-300`}
+                    >
+                        <Zap className="w-4 h-4" />
+                        워크플로우 시작
+                    </Link>
+                )}
             </div>
         </article>
     );
