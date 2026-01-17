@@ -4,13 +4,22 @@ Business logic for StoryMem-based character consistency system.
 
 Features:
 - Character CRUD operations
-- Embedding extraction (Face + CLIP)
+- Embedding extraction (Face + CLIP + Style)
 - Memory bank management (StoryMem algorithm)
-- Platform synchronization
-- Similarity search
+- Platform synchronization (Veo Ingredients, Kling Elements)
+- Similarity search with CoFE fusion
+
+2026 Best Practices:
+- ArcFace R100: Identity-preserving face embeddings (512D)
+- CLIP ViT-L/14: Visual similarity embeddings (768D)
+- HPSv3: Aesthetic quality prediction
+- Qdrant Named Vectors for multi-modal search
+- CoFE multi-expert fusion for character matching
 
 References:
 - StoryMem Paper: arXiv:2512.19539
+- Arc2Face: arXiv:2403.11641
+- CoFE: arXiv:2508.09476
 - DIMENSION_APP_MACRO_PLANNING_2026.md Part 11
 """
 from __future__ import annotations
@@ -41,6 +50,15 @@ from app.schemas.character_schemas import (
     PlatformType,
     SourceImage,
     KeyframeSelectionConfig,
+)
+from app.services.character_embedding_service import (
+    CharacterEmbeddingService,
+    CharacterEmbedding,
+    get_character_embedding_service,
+)
+from app.services.embedding_extractor import (
+    EmbeddingResult,
+    get_embedding_extractor,
 )
 
 logger = logging.getLogger(__name__)
@@ -562,8 +580,29 @@ async def find_similar_characters(
 
 
 # ============================================================================
-# Helper Functions (Stubs - Implement with actual services)
+# Helper Functions (Integrated with Real Services)
 # ============================================================================
+
+# Singleton services
+_embedding_service: Optional[CharacterEmbeddingService] = None
+_extractor = None
+
+
+def _get_embedding_service() -> CharacterEmbeddingService:
+    """Get singleton CharacterEmbeddingService."""
+    global _embedding_service
+    if _embedding_service is None:
+        _embedding_service = get_character_embedding_service()
+    return _embedding_service
+
+
+def _get_extractor():
+    """Get singleton EmbeddingExtractor."""
+    global _extractor
+    if _extractor is None:
+        _extractor = get_embedding_extractor()
+    return _extractor
+
 
 async def _get_image_data(
     base64_data: Optional[str] = None,
@@ -600,13 +639,17 @@ async def _upload_image(
 ) -> str:
     """Upload image to storage and return URL.
 
-    TODO: Implement with actual storage service (GCS, S3, etc.)
+    TODO: Integrate with actual storage service (GCS, S3)
+    Currently generates deterministic mock URL for development.
     """
-    # Generate deterministic filename
+    # Generate deterministic filename from content hash
     content_hash = hashlib.sha256(image_data).hexdigest()[:16]
     filename = f"characters/{user_id}/{character_id}/{content_hash}.jpg"
 
-    # Placeholder: Return mock URL
+    # TODO: Upload to actual storage
+    # from app.services.storage import upload_to_gcs
+    # return await upload_to_gcs(image_data, filename)
+
     return f"https://storage.crebit.studio/{filename}"
 
 
@@ -617,16 +660,52 @@ async def _extract_and_store_embeddings(
     name: str,
     tags: List[str],
 ) -> str:
-    """Extract face and CLIP embeddings, store in Qdrant.
+    """Extract face, CLIP, style embeddings and store in Qdrant.
 
-    TODO: Implement with actual embedding services
+    2026 Pipeline:
+    1. Extract ArcFace face embedding (512D)
+    2. Extract CLIP visual embedding (768D)
+    3. Extract style embedding + HPSv3 score (768D)
+    4. Store as Named Vectors in Qdrant
+
+    Args:
+        character_id: Character UUID
+        user_id: Owner user ID
+        image_data: Raw image bytes
+        name: Character name
+        tags: Character tags
+
+    Returns:
+        Qdrant point ID
     """
-    # Generate point ID
-    point_id = str(uuid.uuid4())
+    logger.info(f"[EMBEDDINGS] Extracting embeddings for character {character_id}")
 
-    # Placeholder: Would extract actual embeddings
-    logger.info(f"[EMBEDDINGS] Storing embeddings for character {character_id}")
+    extractor = _get_extractor()
+    service = _get_embedding_service()
 
+    # Extract all embeddings in parallel
+    embedding_result = await extractor.extract_all(image_data)
+
+    if embedding_result.error:
+        logger.warning(f"[EMBEDDINGS] Extraction error: {embedding_result.error}")
+
+    # Store in Qdrant with named vectors
+    point_id = await service.upsert_character(
+        character_id=character_id,
+        user_id=user_id,
+        face_embed=embedding_result.face_embed,
+        clip_embed=embedding_result.clip_embed,
+        style_embed=embedding_result.style_embed,
+        metadata={
+            "name": name,
+            "tags": tags,
+            "hps_score": embedding_result.hps_score,
+            "face_detected": embedding_result.face_detection.detected if embedding_result.face_detection else False,
+            "face_confidence": embedding_result.face_detection.confidence if embedding_result.face_detection else 0.0,
+        },
+    )
+
+    logger.info(f"[EMBEDDINGS] Stored embeddings for character {character_id} -> point {point_id}")
     return point_id
 
 
@@ -634,65 +713,170 @@ async def _update_embeddings(
     point_id: str,
     source_images: List[str],
 ) -> None:
-    """Update Qdrant embeddings with additional images.
+    """Update Qdrant embeddings by averaging multiple source images.
 
-    TODO: Implement with Qdrant upsert
+    Args:
+        point_id: Existing Qdrant point ID
+        source_images: List of image URLs to process
     """
     logger.info(f"[EMBEDDINGS] Updating point {point_id} with {len(source_images)} images")
+
+    if not source_images:
+        return
+
+    extractor = _get_extractor()
+    service = _get_embedding_service()
+
+    # Collect embeddings from all images
+    all_face: List[List[float]] = []
+    all_clip: List[List[float]] = []
+    all_style: List[List[float]] = []
+
+    for url in source_images[:5]:  # Limit to 5 images for performance
+        try:
+            image_data = await _get_image_data(image_url=url)
+            if image_data:
+                result = await extractor.extract_all(image_data)
+                if result.face_embed:
+                    all_face.append(result.face_embed)
+                if result.clip_embed:
+                    all_clip.append(result.clip_embed)
+                if result.style_embed:
+                    all_style.append(result.style_embed)
+        except Exception as e:
+            logger.warning(f"[EMBEDDINGS] Failed to process {url}: {e}")
+
+    # Average embeddings
+    def _average_embeddings(embeds: List[List[float]]) -> Optional[List[float]]:
+        if not embeds:
+            return None
+        dim = len(embeds[0])
+        avg = [sum(e[i] for e in embeds) / len(embeds) for i in range(dim)]
+        # Normalize
+        norm = sum(v ** 2 for v in avg) ** 0.5
+        if norm > 0:
+            avg = [v / norm for v in avg]
+        return avg
+
+    # Update Qdrant point
+    await service.update_embeddings(
+        point_id=point_id,
+        face_embed=_average_embeddings(all_face),
+        clip_embed=_average_embeddings(all_clip),
+        style_embed=_average_embeddings(all_style),
+    )
 
 
 async def _delete_qdrant_point(point_id: str) -> None:
     """Delete point from Qdrant.
 
-    TODO: Implement with Qdrant delete
+    Args:
+        point_id: Qdrant point ID to delete
     """
     logger.info(f"[EMBEDDINGS] Deleting point {point_id}")
 
+    service = _get_embedding_service()
+    await service.delete_character(point_id)
+
 
 async def _get_character_embedding(point_id: Optional[str]) -> Optional[List[float]]:
-    """Get character reference embedding from Qdrant.
+    """Get character reference CLIP embedding from Qdrant.
 
-    TODO: Implement with Qdrant retrieve
+    Args:
+        point_id: Qdrant point ID
+
+    Returns:
+        CLIP embedding (768D) or None
     """
     if not point_id:
         return None
-    # Placeholder: Return mock embedding
-    return [0.1] * CLIP_EMBED_DIM
+
+    service = _get_embedding_service()
+    char_embedding = await service.get_character_embedding(point_id)
+
+    if char_embedding and char_embedding.clip_embed:
+        return char_embedding.clip_embed
+
+    return None
 
 
 async def _extract_clip_embedding(image_data: bytes) -> List[float]:
     """Extract CLIP embedding from image.
 
-    TODO: Implement with CLIP model
+    Args:
+        image_data: Raw image bytes
+
+    Returns:
+        768D CLIP embedding
     """
-    # Placeholder: Return mock embedding
-    return [0.1] * CLIP_EMBED_DIM
+    extractor = _get_extractor()
+    clip_embed = await extractor.extract_clip_embedding(image_data)
+
+    if clip_embed:
+        return clip_embed
+
+    # Fallback to zeros if extraction fails
+    return [0.0] * CLIP_EMBED_DIM
 
 
 async def _compute_hps_score(image_data: bytes) -> float:
     """Compute HPSv3 aesthetic score.
 
-    TODO: Implement with HPSv3 model
+    Args:
+        image_data: Raw image bytes
+
+    Returns:
+        HPS score (0.0-1.0)
     """
-    # Placeholder: Return mock score
-    return 0.75
+    extractor = _get_extractor()
+    _, hps_score = await extractor.extract_style_embedding(image_data)
+
+    return hps_score if hps_score is not None else 0.5
 
 
 async def _detect_face_confidence(image_data: bytes) -> float:
     """Detect face and return confidence.
 
-    TODO: Implement with face detection model
+    Args:
+        image_data: Raw image bytes
+
+    Returns:
+        Face detection confidence (0.0-1.0)
     """
-    # Placeholder: Return mock confidence
-    return 0.9
+    extractor = _get_extractor()
+    _, face_detection = await extractor.extract_face_embedding(image_data)
+
+    if face_detection and face_detection.detected:
+        return face_detection.confidence
+
+    return 0.0
 
 
 async def _compute_quality_score(image_data: bytes) -> float:
     """Compute overall image quality score.
 
-    TODO: Implement with image quality assessment
+    Combines HPS aesthetic score with face detection confidence.
+
+    Args:
+        image_data: Raw image bytes
+
+    Returns:
+        Quality score (0.0-1.0)
     """
-    return 0.8
+    extractor = _get_extractor()
+
+    # Extract in parallel
+    face_task = asyncio.create_task(extractor.extract_face_embedding(image_data))
+    style_task = asyncio.create_task(extractor.extract_style_embedding(image_data))
+
+    _, face_detection = await face_task
+    _, hps_score = await style_task
+
+    # Combine scores (weighted)
+    face_conf = face_detection.confidence if face_detection and face_detection.detected else 0.5
+    hps = hps_score if hps_score is not None else 0.5
+
+    return 0.6 * hps + 0.4 * face_conf
 
 
 def _compute_cosine_similarity(a: List[float], b: List[float]) -> float:
@@ -714,12 +898,20 @@ def _select_diverse_keyframes(
 ) -> List[Dict]:
     """Select diverse keyframes using greedy selection.
 
-    Algorithm:
+    StoryMem Diversity Algorithm:
     1. Start with highest-scored frame
     2. For each remaining frame:
        - Check CLIP distance to all selected frames
        - If minimum distance > threshold, add to selection
     3. Stop when max_count reached
+
+    Args:
+        scored_frames: List of frames with embeddings and scores
+        max_count: Maximum keyframes to select
+        diversity_threshold: Minimum CLIP distance for diversity
+
+    Returns:
+        Selected diverse keyframes
     """
     if not scored_frames:
         return []
@@ -745,10 +937,30 @@ def _select_diverse_keyframes(
 async def _extract_video_frames(video_url: str, fps: int = 1) -> List[bytes]:
     """Extract frames from video at specified FPS.
 
-    TODO: Implement with ffmpeg or video processing library
+    TODO: Integrate with actual video processing (ffmpeg, moviepy)
+
+    Args:
+        video_url: URL of the video
+        fps: Frames per second to extract
+
+    Returns:
+        List of frame image bytes
     """
-    # Placeholder: Return empty list
     logger.info(f"[VIDEO_FRAMES] Extracting frames from {video_url[:50]}... at {fps} FPS")
+
+    # TODO: Implement actual video frame extraction
+    # try:
+    #     import moviepy.editor as mp
+    #     clip = mp.VideoFileClip(video_url)
+    #     frames = []
+    #     for t in range(0, int(clip.duration), 1 // fps):
+    #         frame = clip.get_frame(t)
+    #         # Convert numpy array to bytes
+    #         ...
+    #     return frames
+    # except Exception as e:
+    #     logger.error(f"Video frame extraction failed: {e}")
+
     return []
 
 
@@ -757,12 +969,40 @@ async def _search_similar_embeddings(
     user_id: str,
     limit: int,
 ) -> List[Dict[str, Any]]:
-    """Search Qdrant for similar embeddings.
+    """Search Qdrant for similar characters using CoFE fusion.
 
-    TODO: Implement with Qdrant search
+    Args:
+        point_id: Source character's Qdrant point ID
+        user_id: Filter by user ownership
+        limit: Maximum results
+
+    Returns:
+        List of similar character dicts with scores
     """
-    # Placeholder: Return empty list
-    return []
+    service = _get_embedding_service()
+
+    # Get source character embedding
+    source_embedding = await service.get_character_embedding(point_id)
+    if not source_embedding:
+        return []
+
+    # Search similar using CoFE fusion
+    results = await service.search_similar(
+        query_embedding=source_embedding,
+        user_id=user_id,
+        limit=limit,
+        vector_name="combined",  # CoFE multi-expert fusion
+    )
+
+    return [
+        {
+            "character_id": r.character_id,
+            "score": r.score,
+            "match_type": r.match_type,
+            "metadata": r.metadata,
+        }
+        for r in results
+    ]
 
 
 # ============================================================================

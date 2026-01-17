@@ -1,0 +1,142 @@
+$schema: "vivid-app/v2"
+
+# =============================================================================
+# Character Consistency Dimension - StoryMem 2026
+#
+# Features:
+# - Multi-shot character consistency tracking
+# - Memory bank (Long-term + Sliding Window)
+# - Platform sync (Veo Ingredients, Kling Elements, Runway References)
+# - Qdrant Named Vectors (face/clip/style embeddings)
+#
+# References:
+# - StoryMem Paper: arXiv:2512.19539 (ByteDance)
+# - DIMENSION_APP_MACRO_PLANNING_2026.md Part 11
+# =============================================================================
+
+metadata:
+  name: character
+  type: dimension
+  version: "1.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "캐릭터 일관성"
+  name_en: "Character Consistency"
+  description: "StoryMem 기반 멀티샷 캐릭터 일관성 관리"
+  icon: "user-check"
+
+capabilities:
+  # RAG integration for character style references
+  - name: rag
+    enabled: true
+    config:
+      mode: auteur_only
+      auteur_mode: true
+      confidence_threshold: 0.6
+      cache_ttl: 7200
+      max_sources: 3
+      retrieval:
+        strategy: hybrid
+        top_k: 5
+        rrf_k: 60
+
+  # Caching for embeddings
+  - name: cache
+    enabled: true
+    config:
+      ttl: 86400  # 24 hours for character embeddings
+      redis_prefix: "char_embed:"
+
+  # Execution config
+  - name: execution
+    enabled: true
+    config:
+      credit_cost: 5  # Base cost for character operations
+      endpoint: "/api/dimension/character"
+      capsule_key: "dimension.character.manage"
+
+  # Vector search (Qdrant Named Vectors)
+  - name: vector_search
+    enabled: true
+    config:
+      collection: "character_embeddings"
+      named_vectors:
+        - name: face_embed
+          size: 512
+          model: arcface
+          distance: cosine
+        - name: clip_embed
+          size: 768
+          model: clip-vit-l-14
+          distance: cosine
+        - name: style_embed
+          size: 768
+          model: aesthetic-predictor
+          distance: cosine
+      similarity_threshold:
+        face: 0.6
+        clip: 0.7
+        combined: 0.65
+
+  # Platform integration
+  - name: platform_sync
+    enabled: true
+    config:
+      platforms:
+        veo:
+          enabled: true
+          max_ingredients: 3
+          sync_mode: "on_demand"
+        kling:
+          enabled: true
+          max_elements: 4
+          sync_mode: "on_demand"
+        runway:
+          enabled: true
+          max_references: 3
+          sync_mode: "on_demand"
+        hailuo:
+          enabled: true
+          max_subjects: 1
+          sync_mode: "on_demand"
+
+extensions:
+  dimension:
+    tool_type: management
+    supports_streaming: true
+
+  # StoryMem-specific configuration
+  storymem:
+    memory_bank:
+      long_term_max: 10
+      sliding_window_max: 20
+      keyframe_selection:
+        clip_weight: 0.4
+        hps_weight: 0.3
+        face_weight: 0.3
+        diversity_threshold: 0.15
+        min_clip_score: 0.7
+        min_hps_score: 0.5
+        min_face_confidence: 0.8
+
+    # 2026 best practices
+    embedding_models:
+      face: "insightface/arcface_r100"
+      clip: "openai/clip-vit-l-14"
+      hps: "hpsv3/aesthetic-predictor"
+
+    # Negative RoPE for temporal ordering
+    negative_rope:
+      enabled: true
+      max_memory_frames: 10
+
+keywords:
+  patterns:
+    - "캐릭터"
+    - "character"
+    - "consistency"
+    - "일관성"
+    - "memory bank"
+    - "메모리 뱅크"
+    - "storymem"

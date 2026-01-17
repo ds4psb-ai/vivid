@@ -121,6 +121,7 @@ class VeoGenerateRequest(BaseModel):
     Includes:
     - XSS sanitization for style and negative_prompt
     - Veo model whitelist validation
+    - Character Consistency integration (character_ids)
     """
     prompt: str = Field(..., min_length=1, max_length=5000, description="Video generation prompt")
     negative_prompt: str = Field("", max_length=1000, description="Negative prompt (sanitized)")
@@ -129,6 +130,11 @@ class VeoGenerateRequest(BaseModel):
     style: str = Field("cinematic", max_length=100, description="Visual style (sanitized)")
     seed: int = Field(0, ge=0, description="Random seed (0 for random)")
     model: str = Field("veo-3.1-generate-preview", description="Veo model")
+    character_ids: list[str] = Field(
+        default=[],
+        max_length=3,
+        description="Character UUIDs for consistency (max 3, Veo Ingredients)"
+    )
 
     @field_validator("prompt", mode="before")
     @classmethod
@@ -237,15 +243,25 @@ async def generate_veo_video_stream(
     byok_key: Optional[str] = Depends(get_byok_key),
     db: AsyncSession = Depends(get_db),
 ) -> StreamingResponse:
-    """Generate video with Veo 3.1 with SSE progress streaming and Intent-Resolver integration."""
+    """Generate video with Veo 3.1 with SSE progress streaming and Intent-Resolver integration.
+
+    Character Consistency Integration:
+    - If character_ids provided, auto-injects as Veo Ingredients
+    - Uses StoryMem memory bank for best reference selection
+    - Creates CharacterAppearance records on success
+    """
     from app.services.veo_service import VeoConfig, VeoProgress, get_veo_service
+    from app.services.character_veo_service import get_character_veo_service
     from app.fixtures.dimension_capsules import DIMENSION_CAPSULES
     from app.routers.intent_helpers import with_intent
 
     user_id = user.get("id", "anonymous")
+    has_characters = bool(request.character_ids)
+
     veo_logger.info(
         f"[VEO_STREAM] user={user_id} prompt_len={len(request.prompt)} "
-        f"duration={request.duration}s aspect={request.aspect_ratio} model={request.model}"
+        f"duration={request.duration}s aspect={request.aspect_ratio} model={request.model} "
+        f"characters={len(request.character_ids) if has_characters else 0}"
     )
 
     # Intent inference for RAG context
@@ -262,8 +278,23 @@ async def generate_veo_video_stream(
         """SSE event generator with progress updates."""
         credits_deducted = False
         enhanced_prompt = request.prompt
+        char_veo_service = get_character_veo_service() if has_characters else None
+        character_ingredients = []
 
         try:
+            # Character Consistency: Prepare ingredients if character_ids provided
+            if has_characters and char_veo_service:
+                try:
+                    character_ingredients = await char_veo_service.prepare_character_ingredients(
+                        db=db,
+                        user_id=user_id,
+                        character_ids=request.character_ids,
+                    )
+                    if character_ingredients:
+                        yield f"data: {json.dumps({'type': 'progress', 'status': 'preparing_characters', 'message': f'캐릭터 준비 중: {len(character_ingredients)}명'})}\n\n"
+                except Exception as e:
+                    logger.warning(f"[VEO Stream] Character preparation failed: {e}")
+
             # Intent-Resolver enhancement for prompt
             if intent:
                 try:
@@ -278,6 +309,17 @@ async def generate_veo_video_stream(
                     logger.debug(f"[VEO Stream] Intent-enhanced prompt applied")
                 except Exception as e:
                     logger.warning(f"[VEO Stream] Intent enhancement failed: {e}")
+
+            # Enhance prompt with character names
+            if character_ingredients:
+                char_names = [c.character_name for c in character_ingredients]
+                prompt_lower = enhanced_prompt.lower()
+                unmentioned = [n for n in char_names if n.lower() not in prompt_lower]
+                if unmentioned:
+                    if len(unmentioned) == 1:
+                        enhanced_prompt = f"[Character: {unmentioned[0]}] {enhanced_prompt}"
+                    else:
+                        enhanced_prompt = f"[Characters: {', '.join(unmentioned)}] {enhanced_prompt}"
 
             # Check credits if not BYOK
             if not byok_key:
@@ -346,7 +388,44 @@ async def generate_veo_video_stream(
             result = await generation_task
 
             if result.success:
-                yield f"data: {json.dumps({'type': 'complete', 'success': True, 'video_uri': result.video_uri, 'duration_ms': result.duration_ms, 'credit_cost': result.credit_cost, 'metadata': result.metadata})}\n\n"
+                # Character Consistency: Create appearance records on success
+                appearances_created = []
+                if character_ingredients and char_veo_service:
+                    try:
+                        from app.models_character import CharacterAppearance
+                        import uuid as uuid_module
+                        for ingredient in character_ingredients:
+                            appearance = CharacterAppearance(
+                                id=uuid_module.uuid4(),
+                                character_id=uuid_module.UUID(ingredient.character_id),
+                                shot_id=None,
+                                scene_description=enhanced_prompt[:500],
+                                generated_frame_url=result.video_uri,
+                            )
+                            db.add(appearance)
+                            appearances_created.append(str(appearance.id))
+                        await db.commit()
+                        logger.info(f"[VEO Stream] Created {len(appearances_created)} character appearances")
+                    except Exception as e:
+                        logger.warning(f"[VEO Stream] Failed to create appearances: {e}")
+
+                # Build response with character info
+                response_data = {
+                    'type': 'complete',
+                    'success': True,
+                    'video_uri': result.video_uri,
+                    'duration_ms': result.duration_ms,
+                    'credit_cost': result.credit_cost,
+                    'metadata': result.metadata,
+                }
+                if character_ingredients:
+                    response_data['characters_used'] = [
+                        {'id': c.character_id, 'name': c.character_name}
+                        for c in character_ingredients
+                    ]
+                    response_data['appearances_created'] = appearances_created
+
+                yield f"data: {json.dumps(response_data)}\n\n"
             else:
                 if credits_deducted:
                     await _refund_with_retry(
