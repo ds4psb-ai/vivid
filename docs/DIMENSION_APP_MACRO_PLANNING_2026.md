@@ -2597,7 +2597,712 @@ app/workflow/
 
 ---
 
-**Document Status**: Draft v1.2 (P0 구현 완료)
+## Part 11: StoryMem + Character Consistency System (2026)
+
+> **Status**: P1 Implementation
+> **Updated**: 2026-01-17
+> **Source**: ByteDance/NTU StoryMem (arXiv:2512.19539), Platform Research (Veo 3.1, Kling 2.6, Runway Gen-4/4.5)
+
+### 11.1 Overview: The Multi-Shot Consistency Challenge
+
+AI 비디오 생성의 가장 큰 과제 중 하나는 **캐릭터 일관성(Character Consistency)**입니다. 단일 샷에서 인상적인 결과를 내더라도, 여러 샷에 걸쳐 같은 캐릭터를 일관되게 유지하는 것은 여전히 어렵습니다.
+
+**2026 Solution Landscape**:
+
+| Approach | Provider | Mechanism | Improvement |
+|----------|----------|-----------|-------------|
+| **StoryMem** | ByteDance/NTU | Memory-to-Video (M2V) + LoRA | +28.7% consistency |
+| **Ingredients** | Google Veo 3.1 | Reference image upload (max 3) | Platform native |
+| **Elements** | Kling 2.6 | User-managed element library | Platform native |
+| **Reference Tab** | Runway Gen-4 | Character + Style references | Platform native |
+| **IP-Adapter** | Open Source | CLIP image features injection | Flexible |
+
+### 11.2 StoryMem Architecture (State-of-the-Art)
+
+ByteDance의 StoryMem은 2024년 12월 발표된 최신 연구로, 메모리 기반 접근법을 통해 cross-shot consistency를 28.7% 향상시켰습니다.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        StoryMem Architecture                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   ┌─────────────────┐     ┌──────────────────┐     ┌───────────────────┐   │
+│   │  Memory Bank    │     │  M2V Adapter     │     │  Video Generation │   │
+│   │                 │     │  (LoRA + RoPE)   │     │  (WAN 2.2 I2V)    │   │
+│   │  ┌───────────┐  │     │                  │     │                   │   │
+│   │  │ Long-term │──┼────▶│  Negative RoPE   │────▶│  Consistent       │   │
+│   │  │ Keyframes │  │     │  Time Embedding  │     │  Character Output │   │
+│   │  └───────────┘  │     │                  │     │                   │   │
+│   │        ↑        │     │  ┌────────────┐  │     │                   │   │
+│   │  ┌───────────┐  │     │  │ Cross-Attn │  │     │                   │   │
+│   │  │ Sliding   │──┼────▶│  │ Injection  │  │     │                   │   │
+│   │  │ Window    │  │     │  └────────────┘  │     │                   │   │
+│   │  └───────────┘  │     │                  │     │                   │   │
+│   └─────────────────┘     └──────────────────┘     └───────────────────┘   │
+│                                                                             │
+│   Keyframe Selection Criteria:                                              │
+│   1. CLIP Feature Clustering (semantic diversity)                           │
+│   2. HPSv3 Aesthetic Score (quality filtering)                              │
+│   3. Face Detection Confidence (identity preservation)                      │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Key Technical Innovations**:
+
+| Component | Technique | Purpose |
+|-----------|-----------|---------|
+| **Memory Bank** | Hybrid (Long-term + Sliding Window) | Balance global consistency with local detail |
+| **Negative RoPE** | Time indices: -3, -2, -1, 0, 1, ... | Encode temporal ordering of past events |
+| **LoRA Fine-tuning** | ~7B params on 140B base | Efficient adaptation without full retraining |
+| **HPSv3 Filtering** | Aesthetic preference model | Select high-quality keyframes |
+
+### 11.3 Platform-Specific Features (2026 State)
+
+#### 11.3.1 Google Veo 3.1 - Ingredients-to-Video
+
+```yaml
+veo_31_ingredients:
+  feature_name: "Ingredients"
+  max_references: 3
+  supported_types:
+    - character_reference  # Main character appearance
+    - object_reference     # Props, items
+    - style_reference      # Visual style transfer
+  workflow:
+    1. Upload reference images (up to 3)
+    2. Describe scene with "[ref1]", "[ref2]" markers
+    3. Generate video with preserved references
+  limitations:
+    - Fixed reference count (max 3)
+    - No pose/motion control
+    - Limited to specific resolution tiers
+```
+
+#### 11.3.2 Kling 2.6 - Elements Library
+
+```yaml
+kling_26_elements:
+  feature_name: "Elements"
+  capabilities:
+    - Upload and manage character elements
+    - Mark specific regions as "Elements"
+    - Reference in subsequent generations
+    - Voice Control integration
+  workflow:
+    1. Upload character image → Mark as "Element"
+    2. Element appears in library
+    3. Select Element when generating new videos
+    4. AI maintains character consistency
+  integration_note: "Works with Kling Camera Control"
+```
+
+#### 11.3.3 Runway Gen-4/4.5 - Reference + Style
+
+```yaml
+runway_gen4:
+  tabs:
+    reference:
+      purpose: "Character and object consistency"
+      max_images: 4
+      strength_slider: true
+    style:
+      purpose: "Visual style transfer"
+      strength_slider: true
+  world_consistency:
+    description: "Gen-4.5 feature for environment persistence"
+    beta: true
+```
+
+### 11.4 Crebit Character Consistency System Design
+
+#### 11.4.1 System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                 Crebit Character Consistency System                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐           │
+│  │  Character      │   │  Memory Bank    │   │  Platform       │           │
+│  │  Library UI     │──▶│  Service        │──▶│  Adapter        │           │
+│  │                 │   │                 │   │                 │           │
+│  │ - Upload refs   │   │ - Store embeds  │   │ - Veo Ingred.   │           │
+│  │ - Tag metadata  │   │ - Keyframe sel. │   │ - Kling Elem.   │           │
+│  │ - Organize      │   │ - Similarity    │   │ - Runway Ref.   │           │
+│  └─────────────────┘   └─────────────────┘   └─────────────────┘           │
+│           │                    │                     │                      │
+│           ▼                    ▼                     ▼                      │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                        Qdrant Vector DB                              │   │
+│  │                                                                      │   │
+│  │   Collection: character_embeddings                                   │   │
+│  │   Named Vectors:                                                     │   │
+│  │     - face_embed (512D, ArcFace)                                     │   │
+│  │     - clip_embed (768D, CLIP ViT-L/14)                               │   │
+│  │     - style_embed (768D, Style encoder)                              │   │
+│  │                                                                      │   │
+│  │   Payload:                                                           │   │
+│  │     - character_id, user_id, project_id                              │   │
+│  │     - name, description, tags                                        │   │
+│  │     - source_image_urls[], keyframe_timestamps[]                     │   │
+│  │     - platform_refs: {veo: {...}, kling: {...}, runway: {...}}       │   │
+│  │                                                                      │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### 11.4.2 Database Schema
+
+```python
+# SQLAlchemy Models - backend/app/models_character.py
+
+class Character(Base):
+    """캐릭터 메타데이터 저장."""
+    __tablename__ = "characters"
+
+    id = Column(UUID, primary_key=True, default=uuid.uuid4)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    project_id = Column(UUID, ForeignKey("projects.id"), nullable=True)
+
+    name = Column(String(100), nullable=False)
+    description = Column(Text, nullable=True)
+    tags = Column(JSONB, default=[])  # ["protagonist", "human", "male"]
+
+    # Reference images
+    source_images = Column(JSONB, default=[])  # [{url, timestamp, quality_score}]
+    primary_image_url = Column(String, nullable=True)
+
+    # Embeddings stored in Qdrant (reference only)
+    qdrant_point_id = Column(String, nullable=True)
+
+    # Platform-specific references
+    platform_refs = Column(JSONB, default={})
+    # {
+    #   "veo": {"ingredient_id": "...", "last_used": "..."},
+    #   "kling": {"element_id": "...", "last_sync": "..."},
+    #   "runway": {"reference_id": "...", "style_strength": 0.8}
+    # }
+
+    # StoryMem-style memory bank
+    memory_keyframes = Column(JSONB, default=[])
+    # [{
+    #   "frame_url": "...",
+    #   "timestamp": 2.5,
+    #   "clip_score": 0.92,
+    #   "hps_score": 0.85,
+    #   "face_confidence": 0.98
+    # }]
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, onupdate=datetime.utcnow)
+
+
+class CharacterAppearance(Base):
+    """캐릭터 등장 기록 (shot별 추적)."""
+    __tablename__ = "character_appearances"
+
+    id = Column(UUID, primary_key=True, default=uuid.uuid4)
+    character_id = Column(UUID, ForeignKey("characters.id"), nullable=False)
+    shot_id = Column(UUID, ForeignKey("shots.id"), nullable=True)
+    video_generation_id = Column(UUID, nullable=True)
+
+    # Appearance context
+    scene_description = Column(Text)
+    pose_description = Column(String(200))
+    emotion = Column(String(50))
+
+    # Quality metrics
+    consistency_score = Column(Float)  # 0.0 - 1.0, auto-computed
+    user_rating = Column(Integer)      # 1-5 stars from user feedback
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+```
+
+#### 11.4.3 Backend API Design
+
+```python
+# backend/app/routers/dimension/character.py
+
+@router.post("/character/create")
+async def create_character(
+    request: CharacterCreateRequest,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> CharacterResponse:
+    """
+    새 캐릭터 생성 및 임베딩 추출.
+
+    Workflow:
+    1. 이미지 업로드 및 저장
+    2. Face embedding 추출 (ArcFace)
+    3. CLIP embedding 추출
+    4. Qdrant에 벡터 저장
+    5. PostgreSQL에 메타데이터 저장
+    """
+
+@router.post("/character/{character_id}/add-reference")
+async def add_character_reference(
+    character_id: UUID,
+    files: List[UploadFile],
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> CharacterResponse:
+    """
+    기존 캐릭터에 참조 이미지 추가.
+
+    StoryMem Keyframe Selection:
+    1. CLIP feature clustering으로 다양성 확보
+    2. HPSv3로 미학적 품질 필터링
+    3. Face detection confidence 체크
+    """
+
+@router.get("/character/{character_id}/similar")
+async def find_similar_characters(
+    character_id: UUID,
+    limit: int = 5,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> List[CharacterSimilarity]:
+    """
+    유사 캐릭터 검색 (프로젝트 내 중복 방지용).
+    """
+
+@router.post("/character/{character_id}/sync-platform")
+async def sync_to_platform(
+    character_id: UUID,
+    platform: PlatformType,  # veo | kling | runway
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> PlatformSyncResponse:
+    """
+    캐릭터를 특정 플랫폼에 동기화.
+
+    - Veo: Ingredient로 등록
+    - Kling: Element로 등록
+    - Runway: Reference로 저장
+    """
+
+@router.post("/character/memory-bank/update")
+async def update_memory_bank(
+    character_id: UUID,
+    video_url: str,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> MemoryBankResponse:
+    """
+    생성된 비디오에서 keyframe 추출하여 memory bank 업데이트.
+
+    StoryMem Algorithm:
+    1. 비디오에서 프레임 추출 (1 FPS)
+    2. 각 프레임의 CLIP/Face embedding 계산
+    3. HPSv3 aesthetic score 필터링
+    4. Long-term memory (best keyframes) 업데이트
+    5. Sliding window (recent keyframes) 업데이트
+    """
+```
+
+#### 11.4.4 Pydantic Schemas
+
+```python
+# backend/app/schemas/character_schemas.py
+
+class CharacterCreateRequest(BaseModel):
+    """캐릭터 생성 요청."""
+    name: str = Field(..., min_length=1, max_length=100)
+    description: Optional[str] = Field(None, max_length=1000)
+    tags: List[str] = Field(default=[])
+    project_id: Optional[UUID] = None
+
+    # Initial reference image (base64 or URL)
+    reference_image: Optional[str] = None
+    reference_image_url: Optional[HttpUrl] = None
+
+
+class CharacterResponse(BaseModel):
+    """캐릭터 응답."""
+    id: UUID
+    name: str
+    description: Optional[str]
+    tags: List[str]
+    primary_image_url: Optional[str]
+    source_images: List[SourceImage]
+    memory_keyframes: List[MemoryKeyframe]
+    platform_refs: Dict[str, Any]
+    created_at: datetime
+
+
+class MemoryKeyframe(BaseModel):
+    """StoryMem-style keyframe."""
+    frame_url: str
+    timestamp: float
+    clip_score: float  # CLIP similarity to character embedding
+    hps_score: float   # HPSv3 aesthetic score
+    face_confidence: float
+    is_long_term: bool = False  # True if selected for long-term memory
+
+
+class PlatformType(str, Enum):
+    VEO = "veo"
+    KLING = "kling"
+    RUNWAY = "runway"
+    HAILUO = "hailuo"
+
+
+class PlatformSyncResponse(BaseModel):
+    """플랫폼 동기화 응답."""
+    platform: PlatformType
+    status: Literal["success", "pending", "failed"]
+    platform_ref_id: Optional[str]
+    message: Optional[str]
+```
+
+### 11.5 Frontend UI Design
+
+#### 11.5.1 Character Library Panel
+
+```tsx
+// frontend/src/components/dimension/CharacterLibraryPanel.tsx
+
+interface CharacterLibraryPanelProps {
+  projectId?: string;
+  onSelectCharacter?: (character: Character) => void;
+}
+
+export function CharacterLibraryPanel({ projectId, onSelectCharacter }: CharacterLibraryPanelProps) {
+  return (
+    <div className="character-library">
+      {/* Header with Create button */}
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold">Character Library</h2>
+        <Button onClick={() => setShowCreateModal(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          New Character
+        </Button>
+      </div>
+
+      {/* Grid view of characters */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {characters.map(character => (
+          <CharacterCard
+            key={character.id}
+            character={character}
+            onSelect={onSelectCharacter}
+            onEdit={() => setEditingCharacter(character)}
+          />
+        ))}
+      </div>
+
+      {/* Character Detail/Edit Modal */}
+      <CharacterDetailModal
+        character={editingCharacter}
+        onClose={() => setEditingCharacter(null)}
+        onSave={handleSaveCharacter}
+      />
+    </div>
+  );
+}
+```
+
+#### 11.5.2 Character Card Component
+
+```tsx
+// frontend/src/components/dimension/CharacterCard.tsx
+
+interface CharacterCardProps {
+  character: Character;
+  onSelect?: (character: Character) => void;
+  onEdit?: () => void;
+  selected?: boolean;
+}
+
+export function CharacterCard({ character, onSelect, onEdit, selected }: CharacterCardProps) {
+  return (
+    <div
+      className={cn(
+        "relative rounded-lg border-2 overflow-hidden cursor-pointer transition-all",
+        selected ? "border-blue-500 ring-2 ring-blue-200" : "border-gray-200 hover:border-gray-300"
+      )}
+      onClick={() => onSelect?.(character)}
+    >
+      {/* Primary image */}
+      <div className="aspect-square relative">
+        <Image
+          src={character.primary_image_url || "/placeholder-character.png"}
+          alt={character.name}
+          fill
+          className="object-cover"
+        />
+
+        {/* Memory bank indicator */}
+        {character.memory_keyframes.length > 0 && (
+          <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+            <Brain className="w-3 h-3 inline mr-1" />
+            {character.memory_keyframes.length} keyframes
+          </div>
+        )}
+
+        {/* Platform sync status */}
+        <div className="absolute bottom-2 left-2 flex gap-1">
+          {character.platform_refs.veo && (
+            <Badge variant="outline" className="bg-white/80">Veo</Badge>
+          )}
+          {character.platform_refs.kling && (
+            <Badge variant="outline" className="bg-white/80">Kling</Badge>
+          )}
+          {character.platform_refs.runway && (
+            <Badge variant="outline" className="bg-white/80">Runway</Badge>
+          )}
+        </div>
+      </div>
+
+      {/* Character info */}
+      <div className="p-3">
+        <h3 className="font-medium truncate">{character.name}</h3>
+        <p className="text-sm text-gray-500 truncate">{character.description}</p>
+
+        {/* Tags */}
+        <div className="flex flex-wrap gap-1 mt-2">
+          {character.tags.slice(0, 3).map(tag => (
+            <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+          ))}
+        </div>
+      </div>
+
+      {/* Edit button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="absolute top-2 left-2 bg-white/80 hover:bg-white"
+        onClick={(e) => {
+          e.stopPropagation();
+          onEdit?.();
+        }}
+      >
+        <Edit className="w-4 h-4" />
+      </Button>
+    </div>
+  );
+}
+```
+
+#### 11.5.3 Memory Bank Visualizer
+
+```tsx
+// frontend/src/components/dimension/MemoryBankVisualizer.tsx
+
+interface MemoryBankVisualizerProps {
+  character: Character;
+  onKeyframeSelect?: (keyframe: MemoryKeyframe) => void;
+}
+
+export function MemoryBankVisualizer({ character, onKeyframeSelect }: MemoryBankVisualizerProps) {
+  const longTermKeyframes = character.memory_keyframes.filter(k => k.is_long_term);
+  const recentKeyframes = character.memory_keyframes.filter(k => !k.is_long_term);
+
+  return (
+    <div className="memory-bank-visualizer">
+      <Tabs defaultValue="long-term">
+        <TabsList>
+          <TabsTrigger value="long-term">
+            Long-term Memory ({longTermKeyframes.length})
+          </TabsTrigger>
+          <TabsTrigger value="recent">
+            Recent ({recentKeyframes.length})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="long-term" className="mt-4">
+          <p className="text-sm text-gray-500 mb-3">
+            Best keyframes selected by CLIP similarity and aesthetic quality.
+          </p>
+          <div className="grid grid-cols-4 gap-2">
+            {longTermKeyframes.map((keyframe, idx) => (
+              <KeyframeCard
+                key={idx}
+                keyframe={keyframe}
+                onClick={() => onKeyframeSelect?.(keyframe)}
+              />
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="recent" className="mt-4">
+          <p className="text-sm text-gray-500 mb-3">
+            Sliding window of recent generation keyframes.
+          </p>
+          <div className="grid grid-cols-4 gap-2">
+            {recentKeyframes.map((keyframe, idx) => (
+              <KeyframeCard
+                key={idx}
+                keyframe={keyframe}
+                onClick={() => onKeyframeSelect?.(keyframe)}
+              />
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function KeyframeCard({ keyframe, onClick }: { keyframe: MemoryKeyframe; onClick?: () => void }) {
+  return (
+    <div
+      className="relative aspect-video rounded overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-400"
+      onClick={onClick}
+    >
+      <Image src={keyframe.frame_url} alt="" fill className="object-cover" />
+
+      {/* Quality scores overlay */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 p-2">
+        <div className="flex justify-between text-xs text-white">
+          <span>CLIP: {(keyframe.clip_score * 100).toFixed(0)}%</span>
+          <span>HPS: {(keyframe.hps_score * 100).toFixed(0)}%</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+### 11.6 Integration with Video Generation
+
+#### 11.6.1 Veo Video Panel Enhancement
+
+```tsx
+// In VeoVideoPanel.tsx - Add character selection
+
+function VeoVideoContent() {
+  const [selectedCharacters, setSelectedCharacters] = useState<Character[]>([]);
+
+  // ... existing state ...
+
+  const handleGenerate = async () => {
+    const payload = {
+      prompt,
+      negative_prompt: negativePrompt,
+      aspect_ratio: aspectRatio,
+      duration: parseInt(duration),
+      style,
+      // NEW: Character references
+      character_refs: selectedCharacters.map(c => ({
+        character_id: c.id,
+        platform_ref: c.platform_refs.veo,
+        role: "main_character",  // or "supporting", "background"
+      })),
+    };
+
+    // API call...
+  };
+
+  return (
+    <DimensionPanel {...props}>
+      {/* Existing form fields */}
+
+      {/* NEW: Character Selection */}
+      <div className="space-y-2">
+        <Label>Characters (max 3 for Veo Ingredients)</Label>
+        <CharacterSelector
+          maxSelections={3}
+          selected={selectedCharacters}
+          onChange={setSelectedCharacters}
+          platformFilter="veo"
+        />
+      </div>
+
+      {/* Generate button */}
+    </DimensionPanel>
+  );
+}
+```
+
+#### 11.6.2 Backend Integration
+
+```python
+# In dimension_adapter.py
+
+async def run_veo_video_generate(
+    prompt: str,
+    character_refs: List[CharacterRef] = None,
+    **kwargs
+) -> Dict[str, Any]:
+    """
+    Veo 비디오 생성 with Character Consistency.
+
+    1. character_refs가 있으면:
+       - 각 캐릭터의 Veo Ingredient 참조 확인
+       - 없으면 자동 동기화 (sync_to_platform 호출)
+    2. prompt에 ingredient markers 삽입
+    3. Veo API 호출
+    4. 생성된 비디오에서 keyframe 추출
+    5. memory_bank 업데이트
+    """
+    if character_refs:
+        enhanced_prompt = await _inject_character_references(prompt, character_refs)
+
+        # After generation, update memory bank
+        result = await veo_generate(enhanced_prompt, **kwargs)
+
+        if result["success"]:
+            await update_character_memory_banks(character_refs, result["video_url"])
+
+        return result
+
+    return await veo_generate(prompt, **kwargs)
+```
+
+### 11.7 Performance Metrics
+
+| Metric | Target | Measurement Method |
+|--------|--------|-------------------|
+| Character Consistency Score | ≥85% | CLIP cosine similarity between reference and generated |
+| Face ID Preservation | ≥90% | ArcFace embedding distance |
+| Memory Bank Latency | <100ms | Qdrant query time |
+| Cross-Shot Consistency | ≥75% | Multi-shot evaluation (StoryMem benchmark) |
+| Platform Sync Success Rate | ≥99% | API success tracking |
+
+### 11.8 Implementation Roadmap
+
+```
+Week 1-2: Foundation
+├── [ ] Character SQLAlchemy model
+├── [ ] Qdrant collection setup (character_embeddings)
+├── [ ] Basic CRUD API endpoints
+└── [ ] Character Library Panel (frontend)
+
+Week 3-4: Embedding Pipeline
+├── [ ] Face embedding extraction (ArcFace)
+├── [ ] CLIP embedding extraction
+├── [ ] HPSv3 aesthetic scoring integration
+└── [ ] Keyframe selection algorithm
+
+Week 5-6: Platform Integration
+├── [ ] Veo Ingredients adapter
+├── [ ] Kling Elements adapter
+├── [ ] Runway Reference adapter
+└── [ ] Platform sync UI
+
+Week 7-8: Memory Bank
+├── [ ] Memory bank update pipeline
+├── [ ] Long-term/sliding window management
+├── [ ] Memory Bank Visualizer UI
+└── [ ] Integration with video generation panels
+```
+
+### 11.9 References
+
+- [StoryMem Paper](https://arxiv.org/abs/2512.19539) - ByteDance/NTU (Dec 2024)
+- [Veo 3.1 Ingredients Documentation](https://aistudio.google.com/docs/veo) - Google AI Studio
+- [Kling 2.6 Elements Guide](https://klingai.com/docs/elements) - Kuaishou
+- [Runway Gen-4 Reference Feature](https://runwayml.com/docs/gen4) - Runway
+- [IP-Adapter](https://github.com/tencent-ailab/IP-Adapter) - Tencent AI Lab
+- [HPSv3](https://arxiv.org/abs/2306.09341) - Human Preference Score v3
+
+---
+
+**Document Status**: Draft v1.3 (StoryMem + Character Consistency 추가)
 **Next Review**: After individual app research completion
 **Owner**: Crebit Studio Development Team
 
@@ -2608,3 +3313,4 @@ app/workflow/
 | 1.0 | 2026-01-17 | 초기 거시적 기획 문서 작성 |
 | 1.1 | 2026-01-17 | Part 9 추가: Native Audio, Prop/BG Consistency, Multi-Modal Embedding, DAG 확장 계획, Suno AI 통합 전략 |
 | 1.2 | 2026-01-17 | Part 10 추가: P0 Infrastructure 구현 현황 (Multi-Modal RAG, Multi-RAG Router, Dynamic DAG, HITL) |
+| 1.3 | 2026-01-17 | Part 11 추가: StoryMem + Character Consistency System (ByteDance 연구, 플랫폼 통합, 구현 설계) |

@@ -14,9 +14,12 @@ Usage in main.py:
 """
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict
 
 from fastapi import APIRouter
+
+logger = logging.getLogger(__name__)
 
 # Import sub-routers
 from .classic import router as classic_router
@@ -30,6 +33,8 @@ from .suno import router as suno_router
 from .json_gen import router as json_gen_router
 from .nanobanana import router as nanobanana_router
 from .mirror import router as mirror_router
+from .prompt import router as prompt_router
+from .character import router as character_router
 
 # Re-export from _base for backward compatibility
 from ._base import (
@@ -59,6 +64,8 @@ router.include_router(suno_router)
 router.include_router(json_gen_router)
 router.include_router(nanobanana_router)
 router.include_router(mirror_router)
+router.include_router(prompt_router)
+router.include_router(character_router)
 
 
 # ============================================================================
