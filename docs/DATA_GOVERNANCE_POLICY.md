@@ -57,7 +57,7 @@ Vivid가 데이터를 분류, 저장, 처리, 폐기하는 방식을 정의한�
 
 ## 9. 정보주체 요청
 - 열람, 정정, 삭제, 내보내기 절차를 문서화한다.
-- 응답 SLA: TBD days.
+- 응답 SLA: 30일 (GDPR/개인정보보호법 기준, 복잡한 요청은 60일까지 연장 가능).
 
 ## 10. 제3자 처리
 - 벤더는 최소 보안 요구사항을 충족해야 한다.
@@ -125,7 +125,7 @@ Define how Vivid classifies, stores, processes, and retires data across all syst
 
 ## 9. Data Subject Requests
 - Provide a documented process for access, correction, deletion, and export.
-- Response SLA: TBD days.
+- Response SLA: 30 days (per GDPR/PIPA, extendable to 60 days for complex requests).
 
 ## 10. Third-Party Data Processing
 - Vendors must meet minimum security requirements and DPAs.

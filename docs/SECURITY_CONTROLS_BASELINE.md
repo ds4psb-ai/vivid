@@ -65,14 +65,14 @@
 - 모의침투 테스트 리포트(연 1회 또는 큰 변경 시)
 - 접근/감사 로그 내보내기
 
-## 6. 통제 상태 트래커(템플릿)
+## 6. 통제 상태 트래커
 | 컴포넌트 | 통제 범위 | 상태 | 비고 |
 | --- | --- | --- | --- |
-| Backend API | SEC-AC, SEC-CR, SEC-LOG | Not Started | TBD |
-| RAG Pipeline | SEC-RAG, SEC-DATA | Not Started | TBD |
-| MCP Tools | SEC-AC, SEC-RATE | Not Started | TBD |
-| Frontend | SEC-AC, SEC-SESS | Not Started | TBD |
-| Infrastructure | SEC-DATA, SEC-BCP | Not Started | TBD |
+| Backend API | SEC-AC, SEC-CR, SEC-LOG | Partial | SEC-AC-01(인증) 구현, SEC-CR-01(run-token) 구현, 로그 마스킹 구현 |
+| RAG Pipeline | SEC-RAG, SEC-DATA | Partial | SEC-RAG-02(evidence_refs) 구현, 암호화 TBD |
+| MCP Tools | SEC-AC, SEC-RATE | Partial | 인증 구현, 레이트리밋 미들웨어 존재 |
+| Frontend | SEC-AC, SEC-SESS | Partial | 인증 구현, 세션 서명 검증 TBD |
+| Infrastructure | SEC-DATA, SEC-BCP | Not Started | RTO/RPO 목표 설정됨 (8.2 참조) |
 
 ## 7. 검토 주기
 - 분기별 및 주요 릴리스 전 검토.
@@ -144,14 +144,14 @@ Map internal controls to external frameworks for audits.
 - Penetration test reports (annual or major change)
 - Access and audit log exports
 
-## 6. Control Status Tracker (Template)
+## 6. Control Status Tracker
 | Component | Control Coverage | Status | Notes |
 | --- | --- | --- | --- |
-| Backend API | SEC-AC, SEC-CR, SEC-LOG | Not Started | TBD |
-| RAG Pipeline | SEC-RAG, SEC-DATA | Not Started | TBD |
-| MCP Tools | SEC-AC, SEC-RATE | Not Started | TBD |
-| Frontend | SEC-AC, SEC-SESS | Not Started | TBD |
-| Infrastructure | SEC-DATA, SEC-BCP | Not Started | TBD |
+| Backend API | SEC-AC, SEC-CR, SEC-LOG | Partial | SEC-AC-01(auth) implemented, SEC-CR-01(run-token) implemented, log masking implemented |
+| RAG Pipeline | SEC-RAG, SEC-DATA | Partial | SEC-RAG-02(evidence_refs) implemented, encryption TBD |
+| MCP Tools | SEC-AC, SEC-RATE | Partial | Auth implemented, rate limit middleware exists |
+| Frontend | SEC-AC, SEC-SESS | Partial | Auth implemented, session signature validation TBD |
+| Infrastructure | SEC-DATA, SEC-BCP | Not Started | RTO/RPO targets defined (see 8.2) |
 
 ## 7. Review Cadence
 - Baseline reviewed quarterly and prior to major releases.

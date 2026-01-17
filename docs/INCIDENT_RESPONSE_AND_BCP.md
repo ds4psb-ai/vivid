@@ -51,14 +51,14 @@
 - 핵심 데이터 저장소는 자동 백업과 검증을 수행한다.
 - 백업 복구 테스트는 최소 분기 1회.
 
-### 8.2 RTO/RPO 목표(템플릿)
+### 8.2 RTO/RPO 목표
 | 시스템 | RTO | RPO | 비고 |
 | --- | --- | --- | --- |
-| API | TBD | TBD | TBD |
-| RAG Pipeline | TBD | TBD | TBD |
-| Postgres | TBD | TBD | TBD |
-| Qdrant | TBD | TBD | TBD |
-| Redis | TBD | TBD | TBD |
+| API | 4h | 1h | 컨테이너 재배포 기준 |
+| RAG Pipeline | 8h | 24h | 리인덱싱 소요시간 포함 |
+| Postgres | 2h | 15min | Point-in-time recovery 기준 |
+| Qdrant | 8h | 24h | 스냅샷 복원 기준 |
+| Redis | 1h | 1h | 캐시 재구축 허용 |
 
 ### 8.3 재해 복구
 - DR 런북을 유지하고 연 1회 테스트한다.
@@ -125,14 +125,14 @@ All production services, data stores, and supporting infrastructure.
 - Backups for critical data stores are automated and verified.
 - Backup restoration tests run at least quarterly.
 
-### 8.2 RTO/RPO Targets (Template)
+### 8.2 RTO/RPO Targets
 | System | RTO | RPO | Notes |
 | --- | --- | --- | --- |
-| API | TBD | TBD | TBD |
-| RAG Pipeline | TBD | TBD | TBD |
-| Postgres | TBD | TBD | TBD |
-| Qdrant | TBD | TBD | TBD |
-| Redis | TBD | TBD | TBD |
+| API | 4h | 1h | Container redeployment |
+| RAG Pipeline | 8h | 24h | Includes re-indexing time |
+| Postgres | 2h | 15min | Point-in-time recovery |
+| Qdrant | 8h | 24h | Snapshot restoration |
+| Redis | 1h | 1h | Cache rebuild allowed |
 
 ### 8.3 Disaster Recovery
 - DR runbooks are maintained and tested annually.
