@@ -11,13 +11,22 @@ Endpoints:
 Security:
 - XSS sanitization for prompt and negative_prompt
 - Enum validation for duration, aspect_ratio, resolution, mode
+
+2026 Best Practices Applied:
+- Beat-Matched Prompting (Beat 0-4s: [Action], Beat 5-8s: [Dialogue])
+- Native Audio with lip sync and multi-character dialogue
+- Tone descriptors: (whispering), (shouting), (breathy), (resigned)
+- Audio/Visual negative prompt separation
+- trace_id and evidence_refs for RAG Protocol v2
 """
 from __future__ import annotations
 
 import html
 import logging
 import re
-from typing import Any, Dict, Optional
+import uuid
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, field_validator
@@ -41,6 +50,177 @@ from app.services.telemetry_integration import record_tool_run
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/kling", tags=["Kling AI"])
+
+
+# =============================================================================
+# 2026 Best Practices: Enums and Models
+# =============================================================================
+
+class KlingToneDescriptor(str, Enum):
+    """Tone descriptors for dialogue (2026 Best Practice).
+
+    These influence both voice generation and facial expression.
+    Reference: creativeaininja, fal.ai
+    """
+    WHISPERING = "whispering"
+    SHOUTING = "shouting"
+    BREATHY = "breathy"
+    RESIGNED = "resigned"
+    EXCITED = "excited"
+    CALM = "calm"
+    NERVOUS = "nervous"
+    ANGRY = "angry"
+    WEARY = "weary"
+    PLAYFUL = "playful"
+
+
+class KlingNegativePromptType(str, Enum):
+    """Negative prompt types (2026 Best Practice).
+
+    Kling 2.6 supports separate audio and visual negative prompts.
+    """
+    AUDIO = "audio"
+    VISUAL = "visual"
+    COMBINED = "combined"
+
+
+class KlingLipSyncMode(str, Enum):
+    """Lip sync modes for Kling 2.6 (2026).
+
+    Reference: fal.ai/models/kling-video
+    """
+    TEXT_TO_VIDEO = "text_to_video"  # Generate speech from text
+    AUDIO_TO_VIDEO = "audio_to_video"  # Sync to uploaded audio
+    NONE = "none"  # No lip sync
+
+
+class KlingCameraMovement(str, Enum):
+    """Camera movements supported by Kling 2.6 (2026)."""
+    STATIC = "static"
+    PAN_LEFT = "pan_left"
+    PAN_RIGHT = "pan_right"
+    TILT_UP = "tilt_up"
+    TILT_DOWN = "tilt_down"
+    ZOOM_IN = "zoom_in"
+    ZOOM_OUT = "zoom_out"
+    DOLLY_IN = "dolly_in"
+    DOLLY_OUT = "dolly_out"
+    ORBIT = "orbit"
+    TRACKING = "tracking"
+
+
+class KlingMotionIntensity(str, Enum):
+    """Motion intensity presets (2026)."""
+    SLOW = "slow"
+    NORMAL = "normal"
+    FAST = "fast"
+    DRAMATIC = "dramatic"
+
+
+class Kling26Capabilities(BaseModel):
+    """Kling 2.6 capabilities (Dec 2025 release)."""
+    max_duration_seconds: int = Field(default=10, description="Max duration (5s or 10s)")
+    max_resolution: str = Field(default="1080p", description="1080p max")
+    native_audio: bool = Field(default=True, description="Supports native audio (2026)")
+    lip_sync: bool = Field(default=True, description="Best-in-class lip sync")
+    multi_character_dialogue: bool = Field(default=True, description="Supports multiple characters")
+    beat_timestamp_format: str = Field(
+        default="Beat 0-4s: [Action], Beat 5-8s: [Dialogue]",
+        description="Beat-matched prompting format"
+    )
+    dialogue_format: str = Field(
+        default='Beat 5-8s: Close up. Character (Tone): "text"',
+        description="Dialogue with beat timestamps"
+    )
+
+
+class KlingPromptQualityScore(BaseModel):
+    """Prompt quality assessment for Kling (2026)."""
+    has_beat_timestamps: bool = Field(default=False, description="Uses Beat timestamp format")
+    has_dialogue: bool = Field(default=False, description="Contains dialogue")
+    has_tone_descriptors: bool = Field(default=False, description="Uses tone descriptors")
+    has_camera_movement: bool = Field(default=False, description="Specifies camera")
+    has_audio_negative: bool = Field(default=False, description="Has audio negative prompts")
+    has_visual_negative: bool = Field(default=False, description="Has visual negative prompts")
+    overall_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Overall quality")
+
+
+# Regex patterns for prompt quality assessment
+BEAT_TIMESTAMP_PATTERN = re.compile(r"Beat\s*\d+-\d+s:", re.IGNORECASE)
+DIALOGUE_PATTERN = re.compile(r'\([^)]+\):\s*"[^"]*"', re.IGNORECASE)
+TONE_DESCRIPTOR_PATTERN = re.compile(r"\((" + "|".join([t.value for t in KlingToneDescriptor]) + r")\)", re.IGNORECASE)
+
+# Recommended negative prompts (2026)
+RECOMMENDED_AUDIO_NEGATIVE = "No background music, no mumble, no overlapping speech, no distortion, no electronic interference"
+RECOMMENDED_VISUAL_NEGATIVE = "No text overlay, no watermark, no distortion, blurry, low quality"
+
+# Camera movement keywords for detection
+CAMERA_MOVEMENT_KEYWORDS = [
+    "pan", "tilt", "zoom", "dolly", "track", "orbit", "crane", "steady",
+    "aerial", "handheld", "close-up", "wide shot", "static", "following"
+]
+
+
+def assess_kling_prompt_quality(prompt: str, negative_prompt: str | None = None) -> KlingPromptQualityScore:
+    """Assess Kling prompt quality using 2026 best practices.
+
+    Checks for:
+    - Beat timestamps (Beat 0-4s: format)
+    - Dialogue with tone descriptors
+    - Camera movement specifications
+    - Audio/visual negative prompts
+
+    Args:
+        prompt: The main video generation prompt
+        negative_prompt: Optional negative prompt
+
+    Returns:
+        KlingPromptQualityScore with component flags and overall score
+    """
+    prompt_lower = prompt.lower()
+    neg_lower = (negative_prompt or "").lower()
+
+    # Check for beat timestamps
+    has_beat_timestamps = bool(BEAT_TIMESTAMP_PATTERN.search(prompt))
+
+    # Check for dialogue (Speaker (Tone): "text" format)
+    has_dialogue = bool(DIALOGUE_PATTERN.search(prompt))
+
+    # Check for tone descriptors
+    has_tone_descriptors = bool(TONE_DESCRIPTOR_PATTERN.search(prompt))
+
+    # Check for camera movement
+    has_camera_movement = any(kw in prompt_lower for kw in CAMERA_MOVEMENT_KEYWORDS)
+
+    # Check for audio negative prompts
+    audio_negative_keywords = ["background music", "mumble", "overlapping speech", "distortion", "audio"]
+    has_audio_negative = any(kw in neg_lower for kw in audio_negative_keywords)
+
+    # Check for visual negative prompts
+    visual_negative_keywords = ["watermark", "text overlay", "blurry", "low quality", "distortion"]
+    has_visual_negative = any(kw in neg_lower for kw in visual_negative_keywords)
+
+    # Calculate overall score (0.0 - 1.0)
+    score_components = [
+        has_beat_timestamps,      # 0.20 - Beat timestamps are important for Kling 2.6
+        has_dialogue,             # 0.20 - Dialogue with proper format
+        has_tone_descriptors,     # 0.15 - Tone descriptors improve lip sync
+        has_camera_movement,      # 0.15 - Camera specifications
+        has_audio_negative,       # 0.15 - Audio negative prompts
+        has_visual_negative,      # 0.15 - Visual negative prompts
+    ]
+    weights = [0.20, 0.20, 0.15, 0.15, 0.15, 0.15]
+    overall_score = sum(w for w, c in zip(weights, score_components) if c)
+
+    return KlingPromptQualityScore(
+        has_beat_timestamps=has_beat_timestamps,
+        has_dialogue=has_dialogue,
+        has_tone_descriptors=has_tone_descriptors,
+        has_camera_movement=has_camera_movement,
+        has_audio_negative=has_audio_negative,
+        has_visual_negative=has_visual_negative,
+        overall_score=round(overall_score, 2),
+    )
 
 
 # =============================================================================
@@ -226,8 +406,14 @@ class KlingGenerateRequest(BaseModel):
 
 
 class KlingGenerateResponse(BaseModel):
-    """API response for Kling video generation."""
-    
+    """API response for Kling video generation.
+
+    2026 Best Practices:
+    - trace_id: Unique request identifier for debugging
+    - evidence_refs: RAG Protocol v2 references (List[str])
+    - prompt_quality: Quality assessment of the input prompt
+    """
+
     success: bool
     task_id: str
     status: str
@@ -235,15 +421,20 @@ class KlingGenerateResponse(BaseModel):
     thumbnail_url: Optional[str] = None
     credits_used: int = 0
     error: Optional[str] = None
+    # 2026: RAG Protocol v2 fields
+    trace_id: str = Field(default="", description="Unique trace identifier")
+    evidence_refs: List[str] = Field(default_factory=list, description="RAG evidence references")
+    prompt_quality: Optional[KlingPromptQualityScore] = Field(None, description="Prompt quality assessment")
 
 
 class KlingStatusResponse(BaseModel):
     """API response for task status."""
-    
+
     task_id: str
     status: str
     video_url: Optional[str] = None
     error: Optional[str] = None
+    trace_id: str = Field(default="", description="Unique trace identifier")
 
 
 # =============================================================================
@@ -280,11 +471,17 @@ async def generate_video(
     import time
     start_time = time.time()
 
+    # 2026: Generate trace_id for RAG Protocol v2
+    trace_id = f"kling-{uuid.uuid4().hex[:12]}"
+
     user_id = user.get("id")
     logger.info(
-        f"[KLING_GENERATE] user={user_id} prompt_len={len(request.prompt)} "
+        f"[KLING_GENERATE] trace_id={trace_id} user={user_id} prompt_len={len(request.prompt)} "
         f"duration={request.duration}s resolution={request.resolution} mode={request.mode}"
     )
+
+    # 2026: Assess prompt quality
+    prompt_quality = assess_kling_prompt_quality(request.prompt, request.negative_prompt)
 
     if not user_id:
         raise HTTPException(
@@ -374,6 +571,9 @@ async def generate_video(
                 task_id=result.task_id,
                 status="failed",
                 error=result.error,
+                trace_id=trace_id,
+                evidence_refs=[f"db:kling:task:{result.task_id}"],
+                prompt_quality=prompt_quality,
             )
         
         await record_tool_run(
@@ -387,12 +587,25 @@ async def generate_video(
             credits_charged=credit_cost,
         )
         
+        # 2026: Build evidence_refs
+        evidence_refs = [
+            f"db:kling:task:{result.task_id}",
+            f"db:kling:model:v2.6",
+        ]
+        if request.enable_audio:
+            evidence_refs.append("db:kling:feature:native_audio")
+        if request.elements:
+            evidence_refs.append(f"db:kling:elements:{len(request.elements)}")
+
         return KlingGenerateResponse(
             success=True,
             task_id=result.task_id,
             status="completed",
             video_url=result.video_url,
             credits_used=credit_cost,
+            trace_id=trace_id,
+            evidence_refs=evidence_refs,
+            prompt_quality=prompt_quality,
         )
         
     except Exception as e:
@@ -422,14 +635,18 @@ async def get_status(
     user: dict = Depends(get_current_user),
 ) -> KlingStatusResponse:
     """Get status of a generation task."""
+    # 2026: Generate trace_id for this status check
+    trace_id = f"kling-status-{uuid.uuid4().hex[:8]}"
+
     service = get_kling_service()
     result = await service.get_task_status(task_id)
-    
+
     return KlingStatusResponse(
         task_id=result.task_id,
         status=result.status,
         video_url=result.video_url,
         error=result.error,
+        trace_id=trace_id,
     )
 
 
@@ -439,7 +656,10 @@ async def get_status(
     description="Get Kling AI pricing information in credits.",
 )
 async def get_pricing() -> Dict[str, Any]:
-    """Get pricing information."""
+    """Get pricing information with 2026 capabilities."""
+    # 2026: Include capabilities model
+    capabilities = Kling26Capabilities()
+
     return {
         "service": "Kling AI",
         "provider": "kling",
@@ -458,5 +678,35 @@ async def get_pricing() -> Dict[str, Any]:
             "Audio generation (v2.6+)",
             "720p / 1080p resolution",
             "5s / 10s duration",
+            "Native lip sync (v2.6+)",  # 2026
+            "Multi-character dialogue (v2.6+)",  # 2026
+            "Beat-matched prompting (v2.6+)",  # 2026
+            "End frame control (v2.6+)",  # 2026
+            "Element references (max 4)",  # 2026
         ],
+        # 2026: Kling 2.6 capabilities
+        "capabilities_v26": {
+            "max_duration_seconds": capabilities.max_duration_seconds,
+            "native_audio": capabilities.native_audio,
+            "lip_sync": capabilities.lip_sync,
+            "multi_character_dialogue": capabilities.multi_character_dialogue,
+            "beat_timestamp_format": capabilities.beat_timestamp_format,
+            "dialogue_format": capabilities.dialogue_format,
+        },
+        # 2026: Prompt writing tips
+        "prompt_tips": {
+            "beat_timestamps": "Use 'Beat 0-4s: [Action], Beat 5-8s: [Dialogue]' format",
+            "dialogue_format": 'Use Speaker (Tone): "text" format for dialogue',
+            "tone_descriptors": [t.value for t in KlingToneDescriptor],
+            "camera_movements": [c.value for c in KlingCameraMovement],
+            "motion_intensities": [m.value for m in KlingMotionIntensity],
+            "recommended_audio_negative": RECOMMENDED_AUDIO_NEGATIVE,
+            "recommended_visual_negative": RECOMMENDED_VISUAL_NEGATIVE,
+        },
+        # 2026: Lip sync best practices
+        "lip_sync_tips": {
+            "dialogue_length": "3-5 seconds per line for best results",
+            "tone_importance": "Tone descriptors affect facial expressions",
+            "multiple_speakers": "Label speakers clearly: 'John (excited):', 'Mary (calm):'",
+        },
     }

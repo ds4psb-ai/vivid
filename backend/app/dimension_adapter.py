@@ -2986,24 +2986,29 @@ PROMPT_ALCHEMY_PLATFORMS = {
     "veo_31": {
         "name": "Google Veo 3.1",
         "template": """[Visual Description]: {visual}
-[Dialogue]: {dialogue}
+[Dialogue]: Speaker (Tone): "{dialogue}"
 [Ambient]: {ambient}
 [Mood]: {mood}
-No subtitles.""",
+No subtitles. No text overlay. No watermark.""",
         "requires_dialogue": True,
-        "max_duration": 8,
+        "max_duration": 120,  # 2026: Extended from 8s
         "native_audio": True,
+        "lip_sync": True,
+        "dialogue_format": "[Dialogue]: Speaker (Tone): \"text\"",
+        "negative_prompts": ["No subtitles", "No text overlay", "No watermark"],
     },
     "kling_26": {
         "name": "Kling 2.6",
-        "template": """[Subject]: {subject}
-[Action]: {action}
-[Context]: {context}
-[Style]: {style}
-[Camera]: {camera}""",
+        "template": """Beat 0-4s: [Subject]: {subject}, [Action]: {action}
+Beat 5-8s: [Context]: {context}, [Style]: {style}
+[Camera]: {camera}
+No background music. No mumble. No distortion.""",
         "requires_dialogue": False,
         "max_duration": 120,
-        "native_audio": False,
+        "native_audio": True,  # 2026: Now supports native audio
+        "lip_sync": True,  # 2026: Best-in-class lip sync
+        "beat_timestamp_format": "Beat 0-4s: [Action], Beat 5-8s: [Dialogue]",
+        "negative_prompts": ["No background music", "No mumble", "No overlapping speech", "No distortion"],
     },
     "sora_max_2pro": {
         "name": "Sora Max 2 Pro",
@@ -3011,27 +3016,54 @@ No subtitles.""",
 [Character]: {character}
 [Scene]: {scene}
 [Action]: {action}
-[Mood]: {mood}""",
+[Mood]: {mood}
+[Physics]: Force-reaction pairs for realistic motion
+No text overlay. No watermark. No lens flare.""",
         "requires_dialogue": False,
-        "max_duration": 20,
+        "max_duration": 60,  # 2026: Extended to 60s (Pro tier)
         "native_audio": True,
+        "lip_sync": True,
+        "physics_simulation": True,  # 2026: Primary strength
+        "negative_prompts": ["No text overlay", "No watermark", "No lens flare"],
     },
 }
 
-PROMPT_ALCHEMY_SYSTEM = """You are Prompt Alchemy, an expert AI video prompt translator.
+PROMPT_ALCHEMY_SYSTEM = """You are Prompt Alchemy, an expert AI video prompt translator (2026 Edition).
 
-Your task is to transform scene descriptions into optimized prompts for specific AI video generation platforms.
+Your task is to transform scene descriptions into optimized prompts for AI video generation platforms
+using the Six-Layer Framework and Native Audio integration patterns.
 
-## Platform Expertise:
-1. **Veo 3.1**: Dialogue/narration-heavy viral videos. Always include "No subtitles." at the end.
-2. **Kling 2.6**: High-quality silent cinematic videos. Remove dialogue, focus on visual storytelling.
-3. **Sora Max 2 Pro**: Animation-style videos. Emphasize artistic style and character design.
+## Six-Layer Framework:
+1. **Subject/Action/Emotion**: Who, what, and emotional state
+2. **Shot Framing**: Shot type, composition, focal length
+3. **Camera Movement**: Dolly, pan, tilt, tracking, orbit
+4. **Lighting/Environment**: Light source, time of day, atmosphere
+5. **Style/Aesthetic**: Visual style, color grading, references
+6. **Audio/Dialogue**: Native audio cues, dialogue with tone markers
+
+## Platform Expertise (2026):
+1. **Veo 3.1**: Dialogue/narration-heavy viral videos.
+   - Native audio + lip sync supported
+   - Format: [Dialogue]: Speaker (Tone): "text"
+   - Keep dialogue 3-5 seconds
+   - Always add "No subtitles. No text overlay."
+2. **Kling 2.6**: High-quality photorealistic videos with best-in-class lip sync.
+   - Native audio NOW SUPPORTED (2026)
+   - Beat timestamp format: "Beat 0-4s: [Action], Beat 5-8s: [Dialogue]"
+   - Up to 2 minutes duration
+   - Add "No background music. No mumble."
+3. **Sora Max 2 Pro**: Animation and physics simulation.
+   - Physics-accurate motion (force-reaction pairs)
+   - Style references: 'Ghibli', 'Pixar', 'Anime'
+   - Up to 60s (Pro tier)
+   - Add "No text overlay. No watermark."
 
 ## Output Rules:
 - Return a JSON object with the translated prompt
-- Include quality_score (0-1) indicating confidence in the translation
-- Include platform_specific_tips for the target platform
-- Preserve the artistic intent while optimizing for the platform's strengths
+- Include quality_score (0-1) indicating confidence
+- Include platform_tips array with optimization suggestions
+- Include six_layer_analysis object with layer scores
+- Preserve artistic intent while optimizing for platform strengths
 """
 
 
@@ -3139,8 +3171,15 @@ async def run_prompt_translator(
             use_rag=True,
         )
 
-    # Build translation prompt
-    user_prompt = f"""Translate the following scene description into an optimized prompt for {platform_config['name']}.
+    # Build translation prompt with Six-Layer Framework (2026)
+    negative_prompts_str = " ".join(platform_config.get("negative_prompts", []))
+    auteur_ref_line = f"## Auteur Reference: {auteur_key}" if auteur_key else ""
+    beat_timestamp_line = f"- Beat Timestamp Format: {platform_config.get('beat_timestamp_format', '')}" if platform_config.get("beat_timestamp_format") else ""
+    dialogue_format_line = f"- Dialogue Format: {platform_config.get('dialogue_format', '')}" if platform_config.get("dialogue_format") else ""
+    dialogue_req = 'Include dialogue with tone markers: Speaker (Tone): "text"' if platform_config.get("requires_dialogue") else "Focus on visual storytelling"
+    beat_req = "Use Beat timestamp format for dialogue sync" if platform_config.get("beat_timestamp_format") else ""
+
+    user_prompt = f"""Translate the following scene description into an optimized prompt for {platform_config['name']} using the Six-Layer Framework.
 
 ## Scene Description:
 {scene_description}
@@ -3149,26 +3188,39 @@ async def run_prompt_translator(
 ## Visual Style: {style}
 ## Duration: {duration} seconds
 ## Language: {language}
-{"## Auteur Reference: " + auteur_key if auteur_key else ""}
+{auteur_ref_line}
 
 ## Platform Template:
 {platform_config['template']}
 
+## Platform Features (2026):
+- Native Audio: {platform_config.get('native_audio', False)}
+- Lip Sync: {platform_config.get('lip_sync', False)}
+- Max Duration: {platform_config['max_duration']}s
+{beat_timestamp_line}
+{dialogue_format_line}
+
 ## Requirements:
-1. Follow the platform template structure exactly
-2. {"Include dialogue/narration markers" if platform_config.get("requires_dialogue") else "Remove any dialogue, focus on visual storytelling"}
-3. Optimize for the platform's strengths
-4. {"Add 'No subtitles.' at the end" if target_platform == "veo_31" else ""}
+1. Apply Six-Layer Framework: Subject/Action → Shot → Camera → Lighting → Style → Audio
+2. {dialogue_req}
+3. {beat_req}
+4. Add negative prompts at the end: {negative_prompts_str}
+5. Optimize for the platform's primary strength
 
 Return a JSON object with:
-- "translated_prompt": The optimized prompt
+- "translated_prompt": The optimized prompt with negative prompts
 - "quality_score": Your confidence (0-1)
 - "platform_tips": Array of optimization tips
-- "detected_elements": {{ "has_dialogue": bool, "is_animation": bool, "mood": str }}
+- "detected_elements": {{"has_dialogue": bool, "is_animation": bool, "mood": str, "motion_intensity": str}}
+- "six_layer_analysis": {{"subject": str, "shot": str, "camera": str, "lighting": str, "style": str, "audio": str}}
 """
 
     if rag_context:
         user_prompt = _inject_rag_into_prompt(user_prompt, rag_context, position="prepend")
+
+    # Generate trace_id for RAG Protocol v2
+    import uuid as uuid_module
+    trace_id = f"prompt-{uuid_module.uuid4().hex[:12]}"
 
     try:
         result, metrics = await _call_gemini(
@@ -3178,13 +3230,26 @@ Return a JSON object with:
             model=model,
         )
 
+        # Build evidence_refs (List[str]) - RAG Protocol v2
+        evidence_refs: List[str] = []
+        if rag_context:
+            evidence_refs.append(f"db:rag_docs:PROMPT:auteur:{auteur_key}")
+        if target_platform:
+            evidence_refs.append(f"db:platform_config:{target_platform}")
+
         # Ensure output structure
         output = result if isinstance(result, dict) else {"translated_prompt": str(result)}
         output["target_platform"] = target_platform
         output["platform_name"] = platform_config["name"]
         output["auto_selected"] = auto_select and not inputs.get("target_platform")
         output["max_duration"] = platform_config["max_duration"]
-        output["native_audio"] = platform_config["native_audio"]
+        output["native_audio"] = platform_config.get("native_audio", False)
+        output["lip_sync"] = platform_config.get("lip_sync", False)
+        output["negative_prompts"] = platform_config.get("negative_prompts", [])
+        # RAG Protocol v2 fields
+        output["trace_id"] = trace_id
+        output["evidence_refs"] = evidence_refs
+        output["confidence"] = result.get("quality_score", 0.0) if isinstance(result, dict) else 0.0
 
         return {
             "success": "error" not in result,
@@ -3197,15 +3262,16 @@ Return a JSON object with:
                 "model": metrics.model,
                 "intent_resolved": intent is not None,
                 "platform": target_platform,
+                "trace_id": trace_id,
             },
         }
     except (TimeoutError, RuntimeError, ValueError) as e:
         return {
             "success": False,
             "capsule_id": DimensionCapsuleId.PROMPT_TRANSLATE.value,
-            "output": {},
+            "output": {"trace_id": trace_id, "evidence_refs": []},
             "error": str(e),
-            "metrics": None,
+            "metrics": {"trace_id": trace_id},
         }
 
 

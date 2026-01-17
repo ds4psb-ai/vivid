@@ -2,17 +2,25 @@
 Prompt Alchemy Endpoints - AI Video Platform Prompt Translator.
 
 Translates scene descriptions into optimized prompts for:
-- Veo 3.1: Dialogue/narration-heavy viral videos
-- Kling 2.6: High-quality silent cinematic videos (recommended)
-- Sora Max 2 Pro: Animation-style videos
+- Veo 3.1: Dialogue/narration-heavy viral videos (Native Audio)
+- Kling 2.6: High-quality silent cinematic videos (recommended, Lip Sync)
+- Sora Max 2 Pro: Animation-style videos (Physics simulation)
+
+2026 Best Practices Applied:
+- Six-Layer Framework for prompt engineering
+- Native Audio integration patterns (dialogue, ambient, SFX)
+- Beat timestamp format for lip sync
+- Platform-specific negative prompts
+- trace_id and evidence_refs for RAG Protocol v2
 """
 from __future__ import annotations
 
 import html
 import logging
 import re
+import uuid
 from enum import Enum
-from typing import Annotated, List, Literal, Optional
+from typing import Annotated, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
@@ -49,6 +57,154 @@ router = APIRouter()
 # ============================================================================
 
 SUPPORTED_PLATFORMS = ["veo_31", "kling_26", "sora_max_2pro"]
+
+
+# ============================================================================
+# 2026 Best Practices: Enums and Models
+# ============================================================================
+
+class SixLayerDimension(str, Enum):
+    """Six-Layer Framework for AI Video Prompt Engineering (2026).
+
+    Based on professional cinematography hierarchy for generative models.
+    Reference: vidwave.ai, Medium @creativeaininja
+    """
+    SUBJECT_ACTION_EMOTION = "subject_action_emotion"  # Layer 1: Who, What, Feeling
+    SHOT_FRAMING = "shot_framing"  # Layer 2: Shot type, composition
+    CAMERA_MOVEMENT = "camera_movement"  # Layer 3: Dolly, pan, tilt, tracking
+    LIGHTING_ENVIRONMENT = "lighting_environment"  # Layer 4: Light, time, place
+    STYLE_AESTHETIC = "style_aesthetic"  # Layer 5: Visual style, references
+    AUDIO_DIALOGUE = "audio_dialogue"  # Layer 6: Native audio, SFX, dialogue
+
+
+class AudioIntegrationType(str, Enum):
+    """Audio integration strategy for AI video generation (2026).
+
+    Determines how audio is generated/synced with video.
+    """
+    NATIVE = "native"  # Audio generated with video (Veo 3.1, Kling 2.6)
+    SEPARATE = "separate"  # Audio generated separately (Suno, ElevenLabs)
+    HYBRID = "hybrid"  # Native + post-enhancement
+    NONE = "none"  # No audio (silent video)
+
+
+class MotionIntensity(str, Enum):
+    """Motion intensity level for shot classification (2026).
+
+    Used for tool selection heuristics.
+    """
+    STATIC = "static"  # No movement, locked camera
+    LOW = "low"  # Subtle movement, breathing room
+    MEDIUM = "medium"  # Normal action, moderate camera work
+    HIGH = "high"  # Fast action, dynamic camera
+    EXTREME = "extreme"  # Chase, fight, intense action
+
+
+class CameraMovement(str, Enum):
+    """Standard camera movements for prompt engineering (2026).
+
+    Based on film industry terminology recognized by AI models.
+    """
+    STATIC = "static"
+    DOLLY_IN = "dolly_in"
+    DOLLY_OUT = "dolly_out"
+    PAN_LEFT = "pan_left"
+    PAN_RIGHT = "pan_right"
+    TILT_UP = "tilt_up"
+    TILT_DOWN = "tilt_down"
+    CRANE_UP = "crane_up"
+    CRANE_DOWN = "crane_down"
+    TRACKING = "tracking"
+    STEADICAM = "steadicam"
+    HANDHELD = "handheld"
+    ORBIT = "orbit"
+    WHIP_PAN = "whip_pan"
+
+
+class PromptQualityDimension(str, Enum):
+    """Prompt quality evaluation dimensions (2026).
+
+    Used for automatic prompt quality scoring.
+    """
+    SPECIFICITY = "specificity"  # How specific is the description
+    CLARITY = "clarity"  # Is the instruction clear
+    MOTION_GUIDANCE = "motion_guidance"  # Camera/subject motion clarity
+    AUDIO_CUES = "audio_cues"  # Native audio instructions
+    STYLE_COHERENCE = "style_coherence"  # Visual style consistency
+    TEMPORAL_STRUCTURE = "temporal_structure"  # Beat/timeline structure
+
+
+class Veo31Capabilities(BaseModel):
+    """Google Veo 3.1 capabilities (Oct 2025 release)."""
+    max_duration_seconds: int = Field(default=8, description="Max duration (8s default, 120s extended)")
+    max_resolution: str = Field(default="4K", description="Maximum resolution")
+    native_audio: bool = Field(default=True, description="Supports native audio generation")
+    lip_sync: bool = Field(default=True, description="Supports lip synchronization")
+    dialogue_format: str = Field(
+        default="[Dialogue]: Speaker (Tone): \"text\"",
+        description="Dialogue prompt format"
+    )
+    generation_time_fast: str = Field(default="30-90s", description="Fast mode generation time")
+    primary_strength: str = Field(default="emotional_realism", description="Primary strength")
+
+
+class Kling26Capabilities(BaseModel):
+    """Kling 2.6 capabilities (Dec 2025 release)."""
+    max_duration_seconds: int = Field(default=120, description="Max 2-minute duration")
+    max_resolution: str = Field(default="1080p", description="Maximum resolution")
+    native_audio: bool = Field(default=True, description="Supports native audio")
+    lip_sync: bool = Field(default=True, description="Best-in-class lip sync")
+    beat_timestamp_format: str = Field(
+        default="Beat 0-4s: [Action], Beat 5-8s: [Dialogue]",
+        description="Beat timestamp prompt format"
+    )
+    dialogue_format: str = Field(
+        default="Beat 5-8s: Close up. Character (Tone): \"text\"",
+        description="Dialogue with beat timestamps"
+    )
+    generation_time: str = Field(default="2-5min", description="Generation time")
+    primary_strength: str = Field(default="photorealistic_humans", description="Primary strength")
+
+
+class SoraMax2ProCapabilities(BaseModel):
+    """OpenAI Sora Max 2 Pro capabilities (2025 release)."""
+    max_duration_seconds: int = Field(default=60, description="Max 60s (Pro tier)")
+    max_resolution: str = Field(default="4K", description="Maximum resolution")
+    native_audio: bool = Field(default=True, description="Supports native audio")
+    lip_sync: bool = Field(default=True, description="Supports dialogue sync")
+    generation_time: str = Field(default="5-15min", description="Generation time")
+    primary_strength: str = Field(default="physics_accuracy", description="Primary strength: physics simulation")
+
+
+class NativeAudioPromptTemplate(BaseModel):
+    """Native audio prompt template for 2026 platforms."""
+    platform: str = Field(..., description="Target platform")
+    visual_block: str = Field(..., description="Visual description block")
+    dialogue_block: Optional[str] = Field(None, description="Dialogue with speaker tags")
+    ambient_block: Optional[str] = Field(None, description="Ambient sound description")
+    mood_block: Optional[str] = Field(None, description="Emotional mood/tone")
+    sfx_block: Optional[str] = Field(None, description="Sound effects description")
+    no_subtitles: bool = Field(default=True, description="Add 'No subtitles' instruction")
+
+
+class PromptOptimizationResult(BaseModel):
+    """Result of prompt optimization with RAG Protocol v2 fields."""
+    trace_id: str = Field(default="", description="Unique trace identifier")
+    optimized_prompt: str = Field(..., description="Optimized prompt text")
+    platform: str = Field(..., description="Target platform")
+    quality_scores: Dict[str, float] = Field(
+        default_factory=dict,
+        description="Quality scores by dimension"
+    )
+    overall_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Overall quality score")
+    suggestions: List[str] = Field(default_factory=list, description="Improvement suggestions")
+    audio_strategy: AudioIntegrationType = Field(
+        default=AudioIntegrationType.NATIVE,
+        description="Recommended audio integration"
+    )
+    evidence_refs: List[str] = Field(default_factory=list, description="RAG evidence references")
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0, description="Confidence score")
+
 
 # UQSL Strategy enum for multi-candidate generation
 class UQSLStrategy(str, Enum):
@@ -129,21 +285,57 @@ PLATFORM_INFO = {
     "veo_31": {
         "name": "Google Veo 3.1",
         "use_case": "대화/나레이션 중심 바이럴 영상",
-        "max_duration": 8,
+        "max_duration": 120,  # Extended from 8s
+        "max_resolution": "4K",
         "native_audio": True,
+        "lip_sync": True,
+        "generation_time": "30-90s (fast)",
+        "primary_strength": "emotional_realism",
+        "prompt_tips": [
+            "대화는 3-5초로 짧게 유지",
+            "톤 지시어 필수: (whispering), (excited), (calm)",
+            "'No subtitles' 항상 추가",
+            "[Dialogue]: Speaker (Tone): \"text\" 형식 사용",
+        ],
+        "negative_prompts": ["No subtitles", "No text overlay", "No watermark"],
+        "audio_format": "[Dialogue]: Speaker (Tone): \"text\"\n[Ambient]: description\n[Mood]: tone",
     },
     "kling_26": {
         "name": "Kling 2.6",
-        "use_case": "고화질 음성 없는 영상 (특히 추천)",
+        "use_case": "고화질 실사 영상 + 립싱크 (추천)",
         "max_duration": 120,
-        "native_audio": False,
+        "max_resolution": "1080p",
+        "native_audio": True,  # Updated: Now supports native audio
+        "lip_sync": True,  # Best-in-class lip sync
+        "generation_time": "2-5min",
+        "primary_strength": "photorealistic_humans",
         "recommended": True,
+        "prompt_tips": [
+            "Beat timestamp 형식 사용: Beat 0-4s: [Action]",
+            "카메라 움직임 구체적 지정",
+            "2분까지 가능 - 긴 씬에 최적",
+            "물리적 모션에 강점",
+        ],
+        "negative_prompts": ["No background music", "No mumble", "No overlapping speech", "No distortion"],
+        "audio_format": "Beat 5-8s: Close up. Character (Tone): \"text\"",
     },
     "sora_max_2pro": {
         "name": "Sora Max 2 Pro",
-        "use_case": "애니메이션 스타일 영상",
-        "max_duration": 20,
+        "use_case": "애니메이션 스타일 + 물리 시뮬레이션",
+        "max_duration": 60,  # Updated: 60s Pro tier
+        "max_resolution": "4K",
         "native_audio": True,
+        "lip_sync": True,
+        "generation_time": "5-15min",
+        "primary_strength": "physics_accuracy",
+        "prompt_tips": [
+            "스타일 레퍼런스 명시 ('Ghibli', 'Pixar', 'Anime')",
+            "캐릭터 묘사 일관되게 반복",
+            "감정/분위기 키워드 중요",
+            "Force-reaction 구문으로 물리 동작 묘사",
+        ],
+        "negative_prompts": ["No text overlay", "No watermark", "No lens flare"],
+        "audio_format": "[Visual Description]\n+ [SFX descriptions]\n+ [Dialogue if any]",
     },
 }
 
