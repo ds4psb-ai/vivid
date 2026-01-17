@@ -262,8 +262,8 @@ function PromptGeneratorContent() {
 
         {/* File Upload (2026 Best Practice: Multimodal Input) */}
         <DimensionPanel.FileUpload
-          accept={["image/*", "video/*", "application/pdf"]}
-          maxSizeMB={50}
+          accept={["*"]}
+          maxSizeMB={100}
           multiple
           onUpload={setUploadedFiles}
           label="참고 자료 (선택)"

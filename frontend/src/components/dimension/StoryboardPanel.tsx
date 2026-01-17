@@ -88,6 +88,7 @@ function StoryboardContent() {
   const [sceneCount, setSceneCount] = useState(5);
   const [language, setLanguage] = useState<"ko" | "en">("ko");
   const [model, setModel] = useState("gemini-3-flash-preview");
+  const [files, setFiles] = useState<File[]>([]);
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -236,6 +237,16 @@ function StoryboardContent() {
             {script.length}/{MAX_SCRIPT_LENGTH}
           </div>
         </div>
+
+        {/* File Upload */}
+        <DimensionPanel.FileUpload
+          accept={["*"]}
+          maxSizeMB={100}
+          multiple
+          onUpload={setFiles}
+          label="참고 자료 (선택)"
+          helperText="기존 스토리보드, 무드보드 이미지 또는 PDF"
+        />
 
         {/* Scene Count */}
         <DimensionPanel.Select

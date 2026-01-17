@@ -83,6 +83,7 @@ function AbyssMirrorContent() {
     bloodType: "",
     gender: "",
   });
+  const [files, setFiles] = useState<File[]>([]);
 
   // Chat state
   const [messages, setMessages] = useState<Message[]>([]);
@@ -743,6 +744,18 @@ function AbyssMirrorContent() {
             options={MODELS}
             disabled={phase !== "input"}
           />
+
+          {/* File Upload (Input phase only) */}
+          {phase === "input" && (
+            <DimensionPanel.FileUpload
+              accept={["*"]}
+              maxSizeMB={100}
+              multiple
+              onUpload={setFiles}
+              label="영감 이미지 (선택)"
+              helperText="취향이 담긴 이미지, 좋아하는 포스터 등"
+            />
+          )}
 
           {/* Trace History */}
           {traces.length > 0 && (

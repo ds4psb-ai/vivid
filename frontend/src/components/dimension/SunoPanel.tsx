@@ -16,11 +16,13 @@
  * @see https://react.dev/blog/2024/12/05/react-19
  */
 
-import { useState, useCallback, useTransition, useOptimistic } from "react";
+import { useState, useCallback, useTransition, useOptimistic, useRef, useMemo } from "react";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
+import { Upload, X, Music } from "lucide-react";
 
 // =============================================================================
 // CONSTANTS
@@ -52,47 +54,47 @@ interface SunoGenerateResponse {
 }
 
 // =============================================================================
-// PRESETS
+// PRESETS (Dynamic based on language)
 // =============================================================================
 
-const MODELS = [
-  { value: "V5", label: "Suno V5 (최신)", credits: 20 },
+const getModels = (isKo: boolean) => [
+  { value: "V5", label: isKo ? "Suno V5 (최신)" : "Suno V5 (Latest)", credits: 20 },
   { value: "V4_5PLUS", label: "V4.5 Plus", credits: 15 },
   { value: "V4_5ALL", label: "V4.5 All", credits: 15 },
   { value: "V4_5", label: "V4.5", credits: 12 },
-  { value: "V4", label: "V4 (경제적)", credits: 10 },
+  { value: "V4", label: isKo ? "V4 (경제적)" : "V4 (Economic)", credits: 10 },
 ];
 
-const GENRES = [
-  { value: "pop", label: "팝", hint: "Catchy pop melody, upbeat rhythm, modern production" },
+const getGenres = (isKo: boolean) => [
+  { value: "pop", label: isKo ? "팝" : "Pop", hint: "Catchy pop melody, upbeat rhythm, modern production" },
   { value: "kpop", label: "K-Pop", hint: "K-pop, electronic dance pop, catchy hooks, powerful vocals" },
-  { value: "cinematic", label: "시네마틱", hint: "Epic cinematic orchestral, dramatic, emotional" },
+  { value: "cinematic", label: isKo ? "시네마틱" : "Cinematic", hint: "Epic cinematic orchestral, dramatic, emotional" },
   { value: "lofi", label: "Lo-Fi", hint: "Lo-fi hip hop, chill beats, relaxing, nostalgic" },
   { value: "edm", label: "EDM", hint: "Electronic dance music, energetic drops, synth heavy" },
-  { value: "rock", label: "록", hint: "Rock, electric guitar, powerful drums, energetic" },
-  { value: "acoustic", label: "어쿠스틱", hint: "Acoustic, gentle guitar, warm vocals, intimate" },
+  { value: "rock", label: isKo ? "록" : "Rock", hint: "Rock, electric guitar, powerful drums, energetic" },
+  { value: "acoustic", label: isKo ? "어쿠스틱" : "Acoustic", hint: "Acoustic, gentle guitar, warm vocals, intimate" },
   { value: "rnb", label: "R&B", hint: "R&B, smooth vocals, soulful, groovy" },
-  { value: "hiphop", label: "힙합", hint: "Hip hop, rhythmic flow, bass heavy, urban" },
-  { value: "jazz", label: "재즈", hint: "Jazz, smooth, sophisticated, brass and piano" },
-  { value: "ambient", label: "앰비언트", hint: "Ambient, atmospheric, ethereal, meditative" },
+  { value: "hiphop", label: isKo ? "힙합" : "Hip-Hop", hint: "Hip hop, rhythmic flow, bass heavy, urban" },
+  { value: "jazz", label: isKo ? "재즈" : "Jazz", hint: "Jazz, smooth, sophisticated, brass and piano" },
+  { value: "ambient", label: isKo ? "앰비언트" : "Ambient", hint: "Ambient, atmospheric, ethereal, meditative" },
 ];
 
-const MOODS = [
-  { value: "happy", label: "행복", keywords: "upbeat, joyful, bright, energetic" },
-  { value: "sad", label: "슬픔", keywords: "melancholy, emotional, touching, heartfelt" },
-  { value: "epic", label: "웅장", keywords: "grand, powerful, dramatic, heroic" },
-  { value: "romantic", label: "로맨틱", keywords: "love, tender, sweet, intimate" },
-  { value: "mysterious", label: "미스터리", keywords: "dark, suspenseful, enigmatic, haunting" },
-  { value: "relaxing", label: "편안", keywords: "calm, peaceful, soothing, gentle" },
-  { value: "energetic", label: "에너제틱", keywords: "high-energy, driving, intense, pumping" },
+const getMoods = (isKo: boolean) => [
+  { value: "happy", label: isKo ? "행복" : "Happy", keywords: "upbeat, joyful, bright, energetic" },
+  { value: "sad", label: isKo ? "슬픔" : "Sad", keywords: "melancholy, emotional, touching, heartfelt" },
+  { value: "epic", label: isKo ? "웅장" : "Epic", keywords: "grand, powerful, dramatic, heroic" },
+  { value: "romantic", label: isKo ? "로맨틱" : "Romantic", keywords: "love, tender, sweet, intimate" },
+  { value: "mysterious", label: isKo ? "미스터리" : "Mysterious", keywords: "dark, suspenseful, enigmatic, haunting" },
+  { value: "relaxing", label: isKo ? "편안" : "Relaxing", keywords: "calm, peaceful, soothing, gentle" },
+  { value: "energetic", label: isKo ? "에너제틱" : "Energetic", keywords: "high-energy, driving, intense, pumping" },
 ];
 
-const COMPOSER_STYLES = [
-  { value: "", label: "기본 스타일" },
-  { value: "hans_zimmer", label: "한스 짐머", hint: "Epic cinematic orchestral, Hans Zimmer style, dramatic brass, layered synths" },
-  { value: "joe_hisaishi", label: "조 히사이시", hint: "Minimalist piano, Joe Hisaishi style, Ghibli-inspired, gentle strings, nostalgic" },
-  { value: "ennio_morricone", label: "엔니오 모리코네", hint: "Western epic, Ennio Morricone style, trumpet, dramatic orchestration" },
-  { value: "john_williams", label: "존 윌리엄스", hint: "Grand orchestral, John Williams style, heroic brass, sweeping strings" },
+const getComposerStyles = (isKo: boolean) => [
+  { value: "", label: isKo ? "기본 스타일" : "Default Style" },
+  { value: "hans_zimmer", label: isKo ? "한스 짐머" : "Hans Zimmer", hint: "Epic cinematic orchestral, Hans Zimmer style, dramatic brass, layered synths" },
+  { value: "joe_hisaishi", label: isKo ? "조 히사이시" : "Joe Hisaishi", hint: "Minimalist piano, Joe Hisaishi style, Ghibli-inspired, gentle strings, nostalgic" },
+  { value: "ennio_morricone", label: isKo ? "엔니오 모리코네" : "Ennio Morricone", hint: "Western epic, Ennio Morricone style, trumpet, dramatic orchestration" },
+  { value: "john_williams", label: isKo ? "존 윌리엄스" : "John Williams", hint: "Grand orchestral, John Williams style, heroic brass, sweeping strings" },
 ];
 
 // =============================================================================
@@ -100,6 +102,48 @@ const COMPOSER_STYLES = [
 // =============================================================================
 
 function SunoContent() {
+  const { language } = useLanguage();
+  const isKo = language === "ko";
+
+  // Memoized presets based on language
+  const MODELS = useMemo(() => getModels(isKo), [isKo]);
+  const GENRES = useMemo(() => getGenres(isKo), [isKo]);
+  const MOODS = useMemo(() => getMoods(isKo), [isKo]);
+  const COMPOSER_STYLES = useMemo(() => getComposerStyles(isKo), [isKo]);
+
+  // i18n labels
+  const labels = useMemo(() => ({
+    title: isKo ? "Suno Music" : "Suno Music",
+    subtitle: isKo ? "AI로 고품질 음악과 BGM을 생성합니다 (생성당 2곡)" : "Generate high-quality music and BGM with AI (2 songs per generation)",
+    songTitle: isKo ? "곡 제목 *" : "Song Title *",
+    songTitlePlaceholder: isKo ? "예: Midnight Dreams" : "e.g., Midnight Dreams",
+    genre: isKo ? "장르" : "Genre",
+    mood: isKo ? "분위기" : "Mood",
+    lyricsOrDesc: isKo ? "가사 / 설명 *" : "Lyrics / Description *",
+    musicDesc: isKo ? "음악 설명 *" : "Music Description *",
+    lyricsPlaceholder: isKo ? "가사를 입력하세요. 예:\n[Verse]\nWalking through the city lights...\n\n[Chorus]\nWe are the dreamers..." : "Enter lyrics. e.g.:\n[Verse]\nWalking through the city lights...\n\n[Chorus]\nWe are the dreamers...",
+    musicDescPlaceholder: isKo ? "어떤 분위기의 음악을 원하시나요? 예: A peaceful morning soundtrack with gentle piano and soft strings" : "What kind of music do you want? e.g., A peaceful morning soundtrack with gentle piano and soft strings",
+    reference: isKo ? "레퍼런스 (선택)" : "Reference (Optional)",
+    dragOrClick: isKo ? "참고 파일을 드래그하거나 클릭하여 업로드" : "Drag files or click to upload",
+    allFormats: isKo ? "모든 파일 형식 지원 (최대 100MB)" : "All file formats supported (max 100MB)",
+    addFile: isKo ? "+ 파일 추가" : "+ Add File",
+    instrumental: isKo ? "인스트루멘탈 (보컬 없음)" : "Instrumental (no vocals)",
+    advancedOptions: isKo ? "고급 옵션" : "Advanced Options",
+    modelLabel: isKo ? "모델" : "Model",
+    composerStyle: isKo ? "작곡가 스타일" : "Composer Style",
+    additionalStyleHint: isKo ? "추가 스타일 힌트" : "Additional Style Hint",
+    styleHintPlaceholder: isKo ? "예: with heavy bass drops and catchy synth riffs" : "e.g., with heavy bass drops and catchy synth riffs",
+    generatedMusic: (count: number) => isKo ? `생성된 음악 (${count}곡)` : `Generated Music (${count} songs)`,
+    download: isKo ? "다운로드" : "Download",
+    generating: isKo ? "음악 생성 중... (1-3분 소요)" : "Generating music... (1-3 min)",
+    generate: (credits: number) => isKo ? `음악 생성 (${credits} 크레딧)` : `Generate Music (${credits} credits)`,
+    twoSongsNote: isKo ? "생성당 2곡이 만들어집니다" : "2 songs will be created per generation",
+    errorTitlePrompt: isKo ? "제목과 프롬프트를 입력해주세요." : "Please enter a title and prompt.",
+    errorGeneration: isKo ? "음악 생성에 실패했습니다." : "Music generation failed.",
+    errorUnknown: isKo ? "알 수 없는 오류가 발생했습니다." : "An unknown error occurred.",
+    credits: isKo ? "크레딧" : "credits",
+  }), [isKo]);
+
   // Form state
   const [title, setTitle] = useState("");
   const [style, setStyle] = useState("");
@@ -110,6 +154,8 @@ function SunoContent() {
   const [selectedMood, setSelectedMood] = useState("");
   const [selectedComposer, setSelectedComposer] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [referenceFiles, setReferenceFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // UI state
   const [isPending, startTransition] = useTransition();
@@ -152,7 +198,7 @@ function SunoContent() {
   // Handle generate
   const handleGenerate = useCallback(async () => {
     if (!title.trim() || !prompt.trim()) {
-      setError("제목과 프롬프트를 입력해주세요.");
+      setError(labels.errorTitlePrompt);
       return;
     }
 
@@ -186,7 +232,7 @@ function SunoContent() {
         }
 
         if (!response.ok) {
-          throw new Error(data.detail || "음악 생성에 실패했습니다.");
+          throw new Error(data.detail || labels.errorGeneration);
         }
 
         setResult(data);
@@ -196,10 +242,10 @@ function SunoContent() {
           creditContext.refresh();
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.");
+        setError(err instanceof Error ? err.message : labels.errorUnknown);
       }
     });
-  }, [title, prompt, model, instrumental, buildStyleString, creditContext]);
+  }, [title, prompt, model, instrumental, buildStyleString, creditContext, labels]);
 
   // Handle genre select
   const handleGenreSelect = (genreValue: string) => {
@@ -225,10 +271,10 @@ function SunoContent() {
       <div className="p-4 border-b border-gray-700">
         <h2 className="text-xl font-bold text-white flex items-center gap-2">
           <span>🎵</span>
-          <span>Suno Music</span>
+          <span>{labels.title}</span>
         </h2>
         <p className="text-sm text-gray-400 mt-1">
-          AI로 고품질 음악과 BGM을 생성합니다 (생성당 2곡)
+          {labels.subtitle}
         </p>
       </div>
 
@@ -236,13 +282,13 @@ function SunoContent() {
         {/* Title Input */}
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
-            곡 제목 *
+            {labels.songTitle}
           </label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="예: Midnight Dreams"
+            placeholder={labels.songTitlePlaceholder}
             maxLength={100}
             className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
@@ -251,7 +297,7 @@ function SunoContent() {
         {/* Genre Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
-            장르
+            {labels.genre}
           </label>
           <div className="flex flex-wrap gap-2">
             {GENRES.map((genre) => (
@@ -273,7 +319,7 @@ function SunoContent() {
         {/* Mood Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
-            분위기
+            {labels.mood}
           </label>
           <div className="flex flex-wrap gap-2">
             {MOODS.map((mood) => (
@@ -295,15 +341,15 @@ function SunoContent() {
         {/* Lyrics/Description */}
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
-            {instrumental ? "음악 설명 *" : "가사 / 설명 *"}
+            {instrumental ? labels.musicDesc : labels.lyricsOrDesc}
           </label>
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder={
               instrumental
-                ? "어떤 분위기의 음악을 원하시나요? 예: A peaceful morning soundtrack with gentle piano and soft strings"
-                : "가사를 입력하세요. 예:\n[Verse]\nWalking through the city lights...\n\n[Chorus]\nWe are the dreamers..."
+                ? labels.musicDescPlaceholder
+                : labels.lyricsPlaceholder
             }
             rows={6}
             maxLength={2000}
@@ -312,6 +358,88 @@ function SunoContent() {
           <p className="text-xs text-gray-500 mt-1">
             {prompt.length}/2000
           </p>
+        </div>
+
+        {/* Reference File Upload */}
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            {labels.reference}
+          </label>
+          <div
+            className={`border-2 border-dashed rounded-lg p-4 transition-colors ${
+              referenceFiles.length > 0
+                ? "border-purple-500 bg-purple-500/10"
+                : "border-gray-600 hover:border-gray-500"
+            }`}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const files = Array.from(e.dataTransfer.files);
+              if (files.length > 0) {
+                setReferenceFiles((prev) => [...prev, ...files].slice(0, 10));
+              }
+            }}
+          >
+            {referenceFiles.length === 0 ? (
+              <div
+                className="flex flex-col items-center gap-2 cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="w-6 h-6 text-gray-400" />
+                <p className="text-sm text-gray-500 text-center">
+                  {labels.dragOrClick}
+                </p>
+                <p className="text-xs text-gray-600">{labels.allFormats}</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {referenceFiles.map((file, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between bg-gray-800 rounded-lg px-3 py-2"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Music className="w-4 h-4 text-purple-400 flex-shrink-0" />
+                      <span className="text-sm text-gray-300 truncate">{file.name}</span>
+                      <span className="text-xs text-gray-500 flex-shrink-0">
+                        {(file.size / 1024 / 1024).toFixed(1)}MB
+                      </span>
+                    </div>
+                    <button
+                      onClick={() =>
+                        setReferenceFiles((prev) => prev.filter((_, i) => i !== idx))
+                      }
+                      className="p-1 hover:bg-gray-700 rounded"
+                    >
+                      <X className="w-4 h-4 text-gray-400" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full py-2 text-sm text-purple-400 hover:text-purple-300"
+                >
+                  {labels.addFile}
+                </button>
+              </div>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="*"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                const files = Array.from(e.target.files || []);
+                setReferenceFiles((prev) => [...prev, ...files].slice(0, 10));
+                e.target.value = "";
+              }}
+            />
+          </div>
         </div>
 
         {/* Instrumental Toggle */}
@@ -329,7 +457,7 @@ function SunoContent() {
             />
           </button>
           <span className="text-sm text-gray-300">
-            인스트루멘탈 (보컬 없음)
+            {labels.instrumental}
           </span>
         </div>
 
@@ -340,7 +468,7 @@ function SunoContent() {
             className="text-sm text-purple-400 hover:text-purple-300 flex items-center gap-1"
           >
             <span>{showAdvanced ? "▼" : "▶"}</span>
-            <span>고급 옵션</span>
+            <span>{labels.advancedOptions}</span>
           </button>
 
           {showAdvanced && (
@@ -348,7 +476,7 @@ function SunoContent() {
               {/* Model Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  모델
+                  {labels.modelLabel}
                 </label>
                 <select
                   value={model}
@@ -357,7 +485,7 @@ function SunoContent() {
                 >
                   {MODELS.map((m) => (
                     <option key={m.value} value={m.value}>
-                      {m.label} ({m.credits} 크레딧)
+                      {m.label} ({m.credits} {labels.credits})
                     </option>
                   ))}
                 </select>
@@ -366,7 +494,7 @@ function SunoContent() {
               {/* Composer Style */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  작곡가 스타일
+                  {labels.composerStyle}
                 </label>
                 <select
                   value={selectedComposer}
@@ -384,13 +512,13 @@ function SunoContent() {
               {/* Custom Style */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  추가 스타일 힌트
+                  {labels.additionalStyleHint}
                 </label>
                 <input
                   type="text"
                   value={style}
                   onChange={(e) => setStyle(e.target.value)}
-                  placeholder="예: with heavy bass drops and catchy synth riffs"
+                  placeholder={labels.styleHintPlaceholder}
                   maxLength={500}
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
@@ -410,7 +538,7 @@ function SunoContent() {
         {result?.success && result.songs.length > 0 && (
           <div className="space-y-3">
             <h3 className="text-sm font-medium text-gray-300">
-              생성된 음악 ({result.songs.length}곡)
+              {labels.generatedMusic(result.songs.length)}
             </h3>
             {result.songs.map((song, index) => (
               <div
@@ -454,7 +582,7 @@ function SunoContent() {
                     className="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-sm rounded transition-colors"
                   >
                     <span>⬇</span>
-                    <span>다운로드</span>
+                    <span>{labels.download}</span>
                   </a>
                 )}
               </div>
@@ -477,18 +605,18 @@ function SunoContent() {
           {isPending ? (
             <span className="flex items-center justify-center gap-2">
               <span className="animate-spin">⏳</span>
-              <span>음악 생성 중... (1-3분 소요)</span>
+              <span>{labels.generating}</span>
             </span>
           ) : (
             <span className="flex items-center justify-center gap-2">
               <span>🎵</span>
-              <span>음악 생성 ({creditCost} 크레딧)</span>
+              <span>{labels.generate(creditCost)}</span>
             </span>
           )}
         </button>
 
         <p className="text-xs text-gray-500 text-center mt-2">
-          생성당 2곡이 만들어집니다
+          {labels.twoSongsNote}
         </p>
       </div>
 

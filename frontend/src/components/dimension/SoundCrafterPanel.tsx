@@ -136,6 +136,7 @@ function SoundCrafterContent() {
 
   // Inputs
   const [concept, setConcept] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
   const [selectedDirection, setSelectedDirection] =
     useState<AudioDirection | null>(null);
   const [mixRecipe, setMixRecipe] = useState<MixRecipe>({
@@ -401,6 +402,8 @@ function SoundCrafterContent() {
             onGenerate={handleGenerateMood}
             creditCost={CREDIT_COST_MOOD}
             byokKey={byokKey}
+            files={files}
+            setFiles={setFiles}
           />
         )}
       </DimensionPanel.Sidebar>
@@ -613,6 +616,8 @@ function ConceptInput({
   onGenerate,
   creditCost,
   byokKey,
+  files,
+  setFiles,
 }: {
   concept: string;
   setConcept: (v: string) => void;
@@ -620,6 +625,8 @@ function ConceptInput({
   onGenerate: () => void;
   creditCost: number;
   byokKey: string | null;
+  files: File[];
+  setFiles: (files: File[]) => void;
 }) {
   return (
     <div className="space-y-2 animate-in fade-in">
@@ -634,6 +641,16 @@ function ConceptInput({
       <div className="text-xs text-slate-400 dark:text-white/40 text-right">
         {concept.length}/{MAX_CONCEPT_LENGTH}
       </div>
+
+      {/* File Upload */}
+      <DimensionPanel.FileUpload
+        accept={["*"]}
+        maxSizeMB={100}
+        multiple
+        onUpload={setFiles}
+        label="레퍼런스 (선택)"
+        helperText="참고 음악, 분위기 이미지"
+      />
 
       <DimensionPanel.GenerateButton
         onClick={onGenerate}

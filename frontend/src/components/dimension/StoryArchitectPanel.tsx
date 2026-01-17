@@ -357,8 +357,8 @@ function StoryArchitectContent() {
 
           {/* File Upload (2026 Best Practice: Multimodal Input) */}
           <DimensionPanel.FileUpload
-            accept={["image/*", "application/pdf", "text/plain"]}
-            maxSizeMB={30}
+            accept={["*"]}
+            maxSizeMB={100}
             multiple
             onUpload={setUploadedFiles}
             label="참고 자료 (선택)"

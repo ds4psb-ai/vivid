@@ -227,8 +227,8 @@ function VisualRealizerContent() {
 
         {/* File Upload (2026 Best Practice: Multimodal Input) */}
         <DimensionPanel.FileUpload
-          accept={["image/*"]}
-          maxSizeMB={20}
+          accept={["*"]}
+          maxSizeMB={100}
           multiple
           onUpload={setUploadedFiles}
           label="참고 이미지 (선택)"

@@ -94,6 +94,7 @@ function QualityDirectorContent() {
     "consistency",
     "safety",
   ]);
+  const [files, setFiles] = useState<File[]>([]);
   const [model, setModel] = useState("gemini-3-pro-preview");
   const [threshold, setThreshold] = useState(70);
   const [showCreditModal, setShowCreditModal] = useState(false);
@@ -238,17 +239,23 @@ function QualityDirectorContent() {
 
       <DimensionPanel.Sidebar>
         {/* Content Input */}
-        <div className="space-y-2 group">
-          <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">
-            검수 콘텐츠
-          </label>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="검수할 프롬프트, 스크립트, 또는 스토리보드를 입력하세요..."
-            className={`w-full h-40 px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:outline-none focus:border-${token.themeColor}-400/50 focus:bg-white dark:focus:bg-white/[0.07] focus:ring-4 focus:ring-${token.themeColor}-400/5 transition-all resize-none text-sm font-light leading-relaxed`}
-          />
-        </div>
+        <DimensionPanel.Textarea
+          label="검수 콘텐츠"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="검수할 프롬프트, 스크립트, 또는 스토리보드를 입력하세요..."
+          rows={6}
+        />
+
+        {/* File Upload */}
+        <DimensionPanel.FileUpload
+          accept={["*"]}
+          maxSizeMB={100}
+          multiple
+          onUpload={setFiles}
+          label="검수 자료 (선택)"
+          helperText="영상 스틸컷, 스크립트 PDF 등"
+        />
 
         {/* Content Type */}
         <div className="space-y-2">

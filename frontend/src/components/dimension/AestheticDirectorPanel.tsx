@@ -147,6 +147,7 @@ function AestheticDirectorContent() {
   const [concept, setConcept] = useState("");
   const [mood, setMood] = useState("neutral");
   const [targetMedium, setTargetMedium] = useState("video");
+  const [files, setFiles] = useState<File[]>([]);
   const [useRag, setUseRag] = useState(true);
 
   // Visual Identity Workshop State
@@ -476,6 +477,18 @@ Suggested Auteur: ${selectedDirection.suggested_auteur}`;
           rows={5}
           disabled={combinedLoading || stage !== "moodboard"}
         />
+
+        {/* File Upload (Stage 1 only) */}
+        {stage === "moodboard" && (
+          <DimensionPanel.FileUpload
+            accept={["*"]}
+            maxSizeMB={100}
+            multiple
+            onUpload={setFiles}
+            label="레퍼런스 (선택)"
+            helperText="무드보드, 컬러 레퍼런스, 영상 스틸"
+          />
+        )}
 
         {/* Mood Selector (Stage 1 only) */}
         {stage === "moodboard" && (

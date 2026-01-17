@@ -174,6 +174,7 @@ function PromptAlchemyContent() {
   const [duration, setDuration] = useState<number>(15);
   const [language, setLanguage] = useState<"ko" | "en">("ko");
   const [model, setModel] = useState("gemini-3-flash-preview");
+  const [files, setFiles] = useState<File[]>([]);
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [mode, setMode] = useState<"single" | "batch">("single");
@@ -419,6 +420,16 @@ function PromptAlchemyContent() {
           error={validationError || undefined}
           disabled={combinedLoading}
           rows={6}
+        />
+
+        {/* File Upload */}
+        <DimensionPanel.FileUpload
+          accept={["*"]}
+          maxSizeMB={100}
+          multiple
+          onUpload={setFiles}
+          label="참고 이미지 (선택)"
+          helperText="스타일/분위기 참고 이미지 첨부"
         />
 
         {/* Platform Selection (Single Mode Only) */}

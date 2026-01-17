@@ -44,32 +44,44 @@ import type {
 } from "@/lib/telemetry-api";
 import ForkToolModal from "@/components/tools/ForkToolModal";
 import { useToast } from "@/components/Toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // =============================================================================
 // Attribution Score Visualization
 // =============================================================================
 
-function AttributionScoreCard({ score }: { score: AttributionScore | null }) {
+interface AttributionLabels {
+    attributionScore: string;
+    attributionWillBeCalculated: string;
+    lastCalculated: string;
+    diff: string;
+    tests: string;
+    usage: string;
+    revenue: string;
+    quality: string;
+}
+
+function AttributionScoreCard({ score, labels }: { score: AttributionScore | null; labels: AttributionLabels }) {
     if (!score) {
         return (
             <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6">
                 <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                     <Shield className="w-5 h-5 text-purple-400" />
-                    Attribution Score
+                    {labels.attributionScore}
                 </h3>
                 <p className="text-gray-400 text-sm">
-                    Attribution score will be calculated after the first fork.
+                    {labels.attributionWillBeCalculated}
                 </p>
             </div>
         );
     }
 
     const components = [
-        { label: "Diff", value: score.diff_score, weight: score.weights.diff, color: "bg-blue-500" },
-        { label: "Tests", value: score.test_score, weight: score.weights.test, color: "bg-green-500" },
-        { label: "Usage", value: score.usage_score, weight: score.weights.usage, color: "bg-purple-500" },
-        { label: "Revenue", value: score.revenue_score, weight: score.weights.revenue, color: "bg-yellow-500" },
-        { label: "Quality", value: score.quality_score, weight: score.weights.quality, color: "bg-pink-500" },
+        { label: labels.diff, value: score.diff_score, weight: score.weights.diff, color: "bg-blue-500" },
+        { label: labels.tests, value: score.test_score, weight: score.weights.test, color: "bg-green-500" },
+        { label: labels.usage, value: score.usage_score, weight: score.weights.usage, color: "bg-purple-500" },
+        { label: labels.revenue, value: score.revenue_score, weight: score.weights.revenue, color: "bg-yellow-500" },
+        { label: labels.quality, value: score.quality_score, weight: score.weights.quality, color: "bg-pink-500" },
     ];
 
     return (
@@ -77,7 +89,7 @@ function AttributionScoreCard({ score }: { score: AttributionScore | null }) {
             <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                     <Shield className="w-5 h-5 text-purple-400" />
-                    Attribution Score
+                    {labels.attributionScore}
                 </h3>
                 <div className="text-3xl font-bold text-purple-400">
                     {score.total_score.toFixed(1)}
@@ -104,7 +116,7 @@ function AttributionScoreCard({ score }: { score: AttributionScore | null }) {
             </div>
 
             <p className="text-xs text-gray-500 mt-4">
-                Last calculated: {new Date(score.calculated_at).toLocaleString()}
+                {labels.lastCalculated}: {new Date(score.calculated_at).toLocaleString()}
             </p>
         </div>
     );
@@ -114,12 +126,27 @@ function AttributionScoreCard({ score }: { score: AttributionScore | null }) {
 // Run History
 // =============================================================================
 
+interface RunLabels {
+    recentRuns: string;
+    noRunsYet: string;
+    inProgress: string;
+    inputs: string;
+    outputs: string;
+    rateThisRun: string;
+    addFeedbackOptional: string;
+    submit: string;
+    cancel: string;
+    addFeedback: string;
+}
+
 function RunHistoryCard({
     runs,
     onFeedback,
+    labels,
 }: {
     runs: ToolRunEvent[];
     onFeedback: (runId: string, rating: number, feedback?: string) => void;
+    labels: RunLabels;
 }) {
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [feedbackRunId, setFeedbackRunId] = useState<string | null>(null);
@@ -152,11 +179,11 @@ function RunHistoryCard({
         <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                 <Play className="w-5 h-5 text-blue-400" />
-                Recent Runs
+                {labels.recentRuns}
             </h3>
 
             {runs.length === 0 ? (
-                <p className="text-gray-400 text-sm">No runs yet</p>
+                <p className="text-gray-400 text-sm">{labels.noRunsYet}</p>
             ) : (
                 <div className="space-y-3">
                     {runs.slice(0, 10).map((run) => (
@@ -175,7 +202,7 @@ function RunHistoryCard({
                                             {new Date(run.created_at).toLocaleString()}
                                         </div>
                                         <div className="text-xs text-gray-500">
-                                            {run.latency_ms ? `${run.latency_ms}ms` : "In progress"} • {run.credits_charged} credits
+                                            {run.latency_ms ? `${run.latency_ms}ms` : labels.inProgress} • {run.credits_charged} credits
                                         </div>
                                     </div>
                                 </div>
@@ -198,13 +225,13 @@ function RunHistoryCard({
                                 <div className="px-3 pb-3 border-t border-gray-700/30">
                                     <div className="grid grid-cols-2 gap-4 py-3">
                                         <div>
-                                            <div className="text-xs text-gray-500 mb-1">Inputs</div>
+                                            <div className="text-xs text-gray-500 mb-1">{labels.inputs}</div>
                                             <pre className="text-xs text-gray-300 bg-gray-800 p-2 rounded overflow-x-auto">
                                                 {JSON.stringify(run.inputs_summary, null, 2)}
                                             </pre>
                                         </div>
                                         <div>
-                                            <div className="text-xs text-gray-500 mb-1">Outputs</div>
+                                            <div className="text-xs text-gray-500 mb-1">{labels.outputs}</div>
                                             <pre className="text-xs text-gray-300 bg-gray-800 p-2 rounded overflow-x-auto">
                                                 {JSON.stringify(run.outputs_summary, null, 2)}
                                             </pre>
@@ -222,7 +249,7 @@ function RunHistoryCard({
                                             {feedbackRunId === run.id ? (
                                                 <div className="space-y-2">
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-xs text-gray-400">Rate this run:</span>
+                                                        <span className="text-xs text-gray-400">{labels.rateThisRun}</span>
                                                         <div className="flex gap-1">
                                                             {[1, 2, 3, 4, 5].map((star) => (
                                                                 <button
@@ -242,7 +269,7 @@ function RunHistoryCard({
                                                     </div>
                                                     <input
                                                         type="text"
-                                                        placeholder="Add feedback (optional)"
+                                                        placeholder={labels.addFeedbackOptional}
                                                         value={feedback}
                                                         onChange={(e) => setFeedback(e.target.value)}
                                                         className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-sm text-white"
@@ -251,16 +278,16 @@ function RunHistoryCard({
                                                         <button
                                                             onClick={() => handleSubmitFeedback(run.id)}
                                                             disabled={rating === 0}
-                                                            className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 
+                                                            className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50
                                        text-white text-xs rounded transition-colors"
                                                         >
-                                                            Submit
+                                                            {labels.submit}
                                                         </button>
                                                         <button
                                                             onClick={() => setFeedbackRunId(null)}
                                                             className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded"
                                                         >
-                                                            Cancel
+                                                            {labels.cancel}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -270,7 +297,7 @@ function RunHistoryCard({
                                                     className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-purple-400"
                                                 >
                                                     <MessageSquare className="w-3.5 h-3.5" />
-                                                    Add Feedback
+                                                    {labels.addFeedback}
                                                 </button>
                                             )}
                                         </div>
@@ -289,16 +316,27 @@ function RunHistoryCard({
 // Fork History with Sybil Warning
 // =============================================================================
 
-function ForkHistoryCard({ forks }: { forks: ForkEvent[] }) {
+interface ForkLabels {
+    forkHistory: string;
+    noForksYet: string;
+    flagged: string;
+    score: string;
+    warning: string;
+    testsPassed: string;
+    testsPending: string;
+    revenue: string;
+}
+
+function ForkHistoryCard({ forks, labels }: { forks: ForkEvent[]; labels: ForkLabels }) {
     return (
         <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                 <GitFork className="w-5 h-5 text-emerald-400" />
-                Fork History
+                {labels.forkHistory}
             </h3>
 
             {forks.length === 0 ? (
-                <p className="text-gray-400 text-sm">No forks yet. Be the first to fork this tool!</p>
+                <p className="text-gray-400 text-sm">{labels.noForksYet}</p>
             ) : (
                 <div className="space-y-3">
                     {forks.map((fork) => (
@@ -316,7 +354,7 @@ function ForkHistoryCard({ forks }: { forks: ForkEvent[] }) {
                                         {fork.is_suspicious && (
                                             <span className="flex items-center gap-1 px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-xs rounded-full">
                                                 <AlertTriangle className="w-3 h-3" />
-                                                Flagged
+                                                {labels.flagged}
                                             </span>
                                         )}
                                     </div>
@@ -326,7 +364,7 @@ function ForkHistoryCard({ forks }: { forks: ForkEvent[] }) {
                                 </div>
                                 <div className="text-right">
                                     <div className="text-sm font-medium text-purple-400">
-                                        Score: {fork.attribution_score.toFixed(1)}
+                                        {labels.score}: {fork.attribution_score.toFixed(1)}
                                     </div>
                                     <div className="text-xs text-gray-500">
                                         +{fork.diff_lines_added} -{fork.diff_lines_removed} ~{fork.diff_lines_modified}
@@ -336,7 +374,7 @@ function ForkHistoryCard({ forks }: { forks: ForkEvent[] }) {
 
                             {fork.is_suspicious && fork.suspicion_reason && (
                                 <div className="mt-2 p-2 bg-yellow-500/10 rounded text-xs text-yellow-300">
-                                    <strong>Warning:</strong> {fork.suspicion_reason}
+                                    <strong>{labels.warning}:</strong> {fork.suspicion_reason}
                                 </div>
                             )}
 
@@ -348,10 +386,10 @@ function ForkHistoryCard({ forks }: { forks: ForkEvent[] }) {
 
                             <div className="flex items-center gap-4 mt-3 text-xs">
                                 <span className={fork.test_passed ? "text-green-400" : "text-gray-500"}>
-                                    {fork.test_passed ? "✓ Tests Passed" : "○ Tests Pending"}
+                                    {fork.test_passed ? `✓ ${labels.testsPassed}` : `○ ${labels.testsPending}`}
                                 </span>
                                 <span className="text-gray-500">
-                                    Revenue: {fork.revenue_generated} credits
+                                    {labels.revenue}: {fork.revenue_generated} credits
                                 </span>
                             </div>
                         </div>
@@ -371,6 +409,7 @@ export default function ToolDetailPage() {
     const router = useRouter();
     const toolKey = params.toolKey as string;
     const toast = useToast();
+    const { language } = useLanguage();
 
     const [tool, setTool] = useState<ToolManifest | null>(null);
     const [runs, setRuns] = useState<ToolRunEvent[]>([]);
@@ -379,6 +418,50 @@ export default function ToolDetailPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showForkModal, setShowForkModal] = useState(false);
+
+    // i18n labels
+    const labels = {
+        toolNotFound: language === "ko" ? "도구를 찾을 수 없습니다" : "Tool Not Found",
+        backToDashboard: language === "ko" ? "대시보드로 돌아가기" : "Back to Dashboard",
+        forkTool: language === "ko" ? "도구 포크" : "Fork Tool",
+        totalRuns: language === "ko" ? "총 실행" : "Total Runs",
+        forks: language === "ko" ? "포크" : "Forks",
+        revenue: language === "ko" ? "수익" : "Revenue",
+        rating: language === "ko" ? "평점" : "Rating",
+        description: language === "ko" ? "설명" : "Description",
+        category: language === "ko" ? "카테고리" : "Category",
+        cost: language === "ko" ? "비용" : "Cost",
+        createdBy: language === "ko" ? "제작자" : "Created by",
+        feedbackSubmitFailed: language === "ko" ? "피드백 제출에 실패했습니다" : "Failed to submit feedback",
+        failedToLoadTool: language === "ko" ? "도구를 불러오지 못했습니다" : "Failed to load tool",
+        // Attribution labels
+        attributionScore: language === "ko" ? "기여도 점수" : "Attribution Score",
+        attributionWillBeCalculated: language === "ko" ? "첫 번째 포크 이후 기여도 점수가 계산됩니다." : "Attribution score will be calculated after the first fork.",
+        lastCalculated: language === "ko" ? "마지막 계산" : "Last calculated",
+        diff: language === "ko" ? "차이" : "Diff",
+        tests: language === "ko" ? "테스트" : "Tests",
+        usage: language === "ko" ? "사용량" : "Usage",
+        quality: language === "ko" ? "품질" : "Quality",
+        // Run labels
+        recentRuns: language === "ko" ? "최근 실행" : "Recent Runs",
+        noRunsYet: language === "ko" ? "아직 실행 기록이 없습니다" : "No runs yet",
+        inProgress: language === "ko" ? "진행 중" : "In progress",
+        inputs: language === "ko" ? "입력" : "Inputs",
+        outputs: language === "ko" ? "출력" : "Outputs",
+        rateThisRun: language === "ko" ? "이 실행 평가:" : "Rate this run:",
+        addFeedbackOptional: language === "ko" ? "피드백 추가 (선택)" : "Add feedback (optional)",
+        submit: language === "ko" ? "제출" : "Submit",
+        cancel: language === "ko" ? "취소" : "Cancel",
+        addFeedback: language === "ko" ? "피드백 추가" : "Add Feedback",
+        // Fork labels
+        forkHistory: language === "ko" ? "포크 기록" : "Fork History",
+        noForksYet: language === "ko" ? "아직 포크가 없습니다. 첫 번째로 포크하세요!" : "No forks yet. Be the first to fork this tool!",
+        flagged: language === "ko" ? "신고됨" : "Flagged",
+        score: language === "ko" ? "점수" : "Score",
+        warning: language === "ko" ? "경고" : "Warning",
+        testsPassed: language === "ko" ? "테스트 통과" : "Tests Passed",
+        testsPending: language === "ko" ? "테스트 대기 중" : "Tests Pending",
+    };
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -404,11 +487,11 @@ export default function ToolDetailPage() {
                 }
             }
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to load tool");
+            setError(err instanceof Error ? err.message : labels.failedToLoadTool);
         } finally {
             setLoading(false);
         }
-    }, [toolKey]);
+    }, [toolKey, labels.failedToLoadTool]);
 
     useEffect(() => {
         fetchData();
@@ -422,7 +505,7 @@ export default function ToolDetailPage() {
             setRuns(updatedRuns);
         } catch (err) {
             console.error("Failed to submit feedback:", err);
-            toast.error("피드백 제출에 실패했습니다");
+            toast.error(labels.feedbackSubmitFailed);
         }
     };
 
@@ -452,13 +535,13 @@ export default function ToolDetailPage() {
             <div className="min-h-screen bg-gray-900 flex items-center justify-center">
                 <div className="text-center">
                     <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-                    <h2 className="text-xl text-white mb-2">Tool Not Found</h2>
+                    <h2 className="text-xl text-white mb-2">{labels.toolNotFound}</h2>
                     <p className="text-gray-400 mb-4">{error}</p>
                     <button
                         onClick={() => router.push("/tools")}
                         className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg"
                     >
-                        Back to Dashboard
+                        {labels.backToDashboard}
                     </button>
                 </div>
             </div>
@@ -475,7 +558,7 @@ export default function ToolDetailPage() {
                         className="flex items-center gap-2 text-gray-400 hover:text-white mb-4 transition-colors"
                     >
                         <ArrowLeft className="w-4 h-4" />
-                        Back to Dashboard
+                        {labels.backToDashboard}
                     </button>
 
                     <div className="flex items-start justify-between">
@@ -504,11 +587,11 @@ export default function ToolDetailPage() {
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={handleFork}
-                                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 
+                                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500
                          text-white font-medium rounded-lg transition-colors"
                             >
                                 <GitFork className="w-5 h-5" />
-                                Fork Tool
+                                {labels.forkTool}
                             </button>
                         </div>
                     </div>
@@ -522,28 +605,28 @@ export default function ToolDetailPage() {
                     <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4">
                         <div className="flex items-center gap-2 text-gray-400 mb-2">
                             <Zap className="w-4 h-4" />
-                            <span className="text-sm">Total Runs</span>
+                            <span className="text-sm">{labels.totalRuns}</span>
                         </div>
                         <div className="text-2xl font-bold">{tool.usage_count}</div>
                     </div>
                     <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4">
                         <div className="flex items-center gap-2 text-gray-400 mb-2">
                             <GitFork className="w-4 h-4" />
-                            <span className="text-sm">Forks</span>
+                            <span className="text-sm">{labels.forks}</span>
                         </div>
                         <div className="text-2xl font-bold">{tool.fork_count}</div>
                     </div>
                     <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4">
                         <div className="flex items-center gap-2 text-gray-400 mb-2">
                             <DollarSign className="w-4 h-4" />
-                            <span className="text-sm">Revenue</span>
+                            <span className="text-sm">{labels.revenue}</span>
                         </div>
                         <div className="text-2xl font-bold text-emerald-400">{tool.total_revenue}</div>
                     </div>
                     <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4">
                         <div className="flex items-center gap-2 text-gray-400 mb-2">
                             <Star className="w-4 h-4" />
-                            <span className="text-sm">Rating</span>
+                            <span className="text-sm">{labels.rating}</span>
                         </div>
                         <div className="text-2xl font-bold">
                             {tool.quality_rating ? tool.quality_rating.toFixed(1) : "—"}
@@ -553,25 +636,64 @@ export default function ToolDetailPage() {
 
                 {/* Description */}
                 <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6 mb-8">
-                    <h3 className="text-lg font-semibold mb-3">Description</h3>
+                    <h3 className="text-lg font-semibold mb-3">{labels.description}</h3>
                     <p className="text-gray-300">{tool.description}</p>
                     <div className="flex items-center gap-4 mt-4 text-sm text-gray-500">
-                        <span>Category: {tool.category}</span>
+                        <span>{labels.category}: {tool.category}</span>
                         <span>•</span>
-                        <span>Cost: {tool.credit_cost} credits</span>
+                        <span>{labels.cost}: {tool.credit_cost} credits</span>
                         <span>•</span>
-                        <span>Created by: {tool.created_by}</span>
+                        <span>{labels.createdBy}: {tool.created_by}</span>
                     </div>
                 </div>
 
                 {/* Two Column Layout */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <AttributionScoreCard score={attribution} />
-                    <ForkHistoryCard forks={forks} />
+                    <AttributionScoreCard
+                        score={attribution}
+                        labels={{
+                            attributionScore: labels.attributionScore,
+                            attributionWillBeCalculated: labels.attributionWillBeCalculated,
+                            lastCalculated: labels.lastCalculated,
+                            diff: labels.diff,
+                            tests: labels.tests,
+                            usage: labels.usage,
+                            revenue: labels.revenue,
+                            quality: labels.quality,
+                        }}
+                    />
+                    <ForkHistoryCard
+                        forks={forks}
+                        labels={{
+                            forkHistory: labels.forkHistory,
+                            noForksYet: labels.noForksYet,
+                            flagged: labels.flagged,
+                            score: labels.score,
+                            warning: labels.warning,
+                            testsPassed: labels.testsPassed,
+                            testsPending: labels.testsPending,
+                            revenue: labels.revenue,
+                        }}
+                    />
                 </div>
 
                 <div className="mt-6">
-                    <RunHistoryCard runs={runs} onFeedback={handleFeedback} />
+                    <RunHistoryCard
+                        runs={runs}
+                        onFeedback={handleFeedback}
+                        labels={{
+                            recentRuns: labels.recentRuns,
+                            noRunsYet: labels.noRunsYet,
+                            inProgress: labels.inProgress,
+                            inputs: labels.inputs,
+                            outputs: labels.outputs,
+                            rateThisRun: labels.rateThisRun,
+                            addFeedbackOptional: labels.addFeedbackOptional,
+                            submit: labels.submit,
+                            cancel: labels.cancel,
+                            addFeedback: labels.addFeedback,
+                        }}
+                    />
                 </div>
             </div>
 

@@ -128,6 +128,7 @@ function KlingContent() {
   const [endImageUrl, setEndImageUrl] = useState("");
   const [motionPreset, setMotionPreset] = useState("");
   const [cameraPreset, setCameraPreset] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -294,6 +295,16 @@ function KlingContent() {
           error={validationError || undefined}
           disabled={combinedLoading}
           rows={5}
+        />
+
+        {/* File Upload */}
+        <DimensionPanel.FileUpload
+          accept={["*"]}
+          maxSizeMB={100}
+          multiple
+          onUpload={setFiles}
+          label="참고 이미지 (선택)"
+          helperText="스타일 참고 이미지 첨부"
         />
 
         {/* Duration & Resolution */}
