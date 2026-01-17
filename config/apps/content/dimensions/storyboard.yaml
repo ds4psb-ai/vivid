@@ -1,0 +1,112 @@
+$schema: "vivid-app/v2"
+
+metadata:
+  name: storyboard
+  type: dimension
+  version: "2.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "스토리보드 스케처"
+  name_en: "Storyboard Sketcher"
+  icon: "layout-grid"
+  description: "AI 기반 스토리보드 패널 생성 및 시각적 일관성 관리"
+
+capabilities:
+  - name: rag
+    enabled: true
+    config:
+      mode: auteur_only
+      auteur_mode: true
+      confidence_threshold: 0.5
+      corpus: storyboard_composition_rules
+      cache_ttl: 3600
+      max_sources: 8
+      retrieval:
+        strategy: hybrid
+        top_k: 10
+        rrf_k: 60
+      corpora:
+        - storyboard_composition_rules
+        - shot_type_visual_guide
+        - camera_movement_notation
+        - character_consistency_techniques
+
+  - name: cache
+    enabled: true
+    config:
+      ttl: 3600
+
+  - name: execution
+    enabled: true
+    config:
+      credit_cost: 15
+      endpoint: "/api/dimension/storyboard/sketch"
+      stream_endpoint: "/api/dimension/storyboard/sketch/stream"
+      capsule_key: "dimension.storyboard.sketch"
+
+  - name: memory_bank
+    enabled: true
+    config:
+      max_characters: 20
+      max_props: 30
+      max_backgrounds: 10
+      keyframe_slots_per_entity: 10
+      feature_storage: "dinov2+clip"
+      update_policy: "semantic_distinctiveness > 0.15"
+
+  - name: consistency_scoring
+    enabled: true
+    config:
+      method: "dinov2_feature_similarity"
+      thresholds:
+        character: 0.63
+        prop: 0.58
+        background: 0.72
+      auto_fix: true
+      fallback: "memory_bank_injection"
+
+extensions:
+  dimension:
+    corpus: storyboard_composition_rules
+    tool_type: generation
+    supports_streaming: true
+    supports_memory_bank: true
+    supports_consistency_check: true
+
+  handoff:
+    targets:
+      - visual_realizer
+      - video_maker
+    data_transfer:
+      - character_memory_bank
+      - prop_memory_bank
+      - background_memory_bank
+      - style_guide
+
+keywords:
+  patterns:
+    - "storyboard"
+    - "스토리보드"
+    - "패널"
+    - "panel"
+    - "샷 리스트"
+    - "shot list"
+    - "컷"
+    - "프리비즈"
+    - "previz"
+    - "애니매틱"
+    - "animatic"
+
+research:
+  reference_doc: "docs/research/05_STORYBOARD_SKETCHER_RESEARCH.md"
+  technologies:
+    - name: "StoryMem"
+      source: "ByteDance + NTU, Dec 2025"
+      use_case: "Memory-to-Video paradigm for multi-shot consistency"
+    - name: "DINOv2"
+      source: "Meta AI"
+      use_case: "Visual consistency scoring"
+    - name: "VideoMemory"
+      source: "Jan 2026 Benchmark"
+      use_case: "Consistency benchmark targets"

@@ -35,6 +35,7 @@ from .nanobanana import router as nanobanana_router
 from .mirror import router as mirror_router
 from .prompt import router as prompt_router
 from .character import router as character_router
+from .storyboard import router as storyboard_router
 
 # Re-export from _base for backward compatibility
 from ._base import (
@@ -66,6 +67,7 @@ router.include_router(nanobanana_router)
 router.include_router(mirror_router)
 router.include_router(prompt_router)
 router.include_router(character_router)
+router.include_router(storyboard_router)
 
 
 # ============================================================================
