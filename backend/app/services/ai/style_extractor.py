@@ -1,7 +1,7 @@
 """Style Extraction Service for Reference Analysis (2026 Expert Workflow).
 
 Extracts reusable visual style information from reference images using
-Gemini 2.5 multimodal capabilities and color analysis.
+Gemini 3 multimodal capabilities and color analysis.
 
 Features:
 - Style tag extraction (anime, photorealistic, etc.)
@@ -84,7 +84,7 @@ class StyleExtractionResult(BaseModel):
 class StyleExtractionConfig:
     """Configuration for style extraction."""
 
-    model: str = "gemini-2.5-flash"  # 2026 default
+    model: str = "gemini-3-flash-preview"  # 2026 Gemini 3 Flash (Jan 2026)
     max_retries: int = 3
     retry_delay: float = 1.0
     timeout_seconds: float = 30.0
@@ -123,7 +123,7 @@ class StyleExtractionAPIError(StyleExtractionError):
 class StyleExtractor:
     """Extract reusable style from reference images (2026 Expert Workflow).
 
-    Uses Gemini 2.5 multimodal for style analysis and K-Means clustering
+    Uses Gemini 3 multimodal for style analysis and K-Means clustering
     for accurate color palette extraction.
     """
 

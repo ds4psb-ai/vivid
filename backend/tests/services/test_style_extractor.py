@@ -103,7 +103,7 @@ class TestStyleExtractionConfig:
     def test_default_values(self):
         """Test default configuration values."""
         config = StyleExtractionConfig()
-        assert config.model == "gemini-2.5-flash"
+        assert config.model == "gemini-3-flash-preview"
         assert config.max_retries == 3
         assert config.retry_delay == 1.0
         assert config.timeout_seconds == 30.0

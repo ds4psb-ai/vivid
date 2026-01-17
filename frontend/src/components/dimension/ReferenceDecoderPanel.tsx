@@ -1,21 +1,26 @@
 "use client";
 
 /**
- * ReferenceDecoderPanel - 레퍼런스 해석기 (AI)
+ * ReferenceDecoderPanel - 레퍼런스 해석기 (4D)
  *
- * 2026 Golden App: React 19 Best Practices + Multimodal Input
+ * 2026 Expert Workflow Hardening:
+ * - Style extraction from reference images
+ * - Frame-by-frame video analysis
+ * - Shot list generation for recreation
+ * - Moodboard display
  *
  * Features:
  * - useTransition for non-blocking form submission
  * - useOptimistic for instant UI feedback
- * - File upload for reference images/videos
- * - Evidence refs display
+ * - Multimodal input (text/image/video)
+ * - i18n support
  *
+ * @see docs/DIMENSION_APP_AUDIT_REPORT_2026.md
  * @see docs/PANEL_DESIGN_UNITY_SPEC.md
- * @see https://react.dev/blog/2024/12/05/react-19
  */
 
-import { useState, useCallback, useTransition, useOptimistic } from "react";
+import { useState, useCallback, useTransition, useMemo } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
@@ -23,18 +28,35 @@ import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import { type EvidenceRef } from "./EvidenceDisplay";
-import { Download, FileSearch } from "lucide-react";
+import {
+  Download,
+  FileSearch,
+  Image as ImageIcon,
+  Video,
+  FileText,
+  Palette,
+  Camera,
+  Film,
+  Sparkles,
+  Copy,
+  Check,
+} from "lucide-react";
 
 // ============================================================================
 // Constants & Types
 // ============================================================================
 
-const DIMENSION_CODE = "ai"; // Reference Decoder uses ai dimension
+const DIMENSION_CODE = "4d";
 const DIMENSION_KEY = "reference-decoder";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 const MAX_DESCRIPTION_LENGTH = 3000;
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
 
-interface AnalysisResult {
+type AnalysisMode = "text" | "style" | "video" | "image";
+
+// Traditional text-based analysis result
+interface TextAnalysisResult {
   composition?: string;
   lighting?: string;
   color?: string;
@@ -45,19 +67,207 @@ interface AnalysisResult {
   confidence?: number;
 }
 
-const FOCUS_AREAS = [
-  { value: "composition", label: "구도" },
-  { value: "lighting", label: "조명" },
-  { value: "color", label: "색감" },
-  { value: "movement", label: "카메라" },
-  { value: "narrative", label: "내러티브" },
-  { value: "pacing", label: "페이싱" },
-];
+// Style extraction result (2026 Expert Workflow)
+interface StyleExtractionResult {
+  success: boolean;
+  style_tags: string[];
+  style_prompt: string;
+  color_palette: string[];
+  lighting: string;
+  composition: string;
+  mood: string;
+  camera_angle?: string;
+  reference_artists: string[];
+  confidence: number;
+  evidence_refs: string[];
+}
 
-const MODELS = [
-  { value: "gemini-3-flash-preview", label: "Flash (빠름)" },
-  { value: "gemini-3-pro-preview", label: "Pro (고품질)" },
-];
+// Video analysis result (2026 Expert Workflow)
+interface VideoAnalysisResult {
+  success: boolean;
+  total_duration: number;
+  frame_count: number;
+  frames: Array<{
+    timestamp: number;
+    frame_number: number;
+    description: string;
+    objects: string[];
+    actions: string[];
+    camera_movement?: string;
+    shot_type?: string;
+    emotion?: string;
+  }>;
+  scenes: Array<{
+    start_time: number;
+    end_time: number;
+    duration: number;
+    description: string;
+    key_frame_index: number;
+  }>;
+  style: {
+    style_tags: string[];
+    style_prompt: string;
+    color_palette: string[];
+    lighting: string;
+    composition: string;
+    mood: string;
+  };
+  suggested_shots: Array<{
+    shot_number: number;
+    duration_seconds: number;
+    description: string;
+    camera_setup: string;
+    prompt: string;
+    reference_frame_index: number;
+  }>;
+  moodboard_frames: string[];
+  confidence: number;
+  evidence_refs: string[];
+}
+
+// Image analysis result (2026 Expert Workflow)
+interface ImageAnalysisResult {
+  success: boolean;
+  description: string;
+  style: {
+    style_tags: string[];
+    style_prompt: string;
+    color_palette: string[];
+    lighting: string;
+    composition: string;
+    mood: string;
+  };
+  objects: string[];
+  composition_analysis: string;
+  recreation_prompt: string;
+  similar_references: string[];
+  evidence_refs: string[];
+}
+
+type AnalysisResult =
+  | TextAnalysisResult
+  | StyleExtractionResult
+  | VideoAnalysisResult
+  | ImageAnalysisResult;
+
+// ============================================================================
+// i18n Helpers
+// ============================================================================
+
+const getI18n = (isKo: boolean) => ({
+  title: isKo ? "레퍼런스 해석기" : "Reference Decoder",
+  modes: {
+    text: isKo ? "텍스트 설명" : "Text Description",
+    style: isKo ? "스타일 추출" : "Style Extraction",
+    video: isKo ? "영상 분석" : "Video Analysis",
+    image: isKo ? "이미지 분석" : "Image Analysis",
+  },
+  modeDescriptions: {
+    text: isKo
+      ? "영상의 특징을 텍스트로 설명하여 분석"
+      : "Analyze by describing video features in text",
+    style: isKo
+      ? "레퍼런스 이미지에서 재사용 가능한 스타일 추출"
+      : "Extract reusable style from reference image",
+    video: isKo
+      ? "영상을 프레임별로 분석하고 샷 리스트 생성"
+      : "Analyze video frame-by-frame and generate shot list",
+    image: isKo
+      ? "이미지를 분석하고 재현 프롬프트 생성"
+      : "Analyze image and generate recreation prompt",
+  },
+  labels: {
+    description: isKo ? "레퍼런스 영상 설명" : "Reference Video Description",
+    focusAreas: isKo ? "분석 집중 영역" : "Focus Areas",
+    model: isKo ? "AI 모델" : "AI Model",
+    uploadImage: isKo ? "이미지 업로드" : "Upload Image",
+    uploadVideo: isKo ? "영상 업로드" : "Upload Video",
+    analysisDepth: isKo ? "분석 깊이" : "Analysis Depth",
+    context: isKo ? "추가 컨텍스트 (선택)" : "Additional Context (Optional)",
+  },
+  placeholders: {
+    description: isKo
+      ? "분석하고 싶은 영상의 장면이나 특징을 상세히 설명하세요..."
+      : "Describe the scene or features of the video you want to analyze...",
+    context: isKo
+      ? "이 레퍼런스의 출처나 장르 정보 (예: SF 영화, 뮤직비디오)"
+      : "Source or genre info (e.g., sci-fi film, music video)",
+  },
+  buttons: {
+    analyze: isKo ? "분석하기" : "Analyze",
+    analyzing: isKo ? "분석 중..." : "Analyzing...",
+    extractStyle: isKo ? "스타일 추출" : "Extract Style",
+    analyzeVideo: isKo ? "영상 분석" : "Analyze Video",
+    analyzeImage: isKo ? "이미지 분석" : "Analyze Image",
+    copyPrompt: isKo ? "프롬프트 복사" : "Copy Prompt",
+    copied: isKo ? "복사됨!" : "Copied!",
+    exportJson: isKo ? "JSON 내보내기" : "Export JSON",
+  },
+  focusAreas: [
+    { value: "composition", label: isKo ? "구도" : "Composition" },
+    { value: "lighting", label: isKo ? "조명" : "Lighting" },
+    { value: "color", label: isKo ? "색감" : "Color" },
+    { value: "movement", label: isKo ? "카메라" : "Camera" },
+    { value: "narrative", label: isKo ? "내러티브" : "Narrative" },
+    { value: "pacing", label: isKo ? "페이싱" : "Pacing" },
+  ],
+  depths: [
+    { value: "quick", label: isKo ? "빠른 분석" : "Quick" },
+    { value: "detailed", label: isKo ? "상세 분석" : "Detailed" },
+    { value: "comprehensive", label: isKo ? "종합 분석" : "Comprehensive" },
+  ],
+  models: [
+    { value: "gemini-3-flash-preview", label: isKo ? "Flash (빠름)" : "Flash (Fast)" },
+    { value: "gemini-3-pro-preview", label: isKo ? "Pro (고품질)" : "Pro (High Quality)" },
+  ],
+  results: {
+    styleExtraction: isKo ? "스타일 추출 결과" : "Style Extraction Result",
+    styleTags: isKo ? "스타일 태그" : "Style Tags",
+    stylePrompt: isKo ? "스타일 프롬프트" : "Style Prompt",
+    colorPalette: isKo ? "컬러 팔레트" : "Color Palette",
+    referenceArtists: isKo ? "유사 아티스트" : "Reference Artists",
+    videoAnalysis: isKo ? "영상 분석 결과" : "Video Analysis Result",
+    frameAnalysis: isKo ? "프레임 분석" : "Frame Analysis",
+    sceneSegments: isKo ? "장면 구분" : "Scene Segments",
+    shotList: isKo ? "샷 리스트" : "Shot List",
+    moodboard: isKo ? "무드보드" : "Moodboard",
+    imageAnalysis: isKo ? "이미지 분석 결과" : "Image Analysis Result",
+    recreationPrompt: isKo ? "재현 프롬프트" : "Recreation Prompt",
+    compositionAnalysis: isKo ? "구도 분석" : "Composition Analysis",
+    detectedObjects: isKo ? "감지된 오브젝트" : "Detected Objects",
+  },
+  emptyState: {
+    title: isKo ? "분석 대기 중" : "Ready to Analyze",
+    description: isKo
+      ? "레퍼런스를 업로드하거나 설명을 입력하세요"
+      : "Upload a reference or enter a description",
+  },
+  errors: {
+    noDescription: isKo ? "영상 설명을 입력해주세요" : "Please enter video description",
+    descriptionTooLong: isKo
+      ? `영상 설명은 ${MAX_DESCRIPTION_LENGTH}자 이하로 입력해주세요`
+      : `Description must be less than ${MAX_DESCRIPTION_LENGTH} characters`,
+    noFocusAreas: isKo
+      ? "최소 하나의 분석 영역을 선택해주세요"
+      : "Please select at least one focus area",
+    noFile: isKo ? "파일을 업로드해주세요" : "Please upload a file",
+    imageTooLarge: isKo
+      ? `이미지 크기가 ${MAX_IMAGE_SIZE / (1024 * 1024)}MB를 초과합니다`
+      : `Image size exceeds ${MAX_IMAGE_SIZE / (1024 * 1024)}MB`,
+    videoTooLarge: isKo
+      ? `영상 크기가 ${MAX_VIDEO_SIZE / (1024 * 1024)}MB를 초과합니다`
+      : `Video size exceeds ${MAX_VIDEO_SIZE / (1024 * 1024)}MB`,
+    invalidImageType: isKo
+      ? "지원하지 않는 이미지 형식입니다 (JPEG, PNG, WebP 지원)"
+      : "Unsupported image format (JPEG, PNG, WebP supported)",
+    invalidVideoType: isKo
+      ? "지원하지 않는 영상 형식입니다 (MP4, WebM 지원)"
+      : "Unsupported video format (MP4, WebM supported)",
+  },
+});
+
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
 
 // ============================================================================
 // Main Export
@@ -77,6 +287,11 @@ export default function ReferenceDecoderPanel() {
 
 function ReferenceDecoderContent() {
   const { token, setLoading, setResult, setError, classes } = useDimensionPanel();
+  const { isKorean } = useLanguage();
+  const t = useMemo(() => getI18n(isKorean), [isKorean]);
+
+  // Mode state
+  const [mode, setMode] = useState<AnalysisMode>("text");
 
   // Form state
   const [description, setDescription] = useState("");
@@ -87,17 +302,17 @@ function ReferenceDecoderContent() {
     "movement",
   ]);
   const [model, setModel] = useState("gemini-3-flash-preview");
+  const [analysisDepth, setAnalysisDepth] = useState("detailed");
+  const [context, setContext] = useState("");
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
+  // File upload state
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+
   // React 19: useTransition for non-blocking form submission
   const [isTransitionPending, startTransition] = useTransition();
-
-  // React 19: useOptimistic for instant UI feedback
-  const [optimisticResult, setOptimisticResult] = useOptimistic<AnalysisResult | null>(null);
-
-  // File upload state (2026 Best Practice: Multimodal input)
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
   // Result state
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
@@ -113,20 +328,12 @@ function ReferenceDecoderContent() {
   const { exportJSON } = useResultExport();
 
   // Async operation hook
-  const {
-    isLoading,
-    error,
-    execute,
-    retry,
-    canRetry,
-  } = useAsyncOperation<{ success: boolean; output: AnalysisResult; error?: string }>({
+  const { isLoading, error, execute, retry, canRetry } = useAsyncOperation<AnalysisResult>({
     onSuccess: (data) => {
-      if (data.success) {
-        setAnalysisResult(data.output);
-        setResult(data.output);
-        if (!byokKey && creditCtx) {
-          void creditCtx.refresh();
-        }
+      setAnalysisResult(data);
+      setResult(data);
+      if (!byokKey && creditCtx) {
+        void creditCtx.refresh();
       }
     },
     onError: (err) => {
@@ -140,12 +347,11 @@ function ReferenceDecoderContent() {
     nonRetryableErrors: ["400", "401", "402", "403", "404", "크레딧", "부족"],
   });
 
-  // Combined loading state (include transition pending for 2026 UX)
   const combinedLoading = isLoading || isTransitionPending;
 
   // Sync loading state to context
   const wrappedExecute = useCallback(
-    async (url: string, payload: object, headers?: Record<string, string>) => {
+    async (url: string, payload: object | FormData, headers?: Record<string, string>) => {
       setLoading(true);
       try {
         return await execute(url, payload, headers);
@@ -156,27 +362,79 @@ function ReferenceDecoderContent() {
     [execute, setLoading]
   );
 
+  // File upload handler
+  const handleFileUpload = useCallback(
+    (file: File | null) => {
+      if (!file) {
+        setUploadedFile(null);
+        setFilePreview(null);
+        return;
+      }
+
+      // Validate based on mode
+      if (mode === "style" || mode === "image") {
+        if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+          setValidationError(t.errors.invalidImageType);
+          return;
+        }
+        if (file.size > MAX_IMAGE_SIZE) {
+          setValidationError(t.errors.imageTooLarge);
+          return;
+        }
+      } else if (mode === "video") {
+        if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
+          setValidationError(t.errors.invalidVideoType);
+          return;
+        }
+        if (file.size > MAX_VIDEO_SIZE) {
+          setValidationError(t.errors.videoTooLarge);
+          return;
+        }
+      }
+
+      setValidationError(null);
+      setUploadedFile(file);
+
+      // Create preview for images
+      if (file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = (e) => setFilePreview(e.target?.result as string);
+        reader.readAsDataURL(file);
+      } else {
+        setFilePreview(null);
+      }
+    },
+    [mode, t.errors]
+  );
+
+  // Mode change handler
+  const handleModeChange = useCallback((newMode: AnalysisMode) => {
+    setMode(newMode);
+    setUploadedFile(null);
+    setFilePreview(null);
+    setAnalysisResult(null);
+    setValidationError(null);
+  }, []);
+
   const toggleFocusArea = (area: string) => {
     setFocusAreas((prev) =>
       prev.includes(area) ? prev.filter((a) => a !== area) : [...prev, area]
     );
   };
 
-  // Analyze handler
-  const handleAnalyze = useCallback(async () => {
+  // Text analysis handler (existing)
+  const handleTextAnalysis = useCallback(async () => {
     const trimmedDescription = description.trim();
     if (!trimmedDescription) {
-      setValidationError("영상 설명을 입력해주세요");
+      setValidationError(t.errors.noDescription);
       return;
     }
     if (trimmedDescription.length > MAX_DESCRIPTION_LENGTH) {
-      setValidationError(
-        `영상 설명은 ${MAX_DESCRIPTION_LENGTH}자 이하로 입력해주세요`
-      );
+      setValidationError(t.errors.descriptionTooLong);
       return;
     }
     if (focusAreas.length === 0) {
-      setValidationError("최소 하나의 분석 영역을 선택해주세요");
+      setValidationError(t.errors.noFocusAreas);
       return;
     }
     setValidationError(null);
@@ -191,106 +449,268 @@ function ReferenceDecoderContent() {
       { video_description: description, focus_areas: focusAreas, model },
       getBYOKHeaders(byokKey)
     );
-  }, [description, focusAreas, model, byokKey, creditCtx, wrappedExecute, CREDIT_COST]);
+  }, [description, focusAreas, model, byokKey, creditCtx, wrappedExecute, CREDIT_COST, t.errors]);
+
+  // Style extraction handler (2026 Expert Workflow)
+  const handleStyleExtraction = useCallback(async () => {
+    if (!uploadedFile) {
+      setValidationError(t.errors.noFile);
+      return;
+    }
+    setValidationError(null);
+
+    if (!byokKey && creditCtx && !creditCtx.hasEnoughCredits(CREDIT_COST)) {
+      setShowCreditModal(true);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", uploadedFile);
+    if (context) {
+      formData.append("context", context);
+    }
+
+    await wrappedExecute(
+      `${API_BASE}/api/dimension/4d/extract-style`,
+      formData,
+      getBYOKHeaders(byokKey)
+    );
+  }, [uploadedFile, context, byokKey, creditCtx, wrappedExecute, CREDIT_COST, t.errors]);
+
+  // Video analysis handler (2026 Expert Workflow)
+  const handleVideoAnalysis = useCallback(async () => {
+    if (!uploadedFile) {
+      setValidationError(t.errors.noFile);
+      return;
+    }
+    setValidationError(null);
+
+    if (!byokKey && creditCtx && !creditCtx.hasEnoughCredits(CREDIT_COST)) {
+      setShowCreditModal(true);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", uploadedFile);
+    formData.append("analysis_depth", analysisDepth);
+
+    await wrappedExecute(
+      `${API_BASE}/api/dimension/4d/analyze-video`,
+      formData,
+      getBYOKHeaders(byokKey)
+    );
+  }, [uploadedFile, analysisDepth, byokKey, creditCtx, wrappedExecute, CREDIT_COST, t.errors]);
+
+  // Image analysis handler (2026 Expert Workflow)
+  const handleImageAnalysis = useCallback(async () => {
+    if (!uploadedFile) {
+      setValidationError(t.errors.noFile);
+      return;
+    }
+    setValidationError(null);
+
+    if (!byokKey && creditCtx && !creditCtx.hasEnoughCredits(CREDIT_COST)) {
+      setShowCreditModal(true);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", uploadedFile);
+
+    await wrappedExecute(
+      `${API_BASE}/api/dimension/4d/analyze-image`,
+      formData,
+      getBYOKHeaders(byokKey)
+    );
+  }, [uploadedFile, byokKey, creditCtx, wrappedExecute, CREDIT_COST, t.errors]);
+
+  // Main action handler based on mode
+  const handleAnalyze = useCallback(() => {
+    startTransition(() => {
+      switch (mode) {
+        case "text":
+          void handleTextAnalysis();
+          break;
+        case "style":
+          void handleStyleExtraction();
+          break;
+        case "video":
+          void handleVideoAnalysis();
+          break;
+        case "image":
+          void handleImageAnalysis();
+          break;
+      }
+    });
+  }, [mode, handleTextAnalysis, handleStyleExtraction, handleVideoAnalysis, handleImageAnalysis]);
 
   // Export result as JSON
   const handleExportJson = useCallback(() => {
     if (!analysisResult) return;
-    exportJSON(analysisResult, `reference-analysis-${Date.now()}.json`);
-  }, [analysisResult, exportJSON]);
+    exportJSON(analysisResult, `reference-analysis-${mode}-${Date.now()}.json`);
+  }, [analysisResult, exportJSON, mode]);
 
   const displayError = validationError || error;
+  const canSubmit =
+    mode === "text"
+      ? description.trim() && focusAreas.length > 0
+      : !!uploadedFile;
 
   return (
     <>
-      <DimensionPanel.Header
-        title="레퍼런스 해석기"
-        creditCost={CREDIT_COST}
-      />
+      <DimensionPanel.Header title={t.title} creditCost={CREDIT_COST} />
 
       <DimensionPanel.Sidebar>
-        {/* Description Input */}
-        <div className="space-y-2 group">
-          <label
-            className={`text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1 group-focus-within:${classes.text} transition-colors`}
-          >
-            레퍼런스 영상 설명
+        {/* Mode Selector */}
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">
+            {isKorean ? "분석 모드" : "Analysis Mode"}
           </label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="분석하고 싶은 영상의 장면이나 특징을 상세히 설명하세요..."
-            className={`w-full h-32 px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:outline-none focus:border-${token.themeColor}-500 dark:focus:border-${token.themeColor}-400/50 focus:bg-white dark:focus:bg-white/[0.07] focus:ring-4 focus:ring-${token.themeColor}-500/10 dark:focus:ring-${token.themeColor}-400/5 transition-all resize-none text-sm font-light leading-relaxed`}
-          />
-        </div>
-
-        {/* File Upload (2026 Best Practice: Multimodal Input) */}
-        <DimensionPanel.FileUpload
-          accept={["*"]}
-          maxSizeMB={100}
-          multiple
-          onUpload={setUploadedFiles}
-          label="참고 영상/이미지 (선택)"
-          helperText="영상 스틸컷이나 참고 이미지를 첨부하면 더 정확한 분석"
-        />
-
-        {/* Focus Areas */}
-        <div className="space-y-2 group">
-          <label
-            className={`text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1 group-focus-within:${classes.text} transition-colors`}
-          >
-            분석 집중 영역
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {FOCUS_AREAS.map((area) => (
-              <button
-                key={area.value}
-                onClick={() => toggleFocusArea(area.value)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${
-                  focusAreas.includes(area.value)
-                    ? `${classes.bg}/20 border-${token.themeColor}-500 dark:border-${token.themeColor}-400/50 ${classes.text} shadow-[0_0_10px_rgba(245,158,11,0.1)]`
-                    : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white"
-                }`}
-              >
-                {area.label}
-              </button>
-            ))}
+          <div className="grid grid-cols-2 gap-2">
+            {(["text", "style", "video", "image"] as AnalysisMode[]).map((m) => {
+              const icons = {
+                text: FileText,
+                style: Palette,
+                video: Video,
+                image: ImageIcon,
+              };
+              const Icon = icons[m];
+              const isActive = mode === m;
+              return (
+                <button
+                  key={m}
+                  onClick={() => handleModeChange(m)}
+                  className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                    isActive
+                      ? `${classes.bg}/20 border border-${token.themeColor}-500/50 ${classes.text}`
+                      : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-white/10"
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{t.modes[m]}</span>
+                </button>
+              );
+            })}
           </div>
+          <p className="text-[10px] text-slate-400 dark:text-zinc-600 ml-1">
+            {t.modeDescriptions[mode]}
+          </p>
         </div>
 
-        {/* Model Select */}
-        <DimensionPanel.Select
-          label="AI 모델"
-          value={model}
-          onChange={(e) => setModel(e.target.value)}
-          options={MODELS}
-        />
+        {/* Text Mode Inputs */}
+        {mode === "text" && (
+          <>
+            <div className="space-y-2 group">
+              <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">
+                {t.labels.description}
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder={t.placeholders.description}
+                className={`w-full h-32 px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:outline-none focus:border-${token.themeColor}-500 focus:ring-4 focus:ring-${token.themeColor}-500/10 transition-all resize-none text-sm font-light leading-relaxed`}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">
+                {t.labels.focusAreas}
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {t.focusAreas.map((area) => (
+                  <button
+                    key={area.value}
+                    onClick={() => toggleFocusArea(area.value)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${
+                      focusAreas.includes(area.value)
+                        ? `${classes.bg}/20 border-${token.themeColor}-500/50 ${classes.text}`
+                        : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-white/10"
+                    }`}
+                  >
+                    {area.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <DimensionPanel.Select
+              label={t.labels.model}
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+              options={t.models}
+            />
+          </>
+        )}
+
+        {/* Style/Image Mode Inputs */}
+        {(mode === "style" || mode === "image") && (
+          <>
+            <FileUploadArea
+              accept={ALLOWED_IMAGE_TYPES.join(",")}
+              file={uploadedFile}
+              preview={filePreview}
+              onUpload={handleFileUpload}
+              label={t.labels.uploadImage}
+              icon={<ImageIcon className="w-8 h-8" />}
+              helperText={isKorean ? "JPEG, PNG, WebP (최대 10MB)" : "JPEG, PNG, WebP (max 10MB)"}
+            />
+            {mode === "style" && (
+              <DimensionPanel.Input
+                label={t.labels.context}
+                value={context}
+                onChange={(e) => setContext(e.target.value)}
+                placeholder={t.placeholders.context}
+              />
+            )}
+          </>
+        )}
+
+        {/* Video Mode Inputs */}
+        {mode === "video" && (
+          <>
+            <FileUploadArea
+              accept={ALLOWED_VIDEO_TYPES.join(",")}
+              file={uploadedFile}
+              preview={null}
+              onUpload={handleFileUpload}
+              label={t.labels.uploadVideo}
+              icon={<Video className="w-8 h-8" />}
+              helperText={isKorean ? "MP4, WebM (최대 100MB)" : "MP4, WebM (max 100MB)"}
+            />
+            <DimensionPanel.Select
+              label={t.labels.analysisDepth}
+              value={analysisDepth}
+              onChange={(e) => setAnalysisDepth(e.target.value)}
+              options={t.depths}
+            />
+          </>
+        )}
 
         {/* Generate Button */}
         <DimensionPanel.GenerateButton
           onClick={handleAnalyze}
-          disabled={!description.trim() || focusAreas.length === 0}
+          disabled={!canSubmit}
           loading={combinedLoading}
           creditCost={CREDIT_COST}
           icon={<FileSearch className="w-5 h-5" />}
-          loadingText="분석 중..."
+          loadingText={t.buttons.analyzing}
         >
-          레퍼런스 분석
+          {mode === "text" && t.buttons.analyze}
+          {mode === "style" && t.buttons.extractStyle}
+          {mode === "video" && t.buttons.analyzeVideo}
+          {mode === "image" && t.buttons.analyzeImage}
         </DimensionPanel.GenerateButton>
 
-        {/* Validation Error */}
         {validationError && (
-          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs break-keep leading-relaxed animate-in fade-in slide-in-from-top-1">
+          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs animate-in fade-in">
             {validationError}
           </div>
         )}
       </DimensionPanel.Sidebar>
 
       <DimensionPanel.Content>
-        {/* Loading State */}
-        <DimensionPanel.Loading message="레퍼런스 분석 중..." />
+        <DimensionPanel.Loading message={t.buttons.analyzing} />
 
-        {/* Error State */}
         {displayError && !isLoading && (
           <DimensionPanel.Error
             error={displayError}
@@ -298,26 +718,57 @@ function ReferenceDecoderContent() {
           />
         )}
 
-        {/* Result Display */}
+        {/* Result Display based on mode */}
         {analysisResult && !isLoading && (
-          <AnalysisResultDisplay
-            result={analysisResult}
-            onExport={handleExportJson}
-            themeColor={token.themeColor}
-          />
+          <>
+            {mode === "text" && (
+              <TextAnalysisDisplay
+                result={analysisResult as TextAnalysisResult}
+                onExport={handleExportJson}
+                t={t}
+                themeColor={token.themeColor}
+              />
+            )}
+            {mode === "style" && (
+              <StyleExtractionDisplay
+                result={analysisResult as StyleExtractionResult}
+                onExport={handleExportJson}
+                t={t}
+                themeColor={token.themeColor}
+              />
+            )}
+            {mode === "video" && (
+              <VideoAnalysisDisplay
+                result={analysisResult as VideoAnalysisResult}
+                onExport={handleExportJson}
+                t={t}
+                themeColor={token.themeColor}
+              />
+            )}
+            {mode === "image" && (
+              <ImageAnalysisDisplay
+                result={analysisResult as ImageAnalysisResult}
+                onExport={handleExportJson}
+                t={t}
+                themeColor={token.themeColor}
+              />
+            )}
+          </>
         )}
 
-        {/* Empty State */}
-        {!analysisResult && !isLoading && !displayError && <EmptyState />}
+        {!analysisResult && !isLoading && !displayError && <EmptyState t={t} />}
 
-        {/* Evidence Display */}
-        <DimensionPanel.Evidence refs={analysisResult?.evidence_refs} />
+        <DimensionPanel.Evidence
+          refs={
+            analysisResult && "evidence_refs" in analysisResult
+              ? (analysisResult.evidence_refs as EvidenceRef[])
+              : undefined
+          }
+        />
 
-        {/* Next Dimension Navigation */}
         <DimensionPanel.NextNav currentDimension={DIMENSION_KEY} />
       </DimensionPanel.Content>
 
-      {/* Credit Modal */}
       <InsufficientCreditsModal
         isOpen={showCreditModal}
         onClose={() => setShowCreditModal(false)}
@@ -330,108 +781,291 @@ function ReferenceDecoderContent() {
 }
 
 // ============================================================================
-// Sub-Components
+// File Upload Area Component
 // ============================================================================
 
-function AnalysisResultDisplay({
+function FileUploadArea({
+  accept,
+  file,
+  preview,
+  onUpload,
+  label,
+  icon,
+  helperText,
+}: {
+  accept: string;
+  file: File | null;
+  preview: string | null;
+  onUpload: (file: File | null) => void;
+  label: string;
+  icon: React.ReactNode;
+  helperText: string;
+}) {
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      const droppedFile = e.dataTransfer.files[0];
+      if (droppedFile) onUpload(droppedFile);
+    },
+    [onUpload]
+  );
+
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const selectedFile = e.target.files?.[0];
+      if (selectedFile) onUpload(selectedFile);
+    },
+    [onUpload]
+  );
+
+  return (
+    <div className="space-y-2">
+      <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">
+        {label}
+      </label>
+      <div
+        onDrop={handleDrop}
+        onDragOver={(e) => e.preventDefault()}
+        className="relative border-2 border-dashed border-slate-200 dark:border-white/10 rounded-xl p-6 text-center hover:border-amber-500/50 dark:hover:border-amber-400/30 transition-colors cursor-pointer group"
+      >
+        <input
+          type="file"
+          accept={accept}
+          onChange={handleChange}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+        />
+        {file ? (
+          <div className="space-y-2">
+            {preview ? (
+              <img
+                src={preview}
+                alt="Preview"
+                className="w-full h-32 object-cover rounded-lg"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-20">
+                <Video className="w-10 h-10 text-amber-500" />
+              </div>
+            )}
+            <p className="text-sm text-slate-600 dark:text-zinc-300 truncate">
+              {file.name}
+            </p>
+            <p className="text-xs text-slate-400 dark:text-zinc-500">
+              {(file.size / (1024 * 1024)).toFixed(2)} MB
+            </p>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onUpload(null);
+              }}
+              className="text-xs text-red-400 hover:text-red-300"
+            >
+              Remove
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-2 text-slate-400 dark:text-zinc-500 group-hover:text-amber-500 dark:group-hover:text-amber-400 transition-colors">
+            {icon}
+            <p className="text-sm font-medium">
+              {helperText}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Result Display Components
+// ============================================================================
+
+function TextAnalysisDisplay({
   result,
   onExport,
+  t,
   themeColor,
 }: {
-  result: AnalysisResult;
+  result: TextAnalysisResult;
   onExport: () => void;
+  t: ReturnType<typeof getI18n>;
   themeColor: string;
 }) {
   return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in pb-20">
       <div className="flex items-center justify-between px-1">
-        <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-          <span className={`w-1.5 h-1.5 rounded-full bg-${themeColor}-400`}></span>
+        <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
           Analysis Report
         </h3>
         <button
           onClick={onExport}
-          className="px-3 py-1.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 hover:border-slate-300 dark:hover:border-white/20 text-slate-600 dark:text-white text-xs font-medium rounded-lg transition-all flex items-center gap-2"
+          className="px-3 py-1.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-white text-xs rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 flex items-center gap-2"
         >
-          <Download className="w-4 h-4 text-slate-500 dark:text-zinc-400" />
-          JSON Export
+          <Download className="w-4 h-4" />
+          {t.buttons.exportJson}
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Analysis Sections */}
         {Object.entries(result).map(([key, value]) => {
-          if (
-            key === "recommendations" ||
-            key === "evidence_refs" ||
-            key === "confidence"
-          )
-            return null;
-          const title =
-            FOCUS_AREAS.find((f) => f.value === key)?.label || key;
-
+          if (["recommendations", "evidence_refs", "confidence"].includes(key)) return null;
+          const title = t.focusAreas.find((f) => f.value === key)?.label || key;
           return (
-            <div key={key} className="group relative">
-              <div
-                className={`p-8 bg-white/80 dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] font-mono text-base leading-relaxed text-slate-800 dark:text-zinc-100 whitespace-pre-wrap group-hover:border-${themeColor}-400/50 dark:group-hover:border-${themeColor}-500/30 group-hover:bg-white dark:group-hover:bg-black/50 transition-all relative overflow-hidden`}
-              >
-                <div
-                  className={`absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-${themeColor}-400 to-orange-500 dark:from-${themeColor}-500 dark:to-orange-500 shadow-[0_0_20px_#f59e0b]`}
-                ></div>
-                <h4
-                  className={`text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest mb-3 border-b border-slate-100 dark:border-white/5 pb-2 group-hover:text-${themeColor}-600 dark:group-hover:text-${themeColor}-400/80 transition-colors`}
-                >
-                  {title}
-                </h4>
-                <p className="text-slate-700 dark:text-white/90 text-sm leading-relaxed whitespace-pre-wrap">
-                  {value as string}
-                </p>
-              </div>
+            <div key={key} className="p-6 bg-white/80 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl">
+              <h4 className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase mb-2">
+                {title}
+              </h4>
+              <p className="text-sm text-slate-700 dark:text-zinc-200 leading-relaxed">
+                {value as string}
+              </p>
             </div>
           );
         })}
       </div>
 
-      {/* Recommendations */}
       {result.recommendations && result.recommendations.length > 0 && (
-        <div className="group relative">
-          <div
-            className={`p-8 bg-white/80 dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] font-mono text-base leading-relaxed text-slate-800 dark:text-zinc-100 whitespace-pre-wrap group-hover:border-${themeColor}-400/50 dark:group-hover:border-${themeColor}-500/30 group-hover:bg-white dark:group-hover:bg-black/50 transition-all relative overflow-hidden`}
-          >
-            <div
-              className={`absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-${themeColor}-400 to-orange-500 dark:from-${themeColor}-500 dark:to-orange-500 shadow-[0_0_20px_#f59e0b]`}
-            ></div>
-            <h4
-              className={`text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2 group-hover:text-${themeColor}-600 dark:group-hover:text-${themeColor}-400/80 transition-colors`}
+        <div className="p-6 bg-white/80 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl">
+          <h4 className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase mb-3">
+            Key Recommendations
+          </h4>
+          <ul className="space-y-2">
+            {result.recommendations.map((rec, idx) => (
+              <li key={idx} className="flex items-start gap-2 text-sm text-slate-700 dark:text-zinc-200">
+                <span className={`mt-1.5 w-1.5 h-1.5 rounded-full bg-${themeColor}-500`} />
+                {rec}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StyleExtractionDisplay({
+  result,
+  onExport,
+  t,
+  themeColor,
+}: {
+  result: StyleExtractionResult;
+  onExport: () => void;
+  t: ReturnType<typeof getI18n>;
+  themeColor: string;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const copyPrompt = useCallback(() => {
+    navigator.clipboard.writeText(result.style_prompt);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [result.style_prompt]);
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in pb-20">
+      <div className="flex items-center justify-between px-1">
+        <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+          <Sparkles className={`w-4 h-4 text-${themeColor}-500`} />
+          {t.results.styleExtraction}
+        </h3>
+        <button onClick={onExport} className="px-3 py-1.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs rounded-lg flex items-center gap-2">
+          <Download className="w-4 h-4" />
+          {t.buttons.exportJson}
+        </button>
+      </div>
+
+      {/* Style Tags */}
+      <div className="p-6 bg-white/80 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl">
+        <h4 className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase mb-3">
+          {t.results.styleTags}
+        </h4>
+        <div className="flex flex-wrap gap-2">
+          {result.style_tags.map((tag, idx) => (
+            <span
+              key={idx}
+              className={`px-3 py-1 bg-${themeColor}-500/10 text-${themeColor}-600 dark:text-${themeColor}-400 text-sm rounded-full`}
             >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 10V3L4 14h7v7l9-11h-7z"
-                />
-              </svg>
-              Key Recommendations
+              {tag}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Style Prompt */}
+      <div className="p-6 bg-white/80 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl">
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase">
+            {t.results.stylePrompt}
+          </h4>
+          <button
+            onClick={copyPrompt}
+            className={`px-3 py-1 text-xs rounded-lg flex items-center gap-1 transition-colors ${
+              copied
+                ? "bg-green-500/20 text-green-600"
+                : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-white/10"
+            }`}
+          >
+            {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+            {copied ? t.buttons.copied : t.buttons.copyPrompt}
+          </button>
+        </div>
+        <p className="text-sm text-slate-700 dark:text-zinc-200 leading-relaxed font-mono bg-slate-50 dark:bg-white/5 p-4 rounded-lg">
+          {result.style_prompt}
+        </p>
+      </div>
+
+      {/* Color Palette */}
+      <div className="p-6 bg-white/80 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl">
+        <h4 className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase mb-3">
+          {t.results.colorPalette}
+        </h4>
+        <div className="flex gap-2">
+          {result.color_palette.map((color, idx) => (
+            <div key={idx} className="flex flex-col items-center gap-1">
+              <div
+                className="w-12 h-12 rounded-lg shadow-md border border-white/20"
+                style={{ backgroundColor: color }}
+              />
+              <span className="text-[10px] text-slate-500 dark:text-zinc-500 font-mono">
+                {color}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Additional Info */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: "Lighting", value: result.lighting },
+          { label: "Composition", value: result.composition },
+          { label: "Mood", value: result.mood },
+          { label: "Camera", value: result.camera_angle || "N/A" },
+        ].map(({ label, value }) => (
+          <div key={label} className="p-4 bg-white/80 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl">
+            <h4 className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase mb-1">
+              {label}
             </h4>
-            <ul className="space-y-3">
-              {result.recommendations.map((rec, idx) => (
-                <li
-                  key={idx}
-                  className="flex items-start gap-3 text-sm text-slate-700 dark:text-zinc-200"
-                >
-                  <span
-                    className={`mt-1.5 w-1.5 h-1.5 rounded-full bg-${themeColor}-500/50 flex-shrink-0`}
-                  ></span>
-                  <span className="leading-relaxed">{rec}</span>
-                </li>
-              ))}
-            </ul>
+            <p className="text-sm text-slate-700 dark:text-zinc-200 capitalize">{value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Reference Artists */}
+      {result.reference_artists.length > 0 && (
+        <div className="p-6 bg-white/80 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl">
+          <h4 className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase mb-3">
+            {t.results.referenceArtists}
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            {result.reference_artists.map((artist, idx) => (
+              <span
+                key={idx}
+                className="px-3 py-1 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-zinc-300 text-sm rounded-full"
+              >
+                {artist}
+              </span>
+            ))}
           </div>
         </div>
       )}
@@ -439,39 +1073,329 @@ function AnalysisResultDisplay({
   );
 }
 
-function EmptyState() {
+function VideoAnalysisDisplay({
+  result,
+  onExport,
+  t,
+  themeColor,
+}: {
+  result: VideoAnalysisResult;
+  onExport: () => void;
+  t: ReturnType<typeof getI18n>;
+  themeColor: string;
+}) {
+  const [activeTab, setActiveTab] = useState<"frames" | "shots" | "moodboard">("shots");
+
   return (
-    <div className="flex flex-col items-center justify-center h-full text-zinc-500 space-y-8 animate-in fade-in zoom-in-95 duration-700">
-      <div className="relative group">
-        <div className="absolute inset-0 bg-amber-500/20 blur-[80px] rounded-full group-hover:bg-amber-500/30 transition-colors duration-1000" />
-        <div className="w-32 h-32 rounded-[2rem] bg-white/[0.02] border border-white/10 flex items-center justify-center shadow-[0_0_60px_rgba(0,0,0,0.3)] backdrop-blur-md relative transform group-hover:scale-105 transition-all duration-500 group-hover:border-amber-500/20">
-          <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent rounded-[2rem]" />
-          <svg
-            className="w-12 h-12 text-white/20 group-hover:text-amber-400 transition-colors duration-500"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in pb-20">
+      <div className="flex items-center justify-between px-1">
+        <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+          <Film className={`w-4 h-4 text-${themeColor}-500`} />
+          {t.results.videoAnalysis}
+        </h3>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-slate-500 dark:text-zinc-500">
+            {result.frame_count} frames • {result.total_duration.toFixed(1)}s
+          </span>
+          <button onClick={onExport} className="px-3 py-1.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs rounded-lg flex items-center gap-2">
+            <Download className="w-4 h-4" />
+            {t.buttons.exportJson}
+          </button>
+        </div>
+      </div>
+
+      {/* Style Summary */}
+      <div className="p-6 bg-white/80 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl">
+        <h4 className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase mb-3">
+          Extracted Style
+        </h4>
+        <div className="flex flex-wrap gap-2 mb-4">
+          {result.style.style_tags.map((tag, idx) => (
+            <span key={idx} className={`px-3 py-1 bg-${themeColor}-500/10 text-${themeColor}-600 dark:text-${themeColor}-400 text-sm rounded-full`}>
+              {tag}
+            </span>
+          ))}
+        </div>
+        <p className="text-sm text-slate-600 dark:text-zinc-300 font-mono bg-slate-50 dark:bg-white/5 p-3 rounded-lg">
+          {result.style.style_prompt}
+        </p>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-2">
+        {[
+          { key: "shots", label: t.results.shotList, icon: Camera },
+          { key: "frames", label: t.results.frameAnalysis, icon: Film },
+          { key: "moodboard", label: t.results.moodboard, icon: ImageIcon },
+        ].map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            onClick={() => setActiveTab(key as typeof activeTab)}
+            className={`px-4 py-2 text-sm font-medium rounded-t-lg flex items-center gap-2 transition-colors ${
+              activeTab === key
+                ? `text-${themeColor}-600 dark:text-${themeColor}-400 border-b-2 border-${themeColor}-500`
+                : "text-slate-500 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300"
+            }`}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1}
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
+            <Icon className="w-4 h-4" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Shot List */}
+      {activeTab === "shots" && (
+        <div className="space-y-4">
+          {result.suggested_shots.map((shot) => (
+            <ShotCard key={shot.shot_number} shot={shot} themeColor={themeColor} />
+          ))}
+        </div>
+      )}
+
+      {/* Frame Analysis */}
+      {activeTab === "frames" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {result.frames.slice(0, 12).map((frame, idx) => (
+            <div
+              key={idx}
+              className="p-4 bg-white/80 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className={`text-xs font-bold text-${themeColor}-500`}>
+                  {frame.timestamp.toFixed(1)}s
+                </span>
+                {frame.shot_type && (
+                  <span className="text-[10px] px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded-full">
+                    {frame.shot_type}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-slate-700 dark:text-zinc-200 mb-2">
+                {frame.description}
+              </p>
+              {frame.camera_movement && (
+                <p className="text-xs text-slate-500 dark:text-zinc-500">
+                  📷 {frame.camera_movement}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Moodboard */}
+      {activeTab === "moodboard" && (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {result.moodboard_frames.map((frame, idx) => (
+            <div
+              key={idx}
+              className="aspect-video rounded-xl overflow-hidden border border-slate-200 dark:border-white/10"
+            >
+              <img
+                src={`data:image/jpeg;base64,${frame}`}
+                alt={`Moodboard frame ${idx + 1}`}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ShotCard({
+  shot,
+  themeColor,
+}: {
+  shot: VideoAnalysisResult["suggested_shots"][0];
+  themeColor: string;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const copyPrompt = useCallback(() => {
+    navigator.clipboard.writeText(shot.prompt);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [shot.prompt]);
+
+  return (
+    <div className="p-6 bg-white/80 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl">
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <span className={`w-8 h-8 flex items-center justify-center rounded-full bg-${themeColor}-500/20 text-${themeColor}-600 dark:text-${themeColor}-400 font-bold text-sm`}>
+            {shot.shot_number}
+          </span>
+          <div>
+            <h5 className="text-sm font-medium text-slate-800 dark:text-zinc-100">
+              {shot.description}
+            </h5>
+            <p className="text-xs text-slate-500 dark:text-zinc-500">
+              {shot.duration_seconds}s • {shot.camera_setup}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={copyPrompt}
+          className={`px-3 py-1 text-xs rounded-lg flex items-center gap-1 transition-colors ${
+            copied
+              ? "bg-green-500/20 text-green-600"
+              : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-zinc-400"
+          }`}
+        >
+          {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+          {copied ? "Copied!" : "Copy"}
+        </button>
+      </div>
+      <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-lg">
+        <p className="text-xs text-slate-600 dark:text-zinc-300 font-mono leading-relaxed">
+          {shot.prompt}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function ImageAnalysisDisplay({
+  result,
+  onExport,
+  t,
+  themeColor,
+}: {
+  result: ImageAnalysisResult;
+  onExport: () => void;
+  t: ReturnType<typeof getI18n>;
+  themeColor: string;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const copyPrompt = useCallback(() => {
+    navigator.clipboard.writeText(result.recreation_prompt);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [result.recreation_prompt]);
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in pb-20">
+      <div className="flex items-center justify-between px-1">
+        <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+          <ImageIcon className={`w-4 h-4 text-${themeColor}-500`} />
+          {t.results.imageAnalysis}
+        </h3>
+        <button onClick={onExport} className="px-3 py-1.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs rounded-lg flex items-center gap-2">
+          <Download className="w-4 h-4" />
+          {t.buttons.exportJson}
+        </button>
+      </div>
+
+      {/* Description */}
+      <div className="p-6 bg-white/80 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl">
+        <h4 className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase mb-3">
+          Description
+        </h4>
+        <p className="text-sm text-slate-700 dark:text-zinc-200 leading-relaxed">
+          {result.description}
+        </p>
+      </div>
+
+      {/* Recreation Prompt */}
+      <div className="p-6 bg-white/80 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl">
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase">
+            {t.results.recreationPrompt}
+          </h4>
+          <button
+            onClick={copyPrompt}
+            className={`px-3 py-1 text-xs rounded-lg flex items-center gap-1 transition-colors ${
+              copied
+                ? "bg-green-500/20 text-green-600"
+                : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-zinc-400"
+            }`}
+          >
+            {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+            {copied ? t.buttons.copied : t.buttons.copyPrompt}
+          </button>
+        </div>
+        <p className="text-sm text-slate-700 dark:text-zinc-200 leading-relaxed font-mono bg-slate-50 dark:bg-white/5 p-4 rounded-lg">
+          {result.recreation_prompt}
+        </p>
+      </div>
+
+      {/* Style Info */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="p-6 bg-white/80 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl">
+          <h4 className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase mb-3">
+            {t.results.styleTags}
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            {result.style.style_tags.map((tag, idx) => (
+              <span key={idx} className={`px-3 py-1 bg-${themeColor}-500/10 text-${themeColor}-600 dark:text-${themeColor}-400 text-sm rounded-full`}>
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="p-6 bg-white/80 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl">
+          <h4 className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase mb-3">
+            {t.results.colorPalette}
+          </h4>
+          <div className="flex gap-2">
+            {result.style.color_palette.map((color, idx) => (
+              <div
+                key={idx}
+                className="w-8 h-8 rounded-lg shadow border border-white/20"
+                style={{ backgroundColor: color }}
+                title={color}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Composition & Objects */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="p-6 bg-white/80 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl">
+          <h4 className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase mb-3">
+            {t.results.compositionAnalysis}
+          </h4>
+          <p className="text-sm text-slate-700 dark:text-zinc-200 leading-relaxed">
+            {result.composition_analysis}
+          </p>
+        </div>
+
+        <div className="p-6 bg-white/80 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl">
+          <h4 className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase mb-3">
+            {t.results.detectedObjects}
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            {result.objects.map((obj, idx) => (
+              <span key={idx} className="px-2 py-1 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-zinc-400 text-xs rounded">
+                {obj}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({ t }: { t: ReturnType<typeof getI18n> }) {
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-zinc-500 space-y-8 animate-in fade-in">
+      <div className="relative group">
+        <div className="absolute inset-0 bg-amber-500/20 blur-[80px] rounded-full" />
+        <div className="w-32 h-32 rounded-[2rem] bg-white/[0.02] border border-white/10 flex items-center justify-center backdrop-blur-md relative">
+          <FileSearch className="w-12 h-12 text-white/20 group-hover:text-amber-400 transition-colors" />
         </div>
       </div>
       <div className="text-center space-y-3">
-        <h3 className="text-2xl font-bold text-slate-900 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-b dark:from-white dark:to-white/40 tracking-tight">
-          Ready to Analyze
+        <h3 className="text-2xl font-bold text-slate-900 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-b dark:from-white dark:to-white/40">
+          {t.emptyState.title}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-zinc-500 max-w-xs mx-auto font-light leading-relaxed">
-          영상의 특징을 설명하고
-          <br />
-          <span className="text-amber-600 dark:text-amber-500/80 font-medium">
-            AI 기반의 심층 시네마틱 분석
-          </span>
-          을 받아보세요.
+        <p className="text-sm text-slate-500 dark:text-zinc-500 max-w-xs mx-auto">
+          {t.emptyState.description}
         </p>
       </div>
     </div>

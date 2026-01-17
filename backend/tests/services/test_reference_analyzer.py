@@ -225,8 +225,8 @@ class TestReferenceAnalyzerConfig:
     def test_default_values(self):
         """Test default configuration values."""
         config = ReferenceAnalyzerConfig()
-        assert config.model == "gemini-2.5-pro"
-        assert config.flash_model == "gemini-2.5-flash"
+        assert config.model == "gemini-3-pro-preview"
+        assert config.flash_model == "gemini-3-flash-preview"
         assert config.max_frames == 20
         assert config.quick_frames == 10
         assert config.comprehensive_frames == 30

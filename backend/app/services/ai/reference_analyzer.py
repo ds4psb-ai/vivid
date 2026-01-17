@@ -149,8 +149,8 @@ class ImageReferenceAnalysis(BaseModel):
 class ReferenceAnalyzerConfig:
     """Configuration for reference analysis."""
 
-    model: str = "gemini-2.5-pro"  # Pro for detailed analysis
-    flash_model: str = "gemini-2.5-flash"  # Flash for quick frame analysis
+    model: str = "gemini-3-pro-preview"  # Gemini 3 Pro for detailed analysis (Jan 2026)
+    flash_model: str = "gemini-3-flash-preview"  # Gemini 3 Flash for quick frame analysis
     max_frames: int = 20  # Max frames to analyze for detailed
     quick_frames: int = 10  # Frames for quick analysis
     comprehensive_frames: int = 30  # Frames for comprehensive
