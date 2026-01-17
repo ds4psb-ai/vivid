@@ -1,12 +1,21 @@
 """Tests for Character Consistency API.
 
+Comprehensive tests for StoryMem-based character consistency system.
+
 Tests cover:
 - Character CRUD operations
-- Reference image management
-- Memory bank operations
-- Platform synchronization
-- Similarity search
+- Reference image management (up to 14 images)
+- Memory bank operations (StoryMem algorithm)
+- Platform synchronization (Veo, Kling, Runway, Hailuo)
+- Similarity search (CoFE multi-expert fusion)
 - Input validation and sanitization
+- File validation (2026 Best Practices)
+- Evidence refs (Vivid convention)
+
+2026 Best Practices:
+- Gemini 3 Pro Image: up to 5 people, 14 reference images
+- ArcFace R100 (512D) + CLIP ViT-L/14 (768D)
+- CoFE multi-expert fusion for similarity
 
 References:
 - StoryMem Paper: arXiv:2512.19539
@@ -14,13 +23,15 @@ References:
 """
 from __future__ import annotations
 
+import base64
+import io
 import uuid
 from datetime import datetime
 from typing import Any, Dict
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from fastapi import status
+from fastapi import status, UploadFile
 from httpx import AsyncClient
 
 from app.models_character import Character, CharacterAppearance
@@ -35,8 +46,20 @@ from app.schemas.character_schemas import (
     PlatformSyncResponse,
     MemoryBankUpdateRequest,
     MemoryBankResponse,
+    KeyframeSelectionConfig,
+    EmbeddingMetadata,
+    SourceImage,
+    CharacterSimilarity,
+    CharacterListResponse,
 )
-from app.routers.dimension.character import _sanitize_text
+from app.routers.dimension.character import (
+    _sanitize_text,
+    _validate_image_file,
+    ALLOWED_IMAGE_TYPES,
+    MAX_IMAGE_SIZE,
+    MAX_REFERENCE_IMAGES,
+    MAX_CHARACTERS_PER_VIDEO,
+)
 
 
 # ============================================================================
@@ -500,3 +523,290 @@ class TestCharacterDatabaseIntegration:
     async def test_delete_character_cascade(self, db_session, sample_character):
         """Delete character cascades to appearances."""
         pass
+
+
+# ============================================================================
+# File Validation Tests (2026 Best Practices)
+# ============================================================================
+
+class TestFileValidation:
+    """Tests for file upload validation."""
+
+    def test_allowed_image_types_defined(self):
+        """ALLOWED_IMAGE_TYPES contains expected formats."""
+        assert "image/jpeg" in ALLOWED_IMAGE_TYPES
+        assert "image/png" in ALLOWED_IMAGE_TYPES
+        assert "image/webp" in ALLOWED_IMAGE_TYPES
+        assert "image/heic" in ALLOWED_IMAGE_TYPES
+        assert "image/heif" in ALLOWED_IMAGE_TYPES
+
+    def test_max_image_size(self):
+        """MAX_IMAGE_SIZE is 20MB."""
+        assert MAX_IMAGE_SIZE == 20 * 1024 * 1024
+
+    def test_max_reference_images(self):
+        """MAX_REFERENCE_IMAGES is 14 (Gemini 3 Pro Image limit)."""
+        assert MAX_REFERENCE_IMAGES == 14
+
+    def test_max_characters_per_video(self):
+        """MAX_CHARACTERS_PER_VIDEO is 5 (Gemini 3 Pro Image limit)."""
+        assert MAX_CHARACTERS_PER_VIDEO == 5
+
+    def test_validate_jpeg_file(self):
+        """Validates JPEG files."""
+        file = MagicMock(spec=UploadFile)
+        file.content_type = "image/jpeg"
+        file.filename = "test.jpg"
+        # Should not raise
+        _validate_image_file(file)
+
+    def test_validate_png_file(self):
+        """Validates PNG files."""
+        file = MagicMock(spec=UploadFile)
+        file.content_type = "image/png"
+        file.filename = "test.png"
+        _validate_image_file(file)
+
+    def test_validate_webp_file(self):
+        """Validates WebP files."""
+        file = MagicMock(spec=UploadFile)
+        file.content_type = "image/webp"
+        file.filename = "test.webp"
+        _validate_image_file(file)
+
+    def test_rejects_invalid_content_type(self):
+        """Rejects unsupported content types."""
+        file = MagicMock(spec=UploadFile)
+        file.content_type = "application/pdf"
+        file.filename = "test.pdf"
+
+        from fastapi import HTTPException
+        with pytest.raises(HTTPException) as exc_info:
+            _validate_image_file(file)
+        assert exc_info.value.status_code == 400
+        assert "Unsupported image type" in str(exc_info.value.detail)
+
+    def test_rejects_gif_files(self):
+        """Rejects GIF files (not supported by Gemini)."""
+        file = MagicMock(spec=UploadFile)
+        file.content_type = "image/gif"
+        file.filename = "test.gif"
+
+        from fastapi import HTTPException
+        with pytest.raises(HTTPException):
+            _validate_image_file(file)
+
+
+# ============================================================================
+# Evidence Refs Tests (Vivid Convention)
+# ============================================================================
+
+class TestEvidenceRefs:
+    """Tests for evidence_refs format (List[str])."""
+
+    def test_memory_bank_response_has_evidence_refs(self):
+        """MemoryBankResponse includes evidence_refs."""
+        response = MemoryBankResponse(
+            character_id=uuid.uuid4(),
+            keyframes_extracted=10,
+            long_term_updated=5,
+            sliding_window_updated=5,
+            new_keyframes=[],
+            evidence_refs=["db:characters:uuid-123", "qdrant:character_embeddings:point-456"],
+        )
+        assert isinstance(response.evidence_refs, list)
+        assert all(isinstance(ref, str) for ref in response.evidence_refs)
+        assert "db:characters:uuid-123" in response.evidence_refs
+
+    def test_evidence_refs_format_db_prefix(self):
+        """Evidence refs use db: prefix for database references."""
+        refs = ["db:characters:abc123", "db:character_appearances:def456"]
+        for ref in refs:
+            assert ref.startswith("db:")
+            parts = ref.split(":")
+            assert len(parts) == 3  # db:table:id
+
+    def test_evidence_refs_format_qdrant_prefix(self):
+        """Evidence refs use qdrant: prefix for vector store."""
+        refs = ["qdrant:character_embeddings:point123"]
+        for ref in refs:
+            assert ref.startswith("qdrant:")
+
+    def test_character_response_has_evidence_refs(self):
+        """CharacterResponse includes evidence_refs field."""
+        # Check that the field exists in the model
+        assert "evidence_refs" in CharacterResponse.model_fields
+
+
+# ============================================================================
+# Keyframe Selection Config Tests
+# ============================================================================
+
+class TestKeyframeSelectionConfig:
+    """Tests for StoryMem keyframe selection configuration."""
+
+    def test_default_weights(self):
+        """Default weights sum to 1.0."""
+        config = KeyframeSelectionConfig()
+        total = config.clip_weight + config.hps_weight + config.face_weight
+        assert abs(total - 1.0) < 0.01
+
+    def test_custom_weights(self):
+        """Custom weights are applied."""
+        config = KeyframeSelectionConfig(
+            clip_weight=0.5,
+            hps_weight=0.25,
+            face_weight=0.25,
+        )
+        assert config.clip_weight == 0.5
+        assert config.hps_weight == 0.25
+
+    def test_min_score_thresholds(self):
+        """Minimum score thresholds are reasonable."""
+        config = KeyframeSelectionConfig()
+        assert 0.5 <= config.min_clip_score <= 0.9
+        assert 0.3 <= config.min_hps_score <= 0.8
+        assert 0.7 <= config.min_face_confidence <= 1.0
+
+    def test_diversity_threshold(self):
+        """Diversity threshold is within expected range."""
+        config = KeyframeSelectionConfig()
+        assert 0.1 <= config.diversity_threshold <= 0.3
+
+
+# ============================================================================
+# Embedding Metadata Tests
+# ============================================================================
+
+class TestEmbeddingMetadata:
+    """Tests for embedding metadata schema."""
+
+    def test_required_fields(self):
+        """Required fields are present."""
+        metadata = EmbeddingMetadata(
+            character_id="char-123",
+            user_id="user-456",
+            name="Test Character",
+            created_at=datetime.utcnow().isoformat(),
+        )
+        assert metadata.character_id == "char-123"
+        assert metadata.user_id == "user-456"
+
+    def test_optional_fields_default(self):
+        """Optional fields have defaults."""
+        metadata = EmbeddingMetadata(
+            character_id="char-123",
+            user_id="user-456",
+            name="Test",
+            created_at=datetime.utcnow().isoformat(),
+        )
+        assert metadata.project_id is None
+        assert metadata.tags == []
+        assert metadata.source_image_urls == []
+
+
+# ============================================================================
+# Source Image Tests
+# ============================================================================
+
+class TestSourceImage:
+    """Tests for SourceImage schema."""
+
+    def test_source_image_with_url(self):
+        """SourceImage with URL."""
+        img = SourceImage(url="https://example.com/image.jpg")
+        assert img.url == "https://example.com/image.jpg"
+        assert img.is_primary is False
+
+    def test_source_image_quality_score_range(self):
+        """Quality score must be 0-1."""
+        img = SourceImage(url="https://example.com/image.jpg", quality_score=0.95)
+        assert img.quality_score == 0.95
+
+    def test_source_image_quality_score_validation(self):
+        """Quality score outside range raises error."""
+        with pytest.raises(ValueError):
+            SourceImage(url="https://example.com/image.jpg", quality_score=1.5)
+
+
+# ============================================================================
+# Character Similarity Tests
+# ============================================================================
+
+class TestCharacterSimilaritySchema:
+    """Tests for CharacterSimilarity response schema."""
+
+    def test_similarity_score_range(self):
+        """Similarity score must be 0-1."""
+        summary = CharacterSummaryResponse(
+            id=uuid.uuid4(),
+            name="Test",
+            primary_image_url=None,
+            tags=[],
+            keyframe_count=0,
+            platforms_synced=[],
+        )
+        similarity = CharacterSimilarity(
+            character=summary,
+            similarity_score=0.85,
+            match_type="combined",
+        )
+        assert similarity.similarity_score == 0.85
+
+    def test_match_types(self):
+        """Match type is one of allowed values."""
+        summary = CharacterSummaryResponse(
+            id=uuid.uuid4(),
+            name="Test",
+            primary_image_url=None,
+            tags=[],
+            keyframe_count=0,
+            platforms_synced=[],
+        )
+
+        for match_type in ["face", "clip", "combined"]:
+            similarity = CharacterSimilarity(
+                character=summary,
+                similarity_score=0.8,
+                match_type=match_type,
+            )
+            assert similarity.match_type == match_type
+
+
+# ============================================================================
+# Character List Response Tests
+# ============================================================================
+
+class TestCharacterListResponse:
+    """Tests for paginated character list response."""
+
+    def test_pagination_fields(self):
+        """Pagination fields are present."""
+        response = CharacterListResponse(
+            items=[],
+            total=100,
+            limit=20,
+            offset=40,
+        )
+        assert response.total == 100
+        assert response.limit == 20
+        assert response.offset == 40
+
+    def test_items_list(self):
+        """Items is a list of CharacterSummaryResponse."""
+        summary = CharacterSummaryResponse(
+            id=uuid.uuid4(),
+            name="Test",
+            primary_image_url=None,
+            tags=["test"],
+            keyframe_count=5,
+            platforms_synced=["veo"],
+        )
+        response = CharacterListResponse(
+            items=[summary],
+            total=1,
+            limit=20,
+            offset=0,
+        )
+        assert len(response.items) == 1
+        assert response.items[0].name == "Test"

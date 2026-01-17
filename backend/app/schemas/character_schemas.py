@@ -170,6 +170,10 @@ class CharacterResponse(BaseModel):
     user_id: str
     created_at: datetime
     updated_at: Optional[datetime]
+    evidence_refs: List[str] = Field(
+        default_factory=list,
+        description="Evidence references: [\"db:characters:uuid\", \"qdrant:character_embeddings:point_id\"]",
+    )
 
     model_config = {"from_attributes": True}
 
@@ -206,6 +210,10 @@ class MemoryBankResponse(BaseModel):
     long_term_updated: int
     sliding_window_updated: int
     new_keyframes: List[MemoryKeyframe]
+    evidence_refs: List[str] = Field(
+        default_factory=list,
+        description="Evidence references: [\"db:characters:uuid\", \"qdrant:character_embeddings:point_id\"]",
+    )
 
 
 class CharacterListResponse(BaseModel):

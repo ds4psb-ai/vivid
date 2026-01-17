@@ -4,18 +4,26 @@ API endpoints for StoryMem-based character consistency system.
 
 Features:
 - Character CRUD (create, read, update, delete)
-- Reference image management
+- Reference image management (up to 14 images per character)
 - Memory bank management
 - Platform synchronization
 - Similarity search
+
+2026 Best Practices:
+- Gemini 3 Pro Image: Supports up to 5 people with 14 reference images
+- ArcFace R100 + CLIP ViT-L/14 for embeddings
+- CoFE multi-expert fusion for similarity search
+- File validation (type, size)
 
 Security:
 - User authentication required
 - Ownership validation
 - XSS sanitization for text fields
+- File type/size validation
 
 References:
 - StoryMem Paper: arXiv:2512.19539
+- Gemini 3 Pro Image: https://ai.google.dev/gemini-api
 - DIMENSION_APP_MACRO_PLANNING_2026.md Part 11
 """
 from __future__ import annotations
@@ -69,6 +77,76 @@ from app.services.character_service import (
 
 router = APIRouter()
 character_logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# Constants (2026 Best Practices)
+# ============================================================================
+
+# File validation (Gemini 3 Pro Image supports these formats)
+ALLOWED_IMAGE_TYPES = {
+    "image/jpeg": [".jpg", ".jpeg"],
+    "image/png": [".png"],
+    "image/webp": [".webp"],
+    "image/heic": [".heic"],
+    "image/heif": [".heif"],
+}
+MAX_IMAGE_SIZE = 20 * 1024 * 1024  # 20MB per image
+MAX_REFERENCE_IMAGES = 14  # Gemini 3 Pro Image supports up to 14 reference images
+MAX_CHARACTERS_PER_VIDEO = 5  # Gemini 3 Pro Image supports up to 5 people
+
+
+# ============================================================================
+# File Validation Helpers
+# ============================================================================
+
+def _validate_image_file(file: UploadFile) -> None:
+    """Validate uploaded image file.
+
+    Args:
+        file: Uploaded file to validate
+
+    Raises:
+        HTTPException: If file is invalid
+    """
+    # Check content type
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
+        allowed = ", ".join(ALLOWED_IMAGE_TYPES.keys())
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported image type: {file.content_type}. Allowed: {allowed}",
+        )
+
+    # Check file extension
+    if file.filename:
+        ext = "." + file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
+        allowed_exts = ALLOWED_IMAGE_TYPES.get(file.content_type, [])
+        if ext and ext not in allowed_exts:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"File extension {ext} does not match content type {file.content_type}",
+            )
+
+
+async def _validate_image_size(file: UploadFile) -> bytes:
+    """Validate image file size and return content.
+
+    Args:
+        file: Uploaded file to validate
+
+    Returns:
+        File content as bytes
+
+    Raises:
+        HTTPException: If file exceeds size limit
+    """
+    content = await file.read()
+    if len(content) > MAX_IMAGE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Image size {len(content)} bytes exceeds maximum {MAX_IMAGE_SIZE} bytes ({MAX_IMAGE_SIZE // (1024*1024)}MB)",
+        )
+    return content
 
 
 # ============================================================================
@@ -318,10 +396,12 @@ async def add_reference_endpoint(
     "/character/{character_id}/upload-reference",
     response_model=CharacterResponse,
     responses={
+        400: {"model": DimensionErrorResponse},
         404: {"model": DimensionErrorResponse},
     },
-    summary="Upload Reference Image",
-    description="Upload reference image file to character.",
+    summary="Upload Reference Images",
+    description=f"Upload reference image files to character. Max {MAX_REFERENCE_IMAGES} images per character. "
+                f"Supported formats: JPEG, PNG, WebP, HEIC. Max size: {MAX_IMAGE_SIZE // (1024*1024)}MB per image.",
     tags=["Character Consistency"],
 )
 async def upload_reference_endpoint(
@@ -330,20 +410,49 @@ async def upload_reference_endpoint(
     user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> CharacterResponse:
-    """Upload reference images via file upload."""
+    """Upload reference images via file upload.
+
+    2026 Best Practices (Gemini 3 Pro Image):
+    - Supports up to 14 reference images per character
+    - Recommended: 5-10 high-quality reference images
+    - Best results with front-facing, well-lit photos
+    """
     user_id = user.get("id", "unknown")
     character_logger.info(
         f"[CHARACTER_UPLOAD_REF] user={user_id} character={character_id} "
         f"files={len(files)}"
     )
 
-    # Read file contents as base64
+    # Validate file count
+    if len(files) > MAX_REFERENCE_IMAGES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Too many files: {len(files)}. Maximum {MAX_REFERENCE_IMAGES} reference images allowed.",
+        )
+
+    # Validate and read file contents
+    import base64
     images_base64 = []
-    for file in files:
-        content = await file.read()
-        import base64
-        b64 = base64.b64encode(content).decode("utf-8")
-        images_base64.append(b64)
+    for i, file in enumerate(files):
+        try:
+            # Validate file type
+            _validate_image_file(file)
+
+            # Validate size and get content
+            content = await _validate_image_size(file)
+
+            # Convert to base64
+            b64 = base64.b64encode(content).decode("utf-8")
+            images_base64.append(b64)
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            character_logger.warning(f"[CHARACTER_UPLOAD_REF] File {i} validation failed: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"File {i + 1} validation failed: {str(e)}",
+            )
 
     character = await add_reference_images(
         db, character_id, user_id, images_base64=images_base64

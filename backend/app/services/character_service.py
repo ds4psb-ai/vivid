@@ -74,6 +74,11 @@ QDRANT_COLLECTION = "character_embeddings"
 MAX_LONG_TERM_KEYFRAMES = 10
 MAX_SLIDING_WINDOW_KEYFRAMES = 20
 
+# Reference image limits (2026 Best Practices - Gemini 3 Pro Image)
+MAX_REFERENCE_IMAGES = 14  # Gemini 3 Pro Image supports up to 14 reference images
+RECOMMENDED_REFERENCE_IMAGES = 10  # 5-10 recommended for best results
+MAX_CHARACTERS_PER_VIDEO = 5  # Supports up to 5 people consistency
+
 # Embedding dimensions
 FACE_EMBED_DIM = 512   # ArcFace
 CLIP_EMBED_DIM = 768   # CLIP ViT-L/14
@@ -446,12 +451,20 @@ async def update_memory_bank(
     await db.commit()
     await db.refresh(character)
 
+    # Build evidence refs (Vivid convention: List[str])
+    evidence_refs = [
+        f"db:characters:{character_id}",
+    ]
+    if character.qdrant_point_id:
+        evidence_refs.append(f"qdrant:character_embeddings:{character.qdrant_point_id}")
+
     return MemoryBankResponse(
         character_id=character_id,
         keyframes_extracted=len(frames),
         long_term_updated=len(long_term),
         sliding_window_updated=len(updated_sliding),
         new_keyframes=new_keyframes,
+        evidence_refs=evidence_refs,
     )
 
 
@@ -732,7 +745,7 @@ async def _update_embeddings(
     all_clip: List[List[float]] = []
     all_style: List[List[float]] = []
 
-    for url in source_images[:5]:  # Limit to 5 images for performance
+    for url in source_images[:MAX_REFERENCE_IMAGES]:  # Limit to 14 images (Gemini 3 Pro Image limit)
         try:
             image_data = await _get_image_data(image_url=url)
             if image_data:
