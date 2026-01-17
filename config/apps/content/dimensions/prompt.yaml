@@ -1,0 +1,118 @@
+$schema: "vivid-app/v2"
+
+metadata:
+  name: prompt
+  type: dimension
+  version: "1.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "프롬프트 연금술"
+  name_en: "Prompt Alchemy"
+  icon: "⚗️"
+  description: "씬 설명을 AI 비디오 플랫폼별 최적화 프롬프트로 변환합니다."
+
+capabilities:
+  - name: rag
+    enabled: true
+    config:
+      mode: auteur_only  # auteur_key 있을 때만 RAG 활성화
+      auteur_mode: true
+      confidence_threshold: 0.7
+      cache_ttl: 3600
+      max_sources: 5
+      retrieval:
+        strategy: hybrid
+        top_k: 10
+        rrf_k: 60
+
+  - name: cache
+    enabled: true
+    config:
+      ttl: 3600
+
+  - name: execution
+    enabled: true
+    config:
+      credit_cost: 5  # 프롬프트 변환은 저비용
+      endpoint: "/api/dimension/prompt/translate"
+      capsule_key: "prompt.alchemy.translate"
+
+extensions:
+  dimension:
+    tool_type: generation
+    supports_streaming: true
+
+  # Prompt Alchemy 전용 확장
+  prompt_alchemy:
+    # Crebit 공식 지원 모델 (3개만)
+    supported_platforms:
+      - id: veo_31
+        name: "Google Veo 3.1"
+        use_case: "대화/나레이션 중심 바이럴 영상"
+        max_duration: 8
+        native_audio: true
+        api_provider: "fal.ai"
+
+      - id: kling_26
+        name: "Kling 2.6"
+        use_case: "고화질 음성 없는 영상 (특히 추천)"
+        max_duration: 120
+        native_audio: false
+        api_provider: "cometapi"
+        recommended_default: true  # 기본 추천
+
+      - id: sora_max_2pro
+        name: "Sora Max 2 Pro"
+        use_case: "애니메이션 스타일 영상"
+        max_duration: 20
+        native_audio: true
+        api_provider: "aiml"
+
+    # 자동 모델 선택 규칙
+    auto_selection:
+      dialogue_or_narration: "veo_31"
+      animation_style: "sora_max_2pro"
+      default: "kling_26"  # 그 외 모든 경우 Kling 추천
+
+    # 프롬프트 품질 평가 메트릭
+    quality_metrics:
+      - specificity       # 구체성
+      - camera_clarity    # 카메라 움직임 명확성
+      - subject_clarity   # 주체 명확성
+      - style_consistency # 스타일 일관성
+      - platform_fit      # 플랫폼 최적화
+
+quality_selection:
+  enabled: true
+  tier: premium
+
+  multi_generate:
+    candidates: 3
+    parallel: true
+    diversity_factor: 0.2
+
+  quality_weights:
+    groundedness: 0.30
+    relevance: 0.25
+    specificity: 0.20
+    platform_fit: 0.15
+    creativity: 0.10
+
+  selection:
+    strategy: auto  # 프롬프트는 자동 선택 기본
+    auto_threshold: 0.80
+
+  feedback:
+    enabled: true
+    implicit: true
+    explicit: true
+
+keywords:
+  patterns:
+    - "prompt"
+    - "프롬프트"
+    - "연금술"
+    - "변환"
+    - "translate"
+    - "alchemy"

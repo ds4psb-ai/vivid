@@ -86,9 +86,50 @@ class KlingResolution(str, Enum):
     FHD = "1080p"
 
 
+class KlingMotionPreset(str, Enum):
+    """Motion control presets (v2.6+)."""
+    SLOW = "slow"
+    NORMAL = "normal"
+    FAST = "fast"
+    DRAMATIC = "dramatic"
+
+
+class KlingCameraPreset(str, Enum):
+    """Camera control presets (v2.6+)."""
+    STATIC = "static"
+    PAN_LEFT = "pan_left"
+    PAN_RIGHT = "pan_right"
+    TILT_UP = "tilt_up"
+    TILT_DOWN = "tilt_down"
+    ZOOM_IN = "zoom_in"
+    ZOOM_OUT = "zoom_out"
+    DOLLY_IN = "dolly_in"
+    DOLLY_OUT = "dolly_out"
+    ORBIT = "orbit"
+
+
+@dataclass
+class KlingElement:
+    """Element for character/style reference (v2.6+).
+
+    Kling 2.6 supports up to 4 reference images for consistency.
+    """
+    image_url: str
+    element_type: str = "character"  # character, style, scene
+    weight: float = 1.0
+
+
 class KlingVideoRequest(BaseModel):
-    """Request model for Kling video generation."""
-    
+    """Request model for Kling video generation.
+
+    Kling 2.6 Features:
+    - Elements: Up to 4 reference images for character consistency
+    - Motion Control: Preset-based motion intensity
+    - Camera Control: Preset camera movements
+    - End Frame: For shot sequencing
+    - Native Audio: Sound effects and ambient audio
+    """
+
     prompt: str = Field(..., min_length=1, max_length=2500, description="Video description")
     negative_prompt: Optional[str] = Field(None, max_length=500, description="Elements to avoid")
     duration: KlingDuration = Field(default=KlingDuration.SHORT, description="Video duration")
@@ -98,9 +139,31 @@ class KlingVideoRequest(BaseModel):
     model: str = Field(default=KlingConfig.DEFAULT_MODEL, description="Model version")
     enable_audio: bool = Field(default=False, description="Enable audio generation (v2.6+)")
     cfg_scale: float = Field(default=0.5, ge=0, le=1, description="Prompt adherence (0-1)")
-    
+
     # Image-to-video (optional)
     image_url: Optional[str] = Field(None, description="Initial frame image URL")
+
+    # Kling 2.6: End Frame for shot sequencing
+    end_image_url: Optional[str] = Field(None, description="End frame image URL (v2.6+)")
+
+    # Kling 2.6: Elements (character/style reference)
+    elements: Optional[List[Dict[str, Any]]] = Field(
+        None,
+        max_length=4,
+        description="Reference images for consistency (max 4, v2.6+)"
+    )
+
+    # Kling 2.6: Motion Control
+    motion_preset: Optional[str] = Field(
+        None,
+        description="Motion intensity preset: slow, normal, fast, dramatic"
+    )
+
+    # Kling 2.6: Camera Control
+    camera_preset: Optional[str] = Field(
+        None,
+        description="Camera movement preset"
+    )
 
 
 class KlingVideoResponse(BaseModel):
@@ -214,7 +277,7 @@ class KlingService:
                 "model_name": request.model,
                 "cfg_scale": request.cfg_scale,
             }
-            
+
             # Optional parameters
             if request.negative_prompt:
                 payload["negative_prompt"] = request.negative_prompt
@@ -222,7 +285,34 @@ class KlingService:
                 payload["image_url"] = request.image_url
             if request.enable_audio:
                 payload["sound"] = True
-            
+
+            # Kling 2.6: End Frame for shot sequencing
+            if request.end_image_url:
+                payload["end_image_url"] = request.end_image_url
+
+            # Kling 2.6: Elements (character/style reference)
+            if request.elements:
+                payload["elements"] = [
+                    {
+                        "image_url": elem.get("image_url"),
+                        "type": elem.get("element_type", "character"),
+                        "weight": elem.get("weight", 1.0),
+                    }
+                    for elem in request.elements[:4]  # Max 4 elements
+                ]
+
+            # Kling 2.6: Motion Control
+            if request.motion_preset:
+                payload["motion_control"] = {
+                    "preset": request.motion_preset
+                }
+
+            # Kling 2.6: Camera Control
+            if request.camera_preset:
+                payload["camera_control"] = {
+                    "preset": request.camera_preset
+                }
+
             # Submit generation request
             endpoint = "/videos/text2video" if not request.image_url else "/videos/image2video"
             response = await client.post(endpoint, json=payload)

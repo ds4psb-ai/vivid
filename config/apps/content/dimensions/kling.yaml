@@ -1,0 +1,166 @@
+$schema: "vivid-app/v2"
+
+metadata:
+  name: kling
+  type: dimension
+  version: "2.6.0"
+  bounded_context: content
+
+display:
+  name_ko: "클링 비디오"
+  name_en: "Kling Video"
+  icon: "🎬"
+  description: "Kling 2.6 AI로 고품질 시네마틱 비디오를 생성합니다."
+
+capabilities:
+  - name: cache
+    enabled: true
+    config:
+      ttl: 3600
+
+  - name: execution
+    enabled: true
+    config:
+      credit_cost: 50  # Base cost (5s 1080p)
+      endpoint: "/api/dimension/kling/generate"
+      capsule_key: "kling.video.generate"
+      credit_only: true  # No BYOK support
+      wait_for_completion: true
+
+  - name: telemetry
+    enabled: true
+    config:
+      log_level: info
+
+extensions:
+  dimension:
+    tool_type: generation
+    supports_streaming: false  # Kling uses polling
+
+  # Kling 2.6 전용 확장
+  kling_video:
+    # 모델 버전
+    models:
+      - id: "kling-v2.6"
+        name: "Kling 2.6"
+        default: true
+        features: ["audio", "motion_control", "elements"]
+      - id: "kling-v2.5"
+        name: "Kling 2.5"
+        features: ["motion_control"]
+      - id: "kling-v2.2"
+        name: "Kling 2.2"
+        features: []
+
+    # 지원 설정
+    durations:
+      - value: "5"
+        label: "5초"
+        credit_720p: 35
+        credit_1080p: 50
+      - value: "10"
+        label: "10초"
+        credit_720p: 70
+        credit_1080p: 100
+
+    aspect_ratios:
+      - value: "16:9"
+        label: "가로 (16:9)"
+        width: 1920
+        height: 1080
+      - value: "9:16"
+        label: "세로 (9:16)"
+        width: 1080
+        height: 1920
+      - value: "1:1"
+        label: "정방형 (1:1)"
+        width: 1440
+        height: 1440
+
+    resolutions:
+      - value: "720p"
+        label: "HD (720p)"
+      - value: "1080p"
+        label: "Full HD (1080p)"
+        default: true
+
+    modes:
+      - value: "std"
+        label: "Standard"
+        description: "빠른 생성"
+      - value: "pro"
+        label: "Professional"
+        description: "최고 품질"
+        credit_multiplier: 1.5
+
+    # Kling 2.6 Elements (캐릭터 참조)
+    elements:
+      max_images: 4
+      supported_types:
+        - character
+        - style
+        - scene
+      description: "최대 4개의 참조 이미지로 캐릭터 및 스타일 일관성 유지"
+
+    # Motion Control (2.6 신기능)
+    motion_control:
+      enabled: true
+      presets:
+        - id: "slow"
+          label: "느린 움직임"
+        - id: "normal"
+          label: "일반"
+          default: true
+        - id: "fast"
+          label: "빠른 움직임"
+        - id: "dramatic"
+          label: "드라마틱"
+
+    # Camera Control
+    camera_control:
+      enabled: true
+      presets:
+        - id: "static"
+          label: "고정"
+        - id: "pan_left"
+          label: "좌로 패닝"
+        - id: "pan_right"
+          label: "우로 패닝"
+        - id: "tilt_up"
+          label: "틸트 업"
+        - id: "tilt_down"
+          label: "틸트 다운"
+        - id: "zoom_in"
+          label: "줌 인"
+        - id: "zoom_out"
+          label: "줌 아웃"
+        - id: "dolly_in"
+          label: "달리 인"
+        - id: "dolly_out"
+          label: "달리 아웃"
+        - id: "orbit"
+          label: "오빗"
+
+    # Audio Generation (2.6)
+    audio:
+      enabled: true
+      native_audio: false  # Kling doesn't have native dialogue audio like Veo
+      sound_effects: true
+      ambient_sound: true
+
+    # End Frame (시퀀싱용)
+    end_frame:
+      enabled: true
+      description: "종료 프레임을 지정하여 연속 샷 생성 지원"
+
+quality_selection:
+  enabled: false  # UQSL not applicable to video generation
+
+keywords:
+  patterns:
+    - "kling"
+    - "클링"
+    - "video"
+    - "비디오"
+    - "motion"
+    - "cinematic"

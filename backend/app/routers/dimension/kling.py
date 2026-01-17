@@ -145,12 +145,20 @@ def _validate_mode(value: str) -> str:
 # Request/Response Models
 # =============================================================================
 
+class KlingElementInput(BaseModel):
+    """Element input for character/style reference (Kling 2.6)."""
+    image_url: str = Field(..., description="Reference image URL")
+    element_type: str = Field(default="character", description="Element type: character, style, scene")
+    weight: float = Field(default=1.0, ge=0.0, le=2.0, description="Element weight")
+
+
 class KlingGenerateRequest(BaseModel):
     """API request for Kling video generation.
 
     Includes:
     - XSS sanitization for prompt and negative_prompt
     - Enum validation for duration, aspect_ratio, resolution, mode
+    - Kling 2.6: Elements, Motion Control, Camera Control, End Frame
     """
 
     prompt: str = Field(..., min_length=1, max_length=2500, description="Video description (sanitized)")
@@ -161,6 +169,22 @@ class KlingGenerateRequest(BaseModel):
     mode: str = Field(default="std", description="Mode: std or pro")
     enable_audio: bool = Field(default=False, description="Enable audio generation")
     image_url: Optional[str] = Field(None, description="Initial image for image-to-video")
+
+    # Kling 2.6: New features
+    end_image_url: Optional[str] = Field(None, description="End frame image (for shot sequencing)")
+    elements: Optional[list[KlingElementInput]] = Field(
+        None,
+        max_length=4,
+        description="Reference images for character/style consistency (max 4)"
+    )
+    motion_preset: Optional[str] = Field(
+        None,
+        description="Motion intensity: slow, normal, fast, dramatic"
+    )
+    camera_preset: Optional[str] = Field(
+        None,
+        description="Camera movement: static, pan_left, pan_right, tilt_up, tilt_down, zoom_in, zoom_out, dolly_in, dolly_out, orbit"
+    )
 
     @field_validator("prompt", mode="before")
     @classmethod
@@ -291,7 +315,18 @@ async def generate_video(
     )
     
     try:
-        # Build service request
+        # Build service request with Kling 2.6 features
+        elements_data = None
+        if request.elements:
+            elements_data = [
+                {
+                    "image_url": elem.image_url,
+                    "element_type": elem.element_type,
+                    "weight": elem.weight,
+                }
+                for elem in request.elements
+            ]
+
         service_request = KlingVideoRequest(
             prompt=request.prompt,
             negative_prompt=request.negative_prompt,
@@ -301,6 +336,11 @@ async def generate_video(
             mode=KlingMode(request.mode),
             enable_audio=request.enable_audio,
             image_url=request.image_url,
+            # Kling 2.6 features
+            end_image_url=request.end_image_url,
+            elements=elements_data,
+            motion_preset=request.motion_preset,
+            camera_preset=request.camera_preset,
         )
         
         # Generate video
