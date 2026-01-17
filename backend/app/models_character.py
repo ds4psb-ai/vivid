@@ -66,13 +66,13 @@ class Character(Base):
     # Ownership
     user_id: Mapped[str] = mapped_column(
         String(255),
-        ForeignKey("users.id", ondelete="CASCADE"),
+        # ForeignKey("users.id", ondelete="CASCADE"),  # TODO: Re-enable when users table exists
         nullable=False,
         index=True,
     )
     project_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("projects.id", ondelete="SET NULL"),
+        # ForeignKey("projects.id", ondelete="SET NULL"),  # TODO: Re-enable when projects table exists
         nullable=True,
         index=True,
     )
@@ -207,7 +207,7 @@ class CharacterAppearance(Base):
     )
     shot_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("shots.id", ondelete="SET NULL"),
+        # ForeignKey("shots.id", ondelete="SET NULL"),  # TODO: Re-enable when shots table exists
         nullable=True,
         index=True,
     )

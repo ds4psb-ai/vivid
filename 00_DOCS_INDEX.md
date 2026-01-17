@@ -1,7 +1,7 @@
 # Docs Index (정본)
 
-**Updated**: 2026-01-16
-**총 문서**: 14개 (핵심), 35개 (archive)
+**Updated**: 2026-01-17
+**총 문서**: 15개 (핵심), 35개 (archive)
 
 ---
 
@@ -14,6 +14,7 @@
 | 08 | PIPELINES_AND_USER_FLOWS.md | 파이프라인/역할 | ✅ |
 | 10 | UI_DESIGN_GUIDE_2025-12.md | UI/UX 가이드 | ✅ |
 | 13 | CREDITS_AND_BILLING_SPEC_V1.md | 크레딧 시스템 | ✅ |
+| 14 | **[14_CODEX_WORKFLOW.md](docs/14_CODEX_WORKFLOW.md)** | **Codex 운영 규칙 (Auto Research Mode)** | ✅ |
 | 15 | CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md | 아키텍처 철학 | ✅ |
 | 27 | MCP_INTEGRATION_SPEC_V1.md | MCP 통합 | ✅ |
 | 30 | UNIFIED_EXECUTION_ROADMAP.md | 실행 로드맵 | ✅ |

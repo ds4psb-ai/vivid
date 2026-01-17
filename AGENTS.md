@@ -33,6 +33,18 @@
 - Frontend lint/build/start: `cd frontend && npm run lint|build|start`
 - E2E: `cd frontend && npm run test:e2e`
 
+## Auto Research Mode (2026)
+사용자 입력이 다음 조건을 충족하면 **2026년 기준 MCP 리서치 및 웹서칭** 수행:
+- 새로운 기능 구현 요청
+- 아키텍처/설계 관련 질문
+- 라이브러리/프레임워크 관련 질문
+
+예외 (리서치 없이 바로 수행):
+- 단순 질문 (무엇인가요?, 어떻게?)
+- 간단 패치/수정 요청
+- 파일 읽기/탐색 요청
+- git 명령어
+
 ## Coding Style & Naming Conventions
 - Python: 4-space indentation, snake_case, type hints.
 - TypeScript/TSX: 2-space indentation, `PascalCase` components, `useX` hooks, `camelCase` utilities.

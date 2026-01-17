@@ -61,6 +61,15 @@
         "TAVILY_API_KEY": "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"
       }
     },
+    "codex-bridge": {
+      "command": "uvx",
+      "args": [
+        "codex-bridge"
+      ],
+      "env": {
+        "CODEX_TIMEOUT": "120"
+      }
+    },
     "postgres": {
       "command": "npx",
       "args": [
