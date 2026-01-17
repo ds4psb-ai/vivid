@@ -1,7 +1,7 @@
 # Vivid Documentation Master Index
 
-> **Version**: 1.0
-> **Last Updated**: 2026-01-17
+> **Version**: 1.1
+> **Last Updated**: 2026-01-18
 > **Purpose**: 전체 문서 네비게이션 및 SSoT 참조
 
 ---
@@ -15,6 +15,7 @@
 | RAG 시스템 | [RAG_ARCHITECTURE.md](./RAG_ARCHITECTURE.md) |
 | 테스트 작성 | [TESTING_GUIDE.md](./TESTING_GUIDE.md) |
 | 2026 로드맵 | [2026_PRIORITY_ROADMAP.md](./2026_PRIORITY_ROADMAP.md) |
+| 앱 하드닝 리포트 | [DIMENSION_APP_AUDIT_REPORT_2026.md](./DIMENSION_APP_AUDIT_REPORT_2026.md) |
 
 ---
 
@@ -52,6 +53,7 @@
 | [ARCHITECTURE_FLEXIBILITY_ANALYSIS_2026.md](./ARCHITECTURE_FLEXIBILITY_ANALYSIS_2026.md) | 아키텍처 유연성 분석 | ✅ Active |
 | [DIMENSION_APP_MACRO_PLANNING_2026.md](./DIMENSION_APP_MACRO_PLANNING_2026.md) | Dimension 앱 매크로 플래닝 | ✅ Active |
 | [DIMENSION_PANEL_UX_AUDIT_2026.md](./DIMENSION_PANEL_UX_AUDIT_2026.md) | UX 오디트 2026 | ✅ Active |
+| [DIMENSION_APP_AUDIT_REPORT_2026.md](./DIMENSION_APP_AUDIT_REPORT_2026.md) | **전문가 워크플로우 vs Vivid 비교 분석** | ✅ Active |
 
 ---
 
