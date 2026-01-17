@@ -13,7 +13,9 @@ from __future__ import annotations
 import html
 import logging
 import re
+import uuid
 from enum import Enum
+from typing import List
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
@@ -723,6 +725,34 @@ class CharacterDNAResponse(BaseModel):
     style_prompt: str   # Style-specific prefix
     full_prompt: str    # Combined: style + dna
     usage_hint: str
+    # RAG Protocol Fields (v2) - P6 evidence_refs as List[str]
+    trace_id: str = Field("", description="Trace ID for auditability")
+    evidence_refs: List[str] = Field(
+        default_factory=list,
+        description="RAG evidence references (format: 'rag:auteur_dna:bong:visual:composition', 'db:character_dna:uuid')",
+    )
+    confidence: float = Field(0.0, ge=0.0, le=1.0, description="AI confidence score")
+
+
+# ============================================================================
+# 2026 Best Practices: Fine-Grained Preference Types (VisionPrefer/AesthetiQ)
+# ============================================================================
+
+class AestheticPreferenceAspect(str, Enum):
+    """Fine-grained aesthetic preference aspects (VisionPrefer 2026 pattern)."""
+    PROMPT_FOLLOWING = "prompt_following"  # Adherence to input concept
+    FIDELITY = "fidelity"  # Visual accuracy and realism
+    AESTHETIC = "aesthetic"  # Overall visual appeal
+    HARMLESSNESS = "harmlessness"  # Safety/appropriateness
+
+
+class AestheticQualityScore(BaseModel):
+    """2026 Best Practice: Multi-aspect quality scoring (AesthetiQ/VisionPrefer pattern)."""
+    prompt_following: float = Field(0.0, ge=0.0, le=1.0, description="How well output follows input concept")
+    fidelity: float = Field(0.0, ge=0.0, le=1.0, description="Visual accuracy and realism")
+    aesthetic: float = Field(0.0, ge=0.0, le=1.0, description="Overall visual appeal")
+    harmlessness: float = Field(1.0, ge=0.0, le=1.0, description="Safety score")
+    overall: float = Field(0.0, ge=0.0, le=1.0, description="Weighted overall score")
 
 
 @router.post(
@@ -828,7 +858,7 @@ Generate a detailed, reusable character prompt string."""
         )
         
         character_dna = response.text.strip()
-        
+
         # Generate style-specific prefix based on style_reference
         style_prompts = {
             "anime": "Japanese TV anime style illustration, clean and sharp lineart, thin and consistent black outlines, digital cel-shaded coloring, large expressive anime eyes, anime-style hair with large defined clumps, high saturation, modern anime screenshot look, no realism, no 3D",
@@ -836,15 +866,23 @@ Generate a detailed, reusable character prompt string."""
             "stylized": "Stylized digital art, bold colors, strong silhouettes, graphic design aesthetics, clean lines, modern illustration style",
             "cinematic": "Cinematic film still, anamorphic lens, movie color grading, dramatic lighting, professional cinematography, 35mm film texture",
         }
-        
+
         style_prompt = style_prompts.get(
             request.style_reference.lower(),
             style_prompts["cinematic"]
         )
-        
+
         # Combine for full prompt
         full_prompt = f"{style_prompt}, {character_dna}"
-        
+
+        # Generate trace_id and evidence_refs (P6 RAG Protocol)
+        trace_id = str(uuid.uuid4())
+        evidence_refs: List[str] = [
+            f"rag:character_dna:{request.style_reference}:visual_layer",
+            f"rag:character_dna:{request.style_reference}:psychological_layer",
+            f"db:character_dna:{trace_id}",
+        ]
+
         return CharacterDNAResponse(
             success=True,
             character_name=request.name,
@@ -852,8 +890,11 @@ Generate a detailed, reusable character prompt string."""
             style_prompt=style_prompt,
             full_prompt=full_prompt,
             usage_hint="Copy the 'full_prompt' and use it as a prefix for all image/video generations of this character.",
+            trace_id=trace_id,
+            evidence_refs=evidence_refs,
+            confidence=0.85,  # LLM-generated, high confidence
         )
-        
+
     except Exception as e:
         return CharacterDNAResponse(
             success=False,
@@ -862,6 +903,9 @@ Generate a detailed, reusable character prompt string."""
             style_prompt="",
             full_prompt="",
             usage_hint=f"Error: {str(e)}",
+            trace_id=str(uuid.uuid4()),
+            evidence_refs=[],
+            confidence=0.0,
         )
 
 

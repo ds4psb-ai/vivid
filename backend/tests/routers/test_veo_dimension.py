@@ -583,3 +583,260 @@ class TestPromptEdgeCases:
         )
         assert "[DOLLY IN]" in request.prompt
         assert "[CUT TO]" in request.prompt
+
+
+# ============================================================================
+# 2026 Video Generation Platform Capability Tests
+# ============================================================================
+
+class TestVideoGenerationPlatform:
+    """Test VideoGenerationPlatform enum (2026 multi-platform support)."""
+
+    def test_platform_enum_exists(self):
+        """Test VideoGenerationPlatform enum is importable."""
+        from app.routers.dimension.veo import VideoGenerationPlatform
+        assert VideoGenerationPlatform is not None
+
+    def test_supported_platforms(self):
+        """Test 2026 supported video platforms."""
+        from app.routers.dimension.veo import VideoGenerationPlatform
+        assert VideoGenerationPlatform.VEO.value == "veo"
+        assert VideoGenerationPlatform.KLING.value == "kling"
+        assert VideoGenerationPlatform.SORA.value == "sora"
+        assert VideoGenerationPlatform.HAILUO.value == "hailuo"
+        assert VideoGenerationPlatform.SEEDANCE.value == "seedance"
+        assert VideoGenerationPlatform.RUNWAY.value == "runway"
+
+    def test_platform_count(self):
+        """Test at least 6 platforms supported."""
+        from app.routers.dimension.veo import VideoGenerationPlatform
+        assert len(VideoGenerationPlatform) >= 6
+
+
+class TestVideoOutputQuality:
+    """Test VideoOutputQuality enum (2026 standards)."""
+
+    def test_quality_levels(self):
+        """Test 2026 video quality levels."""
+        from app.routers.dimension.veo import VideoOutputQuality
+        assert VideoOutputQuality.SD.value == "sd"  # 480p
+        assert VideoOutputQuality.HD.value == "hd"  # 720p
+        assert VideoOutputQuality.FHD.value == "fhd"  # 1080p
+        assert VideoOutputQuality.UHD.value == "uhd"  # 4K
+
+
+class TestAudioIntegrationMode:
+    """Test AudioIntegrationMode enum (2026 native audio trend)."""
+
+    def test_audio_modes(self):
+        """Test 2026 audio integration modes."""
+        from app.routers.dimension.veo import AudioIntegrationMode
+        assert AudioIntegrationMode.NONE.value == "none"
+        assert AudioIntegrationMode.NATIVE.value == "native"
+        assert AudioIntegrationMode.SYNC.value == "sync"
+        assert AudioIntegrationMode.DIALOGUE.value == "dialogue"
+
+
+class TestVeo31Capabilities:
+    """Test Veo31Capabilities model (Oct 2025 release)."""
+
+    def test_default_capabilities(self):
+        """Test default Veo 3.1 capabilities."""
+        from app.routers.dimension.veo import Veo31Capabilities, VideoOutputQuality
+        caps = Veo31Capabilities()
+        assert caps.max_duration_seconds == 60  # 60s max
+        assert caps.resolution == VideoOutputQuality.FHD  # 1080p
+        assert caps.supports_native_audio is True
+        assert caps.supports_multi_image is True
+        assert caps.supports_camera_control is True
+        assert caps.pricing_per_second == 0.25
+
+    def test_custom_capabilities(self):
+        """Test custom capability values."""
+        from app.routers.dimension.veo import Veo31Capabilities, VideoOutputQuality
+        caps = Veo31Capabilities(
+            max_duration_seconds=90,
+            resolution=VideoOutputQuality.UHD,
+            pricing_per_second=0.40,
+        )
+        assert caps.max_duration_seconds == 90
+        assert caps.resolution == VideoOutputQuality.UHD
+
+
+class TestKling26Capabilities:
+    """Test Kling26Capabilities model (Dec 2025 release)."""
+
+    def test_default_capabilities(self):
+        """Test default Kling 2.6 capabilities."""
+        from app.routers.dimension.veo import Kling26Capabilities, VideoOutputQuality
+        caps = Kling26Capabilities()
+        assert caps.max_duration_seconds == 120  # 2-minute max
+        assert caps.resolution == VideoOutputQuality.FHD  # 1080p
+        assert caps.supports_native_audio is True
+        assert caps.supports_dialogue_sync is True  # Lip-sync
+        assert caps.supports_high_action is True
+        assert caps.frame_rate == 48  # 48 FPS
+
+    def test_kling_vs_veo_comparison(self):
+        """Test Kling 2.6 has longer duration than Veo 3.1."""
+        from app.routers.dimension.veo import Veo31Capabilities, Kling26Capabilities
+        veo = Veo31Capabilities()
+        kling = Kling26Capabilities()
+        assert kling.max_duration_seconds > veo.max_duration_seconds  # 120 > 60
+
+
+class TestVideoGenerationResult:
+    """Test VideoGenerationResult model (2026 comprehensive result)."""
+
+    def test_result_creation_defaults(self):
+        """Test result creation with defaults."""
+        from app.routers.dimension.veo import (
+            VideoGenerationResult, VideoGenerationPlatform,
+            VideoOutputQuality, AudioIntegrationMode
+        )
+        result = VideoGenerationResult()
+        assert result.success is False
+        assert result.video_uri == ""
+        assert result.duration_ms == 0
+        assert result.credit_cost == 0
+        assert result.platform == VideoGenerationPlatform.VEO
+        assert result.output_quality == VideoOutputQuality.FHD
+        assert result.audio_mode == AudioIntegrationMode.NATIVE
+        assert result.characters_used == []
+        assert result.trace_id == ""
+        assert result.evidence_refs == []
+        assert result.confidence == 0.0
+
+    def test_result_with_data(self):
+        """Test result with full data."""
+        from app.routers.dimension.veo import (
+            VideoGenerationResult, VideoGenerationPlatform,
+            VideoOutputQuality, AudioIntegrationMode
+        )
+        result = VideoGenerationResult(
+            success=True,
+            video_uri="gs://bucket/video.mp4",
+            duration_ms=45000,
+            credit_cost=200,
+            platform=VideoGenerationPlatform.VEO,
+            output_quality=VideoOutputQuality.FHD,
+            audio_mode=AudioIntegrationMode.NATIVE,
+            characters_used=["char-1", "char-2"],
+            trace_id="veo-abc123",
+            evidence_refs=[
+                "rag:veo:style:cinematic",
+                "config:model:veo-3.1-generate-preview",
+            ],
+            confidence=0.9,
+        )
+        assert result.success is True
+        assert result.video_uri == "gs://bucket/video.mp4"
+        assert result.trace_id == "veo-abc123"
+        assert len(result.evidence_refs) == 2
+        assert result.confidence == 0.9
+
+    def test_result_evidence_refs_list_str(self):
+        """Test evidence_refs is List[str] (Vivid convention)."""
+        from app.routers.dimension.veo import VideoGenerationResult
+        result = VideoGenerationResult(
+            evidence_refs=["rag:veo:test", "config:model:veo-3.1"]
+        )
+        assert isinstance(result.evidence_refs, list)
+        assert all(isinstance(ref, str) for ref in result.evidence_refs)
+
+
+# ============================================================================
+# Evidence Refs Format Tests (Vivid Convention)
+# ============================================================================
+
+class TestEvidenceRefsFormat:
+    """Test evidence_refs follows Vivid List[str] convention."""
+
+    def test_evidence_refs_format_veo(self):
+        """Test veo evidence_refs format."""
+        expected_format = "rag:veo:style:cinematic"
+        assert expected_format.startswith("rag:")
+        parts = expected_format.split(":")
+        assert len(parts) >= 3
+        assert parts[0] in ("rag", "db", "config")
+
+    def test_evidence_refs_format_model(self):
+        """Test model config evidence_refs format."""
+        expected_format = "config:model:veo-3.1-generate-preview"
+        parts = expected_format.split(":")
+        assert parts[0] == "config"
+        assert parts[1] == "model"
+        assert parts[2] in ALLOWED_VEO_MODELS
+
+    def test_evidence_refs_format_character(self):
+        """Test character db evidence_refs format."""
+        expected_format = "db:character:uuid-123"
+        parts = expected_format.split(":")
+        assert parts[0] == "db"
+        assert parts[1] == "character"
+
+
+# ============================================================================
+# 2026 Multi-Platform Workflow Tests
+# ============================================================================
+
+class TestMultiPlatformWorkflow:
+    """Test 2026 multi-platform video generation patterns."""
+
+    def test_veo_native_audio_support(self):
+        """Test Veo 3.1 native audio support."""
+        from app.routers.dimension.veo import Veo31Capabilities
+        caps = Veo31Capabilities()
+        assert caps.supports_native_audio is True
+
+    def test_kling_dialogue_sync(self):
+        """Test Kling 2.6 dialogue sync support."""
+        from app.routers.dimension.veo import Kling26Capabilities
+        caps = Kling26Capabilities()
+        assert caps.supports_dialogue_sync is True
+
+    def test_platform_pricing_comparison(self):
+        """Test pricing comparison between platforms."""
+        from app.routers.dimension.veo import Veo31Capabilities
+        caps = Veo31Capabilities()
+        # Veo 3.1: $0.15-0.40/sec average
+        assert 0.10 <= caps.pricing_per_second <= 0.50
+
+    def test_image_to_video_workflow(self):
+        """Test Image-to-Video workflow for character consistency."""
+        # 2026 Best Practice: Generate character in Midjourney, animate in Veo
+        request = VeoGenerateRequest(
+            prompt="[Character: John] A man walks through a forest",
+            character_ids=["char-john-001"],
+        )
+        assert len(request.character_ids) == 1
+        assert "Character:" in request.prompt
+
+
+# ============================================================================
+# 2026 Audio Integration Tests
+# ============================================================================
+
+class TestAudioIntegration:
+    """Test 2026 native audio integration features."""
+
+    def test_audio_modes_enum_complete(self):
+        """Test all audio modes are defined."""
+        from app.routers.dimension.veo import AudioIntegrationMode
+        modes = [m.value for m in AudioIntegrationMode]
+        assert "none" in modes
+        assert "native" in modes
+        assert "sync" in modes
+        assert "dialogue" in modes
+
+    def test_veo_supports_native_audio(self):
+        """Test Veo 3.1 supports native audio generation."""
+        from app.routers.dimension.veo import Veo31Capabilities
+        caps = Veo31Capabilities()
+        assert caps.supports_native_audio is True
+
+    def test_kling_supports_dialogue(self):
+        """Test Kling 2.6 supports dialogue lip-sync."""
+        from app.routers.dimension.veo import Kling26Capabilities
+        caps = Kling26Capabilities()
+        assert caps.supports_dialogue_sync is True

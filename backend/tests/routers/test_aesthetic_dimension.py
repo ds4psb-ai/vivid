@@ -21,6 +21,10 @@ from app.routers.dimension.aesthetic import (
     AestheticMoodboardRequest,
     PersonaAnalyzeRequest,
     CharacterDNARequest,
+    # Response models (2026 Best Practices)
+    CharacterDNAResponse,
+    AestheticQualityScore,
+    AestheticPreferenceAspect,
     # Helpers
     _sanitize_text_field,
     _validate_lighting_style,
@@ -693,3 +697,323 @@ class TestEdgeCases:
         )
         assert "ethereal" in request.mood
         assert "dreamy" in request.mood
+
+
+# ============================================================================
+# Response Model Tests - CharacterDNAResponse (2026 Best Practices)
+# ============================================================================
+
+class TestCharacterDNAResponse:
+    """Test CharacterDNAResponse model with evidence_refs."""
+
+    def test_valid_response(self):
+        """Test valid response creation."""
+        response = CharacterDNAResponse(
+            success=True,
+            character_name="Sora",
+            character_dna="48-year-old master chef, quiet and introverted",
+            style_prompt="anime style",
+            full_prompt="anime style, 48-year-old master chef",
+            usage_hint="Use as prefix",
+            trace_id="test-uuid-1234",
+            evidence_refs=[
+                "rag:character_dna:anime:visual_layer",
+                "db:character_dna:uuid-5678",
+            ],
+            confidence=0.85,
+        )
+        assert response.success is True
+        assert response.character_name == "Sora"
+        assert "master chef" in response.character_dna
+        assert response.trace_id == "test-uuid-1234"
+        assert len(response.evidence_refs) == 2
+        assert response.confidence == 0.85
+
+    def test_evidence_refs_is_list_of_strings(self):
+        """Test evidence_refs is List[str] (Vivid convention)."""
+        response = CharacterDNAResponse(
+            success=True,
+            character_name="Test",
+            character_dna="dna",
+            style_prompt="style",
+            full_prompt="full",
+            usage_hint="hint",
+            evidence_refs=["ref1", "ref2", "ref3"],
+        )
+        assert isinstance(response.evidence_refs, list)
+        for ref in response.evidence_refs:
+            assert isinstance(ref, str)
+
+    def test_evidence_refs_format_rag(self):
+        """Test evidence_refs follows RAG format."""
+        response = CharacterDNAResponse(
+            success=True,
+            character_name="Test",
+            character_dna="dna",
+            style_prompt="style",
+            full_prompt="full",
+            usage_hint="hint",
+            evidence_refs=[
+                "rag:auteur_dna:bong:visual:composition",
+                "rag:character_dna:anime:psychological_layer",
+            ],
+        )
+        for ref in response.evidence_refs:
+            assert ref.startswith("rag:") or ref.startswith("db:")
+
+    def test_evidence_refs_default_empty(self):
+        """Test evidence_refs defaults to empty list."""
+        response = CharacterDNAResponse(
+            success=False,
+            character_name="Test",
+            character_dna="",
+            style_prompt="",
+            full_prompt="",
+            usage_hint="Error",
+        )
+        assert response.evidence_refs == []
+
+    def test_confidence_bounds(self):
+        """Test confidence is bounded [0, 1]."""
+        response = CharacterDNAResponse(
+            success=True,
+            character_name="Test",
+            character_dna="dna",
+            style_prompt="style",
+            full_prompt="full",
+            usage_hint="hint",
+            confidence=0.95,
+        )
+        assert 0.0 <= response.confidence <= 1.0
+
+    def test_confidence_out_of_bounds_raises(self):
+        """Test confidence out of bounds raises."""
+        with pytest.raises(ValidationError):
+            CharacterDNAResponse(
+                success=True,
+                character_name="Test",
+                character_dna="dna",
+                style_prompt="style",
+                full_prompt="full",
+                usage_hint="hint",
+                confidence=1.5,
+            )
+
+    def test_trace_id_default_empty(self):
+        """Test trace_id defaults to empty string."""
+        response = CharacterDNAResponse(
+            success=True,
+            character_name="Test",
+            character_dna="dna",
+            style_prompt="style",
+            full_prompt="full",
+            usage_hint="hint",
+        )
+        assert response.trace_id == ""
+
+
+# ============================================================================
+# 2026 Best Practices Tests - AestheticQualityScore (VisionPrefer/AesthetiQ)
+# ============================================================================
+
+class TestAestheticQualityScore:
+    """Test AestheticQualityScore model (2026 VisionPrefer/AesthetiQ pattern)."""
+
+    def test_valid_score(self):
+        """Test valid quality score creation."""
+        score = AestheticQualityScore(
+            prompt_following=0.9,
+            fidelity=0.8,
+            aesthetic=0.85,
+            harmlessness=1.0,
+            overall=0.86,
+        )
+        assert score.prompt_following == 0.9
+        assert score.fidelity == 0.8
+        assert score.aesthetic == 0.85
+        assert score.harmlessness == 1.0
+        assert score.overall == 0.86
+
+    def test_default_values(self):
+        """Test default values for quality score."""
+        score = AestheticQualityScore()
+        assert score.prompt_following == 0.0
+        assert score.fidelity == 0.0
+        assert score.aesthetic == 0.0
+        assert score.harmlessness == 1.0  # Safe by default
+        assert score.overall == 0.0
+
+    def test_bounds_enforcement(self):
+        """Test all scores are bounded [0, 1]."""
+        with pytest.raises(ValidationError):
+            AestheticQualityScore(prompt_following=1.5)
+        with pytest.raises(ValidationError):
+            AestheticQualityScore(fidelity=-0.1)
+        with pytest.raises(ValidationError):
+            AestheticQualityScore(aesthetic=2.0)
+        with pytest.raises(ValidationError):
+            AestheticQualityScore(harmlessness=1.1)
+        with pytest.raises(ValidationError):
+            AestheticQualityScore(overall=-0.5)
+
+    def test_all_aspects_covered(self):
+        """Test all VisionPrefer aspects are present."""
+        score = AestheticQualityScore(
+            prompt_following=0.8,
+            fidelity=0.7,
+            aesthetic=0.9,
+            harmlessness=1.0,
+            overall=0.85,
+        )
+        # VisionPrefer 4 aspects: Prompt-Following, Fidelity, Aesthetic, Harmlessness
+        assert hasattr(score, "prompt_following")
+        assert hasattr(score, "fidelity")
+        assert hasattr(score, "aesthetic")
+        assert hasattr(score, "harmlessness")
+        assert hasattr(score, "overall")
+
+
+class TestAestheticPreferenceAspect:
+    """Test AestheticPreferenceAspect enum (2026 fine-grained preference)."""
+
+    def test_all_visionprefer_aspects(self):
+        """Test all VisionPrefer aspects are defined."""
+        assert AestheticPreferenceAspect.PROMPT_FOLLOWING == "prompt_following"
+        assert AestheticPreferenceAspect.FIDELITY == "fidelity"
+        assert AestheticPreferenceAspect.AESTHETIC == "aesthetic"
+        assert AestheticPreferenceAspect.HARMLESSNESS == "harmlessness"
+
+    def test_aspect_count(self):
+        """Test correct number of aspects."""
+        aspects = list(AestheticPreferenceAspect)
+        assert len(aspects) == 4
+
+    def test_aspect_values_are_strings(self):
+        """Test all aspect values are strings."""
+        for aspect in AestheticPreferenceAspect:
+            assert isinstance(aspect.value, str)
+
+
+# ============================================================================
+# Evidence Refs Format Validation Tests
+# ============================================================================
+
+class TestEvidenceRefsFormat:
+    """Test evidence_refs format validation."""
+
+    @pytest.mark.parametrize("ref", [
+        "rag:auteur_dna:bong:visual:composition",
+        "rag:auteur_dna:kubrick:lighting:chiaroscuro",
+        "rag:character_dna:anime:visual_layer",
+        "rag:aesthetic:mathematical:golden_ratio",
+        "db:character_dna:uuid-1234-5678",
+        "db:aesthetic_guide:session-uuid",
+    ])
+    def test_valid_evidence_ref_formats(self, ref):
+        """Test valid evidence_refs formats."""
+        response = CharacterDNAResponse(
+            success=True,
+            character_name="Test",
+            character_dna="dna",
+            style_prompt="style",
+            full_prompt="full",
+            usage_hint="hint",
+            evidence_refs=[ref],
+        )
+        assert ref in response.evidence_refs
+
+    def test_multiple_evidence_refs(self):
+        """Test multiple evidence_refs."""
+        refs = [
+            "rag:auteur_dna:bong:visual:composition",
+            "rag:auteur_dna:bong:audio:silence_usage",
+            "rag:mathematical_aesthetics:golden_ratio",
+            "db:style_guide:session-uuid",
+        ]
+        response = CharacterDNAResponse(
+            success=True,
+            character_name="Test",
+            character_dna="dna",
+            style_prompt="style",
+            full_prompt="full",
+            usage_hint="hint",
+            evidence_refs=refs,
+        )
+        assert len(response.evidence_refs) == 4
+        for ref in refs:
+            assert ref in response.evidence_refs
+
+    def test_empty_evidence_refs_allowed(self):
+        """Test empty evidence_refs is allowed (LLM-only mode)."""
+        response = CharacterDNAResponse(
+            success=True,
+            character_name="Test",
+            character_dna="dna",
+            style_prompt="style",
+            full_prompt="full",
+            usage_hint="hint",
+            evidence_refs=[],
+        )
+        assert response.evidence_refs == []
+
+
+# ============================================================================
+# 2026 Multimodal Best Practices Tests
+# ============================================================================
+
+class TestMultimodalAestheticPatterns:
+    """Test 2026 multimodal aesthetic patterns."""
+
+    def test_visual_dna_with_psychological_layer(self):
+        """Test Character DNA includes both visual and psychological layers."""
+        response = CharacterDNAResponse(
+            success=True,
+            character_name="Chef Sora",
+            character_dna="48-year-old male chef, quiet introspective master craftsman, appears awkward when speaking",
+            style_prompt="anime style",
+            full_prompt="anime style, 48-year-old male chef",
+            usage_hint="hint",
+            evidence_refs=[
+                "rag:character_dna:anime:visual_layer",
+                "rag:character_dna:anime:psychological_layer",  # 2026: psychological acting layer
+            ],
+        )
+        # Check both layers referenced
+        visual_refs = [r for r in response.evidence_refs if "visual_layer" in r]
+        psych_refs = [r for r in response.evidence_refs if "psychological_layer" in r]
+        assert len(visual_refs) >= 1
+        assert len(psych_refs) >= 1
+
+    def test_style_reference_all_types(self):
+        """Test all style references work correctly."""
+        for style in ALLOWED_STYLE_REFERENCES:
+            response = CharacterDNAResponse(
+                success=True,
+                character_name="Test",
+                character_dna=f"Character in {style} style",
+                style_prompt=f"{style} style prompt",
+                full_prompt=f"{style} style prompt, Character",
+                usage_hint="hint",
+                evidence_refs=[f"rag:character_dna:{style}:visual_layer"],
+            )
+            assert style in response.evidence_refs[0]
+
+    def test_cross_modal_consistency(self):
+        """Test evidence_refs can reference cross-modal aspects."""
+        response = CharacterDNAResponse(
+            success=True,
+            character_name="Test",
+            character_dna="dna",
+            style_prompt="style",
+            full_prompt="full",
+            usage_hint="hint",
+            evidence_refs=[
+                "rag:auteur_dna:bong:visual:composition",
+                "rag:auteur_dna:bong:audio:silence_usage",
+                "rag:auteur_dna:bong:narrative:pacing",
+            ],
+        )
+        # Cross-modal: visual, audio, narrative
+        assert any("visual" in ref for ref in response.evidence_refs)
+        assert any("audio" in ref for ref in response.evidence_refs)
+        assert any("narrative" in ref for ref in response.evidence_refs)

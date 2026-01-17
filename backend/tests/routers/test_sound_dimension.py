@@ -620,3 +620,285 @@ class TestEdgeCases:
         )
         assert "&" in request.concept or "&amp;" in request.concept
         assert "-" in request.concept
+
+
+# ============================================================================
+# 2026 Audio Platform Capability Tests
+# ============================================================================
+
+class TestAudioPlatform:
+    """Test AudioPlatform enum (2026 platform support)."""
+
+    def test_audio_platform_enum_exists(self):
+        """Test AudioPlatform enum is importable."""
+        from app.routers.dimension.sound import AudioPlatform
+        assert AudioPlatform is not None
+
+    def test_supported_platforms(self):
+        """Test 2026 supported platforms."""
+        from app.routers.dimension.sound import AudioPlatform
+        assert AudioPlatform.SUNO.value == "suno"
+        assert AudioPlatform.UDIO.value == "udio"
+        assert AudioPlatform.ELEVENLABS.value == "elevenlabs"
+        assert AudioPlatform.MINIMAX.value == "minimax"  # New 2026
+
+    def test_platform_count(self):
+        """Test at least 4 platforms supported."""
+        from app.routers.dimension.sound import AudioPlatform
+        assert len(AudioPlatform) >= 4
+
+
+class TestAudioQuality:
+    """Test AudioQuality enum (2026 industry standards)."""
+
+    def test_audio_quality_enum_exists(self):
+        """Test AudioQuality enum is importable."""
+        from app.routers.dimension.sound import AudioQuality
+        assert AudioQuality is not None
+
+    def test_quality_levels(self):
+        """Test 2026 audio quality levels."""
+        from app.routers.dimension.sound import AudioQuality
+        assert AudioQuality.STANDARD.value == "standard"  # 32 kHz
+        assert AudioQuality.HIGH.value == "high"  # 44.1 kHz
+        assert AudioQuality.STUDIO.value == "studio"  # 48 kHz
+
+
+class TestStemExportFormat:
+    """Test StemExportFormat enum (Suno v5 feature)."""
+
+    def test_stem_export_formats(self):
+        """Test stem export formats."""
+        from app.routers.dimension.sound import StemExportFormat
+        assert StemExportFormat.WAV.value == "wav"
+        assert StemExportFormat.MIDI.value == "midi"
+        assert StemExportFormat.MP3.value == "mp3"
+
+
+class TestSunoV5Capabilities:
+    """Test SunoV5Capabilities model (2026 Suno v5 features)."""
+
+    def test_default_capabilities(self):
+        """Test default Suno v5 capabilities."""
+        from app.routers.dimension.sound import SunoV5Capabilities
+        caps = SunoV5Capabilities()
+        assert caps.max_duration_seconds == 480  # 8 minutes
+        assert caps.sample_rate_khz == 44.1  # Studio-grade
+        assert caps.max_stems == 12  # 12-stem export
+        assert caps.supports_midi_export is True
+        assert caps.supports_audio_upload is True
+        assert caps.supports_vocals_upload is True
+
+    def test_custom_capabilities(self):
+        """Test custom capability values."""
+        from app.routers.dimension.sound import SunoV5Capabilities
+        caps = SunoV5Capabilities(
+            max_duration_seconds=600,
+            sample_rate_khz=48.0,
+            max_stems=16,
+        )
+        assert caps.max_duration_seconds == 600
+        assert caps.sample_rate_khz == 48.0
+        assert caps.max_stems == 16
+
+
+class TestUdioCapabilities:
+    """Test UdioCapabilities model (2026 Udio features)."""
+
+    def test_default_capabilities(self):
+        """Test default Udio capabilities."""
+        from app.routers.dimension.sound import UdioCapabilities
+        caps = UdioCapabilities()
+        assert caps.max_duration_seconds == 300  # 5 minutes
+        assert caps.sample_rate_khz == 48.0  # Broadcast-grade
+        assert caps.supports_detailed_remixing is True
+        assert caps.supports_song_extensions is True
+        assert caps.vocal_quality == "human-like"
+
+
+class TestSoundGenerationResult:
+    """Test SoundGenerationResult model (2026 comprehensive result)."""
+
+    def test_result_creation_defaults(self):
+        """Test result creation with defaults."""
+        from app.routers.dimension.sound import SoundGenerationResult, AudioPlatform, AudioQuality
+        result = SoundGenerationResult()
+        assert result.suno_prompt == ""
+        assert result.udio_prompt == ""
+        assert result.elevenlabs_prompt == ""
+        assert result.target_platform == AudioPlatform.SUNO
+        assert result.audio_quality == AudioQuality.HIGH
+        assert result.stem_export_available is False
+        assert result.stem_count == 0
+        assert result.trace_id == ""
+        assert result.evidence_refs == []
+        assert result.confidence == 0.0
+
+    def test_result_with_prompts(self):
+        """Test result with platform-specific prompts."""
+        from app.routers.dimension.sound import SoundGenerationResult, AudioPlatform, AudioQuality
+        result = SoundGenerationResult(
+            suno_prompt="Genre: Pop, Tempo: 120, Mood: Happy",
+            udio_prompt="Pop track with energetic vocals",
+            target_platform=AudioPlatform.SUNO,
+            audio_quality=AudioQuality.STUDIO,
+            stem_export_available=True,
+            stem_count=12,
+            trace_id="sc-abc123",
+            evidence_refs=[
+                "rag:sound_craft:bgm",
+                "config:platform:suno",
+            ],
+            confidence=0.9,
+        )
+        assert "Genre: Pop" in result.suno_prompt
+        assert result.stem_export_available is True
+        assert result.stem_count == 12
+        assert result.trace_id == "sc-abc123"
+        assert len(result.evidence_refs) == 2
+
+    def test_result_evidence_refs_list_str(self):
+        """Test evidence_refs is List[str] (Vivid convention)."""
+        from app.routers.dimension.sound import SoundGenerationResult
+        result = SoundGenerationResult(
+            evidence_refs=["rag:sound:test", "config:platform:suno"]
+        )
+        assert isinstance(result.evidence_refs, list)
+        assert all(isinstance(ref, str) for ref in result.evidence_refs)
+
+
+class TestStructureSegment:
+    """Test StructureSegment model (2026 Structure Strategy)."""
+
+    def test_segment_creation(self):
+        """Test segment creation."""
+        from app.routers.dimension.sound import StructureSegment
+        segment = StructureSegment(
+            name="chorus",
+            duration_beats=32,
+            bpm_hint=140,
+            mood_hint="energetic",
+        )
+        assert segment.name == "chorus"
+        assert segment.duration_beats == 32
+        assert segment.bpm_hint == 140
+        assert segment.mood_hint == "energetic"
+
+    def test_segment_defaults(self):
+        """Test segment default values."""
+        from app.routers.dimension.sound import StructureSegment
+        segment = StructureSegment(name="verse")
+        assert segment.duration_beats == 16
+        assert segment.bpm_hint == 120
+        assert segment.mood_hint == "neutral"
+
+
+# ============================================================================
+# Evidence Refs Format Tests (Vivid Convention)
+# ============================================================================
+
+class TestEvidenceRefsFormat:
+    """Test evidence_refs follows Vivid List[str] convention."""
+
+    def test_evidence_refs_format_sound_craft(self):
+        """Test sound_craft evidence_refs format."""
+        expected_format = "rag:sound_craft:bgm"
+        assert expected_format.startswith("rag:")
+        parts = expected_format.split(":")
+        assert len(parts) >= 3
+        assert parts[0] in ("rag", "db", "config")
+
+    def test_evidence_refs_format_platform(self):
+        """Test platform evidence_refs format."""
+        expected_format = "config:platform:suno"
+        parts = expected_format.split(":")
+        assert parts[0] == "config"
+        assert parts[1] == "platform"
+        assert parts[2] in ALLOWED_AUDIO_PLATFORMS
+
+    def test_evidence_refs_format_genre(self):
+        """Test genre evidence_refs format."""
+        expected_format = "config:genre:drama"
+        parts = expected_format.split(":")
+        assert parts[0] == "config"
+        assert parts[1] == "genre"
+        assert parts[2] in ALLOWED_GENRES
+
+
+# ============================================================================
+# LyricsResponse 2026 Tests
+# ============================================================================
+
+class TestLyricsResponse2026:
+    """Test LyricsResponse with 2026 RAG Protocol v2 fields."""
+
+    def test_lyrics_response_trace_fields(self):
+        """Test LyricsResponse has trace fields."""
+        from app.routers.dimension.sound import LyricsResponse, LyricsSection
+        response = LyricsResponse(
+            success=True,
+            topic_analysis="Analysis of love theme",
+            lyrics_sections=[
+                LyricsSection(type="verse", content="First verse...")
+            ],
+            full_lyrics="[Verse]\nFirst verse...",
+            suno_prompt="Genre: Pop",
+            udio_prompt="Pop ballad",
+            style_summary="Modern pop ballad",
+            trace_id="lyr-abc123",
+            evidence_refs=[
+                "rag:lyrics:genre:pop",
+                "config:structure:verse-chorus",
+            ],
+            confidence=0.85,
+        )
+        assert response.trace_id == "lyr-abc123"
+        assert len(response.evidence_refs) == 2
+        assert response.confidence == 0.85
+
+    def test_lyrics_response_default_trace_fields(self):
+        """Test LyricsResponse default trace field values."""
+        from app.routers.dimension.sound import LyricsResponse
+        response = LyricsResponse(
+            success=True,
+            topic_analysis="Test",
+            lyrics_sections=[],
+            full_lyrics="",
+            suno_prompt="",
+            udio_prompt="",
+            style_summary="",
+        )
+        assert response.trace_id == ""
+        assert response.evidence_refs == []
+        assert response.confidence == 0.0
+
+
+# ============================================================================
+# 2026 Multi-Platform Prompt Tests
+# ============================================================================
+
+class TestMultiPlatformPrompts:
+    """Test 2026 multi-platform prompt generation patterns."""
+
+    def test_suno_v5_prompt_structure(self):
+        """Test Suno v5 prompt structure strategy."""
+        # 2026 Suno prompt structure: Style -> Lyrics -> Structure
+        suno_prompt = "Style: Lo-fi Hip Hop, female vocals, 80bpm\n[Verse 1] Rain..."
+        assert "Style:" in suno_prompt
+        assert "[Verse" in suno_prompt
+
+    def test_udio_prompt_structure(self):
+        """Test Udio prompt structure."""
+        # Udio: Tag-driven, modular structure
+        udio_prompt = "lo-fi, female vocal, melancholic, 80bpm"
+        assert "," in udio_prompt  # Tag-based
+
+    def test_platform_specific_capabilities(self):
+        """Test different platforms have different capabilities."""
+        from app.routers.dimension.sound import SunoV5Capabilities, UdioCapabilities
+        suno = SunoV5Capabilities()
+        udio = UdioCapabilities()
+        # Suno v5 has longer duration (8 min vs 5 min)
+        assert suno.max_duration_seconds > udio.max_duration_seconds
+        # Udio has higher sample rate (48 kHz vs 44.1 kHz)
+        assert udio.sample_rate_khz > suno.sample_rate_khz

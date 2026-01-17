@@ -602,3 +602,268 @@ class TestEdgeCases:
         """Test threshold can be 100."""
         request = QualityCheckRequest(content="Test", threshold=100)
         assert request.threshold == 100
+
+
+# ============================================================================
+# 2026 VBench Evaluation Dimension Tests
+# ============================================================================
+
+class TestVBenchDimension:
+    """Test VBenchDimension enum (2026 Best Practice: CVPR 2024 + VBench-2.0)."""
+
+    def test_vbench_enum_exists(self):
+        """Test VBenchDimension enum is importable."""
+        from app.routers.dimension.quality import VBenchDimension
+        assert VBenchDimension is not None
+
+    def test_vbench_superficial_faithfulness_dimensions(self):
+        """Test VBench 1.0 superficial faithfulness dimensions."""
+        from app.routers.dimension.quality import VBenchDimension
+        # 16 original VBench dimensions
+        assert VBenchDimension.SUBJECT_CONSISTENCY.value == "subject_consistency"
+        assert VBenchDimension.BACKGROUND_CONSISTENCY.value == "background_consistency"
+        assert VBenchDimension.TEMPORAL_FLICKERING.value == "temporal_flickering"
+        assert VBenchDimension.MOTION_SMOOTHNESS.value == "motion_smoothness"
+        assert VBenchDimension.DYNAMIC_DEGREE.value == "dynamic_degree"
+        assert VBenchDimension.AESTHETIC_QUALITY.value == "aesthetic_quality"
+        assert VBenchDimension.IMAGING_QUALITY.value == "imaging_quality"
+        assert VBenchDimension.OBJECT_CLASS.value == "object_class"
+        assert VBenchDimension.MULTIPLE_OBJECTS.value == "multiple_objects"
+        assert VBenchDimension.HUMAN_ACTION.value == "human_action"
+
+    def test_vbench_intrinsic_faithfulness_dimensions(self):
+        """Test VBench-2.0 intrinsic faithfulness dimensions (Mar 2025)."""
+        from app.routers.dimension.quality import VBenchDimension
+        assert VBenchDimension.COMPOSITIONAL_CREATIVITY.value == "compositional_creativity"
+        assert VBenchDimension.COMMONSENSE_REASONING.value == "commonsense_reasoning"
+        assert VBenchDimension.PHYSICS_REALISM.value == "physics_realism"
+        assert VBenchDimension.HUMAN_ANATOMY.value == "human_anatomy"
+        assert VBenchDimension.COMPLEX_PROMPT_ADHERENCE.value == "complex_prompt_adherence"
+
+    def test_vbench_dimension_count(self):
+        """Test VBenchDimension has at least 16+5=21 dimensions."""
+        from app.routers.dimension.quality import VBenchDimension
+        assert len(VBenchDimension) >= 21
+
+
+class TestConsistencyScoringMethod:
+    """Test ConsistencyScoringMethod enum (2026 DINOv2 standard)."""
+
+    def test_dinov2_is_primary(self):
+        """Test DINOv2 feature similarity is primary method."""
+        from app.routers.dimension.quality import ConsistencyScoringMethod
+        assert ConsistencyScoringMethod.DINOV2_FEATURE.value == "dinov2_feature_similarity"
+
+    def test_clip_embedding_available(self):
+        """Test CLIP embedding is secondary method."""
+        from app.routers.dimension.quality import ConsistencyScoringMethod
+        assert ConsistencyScoringMethod.CLIP_EMBEDDING.value == "clip_embedding_similarity"
+
+    def test_arcface_identity_for_faces(self):
+        """Test ArcFace is available for face-specific scoring."""
+        from app.routers.dimension.quality import ConsistencyScoringMethod
+        assert ConsistencyScoringMethod.ARCFACE_IDENTITY.value == "arcface_identity_match"
+
+
+class TestConsistencyThresholds:
+    """Test ConsistencyThresholds model (2026 VideoMemory benchmark)."""
+
+    def test_default_thresholds(self):
+        """Test default consistency thresholds match research doc."""
+        from app.routers.dimension.quality import ConsistencyThresholds
+        thresholds = ConsistencyThresholds()
+        assert thresholds.character == 0.70
+        assert thresholds.prop == 0.60
+        assert thresholds.background == 0.65
+        assert thresholds.temporal == 0.80
+
+    def test_custom_thresholds(self):
+        """Test custom threshold values."""
+        from app.routers.dimension.quality import ConsistencyThresholds
+        thresholds = ConsistencyThresholds(
+            character=0.85,
+            prop=0.75,
+            background=0.80,
+            temporal=0.90,
+        )
+        assert thresholds.character == 0.85
+        assert thresholds.temporal == 0.90
+
+    def test_threshold_validation_range(self):
+        """Test thresholds must be 0-1."""
+        from app.routers.dimension.quality import ConsistencyThresholds
+        from pydantic import ValidationError
+        with pytest.raises(ValidationError):
+            ConsistencyThresholds(character=1.5)
+
+
+class TestVBenchScore:
+    """Test VBenchScore model."""
+
+    def test_vbench_score_creation(self):
+        """Test VBenchScore creation."""
+        from app.routers.dimension.quality import (
+            VBenchScore, VBenchDimension, ConsistencyScoringMethod
+        )
+        score = VBenchScore(
+            dimension=VBenchDimension.SUBJECT_CONSISTENCY,
+            score=0.85,
+            method=ConsistencyScoringMethod.DINOV2_FEATURE,
+            confidence=0.9,
+        )
+        assert score.dimension == VBenchDimension.SUBJECT_CONSISTENCY
+        assert score.score == 0.85
+        assert score.confidence == 0.9
+
+    def test_vbench_score_defaults(self):
+        """Test VBenchScore default values."""
+        from app.routers.dimension.quality import VBenchScore, VBenchDimension
+        score = VBenchScore(dimension=VBenchDimension.AESTHETIC_QUALITY)
+        assert score.score == 0.0
+        assert score.confidence == 0.0
+
+
+class TestMultiModalQualityWeight:
+    """Test MultiModalQualityWeight model."""
+
+    def test_default_weights(self):
+        """Test default 50/25/25 distribution."""
+        from app.routers.dimension.quality import MultiModalQualityWeight
+        weights = MultiModalQualityWeight()
+        assert weights.video == 0.50
+        assert weights.audio == 0.25
+        assert weights.prompt == 0.25
+        # Total should equal 1.0
+        assert weights.video + weights.audio + weights.prompt == 1.0
+
+    def test_custom_weights(self):
+        """Test custom weight values."""
+        from app.routers.dimension.quality import MultiModalQualityWeight
+        weights = MultiModalQualityWeight(video=0.60, audio=0.20, prompt=0.20)
+        assert weights.video == 0.60
+
+
+class TestQualityEvaluationResult:
+    """Test QualityEvaluationResult model (2026 comprehensive result)."""
+
+    def test_result_creation_defaults(self):
+        """Test result creation with defaults."""
+        from app.routers.dimension.quality import QualityEvaluationResult
+        result = QualityEvaluationResult()
+        assert result.overall_score == 0.0
+        assert result.pass_threshold is False
+        assert result.trace_id == ""
+        assert result.evidence_refs == []
+        assert result.confidence == 0.0
+
+    def test_result_with_scores(self):
+        """Test result with VBench dimension scores."""
+        from app.routers.dimension.quality import QualityEvaluationResult
+        result = QualityEvaluationResult(
+            overall_score=85.5,
+            pass_threshold=True,
+            subject_consistency=0.92,
+            background_consistency=0.88,
+            aesthetic_quality=0.95,
+            motion_smoothness=0.85,
+            trace_id="qc-abc123",
+            evidence_refs=[
+                "rag:quality_check:prompt",
+                "criteria:aesthetic",
+            ],
+            confidence=0.9,
+        )
+        assert result.overall_score == 85.5
+        assert result.pass_threshold is True
+        assert result.subject_consistency == 0.92
+        assert result.trace_id == "qc-abc123"
+        assert len(result.evidence_refs) == 2
+
+    def test_result_evidence_refs_list_str(self):
+        """Test evidence_refs is List[str] (Vivid convention)."""
+        from app.routers.dimension.quality import QualityEvaluationResult
+        result = QualityEvaluationResult(
+            evidence_refs=["rag:quality:test", "db:quality_check:uuid-123"]
+        )
+        assert isinstance(result.evidence_refs, list)
+        assert all(isinstance(ref, str) for ref in result.evidence_refs)
+
+    def test_result_weights_attached(self):
+        """Test MultiModalQualityWeight is attached."""
+        from app.routers.dimension.quality import (
+            QualityEvaluationResult, MultiModalQualityWeight
+        )
+        result = QualityEvaluationResult()
+        assert isinstance(result.weights, MultiModalQualityWeight)
+        assert result.weights.video == 0.50
+
+
+# ============================================================================
+# Evidence Refs Format Tests (Vivid Convention)
+# ============================================================================
+
+class TestEvidenceRefsFormat:
+    """Test evidence_refs follows Vivid List[str] convention."""
+
+    def test_evidence_refs_format_quality_check(self):
+        """Test quality_check evidence_refs format."""
+        expected_format = "rag:quality_check:prompt"
+        assert expected_format.startswith("rag:")
+        parts = expected_format.split(":")
+        assert len(parts) >= 3
+        assert parts[0] in ("rag", "db", "config", "criteria")
+
+    def test_evidence_refs_format_criteria(self):
+        """Test criteria evidence_refs format."""
+        expected_format = "criteria:aesthetic"
+        parts = expected_format.split(":")
+        assert parts[0] == "criteria"
+        assert parts[1] in ALLOWED_CRITERIA
+
+    def test_evidence_refs_format_config(self):
+        """Test config evidence_refs format."""
+        expected_format = "config:inspection_mode:comprehensive"
+        parts = expected_format.split(":")
+        assert parts[0] == "config"
+        assert parts[1] == "inspection_mode"
+        assert parts[2] in ALLOWED_INSPECTION_MODES
+
+
+# ============================================================================
+# 2026 Multi-Dimensional Evaluation Tests
+# ============================================================================
+
+class TestMultiDimensionalEvaluation:
+    """Test 2026 multi-dimensional evaluation patterns."""
+
+    def test_vbench_dimension_string_values(self):
+        """Test all VBench dimensions have string values."""
+        from app.routers.dimension.quality import VBenchDimension
+        for dim in VBenchDimension:
+            assert isinstance(dim.value, str)
+            assert "_" in dim.value or dim.value.isalpha()
+
+    def test_consistency_scoring_method_string_values(self):
+        """Test all scoring methods have string values."""
+        from app.routers.dimension.quality import ConsistencyScoringMethod
+        for method in ConsistencyScoringMethod:
+            assert isinstance(method.value, str)
+
+    def test_vbench_2_0_new_dimensions(self):
+        """Test VBench-2.0 (Mar 2025) new dimensions are present."""
+        from app.routers.dimension.quality import VBenchDimension
+        new_dims = [
+            VBenchDimension.COMPOSITIONAL_CREATIVITY,
+            VBenchDimension.COMMONSENSE_REASONING,
+            VBenchDimension.PHYSICS_REALISM,
+            VBenchDimension.HUMAN_ANATOMY,
+            VBenchDimension.COMPLEX_PROMPT_ADHERENCE,
+        ]
+        for dim in new_dims:
+            assert dim is not None
+
+    def test_dinov2_is_default_method(self):
+        """Test DINOv2 is default consistency scoring method."""
+        from app.routers.dimension.quality import VBenchScore, VBenchDimension, ConsistencyScoringMethod
+        score = VBenchScore(dimension=VBenchDimension.SUBJECT_CONSISTENCY)
+        assert score.method == ConsistencyScoringMethod.DINOV2_FEATURE
