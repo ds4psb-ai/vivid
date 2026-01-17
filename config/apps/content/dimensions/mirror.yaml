@@ -1,0 +1,271 @@
+$schema: "vivid-app/v2"
+
+metadata:
+  name: mirror
+  type: dimension
+  version: "2.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "심연의 거울"
+  name_en: "Abyss Mirror"
+  icon: "🪞"
+  description: "MBTI + 사주 + 혈액형 기반 심층 페르소나 분석 및 창작 DNA 생성"
+
+capabilities:
+  - name: cache
+    enabled: true
+    config:
+      ttl: 3600
+
+  - name: execution
+    enabled: true
+    config:
+      credit_cost: 5  # Per chat turn
+      endpoint: "/api/dimension/mirror/chat"
+      capsule_key: "mirror.persona.analyze"
+      credit_only: false  # BYOK supported
+      wait_for_completion: false  # Streaming
+
+  - name: telemetry
+    enabled: true
+    config:
+      log_level: info
+
+extensions:
+  dimension:
+    tool_type: analysis
+    supports_streaming: true
+
+  # 심연의 거울 전용 확장
+  abyss_mirror:
+    # 분석 단계
+    stages:
+      - id: "intro"
+        name: "인사 단계"
+        order: 1
+        completion_rate: 0
+        description: "라포 형성 및 분석 방향 설정"
+
+      - id: "birth"
+        name: "출생 정보"
+        order: 2
+        completion_rate: 15
+        description: "사주팔자 계산 및 기본 분석"
+
+      - id: "saju"
+        name: "사주 분석"
+        order: 3
+        completion_rate: 25
+        description: "사주 기반 성향 탐색"
+
+      - id: "psychology"
+        name: "심리 분석"
+        order: 4
+        completion_rate: 45
+        description: "심층 심리 탐색 (융 원형, Big Five)"
+
+      - id: "creativity"
+        name: "창작 성향"
+        order: 5
+        completion_rate: 65
+        description: "창작 스타일 및 선호도 분석"
+
+      - id: "preferences"
+        name: "취향 분석"
+        order: 6
+        completion_rate: 80
+        description: "미학적 선호도 및 거장 매칭"
+
+      - id: "synthesis"
+        name: "종합 분석"
+        order: 7
+        completion_rate: 90
+        description: "페르소나 DNA 통합"
+
+      - id: "final"
+        name: "완료"
+        order: 8
+        completion_rate: 100
+        description: "프리셋 생성 완료"
+
+    # MBTI 설정
+    mbti:
+      enabled: true
+      types:
+        - "INTJ"
+        - "INTP"
+        - "ENTJ"
+        - "ENTP"
+        - "INFJ"
+        - "INFP"
+        - "ENFJ"
+        - "ENFP"
+        - "ISTJ"
+        - "ISFJ"
+        - "ESTJ"
+        - "ESFJ"
+        - "ISTP"
+        - "ISFP"
+        - "ESTP"
+        - "ESFP"
+
+      # MBTI-CI (Creativity Index) 공식
+      creativity_formula:
+        formula: "3*SN + JP - EI - 0.5*TF"
+        description: "직관(N)과 인식(P) 유형이 창의성과 가장 강하게 상관"
+        range: "-4.5 to +4.5"
+
+    # 혈액형 설정
+    blood_types:
+      - id: "A"
+        name: "A형"
+        traits: ["꼼꼼함", "완벽주의", "협동적"]
+      - id: "B"
+        name: "B형"
+        traits: ["자유분방", "독창적", "감성적"]
+      - id: "O"
+        name: "O형"
+        traits: ["리더십", "열정적", "목표지향"]
+      - id: "AB"
+        name: "AB형"
+        traits: ["다재다능", "직관적", "분석적"]
+
+    # 사주(四柱) 원소
+    saju_elements:
+      - id: "wood"
+        name_ko: "목(木)"
+        name_en: "Wood"
+        traits: ["성장", "창조", "유연성"]
+        creative_style: "점진적 발전, 자연스러운 전개"
+
+      - id: "fire"
+        name_ko: "화(火)"
+        name_en: "Fire"
+        traits: ["열정", "변화", "표현력"]
+        creative_style: "강렬한 감정, 드라마틱 전개"
+
+      - id: "earth"
+        name_ko: "토(土)"
+        name_en: "Earth"
+        traits: ["안정", "조화", "신뢰"]
+        creative_style: "탄탄한 구조, 깊은 메시지"
+
+      - id: "metal"
+        name_ko: "금(金)"
+        name_en: "Metal"
+        traits: ["정밀", "결단력", "완성도"]
+        creative_style: "정제된 미학, 절제된 표현"
+
+      - id: "water"
+        name_ko: "수(水)"
+        name_en: "Water"
+        traits: ["지혜", "적응력", "깊이"]
+        creative_style: "심오한 주제, 유동적 서사"
+
+    # 창작 스타일 매핑 (연구 기반)
+    creative_style_mapping:
+      - id: "visionary_storyteller"
+        name: "비전 서술가"
+        mbti_types: ["INFP", "ENFP"]
+        strengths:
+          - "감정적 깊이"
+          - "캐릭터 내면 탐구"
+          - "상징적 표현"
+        recommended_auteurs: ["bong", "wong", "miyazaki"]
+
+      - id: "logical_architect"
+        name: "논리 건축가"
+        mbti_types: ["INTP", "INTJ"]
+        strengths:
+          - "복잡한 플롯 구조"
+          - "세계관 설계"
+          - "논리적 일관성"
+        recommended_auteurs: ["nolan", "villeneuve", "kubrick"]
+
+      - id: "dramatic_director"
+        name: "드라마 감독"
+        mbti_types: ["ENTJ", "ENFJ"]
+        strengths:
+          - "대규모 서사"
+          - "캐릭터 성장 아크"
+          - "감정적 고조"
+        recommended_auteurs: ["spielberg", "cameron", "ridley"]
+
+      - id: "experimental_artist"
+        name: "실험 예술가"
+        mbti_types: ["ENTP", "ISTP"]
+        strengths:
+          - "장르 혼합"
+          - "비선형 서사"
+          - "기술적 혁신"
+        recommended_auteurs: ["tarantino", "fincher", "refn"]
+
+    # 페르소나 DNA 출력 스키마
+    persona_dna_schema:
+      core_identity:
+        - "mbti_type"
+        - "mbti_confidence"
+        - "dominant_traits"
+        - "creative_archetype"
+      aesthetic_preferences:
+        visual:
+          - "color_preference"
+          - "composition_style"
+          - "lighting_mood"
+        narrative:
+          - "preferred_genres"
+          - "story_structure"
+          - "pacing_preference"
+        audio:
+          - "music_genres"
+          - "tempo_preference"
+      auteur_affinity:
+        - "primary_auteur"
+        - "secondary_matches"
+        - "affinity_score"
+      creative_process:
+        - "ideation_style"
+        - "workflow_preference"
+        - "potential_blocks"
+
+    # 보안 설정
+    security:
+      prompt_injection_defense: true
+      pii_masking: true
+      session_token_binding: true
+      max_message_length: 2000
+      context_summarization:
+        enabled: true
+        max_messages: 10
+        max_chars_per_message: 500
+
+    # TieredContext 통합
+    tiered_context:
+      session_level:
+        - "mbti_type"
+        - "creativity_index"
+        - "auteur_affinity"
+        - "creative_style"
+        - "strength_areas"
+        - "growth_areas"
+      propagates_to:
+        - "scenario_generator"
+        - "storyboard_sketcher"
+        - "aesthetic_director"
+        - "quality_director"
+
+quality_selection:
+  enabled: false  # UQSL not applicable to persona analysis
+
+keywords:
+  patterns:
+    - "심연"
+    - "거울"
+    - "페르소나"
+    - "mbti"
+    - "사주"
+    - "혈액형"
+    - "abyss"
+    - "mirror"
+    - "persona"
