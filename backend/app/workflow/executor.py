@@ -45,7 +45,15 @@ from app.models_workflow import (
     NodeStatus,
     CheckpointAction,
 )
-from app.workflow.types import ExecutableDAG, DAGNode
+from app.workflow.types import (
+    ExecutableDAG,
+    ExecutableDAGV2,
+    DAGNode,
+    ConditionalEdge,
+    RouterNode,
+    WorkflowState,
+    RoutingDecision,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -863,6 +871,555 @@ async def create_executor(
         HITLWorkflowExecutor 인스턴스
     """
     return HITLWorkflowExecutor(
+        db=db,
+        tool_executor=tool_executor,
+    )
+
+
+# =============================================================================
+# HITL Workflow Executor V2 (2026 Extension - Conditional Edges)
+# =============================================================================
+
+class HITLWorkflowExecutorV2(HITLWorkflowExecutor):
+    """HITL 워크플로우 실행기 V2.
+
+    2026 확장:
+    - ConditionalEdge 지원 (상태 기반 동적 라우팅)
+    - RouterNode 지원 (LLM 기반 라우팅)
+    - WorkflowState 관리
+    - ExecutableDAGV2 처리
+
+    ConditionalEdge 실행 흐름:
+        1. 현재 노드 실행 완료
+        2. 해당 노드에서 출발하는 ConditionalEdge 확인
+        3. 조건 함수(condition) 실행하여 라우트 결정
+        4. route_map에서 다음 노드 선택
+        5. 다음 노드로 점프 (선형 순서 무시)
+
+    Example:
+        >>> executor = HITLWorkflowExecutorV2(db, tool_executor)
+        >>> dag_v2 = await analyzer.build_dag_v2(intent, user_context)
+        >>> execution_id = await executor.start_workflow_v2(dag_v2, user_id)
+    """
+
+    def __init__(
+        self,
+        db: AsyncSession,
+        tool_executor: Optional[ToolExecutor] = None,
+        checkpoint_service: Optional[CheckpointService] = None,
+    ) -> None:
+        """Initialize V2 executor."""
+        super().__init__(db, tool_executor, checkpoint_service)
+
+        # 워크플로우 상태 캐시 (execution_id -> WorkflowState)
+        self._state_cache: Dict[uuid.UUID, WorkflowState] = {}
+
+        # 조건부 엣지 매핑 (execution_id -> from_node_id -> ConditionalEdge)
+        self._conditional_edges: Dict[uuid.UUID, Dict[str, ConditionalEdge]] = {}
+
+    async def start_workflow_v2(
+        self,
+        dag: ExecutableDAGV2,
+        user_id: str,
+        initial_inputs: Optional[Dict[str, Any]] = None,
+        user_context: Optional[Dict[str, Any]] = None,
+    ) -> uuid.UUID:
+        """V2 워크플로우 실행 시작.
+
+        Args:
+            dag: ExecutableDAGV2 (조건부 엣지 포함)
+            user_id: 사용자 ID
+            initial_inputs: 초기 입력
+            user_context: 사용자 컨텍스트
+
+        Returns:
+            실행 ID
+        """
+        initial_inputs = initial_inputs or {}
+        user_context = user_context or {}
+
+        # 기본 DAG로 실행 시작
+        base_dag = ExecutableDAG(
+            dag_id=dag.dag_id,
+            nodes=dag.nodes,
+            edges=dag.edges,
+            execution_order=dag.execution_order,
+            human_review_points=dag.human_review_points,
+            estimated_credits=dag.estimated_credits,
+            estimated_latency_ms=dag.estimated_latency_ms,
+            metadata=dag.metadata,
+        )
+
+        # 실행 레코드 생성
+        execution = WorkflowExecution(
+            dag_id=dag.dag_id,
+            user_id=user_id,
+            status=WorkflowStatus.PENDING.value,
+            dag_snapshot=dag.to_dict(),  # V2 스냅샷 저장
+            initial_inputs=initial_inputs,
+            user_context=user_context,
+            estimated_credits=dag.estimated_credits,
+        )
+
+        self._db.add(execution)
+        await self._db.flush()
+
+        execution_id = execution.id
+
+        # 조건부 엣지 캐싱
+        self._conditional_edges[execution_id] = {
+            edge.from_node_id: edge
+            for edge in dag.conditional_edges
+        }
+
+        # 워크플로우 상태 초기화
+        self._state_cache[execution_id] = WorkflowState(
+            query=initial_inputs.get("query", initial_inputs.get("intent", "")),
+            intent_type="unknown",
+            selected_tools=[node.tool_id for node in dag.nodes.values()],
+            current_step="start",
+            accumulated_outputs={},
+            user_context=user_context,
+            confidence=dag.orchestration_plan.confidence if dag.orchestration_plan else 0.7,
+        )
+
+        logger.info(
+            f"[ExecutorV2] Started workflow | execution_id={execution_id} | "
+            f"dag_id={dag.dag_id} | conditional_edges={len(dag.conditional_edges)}"
+        )
+
+        # 실행 시작
+        await self._run_workflow_v2(
+            execution_id,
+            dag,
+            initial_inputs,
+            user_context,
+        )
+
+        return execution_id
+
+    async def _run_workflow_v2(
+        self,
+        execution_id: uuid.UUID,
+        dag: ExecutableDAGV2,
+        initial_inputs: Dict[str, Any],
+        user_context: Dict[str, Any],
+    ) -> None:
+        """V2 워크플로우 실행."""
+        execution = await self._get_execution(execution_id)
+        if not execution:
+            return
+
+        execution.status = WorkflowStatus.RUNNING.value
+        execution.started_at = datetime.utcnow()
+        await self._db.flush()
+
+        # 출력 캐시 초기화
+        self._output_cache[execution_id] = {}
+
+        await self._continue_workflow_v2(
+            execution_id,
+            dag,
+            initial_inputs,
+            user_context,
+            [],
+        )
+
+    async def _continue_workflow_v2(
+        self,
+        execution_id: uuid.UUID,
+        dag: ExecutableDAGV2,
+        initial_inputs: Dict[str, Any],
+        user_context: Dict[str, Any],
+        completed_nodes: List[str],
+    ) -> None:
+        """V2 워크플로우 계속 실행 (조건부 라우팅 지원)."""
+        execution = await self._get_execution(execution_id)
+        if not execution:
+            return
+
+        execution.status = WorkflowStatus.RUNNING.value
+        await self._db.flush()
+
+        state = self._state_cache.get(execution_id, WorkflowState())
+        completed_set = set(completed_nodes)
+        conditional_edges = self._conditional_edges.get(execution_id, {})
+
+        # 실행 순서 (조건부 점프 가능)
+        current_index = 0
+        execution_order = dag.execution_order
+
+        while current_index < len(execution_order):
+            node_id = execution_order[current_index]
+
+            # 이미 완료된 노드 스킵
+            if node_id in completed_set:
+                current_index += 1
+                continue
+
+            node = dag.nodes.get(node_id)
+            if not node:
+                current_index += 1
+                continue
+
+            # 노드 실행
+            execution.current_node_id = node_id
+            state.current_step = node_id
+            await self._db.flush()
+
+            try:
+                # 입력 준비
+                node_inputs = self._prepare_inputs(
+                    execution_id,
+                    node,
+                    dag,
+                    initial_inputs,
+                )
+
+                # RouterNode인 경우 특별 처리
+                if isinstance(node, RouterNode):
+                    routing_result = await self._execute_router_node(
+                        execution_id,
+                        node,
+                        node_inputs,
+                        user_context,
+                        state,
+                    )
+                    outputs = {"route": routing_result.route, "confidence": routing_result.confidence}
+                    state.route = routing_result.route
+                    state.confidence = routing_result.confidence
+                else:
+                    # 일반 노드 실행
+                    outputs = await self._execute_node(
+                        execution_id,
+                        node,
+                        node_inputs,
+                        user_context,
+                    )
+
+                # 상태 업데이트
+                state.accumulated_outputs[node_id] = outputs
+
+                # 출력 캐시 저장
+                if execution_id not in self._output_cache:
+                    self._output_cache[execution_id] = {}
+                self._output_cache[execution_id][node_id] = outputs
+
+                # HITL 체크포인트 확인
+                if node.requires_human_review:
+                    checkpoint_index = len([
+                        nid for nid in execution_order[:current_index]
+                        if dag.nodes[nid].requires_human_review
+                    ])
+
+                    checkpoint = await self._checkpoint_service.create_checkpoint(
+                        execution_id=execution_id,
+                        node_id=node_id,
+                        tool_id=node.tool_id,
+                        node_output=outputs,
+                        checkpoint_index=checkpoint_index,
+                    )
+
+                    execution.status = WorkflowStatus.PAUSED.value
+                    await self._db.flush()
+
+                    logger.info(
+                        f"[ExecutorV2] Paused at HITL | execution_id={execution_id} | "
+                        f"node_id={node_id}"
+                    )
+                    return
+
+                # 조건부 엣지 확인 및 점프
+                if node_id in conditional_edges:
+                    conditional_edge = conditional_edges[node_id]
+                    next_node_id = self._resolve_conditional_edge(
+                        conditional_edge,
+                        state,
+                    )
+
+                    logger.info(
+                        f"[ExecutorV2] Conditional routing | from={node_id} | "
+                        f"to={next_node_id} | route={state.route}"
+                    )
+
+                    # 다음 노드가 'end'면 워크플로우 종료
+                    if next_node_id == "end":
+                        completed_set.add(node_id)
+                        break
+
+                    # 다음 노드 인덱스로 점프
+                    if next_node_id in execution_order:
+                        next_index = execution_order.index(next_node_id)
+                        completed_set.add(node_id)
+                        current_index = next_index
+                        continue
+
+                # 완료된 노드 추가
+                completed_set.add(node_id)
+                completed_nodes_list = list(execution.completed_nodes)
+                completed_nodes_list.append(node_id)
+                execution.completed_nodes = completed_nodes_list
+                await self._db.flush()
+
+                current_index += 1
+
+            except Exception as e:
+                await self._fail_workflow(execution, node_id, str(e))
+                return
+
+        # 모든 노드 완료
+        await self._complete_workflow(execution)
+
+        # 캐시 정리
+        if execution_id in self._state_cache:
+            del self._state_cache[execution_id]
+        if execution_id in self._conditional_edges:
+            del self._conditional_edges[execution_id]
+
+    def _resolve_conditional_edge(
+        self,
+        edge: ConditionalEdge,
+        state: WorkflowState,
+    ) -> str:
+        """조건부 엣지 해결.
+
+        Args:
+            edge: 조건부 엣지
+            state: 현재 워크플로우 상태
+
+        Returns:
+            다음 노드 ID
+        """
+        return edge.resolve(state)
+
+    async def _execute_router_node(
+        self,
+        execution_id: uuid.UUID,
+        node: RouterNode,
+        inputs: Dict[str, Any],
+        context: Dict[str, Any],
+        state: WorkflowState,
+    ) -> RoutingDecision:
+        """RouterNode 실행 (LLM 기반 라우팅).
+
+        Args:
+            execution_id: 실행 ID
+            node: 라우터 노드
+            inputs: 입력
+            context: 컨텍스트
+            state: 워크플로우 상태
+
+        Returns:
+            라우팅 결정
+        """
+        # TODO: 실제 LLM 호출 구현 (Phase 2)
+        # 현재는 휴리스틱 기반
+
+        query = inputs.get("query", state.query)
+        query_lower = query.lower()
+
+        # 가능한 라우트에서 선택
+        selected_route = node.fallback_route
+        confidence = 0.6
+
+        for route in node.possible_routes:
+            if route in query_lower:
+                selected_route = route
+                confidence = 0.8
+                break
+
+        # 신뢰도 기반 fallback
+        if state.confidence < 0.5:
+            selected_route = node.fallback_route
+            confidence = 0.5
+
+        logger.debug(
+            f"[ExecutorV2] Router decision | node_id={node.node_id} | "
+            f"route={selected_route} | confidence={confidence}"
+        )
+
+        return RoutingDecision(
+            route=selected_route,
+            confidence=confidence,
+            reasoning=f"Selected '{selected_route}' based on query analysis",
+        )
+
+    async def resume_workflow_v2(
+        self,
+        execution_id: uuid.UUID,
+        checkpoint_id: uuid.UUID,
+        action: CheckpointAction,
+        reviewer_id: str,
+        feedback: Optional[str] = None,
+        modified_output: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """V2 워크플로우 재개."""
+        # 기본 체크포인트 처리는 상위 클래스 사용
+        execution = await self._get_execution(execution_id)
+        if not execution:
+            raise WorkflowExecutionError(f"Execution not found: {execution_id}")
+
+        if execution.status != WorkflowStatus.PAUSED.value:
+            raise WorkflowNotPausedError(f"Workflow is not paused: {execution.status}")
+
+        # 체크포인트 해결
+        checkpoint = await self._checkpoint_service.resolve_checkpoint(
+            checkpoint_id=checkpoint_id,
+            action=action,
+            reviewer_id=reviewer_id,
+            feedback=feedback,
+            modified_output=modified_output,
+        )
+
+        # 상태 업데이트
+        if action == CheckpointAction.MODIFY and modified_output:
+            if execution_id not in self._output_cache:
+                self._output_cache[execution_id] = {}
+            self._output_cache[execution_id][checkpoint.node_id] = modified_output
+
+            # WorkflowState도 업데이트
+            if execution_id in self._state_cache:
+                self._state_cache[execution_id].accumulated_outputs[checkpoint.node_id] = modified_output
+
+        if action == CheckpointAction.REJECT:
+            await self._fail_workflow(execution, checkpoint.node_id, "Rejected by user")
+            return
+
+        # 완료된 노드 업데이트
+        completed_nodes = list(execution.completed_nodes)
+        if checkpoint.node_id not in completed_nodes:
+            completed_nodes.append(checkpoint.node_id)
+        execution.completed_nodes = completed_nodes
+
+        logger.info(
+            f"[ExecutorV2] Resuming | execution_id={execution_id} | "
+            f"checkpoint={checkpoint_id}"
+        )
+
+        # V2 DAG 복원 및 계속 실행
+        dag_v2 = self._restore_dag_v2(execution.dag_snapshot)
+        await self._continue_workflow_v2(
+            execution_id,
+            dag_v2,
+            execution.initial_inputs,
+            execution.user_context,
+            completed_nodes,
+        )
+
+    def _restore_dag_v2(self, dag_snapshot: Dict[str, Any]) -> ExecutableDAGV2:
+        """DAG V2 스냅샷에서 복원."""
+        from app.workflow.types import DAGEdge, DataType
+
+        # 노드 복원
+        nodes = {}
+        for node_id, node_data in dag_snapshot.get("nodes", {}).items():
+            if node_data.get("routing_prompt"):
+                # RouterNode
+                nodes[node_id] = RouterNode(
+                    node_id=node_data["node_id"],
+                    tool_id=node_data["tool_id"],
+                    inputs=node_data.get("inputs", {}),
+                    dependencies=set(node_data.get("dependencies", [])),
+                    requires_human_review=node_data.get("requires_human_review", False),
+                    status=node_data.get("status", "pending"),
+                    routing_prompt=node_data.get("routing_prompt", ""),
+                    possible_routes=node_data.get("possible_routes", []),
+                    llm_model=node_data.get("llm_model", "gemini-2.5-flash"),
+                    fallback_route=node_data.get("fallback_route", "general"),
+                )
+            else:
+                # 일반 DAGNode
+                nodes[node_id] = DAGNode(
+                    node_id=node_data["node_id"],
+                    tool_id=node_data["tool_id"],
+                    inputs=node_data.get("inputs", {}),
+                    dependencies=set(node_data.get("dependencies", [])),
+                    requires_human_review=node_data.get("requires_human_review", False),
+                    status=node_data.get("status", "pending"),
+                )
+
+        # 엣지 복원
+        edges = []
+        for edge_data in dag_snapshot.get("edges", []):
+            data_type = None
+            if edge_data.get("data_type"):
+                data_type = DataType(edge_data["data_type"])
+            edges.append(DAGEdge(
+                from_node_id=edge_data["from_node_id"],
+                from_port=edge_data["from_port"],
+                to_node_id=edge_data["to_node_id"],
+                to_port=edge_data["to_port"],
+                data_type=data_type,
+            ))
+
+        # 조건부 엣지 복원
+        conditional_edges = []
+        for ce_data in dag_snapshot.get("conditional_edges", []):
+            # 주의: condition 함수는 직렬화 불가, 기본 라우터 사용
+            def default_condition(state: WorkflowState) -> str:
+                if state.confidence >= 0.8:
+                    return "condition_true"
+                elif state.confidence >= 0.5:
+                    return "option_a"
+                else:
+                    return "condition_false"
+
+            conditional_edges.append(ConditionalEdge(
+                from_node_id=ce_data["from_node_id"],
+                condition=default_condition,
+                route_map=ce_data.get("route_map", {}),
+                default_route=ce_data.get("default_route", "end"),
+            ))
+
+        # OrchestrationPlan 복원 (있으면)
+        orchestration_plan = None
+        if dag_snapshot.get("orchestration_plan"):
+            from app.workflow.types import QueryComplexity, OrchestrationPattern, CompoundOrchestrationPlan
+            op = dag_snapshot["orchestration_plan"]
+            orchestration_plan = CompoundOrchestrationPlan(
+                complexity=QueryComplexity(op.get("complexity", "moderate")),
+                pattern=OrchestrationPattern(op.get("pattern", "linear")),
+                primary_tools=op.get("primary_tools", []),
+                optional_tools=op.get("optional_tools", []),
+                conditional_branches=op.get("conditional_branches", {}),
+                estimated_steps=op.get("estimated_steps", 1),
+                confidence=op.get("confidence", 0.7),
+                reasoning=op.get("reasoning", ""),
+            )
+
+        return ExecutableDAGV2(
+            dag_id=dag_snapshot["dag_id"],
+            nodes=nodes,
+            edges=edges,
+            execution_order=dag_snapshot.get("execution_order", []),
+            human_review_points=dag_snapshot.get("human_review_points", []),
+            estimated_credits=dag_snapshot.get("estimated_credits", 0),
+            estimated_latency_ms=dag_snapshot.get("estimated_latency_ms", 0),
+            metadata=dag_snapshot.get("metadata", {}),
+            conditional_edges=conditional_edges,
+            router_nodes=dag_snapshot.get("router_nodes", []),
+            orchestration_plan=orchestration_plan,
+        )
+
+
+# =============================================================================
+# Factory Functions V2
+# =============================================================================
+
+async def create_executor_v2(
+    db: AsyncSession,
+    tool_executor: Optional[ToolExecutor] = None,
+) -> HITLWorkflowExecutorV2:
+    """HITL 워크플로우 실행기 V2 생성.
+
+    Args:
+        db: 비동기 DB 세션
+        tool_executor: 도구 실행기
+
+    Returns:
+        HITLWorkflowExecutorV2 인스턴스
+    """
+    return HITLWorkflowExecutorV2(
         db=db,
         tool_executor=tool_executor,
     )

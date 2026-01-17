@@ -4,7 +4,8 @@
 
 Reference:
     - Temporal DAG: https://temporal.io/code-exchange/temporalgraph-graph-based-orchestration
-    - LangGraph: https://docs.langchain.com/oss/python/langchain
+    - LangGraph: https://langchain-ai.github.io/langgraph/
+    - LangGraph Conditional Edges: https://langchain-ai.github.io/langgraph/concepts/low_level/
 
 Usage:
     from app.workflow.types import (
@@ -14,13 +15,18 @@ Usage:
         DAGNode,
         DAGEdge,
         ExecutableDAG,
+        # 2026 Extensions
+        ConditionalEdge,
+        RouterNode,
+        WorkflowState,
+        RoutingDecision,
     )
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Literal, Optional, Set, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -287,3 +293,262 @@ class ExecutableDAG:
             "estimated_latency_ms": self.estimated_latency_ms,
             "metadata": self.metadata,
         }
+
+
+# =============================================================================
+# 2026 Extensions: LangGraph-style Conditional Routing
+# =============================================================================
+
+
+class WorkflowState(BaseModel):
+    """워크플로우 상태 (LangGraph StateGraph 패턴).
+
+    노드 간 전달되는 상태 객체입니다.
+    각 노드는 상태를 읽고 업데이트하며, 조건부 라우팅에 활용됩니다.
+
+    Attributes:
+        query: 원본 사용자 쿼리
+        intent_type: 분류된 의도 타입
+        selected_tools: 선택된 도구 목록
+        current_step: 현재 실행 단계
+        accumulated_outputs: 누적된 출력 데이터
+        user_context: 사용자 컨텍스트 (auteur_key 등)
+        error: 에러 정보 (있는 경우)
+
+    Example:
+        >>> state = WorkflowState(
+        ...     query="봉준호 스타일로 3분 MV 만들어줘",
+        ...     intent_type="full_production",
+        ...     user_context={"auteur_key": "bong"},
+        ... )
+    """
+    model_config = ConfigDict(extra="allow")
+
+    # Core fields
+    query: str = Field(default="")
+    intent_type: str = Field(default="unknown")
+    selected_tools: List[str] = Field(default_factory=list)
+    current_step: str = Field(default="start")
+
+    # Accumulated data
+    accumulated_outputs: Dict[str, Any] = Field(default_factory=dict)
+    user_context: Dict[str, Any] = Field(default_factory=dict)
+
+    # Routing info
+    route: str = Field(default="")
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+
+    # Error handling
+    error: Optional[str] = Field(default=None)
+    retry_count: int = Field(default=0)
+
+
+class RoutingDecision(BaseModel):
+    """라우팅 결정 결과.
+
+    IntentAnalyzerV2 또는 RouterNode가 반환하는 라우팅 결정입니다.
+
+    Attributes:
+        target_node: 다음 실행할 노드 ID
+        confidence: 결정 신뢰도 (0-1)
+        reasoning: 결정 이유 (디버깅용)
+        alternatives: 대안 노드들 (폴백용)
+    """
+    model_config = ConfigDict(frozen=True)
+
+    target_node: str
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
+    reasoning: str = Field(default="")
+    alternatives: List[str] = Field(default_factory=list)
+
+
+# Routing function type alias
+RoutingFunction = Callable[[WorkflowState], str]
+
+
+@dataclass
+class ConditionalEdge:
+    """조건부 엣지 - 상태 기반 동적 라우팅.
+
+    LangGraph의 add_conditional_edges 패턴을 구현합니다.
+    상태에 따라 다음 노드를 동적으로 결정합니다.
+
+    Attributes:
+        from_node_id: 소스 노드 ID
+        condition: 상태를 받아 라우트 키를 반환하는 함수
+        route_map: 라우트 키 → 타겟 노드 ID 매핑
+        default_route: 매핑되지 않을 때 기본 라우트
+
+    Example:
+        >>> def classify_intent(state: WorkflowState) -> str:
+        ...     if "분석" in state.query:
+        ...         return "analysis"
+        ...     elif "생성" in state.query:
+        ...         return "generation"
+        ...     return "general"
+        ...
+        >>> edge = ConditionalEdge(
+        ...     from_node_id="intent_classifier",
+        ...     condition=classify_intent,
+        ...     route_map={
+        ...         "analysis": "reference_decoder",
+        ...         "generation": "visual_realizer",
+        ...         "general": "prompt_alchemy",
+        ...     },
+        ...     default_route="prompt_alchemy",
+        ... )
+    """
+    from_node_id: str
+    condition: RoutingFunction
+    route_map: Dict[str, str]  # condition_result → target_node_id
+    default_route: str = "end"
+
+    def resolve(self, state: WorkflowState) -> str:
+        """상태를 기반으로 다음 노드 결정.
+
+        Args:
+            state: 현재 워크플로우 상태
+
+        Returns:
+            다음 실행할 노드 ID
+        """
+        route_key = self.condition(state)
+        return self.route_map.get(route_key, self.default_route)
+
+
+@dataclass
+class RouterNode(DAGNode):
+    """LLM 기반 라우팅 노드.
+
+    복잡한 의도 분석이 필요할 때 LLM을 활용하여 라우팅합니다.
+    기존 키워드 기반 IntentAnalyzer를 LLM으로 업그레이드합니다.
+
+    Attributes:
+        routing_prompt: LLM에 전달할 라우팅 프롬프트 템플릿
+        possible_routes: 가능한 라우트 목록
+        llm_model: 사용할 LLM 모델 (기본: gemini-2.5-flash)
+        fallback_route: LLM 실패 시 폴백 라우트
+        max_retries: 최대 재시도 횟수
+
+    Example:
+        >>> router = RouterNode(
+        ...     node_id="smart_router",
+        ...     tool_id="llm_router",
+        ...     routing_prompt='''
+        ...     사용자 의도를 분석하고 적절한 도구를 선택하세요.
+        ...     가능한 라우트: {possible_routes}
+        ...     사용자 쿼리: {query}
+        ...     ''',
+        ...     possible_routes=["reference", "story", "image", "video"],
+        ...     llm_model="gemini-2.5-flash",
+        ... )
+    """
+    routing_prompt: str = ""
+    possible_routes: List[str] = field(default_factory=list)
+    llm_model: str = "gemini-2.5-flash"
+    fallback_route: str = "general"
+    max_retries: int = 2
+
+    def __post_init__(self) -> None:
+        """tool_id 기본값 설정."""
+        if not self.tool_id:
+            self.tool_id = "llm_router"
+
+
+class QueryComplexity(str, Enum):
+    """쿼리 복잡도 레벨 (Compound Orchestration용).
+
+    복잡도에 따라 오케스트레이션 전략이 달라집니다.
+    """
+    SIMPLE = "simple"          # 단일 도구로 해결 가능
+    MODERATE = "moderate"      # 2-3개 도구 순차 실행
+    COMPLEX = "complex"        # 다중 도구 + 조건부 분기
+    ITERATIVE = "iterative"    # 사용자 피드백 기반 반복 (HITL)
+
+
+class OrchestrationPattern(str, Enum):
+    """오케스트레이션 패턴.
+
+    Compound Orchestration에서 사용하는 실행 패턴입니다.
+    """
+    DIRECT = "direct"          # 단일 도구 직접 호출
+    LINEAR = "linear"          # 순차 DAG 실행
+    PARALLEL = "parallel"      # 병렬 실행 (독립 노드)
+    CONDITIONAL = "conditional"  # 조건부 분기 DAG
+    HITL_LOOP = "hitl_loop"    # Human-in-the-Loop 반복
+
+
+@dataclass
+class CompoundOrchestrationPlan:
+    """복합 오케스트레이션 계획.
+
+    IntentAnalyzerV2가 생성하는 실행 계획입니다.
+
+    Attributes:
+        complexity: 쿼리 복잡도
+        pattern: 오케스트레이션 패턴
+        primary_tools: 메인 도구 목록 (순서대로)
+        optional_tools: 선택적 도구 (조건 충족 시)
+        conditional_branches: 조건부 분기 정보
+        estimated_steps: 예상 단계 수
+        confidence: 계획 신뢰도
+    """
+    complexity: QueryComplexity
+    pattern: OrchestrationPattern
+    primary_tools: List[str]
+    optional_tools: List[str] = field(default_factory=list)
+    conditional_branches: Dict[str, List[str]] = field(default_factory=dict)
+    estimated_steps: int = 1
+    confidence: float = 1.0
+    reasoning: str = ""
+
+
+@dataclass
+class ExecutableDAGV2(ExecutableDAG):
+    """확장된 실행 가능 DAG (조건부 엣지 지원).
+
+    LangGraph 스타일의 조건부 라우팅을 지원합니다.
+
+    Attributes:
+        conditional_edges: 조건부 엣지 목록
+        router_nodes: LLM 라우팅 노드 ID 목록
+        orchestration_plan: 오케스트레이션 계획 (있는 경우)
+    """
+    conditional_edges: List[ConditionalEdge] = field(default_factory=list)
+    router_nodes: List[str] = field(default_factory=list)
+    orchestration_plan: Optional[CompoundOrchestrationPlan] = None
+
+    def get_conditional_edge(self, from_node_id: str) -> Optional[ConditionalEdge]:
+        """노드의 조건부 엣지 조회."""
+        for edge in self.conditional_edges:
+            if edge.from_node_id == from_node_id:
+                return edge
+        return None
+
+    def is_router_node(self, node_id: str) -> bool:
+        """라우터 노드 여부 확인."""
+        return node_id in self.router_nodes
+
+    def to_dict(self) -> Dict[str, Any]:
+        """딕셔너리 변환 (조건부 엣지 포함)."""
+        base_dict = super().to_dict()
+        base_dict["conditional_edges"] = [
+            {
+                "from_node_id": ce.from_node_id,
+                "route_map": ce.route_map,
+                "default_route": ce.default_route,
+                # condition은 직렬화 불가 - 생략
+            }
+            for ce in self.conditional_edges
+        ]
+        base_dict["router_nodes"] = self.router_nodes
+        if self.orchestration_plan:
+            base_dict["orchestration_plan"] = {
+                "complexity": self.orchestration_plan.complexity.value,
+                "pattern": self.orchestration_plan.pattern.value,
+                "primary_tools": self.orchestration_plan.primary_tools,
+                "optional_tools": self.orchestration_plan.optional_tools,
+                "estimated_steps": self.orchestration_plan.estimated_steps,
+                "confidence": self.orchestration_plan.confidence,
+            }
+        return base_dict

@@ -1,287 +1,465 @@
-"""Multi-RAG Type Definitions (P0 2026).
+"""Multi-Modal RAG Type Definitions (2026 Best Practices).
 
-RAG 소스 레지스트리와 지능형 라우터를 위한 타입 정의.
+이 모듈은 Multi-Modal RAG 시스템의 핵심 타입을 정의합니다.
+- 멀티모달 임베딩 (Text, Image, Audio, Video)
+- Qdrant Named Vectors 기반 컬렉션 스키마
+- 크로스모달 검색 쿼리/결과 타입
+- Dimension별 모달리티 매핑
 
-Reference:
-    - RAGRouter Paper: https://arxiv.org/abs/2505.23052
-    - LlamaIndex Router: https://docs.llamaindex.ai/en/stable/examples/low_level/router/
-
-Usage:
-    from app.rag.multi_rag.types import (
-        RAGSourceType,
-        RAGSourceSpec,
-        RAGSourceBackend,
-        RouteDecision,
-        MultiRAGResult,
-    )
+References:
+    - Qdrant Named Vectors: https://qdrant.tech/documentation/concepts/vectors/
+    - ImageBind (Meta): 6-modality unified embedding
+    - Voyage Multimodal-3: 32K context multimodal
+    - TwelveLabs Embed API: Video understanding
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
-
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Any, Protocol, runtime_checkable
 
 
-class RAGSourceType(str, Enum):
-    """RAG 소스 유형.
+class Modality(str, Enum):
+    """지원되는 모달리티 타입."""
 
-    P0 지원 (5개):
-        AUTEUR_DNA: 거장 DNA (NotebookLM) - Tier 0
-        DIMENSION_KNOWLEDGE: 차원별 지식 (Qdrant) - Tier 1
-        USER_HISTORY: 사용자 작업 히스토리
-        TEMPLATE_WORKFLOW: 워크플로우 템플릿
-        PROJECT_CONTEXT: 현재 프로젝트 컨텍스트
+    TEXT = "text"
+    IMAGE = "image"
+    AUDIO = "audio"
+    VIDEO = "video"
 
-    P1 확장 예정 (4개):
-        INDUSTRY_VERTICAL: 업종별 지식 (광고, 영화, 유튜브)
-        TREND_DATA: 2026 트렌드 데이터
-        COMPLIANCE: 법적/규정 가이드
-        CUSTOM: 사용자 정의
-    """
-    # P0 Core
-    AUTEUR_DNA = "auteur_dna"
-    DIMENSION_KNOWLEDGE = "dimension"
-    USER_HISTORY = "user_history"
-    TEMPLATE_WORKFLOW = "template"
-    PROJECT_CONTEXT = "project"
-
-    # P1 Extension
-    INDUSTRY_VERTICAL = "industry"
-    TREND_DATA = "trend"
-    COMPLIANCE = "compliance"
-    CUSTOM = "custom"
+    @classmethod
+    def all(cls) -> list[Modality]:
+        """모든 모달리티 반환."""
+        return list(cls)
 
 
-class RAGSourceSpec(BaseModel):
-    """RAG 소스 명세.
+class ContentType(str, Enum):
+    """콘텐츠 유형 (Dimension 기반)."""
 
-    각 RAG 소스의 메타데이터와 라우팅 정보를 정의합니다.
-    런타임에 동적으로 등록/해제 가능합니다.
+    # Core creative content
+    SHOT = "shot"  # 영상 샷
+    SCENE = "scene"  # 씬 구성
+    SEQUENCE = "sequence"  # 시퀀스
+    TECHNIQUE = "technique"  # 촬영/연출 기법
+    STYLE = "style"  # 비주얼 스타일
 
-    Attributes:
-        source_id: 고유 소스 ID (예: "notebooklm_bong", "qdrant_4d")
-        source_type: RAGSourceType enum 값
-        display_name: UI 표시명
-        description: 소스 설명
-        keywords: 라우팅 키워드 (쿼리 매칭용)
-        priority: 우선순위 (1-10, 높을수록 우선)
-        latency_ms_avg: 평균 응답 시간 (ms)
-        cost_per_query: 쿼리당 비용
-        backend_type: 백엔드 타입 ("notebooklm", "qdrant", "postgres", "api")
-        connection_config: 백엔드별 연결 설정
-        max_results: 최대 결과 수
-        requires_auth: 인증 필요 여부
-        enabled: 활성화 여부
+    # Reference materials
+    REFERENCE = "reference"  # 레퍼런스 이미지/영상
+    STORYBOARD = "storyboard"  # 스토리보드
+    MOODBOARD = "moodboard"  # 무드보드
 
-    Example:
-        >>> spec = RAGSourceSpec(
-        ...     source_id="notebooklm_bong",
-        ...     source_type=RAGSourceType.AUTEUR_DNA,
-        ...     display_name="봉준호 DNA",
-        ...     description="봉준호 감독의 연출 철학과 기법",
-        ...     keywords=["봉준호", "계단", "기생충", "살인의추억"],
-        ...     priority=10,
-        ...     backend_type="notebooklm",
-        ...     connection_config={"notebook_id": "DNA_봉준호"},
-        ... )
-    """
-    model_config = ConfigDict(
-        frozen=False,  # Allow mutation for runtime updates
-        extra="forbid",
-        validate_default=True,
-    )
+    # Audio content
+    MUSIC = "music"  # 음악
+    SFX = "sfx"  # 효과음
+    DIALOGUE = "dialogue"  # 대사/나레이션
+    AMBIENT = "ambient"  # 앰비언트 사운드
 
-    # Identity
-    source_id: str = Field(..., min_length=1, max_length=64)
-    source_type: RAGSourceType
-    display_name: str = Field(..., min_length=1, max_length=100)
-    description: str = Field(default="", max_length=500)
+    # Story content
+    NARRATIVE = "narrative"  # 내러티브 구조
+    CHARACTER = "character"  # 캐릭터 설정
+    THEME = "theme"  # 테마/주제
 
-    # Routing metadata
-    keywords: List[str] = Field(default_factory=list)
-    priority: int = Field(default=5, ge=1, le=10)
-    latency_ms_avg: int = Field(default=500, ge=0)
-    cost_per_query: float = Field(default=0.0, ge=0.0)
+    # Auteur knowledge
+    AUTEUR_INSIGHT = "auteur_insight"  # 거장 인사이트
+    FILMOGRAPHY = "filmography"  # 필모그래피
 
-    # Backend config
-    backend_type: str = Field(..., min_length=1, max_length=32)
-    connection_config: Dict[str, Any] = Field(default_factory=dict)
 
-    # Constraints
-    max_results: int = Field(default=10, ge=1, le=100)
-    requires_auth: bool = Field(default=False)
-    enabled: bool = Field(default=True)
+class SearchStrategy(str, Enum):
+    """검색 전략."""
 
-    # Dimension/Auteur affinity (optional)
-    dimensions: List[str] = Field(default_factory=list)
-    auteur_keys: List[str] = Field(default_factory=list)
+    # Single modality
+    DENSE_ONLY = "dense_only"  # Dense vector만 사용
+    SPARSE_ONLY = "sparse_only"  # BM25만 사용
+
+    # Hybrid strategies
+    HYBRID_RRF = "hybrid_rrf"  # RRF (Reciprocal Rank Fusion)
+    HYBRID_WEIGHTED = "hybrid_weighted"  # 가중치 기반 융합
+
+    # Cross-modal
+    CROSS_MODAL = "cross_modal"  # 크로스모달 검색
+    MULTI_MODAL = "multi_modal"  # 다중 모달리티 동시 검색
+
+
+class DistanceMetric(str, Enum):
+    """벡터 거리 메트릭."""
+
+    COSINE = "Cosine"
+    EUCLID = "Euclid"
+    DOT = "Dot"
+
+
+# =============================================================================
+# Vector Configuration
+# =============================================================================
+
+
+@dataclass
+class VectorConfig:
+    """Dense 벡터 설정."""
+
+    name: str  # e.g., "text_embed", "image_embed"
+    size: int  # 벡터 차원 (768 for unified space)
+    distance: DistanceMetric = DistanceMetric.COSINE
+
+    def to_qdrant_config(self) -> dict[str, Any]:
+        """Qdrant 설정 형식으로 변환."""
+        return {
+            "size": self.size,
+            "distance": self.distance.value,
+        }
+
+
+@dataclass
+class SparseVectorConfig:
+    """Sparse 벡터 설정 (BM25)."""
+
+    name: str  # e.g., "text_bm25"
+    modifier: str | None = None  # "idf" for BM25
+
+    def to_qdrant_config(self) -> dict[str, Any]:
+        """Qdrant 설정 형식으로 변환."""
+        config: dict[str, Any] = {}
+        if self.modifier:
+            config["modifier"] = self.modifier
+        return config
+
+
+@dataclass
+class CollectionSchema:
+    """Multi-Modal 컬렉션 스키마."""
+
+    name: str
+    dense_vectors: list[VectorConfig] = field(default_factory=list)
+    sparse_vectors: list[SparseVectorConfig] = field(default_factory=list)
+    payload_schema: dict[str, str] = field(default_factory=dict)
+
+    def to_qdrant_config(self) -> dict[str, Any]:
+        """Qdrant 컬렉션 생성 설정으로 변환."""
+        config: dict[str, Any] = {
+            "collection_name": self.name,
+        }
+
+        # Named vectors config
+        if self.dense_vectors:
+            config["vectors_config"] = {
+                vec.name: vec.to_qdrant_config() for vec in self.dense_vectors
+            }
+
+        # Sparse vectors config
+        if self.sparse_vectors:
+            config["sparse_vectors_config"] = {
+                vec.name: vec.to_qdrant_config() for vec in self.sparse_vectors
+            }
+
+        return config
+
+
+# =============================================================================
+# Document Types
+# =============================================================================
+
+
+@dataclass
+class MultiModalDocument:
+    """멀티모달 문서."""
+
+    doc_id: str
+    dimension: str  # "3D", "4D", "AD", "Story", etc.
+    modality: Modality
+    content_type: ContentType
+
+    # Content
+    text_content: str | None = None
+    image_data: bytes | None = None
+    audio_data: bytes | None = None
+    video_data: bytes | None = None
+    content_url: str | None = None  # 외부 저장소 URL
+
+    # Embeddings (modality name -> vector)
+    embeddings: dict[str, list[float]] = field(default_factory=dict)
+    sparse_embeddings: dict[str, dict[int, float]] = field(default_factory=dict)
+
+    # Metadata
+    auteur_key: str | None = None
+    title: str | None = None
+    description: str | None = None
+    source: str | None = None  # "notebooklm", "qdrant", "upload"
+    timestamp: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def get_evidence_ref(self) -> str:
+        """evidence_ref 문자열 생성."""
+        base = f"db:rag_docs:multimodal:{self.dimension}"
+        if self.auteur_key:
+            base += f":{self.auteur_key}"
+        return f"{base}:{self.doc_id}"
+
+    def has_modality_embedding(self, modality: Modality) -> bool:
+        """특정 모달리티 임베딩 존재 여부."""
+        embed_key = f"{modality.value}_embed"
+        return embed_key in self.embeddings and len(self.embeddings[embed_key]) > 0
+
+
+@dataclass
+class EmbeddingResult:
+    """임베딩 결과."""
+
+    vector: list[float]
+    modality: Modality
+    model: str
+    dimensions: int
+    processing_time_ms: float = 0.0
+    tokens_used: int | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class SparseEmbeddingResult:
+    """Sparse 임베딩 결과 (BM25)."""
+
+    indices: list[int]
+    values: list[float]
+    model: str = "bm25"
+
+    def to_dict(self) -> dict[int, float]:
+        """인덱스-값 딕셔너리로 변환."""
+        return dict(zip(self.indices, self.values))
+
+
+# =============================================================================
+# Query Types
+# =============================================================================
+
+
+@dataclass
+class MultiModalQuery:
+    """멀티모달 검색 쿼리."""
+
+    # Query content (at least one required)
+    query_text: str | None = None
+    query_image: bytes | None = None
+    query_audio: bytes | None = None
+    query_video: bytes | None = None
+
+    # Search configuration
+    target_modalities: list[Modality] = field(default_factory=lambda: [Modality.TEXT])
+    search_strategy: SearchStrategy = SearchStrategy.HYBRID_RRF
+    top_k: int = 10
+
+    # Filters
+    dimension_filter: str | None = None
+    auteur_filter: str | None = None
+    content_type_filter: list[ContentType] | None = None
+
+    # Hybrid search weights
+    dense_weight: float = 0.7
+    sparse_weight: float = 0.3
+
+    # Cross-modal config
+    cross_modal_boost: float = 1.0  # 크로스모달 결과 부스트
+
+    def get_query_modality(self) -> Modality:
+        """쿼리의 주 모달리티 반환."""
+        if self.query_text:
+            return Modality.TEXT
+        if self.query_image:
+            return Modality.IMAGE
+        if self.query_audio:
+            return Modality.AUDIO
+        if self.query_video:
+            return Modality.VIDEO
+        return Modality.TEXT
+
+
+@dataclass
+class RetrievalResult:
+    """검색 결과."""
+
+    doc_id: str
+    score: float
+    modality: Modality
+    content_type: ContentType
+    dimension: str
+
+    # Content preview
+    text_preview: str | None = None
+    content_url: str | None = None
+
+    # Evidence
+    evidence_ref: str = ""
+
+    # Metadata
+    auteur_key: str | None = None
+    title: str | None = None
+    source: str | None = None
+    matched_vector: str | None = None  # 매칭된 벡터 이름
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class MultiModalSearchResult:
+    """멀티모달 검색 전체 결과."""
+
+    query: MultiModalQuery
+    results: list[RetrievalResult] = field(default_factory=list)
+    total_found: int = 0
+    search_time_ms: float = 0.0
+
+    # Strategy info
+    strategy_used: SearchStrategy = SearchStrategy.HYBRID_RRF
+    modalities_searched: list[Modality] = field(default_factory=list)
+
+    # Fusion info (for hybrid)
+    rrf_k: int = 60  # RRF k parameter
+    dense_results_count: int = 0
+    sparse_results_count: int = 0
+
+
+# =============================================================================
+# Embedder Protocol
+# =============================================================================
 
 
 @runtime_checkable
-class RAGSourceBackend(Protocol):
-    """RAG 소스 백엔드 프로토콜 (Duck Typing).
+class MultiModalEmbedder(Protocol):
+    """멀티모달 임베더 프로토콜."""
 
-    모든 RAG 백엔드 구현체가 따라야 하는 인터페이스입니다.
-    기존 BaseBackend를 확장하며, Protocol 기반으로 정적 타입 체크를 지원합니다.
-
-    Methods:
-        query: 쿼리 실행
-        health_check: 헬스 체크
-
-    Example:
-        >>> class MyBackend:
-        ...     async def query(
-        ...         self,
-        ...         query: str,
-        ...         filters: Optional[Dict[str, Any]] = None,
-        ...         limit: int = 10,
-        ...     ) -> List[Dict[str, Any]]:
-        ...         # Implementation
-        ...         ...
+    @property
+    def model_name(self) -> str:
+        """모델 이름."""
         ...
-        ...     async def health_check(self) -> bool:
-        ...         return True
-        ...
-        >>> backend = MyBackend()
-        >>> isinstance(backend, RAGSourceBackend)
-        True
-    """
 
-    async def query(
+    @property
+    def embedding_dim(self) -> int:
+        """임베딩 차원."""
+        ...
+
+    @property
+    def supported_modalities(self) -> list[Modality]:
+        """지원 모달리티."""
+        ...
+
+    async def embed_text(self, text: str) -> EmbeddingResult:
+        """텍스트 임베딩."""
+        ...
+
+    async def embed_image(self, image: bytes) -> EmbeddingResult:
+        """이미지 임베딩."""
+        ...
+
+    async def embed_audio(self, audio: bytes) -> EmbeddingResult:
+        """오디오 임베딩."""
+        ...
+
+    async def embed_batch(
         self,
-        query: str,
-        filters: Optional[Dict[str, Any]] = None,
-        limit: int = 10,
-    ) -> List[Dict[str, Any]]:
-        """쿼리 실행.
-
-        Args:
-            query: 검색 쿼리
-            filters: 메타데이터 필터 (app_key, user_id, dimension 등)
-            limit: 최대 결과 수
-
-        Returns:
-            검색 결과 리스트. 각 결과는 다음 필드를 포함:
-            - id: 문서 ID
-            - content: 문서 내용
-            - score: 관련성 점수 (0.0-1.0)
-            - metadata: 추가 메타데이터
-        """
-        ...
-
-    async def health_check(self) -> bool:
-        """헬스 체크.
-
-        Returns:
-            True if healthy, False otherwise
-        """
+        texts: list[str] | None = None,
+        images: list[bytes] | None = None,
+    ) -> list[EmbeddingResult]:
+        """배치 임베딩."""
         ...
 
 
-@dataclass
-class RouteDecision:
-    """라우팅 결정 결과.
+# =============================================================================
+# Dimension-Modality Mapping
+# =============================================================================
 
-    IntelligentRAGRouter가 쿼리 분석 후 반환하는 라우팅 결정입니다.
-
-    Attributes:
-        selected_sources: 선택된 소스 ID 목록
-        reasoning: 선택 이유 (디버깅/로깅용)
-        confidence: 선택 신뢰도 (0.0-1.0)
-        estimated_latency_ms: 예상 총 레이턴시 (ms)
-        routing_strategy: 라우팅 전략 ("rule_based", "llm_assisted", "hybrid")
-
-    Example:
-        >>> decision = RouteDecision(
-        ...     selected_sources=["notebooklm_bong", "qdrant_4d"],
-        ...     reasoning="봉준호 키워드 감지 + 4D 분석 요청",
-        ...     confidence=0.92,
-        ...     estimated_latency_ms=3500,
-        ... )
-    """
-    selected_sources: List[str]
-    reasoning: str
-    confidence: float
-    estimated_latency_ms: int
-    routing_strategy: str = "rule_based"
+# Dimension별 주요 모달리티 매핑
+DIMENSION_MODALITY_MAP: dict[str, list[Modality]] = {
+    # Visual dimensions
+    "1D": [Modality.TEXT],  # 텍스트 기반 분석
+    "2D": [Modality.IMAGE, Modality.TEXT],  # 이미지 생성
+    "3D": [Modality.IMAGE, Modality.TEXT],  # 프레임/샷 분석
+    "4D": [Modality.VIDEO, Modality.IMAGE, Modality.TEXT],  # 비디오 분석
+    # Audio dimension
+    "AD": [Modality.AUDIO, Modality.TEXT],  # 사운드 디자인
+    # Story dimension
+    "Story": [Modality.TEXT],  # 스토리/내러티브
+    # Quality/Technical
+    "QD": [Modality.VIDEO, Modality.IMAGE, Modality.TEXT],  # 품질 분석
+    # AI/VEO
+    "AI": [Modality.TEXT, Modality.IMAGE],  # AI 추천
+    "VEO": [Modality.VIDEO, Modality.TEXT],  # Veo 비디오 생성
+}
 
 
-@dataclass
-class MultiRAGDocument:
-    """Multi-RAG 검색 결과 문서.
-
-    여러 RAG 소스에서 가져온 문서를 통합 형식으로 표현합니다.
-
-    Attributes:
-        doc_id: 문서 고유 ID
-        content: 문서 내용
-        score: 관련성 점수 (원본 또는 RRF)
-        source_id: 원본 소스 ID
-        source_type: 원본 소스 타입
-        rank: 최종 순위
-        metadata: 추가 메타데이터
-    """
-    doc_id: str
-    content: str
-    score: float
-    source_id: str
-    source_type: RAGSourceType
-    rank: int = 0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+def get_modalities_for_dimension(dimension: str) -> list[Modality]:
+    """Dimension에 해당하는 모달리티 목록 반환."""
+    return DIMENSION_MODALITY_MAP.get(dimension, [Modality.TEXT])
 
 
-@dataclass
-class MultiRAGResult:
-    """Multi-RAG 최종 결과.
+# =============================================================================
+# Default Schema Factory
+# =============================================================================
 
-    Multi-RAG Orchestrator가 반환하는 최종 결과입니다.
-    기존 HybridRAGResult와 호환성을 유지하면서 확장된 기능을 제공합니다.
-
-    Attributes:
-        documents: 검색된 문서 목록 (RRF fusion 후)
-        sources_used: 사용된 소스 ID 목록
-        routing_decision: 라우팅 결정 정보
-        total_retrieved: 총 검색된 문서 수 (fusion 전)
-        query_time_ms: 총 쿼리 시간 (ms)
-        reranked: 리랭킹 적용 여부
-        rerank_model: 리랭킹 모델 이름
-
-    Example:
-        >>> result = MultiRAGResult(
-        ...     documents=[doc1, doc2, doc3],
-        ...     sources_used=["notebooklm_bong", "qdrant_4d"],
-        ...     routing_decision=decision,
-        ...     total_retrieved=25,
-        ...     query_time_ms=2100,
-        ... )
-    """
-    documents: List[MultiRAGDocument]
-    sources_used: List[str]
-    routing_decision: RouteDecision
-    total_retrieved: int = 0
-    query_time_ms: int = 0
-    reranked: bool = False
-    rerank_model: Optional[str] = None
-
-    @property
-    def confidence(self) -> float:
-        """최고 문서 스코어 기반 신뢰도."""
-        if not self.documents:
-            return 0.0
-        return self.documents[0].score
-
-    @property
-    def answer(self) -> str:
-        """상위 문서 내용 기반 답변 (HybridRAGResult 호환)."""
-        if not self.documents:
-            return "검색 결과를 찾을 수 없습니다."
-        return "\n\n".join(
-            doc.content[:500] for doc in self.documents[:3]
-        )
+# 통합 임베딩 차원 (CLIP, ImageBind 기반)
+UNIFIED_EMBEDDING_DIM = 768
 
 
-# Type aliases for backward compatibility
-QueryContext = Dict[str, Any]
-BackendResults = List[Dict[str, Any]]
+def get_default_multimodal_schema(
+    collection_name: str = "vivid_multimodal_auteur",
+) -> CollectionSchema:
+    """기본 멀티모달 컬렉션 스키마 생성."""
+    return CollectionSchema(
+        name=collection_name,
+        dense_vectors=[
+            VectorConfig("text_embed", UNIFIED_EMBEDDING_DIM, DistanceMetric.COSINE),
+            VectorConfig("image_embed", UNIFIED_EMBEDDING_DIM, DistanceMetric.COSINE),
+            VectorConfig("audio_embed", UNIFIED_EMBEDDING_DIM, DistanceMetric.COSINE),
+            VectorConfig("video_embed", UNIFIED_EMBEDDING_DIM, DistanceMetric.COSINE),
+        ],
+        sparse_vectors=[
+            SparseVectorConfig("text_bm25", modifier="idf"),
+        ],
+        payload_schema={
+            "doc_id": "keyword",
+            "dimension": "keyword",
+            "auteur_key": "keyword",
+            "content_type": "keyword",
+            "modality": "keyword",
+            "title": "text",
+            "description": "text",
+            "source": "keyword",
+            "timestamp": "datetime",
+        },
+    )
+
+
+def get_dimension_collection_name(dimension: str) -> str:
+    """Dimension별 컬렉션 이름 생성."""
+    return f"vivid_multimodal_{dimension.lower()}"
+
+
+# =============================================================================
+# Export
+# =============================================================================
+
+__all__ = [
+    # Enums
+    "Modality",
+    "ContentType",
+    "SearchStrategy",
+    "DistanceMetric",
+    # Vector Config
+    "VectorConfig",
+    "SparseVectorConfig",
+    "CollectionSchema",
+    # Documents
+    "MultiModalDocument",
+    "EmbeddingResult",
+    "SparseEmbeddingResult",
+    # Query/Result
+    "MultiModalQuery",
+    "RetrievalResult",
+    "MultiModalSearchResult",
+    # Protocol
+    "MultiModalEmbedder",
+    # Constants
+    "DIMENSION_MODALITY_MAP",
+    "UNIFIED_EMBEDDING_DIM",
+    # Helpers
+    "get_modalities_for_dimension",
+    "get_default_multimodal_schema",
+    "get_dimension_collection_name",
+]

@@ -1,96 +1,154 @@
-"""Multi-RAG Router Module (P0 2026).
+"""Multi-Modal RAG Module (2026 Best Practices).
 
-지능형 다중 RAG 소스 라우팅 및 오케스트레이션.
+멀티모달 임베딩 기반 RAG 시스템.
+- Named Vectors 기반 Qdrant 컬렉션
+- 크로스모달 검색 (텍스트 → 이미지/비디오)
+- Hybrid RRF 검색 (Dense + Sparse)
+- Dimension별 모달리티 매핑
 
-Components:
-    - types: 타입 정의 (RAGSourceType, RAGSourceSpec, etc.)
-    - registry: RAG 소스 레지스트리 (동적 등록/해제)
-    - router: 지능형 RAG 라우터 (규칙 + LLM 기반)
-    - orchestrator: Multi-RAG 오케스트레이터 (병렬 실행 + RRF)
-    - backends: RAG 소스 백엔드 구현체
+Architecture:
+    - types.py: 타입 정의 (Modality, ContentType, MultiModalDocument, etc.)
+    - embedders/: 멀티모달 임베더 (Gemini, future: ImageBind, Voyage)
+    - collection_manager.py: Qdrant Named Vectors 컬렉션 관리
+    - retriever.py: 크로스모달 하이브리드 검색
+    - service.py: 통합 서비스 API
 
 Usage:
     from app.rag.multi_rag import (
-        # Types
-        RAGSourceType,
-        RAGSourceSpec,
-        RouteDecision,
-        MultiRAGResult,
-        # Registry
-        get_registry,
-        # Router & Orchestrator
-        IntelligentRAGRouter,
-        MultiRAGOrchestrator,
+        MultiModalRAGService,
+        Modality,
+        ContentType,
+        SearchStrategy,
     )
 
-    # Get global registry
-    registry = get_registry()
+    # 서비스 생성
+    service = await MultiModalRAGService.create()
 
-    # Register a new source
-    registry.register(
-        RAGSourceSpec(
-            source_id="my_source",
-            source_type=RAGSourceType.CUSTOM,
-            ...
-        ),
-        my_backend,
+    # 문서 인덱싱
+    doc_id = await service.index_text(
+        text="봉준호 감독의 수직적 프레이밍",
+        dimension="4D",
+        auteur_key="bong",
+        content_type=ContentType.TECHNIQUE,
     )
 
-    # Query via orchestrator
-    orchestrator = MultiRAGOrchestrator(registry)
-    result = await orchestrator.query("봉준호 계단 연출", context={"auteur_key": "bong"})
+    # 검색
+    results = await service.search(
+        query_text="수직 구도",
+        dimension="4D",
+    )
+
+    # evidence_refs 추출
+    refs = [r.evidence_ref for r in results.results]
+    # ['db:rag_docs:multimodal:4D:bong:doc_id', ...]
+
+References:
+    - Qdrant Named Vectors: https://qdrant.tech/documentation/concepts/vectors/
+    - Google Gemini Embedding: https://ai.google.dev/gemini-api/docs/embeddings
+    - RRF Fusion: https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf
 """
+
 from app.rag.multi_rag.types import (
-    RAGSourceType,
-    RAGSourceSpec,
-    RAGSourceBackend,
-    RouteDecision,
-    MultiRAGDocument,
-    MultiRAGResult,
-    QueryContext,
-    BackendResults,
+    # Enums
+    Modality,
+    ContentType,
+    SearchStrategy,
+    DistanceMetric,
+    # Vector Config
+    VectorConfig,
+    SparseVectorConfig,
+    CollectionSchema,
+    # Documents
+    MultiModalDocument,
+    EmbeddingResult,
+    SparseEmbeddingResult,
+    # Query/Result
+    MultiModalQuery,
+    RetrievalResult,
+    MultiModalSearchResult,
+    # Protocol
+    MultiModalEmbedder,
+    # Constants
+    DIMENSION_MODALITY_MAP,
+    UNIFIED_EMBEDDING_DIM,
+    # Helpers
+    get_modalities_for_dimension,
+    get_default_multimodal_schema,
+    get_dimension_collection_name,
 )
-from app.rag.multi_rag.registry import (
-    RAGSourceRegistry,
-    get_registry,
-    reset_registry,
+
+from app.rag.multi_rag.embedders import (
+    BaseMultiModalEmbedder,
+    GeminiMultiModalEmbedder,
+    EmbedderError,
+    ModalityNotSupportedError,
 )
-from app.rag.multi_rag.router import (
-    IntelligentRAGRouter,
-    create_router,
+
+from app.rag.multi_rag.collection_manager import (
+    MultiModalCollectionManager,
+    create_collection_manager,
+    create_dimension_collection,
+    get_qdrant_client,
+    reset_qdrant_client,
 )
-from app.rag.multi_rag.orchestrator import (
-    MultiRAGOrchestrator,
-    create_orchestrator,
+
+from app.rag.multi_rag.retriever import (
+    CrossModalRetriever,
+    create_retriever,
+    reciprocal_rank_fusion,
 )
-from app.rag.multi_rag.initializer import (
-    initialize_multi_rag,
-    initialize_multi_rag_sync,
-    get_default_sources,
+
+from app.rag.multi_rag.service import (
+    MultiModalRAGService,
+    create_multimodal_rag_service,
+    get_multimodal_rag_service,
 )
 
 __all__ = [
-    # Types
-    "RAGSourceType",
-    "RAGSourceSpec",
-    "RAGSourceBackend",
-    "RouteDecision",
-    "MultiRAGDocument",
-    "MultiRAGResult",
-    "QueryContext",
-    "BackendResults",
-    # Registry
-    "RAGSourceRegistry",
-    "get_registry",
-    "reset_registry",
-    # Router
-    "IntelligentRAGRouter",
-    "create_router",
-    # Orchestrator
-    "MultiRAGOrchestrator",
-    "create_orchestrator",
-    # Initialization
-    "initialize_multi_rag",
-    "initialize_multi_rag_sync",
-    "get_default_sources",
+    # === Types ===
+    # Enums
+    "Modality",
+    "ContentType",
+    "SearchStrategy",
+    "DistanceMetric",
+    # Vector Config
+    "VectorConfig",
+    "SparseVectorConfig",
+    "CollectionSchema",
+    # Documents
+    "MultiModalDocument",
+    "EmbeddingResult",
+    "SparseEmbeddingResult",
+    # Query/Result
+    "MultiModalQuery",
+    "RetrievalResult",
+    "MultiModalSearchResult",
+    # Protocol
+    "MultiModalEmbedder",
+    # Constants
+    "DIMENSION_MODALITY_MAP",
+    "UNIFIED_EMBEDDING_DIM",
+    # Helpers
+    "get_modalities_for_dimension",
+    "get_default_multimodal_schema",
+    "get_dimension_collection_name",
+    # === Embedders ===
+    "BaseMultiModalEmbedder",
+    "GeminiMultiModalEmbedder",
+    "EmbedderError",
+    "ModalityNotSupportedError",
+    # === Collection Manager ===
+    "MultiModalCollectionManager",
+    "create_collection_manager",
+    "create_dimension_collection",
+    "get_qdrant_client",
+    "reset_qdrant_client",
+    # === Retriever ===
+    "CrossModalRetriever",
+    "create_retriever",
+    "reciprocal_rank_fusion",
+    # === Service ===
+    "MultiModalRAGService",
+    "create_multimodal_rag_service",
+    "get_multimodal_rag_service",
 ]
