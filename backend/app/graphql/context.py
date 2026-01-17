@@ -17,6 +17,10 @@ from strawberry.fastapi import BaseContext
 from strawberry.dataloader import DataLoader
 from fastapi import Request, Response
 
+from app.auth import get_user_id, get_is_admin
+from app.auth_tokens import decode_token
+from app.config import settings
+
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -180,30 +184,31 @@ async def get_graphql_context(
     Extracts authentication info from request headers
     and creates the context object.
     """
-    # Extract auth info from headers
+    # Extract auth info from session token or Authorization header
     auth_header = request.headers.get("Authorization", "")
-    user_id = None
-    user_email = None
-    user_tier = "free"
-    is_authenticated = False
-    is_admin = False
+    token = None
+    if auth_header.lower().startswith("bearer "):
+        token = auth_header.split(" ", 1)[1].strip()
+    if not token:
+        token = request.cookies.get(settings.SESSION_COOKIE_NAME)
 
-    if auth_header.startswith("Bearer "):
-        # TODO: Implement actual JWT validation
-        # For now, extract user info from a simple token format
-        token = auth_header[7:]
-        if token:
-            # Mock: treat token as user_id for testing
-            user_id = token
-            user_email = f"{token}@example.com"
-            is_authenticated = True
+    payload = decode_token(token, settings.SESSION_SECRET) if token else None
+    user_id = payload.get("user_id") if payload else None
+    user_email = payload.get("email") if payload else None
+    user_tier = payload.get("tier", "free") if payload else "free"
+
+    if not user_id:
+        # Fall back to existing auth helpers (dev-only header allowed)
+        user_id = await get_user_id(request, request.headers.get("X-User-Id"))
+
+    is_authenticated = bool(user_id)
 
     # Extract request metadata
     request_id = request.headers.get("X-Request-ID")
     client_ip = request.client.host if request.client else None
 
     # Check admin status (from custom header or user role)
-    is_admin = request.headers.get("X-Admin-Access") == "true"
+    is_admin = await get_is_admin(request)
 
     return GraphQLContext(
         request=request,

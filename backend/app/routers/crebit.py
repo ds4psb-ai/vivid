@@ -1,4 +1,5 @@
 """Crebit ATC course application endpoints."""
+import logging
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
@@ -8,11 +9,12 @@ from pydantic import BaseModel, ConfigDict
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.dependencies import require_admin
 from app.database import get_db
 from app.models import CrebitApplication
 
-
 router = APIRouter(prefix="/crebit", tags=["crebit"])
+logger = logging.getLogger("crebit")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -106,6 +108,7 @@ async def list_applications(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
+    _: bool = Depends(require_admin),
 ):
     """List all applications (Admin only)."""
     # Build query
@@ -140,8 +143,9 @@ async def list_applications(
 async def get_application(
     application_id: UUID,
     db: AsyncSession = Depends(get_db),
+    _: bool = Depends(require_admin),
 ):
-    """Get a single application by ID."""
+    """Get a single application by ID (Admin only)."""
     result = await db.execute(
         select(CrebitApplication).where(CrebitApplication.id == application_id)
     )
@@ -158,6 +162,7 @@ async def update_application(
     application_id: UUID,
     data: ApplicationUpdate,
     db: AsyncSession = Depends(get_db),
+    _: bool = Depends(require_admin),
 ):
     """Update an application (Admin only)."""
     result = await db.execute(
@@ -183,6 +188,7 @@ async def update_application(
 @router.get("/stats", response_model=StatsResponse)
 async def get_stats(
     db: AsyncSession = Depends(get_db),
+    _: bool = Depends(require_admin),
 ):
     """Get application statistics (Admin only)."""
     # Total count

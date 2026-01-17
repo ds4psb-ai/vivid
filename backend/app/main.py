@@ -119,6 +119,15 @@ from app.monitoring import setup_monitoring
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Validate production configuration (fail fast)
+    if settings.ENVIRONMENT.lower() in {"production", "prod", "staging"}:
+        warnings = settings.validate_production_config()
+        if warnings:
+            import logging
+            logger = logging.getLogger("startup")
+            for warning in warnings:
+                logger.warning(f"[PROD CONFIG] {warning}")
+
     # Initialize database
     await init_db(drop_all=False)
     
@@ -295,7 +304,11 @@ app.include_router(miniapps_router, prefix="/api/v1", tags=["miniapps"])
 app.include_router(context_router, prefix="/api/v1", tags=["context"])
 
 # GraphQL Gateway (2026 Best Practices - P3.3)
-app.include_router(graphql_router, prefix="/graphql", tags=["graphql"])
+if settings.ENVIRONMENT.lower() in {"production", "prod", "staging"}:
+    if settings.GRAPHQL_ENABLED:
+        app.include_router(graphql_router, prefix="/graphql", tags=["graphql"])
+else:
+    app.include_router(graphql_router, prefix="/graphql", tags=["graphql"])
 
 # Infrastructure
 app.include_router(health_router, prefix="", tags=["health"])

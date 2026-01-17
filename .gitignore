@@ -18,6 +18,12 @@ dist/
 .env.local
 *.log
 
+# NotebookLM dumps / browser profiles (sensitive)
+backend/notebook_page_dump.html
+backend/notebook_ui_dump.html
+backend/notebook*_dump.html
+backend/chrome_profile_notebooklm/
+
 # IDE
 .vscode/
 .idea/

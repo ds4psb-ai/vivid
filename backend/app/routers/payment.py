@@ -1,11 +1,18 @@
-"""NICE Payments (나이스페이) integration endpoints."""
+"""NICE Payments (나이스페이) integration endpoints.
+
+Security Notes:
+- /confirm endpoint relies on NICE API tid/amount validation for security
+- Rate limiting should be applied at nginx/middleware level
+- Consider adding webhook signature verification for production
+"""
 import base64
+import logging
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,8 +21,8 @@ from app.config import settings
 from app.database import get_db
 from app.models import CrebitApplication
 
-
 router = APIRouter(prefix="/payment", tags=["payment"])
+logger = logging.getLogger("payment")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -88,22 +95,33 @@ async def call_nice_approval_api(tid: str, amount: int) -> dict:
 @router.post("/confirm", response_model=PaymentConfirmResponse)
 async def confirm_payment(
     data: PaymentConfirmRequest,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ):
     """
     Confirm NICE payment after user authentication.
-    
+
     This endpoint is called after the user completes card authentication
     in the NICE payment window. It calls the NICE approval API and updates
     the application status.
+
+    Security: NICE API validates tid/amount match. Rate limiting at nginx level.
     """
+    # Audit logging for security monitoring
+    client_ip = request.client.host if request.client else "unknown"
+    logger.info(
+        f"[PAYMENT CONFIRM] app_id={data.application_id} tid={data.tid} "
+        f"amount={data.amount} ip={client_ip}"
+    )
+
     # 1. Find the application
     result = await db.execute(
         select(CrebitApplication).where(CrebitApplication.id == data.application_id)
     )
     application = result.scalar_one_or_none()
-    
+
     if not application:
+        logger.warning(f"[PAYMENT CONFIRM FAIL] app_id={data.application_id} not found ip={client_ip}")
         raise HTTPException(status_code=404, detail="Application not found")
     
     if application.status == "paid":
@@ -131,7 +149,11 @@ async def confirm_payment(
         application.paid_at = datetime.utcnow()
         await db.commit()
         await db.refresh(application)
-        
+
+        logger.info(
+            f"[PAYMENT SUCCESS] app_id={data.application_id} tid={data.tid} "
+            f"amount={data.amount} ip={client_ip}"
+        )
         return PaymentConfirmResponse(
             success=True,
             tid=data.tid,
@@ -142,6 +164,10 @@ async def confirm_payment(
         )
     else:
         # Failed
+        logger.warning(
+            f"[PAYMENT FAIL] app_id={data.application_id} tid={data.tid} "
+            f"code={result_code} msg={result_msg} ip={client_ip}"
+        )
         return PaymentConfirmResponse(
             success=False,
             tid=data.tid,

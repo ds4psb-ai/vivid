@@ -19,6 +19,7 @@ from strawberry.schema.config import StrawberryConfig
 from app.graphql.queries import Query
 from app.graphql.mutations import Mutation
 from app.graphql.context import get_graphql_context
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +91,7 @@ graphql_router = GraphQLRouter(
     schema=schema,
     context_getter=get_graphql_context,
     # Enable GraphiQL for development
-    graphql_ide="graphiql",
+    graphql_ide="graphiql" if settings.ENVIRONMENT.lower() in {"development", "dev", "local"} else None,
     # Allow introspection (disable in production if needed)
     allow_queries_via_get=False,
 )
