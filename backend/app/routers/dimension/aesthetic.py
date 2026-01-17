@@ -7,6 +7,12 @@ Aesthetic Dimension Endpoints - Aesthetic Director.
 Security:
 - XSS sanitization for mood, style, and text fields
 - Enum validation for lighting_style, color_mood, style_reference, target_medium
+
+2026 Enhancements:
+- Auteur Style Blending with mathematical interpolation
+- Mathematical Aesthetics (golden ratio, color harmony)
+- Prompt Quality assessment for aesthetic prompts
+- Multi-RAG evidence_refs generation
 """
 from __future__ import annotations
 
@@ -753,6 +759,347 @@ class AestheticQualityScore(BaseModel):
     aesthetic: float = Field(0.0, ge=0.0, le=1.0, description="Overall visual appeal")
     harmlessness: float = Field(1.0, ge=0.0, le=1.0, description="Safety score")
     overall: float = Field(0.0, ge=0.0, le=1.0, description="Weighted overall score")
+
+
+# ============================================================================
+# 2026 Enhancements: Auteur Style Blending & Mathematical Aesthetics
+# ============================================================================
+
+# Auteur compatibility matrix for style blending
+AUTEUR_COMPATIBILITY_MATRIX: dict[str, dict[str, float]] = {
+    "bong": {"nolan": 0.75, "fincher": 0.80, "wong": 0.60, "tarantino": 0.45, "villeneuve": 0.70},
+    "nolan": {"bong": 0.75, "fincher": 0.85, "villeneuve": 0.90, "kubrick": 0.80, "spielberg": 0.65},
+    "wong": {"bong": 0.60, "tarantino": 0.55, "kar_wai": 1.0, "wong_kar_wai": 1.0},
+    "villeneuve": {"nolan": 0.90, "kubrick": 0.85, "ridley_scott": 0.80, "bong": 0.70},
+    "tarantino": {"guy_ritchie": 0.75, "rodriguez": 0.80, "wong": 0.55, "bong": 0.45},
+    "miyazaki": {"shinkai": 0.65, "ghibli": 1.0, "hosoda": 0.70, "isao": 0.80},
+    "kubrick": {"nolan": 0.80, "villeneuve": 0.85, "fincher": 0.75, "bong": 0.60},
+    "fincher": {"nolan": 0.85, "bong": 0.80, "kubrick": 0.75, "villeneuve": 0.80},
+    "spielberg": {"cameron": 0.75, "nolan": 0.65, "zemeckis": 0.70},
+}
+
+# Visual style keywords for each auteur
+AUTEUR_VISUAL_KEYWORDS: dict[str, List[str]] = {
+    "bong": ["layered framing", "class symbolism", "muted palette", "vertical depth", "social tension"],
+    "nolan": ["IMAX scale", "temporal complexity", "practical effects", "blue-gold palette", "geometric precision"],
+    "wong": ["neon expressionism", "handheld intimacy", "color saturation", "reflection shots", "time distortion"],
+    "villeneuve": ["vast scale", "minimal dialogue", "architectural framing", "amber-grey palette", "slow revelation"],
+    "tarantino": ["split screens", "trunk shots", "pop culture references", "vibrant colors", "genre homage"],
+    "miyazaki": ["hand-drawn warmth", "nature harmony", "flight sequences", "watercolor backgrounds", "child wonder"],
+    "kubrick": ["one-point perspective", "symmetrical composition", "cold precision", "long takes", "existential dread"],
+    "fincher": ["dark atmosphere", "desaturated palette", "forensic detail", "shadow play", "meticulous control"],
+}
+
+# Mathematical aesthetics constants
+GOLDEN_RATIO = 1.618033988749895
+RULE_OF_THIRDS = 0.333
+
+# Color harmony types with angle offsets on color wheel
+COLOR_HARMONY_ANGLES: dict[str, List[int]] = {
+    "complementary": [180],  # Opposite colors
+    "triadic": [120, 240],  # 3 equidistant colors
+    "analogous": [30, -30],  # Adjacent colors
+    "split_complementary": [150, 210],  # Adjacent to complement
+    "tetradic": [90, 180, 270],  # 4 colors (square)
+}
+
+
+class AuteurBlendResult(BaseModel):
+    """Result of blending two auteur styles."""
+    primary_auteur: str
+    secondary_auteur: str
+    compatibility_score: float = Field(0.0, ge=0.0, le=1.0)
+    blend_ratio: str = Field("60:40", description="Primary:Secondary ratio")
+    visual_keywords: List[str] = Field(default_factory=list)
+    color_approach: str = ""
+    composition_approach: str = ""
+    recommended_for: List[str] = Field(default_factory=list)
+
+
+class AestheticPromptQuality(BaseModel):
+    """2026 Prompt Quality assessment for aesthetic requests."""
+    # Scores (0-100)
+    concept_clarity: int = Field(0, ge=0, le=100, description="Concept description clarity")
+    style_specificity: int = Field(0, ge=0, le=100, description="Style reference specificity")
+    technical_detail: int = Field(0, ge=0, le=100, description="Technical parameters detail")
+    overall_score: int = Field(0, ge=0, le=100, description="Overall quality score")
+
+    # Components detected
+    has_auteur_reference: bool = False
+    has_color_specification: bool = False
+    has_lighting_specification: bool = False
+    has_composition_hint: bool = False
+
+    # Suggestions
+    suggestions: List[str] = Field(default_factory=list)
+
+
+def get_auteur_compatibility(primary: str, secondary: str) -> float:
+    """Get compatibility score between two auteurs.
+
+    Args:
+        primary: Primary auteur key
+        secondary: Secondary auteur key
+
+    Returns:
+        Compatibility score (0.0-1.0), default 0.5 if unknown
+    """
+    primary = primary.lower()
+    secondary = secondary.lower()
+
+    if primary == secondary:
+        return 1.0
+
+    # Check direct mapping
+    if primary in AUTEUR_COMPATIBILITY_MATRIX:
+        if secondary in AUTEUR_COMPATIBILITY_MATRIX[primary]:
+            return AUTEUR_COMPATIBILITY_MATRIX[primary][secondary]
+
+    # Check reverse mapping
+    if secondary in AUTEUR_COMPATIBILITY_MATRIX:
+        if primary in AUTEUR_COMPATIBILITY_MATRIX[secondary]:
+            return AUTEUR_COMPATIBILITY_MATRIX[secondary][primary]
+
+    return 0.5  # Default unknown compatibility
+
+
+def blend_auteur_styles(
+    primary: str,
+    secondary: str,
+    primary_weight: float = 0.6,
+) -> AuteurBlendResult:
+    """Blend two auteur styles using 2026 weighted interpolation.
+
+    Args:
+        primary: Primary auteur key
+        secondary: Secondary auteur key
+        primary_weight: Weight for primary auteur (0.0-1.0)
+
+    Returns:
+        AuteurBlendResult with blended characteristics
+    """
+    primary = primary.lower()
+    secondary = secondary.lower()
+    secondary_weight = 1.0 - primary_weight
+
+    compatibility = get_auteur_compatibility(primary, secondary)
+
+    # Get visual keywords
+    primary_keywords = AUTEUR_VISUAL_KEYWORDS.get(primary, [])
+    secondary_keywords = AUTEUR_VISUAL_KEYWORDS.get(secondary, [])
+
+    # Weighted selection: more keywords from primary
+    num_primary = int(len(primary_keywords) * primary_weight) if primary_keywords else 0
+    num_secondary = int(len(secondary_keywords) * secondary_weight) if secondary_keywords else 0
+
+    blended_keywords = primary_keywords[:max(2, num_primary)] + secondary_keywords[:max(1, num_secondary)]
+
+    # Determine color and composition approach
+    if compatibility >= 0.8:
+        color_approach = "Seamless blend - complementary palettes"
+        composition_approach = "Primary rules with secondary variations"
+    elif compatibility >= 0.6:
+        color_approach = "Primary palette with secondary accents"
+        composition_approach = "Primary framing, secondary pacing"
+    else:
+        color_approach = "Separate color zones by scene type"
+        composition_approach = "Choose dominant style per scene"
+
+    # Recommendations
+    recommended_for = []
+    if compatibility >= 0.7:
+        recommended_for.extend(["feature film", "music video", "commercial"])
+    elif compatibility >= 0.5:
+        recommended_for.extend(["experimental short", "art film"])
+    else:
+        recommended_for.append("stylistic contrast project")
+
+    ratio_str = f"{int(primary_weight * 100)}:{int(secondary_weight * 100)}"
+
+    return AuteurBlendResult(
+        primary_auteur=primary,
+        secondary_auteur=secondary,
+        compatibility_score=compatibility,
+        blend_ratio=ratio_str,
+        visual_keywords=blended_keywords,
+        color_approach=color_approach,
+        composition_approach=composition_approach,
+        recommended_for=recommended_for,
+    )
+
+
+def calculate_golden_ratio_points(frame_width: int, frame_height: int) -> dict:
+    """Calculate golden ratio focal points for composition.
+
+    Args:
+        frame_width: Frame width in pixels
+        frame_height: Frame height in pixels
+
+    Returns:
+        Dict with focal points and grid lines
+    """
+    phi = GOLDEN_RATIO
+    phi_inverse = 1 / phi  # 0.618
+
+    # Vertical lines (golden section)
+    v_left = int(frame_width * (1 - phi_inverse))   # ~38.2%
+    v_right = int(frame_width * phi_inverse)        # ~61.8%
+
+    # Horizontal lines
+    h_top = int(frame_height * (1 - phi_inverse))
+    h_bottom = int(frame_height * phi_inverse)
+
+    # Power points (intersections)
+    power_points = [
+        (v_left, h_top),     # Top-left
+        (v_right, h_top),    # Top-right
+        (v_left, h_bottom),  # Bottom-left
+        (v_right, h_bottom), # Bottom-right
+    ]
+
+    return {
+        "golden_ratio": phi,
+        "vertical_lines": [v_left, v_right],
+        "horizontal_lines": [h_top, h_bottom],
+        "power_points": power_points,
+        "center": (frame_width // 2, frame_height // 2),
+        "thirds_grid": {
+            "vertical": [frame_width // 3, 2 * frame_width // 3],
+            "horizontal": [frame_height // 3, 2 * frame_height // 3],
+        }
+    }
+
+
+def get_color_harmony_palette(base_hue: int, harmony_type: str = "complementary") -> List[int]:
+    """Generate harmonious color hues based on color wheel theory.
+
+    Args:
+        base_hue: Base hue (0-360)
+        harmony_type: Type of color harmony
+
+    Returns:
+        List of hues in the harmony
+    """
+    if harmony_type not in COLOR_HARMONY_ANGLES:
+        harmony_type = "complementary"
+
+    angles = COLOR_HARMONY_ANGLES[harmony_type]
+    palette = [base_hue]
+
+    for angle in angles:
+        new_hue = (base_hue + angle) % 360
+        palette.append(new_hue)
+
+    return palette
+
+
+def assess_aesthetic_prompt_quality(
+    concept: str,
+    reference_style: str = "",
+    mood: str = "",
+    lighting_style: str = "",
+    color_mood: str = "",
+) -> AestheticPromptQuality:
+    """Assess aesthetic prompt quality using 2026 best practices.
+
+    Args:
+        concept: Visual concept description
+        reference_style: Auteur reference
+        mood: Visual mood
+        lighting_style: Lighting specification
+        color_mood: Color specification
+
+    Returns:
+        AestheticPromptQuality with scores and suggestions
+    """
+    suggestions: List[str] = []
+    concept_lower = concept.lower() if concept else ""
+
+    # 1. Concept Clarity Score
+    concept_clarity = 0
+    if concept:
+        word_count = len(concept.split())
+        if word_count >= 10:
+            concept_clarity += 40
+        elif word_count >= 5:
+            concept_clarity += 25
+        else:
+            concept_clarity += 10
+            suggestions.append("Add more detail to your concept description (aim for 10+ words)")
+
+        # Check for visual keywords
+        visual_keywords = ["scene", "shot", "frame", "composition", "angle", "perspective"]
+        if any(kw in concept_lower for kw in visual_keywords):
+            concept_clarity += 30
+
+        # Check for subject clarity
+        if any(kw in concept_lower for kw in ["character", "person", "object", "landscape", "interior"]):
+            concept_clarity += 30
+        else:
+            suggestions.append("Specify the main subject (character, object, landscape, etc.)")
+
+    concept_clarity = min(100, concept_clarity)
+
+    # 2. Style Specificity Score
+    style_specificity = 0
+    has_auteur = False
+
+    if reference_style:
+        style_specificity += 40
+        has_auteur = reference_style.lower() in AUTEUR_VISUAL_KEYWORDS
+        if has_auteur:
+            style_specificity += 30
+        else:
+            suggestions.append(f"Consider using a known auteur: {', '.join(list(AUTEUR_VISUAL_KEYWORDS.keys())[:5])}")
+    else:
+        suggestions.append("Add an auteur reference for stronger style direction")
+
+    if mood:
+        style_specificity += 30
+
+    style_specificity = min(100, style_specificity)
+
+    # 3. Technical Detail Score
+    technical_detail = 0
+    has_lighting = bool(lighting_style)
+    has_color = bool(color_mood)
+    has_composition = any(kw in concept_lower for kw in ["wide", "close", "medium", "angle", "overhead", "low"])
+
+    if has_lighting:
+        technical_detail += 35
+    else:
+        suggestions.append("Specify lighting style (natural, dramatic, soft, high-key, low-key)")
+
+    if has_color:
+        technical_detail += 35
+    else:
+        suggestions.append("Specify color mood (warm, cool, vibrant, desaturated)")
+
+    if has_composition:
+        technical_detail += 30
+    else:
+        suggestions.append("Add composition hints (wide shot, close-up, low angle, etc.)")
+
+    technical_detail = min(100, technical_detail)
+
+    # 4. Overall Score
+    overall_score = int(
+        concept_clarity * 0.4 +
+        style_specificity * 0.3 +
+        technical_detail * 0.3
+    )
+
+    return AestheticPromptQuality(
+        concept_clarity=concept_clarity,
+        style_specificity=style_specificity,
+        technical_detail=technical_detail,
+        overall_score=overall_score,
+        has_auteur_reference=has_auteur,
+        has_color_specification=has_color,
+        has_lighting_specification=has_lighting,
+        has_composition_hint=has_composition,
+        suggestions=suggestions[:5],  # Limit to 5 suggestions
+    )
 
 
 @router.post(

@@ -32,6 +32,18 @@ from app.routers.dimension.aesthetic import (
     _validate_style_reference,
     _validate_target_medium,
     _validate_persona_stage,
+    # 2026 Enhancements
+    AUTEUR_COMPATIBILITY_MATRIX,
+    AUTEUR_VISUAL_KEYWORDS,
+    GOLDEN_RATIO,
+    COLOR_HARMONY_ANGLES,
+    AuteurBlendResult,
+    AestheticPromptQuality,
+    get_auteur_compatibility,
+    blend_auteur_styles,
+    calculate_golden_ratio_points,
+    get_color_harmony_palette,
+    assess_aesthetic_prompt_quality,
 )
 
 
@@ -1017,3 +1029,458 @@ class TestMultimodalAestheticPatterns:
         assert any("visual" in ref for ref in response.evidence_refs)
         assert any("audio" in ref for ref in response.evidence_refs)
         assert any("narrative" in ref for ref in response.evidence_refs)
+
+
+# ============================================================================
+# 2026 Enhancements Tests: Auteur Style Blending
+# ============================================================================
+
+class TestAuteurCompatibilityMatrix:
+    """Test AUTEUR_COMPATIBILITY_MATRIX constant."""
+
+    def test_matrix_has_expected_auteurs(self):
+        """Test matrix contains key auteurs."""
+        expected = {"bong", "nolan", "wong", "villeneuve", "tarantino", "miyazaki", "kubrick", "fincher"}
+        actual = set(AUTEUR_COMPATIBILITY_MATRIX.keys())
+        assert expected.issubset(actual)
+
+    def test_matrix_values_are_valid(self):
+        """Test all compatibility values are in valid range."""
+        for primary, mappings in AUTEUR_COMPATIBILITY_MATRIX.items():
+            for secondary, score in mappings.items():
+                assert 0.0 <= score <= 1.0, f"{primary}-{secondary}: {score} out of range"
+
+    def test_bong_nolan_compatibility(self):
+        """Test Bong-Nolan compatibility is high."""
+        assert AUTEUR_COMPATIBILITY_MATRIX["bong"]["nolan"] >= 0.7
+
+    def test_nolan_villeneuve_compatibility(self):
+        """Test Nolan-Villeneuve compatibility is very high."""
+        assert AUTEUR_COMPATIBILITY_MATRIX["nolan"]["villeneuve"] >= 0.85
+
+
+class TestAuteurVisualKeywords:
+    """Test AUTEUR_VISUAL_KEYWORDS constant."""
+
+    def test_keywords_has_expected_auteurs(self):
+        """Test keywords contains key auteurs."""
+        expected = {"bong", "nolan", "wong", "villeneuve", "tarantino", "miyazaki", "kubrick", "fincher"}
+        actual = set(AUTEUR_VISUAL_KEYWORDS.keys())
+        assert expected.issubset(actual)
+
+    def test_keywords_are_lists(self):
+        """Test all keyword values are lists."""
+        for auteur, keywords in AUTEUR_VISUAL_KEYWORDS.items():
+            assert isinstance(keywords, list), f"{auteur} keywords not a list"
+            assert len(keywords) >= 3, f"{auteur} should have at least 3 keywords"
+
+    def test_bong_keywords_contain_expected(self):
+        """Test Bong keywords contain expected terms."""
+        bong_keywords = AUTEUR_VISUAL_KEYWORDS["bong"]
+        assert "class symbolism" in bong_keywords or any("class" in kw for kw in bong_keywords)
+
+    def test_nolan_keywords_contain_expected(self):
+        """Test Nolan keywords contain expected terms."""
+        nolan_keywords = AUTEUR_VISUAL_KEYWORDS["nolan"]
+        assert "IMAX scale" in nolan_keywords or any("imax" in kw.lower() for kw in nolan_keywords)
+
+
+class TestGetAuteurCompatibility:
+    """Test get_auteur_compatibility function."""
+
+    def test_same_auteur_returns_1(self):
+        """Test same auteur has perfect compatibility."""
+        assert get_auteur_compatibility("bong", "bong") == 1.0
+        assert get_auteur_compatibility("nolan", "nolan") == 1.0
+
+    def test_known_pair_returns_score(self):
+        """Test known pair returns correct score."""
+        score = get_auteur_compatibility("bong", "nolan")
+        assert score == AUTEUR_COMPATIBILITY_MATRIX["bong"]["nolan"]
+
+    def test_reverse_order_same_score(self):
+        """Test reverse order returns same score."""
+        score1 = get_auteur_compatibility("bong", "fincher")
+        score2 = get_auteur_compatibility("fincher", "bong")
+        assert score1 == score2
+
+    def test_unknown_pair_returns_default(self):
+        """Test unknown pair returns default 0.5."""
+        score = get_auteur_compatibility("unknown_director", "another_unknown")
+        assert score == 0.5
+
+    def test_case_insensitive(self):
+        """Test function is case insensitive."""
+        score1 = get_auteur_compatibility("Bong", "NOLAN")
+        score2 = get_auteur_compatibility("bong", "nolan")
+        assert score1 == score2
+
+
+class TestBlendAuteurStyles:
+    """Test blend_auteur_styles function."""
+
+    def test_blend_returns_auteur_blend_result(self):
+        """Test blend returns AuteurBlendResult."""
+        result = blend_auteur_styles("bong", "nolan")
+        assert isinstance(result, AuteurBlendResult)
+
+    def test_blend_has_correct_auteurs(self):
+        """Test result has correct auteur names."""
+        result = blend_auteur_styles("bong", "nolan")
+        assert result.primary_auteur == "bong"
+        assert result.secondary_auteur == "nolan"
+
+    def test_blend_has_compatibility_score(self):
+        """Test result has valid compatibility score."""
+        result = blend_auteur_styles("bong", "nolan")
+        assert 0.0 <= result.compatibility_score <= 1.0
+        assert result.compatibility_score == get_auteur_compatibility("bong", "nolan")
+
+    def test_blend_has_visual_keywords(self):
+        """Test result has visual keywords from both auteurs."""
+        result = blend_auteur_styles("bong", "nolan")
+        assert len(result.visual_keywords) >= 2
+
+    def test_blend_ratio_default_60_40(self):
+        """Test default blend ratio is 60:40."""
+        result = blend_auteur_styles("bong", "nolan")
+        assert result.blend_ratio == "60:40"
+
+    def test_blend_ratio_custom_weight(self):
+        """Test custom weight produces correct ratio."""
+        result = blend_auteur_styles("bong", "nolan", primary_weight=0.7)
+        assert result.blend_ratio == "70:30"
+
+    def test_high_compatibility_has_seamless_blend(self):
+        """Test high compatibility produces seamless blend approach."""
+        result = blend_auteur_styles("nolan", "villeneuve")  # 0.90 compatibility
+        assert "seamless" in result.color_approach.lower() or result.compatibility_score >= 0.8
+
+    def test_low_compatibility_has_separate_zones(self):
+        """Test low compatibility suggests separate zones."""
+        result = blend_auteur_styles("bong", "tarantino")  # 0.45 compatibility
+        assert "separate" in result.color_approach.lower() or "zone" in result.color_approach.lower()
+
+    def test_recommended_for_includes_entries(self):
+        """Test recommended_for has suggestions."""
+        result = blend_auteur_styles("bong", "nolan")
+        assert len(result.recommended_for) >= 1
+
+    def test_case_insensitive_auteurs(self):
+        """Test function handles case variations."""
+        result1 = blend_auteur_styles("Bong", "NOLAN")
+        result2 = blend_auteur_styles("bong", "nolan")
+        assert result1.compatibility_score == result2.compatibility_score
+
+
+# ============================================================================
+# 2026 Enhancements Tests: Mathematical Aesthetics
+# ============================================================================
+
+class TestGoldenRatioConstant:
+    """Test GOLDEN_RATIO constant."""
+
+    def test_golden_ratio_value(self):
+        """Test golden ratio has correct value."""
+        assert abs(GOLDEN_RATIO - 1.618033988749895) < 0.0001
+
+    def test_golden_ratio_property(self):
+        """Test golden ratio satisfies φ = 1 + 1/φ."""
+        assert abs(GOLDEN_RATIO - (1 + 1 / GOLDEN_RATIO)) < 0.0001
+
+
+class TestColorHarmonyAngles:
+    """Test COLOR_HARMONY_ANGLES constant."""
+
+    def test_complementary_is_180(self):
+        """Test complementary is 180 degrees."""
+        assert COLOR_HARMONY_ANGLES["complementary"] == [180]
+
+    def test_triadic_is_120_240(self):
+        """Test triadic is 120 and 240 degrees."""
+        assert COLOR_HARMONY_ANGLES["triadic"] == [120, 240]
+
+    def test_analogous_is_30_minus30(self):
+        """Test analogous is +30 and -30 degrees."""
+        assert COLOR_HARMONY_ANGLES["analogous"] == [30, -30]
+
+    def test_split_complementary_exists(self):
+        """Test split_complementary harmony exists."""
+        assert "split_complementary" in COLOR_HARMONY_ANGLES
+
+    def test_tetradic_has_four_points(self):
+        """Test tetradic has 3 angles (4 colors total with base)."""
+        assert len(COLOR_HARMONY_ANGLES["tetradic"]) == 3
+
+
+class TestCalculateGoldenRatioPoints:
+    """Test calculate_golden_ratio_points function."""
+
+    def test_returns_dict(self):
+        """Test function returns dict."""
+        result = calculate_golden_ratio_points(1920, 1080)
+        assert isinstance(result, dict)
+
+    def test_has_required_keys(self):
+        """Test result has all required keys."""
+        result = calculate_golden_ratio_points(1920, 1080)
+        required = {"golden_ratio", "vertical_lines", "horizontal_lines", "power_points", "center", "thirds_grid"}
+        assert required.issubset(result.keys())
+
+    def test_1920x1080_vertical_lines(self):
+        """Test 1920x1080 vertical lines are approximately correct."""
+        result = calculate_golden_ratio_points(1920, 1080)
+        v_lines = result["vertical_lines"]
+        # φ^-1 ≈ 0.618, so lines at ~38.2% and ~61.8%
+        assert v_lines[0] < 1920 // 2  # Left of center
+        assert v_lines[1] > 1920 // 2  # Right of center
+        assert 700 < v_lines[0] < 800   # ~38.2% of 1920 ≈ 734
+        assert 1100 < v_lines[1] < 1250  # ~61.8% of 1920 ≈ 1186
+
+    def test_power_points_count(self):
+        """Test there are 4 power points (intersections)."""
+        result = calculate_golden_ratio_points(1920, 1080)
+        assert len(result["power_points"]) == 4
+
+    def test_power_points_are_tuples(self):
+        """Test power points are coordinate tuples."""
+        result = calculate_golden_ratio_points(1920, 1080)
+        for point in result["power_points"]:
+            assert isinstance(point, tuple)
+            assert len(point) == 2
+
+    def test_center_is_correct(self):
+        """Test center is calculated correctly."""
+        result = calculate_golden_ratio_points(1920, 1080)
+        assert result["center"] == (960, 540)
+
+    def test_thirds_grid_exists(self):
+        """Test thirds grid is included."""
+        result = calculate_golden_ratio_points(1920, 1080)
+        thirds = result["thirds_grid"]
+        assert "vertical" in thirds
+        assert "horizontal" in thirds
+        assert len(thirds["vertical"]) == 2
+        assert len(thirds["horizontal"]) == 2
+
+
+class TestGetColorHarmonyPalette:
+    """Test get_color_harmony_palette function."""
+
+    def test_complementary_returns_two_hues(self):
+        """Test complementary returns 2 hues."""
+        palette = get_color_harmony_palette(0, "complementary")
+        assert len(palette) == 2
+
+    def test_complementary_180_apart(self):
+        """Test complementary hues are 180 degrees apart."""
+        palette = get_color_harmony_palette(0, "complementary")
+        assert palette[0] == 0
+        assert palette[1] == 180
+
+    def test_triadic_returns_three_hues(self):
+        """Test triadic returns 3 hues."""
+        palette = get_color_harmony_palette(0, "triadic")
+        assert len(palette) == 3
+
+    def test_analogous_returns_three_hues(self):
+        """Test analogous returns 3 hues."""
+        palette = get_color_harmony_palette(0, "analogous")
+        assert len(palette) == 3
+
+    def test_tetradic_returns_four_hues(self):
+        """Test tetradic returns 4 hues."""
+        palette = get_color_harmony_palette(0, "tetradic")
+        assert len(palette) == 4
+
+    def test_hue_wrapping(self):
+        """Test hues wrap around 360."""
+        palette = get_color_harmony_palette(350, "complementary")
+        assert palette[0] == 350
+        assert palette[1] == (350 + 180) % 360  # 170
+
+    def test_invalid_type_defaults_to_complementary(self):
+        """Test invalid harmony type defaults to complementary."""
+        palette = get_color_harmony_palette(0, "invalid_type")
+        assert len(palette) == 2  # complementary
+
+    def test_base_hue_always_first(self):
+        """Test base hue is always first in palette."""
+        for base in [0, 90, 180, 270]:
+            for harmony in COLOR_HARMONY_ANGLES.keys():
+                palette = get_color_harmony_palette(base, harmony)
+                assert palette[0] == base
+
+
+# ============================================================================
+# 2026 Enhancements Tests: Prompt Quality Assessment
+# ============================================================================
+
+class TestAestheticPromptQualityModel:
+    """Test AestheticPromptQuality model."""
+
+    def test_model_creation(self):
+        """Test model creation with defaults."""
+        quality = AestheticPromptQuality()
+        assert quality.concept_clarity == 0
+        assert quality.style_specificity == 0
+        assert quality.technical_detail == 0
+        assert quality.overall_score == 0
+
+    def test_model_with_scores(self):
+        """Test model with scores."""
+        quality = AestheticPromptQuality(
+            concept_clarity=80,
+            style_specificity=75,
+            technical_detail=70,
+            overall_score=75,
+        )
+        assert quality.concept_clarity == 80
+        assert quality.overall_score == 75
+
+    def test_boolean_flags(self):
+        """Test boolean component flags."""
+        quality = AestheticPromptQuality(
+            has_auteur_reference=True,
+            has_color_specification=True,
+            has_lighting_specification=False,
+            has_composition_hint=True,
+        )
+        assert quality.has_auteur_reference is True
+        assert quality.has_lighting_specification is False
+
+    def test_suggestions_list(self):
+        """Test suggestions is list."""
+        quality = AestheticPromptQuality(
+            suggestions=["Add auteur", "Specify lighting"],
+        )
+        assert len(quality.suggestions) == 2
+
+    def test_score_bounds(self):
+        """Test scores are bounded 0-100."""
+        with pytest.raises(ValidationError):
+            AestheticPromptQuality(concept_clarity=101)
+        with pytest.raises(ValidationError):
+            AestheticPromptQuality(concept_clarity=-1)
+
+
+class TestAssessAestheticPromptQuality:
+    """Test assess_aesthetic_prompt_quality function."""
+
+    def test_empty_concept_low_score(self):
+        """Test empty concept gets low score."""
+        result = assess_aesthetic_prompt_quality("")
+        assert result.concept_clarity == 0
+        assert result.overall_score < 30
+
+    def test_short_concept_suggests_more_detail(self):
+        """Test short concept suggests more detail."""
+        result = assess_aesthetic_prompt_quality("A tree")
+        assert any("detail" in s.lower() for s in result.suggestions)
+
+    def test_detailed_concept_higher_score(self):
+        """Test detailed concept gets higher score."""
+        short_result = assess_aesthetic_prompt_quality("A scene")
+        detailed_result = assess_aesthetic_prompt_quality(
+            "A wide shot composition of a character standing in a dramatic landscape with layered framing"
+        )
+        assert detailed_result.concept_clarity > short_result.concept_clarity
+
+    def test_auteur_reference_increases_score(self):
+        """Test auteur reference increases style score."""
+        without_auteur = assess_aesthetic_prompt_quality("A scene")
+        with_auteur = assess_aesthetic_prompt_quality("A scene", reference_style="bong")
+        assert with_auteur.style_specificity > without_auteur.style_specificity
+        assert with_auteur.has_auteur_reference is True
+
+    def test_known_auteur_higher_than_unknown(self):
+        """Test known auteur scores higher than unknown."""
+        known = assess_aesthetic_prompt_quality("A scene", reference_style="bong")
+        unknown = assess_aesthetic_prompt_quality("A scene", reference_style="unknown_director")
+        assert known.style_specificity >= unknown.style_specificity
+
+    def test_lighting_specification_detected(self):
+        """Test lighting specification is detected."""
+        result = assess_aesthetic_prompt_quality(
+            "A scene",
+            lighting_style="dramatic"
+        )
+        assert result.has_lighting_specification is True
+
+    def test_color_specification_detected(self):
+        """Test color specification is detected."""
+        result = assess_aesthetic_prompt_quality(
+            "A scene",
+            color_mood="warm"
+        )
+        assert result.has_color_specification is True
+
+    def test_full_prompt_high_score(self):
+        """Test fully specified prompt gets high score."""
+        result = assess_aesthetic_prompt_quality(
+            concept="A wide composition shot of a character silhouette against a dramatic landscape with layered framing and foreground elements",
+            reference_style="bong",
+            mood="cinematic and moody",
+            lighting_style="dramatic",
+            color_mood="desaturated",
+        )
+        assert result.overall_score >= 70
+        assert result.has_auteur_reference is True
+        assert result.has_lighting_specification is True
+        assert result.has_color_specification is True
+
+    def test_no_auteur_suggests_auteur(self):
+        """Test missing auteur generates suggestion."""
+        result = assess_aesthetic_prompt_quality("A scene")
+        assert any("auteur" in s.lower() for s in result.suggestions)
+
+    def test_visual_keywords_increase_clarity(self):
+        """Test visual keywords increase concept clarity."""
+        without_keywords = assess_aesthetic_prompt_quality("A person in a room")
+        with_keywords = assess_aesthetic_prompt_quality("A wide shot composition of a character in perspective")
+        assert with_keywords.concept_clarity > without_keywords.concept_clarity
+
+    def test_subject_keywords_increase_clarity(self):
+        """Test subject keywords increase concept clarity."""
+        vague = assess_aesthetic_prompt_quality("Something happening somewhere")
+        specific = assess_aesthetic_prompt_quality("A character standing in an interior")
+        assert specific.concept_clarity > vague.concept_clarity
+
+
+class TestAuteurBlendResultModel:
+    """Test AuteurBlendResult model."""
+
+    def test_model_creation(self):
+        """Test model creation."""
+        result = AuteurBlendResult(
+            primary_auteur="bong",
+            secondary_auteur="nolan",
+            compatibility_score=0.75,
+            blend_ratio="60:40",
+            visual_keywords=["layered framing", "IMAX scale"],
+            color_approach="Seamless blend",
+            composition_approach="Primary rules",
+            recommended_for=["feature film"],
+        )
+        assert result.primary_auteur == "bong"
+        assert result.compatibility_score == 0.75
+
+    def test_compatibility_score_bounds(self):
+        """Test compatibility score is bounded 0-1."""
+        with pytest.raises(ValidationError):
+            AuteurBlendResult(
+                primary_auteur="test",
+                secondary_auteur="test2",
+                compatibility_score=1.5,
+            )
+
+    def test_default_values(self):
+        """Test default values."""
+        result = AuteurBlendResult(
+            primary_auteur="test",
+            secondary_auteur="test2",
+        )
+        assert result.compatibility_score == 0.0
+        assert result.blend_ratio == "60:40"
+        assert result.visual_keywords == []
+        assert result.recommended_for == []

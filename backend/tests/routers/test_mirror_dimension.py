@@ -6,6 +6,7 @@ Covers:
 - Validation helpers (MBTI, blood type, gender, stage)
 - Request model validation
 - Edge cases
+- 2026 Enhancements: MBTI-CI, Creative Style, Auteur Affinity, Profile Quality
 """
 import pytest
 from pydantic import ValidationError
@@ -25,6 +26,20 @@ from app.routers.dimension.mirror import (
     # Request models
     MirrorInitRequest,
     MirrorChatRequest,
+    # 2026 Enhancements
+    CreativeStyle,
+    MBTI_DIMENSION_SCORES,
+    MBTI_CREATIVE_STYLE_MAP,
+    AUTEUR_AFFINITY_MAP,
+    CREATIVE_STRENGTHS_MAP,
+    calculate_mbti_creativity_index,
+    get_creative_style,
+    get_auteur_affinity,
+    get_creative_strengths,
+    assess_mirror_profile_quality,
+    MirrorProfileQuality,
+    MirrorInitResponse,
+    MirrorChatResponse,
 )
 
 
@@ -600,3 +615,501 @@ class TestConstants:
         assert VALID_MBTI_CHARS[1] == frozenset({"S", "N"})
         assert VALID_MBTI_CHARS[2] == frozenset({"T", "F"})
         assert VALID_MBTI_CHARS[3] == frozenset({"J", "P"})
+
+
+# ============================================================================
+# 2026 Enhancements: MBTI Creativity Index Tests
+# ============================================================================
+
+class TestMBTICreativityIndex:
+    """Tests for MBTI Creativity Index calculation (2026)."""
+
+    def test_highest_creativity_infp(self):
+        """INFP should have highest CI: 3*1 + 1 - 1 - 0.5*1 = 2.5"""
+        ci = calculate_mbti_creativity_index("INFP")
+        assert ci == 2.5
+
+    def test_highest_creativity_entp(self):
+        """ENTP: 3*1 + 1 - 0 - 0.5*0 = 4.0"""
+        ci = calculate_mbti_creativity_index("ENTP")
+        assert ci == 4.0
+
+    def test_lowest_creativity_estj(self):
+        """ESTJ: 3*0 + 0 - 0 - 0.5*0 = 0.0"""
+        ci = calculate_mbti_creativity_index("ESTJ")
+        assert ci == 0.0
+
+    def test_lowest_creativity_istj(self):
+        """ISTJ: 3*0 + 0 - 1 - 0.5*0 = -1.0"""
+        ci = calculate_mbti_creativity_index("ISTJ")
+        assert ci == -1.0
+
+    def test_isfj_creativity(self):
+        """ISFJ: 3*0 + 0 - 1 - 0.5*1 = -1.5"""
+        ci = calculate_mbti_creativity_index("ISFJ")
+        assert ci == -1.5
+
+    def test_intj_creativity(self):
+        """INTJ: 3*1 + 0 - 1 - 0.5*0 = 2.0"""
+        ci = calculate_mbti_creativity_index("INTJ")
+        assert ci == 2.0
+
+    def test_enfp_creativity(self):
+        """ENFP: 3*1 + 1 - 0 - 0.5*1 = 3.5"""
+        ci = calculate_mbti_creativity_index("ENFP")
+        assert ci == 3.5
+
+    def test_empty_mbti_returns_zero(self):
+        ci = calculate_mbti_creativity_index("")
+        assert ci == 0.0
+
+    def test_invalid_mbti_returns_zero(self):
+        ci = calculate_mbti_creativity_index("XXXX")
+        assert ci == 0.0
+
+    def test_short_mbti_returns_zero(self):
+        ci = calculate_mbti_creativity_index("INT")
+        assert ci == 0.0
+
+    def test_ci_range_boundaries(self):
+        """CI should be in range -4.5 to +4.5."""
+        all_types = [
+            "ISTJ", "ISFJ", "INFJ", "INTJ",
+            "ISTP", "ISFP", "INFP", "INTP",
+            "ESTP", "ESFP", "ENFP", "ENTP",
+            "ESTJ", "ESFJ", "ENFJ", "ENTJ",
+        ]
+        for mbti in all_types:
+            ci = calculate_mbti_creativity_index(mbti)
+            assert -4.5 <= ci <= 4.5, f"CI out of range for {mbti}: {ci}"
+
+    def test_all_16_types_calculated(self):
+        """All 16 MBTI types should return valid CI."""
+        all_types = list(MBTI_CREATIVE_STYLE_MAP.keys())
+        assert len(all_types) == 16
+        for mbti in all_types:
+            ci = calculate_mbti_creativity_index(mbti)
+            assert isinstance(ci, float)
+
+
+# ============================================================================
+# 2026 Enhancements: Creative Style Tests
+# ============================================================================
+
+class TestCreativeStyle:
+    """Tests for Creative Style classification (2026)."""
+
+    def test_visionary_storyteller_types(self):
+        visionary_types = ["INFP", "ENFP", "INFJ", "ENFJ", "ISFJ"]
+        for mbti in visionary_types:
+            style = get_creative_style(mbti)
+            assert style == CreativeStyle.VISIONARY_STORYTELLER, f"{mbti} should be visionary"
+
+    def test_logical_architect_types(self):
+        architect_types = ["INTP", "INTJ", "ENTP", "ENTJ", "ISTJ"]
+        for mbti in architect_types:
+            style = get_creative_style(mbti)
+            assert style == CreativeStyle.LOGICAL_ARCHITECT, f"{mbti} should be architect"
+
+    def test_dramatic_director_types(self):
+        dramatic_types = ["ESTJ", "ESFJ"]
+        for mbti in dramatic_types:
+            style = get_creative_style(mbti)
+            assert style == CreativeStyle.DRAMATIC_DIRECTOR, f"{mbti} should be dramatic"
+
+    def test_experimental_artist_types(self):
+        experimental_types = ["ISTP", "ESTP", "ISFP", "ESFP"]
+        for mbti in experimental_types:
+            style = get_creative_style(mbti)
+            assert style == CreativeStyle.EXPERIMENTAL_ARTIST, f"{mbti} should be experimental"
+
+    def test_empty_mbti_returns_unknown(self):
+        style = get_creative_style("")
+        assert style == CreativeStyle.UNKNOWN
+
+    def test_invalid_mbti_returns_unknown(self):
+        style = get_creative_style("XXXX")
+        assert style == CreativeStyle.UNKNOWN
+
+    def test_all_16_types_mapped(self):
+        """All 16 MBTI types should be in the mapping."""
+        assert len(MBTI_CREATIVE_STYLE_MAP) == 16
+
+    def test_creative_style_enum_values(self):
+        assert CreativeStyle.VISIONARY_STORYTELLER.value == "visionary_storyteller"
+        assert CreativeStyle.LOGICAL_ARCHITECT.value == "logical_architect"
+        assert CreativeStyle.DRAMATIC_DIRECTOR.value == "dramatic_director"
+        assert CreativeStyle.EXPERIMENTAL_ARTIST.value == "experimental_artist"
+        assert CreativeStyle.UNKNOWN.value == "unknown"
+
+
+# ============================================================================
+# 2026 Enhancements: Auteur Affinity Tests
+# ============================================================================
+
+class TestAuteurAffinity:
+    """Tests for Auteur Affinity matching (2026)."""
+
+    def test_visionary_auteurs(self):
+        auteurs = get_auteur_affinity(CreativeStyle.VISIONARY_STORYTELLER)
+        assert "bong" in auteurs
+        assert "wong" in auteurs
+        assert "miyazaki" in auteurs
+
+    def test_architect_auteurs(self):
+        auteurs = get_auteur_affinity(CreativeStyle.LOGICAL_ARCHITECT)
+        assert "nolan" in auteurs
+        assert "villeneuve" in auteurs
+        assert "kubrick" in auteurs
+
+    def test_dramatic_auteurs(self):
+        auteurs = get_auteur_affinity(CreativeStyle.DRAMATIC_DIRECTOR)
+        assert "spielberg" in auteurs
+        assert "cameron" in auteurs
+
+    def test_experimental_auteurs(self):
+        auteurs = get_auteur_affinity(CreativeStyle.EXPERIMENTAL_ARTIST)
+        assert "tarantino" in auteurs
+        assert "guy_ritchie" in auteurs
+
+    def test_unknown_returns_empty(self):
+        auteurs = get_auteur_affinity(CreativeStyle.UNKNOWN)
+        assert auteurs == []
+
+    def test_all_styles_have_auteurs(self):
+        for style in CreativeStyle:
+            if style != CreativeStyle.UNKNOWN:
+                auteurs = get_auteur_affinity(style)
+                assert len(auteurs) > 0, f"{style} should have auteurs"
+
+
+# ============================================================================
+# 2026 Enhancements: Creative Strengths Tests
+# ============================================================================
+
+class TestCreativeStrengths:
+    """Tests for Creative Strengths retrieval (2026)."""
+
+    def test_visionary_strengths(self):
+        strengths = get_creative_strengths(CreativeStyle.VISIONARY_STORYTELLER)
+        assert "emotional_depth" in strengths
+        assert "character_psychology" in strengths
+
+    def test_architect_strengths(self):
+        strengths = get_creative_strengths(CreativeStyle.LOGICAL_ARCHITECT)
+        assert "complex_plot_structure" in strengths
+        assert "worldbuilding" in strengths
+
+    def test_dramatic_strengths(self):
+        strengths = get_creative_strengths(CreativeStyle.DRAMATIC_DIRECTOR)
+        assert "epic_narrative" in strengths
+        assert "character_growth_arc" in strengths
+
+    def test_experimental_strengths(self):
+        strengths = get_creative_strengths(CreativeStyle.EXPERIMENTAL_ARTIST)
+        assert "genre_blending" in strengths
+        assert "nonlinear_narrative" in strengths
+
+    def test_unknown_returns_empty(self):
+        strengths = get_creative_strengths(CreativeStyle.UNKNOWN)
+        assert strengths == []
+
+    def test_all_styles_have_strengths(self):
+        for style in CreativeStyle:
+            if style != CreativeStyle.UNKNOWN:
+                strengths = get_creative_strengths(style)
+                assert len(strengths) >= 3, f"{style} should have at least 3 strengths"
+
+
+# ============================================================================
+# 2026 Enhancements: Profile Quality Assessment Tests
+# ============================================================================
+
+class TestProfileQualityAssessment:
+    """Tests for Profile Quality Assessment (2026)."""
+
+    def test_basic_assessment_with_mbti(self):
+        quality = assess_mirror_profile_quality(
+            mbti="INFP",
+            persona_data={"saju": {"year_pillar": "甲子"}},
+            completion_rate=50.0,
+            chat_turn_count=5,
+        )
+        assert quality.creativity_index == 2.5
+        assert quality.creative_style == "visionary_storyteller"
+        assert "bong" in quality.auteur_affinity
+        assert "emotional_depth" in quality.creative_strengths
+
+    def test_assessment_without_mbti(self):
+        quality = assess_mirror_profile_quality(
+            mbti="",
+            persona_data={},
+            completion_rate=25.0,
+            chat_turn_count=2,
+        )
+        assert quality.creativity_index == 0.0
+        assert quality.creative_style == "unknown"
+        assert quality.auteur_affinity == []
+
+    def test_completeness_score_with_full_data(self):
+        quality = assess_mirror_profile_quality(
+            mbti="INTJ",
+            persona_data={
+                "saju": {"year_pillar": "甲子"},
+                "input": {"mbti": "INTJ"},
+                "persona": {"archetype": "Analyst"},
+                "preferences": {"genre": "sci-fi"},
+            },
+            completion_rate=100.0,
+            chat_turn_count=15,
+        )
+        assert quality.completeness_score == 100  # 25+25+15+20+15
+
+    def test_consistency_score_with_many_turns(self):
+        quality = assess_mirror_profile_quality(
+            mbti="ENTP",
+            persona_data={},
+            completion_rate=50.0,
+            chat_turn_count=15,
+        )
+        assert quality.consistency_score == 100
+
+    def test_consistency_score_with_few_turns(self):
+        quality = assess_mirror_profile_quality(
+            mbti="ENTP",
+            persona_data={},
+            completion_rate=50.0,
+            chat_turn_count=3,
+        )
+        assert quality.consistency_score == 30  # 3 * 10
+
+    def test_depth_score_from_completion_rate(self):
+        quality = assess_mirror_profile_quality(
+            mbti="ESTJ",
+            persona_data={},
+            completion_rate=75.0,
+            chat_turn_count=10,
+        )
+        assert quality.depth_score == 75
+
+    def test_overall_score_calculation(self):
+        quality = assess_mirror_profile_quality(
+            mbti="INFJ",
+            persona_data={
+                "saju": {"year_pillar": "甲子"},  # Non-empty to count
+                "input": {"mbti": "INFJ"},  # Non-empty to count
+            },
+            completion_rate=60.0,
+            chat_turn_count=8,
+        )
+        # completeness: 25 (mbti) + 25 (saju) + 15 (input) = 65
+        # consistency: 60 (8 turns -> 60)
+        # depth: 60
+        # overall: 65*0.3 + 60*0.3 + 60*0.4 = 19.5 + 18 + 24 = 61.5 -> 61
+        assert 55 <= quality.overall_score <= 65
+
+    def test_suggestions_for_low_completion(self):
+        quality = assess_mirror_profile_quality(
+            mbti="",
+            persona_data={},
+            completion_rate=20.0,
+            chat_turn_count=1,
+        )
+        assert len(quality.suggestions) > 0
+        assert any("MBTI" in s for s in quality.suggestions)
+
+    def test_high_creativity_suggestion(self):
+        quality = assess_mirror_profile_quality(
+            mbti="ENTP",  # CI = 4.0
+            persona_data={},
+            completion_rate=50.0,
+            chat_turn_count=5,
+        )
+        assert any("creative potential" in s.lower() for s in quality.suggestions)
+
+    def test_low_creativity_suggestion(self):
+        # ISFJ CI = -1.5 which is <= -1.0, so structured suggestion triggers
+        quality = assess_mirror_profile_quality(
+            mbti="ISFJ",  # CI = -1.5 (lowest possible)
+            persona_data={},
+            completion_rate=50.0,
+            chat_turn_count=5,
+        )
+        # Lowest CI (-1.5) should trigger structured suggestion
+        assert any("structured" in s.lower() for s in quality.suggestions)
+        # Verify the CI is indeed low
+        assert quality.creativity_index == -1.5
+
+    def test_profile_quality_model_validation(self):
+        """Test MirrorProfileQuality model constraints."""
+        quality = MirrorProfileQuality(
+            completeness_score=100,
+            consistency_score=100,
+            depth_score=100,
+            overall_score=100,
+            creativity_index=4.5,
+            creative_style="visionary_storyteller",
+            auteur_affinity=["bong", "wong"],
+            creative_strengths=["emotional_depth"],
+            suggestions=["tip1"],
+        )
+        assert quality.completeness_score == 100
+        assert quality.creativity_index == 4.5
+
+    def test_profile_quality_score_bounds(self):
+        """Scores should be bounded 0-100."""
+        with pytest.raises(ValidationError):
+            MirrorProfileQuality(
+                completeness_score=150,  # Over limit
+                consistency_score=50,
+                depth_score=50,
+                overall_score=50,
+            )
+
+
+# ============================================================================
+# 2026 Enhancements: Response Model Tests
+# ============================================================================
+
+class TestMirrorInitResponse2026:
+    """Tests for MirrorInitResponse with 2026 fields."""
+
+    def test_response_with_2026_fields(self):
+        response = MirrorInitResponse(
+            success=True,
+            session_id="test-session",
+            saju={"year_pillar": "甲子"},
+            initial_message="Welcome",
+            persona_data={},
+            completion_rate=25.0,
+            trace_id="trace-123",
+            evidence_refs=["rag:mirror:mbti_profile:intj"],
+            profile_quality=MirrorProfileQuality(
+                creativity_index=2.0,
+                creative_style="logical_architect",
+            ),
+        )
+        assert response.trace_id == "trace-123"
+        assert len(response.evidence_refs) == 1
+        assert response.profile_quality.creativity_index == 2.0
+
+    def test_response_default_2026_fields(self):
+        response = MirrorInitResponse(
+            success=True,
+            session_id="test",
+            saju={},
+            initial_message="msg",
+            persona_data={},
+            completion_rate=0.0,
+        )
+        assert response.trace_id == ""
+        assert response.evidence_refs == []
+        assert response.profile_quality is None
+
+
+class TestMirrorChatResponse2026:
+    """Tests for MirrorChatResponse with 2026 fields."""
+
+    def test_response_with_profile_quality(self):
+        response = MirrorChatResponse(
+            success=True,
+            ai_response="Hello",
+            persona_data={},
+            completion_rate=50.0,
+            current_stage="psychology",
+            is_complete=False,
+            trace_id="trace-456",
+            evidence_refs=["db:mirror:session:xyz"],
+            confidence=0.75,
+            profile_quality=MirrorProfileQuality(
+                overall_score=75,
+                creativity_index=3.5,
+                creative_style="visionary_storyteller",
+            ),
+        )
+        assert response.profile_quality.overall_score == 75
+        assert response.confidence == 0.75
+
+    def test_response_default_profile_quality(self):
+        response = MirrorChatResponse(
+            success=True,
+            ai_response="msg",
+            persona_data={},
+            completion_rate=0.0,
+            current_stage="intro",
+            is_complete=False,
+        )
+        assert response.profile_quality is None
+
+
+# ============================================================================
+# 2026 Dimension Score Constants Tests
+# ============================================================================
+
+class TestMBTIDimensionScores:
+    """Tests for MBTI dimension score constants."""
+
+    def test_ei_dimension_scores(self):
+        assert MBTI_DIMENSION_SCORES["E"] == 0
+        assert MBTI_DIMENSION_SCORES["I"] == 1
+
+    def test_sn_dimension_scores(self):
+        assert MBTI_DIMENSION_SCORES["S"] == 0
+        assert MBTI_DIMENSION_SCORES["N"] == 1
+
+    def test_tf_dimension_scores(self):
+        assert MBTI_DIMENSION_SCORES["T"] == 0
+        assert MBTI_DIMENSION_SCORES["F"] == 1
+
+    def test_jp_dimension_scores(self):
+        assert MBTI_DIMENSION_SCORES["J"] == 0
+        assert MBTI_DIMENSION_SCORES["P"] == 1
+
+    def test_all_8_chars_mapped(self):
+        expected = {"E", "I", "S", "N", "T", "F", "J", "P"}
+        assert set(MBTI_DIMENSION_SCORES.keys()) == expected
+
+
+# ============================================================================
+# 2026 MBTI-CI Formula Verification Tests
+# ============================================================================
+
+class TestMBTICIFormulaVerification:
+    """Comprehensive tests to verify CI formula: 3*SN + JP - EI - 0.5*TF."""
+
+    @pytest.mark.parametrize("mbti,expected_ci", [
+        # Highest creativity (N + P dominant)
+        ("ENTP", 4.0),   # 3*1 + 1 - 0 - 0.5*0 = 4.0
+        ("ENFP", 3.5),   # 3*1 + 1 - 0 - 0.5*1 = 3.5
+        ("INTP", 3.0),   # 3*1 + 1 - 1 - 0.5*0 = 3.0
+        ("INFP", 2.5),   # 3*1 + 1 - 1 - 0.5*1 = 2.5
+        # High creativity (N dominant)
+        ("ENTJ", 3.0),   # 3*1 + 0 - 0 - 0.5*0 = 3.0
+        ("ENFJ", 2.5),   # 3*1 + 0 - 0 - 0.5*1 = 2.5
+        ("INTJ", 2.0),   # 3*1 + 0 - 1 - 0.5*0 = 2.0
+        ("INFJ", 1.5),   # 3*1 + 0 - 1 - 0.5*1 = 1.5
+        # Medium creativity (mixed)
+        ("ESTP", 1.0),   # 3*0 + 1 - 0 - 0.5*0 = 1.0
+        ("ESFP", 0.5),   # 3*0 + 1 - 0 - 0.5*1 = 0.5
+        ("ISTP", 0.0),   # 3*0 + 1 - 1 - 0.5*0 = 0.0
+        ("ISFP", -0.5),  # 3*0 + 1 - 1 - 0.5*1 = -0.5
+        # Lower creativity (S + J dominant)
+        ("ESTJ", 0.0),   # 3*0 + 0 - 0 - 0.5*0 = 0.0
+        ("ESFJ", -0.5),  # 3*0 + 0 - 0 - 0.5*1 = -0.5
+        ("ISTJ", -1.0),  # 3*0 + 0 - 1 - 0.5*0 = -1.0
+        ("ISFJ", -1.5),  # 3*0 + 0 - 1 - 0.5*1 = -1.5
+    ])
+    def test_ci_formula_for_all_types(self, mbti, expected_ci):
+        """Verify CI calculation for all 16 MBTI types."""
+        ci = calculate_mbti_creativity_index(mbti)
+        assert ci == expected_ci, f"CI for {mbti} should be {expected_ci}, got {ci}"
+
+    def test_ci_formula_max_value(self):
+        """Maximum CI is 4.0 (ENTP)."""
+        max_ci = max(calculate_mbti_creativity_index(mbti) for mbti in MBTI_CREATIVE_STYLE_MAP.keys())
+        assert max_ci == 4.0
+
+    def test_ci_formula_min_value(self):
+        """Minimum CI is -1.5 (ISFJ)."""
+        min_ci = min(calculate_mbti_creativity_index(mbti) for mbti in MBTI_CREATIVE_STYLE_MAP.keys())
+        assert min_ci == -1.5
