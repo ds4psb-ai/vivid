@@ -25,6 +25,52 @@ cd frontend && npm run build  # Frontend
 
 ---
 
+## P0: 앱/DB 작업 전 필수 참조 문서
+
+**앱 또는 DB 관련 작업 요청 시 반드시 아래 문서를 먼저 읽고 진행:**
+
+### 1. 앱 개발 프로토콜
+| 문서 | 경로 | 용도 |
+|------|------|------|
+| 앱 개발 가이드 | `docs/DIMENSION_APP_DEVELOPER_GUIDE.md` | 앱 생성 표준 절차 |
+| 앱 YAML 스키마 | `config/apps/content/dimensions/*.yaml` | SSoT 설정 |
+| 앱 라우터 패턴 | `backend/app/routers/dimension/_base.py` | 공통 유틸 |
+
+### 2. 앱별 리서치 문서 (2026 Best Practices)
+| 앱 | 리서치 문서 |
+|----|-------------|
+| Abyss Mirror | `docs/research/01_ABYSS_MIRROR_RESEARCH.md` |
+| Reference Decoder | `docs/research/02_REFERENCE_DECODER_RESEARCH.md` |
+| Scenario Generator | `docs/research/03_SCENARIO_GENERATOR_RESEARCH.md` |
+| Sound Crafter | `docs/research/04_SOUND_CRAFTER_RESEARCH.md` |
+| Storyboard Sketcher | `docs/research/05_STORYBOARD_SKETCHER_RESEARCH.md` |
+| Prompt Alchemy | `docs/research/06_PROMPT_ALCHEMY_RESEARCH.md` |
+| Visual Realizer | `docs/research/07_VISUAL_REALIZER_RESEARCH.md` |
+| Video Maker | `docs/research/08_VIDEO_MAKER_RESEARCH.md` |
+| Quality Director | `docs/research/09_QUALITY_DIRECTOR_RESEARCH.md` |
+| Aesthetic Director | `docs/research/10_AESTHETIC_DIRECTOR_RESEARCH.md` |
+
+### 3. DB/백엔드 프로토콜
+| 문서 | 경로 | 용도 |
+|------|------|------|
+| 크레딧 시스템 | `docs/13_CREDITS_AND_BILLING_SPEC_V1.md` | Run-Token 흐름 |
+| 아키텍처 코덱스 | `docs/15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md` | 설계 철학 |
+| Backend CLAUDE.md | `backend/CLAUDE.md` | DB/API 패턴 |
+
+### 4. 큐레이션 체크리스트 (앱 완성도 평가)
+```
+□ YAML Config 존재 (config/apps/content/dimensions/{app}.yaml)
+□ Router 구현 (backend/app/routers/dimension/{app}.py)
+□ Adapter Handler 등록 (backend/app/dimension_adapter.py)
+□ Tests 작성 (backend/tests/routers/test_{app}.py) - 최소 30개
+□ Frontend Page 존재 (frontend/src/app/dimension/{app}/page.tsx)
+□ Frontend Panel 구현 (frontend/src/components/dimension/{App}Panel.tsx)
+□ dimension-data.ts 등록 (DIMENSION_ITEMS, ROUTE_KEYS)
+□ 2026 Best Practices 적용 (React 19, Pydantic v2, SSE streaming)
+```
+
+---
+
 ## Auto Research Mode
 
 사용자 입력이 다음 조건을 충족하면 **2026년 기준 MCP 리서치 및 웹서칭** 수행:
