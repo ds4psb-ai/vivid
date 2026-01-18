@@ -103,18 +103,20 @@ W_RRF(A) = 0.7/(60+1) + 0.3/(60+5) = 0.0161
 
 ### Named Vectors 구조 (P0.5 마이그레이션 완료)
 
-| 차원 | 컬렉션 이름 | 용도 | Dense | Sparse |
-|------|-----------|------|-------|--------|
-| 1D | dimension_1d_contexts | 프롬프트 최적화 | 384 | ✅ |
-| 2D | dimension_2d_contexts | 스토리보드 | 384 | ✅ |
-| 3D | dimension_3d_contexts | 이미지 프롬프트 | 384 | ✅ |
-| 4D | dimension_4d_contexts | 레퍼런스 분석 | 384 | ✅ |
-| AD | dimension_ad_contexts | 미학 감독 | 384 | ✅ |
-| AI | dimension_ai_contexts | 페르소나/MBTI/사주 | 384 | ✅ |
-| QC | dimension_qc_contexts | 품질 검수 | 384 | ✅ |
-| VEO | dimension_veo_contexts | 영상 스타일 | 384 | ✅ |
-| Story | dimension_story_contexts | 시나리오 | 384 | ✅ |
-| CC | dimension_cc_contexts | 캐릭터 일관성 | 384 | ✅ |
+| 차원 | 컬렉션 이름 | Hybrid 컬렉션 | 용도 | Dense | Sparse |
+|------|-----------|--------------|------|-------|--------|
+| 1D | dimension_1d_contexts | dimension_1d_contexts_hybrid | 프롬프트 최적화 | 384 | ✅ |
+| 2D | dimension_2d_contexts | dimension_2d_contexts_hybrid | 스토리보드 | 384 | ✅ |
+| 3D | dimension_3d_contexts | dimension_3d_contexts_hybrid | 이미지 프롬프트 | 384 | ✅ |
+| 4D | dimension_4d_contexts | dimension_4d_contexts_hybrid | 레퍼런스 분석 | 384 | ✅ |
+| 5D | dimension_5d_contexts | dimension_5d_contexts_hybrid | 영상/카메라 무브먼트 | 384 | ✅ |
+| 6D | dimension_6d_contexts | dimension_6d_contexts_hybrid | 음악/사운드 디자인 | 384 | ✅ |
+| AD | dimension_ad_contexts | dimension_ad_contexts_hybrid | 미학 감독 | 384 | ✅ |
+| AI | dimension_ai_contexts | dimension_ai_contexts_hybrid | 페르소나/MBTI/사주 | 384 | ✅ |
+| QC | dimension_qc_contexts | dimension_qc_contexts_hybrid | 품질 검수 | 384 | ✅ |
+| VEO | dimension_veo_contexts | dimension_veo_contexts_hybrid | Veo 프롬프트/영상 스타일 | 384 | ✅ |
+
+> **Note**: P2-3에서 Hybrid 컬렉션 추가. `*_hybrid` 컬렉션은 Named Vectors로 dense + sparse(BM25 with IDF) 저장
 
 ---
 
@@ -396,18 +398,20 @@ W_RRF(A) = 0.7/(60+1) + 0.3/(60+5) = 0.0161
 
 ### Named Vectors Structure (P0.5 Migration Complete)
 
-| Dimension | Collection | Use | Dense | Sparse |
-|-----------|-----------|-----|-------|--------|
-| 1D | dimension_1d_contexts | Prompt optimization | 384 | ✅ |
-| 2D | dimension_2d_contexts | Storyboard | 384 | ✅ |
-| 3D | dimension_3d_contexts | Image prompts | 384 | ✅ |
-| 4D | dimension_4d_contexts | Reference analysis | 384 | ✅ |
-| AD | dimension_ad_contexts | Aesthetics | 384 | ✅ |
-| AI | dimension_ai_contexts | Persona/MBTI/Saju | 384 | ✅ |
-| QC | dimension_qc_contexts | Quality review | 384 | ✅ |
-| VEO | dimension_veo_contexts | Video style | 384 | ✅ |
-| Story | dimension_story_contexts | Scenario | 384 | ✅ |
-| CC | dimension_cc_contexts | Character consistency | 384 | ✅ |
+| Dimension | Collection | Hybrid Collection | Use | Dense | Sparse |
+|-----------|-----------|------------------|-----|-------|--------|
+| 1D | dimension_1d_contexts | dimension_1d_contexts_hybrid | Prompt optimization | 384 | ✅ |
+| 2D | dimension_2d_contexts | dimension_2d_contexts_hybrid | Storyboard | 384 | ✅ |
+| 3D | dimension_3d_contexts | dimension_3d_contexts_hybrid | Image prompts | 384 | ✅ |
+| 4D | dimension_4d_contexts | dimension_4d_contexts_hybrid | Reference analysis | 384 | ✅ |
+| 5D | dimension_5d_contexts | dimension_5d_contexts_hybrid | Video/Camera movement | 384 | ✅ |
+| 6D | dimension_6d_contexts | dimension_6d_contexts_hybrid | Music/Sound design | 384 | ✅ |
+| AD | dimension_ad_contexts | dimension_ad_contexts_hybrid | Aesthetics | 384 | ✅ |
+| AI | dimension_ai_contexts | dimension_ai_contexts_hybrid | Persona/MBTI/Saju | 384 | ✅ |
+| QC | dimension_qc_contexts | dimension_qc_contexts_hybrid | Quality review | 384 | ✅ |
+| VEO | dimension_veo_contexts | dimension_veo_contexts_hybrid | Veo prompts/Video style | 384 | ✅ |
+
+> **Note**: P2-3 added hybrid collections. `*_hybrid` collections use Named Vectors: dense + sparse(BM25 with IDF)
 
 ---
 
