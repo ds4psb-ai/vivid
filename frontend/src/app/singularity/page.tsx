@@ -11,6 +11,7 @@ import { api, SingularityTemplate, IntentPresetSummary } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import { RatingModal } from "@/components/ui/StarRating";
 import { FLOW_ENABLED } from "@/lib/feature-flags";
+import { dimensionIdToCode, getDimensionToken } from "@/lib/tokens";
 
 // Template type alias for local use
 type Template = SingularityTemplate;
@@ -20,22 +21,32 @@ type Template = SingularityTemplate;
 // DIMENSION FLOW DISPLAY - 차원 조합 시각화
 // =============================================================================
 
-const DIMENSION_COLORS: Record<string, { bg: string; text: string; glow: string }> = {
-    // Core Dimensions (1D-4D)
-    "1D": { bg: "bg-violet-500/20", text: "text-violet-400", glow: "shadow-violet-500/30" },
-    "2D": { bg: "bg-emerald-500/20", text: "text-emerald-400", glow: "shadow-emerald-500/30" },
-    "3D": { bg: "bg-amber-500/20", text: "text-amber-400", glow: "shadow-amber-500/30" },
-    "4D": { bg: "bg-cyan-500/20", text: "text-cyan-400", glow: "shadow-cyan-500/30" },
-    // Extended Dimensions (10개 전체)
-    "AI": { bg: "bg-indigo-500/20", text: "text-indigo-400", glow: "shadow-indigo-500/30" },
-    "AD": { bg: "bg-fuchsia-500/20", text: "text-fuchsia-400", glow: "shadow-fuchsia-500/30" },
-    "STORY": { bg: "bg-orange-500/20", text: "text-orange-400", glow: "shadow-orange-500/30" },
-    "SOUND": { bg: "bg-pink-500/20", text: "text-pink-400", glow: "shadow-pink-500/30" },
-    "VEO": { bg: "bg-sky-500/20", text: "text-sky-400", glow: "shadow-sky-500/30" },
-    "QC": { bg: "bg-rose-500/20", text: "text-rose-400", glow: "shadow-rose-500/30" },
-    // Aliases
+type DimensionTone = { bg: string; text: string; glow: string };
+
+const LEGACY_DIMENSION_TONES: Record<string, DimensionTone> = {
+    // Legacy aliases not present in AppRegistry
     "VIS": { bg: "bg-amber-500/20", text: "text-amber-400", glow: "shadow-amber-500/30" },
     "REF": { bg: "bg-cyan-500/20", text: "text-cyan-400", glow: "shadow-cyan-500/30" },
+};
+
+const getDimensionTone = (dimension: string): DimensionTone => {
+    const code = dimensionIdToCode(dimension);
+    if (code) {
+        const token = getDimensionToken(code);
+        const key = token.tailwindKey;
+        return {
+            bg: `bg-${key}/20`,
+            text: `text-${key}`,
+            glow: `shadow-${key}/30`,
+        };
+    }
+    const fallbackToken = getDimensionToken("1d");
+    const fallbackKey = fallbackToken.tailwindKey;
+    return LEGACY_DIMENSION_TONES[dimension] ?? {
+        bg: `bg-${fallbackKey}/20`,
+        text: `text-${fallbackKey}`,
+        glow: `shadow-${fallbackKey}/30`,
+    };
 };
 
 function DimensionFlow({ dimensions }: { dimensions: string[] }) {
@@ -44,7 +55,7 @@ function DimensionFlow({ dimensions }: { dimensions: string[] }) {
     return (
         <div className="flex items-center gap-1">
             {dimensions.map((dim, i) => {
-                const colors = DIMENSION_COLORS[dim] || DIMENSION_COLORS["1D"];
+                const colors = getDimensionTone(dim);
                 return (
                     <React.Fragment key={dim}>
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${colors.bg} ${colors.text}`}>
