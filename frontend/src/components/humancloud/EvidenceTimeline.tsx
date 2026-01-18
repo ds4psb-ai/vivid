@@ -55,11 +55,11 @@ function EvidenceItem({ log, index, isLast }: { log: EvidenceLog; index: number;
         >
             {/* Timeline Line */}
             {!isLast && (
-                <div className="absolute left-[11px] top-8 bottom-0 w-[2px] bg-slate-800" />
+                <div className="absolute left-[11px] top-8 bottom-0 w-[2px] bg-[var(--border-subtle)]" />
             )}
 
             {/* Icon Dot */}
-            <div className={`absolute left-0 top-0 w-6 h-6 rounded-full flex items-center justify-center border-2 border-slate-900 ${config.bgColor}`}>
+            <div className={`absolute left-0 top-0 w-6 h-6 rounded-full flex items-center justify-center border-2 border-[var(--border-muted)] ${config.bgColor}`}>
                 <Icon className={`w-3 h-3 ${config.color}`} />
             </div>
 
@@ -69,7 +69,7 @@ function EvidenceItem({ log, index, isLast }: { log: EvidenceLog; index: number;
                     <span className={`text-sm font-medium ${config.color}`}>
                         {log.title}
                     </span>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-[var(--fg-muted)]">
                         {new Date(log.created_at).toLocaleString([], {
                             month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
                         })}
@@ -91,7 +91,7 @@ function EvidenceItem({ log, index, isLast }: { log: EvidenceLog; index: number;
                                 href={file}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="inline-flex items-center gap-1 px-2 py-1 bg-slate-800 rounded text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-[var(--surface-2)] rounded text-xs text-[var(--fg-muted)] hover:text-[var(--fg-0)] transition-colors"
                             >
                                 <Upload className="w-3 h-3" />
                                 File {i + 1}
@@ -102,10 +102,10 @@ function EvidenceItem({ log, index, isLast }: { log: EvidenceLog; index: number;
 
                 {/* Actor Badge */}
                 <div className="mt-1">
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded border ${log.actor_role === 'client'
-                            ? 'border-violet-500/30 text-violet-400 bg-violet-500/10'
-                            : 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10'
-                        }`}>
+                    <span
+                        className="evidence-badge"
+                        style={{ color: log.actor_role === "client" ? "var(--credit-pending)" : "var(--credit-ok)" }}
+                    >
                         {log.actor_role.toUpperCase()}
                     </span>
                 </div>

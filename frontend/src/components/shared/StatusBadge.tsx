@@ -26,80 +26,67 @@ interface StatusBadgeProps {
 
 const STATUS_CONFIG: Record<string, {
     label: string;
-    bg: string;
-    text: string;
+    tone: "idle" | "loading" | "complete" | "error" | "cancelled";
     icon: typeof CheckCircle;
 }> = {
     pending: {
         label: "대기 중",
-        bg: "bg-yellow-500/20",
-        text: "text-yellow-400",
+        tone: "idle",
         icon: Clock,
     },
     approved: {
         label: "승인됨",
-        bg: "bg-green-500/20",
-        text: "text-green-400",
+        tone: "complete",
         icon: CheckCircle,
     },
     completed: {
         label: "완료",
-        bg: "bg-green-500/20",
-        text: "text-green-400",
+        tone: "complete",
         icon: CheckCircle,
     },
     rejected: {
         label: "거절됨",
-        bg: "bg-red-500/20",
-        text: "text-red-400",
+        tone: "error",
         icon: XCircle,
     },
     failed: {
         label: "실패",
-        bg: "bg-red-500/20",
-        text: "text-red-400",
+        tone: "error",
         icon: XCircle,
     },
     processing: {
         label: "처리 중",
-        bg: "bg-blue-500/20",
-        text: "text-blue-400",
+        tone: "loading",
         icon: Loader2,
     },
     in_progress: {
         label: "진행 중",
-        bg: "bg-blue-500/20",
-        text: "text-blue-400",
+        tone: "loading",
         icon: Loader2,
     },
     disputed: {
         label: "분쟁 중",
-        bg: "bg-orange-500/20",
-        text: "text-orange-400",
+        tone: "error",
         icon: AlertTriangle,
     },
     draft: {
         label: "초안",
-        bg: "bg-gray-500/20",
-        text: "text-gray-400",
+        tone: "idle",
         icon: Clock,
     },
     reversed: {
         label: "취소됨",
-        bg: "bg-purple-500/20",
-        text: "text-purple-400",
+        tone: "cancelled",
         icon: Ban,
     },
     resolved: {
         label: "해결됨",
-        bg: "bg-green-500/20",
-        text: "text-green-400",
+        tone: "complete",
         icon: CheckCircle,
     },
     skipped: {
         label: "건너뜀",
-        bg: "bg-gray-500/20",
-        text: "text-gray-400",
+        tone: "cancelled",
         icon: Ban,
     },
 };
@@ -107,8 +94,7 @@ const STATUS_CONFIG: Record<string, {
 export function StatusBadge({ status, size = "sm", showIcon = true }: StatusBadgeProps) {
     const config = STATUS_CONFIG[status.toLowerCase()] || {
         label: status,
-        bg: "bg-gray-500/20",
-        text: "text-gray-400",
+        tone: "idle",
         icon: Clock,
     };
 
@@ -119,10 +105,12 @@ export function StatusBadge({ status, size = "sm", showIcon = true }: StatusBadg
         ? "px-2 py-0.5 text-xs"
         : "px-3 py-1 text-sm";
 
+    const toneClass = `run-state ${config.tone}`;
+
     return (
-        <span className={`inline-flex items-center gap-1 ${sizeClasses} ${config.bg} ${config.text} rounded-full font-medium`}>
+        <span className={`inline-flex items-center gap-1 ${sizeClasses} bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-full font-medium ${toneClass}`}>
             {showIcon && (
-                <Icon className={`w-3 h-3 ${isAnimated ? "animate-spin" : ""}`} />
+                <Icon className={`w-3 h-3 ${toneClass} ${isAnimated ? "animate-spin" : ""}`} />
             )}
             {config.label}
         </span>
