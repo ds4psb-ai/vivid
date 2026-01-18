@@ -1532,6 +1532,15 @@ html.lenis body {
   background: rgba(var(--error-rgb), 0.2);
 }
 
+.selection-ring {
+  border-color: var(--interactive-default);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-default) 30%, transparent);
+}
+
+.hover-ring:hover {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-default) 25%, transparent);
+}
+
 /* Crebit Philosophy Utility Classes (Section 7.4-7.6) */
 .evidence-badge {
   background: var(--evidence-badge-bg);

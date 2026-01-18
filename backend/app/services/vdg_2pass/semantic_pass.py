@@ -8,11 +8,11 @@ import json
 import logging
 import hashlib
 from datetime import datetime
-import google.generativeai as genai
-from google.generativeai import types
+from google.genai import types
 from app.schemas.vdg_v4 import SemanticPassResult
 from app.services.vdg_2pass.prompts.semantic_prompt import SEMANTIC_SYSTEM_PROMPT, SEMANTIC_USER_PROMPT
 from app.services.vdg_2pass.gemini_utils import robust_generate_content
+from app.services.genai_utils import GenaiModelAdapter, get_genai_client
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -36,9 +36,7 @@ class SemanticPass:
     """
     
     def __init__(self, client=None):
-        self.client = client
-        if not self.client and settings.GEMINI_API_KEY:
-            genai.configure(api_key=settings.GEMINI_API_KEY)
+        self.client = client or get_genai_client()
         
         # Use config or default to 2.0 Flash
         self.model_name = getattr(settings, "GEMINI_MODEL_FLASH", "gemini-2.0-flash-exp")
@@ -81,24 +79,20 @@ class SemanticPass:
         )
         
         # 3. Prepare Video Part
-        video_part = types.Part(
-            inline_data=types.Blob(
-                data=video_bytes,
-                mime_type="video/mp4"
-            )
-        )
+        video_part = types.Part.from_bytes(data=video_bytes, mime_type="video/mp4")
         
         # 4. Generate Content with P0-4 hardening
-        model = genai.GenerativeModel(
-            model_name=self.model_name,
+        model = GenaiModelAdapter(
+            self.client,
+            self.model_name,
             system_instruction=system_prompt,
-            generation_config=types.GenerationConfig(
-                response_mime_type="application/json",
-                response_schema=SemanticPassResult,
-                temperature=0.2,  # Low temp for structured extraction
-                top_p=0.95,
-                max_output_tokens=8192
-            )
+            generation_config={
+                "response_mime_type": "application/json",
+                "response_schema": SemanticPassResult,
+                "temperature": 0.2,
+                "top_p": 0.95,
+                "max_output_tokens": 8192,
+            },
         )
         
         logger.info(f"🚀 Starting Semantic Pass (Model: {self.model_name})")

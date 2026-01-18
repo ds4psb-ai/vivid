@@ -20,6 +20,12 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from app.config import settings
+from app.services.genai_utils import (
+    GenaiModelAdapter,
+    get_genai_client,
+    normalize_model_name,
+    with_model_prefix,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -299,7 +305,7 @@ class GeminiCacheManager:
     _cache_name: Optional[str] = None
     _cache_expiry: Optional[datetime] = None
     _cache_lock = threading.Lock()
-    _genai = None
+    _client = None
     
     # Configuration
     DEFAULT_TTL_HOURS = 1
@@ -308,17 +314,11 @@ class GeminiCacheManager:
     CACHE_DISPLAY_NAME = "chokki_agent_v1"
     
     @classmethod
-    def _ensure_genai(cls):
-        """Lazy load google.generativeai to avoid import errors."""
-        if cls._genai is None:
-            try:
-                import google.generativeai as genai
-                genai.configure(api_key=settings.GEMINI_API_KEY)
-                cls._genai = genai
-            except ImportError as e:
-                logger.error("google-generativeai not installed", exc_info=e)
-                raise
-        return cls._genai
+    def _ensure_client(cls):
+        """Lazy load google-genai client."""
+        if cls._client is None:
+            cls._client = get_genai_client()
+        return cls._client
     
     @classmethod
     def get_chokki_cache(cls, model_name: str = "gemini-3-flash-preview"):
@@ -379,7 +379,8 @@ class GeminiCacheManager:
     @classmethod
     def _create_cache(cls, model_name: str):
         """Create explicit cached content."""
-        genai = cls._ensure_genai()
+        client = cls._ensure_client()
+        from google.genai import types
         
         # Validate token count
         prompt_length = len(CHOKKI_SYSTEM_PROMPT.split())
@@ -389,11 +390,17 @@ class GeminiCacheManager:
                 f"Flash requires ~{cls.MIN_TOKENS_FLASH} tokens."
             )
         
-        return genai.caching.CachedContent.create(
-            model=f"models/{model_name}",
-            display_name=cls.CACHE_DISPLAY_NAME,
-            system_instruction=CHOKKI_SYSTEM_PROMPT,
-            ttl=timedelta(hours=cls.DEFAULT_TTL_HOURS),
+        cache_model = with_model_prefix(model_name)
+        return client.caches.create(
+            model=cache_model,
+            config=types.CreateCachedContentConfig(
+                display_name=cls.CACHE_DISPLAY_NAME,
+                system_instruction=CHOKKI_SYSTEM_PROMPT,
+                contents=[
+                    types.Content(role="user", parts=[types.Part(text="Cache primer")])
+                ],
+                ttl=f"{int(timedelta(hours=cls.DEFAULT_TTL_HOURS).total_seconds())}s",
+            ),
         )
     
     @classmethod
@@ -401,7 +408,8 @@ class GeminiCacheManager:
         """Clean up expired cache."""
         if cls._cache is not None:
             try:
-                cls._cache.delete()
+                client = cls._ensure_client()
+                client.caches.delete(cls._cache.name)
                 logger.info("Deleted expired cache", extra={"cache_name": cls._cache_name})
             except Exception as e:
                 logger.warning("Failed to delete cache", exc_info=e)
@@ -411,25 +419,35 @@ class GeminiCacheManager:
                 cls._cache_expiry = None
     
     @classmethod
-    def get_model_from_cache(cls, model_name: str = "gemini-3-flash-preview"):
+    def get_model_from_cache(
+        cls,
+        model_name: str = "gemini-3-flash-preview",
+        generation_config: Optional[dict] = None,
+    ):
         """
-        Get a GenerativeModel using cached content.
+        Get a GenAI model adapter using cached content.
         
         Returns:
-            GenerativeModel instance (cached or direct)
+            GenaiModelAdapter instance (cached or direct)
         """
-        genai = cls._ensure_genai()
         cache = cls.get_chokki_cache(model_name)
-        
+        client = cls._ensure_client()
+
         if cache is not None:
-            return genai.GenerativeModel.from_cached_content(cache)
-        else:
-            # Fallback to direct model with system instruction
-            logger.warning("Using direct model (no cache)")
-            return genai.GenerativeModel(
-                model_name=model_name,
-                system_instruction=CHOKKI_SYSTEM_PROMPT,
+            return GenaiModelAdapter(
+                client,
+                normalize_model_name(cache.model),
+                generation_config=generation_config,
+                cached_content=cache.name,
             )
+
+        logger.warning("Using direct model (no cache)")
+        return GenaiModelAdapter(
+            client,
+            model_name,
+            system_instruction=CHOKKI_SYSTEM_PROMPT,
+            generation_config=generation_config,
+        )
     
     @classmethod
     def get_system_prompt(cls) -> str:
@@ -452,7 +470,11 @@ class GeminiCacheManager:
             metrics = {
                 "prompt_tokens": getattr(metadata, "prompt_token_count", 0),
                 "cached_tokens": getattr(metadata, "cached_content_token_count", 0),
-                "output_tokens": getattr(metadata, "candidates_token_count", 0),
+                "output_tokens": getattr(
+                    metadata,
+                    "response_token_count",
+                    getattr(metadata, "candidates_token_count", 0),
+                ),
             }
             
             # Calculate cache hit rate

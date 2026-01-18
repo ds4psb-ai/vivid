@@ -28,6 +28,7 @@
 | [RAG_RELIABILITY.md](./RAG_RELIABILITY.md) | RAG 시스템 신뢰성 가이드 | ✅ Active |
 | [PANEL_DESIGN_UNITY_SPEC.md](./PANEL_DESIGN_UNITY_SPEC.md) | Compound Component System | ✅ Active |
 | [UQSL_IMPLEMENTATION_SPEC.md](./UQSL_IMPLEMENTATION_SPEC.md) | Universal Quality Selection Layer | ✅ Active |
+| [DESIGN_SYSTEM_2026.md](./DESIGN_SYSTEM_2026.md) | **디자인 시스템 SSoT (토큰, OKLCH, 철학)** | ✅ Active |
 
 ---
 

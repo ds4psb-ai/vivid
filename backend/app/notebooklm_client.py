@@ -205,23 +205,22 @@ def _default_storyboard_shot(idx: int) -> str:
 
 def _call_gemini(prompt: str, context: str, max_retries: int = 3) -> Dict[str, Any]:
     """Call Gemini API and parse JSON response."""
-    import google.generativeai as genai
+    from app.services.genai_utils import build_generate_config, get_genai_client
     
     if not settings.GEMINI_API_KEY:
         raise NotebookLMClientError("GEMINI_API_KEY not configured")
     
-    genai.configure(api_key=settings.GEMINI_API_KEY)
-    model = genai.GenerativeModel(settings.GEMINI_MODEL)
+    client = get_genai_client()
     
     full_prompt = f"{prompt}\n\n### Context:\n{context}\n\n### Response (JSON only):"
     
     for attempt in range(max_retries):
         try:
-            response = model.generate_content(
-                full_prompt,
-                generation_config=genai.types.GenerationConfig(
-                    response_mime_type="application/json",
-                    temperature=0.3,
+            response = client.models.generate_content(
+                model=settings.GEMINI_MODEL,
+                contents=full_prompt,
+                config=build_generate_config(
+                    {"response_mime_type": "application/json", "temperature": 0.3}
                 ),
             )
             text = response.text.strip()

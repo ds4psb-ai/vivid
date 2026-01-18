@@ -131,14 +131,14 @@ Respond with ONLY a number from 0 to 1:
 Score:"""
 
     try:
-        import google.generativeai as genai
-        from app.config import settings
-        
-        genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-2.0-flash-exp")
-        
+        from app.services.genai_utils import get_genai_client
+        client = get_genai_client()
+
         response = await asyncio.to_thread(
-            lambda: model.generate_content(evaluation_prompt)
+            lambda: client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=evaluation_prompt,
+            )
         )
         
         # Parse score from response
@@ -164,11 +164,8 @@ async def evaluate_relevance(query: str, answer: str) -> float:
         return 0.0
     
     try:
-        import google.generativeai as genai
-        from app.config import settings
-        
-        genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-2.0-flash-exp")
+        from app.services.genai_utils import get_genai_client
+        client = get_genai_client()
         
         prompt = f"""Rate how relevant this answer is to the query.
 
@@ -183,7 +180,10 @@ Respond with ONLY a number from 0 to 1:
 Score:"""
         
         response = await asyncio.to_thread(
-            lambda: model.generate_content(prompt)
+            lambda: client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=prompt,
+            )
         )
         return min(1.0, max(0.0, float(response.text.strip())))
         

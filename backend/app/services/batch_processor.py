@@ -27,6 +27,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
 from app.config import settings
+from app.services.genai_utils import get_genai_client, with_model_prefix
 
 logger = logging.getLogger(__name__)
 
@@ -119,21 +120,15 @@ class BatchProcessor:
         results = await processor.get_job_results(job_id)
     """
     
-    _genai = None
+    _client = None
     _jobs: Dict[str, BatchJobRecord] = {}  # In-memory job tracking
     
     @classmethod
-    def _ensure_genai(cls):
-        """Lazy load google.generativeai."""
-        if cls._genai is None:
-            try:
-                import google.generativeai as genai
-                genai.configure(api_key=settings.GEMINI_API_KEY)
-                cls._genai = genai
-            except ImportError as e:
-                logger.error("google-generativeai not installed", exc_info=e)
-                raise
-        return cls._genai
+    def _ensure_client(cls):
+        """Lazy load google-genai client."""
+        if cls._client is None:
+            cls._client = get_genai_client()
+        return cls._client
     
     @classmethod
     async def submit_job(
@@ -154,7 +149,7 @@ class BatchProcessor:
         Note:
             Jobs complete within 24 hours at 50% discount.
         """
-        genai = cls._ensure_genai()
+        client = cls._ensure_client()
         
         job_id = str(uuid.uuid4())
         display_name = config.display_name or f"{config.job_type.value}_{job_id[:8]}"
@@ -175,12 +170,10 @@ class BatchProcessor:
                 })
             
             # Submit batch job
-            batch_job = genai.batches.create(
-                model=f"models/{config.model}",
+            batch_job = client.batches.create(
+                model=with_model_prefix(config.model),
                 src=inline_requests,
-                config={
-                    "display_name": display_name,
-                }
+                config={"display_name": display_name},
             )
             
             # Create job record

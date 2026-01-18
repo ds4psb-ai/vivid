@@ -12,11 +12,16 @@ import time
 from typing import Any, Dict, List, Optional, Tuple
 
 from app.config import settings
+from app.services.genai_utils import (
+    GenaiModelAdapter,
+    build_generate_config,
+    get_genai_client,
+)
 
 logger = logging.getLogger(__name__)
 
 # Lazy-load the SDK to avoid import errors if not installed
-_genai = None
+_client = None
 _model = None
 
 
@@ -25,18 +30,14 @@ class GeminiGenerationError(Exception):
     pass
 
 
-def _get_genai():
-    """Lazy-load google.generativeai module."""
-    global _genai
-    if _genai is None:
-        try:
-            import google.generativeai as genai
-            _genai = genai
-        except ImportError:
-            raise GeminiGenerationError(
-                "google-generativeai not installed. Run: pip install google-generativeai"
-            )
-    return _genai
+def _get_client(api_key: Optional[str] = None):
+    """Lazy-load google-genai client."""
+    global _client
+    if api_key:
+        _client = get_genai_client(api_key)
+    elif _client is None:
+        _client = get_genai_client()
+    return _client
 
 
 _active_api_key: Optional[str] = None  # Track which key is currently active
@@ -69,11 +70,9 @@ def configure_gemini(force_fallback: bool = False) -> bool:
     if fallback_key:
         keys_to_try.append(("fallback", fallback_key))
 
-    genai = _get_genai()
-
     for key_name, api_key in keys_to_try:
         try:
-            genai.configure(api_key=api_key)
+            _get_client(api_key)
             _active_api_key = api_key
             logger.info(f"Gemini configured with {key_name} key, model: {settings.GEMINI_MODEL}")
             return True
@@ -117,14 +116,15 @@ def _get_model(use_video: bool = False):
     if use_video:
         if not configure_gemini():
             raise GeminiGenerationError("Gemini not configured")
-        genai = _get_genai()
-        return genai.GenerativeModel(
-            model_name=model_name,
+        client = _get_client()
+        return GenaiModelAdapter(
+            client,
+            model_name,
             generation_config={
-                "temperature": 0.4,  # Lower temp for video interpretation
+                "temperature": 0.4,
                 "top_p": 0.95,
                 "top_k": 40,
-                "max_output_tokens": 16384,  # Higher for video analysis
+                "max_output_tokens": 16384,
                 "response_mime_type": "application/json",
             },
         )
@@ -133,9 +133,10 @@ def _get_model(use_video: bool = False):
     if _model is None:
         if not configure_gemini():
             raise GeminiGenerationError("Gemini not configured")
-        genai = _get_genai()
-        _model = genai.GenerativeModel(
-            model_name=model_name,
+        client = _get_client()
+        _model = GenaiModelAdapter(
+            client,
+            model_name,
             generation_config={
                 "temperature": 0.7,
                 "top_p": 0.95,
@@ -180,21 +181,21 @@ def _call_with_retry(
         try:
             start_time = time.time()
             
-            # Create a new model instance with system instruction
-            genai = _get_genai()
-            configured_model = genai.GenerativeModel(
-                model_name=settings.GEMINI_MODEL,
-                system_instruction=system_instruction,
-                generation_config={
-                    "temperature": 0.7,
-                    "top_p": 0.95,
-                    "top_k": 40,
-                    "max_output_tokens": 8192,
-                    "response_mime_type": "application/json",
-                },
+            client = _get_client()
+            response = client.models.generate_content(
+                model=settings.GEMINI_MODEL,
+                contents=prompt,
+                config=build_generate_config(
+                    {
+                        "temperature": 0.7,
+                        "top_p": 0.95,
+                        "top_k": 40,
+                        "max_output_tokens": 8192,
+                        "response_mime_type": "application/json",
+                    },
+                    system_instruction=system_instruction,
+                ),
             )
-            
-            response = configured_model.generate_content(prompt)
             elapsed = time.time() - start_time
             
             # Parse JSON response
@@ -204,7 +205,11 @@ def _call_with_retry(
             # Extract token usage
             usage = {
                 "input": getattr(response.usage_metadata, 'prompt_token_count', 0) if hasattr(response, 'usage_metadata') else 0,
-                "output": getattr(response.usage_metadata, 'candidates_token_count', 0) if hasattr(response, 'usage_metadata') else 0,
+                "output": getattr(
+                    response.usage_metadata,
+                    'response_token_count',
+                    getattr(response.usage_metadata, 'candidates_token_count', 0),
+                ) if hasattr(response, 'usage_metadata') else 0,
             }
             usage["total"] = usage["input"] + usage["output"]
             
@@ -1133,9 +1138,11 @@ def test_connection() -> Dict[str, Any]:
     
     try:
         configure_gemini()
-        genai = _get_genai()
-        model = genai.GenerativeModel(settings.GEMINI_MODEL)
-        response = model.generate_content("Say 'OK' if you can receive this message.")
+        client = _get_client()
+        response = client.models.generate_content(
+            model=settings.GEMINI_MODEL,
+            contents="Say 'OK' if you can receive this message.",
+        )
         return {
             "status": "ok",
             "model": settings.GEMINI_MODEL,
@@ -1173,7 +1180,7 @@ def interpret_video_file(
         raise GeminiGenerationError("Gemini not enabled or API key not set")
     
     configure_gemini()
-    genai = _get_genai()
+    client = _get_client()
     
     # Use video model (gemini-3-pro-preview)
     video_model = _get_video_model()
@@ -1181,13 +1188,13 @@ def interpret_video_file(
     
     try:
         # Upload video file
-        video_file = genai.upload_file(path=video_file_path)
+        video_file = client.files.upload(file=video_file_path)
         
         # Wait for file processing
         import time
         while video_file.state.name == "PROCESSING":
             time.sleep(2)
-            video_file = genai.get_file(video_file.name)
+            video_file = client.files.get(name=video_file.name)
         
         if video_file.state.name == "FAILED":
             raise GeminiGenerationError(f"Video processing failed: {video_file.state.name}")
@@ -1204,7 +1211,11 @@ def interpret_video_file(
         # Token usage
         usage = {
             "input": getattr(response.usage_metadata, 'prompt_token_count', 0) if hasattr(response, 'usage_metadata') else 0,
-            "output": getattr(response.usage_metadata, 'candidates_token_count', 0) if hasattr(response, 'usage_metadata') else 0,
+            "output": getattr(
+                response.usage_metadata,
+                'response_token_count',
+                getattr(response.usage_metadata, 'candidates_token_count', 0),
+            ) if hasattr(response, 'usage_metadata') else 0,
         }
         usage["total"] = usage["input"] + usage["output"]
         
@@ -1232,4 +1243,3 @@ def interpret_video_file(
 #   - Scene detection, visual structure analysis
 #   - Higher token limits for video content
 #
-

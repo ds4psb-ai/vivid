@@ -183,19 +183,23 @@ class TestSkipRetrievalIntegration:
         from app.rag.hybrid_rag import _check_skip_retrieval
 
         with patch("app.rag.semantic_router.get_semantic_router") as router_mock, \
-             patch("google.generativeai.GenerativeModel") as genai_mock:
+             patch("app.services.genai_utils.get_genai_client") as genai_mock:
 
             # Router returns simple_factual
             router = AsyncMock()
             router.classify.return_value = (QueryType.SIMPLE_FACTUAL, 0.92)
             router_mock.return_value = router
 
-            # Mock Gemini GenerativeModel
-            mock_model = MagicMock()
+            # Mock google-genai client
             mock_response = MagicMock()
             mock_response.text = "Python is a programming language."
-            mock_model.generate_content_async = AsyncMock(return_value=mock_response)
-            genai_mock.return_value = mock_model
+            mock_models = MagicMock()
+            mock_models.generate_content = AsyncMock(return_value=mock_response)
+            mock_aio = MagicMock()
+            mock_aio.models = mock_models
+            mock_client = MagicMock()
+            mock_client.aio = mock_aio
+            genai_mock.return_value = mock_client
 
             result = await _check_skip_retrieval(
                 query="Python이란?",
