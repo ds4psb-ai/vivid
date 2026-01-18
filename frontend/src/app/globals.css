@@ -164,10 +164,11 @@ html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
   /* ─── LIGHT MODE (Midday AI Style) ─── */
   /* Clean, crisp, professional */
   color-scheme: light dark;
-  --bg-0: #ffffff;
-  --bg-1: #FAFAFA;
+  /* Base backgrounds now mapped to neutral scale (Phase 3.1) */
+  --bg-0: var(--neutral-0);
+  --bg-1: var(--neutral-50);
   /* Very subtle grey for contrast */
-  --bg-2: #F4F4F5;
+  --bg-2: var(--neutral-100);
   /* Surface/Panels */
 
   --fg-0: #09090B;
@@ -237,11 +238,12 @@ html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
 .dark {
   /* ─── DARK MODE (Existing Deep Space Theme) ─── */
   /* 2025 Deep Space Theme - Reduced Eye Strain */
-  --bg-0: #0F0F1A;
+  /* Base backgrounds now mapped to neutral scale (Phase 3.1) */
+  --bg-0: var(--neutral-50);
   /* Deep Blue-Gray (Primary Background) */
-  --bg-1: #151522;
+  --bg-1: var(--neutral-100);
   /* Slightly lighter for panels */
-  --bg-2: #1A1A2E;
+  --bg-2: var(--neutral-200);
   /* Elevated Surface */
 
   --fg-0: #E8E8ED;
