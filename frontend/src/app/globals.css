@@ -213,6 +213,17 @@ html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
   --interactive-secondary: var(--accent-2);
   --focus-ring: var(--accent);
 
+  /* Role Tokens (Primary / Secondary / Tertiary) */
+  --role-primary-bg: var(--interactive-default);
+  --role-primary-fg: var(--fg-on-emphasis);
+  --role-primary-border: var(--interactive-default);
+  --role-secondary-bg: var(--surface-1);
+  --role-secondary-fg: var(--fg-0);
+  --role-secondary-border: var(--border-muted);
+  --role-tertiary-bg: transparent;
+  --role-tertiary-fg: var(--fg-muted);
+  --role-tertiary-border: transparent;
+
   /* High-Contrast Tokens (Phase 2.2 skeleton) */
   --hc-bg-0: #ffffff;
   --hc-bg-1: #ffffff;
@@ -290,6 +301,17 @@ html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
   --interactive-secondary: var(--accent-2);
   --focus-ring: var(--accent);
 
+  /* Role Tokens (Primary / Secondary / Tertiary) */
+  --role-primary-bg: var(--interactive-default);
+  --role-primary-fg: var(--fg-on-emphasis);
+  --role-primary-border: var(--interactive-default);
+  --role-secondary-bg: var(--surface-1);
+  --role-secondary-fg: var(--fg-0);
+  --role-secondary-border: var(--border-muted);
+  --role-tertiary-bg: transparent;
+  --role-tertiary-fg: var(--fg-muted);
+  --role-tertiary-border: transparent;
+
   /* High-Contrast Tokens (Phase 2.2 skeleton) */
   --hc-bg-0: #000000;
   --hc-bg-1: #0b0b0f;
@@ -356,6 +378,52 @@ html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
 
   --radius-lusion: 20px;
   --global-border-radius: 20px;
+
+  /* Token Spine (Spacing) */
+  --space-0: 0px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 48px;
+  --space-10: 64px;
+
+  /* Token Spine (Radius) */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: var(--radius-lusion);
+  --radius-2xl: 24px;
+  --radius-pill: 999px;
+
+  /* Token Spine (Motion) */
+  --motion-duration-fast: 120ms;
+  --motion-duration-medium: 200ms;
+  --motion-duration-slow: 320ms;
+  --motion-duration-xslow: 500ms;
+  --motion-ease-standard: var(--ease-lusion);
+  --motion-ease-emphasized: var(--ease-bounce);
+  --motion-ease-linear: linear;
+
+  /* Token Spine (Z-Index) */
+  --z-base: 0;
+  --z-sticky: 40;
+  --z-dropdown: 50;
+  --z-overlay: 60;
+  --z-modal: 70;
+  --z-toast: 90;
+
+  /* Token Spine (Shadows) */
+  --shadow-color-ambient: rgba(2, 6, 23, 0.08);
+  --shadow-color-lifted: rgba(2, 6, 23, 0.18);
+  --shadow-sm: 0 1px 2px var(--shadow-color-ambient);
+  --shadow-md: 0 6px 16px var(--shadow-color-ambient);
+  --shadow-lg: 0 14px 40px var(--shadow-color-lifted);
 }
 
 
