@@ -224,6 +224,25 @@ html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
   --role-tertiary-fg: var(--fg-muted);
   --role-tertiary-border: transparent;
 
+  /* Crebit Philosophy Tokens (Section 3.5) */
+  --evidence-badge-bg: rgba(14, 165, 233, 0.12);
+  --evidence-badge-fg: var(--fg-0);
+  --provenance-border: rgba(14, 165, 233, 0.35);
+  --pattern-version-fg: var(--fg-muted);
+  --capsule-locked-bg: var(--surface-1);
+  --capsule-locked-border: var(--border-muted);
+  --capsule-lock-icon: var(--fg-muted);
+  --run-idle: var(--fg-muted);
+  --run-loading: var(--accent);
+  --run-streaming: var(--accent-2);
+  --run-complete: var(--success);
+  --run-error: var(--error);
+  --run-cancelled: var(--fg-muted);
+  --credit-ok: var(--success);
+  --credit-low: var(--warning);
+  --credit-zero: var(--error);
+  --credit-pending: var(--accent);
+
   /* High-Contrast Tokens (Phase 2.2 skeleton) */
   --hc-bg-0: #ffffff;
   --hc-bg-1: #ffffff;
@@ -311,6 +330,25 @@ html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
   --role-tertiary-bg: transparent;
   --role-tertiary-fg: var(--fg-muted);
   --role-tertiary-border: transparent;
+
+  /* Crebit Philosophy Tokens (Section 3.5) */
+  --evidence-badge-bg: rgba(56, 189, 248, 0.12);
+  --evidence-badge-fg: var(--fg-0);
+  --provenance-border: rgba(56, 189, 248, 0.35);
+  --pattern-version-fg: var(--fg-muted);
+  --capsule-locked-bg: var(--surface-1);
+  --capsule-locked-border: var(--border-muted);
+  --capsule-lock-icon: var(--fg-muted);
+  --run-idle: var(--fg-muted);
+  --run-loading: var(--accent);
+  --run-streaming: var(--accent-2);
+  --run-complete: var(--success);
+  --run-error: var(--error);
+  --run-cancelled: var(--fg-muted);
+  --credit-ok: var(--success);
+  --credit-low: var(--warning);
+  --credit-zero: var(--error);
+  --credit-pending: var(--accent);
 
   /* High-Contrast Tokens (Phase 2.2 skeleton) */
   --hc-bg-0: #000000;
@@ -1160,3 +1198,29 @@ html.lenis body {
   opacity: 0;
   transition: opacity 0.2s;
 }
+
+/* Crebit Philosophy Utility Classes (Section 7.4-7.6) */
+.evidence-badge {
+  background: var(--evidence-badge-bg);
+  color: var(--evidence-badge-fg);
+  border: 1px solid var(--provenance-border);
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+
+.capsule-locked {
+  background: var(--capsule-locked-bg);
+  border: 1px solid var(--capsule-locked-border);
+  color: var(--capsule-lock-icon);
+  opacity: 0.85;
+}
+
+.run-state.loading { color: var(--run-loading); }
+.run-state.streaming { color: var(--run-streaming); }
+.run-state.error { color: var(--run-error); }
+.run-state.complete { color: var(--run-complete); }
+.run-state.cancelled { color: var(--run-cancelled); }
+.credit-chip.low { color: var(--credit-low); }
+.credit-chip.zero { color: var(--credit-zero); }
+.credit-chip.ok { color: var(--credit-ok); }
