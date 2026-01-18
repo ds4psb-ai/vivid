@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Copy, Check, Sparkles, LayoutGrid, Image as ImageIcon, Film, X, Download, Save, CheckCircle, Palette, Moon, Video, Loader2, BookOpen, Music, Construction, ArrowLeft } from "lucide-react";
 import { api, SingularityTemplate } from "@/lib/api";
 import { FLOW_ENABLED } from "@/lib/feature-flags";
+import { dimensionIdToCode, getDimensionToken } from "@/lib/tokens";
 import Link from "next/link";
 import type {
     WorkflowStartEvent,
@@ -790,6 +791,19 @@ function FlowPageContent() {
                                                     const isExpanded = expandedResult === result.toolName;
                                                     const toolInfo = getToolInfoFromAgentTool(result.toolName);
                                                     const Icon = ICON_COMPONENTS[toolInfo?.icon || "sparkles"];
+                                                    const dimensionValue = toolInfo?.dimension ?? result.dimension;
+                                                    const dimensionCode = dimensionValue
+                                                        ? dimensionIdToCode(dimensionValue)
+                                                        : null;
+                                                    const toneKey = dimensionCode
+                                                        ? getDimensionToken(dimensionCode).tailwindKey
+                                                        : null;
+                                                    const iconToneClass = toneKey
+                                                        ? `bg-${toneKey}/20 text-${toneKey}`
+                                                        : "bg-white/10 text-[var(--fg-muted)]";
+                                                    const labelToneClass = toneKey
+                                                        ? `text-${toneKey}`
+                                                        : "text-[var(--fg-muted)]";
 
                                                     return (
                                                         <div
@@ -802,22 +816,14 @@ function FlowPageContent() {
                                                                 className="w-full flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors"
                                                             >
                                                                 <div className="flex items-center gap-3">
-                                                                    <div className={`
-                                                                        h-10 w-10 rounded-xl flex items-center justify-center
-                                                                        ${toolInfo?.color === "violet" ? "bg-violet-500/20 text-violet-400" : ""}
-                                                                        ${toolInfo?.color === "emerald" ? "bg-emerald-500/20 text-emerald-400" : ""}
-                                                                        ${toolInfo?.color === "amber" ? "bg-amber-500/20 text-amber-400" : ""}
-                                                                        ${toolInfo?.color === "cyan" ? "bg-cyan-500/20 text-cyan-400" : ""}
-                                                                        ${toolInfo?.color === "rose" ? "bg-rose-500/20 text-rose-400" : ""}
-                                                                        ${toolInfo?.color === "fuchsia" ? "bg-fuchsia-500/20 text-fuchsia-400" : ""}
-                                                                        ${toolInfo?.color === "indigo" ? "bg-indigo-500/20 text-indigo-400" : ""}
-                                                                        ${toolInfo?.color === "sky" ? "bg-sky-500/20 text-sky-400" : ""}
-                                                                    `}>
+                                                                    <div
+                                                                        className={`h-10 w-10 rounded-xl flex items-center justify-center ${iconToneClass}`}
+                                                                    >
                                                                         {Icon}
                                                                     </div>
                                                                     <div className="text-left">
                                                                         <div className="flex items-center gap-2">
-                                                                            <span className="text-xs font-bold text-violet-400">
+                                                                            <span className={`text-xs font-bold ${labelToneClass}`}>
                                                                                 {result.dimension}
                                                                             </span>
                                                                             <span className="text-sm font-medium text-[var(--fg-0)]">
