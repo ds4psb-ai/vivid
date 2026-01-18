@@ -29,6 +29,7 @@ import { api, DimensionResponse } from "@/lib/api";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useDimensionConfig, type InputFieldConfig } from "@/contexts/DimensionConfigContext";
+import { dimensionIdToCode, getDimensionGradient, getDimensionToken } from "@/lib/tokens";
 
 // =============================================================================
 // Types
@@ -164,6 +165,39 @@ const COLOR_CLASSES: Record<string, {
         gradient: "from-sky-600 to-blue-600",
         glow: "shadow-[0_0_60px_rgba(14,165,233,0.3)]",
     },
+};
+
+const getGradientStops = (dimension: string | undefined) => {
+    if (!dimension) return null;
+    const code = dimensionIdToCode(dimension);
+    if (!code) return null;
+    const gradient = getDimensionGradient(code);
+    return gradient.replace("bg-gradient-to-r ", "");
+};
+
+const getDimensionColorClasses = (dimension?: string) => {
+    if (!dimension) return null;
+    const code = dimensionIdToCode(dimension);
+    if (!code) return null;
+    const token = getDimensionToken(code);
+    const key = token.tailwindKey;
+    return {
+        bg: `bg-${key}/10`,
+        bgSolid: `bg-${key}`,
+        border: `border-${key}/30`,
+        text: `text-${key}`,
+        gradient: getGradientStops(dimension) ?? "from-violet-600 to-purple-600",
+        glow: `shadow-[0_0_60px_var(--tw-shadow-color)] shadow-${key}/30`,
+    };
+};
+
+const getDimensionFocusClass = (dimension?: string) => {
+    if (!dimension) return null;
+    const code = dimensionIdToCode(dimension);
+    if (!code) return null;
+    const token = getDimensionToken(code);
+    const key = token.tailwindKey;
+    return `focus:border-${key}/50 focus:ring-${key}/10`;
 };
 
 // Dimension-specific form configurations
@@ -539,8 +573,9 @@ export function DimensionPortalModal({
     if (!currentCar || !isOpen || !toolConfig) return null;
 
     // SSoT: Use toolConfig from context instead of hardcoded DIMENSION_CONFIG
-    const colorClass = COLOR_CLASSES[currentCar.color] || COLOR_CLASSES.violet;
-    const focusClass = FOCUS_CLASSES[currentCar.color] || FOCUS_CLASSES.violet;
+    const tokenScheme = getDimensionColorClasses(currentCar.dimension);
+    const colorClass = tokenScheme || COLOR_CLASSES[currentCar.color] || COLOR_CLASSES.violet;
+    const focusClass = getDimensionFocusClass(currentCar.dimension) || FOCUS_CLASSES[currentCar.color] || FOCUS_CLASSES.violet;
     const dimensionRoute = DIMENSION_ROUTES[currentCar.dimension];
 
     // Determine button state
@@ -959,7 +994,8 @@ export function DimensionPortalModal({
                         {/* Progress bar at bottom */}
                         <div className="flex items-center gap-1.5 px-6 py-3 border-t border-white/5 bg-black/20">
                             {cars.map((car) => {
-                                const carColor = COLOR_CLASSES[car.color] || COLOR_CLASSES.violet;
+                                const carTokenScheme = getDimensionColorClasses(car.dimension);
+                                const carColor = carTokenScheme || COLOR_CLASSES[car.color] || COLOR_CLASSES.violet;
                                 return (
                                     <button
                                         key={car.id}
