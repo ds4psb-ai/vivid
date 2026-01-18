@@ -261,6 +261,10 @@ const LEGACY_DIMENSION_ALIASES: Record<string, DimensionCode> = {
   "sa": "story",
   "sc": "sound",
   "ce": "qc",
+  "ref": "4d",
+  "vis": "3d",
+  "reference-decoder": "4d",
+  "visual-realizer": "3d",
 };
 
 // =============================================================================

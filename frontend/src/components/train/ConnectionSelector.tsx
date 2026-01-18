@@ -16,7 +16,7 @@ import {
     Moon,
     Video,
 } from "lucide-react";
-import { getDimensionToken, type DimensionCode } from "@/lib/tokens";
+import { dimensionIdToCode, getDimensionToken, type DimensionCode } from "@/lib/tokens";
 
 interface ConnectionOption {
     id: string;
@@ -185,7 +185,8 @@ export function ConnectionSelector({
                     ) : (
                         <>
                             {visibleOptions.map((option, index) => {
-                                const tokenScheme = getDimensionColorClasses(option.dimensionCode);
+                                const resolvedCode = option.dimensionCode ?? dimensionIdToCode(option.dimension);
+                                const tokenScheme = getDimensionColorClasses(resolvedCode);
                                 const colorScheme = tokenScheme || COLOR_MAP[option.color] || COLOR_MAP.violet;
                                 const IconComponent = ICON_MAP[option.icon] || <Sparkles className="h-5 w-5" />;
                                 const isHovered = hoveredId === option.id;
