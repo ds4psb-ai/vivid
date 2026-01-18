@@ -177,6 +177,39 @@ function downloadResultAsMarkdown(result: WorkflowResult) {
     downloadFile(md, `${result.dimension}-${result.toolName}.md`, 'text/markdown');
 }
 
+const BRAND_TONE = {
+    text: "text-[var(--color-brand-primary)]",
+    textSoft: "text-[var(--color-brand-primary)]/70",
+    textMuted: "text-[var(--color-brand-primary)]/60",
+    bgSubtle: "bg-[var(--color-brand-primary)]/10",
+    bg: "bg-[var(--color-brand-primary)]/20",
+    border: "border-[var(--color-brand-primary)]/30",
+    borderStrong: "border-[var(--color-brand-primary)]/50",
+    hoverBg: "hover:bg-[var(--color-brand-primary)]/30",
+    solid: "bg-[var(--color-brand-primary)]",
+};
+
+const SUCCESS_TONE = {
+    text: "text-[var(--success)]",
+    textSoft: "text-[var(--success)]/70",
+    bgSubtle: "bg-[var(--success)]/10",
+    bg: "bg-[var(--success)]/20",
+    border: "border-[var(--success)]/30",
+};
+
+const ERROR_TONE = {
+    text: "text-[var(--error)]",
+    textSoft: "text-[var(--error)]/70",
+    bgSubtle: "bg-[var(--error)]/10",
+    bg: "bg-[var(--error)]/20",
+    border: "border-[var(--error)]/30",
+};
+
+const INFO_TONE = {
+    solid: "bg-[var(--info)]",
+    hover: "hover:opacity-90",
+};
+
 function FlowPageContent() {
     const [workflowResults, setWorkflowResults] = useState<WorkflowResult[]>([]);
     const [showResults, setShowResults] = useState(false);
@@ -623,7 +656,7 @@ function FlowPageContent() {
                             className="absolute top-2 right-2 p-1.5 rounded-md bg-white/5 opacity-0 group-hover:opacity-100 hover:bg-white/10 transition-all"
                         >
                             {copiedField === fieldId ? (
-                                <Check className="h-3.5 w-3.5 text-emerald-400" />
+                                <Check className={`h-3.5 w-3.5 ${SUCCESS_TONE.text}`} />
                             ) : (
                                 <Copy className="h-3.5 w-3.5 text-[var(--fg-muted)]" />
                             )}
@@ -682,22 +715,22 @@ function FlowPageContent() {
                         {/* Template Loading Indicator */}
                         {isLoadingTemplate && (
                             <div className="card-glass p-4 mb-4 flex items-center gap-3">
-                                <Loader2 className="w-5 h-5 animate-spin text-violet-400" />
-                                <span className="text-sm text-slate-400">템플릿을 불러오는 중...</span>
+                                <Loader2 className={`w-5 h-5 animate-spin ${BRAND_TONE.text}`} />
+                                <span className="text-sm text-[var(--fg-muted)]">템플릿을 불러오는 중...</span>
                             </div>
                         )}
 
                         {/* Template Load Error */}
                         {templateLoadError && !isLoadingTemplate && (
-                            <div className="card-glass p-4 mb-4 border border-red-500/30 bg-red-500/5">
+                            <div className={`card-glass p-4 mb-4 border ${ERROR_TONE.border} ${ERROR_TONE.bgSubtle}`}>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
-                                            <X className="w-5 h-5 text-red-400" />
+                                        <div className={`w-10 h-10 rounded-xl ${ERROR_TONE.bg} flex items-center justify-center`}>
+                                            <X className={`w-5 h-5 ${ERROR_TONE.text}`} />
                                         </div>
                                         <div>
-                                            <div className="text-sm font-bold text-red-300">템플릿 로드 실패</div>
-                                            <div className="text-xs text-red-400/70">{templateLoadError}</div>
+                                            <div className={`text-sm font-bold ${ERROR_TONE.text}`}>템플릿 로드 실패</div>
+                                            <div className={`text-xs ${ERROR_TONE.textSoft}`}>{templateLoadError}</div>
                                         </div>
                                     </div>
                                     <button
@@ -715,12 +748,12 @@ function FlowPageContent() {
                             <motion.div
                                 initial={{ opacity: 0, y: -10 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="card-glass p-4 mb-4 border border-violet-500/30 bg-violet-500/5"
+                                className={`card-glass p-4 mb-4 border ${BRAND_TONE.border} ${BRAND_TONE.bgSubtle}`}
                             >
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-violet-500/20 flex items-center justify-center">
-                                            <Sparkles className="w-5 h-5 text-violet-400" />
+                                        <div className={`w-10 h-10 rounded-xl ${BRAND_TONE.bg} flex items-center justify-center`}>
+                                            <Sparkles className={`w-5 h-5 ${BRAND_TONE.text}`} />
                                         </div>
                                         <div>
                                             <div className="text-sm font-bold text-white">{loadedTemplate.title}</div>
@@ -770,9 +803,9 @@ function FlowPageContent() {
                                             {/* Results Header */}
                                             <div className="flex items-center justify-between mb-6">
                                                 <h3 className="text-lg font-bold text-[var(--fg-0)] flex items-center gap-2">
-                                                    <Sparkles className="h-5 w-5 text-violet-400" />
+                                                    <Sparkles className={`h-5 w-5 ${BRAND_TONE.text}`} />
                                                     {labels.results}
-                                                    <span className="ml-2 px-2 py-0.5 rounded-full bg-emerald-500/20 text-xs text-emerald-400">
+                                                    <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${SUCCESS_TONE.bg} ${SUCCESS_TONE.text}`}>
                                                         {workflowResults.length}개 완료
                                                     </span>
                                                 </h3>
@@ -780,7 +813,7 @@ function FlowPageContent() {
                                                     {/* 🆕 Save as Template Button */}
                                                     <button
                                                         onClick={() => setShowTemplateModal(true)}
-                                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-500/20 hover:bg-violet-500/30 text-violet-300 text-xs font-medium transition-colors"
+                                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${BRAND_TONE.bg} ${BRAND_TONE.hoverBg} ${BRAND_TONE.textSoft}`}
                                                     >
                                                         <Save className="h-3.5 w-3.5" />
                                                         템플릿 저장
@@ -882,14 +915,14 @@ function FlowPageContent() {
                                                                             {/* 🆕 Inputs Section */}
                                                                             {result.inputs && Object.keys(result.inputs).length > 0 && (
                                                                                 <details className="group">
-                                                                                    <summary className="text-xs font-medium text-violet-400 cursor-pointer hover:text-violet-300 transition-colors flex items-center gap-1.5">
+                                                                                    <summary className={`text-xs font-medium cursor-pointer transition-colors flex items-center gap-1.5 ${BRAND_TONE.text} hover:text-[var(--color-brand-primary)]/80`}>
                                                                                         <span>📝 입력 프롬프트</span>
                                                                                         <ChevronDown className="h-3 w-3 group-open:rotate-180 transition-transform" />
                                                                                     </summary>
-                                                                                    <div className="mt-2 p-3 bg-violet-500/5 border border-violet-500/20 rounded-lg space-y-2">
+                                                                                    <div className={`mt-2 p-3 rounded-lg space-y-2 ${BRAND_TONE.bgSubtle} ${BRAND_TONE.border}`}>
                                                                                         {Object.entries(result.inputs).map(([key, value]) => (
                                                                                             <div key={key}>
-                                                                                                <span className="text-[10px] text-violet-300/70 uppercase tracking-wider">{key.replace(/_/g, " ")}</span>
+                                                                                                <span className={`text-[10px] uppercase tracking-wider ${BRAND_TONE.textMuted}`}>{key.replace(/_/g, " ")}</span>
                                                                                                 <p className="text-xs text-[var(--fg-0)]">
                                                                                                     {typeof value === "string" ? value : JSON.stringify(value)}
                                                                                                 </p>
@@ -955,7 +988,7 @@ function FlowPageContent() {
                                 {/* Modal Header */}
                                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
                                     <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                        <Save className="h-5 w-5 text-violet-400" />
+                                        <Save className={`h-5 w-5 ${BRAND_TONE.text}`} />
                                         싱귤래리티 템플릿 저장
                                     </h3>
                                     <button
@@ -970,8 +1003,8 @@ function FlowPageContent() {
                                 <div className="p-6 space-y-4">
                                     {templateSaveSuccess ? (
                                         <div className="text-center py-8">
-                                            <div className="h-16 w-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                                                <Check className="h-8 w-8 text-emerald-400" />
+                                            <div className={`h-16 w-16 mx-auto mb-4 rounded-full ${SUCCESS_TONE.bg} flex items-center justify-center`}>
+                                                <Check className={`h-8 w-8 ${SUCCESS_TONE.text}`} />
                                             </div>
                                             <p className="text-lg font-medium text-white">템플릿 저장 완료!</p>
                                             <p className="text-sm text-zinc-400 mt-1 mb-4">싱귤래리티에서 확인하세요</p>
@@ -980,7 +1013,7 @@ function FlowPageContent() {
                                             <div className="flex flex-col gap-2">
                                                 <a
                                                     href="/singularity"
-                                                    className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors"
+                                                    className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors ${BRAND_TONE.solid} ${BRAND_TONE.hoverBg}`}
                                                 >
                                                     <Sparkles className="h-4 w-4" />
                                                     싱귤래리티로 이동
@@ -988,7 +1021,7 @@ function FlowPageContent() {
                                                 {savedTemplateId && (
                                                     <a
                                                         href={`/constellation?new=true&singularity=${savedTemplateId}`}
-                                                        className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-medium transition-colors"
+                                                        className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors ${INFO_TONE.solid} ${INFO_TONE.hover}`}
                                                     >
                                                         <Sparkles className="h-4 w-4" />
                                                         별자리로 확장하기
@@ -1007,7 +1040,7 @@ function FlowPageContent() {
                                                     value={templateTitle}
                                                     onChange={e => setTemplateTitle(e.target.value)}
                                                     placeholder="예: 시네마틱 프롬프트 워크플로우"
-                                                    className="w-full px-4 py-2.5 rounded-lg bg-black/30 border border-white/10 text-white placeholder:text-zinc-500 focus:outline-none focus:border-violet-500/50"
+                                                    className={`w-full px-4 py-2.5 rounded-lg bg-black/30 border border-white/10 text-white placeholder:text-zinc-500 focus:outline-none focus:border-[var(--color-brand-primary)]/50`}
                                                 />
                                             </div>
                                             <div>
@@ -1019,7 +1052,7 @@ function FlowPageContent() {
                                                     onChange={e => setTemplateDescription(e.target.value)}
                                                     placeholder="워크플로우 템플릿에 대한 설명을 입력하세요"
                                                     rows={3}
-                                                    className="w-full px-4 py-2.5 rounded-lg bg-black/30 border border-white/10 text-white placeholder:text-zinc-500 focus:outline-none focus:border-violet-500/50 resize-none"
+                                                    className="w-full px-4 py-2.5 rounded-lg bg-black/30 border border-white/10 text-white placeholder:text-zinc-500 focus:outline-none focus:border-[var(--color-brand-primary)]/50 resize-none"
                                                 />
                                             </div>
                                             <div>
@@ -1031,16 +1064,16 @@ function FlowPageContent() {
                                                     value={templateTags}
                                                     onChange={e => setTemplateTags(e.target.value)}
                                                     placeholder="예: cinematic, veo, prompt"
-                                                    className="w-full px-4 py-2.5 rounded-lg bg-black/30 border border-white/10 text-white placeholder:text-zinc-500 focus:outline-none focus:border-violet-500/50"
+                                                    className="w-full px-4 py-2.5 rounded-lg bg-black/30 border border-white/10 text-white placeholder:text-zinc-500 focus:outline-none focus:border-[var(--color-brand-primary)]/50"
                                                 />
                                             </div>
 
                                             {/* Workflow Summary */}
-                                            <div className="p-3 rounded-lg bg-violet-500/10 border border-violet-500/20">
-                                                <p className="text-xs text-violet-300 font-medium mb-1">포함된 도구</p>
+                                            <div className={`p-3 rounded-lg ${BRAND_TONE.bgSubtle} ${BRAND_TONE.border}`}>
+                                                <p className={`text-xs font-medium mb-1 ${BRAND_TONE.textSoft}`}>포함된 도구</p>
                                                 <div className="flex flex-wrap gap-1.5">
                                                     {workflowResults.map(r => (
-                                                        <span key={r.toolName} className="px-2 py-0.5 rounded-md bg-violet-500/20 text-xs text-violet-200">
+                                                        <span key={r.toolName} className={`px-2 py-0.5 rounded-md text-xs ${BRAND_TONE.bg} ${BRAND_TONE.textSoft}`}>
                                                             {r.dimension}
                                                         </span>
                                                     ))}
@@ -1055,12 +1088,12 @@ function FlowPageContent() {
                                     <div className="px-6 py-4 border-t border-white/5 space-y-3">
                                         {/* 🆕 Inline Error Display */}
                                         {templateSaveError && (
-                                            <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
-                                                <span className="text-red-400 text-xs">⚠️</span>
-                                                <span className="text-xs text-red-300 flex-1">{templateSaveError}</span>
+                                            <div className={`flex items-center gap-2 p-3 rounded-lg ${ERROR_TONE.bgSubtle} ${ERROR_TONE.border}`}>
+                                                <span className={`text-xs ${ERROR_TONE.text}`}>⚠️</span>
+                                                <span className={`text-xs flex-1 ${ERROR_TONE.text}`}>{templateSaveError}</span>
                                                 <button
                                                     onClick={() => setTemplateSaveError(null)}
-                                                    className="text-red-400 hover:text-red-300 text-xs"
+                                                    className={`text-xs ${ERROR_TONE.text} hover:opacity-80`}
                                                 >
                                                     ✕
                                                 </button>
@@ -1076,7 +1109,7 @@ function FlowPageContent() {
                                             <button
                                                 onClick={handleSaveAsTemplate}
                                                 disabled={!templateTitle.trim() || isSavingTemplate}
-                                                className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:bg-zinc-700 disabled:text-zinc-500 text-white text-sm font-medium transition-colors flex items-center gap-2"
+                                                className={`px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors flex items-center gap-2 ${BRAND_TONE.solid} ${BRAND_TONE.hoverBg} disabled:bg-zinc-700 disabled:text-zinc-500`}
                                             >
                                                 {isSavingTemplate ? (
                                                     <>
@@ -1113,13 +1146,13 @@ function FlowComingSoon() {
                     animate={{ opacity: 1, y: 0 }}
                     className="max-w-md text-center"
                 >
-                    <div className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center mb-6 border border-violet-500/20">
-                        <Construction className="w-10 h-10 text-violet-400" />
+                    <div className={`mx-auto w-20 h-20 rounded-2xl flex items-center justify-center mb-6 ${BRAND_TONE.bgSubtle} ${BRAND_TONE.border}`}>
+                        <Construction className={`w-10 h-10 ${BRAND_TONE.text}`} />
                     </div>
                     <h1 className="text-3xl font-bold text-white mb-3">
                         차원 플로우
                     </h1>
-                    <p className="text-lg text-violet-200 mb-2">
+                    <p className={`text-lg mb-2 ${BRAND_TONE.textSoft}`}>
                         Coming Soon
                     </p>
                     <p className="text-slate-400 mb-8">
@@ -1128,7 +1161,7 @@ function FlowComingSoon() {
                     </p>
                     <Link
                         href="/dimension"
-                        className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-medium transition-colors"
+                        className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white font-medium transition-colors ${BRAND_TONE.solid} ${BRAND_TONE.hoverBg}`}
                     >
                         <ArrowLeft className="w-4 h-4" />
                         차원 앱으로 돌아가기
@@ -1150,7 +1183,7 @@ export default function FlowPage() {
         <Suspense fallback={
             <AppShell>
                 <div className="min-h-screen flex items-center justify-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-violet-400" />
+                    <Loader2 className={`w-8 h-8 animate-spin ${BRAND_TONE.text}`} />
                 </div>
             </AppShell>
         }>
