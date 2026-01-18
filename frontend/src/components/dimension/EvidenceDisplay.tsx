@@ -189,7 +189,7 @@ function EvidenceDisplayInner({
                     {visibleRefs.map((ref) => (
                         <div
                             key={ref.ref_id}
-                            className="p-3 bg-white dark:bg-black/20 rounded-lg text-sm"
+                            className="p-3 card text-sm"
                         >
                             <div className="flex items-center gap-2 mb-1">
                                 <span className="evidence-badge">
