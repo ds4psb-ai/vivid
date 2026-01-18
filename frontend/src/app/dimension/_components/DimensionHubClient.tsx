@@ -28,6 +28,7 @@ import { useParallaxScroll } from "@/hooks/useLusionAnimations";
 import AppShell from "@/components/AppShell";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDimensionChainOptional } from "@/contexts/DimensionChainContext";
+import { getDimensionGradient, getDimensionGlow, getDimensionToken } from "@/lib/tokens";
 import {
   type DimensionStage,
   type DimensionItemData,
@@ -39,11 +40,17 @@ import {
 
 // Stage color mappings for toggle buttons
 const STAGE_COLORS: Record<string, { bg: string; text: string }> = {
-  emerald: { bg: "bg-emerald-500", text: "text-emerald-950" },
-  violet: { bg: "bg-violet-500", text: "text-violet-100" },
-  amber: { bg: "bg-amber-500", text: "text-amber-950" },
-  cyan: { bg: "bg-cyan-500", text: "text-cyan-950" },
-  fuchsia: { bg: "bg-fuchsia-500", text: "text-fuchsia-100" },
+  emerald: { bg: "bg-[var(--color-brand-secondary)]", text: "text-black" },
+  violet: { bg: "bg-[var(--color-brand-primary)]", text: "text-white" },
+  amber: { bg: "bg-[var(--color-brand-accent)]", text: "text-black" },
+  cyan: { bg: "bg-[var(--info)]", text: "text-white" },
+  fuchsia: { bg: "bg-[var(--color-brand-primary)]", text: "text-white" },
+};
+
+const SUCCESS_TONE = {
+  bg: "bg-[var(--success)]/20",
+  border: "border-[var(--success)]/30",
+  text: "text-[var(--success)]",
 };
 
 export default function DimensionHubClient() {
@@ -201,10 +208,10 @@ function ChainStatusBar({
       exit={{ opacity: 0, y: -10 }}
       className="mt-4 w-full max-w-2xl"
     >
-      <div className="relative p-3 rounded-xl backdrop-blur-md bg-gradient-to-r from-emerald-500/10 via-violet-500/10 to-amber-500/10 border border-white/10">
+      <div className="relative p-3 rounded-xl backdrop-blur-md bg-gradient-to-r from-[var(--color-brand-secondary)]/10 via-[var(--color-brand-primary)]/10 to-[var(--color-brand-accent)]/10 border border-white/10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Link2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <Link2 className="w-4 h-4 text-[var(--success)]" />
             <span className="text-sm font-medium text-gray-800 dark:text-white/80">
               {language === "ko" ? "워크플로우 진행 중" : "Workflow in progress"}
             </span>
@@ -248,7 +255,7 @@ function ChainStatusBar({
               <div className="pt-3 mt-3 border-t border-white/10 space-y-2">
                 {chainSummary.map((item, idx) => (
                   <div key={item.key} className="flex items-center gap-2 text-sm">
-                    <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-bold">
+                    <span className={`w-5 h-5 rounded-full ${SUCCESS_TONE.bg} ${SUCCESS_TONE.text} flex items-center justify-center text-xs font-bold`}>
                       {idx + 1}
                     </span>
                     <span className="text-white/80 font-medium">{item.name}</span>
@@ -284,7 +291,7 @@ function DimensionPortalGrid({
   return (
     <div className="relative">
       {/* Background Atmosphere Spot */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-blue-600/10 blur-[150px] rounded-full pointer-events-none z-0 mix-blend-screen" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-[var(--color-brand-primary)]/10 blur-[150px] rounded-full pointer-events-none z-0 mix-blend-screen" />
 
       <motion.div
         className={`grid gap-6 relative z-10 ${
@@ -328,6 +335,17 @@ function DimensionCard({
 }: DimensionCardProps) {
   const Icon = getDimensionIcon(dimension.iconName);
   const stageInfo = WORKFLOW_STAGES[dimension.stage];
+  const token = getDimensionToken(dimension.dimensionCode);
+  const toneKey = token.tailwindKey;
+  const textColor = `text-${toneKey}`;
+  const borderColor = `border-${toneKey}`;
+  const borderColorSoft = `border-${toneKey}/50`;
+  const gradientStops = getDimensionGradient(dimension.dimensionCode).replace(
+    "bg-gradient-to-r ",
+    ""
+  );
+  const gradient = `bg-gradient-to-br ${gradientStops}`;
+  const glowClass = getDimensionGlow(dimension.dimensionCode, "lg");
 
   return (
     <motion.div
@@ -351,9 +369,9 @@ function DimensionCard({
 
         {/* Chain Data Indicator */}
         {hasData && (
-          <div className="absolute top-4 left-4 z-20 flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30">
-            <CheckCircle className="w-3 h-3 text-emerald-400" />
-            <span className="text-[10px] text-emerald-400 font-medium">
+          <div className={`absolute top-4 left-4 z-20 flex items-center gap-1 px-2 py-1 rounded-full ${SUCCESS_TONE.bg} border ${SUCCESS_TONE.border}`}>
+            <CheckCircle className={`w-3 h-3 ${SUCCESS_TONE.text}`} />
+            <span className={`text-[10px] ${SUCCESS_TONE.text} font-medium`}>
               {language === "ko" ? "데이터" : "Data"}
             </span>
           </div>
@@ -361,17 +379,17 @@ function DimensionCard({
 
         {/* Colored Border Reveal */}
         <div
-          className={`absolute inset-0 rounded-[2rem] border-2 ${dimension.borderColor} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
+          className={`absolute inset-0 rounded-[2rem] border-2 ${borderColor} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
         />
 
         {/* Gradient Background */}
         <div
-          className={`absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-700 bg-gradient-to-br ${dimension.gradient || "from-white/10 to-transparent"}`}
+          className={`absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-700 ${gradient}`}
         />
 
         {/* Portal Ring Effect */}
         <div
-          className={`absolute -right-20 -top-20 h-64 w-64 rounded-full border-[1px] ${dimension.portalColor} ${dimension.glowClass} blur-[60px] opacity-20 group-hover:opacity-40 transition-opacity duration-700`}
+          className={`absolute -right-20 -top-20 h-64 w-64 rounded-full border-[1px] ${borderColorSoft} ${glowClass} blur-[60px] opacity-20 group-hover:opacity-40 transition-opacity duration-700`}
         />
 
         <div className="relative flex items-start justify-between h-full flex-col gap-4 min-h-[140px]">
@@ -379,7 +397,7 @@ function DimensionCard({
             <div className="flex flex-col gap-1">
               {/* Stage Label */}
               <span
-                className={`text-[10px] font-mono tracking-wider ${dimension.textColor} opacity-60`}
+                className={`text-[10px] font-mono tracking-wider ${textColor} opacity-60`}
               >
                 {stageInfo.order}.{dimension.stageOrder}
               </span>
@@ -388,10 +406,7 @@ function DimensionCard({
               </h2>
             </div>
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 backdrop-blur-md transition-all duration-500 group-hover:scale-110 group-hover:bg-black/10 dark:group-hover:bg-white/10">
-              <Icon
-                className={`h-4 w-4 ${dimension.textColor}`}
-                aria-hidden="true"
-              />
+              <Icon className={`h-4 w-4 ${textColor}`} aria-hidden="true" />
             </div>
           </div>
 
@@ -426,14 +441,14 @@ function ProposeButton({ onOpenSubmitModal, language }: ProposeButtonProps) {
       className="group relative overflow-hidden rounded-[2rem] border border-dashed border-slate-300 dark:border-white/10 bg-transparent p-6 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] hover:border-black/30 dark:hover:border-white/30 transition-all duration-500 flex flex-col items-center justify-center gap-4 min-h-[140px]"
     >
       <div className="relative">
-        <div className="absolute inset-0 bg-lime-400/20 blur-[30px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <div className="absolute inset-0 bg-[var(--color-brand-accent)]/20 blur-[30px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-white/5 border border-black/10 dark:border-white/10 transition-all duration-500 group-hover:scale-110">
           <Plus className="h-6 w-6 text-zinc-500 group-hover:text-black dark:group-hover:text-white transition-colors duration-300" />
         </div>
       </div>
 
       <div className="text-center space-y-2">
-        <span className="text-xs font-bold tracking-[0.2em] text-gray-700 dark:text-zinc-600 uppercase group-hover:text-lime-600 dark:group-hover:text-lime-400 transition-colors">
+        <span className="text-xs font-bold tracking-[0.2em] text-gray-700 dark:text-zinc-600 uppercase group-hover:text-[var(--color-brand-accent)] transition-colors">
           ∞D INFINITE
         </span>
         <p className="text-sm text-gray-500 dark:text-zinc-500 group-hover:text-gray-700 dark:group-hover:text-zinc-300 transition-colors max-w-[200px]">
