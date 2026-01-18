@@ -209,6 +209,16 @@ html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
   --interactive-default: var(--accent);
   --interactive-secondary: var(--accent-2);
   --focus-ring: var(--accent);
+
+  /* High-Contrast Tokens (Phase 2.2 skeleton) */
+  --hc-bg-0: #ffffff;
+  --hc-bg-1: #ffffff;
+  --hc-fg-0: #000000;
+  --hc-fg-muted: #1f2937;
+  --hc-border: #111827;
+  --hc-accent: #0000ff;
+  --hc-accent-2: #b45309;
+  --hc-focus-ring: #0000ff;
 }
 
 .dark {
@@ -260,6 +270,16 @@ html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
   --interactive-default: var(--accent);
   --interactive-secondary: var(--accent-2);
   --focus-ring: var(--accent);
+
+  /* High-Contrast Tokens (Phase 2.2 skeleton) */
+  --hc-bg-0: #000000;
+  --hc-bg-1: #0b0b0f;
+  --hc-fg-0: #ffffff;
+  --hc-fg-muted: #e5e7eb;
+  --hc-border: #ffffff;
+  --hc-accent: #7dd3fc;
+  --hc-accent-2: #fbbf24;
+  --hc-focus-ring: #7dd3fc;
 
   /* Cinematic Aurora Gradient */
   --bg-image-gradient:
@@ -327,6 +347,43 @@ html.dark body {
     radial-gradient(circle at 15% 0%, rgba(56, 189, 248, 0.08) 0%, transparent 40%),
     radial-gradient(circle at 85% 10%, rgba(245, 158, 11, 0.05) 0%, transparent 40%),
     radial-gradient(circle at 50% 100%, rgba(56, 189, 248, 0.03) 0%, transparent 60%);
+}
+
+/* Phase 2.2: User Preference Modes (skeleton) */
+@media (prefers-contrast: more) {
+  :root,
+  .dark {
+    --bg-0: var(--hc-bg-0);
+    --bg-1: var(--hc-bg-1);
+    --bg-2: var(--hc-bg-1);
+    --fg-0: var(--hc-fg-0);
+    --fg-muted: var(--hc-fg-muted);
+    --border-muted: var(--hc-border);
+    --border-subtle: var(--hc-border);
+    --accent: var(--hc-accent);
+    --accent-2: var(--hc-accent-2);
+    --focus-ring: var(--hc-focus-ring);
+    --surface-1: var(--hc-bg-1);
+    --surface-2: var(--hc-bg-1);
+    --glass-border: var(--hc-border);
+    --glass-highlight: transparent;
+    --accent-glow: transparent;
+  }
+}
+
+@media (forced-colors: active) {
+  /* honor system colors; avoid forcing custom palettes */
+  * { forced-color-adjust: auto; }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root,
+  .dark {
+    --surface-1: var(--bg-1);
+    --surface-2: var(--bg-2);
+    --glass-border: var(--border-muted);
+    --glass-highlight: transparent;
+  }
 }
 
 code,
