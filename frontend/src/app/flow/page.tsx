@@ -21,6 +21,15 @@ import type {
     WorkflowNode,
 } from "@/types/agent";
 
+type DimensionType =
+    | "1D" | "2D" | "3D" | "4D"
+    | "AD" | "AI" | "QC" | "VEO"
+    | "STORY" | "STORYBOARD" | "SOUND" | "SUNO"
+    | "KLING" | "CHARACTER" | "PROMPT" | "MIRROR"
+    | "JSON_GEN" | "NANOBANANA"
+    | "SA" | "SC" | "CE"
+    | "REF" | "VIS";
+
 // Agent tool names to toolId mapping (for workflow events) - 10개 전체
 const AGENT_TOOL_TO_TOOL_ID: Record<string, string> = {
     // Core Dimensions (1D-4D)
@@ -314,7 +323,7 @@ function FlowPageContent() {
 
             workflowRef.current.addCar({
                 toolId: DIMENSION_TO_TOOL_ID[dimCode] || dimCode,
-                dimension: dimCode as "1D" | "2D" | "3D" | "4D",
+                dimension: dimCode as DimensionType,
                 displayName: toolInfo.displayName,
                 icon: toolInfo.icon,
                 color: toolInfo.color,
@@ -464,7 +473,7 @@ function FlowPageContent() {
 
             const carId = workflowRef.current.addCar({
                 toolId: AGENT_TOOL_TO_TOOL_ID[node.tool_name] || node.tool_name,
-                dimension: toolInfo.dimension as "1D" | "2D" | "3D" | "4D",
+                dimension: toolInfo.dimension as DimensionType,
                 displayName: toolInfo.displayName,
                 icon: toolInfo.icon,
                 color: toolInfo.color,
@@ -497,7 +506,7 @@ function FlowPageContent() {
             // Add new car with executing status
             const carId = workflowRef.current.addCar({
                 toolId: AGENT_TOOL_TO_TOOL_ID[event.tool_name] || event.tool_name,
-                dimension: (toolInfo.dimension || event.dimension) as "1D" | "2D" | "3D" | "4D",
+                dimension: (toolInfo.dimension || event.dimension) as DimensionType,
                 displayName: toolInfo.displayName,
                 icon: toolInfo.icon,
                 color: toolInfo.color,
