@@ -17,6 +17,7 @@ import {
     Video,
     Eye,
 } from "lucide-react";
+import { dimensionIdToCode, getDimensionToken } from "@/lib/tokens";
 
 interface TrainCarProps {
     id: string;
@@ -110,6 +111,21 @@ const COLOR_MAP: Record<string, { bg: string; border: string; text: string; glow
     },
 };
 
+const getDimensionColorClasses = (dimension?: string) => {
+    if (!dimension) return null;
+    const code = dimensionIdToCode(dimension);
+    if (!code) return null;
+    const token = getDimensionToken(code);
+    const key = token.tailwindKey;
+    return {
+        bg: `bg-${key}/20`,
+        border: `border-${key}/50`,
+        text: `text-${key}`,
+        glow: `shadow-[0_0_30px_var(--tw-shadow-color)] shadow-${key}/30`,
+        portalGlow: `shadow-[0_0_60px_var(--tw-shadow-color),inset_0_0_30px_var(--tw-shadow-color)] shadow-${key}/40`,
+    };
+};
+
 const STATUS_INDICATOR: Record<string, React.ReactNode> = {
     pending: <div className="h-2 w-2 rounded-full bg-zinc-500" />,
     ready: <div className="h-2 w-2 rounded-full bg-blue-400 animate-pulse" />,
@@ -135,7 +151,8 @@ export function TrainCar({
     creditCost,
 }: TrainCarProps) {
     const [showFullError, setShowFullError] = useState(false);
-    const colorScheme = COLOR_MAP[color] || COLOR_MAP.violet;
+    const tokenScheme = getDimensionColorClasses(_dimension);
+    const colorScheme = tokenScheme || COLOR_MAP[color] || COLOR_MAP.violet;
     const IconComponent = ICON_MAP[icon] || <Sparkles className="h-6 w-6" />;
 
     return (
