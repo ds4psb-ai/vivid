@@ -96,6 +96,16 @@ python scripts/run_rag_quality_report.py --no-llm
 python scripts/run_rag_quality_report.py -o data/reports/custom.json
 ```
 
+### 4. 품질 게이트 (자동 실패)
+
+```bash
+# 기본 threshold (rag_quality_cases.json) 기반
+python scripts/run_rag_quality_gate.py --no-llm
+
+# 커스텀 threshold
+python scripts/run_rag_quality_gate.py --min-pass-rate 0.75 --min-groundedness 0.65
+```
+
 ---
 
 ## 비용 & 시간 가이드

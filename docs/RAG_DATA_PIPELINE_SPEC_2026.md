@@ -221,6 +221,19 @@ class VideoLogicExtractor:
 1. VideoLogicExtractor 구현
 2. NotebookLM 세션 안정화
 3. Tavily 기반 코퍼스 자동 수집 파이프라인 확장
+4. 코퍼스 인제스트/품질 게이트 자동화
+
+```bash
+# Tavily research output → Qdrant 인제스트
+python scripts/ingest_research_corpus.py \
+  --input data/source_packs/research/ \
+  --dimension 4D \
+  --dataset-id film_analysis \
+  --app-key teaching.reference.analyze
+
+# 품질 게이트 (기본 threshold 적용)
+python scripts/run_rag_quality_gate.py --no-llm
+```
 
 ### Phase 3: 코퍼스 확장
 1. 라이선스 검증된 소스만 추가
