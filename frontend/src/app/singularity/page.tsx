@@ -10,6 +10,7 @@ import AppShell from "@/components/AppShell";
 import { api, SingularityTemplate, IntentPresetSummary } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import { RatingModal } from "@/components/ui/StarRating";
+import { FLOW_ENABLED } from "@/lib/feature-flags";
 
 // Template type alias for local use
 type Template = SingularityTemplate;
@@ -595,14 +596,24 @@ export default function SingularityPage() {
         } catch (err) {
             console.error("Rating failed:", err);
         }
-        // Navigate to flow after rating
-        router.push(`/flow?template=${ratingTemplate.id}`);
+        // Navigate to flow or show message if disabled
+        if (FLOW_ENABLED) {
+            router.push(`/flow?template=${ratingTemplate.id}`);
+        } else {
+            setRatingModalOpen(false);
+            toast.success("템플릿이 저장되었습니다. 플로우 기능은 곧 출시됩니다!");
+        }
     };
 
     const handleRatingSkip = () => {
         setRatingModalOpen(false);
         if (ratingTemplate) {
-            router.push(`/flow?template=${ratingTemplate.id}`);
+            // Navigate to flow or show message if disabled
+            if (FLOW_ENABLED) {
+                router.push(`/flow?template=${ratingTemplate.id}`);
+            } else {
+                toast.success("템플릿이 저장되었습니다. 플로우 기능은 곧 출시됩니다!");
+            }
         }
     };
 

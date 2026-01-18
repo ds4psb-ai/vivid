@@ -20,7 +20,7 @@ from app.schemas.workflow_session import (
     WorkflowStatus,
     workflow_session_manager,
 )
-from app.dependencies import get_current_user_optional, get_current_user
+from app.dependencies import get_current_user
 from app.database import get_db
 from app.routers.dimension._base import get_byok_key
 
@@ -77,14 +77,16 @@ class WorkflowStatusResponse(BaseModel):
 @router.post("/plan", response_model=PlanWorkflowResponse)
 async def plan_workflow(
     request: PlanWorkflowRequest,
-    user: Optional[dict] = Depends(get_current_user_optional),
+    user: dict = Depends(get_current_user),
 ):
     """
     사용자 요청을 분석하고 워크플로우를 계획합니다.
-    
+
     - 의도에 맞는 템플릿 매칭
     - 연결된 노드 체인 생성
-    - (로그인 시) 세션 생성
+    - 세션 생성 (인증 필수)
+
+    Security: 인증된 사용자만 워크플로우 계획 가능
     """
     
     # 1. 워크플로우 매칭
@@ -348,12 +350,12 @@ async def start_workflow(
 
 @router.get("/user/sessions")
 async def get_user_workflow_sessions(
-    user: dict = Depends(get_current_user_optional),
+    user: dict = Depends(get_current_user),  # P0 BOLA: Auth required
 ):
-    """현재 사용자의 워크플로우 세션 목록"""
-    if not user:
-        return {"sessions": []}
-    
+    """현재 사용자의 워크플로우 세션 목록
+
+    Security: 인증된 사용자만 본인의 세션 목록 조회 가능
+    """
     user_id = user.get("id", user.get("sub", "anonymous"))
     sessions = workflow_session_manager.get_user_sessions(user_id)
     

@@ -1,7 +1,7 @@
 """NICE Payments (나이스페이) integration endpoints.
 
 Security Notes:
-- /confirm endpoint relies on NICE API tid/amount validation for security
+- /confirm endpoint requires authentication and validates user owns the application
 - Rate limiting should be applied at nginx/middleware level
 - Consider adding webhook signature verification for production
 """
@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_db
+from app.dependencies import get_current_user
 from app.models import CrebitApplication
 
 router = APIRouter(prefix="/payment", tags=["payment"])
@@ -97,6 +98,7 @@ async def confirm_payment(
     data: PaymentConfirmRequest,
     request: Request,
     db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
 ):
     """
     Confirm NICE payment after user authentication.
@@ -105,13 +107,17 @@ async def confirm_payment(
     in the NICE payment window. It calls the NICE approval API and updates
     the application status.
 
-    Security: NICE API validates tid/amount match. Rate limiting at nginx level.
+    Security:
+    - Requires authenticated user (prevents anonymous abuse)
+    - NICE API validates tid/amount match
+    - Rate limiting at nginx level
     """
     # Audit logging for security monitoring
     client_ip = request.client.host if request.client else "unknown"
+    user_id = user.get("user_id", "unknown")
     logger.info(
         f"[PAYMENT CONFIRM] app_id={data.application_id} tid={data.tid} "
-        f"amount={data.amount} ip={client_ip}"
+        f"amount={data.amount} user={user_id} ip={client_ip}"
     )
 
     # 1. Find the application

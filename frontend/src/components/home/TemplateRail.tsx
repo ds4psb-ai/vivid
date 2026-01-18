@@ -15,6 +15,7 @@ import { ChevronRight, Sparkles, Play, Loader2, Star, Zap } from "lucide-react";
 import { api, SingularityTemplate } from "@/lib/api";
 import { StarRating } from "@/components/ui/StarRating";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { FLOW_ENABLED } from "@/lib/feature-flags";
 
 // Dimension colors for flow badges (synced with /singularity)
 const DIMENSION_COLORS: Record<string, { bg: string; text: string }> = {
@@ -78,6 +79,12 @@ export function TemplateRail({ maxItems = 6, title, showSeeAll = true }: Templat
     }, [maxItems]);
 
     const handleApply = async (template: SingularityTemplate) => {
+        // Flow is disabled - redirect to singularity page instead
+        if (!FLOW_ENABLED) {
+            router.push(`/singularity?template=${template.id}`);
+            return;
+        }
+
         setApplying(template.id);
         try {
             await api.useSingularityTemplate(template.id);
