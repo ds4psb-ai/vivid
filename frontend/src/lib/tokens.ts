@@ -573,7 +573,7 @@ export function getSkeletonStyle(): string {
  * Get error alert classes
  */
 export function getErrorStyle(): string {
-  return "bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-red-400";
+  return "bg-[var(--error)]/10 border border-[var(--error)]/20 rounded-xl p-4 text-[var(--error)]";
 }
 
 // =============================================================================

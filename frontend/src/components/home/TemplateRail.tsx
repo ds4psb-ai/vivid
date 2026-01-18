@@ -21,11 +21,6 @@ import { dimensionIdToCode, getDimensionToken } from "@/lib/tokens";
 // Dimension tones for flow badges (token-driven, synced with /singularity)
 type DimensionTone = { bg: string; text: string };
 
-const LEGACY_DIMENSION_TONES: Record<string, DimensionTone> = {
-    "VIS": { bg: "bg-amber-500/20", text: "text-amber-400" },
-    "REF": { bg: "bg-cyan-500/20", text: "text-cyan-400" },
-};
-
 const getDimensionTone = (dimension: string): DimensionTone => {
     const code = dimensionIdToCode(dimension);
     if (code) {
@@ -35,7 +30,18 @@ const getDimensionTone = (dimension: string): DimensionTone => {
     }
     const fallbackToken = getDimensionToken("1d");
     const fallbackKey = fallbackToken.tailwindKey;
-    return LEGACY_DIMENSION_TONES[dimension] ?? { bg: `bg-${fallbackKey}/20`, text: `text-${fallbackKey}` };
+    return { bg: `bg-${fallbackKey}/20`, text: `text-${fallbackKey}` };
+};
+
+const BRAND_PRIMARY = {
+    text: "text-[var(--color-brand-primary)]",
+    borderHover: "hover:border-[var(--color-brand-primary)]/40",
+    ring: "focus:ring-[var(--color-brand-primary)]/50",
+    shadowHover: "hover:shadow-[0_0_40px] hover:shadow-dimension-1d/20",
+};
+
+const BRAND_ACCENT = {
+    bg: "bg-[var(--color-brand-accent)]",
 };
 
 function DimensionFlow({ dimensions }: { dimensions: string[] }) {
@@ -128,7 +134,7 @@ export function TemplateRail({ maxItems = 6, title, showSeeAll = true }: Templat
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-violet-500 dark:text-violet-400" />
+                    <Sparkles className={`h-5 w-5 ${BRAND_PRIMARY.text}`} />
                     <h2 className="text-lg font-bold text-gray-900 dark:text-white">
                         {title || (language === "ko" ? "차원 템플릿" : "Dimension Templates")}
                     </h2>
@@ -161,7 +167,7 @@ export function TemplateRail({ maxItems = 6, title, showSeeAll = true }: Templat
                                 role="button"
                                 tabIndex={0}
                                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); !applying && handleApply(template); } }}
-                                className={`group relative w-full rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 bg-gradient-to-b from-gray-50 dark:from-white/[0.04] to-transparent hover:border-violet-500/40 hover:shadow-[0_0_40px_rgba(139,92,246,0.15)] transition-all text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-violet-500/50 ${applying === template.id ? 'opacity-50 pointer-events-none' : ''}`}
+                                className={`group relative w-full rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 bg-gradient-to-b from-gray-50 dark:from-white/[0.04] to-transparent ${BRAND_PRIMARY.borderHover} ${BRAND_PRIMARY.shadowHover} transition-all text-left cursor-pointer focus:outline-none focus:ring-2 ${BRAND_PRIMARY.ring} ${applying === template.id ? 'opacity-50 pointer-events-none' : ''}`}
                             >
                                 {/* Thumbnail */}
                                 <div className="relative h-36 overflow-hidden">
@@ -175,7 +181,7 @@ export function TemplateRail({ maxItems = 6, title, showSeeAll = true }: Templat
 
                                     {/* Featured Badge */}
                                     {template.is_featured && (
-                                        <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-amber-500 text-[9px] font-bold text-black">
+                                        <div className={`absolute top-3 right-3 px-2 py-0.5 rounded-full ${BRAND_ACCENT.bg} text-[9px] font-bold text-black`}>
                                             ⭐ 추천
                                         </div>
                                     )}
@@ -199,7 +205,7 @@ export function TemplateRail({ maxItems = 6, title, showSeeAll = true }: Templat
 
                                 {/* Content */}
                                 <div className="p-4">
-                                    <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-300 transition-colors line-clamp-1">
+                                    <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-[var(--color-brand-primary)] transition-colors line-clamp-1">
                                         {template.title}
                                     </h3>
                                     <p className="text-xs text-gray-500 dark:text-slate-500 mt-1 line-clamp-2">

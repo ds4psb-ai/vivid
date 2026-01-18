@@ -19,6 +19,26 @@ interface WorkflowCTAProps {
     variant?: "default" | "compact";
 }
 
+const BRAND_PRIMARY = {
+    bgSoft: "bg-[var(--color-brand-primary)]/5",
+    bg: "bg-[var(--color-brand-primary)]/10",
+    text: "text-[var(--color-brand-primary)]",
+    border: "border-[var(--color-brand-primary)]/20",
+};
+
+const BRAND_SECONDARY = {
+    bgSoft: "bg-[var(--color-brand-secondary)]/5",
+    bg: "bg-[var(--color-brand-secondary)]/10",
+    bgStrong: "bg-[var(--color-brand-secondary)]/20",
+    text: "text-[var(--color-brand-secondary)]",
+    border: "border-[var(--color-brand-secondary)]/20",
+    borderHover: "hover:border-[var(--color-brand-secondary)]/30",
+};
+
+const BRAND_ACCENT = {
+    text: "text-[var(--color-brand-accent)]",
+};
+
 export function WorkflowCTA({ variant = "default" }: WorkflowCTAProps) {
     const { language } = useLanguage();
 
@@ -31,11 +51,11 @@ export function WorkflowCTA({ variant = "default" }: WorkflowCTAProps) {
         return (
             <Link
                 href="/flow"
-                className="group flex items-center justify-between p-4 rounded-2xl border border-gray-200 dark:border-white/10 bg-gradient-to-r from-emerald-500/5 via-transparent to-violet-500/5 hover:border-emerald-500/30 transition-all"
+                className={`group flex items-center justify-between p-4 rounded-2xl border border-gray-200 dark:border-white/10 bg-gradient-to-r from-[var(--color-brand-secondary)]/5 via-transparent to-[var(--color-brand-primary)]/5 ${BRAND_SECONDARY.borderHover} transition-all`}
             >
                 <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                        <Workflow className="h-5 w-5 text-emerald-400" />
+                    <div className={`h-10 w-10 rounded-xl ${BRAND_SECONDARY.bg} flex items-center justify-center border ${BRAND_SECONDARY.border}`}>
+                        <Workflow className={`h-5 w-5 ${BRAND_SECONDARY.text}`} />
                     </div>
                     <div>
                         <h3 className="font-semibold text-gray-900 dark:text-white">
@@ -46,7 +66,7 @@ export function WorkflowCTA({ variant = "default" }: WorkflowCTAProps) {
                         </p>
                     </div>
                 </div>
-                <ArrowRight className="h-5 w-5 text-slate-400 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
+                <ArrowRight className="h-5 w-5 text-slate-400 group-hover:text-[var(--color-brand-secondary)] group-hover:translate-x-1 transition-all" />
             </Link>
         );
     }
@@ -59,27 +79,27 @@ export function WorkflowCTA({ variant = "default" }: WorkflowCTAProps) {
         >
             <Link
                 href="/flow"
-                className="group block relative overflow-hidden rounded-2xl border border-dashed border-gray-300 dark:border-white/10 hover:border-emerald-500/30 bg-gradient-to-r from-emerald-500/5 via-transparent to-violet-500/5 p-6 transition-all"
+                className={`group block relative overflow-hidden rounded-2xl border border-dashed border-gray-300 dark:border-white/10 ${BRAND_SECONDARY.borderHover} bg-gradient-to-r from-[var(--color-brand-secondary)]/5 via-transparent to-[var(--color-brand-primary)]/5 p-6 transition-all`}
             >
                 {/* Animated background */}
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-transparent to-violet-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[var(--color-brand-secondary)]/10 via-transparent to-[var(--color-brand-primary)]/10 opacity-0 group-hover:opacity-100 transition-opacity" />
 
                 <div className="relative flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <div className="relative">
-                            <div className="absolute inset-0 bg-emerald-500/20 blur-xl rounded-full animate-pulse" />
-                            <div className="relative h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-violet-500/20 flex items-center justify-center border border-gray-200 dark:border-white/10">
-                                <Workflow className="h-7 w-7 text-emerald-500 dark:text-emerald-400" />
+                            <div className={`absolute inset-0 ${BRAND_SECONDARY.bgStrong} blur-xl rounded-full animate-pulse`} />
+                            <div className={`relative h-14 w-14 rounded-2xl bg-gradient-to-br from-[var(--color-brand-secondary)]/20 to-[var(--color-brand-primary)]/20 flex items-center justify-center border border-gray-200 dark:border-white/10`}>
+                                <Workflow className={`h-7 w-7 ${BRAND_SECONDARY.text}`} />
                             </div>
                         </div>
                         <div>
                             <div className="flex items-center gap-2 mb-1">
-                                <Zap className="h-3.5 w-3.5 text-yellow-400" />
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-yellow-400">
+                                <Zap className={`h-3.5 w-3.5 ${BRAND_ACCENT.text}`} />
+                                <span className={`text-[10px] font-bold uppercase tracking-widest ${BRAND_ACCENT.text}`}>
                                     {language === "ko" ? "파워 유저" : "Power User"}
                                 </span>
                             </div>
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-200 transition-colors">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-[var(--color-brand-secondary)] transition-colors">
                                 {language === "ko" ? "차원 플로우 시작하기" : "Start Dimension Flow"}
                             </h3>
                             <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
@@ -90,7 +110,7 @@ export function WorkflowCTA({ variant = "default" }: WorkflowCTAProps) {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2 text-slate-400 group-hover:text-emerald-400 transition-colors">
+                    <div className="flex items-center gap-2 text-slate-400 group-hover:text-[var(--color-brand-secondary)] transition-colors">
                         <span className="text-sm font-medium hidden sm:block">
                             {language === "ko" ? "차원 플로우" : "Flow"}
                         </span>

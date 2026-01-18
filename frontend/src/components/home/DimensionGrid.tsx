@@ -75,11 +75,11 @@ export function DimensionGrid({ showTitle = true, showFilters = true, compact = 
     const stageKeys = Object.keys(WORKFLOW_STAGES) as StageKey[];
 
     const stageColors: Record<string, { bg: string; text: string }> = {
-        emerald: { bg: "bg-emerald-500", text: "text-emerald-950" },
-        violet: { bg: "bg-violet-500", text: "text-violet-100" },
-        amber: { bg: "bg-amber-500", text: "text-amber-950" },
-        cyan: { bg: "bg-cyan-500", text: "text-cyan-950" },
-        fuchsia: { bg: "bg-fuchsia-500", text: "text-fuchsia-100" },
+        emerald: { bg: "bg-[var(--color-brand-secondary)]", text: "text-black" },
+        violet: { bg: "bg-[var(--color-brand-primary)]", text: "text-white" },
+        amber: { bg: "bg-[var(--color-brand-accent)]", text: "text-black" },
+        cyan: { bg: "bg-[var(--info)]", text: "text-white" },
+        fuchsia: { bg: "bg-[var(--color-brand-primary)]", text: "text-white" },
     };
 
     return (
@@ -88,7 +88,7 @@ export function DimensionGrid({ showTitle = true, showFilters = true, compact = 
             {showTitle && (
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <Sparkles className="h-5 w-5 text-cyan-500 dark:text-cyan-400" />
+                        <Sparkles className="h-5 w-5 text-[var(--color-brand-primary)]" />
                         <h2 className="text-lg font-bold text-gray-900 dark:text-white">
                             {language === "ko" ? "차원 앱" : "Dimension Apps"}
                         </h2>
