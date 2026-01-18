@@ -307,7 +307,7 @@ class TavilyGroundingBackend(BaseBackend):
 
         # News topic default days if time_range not specified
         if topic == "news" and time_range is None and days is None:
-            days = 7
+            days = 3
 
         chunks_per_source = _select_chunks_per_source(
             search_depth=search_depth,
