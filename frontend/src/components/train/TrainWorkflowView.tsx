@@ -61,6 +61,19 @@ type DimensionType =
 // Display labels for dimension positions
 const DIMENSION_LABELS = ["Origin", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"];
 
+const STATUS_TONE_CLASSES: Record<Car["status"], string> = {
+    completed: "bg-[var(--success)]",
+    executing: "bg-[var(--warning)] animate-pulse",
+    ready: "bg-[var(--info)]",
+    pending: "bg-[var(--surface-2)]",
+    failed: "bg-[var(--error)]",
+};
+
+const TOAST_TONE_CLASSES: Record<"success" | "error", string> = {
+    success: "bg-[var(--success)] text-white",
+    error: "bg-[var(--error)] text-white",
+};
+
 // =============================================================================
 // Context-Aware Recommendation Logic (confidence boosts based on workflow)
 // =============================================================================
@@ -626,8 +639,8 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                                 fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg
                                 flex items-center gap-2 animate-in slide-in-from-right
                                 ${notification.type === "success"
-                                    ? "bg-emerald-500/90 text-white"
-                                    : "bg-red-500/90 text-white"
+                                    ? TOAST_TONE_CLASSES.success
+                                    : TOAST_TONE_CLASSES.error
                                 }
                             `}
                         >
@@ -780,7 +793,7 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                                     <span className="text-[10px] text-gray-500 dark:text-zinc-500 uppercase tracking-widest">
                                         완료됨
                                     </span>
-                                    <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                                    <p className="text-lg font-bold text-[var(--success)]">
                                         {cars.filter((c) => c.status === "completed").length}
                                     </p>
                                 </div>
@@ -788,7 +801,7 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                                     <span className="text-[10px] text-gray-500 dark:text-zinc-500 uppercase tracking-widest">
                                         예상 크레딧
                                     </span>
-                                    <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
+                                    <p className="text-lg font-bold text-[var(--warning)]">
                                         {cars.reduce((sum, c) => sum + (c.creditCost ?? toolsById[c.toolId]?.creditCost ?? 10), 0)}
                                     </p>
                                 </div>
@@ -800,11 +813,7 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                                         key={car.id}
                                         className={`
                                         h-2 w-8 rounded-full transition-all
-                                        ${car.status === "completed" ? "bg-emerald-500" : ""}
-                                        ${car.status === "executing" ? "bg-amber-500 animate-pulse" : ""}
-                                        ${car.status === "ready" ? "bg-blue-500" : ""}
-                                        ${car.status === "pending" ? "bg-zinc-700" : ""}
-                                        ${car.status === "failed" ? "bg-red-500" : ""}
+                                        ${STATUS_TONE_CLASSES[car.status]}
                                     `}
                                     />
                                 ))}
