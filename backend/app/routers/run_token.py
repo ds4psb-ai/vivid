@@ -135,15 +135,17 @@ def get_registry() -> AppRegistryService:
 
 
 async def verify_run_token(
-    authorization: str = Header(..., description="Bearer {token}"),
+    authorization: Optional[str] = Header(None, description="Bearer {token}"),
     service: RunTokenService = Depends(get_token_service),
 ) -> dict:
     """Run Token 검증 의존성"""
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authorization header required")
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Invalid authorization header")
     
     token = authorization[7:]  # "Bearer " 제거
-    valid, payload, error = service.validate_token(token)
+    valid, payload, error = await service.validate_token(token)
     
     if not valid:
         raise HTTPException(status_code=401, detail=error or "Invalid token")

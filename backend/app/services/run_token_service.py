@@ -23,6 +23,7 @@ import secrets
 import hashlib
 import hmac
 import asyncio
+import jwt
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, Any, Tuple, List
 from dataclasses import dataclass, field

@@ -723,6 +723,7 @@ async def init_mirror(
     response_model=MirrorChatResponse,
     responses={
         400: {"model": DimensionErrorResponse},
+        401: {"model": DimensionErrorResponse, "description": "Invalid or missing run token"},
         402: {"model": DimensionErrorResponse, "description": "Insufficient credits"},
         500: {"model": DimensionErrorResponse},
     },
@@ -732,6 +733,7 @@ async def init_mirror(
 )
 async def chat_mirror(
     request: MirrorChatRequest,
+    token_data: dict = Depends(verify_run_token),  # P0: Run-Token 강제
     user: dict = Depends(get_current_user),
     byok_key: Optional[str] = Depends(get_byok_key),
     db: AsyncSession = Depends(get_db),
