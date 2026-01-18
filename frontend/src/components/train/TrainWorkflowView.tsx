@@ -8,6 +8,7 @@ import { DimensionPortalModal } from "./DimensionPortalModal";
 import { Trash2, CheckCircle, XCircle } from "lucide-react";
 import { api, DimensionResponse } from "@/lib/api";
 import { useDimensionConfig, type ConnectionOption } from "@/contexts/DimensionConfigContext";
+import type { DimensionType } from "@/lib/dimension-types";
 
 // =============================================================================
 // Types
@@ -50,13 +51,7 @@ interface TrainWorkflowViewProps {
 // Dimension Tool Definitions (Now fetched from DimensionConfigContext SSoT)
 // =============================================================================
 
-type DimensionType =
-    | "1D" | "2D" | "3D" | "4D"
-    | "AD" | "AI" | "QC" | "VEO"
-    | "STORY" | "STORYBOARD" | "SOUND" | "SUNO"
-    | "KLING" | "CHARACTER" | "PROMPT" | "MIRROR"
-    | "JSON_GEN" | "NANOBANANA"
-    | "SA" | "SC" | "CE";
+// DimensionType shared in lib/dimension-types
 
 // Display labels for dimension positions
 const DIMENSION_LABELS = ["Origin", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"];

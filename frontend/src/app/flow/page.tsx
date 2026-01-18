@@ -13,6 +13,7 @@ import { ChevronDown, Copy, Check, Sparkles, LayoutGrid, Image as ImageIcon, Fil
 import { api, SingularityTemplate } from "@/lib/api";
 import { FLOW_ENABLED } from "@/lib/feature-flags";
 import { dimensionIdToCode, getDimensionToken } from "@/lib/tokens";
+import type { DimensionType } from "@/lib/dimension-types";
 import Link from "next/link";
 import type {
     WorkflowStartEvent,
@@ -21,14 +22,7 @@ import type {
     WorkflowNode,
 } from "@/types/agent";
 
-type DimensionType =
-    | "1D" | "2D" | "3D" | "4D"
-    | "AD" | "AI" | "QC" | "VEO"
-    | "STORY" | "STORYBOARD" | "SOUND" | "SUNO"
-    | "KLING" | "CHARACTER" | "PROMPT" | "MIRROR"
-    | "JSON_GEN" | "NANOBANANA"
-    | "SA" | "SC" | "CE"
-    | "REF" | "VIS";
+// DimensionType shared in lib/dimension-types
 
 // Agent tool names to toolId mapping (for workflow events) - 10개 전체
 const AGENT_TOOL_TO_TOOL_ID: Record<string, string> = {
@@ -228,7 +222,7 @@ function FlowPageContent() {
 
     const workflowRef = useRef<TrainWorkflowHandle>(null);
     const { language } = useLanguage();
-    const { toolsById, isLoading: isConfigLoading } = useDimensionConfig();
+    const { toolsById, tools, isLoading: isConfigLoading } = useDimensionConfig();
     const searchParams = useSearchParams();
 
     // Template loading state
@@ -243,12 +237,37 @@ function FlowPageContent() {
         return toolsById[toolId] || null;
     }, [toolsById]);
 
-    // Helper: Get tool info from dimension code (1D, 2D, etc.)
-    const getToolInfoFromDimension = useCallback((dimensionCode: string) => {
-        const toolId = DIMENSION_TO_TOOL_ID[dimensionCode];
-        if (!toolId) return null;
-        return toolsById[toolId] || null;
-    }, [toolsById]);
+    const dimensionToToolId = useMemo(() => {
+        const mapping: Record<string, string> = { ...DIMENSION_TO_TOOL_ID };
+        tools.forEach((tool) => {
+            if (!tool?.dimension) return;
+            mapping[tool.dimension] = tool.toolId;
+            const code = dimensionIdToCode(tool.dimension);
+            if (code) {
+                const normalized = code.toUpperCase().replace(/-/g, "_");
+                mapping[normalized] ??= tool.toolId;
+                mapping[code] ??= tool.toolId;
+            }
+        });
+        return mapping;
+    }, [tools]);
+
+    // Helper: Get tool info from dimension code, tool id, or agent tool name
+    const getToolInfoFromDimension = useCallback((value: string) => {
+        if (!value) return null;
+        if (toolsById[value]) return toolsById[value];
+        const agentToolId = AGENT_TOOL_TO_TOOL_ID[value];
+        if (agentToolId && toolsById[agentToolId]) return toolsById[agentToolId];
+        const toolId = dimensionToToolId[value];
+        if (toolId && toolsById[toolId]) return toolsById[toolId];
+        const code = dimensionIdToCode(value);
+        if (code) {
+            const normalized = code.toUpperCase().replace(/-/g, "_");
+            const mappedToolId = dimensionToToolId[normalized] ?? dimensionToToolId[code];
+            if (mappedToolId && toolsById[mappedToolId]) return toolsById[mappedToolId];
+        }
+        return null;
+    }, [dimensionToToolId, toolsById]);
 
     // Template loading error state
     const [templateLoadError, setTemplateLoadError] = useState<string | null>(null);
@@ -346,6 +365,20 @@ function FlowPageContent() {
             return dimensionPreset;
         };
 
+        const resolveToolId = (value: string) => {
+            if (toolsById[value]) return value;
+            const agentToolId = AGENT_TOOL_TO_TOOL_ID[value];
+            if (agentToolId) return agentToolId;
+            const mapped = dimensionToToolId[value];
+            if (mapped) return mapped;
+            const code = dimensionIdToCode(value);
+            if (code) {
+                const normalized = code.toUpperCase().replace(/-/g, "_");
+                return dimensionToToolId[normalized] ?? dimensionToToolId[code] ?? value;
+            }
+            return value;
+        };
+
         // Add cars from template's tool sequence
         toolSequence.forEach((dimCode, idx) => {
             const toolInfo = getToolInfoFromDimension(dimCode);
@@ -355,7 +388,7 @@ function FlowPageContent() {
             const dimensionPreset = extractDimensionPreset(dimCode, loadedTemplate.input_preset);
 
             workflowRef.current.addCar({
-                toolId: DIMENSION_TO_TOOL_ID[dimCode] || dimCode,
+                toolId: resolveToolId(dimCode),
                 dimension: dimCode as DimensionType,
                 displayName: toolInfo.displayName,
                 icon: toolInfo.icon,
@@ -367,7 +400,7 @@ function FlowPageContent() {
 
         setTemplateApplied(true);
         console.log(`[Flow] Applied ${toolSequence.length} cars from template with dimension-specific presets`);
-    }, [loadedTemplate, templateApplied, toolsById, isConfigLoading, getToolInfoFromDimension]);
+    }, [loadedTemplate, templateApplied, toolsById, isConfigLoading, getToolInfoFromDimension, dimensionToToolId]);
 
     // Track agent-created cars for updating status
     const carIdMapRef = useRef<Map<number, string>>(new Map());

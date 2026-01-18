@@ -30,18 +30,13 @@ import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useDimensionConfig, type InputFieldConfig } from "@/contexts/DimensionConfigContext";
 import { dimensionIdToCode, getDimensionGradient, getDimensionToken } from "@/lib/tokens";
+import type { DimensionType } from "@/lib/dimension-types";
 
 // =============================================================================
 // Types
 // =============================================================================
 
-type DimensionType =
-    | "1D" | "2D" | "3D" | "4D"
-    | "AD" | "AI" | "QC" | "VEO"
-    | "STORY" | "STORYBOARD" | "SOUND" | "SUNO"
-    | "KLING" | "CHARACTER" | "PROMPT" | "MIRROR"
-    | "JSON_GEN" | "NANOBANANA"
-    | "SA" | "SC" | "CE";
+// DimensionType shared in lib/dimension-types
 type CarStatus = "pending" | "ready" | "executing" | "completed" | "failed";
 
 interface Car {
