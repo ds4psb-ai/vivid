@@ -8,7 +8,7 @@ import { DimensionPortalModal } from "./DimensionPortalModal";
 import { Trash2, CheckCircle, XCircle } from "lucide-react";
 import { api, DimensionResponse } from "@/lib/api";
 import { useDimensionConfig, type ConnectionOption } from "@/contexts/DimensionConfigContext";
-import { normalizeWorkflowDimension, type DimensionType, type WorkflowDimension } from "@/lib/dimension-types";
+import { normalizeWorkflowDimension, type WorkflowDimension } from "@/lib/dimension-types";
 
 // =============================================================================
 // Types
@@ -51,7 +51,7 @@ interface TrainWorkflowViewProps {
 // Dimension Tool Definitions (Now fetched from DimensionConfigContext SSoT)
 // =============================================================================
 
-// DimensionType shared in lib/dimension-types
+// WorkflowDimension shared in lib/dimension-types
 
 // Display labels for dimension positions
 const DIMENSION_LABELS = ["Origin", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"];
@@ -79,7 +79,7 @@ const TOAST_TONE_CLASSES: Record<"success" | "error", string> = {
 // =============================================================================
 
 // Base confidence adjustments based on previous dimension
-const CONFIDENCE_BOOSTS: Partial<Record<DimensionType, Partial<Record<string, number>>>> = {
+const CONFIDENCE_BOOSTS: Partial<Record<WorkflowDimension, Partial<Record<string, number>>>> = {
     "1D": { storyboard: 0.2, aesthetic_direct: 0.15, quality_check: 0.05 },
     "2D": { image_tool: 0.2, quality_check: 0.15, veo_generate: 0.1, aesthetic_direct: 0.1 },
     "3D": { quality_check: 0.15, veo_generate: 0.15, reference_analyzer: 0.1 },
