@@ -154,7 +154,7 @@ class VideoLogicExtractor:
   - 개인/Plus 플랜은 별도 확인 필요 (공식 페이지 확인 후 업데이트)
 
 ### 3) 대규모 코퍼스 수집 + 저작권 검토
-- **프로세스**: Tavily Search → Tavily Extract → Dedup/License → source_packs → NotebookLM
+- **프로세스**: Tavily Search (no raw) → Conditional Extract (query+chunks) → Dedup/License → source_packs → NotebookLM/Qdrant
 - **법적 고려**: 공정이용/교육용/상업적 이용 여부 확인
 
 ### 4) Qdrant Named Vectors (Character 앱)

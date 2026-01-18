@@ -31,6 +31,7 @@ from typing import Any, Dict, List, Optional
 import httpx
 
 TAVILY_API_URL = "https://api.tavily.com/search"
+TAVILY_EXTRACT_URL = "https://api.tavily.com/extract"
 
 # Import settings for centralized config
 try:
@@ -63,6 +64,35 @@ class TavilySearchResponse:
     follow_up_questions: Optional[List[str]] = None
     response_time: Optional[float] = None
     auto_parameters: Optional[Dict[str, Any]] = None
+    usage: Optional[Dict[str, Any]] = None
+    request_id: Optional[str] = None
+
+
+@dataclass
+class TavilyExtractResult:
+    """Single extract result from Tavily API."""
+
+    url: str
+    raw_content: Optional[str] = None
+    favicon: Optional[str] = None
+    images: Optional[List[str]] = None
+
+
+@dataclass
+class TavilyExtractFailure:
+    """Failed extract result from Tavily API."""
+
+    url: str
+    error: Optional[str] = None
+
+
+@dataclass
+class TavilyExtractResponse:
+    """Response from Tavily extract API."""
+
+    results: List[TavilyExtractResult]
+    failed_results: List[TavilyExtractFailure] = None
+    response_time: Optional[float] = None
     usage: Optional[Dict[str, Any]] = None
     request_id: Optional[str] = None
 
@@ -203,6 +233,82 @@ class TavilyClient:
             follow_up_questions=data.get("follow_up_questions"),
             response_time=data.get("response_time"),
             auto_parameters=data.get("auto_parameters"),
+            usage=data.get("usage"),
+            request_id=data.get("request_id"),
+        )
+
+    async def extract(
+        self,
+        urls: List[str] | str,
+        *,
+        extract_depth: str = "basic",
+        include_images: bool = False,
+        include_favicon: bool = False,
+        format: str = "markdown",
+        timeout: Optional[float] = None,
+        include_usage: Optional[bool] = None,
+        query: Optional[str] = None,
+        chunks_per_source: Optional[int] = None,
+    ) -> TavilyExtractResponse:
+        """Extract content from URLs using Tavily API.
+
+        Args:
+            urls: Single URL or list of URLs (max 20)
+            extract_depth: "basic" or "advanced"
+            include_images: Include extracted images
+            include_favicon: Include favicon URLs
+            format: "markdown" or "text"
+            timeout: Optional timeout in seconds (1-60)
+            include_usage: Include usage info in response
+            query: Optional query for relevance-based chunking
+            chunks_per_source: Max chunks per URL (requires query)
+        """
+        url_list = [urls] if isinstance(urls, str) else list(urls)
+
+        payload: Dict[str, Any] = {
+            "urls": url_list[:20],
+            "extract_depth": extract_depth,
+            "include_images": include_images,
+            "include_favicon": include_favicon,
+            "format": format,
+        }
+        if timeout is not None:
+            payload["timeout"] = max(1, min(float(timeout), 60.0))
+        if include_usage is not None:
+            payload["include_usage"] = include_usage
+        if query:
+            payload["query"] = query
+        if chunks_per_source is not None:
+            payload["chunks_per_source"] = chunks_per_source
+
+        headers = {"Authorization": f"Bearer {self.api_key}"}
+
+        async with httpx.AsyncClient(timeout=timeout or 60.0) as client:
+            response = await client.post(TAVILY_EXTRACT_URL, json=payload, headers=headers)
+            response.raise_for_status()
+            data = response.json()
+
+        results = [
+            TavilyExtractResult(
+                url=r.get("url", ""),
+                raw_content=r.get("raw_content"),
+                favicon=r.get("favicon"),
+                images=r.get("images"),
+            )
+            for r in data.get("results", [])
+        ]
+        failed_results = [
+            TavilyExtractFailure(
+                url=f.get("url", ""),
+                error=f.get("error"),
+            )
+            for f in data.get("failed_results", [])
+        ]
+
+        return TavilyExtractResponse(
+            results=results,
+            failed_results=failed_results,
+            response_time=data.get("response_time"),
             usage=data.get("usage"),
             request_id=data.get("request_id"),
         )

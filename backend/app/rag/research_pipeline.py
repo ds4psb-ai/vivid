@@ -36,7 +36,12 @@ from urllib.parse import urlparse
 
 import httpx
 
-from app.tavily_client import TavilyClient, TavilySearchResult, get_tavily_client
+from app.tavily_client import (
+    TavilyClient,
+    TavilySearchResult,
+    TavilyExtractResult,
+    get_tavily_client,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +88,28 @@ HIGH_QUALITY_DOMAINS = [
     "filmcomment.com",
     "sensesofcinema.com",
     "rogerebert.com",
+]
+
+# Extract heuristics
+EXTRACT_MAX_URLS = 20
+EXTRACT_MIN_CONTENT_LEN = 800
+EXTRACT_MIN_SCORE = 0.55
+RECENCY_KEYWORDS = [
+    "오늘",
+    "최근",
+    "현재",
+    "뉴스",
+    "업데이트",
+    "출시",
+    "latest",
+    "today",
+    "now",
+    "news",
+    "update",
+    "release",
+    "2024",
+    "2025",
+    "2026",
 ]
 
 
@@ -218,6 +245,94 @@ class ResearchPipeline:
         return self.tavily
 
     @staticmethod
+    def _is_recency_query(query: str) -> bool:
+        q = query.lower()
+        return any(kw in q for kw in RECENCY_KEYWORDS)
+
+    @staticmethod
+    def _complexity_score(query: str) -> int:
+        q = query.lower()
+        score = 0
+        if len(query) > 120:
+            score += 1
+        if len(query.split()) > 20:
+            score += 1
+        if any(
+            kw in q
+            for kw in (
+                "compare",
+                "comparison",
+                "vs",
+                "difference",
+                "analysis",
+                "benchmark",
+                "survey",
+                "state of the art",
+                "sota",
+                "논문",
+                "비교",
+                "분석",
+                "벤치마크",
+            )
+        ):
+            score += 1
+        return score
+
+    def _should_extract(
+        self,
+        result: TavilySearchResult,
+        query: str,
+        *,
+        allowlist: Optional[List[str]],
+    ) -> bool:
+        """Decide whether to run Tavily Extract for a result."""
+        if self._is_recency_query(query):
+            return False
+
+        if result.score < EXTRACT_MIN_SCORE:
+            return False
+
+        content = result.raw_content or result.content or ""
+        if len(content) >= EXTRACT_MIN_CONTENT_LEN:
+            return False
+
+        domain = self._extract_domain(result.url)
+        if allowlist:
+            if not any(domain.endswith(d) or domain == d for d in allowlist):
+                return False
+
+        # License heuristic: avoid extracting known restricted pages
+        if self._check_license(content, result.url) == "restricted":
+            return False
+
+        return True
+
+    async def _extract_with_tavily(
+        self,
+        urls: List[str],
+        *,
+        query: str,
+        depth: str,
+        chunks_per_source: int,
+    ) -> Dict[str, TavilyExtractResult]:
+        """Batch extract via Tavily and return url -> extract result map."""
+        if not urls:
+            return {}
+
+        tavily = self._get_tavily()
+        response = await tavily.extract(
+            urls=urls[:EXTRACT_MAX_URLS],
+            extract_depth=depth,
+            query=query,
+            chunks_per_source=chunks_per_source,
+            include_images=False,
+            include_favicon=False,
+            format="markdown",
+        )
+
+        return {item.url: item for item in response.results if item.url}
+
+    @staticmethod
     def _compute_hash(content: str) -> str:
         """Compute content hash for deduplication."""
         # Normalize whitespace before hashing
@@ -318,6 +433,7 @@ class ResearchPipeline:
         query: str,
         max_results: int = 10,
         search_depth: str = "advanced",
+        include_raw_content: bool = False,
         include_domains: Optional[List[str]] = None,
         exclude_domains: Optional[List[str]] = None,
     ) -> List[TavilySearchResult]:
@@ -341,7 +457,7 @@ class ResearchPipeline:
             query=query,
             max_results=max_results,
             search_depth=search_depth,
-            include_raw_content=True,
+            include_raw_content=include_raw_content,
             include_domains=include_domains,
             exclude_domains=exclude_domains,
         )
@@ -355,6 +471,8 @@ class ResearchPipeline:
         query: str,
         auteur_key: Optional[str] = None,
         dimension: Optional[str] = None,
+        extract_mode: str = "auto",
+        extract_allowlist: Optional[List[str]] = None,
     ) -> List[ResearchDocument]:
         """Step 2: Extract and process search results.
 
@@ -367,10 +485,45 @@ class ResearchPipeline:
         Returns:
             List of processed research documents
         """
-        documents = []
+        documents: List[ResearchDocument] = []
+
+        # Decide allowlist for extraction
+        allowlist = extract_allowlist or HIGH_QUALITY_DOMAINS
+        complexity = self._complexity_score(query)
+        extract_depth = "advanced" if complexity >= 2 else "basic"
+        chunks_per_source = 3 if complexity >= 2 else 2
+
+        # Identify URLs to extract
+        extract_urls: List[str] = []
+        if extract_mode != "off":
+            for result in results:
+                if self._should_extract(result, query, allowlist=allowlist):
+                    extract_urls.append(result.url)
+
+        # Batch extract (max 20 per call)
+        extracted_map: Dict[str, TavilyExtractResult] = {}
+        if extract_mode == "force":
+            extract_urls = [r.url for r in results]
+        if extract_urls:
+            for i in range(0, len(extract_urls), EXTRACT_MAX_URLS):
+                batch = extract_urls[i : i + EXTRACT_MAX_URLS]
+                extracted_map.update(
+                    await self._extract_with_tavily(
+                        urls=batch,
+                        query=query,
+                        depth=extract_depth,
+                        chunks_per_source=chunks_per_source,
+                    )
+                )
 
         for result in results:
-            content = result.raw_content or result.content
+            extracted = extracted_map.get(result.url)
+            content = None
+            if extracted and extracted.raw_content:
+                content = extracted.raw_content
+            else:
+                content = result.raw_content or result.content
+
             if not content or len(content) < 100:
                 continue
 
@@ -484,6 +637,7 @@ class ResearchPipeline:
         search_depth: str = "advanced",
         include_domains: Optional[List[str]] = None,
         exclude_domains: Optional[List[str]] = None,
+        extract_mode: str = "auto",
         allow_unknown_license: bool = True,
         save_results: bool = True,
     ) -> ResearchResult:
@@ -512,6 +666,7 @@ class ResearchPipeline:
             query=query,
             max_results=max_results,
             search_depth=search_depth,
+            include_raw_content=(extract_mode == "off"),
             include_domains=include_domains,
             exclude_domains=exclude_domains,
         )
@@ -523,6 +678,8 @@ class ResearchPipeline:
             query=query,
             auteur_key=auteur_key,
             dimension=dimension,
+            extract_mode=extract_mode,
+            extract_allowlist=include_domains,
         )
 
         # Step 3: Dedup
