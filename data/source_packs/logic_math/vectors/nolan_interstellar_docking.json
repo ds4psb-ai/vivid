@@ -1,0 +1,47 @@
+{
+  "id": "logic_nolan_2014_interstellar_scene07",
+  "source": "interstellar_docking.mp4",
+  "auteur_key": "nolan",
+  "content_type": "logic_vector",
+  "logic_vector": {
+    "shot_length_ms": {
+      "median": 800,
+      "p25": 400,
+      "p75": 1500,
+      "min": 200,
+      "max": 4000
+    },
+    "cut_density": 0.78,
+    "camera_motion": {
+      "static": 0.2,
+      "dolly": 0.1,
+      "handheld": 0.3,
+      "crane": 0.1,
+      "steadicam": 0.2,
+      "tracking": 0.1
+    },
+    "composition": {
+      "extreme_wide": 0.15,
+      "wide_shot": 0.25,
+      "medium_shot": 0.35,
+      "close_up": 0.2,
+      "extreme_close_up": 0.05
+    },
+    "color_entropy": 0.22,
+    "dominant_colors": ["#0a0a12", "#1c1c2e", "#3a3a5c", "#ffffff", "#ff6600"],
+    "lighting_key": "low_key",
+    "aspect_ratio": "2.39:1",
+    "depth_of_field": "deep",
+    "pacing_score": 0.92
+  },
+  "tags": ["tension", "space", "cross_cutting", "time_pressure", "imax", "practical_effects"],
+  "metadata": {
+    "film": "Interstellar",
+    "year": 2014,
+    "scene": "Docking Sequence",
+    "duration_sec": 240,
+    "analyzed_at": "2026-01-18T00:00:00Z",
+    "model": "gemini-3-flash-preview",
+    "fps_sampled": 1
+  }
+}

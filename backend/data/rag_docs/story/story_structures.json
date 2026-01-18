@@ -1,0 +1,129 @@
+{
+  "version": "1.0.0",
+  "dimension": "Story",
+  "description": "Narrative structure frameworks for story architecture",
+  "structures": {
+    "three_act": {
+      "name": "Three-Act Structure",
+      "description": "Classic Hollywood narrative structure",
+      "acts": {
+        "act_1": {
+          "name": "Setup",
+          "percentage": "25%",
+          "elements": [
+            "Exposition - introduce world and characters",
+            "Inciting Incident - event that starts the story",
+            "First Plot Point - protagonist commits to journey"
+          ]
+        },
+        "act_2": {
+          "name": "Confrontation",
+          "percentage": "50%",
+          "elements": [
+            "Rising Action - escalating obstacles",
+            "Midpoint - major revelation or reversal",
+            "Second Plot Point - lowest moment"
+          ]
+        },
+        "act_3": {
+          "name": "Resolution",
+          "percentage": "25%",
+          "elements": [
+            "Climax - final confrontation",
+            "Falling Action - aftermath",
+            "Denouement - new equilibrium"
+          ]
+        }
+      }
+    },
+    "hero_journey": {
+      "name": "Hero's Journey (Monomyth)",
+      "description": "Joseph Campbell's universal story pattern",
+      "stages": [
+        {
+          "phase": "Departure",
+          "stages": [
+            "Ordinary World",
+            "Call to Adventure",
+            "Refusal of the Call",
+            "Meeting the Mentor",
+            "Crossing the Threshold"
+          ]
+        },
+        {
+          "phase": "Initiation",
+          "stages": [
+            "Tests, Allies, Enemies",
+            "Approach to the Inmost Cave",
+            "The Ordeal",
+            "Reward (Seizing the Sword)"
+          ]
+        },
+        {
+          "phase": "Return",
+          "stages": [
+            "The Road Back",
+            "Resurrection",
+            "Return with the Elixir"
+          ]
+        }
+      ]
+    },
+    "save_the_cat": {
+      "name": "Save the Cat Beat Sheet",
+      "description": "Blake Snyder's screenplay structure",
+      "beats": [
+        {"beat": "Opening Image", "page": 1, "description": "Visual that sets tone"},
+        {"beat": "Theme Stated", "page": 5, "description": "What the story is about"},
+        {"beat": "Setup", "page": "1-10", "description": "Introduce protagonist and world"},
+        {"beat": "Catalyst", "page": 12, "description": "Life-changing event"},
+        {"beat": "Debate", "page": "12-25", "description": "Protagonist hesitates"},
+        {"beat": "Break into Two", "page": 25, "description": "Enter Act 2"},
+        {"beat": "B Story", "page": 30, "description": "Love story or subplot"},
+        {"beat": "Fun and Games", "page": "30-55", "description": "Promise of the premise"},
+        {"beat": "Midpoint", "page": 55, "description": "Stakes raised"},
+        {"beat": "Bad Guys Close In", "page": "55-75", "description": "Pressure mounts"},
+        {"beat": "All Is Lost", "page": 75, "description": "Lowest point"},
+        {"beat": "Dark Night of the Soul", "page": "75-85", "description": "Reflection"},
+        {"beat": "Break into Three", "page": 85, "description": "Solution found"},
+        {"beat": "Finale", "page": "85-110", "description": "Climax and resolution"},
+        {"beat": "Final Image", "page": 110, "description": "Opposite of opening"}
+      ]
+    },
+    "kishotenketsu": {
+      "name": "Kishotenketsu",
+      "description": "Four-act East Asian narrative structure",
+      "acts": [
+        {"name": "Ki (Introduction)", "description": "Introduce characters and setting"},
+        {"name": "Sho (Development)", "description": "Develop the story without conflict"},
+        {"name": "Ten (Twist)", "description": "Unexpected element or perspective shift"},
+        {"name": "Ketsu (Conclusion)", "description": "Reconcile twist with story"}
+      ]
+    }
+  },
+  "character_arcs": {
+    "positive_change": {
+      "name": "Positive Change Arc",
+      "stages": ["Lie believed", "Confronted by truth", "Struggles", "Embraces truth"]
+    },
+    "negative_change": {
+      "name": "Negative/Tragedy Arc",
+      "stages": ["Truth known", "Tempted by lie", "Struggles", "Embraces lie"]
+    },
+    "flat_arc": {
+      "name": "Flat Arc",
+      "description": "Protagonist knows truth, changes the world around them"
+    }
+  },
+  "scene_structure": {
+    "scene_goal": "What character wants",
+    "conflict": "Obstacle to goal",
+    "disaster": "Things get worse OR",
+    "resolution": "Goal achieved with new problem"
+  },
+  "metadata": {
+    "created_at": "2026-01-18",
+    "source": "2026 Narrative Research",
+    "app_key": "dimension.story.architect"
+  }
+}

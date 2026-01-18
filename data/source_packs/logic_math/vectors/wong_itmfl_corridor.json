@@ -1,0 +1,47 @@
+{
+  "id": "logic_wong_2000_itmfl_scene12",
+  "source": "in_the_mood_for_love_corridor.mp4",
+  "auteur_key": "wong",
+  "content_type": "logic_vector",
+  "logic_vector": {
+    "shot_length_ms": {
+      "median": 4500,
+      "p25": 3000,
+      "p75": 7000,
+      "min": 2000,
+      "max": 12000
+    },
+    "cut_density": 0.18,
+    "camera_motion": {
+      "static": 0.15,
+      "dolly": 0.05,
+      "handheld": 0.1,
+      "crane": 0.05,
+      "steadicam": 0.55,
+      "tracking": 0.1
+    },
+    "composition": {
+      "extreme_wide": 0.0,
+      "wide_shot": 0.1,
+      "medium_shot": 0.6,
+      "close_up": 0.25,
+      "extreme_close_up": 0.05
+    },
+    "color_entropy": 0.45,
+    "dominant_colors": ["#8b0000", "#006400", "#ffd700", "#4a0000", "#2f2f2f"],
+    "lighting_key": "low_key",
+    "aspect_ratio": "1.66:1",
+    "depth_of_field": "shallow",
+    "pacing_score": 0.15
+  },
+  "tags": ["slow_motion", "longing", "neon", "rain", "cheongsam", "repetition", "framing"],
+  "metadata": {
+    "film": "In the Mood for Love",
+    "year": 2000,
+    "scene": "Corridor Encounter",
+    "duration_sec": 90,
+    "analyzed_at": "2026-01-18T00:00:00Z",
+    "model": "gemini-3-flash-preview",
+    "fps_sampled": 1
+  }
+}

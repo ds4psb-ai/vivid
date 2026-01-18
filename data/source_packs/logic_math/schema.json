@@ -1,0 +1,140 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Logic Vector Schema",
+  "description": "Schema for Gemini video analysis-based mathematical logic vectors",
+  "version": "1.0.0",
+  "type": "object",
+  "required": ["id", "source", "auteur_key", "content_type", "logic_vector", "metadata"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^logic_[a-z]+_\\d{4}_[a-z_]+_scene\\d+$",
+      "description": "Unique identifier: logic_{auteur}_{year}_{film}_scene{num}",
+      "examples": ["logic_bong_2019_parasite_scene03"]
+    },
+    "source": {
+      "type": "string",
+      "description": "Source video filename",
+      "examples": ["parasite_scene03.mp4"]
+    },
+    "auteur_key": {
+      "type": "string",
+      "enum": ["bong", "nolan", "tarantino", "villeneuve", "wong", "park", "shinkai", "kubrick"],
+      "description": "Director/auteur identifier"
+    },
+    "content_type": {
+      "type": "string",
+      "const": "logic_vector",
+      "description": "Document type for Qdrant indexing"
+    },
+    "logic_vector": {
+      "type": "object",
+      "required": ["shot_length_ms", "cut_density", "camera_motion", "composition"],
+      "properties": {
+        "shot_length_ms": {
+          "type": "object",
+          "description": "Shot length statistics in milliseconds",
+          "properties": {
+            "median": {"type": "number", "minimum": 0},
+            "p25": {"type": "number", "minimum": 0},
+            "p75": {"type": "number", "minimum": 0},
+            "min": {"type": "number", "minimum": 0},
+            "max": {"type": "number", "minimum": 0}
+          },
+          "required": ["median"]
+        },
+        "cut_density": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Cuts per second normalized (0-1)"
+        },
+        "camera_motion": {
+          "type": "object",
+          "description": "Distribution of camera movement types (must sum to 1)",
+          "properties": {
+            "static": {"type": "number", "minimum": 0, "maximum": 1},
+            "dolly": {"type": "number", "minimum": 0, "maximum": 1},
+            "handheld": {"type": "number", "minimum": 0, "maximum": 1},
+            "crane": {"type": "number", "minimum": 0, "maximum": 1},
+            "steadicam": {"type": "number", "minimum": 0, "maximum": 1},
+            "tracking": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        },
+        "composition": {
+          "type": "object",
+          "description": "Distribution of shot types (must sum to 1)",
+          "properties": {
+            "extreme_wide": {"type": "number", "minimum": 0, "maximum": 1},
+            "wide_shot": {"type": "number", "minimum": 0, "maximum": 1},
+            "medium_shot": {"type": "number", "minimum": 0, "maximum": 1},
+            "close_up": {"type": "number", "minimum": 0, "maximum": 1},
+            "extreme_close_up": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        },
+        "color_entropy": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Color diversity measure (0=monochrome, 1=highly varied)"
+        },
+        "dominant_colors": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$"
+          },
+          "maxItems": 5,
+          "description": "Top 5 dominant colors in hex"
+        },
+        "lighting_key": {
+          "type": "string",
+          "enum": ["high_key", "low_key", "natural", "mixed"],
+          "description": "Overall lighting style"
+        },
+        "aspect_ratio": {
+          "type": "string",
+          "enum": ["1.33:1", "1.66:1", "1.78:1", "1.85:1", "2.00:1", "2.35:1", "2.39:1"],
+          "description": "Frame aspect ratio"
+        },
+        "depth_of_field": {
+          "type": "string",
+          "enum": ["shallow", "medium", "deep"],
+          "description": "Dominant depth of field"
+        },
+        "pacing_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Narrative pacing intensity (0=slow, 1=fast)"
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Semantic tags for filtering"
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["film", "year", "analyzed_at", "model"],
+      "properties": {
+        "film": {"type": "string", "description": "Film title"},
+        "year": {"type": "integer", "minimum": 1900, "maximum": 2030},
+        "scene": {"type": "string", "description": "Scene description"},
+        "duration_sec": {"type": "number", "minimum": 0},
+        "analyzed_at": {"type": "string", "format": "date-time"},
+        "model": {
+          "type": "string",
+          "description": "Gemini model ID used for analysis",
+          "examples": ["gemini-3-flash-preview", "gemini-2.5-pro"]
+        },
+        "fps_sampled": {
+          "type": "number",
+          "default": 1,
+          "description": "Frames per second used in analysis"
+        }
+      }
+    }
+  }
+}

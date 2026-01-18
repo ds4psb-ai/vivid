@@ -1,0 +1,47 @@
+{
+  "id": "logic_bong_2019_parasite_scene03",
+  "source": "parasite_scene03.mp4",
+  "auteur_key": "bong",
+  "content_type": "logic_vector",
+  "logic_vector": {
+    "shot_length_ms": {
+      "median": 1800,
+      "p25": 1200,
+      "p75": 2600,
+      "min": 400,
+      "max": 8000
+    },
+    "cut_density": 0.42,
+    "camera_motion": {
+      "static": 0.6,
+      "dolly": 0.3,
+      "handheld": 0.1,
+      "crane": 0.0,
+      "steadicam": 0.0,
+      "tracking": 0.0
+    },
+    "composition": {
+      "extreme_wide": 0.05,
+      "wide_shot": 0.2,
+      "medium_shot": 0.5,
+      "close_up": 0.2,
+      "extreme_close_up": 0.05
+    },
+    "color_entropy": 0.31,
+    "dominant_colors": ["#1a1a1a", "#4a6741", "#d4af37", "#8b7355", "#2f4f4f"],
+    "lighting_key": "low_key",
+    "aspect_ratio": "2.39:1",
+    "depth_of_field": "deep",
+    "pacing_score": 0.35
+  },
+  "tags": ["tracking", "low_light", "social_tension", "symmetry", "class_contrast"],
+  "metadata": {
+    "film": "Parasite",
+    "year": 2019,
+    "scene": "Rich Family Introduction",
+    "duration_sec": 180,
+    "analyzed_at": "2026-01-18T00:00:00Z",
+    "model": "gemini-3-flash-preview",
+    "fps_sampled": 1
+  }
+}

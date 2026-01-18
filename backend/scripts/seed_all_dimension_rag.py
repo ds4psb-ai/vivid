@@ -453,6 +453,78 @@ Practice: {p.get('practice', '')}
             except Exception as e:
                 logger.error(f"  ✗ Failed {json_file}: {e}")
 
+    # Index camera movement guidelines from rag_docs/veo/
+    veo_camera_path = RAG_DOCS_DIR / "veo" / "veo_camera_movements.json"
+    if veo_camera_path.exists():
+        try:
+            with open(veo_camera_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            # Index camera movements
+            movements = data.get("camera_movements", {})
+            for move_key, move_data in movements.items():
+                keywords = move_data.get("prompt_keywords", [])
+                content = f"""
+Camera Movement: {move_key}
+Keywords: {', '.join(keywords)}
+Description: {move_data.get('description', '')}
+Emotional Effect: {move_data.get('emotional_effect', '')}
+Best For: {', '.join(move_data.get('best_for', []))}
+"""
+                doc_id = f"5d_camera_movement_{move_key}"
+                metadata = {
+                    "app_key": "dimension.5d.video",
+                    "content_type": "camera_movement_guide",
+                    "movement_type": move_key,
+                    "source": "veo_camera_movements.json",
+                    "dimension": "5D",
+                }
+
+                if rag.index_document(doc_id, content, metadata):
+                    logger.info(f"  ✓ VEO Camera: {move_key}")
+                    count += 1
+
+            # Index motion speeds
+            speeds = data.get("motion_speeds", {})
+            for speed_key, speed_data in speeds.items():
+                keywords = speed_data.get("prompt_keywords", [])
+                content = f"""
+Motion Speed: {speed_key}
+Keywords: {', '.join(keywords)}
+Emotional Effect: {speed_data.get('emotional_effect', '')}
+"""
+                doc_id = f"5d_motion_speed_{speed_key}"
+                metadata = {
+                    "app_key": "dimension.5d.video",
+                    "content_type": "motion_speed",
+                    "speed_type": speed_key,
+                    "source": "veo_camera_movements.json",
+                    "dimension": "5D",
+                }
+
+                if rag.index_document(doc_id, content, metadata):
+                    logger.info(f"  ✓ VEO Speed: {speed_key}")
+                    count += 1
+
+            # Index VEO tips
+            tips = data.get("veo_specific_tips", [])
+            if tips:
+                content = "VEO Camera Movement Tips:\n\n" + "\n".join(f"- {tip}" for tip in tips)
+                doc_id = "5d_veo_camera_tips"
+                metadata = {
+                    "app_key": "dimension.5d.video",
+                    "content_type": "veo_tips",
+                    "source": "veo_camera_movements.json",
+                    "dimension": "5D",
+                }
+
+                if rag.index_document(doc_id, content, metadata):
+                    logger.info("  ✓ VEO: Camera Tips")
+                    count += 1
+
+        except Exception as e:
+            logger.error(f"  ✗ Failed veo_camera_movements: {e}")
+
     logger.info(f"  Total 5D documents: {count}")
     return count
 
@@ -542,6 +614,121 @@ def seed_6d_collection() -> int:
                 if rag.index_document(doc_id, content, metadata):
                     logger.info(f"  ✓ {auteur}: {json_file.name}")
                     count += 1
+            except Exception as e:
+                logger.error(f"  ✗ Failed {json_file}: {e}")
+
+    # Index sound design principles from rag_docs/ambience/
+    ambience_dir = RAG_DOCS_DIR / "ambience"
+    if ambience_dir.exists():
+        for json_file in ambience_dir.glob("*.json"):
+            try:
+                with open(json_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+
+                # Index sound design layers
+                sound_design = data.get("sound_design", {})
+                layers = sound_design.get("layers", {})
+                for layer_key, layer_data in layers.items():
+                    examples = layer_data.get("examples", [])
+                    content = f"""
+Sound Layer: {layer_key}
+Description: {layer_data.get('description', '')}
+Examples: {', '.join(examples)}
+"""
+                    doc_id = f"6d_sound_layer_{layer_key}"
+                    metadata = {
+                        "app_key": "dimension.6d.sound",
+                        "content_type": "sound_layer",
+                        "layer_type": layer_key,
+                        "source": json_file.name,
+                        "dimension": "6D",
+                    }
+
+                    if rag.index_document(doc_id, content, metadata):
+                        logger.info(f"  ✓ Sound Layer: {layer_key}")
+                        count += 1
+
+                # Index sound functions
+                functions = sound_design.get("functions", {})
+                if functions:
+                    content = "Sound Design Functions:\n\n"
+                    for func_key, func_desc in functions.items():
+                        content += f"- {func_key}: {func_desc}\n"
+
+                    doc_id = "6d_sound_functions"
+                    metadata = {
+                        "app_key": "dimension.6d.sound",
+                        "content_type": "sound_functions",
+                        "source": json_file.name,
+                        "dimension": "6D",
+                    }
+
+                    if rag.index_document(doc_id, content, metadata):
+                        logger.info("  ✓ Sound Functions")
+                        count += 1
+
+                # Index sound techniques
+                techniques = sound_design.get("techniques", {})
+                if techniques:
+                    content = "Sound Design Techniques:\n\n"
+                    for tech_key, tech_desc in techniques.items():
+                        content += f"- {tech_key}: {tech_desc}\n"
+
+                    doc_id = "6d_sound_techniques"
+                    metadata = {
+                        "app_key": "dimension.6d.sound",
+                        "content_type": "sound_techniques",
+                        "source": json_file.name,
+                        "dimension": "6D",
+                    }
+
+                    if rag.index_document(doc_id, content, metadata):
+                        logger.info("  ✓ Sound Techniques")
+                        count += 1
+
+                # Index music genres
+                genres = data.get("music_genres", {})
+                for genre_key, genre_data in genres.items():
+                    content = f"""
+Music Genre: {genre_key}
+Mood: {', '.join(genre_data.get('mood', []))}
+Instruments: {', '.join(genre_data.get('instruments', []))}
+Use Cases: {', '.join(genre_data.get('use_cases', []))}
+"""
+                    doc_id = f"6d_music_genre_{genre_key}"
+                    metadata = {
+                        "app_key": "dimension.6d.sound",
+                        "content_type": "music_genre",
+                        "genre": genre_key,
+                        "source": json_file.name,
+                        "dimension": "6D",
+                    }
+
+                    if rag.index_document(doc_id, content, metadata):
+                        logger.info(f"  ✓ Music Genre: {genre_key}")
+                        count += 1
+
+                # Index auteur sound signatures
+                signatures = data.get("auteur_sound_signatures", {})
+                for sig_key, sig_data in signatures.items():
+                    content = f"""
+Auteur Sound Signature: {sig_key}
+Characteristics: {', '.join(sig_data.get('characteristics', []))}
+Films: {', '.join(sig_data.get('films', []))}
+"""
+                    doc_id = f"6d_auteur_sound_{sig_key}"
+                    metadata = {
+                        "app_key": "dimension.6d.sound",
+                        "content_type": "auteur_sound_signature",
+                        "auteur": sig_key,
+                        "source": json_file.name,
+                        "dimension": "6D",
+                    }
+
+                    if rag.index_document(doc_id, content, metadata):
+                        logger.info(f"  ✓ Auteur Sound: {sig_key}")
+                        count += 1
+
             except Exception as e:
                 logger.error(f"  ✗ Failed {json_file}: {e}")
 

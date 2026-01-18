@@ -1,0 +1,95 @@
+{
+  "version": "1.0.0",
+  "dimension": "1D",
+  "description": "Prompt engineering patterns for video/image generation platforms",
+  "patterns": {
+    "veo": {
+      "platform": "Google VEO",
+      "structure": {
+        "subject": "Main subject or character description",
+        "action": "What the subject is doing",
+        "setting": "Environment and location details",
+        "style": "Visual style, mood, and aesthetic",
+        "camera": "Camera angle, movement, and framing",
+        "lighting": "Lighting conditions and quality"
+      },
+      "best_practices": [
+        "Start with the main subject",
+        "Use specific visual descriptors",
+        "Include camera movement keywords",
+        "Specify aspect ratio when needed",
+        "Add temporal cues for video flow"
+      ],
+      "example": "A woman in a red dress walking through a rain-soaked Tokyo street at night, neon signs reflecting on wet pavement, cinematic wide shot, dolly forward, low-key lighting with vibrant neon accents, 16:9 aspect ratio"
+    },
+    "runway": {
+      "platform": "Runway Gen-3",
+      "structure": {
+        "scene": "Overall scene description",
+        "subject": "Main focus of the shot",
+        "motion": "Movement and action",
+        "style": "Visual treatment"
+      },
+      "best_practices": [
+        "Be concise but descriptive",
+        "Focus on motion and dynamics",
+        "Specify camera movement explicitly",
+        "Use cinematic terminology"
+      ]
+    },
+    "kling": {
+      "platform": "Kling AI",
+      "structure": {
+        "description": "Detailed scene description",
+        "motion_type": "Type of movement",
+        "duration_hint": "Short/medium/long"
+      },
+      "best_practices": [
+        "Describe motion clearly",
+        "Include environmental details",
+        "Specify mood and atmosphere"
+      ]
+    },
+    "sora": {
+      "platform": "OpenAI Sora",
+      "structure": {
+        "narrative": "Story-driven description",
+        "visual_details": "Specific visual elements",
+        "physics": "Physical interactions and movements"
+      },
+      "best_practices": [
+        "Write naturally and descriptively",
+        "Include physical world details",
+        "Describe light and shadow behavior"
+      ]
+    }
+  },
+  "cinema_to_prompt_rules": {
+    "shot_types": {
+      "extreme_wide_shot": "establishing shot, vast landscape, tiny figures",
+      "wide_shot": "full body visible, environment context",
+      "medium_shot": "waist up, conversation framing",
+      "close_up": "face fills frame, emotional detail",
+      "extreme_close_up": "single feature, macro detail"
+    },
+    "camera_movements": {
+      "dolly_in": "camera moves toward subject, intensifying",
+      "dolly_out": "camera pulls back, revealing context",
+      "tracking_shot": "camera follows subject laterally",
+      "crane_shot": "vertical camera movement",
+      "handheld": "organic camera shake, documentary feel",
+      "steadicam": "smooth floating movement"
+    },
+    "lighting_keys": {
+      "high_key": "bright, even lighting, optimistic mood",
+      "low_key": "dramatic shadows, noir aesthetic",
+      "natural_light": "realistic daylight or available light",
+      "practical_lights": "visible light sources in frame"
+    }
+  },
+  "metadata": {
+    "created_at": "2026-01-18",
+    "source": "2026 Best Practices Research",
+    "app_key": "dimension.1d.prompt"
+  }
+}

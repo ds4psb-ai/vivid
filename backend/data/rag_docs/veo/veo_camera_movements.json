@@ -1,0 +1,91 @@
+{
+  "version": "1.0.0",
+  "dimension": "5D",
+  "description": "VEO video generation camera movement and motion guidelines",
+  "camera_movements": {
+    "static": {
+      "prompt_keywords": ["static shot", "locked off", "tripod shot"],
+      "description": "Camera remains completely still",
+      "emotional_effect": "stability, observation, contemplation",
+      "best_for": ["dialogue", "establishing", "dramatic moments"]
+    },
+    "pan": {
+      "prompt_keywords": ["pan left", "pan right", "horizontal pan"],
+      "description": "Camera rotates horizontally on axis",
+      "emotional_effect": "following action, revealing space",
+      "best_for": ["following subjects", "revealing environment"]
+    },
+    "tilt": {
+      "prompt_keywords": ["tilt up", "tilt down", "vertical tilt"],
+      "description": "Camera rotates vertically on axis",
+      "emotional_effect": "scale, power dynamics, revelation",
+      "best_for": ["establishing height", "character introduction"]
+    },
+    "dolly": {
+      "prompt_keywords": ["dolly in", "dolly out", "push in", "pull back"],
+      "description": "Camera physically moves toward/away from subject",
+      "emotional_effect": "intimacy, revelation, isolation",
+      "best_for": ["emotional moments", "reveals", "endings"]
+    },
+    "tracking": {
+      "prompt_keywords": ["tracking shot", "follow shot", "lateral tracking"],
+      "description": "Camera moves alongside subject",
+      "emotional_effect": "immersion, journey, action",
+      "best_for": ["walking scenes", "action sequences"]
+    },
+    "crane": {
+      "prompt_keywords": ["crane up", "crane down", "aerial rise", "descending shot"],
+      "description": "Camera moves vertically through space",
+      "emotional_effect": "epic scale, transition, transformation",
+      "best_for": ["establishing shots", "transitions", "endings"]
+    },
+    "handheld": {
+      "prompt_keywords": ["handheld", "documentary style", "organic movement"],
+      "description": "Camera held by operator, natural shake",
+      "emotional_effect": "urgency, reality, tension",
+      "best_for": ["action", "documentary feel", "chaos"]
+    },
+    "steadicam": {
+      "prompt_keywords": ["steadicam", "floating", "smooth tracking", "gliding"],
+      "description": "Stabilized moving camera",
+      "emotional_effect": "dreamlike, following, exploration",
+      "best_for": ["long takes", "interior exploration"]
+    },
+    "drone": {
+      "prompt_keywords": ["aerial shot", "drone shot", "bird's eye", "overhead"],
+      "description": "Camera mounted on drone",
+      "emotional_effect": "scale, geography, god's eye view",
+      "best_for": ["establishing", "landscapes", "action overview"]
+    }
+  },
+  "motion_speeds": {
+    "slow_motion": {
+      "prompt_keywords": ["slow motion", "slow mo", "time dilation", "120fps"],
+      "emotional_effect": "emphasis, beauty, impact"
+    },
+    "normal": {
+      "prompt_keywords": ["real time", "normal speed"],
+      "emotional_effect": "naturalism, standard pacing"
+    },
+    "timelapse": {
+      "prompt_keywords": ["timelapse", "time lapse", "accelerated time"],
+      "emotional_effect": "passage of time, transformation"
+    },
+    "hyperlapse": {
+      "prompt_keywords": ["hyperlapse", "moving timelapse"],
+      "emotional_effect": "journey through time and space"
+    }
+  },
+  "veo_specific_tips": [
+    "Combine camera movement with subject action for dynamic shots",
+    "Specify movement direction explicitly (left, right, forward, etc.)",
+    "Include speed qualifiers (slowly, rapidly, gradually)",
+    "Layer movements for complexity (pan while dollying)",
+    "Use environment cues to suggest movement (through trees, along corridor)"
+  ],
+  "metadata": {
+    "created_at": "2026-01-18",
+    "source": "VEO 2026 Guidelines",
+    "app_key": "dimension.5d.veo"
+  }
+}

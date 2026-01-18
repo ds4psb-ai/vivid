@@ -1,0 +1,76 @@
+{
+  "version": "1.0.0",
+  "dimension": "6D",
+  "description": "Sound design principles and music theory for creative audio",
+  "sound_design": {
+    "layers": {
+      "diegetic": {
+        "description": "Sounds that characters can hear within the story world",
+        "examples": ["dialogue", "footsteps", "doors", "traffic", "phone rings"]
+      },
+      "non_diegetic": {
+        "description": "Sounds outside the story world (audience only)",
+        "examples": ["score", "narration", "sound effects for emphasis"]
+      },
+      "meta_diegetic": {
+        "description": "Sounds representing character's internal state",
+        "examples": ["heartbeat during fear", "ringing ears", "memory sounds"]
+      }
+    },
+    "functions": {
+      "spatial": "Establishes environment and location",
+      "temporal": "Indicates time of day, season, era",
+      "emotional": "Enhances or creates mood",
+      "narrative": "Advances story or reveals information",
+      "rhythmic": "Creates pacing and tension"
+    },
+    "techniques": {
+      "sound_bridge": "Audio continues across visual cuts",
+      "j_cut": "Audio precedes its visual source",
+      "l_cut": "Audio extends past its visual source",
+      "silence": "Strategic absence of sound for impact",
+      "sound_motif": "Recurring audio associated with character/theme"
+    }
+  },
+  "music_genres": {
+    "orchestral": {
+      "mood": ["epic", "emotional", "grand"],
+      "instruments": ["strings", "brass", "woodwinds", "percussion"],
+      "use_cases": ["dramatic moments", "action sequences", "emotional peaks"]
+    },
+    "electronic": {
+      "mood": ["modern", "tense", "futuristic"],
+      "instruments": ["synthesizers", "drum machines", "samplers"],
+      "use_cases": ["sci-fi", "thriller", "chase scenes"]
+    },
+    "ambient": {
+      "mood": ["atmospheric", "contemplative", "dreamlike"],
+      "instruments": ["pads", "drones", "processed sounds"],
+      "use_cases": ["transitions", "establishing shots", "internal moments"]
+    },
+    "minimalist": {
+      "mood": ["sparse", "precise", "intellectual"],
+      "instruments": ["piano", "strings", "repeated patterns"],
+      "use_cases": ["dialogue scenes", "tension building", "art house"]
+    }
+  },
+  "auteur_sound_signatures": {
+    "bong_joonho": {
+      "characteristics": ["genre mixing in score", "environmental sounds as narrative", "ironic music choices"],
+      "films": ["Parasite", "Memories of Murder", "The Host"]
+    },
+    "wong_karwai": {
+      "characteristics": ["nostalgic pop songs", "repetitive motifs", "music as memory trigger"],
+      "films": ["In the Mood for Love", "Chungking Express", "2046"]
+    },
+    "nolan": {
+      "characteristics": ["hans zimmer collaboration", "time manipulation sounds", "bass-heavy scores"],
+      "films": ["Inception", "Interstellar", "Dunkirk"]
+    }
+  },
+  "metadata": {
+    "created_at": "2026-01-18",
+    "source": "Sound Design Research 2026",
+    "app_key": "dimension.6d.sound"
+  }
+}
