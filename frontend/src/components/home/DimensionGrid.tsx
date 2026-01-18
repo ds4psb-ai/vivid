@@ -15,20 +15,18 @@ import {
     Music, Video, CheckCircle, Palette, ChevronRight, LucideIcon, Wand2
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { getDimensionGradient, getDimensionToken, type DimensionCode } from "@/lib/tokens";
 
 interface DimensionItem {
     href: string;
     icon: LucideIcon;
     stage: "planning" | "pre_production" | "production" | "finishing" | "extended";
     stageOrder: number;
+    dimensionCode: DimensionCode;
     titleKo: string;
     titleEn: string;
     descKo: string;
     descEn: string;
-    portalColor: string;
-    borderColor: string;
-    textColor: string;
-    gradient?: string;
     isNew?: boolean;
 }
 
@@ -42,20 +40,20 @@ const WORKFLOW_STAGES = {
 
 const DIMENSION_ITEMS: DimensionItem[] = [
     // Planning
-    { href: "/dimension/abyss", icon: Brain, stage: "planning", stageOrder: 1, titleKo: "심연의 거울", titleEn: "Abyss Mirror", descKo: "나만의 취향과 창작 DNA 분석", descEn: "Analyze your creative DNA", portalColor: "border-indigo-500/50", borderColor: "border-indigo-500", textColor: "text-indigo-400", gradient: "from-indigo-500 via-violet-500 to-blue-500" },
-    { href: "/dimension/reference-decoder", icon: Search, stage: "planning", stageOrder: 2, titleKo: "레퍼런스 해석기", titleEn: "Reference Decoder", descKo: "조명, 색감, 연출의 전문가적 분석", descEn: "Expert analysis of lighting, color, direction", portalColor: "border-amber-500/50", borderColor: "border-amber-500", textColor: "text-amber-400", gradient: "from-amber-500 via-orange-500 to-red-500" },
-    { href: "/dimension/story-architect", icon: Layers, stage: "planning", stageOrder: 3, titleKo: "시나리오 생성기", titleEn: "Story Architect", descKo: "DNA와 스타일을 결합한 시나리오 작성", descEn: "Write scenarios combining DNA and style", portalColor: "border-emerald-500/50", borderColor: "border-emerald-500", textColor: "text-emerald-400", gradient: "from-emerald-500 via-green-500 to-lime-500", isNew: true },
+    { href: "/dimension/abyss", icon: Brain, stage: "planning", stageOrder: 1, dimensionCode: "mirror", titleKo: "심연의 거울", titleEn: "Abyss Mirror", descKo: "나만의 취향과 창작 DNA 분석", descEn: "Analyze your creative DNA" },
+    { href: "/dimension/reference-decoder", icon: Search, stage: "planning", stageOrder: 2, dimensionCode: "4d", titleKo: "레퍼런스 해석기", titleEn: "Reference Decoder", descKo: "조명, 색감, 연출의 전문가적 분석", descEn: "Expert analysis of lighting, color, direction" },
+    { href: "/dimension/story-architect", icon: Layers, stage: "planning", stageOrder: 3, dimensionCode: "story", titleKo: "시나리오 생성기", titleEn: "Story Architect", descKo: "DNA와 스타일을 결합한 시나리오 작성", descEn: "Write scenarios combining DNA and style", isNew: true },
     // Pre-production
-    { href: "/dimension/sound-crafter", icon: Music, stage: "pre_production", stageOrder: 1, titleKo: "사운드 크래프터", titleEn: "Sound Crafter", descKo: "BGM 및 성우 내레이션 생성 (Suno, Udio)", descEn: "Generate BGM and narration (Suno, Udio)", portalColor: "border-pink-500/50", borderColor: "border-pink-500", textColor: "text-pink-400", gradient: "from-pink-500 via-rose-500 to-red-500", isNew: true },
-    { href: "/dimension/storyboard", icon: LayoutGrid, stage: "pre_production", stageOrder: 2, titleKo: "스토리보드 스케치", titleEn: "Storyboard Sketch", descKo: "글을 시각적 컷으로 스케치", descEn: "Sketch text into visual cuts", portalColor: "border-cyan-500/50", borderColor: "border-cyan-500", textColor: "text-cyan-400", gradient: "from-cyan-500 via-teal-500 to-emerald-500" },
-    { href: "/dimension/prompt", icon: Wand2, stage: "pre_production", stageOrder: 3, titleKo: "프롬프트 연금술", titleEn: "Prompt Alchemy", descKo: "AI가 이해하는 전문 언어로 번역", descEn: "Translate to AI-native language", portalColor: "border-violet-500/50", borderColor: "border-violet-500", textColor: "text-violet-400", gradient: "from-violet-500 via-purple-500 to-indigo-500" },
+    { href: "/dimension/sound-crafter", icon: Music, stage: "pre_production", stageOrder: 1, dimensionCode: "sound", titleKo: "사운드 크래프터", titleEn: "Sound Crafter", descKo: "BGM 및 성우 내레이션 생성 (Suno, Udio)", descEn: "Generate BGM and narration (Suno, Udio)", isNew: true },
+    { href: "/dimension/storyboard", icon: LayoutGrid, stage: "pre_production", stageOrder: 2, dimensionCode: "storyboard", titleKo: "스토리보드 스케치", titleEn: "Storyboard Sketch", descKo: "글을 시각적 컷으로 스케치", descEn: "Sketch text into visual cuts" },
+    { href: "/dimension/prompt", icon: Wand2, stage: "pre_production", stageOrder: 3, dimensionCode: "prompt", titleKo: "프롬프트 연금술", titleEn: "Prompt Alchemy", descKo: "AI가 이해하는 전문 언어로 번역", descEn: "Translate to AI-native language" },
     // Production
-    { href: "/dimension/visual-realizer", icon: ImageIcon, stage: "production", stageOrder: 1, titleKo: "비주얼 리얼라이저", titleEn: "Visual Realizer", descKo: "Key Frame 고품질 생성 (Midjourney)", descEn: "Generate high-quality keyframes", portalColor: "border-orange-500/50", borderColor: "border-orange-500", textColor: "text-orange-400", gradient: "from-orange-500 via-amber-500 to-yellow-500" },
-    { href: "/dimension/video-maker", icon: Video, stage: "production", stageOrder: 2, titleKo: "비디오 메이커", titleEn: "Video Maker", descKo: "영상 변환 및 모션 제어 (Veo 3.1, Kling)", descEn: "Video conversion & motion control", portalColor: "border-sky-500/50", borderColor: "border-sky-500", textColor: "text-sky-400", gradient: "from-sky-500 via-blue-500 to-indigo-500" },
+    { href: "/dimension/visual-realizer", icon: ImageIcon, stage: "production", stageOrder: 1, dimensionCode: "3d", titleKo: "비주얼 리얼라이저", titleEn: "Visual Realizer", descKo: "Key Frame 고품질 생성 (Midjourney)", descEn: "Generate high-quality keyframes" },
+    { href: "/dimension/video-maker", icon: Video, stage: "production", stageOrder: 2, dimensionCode: "veo", titleKo: "비디오 메이커", titleEn: "Video Maker", descKo: "영상 변환 및 모션 제어 (Veo 3.1, Kling)", descEn: "Video conversion & motion control" },
     // Finishing
-    { href: "/dimension/quality-check", icon: CheckCircle, stage: "finishing", stageOrder: 1, titleKo: "퀄리티 디렉터", titleEn: "Quality Director", descKo: "시각적 일관성 및 동작 자연스러움 검수", descEn: "Check visual consistency & motion smoothness", portalColor: "border-rose-500/50", borderColor: "border-rose-500", textColor: "text-rose-400", gradient: "from-rose-500 via-pink-500 to-red-500" },
+    { href: "/dimension/quality-check", icon: CheckCircle, stage: "finishing", stageOrder: 1, dimensionCode: "qc", titleKo: "퀄리티 디렉터", titleEn: "Quality Director", descKo: "시각적 일관성 및 동작 자연스러움 검수", descEn: "Check visual consistency & motion smoothness" },
     // Extended
-    { href: "/dimension/aesthetic", icon: Palette, stage: "extended", stageOrder: 1, titleKo: "미학디렉터", titleEn: "Aesthetic Director", descKo: "거장들의 미학을 적용합니다", descEn: "Apply masters' aesthetics", portalColor: "border-fuchsia-500/50", borderColor: "border-fuchsia-500", textColor: "text-fuchsia-400", gradient: "from-fuchsia-500 via-purple-500 to-pink-500" },
+    { href: "/dimension/aesthetic", icon: Palette, stage: "extended", stageOrder: 1, dimensionCode: "ad", titleKo: "미학디렉터", titleEn: "Aesthetic Director", descKo: "거장들의 미학을 적용합니다", descEn: "Apply masters' aesthetics" },
 ];
 
 type StageKey = keyof typeof WORKFLOW_STAGES;
@@ -151,6 +149,11 @@ export function DimensionGrid({ showTitle = true, showFilters = true, compact = 
                     {filteredItems.map((dimension, idx) => {
                         const Icon = dimension.icon;
                         const stageInfo = WORKFLOW_STAGES[dimension.stage];
+                        const token = getDimensionToken(dimension.dimensionCode);
+                        const toneKey = token.tailwindKey;
+                        const textColor = `text-${toneKey}`;
+                        const borderColor = `border-${toneKey}/50`;
+                        const hoverBackground = getDimensionGradient(dimension.dimensionCode);
 
                         return (
                             <motion.div
@@ -174,21 +177,21 @@ export function DimensionGrid({ showTitle = true, showFilters = true, compact = 
                                     )}
 
                                     {/* Hover border */}
-                                    <div className={`absolute inset-0 rounded-2xl border-2 ${dimension.borderColor} opacity-0 group-hover:opacity-100 transition-opacity`} />
+                                    <div className={`absolute inset-0 rounded-2xl border-2 ${borderColor} opacity-0 group-hover:opacity-100 transition-opacity`} />
 
                                     {/* Gradient background */}
-                                    <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity bg-gradient-to-br ${dimension.gradient}`} />
+                                    <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity ${hoverBackground}`} />
 
                                     <div className={`relative flex items-start gap-3 ${compact ? "flex-col" : ""}`}>
                                         {/* Icon */}
                                         <div className={`flex items-center justify-center rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 group-hover:scale-110 transition-transform ${compact ? "h-8 w-8" : "h-10 w-10"
                                             }`}>
-                                            <Icon className={`${compact ? "h-4 w-4" : "h-5 w-5"} ${dimension.textColor}`} />
+                                            <Icon className={`${compact ? "h-4 w-4" : "h-5 w-5"} ${textColor}`} />
                                         </div>
 
                                         <div className="flex-1 min-w-0">
                                             {/* Stage label */}
-                                            <span className={`text-[10px] font-mono tracking-wider ${dimension.textColor} opacity-60`}>
+                                            <span className={`text-[10px] font-mono tracking-wider ${textColor} opacity-60`}>
                                                 {stageInfo.order}.{dimension.stageOrder}
                                             </span>
                                             {/* Title */}
