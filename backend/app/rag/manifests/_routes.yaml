@@ -94,10 +94,10 @@ routes:
       - "color grading 기법"
 
   # ============================================================================
-  # RECENCY_REQUIRED - 최신 정보 필요 쿼리 (Google Grounding)
+  # RECENCY_REQUIRED - 최신 정보 필요 쿼리 (Web Grounding)
   # ============================================================================
   - type: recency_required
-    description: "실시간/최신 정보 필요, Google Grounding 우선"
+    description: "실시간/최신 정보 필요, Web Grounding 우선"
     strategy: grounding_first
     examples:
       # AI/Tech 트렌드

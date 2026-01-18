@@ -353,7 +353,7 @@ def _determine_strategy(
         Tuple of (strategy, use_reranker, force_grounding, complexity_score)
         - strategy: "auteur_first" | "hybrid" | "vector"
         - use_reranker: 리랭커 사용 여부
-        - force_grounding: Google Grounding 강제 여부
+        - force_grounding: Web Grounding 강제 여부
         - complexity_score: 복잡도 점수 (0-4, 로깅/메트릭용)
     """
     score = 0
@@ -585,6 +585,9 @@ async def hybrid_query(
     # === Strategy: Ensemble (P3: Multi-backend + Weighted RRF) ===
     hints = pipeline_hints or {}
     use_ensemble = hints.get("use_ensemble", False) or strategy == "ensemble"
+    if router_grounding and not use_ensemble:
+        # Recency-required queries -> force ensemble to include web grounding backend
+        use_ensemble = True
 
     if use_ensemble:
         # app_key 결정: 명시적 전달 > dimension 기반 추론 > auteur 기반 추론
@@ -600,7 +603,9 @@ async def hybrid_query(
                 "VEO": "veo.video.generate",
                 "AI": "dimension.persona.analyze",
                 "QC": "dimension.quality.check",
-                "STORY": "dimension.story.generate",
+                "STORY": "dimension.story.architect",
+                "PROMPT": "prompt.alchemy.translate",
+                "SOUND": "dimension.sound.craft",
             }
             effective_app_key = dimension_to_app.get(dimension.upper())
 
@@ -1155,7 +1160,7 @@ def _convert_ensemble_to_hybrid_result(
                     citation_text=result.text[:200] if result.text else "",
                 )
             )
-        elif source_type in ("qdrant_hybrid", "vertex_grounding"):  # vertex_grounding: future feature
+        elif source_type in ("qdrant_hybrid", "vertex_grounding", "tavily_grounding"):
             vertex_sources.append(
                 RAGSource(
                     source_id=result.doc_id,
@@ -1166,7 +1171,7 @@ def _convert_ensemble_to_hybrid_result(
                 )
             )
             # Google Search Grounding 결과 분리
-            if result.metadata.get("type") == "google_search":
+            if result.metadata.get("type") in ("google_search", "web_search"):
                 grounding_sources.append({
                     "uri": result.metadata.get("url", ""),
                     "source": result.text,
@@ -1504,4 +1509,3 @@ async def ensemble_retrieve(
     )
 
     return result
-

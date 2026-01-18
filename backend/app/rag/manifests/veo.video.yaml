@@ -27,3 +27,25 @@ prompt_injection_template: |
 
   Apply these Veo-specific prompt patterns and cinematic techniques.
   Include camera movements, transitions, and visual effects guidance.
+
+# P2: Recency grounding for Veo updates
+backends:
+  - id: qdrant_hybrid
+    weight: 0.7
+    enabled: true
+    config:
+      dimension: VEO
+      prefetch_limit: 30
+      min_score: 0.45
+
+  - id: notebooklm
+    weight: 0.2
+    enabled: true
+    config:
+      notebook_id: DNA_봉준호
+
+  - id: tavily_grounding
+    weight: 0.1
+    enabled: true
+    config:
+      search_depth: advanced

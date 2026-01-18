@@ -20,7 +20,7 @@ Vivid RAG는 **Multi-RAG Router 패턴** 기반의 Hybrid Retrieval-Augmented Ge
 | **Multi-RAG Router** | 쿼리 의도 분석 → 최적 백엔드 자동 라우팅 |
 | **Plugin-Registry** | YAML 기반 앱 설정, 코드 수정 없이 앱 추가 |
 | **Hybrid Search** | Dense (Qdrant Named Vectors) + Sparse (BM25 Native) + RRF Fusion |
-| **Multi-Tier** | Cache → Qdrant → NotebookLM → Web Search (planned) |
+| **Multi-Tier** | Cache → Qdrant → NotebookLM → Web Search (Tavily) |
 | **Graceful Degradation** | Circuit Breaker + Fallback Chain |
 | **Adaptive RAG** | Query Classification → 동적 전략 선택 |
 
@@ -54,7 +54,7 @@ Vivid RAG는 **Multi-RAG Router 패턴** 기반의 Hybrid Retrieval-Augmented Ge
 │ L2: NotebookLM Playwright (거장 DNA - 봉준호, 놀란, 빌뇌브, 왕가위, 타란티노)  │
 │     └─ Circuit Breaker: 3 failures → 60s cooldown                           │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ L3: Web Search Grounding (planned, Tavily)                                  │
+│ L3: Web Search Grounding (Tavily)                                           │
 │     └─ confidence < 0.5 시 자동 활성화                                       │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -315,7 +315,7 @@ Vivid RAG is a hybrid retrieval-augmented generation system based on the **Multi
 | **Multi-RAG Router** | Query intent analysis → Automatic optimal backend routing |
 | **Plugin-Registry** | YAML-based app config; add apps without code changes |
 | **Hybrid Search** | Dense (Qdrant Named Vectors) + Sparse (BM25 Native) + RRF Fusion |
-| **Multi-Tier** | Cache → Qdrant → NotebookLM → Web Search (planned) |
+| **Multi-Tier** | Cache → Qdrant → NotebookLM → Web Search (Tavily) |
 | **Graceful Degradation** | Circuit Breaker + Fallback Chain |
 | **Adaptive RAG** | Query Classification → Dynamic strategy selection |
 
@@ -349,7 +349,7 @@ Vivid RAG is a hybrid retrieval-augmented generation system based on the **Multi
 │ L2: NotebookLM Playwright (Auteur DNA - Bong, Nolan, Villeneuve, WKW, QT)   │
 │     └─ Circuit Breaker: 3 failures → 60s cooldown                           │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ L3: Web Search Grounding (planned, Tavily)                                  │
+│ L3: Web Search Grounding (Tavily)                                           │
 │     └─ Auto-enabled when confidence < 0.5                                    │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```

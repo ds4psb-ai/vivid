@@ -7,7 +7,7 @@ Strategy Types:
     1. direct_llm: 검색 생략, LLM 파라메트릭 지식만 사용
     2. minimal_rag: 최소 검색 (창작 쿼리용)
     3. ensemble_rrf: 표준 검색 (P3 Weighted RRF)
-    4. grounding_first: Google Grounding 우선 (최신 정보용)
+    4. grounding_first: Web Grounding 우선 (최신 정보용)
     5. full_pipeline: 전체 파이프라인 (Reranker + CRAG 포함)
 
 Usage:
@@ -54,7 +54,7 @@ class Strategy:
         skip_retrieval: 검색 생략 여부
         backends: 사용할 백엔드 목록
         use_reranker: Reranker 사용 여부
-        use_grounding: Google Grounding 사용 여부
+        use_grounding: Web Grounding 사용 여부
         use_crag: CRAG (Corrective RAG) 사용 여부
         max_sources: 최대 소스 수
         min_confidence: 최소 신뢰도 임계값
@@ -126,7 +126,7 @@ STRATEGIES: dict[str, Strategy] = {
     "grounding_first": Strategy(
         name="grounding_first",
         skip_retrieval=False,
-        backends=["google_grounding"],  # Grounding 우선
+        backends=["tavily_grounding"],  # Web grounding 우선
         use_reranker=False,
         use_grounding=True,
         use_crag=False,
@@ -138,7 +138,7 @@ STRATEGIES: dict[str, Strategy] = {
     "full_pipeline": Strategy(
         name="full_pipeline",
         skip_retrieval=False,
-        backends=["qdrant_hybrid", "notebooklm", "google_grounding"],
+        backends=["qdrant_hybrid", "notebooklm", "tavily_grounding"],
         use_reranker=True,
         use_grounding=True,
         use_crag=True,

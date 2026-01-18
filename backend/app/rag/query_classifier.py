@@ -22,7 +22,7 @@ Strategy Mapping:
     - simple_factual → direct_llm (Skip Retrieval)
     - creative → minimal_rag (Optional Retrieval)
     - domain_specific → ensemble_rrf (Standard)
-    - recency_required → grounding_first (Google Grounding)
+    - recency_required → grounding_first (Web Grounding)
     - multi_hop → full_pipeline (All backends)
     - ambiguous → ensemble_rrf (Safe default)
 """
@@ -78,7 +78,7 @@ class QueryType(str, Enum):
     """최신 정보 필요 쿼리.
 
     예: "2026년 AI 트렌드", "최신 Gemini 기능"
-    전략: grounding_first (Google Grounding 우선)
+    전략: grounding_first (Web Grounding 우선)
     비용: ~$0.008
     """
 

@@ -125,9 +125,9 @@ properties:
       properties:
         id:
           type: string
-          enum: [qdrant_hybrid, notebooklm]
+          enum: [qdrant_hybrid, notebooklm, tavily_grounding]
           description: "Backend ID (auto-discovered from backends/ directory)"
-          # NOTE: vertex_grounding planned for future (Google Search Grounding API)
+          # NOTE: tavily_grounding provides web search grounding
         weight:
           type: number
           minimum: 0
@@ -159,7 +159,7 @@ properties:
             use_grounding:
               type: boolean
               default: true
-              description: "Enable Google Search Grounding"
+              description: "Enable web search grounding"
       required: [id]
 
   # Reranker configuration (P4 feature)

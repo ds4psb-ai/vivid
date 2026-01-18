@@ -18,3 +18,25 @@ prompt_injection_template: |
   {rag_results}
 
   Use these narrative frameworks for story architecture.
+
+# P2: Recency grounding for trend-aware story prompts
+backends:
+  - id: qdrant_hybrid
+    weight: 0.7
+    enabled: true
+    config:
+      dimension: 2D
+      prefetch_limit: 30
+      min_score: 0.45
+
+  - id: notebooklm
+    weight: 0.2
+    enabled: true
+    config:
+      notebook_id: DNA_봉준호
+
+  - id: tavily_grounding
+    weight: 0.1
+    enabled: true
+    config:
+      search_depth: advanced
