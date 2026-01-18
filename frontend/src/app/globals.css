@@ -163,6 +163,7 @@ html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
 :root {
   /* ─── LIGHT MODE (Midday AI Style) ─── */
   /* Clean, crisp, professional */
+  color-scheme: light dark;
   --bg-0: #ffffff;
   --bg-1: #FAFAFA;
   /* Very subtle grey for contrast */
@@ -195,6 +196,19 @@ html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
   --warning: #D97706;
   --error: #DC2626;
   --info: #2563EB;
+
+  /* Semantic/Alias Tokens (Phase 2.1) */
+  --bg-base: var(--bg-0);
+  --bg-subtle: var(--bg-1);
+  --bg-muted: var(--bg-2);
+  --fg-base: var(--fg-0);
+  --fg-on-emphasis: #ffffff;
+  --border-default: var(--border-muted);
+  --surface-base: var(--surface-1);
+  --surface-raised: var(--surface-2);
+  --interactive-default: var(--accent);
+  --interactive-secondary: var(--accent-2);
+  --focus-ring: var(--accent);
 }
 
 .dark {
@@ -233,6 +247,19 @@ html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
   --warning: #f59e0b;
   --error: #ef4444;
   --info: #3b82f6;
+
+  /* Semantic/Alias Tokens (Phase 2.1) */
+  --bg-base: var(--bg-0);
+  --bg-subtle: var(--bg-1);
+  --bg-muted: var(--bg-2);
+  --fg-base: var(--fg-0);
+  --fg-on-emphasis: #ffffff;
+  --border-default: var(--border-muted);
+  --surface-base: var(--surface-1);
+  --surface-raised: var(--surface-2);
+  --interactive-default: var(--accent);
+  --interactive-secondary: var(--accent-2);
+  --focus-ring: var(--accent);
 
   /* Cinematic Aurora Gradient */
   --bg-image-gradient:
