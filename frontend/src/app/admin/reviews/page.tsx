@@ -50,17 +50,17 @@ function ReviewCard({
     const TypeIcon = typeIcons[review.review_type] || Zap;
 
     return (
-        <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-5 hover:border-purple-500/50 transition-colors">
+        <div className="bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl p-5 hover:border-purple-500/50 transition-colors">
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-purple-500/20 rounded-lg">
                         <TypeIcon className="w-4 h-4 text-purple-400" />
                     </div>
                     <div>
-                        <div className="font-medium text-white">
+                        <div className="font-medium text-[var(--fg-0)]">
                             {review.review_type.replace(/_/g, " ")}
                         </div>
-                        <div className="text-sm text-gray-400">
+                        <div className="text-sm text-[var(--fg-muted)]">
                             by {review.submitted_by.slice(0, 8)}...
                         </div>
                     </div>
@@ -71,12 +71,12 @@ function ReviewCard({
             {/* Auto-check score */}
             <div className="mb-4">
                 <div className="flex items-center justify-between text-sm mb-1">
-                    <span className="text-gray-400">Auto-check Score</span>
+                    <span className="text-[var(--fg-muted)]">Auto-check Score</span>
                     <span className={review.auto_checks_passed ? "text-green-400" : "text-red-400"}>
                         {review.auto_checks_score.toFixed(1)}
                     </span>
                 </div>
-                <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                <div className="h-2 bg-[var(--surface-2)] rounded-full overflow-hidden">
                     <div
                         className={`h-full ${review.auto_checks_passed ? "bg-green-500" : "bg-red-500"}`}
                         style={{ width: `${Math.min(100, review.auto_checks_score)}%` }}
@@ -85,7 +85,7 @@ function ReviewCard({
             </div>
 
             {review.submission_notes && (
-                <p className="text-sm text-gray-400 mb-4 line-clamp-2">
+                <p className="text-sm text-[var(--fg-muted)] mb-4 line-clamp-2">
                     {review.submission_notes}
                 </p>
             )}
@@ -94,7 +94,7 @@ function ReviewCard({
             <div className="flex items-center gap-2">
                 <button
                     onClick={onView}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm"
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[var(--surface-2)] hover:bg-[var(--surface-1)] text-[var(--fg-0)] rounded-lg text-sm"
                 >
                     <Eye className="w-4 h-4" />
                     View
@@ -119,7 +119,7 @@ function ReviewCard({
                 )}
             </div>
 
-            <div className="mt-3 text-xs text-gray-500">
+            <div className="mt-3 text-xs text-[var(--fg-subtle)]">
                 {new Date(review.created_at).toLocaleDateString("ko-KR", {
                     month: "short",
                     day: "numeric",
@@ -160,8 +160,8 @@ function ReviewDetailModal({
 
     if (loading) {
         return (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                <div className="bg-gray-900 rounded-xl p-8">
+            <div className="fixed inset-0 dialog-overlay flex items-center justify-center z-50">
+                <div className="bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl p-8">
                     <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
                 </div>
             </div>
@@ -169,15 +169,15 @@ function ReviewDetailModal({
     }
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
-            <div className="bg-gray-900 border border-gray-700 rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-                <div className="sticky top-0 bg-gray-900 border-b border-gray-700 p-6">
+        <div className="fixed inset-0 dialog-overlay flex items-center justify-center z-50 p-6">
+            <div className="dialog-panel rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+                <div className="sticky top-0 bg-[var(--surface-1)] border-b border-[var(--border-subtle)] p-6">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                        <h2 className="text-xl font-bold text-[var(--fg-0)] flex items-center gap-2">
                             <Shield className="w-5 h-5 text-purple-400" />
                             Review Details
                         </h2>
-                        <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">
+                        <button onClick={onClose} className="text-[var(--fg-muted)] hover:text-[var(--fg-0)] text-2xl">
                             ×
                         </button>
                     </div>
@@ -185,9 +185,9 @@ function ReviewDetailModal({
 
                 <div className="p-6 space-y-6">
                     {data?.tool && (
-                        <div className="bg-gray-800/50 rounded-lg p-4">
-                            <h3 className="font-medium text-white mb-2">{data.tool.display_name}</h3>
-                            <div className="flex items-center gap-4 text-sm text-gray-400">
+                        <div className="bg-[var(--surface-2)] rounded-lg p-4">
+                            <h3 className="font-medium text-[var(--fg-0)] mb-2">{data.tool.display_name}</h3>
+                            <div className="flex items-center gap-4 text-sm text-[var(--fg-muted)]">
                                 <span>Key: {data.tool.tool_key}</span>
                                 <span>Tier: {data.tool.tier}</span>
                             </div>
@@ -195,7 +195,7 @@ function ReviewDetailModal({
                     )}
 
                     <div>
-                        <h3 className="font-medium text-white mb-3">Automated Checks</h3>
+                        <h3 className="font-medium text-[var(--fg-0)] mb-3">Automated Checks</h3>
                         <div className="space-y-3">
                             {data?.checks?.map((check: CheckResult) => (
                                 <div
@@ -209,8 +209,8 @@ function ReviewDetailModal({
                                             ) : (
                                                 <XCircle className="w-4 h-4 text-red-400" />
                                             )}
-                                            <span className="font-medium text-white">{check.check_name}</span>
-                                            <span className="text-xs text-gray-500 bg-gray-700 px-2 py-0.5 rounded">
+                                            <span className="font-medium text-[var(--fg-0)]">{check.check_name}</span>
+                                            <span className="text-xs text-[var(--fg-subtle)] bg-[var(--surface-2)] px-2 py-0.5 rounded">
                                                 {check.category}
                                             </span>
                                         </div>
@@ -218,7 +218,7 @@ function ReviewDetailModal({
                                             {check.score.toFixed(0)}
                                         </span>
                                     </div>
-                                    {check.description && <p className="text-sm text-gray-400">{check.description}</p>}
+                                    {check.description && <p className="text-sm text-[var(--fg-muted)]">{check.description}</p>}
                                     {check.error_message && <p className="text-sm text-red-400 mt-2">{check.error_message}</p>}
                                 </div>
                             ))}
@@ -232,7 +232,7 @@ function ReviewDetailModal({
                                 value={rejectReason}
                                 onChange={(e) => setRejectReason(e.target.value)}
                                 rows={3}
-                                className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white resize-none"
+                                className="w-full px-3 py-2 bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-lg text-[var(--fg-0)] resize-none"
                                 placeholder="Explain why this review is rejected..."
                             />
                         </div>
@@ -242,7 +242,7 @@ function ReviewDetailModal({
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={onApprove}
-                                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg"
+                                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-500 hover:bg-green-600 text-[var(--fg-on-emphasis)] font-medium rounded-lg"
                             >
                                 <CheckCircle className="w-5 h-5" />
                                 Approve
@@ -251,7 +251,7 @@ function ReviewDetailModal({
                                 <button
                                     onClick={() => rejectReason.length >= 10 && onReject()}
                                     disabled={rejectReason.length < 10}
-                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg disabled:opacity-50"
+                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-500 hover:bg-red-600 text-[var(--fg-on-emphasis)] font-medium rounded-lg disabled:opacity-50"
                                 >
                                     <XCircle className="w-5 h-5" />
                                     Confirm Reject
@@ -333,14 +333,14 @@ export default function AdminReviewsPage() {
 
     if (loading && !stats) {
         return (
-            <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+            <div className="min-h-screen bg-[var(--bg-0)] flex items-center justify-center">
                 <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white">
+        <div className="min-h-screen bg-[var(--bg-0)] text-[var(--fg-0)]">
             <PageHeader
                 title="Review Queue"
                 subtitle="Manage tool submissions and promotions"
@@ -350,7 +350,7 @@ export default function AdminReviewsPage() {
                 actions={
                     <button
                         onClick={loadData}
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm"
+                        className="btn btn-secondary btn-size-sm gap-2"
                     >
                         <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
                         Refresh
@@ -371,14 +371,14 @@ export default function AdminReviewsPage() {
 
                 {/* Filters */}
                 <div className="flex items-center gap-2">
-                    <Filter className="w-4 h-4 text-gray-400" />
+                    <Filter className="w-4 h-4 text-[var(--fg-muted)]" />
                     {["all", "fork_submission", "tier_promotion", "code_update"].map((type) => (
                         <button
                             key={type}
                             onClick={() => setFilter(type === "all" ? null : type)}
                             className={`px-3 py-1.5 rounded-lg text-sm ${(type === "all" && !filter) || filter === type
-                                    ? "bg-purple-500 text-white"
-                                    : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                                    ? "bg-purple-500 text-[var(--fg-on-emphasis)]"
+                                    : "bg-[var(--surface-1)] text-[var(--fg-muted)] hover:bg-[var(--surface-2)]"
                                 }`}
                         >
                             {type === "all" ? "All" : type.replace(/_/g, " ")}

@@ -79,8 +79,8 @@ export default function HomePage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-slate-950">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-400 border-t-transparent" />
+        <div className="min-h-screen flex items-center justify-center bg-[var(--bg-0)]">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
         </div>
       }
     >

@@ -62,7 +62,7 @@ function DimensionFlow({ dimensions }: { dimensions: string[] }) {
                             {dim}
                         </span>
                         {i < dimensions.length - 1 && (
-                            <span className="text-slate-600 text-xs">→</span>
+                            <span className="text-[var(--fg-muted)] text-xs">→</span>
                         )}
                     </React.Fragment>
                 );
@@ -79,7 +79,7 @@ function BlackholeVisual() {
     return (
         <div className="relative w-full h-[400px] flex items-center justify-center overflow-hidden">
             {/* Gravitational Lensing Effect */}
-            <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-black/80" />
+            <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-[var(--overlay-backdrop)]" />
 
             {/* Accretion Disk - Outer */}
             <motion.div
@@ -102,7 +102,7 @@ function BlackholeVisual() {
             />
 
             {/* Event Horizon */}
-            <div className="absolute w-48 h-48 rounded-full bg-black shadow-[0_0_100px_40px_rgba(0,0,0,0.9),0_0_60px_20px_rgba(139,92,246,0.3)]" />
+            <div className="absolute w-48 h-48 rounded-full bg-[var(--bg-base)] shadow-[0_0_100px_40px_rgba(0,0,0,0.9),0_0_60px_20px_color-mix(in_srgb,var(--color-brand-primary)_30%,transparent)]" />
 
             {/* Photon Sphere */}
             <motion.div
@@ -112,14 +112,14 @@ function BlackholeVisual() {
             />
 
             {/* Singularity */}
-            <div className="absolute w-4 h-4 rounded-full bg-white/10" />
+            <div className="absolute w-4 h-4 rounded-full bg-[var(--fg-0)] opacity-10" />
 
             {/* Content Overlay */}
             <div className="relative z-10 text-center px-8">
                 <motion.h1
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-4xl md:text-6xl font-black tracking-tight text-white mb-4"
+                    className="text-4xl md:text-6xl font-black tracking-tight text-[var(--fg-0)] mb-4"
                 >
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-400 to-cyan-400">
                         차원의 특이점
@@ -129,7 +129,7 @@ function BlackholeVisual() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="text-gray-600 dark:text-slate-400 text-lg max-w-xl mx-auto"
+                    className="text-[var(--fg-muted)] text-lg max-w-xl mx-auto"
                 >
                     여러 차원을 관통한 워크플로우가 이곳으로 수렴합니다
                 </motion.p>
@@ -160,8 +160,8 @@ function TagFilter({
             <button
                 onClick={() => onTagChange("")}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${!selectedTag
-                    ? "bg-black dark:bg-white text-white dark:text-black shadow-lg"
-                    : "bg-black/5 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-black/10 dark:hover:bg-white/10 hover:text-black dark:hover:text-white"
+                    ? "bg-[var(--fg-0)] text-[var(--bg-0)] shadow-lg"
+                    : "bg-[var(--surface-1)] text-[var(--fg-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--fg-0)]"
                     }`}
             >
                 전체
@@ -171,8 +171,8 @@ function TagFilter({
                     key={tag}
                     onClick={() => onTagChange(tag === selectedTag ? "" : tag)}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${tag === selectedTag
-                        ? "bg-violet-500 text-white shadow-lg shadow-violet-500/25"
-                        : "bg-black/5 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-black/10 dark:hover:bg-white/10 hover:text-black dark:hover:text-white"
+                        ? "bg-violet-500 text-[var(--fg-on-emphasis)] shadow-lg shadow-violet-500/25"
+                        : "bg-[var(--surface-1)] text-[var(--fg-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--fg-0)]"
                         }`}
                 >
                     #{tag}
@@ -182,7 +182,7 @@ function TagFilter({
                 onClick={() => onFeaturedChange(!featuredOnly)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${featuredOnly
                     ? "bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30"
-                    : "bg-black/5 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-black/10 dark:hover:bg-white/10"
+                    : "bg-[var(--surface-1)] text-[var(--fg-muted)] hover:bg-[var(--surface-2)]"
                     }`}
             >
                 <Star className="w-4 h-4" />
@@ -226,7 +226,7 @@ function PresetSelector({
 }) {
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center gap-2 mb-8 text-slate-500">
+            <div className="flex items-center justify-center gap-2 mb-8 text-[var(--fg-muted)]">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 <span className="text-sm">프리셋 불러오는 중...</span>
             </div>
@@ -239,14 +239,14 @@ function PresetSelector({
         <div className="mb-8">
             <div className="flex items-center justify-center gap-2 mb-4">
                 <Wand2 className="w-4 h-4 text-violet-400" />
-                <span className="text-sm font-medium text-gray-600 dark:text-slate-400">크리에이티브 프리셋</span>
+                <span className="text-sm font-medium text-[var(--fg-muted)]">크리에이티브 프리셋</span>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-2">
                 <button
                     onClick={() => onPresetChange(null)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${!selectedPreset
                         ? "bg-violet-500/20 text-violet-600 dark:text-violet-400 ring-1 ring-violet-500/50"
-                        : "bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-slate-500 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-slate-300"
+                        : "bg-[var(--surface-1)] text-[var(--fg-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--fg-0)]"
                         }`}
                 >
                     전체
@@ -261,7 +261,7 @@ function PresetSelector({
                             title={preset.description || preset.keywords.join(", ")}
                             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${isSelected
                                 ? `bg-${display.color}-500/20 text-${display.color}-400 ring-1 ring-${display.color}-500/50`
-                                : "bg-white/5 text-slate-500 hover:bg-white/10 hover:text-slate-300"
+                                : "bg-[var(--surface-1)] text-[var(--fg-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--fg-0)]"
                                 }`}
                         >
                             <span>{display.icon}</span>
@@ -296,8 +296,8 @@ function TemplateCard({
             transition={{ delay: index * 0.08 }}
             whileHover={{ y: -8, scale: 1.02 }}
             onClick={onClick}
-            className="group relative bg-gradient-to-b from-black/[0.04] dark:from-white/[0.04] to-transparent border border-black/10 dark:border-white/10 rounded-3xl overflow-hidden cursor-pointer
-                       hover:border-violet-500/40 hover:shadow-[0_0_60px_rgba(139,92,246,0.15)] transition-all duration-500"
+            className="group relative bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-3xl overflow-hidden cursor-pointer
+                       hover:border-violet-500/40 hover:bg-[var(--surface-2)] hover:shadow-[0_0_60px_color-mix(in_srgb,var(--color-brand-primary)_20%,transparent)] transition-all duration-500"
         >
             {/* Featured Glow */}
             {template.is_featured && (
@@ -312,15 +312,15 @@ function TemplateCard({
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                     onError={(e) => { (e.target as HTMLImageElement).src = "/images/placeholder.png"; }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[var(--overlay-backdrop)] via-[var(--overlay-backdrop)] to-transparent opacity-80" />
 
                 {/* Play Button */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
                     <motion.div
                         whileHover={{ scale: 1.1 }}
-                        className="w-16 h-16 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-2xl"
+                        className="w-16 h-16 rounded-full bg-[var(--fg-0)] backdrop-blur flex items-center justify-center shadow-2xl"
                     >
-                        <Play className="w-7 h-7 text-black ml-1" />
+                        <Play className="w-7 h-7 text-[var(--bg-0)] ml-1" />
                     </motion.div>
                 </div>
 
@@ -339,24 +339,24 @@ function TemplateCard({
 
             {/* Content */}
             <div className="p-6">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-violet-600 dark:group-hover:text-violet-300 transition-colors line-clamp-1">
+                <h3 className="text-lg font-bold text-[var(--fg-0)] mb-2 group-hover:text-[var(--color-brand-primary)] transition-colors line-clamp-1">
                     {template.title}
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-slate-500 mb-4 line-clamp-2 leading-relaxed">
+                <p className="text-sm text-[var(--fg-muted)] mb-4 line-clamp-2 leading-relaxed">
                     {template.description}
                 </p>
 
                 {/* Tags */}
                 <div className="flex flex-wrap gap-1.5 mb-4">
                     {template.tags.slice(0, 3).map(tag => (
-                        <span key={tag} className="px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/5 text-[10px] text-gray-600 dark:text-slate-500">
+                        <span key={tag} className="px-2 py-0.5 rounded-full bg-[var(--surface-2)] text-[10px] text-[var(--fg-muted)]">
                             #{tag}
                         </span>
                     ))}
                 </div>
 
                 {/* Stats */}
-                <div className="flex items-center justify-between text-xs text-slate-600">
+                <div className="flex items-center justify-between text-xs text-[var(--fg-muted)]">
                     <div className="flex items-center gap-4">
                         <span className="flex items-center gap-1">
                             <Star className="w-3.5 h-3.5 text-amber-500" />
@@ -367,7 +367,7 @@ function TemplateCard({
                             {template.use_count.toLocaleString()}회
                         </span>
                     </div>
-                    <span className="text-slate-500">{template.creator_name}</span>
+                    <span className="text-[var(--fg-subtle)]">{template.creator_name}</span>
                 </div>
             </div>
         </motion.div>
@@ -401,7 +401,7 @@ function TemplateModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 dialog-overlay backdrop-blur-xl"
             onClick={onClose}
         >
             <motion.div
@@ -409,17 +409,17 @@ function TemplateModal({
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.9, opacity: 0, y: 20 }}
                 onClick={e => e.stopPropagation()}
-                className="w-full max-w-2xl bg-slate-950 border border-white/10 rounded-3xl overflow-hidden shadow-2xl"
+                className="w-full max-w-2xl dialog-panel rounded-3xl overflow-hidden shadow-2xl"
             >
                 {/* Hero Image */}
                 <div className="relative h-64">
                     <img src={thumbnail} alt={template.title} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-base)] via-[var(--bg-base)] to-transparent opacity-80" />
                     <button
                         onClick={onClose}
-                        className="absolute top-4 right-4 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
+                        className="absolute top-4 right-4 p-2 rounded-full bg-[var(--surface-2)] hover:bg-[var(--surface-1)] transition-colors"
                     >
-                        <X className="w-5 h-5 text-white" />
+                        <X className="w-5 h-5 text-[var(--fg-0)]" />
                     </button>
 
                     {/* Dimension Flow */}
@@ -430,13 +430,13 @@ function TemplateModal({
 
                 {/* Content */}
                 <div className="p-8">
-                    <h2 className="text-3xl font-bold text-white mb-3">{template.title}</h2>
-                    <p className="text-slate-400 mb-6 leading-relaxed">{template.description}</p>
+                    <h2 className="text-3xl font-bold text-[var(--fg-0)] mb-3">{template.title}</h2>
+                    <p className="text-[var(--fg-muted)] mb-6 leading-relaxed">{template.description}</p>
 
                     {/* Tool Sequence */}
                     {template.tool_names && template.tool_names.length > 0 && (
-                        <div className="mb-6 p-4 rounded-2xl bg-white/5 border border-white/10">
-                            <div className="text-xs text-slate-500 mb-2">사용된 도구 흐름</div>
+                        <div className="mb-6 p-4 rounded-2xl bg-[var(--surface-2)] border border-[var(--border-subtle)]">
+                            <div className="text-xs text-[var(--fg-subtle)] mb-2">사용된 도구 흐름</div>
                             <div className="flex flex-wrap gap-2">
                                 {template.tool_names.map((tool, i) => (
                                     <span key={i} className="px-3 py-1 rounded-lg bg-violet-500/10 text-violet-300 text-sm">
@@ -450,14 +450,14 @@ function TemplateModal({
                     {/* Tags */}
                     <div className="flex flex-wrap gap-2 mb-6">
                         {template.tags.map(tag => (
-                            <span key={tag} className="px-3 py-1 rounded-full bg-white/5 text-xs text-slate-400">
+                            <span key={tag} className="px-3 py-1 rounded-full bg-[var(--surface-2)] text-xs text-[var(--fg-muted)]">
                                 #{tag}
                             </span>
                         ))}
                     </div>
 
                     {/* Stats */}
-                    <div className="flex items-center gap-6 text-sm text-slate-400 mb-8 pb-6 border-b border-white/10">
+                    <div className="flex items-center gap-6 text-sm text-[var(--fg-muted)] mb-8 pb-6 border-b border-[var(--border-subtle)]">
                         <span className="flex items-center gap-1.5">
                             <Star className="w-4 h-4 text-amber-500" />
                             {template.rating_avg.toFixed(1)}
@@ -471,7 +471,7 @@ function TemplateModal({
 
                     {/* Rating */}
                     <div className="mb-8">
-                        <div className="text-xs text-slate-500 mb-3">이 워크플로우를 평가해주세요</div>
+                        <div className="text-xs text-[var(--fg-subtle)] mb-3">이 워크플로우를 평가해주세요</div>
                         <div className="flex gap-2">
                             {[1, 2, 3, 4, 5].map(star => (
                                 <button
@@ -479,8 +479,8 @@ function TemplateModal({
                                     onClick={() => { setRating(star); setHasRated(true); }}
                                     disabled={hasRated}
                                     className={`w-10 h-10 rounded-xl transition-all ${star <= rating
-                                        ? "bg-amber-500 text-black font-bold"
-                                        : "bg-white/5 text-slate-500 hover:bg-white/10"
+                                        ? "bg-amber-500 text-[var(--fg-on-emphasis)] font-bold"
+                                        : "bg-[var(--surface-2)] text-[var(--fg-muted)] hover:bg-[var(--surface-1)]"
                                         } ${hasRated ? "cursor-not-allowed" : ""}`}
                                 >
                                     {star}
@@ -494,7 +494,7 @@ function TemplateModal({
                         <button
                             onClick={() => onApply(template)}
                             disabled={isApplying}
-                            className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 disabled:opacity-50 text-white font-bold rounded-2xl transition-all shadow-lg shadow-violet-500/25"
+                            className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 disabled:opacity-50 text-[var(--fg-on-emphasis)] font-bold rounded-2xl transition-all shadow-lg shadow-violet-500/25"
                         >
                             {isApplying ? (
                                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -654,18 +654,18 @@ export default function SingularityPage() {
                     {loading && (
                         <div className="flex flex-col items-center justify-center py-20">
                             <Loader2 className="w-10 h-10 text-violet-400 animate-spin mb-4" />
-                            <p className="text-slate-500">워크플로우를 불러오는 중...</p>
+                            <p className="text-[var(--fg-muted)]">워크플로우를 불러오는 중...</p>
                         </div>
                     )}
 
                     {/* Error */}
                     {error && !loading && (
                         <div className="flex flex-col items-center justify-center py-20">
-                            <AlertCircle className="w-10 h-10 text-red-400 mb-4" />
-                            <p className="text-red-400 mb-4">{error}</p>
+                            <AlertCircle className="w-10 h-10 event-tone-error mb-4" />
+                            <p className="event-tone-error mb-4">{error}</p>
                             <button
                                 onClick={loadTemplates}
-                                className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg text-white hover:bg-white/20"
+                                className="btn btn-secondary btn-size-sm flex items-center gap-2"
                             >
                                 <RefreshCw className="w-4 h-4" />
                                 다시 시도
@@ -676,16 +676,16 @@ export default function SingularityPage() {
                     {/* Empty */}
                     {!loading && !error && templates.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-20">
-                            <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6">
-                                <Sparkles className="w-8 h-8 text-slate-600" />
+                            <div className="w-20 h-20 rounded-full bg-[var(--surface-2)] flex items-center justify-center mb-6">
+                                <Sparkles className="w-8 h-8 text-[var(--fg-muted)]" />
                             </div>
-                            <h3 className="text-xl font-bold text-white mb-2">아직 수렴된 워크플로우가 없습니다</h3>
-                            <p className="text-slate-500 mb-4">
+                            <h3 className="text-xl font-bold text-[var(--fg-0)] mb-2">아직 수렴된 워크플로우가 없습니다</h3>
+                            <p className="text-[var(--fg-muted)] mb-4">
                                 차원 여행을 시작하고 첫 번째 워크플로우를 만들어보세요
                             </p>
                             <button
                                 onClick={() => router.push("/dimension")}
-                                className="px-6 py-3 bg-violet-500 hover:bg-violet-400 text-white font-semibold rounded-xl transition-colors"
+                                className="px-6 py-3 bg-violet-500 hover:bg-violet-400 text-[var(--fg-on-emphasis)] font-semibold rounded-xl transition-colors"
                             >
                                 차원 앱 열기
                             </button>

@@ -46,12 +46,12 @@ registerWidget('Card', (message, resolveChildren) => {
     const { title, description, href } = message.props || {};
     const children = message.children ? resolveChildren(message.children) : null;
 
-    const baseClasses = "relative overflow-hidden rounded-[2rem] border border-white/5 bg-black/40 p-8 backdrop-blur-2xl hover:bg-white/[0.03] transition-all duration-700";
+    const baseClasses = "relative overflow-hidden rounded-[2rem] border border-[var(--border-subtle)] bg-[var(--surface-1)] p-8 backdrop-blur-2xl hover:bg-[var(--surface-2)] transition-all duration-700";
 
     const content = (
         <div className={baseClasses}>
-            {typeof title === 'string' && <h2 className="text-2xl font-bold text-white mb-4">{title}</h2>}
-            {typeof description === 'string' && <p className="text-sm text-zinc-400">{description}</p>}
+            {typeof title === 'string' && <h2 className="text-2xl font-bold text-[var(--fg-0)] mb-4">{title}</h2>}
+            {typeof description === 'string' && <p className="text-sm text-[var(--fg-muted)]">{description}</p>}
             {children}
         </div>
     );
@@ -69,15 +69,15 @@ registerWidget('Button', (message) => {
     const variantStr = typeof variant === 'string' ? variant : 'primary';
 
     const variants: Record<string, string> = {
-        primary: "bg-white text-black hover:bg-white/90",
-        secondary: "bg-white/10 text-white hover:bg-white/20",
-        ghost: "text-white/60 hover:text-white hover:bg-white/5"
+        primary: "btn btn-primary btn-size-default",
+        secondary: "btn btn-secondary btn-size-default",
+        ghost: "btn btn-ghost btn-size-default"
     };
 
     return (
         <button
             key={message.id}
-            className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium transition-all duration-300 ${variants[variantStr] || variants.primary}`}
+            className={`${variants[variantStr] || variants.primary} inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium transition-all duration-300`}
         >
             {typeof label === 'string' ? label : ''}
         </button>
@@ -94,12 +94,12 @@ registerWidget('Progress', (message) => {
     return (
         <div key={message.id} className="w-full space-y-2">
             {typeof label === 'string' && (
-                <div className="flex justify-between text-xs text-zinc-400">
+                <div className="flex justify-between text-xs text-[var(--fg-muted)]">
                     <span>{label}</span>
                     <span>{Math.round(percentage)}%</span>
                 </div>
             )}
-            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+            <div className="h-2 bg-[var(--border-subtle)] rounded-full overflow-hidden">
                 <div
                     className="h-full bg-gradient-to-r from-violet-500 to-cyan-500 transition-all duration-500"
                     style={{ width: `${percentage}%` }}
@@ -137,24 +137,24 @@ registerWidget('DimensionCard', (message) => {
 
     return (
         <Link key={message.id} href={hrefStr}>
-            <div className="group relative overflow-hidden rounded-[2rem] border border-white/5 bg-black/40 p-8 backdrop-blur-2xl hover:bg-white/[0.03] transition-all duration-700 hover:-translate-y-2 min-h-[320px]">
+            <div className="group relative overflow-hidden rounded-[2rem] border border-[var(--border-subtle)] bg-[var(--surface-1)] p-8 backdrop-blur-2xl hover:bg-[var(--surface-2)] transition-all duration-700 hover:-translate-y-2 min-h-[320px]">
                 {/* Border reveal */}
                 <div className={`absolute inset-0 rounded-[2rem] border-2 ${borderColorStr} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
 
                 <div className="relative flex flex-col h-full justify-between">
                     <div className="flex items-start justify-between">
-                        <h2 className="text-2xl font-bold text-white">{typeof title === 'string' ? title : ''}</h2>
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/5 border border-white/10">
-                            <Icon className="h-5 w-5 text-white/80" />
+                        <h2 className="text-2xl font-bold text-[var(--fg-0)]">{typeof title === 'string' ? title : ''}</h2>
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--surface-2)] border border-[var(--border-subtle)]">
+                            <Icon className="h-5 w-5 text-[var(--fg-muted)]" />
                         </div>
                     </div>
 
                     <div className="space-y-4 mt-auto">
-                        <p className="text-xs font-medium uppercase tracking-widest text-zinc-500">
+                        <p className="text-xs font-medium uppercase tracking-widest text-[var(--fg-subtle)]">
                             {typeof essence === 'string' ? essence : ''}
                         </p>
-                        <p className="text-sm text-zinc-400">{typeof description === 'string' ? description : ''}</p>
-                        <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-white/10 bg-white/5 group-hover:bg-white group-hover:text-black transition-all duration-300">
+                        <p className="text-sm text-[var(--fg-muted)]">{typeof description === 'string' ? description : ''}</p>
+                        <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-[var(--border-subtle)] bg-[var(--surface-2)] group-hover:bg-[var(--surface-1)] group-hover:text-[var(--fg-0)] transition-all duration-300">
                             <span className="text-[10px] font-bold tracking-widest uppercase">EXPLORE</span>
                             <div className={`h-1.5 w-1.5 rounded-full ${activeBgStr}`} />
                         </div>

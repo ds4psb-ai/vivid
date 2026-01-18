@@ -130,7 +130,7 @@ export default function AppShell({
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
                                 onClick={handleMobileClose}
-                                className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+                                className="fixed inset-0 z-40 dialog-overlay lg:hidden"
                                 aria-hidden="true"
                             />
                             {/* Sidebar */}
@@ -145,7 +145,7 @@ export default function AppShell({
                                 {/* Close button - positioned at top right of expanded sidebar area */}
                                 <button
                                     onClick={handleMobileClose}
-                                    className="absolute top-4 left-[220px] flex h-8 w-8 items-center justify-center rounded-lg bg-black/60 text-white transition-colors hover:bg-black/80 backdrop-blur-sm"
+                                    className="absolute top-4 left-[220px] flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--surface-1)] text-[var(--fg-0)] transition-colors hover:bg-[var(--surface-2)] backdrop-blur-sm"
                                     aria-label="Close menu"
                                 >
                                     <X className="h-5 w-5" aria-hidden="true" />

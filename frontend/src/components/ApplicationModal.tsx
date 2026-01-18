@@ -106,7 +106,7 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         className="fixed left-1/2 top-1/2 z-[70] w-full max-w-md -translate-x-1/2 -translate-y-1/2 p-4"
                     >
-                        <div className="relative overflow-hidden rounded-2xl border border-[var(--border-muted)] bg-[var(--surface-1)] shadow-2xl shadow-[#4200FF]/20">
+                        <div className="relative overflow-hidden rounded-2xl border border-[var(--border-muted)] bg-[var(--surface-1)] shadow-2xl shadow-[0_0_40px_color-mix(in_srgb,var(--color-brand-primary)_30%,transparent)]">
                             {/* Header */}
                             <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-6 py-4">
                                 <div>
@@ -156,7 +156,7 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
                                                 onChange={handleChange}
                                                 required
                                                 placeholder="홍길동"
-                                                className="w-full rounded-lg border border-[var(--border-muted)] bg-[var(--surface-1)] py-3 pl-10 pr-4 text-[var(--fg-0)] placeholder:text-[var(--fg-muted)] transition-colors focus:border-[#4200FF]/50 focus:outline-none focus:ring-2 focus:ring-[#4200FF]/20"
+                                                className="w-full rounded-lg border border-[var(--border-muted)] bg-[var(--surface-1)] py-3 pl-10 pr-4 text-[var(--fg-0)] placeholder:text-[var(--fg-muted)] transition-colors focus:border-[var(--color-brand-primary)]/50 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/20"
                                             />
                                         </div>
                                     </div>
@@ -175,7 +175,7 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
                                                 onChange={handleChange}
                                                 required
                                                 placeholder="you@example.com"
-                                                className="w-full rounded-lg border border-[var(--border-muted)] bg-[var(--surface-1)] py-3 pl-10 pr-4 text-[var(--fg-0)] placeholder:text-[var(--fg-muted)] transition-colors focus:border-[#4200FF]/50 focus:outline-none focus:ring-2 focus:ring-[#4200FF]/20"
+                                                className="w-full rounded-lg border border-[var(--border-muted)] bg-[var(--surface-1)] py-3 pl-10 pr-4 text-[var(--fg-0)] placeholder:text-[var(--fg-muted)] transition-colors focus:border-[var(--color-brand-primary)]/50 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/20"
                                             />
                                         </div>
                                     </div>
@@ -194,7 +194,7 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
                                                 onChange={handleChange}
                                                 required
                                                 placeholder="010-1234-5678"
-                                                className="w-full rounded-lg border border-[var(--border-muted)] bg-[var(--surface-1)] py-3 pl-10 pr-4 text-[var(--fg-0)] placeholder:text-[var(--fg-muted)] transition-colors focus:border-[#4200FF]/50 focus:outline-none focus:ring-2 focus:ring-[#4200FF]/20"
+                                                className="w-full rounded-lg border border-[var(--border-muted)] bg-[var(--surface-1)] py-3 pl-10 pr-4 text-[var(--fg-0)] placeholder:text-[var(--fg-muted)] transition-colors focus:border-[var(--color-brand-primary)]/50 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/20"
                                             />
                                         </div>
                                     </div>
@@ -209,7 +209,7 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
                                                 type="button"
                                                 onClick={() => setFormData((prev) => ({ ...prev, track: "A" }))}
                                                 className={`rounded-lg border p-4 text-left transition-all ${formData.track === "A"
-                                                    ? "border-[#4200FF] bg-[#4200FF]/10 text-white"
+                                                    ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/10 text-[var(--fg-on-emphasis)]"
                                                     : "border-[var(--border-muted)] bg-[var(--surface-1)] text-[var(--fg-muted)] hover:border-[var(--border-strong)]"
                                                     }`}
                                             >
@@ -220,7 +220,7 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
                                                 type="button"
                                                 onClick={() => setFormData((prev) => ({ ...prev, track: "B" }))}
                                                 className={`rounded-lg border p-4 text-left transition-all ${formData.track === "B"
-                                                    ? "border-[#FF0045] bg-[#FF0045]/10 text-white"
+                                                    ? "border-[var(--color-brand-accent)] bg-[var(--color-brand-accent)]/10 text-[var(--fg-on-emphasis)]"
                                                     : "border-[var(--border-muted)] bg-[var(--surface-1)] text-[var(--fg-muted)] hover:border-[var(--border-strong)]"
                                                     }`}
                                             >
@@ -234,7 +234,7 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
                                     <button
                                         type="submit"
                                         disabled={isSubmitting}
-                                        className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#4200FF] py-4 font-bold text-white transition-all hover:bg-[#5500FF] disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--color-brand-primary)] py-4 font-bold text-[var(--fg-on-emphasis)] transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                         {isSubmitting ? (
                                             <>
@@ -262,7 +262,7 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
                                         <p>주식회사 페이지아카데미 | 대표: 이용찬</p>
                                         <p>사업자번호: 751-88-02370 | 통신판매: 2022-서울성동-00228</p>
                                         <p>서울특별시 성동구 성수이로 113, 8층 801호</p>
-                                        <p className="text-[#4200FF]">결제: 나이스페이먼츠(주)</p>
+                                        <p className="text-[var(--color-brand-primary)]">결제: 나이스페이먼츠(주)</p>
                                     </div>
                                 </form>
                             )}

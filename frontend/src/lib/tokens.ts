@@ -455,7 +455,7 @@ export function getDimensionThemeClasses(code: DimensionCode): ThemeColorClasses
     border: `border-${key}/20`,
     text: `text-${key}`,
     button: `bg-${key}/20 hover:bg-${key}/30 text-${key}`,
-    buttonActive: `bg-${key} text-black dark:text-white`,
+    buttonActive: `bg-${key} text-[var(--fg-on-emphasis)]`,
     glow: `shadow-[0_0_20px] shadow-${key}/30`,
   };
 }
@@ -519,22 +519,22 @@ export function getDimensionGlow(code: DimensionCode, size: GlowSize = "md"): st
 /**
  * Get glassmorphism panel classes
  * Includes backdrop-blur and dimension-colored border
- * @example getDimensionGlassStyle("ad") => "bg-black/40 backdrop-blur-xl border border-dimension-ad/20 rounded-2xl"
+ * @example getDimensionGlassStyle("ad") => "bg-[var(--surface-1)] backdrop-blur-xl border border-dimension-ad/20 rounded-2xl"
  */
 export function getDimensionGlassStyle(code: DimensionCode): string {
   const key = DIMENSION_TOKENS[code].tailwindKey;
-  return `bg-black/40 backdrop-blur-xl border border-${key}/20 rounded-2xl`;
+  return `bg-[var(--surface-1)] backdrop-blur-xl border border-${key}/20 rounded-2xl`;
 }
 
 /**
  * Get unified input field classes with dimension focus ring
- * @example getDimensionInputStyle("ad") => "bg-white/5 border border-white/10 ... focus:border-dimension-ad/50 ..."
+ * @example getDimensionInputStyle("ad") => "bg-[var(--surface-1)] border border-[var(--border-subtle)] ... focus:border-dimension-ad/50 ..."
  */
 export function getDimensionInputStyle(code: DimensionCode): string {
   const key = DIMENSION_TOKENS[code].tailwindKey;
   return [
-    "bg-white/5 border border-white/10 rounded-lg px-4 py-3",
-    "text-white placeholder:text-white/40",
+    "bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-lg px-4 py-3",
+    "text-[var(--fg-0)] placeholder:text-[var(--fg-subtle)]",
     `focus:border-${key}/50 focus:ring-1 focus:ring-${key}/30`,
     "focus:outline-none transition-colors duration-200",
   ].join(" ");
@@ -546,7 +546,7 @@ export function getDimensionInputStyle(code: DimensionCode): string {
  */
 export function getDimensionButtonStyle(code: DimensionCode): string {
   return [
-    "relative overflow-hidden px-6 py-3 rounded-xl font-semibold text-white",
+    "relative overflow-hidden px-6 py-3 rounded-xl font-semibold text-[var(--fg-on-emphasis)]",
     "transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed",
     getDimensionGradient(code),
     getDimensionGlow(code, "lg"),
@@ -559,14 +559,14 @@ export function getDimensionButtonStyle(code: DimensionCode): string {
  */
 export function getDimensionResultStyle(code: DimensionCode): string {
   const key = DIMENSION_TOKENS[code].tailwindKey;
-  return `bg-black/40 backdrop-blur-xl border border-${key}/20 rounded-2xl p-6 space-y-4`;
+  return `bg-[var(--surface-1)] backdrop-blur-xl border border-${key}/20 rounded-2xl p-6 space-y-4`;
 }
 
 /**
  * Get skeleton loading classes
  */
 export function getSkeletonStyle(): string {
-  return "animate-pulse bg-white/10 rounded-lg";
+  return "animate-pulse bg-[var(--surface-2)] rounded-lg";
 }
 
 /**

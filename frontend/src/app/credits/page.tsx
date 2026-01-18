@@ -35,7 +35,7 @@ const TRANSACTION_CONFIG: Record<string, { bgClass: string; icon: React.ElementT
     topup: { bgClass: "bg-sky-500/10", icon: ArrowDownLeft, iconClass: "text-sky-400" },
     reward: { bgClass: "bg-emerald-500/10", icon: Gift, iconClass: "text-emerald-400" },
     promo: { bgClass: "bg-amber-500/10", icon: Sparkles, iconClass: "text-amber-400" },
-    refund: { bgClass: "bg-slate-500/10", icon: ArrowDownLeft, iconClass: "text-slate-300" },
+    refund: { bgClass: "bg-[var(--surface-2)]", icon: ArrowDownLeft, iconClass: "text-[var(--fg-muted)]" },
 };
 
 export default function CreditsPage() {
@@ -264,7 +264,7 @@ export default function CreditsPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
-                        className="mb-6 rounded-xl border border-gray-300 dark:border-white/10 bg-gradient-to-br from-sky-500/10 via-transparent to-amber-500/10 p-4 sm:mb-8 sm:rounded-2xl sm:p-6"
+                        className="mb-6 rounded-xl border border-[var(--border-subtle)] bg-gradient-to-br from-sky-500/10 via-transparent to-amber-500/10 p-4 sm:mb-8 sm:rounded-2xl sm:p-6"
                     >
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                             <div>
@@ -306,7 +306,7 @@ export default function CreditsPage() {
                             <button
                                 onClick={handleTopUpScroll}
                                 disabled={isLoading}
-                                className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 px-5 py-3 font-semibold text-white shadow-lg shadow-sky-500/25 transition-all hover:from-sky-400 hover:to-sky-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                                className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 px-5 py-3 font-semibold text-[var(--fg-on-emphasis)] shadow-lg shadow-sky-500/25 transition-all hover:from-sky-400 hover:to-sky-500 disabled:opacity-60 disabled:cursor-not-allowed"
                                 aria-label={labels.topUp}
                             >
                                 <Plus className="h-4 w-4" aria-hidden="true" />
@@ -315,7 +315,7 @@ export default function CreditsPage() {
                         </div>
 
                         {/* Stats Row */}
-                        <div className="mt-4 grid grid-cols-3 gap-3 border-t border-gray-300 dark:border-white/10 pt-4 sm:mt-6 sm:gap-4 sm:pt-6">
+                        <div className="mt-4 grid grid-cols-3 gap-3 border-t border-[var(--border-subtle)] pt-4 sm:mt-6 sm:gap-4 sm:pt-6">
                             <div>
                                 <div className="text-[10px] text-[var(--fg-muted)] sm:text-xs">{labels.usedThisMonth}</div>
                                 <div className="mt-1 flex items-center gap-1">
@@ -344,7 +344,7 @@ export default function CreditsPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.15 }}
-                        className="mb-6 rounded-2xl border border-gray-300 dark:border-white/10 bg-gradient-to-br from-emerald-500/10 via-transparent to-sky-500/10 p-5 sm:mb-8 sm:p-6"
+                        className="mb-6 rounded-2xl border border-[var(--border-subtle)] bg-gradient-to-br from-emerald-500/10 via-transparent to-sky-500/10 p-5 sm:mb-8 sm:p-6"
                     >
                         <div className="flex flex-wrap items-center justify-between gap-4">
                             <div>
@@ -381,24 +381,24 @@ export default function CreditsPage() {
                             {creditPacks.map((pack) => (
                                 <div
                                     key={pack.id}
-                                    className="group relative flex flex-col rounded-xl border border-gray-300 dark:border-white/10 bg-gray-50 dark:bg-slate-900/60 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-sky-500/30 hover:bg-gray-100 dark:hover:bg-slate-800/80 hover:shadow-xl hover:shadow-sky-500/10"
+                                    className="group relative flex flex-col rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-5 transition-all duration-300 hover:-translate-y-1 hover:border-sky-500/30 hover:bg-[var(--surface-2)] hover:shadow-xl hover:shadow-sky-500/10"
                                 >
                                     {pack.badge && (
-                                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-sky-500 to-amber-500 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-lg shadow-sky-900/50">
+                                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-sky-500 to-amber-500 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-[var(--fg-on-emphasis)] shadow-lg shadow-sky-900/50">
                                             {pack.badge}
                                         </div>
                                     )}
-                                    <div className="mb-2 text-sm font-medium text-gray-600 dark:text-slate-400 group-hover:text-sky-600 dark:group-hover:text-sky-300 transition-colors">{pack.name}</div>
+                                    <div className="mb-2 text-sm font-medium text-[var(--fg-muted)] group-hover:text-sky-600 transition-colors">{pack.name}</div>
                                     <div className="flex items-baseline gap-1">
-                                        <span className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">{formatNumber(pack.credits)}</span>
-                                        <span className="text-xs text-gray-500 dark:text-slate-500 font-medium uppercase tracking-wider">{labels.credits}</span>
+                                        <span className="text-3xl font-bold text-[var(--fg-0)] tracking-tight">{formatNumber(pack.credits)}</span>
+                                        <span className="text-xs text-[var(--fg-subtle)] font-medium uppercase tracking-wider">{labels.credits}</span>
                                     </div>
 
-                                    <div className="mt-6 pt-6 border-t border-gray-200 dark:border-white/5">
+                                    <div className="mt-6 pt-6 border-t border-[var(--border-subtle)]">
                                         <button
                                             onClick={() => handleTopUp(pack)}
                                             disabled={isLoading || isToppingUp === pack.id}
-                                            className="w-full rounded-lg bg-sky-500/10 py-2.5 text-sm font-semibold text-sky-600 dark:text-sky-400 transition-all group-hover:bg-sky-500 group-hover:text-white group-hover:shadow-lg group-hover:shadow-sky-500/25 disabled:opacity-60 disabled:cursor-not-allowed"
+                                            className="w-full rounded-lg bg-sky-500/10 py-2.5 text-sm font-semibold text-sky-600 dark:text-sky-400 transition-all group-hover:bg-sky-500 group-hover:text-[var(--fg-on-emphasis)] group-hover:shadow-lg group-hover:shadow-sky-500/25 disabled:opacity-60 disabled:cursor-not-allowed"
                                             aria-label={`${pack.name} pack for $${pack.price}`}
                                         >
                                             {isToppingUp === pack.id ? "Processing..." : `$${pack.price}`}
@@ -427,19 +427,19 @@ export default function CreditsPage() {
                                 type="button"
                                 onClick={handleExportCsv}
                                 disabled={transactions.length === 0}
-                                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-white/10 bg-gray-50 dark:bg-white/5 px-3 py-2 text-xs font-semibold text-gray-700 dark:text-slate-200 transition-colors hover:bg-gray-100 dark:hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                                className="btn btn-secondary btn-size-sm gap-2 disabled:cursor-not-allowed disabled:opacity-50"
                                 aria-label={labels.exportCsv}
                             >
                                 <Download className="h-4 w-4" aria-hidden="true" />
                                 {labels.exportCsv}
                             </button>
                         </div>
-                        <div className="overflow-hidden rounded-xl border border-gray-300 dark:border-white/10 bg-gray-50 dark:bg-slate-900/40 backdrop-blur-sm">
-                            <div className="divide-y divide-gray-200 dark:divide-white/5">
+                        <div className="overflow-hidden rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-1)] backdrop-blur-sm">
+                            <div className="divide-y divide-[var(--border-subtle)]">
                                 {isLoading ? (
-                                    <div className="px-5 py-6 text-sm text-slate-500">{labels.loadingTransactions}</div>
+                                    <div className="px-5 py-6 text-sm text-[var(--fg-muted)]">{labels.loadingTransactions}</div>
                                 ) : transactions.length === 0 ? (
-                                    <div className="px-5 py-6 text-sm text-slate-500">{labels.noTransactions}</div>
+                                    <div className="px-5 py-6 text-sm text-[var(--fg-muted)]">{labels.noTransactions}</div>
                                 ) : (
                                     transactions.map((tx) => {
                                         const config = TRANSACTION_CONFIG[tx.event_type] || TRANSACTION_CONFIG.usage;
@@ -457,22 +457,22 @@ export default function CreditsPage() {
                                                     ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
                                                     : tx.event_type === "promo"
                                                         ? "border-amber-500/20 bg-amber-500/10 text-amber-400"
-                                                        : "border-slate-700 bg-slate-800 text-slate-400";
+                                                        : "border-[var(--border-subtle)] bg-[var(--surface-2)] text-[var(--fg-subtle)]";
                                         return (
                                             <div
                                                 key={tx.id}
-                                                className="group flex items-center justify-between px-5 py-4 transition-colors hover:bg-white/5"
+                                                className="group flex items-center justify-between px-5 py-4 transition-colors hover:bg-[var(--surface-2)]"
                                             >
                                                 <div className="flex items-center gap-4">
                                                     <div className={`flex h-10 w-10 items-center justify-center rounded-full ${config.bgClass} transition-transform group-hover:scale-110`}>
                                                         <TxIcon className={`h-5 w-5 ${config.iconClass}`} aria-hidden="true" />
                                                     </div>
                                                     <div>
-                                                        <div className="font-medium text-gray-800 dark:text-slate-200 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
+                                                        <div className="font-medium text-[var(--fg-0)] transition-colors">
                                                             {tx.description || "Credit transaction"}
                                                         </div>
                                                         <div className="flex items-center gap-2 mt-0.5">
-                                                            <span className="text-xs font-mono text-slate-500">
+                                                            <span className="text-xs font-mono text-[var(--fg-subtle)]">
                                                                 {Number.isNaN(createdAt.getTime())
                                                                     ? "--"
                                                                     : createdAt.toLocaleDateString(
@@ -485,7 +485,7 @@ export default function CreditsPage() {
                                                             </span>
                                                         </div>
                                                         {(runType || resourceId) && (
-                                                            <div className="mt-1 text-[10px] text-slate-500">
+                                                            <div className="mt-1 text-[10px] text-[var(--fg-subtle)]">
                                                                 {runType && (
                                                                     <span className="mr-2">{labels.runType}: {runType}</span>
                                                                 )}
@@ -513,7 +513,7 @@ export default function CreditsPage() {
                                     type="button"
                                     onClick={loadMoreTransactions}
                                     disabled={isLoadingMore}
-                                    className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-white/10 bg-gray-50 dark:bg-white/5 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-slate-200 transition-colors hover:bg-gray-100 dark:hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="btn btn-secondary btn-size-sm gap-2 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     {isLoadingMore ? (
                                         <span className="animate-pulse">{language === "ko" ? "불러오는 중..." : "Loading..."}</span>

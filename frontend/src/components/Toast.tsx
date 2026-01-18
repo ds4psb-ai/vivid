@@ -51,10 +51,10 @@ export function useToast(): ToastContextType {
 // =============================================================================
 
 const TOAST_CONFIG: Record<ToastType, { icon: typeof CheckCircle; color: string; bgColor: string }> = {
-    success: { icon: CheckCircle, color: "text-emerald-400", bgColor: "bg-emerald-500/10 border-emerald-500/20" },
-    error: { icon: XCircle, color: "text-red-400", bgColor: "bg-red-500/10 border-red-500/20" },
-    warning: { icon: AlertCircle, color: "text-amber-400", bgColor: "bg-amber-500/10 border-amber-500/20" },
-    info: { icon: Info, color: "text-cyan-400", bgColor: "bg-cyan-500/10 border-cyan-500/20" },
+    success: { icon: CheckCircle, color: "event-tone-success", bgColor: "event-bg-success event-border-success" },
+    error: { icon: XCircle, color: "event-tone-error", bgColor: "event-bg-error event-border-error" },
+    warning: { icon: AlertCircle, color: "event-tone-warning", bgColor: "event-bg-warning event-border-warning" },
+    info: { icon: Info, color: "event-tone-info", bgColor: "event-bg-info event-border-info" },
 };
 
 function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string) => void }) {
@@ -69,12 +69,12 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
             className={`flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-xl shadow-lg ${config.bgColor}`}
         >
             <Icon className={`w-5 h-5 flex-shrink-0 ${config.color}`} />
-            <p className="text-sm text-white flex-1">{toast.message}</p>
+            <p className="text-sm text-[var(--fg-0)] flex-1">{toast.message}</p>
             <button
                 onClick={() => onDismiss(toast.id)}
-                className="p-1 rounded-lg hover:bg-white/10 transition-colors"
+                className="p-1 rounded-lg hover:bg-[var(--surface-2)] transition-colors"
             >
-                <X className="w-4 h-4 text-slate-400" />
+                <X className="w-4 h-4 text-[var(--fg-subtle)]" />
             </button>
         </motion.div>
     );

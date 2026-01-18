@@ -1638,6 +1638,16 @@ html.lenis body {
   border-color: color-mix(in srgb, var(--warning) 35%, transparent);
 }
 
+.event-tone-error { color: var(--error); }
+.event-bg-error {
+  background: rgba(var(--error-rgb), 0.12);
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+}
+.event-border-error {
+  border-color: rgba(var(--error-rgb), 0.35);
+  border-color: color-mix(in srgb, var(--error) 35%, transparent);
+}
+
 .event-tone-neutral { color: var(--fg-muted); }
 .event-bg-neutral {
   background: rgba(var(--fg-muted-rgb), 0.12);

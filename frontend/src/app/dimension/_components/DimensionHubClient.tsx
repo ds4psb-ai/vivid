@@ -149,13 +149,13 @@ function StageToggle({
   language,
 }: StageToggleProps) {
   return (
-    <div className="flex flex-wrap justify-center items-center gap-2 p-2 rounded-2xl backdrop-blur-sm bg-black/5 dark:bg-white/5">
+    <div className="flex flex-wrap justify-center items-center gap-2 p-2 rounded-2xl backdrop-blur-sm bg-[var(--surface-1)]">
       <button
         onClick={() => onStageChange(null)}
         className={`px-5 py-2.5 rounded-xl text-xs font-bold tracking-widest uppercase transition-all duration-300 ${
           selectedStage === null
-            ? "bg-black dark:bg-white text-white dark:text-black shadow-lg scale-105"
-            : "text-slate-600 dark:text-white/40 hover:text-black dark:hover:text-white"
+            ? "bg-[var(--fg-0)] text-[var(--bg-0)] shadow-lg scale-105"
+            : "text-[var(--fg-muted)] hover:text-[var(--fg-0)]"
         }`}
       >
         ALL
@@ -172,7 +172,7 @@ function StageToggle({
             className={`px-4 py-2.5 rounded-xl text-xs font-bold tracking-wide transition-all duration-300 flex items-center gap-2 ${
               isSelected
                 ? `${colors.bg} ${colors.text} shadow-lg scale-105`
-                : "text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10"
+                : "text-[var(--fg-muted)] hover:text-[var(--fg-0)] bg-[var(--surface-1)] hover:bg-[var(--surface-2)]"
             }`}
           >
             <span className="text-[10px] font-mono opacity-60">
@@ -208,14 +208,14 @@ function ChainStatusBar({
       exit={{ opacity: 0, y: -10 }}
       className="mt-4 w-full max-w-2xl"
     >
-      <div className="relative p-3 rounded-xl backdrop-blur-md bg-gradient-to-r from-[var(--color-brand-secondary)]/10 via-[var(--color-brand-primary)]/10 to-[var(--color-brand-accent)]/10 border border-white/10">
+      <div className="relative p-3 rounded-xl backdrop-blur-md bg-gradient-to-r from-[var(--color-brand-secondary)]/10 via-[var(--color-brand-primary)]/10 to-[var(--color-brand-accent)]/10 border border-[var(--border-subtle)]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Link2 className="w-4 h-4 text-[var(--success)]" />
-            <span className="text-sm font-medium text-gray-800 dark:text-white/80">
+            <span className="text-sm font-medium text-[var(--fg-0)]">
               {language === "ko" ? "워크플로우 진행 중" : "Workflow in progress"}
             </span>
-            <span className="text-xs text-gray-500 dark:text-white/40">
+            <span className="text-xs text-[var(--fg-subtle)]">
               ({chainSummary.length}{" "}
               {language === "ko" ? "단계 완료" : "steps done"})
             </span>
@@ -223,7 +223,7 @@ function ChainStatusBar({
           <div className="flex items-center gap-2">
             <button
               onClick={onTogglePanel}
-              className="text-xs text-white/60 hover:text-white px-2 py-1 rounded-lg hover:bg-white/10 transition-colors"
+              className="text-xs text-[var(--fg-muted)] hover:text-[var(--fg-0)] px-2 py-1 rounded-lg hover:bg-[var(--surface-2)] transition-colors"
             >
               {showChainPanel
                 ? language === "ko"
@@ -235,7 +235,7 @@ function ChainStatusBar({
             </button>
             <button
               onClick={onClearChain}
-              className="p-1 rounded-lg text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+              className="p-1 rounded-lg text-[var(--fg-subtle)] hover:text-red-400 hover:bg-red-500/10 transition-colors"
               title={language === "ko" ? "초기화" : "Clear"}
             >
               <Trash2 className="w-4 h-4" />
@@ -252,15 +252,15 @@ function ChainStatusBar({
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden"
             >
-              <div className="pt-3 mt-3 border-t border-white/10 space-y-2">
+              <div className="pt-3 mt-3 border-t border-[var(--border-subtle)] space-y-2">
                 {chainSummary.map((item, idx) => (
                   <div key={item.key} className="flex items-center gap-2 text-sm">
                     <span className={`w-5 h-5 rounded-full ${SUCCESS_TONE.bg} ${SUCCESS_TONE.text} flex items-center justify-center text-xs font-bold`}>
                       {idx + 1}
                     </span>
-                    <span className="text-white/80 font-medium">{item.name}</span>
+                    <span className="text-[var(--fg-0)] font-medium">{item.name}</span>
                     {item.summary && (
-                      <span className="text-white/40 text-xs truncate max-w-[200px]">
+                      <span className="text-[var(--fg-subtle)] text-xs truncate max-w-[200px]">
                         - {item.summary}
                       </span>
                     )}
@@ -358,7 +358,7 @@ function DimensionCard({
     >
       <Link
         href={dimension.href}
-        className="block relative overflow-hidden rounded-[2rem] border border-slate-200 dark:border-white/5 bg-white/60 dark:bg-black/40 p-6 backdrop-blur-2xl hover:bg-white/80 dark:hover:bg-white/[0.03] transition-all duration-700 hover:-translate-y-2 shadow-lg dark:shadow-none"
+        className="block relative overflow-hidden rounded-[2rem] border border-[var(--border-subtle)] bg-[var(--surface-1)] p-6 backdrop-blur-2xl hover:bg-[var(--surface-2)] transition-all duration-700 hover:-translate-y-2 shadow-lg"
       >
         {/* NEW Badge */}
         {dimension.isNew && (
@@ -401,24 +401,24 @@ function DimensionCard({
               >
                 {stageInfo.order}.{dimension.stageOrder}
               </span>
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-gray-900 group-hover:to-gray-600 dark:group-hover:from-white dark:group-hover:to-white/70 transition-all duration-500">
+              <h2 className="text-lg font-bold text-[var(--fg-0)] group-hover:text-[var(--color-brand-primary)] transition-colors duration-500">
                 {language === "ko" ? dimension.titleKo : dimension.titleEn}
               </h2>
             </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 backdrop-blur-md transition-all duration-500 group-hover:scale-110 group-hover:bg-black/10 dark:group-hover:bg-white/10">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface-2)] border border-[var(--border-subtle)] backdrop-blur-md transition-all duration-500 group-hover:scale-110 group-hover:bg-[var(--surface-1)]">
               <Icon className={`h-4 w-4 ${textColor}`} aria-hidden="true" />
             </div>
           </div>
 
           <div className="space-y-6 z-10 mt-auto">
             <div className="space-y-2">
-              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-2">
+              <p className="text-sm text-[var(--fg-muted)] leading-relaxed line-clamp-2">
                 {language === "ko" ? dimension.descKo : dimension.descEn}
               </p>
             </div>
             {/* Arrow Action */}
             <div className="flex justify-end mt-4">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 backdrop-blur-sm text-black/40 dark:text-white/40 group-hover:text-black dark:group-hover:text-white group-hover:bg-black/10 dark:group-hover:bg-white/20 transition-all duration-300 group-hover:scale-110">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full border border-[var(--border-subtle)] bg-[var(--surface-2)] backdrop-blur-sm text-[var(--fg-muted)] group-hover:text-[var(--fg-0)] group-hover:bg-[var(--surface-1)] transition-all duration-300 group-hover:scale-110">
                 <ChevronRight className="w-4 h-4" />
               </div>
             </div>
@@ -438,20 +438,20 @@ function ProposeButton({ onOpenSubmitModal, language }: ProposeButtonProps) {
   return (
     <button
       onClick={onOpenSubmitModal}
-      className="group relative overflow-hidden rounded-[2rem] border border-dashed border-slate-300 dark:border-white/10 bg-transparent p-6 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] hover:border-black/30 dark:hover:border-white/30 transition-all duration-500 flex flex-col items-center justify-center gap-4 min-h-[140px]"
+      className="group relative overflow-hidden rounded-[2rem] border border-dashed border-[var(--border-subtle)] bg-transparent p-6 hover:bg-[var(--surface-1)] hover:border-[var(--border-strong)] transition-all duration-500 flex flex-col items-center justify-center gap-4 min-h-[140px]"
     >
       <div className="relative">
         <div className="absolute inset-0 bg-[var(--color-brand-accent)]/20 blur-[30px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-white/5 border border-black/10 dark:border-white/10 transition-all duration-500 group-hover:scale-110">
-          <Plus className="h-6 w-6 text-zinc-500 group-hover:text-black dark:group-hover:text-white transition-colors duration-300" />
+        <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-[var(--surface-1)] border border-[var(--border-subtle)] transition-all duration-500 group-hover:scale-110">
+          <Plus className="h-6 w-6 text-[var(--fg-muted)] group-hover:text-[var(--fg-0)] transition-colors duration-300" />
         </div>
       </div>
 
       <div className="text-center space-y-2">
-        <span className="text-xs font-bold tracking-[0.2em] text-gray-700 dark:text-zinc-600 uppercase group-hover:text-[var(--color-brand-accent)] transition-colors">
+        <span className="text-xs font-bold tracking-[0.2em] text-[var(--fg-muted)] uppercase group-hover:text-[var(--color-brand-accent)] transition-colors">
           ∞D INFINITE
         </span>
-        <p className="text-sm text-gray-500 dark:text-zinc-500 group-hover:text-gray-700 dark:group-hover:text-zinc-300 transition-colors max-w-[200px]">
+        <p className="text-sm text-[var(--fg-subtle)] group-hover:text-[var(--fg-muted)] transition-colors max-w-[200px]">
           {language === "ko" ? "새로운 차원을 제안하세요" : "Propose a new dimension"}
         </p>
       </div>

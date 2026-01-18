@@ -451,17 +451,17 @@ function AbyssMirrorContent() {
       <div className="max-w-md w-full space-y-6">
         <div className="text-center mb-8">
           <div className={`w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-${token.themeColor}-500 to-purple-600 flex items-center justify-center`}>
-            <Sparkles className="w-10 h-10 text-white" />
+            <Sparkles className="w-10 h-10 text-[var(--fg-on-emphasis)]" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{labels.title}</h2>
-          <p className="text-sm text-slate-500 dark:text-white/50 mt-2">
+          <h2 className="text-2xl font-bold text-[var(--fg-0)]">{labels.title}</h2>
+          <p className="text-sm text-[var(--fg-muted)] mt-2">
             {labels.subtitle}
           </p>
         </div>
 
         {/* Birth Date */}
         <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-500 dark:text-white/50 uppercase">
+          <label className="text-xs font-bold text-[var(--fg-muted)] uppercase">
             {labels.birthDate}
           </label>
           <div className="grid grid-cols-4 gap-2">
@@ -470,28 +470,28 @@ function AbyssMirrorContent() {
               placeholder={labels.year}
               value={birthInfo.year}
               onChange={e => setBirthInfo(prev => ({ ...prev, year: e.target.value }))}
-              className={`px-3 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-center focus:outline-none focus:border-${token.themeColor}-500`}
+              className={`px-3 py-2.5 bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl text-[var(--fg-0)] text-center focus:outline-none focus:border-${token.themeColor}-500`}
             />
             <input
               type="text"
               placeholder={labels.month}
               value={birthInfo.month}
               onChange={e => setBirthInfo(prev => ({ ...prev, month: e.target.value }))}
-              className={`px-3 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-center focus:outline-none focus:border-${token.themeColor}-500`}
+              className={`px-3 py-2.5 bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl text-[var(--fg-0)] text-center focus:outline-none focus:border-${token.themeColor}-500`}
             />
             <input
               type="text"
               placeholder={labels.day}
               value={birthInfo.day}
               onChange={e => setBirthInfo(prev => ({ ...prev, day: e.target.value }))}
-              className={`px-3 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-center focus:outline-none focus:border-${token.themeColor}-500`}
+              className={`px-3 py-2.5 bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl text-[var(--fg-0)] text-center focus:outline-none focus:border-${token.themeColor}-500`}
             />
             <input
               type="text"
               placeholder={labels.hour}
               value={birthInfo.hour}
               onChange={e => setBirthInfo(prev => ({ ...prev, hour: e.target.value }))}
-              className={`px-3 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-center focus:outline-none focus:border-${token.themeColor}-500`}
+              className={`px-3 py-2.5 bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl text-[var(--fg-0)] text-center focus:outline-none focus:border-${token.themeColor}-500`}
             />
           </div>
         </div>
@@ -499,7 +499,7 @@ function AbyssMirrorContent() {
         {/* MBTI & Blood Type */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-500 dark:text-white/50 uppercase">
+            <label className="text-xs font-bold text-[var(--fg-muted)] uppercase">
               {labels.mbti}
             </label>
             <input
@@ -508,17 +508,17 @@ function AbyssMirrorContent() {
               maxLength={4}
               value={birthInfo.mbti}
               onChange={e => setBirthInfo(prev => ({ ...prev, mbti: e.target.value }))}
-              className={`w-full px-3 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-center uppercase focus:outline-none focus:border-${token.themeColor}-500`}
+              className={`w-full px-3 py-2.5 bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl text-[var(--fg-0)] text-center uppercase focus:outline-none focus:border-${token.themeColor}-500`}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-500 dark:text-white/50 uppercase">
+            <label className="text-xs font-bold text-[var(--fg-muted)] uppercase">
               {labels.bloodType}
             </label>
             <select
               value={birthInfo.bloodType}
               onChange={e => setBirthInfo(prev => ({ ...prev, bloodType: e.target.value }))}
-              className={`w-full px-3 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-${token.themeColor}-500`}
+              className={`w-full px-3 py-2.5 bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl text-[var(--fg-0)] focus:outline-none focus:border-${token.themeColor}-500`}
             >
               <option value="">{labels.select}</option>
               <option value="A">{labels.typeA}</option>
@@ -534,11 +534,11 @@ function AbyssMirrorContent() {
           <button
             onClick={() => handleStartAnalysis(false)}
             disabled={isPending}
-            className={`flex-1 py-3 bg-gradient-to-r from-${token.themeColor}-500 to-purple-600 hover:from-${token.themeColor}-600 hover:to-purple-700 text-white font-medium rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2`}
+            className={`flex-1 py-3 bg-gradient-to-r from-${token.themeColor}-500 to-purple-600 hover:from-${token.themeColor}-600 hover:to-purple-700 text-[var(--fg-on-emphasis)] font-medium rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2`}
           >
             {isPending ? (
               <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 rounded-full animate-spin spinner-on-emphasis" />
                 {labels.analyzing}
               </>
             ) : (
@@ -551,7 +551,7 @@ function AbyssMirrorContent() {
           <button
             onClick={() => handleStartAnalysis(true)}
             disabled={isPending}
-            className="px-4 py-3 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white/70 font-medium rounded-xl transition-all disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-3 bg-[var(--surface-1)] hover:bg-[var(--surface-2)] text-[var(--fg-muted)] font-medium rounded-xl transition-all disabled:opacity-50 flex items-center gap-2"
             title={labels.quickStartTooltip}
           >
             <Zap className="w-4 h-4" />
@@ -575,12 +575,12 @@ function AbyssMirrorContent() {
               <button
                 key={p.meta.id}
                 onClick={() => handleResumePreset(p.meta.id)}
-                className="w-full px-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-left hover:bg-slate-50 dark:hover:bg-white/10 transition-all"
+                className="w-full px-4 py-2 bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-lg text-left hover:bg-[var(--surface-2)] transition-all"
               >
-                <div className="text-sm font-medium text-slate-900 dark:text-white">
+                <div className="text-sm font-medium text-[var(--fg-0)]">
                   {p.persona?.archetype as string || labels.persona}
                 </div>
-                <div className="text-xs text-slate-500 dark:text-white/40">
+                <div className="text-xs text-[var(--fg-muted)]">
                   {Math.round(p.meta.completion_rate)}% • {new Date(p.meta.created_at).toLocaleDateString()}
                 </div>
               </button>
@@ -589,7 +589,7 @@ function AbyssMirrorContent() {
         )}
 
         {error && (
-          <div className="p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg text-red-600 dark:text-red-400 text-sm">
+          <div className="p-3 rounded-lg event-bg-error event-border-error event-tone-error text-sm">
             {error}
           </div>
         )}
@@ -604,28 +604,28 @@ function AbyssMirrorContent() {
   const renderChatInterface = () => (
     <div className="flex h-full">
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col overflow-hidden border-r border-slate-200 dark:border-white/5">
+      <div className="flex-1 flex flex-col overflow-hidden border-r border-[var(--border-subtle)]">
         {/* Progress Bar */}
-        <div className="flex-shrink-0 px-6 py-3 border-b border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-900/40">
+        <div className="flex-shrink-0 px-6 py-3 border-b border-[var(--border-subtle)] bg-[var(--surface-1)]">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-slate-500 dark:text-white/50 uppercase">
+            <span className="text-xs font-bold text-[var(--fg-muted)] uppercase">
               {STAGE_LABELS[currentStage] || currentStage}
             </span>
             <span className={`text-xs font-mono text-${token.themeColor}-600 dark:text-${token.themeColor}-400`}>
               {Math.round(completionRate)}%
             </span>
           </div>
-          <div className="h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-[var(--surface-2)] rounded-full overflow-hidden">
             <div
               className={`h-full bg-gradient-to-r from-${token.themeColor}-500 to-purple-500 rounded-full transition-all duration-500`}
               style={{ width: `${completionRate}%` }}
             />
           </div>
           <div className="flex justify-between mt-1">
-            <span className="text-[10px] text-slate-400 dark:text-white/30">
+            <span className="text-[10px] text-[var(--fg-subtle)]">
               {messages.filter(m => m.role === "user").length} {labels.answers}
             </span>
-            <span className="text-[10px] text-slate-400 dark:text-white/30">
+            <span className="text-[10px] text-[var(--fg-subtle)]">
               {traces.length} {labels.traces}
             </span>
           </div>
@@ -645,7 +645,7 @@ function AbyssMirrorContent() {
                   ? "bg-red-500/20 border-2 border-red-500/50"
                   : msg.role === "user"
                     ? `bg-${token.themeColor}-500/20 border border-${token.themeColor}-500/30`
-                    : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"
+                    : "bg-[var(--surface-1)] border border-[var(--border-subtle)]"
                   }`}>
                   {msg.isCrisis && (
                     <div className="flex items-center gap-2 mb-2 text-red-400">
@@ -653,7 +653,7 @@ function AbyssMirrorContent() {
                       <span className="text-xs font-medium">{labels.safetyAlert}</span>
                     </div>
                   )}
-                  <p className={`text-sm leading-relaxed whitespace-pre-wrap ${msg.isCrisis ? "text-red-50" : "text-slate-700 dark:text-zinc-200"}`}>
+                  <p className={`text-sm leading-relaxed whitespace-pre-wrap ${msg.isCrisis ? "text-red-50" : "text-[var(--fg-0)]"}`}>
                     {msg.content}
                   </p>
                   {msg.isCrisis && (
@@ -677,8 +677,8 @@ function AbyssMirrorContent() {
                 )}
               </div>
               {msg.role === "user" && (
-                <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-white/10 border border-slate-300 dark:border-white/20 flex items-center justify-center flex-shrink-0">
-                  <User className="w-4 h-4 text-slate-500 dark:text-zinc-400" />
+                <div className="w-8 h-8 rounded-full bg-[var(--surface-2)] border border-[var(--border-subtle)] flex items-center justify-center flex-shrink-0">
+                  <User className="w-4 h-4 text-[var(--fg-muted)]" />
                 </div>
               )}
             </div>
@@ -690,7 +690,7 @@ function AbyssMirrorContent() {
               <div className={`w-8 h-8 rounded-full bg-${token.themeColor}-100 dark:bg-${token.themeColor}-500/20 border border-${token.themeColor}-300 dark:border-${token.themeColor}-500/30 flex items-center justify-center animate-pulse`}>
                 <Bot className={`w-4 h-4 text-${token.themeColor}-600 dark:text-${token.themeColor}-400`} />
               </div>
-              <div className="flex-1 max-w-[70%] p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl">
+              <div className="flex-1 max-w-[70%] p-4 bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-2xl">
                 <div className="animate-pulse space-y-2">
                   <div className={`h-3 bg-${token.themeColor}-200 dark:bg-${token.themeColor}-500/30 rounded w-3/4`}></div>
                   <div className={`h-3 bg-${token.themeColor}-200 dark:bg-${token.themeColor}-500/30 rounded w-1/2`}></div>
@@ -705,7 +705,7 @@ function AbyssMirrorContent() {
 
         {/* Input Area */}
         {phase !== "complete" && (
-          <div className="flex-shrink-0 p-4 border-t border-slate-200 dark:border-white/5 bg-white/80 dark:bg-slate-900/90 backdrop-blur-md">
+          <div className="flex-shrink-0 p-4 border-t border-[var(--border-subtle)] bg-[var(--surface-1)] backdrop-blur-md">
             {ragEnabled && (ragSuggestion?.has_suggestion || ragLoading || ragOverridden) && (
               <div className="mb-4">
                 <RAGSuggestionCard
@@ -735,12 +735,12 @@ function AbyssMirrorContent() {
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && void handleSendMessage()}
                 placeholder={labels.inputPlaceholder}
                 disabled={isPending}
-                className={`flex-1 px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 focus:outline-none focus:border-${token.themeColor}-500 transition-all disabled:opacity-50`}
+                className={`flex-1 px-4 py-3 bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-xl text-[var(--fg-0)] placeholder:text-[var(--fg-subtle)] focus:outline-none focus:border-${token.themeColor}-500 transition-all disabled:opacity-50`}
               />
               <button
                 onClick={handleSendMessage}
                 disabled={isPending || !inputMessage.trim()}
-                className={`px-6 py-3 bg-${token.themeColor}-500 hover:bg-${token.themeColor}-600 disabled:bg-slate-200 dark:disabled:bg-white/10 text-white disabled:text-slate-400 dark:disabled:text-white/30 rounded-xl transition-all`}
+                className={`px-6 py-3 bg-${token.themeColor}-500 hover:bg-${token.themeColor}-600 disabled:bg-[var(--surface-2)] text-[var(--fg-on-emphasis)] disabled:text-[var(--fg-subtle)] rounded-xl transition-all`}
               >
                 <Send className="w-5 h-5" />
               </button>
@@ -750,23 +750,23 @@ function AbyssMirrorContent() {
 
         {/* Complete State */}
         {phase === "complete" && (
-          <div className={`flex-shrink-0 p-6 border-t border-slate-200 dark:border-white/5 bg-gradient-to-r from-${token.themeColor}-50 to-purple-50 dark:from-${token.themeColor}-500/10 dark:to-purple-500/10`}>
+          <div className={`flex-shrink-0 p-6 border-t border-[var(--border-subtle)] bg-gradient-to-r from-${token.themeColor}-500/10 to-purple-500/10`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Sparkles className={`w-6 h-6 text-${token.themeColor}-600 dark:text-${token.themeColor}-400`} />
-                <span className="font-bold text-slate-900 dark:text-white">{labels.analysisComplete}</span>
+                <span className="font-bold text-[var(--fg-0)]">{labels.analysisComplete}</span>
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={handleExportJson}
-                  className="px-4 py-2 bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg flex items-center gap-2 text-sm hover:bg-slate-50 dark:hover:bg-white/20 transition-all"
+                  className="px-4 py-2 bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-lg flex items-center gap-2 text-sm hover:bg-[var(--surface-2)] transition-all"
                 >
                   <Download className="w-4 h-4" />
                   {labels.exportJson}
                 </button>
                 <button
                   onClick={handleReset}
-                  className={`px-4 py-2 bg-${token.themeColor}-500 hover:bg-${token.themeColor}-600 text-white rounded-lg flex items-center gap-2 text-sm transition-all`}
+                  className={`px-4 py-2 bg-${token.themeColor}-500 hover:bg-${token.themeColor}-600 text-[var(--fg-on-emphasis)] rounded-lg flex items-center gap-2 text-sm transition-all`}
                 >
                   <RefreshCw className="w-4 h-4" />
                   {labels.newSession}
@@ -804,7 +804,7 @@ function AbyssMirrorContent() {
           {phase !== "input" && (
             <button
               onClick={handleReset}
-              className="flex items-center gap-2 text-sm text-slate-500 dark:text-white/50 hover:text-slate-700 dark:hover:text-white/70 mb-4"
+              className="flex items-center gap-2 text-sm text-[var(--fg-muted)] hover:text-[var(--fg-0)] mb-4"
             >
               <ArrowLeft className="w-4 h-4" />
               {labels.goBack}
@@ -835,7 +835,7 @@ function AbyssMirrorContent() {
           {/* Trace History */}
           {traces.length > 0 && (
             <div className="space-y-2 mt-6">
-              <label className="text-[10px] font-bold text-slate-500 dark:text-white/50 uppercase tracking-widest">
+              <label className="text-[10px] font-bold text-[var(--fg-muted)] uppercase tracking-widest">
                 {labels.traceHistory}
               </label>
               <div className="max-h-40 overflow-y-auto space-y-1">
@@ -848,13 +848,13 @@ function AbyssMirrorContent() {
                         handleResumePreset(latestPreset.meta.id);
                       }
                     }}
-                    className={`w-full px-3 py-2 bg-white dark:bg-white/5 rounded-lg text-xs hover:bg-${token.themeColor}-50 dark:hover:bg-${token.themeColor}-500/10 transition-colors cursor-pointer text-left`}
+                    className={`w-full px-3 py-2 bg-[var(--surface-1)] rounded-lg text-xs hover:bg-${token.themeColor}-500/10 transition-colors cursor-pointer text-left`}
                   >
                     <div className="flex justify-between">
                       <span className={`text-${token.themeColor}-600 dark:text-${token.themeColor}-400 font-mono`}>
                         {t.trace_id.slice(0, 8)}...
                       </span>
-                      <span className="text-slate-400 dark:text-white/30">
+                      <span className="text-[var(--fg-subtle)]">
                         {t.stage}
                       </span>
                     </div>
@@ -867,7 +867,7 @@ function AbyssMirrorContent() {
           {/* History Management */}
           {(presets.length > 0 || messages.length > 0) && (
             <div className="mt-6 space-y-2">
-              <label className="text-[10px] font-bold text-slate-500 dark:text-white/50 uppercase tracking-widest">
+              <label className="text-[10px] font-bold text-[var(--fg-muted)] uppercase tracking-widest">
                 {labels.historyManagement}
               </label>
               <div className="flex gap-2">
@@ -897,7 +897,7 @@ function AbyssMirrorContent() {
                 </button>
               </div>
               {presets.length > 1 && (
-                <p className="text-[10px] text-slate-400 dark:text-white/30">
+                <p className="text-[10px] text-[var(--fg-subtle)]">
                   {labels.savedSessions(presets.length)}
                 </p>
               )}
@@ -905,7 +905,7 @@ function AbyssMirrorContent() {
           )}
 
           {error && (
-            <div className="mt-4 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg text-red-600 dark:text-red-400 text-xs">
+            <div className="mt-4 p-3 rounded-lg event-bg-error event-border-error event-tone-error text-xs">
               {error}
             </div>
           )}
