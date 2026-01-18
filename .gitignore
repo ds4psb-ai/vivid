@@ -35,3 +35,9 @@ CLAUDE.local.md
 
 # MCP credentials (if any)
 .mcp-credentials/
+
+# Generated reports
+data/reports/
+
+# Notion export files
+notion_docs_hub_seed.csv
