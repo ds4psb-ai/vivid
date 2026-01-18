@@ -30,6 +30,7 @@ import {
 // const CREDIT_COST_MOOD = 5; // REMOVED - Dynamic
 // const CREDIT_COST_CRAFT = 8; // REMOVED - Dynamic
 const THEME_COLOR: ThemeColor = "rose";
+const DIMENSION_CODE = "sound" as const;
 const DIMENSION_KEY = "sound-crafter";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
@@ -588,6 +589,7 @@ export default function SoundCrafterPanel() {
                 title="사운드 디자인 스튜디오"
                 sidebarContent={sidebarContent}
                 themeColor={THEME_COLOR}
+                dimensionCode={DIMENSION_CODE}
                 creditCost={0} // Managed individually
                 isLoading={moodOp.isLoading || craftOp.isLoading}
                 progress={moodOp.isLoading ? moodOp.progress : craftOp.progress}

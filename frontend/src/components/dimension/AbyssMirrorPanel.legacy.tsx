@@ -30,6 +30,7 @@ import NextDimensionNav from "./NextDimensionNav";
 import { Send, User, Bot, Sparkles, Download, ArrowLeft, Zap, Upload, RefreshCw, AlertTriangle } from "lucide-react";
 
 const THEME_COLOR: ThemeColor = "violet";
+const DIMENSION_CODE = "mirror" as const;
 const DIMENSION_KEY = "abyss-mirror";
 
 // ============================================================================
@@ -830,6 +831,7 @@ export default function AbyssMirrorPanel() {
                 sidebarContent={SidebarContent}
                 isLoading={showFullscreenLoading}
                 themeColor={THEME_COLOR}
+                dimensionCode={DIMENSION_CODE}
             >
                 {phase === "input" ? renderInputForm() : renderChatInterface()}
             </TeachingPanelLayout>

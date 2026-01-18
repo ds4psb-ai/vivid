@@ -17,6 +17,7 @@ import { Layers, ArrowRight, CheckCircle, AlertCircle, Download, Sparkles, BookO
 
 // const CREDIT_COST = 10; // REMOVED
 const THEME_COLOR: ThemeColor = "emerald";
+const DIMENSION_CODE = "story" as const;
 const DIMENSION_KEY = "story-architect";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
@@ -442,6 +443,7 @@ export default function StoryArchitectPanel() {
                 title="시나리오 생성기"
                 sidebarContent={sidebarContent}
                 themeColor={THEME_COLOR}
+                dimensionCode={DIMENSION_CODE}
                 creditCost={CREDIT_COST}
                 isLoading={isLoading}
                 progress={progress}

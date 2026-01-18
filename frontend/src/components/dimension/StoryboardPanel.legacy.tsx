@@ -15,6 +15,7 @@ import NextDimensionNav from "./NextDimensionNav";
 // SSoT: Use context instead of hardcode
 // const CREDIT_COST = 10; // REMOVED
 const THEME_COLOR: ThemeColor = "cyan";
+const DIMENSION_CODE = "storyboard" as const;
 const DIMENSION_KEY = "storyboard";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
@@ -298,6 +299,7 @@ export default function StoryboardPanel() {
                 sidebarContent={SidebarContent}
                 isLoading={isLoading}
                 themeColor={THEME_COLOR}
+                dimensionCode={DIMENSION_CODE}
                 progress={progress}
                 onCancel={cancel}
                 onRetry={retry}

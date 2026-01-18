@@ -15,6 +15,7 @@ import { Palette, Copy, Check, Download, Sparkles, Eye, Wand2, Code, Type, Layer
 
 // const CREDIT_COST = 10; // REMOVED
 const THEME_COLOR: ThemeColor = "fuchsia";
+const DIMENSION_CODE = "ad" as const;
 const DIMENSION_KEY = "aesthetic-director";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
@@ -386,6 +387,7 @@ export default function AestheticDirectorPanel() {
                 sidebarContent={SidebarContent}
                 isLoading={isLoading}
                 themeColor={THEME_COLOR}
+                dimensionCode={DIMENSION_CODE}
                 progress={progress}
                 onCancel={cancel}
                 onRetry={retry}
