@@ -214,6 +214,24 @@ const getHoverGlowClass = (dimension?: string) => {
     return `hover:shadow-${key}/30`;
 };
 
+const STATUS_TONE_CLASSES: Record<"success" | "error", { bg: string; border: string; text: string }> = {
+    success: {
+        bg: "bg-[var(--success)]/10",
+        border: "border-[var(--success)]/30",
+        text: "text-[var(--success)]",
+    },
+    error: {
+        bg: "bg-[var(--error)]/10",
+        border: "border-[var(--error)]/30",
+        text: "text-[var(--error)]",
+    },
+};
+
+const PROGRESS_TONE_CLASSES: Record<"success" | "error", string> = {
+    success: "bg-[var(--success)]/60",
+    error: "bg-[var(--error)]/40",
+};
+
 // Dimension-specific form configurations
 const DIMENSION_CONFIG: Partial<Record<DimensionType, {
     title: string;
@@ -780,7 +798,7 @@ export function DimensionPortalModal({
                                         <div key={field.key} className="space-y-2">
                                             <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">
                                                 {field.label}
-                                                {field.required && <span className="text-red-400 ml-1">*</span>}
+                                                {field.required && <span className={`${STATUS_TONE_CLASSES.error.text} ml-1`}>*</span>}
                                             </label>
 
                                             {field.type === "textarea" ? (
@@ -878,7 +896,7 @@ export function DimensionPortalModal({
                                         {/* Completed State */}
                                         {canRerun && (
                                             <div className="space-y-2">
-                                                <div className="flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-500/10 text-emerald-400">
+                                                <div className={`flex items-center justify-center gap-2 py-3 rounded-xl ${STATUS_TONE_CLASSES.success.bg} ${STATUS_TONE_CLASSES.success.text}`}>
                                                     <CheckCircle className="h-5 w-5" />
                                                     <span className="font-medium">완료됨</span>
                                                 </div>
@@ -899,10 +917,7 @@ export function DimensionPortalModal({
                                         {canRetry && (
                                             <button
                                                 onClick={handleRetry}
-                                                className="w-full py-4 rounded-xl font-bold text-base
-                                                    flex items-center justify-center gap-3
-                                                    bg-red-500/20 hover:bg-red-500/30 border border-red-500/30
-                                                    text-red-400 hover:text-red-300 transition-all"
+                                                className={`w-full py-4 rounded-xl font-bold text-base flex items-center justify-center gap-3 ${STATUS_TONE_CLASSES.error.bg} ${STATUS_TONE_CLASSES.error.border} ${STATUS_TONE_CLASSES.error.text} hover:opacity-90 transition-all`}
                                             >
                                                 <RotateCcw className="h-5 w-5" />
                                                 재시도
@@ -919,9 +934,9 @@ export function DimensionPortalModal({
 
                                     {/* Error display */}
                                     {currentCar.error && (
-                                        <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start gap-2">
-                                            <AlertCircle className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" />
-                                            <span className="text-red-400 text-sm">{currentCar.error}</span>
+                                        <div className={`p-3 rounded-xl ${STATUS_TONE_CLASSES.error.bg} ${STATUS_TONE_CLASSES.error.border} flex items-start gap-2`}>
+                                            <AlertCircle className={`h-4 w-4 ${STATUS_TONE_CLASSES.error.text} flex-shrink-0 mt-0.5`} />
+                                            <span className={`${STATUS_TONE_CLASSES.error.text} text-sm`}>{currentCar.error}</span>
                                         </div>
                                     )}
                                 </div>
@@ -946,7 +961,7 @@ export function DimensionPortalModal({
                                                     >
                                                         {copiedField === key ? (
                                                             <>
-                                                                <Check className="h-3 w-3 text-emerald-400" />
+                                                                <Check className="h-3 w-3 text-[var(--success)]" />
                                                                 복사됨
                                                             </>
                                                         ) : (
@@ -1033,9 +1048,9 @@ export function DimensionPortalModal({
                                             ${car.id === currentCarId
                                                 ? carColor.bgSolid
                                                 : car.status === "completed"
-                                                    ? "bg-emerald-500/60"
+                                                    ? PROGRESS_TONE_CLASSES.success
                                                     : car.status === "failed"
-                                                        ? "bg-red-500/40"
+                                                        ? PROGRESS_TONE_CLASSES.error
                                                         : "bg-white/10 hover:bg-white/20"
                                             }
                                         `}
