@@ -23,28 +23,31 @@ export interface EvidenceLog {
     created_at: string;
 }
 
-const EVENT_CONFIG: Record<string, { icon: React.ElementType; color: string; bgColor: string }> = {
+const EVENT_CONFIG: Record<string, { icon: React.ElementType; tone: "info" | "accent" | "success" | "warning" | "neutral" }> = {
     // Status Updates
-    status_update: { icon: Clock, color: "text-blue-400", bgColor: "bg-blue-500/10" },
-    assignment_created: { icon: User, color: "text-purple-400", bgColor: "bg-purple-500/10" },
-    work_started: { icon: Play, color: "text-indigo-400", bgColor: "bg-indigo-500/10" },
+    status_update: { icon: Clock, tone: "info" },
+    assignment_created: { icon: User, tone: "accent" },
+    work_started: { icon: Play, tone: "info" },
 
     // File / Delivery
-    file_upload: { icon: Upload, color: "text-emerald-400", bgColor: "bg-emerald-500/10" },
-    delivery_submitted: { icon: Send, color: "text-yellow-400", bgColor: "bg-yellow-500/10" },
+    file_upload: { icon: Upload, tone: "success" },
+    delivery_submitted: { icon: Send, tone: "warning" },
 
     // Financial / Contract
-    escrow_secured: { icon: Shield, color: "text-emerald-400", bgColor: "bg-emerald-500/10" },
-    payment_released: { icon: DollarSign, color: "text-emerald-400", bgColor: "bg-emerald-500/10" },
-    approval: { icon: CheckCircle, color: "text-emerald-400", bgColor: "bg-emerald-500/10" },
+    escrow_secured: { icon: Shield, tone: "success" },
+    payment_released: { icon: DollarSign, tone: "success" },
+    approval: { icon: CheckCircle, tone: "success" },
 
     // Default
-    default: { icon: FileText, color: "text-slate-400", bgColor: "bg-slate-500/10" },
+    default: { icon: FileText, tone: "neutral" },
 };
 
 function EvidenceItem({ log, index, isLast }: { log: EvidenceLog; index: number; isLast: boolean }) {
     const config = EVENT_CONFIG[log.event_type] || EVENT_CONFIG.default;
     const Icon = config.icon;
+    const toneText = `event-tone-${config.tone}`;
+    const toneBg = `event-bg-${config.tone}`;
+    const toneBorder = `event-border-${config.tone}`;
 
     return (
         <motion.div
@@ -59,14 +62,14 @@ function EvidenceItem({ log, index, isLast }: { log: EvidenceLog; index: number;
             )}
 
             {/* Icon Dot */}
-            <div className={`absolute left-0 top-0 w-6 h-6 rounded-full flex items-center justify-center border-2 border-[var(--border-muted)] ${config.bgColor}`}>
-                <Icon className={`w-3 h-3 ${config.color}`} />
+            <div className={`absolute left-0 top-0 w-6 h-6 rounded-full flex items-center justify-center border-2 ${toneBorder} ${toneBg}`}>
+                <Icon className={`w-3 h-3 ${toneText}`} />
             </div>
 
             {/* Content */}
             <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between">
-                    <span className={`text-sm font-medium ${config.color}`}>
+                    <span className={`text-sm font-medium ${toneText}`}>
                         {log.title}
                     </span>
                     <span className="text-xs text-[var(--fg-muted)]">
@@ -102,10 +105,7 @@ function EvidenceItem({ log, index, isLast }: { log: EvidenceLog; index: number;
 
                 {/* Actor Badge */}
                 <div className="mt-1">
-                    <span
-                        className="evidence-badge"
-                        style={{ color: log.actor_role === "client" ? "var(--credit-pending)" : "var(--credit-ok)" }}
-                    >
+                    <span className={`evidence-badge ${log.actor_role === "client" ? "actor-client" : "actor-provider"}`}>
                         {log.actor_role.toUpperCase()}
                     </span>
                 </div>
