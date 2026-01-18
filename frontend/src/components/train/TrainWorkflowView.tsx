@@ -17,7 +17,7 @@ interface Car {
     id: string;
     order: number;
     toolId: string;
-    dimension: "1D" | "2D" | "3D" | "4D" | "QC" | "AD" | "AI" | "VEO";
+    dimension: DimensionType;
     displayName: string;
     icon: string;
     color: string;
@@ -50,7 +50,13 @@ interface TrainWorkflowViewProps {
 // Dimension Tool Definitions (Now fetched from DimensionConfigContext SSoT)
 // =============================================================================
 
-type DimensionType = "1D" | "2D" | "3D" | "4D" | "QC" | "AD" | "AI" | "VEO" | "SA" | "SC";
+type DimensionType =
+    | "1D" | "2D" | "3D" | "4D"
+    | "AD" | "AI" | "QC" | "VEO"
+    | "STORY" | "STORYBOARD" | "SOUND" | "SUNO"
+    | "KLING" | "CHARACTER" | "PROMPT" | "MIRROR"
+    | "JSON_GEN" | "NANOBANANA"
+    | "SA" | "SC" | "CE";
 
 // Display labels for dimension positions
 const DIMENSION_LABELS = ["Origin", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"];
@@ -82,7 +88,7 @@ const OUTPUT_TYPE_BOOSTS: Record<string, Partial<Record<string, number>>> = {
 // Input Validation
 // =============================================================================
 
-function validateInputs(dimension: "1D" | "2D" | "3D" | "4D" | "QC" | "AD" | "AI" | "VEO", inputs: Record<string, unknown>): { valid: boolean; error?: string } {
+function validateInputs(dimension: DimensionType, inputs: Record<string, unknown>): { valid: boolean; error?: string } {
     switch (dimension) {
         case "1D": {
             const topic = String(inputs.topic || "").trim();

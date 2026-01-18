@@ -8,6 +8,8 @@
  * @see https://www.designtokens.org/TR/2025.10/format/ - W3C DTCG Spec
  */
 
+import appColors from "@/lib/generated/app_colors.json";
+
 // =============================================================================
 // DIMENSION TOKEN TYPES
 // =============================================================================
@@ -244,6 +246,22 @@ export const DIMENSION_TOKENS: Record<DimensionCode, DimensionToken> = {
   },
 };
 
+const APP_REGISTRY_DIMENSION_CODES: Record<string, DimensionCode> = Object.keys(
+  (appColors as { app_colors?: Record<string, unknown> }).app_colors ?? {},
+).reduce((acc, key) => {
+  const normalized = key.toLowerCase().replace(/_/g, "-");
+  if (normalized in DIMENSION_TOKENS) {
+    acc[normalized] = normalized as DimensionCode;
+  }
+  return acc;
+}, {} as Record<string, DimensionCode>);
+
+const LEGACY_DIMENSION_ALIASES: Record<string, DimensionCode> = {
+  "storyboard-sketch": "storyboard",
+  "sa": "story",
+  "sc": "sound",
+};
+
 // =============================================================================
 // SEMANTIC TOKEN DEFINITIONS
 // =============================================================================
@@ -384,30 +402,7 @@ export function routeKeyToDimensionCode(routeKey: string): DimensionCode | null 
  */
 export function dimensionIdToCode(value: string): DimensionCode | null {
   const normalized = value.trim().toLowerCase().replace(/_/g, "-");
-  const mapping: Record<string, DimensionCode> = {
-    "1d": "1d",
-    "2d": "2d",
-    "3d": "3d",
-    "4d": "4d",
-    "ad": "ad",
-    "ai": "ai",
-    "qc": "qc",
-    "veo": "veo",
-    "story": "story",
-    "storyboard": "storyboard",
-    "storyboard-sketch": "storyboard",
-    "sound": "sound",
-    "suno": "suno",
-    "kling": "kling",
-    "character": "character",
-    "prompt": "prompt",
-    "mirror": "mirror",
-    "json-gen": "json-gen",
-    "nanobanana": "nanobanana",
-    "sa": "story",
-    "sc": "sound",
-  };
-  return mapping[normalized] ?? null;
+  return LEGACY_DIMENSION_ALIASES[normalized] ?? APP_REGISTRY_DIMENSION_CODES[normalized] ?? null;
 }
 
 /**

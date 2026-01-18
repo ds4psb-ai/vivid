@@ -35,7 +35,13 @@ import { dimensionIdToCode, getDimensionGradient, getDimensionToken } from "@/li
 // Types
 // =============================================================================
 
-type DimensionType = "1D" | "2D" | "3D" | "4D" | "QC" | "AD" | "AI" | "VEO";
+type DimensionType =
+    | "1D" | "2D" | "3D" | "4D"
+    | "AD" | "AI" | "QC" | "VEO"
+    | "STORY" | "STORYBOARD" | "SOUND" | "SUNO"
+    | "KLING" | "CHARACTER" | "PROMPT" | "MIRROR"
+    | "JSON_GEN" | "NANOBANANA"
+    | "SA" | "SC" | "CE";
 type CarStatus = "pending" | "ready" | "executing" | "completed" | "failed";
 
 interface Car {
@@ -201,7 +207,7 @@ const getDimensionFocusClass = (dimension?: string) => {
 };
 
 // Dimension-specific form configurations
-const DIMENSION_CONFIG: Record<DimensionType, {
+const DIMENSION_CONFIG: Partial<Record<DimensionType, {
     title: string;
     description: string;
     apiEndpoint: string;
@@ -214,7 +220,7 @@ const DIMENSION_CONFIG: Record<DimensionType, {
         options?: Array<{ value: string; label: string }>;
         required?: boolean;
     }>;
-}> = {
+}>> = {
     "1D": {
         title: "프롬프트",
         description: "아이디어를 언어로 구체화",
@@ -364,7 +370,7 @@ const DIMENSION_CONFIG: Record<DimensionType, {
     },
 };
 
-const DIMENSION_ROUTES: Record<DimensionType, string> = {
+const DIMENSION_ROUTES: Partial<Record<DimensionType, string>> = {
     "1D": "/dimension/prompt",
     "2D": "/dimension/storyboard",
     "3D": "/dimension/visual-realizer",
@@ -373,6 +379,16 @@ const DIMENSION_ROUTES: Record<DimensionType, string> = {
     "AD": "/dimension/aesthetic",
     "AI": "/dimension/abyss",
     "VEO": "/dimension/video-maker",
+    "STORY": "/dimension/story-architect",
+    "STORYBOARD": "/dimension/storyboard",
+    "SOUND": "/dimension/sound-crafter",
+    "SUNO": "/dimension/suno",
+    "KLING": "/dimension/kling",
+    "CHARACTER": "/dimension/character-consistency",
+    "PROMPT": "/dimension/prompt-alchemy",
+    "MIRROR": "/dimension/abyss",
+    "SA": "/dimension/story-architect",
+    "SC": "/dimension/sound-crafter",
 };
 
 // =============================================================================
@@ -577,6 +593,7 @@ export function DimensionPortalModal({
     const colorClass = tokenScheme || COLOR_CLASSES[currentCar.color] || COLOR_CLASSES.violet;
     const focusClass = getDimensionFocusClass(currentCar.dimension) || FOCUS_CLASSES[currentCar.color] || FOCUS_CLASSES.violet;
     const dimensionRoute = DIMENSION_ROUTES[currentCar.dimension];
+    const hasRoute = Boolean(dimensionRoute);
 
     // Determine button state
     const canExecute = currentCar.status === "ready" && !isExecuting;
@@ -695,17 +712,19 @@ export function DimensionPortalModal({
                                 </div>
 
                                 {/* Open in full page */}
-                                <a
-                                    href={dimensionRoute}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl
-                                        bg-white/5 hover:bg-white/10 border border-white/10
-                                        text-zinc-400 hover:text-white transition-all text-xs"
-                                >
-                                    <ExternalLink className="h-3.5 w-3.5" />
-                                    새 탭
-                                </a>
+                                {hasRoute && (
+                                    <a
+                                        href={dimensionRoute}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl
+                                            bg-white/5 hover:bg-white/10 border border-white/10
+                                            text-zinc-400 hover:text-white transition-all text-xs"
+                                    >
+                                        <ExternalLink className="h-3.5 w-3.5" />
+                                        새 탭
+                                    </a>
+                                )}
 
                                 {/* Close */}
                                 <button
