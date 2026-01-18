@@ -1,0 +1,169 @@
+{
+  "generated_at": "2026-01-18T15:15:37.435662+00:00",
+  "source": "config/apps/content/dimensions/*.yaml",
+  "strategy": "stable-hash-hue + fixed chroma/lightness",
+  "app_colors": {
+    "1D": {
+      "hue": 148,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/1d.yaml"
+    },
+    "2D": {
+      "hue": 71,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/2d.yaml"
+    },
+    "3D": {
+      "hue": 342,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/3d.yaml"
+    },
+    "4D": {
+      "hue": 228,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/4d.yaml"
+    },
+    "AD": {
+      "hue": 148,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/ad.yaml"
+    },
+    "AI": {
+      "hue": 217,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/ai.yaml"
+    },
+    "CHARACTER": {
+      "hue": 83,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/character.yaml"
+    },
+    "JSON_GEN": {
+      "hue": 115,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/json_gen.yaml"
+    },
+    "KLING": {
+      "hue": 232,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/kling.yaml"
+    },
+    "MIRROR": {
+      "hue": 33,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/mirror.yaml"
+    },
+    "NANOBANANA": {
+      "hue": 248,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/nanobanana.yaml"
+    },
+    "PROMPT": {
+      "hue": 17,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/prompt.yaml"
+    },
+    "QC": {
+      "hue": 308,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/qc.yaml"
+    },
+    "SOUND": {
+      "hue": 195,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/sound.yaml"
+    },
+    "STORY": {
+      "hue": 21,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/story.yaml"
+    },
+    "STORYBOARD": {
+      "hue": 192,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/storyboard.yaml"
+    },
+    "SUNO": {
+      "hue": 260,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/suno.yaml"
+    },
+    "VEO": {
+      "hue": 46,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/veo.yaml"
+    }
+  }
+}
