@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-01-18T15:08:10.192557+00:00",
+  "generated_at": "2026-01-18T15:12:29.517574+00:00",
   "counts": {
     "ok": 29,
-    "rgb": 208,
+    "rgb": 210,
     "hex": 223
   },
   "matches": [
@@ -230,236 +230,218 @@
     },
     {
       "path": "app/globals.css",
-      "line": 217,
-      "literal": "#ffffff",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 218,
-      "literal": "#ffffff",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 219,
-      "literal": "#000000",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 220,
-      "literal": "#1f2937",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 221,
-      "literal": "#111827",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 222,
-      "literal": "#0000ff",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 223,
-      "literal": "#b45309",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 224,
-      "literal": "#0000ff",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 227,
-      "literal": "#ffffff",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
       "line": 228,
-      "literal": "#fafafa",
+      "literal": "#ffffff",
       "kind": "hex"
     },
     {
       "path": "app/globals.css",
       "line": 229,
-      "literal": "#f4f4f5",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 230,
-      "literal": "#e4e4e7",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 231,
-      "literal": "#d4d4d8",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 232,
-      "literal": "#a1a1aa",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 233,
-      "literal": "#71717a",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 234,
-      "literal": "#52525b",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 235,
-      "literal": "#3f3f46",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 236,
-      "literal": "#27272a",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 237,
-      "literal": "#18181b",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 251,
-      "literal": "#E8E8ED",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 258,
-      "literal": "#38bdf8",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 258,
-      "literal": "#8B5CF6",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 259,
-      "literal": "#8B5CF6",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 260,
-      "literal": "rgba(139, 92, 246, 0.4)",
-      "kind": "rgb"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 261,
-      "literal": "#f59e0b",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 264,
-      "literal": "rgba(22, 22, 24, 0.6)",
-      "kind": "rgb"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 265,
-      "literal": "rgba(30, 30, 35, 0.6)",
-      "kind": "rgb"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 266,
-      "literal": "rgba(255, 255, 255, 0.08)",
-      "kind": "rgb"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 268,
-      "literal": "rgba(255, 255, 255, 0.03)",
-      "kind": "rgb"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 270,
-      "literal": "rgba(255, 255, 255, 0.1)",
-      "kind": "rgb"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 271,
-      "literal": "rgba(255, 255, 255, 0.05)",
-      "kind": "rgb"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 272,
-      "literal": "rgba(255, 255, 255, 0.16)",
-      "kind": "rgb"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 275,
-      "literal": "#10b981",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 276,
-      "literal": "#f59e0b",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 277,
-      "literal": "#ef4444",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 278,
-      "literal": "#3b82f6",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 285,
       "literal": "#ffffff",
       "kind": "hex"
     },
     {
       "path": "app/globals.css",
-      "line": 294,
+      "line": 230,
       "literal": "#000000",
       "kind": "hex"
     },
     {
       "path": "app/globals.css",
-      "line": 295,
-      "literal": "#0b0b0f",
+      "line": 231,
+      "literal": "#1f2937",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 232,
+      "literal": "#111827",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 233,
+      "literal": "#0000ff",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 234,
+      "literal": "#b45309",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 235,
+      "literal": "#0000ff",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 238,
+      "literal": "#ffffff",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 239,
+      "literal": "#fafafa",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 240,
+      "literal": "#f4f4f5",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 241,
+      "literal": "#e4e4e7",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 242,
+      "literal": "#d4d4d8",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 243,
+      "literal": "#a1a1aa",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 244,
+      "literal": "#71717a",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 245,
+      "literal": "#52525b",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 246,
+      "literal": "#3f3f46",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 247,
+      "literal": "#27272a",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 248,
+      "literal": "#18181b",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 262,
+      "literal": "#E8E8ED",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 269,
+      "literal": "#38bdf8",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 269,
+      "literal": "#8B5CF6",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 270,
+      "literal": "#8B5CF6",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 271,
+      "literal": "rgba(139, 92, 246, 0.4)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 272,
+      "literal": "#f59e0b",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 275,
+      "literal": "rgba(22, 22, 24, 0.6)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 276,
+      "literal": "rgba(30, 30, 35, 0.6)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 277,
+      "literal": "rgba(255, 255, 255, 0.08)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 279,
+      "literal": "rgba(255, 255, 255, 0.03)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 281,
+      "literal": "rgba(255, 255, 255, 0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 282,
+      "literal": "rgba(255, 255, 255, 0.05)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 283,
+      "literal": "rgba(255, 255, 255, 0.16)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 286,
+      "literal": "#10b981",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 287,
+      "literal": "#f59e0b",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 288,
+      "literal": "#ef4444",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 289,
+      "literal": "#3b82f6",
       "kind": "hex"
     },
     {
@@ -470,529 +452,559 @@
     },
     {
       "path": "app/globals.css",
-      "line": 297,
-      "literal": "#e5e7eb",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 298,
-      "literal": "#ffffff",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 299,
-      "literal": "#7dd3fc",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 300,
-      "literal": "#fbbf24",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 301,
-      "literal": "#7dd3fc",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 304,
-      "literal": "#0b0b0f",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 305,
-      "literal": "#0f0f1a",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 306,
-      "literal": "#151522",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 307,
-      "literal": "#1a1a2e",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 308,
-      "literal": "#2a2a3b",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 309,
-      "literal": "#3b3b4f",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 310,
-      "literal": "#4b4b60",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 311,
-      "literal": "#5f5f75",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 312,
-      "literal": "#7a7a92",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 313,
-      "literal": "#a0a0b0",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 314,
-      "literal": "#e8e8ed",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 318,
-      "literal": "rgba(56, 189, 248, 0.08)",
-      "kind": "rgb"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 319,
-      "literal": "rgba(245, 158, 11, 0.05)",
-      "kind": "rgb"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 320,
-      "literal": "rgba(56, 189, 248, 0.03)",
-      "kind": "rgb"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 329,
-      "literal": "#1a2ffb",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 330,
-      "literal": "#071bdf",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 331,
-      "literal": "#c1ff00",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 332,
-      "literal": "#8832f7",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 333,
-      "literal": "#ff4c41",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 334,
+      "line": 316,
       "literal": "#000000",
       "kind": "hex"
     },
     {
       "path": "app/globals.css",
-      "line": 335,
+      "line": 317,
+      "literal": "#0b0b0f",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 318,
       "literal": "#ffffff",
       "kind": "hex"
     },
     {
       "path": "app/globals.css",
-      "line": 336,
-      "literal": "#f0f1fa",
+      "line": 319,
+      "literal": "#e5e7eb",
       "kind": "hex"
     },
     {
       "path": "app/globals.css",
-      "line": 337,
-      "literal": "#e4e6ef",
+      "line": 320,
+      "literal": "#ffffff",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 321,
+      "literal": "#7dd3fc",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 322,
+      "literal": "#fbbf24",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 323,
+      "literal": "#7dd3fc",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 326,
+      "literal": "#0b0b0f",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 327,
+      "literal": "#0f0f1a",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 328,
+      "literal": "#151522",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 329,
+      "literal": "#1a1a2e",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 330,
+      "literal": "#2a2a3b",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 331,
+      "literal": "#3b3b4f",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 332,
+      "literal": "#4b4b60",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 333,
+      "literal": "#5f5f75",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 334,
+      "literal": "#7a7a92",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 335,
+      "literal": "#a0a0b0",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 336,
+      "literal": "#e8e8ed",
       "kind": "hex"
     },
     {
       "path": "app/globals.css",
       "line": 340,
-      "literal": "#8B5CF6",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 341,
-      "literal": "#1A2FFB",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 342,
-      "literal": "#C1FF00",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 343,
-      "literal": "#F59E0B",
-      "kind": "hex"
-    },
-    {
-      "path": "app/globals.css",
-      "line": 379,
       "literal": "rgba(56, 189, 248, 0.08)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 380,
+      "line": 341,
       "literal": "rgba(245, 158, 11, 0.05)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 381,
+      "line": 342,
       "literal": "rgba(56, 189, 248, 0.03)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 421,
+      "line": 351,
+      "literal": "#1a2ffb",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 352,
+      "literal": "#071bdf",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 353,
+      "literal": "#c1ff00",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 354,
+      "literal": "#8832f7",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 355,
+      "literal": "#ff4c41",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 356,
+      "literal": "#000000",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 357,
+      "literal": "#ffffff",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 358,
+      "literal": "#f0f1fa",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 359,
+      "literal": "#e4e6ef",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 362,
+      "literal": "#8B5CF6",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 363,
+      "literal": "#1A2FFB",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 364,
+      "literal": "#C1FF00",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 365,
+      "literal": "#F59E0B",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 422,
+      "literal": "rgba(2, 6, 23, 0.08)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 423,
+      "literal": "rgba(2, 6, 23, 0.18)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 447,
+      "literal": "rgba(56, 189, 248, 0.08)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 448,
+      "literal": "rgba(245, 158, 11, 0.05)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 449,
+      "literal": "rgba(56, 189, 248, 0.03)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 489,
       "literal": "oklch(50% 0.02 280)",
       "kind": "ok"
     },
     {
       "path": "app/globals.css",
-      "line": 423,
+      "line": 491,
       "literal": "oklch(100% 0 0)",
       "kind": "ok"
     },
     {
       "path": "app/globals.css",
-      "line": 424,
+      "line": 492,
       "literal": "oklch(97% 0.005 280)",
       "kind": "ok"
     },
     {
       "path": "app/globals.css",
-      "line": 425,
+      "line": 493,
       "literal": "oklch(94% 0.01 280)",
       "kind": "ok"
     },
     {
       "path": "app/globals.css",
-      "line": 426,
+      "line": 494,
       "literal": "oklch(88% 0.015 280)",
       "kind": "ok"
     },
     {
       "path": "app/globals.css",
-      "line": 427,
+      "line": 495,
       "literal": "oklch(75% 0.02 280)",
       "kind": "ok"
     },
     {
       "path": "app/globals.css",
-      "line": 428,
+      "line": 496,
       "literal": "oklch(60% 0.02 280)",
       "kind": "ok"
     },
     {
       "path": "app/globals.css",
-      "line": 429,
+      "line": 497,
       "literal": "oklch(50% 0.02 280)",
       "kind": "ok"
     },
     {
       "path": "app/globals.css",
-      "line": 430,
+      "line": 498,
       "literal": "oklch(40% 0.02 280)",
       "kind": "ok"
     },
     {
       "path": "app/globals.css",
-      "line": 431,
+      "line": 499,
       "literal": "oklch(30% 0.02 280)",
       "kind": "ok"
     },
     {
       "path": "app/globals.css",
-      "line": 432,
+      "line": 500,
       "literal": "oklch(20% 0.015 280)",
       "kind": "ok"
     },
     {
       "path": "app/globals.css",
-      "line": 433,
+      "line": 501,
       "literal": "oklch(12% 0.01 280)",
       "kind": "ok"
     },
     {
       "path": "app/globals.css",
-      "line": 453,
+      "line": 521,
       "literal": "rgba(0, 0, 0, 0.1)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 459,
+      "line": 527,
       "literal": "rgba(255, 255, 255, 0.1)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 463,
+      "line": 531,
       "literal": "rgba(0, 0, 0, 0.2)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 467,
+      "line": 535,
       "literal": "rgba(255, 255, 255, 0.2)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 488,
+      "line": 556,
       "literal": "rgba(255, 255, 255, 0.8)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 491,
+      "line": 559,
       "literal": "rgba(0, 0, 0, 0.1)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 497,
+      "line": 565,
       "literal": "rgba(10, 10, 12, 0.8)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 498,
+      "line": 566,
       "literal": "rgba(0, 0, 0, 0.5)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 511,
+      "line": 579,
       "literal": "rgba(0, 0, 0, 0.05)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 516,
+      "line": 584,
       "literal": "rgba(255, 255, 255, 0.1)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 810,
+      "line": 878,
       "literal": "rgba(255, 255, 255, 0.4)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 813,
+      "line": 881,
       "literal": "rgba(0, 0, 0, 0.08)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 816,
+      "line": 884,
       "literal": "rgba(0, 0, 0, 0.05)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 817,
+      "line": 885,
       "literal": "rgba(255, 255, 255, 0.5)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 824,
+      "line": 892,
       "literal": "rgba(255, 255, 255, 0.03)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 825,
+      "line": 893,
       "literal": "rgba(255, 255, 255, 0.08)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 827,
+      "line": 895,
       "literal": "rgba(0, 0, 0, 0.2)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 828,
+      "line": 896,
       "literal": "rgba(255, 255, 255, 0.05)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 838,
+      "line": 906,
       "literal": "rgba(255, 255, 255, 0.4)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 839,
+      "line": 907,
       "literal": "rgba(255, 255, 255, 0.1)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 840,
+      "line": 908,
       "literal": "rgba(255, 255, 255, 0)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 849,
+      "line": 917,
       "literal": "rgba(255, 255, 255, 0.7)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 850,
+      "line": 918,
       "literal": "rgba(0, 0, 0, 0.1)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 852,
+      "line": 920,
       "literal": "rgba(0, 0, 0, 0.1)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 853,
+      "line": 921,
       "literal": "rgba(0, 0, 0, 0.05)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 854,
+      "line": 922,
       "literal": "rgba(0, 0, 0, 0.05)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 858,
+      "line": 926,
       "literal": "rgba(255, 255, 255, 0.06)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 859,
+      "line": 927,
       "literal": "rgba(255, 255, 255, 0.2)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 861,
+      "line": 929,
       "literal": "rgba(0, 0, 0, 0.4)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 862,
+      "line": 930,
       "literal": "rgba(0, 0, 0, 0.2)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 863,
+      "line": 931,
       "literal": "rgba(255, 255, 255, 0.15)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 864,
+      "line": 932,
       "literal": "rgba(var(--glow-color-rgb, 255, 255, 255)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 888,
+      "line": 956,
       "literal": "rgba(0, 0, 0, 0.05)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 899,
+      "line": 967,
       "literal": "rgba(255, 255, 255, 0.1)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 982,
+      "line": 1050,
       "literal": "rgba(var(--glow-color-rgb)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 983,
+      "line": 1051,
       "literal": "rgba(var(--glow-color-rgb)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 984,
+      "line": 1052,
       "literal": "rgba(var(--glow-color-rgb)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 989,
+      "line": 1057,
       "literal": "rgba(var(--glow-color-rgb)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 990,
+      "line": 1058,
       "literal": "rgba(var(--glow-color-rgb)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 991,
+      "line": 1059,
       "literal": "rgba(var(--glow-color-rgb)",
       "kind": "rgb"
     },
     {
       "path": "app/globals.css",
-      "line": 1083,
+      "line": 1151,
       "literal": "rgba(0, 0, 0, 0.1)",
       "kind": "rgb"
     },
