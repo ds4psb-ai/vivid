@@ -2,6 +2,16 @@
 @import "./app-colors.css";
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Tailwind v4 safelist for dynamic dimension utilities (AppRegistry-driven) */
+@source inline("bg-dimension-{1d,2d,3d,4d,ad,ai,qc,veo,story,storyboard,mirror,sound,suno,kling,character,prompt,json-gen,nanobanana}");
+@source inline("bg-dimension-{1d,2d,3d,4d,ad,ai,qc,veo,story,storyboard,mirror,sound,suno,kling,character,prompt,json-gen,nanobanana}/{10,20,30}");
+@source inline("{hover:,}bg-dimension-{1d,2d,3d,4d,ad,ai,qc,veo,story,storyboard,mirror,sound,suno,kling,character,prompt,json-gen,nanobanana}/{20,30}");
+@source inline("text-dimension-{1d,2d,3d,4d,ad,ai,qc,veo,story,storyboard,mirror,sound,suno,kling,character,prompt,json-gen,nanobanana}");
+@source inline("border-dimension-{1d,2d,3d,4d,ad,ai,qc,veo,story,storyboard,mirror,sound,suno,kling,character,prompt,json-gen,nanobanana}/{20,30,50}");
+@source inline("{hover:,focus:,}border-dimension-{1d,2d,3d,4d,ad,ai,qc,veo,story,storyboard,mirror,sound,suno,kling,character,prompt,json-gen,nanobanana}/{30,50}");
+@source inline("{focus:,}ring-dimension-{1d,2d,3d,4d,ad,ai,qc,veo,story,storyboard,mirror,sound,suno,kling,character,prompt,json-gen,nanobanana}/{10,30}");
+@source inline("shadow-dimension-{1d,2d,3d,4d,ad,ai,qc,veo,story,storyboard,mirror,sound,suno,kling,character,prompt,json-gen,nanobanana}/{20,30,40}");
+
 /* ═══════════════════════════════════════════════════════════════════════════
    DESIGN TOKENS FOUNDATION (W3C DTCG 2025.10 Aligned)
 
