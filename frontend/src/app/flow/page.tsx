@@ -477,9 +477,21 @@ function FlowPageContent() {
             const mergedInputs: Record<string, unknown> = {};
             const mergedOutputs: Record<string, unknown> = {};
 
+            const getPresetPrefix = (dimension: string): string | null => {
+                const code = dimensionIdToCode(dimension);
+                if (!code) return null;
+                return `${code.replace(/-/g, "_")}_`;
+            };
+
             workflowResults.forEach(result => {
                 Object.entries(result.inputs).forEach(([k, v]) => { mergedInputs[k] = v; });
                 Object.entries(result.output).forEach(([k, v]) => { mergedOutputs[k] = v; });
+                const prefix = getPresetPrefix(result.dimension);
+                if (prefix) {
+                    Object.entries(result.inputs).forEach(([k, v]) => {
+                        mergedInputs[`${prefix}${k}`] = v;
+                    });
+                }
             });
 
             const response = await api.createSingularityTemplate({
