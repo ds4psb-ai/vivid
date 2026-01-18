@@ -206,6 +206,14 @@ const getDimensionFocusClass = (dimension?: string) => {
     return `focus:border-${key}/50 focus:ring-${key}/10`;
 };
 
+const getHoverGlowClass = (dimension?: string) => {
+    if (!dimension) return "";
+    const code = dimensionIdToCode(dimension);
+    if (!code) return "";
+    const key = getDimensionToken(code).tailwindKey;
+    return `hover:shadow-${key}/30`;
+};
+
 // Dimension-specific form configurations
 const DIMENSION_CONFIG: Partial<Record<DimensionType, {
     title: string;
@@ -592,6 +600,7 @@ export function DimensionPortalModal({
     const tokenScheme = getDimensionColorClasses(currentCar.dimension);
     const colorClass = tokenScheme || COLOR_CLASSES[currentCar.color] || COLOR_CLASSES.violet;
     const focusClass = getDimensionFocusClass(currentCar.dimension) || FOCUS_CLASSES[currentCar.color] || FOCUS_CLASSES.violet;
+    const hoverGlowClass = getHoverGlowClass(currentCar.dimension);
     const dimensionRoute = DIMENSION_ROUTES[currentCar.dimension];
     const hasRoute = Boolean(dimensionRoute);
 
@@ -844,7 +853,7 @@ export function DimensionPortalModal({
                                                     flex items-center justify-center gap-3
                                                     transition-all active:scale-[0.98]
                                                     bg-gradient-to-r ${colorClass.gradient} text-white
-                                                    hover:shadow-lg hover:shadow-${currentCar.color}-500/20
+                                                    hover:shadow-lg ${hoverGlowClass}
                                                 `}
                                             >
                                                 <Play className="h-5 w-5" />

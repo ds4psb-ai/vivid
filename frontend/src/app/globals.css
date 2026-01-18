@@ -11,6 +11,7 @@
 @source inline("{hover:,focus:,}border-dimension-{1d,2d,3d,4d,ad,ai,qc,veo,story,storyboard,mirror,sound,suno,kling,character,prompt,json-gen,nanobanana}/{30,50}");
 @source inline("{focus:,}ring-dimension-{1d,2d,3d,4d,ad,ai,qc,veo,story,storyboard,mirror,sound,suno,kling,character,prompt,json-gen,nanobanana}/{10,30}");
 @source inline("shadow-dimension-{1d,2d,3d,4d,ad,ai,qc,veo,story,storyboard,mirror,sound,suno,kling,character,prompt,json-gen,nanobanana}/{20,30,40}");
+@source inline("{hover:,}shadow-dimension-{1d,2d,3d,4d,ad,ai,qc,veo,story,storyboard,mirror,sound,suno,kling,character,prompt,json-gen,nanobanana}/{20,30,40}");
 
 /* ═══════════════════════════════════════════════════════════════════════════
    DESIGN TOKENS FOUNDATION (W3C DTCG 2025.10 Aligned)
