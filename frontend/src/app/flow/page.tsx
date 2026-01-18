@@ -797,13 +797,13 @@ function FlowPageContent() {
             const displayValue = value.trim() || '(빈 문자열)';
             return (
                 <div className="relative group">
-                    <div className="p-3 rounded-lg bg-black/30 border border-white/5 text-sm text-[var(--fg-0)] whitespace-pre-wrap max-h-48 overflow-y-auto">
+                    <div className="p-3 rounded-lg bg-[var(--surface-1)] border border-[var(--border-subtle)] text-sm text-[var(--fg-0)] whitespace-pre-wrap max-h-48 overflow-y-auto">
                         {displayValue}
                     </div>
                     {value.trim() && (
                         <button
                             onClick={() => copyToClipboard(value, fieldId)}
-                            className="absolute top-2 right-2 p-1.5 rounded-md bg-white/5 opacity-0 group-hover:opacity-100 hover:bg-white/10 transition-all"
+                            className="absolute top-2 right-2 p-1.5 rounded-md bg-[var(--surface-1)] opacity-0 group-hover:opacity-100 hover:bg-[var(--surface-2)] transition-all"
                         >
                             {copiedField === fieldId ? (
                                 <Check className={`h-3.5 w-3.5 ${SUCCESS_TONE.text}`} />
@@ -827,7 +827,7 @@ function FlowPageContent() {
             return (
                 <div className="space-y-2">
                     {value.slice(0, 20).map((item, i) => (
-                        <div key={i} className="p-2 rounded-lg bg-black/20 border border-white/5 text-xs text-[var(--fg-muted)] overflow-x-auto">
+                        <div key={i} className="p-2 rounded-lg bg-[var(--surface-1)] border border-[var(--border-subtle)] text-xs text-[var(--fg-muted)] overflow-x-auto">
                             {safeStringify(item)}
                         </div>
                     ))}
@@ -841,7 +841,7 @@ function FlowPageContent() {
         if (typeof value === "object" && value !== null) {
             const stringified = safeStringify(value);
             return (
-                <div className="p-3 rounded-lg bg-black/30 border border-white/5 text-xs text-[var(--fg-muted)] font-mono whitespace-pre overflow-x-auto max-h-64">
+                <div className="p-3 rounded-lg bg-[var(--surface-1)] border border-[var(--border-subtle)] text-xs text-[var(--fg-muted)] font-mono whitespace-pre overflow-x-auto max-h-64">
                     {stringified}
                 </div>
             );
@@ -885,7 +885,7 @@ function FlowPageContent() {
                                     </div>
                                     <button
                                         onClick={() => setTemplateLoadError(null)}
-                                        className="text-xs text-slate-500 hover:text-white transition-colors"
+                                        className="text-xs text-[var(--fg-subtle)] hover:text-[var(--fg-0)] transition-colors"
                                     >
                                         닫기
                                     </button>
@@ -906,8 +906,8 @@ function FlowPageContent() {
                                             <Sparkles className={`w-5 h-5 ${BRAND_TONE.text}`} />
                                         </div>
                                         <div>
-                                            <div className="text-sm font-bold text-white">{loadedTemplate.title}</div>
-                                            <div className="text-xs text-slate-400">
+                                            <div className="text-sm font-bold text-[var(--fg-0)]">{loadedTemplate.title}</div>
+                                            <div className="text-xs text-[var(--fg-muted)]">
                                                 {appliedTemplateSequence.length > 0
                                                     ? `${appliedTemplateSequence.join(" → ")} 워크플로우가 적용되었습니다`
                                                     : "적용 가능한 차원이 없어 워크플로우가 비어 있습니다"}
@@ -922,7 +922,7 @@ function FlowPageContent() {
                                             setTemplateSkippedDimensions([]);
                                             workflowRef.current?.clearCars();
                                         }}
-                                        className="text-xs text-slate-500 hover:text-white transition-colors"
+                                        className="text-xs text-[var(--fg-subtle)] hover:text-[var(--fg-0)] transition-colors"
                                     >
                                         초기화
                                     </button>
@@ -947,7 +947,7 @@ function FlowPageContent() {
                                     </div>
                                     <button
                                         onClick={() => setTemplateSkippedDimensions([])}
-                                        className="text-xs text-slate-500 hover:text-white transition-colors"
+                                        className="text-xs text-[var(--fg-subtle)] hover:text-[var(--fg-0)] transition-colors"
                                     >
                                         닫기
                                     </button>
@@ -999,7 +999,7 @@ function FlowPageContent() {
                                                     </button>
                                                     <button
                                                         onClick={() => setShowResults(false)}
-                                                        className="p-1.5 rounded-lg hover:bg-white/5 transition-colors"
+                                                        className="p-1.5 rounded-lg hover:bg-[var(--surface-2)] transition-colors"
                                                     >
                                                         <X className="h-4 w-4 text-[var(--fg-muted)]" />
                                                     </button>
@@ -1021,7 +1021,7 @@ function FlowPageContent() {
                                                         : null;
                                                     const iconToneClass = toneKey
                                                         ? `bg-${toneKey}/20 text-${toneKey}`
-                                                        : "bg-white/10 text-[var(--fg-muted)]";
+                                                        : "bg-[var(--surface-1)] text-[var(--fg-muted)]";
                                                     const labelToneClass = toneKey
                                                         ? `text-${toneKey}`
                                                         : "text-[var(--fg-muted)]";
@@ -1029,12 +1029,12 @@ function FlowPageContent() {
                                                     return (
                                                         <div
                                                             key={result.toolName}
-                                                            className="rounded-xl border border-white/5 bg-black/20 overflow-hidden"
+                                                            className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-1)] overflow-hidden"
                                                         >
                                                             {/* Result Header */}
                                                             <button
                                                                 onClick={() => setExpandedResult(isExpanded ? null : result.toolName)}
-                                                                className="w-full flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors"
+                                                                className="w-full flex items-center justify-between p-4 hover:bg-[var(--surface-2)] transition-colors"
                                                             >
                                                                 <div className="flex items-center gap-3">
                                                                     <div
@@ -1058,25 +1058,25 @@ function FlowPageContent() {
                                                                 </div>
                                                                 <div className="flex items-center gap-2">
                                                                     {/* 🆕 Download Buttons */}
-                                                                    <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                                                                        <button
-                                                                            onClick={() => downloadResultAsJSON(result)}
-                                                                            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                                                                            title="JSON으로 다운로드"
-                                                                        >
-                                                                            <Download className="h-3.5 w-3.5 text-zinc-400" />
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => downloadResultAsMarkdown(result)}
-                                                                            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                                                                            title="Markdown으로 다운로드"
-                                                                        >
-                                                                            <span className="text-[10px] font-bold text-zinc-400">MD</span>
-                                                                        </button>
-                                                                    </div>
-                                                                    <ChevronDown
-                                                                        className={`h-5 w-5 text-[var(--fg-muted)] transition-transform ${isExpanded ? "rotate-180" : ""}`}
-                                                                    />
+                                                                        <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                                                                            <button
+                                                                                onClick={() => downloadResultAsJSON(result)}
+                                                                                className="p-1.5 rounded-lg bg-[var(--surface-1)] hover:bg-[var(--surface-2)] transition-colors"
+                                                                                title="JSON으로 다운로드"
+                                                                            >
+                                                                                <Download className="h-3.5 w-3.5 text-[var(--fg-subtle)]" />
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => downloadResultAsMarkdown(result)}
+                                                                                className="p-1.5 rounded-lg bg-[var(--surface-1)] hover:bg-[var(--surface-2)] transition-colors"
+                                                                                title="Markdown으로 다운로드"
+                                                                            >
+                                                                                <span className="text-[10px] font-bold text-[var(--fg-subtle)]">MD</span>
+                                                                            </button>
+                                                                        </div>
+                                                                        <ChevronDown
+                                                                            className={`h-5 w-5 text-[var(--fg-muted)] transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                                                                        />
                                                                 </div>
                                                             </button>
 
@@ -1090,7 +1090,7 @@ function FlowPageContent() {
                                                                         transition={{ duration: 0.2 }}
                                                                         className="overflow-hidden"
                                                                     >
-                                                                        <div className="p-4 pt-0 space-y-4 border-t border-white/5">
+                                                                        <div className="p-4 pt-0 space-y-4 border-t border-[var(--border-subtle)]">
                                                                             {/* 🆕 Inputs Section */}
                                                                             {result.inputs && Object.keys(result.inputs).length > 0 && (
                                                                                 <details className="group">
@@ -1154,7 +1154,7 @@ function FlowPageContent() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                            className="fixed inset-0 z-50 flex items-center justify-center dialog-overlay"
                             onClick={() => setShowTemplateModal(false)}
                         >
                             <motion.div
@@ -1162,19 +1162,19 @@ function FlowPageContent() {
                                 animate={{ scale: 1, opacity: 1 }}
                                 exit={{ scale: 0.95, opacity: 0 }}
                                 onClick={e => e.stopPropagation()}
-                                className="w-full max-w-md mx-4 bg-black/60 backdrop-blur-xl border border-white/10 rounded-[1.5rem] shadow-2xl overflow-hidden"
+                                className="w-full max-w-md mx-4 dialog-panel rounded-[1.5rem] shadow-2xl overflow-hidden"
                             >
                                 {/* Modal Header */}
-                                <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-subtle)]">
+                                    <h3 className="text-lg font-bold text-[var(--fg-0)] flex items-center gap-2">
                                         <Save className={`h-5 w-5 ${BRAND_TONE.text}`} />
                                         싱귤래리티 템플릿 저장
                                     </h3>
                                     <button
                                         onClick={() => setShowTemplateModal(false)}
-                                        className="p-1.5 rounded-lg hover:bg-white/5 transition-colors"
+                                        className="p-1.5 rounded-lg hover:bg-[var(--surface-2)] transition-colors"
                                     >
-                                        <X className="h-4 w-4 text-zinc-400" />
+                                        <X className="h-4 w-4 text-[var(--fg-subtle)]" />
                                     </button>
                                 </div>
 
@@ -1185,14 +1185,14 @@ function FlowPageContent() {
                                             <div className={`h-16 w-16 mx-auto mb-4 rounded-full ${SUCCESS_TONE.bg} flex items-center justify-center`}>
                                                 <Check className={`h-8 w-8 ${SUCCESS_TONE.text}`} />
                                             </div>
-                                            <p className="text-lg font-medium text-white">템플릿 저장 완료!</p>
-                                            <p className="text-sm text-zinc-400 mt-1 mb-4">싱귤래리티에서 확인하세요</p>
+                                            <p className="text-lg font-medium text-[var(--fg-0)]">템플릿 저장 완료!</p>
+                                            <p className="text-sm text-[var(--fg-muted)] mt-1 mb-4">싱귤래리티에서 확인하세요</p>
 
                                             {/* Singularity & Constellation Links */}
                                             <div className="flex flex-col gap-2">
                                                 <a
                                                     href="/singularity"
-                                                    className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors ${BRAND_TONE.solid} ${BRAND_TONE.hoverBg}`}
+                                                    className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[var(--fg-on-emphasis)] text-sm font-medium transition-colors ${BRAND_TONE.solid} ${BRAND_TONE.hoverBg}`}
                                                 >
                                                     <Sparkles className="h-4 w-4" />
                                                     싱귤래리티로 이동
@@ -1200,7 +1200,7 @@ function FlowPageContent() {
                                                 {savedTemplateId && (
                                                     <a
                                                         href={`/constellation?new=true&singularity=${savedTemplateId}`}
-                                                        className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors ${INFO_TONE.solid} ${INFO_TONE.hover}`}
+                                                        className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[var(--fg-on-emphasis)] text-sm font-medium transition-colors ${INFO_TONE.solid} ${INFO_TONE.hover}`}
                                                     >
                                                         <Sparkles className="h-4 w-4" />
                                                         별자리로 확장하기
@@ -1211,7 +1211,7 @@ function FlowPageContent() {
                                     ) : (
                                         <>
                                             <div>
-                                                <label className="text-xs font-medium text-zinc-400 mb-1.5 block">
+                                                <label className="text-xs font-medium text-[var(--fg-muted)] mb-1.5 block">
                                                     템플릿 제목 *
                                                 </label>
                                                 <input
@@ -1219,11 +1219,11 @@ function FlowPageContent() {
                                                     value={templateTitle}
                                                     onChange={e => setTemplateTitle(e.target.value)}
                                                     placeholder="예: 시네마틱 프롬프트 워크플로우"
-                                                    className={`w-full px-4 py-2.5 rounded-lg bg-black/30 border border-white/10 text-white placeholder:text-zinc-500 focus:outline-none focus:border-[var(--color-brand-primary)]/50`}
+                                                    className="input w-full text-sm"
                                                 />
                                             </div>
                                             <div>
-                                                <label className="text-xs font-medium text-zinc-400 mb-1.5 block">
+                                                <label className="text-xs font-medium text-[var(--fg-muted)] mb-1.5 block">
                                                     설명
                                                 </label>
                                                 <textarea
@@ -1231,11 +1231,11 @@ function FlowPageContent() {
                                                     onChange={e => setTemplateDescription(e.target.value)}
                                                     placeholder="워크플로우 템플릿에 대한 설명을 입력하세요"
                                                     rows={3}
-                                                    className="w-full px-4 py-2.5 rounded-lg bg-black/30 border border-white/10 text-white placeholder:text-zinc-500 focus:outline-none focus:border-[var(--color-brand-primary)]/50 resize-none"
+                                                    className="input w-full text-sm resize-none"
                                                 />
                                             </div>
                                             <div>
-                                                <label className="text-xs font-medium text-zinc-400 mb-1.5 block">
+                                                <label className="text-xs font-medium text-[var(--fg-muted)] mb-1.5 block">
                                                     태그 (쉼표로 구분)
                                                 </label>
                                                 <input
@@ -1243,7 +1243,7 @@ function FlowPageContent() {
                                                     value={templateTags}
                                                     onChange={e => setTemplateTags(e.target.value)}
                                                     placeholder="예: cinematic, veo, prompt"
-                                                    className="w-full px-4 py-2.5 rounded-lg bg-black/30 border border-white/10 text-white placeholder:text-zinc-500 focus:outline-none focus:border-[var(--color-brand-primary)]/50"
+                                                    className="input w-full text-sm"
                                                 />
                                             </div>
 
@@ -1264,7 +1264,7 @@ function FlowPageContent() {
 
                                 {/* Modal Footer */}
                                 {!templateSaveSuccess && (
-                                    <div className="px-6 py-4 border-t border-white/5 space-y-3">
+                                    <div className="px-6 py-4 border-t border-[var(--border-subtle)] space-y-3">
                                         {/* 🆕 Inline Error Display */}
                                         {templateSaveError && (
                                             <div className={`flex items-center gap-2 p-3 rounded-lg ${ERROR_TONE.bgSubtle} ${ERROR_TONE.border}`}>
@@ -1281,18 +1281,18 @@ function FlowPageContent() {
                                         <div className="flex justify-end gap-3">
                                             <button
                                                 onClick={() => setShowTemplateModal(false)}
-                                                className="px-4 py-2 rounded-lg text-sm text-zinc-400 hover:bg-white/5 transition-colors"
+                                                className="btn btn-secondary btn-size-default text-sm"
                                             >
                                                 취소
                                             </button>
                                             <button
                                                 onClick={handleSaveAsTemplate}
                                                 disabled={!templateTitle.trim() || isSavingTemplate}
-                                                className={`px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors flex items-center gap-2 ${BRAND_TONE.solid} ${BRAND_TONE.hoverBg} disabled:bg-zinc-700 disabled:text-zinc-500`}
+                                                className={`px-4 py-2 rounded-lg text-[var(--fg-on-emphasis)] text-sm font-medium transition-colors flex items-center gap-2 ${BRAND_TONE.solid} ${BRAND_TONE.hoverBg} disabled:opacity-60 disabled:cursor-not-allowed`}
                                             >
                                                 {isSavingTemplate ? (
                                                     <>
-                                                        <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                        <span className="h-4 w-4 border-2 spinner-on-emphasis rounded-full animate-spin" />
                                                         저장 중...
                                                     </>
                                                 ) : (
@@ -1328,19 +1328,19 @@ function FlowComingSoon() {
                     <div className={`mx-auto w-20 h-20 rounded-2xl flex items-center justify-center mb-6 ${BRAND_TONE.bgSubtle} ${BRAND_TONE.border}`}>
                         <Construction className={`w-10 h-10 ${BRAND_TONE.text}`} />
                     </div>
-                    <h1 className="text-3xl font-bold text-white mb-3">
+                    <h1 className="text-3xl font-bold text-[var(--fg-0)] mb-3">
                         차원 플로우
                     </h1>
                     <p className={`text-lg mb-2 ${BRAND_TONE.textSoft}`}>
                         Coming Soon
                     </p>
-                    <p className="text-slate-400 mb-8">
+                    <p className="text-[var(--fg-muted)] mb-8">
                         차원 플로우 기능은 현재 개발 중입니다.<br />
                         곧 여러 차원 도구를 조합하여 나만의 AI 파이프라인을 만들 수 있습니다.
                     </p>
                     <Link
                         href="/dimension"
-                        className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white font-medium transition-colors ${BRAND_TONE.solid} ${BRAND_TONE.hoverBg}`}
+                        className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl text-[var(--fg-on-emphasis)] font-medium transition-colors ${BRAND_TONE.solid} ${BRAND_TONE.hoverBg}`}
                     >
                         <ArrowLeft className="w-4 h-4" />
                         차원 앱으로 돌아가기
