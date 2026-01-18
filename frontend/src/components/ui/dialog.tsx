@@ -45,12 +45,12 @@ function DialogContent({ className, children, ...props }: React.HTMLAttributes<H
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
-        className="fixed inset-0 bg-black/80"
+        className="fixed inset-0 dialog-overlay"
         onClick={() => context.onOpenChange(false)}
       />
       <div
         className={cn(
-          "fixed z-50 grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg",
+          "fixed z-50 grid w-full max-w-lg gap-4 p-6 duration-200 dialog-panel",
           className
         )}
         {...props}
@@ -85,7 +85,7 @@ function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
 function DialogTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h2
-      className={cn("text-lg font-semibold leading-none tracking-tight", className)}
+      className={cn("text-lg font-semibold leading-none tracking-tight text-[var(--fg-0)]", className)}
       {...props}
     />
   );
@@ -93,7 +93,7 @@ function DialogTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingEl
 
 function DialogDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
-    <p className={cn("text-sm text-muted-foreground", className)} {...props} />
+    <p className={cn("text-sm text-[var(--fg-muted)]", className)} {...props} />
   );
 }
 

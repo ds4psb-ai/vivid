@@ -215,6 +215,7 @@ html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
   --surface-2: rgba(244, 244, 245, 0.8);
   --glass-border: rgba(0, 0, 0, 0.08);
   --glass-highlight: rgba(0, 0, 0, 0.03);
+  --overlay-backdrop: rgba(2, 6, 23, 0.55);
 
   --border-muted: rgba(0, 0, 0, 0.1);
   --border-subtle: rgba(0, 0, 0, 0.05);
@@ -331,6 +332,7 @@ html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
   --glass-border: rgba(255, 255, 255, 0.08);
   /* Subtle border for glass */
   --glass-highlight: rgba(255, 255, 255, 0.03);
+  --overlay-backdrop: rgba(2, 6, 23, 0.75);
 
   --border-muted: rgba(255, 255, 255, 0.1);
   --border-subtle: rgba(255, 255, 255, 0.05);
@@ -1252,6 +1254,8 @@ html.lenis body {
   gap: var(--space-2);
   border-radius: var(--radius-md);
   font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
   transition:
     transform var(--motion-duration-fast) var(--motion-ease-standard),
     box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
@@ -1388,6 +1392,144 @@ html.lenis body {
 .input:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  border-radius: var(--radius-pill);
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-1);
+  color: var(--fg-0);
+}
+
+.badge-secondary {
+  background: var(--surface-2);
+  color: var(--fg-muted);
+  border-color: var(--border-muted);
+}
+
+.badge-outline {
+  background: transparent;
+  color: var(--fg-0);
+  border-color: var(--border-default);
+}
+
+.badge-destructive {
+  --_color: var(--error);
+  --_rgb: var(--error-rgb);
+  color: var(--_color);
+  border-color: rgba(var(--_rgb), 0.35);
+  background: rgba(var(--_rgb), 0.12);
+  border-color: color-mix(in srgb, var(--_color) 35%, transparent);
+  background: color-mix(in srgb, var(--_color) 12%, transparent);
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--fg-0);
+}
+
+.dialog-overlay {
+  background: var(--overlay-backdrop);
+  backdrop-filter: blur(4px);
+}
+
+.dialog-panel {
+  background: var(--bg-base);
+  color: var(--fg-0);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-md);
+}
+
+.tabs-list {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  color: var(--fg-muted);
+}
+
+.tabs-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--fg-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  transition:
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.tabs-trigger:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.tabs-trigger-active {
+  background: var(--bg-base);
+  color: var(--fg-0);
+  border-color: var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+
+.tabs-content {
+  margin-top: var(--space-2);
+}
+
+.tabs-content:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.validation-error-inline {
+  font-size: 0.875rem;
+  color: var(--error);
+}
+
+.validation-error-banner {
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(var(--error-rgb), 0.35);
+  background: rgba(var(--error-rgb), 0.12);
+  color: var(--error);
+  border-color: color-mix(in srgb, var(--error) 35%, transparent);
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+}
+
+.validation-error-toast {
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--error);
+  color: var(--fg-on-emphasis);
+  box-shadow: var(--shadow-lg);
+}
+
+.validation-error-dismiss {
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.validation-error-dismiss:hover {
+  background: rgba(var(--error-rgb), 0.2);
 }
 
 /* Crebit Philosophy Utility Classes (Section 7.4-7.6) */

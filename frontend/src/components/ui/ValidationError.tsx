@@ -106,11 +106,9 @@ export function ValidationError({
 
   // Variant styles
   const variantStyles = {
-    inline: "text-sm text-red-400 mt-1",
-    banner:
-      "p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400",
-    toast:
-      "fixed bottom-4 right-4 p-4 bg-red-500/90 text-white rounded-xl shadow-lg max-w-sm z-50",
+    inline: "validation-error-inline mt-1",
+    banner: "validation-error-banner",
+    toast: "validation-error-toast fixed bottom-4 right-4 max-w-sm z-50",
   };
 
   if (variant === "inline") {
@@ -144,7 +142,7 @@ export function ValidationError({
         {dismissible && (
           <button
             onClick={handleDismiss}
-            className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+            className="validation-error-dismiss"
           >
             <X className="w-4 h-4" />
           </button>
@@ -182,7 +180,7 @@ export function FieldError({ errors, field, className = "" }: FieldErrorProps) {
 
   return (
     <p
-      className={`text-xs text-red-400 mt-1 animate-in fade-in duration-150 ${className}`}
+      className={`text-xs validation-error-inline mt-1 animate-in fade-in duration-150 ${className}`}
     >
       {fieldErrors[0]}
     </p>
