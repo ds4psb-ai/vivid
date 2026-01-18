@@ -5,6 +5,8 @@
  * scattered across DimensionPortalModal and individual Panel components.
  */
 
+import { dimensionIdToCode } from "@/lib/tokens";
+
 // =============================================================================
 // Types
 // =============================================================================
@@ -486,7 +488,14 @@ export const DIMENSION_INPUT_SCHEMAS: Record<string, DimensionInputSchema> = {
  * Returns empty array if dimension not found.
  */
 export function getInputFieldsByDimension(dimension: string): InputFieldConfig[] {
-    return DIMENSION_INPUT_SCHEMAS[dimension]?.inputFields ?? [];
+    const direct = DIMENSION_INPUT_SCHEMAS[dimension];
+    if (direct) return direct.inputFields;
+
+    const code = dimensionIdToCode(dimension);
+    if (!code) return [];
+
+    const normalized = code.toUpperCase().replace(/-/g, "_");
+    return DIMENSION_INPUT_SCHEMAS[normalized]?.inputFields ?? [];
 }
 
 /**

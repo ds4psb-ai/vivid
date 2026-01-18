@@ -162,7 +162,7 @@ function SoundCrafterContent() {
   const creditCtx = useCreditContextOptional();
   const chainCtx = useDimensionChainOptional();
   const { getToolByDimension } = useDimensionConfig();
-  const toolConfig = getToolByDimension("SC");
+  const toolConfig = getToolByDimension("SOUND") ?? getToolByDimension("SC");
   const CREDIT_COST_CRAFT = toolConfig?.creditCost ?? 8;
   const CREDIT_COST_MOOD = Math.max(1, Math.round(CREDIT_COST_CRAFT * 0.625));
 

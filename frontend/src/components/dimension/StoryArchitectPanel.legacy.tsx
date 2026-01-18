@@ -111,7 +111,7 @@ export default function StoryArchitectPanel() {
     const chainCtx = useDimensionChainOptional();
 
     const { getToolByDimension } = useDimensionConfig();
-    const toolConfig = getToolByDimension("SA");
+    const toolConfig = getToolByDimension("STORY") ?? getToolByDimension("SA");
     const CREDIT_COST = toolConfig?.creditCost ?? 10;
 
     // Export utilities

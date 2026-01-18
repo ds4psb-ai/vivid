@@ -220,7 +220,7 @@ function StoryArchitectContent() {
   const chainCtx = useDimensionChainOptional();
 
   const { getToolByDimension } = useDimensionConfig();
-  const toolConfig = getToolByDimension("SA");
+  const toolConfig = getToolByDimension("STORY") ?? getToolByDimension("SA");
   const creditCost = toolConfig?.creditCost ?? 10;
 
   const { exportJSON } = useResultExport();

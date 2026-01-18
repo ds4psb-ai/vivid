@@ -56,9 +56,10 @@ const DIMENSION_TO_TOOL_ID: Record<string, string> = {
     "SC": "sound_craft",
     // 4-Stage Workflow aliases
     "STORY": "story_architect",
+    "STORYBOARD": "storyboard",
     "SOUND": "sound_craft",
-    "REF": "reference_decoder",
-    "VIS": "visual_realizer",
+    "REF": "reference_analyzer",
+    "VIS": "image_tool",
 };
 
 // Icon components - 10개 차원 전체

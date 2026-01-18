@@ -108,7 +108,7 @@ export default function SoundCrafterPanel() {
 
     // SSoT: Get tool config for Sound Crafter (SC)
     const { getToolByDimension } = useDimensionConfig();
-    const toolConfig = getToolByDimension("SC"); // Might be undefined if not in list
+    const toolConfig = getToolByDimension("SOUND") ?? getToolByDimension("SC"); // Might be undefined if not in list
     const CREDIT_COST_CRAFT = toolConfig?.creditCost ?? 8;
     const CREDIT_COST_MOOD = Math.max(1, Math.round(CREDIT_COST_CRAFT * 0.625)); // ~5/8 ratio
 
