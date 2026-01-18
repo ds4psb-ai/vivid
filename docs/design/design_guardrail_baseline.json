@@ -1,0 +1,2770 @@
+{
+  "generated_at": "2026-01-18T15:08:10.192557+00:00",
+  "counts": {
+    "ok": 29,
+    "rgb": 208,
+    "hex": 223
+  },
+  "matches": [
+    {
+      "path": "app/globals.css",
+      "line": 23,
+      "literal": "oklch(0.70 0.18 285)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 24,
+      "literal": "oklch(0.72 0.15 195)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 25,
+      "literal": "oklch(0.78 0.20 145)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 26,
+      "literal": "oklch(0.80 0.16 85)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 27,
+      "literal": "oklch(0.72 0.19 350)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 28,
+      "literal": "oklch(0.68 0.17 270)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 29,
+      "literal": "oklch(0.70 0.18 15)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 30,
+      "literal": "oklch(0.75 0.14 220)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 31,
+      "literal": "oklch(0.72 0.16 320)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 32,
+      "literal": "oklch(0.65 0.20 290)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 39,
+      "literal": "oklch(0.72 0.17 155)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 40,
+      "literal": "oklch(0.82 0.16 85)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 41,
+      "literal": "oklch(0.65 0.22 25)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 42,
+      "literal": "oklch(0.70 0.15 250)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 49,
+      "literal": "oklch(0.62 0.26 290)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 50,
+      "literal": "oklch(0.78 0.20 145)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 51,
+      "literal": "oklch(0.80 0.16 85)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 127,
+      "literal": "rgb(209 213 219)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 138,
+      "literal": "rgb(249 250 251)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 145,
+      "literal": "rgb(17 24 39)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 157,
+      "literal": "rgb(107 114 128)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 174,
+      "literal": "#09090B",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 181,
+      "literal": "#7C3AED",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 183,
+      "literal": "rgba(124, 58, 237, 0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 184,
+      "literal": "#D97706",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 188,
+      "literal": "rgba(255, 255, 255, 0.8)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 189,
+      "literal": "rgba(244, 244, 245, 0.8)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 190,
+      "literal": "rgba(0, 0, 0, 0.08)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 191,
+      "literal": "rgba(0, 0, 0, 0.03)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 193,
+      "literal": "rgba(0, 0, 0, 0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 194,
+      "literal": "rgba(0, 0, 0, 0.05)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 195,
+      "literal": "rgba(0, 0, 0, 0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 198,
+      "literal": "#059669",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 199,
+      "literal": "#D97706",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 200,
+      "literal": "#DC2626",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 201,
+      "literal": "#2563EB",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 208,
+      "literal": "#ffffff",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 217,
+      "literal": "#ffffff",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 218,
+      "literal": "#ffffff",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 219,
+      "literal": "#000000",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 220,
+      "literal": "#1f2937",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 221,
+      "literal": "#111827",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 222,
+      "literal": "#0000ff",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 223,
+      "literal": "#b45309",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 224,
+      "literal": "#0000ff",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 227,
+      "literal": "#ffffff",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 228,
+      "literal": "#fafafa",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 229,
+      "literal": "#f4f4f5",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 230,
+      "literal": "#e4e4e7",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 231,
+      "literal": "#d4d4d8",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 232,
+      "literal": "#a1a1aa",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 233,
+      "literal": "#71717a",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 234,
+      "literal": "#52525b",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 235,
+      "literal": "#3f3f46",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 236,
+      "literal": "#27272a",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 237,
+      "literal": "#18181b",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 251,
+      "literal": "#E8E8ED",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 258,
+      "literal": "#38bdf8",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 258,
+      "literal": "#8B5CF6",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 259,
+      "literal": "#8B5CF6",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 260,
+      "literal": "rgba(139, 92, 246, 0.4)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 261,
+      "literal": "#f59e0b",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 264,
+      "literal": "rgba(22, 22, 24, 0.6)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 265,
+      "literal": "rgba(30, 30, 35, 0.6)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 266,
+      "literal": "rgba(255, 255, 255, 0.08)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 268,
+      "literal": "rgba(255, 255, 255, 0.03)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 270,
+      "literal": "rgba(255, 255, 255, 0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 271,
+      "literal": "rgba(255, 255, 255, 0.05)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 272,
+      "literal": "rgba(255, 255, 255, 0.16)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 275,
+      "literal": "#10b981",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 276,
+      "literal": "#f59e0b",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 277,
+      "literal": "#ef4444",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 278,
+      "literal": "#3b82f6",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 285,
+      "literal": "#ffffff",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 294,
+      "literal": "#000000",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 295,
+      "literal": "#0b0b0f",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 296,
+      "literal": "#ffffff",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 297,
+      "literal": "#e5e7eb",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 298,
+      "literal": "#ffffff",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 299,
+      "literal": "#7dd3fc",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 300,
+      "literal": "#fbbf24",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 301,
+      "literal": "#7dd3fc",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 304,
+      "literal": "#0b0b0f",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 305,
+      "literal": "#0f0f1a",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 306,
+      "literal": "#151522",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 307,
+      "literal": "#1a1a2e",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 308,
+      "literal": "#2a2a3b",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 309,
+      "literal": "#3b3b4f",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 310,
+      "literal": "#4b4b60",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 311,
+      "literal": "#5f5f75",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 312,
+      "literal": "#7a7a92",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 313,
+      "literal": "#a0a0b0",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 314,
+      "literal": "#e8e8ed",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 318,
+      "literal": "rgba(56, 189, 248, 0.08)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 319,
+      "literal": "rgba(245, 158, 11, 0.05)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 320,
+      "literal": "rgba(56, 189, 248, 0.03)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 329,
+      "literal": "#1a2ffb",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 330,
+      "literal": "#071bdf",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 331,
+      "literal": "#c1ff00",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 332,
+      "literal": "#8832f7",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 333,
+      "literal": "#ff4c41",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 334,
+      "literal": "#000000",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 335,
+      "literal": "#ffffff",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 336,
+      "literal": "#f0f1fa",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 337,
+      "literal": "#e4e6ef",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 340,
+      "literal": "#8B5CF6",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 341,
+      "literal": "#1A2FFB",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 342,
+      "literal": "#C1FF00",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 343,
+      "literal": "#F59E0B",
+      "kind": "hex"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 379,
+      "literal": "rgba(56, 189, 248, 0.08)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 380,
+      "literal": "rgba(245, 158, 11, 0.05)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 381,
+      "literal": "rgba(56, 189, 248, 0.03)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 421,
+      "literal": "oklch(50% 0.02 280)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 423,
+      "literal": "oklch(100% 0 0)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 424,
+      "literal": "oklch(97% 0.005 280)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 425,
+      "literal": "oklch(94% 0.01 280)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 426,
+      "literal": "oklch(88% 0.015 280)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 427,
+      "literal": "oklch(75% 0.02 280)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 428,
+      "literal": "oklch(60% 0.02 280)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 429,
+      "literal": "oklch(50% 0.02 280)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 430,
+      "literal": "oklch(40% 0.02 280)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 431,
+      "literal": "oklch(30% 0.02 280)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 432,
+      "literal": "oklch(20% 0.015 280)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 433,
+      "literal": "oklch(12% 0.01 280)",
+      "kind": "ok"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 453,
+      "literal": "rgba(0, 0, 0, 0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 459,
+      "literal": "rgba(255, 255, 255, 0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 463,
+      "literal": "rgba(0, 0, 0, 0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 467,
+      "literal": "rgba(255, 255, 255, 0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 488,
+      "literal": "rgba(255, 255, 255, 0.8)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 491,
+      "literal": "rgba(0, 0, 0, 0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 497,
+      "literal": "rgba(10, 10, 12, 0.8)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 498,
+      "literal": "rgba(0, 0, 0, 0.5)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 511,
+      "literal": "rgba(0, 0, 0, 0.05)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 516,
+      "literal": "rgba(255, 255, 255, 0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 810,
+      "literal": "rgba(255, 255, 255, 0.4)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 813,
+      "literal": "rgba(0, 0, 0, 0.08)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 816,
+      "literal": "rgba(0, 0, 0, 0.05)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 817,
+      "literal": "rgba(255, 255, 255, 0.5)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 824,
+      "literal": "rgba(255, 255, 255, 0.03)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 825,
+      "literal": "rgba(255, 255, 255, 0.08)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 827,
+      "literal": "rgba(0, 0, 0, 0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 828,
+      "literal": "rgba(255, 255, 255, 0.05)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 838,
+      "literal": "rgba(255, 255, 255, 0.4)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 839,
+      "literal": "rgba(255, 255, 255, 0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 840,
+      "literal": "rgba(255, 255, 255, 0)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 849,
+      "literal": "rgba(255, 255, 255, 0.7)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 850,
+      "literal": "rgba(0, 0, 0, 0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 852,
+      "literal": "rgba(0, 0, 0, 0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 853,
+      "literal": "rgba(0, 0, 0, 0.05)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 854,
+      "literal": "rgba(0, 0, 0, 0.05)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 858,
+      "literal": "rgba(255, 255, 255, 0.06)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 859,
+      "literal": "rgba(255, 255, 255, 0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 861,
+      "literal": "rgba(0, 0, 0, 0.4)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 862,
+      "literal": "rgba(0, 0, 0, 0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 863,
+      "literal": "rgba(255, 255, 255, 0.15)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 864,
+      "literal": "rgba(var(--glow-color-rgb, 255, 255, 255)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 888,
+      "literal": "rgba(0, 0, 0, 0.05)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 899,
+      "literal": "rgba(255, 255, 255, 0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 982,
+      "literal": "rgba(var(--glow-color-rgb)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 983,
+      "literal": "rgba(var(--glow-color-rgb)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 984,
+      "literal": "rgba(var(--glow-color-rgb)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 989,
+      "literal": "rgba(var(--glow-color-rgb)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 990,
+      "literal": "rgba(var(--glow-color-rgb)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 991,
+      "literal": "rgba(var(--glow-color-rgb)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/globals.css",
+      "line": 1083,
+      "literal": "rgba(0, 0, 0, 0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/PortfolioLightbox.tsx",
+      "line": 42,
+      "literal": "#0a0a0c",
+      "kind": "hex"
+    },
+    {
+      "path": "components/PortfolioLightbox.tsx",
+      "line": 62,
+      "literal": "#0a0a0c",
+      "kind": "hex"
+    },
+    {
+      "path": "components/PortfolioLightbox.tsx",
+      "line": 62,
+      "literal": "#0a0a0c",
+      "kind": "hex"
+    },
+    {
+      "path": "components/PortfolioLightbox.tsx",
+      "line": 63,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "components/CreditGate.tsx",
+      "line": 282,
+      "literal": "#0a0a0b",
+      "kind": "hex"
+    },
+    {
+      "path": "components/CreditGate.tsx",
+      "line": 347,
+      "literal": "rgba(132,204,22,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/CreditGate.tsx",
+      "line": 347,
+      "literal": "rgba(132,204,22,0.5)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/MiniAppSubmitModal.tsx",
+      "line": 301,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "components/MiniAppSubmitModal.tsx",
+      "line": 303,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "components/MiniAppSubmitModal.tsx",
+      "line": 322,
+      "literal": "rgba(139,92,246,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/MiniAppSubmitModal.tsx",
+      "line": 322,
+      "literal": "rgba(139,92,246,0.5)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/ChokkiFABSkeleton.tsx",
+      "line": 15,
+      "literal": "rgba(0,0,0,0.5)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/AuroraBackground.tsx",
+      "line": 48,
+      "literal": "#000000",
+      "kind": "hex"
+    },
+    {
+      "path": "components/AuroraBackground.tsx",
+      "line": 67,
+      "literal": "rgba(26,47,251,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/AuroraBackground.tsx",
+      "line": 81,
+      "literal": "#000000",
+      "kind": "hex"
+    },
+    {
+      "path": "components/EmptyCanvasOverlay.tsx",
+      "line": 92,
+      "literal": "rgba(14,165,233,0.5)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/EmptyCanvasOverlay.tsx",
+      "line": 185,
+      "literal": "rgba(14,165,233,0.15)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/EmptyCanvasOverlay.tsx",
+      "line": 201,
+      "literal": "rgba(245,158,11,0.15)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/EmptyCanvasOverlay.tsx",
+      "line": 218,
+      "literal": "rgba(16,185,129,0.15)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/LoginRequiredModal.tsx",
+      "line": 36,
+      "literal": "#1a1a1c",
+      "kind": "hex"
+    },
+    {
+      "path": "components/LoginRequiredModal.tsx",
+      "line": 46,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "components/LoginRequiredModal.tsx",
+      "line": 46,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "components/LoginRequiredModal.tsx",
+      "line": 61,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "components/LoginRequiredModal.tsx",
+      "line": 61,
+      "literal": "#3300CC",
+      "kind": "hex"
+    },
+    {
+      "path": "components/AgentChatAccordion.tsx",
+      "line": 475,
+      "literal": "rgba(0,0,0,0.5)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/AgentChatAccordion.tsx",
+      "line": 524,
+      "literal": "rgba(0,0,0,0.5)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/AgentChatAccordion.tsx",
+      "line": 537,
+      "literal": "rgba(139,92,246,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/AgentChatAccordion.tsx",
+      "line": 537,
+      "literal": "rgba(139,92,246,0.5)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/AgentChatAccordion.tsx",
+      "line": 576,
+      "literal": "#1a1a1c",
+      "kind": "hex"
+    },
+    {
+      "path": "components/CollapsibleSidebar.tsx",
+      "line": 74,
+      "literal": "#1a1a1c",
+      "kind": "hex"
+    },
+    {
+      "path": "components/CollapsibleSidebar.tsx",
+      "line": 106,
+      "literal": "rgba(139,92,246,0.15)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/CollapsibleSidebar.tsx",
+      "line": 107,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "components/CollapsibleSidebar.tsx",
+      "line": 107,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "components/CollapsibleSidebar.tsx",
+      "line": 107,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "components/CollapsibleSidebar.tsx",
+      "line": 126,
+      "literal": "#FF0045",
+      "kind": "hex"
+    },
+    {
+      "path": "components/CollapsibleSidebar.tsx",
+      "line": 126,
+      "literal": "#00E0FF",
+      "kind": "hex"
+    },
+    {
+      "path": "components/CollapsibleSidebar.tsx",
+      "line": 132,
+      "literal": "#0a0a0c",
+      "kind": "hex"
+    },
+    {
+      "path": "components/CollapsibleSidebar.tsx",
+      "line": 133,
+      "literal": "#FF0045",
+      "kind": "hex"
+    },
+    {
+      "path": "components/CollapsibleSidebar.tsx",
+      "line": 133,
+      "literal": "rgba(255,0,69,0.8)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/CollapsibleSidebar.tsx",
+      "line": 134,
+      "literal": "#00E0FF",
+      "kind": "hex"
+    },
+    {
+      "path": "components/CollapsibleSidebar.tsx",
+      "line": 144,
+      "literal": "#1a1a1c",
+      "kind": "hex"
+    },
+    {
+      "path": "components/CollapsibleSidebar.tsx",
+      "line": 225,
+      "literal": "#1a1a1c",
+      "kind": "hex"
+    },
+    {
+      "path": "components/CollapsibleSidebar.tsx",
+      "line": 305,
+      "literal": "rgba(0,0,0,0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/CollapsibleSidebar.tsx",
+      "line": 305,
+      "literal": "rgba(0,0,0,0.5)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/CollapsibleSidebar.tsx",
+      "line": 439,
+      "literal": "#FAE100",
+      "kind": "hex"
+    },
+    {
+      "path": "components/CreditDisplay.tsx",
+      "line": 61,
+      "literal": "#1a1a1c",
+      "kind": "hex"
+    },
+    {
+      "path": "components/CreditDisplay.tsx",
+      "line": 127,
+      "literal": "#0a0a0b",
+      "kind": "hex"
+    },
+    {
+      "path": "components/CreditDisplay.tsx",
+      "line": 174,
+      "literal": "rgba(132,204,22,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/CreditDisplay.tsx",
+      "line": 174,
+      "literal": "rgba(132,204,22,0.5)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/ApplicationModal.tsx",
+      "line": 109,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "components/ApplicationModal.tsx",
+      "line": 159,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "components/ApplicationModal.tsx",
+      "line": 159,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "components/ApplicationModal.tsx",
+      "line": 178,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "components/ApplicationModal.tsx",
+      "line": 178,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "components/ApplicationModal.tsx",
+      "line": 197,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "components/ApplicationModal.tsx",
+      "line": 197,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "components/ApplicationModal.tsx",
+      "line": 212,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "components/ApplicationModal.tsx",
+      "line": 212,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "components/ApplicationModal.tsx",
+      "line": 223,
+      "literal": "#FF0045",
+      "kind": "hex"
+    },
+    {
+      "path": "components/ApplicationModal.tsx",
+      "line": 223,
+      "literal": "#FF0045",
+      "kind": "hex"
+    },
+    {
+      "path": "components/ApplicationModal.tsx",
+      "line": 237,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "components/ApplicationModal.tsx",
+      "line": 237,
+      "literal": "#5500FF",
+      "kind": "hex"
+    },
+    {
+      "path": "components/ApplicationModal.tsx",
+      "line": 265,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "components/home/TemplateRail.tsx",
+      "line": 155,
+      "literal": "rgba(139,92,246,0.15)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/studio/StudioEmptyState.tsx",
+      "line": 156,
+      "literal": "#0c0c1d",
+      "kind": "hex"
+    },
+    {
+      "path": "components/studio/StudioEmptyState.tsx",
+      "line": 156,
+      "literal": "#0a0a14",
+      "kind": "hex"
+    },
+    {
+      "path": "components/studio/StudioEmptyState.tsx",
+      "line": 156,
+      "literal": "#0c0c1d",
+      "kind": "hex"
+    },
+    {
+      "path": "components/studio/NodeDetailPanel.tsx",
+      "line": 106,
+      "literal": "#0a0a0c",
+      "kind": "hex"
+    },
+    {
+      "path": "components/studio/NodeDetailPanel.tsx",
+      "line": 267,
+      "literal": "#0a0a0c",
+      "kind": "hex"
+    },
+    {
+      "path": "components/admin/AppMigrationConsole.tsx",
+      "line": 183,
+      "literal": "#84cc16",
+      "kind": "hex"
+    },
+    {
+      "path": "components/admin/AppMigrationConsole.tsx",
+      "line": 338,
+      "literal": "#0a0a0b",
+      "kind": "hex"
+    },
+    {
+      "path": "components/agent/StreamingText.tsx",
+      "line": 52,
+      "literal": "rgba(255,255,255,0.02)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/agent/AgentThinkingIndicator.tsx",
+      "line": 19,
+      "literal": "rgba(56,189,248,0.7)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/agent/SceneCard.tsx",
+      "line": 34,
+      "literal": "rgba(56,189,248,0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/canvas/DimensionCapsuleNode.tsx",
+      "line": 305,
+      "literal": "#1a1a2e",
+      "kind": "hex"
+    },
+    {
+      "path": "components/canvas/DimensionCapsuleNode.tsx",
+      "line": 305,
+      "literal": "#16162a",
+      "kind": "hex"
+    },
+    {
+      "path": "components/canvas/Inspector.tsx",
+      "line": 403,
+      "literal": "#0a0a0c",
+      "kind": "hex"
+    },
+    {
+      "path": "components/canvas/Inspector.tsx",
+      "line": 403,
+      "literal": "#151518",
+      "kind": "hex"
+    },
+    {
+      "path": "components/canvas/Inspector.tsx",
+      "line": 403,
+      "literal": "#0a0a0c",
+      "kind": "hex"
+    },
+    {
+      "path": "components/canvas/Inspector.tsx",
+      "line": 435,
+      "literal": "rgba(16,185,129,0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/canvas/Inspector.tsx",
+      "line": 436,
+      "literal": "#0a0a0c",
+      "kind": "hex"
+    },
+    {
+      "path": "components/canvas/Inspector.tsx",
+      "line": 436,
+      "literal": "#151518",
+      "kind": "hex"
+    },
+    {
+      "path": "components/canvas/Inspector.tsx",
+      "line": 451,
+      "literal": "rgba(52,211,153,0.6)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/canvas/Inspector.tsx",
+      "line": 486,
+      "literal": "rgba(255,255,255,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/canvas/Inspector.tsx",
+      "line": 511,
+      "literal": "#0a0a0c",
+      "kind": "hex"
+    },
+    {
+      "path": "components/canvas/Inspector.tsx",
+      "line": 511,
+      "literal": "#151518",
+      "kind": "hex"
+    },
+    {
+      "path": "components/canvas/Inspector.tsx",
+      "line": 511,
+      "literal": "#0a0a0c",
+      "kind": "hex"
+    },
+    {
+      "path": "components/canvas/CustomNodes.tsx",
+      "line": 263,
+      "literal": "rgba(245,158,11,0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/canvas/CustomNodes.tsx",
+      "line": 300,
+      "literal": "#0a0a0c",
+      "kind": "hex"
+    },
+    {
+      "path": "components/canvas/CustomNodes.tsx",
+      "line": 303,
+      "literal": "rgba(var(--${config.gradient.split(\"-\")",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/canvas/CustomNodes.tsx",
+      "line": 418,
+      "literal": "rgba(16,185,129,0.5)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/canvas/CustomNodes.tsx",
+      "line": 431,
+      "literal": "#334155",
+      "kind": "hex"
+    },
+    {
+      "path": "components/canvas/CustomNodes.tsx",
+      "line": 485,
+      "literal": "#0a0a0c",
+      "kind": "hex"
+    },
+    {
+      "path": "components/canvas/CustomNodes.tsx",
+      "line": 495,
+      "literal": "#0a0a0c",
+      "kind": "hex"
+    },
+    {
+      "path": "components/canvas/CustomNodes.tsx",
+      "line": 523,
+      "literal": "#0a0a0c",
+      "kind": "hex"
+    },
+    {
+      "path": "components/canvas/CustomNodes.tsx",
+      "line": 555,
+      "literal": "#0a0a0c",
+      "kind": "hex"
+    },
+    {
+      "path": "components/sandbox/DimensionBridge.tsx",
+      "line": 28,
+      "literal": "#84cc16",
+      "kind": "hex"
+    },
+    {
+      "path": "components/sandbox/DimensionBridge.tsx",
+      "line": 29,
+      "literal": "#22c55e",
+      "kind": "hex"
+    },
+    {
+      "path": "components/sandbox/DimensionBridge.tsx",
+      "line": 34,
+      "literal": "#00f0ff",
+      "kind": "hex"
+    },
+    {
+      "path": "components/sandbox/DimensionBridge.tsx",
+      "line": 35,
+      "literal": "#ff00aa",
+      "kind": "hex"
+    },
+    {
+      "path": "components/sandbox/DimensionBridge.tsx",
+      "line": 37,
+      "literal": "#0a0a1a",
+      "kind": "hex"
+    },
+    {
+      "path": "components/sandbox/DimensionBridge.tsx",
+      "line": 37,
+      "literal": "#1a0a2a",
+      "kind": "hex"
+    },
+    {
+      "path": "components/sandbox/DimensionBridge.tsx",
+      "line": 41,
+      "literal": "#f59e0b",
+      "kind": "hex"
+    },
+    {
+      "path": "components/sandbox/DimensionBridge.tsx",
+      "line": 42,
+      "literal": "#ef4444",
+      "kind": "hex"
+    },
+    {
+      "path": "components/sandbox/DimensionBridge.tsx",
+      "line": 44,
+      "literal": "#1a1510",
+      "kind": "hex"
+    },
+    {
+      "path": "components/sandbox/DimensionBridge.tsx",
+      "line": 44,
+      "literal": "#2a1a10",
+      "kind": "hex"
+    },
+    {
+      "path": "components/sandbox/DimensionBridge.tsx",
+      "line": 48,
+      "literal": "#dc2626",
+      "kind": "hex"
+    },
+    {
+      "path": "components/sandbox/DimensionBridge.tsx",
+      "line": 49,
+      "literal": "#7c2d12",
+      "kind": "hex"
+    },
+    {
+      "path": "components/sandbox/DimensionBridge.tsx",
+      "line": 51,
+      "literal": "#0a0505",
+      "kind": "hex"
+    },
+    {
+      "path": "components/sandbox/DimensionBridge.tsx",
+      "line": 51,
+      "literal": "#1a0a0a",
+      "kind": "hex"
+    },
+    {
+      "path": "components/sandbox/DimensionBridge.tsx",
+      "line": 55,
+      "literal": "#22c55e",
+      "kind": "hex"
+    },
+    {
+      "path": "components/sandbox/DimensionBridge.tsx",
+      "line": 56,
+      "literal": "#14b8a6",
+      "kind": "hex"
+    },
+    {
+      "path": "components/sandbox/DimensionBridge.tsx",
+      "line": 58,
+      "literal": "#0a1a0f",
+      "kind": "hex"
+    },
+    {
+      "path": "components/sandbox/DimensionBridge.tsx",
+      "line": 58,
+      "literal": "#0f1a1a",
+      "kind": "hex"
+    },
+    {
+      "path": "components/train/DimensionPortalModal.tsx",
+      "line": 109,
+      "literal": "rgba(139,92,246,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/DimensionPortalModal.tsx",
+      "line": 117,
+      "literal": "rgba(16,185,129,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/DimensionPortalModal.tsx",
+      "line": 125,
+      "literal": "rgba(245,158,11,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/DimensionPortalModal.tsx",
+      "line": 133,
+      "literal": "rgba(6,182,212,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/DimensionPortalModal.tsx",
+      "line": 141,
+      "literal": "rgba(244,63,94,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/DimensionPortalModal.tsx",
+      "line": 149,
+      "literal": "rgba(217,70,239,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/DimensionPortalModal.tsx",
+      "line": 157,
+      "literal": "rgba(99,102,241,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/DimensionPortalModal.tsx",
+      "line": 165,
+      "literal": "rgba(14,165,233,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/ConnectionSelector.tsx",
+      "line": 56,
+      "literal": "rgba(139,92,246,0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/ConnectionSelector.tsx",
+      "line": 63,
+      "literal": "rgba(52,211,153,0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/ConnectionSelector.tsx",
+      "line": 70,
+      "literal": "rgba(251,191,36,0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/ConnectionSelector.tsx",
+      "line": 77,
+      "literal": "rgba(34,211,238,0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/ConnectionSelector.tsx",
+      "line": 85,
+      "literal": "rgba(244,63,94,0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/ConnectionSelector.tsx",
+      "line": 92,
+      "literal": "rgba(217,70,239,0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/ConnectionSelector.tsx",
+      "line": 99,
+      "literal": "rgba(99,102,241,0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/ConnectionSelector.tsx",
+      "line": 106,
+      "literal": "rgba(14,165,233,0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/ConnectionSelector.tsx",
+      "line": 139,
+      "literal": "rgba(139,92,246,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/ConnectionSelector.tsx",
+      "line": 199,
+      "literal": "rgba(139,92,246,0.4)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 58,
+      "literal": "rgba(139,92,246,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 59,
+      "literal": "rgba(139,92,246,0.4)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 59,
+      "literal": "rgba(139,92,246,0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 65,
+      "literal": "rgba(16,185,129,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 66,
+      "literal": "rgba(16,185,129,0.4)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 66,
+      "literal": "rgba(16,185,129,0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 72,
+      "literal": "rgba(245,158,11,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 73,
+      "literal": "rgba(245,158,11,0.4)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 73,
+      "literal": "rgba(245,158,11,0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 79,
+      "literal": "rgba(6,182,212,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 80,
+      "literal": "rgba(6,182,212,0.4)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 80,
+      "literal": "rgba(6,182,212,0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 87,
+      "literal": "rgba(244,63,94,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 88,
+      "literal": "rgba(244,63,94,0.4)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 88,
+      "literal": "rgba(244,63,94,0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 94,
+      "literal": "rgba(217,70,239,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 95,
+      "literal": "rgba(217,70,239,0.4)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 95,
+      "literal": "rgba(217,70,239,0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 101,
+      "literal": "rgba(99,102,241,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 102,
+      "literal": "rgba(99,102,241,0.4)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 102,
+      "literal": "rgba(99,102,241,0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 108,
+      "literal": "rgba(14,165,233,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 109,
+      "literal": "rgba(14,165,233,0.4)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 109,
+      "literal": "rgba(14,165,233,0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/train/TrainCar.tsx",
+      "line": 210,
+      "literal": "rgba(139,92,246,0.5)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/BYOKSettingsModal.tsx",
+      "line": 69,
+      "literal": "#18181b",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/KlingPanel.tsx",
+      "line": 552,
+      "literal": "rgba(0,0,0,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/InsufficientCreditsModal.tsx",
+      "line": 66,
+      "literal": "#18181b",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/InsufficientCreditsModal.tsx",
+      "line": 99,
+      "literal": "#121212",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/VeoVideoPanel.legacy.tsx",
+      "line": 227,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/VeoVideoPanel.legacy.tsx",
+      "line": 244,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/VeoVideoPanel.legacy.tsx",
+      "line": 263,
+      "literal": "rgba(14,165,233,0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/VeoVideoPanel.legacy.tsx",
+      "line": 312,
+      "literal": "rgba(14,165,233,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/VeoVideoPanel.legacy.tsx",
+      "line": 312,
+      "literal": "rgba(14,165,233,0.5)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/VeoVideoPanel.legacy.tsx",
+      "line": 496,
+      "literal": "rgba(0,0,0,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/StoryboardPanel.legacy.tsx",
+      "line": 252,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/StoryboardPanel.legacy.tsx",
+      "line": 265,
+      "literal": "rgba(6,182,212,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/StoryboardPanel.legacy.tsx",
+      "line": 265,
+      "literal": "rgba(6,182,212,0.5)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/StoryboardPanel.legacy.tsx",
+      "line": 333,
+      "literal": "rgba(0,0,0,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/StoryboardPanel.legacy.tsx",
+      "line": 334,
+      "literal": "#06b6d4",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/StoryboardPanel.legacy.tsx",
+      "line": 398,
+      "literal": "rgba(0,0,0,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/ReferenceDecoderPanel.legacy.tsx",
+      "line": 161,
+      "literal": "rgba(245,158,11,0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/ReferenceDecoderPanel.legacy.tsx",
+      "line": 181,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/ReferenceDecoderPanel.legacy.tsx",
+      "line": 194,
+      "literal": "rgba(245,158,11,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/ReferenceDecoderPanel.legacy.tsx",
+      "line": 194,
+      "literal": "rgba(245,158,11,0.5)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/ReferenceDecoderPanel.legacy.tsx",
+      "line": 264,
+      "literal": "rgba(0,0,0,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/ReferenceDecoderPanel.legacy.tsx",
+      "line": 265,
+      "literal": "#f59e0b",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/ReferenceDecoderPanel.legacy.tsx",
+      "line": 281,
+      "literal": "rgba(0,0,0,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/ReferenceDecoderPanel.legacy.tsx",
+      "line": 282,
+      "literal": "#f59e0b",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/ReferenceDecoderPanel.legacy.tsx",
+      "line": 319,
+      "literal": "rgba(0,0,0,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/VisualRealizerPanel.tsx",
+      "line": 452,
+      "literal": "rgba(0,0,0,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/VisualRealizerPanel.tsx",
+      "line": 453,
+      "literal": "#10b981",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/VisualRealizerPanel.tsx",
+      "line": 498,
+      "literal": "#18181b",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/VisualRealizerPanel.tsx",
+      "line": 542,
+      "literal": "rgba(0,0,0,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/AestheticDirectorPanel.legacy.tsx",
+      "line": 256,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/AestheticDirectorPanel.legacy.tsx",
+      "line": 290,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/VisualRealizerPanel.legacy.tsx",
+      "line": 174,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/VisualRealizerPanel.legacy.tsx",
+      "line": 212,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/VisualRealizerPanel.legacy.tsx",
+      "line": 225,
+      "literal": "rgba(16,185,129,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/VisualRealizerPanel.legacy.tsx",
+      "line": 225,
+      "literal": "rgba(16,185,129,0.5)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/VisualRealizerPanel.legacy.tsx",
+      "line": 273,
+      "literal": "rgba(0,0,0,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/VisualRealizerPanel.legacy.tsx",
+      "line": 274,
+      "literal": "#10b981",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/VisualRealizerPanel.legacy.tsx",
+      "line": 316,
+      "literal": "#18181b",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/VisualRealizerPanel.legacy.tsx",
+      "line": 354,
+      "literal": "rgba(0,0,0,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/PromptAlchemyPanel.tsx",
+      "line": 835,
+      "literal": "rgba(0,0,0,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/AbyssMirrorPanel.legacy.tsx",
+      "line": 731,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/AestheticDirectorPanel.tsx",
+      "line": 297,
+      "literal": "#3B82F6",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/AestheticDirectorPanel.tsx",
+      "line": 298,
+      "literal": "#8B5CF6",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/AestheticDirectorPanel.tsx",
+      "line": 299,
+      "literal": "#EC4899",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/DimensionPanelLayout.tsx",
+      "line": 18,
+      "literal": "rgba(139,92,246,0.15)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/DimensionPanelLayout.tsx",
+      "line": 28,
+      "literal": "rgba(6,182,212,0.15)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/DimensionPanelLayout.tsx",
+      "line": 38,
+      "literal": "rgba(16,185,129,0.15)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/DimensionPanelLayout.tsx",
+      "line": 48,
+      "literal": "rgba(245,158,11,0.15)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/DimensionPanelLayout.tsx",
+      "line": 58,
+      "literal": "rgba(244,63,94,0.15)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/DimensionPanelLayout.tsx",
+      "line": 68,
+      "literal": "rgba(217,70,239,0.15)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/DimensionPanelLayout.tsx",
+      "line": 78,
+      "literal": "rgba(99,102,241,0.15)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/DimensionPanelLayout.tsx",
+      "line": 88,
+      "literal": "rgba(14,165,233,0.15)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/DimensionPanelLayout.tsx",
+      "line": 187,
+      "literal": "rgba(139,92,246,0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/DimensionPanelLayout.tsx",
+      "line": 245,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/DimensionPanelLayout.tsx",
+      "line": 263,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/VeoVideoPanel.tsx",
+      "line": 347,
+      "literal": "rgba(14,165,233,0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/VeoVideoPanel.tsx",
+      "line": 367,
+      "literal": "rgba(14,165,233,0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/VeoVideoPanel.tsx",
+      "line": 586,
+      "literal": "rgba(0,0,0,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/QualityDirectorPanel.legacy.tsx",
+      "line": 254,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/QualityDirectorPanel.legacy.tsx",
+      "line": 267,
+      "literal": "rgba(244,63,94,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/QualityDirectorPanel.legacy.tsx",
+      "line": 267,
+      "literal": "rgba(244,63,94,0.5)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/StoryboardPanel.tsx",
+      "line": 472,
+      "literal": "rgba(0,0,0,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/StoryboardPanel.tsx",
+      "line": 475,
+      "literal": "#06b6d4",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/StoryboardPanel.tsx",
+      "line": 564,
+      "literal": "rgba(0,0,0,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/PromptGeneratorPanel.legacy.tsx",
+      "line": 186,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/PromptGeneratorPanel.legacy.tsx",
+      "line": 203,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/PromptGeneratorPanel.legacy.tsx",
+      "line": 224,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/PromptGeneratorPanel.legacy.tsx",
+      "line": 268,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/PromptGeneratorPanel.legacy.tsx",
+      "line": 282,
+      "literal": "rgba(139,92,246,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/PromptGeneratorPanel.legacy.tsx",
+      "line": 282,
+      "literal": "rgba(139,92,246,0.5)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/PromptGeneratorPanel.legacy.tsx",
+      "line": 351,
+      "literal": "rgba(0,0,0,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/PromptGeneratorPanel.legacy.tsx",
+      "line": 421,
+      "literal": "rgba(0,0,0,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/PromptGeneratorPanel.tsx",
+      "line": 462,
+      "literal": "rgba(0,0,0,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/SoundCrafterPanel.tsx",
+      "line": 286,
+      "literal": "#f43f5e",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/panel/Content.tsx",
+      "line": 41,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "components/dimension/panel/Header.tsx",
+      "line": 144,
+      "literal": "rgba(139,92,246,0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "components/dimension/panel/Select.tsx",
+      "line": 93,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "app/constellation/page.tsx",
+      "line": 61,
+      "literal": "#8b5cf6",
+      "kind": "hex"
+    },
+    {
+      "path": "app/constellation/page.tsx",
+      "line": 62,
+      "literal": "#06b6d4",
+      "kind": "hex"
+    },
+    {
+      "path": "app/constellation/page.tsx",
+      "line": 63,
+      "literal": "#f59e0b",
+      "kind": "hex"
+    },
+    {
+      "path": "app/constellation/page.tsx",
+      "line": 78,
+      "literal": "rgba(255,255,255,0.8)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/constellation/page.tsx",
+      "line": 182,
+      "literal": "rgba(6,182,212,0.15)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/api-key-guide/page.tsx",
+      "line": 20,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "app/api-key-guide/page.tsx",
+      "line": 56,
+      "literal": "#13131F",
+      "kind": "hex"
+    },
+    {
+      "path": "app/api-key-guide/page.tsx",
+      "line": 59,
+      "literal": "rgba(16,185,129,0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/api-key-guide/page.tsx",
+      "line": 159,
+      "literal": "#13131F",
+      "kind": "hex"
+    },
+    {
+      "path": "app/api-key-guide/page.tsx",
+      "line": 162,
+      "literal": "rgba(139,92,246,0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/api-key-guide/page.tsx",
+      "line": 211,
+      "literal": "#13131F",
+      "kind": "hex"
+    },
+    {
+      "path": "app/api-key-guide/page.tsx",
+      "line": 214,
+      "literal": "rgba(6,182,212,0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/crebit/page.tsx",
+      "line": 671,
+      "literal": "rgba(16,185,129,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/crebit/page.tsx",
+      "line": 841,
+      "literal": "rgba(0,0,0,0.05)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/crebit/page.tsx",
+      "line": 879,
+      "literal": "rgba(251,191,36,0.4)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/crebit/page.tsx",
+      "line": 880,
+      "literal": "rgba(251,191,36,0.6)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/_components/TemplateCard.tsx",
+      "line": 158,
+      "literal": "rgba(255,255,255,0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/_components/TemplateCard.tsx",
+      "line": 158,
+      "literal": "rgba(255,255,255,0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/singularity/page.tsx",
+      "line": 79,
+      "literal": "rgba(139,92,246,0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/singularity/page.tsx",
+      "line": 79,
+      "literal": "rgba(6,182,212,0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/singularity/page.tsx",
+      "line": 89,
+      "literal": "rgba(139,92,246,0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/singularity/page.tsx",
+      "line": 89,
+      "literal": "rgba(236,72,153,0.1)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/singularity/page.tsx",
+      "line": 94,
+      "literal": "rgba(0,0,0,0.9)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/singularity/page.tsx",
+      "line": 94,
+      "literal": "rgba(139,92,246,0.3)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/singularity/page.tsx",
+      "line": 289,
+      "literal": "rgba(139,92,246,0.15)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/sandbox/[appId]/page.tsx",
+      "line": 39,
+      "literal": "#0a0a0b",
+      "kind": "hex"
+    },
+    {
+      "path": "app/sandbox/[appId]/page.tsx",
+      "line": 113,
+      "literal": "#0a0a0b",
+      "kind": "hex"
+    },
+    {
+      "path": "app/sandbox/[appId]/page.tsx",
+      "line": 121,
+      "literal": "#0a0a0b",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/terms/page.tsx",
+      "line": 11,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/terms/page.tsx",
+      "line": 26,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/terms/page.tsx",
+      "line": 28,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/terms/page.tsx",
+      "line": 66,
+      "literal": "#FF0045",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/_components/CurriculumBox.tsx",
+      "line": 22,
+      "literal": "rgba(16,185,129,0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/crebit/_components/CurriculumBox.tsx",
+      "line": 48,
+      "literal": "#10B981",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/_components/PipelineNode.tsx",
+      "line": 18,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/_components/PipelineNode.tsx",
+      "line": 18,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/_components/PipelineNode.tsx",
+      "line": 18,
+      "literal": "rgba(66,0,255,0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/crebit/_components/PipelineNode.tsx",
+      "line": 20,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/_components/PipelineNode.tsx",
+      "line": 20,
+      "literal": "#1a1a1c",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/_components/PipelineNode.tsx",
+      "line": 20,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/_components/PipelineNode.tsx",
+      "line": 23,
+      "literal": "#1a1a1c",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/_components/PipelineNode.tsx",
+      "line": 27,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/_components/TrackCard.tsx",
+      "line": 36,
+      "literal": "#ffffff",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/_components/AgentVisualization.tsx",
+      "line": 25,
+      "literal": "rgba(16, 185, 129, 0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/crebit/_components/AgentVisualization.tsx",
+      "line": 25,
+      "literal": "rgba(16, 185, 129, 0.4)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/crebit/_components/AgentVisualization.tsx",
+      "line": 25,
+      "literal": "rgba(16, 185, 129, 0.2)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/crebit/_components/SectionHeader.tsx",
+      "line": 17,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/_components/SectionHeader.tsx",
+      "line": 43,
+      "literal": "#9CA3AF",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/_components/StatItem.tsx",
+      "line": 21,
+      "literal": "#9CA3AF",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/_components/StatItem.tsx",
+      "line": 26,
+      "literal": "#FF0045",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/_components/StatItem.tsx",
+      "line": 30,
+      "literal": "#FF0045",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/_components/StatItem.tsx",
+      "line": 30,
+      "literal": "#FF0045",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/_components/StatItem.tsx",
+      "line": 30,
+      "literal": "#FF0045",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/_components/StatItem.tsx",
+      "line": 33,
+      "literal": "#FF0045",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/_components/StatItem.tsx",
+      "line": 34,
+      "literal": "#FF0045",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/_components/PortfolioItem.tsx",
+      "line": 24,
+      "literal": "#4200FF",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/_components/PortfolioItem.tsx",
+      "line": 68,
+      "literal": "rgba(255,255,255,0.5)",
+      "kind": "rgb"
+    },
+    {
+      "path": "app/crebit/payment/callback/page.tsx",
+      "line": 64,
+      "literal": "#1a1a2e",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/payment/callback/page.tsx",
+      "line": 116,
+      "literal": "#1a1a2e",
+      "kind": "hex"
+    },
+    {
+      "path": "app/crebit/payment/callback/page.tsx",
+      "line": 125,
+      "literal": "#0F0F1A",
+      "kind": "hex"
+    },
+    {
+      "path": "app/admin/apps/page.tsx",
+      "line": 125,
+      "literal": "#0a0a0b",
+      "kind": "hex"
+    }
+  ]
+}
