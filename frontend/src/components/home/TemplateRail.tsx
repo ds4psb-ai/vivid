@@ -16,17 +16,26 @@ import { api, SingularityTemplate } from "@/lib/api";
 import { StarRating } from "@/components/ui/StarRating";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { FLOW_ENABLED } from "@/lib/feature-flags";
+import { dimensionIdToCode, getDimensionToken } from "@/lib/tokens";
 
-// Dimension colors for flow badges (synced with /singularity)
-const DIMENSION_COLORS: Record<string, { bg: string; text: string }> = {
-    "1D": { bg: "bg-violet-500/20", text: "text-violet-400" },
-    "2D": { bg: "bg-emerald-500/20", text: "text-emerald-400" },
-    "3D": { bg: "bg-amber-500/20", text: "text-amber-400" },
-    "4D": { bg: "bg-cyan-500/20", text: "text-cyan-400" },
-    "AI": { bg: "bg-indigo-500/20", text: "text-indigo-400" },
-    "AD": { bg: "bg-fuchsia-500/20", text: "text-fuchsia-400" },
-    "VEO": { bg: "bg-sky-500/20", text: "text-sky-400" },
-    "QC": { bg: "bg-rose-500/20", text: "text-rose-400" },
+// Dimension tones for flow badges (token-driven, synced with /singularity)
+type DimensionTone = { bg: string; text: string };
+
+const LEGACY_DIMENSION_TONES: Record<string, DimensionTone> = {
+    "VIS": { bg: "bg-amber-500/20", text: "text-amber-400" },
+    "REF": { bg: "bg-cyan-500/20", text: "text-cyan-400" },
+};
+
+const getDimensionTone = (dimension: string): DimensionTone => {
+    const code = dimensionIdToCode(dimension);
+    if (code) {
+        const token = getDimensionToken(code);
+        const key = token.tailwindKey;
+        return { bg: `bg-${key}/20`, text: `text-${key}` };
+    }
+    const fallbackToken = getDimensionToken("1d");
+    const fallbackKey = fallbackToken.tailwindKey;
+    return LEGACY_DIMENSION_TONES[dimension] ?? { bg: `bg-${fallbackKey}/20`, text: `text-${fallbackKey}` };
 };
 
 function DimensionFlow({ dimensions }: { dimensions: string[] }) {
@@ -34,7 +43,7 @@ function DimensionFlow({ dimensions }: { dimensions: string[] }) {
     return (
         <div className="flex items-center gap-1">
             {dimensions.map((dim, i) => {
-                const colors = DIMENSION_COLORS[dim] || DIMENSION_COLORS["1D"];
+                const colors = getDimensionTone(dim);
                 return (
                     <span key={`${dim}-${i}`}>
                         <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${colors.bg} ${colors.text}`}>
