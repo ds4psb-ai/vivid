@@ -521,10 +521,15 @@ function FlowPageContent() {
                 }
             });
 
+            const normalizedSequence = workflowResults
+                .map((result) => normalizeWorkflowDimension(result.dimension) ?? result.dimension)
+                .filter(Boolean) as string[];
+
             const response = await api.createSingularityTemplate({
                 title: templateTitle.trim(),
                 description: templateDescription.trim() || `${workflowResults.length}개 차원 워크플로우 템플릿`,
-                dimension_source: workflowResults[0]?.dimension || "1D",
+                dimension_source: normalizedSequence[0] || workflowResults[0]?.dimension || "1D",
+                dimension_sequence: normalizedSequence,
                 tool_sequence: workflowResults.map(r => r.toolName),
                 input_preset: mergedInputs,
                 output_example: mergedOutputs,
