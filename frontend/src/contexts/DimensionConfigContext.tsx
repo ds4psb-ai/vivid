@@ -7,6 +7,7 @@ import {
     getDefaultInputValues as getDefaults,
     type InputFieldConfig,
 } from "@/lib/dimension-input-schemas";
+import { dimensionIdToCode, type DimensionCode } from "@/lib/tokens";
 
 // =============================================================================
 // Types
@@ -19,6 +20,8 @@ interface ConnectionOption {
     recommendedToolId: string;
     icon: string;
     color: string;
+    dimension: string;
+    dimensionCode: DimensionCode | null;
     confidence: number;
 }
 
@@ -137,6 +140,8 @@ export function DimensionConfigProvider({ children }: { children: React.ReactNod
             recommendedToolId: tool.toolId,
             icon: tool.icon,
             color: tool.color,
+            dimension: tool.dimension,
+            dimensionCode: dimensionIdToCode(tool.dimension),
             confidence: 0.95 - (idx * 0.05), // Decreasing confidence by order
         }));
     }, [tools]);
@@ -151,6 +156,8 @@ export function DimensionConfigProvider({ children }: { children: React.ReactNod
                 recommendedToolId: tool.toolId,
                 icon: tool.icon,
                 color: tool.color,
+                dimension: tool.dimension,
+                dimensionCode: dimensionIdToCode(tool.dimension),
                 confidence: 0.95 - (idx * 0.05),
             }));
     }, [tools]);

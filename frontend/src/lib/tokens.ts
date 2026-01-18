@@ -379,6 +379,38 @@ export function routeKeyToDimensionCode(routeKey: string): DimensionCode | null 
 }
 
 /**
+ * Convert dimension identifiers from API/app registry to DimensionCode.
+ * Accepts values like "1D", "QC", "STORYBOARD", "JSON_GEN".
+ */
+export function dimensionIdToCode(value: string): DimensionCode | null {
+  const normalized = value.trim().toLowerCase().replace(/_/g, "-");
+  const mapping: Record<string, DimensionCode> = {
+    "1d": "1d",
+    "2d": "2d",
+    "3d": "3d",
+    "4d": "4d",
+    "ad": "ad",
+    "ai": "ai",
+    "qc": "qc",
+    "veo": "veo",
+    "story": "story",
+    "storyboard": "storyboard",
+    "storyboard-sketch": "storyboard",
+    "sound": "sound",
+    "suno": "suno",
+    "kling": "kling",
+    "character": "character",
+    "prompt": "prompt",
+    "mirror": "mirror",
+    "json-gen": "json-gen",
+    "nanobanana": "nanobanana",
+    "sa": "story",
+    "sc": "sound",
+  };
+  return mapping[normalized] ?? null;
+}
+
+/**
  * Get all dimension codes
  */
 export function getAllDimensionCodes(): DimensionCode[] {

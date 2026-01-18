@@ -16,6 +16,7 @@ import {
     Moon,
     Video,
 } from "lucide-react";
+import { getDimensionToken, type DimensionCode } from "@/lib/tokens";
 
 interface ConnectionOption {
     id: string;
@@ -24,6 +25,8 @@ interface ConnectionOption {
     recommendedToolId: string;
     icon: string;
     color: string;
+    dimension: string;
+    dimensionCode: DimensionCode | null;
     confidence: number;
 }
 
@@ -107,6 +110,19 @@ const COLOR_MAP: Record<string, { bg: string; border: string; text: string; hove
     },
 };
 
+const getDimensionColorClasses = (dimensionCode?: DimensionCode | null) => {
+    if (!dimensionCode) return null;
+    const token = getDimensionToken(dimensionCode);
+    const key = token.tailwindKey;
+    return {
+        bg: `bg-${key}/10`,
+        border: `border-${key}/30`,
+        text: `text-${key}`,
+        hover: `hover:bg-${key}/20 hover:border-${key}/50`,
+        glow: `shadow-[0_0_15px] shadow-${key}/20`,
+    };
+};
+
 // 추천 상위 N개
 const INITIAL_SHOW_COUNT = 3;
 
@@ -169,7 +185,8 @@ export function ConnectionSelector({
                     ) : (
                         <>
                             {visibleOptions.map((option, index) => {
-                                const colorScheme = COLOR_MAP[option.color] || COLOR_MAP.violet;
+                                const tokenScheme = getDimensionColorClasses(option.dimensionCode);
+                                const colorScheme = tokenScheme || COLOR_MAP[option.color] || COLOR_MAP.violet;
                                 const IconComponent = ICON_MAP[option.icon] || <Sparkles className="h-5 w-5" />;
                                 const isHovered = hoveredId === option.id;
                                 const isTopRecommend = index === 0;
