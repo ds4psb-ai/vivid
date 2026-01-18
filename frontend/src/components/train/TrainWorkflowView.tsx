@@ -672,7 +672,7 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                 {/* 차원 트랙 */}
                 <div className="relative">
                     {/* 차원 연결선 */}
-                    <div className="absolute top-[120px] left-0 right-0 h-1 bg-gradient-to-r from-violet-500/30 via-emerald-500/30 to-amber-500/30 rounded-full" />
+                    <div className="absolute top-[120px] left-0 right-0 h-1 bg-gradient-to-r from-dimension-1d/30 via-dimension-3d/30 to-dimension-4d/30 rounded-full" />
                     <div className="absolute top-[125px] left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-zinc-600 to-transparent rounded-full" />
 
                     {/* 빈 상태: 중앙 집중형 스타터 */}
