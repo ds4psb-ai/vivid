@@ -169,6 +169,9 @@ properties:
             time_range:
               type: string
               description: "Tavily time range (day/week/month/year)"
+            days:
+              type: integer
+              description: "Tavily days (news topic only)"
             start_date:
               type: string
               description: "Tavily start date (YYYY-MM-DD)"

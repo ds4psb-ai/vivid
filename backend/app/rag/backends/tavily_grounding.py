@@ -33,6 +33,73 @@ RECENCY_KEYWORDS = (
     "2026",
 )
 
+APP_DEFAULTS: Dict[str, Dict[str, Any]] = {
+    # Story / Narrative
+    "dimension.story.architect": {
+        "topic": "news",
+        "time_range": "month",
+        "domain_allowlist": [
+            "imdb.com",
+            "bfi.org.uk",
+            "criterion.com",
+            "rogerebert.com",
+            "sensesofcinema.com",
+            "filmcomment.com",
+            "variety.com",
+            "hollywoodreporter.com",
+            "indiewire.com",
+        ],
+    },
+    # Reference Analysis
+    "teaching.reference.analyze": {
+        "topic": "news",
+        "time_range": "month",
+        "domain_allowlist": [
+            "imdb.com",
+            "bfi.org.uk",
+            "criterion.com",
+            "rogerebert.com",
+            "sensesofcinema.com",
+            "filmcomment.com",
+            "arxiv.org",
+            "variety.com",
+            "hollywoodreporter.com",
+        ],
+    },
+    # Video / Veo (model updates)
+    "dimension.video.generate": {
+        "topic": "general",
+        "time_range": "month",
+        "domain_allowlist": [
+            "deepmind.google",
+            "docs.cloud.google.com",
+            "ai.google.dev",
+            "openai.com",
+            "runwayml.com",
+            "help.runwayml.com",
+        ],
+    },
+    "veo.video.generate": {
+        "topic": "general",
+        "time_range": "month",
+        "domain_allowlist": [
+            "deepmind.google",
+            "docs.cloud.google.com",
+            "ai.google.dev",
+            "openai.com",
+            "runwayml.com",
+            "help.runwayml.com",
+        ],
+    },
+}
+
+DIMENSION_DEFAULTS: Dict[str, Dict[str, Any]] = {
+    "STORY": APP_DEFAULTS["dimension.story.architect"],
+    "4D": APP_DEFAULTS["teaching.reference.analyze"],
+    "5D": APP_DEFAULTS["dimension.video.generate"],
+    "VEO": APP_DEFAULTS["veo.video.generate"],
+}
+
 
 def _is_recency_query(query: str) -> bool:
     q = query.lower()
@@ -56,6 +123,14 @@ def _domain_allowed(domain: str, allowlist: List[str]) -> bool:
         if domain == allowed or domain.endswith(f".{allowed}"):
             return True
     return False
+
+
+def _resolve_defaults(app_key: Optional[str], dimension: Optional[str]) -> Dict[str, Any]:
+    if app_key and app_key in APP_DEFAULTS:
+        return APP_DEFAULTS[app_key]
+    if dimension and dimension.upper() in DIMENSION_DEFAULTS:
+        return DIMENSION_DEFAULTS[dimension.upper()]
+    return {}
 
 
 class TavilyGroundingBackend(BaseBackend):
@@ -104,6 +179,7 @@ class TavilyGroundingBackend(BaseBackend):
         include_raw_content = config.get("include_raw_content", False)
         topic = config.get("topic")
         time_range = config.get("time_range")
+        days = config.get("days")
         start_date = config.get("start_date")
         end_date = config.get("end_date")
         country = config.get("country")
@@ -115,12 +191,23 @@ class TavilyGroundingBackend(BaseBackend):
         chunks_per_source = config.get("chunks_per_source")
         include_domains = config.get("include_domains")
         exclude_domains = config.get("exclude_domains")
+        app_key = config.get("app_key")
+        dimension = config.get("dimension")
 
         # Quality gate configuration
         min_score = config.get("min_score", 0.35)
         quality_gate = config.get("quality_gate", True)
         domain_gate = config.get("domain_gate", True)
         domain_allowlist = config.get("domain_allowlist")
+
+        # Apply per-app defaults if not explicitly set
+        defaults = _resolve_defaults(app_key, dimension)
+        if topic is None:
+            topic = defaults.get("topic")
+        if time_range is None:
+            time_range = defaults.get("time_range")
+        if domain_allowlist is None:
+            domain_allowlist = defaults.get("domain_allowlist")
 
         # Recency-aware auto parameter mapping
         if _is_recency_query(query):
@@ -143,6 +230,7 @@ class TavilyGroundingBackend(BaseBackend):
                 include_raw_content=include_raw_content,
                 topic=topic,
                 time_range=time_range,
+                days=days,
                 start_date=start_date,
                 end_date=end_date,
                 country=country,

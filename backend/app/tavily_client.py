@@ -112,6 +112,7 @@ class TavilyClient:
         include_raw_content: bool = False,
         topic: Optional[str] = None,
         time_range: Optional[str] = None,
+        days: Optional[int] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         country: Optional[str] = None,
@@ -153,6 +154,8 @@ class TavilyClient:
             payload["topic"] = topic
         if time_range:
             payload["time_range"] = time_range
+        if days is not None:
+            payload["days"] = days
         if start_date:
             payload["start_date"] = start_date
         if end_date:

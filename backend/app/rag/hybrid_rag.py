@@ -1347,6 +1347,11 @@ async def ensemble_retrieve(
 
             # NotebookLM의 경우 auteur_key로 notebook_id 오버라이드
             config = dict(backend_config.config)
+            # Provide app_key for backend-level defaults (e.g., Tavily per-app tuning)
+            config.setdefault("app_key", app_key)
+            # Provide dimension fallback for defaults when not explicitly set
+            if manifest and manifest.dimensions:
+                config.setdefault("dimension", manifest.dimensions[0])
             if backend_config.id == "notebooklm" and auteur_key:
                 notebook_key = AUTEUR_KEY_TO_NOTEBOOK.get(auteur_key.lower())
                 if notebook_key:
