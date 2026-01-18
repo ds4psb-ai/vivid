@@ -235,6 +235,20 @@ python scripts/ingest_research_corpus.py \
 python scripts/run_rag_quality_gate.py --no-llm
 ```
 
+#### 원샷 파이프라인 (Research → Ingest → Gate)
+
+```bash
+# 4D 프리셋 (쿼리 자동)
+python scripts/run_research_ingest_pipeline.py --preset 4D --save-output
+
+# 커스텀 쿼리 + 메타데이터 오버라이드
+python scripts/run_research_ingest_pipeline.py \
+  --dimension 1D \
+  --query "video prompt best practices" \
+  --app-key dimension.1d.prompt \
+  --save-output
+```
+
 ### Phase 3: 코퍼스 확장
 1. 라이선스 검증된 소스만 추가
 2. Qdrant 재인덱싱
