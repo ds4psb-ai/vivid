@@ -1722,7 +1722,20 @@ class ApiClient {
    * Unified interface for TrainWorkflowView
    */
   async executeDimension(
-    dimension: "1D" | "2D" | "3D" | "4D" | "QC" | "AD" | "AI" | "VEO",
+    dimension:
+      | "1D"
+      | "2D"
+      | "3D"
+      | "4D"
+      | "QC"
+      | "AD"
+      | "AI"
+      | "VEO"
+      | "STORY"
+      | "SOUND"
+      | "SA"
+      | "SC"
+      | "STORYBOARD",
     inputs: Record<string, unknown>,
     model: string = "gemini-3-flash-preview"
   ): Promise<DimensionResponse> {
@@ -1737,6 +1750,7 @@ class ApiClient {
           model,
         });
       case "2D":
+      case "STORYBOARD":
         return this.execute2DStoryboard({
           concept: String(inputs.concept || inputs.topic || ""),
           prompt: inputs.prompt ? String(inputs.prompt) : undefined,
@@ -1783,6 +1797,34 @@ class ApiClient {
           prompt: String(inputs.prompt || inputs.description || ""),
           duration: Number(inputs.duration) || 5,
           aspect_ratio: String(inputs.aspect_ratio || "16:9"),
+          model,
+        });
+      case "STORY":
+      case "SA":
+        return this.executeStoryArchitect({
+          concept: String(inputs.concept || inputs.description || inputs.topic || ""),
+          persona_data: (inputs.persona_data as Record<string, unknown>) || undefined,
+          reference_analysis: (inputs.reference_analysis as Record<string, unknown>) || undefined,
+          genre: inputs.genre ? String(inputs.genre) : undefined,
+          duration: inputs.duration ? String(inputs.duration) : undefined,
+          structure: inputs.structure ? String(inputs.structure) : undefined,
+          language: inputs.language ? String(inputs.language) : "ko",
+          model,
+        });
+      case "SOUND":
+      case "SC":
+        return this.executeSoundCraft({
+          concept: String(inputs.concept || inputs.description || inputs.topic || ""),
+          storyboard: Array.isArray(inputs.storyboard)
+            ? (inputs.storyboard as Record<string, unknown>[])
+            : undefined,
+          sound_type: inputs.sound_type ? String(inputs.sound_type) : undefined,
+          mood: inputs.mood ? String(inputs.mood) : undefined,
+          genre: inputs.genre ? String(inputs.genre) : undefined,
+          tempo: inputs.tempo ? String(inputs.tempo) : undefined,
+          duration: inputs.duration ? String(inputs.duration) : undefined,
+          target_platform: inputs.target_platform ? String(inputs.target_platform) : undefined,
+          language: inputs.language ? String(inputs.language) : "ko",
           model,
         });
       default:

@@ -8,7 +8,7 @@ import { DimensionPortalModal } from "./DimensionPortalModal";
 import { Trash2, CheckCircle, XCircle } from "lucide-react";
 import { api, DimensionResponse } from "@/lib/api";
 import { useDimensionConfig, type ConnectionOption } from "@/contexts/DimensionConfigContext";
-import type { DimensionType } from "@/lib/dimension-types";
+import { normalizeWorkflowDimension, type DimensionType, type WorkflowDimension } from "@/lib/dimension-types";
 
 // =============================================================================
 // Types
@@ -18,7 +18,7 @@ interface Car {
     id: string;
     order: number;
     toolId: string;
-    dimension: DimensionType;
+    dimension: WorkflowDimension;
     displayName: string;
     icon: string;
     color: string;
@@ -101,7 +101,7 @@ const OUTPUT_TYPE_BOOSTS: Record<string, Partial<Record<string, number>>> = {
 // Input Validation
 // =============================================================================
 
-function validateInputs(dimension: DimensionType, inputs: Record<string, unknown>): { valid: boolean; error?: string } {
+function validateInputs(dimension: WorkflowDimension, inputs: Record<string, unknown>): { valid: boolean; error?: string } {
     switch (dimension) {
         case "1D": {
             const topic = String(inputs.topic || "").trim();
@@ -131,6 +131,20 @@ function validateInputs(dimension: DimensionType, inputs: Record<string, unknown
             }
             return { valid: true };
         }
+        case "STORY": {
+            const concept = String(inputs.concept || inputs.description || "").trim();
+            if (!concept || concept.length < 2) {
+                return { valid: false, error: "스토리 컨셉을 2자 이상 입력해주세요" };
+            }
+            return { valid: true };
+        }
+        case "SOUND": {
+            const concept = String(inputs.concept || inputs.description || "").trim();
+            if (!concept || concept.length < 2) {
+                return { valid: false, error: "사운드 컨셉을 2자 이상 입력해주세요" };
+            }
+            return { valid: true };
+        }
         default:
             return { valid: true };
     }
@@ -153,7 +167,15 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
         const [portalCarId, setPortalCarId] = useState<string | null>(null);
 
         // Initial connection options from context
-        const initialOptions = useMemo(() => getInitialOptions(), [getInitialOptions]);
+        const isSupportedOption = useCallback((option: ConnectionOption) => {
+            const value = option.dimensionCode ?? option.dimension;
+            return normalizeWorkflowDimension(String(value)) !== null;
+        }, []);
+
+        const initialOptions = useMemo(
+            () => getInitialOptions().filter(isSupportedOption),
+            [getInitialOptions, isSupportedOption]
+        );
         const [pendingConnections, setPendingConnections] = useState<ConnectionOption[]>([]);
 
         // Initialize pendingConnections when context loads
@@ -173,16 +195,17 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
 
         // Context-aware recommendations using context data
         const getContextAwareRecommendations = useCallback((
-            prevDimension: DimensionType | undefined,
+            prevDimension: WorkflowDimension | undefined,
             prevOutput: Record<string, unknown> | undefined,
-            usedDimensions: Set<DimensionType>
+            usedDimensions: Set<WorkflowDimension>
         ): ConnectionOption[] => {
             const usedToolIds = cars.map(c => c.toolId);
-            const allOptions = getConnectionOptions(usedToolIds);
+            const allOptions = getConnectionOptions(usedToolIds).filter(isSupportedOption);
 
             const adjustedOptions = allOptions.map(opt => {
                 const optToolInfo = getToolInfo(opt.recommendedToolId);
-                if (!optToolInfo || usedDimensions.has(optToolInfo.dimension as DimensionType)) {
+                const normalizedDimension = optToolInfo ? normalizeWorkflowDimension(optToolInfo.dimension) : null;
+                if (!optToolInfo || !normalizedDimension || usedDimensions.has(normalizedDimension)) {
                     return null;
                 }
 
@@ -219,7 +242,7 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
 
         // Output → Input 체이닝: 이전 노드 출력을 다음 노드 입력으로 변환
         const prepareInputsFromPreviousOutput = useCallback(
-            (dimension: "1D" | "2D" | "3D" | "4D" | "QC" | "AD" | "AI" | "VEO", prevOutput: Record<string, unknown> | undefined, baseInputs: Record<string, unknown>) => {
+            (dimension: WorkflowDimension, prevOutput: Record<string, unknown> | undefined, baseInputs: Record<string, unknown>) => {
                 if (!prevOutput) return baseInputs;
 
                 switch (dimension) {
@@ -249,6 +272,21 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                             ...baseInputs,
                             video_description: prevOutput.prompt || prevOutput.description || baseInputs.video_description,
                         };
+                    case "STORY":
+                        return {
+                            ...baseInputs,
+                            concept: prevOutput.logline || prevOutput.prompt || prevOutput.description || baseInputs.concept,
+                        };
+                    case "SOUND": {
+                        const nextInputs: Record<string, unknown> = {
+                            ...baseInputs,
+                            concept: prevOutput.prompt || prevOutput.concept || prevOutput.description || baseInputs.concept,
+                        };
+                        if (Array.isArray(prevOutput.scenes)) {
+                            nextInputs.storyboard = prevOutput.scenes;
+                        }
+                        return nextInputs;
+                    }
                     // Extended Dimension Capsules Input Chaining
                     case "QC":
                         // QC는 이전 output 전체를 content로 사용
@@ -550,6 +588,11 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
 
             const toolConfig = getToolInfo(selectedOption.recommendedToolId);
             if (!toolConfig) return;
+            const normalizedDimension = normalizeWorkflowDimension(toolConfig.dimension);
+            if (!normalizedDimension) {
+                showNotification("error", "지원하지 않는 차원입니다.");
+                return;
+            }
 
             // 첫 번째 차원 선택인지 체크
             const isFirstCar = cars.length === 0;
@@ -560,12 +603,19 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
 
             // 이전 노드 output을 기반으로 다음 노드 inputs 설정
             if (prevCar?.output) {
-                if (toolConfig.dimension === "2D") {
+                if (normalizedDimension === "2D") {
                     baseInputs.concept = prevCar.output.prompt || prevCar.output.veo_prompt || "";
-                } else if (toolConfig.dimension === "3D") {
+                } else if (normalizedDimension === "3D") {
                     baseInputs.description = prevCar.output.prompt || "";
-                } else if (toolConfig.dimension === "4D") {
+                } else if (normalizedDimension === "4D") {
                     baseInputs.video_description = prevCar.output.prompt || prevCar.output.description || "";
+                } else if (normalizedDimension === "STORY") {
+                    baseInputs.concept = prevCar.output.logline || prevCar.output.prompt || "";
+                } else if (normalizedDimension === "SOUND") {
+                    baseInputs.concept = prevCar.output.prompt || prevCar.output.concept || "";
+                    if (Array.isArray(prevCar.output.scenes)) {
+                        baseInputs.storyboard = prevCar.output.scenes;
+                    }
                 }
             }
 
@@ -573,7 +623,7 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                 id: `car-${cars.length + 1}`,
                 order: cars.length,
                 toolId: selectedOption.recommendedToolId,
-                dimension: toolConfig.dimension as Car["dimension"],
+                dimension: normalizedDimension as Car["dimension"],
                 displayName: toolConfig.displayName,
                 icon: toolConfig.icon,
                 color: toolConfig.color,
@@ -591,10 +641,10 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
             await new Promise((resolve) => setTimeout(resolve, 300));
 
             // 이미 사용한 차원 제외하고 컨텍스트 기반 추천 생성
-            const usedDimensions = new Set([...cars.map(c => c.dimension), toolConfig.dimension as DimensionType]);
+            const usedDimensions = new Set([...cars.map(c => c.dimension), normalizedDimension]);
             const lastCar = cars[cars.length - 1];
             const nextOptions = getContextAwareRecommendations(
-                toolConfig.dimension as DimensionType,  // 방금 추가된 차원
+                normalizedDimension,  // 방금 추가된 차원
                 lastCar?.output,     // 마지막 차원의 출력
                 usedDimensions
             );

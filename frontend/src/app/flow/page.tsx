@@ -13,7 +13,7 @@ import { ChevronDown, Copy, Check, Sparkles, LayoutGrid, Image as ImageIcon, Fil
 import { api, SingularityTemplate } from "@/lib/api";
 import { FLOW_ENABLED } from "@/lib/feature-flags";
 import { dimensionIdToCode, getDimensionToken } from "@/lib/tokens";
-import type { DimensionType } from "@/lib/dimension-types";
+import { normalizeWorkflowDimension, type WorkflowDimension } from "@/lib/dimension-types";
 import Link from "next/link";
 import type {
     WorkflowStartEvent,
@@ -22,7 +22,7 @@ import type {
     WorkflowNode,
 } from "@/types/agent";
 
-// DimensionType shared in lib/dimension-types
+// WorkflowDimension shared in lib/dimension-types
 
 // Agent tool names to toolId mapping (for workflow events) - 10개 전체
 const AGENT_TOOL_TO_TOOL_ID: Record<string, string> = {
@@ -384,13 +384,18 @@ function FlowPageContent() {
         toolSequence.forEach((dimCode, idx) => {
             const toolInfo = getToolInfoFromDimension(dimCode);
             if (!toolInfo || !workflowRef.current) return;
+            const normalizedDimension = normalizeWorkflowDimension(toolInfo.dimension || dimCode);
+            if (!normalizedDimension) {
+                console.warn("[Flow] Unsupported workflow dimension:", dimCode);
+                return;
+            }
 
             // P1: Apply dimension-specific preset instead of full preset
             const dimensionPreset = extractDimensionPreset(dimCode, loadedTemplate.input_preset);
 
             workflowRef.current.addCar({
                 toolId: resolveToolId(dimCode),
-                dimension: dimCode as DimensionType,
+                dimension: normalizedDimension as WorkflowDimension,
                 displayName: toolInfo.displayName,
                 icon: toolInfo.icon,
                 color: toolInfo.color,
@@ -538,9 +543,15 @@ function FlowPageContent() {
             const toolInfo = getToolInfoFromAgentTool(node.tool_name);
             if (!toolInfo || !workflowRef.current) return;
 
+            const normalizedDimension = normalizeWorkflowDimension(toolInfo.dimension || node.dimension || node.tool_name);
+            if (!normalizedDimension) {
+                console.warn("[Flow] Unsupported workflow dimension:", node.tool_name);
+                return;
+            }
+
             const carId = workflowRef.current.addCar({
                 toolId: AGENT_TOOL_TO_TOOL_ID[node.tool_name] || node.tool_name,
-                dimension: toolInfo.dimension as DimensionType,
+                dimension: normalizedDimension as WorkflowDimension,
                 displayName: toolInfo.displayName,
                 icon: toolInfo.icon,
                 color: toolInfo.color,
@@ -571,9 +582,15 @@ function FlowPageContent() {
 
         if (event.status === "start") {
             // Add new car with executing status
+            const normalizedDimension = normalizeWorkflowDimension(toolInfo.dimension || event.dimension || event.tool_name);
+            if (!normalizedDimension) {
+                console.warn("[Flow] Unsupported workflow dimension:", event.tool_name);
+                return;
+            }
+
             const carId = workflowRef.current.addCar({
                 toolId: AGENT_TOOL_TO_TOOL_ID[event.tool_name] || event.tool_name,
-                dimension: (toolInfo.dimension || event.dimension) as DimensionType,
+                dimension: normalizedDimension as WorkflowDimension,
                 displayName: toolInfo.displayName,
                 icon: toolInfo.icon,
                 color: toolInfo.color,
