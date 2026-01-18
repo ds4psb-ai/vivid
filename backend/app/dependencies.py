@@ -111,7 +111,7 @@ async def require_admin(
     user: Dict[str, Any] = Depends(require_authenticated_user),
 ) -> Dict[str, Any]:
     """Require admin user.
-    
+
     Raises HTTPException 403 if user is not admin.
     """
     if not user.get("is_admin"):
@@ -120,3 +120,16 @@ async def require_admin(
             detail="Admin access required",
         )
     return user
+
+
+async def require_flow_enabled() -> None:
+    """Gate for Flow/Workflow feature.
+
+    Raises HTTPException 403 if FLOW_ENABLED is False.
+    Use as a dependency on all workflow endpoints.
+    """
+    if not settings.FLOW_ENABLED:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Flow feature is currently disabled",
+        )

@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Crebit Node Canvas"
     ENVIRONMENT: str = "development"
     GRAPHQL_ENABLED: bool = False
+    FLOW_ENABLED: bool = False
 
     POSTGRES_USER: str = "crebit_user"
     POSTGRES_PASSWORD: str = "crebit_password"

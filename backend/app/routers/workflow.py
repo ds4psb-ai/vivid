@@ -20,7 +20,7 @@ from app.schemas.workflow_session import (
     WorkflowStatus,
     workflow_session_manager,
 )
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, require_flow_enabled
 from app.database import get_db
 from app.routers.dimension._base import get_byok_key
 
@@ -78,6 +78,7 @@ class WorkflowStatusResponse(BaseModel):
 async def plan_workflow(
     request: PlanWorkflowRequest,
     user: dict = Depends(get_current_user),
+    _: None = Depends(require_flow_enabled),
 ):
     """
     사용자 요청을 분석하고 워크플로우를 계획합니다.
@@ -143,7 +144,9 @@ async def plan_workflow(
 
 
 @router.get("/templates")
-async def list_workflow_templates():
+async def list_workflow_templates(
+    _: None = Depends(require_flow_enabled),
+):
     """사용 가능한 워크플로우 템플릿 목록"""
     return {
         "templates": [
@@ -160,7 +163,9 @@ async def list_workflow_templates():
 
 
 @router.get("/tools")
-async def list_available_tools():
+async def list_available_tools(
+    _: None = Depends(require_flow_enabled),
+):
     """사용 가능한 도구(차원문) 목록"""
     return {
         "tools": [
@@ -180,7 +185,8 @@ async def list_available_tools():
 @router.get("/session/{session_id}", response_model=WorkflowStatusResponse)
 async def get_workflow_status(
     session_id: str,
-    user: dict = Depends(get_current_user),  # P0 BOLA: Auth required
+    user: dict = Depends(get_current_user),
+    _: None = Depends(require_flow_enabled),
 ):
     """워크플로우 세션 상태 조회"""
     session = workflow_session_manager.get_session(session_id)
@@ -216,9 +222,10 @@ async def get_workflow_status(
 @router.post("/session/{session_id}/advance")
 async def advance_workflow_step(
     session_id: str,
-    user: dict = Depends(get_current_user),  # P0 BOLA: Auth required
+    user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     byok_key: Optional[str] = Depends(get_byok_key),
+    _: None = Depends(require_flow_enabled),
 ):
     """워크플로우 현재 단계 실행 후 다음 단계로 진행.
     
@@ -281,6 +288,7 @@ async def execute_workflow_all(
     user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     byok_key: Optional[str] = Depends(get_byok_key),
+    _: None = Depends(require_flow_enabled),
 ):
     """워크플로우 전체 자동 실행 (1D → 2D → 3D → ...).
     
@@ -316,6 +324,7 @@ async def start_workflow(
     session_id: str,
     request: StartWorkflowRequest,
     user: dict = Depends(get_current_user),
+    _: None = Depends(require_flow_enabled),
 ):
     """워크플로우 시작: 첫 노드에 초기 파라미터 주입.
     
@@ -350,7 +359,8 @@ async def start_workflow(
 
 @router.get("/user/sessions")
 async def get_user_workflow_sessions(
-    user: dict = Depends(get_current_user),  # P0 BOLA: Auth required
+    user: dict = Depends(get_current_user),
+    _: None = Depends(require_flow_enabled),
 ):
     """현재 사용자의 워크플로우 세션 목록
 

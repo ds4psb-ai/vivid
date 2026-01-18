@@ -65,6 +65,7 @@ class WorkflowStepResult:
 # =============================================================================
 
 WORKFLOW_TOOL_MAP: Dict[str, Dict[str, Any]] = {
+    # Core Dimensions (1D-4D)
     "prompt_generator": {
         "capsule_id": DimensionCapsuleId.PROMPT_GENERATE,
         "tool_key": "generate_veo_prompt",
@@ -89,12 +90,50 @@ WORKFLOW_TOOL_MAP: Dict[str, Dict[str, Any]] = {
         "default_model": "gemini-3-flash-preview",
         "credit_cost": 10,
     },
-    # VEO (optional P2 extension)
+    # Extended Dimensions (QC, AD, AI, SA, SC)
+    "quality_check": {
+        "capsule_id": DimensionCapsuleId.QUALITY_CHECK,
+        "tool_key": "quality_check",
+        "default_model": "gemini-3-flash-preview",
+        "credit_cost": 10,
+    },
+    "aesthetic_direct": {
+        "capsule_id": DimensionCapsuleId.AESTHETIC_DIRECT,
+        "tool_key": "aesthetic_direct",
+        "default_model": "gemini-3-flash-preview",
+        "credit_cost": 10,
+    },
+    "persona_analyze": {
+        "capsule_id": DimensionCapsuleId.PERSONA_ANALYZE,
+        "tool_key": "persona_analyze",
+        "default_model": "gemini-3-flash-preview",
+        "credit_cost": 10,
+    },
+    "story_architect": {
+        "capsule_id": DimensionCapsuleId.STORY_ARCHITECT,
+        "tool_key": "story_architect",
+        "default_model": "gemini-3-flash-preview",
+        "credit_cost": 10,
+    },
+    "sound_craft": {
+        "capsule_id": DimensionCapsuleId.SOUND_CRAFT,
+        "tool_key": "sound_craft",
+        "default_model": "gemini-3-flash-preview",
+        "credit_cost": 10,
+    },
+    # VEO (expensive video generation)
     "veo_generator": {
         "capsule_id": DimensionCapsuleId.VEO_VIDEO_GENERATE,
         "tool_key": "veo_generate",
         "default_model": "veo-3.1-generate-preview",
-        "credit_cost": 5000,  # VEO is expensive
+        "credit_cost": 5000,
+    },
+    # Alias for frontend compatibility
+    "veo_generate": {
+        "capsule_id": DimensionCapsuleId.VEO_VIDEO_GENERATE,
+        "tool_key": "veo_generate",
+        "default_model": "veo-3.1-generate-preview",
+        "credit_cost": 5000,
     },
 }
 
@@ -198,13 +237,96 @@ def _build_veo_inputs(
     }
 
 
+def _build_quality_check_inputs(
+    node_inputs: Dict[str, Any],
+    session: WorkflowSession,
+) -> Dict[str, Any]:
+    """QC Quality Check 입력 변환."""
+    params = session.extracted_params
+    return {
+        "content": node_inputs.get("content") or params.get("content", ""),
+        "criteria": node_inputs.get("criteria", []),
+        "check_type": node_inputs.get("check_type", "general"),
+    }
+
+
+def _build_aesthetic_direct_inputs(
+    node_inputs: Dict[str, Any],
+    session: WorkflowSession,
+) -> Dict[str, Any]:
+    """AD Aesthetic Director 입력 변환."""
+    params = session.extracted_params
+    return {
+        "prompt": node_inputs.get("prompt") or params.get("prompt", ""),
+        "style": node_inputs.get("style") or params.get("style", ""),
+        "auteur_key": node_inputs.get("auteur_key") or params.get("auteur_key"),
+        "mood": node_inputs.get("mood") or params.get("mood", ""),
+    }
+
+
+def _build_persona_analyze_inputs(
+    node_inputs: Dict[str, Any],
+    session: WorkflowSession,
+) -> Dict[str, Any]:
+    """AI Persona Analyze 입력 변환."""
+    params = session.extracted_params
+    return {
+        "character_description": (
+            node_inputs.get("character_description") or
+            node_inputs.get("description") or
+            params.get("character_description", "")
+        ),
+        "depth": node_inputs.get("depth", "standard"),
+    }
+
+
+def _build_story_architect_inputs(
+    node_inputs: Dict[str, Any],
+    session: WorkflowSession,
+) -> Dict[str, Any]:
+    """SA Story Architect 입력 변환."""
+    params = session.extracted_params
+    return {
+        "prompt": node_inputs.get("prompt") or params.get("prompt", ""),
+        "genre": node_inputs.get("genre") or params.get("genre"),
+        "structure": node_inputs.get("structure", "3act"),
+        "language": node_inputs.get("language") or params.get("language", "ko"),
+    }
+
+
+def _build_sound_craft_inputs(
+    node_inputs: Dict[str, Any],
+    session: WorkflowSession,
+) -> Dict[str, Any]:
+    """SC Sound Crafter 입력 변환."""
+    params = session.extracted_params
+    return {
+        "scene_description": (
+            node_inputs.get("scene_description") or
+            node_inputs.get("description") or
+            params.get("scene_description", "")
+        ),
+        "mood": node_inputs.get("mood") or params.get("mood"),
+        "target_platform": node_inputs.get("target_platform", "suno"),
+    }
+
+
 # Input adapter registry
 INPUT_ADAPTERS: Dict[str, callable] = {
+    # Core Dimensions (1D-4D)
     "prompt_generator": _build_prompt_inputs,
     "storyboard": _build_storyboard_inputs,
     "image_tool": _build_image_inputs,
     "reference_analyzer": _build_reference_inputs,
+    # Extended Dimensions (QC, AD, AI, SA, SC)
+    "quality_check": _build_quality_check_inputs,
+    "aesthetic_direct": _build_aesthetic_direct_inputs,
+    "persona_analyze": _build_persona_analyze_inputs,
+    "story_architect": _build_story_architect_inputs,
+    "sound_craft": _build_sound_craft_inputs,
+    # VEO (both aliases)
     "veo_generator": _build_veo_inputs,
+    "veo_generate": _build_veo_inputs,
 }
 
 
