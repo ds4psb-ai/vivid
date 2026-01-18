@@ -173,8 +173,9 @@ html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
 
   --fg-0: #09090B;
   /* Deep Black for primary text */
-  --fg-muted: #71717A;
+  --fg-muted: var(--neutral-500);
   /* Zinc-500 for secondary */
+  --fg-subtle: var(--neutral-600);
 
   /* Crebit Accents - Retained for Brand Identity but adjusted for Light Mode contrast */
   --accent: #7C3AED;
@@ -191,6 +192,7 @@ html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
 
   --border-muted: rgba(0, 0, 0, 0.1);
   --border-subtle: rgba(0, 0, 0, 0.05);
+  --border-strong: rgba(0, 0, 0, 0.2);
 
   /* Semantic */
   --success: #059669;
@@ -248,8 +250,9 @@ html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
 
   --fg-0: #E8E8ED;
   /* Muted White (Primary Text) */
-  --fg-muted: #A0A0B0;
+  --fg-muted: var(--neutral-800);
   /* Cool Gray (Secondary Text) - WCAG 4.5:1 compliant */
+  --fg-subtle: var(--neutral-700);
 
   /* Crebit Accents */
   /* --accent: #38bdf8; (Cyan) -> #8B5CF6 (Violet) */
@@ -266,6 +269,7 @@ html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
 
   --border-muted: rgba(255, 255, 255, 0.1);
   --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-strong: rgba(255, 255, 255, 0.16);
 
   /* Semantic */
   --success: #10b981;
