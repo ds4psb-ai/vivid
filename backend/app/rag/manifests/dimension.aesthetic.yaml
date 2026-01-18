@@ -39,17 +39,13 @@ backends:
       min_score: 0.45
 
   - id: notebooklm
-    weight: 0.3
+    weight: 0.4  # Increased weight (was 0.3 + 0.1 for removed vertex_grounding)
     enabled: true
     config:
       notebook_id: DNA_봉준호  # Default auteur, overridden by auteur_key
 
-  - id: vertex_grounding
-    weight: 0.1
-    enabled: false  # Enable when Google Search context needed
-    config:
-      corpus_name: auteur_dna
-      use_grounding: true
+  # NOTE: vertex_grounding (Google Search Grounding) planned for future release
+  # When implemented, will provide real-time web search for auteur insights
 
 # UQSL (Universal Quality Selection Layer) Configuration
 # See _uqsl_schema.yaml for full schema

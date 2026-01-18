@@ -214,3 +214,148 @@ class TestHybridSearch:
                     results = rag.hybrid_search("INTJ 성격")
 
                     assert results == []
+
+
+class TestHybridIndexing:
+    """Test Tier1DimensionRAG hybrid indexing (P2-3)."""
+
+    @pytest.fixture
+    def mock_qdrant_client(self):
+        """Create mock Qdrant client."""
+        client = MagicMock()
+        client.get_collections.return_value = MagicMock(collections=[])
+        client.create_collection.return_value = None
+        client.upsert.return_value = None
+        client.delete.return_value = None
+        return client
+
+    @pytest.fixture
+    def mock_embedder(self):
+        """Create mock embedder."""
+        embedder = MagicMock()
+        embedder.embed.return_value = [0.1] * 384
+        return embedder
+
+    @pytest.fixture
+    def mock_sparse_embedder(self):
+        """Create mock sparse embedder."""
+        embedder = MagicMock()
+        embedder.embed.return_value = ([1, 2, 3], [0.5, 0.3, 0.2])
+        return embedder
+
+    def test_ensure_collection_creates_hybrid(self, mock_qdrant_client):
+        """Test ensure_collection creates hybrid collection when use_hybrid=True."""
+        from app.rag.tier1_dimension_rag import Tier1DimensionRAG
+
+        with patch.object(Tier1DimensionRAG, "client", new_callable=PropertyMock) as mock_client_prop:
+            mock_client_prop.return_value = mock_qdrant_client
+
+            rag = Tier1DimensionRAG("AD")
+            result = rag.ensure_collection()
+
+            assert result is True
+            # Should create 2 collections (dense-only + hybrid)
+            assert mock_qdrant_client.create_collection.call_count == 2
+
+            # Verify hybrid collection has sparse_vectors_config
+            calls = mock_qdrant_client.create_collection.call_args_list
+            hybrid_call = calls[1]  # Second call is for hybrid
+            assert "sparse_vectors_config" in hybrid_call.kwargs
+            assert "sparse" in hybrid_call.kwargs["sparse_vectors_config"]
+
+    def test_index_document_indexes_to_hybrid(
+        self,
+        mock_qdrant_client,
+        mock_embedder,
+        mock_sparse_embedder
+    ):
+        """Test index_document indexes to both collections."""
+        from app.rag.tier1_dimension_rag import Tier1DimensionRAG
+
+        with patch.object(Tier1DimensionRAG, "client", new_callable=PropertyMock) as mock_client_prop:
+            with patch.object(Tier1DimensionRAG, "embedder", new_callable=PropertyMock) as mock_emb_prop:
+                with patch.object(Tier1DimensionRAG, "sparse_embedder", new_callable=PropertyMock) as mock_sparse_prop:
+                    with patch("app.rag.tier1_dimension_rag.QDRANT_BREAKER") as mock_breaker:
+                        mock_client_prop.return_value = mock_qdrant_client
+                        mock_emb_prop.return_value = mock_embedder
+                        mock_sparse_prop.return_value = mock_sparse_embedder
+                        mock_breaker.check_state.return_value = None
+
+                        rag = Tier1DimensionRAG("AD")
+                        result = rag.index_document(
+                            doc_id="test_doc",
+                            content="봉준호 감독의 영화 스타일",
+                            metadata={"app_key": "test"}
+                        )
+
+                        assert result is True
+                        # Should upsert to 2 collections (dense-only + hybrid)
+                        assert mock_qdrant_client.upsert.call_count == 2
+
+                        # Verify hybrid collection upsert has both vectors
+                        calls = mock_qdrant_client.upsert.call_args_list
+                        hybrid_call = calls[1]  # Second call is for hybrid
+                        point = hybrid_call.kwargs["points"][0]
+                        assert "dense" in point.vector
+                        assert "sparse" in point.vector
+
+    def test_index_document_skips_hybrid_when_no_sparse_embedder(
+        self,
+        mock_qdrant_client,
+        mock_embedder
+    ):
+        """Test index_document skips hybrid when sparse embedder unavailable."""
+        from app.rag.tier1_dimension_rag import Tier1DimensionRAG
+
+        with patch.object(Tier1DimensionRAG, "client", new_callable=PropertyMock) as mock_client_prop:
+            with patch.object(Tier1DimensionRAG, "embedder", new_callable=PropertyMock) as mock_emb_prop:
+                with patch.object(Tier1DimensionRAG, "sparse_embedder", new_callable=PropertyMock) as mock_sparse_prop:
+                    with patch("app.rag.tier1_dimension_rag.QDRANT_BREAKER") as mock_breaker:
+                        mock_client_prop.return_value = mock_qdrant_client
+                        mock_emb_prop.return_value = mock_embedder
+                        mock_sparse_prop.return_value = None  # No sparse embedder
+                        mock_breaker.check_state.return_value = None
+
+                        rag = Tier1DimensionRAG("AD")
+                        result = rag.index_document(
+                            doc_id="test_doc",
+                            content="봉준호 감독의 영화 스타일"
+                        )
+
+                        assert result is True
+                        # Should only upsert to dense-only collection
+                        assert mock_qdrant_client.upsert.call_count == 1
+
+    def test_delete_document_deletes_from_both(self, mock_qdrant_client):
+        """Test delete_document removes from both collections."""
+        from app.rag.tier1_dimension_rag import Tier1DimensionRAG
+
+        with patch.object(Tier1DimensionRAG, "client", new_callable=PropertyMock) as mock_client_prop:
+            mock_client_prop.return_value = mock_qdrant_client
+
+            rag = Tier1DimensionRAG("AD")
+            result = rag.delete_document("test_doc")
+
+            assert result is True
+            # Should delete from 2 collections (dense-only + hybrid)
+            assert mock_qdrant_client.delete.call_count == 2
+
+    def test_get_collection_stats_includes_hybrid(self, mock_qdrant_client):
+        """Test get_collection_stats includes hybrid collection info."""
+        from app.rag.tier1_dimension_rag import Tier1DimensionRAG
+
+        mock_info = MagicMock()
+        mock_info.points_count = 100
+        mock_info.vectors_count = 100
+        mock_info.status = MagicMock(value="green")
+        mock_qdrant_client.get_collection.return_value = mock_info
+
+        with patch.object(Tier1DimensionRAG, "client", new_callable=PropertyMock) as mock_client_prop:
+            mock_client_prop.return_value = mock_qdrant_client
+
+            rag = Tier1DimensionRAG("AD")
+            stats = rag.get_collection_stats()
+
+            assert stats["available"] is True
+            assert "hybrid" in stats
+            assert stats["hybrid"]["points_count"] == 100

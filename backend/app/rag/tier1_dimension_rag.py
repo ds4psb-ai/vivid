@@ -205,9 +205,63 @@ class Tier1DimensionRAG:
                     ),
                 )
                 logger.info(f"[{self.dimension}] Created collection: {self.collection_name}")
+
+            # P2-3: Hybrid collection도 함께 생성 (use_hybrid=True인 경우)
+            if self.collection_config.get("use_hybrid"):
+                self._ensure_hybrid_collection(client, collections)
+
             return True
         except Exception as e:
             logger.error(f"[{self.dimension}] Failed to ensure collection: {e}")
+            return False
+
+    def _ensure_hybrid_collection(
+        self, client: QdrantClient, collections=None
+    ) -> bool:
+        """Hybrid 컬렉션 생성 (Dense + Sparse with IDF).
+
+        2026 Best Practice: Named vectors + Modifier.IDF for BM25.
+
+        Args:
+            client: Qdrant client
+            collections: Cached collections list (optional)
+
+        Returns:
+            True if hybrid collection exists or was created
+        """
+        hybrid_name = self.collection_config.get("name_hybrid")
+        if not hybrid_name:
+            return False
+
+        try:
+            if collections is None:
+                collections = client.get_collections()
+
+            exists = any(c.name == hybrid_name for c in collections.collections)
+
+            if not exists:
+                # 2026 Best Practice: Named vectors with sparse IDF
+                client.create_collection(
+                    collection_name=hybrid_name,
+                    vectors_config={
+                        "dense": qdrant_models.VectorParams(
+                            size=self.vector_size,
+                            distance=qdrant_models.Distance.COSINE,
+                        )
+                    },
+                    sparse_vectors_config={
+                        "sparse": qdrant_models.SparseVectorParams(
+                            modifier=qdrant_models.Modifier.IDF,
+                        )
+                    },
+                )
+                logger.info(
+                    f"[{self.dimension}] Created hybrid collection: {hybrid_name} "
+                    "(dense + sparse with IDF)"
+                )
+            return True
+        except Exception as e:
+            logger.error(f"[{self.dimension}] Failed to create hybrid collection: {e}")
             return False
 
     def _generate_point_id(self, doc_id: str) -> str:
@@ -238,7 +292,7 @@ class Tier1DimensionRAG:
         except CircuitBreakerOpen:
             logger.warning(f"[{self.dimension}] Qdrant circuit open, skipping index")
             return False
-            
+
         client = self.client
         if client is None:
             logger.warning(f"[{self.dimension}] Qdrant unavailable, skipping index")
@@ -259,7 +313,7 @@ class Tier1DimensionRAG:
                 **(metadata or {}),
             }
 
-            # Upsert (증분 업데이트)
+            # Upsert (증분 업데이트) - Dense-only collection
             point_id = self._generate_point_id(doc_id)
             client.upsert(
                 collection_name=self.collection_name,
@@ -271,12 +325,80 @@ class Tier1DimensionRAG:
                     )
                 ],
             )
+
+            # P2-3: Hybrid collection에도 인덱싱 (use_hybrid=True인 경우)
+            if self.collection_config.get("use_hybrid"):
+                self._index_to_hybrid_collection(
+                    client, point_id, content, vector, payload
+                )
+
             QDRANT_BREAKER.record_success()  # P6-3
             logger.debug(f"[{self.dimension}] Indexed: {doc_id}")
             return True
         except Exception as e:
             QDRANT_BREAKER.record_failure(e)  # P6-3
             logger.error(f"[{self.dimension}] Index failed for {doc_id}: {e}")
+            return False
+
+    def _index_to_hybrid_collection(
+        self,
+        client: QdrantClient,
+        point_id: str,
+        content: str,
+        dense_vector: List[float],
+        payload: Dict[str, Any],
+    ) -> bool:
+        """Hybrid 컬렉션에 Dense + Sparse 벡터 저장.
+
+        2026 Best Practice: Named vectors로 dual indexing.
+
+        Args:
+            client: Qdrant client
+            point_id: Point ID (same as dense-only collection)
+            content: Text content for sparse embedding
+            dense_vector: Pre-computed dense vector
+            payload: Metadata payload
+
+        Returns:
+            True if successful
+        """
+        hybrid_name = self.collection_config.get("name_hybrid")
+        if not hybrid_name:
+            return False
+
+        sparse_embedder = self.sparse_embedder
+        if sparse_embedder is None:
+            logger.debug(f"[{self.dimension}] Sparse embedder unavailable, skipping hybrid index")
+            return False
+
+        try:
+            # Sparse embedding 생성 (BM25)
+            sparse_indices, sparse_values = sparse_embedder.embed(content)
+
+            # Named vectors로 upsert (dense + sparse)
+            client.upsert(
+                collection_name=hybrid_name,
+                points=[
+                    qdrant_models.PointStruct(
+                        id=point_id,
+                        vector={
+                            "dense": dense_vector,
+                            "sparse": qdrant_models.SparseVector(
+                                indices=sparse_indices,
+                                values=sparse_values,
+                            ),
+                        },
+                        payload=payload,
+                    )
+                ],
+            )
+            logger.debug(
+                f"[{self.dimension}] Hybrid indexed: {payload.get('doc_id')} "
+                f"(dense={len(dense_vector)}d, sparse={len(sparse_indices)} terms)"
+            )
+            return True
+        except Exception as e:
+            logger.warning(f"[{self.dimension}] Hybrid index failed: {e}")
             return False
 
     def search(
@@ -541,10 +663,25 @@ class Tier1DimensionRAG:
 
         try:
             point_id = self._generate_point_id(doc_id)
+
+            # Dense-only collection에서 삭제
             client.delete(
                 collection_name=self.collection_name,
                 points_selector=qdrant_models.PointIdsList(points=[point_id]),
             )
+
+            # P2-3: Hybrid collection에서도 삭제
+            if self.collection_config.get("use_hybrid"):
+                hybrid_name = self.collection_config.get("name_hybrid")
+                if hybrid_name:
+                    try:
+                        client.delete(
+                            collection_name=hybrid_name,
+                            points_selector=qdrant_models.PointIdsList(points=[point_id]),
+                        )
+                    except Exception:
+                        pass  # Hybrid collection이 없을 수도 있음
+
             logger.debug(f"[{self.dimension}] Deleted: {doc_id}")
             return True
         except Exception as e:
@@ -559,7 +696,7 @@ class Tier1DimensionRAG:
 
         try:
             info = client.get_collection(self.collection_name)
-            return {
+            stats = {
                 "available": True,
                 "dimension": self.dimension,
                 "collection": self.collection_name,
@@ -567,6 +704,23 @@ class Tier1DimensionRAG:
                 "vectors_count": info.vectors_count,
                 "status": info.status.value if info.status else "unknown",
             }
+
+            # P2-3: Hybrid collection 통계 추가
+            if self.collection_config.get("use_hybrid"):
+                hybrid_name = self.collection_config.get("name_hybrid")
+                if hybrid_name:
+                    try:
+                        hybrid_info = client.get_collection(hybrid_name)
+                        stats["hybrid"] = {
+                            "collection": hybrid_name,
+                            "points_count": hybrid_info.points_count,
+                            "vectors_count": hybrid_info.vectors_count,
+                            "status": hybrid_info.status.value if hybrid_info.status else "unknown",
+                        }
+                    except Exception:
+                        stats["hybrid"] = {"available": False}
+
+            return stats
         except Exception as e:
             return {"available": False, "error": str(e)}
 

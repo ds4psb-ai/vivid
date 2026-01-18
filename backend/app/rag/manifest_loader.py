@@ -42,7 +42,7 @@ class BackendConfig(BaseModel):
     """백엔드 설정 (P2 Feature).
 
     Attributes:
-        id: 백엔드 식별자 (qdrant_hybrid, notebooklm, vertex_grounding)
+        id: 백엔드 식별자 (qdrant_hybrid, notebooklm)
         weight: RRF 융합 시 가중치 (0.0 ~ 1.0)
         enabled: 활성화 여부
         config: 백엔드별 추가 설정

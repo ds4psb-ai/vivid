@@ -1155,7 +1155,7 @@ def _convert_ensemble_to_hybrid_result(
                     citation_text=result.text[:200] if result.text else "",
                 )
             )
-        elif source_type in ("qdrant_hybrid", "vertex_grounding"):
+        elif source_type in ("qdrant_hybrid", "vertex_grounding"):  # vertex_grounding: future feature
             vertex_sources.append(
                 RAGSource(
                     source_id=result.doc_id,
