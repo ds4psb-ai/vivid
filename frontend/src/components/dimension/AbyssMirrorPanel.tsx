@@ -110,8 +110,8 @@ function AbyssMirrorContent() {
     inspirationHelperText: isKo ? "취향이 담긴 이미지, 좋아하는 포스터 등" : "Images reflecting your taste, favorite posters, etc.",
     traceHistory: isKo ? "Trace 히스토리" : "Trace History",
     historyManagement: isKo ? "히스토리 관리" : "History Management",
-    previousSession: isKo ? "이전 세션" : "Previous Session",
-    reset: isKo ? "초기화" : "Reset",
+    previousSession: isKo ? "⏪ 이전 세션" : "⏪ Previous Session",
+    reset: isKo ? "🗑️ 초기화" : "🗑️ Reset",
     savedSessions: (count: number) => isKo ? `저장된 세션: ${count}개` : `Saved Sessions: ${count}`,
     goBack: isKo ? "처음으로" : "Go Back",
 
@@ -754,7 +754,7 @@ function AbyssMirrorContent() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Sparkles className={`w-6 h-6 text-${token.themeColor}-600 dark:text-${token.themeColor}-400`} />
-                <span className="font-bold text-slate-900 dark:text-white">페르소나 분석 완료!</span>
+                <span className="font-bold text-slate-900 dark:text-white">{labels.analysisComplete}</span>
               </div>
               <div className="flex gap-2">
                 <button
@@ -762,14 +762,14 @@ function AbyssMirrorContent() {
                   className="px-4 py-2 bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg flex items-center gap-2 text-sm hover:bg-slate-50 dark:hover:bg-white/20 transition-all"
                 >
                   <Download className="w-4 h-4" />
-                  JSON 내보내기
+                  {labels.exportJson}
                 </button>
                 <button
                   onClick={handleReset}
                   className={`px-4 py-2 bg-${token.themeColor}-500 hover:bg-${token.themeColor}-600 text-white rounded-lg flex items-center gap-2 text-sm transition-all`}
                 >
                   <RefreshCw className="w-4 h-4" />
-                  새로 시작
+                  {labels.newSession}
                 </button>
               </div>
             </div>
@@ -797,7 +797,7 @@ function AbyssMirrorContent() {
 
   return (
     <>
-      <DimensionPanel.Header title="심연의 거울" />
+      <DimensionPanel.Header title={labels.title} />
 
       <div className="flex flex-1 min-h-0">
         <DimensionPanel.Sidebar>
@@ -807,13 +807,13 @@ function AbyssMirrorContent() {
               className="flex items-center gap-2 text-sm text-slate-500 dark:text-white/50 hover:text-slate-700 dark:hover:text-white/70 mb-4"
             >
               <ArrowLeft className="w-4 h-4" />
-              처음으로
+              {labels.goBack}
             </button>
           )}
 
           {/* Model Select */}
           <DimensionPanel.Select
-            label="AI 모델"
+            label={labels.aiModel}
             value={model}
             onChange={(e) => setModel(e.target.value)}
             options={MODELS}
@@ -827,8 +827,8 @@ function AbyssMirrorContent() {
               maxSizeMB={100}
               multiple
               onUpload={setFiles}
-              label="영감 이미지 (선택)"
-              helperText="취향이 담긴 이미지, 좋아하는 포스터 등"
+              label={labels.inspirationImage}
+              helperText={labels.inspirationHelperText}
             />
           )}
 
@@ -836,7 +836,7 @@ function AbyssMirrorContent() {
           {traces.length > 0 && (
             <div className="space-y-2 mt-6">
               <label className="text-[10px] font-bold text-slate-500 dark:text-white/50 uppercase tracking-widest">
-                Trace 히스토리
+                {labels.traceHistory}
               </label>
               <div className="max-h-40 overflow-y-auto space-y-1">
                 {traces.slice(0, 5).map((t, i) => (
@@ -868,7 +868,7 @@ function AbyssMirrorContent() {
           {(presets.length > 0 || messages.length > 0) && (
             <div className="mt-6 space-y-2">
               <label className="text-[10px] font-bold text-slate-500 dark:text-white/50 uppercase tracking-widest">
-                히스토리 관리
+                {labels.historyManagement}
               </label>
               <div className="flex gap-2">
                 {presets.length > 0 && (
@@ -881,24 +881,24 @@ function AbyssMirrorContent() {
                     }}
                     className={`flex-1 px-3 py-2 bg-${token.themeColor}-500/20 hover:bg-${token.themeColor}-500/30 border border-${token.themeColor}-500/30 rounded-lg text-xs text-${token.themeColor}-600 dark:text-${token.themeColor}-400 transition-colors`}
                   >
-                    ⏪ 이전 세션
+                    {labels.previousSession}
                   </button>
                 )}
                 <button
                   onClick={() => {
-                    if (confirm("모든 히스토리를 삭제하고 처음부터 시작하시겠습니까?")) {
+                    if (confirm(labels.confirmReset)) {
                       clearLocal();
                       handleReset();
                     }
                   }}
                   className="flex-1 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg text-xs text-red-500 dark:text-red-400 transition-colors"
                 >
-                  🗑️ 초기화
+                  {labels.reset}
                 </button>
               </div>
               {presets.length > 1 && (
                 <p className="text-[10px] text-slate-400 dark:text-white/30">
-                  저장된 세션: {presets.length}개
+                  {labels.savedSessions(presets.length)}
                 </p>
               )}
             </div>
