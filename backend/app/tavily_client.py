@@ -50,6 +50,7 @@ class TavilySearchResult:
     content: str
     score: float
     raw_content: Optional[str] = None
+    favicon: Optional[str] = None
 
 
 @dataclass
@@ -61,6 +62,9 @@ class TavilySearchResponse:
     answer: Optional[str] = None
     follow_up_questions: Optional[List[str]] = None
     response_time: Optional[float] = None
+    auto_parameters: Optional[Dict[str, Any]] = None
+    usage: Optional[Dict[str, Any]] = None
+    request_id: Optional[str] = None
 
 
 class TavilyClient:
@@ -106,6 +110,17 @@ class TavilyClient:
         max_results: int = 5,
         include_answer: bool = True,
         include_raw_content: bool = False,
+        topic: Optional[str] = None,
+        time_range: Optional[str] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        country: Optional[str] = None,
+        auto_parameters: Optional[bool] = None,
+        include_usage: Optional[bool] = None,
+        include_images: Optional[bool] = None,
+        include_image_descriptions: Optional[bool] = None,
+        include_favicon: Optional[bool] = None,
+        chunks_per_source: Optional[int] = None,
         include_domains: Optional[List[str]] = None,
         exclude_domains: Optional[List[str]] = None,
     ) -> TavilySearchResponse:
@@ -134,6 +149,28 @@ class TavilyClient:
             "include_answer": include_answer,
             "include_raw_content": include_raw_content,
         }
+        if topic:
+            payload["topic"] = topic
+        if time_range:
+            payload["time_range"] = time_range
+        if start_date:
+            payload["start_date"] = start_date
+        if end_date:
+            payload["end_date"] = end_date
+        if country:
+            payload["country"] = country
+        if auto_parameters is not None:
+            payload["auto_parameters"] = auto_parameters
+        if include_usage is not None:
+            payload["include_usage"] = include_usage
+        if include_images is not None:
+            payload["include_images"] = include_images
+        if include_image_descriptions is not None:
+            payload["include_image_descriptions"] = include_image_descriptions
+        if include_favicon is not None:
+            payload["include_favicon"] = include_favicon
+        if chunks_per_source is not None:
+            payload["chunks_per_source"] = chunks_per_source
         if include_domains:
             payload["include_domains"] = include_domains
         if exclude_domains:
@@ -151,6 +188,7 @@ class TavilyClient:
                 content=r.get("content", ""),
                 score=r.get("score", 0.0),
                 raw_content=r.get("raw_content"),
+                favicon=r.get("favicon"),
             )
             for r in data.get("results", [])
         ]
@@ -161,6 +199,9 @@ class TavilyClient:
             answer=data.get("answer"),
             follow_up_questions=data.get("follow_up_questions"),
             response_time=data.get("response_time"),
+            auto_parameters=data.get("auto_parameters"),
+            usage=data.get("usage"),
+            request_id=data.get("request_id"),
         )
 
 

@@ -58,6 +58,17 @@ class TavilyGroundingBackend(BaseBackend):
         search_depth = config.get("search_depth", "basic")
         include_answer = config.get("include_answer", False)
         include_raw_content = config.get("include_raw_content", False)
+        topic = config.get("topic")
+        time_range = config.get("time_range")
+        start_date = config.get("start_date")
+        end_date = config.get("end_date")
+        country = config.get("country")
+        auto_parameters = config.get("auto_parameters")
+        include_usage = config.get("include_usage")
+        include_images = config.get("include_images")
+        include_image_descriptions = config.get("include_image_descriptions")
+        include_favicon = config.get("include_favicon")
+        chunks_per_source = config.get("chunks_per_source")
         include_domains = config.get("include_domains")
         exclude_domains = config.get("exclude_domains")
 
@@ -68,6 +79,17 @@ class TavilyGroundingBackend(BaseBackend):
                 max_results=limit,
                 include_answer=include_answer,
                 include_raw_content=include_raw_content,
+                topic=topic,
+                time_range=time_range,
+                start_date=start_date,
+                end_date=end_date,
+                country=country,
+                auto_parameters=auto_parameters,
+                include_usage=include_usage,
+                include_images=include_images,
+                include_image_descriptions=include_image_descriptions,
+                include_favicon=include_favicon,
+                chunks_per_source=chunks_per_source,
                 include_domains=include_domains,
                 exclude_domains=exclude_domains,
             )
@@ -104,4 +126,3 @@ class TavilyGroundingBackend(BaseBackend):
             return True
         except Exception:
             return False
-

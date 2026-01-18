@@ -160,6 +160,42 @@ properties:
               type: boolean
               default: true
               description: "Enable web search grounding"
+            search_depth:
+              type: string
+              description: "Tavily search depth (basic/advanced/fast/ultra-fast)"
+            topic:
+              type: string
+              description: "Tavily search topic (general/news/finance)"
+            time_range:
+              type: string
+              description: "Tavily time range (day/week/month/year)"
+            start_date:
+              type: string
+              description: "Tavily start date (YYYY-MM-DD)"
+            end_date:
+              type: string
+              description: "Tavily end date (YYYY-MM-DD)"
+            country:
+              type: string
+              description: "Tavily country code (boost local sources)"
+            auto_parameters:
+              type: boolean
+              description: "Enable Tavily auto-parameters"
+            include_usage:
+              type: boolean
+              description: "Include Tavily usage info in response"
+            include_images:
+              type: boolean
+              description: "Include image results"
+            include_image_descriptions:
+              type: boolean
+              description: "Include image descriptions"
+            include_favicon:
+              type: boolean
+              description: "Include favicon URLs"
+            chunks_per_source:
+              type: integer
+              description: "Max chunks per source (advanced search only)"
       required: [id]
 
   # Reranker configuration (P4 feature)
