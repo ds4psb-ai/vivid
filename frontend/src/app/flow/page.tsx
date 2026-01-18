@@ -339,15 +339,62 @@ function FlowPageContent() {
         // Format: { "1d_topic": "value", "2d_style": "value", ... }
         // Priority: user_input > preset > defaults
         const extractDimensionPreset = (dimCode: string, fullPreset: Record<string, unknown> = {}): Record<string, unknown> => {
-            const prefix = dimCode.toLowerCase() + "_";
+            const normalized = normalizeWorkflowDimension(dimCode) ?? dimCode.toUpperCase();
+            const prefixCandidates = new Set<string>([`${dimCode.toLowerCase()}_`]);
+
+            switch (normalized) {
+                case "1D":
+                    prefixCandidates.add("1d_");
+                    prefixCandidates.add("prompt_");
+                    break;
+                case "2D":
+                    prefixCandidates.add("2d_");
+                    prefixCandidates.add("storyboard_");
+                    break;
+                case "3D":
+                    prefixCandidates.add("3d_");
+                    prefixCandidates.add("vis_");
+                    break;
+                case "4D":
+                    prefixCandidates.add("4d_");
+                    prefixCandidates.add("ref_");
+                    break;
+                case "QC":
+                    prefixCandidates.add("qc_");
+                    break;
+                case "AD":
+                    prefixCandidates.add("ad_");
+                    break;
+                case "AI":
+                    prefixCandidates.add("ai_");
+                    prefixCandidates.add("mirror_");
+                    break;
+                case "VEO":
+                    prefixCandidates.add("veo_");
+                    break;
+                case "STORY":
+                    prefixCandidates.add("story_");
+                    prefixCandidates.add("sa_");
+                    break;
+                case "SOUND":
+                    prefixCandidates.add("sound_");
+                    prefixCandidates.add("sc_");
+                    break;
+                default:
+                    break;
+            }
             const dimensionPreset: Record<string, unknown> = {};
 
             // Extract prefixed keys for this dimension
             Object.entries(fullPreset).forEach(([key, value]) => {
-                if (key.toLowerCase().startsWith(prefix)) {
-                    // Remove prefix: "1d_topic" -> "topic"
-                    const fieldName = key.slice(prefix.length);
-                    dimensionPreset[fieldName] = value;
+                const lowerKey = key.toLowerCase();
+                for (const prefix of prefixCandidates) {
+                    if (lowerKey.startsWith(prefix)) {
+                        // Remove prefix: "1d_topic" -> "topic"
+                        const fieldName = key.slice(prefix.length);
+                        dimensionPreset[fieldName] = value;
+                        break;
+                    }
                 }
             });
 
@@ -355,7 +402,7 @@ function FlowPageContent() {
             Object.entries(fullPreset).forEach(([key, value]) => {
                 const lowerKey = key.toLowerCase();
                 // Skip if already has a prefix for any dimension
-                if (!lowerKey.match(/^[0-9]d_|^qc_|^ad_|^ai_|^veo_|^sa_|^sc_/)) {
+                if (!lowerKey.match(/^[0-9]d_|^qc_|^ad_|^ai_|^veo_|^sa_|^sc_|^story_|^sound_|^storyboard_|^prompt_|^mirror_|^ref_|^vis_/)) {
                     // Only add if not already set by prefixed version
                     if (!(key in dimensionPreset)) {
                         dimensionPreset[key] = value;
