@@ -52,6 +52,17 @@ DIMENSION_PRESETS: Dict[str, Dict[str, Any]] = {
             "Sora prompt guide",
         ],
     },
+    "PROMPT": {
+        "dimension": "1D",
+        "app_key": "dimension.1d.prompt",
+        "queries": [
+            "video generation prompt engineering",
+            "text to video prompt best practices",
+            "VEO prompt guide",
+            "Runway Gen-3 prompting",
+            "Sora prompt guide",
+        ],
+    },
     "2D": {
         "dimension": "2D",
         "app_key": "dimension.story.architect",
@@ -63,7 +74,40 @@ DIMENSION_PRESETS: Dict[str, Dict[str, Any]] = {
             "save the cat beat sheet",
         ],
     },
+    "STORY": {
+        "dimension": "2D",
+        "app_key": "dimension.story.architect",
+        "dataset_id": "story_templates",
+        "queries": [
+            "storyboard narrative structure",
+            "story beat mapping",
+            "screenplay scene breakdown",
+            "hero's journey beat sheet",
+            "save the cat beat sheet",
+        ],
+    },
+    "STORYBOARD": {
+        "dimension": "2D",
+        "app_key": "teaching.storyboard.create",
+        "dataset_id": "storyboard_composition_rules",
+        "queries": [
+            "storyboard panel composition rules",
+            "shot list storyboard template",
+            "camera movement notation storyboard",
+            "storyboard character consistency techniques",
+        ],
+    },
     "3D": {
+        "dimension": "3D",
+        "app_key": "dimension.3d.image",
+        "queries": [
+            "cinematography composition framing",
+            "lighting techniques film",
+            "color grading film theory",
+            "shot composition analysis",
+        ],
+    },
+    "IMAGE": {
         "dimension": "3D",
         "app_key": "dimension.3d.image",
         "queries": [
@@ -85,6 +129,16 @@ DIMENSION_PRESETS: Dict[str, Dict[str, Any]] = {
         ],
     },
     "5D": {
+        "dimension": "5D",
+        "app_key": "veo.video.generate",
+        "queries": [
+            "camera movement techniques film",
+            "video transition effects",
+            "visual rhythm editing techniques",
+            "VEO camera movement guide",
+        ],
+    },
+    "VEO": {
         "dimension": "5D",
         "app_key": "veo.video.generate",
         "queries": [
@@ -121,6 +175,33 @@ DIMENSION_PRESETS: Dict[str, Dict[str, Any]] = {
             "video quality assessment vmaf",
             "perceptual video quality metrics",
             "ssim lpips fid quality metrics",
+        ],
+    },
+    # Research-only presets (RAG ingest disabled)
+    "MIRROR": {
+        "dimension": "AI",
+        "app_key": "mirror.persona.analyze",
+        "skip_ingest": True,
+        "skip_quality_gate": True,
+        "save_output": True,
+        "queries": [
+            "big five personality traits markers",
+            "attachment theory adult styles",
+            "jungian archetypes creativity",
+            "mbti creativity correlations",
+        ],
+    },
+    "CHARACTER": {
+        "dimension": "CHARACTER",
+        "app_key": "dimension.character.manage",
+        "skip_ingest": True,
+        "skip_quality_gate": True,
+        "save_output": True,
+        "queries": [
+            "character consistency storyboard techniques",
+            "multi-shot character reference design",
+            "character sheet visual guide",
+            "storymem character consistency paper",
         ],
     },
 }
@@ -236,6 +317,7 @@ async def main() -> None:
     parser.add_argument("--min-content-len", type=int, default=200)
     parser.add_argument("--extract-mode", default="auto", choices=["auto", "force", "off"])
     parser.add_argument("--dry-run", action="store_true", help="Skip indexing.")
+    parser.add_argument("--skip-ingest", action="store_true", help="Skip ingest entirely.")
     parser.add_argument("--save-output", action="store_true", help="Save research output JSON.")
     parser.add_argument("--output", help="Output JSON file for research docs.")
     parser.add_argument("--skip-quality-gate", action="store_true")
@@ -258,6 +340,9 @@ async def main() -> None:
 
     dataset_id = args.dataset_id or preset.get("dataset_id")
     app_key = args.app_key or preset.get("app_key")
+    skip_ingest = args.skip_ingest or preset.get("skip_ingest", False)
+    skip_quality_gate = args.skip_quality_gate or preset.get("skip_quality_gate", False)
+    save_output = args.save_output or preset.get("save_output", False)
 
     pipeline = ResearchPipeline()
     all_docs: List[Dict[str, Any]] = []
@@ -277,7 +362,7 @@ async def main() -> None:
         all_docs.extend([doc.to_dict() for doc in result.documents])
 
     output_path = None
-    if args.save_output or args.output:
+    if save_output or args.output:
         if args.output:
             output_path = Path(args.output)
         else:
@@ -288,26 +373,32 @@ async def main() -> None:
         output_path.write_text(json.dumps(all_docs, ensure_ascii=False, indent=2))
         print(f"Saved research output: {output_path}")
 
-    allow_license = {item.strip().lower() for item in args.allow_license.split(",") if item.strip()}
-    stats = ingest_documents(
-        all_docs,
-        dimension_override=dimension,
-        dataset_id=dataset_id,
-        app_key=app_key,
-        min_score=args.min_score,
-        min_quality=args.min_quality,
-        allowed_licenses=allow_license,
-        min_content_len=args.min_content_len,
-        dry_run=args.dry_run,
-    )
+    if skip_ingest:
+        print("[SKIP] Ingest disabled for this preset.")
+        if not skip_quality_gate:
+            print("[SKIP] Quality gate disabled because ingest is skipped.")
+            skip_quality_gate = True
+    else:
+        allow_license = {item.strip().lower() for item in args.allow_license.split(",") if item.strip()}
+        stats = ingest_documents(
+            all_docs,
+            dimension_override=dimension,
+            dataset_id=dataset_id,
+            app_key=app_key,
+            min_score=args.min_score,
+            min_quality=args.min_quality,
+            allowed_licenses=allow_license,
+            min_content_len=args.min_content_len,
+            dry_run=args.dry_run,
+        )
 
-    print(
-        f"[{'DRY RUN' if args.dry_run else 'INDEX'}] "
-        f"Loaded: {stats['loaded']} | Eligible: {stats['eligible']} | Indexed: {stats['indexed']}"
-    )
-    print(f"Skipped: {stats['skipped']}")
+        print(
+            f"[{'DRY RUN' if args.dry_run else 'INDEX'}] "
+            f"Loaded: {stats['loaded']} | Eligible: {stats['eligible']} | Indexed: {stats['indexed']}"
+        )
+        print(f"Skipped: {stats['skipped']}")
 
-    if args.skip_quality_gate:
+    if skip_quality_gate:
         return
 
     ok = await _run_quality_gate(

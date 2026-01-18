@@ -241,12 +241,20 @@ python scripts/run_rag_quality_gate.py --no-llm
 # 4D 프리셋 (쿼리 자동)
 python scripts/run_research_ingest_pipeline.py --preset 4D --save-output
 
+# Story / Storyboard 프리셋
+python scripts/run_research_ingest_pipeline.py --preset STORY --save-output
+python scripts/run_research_ingest_pipeline.py --preset STORYBOARD --save-output
+
 # 커스텀 쿼리 + 메타데이터 오버라이드
 python scripts/run_research_ingest_pipeline.py \
   --dimension 1D \
   --query "video prompt best practices" \
   --app-key dimension.1d.prompt \
   --save-output
+
+# Research-only (RAG 비활성 앱)
+python scripts/run_research_ingest_pipeline.py --preset MIRROR
+python scripts/run_research_ingest_pipeline.py --preset CHARACTER
 ```
 
 ### Phase 3: 코퍼스 확장
