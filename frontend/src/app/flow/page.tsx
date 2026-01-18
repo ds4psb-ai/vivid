@@ -525,12 +525,20 @@ function FlowPageContent() {
                 .map((result) => normalizeWorkflowDimension(result.dimension) ?? result.dimension)
                 .filter(Boolean) as string[];
 
+            const normalizedToolSequence = workflowResults
+                .map((result) => result.toolName)
+                .filter(Boolean);
+
+            if (normalizedSequence.length === 0) {
+                throw new Error("워크플로우 차원 순서를 확인할 수 없습니다.");
+            }
+
             const response = await api.createSingularityTemplate({
                 title: templateTitle.trim(),
                 description: templateDescription.trim() || `${workflowResults.length}개 차원 워크플로우 템플릿`,
                 dimension_source: normalizedSequence[0] || workflowResults[0]?.dimension || "1D",
                 dimension_sequence: normalizedSequence,
-                tool_sequence: workflowResults.map(r => r.toolName),
+                tool_sequence: normalizedToolSequence,
                 input_preset: mergedInputs,
                 output_example: mergedOutputs,
                 tags: templateTags.split(",").map(t => t.trim()).filter(Boolean),
