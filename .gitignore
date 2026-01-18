@@ -39,5 +39,8 @@ CLAUDE.local.md
 # Generated reports
 data/reports/
 
+# Research pipeline output (keep README)
+data/source_packs/research/*.json
+
 # Notion export files
 notion_docs_hub_seed.csv
