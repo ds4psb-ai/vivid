@@ -1238,17 +1238,19 @@ html.lenis body {
 }
 
 /* Crebit Component Utilities (Section 7.1-7.3) */
-.btn-primary {
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-tertiary,
+.btn-outline,
+.btn-ghost,
+.btn-link,
+.btn-destructive {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  min-height: 44px;
-  padding: var(--space-3) var(--space-5);
   border-radius: var(--radius-md);
-  background: var(--role-primary-bg);
-  color: var(--role-primary-fg);
-  border: 1px solid var(--role-primary-border);
   font-weight: 600;
   transition:
     transform var(--motion-duration-fast) var(--motion-ease-standard),
@@ -1258,21 +1260,108 @@ html.lenis body {
     border-color var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
-.btn-primary:hover {
+.btn-primary {
+  background: var(--role-primary-bg);
+  color: var(--role-primary-fg);
+  border: 1px solid var(--role-primary-border);
+}
+
+.btn-secondary {
+  background: var(--role-secondary-bg);
+  color: var(--role-secondary-fg);
+  border: 1px solid var(--role-secondary-border);
+}
+
+.btn-tertiary {
+  background: var(--role-tertiary-bg);
+  color: var(--role-tertiary-fg);
+  border: 1px solid var(--role-tertiary-border);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--fg-0);
+  border: 1px solid var(--border-default);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--fg-0);
+  border: 1px solid transparent;
+}
+
+.btn-link {
+  background: transparent;
+  color: var(--interactive-default);
+  border: 1px solid transparent;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.btn-destructive {
+  background: var(--error);
+  color: var(--fg-on-emphasis);
+  border: 1px solid var(--error);
+}
+
+.btn-primary:hover,
+.btn-secondary:hover,
+.btn-tertiary:hover,
+.btn-outline:hover,
+.btn-ghost:hover,
+.btn-destructive:hover {
   transform: translateY(-1px);
   box-shadow: var(--shadow-sm);
 }
 
-.btn-primary:focus-visible {
+.btn:focus-visible,
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.btn-tertiary:focus-visible,
+.btn-outline:focus-visible,
+.btn-ghost:focus-visible,
+.btn-link:focus-visible,
+.btn-destructive:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
-.btn-primary:disabled {
+.btn:disabled,
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-tertiary:disabled,
+.btn-outline:disabled,
+.btn-ghost:disabled,
+.btn-link:disabled,
+.btn-destructive:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+.btn-size-default {
+  min-height: 44px;
+  padding: var(--space-3) var(--space-5);
+  font-size: 0.875rem;
+}
+
+.btn-size-sm {
+  min-height: 36px;
+  padding: var(--space-2) var(--space-4);
+  font-size: 0.8125rem;
+}
+
+.btn-size-lg {
+  min-height: 48px;
+  padding: var(--space-4) var(--space-6);
+  font-size: 0.9375rem;
+}
+
+.btn-size-icon {
+  width: 40px;
+  height: 40px;
+  padding: 0;
 }
 
 .card {
@@ -1280,6 +1369,7 @@ html.lenis body {
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
+  color: var(--fg-base);
 }
 
 .input {
@@ -1288,7 +1378,7 @@ html.lenis body {
   min-height: 44px;
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
-  color: var(--fg-0);
+  color: var(--fg-base);
 }
 
 .input::placeholder {
