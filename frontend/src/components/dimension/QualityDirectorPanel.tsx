@@ -14,7 +14,8 @@
  * @see docs/PANEL_DESIGN_UNITY_SPEC.md
  */
 
-import { useState, useCallback, useTransition, useOptimistic } from "react";
+import { useState, useCallback, useTransition, useOptimistic, useMemo } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
@@ -62,9 +63,9 @@ const CRITERIA_OPTIONS = [
   { value: "narrative", label: "내러티브", desc: "스토리텔링 완성도" },
 ];
 
-const MODELS = [
-  { value: "gemini-3-flash-preview", label: "Flash (빠름)" },
-  { value: "gemini-3-pro-preview", label: "Pro (정확)" },
+const getModels = (isKo: boolean) => [
+  { value: "gemini-3-flash-preview", label: isKo ? "Flash (빠름)" : "Flash (Fast)" },
+  { value: "gemini-3-pro-preview", label: isKo ? "Pro (고품질)" : "Pro (High Quality)" },
 ];
 
 // ============================================================================
@@ -85,6 +86,11 @@ export default function QualityDirectorPanel() {
 
 function QualityDirectorContent() {
   const { token, setLoading, setResult, setError, classes } = useDimensionPanel();
+  const { language } = useLanguage();
+  const isKo = language === "ko";
+
+  // Model options with i18n
+  const MODELS = useMemo(() => getModels(isKo), [isKo]);
 
   // Form state
   const [content, setContent] = useState("");

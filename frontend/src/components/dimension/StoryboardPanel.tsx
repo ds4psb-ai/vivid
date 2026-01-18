@@ -52,6 +52,7 @@ interface StoryboardResult {
 }
 
 const getModels = (isKo: boolean) => [
+  { value: "gemini-3-flash-preview", label: isKo ? "Flash (빠름)" : "Flash (Fast)" },
   { value: "gemini-3-pro-preview", label: isKo ? "Pro (고품질)" : "Pro (High Quality)" },
 ];
 
@@ -411,7 +412,7 @@ function StoryboardContent() {
 
         {/* Empty State */}
         {!storyboardResult && !isPending && !displayError && !optimisticResult && (
-          <EmptyState themeColor={token.themeColor} />
+          <EmptyState themeColor={token.themeColor} isKo={isKo} />
         )}
 
         {/* Next Dimension Navigation */}
@@ -552,7 +553,7 @@ function StoryboardResultDisplay({
   );
 }
 
-function EmptyState({ themeColor }: { themeColor: string }) {
+function EmptyState({ themeColor, isKo }: { themeColor: string; isKo: boolean }) {
   return (
     <div className="flex flex-col items-center justify-center h-full text-zinc-500 space-y-8 animate-in fade-in zoom-in-95 duration-700">
       <div className="relative group">
@@ -580,15 +581,15 @@ function EmptyState({ themeColor }: { themeColor: string }) {
       </div>
       <div className="text-center space-y-3">
         <h3 className="text-2xl font-bold text-slate-900 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-b dark:from-white dark:to-white/40 tracking-tight">
-          Ready to Visualize
+          {isKo ? "시각화 준비 완료" : "Ready to Visualize"}
         </h3>
         <p className="text-sm text-slate-500 dark:text-zinc-500 max-w-xs mx-auto font-light leading-relaxed">
-          스토리를 장면 단위로 시각화하고
+          {isKo ? "스토리를 장면 단위로 시각화하고" : "Visualize your story scene by scene and"}
           <br />
           <span className={`text-${themeColor}-600 dark:text-${themeColor}-500/80 font-medium`}>
-            Midjourney & Runway 프롬프트
+            {isKo ? "Midjourney & Runway 프롬프트" : "Midjourney & Runway prompts"}
           </span>
-          를 자동 생성합니다.
+          {isKo ? "를 자동 생성합니다." : " will be auto-generated."}
         </p>
       </div>
     </div>

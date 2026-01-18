@@ -18,7 +18,8 @@
  * @see https://react.dev/blog/2024/12/05/react-19
  */
 
-import { useState, useCallback, useTransition, useOptimistic } from "react";
+import { useState, useCallback, useTransition, useOptimistic, useMemo } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
@@ -143,9 +144,9 @@ const STYLES = [
   { value: "realistic", label: "Realistic" },
 ];
 
-const MODELS = [
-  { value: "gemini-3-flash-preview", label: "Flash" },
-  { value: "gemini-3-pro-preview", label: "Pro" },
+const getModels = (isKo: boolean) => [
+  { value: "gemini-3-flash-preview", label: isKo ? "Flash (빠름)" : "Flash (Fast)" },
+  { value: "gemini-3-pro-preview", label: isKo ? "Pro (고품질)" : "Pro (High Quality)" },
 ];
 
 // =============================================================================
@@ -166,6 +167,11 @@ export default function PromptAlchemyPanel() {
 
 function PromptAlchemyContent() {
   const { classes, styles, setLoading, setError, setResult } = useDimensionPanel();
+  const { language: appLanguage } = useLanguage();
+  const isKo = appLanguage === "ko";
+
+  // Model options with i18n
+  const MODELS = useMemo(() => getModels(isKo), [isKo]);
 
   // Form state
   const [sceneDescription, setSceneDescription] = useState("");

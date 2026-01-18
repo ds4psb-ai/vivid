@@ -60,7 +60,7 @@ const getStageLabels = (isKo: boolean): Record<string, string> => ({
 
 const getModels = (isKo: boolean) => [
   { value: "gemini-3-flash-preview", label: isKo ? "Flash (빠름)" : "Flash (Fast)" },
-  { value: "gemini-3-pro-preview", label: isKo ? "Pro (깊이)" : "Pro (Deep)" },
+  { value: "gemini-3-pro-preview", label: isKo ? "Pro (고품질)" : "Pro (High Quality)" },
 ];
 
 // ============================================================================
