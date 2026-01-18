@@ -542,6 +542,7 @@ async def run_quality_test(queries: list[dict]) -> dict:
 | 문서 | 경로 | 설명 |
 |------|------|------|
 | RAG 아키텍처 | `docs/RAG_ARCHITECTURE.md` | 기술 아키텍처 상세 |
+| RAG 데이터 파이프라인 | `docs/RAG_DATA_PIPELINE_SPEC_2026.md` | 앱별 코퍼스/수집 프로토콜 |
 | 앱 개발자 가이드 | `docs/DIMENSION_APP_DEVELOPER_GUIDE.md` | RAG 연동 코드 |
 | Hybrid RAG 코드 | `backend/app/rag/hybrid_rag.py` | 하이브리드 검색 구현 |
 | RAG Presets | `backend/app/rag/rag_presets.py` | 거장 스타일 힌트 |

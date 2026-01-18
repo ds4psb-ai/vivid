@@ -49,6 +49,12 @@
 | **RAG 데이터 큐레이터 가이드** | [`docs/RAG_DATA_CURATOR_GUIDE.md`](docs/RAG_DATA_CURATOR_GUIDE.md) | 데이터 적재 담당자용 (**NEW**) |
 | **Pre-Development 체크리스트** | [`docs/PRE_DEVELOPMENT_CHECKLIST.md`](docs/PRE_DEVELOPMENT_CHECKLIST.md) | 개발자/큐레이터 사전 준비 (**NEW**) |
 
+## 2026-01-18 RAG Data Pipeline
+
+| 항목 | 위치 | 설명 |
+|------|------|------|
+| **RAG 데이터 파이프라인 SPEC** | [`docs/RAG_DATA_PIPELINE_SPEC_2026.md`](docs/RAG_DATA_PIPELINE_SPEC_2026.md) | 앱별 코퍼스 설계 + 수집/품질 프로토콜 |
+
 ---
 
 ## 2026-01-13 신규 (RAG P1-P5)
