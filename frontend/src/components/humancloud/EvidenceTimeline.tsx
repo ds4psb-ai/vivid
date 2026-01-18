@@ -105,7 +105,7 @@ function EvidenceItem({ log, index, isLast }: { log: EvidenceLog; index: number;
 
                 {/* Actor Badge */}
                 <div className="mt-1">
-                    <span className={`evidence-badge ${log.actor_role === "client" ? "actor-client" : "actor-provider"}`}>
+                    <span className="evidence-badge" data-actor={log.actor_role}>
                         {log.actor_role.toUpperCase()}
                     </span>
                 </div>

@@ -183,6 +183,12 @@ html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
   --accent-glow: rgba(124, 58, 237, 0.2);
   --accent-2: #D97706;
   /* Amber-600 */
+  --accent-rgb: 124, 58, 237;
+  --success-rgb: 5, 150, 105;
+  --warning-rgb: 217, 119, 6;
+  --error-rgb: 220, 38, 38;
+  --info-rgb: 37, 99, 235;
+  --fg-muted-rgb: 113, 113, 122;
 
   /* Surfaces & Glass */
   --surface-1: rgba(255, 255, 255, 0.8);
@@ -199,6 +205,9 @@ html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
   --warning: #D97706;
   --error: #DC2626;
   --info: #2563EB;
+
+  --credit-pending-rgb: var(--accent-rgb);
+  --credit-ok-rgb: var(--success-rgb);
 
   /* Semantic/Alias Tokens (Phase 2.1) */
   --bg-base: var(--bg-0);
@@ -289,6 +298,12 @@ html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
   --accent: #8B5CF6;
   --accent-glow: rgba(139, 92, 246, 0.4);
   --accent-2: #f59e0b;
+  --accent-rgb: 139, 92, 246;
+  --success-rgb: 16, 185, 129;
+  --warning-rgb: 245, 158, 11;
+  --error-rgb: 239, 68, 68;
+  --info-rgb: 59, 130, 246;
+  --fg-muted-rgb: 160, 160, 176;
 
   /* Surfaces & Glass */
   --surface-1: rgba(22, 22, 24, 0.6);
@@ -306,6 +321,9 @@ html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
   --warning: #f59e0b;
   --error: #ef4444;
   --info: #3b82f6;
+
+  --credit-pending-rgb: var(--accent-rgb);
+  --credit-ok-rgb: var(--success-rgb);
 
   /* Semantic/Alias Tokens (Phase 2.1) */
   --bg-base: var(--bg-0);
@@ -1228,33 +1246,83 @@ html.lenis body {
 /* Evidence Actor Roles */
 .actor-client {
   color: var(--credit-pending);
+  border-color: rgba(var(--credit-pending-rgb), 0.35);
+  background: rgba(var(--credit-pending-rgb), 0.12);
   border-color: color-mix(in srgb, var(--credit-pending) 35%, transparent);
   background: color-mix(in srgb, var(--credit-pending) 12%, transparent);
 }
 
 .actor-provider {
   color: var(--credit-ok);
+  border-color: rgba(var(--credit-ok-rgb), 0.35);
+  background: rgba(var(--credit-ok-rgb), 0.12);
+  border-color: color-mix(in srgb, var(--credit-ok) 35%, transparent);
+  background: color-mix(in srgb, var(--credit-ok) 12%, transparent);
+}
+
+.evidence-badge[data-actor="client"] {
+  color: var(--credit-pending);
+  border-color: rgba(var(--credit-pending-rgb), 0.35);
+  background: rgba(var(--credit-pending-rgb), 0.12);
+  border-color: color-mix(in srgb, var(--credit-pending) 35%, transparent);
+  background: color-mix(in srgb, var(--credit-pending) 12%, transparent);
+}
+
+.evidence-badge[data-actor="provider"] {
+  color: var(--credit-ok);
+  border-color: rgba(var(--credit-ok-rgb), 0.35);
+  background: rgba(var(--credit-ok-rgb), 0.12);
   border-color: color-mix(in srgb, var(--credit-ok) 35%, transparent);
   background: color-mix(in srgb, var(--credit-ok) 12%, transparent);
 }
 
 /* Evidence/Event tones */
 .event-tone-info { color: var(--info); }
-.event-bg-info { background: color-mix(in srgb, var(--info) 12%, transparent); }
-.event-border-info { border-color: color-mix(in srgb, var(--info) 35%, transparent); }
+.event-bg-info {
+  background: rgba(var(--info-rgb), 0.12);
+  background: color-mix(in srgb, var(--info) 12%, transparent);
+}
+.event-border-info {
+  border-color: rgba(var(--info-rgb), 0.35);
+  border-color: color-mix(in srgb, var(--info) 35%, transparent);
+}
 
 .event-tone-accent { color: var(--accent); }
-.event-bg-accent { background: color-mix(in srgb, var(--accent) 12%, transparent); }
-.event-border-accent { border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
+.event-bg-accent {
+  background: rgba(var(--accent-rgb), 0.12);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.event-border-accent {
+  border-color: rgba(var(--accent-rgb), 0.35);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
 
 .event-tone-success { color: var(--success); }
-.event-bg-success { background: color-mix(in srgb, var(--success) 12%, transparent); }
-.event-border-success { border-color: color-mix(in srgb, var(--success) 35%, transparent); }
+.event-bg-success {
+  background: rgba(var(--success-rgb), 0.12);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+}
+.event-border-success {
+  border-color: rgba(var(--success-rgb), 0.35);
+  border-color: color-mix(in srgb, var(--success) 35%, transparent);
+}
 
 .event-tone-warning { color: var(--warning); }
-.event-bg-warning { background: color-mix(in srgb, var(--warning) 12%, transparent); }
-.event-border-warning { border-color: color-mix(in srgb, var(--warning) 35%, transparent); }
+.event-bg-warning {
+  background: rgba(var(--warning-rgb), 0.12);
+  background: color-mix(in srgb, var(--warning) 12%, transparent);
+}
+.event-border-warning {
+  border-color: rgba(var(--warning-rgb), 0.35);
+  border-color: color-mix(in srgb, var(--warning) 35%, transparent);
+}
 
 .event-tone-neutral { color: var(--fg-muted); }
-.event-bg-neutral { background: color-mix(in srgb, var(--fg-muted) 12%, transparent); }
-.event-border-neutral { border-color: color-mix(in srgb, var(--fg-muted) 35%, transparent); }
+.event-bg-neutral {
+  background: rgba(var(--fg-muted-rgb), 0.12);
+  background: color-mix(in srgb, var(--fg-muted) 12%, transparent);
+}
+.event-border-neutral {
+  border-color: rgba(var(--fg-muted-rgb), 0.35);
+  border-color: color-mix(in srgb, var(--fg-muted) 35%, transparent);
+}
