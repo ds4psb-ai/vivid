@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import type { ProgressEvent } from "@/hooks/useAsyncOperation";
+import { type DimensionCode, getDimensionToken } from "@/lib/tokens";
 
 /**
  * Theme colors matching DimensionPanelLayout.
@@ -91,6 +92,21 @@ const THEME_COLORS = {
   },
 };
 
+const getDimensionTheme = (dimensionCode?: DimensionCode) => {
+  if (!dimensionCode) return null;
+  const token = getDimensionToken(dimensionCode);
+  const key = token.tailwindKey;
+  return {
+    accent: `text-${key}`,
+    bg: `bg-${key}/10`,
+    border: `border-${key}/30`,
+    progress: `bg-${key}`,
+    progressBg: `bg-${key}/20`,
+    button: `bg-${key}/20 hover:bg-${key}/30 text-${key}`,
+    spinner: `border-${key}`,
+  };
+};
+
 export interface OperationProgressProps {
   /** Current progress state */
   progress: ProgressEvent | null;
@@ -106,6 +122,8 @@ export interface OperationProgressProps {
   canRetry: boolean;
   /** Theme color for styling */
   themeColor?: ThemeColor;
+  /** Dimension code for token-driven styling (preferred) */
+  dimensionCode?: DimensionCode;
   /** Show cancel button (default: true) */
   showCancelButton?: boolean;
   /** Show retry button (default: true) */
@@ -152,6 +170,7 @@ export function OperationProgress({
   onRetry,
   canRetry,
   themeColor = "amber",
+  dimensionCode,
   showCancelButton = true,
   showRetryButton = true,
   cancelLabel = "취소",
@@ -160,7 +179,8 @@ export function OperationProgress({
   retryCount = 0,
   maxRetries = 3,
 }: OperationProgressProps) {
-  const theme = THEME_COLORS[themeColor];
+  const tokenTheme = getDimensionTheme(dimensionCode);
+  const theme = tokenTheme ?? THEME_COLORS[themeColor];
 
   // Don't render if not loading and no error
   if (!isLoading && !error) {

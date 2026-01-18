@@ -7,6 +7,7 @@ import { useBYOK } from "@/hooks/useBYOK";
 import BYOKSettingsModal from "./BYOKSettingsModal";
 import OperationProgress from "@/components/shared/OperationProgress";
 import type { ProgressEvent } from "@/hooks/useAsyncOperation";
+import { type DimensionCode, getDimensionToken } from "@/lib/tokens";
 
 export type ThemeColor = "violet" | "cyan" | "emerald" | "amber" | "rose" | "fuchsia" | "indigo" | "sky";
 
@@ -93,6 +94,22 @@ const THEME_COLORS = {
     },
 };
 
+const getDimensionTheme = (dimensionCode?: DimensionCode) => {
+    if (!dimensionCode) return null;
+    const token = getDimensionToken(dimensionCode);
+    const key = token.tailwindKey;
+    return {
+        accent: `text-${key}`,
+        border: `border-${key}/30`,
+        bg: `bg-${key}/10`,
+        glow: `shadow-[0_0_30px_var(--tw-shadow-color)] shadow-${key}/20`,
+        gradient: `from-${key} to-${key}`,
+        focus: `focus:border-${key}/50 focus:ring-${key}/20`,
+        button: `from-${key} to-${key} hover:from-${key}/90 hover:to-${key}/90 shadow-${key}/10 hover:shadow-${key}/20`,
+        spinner: `border-${key} border-${key}`,
+    };
+};
+
 interface TeachingPanelLayoutProps {
     title: string;
     sidebarContent: ReactNode;
@@ -103,6 +120,8 @@ interface TeachingPanelLayoutProps {
     creditCost?: number;
     /** Theme color for this dimension */
     themeColor?: ThemeColor;
+    /** Dimension code for token-driven styling */
+    dimensionCode?: DimensionCode;
 
     // New progress props (optional, backward compatible)
     /** Current progress state */
@@ -129,6 +148,7 @@ export default function TeachingPanelLayout({
     isLoading = false,
     creditCost,
     themeColor = "amber",
+    dimensionCode,
     // New progress props
     progress,
     onCancel,
@@ -138,7 +158,8 @@ export default function TeachingPanelLayout({
     retryCount = 0,
     maxRetries = 3,
 }: TeachingPanelLayoutProps) {
-    const theme = THEME_COLORS[themeColor];
+    const tokenTheme = getDimensionTheme(dimensionCode);
+    const theme = tokenTheme ?? THEME_COLORS[themeColor];
     const creditCtx = useCreditContextOptional();
     const { isBYOKEnabled } = useBYOK();
     const [showBYOKModal, setShowBYOKModal] = useState(false);
@@ -254,6 +275,7 @@ export default function TeachingPanelLayout({
                                         onRetry={onRetry ?? (() => { })}
                                         canRetry={canRetry}
                                         themeColor={themeColor}
+                                        dimensionCode={dimensionCode}
                                         retryCount={retryCount}
                                         maxRetries={maxRetries}
                                     />
