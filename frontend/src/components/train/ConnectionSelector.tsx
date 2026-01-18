@@ -50,66 +50,6 @@ const ICON_MAP: Record<string, React.ReactNode> = {
     video: <Video className="h-5 w-5" />,
 };
 
-const COLOR_MAP: Record<string, { bg: string; border: string; text: string; hover: string; glow: string }> = {
-    violet: {
-        bg: "bg-violet-500/10",
-        border: "border-violet-500/30",
-        text: "text-violet-400",
-        hover: "hover:bg-violet-500/20 hover:border-violet-500/50",
-        glow: "shadow-[0_0_15px_rgba(139,92,246,0.2)]",
-    },
-    emerald: {
-        bg: "bg-emerald-500/10",
-        border: "border-emerald-500/30",
-        text: "text-emerald-400",
-        hover: "hover:bg-emerald-500/20 hover:border-emerald-500/50",
-        glow: "shadow-[0_0_15px_rgba(52,211,153,0.2)]",
-    },
-    amber: {
-        bg: "bg-amber-500/10",
-        border: "border-amber-500/30",
-        text: "text-amber-400",
-        hover: "hover:bg-amber-500/20 hover:border-amber-500/50",
-        glow: "shadow-[0_0_15px_rgba(251,191,36,0.2)]",
-    },
-    cyan: {
-        bg: "bg-cyan-500/10",
-        border: "border-cyan-500/30",
-        text: "text-cyan-400",
-        hover: "hover:bg-cyan-500/20 hover:border-cyan-500/50",
-        glow: "shadow-[0_0_15px_rgba(34,211,238,0.2)]",
-    },
-    // Extended Dimension Colors
-    rose: {
-        bg: "bg-rose-500/10",
-        border: "border-rose-500/30",
-        text: "text-rose-400",
-        hover: "hover:bg-rose-500/20 hover:border-rose-500/50",
-        glow: "shadow-[0_0_15px_rgba(244,63,94,0.2)]",
-    },
-    fuchsia: {
-        bg: "bg-fuchsia-500/10",
-        border: "border-fuchsia-500/30",
-        text: "text-fuchsia-400",
-        hover: "hover:bg-fuchsia-500/20 hover:border-fuchsia-500/50",
-        glow: "shadow-[0_0_15px_rgba(217,70,239,0.2)]",
-    },
-    indigo: {
-        bg: "bg-indigo-500/10",
-        border: "border-indigo-500/30",
-        text: "text-indigo-400",
-        hover: "hover:bg-indigo-500/20 hover:border-indigo-500/50",
-        glow: "shadow-[0_0_15px_rgba(99,102,241,0.2)]",
-    },
-    sky: {
-        bg: "bg-sky-500/10",
-        border: "border-sky-500/30",
-        text: "text-sky-400",
-        hover: "hover:bg-sky-500/20 hover:border-sky-500/50",
-        glow: "shadow-[0_0_15px_rgba(14,165,233,0.2)]",
-    },
-};
-
 const getDimensionColorClasses = (dimensionCode?: DimensionCode | null) => {
     if (!dimensionCode) return null;
     const token = getDimensionToken(dimensionCode);
@@ -187,7 +127,7 @@ export function ConnectionSelector({
                             {visibleOptions.map((option, index) => {
                                 const resolvedCode = option.dimensionCode ?? dimensionIdToCode(option.dimension);
                                 const tokenScheme = getDimensionColorClasses(resolvedCode);
-                                const colorScheme = tokenScheme || COLOR_MAP[option.color] || COLOR_MAP.violet;
+                                const colorScheme = tokenScheme || getDimensionColorClasses("1d");
                                 const IconComponent = ICON_MAP[option.icon] || <Sparkles className="h-5 w-5" />;
                                 const isHovered = hoveredId === option.id;
                                 const isTopRecommend = index === 0;
