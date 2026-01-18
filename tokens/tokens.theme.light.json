@@ -1,0 +1,22 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "semantic": {
+    "bg": {
+      "base": {"$type": "color", "$value": "{color.neutral.0}"},
+      "subtle": {"$type": "color", "$value": "{color.neutral.50}"},
+      "muted": {"$type": "color", "$value": "{color.neutral.100}"}
+    },
+    "fg": {
+      "base": {"$type": "color", "$value": "#09090B"},
+      "muted": {"$type": "color", "$value": "{color.neutral.500}"}
+    },
+    "border": {
+      "muted": {"$type": "color", "$value": "rgba(0,0,0,0.1)"},
+      "subtle": {"$type": "color", "$value": "rgba(0,0,0,0.05)"}
+    },
+    "interactive": {
+      "primary": {"$type": "color", "$value": "{color.brand.primary}"},
+      "secondary": {"$type": "color", "$value": "{color.brand.secondary}"}
+    }
+  }
+}

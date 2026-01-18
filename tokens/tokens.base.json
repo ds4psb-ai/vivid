@@ -1,0 +1,36 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "color": {
+    "neutral": {
+      "0": {"$type": "color", "$value": "#ffffff"},
+      "50": {"$type": "color", "$value": "#fafafa"},
+      "100": {"$type": "color", "$value": "#f4f4f5"},
+      "200": {"$type": "color", "$value": "#e4e4e7"},
+      "300": {"$type": "color", "$value": "#d4d4d8"},
+      "400": {"$type": "color", "$value": "#a1a1aa"},
+      "500": {"$type": "color", "$value": "#71717a"},
+      "600": {"$type": "color", "$value": "#52525b"},
+      "700": {"$type": "color", "$value": "#3f3f46"},
+      "800": {"$type": "color", "$value": "#27272a"},
+      "900": {"$type": "color", "$value": "#18181b"}
+    },
+    "brand": {
+      "primary": {"$type": "color", "$value": "#7C3AED"},
+      "secondary": {"$type": "color", "$value": "#D97706"}
+    },
+    "status": {
+      "success": {"$type": "color", "$value": "#10b981"},
+      "warning": {"$type": "color", "$value": "#f59e0b"},
+      "error": {"$type": "color", "$value": "#ef4444"},
+      "info": {"$type": "color", "$value": "#3b82f6"}
+    }
+  },
+  "spacing": {
+    "4": {"$type": "dimension", "$value": {"value": 16, "unit": "px"}},
+    "5": {"$type": "dimension", "$value": {"value": 20, "unit": "px"}}
+  },
+  "radius": {
+    "md": {"$type": "dimension", "$value": {"value": 12, "unit": "px"}},
+    "lg": {"$type": "dimension", "$value": {"value": 16, "unit": "px"}}
+  }
+}
