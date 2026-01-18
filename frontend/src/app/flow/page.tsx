@@ -9,7 +9,7 @@ import { AgentChatAccordion } from "@/components/AgentChatAccordion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Copy, Check, Sparkles, LayoutGrid, Image as ImageIcon, Film, X, Download, Save, CheckCircle, Palette, Moon, Video, Loader2, BookOpen, Music, Construction, ArrowLeft } from "lucide-react";
+import { ChevronDown, Copy, Check, Sparkles, LayoutGrid, Image as ImageIcon, Film, X, Download, Save, CheckCircle, Palette, Moon, Video, Loader2, BookOpen, Music, Construction, ArrowLeft, AlertCircle } from "lucide-react";
 import { api, SingularityTemplate } from "@/lib/api";
 import { FLOW_ENABLED } from "@/lib/feature-flags";
 import { dimensionIdToCode, getDimensionToken } from "@/lib/tokens";
@@ -200,6 +200,14 @@ const ERROR_TONE = {
     border: "border-[var(--error)]/30",
 };
 
+const WARNING_TONE = {
+    text: "text-[var(--warning)]",
+    textSoft: "text-[var(--warning)]/70",
+    bgSubtle: "bg-[var(--warning)]/10",
+    bg: "bg-[var(--warning)]/20",
+    border: "border-[var(--warning)]/30",
+};
+
 const INFO_TONE = {
     solid: "bg-[var(--info)]",
     hover: "hover:opacity-90",
@@ -230,6 +238,8 @@ function FlowPageContent() {
     const [loadedTemplate, setLoadedTemplate] = useState<SingularityTemplate | null>(null);
     const [isLoadingTemplate, setIsLoadingTemplate] = useState(false);
     const [templateApplied, setTemplateApplied] = useState(false);
+    const [appliedTemplateSequence, setAppliedTemplateSequence] = useState<string[]>([]);
+    const [templateSkippedDimensions, setTemplateSkippedDimensions] = useState<string[]>([]);
 
     // Helper: Get tool info from agent tool name
     const getToolInfoFromAgentTool = useCallback((agentToolName: string) => {
@@ -321,6 +331,13 @@ function FlowPageContent() {
 
         loadTemplate();
     }, [searchParams, templateApplied, isConfigLoading]);
+
+    useEffect(() => {
+        if (!loadedTemplate) {
+            setAppliedTemplateSequence([]);
+            setTemplateSkippedDimensions([]);
+        }
+    }, [loadedTemplate]);
 
     // Apply loaded template to workflow
     useEffect(() => {
@@ -427,13 +444,20 @@ function FlowPageContent() {
             return value;
         };
 
+        const appliedSequence: string[] = [];
+        const skippedSequence: string[] = [];
+
         // Add cars from template's tool sequence
         toolSequence.forEach((dimCode, idx) => {
             const toolInfo = getToolInfoFromDimension(dimCode);
-            if (!toolInfo || !workflowRef.current) return;
+            if (!toolInfo || !workflowRef.current) {
+                skippedSequence.push(dimCode);
+                return;
+            }
             const normalizedDimension = normalizeWorkflowDimension(toolInfo.dimension || dimCode);
             if (!normalizedDimension) {
                 console.warn("[Flow] Unsupported workflow dimension:", dimCode);
+                skippedSequence.push(dimCode);
                 return;
             }
 
@@ -449,9 +473,12 @@ function FlowPageContent() {
                 status: idx === 0 ? "ready" : "pending",
                 inputs: dimensionPreset,  // P1: dimension-specific preset
             });
+            appliedSequence.push(normalizedDimension);
         });
 
         setTemplateApplied(true);
+        setAppliedTemplateSequence(appliedSequence);
+        setTemplateSkippedDimensions(skippedSequence);
         console.log(`[Flow] Applied ${toolSequence.length} cars from template with dimension-specific presets`);
     }, [loadedTemplate, templateApplied, toolsById, isConfigLoading, getToolInfoFromDimension, dimensionToToolId]);
 
@@ -868,7 +895,9 @@ function FlowPageContent() {
                                         <div>
                                             <div className="text-sm font-bold text-white">{loadedTemplate.title}</div>
                                             <div className="text-xs text-slate-400">
-                                                {loadedTemplate.dimension_sequence?.join(" → ")} 워크플로우가 적용되었습니다
+                                                {appliedTemplateSequence.length > 0
+                                                    ? `${appliedTemplateSequence.join(" → ")} 워크플로우가 적용되었습니다`
+                                                    : "적용 가능한 차원이 없어 워크플로우가 비어 있습니다"}
                                             </div>
                                         </div>
                                     </div>
@@ -876,6 +905,8 @@ function FlowPageContent() {
                                         onClick={() => {
                                             setLoadedTemplate(null);
                                             setTemplateApplied(false);
+                                            setAppliedTemplateSequence([]);
+                                            setTemplateSkippedDimensions([]);
                                             workflowRef.current?.clearCars();
                                         }}
                                         className="text-xs text-slate-500 hover:text-white transition-colors"
@@ -884,6 +915,31 @@ function FlowPageContent() {
                                     </button>
                                 </div>
                             </motion.div>
+                        )}
+
+                        {/* Template Skipped Dimensions Warning */}
+                        {templateSkippedDimensions.length > 0 && (
+                            <div className={`card-glass p-4 mb-4 border ${WARNING_TONE.border} ${WARNING_TONE.bgSubtle}`}>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 rounded-xl ${WARNING_TONE.bg} flex items-center justify-center`}>
+                                            <AlertCircle className={`w-5 h-5 ${WARNING_TONE.text}`} />
+                                        </div>
+                                        <div>
+                                            <div className={`text-sm font-bold ${WARNING_TONE.text}`}>일부 차원은 적용되지 않았습니다</div>
+                                            <div className={`text-xs ${WARNING_TONE.textSoft}`}>
+                                                {templateSkippedDimensions.join(", ")} 차원은 현재 워크플로우에서 지원되지 않아 제외되었습니다
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setTemplateSkippedDimensions([])}
+                                        className="text-xs text-slate-500 hover:text-white transition-colors"
+                                    >
+                                        닫기
+                                    </button>
+                                </div>
+                            </div>
                         )}
 
                         {/* Main Workflow View */}
