@@ -30,7 +30,15 @@
   --color-dimension-qc: var(--app-color-qc);         /* Quality Check */
   --color-dimension-veo: var(--app-color-veo);       /* Veo Video */
   --color-dimension-story: var(--app-color-story);   /* Story */
+  --color-dimension-storyboard: var(--app-color-storyboard); /* Storyboard */
+  --color-dimension-sound: var(--app-color-sound);   /* Sound */
+  --color-dimension-suno: var(--app-color-suno);     /* Suno */
+  --color-dimension-kling: var(--app-color-kling);   /* Kling */
+  --color-dimension-character: var(--app-color-character); /* Character */
+  --color-dimension-prompt: var(--app-color-prompt); /* Prompt */
   --color-dimension-mirror: var(--app-color-mirror); /* Abyss Mirror */
+  --color-dimension-json-gen: var(--app-color-json-gen); /* JSON Generator */
+  --color-dimension-nanobanana: var(--app-color-nanobanana); /* Nanobanana */
 
   /* ─────────────────────────────────────────────────────────────────────────
      COLOR TOKENS - Semantic

@@ -25,12 +25,15 @@ export type DimensionCode =
   | "qc"
   | "veo"
   | "story"
+  | "storyboard"
   | "mirror"
   | "sound"
   | "suno"
   | "kling"
   | "character"
-  | "prompt";
+  | "prompt"
+  | "json-gen"
+  | "nanobanana";
 
 /**
  * Theme color type (for Tailwind class mapping)
@@ -158,6 +161,15 @@ export const DIMENSION_TOKENS: Record<DimensionCode, DimensionToken> = {
     labelKo: "스토리 아키텍트",
     description: "Narrative structure and story development",
   },
+  storyboard: {
+    code: "storyboard",
+    cssVar: "--color-dimension-storyboard",
+    tailwindKey: "dimension-storyboard",
+    themeColor: "emerald",
+    label: "Storyboard Sketcher",
+    labelKo: "스토리보드 스케처",
+    description: "AI storyboard panel generation and consistency management",
+  },
   mirror: {
     code: "mirror",
     cssVar: "--color-dimension-mirror",
@@ -169,8 +181,8 @@ export const DIMENSION_TOKENS: Record<DimensionCode, DimensionToken> = {
   },
   sound: {
     code: "sound",
-    cssVar: "--color-dimension-2d",
-    tailwindKey: "dimension-2d",
+    cssVar: "--color-dimension-sound",
+    tailwindKey: "dimension-sound",
     themeColor: "cyan",
     label: "Sound Crafter",
     labelKo: "사운드 크래프터",
@@ -178,8 +190,8 @@ export const DIMENSION_TOKENS: Record<DimensionCode, DimensionToken> = {
   },
   suno: {
     code: "suno",
-    cssVar: "--color-dimension-2d",
-    tailwindKey: "dimension-2d",
+    cssVar: "--color-dimension-suno",
+    tailwindKey: "dimension-suno",
     themeColor: "cyan",
     label: "Suno Music",
     labelKo: "수노 뮤직",
@@ -187,8 +199,8 @@ export const DIMENSION_TOKENS: Record<DimensionCode, DimensionToken> = {
   },
   kling: {
     code: "kling",
-    cssVar: "--color-dimension-4d",
-    tailwindKey: "dimension-4d",
+    cssVar: "--color-dimension-kling",
+    tailwindKey: "dimension-kling",
     themeColor: "amber",
     label: "Kling Video",
     labelKo: "클링 비디오",
@@ -196,8 +208,8 @@ export const DIMENSION_TOKENS: Record<DimensionCode, DimensionToken> = {
   },
   character: {
     code: "character",
-    cssVar: "--color-dimension-3d",
-    tailwindKey: "dimension-3d",
+    cssVar: "--color-dimension-character",
+    tailwindKey: "dimension-character",
     themeColor: "emerald",
     label: "Character Consistency",
     labelKo: "캐릭터 일관성",
@@ -205,12 +217,30 @@ export const DIMENSION_TOKENS: Record<DimensionCode, DimensionToken> = {
   },
   prompt: {
     code: "prompt",
-    cssVar: "--color-dimension-1d",
-    tailwindKey: "dimension-1d",
+    cssVar: "--color-dimension-prompt",
+    tailwindKey: "dimension-prompt",
     themeColor: "violet",
     label: "Prompt Alchemy",
     labelKo: "프롬프트 연금술",
     description: "Advanced prompt optimization and transformation",
+  },
+  "json-gen": {
+    code: "json-gen",
+    cssVar: "--color-dimension-json-gen",
+    tailwindKey: "dimension-json-gen",
+    themeColor: "violet",
+    label: "JSON Generator Adapter",
+    labelKo: "JSON 변환기",
+    description: "Convert JSON categories into ShotContract format",
+  },
+  nanobanana: {
+    code: "nanobanana",
+    cssVar: "--color-dimension-nanobanana",
+    tailwindKey: "dimension-nanobanana",
+    themeColor: "amber",
+    label: "Nanobanana Editor Adapter",
+    labelKo: "나노바나나 에디터",
+    description: "Convert lighting and camera presets into ShotContract",
   },
 };
 
@@ -339,7 +369,11 @@ export function routeKeyToDimensionCode(routeKey: string): DimensionCode | null 
     "quality-director": "qc",
     "veo": "veo",
     "story-architect": "story",
+    "storyboard-sketch": "storyboard",
+    "storyboard": "storyboard",
     "abyss-mirror": "mirror",
+    "json-gen": "json-gen",
+    "nanobanana": "nanobanana",
   };
   return mapping[routeKey] ?? null;
 }
@@ -412,12 +446,15 @@ const DIMENSION_GRADIENTS: Record<DimensionCode, string> = {
   "qc": "bg-gradient-to-r from-red-500 to-rose-600",
   "veo": "bg-gradient-to-r from-sky-500 to-blue-600",
   "story": "bg-gradient-to-r from-fuchsia-500 to-purple-600",
+  "storyboard": "bg-gradient-to-r from-emerald-500 to-green-600",
   "mirror": "bg-gradient-to-r from-purple-500 to-violet-600",
   "sound": "bg-gradient-to-r from-cyan-500 to-teal-600",
   "suno": "bg-gradient-to-r from-cyan-500 to-teal-600",
   "kling": "bg-gradient-to-r from-amber-500 to-orange-600",
   "character": "bg-gradient-to-r from-emerald-500 to-green-600",
   "prompt": "bg-gradient-to-r from-violet-500 to-purple-600",
+  "json-gen": "bg-gradient-to-r from-violet-500 to-purple-600",
+  "nanobanana": "bg-gradient-to-r from-amber-500 to-orange-600",
 };
 
 /**
