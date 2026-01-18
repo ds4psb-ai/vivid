@@ -148,20 +148,20 @@ export function ConnectionSelector({
         <div className="flex flex-col items-center gap-4">
             {/* 차원문 포털 심볼 */}
             <div className="flex items-center gap-2">
-                <div className="h-px w-8 bg-gradient-to-r from-transparent via-violet-500/50 to-zinc-600" />
+                <div className="h-px w-8 bg-gradient-to-r from-transparent via-dimension-1d/50 to-zinc-600" />
                 <motion.div
                     animate={{ scale: [1, 1.15, 1], rotate: [0, 180, 360] }}
                     transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                    className="h-10 w-10 rounded-full bg-gradient-to-br from-violet-500/20 to-purple-500/20 border-2 border-violet-500/40 flex items-center justify-center shadow-[0_0_20px_rgba(139,92,246,0.3)]"
+                    className="h-10 w-10 rounded-full bg-dimension-1d/20 border-2 border-dimension-1d/40 flex items-center justify-center shadow-[0_0_20px] shadow-dimension-1d/30"
                 >
-                    <Compass className="h-5 w-5 text-violet-400" />
+                    <Compass className="h-5 w-5 text-dimension-1d" />
                 </motion.div>
-                <div className="h-px w-8 bg-gradient-to-l from-transparent via-violet-500/50 to-zinc-600" />
+                <div className="h-px w-8 bg-gradient-to-l from-transparent via-dimension-1d/50 to-zinc-600" />
             </div>
 
             {/* 추천 라벨 */}
             <div className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-zinc-500 flex items-center gap-1.5">
-                <Sparkles className="h-3 w-3 text-violet-500 dark:text-violet-400" />
+                <Sparkles className="h-3 w-3 text-dimension-1d" />
                 추천 차원
             </div>
 
@@ -213,14 +213,14 @@ export function ConnectionSelector({
                                             ${colorScheme.bg} ${colorScheme.border} border
                                             ${colorScheme.hover}
                                             ${isTopRecommend ? colorScheme.glow : ""}
-                                            ${isPrimary ? "shadow-[0_0_30px_rgba(139,92,246,0.4)] border-2" : ""}
+                                            ${isPrimary ? "shadow-[0_0_30px] shadow-dimension-1d/40 border-2" : ""}
                                             transition-all duration-300
                                             group cursor-pointer
                                         `}
                                     >
                                         {/* 추천 뱃지 (1위만) */}
                                         {isTopRecommend && (
-                                            <div className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 rounded-full bg-violet-500 text-[8px] font-bold text-white">
+                                            <div className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 rounded-full bg-dimension-1d text-[8px] font-bold text-white">
                                                 추천
                                             </div>
                                         )}
@@ -228,7 +228,7 @@ export function ConnectionSelector({
                                         {/* 옵션 번호 */}
                                         <div className={`
                                             absolute -left-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full
-                                            ${isTopRecommend ? "bg-violet-500 border-violet-400 text-white" : "bg-zinc-900 border-zinc-700 text-zinc-400"}
+                                            ${isTopRecommend ? "bg-dimension-1d border-dimension-1d/50 text-white" : "bg-zinc-900 border-zinc-700 text-zinc-400"}
                                             border flex items-center justify-center text-[10px] font-bold
                                         `}>
                                             {index + 1}
