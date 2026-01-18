@@ -196,7 +196,7 @@ capabilities:
 ### 현재 (P7 완료)
 ```
 backend/app/rag/
-├── manifests/                 # ✅ P1 완료 (13개+ YAML)
+├── manifests/                 # ✅ P1 완료 (YAML 설정)
 │   ├── _schema.yaml           # YAML 스키마
 │   └── *.yaml                 # 앱별 RAG 설정
 │
@@ -204,8 +204,7 @@ backend/app/rag/
 │   ├── __init__.py           # Auto-discovery Registry
 │   ├── base.py               # BaseBackend ABC + RetrievalResult
 │   ├── qdrant_hybrid.py      # Qdrant Dense + Sparse (Named Vectors)
-│   ├── notebooklm.py         # NotebookLM Playwright
-│   └── vertex_grounding.py   # Vertex AI + Google Search
+│   └── notebooklm.py         # NotebookLM Playwright
 │
 ├── rerankers/                 # ✅ P4 완료 (BaseReranker ABC)
 │   ├── __init__.py           # Auto-discovery Registry
@@ -213,27 +212,51 @@ backend/app/rag/
 │   ├── vertex.py             # Vertex AI Ranking API
 │   └── cross_encoder.py      # Local BGE/ms-marco CrossEncoder
 │
-├── router/                    # ✅ P7 완료 (Multi-RAG Router)
-│   ├── __init__.py
-│   ├── query_classifier.py   # 쿼리 의도 분류
-│   └── route_selector.py     # 라우팅 결정
+├── router/                    # ✅ P7 완료 (Multi-Source RAG Router)
+│   ├── __init__.py           # 라우터 exports
+│   ├── types.py              # RAGSourceType, RouteDecision 등
+│   ├── intelligent_router.py # 2-Stage Hybrid Routing (Rule + LLM)
+│   ├── orchestrator.py       # Multi-source 오케스트레이션
+│   ├── registry.py           # 동적 소스 등록
+│   └── backends/             # Source Backend Adapters
+│       ├── base.py           # BaseSourceBackend ABC
+│       ├── notebooklm.py     # NotebookLM (Tier0)
+│       ├── multimodal_qdrant.py  # Qdrant Multi-modal (Tier1)
+│       └── user_history.py   # User History (개인화)
 │
-├── feedback/                  # ✅ P6 완료 (Feedback Collection)
-│   ├── __init__.py
-│   └── collector.py          # 피드백 수집 + 분석
+├── multi_rag/                 # ✅ Multi-Modal RAG
+│   ├── __init__.py           # exports
+│   ├── types.py              # Modality, ContentType 등
+│   ├── service.py            # MultiModalRAGService
+│   ├── retriever.py          # Multi-modal Retriever
+│   ├── collection_manager.py # Collection 관리
+│   ├── backends/             # Backend Adapters
+│   │   ├── notebooklm_adapter.py
+│   │   ├── qdrant_adapter.py
+│   │   └── user_history_adapter.py
+│   └── embedders/            # Multi-modal Embedders
+│       ├── base.py           # BaseEmbedder ABC
+│       └── gemini_embedder.py # Gemini embedding
 │
 ├── sparse/                    # Sparse Embedder
 │   └── fastembed_sparse.py
 │
 ├── hybrid_rag.py              # 메인 오케스트레이터
 ├── manifest_loader.py         # YAML Manifest Loader
-├── tier0_notebooklm.py        # 거장 DNA
-├── tier1_dimension_rag.py     # Qdrant Hybrid
-├── tier0_vertex_rag.py        # Vertex AI
-├── semantic_cache.py          # L0 캐시
+├── tier0_notebooklm.py        # 거장 DNA (Tier0)
+├── tier1_dimension_rag.py     # Qdrant Hybrid (Tier1)
+├── semantic_cache.py          # L0 시맨틱 캐시
 ├── rag_presets.py             # 거장 스타일 힌트
+├── query_classifier.py        # ✅ P5 쿼리 분류기
+├── feedback_loop.py           # ✅ P6 피드백 수집
+├── evaluation.py              # RAG 품질 평가
+├── research_pipeline.py       # Tavily 리서치 파이프라인
 └── metrics.py                 # Prometheus 메트릭
 ```
+
+> **아키텍처 노트:**
+> - `router/` = Multi-SOURCE routing (NotebookLM, Qdrant, UserHistory 백엔드 라우팅)
+> - `multi_rag/` = Multi-MODAL embeddings (Text, Image, Audio, Video 처리)
 
 ---
 
@@ -254,15 +277,19 @@ backend/app/rag/
 | 파일 | 설명 |
 |------|------|
 | `rag/hybrid_rag.py` | 메인 오케스트레이터 (ensemble_retrieve, hybrid_query) |
-| `rag/router/query_classifier.py` | P5 쿼리 분류기 |
-| `rag/router/route_selector.py` | P7 라우팅 결정 |
+| `rag/router/intelligent_router.py` | P7 지능형 라우터 (2-Stage Hybrid) |
+| `rag/router/orchestrator.py` | Multi-Source 오케스트레이션 |
+| `rag/router/types.py` | RAGSourceType, RouteDecision 등 |
+| `rag/query_classifier.py` | P5 쿼리 분류기 |
 | `rag/manifest_loader.py` | YAML Manifest Loader |
 | `rag/backends/__init__.py` | Backend Registry |
 | `rag/rerankers/__init__.py` | Reranker Registry |
-| `rag/feedback/collector.py` | P6 피드백 수집 |
-| `rag/tier1_dimension_rag.py` | Qdrant 벡터 검색 |
-| `rag/tier0_notebooklm.py` | NotebookLM 연동 |
+| `rag/feedback_loop.py` | P6 피드백 수집 |
+| `rag/tier1_dimension_rag.py` | Qdrant 벡터 검색 (Tier1) |
+| `rag/tier0_notebooklm.py` | NotebookLM 연동 (Tier0) |
 | `rag/semantic_cache.py` | 시맨틱 캐시 |
+| `rag/multi_rag/service.py` | Multi-Modal RAG 서비스 |
+| `rag/research_pipeline.py` | Tavily 리서치 파이프라인 |
 
 </details>
 
@@ -462,7 +489,7 @@ capabilities:
 ### Current (P7 Complete)
 ```
 backend/app/rag/
-├── manifests/                 # ✅ P1 done (13+ YAML)
+├── manifests/                 # ✅ P1 done (YAML configs)
 │   ├── _schema.yaml           # YAML schema
 │   └── *.yaml                 # Per-app RAG configs
 │
@@ -470,8 +497,7 @@ backend/app/rag/
 │   ├── __init__.py           # Auto-discovery Registry
 │   ├── base.py               # BaseBackend ABC + RetrievalResult
 │   ├── qdrant_hybrid.py      # Qdrant Dense + Sparse (Named Vectors)
-│   ├── notebooklm.py         # NotebookLM Playwright
-│   └── vertex_grounding.py   # Vertex AI + Google Search
+│   └── notebooklm.py         # NotebookLM Playwright
 │
 ├── rerankers/                 # ✅ P4 done (BaseReranker ABC)
 │   ├── __init__.py           # Auto-discovery Registry
@@ -479,27 +505,51 @@ backend/app/rag/
 │   ├── vertex.py             # Vertex AI Ranking API
 │   └── cross_encoder.py      # Local BGE/ms-marco CrossEncoder
 │
-├── router/                    # ✅ P7 done (Multi-RAG Router)
-│   ├── __init__.py
-│   ├── query_classifier.py   # Query intent classification
-│   └── route_selector.py     # Routing decision
+├── router/                    # ✅ P7 done (Multi-Source RAG Router)
+│   ├── __init__.py           # Router exports
+│   ├── types.py              # RAGSourceType, RouteDecision, etc.
+│   ├── intelligent_router.py # 2-Stage Hybrid Routing (Rule + LLM)
+│   ├── orchestrator.py       # Multi-source orchestration
+│   ├── registry.py           # Dynamic source registration
+│   └── backends/             # Source Backend Adapters
+│       ├── base.py           # BaseSourceBackend ABC
+│       ├── notebooklm.py     # NotebookLM (Tier0)
+│       ├── multimodal_qdrant.py  # Qdrant Multi-modal (Tier1)
+│       └── user_history.py   # User History (personalization)
 │
-├── feedback/                  # ✅ P6 done (Feedback Collection)
-│   ├── __init__.py
-│   └── collector.py          # Feedback collection + analysis
+├── multi_rag/                 # ✅ Multi-Modal RAG
+│   ├── __init__.py           # exports
+│   ├── types.py              # Modality, ContentType, etc.
+│   ├── service.py            # MultiModalRAGService
+│   ├── retriever.py          # Multi-modal Retriever
+│   ├── collection_manager.py # Collection management
+│   ├── backends/             # Backend Adapters
+│   │   ├── notebooklm_adapter.py
+│   │   ├── qdrant_adapter.py
+│   │   └── user_history_adapter.py
+│   └── embedders/            # Multi-modal Embedders
+│       ├── base.py           # BaseEmbedder ABC
+│       └── gemini_embedder.py # Gemini embedding
 │
 ├── sparse/                    # Sparse Embedder
 │   └── fastembed_sparse.py
 │
 ├── hybrid_rag.py              # Main orchestrator
 ├── manifest_loader.py         # YAML Manifest Loader
-├── tier0_notebooklm.py        # Auteur DNA
-├── tier1_dimension_rag.py     # Qdrant Hybrid
-├── tier0_vertex_rag.py        # Vertex AI
-├── semantic_cache.py          # L0 cache
+├── tier0_notebooklm.py        # Auteur DNA (Tier0)
+├── tier1_dimension_rag.py     # Qdrant Hybrid (Tier1)
+├── semantic_cache.py          # L0 semantic cache
 ├── rag_presets.py             # Auteur style hints
+├── query_classifier.py        # ✅ P5 Query classifier
+├── feedback_loop.py           # ✅ P6 Feedback collection
+├── evaluation.py              # RAG quality evaluation
+├── research_pipeline.py       # Tavily research pipeline
 └── metrics.py                 # Prometheus metrics
 ```
+
+> **Architecture Note:**
+> - `router/` = Multi-SOURCE routing (NotebookLM, Qdrant, UserHistory backend routing)
+> - `multi_rag/` = Multi-MODAL embeddings (Text, Image, Audio, Video processing)
 
 ---
 
@@ -520,14 +570,18 @@ backend/app/rag/
 | File | Description |
 |------|-------------|
 | `rag/hybrid_rag.py` | Main orchestrator (ensemble_retrieve, hybrid_query) |
-| `rag/router/query_classifier.py` | P5 Query classifier |
-| `rag/router/route_selector.py` | P7 Routing decision |
+| `rag/router/intelligent_router.py` | P7 Intelligent Router (2-Stage Hybrid) |
+| `rag/router/orchestrator.py` | Multi-Source orchestration |
+| `rag/router/types.py` | RAGSourceType, RouteDecision, etc. |
+| `rag/query_classifier.py` | P5 Query classifier |
 | `rag/manifest_loader.py` | YAML Manifest Loader |
 | `rag/backends/__init__.py` | Backend Registry |
 | `rag/rerankers/__init__.py` | Reranker Registry |
-| `rag/feedback/collector.py` | P6 Feedback collection |
-| `rag/tier1_dimension_rag.py` | Qdrant vector search |
-| `rag/tier0_notebooklm.py` | NotebookLM integration |
+| `rag/feedback_loop.py` | P6 Feedback collection |
+| `rag/tier1_dimension_rag.py` | Qdrant vector search (Tier1) |
+| `rag/tier0_notebooklm.py` | NotebookLM integration (Tier0) |
 | `rag/semantic_cache.py` | Semantic cache |
+| `rag/multi_rag/service.py` | Multi-Modal RAG service |
+| `rag/research_pipeline.py` | Tavily research pipeline |
 
 </details>
