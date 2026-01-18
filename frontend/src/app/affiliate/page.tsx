@@ -42,15 +42,15 @@ function StatCard({
     color: string;
 }) {
     return (
-        <div className="p-4 rounded-2xl border border-white/10 bg-slate-900/50">
+        <div className="p-4 rounded-2xl border border-[var(--border-muted)] bg-[var(--surface-1)]">
             <div className="flex items-center gap-3 mb-3">
                 <div className={`p-2 rounded-xl ${color}`}>
                     <Icon className="w-4 h-4" />
                 </div>
-                <span className="text-sm text-slate-400">{label}</span>
+                <span className="text-sm text-[var(--fg-muted)]">{label}</span>
             </div>
-            <div className="text-2xl font-bold text-white">{value}</div>
-            {subtext && <div className="text-xs text-slate-500 mt-1">{subtext}</div>}
+            <div className="text-2xl font-bold text-[var(--fg-0)]">{value}</div>
+            {subtext && <div className="text-xs text-[var(--fg-subtle)] mt-1">{subtext}</div>}
         </div>
     );
 }
@@ -59,30 +59,30 @@ function ReferralRow({ referral, language }: { referral: AffiliateReferral; lang
     const statusLabels: Record<string, { label: string; color: string }> = {
         pending: {
             label: language === "ko" ? "대기중" : "Pending",
-            color: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+            color: "event-bg-warning event-tone-warning event-border-warning",
         },
         converted: {
             label: language === "ko" ? "전환됨" : "Converted",
-            color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+            color: "event-bg-success event-tone-success event-border-success",
         },
         expired: {
             label: language === "ko" ? "만료" : "Expired",
-            color: "bg-slate-500/10 text-slate-400 border-slate-500/20",
+            color: "event-bg-neutral event-tone-neutral event-border-neutral",
         },
     };
 
     const rewardStatusLabels: Record<string, { label: string; color: string }> = {
         pending: {
             label: language === "ko" ? "지급대기" : "Pending",
-            color: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+            color: "event-bg-warning event-tone-warning event-border-warning",
         },
         paid: {
             label: language === "ko" ? "지급완료" : "Paid",
-            color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+            color: "event-bg-success event-tone-success event-border-success",
         },
         none: {
             label: language === "ko" ? "-" : "-",
-            color: "bg-slate-500/10 text-slate-400 border-slate-500/20",
+            color: "event-bg-neutral event-tone-neutral event-border-neutral",
         },
     };
 
@@ -90,16 +90,16 @@ function ReferralRow({ referral, language }: { referral: AffiliateReferral; lang
     const rewardStatus = rewardStatusLabels[referral.reward_status] || rewardStatusLabels.none;
 
     return (
-        <div className="flex items-center justify-between p-4 border-b border-white/5 last:border-b-0 hover:bg-white/[0.02] transition-colors">
+        <div className="flex items-center justify-between p-4 border-b border-[var(--border-subtle)] last:border-b-0 hover:bg-[var(--surface-2)] transition-colors">
             <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-white font-medium">
                     {(referral.referee_label || "U").charAt(0).toUpperCase()}
                 </div>
                 <div>
-                    <div className="text-sm font-medium text-white">
+                    <div className="text-sm font-medium text-[var(--fg-0)]">
                         {referral.referee_label || (language === "ko" ? "익명 사용자" : "Anonymous User")}
                     </div>
-                    <div className="text-xs text-slate-500">
+                    <div className="text-xs text-[var(--fg-subtle)]">
                         {new Date(referral.created_at).toLocaleDateString()}
                     </div>
                 </div>
@@ -111,10 +111,10 @@ function ReferralRow({ referral, language }: { referral: AffiliateReferral; lang
                 </span>
                 {referral.reward_amount > 0 && (
                     <div className="text-right">
-                        <div className="text-sm font-medium text-emerald-400">
+                        <div className="text-sm font-medium event-tone-success">
                             +{formatNumber(referral.reward_amount)} CR
                         </div>
-                        <span className={`text-[10px] ${rewardStatus.color} px-1.5 py-0.5 rounded`}>
+                        <span className={`text-[10px] ${rewardStatus.color} px-1.5 py-0.5 rounded border`}>
                             {rewardStatus.label}
                         </span>
                     </div>
@@ -189,7 +189,7 @@ export default function AffiliatePage() {
         return (
             <AppShell showTopBar={false}>
                 <div className="min-h-screen flex items-center justify-center">
-                    <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
+                    <Loader2 className="w-8 h-8 text-[var(--accent)] animate-spin" />
                 </div>
             </AppShell>
         );
@@ -200,8 +200,8 @@ export default function AffiliatePage() {
             <AppShell showTopBar={false}>
                 <AuroraBackground />
                 <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4">
-                    <AlertTriangle className="w-12 h-12 text-amber-400" />
-                    <p className="text-lg text-slate-300">{error}</p>
+                    <AlertTriangle className="w-12 h-12 event-tone-warning" />
+                    <p className="text-lg text-[var(--fg-muted)]">{error}</p>
                 </div>
             </AppShell>
         );
@@ -219,8 +219,8 @@ export default function AffiliatePage() {
                         animate={{ opacity: 1, y: 0 }}
                         className="mb-8"
                     >
-                        <h1 className="text-2xl font-bold text-white sm:text-3xl">{labels.title}</h1>
-                        <p className="mt-2 text-slate-400">{labels.subtitle}</p>
+                        <h1 className="text-2xl font-bold text-[var(--fg-0)] sm:text-3xl">{labels.title}</h1>
+                        <p className="mt-2 text-[var(--fg-muted)]">{labels.subtitle}</p>
                     </motion.div>
 
                     {/* Referral Code Card */}
@@ -228,18 +228,18 @@ export default function AffiliatePage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
-                        className="mb-6 p-6 rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10"
+                        className="mb-6 p-6 rounded-2xl border border-[var(--border-muted)] bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10"
                     >
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                             <div>
-                                <div className="text-sm text-slate-400 mb-2">{labels.yourCode}</div>
-                                <div className="text-2xl font-bold font-mono text-white tracking-wider">
+                                <div className="text-sm text-[var(--fg-muted)] mb-2">{labels.yourCode}</div>
+                                <div className="text-2xl font-bold font-mono text-[var(--fg-0)] tracking-wider">
                                     {profile?.affiliate_code || "-"}
                                 </div>
                             </div>
                             <button
                                 onClick={handleCopyLink}
-                                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-medium transition-colors"
+                                className="btn btn-primary btn-size-default rounded-xl px-5 py-2.5"
                             >
                                 {copied ? (
                                     <>
@@ -267,19 +267,19 @@ export default function AffiliatePage() {
                             icon={Users}
                             label={labels.totalReferrals}
                             value={formatNumber(profile?.total_referrals || 0)}
-                            color="bg-sky-500/10 text-sky-400"
+                            color="event-bg-info event-tone-info"
                         />
                         <StatCard
                             icon={DollarSign}
                             label={labels.totalEarned}
                             value={`${formatNumber(profile?.total_earned || 0)} CR`}
-                            color="bg-emerald-500/10 text-emerald-400"
+                            color="event-bg-success event-tone-success"
                         />
                         <StatCard
                             icon={Clock}
                             label={labels.pending}
                             value={formatNumber(profile?.pending_count || 0)}
-                            color="bg-amber-500/10 text-amber-400"
+                            color="event-bg-warning event-tone-warning"
                         />
                     </motion.div>
 
@@ -288,27 +288,27 @@ export default function AffiliatePage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="mb-8 p-6 rounded-2xl border border-white/10 bg-slate-900/50"
+                        className="mb-8 p-6 rounded-2xl border border-[var(--border-muted)] bg-[var(--surface-1)]"
                     >
-                        <h3 className="text-sm font-medium text-slate-400 mb-4">{labels.howItWorks}</h3>
+                        <h3 className="text-sm font-medium text-[var(--fg-muted)] mb-4">{labels.howItWorks}</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-violet-500/20 text-violet-400 flex items-center justify-center text-sm font-bold">
+                                <div className="w-8 h-8 rounded-full event-bg-accent event-tone-accent flex items-center justify-center text-sm font-bold">
                                     1
                                 </div>
-                                <span className="text-sm text-white">{labels.step1}</span>
+                                <span className="text-sm text-[var(--fg-0)]">{labels.step1}</span>
                             </div>
                             <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-violet-500/20 text-violet-400 flex items-center justify-center text-sm font-bold">
+                                <div className="w-8 h-8 rounded-full event-bg-accent event-tone-accent flex items-center justify-center text-sm font-bold">
                                     2
                                 </div>
-                                <span className="text-sm text-white">{labels.step2}</span>
+                                <span className="text-sm text-[var(--fg-0)]">{labels.step2}</span>
                             </div>
                             <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-violet-500/20 text-violet-400 flex items-center justify-center text-sm font-bold">
+                                <div className="w-8 h-8 rounded-full event-bg-accent event-tone-accent flex items-center justify-center text-sm font-bold">
                                     3
                                 </div>
-                                <span className="text-sm text-white">{labels.step3}</span>
+                                <span className="text-sm text-[var(--fg-0)]">{labels.step3}</span>
                             </div>
                         </div>
                     </motion.div>
@@ -318,23 +318,23 @@ export default function AffiliatePage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.25 }}
-                        className="rounded-2xl border border-white/10 bg-slate-900/50 overflow-hidden"
+                        className="rounded-2xl border border-[var(--border-muted)] bg-[var(--surface-1)] overflow-hidden"
                     >
-                        <div className="px-6 py-4 border-b border-white/5">
-                            <h3 className="font-semibold text-white">{labels.referralHistory}</h3>
+                        <div className="px-6 py-4 border-b border-[var(--border-subtle)]">
+                            <h3 className="font-semibold text-[var(--fg-0)]">{labels.referralHistory}</h3>
                         </div>
 
                         {referrals.length > 0 ? (
-                            <div className="divide-y divide-white/5">
+                            <div className="divide-y divide-[var(--border-subtle)]">
                                 {referrals.map((referral) => (
                                     <ReferralRow key={referral.id} referral={referral} language={language} />
                                 ))}
                             </div>
                         ) : (
                             <div className="p-12 text-center">
-                                <Users className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-                                <p className="text-slate-400">{labels.noReferrals}</p>
-                                <p className="text-sm text-slate-500 mt-2">{labels.inviteFriend}</p>
+                                <Users className="w-12 h-12 text-[var(--fg-subtle)] mx-auto mb-4" />
+                                <p className="text-[var(--fg-muted)]">{labels.noReferrals}</p>
+                                <p className="text-sm text-[var(--fg-subtle)] mt-2">{labels.inviteFriend}</p>
                             </div>
                         )}
                     </motion.div>
