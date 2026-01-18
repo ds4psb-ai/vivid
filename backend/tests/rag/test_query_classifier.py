@@ -200,7 +200,7 @@ class TestStrategySelector:
         assert full.skip_retrieval is False
         assert full.use_reranker is True
         assert full.use_grounding is True
-        assert "google_grounding" in full.backends
+        assert "tavily_grounding" in full.backends
 
     def test_get_strategy_for_query_type(self):
         """get_strategy_for_query_type returns correct Strategy."""

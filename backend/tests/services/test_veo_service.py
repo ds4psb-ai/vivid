@@ -7,28 +7,37 @@ Tests cover:
 - Error handling for non-retryable errors
 """
 import sys
+import types
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-# Mock google.genai before importing veo_service
+# Mock google.genai before importing veo_service (and restore after import)
 mock_genai = MagicMock()
 mock_types = MagicMock()
 mock_genai.types = mock_types
-sys.modules['google'] = MagicMock()
-sys.modules['google.genai'] = mock_genai
-sys.modules['google.genai.types'] = mock_types
+mock_google = types.ModuleType("google")
+mock_google.__path__ = []  # treat as package
+mock_google.genai = mock_genai
 
-from app.services.veo_service import (
-    VeoService,
-    VeoConfig,
-    VeoResult,
-    VeoModel,
-    VeoTimeoutError,
-    VeoGenerationError,
-    MAX_RETRIES,
-    RETRY_DELAYS,
-    RETRYABLE_ERRORS,
-)
+with patch.dict(
+    sys.modules,
+    {
+        "google": mock_google,
+        "google.genai": mock_genai,
+        "google.genai.types": mock_types,
+    },
+):
+    from app.services.veo_service import (
+        VeoService,
+        VeoConfig,
+        VeoResult,
+        VeoModel,
+        VeoTimeoutError,
+        VeoGenerationError,
+        MAX_RETRIES,
+        RETRY_DELAYS,
+        RETRYABLE_ERRORS,
+    )
 
 
 @pytest.fixture

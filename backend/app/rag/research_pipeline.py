@@ -23,6 +23,7 @@ References:
 from __future__ import annotations
 
 import asyncio
+import inspect
 import hashlib
 import json
 import logging
@@ -320,7 +321,7 @@ class ResearchPipeline:
             return {}
 
         tavily = self._get_tavily()
-        response = await tavily.extract(
+        response = tavily.extract(
             urls=urls[:EXTRACT_MAX_URLS],
             extract_depth=depth,
             query=query,
@@ -329,6 +330,8 @@ class ResearchPipeline:
             include_favicon=False,
             format="markdown",
         )
+        if inspect.isawaitable(response):
+            response = await response
 
         return {item.url: item for item in response.results if item.url}
 

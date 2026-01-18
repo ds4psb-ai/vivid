@@ -198,11 +198,11 @@ class TestHybridRAGIntegration:
             "semantic_cache",  # L0
             "notebooklm",      # L1
             "vertex_ai",       # L2
-            "google_grounding" # L3 (CRAG)
+            "tavily_grounding" # L3 (CRAG)
         ]
         
         assert priority[0] == "semantic_cache", "Cache should be first"
-        assert priority[-1] == "google_grounding", "Grounding should be last resort"
+        assert priority[-1] == "tavily_grounding", "Grounding should be last resort"
 
 
 # ============================================================================
