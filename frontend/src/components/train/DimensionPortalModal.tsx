@@ -87,92 +87,6 @@ const ICON_MAP: Record<string, React.ReactNode> = {
     eye: <Eye className="h-6 w-6" />,
 };
 
-// Pre-defined focus classes to avoid dynamic Tailwind purging
-const FOCUS_CLASSES: Record<string, string> = {
-    violet: "focus:border-violet-400/50 focus:ring-violet-400/10",
-    emerald: "focus:border-emerald-400/50 focus:ring-emerald-400/10",
-    amber: "focus:border-amber-400/50 focus:ring-amber-400/10",
-    cyan: "focus:border-cyan-400/50 focus:ring-cyan-400/10",
-    rose: "focus:border-rose-400/50 focus:ring-rose-400/10",
-    fuchsia: "focus:border-fuchsia-400/50 focus:ring-fuchsia-400/10",
-    indigo: "focus:border-indigo-400/50 focus:ring-indigo-400/10",
-    sky: "focus:border-sky-400/50 focus:ring-sky-400/10",
-};
-
-const COLOR_CLASSES: Record<string, {
-    bg: string;
-    bgSolid: string;
-    border: string;
-    text: string;
-    gradient: string;
-    glow: string;
-}> = {
-    violet: {
-        bg: "bg-violet-500/10",
-        bgSolid: "bg-violet-500",
-        border: "border-violet-500/30",
-        text: "text-violet-400",
-        gradient: "from-violet-600 to-purple-600",
-        glow: "shadow-[0_0_60px_rgba(139,92,246,0.3)]",
-    },
-    emerald: {
-        bg: "bg-emerald-500/10",
-        bgSolid: "bg-emerald-500",
-        border: "border-emerald-500/30",
-        text: "text-emerald-400",
-        gradient: "from-emerald-600 to-teal-600",
-        glow: "shadow-[0_0_60px_rgba(16,185,129,0.3)]",
-    },
-    amber: {
-        bg: "bg-amber-500/10",
-        bgSolid: "bg-amber-500",
-        border: "border-amber-500/30",
-        text: "text-amber-400",
-        gradient: "from-amber-500 to-orange-500",
-        glow: "shadow-[0_0_60px_rgba(245,158,11,0.3)]",
-    },
-    cyan: {
-        bg: "bg-cyan-500/10",
-        bgSolid: "bg-cyan-500",
-        border: "border-cyan-500/30",
-        text: "text-cyan-400",
-        gradient: "from-cyan-600 to-blue-600",
-        glow: "shadow-[0_0_60px_rgba(6,182,212,0.3)]",
-    },
-    rose: {
-        bg: "bg-rose-500/10",
-        bgSolid: "bg-rose-500",
-        border: "border-rose-500/30",
-        text: "text-rose-400",
-        gradient: "from-rose-600 to-pink-600",
-        glow: "shadow-[0_0_60px_rgba(244,63,94,0.3)]",
-    },
-    fuchsia: {
-        bg: "bg-fuchsia-500/10",
-        bgSolid: "bg-fuchsia-500",
-        border: "border-fuchsia-500/30",
-        text: "text-fuchsia-400",
-        gradient: "from-fuchsia-600 to-purple-600",
-        glow: "shadow-[0_0_60px_rgba(217,70,239,0.3)]",
-    },
-    indigo: {
-        bg: "bg-indigo-500/10",
-        bgSolid: "bg-indigo-500",
-        border: "border-indigo-500/30",
-        text: "text-indigo-400",
-        gradient: "from-indigo-600 to-violet-600",
-        glow: "shadow-[0_0_60px_rgba(99,102,241,0.3)]",
-    },
-    sky: {
-        bg: "bg-sky-500/10",
-        bgSolid: "bg-sky-500",
-        border: "border-sky-500/30",
-        text: "text-sky-400",
-        gradient: "from-sky-600 to-blue-600",
-        glow: "shadow-[0_0_60px_rgba(14,165,233,0.3)]",
-    },
-};
-
 const getGradientStops = (dimension: string | undefined) => {
     if (!dimension) return null;
     const code = dimensionIdToCode(dimension);
@@ -616,8 +530,8 @@ export function DimensionPortalModal({
 
     // SSoT: Use toolConfig from context instead of hardcoded DIMENSION_CONFIG
     const tokenScheme = getDimensionColorClasses(currentCar.dimension);
-    const colorClass = tokenScheme || COLOR_CLASSES[currentCar.color] || COLOR_CLASSES.violet;
-    const focusClass = getDimensionFocusClass(currentCar.dimension) || FOCUS_CLASSES[currentCar.color] || FOCUS_CLASSES.violet;
+    const colorClass = tokenScheme || getDimensionColorClasses("1d");
+    const focusClass = getDimensionFocusClass(currentCar.dimension) || getDimensionFocusClass("1d");
     const hoverGlowClass = getHoverGlowClass(currentCar.dimension);
     const dimensionRoute = DIMENSION_ROUTES[currentCar.dimension];
     const hasRoute = Boolean(dimensionRoute);
@@ -1038,7 +952,7 @@ export function DimensionPortalModal({
                         <div className="flex items-center gap-1.5 px-6 py-3 border-t border-white/5 bg-black/20">
                             {cars.map((car) => {
                                 const carTokenScheme = getDimensionColorClasses(car.dimension);
-                                const carColor = carTokenScheme || COLOR_CLASSES[car.color] || COLOR_CLASSES.violet;
+                                const carColor = carTokenScheme || getDimensionColorClasses("1d");
                                 return (
                                     <button
                                         key={car.id}
