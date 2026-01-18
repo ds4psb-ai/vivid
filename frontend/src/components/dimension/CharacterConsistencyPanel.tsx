@@ -196,13 +196,13 @@ function CharacterCard({ character, onSelect, onEdit, onDelete, selected, labels
   return (
     <div
       className={cn(
-        "relative rounded-lg border-2 overflow-hidden cursor-pointer transition-all",
-        selected ? "border-blue-500 ring-2 ring-blue-200" : "border-gray-200 hover:border-gray-300"
+        "relative rounded-lg border-2 overflow-hidden cursor-pointer transition-all hover-ring",
+        selected ? "selection-ring" : "border-[var(--border-muted)] hover:border-[var(--border-strong)]"
       )}
       onClick={() => onSelect?.(character)}
     >
       {/* Primary image */}
-      <div className="aspect-square relative bg-gray-100">
+      <div className="aspect-square relative bg-[var(--bg-1)]">
         {character.primary_image_url ? (
           <Image
             src={character.primary_image_url}
@@ -211,14 +211,14 @@ function CharacterCard({ character, onSelect, onEdit, onDelete, selected, labels
             className="object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400">
+          <div className="w-full h-full flex items-center justify-center text-[var(--fg-subtle)]">
             <Layers className="w-12 h-12" />
           </div>
         )}
 
         {/* Memory bank indicator */}
         {character.keyframe_count > 0 && (
-          <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+          <div className="absolute top-2 right-2 bg-[var(--overlay-backdrop)] text-[var(--fg-on-emphasis)] text-xs px-2 py-1 rounded">
             <Brain className="w-3 h-3 inline mr-1" />
             {character.keyframe_count}
           </div>
@@ -227,13 +227,13 @@ function CharacterCard({ character, onSelect, onEdit, onDelete, selected, labels
         {/* Platform sync status */}
         <div className="absolute bottom-2 left-2 flex gap-1">
           {character.platforms_synced.includes("veo") && (
-            <Badge variant="outline" className="bg-white/80 text-xs">Veo</Badge>
+            <Badge variant="outline" className="text-xs">Veo</Badge>
           )}
           {character.platforms_synced.includes("kling") && (
-            <Badge variant="outline" className="bg-white/80 text-xs">Kling</Badge>
+            <Badge variant="outline" className="text-xs">Kling</Badge>
           )}
           {character.platforms_synced.includes("runway") && (
-            <Badge variant="outline" className="bg-white/80 text-xs">Runway</Badge>
+            <Badge variant="outline" className="text-xs">Runway</Badge>
           )}
         </div>
       </div>
@@ -258,7 +258,7 @@ function CharacterCard({ character, onSelect, onEdit, onDelete, selected, labels
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 bg-white/80 hover:bg-white"
+          className="h-7 w-7 bg-[var(--surface-1)] hover:bg-[var(--surface-2)]"
           onClick={(e) => {
             e.stopPropagation();
             onEdit?.();
@@ -269,7 +269,7 @@ function CharacterCard({ character, onSelect, onEdit, onDelete, selected, labels
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 bg-white/80 hover:bg-white text-red-600"
+          className="h-7 w-7 bg-[var(--surface-1)] hover:bg-[var(--surface-2)] text-[var(--error)]"
           onClick={(e) => {
             e.stopPropagation();
             onDelete?.();
@@ -312,11 +312,11 @@ function MemoryBankVisualizer({ character, onKeyframeSelect, labels }: MemoryBan
         </TabsList>
 
         <TabsContent value="long-term" className="mt-4">
-          <p className="text-sm text-gray-500 mb-3">
+          <p className="text-sm text-[var(--fg-muted)] mb-3">
             {labels.bestKeyframesDescription}
           </p>
           {longTermKeyframes.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">
+            <div className="text-center py-8 text-[var(--fg-subtle)]">
               <Brain className="w-12 h-12 mx-auto mb-2 opacity-50" />
               <p>{labels.noKeyframesYet}</p>
             </div>
@@ -334,11 +334,11 @@ function MemoryBankVisualizer({ character, onKeyframeSelect, labels }: MemoryBan
         </TabsContent>
 
         <TabsContent value="recent" className="mt-4">
-          <p className="text-sm text-gray-500 mb-3">
+          <p className="text-sm text-[var(--fg-muted)] mb-3">
             {labels.slidingWindowDescription}
           </p>
           {recentKeyframes.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">
+            <div className="text-center py-8 text-[var(--fg-subtle)]">
               <RefreshCw className="w-12 h-12 mx-auto mb-2 opacity-50" />
               <p>{labels.noRecentKeyframes}</p>
             </div>
@@ -362,14 +362,14 @@ function MemoryBankVisualizer({ character, onKeyframeSelect, labels }: MemoryBan
 function KeyframeCard({ keyframe, onClick }: { keyframe: MemoryKeyframe; onClick?: () => void }) {
   return (
     <div
-      className="relative aspect-video rounded overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-400 bg-gray-100"
+      className="relative aspect-video rounded overflow-hidden cursor-pointer bg-[var(--bg-1)] hover-ring"
       onClick={onClick}
     >
       <Image src={keyframe.frame_url} alt="" fill className="object-cover" />
 
       {/* Quality scores overlay */}
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 p-2">
-        <div className="flex justify-between text-xs text-white">
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[var(--overlay-backdrop)] p-2">
+        <div className="flex justify-between text-xs text-[var(--fg-on-emphasis)]">
           <span>CLIP: {(keyframe.clip_score * 100).toFixed(0)}%</span>
           <span>HPS: {(keyframe.hps_score * 100).toFixed(0)}%</span>
         </div>
@@ -378,7 +378,7 @@ function KeyframeCard({ keyframe, onClick }: { keyframe: MemoryKeyframe; onClick
       {/* Long-term indicator */}
       {keyframe.is_long_term && (
         <div className="absolute top-1 right-1">
-          <Badge className="bg-purple-600 text-white text-xs">LT</Badge>
+          <Badge className="text-xs bg-[var(--interactive-secondary)] text-[var(--fg-on-emphasis)] border-[var(--interactive-secondary)]">LT</Badge>
         </div>
       )}
     </div>
@@ -422,7 +422,7 @@ function PlatformSyncPanel({ character, token, onSyncComplete, labels }: Platfor
   return (
     <div className="space-y-4">
       <h4 className="font-medium">{labels.platformSync}</h4>
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-[var(--fg-muted)]">
         {labels.platformSyncDescription}
       </p>
 
@@ -433,7 +433,7 @@ function PlatformSyncPanel({ character, token, onSyncComplete, labels }: Platfor
           const isSyncing = syncing === platform.id;
 
           return (
-            <Card key={platform.id} className={cn(isSynced && "border-green-200 bg-green-50")}>
+            <Card key={platform.id} className={cn(isSynced && "event-bg-success event-border-success")}>
               <CardContent className="pt-4">
                 <div className="flex items-center gap-2 mb-3">
                   {platform.icon}
@@ -442,11 +442,11 @@ function PlatformSyncPanel({ character, token, onSyncComplete, labels }: Platfor
 
                 {isSynced ? (
                   <div className="space-y-2">
-                    <div className="flex items-center gap-1 text-green-600 text-sm">
+                    <div className="flex items-center gap-1 text-sm event-tone-success">
                       <Check className="w-4 h-4" />
                       {labels.synced}
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-[var(--fg-muted)]">
                       {ref.last_sync ? new Date(ref.last_sync).toLocaleDateString() : "N/A"}
                     </p>
                     <Button
@@ -671,7 +671,7 @@ export default function CharacterConsistencyPanel({
 
         {/* Search */}
         <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--fg-subtle)]" />
           <Input
             placeholder={labels.searchCharacters}
             value={searchQuery}
@@ -682,14 +682,14 @@ export default function CharacterConsistencyPanel({
 
         {/* Error state */}
         {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4">
+          <div className="validation-error-banner mb-4">
             {error}
           </div>
         )}
 
         {/* Loading state */}
         {isLoading && (
-          <div className="text-center py-8 text-gray-400">
+          <div className="text-center py-8 text-[var(--fg-subtle)]">
             <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2" />
             {labels.loadingCharacters}
           </div>
@@ -697,7 +697,7 @@ export default function CharacterConsistencyPanel({
 
         {/* Empty state */}
         {!isLoading && characters.length === 0 && (
-          <div className="text-center py-12 text-gray-400">
+          <div className="text-center py-12 text-[var(--fg-subtle)]">
             <Layers className="w-16 h-16 mx-auto mb-4 opacity-50" />
             <p className="mb-4">{labels.noCharactersYet}</p>
             <Button onClick={() => setShowCreateModal(true)}>
@@ -731,7 +731,7 @@ export default function CharacterConsistencyPanel({
           <div className="space-y-6">
             {/* Character header */}
             <div className="flex gap-4">
-              <div className="w-32 h-32 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+              <div className="w-32 h-32 rounded-lg overflow-hidden bg-[var(--bg-1)] flex-shrink-0">
                 {selectedCharacter.primary_image_url ? (
                   <Image
                     src={selectedCharacter.primary_image_url}
@@ -741,7 +741,7 @@ export default function CharacterConsistencyPanel({
                     className="object-cover w-full h-full"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                  <div className="w-full h-full flex items-center justify-center text-[var(--fg-subtle)]">
                     <Layers className="w-12 h-12" />
                   </div>
                 )}
@@ -749,14 +749,14 @@ export default function CharacterConsistencyPanel({
               <div className="flex-1">
                 <h2 className="text-xl font-semibold">{selectedCharacter.name}</h2>
                 {selectedCharacter.description && (
-                  <p className="text-gray-600 mt-1">{selectedCharacter.description}</p>
+                  <p className="text-[var(--fg-muted)] mt-1">{selectedCharacter.description}</p>
                 )}
                 <div className="flex flex-wrap gap-1 mt-2">
                   {selectedCharacter.tags.map(tag => (
                     <Badge key={tag} variant="secondary">{tag}</Badge>
                   ))}
                 </div>
-                <p className="text-xs text-gray-400 mt-2">
+                <p className="text-xs text-[var(--fg-subtle)] mt-2">
                   Created {new Date(selectedCharacter.created_at).toLocaleDateString()}
                 </p>
               </div>
@@ -814,10 +814,12 @@ export default function CharacterConsistencyPanel({
                   </div>
                   <div className="grid grid-cols-4 gap-2">
                     {selectedCharacter.source_images.map((img, idx) => (
-                      <div key={idx} className="relative aspect-square rounded overflow-hidden bg-gray-100">
+                      <div key={idx} className="relative aspect-square rounded overflow-hidden bg-[var(--bg-1)]">
                         <Image src={img.url} alt="" fill className="object-cover" />
                         {img.is_primary && (
-                          <Badge className="absolute top-1 left-1 bg-blue-600 text-xs">{labels.primary}</Badge>
+                          <Badge className="absolute top-1 left-1 text-xs bg-[var(--interactive-default)] text-[var(--fg-on-emphasis)] border-[var(--interactive-default)]">
+                            {labels.primary}
+                          </Badge>
                         )}
                       </div>
                     ))}
@@ -827,7 +829,7 @@ export default function CharacterConsistencyPanel({
             </Tabs>
           </div>
         ) : (
-          <div className="h-full flex items-center justify-center text-gray-400">
+          <div className="h-full flex items-center justify-center text-[var(--fg-subtle)]">
             <div className="text-center">
               <Layers className="w-16 h-16 mx-auto mb-4 opacity-50" />
               <p>{labels.selectCharacterToView}</p>
@@ -879,7 +881,7 @@ export default function CharacterConsistencyPanel({
 
             <div className="space-y-2">
               <Label>{labels.referenceImage}</Label>
-              <div className="border-2 border-dashed rounded-lg p-4 text-center">
+              <div className="border-2 border-dashed border-[var(--border-muted)] rounded-lg p-4 text-center">
                 {uploadedImage ? (
                   <div className="relative">
                     <img
@@ -898,8 +900,8 @@ export default function CharacterConsistencyPanel({
                   </div>
                 ) : (
                   <label className="cursor-pointer">
-                    <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm text-gray-500">{labels.clickToUpload}</p>
+                    <Upload className="w-8 h-8 mx-auto mb-2 text-[var(--fg-subtle)]" />
+                    <p className="text-sm text-[var(--fg-muted)]">{labels.clickToUpload}</p>
                     <input
                       type="file"
                       accept="image/*"

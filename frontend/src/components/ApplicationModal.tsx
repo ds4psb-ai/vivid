@@ -95,7 +95,7 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm"
+                        className="fixed inset-0 z-[60] dialog-overlay"
                     />
 
                     {/* Modal */}
@@ -129,8 +129,8 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
                                     animate={{ opacity: 1, scale: 1 }}
                                     className="flex flex-col items-center justify-center gap-4 py-16"
                                 >
-                                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/20">
-                                        <Check className="h-8 w-8 text-emerald-400" />
+                                    <div className="flex h-16 w-16 items-center justify-center rounded-full event-bg-success">
+                                        <Check className="h-8 w-8 event-tone-success" />
                                     </div>
                                     <div className="text-center">
                                         <h3 className="text-xl font-bold text-[var(--fg-0)]">신청 완료!</h3>
@@ -251,14 +251,14 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
 
                                     {/* Error Display */}
                                     {error && (
-                                        <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
+                                        <div className="mt-4 p-3 rounded-lg validation-error-banner text-sm text-center">
                                             {error}
                                         </div>
                                     )}
 
                                     {/* Business Info Disclosure */}
                                     <div className="mt-6 pt-4 border-t border-[var(--border-subtle)] text-[10px] text-[var(--fg-subtle)] space-y-1">
-                                        <p className="font-medium text-slate-400">판매자 정보</p>
+                                        <p className="font-medium text-[var(--fg-muted)]">판매자 정보</p>
                                         <p>주식회사 페이지아카데미 | 대표: 이용찬</p>
                                         <p>사업자번호: 751-88-02370 | 통신판매: 2022-서울성동-00228</p>
                                         <p>서울특별시 성동구 성수이로 113, 8층 801호</p>

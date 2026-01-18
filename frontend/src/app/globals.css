@@ -1541,6 +1541,11 @@ html.lenis body {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-default) 25%, transparent);
 }
 
+.spinner-on-emphasis {
+  border-color: color-mix(in srgb, var(--fg-on-emphasis) 30%, transparent);
+  border-top-color: var(--fg-on-emphasis);
+}
+
 /* Crebit Philosophy Utility Classes (Section 7.4-7.6) */
 .evidence-badge {
   background: var(--evidence-badge-bg);

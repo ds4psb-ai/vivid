@@ -449,11 +449,11 @@ function SoundCrafterContent() {
             </div>
             <div className="grid grid-cols-1 gap-4">
               {optimisticMoodResult.directions.map((dir, idx) => (
-                <div key={idx} className="p-5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 animate-pulse">
-                  <div className="h-5 w-32 bg-slate-200 dark:bg-white/10 rounded mb-3" />
+                <div key={idx} className="p-5 rounded-xl border border-[var(--border-muted)] bg-[var(--surface-1)] animate-pulse">
+                  <div className="h-5 w-32 bg-[var(--bg-2)] rounded mb-3" />
                   <div className="space-y-2">
-                    <div className="h-3 w-full bg-slate-200 dark:bg-white/10 rounded" />
-                    <div className="h-3 w-3/4 bg-slate-200 dark:bg-white/10 rounded" />
+                    <div className="h-3 w-full bg-[var(--bg-2)] rounded" />
+                    <div className="h-3 w-3/4 bg-[var(--bg-2)] rounded" />
                   </div>
                 </div>
               ))}
@@ -496,19 +496,19 @@ function SoundCrafterContent() {
                 사운드 테크 팩 생성 중...
               </span>
             </div>
-            <div className="p-6 rounded-2xl bg-gradient-to-br from-rose-500/10 to-black border border-rose-500/20 animate-pulse">
+            <div className="p-6 rounded-2xl bg-gradient-to-br from-rose-500/10 to-[var(--bg-0)] border border-rose-500/20 animate-pulse">
               <div className="h-4 w-24 bg-rose-500/20 rounded mb-4" />
               <div className="space-y-2">
-                <div className="h-3 w-full bg-white/10 rounded" />
-                <div className="h-3 w-5/6 bg-white/10 rounded" />
-                <div className="h-3 w-4/6 bg-white/10 rounded" />
+                <div className="h-3 w-full bg-[var(--surface-2)] rounded" />
+                <div className="h-3 w-5/6 bg-[var(--surface-2)] rounded" />
+                <div className="h-3 w-4/6 bg-[var(--surface-2)] rounded" />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {["멜로디", "리듬", "텍스처"].map((label, i) => (
-                <div key={i} className="p-4 rounded-xl bg-white/5 border border-white/10 animate-pulse">
+                <div key={i} className="p-4 rounded-xl bg-[var(--surface-1)] border border-[var(--border-muted)] animate-pulse">
                   <div className="h-3 w-16 bg-rose-400/20 rounded mb-2" />
-                  <div className="h-3 w-full bg-white/10 rounded" />
+                  <div className="h-3 w-full bg-[var(--surface-2)] rounded" />
                 </div>
               ))}
             </div>
@@ -571,11 +571,11 @@ function StageIndicator({
 
   return (
     <div className="space-y-4">
-      <h4 className="text-xs font-bold text-white/40 uppercase tracking-wider">
+      <h4 className="text-xs font-bold text-[var(--fg-muted)] uppercase tracking-wider">
         제작 플로우
       </h4>
       <div className="space-y-0 relative">
-        <div className="absolute left-[15px] top-2 bottom-2 w-0.5 bg-white/10" />
+        <div className="absolute left-[15px] top-2 bottom-2 w-0.5 bg-[var(--border-subtle)]" />
         {stages.map((step, idx) => {
           const isActive = currentStage === step.id;
           const isPast = currentIdx > idx;
@@ -584,20 +584,20 @@ function StageIndicator({
           return (
             <div
               key={step.id}
-              className={`relative flex items-center gap-3 p-2 rounded-lg transition-all ${isActive ? "bg-white/5" : ""}`}
+              className={`relative flex items-center gap-3 p-2 rounded-lg transition-all ${isActive ? "bg-[var(--surface-1)]" : ""}`}
             >
               <div
                 className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all
                 ${
                   isActive || isPast
-                    ? `bg-black border-${themeColor}-500 text-${themeColor}-500`
-                    : "bg-black border-white/10 text-white/30"
+                    ? `bg-[var(--bg-0)] border-${themeColor}-500 text-${themeColor}-500`
+                    : "bg-[var(--bg-0)] border-[var(--border-muted)] text-[var(--fg-subtle)]"
                 }`}
               >
                 <Icon className="w-4 h-4" />
               </div>
               <span
-                className={`text-sm font-medium ${isActive ? "text-white" : isPast ? "text-white/60" : "text-white/30"}`}
+                className={`text-sm font-medium ${isActive ? "text-[var(--fg-0)]" : isPast ? "text-[var(--fg-muted)]" : "text-[var(--fg-subtle)]"}`}
               >
                 {step.label}
               </span>
@@ -638,7 +638,7 @@ function ConceptInput({
         rows={6}
         disabled={isLoading}
       />
-      <div className="text-xs text-slate-400 dark:text-white/40 text-right">
+      <div className="text-xs text-[var(--fg-subtle)] text-right">
         {concept.length}/{MAX_CONCEPT_LENGTH}
       </div>
 
@@ -663,7 +663,7 @@ function ConceptInput({
       </DimensionPanel.GenerateButton>
 
       {!byokKey && (
-        <div className="text-xs text-center text-slate-400 dark:text-white/30 mt-2">
+        <div className="text-xs text-center text-[var(--fg-subtle)] mt-2">
           예상 비용: {creditCost} 크레딧
         </div>
       )}
@@ -675,10 +675,10 @@ function IntroEmptyState() {
   return (
     <div className="flex flex-col items-center justify-center text-center opacity-50 h-full">
       <Music className="w-16 h-16 text-rose-500 dark:text-rose-400 mb-6" />
-      <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+      <h2 className="text-2xl font-bold text-[var(--fg-0)] mb-2">
         사운드 디자인 스튜디오
       </h2>
-      <p className="text-slate-500 dark:text-white/50 max-w-md">
+      <p className="text-[var(--fg-muted)] max-w-md">
         추상적인 아이디어를 구체적인 사운드 텍스처로 변환하세요.
         <br />
         Suno 및 Udio 용 전문 프롬프트가 생성됩니다.
@@ -698,7 +698,7 @@ function MoodStage({
 }) {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+      <h3 className="text-lg font-bold text-[var(--fg-0)] flex items-center gap-2">
         <Activity className="w-5 h-5 text-rose-500 dark:text-rose-400" />
         1단계: 오디오 디렉션 선택
       </h3>
@@ -708,18 +708,18 @@ function MoodStage({
           <button
             key={dir.id}
             onClick={() => onSelectDirection(dir)}
-            className="group relative p-5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10
+            className="group relative p-5 rounded-xl border border-[var(--border-muted)] bg-[var(--surface-1)] hover:bg-[var(--surface-2)]
                      text-left transition-all hover:border-rose-300 dark:hover:border-rose-500/50 hover:shadow-lg hover:shadow-rose-500/10"
           >
             <div className="flex justify-between items-start mb-2">
               <h4 className="text-lg font-bold text-rose-600 dark:text-rose-400 group-hover:text-rose-500 dark:group-hover:text-rose-300 transition-colors">
                 {dir.title}
               </h4>
-              <span className="text-xs px-2 py-1 rounded-full bg-slate-100 dark:bg-black/50 text-slate-600 dark:text-white/50 border border-slate-200 dark:border-white/10">
+              <span className="text-xs px-2 py-1 rounded-full bg-[var(--bg-1)] text-[var(--fg-muted)] border border-[var(--border-muted)]">
                 {dir.bpm_range} BPM
               </span>
             </div>
-            <p className="text-slate-600 dark:text-white/70 text-sm mb-4 leading-relaxed">
+            <p className="text-[var(--fg-muted)] text-sm mb-4 leading-relaxed">
               {dir.description}
             </p>
             <div className="flex flex-wrap gap-2">
@@ -738,7 +738,7 @@ function MoodStage({
 
       <button
         onClick={onGoBack}
-        className="text-sm text-slate-500 dark:text-white/40 hover:text-slate-900 dark:hover:text-white underline"
+        className="text-sm text-[var(--fg-muted)] hover:text-[var(--fg-0)] underline"
       >
         다시 컨셉 입력하기
       </button>
@@ -767,21 +767,21 @@ function LayersStage({
 }) {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-      <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+      <h3 className="text-lg font-bold text-[var(--fg-0)] flex items-center gap-2">
         <Sliders className="w-5 h-5 text-rose-500 dark:text-rose-400" />
         2단계: 사운드 레이어 믹싱
       </h3>
 
-      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-6 space-y-6">
-        <div className="flex items-center gap-4 pb-4 border-b border-slate-200 dark:border-white/10">
+      <div className="bg-[var(--surface-1)] border border-[var(--border-muted)] rounded-xl p-6 space-y-6">
+        <div className="flex items-center gap-4 pb-4 border-b border-[var(--border-muted)]">
           <div className="w-12 h-12 rounded-lg bg-rose-100 dark:bg-rose-500/20 flex items-center justify-center">
             <Music className="w-6 h-6 text-rose-500 dark:text-rose-400" />
           </div>
           <div>
-            <h4 className="font-bold text-slate-900 dark:text-white">
+            <h4 className="font-bold text-[var(--fg-0)]">
               {selectedDirection.title}
             </h4>
-            <p className="text-sm text-slate-500 dark:text-white/50">
+            <p className="text-sm text-[var(--fg-muted)]">
               {selectedDirection.description}
             </p>
           </div>
@@ -811,19 +811,19 @@ function LayersStage({
       <div className="flex gap-3">
         <button
           onClick={onGoBack}
-          className="flex-1 py-4 rounded-xl border border-slate-200 dark:border-white/10 text-slate-500 dark:text-white/60 hover:bg-slate-50 dark:hover:bg-white/5 transition-all font-medium"
+          className="flex-1 py-4 rounded-xl border border-[var(--border-muted)] text-[var(--fg-muted)] hover:bg-[var(--surface-2)] transition-all font-medium"
         >
           이전
         </button>
         <button
           onClick={onGenerate}
           disabled={isLoading}
-          className="flex-[2] py-4 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold
+          className="flex-[2] py-4 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 text-[var(--fg-on-emphasis)] font-bold
                    hover:from-rose-400 hover:to-pink-400 transition-all flex items-center justify-center gap-2"
         >
           {isLoading ? (
             <>
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 spinner-on-emphasis rounded-full animate-spin" />
               최종 프롬프트 생성 중...
             </>
           ) : (
@@ -836,7 +836,7 @@ function LayersStage({
       </div>
 
       {!byokKey && (
-        <div className="text-xs text-center text-slate-400 dark:text-white/30">
+        <div className="text-xs text-center text-[var(--fg-subtle)]">
           최종 생성 비용: {creditCost} 크레딧
         </div>
       )}
@@ -858,7 +858,7 @@ function MixSlider({
   return (
     <div className="space-y-3">
       <div className="flex justify-between text-sm">
-        <label className="text-slate-700 dark:text-white/80 font-medium">
+        <label className="text-[var(--fg-0)] font-medium">
           {label}
         </label>
         <span className="text-rose-600 dark:text-rose-400">{value * 10}%</span>
@@ -869,9 +869,9 @@ function MixSlider({
         max="10"
         value={value}
         onChange={(e) => onChange(parseInt(e.target.value))}
-        className="w-full accent-rose-500 bg-slate-200 dark:bg-white/10 h-2 rounded-lg appearance-none cursor-pointer"
+        className="w-full accent-rose-500 bg-[var(--bg-2)] h-2 rounded-lg appearance-none cursor-pointer"
       />
-      <p className="text-xs text-slate-500 dark:text-white/40">{description}</p>
+      <p className="text-xs text-[var(--fg-muted)]">{description}</p>
     </div>
   );
 }
@@ -897,20 +897,20 @@ function MasteringStage({
     <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+        <h3 className="text-lg font-bold text-[var(--fg-0)] flex items-center gap-2">
           <Disc className="w-5 h-5 text-rose-400 animate-spin" />
           사운드 테크 팩
         </h3>
-        <div className="flex bg-white/5 rounded-lg p-1">
+        <div className="flex bg-[var(--surface-1)] rounded-lg p-1 border border-[var(--border-subtle)]">
           <button
             onClick={() => setActivePlatform("suno")}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activePlatform === "suno" ? "bg-rose-500 text-black shadow-lg" : "text-white/50 hover:text-white"}`}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activePlatform === "suno" ? "bg-[var(--accent)] text-[var(--fg-on-emphasis)] shadow-lg" : "text-[var(--fg-muted)] hover:text-[var(--fg-0)]"}`}
           >
             Suno v3
           </button>
           <button
             onClick={() => setActivePlatform("udio")}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activePlatform === "udio" ? "bg-rose-500 text-black shadow-lg" : "text-white/50 hover:text-white"}`}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activePlatform === "udio" ? "bg-[var(--accent)] text-[var(--fg-on-emphasis)] shadow-lg" : "text-[var(--fg-muted)] hover:text-[var(--fg-0)]"}`}
           >
             Udio
           </button>
@@ -918,7 +918,7 @@ function MasteringStage({
       </div>
 
       {/* Prompt Display */}
-      <div className="p-6 rounded-2xl bg-gradient-to-br from-rose-500/10 to-black border border-rose-500/20 relative group">
+      <div className="p-6 rounded-2xl bg-gradient-to-br from-rose-500/10 to-[var(--bg-0)] border border-rose-500/20 relative group">
         <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={() =>
@@ -929,7 +929,7 @@ function MasteringStage({
                 "prompt"
               )
             }
-            className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+            className="p-2 rounded-lg bg-[var(--surface-1)] hover:bg-[var(--surface-2)] text-[var(--fg-0)] transition-colors"
           >
             {copiedField === "prompt" ? (
               <Check className="w-4 h-4 text-green-400" />
@@ -941,7 +941,7 @@ function MasteringStage({
         <h4 className="text-xs font-bold text-rose-400 uppercase tracking-wider mb-3">
           {activePlatform === "suno" ? "Suno v3.5 최적화" : "Udio Beta 최적화"}
         </h4>
-        <p className="text-white/90 font-mono text-sm leading-relaxed whitespace-pre-wrap">
+        <p className="text-[var(--fg-0)] font-mono text-sm leading-relaxed whitespace-pre-wrap">
           {activePlatform === "suno"
             ? result.music_prompt
             : result.udio_prompt || "Udio 프롬프트가 생성되지 않았습니다."}
@@ -959,26 +959,26 @@ function MasteringStage({
 
       {/* Mixing Guide */}
       {result.mixing_guide && (
-        <div className="p-5 rounded-xl bg-black/40 border dashed border-white/10">
-          <h4 className="text-sm font-bold text-white/60 mb-2 flex items-center gap-2">
+        <div className="p-5 rounded-xl bg-[var(--surface-2)] border dashed border-[var(--border-muted)]">
+          <h4 className="text-sm font-bold text-[var(--fg-muted)] mb-2 flex items-center gap-2">
             <Sliders className="w-4 h-4" />
             믹싱 가이드
           </h4>
-          <p className="text-sm text-white/50">{result.mixing_guide}</p>
+          <p className="text-sm text-[var(--fg-subtle)]">{result.mixing_guide}</p>
         </div>
       )}
 
-      <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+      <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-subtle)]">
         <button
           onClick={onExport}
-          className="px-4 py-2 hover:bg-white/5 rounded-lg text-sm text-white/60 hover:text-white flex items-center gap-2 transition-colors"
+          className="px-4 py-2 hover:bg-[var(--surface-2)] rounded-lg text-sm text-[var(--fg-muted)] hover:text-[var(--fg-0)] flex items-center gap-2 transition-colors"
         >
           <Download className="w-4 h-4" />
           JSON 내보내기
         </button>
         <button
           onClick={onGoBack}
-          className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium text-white transition-colors"
+          className="px-6 py-2 bg-[var(--surface-1)] hover:bg-[var(--surface-2)] rounded-lg text-sm font-medium text-[var(--fg-0)] transition-colors"
         >
           다시 믹싱하기
         </button>
@@ -989,9 +989,9 @@ function MasteringStage({
 
 function LayerCard({ label, content }: { label: string; content: string }) {
   return (
-    <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-      <span className="text-xs text-rose-400/70 block mb-2">{label}</span>
-      <p className="text-sm text-white/80">{content}</p>
+    <div className="p-4 rounded-xl bg-[var(--surface-1)] border border-[var(--border-muted)]">
+      <span className="text-xs text-rose-400 block mb-2">{label}</span>
+      <p className="text-sm text-[var(--fg-muted)]">{content}</p>
     </div>
   );
 }
