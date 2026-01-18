@@ -127,11 +127,30 @@ const getDimensionColorClasses = (dimension?: string) => {
 };
 
 const STATUS_INDICATOR: Record<string, React.ReactNode> = {
-    pending: <div className="h-2 w-2 rounded-full bg-zinc-500" />,
-    ready: <div className="h-2 w-2 rounded-full bg-blue-400 animate-pulse" />,
-    executing: <Loader2 className="h-4 w-4 text-amber-400 animate-spin" />,
-    completed: <CheckCircle className="h-4 w-4 text-emerald-400" />,
-    failed: <div className="h-2 w-2 rounded-full bg-red-500" />,
+    pending: <div className="h-2 w-2 rounded-full bg-[var(--surface-2)]" />,
+    ready: <div className="h-2 w-2 rounded-full bg-[var(--info)] animate-pulse" />,
+    executing: <Loader2 className="h-4 w-4 text-[var(--warning)] animate-spin" />,
+    completed: <CheckCircle className="h-4 w-4 text-[var(--success)]" />,
+    failed: <div className="h-2 w-2 rounded-full bg-[var(--error)]" />,
+};
+
+const BRAND_TONE = {
+    solid: "bg-[var(--color-brand-primary)]",
+    hover: "hover:opacity-90",
+};
+
+const STATUS_TONE = {
+    success: "text-[var(--success)]",
+    warning: "text-[var(--warning)]",
+    error: "text-[var(--error)]",
+};
+
+const ERROR_TONE = {
+    bg: "bg-[var(--error)]/20",
+    border: "border-[var(--error)]/50",
+    text: "text-[var(--error)]",
+    hoverBg: "hover:bg-[var(--error)]/30",
+    hoverText: "hover:opacity-90",
 };
 
 export function TrainCar({
@@ -222,9 +241,8 @@ export function TrainCar({
                         }}
                         className={`
                             flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                            bg-gradient-to-r from-violet-600 to-purple-600
+                            ${BRAND_TONE.solid} ${BRAND_TONE.hover}
                             text-white text-xs font-medium
-                            hover:shadow-[0_0_20px_rgba(139,92,246,0.5)]
                             transition-all duration-300
                         `}
                     >
@@ -235,7 +253,7 @@ export function TrainCar({
 
                 {/* [TIER2] 실행 중 상태 피드백 */}
                 {status === "executing" && (
-                    <div className="text-[10px] text-amber-400 text-center px-2 flex items-center gap-1">
+                    <div className={`text-[10px] ${STATUS_TONE.warning} text-center px-2 flex items-center gap-1`}>
                         <Loader2 className="h-3 w-3 animate-spin" />
                         실행 중...
                     </div>
@@ -243,11 +261,11 @@ export function TrainCar({
 
                 {/* 완료 시 출력 미리보기 */}
                 {status === "completed" && output && (
-                    <div className="text-[10px] text-emerald-400 text-center px-2 flex items-center gap-1">
+                    <div className={`text-[10px] ${STATUS_TONE.success} text-center px-2 flex items-center gap-1`}>
                         <CheckCircle className="h-3 w-3" />
                         차원 전개 완료
                         {creditCost !== undefined && (
-                            <span className="text-amber-400 ml-1">(-{creditCost})</span>
+                            <span className={`${STATUS_TONE.warning} ml-1`}>(-{creditCost})</span>
                         )}
                     </div>
                 )}
@@ -261,7 +279,7 @@ export function TrainCar({
                                 e.stopPropagation();
                                 setShowFullError(!showFullError);
                             }}
-                            className="text-[10px] text-red-400 text-center px-2 flex items-center gap-1 hover:text-red-300 transition-colors"
+                            className={`text-[10px] ${STATUS_TONE.error} text-center px-2 flex items-center gap-1 hover:opacity-80 transition-colors`}
                         >
                             <AlertCircle className="h-3 w-3 flex-shrink-0" />
                             <span className={showFullError ? "" : "max-w-[100px] truncate"}>
@@ -278,9 +296,9 @@ export function TrainCar({
                                 }}
                                 className={`
                                     flex items-center gap-1 px-2.5 py-1 rounded-lg
-                                    bg-red-500/20 border border-red-500/50
-                                    text-red-400 text-[10px] font-medium
-                                    hover:bg-red-500/30 hover:text-red-300
+                                    ${ERROR_TONE.bg} ${ERROR_TONE.border}
+                                    ${ERROR_TONE.text} text-[10px] font-medium
+                                    ${ERROR_TONE.hoverBg} ${ERROR_TONE.hoverText}
                                     transition-all duration-200
                                 `}
                             >
