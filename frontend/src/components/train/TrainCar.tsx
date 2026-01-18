@@ -51,66 +51,6 @@ const ICON_MAP: Record<string, React.ReactNode> = {
     eye: <Eye className="h-6 w-6" />,
 };
 
-const COLOR_MAP: Record<string, { bg: string; border: string; text: string; glow: string; portalGlow: string }> = {
-    violet: {
-        bg: "bg-violet-500/20",
-        border: "border-violet-500/50",
-        text: "text-violet-400",
-        glow: "shadow-[0_0_30px_rgba(139,92,246,0.3)]",
-        portalGlow: "shadow-[0_0_60px_rgba(139,92,246,0.4),inset_0_0_30px_rgba(139,92,246,0.1)]",
-    },
-    emerald: {
-        bg: "bg-emerald-500/20",
-        border: "border-emerald-500/50",
-        text: "text-emerald-400",
-        glow: "shadow-[0_0_30px_rgba(16,185,129,0.3)]",
-        portalGlow: "shadow-[0_0_60px_rgba(16,185,129,0.4),inset_0_0_30px_rgba(16,185,129,0.1)]",
-    },
-    amber: {
-        bg: "bg-amber-500/20",
-        border: "border-amber-500/50",
-        text: "text-amber-400",
-        glow: "shadow-[0_0_30px_rgba(245,158,11,0.3)]",
-        portalGlow: "shadow-[0_0_60px_rgba(245,158,11,0.4),inset_0_0_30px_rgba(245,158,11,0.1)]",
-    },
-    cyan: {
-        bg: "bg-cyan-500/20",
-        border: "border-cyan-500/50",
-        text: "text-cyan-400",
-        glow: "shadow-[0_0_30px_rgba(6,182,212,0.3)]",
-        portalGlow: "shadow-[0_0_60px_rgba(6,182,212,0.4),inset_0_0_30px_rgba(6,182,212,0.1)]",
-    },
-    // Extended Dimension Colors
-    rose: {
-        bg: "bg-rose-500/20",
-        border: "border-rose-500/50",
-        text: "text-rose-400",
-        glow: "shadow-[0_0_30px_rgba(244,63,94,0.3)]",
-        portalGlow: "shadow-[0_0_60px_rgba(244,63,94,0.4),inset_0_0_30px_rgba(244,63,94,0.1)]",
-    },
-    fuchsia: {
-        bg: "bg-fuchsia-500/20",
-        border: "border-fuchsia-500/50",
-        text: "text-fuchsia-400",
-        glow: "shadow-[0_0_30px_rgba(217,70,239,0.3)]",
-        portalGlow: "shadow-[0_0_60px_rgba(217,70,239,0.4),inset_0_0_30px_rgba(217,70,239,0.1)]",
-    },
-    indigo: {
-        bg: "bg-indigo-500/20",
-        border: "border-indigo-500/50",
-        text: "text-indigo-400",
-        glow: "shadow-[0_0_30px_rgba(99,102,241,0.3)]",
-        portalGlow: "shadow-[0_0_60px_rgba(99,102,241,0.4),inset_0_0_30px_rgba(99,102,241,0.1)]",
-    },
-    sky: {
-        bg: "bg-sky-500/20",
-        border: "border-sky-500/50",
-        text: "text-sky-400",
-        glow: "shadow-[0_0_30px_rgba(14,165,233,0.3)]",
-        portalGlow: "shadow-[0_0_60px_rgba(14,165,233,0.4),inset_0_0_30px_rgba(14,165,233,0.1)]",
-    },
-};
-
 const getDimensionColorClasses = (dimension?: string) => {
     if (!dimension) return null;
     const code = dimensionIdToCode(dimension);
@@ -159,7 +99,7 @@ export function TrainCar({
     dimension: _dimension,
     displayName,
     icon,
-    color,
+    color: _color,
     status,
     isActive = false,
     onExecute,
@@ -171,7 +111,7 @@ export function TrainCar({
 }: TrainCarProps) {
     const [showFullError, setShowFullError] = useState(false);
     const tokenScheme = getDimensionColorClasses(_dimension);
-    const colorScheme = tokenScheme || COLOR_MAP[color] || COLOR_MAP.violet;
+    const colorScheme = tokenScheme || getDimensionColorClasses("1D");
     const IconComponent = ICON_MAP[icon] || <Sparkles className="h-6 w-6" />;
 
     return (
