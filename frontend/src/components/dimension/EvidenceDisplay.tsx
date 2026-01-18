@@ -178,7 +178,7 @@ function EvidenceDisplayInner({
                 <span aria-hidden="true">{expanded ? "▼" : "▶"}</span>
                 <span>📚 AI 근거 ({safeRefs.length}개)</span>
                 {autoCollapse && !expanded && (
-                    <span className="text-[10px] text-slate-400 dark:text-zinc-500 ml-2">
+                    <span className="text-[10px] text-[var(--pattern-version-fg)] ml-2">
                         (신뢰도 낮음)
                     </span>
                 )}
@@ -192,19 +192,17 @@ function EvidenceDisplayInner({
                             className="p-3 bg-white dark:bg-black/20 rounded-lg text-sm"
                         >
                             <div className="flex items-center gap-2 mb-1">
-                                <span
-                                    className={`text-[10px] px-1.5 py-0.5 rounded ${theme.badge}`}
-                                >
+                                <span className="evidence-badge">
                                     {ref.dataset_label || ref.dataset_id || "source"}
                                 </span>
                                 {formatScore(ref.score) && (
-                                    <span className="text-[10px] text-slate-400 dark:text-zinc-500">
+                                    <span className="text-[10px] text-[var(--pattern-version-fg)]">
                                         {formatScore(ref.score)}
                                     </span>
                                 )}
                             </div>
                             {/* Safe text rendering - no dangerouslySetInnerHTML */}
-                            <p className="text-slate-600 dark:text-zinc-300 line-clamp-2">
+                            <p className="text-[var(--fg-muted)] line-clamp-2">
                                 {ref.content_preview || ref.ref_id}
                             </p>
                         </div>

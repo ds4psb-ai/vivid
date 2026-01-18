@@ -336,15 +336,15 @@ function TeachingCapsuleNodeBase({
 
                     {/* Status indicator */}
                     {status === "loading" && (
-                        <Loader2 className="w-4 h-4 text-white animate-spin" />
+                        <Loader2 className="w-4 h-4 run-state loading animate-spin" />
                     )}
                     {status === "complete" && (
-                        <Check className="w-4 h-4 text-white" />
+                        <Check className="w-4 h-4 run-state complete" />
                     )}
 
                     {/* Credit cost badge */}
                     {creditCost > 0 && (
-                        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-black/20 text-xs text-white/80">
+                        <div className="credit-chip ok flex items-center gap-1 px-1.5 py-0.5 rounded bg-black/20 text-xs">
                             <Coins className="w-3 h-3" />
                             {creditCost}
                         </div>
@@ -368,8 +368,10 @@ function TeachingCapsuleNodeBase({
                                         isLocked && "text-yellow-300/80",
                                     )}>
                                         {String(value ?? schema.default ?? "-").slice(0, 30)}
-                                        {isLocked && " 🔒"}
                                     </span>
+                                    {isLocked && (
+                                        <span className="capsule-locked text-[10px] px-1 py-0.5 rounded">🔒</span>
+                                    )}
                                 </div>
                             );
                         })}
@@ -411,7 +413,9 @@ function TeachingCapsuleNodeBase({
                                         <label className="flex items-center gap-1 text-xs text-white/60">
                                             {key}
                                             {schema.required && <span className="text-red-400">*</span>}
-                                            {isLocked && <span className="text-yellow-400">🔒</span>}
+                                            {isLocked && (
+                                                <span className="capsule-locked text-[10px] px-1 py-0.5 rounded">🔒</span>
+                                            )}
                                         </label>
                                         {renderInputField(key, schema, value, isLocked)}
                                     </div>
