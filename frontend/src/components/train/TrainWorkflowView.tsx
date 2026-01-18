@@ -69,6 +69,11 @@ const STATUS_TONE_CLASSES: Record<Car["status"], string> = {
     failed: "bg-[var(--error)]",
 };
 
+const DELETE_BUTTON_TONES = {
+    disabled: "bg-zinc-800/50 border-zinc-700 text-zinc-600 cursor-not-allowed",
+    enabled: "bg-[var(--error)]/20 border-[var(--error)]/50 text-[var(--error)] hover:bg-[var(--error)]/30",
+};
+
 const TOAST_TONE_CLASSES: Record<"success" | "error", string> = {
     success: "bg-[var(--success)] text-white",
     error: "bg-[var(--error)] text-white",
@@ -707,7 +712,7 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                                     {/* 차원 노드 */}
                                     <div className="relative">
                                         {/* 차원 레이블 */}
-                                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-gradient-to-r from-violet-500/20 to-purple-500/20 border border-violet-500/30 text-xs font-bold text-violet-400">
+                                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-[var(--role-secondary-bg)] border border-white/10 text-xs font-bold text-[var(--fg-muted)]">
                                             {DIMENSION_LABELS[index] || `${index + 1}D`}
                                         </div>
 
@@ -738,8 +743,8 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                                                 absolute -top-1 -right-1 h-6 w-6 rounded-full
                                                 border flex items-center justify-center transition-all
                                                 ${car.status === "executing" || isExecutingAll
-                                                    ? "bg-zinc-800/50 border-zinc-700 text-zinc-600 cursor-not-allowed"
-                                                    : "bg-red-500/20 border-red-500/50 text-red-400 hover:bg-red-500/30"
+                                                    ? DELETE_BUTTON_TONES.disabled
+                                                    : DELETE_BUTTON_TONES.enabled
                                                 }
                                             `}
                                         >
