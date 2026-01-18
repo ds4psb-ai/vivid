@@ -300,18 +300,18 @@ html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
   /* ─── DARK MODE (Existing Deep Space Theme) ─── */
   /* 2025 Deep Space Theme - Reduced Eye Strain */
   /* Base backgrounds now mapped to neutral scale (Phase 3.1) */
-  --bg-0: var(--neutral-50);
+  --bg-0: var(--neutral-900);
   /* Deep Blue-Gray (Primary Background) */
-  --bg-1: var(--neutral-100);
+  --bg-1: var(--neutral-800);
   /* Slightly lighter for panels */
-  --bg-2: var(--neutral-200);
+  --bg-2: var(--neutral-700);
   /* Elevated Surface */
 
   --fg-0: #E8E8ED;
   /* Muted White (Primary Text) */
-  --fg-muted: var(--neutral-800);
+  --fg-muted: var(--neutral-400);
   /* Cool Gray (Secondary Text) - WCAG 4.5:1 compliant */
-  --fg-subtle: var(--neutral-700);
+  --fg-subtle: var(--neutral-500);
 
   /* Crebit Accents */
   /* --accent: #38bdf8; (Cyan) -> #8B5CF6 (Violet) */
@@ -323,7 +323,7 @@ html:not(.dark) [class*="text-slate-500"]:not([class*="dark:"]) {
   --warning-rgb: 245, 158, 11;
   --error-rgb: 239, 68, 68;
   --info-rgb: 59, 130, 246;
-  --fg-muted-rgb: 160, 160, 176;
+  --fg-muted-rgb: 161, 161, 170;
 
   /* Surfaces & Glass */
   --surface-1: rgba(22, 22, 24, 0.6);
