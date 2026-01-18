@@ -162,9 +162,15 @@ class GeminiBatchService:
         """Initialize Gemini Batch Service.
 
         Args:
-            api_key: Gemini API key. If not provided, uses settings.GEMINI_API_KEY
+            api_key: Gemini API key. If not provided, uses settings.GEMINI_BATCH_API_KEY
+                     or settings.GEMINI_API_KEY as fallback.
         """
-        self._api_key = api_key or settings.GEMINI_API_KEY
+        # Priority: provided key > BATCH_API_KEY > GEMINI_API_KEY
+        self._api_key = (
+            api_key
+            or settings.GEMINI_BATCH_API_KEY
+            or settings.GEMINI_API_KEY
+        )
         self._client = None
         self._jobs: Dict[str, BatchJob] = {}
 

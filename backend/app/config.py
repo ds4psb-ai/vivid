@@ -48,6 +48,7 @@ class Settings(BaseSettings):
     # 24시간 SLA 내 완료 (대부분 더 빠름)
     # 적합: RAG 평가, 대량 콘텐츠 생성, 데이터 전처리
     GEMINI_BATCH_ENABLED: bool = True
+    GEMINI_BATCH_API_KEY: str = ""  # Separate key for Batch API (uses GEMINI_API_KEY if empty)
     GEMINI_BATCH_MODEL: str = "gemini-3-flash-preview"  # 3.0 Flash (50% off)
     GEMINI_BATCH_POLL_INTERVAL: int = 30  # Seconds between status checks
     GEMINI_BATCH_MAX_WAIT_HOURS: int = 24  # Maximum wait time for batch jobs
