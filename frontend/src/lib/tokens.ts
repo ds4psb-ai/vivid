@@ -260,6 +260,7 @@ const LEGACY_DIMENSION_ALIASES: Record<string, DimensionCode> = {
   "storyboard-sketch": "storyboard",
   "sa": "story",
   "sc": "sound",
+  "ce": "qc",
 };
 
 // =============================================================================

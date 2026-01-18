@@ -26,6 +26,7 @@ import {
 
 // const CREDIT_COST = 5; // REMOVED
 const THEME_COLOR: ThemeColor = "rose";
+const DIMENSION_CODE = "qc" as const;
 const DIMENSION_KEY = "creative-editor";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
@@ -206,6 +207,7 @@ export default function CreativeEditorPanel() {
             sidebarContent={SidebarContent}
             isLoading={isLoading}
             themeColor={THEME_COLOR}
+            dimensionCode={DIMENSION_CODE}
             progress={progress}
             onCancel={cancel}
             onRetry={retry}
