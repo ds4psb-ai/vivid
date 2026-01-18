@@ -106,6 +106,35 @@ def _is_recency_query(query: str) -> bool:
     return any(kw in q for kw in RECENCY_KEYWORDS)
 
 
+def _complexity_score(query: str) -> int:
+    q = query.lower()
+    score = 0
+    if len(query) > 120:
+        score += 1
+    if len(query.split()) > 20:
+        score += 1
+    if any(
+        kw in q
+        for kw in (
+            "compare",
+            "comparison",
+            "vs",
+            "difference",
+            "analysis",
+            "benchmark",
+            "survey",
+            "state of the art",
+            "sota",
+            "논문",
+            "비교",
+            "분석",
+            "벤치마크",
+        )
+    ):
+        score += 1
+    return score
+
+
 def _normalize_domain(url: str) -> str:
     try:
         domain = urlparse(url).netloc.lower()
@@ -131,6 +160,61 @@ def _resolve_defaults(app_key: Optional[str], dimension: Optional[str]) -> Dict[
     if dimension and dimension.upper() in DIMENSION_DEFAULTS:
         return DIMENSION_DEFAULTS[dimension.upper()]
     return {}
+
+
+def _select_search_depth(
+    *,
+    query: str,
+    explicit_depth: Optional[str],
+) -> str:
+    """Heuristic to choose Tavily search depth.
+
+    Rules (only applied when explicit_depth is None):
+    - Recency query -> advanced
+    - Complexity >= 2 -> advanced
+    - Complexity == 1 -> basic
+    - Complexity == 0 -> fast (lower latency)
+    """
+    if explicit_depth:
+        return explicit_depth
+
+    if _is_recency_query(query):
+        return "advanced"
+
+    score = _complexity_score(query)
+    if score >= 2:
+        return "advanced"
+    if score == 1:
+        return "basic"
+    return "fast"
+
+
+def _select_chunks_per_source(
+    *,
+    search_depth: str,
+    explicit_chunks: Optional[int],
+    complexity_score: int,
+    include_raw_content: bool,
+) -> Optional[int]:
+    """Heuristic to choose chunks_per_source.
+
+    Only valid for advanced search; otherwise returns None.
+    """
+    if explicit_chunks is not None:
+        return explicit_chunks
+
+    if search_depth != "advanced":
+        return None
+
+    # Keep content size bounded
+    if include_raw_content:
+        return 2 if complexity_score >= 1 else 1
+
+    if complexity_score >= 2:
+        return 3
+    if complexity_score == 1:
+        return 2
+    return 1
 
 
 class TavilyGroundingBackend(BaseBackend):
@@ -174,7 +258,8 @@ class TavilyGroundingBackend(BaseBackend):
             logger.warning(f"[TavilyGrounding] API key missing or invalid: {exc}")
             return []
 
-        search_depth = config.get("search_depth", "basic")
+        explicit_depth = config.get("search_depth")
+        search_depth = _select_search_depth(query=query, explicit_depth=explicit_depth)
         include_answer = config.get("include_answer", False)
         include_raw_content = config.get("include_raw_content", False)
         topic = config.get("topic")
@@ -188,7 +273,7 @@ class TavilyGroundingBackend(BaseBackend):
         include_images = config.get("include_images")
         include_image_descriptions = config.get("include_image_descriptions")
         include_favicon = config.get("include_favicon")
-        chunks_per_source = config.get("chunks_per_source")
+        explicit_chunks = config.get("chunks_per_source")
         include_domains = config.get("include_domains")
         exclude_domains = config.get("exclude_domains")
         app_key = config.get("app_key")
@@ -200,6 +285,8 @@ class TavilyGroundingBackend(BaseBackend):
         domain_gate = config.get("domain_gate", True)
         domain_allowlist = config.get("domain_allowlist")
 
+        complexity = _complexity_score(query)
+
         # Apply per-app defaults if not explicitly set
         defaults = _resolve_defaults(app_key, dimension)
         if topic is None:
@@ -209,7 +296,7 @@ class TavilyGroundingBackend(BaseBackend):
         if domain_allowlist is None:
             domain_allowlist = defaults.get("domain_allowlist")
 
-        # Recency-aware auto parameter mapping
+        # Recency-aware auto parameter mapping (only if not explicitly set)
         if _is_recency_query(query):
             if topic is None:
                 topic = "news"
@@ -217,9 +304,17 @@ class TavilyGroundingBackend(BaseBackend):
                 time_range = "week"
             if auto_parameters is None:
                 auto_parameters = True
-            # If not explicitly set, use advanced depth for recency
-            if config.get("search_depth") is None:
-                search_depth = "advanced"
+
+        # News topic default days if time_range not specified
+        if topic == "news" and time_range is None and days is None:
+            days = 7
+
+        chunks_per_source = _select_chunks_per_source(
+            search_depth=search_depth,
+            explicit_chunks=explicit_chunks,
+            complexity_score=complexity,
+            include_raw_content=include_raw_content,
+        )
 
         try:
             response = await tavily.search(
