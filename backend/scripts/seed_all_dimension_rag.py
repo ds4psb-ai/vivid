@@ -42,6 +42,7 @@ logger = logging.getLogger(__name__)
 # Data paths
 RAG_DOCS_DIR = Path(__file__).parent.parent / "data" / "rag_docs"
 SOURCE_PACKS_DIR = Path(__file__).parent.parent.parent / "data" / "source_packs"
+LOGIC_MATH_DIR = SOURCE_PACKS_DIR / "logic_math" / "vectors"
 
 # =============================================================================
 # Utility Functions
@@ -212,8 +213,9 @@ def seed_4d_collection() -> int:
                 content = extract_content_from_source_pack(data)
                 doc_id = f"4d_thematic_{auteur}_{json_file.stem}"
                 metadata = {
-                    "app_key": "dimension.4d.analysis",
+                    "app_key": "teaching.reference.analyze",
                     "content_type": "thematic_analysis",
+                    "dataset_id": "film_analysis",
                     "auteur": auteur,
                     "source": json_file.name,
                     "dimension": "4D",
@@ -234,8 +236,9 @@ def seed_4d_collection() -> int:
                 content = extract_content_from_source_pack(data)
                 doc_id = f"4d_pacing_{auteur}_{json_file.stem}"
                 metadata = {
-                    "app_key": "dimension.4d.analysis",
+                    "app_key": "teaching.reference.analyze",
                     "content_type": "pacing_narrative",
+                    "dataset_id": "film_analysis",
                     "auteur": auteur,
                     "source": json_file.name,
                     "dimension": "4D",
@@ -272,8 +275,9 @@ Sub-criteria:
 
                 doc_id = f"4d_quality_{key}"
                 metadata = {
-                    "app_key": "dimension.4d.analysis",
+                    "app_key": "teaching.reference.analyze",
                     "content_type": "quality_criteria",
+                    "dataset_id": "film_analysis",
                     "criterion": key,
                     "source": "quality_criteria.json",
                     "dimension": "4D",
@@ -286,6 +290,100 @@ Sub-criteria:
             logger.error(f"  ✗ Failed quality_criteria: {e}")
 
     logger.info(f"  Total 4D documents: {count}")
+    return count
+
+
+def seed_4d_bundle() -> int:
+    """Seed full 4D stack (analysis + logic math vectors)."""
+    total = 0
+    total += seed_4d_collection()
+    total += seed_logic_math_vectors()
+    return total
+
+
+# =============================================================================
+# 4D: Logic Math Vectors (Gemini Video Analysis)
+# =============================================================================
+
+def seed_logic_math_vectors() -> int:
+    """Seed logic_math vectors into 4D (Reference Analysis).
+
+    These vectors represent quantitative scene logic extracted from video analysis.
+
+    Returns:
+        Number of documents indexed
+    """
+    logger.info("\n🧮 Seeding Logic Math Vectors (4D)...")
+    rag = get_dimension_rag("4D")
+    rag.ensure_collection()
+    count = 0
+
+    if not LOGIC_MATH_DIR.exists():
+        logger.warning(f"  ⚠️ logic_math vectors not found at {LOGIC_MATH_DIR}")
+        return 0
+
+    for json_file in LOGIC_MATH_DIR.glob("*.json"):
+        try:
+            with open(json_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            logic = data.get("logic_vector", {})
+            metadata_info = data.get("metadata", {})
+
+            camera = logic.get("camera_motion", {})
+            composition = logic.get("composition", {})
+
+            content = f"""
+Logic Vector: {data.get('id', json_file.stem)}
+Film: {metadata_info.get('film', '')} ({metadata_info.get('year', '')})
+Scene: {metadata_info.get('scene', '')}
+Duration: {metadata_info.get('duration_sec', '')} sec
+Model: {metadata_info.get('model', '')} | FPS: {metadata_info.get('fps_sampled', '')}
+
+Shot Length (ms):
+- median: {logic.get('shot_length_ms', {}).get('median', '')}
+- p25: {logic.get('shot_length_ms', {}).get('p25', '')}
+- p75: {logic.get('shot_length_ms', {}).get('p75', '')}
+- min/max: {logic.get('shot_length_ms', {}).get('min', '')}/{logic.get('shot_length_ms', {}).get('max', '')}
+
+Cut Density: {logic.get('cut_density', '')}
+
+Camera Motion:
+- {', '.join(f"{k} {int(v*100)}%" for k, v in camera.items())}
+
+Composition:
+- {', '.join(f"{k} {int(v*100)}%" for k, v in composition.items())}
+
+Color Entropy: {logic.get('color_entropy', '')}
+Dominant Colors: {', '.join(logic.get('dominant_colors', []))}
+Lighting Key: {logic.get('lighting_key', '')}
+Aspect Ratio: {logic.get('aspect_ratio', '')}
+Depth of Field: {logic.get('depth_of_field', '')}
+Pacing Score: {logic.get('pacing_score', '')}
+
+Tags: {', '.join(data.get('tags', []))}
+            """.strip()
+
+            doc_id = data.get("id", f"logic_{json_file.stem}")
+            metadata = {
+                "app_key": "teaching.reference.analyze",
+                "content_type": data.get("content_type", "logic_vector"),
+                "dataset_id": "video_ref",
+                "auteur": data.get("auteur_key", ""),
+                "film": metadata_info.get("film", ""),
+                "year": metadata_info.get("year", ""),
+                "scene": metadata_info.get("scene", ""),
+                "source": json_file.name,
+                "dimension": "4D",
+            }
+
+            if rag.index_document(doc_id, content, metadata):
+                logger.info(f"  ✓ Logic Vector: {json_file.name}")
+                count += 1
+        except Exception as e:
+            logger.error(f"  ✗ Failed {json_file}: {e}")
+
+    logger.info(f"  Total Logic Math documents: {count}")
     return count
 
 
@@ -329,7 +427,7 @@ Components:
 
             doc_id = "5d_veo_structure"
             metadata = {
-                "app_key": "dimension.5d.video",
+                "app_key": "veo.video.generate",
                 "content_type": "veo_structure",
                 "source": "veo_prompt_templates.json",
                 "dimension": "5D",
@@ -349,7 +447,7 @@ Example: {template.get('example', '')}
 """
                 doc_id = f"5d_veo_template_{name}"
                 metadata = {
-                    "app_key": "dimension.5d.video",
+                    "app_key": "veo.video.generate",
                     "content_type": "veo_template",
                     "template_name": name,
                     "source": "veo_prompt_templates.json",
@@ -372,7 +470,7 @@ Practice: {p.get('practice', '')}
 
             doc_id = "5d_veo_best_practices"
             metadata = {
-                "app_key": "dimension.5d.video",
+                "app_key": "veo.video.generate",
                 "content_type": "veo_best_practices",
                 "source": "veo_prompt_templates.json",
                 "dimension": "5D",
@@ -418,7 +516,7 @@ Practice: {p.get('practice', '')}
 
                     doc_id = f"5d_camera_{auteur}_{json_file.stem}"
                     metadata = {
-                        "app_key": "dimension.5d.video",
+                        "app_key": "veo.video.generate",
                         "content_type": "camera_movement",
                         "auteur": auteur,
                         "source": json_file.name,
@@ -440,7 +538,7 @@ Practice: {p.get('practice', '')}
                 content = extract_content_from_source_pack(data)
                 doc_id = f"5d_ai_{auteur}_{json_file.stem}"
                 metadata = {
-                    "app_key": "dimension.5d.video",
+                    "app_key": "veo.video.generate",
                     "content_type": "ai_technique",
                     "auteur": auteur,
                     "source": json_file.name,
@@ -473,7 +571,7 @@ Best For: {', '.join(move_data.get('best_for', []))}
 """
                 doc_id = f"5d_camera_movement_{move_key}"
                 metadata = {
-                    "app_key": "dimension.5d.video",
+                    "app_key": "veo.video.generate",
                     "content_type": "camera_movement_guide",
                     "movement_type": move_key,
                     "source": "veo_camera_movements.json",
@@ -495,7 +593,7 @@ Emotional Effect: {speed_data.get('emotional_effect', '')}
 """
                 doc_id = f"5d_motion_speed_{speed_key}"
                 metadata = {
-                    "app_key": "dimension.5d.video",
+                    "app_key": "veo.video.generate",
                     "content_type": "motion_speed",
                     "speed_type": speed_key,
                     "source": "veo_camera_movements.json",
@@ -512,7 +610,7 @@ Emotional Effect: {speed_data.get('emotional_effect', '')}
                 content = "VEO Camera Movement Tips:\n\n" + "\n".join(f"- {tip}" for tip in tips)
                 doc_id = "5d_veo_camera_tips"
                 metadata = {
-                    "app_key": "dimension.5d.video",
+                    "app_key": "veo.video.generate",
                     "content_type": "veo_tips",
                     "source": "veo_camera_movements.json",
                     "dimension": "5D",
@@ -937,7 +1035,7 @@ def main():
     # Seed collections
     seeders = {
         "3D": seed_3d_collection,
-        "4D": seed_4d_collection,
+        "4D": seed_4d_bundle,
         "5D": seed_5d_collection,
         "6D": seed_6d_collection,
         "AI": seed_ai_collection,
