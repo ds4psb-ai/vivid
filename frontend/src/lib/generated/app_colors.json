@@ -1,0 +1,241 @@
+{
+  "generated_at": "2026-01-18T15:41:54.253408+00:00",
+  "source": "config/apps/content/dimensions/*.yaml",
+  "strategy": "stable-hash-hue + fixed chroma/lightness",
+  "app_colors": {
+    "1D": {
+      "hue": 148,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/1d.yaml",
+      "slug": "1d",
+      "css_var": "--app-color-1d",
+      "css_var_light": "--app-color-1d-light",
+      "css_var_dark": "--app-color-1d-dark"
+    },
+    "2D": {
+      "hue": 71,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/2d.yaml",
+      "slug": "2d",
+      "css_var": "--app-color-2d",
+      "css_var_light": "--app-color-2d-light",
+      "css_var_dark": "--app-color-2d-dark"
+    },
+    "3D": {
+      "hue": 342,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/3d.yaml",
+      "slug": "3d",
+      "css_var": "--app-color-3d",
+      "css_var_light": "--app-color-3d-light",
+      "css_var_dark": "--app-color-3d-dark"
+    },
+    "4D": {
+      "hue": 228,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/4d.yaml",
+      "slug": "4d",
+      "css_var": "--app-color-4d",
+      "css_var_light": "--app-color-4d-light",
+      "css_var_dark": "--app-color-4d-dark"
+    },
+    "AD": {
+      "hue": 148,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/ad.yaml",
+      "slug": "ad",
+      "css_var": "--app-color-ad",
+      "css_var_light": "--app-color-ad-light",
+      "css_var_dark": "--app-color-ad-dark"
+    },
+    "AI": {
+      "hue": 217,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/ai.yaml",
+      "slug": "ai",
+      "css_var": "--app-color-ai",
+      "css_var_light": "--app-color-ai-light",
+      "css_var_dark": "--app-color-ai-dark"
+    },
+    "CHARACTER": {
+      "hue": 83,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/character.yaml",
+      "slug": "character",
+      "css_var": "--app-color-character",
+      "css_var_light": "--app-color-character-light",
+      "css_var_dark": "--app-color-character-dark"
+    },
+    "JSON_GEN": {
+      "hue": 115,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/json_gen.yaml",
+      "slug": "json-gen",
+      "css_var": "--app-color-json-gen",
+      "css_var_light": "--app-color-json-gen-light",
+      "css_var_dark": "--app-color-json-gen-dark"
+    },
+    "KLING": {
+      "hue": 232,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/kling.yaml",
+      "slug": "kling",
+      "css_var": "--app-color-kling",
+      "css_var_light": "--app-color-kling-light",
+      "css_var_dark": "--app-color-kling-dark"
+    },
+    "MIRROR": {
+      "hue": 33,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/mirror.yaml",
+      "slug": "mirror",
+      "css_var": "--app-color-mirror",
+      "css_var_light": "--app-color-mirror-light",
+      "css_var_dark": "--app-color-mirror-dark"
+    },
+    "NANOBANANA": {
+      "hue": 248,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/nanobanana.yaml",
+      "slug": "nanobanana",
+      "css_var": "--app-color-nanobanana",
+      "css_var_light": "--app-color-nanobanana-light",
+      "css_var_dark": "--app-color-nanobanana-dark"
+    },
+    "PROMPT": {
+      "hue": 17,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/prompt.yaml",
+      "slug": "prompt",
+      "css_var": "--app-color-prompt",
+      "css_var_light": "--app-color-prompt-light",
+      "css_var_dark": "--app-color-prompt-dark"
+    },
+    "QC": {
+      "hue": 308,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/qc.yaml",
+      "slug": "qc",
+      "css_var": "--app-color-qc",
+      "css_var_light": "--app-color-qc-light",
+      "css_var_dark": "--app-color-qc-dark"
+    },
+    "SOUND": {
+      "hue": 195,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/sound.yaml",
+      "slug": "sound",
+      "css_var": "--app-color-sound",
+      "css_var_light": "--app-color-sound-light",
+      "css_var_dark": "--app-color-sound-dark"
+    },
+    "STORY": {
+      "hue": 21,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/story.yaml",
+      "slug": "story",
+      "css_var": "--app-color-story",
+      "css_var_light": "--app-color-story-light",
+      "css_var_dark": "--app-color-story-dark"
+    },
+    "STORYBOARD": {
+      "hue": 192,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/storyboard.yaml",
+      "slug": "storyboard",
+      "css_var": "--app-color-storyboard",
+      "css_var_light": "--app-color-storyboard-light",
+      "css_var_dark": "--app-color-storyboard-dark"
+    },
+    "SUNO": {
+      "hue": 260,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/suno.yaml",
+      "slug": "suno",
+      "css_var": "--app-color-suno",
+      "css_var_light": "--app-color-suno-light",
+      "css_var_dark": "--app-color-suno-dark"
+    },
+    "VEO": {
+      "hue": 46,
+      "chroma": 0.18,
+      "L": {
+        "light": 0.52,
+        "dark": 0.64
+      },
+      "source": "apps/content/dimensions/veo.yaml",
+      "slug": "veo",
+      "css_var": "--app-color-veo",
+      "css_var_light": "--app-color-veo-light",
+      "css_var_dark": "--app-color-veo-dark"
+    }
+  }
+}

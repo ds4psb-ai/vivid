@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-01-18T15:15:37.435662+00:00",
+  "generated_at": "2026-01-18T15:41:54.253408+00:00",
   "source": "config/apps/content/dimensions/*.yaml",
   "strategy": "stable-hash-hue + fixed chroma/lightness",
   "app_colors": {

@@ -9,14 +9,18 @@
 
 - Script: `scripts/generate_app_colors.py`
 - Input: `config/apps/content/dimensions/*.yaml`
-- Output: `tokens/app_colors.json`
+- Output (required): `tokens/app_colors.json`
+- Output (optional): `frontend/src/app/app-colors.css`
+- Output (optional): `frontend/src/lib/generated/app_colors.json`
 
 ## Run
 
 ```bash
 python scripts/generate_app_colors.py \
   --input config/apps/content/dimensions \
-  --output tokens/app_colors.json
+  --output tokens/app_colors.json \
+  --css-output frontend/src/app/app-colors.css \
+  --frontend-output frontend/src/lib/generated/app_colors.json
 ```
 
 ## Strategy (v1)
@@ -27,3 +31,12 @@ python scripts/generate_app_colors.py \
 
 > This produces deterministic colors aligned to the **AppRegistry**.
 > Future revisions may replace the hash strategy with curated hues.
+
+## CSS Output
+
+The CSS output generates theme-safe variables:
+
+- `--app-color-{slug}`: light value on `:root`, dark value on `.dark`
+- `--app-color-{slug}-light` / `--app-color-{slug}-dark`: explicit values
+
+Use `--app-color-*` to map `--color-dimension-*` in `globals.css` without hardcoding.
