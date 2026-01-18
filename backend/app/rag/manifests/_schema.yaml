@@ -196,6 +196,20 @@ properties:
             chunks_per_source:
               type: integer
               description: "Max chunks per source (advanced search only)"
+            min_score:
+              type: number
+              description: "Minimum relevance score for Tavily results"
+            quality_gate:
+              type: boolean
+              description: "Enable Tavily quality gate (score + domain)"
+            domain_gate:
+              type: boolean
+              description: "Enable domain allowlist filtering"
+            domain_allowlist:
+              type: array
+              items:
+                type: string
+              description: "Explicit domain allowlist for Tavily results"
       required: [id]
 
   # Reranker configuration (P4 feature)
