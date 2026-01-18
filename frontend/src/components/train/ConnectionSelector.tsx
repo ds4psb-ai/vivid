@@ -127,7 +127,10 @@ export function ConnectionSelector({
                             {visibleOptions.map((option, index) => {
                                 const resolvedCode = option.dimensionCode ?? dimensionIdToCode(option.dimension);
                                 const tokenScheme = getDimensionColorClasses(resolvedCode);
-                                const colorScheme = tokenScheme || getDimensionColorClasses("1d");
+                                const colorScheme = tokenScheme ?? getDimensionColorClasses("1d") ?? {
+                                    bg: "bg-gray-800", border: "border-gray-600", text: "text-gray-400",
+                                    hover: "hover:bg-gray-700", glow: ""
+                                };
                                 const IconComponent = ICON_MAP[option.icon] || <Sparkles className="h-5 w-5" />;
                                 const isHovered = hoveredId === option.id;
                                 const isTopRecommend = index === 0;

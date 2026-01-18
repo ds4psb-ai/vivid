@@ -1071,6 +1071,7 @@ class ApiClient {
     title: string;
     description: string;
     dimension_source: string;
+    dimension_sequence: string[];
     tool_sequence: string[];
     input_preset: Record<string, unknown>;
     output_example: Record<string, unknown>;

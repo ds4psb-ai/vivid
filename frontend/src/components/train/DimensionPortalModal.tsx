@@ -525,7 +525,11 @@ export function DimensionPortalModal({
 
     // SSoT: Use toolConfig from context instead of hardcoded DIMENSION_CONFIG
     const tokenScheme = getDimensionColorClasses(currentCar.dimension);
-    const colorClass = tokenScheme || getDimensionColorClasses("1d");
+    const colorClass = tokenScheme ?? getDimensionColorClasses("1d") ?? {
+        bg: "bg-gray-800/10", bgSolid: "bg-gray-800", border: "border-gray-600/30",
+        text: "text-gray-400", gradient: "from-gray-600 to-gray-700",
+        glow: "shadow-[0_0_60px_var(--tw-shadow-color)] shadow-gray-500/30"
+    };
     const focusClass = getDimensionFocusClass(currentCar.dimension) || getDimensionFocusClass("1d");
     const hoverGlowClass = getHoverGlowClass(currentCar.dimension);
     const dimensionRoute = DIMENSION_ROUTES[currentCar.dimension];
@@ -947,7 +951,11 @@ export function DimensionPortalModal({
                         <div className="flex items-center gap-1.5 px-6 py-3 border-t border-white/5 bg-black/20">
                             {cars.map((car) => {
                                 const carTokenScheme = getDimensionColorClasses(car.dimension);
-                                const carColor = carTokenScheme || getDimensionColorClasses("1d");
+                                const carColor = carTokenScheme ?? getDimensionColorClasses("1d") ?? {
+                                    bg: "bg-gray-800/10", bgSolid: "bg-gray-800", border: "border-gray-600/30",
+                                    text: "text-gray-400", gradient: "from-gray-600 to-gray-700",
+                                    glow: "shadow-[0_0_60px_var(--tw-shadow-color)] shadow-gray-500/30"
+                                };
                                 return (
                                     <button
                                         key={car.id}

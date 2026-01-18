@@ -111,7 +111,11 @@ export function TrainCar({
 }: TrainCarProps) {
     const [showFullError, setShowFullError] = useState(false);
     const tokenScheme = getDimensionColorClasses(_dimension);
-    const colorScheme = tokenScheme || getDimensionColorClasses("1D");
+    const colorScheme = tokenScheme ?? getDimensionColorClasses("1D") ?? {
+        bg: "bg-gray-800/20", border: "border-gray-600/50", text: "text-gray-400",
+        glow: "shadow-[0_0_30px_var(--tw-shadow-color)] shadow-gray-500/30",
+        portalGlow: "shadow-[0_0_60px_var(--tw-shadow-color),inset_0_0_30px_var(--tw-shadow-color)] shadow-gray-500/40"
+    };
     const IconComponent = ICON_MAP[icon] || <Sparkles className="h-6 w-6" />;
 
     return (
