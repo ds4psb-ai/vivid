@@ -1,8 +1,12 @@
 """
-YAML Manifest Loader.
+YAML Manifest Loader - SSoT (Single Source of Truth).
 
+✅ 이 파일이 RAG 매니페스트의 공식 진입점입니다.
 YAML 파일 기반 앱 RAG 설정 로딩 및 Pydantic 검증.
-기존 app_manifest.py와 호환성 유지 (점진적 마이그레이션).
+
+SSoT Architecture:
+- Primary: app/rag/manifests/*.yaml (YAML 매니페스트)
+- Fallback: app/rag/app_manifest.py (레거시, deprecated)
 
 "앱 추가 = YAML 1개 추가" (코드 수정 0)
 

@@ -1,12 +1,26 @@
 """
 App-level RAG Manifest 정의.
 
+⚠️ DEPRECATED: 이 파일은 레거시 호환성을 위해 유지됩니다.
+새 매니페스트는 YAML로 작성하세요: app/rag/manifests/*.yaml
+
+SSoT (Single Source of Truth):
+- YAML 매니페스트: app/rag/manifests/*.yaml (권장)
+- manifest_loader.py: YAML 우선 조회, 이 파일은 fallback
+
+Migration:
+    # 기존 (deprecated)
+    from app.rag.app_manifest import APP_MANIFESTS, get_manifest
+
+    # 신규 (권장)
+    from app.rag.manifest_loader import get_manifest, load_manifest
+
 각 앱(1D-6D, QC, AD, AI, VEO)에 대한 RAG 설정 매니페스트.
 - 사용할 차원 RAG 컬렉션
 - 검색 파라미터
 - 증폭(amplification) 규칙
 
-Usage:
+Usage (deprecated):
     from app.rag.app_manifest import APP_MANIFESTS, AppRAGManifest
 
     manifest = APP_MANIFESTS.get("dimension.aesthetic.direct")
