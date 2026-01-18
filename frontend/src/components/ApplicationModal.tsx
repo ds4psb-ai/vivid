@@ -106,16 +106,16 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         className="fixed left-1/2 top-1/2 z-[70] w-full max-w-md -translate-x-1/2 -translate-y-1/2 p-4"
                     >
-                        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0a0a0c] shadow-2xl shadow-[#4200FF]/20">
+                        <div className="relative overflow-hidden rounded-2xl border border-[var(--border-muted)] bg-[var(--surface-1)] shadow-2xl shadow-[#4200FF]/20">
                             {/* Header */}
-                            <div className="flex items-center justify-between border-b border-white/5 px-6 py-4">
+                            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-6 py-4">
                                 <div>
-                                    <h2 className="text-lg font-bold text-white">Crebit ATC 1기 신청</h2>
-                                    <p className="text-sm text-slate-400">얼리버드 특가 34만원</p>
+                                    <h2 className="text-lg font-bold text-[var(--fg-0)]">Crebit ATC 1기 신청</h2>
+                                    <p className="text-sm text-[var(--fg-muted)]">얼리버드 특가 34만원</p>
                                 </div>
                                 <button
                                     onClick={onClose}
-                                    className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+                                    className="rounded-lg p-2 text-[var(--fg-muted)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--fg-0)]"
                                     aria-label="닫기"
                                 >
                                     <X className="h-5 w-5" />
@@ -133,8 +133,8 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
                                         <Check className="h-8 w-8 text-emerald-400" />
                                     </div>
                                     <div className="text-center">
-                                        <h3 className="text-xl font-bold text-white">신청 완료!</h3>
-                                        <p className="mt-2 text-sm text-slate-400">
+                                        <h3 className="text-xl font-bold text-[var(--fg-0)]">신청 완료!</h3>
+                                        <p className="mt-2 text-sm text-[var(--fg-muted)]">
                                             데모 모드: 실제 결제 연동 준비 중
                                         </p>
                                     </div>
@@ -144,11 +144,11 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
                                 <form onSubmit={handleSubmit} className="space-y-4 p-6">
                                     {/* Name */}
                                     <div>
-                                        <label className="mb-2 block text-sm font-medium text-slate-300">
+                                        <label className="mb-2 block text-sm font-medium text-[var(--fg-muted)]">
                                             이름
                                         </label>
                                         <div className="relative">
-                                            <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                                            <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--fg-subtle)]" />
                                             <input
                                                 type="text"
                                                 name="name"
@@ -156,18 +156,18 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
                                                 onChange={handleChange}
                                                 required
                                                 placeholder="홍길동"
-                                                className="w-full rounded-lg border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-white placeholder-slate-500 transition-colors focus:border-[#4200FF]/50 focus:outline-none focus:ring-2 focus:ring-[#4200FF]/20"
+                                                className="w-full rounded-lg border border-[var(--border-muted)] bg-[var(--surface-1)] py-3 pl-10 pr-4 text-[var(--fg-0)] placeholder:text-[var(--fg-muted)] transition-colors focus:border-[#4200FF]/50 focus:outline-none focus:ring-2 focus:ring-[#4200FF]/20"
                                             />
                                         </div>
                                     </div>
 
                                     {/* Email */}
                                     <div>
-                                        <label className="mb-2 block text-sm font-medium text-slate-300">
+                                        <label className="mb-2 block text-sm font-medium text-[var(--fg-muted)]">
                                             이메일
                                         </label>
                                         <div className="relative">
-                                            <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                                            <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--fg-subtle)]" />
                                             <input
                                                 type="email"
                                                 name="email"
@@ -175,18 +175,18 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
                                                 onChange={handleChange}
                                                 required
                                                 placeholder="you@example.com"
-                                                className="w-full rounded-lg border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-white placeholder-slate-500 transition-colors focus:border-[#4200FF]/50 focus:outline-none focus:ring-2 focus:ring-[#4200FF]/20"
+                                                className="w-full rounded-lg border border-[var(--border-muted)] bg-[var(--surface-1)] py-3 pl-10 pr-4 text-[var(--fg-0)] placeholder:text-[var(--fg-muted)] transition-colors focus:border-[#4200FF]/50 focus:outline-none focus:ring-2 focus:ring-[#4200FF]/20"
                                             />
                                         </div>
                                     </div>
 
                                     {/* Phone */}
                                     <div>
-                                        <label className="mb-2 block text-sm font-medium text-slate-300">
+                                        <label className="mb-2 block text-sm font-medium text-[var(--fg-muted)]">
                                             연락처
                                         </label>
                                         <div className="relative">
-                                            <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                                            <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--fg-subtle)]" />
                                             <input
                                                 type="tel"
                                                 name="phone"
@@ -194,14 +194,14 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
                                                 onChange={handleChange}
                                                 required
                                                 placeholder="010-1234-5678"
-                                                className="w-full rounded-lg border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-white placeholder-slate-500 transition-colors focus:border-[#4200FF]/50 focus:outline-none focus:ring-2 focus:ring-[#4200FF]/20"
+                                                className="w-full rounded-lg border border-[var(--border-muted)] bg-[var(--surface-1)] py-3 pl-10 pr-4 text-[var(--fg-0)] placeholder:text-[var(--fg-muted)] transition-colors focus:border-[#4200FF]/50 focus:outline-none focus:ring-2 focus:ring-[#4200FF]/20"
                                             />
                                         </div>
                                     </div>
 
                                     {/* Track Selection */}
                                     <div>
-                                        <label className="mb-2 block text-sm font-medium text-slate-300">
+                                        <label className="mb-2 block text-sm font-medium text-[var(--fg-muted)]">
                                             트랙 선택
                                         </label>
                                         <div className="grid grid-cols-2 gap-3">
@@ -210,7 +210,7 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
                                                 onClick={() => setFormData((prev) => ({ ...prev, track: "A" }))}
                                                 className={`rounded-lg border p-4 text-left transition-all ${formData.track === "A"
                                                     ? "border-[#4200FF] bg-[#4200FF]/10 text-white"
-                                                    : "border-white/10 bg-white/5 text-slate-400 hover:border-white/20"
+                                                    : "border-[var(--border-muted)] bg-[var(--surface-1)] text-[var(--fg-muted)] hover:border-[var(--border-strong)]"
                                                     }`}
                                             >
                                                 <div className="text-sm font-bold">A 트랙</div>
@@ -221,7 +221,7 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
                                                 onClick={() => setFormData((prev) => ({ ...prev, track: "B" }))}
                                                 className={`rounded-lg border p-4 text-left transition-all ${formData.track === "B"
                                                     ? "border-[#FF0045] bg-[#FF0045]/10 text-white"
-                                                    : "border-white/10 bg-white/5 text-slate-400 hover:border-white/20"
+                                                    : "border-[var(--border-muted)] bg-[var(--surface-1)] text-[var(--fg-muted)] hover:border-[var(--border-strong)]"
                                                     }`}
                                             >
                                                 <div className="text-sm font-bold">B 트랙</div>
@@ -257,7 +257,7 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
                                     )}
 
                                     {/* Business Info Disclosure */}
-                                    <div className="mt-6 pt-4 border-t border-white/5 text-[10px] text-slate-500 space-y-1">
+                                    <div className="mt-6 pt-4 border-t border-[var(--border-subtle)] text-[10px] text-[var(--fg-subtle)] space-y-1">
                                         <p className="font-medium text-slate-400">판매자 정보</p>
                                         <p>주식회사 페이지아카데미 | 대표: 이용찬</p>
                                         <p>사업자번호: 751-88-02370 | 통신판매: 2022-서울성동-00228</p>
