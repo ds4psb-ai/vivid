@@ -521,7 +521,7 @@ export function AgentChatAccordion({
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        className="fixed z-50 pointer-events-auto w-[380px] h-[600px] flex flex-col bg-black/90 backdrop-blur-2xl rounded-3xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden"
+                        className="fixed z-50 pointer-events-auto w-[var(--layout-chat-width)] h-[var(--layout-chat-height)] flex flex-col bg-black/90 backdrop-blur-2xl rounded-3xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden"
                         style={{
                             left: chatPosition.left,
                             bottom: chatPosition.bottom,
@@ -752,7 +752,7 @@ export function AgentChatAccordion({
                                             </div>
                                         )}
 
-                                        <div className="flex flex-col gap-1 max-w-[85%]">
+                                        <div className="flex flex-col gap-1 max-w-[var(--layout-bubble-max)]">
                                             <span className={`text-[10px] font-medium px-1 ${message.role === "assistant" ? "text-zinc-500" : "text-violet-300 text-right"}`}>
                                                 {message.role === "assistant" ? "초끼" : "You"}
                                             </span>
@@ -882,4 +882,3 @@ export function AgentChatAccordion({
         </>
     );
 }
-

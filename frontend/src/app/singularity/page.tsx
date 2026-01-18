@@ -77,7 +77,7 @@ function DimensionFlow({ dimensions }: { dimensions: string[] }) {
 
 function BlackholeVisual() {
     return (
-        <div className="relative w-full h-[400px] flex items-center justify-center overflow-hidden">
+        <div className="relative w-full h-[var(--layout-visual-lg)] flex items-center justify-center overflow-hidden">
             {/* Gravitational Lensing Effect */}
             <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-[var(--overlay-backdrop)]" />
 
@@ -85,7 +85,7 @@ function BlackholeVisual() {
             <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-                className="absolute w-[600px] h-[600px] rounded-full"
+                className="absolute w-[var(--layout-visual-xl)] h-[var(--layout-visual-xl)] rounded-full"
                 style={{
                     background: "conic-gradient(from 0deg, transparent, rgba(139,92,246,0.1), transparent, rgba(6,182,212,0.1), transparent)",
                 }}
@@ -95,7 +95,7 @@ function BlackholeVisual() {
             <motion.div
                 animate={{ rotate: -360 }}
                 transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-                className="absolute w-[400px] h-[400px] rounded-full"
+                className="absolute w-[var(--layout-visual-lg)] h-[var(--layout-visual-lg)] rounded-full"
                 style={{
                     background: "conic-gradient(from 180deg, transparent, rgba(139,92,246,0.2), rgba(236,72,153,0.1), transparent)",
                 }}

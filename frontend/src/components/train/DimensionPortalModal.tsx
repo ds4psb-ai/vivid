@@ -570,7 +570,7 @@ export function DimensionPortalModal({
                             stiffness: 350,
                         }}
                         className={`
-                            relative w-full max-w-5xl max-h-[90vh] mx-4
+                            relative w-full max-w-5xl max-h-[var(--layout-max-height-lg)] mx-4
                             bg-zinc-900/95 backdrop-blur-xl
                             border ${colorClass.border} rounded-3xl
                             ${colorClass.glow}
@@ -698,7 +698,7 @@ export function DimensionPortalModal({
                         {/* Content: Two-panel layout */}
                         <div className="flex-1 flex overflow-hidden min-h-0">
                             {/* Left Panel: Inputs */}
-                            <div className="w-[380px] flex-shrink-0 border-r border-white/5 bg-black/20 overflow-y-auto custom-scrollbar">
+                            <div className="w-[var(--layout-sidebar-width)] flex-shrink-0 border-r border-white/5 bg-black/20 overflow-y-auto custom-scrollbar">
                                 <div className="p-6 space-y-5">
                                     {/* Description */}
                                     <p className="text-sm text-zinc-400 leading-relaxed">

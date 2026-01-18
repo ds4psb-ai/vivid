@@ -640,7 +640,7 @@ function AbyssMirrorContent() {
                   <Bot className={`w-4 h-4 text-${token.themeColor}-600 dark:text-${token.themeColor}-400`} />
                 </div>
               )}
-              <div className="max-w-[85%] space-y-2">
+              <div className="max-w-[var(--layout-bubble-max)] space-y-2">
                 <div className={`p-4 rounded-2xl ${msg.isCrisis
                   ? "bg-red-500/20 border-2 border-red-500/50"
                   : msg.role === "user"
@@ -690,7 +690,7 @@ function AbyssMirrorContent() {
               <div className={`w-8 h-8 rounded-full bg-${token.themeColor}-100 dark:bg-${token.themeColor}-500/20 border border-${token.themeColor}-300 dark:border-${token.themeColor}-500/30 flex items-center justify-center animate-pulse`}>
                 <Bot className={`w-4 h-4 text-${token.themeColor}-600 dark:text-${token.themeColor}-400`} />
               </div>
-              <div className="flex-1 max-w-[70%] p-4 bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-2xl">
+              <div className="flex-1 max-w-[var(--layout-bubble-max-narrow)] p-4 bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-2xl">
                 <div className="animate-pulse space-y-2">
                   <div className={`h-3 bg-${token.themeColor}-200 dark:bg-${token.themeColor}-500/30 rounded w-3/4`}></div>
                   <div className={`h-3 bg-${token.themeColor}-200 dark:bg-${token.themeColor}-500/30 rounded w-1/2`}></div>
@@ -782,7 +782,7 @@ function AbyssMirrorContent() {
       </div>
 
       {/* PersonaGenome Sidebar */}
-      <div className="w-[380px] flex-shrink-0 hidden xl:block">
+      <div className="w-[var(--layout-sidebar-width)] flex-shrink-0 hidden xl:block">
         <PersonaGenome data={personaData} stage={currentStage} />
       </div>
     </div>

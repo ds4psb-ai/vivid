@@ -169,7 +169,7 @@ export default function TeachingPanelLayout({
             {/* Ambient Background handles by AppShell or Global Aurora */}
 
             {/* Sidebar (Input Panel) - Unified Glass Style */}
-            <div className="w-[380px] flex-shrink-0 flex flex-col border-r border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-slate-900/60 backdrop-blur-xl relative z-20">
+            <div className="w-[var(--layout-sidebar-width)] flex-shrink-0 flex flex-col border-r border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-slate-900/60 backdrop-blur-xl relative z-20">
                 {/* Portal Glow Effect - Removed to clean up visual noise */}
 
                 {/* Sidebar Header */}

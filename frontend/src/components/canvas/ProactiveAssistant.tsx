@@ -130,7 +130,7 @@ export default function ProactiveAssistant({
             initial={{ x: 100, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 100, opacity: 0 }}
-            className="fixed bottom-24 right-6 z-40 w-80 max-h-[60vh] overflow-hidden rounded-2xl bg-gray-900/95 backdrop-blur-xl border border-white/10 shadow-2xl"
+            className="fixed bottom-24 right-6 z-40 w-80 max-h-[var(--layout-max-height-sm)] overflow-hidden rounded-2xl bg-gray-900/95 backdrop-blur-xl border border-white/10 shadow-2xl"
         >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-white/5">
@@ -162,7 +162,7 @@ export default function ProactiveAssistant({
             </div>
 
             {/* Suggestions List */}
-            <div className="max-h-[50vh] overflow-y-auto p-2 space-y-2">
+            <div className="max-h-[var(--layout-max-height-xs)] overflow-y-auto p-2 space-y-2">
                 <AnimatePresence mode="popLayout">
                     {suggestions.map((suggestion) => (
                         <motion.div

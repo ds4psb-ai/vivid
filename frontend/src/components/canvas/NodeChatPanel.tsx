@@ -477,7 +477,7 @@ export default function NodeChatPanel({
 
                     return (
                         <div key={message.id} className={`flex ${alignClass} gap-3`}>
-                            <div className={`max-w-[85%] rounded-2xl border px-4 py-3 ${bubbleClass}`}>
+                            <div className={`max-w-[var(--layout-bubble-max)] rounded-2xl border px-4 py-3 ${bubbleClass}`}>
                                 <div className="text-sm text-slate-100">{message.content}</div>
 
                                 {message.preview && !message.applied && (

@@ -15,7 +15,7 @@ import BYOKSettingsModal from "../BYOKSettingsModal";
 export interface SidebarProps {
   /** Child input components */
   children: ReactNode;
-  /** Width (default: 380px) */
+  /** Width (default: layout sidebar token) */
   width?: string;
   /** Additional className */
   className?: string;
@@ -25,7 +25,7 @@ export interface SidebarProps {
 
 export function Sidebar({
   children,
-  width = "w-[380px]",
+  width = "w-[var(--layout-sidebar-width)]",
   className = "",
   showBYOKFooter = true,
 }: SidebarProps) {

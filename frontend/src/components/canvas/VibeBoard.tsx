@@ -173,7 +173,7 @@ export default function VibeBoard({
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.9, opacity: 0 }}
-                    className="relative w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-3xl bg-gray-900 border border-white/10 shadow-2xl"
+                    className="relative w-full max-w-5xl max-h-[var(--layout-max-height-lg)] overflow-hidden rounded-3xl bg-gray-900 border border-white/10 shadow-2xl"
                 >
                     {/* Header */}
                     <div className="flex items-center justify-between p-6 border-b border-white/5">

@@ -99,11 +99,11 @@ function NodeDetailPanelBase({ node, onClose, onExecute, isExecuting = false }: 
     return (
         <AnimatePresence>
             <motion.div
-                initial={{ x: 400, opacity: 0 }}
+                initial={{ x: "100%", opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
-                exit={{ x: 400, opacity: 0 }}
+                exit={{ x: "100%", opacity: 0 }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="fixed right-0 top-0 h-full w-[400px] bg-[#0a0a0c]/95 backdrop-blur-2xl border-l border-white/10 z-50 overflow-hidden"
+                className="fixed right-0 top-0 h-full w-[var(--layout-detail-panel-width)] bg-[#0a0a0c]/95 backdrop-blur-2xl border-l border-white/10 z-50 overflow-hidden"
             >
                 {/* Header */}
                 <div className="p-6 border-b border-white/10">

@@ -170,7 +170,7 @@ function ReviewDetailModal({
 
     return (
         <div className="fixed inset-0 dialog-overlay flex items-center justify-center z-50 p-6">
-            <div className="dialog-panel rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="dialog-panel rounded-xl w-full max-w-3xl max-h-[var(--layout-max-height-lg)] overflow-y-auto">
                 <div className="sticky top-0 bg-[var(--surface-1)] border-b border-[var(--border-subtle)] p-6">
                     <div className="flex items-center justify-between">
                         <h2 className="text-xl font-bold text-[var(--fg-0)] flex items-center gap-2">

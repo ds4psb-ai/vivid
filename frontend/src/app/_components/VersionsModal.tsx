@@ -69,7 +69,7 @@ export function VersionsModal({
                     </button>
                 </div>
 
-                <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+                <div className="p-6 space-y-4 max-h-[var(--layout-max-height-sm)] overflow-y-auto">
                     {isLoading && <div className="text-sm text-slate-400">{t("loadingVersions")}</div>}
                     {error && <div className="text-sm text-rose-300">{error}</div>}
                     {!isLoading && versions.length === 0 && <div className="text-sm text-slate-500">{t("noVersions")}</div>}

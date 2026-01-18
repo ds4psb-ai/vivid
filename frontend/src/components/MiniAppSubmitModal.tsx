@@ -120,7 +120,7 @@ export function MiniAppSubmitModal({ isOpen, onClose }: MiniAppSubmitModalProps)
                     >
                         <div className="card-premium relative w-full max-w-xl bg-black/40 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-hidden pointer-events-auto">
                             {/* Ambient Glow */}
-                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[200px] bg-violet-500/20 blur-[100px] rounded-full pointer-events-none" />
+                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[var(--layout-visual-lg)] h-[var(--layout-visual-md)] bg-violet-500/20 blur-[100px] rounded-full pointer-events-none" />
 
                             {/* Header */}
                             <div className="relative px-8 pt-8 pb-4 border-b border-white/5">
@@ -144,7 +144,7 @@ export function MiniAppSubmitModal({ isOpen, onClose }: MiniAppSubmitModalProps)
                             </div>
 
                             {/* Content */}
-                            <div className="relative px-8 py-6 max-h-[70vh] overflow-y-auto">
+                            <div className="relative px-8 py-6 max-h-[var(--layout-modal-max-height)] overflow-y-auto">
                                 {step === "form" ? (
                                     <form onSubmit={handleSubmit} className="space-y-6">
                                         {/* App Name */}

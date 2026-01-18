@@ -548,7 +548,7 @@ export default function AbyssMirrorPanel() {
                                     <Bot className="w-4 h-4 text-violet-600 dark:text-violet-400" />
                                 </div>
                             )}
-                            <div className={`max-w-[85%] space-y-2`}>
+                            <div className={`max-w-[var(--layout-bubble-max)] space-y-2`}>
                                 <div className={`p-4 rounded-2xl ${msg.isCrisis
                                     ? "bg-red-500/20 border-2 border-red-500/50"
                                     : msg.role === "user"
@@ -599,7 +599,7 @@ export default function AbyssMirrorPanel() {
                             <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-500/20 border border-violet-300 dark:border-violet-500/30 flex items-center justify-center animate-pulse">
                                 <Bot className="w-4 h-4 text-violet-600 dark:text-violet-400" />
                             </div>
-                            <div className="flex-1 max-w-[70%] p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl">
+                            <div className="flex-1 max-w-[var(--layout-bubble-max-narrow)] p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl">
                                 <div className="animate-pulse space-y-2">
                                     <div className="h-3 bg-violet-200 dark:bg-violet-500/30 rounded w-3/4"></div>
                                     <div className="h-3 bg-violet-200 dark:bg-violet-500/30 rounded w-1/2"></div>
@@ -695,7 +695,7 @@ export default function AbyssMirrorPanel() {
             </div>
 
             {/* PersonaGenome Sidebar */}
-            <div className="w-[380px] flex-shrink-0 hidden xl:block">
+            <div className="w-[var(--layout-sidebar-width)] flex-shrink-0 hidden xl:block">
                 <PersonaGenome data={personaData} stage={currentStage} />
             </div>
         </div>

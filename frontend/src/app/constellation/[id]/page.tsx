@@ -160,7 +160,7 @@ function AddStarModal({
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.9, opacity: 0, y: 20 }}
                 onClick={(e) => e.stopPropagation()}
-                className="w-full max-w-2xl bg-slate-950 border border-white/10 rounded-3xl overflow-hidden shadow-2xl max-h-[80vh] flex flex-col"
+                className="w-full max-w-2xl bg-slate-950 border border-white/10 rounded-3xl overflow-hidden shadow-2xl max-h-[var(--layout-max-height-md)] flex flex-col"
             >
                 {/* Header */}
                 <div className="p-6 border-b border-white/10 flex-shrink-0">

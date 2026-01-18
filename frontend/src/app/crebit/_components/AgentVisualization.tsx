@@ -16,7 +16,7 @@ export function AgentVisualization() {
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80" />
 
             {/* Ambient Glow */}
-            <div className="absolute top-[65%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[120px]" />
+            <div className="absolute top-[65%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[var(--layout-visual-xl)] h-[var(--layout-visual-xl)] bg-emerald-500/10 rounded-full blur-[120px]" />
 
             {/* Central Agent Node */}
             <div className="absolute top-[65%] left-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -72,7 +72,7 @@ export function AgentVisualization() {
             />
 
             {/* Connection Lines */}
-            <div className="absolute top-[65%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px]">
+            <div className="absolute top-[65%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[var(--layout-visual-lg)] h-[var(--layout-visual-lg)]">
                 <div className="absolute top-0 left-1/2 w-px h-[120px] bg-gradient-to-b from-violet-500/50 to-transparent" />
                 <div className="absolute bottom-0 left-1/2 w-px h-[120px] bg-gradient-to-t from-amber-500/50 to-transparent" />
                 <div className="absolute left-0 top-1/2 h-px w-[120px] bg-gradient-to-r from-cyan-500/50 to-transparent" />
