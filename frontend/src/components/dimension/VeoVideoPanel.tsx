@@ -60,6 +60,20 @@ const STYLES = [
   { value: "anime", label: "Anime" },
 ];
 
+// 2026 Veo 3.1 Models
+const getVeoModels = (isKo: boolean) => [
+  {
+    value: "veo-3.1-generate-preview",
+    label: isKo ? "Quality (고품질)" : "Quality (High Quality)",
+    description: isKo ? "최고 품질의 비디오 생성 (느림)" : "Highest quality video generation (slower)"
+  },
+  {
+    value: "veo-3.1-fast-generate-preview",
+    label: isKo ? "Fast (빠름)" : "Fast (Quick)",
+    description: isKo ? "빠른 비디오 생성 (저비용)" : "Quick video generation (lower cost)"
+  },
+];
+
 // === Content Component ===
 function VeoVideoContent() {
   const { token, setLoading, setResult, setError } = useDimensionPanel();
@@ -104,10 +118,14 @@ function VeoVideoContent() {
     emptyStateDesc2: isKo ? "AI 비디오" : "AI video",
     emptyStateDesc3: isKo ? "를 생성하세요." : "generate.",
     durationRange: isKo ? "4-8초" : "4-8s",
+    modelLabel: isKo ? "생성 모드" : "Generation Mode",
+    qualityMode: isKo ? "Quality 모드: 최고 품질" : "Quality mode: Highest quality",
+    fastMode: isKo ? "Fast 모드: 빠른 생성, 저비용" : "Fast mode: Quick generation, lower cost",
   }), [isKo]);
 
   // i18n presets
   const DURATIONS = useMemo(() => getDurations(isKo), [isKo]);
+  const VEO_MODELS = useMemo(() => getVeoModels(isKo), [isKo]);
 
   // Form state
   const [prompt, setPrompt] = useState("");
@@ -115,6 +133,7 @@ function VeoVideoContent() {
   const [aspectRatio, setAspectRatio] = useState("16:9");
   const [duration, setDuration] = useState("8");
   const [style, setStyle] = useState("cinematic");
+  const [veoModel, setVeoModel] = useState("veo-3.1-generate-preview"); // Default: Quality mode
   const [seed, setSeed] = useState<number | undefined>(undefined);
   const [useRandomSeed, setUseRandomSeed] = useState(true);
   const [showCreditModal, setShowCreditModal] = useState(false);
@@ -136,7 +155,11 @@ function VeoVideoContent() {
   const creditCtx = useCreditContextOptional();
   const { getToolByDimension } = useDimensionConfig();
   const toolConfig = getToolByDimension("VEO");
-  const creditCost = toolConfig?.creditCost ?? 200;
+  // Fast mode is 50% cheaper than Quality mode
+  const baseCreditCost = toolConfig?.creditCost ?? 200;
+  const creditCost = veoModel === "veo-3.1-fast-generate-preview"
+    ? Math.floor(baseCreditCost * 0.5)
+    : baseCreditCost;
 
   const { downloadFile, copyToClipboard, isCopied } = useResultExport();
 
@@ -214,6 +237,7 @@ function VeoVideoContent() {
         aspect_ratio: aspectRatio,
         duration: parseInt(duration),
         style,
+        model: veoModel, // veo-3.1-generate-preview (Quality) or veo-3.1-fast-generate-preview (Fast)
         seed: useRandomSeed ? undefined : seed,
       },
       getBYOKHeaders(byokKey)
@@ -224,6 +248,7 @@ function VeoVideoContent() {
     aspectRatio,
     duration,
     style,
+    veoModel,
     seed,
     useRandomSeed,
     byokKey,
@@ -327,6 +352,32 @@ function VeoVideoContent() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Veo Model Selection (Quality / Fast) */}
+          <div className="space-y-2 pt-4 border-t border-slate-200 dark:border-white/5 mt-2">
+            <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">{labels.modelLabel}</label>
+            <div className="grid grid-cols-2 gap-2">
+              {VEO_MODELS.map((m) => (
+                <button
+                  key={m.value}
+                  onClick={() => setVeoModel(m.value)}
+                  className={`px-3 py-3 rounded-xl text-xs font-medium transition-all border flex flex-col items-center gap-1 ${
+                    veoModel === m.value
+                      ? `bg-${token.themeColor}-100 dark:bg-${token.themeColor}-500/20 border-${token.themeColor}-400 dark:border-${token.themeColor}-500/40 text-${token.themeColor}-600 dark:text-${token.themeColor}-400 shadow-[0_0_15px_rgba(14,165,233,0.2)]`
+                      : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white"
+                  }`}
+                >
+                  <span className="font-semibold">{m.label.split(" ")[0]}</span>
+                  {m.value === "veo-3.1-fast-generate-preview" && (
+                    <span className="text-[9px] opacity-70">50% 할인</span>
+                  )}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-slate-500 dark:text-zinc-600">
+              {veoModel === "veo-3.1-generate-preview" ? labels.qualityMode : labels.fastMode}
+            </p>
           </div>
 
           {/* Seed Control */}
@@ -547,7 +598,13 @@ function VeoVideoContent() {
                 </p>
                 <div className="flex items-center justify-center gap-2 pt-2">
                   <span className={`px-2 py-1 bg-${token.themeColor}-100 dark:bg-${token.themeColor}-500/10 border border-${token.themeColor}-200 dark:border-${token.themeColor}-500/20 rounded text-[10px] text-${token.themeColor}-600 dark:text-${token.themeColor}-400 font-medium`}>Veo 3.1</span>
-                  <span className="px-2 py-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded text-[10px] text-slate-500 dark:text-zinc-500">HD Quality</span>
+                  <span className={`px-2 py-1 rounded text-[10px] font-medium ${
+                    veoModel === "veo-3.1-generate-preview"
+                      ? "bg-amber-100 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-600 dark:text-amber-400"
+                      : "bg-emerald-100 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                  }`}>
+                    {veoModel === "veo-3.1-generate-preview" ? "Quality" : "Fast"}
+                  </span>
                   <span className="px-2 py-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded text-[10px] text-slate-500 dark:text-zinc-500">{labels.durationRange}</span>
                 </div>
               </div>

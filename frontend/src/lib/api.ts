@@ -1724,7 +1724,7 @@ class ApiClient {
   async executeDimension(
     dimension: "1D" | "2D" | "3D" | "4D" | "QC" | "AD" | "AI" | "VEO",
     inputs: Record<string, unknown>,
-    model: string = "gemini-3.0-flash-preview"
+    model: string = "gemini-3-flash-preview"
   ): Promise<DimensionResponse> {
     switch (dimension) {
       case "1D":
