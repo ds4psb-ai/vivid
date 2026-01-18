@@ -1243,37 +1243,29 @@ html.lenis body {
 .credit-chip.zero { color: var(--credit-zero); }
 .credit-chip.ok { color: var(--credit-ok); }
 
-/* Evidence Actor Roles */
-.actor-client {
-  color: var(--credit-pending);
-  border-color: rgba(var(--credit-pending-rgb), 0.35);
-  background: rgba(var(--credit-pending-rgb), 0.12);
-  border-color: color-mix(in srgb, var(--credit-pending) 35%, transparent);
-  background: color-mix(in srgb, var(--credit-pending) 12%, transparent);
-}
-
+/* Evidence Actor Roles (DRY) */
+.evidence-badge[data-actor],
+.actor-client,
 .actor-provider {
-  color: var(--credit-ok);
-  border-color: rgba(var(--credit-ok-rgb), 0.35);
-  background: rgba(var(--credit-ok-rgb), 0.12);
-  border-color: color-mix(in srgb, var(--credit-ok) 35%, transparent);
-  background: color-mix(in srgb, var(--credit-ok) 12%, transparent);
+  --_color: var(--fg-muted);
+  --_rgb: var(--fg-muted-rgb);
+  color: var(--_color);
+  border-color: rgba(var(--_rgb), 0.35);
+  background: rgba(var(--_rgb), 0.12);
+  border-color: color-mix(in srgb, var(--_color) 35%, transparent);
+  background: color-mix(in srgb, var(--_color) 12%, transparent);
 }
 
+.actor-client,
 .evidence-badge[data-actor="client"] {
-  color: var(--credit-pending);
-  border-color: rgba(var(--credit-pending-rgb), 0.35);
-  background: rgba(var(--credit-pending-rgb), 0.12);
-  border-color: color-mix(in srgb, var(--credit-pending) 35%, transparent);
-  background: color-mix(in srgb, var(--credit-pending) 12%, transparent);
+  --_color: var(--credit-pending);
+  --_rgb: var(--credit-pending-rgb);
 }
 
+.actor-provider,
 .evidence-badge[data-actor="provider"] {
-  color: var(--credit-ok);
-  border-color: rgba(var(--credit-ok-rgb), 0.35);
-  background: rgba(var(--credit-ok-rgb), 0.12);
-  border-color: color-mix(in srgb, var(--credit-ok) 35%, transparent);
-  background: color-mix(in srgb, var(--credit-ok) 12%, transparent);
+  --_color: var(--credit-ok);
+  --_rgb: var(--credit-ok-rgb);
 }
 
 /* Evidence/Event tones */
