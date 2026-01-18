@@ -105,7 +105,7 @@ export default function TopBar({
 
     return (
         <header
-            className="fixed left-60 right-0 top-0 z-30 flex h-14 items-center justify-between border-b border-black/10 dark:border-white/10 bg-[var(--bg-0)]/80 px-4 backdrop-blur-xl"
+            className="fixed left-60 right-0 top-0 z-30 flex h-14 items-center justify-between border-b border-[var(--border-muted)] bg-[var(--bg-0)]/80 px-4 backdrop-blur-xl"
             role="banner"
         >
             {/* Left Section */}
@@ -113,7 +113,7 @@ export default function TopBar({
                 {showBackButton && (
                     <Link
                         href={backHref}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--fg-muted)] transition-colors hover:bg-white/10 hover:text-[var(--fg-0)]"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--fg-muted)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--fg-0)]"
                         aria-label={getLabel("back", "Go back")}
                     >
                         <ChevronLeft className="h-5 w-5" aria-hidden="true" />
@@ -123,7 +123,7 @@ export default function TopBar({
                 {onMenuToggle && (
                     <button
                         onClick={onMenuToggle}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--fg-muted)] transition-colors hover:bg-black/5 dark:hover:bg-white/10 hover:text-[var(--fg-0)] lg:hidden"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--fg-muted)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--fg-0)] lg:hidden"
                         aria-label={getLabel("toggleMenu", "Toggle menu")}
                         aria-expanded="false"
                     >
@@ -138,14 +138,14 @@ export default function TopBar({
                         onChange={(e) => setEditedName(e.target.value)}
                         onBlur={handleNameSubmit}
                         onKeyDown={handleKeyDown}
-                        className="min-w-[200px] rounded-lg border border-white/20 bg-white/5 px-3 py-1 text-sm font-medium text-[var(--fg-0)] outline-none focus:border-[var(--accent)]"
+                        className="min-w-[200px] rounded-lg border border-[var(--border-muted)] bg-[var(--surface-1)] px-3 py-1 text-sm font-medium text-[var(--fg-0)] outline-none focus:border-[var(--accent)]"
                         aria-label={getLabel("projectName", "Project name")}
                         autoFocus
                     />
                 ) : (
                     <button
                         onClick={() => setIsEditing(true)}
-                        className="max-w-[300px] truncate rounded-lg px-3 py-1 text-sm font-medium text-[var(--fg-0)] transition-colors hover:bg-white/5"
+                        className="max-w-[300px] truncate rounded-lg px-3 py-1 text-sm font-medium text-[var(--fg-0)] transition-colors hover:bg-[var(--surface-2)]"
                         aria-label={getLabel("editProjectName", "Edit project name")}
                     >
                         {projectName}
