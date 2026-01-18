@@ -82,17 +82,17 @@ MAX_DESCRIPTION_LENGTH = 3000
 MIN_SCENE_COUNT = 1
 MAX_SCENE_COUNT = 20
 ALLOWED_LANGUAGES = {"ko", "en"}
-# 2026 Updated: Gemini 3 models as primary, legacy for backwards compatibility
+# 2026 Updated: Gemini 3 + Veo 3.1 models
 ALLOWED_MODELS = {
-    # Primary models (2025-2026)
-    "gemini-3-flash-preview",
-    "gemini-3-pro-preview",
-    # Video generation
-    "veo-3.1-generate-preview",
-    # Image generation (Nano Banana Pro)
-    "gemini-3-pro-image-preview",
-    # Legacy (deprecated but still supported)
-    "gemini-3-flash-preview",
+    # Gemini 3.0 Text (Primary)
+    "gemini-3-flash-preview",      # Fast, cost-effective
+    "gemini-3-pro-preview",        # High quality
+    # Gemini 3.0 Image (Nanobanana Pro)
+    "gemini-3-pro-image-preview",  # Image generation
+    # Veo 3.1 Video Generation
+    "veo-3.1-generate-preview",    # Quality (text-to-video, image-to-video)
+    "veo-3.1-fast-generate-preview",  # Fast (text-to-video, image-to-video)
+    # Legacy (deprecated, for backward compat only)
     "gemini-1.5-pro",
     "gemini-1.5-flash",
 }

@@ -30,6 +30,14 @@ import logging
 
 from pydantic import BaseModel, Field
 
+# Batch API for 50% cost reduction
+from app.services.gemini_batch_service import (
+    get_batch_service,
+    BatchRequest,
+    BatchJobStatus,
+    DEFAULT_BATCH_MODEL,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -411,6 +419,220 @@ class RAGEvaluationPipeline:
         }
 
         return avg_scores, min_scores, max_scores
+
+    # =========================================================================
+    # Batch API Methods (50% Cost Reduction)
+    # =========================================================================
+
+    async def evaluate_batch_with_gemini(
+        self,
+        samples: list[EvaluationSample],
+        model: str = DEFAULT_BATCH_MODEL,
+        wait_for_results: bool = True,
+    ) -> EvaluationReport:
+        """
+        Batch evaluation using Gemini Batch API (50% cost savings).
+
+        Ideal for:
+        - Large-scale evaluation (>10 samples)
+        - Non-real-time quality assessment
+        - CI/CD pipeline integration
+        - Golden dataset evaluation
+
+        Args:
+            samples: List of EvaluationSample objects
+            model: Gemini model to use (default: gemini-2.5-flash)
+            wait_for_results: If True, wait for batch job completion (up to 24h)
+
+        Returns:
+            EvaluationReport with results from batch processing
+
+        Note:
+            Batch API has 24h SLA but typically completes much faster.
+            Cost is 50% of standard API pricing.
+        """
+        start_time = time.time()
+        batch_service = get_batch_service()
+
+        # Build evaluation prompts
+        batch_requests: list[BatchRequest] = []
+        for idx, sample in enumerate(samples):
+            prompt = self._build_evaluation_prompt(sample)
+            batch_requests.append(BatchRequest(
+                prompt=prompt,
+                system_instruction=self._get_evaluation_system_prompt(),
+                request_id=f"eval_{idx}",
+                metadata={"sample_index": idx},
+            ))
+
+        # Estimate and log cost savings
+        cost_estimate = batch_service.estimate_cost(batch_requests, model)
+        logger.info(
+            f"[RAG-BATCH] Starting batch evaluation | "
+            f"samples={len(samples)} | model={model} | "
+            f"estimated_cost=${cost_estimate['batch_cost_usd']:.4f} "
+            f"(saving ${cost_estimate['savings_usd']:.4f})"
+        )
+
+        # Create batch job
+        job = await batch_service.create_batch_job(
+            batch_requests,
+            model=model,
+            job_name=f"rag-eval-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}",
+        )
+
+        if not wait_for_results:
+            # Return pending report with job info
+            return EvaluationReport(
+                total_samples=len(samples),
+                avg_scores={},
+                min_scores={},
+                max_scores={},
+                results=[],
+                metadata={
+                    "batch_job_id": job.job_id,
+                    "batch_job_name": job.name,
+                    "status": "pending",
+                    "cost_estimate": cost_estimate,
+                },
+            )
+
+        # Wait for completion
+        job = await batch_service.wait_for_completion(job.job_id)
+
+        if job.status != BatchJobStatus.COMPLETED:
+            logger.error(f"[RAG-BATCH] Job failed: {job.status}")
+            return EvaluationReport(
+                total_samples=len(samples),
+                avg_scores={},
+                min_scores={},
+                max_scores={},
+                results=[],
+                metadata={
+                    "batch_job_id": job.job_id,
+                    "status": str(job.status),
+                    "error": "Batch job did not complete successfully",
+                },
+            )
+
+        # Parse results
+        results: list[EvaluationResult] = []
+        for idx, response in enumerate(job.results):
+            sample = samples[idx] if idx < len(samples) else None
+            scores = self._parse_evaluation_response(response.content if response.success else None)
+
+            results.append(EvaluationResult(
+                sample_id=f"batch_{idx}",
+                question=sample.question if sample else "",
+                scores=scores,
+                latency_ms=0,  # Batch doesn't track individual latency
+                metadata={
+                    "batch_response": response.success,
+                    "usage": response.usage,
+                },
+            ))
+
+        # Aggregate scores
+        avg_scores, min_scores, max_scores = self._aggregate_scores(results)
+        duration = time.time() - start_time
+
+        logger.info(
+            f"[RAG-BATCH] Evaluation complete | "
+            f"samples={len(samples)} | "
+            f"duration={duration:.1f}s | "
+            f"actual_cost=${job.actual_cost:.4f} | "
+            f"avg_faithfulness={avg_scores.get('faithfulness', 0):.4f}"
+        )
+
+        return EvaluationReport(
+            total_samples=len(samples),
+            avg_scores=avg_scores,
+            min_scores=min_scores,
+            max_scores=max_scores,
+            results=results,
+            duration_seconds=duration,
+            metadata={
+                "batch_job_id": job.job_id,
+                "model": model,
+                "actual_cost": job.actual_cost,
+                "estimated_cost": cost_estimate["batch_cost_usd"],
+                "savings": cost_estimate["savings_usd"],
+                "method": "gemini_batch_api",
+            },
+        )
+
+    def _build_evaluation_prompt(self, sample: EvaluationSample) -> str:
+        """Build evaluation prompt for a single sample."""
+        contexts_text = "\n".join(f"[{i+1}] {ctx}" for i, ctx in enumerate(sample.contexts))
+
+        return f"""Evaluate the following RAG (Retrieval-Augmented Generation) response.
+
+## Question
+{sample.question}
+
+## Generated Answer
+{sample.answer}
+
+## Retrieved Contexts
+{contexts_text}
+
+## Evaluation Criteria
+1. **Faithfulness** (0.0-1.0): Is the answer grounded in and supported by the contexts?
+   - 1.0: All claims in the answer are directly supported by contexts
+   - 0.5: Some claims are supported, others are not
+   - 0.0: Answer contradicts or is unrelated to contexts
+
+2. **Answer Relevancy** (0.0-1.0): Does the answer address the question?
+   - 1.0: Directly and completely answers the question
+   - 0.5: Partially addresses the question
+   - 0.0: Does not address the question at all
+
+3. **Context Precision** (0.0-1.0): Are the retrieved contexts relevant to the question?
+   - 1.0: All contexts are highly relevant
+   - 0.5: Some contexts are relevant
+   - 0.0: Contexts are not relevant
+
+Respond with ONLY a JSON object:
+{{"faithfulness": 0.X, "answer_relevancy": 0.X, "context_precision": 0.X}}"""
+
+    def _get_evaluation_system_prompt(self) -> str:
+        """Get system prompt for evaluation."""
+        return """You are a RAG (Retrieval-Augmented Generation) quality evaluator.
+Your task is to assess the quality of AI-generated answers based on retrieved contexts.
+Be objective and precise in your scoring. Output only valid JSON."""
+
+    def _parse_evaluation_response(self, content: Optional[str]) -> dict[str, float]:
+        """Parse LLM evaluation response into scores."""
+        default_scores = {
+            "faithfulness": 0.0,
+            "answer_relevancy": 0.0,
+            "context_precision": 0.0,
+        }
+
+        if not content:
+            return default_scores
+
+        try:
+            # Try to extract JSON from response
+            content = content.strip()
+            # Handle markdown code blocks
+            if "```json" in content:
+                content = content.split("```json")[1].split("```")[0]
+            elif "```" in content:
+                content = content.split("```")[1].split("```")[0]
+
+            scores = json.loads(content)
+
+            # Validate and clamp scores
+            for key in default_scores:
+                if key in scores:
+                    default_scores[key] = max(0.0, min(1.0, float(scores[key])))
+
+            return default_scores
+
+        except (json.JSONDecodeError, ValueError, KeyError) as e:
+            logger.warning(f"Failed to parse evaluation response: {e}")
+            return default_scores
 
 
 class GoldenDatasetManager:

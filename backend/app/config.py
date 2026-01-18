@@ -41,7 +41,17 @@ class Settings(BaseSettings):
     GEMINI_AGENT_TEMPERATURE: float = 0.4
     GEMINI_AGENT_MAX_TOKENS: int = 2048
     GEMINI_AGENT_MODELS: str = "gemini-3-flash-preview,gemini-3-pro-preview"
-    GEMINI_IMAGE_MODEL: str = "gemini-3-flash-preview"
+    GEMINI_IMAGE_MODEL: str = "gemini-3-pro-image-preview"  # Nanobanana Pro (이미지 생성)
+
+    # Gemini Batch API (50% Cost Reduction)
+    # Batch API는 비실시간 작업을 비동기 처리하여 50% 비용 절감
+    # 24시간 SLA 내 완료 (대부분 더 빠름)
+    # 적합: RAG 평가, 대량 콘텐츠 생성, 데이터 전처리
+    GEMINI_BATCH_ENABLED: bool = True
+    GEMINI_BATCH_MODEL: str = "gemini-3-flash-preview"  # 3.0 Flash (50% off)
+    GEMINI_BATCH_POLL_INTERVAL: int = 30  # Seconds between status checks
+    GEMINI_BATCH_MAX_WAIT_HOURS: int = 24  # Maximum wait time for batch jobs
+    GEMINI_BATCH_MAX_REQUESTS: int = 100000  # Max requests per batch job
 
     # Kling AI API (Video Generation)
     # Get API key from: https://klingai.com/developer or third-party providers
