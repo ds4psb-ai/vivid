@@ -232,7 +232,7 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
             }).filter((opt): opt is ConnectionOption => opt !== null);
 
             return adjustedOptions.sort((a, b) => b.confidence - a.confidence);
-        }, [cars, getConnectionOptions, getToolInfo]);
+        }, [cars, getConnectionOptions, getToolInfo, isSupportedOption]);
 
         // Auto-dismiss notification
         const showNotification = useCallback((type: "success" | "error", message: string) => {

@@ -19,13 +19,6 @@ interface WorkflowCTAProps {
     variant?: "default" | "compact";
 }
 
-const BRAND_PRIMARY = {
-    bgSoft: "bg-[var(--color-brand-primary)]/5",
-    bg: "bg-[var(--color-brand-primary)]/10",
-    text: "text-[var(--color-brand-primary)]",
-    border: "border-[var(--color-brand-primary)]/20",
-};
-
 const BRAND_SECONDARY = {
     bgSoft: "bg-[var(--color-brand-secondary)]/5",
     bg: "bg-[var(--color-brand-secondary)]/10",

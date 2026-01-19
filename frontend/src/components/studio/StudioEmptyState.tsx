@@ -11,16 +11,12 @@
 
 import { motion } from "framer-motion";
 import {
-    Sparkles,
     Video,
     FileText,
-    MessageSquare,
     Wand2,
     TrendingUp,
     Film,
     ArrowRight,
-    Search,
-    Zap,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useState } from "react";
@@ -77,7 +73,7 @@ interface StudioEmptyStateProps {
 }
 
 export default function StudioEmptyState({ onSendPrompt }: StudioEmptyStateProps) {
-    const { t, language } = useLanguage();
+    const { language } = useLanguage();
     const [hoveredId, setHoveredId] = useState<string | null>(null);
 
     const suggestions: PromptSuggestion[] = language === "ko" ? [

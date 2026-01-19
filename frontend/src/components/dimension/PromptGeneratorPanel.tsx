@@ -29,7 +29,6 @@ import { type EvidenceRef } from "./EvidenceDisplay";
 // =============================================================================
 
 const DIMENSION_CODE = "1d" as const;
-const DIMENSION_KEY = "prompt-alchemy";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 // =============================================================================
@@ -104,7 +103,7 @@ export default function PromptGeneratorPanel() {
 
 function PromptGeneratorContent() {
   // Context
-  const { classes, styles, setLoading, setError, setResult, setResponseId } = useDimensionPanel();
+  const { classes, setLoading, setError, setResult } = useDimensionPanel();
 
   // Form state
   const [topic, setTopic] = useState("");
@@ -123,7 +122,7 @@ function PromptGeneratorContent() {
   const [optimisticResult, setOptimisticResult] = useOptimistic<PromptResult | null>(null);
 
   // File upload state (2026 Best Practice: Multimodal input)
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [_uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
   // BYOK and credits
   const { byokKey } = useBYOK();
@@ -138,14 +137,10 @@ function PromptGeneratorContent() {
   // Async operation hook
   const {
     isLoading,
-    progress,
     error,
     data: result,
     execute,
-    cancel,
     retry,
-    canRetry,
-    currentRetryCount,
   } = useAsyncOperation<{ success: boolean; output: PromptResult; error?: string }>({
     onSuccess: (data) => {
       if (data.success) {

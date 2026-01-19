@@ -13,7 +13,7 @@
  */
 
 import { useState, useCallback, useRef } from "react";
-import { z, ZodSchema } from "zod";
+import { ZodSchema } from "zod";
 import {
   validateRequest,
   formatZodError,

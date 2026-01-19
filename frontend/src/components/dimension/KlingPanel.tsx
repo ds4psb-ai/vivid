@@ -34,12 +34,6 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 // TYPES
 // =============================================================================
 
-interface KlingElement {
-  image_url: string;
-  element_type: "character" | "style" | "scene";
-  weight: number;
-}
-
 interface KlingGenerateResponse {
   success: boolean;
   task_id: string;

@@ -9,9 +9,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ChevronRight, Sparkles, Play, Loader2, Star, Zap } from "lucide-react";
+import { ChevronRight, Sparkles, Play, Loader2, Zap } from "lucide-react";
 import { api, SingularityTemplate } from "@/lib/api";
 import { StarRating } from "@/components/ui/StarRating";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -166,16 +167,24 @@ export function TemplateRail({ maxItems = 6, title, showSeeAll = true }: Templat
                                 onClick={() => !applying && handleApply(template)}
                                 role="button"
                                 tabIndex={0}
-                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); !applying && handleApply(template); } }}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" || e.key === " ") {
+                                        e.preventDefault();
+                                        if (!applying) {
+                                            void handleApply(template);
+                                        }
+                                    }
+                                }}
                                 className={`group relative w-full rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 bg-gradient-to-b from-gray-50 dark:from-white/[0.04] to-transparent ${BRAND_PRIMARY.borderHover} ${BRAND_PRIMARY.shadowHover} transition-all text-left cursor-pointer focus:outline-none focus:ring-2 ${BRAND_PRIMARY.ring} ${applying === template.id ? 'opacity-50 pointer-events-none' : ''}`}
                             >
                                 {/* Thumbnail */}
                                 <div className="relative h-36 overflow-hidden">
-                                    <img
+                                    <Image
                                         src={thumbnail}
                                         alt={template.title}
-                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                        onError={(e) => { (e.target as HTMLImageElement).src = "/images/placeholder.png"; }}
+                                        fill
+                                        sizes="(max-width: 1024px) 320px, 320px"
+                                        className="object-cover group-hover:scale-110 transition-transform duration-700"
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
 

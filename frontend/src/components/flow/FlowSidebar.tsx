@@ -14,7 +14,7 @@
  * - 2026 design tokens integration
  */
 
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
@@ -34,10 +34,9 @@ import {
   Pause,
   RotateCcw,
   Workflow,
-  Sparkles,
   type LucideIcon,
 } from "lucide-react";
-import { FLOW_START_OPTIONS, STANDALONE_TOOLS } from "@/lib/dimension-data";
+import { STANDALONE_TOOLS } from "@/lib/dimension-data";
 import type { WorkflowPhase, ChainDataEntry } from "@/machines/workflowMachine";
 
 // =============================================================================
@@ -143,7 +142,6 @@ function PhaseNode({
   phase,
   isActive,
   isCompleted,
-  isPending,
   onClick,
   language = "ko",
   collapsed = false,
@@ -151,7 +149,6 @@ function PhaseNode({
   phase: WorkflowPhase;
   isActive: boolean;
   isCompleted: boolean;
-  isPending: boolean;
   onClick: () => void;
   language?: "ko" | "en";
   collapsed?: boolean;
@@ -295,15 +292,13 @@ export function FlowSidebar({
   activePhase,
   chainData,
   workflowState,
-  onStartSelect,
+  onStartSelect: _onStartSelect,
   onPhaseClick,
   onWorkflowControl,
   language = "ko",
   collapsed = false,
   onCollapsedChange,
 }: FlowSidebarProps) {
-  const [hoveredPhase, setHoveredPhase] = useState<WorkflowPhase | null>(null);
-
   const handleToggleCollapse = useCallback(() => {
     onCollapsedChange?.(!collapsed);
   }, [collapsed, onCollapsedChange]);
@@ -421,7 +416,6 @@ export function FlowSidebar({
             phase={phase}
             isActive={activePhase === phase}
             isCompleted={chainData[phase] !== null}
-            isPending={activePhase === null && chainData[phase] === null}
             onClick={() => onPhaseClick(phase)}
             language={language}
             collapsed={collapsed}

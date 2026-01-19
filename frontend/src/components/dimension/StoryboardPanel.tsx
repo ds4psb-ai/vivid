@@ -125,7 +125,7 @@ function StoryboardContent() {
   const [sceneCount, setSceneCount] = useState(5);
   const [outputLanguage, setOutputLanguage] = useState<"ko" | "en">("ko");
   const [model, setModel] = useState("gemini-3-flash-preview");
-  const [files, setFiles] = useState<File[]>([]);
+  const [_files, setFiles] = useState<File[]>([]);
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -228,7 +228,7 @@ function StoryboardContent() {
 
       setOptimisticResult(null);
     });
-  }, [script, sceneCount, outputLanguage, model, byokKey, creditCtx, wrappedExecute, CREDIT_COST, startTransition, setOptimisticResult]);
+  }, [script, sceneCount, outputLanguage, model, byokKey, creditCtx, wrappedExecute, CREDIT_COST, startTransition, setOptimisticResult, labels]);
 
   // Export result as JSON
   const handleExportJson = useCallback(() => {

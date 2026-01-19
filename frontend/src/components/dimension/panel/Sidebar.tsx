@@ -8,7 +8,6 @@
  */
 
 import { useState, type ReactNode } from "react";
-import { useDimensionPanel } from "./DimensionPanelContext";
 import { useBYOK } from "@/hooks/useBYOK";
 import BYOKSettingsModal from "../BYOKSettingsModal";
 
@@ -29,7 +28,6 @@ export function Sidebar({
   className = "",
   showBYOKFooter = true,
 }: SidebarProps) {
-  const { classes } = useDimensionPanel();
   const { isBYOKEnabled } = useBYOK();
   const [showBYOKModal, setShowBYOKModal] = useState(false);
 

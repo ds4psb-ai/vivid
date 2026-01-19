@@ -4,7 +4,7 @@
  * Tests for P6 RAG Feedback API integration hook
  */
 import { describe, test, expect, beforeEach, vi, afterEach } from "vitest";
-import { renderHook, act, waitFor } from "@testing-library/react";
+import { renderHook, act } from "@testing-library/react";
 import {
   useFeedback,
   createSourceClickHandler,

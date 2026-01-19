@@ -19,7 +19,7 @@
  * - error: 에러 발생
  */
 
-import { setup, assign, fromPromise } from "xstate";
+import { setup, assign } from "xstate";
 
 // =============================================================================
 // TYPES
@@ -103,7 +103,7 @@ const initialContext: WorkflowContext = {
  */
 export function getNextPhases(
   currentPhase: WorkflowPhase,
-  chainData: WorkflowContext["chainData"]
+  _chainData: WorkflowContext["chainData"]
 ): WorkflowPhase[] {
   const transitions: Record<WorkflowPhase, WorkflowPhase[]> = {
     "4D": ["Story", "AD"],

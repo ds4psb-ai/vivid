@@ -40,7 +40,7 @@ export function GenerateButton({
   loadingText = "처리 중...",
   ...props
 }: GenerateButtonProps) {
-  const { styles, isLoading, classes } = useDimensionPanel();
+  const { styles, isLoading } = useDimensionPanel();
 
   // Use context loading state if not explicitly provided
   const isLoadingState = loading !== undefined ? loading : isLoading;

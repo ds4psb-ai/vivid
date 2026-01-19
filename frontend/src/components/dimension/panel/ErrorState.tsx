@@ -28,7 +28,7 @@ export function ErrorState({
   onDismiss,
   className = "",
 }: ErrorStateProps) {
-  const { error: contextError, setError, hasError, classes } = useDimensionPanel();
+  const { error: contextError, setError, hasError } = useDimensionPanel();
 
   // Use prop error or context error
   const error = propError || contextError;

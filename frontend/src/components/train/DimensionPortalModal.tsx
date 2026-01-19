@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     X,
@@ -142,7 +142,7 @@ const PROGRESS_TONE_CLASSES: Record<"success" | "error", string> = {
 };
 
 // Dimension-specific form configurations
-const DIMENSION_CONFIG: Partial<Record<DimensionType, {
+const _DIMENSION_CONFIG: Partial<Record<DimensionType, {
     title: string;
     description: string;
     apiEndpoint: string;
@@ -359,7 +359,10 @@ export function DimensionPortalModal({
     // SSoT: Get tool config and input fields from context
     const { getToolByDimension, getInputFieldsByDimension } = useDimensionConfig();
     const toolConfig = currentCar ? getToolByDimension(currentCar.dimension) : undefined;
-    const inputFields = currentCar ? getInputFieldsByDimension(currentCar.dimension) : [];
+    const inputFields = useMemo(
+        () => (currentCar ? getInputFieldsByDimension(currentCar.dimension) : []),
+        [currentCar, getInputFieldsByDimension]
+    );
 
     // Sync local inputs with car inputs when car changes
     useEffect(() => {

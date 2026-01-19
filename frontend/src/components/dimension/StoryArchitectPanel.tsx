@@ -14,7 +14,7 @@
  * @see https://react.dev/blog/2024/12/05/react-19
  */
 
-import { useState, useEffect, useCallback, useTransition, useOptimistic, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
@@ -206,14 +206,8 @@ function StoryArchitectContent() {
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  // React 19: useTransition for non-blocking form submission
-  const [isTransitionPending, startTransition] = useTransition();
-
-  // React 19: useOptimistic for instant UI feedback
-  const [optimisticResult, setOptimisticResult] = useOptimistic<StoryResult | null>(null);
-
   // File upload state (2026 Best Practice: Multimodal input)
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [_uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
   const { byokKey } = useBYOK();
   const creditCtx = useCreditContextOptional();
@@ -230,8 +224,6 @@ function StoryArchitectContent() {
     isLoading,
     error,
     execute,
-    retry,
-    canRetry,
   } = useAsyncOperation<{ success: boolean; output: StoryResult; error?: string }>({
     onSuccess: (data) => {
       if (data.success && data.output) {
@@ -345,7 +337,7 @@ function StoryArchitectContent() {
       },
       getBYOKHeaders(byokKey)
     );
-  }, [concept, genre, byokKey, wrappedExecuteRefine]);
+  }, [concept, genre, byokKey, wrappedExecuteRefine, labels]);
 
   const handleGenerate = useCallback(async () => {
     const trimmedConcept = concept.trim();
@@ -385,7 +377,7 @@ function StoryArchitectContent() {
     if (res && res.success) {
       setStage("script");
     }
-  }, [concept, genre, duration, structure, personaData, referenceAnalysis, byokKey, creditCtx, creditCost, wrappedExecute, selectedAngle]);
+  }, [concept, genre, duration, structure, personaData, referenceAnalysis, byokKey, creditCtx, creditCost, wrappedExecute, selectedAngle, labels]);
 
   const handleExportJson = useCallback(() => {
     if (!storyResult) return;

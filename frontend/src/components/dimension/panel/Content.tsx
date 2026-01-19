@@ -24,7 +24,7 @@ export function Content({
   className = "",
   padding = "p-8",
 }: ContentProps) {
-  const { isLoading, hasError, classes } = useDimensionPanel();
+  const { isLoading, hasError } = useDimensionPanel();
 
   return (
     <div

@@ -14,7 +14,7 @@
  * - Rate limiting support
  */
 
-import type { A2UIMessage, A2UIPayload, A2UIAction } from './types';
+import type { A2UIMessage, A2UIPayload } from './types';
 
 // =============================================================================
 // Security Constants

@@ -147,7 +147,6 @@ export default function VisualRealizerPanel() {
 
     // Extracted result data for display
     const displayResult = result?.success ? result.output : null;
-    const displayError = validationError || (result && !result.success ? result.error : error);
 
     const SidebarContent = (
         <>

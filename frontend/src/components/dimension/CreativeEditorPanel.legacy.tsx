@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import TeachingPanelLayout, {
     type ThemeColor,
     useAsyncOperation,
@@ -13,12 +13,7 @@ import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import NextDimensionNav from "./NextDimensionNav";
 import {
     PenTool,
-    GitCompare,
     Check,
-    X,
-    ArrowRight,
-    User,
-    FileText,
     Copy,
     Download,
     RefreshCw
@@ -61,8 +56,6 @@ export default function CreativeEditorPanel() {
     const [content, setContent] = useState("");
     const [context, setContext] = useState("");
     const [persona, setPersona] = useState("Senior Editor");
-    const [viewMode, setViewMode] = useState<"split" | "unified">("split");
-
     const [showCreditModal, setShowCreditModal] = useState(false);
     const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -84,7 +77,6 @@ export default function CreativeEditorPanel() {
         cancel,
         retry,
         canRetry,
-        currentRetryCount,
     } = useAsyncOperation<{ success: boolean; output: EditorResult; error?: string }>({
         onSuccess: (data) => {
             if (data.success && !byokKey && creditCtx) {

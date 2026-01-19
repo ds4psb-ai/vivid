@@ -43,7 +43,7 @@ import {
 } from "lucide-react";
 import { getLayoutedElements } from "@/lib/layout";
 import { DIMENSION_CONNECTIONS } from "@/lib/dimension-theme";
-import { FLOW_START_OPTIONS, STANDALONE_TOOLS } from "@/lib/dimension-data";
+import { FLOW_START_OPTIONS } from "@/lib/dimension-data";
 import type { WorkflowPhase, ChainDataEntry } from "@/machines/workflowMachine";
 
 // =============================================================================

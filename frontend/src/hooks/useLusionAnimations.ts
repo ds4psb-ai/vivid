@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect } from "react";
 
 /**
  * Lusion-style Animation Hooks
@@ -32,7 +32,6 @@ interface LenisOptions {
 export function useSmoothScroll(options: LenisOptions = {}) {
     const {
         duration = 1.2,
-        easing = (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
         smoothWheel = true
     } = options;
 

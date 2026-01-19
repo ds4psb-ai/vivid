@@ -15,21 +15,18 @@ import {
 // 2D
 import {
   Create2DRequestSchema,
-  Create2DResponseSchema,
   type Create2DRequest,
 } from "./2d.schema";
 
 // 3D
 import {
   Generate3DRequestSchema,
-  Generate3DResponseSchema,
   type Generate3DRequest,
 } from "./3d.schema";
 
 // 4D
 import {
   Analyze4DRequestSchema,
-  Analyze4DResponseSchema,
 } from "./4d.schema";
 
 // VEO
@@ -43,7 +40,6 @@ import {
   QualityCheckRequestSchema,
   CreativeEditorRequestSchema,
   QualityCheckResponseSchema,
-  CreativeEditorResponseSchema,
 } from "./quality.schema";
 
 describe("1D - Prompt Generator Schema", () => {

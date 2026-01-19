@@ -14,7 +14,7 @@
  * @see https://react.dev/blog/2024/12/05/react-19
  */
 
-import { useState, useRef, useCallback, useTransition, useOptimistic, useMemo } from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
@@ -140,14 +140,8 @@ function VeoVideoContent() {
   const [validationError, setValidationError] = useState<string | null>(null);
   const [videoResult, setVideoResult] = useState<VideoResult | null>(null);
 
-  // React 19: useTransition for non-blocking form submission
-  const [isTransitionPending, startTransition] = useTransition();
-
-  // React 19: useOptimistic for instant UI feedback
-  const [optimisticResult, setOptimisticResult] = useOptimistic<VideoResult | null>(null);
-
   // File upload state (2026 Best Practice: Multimodal input)
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [_uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -166,11 +160,8 @@ function VeoVideoContent() {
   // Async operation for SSE streaming
   const {
     isLoading,
-    progress,
     error,
-    data: result,
     executeStream,
-    cancel,
     retry,
     canRetry,
     currentRetryCount,
@@ -255,6 +246,7 @@ function VeoVideoContent() {
     creditCtx,
     creditCost,
     wrappedExecuteStream,
+    labels,
   ]);
 
   const handleDownload = useCallback(async () => {

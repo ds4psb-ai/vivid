@@ -259,7 +259,7 @@ export function MultiGenerateWrapper({
   isLoading = false,
   error,
 }: MultiGenerateWrapperProps) {
-  const { token, isLoading: panelLoading } = useDimensionPanel();
+  const { isLoading: panelLoading } = useDimensionPanel();
   const [localSelected, setLocalSelected] = useState<number | null>(null);
 
   const currentSelected = selectedIdx ?? localSelected;

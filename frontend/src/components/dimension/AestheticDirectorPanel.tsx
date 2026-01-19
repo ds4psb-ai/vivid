@@ -769,7 +769,6 @@ Suggested Auteur: ${selectedDirection.suggested_auteur}`;
         {/* Feedback for Final Result */}
         {stage === "guide" && result?.success && (
           <FeedbackSection
-            sessionId={sessionId}
             onFeedback={handleFeedback}
             labels={{
               feedbackSaved: labels.feedbackSaved,
@@ -1333,11 +1332,9 @@ function QualityScoresMini({
 }
 
 function FeedbackSection({
-  sessionId,
   onFeedback,
   labels,
 }: {
-  sessionId: string | null;
   onFeedback: (type: "positive" | "negative") => void;
   labels?: {
     feedbackSaved: string;

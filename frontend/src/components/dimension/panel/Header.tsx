@@ -42,7 +42,7 @@ export function Header({
   showBackButton = true,
   backUrl = "/dimension",
 }: HeaderProps) {
-  const { classes, token } = useDimensionPanel();
+  const { classes } = useDimensionPanel();
   const creditCtx = useCreditContextOptional();
   const { isBYOKEnabled } = useBYOK();
 

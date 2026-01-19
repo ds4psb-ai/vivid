@@ -171,9 +171,6 @@ export default function VeoVideoPanel() {
         copyToClipboard(prompt);
     }, [prompt, copyToClipboard]);
 
-    // Combined error (validation + operation error)
-    const displayError = validationError || error;
-
     const SidebarContent = (
         <>
             {/* Prompt Input */}

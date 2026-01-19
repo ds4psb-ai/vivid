@@ -16,9 +16,9 @@
  * @see https://react.dev/blog/2024/12/05/react-19
  */
 
-import { useState, useCallback, useTransition, useOptimistic, useRef, useMemo } from "react";
-import { DimensionPanel, useDimensionPanel } from "./panel";
-import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
+import { useState, useCallback, useTransition, useRef, useMemo } from "react";
+import Image from "next/image";
+import { DimensionPanel } from "./panel";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
@@ -193,7 +193,7 @@ function SunoContent() {
     }
 
     return parts.join(", ") || "Cinematic, modern production";
-  }, [selectedGenre, selectedMood, selectedComposer, style]);
+  }, [selectedGenre, selectedMood, selectedComposer, style, GENRES, MOODS, COMPOSER_STYLES]);
 
   // Handle generate
   const handleGenerate = useCallback(async () => {
@@ -547,10 +547,12 @@ function SunoContent() {
               >
                 <div className="flex items-start gap-3">
                   {song.image_url && (
-                    <img
+                    <Image
                       src={song.image_url}
                       alt={song.title}
-                      className="w-16 h-16 rounded object-cover"
+                      width={64}
+                      height={64}
+                      className="rounded object-cover"
                     />
                   )}
                   <div className="flex-1 min-w-0">

@@ -48,7 +48,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     },
     ref
   ) {
-    const { styles, isLoading, classes } = useDimensionPanel();
+    const { styles, isLoading } = useDimensionPanel();
     const generatedId = useId();
     const id = providedId || generatedId;
     const isDisabled = disabled || isLoading;

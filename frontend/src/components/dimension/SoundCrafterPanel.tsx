@@ -136,7 +136,7 @@ function SoundCrafterContent() {
 
   // Inputs
   const [concept, setConcept] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
+  const [_files, setFiles] = useState<File[]>([]);
   const [selectedDirection, setSelectedDirection] =
     useState<AudioDirection | null>(null);
   const [mixRecipe, setMixRecipe] = useState<MixRecipe>({
@@ -402,7 +402,6 @@ function SoundCrafterContent() {
             onGenerate={handleGenerateMood}
             creditCost={CREDIT_COST_MOOD}
             byokKey={byokKey}
-            files={files}
             setFiles={setFiles}
           />
         )}
@@ -616,7 +615,6 @@ function ConceptInput({
   onGenerate,
   creditCost,
   byokKey,
-  files,
   setFiles,
 }: {
   concept: string;
@@ -625,7 +623,6 @@ function ConceptInput({
   onGenerate: () => void;
   creditCost: number;
   byokKey: string | null;
-  files: File[];
   setFiles: (files: File[]) => void;
 }) {
   return (

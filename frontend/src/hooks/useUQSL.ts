@@ -18,7 +18,6 @@ import {
   type UQSLGenerateCandidatesResponse,
   type UQSLThreeWayRequest,
   type UQSLThreeWayResponse,
-  type UQSLStreamEvent,
   type UQSLStreamProgressEvent,
   type UQSLStreamCandidateEvent,
   type UQSLStreamQualityEvent,
@@ -556,8 +555,10 @@ export function useUQSLFeedback() {
 // Default Export
 // =============================================================================
 
-export default {
+const uqslHooks = {
   useUQSLGenerate,
   useUQSLThreeWay,
   useUQSLFeedback,
 };
+
+export default uqslHooks;

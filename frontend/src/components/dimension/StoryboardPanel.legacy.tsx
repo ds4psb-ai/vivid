@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import TeachingPanelLayout, {
     type ThemeColor,
     useAsyncOperation,
@@ -37,8 +37,6 @@ interface StoryboardResult {
     scenes: StoryboardScene[];
 }
 
-const SCENE_COUNTS = [3, 5, 7, 10, 15, 20];
-
 const MODELS = [
     { value: "gemini-3-pro-preview", label: "Pro (고품질)" },
 ];
@@ -65,7 +63,7 @@ export default function StoryboardPanel() {
     const CREDIT_COST = toolConfig?.creditCost ?? 10;
 
     // Export utilities
-    const { copyToClipboard, isCopied, exportJSON } = useResultExport();
+    const { exportJSON } = useResultExport();
 
     // Async operation hook
     const {
@@ -77,7 +75,6 @@ export default function StoryboardPanel() {
         cancel,
         retry,
         canRetry,
-        currentRetryCount,
     } = useAsyncOperation<{ success: boolean; output: StoryboardResult; error?: string }>({
         onSuccess: (data) => {
             if (data.success && !byokKey && creditCtx) {
@@ -121,14 +118,6 @@ export default function StoryboardPanel() {
         );
     };
 
-    // Copy handler
-    const handleCopy = useCallback(
-        (text: string) => {
-            copyToClipboard(text);
-        },
-        [copyToClipboard]
-    );
-
     // Export result as JSON
     const handleExportJson = () => {
         if (result?.output) {
@@ -152,7 +141,6 @@ export default function StoryboardPanel() {
 
     // Extracted result data for display
     const displayResult = result?.success ? result.output : null;
-    const displayError = validationError || (result && !result.success ? result.error : error);
 
     const SidebarContent = (
         <>
