@@ -11,7 +11,11 @@ import { EvidenceCard } from "@/components/ui/EvidenceCard";
 import { ToolRecommendationCard } from "@/components/ui/ToolRecommendationCard";
 import { useToolRecommendations } from "@/hooks/useToolRecommendations";
 
-interface PresetItem {
+// =============================================================================
+// Types (exported for server component)
+// =============================================================================
+
+export interface PresetItem {
   id: string;
   name_ko: string;
   name_en: string;
@@ -24,7 +28,7 @@ interface PresetItem {
   is_featured: boolean;
 }
 
-interface IPDetail {
+export interface IPDetail {
   id: string;
   slug: string;
   name_ko: string;
@@ -42,7 +46,7 @@ interface IPDetail {
   presets: PresetItem[];
 }
 
-interface IPRights {
+export interface IPRights {
   license_status: "allowed" | "restricted" | "prohibited";
   territory: string[];
   blocked_territory: string[];
@@ -51,18 +55,34 @@ interface IPRights {
   expiry: string | null;
 }
 
-interface IPDetailClientProps {
+// =============================================================================
+// Props
+// =============================================================================
+
+export interface IPDetailClientProps {
   slug: string;
+  /** Pre-fetched IP detail from server (Phase 6 ISR) */
+  initialIP?: IPDetail | null;
+  /** Pre-fetched IP rights from server (Phase 6 ISR) */
+  initialRights?: IPRights | null;
 }
 
-export default function IPDetailClient({ slug }: IPDetailClientProps) {
+// =============================================================================
+// Component
+// =============================================================================
+
+export default function IPDetailClient({
+  slug,
+  initialIP,
+  initialRights,
+}: IPDetailClientProps) {
   const router = useRouter();
   const { language, t } = useLanguage();
 
-  // State
-  const [ip, setIP] = useState<IPDetail | null>(null);
-  const [rights, setRights] = useState<IPRights | null>(null);
-  const [loading, setLoading] = useState(true);
+  // State - use initial data from server if provided (Phase 6 ISR)
+  const [ip, setIP] = useState<IPDetail | null>(initialIP || null);
+  const [rights, setRights] = useState<IPRights | null>(initialRights || null);
+  const [loading, setLoading] = useState(!initialIP); // Skip loading if server data provided
   const [error, setError] = useState<string | null>(null);
 
   // Generation state
@@ -72,6 +92,7 @@ export default function IPDetailClient({ slug }: IPDetailClientProps) {
   const [licenseAccepted, setLicenseAccepted] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [generationId, setGenerationId] = useState<string | null>(null);
+  const [showRecommendations, setShowRecommendations] = useState(true);
 
   // Tool recommendations (Phase 2.5)
   const {
@@ -99,8 +120,20 @@ export default function IPDetailClient({ slug }: IPDetailClientProps) {
     }
   }, [ip, selectedPreset, slug, fetchRecommendations, fetchByIPSlug]);
 
-  // Fetch IP detail
+  // Select first preset when IP data is available (from server or client fetch)
   useEffect(() => {
+    if (ip && ip.presets && ip.presets.length > 0 && !selectedPreset) {
+      setSelectedPreset(ip.presets[0]);
+    }
+  }, [ip, selectedPreset]);
+
+  // Fetch IP detail (skip if server-provided via ISR)
+  useEffect(() => {
+    // Phase 6: Skip fetch if initial data provided from server
+    if (initialIP) {
+      return;
+    }
+
     async function fetchIPDetail() {
       setLoading(true);
       setError(null);
@@ -122,11 +155,6 @@ export default function IPDetailClient({ slug }: IPDetailClientProps) {
           const rightsData = await rightsRes.json();
           setRights(rightsData);
         }
-
-        // Select first preset by default
-        if (detail.presets && detail.presets.length > 0) {
-          setSelectedPreset(detail.presets[0]);
-        }
       } catch (err) {
         setError("Failed to load IP details");
         console.error(err);
@@ -136,7 +164,7 @@ export default function IPDetailClient({ slug }: IPDetailClientProps) {
     }
 
     fetchIPDetail();
-  }, [slug]);
+  }, [slug, initialIP]);
 
   // Fetch recommendations when IP is loaded
   useEffect(() => {
@@ -418,86 +446,101 @@ export default function IPDetailClient({ slug }: IPDetailClientProps) {
                   {/* Tool Recommendations (Phase 2.5 Evidence Card) */}
                   {selectedPreset && (
                     <div className="mb-6">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          {t("recommendedTools")}
-                        </h3>
-                        {recResponse && (
-                          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                            {workflowSuggested && (
-                              <span className="evidence-badge">
-                                {t("workflowSuggested")}
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      {t("recommendedTools")}
+                    </h3>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                      <button
+                        type="button"
+                        onClick={() => setShowRecommendations((prev) => !prev)}
+                        className="text-violet-500 hover:underline"
+                      >
+                        {showRecommendations ? t("hideRecommendations") : t("showRecommendations")}
+                      </button>
+                      {showRecommendations && recResponse && (
+                        <>
+                          {workflowSuggested && (
+                            <span className="evidence-badge">
+                              {t("workflowSuggested")}
+                            </span>
+                          )}
+                          {recommendedDimensions.length > 0 && (
+                            <div className="flex items-center gap-1">
+                              <span className="text-[10px] uppercase tracking-[0.18em]">
+                                {t("recommendedDimensions")}
                               </span>
-                            )}
-                            {recommendedDimensions.length > 0 && (
-                              <div className="flex items-center gap-1">
-                                <span className="text-[10px] uppercase tracking-[0.18em]">
-                                  {t("recommendedDimensions")}
-                                </span>
-                                {recommendedDimensions.map((dimension) => {
-                                  const dimensionKey = dimension.toLowerCase();
-                                  const dimensionClass = dimensionKey
-                                    ? `bg-dimension-${dimensionKey}/20 text-dimension-${dimensionKey}`
-                                    : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300";
-                                  return (
-                                    <span
-                                      key={dimension}
-                                      className={`text-[9px] px-2 py-0.5 rounded-full ${dimensionClass}`}
-                                    >
-                                      {dimension}
-                                    </span>
-                                  );
-                                })}
-                              </div>
-                            )}
-                            {totalCredits > 0 && (
-                              <span>
-                                {totalCredits} {t("credits")}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {recLoading && (
-                        <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-4 animate-pulse space-y-2">
-                          <div className="h-3 w-1/3 bg-slate-200 dark:bg-slate-700 rounded" />
-                          <div className="h-3 w-2/3 bg-slate-200 dark:bg-slate-700 rounded" />
-                          <div className="h-3 w-1/2 bg-slate-200 dark:bg-slate-700 rounded" />
-                        </div>
+                              {recommendedDimensions.map((dimension) => {
+                                const dimensionKey = dimension.toLowerCase();
+                                const dimensionClass = dimensionKey
+                                  ? `bg-dimension-${dimensionKey}/20 text-dimension-${dimensionKey}`
+                                  : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300";
+                                return (
+                                  <span
+                                    key={dimension}
+                                    className={`text-[9px] px-2 py-0.5 rounded-full ${dimensionClass}`}
+                                  >
+                                    {dimension}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          )}
+                          {totalCredits > 0 && (
+                            <span>
+                              {totalCredits} {t("credits")}
+                            </span>
+                          )}
+                        </>
                       )}
+                    </div>
+                  </div>
 
-                      {!recLoading && recError && (
-                        <div className="text-xs text-red-500 flex items-center gap-2">
-                          <span>{t("recommendationLoadFailed")}</span>
-                          <button
-                            type="button"
-                            onClick={handleRetryRecommendations}
-                            className="text-violet-500 hover:underline"
-                          >
-                            {t("retry")}
-                          </button>
-                        </div>
-                      )}
+                  {!showRecommendations && (
+                    <div className="text-xs text-slate-400">
+                      {t("recommendationsHidden")}
+                    </div>
+                  )}
 
-                      {!recLoading && recResponse && recommendations.length === 0 && (
-                        <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                          <span>{t("recommendationEmpty")}</span>
-                          <button
-                            type="button"
-                            onClick={() => router.push("/dimension")}
-                            className="text-violet-500 hover:underline"
-                          >
-                            {t("exploreOtherDimensions")}
-                          </button>
-                        </div>
-                      )}
+                  {showRecommendations && recLoading && (
+                    <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-4 animate-pulse space-y-2">
+                      <div className="h-3 w-1/3 bg-slate-200 dark:bg-slate-700 rounded" />
+                      <div className="h-3 w-2/3 bg-slate-200 dark:bg-slate-700 rounded" />
+                      <div className="h-3 w-1/2 bg-slate-200 dark:bg-slate-700 rounded" />
+                    </div>
+                  )}
 
-                      {!recLoading && recResponse && recommendations.length > 0 && (
-                        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)]">
-                          <div className="space-y-2">
-                            <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                              {t("topRecommendationTitle")}
+                  {showRecommendations && !recLoading && recError && (
+                    <div className="text-xs text-red-500 flex items-center gap-2">
+                      <span>{t("recommendationLoadFailed")}</span>
+                      <button
+                        type="button"
+                        onClick={handleRetryRecommendations}
+                        className="text-violet-500 hover:underline"
+                      >
+                        {t("retry")}
+                      </button>
+                    </div>
+                  )}
+
+                  {showRecommendations && !recLoading && recResponse && recommendations.length === 0 && (
+                    <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                      <span>{t("recommendationEmpty")}</span>
+                      <button
+                        type="button"
+                        onClick={() => router.push("/dimension")}
+                        className="text-violet-500 hover:underline"
+                      >
+                        {t("exploreOtherDimensions")}
+                      </button>
+                    </div>
+                  )}
+
+                  {showRecommendations && !recLoading && recResponse && recommendations.length > 0 && (
+                    <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)]">
+                      <div className="space-y-2">
+                        <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                          {t("topRecommendationTitle")}
                             </div>
                             <EvidenceCard
                               confidenceLevel={recommendations[0]?.confidence_level || "medium"}
