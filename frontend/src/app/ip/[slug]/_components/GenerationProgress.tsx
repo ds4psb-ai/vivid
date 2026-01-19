@@ -220,14 +220,14 @@ export default function GenerationProgress({
           <X className="w-6 h-6 text-red-500" />
         </div>
         <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
-          {language === "ko" ? "생성 실패" : "Generation Failed"}
+          {t("generationFailed")}
         </h3>
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">{error}</p>
         <button
           onClick={onCancel}
           className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700"
         >
-          {language === "ko" ? "닫기" : "Close"}
+          {t("close")}
         </button>
       </div>
     );
@@ -240,8 +240,8 @@ export default function GenerationProgress({
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-bold text-slate-900 dark:text-white">
           {isCompleted
-            ? (language === "ko" ? "생성 완료" : "Generation Complete")
-            : (language === "ko" ? "생성 중..." : "Generating...")}
+            ? t("generationComplete")
+            : t("generating")}
         </h2>
         {!isCompleted && (
           <button
@@ -249,7 +249,7 @@ export default function GenerationProgress({
             disabled={cancelling}
             className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
           >
-            {cancelling ? (language === "ko" ? "취소 중..." : "Cancelling...") : (language === "ko" ? "취소" : "Cancel")}
+            {cancelling ? t("cancelling") : t("cancel")}
           </button>
         )}
       </div>
@@ -258,7 +258,7 @@ export default function GenerationProgress({
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm text-slate-600 dark:text-slate-400">
-            {progress?.current_step || (language === "ko" ? "준비 중" : "Preparing")}
+            {progress?.current_step || t("preparing")}
           </span>
           <span className="text-sm font-medium text-slate-900 dark:text-white">
             {progress?.progress_percent || 0}%
@@ -280,7 +280,7 @@ export default function GenerationProgress({
               <span className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
                 <Coins className="w-4 h-4 text-violet-500" />
                 <span>{progress?.credits_consumed || 0}</span>
-                <span>{language === "ko" ? "크레딧 사용 중" : "credits used"}</span>
+                <span>{t("creditsUsed")}</span>
               </span>
               <span className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
                 <Clock className="w-4 h-4 text-violet-500" />
@@ -304,7 +304,7 @@ export default function GenerationProgress({
                 <WifiOff className="w-3 h-3" />
               )}
               <span className="hidden sm:inline">
-                {connectionMode === "sse" ? "Live" : "Polling"}
+                {connectionMode === "sse" ? t("connectionLive") : t("connectionPolling")}
               </span>
             </span>
           </div>
@@ -316,14 +316,14 @@ export default function GenerationProgress({
         <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
           <h3 className="text-sm font-medium text-slate-900 dark:text-white mb-3 flex items-center gap-2">
             <FileText className="w-4 h-4" />
-            {language === "ko" ? "증거 & 추적" : "Evidence & Trace"}
+            {t("evidenceTraceHeader")}
           </h3>
 
           <div className="space-y-2">
             {evidence.pattern_version && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-slate-500 dark:text-slate-400">
-                  {language === "ko" ? "패턴" : "Pattern"}
+                  {t("patternLabel")}
                 </span>
                 <span className="text-slate-900 dark:text-white font-mono text-xs">
                   {evidence.pattern_version}
@@ -334,7 +334,7 @@ export default function GenerationProgress({
             {evidence.auteur_key && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-slate-500 dark:text-slate-400">
-                  {language === "ko" ? "스타일" : "Style"}
+                  {t("styleLabel")}
                 </span>
                 <span className="text-slate-900 dark:text-white">
                   {evidence.auteur_key}
@@ -361,7 +361,7 @@ export default function GenerationProgress({
           {/* Final stats */}
           <div className="mt-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 flex items-center justify-between">
             <span className="text-sm text-green-700 dark:text-green-400">
-              {language === "ko" ? "완료" : "Completed"}
+              {t("statusCompleted")}
             </span>
             <div className="flex items-center gap-4 text-sm text-green-600 dark:text-green-400">
               <span>{evidence.credits_consumed} credits</span>
@@ -381,7 +381,7 @@ export default function GenerationProgress({
             className="w-full py-3 px-4 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-medium flex items-center justify-center gap-2"
           >
             <ExternalLink className="w-5 h-5" />
-            {language === "ko" ? "결과 보기" : "View Result"}
+            {t("viewResult")}
           </button>
         </div>
       )}
