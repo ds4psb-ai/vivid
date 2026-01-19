@@ -93,17 +93,30 @@ export function DimensionChainProvider({ children }: DimensionChainProviderProps
     }, []);
 
     const getInputData = useCallback((dimensionKey: string): Record<string, ChainData> => {
-        // Map dimension to its input sources based on capsule definitions
+        /**
+         * 워크플로우 입력 의존성 맵
+         *
+         * 거장 RAG + 페르소나 → 차원 조합 → 세계관 컨텐츠 생성
+         *
+         * - 4D(reference-decoder)는 시작점 (입력 없음 또는 외부 레퍼런스)
+         * - Story는 4D 분석 결과 또는 직접 입력
+         * - AI(abyss-mirror)는 독립적 - 다른 앱에 컨텍스트로 주입
+         */
         const inputMap: Record<string, string[]> = {
-            "reference-decoder": ["abyss-mirror"],
-            "story-architect": ["abyss-mirror", "reference-decoder"],
-            "aesthetic-director": ["abyss-mirror", "reference-decoder"],
+            // 4D는 시작점 (입력 없음 또는 외부 레퍼런스)
+            "reference-decoder": [],
+            // Story는 4D 분석 결과 또는 직접 입력
+            "story-architect": ["reference-decoder"],
+            "aesthetic-director": ["reference-decoder"],
+            // 이하 순차 연결
             "storyboard-sketch": ["story-architect", "reference-decoder"],
             "sound-crafter": ["story-architect", "storyboard-sketch"],
             "prompt-alchemy": ["story-architect", "storyboard-sketch"],
             "visual-realizer": ["prompt-alchemy", "storyboard-sketch"],
             "video-maker": ["visual-realizer", "prompt-alchemy", "sound-crafter"],
             "quality-director": ["video-maker", "visual-realizer"],
+            // AI는 독립 - 다른 앱에 컨텍스트로 주입
+            "abyss-mirror": [],
         };
 
         const inputDimensions = inputMap[dimensionKey] || [];

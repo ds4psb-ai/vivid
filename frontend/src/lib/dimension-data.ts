@@ -304,6 +304,90 @@ export const DIMENSION_ITEMS: DimensionItemData[] = [
 ];
 
 // =============================================================================
+// WORKFLOW START OPTIONS - 거장 미학 입력 시작점 (3옵션)
+// =============================================================================
+
+/**
+ * 워크플로우 시작 옵션
+ *
+ * 거장 RAG 기반 세계관 컨텐츠 생성의 3가지 진입점:
+ * 1. 레퍼런스 해석기 (4D): 거장의 레퍼런스 분석부터 시작
+ * 2. 시나리오 생성기 (Story): 스토리 구성부터 시작
+ * 3. 프롬프트 연금술 (1D): 프롬프트 작성부터 시작
+ */
+export interface FlowStartOption {
+  key: string;
+  dimension: string;
+  name: string;
+  nameEn: string;
+  description: string;
+  descriptionEn: string;
+  iconName: DimensionIconName;
+}
+
+export const FLOW_START_OPTIONS: readonly FlowStartOption[] = [
+  {
+    key: "reference-decoder",
+    dimension: "4D",
+    name: "레퍼런스 해석기",
+    nameEn: "Reference Decoder",
+    description: "거장의 레퍼런스 분석부터 시작",
+    descriptionEn: "Start from master's reference analysis",
+    iconName: "search",
+  },
+  {
+    key: "story-architect",
+    dimension: "STORY",
+    name: "시나리오 생성기",
+    nameEn: "Story Architect",
+    description: "스토리 구성부터 시작",
+    descriptionEn: "Start from story composition",
+    iconName: "layers",
+  },
+  {
+    key: "prompt-alchemy",
+    dimension: "1D",
+    name: "프롬프트 연금술",
+    nameEn: "Prompt Alchemy",
+    description: "프롬프트 작성부터 시작",
+    descriptionEn: "Start from prompt writing",
+    iconName: "wand",
+  },
+] as const;
+
+// =============================================================================
+// STANDALONE TOOLS - AI(Abyss Mirror)는 별도 섹션
+// =============================================================================
+
+/**
+ * 독립 도구 목록
+ *
+ * 워크플로우 DAG에 포함되지 않고 별도로 사용:
+ * - 심연의 거울 (AI): 페르소나 분석 후 다른 앱에 컨텍스트로 주입
+ */
+export interface StandaloneTool {
+  key: string;
+  dimension: string;
+  name: string;
+  nameEn: string;
+  description: string;
+  descriptionEn: string;
+  iconName: DimensionIconName;
+}
+
+export const STANDALONE_TOOLS: readonly StandaloneTool[] = [
+  {
+    key: "abyss-mirror",
+    dimension: "AI",
+    name: "심연의 거울",
+    nameEn: "Abyss Mirror",
+    description: "나의 창작 DNA 분석 후 다른 앱에 적용",
+    descriptionEn: "Analyze creative DNA and apply to other apps",
+    iconName: "brain",
+  },
+] as const;
+
+// =============================================================================
 // ROUTE KEY MAPPING
 // =============================================================================
 

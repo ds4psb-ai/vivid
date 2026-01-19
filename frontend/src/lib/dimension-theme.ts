@@ -56,17 +56,47 @@ export const DIMENSION_STAGES: Record<string, { stage: string; order: number }> 
 // =============================================================================
 // DIMENSION CONNECTIONS - Workflow connection map
 // =============================================================================
+/**
+ * 워크플로우 DAG 연결 맵
+ *
+ * 거장 RAG + 페르소나 → 차원 조합 → 세계관 컨텐츠 생성
+ *
+ * Phase 1: 거장 분석 → 시나리오 → 프롬프트
+ *   - reference-decoder (4D): 거장 레퍼런스 분석 → story-architect, aesthetic-director
+ *   - story-architect (Story): 시나리오 생성 → prompt-alchemy, storyboard-sketch
+ *   - aesthetic-director (AD): 미학 디렉터 → story-architect, visual-realizer
+ *
+ * Phase 2: 프롬프트 → 스토리보드 → 비주얼 → 비디오
+ *   - prompt-alchemy (1D): 프롬프트 연금술 → storyboard-sketch, visual-realizer
+ *   - storyboard-sketch (2D): 스토리보드 → sound-crafter, visual-realizer
+ *   - visual-realizer (3D): 비주얼 → video-maker, quality-director
+ *   - video-maker (VEO): 비디오 → quality-director
+ *
+ * Phase 3: 사운드, QC
+ *   - sound-crafter (Sound): 사운드 → video-maker
+ *   - quality-director (QC): 퀄리티 체크 (종료)
+ *
+ * Standalone (별도 섹션):
+ *   - abyss-mirror (AI): 페르소나 분석 후 다른 앱에 적용 (연결 없음)
+ */
 export const DIMENSION_CONNECTIONS: Record<string, string[]> = {
-    "abyss-mirror": ["reference-decoder", "story-architect", "aesthetic-director"],
-    "reference-decoder": ["story-architect", "storyboard-sketch"],
-    "story-architect": ["storyboard-sketch", "sound-crafter", "prompt-alchemy"],
+    // Phase 1: 거장 분석 → 시나리오 → 프롬프트
+    "reference-decoder": ["story-architect", "aesthetic-director"],
+    "story-architect": ["prompt-alchemy", "storyboard-sketch", "aesthetic-director"],
     "aesthetic-director": ["story-architect", "visual-realizer"],
-    "storyboard-sketch": ["sound-crafter", "prompt-alchemy"],
-    "sound-crafter": ["video-maker"],
-    "prompt-alchemy": ["visual-realizer", "video-maker"],
+
+    // Phase 2: 프롬프트 → 스토리보드 → 비주얼 → 비디오
+    "prompt-alchemy": ["storyboard-sketch", "visual-realizer"],
+    "storyboard-sketch": ["sound-crafter", "visual-realizer"],
     "visual-realizer": ["video-maker", "quality-director"],
     "video-maker": ["quality-director"],
+
+    // Phase 3: 사운드, QC
+    "sound-crafter": ["video-maker"],
     "quality-director": [],
+
+    // AI는 Standalone - 페르소나 분석 후 다른 앱에 컨텍스트로 주입
+    "abyss-mirror": [],
 };
 
 export interface ThemeColorClasses {

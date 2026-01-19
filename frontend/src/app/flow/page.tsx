@@ -6,20 +6,24 @@ import AppShell from "@/components/AppShell";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { TrainWorkflowView, TrainWorkflowHandle } from "@/components/train/TrainWorkflowView";
 import { AgentChatAccordion } from "@/components/AgentChatAccordion";
+import { WorkflowCanvas } from "@/components/flow/WorkflowCanvas";
+import { FlowSidebar } from "@/components/flow/FlowSidebar";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Copy, Check, Sparkles, LayoutGrid, Image as ImageIcon, Film, X, Download, Save, CheckCircle, Palette, Moon, Video, Loader2, BookOpen, Music, Construction, ArrowLeft, AlertCircle } from "lucide-react";
+import { ChevronDown, Copy, Check, Sparkles, LayoutGrid, Image as ImageIcon, Film, X, Download, Save, CheckCircle, Palette, Moon, Video, Loader2, BookOpen, Music, Construction, ArrowLeft, AlertCircle, Workflow, Search, Layers, Wand2, PanelLeft } from "lucide-react";
 import { api, SingularityTemplate } from "@/lib/api";
 import { FLOW_ENABLED } from "@/lib/feature-flags";
 import { dimensionIdToCode, getDimensionToken } from "@/lib/tokens";
 import { normalizeWorkflowDimension, type WorkflowDimension } from "@/lib/dimension-types";
+import { FLOW_START_OPTIONS, STANDALONE_TOOLS } from "@/lib/dimension-data";
+import { useMachine } from "@xstate/react";
+import { workflowMachine, type WorkflowPhase } from "@/machines/workflowMachine";
 import Link from "next/link";
 import type {
     WorkflowStartEvent,
     WorkflowStepEvent,
     WorkflowCreatedEvent,
-    WorkflowNode,
 } from "@/types/agent";
 
 // WorkflowDimension shared in lib/dimension-types
@@ -218,6 +222,16 @@ function FlowPageContent() {
     const [showResults, setShowResults] = useState(false);
     const [expandedResult, setExpandedResult] = useState<string | null>(null);
     const [copiedField, setCopiedField] = useState<string | null>(null);
+
+    // XState workflow machine for structured state management
+    const [workflowState, sendWorkflow] = useMachine(workflowMachine);
+
+    // Show DAG canvas toggle
+    const [showDagCanvas, setShowDagCanvas] = useState(false);
+
+    // Sidebar state
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [showMobileSidebar, setShowMobileSidebar] = useState(false);
 
     // 🆕 Template save modal state
     const [showTemplateModal, setShowTemplateModal] = useState(false);
@@ -492,7 +506,62 @@ function FlowPageContent() {
             : "Hello! I'll help you design dimension flows. What content would you like to create?",
         results: language === "ko" ? "워크플로우 결과물" : "Workflow Results",
         copySuccess: language === "ko" ? "복사됨!" : "Copied!",
+        selectStart: language === "ko" ? "워크플로우 시작점 선택" : "Select Workflow Start Point",
+        startDescription: language === "ko"
+            ? "거장 RAG 기반 세계관 컨텐츠 생성의 3가지 진입점 중 하나를 선택하세요."
+            : "Choose one of three entry points for master's RAG-based worldbuilding content creation.",
+        dagToggle: language === "ko" ? "DAG 캔버스" : "DAG Canvas",
+        standaloneTools: language === "ko" ? "독립 도구" : "Standalone Tools",
     };
+
+    // Workflow start handlers
+    const handleStartWorkflow = useCallback((startOption: typeof FLOW_START_OPTIONS[number]) => {
+        const phaseMap: Record<string, "START_4D" | "START_STORY" | "START_1D"> = {
+            "reference-decoder": "START_4D",
+            "story-architect": "START_STORY",
+            "prompt-alchemy": "START_1D",
+        };
+        const event = phaseMap[startOption.key];
+        if (event) {
+            sendWorkflow({ type: event });
+        }
+    }, [sendWorkflow]);
+
+    // Get current phase for DAG canvas
+    const currentPhase = workflowState.context.currentPhase;
+
+    // Handle phase click from sidebar
+    const handlePhaseClick = useCallback((phase: WorkflowPhase) => {
+        console.log("[Flow] Phase clicked:", phase);
+        // If idle and valid start phase, start the workflow
+        if (workflowState.matches("idle")) {
+            const phaseMap: Record<string, "START_4D" | "START_STORY" | "START_1D" | null> = {
+                "4D": "START_4D",
+                "Story": "START_STORY",
+                "1D": "START_1D",
+            };
+            const event = phaseMap[phase];
+            if (event) {
+                sendWorkflow({ type: event });
+            }
+        }
+    }, [workflowState, sendWorkflow]);
+
+    // Get workflow state for sidebar
+    const getWorkflowStateForSidebar = useCallback((): "idle" | "running" | "completed" | "error" => {
+        if (workflowState.matches("idle")) return "idle";
+        if (workflowState.matches("completed")) return "completed";
+        if (workflowState.matches("error")) return "error";
+        return "running";
+    }, [workflowState]);
+
+    // Handle workflow control actions from sidebar
+    const handleWorkflowControl = useCallback((action: "play" | "pause" | "reset") => {
+        if (action === "reset") {
+            sendWorkflow({ type: "RESET" });
+        }
+        // Note: play/pause would require additional state machine events
+    }, [sendWorkflow]);
 
     // 🆕 Save workflow results as template
     const handleSaveAsTemplate = async () => {
@@ -852,15 +921,135 @@ function FlowPageContent() {
 
     return (
         <AppShell showTopBar={false} showChokki={false}>
-            <div className="relative min-h-screen pb-20">
+            <div className="relative min-h-screen flex">
                 {/* Aurora Background */}
                 <AuroraBackground />
 
-                {/* Content Container */}
-                <div className="relative z-10 min-h-screen px-4 py-6 sm:px-6 sm:py-8">
-                    <div className="mx-auto max-w-7xl">
+                {/* Mobile Sidebar Toggle */}
+                <button
+                    onClick={() => setShowMobileSidebar(!showMobileSidebar)}
+                    className="fixed top-4 left-4 z-50 lg:hidden p-2 rounded-xl bg-[var(--surface-1)]/90 backdrop-blur-xl border border-[var(--border-subtle)] shadow-lg"
+                >
+                    <PanelLeft className="w-5 h-5 text-[var(--fg-muted)]" />
+                </button>
 
+                {/* Sidebar - Desktop */}
+                <div className="hidden lg:block relative z-20">
+                    <FlowSidebar
+                        activePhase={currentPhase}
+                        chainData={workflowState.context.chainData}
+                        workflowState={getWorkflowStateForSidebar()}
+                        onStartSelect={(phase) => {
+                            const option = FLOW_START_OPTIONS.find(o => {
+                                const phaseMap: Record<string, WorkflowPhase> = {
+                                    "reference-decoder": "4D",
+                                    "story-architect": "Story",
+                                    "prompt-alchemy": "1D",
+                                };
+                                return phaseMap[o.key] === phase;
+                            });
+                            if (option) handleStartWorkflow(option);
+                        }}
+                        onPhaseClick={handlePhaseClick}
+                        onWorkflowControl={handleWorkflowControl}
+                        language={language}
+                        collapsed={sidebarCollapsed}
+                        onCollapsedChange={setSidebarCollapsed}
+                    />
+                </div>
 
+                {/* Sidebar - Mobile Overlay */}
+                <AnimatePresence>
+                    {showMobileSidebar && (
+                        <>
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                onClick={() => setShowMobileSidebar(false)}
+                                className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm lg:hidden"
+                            />
+                            <motion.div
+                                initial={{ x: -320 }}
+                                animate={{ x: 0 }}
+                                exit={{ x: -320 }}
+                                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                                className="fixed left-0 top-0 bottom-0 z-40 lg:hidden"
+                            >
+                                <FlowSidebar
+                                    activePhase={currentPhase}
+                                    chainData={workflowState.context.chainData}
+                                    workflowState={getWorkflowStateForSidebar()}
+                                    onStartSelect={(phase) => {
+                                        const option = FLOW_START_OPTIONS.find(o => {
+                                            const phaseMap: Record<string, WorkflowPhase> = {
+                                                "reference-decoder": "4D",
+                                                "story-architect": "Story",
+                                                "prompt-alchemy": "1D",
+                                            };
+                                            return phaseMap[o.key] === phase;
+                                        });
+                                        if (option) handleStartWorkflow(option);
+                                        setShowMobileSidebar(false);
+                                    }}
+                                    onPhaseClick={(phase) => {
+                                        handlePhaseClick(phase);
+                                        setShowMobileSidebar(false);
+                                    }}
+                                    onWorkflowControl={handleWorkflowControl}
+                                    language={language}
+                                    collapsed={false}
+                                />
+                            </motion.div>
+                        </>
+                    )}
+                </AnimatePresence>
+
+                {/* Main Content Container */}
+                <div className="relative z-10 flex-1 min-h-screen px-4 py-6 sm:px-6 sm:py-8 pb-20 overflow-y-auto">
+                    <div className="mx-auto max-w-6xl">
+
+                        {/* Page Header */}
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mb-6"
+                        >
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-violet-500/20">
+                                        <Workflow className="w-6 h-6 text-white" />
+                                    </div>
+                                    <div>
+                                        <h1 className="text-2xl font-bold text-[var(--fg-0)]">
+                                            {language === "ko" ? "디멘션 플로우" : "Dimension Flow"}
+                                        </h1>
+                                        <p className="text-sm text-[var(--fg-muted)]">
+                                            {language === "ko"
+                                                ? "거장 RAG 기반 세계관 컨텐츠 생성 워크플로우"
+                                                : "Master's RAG-based worldbuilding workflow"
+                                            }
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setShowDagCanvas(!showDagCanvas)}
+                                        className={`
+                                            flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium
+                                            transition-all duration-200
+                                            ${showDagCanvas
+                                                ? "bg-gradient-to-r from-violet-500 to-cyan-500 text-white shadow-lg shadow-violet-500/20"
+                                                : "bg-[var(--surface-1)] border border-[var(--border-subtle)] text-[var(--fg-muted)] hover:bg-[var(--surface-2)]"
+                                            }
+                                        `}
+                                    >
+                                        <LayoutGrid className="w-4 h-4" />
+                                        {labels.dagToggle}
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
 
                         {/* Template Loading Indicator */}
                         {isLoadingTemplate && (
@@ -954,6 +1143,151 @@ function FlowPageContent() {
                                 </div>
                             </div>
                         )}
+
+                        {/* Workflow Start Options - 3옵션 시작점 고정 */}
+                        {!loadedTemplate && !templateApplied && workflowState.matches("idle") && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="card-glass p-6 mb-6"
+                            >
+                                <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h2 className="text-lg font-bold text-[var(--fg-0)] flex items-center gap-2">
+                                            <Workflow className={`w-5 h-5 ${BRAND_TONE.text}`} />
+                                            {labels.selectStart}
+                                        </h2>
+                                        <p className="text-sm text-[var(--fg-muted)] mt-1">
+                                            {labels.startDescription}
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowDagCanvas(!showDagCanvas)}
+                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                                            showDagCanvas
+                                                ? `${BRAND_TONE.solid} text-[var(--fg-on-emphasis)]`
+                                                : `${BRAND_TONE.bg} ${BRAND_TONE.textSoft} ${BRAND_TONE.hoverBg}`
+                                        }`}
+                                    >
+                                        <LayoutGrid className="w-4 h-4" />
+                                        {labels.dagToggle}
+                                    </button>
+                                </div>
+
+                                {/* 3 Start Options */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                    {FLOW_START_OPTIONS.map((option) => {
+                                        const StartIcon = option.iconName === "search" ? Search
+                                            : option.iconName === "layers" ? Layers
+                                            : option.iconName === "wand" ? Wand2
+                                            : Sparkles;
+
+                                        return (
+                                            <button
+                                                key={option.key}
+                                                onClick={() => handleStartWorkflow(option)}
+                                                className={`
+                                                    p-5 rounded-xl border-2 border-[var(--border-subtle)]
+                                                    bg-[var(--surface-1)] hover:bg-[var(--surface-2)]
+                                                    transition-all hover:scale-[1.02] hover:shadow-lg
+                                                    text-left group
+                                                `}
+                                            >
+                                                <div className={`
+                                                    w-12 h-12 rounded-xl ${BRAND_TONE.bg}
+                                                    flex items-center justify-center mb-3
+                                                    group-hover:scale-110 transition-transform
+                                                `}>
+                                                    <StartIcon className={`w-6 h-6 ${BRAND_TONE.text}`} />
+                                                </div>
+                                                <div className={`text-sm font-bold ${BRAND_TONE.text} mb-1`}>
+                                                    {option.dimension}
+                                                </div>
+                                                <div className="text-base font-semibold text-[var(--fg-0)] mb-2">
+                                                    {language === "ko" ? option.name : option.nameEn}
+                                                </div>
+                                                <p className="text-sm text-[var(--fg-muted)]">
+                                                    {language === "ko" ? option.description : option.descriptionEn}
+                                                </p>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Standalone Tools Section */}
+                                <div className="border-t border-[var(--border-subtle)] pt-4">
+                                    <h3 className="text-sm font-medium text-[var(--fg-muted)] mb-3">
+                                        {labels.standaloneTools}
+                                    </h3>
+                                    <div className="flex gap-3">
+                                        {STANDALONE_TOOLS.map((tool) => (
+                                            <Link
+                                                key={tool.key}
+                                                href={`/dimension/abyss`}
+                                                className={`
+                                                    flex items-center gap-3 px-4 py-2.5 rounded-lg
+                                                    border border-[var(--border-subtle)]
+                                                    bg-[var(--surface-1)] hover:bg-[var(--surface-2)]
+                                                    transition-colors text-sm
+                                                `}
+                                            >
+                                                <div className={`w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center`}>
+                                                    <Moon className="w-4 h-4 text-violet-400" />
+                                                </div>
+                                                <div>
+                                                    <div className="font-medium text-[var(--fg-0)]">
+                                                        {language === "ko" ? tool.name : tool.nameEn}
+                                                    </div>
+                                                    <div className="text-xs text-[var(--fg-muted)]">
+                                                        {tool.dimension}
+                                                    </div>
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {/* DAG Canvas (Toggleable) */}
+                        <AnimatePresence>
+                            {showDagCanvas && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: "auto" }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="mb-6 overflow-hidden"
+                                >
+                                    <div className="card-glass p-1">
+                                        <WorkflowCanvas
+                                            activePhase={currentPhase}
+                                            chainData={workflowState.context.chainData}
+                                            onNodeClick={(phase) => {
+                                                console.log("[Flow] Node clicked:", phase);
+                                            }}
+                                            onStartSelect={(phase) => {
+                                                const eventMap: Record<WorkflowPhase, "START_4D" | "START_STORY" | "START_1D" | null> = {
+                                                    "4D": "START_4D",
+                                                    "Story": "START_STORY",
+                                                    "1D": "START_1D",
+                                                    "AD": null,
+                                                    "2D": null,
+                                                    "Sound": null,
+                                                    "3D": null,
+                                                    "VEO": null,
+                                                    "QC": null,
+                                                };
+                                                const event = eventMap[phase];
+                                                if (event) {
+                                                    sendWorkflow({ type: event });
+                                                }
+                                            }}
+                                            readOnly={!workflowState.matches("idle")}
+                                        />
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
                         {/* Main Workflow View */}
                         <div className="card-glass p-1">

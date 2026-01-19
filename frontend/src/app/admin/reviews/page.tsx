@@ -7,7 +7,6 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import {
     Shield,
     CheckCircle,
@@ -27,6 +26,15 @@ import {
 import { fetchWithAuth } from "@/lib/api-client";
 import { StatCard, StatusBadge, PageHeader, EmptyState } from "@/components/shared";
 import type { Review, ReviewStats, CheckResult } from "@/types/api.types";
+
+type ReviewDetail = Review & {
+    tool?: {
+        display_name: string;
+        tool_key: string;
+        tier: string;
+    };
+    checks?: CheckResult[];
+};
 
 // =============================================================================
 // Review Card Component
@@ -147,12 +155,12 @@ function ReviewDetailModal({
     onReject: () => void;
 }) {
     const [loading, setLoading] = useState(true);
-    const [data, setData] = useState<any>(null);
+    const [data, setData] = useState<ReviewDetail | null>(null);
     const [rejecting, setRejecting] = useState(false);
     const [rejectReason, setRejectReason] = useState("");
 
     useEffect(() => {
-        fetchWithAuth<any>(`/api/v1/reviews/${reviewId}`)
+        fetchWithAuth<ReviewDetail>(`/api/v1/reviews/${reviewId}`)
             .then(setData)
             .catch(console.error)
             .finally(() => setLoading(false));
@@ -238,7 +246,7 @@ function ReviewDetailModal({
                         </div>
                     )}
 
-                    {data?.review?.status === "pending" && (
+                    {data?.status === "pending" && (
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={onApprove}
@@ -278,7 +286,6 @@ function ReviewDetailModal({
 // =============================================================================
 
 export default function AdminReviewsPage() {
-    const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<ReviewStats | null>(null);
     const [reviews, setReviews] = useState<Review[]>([]);

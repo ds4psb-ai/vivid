@@ -19,6 +19,7 @@
     "@copilotkit/react-core": "^1.50.1",
     "@copilotkit/react-ui": "^1.50.1",
     "@types/dagre": "^0.7.53",
+    "@xstate/react": "^6.0.0",
     "@xyflow/react": "^12.10.0",
     "babel-plugin-react-compiler": "^1.0.0",
     "clsx": "^2.1.1",
@@ -32,6 +33,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "tailwind-merge": "^3.4.0",
+    "xstate": "^5.25.1",
     "zod": "^4.3.5"
   },
   "devDependencies": {
