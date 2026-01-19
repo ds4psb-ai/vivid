@@ -397,6 +397,9 @@ export function EvidenceCard({
             <span>{labels.confidenceTitle}</span>
             <span>{confidencePercent}%</span>
           </div>
+          <div className="text-[10px] opacity-70">
+            {t("confidenceDisclaimer")}
+          </div>
         </div>
       )}
 
