@@ -8,10 +8,10 @@
 /**
  * Flow (Dimension Workflow) feature flag
  * - Controls visibility of Flow UI across the app
- * - Default: false (disabled)
- * - Set NEXT_PUBLIC_FLOW_ENABLED=true to enable
+ * - Default: true (enabled)
+ * - Set NEXT_PUBLIC_FLOW_ENABLED=false to disable
  */
-export const FLOW_ENABLED = process.env.NEXT_PUBLIC_FLOW_ENABLED === "true";
+export const FLOW_ENABLED = process.env.NEXT_PUBLIC_FLOW_ENABLED !== "false";
 
 /**
  * B2B API Credits (Wallet) feature flag
