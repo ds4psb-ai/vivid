@@ -1,12 +1,17 @@
-"""Agent Orchestrator for Multi-Agent Coordination (Phase 4).
+"""Agent Orchestrator for Multi-Agent Coordination (Phase 4+5).
 
 Manages agent swarm, task distribution, and execution flow.
+Integrates Model Router and Cost Tracker for cost optimization.
 
 Patterns supported:
 - Supervisor: Main orchestrator coordinates specialist agents
 - Sequential: Tasks execute in dependency order
 - Concurrent: Independent tasks run in parallel
 - Handoff: Context-preserving agent-to-agent transfer
+
+Phase 5 Integration:
+- ModelRouter: Routes tasks to FLASH/PRO/ULTRA based on complexity
+- CostTracker: Tracks costs and enforces daily budgets
 
 Usage:
     from app.agents.orchestrator import AgentOrchestrator
@@ -16,11 +21,15 @@ Usage:
     orchestrator.register_agent(ResearchAgent())
     orchestrator.register_agent(CreativeAgent())
 
+    # Enable cost optimization
+    orchestrator.set_daily_budget(10.0)  # $10/day
+
     plan = TaskPlan()
     plan.add_task(AgentTaskType.RESEARCH, {"query": "봉준호 스타일"})
     plan.add_task(AgentTaskType.CREATE, {"prompt": "..."}, dependencies=[...])
 
     results = await orchestrator.execute_plan(plan)
+    print(orchestrator.get_cost_summary())
 """
 from __future__ import annotations
 
@@ -52,7 +61,8 @@ class AgentOrchestrator:
     - Parallel execution of independent tasks
     - Sequential execution respecting dependencies
     - Handoff coordination between agents
-    - Cost tracking and budget enforcement
+    - Cost tracking and budget enforcement (Phase 5)
+    - Model routing for cost optimization (Phase 5)
     """
 
     def __init__(self, config: OrchestratorConfig | None = None) -> None:
@@ -62,12 +72,18 @@ class AgentOrchestrator:
             config: Orchestrator configuration (uses defaults if not provided)
         """
         from app.agents.base_agent import BaseAgent
+        from app.services.cost_tracker import CostTracker
+        from app.services.model_router import ModelRouter
 
         self.config = config or OrchestratorConfig()
         self._agents: dict[str, BaseAgent] = {}
         self._task_history: list[AgentTask] = []
         self._total_cost: float = 0.0
         self._execution_count: int = 0
+
+        # Phase 5: Cost optimization services
+        self._model_router = ModelRouter()
+        self._cost_tracker = CostTracker()
 
     def register_agent(self, agent: Any) -> None:
         """Register an agent with the orchestrator.
@@ -325,6 +341,126 @@ class AgentOrchestrator:
     def get_capabilities(self) -> list[dict[str, Any]]:
         """Get all registered agent capabilities."""
         return [agent.capability.model_dump() for agent in self._agents.values()]
+
+    # =========================================================================
+    # Phase 5: Cost Optimization Methods
+    # =========================================================================
+
+    def set_daily_budget(self, budget_usd: float) -> None:
+        """Set daily cost budget for the orchestrator.
+
+        Args:
+            budget_usd: Maximum daily spend in USD
+        """
+        self._cost_tracker.set_daily_budget(budget_usd)
+
+    def clear_daily_budget(self) -> None:
+        """Remove daily budget constraint."""
+        self._cost_tracker.clear_daily_budget()
+
+    def get_model_for_task(self, task: AgentTask) -> dict[str, Any]:
+        """Get recommended model for a task.
+
+        Uses ModelRouter to select optimal model tier based on complexity.
+
+        Args:
+            task: Task to route
+
+        Returns:
+            Model configuration dict with model_id, tier, costs
+        """
+        from app.services.model_router import ModelConfig
+
+        config: ModelConfig = self._model_router.route(task)
+        return {
+            "model_id": config.model_id,
+            "tier": config.tier.value,
+            "input_cost_per_million": config.input_cost_per_million,
+            "output_cost_per_million": config.output_cost_per_million,
+            "max_tokens": config.max_tokens,
+        }
+
+    def estimate_task_cost(
+        self,
+        task: AgentTask,
+        input_tokens: int = 1000,
+        output_tokens: int = 500,
+    ) -> float:
+        """Estimate cost for a task.
+
+        Args:
+            task: Task to estimate
+            input_tokens: Expected input tokens (default 1000)
+            output_tokens: Expected output tokens (default 500)
+
+        Returns:
+            Estimated cost in USD
+        """
+        return self._model_router.estimate_cost(task, input_tokens, output_tokens)
+
+    def check_budget(self, estimated_cost: float) -> tuple[bool, str]:
+        """Check if estimated cost fits within budget.
+
+        Args:
+            estimated_cost: Expected cost in USD
+
+        Returns:
+            (allowed, message) tuple
+        """
+        return self._cost_tracker.check_budget(estimated_cost)
+
+    def record_task_cost(
+        self,
+        task: AgentTask,
+        model_id: str,
+        input_tokens: int,
+        output_tokens: int,
+        actual_cost: float,
+    ) -> None:
+        """Record actual cost for a completed task.
+
+        Args:
+            task: Completed task
+            model_id: Model used
+            input_tokens: Actual input tokens
+            output_tokens: Actual output tokens
+            actual_cost: Actual cost in USD
+        """
+        self._cost_tracker.record_cost(
+            task_id=task.task_id,
+            model_id=model_id,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            actual_cost=actual_cost,
+        )
+        self._model_router.record_actual_cost(actual_cost)
+
+    def get_cost_summary(self, days: int = 7) -> dict[str, Any]:
+        """Get cost summary from cost tracker.
+
+        Args:
+            days: Number of days to include
+
+        Returns:
+            Cost summary with totals and savings
+        """
+        return self._cost_tracker.get_summary(days)
+
+    def get_routing_stats(self) -> dict[str, Any]:
+        """Get model routing statistics.
+
+        Returns:
+            Routing stats with tier distribution
+        """
+        return self._model_router.get_stats()
+
+    def get_daily_budget_status(self) -> dict[str, Any]:
+        """Get current daily budget status.
+
+        Returns:
+            Budget status with spent/remaining
+        """
+        return self._cost_tracker.get_daily_status()
 
 
 # =============================================================================
