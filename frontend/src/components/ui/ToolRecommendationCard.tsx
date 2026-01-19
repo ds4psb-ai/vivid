@@ -34,6 +34,7 @@ interface ToolRecommendationCardProps {
   estimatedCredits?: number;
   isPrimary?: boolean;
   ipId?: string;
+  summary?: string;
   className?: string;
 }
 
@@ -48,6 +49,7 @@ export function ToolRecommendationCard({
   estimatedCredits,
   isPrimary = false,
   ipId,
+  summary,
   className,
 }: ToolRecommendationCardProps) {
   const { language, t } = useLanguage();
@@ -169,6 +171,13 @@ export function ToolRecommendationCard({
       ? toolEvidence.evidence_refs
       : evidenceRefs;
   const resolvedDatasets = toolEvidence?.datasets_used || [];
+  const summaryText = summary?.trim()
+    || (resolvedReasonCodes.length > 0
+      ? `${t("recommendationHintPrefix")} ${resolvedReasonCodes
+          .slice(0, 2)
+          .map((code) => getReasonCodeLabel(code, language))
+          .join(", ")}`
+      : "");
 
   const handleCopyToolId = async () => {
     try {
@@ -249,6 +258,12 @@ export function ToolRecommendationCard({
         <div className="text-[10px] text-slate-400 flex items-center gap-1">
           <Sparkles className="w-3 h-3" />
           {t("noReasonCodes")}
+        </div>
+      )}
+
+      {summaryText && (
+        <div className="text-[11px] text-slate-600 dark:text-slate-300 bg-slate-50/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1">
+          {summaryText}
         </div>
       )}
 

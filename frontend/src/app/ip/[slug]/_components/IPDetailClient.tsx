@@ -492,6 +492,7 @@ export default function IPDetailClient({ slug }: IPDetailClientProps) {
                                   reasonCodes={rec.reason_codes}
                                   estimatedCredits={rec.estimated_credits}
                                   ipId={ip?.id}
+                                  summary={rec.description}
                                 />
                               ))}
                             </div>
