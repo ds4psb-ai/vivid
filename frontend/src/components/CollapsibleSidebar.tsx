@@ -28,6 +28,7 @@ import {
     MessageSquareText,
     FlaskConical,
     BarChart3,
+    Archive,
 } from "lucide-react";
 import { CreditDisplay, ProfileSettingsPanel } from "@/components/CreditDisplay";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -142,11 +143,18 @@ function NavItem({ icon: Icon, label, href, isExpanded, isActive, badge }: NavIt
     );
 }
 
+interface NavGroupItem {
+    label: string;
+    href: string;
+    icon: React.ElementType;
+    badge?: string;
+}
+
 interface NavGroupProps {
     id: string;
     label: string;
     icon: React.ElementType;
-    items: { label: string; href: string; icon: React.ElementType }[];
+    items: NavGroupItem[];
     isExpanded: boolean;
     pathname: string;
 }
@@ -205,7 +213,12 @@ function NavGroup({ label, icon: Icon, items, isExpanded, pathname }: NavGroupPr
                                 `}
                             >
                                 <item.icon className="w-4 h-4" />
-                                {item.label}
+                                <span className="flex-1">{item.label}</span>
+                                {item.badge && (
+                                    <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-200/70 dark:bg-slate-700/60 text-slate-600 dark:text-slate-200">
+                                        {item.badge}
+                                    </span>
+                                )}
                             </Link>
                         ))}
                     </motion.div>
@@ -227,7 +240,12 @@ function NavGroup({ label, icon: Icon, items, isExpanded, pathname }: NavGroupPr
                                 className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                             >
                                 <item.icon className="w-4 h-4" />
-                                {item.label}
+                                <span className="flex-1">{item.label}</span>
+                                {item.badge && (
+                                    <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-200/70 dark:bg-slate-700/60 text-slate-600 dark:text-slate-200">
+                                        {item.badge}
+                                    </span>
+                                )}
                             </Link>
                         ))}
                     </div>
@@ -253,7 +271,7 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
         { label: "홈", href: "/", icon: Home },
         { label: "IP 갤러리", href: "/ip", icon: Sparkles },
         { label: "내 작업실", href: "/studio", icon: FolderOpen },
-        { label: "크리에이터", href: "/creator/dashboard", icon: User },
+        { label: "크리에이터", href: "/creator", icon: User },
     ];
 
     const NAV_GROUPS = [
@@ -273,11 +291,22 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
             label: "크리에이터 운영",
             icon: TrendingUp,
             items: [
-                { label: "승인 게이트 (준비중)", href: "/creator/approvals", icon: ShieldCheck },
-                { label: "피드백 루프 (준비중)", href: "/creator/feedback", icon: MessageSquareText },
-                { label: "A/B 실험 (준비중)", href: "/creator/experiments", icon: FlaskConical },
-                { label: "분석 대시보드 (준비중)", href: "/creator/analytics", icon: BarChart3 },
+                { label: "승인 게이트", href: "/creator/approvals", icon: ShieldCheck, badge: "준비중" },
+                { label: "피드백 루프", href: "/creator/feedback", icon: MessageSquareText, badge: "준비중" },
+                { label: "A/B 실험", href: "/creator/experiments", icon: FlaskConical, badge: "준비중" },
+                { label: "분석 대시보드", href: "/creator/analytics", icon: BarChart3, badge: "준비중" },
                 { label: "정산", href: "/settlements", icon: Activity },
+            ],
+        },
+        {
+            id: "legacy",
+            label: "레거시/검토",
+            icon: Archive,
+            items: [
+                { label: "Constellation", href: "/constellation", icon: Orbit, badge: "검토" },
+                { label: "Crebit", href: "/crebit", icon: CircleDashed, badge: "검토" },
+                { label: "Affiliate", href: "/affiliate", icon: TrendingUp, badge: "검토" },
+                { label: "API 키 가이드", href: "/api-key-guide", icon: Globe, badge: "검토" },
             ],
         },
         {
