@@ -107,6 +107,12 @@ from app.routers.intent import router as intent_router
 # Capsules (Direct Capsule Execution - P5)
 from app.routers.capsules import router as capsules_router
 
+# IP (Intellectual Property) - IP-First UX
+from app.routers.ip import router as ip_router
+from app.routers.ip_generation import router as ip_generation_router
+from app.routers.dmca import router as dmca_router
+from app.routers.ip_payout import router as ip_payout_router
+
 # GraphQL Gateway (2026 Best Practices - P3.3)
 from app.graphql import graphql_router
 
@@ -269,6 +275,12 @@ app.include_router(constellation_router, prefix="/api/v1", tags=["constellation"
 
 # Intent Presets (Creative Intent API)
 app.include_router(intent_router, prefix="/api/v1", tags=["intent"])
+
+# IP (Intellectual Property) - IP-First UX
+app.include_router(ip_router, prefix="/api/v1/ip", tags=["ip"])
+app.include_router(ip_generation_router, prefix="/api/v1/ip", tags=["ip-generation"])
+app.include_router(dmca_router, prefix="/api/v1/dmca", tags=["dmca"])
+app.include_router(ip_payout_router, prefix="/api/v1/ip", tags=["ip-payout"])
 
 # Capsules (Direct Capsule Execution - P5)
 app.include_router(capsules_router, tags=["capsules"])
