@@ -1,7 +1,7 @@
 # SSoT Decisions Log (IP-First Coordination)
 
-> **버전**: 0.4
-> **최종 업데이트**: 2026-01-19
+> **버전**: 0.5
+> **최종 업데이트**: 2026-01-20
 > **범위**: IP-First 통합 로드맵(v2.1.1) + Phase 4-7 확장
 > **근거 문서**: `/Users/ted/.claude/plans/ip-first-coordination-roadmap.md`
 > **목적**: 설계/구현 중 SSoT 결정을 **명시적으로 기록**하고, 변경 이력을 추적한다.
@@ -20,8 +20,8 @@
 | 3 | UI 통합 | ✅ Completed | 2026-01-19 |
 | 4 | Multi-Agent Orchestration | ✅ Completed | 2026-01-19 |
 | 5 | Cost Optimization | ✅ Completed | 2026-01-19 |
-| 5.5 | Production Hardening | 🔄 In Progress | - |
-| 6 | Next.js 16 Cache Components | ⏳ Planned | - |
+| 5.5 | Production Hardening | ✅ Completed | 2026-01-19 |
+| 6 | Next.js 16 Cache Components | ✅ Completed | 2026-01-20 |
 | 7 | HITL Enhancement | ⏳ Planned | - |
 
 ---
@@ -358,7 +358,40 @@ revalidateTag(`ip:${slug}`);
   - `backend/app/telemetry/llm_metrics.py` (LLM 메트릭)
   - `backend/app/middleware/logging_middleware.py` (구조화된 로깅)
 - **후속 작업**:
-  - 구현 후 Phase 5.5 완료 처리
+  - ✅ 구현 완료 (2026-01-19)
+
+---
+
+### Decision 009 — Next.js 16 Cache Components 전략
+- **ID**: SSoT-DEC-009
+- **날짜**: 2026-01-20
+- **상태**: **Accepted**
+- **결정 요약**: ISR 기반 캐싱 + cacheLife 프로필로 IP-First UX 최적화
+- **배경/문제**:
+  - IP 카탈로그/상세 페이지 매 요청마다 API 호출
+  - TTFB 500ms+ 지연
+  - 불필요한 서버 부하
+- **대안**:
+  - A) `cacheComponents: true` + `"use cache"` 지시어
+  - B) 전통적 ISR (`next: { revalidate }`) (**채택**)
+- **결정**: **B안 채택** (점진적 전환)
+  - `cacheComponents`는 다른 페이지 Suspense 준비 후 활성화
+  - Server Component + ISR로 IP 페이지 캐싱
+  - `/api/revalidate` 웹훅으로 선택적 무효화
+- **구현 파일**:
+  - `frontend/src/lib/cache-tags.ts` - 캐시 태그 상수
+  - `frontend/next.config.ts` - cacheLife 프로필 (ip, editorial, realtime)
+  - `frontend/src/app/api/revalidate/route.ts` - 캐시 무효화 API
+  - `frontend/src/app/ip/_components/IPCatalogServer.tsx` - 서버 컴포넌트
+  - `frontend/src/app/ip/[slug]/_components/IPDetailServer.tsx` - 서버 컴포넌트
+  - `frontend/src/app/ip/[slug]/page.tsx` - generateStaticParams
+  - `backend/app/services/cache_invalidation.py` - 백엔드 무효화 서비스
+- **예상 효과**:
+  - TTFB 90% 감소 (500ms → 50ms)
+  - API 호출 100% 감소 (캐시 HIT 시)
+- **후속 작업**:
+  - 다른 페이지에 Suspense 추가 후 `cacheComponents: true` 활성화
+  - `REVALIDATE_SECRET` 프로덕션 환경 변수 설정
 
 ---
 
@@ -370,3 +403,4 @@ revalidateTag(`ip:${slug}`);
 | 0.2 | 2026-01-19 | 결정 1~5 Accepted 반영 |
 | 0.3 | 2026-01-19 | Phase 0-3, 2.5 완료 반영 + Phase 4-7 로드맵 추가 |
 | 0.4 | 2026-01-19 | Phase 4-5 완료 + Decision 006/007 Accepted + Phase 5.5 Hardening 추가 |
+| 0.5 | 2026-01-20 | Phase 5.5/6 완료 + Decision 009 Accepted (Next.js Cache Components) |
