@@ -439,7 +439,6 @@ async def start_ip_generation(
         status="pending",
         credits_reserved=preset.estimated_credits,
         run_token_id=run_id,
-        workflow_session_id=run_id,
         workflow_execution_id=workflow_execution.id,  # Link to WorkflowExecution
     )
 

@@ -120,7 +120,7 @@
 | 기능 | 현재 상태 | 필요 작업 | 관련 파일 |
 |------|----------|----------|-----------|
 | **GA/RL 학습** | 프로토타입 | 보상 함수 → Pattern Lift 연동 | `_deprecated/` 참조 |
-| **NotebookLM** | 스텁 | Enterprise API 실연동 | `notebooklm_client.py` |
+| **NotebookLM** | 스텁 | Enterprise API 실연동 | `gemini_analysis_client.py` |
 | **Event-driven 워커** | 미구현 | Redis + Arq 배포 | - |
 | **멀티랭귀지** | ko/en만 | i18n 확장 | - |
 

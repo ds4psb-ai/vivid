@@ -40,11 +40,11 @@ from app.ingest_rules import DERIVED_EVIDENCE_REF_RE
 from app.models import EvidenceRecord, NotebookLibrary, RawAsset, SourcePack, VideoSegment
 from app.source_pack import build_source_pack
 from app.template_seeding import seed_template_from_evidence
-from app.notebooklm_client import (
-    NotebookLMClientError,
+from app.gemini_analysis_client import (
+    GeminiAnalysisError,
     generate_story_beats,
     generate_storyboard_cards,
-    run_notebooklm_analysis,
+    run_gemini_analysis,
 )
 from app.narrative_utils import normalize_story_beats, normalize_storyboard_cards
 from app.routers.ingest import EvidenceRecordRequest
@@ -834,17 +834,17 @@ async def run_pipeline(
     if not dry_run:
         await upsert_source_pack(source_pack)
     
-    # Step 3: Run NotebookLM Analysis
-    print("\n🧠 Step 3: Running NotebookLM Analysis (Gemini)...")
+    # Step 3: Run Gemini Analysis
+    print("\n🧠 Step 3: Running Gemini Analysis...")
     try:
-        summary, evidence_refs = run_notebooklm_analysis(source_pack, capsule_id)
+        summary, evidence_refs = run_gemini_analysis(source_pack, capsule_id)
         print(f"   ✅ Analysis complete")
         print(f"   Logic Vector: {bool(summary.get('logic_vector'))}")
         print(f"   Persona Vector: {bool(summary.get('persona_vector'))}")
         print(f"   Guide: {bool(summary.get('guide'))}")
         print(f"   Claims: {len(summary.get('claims', []))}")
         print(f"   Token Usage: {summary.get('token_usage', {}).get('total', 0)}")
-    except NotebookLMClientError as e:
+    except GeminiAnalysisError as e:
         print(f"   ❌ Analysis failed: {e}")
         return {"status": "error", "message": str(e)}
 

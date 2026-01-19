@@ -241,7 +241,6 @@ class IPGeneration(Base):
     user_prompt: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Workflow tracking
-    workflow_session_id: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)
     run_token_id: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)
     workflow_execution_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),

@@ -1,14 +1,9 @@
-"""NotebookLM Client using Gemini API for Logic/Persona extraction.
+"""Gemini Analysis Client (NotebookLM-style analysis).
 
-DEPRECATION NOTICE (2026-01-12):
---------------------------------
-This module name is MISLEADING. It does NOT connect to NotebookLM.
-Instead, it uses Gemini API to replicate NotebookLM-style analysis.
+Gemini API를 사용해 NotebookLM 스타일의 분석 파이프라인을 구현합니다.
 
 For actual NotebookLM integration (Playwright/MCP), use:
     from app.rag.tier0_notebooklm import get_notebooklm_service
-
-This module will be renamed to 'gemini_analysis_client.py' in a future release.
 
 Current Functionality:
 - Logic Vector extraction (shot cadence, composition, camera motion)
@@ -21,7 +16,6 @@ from __future__ import annotations
 
 import json
 import logging
-import warnings
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -31,13 +25,6 @@ from app.services.persona_service import build_persona_context, build_visual_con
 
 logger = logging.getLogger(__name__)
 
-# Emit deprecation warning on import
-warnings.warn(
-    "notebooklm_client is deprecated and will be renamed to gemini_analysis_client. "
-    "For NotebookLM web integration, use app.rag.tier0_notebooklm instead.",
-    DeprecationWarning,
-    stacklevel=2,
-)
 
 # System prompts for Logic/Persona extraction
 LOGIC_EXTRACTION_PROMPT = """당신은 영상 분석 전문가입니다. 주어진 Source Pack 데이터를 분석하여 Logic Vector를 추출하세요.
@@ -146,8 +133,8 @@ AUTEUR_PERSONA_HINTS = {
 }
 
 
-class NotebookLMClientError(Exception):
-    """Custom exception for NotebookLM client errors."""
+class GeminiAnalysisError(Exception):
+    """Custom exception for Gemini analysis errors."""
     pass
 
 
@@ -208,7 +195,7 @@ def _call_gemini(prompt: str, context: str, max_retries: int = 3) -> Dict[str, A
     from app.services.genai_utils import build_generate_config, get_genai_client
     
     if not settings.GEMINI_API_KEY:
-        raise NotebookLMClientError("GEMINI_API_KEY not configured")
+        raise GeminiAnalysisError("GEMINI_API_KEY not configured")
     
     client = get_genai_client()
     
@@ -228,11 +215,11 @@ def _call_gemini(prompt: str, context: str, max_retries: int = 3) -> Dict[str, A
         except json.JSONDecodeError as e:
             logger.warning(f"JSON parse error attempt {attempt + 1}: {e}")
             if attempt == max_retries - 1:
-                raise NotebookLMClientError(f"Failed to parse JSON: {e}")
+                raise GeminiAnalysisError(f"Failed to parse JSON: {e}")
         except Exception as e:
             logger.warning(f"Gemini call error attempt {attempt + 1}: {e}")
             if attempt == max_retries - 1:
-                raise NotebookLMClientError(f"Gemini API error: {e}")
+                raise GeminiAnalysisError(f"Gemini API error: {e}")
     
     return {}
 
@@ -524,7 +511,7 @@ def generate_story_beats(
     )
     try:
         result = _call_gemini(STORY_BEATS_PROMPT, context)
-    except NotebookLMClientError as exc:
+    except GeminiAnalysisError as exc:
         logger.warning(f"Story beats generation failed: {exc}")
         return fallback
     except Exception as exc:
@@ -559,7 +546,7 @@ def generate_storyboard_cards(
     )
     try:
         result = _call_gemini(STORYBOARD_PROMPT, context)
-    except NotebookLMClientError as exc:
+    except GeminiAnalysisError as exc:
         logger.warning(f"Storyboard generation failed: {exc}")
         return fallback
     except Exception as exc:
@@ -570,11 +557,11 @@ def generate_storyboard_cards(
     return normalized or fallback
 
 
-def run_notebooklm_analysis(
+def run_gemini_analysis(
     source_pack: Dict[str, Any],
     capsule_id: str,
 ) -> Tuple[Dict[str, Any], List[str]]:
-    """Run full NotebookLM-style analysis pipeline.
+    """Run full Gemini analysis pipeline (NotebookLM-style).
     
     This is the main entry point that orchestrates:
     1. Logic Vector extraction
@@ -647,10 +634,10 @@ def run_notebooklm_analysis(
         # Build summary
         summary = {
             "source_id": source_id,
-            "summary": f"NotebookLM analysis complete for {capsule_id}",
+            "summary": f"Gemini analysis complete for {capsule_id}",
             "output_type": "report",
             "output_language": "und",
-            "prompt_version": "notebooklm-gemini-v1",
+            "prompt_version": "gemini-analysis-v1",
             "model_version": settings.GEMINI_MODEL,
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "source_pack_id": source_pack.get("pack_id"),
@@ -674,15 +661,15 @@ def run_notebooklm_analysis(
         
         return summary, evidence_refs
         
-    except NotebookLMClientError as e:
-        logger.error(f"NotebookLM analysis failed: {e}")
+    except GeminiAnalysisError as e:
+        logger.error(f"Gemini analysis failed: {e}")
         return (
-            {"summary": f"NotebookLM analysis failed: {e}", "error": str(e)},
+            {"summary": f"Gemini analysis failed: {e}", "error": str(e)},
             [],
         )
     except Exception as e:
-        logger.error(f"Unexpected error in NotebookLM analysis: {e}")
+        logger.error(f"Unexpected error in Gemini analysis: {e}")
         return (
-            {"summary": f"NotebookLM fallback: {e}", "error": str(e)},
+            {"summary": f"Gemini fallback: {e}", "error": str(e)},
             [],
         )

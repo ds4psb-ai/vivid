@@ -6,7 +6,7 @@ from arq.connections import RedisSettings
 from arq import ArqRedis
 
 from app.config import Settings
-from app.notebooklm_client import run_notebooklm_analysis
+from app.gemini_analysis_client import run_gemini_analysis
 from app.generation_client import run_generation_pipeline, GenProvider
 
 settings = Settings()
@@ -36,7 +36,7 @@ async def analyze_source_pack(
     capsule_id: str,
 ) -> Dict[str, Any]:
     """
-    Run NotebookLM-style analysis on a source pack.
+    Run Gemini analysis on a source pack (NotebookLM-style).
     
     Args:
         source_pack: Source pack data with segment_refs.
@@ -47,7 +47,7 @@ async def analyze_source_pack(
     """
     logger.info(f"[Job] analyze_source_pack: capsule_id={capsule_id}")
     try:
-        summary, evidence_refs = run_notebooklm_analysis(source_pack, capsule_id)
+        summary, evidence_refs = run_gemini_analysis(source_pack, capsule_id)
         return {
             "status": "completed",
             "capsule_id": capsule_id,

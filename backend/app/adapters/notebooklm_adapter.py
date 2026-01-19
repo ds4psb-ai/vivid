@@ -62,13 +62,13 @@ class NotebookLMAdapter(BaseAdapter):
         
         try:
             from app.utils.narrative import normalize_story_beats, normalize_storyboard_cards
-            from app.notebooklm_client import (
+            from app.gemini_analysis_client import (
                 generate_story_beats,
                 generate_storyboard_cards,
-                run_notebooklm_analysis,
+                run_gemini_analysis,
             )
             
-            summary, evidence_refs = run_notebooklm_analysis(
+            summary, evidence_refs = run_gemini_analysis(
                 source_pack.to_dict(), capsule_id
             )
             

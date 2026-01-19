@@ -4,8 +4,7 @@ from __future__ import annotations
 from typing import Dict, List, Optional
 
 from app.fixtures.auteur_capsules import PATTERN_VERSION
-from app.graph_utils import collect_storyboard_refs
-from app._deprecated.template_graph import build_template_graph
+from app.graph_utils import collect_storyboard_refs, build_template_graph
 
 
 def build_meta(
