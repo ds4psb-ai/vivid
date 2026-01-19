@@ -1,10 +1,23 @@
 # SSoT Decisions Log (IP-First Coordination)
 
-> **버전**: 0.2  
-> **최종 업데이트**: 2026-01-19  
-> **범위**: IP-First 통합 로드맵(v2.1.1) 기반 SSoT 결정 기록  
-> **근거 문서**: `/Users/ted/.claude/plans/ip-first-coordination-roadmap.md`  
+> **버전**: 0.3
+> **최종 업데이트**: 2026-01-19
+> **범위**: IP-First 통합 로드맵(v2.1.1) + Phase 4-7 확장
+> **근거 문서**: `/Users/ted/.claude/plans/ip-first-coordination-roadmap.md`
 > **목적**: 설계/구현 중 SSoT 결정을 **명시적으로 기록**하고, 변경 이력을 추적한다.
+
+---
+
+## Phase 완료 현황 (IP-First Roadmap v2.1.1)
+
+| Phase | 이름 | 상태 | 완료일 |
+|-------|------|------|--------|
+| 0.0 | 기초 연결 | ✅ Completed | 2026-01-19 |
+| 0 | DB 스키마 확장 | ✅ Completed | 2026-01-19 |
+| 1 | 워크플로우 연결 | ✅ Completed | 2026-01-19 |
+| 2 | run-token 통합 | ✅ Completed | 2026-01-19 |
+| 2.5 | Tool Recommender & Evidence Card | ✅ Completed | 2026-01-19 |
+| 3 | UI 통합 | ✅ Completed | 2026-01-19 |
 
 ---
 
@@ -150,16 +163,159 @@ ID:
 
 ---
 
-## 3) 오픈 질문
-- `WorkflowExecution` vs `WorkflowState` 통합 경로 최종 결정은 언제 승인할지?
-- Evidence 영속화 시 `evidence_records`와의 관계는 어떻게 정의할지?
-- run-token 통합이 credit_service를 완전 대체하는지 여부?
+## 3) 오픈 질문 (해결됨)
+
+| 질문 | 상태 | 해결 내용 |
+|------|------|----------|
+| `WorkflowExecution` vs `WorkflowState` 통합 경로 | ✅ 해결 | Phase 1에서 B안 채택: WorkflowExecution(Biz Logic) + WorkflowState(Chat Context) 분리 유지 |
+| Evidence 영속화 시 `evidence_records`와의 관계 | ✅ 해결 | `ip_evidence_logs`, `ip_evidence_chains` 신규 테이블로 명시적 분리 |
+| run-token 통합이 credit_service를 완전 대체하는지 | ✅ 해결 | run-token이 크레딧 흐름 SSoT. credit_service는 내부 구현으로 유지 |
 
 ---
 
-## 4) 변경 기록
+## 4) Phase 4-7 로드맵 (2026 연구 기반)
+
+### Phase 4 — Multi-Agent Orchestration (멀티 에이전트 오케스트레이션)
+
+**목표**: 2026 Agentic OS 패턴 적용 - 전문화된 에이전트 스웜 관리
+
+**핵심 기능**:
+- **Supervisor Pattern**: 메인 에이전트가 전문 에이전트 조율
+- **Sequential/Concurrent Pattern**: 작업 의존성에 따른 실행 전략
+- **Handoff Pattern**: 컨텍스트 유지하며 에이전트 간 작업 인계
+- **Plan-and-Execute Pattern**: 저비용 모델(planning) + 고성능 모델(execution) 조합
+
+**예상 파일**:
+| 파일 | 목적 |
+|------|------|
+| `backend/app/agents/orchestrator.py` | 에이전트 오케스트레이터 |
+| `backend/app/agents/patterns/supervisor.py` | Supervisor 패턴 |
+| `backend/app/agents/patterns/handoff.py` | Handoff 패턴 |
+| `backend/app/schemas/agent_task.py` | 에이전트 작업 스키마 |
+
+**근거**: LangGraph 2026, CrewAI, AutoGen 패턴 연구
+
+---
+
+### Phase 5 — Cost Optimization (비용 최적화)
+
+**목표**: Plan-and-Execute 패턴으로 90% 비용 절감
+
+**핵심 기능**:
+- **Heterogeneous Model Selection**: 작업 복잡도에 따른 모델 선택
+  - Planning: Gemini Flash (저비용)
+  - Execution: Gemini Pro (고성능)
+  - Validation: Gemini Flash (저비용)
+- **Semantic Cache**: 유사 쿼리 캐싱으로 API 호출 감소
+- **Batch Processing**: 관련 작업 일괄 처리
+
+**예상 파일**:
+| 파일 | 목적 |
+|------|------|
+| `backend/app/services/model_router.py` | 작업별 모델 라우팅 |
+| `backend/app/services/cost_tracker.py` | 비용 추적/분석 |
+| `backend/app/rag/semantic_cache.py` | 시맨틱 캐시 확장 |
+
+**근거**: Anthropic Plan-and-Execute 연구 (90% 비용 감소 사례)
+
+---
+
+### Phase 6 — Next.js 16 Cache Components (캐시 컴포넌트)
+
+**목표**: Next.js 16의 `"use cache"` 지시어 활용한 명시적 캐싱
+
+**핵심 기능**:
+- **Explicit Cache Opt-in**: 컴포넌트/함수 단위 캐싱
+- **Cache Tag System**: 세분화된 캐시 무효화
+- **Streaming + Cache**: AI 스트리밍과 캐시 조합
+
+**예상 변경**:
+```tsx
+// 캐시 컴포넌트 예시
+"use cache";
+export async function CachedIPMetadata({ slug }: { slug: string }) {
+  const ip = await fetchIP(slug);
+  return <IPCard ip={ip} />;
+}
+
+// 캐시 태그 무효화
+import { revalidateTag } from 'next/cache';
+revalidateTag(`ip:${slug}`);
+```
+
+**예상 파일**:
+| 파일 | 목적 |
+|------|------|
+| `frontend/src/components/cached/CachedIPCard.tsx` | 캐시된 IP 카드 |
+| `frontend/src/lib/cache-tags.ts` | 캐시 태그 관리 |
+| `frontend/src/app/api/revalidate/route.ts` | 캐시 무효화 API |
+
+**근거**: Next.js 16 RC 문서 (2026년 1월 기준)
+
+---
+
+### Phase 7 — HITL Enhancement (Human-in-the-Loop 강화)
+
+**목표**: 크리에이터 피드백 루프 강화
+
+**핵심 기능**:
+- **Approval Gates**: 워크플로우 단계별 승인 게이트
+- **Feedback Integration**: 피드백을 RAG에 반영
+- **A/B Testing**: 생성 결과 A/B 테스트
+- **Creator Dashboard**: 크리에이터 전용 대시보드
+
+**예상 파일**:
+| 파일 | 목적 |
+|------|------|
+| `backend/app/services/approval_gate.py` | 승인 게이트 서비스 |
+| `backend/app/services/feedback_loop.py` | 피드백 루프 서비스 |
+| `frontend/src/app/creator/dashboard/page.tsx` | 크리에이터 대시보드 |
+
+**근거**: AI Content Platform 2026 트렌드 (Human-AI Collaboration)
+
+---
+
+## 5) Phase 4-7 결정 로그
+
+### Decision 006 — Multi-Agent Pattern 선택
+- **ID**: SSoT-DEC-006
+- **날짜**: 2026-01-19
+- **상태**: **Proposed**
+- **결정 요약**: Supervisor + Handoff 하이브리드 패턴 채택 검토
+- **배경/문제**:
+  - 현재 VividAgent는 단일 에이전트.
+  - 복잡한 워크플로우에서 전문화된 에이전트 필요.
+- **대안**:
+  - A) Supervisor Pattern only
+  - B) Sequential/Concurrent Pattern only
+  - C) Supervisor + Handoff 하이브리드 (**검토 중**)
+- **후속 작업**:
+  - LangGraph 2026 패턴 PoC 구현
+  - 비용/성능 벤치마크
+
+---
+
+### Decision 007 — Model Router 전략
+- **ID**: SSoT-DEC-007
+- **날짜**: 2026-01-19
+- **상태**: **Proposed**
+- **결정 요약**: 작업 복잡도 기반 모델 자동 선택
+- **배경/문제**:
+  - 모든 작업에 고비용 모델 사용 중.
+  - 단순 작업에 저비용 모델 사용 가능.
+- **대안**:
+  - A) 정적 라우팅 (작업 유형별 고정)
+  - B) 동적 라우팅 (복잡도 분석 후 선택) (**검토 중**)
+- **후속 작업**:
+  - 복잡도 분류기 설계
+  - 비용 절감 효과 측정
+
+---
+
+## 6) 변경 기록
 
 | 버전 | 날짜 | 변경 |
 |---|---|---|
 | 0.1 | 2026-01-19 | 초기 SSoT 결정 로그 생성 |
 | 0.2 | 2026-01-19 | 결정 1~5 Accepted 반영 |
+| 0.3 | 2026-01-19 | Phase 0-3, 2.5 완료 반영 + Phase 4-7 로드맵 추가 |
