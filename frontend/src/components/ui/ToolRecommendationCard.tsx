@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Coins, Info, Sparkles } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
-import { toolsApi, type ToolDisplayInfo } from "@/lib/api-client";
+import { toolsApi, type ToolDisplayInfo, type ToolEvidenceResponse } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import {
@@ -33,6 +33,7 @@ interface ToolRecommendationCardProps {
   evidenceRefs?: string[];
   estimatedCredits?: number;
   isPrimary?: boolean;
+  ipId?: string;
   className?: string;
 }
 
@@ -46,6 +47,7 @@ export function ToolRecommendationCard({
   evidenceRefs = [],
   estimatedCredits,
   isPrimary = false,
+  ipId,
   className,
 }: ToolRecommendationCardProps) {
   const { language, t } = useLanguage();
@@ -57,6 +59,9 @@ export function ToolRecommendationCard({
   const [infoLoading, setInfoLoading] = useState(false);
   const [infoError, setInfoError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [toolEvidence, setToolEvidence] = useState<ToolEvidenceResponse | null>(null);
+  const [evidenceLoading, setEvidenceLoading] = useState(false);
+  const [evidenceError, setEvidenceError] = useState<string | null>(null);
 
   const level =
     confidenceLevel ?? scoreToConfidenceLevel(confidence ?? 0);
@@ -117,8 +122,52 @@ export function ToolRecommendationCard({
     };
   }, [open, toolInfo, infoLoading, toolId]);
 
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadEvidence() {
+      if (!open || toolEvidence || evidenceLoading) return;
+
+      setEvidenceLoading(true);
+      setEvidenceError(null);
+
+      try {
+        const res = await toolsApi.getToolEvidence(toolId, ipId);
+        if (!res.ok || !res.data) {
+          throw new Error(res.error?.message || "Failed to load evidence");
+        }
+        if (isActive) {
+          setToolEvidence(res.data);
+        }
+      } catch (err) {
+        if (isActive) {
+          setEvidenceError(err instanceof Error ? err.message : "Failed to load evidence");
+        }
+      } finally {
+        if (isActive) {
+          setEvidenceLoading(false);
+        }
+      }
+    }
+
+    loadEvidence();
+
+    return () => {
+      isActive = false;
+    };
+  }, [open, toolEvidence, evidenceLoading, toolId, ipId]);
+
   const toolDescription = toolInfo?.[isKo ? "description_ko" : "description_en"];
   const toolIcon = toolInfo?.icon || "✨";
+  const resolvedReasonCodes =
+    toolEvidence?.reason_codes && toolEvidence.reason_codes.length > 0
+      ? toolEvidence.reason_codes
+      : reasonCodes;
+  const resolvedEvidenceRefs =
+    toolEvidence?.evidence_refs && toolEvidence.evidence_refs.length > 0
+      ? toolEvidence.evidence_refs
+      : evidenceRefs;
+  const resolvedDatasets = toolEvidence?.datasets_used || [];
 
   const handleCopyToolId = async () => {
     try {
@@ -263,13 +312,13 @@ export function ToolRecommendationCard({
                 <div className="text-xs text-red-500">{infoError}</div>
               )}
 
-              {reasonCodes.length > 0 && (
+              {resolvedReasonCodes.length > 0 && (
                 <div className="space-y-2">
                   <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                     {t("evidenceReasonsTitle")}
                   </div>
                   <div className="flex flex-wrap gap-1">
-                    {reasonCodes.map((code) => (
+                    {resolvedReasonCodes.map((code) => (
                       <span key={code} className="evidence-badge text-[9px]">
                         {getReasonCodeLabel(code, language)}
                       </span>
@@ -278,21 +327,47 @@ export function ToolRecommendationCard({
                 </div>
               )}
 
-              {evidenceRefs.length > 0 && (
+              {(resolvedEvidenceRefs.length > 0 || resolvedDatasets.length > 0) && (
                 <div className="space-y-2">
                   <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                     {t("evidenceDataTitle")}
                   </div>
-                  <ul className="space-y-1 text-xs text-slate-500 dark:text-slate-400">
-                    {evidenceRefs.map((ref) => (
-                      <li key={ref} className="flex items-start gap-1">
-                        <span className="mt-0.5">•</span>
-                        <span className="break-all">{ref}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  {resolvedEvidenceRefs.length > 0 && (
+                    <ul className="space-y-1 text-xs text-slate-500 dark:text-slate-400">
+                      {resolvedEvidenceRefs.map((ref) => (
+                        <li key={ref} className="flex items-start gap-1">
+                          <span className="mt-0.5">•</span>
+                          <span className="break-all">{ref}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {resolvedDatasets.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {resolvedDatasets.map((dataset) => (
+                        <span key={dataset} className="evidence-badge text-[9px]">
+                          {dataset}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
+
+              {evidenceLoading && (
+                <div className="text-xs text-slate-400">{t("loading")}</div>
+              )}
+
+              {evidenceError && (
+                <div className="text-xs text-red-500">{t("toolEvidenceLoadFailed")}</div>
+              )}
+
+              {!evidenceLoading &&
+                !evidenceError &&
+                resolvedEvidenceRefs.length === 0 &&
+                resolvedDatasets.length === 0 && (
+                  <div className="text-xs text-slate-400">{t("noEvidenceRefs")}</div>
+                )}
             </div>
 
             <DialogFooter>

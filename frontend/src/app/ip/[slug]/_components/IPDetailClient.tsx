@@ -491,6 +491,7 @@ export default function IPDetailClient({ slug }: IPDetailClientProps) {
                                   confidenceLevel={rec.confidence_level}
                                   reasonCodes={rec.reason_codes}
                                   estimatedCredits={rec.estimated_credits}
+                                  ipId={ip?.id}
                                 />
                               ))}
                             </div>
