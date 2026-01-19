@@ -28,7 +28,6 @@ import {
     MessageSquareText,
     FlaskConical,
     BarChart3,
-    Archive,
 } from "lucide-react";
 import { CreditDisplay, ProfileSettingsPanel } from "@/components/CreditDisplay";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -296,17 +295,6 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
                 { label: "A/B 실험", href: "/creator/experiments", icon: FlaskConical, badge: "준비중" },
                 { label: "분석 대시보드", href: "/creator/analytics", icon: BarChart3, badge: "준비중" },
                 { label: "정산", href: "/settlements", icon: Activity },
-            ],
-        },
-        {
-            id: "legacy",
-            label: "레거시/검토",
-            icon: Archive,
-            items: [
-                { label: "Constellation", href: "/constellation", icon: Orbit, badge: "검토" },
-                { label: "Crebit", href: "/crebit", icon: CircleDashed, badge: "검토" },
-                { label: "Affiliate", href: "/affiliate", icon: TrendingUp, badge: "검토" },
-                { label: "API 키 가이드", href: "/api-key-guide", icon: Globe, badge: "검토" },
             ],
         },
         {

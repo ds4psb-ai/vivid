@@ -69,10 +69,10 @@ function LoginContent() {
           </Link>
 
           <div className="mt-6 flex flex-wrap gap-3 text-xs text-[var(--fg-muted)]">
-            <Link href="/crebit/terms?tab=terms" className="hover:text-[var(--fg-0)]">
+            <Link href="/terms?tab=terms" className="hover:text-[var(--fg-0)]">
               {labels.terms}
             </Link>
-            <Link href="/crebit/terms?tab=privacy" className="hover:text-[var(--fg-0)]">
+            <Link href="/terms?tab=privacy" className="hover:text-[var(--fg-0)]">
               {labels.privacy}
             </Link>
           </div>

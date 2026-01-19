@@ -51,7 +51,6 @@ const PAGE_CONTEXT_MESSAGES: Record<string, string> = {
     // Settings & Credits
     "/settings": "⚙️ 설정 페이지입니다. API 키 연결, 알림 설정 등 궁금한 점 물어보세요!",
     "/credits": "💳 크레딧 관리 페이지입니다. 충전, 사용 내역, BYOK 설정을 도와드릴게요.",
-    "/crebit": "Crebit 페이지입니다. 구독이나 크레딧에 대해 궁금한 점이 있으신가요?",
 
     // Sandbox
     "/sandbox": "🧪 샌드박스 모드입니다. 도구를 테스트해보세요!",

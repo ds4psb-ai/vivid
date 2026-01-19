@@ -1531,15 +1531,6 @@ function FlowPageContent() {
                                                     <Sparkles className="h-4 w-4" />
                                                     싱귤래리티로 이동
                                                 </a>
-                                                {savedTemplateId && (
-                                                    <a
-                                                        href={`/constellation?new=true&singularity=${savedTemplateId}`}
-                                                        className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[var(--fg-on-emphasis)] text-sm font-medium transition-colors ${INFO_TONE.solid} ${INFO_TONE.hover}`}
-                                                    >
-                                                        <Sparkles className="h-4 w-4" />
-                                                        별자리로 확장하기
-                                                    </a>
-                                                )}
                                             </div>
                                         </div>
                                     ) : (
