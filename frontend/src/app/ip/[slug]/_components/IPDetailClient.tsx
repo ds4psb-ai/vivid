@@ -536,11 +536,11 @@ export default function IPDetailClient({
                     </div>
                   )}
 
-                  {showRecommendations && !recLoading && recResponse && recommendations.length > 0 && (
-                    <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)]">
-                      <div className="space-y-2">
-                        <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                          {t("topRecommendationTitle")}
+                      {showRecommendations && !recLoading && recResponse && recommendations.length > 0 && (
+                        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)]">
+                          <div className="space-y-2">
+                            <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                              {t("topRecommendationTitle")}
                             </div>
                             <EvidenceCard
                               confidenceLevel={recommendations[0]?.confidence_level || "medium"}
@@ -550,6 +550,21 @@ export default function IPDetailClient({
                               reasonSummary={recResponse.reason_summary}
                               isCollapsible={true}
                             />
+                            <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                              <span>{t("recommendationFeedbackLabel")}</span>
+                              <button
+                                type="button"
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-emerald-500 hover:border-emerald-400"
+                              >
+                                👍 {t("feedbackHelpful")}
+                              </button>
+                              <button
+                                type="button"
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-rose-500 hover:border-rose-400"
+                              >
+                                👎 {t("feedbackNotHelpful")}
+                              </button>
+                            </div>
                           </div>
                           <div className="space-y-2">
                             <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">

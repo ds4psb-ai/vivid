@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Coins, Info, Sparkles } from "lucide-react";
+import { Coins, Info, Sparkles, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { toolsApi, type ToolDisplayInfo, type ToolEvidenceResponse } from "@/lib/api-client";
@@ -64,6 +64,8 @@ export function ToolRecommendationCard({
   const [toolEvidence, setToolEvidence] = useState<ToolEvidenceResponse | null>(null);
   const [evidenceLoading, setEvidenceLoading] = useState(false);
   const [evidenceError, setEvidenceError] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
+  const [feedbackNote, setFeedbackNote] = useState(false);
 
   const level =
     confidenceLevel ?? scoreToConfidenceLevel(confidence ?? 0);
@@ -204,6 +206,12 @@ export function ToolRecommendationCard({
     }
   };
 
+  const handleFeedback = (value: "up" | "down") => {
+    setFeedback((prev) => (prev === value ? null : value));
+    setFeedbackNote(true);
+    setTimeout(() => setFeedbackNote(false), 1500);
+  };
+
   return (
     <div
       className={cn(
@@ -258,6 +266,9 @@ export function ToolRecommendationCard({
           <div className="flex items-center justify-between text-[10px] text-slate-400">
             <span>{t("evidenceConfidenceTitle")}</span>
             <span>{percent}%</span>
+          </div>
+          <div className="text-[10px] text-slate-400">
+            {t("confidenceDisclaimer")}
           </div>
         </div>
       )}
@@ -431,6 +442,44 @@ export function ToolRecommendationCard({
           </DialogContent>
         </Dialog>
       </div>
+
+      <div className="flex items-center justify-between text-[10px] text-slate-400">
+        <span>{t("recommendationFeedbackLabel")}</span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => handleFeedback("up")}
+            className={cn(
+              "inline-flex items-center gap-1 px-2 py-0.5 rounded-full border",
+              feedback === "up"
+                ? "border-emerald-400 text-emerald-500 bg-emerald-500/10"
+                : "border-slate-200 dark:border-slate-700 text-slate-400"
+            )}
+          >
+            <ThumbsUp className="w-3 h-3" />
+            {t("feedbackHelpful")}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleFeedback("down")}
+            className={cn(
+              "inline-flex items-center gap-1 px-2 py-0.5 rounded-full border",
+              feedback === "down"
+                ? "border-rose-400 text-rose-500 bg-rose-500/10"
+                : "border-slate-200 dark:border-slate-700 text-slate-400"
+            )}
+          >
+            <ThumbsDown className="w-3 h-3" />
+            {t("feedbackNotHelpful")}
+          </button>
+        </div>
+      </div>
+
+      {feedbackNote && (
+        <div className="text-[10px] text-emerald-500">
+          {t("feedbackThanks")}
+        </div>
+      )}
     </div>
   );
 }
