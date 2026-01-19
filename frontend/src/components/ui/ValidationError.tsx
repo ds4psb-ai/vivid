@@ -112,6 +112,7 @@ function ValidationErrorBody({
 }: ValidationErrorProps) {
   const [isVisible, setIsVisible] = useState(true);
   if (!isVisible) return null;
+  if (!errors) return null;
 
   const errorMessages = field
     ? getFieldErrors(errors, field)
@@ -148,7 +149,7 @@ function ValidationErrorBody({
 
   return (
     <div
-      className={`${variantStyles[variant]} ${className} animate-in fade-in slide-in-from-top-2 duration-200`}
+      className={`${variantStyles[variant ?? "banner"]} ${className} animate-in fade-in slide-in-from-top-2 duration-200`}
     >
       <div className="flex items-start gap-3">
         <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
