@@ -225,7 +225,7 @@ class ToolRecommenderService:
                 if ip.genre:
                     for genre in ip.genre[:2]:  # Top 2 genres
                         reason_codes.append(
-                            build_reason_code(ReasonCodeCategory.GENRE, genre)
+                            build_reason_code(ReasonCodeCategory.GENRE, genre.lower())
                         )
                     confidence += 0.1
 
@@ -241,11 +241,13 @@ class ToolRecommenderService:
     async def get_ip_recommendations(
         self,
         ip_slug: str,
+        max_results: int = 5,
     ) -> ToolRecommendationResponse:
         """Get recommendations for an IP by slug.
 
         Args:
             ip_slug: IP slug identifier
+            max_results: Maximum number of recommendations (default 5)
 
         Returns:
             ToolRecommendationResponse
@@ -261,7 +263,7 @@ class ToolRecommenderService:
                 reason_summary=f"IP '{ip_slug}' not found",
             )
 
-        request = ToolRecommendationRequest(ip_id=ip.id)
+        request = ToolRecommendationRequest(ip_id=ip.id, max_results=max_results)
         return await self.recommend_tools(request)
 
     # =========================================================================
@@ -382,7 +384,7 @@ class ToolRecommenderService:
                 score += genre_boost
                 if ip.genre:
                     reason_codes.append(
-                        build_reason_code(ReasonCodeCategory.GENRE, ip.genre[0])
+                        build_reason_code(ReasonCodeCategory.GENRE, ip.genre[0].lower())
                     )
 
             # Worldbuilding context
@@ -414,7 +416,7 @@ class ToolRecommenderService:
             score += scene_boost
             if scene_boost > 0:
                 reason_codes.append(
-                    build_reason_code(ReasonCodeCategory.SHOT, scene_type)
+                    build_reason_code(ReasonCodeCategory.SHOT, scene_type.lower())
                 )
 
         # User history scoring

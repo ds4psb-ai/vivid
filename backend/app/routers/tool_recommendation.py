@@ -107,30 +107,29 @@ async def get_ip_recommendations(
     service = create_tool_recommender(db)
 
     try:
-        # First get recommendations by slug
-        response = await service.get_ip_recommendations(slug)
+        # If no additional context, use simple slug-based recommendations
+        if not scene_type and not dimension_context:
+            return await service.get_ip_recommendations(slug, max_results)
 
-        # If scene_type or dimension_context provided, refine the results
-        if scene_type or dimension_context:
-            # Re-run with full context
-            from sqlalchemy import select
-            from app.models_ip import IPCatalog
+        # If scene_type or dimension_context provided, build full request
+        from sqlalchemy import select
+        from app.models_ip import IPCatalog
 
-            result = await db.execute(
-                select(IPCatalog).where(IPCatalog.slug == slug)
-            )
-            ip = result.scalar_one_or_none()
+        result = await db.execute(
+            select(IPCatalog).where(IPCatalog.slug == slug)
+        )
+        ip = result.scalar_one_or_none()
 
-            if ip:
-                request = ToolRecommendationRequest(
-                    ip_id=ip.id,
-                    scene_type=scene_type,
-                    dimension_context=dimension_context,
-                    max_results=max_results,
-                )
-                response = await service.recommend_tools(request)
+        if not ip:
+            return await service.get_ip_recommendations(slug, max_results)
 
-        return response
+        request = ToolRecommendationRequest(
+            ip_id=ip.id,
+            scene_type=scene_type,
+            dimension_context=dimension_context,
+            max_results=max_results,
+        )
+        return await service.recommend_tools(request)
     except Exception as e:
         logger.error(f"[ToolRec] Error in get_ip_recommendations: {e}")
         raise HTTPException(status_code=500, detail="Failed to generate recommendations")
