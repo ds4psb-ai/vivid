@@ -474,9 +474,18 @@ export function EvidenceCard({
                             {trace.confidence !== null && (
                               <span>{Math.round(trace.confidence * 100)}%</span>
                             )}
-                            {trace.status && (
-                              <span className="uppercase">{trace.status}</span>
-                            )}
+                          {trace.status && (
+                            <span
+                              className="status-badge"
+                              data-tone={getStatusTone(trace.status)}
+                            >
+                              {getStatusLabel(
+                                trace.status.toLowerCase(),
+                                t,
+                                labels.traceFilterUnknown
+                              )}
+                            </span>
+                          )}
                           </div>
                         </div>
                       ))}
@@ -570,6 +579,23 @@ function getStatusLabel(
       return unknownLabel;
     default:
       return status.toUpperCase();
+  }
+}
+
+function getStatusTone(status: string) {
+  switch (status.toLowerCase()) {
+    case "completed":
+      return "success";
+    case "failed":
+      return "error";
+    case "running":
+      return "info";
+    case "pending":
+      return "warning";
+    case "cancelled":
+      return "muted";
+    default:
+      return "muted";
   }
 }
 

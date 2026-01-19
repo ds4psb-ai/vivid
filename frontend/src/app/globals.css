@@ -1711,6 +1711,46 @@ html.lenis body {
   --_rgb: var(--success-rgb);
 }
 
+/* Status badges */
+.status-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.status-badge[data-tone="success"] {
+  color: var(--success);
+  border-color: color-mix(in srgb, var(--success) 35%, transparent);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+}
+
+.status-badge[data-tone="error"] {
+  color: var(--error);
+  border-color: color-mix(in srgb, var(--error) 35%, transparent);
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+}
+
+.status-badge[data-tone="warning"] {
+  color: var(--warning);
+  border-color: color-mix(in srgb, var(--warning) 35%, transparent);
+  background: color-mix(in srgb, var(--warning) 12%, transparent);
+}
+
+.status-badge[data-tone="info"] {
+  color: var(--info);
+  border-color: color-mix(in srgb, var(--info) 35%, transparent);
+  background: color-mix(in srgb, var(--info) 12%, transparent);
+}
+
+.status-badge[data-tone="muted"] {
+  color: var(--fg-muted);
+  border-color: color-mix(in srgb, var(--fg-muted) 35%, transparent);
+  background: color-mix(in srgb, var(--fg-muted) 12%, transparent);
+}
+
 .capsule-locked {
   background: var(--capsule-locked-bg);
   border: 1px solid var(--capsule-locked-border);
