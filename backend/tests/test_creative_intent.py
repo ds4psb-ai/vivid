@@ -188,21 +188,9 @@ class TestTemplateIntentPreset:
         )
         
         assert preset.schema_version == "2.0"
-        assert preset.legacy_params is None
         
         params = preset.get_resolved_params("VEO")
         assert params["mood"] == "cinematic"
-    
-    def test_legacy_compatibility(self):
-        """레거시 호환 모드"""
-        preset = TemplateIntentPreset(
-            intent=CreativeIntent(mood=CreativeMood.CINEMATIC),
-            legacy_params={"veo_model": "veo-2", "aspect_ratio": "21:9"},
-        )
-        
-        # 레거시 우선
-        params = preset.get_resolved_params("VEO")
-        assert params["veo_model"] == "veo-2"
 
 
 class TestAestheticHints:

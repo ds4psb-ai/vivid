@@ -201,7 +201,7 @@ async def _apply_template_handler(context: ToolContext, call: ToolCall) -> ToolR
             
             try:
                 from app.resolvers.integration import extract_intent_from_preset
-                intent, legacy_params = extract_intent_from_preset(input_preset)
+                intent = extract_intent_from_preset(input_preset)
                 if intent:
                     extracted_intent = intent.model_dump()
                     logger.debug(

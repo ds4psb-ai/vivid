@@ -560,10 +560,7 @@ template = {
             "pace": "dynamic",
             "target": "expert"
         },
-        "legacy_params": {
-            "style": "nolan",
-            "duration": "8 seconds"
-        }
+        "schema_version": "2.0"
     }
 }
 ```
@@ -573,14 +570,14 @@ template = {
 ```python
 from app.resolvers.integration import extract_intent_from_preset
 
-intent, legacy_params = extract_intent_from_preset(input_preset)
+intent = extract_intent_from_preset(input_preset)
 
 if intent:
     # 새 형식: intent.mood, intent.pace, intent.target
     mood = intent.mood.value
 else:
-    # 레거시 형식: legacy_params["mood"]
-    mood = legacy_params.get("mood", "neutral")
+    # Intent 없음: 기본값 사용
+    mood = "neutral"
 ```
 
 ---
@@ -1166,14 +1163,11 @@ class TestMyAppResolver:
     @pytest.mark.asyncio
     async def test_resolve_with_fallback(self, resolver):
         """Fallback 로직 테스트."""
-        # Intent 없이 legacy_params만
-        result = await resolver.resolve_with_fallback(
-            intent=None,
-            legacy_params={"legacy_key": "legacy_value"},
-        )
+        # Intent 없이 기본값 폴백
+        result = await resolver.resolve_with_fallback(intent=None)
         
-        assert result.resolved_from == "legacy"
-        assert result.params.get("legacy_key") == "legacy_value"
+        assert result.resolved_from == "fallback"
+        assert result.params
     
     @pytest.mark.parametrize("mood", [
         CreativeMood.CINEMATIC,
@@ -1386,7 +1380,7 @@ tail -f /tmp/vivid-backend.log | grep "HybridRAG"
 | `prev_output` 비어있음 | 이전 차원 실패 | 에러 로그 확인 |
 | RAG 결과 없음 | 인덱스 미생성 | `scripts/seed_aesthetic_rag.py` 실행 |
 | 크레딧 부족 | 잔액 없음 | `/api/v1/credits/balance` 확인 |
-| Intent 없음 | 레거시 템플릿 | `legacy_params` 폴백 사용 |
+| Intent 없음 | 입력 누락 | 기본값 폴백 |
 
 ### 15.3 TieredContext 디버깅
 
@@ -1431,7 +1425,7 @@ logger.debug(f"TieredContext history: {tiered.history}")
 
 ### Q: 새 옵션 추가하면 기존 템플릿이 깨지나요?
 
-**A**: 아니요. `legacy_params`가 하위 호환 레이어 역할을 합니다. 새 옵션은 기본값이 적용됩니다.
+**A**: 아니요. Intent 기반 스키마(`schema_version: 2.0`)로 관리되며, 새 옵션은 기본값이 적용됩니다.
 
 ### Q: QC를 여러 곳에 배치할 수 있나요?
 

@@ -1,8 +1,8 @@
-"""NotebookLM Adapter - Gemini-based Logic/Persona extraction.
+"""Gemini Analysis Adapter - Gemini-based Logic/Persona extraction.
 
-Implements the NotebookLM-style analysis pipeline:
+Implements the Gemini analysis pipeline (NotebookLM-style outputs, Gemini backend):
 1. Logic Vector extraction
-2. Persona Vector extraction  
+2. Persona Vector extraction
 3. Variation Guide generation
 4. Claim-Evidence generation
 5. Story beats and storyboard cards generation
@@ -18,15 +18,15 @@ from app.adapters.source_pack_builder import SourcePackBuilder
 logger = logging.getLogger(__name__)
 
 
-class NotebookLMAdapter(BaseAdapter):
-    """NotebookLM adapter using Gemini API for Logic/Persona extraction.
-    
-    This adapter replicates NotebookLM's core functionality since NotebookLM
-    has no public API. Uses Gemini API under the hood.
+class GeminiAnalysisAdapter(BaseAdapter):
+    """Gemini analysis adapter (NotebookLM-style outputs).
+
+    Gemini API를 사용해 분석 파이프라인을 수행합니다.
+    NotebookLM Tier0(RAG) 어댑터와 혼동되지 않도록 별도 명칭을 사용합니다.
     """
     
     def __init__(self):
-        super().__init__("notebooklm")
+        super().__init__("gemini_analysis")
     
     def run(
         self,
@@ -37,14 +37,14 @@ class NotebookLMAdapter(BaseAdapter):
         capsule_spec: Optional[Dict[str, Any]] = None,
         **kwargs,
     ) -> AdapterResult:
-        """Run NotebookLM-style analysis pipeline."""
+        """Run Gemini analysis pipeline (NotebookLM-style)."""
         from app.config import settings
         
-        # Check if Gemini (NotebookLM substitute) is enabled
+        # Check if Gemini analysis is enabled
         if not settings.GEMINI_ENABLED or not settings.GEMINI_API_KEY:
-            self.logger.info("NotebookLM (Gemini) adapter disabled; returning simulated summary")
+            self.logger.info("Gemini analysis adapter disabled; returning simulated summary")
             return AdapterResult(
-                summary={"summary": "NotebookLM simulated summary", "source_count": 3},
+                summary={"summary": "Gemini analysis simulated summary", "source_count": 3},
                 evidence_refs=[],
             )
         
@@ -113,8 +113,8 @@ class NotebookLMAdapter(BaseAdapter):
             )
             
         except Exception as exc:
-            self.logger.error(f"NotebookLM adapter error: {exc}")
+            self.logger.error(f"Gemini analysis adapter error: {exc}")
             return AdapterResult(
-                summary={"summary": f"NotebookLM fallback: {exc}", "error": str(exc)},
+                summary={"summary": f"Gemini analysis fallback: {exc}", "error": str(exc)},
                 evidence_refs=[],
             )

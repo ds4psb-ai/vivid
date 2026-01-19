@@ -7,7 +7,7 @@ Resolver 시스템을 연결하는 통합 레이어.
 이 모듈은:
 1. CreativeIntent → Resolver → dimension_adapter 파라미터 변환
 2. 기존 RAG 시스템과 Resolver RAG 컨텍스트 통합
-3. Legacy input_preset 호환성 유지
+3. input_preset에서 Intent 추출
 """
 from __future__ import annotations
 
@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 def extract_intent_from_preset(
     input_preset: Dict[str, Any]
-) -> tuple[Optional[CreativeIntent], Optional[Dict[str, Any]]]:
+) -> Optional[CreativeIntent]:
     """
     템플릿 input_preset에서 Intent 추출
     
@@ -45,19 +45,19 @@ def extract_intent_from_preset(
         {"veo_model": "veo-2", "veo_aspect_ratio": "21:9", "mood": "cinematic"}
     
     TO-BE 형식 (new):
-        {"intent": {...}, "legacy_params": {...}, "schema_version": "2.0"}
+        {"intent": {...}, "schema_version": "2.0"}
     
     Returns:
-        (CreativeIntent or None, legacy_params or None)
+        CreativeIntent or None
     """
     if not input_preset:
-        return None, None
+        return None
     
     # 신규 형식 체크
     if "intent" in input_preset and "schema_version" in input_preset:
         try:
             preset = TemplateIntentPreset.model_validate(input_preset)
-            return preset.intent, preset.legacy_params
+            return preset.intent
         except Exception as e:
             logger.warning(f"Failed to parse new format preset: {e}")
     
@@ -87,9 +87,9 @@ def extract_intent_from_preset(
             target=TargetAudience.GENERAL,  # 기본값
         )
         logger.debug(f"Inferred intent from legacy preset: mood={inferred_mood.value}")
-        return intent, input_preset  # legacy_params는 원본 유지
+        return intent
     
-    return None, input_preset
+    return None
 
 
 # =========================================================================
@@ -110,7 +110,7 @@ async def get_enhanced_capsule_params(
     1. explicit_intent가 있으면 사용
     2. input_preset에서 intent 추출 시도
     3. Resolver로 파라미터 생성
-    4. legacy_params와 병합
+    4. intent가 없으면 empty params
     
     Args:
         dimension_code: 대상 Dimension (e.g., "VEO", "1D", "SOUND")
@@ -125,9 +125,8 @@ async def get_enhanced_capsule_params(
     # 1. Intent 결정
     if explicit_intent:
         intent = explicit_intent
-        legacy_params = None
     else:
-        intent, legacy_params = extract_intent_from_preset(input_preset or {})
+        intent = extract_intent_from_preset(input_preset or {})
     
     # 2. RAG Context 자동 조회 (Phase 4: Source Resolver)
     if intent and query and not rag_context:
@@ -148,7 +147,6 @@ async def get_enhanced_capsule_params(
             resolved = await resolver.resolve_with_fallback(
                 intent=intent,
                 rag_context=rag_context,
-                legacy_params=legacy_params,
             )
             
             logger.debug(
@@ -162,8 +160,8 @@ async def get_enhanced_capsule_params(
         except Exception as e:
             logger.warning(f"Resolver failed for {dimension_code}: {e}")
     
-    # 4. Fallback: legacy_params 또는 빈 dict
-    return legacy_params or input_preset or {}
+    # 4. Fallback: empty params
+    return {}
 
 
 # =========================================================================

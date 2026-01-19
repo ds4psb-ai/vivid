@@ -298,21 +298,6 @@ class TestFallbackBehavior:
     """Fallback 동작 테스트"""
     
     @pytest.mark.asyncio
-    async def test_legacy_params_priority(self):
-        """레거시 파라미터 우선"""
-        resolver = VEOResolver()
-        intent = CreativeIntent(mood=CreativeMood.CINEMATIC)
-        legacy = {"aspect_ratio": "4:3", "custom": "value"}
-        
-        result = await resolver.resolve_with_fallback(
-            intent=intent,
-            legacy_params=legacy,
-        )
-        
-        assert result.resolved_from == "legacy"
-        assert result.params["aspect_ratio"] == "4:3"
-    
-    @pytest.mark.asyncio
     async def test_no_intent_fallback(self):
         """Intent 없을 때 기본값"""
         resolver = VEOResolver()

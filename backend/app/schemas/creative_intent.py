@@ -378,17 +378,11 @@ class TemplateIntentPreset(BaseModel):
         input_preset = {"veo_model": "veo-2", "veo_aspect_ratio": "21:9"}
     
     TO-BE (신규):
-        input_preset = {"intent": {...}, "legacy_params": {...}}
+        input_preset = {"intent": {...}, "schema_version": "2.0"}
     """
     
     # 신규: Intent 기반
     intent: CreativeIntent
-    
-    # 하위 호환: 마이그레이션 기간 동안 레거시 파라미터 유지
-    legacy_params: Optional[Dict[str, Any]] = Field(
-        default=None,
-        description="마이그레이션 기간 동안의 레거시 파라미터 (점진적 deprecated)"
-    )
     
     # 버전 관리
     schema_version: str = Field(
@@ -402,10 +396,6 @@ class TemplateIntentPreset(BaseModel):
         
         TODO: Phase 2에서 각 Dimension Resolver와 연동
         """
-        # 마이그레이션 기간: 레거시 우선
-        if self.legacy_params:
-            return self.legacy_params
-        
         # Intent 기반 해석 (Phase 2에서 구현)
         return self.intent.to_resolver_context()
 

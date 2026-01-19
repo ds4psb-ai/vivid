@@ -36,7 +36,7 @@ class ResolvedParams:
     rag_context: Optional[Dict[str, Any]] = None
     
     # 해석 메타데이터
-    resolved_from: str = "intent"  # "intent", "legacy", "fallback"
+    resolved_from: str = "intent"  # "intent", "fallback"
     confidence: float = 1.0
     
     # 디버그/추적 정보
@@ -244,26 +244,15 @@ class BaseCapsuleResolver(ABC):
         self,
         intent: Optional[CreativeIntent],
         rag_context: Optional[Dict[str, Any]] = None,
-        legacy_params: Optional[Dict[str, Any]] = None,
     ) -> ResolvedParams:
         """
         Fallback 로직이 포함된 해석
         
         우선순위:
-        1. legacy_params가 있으면 그대로 사용 (마이그레이션 호환)
-        2. intent가 있으면 resolve_from_intent 호출
-        3. 둘 다 없으면 default_params 사용
+        1. intent가 있으면 resolve_from_intent 호출
+        2. intent가 없으면 default_params 사용
         """
-        # 1. Legacy 우선 (마이그레이션 기간)
-        if legacy_params:
-            logger.debug(f"{self.dimension_code}: Using legacy params")
-            return ResolvedParams(
-                params=legacy_params,
-                resolved_from="legacy",
-                resolution_notes=["Using legacy params for backward compatibility"]
-            )
-        
-        # 2. Intent 기반 해석
+        # 1. Intent 기반 해석
         if intent:
             try:
                 result = await self.resolve_from_intent(intent, rag_context)
@@ -272,7 +261,7 @@ class BaseCapsuleResolver(ABC):
                 logger.warning(f"{self.dimension_code}: Intent resolution failed: {e}")
                 # Fallback to default
         
-        # 3. Default
+        # 2. Default
         return ResolvedParams(
             params=self.get_default_params(),
             resolved_from="fallback",

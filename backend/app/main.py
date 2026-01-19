@@ -11,8 +11,6 @@ from app.database import init_db
 # Core Routers (3-Layer Ecosystem)
 from app.routers.auth import router as auth_router
 from app.routers.credits import router as credits_router
-# [DEPRECATED] teaching_router - merged into dimension_router (2026-01-05)
-# from app.routers.teaching import router as teaching_router
 from app.routers.dimension import router as dimension_router
 from app.routers.agent import router as agent_router
 from app.routers.mcp import router as mcp_router
@@ -212,7 +210,6 @@ app.include_router(dimension_router, prefix="/api/dimension", tags=["dimension"]
 
 # Layer 1: Teaching Tools (레거시 호환용 - deprecated)
 # [DEPRECATED] teaching API - use /api/dimension/* instead
-# app.include_router(teaching_router, prefix="/api/teaching", tags=["teaching"])
 
 # Layer 2: Agent Chat
 app.include_router(agent_router, prefix="/api/v1", tags=["agent"])

@@ -41,15 +41,13 @@ class TestIntentExtraction:
                 "target": "expert",
                 "domain_sources": ["bong-joon-ho"],
             },
-            "legacy_params": {"old_param": "value"},
             "schema_version": "2.0",
         }
         
-        intent, legacy = extract_intent_from_preset(preset)
+        intent = extract_intent_from_preset(preset)
         
         assert intent is not None
         assert intent.mood == CreativeMood.CINEMATIC
-        assert legacy == {"old_param": "value"}
     
     def test_extract_from_legacy_mood(self):
         """레거시 mood 필드에서 Intent 유추"""
@@ -58,11 +56,10 @@ class TestIntentExtraction:
             "veo_model": "veo-3.1",
         }
         
-        intent, legacy = extract_intent_from_preset(preset)
+        intent = extract_intent_from_preset(preset)
         
         assert intent is not None
         assert intent.mood == CreativeMood.CINEMATIC
-        assert legacy == preset  # 원본 유지
     
     def test_extract_from_legacy_style(self):
         """레거시 style 필드에서 Intent 유추"""
@@ -71,7 +68,7 @@ class TestIntentExtraction:
             "aspect_ratio": "16:9",
         }
         
-        intent, legacy = extract_intent_from_preset(preset)
+        intent = extract_intent_from_preset(preset)
         
         assert intent is not None
         assert intent.mood == CreativeMood.DOCUMENTARY
@@ -83,17 +80,15 @@ class TestIntentExtraction:
             "other_param": 123,
         }
         
-        intent, legacy = extract_intent_from_preset(preset)
+        intent = extract_intent_from_preset(preset)
         
         assert intent is None
-        assert legacy == preset
     
     def test_extract_from_empty(self):
         """빈 preset"""
-        intent, legacy = extract_intent_from_preset({})
+        intent = extract_intent_from_preset({})
         
         assert intent is None
-        assert legacy is None
 
 
 class TestParameterEnhancement:
@@ -168,7 +163,7 @@ class TestEnhancedCapsuleParams:
     
     @pytest.mark.asyncio
     async def test_with_legacy_preset(self):
-        """Legacy preset은 그대로 반환"""
+        """Legacy preset은 intent 추출 실패 시 빈 결과"""
         preset = {
             "mood": "unknown_xyz",  # Intent로 변환 불가
             "custom_param": 123,
@@ -179,7 +174,7 @@ class TestEnhancedCapsuleParams:
             input_preset=preset,
         )
         
-        assert params.get("custom_param") == 123
+        assert params == {}
     
     @pytest.mark.asyncio
     async def test_with_unregistered_dimension(self):
@@ -189,7 +184,7 @@ class TestEnhancedCapsuleParams:
             input_preset={"key": "value"},
         )
         
-        assert params == {"key": "value"}
+        assert params == {}
 
 
 class TestPrepareDimensionParams:
@@ -261,7 +256,7 @@ class TestResolverIntegrationHardening:
             input_preset=preset,
         )
         
-        assert params == preset
+        assert params == {}
     
     def test_extract_handles_malformed_preset(self):
         """잘못된 형식의 preset"""
@@ -271,7 +266,7 @@ class TestResolverIntegrationHardening:
             "other": "data",
         }
         
-        intent, legacy = extract_intent_from_preset(preset)
+        intent = extract_intent_from_preset(preset)
         
         # 에러 없이 None 반환
         assert intent is None
@@ -295,7 +290,7 @@ class TestFullPipelineIntegration:
         }
         
         # 2. Intent 추출
-        intent, legacy = extract_intent_from_preset(template_preset)
+        intent = extract_intent_from_preset(template_preset)
         assert intent is not None
         
         # 3. 모든 Dimension에 대해 Resolve

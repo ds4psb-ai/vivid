@@ -1,7 +1,7 @@
 """Adapter package for capsule execution.
 
 This package provides standardized adapters for different AI services:
-- NotebookLM: Logic/Persona extraction with evidence refs
+- GeminiAnalysis: NotebookLM-style logic/persona extraction (Gemini backend)
 - Opal: Workflow orchestration
 - Gemini: Direct LLM generation
 
@@ -17,7 +17,7 @@ from app.adapters.source_pack_builder import (
     SourcePack,
     SourcePackBuilder,
 )
-from app.adapters.notebooklm_adapter import NotebookLMAdapter
+from app.adapters.gemini_analysis_adapter import GeminiAnalysisAdapter
 from app.adapters.opal_adapter import OpalAdapter
 from app.adapters.gemini_adapter import GeminiAdapter
 
@@ -31,7 +31,7 @@ __all__ = [
     "SourcePack",
     "SourcePackBuilder",
     # Concrete adapters
-    "NotebookLMAdapter",
+    "GeminiAnalysisAdapter",
     "OpalAdapter",
     "GeminiAdapter",
 ]

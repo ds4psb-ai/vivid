@@ -1,7 +1,7 @@
 """Base Adapter pattern for capsule execution.
 
 Provides a common interface and shared utilities for all capsule adapters.
-Reduces code duplication between NotebookLM, Opal, and Gemini adapters.
+Reduces code duplication between GeminiAnalysis, Opal, and Gemini adapters.
 """
 from __future__ import annotations
 
@@ -31,11 +31,11 @@ class AdapterResult:
 class BaseAdapter(ABC):
     """Abstract base class for capsule adapters.
     
-    All concrete adapters (NotebookLM, Opal, Gemini) should inherit from this class
+    All concrete adapters (GeminiAnalysis, Opal, Gemini) should inherit from this class
     and implement the `run` method.
     
     Example:
-        class NotebookLMAdapter(BaseAdapter):
+        class GeminiAnalysisAdapter(BaseAdapter):
             def run(self, context: AdapterContext) -> AdapterResult:
                 # Implementation
                 pass

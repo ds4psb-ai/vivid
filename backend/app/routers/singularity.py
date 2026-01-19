@@ -382,12 +382,7 @@ async def seed_templates(
                     "output_format": "video",
                     "keywords": ["dramatic-lighting", "anamorphic"]
                 },
-                "legacy_params": {
-                    "style": "cinematic",
-                    "lens": "anamorphic",
-                    "lighting": "dramatic",
-                    "model": "veo-2",
-                },
+                
                 "schema_version": "2.0"
             },
             "output_example": {
@@ -420,11 +415,7 @@ async def seed_templates(
                     },
                     "keywords": ["composition", "golden-ratio"]
                 },
-                "legacy_params": {
-                    "analysis_type": "composition",
-                    "grid": "golden_ratio",
-                    "style": "cinematic"
-                },
+                
                 "schema_version": "2.0"
             },
             "output_example": {
@@ -457,12 +448,7 @@ async def seed_templates(
                     "output_format": "video",
                     "keywords": ["full-production", "dna-analysis"]
                 },
-                "legacy_params": {
-                    "depth": "deep",
-                    "genre": "drama",
-                    "style": "cinematic",
-                    "duration": "60s",
-                },
+                
                 "schema_version": "2.0"
             },
             "output_example": {

@@ -4,7 +4,7 @@ P5 Commit 2: Unified execution pipeline for all capsule types.
 
 Adapter Routing:
 - teaching.*, dimension.*, veo.* → execute_dimension_capsule
-- auteur.* → NotebookLMAdapter (override: spec.adapter.type ignored)
+- auteur.* → Tier0 NotebookLM RAG (query_auteur_dna)
 
 Usage:
     from app.services.capsule_executor import execute_capsule
@@ -146,7 +146,7 @@ async def _execute_dimension(
 
 
 # =============================================================================
-# NotebookLM Adapter Execution
+# NotebookLM Tier0 Execution
 # =============================================================================
 
 async def _execute_notebooklm(
@@ -155,9 +155,9 @@ async def _execute_notebooklm(
     params: Dict[str, Any],
     user_api_key: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Execute via NotebookLM adapter (auteur capsules).
+    """Execute via NotebookLM Tier0 RAG (auteur capsules).
     
-    P5: All auteur.* capsules use NotebookLM adapter regardless of spec.adapter.type.
+    P5: All auteur.* capsules use Tier0 NotebookLM RAG regardless of spec.adapter.type.
     This is an intentional override for simplicity in this iteration.
     """
     try:
