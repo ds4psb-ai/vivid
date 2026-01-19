@@ -319,6 +319,9 @@ async def execute_capsule(
     
     start_time = time.monotonic()
     
+    # Normalize params to avoid None cases
+    params = dict(params) if params else {}
+
     # Generate run_id if not provided
     if not run_id:
         run_id = str(uuid.uuid4())
@@ -353,7 +356,43 @@ async def execute_capsule(
             error=str(e),
             version=version,
         )
-    
+
+    # -------------------------------------------------------------------------
+    # Phase 7: Generation A/B Testing (optional)
+    # -------------------------------------------------------------------------
+    ab_result = None
+    try:
+        experiment_key = params.get("ab_experiment_key") or params.get("ab_experiment_id")
+        user_id = user.get("user_id") or user.get("id")
+        if experiment_key and user_id:
+            from app.experiments import get_ab_testing
+            from app.experiments.generation_ab import GenerationABService
+
+            ab_service = get_ab_testing()
+            gen_ab = GenerationABService(ab_service)
+            ab_result = await gen_ab.get_variant_config(
+                experiment_key=experiment_key,
+                user_id=str(user_id),
+                db=db,
+                base_params=params,
+                base_inputs=validated_inputs,
+                context={
+                    "capsule_id": capsule_id,
+                    "capsule_key": capsule_key,
+                    "version": version,
+                },
+            )
+            if ab_result:
+                validated_inputs = ab_result.inputs
+                params = ab_result.params
+                logger.info(
+                    "[A/B] Assigned variant %s for %s",
+                    ab_result.variant_name,
+                    experiment_key,
+                )
+    except Exception as e:
+        logger.warning(f"[A/B] Variant assignment skipped: {e}")
+
     # Determine adapter
     adapter_type = _get_adapter_type(capsule_key)
     
@@ -389,6 +428,14 @@ async def execute_capsule(
     
     # Normalize output
     normalized = _normalize_output(raw_result, capsule_key)
+
+    # Attach A/B experiment metadata (if assigned)
+    if ab_result:
+        normalized["summary"]["ab_experiment"] = {
+            "experiment_key": ab_result.experiment_key,
+            "variant_name": ab_result.variant_name,
+            "is_control": ab_result.is_control,
+        }
     
     # Estimate cost (simplified)
     tokens = normalized["token_usage"].get("total", 0)

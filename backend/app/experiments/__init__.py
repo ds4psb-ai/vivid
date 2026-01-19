@@ -14,6 +14,10 @@ from app.experiments.ab_testing import (
     init_ab_testing,
     ExperimentAssignment,
 )
+from app.experiments.generation_ab import (
+    GenerationABService,
+    GenerationABResult,
+)
 from app.experiments.statistics import (
     StatisticalAnalyzer,
     SignificanceResult,
@@ -35,6 +39,8 @@ __all__ = [
     "get_ab_testing",
     "init_ab_testing",
     "ExperimentAssignment",
+    "GenerationABService",
+    "GenerationABResult",
     # Statistics
     "StatisticalAnalyzer",
     "SignificanceResult",
