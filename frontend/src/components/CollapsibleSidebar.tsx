@@ -16,11 +16,14 @@ import {
     ChevronRight,
     ChevronDown,
     MessageCircle,
-    Moon,
     Orbit,
     Waypoints,
     CircleDashed,
     Globe,
+    Sparkles,
+    FolderOpen,
+    User,
+    Wrench,
 } from "lucide-react";
 import { CreditDisplay, ProfileSettingsPanel } from "@/components/CreditDisplay";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -241,17 +244,26 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const { t, language, setLanguage } = useLanguage();
 
-    // 핵심 네비게이션 - 단일 링크 아이템
+    // 핵심 네비게이션 - IP-First UX 기반
     const NAV_ITEMS: { label: string; href: string; icon: React.ElementType; badge?: string }[] = [
         { label: "홈", href: "/", icon: Home },
-        { label: "차원 앱", href: "/dimension", icon: Orbit },
-        // Flow is gated by feature flag
-        ...(FLOW_ENABLED ? [{ label: "차원 플로우", href: "/flow", icon: Waypoints }] : []),
-        { label: "차원 템플릿", href: "/singularity", icon: CircleDashed },
-        { label: "Crebit ATC 1기", href: "/crebit", icon: Moon, badge: "Hot" },
+        { label: "IP 갤러리", href: "/ip", icon: Sparkles },
+        { label: "내 작업실", href: "/studio", icon: FolderOpen },
+        { label: "크리에이터", href: "/creator", icon: User },
     ];
 
     const NAV_GROUPS = [
+        {
+            id: "tools",
+            label: "고급 도구",
+            icon: Wrench,
+            items: [
+                { label: "차원 앱", href: "/dimension", icon: Orbit },
+                // Flow is gated by feature flag
+                ...(FLOW_ENABLED ? [{ label: "차원 플로우", href: "/flow", icon: Waypoints }] : []),
+                { label: "템플릿", href: "/singularity", icon: CircleDashed },
+            ],
+        },
         {
             id: "account",
             label: "계정",
