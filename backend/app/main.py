@@ -89,6 +89,9 @@ from app.routers.monitor import router as monitor_router
 # Admin (Internal Staff App Management)
 from app.routers.admin import router as admin_router
 
+# Ops Audit (Admin Ops Logs)
+from app.routers.ops_audit import router as ops_audit_router
+
 # Run Token (App Execution Tokens)
 from app.routers.run_token import router as run_token_router
 
@@ -302,6 +305,9 @@ app.include_router(monitor_router, tags=["monitor"])
 
 # Admin (Internal Staff App Management)
 app.include_router(admin_router, prefix="/api/v1", tags=["admin"])
+
+# Ops Audit (Admin Logs)
+app.include_router(ops_audit_router, prefix="/api/v1", tags=["ops"])
 
 # Run Token (App Execution Tokens)
 app.include_router(run_token_router, prefix="/api/v1", tags=["run-token"])

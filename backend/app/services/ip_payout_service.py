@@ -7,6 +7,7 @@ from typing import Dict, Any, Optional, Tuple
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models import OpsActionLog
 from app.models_ip import IPPayoutLedger, IPGeneration, IPRights
 
 
@@ -73,6 +74,26 @@ async def ensure_payout_ledger(
     )
     db.add(ledger)
     await db.flush()
+
+    db.add(
+        OpsActionLog(
+            action_type="ip_payout_ledger_created",
+            status="holdback",
+            note="auto-created on credit deduction",
+            actor_id=generation.user_id,
+            payload={
+                "ledger_id": str(ledger.id),
+                "generation_id": str(generation.id),
+                "run_token_id": generation.run_token_id,
+            },
+            stats={
+                "gross_amount": generation.credits_consumed,
+                "ip_owner_share": ip_owner_share,
+                "creator_share": creator_share,
+                "platform_share": platform_share,
+            },
+        )
+    )
     return ledger
 
 
