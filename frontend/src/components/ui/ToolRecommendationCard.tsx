@@ -97,6 +97,14 @@ export function ToolRecommendationCard({
       ? "bg-amber-500/70"
       : "bg-slate-400/70";
 
+  const dimensionKey = dimension?.toLowerCase();
+  const dimensionBadgeClass = dimensionKey
+    ? `bg-dimension-${dimensionKey}/20 text-dimension-${dimensionKey}`
+    : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300";
+  const dimensionBorderClass = dimensionKey
+    ? `border-dimension-${dimensionKey}/50`
+    : "border-slate-200 dark:border-slate-700";
+
   useEffect(() => {
     let isActive = true;
 
@@ -199,7 +207,8 @@ export function ToolRecommendationCard({
   return (
     <div
       className={cn(
-        "rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/40 p-3 space-y-2",
+        "rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/40 p-3 space-y-2 border-l-4",
+        dimensionBorderClass,
         isPrimary && "ring-1 ring-violet-400/30",
         className
       )}
@@ -210,7 +219,7 @@ export function ToolRecommendationCard({
             <span className="text-sm font-semibold text-slate-900 dark:text-white">
               {displayName}
             </span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300">
+            <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full", dimensionBadgeClass)}>
               {dimension}
             </span>
             {isPrimary && (

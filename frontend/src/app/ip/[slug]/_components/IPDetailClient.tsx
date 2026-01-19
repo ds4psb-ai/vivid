@@ -434,15 +434,20 @@ export default function IPDetailClient({ slug }: IPDetailClientProps) {
                                 <span className="text-[10px] uppercase tracking-[0.18em]">
                                   {t("recommendedDimensions")}
                                 </span>
-                                {recommendedDimensions.map((dimension) => (
-                                  <span
-                                    key={dimension}
-                                    className="evidence-badge text-[9px]"
-                                    data-tone="dimension"
-                                  >
-                                    {dimension}
-                                  </span>
-                                ))}
+                                {recommendedDimensions.map((dimension) => {
+                                  const dimensionKey = dimension.toLowerCase();
+                                  const dimensionClass = dimensionKey
+                                    ? `bg-dimension-${dimensionKey}/20 text-dimension-${dimensionKey}`
+                                    : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300";
+                                  return (
+                                    <span
+                                      key={dimension}
+                                      className={`text-[9px] px-2 py-0.5 rounded-full ${dimensionClass}`}
+                                    >
+                                      {dimension}
+                                    </span>
+                                  );
+                                })}
                               </div>
                             )}
                             {totalCredits > 0 && (
