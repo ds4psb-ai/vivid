@@ -20,9 +20,11 @@ import {
   FileText,
   Database,
   Sparkles,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "./badge";
+import { Input } from "./input";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   getReasonCodeLabel,
@@ -167,6 +169,7 @@ export function EvidenceCard({
   const isKo = language === "ko";
   const [isExpanded, setIsExpanded] = useState(!isCollapsible);
   const isEvidenceOnly = variant === "evidence";
+  const [traceQuery, setTraceQuery] = useState("");
 
   // Parse reason codes into display format
   const reasonLabels = useMemo(() => {
@@ -185,8 +188,23 @@ export function EvidenceCard({
     }));
   }, [evidenceRefs]);
 
-  const traceVisible = useMemo(() => workflowTrace.slice(0, 6), [workflowTrace]);
-  const traceHiddenCount = Math.max(workflowTrace.length - traceVisible.length, 0);
+  const normalizedQuery = traceQuery.trim().toLowerCase();
+  const filteredTrace = useMemo(() => {
+    if (!normalizedQuery) return workflowTrace;
+    return workflowTrace.filter((trace) => {
+      const haystack = [
+        trace.ref,
+        trace.source,
+        trace.status ?? "",
+        trace.confidence !== null ? String(trace.confidence) : "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(normalizedQuery);
+    });
+  }, [workflowTrace, normalizedQuery]);
+  const traceVisible = useMemo(() => filteredTrace.slice(0, 6), [filteredTrace]);
+  const traceHiddenCount = Math.max(filteredTrace.length - traceVisible.length, 0);
 
   const confidencePercent = confidence ? Math.round(confidence * 100) : null;
   const labels = useMemo(
@@ -198,6 +216,8 @@ export function EvidenceCard({
       evidenceCardTitle: t("evidenceSummaryTitle"),
       evidenceSourcesTitle: t("evidenceSourcesTitle"),
       evidenceTraceTitle: t("evidenceTraceTitle"),
+      evidenceTraceFilterPlaceholder: t("evidenceTraceFilterPlaceholder"),
+      evidenceTraceEmpty: t("evidenceTraceEmpty"),
     }),
     [t, language]
   );
@@ -328,7 +348,7 @@ export function EvidenceCard({
                       >
                         {getEvidenceIcon(type)}
                         <span className="inline-flex items-center rounded-full border border-current/20 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.08em]">
-                          {getEvidenceSourceLabel(type, t)}
+                          {getEvidenceSourceLabel(type, t as (key: string) => string)}
                         </span>
                         <span className="break-all">{label}</span>
                       </li>
@@ -340,40 +360,58 @@ export function EvidenceCard({
               {/* Workflow Trace */}
               {workflowTrace.length > 0 && (
                 <div className="space-y-2">
-                  <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">
-                    {labels.evidenceTraceTitle}
+                  <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.18em] opacity-70">
+                    <span>{labels.evidenceTraceTitle}</span>
+                    <span className="text-slate-400 normal-case tracking-normal">
+                      {filteredTrace.length}/{workflowTrace.length}
+                    </span>
                   </div>
-                  <div className="space-y-2">
-                    {traceVisible.map((trace) => (
-                      <div
-                        key={trace.evidence_id}
-                        className="flex items-center justify-between rounded-md border border-current/10 px-3 py-2 text-[11px]"
-                      >
-                        <div className="flex flex-col gap-0.5">
-                          <span className="font-mono text-slate-600 dark:text-slate-300">
-                            {trace.ref}
-                          </span>
-                          <span className="text-[10px] text-slate-400">
-                            {trace.source}
-                            {trace.timestamp ? ` · ${new Date(trace.timestamp).toLocaleString()}` : ""}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
-                          {trace.confidence !== null && (
-                            <span>{Math.round(trace.confidence * 100)}%</span>
-                          )}
-                          {trace.status && (
-                            <span className="uppercase">{trace.status}</span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                    {traceHiddenCount > 0 && (
-                      <div className="text-[10px] text-slate-400">
-                        +{traceHiddenCount} {t("moreLabel")}
-                      </div>
-                    )}
+                  <div className="flex items-center gap-2 rounded-md border border-current/10 bg-white/40 dark:bg-slate-900/50 px-2 py-1">
+                    <Search className="w-3 h-3 text-slate-400" />
+                    <Input
+                      value={traceQuery}
+                      onChange={(event) => setTraceQuery(event.target.value)}
+                      placeholder={labels.evidenceTraceFilterPlaceholder}
+                      className="border-0 bg-transparent text-[11px] focus-visible:ring-0"
+                    />
                   </div>
+                  {filteredTrace.length === 0 ? (
+                    <div className="text-[11px] text-slate-400">
+                      {labels.evidenceTraceEmpty}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {traceVisible.map((trace) => (
+                        <div
+                          key={trace.evidence_id}
+                          className="flex items-center justify-between rounded-md border border-current/10 px-3 py-2 text-[11px]"
+                        >
+                          <div className="flex flex-col gap-0.5">
+                            <span className="font-mono text-slate-600 dark:text-slate-300">
+                              {trace.ref}
+                            </span>
+                            <span className="text-[10px] text-slate-400">
+                              {trace.source}
+                              {trace.timestamp ? ` · ${new Date(trace.timestamp).toLocaleString()}` : ""}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
+                            {trace.confidence !== null && (
+                              <span>{Math.round(trace.confidence * 100)}%</span>
+                            )}
+                            {trace.status && (
+                              <span className="uppercase">{trace.status}</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {traceHiddenCount > 0 && (
+                        <div className="text-[10px] text-slate-400">
+                          +{traceHiddenCount} {t("moreLabel")}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 

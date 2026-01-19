@@ -1,9 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Coins, Sparkles } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Coins, Info, Sparkles } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
+import { toolsApi, type ToolDisplayInfo } from "@/lib/api-client";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   getReasonCodeLabel,
   getConfidenceLabel,
@@ -37,6 +48,10 @@ export function ToolRecommendationCard({
   const { language, t } = useLanguage();
   const isKo = language === "ko";
   const [expanded, setExpanded] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [toolInfo, setToolInfo] = useState<ToolDisplayInfo | null>(null);
+  const [infoLoading, setInfoLoading] = useState(false);
+  const [infoError, setInfoError] = useState<string | null>(null);
 
   const level =
     confidenceLevel ?? scoreToConfidenceLevel(confidence ?? 0);
@@ -61,6 +76,43 @@ export function ToolRecommendationCard({
       : level === "medium"
       ? "text-amber-500 bg-amber-500/10 border-amber-500/30"
       : "text-slate-400 bg-slate-500/10 border-slate-500/30";
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadToolInfo() {
+      if (!open || toolInfo || infoLoading) return;
+
+      setInfoLoading(true);
+      setInfoError(null);
+
+      try {
+        const res = await toolsApi.getToolInfo(toolId);
+        if (!res.ok || !res.data) {
+          throw new Error(res.error?.message || "Failed to load tool info");
+        }
+        if (isActive) {
+          setToolInfo(res.data);
+        }
+      } catch (err) {
+        if (isActive) {
+          setInfoError(err instanceof Error ? err.message : "Failed to load tool info");
+        }
+      } finally {
+        if (isActive) {
+          setInfoLoading(false);
+        }
+      }
+    }
+
+    loadToolInfo();
+
+    return () => {
+      isActive = false;
+    };
+  }, [open, toolInfo, infoLoading, toolId]);
+
+  const toolDescription = toolInfo?.[isKo ? "description_ko" : "description_en"];
 
   return (
     <div
@@ -133,6 +185,97 @@ export function ToolRecommendationCard({
           {t("noReasonCodes")}
         </div>
       )}
+
+      <div className="flex items-center justify-between pt-1">
+        <span className="text-[10px] text-slate-400">
+          {estimatedCredits !== undefined ? `${estimatedCredits} ${t("credits")}` : " "}
+        </span>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger className="text-[10px] text-violet-500 hover:underline inline-flex items-center gap-1">
+            <Info className="w-3 h-3" />
+            {t("viewDetails")}
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                {toolInfo?.[isKo ? "display_name_ko" : "display_name_en"] || displayName}
+              </DialogTitle>
+              <DialogDescription>
+                {toolDescription || t("noToolDescription")}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                <span className="px-2 py-1 rounded-full border border-slate-200 dark:border-slate-700">
+                  {dimension}
+                </span>
+                <span className={`px-2 py-1 rounded-full border ${confidenceTone}`}>
+                  {levelLabel}
+                  {percent !== null && ` ${percent}%`}
+                </span>
+                {toolInfo?.base_credits !== undefined && (
+                  <span className="px-2 py-1 rounded-full border border-slate-200 dark:border-slate-700">
+                    {t("baseCredits")}: {toolInfo.base_credits}
+                  </span>
+                )}
+                {estimatedCredits !== undefined && (
+                  <span className="px-2 py-1 rounded-full border border-slate-200 dark:border-slate-700">
+                    {t("estimatedCredits")}: {estimatedCredits}
+                  </span>
+                )}
+              </div>
+
+              {infoLoading && (
+                <div className="text-xs text-slate-400">
+                  {t("loading")}
+                </div>
+              )}
+
+              {infoError && (
+                <div className="text-xs text-red-500">{infoError}</div>
+              )}
+
+              {reasonCodes.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                    {t("evidenceReasonsTitle")}
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {reasonCodes.map((code) => (
+                      <span key={code} className="evidence-badge text-[9px]">
+                        {getReasonCodeLabel(code, language)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {evidenceRefs.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                    {t("evidenceDataTitle")}
+                  </div>
+                  <ul className="space-y-1 text-xs text-slate-500 dark:text-slate-400">
+                    {evidenceRefs.map((ref) => (
+                      <li key={ref} className="flex items-start gap-1">
+                        <span className="mt-0.5">•</span>
+                        <span className="break-all">{ref}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpen(false)}>
+                {t("close")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 }
