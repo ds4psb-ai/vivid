@@ -2,7 +2,7 @@
 
 > 2026년 기준 최신 표준/가이드 반영 + Crebit Studio 서비스 특화 개선안
 
-*업데이트: 2026-01-18*  
+*업데이트: 2026-01-19*  
 *작성: Design Systems Research (MCP + Web)*
 
 ---
@@ -51,6 +51,17 @@ Crebit Studio의 디자인 시스템을 **2026년 표준 기반으로 재정비*
 - 토큰/컴포넌트는 **철학과 실행 UX**를 우선 반영한다. (트렌드는 옵션)
 - Dimension/앱 명칭은 **AppRegistry YAML**을 기준으로 자동 동기화한다.
 - Evidence/Run Token 오류/크레딧 상태는 **숨기지 않는다** (핵심 UX).
+
+### 0.3 IP-First Governance Addendum (2026)
+
+> IP-First UX 전환 시에도 Crebit 철학/정합성은 유지된다.  
+> 본 항목은 **철학 변경이 아니라 서비스 레이어의 필수 UX/컴플라이언스 구현**이다.
+
+- **권리 상태 게이팅**: IP 카드/상세에서 `license_status`, `territory`, `commercial_ok`를 기반으로 **생성 가능/불가를 명확히 표시**한다.
+- **DMCA/Takedown 상태 표시**: 권리 분쟁 상태(Notice/Counter/Restore)를 사용자/운영자에게 **명확히 노출**한다.
+- **Workflow + Run-token 통합**: IP 프리셋 실행은 `/workflow/*` 세션과 `run-token reserve/commit/rollback`을 반드시 거친다.
+- **Evidence/Provenance 노출**: 프리셋 추천 근거와 결과물 `evidence_refs`, `pattern_version`, `credit_cost`를 UI 기본 영역에 표시한다.
+- **Rails 접근성**: 자동 회전 금지, 키보드 탐색/스크린리더 지원, “더보기”는 그리드 확장으로 연결한다.
 
 ---
 

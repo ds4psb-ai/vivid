@@ -4,7 +4,7 @@
 <summary>한국어</summary>
 
 **작성**: 2025-12-24  
-**Updated**: 2026-01-01 (Chat-First Studio 추가)  
+**Updated**: 2026-01-19 (IP-First pipeline addendum)  
 **대상**: Product / Design / Engineering  
 **목표**: 데이터화 파이프라인과 워크플로우 사용자 흐름을 한 장으로 정리
 
@@ -154,6 +154,25 @@ Agent Chat (Global)
 - 스트리밍은 SSE 이벤트로 tool 결과/아티팩트를 즉시 갱신한다.
 - 캔버스 동기화는 현재 비활성(레거시 UI만 유지).
 
+### 2.3 IP Remix Pipeline (IP-First)
+
+```
+Home Rails
+  → IP Catalog (Search/Filter)
+  → IP Detail (Rights Gate + Preset Select)
+  → (Optional) User Prompt
+  → Generate
+  → Hidden Workflow (workflow plan/start + run-token)
+  → Result + Evidence + Credit + Payout
+```
+
+핵심 규칙:
+- **IP-First 진입**: 기본 사용자는 `/ip`에서 시작하고 도구 선택은 숨긴다.
+- **권리 상태 게이팅**: `license_status`, `territory`, `commercial_ok`에 따라 생성 허용/차단.
+- **DMCA 상태 표시**: Notice/Counter/Restore 상태는 운영/사용자에게 명확히 노출.
+- **워크플로우 통합**: IP 프리셋 실행은 `/workflow/*` + `run-token reserve/commit/rollback`을 반드시 거친다.
+- **Evidence/Observability**: `evidence_refs`, `pattern_version`, `credit_cost`, `latency`를 결과 카드에 기본 노출.
+
 ---
 
 ## 3) User Roles & Responsibilities
@@ -187,7 +206,7 @@ Agent Chat (Global)
 <summary>English</summary>
 
 **Created**: 2025-12-24  
-**Updated**: 2026-01-01 (Chat-First Studio added)  
+**Updated**: 2026-01-19 (IP-First pipeline addendum)  
 **Audience**: Product / Design / Engineering  
 **Goal**: Summarize the dataization pipeline and user workflow flows on one page
 
@@ -336,6 +355,25 @@ Key rules:
 - Chat is provided as a global component (Chokki).
 - Streaming uses SSE events to update tool results and artifacts immediately.
 - Canvas sync is currently disabled (legacy UI only).
+
+### 2.3 IP Remix Pipeline (IP-First)
+
+```
+Home Rails
+  → IP Catalog (Search/Filter)
+  → IP Detail (Rights Gate + Preset Select)
+  → (Optional) User Prompt
+  → Generate
+  → Hidden Workflow (workflow plan/start + run-token)
+  → Result + Evidence + Credit + Payout
+```
+
+Key rules:
+- **IP-First entry**: default users start at `/ip`; tool selection is hidden.
+- **Rights gating**: creation is allowed only when `license_status`, `territory`, `commercial_ok` pass.
+- **DMCA state visibility**: Notice/Counter/Restore statuses must be visible to users/ops.
+- **Workflow integration**: preset execution must go through `/workflow/*` + `run-token reserve/commit/rollback`.
+- **Evidence/observability**: expose `evidence_refs`, `pattern_version`, `credit_cost`, `latency` on result cards.
 
 ---
 
