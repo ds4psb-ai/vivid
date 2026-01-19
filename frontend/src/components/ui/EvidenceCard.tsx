@@ -522,7 +522,7 @@ export function EvidenceCard({
                           className="status-badge"
                           data-tone={getStatusTone(status)}
                         >
-                          {getStatusLabel(status, t, labels.traceFilterUnknown)} {count}
+                          {getStatusLabel(status, t as (key: string) => string, labels.traceFilterUnknown)} {count}
                         </span>
                       ))}
                     </div>

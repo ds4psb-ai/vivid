@@ -101,6 +101,13 @@ class Settings(BaseSettings):
     AUTH_ERROR_REDIRECT: str = "http://localhost:3100/login?error=auth_failed"
     MASTER_ADMIN_EMAILS: str = ""
 
+    # Frontend Integration (Phase 6 Cache Invalidation)
+    # URL of the Next.js frontend for cache invalidation API calls
+    FRONTEND_URL: str = "http://localhost:3100"
+    # Secret token for authenticating cache invalidation requests
+    # Generate with: python -c "import secrets; print(secrets.token_urlsafe(32))"
+    REVALIDATE_SECRET: str = ""
+
     # NICE Payments (나이스페이)
     # Sandbox: S2_af4543a0be4d49a98122e01ec2059a56
     # Production: Get from NICE admin console

@@ -8,7 +8,11 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import IPCard from "@/components/ip/IPCard";
 import HomeRailSection from "@/components/home/HomeRailSection";
 
-interface IPCatalogItem {
+// =============================================================================
+// Types
+// =============================================================================
+
+export interface IPCatalogItem {
   id: string;
   slug: string;
   name_ko: string;
@@ -22,14 +26,14 @@ interface IPCatalogItem {
   is_featured: boolean;
 }
 
-interface Genre {
+export interface Genre {
   key: string;
   label_ko: string;
   label_en: string;
   count: number;
 }
 
-interface HomeRailSection {
+export interface HomeRailSectionData {
   section_id: string;
   title_ko: string;
   title_en: string;
@@ -45,16 +49,34 @@ interface HomeRailSection {
   has_more: boolean;
 }
 
-export default function IPCatalogClient() {
+// =============================================================================
+// Props
+// =============================================================================
+
+export interface IPCatalogClientProps {
+  /** Pre-fetched rails data from server (Phase 6 ISR) */
+  initialRails?: HomeRailSectionData[];
+  /** Pre-fetched genres data from server (Phase 6 ISR) */
+  initialGenres?: Genre[];
+}
+
+// =============================================================================
+// Component
+// =============================================================================
+
+export default function IPCatalogClient({
+  initialRails,
+  initialGenres,
+}: IPCatalogClientProps = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { language } = useLanguage();
 
-  // State
+  // State - use initial data from server if provided (Phase 6 ISR)
   const [items, setItems] = useState<IPCatalogItem[]>([]);
-  const [genres, setGenres] = useState<Genre[]>([]);
-  const [rails, setRails] = useState<HomeRailSection[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [genres, setGenres] = useState<Genre[]>(initialGenres || []);
+  const [rails, setRails] = useState<HomeRailSectionData[]>(initialRails || []);
+  const [loading, setLoading] = useState(!initialRails); // Skip loading if server data provided
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"rail" | "grid">("rail");
 
@@ -66,8 +88,13 @@ export default function IPCatalogClient() {
   const [hasMore, setHasMore] = useState(false);
   const [total, setTotal] = useState(0);
 
-  // Fetch home rails
+  // Fetch home rails (skip if server-provided via ISR)
   useEffect(() => {
+    // Phase 6: Skip fetch if initial data provided from server
+    if (initialRails && initialRails.length > 0) {
+      return;
+    }
+
     async function fetchRails() {
       try {
         const response = await fetch("/api/v1/ip/home/rails");
@@ -80,10 +107,15 @@ export default function IPCatalogClient() {
       }
     }
     fetchRails();
-  }, []);
+  }, [initialRails]);
 
-  // Fetch genres
+  // Fetch genres (skip if server-provided via ISR)
   useEffect(() => {
+    // Phase 6: Skip fetch if initial data provided from server
+    if (initialGenres && initialGenres.length > 0) {
+      return;
+    }
+
     async function fetchGenres() {
       try {
         const response = await fetch("/api/v1/ip/genres");
@@ -96,7 +128,7 @@ export default function IPCatalogClient() {
       }
     }
     fetchGenres();
-  }, []);
+  }, [initialGenres]);
 
   // Fetch IP catalog
   useEffect(() => {
