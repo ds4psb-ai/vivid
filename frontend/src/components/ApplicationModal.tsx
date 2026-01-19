@@ -52,7 +52,7 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
 
             // Step 2: Open NICE payment window
             const orderId = application.id;
-            const returnUrl = `${window.location.origin}/crebit/payment/callback`;
+            const returnUrl = `${window.location.origin}/terms`;
 
             await requestNicePayment({
                 clientId: process.env.NEXT_PUBLIC_NICEPAY_CLIENT_ID!,

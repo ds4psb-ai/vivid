@@ -200,7 +200,7 @@ export default function CreditsPage() {
             language === "ko"
                 ? "초대 링크로 크레딧을 받고, 팀원도 보너스를 받습니다."
                 : "Share your invite link to earn bonus credits for both sides.",
-        inviteCta: language === "ko" ? "제휴 페이지로 이동" : "Go to Affiliate",
+        inviteCta: language === "ko" ? "정산으로 이동" : "Go to Settlements",
         loadingTransactions: language === "ko" ? "거래 내역 불러오는 중..." : "Loading transactions...",
         noTransactions: language === "ko" ? "거래 내역이 없습니다." : "No transactions yet.",
         subscription: language === "ko" ? "구독" : "Subscription",
@@ -357,7 +357,7 @@ export default function CreditsPage() {
                                 </div>
                             </div>
                             <a
-                                href="/affiliate"
+                                href="/settlements"
                                 className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-xs font-semibold text-emerald-600 dark:text-emerald-200 transition-colors hover:bg-emerald-500/20"
                             >
                                 {labels.inviteCta}
