@@ -609,6 +609,10 @@ class AnalyticsEvent(Base):
 class CrebitApplication(Base):
     """Crebit ATC course applications."""
     __tablename__ = "crebit_applications"
+    __table_args__ = (
+        Index("ix_crebit_applications_owner_id", "owner_id"),
+        UniqueConstraint("payment_id", name="uq_crebit_application_payment_id"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     
@@ -631,6 +635,9 @@ class CrebitApplication(Base):
     payment_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     paid_amount: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     paid_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    owner_id: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)
+    confirm_token_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    confirm_token_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     
     # Metadata
     cohort: Mapped[str] = mapped_column(String(10), default="1기")

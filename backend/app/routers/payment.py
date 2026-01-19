@@ -1,11 +1,12 @@
 """NICE Payments (나이스페이) integration endpoints.
 
 Security Notes:
-- /confirm endpoint requires authentication and validates user owns the application
+- /confirm endpoint requires auth or confirm token and validates application ownership
 - Rate limiting should be applied at nginx/middleware level
-- Consider adding webhook signature verification for production
+- NICEPAY auth signature is verified on callback
 """
 import base64
+import hmac
 import logging
 from datetime import datetime
 from typing import Optional
@@ -13,14 +14,19 @@ from uuid import UUID
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_db
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user_optional
 from app.models import CrebitApplication
+from app.services.crebit_payment_security import (
+    compute_nicepay_auth_signature,
+    normalize_amount_str,
+    verify_confirm_token,
+)
 
 router = APIRouter(prefix="/payment", tags=["payment"])
 logger = logging.getLogger("payment")
@@ -34,6 +40,13 @@ class PaymentConfirmRequest(BaseModel):
     tid: str
     amount: int
     application_id: UUID
+    amount_raw: Optional[str] = None
+    auth_token: Optional[str] = None
+    signature: Optional[str] = None
+    client_id: Optional[str] = None
+    confirm_token: Optional[str] = None
+
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class PaymentConfirmResponse(BaseModel):
@@ -69,7 +82,7 @@ def get_nice_credentials() -> str:
 async def call_nice_approval_api(tid: str, amount: int) -> dict:
     """Call NICE Payments approval API."""
     credentials = get_nice_credentials()
-    
+
     async with httpx.AsyncClient(timeout=30.0) as client:
         response = await client.post(
             f"{settings.NICEPAY_API_URL}/v1/payments/{tid}",
@@ -79,13 +92,13 @@ async def call_nice_approval_api(tid: str, amount: int) -> dict:
             },
             json={"amount": amount},
         )
-        
+
         if response.status_code != 200:
             return {
                 "resultCode": "9999",
                 "resultMsg": f"HTTP Error: {response.status_code}",
             }
-        
+
         return response.json()
 
 
@@ -98,26 +111,27 @@ async def confirm_payment(
     data: PaymentConfirmRequest,
     request: Request,
     db: AsyncSession = Depends(get_db),
-    user: dict = Depends(get_current_user),
+    user: Optional[dict] = Depends(get_current_user_optional),
 ):
     """
-    Confirm NICE payment after user authentication.
+    Confirm NICE payment after authentication or confirm token validation.
 
     This endpoint is called after the user completes card authentication
     in the NICE payment window. It calls the NICE approval API and updates
     the application status.
 
     Security:
-    - Requires authenticated user (prevents anonymous abuse)
+    - Requires authenticated user or confirm token (prevents anonymous abuse)
+    - NICEPAY auth signature verification
     - NICE API validates tid/amount match
     - Rate limiting at nginx level
     """
     # Audit logging for security monitoring
     client_ip = request.client.host if request.client else "unknown"
-    user_id = user.get("user_id", "unknown")
+    user_id = user.get("user_id") if user else None
     logger.info(
         f"[PAYMENT CONFIRM] app_id={data.application_id} tid={data.tid} "
-        f"amount={data.amount} user={user_id} ip={client_ip}"
+        f"amount={data.amount} user={user_id or 'anonymous'} ip={client_ip}"
     )
 
     # 1. Find the application
@@ -129,7 +143,47 @@ async def confirm_payment(
     if not application:
         logger.warning(f"[PAYMENT CONFIRM FAIL] app_id={data.application_id} not found ip={client_ip}")
         raise HTTPException(status_code=404, detail="Application not found")
-    
+
+    # 2. Verify NICEPAY auth signature
+    if not data.auth_token or not data.signature or not data.client_id:
+        raise HTTPException(status_code=400, detail="Missing NICEPAY signature parameters")
+
+    if data.client_id != settings.NICEPAY_CLIENT_ID:
+        raise HTTPException(status_code=400, detail="Invalid NICEPAY client ID")
+
+    if data.amount_raw:
+        try:
+            raw_amount_int = int(data.amount_raw)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid amount format") from exc
+        if raw_amount_int != data.amount:
+            raise HTTPException(status_code=400, detail="Amount mismatch")
+
+    amount_str = normalize_amount_str(data.amount_raw, data.amount)
+    expected_signature = compute_nicepay_auth_signature(
+        data.auth_token,
+        data.client_id,
+        amount_str,
+        settings.NICEPAY_SECRET_KEY,
+    )
+    if not hmac.compare_digest(expected_signature, data.signature):
+        raise HTTPException(status_code=400, detail="Invalid NICEPAY signature")
+
+    # 3. Verify ownership or confirm token
+    if application.owner_id:
+        if not user_id or application.owner_id != user_id:
+            raise HTTPException(status_code=403, detail="Not authorized for this application")
+    else:
+        if user_id:
+            application.owner_id = user_id
+        else:
+            if not data.confirm_token:
+                raise HTTPException(status_code=401, detail="Confirm token required")
+            if application.confirm_token_expires_at and application.confirm_token_expires_at < datetime.utcnow():
+                raise HTTPException(status_code=401, detail="Confirm token expired")
+            if not verify_confirm_token(data.confirm_token, application.confirm_token_hash):
+                raise HTTPException(status_code=403, detail="Invalid confirm token")
+
     if application.status == "paid":
         return PaymentConfirmResponse(
             success=True,
@@ -139,20 +193,31 @@ async def confirm_payment(
             result_code="0000",
             result_msg="Already paid",
         )
-    
-    # 2. Call NICE approval API
+
+    # 4. Prevent duplicate tid reuse
+    dup_result = await db.execute(
+        select(CrebitApplication)
+        .where(CrebitApplication.payment_id == data.tid)
+        .where(CrebitApplication.id != data.application_id)
+    )
+    if dup_result.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="Payment ID already used")
+
+    # 5. Call NICE approval API
     nice_result = await call_nice_approval_api(data.tid, data.amount)
-    
+
     result_code = nice_result.get("resultCode", "9999")
     result_msg = nice_result.get("resultMsg", "Unknown error")
-    
-    # 3. Process result
+
+    # 6. Process result
     if result_code == "0000":
         # Success - update application
         application.status = "paid"
         application.payment_id = data.tid
         application.paid_amount = data.amount
         application.paid_at = datetime.utcnow()
+        application.confirm_token_hash = None
+        application.confirm_token_expires_at = None
         await db.commit()
         await db.refresh(application)
 
@@ -188,7 +253,7 @@ async def confirm_payment(
 async def get_payment_config():
     """
     Get payment configuration for frontend.
-    
+
     Returns the client ID and mode for JS SDK initialization.
     """
     return {

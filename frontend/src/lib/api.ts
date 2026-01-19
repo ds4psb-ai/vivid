@@ -1167,7 +1167,16 @@ class ApiClient {
 
   // --- Payment (결제) API ---
 
-  async confirmPayment(data: { tid: string; amount: number; application_id: string }): Promise<{
+  async confirmPayment(data: {
+    tid: string;
+    amount: number;
+    application_id: string;
+    amount_raw?: string;
+    auth_token: string;
+    signature: string;
+    client_id: string;
+    confirm_token?: string;
+  }): Promise<{
     success: boolean;
     result_msg?: string;
   }> {
@@ -2546,6 +2555,8 @@ export interface CrebitApplication {
   status: string;
   cohort: string;
   created_at: string;
+  confirm_token?: string;
+  confirm_token_expires_at?: string;
 }
 
 export interface CrebitApplicationList {

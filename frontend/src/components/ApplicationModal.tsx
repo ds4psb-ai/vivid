@@ -43,6 +43,13 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
             const application = await api.applyCrebit(formData as CrebitApplicationRequest);
             trackEvent(EVENTS.FORM_SUBMIT, { track: formData.track, applicationId: application.id });
 
+            if (application.confirm_token) {
+                localStorage.setItem(
+                    `crebit_confirm_token:${application.id}`,
+                    application.confirm_token,
+                );
+            }
+
             // Step 2: Open NICE payment window
             const orderId = application.id;
             const returnUrl = `${window.location.origin}/crebit/payment/callback`;

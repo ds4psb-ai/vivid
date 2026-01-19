@@ -17,12 +17,24 @@ function PaymentCallbackContent() {
             // Get callback parameters
             const authResultCode = searchParams.get("authResultCode");
             const tid = searchParams.get("tid");
-            const orderId = searchParams.get("orderId");
-            const amount = searchParams.get("amount");
+            const orderId = searchParams.get("orderId") ?? searchParams.get("moid");
+            const amount = searchParams.get("amount") ?? searchParams.get("amt");
+            const authToken = searchParams.get("authToken");
+            const signature = searchParams.get("signature");
+            const clientId =
+                searchParams.get("clientId") ??
+                searchParams.get("mid") ??
+                searchParams.get("MID");
 
             if (!authResultCode || !tid || !orderId || !amount) {
                 setStatus("failed");
                 setMessage("결제 정보가 누락되었습니다.");
+                return;
+            }
+
+            if (!authToken || !signature || !clientId) {
+                setStatus("failed");
+                setMessage("결제 서명 정보가 누락되었습니다.");
                 return;
             }
 
@@ -33,14 +45,23 @@ function PaymentCallbackContent() {
             }
 
             try {
+                const confirmTokenKey = `crebit_confirm_token:${orderId}`;
+                const confirmToken = localStorage.getItem(confirmTokenKey) || undefined;
+
                 // Call backend to confirm payment
                 const result = await api.confirmPayment({
                     tid,
                     amount: parseInt(amount),
+                    amount_raw: amount,
                     application_id: orderId,
+                    auth_token: authToken,
+                    signature,
+                    client_id: clientId,
+                    confirm_token: confirmToken,
                 });
 
                 if (result.success) {
+                    localStorage.removeItem(confirmTokenKey);
                     setStatus("success");
                     setMessage("결제가 완료되었습니다!");
                 } else {

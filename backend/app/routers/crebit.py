@@ -9,9 +9,14 @@ from pydantic import BaseModel, ConfigDict
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.dependencies import require_admin
+from app.dependencies import get_current_user_optional, require_admin
 from app.database import get_db
 from app.models import CrebitApplication
+from app.services.crebit_payment_security import (
+    generate_confirm_token,
+    get_confirm_token_expiry,
+    hash_confirm_token,
+)
 
 router = APIRouter(prefix="/crebit", tags=["crebit"])
 logger = logging.getLogger("crebit")
@@ -39,6 +44,11 @@ class ApplicationResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ApplicationCreateResponse(ApplicationResponse):
+    confirm_token: Optional[str] = None
+    confirm_token_expires_at: Optional[datetime] = None
 
 
 class ApplicationDetail(ApplicationResponse):
@@ -75,17 +85,18 @@ class StatsResponse(BaseModel):
 # Endpoints
 # ─────────────────────────────────────────────────────────────────────────────
 
-@router.post("/apply", response_model=ApplicationResponse)
+@router.post("/apply", response_model=ApplicationCreateResponse)
 async def apply(
     data: ApplicationCreate,
     db: AsyncSession = Depends(get_db),
+    user: Optional[dict] = Depends(get_current_user_optional),
 ):
     """Submit a new Crebit ATC application."""
     # Validate track
     if data.track not in ("A", "B"):
         raise HTTPException(status_code=400, detail="Track must be 'A' or 'B'")
     
-    # Create application
+    confirm_token = generate_confirm_token()
     application = CrebitApplication(
         name=data.name,
         email=data.email,
@@ -93,12 +104,21 @@ async def apply(
         track=data.track,
         status="pending",
         cohort="1기",
+        owner_id=user.get("user_id") if user else None,
+        confirm_token_hash=hash_confirm_token(confirm_token),
+        confirm_token_expires_at=get_confirm_token_expiry(),
     )
     db.add(application)
     await db.commit()
     await db.refresh(application)
-    
-    return application
+
+    response = ApplicationCreateResponse.model_validate(application, from_attributes=True)
+    return response.model_copy(
+        update={
+            "confirm_token": confirm_token,
+            "confirm_token_expires_at": application.confirm_token_expires_at,
+        }
+    )
 
 
 @router.get("/applications", response_model=ApplicationListResponse)
