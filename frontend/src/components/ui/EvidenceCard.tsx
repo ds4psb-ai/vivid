@@ -170,6 +170,8 @@ export function EvidenceCard({
   const [isExpanded, setIsExpanded] = useState(!isCollapsible);
   const isEvidenceOnly = variant === "evidence";
   const [traceQuery, setTraceQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [minConfidence, setMinConfidence] = useState(0);
 
   // Parse reason codes into display format
   const reasonLabels = useMemo(() => {
@@ -189,20 +191,48 @@ export function EvidenceCard({
   }, [evidenceRefs]);
 
   const normalizedQuery = traceQuery.trim().toLowerCase();
-  const filteredTrace = useMemo(() => {
-    if (!normalizedQuery) return workflowTrace;
-    return workflowTrace.filter((trace) => {
-      const haystack = [
-        trace.ref,
-        trace.source,
-        trace.status ?? "",
-        trace.confidence !== null ? String(trace.confidence) : "",
-      ]
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(normalizedQuery);
+  const statusOptions = useMemo(() => {
+    const statuses = new Set<string>();
+    workflowTrace.forEach((trace) => {
+      if (trace.status) {
+        statuses.add(trace.status.toLowerCase());
+      } else {
+        statuses.add("unknown");
+      }
     });
-  }, [workflowTrace, normalizedQuery]);
+    return Array.from(statuses);
+  }, [workflowTrace]);
+
+  const filteredTrace = useMemo(() => {
+    let list = workflowTrace;
+
+    if (normalizedQuery) {
+      list = list.filter((trace) => {
+        const haystack = [
+          trace.ref,
+          trace.source,
+          trace.status ?? "",
+          trace.confidence !== null ? String(trace.confidence) : "",
+        ]
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(normalizedQuery);
+      });
+    }
+
+    if (statusFilter !== "all") {
+      list = list.filter((trace) => {
+        const statusValue = trace.status ? trace.status.toLowerCase() : "unknown";
+        return statusValue === statusFilter;
+      });
+    }
+
+    if (minConfidence > 0) {
+      list = list.filter((trace) => (trace.confidence ?? 0) >= minConfidence / 100);
+    }
+
+    return list;
+  }, [workflowTrace, normalizedQuery, statusFilter, minConfidence]);
   const traceVisible = useMemo(() => filteredTrace.slice(0, 6), [filteredTrace]);
   const traceHiddenCount = Math.max(filteredTrace.length - traceVisible.length, 0);
 
@@ -218,6 +248,9 @@ export function EvidenceCard({
       evidenceTraceTitle: t("evidenceTraceTitle"),
       evidenceTraceFilterPlaceholder: t("evidenceTraceFilterPlaceholder"),
       evidenceTraceEmpty: t("evidenceTraceEmpty"),
+      evidenceTraceMinConfidence: t("evidenceTraceMinConfidence"),
+      traceFilterAll: t("traceFilterAll"),
+      traceFilterUnknown: t("traceFilterUnknown"),
     }),
     [t, language]
   );
@@ -375,6 +408,47 @@ export function EvidenceCard({
                       className="border-0 bg-transparent text-[11px] focus-visible:ring-0"
                     />
                   </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter("all")}
+                      className={cn(
+                        "text-[10px] px-2 py-0.5 rounded-full border",
+                        statusFilter === "all"
+                          ? "bg-violet-500/10 border-violet-400 text-violet-500"
+                          : "border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400"
+                      )}
+                    >
+                      {labels.traceFilterAll}
+                    </button>
+                    {statusOptions.map((status) => (
+                      <button
+                        key={status}
+                        type="button"
+                        onClick={() => setStatusFilter(status)}
+                        className={cn(
+                          "text-[10px] px-2 py-0.5 rounded-full border uppercase",
+                          statusFilter === status
+                            ? "bg-violet-500/10 border-violet-400 text-violet-500"
+                            : "border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400"
+                        )}
+                      >
+                        {getStatusLabel(status, t, labels.traceFilterUnknown)}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-3 text-[10px] text-slate-500 dark:text-slate-400">
+                    <span>{labels.evidenceTraceMinConfidence}</span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={minConfidence}
+                      onChange={(event) => setMinConfidence(Number(event.target.value))}
+                      className="flex-1 accent-violet-500"
+                    />
+                    <span className="tabular-nums">{minConfidence}%</span>
+                  </div>
                   {filteredTrace.length === 0 ? (
                     <div className="text-[11px] text-slate-400">
                       {labels.evidenceTraceEmpty}
@@ -472,6 +546,29 @@ function getEvidenceIcon(type: string) {
       return <Sparkles className="w-3 h-3 shrink-0 mt-0.5" />;
     default:
       return <FileText className="w-3 h-3 shrink-0 mt-0.5" />;
+  }
+}
+
+function getStatusLabel(
+  status: string,
+  t: (key: string) => string,
+  unknownLabel: string
+) {
+  switch (status) {
+    case "completed":
+      return t("statusCompleted");
+    case "failed":
+      return t("statusFailed");
+    case "running":
+      return t("statusRunning");
+    case "pending":
+      return t("statusPending");
+    case "cancelled":
+      return t("statusCancelled");
+    case "unknown":
+      return unknownLabel;
+    default:
+      return status.toUpperCase();
   }
 }
 
