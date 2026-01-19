@@ -470,34 +470,48 @@ export default function IPDetailClient({ slug }: IPDetailClientProps) {
                       )}
 
                       {!recLoading && recResponse && recommendations.length > 0 && (
-                        <>
-                          <EvidenceCard
-                            confidenceLevel={recommendations[0]?.confidence_level || "medium"}
-                            confidence={recommendations[0]?.confidence}
-                            reasonCodes={recommendations[0]?.reason_codes || []}
-                            evidenceRefs={recommendations[0]?.evidence_refs || []}
-                            reasonSummary={recResponse.reason_summary}
-                            isCollapsible={true}
-                          />
-                          {recommendations.length > 1 && (
-                            <div className="mt-3 grid gap-2">
-                              {recommendations.slice(1).map((rec) => (
-                                <ToolRecommendationCard
-                                  key={rec.tool_id}
-                                  toolId={rec.tool_id}
-                                  displayName={rec.display_name}
-                                  dimension={rec.dimension}
-                                  confidence={rec.confidence}
-                                  confidenceLevel={rec.confidence_level}
-                                  reasonCodes={rec.reason_codes}
-                                  estimatedCredits={rec.estimated_credits}
-                                  ipId={ip?.id}
-                                  summary={rec.description}
-                                />
-                              ))}
+                        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)]">
+                          <div className="space-y-2">
+                            <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                              {t("topRecommendationTitle")}
                             </div>
-                          )}
-                        </>
+                            <EvidenceCard
+                              confidenceLevel={recommendations[0]?.confidence_level || "medium"}
+                              confidence={recommendations[0]?.confidence}
+                              reasonCodes={recommendations[0]?.reason_codes || []}
+                              evidenceRefs={recommendations[0]?.evidence_refs || []}
+                              reasonSummary={recResponse.reason_summary}
+                              isCollapsible={true}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                              {t("alternativeRecommendations")}
+                            </div>
+                            {recommendations.length > 1 ? (
+                              <div className="grid gap-2">
+                                {recommendations.slice(1).map((rec) => (
+                                  <ToolRecommendationCard
+                                    key={rec.tool_id}
+                                    toolId={rec.tool_id}
+                                    displayName={rec.display_name}
+                                    dimension={rec.dimension}
+                                    confidence={rec.confidence}
+                                    confidenceLevel={rec.confidence_level}
+                                    reasonCodes={rec.reason_codes}
+                                    estimatedCredits={rec.estimated_credits}
+                                    ipId={ip?.id}
+                                    summary={rec.description}
+                                  />
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="text-xs text-slate-400">
+                                {t("noAlternativeRecommendations")}
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       )}
                     </div>
                   )}
