@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import String, Boolean, DateTime, ForeignKey, Integer, Text, Index
+from sqlalchemy import String, Boolean, DateTime, ForeignKey, Integer, Text, Index, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -98,6 +98,8 @@ class IPWorkflowPreset(Base):
     # Workflow configuration (Sealed - not exposed to UI)
     workflow_steps: Mapped[list] = mapped_column(JSONB, default=list)  # [{"step": "story", "capsule": "..."}]
     default_params: Mapped[dict] = mapped_column(JSONB, default=dict)  # default generation params
+    workflow_capsule_id: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)
+    pattern_version: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
 
     # Cost estimation
     estimated_credits: Mapped[int] = mapped_column(Integer, default=10)
@@ -275,10 +277,17 @@ class IPPayoutLedger(Base):
         Index("ix_ip_payout_ledger_creator_id", "creator_id"),
         Index("ix_ip_payout_ledger_status", "status"),
         Index("ix_ip_payout_ledger_holdback_until", "holdback_until"),
+        Index("ix_ip_payout_ledger_generation_id", "generation_id"),
+        UniqueConstraint("generation_id", name="uq_ip_payout_ledger_generation_id"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     ip_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("ip_catalog.id"), nullable=False)
+    generation_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("ip_generations.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     creator_id: Mapped[str] = mapped_column(String(160), nullable=False)
 
     gross_amount: Mapped[int] = mapped_column(Integer, default=0)

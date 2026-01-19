@@ -16,11 +16,33 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth import require_user_id
 from app.database import get_db
 from app.dependencies import get_current_user, require_admin
+from app.models import OpsActionLog
 from app.models_ip import IPPayoutLedger, IPPayoutDispute
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["ip-payout"])
+
+
+def record_ops_action(
+    db: AsyncSession,
+    action_type: str,
+    status: str,
+    actor_id: str,
+    note: Optional[str] = None,
+    payload: Optional[dict] = None,
+    stats: Optional[dict] = None,
+) -> None:
+    db.add(
+        OpsActionLog(
+            action_type=action_type,
+            status=status,
+            note=note,
+            payload=payload or {},
+            stats=stats or {},
+            actor_id=actor_id,
+        )
+    )
 
 
 class PayoutDisputeRequest(BaseModel):
@@ -191,6 +213,17 @@ async def admin_holdback_payout(
     ledger.holdback_until = payload.holdback_until or ledger.holdback_until or datetime.utcnow()
     ledger.updated_at = datetime.utcnow()
 
+    record_ops_action(
+        db=db,
+        action_type="ip_payout_holdback",
+        status=ledger.status,
+        actor_id=admin_user["id"],
+        payload={
+            "ledger_id": str(ledger.id),
+            "holdback_until": ledger.holdback_until.isoformat() if ledger.holdback_until else None,
+        },
+    )
+
     return PayoutLedgerResponse(
         id=str(ledger.id),
         ip_id=str(ledger.ip_id),
@@ -231,6 +264,17 @@ async def admin_release_payout(
     ledger.status = "released"
     ledger.holdback_until = ledger.holdback_until or now
     ledger.updated_at = now
+
+    record_ops_action(
+        db=db,
+        action_type="ip_payout_release",
+        status=ledger.status,
+        actor_id=admin_user["id"],
+        payload={
+            "ledger_id": str(ledger.id),
+            "forced": force,
+        },
+    )
 
     return PayoutLedgerResponse(
         id=str(ledger.id),
@@ -317,6 +361,19 @@ async def resolve_payout_dispute(
         ledger.holdback_until = ledger.holdback_until or now
 
     ledger.updated_at = now
+
+    record_ops_action(
+        db=db,
+        action_type="ip_payout_dispute_resolve",
+        status=payload.status,
+        actor_id=admin_user["id"],
+        note=payload.admin_notes,
+        payload={
+            "dispute_id": str(dispute.id),
+            "ledger_id": str(ledger.id),
+            "ledger_status": ledger.status,
+        },
+    )
 
     return PayoutDisputeDetailResponse(
         id=str(dispute.id),

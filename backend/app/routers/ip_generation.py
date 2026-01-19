@@ -30,6 +30,7 @@ from app.database import get_db, AsyncSessionLocal
 from app.auth import require_user_id
 from app.models_ip import IPCatalog, IPWorkflowPreset, IPRights, IPGeneration
 from app.services.run_token_service import RunTokenService
+from app.services.ip_payout_service import ensure_payout_ledger
 from app.services.capsule_executor import execute_capsule, CapsuleExecutionResult
 
 logger = logging.getLogger(__name__)
@@ -81,6 +82,11 @@ async def execute_generation_workflow(
                 select(IPCatalog).where(IPCatalog.id == generation.ip_id)
             )
             ip = ip_result.scalar_one_or_none()
+
+            rights_result = await db.execute(
+                select(IPRights).where(IPRights.ip_id == generation.ip_id)
+            )
+            rights = rights_result.scalar_one_or_none()
 
             # Update status
             generation.status = "running"
@@ -137,6 +143,8 @@ async def execute_generation_workflow(
                 )
                 if not success:
                     logger.warning(f"Failed to deduct credits: {error}")
+                else:
+                    await ensure_payout_ledger(db, generation, rights)
 
                 logger.info(f"Generation completed: {generation_id}, latency={latency_ms}ms")
             else:
