@@ -1,39 +1,37 @@
-"""Telemetry package for LLM observability (Phase 5.5).
+"""
+OpenTelemetry Integration Module (2026 Best Practices)
+=====================================================
 
-Provides OpenTelemetry tracing, LLM metrics, and structured logging.
+Provides comprehensive distributed tracing, metrics, and logging
+following OpenTelemetry 2026 production standards.
 
 Usage:
-    from app.telemetry import setup_telemetry, get_tracer, get_llm_metrics
+    from app.telemetry import setup_opentelemetry, get_tracer, get_meter
 
-    # Setup at app startup
-    setup_telemetry(service_name="vivid-backend")
+    # In main.py lifespan
+    setup_opentelemetry(app, db_engine)
 
-    # Create spans
-    tracer = get_tracer()
-    with tracer.start_as_current_span("llm_call") as span:
-        span.set_attribute("model", "gemini-2.0-flash")
-        result = await call_llm()
-
-    # Record metrics
-    metrics = get_llm_metrics()
-    metrics.record_tokens(input_tokens=100, output_tokens=50)
+    # In service code
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("my_operation") as span:
+        span.set_attribute("user.id", user_id)
+        result = await do_work()
 """
+
 from app.telemetry.otel_setup import (
+    setup_opentelemetry,
     get_tracer,
     get_meter,
-    setup_telemetry,
-    shutdown_telemetry,
-)
-from app.telemetry.llm_metrics import (
-    LLMMetrics,
-    get_llm_metrics,
+    create_span,
+    record_exception,
+    add_span_attributes,
 )
 
 __all__ = [
-    "setup_telemetry",
-    "shutdown_telemetry",
+    "setup_opentelemetry",
     "get_tracer",
     "get_meter",
-    "LLMMetrics",
-    "get_llm_metrics",
+    "create_span",
+    "record_exception",
+    "add_span_attributes",
 ]
