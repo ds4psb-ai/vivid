@@ -10,7 +10,7 @@
  * - Role-Based Views (Client vs Creator)
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -115,7 +115,7 @@ export default function RequestDetailPage() {
     // Data Fetching
     // -------------------------------------------------------------------------
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         setLoading(true);
         setMsg(null);
         try {
@@ -161,11 +161,11 @@ export default function RequestDetailPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [requestId]);
 
     useEffect(() => {
         if (requestId) fetchData();
-    }, [requestId]);
+    }, [requestId, fetchData]);
 
     // -------------------------------------------------------------------------
     // Action Handlers

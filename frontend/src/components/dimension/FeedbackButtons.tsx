@@ -40,7 +40,7 @@ export interface FeedbackButtonsProps {
 }
 
 export default function FeedbackButtons({
-    responseId,
+    responseId: _responseId,
     onFeedback,
     showRating = false,
     showComment = false,

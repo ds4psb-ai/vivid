@@ -68,11 +68,6 @@ export function ThreeWayComparisonWrapper({
   const { selectThreeWay, isSubmitting } = useUQSLFeedback();
   const [selectionMade, setSelectionMade] = useState(false);
 
-  // Validate candidates structure
-  if (!candidates || !candidates.a || !candidates.b || !candidates.ab) {
-    return null;
-  }
-
   // Map themeColor to ThreeWayComparison supported color
   const mappedThemeColor = THEME_COLOR_MAP[token.themeColor] || "violet";
 
@@ -97,6 +92,11 @@ export function ThreeWayComparisonWrapper({
     },
     [onSelect, comparisonId, selectionMade, selectThreeWay, onSelectionSubmitted]
   );
+
+  // Validate candidates structure
+  if (!candidates || !candidates.a || !candidates.b || !candidates.ab) {
+    return null;
+  }
 
   return (
     <div className={`mt-4 ${className}`}>

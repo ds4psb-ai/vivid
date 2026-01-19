@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 
 // Simple throttle implementation
 function throttle<T extends (...args: Parameters<T>) => void>(

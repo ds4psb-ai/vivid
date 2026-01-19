@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import TeachingPanelLayout, {
     type ThemeColor,
     useAsyncOperation,
@@ -99,7 +99,7 @@ export default function ReferenceDecoderPanel() {
     // Analyze handler
     const MAX_DESCRIPTION_LENGTH = 3000;
 
-    const handleAnalyze = useCallback(async () => {
+    const handleAnalyze = async () => {
         const trimmedDescription = description.trim();
         if (!trimmedDescription) {
             setValidationError("영상 설명을 입력해주세요");
@@ -125,13 +125,13 @@ export default function ReferenceDecoderPanel() {
             { video_description: description, focus_areas: focusAreas, model },
             getBYOKHeaders(byokKey)
         );
-    }, [description, focusAreas, model, byokKey, creditCtx, execute]);
+    };
 
     // Export result as JSON
-    const handleExportJson = useCallback(() => {
+    const handleExportJson = () => {
         if (!result?.output) return;
         exportJSON(result.output, `reference-analysis-${Date.now()}.json`);
-    }, [result?.output, exportJSON]);
+    };
 
     // Extracted result data for display
     const displayResult = result?.success ? result.output : null;

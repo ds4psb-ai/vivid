@@ -34,7 +34,7 @@ const DIMENSION_CODE = "sound" as const;
 const DIMENSION_KEY = "sound-crafter";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
-const MAX_CONCEPT_LENGTH = 2000;
+const _MAX_CONCEPT_LENGTH = 2000;
 
 // --- Interfaces ---
 
@@ -180,7 +180,7 @@ export default function SoundCrafterPanel() {
         }
     };
 
-    const handleGenerateMood = useCallback(async () => {
+    const handleGenerateMood = async () => {
         const trimmed = concept.trim();
         if (trimmed.length < 5) {
             setValidationError("컨셉을 5자 이상 입력해주세요.");
@@ -200,14 +200,14 @@ export default function SoundCrafterPanel() {
             { concept: trimmed, model: "gemini-3-pro-preview" },
             getBYOKHeaders(byokKey)
         );
-    }, [concept, byokKey, creditCtx, moodOp]);
+    };
 
     const handleSelectDirection = (direction: AudioDirection) => {
         setSelectedDirection(direction);
         setCurrentStage("layers");
     };
 
-    const handleGenerateFinal = useCallback(async () => {
+    const handleGenerateFinal = async () => {
         if (!selectedDirection) return;
 
         // Credit check
@@ -229,7 +229,7 @@ export default function SoundCrafterPanel() {
             },
             getBYOKHeaders(byokKey)
         );
-    }, [concept, selectedDirection, mixRecipe, byokKey, creditCtx, craftOp]);
+    };
 
     const handleCopy = useCallback(async (text: string, field: string) => {
         const success = await copyToClipboard(text);

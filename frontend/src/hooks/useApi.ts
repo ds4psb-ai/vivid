@@ -15,7 +15,7 @@ export interface UseApiOptions {
     /** Skip initial fetch */
     skip?: boolean;
     /** Dependencies that trigger refetch */
-    deps?: any[];
+    deps?: unknown[];
 }
 
 export interface UseApiResult<T> {
@@ -73,7 +73,7 @@ export function useApi<T>(
  * const { mutate, loading, error } = useMutation<Response>("/api/v1/users", "POST");
  * await mutate({ name: "John" });
  */
-export function useMutation<T, B = any>(
+export function useMutation<T, B = unknown>(
     endpoint: string,
     method: "POST" | "PUT" | "DELETE" = "POST"
 ) {

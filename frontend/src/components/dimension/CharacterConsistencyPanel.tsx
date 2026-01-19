@@ -30,15 +30,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   Plus,
@@ -187,12 +182,9 @@ interface CharacterCardProps {
   onEdit?: () => void;
   onDelete?: () => void;
   selected?: boolean;
-  labels: {
-    primary: string;
-  };
 }
 
-function CharacterCard({ character, onSelect, onEdit, onDelete, selected, labels }: CharacterCardProps) {
+function CharacterCard({ character, onSelect, onEdit, onDelete, selected }: CharacterCardProps) {
   return (
     <div
       className={cn(
@@ -493,7 +485,7 @@ interface CharacterConsistencyPanelProps {
 }
 
 export default function CharacterConsistencyPanel({
-  projectId,
+  projectId: _projectId,
   onSelectCharacter,
 }: CharacterConsistencyPanelProps) {
   const { language } = useLanguage();
@@ -718,7 +710,6 @@ export default function CharacterConsistencyPanel({
                 onSelect={handleSelectCharacter}
                 onEdit={() => handleSelectCharacter(character)}
                 onDelete={() => handleDeleteCharacter(character.id)}
-                labels={{ primary: labels.primary }}
               />
             ))}
           </div>
@@ -883,11 +874,13 @@ export default function CharacterConsistencyPanel({
               <Label>{labels.referenceImage}</Label>
               <div className="border-2 border-dashed border-[var(--border-muted)] rounded-lg p-4 text-center">
                 {uploadedImage ? (
-                  <div className="relative">
-                    <img
+                  <div className="relative mx-auto h-48 w-full max-w-sm">
+                    <Image
                       src={uploadedImage}
                       alt="Preview"
-                      className="max-h-48 mx-auto rounded"
+                      fill
+                      sizes="(max-width: 640px) 100vw, 384px"
+                      className="object-contain rounded"
                     />
                     <Button
                       variant="ghost"

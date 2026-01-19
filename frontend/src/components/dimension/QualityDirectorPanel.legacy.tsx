@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import TeachingPanelLayout, {
     type ThemeColor,
     useAsyncOperation,
@@ -110,7 +110,7 @@ export default function QualityDirectorPanel() {
 
     const MAX_CONTENT_LENGTH = 5000;
 
-    const handleCheck = useCallback(async () => {
+    const handleCheck = async () => {
         const trimmedContent = content.trim();
         if (!trimmedContent) {
             setValidationError("검수할 콘텐츠를 입력해주세요");
@@ -142,13 +142,13 @@ export default function QualityDirectorPanel() {
             },
             getBYOKHeaders(byokKey)
         );
-    }, [content, contentType, selectedCriteria, model, threshold, byokKey, creditCtx, execute]);
+    };
 
     // Export result as JSON
-    const handleExportJson = useCallback(() => {
+    const handleExportJson = () => {
         if (!result?.output) return;
         exportJSON(result.output, `quality-check-${Date.now()}.json`);
-    }, [result?.output, exportJSON]);
+    };
 
     // Extracted result data for display
     const displayResult = result?.success ? result.output : null;

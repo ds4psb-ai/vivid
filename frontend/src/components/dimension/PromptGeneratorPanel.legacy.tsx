@@ -117,7 +117,7 @@ export default function PromptGeneratorPanel() {
     // Generate prompt
     const MAX_TOPIC_LENGTH = 500;
 
-    const handleGenerate = useCallback(async () => {
+    const handleGenerate = async () => {
         const trimmedTopic = topic.trim();
         if (!trimmedTopic) {
             setValidationError("주제를 입력해주세요");
@@ -139,7 +139,7 @@ export default function PromptGeneratorPanel() {
             { topic, style, mood, duration, language, model },
             getBYOKHeaders(byokKey)
         );
-    }, [topic, style, mood, duration, language, model, byokKey, creditCtx, execute]);
+    };
 
     // Copy handler using useResultExport
     const handleCopy = useCallback(
@@ -150,15 +150,15 @@ export default function PromptGeneratorPanel() {
     );
 
     // Export result as JSON
-    const handleExportJSON = useCallback(() => {
+    const handleExportJSON = () => {
         if (result?.output) {
             exportJSON(result.output, `veo-prompt-${Date.now()}.json`);
         }
-    }, [result?.output, exportJSON]);
+    };
 
     // Extracted result data for display
     const displayResult = result?.success ? result.output : null;
-    const displayError = validationError || (result && !result.success ? result.error : error);
+    const _displayError = validationError || (result && !result.success ? result.error : error);
 
     const SidebarContent = (
         <>

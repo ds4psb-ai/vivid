@@ -56,9 +56,9 @@ test.describe("Core Web Vitals", () => {
 
         new PerformanceObserver((entryList) => {
           for (const entry of entryList.getEntries()) {
-            // @ts-ignore - LayoutShift has value property
+            // @ts-expect-error - LayoutShift has value property
             if (!entry.hadRecentInput) {
-              // @ts-ignore
+              // @ts-expect-error - LayoutShift has value property
               clsValue += entry.value;
             }
           }
@@ -173,7 +173,7 @@ test.describe("Image Optimization", () => {
     await page.goto("/dimension");
 
     // Check for Next.js optimized images
-    const nextImages = await page.locator('img[src*="/_next/image"]').count();
+    const _nextImages = await page.locator('img[src*="/_next/image"]').count();
     const allImages = await page.locator("img").count();
 
     // If there are images, most should be optimized
@@ -196,9 +196,9 @@ test.describe("Memory Usage", () => {
 
       // Get JS heap size (Chrome only)
       const metrics = await page.evaluate(() => {
-        // @ts-ignore - performance.memory is Chrome-specific
+        // @ts-expect-error - performance.memory is Chrome-specific
         if (performance.memory) {
-          // @ts-ignore
+          // @ts-expect-error - performance.memory is Chrome-specific
           return performance.memory.usedJSHeapSize;
         }
         return 0;

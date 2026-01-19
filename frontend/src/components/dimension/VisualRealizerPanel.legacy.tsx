@@ -106,7 +106,7 @@ export default function VisualRealizerPanel() {
     // Generate prompt
     const MAX_DESCRIPTION_LENGTH = 2000;
 
-    const handleGenerate = useCallback(async () => {
+    const handleGenerate = async () => {
         const trimmedDescription = description.trim();
         if (!trimmedDescription) {
             setValidationError("이미지 설명을 입력해주세요");
@@ -128,7 +128,7 @@ export default function VisualRealizerPanel() {
             { description, style, aspect_ratio: aspectRatio, model },
             getBYOKHeaders(byokKey)
         );
-    }, [description, style, aspectRatio, model, byokKey, creditCtx, execute]);
+    };
 
     // Copy handler using useResultExport
     const handleCopy = useCallback(
@@ -139,11 +139,11 @@ export default function VisualRealizerPanel() {
     );
 
     // Export result as JSON
-    const handleExportJSON = useCallback(() => {
+    const handleExportJSON = () => {
         if (result?.output) {
             exportJSON(result.output, `image-prompt-${Date.now()}.json`);
         }
-    }, [result?.output, exportJSON]);
+    };
 
     // Extracted result data for display
     const displayResult = result?.success ? result.output : null;

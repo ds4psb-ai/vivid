@@ -100,7 +100,7 @@ function QualityDirectorContent() {
     "consistency",
     "safety",
   ]);
-  const [files, setFiles] = useState<File[]>([]);
+  const [_files, setFiles] = useState<File[]>([]);
   const [model, setModel] = useState("gemini-3-pro-preview");
   const [threshold, setThreshold] = useState(70);
   const [showCreditModal, setShowCreditModal] = useState(false);

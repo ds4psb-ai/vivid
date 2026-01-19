@@ -33,9 +33,9 @@ import {
   type DimensionStage,
   type DimensionItemData,
   DIMENSION_ITEMS,
+  DIMENSION_ICONS,
   WORKFLOW_STAGES,
   ROUTE_KEYS,
-  getDimensionIcon,
 } from "@/lib/dimension-data";
 
 // Stage color mappings for toggle buttons
@@ -52,6 +52,17 @@ const SUCCESS_TONE = {
   border: "border-[var(--success)]/30",
   text: "text-[var(--success)]",
 };
+
+function DimensionIcon({
+  iconName,
+  className,
+}: {
+  iconName: DimensionItemData["iconName"];
+  className?: string;
+}) {
+  const Icon = DIMENSION_ICONS[iconName] ?? Link2;
+  return <Icon className={className} aria-hidden="true" />;
+}
 
 export default function DimensionHubClient() {
   const { language } = useLanguage();
@@ -333,7 +344,6 @@ function DimensionCard({
   hasData,
   language,
 }: DimensionCardProps) {
-  const Icon = getDimensionIcon(dimension.iconName);
   const stageInfo = WORKFLOW_STAGES[dimension.stage];
   const token = getDimensionToken(dimension.dimensionCode);
   const toneKey = token.tailwindKey;
@@ -406,7 +416,10 @@ function DimensionCard({
               </h2>
             </div>
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface-2)] border border-[var(--border-subtle)] backdrop-blur-md transition-all duration-500 group-hover:scale-110 group-hover:bg-[var(--surface-1)]">
-              <Icon className={`h-4 w-4 ${textColor}`} aria-hidden="true" />
+              <DimensionIcon
+                iconName={dimension.iconName}
+                className={`h-4 w-4 ${textColor}`}
+              />
             </div>
           </div>
 

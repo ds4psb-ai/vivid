@@ -12,7 +12,7 @@
  * - Dismissible option
  */
 
-import { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { AlertCircle, X } from "lucide-react";
 import type { ZodErrorTree } from "@/lib/schemas/validated-fetch";
 
@@ -82,16 +82,36 @@ export function ValidationError({
   onDismiss,
   variant = "inline",
 }: ValidationErrorProps) {
+  const resetKey = useMemo(
+    () => (errors ? JSON.stringify(errors) : "no-errors"),
+    [errors]
+  );
+
+  if (!errors) return null;
+
+  return (
+    <ValidationErrorBody
+      key={resetKey}
+      errors={errors}
+      field={field}
+      className={className}
+      dismissible={dismissible}
+      onDismiss={onDismiss}
+      variant={variant}
+    />
+  );
+}
+
+function ValidationErrorBody({
+  errors,
+  field,
+  className,
+  dismissible,
+  onDismiss,
+  variant,
+}: ValidationErrorProps) {
   const [isVisible, setIsVisible] = useState(true);
-
-  // Reset visibility when errors change
-  useEffect(() => {
-    if (errors) {
-      setIsVisible(true);
-    }
-  }, [errors]);
-
-  if (!errors || !isVisible) return null;
+  if (!isVisible) return null;
 
   const errorMessages = field
     ? getFieldErrors(errors, field)

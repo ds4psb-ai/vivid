@@ -14,7 +14,7 @@
  * - Error handling with retry
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -349,7 +349,7 @@ export default function ToolDashboardPage() {
         toolCount: (count: number) => language === "ko" ? `${count}개 도구` : `${count} tool${count !== 1 ? "s" : ""}`,
     };
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
@@ -364,11 +364,11 @@ export default function ToolDashboardPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [language, tierFilter]);
 
     useEffect(() => {
         fetchData();
-    }, [tierFilter]);
+    }, [fetchData]);
 
     const handleCreateClick = () => {
         router.push("/tools/create");

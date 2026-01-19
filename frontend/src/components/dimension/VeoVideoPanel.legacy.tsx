@@ -107,7 +107,7 @@ export default function VeoVideoPanel() {
     // Generate video using SSE streaming
     const MAX_PROMPT_LENGTH = 2000;
 
-    const handleGenerate = useCallback(async () => {
+    const handleGenerate = async () => {
         // Validation
         const trimmedPrompt = prompt.trim();
         if (!trimmedPrompt) {
@@ -143,21 +143,10 @@ export default function VeoVideoPanel() {
             },
             getBYOKHeaders(byokKey)
         );
-    }, [
-        prompt,
-        negativePrompt,
-        aspectRatio,
-        duration,
-        style,
-        seed,
-        useRandomSeed,
-        byokKey,
-        creditCtx,
-        executeStream,
-    ]);
+    };
 
     // Download video
-    const handleDownload = useCallback(async () => {
+    const handleDownload = async () => {
         if (!result?.video_url) return;
 
         try {
@@ -175,7 +164,7 @@ export default function VeoVideoPanel() {
             a.click();
             document.body.removeChild(a);
         }
-    }, [result?.video_url, downloadFile]);
+    };
 
     // Copy prompt to clipboard
     const handleCopyPrompt = useCallback(() => {

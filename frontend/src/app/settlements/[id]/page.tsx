@@ -16,12 +16,10 @@ import {
     ArrowLeft,
     DollarSign,
     Users,
-    GitFork,
     Clock,
     CheckCircle,
     AlertTriangle,
     XCircle,
-    ChevronRight,
     Loader2,
     PieChart,
     MessageSquare,
@@ -296,7 +294,7 @@ function PayoutsList({ payouts, labels }: { payouts: Payout[]; labels: ReturnTyp
             </div>
 
             <div className="space-y-3">
-                {payouts.map((payout, index) => (
+                {payouts.map((payout, _index) => (
                     <div
                         key={payout.id}
                         className="bg-gray-900/50 rounded-lg p-4 border border-gray-700/30"

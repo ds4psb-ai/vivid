@@ -26,7 +26,7 @@
  * - Invalid refs dropped with console.warn
  */
 
-import React, { useState, useEffect, useMemo, memo } from "react";
+import React, { useState, useMemo, memo } from "react";
 import { z } from "zod";
 
 // P6-2: Zod schema for EvidenceRef validation
@@ -151,19 +151,44 @@ function EvidenceDisplayInner({
 
     // Auto-collapse if confidence < 0.5
     const autoCollapse = confidence < 0.5;
-    const [expanded, setExpanded] = useState(defaultExpanded ?? !autoCollapse);
-    const [showAll, setShowAll] = useState(false);
 
-    // Reset expansion state when refs change
-    useEffect(() => {
-        setExpanded(defaultExpanded ?? !autoCollapse);
-        setShowAll(false);
-    }, [safeRefs, autoCollapse, defaultExpanded]);
+    const resetKey = useMemo(() => {
+        const ids = safeRefs.map((ref) => ref.ref_id).join("|");
+        return `${ids}:${autoCollapse}:${defaultExpanded ?? "auto"}:${maxVisible}`;
+    }, [safeRefs, autoCollapse, defaultExpanded, maxVisible]);
 
     // No refs = null (empty state handled by parent)
     if (safeRefs.length === 0) return null;
 
-    const theme = THEME_COLORS[themeColor] || THEME_COLORS.amber;
+    return (
+        <EvidenceDisplayBody
+            key={resetKey}
+            safeRefs={safeRefs}
+            themeColor={themeColor}
+            maxVisible={maxVisible}
+            autoCollapse={autoCollapse}
+            defaultExpanded={defaultExpanded}
+        />
+    );
+}
+
+function EvidenceDisplayBody({
+    safeRefs,
+    themeColor,
+    maxVisible,
+    autoCollapse,
+    defaultExpanded,
+}: {
+    safeRefs: EvidenceRef[];
+    themeColor?: EvidenceDisplayProps["themeColor"];
+    maxVisible: number;
+    autoCollapse: boolean;
+    defaultExpanded?: boolean;
+}) {
+    const [expanded, setExpanded] = useState(defaultExpanded ?? !autoCollapse);
+    const [showAll, setShowAll] = useState(false);
+
+    const theme = THEME_COLORS[themeColor ?? "amber"] || THEME_COLORS.amber;
     const visibleRefs = showAll ? safeRefs : safeRefs.slice(0, maxVisible);
     const hasMore = safeRefs.length > maxVisible;
 

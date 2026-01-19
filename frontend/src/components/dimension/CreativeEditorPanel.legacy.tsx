@@ -98,7 +98,7 @@ export default function CreativeEditorPanel() {
         },
     });
 
-    const handleRunEditor = useCallback(async () => {
+    const handleRunEditor = async () => {
         const trimmedContent = content.trim();
         if (!trimmedContent) {
             setValidationError("검토할 콘텐츠를 입력해주세요.");
@@ -122,7 +122,7 @@ export default function CreativeEditorPanel() {
             },
             getBYOKHeaders(byokKey)
         );
-    }, [content, context, persona, byokKey, creditCtx, execute]);
+    };
 
     const displayResult = result?.success ? result.output : null;
     const errorMsg = validationError || (result && !result.success ? result.error : error);
@@ -318,7 +318,7 @@ export default function CreativeEditorPanel() {
                             <div className="px-4 py-3 border-b border-emerald-500/20 bg-emerald-500/10 flex justify-between items-center">
                                 <span className="text-sm font-bold text-emerald-400 flex items-center gap-2">
                                     <Check className="w-4 h-4" />
-                                    수정본 (Editor's Cut)
+                                    수정본 (Editor&rsquo;s Cut)
                                 </span>
                             </div>
                             <div className="flex-1 p-6 overflow-y-auto whitespace-pre-wrap text-white leading-relaxed font-serif">

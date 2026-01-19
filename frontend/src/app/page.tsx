@@ -10,16 +10,13 @@
 import { Suspense, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Sparkles, Globe } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { TemplateRail, DimensionGrid, WorkflowCTA } from "@/components/home";
-import { useLanguage } from "@/contexts/LanguageContext";
 import { useSessionContext } from "@/contexts/SessionContext";
 
 function HomePageContent() {
   const router = useRouter();
-  const { language, setLanguage } = useLanguage();
   const { isAuthenticated, isLoading: isSessionLoading } = useSessionContext();
 
   // Authenticated users go to studio

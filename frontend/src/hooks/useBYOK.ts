@@ -7,7 +7,7 @@
  * Stored in localStorage, never sent to our servers.
  */
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 
 const STORAGE_KEY = "crebit:byok_gemini_key";
 
@@ -25,17 +25,11 @@ interface UseBYOKResult {
 }
 
 export function useBYOK(): UseBYOKResult {
-    const [byokKey, setByokKeyState] = useState<string | null>(null);
-    const [isInitialized, setIsInitialized] = useState(false);
-
-    // Load from localStorage on mount
-    useEffect(() => {
-        if (typeof window !== "undefined") {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            setByokKeyState(stored);
-            setIsInitialized(true);
-        }
-    }, []);
+    const [byokKey, setByokKeyState] = useState<string | null>(() => {
+        if (typeof window === "undefined") return null;
+        return localStorage.getItem(STORAGE_KEY);
+    });
+    const [isInitialized] = useState(() => typeof window !== "undefined");
 
     const setBYOKKey = useCallback((key: string | null) => {
         if (key && key.trim()) {

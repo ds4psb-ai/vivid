@@ -27,7 +27,7 @@ export default function InsufficientCreditsModal({
     currentBalance,
     onRetry,
 }: InsufficientCreditsModalProps) {
-    const { setBYOKKey, isBYOKEnabled } = useBYOK();
+    const { setBYOKKey } = useBYOK();
     const [showBYOKInput, setShowBYOKInput] = useState(false);
     const [byokInputValue, setBYOKInputValue] = useState("");
     const [isSaving, setIsSaving] = useState(false);

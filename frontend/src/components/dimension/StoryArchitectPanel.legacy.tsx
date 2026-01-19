@@ -13,7 +13,7 @@ import { useDimensionChainOptional, type ChainData } from "@/contexts/DimensionC
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import ChainDataInput from "./ChainDataInput";
 import NextDimensionNav from "./NextDimensionNav";
-import { Layers, ArrowRight, CheckCircle, AlertCircle, Download, Sparkles, BookOpen } from "lucide-react";
+import { Layers, ArrowRight, CheckCircle, Download, Sparkles, BookOpen } from "lucide-react";
 
 // const CREDIT_COST = 10; // REMOVED
 const THEME_COLOR: ThemeColor = "emerald";
@@ -176,7 +176,7 @@ export default function StoryArchitectPanel() {
 
     // Async operation hook for refine (returns angles)
     const {
-        isLoading: isRefineLoading,
+        isLoading: _isRefineLoading,
         execute: executeRefine,
     } = useAsyncOperation<{ success: boolean; output: StoryRefineResult; error?: string }>({
         onSuccess: (data) => {
@@ -215,7 +215,7 @@ export default function StoryArchitectPanel() {
         );
     }, [concept, genre, byokKey, executeRefine]);
 
-    const handleGenerate = useCallback(async () => {
+    const handleGenerate = async () => {
         if (!selectedAngle && stage !== "pitch") {
             // Fallback if no angle selected in blueprint mode
         }
@@ -260,13 +260,13 @@ export default function StoryArchitectPanel() {
                 setStage("script");
             }
         });
-    }, [concept, genre, duration, structure, personaData, referenceAnalysis, byokKey, creditCtx, execute, selectedAngle, stage]);
+    };
 
     // Export result as JSON
-    const handleExportJson = useCallback(() => {
+    const handleExportJson = () => {
         if (!result?.output) return;
         exportJSON(result.output, `story-architect-${Date.now()}.json`);
-    }, [result?.output, exportJSON]);
+    };
 
     // Extracted result data for display
     const displayResult = result?.success ? result.output : null;
@@ -464,7 +464,7 @@ export default function StoryArchitectPanel() {
                             <div className="w-20 h-20 rounded-full bg-emerald-500/10 flex items-center justify-center mb-6">
                                 <Sparkles className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />
                             </div>
-                            <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Writer's Room에 오신 것을 환영합니다</h3>
+                            <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Writer&apos;s Room에 오신 것을 환영합니다</h3>
                             <p className="text-slate-600 dark:text-white/60 max-w-md leading-relaxed">
                                 단순한 문장이 위대한 스토리로 발전하는 공간입니다.<br />
                                 먼저 떠오르는 영감을 좌측에 적어주세요.<br />

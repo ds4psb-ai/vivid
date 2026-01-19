@@ -6,7 +6,7 @@
  * View and manage assignments for creators.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -60,8 +60,9 @@ const STATUS_FILTERS = [
 function AssignmentCard({ assignment, onClick, language }: { assignment: Assignment; onClick: () => void; language: string }) {
     const config = STATUS_CONFIG[assignment.status] || STATUS_CONFIG.pending;
     const StatusIcon = config.icon;
+    const now = useMemo(() => new Date(), []);
     const daysLeft = assignment.agreed_deadline
-        ? Math.ceil((new Date(assignment.agreed_deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+        ? Math.ceil((new Date(assignment.agreed_deadline).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
         : null;
 
     return (
@@ -137,7 +138,7 @@ export default function AssignmentsPage() {
         count: (n: number) => language === "ko" ? `${n}개 과제` : `${n} assignment${n !== 1 ? "s" : ""}`,
     };
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
@@ -151,11 +152,11 @@ export default function AssignmentsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [statusFilter]);
 
     useEffect(() => {
         fetchData();
-    }, [statusFilter]);
+    }, [fetchData]);
 
     return (
         <AppShell showTopBar={false}>

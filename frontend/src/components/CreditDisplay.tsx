@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Coins, Plus, ChevronRight, Settings, Key, ChevronDown, X, Zap } from "lucide-react";
+import { Coins, Plus, ChevronRight, Settings, Key, ChevronDown, X } from "lucide-react";
 import { useCreditSystem } from "@/components/CreditGate";
 
 interface CreditDisplayProps {
@@ -11,7 +11,7 @@ interface CreditDisplayProps {
 }
 
 export function CreditDisplay({ isExpanded, onOpenSettings }: CreditDisplayProps) {
-    const { credits, isLoading, breakdown } = useCreditSystem();
+    const { credits, isLoading } = useCreditSystem();
 
     const isLowCredits = credits < 100;
 
@@ -85,7 +85,7 @@ interface ProfileSettingsPanelProps {
 }
 
 export function ProfileSettingsPanel({ isOpen, onClose }: ProfileSettingsPanelProps) {
-    const { credits, breakdown, byokKey, setBYOKKey, showChargeModal, refreshCredits } = useCreditSystem();
+    const { credits, breakdown, byokKey, setBYOKKey, showChargeModal } = useCreditSystem();
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [geminiKey, setGeminiKey] = useState(byokKey || "");
     const [isSaving, setIsSaving] = useState(false);

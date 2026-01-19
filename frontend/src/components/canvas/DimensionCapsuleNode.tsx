@@ -217,7 +217,7 @@ function TeachingCapsuleNodeBase({
         } finally {
             setIsExecuting(false);
         }
-    }, [capsuleKey, localInputs]);
+    }, [capsuleKey, data, id, localInputs]);
 
     // Render input field based on type
     const renderInputField = (

@@ -20,7 +20,7 @@
         try {
             // Prevent modification of console (anti-debugging bypass prevention)
             Object.freeze(console);
-        } catch (e) { /* Silent */ }
+        } catch { /* Silent */ }
     }
 
     // Prevent multiple initialization
@@ -376,6 +376,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         // Start anti-debugging checks
         detectDevTools();
+        detectDebugger();
 
         // Connect to platform
         Crebit.app.ready().then(function () {
@@ -385,17 +386,17 @@
                     // Silent fail
                 });
             }
-        }).catch(function (err) {
+        }).catch(function () {
             // Connection failed - app may work in limited mode
         });
     });
 
     // Global error handler (limited info to prevent data leakage)
-    window.addEventListener('error', function (event) {
+    window.addEventListener('error', function (_event) {
         Crebit.app.reportError('Runtime error');
     });
 
-    window.addEventListener('unhandledrejection', function (event) {
+    window.addEventListener('unhandledrejection', function (_event) {
         Crebit.app.reportError('Unhandled promise rejection');
     });
 

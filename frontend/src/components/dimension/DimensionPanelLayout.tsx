@@ -144,9 +144,9 @@ export default function TeachingPanelLayout({
     title,
     sidebarContent,
     children,
-    onBack,
+    onBack: _onBack,
     isLoading = false,
-    creditCost,
+    creditCost: _creditCost,
     themeColor = "amber",
     dimensionCode,
     // New progress props

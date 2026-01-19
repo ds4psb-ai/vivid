@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useState } from "react";
+import Image from "next/image";
 
 export function CrebitGuideBadge() {
     const [isHovered, setIsHovered] = useState(false);
@@ -45,17 +46,19 @@ export function CrebitGuideBadge() {
                 {/* Icon Container - Glassmorphic Circle */}
                 <div className="relative h-14 w-14 rounded-full border border-white/10 bg-white/5 backdrop-blur-md shadow-2xl flex items-center justify-center overflow-hidden transition-colors duration-300 group-hover:border-[var(--lusion-green)]/30 group-hover:bg-black/40">
                     {/* Crebit Rabbit Icon - Using Mask for localized color control of the JPEG if needed, but for now just fitting the image cleanly or using blend mode */}
-                    <div className="h-full w-full bg-black flex items-center justify-center">
+                    <div className="relative h-full w-full bg-black flex items-center justify-center">
                         {/* 
                    Ideally we use a transparent PNG/SVG. 
                    Since we have a JPG (crebit_logo.jpg), we use mix-blend-screen if it's black BG 
                    or just crop it circular. Assuming black background based on poster.
                 */}
-                        <img
+                        <Image
                             src="/images/crebit_logo.jpg"
                             alt="Crebit Guide"
-                            className="h-full w-full object-cover opacity-90 transition-opacity duration-300 group-hover:opacity-100"
-                            style={{ mixBlendMode: 'screen' }}
+                            fill
+                            sizes="56px"
+                            className="object-cover opacity-90 transition-opacity duration-300 group-hover:opacity-100"
+                            style={{ mixBlendMode: "screen" }}
                         />
                     </div>
                 </div>

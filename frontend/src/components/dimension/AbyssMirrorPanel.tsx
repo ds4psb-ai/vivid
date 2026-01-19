@@ -18,7 +18,7 @@
 import { useState, useCallback, useEffect, useRef, useTransition, useOptimistic, useMemo } from "react";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useResultExport } from "./DimensionPanelLayout";
-import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
+import { useBYOK } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -158,7 +158,7 @@ function AbyssMirrorContent() {
     bloodType: "",
     gender: "",
   });
-  const [files, setFiles] = useState<File[]>([]);
+  const [_files, setFiles] = useState<File[]>([]);
 
   // Chat state
   const [messages, setMessages] = useState<Message[]>([]);

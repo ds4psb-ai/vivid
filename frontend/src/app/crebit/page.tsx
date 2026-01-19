@@ -7,7 +7,7 @@
  * @see ai_video_course_design.md
  */
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -40,7 +40,6 @@ import { trackEvent, EVENTS } from "@/lib/analytics";
 import {
     SectionHeader,
     StatItem,
-    CurriculumBox,
 } from "./_components";
 
 // ============================================================================
@@ -235,27 +234,25 @@ const COLOR_CLASSES = {
 // ============================================================================
 
 function useCountdown(deadline: number): TimeLeft {
-    const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+    const calculateTimeLeft = useCallback((): TimeLeft => {
+        const now = Date.now();
+        const distance = deadline - now;
+
+        if (distance < 0) {
+            return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+        }
+
+        return {
+            days: Math.floor(distance / (1000 * 60 * 60 * 24)),
+            hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+            minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+            seconds: Math.floor((distance % (1000 * 60)) / 1000),
+        };
+    }, [deadline]);
+
+    const [timeLeft, setTimeLeft] = useState<TimeLeft>(() => calculateTimeLeft());
 
     useEffect(() => {
-        const calculateTimeLeft = () => {
-            const now = Date.now();
-            const distance = deadline - now;
-
-            if (distance < 0) {
-                return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-            }
-
-            return {
-                days: Math.floor(distance / (1000 * 60 * 60 * 24)),
-                hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-                minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
-                seconds: Math.floor((distance % (1000 * 60)) / 1000),
-            };
-        };
-
-        setTimeLeft(calculateTimeLeft());
-
         const interval = setInterval(() => {
             const newTimeLeft = calculateTimeLeft();
             setTimeLeft(newTimeLeft);
@@ -267,7 +264,7 @@ function useCountdown(deadline: number): TimeLeft {
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [deadline]);
+    }, [calculateTimeLeft]);
 
     return timeLeft;
 }
@@ -632,7 +629,7 @@ export default function AIVideoWorkflowMasterPage() {
                                     </h1>
                                     <p className="text-xl md:text-2xl lg:text-3xl font-light text-[var(--fg-muted)] 
                                                  tracking-tight max-w-4xl mx-auto leading-relaxed">
-                                        "매주 하나의 완성된 영상을 만들면서, AI 도구를 자연스럽게 체득합니다."
+                                        &ldquo;매주 하나의 완성된 영상을 만들면서, AI 도구를 자연스럽게 체득합니다.&rdquo;
                                     </p>
                                 </div>
 

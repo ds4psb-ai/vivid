@@ -18,7 +18,7 @@ interface NoLiveVersionWarningProps {
     onCreatePlaceholder: () => void;
 }
 
-export function NoLiveVersionWarning({ tool, onCreatePlaceholder }: NoLiveVersionWarningProps) {
+export function NoLiveVersionWarning({ tool: _tool, onCreatePlaceholder }: NoLiveVersionWarningProps) {
     return (
         <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-6 text-center">
             <AlertTriangle className="w-12 h-12 text-yellow-400 mx-auto mb-4" />

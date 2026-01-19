@@ -60,13 +60,9 @@ export function ABComparisonWrapper({
   sessionId,
   onSelectionSubmitted,
 }: ABComparisonWrapperProps) {
-  const { token, isLoading, hasResult } = useDimensionPanel();
+  const { token, isLoading } = useDimensionPanel();
   const { selectCandidate, isSubmitting } = useUQSLFeedback();
   const [selectionMade, setSelectionMade] = useState(false);
-
-  // Only render when there's a result to compare
-  // Or when candidates are explicitly provided
-  if (!candidates || candidates.length !== 2) return null;
 
   // Map themeColor to ABComparisonCard supported color
   const mappedThemeColor = THEME_COLOR_MAP[token.themeColor] || "violet";
@@ -92,6 +88,10 @@ export function ABComparisonWrapper({
     },
     [onSelect, sessionId, selectionMade, selectCandidate, onSelectionSubmitted]
   );
+
+  // Only render when there's a result to compare
+  // Or when candidates are explicitly provided
+  if (!candidates || candidates.length !== 2) return null;
 
   return (
     <div className={`mt-4 ${className}`}>

@@ -47,25 +47,21 @@ const NOTIFICATIONS_STORAGE_KEY = "crebit-notifications";
 
 export default function SettingsPage() {
     const { language, setLanguage } = useLanguage();
-    const [theme, setThemeState] = useState("dark");
-    const [notifications, setNotificationsState] = useState(true);
+    const [theme, setThemeState] = useState(() => {
+        if (typeof window === "undefined") return "dark";
+        const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+        return savedTheme === "dark" || savedTheme === "darker" ? savedTheme : "dark";
+    });
+    const [notifications, setNotificationsState] = useState(() => {
+        if (typeof window === "undefined") return true;
+        const savedNotifications = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
+        return savedNotifications !== null ? savedNotifications === "true" : true;
+    });
     const [canvasCount, setCanvasCount] = useState<number | null>(null);
     const [creditBalance, setCreditBalance] = useState<number | null>(null);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [isOffline, setIsOffline] = useState(false);
     const { userId } = useActiveUserId();
-
-    // Load theme and notifications from localStorage on mount
-    useEffect(() => {
-        const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-        if (savedTheme && (savedTheme === "dark" || savedTheme === "darker")) {
-            setThemeState(savedTheme);
-        }
-        const savedNotifications = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
-        if (savedNotifications !== null) {
-            setNotificationsState(savedNotifications === "true");
-        }
-    }, []);
 
     const setTheme = (newTheme: string) => {
         setThemeState(newTheme);

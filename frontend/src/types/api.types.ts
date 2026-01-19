@@ -102,7 +102,7 @@ export interface CheckResult {
     description: string | null;
     passed: boolean;
     score: number;
-    details: Record<string, any>;
+    details: Record<string, unknown>;
     error_message: string | null;
     is_automated: boolean;
 }
@@ -119,8 +119,8 @@ export interface Tool {
     category: string;
     tier: ToolTier;
     credit_cost: number;
-    input_schema: Record<string, any>;
-    output_schema: Record<string, any>;
+    input_schema: Record<string, unknown>;
+    output_schema: Record<string, unknown>;
     usage_count: number;
     fork_count: number;
     quality_rating: number | null;
@@ -178,7 +178,7 @@ export interface DiffStats {
 export interface DiffPreview {
     diff_content: string;
     stats: DiffStats;
-    semantic_changes: Record<string, any>;
+    semantic_changes: Record<string, unknown>;
     sybil_warning: string | null;
 }
 

@@ -97,7 +97,7 @@ export default function StoryboardPanel() {
     // Generate storyboard
     const MAX_SCRIPT_LENGTH = 3000;
 
-    const handleGenerate = useCallback(async () => {
+    const handleGenerate = async () => {
         const trimmedScript = script.trim();
         if (!trimmedScript) {
             setValidationError("스토리 컨셉을 입력해주세요");
@@ -119,7 +119,7 @@ export default function StoryboardPanel() {
             { concept: script, scene_count: sceneCount, language, model },
             getBYOKHeaders(byokKey)
         );
-    }, [script, sceneCount, language, model, byokKey, creditCtx, execute]);
+    };
 
     // Copy handler
     const handleCopy = useCallback(
@@ -130,11 +130,11 @@ export default function StoryboardPanel() {
     );
 
     // Export result as JSON
-    const handleExportJson = useCallback(() => {
+    const handleExportJson = () => {
         if (result?.output) {
             exportJSON(result.output, `storyboard-${Date.now()}.json`);
         }
-    }, [result?.output, exportJSON]);
+    };
 
     // Helper to format duration
     const formatTime = (duration: string | undefined) => {

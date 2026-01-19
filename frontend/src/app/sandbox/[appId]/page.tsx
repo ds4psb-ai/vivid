@@ -7,8 +7,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { ArrowLeft, Maximize2, Minimize2, RefreshCw, ExternalLink, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Maximize2, Minimize2, RefreshCw, AlertTriangle } from "lucide-react";
 import { AppSandbox, DimensionProvider, useDimension } from "@/components/sandbox";
 import { getApp, type AppDetail } from "@/lib/admin-api";
 import { useCreditSystem } from "@/components/CreditGate";

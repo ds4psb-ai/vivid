@@ -11,7 +11,6 @@ import {
     CheckCircle,
     Loader2,
 } from "lucide-react";
-import { useLanguage } from "@/contexts/LanguageContext";
 
 // ============================================================================
 // Types
@@ -226,7 +225,6 @@ export default function NodeChatPanel({
     onUndo,
     className,
 }: NodeChatPanelProps) {
-    const { t } = useLanguage();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [draft, setDraft] = useState("");
     const [isLoading, setIsLoading] = useState(false);

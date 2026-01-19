@@ -20,6 +20,7 @@
  */
 
 import { useState, useCallback, useTransition, useMemo } from "react";
+import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
@@ -838,11 +839,15 @@ function FileUploadArea({
         {file ? (
           <div className="space-y-2">
             {preview ? (
-              <img
-                src={preview}
-                alt="Preview"
-                className="w-full h-32 object-cover rounded-lg"
-              />
+              <div className="relative h-32 w-full">
+                <Image
+                  src={preview}
+                  alt="Preview"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="object-cover rounded-lg"
+                />
+              </div>
             ) : (
               <div className="flex items-center justify-center h-20">
                 <Video className="w-10 h-10 text-amber-500" />
@@ -1190,12 +1195,14 @@ function VideoAnalysisDisplay({
           {result.moodboard_frames.map((frame, idx) => (
             <div
               key={idx}
-              className="aspect-video rounded-xl overflow-hidden border border-slate-200 dark:border-white/10"
+              className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 dark:border-white/10"
             >
-              <img
+              <Image
                 src={`data:image/jpeg;base64,${frame}`}
                 alt={`Moodboard frame ${idx + 1}`}
-                className="w-full h-full object-cover"
+                fill
+                sizes="(max-width: 768px) 50vw, 20vw"
+                className="object-cover"
               />
             </div>
           ))}

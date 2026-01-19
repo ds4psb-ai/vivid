@@ -4,6 +4,7 @@
  * P4: AG-UI 표준 매퍼 - Phase 3
  */
 import { describe, test, expect, vi, beforeEach } from 'vitest';
+import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { createEventHandlers, type AgentEventContext, type Message } from './agent-event-handlers';
 
 describe('createEventHandlers', () => {
@@ -24,7 +25,7 @@ describe('createEventHandlers', () => {
             }),
             assistantMessageId: 'msg-1',
             accumulatedContentRef: { current: '' },
-            router: { push: vi.fn() } as any,
+            router: { push: vi.fn() } as AppRouterInstance,
         };
     });
 

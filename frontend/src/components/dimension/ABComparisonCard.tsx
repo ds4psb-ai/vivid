@@ -16,7 +16,7 @@
 
 import { useState, useCallback } from "react";
 import { Check, Loader2, Clock, Sparkles, HelpCircle } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { type ThemeColor, THEME_COLOR_CLASSES } from "@/lib/dimension-theme";
 
 export interface CandidateData {

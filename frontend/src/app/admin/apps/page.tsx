@@ -60,6 +60,7 @@ export default function AdminAppsPage() {
             setApps(response.apps);
             setTotal(response.total);
         } catch (err) {
+            console.error(err);
             setError("앱 목록을 불러올 수 없습니다");
         } finally {
             setIsLoading(false);

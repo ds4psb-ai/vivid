@@ -469,7 +469,7 @@ export default function CreateToolPage() {
                                                 // If not JSON, treat as markdown prompt
                                                 handleChange('system_prompt', content);
                                             }
-                                        } catch (err) {
+                                        } catch {
                                             alert('Failed to fetch from GitHub. Check the URL.');
                                         }
                                     }}

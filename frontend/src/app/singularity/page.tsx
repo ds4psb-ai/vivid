@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Sparkles, Copy, Play, Star, Zap, Loader2, AlertCircle, RefreshCw, X, Wand2
@@ -67,73 +68,6 @@ function DimensionFlow({ dimensions }: { dimensions: string[] }) {
                     </React.Fragment>
                 );
             })}
-        </div>
-    );
-}
-
-// =============================================================================
-// BLACKHOLE VISUAL - 블랙홀 비주얼
-// =============================================================================
-
-function BlackholeVisual() {
-    return (
-        <div className="relative w-full h-[var(--layout-visual-lg)] flex items-center justify-center overflow-hidden">
-            {/* Gravitational Lensing Effect */}
-            <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-[var(--overlay-backdrop)]" />
-
-            {/* Accretion Disk - Outer */}
-            <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-                className="absolute w-[var(--layout-visual-xl)] h-[var(--layout-visual-xl)] rounded-full"
-                style={{
-                    background: "conic-gradient(from 0deg, transparent, rgba(139,92,246,0.1), transparent, rgba(6,182,212,0.1), transparent)",
-                }}
-            />
-
-            {/* Accretion Disk - Inner */}
-            <motion.div
-                animate={{ rotate: -360 }}
-                transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-                className="absolute w-[var(--layout-visual-lg)] h-[var(--layout-visual-lg)] rounded-full"
-                style={{
-                    background: "conic-gradient(from 180deg, transparent, rgba(139,92,246,0.2), rgba(236,72,153,0.1), transparent)",
-                }}
-            />
-
-            {/* Event Horizon */}
-            <div className="absolute w-48 h-48 rounded-full bg-[var(--bg-base)] shadow-[0_0_100px_40px_rgba(0,0,0,0.9),0_0_60px_20px_color-mix(in_srgb,var(--color-brand-primary)_30%,transparent)]" />
-
-            {/* Photon Sphere */}
-            <motion.div
-                animate={{ scale: [1, 1.05, 1], opacity: [0.5, 0.8, 0.5] }}
-                transition={{ duration: 3, repeat: Infinity }}
-                className="absolute w-56 h-56 rounded-full border border-violet-500/30"
-            />
-
-            {/* Singularity */}
-            <div className="absolute w-4 h-4 rounded-full bg-[var(--fg-0)] opacity-10" />
-
-            {/* Content Overlay */}
-            <div className="relative z-10 text-center px-8">
-                <motion.h1
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-4xl md:text-6xl font-black tracking-tight text-[var(--fg-0)] mb-4"
-                >
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-400 to-cyan-400">
-                        차원의 특이점
-                    </span>
-                </motion.h1>
-                <motion.p
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="text-[var(--fg-muted)] text-lg max-w-xl mx-auto"
-                >
-                    여러 차원을 관통한 워크플로우가 이곳으로 수렴합니다
-                </motion.p>
-            </div>
         </div>
     );
 }
@@ -306,10 +240,12 @@ function TemplateCard({
 
             {/* Thumbnail */}
             <div className="relative h-52 overflow-hidden">
-                <img
+                <Image
                     src={thumbnail}
                     alt={template.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover group-hover:scale-110 transition-transform duration-700"
                     onError={(e) => { (e.target as HTMLImageElement).src = "/images/placeholder.png"; }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[var(--overlay-backdrop)] via-[var(--overlay-backdrop)] to-transparent opacity-80" />
@@ -413,7 +349,13 @@ function TemplateModal({
             >
                 {/* Hero Image */}
                 <div className="relative h-64">
-                    <img src={thumbnail} alt={template.title} className="w-full h-full object-cover" />
+                    <Image
+                        src={thumbnail}
+                        alt={template.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className="object-cover"
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-base)] via-[var(--bg-base)] to-transparent opacity-80" />
                     <button
                         onClick={onClose}

@@ -142,7 +142,7 @@ export default function ForkEditorPage() {
             }
         }, 500);
         return () => clearTimeout(timer);
-    }, [tool, forkCode, originalCode]);
+    }, [tool, forkCode, originalCode, toast]);
 
     // Placeholder code
     const usePlaceholder = useCallback(() => {

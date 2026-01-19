@@ -71,7 +71,7 @@ describe('SSEEventBuffer', () => {
     });
 
     test('handles missing event handler gracefully', () => {
-        const event: SSEEvent = { type: 'unknown.event' as any, payload: {} };
+        const event: SSEEvent = { type: 'unknown.event' as unknown as SSEEvent["type"], payload: {} };
         expect(() => buffer.push(event)).not.toThrow();
     });
 });

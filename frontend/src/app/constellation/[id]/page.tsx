@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Sparkles, Plus, Star, Loader2, AlertCircle, X, ArrowLeft,
@@ -52,10 +53,12 @@ function StarCard({
             {/* Thumbnail */}
             <div className="relative h-32 bg-gradient-to-br from-slate-900 to-slate-950">
                 {star.thumbnail_url ? (
-                    <img
+                    <Image
                         src={star.thumbnail_url}
                         alt={star.singularity_name}
-                        className="w-full h-full object-cover"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-cover"
                     />
                 ) : (
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -208,12 +211,14 @@ function AddStarModal({
                                     }`}
                                 >
                                     <div className="flex items-start gap-3">
-                                        <div className="w-12 h-12 rounded-lg bg-slate-800 flex-shrink-0 overflow-hidden">
+                                        <div className="relative w-12 h-12 rounded-lg bg-slate-800 flex-shrink-0 overflow-hidden">
                                             {singularity.thumbnail_url ? (
-                                                <img
+                                                <Image
                                                     src={singularity.thumbnail_url}
                                                     alt={singularity.title}
-                                                    className="w-full h-full object-cover"
+                                                    fill
+                                                    sizes="48px"
+                                                    className="object-cover"
                                                 />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center">

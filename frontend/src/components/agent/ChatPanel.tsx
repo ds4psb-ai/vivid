@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Bot, Send, Square, Terminal, User, Paperclip, X, Image, FileText, Film } from "lucide-react";
+import { Bot, Send, Square, Terminal, User, Paperclip, X, Image as ImageIcon, FileText, Film } from "lucide-react";
 import { AgentMessage, AgentToolCall, AgentToolMessage } from "@/types/agent";
 import StreamingText from "./StreamingText";
 import AgentThinkingIndicator from "./AgentThinkingIndicator";
@@ -162,7 +162,7 @@ export default function ChatPanel({
   };
 
   const getFileIcon = (file: File) => {
-    if (file.type.startsWith('image/')) return <Image className="w-3.5 h-3.5" />;
+    if (file.type.startsWith('image/')) return <ImageIcon className="w-3.5 h-3.5" />;
     if (file.type.startsWith('video/')) return <Film className="w-3.5 h-3.5" />;
     return <FileText className="w-3.5 h-3.5" />;
   };

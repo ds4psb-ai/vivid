@@ -27,7 +27,6 @@ import {
   useOptimistic,
   useTransition,
   useMemo,
-  type ReactNode,
 } from "react";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
@@ -229,7 +228,6 @@ function AestheticDirectorContent() {
   const [concept, setConcept] = useState("");
   const [mood, setMood] = useState("neutral");
   const [targetMedium, setTargetMedium] = useState("video");
-  const [files, setFiles] = useState<File[]>([]);
   const [useRag, setUseRag] = useState(true);
 
   // Visual Identity Workshop State
@@ -328,20 +326,20 @@ function AestheticDirectorContent() {
   });
 
   // UQSL Feedback Hook (Thompson Sampling)
-  const { selectCandidate, submitFeedback, isSubmitting: isFeedbackSubmitting } =
+  const { selectCandidate, submitFeedback, isSubmitting: _isFeedbackSubmitting } =
     useUQSLFeedback();
 
   // Async operation for final guide
   const {
     isLoading,
-    progress,
+    progress: _progress,
     error,
     data: result,
     execute,
     cancel,
     retry,
     canRetry,
-    currentRetryCount,
+    currentRetryCount: _currentRetryCount,
   } = useAsyncOperation<{
     success: boolean;
     output: AestheticResult;
@@ -370,7 +368,7 @@ function AestheticDirectorContent() {
   const combinedLoading = isLoading || isUqslLoading || isTransitionPending;
 
   // Stage 1: Generate Moodboard with UQSL (2026 Best Practice)
-  const handleGenerateMoodboard = useCallback(async () => {
+  const handleGenerateMoodboard = async () => {
     const trimmedConcept = concept.trim();
     if (!trimmedConcept) {
       setValidationError(labels.enterConcept);
@@ -402,7 +400,7 @@ Output as JSON array with 3 objects.`,
     });
 
     setLoading(false);
-  }, [concept, mood, generateUQSL, resetUQSL, setLoading]);
+  };
 
   // Stage 2: Handle Direction Selection with Thompson Sampling Feedback
   // React 19: useTransition for non-blocking selection updates
@@ -525,10 +523,10 @@ Suggested Auteur: ${selectedDirection.suggested_auteur}`;
   );
 
   // Export result as JSON
-  const handleExportJson = useCallback(() => {
+  const handleExportJson = () => {
     if (!result?.output) return;
     exportJSON(result.output, `aesthetic-director-${Date.now()}.json`);
-  }, [result?.output, exportJSON]);
+  };
 
   // Extracted result data for display
   const displayResult = optimisticResult || (result?.success ? result.output : null);
@@ -1652,7 +1650,7 @@ function StyleGuideResult({
                 </p>
               </div>
               <p className="text-xs text-slate-400 dark:text-white/40 italic pt-2">
-                "{result.typography.description}"
+                &ldquo;{result.typography.description}&rdquo;
               </p>
             </div>
           </div>

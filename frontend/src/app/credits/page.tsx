@@ -53,7 +53,7 @@ export default function CreditsPage() {
     const [isToppingUp, setIsToppingUp] = useState<string | null>(null);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [isOffline, setIsOffline] = useState(false);
-    const { userId } = useActiveUserId();
+    const { userId: _userId } = useActiveUserId();
     const LIMIT = 20;
 
     const creditPacks = useMemo<CreditPack[]>(() => [
@@ -109,7 +109,7 @@ export default function CreditsPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [userId, loadErrorFallback]);
+    }, [loadErrorFallback]);
 
     const loadMoreTransactions = useCallback(async () => {
         if (isLoadingMore || transactions.length >= transactionTotal) return;
@@ -124,7 +124,7 @@ export default function CreditsPage() {
         } finally {
             setIsLoadingMore(false);
         }
-    }, [userId, offset, loadErrorFallback, isLoadingMore, transactions.length, transactionTotal]);
+    }, [offset, loadErrorFallback, isLoadingMore, transactions.length, transactionTotal]);
 
     useEffect(() => {
         void loadCredits();
@@ -151,7 +151,7 @@ export default function CreditsPage() {
                 setIsToppingUp(null);
             }
         },
-        [loadCredits, topupErrorFallback, userId]
+        [loadCredits, topupErrorFallback]
     );
 
     // Calculate stats

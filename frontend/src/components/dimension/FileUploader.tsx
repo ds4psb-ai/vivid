@@ -12,7 +12,7 @@
  */
 
 import { useState, useCallback, useRef, type DragEvent, type ChangeEvent } from "react";
-import { Upload, X, Image, Film, FileText, AlertCircle } from "lucide-react";
+import { Upload, X, Film, FileText, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { type ThemeColor, THEME_COLOR_CLASSES } from "@/lib/dimension-theme";
 

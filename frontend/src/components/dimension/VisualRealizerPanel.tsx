@@ -15,7 +15,7 @@
  * @see https://react.dev/blog/2024/12/05/react-19
  */
 
-import { useState, useCallback, useTransition, useOptimistic, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
@@ -23,8 +23,8 @@ import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
-import EvidenceDisplay, { type EvidenceRef } from "./EvidenceDisplay";
-import { Image } from "lucide-react";
+import type { EvidenceRef } from "./EvidenceDisplay";
+import { Image as ImageIcon } from "lucide-react";
 
 // ============================================================================
 // Constants & Types
@@ -132,14 +132,8 @@ function VisualRealizerContent() {
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  // React 19: useTransition for non-blocking form submission
-  const [isTransitionPending, startTransition] = useTransition();
-
-  // React 19: useOptimistic for instant UI feedback
-  const [optimisticResult, setOptimisticResult] = useOptimistic<ImagePromptResult | null>(null);
-
   // File upload state (2026 Best Practice: Multimodal input)
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [_uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
   // Hooks
   const { byokKey } = useBYOK();
@@ -187,7 +181,7 @@ function VisualRealizerContent() {
   const MAX_DESCRIPTION_LENGTH = 2000;
 
   // Generate prompt
-  const handleGenerate = useCallback(async () => {
+  const handleGenerate = async () => {
     const trimmedDescription = description.trim();
     if (!trimmedDescription) {
       setValidationError(labels.enterDescription);
@@ -211,17 +205,7 @@ function VisualRealizerContent() {
       getBYOKHeaders(byokKey)
     );
     setLoading(false);
-  }, [
-    description,
-    style,
-    aspectRatio,
-    model,
-    byokKey,
-    creditCtx,
-    execute,
-    CREDIT_COST,
-    setLoading,
-  ]);
+  };
 
   // Copy handler
   const handleCopy = useCallback(
@@ -232,11 +216,11 @@ function VisualRealizerContent() {
   );
 
   // Export result as JSON
-  const handleExportJSON = useCallback(() => {
+  const handleExportJSON = () => {
     if (result?.output) {
       exportJSON(result.output, `image-prompt-${Date.now()}.json`);
     }
-  }, [result?.output, exportJSON]);
+  };
 
   // Extracted result data
   const displayResult = result?.success ? result.output : null;
@@ -332,7 +316,6 @@ function VisualRealizerContent() {
             isCopied={isCopied}
             onCopy={handleCopy}
             onExport={handleExportJSON}
-            themeColor={token.themeColor}
             labels={{
               generatedPrompt: labels.generatedPrompt,
               export: labels.export,
@@ -427,14 +410,12 @@ function PromptResultDisplay({
   isCopied,
   onCopy,
   onExport,
-  themeColor,
   labels,
 }: {
   result: ImagePromptResult;
   isCopied: boolean;
   onCopy: (text: string) => void;
   onExport: () => void;
-  themeColor: string;
   labels: {
     generatedPrompt: string;
     export: string;
@@ -541,7 +522,7 @@ function EmptyState({
         <div className="absolute inset-0 bg-emerald-500/20 blur-[80px] rounded-full group-hover:bg-emerald-500/30 transition-colors duration-1000" />
         <div className="w-32 h-32 rounded-[2rem] bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 flex items-center justify-center shadow-lg dark:shadow-[0_0_60px_rgba(0,0,0,0.3)] backdrop-blur-md relative transform group-hover:scale-105 transition-all duration-500 group-hover:border-emerald-300 dark:group-hover:border-emerald-500/20">
           <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/5 to-transparent rounded-[2rem]" />
-          <Image className="w-12 h-12 text-slate-400 dark:text-white/20 group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors duration-500" />
+          <ImageIcon className="w-12 h-12 text-slate-400 dark:text-white/20 group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors duration-500" />
         </div>
       </div>
       <div className="text-center space-y-3">

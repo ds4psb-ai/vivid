@@ -166,7 +166,7 @@ export default function PromptAlchemyPanel() {
 // =============================================================================
 
 function PromptAlchemyContent() {
-  const { classes, styles, setLoading, setError, setResult } = useDimensionPanel();
+  const { classes, styles: _styles, setLoading, setError, setResult } = useDimensionPanel();
   const { language: appLanguage } = useLanguage();
   const isKo = appLanguage === "ko";
 
@@ -180,7 +180,7 @@ function PromptAlchemyContent() {
   const [duration, setDuration] = useState<number>(15);
   const [language, setLanguage] = useState<"ko" | "en">("ko");
   const [model, setModel] = useState("gemini-3-flash-preview");
-  const [files, setFiles] = useState<File[]>([]);
+  const [_files, setFiles] = useState<File[]>([]);
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [mode, setMode] = useState<"single" | "batch">("single");
@@ -201,14 +201,14 @@ function PromptAlchemyContent() {
   // Async operation hook
   const {
     isLoading,
-    progress,
+    progress: _progress,
     error,
     data: result,
     execute,
-    cancel,
+    cancel: _cancel,
     retry,
-    canRetry,
-    currentRetryCount,
+    canRetry: _canRetry,
+    currentRetryCount: _currentRetryCount,
   } = useAsyncOperation<TranslateResponse | BatchResponse>({
     onSuccess: (data) => {
       if (data.success) {

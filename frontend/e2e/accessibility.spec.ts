@@ -210,7 +210,7 @@ test.describe("Semantic HTML", () => {
     await page.goto("/dimension");
 
     // Dimension cards should be in a list or grid structure
-    const dimensionGrid = page.locator('[role="list"], ul, ol, [role="grid"]');
+    const _dimensionGrid = page.locator('[role="list"], ul, ol, [role="grid"]');
 
     // At least the page should use some structure
     await expect(page.locator("body")).toBeVisible();
@@ -306,8 +306,8 @@ test.describe("Form Accessibility", () => {
     await page.waitForLoadState("domcontentloaded");
 
     // Check for aria-live regions or error announcements
-    const liveRegions = await page.locator('[aria-live]').count();
-    const alertRoles = await page.locator('[role="alert"]').count();
+    const _liveRegions = await page.locator('[aria-live]').count();
+    const _alertRoles = await page.locator('[role="alert"]').count();
 
     // At least no critical issues - page should load
     await expect(page.locator("body")).toBeVisible();

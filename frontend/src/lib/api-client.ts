@@ -17,7 +17,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 export interface ApiError {
     status: number;
     message: string;
-    detail?: any;
+    detail?: unknown;
     isRetryable?: boolean;
 }
 
@@ -64,7 +64,7 @@ function sleep(ms: number): Promise<void> {
 /**
  * Execute with retry
  */
-async function withRetry<T>(
+async function withRetry(
     fn: () => Promise<Response>,
     config: Partial<RetryConfig> = {}
 ): Promise<Response> {
@@ -123,7 +123,7 @@ function getAuthToken(): string | null {
     return localStorage.getItem("token");
 }
 
-function enrichError(res: Response, error: any): ApiError {
+function enrichError(res: Response, error: unknown): ApiError {
     const isCircuitOpen = error?.detail?.includes?.("Circuit") ||
         error?.message?.includes?.("Circuit");
 
@@ -175,7 +175,7 @@ export const api = {
     /**
      * POST request with auth and retry
      */
-    async post<T>(endpoint: string, body?: any, retry = true): Promise<ApiResponse<T>> {
+    async post<T>(endpoint: string, body?: unknown, retry = true): Promise<ApiResponse<T>> {
         const token = getAuthToken();
         const doFetch = () => fetch(`${API_BASE_URL}${endpoint}`, {
             method: "POST",
@@ -193,7 +193,7 @@ export const api = {
     /**
      * PUT request with auth and retry
      */
-    async put<T>(endpoint: string, body?: any, retry = true): Promise<ApiResponse<T>> {
+    async put<T>(endpoint: string, body?: unknown, retry = true): Promise<ApiResponse<T>> {
         const token = getAuthToken();
         const doFetch = () => fetch(`${API_BASE_URL}${endpoint}`, {
             method: "PUT",
@@ -317,4 +317,3 @@ export async function retryAsync<T>(
 }
 
 export default api;
-

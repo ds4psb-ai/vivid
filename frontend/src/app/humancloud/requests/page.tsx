@@ -6,7 +6,7 @@
  * Browse all open creative requests.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -56,8 +56,9 @@ const CATEGORIES = [
 
 function RequestCard({ request, onClick, language }: { request: CreativeRequest; onClick: () => void; language: string }) {
     const config = STATUS_CONFIG[request.status] || STATUS_CONFIG.draft;
+    const now = useMemo(() => new Date(), []);
     const daysLeft = request.deadline
-        ? Math.ceil((new Date(request.deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+        ? Math.ceil((new Date(request.deadline).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
         : null;
 
     return (
@@ -138,7 +139,7 @@ export default function RequestsListPage() {
         count: (n: number) => language === "ko" ? `${n}개 의뢰` : `${n} request${n !== 1 ? "s" : ""}`,
     };
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
@@ -152,11 +153,11 @@ export default function RequestsListPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [category]);
 
     useEffect(() => {
         fetchData();
-    }, [category]);
+    }, [category, fetchData]);
 
     const filteredRequests = requests.filter((r) =>
         !search || r.title.toLowerCase().includes(search.toLowerCase()) ||

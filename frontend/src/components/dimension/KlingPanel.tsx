@@ -114,7 +114,7 @@ export default function KlingPanel() {
 // =============================================================================
 
 function KlingContent() {
-  const { classes, styles, setLoading, setError, setResult } = useDimensionPanel();
+  const { classes, styles: _styles, setLoading, setError, setResult } = useDimensionPanel();
 
   // Form state
   const [prompt, setPrompt] = useState("");
@@ -128,7 +128,7 @@ function KlingContent() {
   const [endImageUrl, setEndImageUrl] = useState("");
   const [motionPreset, setMotionPreset] = useState("");
   const [cameraPreset, setCameraPreset] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
+  const [_files, setFiles] = useState<File[]>([]);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -143,7 +143,7 @@ function KlingContent() {
   const creditCtx = useCreditContextOptional();
 
   // Export utilities
-  const { copyToClipboard, isCopied, exportJSON } = useResultExport();
+  const { copyToClipboard, isCopied, exportJSON: _exportJSON } = useResultExport();
 
   // Calculate credit cost
   const creditCost = (() => {
@@ -155,11 +155,11 @@ function KlingContent() {
   // Async operation hook
   const {
     isLoading,
-    progress,
+    progress: _progress,
     error,
     data: result,
     execute,
-    cancel,
+    cancel: _cancel,
     retry,
   } = useAsyncOperation<KlingGenerateResponse>({
     onSuccess: (data) => {

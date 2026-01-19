@@ -9,7 +9,7 @@
  * - Dispute management
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
     DollarSign,
@@ -192,7 +192,7 @@ export default function AdminSettlementsPage() {
     const [batchLoading, setBatchLoading] = useState(false);
     const [statusFilter, setStatusFilter] = useState<string>("pending");
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         setLoading(true);
         try {
             const [statsData, settlementsData, disputesData] = await Promise.all([
@@ -208,11 +208,11 @@ export default function AdminSettlementsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [statusFilter]);
 
     useEffect(() => {
         fetchData();
-    }, [statusFilter]);
+    }, [fetchData]);
 
     const handleBatchProcess = async () => {
         setBatchLoading(true);
@@ -221,6 +221,7 @@ export default function AdminSettlementsPage() {
             alert(`Processed ${result.processed} settlements, ${result.succeeded} succeeded`);
             fetchData();
         } catch (err) {
+            console.error(err);
             alert("Batch processing failed");
         } finally {
             setBatchLoading(false);
@@ -232,6 +233,7 @@ export default function AdminSettlementsPage() {
             await processSingle(id);
             fetchData();
         } catch (err) {
+            console.error(err);
             alert("Processing failed");
         }
     };

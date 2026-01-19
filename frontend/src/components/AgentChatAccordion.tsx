@@ -13,7 +13,6 @@ import {
     saveSession,
     loadSession,
     clearSession,
-    type EventHandlers,
     type SSEConnectionState,
 } from "@/lib/sse-utils";
 import {

@@ -128,11 +128,11 @@ export default function AestheticDirectorPanel() {
         nonRetryableErrors: ["400", "401", "402", "403", "404", "크레딧", "부족"],
     });
 
-    const MAX_CONCEPT_LENGTH = 2000;
+    const _MAX_CONCEPT_LENGTH = 2000;
 
     // Async operation hook for moodboard (returns directions)
     const {
-        isLoading: isMoodboardLoading,
+        isLoading: _isMoodboardLoading,
         execute: executeMoodboard,
     } = useAsyncOperation<{ success: boolean; output: MoodboardResult; error?: string }>({
         onSuccess: (data) => {
@@ -172,7 +172,7 @@ export default function AestheticDirectorPanel() {
     }, [concept, mood, byokKey, executeMoodboard]);
 
     // Stage 2 -> 3: Generate Full Style Guide
-    const handleGenerateGuide = useCallback(async () => {
+    const handleGenerateGuide = async () => {
         if (!selectedDirection) return;
         setValidationError(null);
 
@@ -200,7 +200,7 @@ export default function AestheticDirectorPanel() {
                 setStage("guide");
             }
         });
-    }, [concept, mood, targetMedium, useRag, byokKey, creditCtx, execute, selectedDirection]);
+    };
 
     const handleCopy = useCallback(async (text: string, field: string) => {
         const success = await copyToClipboard(text);
@@ -211,10 +211,10 @@ export default function AestheticDirectorPanel() {
     }, [copyToClipboard]);
 
     // Export result as JSON
-    const handleExportJson = useCallback(() => {
+    const handleExportJson = () => {
         if (!result?.output) return;
         exportJSON(result.output, `aesthetic-director-${Date.now()}.json`);
-    }, [result?.output, exportJSON]);
+    };
 
     // Extracted result data for display
     const displayResult = result?.success ? result.output : null;
@@ -628,7 +628,7 @@ export default function AestheticDirectorPanel() {
                                             <p className="text-base text-zinc-300 mt-1 font-serif">{displayResult.typography.secondary}</p>
                                         </div>
                                         <p className="text-xs text-white/40 italic pt-2">
-                                            "{displayResult.typography.description}"
+                                            &ldquo;{displayResult.typography.description}&rdquo;
                                         </p>
                                     </div>
                                 </div>

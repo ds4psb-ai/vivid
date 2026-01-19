@@ -7,7 +7,7 @@
  * 작업 중인 화면을 떠나지 않고 설정을 변경할 수 있습니다.
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useBYOK } from "@/hooks/useBYOK";
 
 interface BYOKSettingsModalProps {
@@ -17,16 +17,11 @@ interface BYOKSettingsModalProps {
 
 export default function BYOKSettingsModal({ isOpen, onClose }: BYOKSettingsModalProps) {
     const { byokKey, setBYOKKey, isBYOKEnabled, clearBYOKKey } = useBYOK();
-    const [inputValue, setInputValue] = useState("");
+    const [draftValue, setDraftValue] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [showKey, setShowKey] = useState(false);
 
-    // 모달이 열릴 때 기존 키 값으로 초기화
-    useEffect(() => {
-        if (isOpen) {
-            setInputValue(byokKey || "");
-        }
-    }, [isOpen, byokKey]);
+    const inputValue = draftValue ?? byokKey ?? "";
 
     if (!isOpen) return null;
 
@@ -48,12 +43,12 @@ export default function BYOKSettingsModal({ isOpen, onClose }: BYOKSettingsModal
         clearBYOKKey();
         await new Promise(resolve => setTimeout(resolve, 100));
         setIsSaving(false);
-        setInputValue("");
+        setDraftValue("");
         onClose();
     };
 
     const handleClose = () => {
-        setInputValue("");
+        setDraftValue(null);
         onClose();
     };
 
@@ -102,7 +97,7 @@ export default function BYOKSettingsModal({ isOpen, onClose }: BYOKSettingsModal
                             <input
                                 type={showKey ? "text" : "password"}
                                 value={inputValue}
-                                onChange={(e) => setInputValue(e.target.value)}
+                                onChange={(e) => setDraftValue(e.target.value)}
                                 placeholder="AIzaSy... (여기에 붙여넣기)"
                                 className="w-full px-4 py-3 pr-12 bg-black/50 border border-white/10 rounded-xl text-white text-sm font-mono placeholder-white/20 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-all"
                                 autoFocus

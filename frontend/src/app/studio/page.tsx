@@ -10,15 +10,11 @@
  */
 
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { TemplateRail, DimensionGrid, WorkflowCTA } from "@/components/home";
-import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function StudioPage() {
-    const { language } = useLanguage();
-
     return (
         <AppShell showTopBar={false}>
             {/* Aurora Background */}

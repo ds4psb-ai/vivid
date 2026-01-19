@@ -16,7 +16,7 @@
 
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { Shield, Target, Link2, Sparkles, Lock, TrendingUp } from "lucide-react";
+import { Shield, Target, Link2, Sparkles, TrendingUp } from "lucide-react";
 import { type ThemeColor, THEME_COLOR_CLASSES } from "@/lib/dimension-theme";
 
 export interface QualityScores {
@@ -364,7 +364,6 @@ function RadarChart({
         };
     });
 
-    const bgPath = bgPoints.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ") + " Z";
     const scorePath = scorePoints.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ") + " Z";
 
     return (

@@ -15,7 +15,7 @@ import TeachingPanelLayout, {
     type ThemeColor,
     useResultExport,
 } from "./DimensionPanelLayout";
-import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
+import { useBYOK } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
@@ -23,7 +23,7 @@ import PersonaGenome from "./PersonaGenome";
 import EvidenceDisplay from "./EvidenceDisplay";
 import { RAGSuggestionCard } from "@/components/rag/RAGSuggestionCard";
 import { useRAGSuggestion, type EvidenceRef } from "@/hooks/useRAGSuggestion";
-import { usePersonaPreset, type TraceEntry, type PersonaPreset } from "@/hooks/usePersonaPreset";
+import { usePersonaPreset, type PersonaPreset } from "@/hooks/usePersonaPreset";
 import { initMirror, chatMirror, type MirrorChatResponse } from "@/lib/mirrorApi";
 import { useDimensionChainOptional } from "@/contexts/DimensionChainContext";
 import NextDimensionNav from "./NextDimensionNav";
@@ -122,11 +122,11 @@ export default function AbyssMirrorPanel() {
 
     // Preset management
     const {
-        preset,
+        preset: _preset,
         presets,
         traces,
         saveLocal,
-        deleteLocal,
+        deleteLocal: _deleteLocal,
         clearLocal,
         addTrace,
         listPresets,
@@ -313,7 +313,7 @@ export default function AbyssMirrorPanel() {
         } finally {
             setIsLoading(false);
         }
-    }, [inputMessage, isLoading, sessionId, byokKey, creditCtx, messages, personaData, currentStage, model, CREDIT_COST, fetchSuggestion, addTrace, saveLocal]);
+    }, [inputMessage, isLoading, sessionId, byokKey, creditCtx, messages, personaData, currentStage, model, CREDIT_COST, fetchSuggestion, addTrace, saveLocal, ragEnabled, chainContext]);
 
     // Export JSON
     const handleExportJson = useCallback(() => {
