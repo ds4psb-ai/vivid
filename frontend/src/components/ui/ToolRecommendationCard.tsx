@@ -6,6 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { toolsApi, type ToolDisplayInfo } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -48,12 +49,14 @@ export function ToolRecommendationCard({
   className,
 }: ToolRecommendationCardProps) {
   const { language, t } = useLanguage();
+  const router = useRouter();
   const isKo = language === "ko";
   const [expanded, setExpanded] = useState(false);
   const [open, setOpen] = useState(false);
   const [toolInfo, setToolInfo] = useState<ToolDisplayInfo | null>(null);
   const [infoLoading, setInfoLoading] = useState(false);
   const [infoError, setInfoError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const level =
     confidenceLevel ?? scoreToConfidenceLevel(confidence ?? 0);
@@ -115,6 +118,17 @@ export function ToolRecommendationCard({
   }, [open, toolInfo, infoLoading, toolId]);
 
   const toolDescription = toolInfo?.[isKo ? "description_ko" : "description_en"];
+  const toolIcon = toolInfo?.icon || "✨";
+
+  const handleCopyToolId = async () => {
+    try {
+      await navigator.clipboard?.writeText(toolId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (err) {
+      console.warn("Failed to copy tool id", err);
+    }
+  };
 
   return (
     <div
@@ -200,7 +214,12 @@ export function ToolRecommendationCard({
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>
-                {toolInfo?.[isKo ? "display_name_ko" : "display_name_en"] || displayName}
+                <span className="inline-flex items-center gap-2">
+                  <span className="text-lg">{toolIcon}</span>
+                  <span>
+                    {toolInfo?.[isKo ? "display_name_ko" : "display_name_en"] || displayName}
+                  </span>
+                </span>
               </DialogTitle>
               <DialogDescription>
                 {toolDescription || t("noToolDescription")}
@@ -208,6 +227,12 @@ export function ToolRecommendationCard({
             </DialogHeader>
 
             <div className="space-y-4">
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                <span className="uppercase tracking-[0.18em] text-[10px] mr-2">
+                  {t("toolIdLabel")}
+                </span>
+                <span className="font-mono">{toolId}</span>
+              </div>
               <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
                 <span className="px-2 py-1 rounded-full border border-slate-200 dark:border-slate-700">
                   {dimension}
@@ -271,6 +296,12 @@ export function ToolRecommendationCard({
             </div>
 
             <DialogFooter>
+              <Button variant="ghost" onClick={handleCopyToolId}>
+                {copied ? t("copied") : t("copyToolId")}
+              </Button>
+              <Button variant="secondary" onClick={() => router.push("/tools")}>
+                {t("openToolsCatalog")}
+              </Button>
               <Button variant="outline" onClick={() => setOpen(false)}>
                 {t("close")}
               </Button>
