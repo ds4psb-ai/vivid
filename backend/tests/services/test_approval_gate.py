@@ -13,8 +13,8 @@ try:
     from app.schemas.approval_gate_schemas import (
         ApprovalDecision,
         ApprovalGateConfig,
-        CheckpointAction,
     )
+    from app.models_workflow import CheckpointAction
     DEPS_AVAILABLE = True
 except ImportError as e:
     DEPS_AVAILABLE = False
@@ -111,15 +111,17 @@ class TestApprovalGateService:
         output = {"result": "test output"}
         confidence = 0.30
 
-        result = await service.evaluate_for_approval(
-            execution_id=execution_id,
-            node_id=node_id,
-            output=output,
-            confidence=confidence,
-        )
+        # Mock _create_checkpoint to avoid DB schema issues
+        with patch.object(service, '_create_checkpoint', return_value=MagicMock(id=uuid4())):
+            result = await service.evaluate_for_approval(
+                execution_id=execution_id,
+                node_id=node_id,
+                output=output,
+                confidence=confidence,
+            )
 
-        assert result.decision == ApprovalDecision.ESCALATED
-        assert result.confidence == confidence
+            assert result.decision == ApprovalDecision.ESCALATED
+            assert result.confidence == confidence
 
     @pytest.mark.asyncio
     async def test_evaluate_pending_review_mid_confidence(self, service, mock_db):
@@ -129,27 +131,31 @@ class TestApprovalGateService:
         output = {"result": "test output"}
         confidence = 0.65
 
-        result = await service.evaluate_for_approval(
-            execution_id=execution_id,
-            node_id=node_id,
-            output=output,
-            confidence=confidence,
-        )
+        # Mock _create_checkpoint to avoid DB schema issues
+        with patch.object(service, '_create_checkpoint', return_value=MagicMock(id=uuid4())):
+            result = await service.evaluate_for_approval(
+                execution_id=execution_id,
+                node_id=node_id,
+                output=output,
+                confidence=confidence,
+            )
 
-        assert result.decision == ApprovalDecision.PENDING_REVIEW
-        assert result.confidence == confidence
+            assert result.decision == ApprovalDecision.PENDING_REVIEW
+            assert result.confidence == confidence
 
     @pytest.mark.asyncio
     async def test_dimension_config_override(self, service, mock_db):
-        """Dimension-specific config should override defaults."""
+        """Dimension-specific config should override defaults via _config.dimension_overrides."""
+        from app.schemas.approval_gate_schemas import DimensionApprovalConfig
+
         execution_id = uuid4()
         node_id = "test_node"
         output = {"result": "test output"}
         # With default config this would be PENDING_REVIEW
         confidence = 0.80
 
-        # Override dimension config to auto-approve at 0.75
-        service.dimension_configs["test_dimension"] = ApprovalGateConfig(
+        # Override dimension config to auto-approve at 0.75 via _config
+        service._config.dimension_overrides["test_dimension"] = DimensionApprovalConfig(
             auto_approve_threshold=0.75
         )
 
@@ -166,9 +172,15 @@ class TestApprovalGateService:
     @pytest.mark.asyncio
     async def test_get_pending_approvals_empty(self, service, mock_db):
         """Should return empty list when no pending approvals."""
-        mock_db.execute.return_value = MagicMock(
-            scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[])))
-        )
+        # Setup mock for count query
+        mock_count_result = MagicMock()
+        mock_count_result.scalar.return_value = 0
+
+        # Setup mock for items query
+        mock_items_result = MagicMock()
+        mock_items_result.scalars.return_value = MagicMock(all=MagicMock(return_value=[]))
+
+        mock_db.execute.side_effect = [mock_count_result, mock_items_result]
 
         items, total = await service.get_pending_approvals(limit=10)
 
@@ -196,14 +208,16 @@ class TestApprovalGateService:
         execution_id = uuid4()
         confidence = 0.50  # Exactly at threshold
 
-        result = await service.evaluate_for_approval(
-            execution_id=execution_id,
-            node_id="node",
-            output={},
-            confidence=confidence,
-        )
+        # Mock _create_checkpoint to avoid DB schema issues
+        with patch.object(service, '_create_checkpoint', return_value=MagicMock(id=uuid4())):
+            result = await service.evaluate_for_approval(
+                execution_id=execution_id,
+                node_id="node",
+                output={},
+                confidence=confidence,
+            )
 
-        assert result.decision == ApprovalDecision.PENDING_REVIEW
+            assert result.decision == ApprovalDecision.PENDING_REVIEW
 
     @pytest.mark.asyncio
     async def test_just_below_escalate_threshold(self, service, mock_db):
@@ -211,27 +225,33 @@ class TestApprovalGateService:
         execution_id = uuid4()
         confidence = 0.49
 
-        result = await service.evaluate_for_approval(
-            execution_id=execution_id,
-            node_id="node",
-            output={},
-            confidence=confidence,
-        )
+        # Mock _create_checkpoint to avoid DB schema issues
+        with patch.object(service, '_create_checkpoint', return_value=MagicMock(id=uuid4())):
+            result = await service.evaluate_for_approval(
+                execution_id=execution_id,
+                node_id="node",
+                output={},
+                confidence=confidence,
+            )
 
-        assert result.decision == ApprovalDecision.ESCALATED
+            assert result.decision == ApprovalDecision.ESCALATED
 
 
 class TestCheckpointAction:
     """Tests for CheckpointAction enum."""
 
-    def test_approve_continue_value(self):
-        """APPROVE_CONTINUE should have correct string value."""
-        assert CheckpointAction.APPROVE_CONTINUE == "approve_continue"
+    def test_approve_value(self):
+        """APPROVE should have correct string value."""
+        assert CheckpointAction.APPROVE == "approve"
 
     def test_reject_value(self):
         """REJECT should have correct string value."""
         assert CheckpointAction.REJECT == "reject"
 
-    def test_request_revision_value(self):
-        """REQUEST_REVISION should have correct string value."""
-        assert CheckpointAction.REQUEST_REVISION == "request_revision"
+    def test_modify_value(self):
+        """MODIFY should have correct string value."""
+        assert CheckpointAction.MODIFY == "modify"
+
+    def test_skip_value(self):
+        """SKIP should have correct string value."""
+        assert CheckpointAction.SKIP == "skip"
