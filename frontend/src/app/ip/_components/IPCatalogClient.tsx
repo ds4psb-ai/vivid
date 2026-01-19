@@ -144,16 +144,16 @@ export default function IPCatalogClient() {
 
   return (
     <AppShell showTopBar={false}>
-      <div className="min-h-screen bg-white dark:bg-slate-950">
+      <div className="min-h-screen bg-[var(--bg-base)]">
         {/* Header */}
-        <div className="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl sticky top-0 z-40">
+        <div className="border-b border-[var(--border-default)] bg-[var(--surface-base)] backdrop-blur-xl sticky top-0 z-40">
           <div className="max-w-7xl mx-auto px-4 py-4">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+                <h1 className="text-2xl font-bold text-[var(--fg-base)]">
                   {language === "ko" ? "IP 갤러리" : "IP Gallery"}
                 </h1>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                <p className="text-sm text-[var(--fg-muted)] mt-1">
                   {language === "ko"
                     ? "좋아하는 IP로 AI 팬 창작물을 만들어보세요"
                     : "Create AI fan content with your favorite IPs"}
@@ -161,17 +161,17 @@ export default function IPCatalogClient() {
               </div>
 
               {/* View toggle */}
-              <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+              <div className="flex items-center gap-2 bg-[var(--bg-subtle)] rounded-lg p-1">
                 <button
                   onClick={() => setViewMode("rail")}
-                  className={"p-2 rounded " + (viewMode === "rail" ? "bg-white dark:bg-slate-700 shadow-sm" : "")}
+                  className={"p-2 rounded " + (viewMode === "rail" ? "bg-[var(--bg-base)] shadow-sm" : "")}
                   aria-label="Rail view"
                 >
                   <List className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setViewMode("grid")}
-                  className={"p-2 rounded " + (viewMode === "grid" ? "bg-white dark:bg-slate-700 shadow-sm" : "")}
+                  className={"p-2 rounded " + (viewMode === "grid" ? "bg-[var(--bg-base)] shadow-sm" : "")}
                   aria-label="Grid view"
                 >
                   <Grid className="w-4 h-4" />
@@ -183,13 +183,13 @@ export default function IPCatalogClient() {
             <div className="flex items-center gap-4 mt-4">
               <form onSubmit={handleSearch} className="flex-1 max-w-md">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--fg-muted)]" />
                   <input
                     type="search"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={language === "ko" ? "IP 검색..." : "Search IPs..."}
-                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border-default)] bg-[var(--surface-base)] text-[var(--fg-base)] placeholder-[var(--fg-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)]"
                   />
                 </div>
               </form>
@@ -202,7 +202,7 @@ export default function IPCatalogClient() {
                     setSelectedGenre(e.target.value);
                     setPage(1);
                   }}
-                  className="appearance-none pl-4 pr-10 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  className="appearance-none pl-4 pr-10 py-2 rounded-lg border border-[var(--border-default)] bg-[var(--surface-base)] text-[var(--fg-base)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)]"
                 >
                   <option value="">{language === "ko" ? "모든 장르" : "All Genres"}</option>
                   {genres.map((genre) => (
@@ -211,7 +211,7 @@ export default function IPCatalogClient() {
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--fg-muted)] pointer-events-none" />
               </div>
 
               {/* Sort */}
@@ -222,13 +222,13 @@ export default function IPCatalogClient() {
                     setSortBy(e.target.value);
                     setPage(1);
                   }}
-                  className="appearance-none pl-4 pr-10 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  className="appearance-none pl-4 pr-10 py-2 rounded-lg border border-[var(--border-default)] bg-[var(--surface-base)] text-[var(--fg-base)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)]"
                 >
                   <option value="popular">{language === "ko" ? "인기순" : "Popular"}</option>
                   <option value="new">{language === "ko" ? "최신순" : "Newest"}</option>
                   <option value="name">{language === "ko" ? "이름순" : "Name"}</option>
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--fg-muted)] pointer-events-none" />
               </div>
             </div>
           </div>
@@ -261,7 +261,7 @@ export default function IPCatalogClient() {
               {/* All IPs section */}
               {items.length > 0 && (
                 <div className="px-4">
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                  <h2 className="text-lg font-bold text-[var(--fg-base)] mb-4">
                     {language === "ko" ? "전체 IP" : "All IPs"}
                   </h2>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -292,9 +292,9 @@ export default function IPCatalogClient() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                   {Array.from({ length: 10 }).map((_, i) => (
                     <div key={i} className="animate-pulse">
-                      <div className="w-full h-64 rounded-xl bg-slate-200 dark:bg-slate-800 mb-2" />
-                      <div className="h-4 w-3/4 rounded bg-slate-200 dark:bg-slate-800 mb-1" />
-                      <div className="h-3 w-1/2 rounded bg-slate-200 dark:bg-slate-800" />
+                      <div className="w-full h-64 rounded-xl bg-[var(--bg-subtle)] mb-2" />
+                      <div className="h-4 w-3/4 rounded bg-[var(--bg-subtle)] mb-1" />
+                      <div className="h-3 w-1/2 rounded bg-[var(--bg-subtle)]" />
                     </div>
                   ))}
                 </div>
@@ -311,16 +311,16 @@ export default function IPCatalogClient() {
               ) : items.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-4xl mb-4">🎬</div>
-                  <h3 className="text-lg font-medium text-slate-900 dark:text-white">
+                  <h3 className="text-lg font-medium text-[var(--fg-base)]">
                     {language === "ko" ? "IP를 찾을 수 없습니다" : "No IPs found"}
                   </h3>
-                  <p className="text-slate-600 dark:text-slate-400 mt-1">
+                  <p className="text-[var(--fg-muted)] mt-1">
                     {language === "ko" ? "다른 검색어를 시도해보세요" : "Try a different search"}
                   </p>
                 </div>
               ) : (
                 <>
-                  <div className="mb-4 text-sm text-slate-600 dark:text-slate-400">
+                  <div className="mb-4 text-sm text-[var(--fg-muted)]">
                     {language === "ko"
                       ? total + "개의 IP"
                       : total + " IPs"}
@@ -349,7 +349,7 @@ export default function IPCatalogClient() {
                     <div className="text-center mt-8">
                       <button
                         onClick={() => setPage((p) => p + 1)}
-                        className="px-6 py-2 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                        className="px-6 py-2 bg-[var(--bg-subtle)] text-[var(--fg-base)] rounded-lg hover:bg-[var(--bg-muted)] transition-colors"
                       >
                         {language === "ko" ? "더 보기" : "Load More"}
                       </button>
