@@ -24,6 +24,10 @@ import {
     FolderOpen,
     User,
     Wrench,
+    ShieldCheck,
+    MessageSquareText,
+    FlaskConical,
+    BarChart3,
 } from "lucide-react";
 import { CreditDisplay, ProfileSettingsPanel } from "@/components/CreditDisplay";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -249,7 +253,7 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
         { label: "홈", href: "/", icon: Home },
         { label: "IP 갤러리", href: "/ip", icon: Sparkles },
         { label: "내 작업실", href: "/studio", icon: FolderOpen },
-        { label: "크리에이터", href: "/creator", icon: User },
+        { label: "크리에이터", href: "/creator/dashboard", icon: User },
     ];
 
     const NAV_GROUPS = [
@@ -262,6 +266,18 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
                 // Flow is gated by feature flag
                 ...(FLOW_ENABLED ? [{ label: "차원 플로우", href: "/flow", icon: Waypoints }] : []),
                 { label: "템플릿", href: "/singularity", icon: CircleDashed },
+            ],
+        },
+        {
+            id: "creator",
+            label: "크리에이터 운영",
+            icon: TrendingUp,
+            items: [
+                { label: "승인 게이트 (준비중)", href: "/creator/approvals", icon: ShieldCheck },
+                { label: "피드백 루프 (준비중)", href: "/creator/feedback", icon: MessageSquareText },
+                { label: "A/B 실험 (준비중)", href: "/creator/experiments", icon: FlaskConical },
+                { label: "분석 대시보드 (준비중)", href: "/creator/analytics", icon: BarChart3 },
+                { label: "정산", href: "/settlements", icon: Activity },
             ],
         },
         {
