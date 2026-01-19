@@ -38,9 +38,6 @@ from app.services.workflow_run_token import (
     get_workflow_run_token_service,
 )
 
-# Legacy import for backwards compatibility (deprecated)
-from app.schemas.workflow_session import workflow_session_manager
-
 logger = get_logger("workflow_router")
 
 router = APIRouter(prefix="/workflow", tags=["workflow"])

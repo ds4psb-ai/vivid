@@ -4,7 +4,7 @@
 
 SSoT Decision:
 - WorkflowExecution (DB): IP/Flow 워크플로우의 SSoT
-- WorkflowSessionManager (in-memory): Phase 1 이후 deprecated
+- In-memory WorkflowSessionManager removed after DB migration
 
 Features:
 - /plan, /start, /advance, /execute API를 DB 기반으로 처리
