@@ -1407,7 +1407,7 @@ function StyleGuideResult({
     avoidElements: string;
   };
 }) {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const isKo = language === "ko";
   const defaultLabels = {
     generatingGuide: "스타일 가이드 생성 중...",
@@ -1449,15 +1449,11 @@ function StyleGuideResult({
       {result.evidence_refs && result.evidence_refs.length > 0 && (
         <EvidenceCard
           variant="evidence"
-          title={isKo ? "근거 데이터" : "Evidence Data"}
+          title={t("evidenceDataTitle")}
           confidenceLevel="medium"
           reasonCodes={[]}
           evidenceRefs={result.evidence_refs}
-          reasonSummary={
-            isKo
-              ? "이 결과는 아래 근거 데이터를 기반으로 생성되었습니다."
-              : "This result was generated using the evidence below."
-          }
+          reasonSummary={t("evidenceSummaryDefault")}
           isCollapsible
         />
       )}

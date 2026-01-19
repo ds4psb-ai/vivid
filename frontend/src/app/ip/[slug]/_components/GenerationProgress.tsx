@@ -56,7 +56,7 @@ export default function GenerationProgress({
   onComplete,
   onCancel,
 }: GenerationProgressProps) {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
 
   const [progress, setProgress] = useState<GenerationProgress | null>(null);
   const [evidence, setEvidence] = useState<EvidenceData | null>(null);
@@ -346,15 +346,11 @@ export default function GenerationProgress({
               <div className="mt-3">
                 <EvidenceCard
                   variant="evidence"
-                  title={language === "ko" ? "근거 데이터" : "Evidence Data"}
+                  title={t("evidenceDataTitle")}
                   confidenceLevel="medium"
                   reasonCodes={[]}
                   evidenceRefs={evidence.evidence_refs}
-                  reasonSummary={
-                    language === "ko"
-                      ? "이 결과는 아래 근거 데이터를 기반으로 생성되었습니다."
-                      : "This result was generated using the evidence below."
-                  }
+                  reasonSummary={t("evidenceSummaryDefault")}
                   isCollapsible
                 />
               </div>

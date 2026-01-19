@@ -76,7 +76,7 @@ export function ConnectionSelector({
     isLoading = false,
     isPrimarySelection = false,
 }: ConnectionSelectorProps) {
-    const { language } = useLanguage();
+    const { language, t } = useLanguage();
     const isKo = language === "ko";
     const [hoveredId, setHoveredId] = useState<string | null>(null);
     const [showAll, setShowAll] = useState(false);
@@ -107,7 +107,7 @@ export function ConnectionSelector({
             {/* 추천 라벨 */}
             <div className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-zinc-500 flex items-center gap-1.5">
                 <Sparkles className="h-3 w-3 text-dimension-1d" />
-                {isKo ? "추천 차원" : "Recommended Dimensions"}
+                {t("recommendedDimensions")}
             </div>
 
             {/* 옵션 카드 */}
@@ -151,7 +151,7 @@ export function ConnectionSelector({
                                     : confidenceLevel === "medium"
                                     ? "text-amber-500 bg-amber-500/10 border-amber-500/30"
                                     : "text-slate-400 bg-slate-500/10 border-slate-500/30";
-                                const badgeLabel = isKo ? "추천" : "Top";
+                                const badgeLabel = t("recommendationTopBadge");
 
                                 return (
                                     <motion.button
@@ -260,8 +260,10 @@ export function ConnectionSelector({
                 >
                     <ChevronDown className={`h-3 w-3 transition-transform ${showAll ? "rotate-180" : ""}`} />
                     {showAll
-                        ? (isKo ? "접기" : "Collapse")
-                        : (isKo ? `+${hiddenCount}개 더 보기` : `+${hiddenCount} more`)}
+                        ? t("collapseLabel")
+                        : (isKo
+                            ? `+${hiddenCount}개 ${t("moreLabel")}`
+                            : `+${hiddenCount} ${t("moreLabel")}`)}
                 </motion.button>
             )}
 
@@ -272,7 +274,7 @@ export function ConnectionSelector({
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-200/50 dark:bg-zinc-800/50 border border-gray-300 dark:border-zinc-700 text-gray-600 dark:text-zinc-400 text-xs hover:bg-gray-200 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-white transition-all"
                 >
                     <RefreshCw className="h-3 w-3" />
-                    {isKo ? "다른 차원 탐색" : "Explore other dimensions"}
+                    {t("exploreOtherDimensions")}
                 </button>
             )}
         </div>

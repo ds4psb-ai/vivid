@@ -154,7 +154,7 @@ export function EvidenceCard({
   className = "",
   compact = false,
 }: EvidenceCardProps) {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const isKo = language === "ko";
   const [isExpanded, setIsExpanded] = useState(!isCollapsible);
   const isEvidenceOnly = variant === "evidence";
@@ -179,15 +179,13 @@ export function EvidenceCard({
   const confidencePercent = confidence ? Math.round(confidence * 100) : null;
   const labels = useMemo(
     () => ({
-      confidenceTitle: isKo ? "추천 신뢰도" : "Recommendation Confidence",
-      reasonsTitle: isKo ? "추천 이유" : "Recommendation Reasons",
-      evidenceTitle: isKo ? "근거 데이터" : "Evidence Data",
-      showEvidence: isKo ? "근거 보기" : "Show Evidence",
-      hideEvidence: isKo ? "근거 접기" : "Hide Evidence",
-      datasetsUsed: isKo ? "사용 데이터셋" : "Datasets Used",
-      evidenceCardTitle: isKo ? "근거 요약" : "Evidence Summary",
+      confidenceTitle: t("evidenceConfidenceTitle"),
+      reasonsTitle: t("evidenceReasonsTitle"),
+      evidenceTitle: t("evidenceDataTitle"),
+      datasetsUsed: t("evidenceDatasetsUsed"),
+      evidenceCardTitle: t("evidenceSummaryTitle"),
     }),
-    [isKo]
+    [t, language]
   );
 
   // Compact mode for inline display
