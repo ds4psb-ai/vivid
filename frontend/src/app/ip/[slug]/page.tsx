@@ -17,6 +17,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { IPDetailServer } from "./_components/IPDetailServer";
 import { IPDetailFallback } from "./_components/IPDetailFallback";
+import { fetchWithRetry } from "@/lib/fetch-utils";
 
 // =============================================================================
 // Page Configuration
@@ -33,34 +34,54 @@ import { IPDetailFallback } from "./_components/IPDetailFallback";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 // =============================================================================
+// Types
+// =============================================================================
+
+interface PopularIPItem {
+  id: string;
+  slug: string;
+  name_ko: string;
+  name_en: string;
+}
+
+// =============================================================================
 // Static Params Generation
 // =============================================================================
 
 /**
  * Pre-generate pages for popular IPs at build time
- * Fetches popular IP slugs for static generation
+ * Fetches popular IP slugs for static generation with retry logic
  */
 async function getPopularIPSlugs(): Promise<string[]> {
-  try {
-    const res = await fetch(`${API_URL}/api/v1/ip/popular?limit=50`, {
+  const result = await fetchWithRetry<PopularIPItem[]>(
+    `${API_URL}/api/v1/ip/popular?limit=50`,
+    {
       headers: {
         "Content-Type": "application/json",
       },
       // Use next cache for build-time fetching
       next: { revalidate: 3600 }, // Revalidate every hour during builds
-    });
-
-    if (!res.ok) {
-      console.warn("[generateStaticParams] Failed to fetch popular IPs");
-      return [];
+      // Retry config for build time
+      maxRetries: 3,
+      baseDelay: 2000,
+      timeout: 30000,
     }
+  );
 
-    const ips = await res.json();
-    return ips.map((ip: { slug: string }) => ip.slug);
-  } catch (error) {
-    console.warn("[generateStaticParams] Error fetching popular IPs:", error);
+  if (result.error) {
+    console.warn(
+      `[generateStaticParams] Failed to fetch popular IPs after ${result.retries} retries:`,
+      result.error
+    );
     return [];
   }
+
+  if (!result.data || !Array.isArray(result.data)) {
+    console.warn("[generateStaticParams] Invalid response format");
+    return [];
+  }
+
+  return result.data.map((ip) => ip.slug);
 }
 
 /**

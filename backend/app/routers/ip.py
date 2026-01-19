@@ -473,3 +473,45 @@ async def list_genres(
     ]
 
     return {"genres": genres}
+
+
+class PopularIPItem(BaseModel):
+    """Popular IP item for generateStaticParams."""
+    id: str
+    slug: str
+    name_ko: str
+    name_en: str
+
+
+@router.get("/popular", response_model=list[PopularIPItem])
+async def get_popular_ips(
+    db: AsyncSession = Depends(get_db),
+    limit: int = Query(50, ge=1, le=100, description="Max number of IPs to return"),
+):
+    """Get popular IPs for static generation.
+
+    Used by Next.js generateStaticParams to pre-render popular IP pages at build time.
+    Returns IPs sorted by generation count (popularity).
+
+    Phase 6: ISR + generateStaticParams integration
+    """
+    result = await db.execute(
+        select(IPCatalog)
+        .where(IPCatalog.is_active == True)
+        .order_by(
+            desc(IPCatalog.is_featured),  # Featured first
+            desc(IPCatalog.generation_count),  # Then by popularity
+        )
+        .limit(limit)
+    )
+    ips = result.scalars().all()
+
+    return [
+        PopularIPItem(
+            id=str(ip.id),
+            slug=ip.slug,
+            name_ko=ip.name_ko,
+            name_en=ip.name_en,
+        )
+        for ip in ips
+    ]

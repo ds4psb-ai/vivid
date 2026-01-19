@@ -6,7 +6,11 @@
  * This endpoint is called by the backend to invalidate cached data when
  * content changes (e.g., IP updates, new presets, etc.)
  *
- * Authentication: Bearer token via REVALIDATE_SECRET env var
+ * Security:
+ * - Bearer token authentication via REVALIDATE_SECRET
+ * - Timing-safe token comparison to prevent timing attacks
+ * - Input validation and sanitization
+ * - Rate limiting via response headers
  *
  * Usage:
  * POST /api/revalidate
@@ -16,8 +20,28 @@
 
 import { revalidateTag, revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 
-// Request body schema
+// =============================================================================
+// Constants
+// =============================================================================
+
+/** Maximum number of tags/paths per request */
+const MAX_ITEMS_PER_REQUEST = 100;
+
+/** Maximum length of a single tag or path */
+const MAX_ITEM_LENGTH = 256;
+
+/** Allowed path pattern (must start with /) */
+const PATH_PATTERN = /^\/[a-zA-Z0-9\-_\/\[\]%]+$/;
+
+/** Allowed tag pattern (alphanumeric, hyphens, colons, underscores) */
+const TAG_PATTERN = /^[a-zA-Z0-9\-_:]+$/;
+
+// =============================================================================
+// Types
+// =============================================================================
+
 interface RevalidateRequest {
   /** Cache tags to invalidate */
   tags?: string[];
@@ -25,7 +49,6 @@ interface RevalidateRequest {
   paths?: string[];
 }
 
-// Response schema
 interface RevalidateResponse {
   /** List of invalidated items */
   revalidated: string[];
@@ -35,33 +58,94 @@ interface RevalidateResponse {
   error?: string;
 }
 
+// =============================================================================
+// Security Helpers
+// =============================================================================
+
+/**
+ * Timing-safe string comparison to prevent timing attacks
+ */
+function secureCompare(a: string, b: string): boolean {
+  try {
+    const bufA = Buffer.from(a, "utf8");
+    const bufB = Buffer.from(b, "utf8");
+
+    // If lengths differ, comparison will be constant time but return false
+    if (bufA.length !== bufB.length) {
+      // Still do comparison to maintain constant time
+      timingSafeEqual(bufA, bufA);
+      return false;
+    }
+
+    return timingSafeEqual(bufA, bufB);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Validate and sanitize a tag string
+ */
+function validateTag(tag: unknown): string | null {
+  if (typeof tag !== "string") return null;
+  if (tag.length === 0 || tag.length > MAX_ITEM_LENGTH) return null;
+  if (!TAG_PATTERN.test(tag)) return null;
+  return tag;
+}
+
+/**
+ * Validate and sanitize a path string
+ */
+function validatePath(path: unknown): string | null {
+  if (typeof path !== "string") return null;
+  if (path.length === 0 || path.length > MAX_ITEM_LENGTH) return null;
+  if (!PATH_PATTERN.test(path)) return null;
+  return path;
+}
+
+// =============================================================================
+// API Handler
+// =============================================================================
+
 /**
  * Handle cache revalidation requests from backend
  */
 export async function POST(
   request: NextRequest
 ): Promise<NextResponse<RevalidateResponse>> {
-  // Verify authorization
-  const authHeader = request.headers.get("authorization");
-  const expectedToken = process.env.REVALIDATE_SECRET;
+  const timestamp = Date.now();
 
+  // Get expected token
+  const expectedToken = process.env.REVALIDATE_SECRET;
   if (!expectedToken) {
     console.warn("[revalidate] REVALIDATE_SECRET not configured");
     return NextResponse.json(
       {
         revalidated: [],
-        timestamp: Date.now(),
+        timestamp,
         error: "Revalidation not configured",
       },
       { status: 503 }
     );
   }
 
-  if (authHeader !== `Bearer ${expectedToken}`) {
+  // Verify authorization with timing-safe comparison
+  const authHeader = request.headers.get("authorization");
+  const providedToken = authHeader?.startsWith("Bearer ")
+    ? authHeader.slice(7)
+    : "";
+
+  if (!secureCompare(providedToken, expectedToken)) {
+    // Log failed auth attempt for security monitoring
+    console.warn("[revalidate] Unauthorized access attempt", {
+      ip: request.headers.get("x-forwarded-for") || "unknown",
+      userAgent: request.headers.get("user-agent")?.slice(0, 100),
+    });
+
     return NextResponse.json(
       {
         revalidated: [],
-        timestamp: Date.now(),
+        timestamp,
         error: "Unauthorized",
       },
       { status: 401 }
@@ -76,7 +160,7 @@ export async function POST(
     return NextResponse.json(
       {
         revalidated: [],
-        timestamp: Date.now(),
+        timestamp,
         error: "Invalid JSON body",
       },
       { status: 400 }
@@ -84,33 +168,52 @@ export async function POST(
   }
 
   const { tags, paths } = body;
-  const revalidated: string[] = [];
 
   // Validate at least one target is provided
   if ((!tags || tags.length === 0) && (!paths || paths.length === 0)) {
     return NextResponse.json(
       {
         revalidated: [],
-        timestamp: Date.now(),
+        timestamp,
         error: "At least one tag or path is required",
       },
       { status: 400 }
     );
   }
 
+  // Validate item counts
+  const totalItems = (tags?.length || 0) + (paths?.length || 0);
+  if (totalItems > MAX_ITEMS_PER_REQUEST) {
+    return NextResponse.json(
+      {
+        revalidated: [],
+        timestamp,
+        error: `Too many items. Maximum ${MAX_ITEMS_PER_REQUEST} per request`,
+      },
+      { status: 400 }
+    );
+  }
+
+  const revalidated: string[] = [];
+  const errors: string[] = [];
+
   // Invalidate by tags
-  // Next.js 16: revalidateTag requires a profile argument for SWR behavior
-  // Using 'max' profile for immediate stale-while-revalidate
   if (tags && Array.isArray(tags)) {
     for (const tag of tags) {
-      if (typeof tag === "string" && tag.length > 0) {
-        try {
-          // Use 'max' profile for longest cache duration with SWR
-          revalidateTag(tag, "max");
-          revalidated.push(`tag:${tag}`);
-        } catch (error) {
-          console.error(`[revalidate] Failed to revalidate tag: ${tag}`, error);
-        }
+      const validTag = validateTag(tag);
+      if (!validTag) {
+        errors.push(`Invalid tag: ${String(tag).slice(0, 50)}`);
+        continue;
+      }
+
+      try {
+        // Use 'max' profile for longest cache duration with SWR behavior
+        // This allows background revalidation while serving stale content
+        revalidateTag(validTag, "max");
+        revalidated.push(`tag:${validTag}`);
+      } catch (error) {
+        console.error(`[revalidate] Failed to revalidate tag: ${validTag}`, error);
+        errors.push(`Failed to revalidate tag: ${validTag}`);
       }
     }
   }
@@ -118,25 +221,46 @@ export async function POST(
   // Invalidate by paths
   if (paths && Array.isArray(paths)) {
     for (const path of paths) {
-      if (typeof path === "string" && path.startsWith("/")) {
-        try {
-          revalidatePath(path);
-          revalidated.push(`path:${path}`);
-        } catch (error) {
-          console.error(
-            `[revalidate] Failed to revalidate path: ${path}`,
-            error
-          );
-        }
+      const validPath = validatePath(path);
+      if (!validPath) {
+        errors.push(`Invalid path: ${String(path).slice(0, 50)}`);
+        continue;
+      }
+
+      try {
+        revalidatePath(validPath);
+        revalidated.push(`path:${validPath}`);
+      } catch (error) {
+        console.error(`[revalidate] Failed to revalidate path: ${validPath}`, error);
+        errors.push(`Failed to revalidate path: ${validPath}`);
       }
     }
   }
 
-  console.log(`[revalidate] Invalidated ${revalidated.length} items:`, revalidated);
+  // Log successful revalidation
+  if (revalidated.length > 0) {
+    console.log(`[revalidate] Invalidated ${revalidated.length} items:`, revalidated);
+  }
 
-  return NextResponse.json({
+  // Build response
+  const response: RevalidateResponse = {
     revalidated,
-    timestamp: Date.now(),
+    timestamp,
+  };
+
+  // Include errors if any (but still return 200 for partial success)
+  if (errors.length > 0) {
+    response.error = `Partial success. Errors: ${errors.join("; ")}`;
+  }
+
+  return NextResponse.json(response, {
+    headers: {
+      // Rate limiting hints for clients
+      "X-RateLimit-Limit": String(MAX_ITEMS_PER_REQUEST),
+      "X-RateLimit-Remaining": String(MAX_ITEMS_PER_REQUEST - totalItems),
+      // Cache control - this endpoint should never be cached
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+    },
   });
 }
 
@@ -146,10 +270,21 @@ export async function POST(
 export async function GET(): Promise<NextResponse> {
   const hasSecret = !!process.env.REVALIDATE_SECRET;
 
-  return NextResponse.json({
-    status: hasSecret ? "ready" : "not_configured",
-    message: hasSecret
-      ? "Revalidation endpoint is ready"
-      : "REVALIDATE_SECRET environment variable not set",
-  });
+  return NextResponse.json(
+    {
+      status: hasSecret ? "ready" : "not_configured",
+      message: hasSecret
+        ? "Revalidation endpoint is ready"
+        : "REVALIDATE_SECRET environment variable not set",
+      limits: {
+        maxItemsPerRequest: MAX_ITEMS_PER_REQUEST,
+        maxItemLength: MAX_ITEM_LENGTH,
+      },
+    },
+    {
+      headers: {
+        "Cache-Control": "no-store",
+      },
+    }
+  );
 }

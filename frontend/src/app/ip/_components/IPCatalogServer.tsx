@@ -6,11 +6,14 @@
  * This server component fetches IP catalog data with caching and passes it
  * to the client component for interactivity.
  *
+ * Features:
+ * - ISR with 15-minute revalidation for rails, 1-hour for genres
+ * - Retry with exponential backoff for transient failures
+ * - Graceful fallback to empty data on persistent failures
+ *
  * Caching Strategy:
  * - When cacheComponents is disabled: Uses traditional ISR with `next: { revalidate }`
- * - When cacheComponents is enabled: Uses "use cache" + cacheLife (uncomment)
- *
- * TODO: Enable "use cache" once cacheComponents is enabled globally
+ * - When cacheComponents is enabled: Uses "use cache" + cacheLife (uncomment TODOs)
  */
 
 import IPCatalogClient, {
@@ -18,6 +21,7 @@ import IPCatalogClient, {
   type Genre,
 } from "./IPCatalogClient";
 import { REVALIDATE_TIMES } from "@/lib/cache-tags";
+import { fetchWithRetry } from "@/lib/fetch-utils";
 
 // =============================================================================
 // API Base URL
@@ -26,11 +30,23 @@ import { REVALIDATE_TIMES } from "@/lib/cache-tags";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 // =============================================================================
-// Cached Data Fetchers (ISR mode)
+// API Response Types
+// =============================================================================
+
+interface HomeRailResponse {
+  sections: HomeRailSectionData[];
+}
+
+interface GenresResponse {
+  genres: Genre[];
+}
+
+// =============================================================================
+// Cached Data Fetchers (ISR mode with retry)
 // =============================================================================
 
 /**
- * Fetch IP home rails with ISR caching
+ * Fetch IP home rails with ISR caching and retry
  * Revalidates every 15 minutes
  */
 async function getCachedIPRails(): Promise<HomeRailSectionData[]> {
@@ -39,30 +55,34 @@ async function getCachedIPRails(): Promise<HomeRailSectionData[]> {
   // cacheLife("ip");
   // cacheTag(CACHE_TAGS.IP_RAILS);
 
-  try {
-    const res = await fetch(`${API_URL}/api/v1/ip/home/rails`, {
+  const result = await fetchWithRetry<HomeRailResponse>(
+    `${API_URL}/api/v1/ip/home/rails`,
+    {
       headers: {
         "Content-Type": "application/json",
       },
       // ISR: Revalidate every 15 minutes
       next: { revalidate: REVALIDATE_TIMES.IP_PAGES },
-    });
-
-    if (!res.ok) {
-      console.error("[IPCatalogServer] Failed to fetch rails:", res.status);
-      return [];
+      // Retry config
+      maxRetries: 3,
+      baseDelay: 1000,
+      timeout: 15000,
     }
+  );
 
-    const data = await res.json();
-    return data.sections || [];
-  } catch (error) {
-    console.error("[IPCatalogServer] Error fetching rails:", error);
+  if (result.error) {
+    console.error(
+      `[IPCatalogServer] Failed to fetch rails after ${result.retries} retries:`,
+      result.error
+    );
     return [];
   }
+
+  return result.data?.sections || [];
 }
 
 /**
- * Fetch IP genres with ISR caching
+ * Fetch IP genres with ISR caching and retry
  * Revalidates every hour (editorial content changes less frequently)
  */
 async function getCachedGenres(): Promise<Genre[]> {
@@ -71,26 +91,30 @@ async function getCachedGenres(): Promise<Genre[]> {
   // cacheLife("editorial");
   // cacheTag(CACHE_TAGS.IP_GENRES);
 
-  try {
-    const res = await fetch(`${API_URL}/api/v1/ip/genres`, {
+  const result = await fetchWithRetry<GenresResponse>(
+    `${API_URL}/api/v1/ip/genres`,
+    {
       headers: {
         "Content-Type": "application/json",
       },
       // ISR: Revalidate every hour
       next: { revalidate: REVALIDATE_TIMES.EDITORIAL },
-    });
-
-    if (!res.ok) {
-      console.error("[IPCatalogServer] Failed to fetch genres:", res.status);
-      return [];
+      // Retry config
+      maxRetries: 3,
+      baseDelay: 1000,
+      timeout: 15000,
     }
+  );
 
-    const data = await res.json();
-    return data.genres || [];
-  } catch (error) {
-    console.error("[IPCatalogServer] Error fetching genres:", error);
+  if (result.error) {
+    console.error(
+      `[IPCatalogServer] Failed to fetch genres after ${result.retries} retries:`,
+      result.error
+    );
     return [];
   }
+
+  return result.data?.genres || [];
 }
 
 // =============================================================================

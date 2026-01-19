@@ -6,11 +6,14 @@
  * This server component fetches IP detail data with caching and passes it
  * to the client component for interactivity.
  *
+ * Features:
+ * - ISR with 15-minute revalidation
+ * - Retry with exponential backoff for transient failures
+ * - Graceful fallback to null on persistent failures (client will retry)
+ *
  * Caching Strategy:
  * - When cacheComponents is disabled: Uses traditional ISR with `next: { revalidate }`
- * - When cacheComponents is enabled: Uses "use cache" + cacheLife (uncomment)
- *
- * TODO: Enable "use cache" once cacheComponents is enabled globally
+ * - When cacheComponents is enabled: Uses "use cache" + cacheLife (uncomment TODOs)
  */
 
 import IPDetailClient, {
@@ -18,6 +21,7 @@ import IPDetailClient, {
   type IPRights,
 } from "./IPDetailClient";
 import { REVALIDATE_TIMES } from "@/lib/cache-tags";
+import { fetchWithRetry } from "@/lib/fetch-utils";
 
 // =============================================================================
 // API Base URL
@@ -26,11 +30,11 @@ import { REVALIDATE_TIMES } from "@/lib/cache-tags";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 // =============================================================================
-// Cached Data Fetchers (ISR mode)
+// Cached Data Fetchers (ISR mode with retry)
 // =============================================================================
 
 /**
- * Fetch IP detail with ISR caching
+ * Fetch IP detail with ISR caching and retry
  * Revalidates every 15 minutes
  */
 async function getCachedIPDetail(slug: string): Promise<IPDetail | null> {
@@ -39,32 +43,39 @@ async function getCachedIPDetail(slug: string): Promise<IPDetail | null> {
   // cacheLife("ip");
   // cacheTag(CACHE_TAGS.IP_DETAIL(slug));
 
-  try {
-    const res = await fetch(`${API_URL}/api/v1/ip/catalog/${slug}`, {
+  const result = await fetchWithRetry<IPDetail>(
+    `${API_URL}/api/v1/ip/catalog/${encodeURIComponent(slug)}`,
+    {
       headers: {
         "Content-Type": "application/json",
       },
       // ISR: Revalidate every 15 minutes
       next: { revalidate: REVALIDATE_TIMES.IP_PAGES },
-    });
-
-    if (!res.ok) {
-      console.error(
-        `[IPDetailServer] Failed to fetch IP detail for ${slug}:`,
-        res.status
-      );
-      return null;
+      // Retry config
+      maxRetries: 3,
+      baseDelay: 1000,
+      timeout: 15000,
     }
+  );
 
-    return await res.json();
-  } catch (error) {
-    console.error(`[IPDetailServer] Error fetching IP detail for ${slug}:`, error);
+  if (result.error) {
+    // 404 is expected for invalid slugs, don't log as error
+    if (result.status === 404) {
+      console.warn(`[IPDetailServer] IP not found: ${slug}`);
+    } else {
+      console.error(
+        `[IPDetailServer] Failed to fetch IP detail for ${slug} after ${result.retries} retries:`,
+        result.error
+      );
+    }
     return null;
   }
+
+  return result.data;
 }
 
 /**
- * Fetch IP rights with ISR caching
+ * Fetch IP rights with ISR caching and retry
  * Revalidates every 15 minutes
  */
 async function getCachedIPRights(slug: string): Promise<IPRights | null> {
@@ -73,25 +84,33 @@ async function getCachedIPRights(slug: string): Promise<IPRights | null> {
   // cacheLife("ip");
   // cacheTag(CACHE_TAGS.IP_RIGHTS(slug));
 
-  try {
-    const res = await fetch(`${API_URL}/api/v1/ip/catalog/${slug}/rights`, {
+  const result = await fetchWithRetry<IPRights>(
+    `${API_URL}/api/v1/ip/catalog/${encodeURIComponent(slug)}/rights`,
+    {
       headers: {
         "Content-Type": "application/json",
       },
       // ISR: Revalidate every 15 minutes
       next: { revalidate: REVALIDATE_TIMES.IP_PAGES },
-    });
-
-    if (!res.ok) {
-      // Rights might not exist for all IPs, so this is not an error
-      return null;
+      // Retry config - fewer retries for rights since it may legitimately not exist
+      maxRetries: 2,
+      baseDelay: 500,
+      timeout: 10000,
     }
+  );
 
-    return await res.json();
-  } catch (error) {
-    console.error(`[IPDetailServer] Error fetching IP rights for ${slug}:`, error);
+  if (result.error) {
+    // Rights might not exist for all IPs, so 404 is not an error
+    if (result.status !== 404) {
+      console.error(
+        `[IPDetailServer] Failed to fetch IP rights for ${slug} after ${result.retries} retries:`,
+        result.error
+      );
+    }
     return null;
   }
+
+  return result.data;
 }
 
 // =============================================================================
