@@ -1,7 +1,7 @@
 # Docs Index (정본)
 
-**Updated**: 2026-01-17
-**총 문서**: 15개 (핵심), 35개 (archive)
+**Updated**: 2026-01-19
+**총 문서**: 16개 (핵심), 35개 (archive)
 
 ---
 
@@ -16,6 +16,7 @@
 | 13 | CREDITS_AND_BILLING_SPEC_V1.md | 크레딧 시스템 | ✅ |
 | 14 | **[14_CODEX_WORKFLOW.md](docs/14_CODEX_WORKFLOW.md)** | **Codex 운영 규칙 (Auto Research Mode)** | ✅ |
 | 15 | CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md | 아키텍처 철학 | ✅ |
+| 16 | **[SSOT_DECISIONS_LOG.md](docs/SSOT_DECISIONS_LOG.md)** | **SSoT 결정 로그 (IP-First)** | 🔄 |
 | 27 | MCP_INTEGRATION_SPEC_V1.md | MCP 통합 | ✅ |
 | 30 | UNIFIED_EXECUTION_ROADMAP.md | 실행 로드맵 | ✅ |
 | **31** | **[DIMENSION_APP_DEVELOPER_GUIDE.md](docs/DIMENSION_APP_DEVELOPER_GUIDE.md)** | **앱 개발자 가이드 (SSoT)** | ✅ |
@@ -54,6 +55,13 @@
 | 항목 | 위치 | 설명 |
 |------|------|------|
 | **RAG 데이터 파이프라인 SPEC** | [`docs/RAG_DATA_PIPELINE_SPEC_2026.md`](docs/RAG_DATA_PIPELINE_SPEC_2026.md) | 앱별 코퍼스 설계 + 수집/품질 프로토콜 |
+
+## 2026-01-19 IP-First Governance Sync
+
+| 항목 | 위치 | 설명 |
+|------|------|------|
+| **Pipelines & User Flows 업데이트** | [`08_PIPELINES_AND_USER_FLOWS.md`](08_PIPELINES_AND_USER_FLOWS.md) | IP-First 파이프라인/권리 게이팅 추가 |
+| **Design System 거버넌스 추가** | [`docs/DESIGN_SYSTEM_2026.md`](docs/DESIGN_SYSTEM_2026.md) | 권리/DMCA/워크플로우 통합 UX 요구사항 |
 
 ---
 

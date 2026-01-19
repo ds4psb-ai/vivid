@@ -98,6 +98,8 @@ class WorkflowExecution(Base):
         Index("ix_workflow_executions_user_id", "user_id"),
         Index("ix_workflow_executions_status", "status"),
         Index("ix_workflow_executions_dag_id", "dag_id"),
+        Index("ix_workflow_executions_ip_id", "ip_id"),
+        Index("ix_workflow_executions_preset_id", "preset_id"),
         Index("ix_workflow_executions_created_at", "created_at"),
     )
 
@@ -112,6 +114,19 @@ class WorkflowExecution(Base):
         String(32),
         default=WorkflowStatus.PENDING.value,
     )
+
+    # IP Context (IP-First SSoT)
+    ip_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("ip_catalog.id"),
+        nullable=True,
+    )
+    preset_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("ip_workflow_presets.id"),
+        nullable=True,
+    )
+    ip_context: Mapped[dict] = mapped_column(JSONB, default=dict)
 
     # DAG Snapshot
     dag_snapshot: Mapped[dict] = mapped_column(JSONB, default=dict)

@@ -226,6 +226,7 @@ class IPGeneration(Base):
         Index("ix_ip_generations_preset_id", "preset_id"),
         Index("ix_ip_generations_user_id", "user_id"),
         Index("ix_ip_generations_status", "status"),
+        Index("ix_ip_generations_workflow_execution_id", "workflow_execution_id"),
         Index("ix_ip_generations_created_at", "created_at"),
     )
 
@@ -242,6 +243,11 @@ class IPGeneration(Base):
     # Workflow tracking
     workflow_session_id: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)
     run_token_id: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)
+    workflow_execution_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("workflow_executions.id"),
+        nullable=True,
+    )
 
     # Status
     status: Mapped[str] = mapped_column(String(32), default="pending")  # pending/running/completed/failed/cancelled
