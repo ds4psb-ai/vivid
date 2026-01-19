@@ -93,6 +93,8 @@ export default function IPDetailClient({
   const [generating, setGenerating] = useState(false);
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [showRecommendations, setShowRecommendations] = useState(true);
+  const [traceIdCopied, setTraceIdCopied] = useState(false);
+  const [showRecommendationWhy, setShowRecommendationWhy] = useState(false);
 
   // Tool recommendations (Phase 2.5)
   const {
@@ -102,6 +104,8 @@ export default function IPDetailClient({
     error: recError,
     totalCredits,
     workflowSuggested,
+    ipContextUsed,
+    traceId,
     fetchByIPSlug,
     fetchRecommendations,
   } = useToolRecommendations();
@@ -231,6 +235,17 @@ export default function IPDetailClient({
     handleGenerate();
   }, [handleGenerate]);
 
+  const handleCopyTraceId = useCallback(async () => {
+    if (!traceId) return;
+    try {
+      await navigator.clipboard?.writeText(traceId);
+      setTraceIdCopied(true);
+      setTimeout(() => setTraceIdCopied(false), 1500);
+    } catch (err) {
+      console.warn("Failed to copy trace id", err);
+    }
+  }, [traceId]);
+
   if (loading) {
     return (
       <AppShell showTopBar={false}>
@@ -266,6 +281,12 @@ export default function IPDetailClient({
   const isRestricted = effectiveStatus === "restricted";
   const recommendedDimensions = Array.from(
     new Set(recommendations.map((rec) => rec.dimension))
+  );
+  const hasEvidenceSignals = recommendations.some(
+    (rec) => (rec.evidence_refs || []).length > 0
+  );
+  const hasHistorySignals = recommendations.some((rec) =>
+    (rec.reason_codes || []).some((code) => code.startsWith("history:"))
   );
 
   return (
@@ -458,12 +479,34 @@ export default function IPDetailClient({
                       >
                         {showRecommendations ? t("hideRecommendations") : t("showRecommendations")}
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowRecommendationWhy((prev) => !prev)}
+                        className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-200"
+                      >
+                        {showRecommendationWhy ? t("hideRecommendationWhy") : t("showRecommendationWhy")}
+                      </button>
                       {showRecommendations && recResponse && (
                         <>
                           {workflowSuggested && (
                             <span className="evidence-badge">
                               {t("workflowSuggested")}
                             </span>
+                          )}
+                          <span
+                            className="evidence-badge text-[9px]"
+                            data-tone="context"
+                          >
+                            {ipContextUsed ? t("ipContextUsed") : t("ipContextMissing")}
+                          </span>
+                          {traceId && (
+                            <button
+                              type="button"
+                              onClick={handleCopyTraceId}
+                              className="text-[9px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                            >
+                              {traceIdCopied ? t("copied") : `${t("traceIdLabel")} · ${t("copyTraceId")}`}
+                            </button>
                           )}
                           {recommendedDimensions.length > 0 && (
                             <div className="flex items-center gap-1">
@@ -499,6 +542,24 @@ export default function IPDetailClient({
                   {!showRecommendations && (
                     <div className="text-xs text-slate-400">
                       {t("recommendationsHidden")}
+                    </div>
+                  )}
+
+                  {showRecommendationWhy && (
+                    <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/40 px-3 py-2 text-xs text-slate-600 dark:text-slate-300 space-y-1">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                        {t("recommendationSignalsTitle")}
+                      </div>
+                      <ul className="list-disc pl-4 space-y-0.5">
+                        <li>
+                          {ipContextUsed
+                            ? t("signalIpContext")
+                            : t("signalLimitedContext")}
+                        </li>
+                        {workflowSuggested && <li>{t("signalWorkflowFit")}</li>}
+                        {hasEvidenceSignals && <li>{t("signalEvidenceSources")}</li>}
+                        {hasHistorySignals && <li>{t("signalUsageHistory")}</li>}
+                      </ul>
                     </div>
                   )}
 
