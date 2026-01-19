@@ -580,6 +580,21 @@ else:
     mood = "neutral"
 ```
 
+#### 9.2.1 템플릿 마이그레이션/정리
+
+의미가 없는 `legacy_params`는 제거하고, 기존 템플릿은 intent 기반으로 백필합니다.
+
+```bash
+# 1) DB 마이그레이션: legacy_params 제거
+alembic upgrade head
+
+# 2) 템플릿 intent 백필 (dry-run)
+python backend/scripts/backfill_template_intents.py
+
+# 3) 실제 반영
+python backend/scripts/backfill_template_intents.py --execute
+```
+
 ---
 
 ## 10. 프론트엔드 연동 (React 19 Best Practices)
