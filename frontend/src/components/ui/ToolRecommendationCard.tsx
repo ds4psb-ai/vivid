@@ -76,6 +76,7 @@ export function ToolRecommendationCard({
       visibleReasons.map((code) => ({
         code,
         label: getReasonCodeLabel(code, language),
+        tone: code.split(":")[0],
       })),
     [visibleReasons, language]
   );
@@ -224,7 +225,7 @@ export function ToolRecommendationCard({
       {chips.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {chips.map((chip) => (
-            <span key={chip.code} className="evidence-badge text-[9px]">
+            <span key={chip.code} className="evidence-badge text-[9px]" data-tone={chip.tone}>
               {chip.label}
             </span>
           ))}
@@ -319,7 +320,7 @@ export function ToolRecommendationCard({
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {resolvedReasonCodes.map((code) => (
-                      <span key={code} className="evidence-badge text-[9px]">
+                      <span key={code} className="evidence-badge text-[9px]" data-tone={code.split(":")[0]}>
                         {getReasonCodeLabel(code, language)}
                       </span>
                     ))}
@@ -345,7 +346,7 @@ export function ToolRecommendationCard({
                   {resolvedDatasets.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {resolvedDatasets.map((dataset) => (
-                        <span key={dataset} className="evidence-badge text-[9px]">
+                        <span key={dataset} className="evidence-badge text-[9px]" data-tone="dataset">
                           {dataset}
                         </span>
                       ))}

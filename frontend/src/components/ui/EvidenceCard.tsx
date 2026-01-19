@@ -331,8 +331,9 @@ export function EvidenceCard({
             {reasonLabels.map(({ code, label, category }) => (
               <span
                 key={code}
-                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-white/50 border border-current/20"
+                className="evidence-badge inline-flex items-center text-[11px]"
                 title={code}
+                data-tone={category}
               >
                 {getCategoryIcon(category)}
                 <span className="ml-1">{label}</span>
@@ -380,7 +381,7 @@ export function EvidenceCard({
                         className="flex items-start gap-2 text-xs opacity-80"
                       >
                         {getEvidenceIcon(type)}
-                        <span className="inline-flex items-center rounded-full border border-current/20 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.08em]">
+                        <span className="evidence-badge text-[9px] uppercase tracking-[0.08em]" data-tone="source">
                           {getEvidenceSourceLabel(type, t as (key: string) => string)}
                         </span>
                         <span className="break-all">{label}</span>

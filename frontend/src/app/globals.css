@@ -1662,6 +1662,55 @@ html.lenis body {
   border-radius: 999px;
 }
 
+/* Evidence tone badges */
+.evidence-badge[data-tone] {
+  --_color: var(--fg-muted);
+  --_rgb: var(--fg-muted-rgb);
+  color: var(--_color);
+  border-color: color-mix(in srgb, var(--_color) 35%, transparent);
+  background: color-mix(in srgb, var(--_color) 12%, transparent);
+}
+
+.evidence-badge[data-tone="genre"] {
+  --_color: var(--info);
+  --_rgb: var(--info-rgb);
+}
+
+.evidence-badge[data-tone="auteur"] {
+  --_color: var(--accent);
+  --_rgb: var(--accent-rgb);
+}
+
+.evidence-badge[data-tone="dimension"] {
+  --_color: var(--success);
+  --_rgb: var(--success-rgb);
+}
+
+.evidence-badge[data-tone="shot"] {
+  --_color: var(--warning);
+  --_rgb: var(--warning-rgb);
+}
+
+.evidence-badge[data-tone="context"] {
+  --_color: var(--info);
+  --_rgb: var(--info-rgb);
+}
+
+.evidence-badge[data-tone="history"] {
+  --_color: var(--warning);
+  --_rgb: var(--warning-rgb);
+}
+
+.evidence-badge[data-tone="source"] {
+  --_color: var(--fg-muted);
+  --_rgb: var(--fg-muted-rgb);
+}
+
+.evidence-badge[data-tone="dataset"] {
+  --_color: var(--success);
+  --_rgb: var(--success-rgb);
+}
+
 .capsule-locked {
   background: var(--capsule-locked-bg);
   border: 1px solid var(--capsule-locked-border);
