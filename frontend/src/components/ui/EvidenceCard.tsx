@@ -53,12 +53,23 @@ export interface EvidenceCardProps {
   reasonSummary: string;
   /** Datasets used for the recommendation */
   datasetsUsed?: string[];
+  /** Workflow trace items for evidence */
+  workflowTrace?: EvidenceTraceItem[];
   /** Whether the evidence section is collapsible */
   isCollapsible?: boolean;
   /** Custom class name */
   className?: string;
   /** Compact mode for inline display */
   compact?: boolean;
+}
+
+export interface EvidenceTraceItem {
+  evidence_id: string;
+  source: string;
+  ref: string;
+  confidence: number | null;
+  status: string | null;
+  timestamp: string | null;
 }
 
 // =============================================================================
@@ -81,10 +92,7 @@ function getConfidenceColor(level: ConfidenceLevel): string {
   }
 }
 
-function formatEvidenceRef(
-  ref: string,
-  isKo: boolean
-): { type: string; label: string } {
+function formatEvidenceRef(ref: string): { type: string; label: string } {
   const parts = ref.split(":");
   const prefix = parts[0];
   const category = parts[1];
@@ -92,42 +100,42 @@ function formatEvidenceRef(
   if (prefix === "db" && category === "rag_docs") {
     return {
       type: "rag",
-      label: `${isKo ? "RAG" : "RAG"} · ${parts.slice(2).join("/")}`,
+      label: `${parts.slice(2).join("/")}`,
     };
   }
 
   if (prefix === "db" && category === "ip_catalog") {
     return {
       type: "ip",
-      label: `${isKo ? "IP" : "IP"} · ${parts.slice(2).join("/")}`,
+      label: `${parts.slice(2).join("/")}`,
     };
   }
 
   if (prefix === "db" && category === "capsule_runs") {
     return {
-      type: "database",
-      label: `${isKo ? "실행" : "Run"} · ${parts.slice(2).join("/")}`,
+      type: "run",
+      label: `${parts.slice(2).join("/")}`,
     };
   }
 
   if (prefix === "rag") {
     return {
       type: "rag",
-      label: `${isKo ? "RAG" : "RAG"} · ${parts.slice(1).join("/")}`,
+      label: `${parts.slice(1).join("/")}`,
     };
   }
 
   if (prefix === "ip") {
     return {
       type: "ip",
-      label: `${isKo ? "IP" : "IP"} · ${parts.slice(1).join("/")}`,
+      label: `${parts.slice(1).join("/")}`,
     };
   }
 
   if (prefix === "db") {
     return {
       type: "database",
-      label: `${isKo ? "DB" : "DB"} · ${parts.slice(1).join("/")}`,
+      label: `${parts.slice(1).join("/")}`,
     };
   }
 
@@ -150,6 +158,7 @@ export function EvidenceCard({
   evidenceRefs,
   reasonSummary,
   datasetsUsed = [],
+  workflowTrace = [],
   isCollapsible = true,
   className = "",
   compact = false,
@@ -172,9 +181,12 @@ export function EvidenceCard({
   const evidenceItems = useMemo(() => {
     return evidenceRefs.map((ref) => ({
       ref,
-      ...formatEvidenceRef(ref, isKo),
+      ...formatEvidenceRef(ref),
     }));
-  }, [evidenceRefs, isKo]);
+  }, [evidenceRefs]);
+
+  const traceVisible = useMemo(() => workflowTrace.slice(0, 6), [workflowTrace]);
+  const traceHiddenCount = Math.max(workflowTrace.length - traceVisible.length, 0);
 
   const confidencePercent = confidence ? Math.round(confidence * 100) : null;
   const labels = useMemo(
@@ -184,6 +196,8 @@ export function EvidenceCard({
       evidenceTitle: t("evidenceDataTitle"),
       datasetsUsed: t("evidenceDatasetsUsed"),
       evidenceCardTitle: t("evidenceSummaryTitle"),
+      evidenceSourcesTitle: t("evidenceSourcesTitle"),
+      evidenceTraceTitle: t("evidenceTraceTitle"),
     }),
     [t, language]
   );
@@ -276,7 +290,7 @@ export function EvidenceCard({
       )}
 
       {/* Collapsible Evidence Section */}
-      {(evidenceItems.length > 0 || datasetsUsed.length > 0) && (
+      {(evidenceItems.length > 0 || datasetsUsed.length > 0 || workflowTrace.length > 0) && (
         <div className="pt-2 border-t border-current/10">
           {isCollapsible ? (
             <button
@@ -299,26 +313,74 @@ export function EvidenceCard({
           )}
 
           {isExpanded && (
-            <div className="mt-2 space-y-2 animate-in fade-in duration-200">
-              {/* Evidence Refs */}
+            <div className="mt-2 rounded-md border border-current/10 bg-white/60 dark:bg-slate-900/60 p-3 space-y-3 animate-in fade-in duration-200">
+              {/* Evidence Sources */}
               {evidenceItems.length > 0 && (
-                <ul className="space-y-1">
-                  {evidenceItems.map(({ ref, type, label }) => (
-                    <li
-                      key={ref}
-                      className="flex items-start gap-1.5 text-xs opacity-80"
-                    >
-                      {getEvidenceIcon(type)}
-                      <span className="break-all">{label}</span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="space-y-2">
+                  <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">
+                    {labels.evidenceSourcesTitle}
+                  </div>
+                  <ul className="space-y-1">
+                    {evidenceItems.map(({ ref, type, label }) => (
+                      <li
+                        key={ref}
+                        className="flex items-start gap-2 text-xs opacity-80"
+                      >
+                        {getEvidenceIcon(type)}
+                        <span className="inline-flex items-center rounded-full border border-current/20 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.08em]">
+                          {getEvidenceSourceLabel(type, t)}
+                        </span>
+                        <span className="break-all">{label}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Workflow Trace */}
+              {workflowTrace.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">
+                    {labels.evidenceTraceTitle}
+                  </div>
+                  <div className="space-y-2">
+                    {traceVisible.map((trace) => (
+                      <div
+                        key={trace.evidence_id}
+                        className="flex items-center justify-between rounded-md border border-current/10 px-3 py-2 text-[11px]"
+                      >
+                        <div className="flex flex-col gap-0.5">
+                          <span className="font-mono text-slate-600 dark:text-slate-300">
+                            {trace.ref}
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            {trace.source}
+                            {trace.timestamp ? ` · ${new Date(trace.timestamp).toLocaleString()}` : ""}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
+                          {trace.confidence !== null && (
+                            <span>{Math.round(trace.confidence * 100)}%</span>
+                          )}
+                          {trace.status && (
+                            <span className="uppercase">{trace.status}</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {traceHiddenCount > 0 && (
+                      <div className="text-[10px] text-slate-400">
+                        +{traceHiddenCount} {t("moreLabel")}
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
 
               {/* Datasets Used */}
               {datasetsUsed.length > 0 && (
-                <div className="pt-2">
-                  <div className="text-[10px] uppercase tracking-[0.18em] opacity-70 mb-1">
+                <div className="space-y-2">
+                  <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">
                     {labels.datasetsUsed}
                   </div>
                   <div className="flex flex-wrap gap-1">
@@ -364,12 +426,29 @@ function getEvidenceIcon(type: string) {
   switch (type) {
     case "database":
       return <Database className="w-3 h-3 shrink-0 mt-0.5" />;
+    case "run":
+      return <Database className="w-3 h-3 shrink-0 mt-0.5" />;
     case "rag":
       return <FileText className="w-3 h-3 shrink-0 mt-0.5" />;
     case "ip":
       return <Sparkles className="w-3 h-3 shrink-0 mt-0.5" />;
     default:
       return <FileText className="w-3 h-3 shrink-0 mt-0.5" />;
+  }
+}
+
+function getEvidenceSourceLabel(type: string, t: (key: string) => string) {
+  switch (type) {
+    case "rag":
+      return t("evidenceSourceRag");
+    case "ip":
+      return t("evidenceSourceIp");
+    case "run":
+      return t("evidenceSourceRun");
+    case "database":
+      return t("evidenceSourceDb");
+    default:
+      return t("evidenceSourceOther");
   }
 }
 

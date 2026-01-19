@@ -342,7 +342,7 @@ export default function GenerationProgress({
               </div>
             )}
 
-            {evidence.evidence_refs.length > 0 && (
+            {evidence.evidence_refs.length > 0 || evidence.workflow_trace?.length > 0 ? (
               <div className="mt-3">
                 <EvidenceCard
                   variant="evidence"
@@ -351,50 +351,11 @@ export default function GenerationProgress({
                   reasonCodes={[]}
                   evidenceRefs={evidence.evidence_refs}
                   reasonSummary={t("evidenceSummaryDefault")}
+                  workflowTrace={evidence.workflow_trace}
                   isCollapsible
                 />
               </div>
-            )}
-
-            {evidence.workflow_trace?.length > 0 && (
-              <div className="mt-4">
-                <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                  {language === "ko" ? "워크플로우 트레이스" : "Workflow Trace"}
-                </div>
-                <div className="space-y-2">
-                  {evidence.workflow_trace.slice(0, 6).map((trace) => (
-                    <div
-                      key={trace.evidence_id}
-                      className="flex items-center justify-between rounded-md border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs"
-                    >
-                      <div className="flex flex-col gap-1">
-                        <span className="font-mono text-slate-600 dark:text-slate-300">
-                          {trace.ref}
-                        </span>
-                        <span className="text-[10px] text-slate-400">
-                          {trace.source}
-                          {trace.timestamp ? ` · ${new Date(trace.timestamp).toLocaleString()}` : ""}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
-                        {trace.confidence !== null && (
-                          <span>{Math.round(trace.confidence * 100)}%</span>
-                        )}
-                        {trace.status && (
-                          <span className="uppercase">{trace.status}</span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  {evidence.workflow_trace.length > 6 && (
-                    <div className="text-[11px] text-slate-400">
-                      +{evidence.workflow_trace.length - 6}{" "}
-                      {language === "ko" ? "개 더 있음" : "more items"}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+            ) : null}
           </div>
 
           {/* Final stats */}

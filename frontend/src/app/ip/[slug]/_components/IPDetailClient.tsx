@@ -85,6 +85,20 @@ export default function IPDetailClient({ slug }: IPDetailClientProps) {
     fetchRecommendations,
   } = useToolRecommendations();
 
+  const handleRetryRecommendations = useCallback(() => {
+    if (ip && selectedPreset) {
+      fetchRecommendations({
+        ip_id: ip.id,
+        preset_id: selectedPreset.id,
+        max_results: 3,
+      });
+      return;
+    }
+    if (slug) {
+      fetchByIPSlug(slug);
+    }
+  }, [ip, selectedPreset, slug, fetchRecommendations, fetchByIPSlug]);
+
   // Fetch IP detail
   useEffect(() => {
     async function fetchIPDetail() {
@@ -430,14 +444,28 @@ export default function IPDetailClient({ slug }: IPDetailClientProps) {
                       )}
 
                       {!recLoading && recError && (
-                        <div className="text-xs text-red-500">
-                          {t("recommendationLoadFailed")}
+                        <div className="text-xs text-red-500 flex items-center gap-2">
+                          <span>{t("recommendationLoadFailed")}</span>
+                          <button
+                            type="button"
+                            onClick={handleRetryRecommendations}
+                            className="text-violet-500 hover:underline"
+                          >
+                            {t("retry")}
+                          </button>
                         </div>
                       )}
 
                       {!recLoading && recResponse && recommendations.length === 0 && (
-                        <div className="text-xs text-slate-500 dark:text-slate-400">
-                          {t("recommendationEmpty")}
+                        <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                          <span>{t("recommendationEmpty")}</span>
+                          <button
+                            type="button"
+                            onClick={() => router.push("/dimension")}
+                            className="text-violet-500 hover:underline"
+                          >
+                            {t("exploreOtherDimensions")}
+                          </button>
                         </div>
                       )}
 
