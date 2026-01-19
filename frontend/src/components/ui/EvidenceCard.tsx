@@ -433,7 +433,7 @@ export function EvidenceCard({
                             : "border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400"
                         )}
                       >
-                        {getStatusLabel(status, t, labels.traceFilterUnknown)}
+                        {getStatusLabel(status, t as (key: string) => string, labels.traceFilterUnknown)}
                       </button>
                     ))}
                   </div>
