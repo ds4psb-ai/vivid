@@ -183,6 +183,7 @@ export function EvidenceCard({
   const [traceQuery, setTraceQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [minConfidence, setMinConfidence] = useState(0);
+  const [evidenceCopied, setEvidenceCopied] = useState(false);
 
   // Parse reason codes into display format
   const reasonLabels = useMemo(() => {
@@ -278,9 +279,24 @@ export function EvidenceCard({
       evidenceTraceMinConfidence: t("evidenceTraceMinConfidence"),
       traceFilterAll: t("traceFilterAll"),
       traceFilterUnknown: t("traceFilterUnknown"),
+      copyEvidenceRefs: t("copyEvidenceRefs"),
+      copied: t("copied"),
     }),
     [t, language]
   );
+
+  const handleCopyEvidenceRefs = async () => {
+    if (evidenceItems.length === 0) return;
+    try {
+      await navigator.clipboard?.writeText(
+        evidenceItems.map((item) => item.ref).join("\n")
+      );
+      setEvidenceCopied(true);
+      setTimeout(() => setEvidenceCopied(false), 1500);
+    } catch (err) {
+      console.warn("Failed to copy evidence refs", err);
+    }
+  };
 
   // Compact mode for inline display
   if (compact) {
@@ -413,8 +429,15 @@ export function EvidenceCard({
               {/* Evidence Sources */}
               {evidenceItems.length > 0 && (
                 <div className="space-y-2">
-                  <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">
-                    {labels.evidenceSourcesTitle}
+                  <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.18em] opacity-70">
+                    <span>{labels.evidenceSourcesTitle}</span>
+                    <button
+                      type="button"
+                      onClick={handleCopyEvidenceRefs}
+                      className="text-[9px] normal-case tracking-normal text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
+                    >
+                      {evidenceCopied ? labels.copied : labels.copyEvidenceRefs}
+                    </button>
                   </div>
                   {evidenceStats.length > 0 && (
                     <div className="flex flex-wrap gap-1">
