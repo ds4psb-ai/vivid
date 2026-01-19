@@ -1,6 +1,6 @@
 # SSoT Decisions Log (IP-First Coordination)
 
-> **버전**: 0.3
+> **버전**: 0.4
 > **최종 업데이트**: 2026-01-19
 > **범위**: IP-First 통합 로드맵(v2.1.1) + Phase 4-7 확장
 > **근거 문서**: `/Users/ted/.claude/plans/ip-first-coordination-roadmap.md`
@@ -8,7 +8,7 @@
 
 ---
 
-## Phase 완료 현황 (IP-First Roadmap v2.1.1)
+## Phase 완료 현황 (IP-First Roadmap v2.1.1 + Extended)
 
 | Phase | 이름 | 상태 | 완료일 |
 |-------|------|------|--------|
@@ -18,6 +18,11 @@
 | 2 | run-token 통합 | ✅ Completed | 2026-01-19 |
 | 2.5 | Tool Recommender & Evidence Card | ✅ Completed | 2026-01-19 |
 | 3 | UI 통합 | ✅ Completed | 2026-01-19 |
+| 4 | Multi-Agent Orchestration | ✅ Completed | 2026-01-19 |
+| 5 | Cost Optimization | ✅ Completed | 2026-01-19 |
+| 5.5 | Production Hardening | 🔄 In Progress | - |
+| 6 | Next.js 16 Cache Components | ⏳ Planned | - |
+| 7 | HITL Enhancement | ⏳ Planned | - |
 
 ---
 
@@ -280,35 +285,80 @@ revalidateTag(`ip:${slug}`);
 ### Decision 006 — Multi-Agent Pattern 선택
 - **ID**: SSoT-DEC-006
 - **날짜**: 2026-01-19
-- **상태**: **Proposed**
-- **결정 요약**: Supervisor + Handoff 하이브리드 패턴 채택 검토
+- **상태**: **Accepted**
+- **결정 요약**: Supervisor + Handoff 하이브리드 패턴 채택
 - **배경/문제**:
   - 현재 VividAgent는 단일 에이전트.
   - 복잡한 워크플로우에서 전문화된 에이전트 필요.
 - **대안**:
   - A) Supervisor Pattern only
   - B) Sequential/Concurrent Pattern only
-  - C) Supervisor + Handoff 하이브리드 (**검토 중**)
-- **후속 작업**:
-  - LangGraph 2026 패턴 PoC 구현
-  - 비용/성능 벤치마크
+  - C) Supervisor + Handoff 하이브리드 (**채택**)
+- **결정**: **C안 채택**
+  - `AgentOrchestrator`: Supervisor 역할
+  - `BaseAgent` 서브클래스: ResearchAgent, CreativeAgent, ValidatorAgent, PlannerAgent
+  - `HandoffRequest`: 에이전트 간 컨텍스트 전달
+  - `TaskPlan`: 의존성 기반 실행
+- **구현 파일**:
+  - `backend/app/agents/orchestrator.py`
+  - `backend/app/agents/base_agent.py`
+  - `backend/app/schemas/agent_task.py`
+  - `backend/tests/agents/test_orchestrator.py` (37개 테스트)
 
 ---
 
 ### Decision 007 — Model Router 전략
 - **ID**: SSoT-DEC-007
 - **날짜**: 2026-01-19
-- **상태**: **Proposed**
-- **결정 요약**: 작업 복잡도 기반 모델 자동 선택
+- **상태**: **Accepted**
+- **결정 요약**: 작업 복잡도 기반 동적 모델 라우팅
 - **배경/문제**:
   - 모든 작업에 고비용 모델 사용 중.
   - 단순 작업에 저비용 모델 사용 가능.
 - **대안**:
   - A) 정적 라우팅 (작업 유형별 고정)
-  - B) 동적 라우팅 (복잡도 분석 후 선택) (**검토 중**)
+  - B) 동적 라우팅 (복잡도 분석 후 선택) (**채택**)
+- **결정**: **B안 채택**
+  - `ComplexityAnalyzer`: 키워드/태스크 타입/입력 길이 기반 분석
+  - `ModelRouter`: LOW→FLASH, MEDIUM→PRO, HIGH→ULTRA
+  - `CostTracker`: 실제 비용 기록 + ULTRA 대비 절감액 계산
+  - 일일 예산 강제 (`DailyBudgetExceededError`)
+- **구현 파일**:
+  - `backend/app/services/model_router.py`
+  - `backend/app/services/cost_tracker.py`
+  - `backend/tests/services/test_model_router.py` (28개 테스트)
+  - `backend/tests/services/test_cost_tracker.py` (27개 테스트)
+- **예상 효과**: 67% 비용 절감
+
+---
+
+### Decision 008 — Production Hardening 전략
+- **ID**: SSoT-DEC-008
+- **날짜**: 2026-01-19
+- **상태**: **Proposed**
+- **결정 요약**: 2026 Best Practices 기반 프로덕션 강화
+- **배경/문제**:
+  - Multi-Agent + Cost Optimization 완료되었으나 resilience 패턴 미적용
+  - 2026 기준: "Observability is non-negotiable for production agents"
+  - LLM API 장애 시 cascading failure 위험
+- **2026 리서치 근거**:
+  - [LakeFS](https://lakefs.io/blog/llm-observability-tools/): 89% 조직이 에이전트 관측성 구현
+  - [Portkey](https://portkey.ai/blog/retries-fallbacks-and-circuit-breakers-in-llm-apps/): Circuit breaker 필수
+  - [TrueFoundry](https://www.truefoundry.com/blog/rate-limiting-in-llm-gateway): Token-aware rate limiting
+  - [Splunk](https://www.splunk.com/en_us/blog/learn/llm-observability.html): 토큰 모니터링으로 30-40% 절감
+- **핵심 구현 항목**:
+  1. **Circuit Breaker**: LLM provider 장애 감지/차단/복구
+  2. **Retry with Exponential Backoff**: 일시적 실패 자동 재시도
+  3. **OpenTelemetry Tracing**: 분산 추적 + 토큰 메트릭
+  4. **Structured Logging**: JSON 로깅 + trace ID 연동
+  5. **Rate Limiting**: Token-aware 제한
+- **예상 파일**:
+  - `backend/app/services/resilience.py` (Circuit Breaker, Retry)
+  - `backend/app/telemetry/otel_setup.py` (OpenTelemetry 설정)
+  - `backend/app/telemetry/llm_metrics.py` (LLM 메트릭)
+  - `backend/app/middleware/logging_middleware.py` (구조화된 로깅)
 - **후속 작업**:
-  - 복잡도 분류기 설계
-  - 비용 절감 효과 측정
+  - 구현 후 Phase 5.5 완료 처리
 
 ---
 
@@ -319,3 +369,4 @@ revalidateTag(`ip:${slug}`);
 | 0.1 | 2026-01-19 | 초기 SSoT 결정 로그 생성 |
 | 0.2 | 2026-01-19 | 결정 1~5 Accepted 반영 |
 | 0.3 | 2026-01-19 | Phase 0-3, 2.5 완료 반영 + Phase 4-7 로드맵 추가 |
+| 0.4 | 2026-01-19 | Phase 4-5 완료 + Decision 006/007 Accepted + Phase 5.5 Hardening 추가 |
