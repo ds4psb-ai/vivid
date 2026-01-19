@@ -116,6 +116,9 @@ from app.routers.ip_generation import router as ip_generation_router
 from app.routers.dmca import router as dmca_router
 from app.routers.ip_payout import router as ip_payout_router
 
+# Tool Recommendation (IP-First Coordination Phase 2.5)
+from app.routers.tool_recommendation import router as tool_recommendation_router
+
 # GraphQL Gateway (2026 Best Practices - P3.3)
 from app.graphql import graphql_router
 
@@ -284,6 +287,9 @@ app.include_router(ip_router, prefix="/api/v1/ip", tags=["ip"])
 app.include_router(ip_generation_router, prefix="/api/v1/ip", tags=["ip-generation"])
 app.include_router(dmca_router, prefix="/api/v1/dmca", tags=["dmca"])
 app.include_router(ip_payout_router, prefix="/api/v1/ip", tags=["ip-payout"])
+
+# Tool Recommendation (IP-First Coordination Phase 2.5)
+app.include_router(tool_recommendation_router, prefix="/api/v1", tags=["tool-recommendation"])
 
 # Capsules (Direct Capsule Execution - P5)
 app.include_router(capsules_router, tags=["capsules"])

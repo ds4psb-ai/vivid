@@ -7,6 +7,8 @@ import AppShell from "@/components/AppShell";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LicenseStatusInfo } from "@/components/ip/LicenseStatusBadge";
 import GenerationProgress from "./GenerationProgress";
+import { EvidenceCard } from "@/components/ui/EvidenceCard";
+import { useToolRecommendations, type ToolRecommendation } from "@/hooks/useToolRecommendations";
 
 interface PresetItem {
   id: string;
@@ -70,6 +72,15 @@ export default function IPDetailClient({ slug }: IPDetailClientProps) {
   const [generating, setGenerating] = useState(false);
   const [generationId, setGenerationId] = useState<string | null>(null);
 
+  // Tool recommendations (Phase 2.5)
+  const {
+    recommendations,
+    response: recResponse,
+    isLoading: recLoading,
+    fetchByIPSlug,
+    fetchRecommendations,
+  } = useToolRecommendations();
+
   // Fetch IP detail
   useEffect(() => {
     async function fetchIPDetail() {
@@ -108,6 +119,24 @@ export default function IPDetailClient({ slug }: IPDetailClientProps) {
 
     fetchIPDetail();
   }, [slug]);
+
+  // Fetch recommendations when IP is loaded
+  useEffect(() => {
+    if (ip && slug) {
+      fetchByIPSlug(slug);
+    }
+  }, [ip, slug, fetchByIPSlug]);
+
+  // Fetch updated recommendations when preset is selected
+  useEffect(() => {
+    if (ip && selectedPreset) {
+      fetchRecommendations({
+        ip_id: ip.id,
+        preset_id: selectedPreset.id,
+        max_results: 3,
+      });
+    }
+  }, [ip, selectedPreset, fetchRecommendations]);
 
   const handleGenerate = useCallback(async () => {
     if (!selectedPreset || !ip) return;
@@ -364,6 +393,39 @@ export default function IPDetailClient({ slug }: IPDetailClientProps) {
                       );
                     })}
                   </div>
+
+                  {/* Tool Recommendations (Phase 2.5 Evidence Card) */}
+                  {selectedPreset && recResponse && recommendations.length > 0 && (
+                    <div className="mb-6">
+                      <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        {language === "ko" ? "추천 도구" : "Recommended Tools"}
+                      </h3>
+                      <EvidenceCard
+                        confidenceLevel={recommendations[0]?.confidence_level || "medium"}
+                        confidence={recommendations[0]?.confidence}
+                        reasonCodes={recommendations[0]?.reason_codes || []}
+                        evidenceRefs={recommendations[0]?.evidence_refs || []}
+                        reasonSummary={recResponse.reason_summary}
+                        isCollapsible={true}
+                      />
+                      {/* Show additional recommendations as compact badges */}
+                      {recommendations.length > 1 && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {recommendations.slice(1).map((rec) => (
+                            <EvidenceCard
+                              key={rec.tool_id}
+                              confidenceLevel={rec.confidence_level}
+                              confidence={rec.confidence}
+                              reasonCodes={rec.reason_codes}
+                              evidenceRefs={rec.evidence_refs}
+                              reasonSummary={`${rec.display_name} (${rec.dimension})`}
+                              compact
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* User prompt */}
                   <div className="mb-6">

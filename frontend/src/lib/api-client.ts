@@ -124,14 +124,18 @@ function getAuthToken(): string | null {
 }
 
 function enrichError(res: Response, error: unknown): ApiError {
-    const isCircuitOpen = error?.detail?.includes?.("Circuit") ||
-        error?.message?.includes?.("Circuit");
+    const err = error as Record<string, unknown> | null;
+    const detail = typeof err?.detail === "string" ? err.detail : undefined;
+    const message = typeof err?.message === "string" ? err.message : undefined;
+
+    const isCircuitOpen = detail?.includes?.("Circuit") ||
+        message?.includes?.("Circuit");
 
     return {
         status: res.status,
         message: isCircuitOpen
             ? "서비스가 일시적으로 불안정합니다. 잠시 후 다시 시도해주세요."
-            : error.detail || error.message || `Error: ${res.status}`,
+            : detail || message || `Error: ${res.status}`,
         detail: error,
         isRetryable: isRetryableError(res.status),
     };
@@ -315,5 +319,135 @@ export async function retryAsync<T>(
 
     throw lastError;
 }
+
+// =============================================================================
+// Tool Recommendation API (IP-First Phase 2.5)
+// =============================================================================
+
+export interface ToolRecommendation {
+    tool_id: string;
+    display_name: string;
+    dimension: string;
+    confidence: number;
+    confidence_level: "high" | "medium" | "low";
+    reason_codes: string[];
+    evidence_refs: string[];
+    estimated_credits: number;
+    priority: number;
+    description?: string;
+}
+
+export interface ToolRecommendationResponse {
+    recommendations: ToolRecommendation[];
+    total_estimated_credits: number;
+    workflow_suggested: boolean;
+    reason_summary: string;
+    ip_context_used: boolean;
+    trace_id?: string;
+}
+
+export interface ToolRecommendationRequest {
+    ip_id?: string;
+    preset_id?: string;
+    scene_type?: string;
+    user_history?: string[];
+    dimension_context?: string;
+    max_results?: number;
+}
+
+export interface ToolEvidenceResponse {
+    tool_id: string;
+    evidence_refs: string[];
+    datasets_used: string[];
+    reason_codes: string[];
+    confidence: number;
+    confidence_level: "high" | "medium" | "low";
+}
+
+export interface ToolDisplayInfo {
+    tool_id: string;
+    display_name_ko: string;
+    display_name_en: string;
+    dimension: string;
+    description_ko: string;
+    description_en: string;
+    icon: string;
+    base_credits: number;
+}
+
+/**
+ * Tool Recommendation API namespace
+ */
+export const toolsApi = {
+    /**
+     * Get tool recommendations based on context
+     */
+    async recommend(
+        request: ToolRecommendationRequest
+    ): Promise<ApiResponse<ToolRecommendationResponse>> {
+        return api.post<ToolRecommendationResponse>(
+            "/api/v1/tools/recommend",
+            request
+        );
+    },
+
+    /**
+     * Get recommendations for an IP by slug
+     */
+    async getIPRecommendations(
+        slug: string,
+        options?: { sceneType?: string; dimensionContext?: string; maxResults?: number }
+    ): Promise<ApiResponse<ToolRecommendationResponse>> {
+        const params = new URLSearchParams();
+        if (options?.sceneType) params.set("scene_type", options.sceneType);
+        if (options?.dimensionContext) params.set("dimension_context", options.dimensionContext);
+        if (options?.maxResults) params.set("max_results", options.maxResults.toString());
+
+        const query = params.toString() ? `?${params.toString()}` : "";
+        return api.get<ToolRecommendationResponse>(
+            `/api/v1/tools/ip/${encodeURIComponent(slug)}/recommendations${query}`
+        );
+    },
+
+    /**
+     * Get evidence for a tool selection
+     */
+    async getToolEvidence(
+        toolId: string,
+        ipId?: string
+    ): Promise<ApiResponse<ToolEvidenceResponse>> {
+        const params = new URLSearchParams();
+        if (ipId) params.set("ip_id", ipId);
+
+        const query = params.toString() ? `?${params.toString()}` : "";
+        return api.get<ToolEvidenceResponse>(
+            `/api/v1/tools/${encodeURIComponent(toolId)}/evidence${query}`
+        );
+    },
+
+    /**
+     * List all available tools
+     */
+    async listTools(options?: {
+        dimension?: string;
+        stage?: string;
+    }): Promise<ApiResponse<ToolDisplayInfo[]>> {
+        const params = new URLSearchParams();
+        if (options?.dimension) params.set("dimension", options.dimension);
+        if (options?.stage) params.set("stage", options.stage);
+
+        const query = params.toString() ? `?${params.toString()}` : "";
+        return api.get<ToolDisplayInfo[]>(`/api/v1/tools/list${query}`);
+    },
+
+    /**
+     * Get info for a specific tool
+     */
+    async getToolInfo(toolId: string): Promise<ApiResponse<ToolDisplayInfo>> {
+        return api.get<ToolDisplayInfo>(
+            `/api/v1/tools/${encodeURIComponent(toolId)}/info`
+        );
+    },
+};
 
 export default api;
