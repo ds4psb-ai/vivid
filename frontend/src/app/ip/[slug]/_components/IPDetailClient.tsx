@@ -57,7 +57,7 @@ interface IPDetailClientProps {
 
 export default function IPDetailClient({ slug }: IPDetailClientProps) {
   const router = useRouter();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
 
   // State
   const [ip, setIP] = useState<IPDetail | null>(null);
@@ -403,18 +403,18 @@ export default function IPDetailClient({ slug }: IPDetailClientProps) {
                     <div className="mb-6">
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          {language === "ko" ? "추천 도구" : "Recommended Tools"}
+                          {t("recommendedTools")}
                         </h3>
                         {recResponse && (
                           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                             {workflowSuggested && (
                               <span className="evidence-badge">
-                                {language === "ko" ? "워크플로우 추천" : "Workflow Suggested"}
+                                {t("workflowSuggested")}
                               </span>
                             )}
                             {totalCredits > 0 && (
                               <span>
-                                {totalCredits} {language === "ko" ? "크레딧" : "credits"}
+                                {totalCredits} {t("credits")}
                               </span>
                             )}
                           </div>
@@ -431,13 +431,13 @@ export default function IPDetailClient({ slug }: IPDetailClientProps) {
 
                       {!recLoading && recError && (
                         <div className="text-xs text-red-500">
-                          {language === "ko" ? "추천을 불러오지 못했습니다." : "Failed to load recommendations."}
+                          {t("recommendationLoadFailed")}
                         </div>
                       )}
 
                       {!recLoading && recResponse && recommendations.length === 0 && (
                         <div className="text-xs text-slate-500 dark:text-slate-400">
-                          {language === "ko" ? "추천 결과가 없습니다." : "No recommendations available."}
+                          {t("recommendationEmpty")}
                         </div>
                       )}
 
