@@ -236,6 +236,9 @@ export default function IPDetailClient({ slug }: IPDetailClientProps) {
   const effectiveStatus = rights?.license_status || ip.license_status;
   const isProhibited = effectiveStatus === "prohibited";
   const isRestricted = effectiveStatus === "restricted";
+  const recommendedDimensions = Array.from(
+    new Set(recommendations.map((rec) => rec.dimension))
+  );
 
   return (
     <AppShell showTopBar={false}>
@@ -420,11 +423,27 @@ export default function IPDetailClient({ slug }: IPDetailClientProps) {
                           {t("recommendedTools")}
                         </h3>
                         {recResponse && (
-                          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                             {workflowSuggested && (
                               <span className="evidence-badge">
                                 {t("workflowSuggested")}
                               </span>
+                            )}
+                            {recommendedDimensions.length > 0 && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-[10px] uppercase tracking-[0.18em]">
+                                  {t("recommendedDimensions")}
+                                </span>
+                                {recommendedDimensions.map((dimension) => (
+                                  <span
+                                    key={dimension}
+                                    className="evidence-badge text-[9px]"
+                                    data-tone="dimension"
+                                  >
+                                    {dimension}
+                                  </span>
+                                ))}
+                              </div>
                             )}
                             {totalCredits > 0 && (
                               <span>
