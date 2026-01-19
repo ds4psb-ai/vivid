@@ -29,6 +29,7 @@ interface ToolRecommendationCardProps {
   confidence?: number;
   confidenceLevel?: ConfidenceLevel;
   reasonCodes?: string[];
+  evidenceRefs?: string[];
   estimatedCredits?: number;
   isPrimary?: boolean;
   className?: string;
@@ -41,6 +42,7 @@ export function ToolRecommendationCard({
   confidence,
   confidenceLevel,
   reasonCodes = [],
+  evidenceRefs = [],
   estimatedCredits,
   isPrimary = false,
   className,

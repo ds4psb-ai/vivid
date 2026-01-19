@@ -272,7 +272,7 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                     confidence: adjustedConfidence,
                     reasonCodes: dynamicRec?.reasonCodes ?? opt.reasonCodes ?? [],
                 };
-            }).filter((opt): opt is ConnectionOption => opt !== null);
+            }).filter((opt): opt is NonNullable<typeof opt> => opt !== null);
 
             return adjustedOptions.sort((a, b) => b.confidence - a.confidence);
         }, [cars, getConnectionOptions, getToolInfo, isSupportedOption, dynamicRecMap]);
