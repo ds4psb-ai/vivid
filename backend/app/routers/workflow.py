@@ -490,6 +490,15 @@ async def advance_workflow_step(
     if not next_node:
         # 모든 노드 완료
         await db_service.complete_execution(execution.id)
+
+        # Finalize run-token (refund unused credits)
+        if execution.run_token_id:
+            advance_run_token_service = get_workflow_run_token_service()
+            await advance_run_token_service.finalize_workflow(
+                run_id=execution.run_token_id,
+                success=True,
+            )
+
         await db.commit()
         return {
             "success": True,
@@ -601,10 +610,20 @@ async def advance_workflow_step(
             latency_ms=latency_ms,
         )
 
+        # Refresh execution to get updated completed_nodes
+        execution = await db_service.get_execution(execution.id)
+
         # 다음 노드 확인
         next_next = db_service.get_next_node(execution)
         if not next_next:
             await db_service.complete_execution(execution.id)
+
+            # Finalize run-token (refund unused credits)
+            if execution.run_token_id:
+                await run_token_service.finalize_workflow(
+                    run_id=execution.run_token_id,
+                    success=True,
+                )
 
         await db.commit()
 
@@ -629,6 +648,14 @@ async def advance_workflow_step(
             inputs=inputs,
             error_message=result.error or "Unknown error",
         )
+
+        # Finalize run-token on failure (refund all unused credits)
+        if execution.run_token_id:
+            await run_token_service.finalize_workflow(
+                run_id=execution.run_token_id,
+                success=False,
+            )
+
         await db.commit()
 
         return {

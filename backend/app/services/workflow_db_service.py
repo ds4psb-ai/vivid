@@ -85,6 +85,20 @@ class WorkflowDBService:
         """
         initial_params = initial_params or {}
 
+        # Extract node-level connections from node_chain
+        # Each node has "connections": [{"from_node_id", "from_port", "to_port"}]
+        # We need to flatten and add "to_node_id" for _propagate_outputs
+        node_level_connections = []
+        for node in plan.node_chain:
+            to_node_id = node.get("id")
+            for conn in node.get("connections", []):
+                node_level_connections.append({
+                    "from_node_id": conn.get("from_node_id"),
+                    "to_node_id": to_node_id,
+                    "from_port": conn.get("from_port", "output"),
+                    "to_port": conn.get("to_port", "input"),
+                })
+
         # DAG 스냅샷 생성
         dag_snapshot = {
             "template_id": plan.template_id,
@@ -93,7 +107,7 @@ class WorkflowDBService:
             "template_description": plan.template.description_ko,
             "tools": plan.template.tools,
             "nodes": plan.node_chain,
-            "connections": plan.template.connections,
+            "connections": node_level_connections,  # Use node-level format for _propagate_outputs
             "execution_order": [n["id"] for n in plan.node_chain],
         }
 
@@ -112,7 +126,7 @@ class WorkflowDBService:
             estimated_credits=plan.total_credits,
             ip_id=ip_id,
             preset_id=preset_id,
-            ip_context=ip_context.model_dump() if ip_context else {},
+            ip_context=ip_context.model_dump(mode="json") if ip_context else {},  # JSON serializable for JSONB
         )
 
         self._db.add(execution)

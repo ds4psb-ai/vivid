@@ -119,11 +119,15 @@ async def execute_generation_workflow(
             workflow_execution.current_node_id = "capsule_execute"
             await db.commit()
 
-            # Build capsule inputs
+            # Build capsule inputs from stored IPContext (SSoT-DEC-005)
+            # ip_context is stored in workflow_execution.ip_context (JSONB)
+            stored_ip_context = workflow_execution.ip_context or {}
             capsule_inputs = {
                 "topic": generation.user_prompt or f"Fan fiction for {ip.name_en if ip else 'IP'}",
-                "ip_context": ip.worldbuilding if ip else {},
-                "auteur_key": ip.auteur_key if ip else None,
+                "ip_context": stored_ip_context,  # Use standardized IPContext from DB
+                "auteur_key": stored_ip_context.get("auteur_key") or (ip.auteur_key if ip else None),
+                "worldbuilding": stored_ip_context.get("worldbuilding", {}),
+                "style_refs": stored_ip_context.get("style_refs", []),
             }
 
             # Execute capsule (sealed - internal DAG hidden)
@@ -177,9 +181,9 @@ async def execute_generation_workflow(
                         execution_id=workflow_execution.id,
                     )
 
-                # Deduct credits
+                # Deduct credits (use run_id, not JWT token)
                 success, _, error = await run_token_service.deduct_credits(
-                    run_token,
+                    run_id,
                     generation.credits_consumed,
                 )
                 if not success:
@@ -200,8 +204,8 @@ async def execute_generation_workflow(
                 workflow_execution.failed_node_id = "capsule_execute"
                 workflow_execution.error_message = capsule_result.error or "Workflow execution failed"
 
-                # Refund credits
-                await run_token_service.refund_credits(run_token)
+                # Refund credits (use run_id, not JWT token)
+                await run_token_service.refund_credits(run_id)
 
                 logger.error(f"Generation failed: {generation_id}, workflow={workflow_execution_id}, error={capsule_result.error}")
 
@@ -221,9 +225,9 @@ async def execute_generation_workflow(
 
             await db.commit()
 
-            # Refund credits
+            # Refund credits (use run_id, not JWT token)
             try:
-                await run_token_service.refund_credits(run_token)
+                await run_token_service.refund_credits(run_id)
             except Exception as refund_error:
                 logger.error(f"Failed to refund credits: {refund_error}")
 
@@ -410,7 +414,7 @@ async def start_ip_generation(
         status=WorkflowStatus.PENDING.value,
         ip_id=ip.id,
         preset_id=preset.id,
-        ip_context=ip_context.model_dump(),
+        ip_context=ip_context.model_dump(mode="json"),  # JSON serializable for JSONB
         dag_snapshot={
             "template_id": f"ip_generation:{preset.preset_type}",
             "nodes": [{"id": "capsule_execute", "tool_id": preset.workflow_capsule_id or "teaching.story.generate:1.0.0"}],
@@ -586,6 +590,11 @@ async def get_generation_evidence(
     )
     preset = preset_result.scalar_one_or_none()
 
+    # Get workflow_trace from IPEvidenceService (dual-write DB)
+    evidence_service = IPEvidenceService(db)
+    evidence_logs = await evidence_service.get_evidence_for_generation(generation.id)
+    workflow_trace = evidence_service.to_workflow_trace(evidence_logs)
+
     return EvidenceResponse(
         generation_id=str(generation.id),
         evidence_refs=generation.evidence_refs or [],
@@ -595,7 +604,7 @@ async def get_generation_evidence(
         auteur_key=ip.auteur_key if ip else None,
         credits_consumed=generation.credits_consumed,
         latency_ms=generation.latency_ms,
-        workflow_trace=[],  # Would be populated from workflow session
+        workflow_trace=workflow_trace,
     )
 
 
