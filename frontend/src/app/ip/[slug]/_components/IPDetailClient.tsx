@@ -8,6 +8,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { LicenseStatusInfo } from "@/components/ip/LicenseStatusBadge";
 import GenerationProgress from "./GenerationProgress";
 import { EvidenceCard } from "@/components/ui/EvidenceCard";
+import { ToolRecommendationCard } from "@/components/ui/ToolRecommendationCard";
 import { useToolRecommendations } from "@/hooks/useToolRecommendations";
 
 interface PresetItem {
@@ -450,18 +451,18 @@ export default function IPDetailClient({ slug }: IPDetailClientProps) {
                             reasonSummary={recResponse.reason_summary}
                             isCollapsible={true}
                           />
-                          {/* Show additional recommendations as compact badges */}
                           {recommendations.length > 1 && (
-                            <div className="mt-2 flex flex-wrap gap-2">
+                            <div className="mt-3 grid gap-2">
                               {recommendations.slice(1).map((rec) => (
-                                <EvidenceCard
+                                <ToolRecommendationCard
                                   key={rec.tool_id}
-                                  confidenceLevel={rec.confidence_level}
+                                  toolId={rec.tool_id}
+                                  displayName={rec.display_name}
+                                  dimension={rec.dimension}
                                   confidence={rec.confidence}
+                                  confidenceLevel={rec.confidence_level}
                                   reasonCodes={rec.reason_codes}
-                                  evidenceRefs={rec.evidence_refs}
-                                  reasonSummary={`${rec.display_name} (${rec.dimension})`}
-                                  compact
+                                  estimatedCredits={rec.estimated_credits}
                                 />
                               ))}
                             </div>
