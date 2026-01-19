@@ -184,6 +184,7 @@ export function EvidenceCard({
   const [statusFilter, setStatusFilter] = useState("all");
   const [minConfidence, setMinConfidence] = useState(0);
   const [evidenceCopied, setEvidenceCopied] = useState(false);
+  const [traceCopied, setTraceCopied] = useState(false);
 
   // Parse reason codes into display format
   const reasonLabels = useMemo(() => {
@@ -281,6 +282,7 @@ export function EvidenceCard({
       traceFilterUnknown: t("traceFilterUnknown"),
       copyEvidenceRefs: t("copyEvidenceRefs"),
       copied: t("copied"),
+      copyTrace: t("copyTrace"),
     }),
     [t, language]
   );
@@ -295,6 +297,31 @@ export function EvidenceCard({
       setTimeout(() => setEvidenceCopied(false), 1500);
     } catch (err) {
       console.warn("Failed to copy evidence refs", err);
+    }
+  };
+
+  const handleCopyTrace = async () => {
+    if (filteredTrace.length === 0) return;
+    try {
+      await navigator.clipboard?.writeText(
+        filteredTrace
+          .map((trace) =>
+            [
+              trace.ref,
+              trace.status ?? labels.traceFilterUnknown,
+              trace.confidence !== null ? `${Math.round(trace.confidence * 100)}%` : "",
+              trace.timestamp ?? "",
+              trace.source,
+            ]
+              .filter(Boolean)
+              .join(" | ")
+          )
+          .join("\n")
+      );
+      setTraceCopied(true);
+      setTimeout(() => setTraceCopied(false), 1500);
+    } catch (err) {
+      console.warn("Failed to copy trace", err);
     }
   };
 
@@ -473,10 +500,19 @@ export function EvidenceCard({
               {workflowTrace.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.18em] opacity-70">
-                    <span>{labels.evidenceTraceTitle}</span>
-                    <span className="text-slate-400 normal-case tracking-normal">
-                      {filteredTrace.length}/{workflowTrace.length}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span>{labels.evidenceTraceTitle}</span>
+                      <span className="text-slate-400 normal-case tracking-normal">
+                        {filteredTrace.length}/{workflowTrace.length}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCopyTrace}
+                      className="text-[9px] normal-case tracking-normal text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
+                    >
+                      {traceCopied ? labels.copied : labels.copyTrace}
+                    </button>
                   </div>
                   {traceStats.length > 0 && (
                     <div className="flex flex-wrap gap-1">
