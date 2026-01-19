@@ -23,6 +23,7 @@ interface ConnectionOption {
     dimension: string;
     dimensionCode: DimensionCode | null;
     confidence: number;
+    reasonCodes?: string[];
 }
 
 interface DimensionConfigContextType {
@@ -148,6 +149,7 @@ export function DimensionConfigProvider({ children }: { children: React.ReactNod
             dimension: tool.dimension,
             dimensionCode: dimensionIdToCode(tool.dimension),
             confidence: 0.95 - (idx * 0.05), // Decreasing confidence by order
+            reasonCodes: [],
         }));
     }, [tools]);
 
@@ -164,6 +166,7 @@ export function DimensionConfigProvider({ children }: { children: React.ReactNod
                 dimension: tool.dimension,
                 dimensionCode: dimensionIdToCode(tool.dimension),
                 confidence: 0.95 - (idx * 0.05),
+                reasonCodes: [],
             }));
     }, [tools]);
 

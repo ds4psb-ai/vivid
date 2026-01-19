@@ -12,65 +12,14 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
-
-// =============================================================================
-// Types
-// =============================================================================
-
-export type ConfidenceLevel = "high" | "medium" | "low";
-
-export interface ToolRecommendation {
-  tool_id: string;
-  display_name: string;
-  dimension: string;
-  confidence: number;
-  confidence_level: ConfidenceLevel;
-  reason_codes: string[];
-  evidence_refs: string[];
-  estimated_credits: number;
-  priority: number;
-  description?: string;
-}
-
-export interface ToolRecommendationResponse {
-  recommendations: ToolRecommendation[];
-  total_estimated_credits: number;
-  workflow_suggested: boolean;
-  reason_summary: string;
-  ip_context_used: boolean;
-  trace_id?: string;
-}
-
-export interface ToolRecommendationRequest {
-  ip_id?: string;
-  preset_id?: string;
-  scene_type?: string;
-  user_history?: string[];
-  dimension_context?: string;
-  max_results?: number;
-}
-
-export interface ToolEvidenceResponse {
-  tool_id: string;
-  evidence_refs: string[];
-  datasets_used: string[];
-  reason_codes: string[];
-  confidence: number;
-  confidence_level: ConfidenceLevel;
-}
-
-export interface ToolDisplayInfo {
-  tool_id: string;
-  display_name_ko: string;
-  display_name_en: string;
-  dimension: string;
-  description_ko: string;
-  description_en: string;
-  icon: string;
-  base_credits: number;
-}
+import {
+  toolsApi,
+  ToolRecommendation,
+  ToolRecommendationRequest,
+  ToolRecommendationResponse,
+  ToolEvidenceResponse,
+  ToolDisplayInfo,
+} from "@/lib/api-client";
 
 // =============================================================================
 // Hook Options
@@ -123,20 +72,16 @@ export function useToolRecommendations(
       setError(null);
 
       try {
-        const res = await fetch(`${API_BASE}/api/v1/tools/recommend`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...request,
-            max_results: request.max_results || maxResults,
-          }),
+        const res = await toolsApi.recommend({
+          ...request,
+          max_results: request.max_results || maxResults,
         });
 
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
+        if (!res.ok || !res.data) {
+          throw new Error(res.error?.message || "Failed to fetch recommendations");
         }
 
-        const data = (await res.json()) as ToolRecommendationResponse;
+        const data = res.data;
 
         // Cache result
         cacheRef.current.set(cacheKey, data);
@@ -145,7 +90,8 @@ export function useToolRecommendations(
         setResponse(data);
         return data;
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to fetch recommendations";
+        const message =
+          err instanceof Error ? err.message : "Failed to fetch recommendations";
         setError(message);
         setRecommendations([]);
         setResponse(null);
@@ -169,29 +115,24 @@ export function useToolRecommendations(
       setError(null);
 
       try {
-        const params = new URLSearchParams();
-        if (options?.sceneType) params.set("scene_type", options.sceneType);
-        if (options?.dimensionContext) {
-          params.set("dimension_context", options.dimensionContext);
+        const res = await toolsApi.getIPRecommendations(slug, {
+          sceneType: options?.sceneType,
+          dimensionContext: options?.dimensionContext,
+          maxResults,
+        });
+
+        if (!res.ok || !res.data) {
+          throw new Error(res.error?.message || "Failed to fetch recommendations");
         }
 
-        const url = `${API_BASE}/api/v1/tools/ip/${encodeURIComponent(slug)}/recommendations${
-          params.toString() ? `?${params.toString()}` : ""
-        }`;
-
-        const res = await fetch(url);
-
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-
-        const data = (await res.json()) as ToolRecommendationResponse;
+        const data = res.data;
 
         setRecommendations(data.recommendations);
         setResponse(data);
         return data;
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to fetch recommendations";
+        const message =
+          err instanceof Error ? err.message : "Failed to fetch recommendations";
         setError(message);
         setRecommendations([]);
         setResponse(null);
@@ -209,20 +150,11 @@ export function useToolRecommendations(
   const fetchToolEvidence = useCallback(
     async (toolId: string, ipId?: string) => {
       try {
-        const params = new URLSearchParams();
-        if (ipId) params.set("ip_id", ipId);
-
-        const url = `${API_BASE}/api/v1/tools/${encodeURIComponent(toolId)}/evidence${
-          params.toString() ? `?${params.toString()}` : ""
-        }`;
-
-        const res = await fetch(url);
-
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
+        const res = await toolsApi.getToolEvidence(toolId, ipId);
+        if (!res.ok || !res.data) {
+          throw new Error(res.error?.message || "Failed to fetch tool evidence");
         }
-
-        return (await res.json()) as ToolEvidenceResponse;
+        return res.data as ToolEvidenceResponse;
       } catch (err) {
         console.error("Failed to fetch tool evidence:", err);
         return null;
@@ -288,26 +220,21 @@ export function useToolList(options: UseToolListOptions = {}) {
     setIsLoading(true);
     setError(null);
 
-    try {
-      const params = new URLSearchParams();
-      if (options.dimension) params.set("dimension", options.dimension);
-      if (options.stage) params.set("stage", options.stage);
+      try {
+        const res = await toolsApi.listTools({
+          dimension: options.dimension,
+          stage: options.stage,
+        });
 
-      const url = `${API_BASE}/api/v1/tools/list${
-        params.toString() ? `?${params.toString()}` : ""
-      }`;
+        if (!res.ok || !res.data) {
+          throw new Error(res.error?.message || "Failed to fetch tools");
+        }
 
-      const res = await fetch(url);
-
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
-
-      const data = (await res.json()) as ToolDisplayInfo[];
-      setTools(data);
-      return data;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to fetch tools";
+        const data = res.data as ToolDisplayInfo[];
+        setTools(data);
+        return data;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Failed to fetch tools";
       setError(message);
       setTools([]);
       return [];

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Coins, Clock, X, FileText, ExternalLink, Wifi, WifiOff } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { EvidenceCard } from "@/components/ui/EvidenceCard";
 
 interface GenerationProgressProps {
   slug: string;
@@ -30,7 +31,16 @@ interface EvidenceData {
   auteur_key: string | null;
   credits_consumed: number;
   latency_ms: number;
-  workflow_trace: unknown[];
+  workflow_trace: WorkflowTraceItem[];
+}
+
+interface WorkflowTraceItem {
+  evidence_id: string;
+  source: string;
+  ref: string;
+  confidence: number | null;
+  status: string | null;
+  timestamp: string | null;
 }
 
 /**
@@ -306,13 +316,15 @@ export default function GenerationProgress({
         <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
           <h3 className="text-sm font-medium text-slate-900 dark:text-white mb-3 flex items-center gap-2">
             <FileText className="w-4 h-4" />
-            Evidence
+            {language === "ko" ? "증거 & 추적" : "Evidence & Trace"}
           </h3>
 
           <div className="space-y-2">
             {evidence.pattern_version && (
               <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-500 dark:text-slate-400">Pattern</span>
+                <span className="text-slate-500 dark:text-slate-400">
+                  {language === "ko" ? "패턴" : "Pattern"}
+                </span>
                 <span className="text-slate-900 dark:text-white font-mono text-xs">
                   {evidence.pattern_version}
                 </span>
@@ -321,7 +333,9 @@ export default function GenerationProgress({
 
             {evidence.auteur_key && (
               <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-500 dark:text-slate-400">Style</span>
+                <span className="text-slate-500 dark:text-slate-400">
+                  {language === "ko" ? "스타일" : "Style"}
+                </span>
                 <span className="text-slate-900 dark:text-white">
                   {evidence.auteur_key}
                 </span>
@@ -330,22 +344,57 @@ export default function GenerationProgress({
 
             {evidence.evidence_refs.length > 0 && (
               <div className="mt-3">
-                <span className="text-xs text-slate-500 dark:text-slate-400 block mb-2">
-                  References
-                </span>
-                <div className="flex flex-wrap gap-1">
-                  {evidence.evidence_refs.slice(0, 3).map((ref, i) => (
-                    <span
-                      key={i}
-                      className="text-xs px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono"
+                <EvidenceCard
+                  variant="evidence"
+                  title={language === "ko" ? "근거 데이터" : "Evidence Data"}
+                  confidenceLevel="medium"
+                  reasonCodes={[]}
+                  evidenceRefs={evidence.evidence_refs}
+                  reasonSummary={
+                    language === "ko"
+                      ? "이 결과는 아래 근거 데이터를 기반으로 생성되었습니다."
+                      : "This result was generated using the evidence below."
+                  }
+                  isCollapsible
+                />
+              </div>
+            )}
+
+            {evidence.workflow_trace?.length > 0 && (
+              <div className="mt-4">
+                <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                  {language === "ko" ? "워크플로우 트레이스" : "Workflow Trace"}
+                </div>
+                <div className="space-y-2">
+                  {evidence.workflow_trace.slice(0, 6).map((trace) => (
+                    <div
+                      key={trace.evidence_id}
+                      className="flex items-center justify-between rounded-md border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs"
                     >
-                      {ref.split(":").pop()}
-                    </span>
+                      <div className="flex flex-col gap-1">
+                        <span className="font-mono text-slate-600 dark:text-slate-300">
+                          {trace.ref}
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          {trace.source}
+                          {trace.timestamp ? ` · ${new Date(trace.timestamp).toLocaleString()}` : ""}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
+                        {trace.confidence !== null && (
+                          <span>{Math.round(trace.confidence * 100)}%</span>
+                        )}
+                        {trace.status && (
+                          <span className="uppercase">{trace.status}</span>
+                        )}
+                      </div>
+                    </div>
                   ))}
-                  {evidence.evidence_refs.length > 3 && (
-                    <span className="text-xs text-slate-400">
-                      +{evidence.evidence_refs.length - 3} more
-                    </span>
+                  {evidence.workflow_trace.length > 6 && (
+                    <div className="text-[11px] text-slate-400">
+                      +{evidence.workflow_trace.length - 6}{" "}
+                      {language === "ko" ? "개 더 있음" : "more items"}
+                    </div>
                   )}
                 </div>
               </div>

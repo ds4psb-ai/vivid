@@ -17,6 +17,8 @@ import {
     Video,
 } from "lucide-react";
 import { dimensionIdToCode, getDimensionToken, type DimensionCode } from "@/lib/tokens";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { getReasonCodeLabel, getConfidenceLabel, scoreToConfidenceLevel } from "@/lib/reason-codes";
 
 interface ConnectionOption {
     id: string;
@@ -28,6 +30,7 @@ interface ConnectionOption {
     dimension: string;
     dimensionCode: DimensionCode | null;
     confidence: number;
+    reasonCodes?: string[];
 }
 
 interface ConnectionSelectorProps {
@@ -73,6 +76,8 @@ export function ConnectionSelector({
     isLoading = false,
     isPrimarySelection = false,
 }: ConnectionSelectorProps) {
+    const { language } = useLanguage();
+    const isKo = language === "ko";
     const [hoveredId, setHoveredId] = useState<string | null>(null);
     const [showAll, setShowAll] = useState(false);
 
@@ -102,7 +107,7 @@ export function ConnectionSelector({
             {/* 추천 라벨 */}
             <div className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-zinc-500 flex items-center gap-1.5">
                 <Sparkles className="h-3 w-3 text-dimension-1d" />
-                추천 차원
+                {isKo ? "추천 차원" : "Recommended Dimensions"}
             </div>
 
             {/* 옵션 카드 */}
@@ -136,6 +141,17 @@ export function ConnectionSelector({
                                 const isTopRecommend = index === 0;
                                 // Primary Selection 모드에서 1위 옵션은 더 강조
                                 const isPrimary = isPrimarySelection && isTopRecommend;
+                                const reasonTooltip = option.reasonCodes && option.reasonCodes.length > 0
+                                    ? option.reasonCodes.slice(0, 2).map((code) => getReasonCodeLabel(code, language)).join(", ")
+                                    : undefined;
+                                const confidenceLevel = scoreToConfidenceLevel(option.confidence);
+                                const confidenceLabel = getConfidenceLabel(confidenceLevel, language);
+                                const confidenceTone = confidenceLevel === "high"
+                                    ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/30"
+                                    : confidenceLevel === "medium"
+                                    ? "text-amber-500 bg-amber-500/10 border-amber-500/30"
+                                    : "text-slate-400 bg-slate-500/10 border-slate-500/30";
+                                const badgeLabel = isKo ? "추천" : "Top";
 
                                 return (
                                     <motion.button
@@ -151,6 +167,7 @@ export function ConnectionSelector({
                                         onClick={() => onSelect(option.id)}
                                         onMouseEnter={() => setHoveredId(option.id)}
                                         onMouseLeave={() => setHoveredId(null)}
+                                        title={reasonTooltip}
                                         className={`
                                             relative flex items-center gap-3 rounded-xl
                                             ${isPrimary ? "p-4" : "p-3"}
@@ -165,7 +182,7 @@ export function ConnectionSelector({
                                         {/* 추천 뱃지 (1위만) */}
                                         {isTopRecommend && (
                                             <div className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 rounded-full bg-dimension-1d text-[8px] font-bold text-white">
-                                                추천
+                                                {badgeLabel}
                                             </div>
                                         )}
 
@@ -191,13 +208,32 @@ export function ConnectionSelector({
                                             <p className="text-[10px] text-gray-500 dark:text-zinc-500 truncate">
                                                 {option.description}
                                             </p>
+                                            {option.reasonCodes && option.reasonCodes.length > 0 && (
+                                                <div className="mt-1 flex flex-wrap gap-1">
+                                                    {option.reasonCodes.slice(0, 2).map((code) => (
+                                                        <span
+                                                            key={code}
+                                                            className="evidence-badge text-[9px]"
+                                                        >
+                                                            {getReasonCodeLabel(code, language)}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* 신뢰도 + 화살표 */}
                                         <div className="flex items-center gap-1">
-                                            <span className={`text-[10px] ${isTopRecommend ? colorScheme.text : "text-zinc-500"}`}>
-                                                {Math.round(option.confidence * 100)}%
-                                            </span>
+                                            <div className="flex flex-col items-end gap-0.5">
+                                                <span
+                                                    className={`text-[9px] px-1.5 py-0.5 rounded-full border ${confidenceTone}`}
+                                                >
+                                                    {confidenceLabel}
+                                                </span>
+                                                <span className={`text-[10px] ${isTopRecommend ? colorScheme.text : "text-zinc-500"}`}>
+                                                    {Math.round(option.confidence * 100)}%
+                                                </span>
+                                            </div>
                                             <ChevronRight
                                                 className={`
                                                     h-4 w-4 text-zinc-500
@@ -223,7 +259,9 @@ export function ConnectionSelector({
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-200/50 dark:bg-zinc-800/30 border border-gray-300/50 dark:border-zinc-700/50 text-gray-600 dark:text-zinc-400 text-xs hover:bg-gray-200 dark:hover:bg-zinc-800/50 hover:text-gray-900 dark:hover:text-white transition-all"
                 >
                     <ChevronDown className={`h-3 w-3 transition-transform ${showAll ? "rotate-180" : ""}`} />
-                    {showAll ? "접기" : `+${hiddenCount}개 더 보기`}
+                    {showAll
+                        ? (isKo ? "접기" : "Collapse")
+                        : (isKo ? `+${hiddenCount}개 더 보기` : `+${hiddenCount} more`)}
                 </motion.button>
             )}
 
@@ -234,7 +272,7 @@ export function ConnectionSelector({
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-200/50 dark:bg-zinc-800/50 border border-gray-300 dark:border-zinc-700 text-gray-600 dark:text-zinc-400 text-xs hover:bg-gray-200 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-white transition-all"
                 >
                     <RefreshCw className="h-3 w-3" />
-                    다른 차원 탐색
+                    {isKo ? "다른 차원 탐색" : "Explore other dimensions"}
                 </button>
             )}
         </div>

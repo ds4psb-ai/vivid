@@ -49,8 +49,8 @@ import {
   Layers,
   TrendingUp,
   Zap,
-  FileText,
 } from "lucide-react";
+import { EvidenceCard } from "@/components/ui/EvidenceCard";
 
 // ============================================================================
 // Constants & Types
@@ -247,6 +247,7 @@ function AestheticDirectorContent() {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [_files, setFiles] = useState<File[]>([]); // Reference files for moodboard
   const [showQualityScores, setShowQualityScores] = useState(true);
 
   // Hooks
@@ -1406,6 +1407,8 @@ function StyleGuideResult({
     avoidElements: string;
   };
 }) {
+  const { language } = useLanguage();
+  const isKo = language === "ko";
   const defaultLabels = {
     generatingGuide: "스타일 가이드 생성 중...",
     exportJson: "JSON 내보내기",
@@ -1444,7 +1447,19 @@ function StyleGuideResult({
 
       {/* Evidence Refs (2026 Best Practice) */}
       {result.evidence_refs && result.evidence_refs.length > 0 && (
-        <EvidenceRefsDisplay refs={result.evidence_refs} />
+        <EvidenceCard
+          variant="evidence"
+          title={isKo ? "근거 데이터" : "Evidence Data"}
+          confidenceLevel="medium"
+          reasonCodes={[]}
+          evidenceRefs={result.evidence_refs}
+          reasonSummary={
+            isKo
+              ? "이 결과는 아래 근거 데이터를 기반으로 생성되었습니다."
+              : "This result was generated using the evidence below."
+          }
+          isCollapsible
+        />
       )}
 
       {/* Auteur Influence */}
@@ -1673,27 +1688,6 @@ function StyleGuideResult({
           </ul>
         </div>
       )}
-    </div>
-  );
-}
-
-function EvidenceRefsDisplay({ refs }: { refs: string[] }) {
-  return (
-    <div className="p-4 bg-cyan-50 dark:bg-cyan-500/5 border border-cyan-200 dark:border-cyan-500/20 rounded-xl">
-      <h3 className="text-sm font-bold text-cyan-600 dark:text-cyan-400 flex items-center gap-2 mb-3">
-        <FileText className="w-4 h-4" />
-        Evidence Sources
-      </h3>
-      <div className="flex flex-wrap gap-2">
-        {refs.map((ref, i) => (
-          <span
-            key={i}
-            className="text-xs px-2 py-1 rounded bg-cyan-100 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 font-mono"
-          >
-            {ref}
-          </span>
-        ))}
-      </div>
     </div>
   );
 }

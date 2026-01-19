@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, forwardRef, useImperativeHandle, useCallback, useRef, useMemo } from "react";
+import { useState, forwardRef, useImperativeHandle, useCallback, useRef, useMemo, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { TrainCar } from "./TrainCar";
 import { ConnectionSelector } from "./ConnectionSelector";
@@ -9,6 +9,7 @@ import { Trash2, CheckCircle, XCircle } from "lucide-react";
 import { api, DimensionResponse } from "@/lib/api";
 import { useDimensionConfig, type ConnectionOption } from "@/contexts/DimensionConfigContext";
 import { normalizeWorkflowDimension, type WorkflowDimension } from "@/lib/dimension-types";
+import { useToolRecommendations } from "@/hooks/useToolRecommendations";
 
 // =============================================================================
 // Types
@@ -158,6 +159,7 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
     ({ onComplete }, ref) => {
         // Get dimension config from context (SSoT)
         const { toolsById, getInitialOptions, getConnectionOptions } = useDimensionConfig();
+        const { fetchRecommendations } = useToolRecommendations({ maxResults: 20 });
 
         const [cars, setCars] = useState<Car[]>([]);
         const [isLoadingOptions, setIsLoadingOptions] = useState(false);
@@ -165,6 +167,8 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
         const [isExecutingAll, setIsExecutingAll] = useState(false);
         const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
         const [portalCarId, setPortalCarId] = useState<string | null>(null);
+        const [dynamicRecMap, setDynamicRecMap] = useState<Record<string, { confidence: number; reasonCodes: string[] }>>({});
+        const lastRecContextRef = useRef<string | null>(null);
 
         // Initial connection options from context
         const isSupportedOption = useCallback((option: ConnectionOption) => {
@@ -185,8 +189,37 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
             }
         }, [initialOptions, pendingConnections.length]);
 
+        // Fetch dynamic tool recommendations based on current dimension context
+        useEffect(() => {
+            const contextDimension = cars.length > 0 ? cars[cars.length - 1].dimension : "1D";
+            if (!contextDimension || lastRecContextRef.current === contextDimension) return;
+
+            lastRecContextRef.current = contextDimension;
+            setIsLoadingOptions(true);
+
+            fetchRecommendations({
+                dimension_context: contextDimension,
+                max_results: 20,
+            })
+                .then((res) => {
+                    if (!res) return;
+                    const map: Record<string, { confidence: number; reasonCodes: string[] }> = {};
+                    res.recommendations.forEach((rec) => {
+                        map[rec.tool_id] = {
+                            confidence: rec.confidence,
+                            reasonCodes: rec.reason_codes || [],
+                        };
+                    });
+                    setDynamicRecMap(map);
+                })
+                .finally(() => {
+                    setIsLoadingOptions(false);
+                });
+        }, [cars, fetchRecommendations]);
+
         // Track executing cars to prevent double-click
         const executingCarsRef = useRef<Set<string>>(new Set());
+
 
         // Helper: Get tool info from context
         const getToolInfo = useCallback((toolId: string) => {
@@ -210,6 +243,7 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                 }
 
                 let adjustedConfidence = opt.confidence;
+                const dynamicRec = dynamicRecMap[opt.recommendedToolId];
 
                 // Apply dimension-based boost
                 if (prevDimension && CONFIDENCE_BOOSTS[prevDimension]) {
@@ -227,12 +261,39 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                     });
                 }
 
+                // Apply dynamic recommendation score (Tool Recommender)
+                if (dynamicRec) {
+                    adjustedConfidence = Math.max(adjustedConfidence, dynamicRec.confidence);
+                }
+
                 adjustedConfidence = Math.min(adjustedConfidence, 0.99);
-                return { ...opt, confidence: adjustedConfidence };
+                return {
+                    ...opt,
+                    confidence: adjustedConfidence,
+                    reasonCodes: dynamicRec?.reasonCodes ?? opt.reasonCodes ?? [],
+                };
             }).filter((opt): opt is ConnectionOption => opt !== null);
 
             return adjustedOptions.sort((a, b) => b.confidence - a.confidence);
-        }, [cars, getConnectionOptions, getToolInfo, isSupportedOption]);
+        }, [cars, getConnectionOptions, getToolInfo, isSupportedOption, dynamicRecMap]);
+
+        // Refresh pending connection options when dynamic recommendations update
+        useEffect(() => {
+            if (cars.length === 0) {
+                const refreshed = getContextAwareRecommendations(undefined, undefined, new Set());
+                if (refreshed.length > 0) {
+                    setPendingConnections(refreshed);
+                }
+                return;
+            }
+
+            const usedDimensions = new Set(cars.map(c => c.dimension));
+            const lastCar = cars[cars.length - 1];
+            const refreshed = getContextAwareRecommendations(lastCar?.dimension, lastCar?.output, usedDimensions);
+            if (refreshed.length > 0) {
+                setPendingConnections(refreshed);
+            }
+        }, [dynamicRecMap, cars, getContextAwareRecommendations]);
 
         // Auto-dismiss notification
         const showNotification = useCallback((type: "success" | "error", message: string) => {
