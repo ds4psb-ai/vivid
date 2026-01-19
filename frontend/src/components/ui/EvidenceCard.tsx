@@ -481,7 +481,7 @@ export function EvidenceCard({
                             >
                               {getStatusLabel(
                                 trace.status.toLowerCase(),
-                                t,
+                                t as (key: string) => string,
                                 labels.traceFilterUnknown
                               )}
                             </span>
