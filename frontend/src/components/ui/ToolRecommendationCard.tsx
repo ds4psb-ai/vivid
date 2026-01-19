@@ -90,6 +90,13 @@ export function ToolRecommendationCard({
       ? "text-amber-500 bg-amber-500/10 border-amber-500/30"
       : "text-slate-400 bg-slate-500/10 border-slate-500/30";
 
+  const confidenceBarTone =
+    level === "high"
+      ? "bg-emerald-500/70"
+      : level === "medium"
+      ? "bg-amber-500/70"
+      : "bg-slate-400/70";
+
   useEffect(() => {
     let isActive = true;
 
@@ -230,6 +237,21 @@ export function ToolRecommendationCard({
           )}
         </div>
       </div>
+
+      {percent !== null && (
+        <div className="space-y-1">
+          <div className="h-1 w-full rounded-full bg-slate-200/70 dark:bg-slate-800 overflow-hidden">
+            <div
+              className={cn("h-full rounded-full", confidenceBarTone)}
+              style={{ width: `${percent}%` }}
+            />
+          </div>
+          <div className="flex items-center justify-between text-[10px] text-slate-400">
+            <span>{t("evidenceConfidenceTitle")}</span>
+            <span>{percent}%</span>
+          </div>
+        </div>
+      )}
 
       {chips.length > 0 && (
         <div className="flex flex-wrap gap-1">

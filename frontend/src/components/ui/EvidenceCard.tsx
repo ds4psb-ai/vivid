@@ -94,6 +94,17 @@ function getConfidenceColor(level: ConfidenceLevel): string {
   }
 }
 
+function getConfidenceBarColor(level: ConfidenceLevel): string {
+  switch (level) {
+    case "high":
+      return "bg-emerald-500/70";
+    case "medium":
+      return "bg-amber-500/70";
+    case "low":
+      return "bg-slate-400/70";
+  }
+}
+
 function formatEvidenceRef(ref: string): { type: string; label: string } {
   const parts = ref.split(":");
   const prefix = parts[0];
@@ -314,6 +325,21 @@ export function EvidenceCard({
           )}
         </div>
       </div>
+
+      {!isEvidenceOnly && confidencePercent !== null && (
+        <div className="space-y-1">
+          <div className="h-1 w-full rounded-full bg-white/60 dark:bg-slate-800 overflow-hidden">
+            <div
+              className={cn("h-full rounded-full", getConfidenceBarColor(confidenceLevel))}
+              style={{ width: `${confidencePercent}%` }}
+            />
+          </div>
+          <div className="flex items-center justify-between text-[10px] opacity-80">
+            <span>{labels.confidenceTitle}</span>
+            <span>{confidencePercent}%</span>
+          </div>
+        </div>
+      )}
 
       {/* Reason Summary */}
       {reasonSummary && (
