@@ -195,7 +195,7 @@ export default function VibeBoard({
                     </div>
 
                     {/* Content */}
-                    <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+                    <div className="p-6 overflow-y-auto max-h-[var(--layout-max-height-xl)]">
                         {/* Mode Toggle */}
                         <div className="flex gap-3 mb-6">
                             <button

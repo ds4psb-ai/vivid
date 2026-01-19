@@ -326,7 +326,7 @@ export default function ThreeWayComparison({
                             </div>
 
                             {/* Content */}
-                            <div className="mb-4 min-h-[120px]">
+                            <div className="mb-4 min-h-[var(--layout-min-height-sm)]">
                                 {typeof candidate.content === "string" ? (
                                     <p className="text-sm text-white/80 leading-relaxed line-clamp-6">
                                         {candidate.content}
@@ -424,7 +424,7 @@ function CandidateContent({
             </div>
 
             {/* Content */}
-            <div className="min-h-[150px]">
+            <div className="min-h-[var(--layout-min-height-md)]">
                 {typeof candidate.content === "string" ? (
                     <p className="text-sm text-white/80 leading-relaxed">
                         {candidate.content}

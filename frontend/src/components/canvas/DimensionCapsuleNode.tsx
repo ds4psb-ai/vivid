@@ -301,7 +301,7 @@ function TeachingCapsuleNodeBase({
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             className={cn(
-                "relative min-w-[280px] max-w-[320px] rounded-xl overflow-hidden",
+                "relative min-w-[var(--layout-min-width-lg)] max-w-[var(--layout-max-width-4xl)] rounded-xl overflow-hidden",
                 "bg-gradient-to-br from-[#1a1a2e] to-[#16162a]",
                 "border-2",
                 colors.border,
@@ -362,7 +362,9 @@ function TeachingCapsuleNodeBase({
                             const isLocked = (data.locked_inputs || []).includes(key);
                             return (
                                 <div key={key} className="flex items-center gap-2 text-xs">
-                                    <span className="text-white/50 min-w-[60px] truncate">{key}:</span>
+                                    <span className="text-white/50 min-w-[var(--layout-min-width-xs-plus)] truncate">
+                                      {key}:
+                                    </span>
                                     <span className={cn(
                                         "text-white/80 truncate flex-1",
                                         isLocked && "text-yellow-300/80",

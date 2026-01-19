@@ -129,21 +129,21 @@ const createShotListColumns = (labels: {
         id: "action",
         label: labels.action,
         value: (shot) => shot.action,
-        cellClassName: "max-w-[220px] truncate",
-        previewCellClassName: "max-w-[150px] truncate",
+        cellClassName: "max-w-[var(--layout-max-width-2xl)] truncate",
+        previewCellClassName: "max-w-[var(--layout-max-width-md)] truncate",
     },
     {
         id: "dialogue",
         label: labels.dialogue,
         value: (shot) => shot.dialogue ?? "",
-        cellClassName: "max-w-[160px] truncate",
+        cellClassName: "max-w-[var(--layout-max-width-lg)] truncate",
     },
     { id: "duration", label: labels.duration, value: (shot) => shot.duration },
     {
         id: "notes",
         label: labels.notes,
         value: (shot) => shot.notes ?? "",
-        cellClassName: "max-w-[200px] truncate",
+        cellClassName: "max-w-[var(--layout-max-width-xl)] truncate",
     },
 ];
 
@@ -410,7 +410,7 @@ function StoryboardDetail({
                 totalLabel={totalLabel}
                 secondsSuffix={secondsSuffix}
             />
-            <div className="max-h-[420px] space-y-3 overflow-y-auto pr-1">
+            <div className="max-h-[var(--layout-panel-max-height)] space-y-3 overflow-y-auto pr-1">
                 {cards.map((card) => (
                     <div
                         key={card.shot_id}
@@ -676,12 +676,12 @@ function ShotListDetail({
     return (
         <div className="space-y-2">
             <ShotListStats count={shots.length} shotsLabel={shotsLabel} />
-            <div className="max-h-[420px] overflow-auto rounded-lg border border-white/10">
+            <div className="max-h-[var(--layout-panel-max-height)] overflow-auto rounded-lg border border-white/10">
                 <ShotListTable
                     shots={shots}
                     columns={columns}
                     variant="detail"
-                    tableClassName="min-w-[720px] w-full text-xs"
+                    tableClassName="min-w-[var(--layout-min-width-xl)] w-full text-xs"
                     headerClassName="sticky top-0 bg-slate-950/80"
                     headerCellClassName="px-2 py-2 font-medium"
                     cellClassName="px-2 py-1.5"
@@ -733,7 +733,7 @@ function DataTablePreview({
                 tableClassName="w-full text-xs"
                 headerClassName="bg-slate-900/40"
                 headerCellClassName="px-2 py-1.5 font-medium"
-                cellClassName="px-2 py-1.5 max-w-[120px] truncate"
+                cellClassName="px-2 py-1.5 max-w-[var(--layout-max-width-xs)] truncate"
             />
             {rows.length > 3 && (
                 <div className="bg-white/5 px-2 py-1 text-center text-[10px] text-slate-500">
@@ -816,14 +816,14 @@ function DataTableDetail({
                     </div>
                 </div>
             )}
-            <div className="max-h-[420px] overflow-auto rounded-lg border border-white/10">
+            <div className="max-h-[var(--layout-panel-max-height)] overflow-auto rounded-lg border border-white/10">
                 <DataTableGrid
                     columns={columns}
                     rows={visibleRows}
-                    tableClassName="min-w-[720px] w-full text-xs"
+                    tableClassName="min-w-[var(--layout-min-width-xl)] w-full text-xs"
                     headerClassName="sticky top-0 bg-slate-950/80"
                     headerCellClassName="px-2 py-2 font-medium"
-                    cellClassName="px-2 py-1.5 max-w-[240px] truncate"
+                    cellClassName="px-2 py-1.5 max-w-[var(--layout-max-width-2xl)] truncate"
                 />
             </div>
             {remaining > 0 && (

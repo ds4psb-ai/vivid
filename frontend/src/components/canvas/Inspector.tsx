@@ -487,7 +487,7 @@ export function Inspector({
                 style={{ left: `${((Number(currentValue) - (def.min ?? 0)) / ((def.max ?? 1) - (def.min ?? 0))) * 100}%` }}
               />
             </div>
-            <span className="min-w-[3rem] text-right text-[10px] font-mono font-bold text-slate-300 bg-white/5 rounded px-1.5 py-0.5 border border-white/5">
+            <span className="min-w-[var(--layout-min-width-xxs)] text-right text-[10px] font-mono font-bold text-slate-300 bg-white/5 rounded px-1.5 py-0.5 border border-white/5">
               {Number(currentValue).toFixed(def.step && def.step < 0.1 ? 2 : 1)}
             </span>
           </div>

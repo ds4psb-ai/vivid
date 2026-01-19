@@ -542,7 +542,7 @@ export default function ConstellationDetailPage() {
                             {/* Add Card */}
                             <motion.button
                                 onClick={() => setShowAddModal(true)}
-                                className="h-full min-h-[200px] border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-500 hover:border-cyan-500/30 hover:text-cyan-400 transition-all"
+                                className="h-full min-h-[var(--layout-min-height-lg)] border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-500 hover:border-cyan-500/30 hover:text-cyan-400 transition-all"
                             >
                                 <Plus className="w-8 h-8" />
                                 <span className="text-sm font-medium">씬 추가</span>

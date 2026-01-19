@@ -141,7 +141,7 @@ function NodeDetailPanelBase({ node, onClose, onExecute, isExecuting = false }: 
                 </div>
 
                 {/* Content based on category */}
-                <div className="p-6 space-y-6 overflow-y-auto h-[calc(100%-200px)]">
+                <div className="p-6 space-y-6 overflow-y-auto h-[calc(100%_-_var(--layout-rail-offset-lg))]">
                     {/* INPUT category - Show input form */}
                     {category === "input" && (
                         <div className="space-y-4">

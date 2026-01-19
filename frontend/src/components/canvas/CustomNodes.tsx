@@ -295,7 +295,7 @@ function BaseNode({ data, type, selected }: NodeProps<Node<CanvasNodeData>>) {
       whileHover={{ scale: 1.02, y: -2 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
       className={cn(
-        "relative min-w-[260px] rounded-2xl border px-5 py-5 transition-all duration-300",
+        "relative min-w-[var(--layout-min-width-md)] rounded-2xl border px-5 py-5 transition-all duration-300",
         // Glassmorphism Base
         "bg-[#0a0a0c]/60 backdrop-blur-2xl",
         // Border Logic
@@ -433,7 +433,7 @@ function BaseNode({ data, type, selected }: NodeProps<Node<CanvasNodeData>>) {
               return (
                 <div key={`shot-${idx}`} className="flex items-center gap-2 mt-2 pt-2 border-t border-white/5">
                   <div className="h-3 w-3 rounded-full shadow-inner" style={{ backgroundColor: dominant }} />
-                  <span className="text-[10px] uppercase tracking-wide text-slate-400 truncate max-w-[150px]">
+                  <span className="text-[10px] uppercase tracking-wide text-slate-400 truncate max-w-[var(--layout-max-width-md)]">
                     {shotLabel || String(shotData.composition ?? "Shot Composition")}
                   </span>
                 </div>

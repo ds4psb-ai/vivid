@@ -341,7 +341,7 @@ export default function RequestDetailPage() {
 
                     {/* RIGHT COLUMN: Evidence Timeline */}
                     <div className="lg:col-span-1">
-                        <div className="card-glass h-full max-h-[calc(100vh-100px)] flex flex-col">
+                        <div className="card-glass h-full max-h-[var(--layout-app-viewport-lg)] flex flex-col">
                             <div className="p-4 border-b border-white/5 bg-slate-900/50">
                                 <h2 className="font-semibold text-[var(--fg-0)] flex items-center gap-2">
                                     <Shield className="w-4 h-4 text-emerald-400" />

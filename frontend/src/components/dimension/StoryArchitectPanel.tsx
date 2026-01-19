@@ -519,7 +519,7 @@ function StoryArchitectContent() {
 
           {/* Stage 1: Pitch (Initial State) */}
           {stage === "pitch" && !isAnyLoading && (
-            <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center p-8">
+            <div className="flex flex-col items-center justify-center h-full min-h-[var(--layout-panel-min-height)] text-center p-8">
               <div className={`w-20 h-20 rounded-full bg-${token.themeColor}-500/10 flex items-center justify-center mb-6`}>
                 <Sparkles className={`w-10 h-10 text-${token.themeColor}-600 dark:text-${token.themeColor}-400`} />
               </div>
@@ -689,7 +689,7 @@ function StoryArchitectContent() {
 
           {/* Empty State */}
           {!stage && !storyResult && !displayError && (
-            <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
+            <div className="flex flex-col items-center justify-center h-full min-h-[var(--layout-panel-min-height)] text-center">
               <Layers className={`w-16 h-16 text-${token.themeColor}-500/30 dark:text-${token.themeColor}-400/30 mb-4`} />
               <h3 className="text-xl font-bold text-slate-400 dark:text-white/60 mb-2">{labels.emptyStateTitle}</h3>
               <p className="text-slate-400 dark:text-white/40 text-sm max-w-md">

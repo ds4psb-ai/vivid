@@ -879,7 +879,7 @@ function ThompsonSamplingStats({
       <div className="space-y-1">
         {Object.entries(stats).slice(0, 3).map(([arm, data]) => (
           <div key={arm} className="flex items-center justify-between text-[10px]">
-            <span className="text-slate-500 dark:text-white/50 truncate max-w-[100px]">
+            <span className="text-slate-500 dark:text-white/50 truncate max-w-[var(--layout-max-width-xxs)]">
               {arm}
             </span>
             <span className="text-emerald-500">{(data.success_rate * 100).toFixed(1)}%</span>

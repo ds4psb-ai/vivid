@@ -238,7 +238,7 @@ export default function ActionConsole({ status, role, onAction, budget }: Action
                             value={deliveryNotes}
                             onChange={(e) => setDeliveryNotes(e.target.value)}
                             placeholder="Add notes about your work..."
-                            className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm mb-3 min-h-[80px]"
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm mb-3 min-h-[var(--layout-min-height-xs)]"
                         />
                         <button
                             onClick={() => handleAction("deliver", {
@@ -306,7 +306,7 @@ export default function ActionConsole({ status, role, onAction, budget }: Action
                         value={feedback}
                         onChange={(e) => setFeedback(e.target.value)}
                         placeholder="Leave feedback for the creator..."
-                        className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm min-h-[60px]"
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm min-h-[var(--layout-min-height-xxs)]"
                     />
                 </div>
 

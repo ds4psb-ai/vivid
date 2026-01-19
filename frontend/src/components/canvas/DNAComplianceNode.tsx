@@ -131,7 +131,7 @@ export default function DNAComplianceNode({
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-gray-500">스타일:</span>
-                                        <span className="text-purple-300 truncate max-w-[150px]">{narrativeDna.visual_style}</span>
+                                        <span className="text-purple-300 truncate max-w-[var(--layout-max-width-md)]">{narrativeDna.visual_style}</span>
                                     </div>
                                     {narrativeDna.forbidden_tones.length > 0 && (
                                         <div className="flex justify-between">

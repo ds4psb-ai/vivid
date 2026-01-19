@@ -226,7 +226,7 @@ export default function CreativeEditorPanel() {
                                 value={content}
                                 onChange={(e) => setContent(e.target.value)}
                                 placeholder="여기에 시나리오, 프롬프트, 혹은 아이디어를 입력하세요..."
-                                className="w-full h-[60vh] p-6 bg-white/5 border border-white/10 rounded-2xl text-white resize-none focus:outline-none focus:border-rose-500/50 text-lg leading-relaxed font-serif"
+                                className="w-full h-[var(--layout-editor-height)] p-6 bg-white/5 border border-white/10 rounded-2xl text-white resize-none focus:outline-none focus:border-rose-500/50 text-lg leading-relaxed font-serif"
                             />
                         </div>
                     ) : (

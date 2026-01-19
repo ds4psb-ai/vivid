@@ -768,7 +768,7 @@ export function AgentChatAccordion({
                                                         {message.attachments.map((file, i) => (
                                                             <div key={i} className="flex items-center gap-1.5 rounded-md bg-black/20 px-2 py-1.5 text-xs text-white/80">
                                                                 <FileIcon className="h-3 w-3 opacity-70" />
-                                                                <span className="max-w-[150px] truncate">{file.name}</span>
+                                                                <span className="max-w-[var(--layout-max-width-md)] truncate">{file.name}</span>
                                                             </div>
                                                         ))}
                                                     </div>
@@ -826,7 +826,7 @@ export function AgentChatAccordion({
                                             key={i}
                                             className="relative flex items-center gap-2 rounded-lg bg-zinc-800/80 px-3 py-2 text-xs text-zinc-300 border border-white/10 shrink-0"
                                         >
-                                            <span className="max-w-[100px] truncate">{file.name}</span>
+                                            <span className="max-w-[var(--layout-max-width-xxs)] truncate">{file.name}</span>
                                             <button
                                                 onClick={() => removeFile(i)}
                                                 className="ml-1 rounded-full p-0.5 hover:bg-white/10 transition-colors"

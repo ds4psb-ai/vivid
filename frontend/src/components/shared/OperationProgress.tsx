@@ -238,7 +238,7 @@ export function OperationProgress({
 
           {/* Status */}
           <div className="flex items-center justify-between">
-            <span className="text-xs text-white/50 truncate max-w-[80%]">
+            <span className="text-xs text-white/50 truncate max-w-[var(--layout-bubble-max-medium)]">
               {progress.message}
             </span>
             <span className={`text-xs font-mono ${theme.accent}`}>

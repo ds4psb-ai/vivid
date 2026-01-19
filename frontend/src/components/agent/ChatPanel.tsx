@@ -201,7 +201,7 @@ export default function ChatPanel({
                 if (artifactPayload) {
                   return (
                     <div key={message.id} className="flex justify-start">
-                      <div className="max-w-[90%]">
+                      <div className="max-w-[var(--layout-bubble-max-wide)]">
                         <ArtifactPreview artifact={artifactPayload} />
                       </div>
                     </div>
@@ -215,7 +215,7 @@ export default function ChatPanel({
                 if (!errorMessage) return null;
                 return (
                   <div key={message.id} className="flex justify-start">
-                    <div className="max-w-[90%] rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-xs text-rose-100">
+                    <div className="max-w-[var(--layout-bubble-max-wide)] rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-xs text-rose-100">
                       {errorMessage}
                     </div>
                   </div>
@@ -223,7 +223,7 @@ export default function ChatPanel({
               }
               return (
                 <div key={message.id} className="flex justify-start">
-                  <div className="max-w-[90%]">
+                  <div className="max-w-[var(--layout-bubble-max-wide)]">
                     <ToolResultCard message={message} artifactPayload={artifactPayload} />
                   </div>
                 </div>
@@ -243,7 +243,7 @@ export default function ChatPanel({
                     <Bot className="h-6 w-6" aria-hidden="true" />
                   </div>
                 )}
-                <div className={`max-w-[80%] rounded-2xl border px-4 py-3 ${bubbleClass}`}>
+                <div className={`max-w-[var(--layout-bubble-max-medium)] rounded-2xl border px-4 py-3 ${bubbleClass}`}>
                   <div className="text-xs uppercase tracking-[0.25em] text-slate-400">
                     {isUser ? t("studioChatYou") : t("studioChatAgent")}
                   </div>
@@ -298,7 +298,7 @@ export default function ChatPanel({
                 className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-slate-300"
               >
                 {getFileIcon(file)}
-                <span className="max-w-[100px] truncate">{file.name}</span>
+                <span className="max-w-[var(--layout-max-width-xxs)] truncate">{file.name}</span>
                 <button
                   type="button"
                   onClick={() => removeFile(index)}
@@ -342,7 +342,7 @@ export default function ChatPanel({
               }}
               placeholder={placeholder}
               rows={1}
-              className="flex-1 resize-none bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none min-h-[24px] max-h-[120px]"
+              className="flex-1 resize-none bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none min-h-[var(--layout-textarea-min-height)] max-h-[var(--layout-textarea-max-height)]"
             />
 
             {isStreaming ? (

@@ -137,7 +137,7 @@ registerWidget('DimensionCard', (message) => {
 
     return (
         <Link key={message.id} href={hrefStr}>
-            <div className="group relative overflow-hidden rounded-[2rem] border border-[var(--border-subtle)] bg-[var(--surface-1)] p-8 backdrop-blur-2xl hover:bg-[var(--surface-2)] transition-all duration-700 hover:-translate-y-2 min-h-[320px]">
+            <div className="group relative overflow-hidden rounded-[2rem] border border-[var(--border-subtle)] bg-[var(--surface-1)] p-8 backdrop-blur-2xl hover:bg-[var(--surface-2)] transition-all duration-700 hover:-translate-y-2 min-h-[var(--layout-min-height-xl)]">
                 {/* Border reveal */}
                 <div className={`absolute inset-0 rounded-[2rem] border-2 ${borderColorStr} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
 

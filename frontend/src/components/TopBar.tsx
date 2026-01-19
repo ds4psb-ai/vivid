@@ -138,14 +138,14 @@ export default function TopBar({
                         onChange={(e) => setEditedName(e.target.value)}
                         onBlur={handleNameSubmit}
                         onKeyDown={handleKeyDown}
-                        className="min-w-[200px] rounded-lg border border-[var(--border-muted)] bg-[var(--surface-1)] px-3 py-1 text-sm font-medium text-[var(--fg-0)] outline-none focus:border-[var(--accent)]"
+                        className="min-w-[var(--layout-min-width-sm)] rounded-lg border border-[var(--border-muted)] bg-[var(--surface-1)] px-3 py-1 text-sm font-medium text-[var(--fg-0)] outline-none focus:border-[var(--accent)]"
                         aria-label={getLabel("projectName", "Project name")}
                         autoFocus
                     />
                 ) : (
                     <button
                         onClick={() => setIsEditing(true)}
-                        className="max-w-[300px] truncate rounded-lg px-3 py-1 text-sm font-medium text-[var(--fg-0)] transition-colors hover:bg-[var(--surface-2)]"
+                        className="max-w-[var(--layout-max-width-3xl)] truncate rounded-lg px-3 py-1 text-sm font-medium text-[var(--fg-0)] transition-colors hover:bg-[var(--surface-2)]"
                         aria-label={getLabel("editProjectName", "Edit project name")}
                     >
                         {projectName}
@@ -165,7 +165,7 @@ export default function TopBar({
                 {isAuthenticated ? (
                     <div className="flex items-center gap-2 rounded-lg bg-black/5 dark:bg-white/5 px-3 py-1.5 text-sm">
                         <UserCircle className="h-4 w-4 text-[var(--fg-muted)]" aria-hidden="true" />
-                        <span className="max-w-[160px] truncate">{userLabel}</span>
+                        <span className="max-w-[var(--layout-max-width-lg)] truncate">{userLabel}</span>
                         {session?.user?.role && (
                             <span className="rounded-full bg-black/10 dark:bg-white/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-[var(--fg-muted)]">
                                 {session.user.role}

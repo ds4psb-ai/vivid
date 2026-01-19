@@ -386,7 +386,7 @@ function ContentInputArea({
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder={labels.contentPlaceholder}
-            className={`w-full h-[60vh] p-6 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white resize-none focus:outline-none focus:border-${themeColor}-500/50 text-lg leading-relaxed font-serif`}
+            className={`w-full h-[var(--layout-editor-height)] p-6 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white resize-none focus:outline-none focus:border-${themeColor}-500/50 text-lg leading-relaxed font-serif`}
           />
         </div>
       </div>

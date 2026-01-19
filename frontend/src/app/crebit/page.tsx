@@ -492,7 +492,7 @@ function AccordionCurriculum({ section, title, items, isOpen, onToggle }: Accord
             >
                 <div className="flex items-center gap-4">
                     <span className="text-emerald-500 font-mono text-sm font-bold
-                                   tabular-nums min-w-[2rem]">
+                                   tabular-nums min-w-[var(--layout-min-width-xs)]">
                         {section}
                     </span>
                     <span className="text-[var(--fg-0)] font-semibold text-base sm:text-lg">

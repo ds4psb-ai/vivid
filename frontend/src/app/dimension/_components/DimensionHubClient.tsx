@@ -260,7 +260,7 @@ function ChainStatusBar({
                     </span>
                     <span className="text-[var(--fg-0)] font-medium">{item.name}</span>
                     {item.summary && (
-                      <span className="text-[var(--fg-subtle)] text-xs truncate max-w-[200px]">
+                      <span className="text-[var(--fg-subtle)] text-xs truncate max-w-[var(--layout-max-width-xl)]">
                         - {item.summary}
                       </span>
                     )}
@@ -291,7 +291,7 @@ function DimensionPortalGrid({
   return (
     <div className="relative">
       {/* Background Atmosphere Spot */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-[var(--color-brand-primary)]/10 blur-[150px] rounded-full pointer-events-none z-0 mix-blend-screen" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[var(--layout-spotlight-size)] h-[var(--layout-spotlight-size)] bg-[var(--color-brand-primary)]/10 blur-[150px] rounded-full pointer-events-none z-0 mix-blend-screen" />
 
       <motion.div
         className={`grid gap-6 relative z-10 ${
@@ -392,7 +392,7 @@ function DimensionCard({
           className={`absolute -right-20 -top-20 h-64 w-64 rounded-full border-[1px] ${borderColorSoft} ${glowClass} blur-[60px] opacity-20 group-hover:opacity-40 transition-opacity duration-700`}
         />
 
-        <div className="relative flex items-start justify-between h-full flex-col gap-4 min-h-[140px]">
+        <div className="relative flex items-start justify-between h-full flex-col gap-4 min-h-[var(--layout-min-height-md)]">
           <div className="w-full flex items-start justify-between z-10">
             <div className="flex flex-col gap-1">
               {/* Stage Label */}
@@ -438,7 +438,7 @@ function ProposeButton({ onOpenSubmitModal, language }: ProposeButtonProps) {
   return (
     <button
       onClick={onOpenSubmitModal}
-      className="group relative overflow-hidden rounded-[2rem] border border-dashed border-[var(--border-subtle)] bg-transparent p-6 hover:bg-[var(--surface-1)] hover:border-[var(--border-strong)] transition-all duration-500 flex flex-col items-center justify-center gap-4 min-h-[140px]"
+      className="group relative overflow-hidden rounded-[2rem] border border-dashed border-[var(--border-subtle)] bg-transparent p-6 hover:bg-[var(--surface-1)] hover:border-[var(--border-strong)] transition-all duration-500 flex flex-col items-center justify-center gap-4 min-h-[var(--layout-min-height-md)]"
     >
       <div className="relative">
         <div className="absolute inset-0 bg-[var(--color-brand-accent)]/20 blur-[30px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -451,7 +451,7 @@ function ProposeButton({ onOpenSubmitModal, language }: ProposeButtonProps) {
         <span className="text-xs font-bold tracking-[0.2em] text-[var(--fg-muted)] uppercase group-hover:text-[var(--color-brand-accent)] transition-colors">
           ∞D INFINITE
         </span>
-        <p className="text-sm text-[var(--fg-subtle)] group-hover:text-[var(--fg-muted)] transition-colors max-w-[200px]">
+        <p className="text-sm text-[var(--fg-subtle)] group-hover:text-[var(--fg-muted)] transition-colors max-w-[var(--layout-max-width-xl)]">
           {language === "ko" ? "새로운 차원을 제안하세요" : "Propose a new dimension"}
         </p>
       </div>

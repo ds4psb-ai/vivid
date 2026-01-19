@@ -168,7 +168,7 @@ export function TrainCar({
 
                 {/* 이름 */}
                 <div className="text-center px-3">
-                    <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate max-w-[130px]">
+                    <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate max-w-[var(--layout-max-width-sm)]">
                         {displayName}
                     </h4>
                     <p className="text-[10px] text-gray-500 dark:text-zinc-500 mt-0.5">
@@ -226,7 +226,7 @@ export function TrainCar({
                             className={`text-[10px] ${STATUS_TONE.error} text-center px-2 flex items-center gap-1 hover:opacity-80 transition-colors`}
                         >
                             <AlertCircle className="h-3 w-3 flex-shrink-0" />
-                            <span className={showFullError ? "" : "max-w-[100px] truncate"}>
+                            <span className={showFullError ? "" : "max-w-[var(--layout-max-width-xxs)] truncate"}>
                                 {error || "실행 실패"}
                             </span>
                         </button>

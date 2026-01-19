@@ -74,7 +74,7 @@ function SandboxContent({ app }: { app: AppDetail }) {
             </div>
 
             {/* Sandbox */}
-            <div className={`${isFullscreen ? "h-[calc(100vh-57px)]" : "h-[calc(100vh-120px)]"}`}>
+            <div className={`${isFullscreen ? "h-[var(--layout-app-viewport-md)]" : "h-[var(--layout-app-viewport-xl)]"}`}>
                 <AppSandbox
                     appId={app.appId}
                     appUrl={app.sandboxUrl}

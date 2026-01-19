@@ -211,7 +211,7 @@ export default function FileUploader({
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 className={`
-                    relative w-full min-h-[120px] rounded-xl border-2 border-dashed transition-all cursor-pointer
+                    relative w-full min-h-[var(--layout-min-height-sm)] rounded-xl border-2 border-dashed transition-all cursor-pointer
                     ${disabled ? "opacity-50 cursor-not-allowed" : ""}
                     ${isDragging
                         ? `${colors.border.replace("border-", "border-")} ${colors.bg} scale-[1.02]`

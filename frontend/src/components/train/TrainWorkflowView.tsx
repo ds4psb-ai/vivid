@@ -680,7 +680,7 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
         };
 
         return (
-            <div className="w-full min-h-[400px] p-8 relative">
+            <div className="w-full min-h-[var(--layout-panel-min-height)] p-8 relative">
                 {/* [TIER2] 알림 토스트 */}
                 <AnimatePresence>
                     {notification && (
@@ -729,7 +729,7 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, x: -100, scale: 0.9 }}
                                 transition={{ duration: 0.3 }}
-                                className="flex flex-col items-center justify-center h-[50vh] w-full"
+                                className="flex flex-col items-center justify-center h-[var(--layout-section-height)] w-full"
                             >
                                 {/* 중앙 배치된 ConnectionSelector */}
                                 <ConnectionSelector

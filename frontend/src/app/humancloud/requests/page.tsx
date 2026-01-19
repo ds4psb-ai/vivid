@@ -194,7 +194,7 @@ export default function RequestsListPage() {
 
                     {/* Filters */}
                     <div className="flex flex-wrap gap-3 mb-6">
-                        <div className="flex-1 min-w-[200px] relative">
+                        <div className="flex-1 min-w-[var(--layout-min-width-sm)] relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                             <input
                                 type="text"
