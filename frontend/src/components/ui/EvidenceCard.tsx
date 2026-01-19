@@ -246,6 +246,22 @@ export function EvidenceCard({
   }, [workflowTrace, normalizedQuery, statusFilter, minConfidence]);
   const traceVisible = useMemo(() => filteredTrace.slice(0, 6), [filteredTrace]);
   const traceHiddenCount = Math.max(filteredTrace.length - traceVisible.length, 0);
+  const evidenceStats = useMemo(() => {
+    const counts = new Map<string, number>();
+    evidenceItems.forEach((item) => {
+      counts.set(item.type, (counts.get(item.type) ?? 0) + 1);
+    });
+    return Array.from(counts.entries());
+  }, [evidenceItems]);
+
+  const traceStats = useMemo(() => {
+    const counts = new Map<string, number>();
+    workflowTrace.forEach((trace) => {
+      const status = trace.status ? trace.status.toLowerCase() : "unknown";
+      counts.set(status, (counts.get(status) ?? 0) + 1);
+    });
+    return Array.from(counts.entries());
+  }, [workflowTrace]);
 
   const confidencePercent = confidence ? Math.round(confidence * 100) : null;
   const labels = useMemo(
@@ -400,6 +416,19 @@ export function EvidenceCard({
                   <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">
                     {labels.evidenceSourcesTitle}
                   </div>
+                  {evidenceStats.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {evidenceStats.map(([type, count]) => (
+                        <span
+                          key={type}
+                          className="evidence-badge text-[9px]"
+                          data-tone="source"
+                        >
+                          {getEvidenceSourceLabel(type, t as (key: string) => string)} {count}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   <ul className="space-y-1">
                     {evidenceItems.map(({ ref, type, label }) => (
                       <li
@@ -426,6 +455,19 @@ export function EvidenceCard({
                       {filteredTrace.length}/{workflowTrace.length}
                     </span>
                   </div>
+                  {traceStats.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {traceStats.map(([status, count]) => (
+                        <span
+                          key={status}
+                          className="status-badge"
+                          data-tone={getStatusTone(status)}
+                        >
+                          {getStatusLabel(status, t, labels.traceFilterUnknown)} {count}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 rounded-md border border-current/10 bg-white/40 dark:bg-slate-900/50 px-2 py-1">
                     <Search className="w-3 h-3 text-slate-400" />
                     <Input
