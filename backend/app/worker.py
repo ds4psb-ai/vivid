@@ -372,6 +372,35 @@ async def check_tier_promotions(
         return {"status": "failed", "error": str(e)}
 
 
+async def process_ip_payout_holdbacks(
+    ctx: Dict[str, Any],
+    limit: int = 200,
+) -> Dict[str, Any]:
+    """Release IP payout holdbacks once the holdback window expires."""
+    from app.database import AsyncSessionLocal
+    from app.services.ip_payout_service import release_due_holdbacks
+
+    logger.info(f"[Cron] process_ip_payout_holdbacks: limit={limit}")
+
+    try:
+        async with AsyncSessionLocal() as db:
+            result = await release_due_holdbacks(
+                db=db,
+                limit=limit,
+                processed_by="cron:ip_payout_holdbacks",
+            )
+
+            logger.info(
+                f"[Cron] IP payout holdbacks released: processed={result['processed']}, "
+                f"released={result['released']}"
+            )
+
+            return {"status": "completed", **result}
+    except Exception as e:
+        logger.exception(f"process_ip_payout_holdbacks failed: {e}")
+        return {"status": "failed", "error": str(e)}
+
+
 class WorkerSettings:
     """Arq WorkerSettings for job processing."""
     functions = [
@@ -382,6 +411,7 @@ class WorkerSettings:
         poll_batch_jobs,
         process_pending_settlements,
         check_tier_promotions,
+        process_ip_payout_holdbacks,
     ]
     
     # Cron jobs - scheduled tasks
@@ -398,6 +428,12 @@ class WorkerSettings:
             "cron": "0 2 * * *",  # 2:00 AM daily
             "unique": True,
         },
+        # Release IP payout holdbacks daily at 3 AM
+        {
+            "func": process_ip_payout_holdbacks,
+            "cron": "0 3 * * *",  # 3:00 AM daily
+            "unique": True,
+        },
     ]
     
     redis_settings = RedisSettings.from_dsn(settings.REDIS_URL)
@@ -405,4 +441,3 @@ class WorkerSettings:
     on_shutdown = shutdown
     handle_signals = False
     job_timeout = 600  # 10 minutes max per job
-
