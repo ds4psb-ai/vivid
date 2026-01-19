@@ -143,6 +143,9 @@ class WorkflowExecution(Base):
     estimated_credits: Mapped[int] = mapped_column(Integer, default=0)
     actual_credits: Mapped[int] = mapped_column(Integer, default=0)
 
+    # Run Token (SSoT-DEC-003)
+    run_token_id: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)
+
     # Timing
     started_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)

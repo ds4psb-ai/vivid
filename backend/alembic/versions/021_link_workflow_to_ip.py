@@ -55,6 +55,12 @@ def upgrade() -> None:
         ["preset_id"],
     )
 
+    # workflow_executions: add run_token_id
+    op.add_column(
+        "workflow_executions",
+        sa.Column("run_token_id", sa.String(160), nullable=True),
+    )
+
     # ip_generations: link to workflow execution
     op.add_column(
         "ip_generations",
@@ -85,6 +91,8 @@ def downgrade() -> None:
         type_="foreignkey",
     )
     op.drop_column("ip_generations", "workflow_execution_id")
+
+    op.drop_column("workflow_executions", "run_token_id")
 
     op.drop_index(
         "ix_workflow_executions_preset_id",

@@ -419,26 +419,31 @@ async def _execute_dimension_tool(
     inputs_summary: Dict[str, Any],
     params: Optional[Dict[str, Any]] = None,
     intent: Optional[Any] = None,
+    skip_credit_deduction: bool = False,
 ) -> DimensionResponse:
-    """Execute dimension tool with credit deduction, telemetry, and Intent-Resolver integration."""
+    """Execute dimension tool with credit deduction, telemetry, and Intent-Resolver integration.
+
+    Args:
+        skip_credit_deduction: True면 크레딧 차감 건너뜀 (run-token이 이미 처리한 경우).
+    """
     start_time = time.time()
     user_id = user.get("id")
-    
+
     if not user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={"code": "INVALID_USER", "message": "유효하지 않은 사용자입니다."}
         )
-    
+
     # P3: Get credit_multiplier from params (default 1.0)
     credit_multiplier = (params or {}).get("credit_multiplier", 1.0)
-    
-    # Credit check (skip for BYOK users)
+
+    # Credit check (skip for BYOK users or run-token flow)
     credit_cost = get_credit_cost(capsule_id, model, credit_multiplier)
     credits_deducted = False
 
-    
-    if not byok_key:
+
+    if not byok_key and not skip_credit_deduction:
         user_credits = await get_or_create_user_credits(db, user_id)
         if user_credits.balance < credit_cost:
             raise HTTPException(

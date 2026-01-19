@@ -29,9 +29,13 @@ from sse_starlette.sse import EventSourceResponse
 from app.database import get_db, AsyncSessionLocal
 from app.auth import require_user_id
 from app.models_ip import IPCatalog, IPWorkflowPreset, IPRights, IPGeneration
+from app.models_workflow import WorkflowExecution, WorkflowStatus
 from app.services.run_token_service import RunTokenService
 from app.services.ip_payout_service import ensure_payout_ledger
 from app.services.capsule_executor import execute_capsule, CapsuleExecutionResult
+from app.services.workflow_db_service import WorkflowDBService
+from app.services.ip_evidence_service import IPEvidenceService
+from app.schemas.ip_context import IPContext
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +51,7 @@ run_token_service = RunTokenService()
 
 async def execute_generation_workflow(
     generation_id: UUID,
+    workflow_execution_id: UUID,
     run_token: str,
     run_id: str,
 ):
@@ -56,6 +61,10 @@ async def execute_generation_workflow(
     - Create own DB session (not from dependency)
     - Only receive IDs, not ORM objects
     - Handle errors with credit refund
+
+    IP-First Coordination:
+    - Updates WorkflowExecution status as SSoT
+    - Links IPGeneration to WorkflowExecution
     """
     start_time = time.monotonic()
 
@@ -69,6 +78,19 @@ async def execute_generation_workflow(
 
             if not generation:
                 logger.error(f"Generation not found: {generation_id}")
+                return
+
+            # Load WorkflowExecution
+            wf_result = await db.execute(
+                select(WorkflowExecution).where(WorkflowExecution.id == workflow_execution_id)
+            )
+            workflow_execution = wf_result.scalar_one_or_none()
+
+            if not workflow_execution:
+                logger.error(f"WorkflowExecution not found: {workflow_execution_id}")
+                generation.status = "failed"
+                generation.error_message = "Workflow execution not found"
+                await db.commit()
                 return
 
             # Load preset with workflow steps
@@ -88,10 +110,13 @@ async def execute_generation_workflow(
             )
             rights = rights_result.scalar_one_or_none()
 
-            # Update status
+            # Update status - both IPGeneration and WorkflowExecution
             generation.status = "running"
             generation.current_step = "workflow_init"
             generation.progress_percent = 10
+            workflow_execution.status = WorkflowStatus.RUNNING.value
+            workflow_execution.started_at = datetime.utcnow()
+            workflow_execution.current_node_id = "capsule_execute"
             await db.commit()
 
             # Build capsule inputs
@@ -126,7 +151,7 @@ async def execute_generation_workflow(
             latency_ms = int((time.monotonic() - start_time) * 1000)
 
             if capsule_result.status == "done":
-                # Success
+                # Success - Update both IPGeneration and WorkflowExecution
                 generation.status = "completed"
                 generation.progress_percent = 100
                 generation.current_step = None
@@ -135,6 +160,22 @@ async def execute_generation_workflow(
                 generation.pattern_version = preset.pattern_version or "v1.0.0"
                 generation.credits_consumed = capsule_result.token_usage.get("total_credits", preset.estimated_credits)
                 generation.latency_ms = latency_ms
+
+                # Update WorkflowExecution (SSoT)
+                workflow_execution.status = WorkflowStatus.COMPLETED.value
+                workflow_execution.completed_at = datetime.utcnow()
+                workflow_execution.current_node_id = None
+                workflow_execution.completed_nodes = ["capsule_execute"]
+                workflow_execution.actual_credits = generation.credits_consumed
+
+                # Dual-write evidence to ip_evidence_logs (SSoT-DEC-002)
+                if evidence_refs:
+                    evidence_service = IPEvidenceService(db)
+                    await evidence_service.record_evidence_from_refs(
+                        evidence_refs=evidence_refs,
+                        generation_id=generation.id,
+                        execution_id=workflow_execution.id,
+                    )
 
                 # Deduct credits
                 success, _, error = await run_token_service.deduct_credits(
@@ -146,26 +187,38 @@ async def execute_generation_workflow(
                 else:
                     await ensure_payout_ledger(db, generation, rights)
 
-                logger.info(f"Generation completed: {generation_id}, latency={latency_ms}ms")
+                logger.info(f"Generation completed: {generation_id}, workflow={workflow_execution_id}, latency={latency_ms}ms")
             else:
-                # Failed
+                # Failed - Update both IPGeneration and WorkflowExecution
                 generation.status = "failed"
                 generation.error_message = capsule_result.error or "Workflow execution failed"
                 generation.latency_ms = latency_ms
 
+                # Update WorkflowExecution (SSoT)
+                workflow_execution.status = WorkflowStatus.FAILED.value
+                workflow_execution.completed_at = datetime.utcnow()
+                workflow_execution.failed_node_id = "capsule_execute"
+                workflow_execution.error_message = capsule_result.error or "Workflow execution failed"
+
                 # Refund credits
                 await run_token_service.refund_credits(run_token)
 
-                logger.error(f"Generation failed: {generation_id}, error={capsule_result.error}")
+                logger.error(f"Generation failed: {generation_id}, workflow={workflow_execution_id}, error={capsule_result.error}")
 
             await db.commit()
 
         except Exception as e:
             logger.exception(f"Background task error: {generation_id}")
 
-            # Update status
+            # Update status - both IPGeneration and WorkflowExecution
             generation.status = "failed"
             generation.error_message = str(e)
+
+            if workflow_execution:
+                workflow_execution.status = WorkflowStatus.FAILED.value
+                workflow_execution.completed_at = datetime.utcnow()
+                workflow_execution.error_message = str(e)
+
             await db.commit()
 
             # Refund credits
@@ -341,7 +394,39 @@ async def start_ip_generation(
             detail=f"Failed to reserve credits: {error or 'Insufficient credits'}"
         )
 
-    # Create generation record
+    # Build IPContext (SSoT-DEC-002) using factory method
+    # revenue_share_percent is stored as integer (0-100), convert to float (0-1)
+    owner_royalty_rate = (rights.revenue_share_percent / 100.0) if rights else 0.3
+    ip_context = IPContext.from_ip_catalog(
+        ip=ip,
+        preset=preset,
+        owner_royalty_rate=owner_royalty_rate,
+    )
+
+    # Create WorkflowExecution (SSoT for IP-First Coordination)
+    workflow_execution = WorkflowExecution(
+        dag_id=f"ip_generation:{preset.preset_type}",
+        user_id=user_id,
+        status=WorkflowStatus.PENDING.value,
+        ip_id=ip.id,
+        preset_id=preset.id,
+        ip_context=ip_context.model_dump(),
+        dag_snapshot={
+            "template_id": f"ip_generation:{preset.preset_type}",
+            "nodes": [{"id": "capsule_execute", "tool_id": preset.workflow_capsule_id or "teaching.story.generate:1.0.0"}],
+            "execution_order": ["capsule_execute"],
+        },
+        initial_inputs={
+            "user_prompt": request.user_prompt,
+            "preset_type": preset.preset_type,
+        },
+        estimated_credits=preset.estimated_credits,
+        run_token_id=run_id,
+    )
+    db.add(workflow_execution)
+    await db.flush()
+
+    # Create generation record with workflow_execution_id link
     generation = IPGeneration(
         ip_id=ip.id,
         preset_id=preset.id,
@@ -349,8 +434,9 @@ async def start_ip_generation(
         user_prompt=request.user_prompt,
         status="pending",
         credits_reserved=preset.estimated_credits,
-        run_token_id=run_id,  # Store run-token ID
+        run_token_id=run_id,
         workflow_session_id=run_id,
+        workflow_execution_id=workflow_execution.id,  # Link to WorkflowExecution
     )
 
     db.add(generation)
@@ -377,12 +463,14 @@ async def start_ip_generation(
     background_tasks.add_task(
         execute_generation_workflow,
         generation_id=generation.id,
+        workflow_execution_id=workflow_execution.id,
         run_token=run_token,
         run_id=run_id,
     )
 
     logger.info(
         f"IP generation started: generation_id={generation.id}, "
+        f"workflow_execution_id={workflow_execution.id}, "
         f"ip={slug}, preset={preset.preset_type}, user={user_id}, run_id={run_id}"
     )
 
