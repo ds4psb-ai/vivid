@@ -117,6 +117,10 @@ from app.routers.ip_payout import router as ip_payout_router
 # Tool Recommendation (IP-First Coordination Phase 2.5)
 from app.routers.tool_recommendation import router as tool_recommendation_router
 
+# Phase 7: HITL Enhancement
+from app.routers.approval_gate import router as approval_gate_router
+from app.routers.creator_dashboard import router as creator_dashboard_router
+
 # GraphQL Gateway (2026 Best Practices - P3.3)
 from app.graphql import graphql_router
 
@@ -323,6 +327,10 @@ app.include_router(miniapps_router, prefix="/api/v1", tags=["miniapps"])
 
 # Context Library (Expert Workflow - Context Injection)
 app.include_router(context_router, prefix="/api/v1", tags=["context"])
+
+# Phase 7: HITL Enhancement (Approval Gate, Creator Dashboard)
+app.include_router(approval_gate_router, prefix="/api/v1", tags=["approval-gate"])
+app.include_router(creator_dashboard_router, prefix="/api/v1", tags=["creator-dashboard"])
 
 # GraphQL Gateway (2026 Best Practices - P3.3)
 if settings.ENVIRONMENT.lower() in {"production", "prod", "staging"}:

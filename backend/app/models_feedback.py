@@ -1,13 +1,17 @@
-"""P6: RAG Feedback Collection DB Models.
+"""P6/P7: RAG Feedback Collection & HITL Enhancement DB Models.
 
 Tracks RAG responses and user feedback for:
 - P5 classification accuracy analysis
 - P7 self-correction data foundation
+- P7 HITL enhancement (approval gates, feedback→RAG pipeline)
 - P8 continual learning training data
 
 Tables:
     - rag_responses: RAG 응답 저장 (피드백 연결용)
     - rag_feedbacks: 명시적/암시적 피드백 수집
+    - feedback_corrections: 부정 피드백 교정 추적
+    - feedback_ingestions: 긍정 피드백 RAG 수집 추적
+    - creator_anomaly_logs: 크리에이터 이상 탐지 기록
 """
 import uuid
 import enum
@@ -216,9 +220,25 @@ class RAGFeedback(Base):
         DateTime, server_default=func.now()
     )
 
+    # ==========================================================================
+    # P7 HITL Enhancement Columns
+    # ==========================================================================
+
+    # Feedback → RAG Pipeline tracking
+    ingested_to_rag: Mapped[bool] = mapped_column(Boolean, default=False)
+    correction_applied: Mapped[bool] = mapped_column(Boolean, default=False)
+    processed_for_learning: Mapped[bool] = mapped_column(Boolean, default=False)
+    learning_cycle_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+
     # Relationship
     response: Mapped["RAGResponse"] = relationship(
         "RAGResponse", back_populates="feedbacks"
+    )
+    corrections: Mapped[List["FeedbackCorrection"]] = relationship(
+        "FeedbackCorrection", back_populates="feedback", cascade="all, delete-orphan"
+    )
+    ingestions: Mapped[List["FeedbackIngestion"]] = relationship(
+        "FeedbackIngestion", back_populates="feedback", cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:
@@ -283,3 +303,214 @@ class RAGResponseDailyStats(Base):
 
     def __repr__(self) -> str:
         return f"<RAGResponseDailyStats {self.stat_date} app={self.app_key}>"
+
+
+# =============================================================================
+# P7 HITL Enhancement Models
+# =============================================================================
+
+
+class CorrectionType(str, enum.Enum):
+    """Feedback correction types."""
+    SOURCE_FLAGGED = "source_flagged"
+    CACHE_INVALIDATED = "cache_invalidated"
+    CRAG_TRIGGERED = "crag_triggered"
+    MANUAL_OVERRIDE = "manual_override"
+
+
+class AnomalyType(str, enum.Enum):
+    """Creator anomaly types."""
+    RATING_DROP = "rating_drop"
+    REVISION_SPIKE = "revision_spike"
+    DELIVERY_DELAY = "delivery_delay"
+    CREDIT_ANOMALY = "credit_anomaly"
+    ENGAGEMENT_DROP = "engagement_drop"
+
+
+class AnomalySeverity(str, enum.Enum):
+    """Anomaly severity levels."""
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+
+class FeedbackCorrection(Base):
+    """부정 피드백 교정 추적.
+
+    부정 피드백이 발생했을 때 수행된 교정 작업을 기록합니다.
+
+    Correction Types:
+    - source_flagged: 원본 소스 문서에 검토 플래그
+    - cache_invalidated: 시맨틱 캐시 항목 무효화
+    - crag_triggered: CRAG 교정 워크플로우 트리거
+    - manual_override: 수동 교정
+    """
+    __tablename__ = "feedback_corrections"
+    __table_args__ = (
+        Index("ix_feedback_corrections_response_id", "response_id"),
+        Index("ix_feedback_corrections_feedback_id", "feedback_id"),
+        Index("ix_feedback_corrections_correction_type", "correction_type"),
+        Index("ix_feedback_corrections_dimension", "dimension"),
+        Index("ix_feedback_corrections_created_at", "created_at"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    response_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("rag_responses.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    feedback_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("rag_feedbacks.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    # Correction Details
+    correction_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    original_query: Mapped[str] = mapped_column(Text, nullable=False)
+    corrected_answer: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    correction_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Metadata
+    dimension: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
+    auteur_key: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+
+    # Review Status
+    reviewed_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    reviewed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )
+
+    # Relationships
+    response: Mapped["RAGResponse"] = relationship("RAGResponse")
+    feedback: Mapped["RAGFeedback"] = relationship(
+        "RAGFeedback", back_populates="corrections"
+    )
+
+    def __repr__(self) -> str:
+        return f"<FeedbackCorrection {self.id} type={self.correction_type}>"
+
+
+class FeedbackIngestion(Base):
+    """긍정 피드백 RAG 수집 추적.
+
+    긍정 피드백(평점 >= 4)이 발생했을 때 RAG 지식베이스로의 수집을 기록합니다.
+    """
+    __tablename__ = "feedback_ingestions"
+    __table_args__ = (
+        Index("ix_feedback_ingestions_feedback_id", "feedback_id"),
+        Index("ix_feedback_ingestions_dimension", "dimension"),
+        Index("ix_feedback_ingestions_qdrant_point_id", "qdrant_point_id"),
+        Index("ix_feedback_ingestions_collection_name", "collection_name"),
+        Index("ix_feedback_ingestions_ingested_at", "ingested_at"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    feedback_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("rag_feedbacks.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    # Qdrant Indexing
+    dimension: Mapped[str] = mapped_column(String(10), nullable=False)
+    qdrant_point_id: Mapped[str] = mapped_column(String(100), nullable=False)
+    collection_name: Mapped[str] = mapped_column(String(100), nullable=False)
+
+    # Content Info
+    content_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    content_preview: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+
+    # Embedding Info
+    embedding_model: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    embedding_dim: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+
+    # Metadata
+    auteur_key: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    user_validated: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    # Timestamps
+    ingested_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+
+    # Relationships
+    feedback: Mapped["RAGFeedback"] = relationship(
+        "RAGFeedback", back_populates="ingestions"
+    )
+
+    def __repr__(self) -> str:
+        return f"<FeedbackIngestion {self.id} dim={self.dimension}>"
+
+
+class CreatorAnomalyLog(Base):
+    """크리에이터 이상 탐지 기록.
+
+    IQR 방법을 사용하여 감지된 크리에이터 행동 이상을 기록합니다.
+
+    Anomaly Types:
+    - rating_drop: 급격한 평점 하락 (평균 대비 2 std 이하)
+    - revision_spike: 비정상 수정 비율
+    - delivery_delay: 비정상 납품 지연
+    - credit_anomaly: 크레딧 수익 급등/급락
+    - engagement_drop: 참여도 급감
+    """
+    __tablename__ = "creator_anomaly_logs"
+    __table_args__ = (
+        Index("ix_creator_anomaly_logs_creator_id", "creator_id"),
+        Index("ix_creator_anomaly_logs_anomaly_type", "anomaly_type"),
+        Index("ix_creator_anomaly_logs_severity", "severity"),
+        Index("ix_creator_anomaly_logs_resolved", "resolved"),
+        Index("ix_creator_anomaly_logs_detected_at", "detected_at"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    creator_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+
+    # Anomaly Details
+    anomaly_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    severity: Mapped[str] = mapped_column(String(20), nullable=False)
+    metric_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    metric_value: Mapped[float] = mapped_column(Float, nullable=False)
+    expected_range_low: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    expected_range_high: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    deviation_std: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+
+    # Context
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    context: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+
+    # Resolution
+    resolved: Mapped[bool] = mapped_column(Boolean, default=False)
+    resolved_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    resolved_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    resolution_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Timestamps
+    detected_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+
+    def __repr__(self) -> str:
+        return f"<CreatorAnomalyLog {self.id} type={self.anomaly_type} severity={self.severity}>"

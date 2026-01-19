@@ -401,6 +401,89 @@ async def process_ip_payout_holdbacks(
         return {"status": "failed", "error": str(e)}
 
 
+async def run_daily_learning_cycle(
+    ctx: Dict[str, Any],
+) -> Dict[str, Any]:
+    """
+    Run daily feedback → RAG learning cycle.
+
+    This cron job runs daily at 2 AM UTC to:
+    1. Collect unprocessed feedback events
+    2. Process positive feedback (rating >= 4) → Qdrant indexing
+    3. Process negative feedback → corrections
+    4. Update rag_presets confidence scores
+
+    Returns:
+        Summary of learning cycle.
+    """
+    from datetime import datetime
+    from app.database import AsyncSessionLocal
+    from app.services.feedback_loop import FeedbackLoopService
+
+    cycle_id = f"cycle_{datetime.utcnow().strftime('%Y-%m-%d')}"
+    logger.info(f"[Cron] run_daily_learning_cycle: {cycle_id}")
+
+    try:
+        async with AsyncSessionLocal() as db:
+            service = FeedbackLoopService(db)
+            result = await service.aggregate_learning_cycle(cycle_id)
+            await db.commit()
+
+            logger.info(
+                f"[Cron] Learning cycle complete: {cycle_id} | "
+                f"ingested={result.ingested_count}, corrected={result.corrected_count}"
+            )
+
+            return {
+                "status": "completed",
+                "cycle_id": result.cycle_id,
+                "processed": result.processed_count,
+                "ingested": result.ingested_count,
+                "corrected": result.corrected_count,
+                "errors": result.error_count,
+                "duration_seconds": result.duration_seconds,
+            }
+    except Exception as e:
+        logger.exception(f"run_daily_learning_cycle failed: {e}")
+        return {"status": "failed", "error": str(e)}
+
+
+async def process_expired_approval_checkpoints(
+    ctx: Dict[str, Any],
+) -> Dict[str, Any]:
+    """
+    Process expired approval gate checkpoints.
+
+    This cron job runs every hour to handle checkpoints that have expired
+    without receiving a review decision.
+
+    Returns:
+        Summary of processed checkpoints.
+    """
+    from app.database import AsyncSessionLocal
+    from app.services.approval_gate import ApprovalGateService
+
+    logger.info("[Cron] process_expired_approval_checkpoints")
+
+    try:
+        async with AsyncSessionLocal() as db:
+            service = ApprovalGateService(db)
+            processed_count = await service.process_expired_checkpoints()
+            await db.commit()
+
+            logger.info(
+                f"[Cron] Expired checkpoints processed: {processed_count}"
+            )
+
+            return {
+                "status": "completed",
+                "processed": processed_count,
+            }
+    except Exception as e:
+        logger.exception(f"process_expired_approval_checkpoints failed: {e}")
+        return {"status": "failed", "error": str(e)}
+
+
 class WorkerSettings:
     """Arq WorkerSettings for job processing."""
     functions = [
@@ -412,8 +495,10 @@ class WorkerSettings:
         process_pending_settlements,
         check_tier_promotions,
         process_ip_payout_holdbacks,
+        run_daily_learning_cycle,
+        process_expired_approval_checkpoints,
     ]
-    
+
     # Cron jobs - scheduled tasks
     cron_jobs = [
         # Process settlements every 5 minutes
@@ -432,6 +517,18 @@ class WorkerSettings:
         {
             "func": process_ip_payout_holdbacks,
             "cron": "0 3 * * *",  # 3:00 AM daily
+            "unique": True,
+        },
+        # Run daily learning cycle at 2 AM UTC (Phase 7)
+        {
+            "func": run_daily_learning_cycle,
+            "cron": "0 2 * * *",  # 2:00 AM daily
+            "unique": True,
+        },
+        # Process expired approval checkpoints every hour (Phase 7)
+        {
+            "func": process_expired_approval_checkpoints,
+            "cron": "0 * * * *",  # Every hour
             "unique": True,
         },
     ]
