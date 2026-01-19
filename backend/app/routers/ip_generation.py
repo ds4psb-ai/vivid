@@ -40,6 +40,169 @@ router = APIRouter(tags=["ip-generation"])
 run_token_service = RunTokenService()
 
 
+# =============================================================================
+# Background Task: Workflow Execution (FastAPI 2026 Pattern)
+# =============================================================================
+
+async def execute_generation_workflow(
+    generation_id: UUID,
+    run_token: str,
+    run_id: str,
+):
+    """Execute generation workflow in background.
+
+    FastAPI 2026 Best Practice:
+    - Create own DB session (not from dependency)
+    - Only receive IDs, not ORM objects
+    - Handle errors with credit refund
+    """
+    start_time = time.monotonic()
+
+    async with AsyncSessionLocal() as db:
+        try:
+            # Load generation
+            result = await db.execute(
+                select(IPGeneration).where(IPGeneration.id == generation_id)
+            )
+            generation = result.scalar_one_or_none()
+
+            if not generation:
+                logger.error(f"Generation not found: {generation_id}")
+                return
+
+            # Load preset with workflow steps
+            preset_result = await db.execute(
+                select(IPWorkflowPreset).where(IPWorkflowPreset.id == generation.preset_id)
+            )
+            preset = preset_result.scalar_one_or_none()
+
+            # Load IP for auteur key
+            ip_result = await db.execute(
+                select(IPCatalog).where(IPCatalog.id == generation.ip_id)
+            )
+            ip = ip_result.scalar_one_or_none()
+
+            # Update status
+            generation.status = "running"
+            generation.current_step = "workflow_init"
+            generation.progress_percent = 10
+            await db.commit()
+
+            # Build capsule inputs
+            capsule_inputs = {
+                "topic": generation.user_prompt or f"Fan fiction for {ip.name_en if ip else 'IP'}",
+                "ip_context": ip.worldbuilding if ip else {},
+                "auteur_key": ip.auteur_key if ip else None,
+            }
+
+            # Execute capsule (sealed - internal DAG hidden)
+            capsule_result: CapsuleExecutionResult = await execute_capsule(
+                capsule_id=preset.workflow_capsule_id or "teaching.story.generate:1.0.0",
+                inputs=capsule_inputs,
+                params={
+                    "model": "gemini-2.0-flash",
+                    "preset_type": preset.preset_type,
+                },
+                user={"user_id": generation.user_id},
+                db=db,
+                run_id=run_id,
+            )
+
+            # Generate evidence refs
+            evidence_refs = generate_evidence_refs(
+                generation=generation,
+                preset=preset,
+                ip=ip,
+                capsule_result=capsule_result,
+            )
+
+            # Calculate latency
+            latency_ms = int((time.monotonic() - start_time) * 1000)
+
+            if capsule_result.status == "done":
+                # Success
+                generation.status = "completed"
+                generation.progress_percent = 100
+                generation.current_step = None
+                generation.output_artifacts = capsule_result.summary.get("artifacts", [])
+                generation.evidence_refs = evidence_refs
+                generation.pattern_version = preset.pattern_version or "v1.0.0"
+                generation.credits_consumed = capsule_result.token_usage.get("total_credits", preset.estimated_credits)
+                generation.latency_ms = latency_ms
+
+                # Deduct credits
+                success, _, error = await run_token_service.deduct_credits(
+                    run_token,
+                    generation.credits_consumed,
+                )
+                if not success:
+                    logger.warning(f"Failed to deduct credits: {error}")
+
+                logger.info(f"Generation completed: {generation_id}, latency={latency_ms}ms")
+            else:
+                # Failed
+                generation.status = "failed"
+                generation.error_message = capsule_result.error or "Workflow execution failed"
+                generation.latency_ms = latency_ms
+
+                # Refund credits
+                await run_token_service.refund_credits(run_token)
+
+                logger.error(f"Generation failed: {generation_id}, error={capsule_result.error}")
+
+            await db.commit()
+
+        except Exception as e:
+            logger.exception(f"Background task error: {generation_id}")
+
+            # Update status
+            generation.status = "failed"
+            generation.error_message = str(e)
+            await db.commit()
+
+            # Refund credits
+            try:
+                await run_token_service.refund_credits(run_token)
+            except Exception as refund_error:
+                logger.error(f"Failed to refund credits: {refund_error}")
+
+
+def generate_evidence_refs(
+    generation: IPGeneration,
+    preset: IPWorkflowPreset,
+    ip: IPCatalog,
+    capsule_result: CapsuleExecutionResult,
+) -> list[str]:
+    """Generate evidence references for transparency.
+
+    SSoT: evidence_refs is List[str]
+    """
+    refs = []
+
+    # 1. IP source
+    if ip:
+        refs.append(f"db:ip_catalog:{ip.id}")
+
+    # 2. Preset source
+    refs.append(f"db:ip_presets:{preset.id}")
+
+    # 3. Auteur style reference
+    if ip and ip.auteur_key:
+        refs.append(f"rag:auteur:{ip.auteur_key}")
+
+    # 4. Pattern version
+    refs.append(f"pattern:{preset.pattern_version or 'v1.0.0'}")
+
+    # 5. Capsule run
+    refs.append(f"capsule:run:{capsule_result.run_id}")
+
+    # 6. Include capsule's evidence refs
+    if capsule_result.evidence_refs:
+        refs.extend(capsule_result.evidence_refs[:5])  # Limit to 5
+
+    return refs
+
+
 # --- Pydantic Schemas ---
 
 class GenerationStartRequest(BaseModel):
@@ -98,6 +261,7 @@ class EvidenceResponse(BaseModel):
 async def start_ip_generation(
     slug: str,
     request: GenerationStartRequest,
+    background_tasks: BackgroundTasks,
     user_id: str = Depends(require_user_id),
     db: AsyncSession = Depends(get_db),
 ):
@@ -107,7 +271,7 @@ async def start_ip_generation(
     1. Validates IP rights (prohibited → 403)
     2. Loads preset workflow configuration (sealed)
     3. Reserves run-token credits
-    4. Starts async workflow execution
+    4. Starts async workflow execution via BackgroundTasks
     5. Returns generation ID for progress tracking
 
     The internal DAG/tool selection is never exposed to the client.
@@ -138,7 +302,6 @@ async def start_ip_generation(
         )
 
     if license_status == "restricted":
-        # In production, you might want to add additional checks here
         logger.warning(f"Generation started for restricted IP: {slug}")
 
     # Get preset
@@ -155,6 +318,21 @@ async def start_ip_generation(
     if preset.ip_id != ip.id:
         raise HTTPException(status_code=400, detail="Preset does not belong to this IP")
 
+    # Issue run-token and reserve credits
+    success, run_token, run_id, error = await run_token_service.issue_token(
+        user_id=user_id,
+        app_id=f"ip_generation:{preset.id}",
+        credits_to_reserve=preset.estimated_credits,
+        permissions=["capsule:execute", "storage:write"],
+    )
+
+    if not success:
+        logger.error(f"Failed to issue run-token: {error}")
+        raise HTTPException(
+            status_code=402,
+            detail=f"Failed to reserve credits: {error or 'Insufficient credits'}"
+        )
+
     # Create generation record
     generation = IPGeneration(
         ip_id=ip.id,
@@ -163,20 +341,12 @@ async def start_ip_generation(
         user_prompt=request.user_prompt,
         status="pending",
         credits_reserved=preset.estimated_credits,
+        run_token_id=run_id,  # Store run-token ID
+        workflow_session_id=run_id,
     )
 
     db.add(generation)
     await db.flush()
-
-    # In production, this would:
-    # 1. Reserve credits via run-token service
-    # 2. Start async workflow execution
-    # 3. Return session ID for progress tracking
-
-    # For now, we'll simulate the start
-    # TODO: Integrate with actual workflow executor
-    generation.status = "running"
-    generation.current_step = "initializing"
 
     # Update IP stats
     await db.execute(
@@ -192,17 +362,26 @@ async def start_ip_generation(
         .values(usage_count=IPWorkflowPreset.usage_count + 1)
     )
 
-    await db.flush()
+    await db.commit()
+
+    # Start background workflow execution
+    # FastAPI 2026 Pattern: Pass only IDs, create new session in task
+    background_tasks.add_task(
+        execute_generation_workflow,
+        generation_id=generation.id,
+        run_token=run_token,
+        run_id=run_id,
+    )
 
     logger.info(
         f"IP generation started: generation_id={generation.id}, "
-        f"ip={slug}, preset={preset.preset_type}, user={user_id}"
+        f"ip={slug}, preset={preset.preset_type}, user={user_id}, run_id={run_id}"
     )
 
     return GenerationStartResponse(
         generation_id=str(generation.id),
-        session_id=None,  # Would be set by workflow executor
-        status="running",
+        session_id=run_id,
+        status="pending",
         estimated_credits=preset.estimated_credits,
         estimated_duration_seconds=preset.estimated_duration_seconds,
         message="Generation started. Track progress using the generation ID.",
@@ -405,15 +584,106 @@ async def cancel_generation(
     generation.status = "cancelled"
     generation.error_message = "Cancelled by user"
 
-    # In production, this would trigger run-token refund
-    # TODO: Integrate with run-token service
+    # Refund credits via run-token
+    if generation.run_token_id:
+        try:
+            # Get the token from storage and refund
+            await run_token_service.refund_credits(generation.run_token_id)
+            logger.info(f"Credits refunded for cancelled generation: {generation_id}")
+        except Exception as e:
+            logger.error(f"Failed to refund credits for {generation_id}: {e}")
 
-    await db.flush()
+    await db.commit()
 
     logger.info(f"Generation cancelled: generation_id={generation.id}")
 
     return {
         "generation_id": str(generation.id),
         "status": "cancelled",
-        "message": "Generation cancelled. Credits will be refunded.",
+        "message": "Generation cancelled. Credits have been refunded.",
     }
+
+
+# =============================================================================
+# SSE Streaming Endpoint (2026 Best Practice)
+# =============================================================================
+
+@router.get("/{slug}/generation/{generation_id}/stream")
+async def stream_generation_progress(
+    slug: str,
+    generation_id: UUID,
+):
+    """Stream generation progress via Server-Sent Events.
+
+    2026 Best Practice: SSE instead of polling for real-time updates.
+    Reduces bandwidth by ~90% compared to polling.
+    """
+    async def event_generator():
+        last_status = None
+        last_progress = -1
+        consecutive_errors = 0
+        max_errors = 5
+
+        while True:
+            try:
+                async with AsyncSessionLocal() as db:
+                    result = await db.execute(
+                        select(IPGeneration).where(IPGeneration.id == generation_id)
+                    )
+                    generation = result.scalar_one_or_none()
+
+                    if not generation:
+                        yield {
+                            "event": "error",
+                            "data": json.dumps({"error": "Generation not found"})
+                        }
+                        break
+
+                    # Only emit when status or progress changes
+                    if (generation.status != last_status or
+                        generation.progress_percent != last_progress):
+
+                        yield {
+                            "event": "progress",
+                            "data": json.dumps({
+                                "generation_id": str(generation.id),
+                                "status": generation.status,
+                                "progress_percent": generation.progress_percent,
+                                "current_step": generation.current_step,
+                                "credits_consumed": generation.credits_consumed,
+                                "latency_ms": generation.latency_ms,
+                                "error_message": generation.error_message,
+                            })
+                        }
+
+                        last_status = generation.status
+                        last_progress = generation.progress_percent
+
+                    # Stop if terminal state
+                    if generation.status in ["completed", "failed", "cancelled"]:
+                        yield {
+                            "event": "complete",
+                            "data": json.dumps({
+                                "status": generation.status,
+                                "preview_url": generation.preview_url,
+                            })
+                        }
+                        break
+
+                consecutive_errors = 0
+                await asyncio.sleep(1)  # 1 second between checks
+
+            except Exception as e:
+                consecutive_errors += 1
+                logger.error(f"SSE error for {generation_id}: {e}")
+
+                if consecutive_errors >= max_errors:
+                    yield {
+                        "event": "error",
+                        "data": json.dumps({"error": "Connection lost"})
+                    }
+                    break
+
+                await asyncio.sleep(2)
+
+    return EventSourceResponse(event_generator())

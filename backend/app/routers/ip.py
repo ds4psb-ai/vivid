@@ -13,7 +13,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import select, func, or_, desc, asc
+from sqlalchemy import select, func, or_, desc, asc, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -433,9 +433,13 @@ async def get_preset_detail(
 async def list_genres(
     db: AsyncSession = Depends(get_db),
 ):
-    """List available genres with counts."""
-    # This is a simplified version - in production, you'd aggregate from the database
-    genres = [
+    """List available genres with counts.
+
+    Optimized: Single query with unnest instead of N+1 queries.
+    Reference: 2026 PostgreSQL best practice for JSONB array aggregation.
+    """
+    # Genre definitions
+    GENRE_DEFINITIONS = [
         {"key": "kdrama", "label_ko": "K-드라마", "label_en": "K-Drama"},
         {"key": "movie", "label_ko": "영화", "label_en": "Movie"},
         {"key": "anime", "label_ko": "애니메이션", "label_en": "Anime"},
@@ -446,14 +450,26 @@ async def list_genres(
         {"key": "scifi", "label_ko": "SF", "label_en": "Sci-Fi"},
     ]
 
-    # Get counts per genre
-    for genre in genres:
-        count_result = await db.execute(
-            select(func.count())
-            .select_from(IPCatalog)
-            .where(IPCatalog.is_active == True)
-            .where(IPCatalog.genre.contains([genre["key"]]))
+    # Single query: unnest genre array and count all genres at once
+    # Before: 8 queries (1 per genre) = N+1 problem
+    # After: 1 query
+    genre_counts_result = await db.execute(
+        select(
+            func.unnest(IPCatalog.genre).label("genre_key"),
+            func.count().label("count"),
         )
-        genre["count"] = count_result.scalar() or 0
+        .where(IPCatalog.is_active == True)
+        .group_by(text("genre_key"))
+    )
+    count_map = {row.genre_key: row.count for row in genre_counts_result}
+
+    # Merge with genre definitions
+    genres = [
+        {
+            **genre_def,
+            "count": count_map.get(genre_def["key"], 0),
+        }
+        for genre_def in GENRE_DEFINITIONS
+    ]
 
     return {"genres": genres}

@@ -22,6 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.auth import require_user_id
 from app.models_ip import DMCACase, IPCatalog, IPRights
+from app.services.dmca_notification_service import dmca_notification_service
 
 logger = logging.getLogger(__name__)
 
@@ -242,9 +243,12 @@ async def submit_counter_notice(
 
     await db.flush()
 
+    # Notify original claimant of counter-notice (per 17 U.S.C. § 512(g)(2)(B))
+    notification = await dmca_notification_service.notify_claimant_counter(dmca_case)
+
     logger.info(
         f"DMCA counter-notice received: case_id={dmca_case.id}, "
-        f"user={user_id}"
+        f"user={user_id}, claimant_notified={notification.success}"
     )
 
     return DMCACounterResponse(
@@ -343,7 +347,13 @@ async def admin_remove_content(
     db: AsyncSession = Depends(get_db),
     # In production, add admin authentication here
 ):
-    """[Admin] Remove content after DMCA notice review."""
+    """[Admin] Remove content after DMCA notice review.
+
+    This triggers:
+    1. Content removal
+    2. Notification to content owner
+    3. Repeat infringer check
+    """
     result = await db.execute(
         select(DMCACase).where(DMCACase.id == notice_id)
     )
@@ -359,9 +369,29 @@ async def admin_remove_content(
 
     await db.flush()
 
-    logger.info(f"Content removed via DMCA: case_id={dmca_case.id}")
+    # Process takedown: notify owner + check repeat infringer
+    notification, repeat_check = await dmca_notification_service.process_takedown(
+        dmca_case=dmca_case,
+        db=db,
+    )
 
-    return {"status": "removed", "notice_id": str(dmca_case.id)}
+    logger.info(
+        f"Content removed via DMCA: case_id={dmca_case.id}, "
+        f"repeat_infringer={repeat_check.is_repeat_infringer}, "
+        f"strike_count={repeat_check.strike_count}"
+    )
+
+    return {
+        "status": "removed",
+        "notice_id": str(dmca_case.id),
+        "notification_sent": notification.success,
+        "repeat_infringer_check": {
+            "is_repeat_infringer": repeat_check.is_repeat_infringer,
+            "strike_count": repeat_check.strike_count,
+            "threshold": repeat_check.threshold,
+            "action_taken": repeat_check.action_taken,
+        },
+    }
 
 
 @router.post("/admin/restore/{notice_id}")
