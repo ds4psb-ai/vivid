@@ -242,7 +242,7 @@ export function PendingApprovalsPanel() {
             <button
               className="w-full flex items-center justify-center gap-1 py-2 text-sm text-violet-400
                        hover:text-violet-300 transition-colors"
-              onClick={() => window.location.href = "/approval-gate"}
+              onClick={() => window.location.href = "/creator/approvals"}
             >
               {labels.showMore} ({total - data.length} {language === "ko" ? "개 더" : "more"})
               <ChevronRight className="w-4 h-4" />
