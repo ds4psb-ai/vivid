@@ -14,9 +14,11 @@ import { motion } from "framer-motion";
 import {
   ArrowUpRight,
   BarChart3,
+  CreditCard,
   FlaskConical,
   LayoutDashboard,
   MessageSquareText,
+  Settings,
   ShieldCheck,
   Sparkles,
   Wallet,
@@ -26,6 +28,7 @@ import AppShell from "@/components/AppShell";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { TemplateRail, DimensionGrid, WorkflowCTA } from "@/components/home";
 import HomeRailSection from "@/components/home/HomeRailSection";
+import { IPRailCard } from "@/components/home/IPRailCard";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Badge } from "@/components/ui/badge";
@@ -53,7 +56,7 @@ interface RailSection {
 function HomePageContent() {
   const router = useRouter();
   const { language } = useLanguage();
-  const { isAuthenticated, isLoading: isSessionLoading } = useSessionContext();
+  const { isLoading: isSessionLoading } = useSessionContext();
   const [ipRails, setIpRails] = useState<RailSection[]>([]);
 
   // Fetch IP rails
@@ -84,6 +87,11 @@ function HomePageContent() {
       seeAll: ko ? "전체 보기" : "View all",
       studioCta: ko ? "작업실로 이동" : "Go to Studio",
       browseIp: ko ? "IP 갤러리 보기" : "Browse IP Gallery",
+      ipHighlight: ko ? "IP 하이라이트" : "IP Highlights",
+      ipHighlightDesc: ko
+        ? "추천 IP를 카드로 먼저 살펴보세요."
+        : "Preview recommended IPs at a glance.",
+      accountTools: ko ? "계정 & 크레딧" : "Account & Credits",
     };
   }, [language]);
 
@@ -165,6 +173,62 @@ function HomePageContent() {
     },
   ];
 
+  const accountLinks = [
+    {
+      titleKo: "크레딧",
+      titleEn: "Credits",
+      descKo: "크레딧 충전 및 사용 현황을 확인합니다.",
+      descEn: "Manage credit balance and usage.",
+      href: "/credits",
+      icon: CreditCard,
+      badge: "CREDITS",
+    },
+    {
+      titleKo: "설정",
+      titleEn: "Settings",
+      descKo: "계정, BYOK, 알림을 설정합니다.",
+      descEn: "Configure account, BYOK, and notifications.",
+      href: "/settings",
+      icon: Settings,
+      badge: "SETUP",
+    },
+  ];
+
+  const mockIpCards = [
+    {
+      titleKo: "네오 서울",
+      titleEn: "Neo Seoul",
+      subtitleKo: "사이버펑크 도시",
+      subtitleEn: "Cyberpunk city",
+      license: "allowed" as const,
+      genres: ["SF", "Action"],
+    },
+    {
+      titleKo: "달빛 정원",
+      titleEn: "Moonlit Garden",
+      subtitleKo: "판타지 왕국",
+      subtitleEn: "Fantasy realm",
+      license: "restricted" as const,
+      genres: ["Fantasy", "Drama"],
+    },
+    {
+      titleKo: "서울 2099",
+      titleEn: "Seoul 2099",
+      subtitleKo: "미래 추격전",
+      subtitleEn: "Future chase",
+      license: "allowed" as const,
+      genres: ["Thriller", "Sci-Fi"],
+    },
+    {
+      titleKo: "금빛 극장",
+      titleEn: "Golden Theatre",
+      subtitleKo: "뮤지컬 무대",
+      subtitleEn: "Musical stage",
+      license: "prohibited" as const,
+      genres: ["Musical", "Romance"],
+    },
+  ];
+
   const handleIPItemClick = (item: { slug: string }) => {
     router.push("/ip/" + item.slug);
   };
@@ -224,6 +288,36 @@ function HomePageContent() {
                       hasMore={section.has_more}
                       onSeeMore={() => router.push("/ip")}
                       onItemClick={handleIPItemClick}
+                    />
+                  ))}
+                </div>
+              </motion.section>
+            )}
+
+            {ipRails.length === 0 && (
+              <motion.section
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-base font-semibold text-[var(--fg-0)]">{copy.ipHighlight}</h2>
+                    <p className="text-xs text-[var(--fg-muted)]">{copy.ipHighlightDesc}</p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => router.push("/ip")}>
+                    {copy.seeAll}
+                    <ArrowUpRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  {mockIpCards.map((item) => (
+                    <IPRailCard
+                      key={item.titleEn}
+                      title={language === "ko" ? item.titleKo : item.titleEn}
+                      subtitle={language === "ko" ? item.subtitleKo : item.subtitleEn}
+                      licenseStatus={item.license}
+                      genres={item.genres}
                     />
                   ))}
                 </div>
@@ -308,6 +402,52 @@ function HomePageContent() {
                         <p className="mt-2 text-xs text-[var(--fg-muted)]">
                           {language === "ko" ? item.descKo : item.descEn}
                         </p>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            </motion.section>
+
+            {/* Account & Credits */}
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 }}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-semibold text-[var(--fg-0)]">{copy.accountTools}</h2>
+                <Button variant="ghost" className="text-[var(--fg-subtle)]">
+                  {copy.seeAll}
+                  <ArrowUpRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                {accountLinks.map((item) => (
+                  <Link key={item.href} href={item.href} className="group">
+                    <Card className="border border-white/5 bg-[var(--surface-1)]/70 transition-all group-hover:border-violet-500/30 group-hover:-translate-y-0.5">
+                      <CardContent className="p-5">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-start gap-3">
+                            <div className="h-10 w-10 rounded-xl bg-violet-500/10 text-violet-400 flex items-center justify-center">
+                              <item.icon className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <div className="text-sm font-semibold text-[var(--fg-0)]">
+                                  {language === "ko" ? item.titleKo : item.titleEn}
+                                </div>
+                                <Badge variant="secondary" className="text-[10px]">
+                                  {item.badge}
+                                </Badge>
+                              </div>
+                              <p className="mt-2 text-xs text-[var(--fg-muted)]">
+                                {language === "ko" ? item.descKo : item.descEn}
+                              </p>
+                            </div>
+                          </div>
+                          <ArrowUpRight className="h-4 w-4 text-violet-400 opacity-0 transition group-hover:opacity-100" />
+                        </div>
                       </CardContent>
                     </Card>
                   </Link>
