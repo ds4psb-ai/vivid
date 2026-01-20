@@ -254,6 +254,7 @@ export default function AbyssMirrorPanel() {
                 // Add trace
                 addTrace({
                     trace_id: response.trace_id,
+                    session_id: sessionId || "",  // Link to current session
                     timestamp: new Date().toISOString(),
                     stage: response.current_stage,
                     evidence_refs: response.evidence_refs,

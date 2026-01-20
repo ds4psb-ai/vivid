@@ -456,7 +456,7 @@ function StoryArchitectContent() {
             placeholder={isKo ? "어떤 영상을 만들고 싶으신가요? 아이디어, 분위기, 메시지 등을 자유롭게 적어주세요..." : "What kind of video do you want to create? Feel free to describe your ideas, mood, message, etc."}
             rows={5}
             maxLength={MAX_CONCEPT_LENGTH}
-            disabled={isAnyLoading || stage !== "pitch"}
+            disabled={isAnyLoading || stage === "script"}
           />
 
           {/* File Upload (2026 Best Practice: Multimodal Input) */}

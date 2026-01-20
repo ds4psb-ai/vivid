@@ -54,7 +54,7 @@ ALLOWED_BLOOD_TYPES = frozenset({"A", "B", "O", "AB", ""})
 ALLOWED_GENDERS = frozenset({"M", "F", "Other", ""})
 ALLOWED_STAGES = frozenset({
     "intro", "birth", "saju", "psychology", "creativity",
-    "preferences", "synthesis", "final"
+    "preferences", "synthesis", "summary", "final"  # Added "summary" - used by service
 })
 VALID_MBTI_CHARS = [
     frozenset({"E", "I"}),
@@ -790,6 +790,11 @@ async def chat_mirror(
         f"stage={result['next_stage']} quality={profile_quality.overall_score}"
     )
 
+    # Ensure error is always a string or None (防止 ValueError object serialization)
+    error_value = result.get("error")
+    if error_value is not None and not isinstance(error_value, str):
+        error_value = str(error_value)
+
     return MirrorChatResponse(
         success="error" not in result,
         ai_response=result["ai_response"],
@@ -804,7 +809,7 @@ async def chat_mirror(
         is_crisis=result.get("is_crisis", False),
         # 2026 Profile Quality
         profile_quality=profile_quality,
-        error=result.get("error"),
+        error=error_value,
     )
 
 
@@ -947,6 +952,11 @@ async def chat_mirror_stream(
         result["evidence_refs"] = evidence_refs
         result["confidence"] = min(1.0, profile_quality.overall_score / 100)
         result["profile_quality"] = profile_quality.model_dump()
+
+        # Ensure error is always a string or None (防止 ValueError object serialization)
+        if "error" in result and result["error"] is not None:
+            if not isinstance(result["error"], str):
+                result["error"] = str(result["error"])
 
         mirror_logger.info(
             f"[MIRROR_STREAM_2026] trace_id={trace_id} quality={profile_quality.overall_score}"

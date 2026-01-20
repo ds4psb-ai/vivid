@@ -83,6 +83,14 @@ export interface MirrorExportResponse {
 // ============================================================================
 // P5-1: issueRunToken moved to run-token-api.ts (SSoT)
 
+// Get user ID for demo mode
+const getUserId = () => {
+    if (typeof window !== 'undefined') {
+        return process.env.NEXT_PUBLIC_USER_ID || 'demo-user';
+    }
+    return 'demo-user';
+};
+
 export async function initMirror(
     request: MirrorInitRequest,
     byokKey?: string | null
@@ -91,6 +99,7 @@ export async function initMirror(
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-User-ID': getUserId(),
             ...getBYOKHeaders(byokKey ?? null),
         },
         body: JSON.stringify({
@@ -125,6 +134,7 @@ export async function chatMirror(
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-User-ID': getUserId(),
             ...getBYOKHeaders(byokKey ?? null),
         },
         body: JSON.stringify({
@@ -185,6 +195,7 @@ export function chatMirrorStream(
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-User-ID': getUserId(),
                     ...(runToken ? { Authorization: `Bearer ${runToken}` } : {}),  // P3.5
                     ...getBYOKHeaders(byokKey ?? null),
                 },

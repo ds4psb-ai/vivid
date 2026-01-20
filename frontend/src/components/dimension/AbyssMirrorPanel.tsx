@@ -32,7 +32,7 @@ import { initMirror, chatMirror, type MirrorChatResponse } from "@/lib/mirrorApi
 import { useDimensionChainOptional } from "@/contexts/DimensionChainContext";
 import { getDemoIPOverride } from "@/lib/demo-ip-overrides";
 import { getPreviousStepResult } from "@/lib/workflow-state";
-import { Send, User, Bot, Sparkles, Download, ArrowLeft, Zap, Upload, RefreshCw, AlertTriangle, Film } from "lucide-react";
+import { Send, User, Bot, Sparkles, Download, ArrowLeft, Zap, Upload, RefreshCw, AlertTriangle, Film, RotateCcw } from "lucide-react";
 
 const DIMENSION_CODE = "mirror";
 const DIMENSION_KEY = "abyss-mirror";
@@ -70,7 +70,7 @@ const getModels = (isKo: boolean) => [
 // ============================================================================
 
 function AbyssMirrorContent() {
-  const { token, setLoading } = useDimensionPanel();
+  const { token, setLoading, setResult } = useDimensionPanel();
   const { language } = useLanguage();
   const isKo = language === "ko";
 
@@ -248,6 +248,7 @@ function AbyssMirrorContent() {
       colorPalette?: string[];
       referenceArtists?: string[];
       stylePrompt?: string;
+      styleTags?: string[];
     };
   } | null>(null);
 
@@ -288,18 +289,60 @@ function AbyssMirrorContent() {
     const data = prevResult.outputData;
     const styleHints: NonNullable<typeof workflowContext>["styleHints"] = {};
 
-    // Style Extraction / Video Analysis / Image Analysis mode handling
-    if (data.style_prompt) {
-      styleHints.stylePrompt = data.style_prompt as string;
-      styleHints.mood = data.mood as string;
-      styleHints.lighting = data.lighting as string;
-      styleHints.colorPalette = data.color_palette as string[];
-      styleHints.referenceArtists = data.reference_artists as string[];
-    }
+    // Handle Video Analysis output format: { style: { description, tags }, shot_list: [...] }
     if (data.style && typeof data.style === "object") {
       const style = data.style as Record<string, unknown>;
-      styleHints.mood ??= style.mood as string;
-      styleHints.lighting ??= style.lighting as string;
+      // Use style description as the main style prompt
+      if (style.description) {
+        styleHints.stylePrompt = style.description as string;
+      }
+      // Extract mood from tags if present (e.g., "romantic", "melancholic")
+      if (Array.isArray(style.tags)) {
+        const tags = style.tags as string[];
+        const moodTags = tags.filter(t =>
+          ["romantic", "melancholic", "dramatic", "serene", "youthful", "mysterious", "nostalgic", "energetic"].includes(t.toLowerCase())
+        );
+        if (moodTags.length > 0) {
+          styleHints.mood = moodTags.join(", ");
+        }
+        // Store all tags as style keywords
+        styleHints.styleTags = tags;
+      }
+      // Extract lighting if present
+      if (style.lighting) {
+        styleHints.lighting = style.lighting as string;
+      }
+    }
+
+    // Handle shot_list for additional context
+    if (Array.isArray(data.shot_list) && data.shot_list.length > 0) {
+      // Extract lighting from first shot description if not already set
+      const firstShot = data.shot_list[0] as Record<string, unknown>;
+      if (firstShot?.description && !styleHints.lighting) {
+        const desc = (firstShot.description as string).toLowerCase();
+        if (desc.includes("soft") && desc.includes("light")) {
+          styleHints.lighting = "soft diffused natural lighting";
+        } else if (desc.includes("dramatic")) {
+          styleHints.lighting = "dramatic lighting";
+        }
+      }
+    }
+
+    // Legacy format support: direct style_prompt, mood, etc.
+    if (data.style_prompt && !styleHints.stylePrompt) {
+      styleHints.stylePrompt = data.style_prompt as string;
+    }
+    if (data.mood && !styleHints.mood) {
+      styleHints.mood = data.mood as string;
+    }
+    if (data.lighting && !styleHints.lighting) {
+      styleHints.lighting = data.lighting as string;
+    }
+    if (data.color_palette) {
+      styleHints.colorPalette = data.color_palette as string[];
+    }
+    if (data.reference_artists) {
+      styleHints.referenceArtists = data.reference_artists as string[];
     }
     if (data.recreation_prompt && !styleHints.stylePrompt) {
       styleHints.stylePrompt = data.recreation_prompt as string;
@@ -309,6 +352,23 @@ function AbyssMirrorContent() {
       setWorkflowContext({ source: "reference-decoder", styleHints });
     }
   }, []);
+
+  // Auto-resume last session on mount if available
+  useEffect(() => {
+    if (presets.length > 0 && phase === "input" && !sessionId) {
+      // Check URL for explicit workflow mode - if in workflow, don't auto-resume
+      const params = new URLSearchParams(window.location.search);
+      const isWorkflowMode = params.has("workflow") || params.has("step");
+
+      if (!isWorkflowMode) {
+        const latestPreset = presets[0];
+        if (latestPreset && latestPreset.meta.completion_rate > 0) {
+          // Show a banner instead of auto-resuming to avoid confusion
+          // The user can click "이전 세션" to resume
+        }
+      }
+    }
+  }, [presets, phase, sessionId]);
 
   // ========================================================================
   // Handlers
@@ -345,11 +405,17 @@ function AbyssMirrorContent() {
       setError(null);
 
       try {
+        // Parse and validate birth_hour (0-23)
+        let birthHour = parseInt(birthInfo.hour) || 12;
+        // Handle HHMM format (e.g., 0719 -> 7, 1430 -> 14)
+        if (birthHour >= 100) birthHour = Math.floor(birthHour / 100);
+        birthHour = Math.min(23, Math.max(0, birthHour));
+
         const response = await initMirror({
           birth_year: quick ? 1990 : parseInt(birthInfo.year),
           birth_month: quick ? 1 : parseInt(birthInfo.month),
           birth_day: quick ? 1 : parseInt(birthInfo.day),
-          birth_hour: parseInt(birthInfo.hour) || 12,
+          birth_hour: Math.min(23, Math.max(0, birthHour)),
           mbti: birthInfo.mbti.toUpperCase(),
           blood_type: birthInfo.bloodType.toUpperCase(),
           gender: birthInfo.gender,
@@ -391,17 +457,17 @@ function AbyssMirrorContent() {
     const userMessage = inputMessage.trim();
     setInputMessage("");
 
-    // React 19: Optimistic update - show user message immediately
-    const userMessageObj: Message = { role: "user", content: userMessage };
-    addOptimisticMessage(userMessageObj);
-    setMessages(prev => [...prev, userMessageObj]);
-
     if (ragEnabled) {
       void fetchSuggestion(userMessage, messages.map(m => m.content).join("\n").slice(-500));
     }
 
-    // React 19: Non-blocking transition
+    // React 19: Non-blocking transition with optimistic update
     startTransition(async () => {
+      // Optimistic update - show user message immediately (must be inside transition)
+      const userMessageObj: Message = { role: "user", content: userMessage };
+      addOptimisticMessage(userMessageObj);
+      setMessages(prev => [...prev, userMessageObj]);
+
       setIsLoadingLocal(true);
       setError(null);
 
@@ -443,14 +509,37 @@ function AbyssMirrorContent() {
 
           addTrace({
             trace_id: response.trace_id,
+            session_id: sessionId || "",  // Link to current session
             timestamp: new Date().toISOString(),
             stage: response.current_stage,
             evidence_refs: response.evidence_refs,
             user_message_preview: userMessage.slice(0, 50),
           });
 
+          // Always save the session (not just on complete) so trace history can restore it
+          // Note: `messages` is stale here (before user message), so include both user and assistant
+          const updatedMessages = [
+            ...messages,
+            { role: "user" as const, content: userMessage },
+            { role: "assistant" as const, content: response.ai_response },
+          ];
+          saveLocal({
+            meta: {
+              id: sessionId,
+              created_at: new Date().toISOString(),
+              version: "1.0",
+              completion_rate: response.completion_rate,
+              schema_version: "2026-01-14",
+            },
+            ...response.persona_data,
+            _messages: updatedMessages,
+            _current_stage: response.current_stage,
+          } as PersonaPreset);
+
           if (response.is_complete) {
             setPhase("complete");
+            // Set result for NextNav visibility in workflow mode
+            setResult(response.persona_data);
             if (chainContext) {
               const personaSummary = (response.persona_data as Record<string, Record<string, string>>)?.persona?.summary;
               chainContext.setChainData(
@@ -459,18 +548,6 @@ function AbyssMirrorContent() {
                 personaSummary || labels.chainCompleteMessage
               );
             }
-            saveLocal({
-              meta: {
-                id: sessionId,
-                created_at: new Date().toISOString(),
-                version: "1.0",
-                completion_rate: response.completion_rate,
-                schema_version: "2026-01-14",
-              },
-              ...response.persona_data,
-              _messages: [...messages, { role: "assistant", content: response.ai_response }],
-              _current_stage: response.current_stage,
-            } as PersonaPreset);
           }
 
           if (!byokKey && creditCtx) {
@@ -522,10 +599,16 @@ function AbyssMirrorContent() {
         setCurrentStage(savedStage);
       }
       setSessionId(found.meta.id);
-      setPhase("chat");
+      // Check if session was already complete
+      if (found.meta.completion_rate >= 80) {
+        setPhase("complete");
+        setResult(found);  // Enable NextNav for workflow mode
+      } else {
+        setPhase("chat");
+      }
       setShowPresetList(false);
     }
-  }, [resumeSession]);
+  }, [resumeSession, setResult]);
 
   const handleReset = useCallback(() => {
     setPhase("input");
@@ -573,33 +656,74 @@ function AbyssMirrorContent() {
 
         {/* Workflow Context Banner (previous step result, e.g., Reference Decoder) */}
         {workflowContext && (
-          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
-            <div className="flex items-center gap-2 mb-2">
+          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-2">
+            <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-amber-500" />
               <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
                 {isKo ? "레퍼런스 분석 반영됨" : "Reference Analysis Applied"}
               </span>
             </div>
-            {workflowContext.styleHints.mood && (
-              <p className="text-xs text-[var(--fg-muted)]">
-                <span className="font-medium">{isKo ? "무드" : "Mood"}:</span> {workflowContext.styleHints.mood}
+            {/* Style Tags */}
+            {workflowContext.styleHints.styleTags && workflowContext.styleHints.styleTags.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {workflowContext.styleHints.styleTags.slice(0, 6).map((tag, i) => (
+                  <span key={i} className="px-2 py-0.5 text-[10px] bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-full">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+            {/* Style Prompt (truncated) */}
+            {workflowContext.styleHints.stylePrompt && (
+              <p className="text-[11px] text-[var(--fg-muted)] line-clamp-3 leading-relaxed">
+                {workflowContext.styleHints.stylePrompt}
               </p>
             )}
-            {workflowContext.styleHints.lighting && (
-              <p className="text-xs text-[var(--fg-muted)]">
-                <span className="font-medium">{isKo ? "조명" : "Lighting"}:</span> {workflowContext.styleHints.lighting}
-              </p>
-            )}
+            {/* Mood & Lighting */}
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--fg-muted)]">
+              {workflowContext.styleHints.mood && (
+                <span><span className="font-medium">{isKo ? "무드" : "Mood"}:</span> {workflowContext.styleHints.mood}</span>
+              )}
+              {workflowContext.styleHints.lighting && (
+                <span><span className="font-medium">{isKo ? "조명" : "Lighting"}:</span> {workflowContext.styleHints.lighting}</span>
+              )}
+            </div>
+            {/* Reference Artists */}
             {workflowContext.styleHints.referenceArtists && workflowContext.styleHints.referenceArtists.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2">
+              <div className="flex flex-wrap gap-1">
                 {workflowContext.styleHints.referenceArtists.slice(0, 3).map((artist, i) => (
-                  <span key={i} className="px-2 py-0.5 text-[10px] bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-full capitalize">
-                    {artist}
+                  <span key={i} className="px-2 py-0.5 text-[10px] bg-violet-500/20 text-violet-600 dark:text-violet-400 rounded-full capitalize">
+                    🎬 {artist}
                   </span>
                 ))}
               </div>
             )}
           </div>
+        )}
+
+        {/* Resume Previous Session Banner */}
+        {presets.length > 0 && presets[0].meta.completion_rate > 0 && (
+          <button
+            onClick={() => handleResumePreset(presets[0].meta.id)}
+            className={`w-full p-3 rounded-xl bg-${token.themeColor}-500/10 border border-${token.themeColor}-500/20 hover:bg-${token.themeColor}-500/20 transition-colors text-left`}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <RotateCcw className="w-4 h-4 text-${token.themeColor}-500" />
+                <span className={`text-xs font-medium text-${token.themeColor}-600 dark:text-${token.themeColor}-400`}>
+                  {isKo ? "이전 세션 재개" : "Resume Previous Session"}
+                </span>
+              </div>
+              <span className={`text-xs text-${token.themeColor}-500`}>
+                {Math.round(presets[0].meta.completion_rate)}% {isKo ? "완료" : "complete"}
+              </span>
+            </div>
+            <p className="text-xs text-[var(--fg-muted)] mt-1 truncate">
+              {presets[0].input?.mbti && `MBTI: ${presets[0].input.mbti}`}
+              {presets[0].input?.mbti && presets[0].input?.blood_type && " · "}
+              {presets[0].input?.blood_type && `${presets[0].input.blood_type}형`}
+            </p>
+          </button>
         )}
 
         {/* Birth Date */}
@@ -963,7 +1087,7 @@ function AbyssMirrorContent() {
             disabled={phase !== "input"}
           />
 
-          {/* File Upload (Input phase only) */}
+          {/* File Upload (Input phase only) - Gemini supports all file types */}
           {phase === "input" && (
             <DimensionPanel.FileUpload
               accept={["*"]}
@@ -986,10 +1110,12 @@ function AbyssMirrorContent() {
                   <button
                     key={i}
                     onClick={() => {
-                      const latestPreset = presets[0];
-                      if (latestPreset) {
-                        handleResumePreset(latestPreset.meta.id);
+                      // Find preset matching this trace's session_id (no fallback)
+                      const targetPreset = presets.find(p => p.meta.id === t.session_id);
+                      if (targetPreset) {
+                        handleResumePreset(targetPreset.meta.id);
                       }
+                      // If no matching preset found, do nothing (old traces without saved session)
                     }}
                     className={`w-full px-3 py-2 bg-[var(--surface-1)] rounded-lg text-xs hover:bg-${token.themeColor}-500/10 transition-colors cursor-pointer text-left`}
                   >
@@ -1008,7 +1134,7 @@ function AbyssMirrorContent() {
           )}
 
           {/* History Management */}
-          {(presets.length > 0 || messages.length > 0) && (
+          {(presets.length > 0 || messages.length > 0 || traces.length > 0) && (
             <div className="mt-6 space-y-2">
               <label className="text-[10px] font-bold text-[var(--fg-muted)] uppercase tracking-widest">
                 {labels.historyManagement}

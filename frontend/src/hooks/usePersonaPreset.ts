@@ -31,6 +31,7 @@ export interface EvidenceRef {
 
 export interface TraceEntry {
     trace_id: string;
+    session_id?: string;  // Link to preset meta.id (optional for backward compatibility)
     timestamp: string;
     stage: string;
     evidence_refs: EvidenceRef[];
