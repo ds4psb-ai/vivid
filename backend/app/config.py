@@ -211,6 +211,30 @@ class Settings(BaseSettings):
     GRAPHRAG_GRAPH_WEIGHT: float = 0.4  # Graph results weight in fusion
     GRAPHRAG_VECTOR_WEIGHT: float = 0.6  # Vector results weight in fusion
 
+    # ==========================================================================
+    # Phase 9: Monetization & Analytics Configuration
+    # ==========================================================================
+    # Core Analytics Settings
+    ANALYTICS_ENABLED: bool = True
+    ANALYTICS_DAILY_AGGREGATION_HOUR: int = 0  # UTC hour for daily aggregation (0 = midnight)
+    ANALYTICS_LEADERBOARD_UPDATE_MINUTES: int = 60  # Leaderboard refresh interval
+    ANALYTICS_COHORT_UPDATE_DAY: int = 0  # Day of week for cohort computation (0 = Monday)
+
+    # KPI Cache Settings
+    ANALYTICS_KPI_CACHE_TTL: int = 300  # KPI cache TTL in seconds (5 minutes)
+    ANALYTICS_SSE_HEARTBEAT_SECONDS: int = 15  # SSE heartbeat interval
+    ANALYTICS_SSE_UPDATE_SECONDS: int = 5  # SSE KPI update interval
+
+    # Pricing Experiment Settings
+    PRICING_EXPERIMENT_ENABLED: bool = False  # Enable dynamic pricing experiments
+    PRICING_DEFAULT_ELASTICITY: float = -1.2  # Default price elasticity coefficient
+    PRICING_MIN_SAMPLE_SIZE: int = 100  # Minimum sample per variant for significance
+    PRICING_CONFIDENCE_LEVEL: float = 0.95  # Required statistical confidence
+
+    # Attribution Settings
+    ATTRIBUTION_LOOKBACK_DAYS: int = 30  # Days to look back for touchpoint attribution
+    ATTRIBUTION_TIME_DECAY_FACTOR: float = 0.95  # Daily decay factor for attribution weight
+
     # Security Hardening
     SECURITY_HEADERS_ENABLED: bool = True
     SECURITY_REQUEST_ID_ENABLED: bool = True

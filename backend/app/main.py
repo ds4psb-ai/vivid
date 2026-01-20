@@ -121,6 +121,9 @@ from app.routers.tool_recommendation import router as tool_recommendation_router
 from app.routers.approval_gate import router as approval_gate_router
 from app.routers.creator_dashboard import router as creator_dashboard_router
 
+# Phase 9: Monetization & Analytics
+from app.routers.analytics_dashboard import router as analytics_dashboard_router
+
 # GraphQL Gateway (2026 Best Practices - P3.3)
 from app.graphql import graphql_router
 
@@ -331,6 +334,9 @@ app.include_router(context_router, prefix="/api/v1", tags=["context"])
 # Phase 7: HITL Enhancement (Approval Gate, Creator Dashboard)
 app.include_router(approval_gate_router, prefix="/api/v1", tags=["approval-gate"])
 app.include_router(creator_dashboard_router, prefix="/api/v1", tags=["creator-dashboard"])
+
+# Phase 9: Monetization & Analytics
+app.include_router(analytics_dashboard_router, tags=["analytics"])
 
 # GraphQL Gateway (2026 Best Practices - P3.3)
 if settings.ENVIRONMENT.lower() in {"production", "prod", "staging"}:
