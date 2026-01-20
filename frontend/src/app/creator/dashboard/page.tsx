@@ -8,40 +8,47 @@ import { EngagementChart } from "@/components/creator/EngagementChart";
 import { PendingApprovalsPanel } from "@/components/creator/PendingApprovalsPanel";
 import { AnomalyAlerts } from "@/components/creator/AnomalyAlerts";
 import { RecentDeliveries } from "@/components/creator/RecentDeliveries";
+import { Card, CardContent } from "@/components/ui/card";
 
 // Skeleton components for loading states
 function MetricsSkeleton() {
   return (
-    <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-5">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-gray-900/50 rounded-lg p-4">
-            <div className="h-4 bg-gray-700 rounded w-20 mb-3 animate-pulse" />
-            <div className="h-8 bg-gray-700 rounded w-16 animate-pulse" />
-          </div>
-        ))}
-      </div>
-    </div>
+    <Card className="border border-white/5 bg-[var(--surface-1)]/70">
+      <CardContent className="p-5">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="rounded-lg border border-white/5 bg-[var(--surface-2)]/60 p-4">
+              <div className="h-4 bg-white/10 rounded w-20 mb-3 animate-pulse" />
+              <div className="h-8 bg-white/10 rounded w-16 animate-pulse" />
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
 function ChartSkeleton() {
   return (
-    <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-5 h-72">
-      <div className="h-4 bg-gray-700 rounded w-32 mb-4 animate-pulse" />
-      <div className="h-40 bg-gray-700/50 rounded animate-pulse" />
-    </div>
+    <Card className="border border-white/5 bg-[var(--surface-1)]/70 h-72">
+      <CardContent className="p-5">
+        <div className="h-4 bg-white/10 rounded w-32 mb-4 animate-pulse" />
+        <div className="h-40 bg-white/10 rounded animate-pulse" />
+      </CardContent>
+    </Card>
   );
 }
 
 function PanelSkeleton() {
   return (
-    <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-5">
-      <div className="h-4 bg-gray-700 rounded w-40 mb-4 animate-pulse" />
-      {[...Array(3)].map((_, i) => (
-        <div key={i} className="h-16 bg-gray-700/50 rounded mb-2 animate-pulse" />
-      ))}
-    </div>
+    <Card className="border border-white/5 bg-[var(--surface-1)]/70">
+      <CardContent className="p-5">
+        <div className="h-4 bg-white/10 rounded w-40 mb-4 animate-pulse" />
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="h-16 bg-white/10 rounded mb-2 animate-pulse" />
+        ))}
+      </CardContent>
+    </Card>
   );
 }
 

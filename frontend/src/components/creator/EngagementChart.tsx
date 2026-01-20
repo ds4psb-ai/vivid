@@ -206,7 +206,9 @@ export function EngagementChart({ period: initialPeriod = "7d" }: EngagementChar
 
                 {/* Date label */}
                 {(idx === 0 || idx === data.length - 1 || idx === Math.floor(data.length / 2)) && (
-                  <span className="text-[10px] text-gray-500 mt-1">{formatDate(item.date)}</span>
+                  <span className="text-[10px] text-[var(--fg-subtle)] mt-1">
+                    {formatDate(item.date)}
+                  </span>
                 )}
 
                 {/* Tooltip */}
