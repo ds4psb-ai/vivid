@@ -7,7 +7,7 @@
  * 첫 번째 앱으로 리다이렉트하는 모달입니다.
  */
 
-import React from "react";
+import React, { useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { saveWorkflowState, buildStepUrl } from "@/lib/workflow-state";
 
 // Icon mapping
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -63,6 +64,7 @@ interface WorkflowPreviewModalProps {
   workflowData: WorkflowData | null;
   ipSlug: string;
   ipName: string;
+  userPrompt?: string; // 사용자가 입력한 프롬프트
 }
 
 export function WorkflowPreviewModal({
@@ -71,16 +73,95 @@ export function WorkflowPreviewModal({
   workflowData,
   ipSlug,
   ipName,
+  userPrompt,
 }: WorkflowPreviewModalProps) {
   const router = useRouter();
   const { language } = useLanguage();
   const ko = language === "ko";
 
-  const handleConfirm = () => {
-    if (workflowData?.redirect_url) {
-      router.push(workflowData.redirect_url);
-    }
-  };
+  // 워크플로우 상태 저장 및 첫 번째 단계로 이동
+  const handleConfirm = useCallback(() => {
+    if (!workflowData) return;
+
+    // 1. 워크플로우 상태 저장
+    saveWorkflowState({
+      ipSlug,
+      workflowKey: workflowData.workflow_key,
+      currentStep: 1,
+      totalSteps: workflowData.workflow_steps.length,
+      steps: workflowData.workflow_steps.map((step) => ({
+        app: step.app,
+        href: step.href,
+        badge: step.badge,
+        name_ko: step.name_ko,
+        name_en: step.name_en,
+      })),
+      startedAt: new Date().toISOString(),
+      results: {},
+      userPrompt: userPrompt || undefined,
+    });
+
+    // 2. 첫 번째 단계 URL 생성 (쿼리 파라미터 포함)
+    const firstStep = workflowData.workflow_steps[0];
+    const url = buildStepUrl(
+      {
+        app: firstStep.app,
+        href: firstStep.href,
+        badge: firstStep.badge,
+        name_ko: firstStep.name_ko,
+        name_en: firstStep.name_en,
+      },
+      ipSlug,
+      1,
+      workflowData.workflow_key,
+      userPrompt || undefined
+    );
+
+    router.push(url);
+  }, [workflowData, ipSlug, userPrompt, router]);
+
+  // 특정 단계로 직접 이동
+  const handleStepClick = useCallback(
+    (step: WorkflowStep, index: number) => {
+      if (!workflowData) return;
+
+      // 워크플로우 상태 저장 (해당 단계부터 시작)
+      saveWorkflowState({
+        ipSlug,
+        workflowKey: workflowData.workflow_key,
+        currentStep: index + 1,
+        totalSteps: workflowData.workflow_steps.length,
+        steps: workflowData.workflow_steps.map((s) => ({
+          app: s.app,
+          href: s.href,
+          badge: s.badge,
+          name_ko: s.name_ko,
+          name_en: s.name_en,
+        })),
+        startedAt: new Date().toISOString(),
+        results: {},
+        userPrompt: userPrompt || undefined,
+      });
+
+      // URL 생성 및 이동
+      const url = buildStepUrl(
+        {
+          app: step.app,
+          href: step.href,
+          badge: step.badge,
+          name_ko: step.name_ko,
+          name_en: step.name_en,
+        },
+        ipSlug,
+        index + 1,
+        workflowData.workflow_key,
+        userPrompt || undefined
+      );
+
+      router.push(url);
+    },
+    [workflowData, ipSlug, userPrompt, router]
+  );
 
   // Get icon for app
   const getAppIcon = (app: string): React.ElementType => {
@@ -169,11 +250,12 @@ export function WorkflowPreviewModal({
                           <div className="absolute left-5 top-12 w-0.5 h-4 bg-gradient-to-b from-violet-300 to-violet-100 dark:from-violet-600 dark:to-violet-800" />
                         )}
 
-                        <div
-                          className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+                        <button
+                          onClick={() => handleStepClick(step, index)}
+                          className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left hover:shadow-md ${
                             isFirst
-                              ? "border-violet-500 bg-violet-50 dark:bg-violet-900/20"
-                              : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/30"
+                              ? "border-violet-500 bg-violet-50 dark:bg-violet-900/20 hover:bg-violet-100 dark:hover:bg-violet-900/30"
+                              : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/30 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                           }`}
                         >
                           {/* Step Number + Icon */}
@@ -222,11 +304,9 @@ export function WorkflowPreviewModal({
                             </div>
                           </div>
 
-                          {/* Arrow for first step */}
-                          {isFirst && (
-                            <ChevronRight className="w-5 h-5 text-violet-500 flex-shrink-0" />
-                          )}
-                        </div>
+                          {/* Arrow for all steps - shows clickability */}
+                          <ChevronRight className={`w-5 h-5 flex-shrink-0 ${isFirst ? "text-violet-500" : "text-slate-400"}`} />
+                        </button>
                       </div>
                     );
                   })}

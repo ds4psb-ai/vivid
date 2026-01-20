@@ -4,11 +4,15 @@
  * NextNavWrapper - DimensionPanel.NextNav compound component
  *
  * Wraps existing NextDimensionNav component with dimension theming.
+ * When in workflow mode (URL has ip/step/workflow params), shows WorkflowStepNav instead.
  */
 
-import { type ComponentProps } from "react";
+import { type ComponentProps, useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import NextDimensionNav from "../NextDimensionNav";
 import { useDimensionPanel } from "./DimensionPanelContext";
+import { WorkflowStepNav } from "@/components/workflow";
+import { parseWorkflowUrlParams } from "@/lib/workflow-state";
 
 type NextDimensionNavProps = ComponentProps<typeof NextDimensionNav>;
 
@@ -35,6 +39,62 @@ const DIMENSION_ROUTE_MAP: Record<string, string> = {
   story: "story-architect",
   mirror: "abyss-mirror",
 };
+
+// Inner component that uses useSearchParams (needs Suspense boundary)
+function NextNavInner({
+  currentDimension,
+  show,
+  className,
+  navThemeColor,
+  isLoading,
+  props,
+}: {
+  currentDimension: string;
+  show: boolean;
+  className: string;
+  navThemeColor: NextDimensionNavProps["themeColor"];
+  isLoading: boolean;
+  props: Omit<NextNavWrapperProps, "currentDimension" | "show" | "className">;
+}) {
+  const searchParams = useSearchParams();
+
+  // Parse workflow URL params
+  const workflowParams = useMemo(
+    () => parseWorkflowUrlParams(searchParams),
+    [searchParams]
+  );
+
+  // Check if we're in workflow mode
+  const isWorkflowMode = !!(
+    workflowParams.ipSlug &&
+    workflowParams.step &&
+    workflowParams.workflowKey
+  );
+
+  // In workflow mode, show WorkflowStepNav instead of NextDimensionNav
+  if (isWorkflowMode) {
+    return (
+      <div className={`mt-6 ${className}`}>
+        <WorkflowStepNav
+          currentApp={currentDimension}
+          disabled={isLoading}
+        />
+      </div>
+    );
+  }
+
+  // Default: show NextDimensionNav
+  return (
+    <div className={`mt-6 ${className}`}>
+      <NextDimensionNav
+        currentDimension={currentDimension}
+        show={show}
+        themeColor={navThemeColor}
+        {...props}
+      />
+    </div>
+  );
+}
 
 export function NextNavWrapper({
   currentDimension: propCurrentDimension,
@@ -68,15 +128,29 @@ export function NextNavWrapper({
 
   const navThemeColor = themeColorMap[token.themeColor] || "amber";
 
+  // Wrap with Suspense for useSearchParams
   return (
-    <div className={`mt-6 ${className}`}>
-      <NextDimensionNav
+    <Suspense
+      fallback={
+        <div className={`mt-6 ${className}`}>
+          <NextDimensionNav
+            currentDimension={currentDimension}
+            show={show}
+            themeColor={navThemeColor}
+            {...props}
+          />
+        </div>
+      }
+    >
+      <NextNavInner
         currentDimension={currentDimension}
         show={show}
-        themeColor={navThemeColor}
-        {...props}
+        className={className}
+        navThemeColor={navThemeColor}
+        isLoading={isLoading}
+        props={props}
       />
-    </div>
+    </Suspense>
   );
 }
 

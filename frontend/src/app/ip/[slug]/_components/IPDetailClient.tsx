@@ -44,6 +44,11 @@ import {
   type DemoWorkflow,
   type ContentType,
 } from "@/lib/demo-ip-overrides";
+import {
+  saveWorkflowState,
+  buildStepUrl,
+  type WorkflowStep as WorkflowStateStep,
+} from "@/lib/workflow-state";
 
 // =============================================================================
 // Types (exported for server component)
@@ -666,7 +671,47 @@ export default function IPDetailClient({
                                 <div className="absolute left-5 top-14 w-0.5 h-6 bg-gradient-to-b from-slate-300 to-slate-200 dark:from-slate-600 dark:to-slate-700" />
                               )}
                               <button
-                                onClick={() => router.push(workflow.href)}
+                                onClick={() => {
+                                  // 워크플로우 상태 저장 및 컨텍스트 전달
+                                  const stepNumber = workflow.stepNumber || index + 1;
+                                  const workflowKey = demoOverride?.contentType || "default";
+
+                                  // 워크플로우 상태 저장 (전체 워크플로우)
+                                  saveWorkflowState({
+                                    ipSlug: slug,
+                                    workflowKey,
+                                    currentStep: stepNumber,
+                                    totalSteps: workflowCards?.length || 1,
+                                    steps: (workflowCards || []).map((wf) => ({
+                                      app: wf.id,
+                                      href: wf.href,
+                                      badge: wf.badge || "",
+                                      name_ko: wf.titleKo,
+                                      name_en: wf.title,
+                                      titleKo: wf.titleKo,
+                                      title: wf.title,
+                                    })),
+                                    startedAt: new Date().toISOString(),
+                                    results: {},
+                                    userPrompt: userPrompt || undefined,
+                                  });
+
+                                  // URL에 쿼리 파라미터 추가
+                                  const url = buildStepUrl(
+                                    {
+                                      app: workflow.id,
+                                      href: workflow.href,
+                                      badge: workflow.badge || "",
+                                      name_ko: workflow.titleKo,
+                                      name_en: workflow.title,
+                                    },
+                                    slug,
+                                    stepNumber,
+                                    workflowKey,
+                                    userPrompt || undefined
+                                  );
+                                  router.push(url);
+                                }}
                                 className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 hover:border-violet-500/50 hover:bg-violet-50 dark:hover:bg-violet-900/10 transition-all text-left group"
                               >
                                 <div className="flex items-center gap-3">
@@ -708,7 +753,7 @@ export default function IPDetailClient({
                   ) : (
                     /* 기본 워크플로우 (숏폼 포함) - 그리드 스타일 */
                     <div className="grid grid-cols-2 gap-3">
-                      {workflowCards.map((workflow: DemoWorkflow) => {
+                      {workflowCards.map((workflow: DemoWorkflow, index: number) => {
                         const IconComponent = workflowIconMap[workflow.icon] || Sparkles;
                         const title = language === "ko" ? workflow.titleKo : workflow.title;
                         const desc = language === "ko" ? workflow.descriptionKo : workflow.description;
@@ -716,7 +761,47 @@ export default function IPDetailClient({
                         return (
                           <button
                             key={workflow.id}
-                            onClick={() => router.push(workflow.href)}
+                            onClick={() => {
+                              // 워크플로우 상태 저장 및 컨텍스트 전달
+                              const stepNumber = workflow.stepNumber || index + 1;
+                              const workflowKey = demoOverride?.contentType || "default";
+
+                              // 워크플로우 상태 저장 (전체 워크플로우)
+                              saveWorkflowState({
+                                ipSlug: slug,
+                                workflowKey,
+                                currentStep: stepNumber,
+                                totalSteps: workflowCards?.length || 1,
+                                steps: (workflowCards || []).map((wf) => ({
+                                  app: wf.id,
+                                  href: wf.href,
+                                  badge: wf.badge || "",
+                                  name_ko: wf.titleKo,
+                                  name_en: wf.title,
+                                  titleKo: wf.titleKo,
+                                  title: wf.title,
+                                })),
+                                startedAt: new Date().toISOString(),
+                                results: {},
+                                userPrompt: userPrompt || undefined,
+                              });
+
+                              // URL에 쿼리 파라미터 추가
+                              const url = buildStepUrl(
+                                {
+                                  app: workflow.id,
+                                  href: workflow.href,
+                                  badge: workflow.badge || "",
+                                  name_ko: workflow.titleKo,
+                                  name_en: workflow.title,
+                                },
+                                slug,
+                                stepNumber,
+                                workflowKey,
+                                userPrompt || undefined
+                              );
+                              router.push(url);
+                            }}
                             className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 hover:border-violet-500/50 hover:bg-violet-50 dark:hover:bg-violet-900/10 transition-all text-left group"
                           >
                             <div className="flex items-start gap-3">
@@ -762,18 +847,151 @@ export default function IPDetailClient({
               )}
 
               {/* 세계관 (있는 경우) */}
-              {ip.worldbuilding && Object.keys(ip.worldbuilding).length > 0 && (
+              {ip.worldbuilding && Object.keys(ip.worldbuilding).length > 0 && (() => {
+                // Type-safe worldbuilding extraction
+                const wb = ip.worldbuilding as {
+                  logline?: string;
+                  setting?: string;
+                  mood?: string;
+                  episode_count?: number;
+                  episode_length?: string;
+                  duration?: string;
+                  music_style?: string;
+                  themes?: string[];
+                  characters?: Array<{
+                    name: string;
+                    role?: string;
+                    age?: string;
+                    job?: string;
+                    specialty?: string;
+                    traits?: string[];
+                    backstory?: string;
+                  }>;
+                };
+                return (
                 <div className="mb-6">
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                    <Globe className="w-5 h-5 text-violet-500" />
                     {language === "ko" ? "세계관" : "Worldbuilding"}
                   </h2>
-                  <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400">
-                    <pre className="whitespace-pre-wrap text-sm">
-                      {JSON.stringify(ip.worldbuilding, null, 2)}
-                    </pre>
+                  <div className="space-y-4">
+                    {/* 로그라인 (핵심 한 줄 요약) */}
+                    {wb.logline && (
+                      <div className="p-4 rounded-xl bg-gradient-to-r from-violet-500/10 to-blue-500/10 border border-violet-500/20">
+                        <p className="text-base font-medium text-slate-800 dark:text-slate-200 italic leading-relaxed">
+                          "{wb.logline}"
+                        </p>
+                      </div>
+                    )}
+
+                    {/* 배경 설정 + 분위기 */}
+                    {wb.setting && (
+                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                        <p className="text-xs font-semibold text-violet-600 dark:text-violet-400 mb-2 uppercase tracking-wider">
+                          {language === "ko" ? "배경" : "Setting"}
+                        </p>
+                        <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                          {wb.setting}
+                        </p>
+                        {wb.mood && (
+                          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                            <span className="font-medium">무드:</span> {wb.mood}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* 콘텐츠 정보 (에피소드/길이) */}
+                    {(wb.episode_count || wb.duration || wb.music_style) && (
+                      <div className="flex flex-wrap gap-2">
+                        {wb.episode_count && (
+                          <span className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
+                            <Clapperboard className="w-3.5 h-3.5" />
+                            {wb.episode_count}화 × {wb.episode_length || "60초"}
+                          </span>
+                        )}
+                        {wb.duration && (
+                          <span className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
+                            <Clock className="w-3.5 h-3.5" />
+                            {wb.duration}
+                          </span>
+                        )}
+                        {wb.music_style && (
+                          <span className="px-3 py-1.5 text-xs font-medium rounded-lg bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 flex items-center gap-1.5">
+                            <Music className="w-3.5 h-3.5" />
+                            {wb.music_style}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* 테마 */}
+                    {wb.themes && wb.themes.length > 0 && (
+                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                        <p className="text-xs font-semibold text-violet-600 dark:text-violet-400 mb-3 uppercase tracking-wider">
+                          {language === "ko" ? "테마" : "Themes"}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {wb.themes.map((theme, i) => (
+                            <span key={i} className="px-3 py-1.5 text-sm font-medium rounded-full bg-gradient-to-r from-violet-100 to-purple-100 dark:from-violet-900/40 dark:to-purple-900/40 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800">
+                              {theme}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 캐릭터 */}
+                    {wb.characters && wb.characters.length > 0 && (
+                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                        <p className="text-xs font-semibold text-violet-600 dark:text-violet-400 mb-3 uppercase tracking-wider flex items-center gap-1.5">
+                          <Users className="w-3.5 h-3.5" />
+                          {language === "ko" ? "등장인물" : "Characters"}
+                        </p>
+                        <div className="space-y-4">
+                          {wb.characters.map((char, i) => (
+                            <div key={i} className="p-3 rounded-lg bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700">
+                              <div className="flex items-start justify-between mb-2">
+                                <div>
+                                  <span className="text-base font-bold text-slate-800 dark:text-slate-200">{char.name}</span>
+                                  {char.role && (
+                                    <span className="ml-2 px-2 py-0.5 text-[11px] font-medium rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400">
+                                      {char.role}
+                                    </span>
+                                  )}
+                                </div>
+                                {char.age && (
+                                  <span className="text-xs text-slate-500 dark:text-slate-400">{char.age}</span>
+                                )}
+                              </div>
+                              {(char.job || char.specialty) && (
+                                <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">
+                                  {char.job || char.specialty}
+                                </p>
+                              )}
+                              {char.traits && char.traits.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mb-2">
+                                  {char.traits.map((trait, j) => (
+                                    <span key={j} className="px-2 py-0.5 text-[10px] rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                      #{trait}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                              {char.backstory && (
+                                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-2 mt-2">
+                                  {char.backstory}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-              )}
+                );
+              })()}
             </div>
 
             {/* 우측 사이드바 - 생성 패널 */}
@@ -1188,6 +1406,7 @@ export default function IPDetailClient({
           workflowData={workflowData}
           ipSlug={slug}
           ipName={name}
+          userPrompt={userPrompt || undefined}
         />
       </div>
     </AppShell>
