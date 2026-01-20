@@ -63,7 +63,7 @@ class VividException(HTTPException):
         )
         super().__init__(
             status_code=status_code,
-            detail=self.problem.model_dump(exclude_none=True),
+            detail=self.problem.model_dump(mode="json", exclude_none=True),
         )
 
 

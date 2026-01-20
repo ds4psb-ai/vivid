@@ -262,7 +262,7 @@ async def vivid_exception_handler(request: Request, exc: VividException):
     exc.problem.instance = str(request.url.path)
     return JSONResponse(
         status_code=exc.status_code,
-        content=exc.problem.model_dump(exclude_none=True),
+        content=exc.problem.model_dump(mode="json", exclude_none=True),
         media_type="application/problem+json",
     )
 
@@ -282,7 +282,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
     return JSONResponse(
         status_code=422,
-        content=problem.model_dump(exclude_none=True),
+        content=problem.model_dump(mode="json", exclude_none=True),
         media_type="application/problem+json",
     )
 
@@ -308,7 +308,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
     )
     return JSONResponse(
         status_code=500,
-        content=problem.model_dump(exclude_none=True),
+        content=problem.model_dump(mode="json", exclude_none=True),
         media_type="application/problem+json",
     )
 

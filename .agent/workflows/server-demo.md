@@ -1,3 +1,7 @@
+---
+description: Vivid 투자자 데모용 서버 실행 (포트 8100/3100, 시드된 데모 IP 사용)
+---
+
 # Vivid Demo Server (투자자 데모용)
 
 // turbo-all

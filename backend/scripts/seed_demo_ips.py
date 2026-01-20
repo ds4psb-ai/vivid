@@ -39,14 +39,32 @@ DEMO_IPS = [
         "is_featured": True,
         "featured_order": 1,
         "worldbuilding": {
-            "setting": "Modern Seoul, rainy day",
+            "setting": "2024년 서울, 장마철 저녁. 을지로 골목에서 갑자기 쏟아지는 소나기.",
+            "logline": "우연히 같은 우산 속에 들어간 두 사람. 비가 그치기 전, 서로의 인생이 바뀐다.",
             "characters": [
-                {"name": "주인공", "role": "protagonist", "traits": ["introspective", "kind"]},
-                {"name": "상대역", "role": "love_interest", "traits": ["mysterious", "warm"]}
+                {
+                    "name": "이서연",
+                    "role": "여자 주인공",
+                    "age": "28세",
+                    "job": "스타트업 UX 디자이너",
+                    "traits": ["완벽주의", "내성적", "관찰력"],
+                    "backstory": "3년간의 연애 끝에 최근 이별. 일에만 몰두하며 감정을 피해왔다."
+                },
+                {
+                    "name": "강민재",
+                    "role": "남자 주인공",
+                    "age": "31세",
+                    "job": "퇴사 후 첫 소설 집필 중",
+                    "traits": ["자유로움", "따뜻함", "직관적"],
+                    "backstory": "대기업을 그만두고 꿈을 찾아 방황 중. 우산 하나로 세상과 연결된다."
+                }
             ],
-            "themes": ["chance encounter", "fate", "connection"],
+            "themes": ["우연과 운명", "일상 속 로맨스", "치유와 성장"],
+            "mood": "감성적, 따뜻한, 몽환적",
             "content_type": "vertical-shortform",
-            "aspect_ratio": "9:16"
+            "aspect_ratio": "9:16",
+            "episode_count": 8,
+            "episode_length": "60초"
         },
         "workflows": [
             {
@@ -92,14 +110,39 @@ DEMO_IPS = [
         "is_featured": True,
         "featured_order": 2,
         "worldbuilding": {
-            "setting": "Competitive cooking arena",
+            "setting": "2025년, 전 세계가 주목하는 요리 서바이벌 '흑백요리사' 시즌2 결승전 무대.",
+            "logline": "100명의 셰프, 단 하나의 왕관. 요리로 증명하는 자존심의 전쟁.",
             "characters": [
-                {"name": "주인공 셰프", "role": "protagonist", "traits": ["passionate", "skilled"]},
-                {"name": "라이벌", "role": "rival", "traits": ["cool", "precise"]}
+                {
+                    "name": "백승훈",
+                    "role": "주인공",
+                    "age": "34세",
+                    "specialty": "한식 퓨전",
+                    "traits": ["독창적", "끈기", "감성적"],
+                    "backstory": "무명 셰프에서 SNS 바이럴로 주목받은 신예. 어머니의 레시피를 현대적으로 재해석한다."
+                },
+                {
+                    "name": "에드워드 리",
+                    "role": "최종 라이벌",
+                    "age": "41세",
+                    "specialty": "모던 프렌치",
+                    "traits": ["완벽주의", "카리스마", "냉철함"],
+                    "backstory": "미쉐린 3스타 출신. 시즌1 준우승의 설욕을 노린다."
+                },
+                {
+                    "name": "최유나",
+                    "role": "심사위원장",
+                    "age": "52세",
+                    "specialty": "글로벌 퓨전",
+                    "traits": ["날카로움", "공정함", "따뜻한 멘토"]
+                }
             ],
-            "themes": ["competition", "passion", "mastery"],
+            "themes": ["도전과 성장", "요리의 본질", "세대를 잇는 맛"],
+            "mood": "역동적, 열정적, 드라마틱",
             "content_type": "horizontal-anime-mv",
-            "aspect_ratio": "16:9"
+            "aspect_ratio": "16:9",
+            "duration": "90초",
+            "music_style": "오케스트라 + 일렉트로닉 하이브리드"
         },
         "workflows": [
             {

@@ -136,20 +136,35 @@ def get_registry() -> AppRegistryService:
 
 async def verify_run_token(
     authorization: Optional[str] = Header(None, description="Bearer {token}"),
+    x_user_id: Optional[str] = Header(None, alias="X-User-ID"),
     service: RunTokenService = Depends(get_token_service),
 ) -> dict:
-    """Run Token 검증 의존성"""
+    """Run Token 검증 의존성
+
+    Demo Mode: X-User-ID가 'demo-user'이고 Authorization이 없으면 우회
+    """
+    # Demo mode bypass: Allow demo-user to skip Run-Token for testing
+    if not authorization and x_user_id == "demo-user":
+        return {
+            "user_id": "demo-user",
+            "app_id": "mirror",
+            "run_id": "demo-run",
+            "credits_reserved": 0,
+            "credits_used": 0,
+            "permissions": ["*"],
+        }
+
     if not authorization:
         raise HTTPException(status_code=401, detail="Authorization header required")
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Invalid authorization header")
-    
+
     token = authorization[7:]  # "Bearer " 제거
     valid, payload, error = await service.validate_token(token)
-    
+
     if not valid:
         raise HTTPException(status_code=401, detail=error or "Invalid token")
-    
+
     return {
         "user_id": payload.user_id,
         "app_id": payload.app_id,
