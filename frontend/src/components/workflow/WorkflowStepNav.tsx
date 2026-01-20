@@ -188,10 +188,10 @@ function WorkflowStepNavInner({
   return (
     <div
       className={`
-        flex items-center justify-between gap-4 p-4
-        bg-slate-50 dark:bg-slate-800/50
-        border border-slate-200 dark:border-slate-700
-        rounded-xl
+        flex items-center justify-between gap-4 p-[var(--workflow-nav-padding)]
+        bg-[var(--workflow-nav-bg)]
+        border border-[var(--workflow-nav-border)]
+        rounded-[var(--workflow-nav-radius)]
         ${className}
       `}
     >
@@ -226,9 +226,9 @@ function WorkflowStepNavInner({
           </span>
 
           {/* 진행률 바 */}
-          <div className="w-24 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+          <div className="w-24 bg-[var(--workflow-progress-bg)] rounded-[var(--workflow-progress-radius)] overflow-hidden" style={{ height: 'var(--workflow-progress-height)' }}>
             <div
-              className="h-full bg-violet-500 rounded-full transition-all duration-300"
+              className="h-full bg-[var(--workflow-progress-fill)] rounded-[var(--workflow-progress-radius)] transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -243,16 +243,14 @@ function WorkflowStepNavInner({
               return (
                 <div
                   key={step.app}
-                  className={`
-                    w-2 h-2 rounded-full transition-all
-                    ${
-                      completed
-                        ? "bg-emerald-500"
-                        : isCurrent
-                          ? "bg-violet-500"
-                          : "bg-slate-300 dark:bg-slate-600"
-                    }
-                  `}
+                  className="w-2 h-2 rounded-full transition-all"
+                  style={{
+                    backgroundColor: completed
+                      ? 'var(--workflow-step-dot-complete)'
+                      : isCurrent
+                        ? 'var(--workflow-step-dot-current)'
+                        : 'var(--workflow-step-dot-default)'
+                  }}
                   title={ko ? step.name_ko : step.name_en}
                 />
               );
@@ -286,10 +284,11 @@ function WorkflowStepNavInner({
             onClick={handleNextStep}
             disabled={disabled}
             className={`
-              inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg
-              bg-violet-600 hover:bg-violet-700 disabled:bg-slate-300 dark:disabled:bg-slate-700
-              text-white text-sm font-medium
-              transition-all
+              inline-flex items-center gap-1.5 px-4 py-1.5 rounded-[var(--cta-primary-radius)]
+              bg-[var(--bg-primary)] hover:bg-[var(--bg-primary-hover)] disabled:bg-[var(--bg-interactive)]
+              text-[var(--fg-on-primary)] text-sm font-medium
+              shadow-[var(--cta-primary-shadow)] hover:shadow-[var(--cta-primary-shadow-hover)]
+              transition-[var(--transition-interactive)]
               ${disabled ? "cursor-not-allowed opacity-60" : ""}
             `}
           >
@@ -304,10 +303,10 @@ function WorkflowStepNavInner({
           <button
             onClick={handleBackToIP}
             className="
-              inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg
-              bg-emerald-600 hover:bg-emerald-700
-              text-white text-sm font-medium
-              transition-all
+              inline-flex items-center gap-1.5 px-4 py-1.5 rounded-[var(--cta-primary-radius)]
+              bg-[var(--bg-success)] hover:brightness-110
+              text-[var(--fg-on-primary)] text-sm font-medium
+              transition-[var(--transition-interactive)]
             "
           >
             <CheckCircle2 className="w-3.5 h-3.5" />

@@ -55,12 +55,13 @@ export function Content({
         {/* Loading/Error Overlay - content is INSIDE so it's not blurred */}
         {(isLoading || hasError) && (
           <div
-            className="absolute inset-0 bg-slate-900/60 dark:bg-[#0F0F1A]/70 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-300"
+            className="absolute inset-0 bg-[var(--bg-overlay)] backdrop-blur-sm flex items-center justify-center z-50"
+            style={{ animation: 'var(--animation-fade-in)' }}
             role="status"
             aria-live="polite"
           >
             {/* LoadingState and ErrorState are rendered INSIDE the overlay */}
-            <div className="bg-slate-800/90 dark:bg-zinc-900/95 backdrop-blur-xl rounded-2xl p-8 shadow-2xl border border-white/10 max-w-md mx-4">
+            <div className="bg-[var(--glass-bg-strong)] backdrop-blur-xl rounded-2xl p-8 shadow-[var(--glass-shadow)] border border-[var(--glass-border)] max-w-md mx-4">
               {isLoading && loadingChild}
               {hasError && (errorChild || <ErrorState error={error || undefined} />)}
             </div>

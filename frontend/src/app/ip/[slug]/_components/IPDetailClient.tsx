@@ -1337,7 +1337,7 @@ export default function IPDetailClient({
                   <button
                     onClick={handleGenerate}
                     disabled={!selectedPreset || isProhibited || generating}
-                    className={"w-full py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2 transition-all " + (isProhibited ? "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed" : "bg-violet-600 hover:bg-violet-700 text-white")}
+                    className={"w-full py-3 px-4 rounded-[var(--cta-primary-radius)] font-medium flex items-center justify-center gap-2 transition-[var(--transition-interactive)] " + (isProhibited ? "bg-[var(--bg-interactive)] text-[var(--fg-disabled)] cursor-not-allowed" : "bg-[var(--bg-primary)] hover:bg-[var(--bg-primary-hover)] text-[var(--fg-on-primary)] shadow-[var(--cta-primary-shadow)] hover:shadow-[var(--cta-primary-shadow-hover)]")}
                   >
                     <Sparkles className="w-5 h-5" />
                     {isProhibited
@@ -1381,13 +1381,13 @@ export default function IPDetailClient({
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowLicenseWarning(false)}
-                  className="flex-1 py-2 px-4 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  className="flex-1 py-2 px-4 rounded-[var(--cta-secondary-radius)] border border-[var(--cta-secondary-border)] bg-[var(--cta-secondary-bg)] text-[var(--cta-secondary-fg)] hover:bg-[var(--cta-secondary-bg-hover)] transition-[var(--transition-interactive)]"
                 >
                   {language === "ko" ? "취소" : "Cancel"}
                 </button>
                 <button
                   onClick={handleAcceptLicense}
-                  className="flex-1 py-2 px-4 rounded-lg bg-violet-600 text-white hover:bg-violet-700"
+                  className="flex-1 py-2 px-4 rounded-[var(--cta-primary-radius)] bg-[var(--bg-primary)] text-[var(--fg-on-primary)] hover:bg-[var(--bg-primary-hover)] transition-[var(--transition-interactive)]"
                 >
                   {language === "ko" ? "동의하고 계속" : "Accept & Continue"}
                 </button>

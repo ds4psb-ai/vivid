@@ -96,7 +96,7 @@ export function IPRailCard({
 
   return (
     <div
-      className="group h-full overflow-hidden rounded-2xl border border-[var(--border-muted)] bg-[var(--surface-1)] hover:border-violet-500/50 hover:shadow-lg hover:shadow-violet-500/10 transition-all duration-300 hover:-translate-y-1"
+      className="group h-full overflow-hidden bg-[var(--ip-card-bg)] border border-[var(--ip-card-border)] hover:border-[var(--ip-card-border-hover)] hover:bg-[var(--ip-card-bg-hover)] shadow-[var(--ip-card-shadow)] hover:shadow-[var(--ip-card-shadow-hover)] rounded-[var(--ip-card-radius)] transition-[var(--transition-hover)] hover:scale-[var(--ip-card-scale-hover)] hover:-translate-y-[var(--ip-card-translate-hover)]"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -188,13 +188,13 @@ export function IPRailCard({
         )}
 
         {/* 하단 그라데이션 */}
-        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/80 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-16" style={{ background: 'var(--ip-card-gradient)' }} />
       </div>
 
       {/* 정보 영역 */}
       <div className="p-3 space-y-2">
         <div>
-          <p className="text-sm font-bold text-[var(--fg-0)] line-clamp-1 group-hover:text-violet-400 transition-colors">{title}</p>
+          <p className="text-sm font-bold text-[var(--fg-default)] line-clamp-1 group-hover:text-[var(--fg-primary)] transition-[var(--transition-color)]">{title}</p>
           {subtitle && (
             <p className="text-[11px] text-[var(--fg-muted)] line-clamp-1 mt-0.5">{subtitle}</p>
           )}
@@ -205,7 +205,7 @@ export function IPRailCard({
             {genres.slice(0, 3).map((genre) => (
               <span
                 key={genre}
-                className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] text-violet-400 font-medium"
+                className="rounded-full bg-[var(--bg-primary-subtle)] px-2 py-0.5 text-[10px] text-[var(--fg-primary)] font-medium"
               >
                 {genre}
               </span>

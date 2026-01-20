@@ -193,30 +193,30 @@ export function WorkflowPreviewModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
+            className="bg-[var(--bg-elevated)] rounded-[var(--workflow-card-radius)] shadow-[var(--workflow-card-shadow)] w-full max-w-lg overflow-hidden border border-[var(--workflow-card-border)]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="p-5 border-b border-slate-200 dark:border-slate-700">
+            <div className="p-5 border-b border-[var(--border-default)]">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-violet-500/10">
-                    <Sparkles className="w-5 h-5 text-violet-500" />
+                  <div className="p-2 rounded-xl bg-[var(--bg-primary-subtle)]">
+                    <Sparkles className="w-5 h-5 text-[var(--fg-primary)]" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                    <h2 className="text-lg font-bold text-[var(--fg-default)]">
                       {ko ? "추천 워크플로우" : "Recommended Workflow"}
                     </h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                    <p className="text-sm text-[var(--fg-muted)]">
                       {ko ? workflowData.workflow_name_ko : workflowData.workflow_name_en}
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={onClose}
-                  className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="p-2 rounded-lg hover:bg-[var(--bg-interactive-hover)] transition-[var(--transition-interactive)]"
                 >
-                  <X className="w-5 h-5 text-slate-500" />
+                  <X className="w-5 h-5 text-[var(--fg-muted)]" />
                 </button>
               </div>
             </div>
@@ -224,9 +224,9 @@ export function WorkflowPreviewModal({
             {/* Content */}
             <div className="p-5">
               {/* IP Info */}
-              <div className="mb-5 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  <span className="font-medium text-slate-900 dark:text-white">{ipName}</span>
+              <div className="mb-5 p-3 rounded-xl bg-[var(--bg-subtle)]">
+                <p className="text-sm text-[var(--fg-muted)]">
+                  <span className="font-medium text-[var(--fg-default)]">{ipName}</span>
                   {ko ? "로 창작을 시작합니다" : " will be used as reference"}
                 </p>
               </div>
@@ -315,23 +315,23 @@ export function WorkflowPreviewModal({
             </div>
 
             {/* Footer */}
-            <div className="p-5 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/30">
+            <div className="p-5 border-t border-[var(--border-default)] bg-[var(--bg-subtle)]">
               <div className="flex gap-3">
                 <button
                   onClick={onClose}
-                  className="flex-1 py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors font-medium"
+                  className="flex-1 py-2.5 px-4 rounded-[var(--cta-secondary-radius)] border border-[var(--cta-secondary-border)] bg-[var(--cta-secondary-bg)] text-[var(--cta-secondary-fg)] hover:bg-[var(--cta-secondary-bg-hover)] transition-[var(--transition-interactive)] font-medium"
                 >
                   {ko ? "취소" : "Cancel"}
                 </button>
                 <button
                   onClick={handleConfirm}
-                  className="flex-1 py-2.5 px-4 rounded-xl bg-violet-600 hover:bg-violet-700 text-white transition-colors font-medium flex items-center justify-center gap-2"
+                  className="flex-1 py-2.5 px-4 rounded-[var(--cta-primary-radius)] bg-[var(--bg-primary)] hover:bg-[var(--bg-primary-hover)] text-[var(--fg-on-primary)] shadow-[var(--cta-primary-shadow)] hover:shadow-[var(--cta-primary-shadow-hover)] transition-[var(--transition-interactive)] font-medium flex items-center justify-center gap-2"
                 >
                   {ko ? "시작하기" : "Start"}
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
-              <p className="text-xs text-center text-slate-500 dark:text-slate-400 mt-3">
+              <p className="text-xs text-center text-[var(--fg-subtle)] mt-3">
                 {ko
                   ? "첫 번째 단계로 이동합니다. IP 레퍼런스가 자동으로 전달됩니다."
                   : "You will be redirected to the first step. IP reference will be passed automatically."}
