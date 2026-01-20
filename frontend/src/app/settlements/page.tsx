@@ -23,6 +23,7 @@ import {
 // Shared imports
 import { fetchWithAuth } from "@/lib/api-client";
 import { StatusBadge, StatCard, EmptyState } from "@/components/shared";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Payout, PayoutSummary } from "@/types/api.types";
 import AppShell from "@/components/AppShell";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -62,10 +63,12 @@ function SummaryCards({ summary, loading, labels }: { summary: PayoutSummary | n
         return (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-5 animate-pulse">
-                        <div className="h-4 w-20 bg-gray-700 rounded mb-3" />
-                        <div className="h-8 w-16 bg-gray-700 rounded" />
-                    </div>
+                    <Card key={i} className="border border-white/5 bg-[var(--surface-1)]/70 animate-pulse">
+                        <CardContent className="p-5">
+                            <div className="h-4 w-20 bg-white/10 rounded mb-3" />
+                            <div className="h-8 w-16 bg-white/10 rounded" />
+                        </CardContent>
+                    </Card>
                 ))}
             </div>
         );
@@ -114,65 +117,72 @@ function PayoutHistory({ payouts, loading, labels }: { payouts: Payout[]; loadin
 
     if (loading) {
         return (
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-4">
-                    <History className="w-5 h-5 text-gray-400" />
-                    <h3 className="text-lg font-semibold">{labels.payoutHistory}</h3>
-                </div>
-                <div className="space-y-3">
+            <Card className="border border-white/5 bg-[var(--surface-1)]/70">
+                <CardHeader className="pb-4">
+                    <div className="flex items-center gap-2">
+                        <History className="w-5 h-5 text-violet-400" />
+                        <CardTitle className="text-base">{labels.payoutHistory}</CardTitle>
+                    </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
                     {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="bg-gray-900/50 rounded-lg p-4 animate-pulse">
-                            <div className="h-4 w-32 bg-gray-700 rounded mb-2" />
-                            <div className="h-3 w-24 bg-gray-700/50 rounded" />
+                        <div key={i} className="rounded-lg border border-white/5 bg-[var(--surface-2)]/60 p-4 animate-pulse">
+                            <div className="h-4 w-32 bg-white/10 rounded mb-2" />
+                            <div className="h-3 w-24 bg-white/10 rounded" />
                         </div>
                     ))}
-                </div>
-            </div>
+                </CardContent>
+            </Card>
         );
     }
 
     if (payouts.length === 0) {
         return (
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-4">
-                    <History className="w-5 h-5 text-gray-400" />
-                    <h3 className="text-lg font-semibold">{labels.payoutHistory}</h3>
-                </div>
-                <EmptyState
-                    icon={Wallet}
-                    title={labels.noPayoutsTitle}
-                    description={labels.noPayoutsDesc}
-                />
-            </div>
+            <Card className="border border-white/5 bg-[var(--surface-1)]/70">
+                <CardHeader className="pb-4">
+                    <div className="flex items-center gap-2">
+                        <History className="w-5 h-5 text-violet-400" />
+                        <CardTitle className="text-base">{labels.payoutHistory}</CardTitle>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <EmptyState
+                        icon={Wallet}
+                        title={labels.noPayoutsTitle}
+                        description={labels.noPayoutsDesc}
+                    />
+                </CardContent>
+            </Card>
         );
     }
 
     return (
-        <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6">
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                    <History className="w-5 h-5 text-gray-400" />
-                    <h3 className="text-lg font-semibold">{labels.payoutHistory}</h3>
+        <Card className="border border-white/5 bg-[var(--surface-1)]/70">
+            <CardHeader className="pb-4">
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                        <History className="w-5 h-5 text-violet-400" />
+                        <CardTitle className="text-base">{labels.payoutHistory}</CardTitle>
+                    </div>
+                    <span className="text-sm text-[var(--fg-subtle)]">{payouts.length} {labels.payouts.toLowerCase()}</span>
                 </div>
-                <span className="text-sm text-gray-500">{payouts.length} {labels.payouts.toLowerCase()}</span>
-            </div>
-
-            <div className="space-y-3">
+            </CardHeader>
+            <CardContent className="space-y-3">
                 {payouts.map((payout) => (
                     <div
                         key={payout.id}
                         onClick={() => router.push(`/settlements/${payout.settlement_id}`)}
-                        className="bg-gray-900/50 rounded-lg p-4 hover:bg-gray-900/70 cursor-pointer transition-colors group"
+                        className="rounded-lg border border-white/5 bg-[var(--surface-2)]/60 p-4 hover:border-violet-500/30 cursor-pointer transition-colors group"
                     >
                         <div className="flex items-center justify-between">
                             <div>
                                 <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-white font-medium">
+                                    <span className="text-[var(--fg-0)] font-medium">
                                         +{payout.amount.toLocaleString()} {labels.credits}
                                     </span>
                                     <StatusBadge status={payout.status === "credited" ? "completed" : payout.status} />
                                 </div>
-                                <div className="flex items-center gap-3 text-sm text-gray-500">
+                                <div className="flex items-center gap-3 text-sm text-[var(--fg-subtle)]">
                                     <span>{payout.recipient_tool_key || labels.unknownTool}</span>
                                     <span>•</span>
                                     <span className="capitalize">{payout.share_type}</span>
@@ -180,12 +190,12 @@ function PayoutHistory({ payouts, loading, labels }: { payouts: Payout[]; loadin
                                     <span>{new Date(payout.created_at).toLocaleDateString()}</span>
                                 </div>
                             </div>
-                            <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-purple-400 transition-colors" />
+                            <ChevronRight className="w-5 h-5 text-[var(--fg-subtle)] group-hover:text-violet-400 transition-colors" />
                         </div>
                     </div>
                 ))}
-            </div>
-        </div>
+            </CardContent>
+        </Card>
     );
 }
 
