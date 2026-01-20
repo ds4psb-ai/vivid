@@ -181,6 +181,36 @@ class Settings(BaseSettings):
     RAG_EVAL_ALERT_THRESHOLD: float = 0.6  # Alert if avg score drops below
     RAG_EVAL_LLM_MODEL: str = "gpt-4o-mini"  # LLM for evaluation
 
+    # ==========================================================================
+    # Phase 8: Personalization Configuration
+    # ==========================================================================
+    # Core Personalization Settings
+    PERSONALIZATION_ENABLED: bool = False  # Enable personalization features
+    PERSONALIZATION_MIN_SIGNALS: int = 10  # Min signals before embedding update
+
+    # Preference Learning
+    PERSONALIZATION_DECAY_HALF_LIFE_DAYS: int = 30  # Preference decay half-life
+    PERSONALIZATION_EMBEDDING_DIM: int = 768  # User embedding dimension
+
+    # Affinity Boosts
+    PERSONALIZATION_DIMENSION_BOOST: float = 0.3  # Dimension affinity boost (0-1)
+    PERSONALIZATION_AUTEUR_BOOST: float = 0.25  # Auteur affinity boost (0-1)
+    PERSONALIZATION_EMBEDDING_WEIGHT: float = 0.2  # User embedding weight (0-1)
+
+    # Session Tracking
+    PERSONALIZATION_SESSION_TTL: int = 3600  # Session TTL in seconds (1 hour)
+    PERSONALIZATION_SESSION_DECAY: float = 0.9  # Session affinity decay per hour
+
+    # A/B Testing
+    PERSONALIZATION_AB_ENABLED: bool = False  # Enable A/B testing
+    PERSONALIZATION_AB_CONTROL_RATIO: float = 0.1  # 10% control group
+
+    # GraphRAG Settings
+    GRAPHRAG_MAX_HOPS: int = 2  # Max graph traversal hops
+    GRAPHRAG_COMMUNITY_LEVEL: int = 1  # Default community level for global search
+    GRAPHRAG_GRAPH_WEIGHT: float = 0.4  # Graph results weight in fusion
+    GRAPHRAG_VECTOR_WEIGHT: float = 0.6  # Vector results weight in fusion
+
     # Security Hardening
     SECURITY_HEADERS_ENABLED: bool = True
     SECURITY_REQUEST_ID_ENABLED: bool = True

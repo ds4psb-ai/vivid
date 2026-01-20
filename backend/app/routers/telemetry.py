@@ -276,11 +276,39 @@ async def complete_tool_run(
     db: AsyncSession = Depends(get_db),
 ):
     """Complete a tool run with results.
-    
+
     Call this when a tool execution finishes (success or failure).
+    Phase 8: Also records preference signals for personalization.
     """
     try:
         event = await telemetry_service.complete_tool_run(db, event_id, data)
+
+        # Phase 8: Record preference signal for successful generation
+        if event.status == "success" and event.user_id:
+            try:
+                from app.config import settings
+                if getattr(settings, "PERSONALIZATION_ENABLED", False):
+                    from app.services.preference_learning_service import PreferenceLearningService
+
+                    pref_service = PreferenceLearningService()
+
+                    # Extract dimension and auteur from inputs_summary
+                    inputs = event.inputs_summary or {}
+                    dimension = inputs.get("dimension")
+                    auteur_key = inputs.get("auteur_key")
+
+                    await pref_service.record_signal(
+                        user_id=event.user_id,
+                        signal_type="generation_complete",
+                        value=1.0,
+                        dimension=dimension,
+                        auteur_key=auteur_key,
+                        evidence_ref=f"db:tool_run_events:{event_id}",
+                    )
+                    logger.debug(f"[Telemetry] P8 signal recorded for user={event.user_id[:8]}...")
+            except Exception as e:
+                logger.warning(f"[Telemetry] P8 preference signal failed: {e}")
+
         return event
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -292,11 +320,48 @@ async def add_run_feedback(
     data: ToolRunFeedback,
     db: AsyncSession = Depends(get_db),
 ):
-    """Add user feedback to a tool run."""
+    """Add user feedback to a tool run.
+
+    Phase 8: Also records rating preference signal for personalization.
+    """
     try:
         event = await telemetry_service.add_tool_run_feedback(
             db, event_id, data.rating, data.feedback
         )
+
+        # Phase 8: Record rating preference signal
+        if event.user_id:
+            try:
+                from app.config import settings
+                if getattr(settings, "PERSONALIZATION_ENABLED", False):
+                    from app.services.preference_learning_service import PreferenceLearningService
+
+                    pref_service = PreferenceLearningService()
+
+                    # Extract dimension and auteur from inputs_summary
+                    inputs = event.inputs_summary or {}
+                    dimension = inputs.get("dimension")
+                    auteur_key = inputs.get("auteur_key")
+
+                    # Rating value: 1-5 stars normalized, with 3 as neutral
+                    # Positive boost for 4-5, negative/neutral for 1-3
+                    rating_value = (data.rating - 3) / 2  # -1 to +1
+
+                    await pref_service.record_signal(
+                        user_id=event.user_id,
+                        signal_type="rating",
+                        value=rating_value,
+                        dimension=dimension,
+                        auteur_key=auteur_key,
+                        evidence_ref=f"db:tool_run_events:{event_id}",
+                    )
+                    logger.debug(
+                        f"[Telemetry] P8 rating signal recorded | "
+                        f"user={event.user_id[:8]}... | rating={data.rating}"
+                    )
+            except Exception as e:
+                logger.warning(f"[Telemetry] P8 rating signal failed: {e}")
+
         return event
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

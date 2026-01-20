@@ -413,6 +413,9 @@ async def hybrid_query(
     pipeline_hints: Optional[Dict[str, Any]] = None,
     use_semantic_cache: bool = True,  # NEW: Enable semantic caching
     app_key: Optional[str] = None,  # P3: For ensemble retrieval
+    user_id: Optional[str] = None,  # P8: For personalization
+    session_id: Optional[str] = None,  # P8: For session-based personalization
+    personalization_config: Optional[Dict[str, Any]] = None,  # P8: Override personalization settings
 ) -> HybridRAGResult:
     """하이브리드 RAG 쿼리 실행.
 
@@ -448,6 +451,9 @@ async def hybrid_query(
         strategy: 검색 전략 ("vector" | "graph" | "hybrid" | "ensemble")
         pipeline_hints: 파이프라인 힌트 딕셔너리
         app_key: 앱 키 (ensemble 전략 시 필수, e.g., "dimension.aesthetic.direct")
+        user_id: 사용자 ID (Phase 8 개인화)
+        session_id: 세션 ID (Phase 8 실시간 개인화)
+        personalization_config: 개인화 설정 오버라이드
 
     Returns:
         HybridRAGResult with combined answer and sources
@@ -770,6 +776,49 @@ async def hybrid_query(
         rrf_enabled=result.rrf_enabled,
     )
 
+    # === Phase 8: Personalization Integration ===
+    if user_id:
+        try:
+            from app.config import settings
+            if getattr(settings, "PERSONALIZATION_ENABLED", False):
+                from app.services.preference_learning_service import PreferenceLearningService
+
+                pref_service = PreferenceLearningService()
+                user_context = await pref_service.get_user_context(
+                    user_id=user_id,
+                    session_id=session_id,
+                )
+
+                if user_context:
+                    # Apply personalization boosts to confidence
+                    boost = 0.0
+                    pref_config = personalization_config or {}
+                    dimension_boost = pref_config.get("dimension_affinity_boost", 0.3)
+                    auteur_boost = pref_config.get("auteur_affinity_boost", 0.25)
+
+                    # Dimension affinity boost
+                    if dimension and hasattr(user_context, "dimension_affinities"):
+                        affinity = user_context.dimension_affinities.get(dimension, 0.0)
+                        if affinity >= 0.3:
+                            boost += dimension_boost * affinity
+
+                    # Auteur affinity boost
+                    if auteur_key and hasattr(user_context, "auteur_affinities"):
+                        affinity = user_context.auteur_affinities.get(auteur_key, 0.0)
+                        if affinity >= 0.3:
+                            boost += auteur_boost * affinity
+
+                    # Apply boost to confidence (capped at 1.0)
+                    if boost > 0:
+                        result.confidence = min(1.0, result.confidence * (1 + boost))
+                        logger.debug(
+                            f"[HybridRAG] P8 personalization boost={boost:.3f} | "
+                            f"user_id={user_id[:8]}... | "
+                            f"new_confidence={result.confidence:.3f}"
+                        )
+        except Exception as e:
+            logger.warning(f"[HybridRAG] Personalization failed: {e}")
+
     # === Load preset for Cache thresholds ===
     from app.rag.rag_presets import get_rag_preset
     preset_dim = dimension or ("AD" if auteur_key else "1D")
@@ -980,6 +1029,9 @@ class HybridRAGService:
         auteur_key: Optional[str] = None,
         dimension: Optional[str] = None,
         use_google_search: bool = True,
+        user_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+        personalization_config: Optional[Dict[str, Any]] = None,
     ) -> HybridRAGResult:
         """하이브리드 RAG 쿼리 실행."""
         return await hybrid_query(
@@ -987,6 +1039,9 @@ class HybridRAGService:
             auteur_key=auteur_key,
             dimension=dimension,
             use_google_search=use_google_search,
+            user_id=user_id,
+            session_id=session_id,
+            personalization_config=personalization_config,
         )
 
     # P0.5: rrf_query() removed - use tier1_dimension_rag.hybrid_search() instead
