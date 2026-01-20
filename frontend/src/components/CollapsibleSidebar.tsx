@@ -270,63 +270,27 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const { t, language, setLanguage } = useLanguage();
 
-    // 핵심 네비게이션 - IP-First UX 기반
+    // ==========================================================================
+    // 투자자 데모용 단순화된 네비게이션
+    // 핵심 3가지: 숏폼 웹드라마, 애니 MV, 차원 플로우
+    // ==========================================================================
     const NAV_ITEMS: { label: string; href: string; icon: React.ElementType; badge?: string }[] = [
         { label: "홈", href: "/", icon: Home },
-        { label: "IP 갤러리", href: "/ip", icon: Sparkles },
-        { label: "내 작업실", href: "/studio", icon: FolderOpen },
-        { label: "크리에이터 허브", href: "/creator", icon: User },
+        { label: "숏폼 웹드라마", href: "/ip/umbrella-encounter", icon: Sparkles, badge: "9:16" },
+        { label: "애니메이션 MV", href: "/ip/cooking-anime-mv", icon: Orbit, badge: "16:9" },
+        { label: "차원 플로우", href: "/flow", icon: Waypoints },
     ];
 
-    const QUICK_ACTIONS: { label: string; href: string; icon: React.ElementType }[] = [
-        { label: "새 작업", href: "/studio", icon: Plus },
-        { label: "템플릿", href: "/singularity", icon: CircleDashed },
-    ];
+    const QUICK_ACTIONS: { label: string; href: string; icon: React.ElementType }[] = [];
 
-    const NAV_GROUPS = [
-        {
-            id: "make",
-            sectionLabel: "만들기",
-            label: "제작 도구",
-            icon: Wrench,
-            items: [
-                { label: "차원 앱", href: "/dimension", icon: Orbit },
-                ...(FLOW_ENABLED ? [{ label: "차원 플로우", href: "/flow", icon: Waypoints }] : []),
-                { label: "템플릿", href: "/singularity", icon: CircleDashed },
-            ],
-        },
-        {
-            id: "activity",
-            sectionLabel: "활동",
-            label: "운영 흐름",
-            icon: Activity,
-            items: [
-                { label: "승인 게이트", href: "/creator/approvals", icon: ShieldCheck, badge: "HITL" },
-                { label: "피드백 루프", href: "/creator/feedback", icon: MessageSquareText, badge: "NEW" },
-                { label: "A/B 실험", href: "/creator/experiments", icon: FlaskConical, badge: "BETA" },
-            ],
-        },
-        {
-            id: "earn",
-            sectionLabel: "수익",
-            label: "수익 관리",
-            icon: TrendingUp,
-            items: [
-                { label: "분석 대시보드", href: "/creator/analytics", icon: BarChart3, badge: "INSIGHT" },
-                { label: "정산", href: "/settlements", icon: Activity, badge: "FIN" },
-            ],
-        },
-        {
-            id: "account",
-            sectionLabel: "계정",
-            label: "계정 관리",
-            icon: Settings,
-            items: [
-                { label: "크레딧", href: "/credits", icon: CreditCard },
-                { label: "설정", href: "/settings", icon: Settings },
-            ],
-        },
-    ];
+    // 데모용 - 그룹 메뉴 비활성화
+    const NAV_GROUPS: {
+        id: string;
+        sectionLabel: string;
+        label: string;
+        icon: React.ElementType;
+        items: { label: string; href: string; icon: React.ElementType; badge?: string }[];
+    }[] = [];
 
     const handleToggleExpanded = () => {
         setIsExpanded((prev) => {
@@ -504,6 +468,7 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
                                 </div>
                             )}
                             <NavGroup
+                                id={group.id}
                                 label={group.label}
                                 icon={group.icon}
                                 items={group.items}

@@ -1,7 +1,8 @@
 "use client";
 
+import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
-import { ShieldCheck, ShieldAlert, ShieldX } from "lucide-react";
+import { ShieldCheck, ShieldAlert, ShieldX, Play, Eye, Flame, Sparkles } from "lucide-react";
 
 type LicenseStatus = "allowed" | "restricted" | "prohibited";
 
@@ -9,8 +10,12 @@ interface IPRailCardProps {
   title: string;
   subtitle?: string;
   thumbnailUrl?: string;
+  previewVideoUrl?: string;
   genres?: string[];
   licenseStatus?: LicenseStatus;
+  viewCount?: string;
+  isHot?: boolean;
+  isNew?: boolean;
 }
 
 const STATUS_STYLES: Record<LicenseStatus, { label: string; icon: typeof ShieldCheck; className: string }> = {
@@ -35,50 +40,132 @@ export function IPRailCard({
   title,
   subtitle,
   thumbnailUrl,
+  previewVideoUrl,
   genres,
   licenseStatus = "allowed",
+  viewCount,
+  isHot,
+  isNew,
 }: IPRailCardProps) {
   const status = STATUS_STYLES[licenseStatus];
   const StatusIcon = status.icon;
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
+
+  const handleMouseEnter = useCallback(() => {
+    setIsHovered(true);
+    if (videoRef.current && previewVideoUrl) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch(() => {});
+    }
+  }, [previewVideoUrl]);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsHovered(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  }, []);
 
   return (
-    <div className="group h-full overflow-hidden rounded-2xl border border-[var(--border-muted)] bg-[var(--surface-1)] hover:border-[var(--border-strong)] transition-all">
-      <div className="relative h-32 w-full bg-black/10">
-        {thumbnailUrl ? (
+    <div
+      className="group h-full overflow-hidden rounded-2xl border border-[var(--border-muted)] bg-[var(--surface-1)] hover:border-violet-500/50 hover:shadow-lg hover:shadow-violet-500/10 transition-all duration-300 hover:-translate-y-1"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {/* 썸네일/비디오 영역 - 세로 비율 증가 */}
+      <div className="relative h-44 w-full bg-gradient-to-br from-slate-900 to-slate-800 overflow-hidden">
+        {/* 정적 썸네일 */}
+        {thumbnailUrl && (
           <Image
             src={thumbnailUrl}
             alt={title}
             fill
             sizes="(max-width: 1024px) 220px, 220px"
-            className="object-cover"
+            className={`object-cover transition-opacity duration-300 ${isHovered && previewVideoUrl && videoLoaded ? 'opacity-0' : 'opacity-100'}`}
           />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-xs text-[var(--fg-muted)]">
-            No Image
+        )}
+
+        {/* 비디오 프리뷰 */}
+        {previewVideoUrl && (
+          <video
+            ref={videoRef}
+            src={previewVideoUrl}
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            onLoadedData={() => setVideoLoaded(true)}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${isHovered && videoLoaded ? 'opacity-100' : 'opacity-0'}`}
+          />
+        )}
+
+        {/* 플레이 오버레이 */}
+        {!isHovered && previewVideoUrl && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+              <Play className="w-5 h-5 text-slate-900 ml-0.5" />
+            </div>
           </div>
         )}
-      </div>
-      <div className="p-3 space-y-2">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <p className="text-sm font-semibold text-[var(--fg-0)] line-clamp-1">{title}</p>
-            {subtitle && (
-              <p className="text-xs text-[var(--fg-muted)] line-clamp-1">{subtitle}</p>
-            )}
-          </div>
-          <span
-            className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${status.className}`}
-          >
-            <StatusIcon className="h-3 w-3" />
-            {status.label}
-          </span>
+
+        {/* 상단 배지들 */}
+        <div className="absolute top-2 left-2 flex items-center gap-1.5">
+          {isHot && (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-rose-500 to-orange-500 text-white text-[10px] font-bold shadow-lg">
+              <Flame className="w-3 h-3" />
+              HOT
+            </span>
+          )}
+          {isNew && (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-violet-500 to-blue-500 text-white text-[10px] font-bold shadow-lg">
+              <Sparkles className="w-3 h-3" />
+              NEW
+            </span>
+          )}
         </div>
+
+        {/* 조회수 배지 */}
+        {viewCount && (
+          <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-sm text-white text-[10px] font-medium">
+            <Eye className="w-3 h-3" />
+            {viewCount}
+          </div>
+        )}
+
+        {/* 라이선스 상태 배지 */}
+        {licenseStatus !== "allowed" && (
+          <div className="absolute top-2 right-2">
+            <span
+              className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold backdrop-blur-sm ${status.className}`}
+            >
+              <StatusIcon className="h-3 w-3" />
+              {status.label}
+            </span>
+          </div>
+        )}
+
+        {/* 하단 그라데이션 */}
+        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/80 to-transparent" />
+      </div>
+
+      {/* 정보 영역 */}
+      <div className="p-3 space-y-2">
+        <div>
+          <p className="text-sm font-bold text-[var(--fg-0)] line-clamp-1 group-hover:text-violet-400 transition-colors">{title}</p>
+          {subtitle && (
+            <p className="text-[11px] text-[var(--fg-muted)] line-clamp-1 mt-0.5">{subtitle}</p>
+          )}
+        </div>
+
         {genres && genres.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {genres.slice(0, 3).map((genre) => (
               <span
                 key={genre}
-                className="rounded-full bg-[var(--surface-2)] px-2 py-0.5 text-[10px] text-[var(--fg-muted)]"
+                className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] text-violet-400 font-medium"
               >
                 {genre}
               </span>

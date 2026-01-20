@@ -3,6 +3,19 @@ import type { NextConfig } from "next";
 const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 const nextConfig: NextConfig = {
+  // External image domains for demo
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "picsum.photos",
+      },
+      {
+        protocol: "https",
+        hostname: "storage.googleapis.com",
+      },
+    ],
+  },
   // React Compiler - 2026 Best Practice for automatic memoization
   // Requires babel-plugin-react-compiler (installed)
   compiler: {
@@ -62,8 +75,8 @@ const nextConfig: NextConfig = {
           {
             key: "Content-Security-Policy",
             value: isDev
-              ? "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; connect-src 'self' ws: wss: http: https:; font-src 'self' data:; frame-ancestors 'none';"
-              : "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; connect-src 'self' https:; font-src 'self' data:; frame-ancestors 'none'; upgrade-insecure-requests;",
+              ? "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; media-src 'self' https: blob:; connect-src 'self' ws: wss: http: https:; font-src 'self' data:; frame-ancestors 'none';"
+              : "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; media-src 'self' https: blob:; connect-src 'self' https:; font-src 'self' data:; frame-ancestors 'none'; upgrade-insecure-requests;",
           },
           // HSTS - enforce HTTPS (production only effective)
           {

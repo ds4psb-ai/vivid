@@ -1,8 +1,33 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Clock, Coins, Sparkles, AlertTriangle, Ban, ChevronRight } from "lucide-react";
+import {
+  ArrowLeft,
+  Clock,
+  Coins,
+  Sparkles,
+  AlertTriangle,
+  Ban,
+  ChevronRight,
+  BookOpen,
+  Palette,
+  Brain,
+  GitBranch,
+  Image,
+  Users,
+  Wand2,
+  Globe,
+  Clapperboard,
+  Video,
+  Zap,
+  Layers,
+  Heart,
+  Music,
+  Eye,
+  ArrowRight,
+  CheckCircle2,
+} from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LicenseStatusInfo } from "@/components/ip/LicenseStatusBadge";
@@ -10,6 +35,14 @@ import GenerationProgress from "./GenerationProgress";
 import { EvidenceCard } from "@/components/ui/EvidenceCard";
 import { ToolRecommendationCard } from "@/components/ui/ToolRecommendationCard";
 import { useToolRecommendations } from "@/hooks/useToolRecommendations";
+import {
+  getDemoIPOverride,
+  getDemoIPData,
+  isDemoIP,
+  resolveVideoUrl,
+  type DemoWorkflow,
+  type ContentType,
+} from "@/lib/demo-ip-overrides";
 
 // =============================================================================
 // Types (exported for server component)
@@ -37,6 +70,7 @@ export interface IPDetail {
   description_en: string | null;
   thumbnail_url: string | null;
   banner_url: string | null;
+  preview_video_url?: string | null; // 비디오 URL (실제 데이터용)
   genre: string[];
   tags: string[];
   worldbuilding: Record<string, unknown>;
@@ -131,11 +165,22 @@ export default function IPDetailClient({
     }
   }, [ip, selectedPreset]);
 
-  // Fetch IP detail (skip if server-provided via ISR)
+  // Fetch IP detail (skip if server-provided via ISR or if demo IP)
   useEffect(() => {
     // Phase 6: Skip fetch if initial data provided from server
     if (initialIP) {
       return;
+    }
+
+    // Demo IP: Use synthetic data without backend fetch
+    if (isDemoIP(slug)) {
+      const demoData = getDemoIPData(slug);
+      if (demoData) {
+        setIP(demoData.ipDetail as IPDetail);
+        setRights(demoData.ipRights as IPRights);
+        setLoading(false);
+        return;
+      }
     }
 
     async function fetchIPDetail() {
@@ -149,6 +194,14 @@ export default function IPDetailClient({
         ]);
 
         if (!detailRes.ok) {
+          // Fallback to demo data if backend fails
+          const demoData = getDemoIPData(slug);
+          if (demoData) {
+            setIP(demoData.ipDetail as IPDetail);
+            setRights(demoData.ipRights as IPRights);
+            setLoading(false);
+            return;
+          }
           throw new Error("IP not found");
         }
 
@@ -160,6 +213,14 @@ export default function IPDetailClient({
           setRights(rightsData);
         }
       } catch (err) {
+        // Final fallback attempt to demo data
+        const demoData = getDemoIPData(slug);
+        if (demoData) {
+          setIP(demoData.ipDetail as IPDetail);
+          setRights(demoData.ipRights as IPRights);
+          setLoading(false);
+          return;
+        }
         setError("Failed to load IP details");
         console.error(err);
       } finally {
@@ -170,23 +231,23 @@ export default function IPDetailClient({
     fetchIPDetail();
   }, [slug, initialIP]);
 
-  // Fetch recommendations when IP is loaded
+  // Fetch recommendations when IP is loaded (skip for demo IPs)
   useEffect(() => {
-    if (ip && slug) {
+    if (ip && slug && !isDemoIP(slug)) {
       fetchByIPSlug(slug);
     }
   }, [ip, slug, fetchByIPSlug]);
 
-  // Fetch updated recommendations when preset is selected
+  // Fetch updated recommendations when preset is selected (skip for demo IPs)
   useEffect(() => {
-    if (ip && selectedPreset) {
+    if (ip && selectedPreset && !isDemoIP(slug)) {
       fetchRecommendations({
         ip_id: ip.id,
         preset_id: selectedPreset.id,
         max_results: 3,
       });
     }
-  }, [ip, selectedPreset, fetchRecommendations]);
+  }, [ip, selectedPreset, slug, fetchRecommendations]);
 
   const handleGenerate = useCallback(async () => {
     if (!selectedPreset || !ip) return;
@@ -245,6 +306,58 @@ export default function IPDetailClient({
       console.warn("Failed to copy trace id", err);
     }
   }, [traceId]);
+
+  // ==========================================================================
+  // IMPORTANT: All useMemo/useCallback hooks MUST be called before early returns
+  // to comply with React's Rules of Hooks (same order on every render)
+  // ==========================================================================
+
+  // Demo overlay - slug 기반으로 데모 데이터 조회
+  const demoOverride = useMemo(() => getDemoIPOverride(slug), [slug]);
+
+  // Video URL 우선순위: demo.detailVideoUrl → ip.preview_video_url → poster fallback
+  const { videoUrl, posterUrl } = useMemo(
+    () => ip ? resolveVideoUrl(ip, demoOverride) : { videoUrl: null, posterUrl: null },
+    [ip, demoOverride]
+  );
+
+  // 워크플로우 카드 데이터 (데모 오버라이드 우선)
+  const workflowCards = useMemo(() => {
+    if (demoOverride?.workflows && demoOverride.workflows.length > 0) {
+      return demoOverride.workflows;
+    }
+    // Fallback - 기본 워크플로우 (실제 데이터 연동 시 대체)
+    return null;
+  }, [demoOverride]);
+
+  // 콘텐츠 유형 가져오기 (hooks 이후에 파생 값 계산)
+  const contentType: ContentType = demoOverride?.contentType || "default";
+  const isComplexWorkflow = contentType === "horizontal-anime-mv";
+  const isVerticalShortform = contentType === "vertical-shortform";
+
+  // Workflow icon 매핑 (static - 렌더링 때마다 동일)
+  const workflowIconMap: Record<string, React.ElementType> = useMemo(() => ({
+    BookOpen,
+    Palette,
+    Brain,
+    Sparkles,
+    GitBranch,
+    Image,
+    Users,
+    Wand2,
+    Globe,
+    Clapperboard,
+    Video,
+    Zap,
+    Layers,
+    Heart,
+    Music,
+    Eye,
+  }), []);
+
+  // ==========================================================================
+  // Early returns - AFTER all hooks
+  // ==========================================================================
 
   if (loading) {
     return (
@@ -333,15 +446,132 @@ export default function IPDetailClient({
           </div>
         </div>
 
-        {/* Content */}
+        {/* Content - 시연용 2-Column 레이아웃 */}
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row">
-            {/* Main content (left) */}
-            <div className="flex-1 p-6 lg:pr-0">
-              {/* Hero section */}
-              <div className="flex gap-6 mb-8">
-                {/* Thumbnail */}
-                <div className="w-48 h-64 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 flex-shrink-0">
+            {/* 좌측: 영상 플레이어 + IP 정보 */}
+            <div className="flex-1 p-6 lg:pr-6">
+              {/* 메인 영상 플레이어 - 비율에 따라 동적 조정 */}
+              <div className="mb-6">
+                {/* 세로 숏폼 (9:16) */}
+                {isVerticalShortform ? (
+                  <div className="flex justify-center">
+                    <div className="relative w-full max-w-[320px] aspect-[9/16] rounded-2xl overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 shadow-2xl ring-1 ring-white/10">
+                      {videoUrl ? (
+                        <video
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                          className="w-full h-full object-cover"
+                          poster={posterUrl || undefined}
+                        >
+                          <source src={videoUrl} type="video/mp4" />
+                        </video>
+                      ) : (
+                        <div
+                          className="w-full h-full bg-cover bg-center"
+                          style={{ backgroundImage: posterUrl ? `url(${posterUrl})` : undefined }}
+                        >
+                          <div className="w-full h-full flex items-center justify-center bg-black/40">
+                            <span className="text-white/60 text-sm">
+                              {language === "ko" ? "영상 준비 중" : "Video coming soon"}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 세로 영상 오버레이 */}
+                      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                        <div className="text-center">
+                          <p className="text-white font-bold text-base">{name}</p>
+                          <div className="flex items-center justify-center gap-2 mt-1">
+                            <span className="px-2 py-0.5 rounded-full bg-violet-500/80 text-white text-[10px] font-medium">
+                              9:16 {language === "ko" ? "세로 숏폼" : "Vertical"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 세로 영상 상단 배지 */}
+                      <div className="absolute top-3 left-3 right-3 flex justify-between">
+                        <span className="px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-sm text-white text-[10px] font-medium">
+                          {language === "ko" ? "웹드라마" : "Web Drama"}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full bg-rose-500/90 text-white text-[10px] font-bold">
+                          SHORTS
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* 가로 영상 (16:9 - 기본) */
+                  <div className="relative aspect-video rounded-2xl overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 shadow-2xl ring-1 ring-white/10">
+                    {videoUrl ? (
+                      <video
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        className="w-full h-full object-cover"
+                        poster={posterUrl || undefined}
+                      >
+                        <source src={videoUrl} type="video/mp4" />
+                      </video>
+                    ) : (
+                      <div
+                        className="w-full h-full bg-cover bg-center"
+                        style={{ backgroundImage: posterUrl ? `url(${posterUrl})` : undefined }}
+                      >
+                        <div className="w-full h-full flex items-center justify-center bg-black/40">
+                          <span className="text-white/60 text-sm">
+                            {language === "ko" ? "영상 준비 중" : "Video coming soon"}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 가로 영상 오버레이 */}
+                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-white font-bold text-lg">{name}</p>
+                          <p className="text-white/70 text-sm">
+                            {language === "ko" ? "대표 영상 미리보기" : "Featured Preview"}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {isComplexWorkflow && (
+                            <span className="px-2 py-1 rounded-full bg-emerald-500/80 text-white text-xs font-medium">
+                              {language === "ko" ? "씬 일관성" : "Scene Consistency"}
+                            </span>
+                          )}
+                          <span className="px-3 py-1 rounded-full bg-violet-500/80 text-white text-xs font-medium">
+                            {language === "ko" ? "자동 재생" : "Auto Play"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 애니 MV 상단 배지 */}
+                    {isComplexWorkflow && (
+                      <div className="absolute top-3 left-3 flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-sm text-white text-[10px] font-medium">
+                          {language === "ko" ? "애니메이션 MV" : "Animation MV"}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-violet-500 to-blue-500 text-white text-[10px] font-bold">
+                          16:9
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* IP 정보 헤더 */}
+              <div className="flex gap-4 mb-6">
+                {/* 작은 썸네일 */}
+                <div className="w-20 h-28 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 flex-shrink-0 ring-2 ring-violet-500/20">
                   {ip.thumbnail_url ? (
                     <img
                       src={ip.thumbnail_url}
@@ -349,48 +579,183 @@ export default function IPDetailClient({
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-5xl">
+                    <div className="w-full h-full flex items-center justify-center text-3xl">
                       🎬
                     </div>
                   )}
                 </div>
 
-                {/* Info */}
+                {/* 정보 */}
                 <div className="flex-1">
-                  <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+                  <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
                     {name}
                   </h1>
 
-                  {/* Genre tags */}
-                  <div className="flex flex-wrap gap-2 mb-4">
+                  {/* 장르 태그 */}
+                  <div className="flex flex-wrap gap-2 mb-3">
                     {ip.genre.map((g) => (
                       <span
                         key={g}
-                        className="px-2 py-1 text-sm rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                        className="px-2 py-0.5 text-xs rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 font-medium"
                       >
                         {g}
                       </span>
                     ))}
                   </div>
 
-                  {/* Description */}
-                  {description && (
-                    <p className="text-slate-600 dark:text-slate-400 mb-4">
-                      {description}
-                    </p>
-                  )}
-
-                  {/* Stats */}
-                  <div className="flex items-center gap-6 text-sm text-slate-500 dark:text-slate-400">
-                    <span>{ip.preset_count} presets</span>
-                    <span>{ip.generation_count.toLocaleString()} created</span>
+                  {/* 통계 */}
+                  <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                      {ip.preset_count} {language === "ko" ? "프리셋" : "presets"}
+                    </span>
+                    <span>{ip.generation_count.toLocaleString()} {language === "ko" ? "생성됨" : "created"}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Worldbuilding (if available) */}
+              {/* 설명 */}
+              {description && (
+                <p className="text-slate-600 dark:text-slate-400 mb-6 text-sm leading-relaxed">
+                  {description}
+                </p>
+              )}
+
+              {/* 이 IP로 만들 수 있는 것 - 워크플로우 추천 */}
+              {workflowCards && workflowCards.length > 0 && (
+                <div className="mb-6">
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-violet-500" />
+                    {language === "ko" ? "이 IP로 만들 수 있는 것" : "Create with this IP"}
+                    {/* 콘텐츠 유형 배지 */}
+                    {isVerticalShortform && (
+                      <span className="px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-600 dark:text-violet-400 text-[10px] font-medium">
+                        9:16 {language === "ko" ? "세로" : "Vertical"}
+                      </span>
+                    )}
+                    {isComplexWorkflow && (
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-medium">
+                        16:9 {language === "ko" ? "씬 일관성" : "Scene Consistency"}
+                      </span>
+                    )}
+                  </h2>
+
+                  {/* 복잡한 워크플로우 (애니 MV) - 스텝퍼 스타일 */}
+                  {isComplexWorkflow ? (
+                    <div className="space-y-2">
+                      {workflowCards
+                        .sort((a, b) => (a.stepNumber || 0) - (b.stepNumber || 0))
+                        .map((workflow: DemoWorkflow, index: number) => {
+                          const IconComponent = workflowIconMap[workflow.icon] || Sparkles;
+                          const title = language === "ko" ? workflow.titleKo : workflow.title;
+                          const desc = language === "ko" ? workflow.descriptionKo : workflow.description;
+                          const isLast = index === workflowCards.length - 1;
+
+                          return (
+                            <div key={workflow.id} className="relative">
+                              {/* 연결선 */}
+                              {!isLast && (
+                                <div className="absolute left-5 top-14 w-0.5 h-6 bg-gradient-to-b from-slate-300 to-slate-200 dark:from-slate-600 dark:to-slate-700" />
+                              )}
+                              <button
+                                onClick={() => router.push(workflow.href)}
+                                className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 hover:border-violet-500/50 hover:bg-violet-50 dark:hover:bg-violet-900/10 transition-all text-left group"
+                              >
+                                <div className="flex items-center gap-3">
+                                  {/* 단계 번호 + 아이콘 */}
+                                  <div className="relative flex-shrink-0">
+                                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center shadow-lg shadow-violet-500/20">
+                                      <IconComponent className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold flex items-center justify-center">
+                                      {workflow.stepNumber || index + 1}
+                                    </div>
+                                  </div>
+
+                                  {/* 콘텐츠 */}
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <p className="font-semibold text-slate-900 dark:text-white text-sm group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+                                        {title}
+                                      </p>
+                                      {workflow.badge && (
+                                        <span className="px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-600 dark:text-violet-400 text-[9px] font-medium">
+                                          {workflow.badge}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
+                                      {desc}
+                                    </p>
+                                  </div>
+
+                                  {/* 화살표 */}
+                                  <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-violet-500 group-hover:translate-x-1 transition-all flex-shrink-0" />
+                                </div>
+                              </button>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  ) : (
+                    /* 기본 워크플로우 (숏폼 포함) - 그리드 스타일 */
+                    <div className="grid grid-cols-2 gap-3">
+                      {workflowCards.map((workflow: DemoWorkflow) => {
+                        const IconComponent = workflowIconMap[workflow.icon] || Sparkles;
+                        const title = language === "ko" ? workflow.titleKo : workflow.title;
+                        const desc = language === "ko" ? workflow.descriptionKo : workflow.description;
+
+                        return (
+                          <button
+                            key={workflow.id}
+                            onClick={() => router.push(workflow.href)}
+                            className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 hover:border-violet-500/50 hover:bg-violet-50 dark:hover:bg-violet-900/10 transition-all text-left group"
+                          >
+                            <div className="flex items-start gap-3">
+                              {/* 단계 번호 표시 (숏폼) */}
+                              {isVerticalShortform && workflow.stepNumber && (
+                                <div className="relative">
+                                  <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0">
+                                    <IconComponent className="w-5 h-5 text-violet-500" />
+                                  </div>
+                                  <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-violet-500 text-white text-[9px] font-bold flex items-center justify-center">
+                                    {workflow.stepNumber}
+                                  </div>
+                                </div>
+                              )}
+                              {/* 기본 아이콘 */}
+                              {(!isVerticalShortform || !workflow.stepNumber) && (
+                                <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0">
+                                  <IconComponent className="w-5 h-5 text-violet-500" />
+                                </div>
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <p className="font-semibold text-slate-900 dark:text-white text-sm group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors truncate">
+                                    {title}
+                                  </p>
+                                  {workflow.badge && (
+                                    <span className="px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-600 dark:text-violet-400 text-[9px] font-medium flex-shrink-0">
+                                      {workflow.badge}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+                                  {desc}
+                                </p>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 세계관 (있는 경우) */}
               {ip.worldbuilding && Object.keys(ip.worldbuilding).length > 0 && (
-                <div className="mb-8">
+                <div className="mb-6">
                   <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
                     {language === "ko" ? "세계관" : "Worldbuilding"}
                   </h2>
@@ -401,27 +766,10 @@ export default function IPDetailClient({
                   </div>
                 </div>
               )}
-
-              {/* Sample gallery placeholder */}
-              <div className="mb-8">
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
-                  {language === "ko" ? "샘플 갤러리" : "Sample Gallery"}
-                </h2>
-                <div className="grid grid-cols-3 gap-4">
-                  {[1, 2, 3].map((i) => (
-                    <div
-                      key={i}
-                      className="aspect-video rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-2xl"
-                    >
-                      🎬
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
 
-            {/* Sidebar (right) - Generation panel */}
-            <div className="lg:w-96 p-6 lg:border-l border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+            {/* 우측 사이드바 - 생성 패널 */}
+            <div className="lg:w-[420px] p-6 lg:border-l border-slate-200 dark:border-slate-800 bg-gradient-to-b from-slate-50 to-white dark:from-slate-900/50 dark:to-slate-900/80">
               {generationId ? (
                 <GenerationProgress
                   slug={slug}
@@ -436,9 +784,25 @@ export default function IPDetailClient({
                 />
               ) : (
                 <>
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                  {/* 시연용 헤더 섹션 */}
+                  <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-violet-500/10 to-blue-500/10 border border-violet-500/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Sparkles className="w-5 h-5 text-violet-500" />
+                      <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                        {language === "ko" ? "AI 콘텐츠 생성" : "AI Content Generation"}
+                      </h2>
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                      {language === "ko"
+                        ? "이 IP의 세계관과 캐릭터를 활용한 새로운 콘텐츠를 AI로 생성하세요."
+                        : "Create new content using this IP's worldbuilding and characters with AI."}
+                    </p>
+                  </div>
+
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-violet-500"></span>
                     {language === "ko" ? "프리셋 선택" : "Select Preset"}
-                  </h2>
+                  </h3>
 
                   {/* Preset list */}
                   <div className="space-y-3 mb-6">
