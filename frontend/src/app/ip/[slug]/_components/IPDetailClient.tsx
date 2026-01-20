@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -27,6 +27,8 @@ import {
   Eye,
   ArrowRight,
   CheckCircle2,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -137,6 +139,22 @@ export default function IPDetailClient({
   const [showRecommendationWhy, setShowRecommendationWhy] = useState(false);
   const [showWorkflowModal, setShowWorkflowModal] = useState(false);
   const [workflowData, setWorkflowData] = useState<WorkflowData | null>(null);
+
+  // Video player state
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isMuted, setIsMuted] = useState(true);
+
+  // Sync muted state with video element
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = isMuted;
+    }
+  }, [isMuted]);
+
+  // Mute toggle handler
+  const handleMuteToggle = useCallback(() => {
+    setIsMuted((prev) => !prev);
+  }, []);
 
   // Tool recommendations (Phase 2.5)
   const {
@@ -472,8 +490,9 @@ export default function IPDetailClient({
                     <div className="relative w-full max-w-[320px] aspect-[9/16] rounded-2xl overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 shadow-2xl ring-1 ring-white/10">
                       {videoUrl ? (
                         <video
+                          ref={videoRef}
                           autoPlay
-                          muted
+                          muted={isMuted}
                           loop
                           playsInline
                           className="w-full h-full object-cover"
@@ -492,6 +511,17 @@ export default function IPDetailClient({
                             </span>
                           </div>
                         </div>
+                      )}
+
+                      {/* Mute/Unmute 토글 버튼 */}
+                      {videoUrl && (
+                        <button
+                          onClick={handleMuteToggle}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/80 transition-all z-10 shadow-lg"
+                          aria-label={isMuted ? "Unmute" : "Mute"}
+                        >
+                          {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                        </button>
                       )}
 
                       {/* 세로 영상 오버레이 */}
@@ -522,8 +552,9 @@ export default function IPDetailClient({
                   <div className="relative aspect-video rounded-2xl overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 shadow-2xl ring-1 ring-white/10">
                     {videoUrl ? (
                       <video
+                        ref={videoRef}
                         autoPlay
-                        muted
+                        muted={isMuted}
                         loop
                         playsInline
                         className="w-full h-full object-cover"
@@ -542,6 +573,17 @@ export default function IPDetailClient({
                           </span>
                         </div>
                       </div>
+                    )}
+
+                    {/* Mute/Unmute 토글 버튼 */}
+                    {videoUrl && (
+                      <button
+                        onClick={handleMuteToggle}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/80 transition-all z-10 shadow-lg"
+                        aria-label={isMuted ? "Unmute" : "Mute"}
+                      >
+                        {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+                      </button>
                     )}
 
                     {/* 가로 영상 오버레이 */}

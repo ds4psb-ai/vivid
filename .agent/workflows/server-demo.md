@@ -10,8 +10,13 @@ description: Vivid 투자자 데모용 서버 실행 (포트 8100/3100, 시드�
 > **용도**: 투자자 데모용 서버 (DB에 시드된 데모 IP 사용)
 
 이 워크플로우는 DB에 시드된 데모 IP를 사용하여 실제 API가 동작하는 데모 환경을 실행합니다.
-- `umbrella-encounter`: 9:16 세로형 숏폼 웹드라마
+- `umbrella-encounter`: 9:16 세로형 숏폼 웹드라마 (메인 데모 IP)
 - `cooking-anime-mv`: 16:9 가로형 애니메이션 MV
+
+**데모 핵심 플로우:**
+1. IP 카드 → 워크플로우 카드 클릭
+2. Reference Decoder → Abyss Mirror 단계 이동
+3. 워크플로우 진행률 표시 및 결과 계승
 
 ## 1. Docker 서비스 확인 및 시작
 ```bash
@@ -82,8 +87,26 @@ echo "📌 Demo IPs: /ip/umbrella-encounter, /ip/cooking-anime-mv"
 echo "📌 Logs: /tmp/vivid-backend.log, /tmp/vivid-frontend.log"
 ```
 
+## 7. 브라우저 열기 (선택)
+```bash
+open "http://localhost:3100/ip/umbrella-encounter"
+```
+
 ## 참고사항
 - DB에 시드된 demo IP 사용 (Option B)
 - 시드 스크립트: `backend/scripts/seed_demo_ips.py`
 - 비디오/썸네일: `frontend/public/demo-video/`
 - 전체 서버 재시작 필요 시 `/server` 워크플로우 사용
+
+## 데모 체크리스트
+- [ ] IP 카드 호버 시 비디오 프리뷰 재생
+- [ ] 워크플로우 카드 클릭 → 모달 표시
+- [ ] 워크플로우 시작 → Reference Decoder 이동
+- [ ] 단계 완료 → 다음 단계 버튼 활성화
+- [ ] 진행률 바 및 단계 점 표시
+- [ ] 초기화 버튼 동작 (↺ 아이콘)
+- [ ] 다크모드 토글 시 토큰 적용 확인
+
+## 디자인 토큰 (2026.01)
+- `frontend/src/styles/tokens/` - 모듈화된 토큰 시스템
+- IP 카드, 워크플로우, CTA 버튼에 시맨틱 토큰 적용됨
