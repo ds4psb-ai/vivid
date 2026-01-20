@@ -37,25 +37,25 @@ function HomePageContent() {
       <AuroraBackground />
 
       <div className="relative z-10 min-h-screen">
-        {/* Hero Section - 간결한 타이틀 */}
-        <section className="pt-12 pb-8 px-6">
-          <div className="mx-auto max-w-6xl text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <h1 className="text-3xl md:text-4xl font-bold text-[var(--fg-0)] mb-3">
-                {ko ? "IP-First 콘텐츠 생성" : "IP-First Content Creation"}
-              </h1>
-              <p className="text-base text-[var(--fg-muted)] max-w-xl mx-auto">
-                {ko
-                  ? "레퍼런스 영상을 분석하고, AI로 새로운 변주를 생성하세요"
-                  : "Analyze reference videos and generate new variations with AI"}
-              </p>
-            </motion.div>
+        {/* Simple Top Bar - Search & Login */}
+        <div className="pt-6 pb-4 px-6">
+          <div className="mx-auto max-w-6xl flex justify-end items-center gap-3">
+            <div className="relative flex items-center">
+              <Search className="absolute left-3 w-4 h-4 text-[var(--fg-muted)]" />
+              <input
+                type="text"
+                placeholder={ko ? "검색어를 입력해주세요" : "Search..."}
+                className="pl-9 pr-4 py-2 text-sm bg-[var(--surface-1)] border border-white/10 rounded-lg text-[var(--fg-0)] placeholder:text-[var(--fg-muted)] focus:outline-none focus:ring-1 focus:ring-violet-500/50 w-48 md:w-64"
+              />
+            </div>
+            <Link href="/login">
+              <Button variant="ghost" size="sm" className="gap-2 text-[var(--fg-muted)] hover:text-[var(--fg-0)]">
+                <LogIn className="w-4 h-4" />
+                {ko ? "로그인" : "Login"}
+              </Button>
+            </Link>
           </div>
-        </section>
+        </div>
 
         {/* Main Content */}
         <div className="px-6 pb-20">
