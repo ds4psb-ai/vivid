@@ -22,7 +22,10 @@
 | 5 | Cost Optimization | ✅ Completed | 2026-01-19 |
 | 5.5 | Production Hardening | ✅ Completed | 2026-01-19 |
 | 6 | Next.js 16 Cache Components | ✅ Completed | 2026-01-20 |
-| 7 | HITL Enhancement | ⏳ Planned | - |
+| 7 | HITL Enhancement | ✅ Completed | 2026-01-20 |
+| 8 | Advanced Personalization | ✅ Completed | 2026-01-20 |
+| 9 | Monetization & Analytics | ✅ Completed | 2026-01-20 |
+| 10 | Enterprise & Scale + IP Character Chat | ⏳ Planned | - |
 
 ---
 
@@ -518,40 +521,455 @@ revalidateTag(`ip:${slug}`);
 
 ---
 
-### Phase 10 — Enterprise & Scale (엔터프라이즈 및 확장)
+### Phase 10 — Enterprise & Scale + IP Character Chat (엔터프라이즈 및 확장 + IP 캐릭터 채팅)
 
-**목표**: 멀티테넌트 아키텍처 + 대규모 확장성
+**목표**: 멀티테넌트 아키텍처 + IP 캐릭터 실시간 채팅 + 크리에이터 수익화
 
-**2026 리서치 근거**:
-- Hub-Spoke 패턴: 중앙 AI 허브 + 테넌트별 커스터마이징
-- Knowledge Graph Isolation: 테넌트별 지식 분리
-- Shared Infrastructure: 인프라 비용 효율화
+---
 
-**핵심 기능**:
-- **Multi-Tenant Architecture**: 멀티테넌트 아키텍처
-  - 테넌트별 데이터 격리
-  - 공유 AI 인프라
-  - 커스텀 브랜딩
-- **Horizontal Scaling**: 수평적 확장
-  - Kubernetes 오토스케일링
-  - 지역별 배포
-  - CDN 최적화
-- **Enterprise Features**: 엔터프라이즈 기능
-  - SSO/SAML 통합
-  - 감사 로그
-  - SLA 보장
-- **API Gateway**: API 게이트웨이
-  - 레이트 리미팅
-  - API 버저닝
-  - 사용량 기반 과금
+## 8) 경쟁사 분석: Caveduck.io (2026-01-20)
 
-**예상 파일**:
+### 8.1 플랫폼 개요
+
+**Caveduck** (caveduck.io) — Warp Space Inc. 개발, 2023년 출시
+
+| 항목 | 상세 |
+|------|------|
+| 타입 | AI 캐릭터 채팅 플랫폼 |
+| 태그라인 | "Create your own unique AI friend" |
+| 주요 시장 | 한국, 일본, 동남아 |
+| iOS 앱 | "Caveduck — Meet Your AI Friends" |
+
+### 8.2 핵심 기능 (UI 분석)
+
+**메인 피드**:
+- 캐릭터 카드 그리드 (이미지 + 이름 + 설명 + 크리에이터)
+- 필터 탭: 추천, 신작, 실시간 급상승, 인기, 태그
+- 참여 메트릭: 조회수, 이미지 수, 좋아요
+- #Original 배지 (오리지널 캐릭터 표시)
+- 시즌 이벤트 (렛잇스노우)
+
+**캐릭터 상세**:
+- 캐릭터 프로필 + 상세 설명
+- 태그 시스템 (여성, 오리지널, 힐링, 게임, 공모전 당선작 등)
+- 시나리오 선택 (A/B 분기)
+- 페르소나 설정 옵션
+- 크리에이터 프로필 연결
+- 공개일/수정일 표시
+- 댓글 시스템
+
+**채팅 인터페이스**:
+- 도입 옵션 (시나리오 분기)
+- 플레이 방법 가이드
+- **멀티 모델 지원**:
+  - 기본: Dino (자체 모델)
+  - 고급: Claude 시리즈 (권장)
+  - GPT-4 지원
+  - Gemini 3 Pro (비권장으로 표시)
+- 크리에이터 코멘트 섹션
+
+### 8.3 수익 모델
+
+| 티어 | 가격 | 혜택 |
+|------|------|------|
+| Free | 무료 | 일일 300포인트, 기본 캐릭터 접근 |
+| PLUS | $11.99/월 (첫 결제 $5.99) | 무제한 기본 채팅, 음성, 고급 모델 |
+
+**포인트 패키지**:
+| 포인트 | 가격 | 보너스 |
+|--------|------|--------|
+| 5,000 | $4.99 | - |
+| 10,000 | $9.99 | - |
+| 30,900 | $29.99 | 3% |
+| 52,500 | $49.99 | 5% |
+| 107,000 | $99.99 | 7% |
+
+**모델별 비용**:
+- Haiku: 15포인트/응답 (저비용)
+- Claude 3 Sonnet/GPT-4: 높은 비용 (창의적 응답)
+
+**추천 시스템**: 양방향 1,000포인트 (유효기간 1년)
+
+### 8.4 경쟁력 분석
+
+**강점**:
+1. 빠른 캐릭터 생성 (30초 이내)
+2. 멀티 모델 선택권 (사용자 비용 최적화)
+3. 공모전/크리에이터 인센티브
+4. 이미지/음성/비디오 통합
+5. 직관적 한국어 UI
+
+**약점**:
+1. 크리에이터 수익 분배 불투명
+2. IP 라이선싱 체계 부재
+3. 엔터프라이즈 기능 없음
+4. API 미제공
+
+### 8.5 Vivid 차별화 전략
+
+| Caveduck | Vivid (Phase 10) |
+|----------|------------------|
+| 캐릭터 채팅 중심 | **IP-First 생태계** (캐릭터 + 콘텐츠 생성) |
+| 포인트 과금 | **Fork 수익 분배 (60/30/10)** |
+| 크리에이터 귀속 표시 | **IP 라이선싱 마켓플레이스** |
+| 단일 채팅 | **워크플로우 + 채팅 통합** |
+| 소비자 중심 | **B2B + B2C 하이브리드** |
+
+---
+
+## 9) 2026 시장 리서치
+
+### 9.1 AI 컴패니언 시장 규모
+
+| 연도 | 시장 규모 | 출처 |
+|------|----------|------|
+| 2026 | $501B | Business Research Insights |
+| 2033 | $970B | Precedence Research |
+| CAGR | 36.6% | - |
+
+### 9.2 주요 경쟁사 비교
+
+| 플랫폼 | MAU | 특징 | 수익 모델 |
+|--------|-----|------|----------|
+| Character.AI | 20M+ | 8.18 페이지/세션 | $9.99/월 Plus |
+| SpicyChat | 2M | 850K+ 캐릭터 | $14.95/월 True Supporter |
+| JanitorAI | 5M+ | 무료 + API | OpenRouter 과금 |
+| Caveduck | 1M+ | 한국 중심 | $11.99/월 PLUS |
+
+### 9.3 NSFW vs SFW 비교
+
+| 메트릭 | NSFW 플랫폼 | SFW 플랫폼 |
+|--------|------------|-----------|
+| 월 평균 지출 | $24.99 | $9.99 |
+| 월간 리텐션 | 80% | 40% |
+| 전환율 | 8-12% | 3-5% |
+
+### 9.4 크리에이터 이코노미 (2026)
+
+- 글로벌 규모: **$250B** (2027년 $500B 전망)
+- AI 도구 채택률: **84%**
+- 수익 증가 효과: **30%** (AI 분석 도구 사용 시)
+
+### 9.5 멀티테넌트 AI 아키텍처 트렌드
+
+**2026 Best Practices**:
+1. **테넌트 격리**: Shared schema + tenant ID (가장 일반적)
+2. **AI 모델 접근**: Hub-Spoke 패턴 (중앙 AI + 테넌트 커스텀)
+3. **보안**: Zero-trust + 테넌트 컨텍스트 인젝션
+4. **규제**: EU AI Act, HIPAA, SOC 2 준수 필수
+
+### 9.6 실시간 채팅 아키텍처 (2026)
+
+**핵심 패턴**:
+1. **WebSocket + Redis Pub/Sub**: 서버 간 조정
+2. **Event-Driven**: 240K 동시 연결/노드 (sub-50ms 레이턴시)
+3. **Sticky Sessions**: 세션 상태 관리
+4. **Microservices**: Chat/Presence/Notification 분리
+
+### 9.7 음성 AI 기술 (2026)
+
+**주요 기술**:
+- **WebRTC Real-Time API**: OpenAI Realtime API 직접 연결
+- **Voice Cloning**: 5초 샘플로 복제 (Chatterbox, ElevenLabs)
+- **Zero-Shot TTS**: sub-200ms 스트리밍 레이턴시
+- **Fish Audio**: 70+ 언어, 1000+ 음성
+
+---
+
+## 10) Phase 10 상세 설계 (Enterprise & Scale + IP Character Chat)
+
+### 10.1 목표
+
+1. **멀티테넌트 아키텍처**: Hub-Spoke 패턴으로 B2B 확장
+2. **IP 캐릭터 채팅**: Caveduck 대비 차별화된 실시간 채팅
+3. **크리에이터 마켓플레이스**: IP 라이선싱 + 수익 분배
+4. **음성 채팅**: WebRTC + Voice Cloning
+5. **수평 확장**: Kubernetes 오토스케일링
+
+### 10.2 핵심 기능 설계
+
+#### 10.2.1 IP Character Chat
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    IP Character Chat                     │
+├─────────────────────────────────────────────────────────┤
+│  ┌──────────────┐    ┌──────────────┐    ┌───────────┐ │
+│  │ IP Registry  │───▶│ Character    │───▶│ Chat      │ │
+│  │ (캐릭터 DB)   │    │ Personality  │    │ Session   │ │
+│  │              │    │ (RAG + Prompt)│    │ (Redis)   │ │
+│  └──────────────┘    └──────────────┘    └───────────┘ │
+│          │                  │                  │        │
+│          ▼                  ▼                  ▼        │
+│  ┌──────────────┐    ┌──────────────┐    ┌───────────┐ │
+│  │ Visual       │    │ Model Router │    │ WebSocket │ │
+│  │ Generator    │    │ (Claude/GPT) │    │ + SSE     │ │
+│  └──────────────┘    └──────────────┘    └───────────┘ │
+└─────────────────────────────────────────────────────────┘
+```
+
+**특징**:
+- IP 기반 캐릭터 페르소나 (RAG에서 월드빌딩 컨텍스트 주입)
+- 시나리오 분기 (A/B 선택지)
+- 다중 모델 선택 (비용/품질 트레이드오프)
+- 이미지/음성/비디오 응답 통합
+- 대화 기록 영속화 (세션 복구)
+
+#### 10.2.2 Multi-Tenant Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                     API Gateway                          │
+├─────────────────────────────────────────────────────────┤
+│                   Tenant Middleware                      │
+│   ┌──────────────────────────────────────────────────┐  │
+│   │ - X-Tenant-Id 헤더 검증                           │  │
+│   │ - JWT 테넌트 클레임 추출                          │  │
+│   │ - Rate Limiting (테넌트별)                        │  │
+│   │ - Usage Metering                                 │  │
+│   └──────────────────────────────────────────────────┘  │
+├─────────────────────────────────────────────────────────┤
+│                    Service Layer                         │
+│   ┌───────────┐  ┌───────────┐  ┌───────────────────┐  │
+│   │ Tenant A  │  │ Tenant B  │  │ Shared AI Hub     │  │
+│   │ (Data)    │  │ (Data)    │  │ (LLM + RAG)       │  │
+│   └───────────┘  └───────────┘  └───────────────────┘  │
+└─────────────────────────────────────────────────────────┘
+```
+
+**격리 전략**:
+- **Database**: Schema-per-tenant (PostgreSQL schemas)
+- **Redis**: Key prefix (`tenant:{id}:*`)
+- **Qdrant**: Collection-per-tenant
+- **S3**: Bucket prefix (`s3://vivid/{tenant_id}/`)
+
+#### 10.2.3 Voice Chat (Phase 10.5)
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Voice Chat Flow                       │
+├─────────────────────────────────────────────────────────┤
+│  User Mic ──▶ WebRTC ──▶ STT ──▶ LLM ──▶ TTS ──▶ Speaker│
+│              (Opus)     (Whisper) (Claude) (Voice Clone)│
+│                                                         │
+│  Voice Clone Options:                                   │
+│  - ElevenLabs (상용)                                    │
+│  - Chatterbox (오픈소스, sub-200ms)                     │
+│  - Fish Audio (70+ 언어)                                │
+└─────────────────────────────────────────────────────────┘
+```
+
+#### 10.2.4 Creator Marketplace
+
+| 기능 | 설명 |
+|------|------|
+| IP 등록 | 캐릭터 + 월드빌딩 + 스토리 |
+| 라이선스 티어 | Free / Commercial / Exclusive |
+| 수익 분배 | 크리에이터 60% / 플랫폼 30% / Fork 원작자 10% |
+| 어트리뷰션 | 사용 추적 + 로열티 정산 |
+| 공모전 | 주기적 테마 공모 + 상금 |
+
+### 10.3 예상 파일 구조
+
+**Backend (신규)**:
+
 | 파일 | 목적 |
 |------|------|
-| `backend/app/middleware/tenant_middleware.py` | 테넌트 미들웨어 |
-| `backend/app/services/tenant_service.py` | 테넌트 관리 |
-| `backend/app/services/api_gateway.py` | API 게이트웨이 |
-| `infrastructure/k8s/` | Kubernetes 설정 |
+| `app/middleware/tenant_middleware.py` | 테넌트 격리 미들웨어 |
+| `app/services/tenant_service.py` | 테넌트 CRUD + 프로비저닝 |
+| `app/services/ip_chat_service.py` | IP 캐릭터 채팅 서비스 |
+| `app/services/character_personality.py` | 캐릭터 페르소나 + RAG 주입 |
+| `app/services/voice_chat_service.py` | WebRTC 음성 채팅 |
+| `app/services/ip_marketplace_service.py` | IP 마켓플레이스 서비스 |
+| `app/routers/tenant.py` | 테넌트 관리 API |
+| `app/routers/ip_chat.py` | IP 채팅 API + WebSocket |
+| `app/routers/voice.py` | 음성 채팅 API |
+| `app/routers/marketplace.py` | 마켓플레이스 API |
+| `app/models_tenant.py` | 테넌트 모델 |
+| `app/models_ip_chat.py` | 채팅 세션/메시지 모델 |
+
+**Frontend (신규)**:
+
+| 파일 | 목적 |
+|------|------|
+| `src/app/chat/[characterId]/page.tsx` | IP 캐릭터 채팅 페이지 |
+| `src/app/marketplace/page.tsx` | IP 마켓플레이스 |
+| `src/components/chat/ChatInterface.tsx` | 채팅 인터페이스 |
+| `src/components/chat/VoiceControl.tsx` | 음성 채팅 컨트롤 |
+| `src/components/marketplace/IPCard.tsx` | IP 카드 컴포넌트 |
+| `src/hooks/useChat.ts` | 채팅 WebSocket 훅 |
+| `src/hooks/useVoiceChat.ts` | 음성 채팅 훅 |
+
+**Infrastructure**:
+
+| 파일 | 목적 |
+|------|------|
+| `infrastructure/k8s/deployment.yaml` | K8s 배포 설정 |
+| `infrastructure/k8s/hpa.yaml` | 수평 오토스케일링 |
+| `infrastructure/k8s/ingress.yaml` | 인그레스 설정 |
+| `infrastructure/terraform/` | IaC 설정 |
+
+### 10.4 DB 스키마 (마이그레이션 028)
+
+```sql
+-- Tenants
+CREATE TABLE tenants (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(128) NOT NULL,
+    slug VARCHAR(64) UNIQUE NOT NULL,
+    plan VARCHAR(32) DEFAULT 'free',  -- free, starter, pro, enterprise
+    settings JSONB DEFAULT '{}',
+    api_key_hash VARCHAR(256),
+    usage_limits JSONB DEFAULT '{}',
+    created_at TIMESTAMP DEFAULT now(),
+    updated_at TIMESTAMP DEFAULT now()
+);
+
+-- IP Characters (확장)
+ALTER TABLE ip_registry ADD COLUMN chat_enabled BOOLEAN DEFAULT FALSE;
+ALTER TABLE ip_registry ADD COLUMN persona_prompt TEXT;
+ALTER TABLE ip_registry ADD COLUMN voice_id VARCHAR(64);  -- ElevenLabs/Chatterbox voice ID
+ALTER TABLE ip_registry ADD COLUMN scenario_branches JSONB DEFAULT '[]';
+
+-- Chat Sessions
+CREATE TABLE ip_chat_sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id VARCHAR(160) NOT NULL,
+    ip_id UUID REFERENCES ip_registry(id),
+    character_state JSONB DEFAULT '{}',  -- 캐릭터 상태
+    scenario_branch VARCHAR(64),  -- 현재 시나리오
+    model_preference VARCHAR(32) DEFAULT 'flash',  -- flash, pro, opus
+    total_messages INTEGER DEFAULT 0,
+    total_tokens_used INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT now(),
+    last_message_at TIMESTAMP
+);
+CREATE INDEX ix_chat_session_user ON ip_chat_sessions(user_id, last_message_at DESC);
+
+-- Chat Messages
+CREATE TABLE ip_chat_messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    session_id UUID REFERENCES ip_chat_sessions(id) ON DELETE CASCADE,
+    role VARCHAR(16) NOT NULL,  -- user, assistant, system
+    content TEXT NOT NULL,
+    media_urls JSONB DEFAULT '[]',  -- 이미지/음성/비디오 URL
+    tokens_used INTEGER DEFAULT 0,
+    latency_ms INTEGER,
+    model_used VARCHAR(32),
+    created_at TIMESTAMP DEFAULT now()
+);
+CREATE INDEX ix_chat_message_session ON ip_chat_messages(session_id, created_at);
+
+-- IP Marketplace Listings
+CREATE TABLE ip_marketplace_listings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ip_id UUID REFERENCES ip_registry(id),
+    creator_id VARCHAR(160) NOT NULL,
+    license_type VARCHAR(32) NOT NULL,  -- free, commercial, exclusive
+    price_credits INTEGER DEFAULT 0,
+    royalty_percent FLOAT DEFAULT 0.1,  -- Fork 시 로열티
+    downloads INTEGER DEFAULT 0,
+    revenue_total INTEGER DEFAULT 0,
+    featured BOOLEAN DEFAULT FALSE,
+    contest_winner BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT now()
+);
+CREATE INDEX ix_marketplace_featured ON ip_marketplace_listings(featured, downloads DESC);
+```
+
+### 10.5 구현 순서
+
+| 순서 | 작업 | 의존성 | 우선순위 |
+|------|------|--------|----------|
+| 1 | DB Migration (028) | - | P0 |
+| 2 | IP Chat Session/Message 모델 | 1 | P0 |
+| 3 | IP Chat Service (텍스트) | 2 | P0 |
+| 4 | Chat WebSocket Router | 3 | P0 |
+| 5 | Frontend Chat UI | 4 | P0 |
+| 6 | Marketplace Listings 모델 | 1 | P1 |
+| 7 | Marketplace Service | 6 | P1 |
+| 8 | Frontend Marketplace | 7 | P1 |
+| 9 | Tenant Middleware | - | P1 |
+| 10 | Tenant Service | 9 | P1 |
+| 11 | Voice Chat Integration | 4 | P2 |
+| 12 | K8s 배포 설정 | All | P2 |
+
+### 10.6 성능 목표
+
+| 메트릭 | 목표 |
+|--------|------|
+| Chat 첫 토큰 지연 | < 500ms |
+| WebSocket 연결 | < 100ms |
+| 동시 채팅 세션 | 10K/노드 |
+| 음성 응답 지연 | < 2s (E2E) |
+| Marketplace 검색 | < 200ms |
+
+### 10.7 Caveduck 대비 차별화 포인트
+
+| 기능 | Caveduck | Vivid Phase 10 |
+|------|----------|----------------|
+| 채팅 | 단순 텍스트 | **IP 컨텍스트 + RAG 기반** |
+| 크리에이터 수익 | 불투명 | **60/30/10 투명 분배** |
+| 콘텐츠 생성 | 채팅만 | **채팅 + 이미지/비디오/오디오 생성** |
+| B2B | 없음 | **멀티테넌트 화이트라벨** |
+| API | 미제공 | **Public API + SDK** |
+| 음성 | 기본 TTS | **Voice Cloning + WebRTC** |
+
+---
+
+## 11) Decision 011 — Phase 10 전략 채택
+
+- **ID**: SSoT-DEC-011
+- **날짜**: 2026-01-20
+- **상태**: **Proposed**
+- **결정 요약**: IP Character Chat + Multi-Tenant + Marketplace 통합 전략 채택
+- **배경/문제**:
+  - Caveduck 등 AI 캐릭터 채팅 시장 급성장 ($501B, 2026)
+  - 현재 Vivid는 콘텐츠 생성 중심, 채팅 기능 부재
+  - B2B 확장을 위한 멀티테넌트 아키텍처 필요
+- **대안**:
+  - A) 채팅만 추가 (Caveduck 클론)
+  - B) 엔터프라이즈만 추가 (B2B 집중)
+  - C) **IP Chat + Marketplace + Enterprise 통합** (채택)
+- **결정**: **C안 채택**
+  - IP-First 전략과 일관성 유지
+  - 크리에이터 수익화 강화 (마켓플레이스)
+  - B2B 확장 기반 마련 (멀티테넌트)
+- **리스크**:
+  - 구현 복잡도 높음 → 단계별 출시 (P0/P1/P2)
+  - 경쟁 심화 → IP 컨텍스트 차별화
+- **후속 작업**:
+  - Phase 10 구현 시작
+  - Caveduck 지속 모니터링
+
+---
+
+## 12) 리서치 출처
+
+### 경쟁사 분석
+- [Caveduck Review - FindMyAITool](https://findmyaitool.io/tool/caveduck/)
+- [Caveduck AI Review 2025 - Skywork](https://skywork.ai/blog/caveduck-ai-review-2025-features-safety-cost/)
+- [Character.AI Statistics - Business of Apps](https://www.businessofapps.com/data/character-ai-statistics/)
+
+### 시장 리서치
+- [AI Companion Market 2026 - Companion Guide](https://companionguide.ai/news/ai-companion-market-120m-revenue)
+- [Creator Economy 2026 - Digiday](https://digiday.com/marketing/in-graphic-detail-heres-what-the-creator-economy-is-expected-to-look-like-in-2026/)
+- [AI Companion Market Size - Precedence Research](https://www.precedenceresearch.com/ai-companion-market)
+
+### 기술 아키텍처
+- [Multi-Tenant AI on AWS](https://aws.amazon.com/blogs/machine-learning/build-a-multi-tenant-generative-ai-environment-for-your-enterprise-on-aws/)
+- [Agentic AI Multi-Tenant - AWS](https://docs.aws.amazon.com/pdfs/prescriptive-guidance/latest/agentic-ai-multitenant/agentic-ai-multitenant.pdf)
+- [Real-Time AI Chat Infrastructure - Render](https://render.com/articles/real-time-ai-chat-websockets-infrastructure)
+- [WebSocket Architecture - Ably](https://ably.com/topic/websocket-architecture-best-practices)
+
+### IP/마켓플레이스
+- [Kamoto.AI - Create & Monetize AI Characters](https://www.kamoto.ai/)
+- [IP Licensing Legal Guide - Promise Legal](https://blog.promise.legal/startup-central/licensing-your-characters-to-generative-ai-platforms-a-legal-governance-checklist-for-studios-and-ai-companies/)
+
+### 음성 기술
+- [Voice Chat AI - GitHub](https://github.com/bigsk1/voice-chat-ai)
+- [Chatterbox AI](https://chatterboxai.net/)
+- [ElevenLabs Voice Cloning](https://elevenlabs.io/voice-cloning)
 
 ---
 
@@ -565,3 +983,6 @@ revalidateTag(`ip:${slug}`);
 | 0.4 | 2026-01-19 | Phase 4-5 완료 + Decision 006/007 Accepted + Phase 5.5 Hardening 추가 |
 | 0.5 | 2026-01-20 | Phase 5.5/6 완료 + Decision 009 Accepted (Next.js Cache Components) |
 | 0.6 | 2026-01-20 | Phase 7 완료 + Decision 010 Accepted (HITL Enhancement) + Phase 8-10 로드맵 추가 |
+| 0.7 | 2026-01-20 | Phase 8 완료 (Advanced Personalization) |
+| 0.8 | 2026-01-20 | Phase 9 완료 (Monetization & Analytics) |
+| 0.9 | 2026-01-20 | Phase 10 상세 계획 + 경쟁사 분석 + 2026 리서치 추가 |

@@ -124,6 +124,11 @@ from app.routers.creator_dashboard import router as creator_dashboard_router
 # Phase 9: Monetization & Analytics
 from app.routers.analytics_dashboard import router as analytics_dashboard_router
 
+# Phase 10: IP Character Chat + Marketplace + Tenant
+from app.routers.ip_chat import router as ip_chat_router
+from app.routers.marketplace import router as marketplace_router
+from app.routers.tenant import router as tenant_router
+
 # GraphQL Gateway (2026 Best Practices - P3.3)
 from app.graphql import graphql_router
 
@@ -337,6 +342,11 @@ app.include_router(creator_dashboard_router, prefix="/api/v1", tags=["creator-da
 
 # Phase 9: Monetization & Analytics
 app.include_router(analytics_dashboard_router, tags=["analytics"])
+
+# Phase 10: IP Character Chat + Marketplace + Tenant
+app.include_router(ip_chat_router, tags=["ip-chat"])
+app.include_router(marketplace_router, tags=["marketplace"])
+app.include_router(tenant_router, tags=["tenants"])
 
 # GraphQL Gateway (2026 Best Practices - P3.3)
 if settings.ENVIRONMENT.lower() in {"production", "prod", "staging"}:

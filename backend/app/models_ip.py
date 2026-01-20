@@ -65,6 +65,15 @@ class IPCatalog(Base):
     is_featured: Mapped[bool] = mapped_column(Boolean, default=False)
     featured_order: Mapped[int] = mapped_column(Integer, default=0)
 
+    # Phase 10: Chat features
+    chat_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    persona_prompt: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    voice_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)  # ElevenLabs/Chatterbox voice ID
+    chat_model_default: Mapped[str] = mapped_column(String(32), default="flash")  # flash, pro, opus
+    chat_session_count: Mapped[int] = mapped_column(Integer, default=0)
+    chat_message_count: Mapped[int] = mapped_column(Integer, default=0)
+    marketplace_listing_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
