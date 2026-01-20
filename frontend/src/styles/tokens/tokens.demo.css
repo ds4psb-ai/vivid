@@ -1,0 +1,266 @@
+/**
+ * tokens.demo.css - Demo Flow Specific Tokens (Level 3)
+ *
+ * Component-level tokens for the demo workflow:
+ * - IP Rail Cards (umbrella encounter)
+ * - Workflow Step Navigation
+ * - Demo CTA buttons
+ * - Onboarding tooltips
+ *
+ * Based on DEMO_ENHANCEMENT_GUIDE.md
+ */
+
+/* =============================================================================
+   IP CARD TOKENS
+   For IPRailCard and IP detail pages
+   ============================================================================= */
+
+:root {
+  /* Card container */
+  --ip-card-bg: var(--glass-bg);
+  --ip-card-bg-hover: var(--glass-bg-strong);
+  --ip-card-border: var(--glass-border);
+  --ip-card-border-hover: oklch(62% 0.20 280 / 0.3);
+  --ip-card-shadow: var(--glass-shadow);
+  --ip-card-shadow-hover: 0 12px 40px oklch(0% 0 0 / 0.2);
+  --ip-card-radius: var(--radius-2xl);
+
+  /* Card transforms */
+  --ip-card-scale: 1;
+  --ip-card-scale-hover: 1.02;
+  --ip-card-translate-hover: -2px;
+
+  /* Card gradient overlay (for thumbnails) */
+  --ip-card-gradient: linear-gradient(
+    to top,
+    oklch(0% 0 0 / 0.8) 0%,
+    oklch(0% 0 0 / 0.4) 50%,
+    transparent 100%
+  );
+
+  /* Card badge (workflow count, etc.) */
+  --ip-card-badge-bg: var(--bg-primary);
+  --ip-card-badge-fg: var(--fg-on-primary);
+  --ip-card-badge-radius: var(--radius-full);
+}
+
+.dark {
+  --ip-card-shadow-hover: 0 12px 40px oklch(0% 0 0 / 0.4);
+  --ip-card-border-hover: oklch(62% 0.20 280 / 0.4);
+}
+
+/* =============================================================================
+   WORKFLOW TOKENS
+   For WorkflowStepNav, WorkflowPreviewModal
+   ============================================================================= */
+
+:root {
+  /* Navigation bar */
+  --workflow-nav-bg: var(--bg-subtle);
+  --workflow-nav-border: var(--border-default);
+  --workflow-nav-radius: var(--radius-xl);
+  --workflow-nav-padding: var(--space-4);
+
+  /* Step indicators */
+  --workflow-step-bg: var(--bg-muted);
+  --workflow-step-bg-current: var(--bg-primary-subtle);
+  --workflow-step-bg-complete: oklch(65% 0.18 145 / 0.15);
+
+  --workflow-step-dot-default: var(--neutral-300);
+  --workflow-step-dot-current: var(--violet-500);
+  --workflow-step-dot-complete: var(--state-success);
+
+  --workflow-step-border-current: var(--violet-500);
+  --workflow-step-border-complete: var(--state-success);
+
+  /* Progress bar */
+  --workflow-progress-bg: var(--neutral-200);
+  --workflow-progress-fill: var(--violet-500);
+  --workflow-progress-height: 6px;
+  --workflow-progress-radius: var(--radius-full);
+
+  /* Workflow cards (in preview modal) */
+  --workflow-card-bg: var(--glass-bg);
+  --workflow-card-bg-hover: var(--glass-bg-strong);
+  --workflow-card-border: var(--glass-border);
+  --workflow-card-shadow: var(--shadow-md);
+  --workflow-card-radius: var(--radius-xl);
+}
+
+.dark {
+  --workflow-step-dot-default: var(--neutral-600);
+  --workflow-progress-bg: var(--neutral-700);
+}
+
+/* =============================================================================
+   CTA (CALL TO ACTION) TOKENS
+   Primary action buttons for demo
+   ============================================================================= */
+
+:root {
+  /* Primary CTA (Start Workflow, Generate, etc.) */
+  --cta-primary-bg: var(--gradient-primary);
+  --cta-primary-bg-hover: linear-gradient(135deg, var(--violet-600), var(--cyan-600));
+  --cta-primary-fg: var(--fg-on-primary);
+  --cta-primary-shadow: 0 4px 14px oklch(62% 0.20 280 / 0.25);
+  --cta-primary-shadow-hover: 0 6px 20px oklch(62% 0.20 280 / 0.35);
+  --cta-primary-radius: var(--radius-xl);
+
+  /* Glow effect for emphasis */
+  --cta-glow-color: oklch(62% 0.20 280 / 0.4);
+  --cta-glow-blur: 20px;
+
+  /* Secondary CTA */
+  --cta-secondary-bg: var(--bg-interactive);
+  --cta-secondary-bg-hover: var(--bg-interactive-hover);
+  --cta-secondary-fg: var(--fg-default);
+  --cta-secondary-border: var(--border-default);
+  --cta-secondary-radius: var(--radius-lg);
+
+  /* Ghost CTA (minimal) */
+  --cta-ghost-bg: transparent;
+  --cta-ghost-bg-hover: var(--bg-interactive);
+  --cta-ghost-fg: var(--fg-primary);
+  --cta-ghost-fg-hover: var(--fg-primary-hover);
+}
+
+.dark {
+  --cta-primary-shadow: 0 4px 14px oklch(62% 0.20 280 / 0.35);
+  --cta-primary-shadow-hover: 0 6px 20px oklch(62% 0.20 280 / 0.5);
+  --cta-glow-color: oklch(62% 0.20 280 / 0.5);
+}
+
+/* =============================================================================
+   TOOLTIP / ONBOARDING TOKENS
+   For demo guidance and hints
+   ============================================================================= */
+
+:root {
+  /* Tooltip container */
+  --tooltip-bg: var(--neutral-900);
+  --tooltip-fg: var(--neutral-100);
+  --tooltip-border: var(--neutral-700);
+  --tooltip-shadow: var(--shadow-lg);
+  --tooltip-radius: var(--radius-lg);
+  --tooltip-padding: var(--space-3) var(--space-4);
+  --tooltip-max-width: 280px;
+
+  /* Tooltip arrow */
+  --tooltip-arrow-size: 8px;
+
+  /* Spotlight overlay (for guided tours) */
+  --spotlight-bg: oklch(0% 0 0 / 0.75);
+  --spotlight-ring: oklch(62% 0.20 280 / 0.6);
+  --spotlight-ring-width: 4px;
+}
+
+.dark {
+  --tooltip-bg: var(--neutral-800);
+  --tooltip-border: var(--neutral-600);
+}
+
+/* =============================================================================
+   VIDEO PLAYER TOKENS
+   For demo video and VEO playback
+   ============================================================================= */
+
+:root {
+  /* Player container */
+  --player-bg: var(--neutral-950);
+  --player-border: var(--border-subtle);
+  --player-radius: var(--radius-xl);
+  --player-shadow: var(--shadow-xl);
+
+  /* Controls */
+  --player-controls-bg: linear-gradient(to top, oklch(0% 0 0 / 0.8), transparent);
+  --player-controls-fg: var(--neutral-100);
+  --player-controls-fg-hover: var(--neutral-0);
+
+  /* Progress bar */
+  --player-progress-bg: oklch(100% 0 0 / 0.2);
+  --player-progress-fill: var(--violet-500);
+  --player-progress-buffer: oklch(100% 0 0 / 0.3);
+
+  /* Mute/unmute button */
+  --player-mute-bg: oklch(0% 0 0 / 0.6);
+  --player-mute-bg-hover: oklch(0% 0 0 / 0.8);
+  --player-mute-fg: var(--neutral-100);
+}
+
+/* =============================================================================
+   CONTEXT BANNER TOKENS
+   For workflow context indicators (e.g., "Reference Analysis Applied")
+   ============================================================================= */
+
+:root {
+  /* Info banner */
+  --banner-info-bg: var(--bg-info-subtle);
+  --banner-info-border: oklch(60% 0.16 240 / 0.3);
+  --banner-info-fg: var(--fg-info);
+  --banner-info-icon: var(--state-info);
+
+  /* Success banner */
+  --banner-success-bg: var(--bg-success-subtle);
+  --banner-success-border: oklch(65% 0.18 145 / 0.3);
+  --banner-success-fg: var(--fg-success);
+  --banner-success-icon: var(--state-success);
+
+  /* Warning banner */
+  --banner-warning-bg: var(--bg-warning-subtle);
+  --banner-warning-border: oklch(78% 0.16 80 / 0.3);
+  --banner-warning-fg: var(--fg-warning);
+  --banner-warning-icon: var(--state-warning);
+
+  /* Workflow context banner (amber) */
+  --banner-workflow-bg: oklch(78% 0.16 80 / 0.1);
+  --banner-workflow-border: oklch(78% 0.16 80 / 0.2);
+  --banner-workflow-fg: oklch(58% 0.14 80);
+  --banner-workflow-icon: oklch(68% 0.16 80);
+}
+
+.dark {
+  --banner-info-border: oklch(60% 0.16 240 / 0.4);
+  --banner-success-border: oklch(65% 0.18 145 / 0.4);
+  --banner-warning-border: oklch(78% 0.16 80 / 0.4);
+  --banner-workflow-fg: oklch(78% 0.14 80);
+}
+
+/* =============================================================================
+   SKELETON / LOADING TOKENS
+   For loading states
+   ============================================================================= */
+
+:root {
+  --skeleton-base: var(--neutral-200);
+  --skeleton-shine: var(--neutral-100);
+  --skeleton-radius: var(--radius-md);
+
+  /* Shimmer gradient */
+  --skeleton-gradient: linear-gradient(
+    90deg,
+    var(--skeleton-base) 0%,
+    var(--skeleton-shine) 50%,
+    var(--skeleton-base) 100%
+  );
+}
+
+.dark {
+  --skeleton-base: var(--neutral-800);
+  --skeleton-shine: var(--neutral-700);
+}
+
+/* =============================================================================
+   EMPTY STATE TOKENS
+   For no-data states
+   ============================================================================= */
+
+:root {
+  --empty-icon-color: var(--neutral-300);
+  --empty-title-color: var(--fg-muted);
+  --empty-description-color: var(--fg-subtle);
+  --empty-cta-color: var(--fg-primary);
+}
+
+.dark {
+  --empty-icon-color: var(--neutral-600);
+}

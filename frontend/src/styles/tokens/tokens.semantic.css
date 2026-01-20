@@ -1,0 +1,289 @@
+/**
+ * tokens.semantic.css - Semantic/Alias Tokens (Level 2)
+ *
+ * These reference base tokens and provide semantic meaning.
+ * Use these in components instead of raw base tokens.
+ *
+ * Naming: --{category}-{element}-{property}-{state}
+ * Examples: --bg-base, --fg-default, --border-subtle
+ */
+
+/* =============================================================================
+   LIGHT MODE (Default)
+   ============================================================================= */
+
+:root {
+  /* -------------------------------------------------------------------------
+     BACKGROUND TOKENS
+     ------------------------------------------------------------------------- */
+  --bg-base: var(--neutral-0);
+  --bg-subtle: var(--neutral-50);
+  --bg-muted: var(--neutral-100);
+  --bg-elevated: var(--neutral-0);
+  --bg-overlay: oklch(0% 0 0 / 0.5);
+  --bg-inverse: var(--neutral-900);
+
+  /* Interactive backgrounds */
+  --bg-interactive: var(--neutral-100);
+  --bg-interactive-hover: var(--neutral-200);
+  --bg-interactive-active: var(--neutral-300);
+
+  /* Brand backgrounds */
+  --bg-primary: var(--violet-500);
+  --bg-primary-hover: var(--violet-600);
+  --bg-primary-active: var(--violet-700);
+  --bg-primary-subtle: var(--violet-50);
+
+  --bg-secondary: var(--cyan-500);
+  --bg-secondary-hover: var(--cyan-600);
+  --bg-secondary-active: var(--cyan-700);
+  --bg-secondary-subtle: var(--cyan-50);
+
+  /* State backgrounds */
+  --bg-success: var(--state-success);
+  --bg-success-subtle: var(--state-success-light);
+  --bg-warning: var(--state-warning);
+  --bg-warning-subtle: var(--state-warning-light);
+  --bg-error: var(--state-error);
+  --bg-error-subtle: var(--state-error-light);
+  --bg-info: var(--state-info);
+  --bg-info-subtle: var(--state-info-light);
+
+  /* -------------------------------------------------------------------------
+     FOREGROUND / TEXT TOKENS
+     ------------------------------------------------------------------------- */
+  --fg-default: var(--neutral-900);
+  --fg-muted: var(--neutral-600);
+  --fg-subtle: var(--neutral-400);
+  --fg-disabled: var(--neutral-300);
+  --fg-inverse: var(--neutral-0);
+  --fg-on-primary: var(--neutral-0);
+  --fg-on-secondary: var(--neutral-0);
+
+  /* Brand foregrounds */
+  --fg-primary: var(--violet-600);
+  --fg-primary-hover: var(--violet-700);
+  --fg-secondary: var(--cyan-600);
+
+  /* State foregrounds */
+  --fg-success: var(--state-success-dark);
+  --fg-warning: var(--state-warning-dark);
+  --fg-error: var(--state-error-dark);
+  --fg-info: var(--state-info-dark);
+
+  /* -------------------------------------------------------------------------
+     BORDER TOKENS
+     ------------------------------------------------------------------------- */
+  --border-default: var(--neutral-200);
+  --border-subtle: var(--neutral-100);
+  --border-muted: var(--neutral-300);
+  --border-strong: var(--neutral-400);
+  --border-inverse: var(--neutral-700);
+
+  /* Interactive borders */
+  --border-focus: var(--violet-500);
+  --border-focus-ring: oklch(62% 0.20 280 / 0.3);
+
+  /* Brand borders */
+  --border-primary: var(--violet-500);
+  --border-secondary: var(--cyan-500);
+
+  /* State borders */
+  --border-success: var(--state-success);
+  --border-warning: var(--state-warning);
+  --border-error: var(--state-error);
+  --border-info: var(--state-info);
+
+  /* -------------------------------------------------------------------------
+     GLASS MORPHISM TOKENS
+     For frosted glass effects
+     ------------------------------------------------------------------------- */
+  --glass-bg: oklch(100% 0 0 / 0.7);
+  --glass-bg-subtle: oklch(100% 0 0 / 0.5);
+  --glass-bg-strong: oklch(100% 0 0 / 0.85);
+  --glass-border: oklch(0% 0 0 / 0.1);
+  --glass-shadow: 0 8px 32px oklch(0% 0 0 / 0.1);
+
+  /* -------------------------------------------------------------------------
+     GRADIENT TOKENS
+     ------------------------------------------------------------------------- */
+  --gradient-primary: linear-gradient(135deg, var(--violet-500), var(--cyan-500));
+  --gradient-primary-soft: linear-gradient(135deg, var(--violet-100), var(--cyan-100));
+  --gradient-dark: linear-gradient(180deg, var(--neutral-800), var(--neutral-950));
+  --gradient-radial-glow: radial-gradient(circle at center, var(--violet-500) 0%, transparent 70%);
+}
+
+/* =============================================================================
+   DARK MODE
+   ============================================================================= */
+
+.dark {
+  /* -------------------------------------------------------------------------
+     BACKGROUND TOKENS
+     ------------------------------------------------------------------------- */
+  --bg-base: var(--neutral-950);
+  --bg-subtle: var(--neutral-900);
+  --bg-muted: var(--neutral-800);
+  --bg-elevated: var(--neutral-900);
+  --bg-overlay: oklch(0% 0 0 / 0.7);
+  --bg-inverse: var(--neutral-100);
+
+  /* Interactive backgrounds */
+  --bg-interactive: var(--neutral-800);
+  --bg-interactive-hover: var(--neutral-700);
+  --bg-interactive-active: var(--neutral-600);
+
+  /* Brand backgrounds */
+  --bg-primary: var(--violet-500);
+  --bg-primary-hover: var(--violet-400);
+  --bg-primary-active: var(--violet-300);
+  --bg-primary-subtle: oklch(62% 0.20 280 / 0.15);
+
+  --bg-secondary: var(--cyan-500);
+  --bg-secondary-hover: var(--cyan-400);
+  --bg-secondary-active: var(--cyan-300);
+  --bg-secondary-subtle: oklch(62% 0.18 200 / 0.15);
+
+  /* State backgrounds */
+  --bg-success-subtle: oklch(65% 0.18 145 / 0.15);
+  --bg-warning-subtle: oklch(78% 0.16 80 / 0.15);
+  --bg-error-subtle: oklch(55% 0.22 25 / 0.15);
+  --bg-info-subtle: oklch(60% 0.16 240 / 0.15);
+
+  /* -------------------------------------------------------------------------
+     FOREGROUND / TEXT TOKENS
+     ------------------------------------------------------------------------- */
+  --fg-default: var(--neutral-100);
+  --fg-muted: var(--neutral-400);
+  --fg-subtle: var(--neutral-500);
+  --fg-disabled: var(--neutral-600);
+  --fg-inverse: var(--neutral-900);
+
+  /* Brand foregrounds */
+  --fg-primary: var(--violet-400);
+  --fg-primary-hover: var(--violet-300);
+  --fg-secondary: var(--cyan-400);
+
+  /* State foregrounds */
+  --fg-success: var(--state-success-light);
+  --fg-warning: var(--state-warning-light);
+  --fg-error: var(--state-error-light);
+  --fg-info: var(--state-info-light);
+
+  /* -------------------------------------------------------------------------
+     BORDER TOKENS
+     ------------------------------------------------------------------------- */
+  --border-default: var(--neutral-700);
+  --border-subtle: var(--neutral-800);
+  --border-muted: var(--neutral-600);
+  --border-strong: var(--neutral-500);
+  --border-inverse: var(--neutral-300);
+
+  /* -------------------------------------------------------------------------
+     GLASS MORPHISM TOKENS
+     ------------------------------------------------------------------------- */
+  --glass-bg: oklch(15% 0.006 280 / 0.7);
+  --glass-bg-subtle: oklch(15% 0.006 280 / 0.5);
+  --glass-bg-strong: oklch(15% 0.006 280 / 0.85);
+  --glass-border: oklch(100% 0 0 / 0.1);
+  --glass-shadow: 0 8px 32px oklch(0% 0 0 / 0.3);
+
+  /* -------------------------------------------------------------------------
+     GRADIENT TOKENS
+     ------------------------------------------------------------------------- */
+  --gradient-primary-soft: linear-gradient(135deg, oklch(62% 0.20 280 / 0.2), oklch(62% 0.18 200 / 0.2));
+}
+
+/* =============================================================================
+   DIMENSION APP SEMANTIC TOKENS
+   Map to specific dimension colors
+   ============================================================================= */
+
+:root {
+  /* Each dimension app gets semantic tokens */
+  --dim-current: var(--violet-500);
+  --dim-current-bg: var(--bg-primary-subtle);
+  --dim-current-border: var(--violet-500);
+}
+
+/* Dimension-specific overrides via data attribute */
+[data-dimension="mirror"] {
+  --dim-current: var(--dim-mirror);
+  --dim-current-bg: oklch(50% 0.20 290 / 0.15);
+  --dim-current-border: var(--dim-mirror);
+}
+
+[data-dimension="decoder"],
+[data-dimension="reference-decoder"] {
+  --dim-current: var(--dim-decoder);
+  --dim-current-bg: oklch(55% 0.14 180 / 0.15);
+  --dim-current-border: var(--dim-decoder);
+}
+
+[data-dimension="scenario"] {
+  --dim-current: var(--dim-scenario);
+  --dim-current-bg: oklch(72% 0.16 85 / 0.15);
+  --dim-current-border: var(--dim-scenario);
+}
+
+[data-dimension="sound"] {
+  --dim-current: var(--dim-sound);
+  --dim-current-bg: oklch(65% 0.18 25 / 0.15);
+  --dim-current-border: var(--dim-sound);
+}
+
+[data-dimension="storyboard"] {
+  --dim-current: var(--dim-storyboard);
+  --dim-current-bg: oklch(52% 0.18 260 / 0.15);
+  --dim-current-border: var(--dim-storyboard);
+}
+
+[data-dimension="prompt"] {
+  --dim-current: var(--dim-prompt);
+  --dim-current-bg: oklch(58% 0.22 320 / 0.15);
+  --dim-current-border: var(--dim-prompt);
+}
+
+[data-dimension="visual"] {
+  --dim-current: var(--dim-visual);
+  --dim-current-bg: oklch(60% 0.16 155 / 0.15);
+  --dim-current-border: var(--dim-visual);
+}
+
+[data-dimension="veo"] {
+  --dim-current: var(--dim-veo);
+  --dim-current-bg: oklch(52% 0.18 210 / 0.15);
+  --dim-current-border: var(--dim-veo);
+}
+
+[data-dimension="quality"] {
+  --dim-current: var(--dim-quality);
+  --dim-current-bg: oklch(55% 0.20 15 / 0.15);
+  --dim-current-border: var(--dim-quality);
+}
+
+[data-dimension="aesthetic"] {
+  --dim-current: var(--dim-aesthetic);
+  --dim-current-bg: oklch(62% 0.18 350 / 0.15);
+  --dim-current-border: var(--dim-aesthetic);
+}
+
+/* =============================================================================
+   HIGH CONTRAST MODE
+   WCAG 2.2 AAA compliance
+   ============================================================================= */
+
+@media (prefers-contrast: more) {
+  :root {
+    --fg-default: var(--neutral-1000);
+    --fg-muted: var(--neutral-800);
+    --border-default: var(--neutral-600);
+    --border-focus-ring: oklch(62% 0.20 280 / 0.6);
+  }
+
+  .dark {
+    --fg-default: var(--neutral-0);
+    --fg-muted: var(--neutral-200);
+    --border-default: var(--neutral-400);
+  }
+}

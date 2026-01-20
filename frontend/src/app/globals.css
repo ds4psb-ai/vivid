@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./app-colors.css";
+@import "../styles/tokens/index.css";
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Tailwind v4 safelist for dynamic dimension utilities (AppRegistry-driven) */

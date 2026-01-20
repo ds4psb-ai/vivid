@@ -1,0 +1,455 @@
+/**
+ * tokens.motion.css - Motion & Animation Tokens
+ *
+ * 2026 Best Practices:
+ * - Purposeful motion (why does it move?)
+ * - Functional feedback (button states, form validation)
+ * - Reduced motion support (WCAG 2.2)
+ *
+ * @see https://primotech.com/ui-ux-evolution-2026-why-micro-interactions-and-motion-matter-more-than-ever/
+ */
+
+/* =============================================================================
+   DURATION TOKENS
+   Timing values for animations
+   ============================================================================= */
+
+:root {
+  /* Micro-interactions (button clicks, toggles) */
+  --duration-instant: 50ms;
+  --duration-fast: 100ms;
+  --duration-normal: 200ms;
+
+  /* UI transitions (modals, dropdowns) */
+  --duration-moderate: 300ms;
+  --duration-slow: 400ms;
+
+  /* Page/content transitions */
+  --duration-slower: 500ms;
+  --duration-slowest: 700ms;
+
+  /* Special effects (loading, emphasis) */
+  --duration-emphasis: 1000ms;
+  --duration-loop: 2000ms;
+}
+
+/* =============================================================================
+   EASING TOKENS
+   Cubic bezier curves for natural motion
+   ============================================================================= */
+
+:root {
+  /* Standard easings */
+  --ease-linear: linear;
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Smooth (default for most transitions) */
+  --ease-smooth: cubic-bezier(0.25, 0.1, 0.25, 1);
+
+  /* Bounce (playful interactions) */
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-bounce-soft: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  /* Elastic (emphasis, success) */
+  --ease-elastic: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* Spring (natural physics) */
+  --ease-spring: cubic-bezier(0.5, 1.5, 0.5, 1);
+  --ease-spring-soft: cubic-bezier(0.5, 1.25, 0.5, 1);
+
+  /* Expo (dramatic entrances) */
+  --ease-expo-out: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-expo-in: cubic-bezier(0.95, 0.05, 0.795, 0.035);
+
+  /* Back (overshoot) */
+  --ease-back-out: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --ease-back-in: cubic-bezier(0.6, -0.28, 0.735, 0.045);
+}
+
+/* =============================================================================
+   TRANSITION PRESETS
+   Common transition combinations
+   ============================================================================= */
+
+:root {
+  /* Interactive elements (buttons, links) */
+  --transition-interactive: var(--duration-fast) var(--ease-smooth);
+  --transition-interactive-slow: var(--duration-normal) var(--ease-smooth);
+
+  /* Hover effects */
+  --transition-hover: var(--duration-normal) var(--ease-out);
+  --transition-hover-scale: transform var(--duration-normal) var(--ease-bounce-soft);
+
+  /* Focus states */
+  --transition-focus: var(--duration-fast) var(--ease-out);
+
+  /* Content changes (accordion, tabs) */
+  --transition-content: var(--duration-moderate) var(--ease-smooth);
+  --transition-content-slow: var(--duration-slow) var(--ease-smooth);
+
+  /* Modal/overlay */
+  --transition-modal: var(--duration-moderate) var(--ease-expo-out);
+  --transition-overlay: var(--duration-normal) var(--ease-out);
+
+  /* Drawer/panel */
+  --transition-drawer: var(--duration-slow) var(--ease-expo-out);
+
+  /* Page transitions */
+  --transition-page: var(--duration-slower) var(--ease-smooth);
+
+  /* Color transitions */
+  --transition-color: color var(--duration-fast) var(--ease-smooth),
+    background-color var(--duration-fast) var(--ease-smooth),
+    border-color var(--duration-fast) var(--ease-smooth);
+
+  /* All common properties */
+  --transition-all: all var(--duration-normal) var(--ease-smooth);
+}
+
+/* =============================================================================
+   ANIMATION KEYFRAMES
+   Reusable keyframe definitions
+   ============================================================================= */
+
+/* Fade */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Scale */
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes scale-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+/* Slide */
+@keyframes slide-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Bounce */
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bounce-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Pulse */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes pulse-scale {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Glow */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--cta-glow-color);
+  }
+  50% {
+    box-shadow: 0 0 20px var(--cta-glow-color), 0 0 30px var(--cta-glow-color);
+  }
+}
+
+/* Shimmer (skeleton loading) */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Spin */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Shake (error feedback) */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-4px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(4px);
+  }
+}
+
+/* Workflow step transition */
+@keyframes step-activate {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 var(--workflow-step-border-current);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 4px oklch(62% 0.20 280 / 0.3);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@keyframes step-complete {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.2);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Card entrance (staggered) */
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Progress fill */
+@keyframes progress-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* =============================================================================
+   ANIMATION UTILITY TOKENS
+   ============================================================================= */
+
+:root {
+  /* Named animations */
+  --animation-fade-in: fade-in var(--duration-normal) var(--ease-out) forwards;
+  --animation-fade-out: fade-out var(--duration-normal) var(--ease-out) forwards;
+  --animation-scale-in: scale-in var(--duration-moderate) var(--ease-bounce-soft) forwards;
+  --animation-scale-out: scale-out var(--duration-normal) var(--ease-in) forwards;
+  --animation-slide-up: slide-in-up var(--duration-moderate) var(--ease-expo-out) forwards;
+  --animation-slide-down: slide-in-down var(--duration-moderate) var(--ease-expo-out) forwards;
+  --animation-bounce-in: bounce-in var(--duration-slow) var(--ease-bounce) forwards;
+  --animation-pulse: pulse var(--duration-loop) var(--ease-in-out) infinite;
+  --animation-shimmer: shimmer var(--duration-loop) var(--ease-linear) infinite;
+  --animation-spin: spin var(--duration-emphasis) var(--ease-linear) infinite;
+  --animation-shake: shake var(--duration-slow) var(--ease-smooth);
+  --animation-glow: glow-pulse var(--duration-loop) var(--ease-in-out) infinite;
+
+  /* Card animations */
+  --animation-card-enter: card-enter var(--duration-slow) var(--ease-expo-out) forwards;
+
+  /* Workflow animations */
+  --animation-step-activate: step-activate var(--duration-slow) var(--ease-bounce);
+  --animation-step-complete: step-complete var(--duration-moderate) var(--ease-bounce);
+}
+
+/* =============================================================================
+   REDUCED MOTION
+   WCAG 2.2 compliance - respect user preferences
+   ============================================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  :root {
+    /* Override all durations to near-instant */
+    --duration-instant: 0.01ms;
+    --duration-fast: 0.01ms;
+    --duration-normal: 0.01ms;
+    --duration-moderate: 0.01ms;
+    --duration-slow: 0.01ms;
+    --duration-slower: 0.01ms;
+    --duration-slowest: 0.01ms;
+    --duration-emphasis: 0.01ms;
+    --duration-loop: 0.01ms;
+  }
+}
+
+/* =============================================================================
+   MOTION UTILITY CLASSES
+   Apply motion tokens easily
+   ============================================================================= */
+
+.motion-safe {
+  /* Only animate if user hasn't requested reduced motion */
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .motion-fade-in {
+    animation: var(--animation-fade-in);
+  }
+
+  .motion-scale-in {
+    animation: var(--animation-scale-in);
+  }
+
+  .motion-slide-up {
+    animation: var(--animation-slide-up);
+  }
+
+  .motion-bounce-in {
+    animation: var(--animation-bounce-in);
+  }
+
+  .motion-pulse {
+    animation: var(--animation-pulse);
+  }
+
+  .motion-shimmer {
+    animation: var(--animation-shimmer);
+    background: var(--skeleton-gradient);
+    background-size: 200% 100%;
+  }
+
+  .motion-spin {
+    animation: var(--animation-spin);
+  }
+
+  .motion-glow {
+    animation: var(--animation-glow);
+  }
+}
+
+/* Staggered card animations */
+@media (prefers-reduced-motion: no-preference) {
+  .motion-stagger > * {
+    animation: var(--animation-card-enter);
+    animation-fill-mode: both;
+  }
+
+  .motion-stagger > *:nth-child(1) { animation-delay: 0ms; }
+  .motion-stagger > *:nth-child(2) { animation-delay: 50ms; }
+  .motion-stagger > *:nth-child(3) { animation-delay: 100ms; }
+  .motion-stagger > *:nth-child(4) { animation-delay: 150ms; }
+  .motion-stagger > *:nth-child(5) { animation-delay: 200ms; }
+  .motion-stagger > *:nth-child(6) { animation-delay: 250ms; }
+  .motion-stagger > *:nth-child(7) { animation-delay: 300ms; }
+  .motion-stagger > *:nth-child(8) { animation-delay: 350ms; }
+  .motion-stagger > *:nth-child(9) { animation-delay: 400ms; }
+  .motion-stagger > *:nth-child(10) { animation-delay: 450ms; }
+}

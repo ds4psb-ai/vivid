@@ -1,0 +1,17 @@
+/**
+ * Design Tokens Index
+ *
+ * Import order matters:
+ * 1. Base tokens (raw primitives)
+ * 2. Semantic tokens (aliases)
+ * 3. Component tokens (demo-specific)
+ * 4. Motion tokens (animations)
+ *
+ * @see https://www.w3.org/community/design-tokens/
+ * @version 2026.01
+ */
+
+@import "./tokens.base.css";
+@import "./tokens.semantic.css";
+@import "./tokens.demo.css";
+@import "./tokens.motion.css";
