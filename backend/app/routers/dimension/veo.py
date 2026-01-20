@@ -416,10 +416,12 @@ async def generate_veo_video_stream(
 
     # Get capsule info for credit cost
     capsule_info = next(
-        (c for c in DIMENSION_CAPSULES if c["id"] == DimensionCapsuleId.VEO_VIDEO_GENERATE.value),
+        (c for c in DIMENSION_CAPSULES if c.get("capsule_key") == DimensionCapsuleId.VEO_VIDEO_GENERATE.value),
         None
     )
-    credit_cost = capsule_info["cost"] if capsule_info else 200
+    # credit_costs is a dict keyed by model name
+    credit_costs = capsule_info.get("credit_costs", {}) if capsule_info else {}
+    credit_cost = credit_costs.get(request.model, 200)
 
     async def event_stream():
         """SSE event generator with progress updates."""
@@ -478,9 +480,11 @@ async def generate_veo_video_stream(
                 # Deduct credits upfront
                 try:
                     await deduct_credits(
-                        db, user_id, credit_cost,
-                        f"Veo video generation: {request.prompt[:50]}...",
-                        {"capsule_id": DimensionCapsuleId.VEO_VIDEO_GENERATE.value}
+                        db=db,
+                        user_id=user_id,
+                        amount=credit_cost,
+                        description=f"Veo video generation: {request.prompt[:50]}...",
+                        meta={"capsule_id": DimensionCapsuleId.VEO_VIDEO_GENERATE.value}
                     )
                     credits_deducted = True
                 except ValueError as e:
