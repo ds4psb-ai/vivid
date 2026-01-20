@@ -202,6 +202,7 @@ function HomePageContent() {
       subtitleEn: "Cyberpunk city",
       license: "allowed" as const,
       genres: ["SF", "Action"],
+      thumbnailUrl: "/images/ip_cards/neo_seoul.svg",
     },
     {
       titleKo: "달빛 정원",
@@ -210,6 +211,7 @@ function HomePageContent() {
       subtitleEn: "Fantasy realm",
       license: "restricted" as const,
       genres: ["Fantasy", "Drama"],
+      thumbnailUrl: "/images/ip_cards/moonlight_garden.svg",
     },
     {
       titleKo: "서울 2099",
@@ -218,6 +220,7 @@ function HomePageContent() {
       subtitleEn: "Future chase",
       license: "allowed" as const,
       genres: ["Thriller", "Sci-Fi"],
+      thumbnailUrl: "/images/ip_cards/seoul_2099.svg",
     },
     {
       titleKo: "금빛 극장",
@@ -226,8 +229,10 @@ function HomePageContent() {
       subtitleEn: "Musical stage",
       license: "prohibited" as const,
       genres: ["Musical", "Romance"],
+      thumbnailUrl: "/images/ip_cards/golden_theater.svg",
     },
   ];
+
 
   const handleIPItemClick = (item: { slug: string }) => {
     router.push("/ip/" + item.slug);
@@ -318,6 +323,7 @@ function HomePageContent() {
                       subtitle={language === "ko" ? item.subtitleKo : item.subtitleEn}
                       licenseStatus={item.license}
                       genres={item.genres}
+                      thumbnailUrl={item.thumbnailUrl}
                     />
                   ))}
                 </div>

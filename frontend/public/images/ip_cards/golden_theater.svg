@@ -1,0 +1,40 @@
+<svg width="800" height="450" viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="stage-floor" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#400" />
+      <stop offset="100%" stop-color="#200" />
+    </linearGradient>
+    <style>
+      @keyframes curtain-sway {
+        0%, 100% { transform: scaleX(1); }
+        50% { transform: scaleX(1.02); }
+      }
+      @keyframes spot-move {
+        0% { transform: rotate(-20deg); opacity: 0.3; }
+        50% { transform: rotate(20deg); opacity: 0.5; }
+        100% { transform: rotate(-20deg); opacity: 0.3; }
+      }
+      .curtain { fill: #800000; transform-origin: top; animation: curtain-sway 4s ease-in-out infinite; }
+      .spotlight { fill: #fff; transform-origin: 400px -100px; animation: spot-move 6s ease-in-out infinite; }
+    </style>
+  </defs>
+
+  <!-- Stage Background (Dark) -->
+  <rect width="800" height="450" fill="#100" />
+  
+  <!-- Floor -->
+  <path d="M0,450 L100,350 L700,350 L800,450 Z" fill="url(#stage-floor)" />
+  
+  <!-- Spotlights -->
+  <path d="M400,-100 L200,400 L600,400 Z" class="spotlight" filter="blur(20px)" />
+  <path d="M200,-100 L0,400 L400,400 Z" class="spotlight" filter="blur(20px)" style="animation-delay: -3s; fill: #ffd700;" />
+  <path d="M600,-100 L400,400 L800,400 Z" class="spotlight" filter="blur(20px)" style="animation-delay: -1.5s; fill: #ffd700;" />
+  
+  <!-- Curtains -->
+  <path d="M0,0 C100,100 0,300 0,450 L-100,450 L-100,0 Z" class="curtain" />
+  <path d="M800,0 C700,100 800,300 800,450 L900,450 L900,0 Z" class="curtain" />
+  
+  <!-- Top Valence -->
+  <path d="M0,0 Q100,100 200,50 T400,50 T600,50 T800,0 L800,-100 L0,-100 Z" fill="#600" />
+
+</svg>

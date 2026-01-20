@@ -1,0 +1,45 @@
+<svg width="800" height="450" viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="chase-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#200" />
+      <stop offset="100%" stop-color="#000" />
+    </linearGradient>
+    <style>
+      @keyframes road-move {
+        0% { transform: scaleY(1); opacity: 0.3; }
+        50% { transform: scaleY(1.5); opacity: 0.6; }
+        100% { transform: scaleY(1); opacity: 0.3; }
+      }
+      @keyframes speed-streak {
+        0% { transform: translateX(-800px) skewX(-45deg); opacity: 0; }
+        20% { opacity: 1; }
+        80% { opacity: 1; }
+        100% { transform: translateX(800px) skewX(-45deg); opacity: 0; }
+      }
+      .streak { fill: #ff0000; opacity: 0.6; animation: speed-streak 0.8s linear infinite; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="450" fill="url(#chase-bg)" />
+  
+  <!-- Perspective Grid (Tunnel/City) -->
+  <path d="M0,0 L350,225 L0,450 Z" fill="#111" />
+  <path d="M800,0 L450,225 L800,450 Z" fill="#111" />
+  <path d="M0,0 L800,0 L450,225 L350,225 Z" fill="#050505" />
+  <path d="M0,450 L800,450 L450,225 L350,225 Z" fill="#1a1a1a" />
+  
+  <!-- Road Lights -->
+  <rect x="380" y="250" width="10" height="20" fill="#ffaa00" opacity="0.5" style="animation: road-move 0.5s infinite" />
+  <rect x="410" y="300" width="20" height="40" fill="#ffaa00" opacity="0.6" style="animation: road-move 0.5s infinite 0.1s" />
+  <rect x="300" y="400" width="40" height="10" fill="#ff0000" opacity="0.8" />
+  
+  <!-- Speed Streaks (Motion Blur) -->
+  <rect x="0" y="100" width="200" height="10" class="streak" />
+  <rect x="100" y="350" width="300" height="5" class="streak" style="animation-delay: 0.2s; fill: #ffff00;" />
+  <rect x="500" y="50" width="150" height="8" class="streak" style="animation-delay: 0.4s; fill: #00ffff;" />
+  <rect x="600" y="380" width="200" height="15" class="streak" style="animation-delay: 0.1s" />
+
+  <!-- Center Focal Point -->
+  <circle cx="400" cy="225" r="5" fill="#fff" />
+</svg>

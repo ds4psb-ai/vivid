@@ -1,0 +1,53 @@
+<svg width="800" height="450" viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="night-sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0a1a2a" />
+      <stop offset="100%" stop-color="#1d4e5f" />
+    </linearGradient>
+    <style>
+      @keyframes float-up {
+        0% { transform: translateY(0); opacity: 0; }
+        20% { opacity: 1; }
+        80% { opacity: 1; }
+        100% { transform: translateY(-50px); opacity: 0; }
+      }
+      @keyframes pulse {
+        0% { r: 60; opacity: 0.9; }
+        50% { r: 62; opacity: 1; }
+        100% { r: 60; opacity: 0.9; }
+      }
+      @keyframes mist-move {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-100px); }
+      }
+      .firefly { fill: #ffd700; animation: float-up 4s ease-in-out infinite; }
+      .mist { fill: #fff; opacity: 0.1; animation: mist-move 10s linear infinite; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="450" fill="url(#night-sky)" />
+
+  <!-- Moon -->
+  <circle cx="400" cy="150" r="60" fill="#fff" filter="blur(2px)" opacity="0.9" style="animation: pulse 5s infinite ease-in-out" />
+  
+  <!-- Mountains/Hills (Midground) -->
+  <path d="M0,450 L200,300 L400,380 L600,280 L800,450 Z" fill="#132c38" />
+  
+  <!-- Foreground Elements (Ruins/Silhouette) -->
+  <path d="M0,450 L100,350 L120,250 L140,350 L300,450 Z" fill="#08151b" />
+  <path d="M600,450 L700,320 L750,300 L800,450 Z" fill="#08151b" />
+  
+  <!-- Mist Layers -->
+  <circle cx="200" cy="400" r="100" class="mist" filter="blur(20px)" />
+  <circle cx="600" cy="420" r="120" class="mist" filter="blur(20px)" />
+
+  <!-- Fireflies -->
+  <circle cx="150" cy="400" r="2" class="firefly" style="animation-delay: 0s" />
+  <circle cx="250" cy="380" r="3" class="firefly" style="animation-delay: 1.2s" />
+  <circle cx="500" cy="410" r="2" class="firefly" style="animation-delay: 0.5s" />
+  <circle cx="700" cy="350" r="3" class="firefly" style="animation-delay: 2.5s" />
+  <circle cx="400" cy="300" r="2" class="firefly" style="animation-delay: 1.8s" />
+  <circle cx="600" cy="380" r="2" class="firefly" style="animation-delay: 3.0s" />
+
+</svg>
