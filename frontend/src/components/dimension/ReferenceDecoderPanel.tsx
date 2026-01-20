@@ -215,8 +215,8 @@ const getI18n = (isKo: boolean) => ({
   ],
   depths: [
     { value: "quick", label: isKo ? "빠른 분석" : "Quick" },
-    { value: "detailed", label: isKo ? "상세 분석" : "Detailed" },
-    { value: "comprehensive", label: isKo ? "종합 분석" : "Comprehensive" },
+    { value: "standard", label: isKo ? "상세 분석" : "Standard" },
+    { value: "deep", label: isKo ? "종합 분석" : "Deep" },
   ],
   models: [
     { value: "gemini-3-flash-preview", label: isKo ? "Flash (빠름)" : "Flash (Fast)" },
@@ -305,7 +305,7 @@ function ReferenceDecoderContent() {
     "movement",
   ]);
   const [model, setModel] = useState("gemini-3-flash-preview");
-  const [analysisDepth, setAnalysisDepth] = useState("detailed");
+  const [analysisDepth, setAnalysisDepth] = useState("standard");
   const [context, setContext] = useState("");
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -317,6 +317,7 @@ function ReferenceDecoderContent() {
   // IP reference state (for demo workflow integration)
   const [ipVideoUrl, setIpVideoUrl] = useState<string | null>(null);
   const [ipSlug, setIpSlug] = useState<string | null>(null);
+  const [isLoadingIpVideo, setIsLoadingIpVideo] = useState(false);
 
   // URL parameter handling for workflow integration
   useEffect(() => {
@@ -331,6 +332,8 @@ function ReferenceDecoderContent() {
       const ipData = getDemoIPOverride(ipParam);
       if (ipData?.previewVideoUrl) {
         setIpVideoUrl(ipData.previewVideoUrl);
+        // Auto-select video mode when IP has video reference
+        setMode("video");
       }
       // Pre-fill context with IP info
       const ipContext = isKorean
@@ -343,6 +346,40 @@ function ReferenceDecoderContent() {
       setDescription(decodeURIComponent(promptParam));
     }
   }, [isKorean]);
+
+  // Auto-load IP video when switching to video mode
+  useEffect(() => {
+    if (mode !== "video" || !ipVideoUrl || uploadedFile) return;
+
+    const loadIpVideo = async () => {
+      setIsLoadingIpVideo(true);
+      try {
+        const response = await fetch(ipVideoUrl);
+        if (!response.ok) throw new Error("Failed to fetch IP video");
+
+        const blob = await response.blob();
+        const fileName = ipVideoUrl.split("/").pop() || "ip-reference.mp4";
+        // Determine correct MIME type from Content-Type header or file extension
+        const contentType = response.headers.get("Content-Type");
+        const mimeType = contentType?.startsWith("video/")
+          ? contentType
+          : fileName.endsWith(".mp4") ? "video/mp4"
+          : fileName.endsWith(".webm") ? "video/webm"
+          : "video/mp4";
+        const file = new File([blob], fileName, { type: mimeType });
+
+        setUploadedFile(file);
+        setValidationError(null);
+      } catch (err) {
+        console.error("Failed to load IP video:", err);
+        // Silently fail - user can still upload manually
+      } finally {
+        setIsLoadingIpVideo(false);
+      }
+    };
+
+    void loadIpVideo();
+  }, [mode, ipVideoUrl, uploadedFile]);
 
   // React 19: useTransition for non-blocking form submission
   const [isTransitionPending, startTransition] = useTransition();
@@ -499,15 +536,12 @@ function ReferenceDecoderContent() {
 
     const formData = new FormData();
     formData.append("file", uploadedFile);
-    if (context) {
-      formData.append("context", context);
-    }
 
-    await wrappedExecute(
-      `${API_BASE}/api/dimension/4d/extract-style`,
-      formData,
-      getBYOKHeaders(byokKey)
-    );
+    const url = context
+      ? `${API_BASE}/api/dimension/4d/extract-style?context=${encodeURIComponent(context)}`
+      : `${API_BASE}/api/dimension/4d/extract-style`;
+
+    await wrappedExecute(url, formData, getBYOKHeaders(byokKey));
   }, [uploadedFile, context, byokKey, creditCtx, wrappedExecute, CREDIT_COST, t.errors]);
 
   // Video analysis handler (2026 Expert Workflow)
@@ -525,10 +559,9 @@ function ReferenceDecoderContent() {
 
     const formData = new FormData();
     formData.append("file", uploadedFile);
-    formData.append("analysis_depth", analysisDepth);
 
     await wrappedExecute(
-      `${API_BASE}/api/dimension/4d/analyze-video`,
+      `${API_BASE}/api/dimension/4d/analyze-video?analysis_depth=${encodeURIComponent(analysisDepth)}`,
       formData,
       getBYOKHeaders(byokKey)
     );
@@ -585,9 +618,10 @@ function ReferenceDecoderContent() {
 
   const displayError = validationError || error;
   const canSubmit =
-    mode === "text"
+    !isLoadingIpVideo &&
+    (mode === "text"
       ? description.trim() && focusAreas.length > 0
-      : !!uploadedFile;
+      : !!uploadedFile);
 
   return (
     <>
@@ -731,15 +765,46 @@ function ReferenceDecoderContent() {
         {/* Video Mode Inputs */}
         {mode === "video" && (
           <>
-            <FileUploadArea
-              accept={ALLOWED_VIDEO_TYPES.join(",")}
-              file={uploadedFile}
-              preview={null}
-              onUpload={handleFileUpload}
-              label={t.labels.uploadVideo}
-              icon={<Video className="w-8 h-8" />}
-              helperText={isKorean ? "MP4, WebM (최대 100MB)" : "MP4, WebM (max 100MB)"}
-            />
+            {/* IP Video Auto-loaded Banner */}
+            {ipVideoUrl && uploadedFile && !isLoadingIpVideo && (
+              <div className="p-3 rounded-xl bg-violet-500/10 border border-violet-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Film className="w-4 h-4 text-violet-500" />
+                  <span className="text-xs font-medium text-violet-600 dark:text-violet-400">
+                    {isKorean ? "IP 레퍼런스 영상 로드됨" : "IP Reference Video Loaded"}
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-500 dark:text-zinc-500">
+                  {uploadedFile.name} ({(uploadedFile.size / (1024 * 1024)).toFixed(1)}MB)
+                </p>
+              </div>
+            )}
+
+            {/* Loading IP Video */}
+            {isLoadingIpVideo && (
+              <div className="p-4 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                <div className="flex items-center gap-3">
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-violet-500 border-t-transparent" />
+                  <span className="text-sm text-slate-600 dark:text-zinc-400">
+                    {isKorean ? "IP 레퍼런스 영상 로딩 중..." : "Loading IP reference video..."}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* File Upload (hidden when IP video is loaded, show for manual override) */}
+            {(!ipVideoUrl || !uploadedFile) && !isLoadingIpVideo && (
+              <FileUploadArea
+                accept={ALLOWED_VIDEO_TYPES.join(",")}
+                file={uploadedFile}
+                preview={null}
+                onUpload={handleFileUpload}
+                label={t.labels.uploadVideo}
+                icon={<Video className="w-8 h-8" />}
+                helperText={isKorean ? "MP4, WebM (최대 100MB)" : "MP4, WebM (max 100MB)"}
+              />
+            )}
+
             <DimensionPanel.Select
               label={t.labels.analysisDepth}
               value={analysisDepth}
@@ -975,7 +1040,9 @@ function TextAnalysisDisplay({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {Object.entries(result).map(([key, value]) => {
+          // Skip non-string fields (objects, arrays, etc.)
           if (["recommendations", "evidence_refs", "confidence"].includes(key)) return null;
+          if (typeof value !== "string" || !value) return null;
           const title = t.focusAreas.find((f) => f.value === key)?.label || key;
           return (
             <div key={key} className="p-6 bg-white/80 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl">
@@ -983,7 +1050,7 @@ function TextAnalysisDisplay({
                 {title}
               </h4>
               <p className="text-sm text-slate-700 dark:text-zinc-200 leading-relaxed">
-                {value as string}
+                {value}
               </p>
             </div>
           );

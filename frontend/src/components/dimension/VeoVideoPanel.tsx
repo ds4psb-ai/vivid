@@ -14,7 +14,8 @@
  * @see https://react.dev/blog/2024/12/05/react-19
  */
 
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useState, useRef, useCallback, useMemo, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
@@ -22,6 +23,8 @@ import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { getPreviousStepResult, parseWorkflowUrlParams } from "@/lib/workflow-state";
+import { Sparkles } from "lucide-react";
 
 const DIMENSION_CODE = "veo";
 const DIMENSION_KEY = "video-maker";
@@ -74,11 +77,31 @@ const getVeoModels = (isKo: boolean) => [
   },
 ];
 
+// Workflow context type - data from previous steps
+interface WorkflowScenarioContext {
+  source: string;
+  scenarioTitle?: string;
+  currentShot?: {
+    shotNumber: number;
+    description: string;
+    cameraWork?: string;
+    lighting?: string;
+    mood?: string;
+  };
+  styleHints?: {
+    mood?: string;
+    lighting?: string;
+    colorPalette?: string[];
+  };
+  fullScript?: string;
+}
+
 // === Content Component ===
 function VeoVideoContent() {
   const { token, setLoading, setResult, setError } = useDimensionPanel();
   const { language } = useLanguage();
   const isKo = language === "ko";
+  const searchParams = useSearchParams();
 
   // i18n labels
   const labels = useMemo(() => ({
@@ -143,7 +166,138 @@ function VeoVideoContent() {
   // File upload state (2026 Best Practice: Multimodal input)
   const [_uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
+  // Workflow context - data from previous steps (Scenario Generator, Reference Decoder)
+  const [workflowContext, setWorkflowContext] = useState<WorkflowScenarioContext | null>(null);
+
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Load previous step data on mount (workflow integration)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const { ipSlug, step: currentStep } = parseWorkflowUrlParams(searchParams);
+    if (!ipSlug || !currentStep || currentStep <= 1) return;
+
+    // Search backward through previous steps for scenario/style data
+    for (let prevStep = currentStep - 1; prevStep >= 1; prevStep--) {
+      const prevResult = getPreviousStepResult(ipSlug, prevStep + 1);
+      if (!prevResult?.outputData) continue;
+
+      const data = prevResult.outputData as Record<string, unknown>;
+      const context: WorkflowScenarioContext = { source: "workflow" };
+
+      // StoryArchitectPanel output (title, logline, synopsis, structure)
+      if (data.logline || data.synopsis || data.structure) {
+        context.scenarioTitle = data.title as string;
+
+        // Build full script from synopsis and structure
+        let scriptParts: string[] = [];
+        if (data.logline) scriptParts.push(data.logline as string);
+        if (data.synopsis) scriptParts.push(data.synopsis as string);
+
+        // Extract structure acts as shots
+        const structure = data.structure as Array<{
+          act: string;
+          description: string;
+          duration: string;
+          emotion: string;
+        }> | undefined;
+
+        if (structure && structure.length > 0) {
+          // Use first act as current shot
+          const firstAct = structure[0];
+          context.currentShot = {
+            shotNumber: 1,
+            description: firstAct.description,
+            mood: firstAct.emotion,
+          };
+
+          // Add all act descriptions to script
+          structure.forEach((act, i) => {
+            scriptParts.push(`[${act.act}] ${act.description} (${act.emotion})`);
+          });
+        }
+
+        context.fullScript = scriptParts.join("\n\n");
+
+        // Extract visual motifs for style hints
+        if (data.visual_motifs && Array.isArray(data.visual_motifs)) {
+          const motifs = data.visual_motifs as string[];
+          context.styleHints = {
+            mood: (data.structure as Array<{ emotion: string }>)?.[0]?.emotion,
+          };
+        }
+      }
+
+      // Scenario Generator output (generated_script, shots) - legacy support
+      if (data.generated_script || data.shots) {
+        context.fullScript = data.generated_script as string;
+        context.scenarioTitle ??= data.title as string;
+
+        // Get first shot for initial prompt
+        const shots = data.shots as Array<{
+          shot_number: number;
+          description: string;
+          camera_work?: string;
+          lighting?: string;
+          mood?: string;
+        }> | undefined;
+
+        if (shots && shots.length > 0) {
+          const firstShot = shots[0];
+          context.currentShot = {
+            shotNumber: firstShot.shot_number,
+            description: firstShot.description,
+            cameraWork: firstShot.camera_work,
+            lighting: firstShot.lighting,
+            mood: firstShot.mood,
+          };
+        }
+      }
+
+      // Reference Decoder style hints
+      if (data.style_prompt || data.mood || data.lighting) {
+        context.styleHints = {
+          mood: data.mood as string,
+          lighting: data.lighting as string,
+          colorPalette: data.color_palette as string[],
+        };
+        // Also use style_prompt if no script
+        if (!context.fullScript && data.style_prompt) {
+          context.fullScript = data.style_prompt as string;
+        }
+      }
+
+      if (context.currentShot || context.fullScript || context.styleHints) {
+        setWorkflowContext(context);
+
+        // Auto-populate prompt with shot/act description
+        if (context.currentShot && !prompt) {
+          let autoPrompt = context.currentShot.description;
+          if (context.currentShot.cameraWork) {
+            autoPrompt += `. Camera: ${context.currentShot.cameraWork}`;
+          }
+          if (context.currentShot.lighting) {
+            autoPrompt += `. Lighting: ${context.currentShot.lighting}`;
+          }
+          if (context.currentShot.mood) {
+            autoPrompt += `. Mood: ${context.currentShot.mood}`;
+          }
+          // Add scenario title context
+          if (context.scenarioTitle) {
+            autoPrompt = `"${context.scenarioTitle}" - ${autoPrompt}`;
+          }
+          setPrompt(autoPrompt);
+        } else if (context.fullScript && !prompt) {
+          // Use first 500 chars of script as prompt starter
+          const prefix = context.scenarioTitle ? `"${context.scenarioTitle}"\n\n` : "";
+          setPrompt(prefix + context.fullScript.slice(0, 500));
+        }
+        break;
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const { byokKey } = useBYOK();
   const creditCtx = useCreditContextOptional();
@@ -281,6 +435,33 @@ function VeoVideoContent() {
       <div className="flex flex-1 min-h-0">
         {/* Sidebar */}
         <DimensionPanel.Sidebar>
+          {/* Workflow Context Banner */}
+          {workflowContext && (
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                  {isKo ? "시나리오 데이터 적용됨" : "Scenario Data Applied"}
+                </span>
+              </div>
+              {workflowContext.scenarioTitle && (
+                <p className="text-xs text-[var(--fg-muted)] mb-1">
+                  <span className="font-medium">{isKo ? "제목" : "Title"}:</span> {workflowContext.scenarioTitle}
+                </p>
+              )}
+              {workflowContext.currentShot && (
+                <p className="text-xs text-[var(--fg-muted)]">
+                  <span className="font-medium">{isKo ? "현재 샷" : "Current Shot"}:</span> #{workflowContext.currentShot.shotNumber}
+                </p>
+              )}
+              {workflowContext.styleHints?.mood && (
+                <p className="text-xs text-[var(--fg-muted)]">
+                  <span className="font-medium">{isKo ? "무드" : "Mood"}:</span> {workflowContext.styleHints.mood}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Prompt Input */}
           <DimensionPanel.Textarea
             label={labels.promptLabel}
@@ -620,7 +801,9 @@ function VeoVideoContent() {
 export default function VeoVideoPanel() {
   return (
     <DimensionPanel dimensionCode={DIMENSION_CODE}>
-      <VeoVideoContent />
+      <Suspense fallback={null}>
+        <VeoVideoContent />
+      </Suspense>
     </DimensionPanel>
   );
 }

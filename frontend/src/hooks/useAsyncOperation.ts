@@ -384,14 +384,18 @@ export function useAsyncOperation<T = unknown>(
 
       let statusCode: number | undefined;
 
+      // Handle FormData vs JSON body
+      const isFormData = body instanceof FormData;
+      const requestBody = isFormData ? body : JSON.stringify(body);
+      const requestHeaders = isFormData
+        ? headers // FormData: let browser set Content-Type with boundary
+        : { "Content-Type": "application/json", ...headers };
+
       try {
         const response = await fetch(url, {
           method: "POST",
-          body: JSON.stringify(body),
-          headers: {
-            "Content-Type": "application/json",
-            ...headers,
-          },
+          body: requestBody,
+          headers: requestHeaders,
           signal: abortControllerRef.current.signal,
         });
 

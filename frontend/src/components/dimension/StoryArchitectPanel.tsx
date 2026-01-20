@@ -15,6 +15,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
@@ -25,6 +26,7 @@ import { useDimensionChainOptional, type ChainData } from "@/contexts/DimensionC
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import ChainDataInput from "./ChainDataInput";
 import { getDemoIPOverride } from "@/lib/demo-ip-overrides";
+import { getPreviousStepResult, parseWorkflowUrlParams } from "@/lib/workflow-state";
 import { Layers, ArrowRight, CheckCircle, Download, Sparkles, BookOpen, Film } from "lucide-react";
 import { type ThemeColor as DimensionThemeColor } from "@/lib/dimension-theme";
 
@@ -289,6 +291,8 @@ function StoryArchitectContent() {
     const params = new URLSearchParams(window.location.search);
     const ipParam = params.get("ip");
     const promptParam = params.get("prompt");
+    const stepParam = params.get("step");
+    const currentStep = stepParam ? parseInt(stepParam, 10) : null;
 
     if (ipParam) {
       const ipData = getDemoIPOverride(ipParam);
@@ -304,6 +308,37 @@ function StoryArchitectContent() {
             ? `"${ipData.titleKo}" IP를 기반으로 한 새로운 스토리`
             : `A new story based on "${ipData.titleEn}" IP`;
           setConcept(ipConcept);
+        }
+      }
+
+      // Load previous step results from workflow state (P0: Critical for data flow)
+      if (currentStep && currentStep > 1) {
+        // Check for Reference Decoder result (typically step before scenario)
+        for (let prevStep = currentStep - 1; prevStep >= 1; prevStep--) {
+          const prevResult = getPreviousStepResult(ipParam, prevStep + 1);
+          if (prevResult?.outputData) {
+            const data = prevResult.outputData;
+            // Check if this is Reference Decoder output (has style/analysis fields)
+            if (data.style_prompt || data.recreation_prompt || data.description || data.style) {
+              setReferenceAnalysis(data);
+              // Also update concept to include reference context
+              const refPrompt = (data.style_prompt || data.recreation_prompt || data.description || "") as string;
+              if (refPrompt && !concept) {
+                const ipTitle = ipData ? (isKo ? ipData.titleKo : ipData.titleEn) : ipParam;
+                const enrichedConcept = isKo
+                  ? `"${ipTitle}" 원본 영상의 핵심 스토리 구조를 유지하면서 새로운 시나리오 작성:\n\n원본 스타일: ${refPrompt.slice(0, 200)}`
+                  : `Create a new scenario preserving the core story structure of "${ipTitle}":\n\nOriginal style: ${refPrompt.slice(0, 200)}`;
+                setConcept(enrichedConcept);
+              }
+              console.log("[StoryArchitectPanel] Loaded reference analysis from workflow step", prevStep);
+              break;
+            }
+            // Check if this is Abyss Mirror output (has persona fields)
+            if (data.persona || data.psychology || data.creativity) {
+              setPersonaData(data);
+              console.log("[StoryArchitectPanel] Loaded persona data from workflow step", prevStep);
+            }
+          }
         }
       }
     }

@@ -81,8 +81,9 @@ export default function FileUploader({
                 return `파일이 너무 큽니다 (최대 ${maxSizeMB}MB)`;
             }
 
-            // Check file type
+            // Check file type - "*" means accept all files
             const isAccepted = accept.some((type) => {
+                if (type === "*") return true; // Accept all files
                 if (type.endsWith("/*")) {
                     const category = type.replace("/*", "");
                     return file.type.startsWith(category);
