@@ -16,6 +16,7 @@ import {
   BarChart3,
   CreditCard,
   FlaskConical,
+  Clock,
   LayoutDashboard,
   MessageSquareText,
   Settings,
@@ -29,6 +30,7 @@ import { AuroraBackground } from "@/components/AuroraBackground";
 import { TemplateRail, DimensionGrid, WorkflowCTA } from "@/components/home";
 import HomeRailSection from "@/components/home/HomeRailSection";
 import { IPRailCard } from "@/components/home/IPRailCard";
+import { WorkRailCard } from "@/components/home/WorkRailCard";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Badge } from "@/components/ui/badge";
@@ -82,11 +84,22 @@ function HomePageContent() {
       heroSubtitle: ko
         ? "IP-First 워크플로우와 HITL 운영을 빠르게 시작하세요."
         : "Kickstart IP-first workflows and HITL operations.",
+      heroSummaryTitle: ko ? "운영 스냅샷" : "Ops Snapshot",
+      heroSummaryDesc: ko
+        ? "승인 대기와 추천 작업을 빠르게 확인하세요."
+        : "Review pending approvals and suggested tasks instantly.",
+      heroCtaPrimary: ko ? "크리에이터 허브" : "Creator Hub",
       quickStart: ko ? "빠른 시작" : "Quick Start",
       creatorOps: ko ? "크리에이터 운영" : "Creator Operations",
       seeAll: ko ? "전체 보기" : "View all",
       studioCta: ko ? "작업실로 이동" : "Go to Studio",
       browseIp: ko ? "IP 갤러리 보기" : "Browse IP Gallery",
+      recentWork: ko ? "최근 작업" : "Recent Work",
+      recentWorkDesc: ko ? "진행 중인 작업을 이어서 진행하세요." : "Resume in-progress creations.",
+      recommendedIp: ko ? "추천 IP" : "Recommended IP",
+      recommendedIpDesc: ko
+        ? "IP 하이라이트와 권리 상태를 한눈에 확인하세요."
+        : "Preview IP highlights with rights status.",
       ipHighlight: ko ? "IP 하이라이트" : "IP Highlights",
       ipHighlightDesc: ko
         ? "추천 IP를 카드로 먼저 살펴보세요."
@@ -233,6 +246,54 @@ function HomePageContent() {
     },
   ];
 
+  const recentWorks = [
+    {
+      titleKo: "네오 서울 - 스토리 아크",
+      titleEn: "Neo Seoul - Story Arc",
+      subtitleKo: "스토리 아키텍트 • 2단계 진행 중",
+      subtitleEn: "Story Architect • Phase 2 in progress",
+      status: "in_progress" as const,
+      updatedAt: "10분 전",
+    },
+    {
+      titleKo: "달빛 정원 - 캐릭터 셋업",
+      titleEn: "Moonlit Garden - Character Setup",
+      subtitleKo: "캐릭터 디자인 • 초안",
+      subtitleEn: "Character Design • Draft",
+      status: "draft" as const,
+      updatedAt: "1시간 전",
+    },
+    {
+      titleKo: "서울 2099 - 레퍼런스 분석",
+      titleEn: "Seoul 2099 - Reference Review",
+      subtitleKo: "Aesthetic Director • 완료",
+      subtitleEn: "Aesthetic Director • Completed",
+      status: "complete" as const,
+      updatedAt: "어제",
+    },
+  ];
+
+  const recommendedCards = ipRails.length > 0
+    ? ipRails[0].items.slice(0, 4).map((item) => ({
+      title: language === "ko" ? item.name_ko : item.name_en,
+      subtitle: `${item.preset_count} presets`,
+      slug: item.slug,
+      thumbnailUrl: item.thumbnail_url || undefined,
+      license: item.license_status === "restricted"
+        ? ("restricted" as const)
+        : item.license_status === "prohibited"
+          ? ("prohibited" as const)
+          : ("allowed" as const),
+    }))
+    : mockIpCards.map((item) => ({
+      title: language === "ko" ? item.titleKo : item.titleEn,
+      subtitle: language === "ko" ? item.subtitleKo : item.subtitleEn,
+      slug: "",
+      thumbnailUrl: item.thumbnailUrl,
+      license: item.license,
+      genres: item.genres,
+    }));
+
 
   const handleIPItemClick = (item: { slug: string }) => {
     router.push("/ip/" + item.slug);
@@ -244,30 +305,74 @@ function HomePageContent() {
       <AuroraBackground />
 
       <div className="relative z-10 min-h-screen">
-        {/* Hero Section - Minimal */}
+        {/* Hero Section */}
         <section className="pt-10 pb-6 px-6">
           <div className="mx-auto max-w-7xl">
-            <div className="flex flex-wrap items-center gap-3">
-              <Badge variant="secondary">IP-FIRST</Badge>
-              <Badge variant="outline">HITL READY</Badge>
-            </div>
-            <h1 className="mt-3 text-2xl md:text-3xl font-semibold text-[var(--fg-0)]">
-              {copy.heroTitle}
-            </h1>
-            <p className="mt-2 text-sm text-[var(--fg-muted)] max-w-2xl">{copy.heroSubtitle}</p>
-            <div className="mt-4 flex flex-wrap gap-3">
-              <Button
-                onClick={() => router.push("/studio")}
-                className="gap-2"
-                disabled={isSessionLoading}
-              >
-                <LayoutDashboard className="h-4 w-4" />
-                {copy.studioCta}
-              </Button>
-              <Button variant="outline" onClick={() => router.push("/ip")} className="gap-2">
-                <Sparkles className="h-4 w-4" />
-                {copy.browseIp}
-              </Button>
+            <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+              <div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Badge variant="secondary">IP-FIRST</Badge>
+                  <Badge variant="outline">HITL READY</Badge>
+                </div>
+                <h1 className="mt-3 text-2xl md:text-3xl font-semibold text-[var(--fg-0)]">
+                  {copy.heroTitle}
+                </h1>
+                <p className="mt-2 text-sm text-[var(--fg-muted)] max-w-2xl">{copy.heroSubtitle}</p>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <Button
+                    onClick={() => router.push("/studio")}
+                    className="gap-2"
+                    disabled={isSessionLoading}
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                    {copy.studioCta}
+                  </Button>
+                  <Button variant="outline" onClick={() => router.push("/ip")} className="gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    {copy.browseIp}
+                  </Button>
+                </div>
+              </div>
+              <Card className="border border-white/5 bg-[var(--surface-1)]/70 overflow-hidden">
+                <div className="h-1 w-full bg-gradient-to-r from-violet-500/70 via-sky-500/50 to-emerald-500/50" />
+                <CardContent className="p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-[var(--fg-muted)]">{copy.heroSummaryTitle}</p>
+                      <p className="text-base font-semibold text-[var(--fg-0)]">{copy.heroSummaryDesc}</p>
+                    </div>
+                    <Badge variant="secondary" className="text-[10px]">
+                      LIVE
+                    </Badge>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between rounded-xl border border-white/5 bg-[var(--surface-2)] px-3 py-2 text-xs text-[var(--fg-muted)]">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-violet-400" />
+                        승인 대기 SLA
+                      </div>
+                      <span className="text-[var(--fg-0)] font-semibold">24h</span>
+                    </div>
+                    <div className="flex items-center justify-between rounded-xl border border-white/5 bg-[var(--surface-2)] px-3 py-2 text-xs text-[var(--fg-muted)]">
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                        승인 처리율
+                      </div>
+                      <span className="text-[var(--fg-0)] font-semibold">92%</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" className="gap-2" onClick={() => router.push("/creator")}>
+                      {copy.heroCtaPrimary}
+                      <ArrowUpRight className="h-4 w-4" />
+                    </Button>
+                    <Button size="sm" variant="outline" className="gap-2" onClick={() => router.push("/creator/approvals")}>
+                      승인 게이트
+                      <ArrowUpRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </section>
@@ -275,6 +380,64 @@ function HomePageContent() {
         {/* Main Content */}
         <div className="px-6 pb-20 space-y-12">
           <div className="mx-auto max-w-7xl space-y-12">
+            {/* Recent work + Recommended IP */}
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+            >
+              <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-base font-semibold text-[var(--fg-0)]">{copy.recentWork}</h2>
+                      <p className="text-xs text-[var(--fg-muted)]">{copy.recentWorkDesc}</p>
+                    </div>
+                    <Button variant="ghost" onClick={() => router.push("/studio")} className="text-[var(--fg-subtle)]">
+                      {copy.seeAll}
+                      <ArrowUpRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    {recentWorks.map((work) => (
+                      <WorkRailCard
+                        key={work.titleEn}
+                        title={language === "ko" ? work.titleKo : work.titleEn}
+                        subtitle={language === "ko" ? work.subtitleKo : work.subtitleEn}
+                        status={work.status}
+                        updatedAt={work.updatedAt}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-base font-semibold text-[var(--fg-0)]">{copy.recommendedIp}</h2>
+                      <p className="text-xs text-[var(--fg-muted)]">{copy.recommendedIpDesc}</p>
+                    </div>
+                    <Button variant="ghost" onClick={() => router.push("/ip")} className="text-[var(--fg-subtle)]">
+                      {copy.seeAll}
+                      <ArrowUpRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {recommendedCards.map((item, idx) => (
+                      <Link key={`${item.title}-${idx}`} href={item.slug ? `/ip/${item.slug}` : "/ip"}>
+                        <IPRailCard
+                          title={item.title}
+                          subtitle={item.subtitle}
+                          licenseStatus={item.license}
+                          genres={"genres" in item ? item.genres : undefined}
+                          thumbnailUrl={item.thumbnailUrl}
+                        />
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.section>
+
             {/* IP Rails - IP-First UX */}
             {ipRails.length > 0 && (
               <motion.section

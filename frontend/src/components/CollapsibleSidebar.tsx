@@ -30,6 +30,8 @@ import {
     BarChart3,
     CreditCard,
     Plus,
+    Pin,
+    PinOff,
 } from "lucide-react";
 import { CreditDisplay, ProfileSettingsPanel } from "@/components/CreditDisplay";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -262,6 +264,7 @@ interface CollapsibleSidebarProps {
 
 export default function CollapsibleSidebar({ defaultExpanded = false }: CollapsibleSidebarProps) {
     const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+    const [isPinned, setIsPinned] = useState(false);
     const pathname = usePathname();
     const [isLogoHovered, setIsLogoHovered] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -283,7 +286,8 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
     const NAV_GROUPS = [
         {
             id: "make",
-            label: "만들기",
+            sectionLabel: "만들기",
+            label: "제작 도구",
             icon: Wrench,
             items: [
                 { label: "차원 앱", href: "/dimension", icon: Orbit },
@@ -293,7 +297,8 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
         },
         {
             id: "activity",
-            label: "활동",
+            sectionLabel: "활동",
+            label: "운영 흐름",
             icon: Activity,
             items: [
                 { label: "승인 게이트", href: "/creator/approvals", icon: ShieldCheck, badge: "HITL" },
@@ -303,7 +308,8 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
         },
         {
             id: "earn",
-            label: "수익",
+            sectionLabel: "수익",
+            label: "수익 관리",
             icon: TrendingUp,
             items: [
                 { label: "분석 대시보드", href: "/creator/analytics", icon: BarChart3, badge: "INSIGHT" },
@@ -312,7 +318,8 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
         },
         {
             id: "account",
-            label: "계정",
+            sectionLabel: "계정",
+            label: "계정 관리",
             icon: Settings,
             items: [
                 { label: "크레딧", href: "/credits", icon: CreditCard },
@@ -320,6 +327,26 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
             ],
         },
     ];
+
+    const handleToggleExpanded = () => {
+        setIsExpanded((prev) => {
+            const next = !prev;
+            if (!next) {
+                setIsPinned(false);
+            }
+            return next;
+        });
+    };
+
+    const handleTogglePinned = () => {
+        setIsPinned((prev) => {
+            const next = !prev;
+            if (next) {
+                setIsExpanded(true);
+            }
+            return next;
+        });
+    };
 
     const FLYOUT_CONTENT = {
         affiliate: {
@@ -347,56 +374,68 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
                 className="fixed left-0 top-0 h-screen bg-white/80 dark:bg-black/40 backdrop-blur-2xl z-50 
                        border-r border-black/10 dark:border-white/10 flex flex-col shadow-[10px_0_30px_rgba(0,0,0,0.1)] dark:shadow-[10px_0_30px_rgba(0,0,0,0.5)]"
             >
-                {/* Logo Toggle Button */}
-                {/* Logo Toggle Button */}
-                <button
-                    onClick={() => setIsExpanded(!isExpanded)}
-                    onMouseEnter={() => setIsLogoHovered(true)}
-                    onMouseLeave={() => setIsLogoHovered(false)}
-                    className="flex items-center gap-3 px-3 py-4 hover:bg-white/5 transition-colors group"
-                    aria-label={isExpanded ? "사이드바 축소" : "사이드바 확장"}
-                    aria-expanded={isExpanded}
-                >
-                    <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-900
-                                flex items-center justify-center shrink-0 shadow-lg shadow-black/10 dark:shadow-white/5 relative overflow-hidden border border-black/10 dark:border-white/10">
-                        <motion.div
-                            animate={{ scale: isLogoHovered ? 1.2 : 1 }}
-                            transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                            className="w-full h-full flex items-center justify-center"
-                        >
-                            <Image
-                                src="/assets/characters/crebit-logo.png"
-                                alt="Crebit"
-                                width={24}
-                                height={24}
-                                className="object-contain dark:invert"
-                                unoptimized
-                            />
-                        </motion.div>
-                    </div>
-                    <AnimatePresence>
-                        {isExpanded && (
+                {/* Logo Toggle + Pin */}
+                <div className="flex items-center justify-between gap-2 px-3 py-4">
+                    <button
+                        onClick={handleToggleExpanded}
+                        onMouseEnter={() => setIsLogoHovered(true)}
+                        onMouseLeave={() => setIsLogoHovered(false)}
+                        className="flex flex-1 items-center gap-3 hover:bg-white/5 transition-colors group rounded-xl px-1 py-1.5"
+                        aria-label={isExpanded ? "사이드바 축소" : "사이드바 확장"}
+                        aria-expanded={isExpanded}
+                    >
+                        <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-900
+                                    flex items-center justify-center shrink-0 shadow-lg shadow-black/10 dark:shadow-white/5 relative overflow-hidden border border-black/10 dark:border-white/10">
                             <motion.div
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -10 }}
-                                className="flex items-center gap-2"
+                                animate={{ scale: isLogoHovered ? 1.2 : 1 }}
+                                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                                className="w-full h-full flex items-center justify-center"
                             >
-                                <span className="text-lg font-bold text-black dark:text-white">Crebit</span>
-                                <ChevronLeft className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                                <Image
+                                    src="/assets/characters/crebit-logo.png"
+                                    alt="Crebit"
+                                    width={24}
+                                    height={24}
+                                    className="object-contain dark:invert"
+                                    unoptimized
+                                />
+                            </motion.div>
+                        </div>
+                        <AnimatePresence>
+                            {isExpanded && (
+                                <motion.div
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -10 }}
+                                    className="flex items-center gap-2"
+                                >
+                                    <span className="text-lg font-bold text-black dark:text-white">Crebit</span>
+                                    <ChevronLeft className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                        {!isExpanded && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="absolute left-14 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                                <ChevronRight className="w-4 h-4 text-slate-400" />
                             </motion.div>
                         )}
-                    </AnimatePresence>
-                    {!isExpanded && (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="absolute left-14 opacity-0 group-hover:opacity-100 transition-opacity"
+                    </button>
+                    {isExpanded && (
+                        <button
+                            onClick={handleTogglePinned}
+                            className="h-8 w-8 rounded-lg border border-black/10 dark:border-white/10 bg-white/70 dark:bg-white/5 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center justify-center"
+                            aria-pressed={isPinned}
+                            aria-label={isPinned ? "사이드바 고정 해제" : "사이드바 고정"}
+                            title={isPinned ? "고정 해제" : "고정"}
                         >
-                            <ChevronRight className="w-4 h-4 text-slate-400" />
-                        </motion.div>
+                            {isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+                        </button>
                     )}
-                </button>
+                </div>
 
                 {/* Divider */}
                 <div className="mx-3 border-t border-white/5" />
@@ -458,12 +497,20 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
 
                     {/* Nav Groups */}
                     {NAV_GROUPS.map((group) => (
-                        <NavGroup
-                            key={group.id}
-                            {...group}
-                            isExpanded={isExpanded}
-                            pathname={pathname}
-                        />
+                        <div key={group.id} className="space-y-2">
+                            {isExpanded && group.sectionLabel && (
+                                <div className="px-3 pt-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                                    {group.sectionLabel}
+                                </div>
+                            )}
+                            <NavGroup
+                                label={group.label}
+                                icon={group.icon}
+                                items={group.items}
+                                isExpanded={isExpanded}
+                                pathname={pathname}
+                            />
+                        </div>
                     ))}
                 </nav>
 

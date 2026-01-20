@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   ArrowUpRight,
   BarChart3,
+  ArrowUpRight as ArrowUpRightSmall,
   FlaskConical,
   LayoutDashboard,
   MessageSquareText,
@@ -14,6 +15,7 @@ import {
 import CreatorPageFrame from "./_components/CreatorPageFrame";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 
@@ -32,10 +34,17 @@ function StatCard({ label, value, helper, icon: Icon, tone = "neutral" }: StatCa
     warning: "bg-amber-500/10 text-amber-400",
     neutral: "bg-slate-500/10 text-slate-300",
   };
+  const toneStripe = {
+    info: "bg-violet-500/60",
+    success: "bg-emerald-500/60",
+    warning: "bg-amber-500/60",
+    neutral: "bg-slate-500/40",
+  };
 
   return (
-    <Card className="border border-white/5 bg-[var(--surface-1)]/70">
-      <CardContent className="pt-6">
+    <Card className="border border-white/5 bg-[var(--surface-1)]/70 overflow-hidden">
+      <div className={cn("h-1 w-full", toneStripe[tone])} />
+      <CardContent className="pt-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center", toneStyles[tone])}>
@@ -66,6 +75,12 @@ export default function CreatorHubPage() {
       subtitle: ko
         ? "HITL 승인, 피드백, 실험, 정산을 한곳에서 관리하는 운영 허브입니다."
         : "Operate HITL approvals, feedback loops, experiments, and settlements in one hub.",
+      kpiTitle: ko ? "운영 KPI 요약" : "Operational KPI Snapshot",
+      kpiDesc: ko
+        ? "승인 SLA, 피드백 처리율, 정산 상태를 한눈에 확인하세요."
+        : "Track approval SLA, feedback throughput, and settlement status at a glance.",
+      kpiCtaPrimary: ko ? "승인 게이트 열기" : "Open Approval Gate",
+      kpiCtaSecondary: ko ? "대시보드 보기" : "View Dashboard",
       summary: ko ? "운영 요약" : "Operational Summary",
       cards: {
         approvals: ko ? "승인 대기" : "Pending Approvals",
@@ -155,6 +170,33 @@ export default function CreatorHubPage() {
   return (
     <CreatorPageFrame title={copy.title} subtitle={copy.subtitle} badge="HITL PHASE 7">
       <div className="space-y-6">
+        <Card className="border border-white/5 bg-[var(--surface-1)]/70 overflow-hidden">
+          <div className="h-1 w-full bg-gradient-to-r from-violet-500/70 via-sky-500/50 to-emerald-500/50" />
+          <CardContent className="p-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-2">
+              <Badge variant="secondary" className="text-[10px]">
+                KPI SNAPSHOT
+              </Badge>
+              <div className="text-base font-semibold text-[var(--fg-0)]">{copy.kpiTitle}</div>
+              <p className="text-xs text-[var(--fg-muted)]">{copy.kpiDesc}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" className="gap-2" asChild>
+                <Link href="/creator/approvals">
+                  {copy.kpiCtaPrimary}
+                  <ArrowUpRightSmall className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" className="gap-2" asChild>
+                <Link href="/creator/dashboard">
+                  {copy.kpiCtaSecondary}
+                  <ArrowUpRightSmall className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="space-y-4">
           <div className="text-sm font-semibold text-[var(--fg-0)]">{copy.summary}</div>
           <div className="grid gap-4 md:grid-cols-3">
