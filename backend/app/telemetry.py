@@ -179,7 +179,138 @@ def create_metrics_endpoint(app: FastAPI) -> None:
         logger.info("prometheus-client not installed, metrics endpoint disabled")
 
 
+# =============================================================================
+# H3.1: GenAI-Specific Metrics (OpenLLMetry Integration)
+# =============================================================================
+
+# Lazy-loaded metrics (initialized on first use)
+_llm_metrics_initialized = False
+_LLM_REQUESTS = None
+_LLM_TOKENS = None
+_LLM_LATENCY = None
+_LLM_COST = None
+_LLM_ERRORS = None
+
+
+def _init_llm_metrics():
+    """Initialize LLM metrics lazily to avoid import issues."""
+    global _llm_metrics_initialized, _LLM_REQUESTS, _LLM_TOKENS, _LLM_LATENCY, _LLM_COST, _LLM_ERRORS
+
+    if _llm_metrics_initialized:
+        return
+
+    try:
+        from prometheus_client import Counter, Histogram
+
+        _LLM_REQUESTS = Counter(
+            "vivid_llm_requests_total",
+            "Total LLM API requests",
+            ["model", "dimension", "status"]
+        )
+
+        _LLM_TOKENS = Counter(
+            "vivid_llm_tokens_total",
+            "Total LLM tokens used",
+            ["model", "dimension", "type"]  # type: input/output
+        )
+
+        _LLM_LATENCY = Histogram(
+            "vivid_llm_latency_seconds",
+            "LLM request latency",
+            ["model", "dimension"],
+            buckets=[0.5, 1, 2, 5, 10, 30, 60, 120]
+        )
+
+        _LLM_COST = Counter(
+            "vivid_llm_cost_credits",
+            "LLM cost in credits",
+            ["model", "dimension"]
+        )
+
+        _LLM_ERRORS = Counter(
+            "vivid_llm_errors_total",
+            "Total LLM API errors",
+            ["model", "dimension", "error_type"]
+        )
+
+        _llm_metrics_initialized = True
+        logger.info("LLM metrics initialized")
+
+    except ImportError:
+        logger.warning("prometheus-client not installed, LLM metrics disabled")
+
+
+def record_llm_request(
+    model: str,
+    dimension: str,
+    status: str,
+    input_tokens: int = 0,
+    output_tokens: int = 0,
+    latency_seconds: float = 0.0,
+    credits: float = 0.0,
+    error_type: str = None,
+):
+    """
+    Record LLM request metrics for observability (H3.1).
+
+    Args:
+        model: LLM model name (e.g., "gemini-3-flash-preview")
+        dimension: Dimension app name (e.g., "4D", "AD", "VEO")
+        status: Request status ("success", "failed", "timeout")
+        input_tokens: Number of input tokens
+        output_tokens: Number of output tokens
+        latency_seconds: Request latency in seconds
+        credits: Credits charged for this request
+        error_type: Error type if failed (optional)
+    """
+    _init_llm_metrics()
+
+    if not _llm_metrics_initialized:
+        return
+
+    try:
+        # Record request count
+        _LLM_REQUESTS.labels(model=model, dimension=dimension, status=status).inc()
+
+        # Record tokens
+        if input_tokens > 0:
+            _LLM_TOKENS.labels(model=model, dimension=dimension, type="input").inc(input_tokens)
+        if output_tokens > 0:
+            _LLM_TOKENS.labels(model=model, dimension=dimension, type="output").inc(output_tokens)
+
+        # Record latency
+        if latency_seconds > 0:
+            _LLM_LATENCY.labels(model=model, dimension=dimension).observe(latency_seconds)
+
+        # Record cost
+        if credits > 0:
+            _LLM_COST.labels(model=model, dimension=dimension).inc(credits)
+
+        # Record errors
+        if error_type and status in ("failed", "error"):
+            _LLM_ERRORS.labels(model=model, dimension=dimension, error_type=error_type).inc()
+
+    except Exception as e:
+        logger.warning(f"Failed to record LLM metrics: {e}")
+
+
+def get_llm_tracer():
+    """
+    Get OpenTelemetry tracer for LLM operations.
+
+    Returns:
+        Tracer instance for creating spans.
+    """
+    try:
+        from opentelemetry import trace
+        return trace.get_tracer("vivid.llm", "1.0.0")
+    except ImportError:
+        return None
+
+
 __all__ = [
     "setup_telemetry",
     "create_metrics_endpoint",
+    "record_llm_request",
+    "get_llm_tracer",
 ]

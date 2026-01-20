@@ -27,6 +27,8 @@ from app.telemetry.otel_setup import (
 from app.telemetry.llm_metrics import (
     LLMMetrics,
     get_llm_metrics,
+    record_llm_request,
+    get_llm_tracer,
 )
 
 __all__ = [
@@ -36,4 +38,7 @@ __all__ = [
     "get_meter",
     "LLMMetrics",
     "get_llm_metrics",
+    # H3.1: Convenience functions
+    "record_llm_request",
+    "get_llm_tracer",
 ]

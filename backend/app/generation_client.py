@@ -5,6 +5,8 @@ This module implements Stage 10 of the E2E pipeline:
 - Gen Run execution (Veo 3.1 / Kling)
 - Batch processing with iteration budget
 
+H3.1: OpenLLMetry integration with GenAI semantic conventions.
+
 Based on: 29_AI_PRODUCTION_PIPELINE_CODEX.md
 """
 from __future__ import annotations
@@ -21,6 +23,19 @@ from app.config import settings
 from app.storyboard_utils import build_shot_id, infer_shot_type, normalize_storyboard_cards
 
 logger = logging.getLogger(__name__)
+
+
+# =============================================================================
+# H3.1: OpenLLMetry Tracing
+# =============================================================================
+
+def _get_tracer():
+    """Get OpenTelemetry tracer for generation operations."""
+    try:
+        from opentelemetry import trace
+        return trace.get_tracer("vivid.generation", "1.0.0")
+    except ImportError:
+        return None
 
 
 class GenProvider(str, Enum):
@@ -221,18 +236,39 @@ async def generate_shot(
     max_iterations: int = 4,
 ) -> GenResult:
     """Generate a single shot from Shot Contract.
-    
+
+    H3.1: Includes OpenLLMetry tracing with GenAI semantic conventions.
+
     Args:
         contract: Shot specification.
         provider: Generation provider to use.
         max_iterations: Max retry attempts (budget 3-4 per CODEX 29).
-        
+
     Returns:
         GenResult with output or error.
     """
     # Convert to prompt
     prompt_contract = shot_contract_to_prompt(contract)
     logger.info(f"Generated prompt for {contract.shot_id}: {prompt_contract.prompt[:80]}...")
+
+    # H3.1: Initialize tracing
+    tracer = _get_tracer()
+    span = None
+    start_time = datetime.utcnow()
+
+    if tracer:
+        span = tracer.start_span(
+            "generation.shot",
+            attributes={
+                "vivid.shot_id": contract.shot_id,
+                "vivid.sequence_id": contract.sequence_id,
+                "vivid.scene_id": contract.scene_id,
+                "vivid.shot_type": contract.shot_type,
+                "gen_ai.system": provider.value,
+                "gen_ai.request.model": f"{provider.value}-v1",
+                "gen_ai.prompt": prompt_contract.prompt[:500],  # Truncate for span
+            }
+        )
     
     for iteration in range(1, max_iterations + 1):
         try:
@@ -259,28 +295,77 @@ async def generate_shot(
                 result = await _run_kling_generation(prompt_contract)
             else:
                 result = await _run_mock_generation(prompt_contract)
-            
+
             result.iteration = iteration
-            
+
             if result.status == "success":
+                # H3.1: End span with success
+                if span:
+                    _end_generation_span(span, result, start_time, "success")
                 return result
-                
+
         except Exception as e:
             logger.warning(f"Generation attempt {iteration} failed: {e}")
             if iteration == max_iterations:
-                return GenResult(
+                failed_result = GenResult(
                     shot_id=contract.shot_id,
                     status="failed",
                     iteration=iteration,
                     error=str(e),
                 )
-    
-    return GenResult(
+                # H3.1: End span with error
+                if span:
+                    _end_generation_span(span, failed_result, start_time, "error", str(e))
+                return failed_result
+
+    final_result = GenResult(
         shot_id=contract.shot_id,
         status="failed",
         iteration=max_iterations,
         error="Max iterations exceeded",
     )
+    # H3.1: End span with error
+    if span:
+        _end_generation_span(span, final_result, start_time, "error", "Max iterations exceeded")
+    return final_result
+
+
+def _end_generation_span(span, result: GenResult, start_time: datetime, status: str, error: str = None):
+    """Helper to end a generation span with proper attributes."""
+    try:
+        from opentelemetry.trace import StatusCode
+
+        elapsed = (datetime.utcnow() - start_time).total_seconds()
+
+        span.set_attribute("vivid.iteration", result.iteration)
+        span.set_attribute("vivid.latency_ms", result.latency_ms)
+        span.set_attribute("vivid.cost_usd_est", result.cost_usd_est)
+        span.set_attribute("gen_ai.response.model", result.model_version)
+
+        if result.output_url:
+            span.set_attribute("vivid.output_url", result.output_url)
+
+        if status == "success":
+            span.set_status(StatusCode.OK)
+        else:
+            span.set_status(StatusCode.ERROR, error or "Unknown error")
+
+        span.end()
+
+        # Record metrics
+        try:
+            from app.telemetry import record_llm_request
+            record_llm_request(
+                model=result.model_version or "unknown",
+                dimension="VEO",
+                status=status,
+                latency_seconds=elapsed,
+                credits=result.cost_usd_est * 100,
+            )
+        except ImportError:
+            pass
+    except Exception as e:
+        logger.warning(f"Failed to end generation span: {e}")
 
 
 async def generate_batch(

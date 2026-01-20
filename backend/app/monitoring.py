@@ -140,22 +140,80 @@ def setup_prometheus(app: FastAPI) -> bool:
 def setup_monitoring(app: FastAPI) -> dict:
     """
     Initialize all monitoring integrations.
-    
+
     Returns a dict with the status of each integration.
     """
     status = {
         "sentry": setup_sentry(app),
         "prometheus": setup_prometheus(app),
         "opentelemetry": setup_opentelemetry(app),
+        "openllmetry": setup_openllmetry(app),
         "profiling": setup_profiling(app),
     }
-    
+
     logger.info(
         "Monitoring setup complete",
         extra={"status": status}
     )
-    
+
     return status
+
+
+def setup_openllmetry(app: FastAPI) -> bool:
+    """
+    Initialize OpenLLMetry for GenAI observability (H3.1).
+
+    Provides:
+    - GenAI semantic conventions v1.38+
+    - Automatic Gemini/Google GenAI instrumentation
+    - LLM workflow/task tracing with @workflow/@task decorators
+
+    Requires:
+        OTEL_ENABLED=true
+        OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+    """
+    if not getattr(settings, "OTEL_ENABLED", False):
+        logger.info("OpenLLMetry disabled (OTEL_ENABLED=false)")
+        return False
+
+    try:
+        from traceloop.sdk import Traceloop
+
+        otlp_endpoint = getattr(settings, "OTEL_EXPORTER_OTLP_ENDPOINT", None)
+
+        # Initialize Traceloop SDK with OpenLLMetry
+        Traceloop.init(
+            app_name=getattr(settings, "OTEL_SERVICE_NAME", "vivid-backend"),
+            disable_batch=settings.ENVIRONMENT in ("development", "local", "dev"),
+            api_endpoint=otlp_endpoint if otlp_endpoint else None,
+        )
+
+        # Instrument Google Generative AI (Gemini)
+        try:
+            from opentelemetry.instrumentation.google_generativeai import GoogleGenerativeAIInstrumentor
+            GoogleGenerativeAIInstrumentor().instrument()
+            logger.info("Google GenerativeAI instrumentation enabled")
+        except ImportError:
+            logger.warning("opentelemetry-instrumentation-google-generativeai not installed")
+        except Exception as e:
+            logger.warning(f"Failed to instrument Google GenerativeAI: {e}")
+
+        logger.info(
+            "OpenLLMetry initialized with GenAI semantic conventions",
+            extra={
+                "app_name": getattr(settings, "OTEL_SERVICE_NAME", "vivid-backend"),
+                "otlp_endpoint": otlp_endpoint,
+                "environment": settings.ENVIRONMENT,
+            }
+        )
+        return True
+
+    except ImportError:
+        logger.warning("traceloop-sdk not installed, skipping OpenLLMetry")
+        return False
+    except Exception as e:
+        logger.error(f"Failed to initialize OpenLLMetry: {e}")
+        return False
 
 
 def setup_opentelemetry(app: FastAPI) -> bool:

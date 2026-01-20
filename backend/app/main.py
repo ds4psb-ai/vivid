@@ -233,6 +233,81 @@ setup_logging(settings.LOG_LEVEL if hasattr(settings, 'LOG_LEVEL') else "INFO")
 setup_monitoring(app)
 
 # =============================================================================
+# H3.3: RFC 9457 Exception Handlers
+# =============================================================================
+
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from app.schemas.problem_details import ProblemDetail, ProblemTypes
+from app.exceptions import VividException
+from app.logging_config import request_id_ctx
+
+
+def _get_request_id() -> str:
+    """Get current request ID from context."""
+    return request_id_ctx.get() or "unknown"
+
+
+@app.exception_handler(VividException)
+async def vivid_exception_handler(request: Request, exc: VividException):
+    """Handle custom Vivid exceptions with RFC 9457 format."""
+    exc.problem.request_id = _get_request_id()
+    exc.problem.instance = str(request.url.path)
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=exc.problem.model_dump(exclude_none=True),
+        media_type="application/problem+json",
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Handle Pydantic validation errors with RFC 9457 format."""
+    problem = ProblemDetail(
+        type=ProblemTypes.VALIDATION_ERROR,
+        title="Validation Error",
+        status=422,
+        detail="Request validation failed",
+        request_id=_get_request_id(),
+        instance=str(request.url.path),
+        error_code="VALIDATION_ERROR",
+        errors=exc.errors(),
+    )
+    return JSONResponse(
+        status_code=422,
+        content=problem.model_dump(exclude_none=True),
+        media_type="application/problem+json",
+    )
+
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    """Handle unexpected exceptions with RFC 9457 format."""
+    import logging
+    logger = logging.getLogger("exception_handler")
+    logger.exception(f"Unhandled exception: {exc}")
+
+    # In development, include error details
+    is_dev = settings.ENVIRONMENT in ("development", "local", "dev")
+
+    problem = ProblemDetail(
+        type=ProblemTypes.INTERNAL_ERROR,
+        title="Internal Server Error",
+        status=500,
+        detail=str(exc) if is_dev else "An unexpected error occurred",
+        request_id=_get_request_id(),
+        instance=str(request.url.path),
+        error_code="INTERNAL_ERROR",
+    )
+    return JSONResponse(
+        status_code=500,
+        content=problem.model_dump(exclude_none=True),
+        media_type="application/problem+json",
+    )
+
+
+# =============================================================================
 # 3-Layer Ecosystem Routers
 # =============================================================================
 

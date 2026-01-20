@@ -372,3 +372,56 @@ def get_llm_metrics() -> LLMMetrics:
     if _default_metrics is None:
         _default_metrics = LLMMetrics()
     return _default_metrics
+
+
+# =============================================================================
+# H3.1: Convenience Functions
+# =============================================================================
+
+def record_llm_request(
+    model: str,
+    dimension: str,
+    status: str,
+    input_tokens: int = 0,
+    output_tokens: int = 0,
+    latency_seconds: float = 0.0,
+    credits: float = 0.0,
+    error_type: str = None,
+) -> None:
+    """
+    Convenience function to record LLM request metrics (H3.1).
+
+    This is a wrapper around LLMMetrics.record_call for simpler usage.
+
+    Args:
+        model: LLM model name (e.g., "gemini-3-flash-preview")
+        dimension: Dimension app name (e.g., "4D", "AD", "VEO")
+        status: Request status ("success", "failed", "timeout")
+        input_tokens: Number of input tokens
+        output_tokens: Number of output tokens
+        latency_seconds: Request latency in seconds
+        credits: Credits charged for this request
+        error_type: Error type if failed (optional)
+    """
+    metrics = get_llm_metrics()
+
+    # Record the call
+    metrics.record_call(
+        model=f"{model}:{dimension}",  # Include dimension in model name
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+        latency_ms=latency_seconds * 1000,
+        success=status in ("success", "done"),
+        error_type=error_type if status in ("failed", "error") else None,
+    )
+
+
+def get_llm_tracer():
+    """
+    Get OpenTelemetry tracer for LLM operations (H3.1).
+
+    Returns:
+        Tracer instance for creating spans, or None if OTEL not configured.
+    """
+    from app.telemetry.otel_setup import get_tracer
+    return get_tracer()

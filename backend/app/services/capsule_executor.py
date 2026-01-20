@@ -1,6 +1,7 @@
 """Capsule Executor Pipeline.
 
 P5 Commit 2: Unified execution pipeline for all capsule types.
+H3.1: OpenLLMetry integration with GenAI semantic conventions.
 
 Adapter Routing:
 - teaching.*, dimension.*, veo.* → execute_dimension_capsule
@@ -8,7 +9,7 @@ Adapter Routing:
 
 Usage:
     from app.services.capsule_executor import execute_capsule
-    
+
     result = await execute_capsule(
         capsule_id="teaching.prompt.generate:1.0.0",
         inputs={"topic": "테스트"},
@@ -27,6 +28,46 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
+
+
+# =============================================================================
+# H3.1: OpenLLMetry Tracing Setup
+# =============================================================================
+
+def _get_tracer():
+    """Get OpenTelemetry tracer for capsule operations."""
+    try:
+        from opentelemetry import trace
+        return trace.get_tracer("vivid.capsule", "1.0.0")
+    except ImportError:
+        return None
+
+
+def _get_workflow_decorator():
+    """Get traceloop workflow decorator if available."""
+    try:
+        from traceloop.sdk.decorators import workflow
+        return workflow
+    except ImportError:
+        # Return a no-op decorator if traceloop is not installed
+        def noop_decorator(name: str = None):
+            def wrapper(func):
+                return func
+            return wrapper
+        return noop_decorator
+
+
+def _get_task_decorator():
+    """Get traceloop task decorator if available."""
+    try:
+        from traceloop.sdk.decorators import task
+        return task
+    except ImportError:
+        def noop_decorator(name: str = None):
+            def wrapper(func):
+                return func
+            return wrapper
+        return noop_decorator
 
 
 # =============================================================================
@@ -301,7 +342,9 @@ async def execute_capsule(
     run_id: Optional[str] = None,
 ) -> CapsuleExecutionResult:
     """Execute a capsule with unified pipeline.
-    
+
+    H3.1: Full tracing with OpenLLMetry GenAI semantic conventions.
+
     Args:
         capsule_id: Format "capsule_key" or "capsule_key:version"
         inputs: User-provided inputs
@@ -310,14 +353,30 @@ async def execute_capsule(
         db: Database session
         byok_key: Optional BYOK API key
         run_id: Optional pre-generated run_id
-    
+
     Returns:
         CapsuleExecutionResult with normalized output
     """
     import uuid
     from app.services.capsule_specs import parse_capsule_id, get_spec
-    
+
     start_time = time.monotonic()
+
+    # H3.1: Initialize tracing
+    tracer = _get_tracer()
+    span = None
+
+    if tracer:
+        # Start a span for the capsule execution
+        span = tracer.start_span(
+            "capsule.execute",
+            attributes={
+                "vivid.capsule_id": capsule_id,
+                "vivid.user_id": user.get("user_id") or user.get("id", "unknown"),
+                "gen_ai.system": "google_genai",
+                "gen_ai.request.model": params.get("model", "gemini-3-flash-preview") if params else "gemini-3-flash-preview",
+            }
+        )
     
     # Normalize params to avoid None cases
     params = dict(params) if params else {}
@@ -441,7 +500,7 @@ async def execute_capsule(
     tokens = normalized["token_usage"].get("total", 0)
     cost_usd_est = tokens * 0.00001  # ~$10/1M tokens estimate
     
-    return CapsuleExecutionResult(
+    result = CapsuleExecutionResult(
         run_id=run_id,
         status=status,
         summary=normalized["summary"],
@@ -452,3 +511,50 @@ async def execute_capsule(
         cost_usd_est=cost_usd_est,
         error=error,
     )
+
+    # H3.1: Record trace attributes and metrics
+    if span:
+        try:
+            from opentelemetry.trace import StatusCode
+
+            # Set GenAI semantic convention attributes
+            span.set_attribute("gen_ai.usage.input_tokens", normalized["token_usage"].get("input", 0))
+            span.set_attribute("gen_ai.usage.output_tokens", normalized["token_usage"].get("output", 0))
+            span.set_attribute("gen_ai.usage.total_tokens", normalized["token_usage"].get("total", 0))
+            span.set_attribute("vivid.capsule_key", capsule_key)
+            span.set_attribute("vivid.version", version)
+            span.set_attribute("vivid.latency_ms", latency_ms)
+            span.set_attribute("vivid.cost_usd_est", cost_usd_est)
+
+            if status == "done":
+                span.set_status(StatusCode.OK)
+            else:
+                span.set_status(StatusCode.ERROR, error or "Unknown error")
+
+            span.end()
+        except Exception as e:
+            logger.warning(f"Failed to record span attributes: {e}")
+
+    # H3.1: Record Prometheus metrics
+    try:
+        from app.telemetry import record_llm_request
+
+        dimension = capsule_key.split(".")[0] if "." in capsule_key else capsule_key
+        model = params.get("model", "gemini-3-flash-preview") if params else "gemini-3-flash-preview"
+
+        record_llm_request(
+            model=model,
+            dimension=dimension,
+            status="success" if status == "done" else "failed",
+            input_tokens=normalized["token_usage"].get("input", 0),
+            output_tokens=normalized["token_usage"].get("output", 0),
+            latency_seconds=latency_ms / 1000.0,
+            credits=cost_usd_est * 100,  # Convert USD to credits estimate
+            error_type=error[:50] if error else None,
+        )
+    except ImportError:
+        pass
+    except Exception as e:
+        logger.warning(f"Failed to record LLM metrics: {e}")
+
+    return result

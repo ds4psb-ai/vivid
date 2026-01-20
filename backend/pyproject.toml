@@ -1,0 +1,78 @@
+# H3.2: Coverage and Testing Configuration
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+omit = [
+    "app/alembic/*",
+    "app/fixtures/*",
+    "app/scripts/*",
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/conftest.py",
+]
+# Python 3.12+ optimization
+# core = "sysmon"
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "@abstractmethod",
+    "if __name__ == .__main__.:",
+    "pass",
+    "\\.\\.\\.",
+]
+fail_under = 60
+show_missing = true
+skip_covered = false
+precision = 2
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
+[tool.mutmut]
+paths_to_mutate = "app/services/,app/routers/"
+tests_dir = "tests/"
+runner = "pytest -x -q --tb=no"
+dict_synonyms = "Struct, NamedStruct"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = [
+    "--strict-markers",
+    "-v",
+    "--tb=short",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "B008",  # function calls in argument defaults
+    "B904",  # raise from inside except
+]
+
+[tool.ruff.isort]
+known-first-party = ["app"]
+
+[tool.pyright]
+pythonVersion = "3.11"
+typeCheckingMode = "basic"
+reportMissingImports = true
+reportMissingTypeStubs = false
