@@ -11,7 +11,7 @@
 
 import React, { useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, ArrowRight, CheckCircle2, Home } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Home, RotateCcw } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   getWorkflowState,
@@ -20,6 +20,7 @@ import {
   parseWorkflowUrlParams,
   getWorkflowProgress,
   isStepCompleted,
+  clearWorkflowState,
   type StepResult,
   type WorkflowStep,
 } from "@/lib/workflow-state";
@@ -145,6 +146,20 @@ function WorkflowStepNavInner({
     router.push(`/ip/${urlParams.ipSlug}`);
   };
 
+  // 워크플로우 초기화 (처음부터 다시 시작)
+  const handleReset = () => {
+    if (!urlParams.ipSlug) return;
+
+    const confirmMsg = ko
+      ? "워크플로우 진행 상황을 초기화하시겠습니까?\n모든 단계의 결과가 삭제됩니다."
+      : "Reset workflow progress?\nAll step results will be deleted.";
+
+    if (window.confirm(confirmMsg)) {
+      clearWorkflowState(urlParams.ipSlug);
+      router.push(`/ip/${urlParams.ipSlug}`);
+    }
+  };
+
   // 컴팩트 모드: 다음 단계 버튼만 표시
   if (compact) {
     if (!nextStep) return null;
@@ -189,6 +204,15 @@ function WorkflowStepNavInner({
           title={ko ? "IP 페이지로" : "Back to IP"}
         >
           <Home className="w-4 h-4 text-slate-500" />
+        </button>
+
+        {/* 초기화 버튼 */}
+        <button
+          onClick={handleReset}
+          className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors group"
+          title={ko ? "처음부터 다시 시작" : "Start over"}
+        >
+          <RotateCcw className="w-4 h-4 text-slate-400 group-hover:text-red-500 transition-colors" />
         </button>
 
         {/* 진행률 */}
