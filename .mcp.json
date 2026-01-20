@@ -58,7 +58,7 @@
         "tavily-mcp@latest"
       ],
       "env": {
-        "TAVILY_API_KEY": "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"
+        "TAVILY_API_KEY": "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"
       }
     },
     "codex-bridge": {

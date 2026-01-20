@@ -181,18 +181,18 @@ export default function CreatorHubPage() {
               <p className="text-xs text-[var(--fg-muted)]">{copy.kpiDesc}</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button size="sm" className="gap-2" asChild>
-                <Link href="/creator/approvals">
+              <Link href="/creator/approvals">
+                <Button size="sm" className="gap-2">
                   {copy.kpiCtaPrimary}
                   <ArrowUpRightSmall className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button variant="outline" size="sm" className="gap-2" asChild>
-                <Link href="/creator/dashboard">
+                </Button>
+              </Link>
+              <Link href="/creator/dashboard">
+                <Button variant="outline" size="sm" className="gap-2">
                   {copy.kpiCtaSecondary}
                   <ArrowUpRightSmall className="h-4 w-4" />
-                </Link>
-              </Button>
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>

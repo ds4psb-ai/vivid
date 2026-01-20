@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { ShieldCheck, ShieldAlert, ShieldX, Play, Eye, Flame, Sparkles, Volume2, VolumeX } from "lucide-react";
 
@@ -79,14 +79,19 @@ export function IPRailCard({
     setIsMuted(true);
   }, []);
 
-  // Mute 토글 핸들러 - stopPropagation으로 Link 클릭 방지
+  // Mute 상태 동기화
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = isMuted;
+    }
+  }, [isMuted, videoLoaded]);
+
+  // Mute 토글 핸들러 - 강력한 이벤 전파 방지
   const handleMuteToggle = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
+    e.nativeEvent.stopImmediatePropagation(); // 부모로의 모든 이벤트 차단
     setIsMuted((prev) => !prev);
-    if (videoRef.current) {
-      videoRef.current.muted = !videoRef.current.muted;
-    }
   }, []);
 
   return (
@@ -116,7 +121,7 @@ export function IPRailCard({
             muted={isMuted}
             loop
             playsInline
-            preload="metadata"
+            preload="auto"
             onLoadedData={() => setVideoLoaded(true)}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${isHovered && videoLoaded ? 'opacity-100' : 'opacity-0'}`}
           />

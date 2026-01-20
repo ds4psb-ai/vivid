@@ -50,6 +50,7 @@
 | 문서 | 설명 | 상태 |
 |------|------|------|
 | [2026_PRIORITY_ROADMAP.md](./2026_PRIORITY_ROADMAP.md) | 2026 우선순위 로드맵 | ✅ Active |
+| [15_HARDENING_MASTER_PLAN_2026.md](./15_HARDENING_MASTER_PLAN_2026.md) | **Phase 1-10 하드닝 마스터플랜 (보안/안정성 강화)** | ✅ Active |
 | [P0_IMPLEMENTATION_SPEC_2026.md](./P0_IMPLEMENTATION_SPEC_2026.md) | P0 상세 설계서 | ✅ Active |
 | [P0_PHASE4_MCP_INTEGRATION_PLAN_2026.md](./P0_PHASE4_MCP_INTEGRATION_PLAN_2026.md) | MCP Gateway 통합 | ✅ Active |
 | [ARCHITECTURE_FLEXIBILITY_ANALYSIS_2026.md](./ARCHITECTURE_FLEXIBILITY_ANALYSIS_2026.md) | 아키텍처 유연성 분석 | ✅ Active |

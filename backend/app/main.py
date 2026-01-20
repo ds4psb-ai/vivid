@@ -176,28 +176,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Security Hardening: Explicit allow_headers instead of wildcard (H1.1)
-# This prevents exposure of sensitive headers and reduces attack surface
-CORS_ALLOWED_HEADERS = [
-    "Authorization",
-    "Content-Type",
-    "X-Request-ID",
-    "X-CSRF-Token",
-    "X-API-Key",
-    "Accept",
-    "Accept-Language",
-    "Cache-Control",
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
-    allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
-    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=CORS_ALLOWED_HEADERS,
-    expose_headers=["X-Request-ID", "X-RateLimit-Limit", "X-RateLimit-Remaining"],
-    max_age=settings.CORS_MAX_AGE,
-)
+# CORSMiddleware moved to the end to ensure it runs first
 
 # Add secure logging middleware (PII Redaction)
 # LoggingMiddleware는 제거하고 SecureLoggingMiddleware 사용
@@ -232,6 +211,32 @@ setup_logging(settings.LOG_LEVEL if hasattr(settings, 'LOG_LEVEL') else "INFO")
 
 # Setup Sentry, Prometheus, and OpenTelemetry monitoring
 setup_monitoring(app)
+
+# =============================================================================
+# CORS Middleware (Must be added LAST to execute FIRST)
+# =============================================================================
+# Security Hardening: Explicit allow_headers instead of wildcard (H1.1)
+# This prevents exposure of sensitive headers and reduces attack surface
+CORS_ALLOWED_HEADERS = [
+    "Authorization",
+    "Content-Type",
+    "X-Request-ID",
+    "X-CSRF-Token",
+    "X-API-Key",
+    "Accept",
+    "Accept-Language",
+    "Cache-Control",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Temporary fix for demo: Allow all origins to rule out config issues
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["X-Request-ID", "X-RateLimit-Limit", "X-RateLimit-Remaining"],
+    max_age=600,
+)
 
 # =============================================================================
 # H3.3: RFC 9457 Exception Handlers

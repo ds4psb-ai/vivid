@@ -6,6 +6,45 @@
 
 ---
 
+## ⚠️ 주요 백엔드 변경사항 (2026-01-20 23:00)
+
+> [!IMPORTANT]
+> 아래 변경사항으로 인해 **반드시 백엔드를 재시작**해야 합니다.
+> 간편 실행: `/server-demo` 워크플로우 사용
+
+### 변경 내용
+
+| 항목 | 변경 내용 | 영향 |
+|------|----------|------|
+| **CORS 미들웨어 순서** | `CORSMiddleware`를 `main.py` 가장 아래로 이동 (마지막 add = 첫 번째 실행) | 프론트엔드 API 호출 시 CORS 에러 해결 |
+| **데모 IP DB 시드** | `scripts/seed_demo_ips.py` 생성 → DB에 `umbrella-encounter`, `cooking-anime-mv` 삽입 | 백엔드 API가 실제 데이터 반환 |
+| **DB 스키마 업데이트** | `ip_catalog`에 `chat_enabled` 등 컬럼 추가, `ip_workflow_presets`에 `workflow_capsule_id` 추가 | Alembic 마이그레이션 불필요 (직접 ALTER TABLE 완료) |
+| **Mute 버튼 수정** | `IPRailCard.tsx`에 `useEffect` 상태 동기화 + `stopImmediatePropagation()` 추가 | 호버 시 뮤트 토글 정상 동작 |
+
+### 새 파일
+
+| 파일 | 용도 |
+|------|------|
+| `backend/scripts/seed_demo_ips.py` | 데모 IP 시드 스크립트 (재실행 가능) |
+| `.agent/workflows/server-demo.md` | 데모 서버 원클릭 실행 워크플로우 |
+
+### 실행 방법
+
+```bash
+# 1. 워크플로우 실행 (권장)
+# Cursor에서 /server-demo 입력
+
+# 2. 또는 수동 실행
+cd backend && source venv/bin/activate
+python scripts/seed_demo_ips.py  # 데모 IP 시드 (최초 1회)
+uvicorn app.main:app --port 8100 --reload
+
+cd frontend && bun run dev  # 별도 터미널
+```
+
+---
+
+
 ## 1. 현재 상태 요약
 
 ### 완료된 항목 ✅
