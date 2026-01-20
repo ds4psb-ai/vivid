@@ -19,9 +19,10 @@
  * @see docs/PANEL_DESIGN_UNITY_SPEC.md
  */
 
-import { useState, useCallback, useTransition, useMemo } from "react";
+import { useState, useCallback, useTransition, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { getDemoIPOverride } from "@/lib/demo-ip-overrides";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
@@ -313,6 +314,36 @@ function ReferenceDecoderContent() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
 
+  // IP reference state (for demo workflow integration)
+  const [ipVideoUrl, setIpVideoUrl] = useState<string | null>(null);
+  const [ipSlug, setIpSlug] = useState<string | null>(null);
+
+  // URL parameter handling for workflow integration
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const ipParam = params.get("ip");
+    const promptParam = params.get("prompt");
+
+    if (ipParam) {
+      setIpSlug(ipParam);
+      const ipData = getDemoIPOverride(ipParam);
+      if (ipData?.previewVideoUrl) {
+        setIpVideoUrl(ipData.previewVideoUrl);
+      }
+      // Pre-fill context with IP info
+      const ipContext = isKorean
+        ? `IP: ${ipData?.titleKo || ipParam} - ${ipData?.descKo || ""}`
+        : `IP: ${ipData?.titleEn || ipParam} - ${ipData?.descEn || ""}`;
+      setContext(ipContext);
+    }
+
+    if (promptParam) {
+      setDescription(decodeURIComponent(promptParam));
+    }
+  }, [isKorean]);
+
   // React 19: useTransition for non-blocking form submission
   const [isTransitionPending, startTransition] = useTransition();
 
@@ -598,6 +629,36 @@ function ReferenceDecoderContent() {
             {t.modeDescriptions[mode]}
           </p>
         </div>
+
+        {/* IP Reference Preview (from workflow integration) */}
+        {ipVideoUrl && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Film className="w-4 h-4 text-violet-500" />
+              <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest">
+                {isKorean ? "IP 레퍼런스" : "IP Reference"}
+              </label>
+              {ipSlug && (
+                <span className="px-2 py-0.5 text-[9px] font-medium bg-violet-500/10 text-violet-600 dark:text-violet-400 rounded-full">
+                  {ipSlug}
+                </span>
+              )}
+            </div>
+            <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 bg-black/5">
+              <video
+                src={ipVideoUrl}
+                controls
+                className="w-full max-h-48 object-contain"
+                preload="metadata"
+              />
+            </div>
+            <p className="text-[10px] text-slate-400 dark:text-zinc-600 ml-1">
+              {isKorean
+                ? "이 레퍼런스 영상을 텍스트로 설명하여 분석할 수 있습니다"
+                : "You can describe this reference video in text for analysis"}
+            </p>
+          </div>
+        )}
 
         {/* Text Mode Inputs */}
         {mode === "text" && (

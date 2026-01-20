@@ -34,6 +34,7 @@ import { LicenseStatusInfo } from "@/components/ip/LicenseStatusBadge";
 import GenerationProgress from "./GenerationProgress";
 import { EvidenceCard } from "@/components/ui/EvidenceCard";
 import { ToolRecommendationCard } from "@/components/ui/ToolRecommendationCard";
+import { WorkflowPreviewModal, type WorkflowData } from "@/components/WorkflowPreviewModal";
 import { useToolRecommendations } from "@/hooks/useToolRecommendations";
 import {
   getDemoIPOverride,
@@ -129,6 +130,8 @@ export default function IPDetailClient({
   const [showRecommendations, setShowRecommendations] = useState(true);
   const [traceIdCopied, setTraceIdCopied] = useState(false);
   const [showRecommendationWhy, setShowRecommendationWhy] = useState(false);
+  const [showWorkflowModal, setShowWorkflowModal] = useState(false);
+  const [workflowData, setWorkflowData] = useState<WorkflowData | null>(null);
 
   // Tool recommendations (Phase 2.5)
   const {
@@ -250,7 +253,7 @@ export default function IPDetailClient({
   }, [ip, selectedPreset, slug, fetchRecommendations]);
 
   const handleGenerate = useCallback(async () => {
-    if (!selectedPreset || !ip) return;
+    if (!ip) return;
 
     const effectiveStatus = rights?.license_status || ip.license_status;
 
@@ -267,22 +270,27 @@ export default function IPDetailClient({
     setGenerating(true);
 
     try {
-      const response = await fetch("/api/v1/ip/" + slug + "/generate", {
+      // Demo mode: Call demo endpoint for workflow recommendation
+      const response = await fetch("/api/v1/ip/" + slug + "/generate-demo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          preset_id: selectedPreset.id,
-          user_prompt: userPrompt || null,
+          prompt: userPrompt || null,
+          preset_id: selectedPreset?.id || null,
         }),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.detail || "Generation failed");
+        throw new Error(error.detail || "Workflow recommendation failed");
       }
 
-      const result = await response.json();
-      setGenerationId(result.generation_id);
+      const result: WorkflowData = await response.json();
+
+      // Show workflow preview modal instead of starting generation
+      setWorkflowData(result);
+      setShowWorkflowModal(true);
+      setGenerating(false);
     } catch (err) {
       console.error("Generation error:", err);
       setError(err instanceof Error ? err.message : "Generation failed");
@@ -1169,6 +1177,18 @@ export default function IPDetailClient({
             </div>
           </div>
         )}
+
+        {/* Workflow Preview Modal (Demo) */}
+        <WorkflowPreviewModal
+          isOpen={showWorkflowModal}
+          onClose={() => {
+            setShowWorkflowModal(false);
+            setWorkflowData(null);
+          }}
+          workflowData={workflowData}
+          ipSlug={slug}
+          ipName={name}
+        />
       </div>
     </AppShell>
   );

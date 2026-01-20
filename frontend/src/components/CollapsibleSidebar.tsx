@@ -276,8 +276,8 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
     // ==========================================================================
     const NAV_ITEMS: { label: string; href: string; icon: React.ElementType; badge?: string }[] = [
         { label: "홈", href: "/", icon: Home },
-        { label: "숏폼 웹드라마", href: "/ip/umbrella-encounter", icon: Sparkles, badge: "9:16" },
-        { label: "애니메이션 MV", href: "/ip/cooking-anime-mv", icon: Orbit, badge: "16:9" },
+        { label: "숏폼", href: "/shortform", icon: Sparkles, badge: "9:16" },
+        { label: "애니 MV", href: "/anime-mv", icon: Orbit, badge: "16:9" },
         { label: "차원 플로우", href: "/flow", icon: Waypoints },
     ];
 

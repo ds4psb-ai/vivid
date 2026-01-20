@@ -24,7 +24,8 @@ import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import { useDimensionChainOptional, type ChainData } from "@/contexts/DimensionChainContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import ChainDataInput from "./ChainDataInput";
-import { Layers, ArrowRight, CheckCircle, Download, Sparkles, BookOpen } from "lucide-react";
+import { getDemoIPOverride } from "@/lib/demo-ip-overrides";
+import { Layers, ArrowRight, CheckCircle, Download, Sparkles, BookOpen, Film } from "lucide-react";
 import { type ThemeColor as DimensionThemeColor } from "@/lib/dimension-theme";
 
 const DIMENSION_CODE = "story";
@@ -274,6 +275,44 @@ function StoryArchitectContent() {
     }
   }, [chainCtx]);
 
+  // IP context state for workflow integration
+  const [ipContext, setIpContext] = useState<{
+    slug: string;
+    title: string;
+    desc: string;
+  } | null>(null);
+
+  // URL parameter handling for workflow integration
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const ipParam = params.get("ip");
+    const promptParam = params.get("prompt");
+
+    if (ipParam) {
+      const ipData = getDemoIPOverride(ipParam);
+      if (ipData) {
+        setIpContext({
+          slug: ipParam,
+          title: isKo ? ipData.titleKo : ipData.titleEn,
+          desc: isKo ? ipData.descKo : ipData.descEn,
+        });
+        // Pre-fill concept with IP context if no prompt
+        if (!promptParam && !concept) {
+          const ipConcept = isKo
+            ? `"${ipData.titleKo}" IP를 기반으로 한 새로운 스토리`
+            : `A new story based on "${ipData.titleEn}" IP`;
+          setConcept(ipConcept);
+        }
+      }
+    }
+
+    if (promptParam) {
+      setConcept(decodeURIComponent(promptParam));
+    }
+  }, [isKo]);
+
   // Handler to apply chain data from previous dimensions
   const handleApplyChainData = (data: Record<string, ChainData>) => {
     if (data["abyss-mirror"]) {
@@ -521,6 +560,23 @@ function StoryArchitectContent() {
                 {labels.pitchDesc2}<br />
                 {labels.pitchDesc3}
               </p>
+
+              {/* IP Context Banner */}
+              {ipContext && (
+                <div className="mt-6 p-4 rounded-xl bg-violet-500/10 border border-violet-500/20 max-w-md">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Film className="w-4 h-4 text-violet-500" />
+                    <span className="text-xs font-medium text-violet-600 dark:text-violet-400">
+                      {isKo ? "IP 레퍼런스" : "IP Reference"}
+                    </span>
+                    <span className="px-2 py-0.5 text-[9px] bg-violet-500/20 text-violet-600 dark:text-violet-400 rounded-full">
+                      {ipContext.slug}
+                    </span>
+                  </div>
+                  <p className="text-sm font-medium text-slate-800 dark:text-white">{ipContext.title}</p>
+                  <p className="text-xs text-slate-600 dark:text-white/60 mt-1">{ipContext.desc}</p>
+                </div>
+              )}
             </div>
           )}
 

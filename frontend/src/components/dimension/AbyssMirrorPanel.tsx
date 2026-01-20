@@ -30,7 +30,8 @@ import { useRAGSuggestion, type EvidenceRef } from "@/hooks/useRAGSuggestion";
 import { usePersonaPreset, type PersonaPreset } from "@/hooks/usePersonaPreset";
 import { initMirror, chatMirror, type MirrorChatResponse } from "@/lib/mirrorApi";
 import { useDimensionChainOptional } from "@/contexts/DimensionChainContext";
-import { Send, User, Bot, Sparkles, Download, ArrowLeft, Zap, Upload, RefreshCw, AlertTriangle } from "lucide-react";
+import { getDemoIPOverride } from "@/lib/demo-ip-overrides";
+import { Send, User, Bot, Sparkles, Download, ArrowLeft, Zap, Upload, RefreshCw, AlertTriangle, Film } from "lucide-react";
 
 const DIMENSION_CODE = "mirror";
 const DIMENSION_KEY = "abyss-mirror";
@@ -228,6 +229,34 @@ function AbyssMirrorContent() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // IP context state for workflow integration
+  const [ipContext, setIpContext] = useState<{
+    slug: string;
+    title: string;
+    desc: string;
+    videoUrl?: string;
+  } | null>(null);
+
+  // URL parameter handling for workflow integration
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const ipParam = params.get("ip");
+
+    if (ipParam) {
+      const ipData = getDemoIPOverride(ipParam);
+      if (ipData) {
+        setIpContext({
+          slug: ipParam,
+          title: isKo ? ipData.titleKo : ipData.titleEn,
+          desc: isKo ? ipData.descKo : ipData.descEn,
+          videoUrl: ipData.previewVideoUrl,
+        });
+      }
+    }
+  }, [isKo]);
 
   // ========================================================================
   // Handlers
@@ -458,6 +487,23 @@ function AbyssMirrorContent() {
             {labels.subtitle}
           </p>
         </div>
+
+        {/* IP Context Banner (from workflow integration) */}
+        {ipContext && (
+          <div className="p-3 rounded-xl bg-violet-500/10 border border-violet-500/20">
+            <div className="flex items-center gap-2 mb-2">
+              <Film className="w-4 h-4 text-violet-500" />
+              <span className="text-xs font-medium text-violet-600 dark:text-violet-400">
+                {isKo ? "IP 레퍼런스" : "IP Reference"}
+              </span>
+              <span className="px-2 py-0.5 text-[9px] bg-violet-500/20 text-violet-600 dark:text-violet-400 rounded-full">
+                {ipContext.slug}
+              </span>
+            </div>
+            <p className="text-sm font-medium text-[var(--fg-0)]">{ipContext.title}</p>
+            <p className="text-xs text-[var(--fg-muted)] mt-1">{ipContext.desc}</p>
+          </div>
+        )}
 
         {/* Birth Date */}
         <div className="space-y-2">

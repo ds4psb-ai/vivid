@@ -17,6 +17,7 @@ import { Sparkles, Play, Layers, ArrowRight } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { IPRailCard } from "@/components/home/IPRailCard";
+import { DimensionAppRail } from "@/components/home/DimensionAppRail";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -181,6 +182,15 @@ function HomePageContent() {
                 <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-violet-500/20 to-transparent rounded-full blur-3xl" />
                 <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-emerald-500/20 to-transparent rounded-full blur-3xl" />
               </div>
+            </motion.section>
+
+            {/* Dimension App Rail */}
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <DimensionAppRail compact={true} showCore={true} />
             </motion.section>
           </div>
         </div>
