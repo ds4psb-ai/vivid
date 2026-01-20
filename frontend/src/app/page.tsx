@@ -13,7 +13,7 @@ import React, { Suspense } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Sparkles, Play, Layers, ArrowRight } from "lucide-react";
+import { Sparkles, Play, Layers, ArrowRight, Search, LogIn } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { IPRailCard } from "@/components/home/IPRailCard";
