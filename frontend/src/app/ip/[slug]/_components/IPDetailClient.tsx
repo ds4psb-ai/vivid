@@ -36,6 +36,7 @@ import { LicenseStatusInfo } from "@/components/ip/LicenseStatusBadge";
 import GenerationProgress from "./GenerationProgress";
 import { EvidenceCard } from "@/components/ui/EvidenceCard";
 import { ToolRecommendationCard } from "@/components/ui/ToolRecommendationCard";
+import { Collapsible } from "@/components/ui/Collapsible";
 import { WorkflowPreviewModal, type WorkflowData } from "@/components/WorkflowPreviewModal";
 import { useToolRecommendations } from "@/hooks/useToolRecommendations";
 import {
@@ -888,7 +889,7 @@ export default function IPDetailClient({
                 </div>
               )}
 
-              {/* 세계관 (있는 경우) */}
+              {/* 세계관 (있는 경우) - Collapsible */}
               {ip.worldbuilding && Object.keys(ip.worldbuilding).length > 0 && (() => {
                 // Type-safe worldbuilding extraction
                 const wb = ip.worldbuilding as {
@@ -911,11 +912,12 @@ export default function IPDetailClient({
                   }>;
                 };
                 return (
-                <div className="mb-6">
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                    <Globe className="w-5 h-5 text-violet-500" />
-                    {language === "ko" ? "세계관" : "Worldbuilding"}
-                  </h2>
+                <Collapsible
+                  header={language === "ko" ? "세계관" : "Worldbuilding"}
+                  icon={<Globe className="w-5 h-5 text-violet-500" />}
+                  defaultExpanded={false}
+                  className="mb-6"
+                >
                   <div className="space-y-4">
                     {/* 로그라인 (핵심 한 줄 요약) */}
                     {wb.logline && (
@@ -983,13 +985,22 @@ export default function IPDetailClient({
                       </div>
                     )}
 
-                    {/* 캐릭터 */}
+                    {/* 캐릭터 - 중첩 Collapsible */}
                     {wb.characters && wb.characters.length > 0 && (
-                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                        <p className="text-xs font-semibold text-violet-600 dark:text-violet-400 mb-3 uppercase tracking-wider flex items-center gap-1.5">
-                          <Users className="w-3.5 h-3.5" />
-                          {language === "ko" ? "등장인물" : "Characters"}
-                        </p>
+                      <Collapsible
+                        header={
+                          <span className="flex items-center gap-1.5">
+                            <Users className="w-3.5 h-3.5" />
+                            {language === "ko" ? "등장인물" : "Characters"}
+                            <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+                              ({wb.characters.length})
+                            </span>
+                          </span>
+                        }
+                        defaultExpanded={false}
+                        className="bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-700"
+                        headerClassName="text-sm text-violet-600 dark:text-violet-400"
+                      >
                         <div className="space-y-4">
                           {wb.characters.map((char, i) => (
                             <div key={i} className="p-3 rounded-lg bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700">
@@ -1028,10 +1039,10 @@ export default function IPDetailClient({
                             </div>
                           ))}
                         </div>
-                      </div>
+                      </Collapsible>
                     )}
                   </div>
-                </div>
+                </Collapsible>
                 );
               })()}
             </div>
