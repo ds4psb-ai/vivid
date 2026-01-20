@@ -395,7 +395,167 @@ revalidateTag(`ip:${slug}`);
 
 ---
 
-## 6) 변경 기록
+### Decision 010 — HITL Enhancement 완료
+- **ID**: SSoT-DEC-010
+- **날짜**: 2026-01-20
+- **상태**: **Accepted**
+- **결정 요약**: 신뢰도 기반 승인 게이트 + 피드백 → RAG 파이프라인 완료
+- **배경/문제**:
+  - 워크플로우 결과물에 대한 품질 보증 메커니즘 부재
+  - 사용자 피드백이 시스템 학습에 반영되지 않음
+  - 크리에이터 성과 모니터링 도구 부재
+- **2026 리서치 근거**:
+  - [Parseur](https://parseur.com/blog/human-in-the-loop-ai): HITL AI Best Practices
+  - [Permit.io](https://www.permit.io/blog/human-in-the-loop-for-ai-agents): HITL for AI Agents
+  - [NIST AI RMF](https://www.nist.gov/itl/ai-risk-management-framework): 고위험 결정에 명시적 인간 감독
+- **핵심 구현 항목**:
+  1. **ApprovalGateService**: 신뢰도 기반 자동/수동 승인 라우팅
+     - `confidence >= 0.85`: 자동 승인 (AUTO_APPROVED)
+     - `confidence >= 0.50`: 수동 검토 (PENDING_REVIEW)
+     - `confidence < 0.50`: 에스컬레이션 (ESCALATED)
+  2. **FeedbackLoopService**: 피드백 → RAG 파이프라인
+     - 긍정 피드백 (rating >= 4): Qdrant 인덱싱
+     - 부정 피드백: 소스 플래깅 + 캐시 무효화 + CRAG 트리거
+  3. **CreatorAnalyticsService**: 크리에이터 분석 + 이상 탐지
+     - RPV (Revenue Per View) 메트릭
+     - IQR 기반 이상 탐지 (평점 하락, 수정 급증, 납품 지연)
+  4. **GenerationABService**: 생성 파라미터 A/B 테스트
+- **구현 파일**:
+  - Backend Services:
+    - `backend/app/services/approval_gate.py` (승인 게이트)
+    - `backend/app/services/feedback_loop.py` (피드백 루프)
+    - `backend/app/services/creator_analytics.py` (크리에이터 분석)
+    - `backend/app/experiments/generation_ab.py` (A/B 테스트)
+  - Backend API:
+    - `backend/app/routers/approval_gate.py`
+    - `backend/app/routers/creator_dashboard.py`
+  - Frontend:
+    - `frontend/src/app/creator/dashboard/page.tsx`
+    - `frontend/src/components/creator/*.tsx` (5개 컴포넌트)
+  - Tests:
+    - `backend/tests/services/test_approval_gate.py` (17개 테스트)
+    - `backend/tests/services/test_feedback_loop.py` (12개 테스트)
+    - `backend/tests/services/test_creator_analytics.py` (23개 테스트)
+- **예상 효과**:
+  - 품질 보증율 향상 (저신뢰도 결과물 자동 검토)
+  - RAG 지식베이스 자동 학습 (피드백 기반)
+  - 크리에이터 성과 가시성 확보
+
+---
+
+## 6) Phase 8-10 로드맵 (2026 리서치 기반)
+
+### Phase 8 — Advanced Personalization (고급 개인화)
+
+**목표**: 2026 Hyper-Personalization 패턴 적용 - 실시간 맞춤형 콘텐츠
+
+**2026 리서치 근거**:
+- 71% 소비자가 개인화된 상호작용 기대
+- 76% 사용자가 개인화 부재 시 이탈
+- Zero-Party Data + Predictive AI = 최적의 개인화
+
+**핵심 기능**:
+- **GraphRAG Integration**: 지식 그래프 기반 RAG 확장
+  - 엔티티 관계 추론
+  - 다중 홉 질의 지원
+  - 컨텍스트 인식 검색
+- **User Preference Learning**: 사용자 선호도 학습
+  - 암묵적 신호 수집 (클릭, 체류시간, 스크롤)
+  - Zero-Party Data 수집 (명시적 선호도)
+  - 선호도 임베딩 생성
+- **Predictive Content Suggestion**: 예측적 콘텐츠 제안
+  - 다음 행동 예측
+  - 선제적 도구 추천
+  - 개인화된 RAG 힌트
+- **Real-Time Adaptation**: 실시간 적응
+  - 세션 내 선호도 업데이트
+  - A/B 변형 실시간 선택
+
+**예상 파일**:
+| 파일 | 목적 |
+|------|------|
+| `backend/app/rag/graph_rag.py` | GraphRAG 통합 |
+| `backend/app/services/preference_learner.py` | 선호도 학습 |
+| `backend/app/services/content_suggester.py` | 콘텐츠 제안 |
+| `backend/app/models_user_preference.py` | 선호도 모델 |
+
+---
+
+### Phase 9 — Monetization & Analytics (수익화 및 분석)
+
+**목표**: $205B 크리에이터 이코노미 최적화 - AI 기반 수익 분석
+
+**2026 리서치 근거**:
+- 크리에이터 이코노미 시장 $205B (2026)
+- 84% 크리에이터가 AI 도구 활용
+- AI 분석 도구로 평균 30% 수익 증가
+
+**핵심 기능**:
+- **Revenue Attribution**: 수익 기여도 분석
+  - IP별 수익 추적
+  - 도구별 ROI 분석
+  - Fork 수익 분배 최적화
+- **Engagement Analytics**: 참여도 분석
+  - 콘텐츠 성과 대시보드
+  - 오디언스 세그멘테이션
+  - 트렌드 감지
+- **Pricing Optimization**: 가격 최적화
+  - 동적 크레딧 가격 책정
+  - 수요 예측
+  - 번들 추천
+- **Creator Insights**: 크리에이터 인사이트
+  - 경쟁 벤치마킹
+  - 성장 기회 식별
+  - 자동화된 보고서
+
+**예상 파일**:
+| 파일 | 목적 |
+|------|------|
+| `backend/app/services/revenue_attribution.py` | 수익 기여도 |
+| `backend/app/services/engagement_analytics.py` | 참여도 분석 |
+| `backend/app/services/pricing_optimizer.py` | 가격 최적화 |
+| `frontend/src/app/analytics/page.tsx` | 분석 대시보드 |
+
+---
+
+### Phase 10 — Enterprise & Scale (엔터프라이즈 및 확장)
+
+**목표**: 멀티테넌트 아키텍처 + 대규모 확장성
+
+**2026 리서치 근거**:
+- Hub-Spoke 패턴: 중앙 AI 허브 + 테넌트별 커스터마이징
+- Knowledge Graph Isolation: 테넌트별 지식 분리
+- Shared Infrastructure: 인프라 비용 효율화
+
+**핵심 기능**:
+- **Multi-Tenant Architecture**: 멀티테넌트 아키텍처
+  - 테넌트별 데이터 격리
+  - 공유 AI 인프라
+  - 커스텀 브랜딩
+- **Horizontal Scaling**: 수평적 확장
+  - Kubernetes 오토스케일링
+  - 지역별 배포
+  - CDN 최적화
+- **Enterprise Features**: 엔터프라이즈 기능
+  - SSO/SAML 통합
+  - 감사 로그
+  - SLA 보장
+- **API Gateway**: API 게이트웨이
+  - 레이트 리미팅
+  - API 버저닝
+  - 사용량 기반 과금
+
+**예상 파일**:
+| 파일 | 목적 |
+|------|------|
+| `backend/app/middleware/tenant_middleware.py` | 테넌트 미들웨어 |
+| `backend/app/services/tenant_service.py` | 테넌트 관리 |
+| `backend/app/services/api_gateway.py` | API 게이트웨이 |
+| `infrastructure/k8s/` | Kubernetes 설정 |
+
+---
+
+## 7) 변경 기록
 
 | 버전 | 날짜 | 변경 |
 |---|---|---|
@@ -404,3 +564,4 @@ revalidateTag(`ip:${slug}`);
 | 0.3 | 2026-01-19 | Phase 0-3, 2.5 완료 반영 + Phase 4-7 로드맵 추가 |
 | 0.4 | 2026-01-19 | Phase 4-5 완료 + Decision 006/007 Accepted + Phase 5.5 Hardening 추가 |
 | 0.5 | 2026-01-20 | Phase 5.5/6 완료 + Decision 009 Accepted (Next.js Cache Components) |
+| 0.6 | 2026-01-20 | Phase 7 완료 + Decision 010 Accepted (HITL Enhancement) + Phase 8-10 로드맵 추가 |
