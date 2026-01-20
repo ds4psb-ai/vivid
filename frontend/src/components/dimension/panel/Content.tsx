@@ -7,8 +7,10 @@
  * Automatically shows loading overlay when isLoading is true.
  */
 
-import { type ReactNode } from "react";
+import { type ReactNode, Children, isValidElement } from "react";
 import { useDimensionPanel } from "./DimensionPanelContext";
+import { LoadingState } from "./LoadingState";
+import { ErrorState } from "./ErrorState";
 
 export interface ContentProps {
   /** Child components (Result, Loading, Error, etc.) */
@@ -24,7 +26,21 @@ export function Content({
   className = "",
   padding = "p-8",
 }: ContentProps) {
-  const { isLoading, hasError } = useDimensionPanel();
+  const { isLoading, hasError, error } = useDimensionPanel();
+
+  // Separate LoadingState and ErrorState from other children
+  const childArray = Children.toArray(children);
+  const loadingChild = childArray.find(
+    (child) => isValidElement(child) && child.type === LoadingState
+  );
+  const errorChild = childArray.find(
+    (child) => isValidElement(child) && child.type === ErrorState
+  );
+  const otherChildren = childArray.filter(
+    (child) =>
+      !isValidElement(child) ||
+      (child.type !== LoadingState && child.type !== ErrorState)
+  );
 
   return (
     <div
@@ -33,16 +49,21 @@ export function Content({
       <div
         className={`flex-1 overflow-y-auto ${padding} relative scroll-smooth custom-scrollbar`}
       >
-        {children}
+        {/* Other children (Result, etc.) - these get blurred during loading */}
+        {otherChildren}
 
-        {/* Loading/Error Overlay */}
+        {/* Loading/Error Overlay - content is INSIDE so it's not blurred */}
         {(isLoading || hasError) && (
           <div
-            className="absolute inset-0 bg-slate-900/40 dark:bg-[#0F0F1A]/40 backdrop-blur-md flex items-center justify-center z-50 animate-in fade-in duration-300"
+            className="absolute inset-0 bg-slate-900/60 dark:bg-[#0F0F1A]/70 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-300"
             role="status"
             aria-live="polite"
           >
-            {/* Overlay content is handled by LoadingState and ErrorState components */}
+            {/* LoadingState and ErrorState are rendered INSIDE the overlay */}
+            <div className="bg-slate-800/90 dark:bg-zinc-900/95 backdrop-blur-xl rounded-2xl p-8 shadow-2xl border border-white/10 max-w-md mx-4">
+              {isLoading && loadingChild}
+              {hasError && (errorChild || <ErrorState error={error || undefined} />)}
+            </div>
           </div>
         )}
       </div>
