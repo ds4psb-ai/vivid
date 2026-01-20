@@ -20,7 +20,6 @@ import { RPVMetricsCard } from "@/components/creator/RPVMetricsCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function CreatorAnalyticsPage() {
@@ -139,26 +138,7 @@ export default function CreatorAnalyticsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.1 }}
             >
-              <Card className="border border-white/5 bg-[var(--surface-1)]/70">
-                <CardHeader className="pb-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <CardTitle className="text-base">{copy.timelineTitle}</CardTitle>
-                      <CardDescription>{copy.timelineDesc}</CardDescription>
-                    </div>
-                    <Tabs defaultValue="week">
-                      <TabsList className="flex gap-2">
-                        <TabsTrigger value="week">{copy.tabs.week}</TabsTrigger>
-                        <TabsTrigger value="month">{copy.tabs.month}</TabsTrigger>
-                        <TabsTrigger value="quarter">{copy.tabs.quarter}</TabsTrigger>
-                      </TabsList>
-                    </Tabs>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <EngagementChart period="7d" />
-                </CardContent>
-              </Card>
+              <EngagementChart period="7d" />
             </motion.div>
           </div>
 

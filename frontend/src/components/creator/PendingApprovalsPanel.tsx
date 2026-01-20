@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { fetchWithAuth } from "@/lib/api-client";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface PendingApproval {
   checkpoint_id: string;
@@ -131,56 +133,53 @@ export function PendingApprovalsPanel() {
   };
 
   return (
-    <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-5 h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+    <Card className="border border-white/5 bg-[var(--surface-1)]/70 h-full">
+      <CardHeader className="flex-row items-center justify-between space-y-0 pb-4">
         <div className="flex items-center gap-2">
           <ClipboardCheck className="w-4 h-4 text-violet-400" />
-          <h3 className="text-sm font-medium text-white">{labels.title}</h3>
+          <CardTitle className="text-base">{labels.title}</CardTitle>
           {total > 0 && (
-            <span className="px-2 py-0.5 bg-violet-600/30 text-violet-300 text-xs rounded-full">
+            <Badge className="bg-violet-600/20 text-violet-200 border-violet-500/30 text-xs">
               {total}
-            </span>
+            </Badge>
           )}
         </div>
-      </div>
+      </CardHeader>
 
-      {/* Content */}
-      {loading ? (
-        <div className="flex items-center justify-center h-32">
-          <Loader2 className="w-6 h-6 text-violet-400 animate-spin" />
-        </div>
-      ) : error ? (
-        <div className="flex items-center justify-center h-32 gap-2 text-red-400">
-          <AlertCircle className="w-5 h-5" />
-          <span className="text-sm">{error}</span>
-        </div>
-      ) : data.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-32 text-gray-500">
-          <ClipboardCheck className="w-8 h-8 mb-2 opacity-50" />
-          <span className="text-sm">{labels.noItems}</span>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {data.map((item) => (
-            <div
-              key={item.checkpoint_id}
-              className="bg-gray-900/50 border border-gray-700 rounded-lg p-3 hover:border-gray-600 transition-colors"
-            >
+      <CardContent>
+        {loading ? (
+          <div className="flex items-center justify-center h-32">
+            <Loader2 className="w-6 h-6 text-violet-400 animate-spin" />
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center h-32 gap-2 text-red-400">
+            <AlertCircle className="w-5 h-5" />
+            <span className="text-sm">{error}</span>
+          </div>
+        ) : data.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-32 text-[var(--fg-subtle)]">
+            <ClipboardCheck className="w-8 h-8 mb-2 opacity-50" />
+            <span className="text-sm">{labels.noItems}</span>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {data.map((item) => (
+              <div
+                key={item.checkpoint_id}
+                className="rounded-lg border border-white/5 bg-[var(--surface-2)]/60 p-3 transition-colors hover:border-white/10"
+              >
               {/* Top row */}
               <div className="flex items-start justify-between mb-2">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     {item.dimension && (
-                      <span className="px-2 py-0.5 bg-blue-600/20 text-blue-300 text-xs rounded">
-                        {item.dimension}
-                      </span>
+                      <Badge variant="secondary" className="text-[10px]">{item.dimension}</Badge>
                     )}
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-[var(--fg-subtle)]">
                       {item.node_id}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-300 line-clamp-2">
+                  <p className="text-sm text-[var(--fg-muted)] line-clamp-2">
                     {truncatePreview(item.output_preview)}
                   </p>
                 </div>
@@ -190,7 +189,7 @@ export function PendingApprovalsPanel() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 text-xs">
                   <div className="flex items-center gap-1">
-                    <span className="text-gray-500">{labels.confidence}:</span>
+                    <span className="text-[var(--fg-subtle)]">{labels.confidence}:</span>
                     <span className={getConfidenceColor(item.confidence)}>
                       {(item.confidence * 100).toFixed(0)}%
                     </span>
@@ -202,7 +201,7 @@ export function PendingApprovalsPanel() {
                       {getConfidenceBadge(item.confidence, language)}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 text-gray-500">
+                  <div className="flex items-center gap-1 text-[var(--fg-subtle)]">
                     <Clock className="w-3 h-3" />
                     <span>{formatTimeRemaining(item.expires_at)}</span>
                   </div>
@@ -248,9 +247,10 @@ export function PendingApprovalsPanel() {
               <ChevronRight className="w-4 h-4" />
             </button>
           )}
-        </div>
-      )}
-    </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

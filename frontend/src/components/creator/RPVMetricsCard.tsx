@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { fetchWithAuth } from "@/lib/api-client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface CreatorMetrics {
   rpv: number;
@@ -55,16 +56,16 @@ const COLOR_MAP: Record<string, { icon: string; bg: string }> = {
 function StatCard({ title, value, icon: Icon, color, suffix }: StatCardProps) {
   const colors = COLOR_MAP[color];
   return (
-    <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 hover:border-gray-600 transition-colors">
+    <div className="rounded-xl border border-white/5 bg-[var(--surface-2)]/60 p-4 transition-colors hover:border-white/10">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-gray-400">{title}</span>
+        <span className="text-xs text-[var(--fg-subtle)]">{title}</span>
         <div className={`p-1.5 ${colors.bg} rounded-lg`}>
           <Icon className={`w-3.5 h-3.5 ${colors.icon}`} />
         </div>
       </div>
       <div className="flex items-baseline gap-1">
-        <span className="text-2xl font-bold text-white">{value}</span>
-        {suffix && <span className="text-sm text-gray-500">{suffix}</span>}
+        <span className="text-2xl font-bold text-[var(--fg-0)]">{value}</span>
+        {suffix && <span className="text-sm text-[var(--fg-subtle)]">{suffix}</span>}
       </div>
     </div>
   );
@@ -109,22 +110,26 @@ export function RPVMetricsCard() {
 
   if (loading) {
     return (
-      <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-5">
+      <Card className="border border-white/5 bg-[var(--surface-1)]/70">
+        <CardContent className="p-5">
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-6 h-6 text-violet-400 animate-spin" />
         </div>
-      </div>
+        </CardContent>
+      </Card>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-5">
+      <Card className="border border-white/5 bg-[var(--surface-1)]/70">
+        <CardContent className="p-5">
         <div className="flex items-center gap-3 text-red-400">
           <AlertCircle className="w-5 h-5" />
           <span>{error}</span>
         </div>
-      </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -146,13 +151,14 @@ export function RPVMetricsCard() {
   const formatPercent = (n: number) => `${(n * 100).toFixed(1)}%`;
 
   return (
-    <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-white">{labels.title}</h3>
-        <span className="text-xs text-gray-500">{labels.period}</span>
-      </div>
+    <Card className="border border-white/5 bg-[var(--surface-1)]/70">
+      <CardHeader className="flex-row items-center justify-between space-y-0">
+        <CardTitle className="text-base">{labels.title}</CardTitle>
+        <span className="text-xs text-[var(--fg-subtle)]">{labels.period}</span>
+      </CardHeader>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+      <CardContent>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
         <StatCard
           title={labels.rpv}
           value={`$${formatCurrency(metrics.rpv)}`}
@@ -209,7 +215,8 @@ export function RPVMetricsCard() {
           color="purple"
         />
       </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 

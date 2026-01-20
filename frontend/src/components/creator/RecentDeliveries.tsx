@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { fetchWithAuth } from "@/lib/api-client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface DeliveryRecord {
   delivery_id: string;
@@ -83,43 +84,42 @@ export function RecentDeliveries() {
   };
 
   return (
-    <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-5 h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+    <Card className="border border-white/5 bg-[var(--surface-1)]/70 h-full">
+      <CardHeader className="flex-row items-center justify-between space-y-0 pb-4">
         <div className="flex items-center gap-2">
           <Package className="w-4 h-4 text-blue-400" />
-          <h3 className="text-sm font-medium text-white">{labels.title}</h3>
+          <CardTitle className="text-base">{labels.title}</CardTitle>
         </div>
-      </div>
+      </CardHeader>
 
-      {/* Content */}
-      {loading ? (
-        <div className="flex items-center justify-center h-32">
-          <Loader2 className="w-6 h-6 text-violet-400 animate-spin" />
-        </div>
-      ) : error ? (
-        <div className="flex items-center justify-center h-32 gap-2 text-red-400">
-          <AlertCircle className="w-5 h-5" />
-          <span className="text-sm">{error}</span>
-        </div>
-      ) : data.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-32 text-gray-500">
-          <Package className="w-8 h-8 mb-2 opacity-50" />
-          <span className="text-sm">{labels.noDeliveries}</span>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {data.map((item) => (
-            <div
-              key={item.delivery_id}
-              className="bg-gray-900/50 border border-gray-700 rounded-lg p-3 hover:border-gray-600 transition-colors"
-            >
+      <CardContent>
+        {loading ? (
+          <div className="flex items-center justify-center h-32">
+            <Loader2 className="w-6 h-6 text-violet-400 animate-spin" />
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center h-32 gap-2 text-red-400">
+            <AlertCircle className="w-5 h-5" />
+            <span className="text-sm">{error}</span>
+          </div>
+        ) : data.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-32 text-[var(--fg-subtle)]">
+            <Package className="w-8 h-8 mb-2 opacity-50" />
+            <span className="text-sm">{labels.noDeliveries}</span>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {data.map((item) => (
+              <div
+                key={item.delivery_id}
+                className="rounded-lg border border-white/5 bg-[var(--surface-2)]/60 p-3 transition-colors hover:border-white/10"
+              >
               {/* Project title and date */}
               <div className="flex items-start justify-between mb-2">
-                <h4 className="text-sm font-medium text-white line-clamp-1 flex-1 mr-2">
+                <h4 className="text-sm font-medium text-[var(--fg-0)] line-clamp-1 flex-1 mr-2">
                   {item.project_title}
                 </h4>
-                <span className="text-xs text-gray-500 whitespace-nowrap">
+                <span className="text-xs text-[var(--fg-subtle)] whitespace-nowrap">
                   {formatDate(item.delivered_at)}
                 </span>
               </div>
@@ -133,7 +133,7 @@ export function RecentDeliveries() {
                     <span className="text-yellow-400">{item.rating.toFixed(1)}</span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1 text-gray-500">
+                  <div className="flex items-center gap-1 text-[var(--fg-subtle)]">
                     <Star className="w-3 h-3" />
                     <span>-</span>
                   </div>
@@ -156,7 +156,7 @@ export function RecentDeliveries() {
 
                 {/* Revisions */}
                 {item.revision_count > 0 && (
-                  <div className="flex items-center gap-1 text-gray-400">
+                  <div className="flex items-center gap-1 text-[var(--fg-muted)]">
                     <RotateCcw className="w-3 h-3" />
                     <span>{item.revision_count}</span>
                   </div>
@@ -167,14 +167,15 @@ export function RecentDeliveries() {
                   <span className="text-green-400 font-medium">
                     +{formatCredits(item.credits_earned)}
                   </span>
-                  <span className="text-gray-500">{labels.credits}</span>
+                  <span className="text-[var(--fg-subtle)]">{labels.credits}</span>
                 </div>
               </div>
             </div>
           ))}
-        </div>
-      )}
-    </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

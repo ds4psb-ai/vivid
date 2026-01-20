@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { fetchWithAuth } from "@/lib/api-client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface EngagementData {
   date: string;
@@ -110,12 +111,11 @@ export function EngagementChart({ period: initialPeriod = "7d" }: EngagementChar
   };
 
   return (
-    <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-5 h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+    <Card className="border border-white/5 bg-[var(--surface-1)]/70 h-full">
+      <CardHeader className="flex-row items-center justify-between space-y-0 pb-4">
         <div className="flex items-center gap-2">
           <BarChart3 className="w-4 h-4 text-violet-400" />
-          <h3 className="text-sm font-medium text-white">{labels.title}</h3>
+          <CardTitle className="text-base">{labels.title}</CardTitle>
         </div>
 
         {/* Period Selector */}
@@ -124,55 +124,56 @@ export function EngagementChart({ period: initialPeriod = "7d" }: EngagementChar
             <button
               key={opt.value}
               onClick={() => setPeriod(opt.value as "7d" | "30d" | "90d")}
-              className={`px-3 py-1 text-xs rounded-lg transition-colors ${
+              className={`px-3 py-1 text-xs rounded-lg border transition-colors ${
                 period === opt.value
-                  ? "bg-violet-600 text-white"
-                  : "bg-gray-700 text-gray-400 hover:bg-gray-600"
+                  ? "bg-violet-600/90 text-white border-violet-500/60"
+                  : "bg-[var(--surface-2)]/60 text-[var(--fg-subtle)] border-white/5 hover:bg-[var(--surface-2)]"
               }`}
             >
               {language === "ko" ? opt.label : opt.labelEn}
             </button>
           ))}
         </div>
-      </div>
+      </CardHeader>
 
       {/* Content */}
-      {loading ? (
-        <div className="flex items-center justify-center h-48">
-          <Loader2 className="w-6 h-6 text-violet-400 animate-spin" />
-        </div>
-      ) : error ? (
-        <div className="flex items-center justify-center h-48 gap-2 text-red-400">
-          <AlertCircle className="w-5 h-5" />
-          <span>{error}</span>
-        </div>
-      ) : data.length === 0 ? (
-        <div className="flex items-center justify-center h-48 text-gray-500">
-          {labels.noData}
-        </div>
-      ) : (
-        <>
+      <CardContent>
+        {loading ? (
+          <div className="flex items-center justify-center h-48">
+            <Loader2 className="w-6 h-6 text-violet-400 animate-spin" />
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center h-48 gap-2 text-red-400">
+            <AlertCircle className="w-5 h-5" />
+            <span>{error}</span>
+          </div>
+        ) : data.length === 0 ? (
+          <div className="flex items-center justify-center h-48 text-[var(--fg-subtle)]">
+            {labels.noData}
+          </div>
+        ) : (
+          <>
           {/* Legend */}
           <div className="flex flex-wrap gap-4 mb-4 text-xs">
             <div className="flex items-center gap-1.5">
               <Eye className="w-3.5 h-3.5 text-blue-400" />
-              <span className="text-gray-400">{labels.views}</span>
-              <span className="text-white font-medium">{formatNumber(totals.views)}</span>
+              <span className="text-[var(--fg-subtle)]">{labels.views}</span>
+              <span className="text-[var(--fg-0)] font-medium">{formatNumber(totals.views)}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Heart className="w-3.5 h-3.5 text-red-400" />
-              <span className="text-gray-400">{labels.likes}</span>
-              <span className="text-white font-medium">{formatNumber(totals.likes)}</span>
+              <span className="text-[var(--fg-subtle)]">{labels.likes}</span>
+              <span className="text-[var(--fg-0)] font-medium">{formatNumber(totals.likes)}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <MessageCircle className="w-3.5 h-3.5 text-green-400" />
-              <span className="text-gray-400">{labels.comments}</span>
-              <span className="text-white font-medium">{formatNumber(totals.comments)}</span>
+              <span className="text-[var(--fg-subtle)]">{labels.comments}</span>
+              <span className="text-[var(--fg-0)] font-medium">{formatNumber(totals.comments)}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Share2 className="w-3.5 h-3.5 text-yellow-400" />
-              <span className="text-gray-400">{labels.shares}</span>
-              <span className="text-white font-medium">{formatNumber(totals.shares)}</span>
+              <span className="text-[var(--fg-subtle)]">{labels.shares}</span>
+              <span className="text-[var(--fg-0)] font-medium">{formatNumber(totals.shares)}</span>
             </div>
           </div>
 
@@ -209,8 +210,8 @@ export function EngagementChart({ period: initialPeriod = "7d" }: EngagementChar
                 )}
 
                 {/* Tooltip */}
-                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-900 border border-gray-700 rounded-lg p-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 whitespace-nowrap">
-                  <div className="font-medium text-white mb-1">{formatDate(item.date)}</div>
+                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-[var(--surface-3)] border border-white/10 rounded-lg p-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 whitespace-nowrap">
+                  <div className="font-medium text-[var(--fg-0)] mb-1">{formatDate(item.date)}</div>
                   <div className="text-blue-400">Views: {formatNumber(item.views)}</div>
                   <div className="text-red-400">Likes: {formatNumber(item.likes)}</div>
                   <div className="text-green-400">Comments: {item.comments}</div>
@@ -223,8 +224,9 @@ export function EngagementChart({ period: initialPeriod = "7d" }: EngagementChar
             ))}
           </div>
         </>
-      )}
-    </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

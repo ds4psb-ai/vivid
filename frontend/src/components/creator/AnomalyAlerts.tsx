@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { fetchWithAuth } from "@/lib/api-client";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface AnomalyAlert {
   id: string;
@@ -132,52 +134,51 @@ export function AnomalyAlerts() {
   };
 
   return (
-    <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-5 h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+    <Card className="border border-white/5 bg-[var(--surface-1)]/70 h-full">
+      <CardHeader className="flex-row items-center justify-between space-y-0 pb-4">
         <div className="flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-yellow-400" />
-          <h3 className="text-sm font-medium text-white">{labels.title}</h3>
+          <CardTitle className="text-base">{labels.title}</CardTitle>
           {data.length > 0 && (
-            <span className="px-2 py-0.5 bg-yellow-600/30 text-yellow-300 text-xs rounded-full">
+            <Badge className="bg-yellow-600/20 text-yellow-200 border-yellow-500/30 text-xs">
               {data.length}
-            </span>
+            </Badge>
           )}
         </div>
-      </div>
+      </CardHeader>
 
-      {/* Content */}
-      {loading ? (
-        <div className="flex items-center justify-center h-32">
-          <Loader2 className="w-6 h-6 text-violet-400 animate-spin" />
-        </div>
-      ) : error ? (
-        <div className="flex items-center justify-center h-32 gap-2 text-red-400">
-          <AlertCircle className="w-5 h-5" />
-          <span className="text-sm">{error}</span>
-        </div>
-      ) : data.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-32 text-gray-500">
-          <Check className="w-8 h-8 mb-2 text-green-400 opacity-50" />
-          <span className="text-sm">{labels.noAlerts}</span>
-        </div>
-      ) : (
-        <div className="space-y-3 max-h-80 overflow-y-auto">
-          {data.map((item) => {
-            const config = SEVERITY_CONFIG[item.severity] || SEVERITY_CONFIG.info;
-            const Icon = TYPE_ICONS[item.type] || AlertTriangle;
+      <CardContent>
+        {loading ? (
+          <div className="flex items-center justify-center h-32">
+            <Loader2 className="w-6 h-6 text-violet-400 animate-spin" />
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center h-32 gap-2 text-red-400">
+            <AlertCircle className="w-5 h-5" />
+            <span className="text-sm">{error}</span>
+          </div>
+        ) : data.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-32 text-[var(--fg-subtle)]">
+            <Check className="w-8 h-8 mb-2 text-green-400 opacity-50" />
+            <span className="text-sm">{labels.noAlerts}</span>
+          </div>
+        ) : (
+          <div className="space-y-3 max-h-80 overflow-y-auto">
+            {data.map((item) => {
+              const config = SEVERITY_CONFIG[item.severity] || SEVERITY_CONFIG.info;
+              const Icon = TYPE_ICONS[item.type] || AlertTriangle;
 
-            return (
-              <div
-                key={item.id}
-                className={`${config.bg} ${config.border} border rounded-lg p-3`}
-              >
+              return (
+                <div
+                  key={item.id}
+                  className={`${config.bg} ${config.border} border rounded-lg p-3`}
+                >
                 {/* Header */}
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Icon className={`w-4 h-4 ${config.icon}`} />
                     <div>
-                      <span className="text-sm font-medium text-white">
+                      <span className="text-sm font-medium text-[var(--fg-0)]">
                         {labels.typeLabels[item.type] || item.type}
                       </span>
                       <span className={`ml-2 px-1.5 py-0.5 text-[10px] rounded ${config.bg} ${
@@ -189,27 +190,27 @@ export function AnomalyAlerts() {
                       </span>
                     </div>
                   </div>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-[var(--fg-subtle)]">
                     {formatDate(item.detected_at)}
                   </span>
                 </div>
 
                 {/* Description */}
-                <p className="text-xs text-gray-300 mb-2 line-clamp-2">
+                <p className="text-xs text-[var(--fg-muted)] mb-2 line-clamp-2">
                   {item.description}
                 </p>
 
                 {/* Metrics */}
                 <div className="flex items-center gap-4 text-xs mb-2">
                   <div>
-                    <span className="text-gray-500">{labels.actual}: </span>
-                    <span className="text-white font-medium">
+                    <span className="text-[var(--fg-subtle)]">{labels.actual}: </span>
+                    <span className="text-[var(--fg-0)] font-medium">
                       {item.metric_value.toFixed(2)}
                     </span>
                   </div>
                   <div>
-                    <span className="text-gray-500">{labels.expected}: </span>
-                    <span className="text-gray-400">
+                    <span className="text-[var(--fg-subtle)]">{labels.expected}: </span>
+                    <span className="text-[var(--fg-muted)]">
                       {item.expected_range[0].toFixed(2)} - {item.expected_range[1].toFixed(2)}
                     </span>
                   </div>
@@ -231,12 +232,13 @@ export function AnomalyAlerts() {
                     {labels.resolve}
                   </button>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
