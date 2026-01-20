@@ -138,6 +138,21 @@ export function isStepCompleted(ipSlug: string, step: number): boolean {
 }
 
 /**
+ * 이전 단계의 결과 데이터 가져오기
+ */
+export function getPreviousStepResult(
+  ipSlug: string,
+  currentStep: number
+): StepResult | null {
+  if (currentStep <= 1) return null;
+
+  const state = getWorkflowState(ipSlug);
+  if (!state) return null;
+
+  return state.results[currentStep - 1] || null;
+}
+
+/**
  * 다음 단계 정보 가져오기
  */
 export function getNextStep(ipSlug: string): WorkflowStep | null {

@@ -31,6 +31,7 @@ import { usePersonaPreset, type PersonaPreset } from "@/hooks/usePersonaPreset";
 import { initMirror, chatMirror, type MirrorChatResponse } from "@/lib/mirrorApi";
 import { useDimensionChainOptional } from "@/contexts/DimensionChainContext";
 import { getDemoIPOverride } from "@/lib/demo-ip-overrides";
+import { getPreviousStepResult } from "@/lib/workflow-state";
 import { Send, User, Bot, Sparkles, Download, ArrowLeft, Zap, Upload, RefreshCw, AlertTriangle, Film } from "lucide-react";
 
 const DIMENSION_CODE = "mirror";
@@ -238,6 +239,18 @@ function AbyssMirrorContent() {
     videoUrl?: string;
   } | null>(null);
 
+  // Workflow context from previous step (e.g., Reference Decoder)
+  const [workflowContext, setWorkflowContext] = useState<{
+    source: string;
+    styleHints: {
+      mood?: string;
+      lighting?: string;
+      colorPalette?: string[];
+      referenceArtists?: string[];
+      stylePrompt?: string;
+    };
+  } | null>(null);
+
   // URL parameter handling for workflow integration
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -258,6 +271,45 @@ function AbyssMirrorContent() {
     }
   }, [isKo]);
 
+  // Load previous step result (e.g., Reference Decoder → Abyss Mirror inheritance)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const ipSlug = params.get("ip");
+    const stepParam = params.get("step");
+    const currentStep = stepParam ? parseInt(stepParam, 10) : null;
+
+    if (!ipSlug || !currentStep || currentStep <= 1) return;
+
+    const prevResult = getPreviousStepResult(ipSlug, currentStep);
+    if (!prevResult?.outputData) return;
+
+    const data = prevResult.outputData;
+    const styleHints: NonNullable<typeof workflowContext>["styleHints"] = {};
+
+    // Style Extraction / Video Analysis / Image Analysis mode handling
+    if (data.style_prompt) {
+      styleHints.stylePrompt = data.style_prompt as string;
+      styleHints.mood = data.mood as string;
+      styleHints.lighting = data.lighting as string;
+      styleHints.colorPalette = data.color_palette as string[];
+      styleHints.referenceArtists = data.reference_artists as string[];
+    }
+    if (data.style && typeof data.style === "object") {
+      const style = data.style as Record<string, unknown>;
+      styleHints.mood ??= style.mood as string;
+      styleHints.lighting ??= style.lighting as string;
+    }
+    if (data.recreation_prompt && !styleHints.stylePrompt) {
+      styleHints.stylePrompt = data.recreation_prompt as string;
+    }
+
+    if (Object.values(styleHints).some(Boolean)) {
+      setWorkflowContext({ source: "reference-decoder", styleHints });
+    }
+  }, []);
+
   // ========================================================================
   // Handlers
   // ========================================================================
@@ -272,6 +324,19 @@ function AbyssMirrorContent() {
       setShowCreditModal(true);
       return;
     }
+
+    // Build seed_preset from workflow context (e.g., Reference Decoder → Abyss Mirror)
+    const seedPreset = workflowContext?.styleHints
+      ? {
+          visual_preferences: {
+            mood: workflowContext.styleHints.mood,
+            lighting: workflowContext.styleHints.lighting,
+            color_palette: workflowContext.styleHints.colorPalette,
+          },
+          style_prompt: workflowContext.styleHints.stylePrompt,
+          suggested_auteurs: workflowContext.styleHints.referenceArtists,
+        }
+      : undefined;
 
     // React 19: Non-blocking transition
     startTransition(async () => {
@@ -289,6 +354,7 @@ function AbyssMirrorContent() {
           blood_type: birthInfo.bloodType.toUpperCase(),
           gender: birthInfo.gender,
           model,
+          seed_preset: seedPreset,
         }, byokKey);
 
         if (response.success) {
@@ -312,7 +378,7 @@ function AbyssMirrorContent() {
         setLoading(false);
       }
     });
-  }, [birthInfo, byokKey, creditCtx, model, creditCost, setLoading, startTransition, labels]);
+  }, [birthInfo, byokKey, creditCtx, model, creditCost, setLoading, startTransition, labels, workflowContext]);
 
   const handleSendMessage = useCallback(() => {
     if (!inputMessage.trim() || isPending || !sessionId) return;
@@ -502,6 +568,37 @@ function AbyssMirrorContent() {
             </div>
             <p className="text-sm font-medium text-[var(--fg-0)]">{ipContext.title}</p>
             <p className="text-xs text-[var(--fg-muted)] mt-1">{ipContext.desc}</p>
+          </div>
+        )}
+
+        {/* Workflow Context Banner (previous step result, e.g., Reference Decoder) */}
+        {workflowContext && (
+          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                {isKo ? "레퍼런스 분석 반영됨" : "Reference Analysis Applied"}
+              </span>
+            </div>
+            {workflowContext.styleHints.mood && (
+              <p className="text-xs text-[var(--fg-muted)]">
+                <span className="font-medium">{isKo ? "무드" : "Mood"}:</span> {workflowContext.styleHints.mood}
+              </p>
+            )}
+            {workflowContext.styleHints.lighting && (
+              <p className="text-xs text-[var(--fg-muted)]">
+                <span className="font-medium">{isKo ? "조명" : "Lighting"}:</span> {workflowContext.styleHints.lighting}
+              </p>
+            )}
+            {workflowContext.styleHints.referenceArtists && workflowContext.styleHints.referenceArtists.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {workflowContext.styleHints.referenceArtists.slice(0, 3).map((artist, i) => (
+                  <span key={i} className="px-2 py-0.5 text-[10px] bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-full capitalize">
+                    {artist}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

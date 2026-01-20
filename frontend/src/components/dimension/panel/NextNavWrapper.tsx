@@ -47,6 +47,7 @@ function NextNavInner({
   className,
   navThemeColor,
   isLoading,
+  result,
   props,
 }: {
   currentDimension: string;
@@ -54,6 +55,7 @@ function NextNavInner({
   className: string;
   navThemeColor: NextDimensionNavProps["themeColor"];
   isLoading: boolean;
+  result: unknown;
   props: Omit<NextNavWrapperProps, "currentDimension" | "show" | "className">;
 }) {
   const searchParams = useSearchParams();
@@ -73,11 +75,21 @@ function NextNavInner({
 
   // In workflow mode, show WorkflowStepNav instead of NextDimensionNav
   if (isWorkflowMode) {
+    // Extract result summary from result data for workflow state persistence
+    const resultSummary = (() => {
+      if (!result) return undefined;
+      const r = result as Record<string, unknown>;
+      // Try common result fields in priority order
+      return (r.style_prompt || r.description || r.recreation_prompt || "Complete") as string;
+    })();
+
     return (
       <div className={`mt-6 ${className}`}>
         <WorkflowStepNav
           currentApp={currentDimension}
           disabled={isLoading}
+          resultData={result as Record<string, unknown>}
+          resultSummary={resultSummary?.slice(0, 100)}
         />
       </div>
     );
@@ -102,7 +114,7 @@ export function NextNavWrapper({
   className = "",
   ...props
 }: NextNavWrapperProps) {
-  const { dimensionCode, token, hasResult, isLoading } = useDimensionPanel();
+  const { dimensionCode, token, hasResult, isLoading, result } = useDimensionPanel();
 
   // Only render when there's a result and show is true
   if (!show || !hasResult || isLoading) return null;
@@ -148,6 +160,7 @@ export function NextNavWrapper({
         className={className}
         navThemeColor={navThemeColor}
         isLoading={isLoading}
+        result={result}
         props={props}
       />
     </Suspense>
