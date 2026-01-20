@@ -290,11 +290,11 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
             label: "크리에이터 운영",
             icon: TrendingUp,
             items: [
-                { label: "승인 게이트", href: "/creator/approvals", icon: ShieldCheck, badge: "준비중" },
-                { label: "피드백 루프", href: "/creator/feedback", icon: MessageSquareText, badge: "준비중" },
-                { label: "A/B 실험", href: "/creator/experiments", icon: FlaskConical, badge: "준비중" },
-                { label: "분석 대시보드", href: "/creator/analytics", icon: BarChart3, badge: "준비중" },
-                { label: "정산", href: "/settlements", icon: Activity },
+                { label: "승인 게이트", href: "/creator/approvals", icon: ShieldCheck, badge: "HITL" },
+                { label: "피드백 루프", href: "/creator/feedback", icon: MessageSquareText, badge: "NEW" },
+                { label: "A/B 실험", href: "/creator/experiments", icon: FlaskConical, badge: "BETA" },
+                { label: "분석 대시보드", href: "/creator/analytics", icon: BarChart3, badge: "INSIGHT" },
+                { label: "정산", href: "/settlements", icon: Activity, badge: "FIN" },
             ],
         },
         {
