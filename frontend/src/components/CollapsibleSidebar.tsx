@@ -28,6 +28,7 @@ import {
     MessageSquareText,
     FlaskConical,
     BarChart3,
+    CreditCard,
 } from "lucide-react";
 import { CreditDisplay, ProfileSettingsPanel } from "@/components/CreditDisplay";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -270,29 +271,35 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
         { label: "홈", href: "/", icon: Home },
         { label: "IP 갤러리", href: "/ip", icon: Sparkles },
         { label: "내 작업실", href: "/studio", icon: FolderOpen },
-        { label: "크리에이터", href: "/creator", icon: User },
+        { label: "크리에이터 허브", href: "/creator", icon: User },
     ];
 
     const NAV_GROUPS = [
         {
-            id: "tools",
-            label: "고급 도구",
+            id: "make",
+            label: "만들기",
             icon: Wrench,
             items: [
                 { label: "차원 앱", href: "/dimension", icon: Orbit },
-                // Flow is gated by feature flag
                 ...(FLOW_ENABLED ? [{ label: "차원 플로우", href: "/flow", icon: Waypoints }] : []),
                 { label: "템플릿", href: "/singularity", icon: CircleDashed },
             ],
         },
         {
-            id: "creator",
-            label: "크리에이터 운영",
-            icon: TrendingUp,
+            id: "activity",
+            label: "활동",
+            icon: Activity,
             items: [
                 { label: "승인 게이트", href: "/creator/approvals", icon: ShieldCheck, badge: "HITL" },
                 { label: "피드백 루프", href: "/creator/feedback", icon: MessageSquareText, badge: "NEW" },
                 { label: "A/B 실험", href: "/creator/experiments", icon: FlaskConical, badge: "BETA" },
+            ],
+        },
+        {
+            id: "earn",
+            label: "수익",
+            icon: TrendingUp,
+            items: [
                 { label: "분석 대시보드", href: "/creator/analytics", icon: BarChart3, badge: "INSIGHT" },
                 { label: "정산", href: "/settlements", icon: Activity, badge: "FIN" },
             ],
@@ -300,9 +307,9 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
         {
             id: "account",
             label: "계정",
-            icon: TrendingUp,
+            icon: Settings,
             items: [
-                { label: "크레딧", href: "/credits", icon: Activity },
+                { label: "크레딧", href: "/credits", icon: CreditCard },
                 { label: "설정", href: "/settings", icon: Settings },
             ],
         },
