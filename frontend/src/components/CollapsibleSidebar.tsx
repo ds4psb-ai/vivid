@@ -29,6 +29,7 @@ import {
     FlaskConical,
     BarChart3,
     CreditCard,
+    Plus,
 } from "lucide-react";
 import { CreditDisplay, ProfileSettingsPanel } from "@/components/CreditDisplay";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -274,6 +275,11 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
         { label: "크리에이터 허브", href: "/creator", icon: User },
     ];
 
+    const QUICK_ACTIONS: { label: string; href: string; icon: React.ElementType }[] = [
+        { label: "새 작업", href: "/studio", icon: Plus },
+        { label: "템플릿", href: "/singularity", icon: CircleDashed },
+    ];
+
     const NAV_GROUPS = [
         {
             id: "make",
@@ -396,8 +402,45 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
                 <div className="mx-3 border-t border-white/5" />
 
                 {/* Main Navigation */}
-                <nav className={`flex-1 p-2 space-y-1 scrollbar-none ${isExpanded ? 'overflow-y-auto' : 'overflow-visible'}`}>
+                <nav className={`flex-1 p-2 space-y-2 scrollbar-none ${isExpanded ? 'overflow-y-auto' : 'overflow-visible'}`}>
+                    {/* Quick Actions */}
+                    <div className="space-y-2">
+                        {isExpanded && (
+                            <div className="px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                                퀵 액션
+                            </div>
+                        )}
+                        <div className="grid gap-2">
+                            {QUICK_ACTIONS.map((action) => (
+                                <div key={action.href} className="relative group/quickaction">
+                                    <Link
+                                        href={action.href}
+                                        className={`btn btn-secondary ${isExpanded ? "btn-size-sm w-full justify-start px-3" : "btn-size-icon w-full justify-center"} gap-2`}
+                                        aria-label={action.label}
+                                    >
+                                        <action.icon className="h-4 w-4" />
+                                        {isExpanded && <span className="text-sm">{action.label}</span>}
+                                    </Link>
+                                    {!isExpanded && (
+                                        <div className="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 z-[60]
+                                                      opacity-0 invisible transform -translate-x-2 group-hover/quickaction:opacity-100 group-hover/quickaction:visible group-hover/quickaction:translate-x-0 
+                                                      transition-all duration-200 pointer-events-none">
+                                            <div className="bg-white dark:bg-[#1a1a1c] border border-black/10 dark:border-white/10 text-black dark:text-white text-sm font-medium px-3 py-1.5 rounded-lg shadow-xl whitespace-nowrap">
+                                                {action.label}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
                     {/* Quick Access */}
+                    {isExpanded && (
+                        <div className="px-3 pt-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                            탐색
+                        </div>
+                    )}
                     {NAV_ITEMS.map((item) => (
                         <NavItem
                             key={item.href + item.label}
