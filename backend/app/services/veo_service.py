@@ -356,13 +356,42 @@ class VeoService:
                 )
 
             # Extract result
-            if hasattr(operation, 'result') and operation.result:
-                result = operation.result
-                videos = getattr(result, 'generated_videos', [])
+            # Note: Google Veo API uses 'response' not 'result'
+            response = getattr(operation, 'response', None) or getattr(operation, 'result', None)
+            if response:
+                videos = getattr(response, 'generated_videos', [])
 
                 if videos and len(videos) > 0:
                     video = videos[0]
-                    video_uri = getattr(video, 'uri', None)
+
+                    # Debug: Log the video object structure
+                    logger.debug(f"Video object type: {type(video)}, attrs: {dir(video)}")
+
+                    # Try multiple attribute paths for video URI
+                    # Google Veo API may return URI in different structures
+                    video_uri = None
+
+                    # Path 1: video.uri (direct URI)
+                    if hasattr(video, 'uri') and video.uri:
+                        video_uri = video.uri
+                        logger.debug(f"Found video URI at video.uri: {video_uri}")
+
+                    # Path 2: video.video.uri (nested video object)
+                    elif hasattr(video, 'video'):
+                        video_file = video.video
+                        logger.debug(f"Video file type: {type(video_file)}, attrs: {dir(video_file)}")
+                        if hasattr(video_file, 'uri') and video_file.uri:
+                            video_uri = video_file.uri
+                            logger.debug(f"Found video URI at video.video.uri: {video_uri}")
+                        elif hasattr(video_file, 'name') and video_file.name:
+                            # Google Files API uses 'name' as the resource identifier
+                            video_uri = video_file.name
+                            logger.debug(f"Found video name at video.video.name: {video_uri}")
+
+                    # Path 3: video.name (direct name)
+                    elif hasattr(video, 'name') and video.name:
+                        video_uri = video.name
+                        logger.debug(f"Found video name at video.name: {video_uri}")
 
                     if video_uri:
                         logger.info(f"Veo generation completed in {duration_ms}ms")
@@ -394,7 +423,17 @@ class VeoService:
                     credit_cost=0,  # No charge on error
                 )
 
-            # Unknown state
+            # Unknown state - log operation structure for debugging
+            logger.error(
+                f"Veo generation: Unknown state. "
+                f"operation.done={getattr(operation, 'done', None)}, "
+                f"has_response={hasattr(operation, 'response')}, "
+                f"has_result={hasattr(operation, 'result')}, "
+                f"operation_attrs={[a for a in dir(operation) if not a.startswith('_')]}"
+            )
+            if hasattr(operation, 'response') and operation.response:
+                resp = operation.response
+                logger.error(f"response_attrs={[a for a in dir(resp) if not a.startswith('_')]}")
             emit_progress("failed", "영상 생성 결과를 받지 못했습니다.")
             return VeoResult(
                 success=False,
