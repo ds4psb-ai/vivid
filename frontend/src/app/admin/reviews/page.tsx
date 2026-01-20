@@ -26,6 +26,9 @@ import {
 import { fetchWithAuth } from "@/lib/api-client";
 import { StatCard, StatusBadge, PageHeader, EmptyState } from "@/components/shared";
 import type { Review, ReviewStats, CheckResult } from "@/types/api.types";
+import AppShell from "@/components/AppShell";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type ReviewDetail = Review & {
     tool?: {
@@ -347,82 +350,83 @@ export default function AdminReviewsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[var(--bg-0)] text-[var(--fg-0)]">
-            <PageHeader
-                title="Review Queue"
-                subtitle="Manage tool submissions and promotions"
-                icon={Shield}
-                backHref="/admin"
-                backLabel="Admin Dashboard"
-                actions={
-                    <button
-                        onClick={loadData}
-                        className="btn btn-secondary btn-size-sm gap-2"
-                    >
-                        <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-                        Refresh
-                    </button>
-                }
-            />
-
-            <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
-                {/* Stats */}
-                {stats && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <StatCard title="Pending" value={stats.pending_count} icon={Clock} color="yellow" />
-                        <StatCard title="In Progress" value={stats.in_progress_count} icon={User} color="blue" />
-                        <StatCard title="Decided Today" value={stats.decided_today} icon={CheckCircle} color="green" />
-                        <StatCard title="Avg Auto Score" value={stats.avg_auto_score.toFixed(1)} icon={Zap} color="purple" />
-                    </div>
-                )}
-
-                {/* Filters */}
-                <div className="flex items-center gap-2">
-                    <Filter className="w-4 h-4 text-[var(--fg-muted)]" />
-                    {["all", "fork_submission", "tier_promotion", "code_update"].map((type) => (
-                        <button
-                            key={type}
-                            onClick={() => setFilter(type === "all" ? null : type)}
-                            className={`px-3 py-1.5 rounded-lg text-sm ${(type === "all" && !filter) || filter === type
-                                    ? "bg-purple-500 text-[var(--fg-on-emphasis)]"
-                                    : "bg-[var(--surface-1)] text-[var(--fg-muted)] hover:bg-[var(--surface-2)]"
-                                }`}
+        <AppShell showTopBar={false}>
+            <div className="min-h-screen bg-[var(--bg-0)] text-[var(--fg-0)]">
+                <PageHeader
+                    title="Review Queue"
+                    subtitle="Manage tool submissions and promotions"
+                    icon={Shield}
+                    backHref="/admin"
+                    backLabel="Admin Dashboard"
+                    actions={
+                        <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={loadData}
+                            className="gap-2"
                         >
-                            {type === "all" ? "All" : type.replace(/_/g, " ")}
-                        </button>
-                    ))}
+                            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+                            Refresh
+                        </Button>
+                    }
+                />
+
+                <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
+                    {/* Stats */}
+                    {stats && (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <StatCard title="Pending" value={stats.pending_count} icon={Clock} color="yellow" />
+                            <StatCard title="In Progress" value={stats.in_progress_count} icon={User} color="blue" />
+                            <StatCard title="Decided Today" value={stats.decided_today} icon={CheckCircle} color="green" />
+                            <StatCard title="Avg Auto Score" value={stats.avg_auto_score.toFixed(1)} icon={Zap} color="purple" />
+                        </div>
+                    )}
+
+                    {/* Filters */}
+                    <div className="flex items-center gap-2">
+                        <Filter className="w-4 h-4 text-[var(--fg-muted)]" />
+                        <Tabs value={filter ?? "all"} onValueChange={(value) => setFilter(value === "all" ? null : value)}>
+                            <TabsList className="flex flex-wrap gap-2">
+                                {["all", "fork_submission", "tier_promotion", "code_update"].map((type) => (
+                                    <TabsTrigger key={type} value={type}>
+                                        {type === "all" ? "All" : type.replace(/_/g, " ")}
+                                    </TabsTrigger>
+                                ))}
+                            </TabsList>
+                        </Tabs>
+                    </div>
+
+                    {/* Review Grid */}
+                    {reviews.length === 0 ? (
+                        <EmptyState
+                            icon={CheckCircle}
+                            title="No pending reviews"
+                            description="All caught up! 🎉"
+                        />
+                    ) : (
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {reviews.map((review) => (
+                                <ReviewCard
+                                    key={review.id}
+                                    review={review}
+                                    onView={() => setSelectedReview(review.id)}
+                                    onApprove={() => handleApprove(review.id)}
+                                    onReject={() => handleReject(review.id)}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
 
-                {/* Review Grid */}
-                {reviews.length === 0 ? (
-                    <EmptyState
-                        icon={CheckCircle}
-                        title="No pending reviews"
-                        description="All caught up! 🎉"
+                {selectedReview && (
+                    <ReviewDetailModal
+                        reviewId={selectedReview}
+                        onClose={() => setSelectedReview(null)}
+                        onApprove={() => handleApprove(selectedReview)}
+                        onReject={() => handleReject(selectedReview)}
                     />
-                ) : (
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {reviews.map((review) => (
-                            <ReviewCard
-                                key={review.id}
-                                review={review}
-                                onView={() => setSelectedReview(review.id)}
-                                onApprove={() => handleApprove(review.id)}
-                                onReject={() => handleReject(review.id)}
-                            />
-                        ))}
-                    </div>
                 )}
             </div>
-
-            {selectedReview && (
-                <ReviewDetailModal
-                    reviewId={selectedReview}
-                    onClose={() => setSelectedReview(null)}
-                    onApprove={() => handleApprove(selectedReview)}
-                    onReject={() => handleReject(selectedReview)}
-                />
-            )}
-        </div>
+        </AppShell>
     );
 }
