@@ -227,11 +227,11 @@ class VeoService:
 
         try:
             # Build generation config
+            # Note: person_generation removed - 'dont_allow' is not supported in Veo 3.1
             generate_config = {
                 "prompt": config.prompt,
                 "duration_seconds": config.duration_seconds,
                 "aspect_ratio": config.aspect_ratio,
-                "person_generation": config.person_generation,
             }
 
             if config.negative_prompt:
