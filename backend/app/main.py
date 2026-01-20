@@ -230,7 +230,14 @@ CORS_ALLOWED_HEADERS = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Temporary fix for demo: Allow all origins to rule out config issues
+    # credentials=True 일 때는 "*" 사용 불가 → 정확한 origin 지정 필수
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3100",
+        "https://shorti.ai",
+        "https://www.shorti.ai",
+        "https://vivid-frontend.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

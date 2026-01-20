@@ -59,7 +59,7 @@ function HomePageContent() {
 
         {/* Main Content */}
         <div className="px-6 pb-20">
-          <div className="mx-auto max-w-6xl space-y-12">
+          <div className="mx-auto max-w-6xl space-y-8">
             {/* Rail 1: 세로 숏폼 웹드라마 */}
             {VERTICAL_SHORTFORM_IPS.length > 0 && (
               <motion.section
@@ -67,7 +67,7 @@ function HomePageContent() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
               >
-                <div className="flex items-center gap-3 mb-6">
+                <div className="flex items-center gap-3 mb-4">
                   <div className="flex items-center gap-2">
                     <Play className="w-5 h-5 text-violet-500" />
                     <h2 className="text-xl font-semibold text-[var(--fg-0)]">
@@ -78,12 +78,7 @@ function HomePageContent() {
                     9:16
                   </Badge>
                 </div>
-                <p className="text-sm text-[var(--fg-muted)] mb-6">
-                  {ko
-                    ? "세로 영상을 분석하고 캐릭터/스토리 변주를 생성합니다"
-                    : "Analyze vertical videos and generate character/story variations"}
-                </p>
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {VERTICAL_SHORTFORM_IPS.map((ip) => (
                     <Link key={ip.slug} href={`/ip/${ip.slug}`}>
                       <IPRailCard
@@ -111,7 +106,7 @@ function HomePageContent() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
               >
-                <div className="flex items-center gap-3 mb-6">
+                <div className="flex items-center gap-3 mb-4">
                   <div className="flex items-center gap-2">
                     <Layers className="w-5 h-5 text-emerald-500" />
                     <h2 className="text-xl font-semibold text-[var(--fg-0)]">
@@ -125,12 +120,7 @@ function HomePageContent() {
                     {ko ? "씬 일관성" : "Scene Consistency"}
                   </Badge>
                 </div>
-                <p className="text-sm text-[var(--fg-muted)] mb-6">
-                  {ko
-                    ? "가로 영상의 씬을 분석하고 캐릭터 일관성을 유지하며 새로운 씬을 생성합니다"
-                    : "Analyze horizontal video scenes and generate new scenes with character consistency"}
-                </p>
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {HORIZONTAL_ANIME_MV_IPS.map((ip) => (
                     <Link key={ip.slug} href={`/ip/${ip.slug}`}>
                       <IPRailCard

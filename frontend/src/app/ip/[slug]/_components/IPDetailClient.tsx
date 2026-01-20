@@ -525,15 +525,9 @@ export default function IPDetailClient({
                         </button>
                       )}
 
-                      {/* 세로 영상 오버레이 */}
                       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
                         <div className="text-center">
                           <p className="text-white font-bold text-base">{name}</p>
-                          <div className="flex items-center justify-center gap-2 mt-1">
-                            <span className="px-2 py-0.5 rounded-full bg-violet-500/80 text-white text-[10px] font-medium">
-                              9:16 {language === "ko" ? "세로 숏폼" : "Vertical"}
-                            </span>
-                          </div>
                         </div>
                       </div>
 
@@ -609,14 +603,10 @@ export default function IPDetailClient({
                       </div>
                     </div>
 
-                    {/* 애니 MV 상단 배지 */}
                     {isComplexWorkflow && (
                       <div className="absolute top-3 left-3 flex items-center gap-2">
                         <span className="px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-sm text-white text-[10px] font-medium">
                           {language === "ko" ? "애니메이션 MV" : "Animation MV"}
-                        </span>
-                        <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-violet-500 to-blue-500 text-white text-[10px] font-bold">
-                          16:9
                         </span>
                       </div>
                     )}
@@ -683,17 +673,6 @@ export default function IPDetailClient({
                   <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-violet-500" />
                     {language === "ko" ? "이 IP로 만들 수 있는 것" : "Create with this IP"}
-                    {/* 콘텐츠 유형 배지 */}
-                    {isVerticalShortform && (
-                      <span className="px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-600 dark:text-violet-400 text-[10px] font-medium">
-                        9:16 {language === "ko" ? "세로" : "Vertical"}
-                      </span>
-                    )}
-                    {isComplexWorkflow && (
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-medium">
-                        16:9 {language === "ko" ? "씬 일관성" : "Scene Consistency"}
-                      </span>
-                    )}
                   </h2>
 
                   {/* 복잡한 워크플로우 (애니 MV) - 스텝퍼 스타일 */}
@@ -912,137 +891,137 @@ export default function IPDetailClient({
                   }>;
                 };
                 return (
-                <Collapsible
-                  header={language === "ko" ? "세계관" : "Worldbuilding"}
-                  icon={<Globe className="w-5 h-5 text-violet-500" />}
-                  defaultExpanded={false}
-                  className="mb-6"
-                >
-                  <div className="space-y-4">
-                    {/* 로그라인 (핵심 한 줄 요약) */}
-                    {wb.logline && (
-                      <div className="p-4 rounded-xl bg-gradient-to-r from-violet-500/10 to-blue-500/10 border border-violet-500/20">
-                        <p className="text-base font-medium text-slate-800 dark:text-slate-200 italic leading-relaxed">
-                          "{wb.logline}"
-                        </p>
-                      </div>
-                    )}
-
-                    {/* 배경 설정 + 분위기 */}
-                    {wb.setting && (
-                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                        <p className="text-xs font-semibold text-violet-600 dark:text-violet-400 mb-2 uppercase tracking-wider">
-                          {language === "ko" ? "배경" : "Setting"}
-                        </p>
-                        <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                          {wb.setting}
-                        </p>
-                        {wb.mood && (
-                          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                            <span className="font-medium">무드:</span> {wb.mood}
+                  <Collapsible
+                    header={language === "ko" ? "세계관" : "Worldbuilding"}
+                    icon={<Globe className="w-5 h-5 text-violet-500" />}
+                    defaultExpanded={false}
+                    className="mb-6"
+                  >
+                    <div className="space-y-4">
+                      {/* 로그라인 (핵심 한 줄 요약) */}
+                      {wb.logline && (
+                        <div className="p-4 rounded-xl bg-gradient-to-r from-violet-500/10 to-blue-500/10 border border-violet-500/20">
+                          <p className="text-base font-medium text-slate-800 dark:text-slate-200 italic leading-relaxed">
+                            "{wb.logline}"
                           </p>
-                        )}
-                      </div>
-                    )}
-
-                    {/* 콘텐츠 정보 (에피소드/길이) */}
-                    {(wb.episode_count || wb.duration || wb.music_style) && (
-                      <div className="flex flex-wrap gap-2">
-                        {wb.episode_count && (
-                          <span className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
-                            <Clapperboard className="w-3.5 h-3.5" />
-                            {wb.episode_count}화 × {wb.episode_length || "60초"}
-                          </span>
-                        )}
-                        {wb.duration && (
-                          <span className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
-                            <Clock className="w-3.5 h-3.5" />
-                            {wb.duration}
-                          </span>
-                        )}
-                        {wb.music_style && (
-                          <span className="px-3 py-1.5 text-xs font-medium rounded-lg bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 flex items-center gap-1.5">
-                            <Music className="w-3.5 h-3.5" />
-                            {wb.music_style}
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* 테마 */}
-                    {wb.themes && wb.themes.length > 0 && (
-                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                        <p className="text-xs font-semibold text-violet-600 dark:text-violet-400 mb-3 uppercase tracking-wider">
-                          {language === "ko" ? "테마" : "Themes"}
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {wb.themes.map((theme, i) => (
-                            <span key={i} className="px-3 py-1.5 text-sm font-medium rounded-full bg-gradient-to-r from-violet-100 to-purple-100 dark:from-violet-900/40 dark:to-purple-900/40 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800">
-                              {theme}
-                            </span>
-                          ))}
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* 캐릭터 - 중첩 Collapsible */}
-                    {wb.characters && wb.characters.length > 0 && (
-                      <Collapsible
-                        header={
-                          <span className="flex items-center gap-1.5">
-                            <Users className="w-3.5 h-3.5" />
-                            {language === "ko" ? "등장인물" : "Characters"}
-                            <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
-                              ({wb.characters.length})
+                      {/* 배경 설정 + 분위기 */}
+                      {wb.setting && (
+                        <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                          <p className="text-xs font-semibold text-violet-600 dark:text-violet-400 mb-2 uppercase tracking-wider">
+                            {language === "ko" ? "배경" : "Setting"}
+                          </p>
+                          <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                            {wb.setting}
+                          </p>
+                          {wb.mood && (
+                            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                              <span className="font-medium">무드:</span> {wb.mood}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* 콘텐츠 정보 (에피소드/길이) */}
+                      {(wb.episode_count || wb.duration || wb.music_style) && (
+                        <div className="flex flex-wrap gap-2">
+                          {wb.episode_count && (
+                            <span className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
+                              <Clapperboard className="w-3.5 h-3.5" />
+                              {wb.episode_count}화 × {wb.episode_length || "60초"}
                             </span>
-                          </span>
-                        }
-                        defaultExpanded={false}
-                        className="bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-700"
-                        headerClassName="text-sm text-violet-600 dark:text-violet-400"
-                      >
-                        <div className="space-y-4">
-                          {wb.characters.map((char, i) => (
-                            <div key={i} className="p-3 rounded-lg bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700">
-                              <div className="flex items-start justify-between mb-2">
-                                <div>
-                                  <span className="text-base font-bold text-slate-800 dark:text-slate-200">{char.name}</span>
-                                  {char.role && (
-                                    <span className="ml-2 px-2 py-0.5 text-[11px] font-medium rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400">
-                                      {char.role}
-                                    </span>
+                          )}
+                          {wb.duration && (
+                            <span className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5" />
+                              {wb.duration}
+                            </span>
+                          )}
+                          {wb.music_style && (
+                            <span className="px-3 py-1.5 text-xs font-medium rounded-lg bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 flex items-center gap-1.5">
+                              <Music className="w-3.5 h-3.5" />
+                              {wb.music_style}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* 테마 */}
+                      {wb.themes && wb.themes.length > 0 && (
+                        <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                          <p className="text-xs font-semibold text-violet-600 dark:text-violet-400 mb-3 uppercase tracking-wider">
+                            {language === "ko" ? "테마" : "Themes"}
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {wb.themes.map((theme, i) => (
+                              <span key={i} className="px-3 py-1.5 text-sm font-medium rounded-full bg-gradient-to-r from-violet-100 to-purple-100 dark:from-violet-900/40 dark:to-purple-900/40 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800">
+                                {theme}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 캐릭터 - 중첩 Collapsible */}
+                      {wb.characters && wb.characters.length > 0 && (
+                        <Collapsible
+                          header={
+                            <span className="flex items-center gap-1.5">
+                              <Users className="w-3.5 h-3.5" />
+                              {language === "ko" ? "등장인물" : "Characters"}
+                              <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+                                ({wb.characters.length})
+                              </span>
+                            </span>
+                          }
+                          defaultExpanded={false}
+                          className="bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-700"
+                          headerClassName="text-sm text-violet-600 dark:text-violet-400"
+                        >
+                          <div className="space-y-4">
+                            {wb.characters.map((char, i) => (
+                              <div key={i} className="p-3 rounded-lg bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div>
+                                    <span className="text-base font-bold text-slate-800 dark:text-slate-200">{char.name}</span>
+                                    {char.role && (
+                                      <span className="ml-2 px-2 py-0.5 text-[11px] font-medium rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400">
+                                        {char.role}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {char.age && (
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">{char.age}</span>
                                   )}
                                 </div>
-                                {char.age && (
-                                  <span className="text-xs text-slate-500 dark:text-slate-400">{char.age}</span>
+                                {(char.job || char.specialty) && (
+                                  <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">
+                                    {char.job || char.specialty}
+                                  </p>
+                                )}
+                                {char.traits && char.traits.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mb-2">
+                                    {char.traits.map((trait, j) => (
+                                      <span key={j} className="px-2 py-0.5 text-[10px] rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                        #{trait}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                                {char.backstory && (
+                                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-2 mt-2">
+                                    {char.backstory}
+                                  </p>
                                 )}
                               </div>
-                              {(char.job || char.specialty) && (
-                                <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">
-                                  {char.job || char.specialty}
-                                </p>
-                              )}
-                              {char.traits && char.traits.length > 0 && (
-                                <div className="flex flex-wrap gap-1 mb-2">
-                                  {char.traits.map((trait, j) => (
-                                    <span key={j} className="px-2 py-0.5 text-[10px] rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                                      #{trait}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                              {char.backstory && (
-                                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-2 mt-2">
-                                  {char.backstory}
-                                </p>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </Collapsible>
-                    )}
-                  </div>
-                </Collapsible>
+                            ))}
+                          </div>
+                        </Collapsible>
+                      )}
+                    </div>
+                  </Collapsible>
                 );
               })()}
             </div>
@@ -1124,163 +1103,163 @@ export default function IPDetailClient({
                   {/* Tool Recommendations (Phase 2.5 Evidence Card) */}
                   {selectedPreset && (
                     <div className="mb-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      {t("recommendedTools")}
-                    </h3>
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                      <button
-                        type="button"
-                        onClick={() => setShowRecommendations((prev) => !prev)}
-                        className="text-violet-500 hover:underline"
-                        aria-pressed={showRecommendations}
-                      >
-                        {showRecommendations ? t("hideRecommendations") : t("showRecommendations")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowRecommendationWhy((prev) => !prev)}
-                        className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-200"
-                        aria-pressed={showRecommendationWhy}
-                        aria-controls="recommendation-why-panel"
-                      >
-                        {showRecommendationWhy ? t("hideRecommendationWhy") : t("showRecommendationWhy")}
-                      </button>
-                      {showRecommendations && recResponse && (
-                        <>
-                          {workflowSuggested && (
-                            <span className="evidence-badge">
-                              {t("workflowSuggested")}
-                            </span>
-                          )}
-                          <span
-                            className="evidence-badge text-[9px]"
-                            data-tone="context"
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                          {t("recommendedTools")}
+                        </h3>
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                          <button
+                            type="button"
+                            onClick={() => setShowRecommendations((prev) => !prev)}
+                            className="text-violet-500 hover:underline"
+                            aria-pressed={showRecommendations}
                           >
-                            {ipContextUsed ? t("ipContextUsed") : t("ipContextMissing")}
-                          </span>
-                          {traceId && (
-                            <button
-                              type="button"
-                              onClick={handleCopyTraceId}
-                              className="text-[9px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                            >
-                              {traceIdCopied ? t("copied") : `${t("traceIdLabel")} · ${t("copyTraceId")}`}
-                            </button>
-                          )}
-                          {recommendedDimensions.length > 0 && (
-                            <div className="flex items-center gap-1">
-                              <span className="text-[10px] uppercase tracking-[0.18em]">
-                                {t("recommendedDimensions")}
+                            {showRecommendations ? t("hideRecommendations") : t("showRecommendations")}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowRecommendationWhy((prev) => !prev)}
+                            className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-200"
+                            aria-pressed={showRecommendationWhy}
+                            aria-controls="recommendation-why-panel"
+                          >
+                            {showRecommendationWhy ? t("hideRecommendationWhy") : t("showRecommendationWhy")}
+                          </button>
+                          {showRecommendations && recResponse && (
+                            <>
+                              {workflowSuggested && (
+                                <span className="evidence-badge">
+                                  {t("workflowSuggested")}
+                                </span>
+                              )}
+                              <span
+                                className="evidence-badge text-[9px]"
+                                data-tone="context"
+                              >
+                                {ipContextUsed ? t("ipContextUsed") : t("ipContextMissing")}
                               </span>
-                              {recommendedDimensions.map((dimension) => {
-                                const dimensionKey = dimension.toLowerCase();
-                                const dimensionClass = dimensionKey
-                                  ? `bg-dimension-${dimensionKey}/20 text-dimension-${dimensionKey}`
-                                  : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300";
-                                return (
-                                  <span
-                                    key={dimension}
-                                    className={`text-[9px] px-2 py-0.5 rounded-full ${dimensionClass}`}
-                                  >
-                                    {dimension}
+                              {traceId && (
+                                <button
+                                  type="button"
+                                  onClick={handleCopyTraceId}
+                                  className="text-[9px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                >
+                                  {traceIdCopied ? t("copied") : `${t("traceIdLabel")} · ${t("copyTraceId")}`}
+                                </button>
+                              )}
+                              {recommendedDimensions.length > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[10px] uppercase tracking-[0.18em]">
+                                    {t("recommendedDimensions")}
                                   </span>
-                                );
-                              })}
-                            </div>
-                          )}
-                          {totalCredits > 0 && (
-                            <span>
-                              {totalCredits} {t("credits")}
-                            </span>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {!showRecommendations && (
-                    <div className="text-xs text-slate-400">
-                      {t("recommendationsHidden")}
-                    </div>
-                  )}
-
-                  {showRecommendationWhy && (
-                    <div
-                      id="recommendation-why-panel"
-                      className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/40 px-3 py-2 text-xs text-slate-600 dark:text-slate-300 space-y-1"
-                    >
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                        {t("recommendationSignalsTitle")}
-                      </div>
-                      {reasonCodeCount > 0 && (
-                        <div className="flex flex-wrap gap-1 text-[10px] text-slate-400">
-                          <span className="evidence-badge" data-tone="context">
-                            {t("evidenceReasonsTitle")} {reasonCodeCount}
-                          </span>
-                          {hasEvidenceSignals && (
-                            <span className="evidence-badge" data-tone="source">
-                              {t("evidenceSourcesTitle")} {evidenceRefCount}
-                            </span>
+                                  {recommendedDimensions.map((dimension) => {
+                                    const dimensionKey = dimension.toLowerCase();
+                                    const dimensionClass = dimensionKey
+                                      ? `bg-dimension-${dimensionKey}/20 text-dimension-${dimensionKey}`
+                                      : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300";
+                                    return (
+                                      <span
+                                        key={dimension}
+                                        className={`text-[9px] px-2 py-0.5 rounded-full ${dimensionClass}`}
+                                      >
+                                        {dimension}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                              {totalCredits > 0 && (
+                                <span>
+                                  {totalCredits} {t("credits")}
+                                </span>
+                              )}
+                            </>
                           )}
                         </div>
+                      </div>
+
+                      {!showRecommendations && (
+                        <div className="text-xs text-slate-400">
+                          {t("recommendationsHidden")}
+                        </div>
                       )}
-                      <ul className="list-disc pl-4 space-y-0.5">
-                        <li>
-                          {ipContextUsed
-                            ? t("signalIpContext")
-                            : t("signalLimitedContext")}
-                        </li>
-                        {workflowSuggested && <li>{t("signalWorkflowFit")}</li>}
-                        {hasEvidenceSignals && (
-                          <li>
-                            {t("signalEvidenceSources")}
-                            {evidenceRefCount > 0 ? ` (${evidenceRefCount})` : ""}
-                          </li>
-                        )}
-                        {hasHistorySignals && (
-                          <li>
-                            {t("signalUsageHistory")}
-                            {historyReasonCount > 0 ? ` (${historyReasonCount})` : ""}
-                          </li>
-                        )}
-                      </ul>
-                    </div>
-                  )}
 
-                  {showRecommendations && recLoading && (
-                    <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-4 animate-pulse space-y-2">
-                      <div className="h-3 w-1/3 bg-slate-200 dark:bg-slate-700 rounded" />
-                      <div className="h-3 w-2/3 bg-slate-200 dark:bg-slate-700 rounded" />
-                      <div className="h-3 w-1/2 bg-slate-200 dark:bg-slate-700 rounded" />
-                    </div>
-                  )}
+                      {showRecommendationWhy && (
+                        <div
+                          id="recommendation-why-panel"
+                          className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/40 px-3 py-2 text-xs text-slate-600 dark:text-slate-300 space-y-1"
+                        >
+                          <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                            {t("recommendationSignalsTitle")}
+                          </div>
+                          {reasonCodeCount > 0 && (
+                            <div className="flex flex-wrap gap-1 text-[10px] text-slate-400">
+                              <span className="evidence-badge" data-tone="context">
+                                {t("evidenceReasonsTitle")} {reasonCodeCount}
+                              </span>
+                              {hasEvidenceSignals && (
+                                <span className="evidence-badge" data-tone="source">
+                                  {t("evidenceSourcesTitle")} {evidenceRefCount}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          <ul className="list-disc pl-4 space-y-0.5">
+                            <li>
+                              {ipContextUsed
+                                ? t("signalIpContext")
+                                : t("signalLimitedContext")}
+                            </li>
+                            {workflowSuggested && <li>{t("signalWorkflowFit")}</li>}
+                            {hasEvidenceSignals && (
+                              <li>
+                                {t("signalEvidenceSources")}
+                                {evidenceRefCount > 0 ? ` (${evidenceRefCount})` : ""}
+                              </li>
+                            )}
+                            {hasHistorySignals && (
+                              <li>
+                                {t("signalUsageHistory")}
+                                {historyReasonCount > 0 ? ` (${historyReasonCount})` : ""}
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                      )}
 
-                  {showRecommendations && !recLoading && recError && (
-                    <div className="text-xs text-red-500 flex items-center gap-2">
-                      <span>{t("recommendationLoadFailed")}</span>
-                      <button
-                        type="button"
-                        onClick={handleRetryRecommendations}
-                        className="text-violet-500 hover:underline"
-                      >
-                        {t("retry")}
-                      </button>
-                    </div>
-                  )}
+                      {showRecommendations && recLoading && (
+                        <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-4 animate-pulse space-y-2">
+                          <div className="h-3 w-1/3 bg-slate-200 dark:bg-slate-700 rounded" />
+                          <div className="h-3 w-2/3 bg-slate-200 dark:bg-slate-700 rounded" />
+                          <div className="h-3 w-1/2 bg-slate-200 dark:bg-slate-700 rounded" />
+                        </div>
+                      )}
 
-                  {showRecommendations && !recLoading && recResponse && recommendations.length === 0 && (
-                    <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                      <span>{t("recommendationEmpty")}</span>
-                      <button
-                        type="button"
-                        onClick={() => router.push("/dimension")}
-                        className="text-violet-500 hover:underline"
-                      >
-                        {t("exploreOtherDimensions")}
-                      </button>
-                    </div>
-                  )}
+                      {showRecommendations && !recLoading && recError && (
+                        <div className="text-xs text-red-500 flex items-center gap-2">
+                          <span>{t("recommendationLoadFailed")}</span>
+                          <button
+                            type="button"
+                            onClick={handleRetryRecommendations}
+                            className="text-violet-500 hover:underline"
+                          >
+                            {t("retry")}
+                          </button>
+                        </div>
+                      )}
+
+                      {showRecommendations && !recLoading && recResponse && recommendations.length === 0 && (
+                        <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                          <span>{t("recommendationEmpty")}</span>
+                          <button
+                            type="button"
+                            onClick={() => router.push("/dimension")}
+                            className="text-violet-500 hover:underline"
+                          >
+                            {t("exploreOtherDimensions")}
+                          </button>
+                        </div>
+                      )}
 
                       {showRecommendations && !recLoading && recResponse && recommendations.length > 0 && (
                         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)]">
