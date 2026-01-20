@@ -16,7 +16,8 @@ def _get_session_payload(request: Request) -> Optional[Dict[str, Any]]:
         token = request.cookies.get(settings.SESSION_COOKIE_NAME)
     if not token:
         return None
-    return decode_token(token, settings.SESSION_SECRET)
+    # H1.3: Use get_secret_value() for SecretStr
+    return decode_token(token, settings.SESSION_SECRET.get_secret_value())
 
 
 async def get_user_id(

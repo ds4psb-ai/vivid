@@ -28,6 +28,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth_tokens import decode_token
+from app.config import settings
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models_ip import IPCatalog
@@ -480,6 +482,46 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
+async def authenticate_websocket(websocket: WebSocket) -> Optional[str]:
+    """Authenticate WebSocket connection using JWT token.
+
+    Security Hardening (H1.2): Validates JWT token BEFORE accepting connection.
+    Token can be passed via:
+    1. Query parameter: ?token=xxx
+    2. Subprotocol header (for browsers that support it)
+
+    Args:
+        websocket: The WebSocket connection (not yet accepted)
+
+    Returns:
+        User ID if authenticated, None otherwise
+    """
+    # Try query parameter first (most common for WebSocket)
+    token = websocket.query_params.get("token")
+
+    # Fallback: Check Sec-WebSocket-Protocol header for token
+    if not token:
+        protocols = websocket.headers.get("sec-websocket-protocol", "")
+        for protocol in protocols.split(","):
+            protocol = protocol.strip()
+            if protocol.startswith("auth-"):
+                token = protocol[5:]  # Remove 'auth-' prefix
+                break
+
+    if not token:
+        return None
+
+    # Validate token using existing auth system
+    try:
+        payload = decode_token(token, settings.SESSION_SECRET)
+        if payload and isinstance(payload.get("user_id"), str):
+            return payload["user_id"]
+    except Exception as e:
+        logger.warning(f"WebSocket auth failed: {e}")
+
+    return None
+
+
 @router.websocket("/sessions/{session_id}/ws")
 async def websocket_chat(
     websocket: WebSocket,
@@ -488,15 +530,30 @@ async def websocket_chat(
 ):
     """WebSocket endpoint for real-time chat.
 
+    Security: JWT authentication required BEFORE connection acceptance.
+    Pass token via query param: ws://host/sessions/{id}/ws?token=your_jwt_token
+
     Message types:
     - Client -> Server: {"type": "message", "content": "...", "media_urls": [...]}
     - Server -> Client: {"type": "chunk", "chunk": "..."}
     - Server -> Client: {"type": "complete", "message": {...}}
     - Server -> Client: {"type": "error", "message": "..."}
     """
-    # TODO: Add proper authentication for WebSocket
-    # For now, extract user_id from query params or connection
-    user_id = websocket.query_params.get("user_id", "anonymous")
+    # H1.2: Authenticate BEFORE accepting WebSocket connection
+    user_id = await authenticate_websocket(websocket)
+
+    # In development, allow anonymous access for testing
+    if not user_id:
+        if settings.ENVIRONMENT.lower() in {"development", "dev", "local"}:
+            # Development fallback - check query param
+            user_id = websocket.query_params.get("user_id")
+            if not user_id:
+                user_id = "dev-user-001"
+                logger.warning(f"WebSocket using dev user for session {session_id}")
+        else:
+            # Production: Reject unauthenticated connections
+            await websocket.close(code=4001, reason="Unauthorized: Valid token required")
+            return
 
     service = IPChatService(db)
 

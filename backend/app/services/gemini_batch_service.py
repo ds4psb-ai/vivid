@@ -166,11 +166,10 @@ class GeminiBatchService:
                      or settings.GEMINI_API_KEY as fallback.
         """
         # Priority: provided key > BATCH_API_KEY > GEMINI_API_KEY
-        self._api_key = (
-            api_key
-            or settings.GEMINI_BATCH_API_KEY
-            or settings.GEMINI_API_KEY
-        )
+        # H1.3: SecretStr - use .get_secret_value() for actual API key
+        batch_key = settings.GEMINI_BATCH_API_KEY.get_secret_value() if settings.GEMINI_BATCH_API_KEY else None
+        gemini_key = settings.GEMINI_API_KEY.get_secret_value() if settings.GEMINI_API_KEY else None
+        self._api_key = api_key or batch_key or gemini_key
         self._client = None
         self._jobs: Dict[str, BatchJob] = {}
 

@@ -460,7 +460,8 @@ class IPChatService:
         # Call Gemini
         start_time = datetime.utcnow()
         try:
-            genai.configure(api_key=settings.GEMINI_API_KEY)
+            # H1.3: SecretStr - use .get_secret_value() for actual API key
+            genai.configure(api_key=settings.GEMINI_API_KEY.get_secret_value())
             model = genai.GenerativeModel(
                 model_name=model_config["model_name"],
                 generation_config={
@@ -522,7 +523,8 @@ class IPChatService:
         messages = self._build_chat_messages(persona_prompt, history, session)
 
         try:
-            genai.configure(api_key=settings.GEMINI_API_KEY)
+            # H1.3: SecretStr - use .get_secret_value() for actual API key
+            genai.configure(api_key=settings.GEMINI_API_KEY.get_secret_value())
             model = genai.GenerativeModel(
                 model_name=model_config["model_name"],
                 generation_config={

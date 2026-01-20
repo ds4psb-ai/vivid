@@ -194,7 +194,8 @@ def _call_gemini(prompt: str, context: str, max_retries: int = 3) -> Dict[str, A
     """Call Gemini API and parse JSON response."""
     from app.services.genai_utils import build_generate_config, get_genai_client
     
-    if not settings.GEMINI_API_KEY:
+    # H1.3: SecretStr - use .get_secret_value() for actual API key
+    if not settings.GEMINI_API_KEY.get_secret_value():
         raise GeminiAnalysisError("GEMINI_API_KEY not configured")
     
     client = get_genai_client()

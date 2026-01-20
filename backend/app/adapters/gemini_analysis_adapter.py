@@ -41,7 +41,8 @@ class GeminiAnalysisAdapter(BaseAdapter):
         from app.config import settings
         
         # Check if Gemini analysis is enabled
-        if not settings.GEMINI_ENABLED or not settings.GEMINI_API_KEY:
+        # H1.3: SecretStr - use .get_secret_value() for actual API key
+        if not settings.GEMINI_ENABLED or not settings.GEMINI_API_KEY.get_secret_value():
             self.logger.info("Gemini analysis adapter disabled; returning simulated summary")
             return AdapterResult(
                 summary={"summary": "Gemini analysis simulated summary", "source_count": 3},

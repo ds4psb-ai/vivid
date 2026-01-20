@@ -1,11 +1,22 @@
 """
 Database setup (async SQLAlchemy + asyncpg)
+
+Security Note (H1.4b):
+- Includes RLS context support via ContextVar
+- Use get_db_with_rls() for tenant-isolated queries
+- TenantMiddleware sets the current_tenant ContextVar
 """
+from contextvars import ContextVar
+from typing import Optional, AsyncGenerator
+
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 
 from app.config import settings
+
+# H1.4b: ContextVar for current tenant (set by TenantMiddleware)
+current_tenant: ContextVar[Optional[str]] = ContextVar("current_tenant", default=None)
 
 engine = create_async_engine(
     settings.DATABASE_URL,
@@ -31,9 +42,58 @@ class Base(DeclarativeBase):
     pass
 
 
-async def get_db() -> AsyncSession:
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """Get database session without RLS context.
+
+    Use this for system operations or when tenant context is not needed.
+    For tenant-isolated queries, use get_db_with_rls() instead.
+    """
     async with AsyncSessionLocal() as session:
         try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
+
+
+async def get_db_with_rls() -> AsyncGenerator[AsyncSession, None]:
+    """Get database session with RLS context for tenant isolation.
+
+    H1.4b Security Enhancement:
+    - Sets app.current_tenant session variable from ContextVar
+    - Enables PostgreSQL Row Level Security enforcement
+    - Tenant data is automatically filtered at database level
+
+    Usage:
+        @router.get("/data")
+        async def get_data(
+            db: AsyncSession = Depends(get_db_with_rls),
+            tenant: Tenant = Depends(require_tenant),
+        ):
+            # Query automatically filtered by tenant
+            result = await db.execute(select(CapsuleRun))
+            return result.scalars().all()
+
+    Note:
+        SET LOCAL is used, so the setting is transaction-scoped
+        and automatically cleared when the session ends.
+    """
+    async with AsyncSessionLocal() as session:
+        try:
+            # Get tenant from ContextVar (set by TenantMiddleware)
+            tenant_id = current_tenant.get()
+
+            if tenant_id:
+                # Set PostgreSQL session variable for RLS
+                # Using SET LOCAL so it's transaction-scoped
+                await session.execute(
+                    text("SET LOCAL app.current_tenant = :tenant_id"),
+                    {"tenant_id": tenant_id}
+                )
+
             yield session
             await session.commit()
         except Exception:

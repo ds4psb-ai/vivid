@@ -56,8 +56,9 @@ def configure_gemini(force_fallback: bool = False) -> bool:
     """
     global _active_api_key
 
-    primary_key = settings.GEMINI_API_KEY
-    fallback_key = getattr(settings, 'GEMINI_API_KEY_FALLBACK', '')
+    # H1.3: Use get_secret_value() for SecretStr
+    primary_key = settings.GEMINI_API_KEY.get_secret_value()
+    fallback_key = settings.GEMINI_API_KEY_FALLBACK.get_secret_value() if hasattr(settings, 'GEMINI_API_KEY_FALLBACK') else ''
 
     if not primary_key and not fallback_key:
         logger.warning("GEMINI_API_KEY not set, Gemini features disabled")
@@ -88,7 +89,8 @@ def rotate_to_fallback_key() -> bool:
     """Rotate to fallback API key. Call this when primary key fails at runtime."""
     global _active_api_key, _model
 
-    fallback_key = getattr(settings, 'GEMINI_API_KEY_FALLBACK', '')
+    # H1.3: Use get_secret_value() for SecretStr
+    fallback_key = settings.GEMINI_API_KEY_FALLBACK.get_secret_value() if hasattr(settings, 'GEMINI_API_KEY_FALLBACK') else ''
     if not fallback_key:
         logger.error("No fallback key configured")
         return False
@@ -1133,7 +1135,8 @@ def test_connection() -> Dict[str, Any]:
     if not settings.GEMINI_ENABLED:
         return {"status": "disabled", "message": "GEMINI_ENABLED is False"}
     
-    if not settings.GEMINI_API_KEY:
+    # H1.3: Use get_secret_value() for SecretStr
+    if not settings.GEMINI_API_KEY.get_secret_value():
         return {"status": "error", "message": "GEMINI_API_KEY not set"}
     
     try:
@@ -1176,7 +1179,8 @@ def interpret_video_file(
         This function uses gemini-3-pro-preview which has enhanced multimodal capabilities
         specifically for video understanding tasks.
     """
-    if not settings.GEMINI_ENABLED or not settings.GEMINI_API_KEY:
+    # H1.3: Use get_secret_value() for SecretStr
+    if not settings.GEMINI_ENABLED or not settings.GEMINI_API_KEY.get_secret_value():
         raise GeminiGenerationError("Gemini not enabled or API key not set")
     
     configure_gemini()

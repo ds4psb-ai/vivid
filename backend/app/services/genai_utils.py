@@ -11,13 +11,16 @@ def get_genai_client(api_key: Optional[str] = None):
     """Return google.genai client.
 
     Lazily imports the library to avoid import errors when not needed.
+
+    H1.3: Uses SecretStr.get_secret_value() for API key security.
     """
     try:
         from google import genai  # type: ignore
     except Exception as exc:  # pragma: no cover - handled in tests via mocks
         raise ImportError("google-genai is not installed") from exc
 
-    key = api_key or settings.GEMINI_API_KEY
+    # H1.3: Use get_secret_value() for SecretStr
+    key = api_key or settings.GEMINI_API_KEY.get_secret_value()
     if not key:
         raise ValueError("GEMINI_API_KEY not set")
     return genai.Client(api_key=key)

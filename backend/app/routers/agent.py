@@ -41,7 +41,8 @@ def _build_agent(model_name: Optional[str] = None, use_cache: bool = True) -> Vi
         use_cache: Enable explicit context caching for cost optimization
     """
     selected_model = model_name or settings.GEMINI_AGENT_MODEL
-    if settings.GEMINI_ENABLED and settings.GEMINI_API_KEY:
+    # H1.3: SecretStr - use .get_secret_value() for actual API key
+    if settings.GEMINI_ENABLED and settings.GEMINI_API_KEY.get_secret_value():
         try:
             return VividAgent(
                 model_client=GeminiModelClient(
@@ -253,9 +254,10 @@ def _to_core_message(record: AgentMessageRecord) -> CoreAgentMessage:
 def _ensure_genai():
     try:
         import google.generativeai as genai
-        if not settings.GEMINI_API_KEY:
+        # H1.3: SecretStr - use .get_secret_value() for actual API key
+        if not settings.GEMINI_API_KEY.get_secret_value():
              raise ValueError("GEMINI_API_KEY not set")
-        genai.configure(api_key=settings.GEMINI_API_KEY)
+        genai.configure(api_key=settings.GEMINI_API_KEY.get_secret_value())
         return genai
     except ImportError:
         raise HTTPException(status_code=500, detail="google-generativeai not installed")

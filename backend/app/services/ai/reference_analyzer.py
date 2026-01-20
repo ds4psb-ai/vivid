@@ -234,7 +234,8 @@ Return a JSON array of shots. Focus on creating prompts that capture:
             config: Optional configuration
             style_extractor: Optional StyleExtractor instance
         """
-        self._api_key = api_key or settings.GEMINI_API_KEY
+        # H1.3: SecretStr - use .get_secret_value() for actual API key
+        self._api_key = api_key or settings.GEMINI_API_KEY.get_secret_value()
         self.config = config or ReferenceAnalyzerConfig()
         self._style_extractor = style_extractor
         self._client = None

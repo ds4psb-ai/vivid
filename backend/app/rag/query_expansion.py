@@ -119,7 +119,8 @@ async def _expand_with_llm(
     model: str,
 ) -> List[str]:
     """LLM을 사용한 쿼리 확장."""
-    client = genai.Client(api_key=settings.GEMINI_API_KEY)
+    # H1.3: SecretStr - use .get_secret_value() for actual API key
+    client = genai.Client(api_key=settings.GEMINI_API_KEY.get_secret_value())
     
     system_prompt = EXPANSION_SYSTEM_PROMPT.format(max_expansions=max_expansions)
     
@@ -148,7 +149,8 @@ async def _expand_with_hyde(
     model: str,
 ) -> List[str]:
     """HyDE: 가상 문서 생성을 통한 확장."""
-    client = genai.Client(api_key=settings.GEMINI_API_KEY)
+    # H1.3: SecretStr - use .get_secret_value() for actual API key
+    client = genai.Client(api_key=settings.GEMINI_API_KEY.get_secret_value())
     
     response = await client.aio.models.generate_content(
         model=model,

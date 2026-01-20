@@ -256,7 +256,8 @@ class TestReferenceAnalyzerInit:
     def test_init_default(self):
         """Test default initialization."""
         with patch("app.services.ai.reference_analyzer.settings") as mock_settings:
-            mock_settings.GEMINI_API_KEY = "test-key"
+            # H1.3: SecretStr mock - must have get_secret_value() method
+            mock_settings.GEMINI_API_KEY.get_secret_value.return_value = "test-key"
             analyzer = ReferenceAnalyzer()
             assert analyzer._api_key == "test-key"
 
@@ -381,7 +382,8 @@ class TestErrorHandling:
     def test_no_api_key_error(self):
         """Test error when no API key available."""
         with patch("app.services.ai.reference_analyzer.settings") as mock_settings:
-            mock_settings.GEMINI_API_KEY = None
+            # H1.3: SecretStr mock - get_secret_value returns None for no key
+            mock_settings.GEMINI_API_KEY.get_secret_value.return_value = None
             analyzer = ReferenceAnalyzer()
 
             with pytest.raises(ReferenceAnalysisError, match="No API key"):
@@ -407,7 +409,8 @@ class TestModuleFunctions:
     def test_get_reference_analyzer_default(self):
         """Test get_reference_analyzer returns singleton."""
         with patch("app.services.ai.reference_analyzer.settings") as mock_settings:
-            mock_settings.GEMINI_API_KEY = "test-key"
+            # H1.3: SecretStr mock - must have get_secret_value() method
+            mock_settings.GEMINI_API_KEY.get_secret_value.return_value = "test-key"
 
             analyzer1 = get_reference_analyzer()
             analyzer2 = get_reference_analyzer()

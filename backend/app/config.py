@@ -1,7 +1,12 @@
 """
 Crebit Node Canvas settings
+
+Security Note (H1.3):
+Sensitive fields use SecretStr to prevent accidental exposure in logs/repr.
+Access secret values via: settings.FIELD_NAME.get_secret_value()
 """
 from typing import List
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -12,7 +17,7 @@ class Settings(BaseSettings):
     FLOW_ENABLED: bool = False
 
     POSTGRES_USER: str = "crebit_user"
-    POSTGRES_PASSWORD: str = "crebit_password"
+    POSTGRES_PASSWORD: SecretStr = SecretStr("crebit_password")
     POSTGRES_DB: str = "crebit_canvas"
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: int = 5433
@@ -32,9 +37,9 @@ class Settings(BaseSettings):
     VIDEO_KEYFRAME_PATTERN: str = r"^[A-Za-z0-9][A-Za-z0-9_-]{1,63}$"
     VIDEO_EVIDENCE_REF_PATTERN: str = r"^[a-z][a-z0-9_-]*:.+"
 
-    # Gemini API
-    GEMINI_API_KEY: str = ""
-    GEMINI_API_KEY_FALLBACK: str = ""  # Backup key for auto-rotation on failure
+    # Gemini API (H1.3: SecretStr for API keys)
+    GEMINI_API_KEY: SecretStr = SecretStr("")
+    GEMINI_API_KEY_FALLBACK: SecretStr = SecretStr("")  # Backup key for auto-rotation on failure
     GEMINI_MODEL: str = "gemini-3-flash-preview"  # Default for text/general tasks
     GEMINI_VIDEO_MODEL: str = "gemini-3-flash-preview"  # For video file interpretation
     GEMINI_ENABLED: bool = True
@@ -49,7 +54,7 @@ class Settings(BaseSettings):
     # 24시간 SLA 내 완료 (대부분 더 빠름)
     # 적합: RAG 평가, 대량 콘텐츠 생성, 데이터 전처리
     GEMINI_BATCH_ENABLED: bool = True
-    GEMINI_BATCH_API_KEY: str = ""  # Separate key for Batch API (uses GEMINI_API_KEY if empty)
+    GEMINI_BATCH_API_KEY: SecretStr = SecretStr("")  # Separate key for Batch API (uses GEMINI_API_KEY if empty)
     GEMINI_BATCH_MODEL: str = "gemini-3-flash-preview"  # 3.0 Flash (50% off)
     GEMINI_BATCH_POLL_INTERVAL: int = 30  # Seconds between status checks
     GEMINI_BATCH_MAX_WAIT_HOURS: int = 24  # Maximum wait time for batch jobs
@@ -58,22 +63,22 @@ class Settings(BaseSettings):
     # Kling AI API (Video Generation)
     # Get API key from: https://klingai.com/developer or third-party providers
     # Provider options: klingai.com, kie.ai, piapi.ai, novita.ai
-    KLING_API_KEY: str = ""
+    KLING_API_KEY: SecretStr = SecretStr("")
     KLING_API_BASE_URL: str = "https://api.klingai.com/v1"  # Or provider URL
-    
+
     # Suno AI API (Music Generation)
     # Uses third-party providers (no official API)
     # Provider options: sunoapi.org, musicapi.ai, laozhang.ai
-    SUNO_API_KEY: str = ""
+    SUNO_API_KEY: SecretStr = SecretStr("")
     SUNO_API_BASE_URL: str = "https://api.sunoapi.org/api/v1"
     # Get free key at https://tavily.com (1,000 credits/month)
-    TAVILY_API_KEY: str = ""
+    TAVILY_API_KEY: SecretStr = SecretStr("")
 
     # Qdrant Vector Database
     # Local: docker-compose up qdrant (port 6333)
     # Cloud: https://cloud.qdrant.io
     QDRANT_URL: str = "http://localhost:6333"
-    QDRANT_API_KEY: str = ""
+    QDRANT_API_KEY: SecretStr = SecretStr("")
     
     # Redis (Added Phase 3)
     REDIS_URL: str = "redis://localhost:6380"
@@ -83,16 +88,16 @@ class Settings(BaseSettings):
     CAPSULE_SYNC_TIMEOUT: int = 60        # Timeout for sync mode execution (1 minute)
     CAPSULE_HEAVY_TIMEOUT: int = 300      # Extended timeout for heavy operations (5 minutes)
 
-    # Auth / OAuth
+    # Auth / OAuth (H1.3: SecretStr for secrets)
     GOOGLE_CLIENT_ID: str = ""
-    GOOGLE_CLIENT_SECRET: str = ""
+    GOOGLE_CLIENT_SECRET: SecretStr = SecretStr("")
     GOOGLE_REDIRECT_URI: str = ""
     GOOGLE_OAUTH_SCOPES: str = "openid email profile"
     GOOGLE_AUTH_URL: str = "https://accounts.google.com/o/oauth2/v2/auth"
     GOOGLE_TOKEN_URL: str = "https://oauth2.googleapis.com/token"
     GOOGLE_TOKEN_INFO_URL: str = "https://oauth2.googleapis.com/tokeninfo"
 
-    SESSION_SECRET: str = ""
+    SESSION_SECRET: SecretStr = SecretStr("")
     SESSION_TTL_SECONDS: int = 60 * 60 * 24 * 7
     OAUTH_STATE_TTL_SECONDS: int = 600
     SESSION_COOKIE_NAME: str = "crebit_session"
@@ -106,13 +111,13 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:3100"
     # Secret token for authenticating cache invalidation requests
     # Generate with: python -c "import secrets; print(secrets.token_urlsafe(32))"
-    REVALIDATE_SECRET: str = ""
+    REVALIDATE_SECRET: SecretStr = SecretStr("")
 
-    # NICE Payments (나이스페이)
+    # NICE Payments (나이스페이) (H1.3: SecretStr for secret key)
     # Sandbox: S2_af4543a0be4d49a98122e01ec2059a56
     # Production: Get from NICE admin console
     NICEPAY_CLIENT_ID: str = ""
-    NICEPAY_SECRET_KEY: str = ""
+    NICEPAY_SECRET_KEY: SecretStr = SecretStr("")
     NICEPAY_API_URL: str = "https://sandbox-api.nicepay.co.kr"
     NICEPAY_MODE: str = "sandbox"  # sandbox | production
 
@@ -129,7 +134,7 @@ class Settings(BaseSettings):
     # Leave empty to use local PostgreSQL
     CLOUD_SQL_INSTANCE: str = ""
     CLOUD_SQL_USER: str = ""
-    CLOUD_SQL_PASSWORD: str = ""
+    CLOUD_SQL_PASSWORD: SecretStr = SecretStr("")
     CLOUD_SQL_DB: str = ""
     CLOUD_SQL_IAM_AUTH: bool = False  # Use IAM authentication instead of password
 
@@ -159,9 +164,9 @@ class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str = "INFO"  # DEBUG, INFO, WARNING, ERROR
     
-    # Langfuse Observability (Phase 4)
+    # Langfuse Observability (Phase 4) (H1.3: SecretStr)
     # Get keys from https://langfuse.com
-    LANGFUSE_SECRET_KEY: str = ""
+    LANGFUSE_SECRET_KEY: SecretStr = SecretStr("")
     LANGFUSE_PUBLIC_KEY: str = ""
     LANGFUSE_HOST: str = "https://cloud.langfuse.com"
     LANGFUSE_ENABLED: bool = True
@@ -270,9 +275,9 @@ class Settings(BaseSettings):
     MCP_FILESYSTEM_ENABLED: bool = False
     MCP_FILESYSTEM_ALLOWED_PATHS: str = "/tmp/vivid-workspace"
 
-    # GitHub MCP
+    # GitHub MCP (H1.3: SecretStr for token)
     MCP_GITHUB_ENABLED: bool = False
-    MCP_GITHUB_TOKEN: str = ""
+    MCP_GITHUB_TOKEN: SecretStr = SecretStr("")
 
     # Internal MCP Server (Dimension Tools exposure)
     MCP_INTERNAL_SERVER_ENABLED: bool = True
@@ -290,8 +295,10 @@ class Settings(BaseSettings):
 
     @property
     def DATABASE_URL(self) -> str:
+        """Build database URL with SecretStr password."""
+        password = self.POSTGRES_PASSWORD.get_secret_value()
         return (
-            f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+            f"postgresql+asyncpg://{self.POSTGRES_USER}:{password}"
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
 
@@ -376,10 +383,10 @@ class Settings(BaseSettings):
             if "localhost" in self.REDIS_URL or "127.0.0.1" in self.REDIS_URL:
                 warnings.append("REDIS_URL contains localhost - ensure Redis is accessible")
             
-            # Check for empty required secrets
-            if not self.SESSION_SECRET:
+            # Check for empty required secrets (H1.3: SecretStr compatibility)
+            if not self.SESSION_SECRET.get_secret_value():
                 errors.append("SESSION_SECRET is empty - required for session encryption")
-            if not self.GOOGLE_CLIENT_ID or not self.GOOGLE_CLIENT_SECRET:
+            if not self.GOOGLE_CLIENT_ID or not self.GOOGLE_CLIENT_SECRET.get_secret_value():
                 warnings.append("Google OAuth credentials not configured")
             
             # Check for sandbox payment in production

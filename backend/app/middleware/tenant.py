@@ -2,11 +2,17 @@
 
 Handles API key authentication and tenant context injection.
 
+Security Note (H1.5):
+- Sets both Tenant object and tenant_id for RLS
+- Uses database.current_tenant ContextVar for PostgreSQL RLS
+- Enables row-level security at database level
+
 Usage:
     # In route handlers
     @router.get("/api/v1/tenant/data")
     async def get_data(
         tenant: Tenant | None = Depends(get_current_tenant),
+        db: AsyncSession = Depends(get_db_with_rls),  # RLS-enabled session
     ):
         if tenant:
             # Tenant-specific logic
@@ -25,13 +31,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
-from app.database import get_db
+from app.database import get_db, current_tenant as db_current_tenant
 from app.models_tenant import Tenant
 from app.services.tenant_service import TenantService
 
 logger = logging.getLogger(__name__)
 
-# Context variable for current tenant
+# Context variable for current tenant object (full Tenant model)
 _current_tenant: ContextVar[Optional[Tenant]] = ContextVar("current_tenant", default=None)
 
 
@@ -82,8 +88,10 @@ class TenantMiddleware(BaseHTTPMiddleware):
                                 status_code=429,
                             )
 
-                        # Set tenant context
+                        # Set tenant context (both object and ID for RLS)
                         _current_tenant.set(tenant)
+                        # H1.5: Also set database ContextVar for RLS
+                        db_current_tenant.set(str(tenant.id))
 
                         # Add tenant info to request state
                         request.state.tenant = tenant
@@ -98,8 +106,10 @@ class TenantMiddleware(BaseHTTPMiddleware):
 
         response = await call_next(request)
 
-        # Clear tenant context after request
+        # Clear tenant context after request (both object and ID)
         _current_tenant.set(None)
+        # H1.5: Also clear database ContextVar
+        db_current_tenant.set(None)
 
         return response
 

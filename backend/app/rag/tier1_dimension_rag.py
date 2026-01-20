@@ -169,9 +169,11 @@ class Tier1DimensionRAG:
 
         if self._client is None:
             try:
+                # H1.3: SecretStr - use .get_secret_value() for actual API key
+                qdrant_api_key = settings.QDRANT_API_KEY.get_secret_value() if settings.QDRANT_API_KEY else None
                 self._client = QdrantClient(
                     url=settings.QDRANT_URL,
-                    api_key=settings.QDRANT_API_KEY if settings.QDRANT_API_KEY else None,
+                    api_key=qdrant_api_key if qdrant_api_key else None,
                     timeout=5,
                 )
                 self._client.get_collections()

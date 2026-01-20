@@ -41,7 +41,8 @@ class GeminiAdapter(BaseAdapter):
         """Run Gemini generation pipeline."""
         from app.config import settings
         
-        if not settings.GEMINI_ENABLED or not settings.GEMINI_API_KEY:
+        # H1.3: SecretStr - use .get_secret_value() for actual API key
+        if not settings.GEMINI_ENABLED or not settings.GEMINI_API_KEY.get_secret_value():
             self.logger.info("Gemini adapter disabled or missing API key; returning fallback")
             return AdapterResult(
                 summary={"summary": "Gemini disabled, using rule-based generation"},

@@ -465,7 +465,8 @@ async def analyze_persona_with_mirror(
             "is_crisis": True,  # 프론트엔드에서 특별 UI 처리용
         }
     
-    client = genai.Client(api_key=api_key or settings.GEMINI_API_KEY)
+    # H1.3: SecretStr - use .get_secret_value() for actual API key
+    client = genai.Client(api_key=api_key or settings.GEMINI_API_KEY.get_secret_value())
     
     # 1단계: 사주 정보가 없으면 계산/웹서칭
     if not persona_data.get("saju") and birth_info.get("birth_year"):

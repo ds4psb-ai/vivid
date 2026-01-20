@@ -161,7 +161,8 @@ Return ONLY valid JSON, no markdown code blocks or explanations."""
             api_key: Optional API key. Uses settings.GEMINI_API_KEY if not provided.
             config: Optional configuration. Uses defaults if not provided.
         """
-        self._api_key = api_key or settings.GEMINI_API_KEY
+        # H1.3: SecretStr - use .get_secret_value() for actual API key
+        self._api_key = api_key or settings.GEMINI_API_KEY.get_secret_value()
         self.config = config or StyleExtractionConfig()
         self._client = None
 

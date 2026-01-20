@@ -773,8 +773,8 @@ async def _call_gemini(
         logger.debug(f"Gemini 3 detected, using temperature 1.0 (was {temperature})")
         temperature = 1.0
 
-    # Use provided key or fall back to server key
-    key = api_key or settings.GEMINI_API_KEY
+    # Use provided key or fall back to server key (H1.3: SecretStr)
+    key = api_key or settings.GEMINI_API_KEY.get_secret_value()
     if not key:
         raise ValueError("No API key available. Configure GEMINI_API_KEY or provide user key.")
 

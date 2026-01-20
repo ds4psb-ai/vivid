@@ -137,7 +137,8 @@ class QualityEvaluator:
         if self._genai_client is None:
             try:
                 import google.generativeai as genai
-                genai.configure(api_key=settings.GEMINI_API_KEY)
+                # H1.3: SecretStr - use .get_secret_value() for actual API key
+                genai.configure(api_key=settings.GEMINI_API_KEY.get_secret_value())
                 self._genai_client = genai.GenerativeModel(self.model)
             except Exception as e:
                 logger.error(f"[QualityEvaluator] Failed to initialize Gemini: {e}")

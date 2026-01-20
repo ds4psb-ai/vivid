@@ -22,7 +22,8 @@ router = APIRouter()
 
 
 def _require_oauth_config() -> None:
-    if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_SECRET:
+    # H1.3: Use get_secret_value() for SecretStr fields
+    if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_SECRET.get_secret_value():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Google OAuth not configured",
@@ -32,7 +33,7 @@ def _require_oauth_config() -> None:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Google OAuth redirect URI not configured",
         )
-    if not settings.SESSION_SECRET:
+    if not settings.SESSION_SECRET.get_secret_value():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Session secret not configured",
@@ -55,8 +56,10 @@ def _build_google_auth_url(state: str) -> str:
 def _validate_state(state: Optional[str], cookie_state: Optional[str]) -> bool:
     if not state or not cookie_state:
         return False
-    payload = decode_token(state, settings.SESSION_SECRET)
-    cookie_payload = decode_token(cookie_state, settings.SESSION_SECRET)
+    # H1.3: Use get_secret_value() for SecretStr
+    secret = settings.SESSION_SECRET.get_secret_value()
+    payload = decode_token(state, secret)
+    cookie_payload = decode_token(cookie_state, secret)
     if not payload or not cookie_payload:
         return False
     if payload.get("purpose") != "oauth_state":
@@ -73,9 +76,10 @@ def _error_redirect(reason: str) -> RedirectResponse:
 @router.get("/google/start")
 async def google_start() -> RedirectResponse:
     _require_oauth_config()
+    # H1.3: Use get_secret_value() for SecretStr
     state = create_token(
         {"purpose": "oauth_state", "nonce": secrets.token_urlsafe(16)},
-        settings.SESSION_SECRET,
+        settings.SESSION_SECRET.get_secret_value(),
         settings.OAUTH_STATE_TTL_SECONDS,
     )
     response = RedirectResponse(_build_google_auth_url(state))
@@ -105,12 +109,13 @@ async def google_callback(
         return _error_redirect("missing_code")
 
     async with httpx.AsyncClient(timeout=15) as client:
+        # H1.3: Use get_secret_value() for SecretStr
         token_resp = await client.post(
             settings.GOOGLE_TOKEN_URL,
             data={
                 "code": code,
                 "client_id": settings.GOOGLE_CLIENT_ID,
-                "client_secret": settings.GOOGLE_CLIENT_SECRET,
+                "client_secret": settings.GOOGLE_CLIENT_SECRET.get_secret_value(),
                 "redirect_uri": settings.GOOGLE_REDIRECT_URI,
                 "grant_type": "authorization_code",
             },
@@ -186,7 +191,8 @@ async def google_callback(
         "role": account.role,
         "verified": email_verified,
     }
-    session_token = create_token(session_payload, settings.SESSION_SECRET, settings.SESSION_TTL_SECONDS)
+    # H1.3: Use get_secret_value() for SecretStr
+    session_token = create_token(session_payload, settings.SESSION_SECRET.get_secret_value(), settings.SESSION_TTL_SECONDS)
     response = RedirectResponse(settings.AUTH_SUCCESS_REDIRECT)
     response.delete_cookie(settings.OAUTH_STATE_COOKIE_NAME)
     response.set_cookie(
@@ -205,7 +211,8 @@ async def get_session(request: Request) -> JSONResponse:
     token = request.cookies.get(settings.SESSION_COOKIE_NAME)
     if not token and request.headers.get("Authorization", "").lower().startswith("bearer "):
         token = request.headers.get("Authorization").split(" ", 1)[1].strip()
-    payload = decode_token(token, settings.SESSION_SECRET) if token else None
+    # H1.3: Use get_secret_value() for SecretStr
+    payload = decode_token(token, settings.SESSION_SECRET.get_secret_value()) if token else None
     if not payload:
         return JSONResponse({"authenticated": False})
     return JSONResponse(
@@ -241,8 +248,9 @@ async def get_current_user_profile(
     token = request.cookies.get(settings.SESSION_COOKIE_NAME)
     if not token and request.headers.get("Authorization", "").lower().startswith("bearer "):
         token = request.headers.get("Authorization").split(" ", 1)[1].strip()
-    
-    payload = decode_token(token, settings.SESSION_SECRET) if token else None
+
+    # H1.3: Use get_secret_value() for SecretStr
+    payload = decode_token(token, settings.SESSION_SECRET.get_secret_value()) if token else None
     if not payload:
         raise HTTPException(status_code=401, detail="Not authenticated")
     

@@ -503,10 +503,11 @@ class IntentRouter:
             import google.generativeai as genai
             from app.config import settings
             
-            if not settings.GEMINI_API_KEY:
+            # H1.3: SecretStr - use .get_secret_value() for actual API key
+            if not settings.GEMINI_API_KEY.get_secret_value():
                 return None
-            
-            genai.configure(api_key=settings.GEMINI_API_KEY)
+
+            genai.configure(api_key=settings.GEMINI_API_KEY.get_secret_value())
             
             # Use fast model for classification
             model = genai.GenerativeModel("gemini-2.0-flash")

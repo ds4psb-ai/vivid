@@ -75,7 +75,8 @@ class PaymentCallbackData(BaseModel):
 
 def get_nice_credentials() -> str:
     """Generate Base64 encoded credentials for NICE API."""
-    credentials = f"{settings.NICEPAY_CLIENT_ID}:{settings.NICEPAY_SECRET_KEY}"
+    # H1.3: SecretStr - use .get_secret_value() for actual secret key
+    credentials = f"{settings.NICEPAY_CLIENT_ID}:{settings.NICEPAY_SECRET_KEY.get_secret_value()}"
     return base64.b64encode(credentials.encode()).decode()
 
 
@@ -160,11 +161,12 @@ async def confirm_payment(
             raise HTTPException(status_code=400, detail="Amount mismatch")
 
     amount_str = normalize_amount_str(data.amount_raw, data.amount)
+    # H1.3: SecretStr - use .get_secret_value() for actual secret key
     expected_signature = compute_nicepay_auth_signature(
         data.auth_token,
         data.client_id,
         amount_str,
-        settings.NICEPAY_SECRET_KEY,
+        settings.NICEPAY_SECRET_KEY.get_secret_value(),
     )
     if not hmac.compare_digest(expected_signature, data.signature):
         raise HTTPException(status_code=400, detail="Invalid NICEPAY signature")

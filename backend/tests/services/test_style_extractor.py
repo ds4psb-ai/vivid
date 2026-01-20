@@ -135,7 +135,8 @@ class TestStyleExtractorInit:
     def test_init_default(self):
         """Test default initialization."""
         with patch("app.services.ai.style_extractor.settings") as mock_settings:
-            mock_settings.GEMINI_API_KEY = "test-key"
+            # H1.3: SecretStr mock - must have get_secret_value() method
+            mock_settings.GEMINI_API_KEY.get_secret_value.return_value = "test-key"
             extractor = StyleExtractor()
             assert extractor._api_key == "test-key"
             assert extractor.config is not None
@@ -369,7 +370,8 @@ class TestErrorHandling:
     def test_no_api_key_error(self):
         """Test error when no API key available."""
         with patch("app.services.ai.style_extractor.settings") as mock_settings:
-            mock_settings.GEMINI_API_KEY = None
+            # H1.3: SecretStr mock - get_secret_value returns None for no key
+            mock_settings.GEMINI_API_KEY.get_secret_value.return_value = None
             extractor = StyleExtractor()
 
             with pytest.raises(StyleExtractionError, match="No API key"):
@@ -400,7 +402,8 @@ class TestModuleFunctions:
     def test_get_style_extractor_default(self):
         """Test get_style_extractor returns singleton."""
         with patch("app.services.ai.style_extractor.settings") as mock_settings:
-            mock_settings.GEMINI_API_KEY = "test-key"
+            # H1.3: SecretStr mock - must have get_secret_value() method
+            mock_settings.GEMINI_API_KEY.get_secret_value.return_value = "test-key"
 
             extractor1 = get_style_extractor()
             extractor2 = get_style_extractor()

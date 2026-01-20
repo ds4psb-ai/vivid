@@ -27,7 +27,8 @@ class GeminiModelClient:
         max_output_tokens: int = 2048,
         use_cache: bool = False,
     ) -> None:
-        if not settings.GEMINI_API_KEY:
+        # H1.3: Use get_secret_value() for SecretStr
+        if not settings.GEMINI_API_KEY.get_secret_value():
             raise ValueError("GEMINI_API_KEY not set")
         try:
             import google.generativeai as genai
@@ -35,7 +36,7 @@ class GeminiModelClient:
             raise ImportError("google-generativeai not installed") from exc
 
         self._genai = genai
-        self._genai.configure(api_key=settings.GEMINI_API_KEY)
+        self._genai.configure(api_key=settings.GEMINI_API_KEY.get_secret_value())
         self._use_cache = use_cache
         self._model_name = model_name
         

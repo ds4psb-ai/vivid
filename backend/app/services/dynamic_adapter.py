@@ -103,7 +103,8 @@ async def _call_gemini_generic(
     if model not in ALLOWED_MODELS:
         model = "gemini-3-flash-preview"
     
-    key = api_key or settings.GEMINI_API_KEY
+    # H1.3: SecretStr - use .get_secret_value() for actual API key
+    key = api_key or settings.GEMINI_API_KEY.get_secret_value()
     if not key:
         raise ValueError("No API key available")
     
