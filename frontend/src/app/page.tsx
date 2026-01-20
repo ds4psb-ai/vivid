@@ -96,6 +96,7 @@ function HomePageContent() {
                         viewCount={ip.viewCount}
                         isHot={ip.isHot}
                         isNew={ip.isNew}
+                        aspectRatio="9:16"
                       />
                     </Link>
                   ))}
@@ -142,6 +143,7 @@ function HomePageContent() {
                         viewCount={ip.viewCount}
                         isHot={ip.isHot}
                         isNew={ip.isNew}
+                        aspectRatio="16:9"
                       />
                     </Link>
                   ))}

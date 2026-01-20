@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
-import { ShieldCheck, ShieldAlert, ShieldX, Play, Eye, Flame, Sparkles } from "lucide-react";
+import { ShieldCheck, ShieldAlert, ShieldX, Play, Eye, Flame, Sparkles, Volume2, VolumeX } from "lucide-react";
 
 type LicenseStatus = "allowed" | "restricted" | "prohibited";
 
@@ -16,6 +16,8 @@ interface IPRailCardProps {
   viewCount?: string;
   isHot?: boolean;
   isNew?: boolean;
+  /** Aspect ratio for card thumbnail: "9:16" (vertical) or "16:9" (horizontal) */
+  aspectRatio?: "9:16" | "16:9";
 }
 
 const STATUS_STYLES: Record<LicenseStatus, { label: string; icon: typeof ShieldCheck; className: string }> = {
@@ -46,18 +48,24 @@ export function IPRailCard({
   viewCount,
   isHot,
   isNew,
+  aspectRatio = "16:9",
 }: IPRailCardProps) {
   const status = STATUS_STYLES[licenseStatus];
   const StatusIcon = status.icon;
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
+  const [isMuted, setIsMuted] = useState(true); // 기본 muted 상태
+
+  // 세로 영상(9:16)은 더 높은 카드, 가로 영상(16:9)은 기본 높이
+  const isVertical = aspectRatio === "9:16";
+  const thumbnailHeightClass = isVertical ? "h-72" : "h-44";
 
   const handleMouseEnter = useCallback(() => {
     setIsHovered(true);
     if (videoRef.current && previewVideoUrl) {
       videoRef.current.currentTime = 0;
-      videoRef.current.play().catch(() => {});
+      videoRef.current.play().catch(() => { });
     }
   }, [previewVideoUrl]);
 
@@ -67,6 +75,18 @@ export function IPRailCard({
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
     }
+    // 마우스 나가면 다시 muted로 초기화
+    setIsMuted(true);
+  }, []);
+
+  // Mute 토글 핸들러 - stopPropagation으로 Link 클릭 방지
+  const handleMuteToggle = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsMuted((prev) => !prev);
+    if (videoRef.current) {
+      videoRef.current.muted = !videoRef.current.muted;
+    }
   }, []);
 
   return (
@@ -75,8 +95,8 @@ export function IPRailCard({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* 썸네일/비디오 영역 - 세로 비율 증가 */}
-      <div className="relative h-44 w-full bg-gradient-to-br from-slate-900 to-slate-800 overflow-hidden">
+      {/* 썸네일/비디오 영역 - aspectRatio에 따라 높이 조정 */}
+      <div className={`relative ${thumbnailHeightClass} w-full bg-gradient-to-br from-slate-900 to-slate-800 overflow-hidden`}>
         {/* 정적 썸네일 */}
         {thumbnailUrl && (
           <Image
@@ -93,7 +113,7 @@ export function IPRailCard({
           <video
             ref={videoRef}
             src={previewVideoUrl}
-            muted
+            muted={isMuted}
             loop
             playsInline
             preload="metadata"
@@ -102,13 +122,28 @@ export function IPRailCard({
           />
         )}
 
-        {/* 플레이 오버레이 */}
+        {/* 플레이 오버레이 - 호버 전에만 표시 */}
         {!isHovered && previewVideoUrl && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
             <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
               <Play className="w-5 h-5 text-slate-900 ml-0.5" />
             </div>
           </div>
+        )}
+
+        {/* Mute/Unmute 토글 버튼 - 호버 중일 때 중간 좌측에 표시 */}
+        {isHovered && previewVideoUrl && videoLoaded && (
+          <button
+            onClick={handleMuteToggle}
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/80 transition-all z-10 shadow-lg"
+            aria-label={isMuted ? "Unmute" : "Mute"}
+          >
+            {isMuted ? (
+              <VolumeX className="w-5 h-5" />
+            ) : (
+              <Volume2 className="w-5 h-5" />
+            )}
+          </button>
         )}
 
         {/* 상단 배지들 */}
