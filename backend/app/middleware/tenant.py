@@ -57,6 +57,10 @@ class TenantMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
 
     async def dispatch(self, request: Request, call_next):
+        # Skip OPTIONS preflight requests (CORS)
+        if request.method == "OPTIONS":
+            return await call_next(request)
+
         # Skip tenant auth for certain paths
         skip_paths = ["/", "/health", "/docs", "/openapi.json", "/redoc"]
         if request.url.path in skip_paths or request.url.path.startswith("/api/v1/auth"):
