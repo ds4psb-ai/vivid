@@ -24,7 +24,14 @@ import {
     Zap,
 } from "lucide-react";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import AppShell from "@/components/AppShell";
+import { PageHeader, StatusBadge, EmptyState } from "@/components/shared";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 // =============================================================================
 // Types
@@ -112,10 +119,12 @@ function StatsCards({ stats, loading }: { stats: AdminStats | null; loading: boo
         return (
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
                 {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4 animate-pulse">
-                        <div className="h-4 w-16 bg-gray-700 rounded mb-2"></div>
-                        <div className="h-8 w-12 bg-gray-700 rounded"></div>
-                    </div>
+                    <Card key={i} className="border border-white/5 bg-[var(--surface-1)]/70 animate-pulse">
+                        <CardContent className="p-4">
+                            <div className="h-4 w-16 bg-white/10 rounded mb-2"></div>
+                            <div className="h-8 w-12 bg-white/10 rounded"></div>
+                        </CardContent>
+                    </Card>
                 ))}
             </div>
         );
@@ -162,18 +171,20 @@ function StatsCards({ stats, loading }: { stats: AdminStats | null; loading: boo
     return (
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
             {cards.map((card) => (
-                <div
+                <Card
                     key={card.label}
-                    className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4"
+                    className="border border-white/5 bg-[var(--surface-1)]/70"
                 >
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className={`p-1.5 rounded-lg ${card.bgColor}`}>
-                            <card.icon className={`w-4 h-4 ${card.color}`} />
+                    <CardContent className="p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className={`p-1.5 rounded-lg ${card.bgColor}`}>
+                                <card.icon className={`w-4 h-4 ${card.color}`} />
+                            </div>
+                            <span className="text-xs text-[var(--fg-muted)]">{card.label}</span>
                         </div>
-                        <span className="text-xs text-gray-400">{card.label}</span>
-                    </div>
-                    <div className="text-2xl font-bold text-white">{card.value}</div>
-                </div>
+                        <div className="text-2xl font-bold text-[var(--fg-0)]">{card.value}</div>
+                    </CardContent>
+                </Card>
             ))}
         </div>
     );
@@ -239,23 +250,20 @@ export default function AdminSettlementsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white">
-            {/* Header */}
-            <div className="border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
-                <div className="max-w-7xl mx-auto px-6 py-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-bold flex items-center gap-2">
-                                <DollarSign className="w-6 h-6 text-emerald-400" />
-                                Settlement Admin
-                            </h1>
-                            <p className="text-gray-400 text-sm">Manage revenue distributions</p>
-                        </div>
+        <AppShell showTopBar={false}>
+            <div className="min-h-screen">
+                <PageHeader
+                    title="Settlement Admin"
+                    subtitle="Manage revenue distributions"
+                    icon={DollarSign}
+                    backLabel=""
+                    actions={
                         <div className="flex items-center gap-3">
-                            <button
+                            <Button
+                                size="sm"
                                 onClick={handleBatchProcess}
                                 disabled={batchLoading || (stats?.pending_count ?? 0) === 0}
-                                className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white font-medium rounded-lg disabled:opacity-50"
+                                className="gap-2"
                             >
                                 {batchLoading ? (
                                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -263,134 +271,143 @@ export default function AdminSettlementsPage() {
                                     <Zap className="w-4 h-4" />
                                 )}
                                 Process Batch
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
                                 onClick={fetchData}
-                                className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg"
                             >
                                 <RefreshCw className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
-                            </button>
+                            </Button>
                         </div>
+                    }
+                />
+
+                <div className="max-w-7xl mx-auto px-6 py-6">
+                    <StatsCards stats={stats} loading={loading} />
+
+                    <div className="flex items-center justify-between mb-6">
+                        <Tabs value={statusFilter} onValueChange={setStatusFilter}>
+                            <TabsList className="flex gap-2">
+                                {["pending", "processing", "completed", "failed"].map((status) => (
+                                    <TabsTrigger key={status} value={status}>
+                                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                                    </TabsTrigger>
+                                ))}
+                            </TabsList>
+                        </Tabs>
+                        <Badge variant="secondary" className="text-xs">
+                            {settlements.length} items
+                        </Badge>
                     </div>
-                </div>
-            </div>
 
-            {/* Content */}
-            <div className="max-w-7xl mx-auto px-6 py-8">
-                <StatsCards stats={stats} loading={loading} />
-
-                {/* Tabs */}
-                <div className="flex gap-2 mb-6">
-                    {["pending", "processing", "completed", "failed"].map((status) => (
-                        <button
-                            key={status}
-                            onClick={() => setStatusFilter(status)}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${statusFilter === status
-                                    ? "bg-purple-500 text-white"
-                                    : "bg-gray-800 text-gray-400 hover:text-white"
-                                }`}
-                        >
-                            {status.charAt(0).toUpperCase() + status.slice(1)}
-                        </button>
-                    ))}
-                </div>
-
-                {/* Settlements Table */}
-                <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl overflow-hidden mb-8">
-                    <table className="w-full">
-                        <thead className="bg-gray-800">
-                            <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400">Settlement</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400">Amount</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400">Payer</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400">Created</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400">Status</th>
-                                <th className="px-4 py-3 text-right text-xs font-medium text-gray-400">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-700/50">
-                            {settlements.map((s) => (
-                                <tr key={s.id} className="hover:bg-gray-800/50">
-                                    <td className="px-4 py-3">
-                                        <div className="text-sm font-medium text-white">{s.tool_key}</div>
-                                        <div className="text-xs text-gray-500">{s.id.slice(0, 8)}...</div>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        <div className="text-sm text-white">{s.total_credits} credits</div>
-                                        <div className="text-xs text-gray-500">Pool: {s.creator_pool}</div>
-                                    </td>
-                                    <td className="px-4 py-3 text-sm text-gray-400">
-                                        {s.payer_user_id.slice(0, 8)}...
-                                    </td>
-                                    <td className="px-4 py-3 text-sm text-gray-400">
-                                        {new Date(s.created_at).toLocaleString()}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        <span className={`px-2 py-1 text-xs rounded-full ${s.status === "pending" ? "bg-yellow-500/20 text-yellow-400" :
-                                                s.status === "completed" ? "bg-green-500/20 text-green-400" :
-                                                    s.status === "failed" ? "bg-red-500/20 text-red-400" :
-                                                        "bg-gray-500/20 text-gray-400"
-                                            }`}>
-                                            {s.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-3 text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            {s.status === "pending" && (
-                                                <button
-                                                    onClick={() => handleProcessSingle(s.id)}
-                                                    className="p-1.5 text-purple-400 hover:bg-purple-500/20 rounded"
-                                                    title="Process"
-                                                >
-                                                    <PlayCircle className="w-4 h-4" />
-                                                </button>
-                                            )}
-                                            <button
-                                                onClick={() => router.push(`/settlements/${s.id}`)}
-                                                className="p-1.5 text-gray-400 hover:bg-gray-700 rounded"
-                                            >
-                                                <ChevronRight className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    {settlements.length === 0 && (
-                        <div className="p-8 text-center text-gray-500">
-                            No {statusFilter} settlements
-                        </div>
-                    )}
-                </div>
-
-                {/* Disputes Section */}
-                {disputes.length > 0 && (
-                    <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-6">
-                        <div className="flex items-center gap-2 mb-4">
-                            <MessageSquare className="w-5 h-5 text-orange-400" />
-                            <h3 className="text-lg font-semibold text-orange-400">
-                                Open Disputes ({disputes.length})
-                            </h3>
-                        </div>
-                        <div className="space-y-3">
-                            {disputes.map((d) => (
-                                <div
-                                    key={d.id}
-                                    onClick={() => router.push(`/settlements/${d.settlement_id}`)}
-                                    className="bg-gray-900/50 rounded-lg p-4 cursor-pointer hover:bg-gray-900/70"
-                                >
-                                    <p className="text-gray-300 line-clamp-2 mb-2">{d.reason}</p>
-                                    <div className="flex items-center gap-3 text-xs text-gray-500">
-                                        <span>By {d.complainant_id.slice(0, 8)}...</span>
-                                        <span>{new Date(d.created_at).toLocaleDateString()}</span>
-                                    </div>
+                    <Card className="border border-white/5 bg-[var(--surface-1)]/70 overflow-hidden mb-8">
+                        <CardHeader className="pb-4">
+                            <CardTitle className="text-base">Settlement Queue</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <table className="w-full">
+                                <thead className="bg-[var(--surface-2)]/60">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-[var(--fg-muted)]">Settlement</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-[var(--fg-muted)]">Amount</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-[var(--fg-muted)]">Payer</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-[var(--fg-muted)]">Created</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-[var(--fg-muted)]">Status</th>
+                                        <th className="px-4 py-3 text-right text-xs font-medium text-[var(--fg-muted)]">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/5">
+                                    {settlements.map((s) => (
+                                        <tr key={s.id} className="hover:bg-[var(--surface-2)]/60">
+                                            <td className="px-4 py-3">
+                                                <div className="text-sm font-medium text-[var(--fg-0)]">{s.tool_key}</div>
+                                                <div className="text-xs text-[var(--fg-subtle)]">{s.id.slice(0, 8)}...</div>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="text-sm text-[var(--fg-0)]">{s.total_credits} credits</div>
+                                                <div className="text-xs text-[var(--fg-subtle)]">Pool: {s.creator_pool}</div>
+                                            </td>
+                                            <td className="px-4 py-3 text-sm text-[var(--fg-muted)]">
+                                                {s.payer_user_id.slice(0, 8)}...
+                                            </td>
+                                            <td className="px-4 py-3 text-sm text-[var(--fg-muted)]">
+                                                {new Date(s.created_at).toLocaleString()}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <StatusBadge status={s.status} />
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    {s.status === "pending" && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => handleProcessSingle(s.id)}
+                                                            title="Process"
+                                                        >
+                                                            <PlayCircle className="w-4 h-4 text-violet-400" />
+                                                        </Button>
+                                                    )}
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => router.push(`/settlements/${s.id}`)}
+                                                    >
+                                                        <ChevronRight className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            {settlements.length === 0 && (
+                                <div className="p-8 text-center text-[var(--fg-subtle)]">
+                                    No {statusFilter} settlements
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border border-white/5 bg-[var(--surface-1)]/70">
+                        <CardHeader className="pb-4">
+                            <div className="flex items-center gap-2">
+                                <MessageSquare className="w-5 h-5 text-orange-400" />
+                                <CardTitle className="text-base">Open Disputes</CardTitle>
+                                <Badge variant="secondary" className="text-xs">
+                                    {disputes.length}
+                                </Badge>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            {disputes.length === 0 ? (
+                                <EmptyState
+                                    icon={CheckCircle}
+                                    title="No disputes"
+                                    description="All disputes have been resolved."
+                                />
+                            ) : (
+                                <div className="space-y-3">
+                                    {disputes.map((d) => (
+                                        <div
+                                            key={d.id}
+                                            onClick={() => router.push(`/settlements/${d.settlement_id}`)}
+                                            className="rounded-lg border border-white/5 bg-[var(--surface-2)]/60 p-4 cursor-pointer hover:border-violet-500/30"
+                                        >
+                                            <p className="text-[var(--fg-0)] line-clamp-2 mb-2">{d.reason}</p>
+                                            <div className="flex items-center gap-3 text-xs text-[var(--fg-subtle)]">
+                                                <span>By {d.complainant_id.slice(0, 8)}...</span>
+                                                <span>{new Date(d.created_at).toLocaleDateString()}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
-        </div>
+        </AppShell>
     );
 }

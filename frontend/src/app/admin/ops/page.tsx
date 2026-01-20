@@ -26,8 +26,11 @@ import {
 } from "lucide-react";
 
 import { fetchWithAuth } from "@/lib/api-client";
-import { StatusBadge, StatCard } from "@/components/shared";
+import { StatusBadge, StatCard, EmptyState } from "@/components/shared";
 import AppShell from "@/components/AppShell";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // =============================================================================
 // Types
@@ -102,10 +105,12 @@ function StatsOverview({
         return (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-5 animate-pulse">
-                        <div className="h-4 w-20 bg-gray-700 rounded mb-3" />
-                        <div className="h-8 w-16 bg-gray-700 rounded" />
-                    </div>
+                    <Card key={i} className="border border-white/5 bg-[var(--surface-1)]/70 animate-pulse">
+                        <CardContent className="p-5">
+                            <div className="h-4 w-20 bg-white/10 rounded mb-3" />
+                            <div className="h-8 w-16 bg-white/10 rounded" />
+                        </CardContent>
+                    </Card>
                 ))}
             </div>
         );
@@ -171,86 +176,93 @@ function SettlementSection({
     };
 
     return (
-        <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                    <DollarSign className="w-5 h-5 text-emerald-400" />
-                    <h3 className="text-lg font-semibold">정산</h3>
-                    <span className="text-sm text-gray-500 ml-2">
-                        {data?.pending_count ?? 0}개 대기 중
-                    </span>
+        <Card className="border border-white/5 bg-[var(--surface-1)]/70 mb-6">
+            <CardHeader className="pb-4">
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                        <DollarSign className="w-5 h-5 text-emerald-400" />
+                        <CardTitle className="text-base">정산</CardTitle>
+                        <Badge variant="secondary" className="text-xs">
+                            {data?.pending_count ?? 0}개 대기
+                        </Badge>
+                    </div>
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={onProcessBatch}
+                        disabled={processingBatch || (data?.pending_count ?? 0) === 0}
+                        className="gap-2"
+                    >
+                        {processingBatch ? (
+                            <RefreshCw className="w-4 h-4 animate-spin" />
+                        ) : (
+                            <Play className="w-4 h-4" />
+                        )}
+                        전체 처리
+                    </Button>
                 </div>
-                <button
-                    onClick={onProcessBatch}
-                    disabled={processingBatch || (data?.pending_count ?? 0) === 0}
-                    className="flex items-center gap-2 px-4 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 
-                             text-emerald-400 rounded-lg text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    {processingBatch ? (
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                    ) : (
-                        <Play className="w-4 h-4" />
-                    )}
-                    전체 처리
-                </button>
-            </div>
+            </CardHeader>
 
-            {loading ? (
-                <div className="space-y-3">
-                    {[1, 2, 3].map((i) => (
-                        <div key={i} className="bg-gray-900/50 rounded-lg p-4 animate-pulse">
-                            <div className="h-4 w-32 bg-gray-700 rounded mb-2" />
-                            <div className="h-3 w-24 bg-gray-700/50 rounded" />
-                        </div>
-                    ))}
-                </div>
-            ) : data?.settlements.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                    <CheckCircle className="w-12 h-12 mb-3 text-emerald-500/50" />
-                    <p>모든 정산이 완료되었습니다</p>
-                </div>
-            ) : (
-                <div className="space-y-3 max-h-80 overflow-y-auto">
-                    {data?.settlements.map((settlement) => (
-                        <div
-                            key={settlement.id}
-                            className="bg-gray-900/50 rounded-lg p-4 hover:bg-gray-900/70 transition-colors"
-                        >
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-white font-medium">
-                                            {settlement.total_credits} 크레딧
-                                        </span>
-                                        <StatusBadge status={settlement.status} />
+            <CardContent>
+                {loading ? (
+                    <div className="space-y-3">
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="rounded-lg border border-white/5 bg-[var(--surface-2)]/60 p-4 animate-pulse">
+                                <div className="h-4 w-32 bg-white/10 rounded mb-2" />
+                                <div className="h-3 w-24 bg-white/10 rounded" />
+                            </div>
+                        ))}
+                    </div>
+                ) : data?.settlements.length === 0 ? (
+                    <EmptyState
+                        icon={CheckCircle}
+                        title="모든 정산이 완료되었습니다"
+                        description="대기 중인 정산이 없습니다."
+                    />
+                ) : (
+                    <div className="space-y-3 max-h-80 overflow-y-auto">
+                        {data?.settlements.map((settlement) => (
+                            <div
+                                key={settlement.id}
+                                className="rounded-lg border border-white/5 bg-[var(--surface-2)]/60 p-4 transition-colors hover:border-violet-500/30"
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-[var(--fg-0)] font-medium">
+                                                {settlement.total_credits} 크레딧
+                                            </span>
+                                            <StatusBadge status={settlement.status} />
+                                        </div>
+                                        <div className="flex items-center gap-3 text-sm text-[var(--fg-subtle)]">
+                                            <span>{settlement.tool_key}</span>
+                                            <span>•</span>
+                                            <span>{new Date(settlement.created_at).toLocaleString("ko-KR")}</span>
+                                        </div>
+                                        {settlement.error_message && (
+                                            <p className="text-xs text-red-400 mt-1 truncate max-w-md">
+                                                {settlement.error_message}
+                                            </p>
+                                        )}
                                     </div>
-                                    <div className="flex items-center gap-3 text-sm text-gray-500">
-                                        <span>{settlement.tool_key}</span>
-                                        <span>•</span>
-                                        <span>{new Date(settlement.created_at).toLocaleString("ko-KR")}</span>
-                                    </div>
-                                    {settlement.error_message && (
-                                        <p className="text-xs text-red-400 mt-1 truncate max-w-md">
-                                            {settlement.error_message}
-                                        </p>
+                                    {settlement.status === "failed" && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => handleRetry(settlement.id)}
+                                            disabled={retryingId === settlement.id}
+                                            title="재시도"
+                                        >
+                                            <RotateCcw className={`w-4 h-4 ${retryingId === settlement.id ? 'animate-spin' : ''}`} />
+                                        </Button>
                                     )}
                                 </div>
-                                {settlement.status === "failed" && (
-                                    <button
-                                        onClick={() => handleRetry(settlement.id)}
-                                        disabled={retryingId === settlement.id}
-                                        className="p-2 hover:bg-white/5 rounded-lg transition-colors"
-                                        title="재시도"
-                                    >
-                                        <RotateCcw className={`w-4 h-4 text-gray-400 ${retryingId === settlement.id ? 'animate-spin' : ''}`} />
-                                    </button>
-                                )}
                             </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
+                        ))}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
     );
 }
 
@@ -284,94 +296,100 @@ function DLQSection({
     };
 
     return (
-        <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6">
-            <div className="flex items-center justify-between mb-4">
+        <Card className="border border-white/5 bg-[var(--surface-1)]/70">
+            <CardHeader className="pb-4">
                 <div className="flex items-center gap-2">
                     <Inbox className="w-5 h-5 text-orange-400" />
-                    <h3 className="text-lg font-semibold">실패 항목 대기열</h3>
-                    <span className="text-sm text-gray-500 ml-2">
-                        {data?.total ?? 0}개 항목
-                    </span>
+                    <CardTitle className="text-base">실패 항목 대기열</CardTitle>
+                    <Badge variant="secondary" className="text-xs">
+                        {data?.total ?? 0}개
+                    </Badge>
                 </div>
-            </div>
+            </CardHeader>
 
-            {loading ? (
-                <div className="space-y-3">
-                    {[1, 2, 3].map((i) => (
-                        <div key={i} className="bg-gray-900/50 rounded-lg p-4 animate-pulse">
-                            <div className="h-4 w-32 bg-gray-700 rounded mb-2" />
-                            <div className="h-3 w-24 bg-gray-700/50 rounded" />
-                        </div>
-                    ))}
-                </div>
-            ) : data?.items.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                    <CheckCircle className="w-12 h-12 mb-3 text-emerald-500/50" />
-                    <p>실패한 작업이 없습니다</p>
-                </div>
-            ) : (
-                <div className="space-y-3 max-h-80 overflow-y-auto">
-                    {data?.items.map((item) => (
-                        <div
-                            key={item.id}
-                            className="bg-gray-900/50 rounded-lg p-4 hover:bg-gray-900/70 transition-colors"
-                        >
-                            <div className="flex items-center justify-between">
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-white font-medium">
-                                            {item.amount} 크레딧
-                                        </span>
-                                        <StatusBadge status={item.status} />
-                                        <span className="text-xs px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded">
-                                            {item.event_type === 'refund_failed' ? '환불 실패' : item.event_type.replace('_', ' ')}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-3 text-sm text-gray-500">
-                                        <span>사용자: {item.user_id}</span>
-                                        <span>•</span>
-                                        <span>{item.operation_type}</span>
-                                        <span>•</span>
-                                        <span>재시도: {item.retry_count}회</span>
-                                    </div>
-                                    <p className="text-xs text-red-400 mt-1 truncate max-w-lg">
-                                        {item.error_message}
-                                    </p>
-                                </div>
-                                {item.status === "pending" && (
-                                    <div className="flex items-center gap-2 ml-4">
-                                        <button
-                                            onClick={() => handleRetry(item.id)}
-                                            disabled={processingId === item.id}
-                                            className="p-2 hover:bg-emerald-500/10 text-emerald-400 rounded-lg transition-colors"
-                                            title="재시도"
-                                        >
-                                            <RotateCcw className={`w-4 h-4 ${processingId === item.id ? 'animate-spin' : ''}`} />
-                                        </button>
-                                        <button
-                                            onClick={() => handleResolve(item.id, false)}
-                                            disabled={processingId === item.id}
-                                            className="p-2 hover:bg-blue-500/10 text-blue-400 rounded-lg transition-colors"
-                                            title="해결 완료"
-                                        >
-                                            <CheckCircle className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleResolve(item.id, true)}
-                                            disabled={processingId === item.id}
-                                            className="p-2 hover:bg-gray-500/10 text-gray-400 rounded-lg transition-colors"
-                                            title="건너뛰기"
-                                        >
-                                            <FileX className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                )}
+            <CardContent>
+                {loading ? (
+                    <div className="space-y-3">
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="rounded-lg border border-white/5 bg-[var(--surface-2)]/60 p-4 animate-pulse">
+                                <div className="h-4 w-32 bg-white/10 rounded mb-2" />
+                                <div className="h-3 w-24 bg-white/10 rounded" />
                             </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
+                        ))}
+                    </div>
+                ) : data?.items.length === 0 ? (
+                    <EmptyState
+                        icon={CheckCircle}
+                        title="실패한 작업이 없습니다"
+                        description="모든 DLQ 항목이 처리되었습니다."
+                    />
+                ) : (
+                    <div className="space-y-3 max-h-80 overflow-y-auto">
+                        {data?.items.map((item) => (
+                            <div
+                                key={item.id}
+                                className="rounded-lg border border-white/5 bg-[var(--surface-2)]/60 p-4 transition-colors hover:border-violet-500/30"
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-[var(--fg-0)] font-medium">
+                                                {item.amount} 크레딧
+                                            </span>
+                                            <StatusBadge status={item.status} />
+                                            <Badge variant="secondary" className="text-xs">
+                                                {item.event_type === 'refund_failed' ? '환불 실패' : item.event_type.replace('_', ' ')}
+                                            </Badge>
+                                        </div>
+                                        <div className="flex items-center gap-3 text-sm text-[var(--fg-subtle)]">
+                                            <span>사용자: {item.user_id}</span>
+                                            <span>•</span>
+                                            <span>{item.operation_type}</span>
+                                            <span>•</span>
+                                            <span>재시도: {item.retry_count}회</span>
+                                        </div>
+                                        <p className="text-xs text-red-400 mt-1 truncate max-w-lg">
+                                            {item.error_message}
+                                        </p>
+                                    </div>
+                                    {item.status === "pending" && (
+                                        <div className="flex items-center gap-2 ml-4">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => handleRetry(item.id)}
+                                                disabled={processingId === item.id}
+                                                title="재시도"
+                                            >
+                                                <RotateCcw className={`w-4 h-4 ${processingId === item.id ? 'animate-spin' : ''}`} />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => handleResolve(item.id, false)}
+                                                disabled={processingId === item.id}
+                                                title="해결 완료"
+                                            >
+                                                <CheckCircle className="w-4 h-4 text-emerald-400" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => handleResolve(item.id, true)}
+                                                disabled={processingId === item.id}
+                                                title="건너뛰기"
+                                            >
+                                                <FileX className="w-4 h-4 text-[var(--fg-subtle)]" />
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
     );
 }
 
