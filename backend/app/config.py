@@ -121,6 +121,22 @@ class Settings(BaseSettings):
     NICEPAY_API_URL: str = "https://sandbox-api.nicepay.co.kr"
     NICEPAY_MODE: str = "sandbox"  # sandbox | production
 
+    # ==========================================================================
+    # H2.3: Stripe Payments (PCI DSS 4.0 Compliant)
+    # ==========================================================================
+    # Get keys from https://dashboard.stripe.com/apikeys
+    # Test mode keys start with sk_test_ and pk_test_
+    # Live mode keys start with sk_live_ and pk_live_
+    STRIPE_SECRET_KEY: SecretStr = SecretStr("")  # sk_test_... or sk_live_...
+    STRIPE_PUBLISHABLE_KEY: str = ""  # pk_test_... or pk_live_... (safe for frontend)
+    # Webhook signing secret from https://dashboard.stripe.com/webhooks
+    # Each webhook endpoint has its own signing secret (whsec_...)
+    STRIPE_WEBHOOK_SECRET: SecretStr = SecretStr("")
+    # Stripe API version (use stable version)
+    STRIPE_API_VERSION: str = "2024-12-18.acacia"
+    # Enable Stripe payments (set to True when configured)
+    STRIPE_ENABLED: bool = False
+
     # Google Cloud Platform
     # Project: vivid-canvas-482303 (Production Project)
     # Account: arkain.info@gmail.com

@@ -1,0 +1,229 @@
+{
+    "defaultAction": "SCMP_ACT_ERRNO",
+    "architectures": [
+        "SCMP_ARCH_X86_64",
+        "SCMP_ARCH_AARCH64"
+    ],
+    "syscalls": [
+        {
+            "names": [
+                "read",
+                "write",
+                "close",
+                "fstat",
+                "lseek"
+            ],
+            "action": "SCMP_ACT_ALLOW",
+            "comment": "Basic I/O"
+        },
+        {
+            "names": [
+                "mmap",
+                "mprotect",
+                "munmap",
+                "brk",
+                "madvise",
+                "mremap"
+            ],
+            "action": "SCMP_ACT_ALLOW",
+            "comment": "Memory management"
+        },
+        {
+            "names": [
+                "exit",
+                "exit_group"
+            ],
+            "action": "SCMP_ACT_ALLOW",
+            "comment": "Process exit"
+        },
+        {
+            "names": [
+                "futex",
+                "set_robust_list",
+                "set_tid_address",
+                "get_robust_list"
+            ],
+            "action": "SCMP_ACT_ALLOW",
+            "comment": "Threading (required by Python)"
+        },
+        {
+            "names": [
+                "clock_gettime",
+                "clock_getres",
+                "gettimeofday"
+            ],
+            "action": "SCMP_ACT_ALLOW",
+            "comment": "Time operations"
+        },
+        {
+            "names": [
+                "openat",
+                "newfstatat",
+                "getdents64",
+                "getcwd",
+                "readlinkat",
+                "faccessat2",
+                "statx",
+                "close_range"
+            ],
+            "action": "SCMP_ACT_ALLOW",
+            "comment": "File operations (read-only)"
+        },
+        {
+            "names": [
+                "rt_sigaction",
+                "rt_sigprocmask",
+                "rt_sigreturn",
+                "sigaltstack"
+            ],
+            "action": "SCMP_ACT_ALLOW",
+            "comment": "Signal handling"
+        },
+        {
+            "names": [
+                "arch_prctl",
+                "getrandom",
+                "pread64",
+                "pwrite64",
+                "fcntl",
+                "dup",
+                "dup2",
+                "pipe2",
+                "prctl",
+                "prlimit64",
+                "rseq"
+            ],
+            "action": "SCMP_ACT_ALLOW",
+            "comment": "Python runtime requirements"
+        },
+        {
+            "names": [
+                "getuid",
+                "getgid",
+                "geteuid",
+                "getegid",
+                "getpid",
+                "getppid",
+                "getpgrp"
+            ],
+            "action": "SCMP_ACT_ALLOW",
+            "comment": "Process identity"
+        },
+        {
+            "names": [
+                "poll",
+                "epoll_create1",
+                "epoll_ctl",
+                "epoll_wait",
+                "epoll_pwait",
+                "eventfd2"
+            ],
+            "action": "SCMP_ACT_ALLOW",
+            "comment": "I/O multiplexing"
+        },
+        {
+            "names": [
+                "ioctl"
+            ],
+            "action": "SCMP_ACT_ALLOW",
+            "args": [
+                {
+                    "index": 1,
+                    "value": 21523,
+                    "op": "SCMP_CMP_EQ"
+                }
+            ],
+            "comment": "ioctl TIOCGWINSZ only (terminal size)"
+        },
+        {
+            "names": [
+                "execve",
+                "execveat"
+            ],
+            "action": "SCMP_ACT_ERRNO",
+            "errnoRet": 1,
+            "comment": "BLOCKED: No process execution"
+        },
+        {
+            "names": [
+                "socket",
+                "connect",
+                "bind",
+                "listen",
+                "accept",
+                "accept4",
+                "sendto",
+                "recvfrom",
+                "sendmsg",
+                "recvmsg",
+                "shutdown",
+                "setsockopt",
+                "getsockopt"
+            ],
+            "action": "SCMP_ACT_ERRNO",
+            "errnoRet": 1,
+            "comment": "BLOCKED: No network access"
+        },
+        {
+            "names": [
+                "clone",
+                "clone3",
+                "fork",
+                "vfork"
+            ],
+            "action": "SCMP_ACT_ERRNO",
+            "errnoRet": 1,
+            "comment": "BLOCKED: No process creation"
+        },
+        {
+            "names": [
+                "ptrace",
+                "process_vm_readv",
+                "process_vm_writev"
+            ],
+            "action": "SCMP_ACT_ERRNO",
+            "errnoRet": 1,
+            "comment": "BLOCKED: No process tracing"
+        },
+        {
+            "names": [
+                "mount",
+                "umount2",
+                "chroot",
+                "pivot_root",
+                "setns",
+                "unshare"
+            ],
+            "action": "SCMP_ACT_ERRNO",
+            "errnoRet": 1,
+            "comment": "BLOCKED: No namespace/mount operations"
+        },
+        {
+            "names": [
+                "reboot",
+                "kexec_load",
+                "kexec_file_load",
+                "init_module",
+                "finit_module",
+                "delete_module"
+            ],
+            "action": "SCMP_ACT_ERRNO",
+            "errnoRet": 1,
+            "comment": "BLOCKED: No kernel operations"
+        },
+        {
+            "names": [
+                "setuid",
+                "setgid",
+                "setreuid",
+                "setregid",
+                "setresuid",
+                "setresgid",
+                "setgroups"
+            ],
+            "action": "SCMP_ACT_ERRNO",
+            "errnoRet": 1,
+            "comment": "BLOCKED: No privilege changes"
+        }
+    ]
+}

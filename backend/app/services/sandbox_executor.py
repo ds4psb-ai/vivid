@@ -1,12 +1,21 @@
-"""Sandbox Executor Service (v2).
+"""Sandbox Executor Service (v3 - H2.2 Core Feature Hardening).
 
 Production-grade isolated tool execution with:
 - Custom Docker image (vivid-sandbox)
-- Seccomp profiles for syscall filtering
+- Seccomp profiles for syscall filtering (minimal allowlist)
+- gVisor (runsc) runtime support for defense-in-depth
 - Resource limits (CPU, memory, timeout)
 - Network/filesystem restrictions
 - Execution tracking and logging
 - Container pool management
+
+H2.2 Security Enhancements:
+- gVisor runtime support for user-space kernel isolation
+- Stricter seccomp profile with minimal syscalls
+- PIDs limit to prevent fork bombs
+- Read-only root filesystem with tmpfs for /tmp
+- Dropped ALL capabilities
+- No-new-privileges security flag
 """
 import asyncio
 import json
@@ -16,7 +25,9 @@ import subprocess
 import tempfile
 import time
 from contextlib import asynccontextmanager
+from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
 from typing import Optional, Dict, Any, Tuple, List
 from uuid import UUID, uuid4
@@ -39,6 +50,186 @@ logger = logging.getLogger(__name__)
 # Paths
 SANDBOX_DIR = Path(__file__).parent.parent.parent / "sandbox"
 SECCOMP_STRICT = SANDBOX_DIR / "seccomp-strict.json"
+SECCOMP_MINIMAL = SANDBOX_DIR / "seccomp-minimal.json"
+
+
+# =============================================================================
+# H2.2: Runtime Configuration
+# =============================================================================
+
+class SandboxRuntime(str, Enum):
+    """Container runtime options for sandbox execution."""
+    RUNC = "runc"       # Default Docker runtime (seccomp only)
+    RUNSC = "runsc"     # gVisor - user-space kernel (recommended)
+    KATA = "kata"       # Kata Containers - lightweight VMs (optional)
+
+
+@dataclass
+class SandboxSecurityConfig:
+    """
+    H2.2: Enhanced sandbox security configuration.
+
+    Defense-in-depth approach with multiple security layers:
+    1. Container isolation (Docker/gVisor)
+    2. Seccomp syscall filtering
+    3. Capability dropping
+    4. Resource limits
+    5. Network isolation
+    6. Filesystem restrictions
+    """
+    # Runtime selection
+    runtime: SandboxRuntime = SandboxRuntime.RUNC
+
+    # Resource limits
+    memory_limit: str = "512m"
+    cpu_limit: float = 0.5
+    timeout_seconds: int = 30
+    pids_limit: int = 50  # Prevent fork bombs
+
+    # Isolation flags
+    network_disabled: bool = True
+    read_only_rootfs: bool = True
+    no_new_privileges: bool = True
+
+    # Seccomp configuration
+    seccomp_profile: str = "strict"  # strict, minimal, standard
+
+    # Allowed syscalls for minimal profile (H2.2)
+    # Only essential syscalls for Python execution
+    minimal_syscalls: List[str] = field(default_factory=lambda: [
+        # Memory management
+        "read", "write", "close", "fstat", "lseek",
+        "mmap", "mprotect", "munmap", "brk",
+        # Process lifecycle
+        "exit", "exit_group",
+        # Thread support (needed for Python)
+        "futex", "set_robust_list", "set_tid_address",
+        # Clock (needed for time operations)
+        "clock_gettime", "clock_getres",
+        # File operations (read-only)
+        "openat", "newfstatat", "getdents64", "getcwd",
+        "readlinkat", "faccessat2", "statx",
+        # Signals
+        "rt_sigaction", "rt_sigprocmask", "rt_sigreturn",
+        "sigaltstack",
+        # Misc required by Python
+        "arch_prctl", "getrandom", "pread64",
+        "fcntl", "dup", "dup2", "pipe2",
+        "prctl", "prlimit64",
+        # Memory info
+        "madvise", "mremap",
+        # UID/GID
+        "getuid", "getgid", "geteuid", "getegid",
+        "getpid", "getppid",
+        # Poll/epoll for I/O
+        "poll", "epoll_create1", "epoll_ctl", "epoll_wait",
+    ])
+
+
+# H2.2: Strict seccomp profile (minimal syscalls)
+MINIMAL_SECCOMP_PROFILE = {
+    "defaultAction": "SCMP_ACT_ERRNO",
+    "architectures": ["SCMP_ARCH_X86_64", "SCMP_ARCH_AARCH64"],
+    "syscalls": [
+        {
+            "names": [
+                # Memory management
+                "read", "write", "close", "fstat", "lseek",
+                "mmap", "mprotect", "munmap", "brk",
+            ],
+            "action": "SCMP_ACT_ALLOW",
+        },
+        {
+            "names": [
+                # Process lifecycle
+                "exit", "exit_group",
+            ],
+            "action": "SCMP_ACT_ALLOW",
+        },
+        {
+            "names": [
+                # Threading support
+                "futex", "set_robust_list", "set_tid_address",
+            ],
+            "action": "SCMP_ACT_ALLOW",
+        },
+        {
+            "names": [
+                # Clock
+                "clock_gettime", "clock_getres",
+            ],
+            "action": "SCMP_ACT_ALLOW",
+        },
+        {
+            "names": [
+                # File operations (read-only)
+                "openat", "newfstatat", "getdents64", "getcwd",
+                "readlinkat", "faccessat2", "statx",
+            ],
+            "action": "SCMP_ACT_ALLOW",
+        },
+        {
+            "names": [
+                # Signals
+                "rt_sigaction", "rt_sigprocmask", "rt_sigreturn",
+                "sigaltstack",
+            ],
+            "action": "SCMP_ACT_ALLOW",
+        },
+        {
+            "names": [
+                # Misc Python requirements
+                "arch_prctl", "getrandom", "pread64",
+                "fcntl", "dup", "dup2", "pipe2",
+                "prctl", "prlimit64",
+            ],
+            "action": "SCMP_ACT_ALLOW",
+        },
+        {
+            "names": [
+                # Memory info
+                "madvise", "mremap",
+            ],
+            "action": "SCMP_ACT_ALLOW",
+        },
+        {
+            "names": [
+                # UID/GID
+                "getuid", "getgid", "geteuid", "getegid",
+                "getpid", "getppid",
+            ],
+            "action": "SCMP_ACT_ALLOW",
+        },
+        {
+            "names": [
+                # Poll/epoll
+                "poll", "epoll_create1", "epoll_ctl", "epoll_wait",
+            ],
+            "action": "SCMP_ACT_ALLOW",
+        },
+        # Explicitly blocked dangerous syscalls
+        {
+            "names": ["execve", "execveat"],
+            "action": "SCMP_ACT_ERRNO",
+            "errnoRet": 1,
+        },
+        {
+            "names": ["socket", "connect", "bind", "listen", "accept"],
+            "action": "SCMP_ACT_ERRNO",
+            "errnoRet": 1,
+        },
+        {
+            "names": ["clone", "clone3", "fork", "vfork"],
+            "action": "SCMP_ACT_ERRNO",
+            "errnoRet": 1,
+        },
+        {
+            "names": ["ptrace", "mount", "umount2", "chroot", "pivot_root"],
+            "action": "SCMP_ACT_ERRNO",
+            "errnoRet": 1,
+        },
+    ],
+}
 
 
 # =============================================================================
@@ -78,17 +269,30 @@ class ExecutionResult:
 # =============================================================================
 
 class SandboxExecutor:
-    """Executes tools in isolated sandbox environment."""
-    
-    # Docker image - should be built from sandbox/Dockerfile
+    """
+    Executes tools in isolated sandbox environment (H2.2 Enhanced).
+
+    Security layers:
+    1. Container isolation (Docker or gVisor)
+    2. Seccomp syscall filtering
+    3. Capability dropping (ALL)
+    4. Resource limits (memory, CPU, PIDs)
+    5. Network isolation
+    6. Read-only filesystem
+    """
+
+    # Docker images
     SANDBOX_IMAGE = "vivid-sandbox:latest"
     FALLBACK_IMAGE = "python:3.11-slim"
-    
-    def __init__(self):
+
+    def __init__(self, security_config: Optional[SandboxSecurityConfig] = None):
         self.docker_available = False
         self.image_available = False
+        self.gvisor_available = False
+        self.security_config = security_config or SandboxSecurityConfig()
         self._check_docker()
-    
+        self._check_gvisor()
+
     def _check_docker(self):
         """Check if Docker and our sandbox image are available."""
         try:
@@ -99,7 +303,7 @@ class SandboxExecutor:
                 timeout=10,
             )
             self.docker_available = result.returncode == 0
-            
+
             if self.docker_available:
                 # Check if our image exists
                 result = subprocess.run(
@@ -108,7 +312,7 @@ class SandboxExecutor:
                     timeout=5,
                 )
                 self.image_available = bool(result.stdout.strip())
-                
+
                 if not self.image_available:
                     logger.warning(
                         f"Sandbox image {self.SANDBOX_IMAGE} not found. "
@@ -117,6 +321,37 @@ class SandboxExecutor:
         except Exception as e:
             logger.warning(f"Docker check failed: {e}")
             self.docker_available = False
+
+    def _check_gvisor(self):
+        """
+        H2.2: Check if gVisor (runsc) runtime is available.
+
+        gVisor provides user-space kernel isolation for defense-in-depth.
+        """
+        if not self.docker_available:
+            return
+
+        try:
+            # Check if gVisor runtime is configured
+            result = subprocess.run(
+                ["docker", "info", "--format", "{{json .Runtimes}}"],
+                capture_output=True,
+                timeout=5,
+            )
+            if result.returncode == 0:
+                output = result.stdout.decode()
+                # Check if runsc is in the runtimes
+                self.gvisor_available = "runsc" in output.lower()
+                if self.gvisor_available:
+                    logger.info("gVisor (runsc) runtime available for sandbox")
+                else:
+                    logger.info(
+                        "gVisor not available. Install runsc and configure Docker daemon "
+                        "for enhanced security. See: https://gvisor.dev/docs/user_guide/install/"
+                    )
+        except Exception as e:
+            logger.debug(f"gVisor check failed: {e}")
+            self.gvisor_available = False
     
     async def execute(
         self,
@@ -146,20 +381,35 @@ class SandboxExecutor:
         code: str,
         input_data: Dict[str, Any],
         config: SandboxConfig,
+        use_gvisor: bool = False,
     ) -> ExecutionResult:
-        """Execute in Docker container with full security."""
+        """
+        Execute in Docker container with full security (H2.2 Enhanced).
+
+        Security measures:
+        1. gVisor runtime (optional, for defense-in-depth)
+        2. Strict seccomp profile
+        3. All capabilities dropped
+        4. Read-only filesystem
+        5. Network isolation
+        6. Resource limits
+        """
         start_time = time.time()
         container_name = f"sandbox-{uuid4().hex[:8]}"
-        
+
+        # H2.2: Use gVisor for strict tier by default if available
+        if use_gvisor is False and config.tier == SandboxTier.STRICT.value:
+            use_gvisor = self.gvisor_available
+
         # Prepare payload for runner.py
         payload = {
             "code": code,
             "input_data": input_data,
         }
         payload_json = json.dumps(payload)
-        
+
         # Build Docker command with security options
-        cmd = self._build_docker_command(config, container_name)
+        cmd = self._build_docker_command(config, container_name, use_gvisor=use_gvisor)
         
         try:
             # Create subprocess and pipe input
@@ -257,50 +507,114 @@ class SandboxExecutor:
         self,
         config: SandboxConfig,
         container_name: str,
+        use_gvisor: bool = False,
     ) -> List[str]:
-        """Build Docker run command with security options."""
+        """
+        Build Docker run command with security options (H2.2 Enhanced).
+
+        Security layers applied:
+        1. gVisor runtime (if available and requested)
+        2. Seccomp profile (strict/minimal/standard)
+        3. Capability dropping (ALL)
+        4. Resource limits (memory, CPU, PIDs)
+        5. Network isolation
+        6. Read-only filesystem with tmpfs for /tmp
+        7. No-new-privileges flag
+        """
         image = self.SANDBOX_IMAGE if self.image_available else self.FALLBACK_IMAGE
-        
+        sec_config = self.security_config
+
         cmd = [
             "docker", "run",
-            "--rm",                                    # Auto-remove
-            f"--name={container_name}",               # Named for management
-            "-i",                                      # Interactive (for stdin)
-            f"--memory={config.memory_mb}m",          # Memory limit
-            f"--memory-swap={config.memory_mb}m",     # No swap
-            f"--cpus={config.cpu_limit}",             # CPU limit
-            f"--pids-limit=50",                       # Limit PIDs
-            "--security-opt=no-new-privileges:true",  # No privilege escalation
-            "--cap-drop=ALL",                         # Drop all capabilities
-            "--read-only",                            # Read-only root filesystem
-            "--tmpfs=/tmp:size=10M,mode=1777",        # Small writable /tmp
+            "--rm",                                         # Auto-remove container
+            f"--name={container_name}",                     # Named for management
+            "-i",                                           # Interactive (for stdin)
+            f"--memory={config.memory_mb}m",                # Memory limit
+            f"--memory-swap={config.memory_mb}m",           # No swap allowed
+            f"--cpus={config.cpu_limit}",                   # CPU limit
+            f"--pids-limit={sec_config.pids_limit}",        # H2.2: PIDs limit
+            "--security-opt=no-new-privileges:true",        # H2.2: No privilege escalation
+            "--cap-drop=ALL",                               # H2.2: Drop ALL capabilities
+            "--read-only",                                  # H2.2: Read-only root filesystem
+            "--tmpfs=/tmp:size=10M,mode=1777,noexec",       # H2.2: noexec on tmpfs
         ]
-        
-        # Seccomp profile (strict mode only)
-        if config.tier == SandboxTier.STRICT.value and SECCOMP_STRICT.exists():
-            cmd.append(f"--security-opt=seccomp={SECCOMP_STRICT}")
-        
+
+        # H2.2: gVisor runtime for defense-in-depth
+        if use_gvisor and self.gvisor_available:
+            cmd.append("--runtime=runsc")
+            logger.debug(f"Using gVisor runtime for container {container_name}")
+        else:
+            # Use default runc but with enhanced seccomp
+            pass
+
+        # H2.2: Enhanced seccomp profile selection
+        seccomp_profile_path = self._get_seccomp_profile(config.tier)
+        if seccomp_profile_path:
+            cmd.append(f"--security-opt=seccomp={seccomp_profile_path}")
+
         # Network isolation
         if not config.network_enabled:
             cmd.append("--network=none")
         else:
-            # For network-enabled, still use isolated network
+            # For network-enabled, use bridge but consider egress filtering
             cmd.append("--network=bridge")
-            # TODO: Use custom network with egress filtering
-        
-        # User (non-root)
+            # Add DNS isolation for untrusted code
+            cmd.extend(["--dns", "8.8.8.8", "--dns", "8.8.4.4"])
+
+        # User (non-root) - critical for security
         if self.image_available:
             cmd.append("--user=sandbox")
-        
-        # Add the image and command
+        else:
+            # Use nobody for fallback image
+            cmd.append("--user=65534:65534")
+
+        # H2.2: Additional hardening
+        cmd.extend([
+            "--ulimit=nofile=64:64",      # Limit open files
+            "--ulimit=nproc=50:50",       # Limit processes
+        ])
+
+        # Add the image
         cmd.append(image)
-        
+
         # If using fallback image, run runner.py from stdin
         if not self.image_available:
             runner_code = self._get_embedded_runner()
             cmd.extend(["python3", "-c", runner_code])
-        
+
         return cmd
+
+    def _get_seccomp_profile(self, tier: str) -> Optional[str]:
+        """
+        H2.2: Get the appropriate seccomp profile for the tier.
+
+        Profiles:
+        - strict: Minimal syscalls (most secure)
+        - standard: Basic syscalls for verified tools
+        - trusted: Extended syscalls for certified tools
+        """
+        if tier == SandboxTier.STRICT.value:
+            # Use minimal seccomp profile
+            if SECCOMP_MINIMAL.exists():
+                return str(SECCOMP_MINIMAL)
+            elif SECCOMP_STRICT.exists():
+                return str(SECCOMP_STRICT)
+            else:
+                # Create inline profile
+                return self._create_inline_seccomp_profile()
+        elif tier == SandboxTier.STANDARD.value:
+            if SECCOMP_STRICT.exists():
+                return str(SECCOMP_STRICT)
+        # trusted tier uses default Docker seccomp
+        return None
+
+    def _create_inline_seccomp_profile(self) -> str:
+        """Create a temporary file with minimal seccomp profile."""
+        import tempfile
+        profile_path = Path(tempfile.gettempdir()) / "vivid-seccomp-minimal.json"
+        if not profile_path.exists():
+            profile_path.write_text(json.dumps(MINIMAL_SECCOMP_PROFILE))
+        return str(profile_path)
     
     def _get_embedded_runner(self) -> str:
         """Get embedded runner code for fallback mode."""
