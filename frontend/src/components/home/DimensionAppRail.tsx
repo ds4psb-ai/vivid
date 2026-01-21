@@ -121,10 +121,10 @@ const CORE_APPS: DimensionApp[] = [
     href: "/dimension/reference-decoder",
     icon: Search,
     badge: "4D",
-    titleKo: "레퍼런스 분석",
+    titleKo: "레퍼런스 해석기",
     titleEn: "Reference Decoder",
-    descKo: "영상 분석",
-    descEn: "Video Analysis",
+    descKo: "4D 분석",
+    descEn: "4D Analysis",
     color: "blue",
   },
   {
@@ -134,8 +134,8 @@ const CORE_APPS: DimensionApp[] = [
     badge: "AI",
     titleKo: "심연의 거울",
     titleEn: "Abyss Mirror",
-    descKo: "창작 DNA 분석",
-    descEn: "Creative DNA",
+    descKo: "캐릭터 에센스",
+    descEn: "Character Essence",
     color: "violet",
   },
   {
@@ -145,8 +145,8 @@ const CORE_APPS: DimensionApp[] = [
     badge: "AD",
     titleKo: "미학디렉터",
     titleEn: "Aesthetic Director",
-    descKo: "거장 스타일",
-    descEn: "Master Styles",
+    descKo: "비주얼 스타일",
+    descEn: "Visual Style",
     color: "amber",
   },
   {
@@ -154,10 +154,10 @@ const CORE_APPS: DimensionApp[] = [
     href: "/dimension/story-architect",
     icon: Layers,
     badge: "2D",
-    titleKo: "스토리 생성",
+    titleKo: "시나리오 생성기",
     titleEn: "Story Architect",
-    descKo: "시나리오 작성",
-    descEn: "Scenario Writing",
+    descKo: "서사 구조",
+    descEn: "Narrative Logic",
     color: "emerald",
   },
   {
@@ -176,10 +176,10 @@ const CORE_APPS: DimensionApp[] = [
     href: "/dimension/suno",
     icon: Sparkles,
     badge: "BGM",
-    titleKo: "음악 생성",
+    titleKo: "Suno 음악",
     titleEn: "Suno Music",
-    descKo: "Suno V5 BGM",
-    descEn: "Suno V5 BGM",
+    descKo: "BGM & 사운드",
+    descEn: "BGM & Sound",
     color: "purple",
   },
   {
@@ -187,10 +187,10 @@ const CORE_APPS: DimensionApp[] = [
     href: "/dimension/video-maker",
     icon: Video,
     badge: "VEO",
-    titleKo: "비디오 메이커",
-    titleEn: "Video Maker",
-    descKo: "Veo 3.1 영상",
-    descEn: "Veo 3.1 Video",
+    titleKo: "VEO 비디오",
+    titleEn: "VEO Video",
+    descKo: "영상 생성",
+    descEn: "Video Generation",
     color: "cyan",
   },
   {
@@ -229,7 +229,7 @@ export function DimensionAppRail({
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-violet-500" />
           <h3 className="text-lg font-semibold text-[var(--fg-0)]">
-            {ko ? "차원 도구" : "Dimension Tools"}
+            {ko ? "차원 앱" : "Dimension Apps"}
           </h3>
         </div>
         <Link

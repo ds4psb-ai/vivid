@@ -266,6 +266,141 @@ class ToolRecommenderService:
         request = ToolRecommendationRequest(ip_id=ip.id, max_results=max_results)
         return await self.recommend_tools(request)
 
+    async def recommend_workflow_from_prompt(
+        self,
+        user_prompt: str,
+        ip_slug: str,
+        content_type: str = "shortform",
+    ) -> Dict[str, Any]:
+        """Recommend workflow based on user's variation prompt using Gemini Flash.
+
+        Uses Intent Classification to determine the best workflow template
+        for the user's creative intent.
+
+        Args:
+            user_prompt: User's variation/remix prompt (e.g., "캐릭터를 INTJ로 변주")
+            ip_slug: IP slug for context
+            content_type: Content type ("shortform", "anime-mv")
+
+        Returns:
+            Dict with workflow_template, steps, and confidence
+        """
+        # Workflow templates
+        WORKFLOW_TEMPLATES = {
+            "character-variation": {
+                "name_ko": "캐릭터 변주",
+                "name_en": "Character Variation",
+                "steps": [
+                    {"tool_id": "analyze_reference", "name": "Reference Decoder", "dimension": "4D"},
+                    {"tool_id": "persona_analyze", "name": "Abyss Mirror", "dimension": "AI"},
+                    {"tool_id": "story_architect", "name": "Story Architect", "dimension": "2D"},
+                    {"tool_id": "veo_generate", "name": "VEO Video", "dimension": "VEO"},
+                ],
+            },
+            "style-remix": {
+                "name_ko": "스타일 리믹스",
+                "name_en": "Style Remix",
+                "steps": [
+                    {"tool_id": "analyze_reference", "name": "Reference Decoder", "dimension": "4D"},
+                    {"tool_id": "aesthetic_direct", "name": "Aesthetic Director", "dimension": "AD"},
+                    {"tool_id": "generate_image_prompt", "name": "Visual Realizer", "dimension": "3D"},
+                ],
+            },
+            "scene-extension": {
+                "name_ko": "씬 확장",
+                "name_en": "Scene Extension",
+                "steps": [
+                    {"tool_id": "analyze_reference", "name": "Reference Decoder", "dimension": "4D"},
+                    {"tool_id": "story_architect", "name": "Story Architect", "dimension": "2D"},
+                    {"tool_id": "veo_sequence", "name": "VEO Sequence", "dimension": "VEO"},
+                ],
+            },
+            "full-production": {
+                "name_ko": "풀 프로덕션",
+                "name_en": "Full Production",
+                "steps": [
+                    {"tool_id": "analyze_reference", "name": "Reference Decoder", "dimension": "4D"},
+                    {"tool_id": "persona_analyze", "name": "Abyss Mirror", "dimension": "AI"},
+                    {"tool_id": "aesthetic_direct", "name": "Aesthetic Director", "dimension": "AD"},
+                    {"tool_id": "story_architect", "name": "Story Architect", "dimension": "2D"},
+                    {"tool_id": "sound_crafter", "name": "Suno Music", "dimension": "AUDIO"},
+                    {"tool_id": "veo_generate", "name": "VEO Video", "dimension": "VEO"},
+                ],
+            },
+        }
+
+        # Intent classification keywords
+        INTENT_KEYWORDS = {
+            "character-variation": [
+                "캐릭터", "character", "MBTI", "INTJ", "ENFP", "성격", "personality",
+                "persona", "페르소나", "변주", "variation", "인물",
+            ],
+            "style-remix": [
+                "스타일", "style", "봉준호", "노란", "ghibli", "지브리",
+                "거장", "auteur", "미학", "aesthetic", "색감", "톤", "tone",
+            ],
+            "scene-extension": [
+                "씬", "scene", "확장", "extend", "연장", "continuation",
+                "이어서", "다음", "next", "후속",
+            ],
+        }
+
+        # Simple keyword-based intent classification (fallback)
+        prompt_lower = user_prompt.lower()
+        detected_intent = "full-production"  # default
+        max_matches = 0
+
+        for intent, keywords in INTENT_KEYWORDS.items():
+            matches = sum(1 for kw in keywords if kw.lower() in prompt_lower)
+            if matches > max_matches:
+                max_matches = matches
+                detected_intent = intent
+
+        # Try Gemini Flash for more accurate classification
+        try:
+            from app.services.genai_utils import get_gemini_client
+            
+            client = get_gemini_client()
+            classification_prompt = f"""Classify the following user prompt into one of these workflow types:
+- character-variation: For character personality, MBTI, persona changes
+- style-remix: For visual style, auteur style (봉준호, Ghibli, etc.), aesthetic changes
+- scene-extension: For extending scenes, continuations, next parts
+- full-production: For complete video production from scratch
+
+User prompt: "{user_prompt}"
+Content type: {content_type}
+
+Respond with ONLY the workflow type name (e.g., "character-variation")."""
+
+            response = await client.generate_content_async(
+                classification_prompt,
+                generation_config={"max_output_tokens": 50, "temperature": 0.1},
+            )
+            
+            gemini_intent = response.text.strip().lower().replace('"', '').replace("'", "")
+            if gemini_intent in WORKFLOW_TEMPLATES:
+                detected_intent = gemini_intent
+                logger.info(f"[WorkflowRec] Gemini classified intent: {detected_intent}")
+        except Exception as e:
+            logger.warning(f"[WorkflowRec] Gemini classification failed, using keyword fallback: {e}")
+
+        # Get the template
+        template = WORKFLOW_TEMPLATES.get(detected_intent, WORKFLOW_TEMPLATES["full-production"])
+        
+        # Calculate confidence based on match quality
+        confidence = min(0.5 + (max_matches * 0.1), 0.95)
+
+        return {
+            "workflow_template": detected_intent,
+            "name_ko": template["name_ko"],
+            "name_en": template["name_en"],
+            "steps": template["steps"],
+            "confidence": confidence,
+            "user_prompt": user_prompt,
+            "ip_slug": ip_slug,
+            "content_type": content_type,
+        }
+
     # =========================================================================
     # Private Methods
     # =========================================================================

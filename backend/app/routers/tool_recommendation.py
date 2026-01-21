@@ -75,6 +75,45 @@ async def recommend_tools(
         raise HTTPException(status_code=500, detail="Failed to generate recommendations")
 
 
+@router.post("/recommend-workflow")
+async def recommend_workflow(
+    user_prompt: str,
+    ip_slug: str,
+    content_type: str = "shortform",
+    db: AsyncSession = Depends(get_db),
+    user_id: Optional[str] = Depends(get_user_id),
+):
+    """Recommend workflow based on user's variation prompt.
+
+    Uses Gemini Flash for intent classification to determine the best
+    workflow template for the user's creative intent.
+
+    Args:
+        user_prompt: User's variation prompt (e.g., "캐릭터를 INTJ로 변주")
+        ip_slug: IP slug for context
+        content_type: Content type ("shortform", "anime-mv")
+
+    Returns:
+        Dict with workflow_template, steps, and confidence
+    """
+    logger.info(
+        f"[ToolRec] POST /recommend-workflow | user={user_id} prompt={user_prompt[:50]}..."
+    )
+
+    service = create_tool_recommender(db)
+
+    try:
+        result = await service.recommend_workflow_from_prompt(
+            user_prompt=user_prompt,
+            ip_slug=ip_slug,
+            content_type=content_type,
+        )
+        return result
+    except Exception as e:
+        logger.error(f"[ToolRec] Error in recommend_workflow: {e}")
+        raise HTTPException(status_code=500, detail="Failed to recommend workflow")
+
+
 @router.get("/ip/{slug}/recommendations", response_model=ToolRecommendationResponse)
 async def get_ip_recommendations(
     slug: str,
