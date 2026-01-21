@@ -159,6 +159,10 @@ function SunoContent() {
   const [referenceFiles, setReferenceFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // 2026 API enhancements
+  const [vocalGender, setVocalGender] = useState<string>(""); // "m" or "f"
+  const [styleWeight, setStyleWeight] = useState<number | null>(null); // 0-1
+
   // UI state
   const [isPending, startTransition] = useTransition();
   const [localResult, setLocalResult] = useState<SunoGenerateResponse | null>(null);
@@ -266,6 +270,8 @@ function SunoContent() {
             prompt: prompt.trim(),
             model,
             instrumental,
+            ...(vocalGender && { vocal_gender: vocalGender }),
+            ...(styleWeight !== null && { style_weight: styleWeight }),
           }),
         });
 
