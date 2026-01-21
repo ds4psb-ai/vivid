@@ -37,6 +37,7 @@ from .prompt import router as prompt_router
 from .character import router as character_router
 from .storyboard import router as storyboard_router
 from .veo_sequence import router as veo_sequence_router
+from .kling_motion import router as kling_motion_router
 
 # Re-export from _base for backward compatibility
 from ._base import (
@@ -70,6 +71,7 @@ router.include_router(prompt_router)
 router.include_router(character_router)
 router.include_router(storyboard_router)
 router.include_router(veo_sequence_router)
+router.include_router(kling_motion_router)
 
 
 # ============================================================================

@@ -189,6 +189,53 @@ class KlingResult:
 
 
 # =============================================================================
+# Motion Transfer (Kling 2.6+) Data Classes
+# =============================================================================
+
+class CharacterOrientation(str, Enum):
+    """Character orientation mode for motion transfer.
+    
+    - VIDEO: Full body follows reference video (max 30s)
+    - IMAGE: Portrait animation with camera movement (max 10s)
+    """
+    VIDEO = "video"
+    IMAGE = "image"
+
+
+@dataclass
+class MotionTransferConfig:
+    """Configuration for Kling 2.6 Motion Transfer.
+    
+    Transfers motion from a reference video to a character image.
+    Ideal for dance videos, action sequences, and character animations.
+    
+    References:
+    - API Endpoint: POST /videos/motion-create
+    - Max duration: 30s (video orientation), 10s (image orientation)
+    - Features: Full-body motion, hand/finger precision, audio preservation
+    """
+    image_url: str  # Character/subject image
+    motion_video_url: str  # Reference video with motion to transfer
+    prompt: str = ""  # Scene/background description
+    character_orientation: CharacterOrientation = CharacterOrientation.VIDEO
+    keep_original_sound: bool = True
+    mode: KlingMode = KlingMode.PROFESSIONAL
+    negative_prompt: Optional[str] = None
+    model: str = KlingConfig.DEFAULT_MODEL
+
+
+@dataclass
+class MotionTransferResult:
+    """Result from Kling Motion Transfer."""
+    success: bool
+    task_id: str
+    video_url: Optional[str] = None
+    duration_seconds: float = 0
+    credits_used: int = 0
+    error: Optional[str] = None
+
+
+# =============================================================================
 # Service Class
 # =============================================================================
 
@@ -430,6 +477,158 @@ class KlingService:
                 status="error",
                 error=str(e),
             )
+
+    async def transfer_motion(
+        self,
+        config: MotionTransferConfig,
+        wait_for_completion: bool = True,
+    ) -> MotionTransferResult:
+        """Transfer motion from reference video to character image.
+        
+        Kling 2.6 Motion Control API.
+        
+        Args:
+            config: Motion transfer configuration
+            wait_for_completion: Whether to wait for video completion
+            
+        Returns:
+            MotionTransferResult with video URL or error
+        """
+        if not self.api_key:
+            return MotionTransferResult(
+                success=False,
+                task_id="",
+                error="Kling API key not configured",
+            )
+        
+        try:
+            client = self._get_client()
+            
+            # Build motion transfer request payload
+            payload: Dict[str, Any] = {
+                "image": config.image_url,
+                "video": config.motion_video_url,
+                "model_name": config.model,
+                "mode": config.mode.value,
+                "character_orientation": config.character_orientation.value,
+                "keep_original_sound": config.keep_original_sound,
+            }
+            
+            # Optional parameters
+            if config.prompt:
+                payload["prompt"] = config.prompt
+            if config.negative_prompt:
+                payload["negative_prompt"] = config.negative_prompt
+            
+            # Submit motion transfer request
+            logger.info(
+                f"[KLING_MOTION] Submitting motion transfer: "
+                f"orientation={config.character_orientation.value}, "
+                f"audio={config.keep_original_sound}"
+            )
+            
+            response = await client.post("/videos/motion-create", json=payload)
+            response.raise_for_status()
+            
+            data = response.json()
+            task_id = data.get("data", {}).get("task_id") or data.get("task_id")
+            
+            if not task_id:
+                return MotionTransferResult(
+                    success=False,
+                    task_id="",
+                    error="No task_id in response",
+                )
+            
+            logger.info(f"[KLING_MOTION] Task submitted: {task_id}")
+            
+            # Return immediately if not waiting
+            if not wait_for_completion:
+                # Estimate credits based on orientation (30s max for video, 10s for image)
+                max_duration = 30 if config.character_orientation == CharacterOrientation.VIDEO else 10
+                estimated_credits = max_duration * 10  # ~10 credits per second for pro
+                return MotionTransferResult(
+                    success=True,
+                    task_id=task_id,
+                    credits_used=estimated_credits,
+                )
+            
+            # Poll for completion
+            result = await self._poll_motion_completion(task_id)
+            return result
+            
+        except httpx.HTTPStatusError as e:
+            logger.error(f"[KLING_MOTION] API error: {e.response.status_code} - {e.response.text}")
+            return MotionTransferResult(
+                success=False,
+                task_id="",
+                error=f"HTTP {e.response.status_code}: {e.response.text[:200]}",
+            )
+        except Exception as e:
+            logger.exception(f"[KLING_MOTION] Motion transfer failed: {e}")
+            return MotionTransferResult(
+                success=False,
+                task_id="",
+                error=str(e),
+            )
+
+    async def _poll_motion_completion(self, task_id: str) -> MotionTransferResult:
+        """Poll for motion transfer task completion."""
+        client = self._get_client()
+        start_time = asyncio.get_event_loop().time()
+        
+        while True:
+            elapsed = asyncio.get_event_loop().time() - start_time
+            if elapsed > KlingConfig.POLL_TIMEOUT:
+                return MotionTransferResult(
+                    success=False,
+                    task_id=task_id,
+                    error="Motion transfer timeout",
+                )
+            
+            try:
+                response = await client.get(f"/videos/{task_id}")
+                response.raise_for_status()
+                data = response.json()
+                
+                task_data = data.get("data", data)
+                status = task_data.get("status", "").lower()
+                
+                if status in ("completed", "succeed", "done"):
+                    video_url = (
+                        task_data.get("video_url") or
+                        task_data.get("output", {}).get("video_url") or
+                        task_data.get("works", [{}])[0].get("video_url")
+                    )
+                    duration = task_data.get("duration", 0)
+                    
+                    # Calculate credits based on actual duration
+                    credits = int(duration * 10) if duration else 100
+                    
+                    logger.info(f"[KLING_MOTION] Completed: {task_id}, duration={duration}s")
+                    
+                    return MotionTransferResult(
+                        success=True,
+                        task_id=task_id,
+                        video_url=video_url,
+                        duration_seconds=duration,
+                        credits_used=credits,
+                    )
+                
+                if status in ("failed", "error"):
+                    error = task_data.get("error") or task_data.get("message") or "Motion transfer failed"
+                    return MotionTransferResult(
+                        success=False,
+                        task_id=task_id,
+                        error=error,
+                    )
+                
+                # Still processing
+                await asyncio.sleep(KlingConfig.POLL_INTERVAL)
+                
+            except Exception as e:
+                logger.warning(f"[KLING_MOTION] Poll error for {task_id}: {e}")
+                await asyncio.sleep(KlingConfig.POLL_INTERVAL)
 
 
 # =============================================================================
