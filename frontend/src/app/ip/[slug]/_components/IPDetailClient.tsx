@@ -34,6 +34,7 @@ import AppShell from "@/components/AppShell";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LicenseStatusInfo } from "@/components/ip/LicenseStatusBadge";
 import GenerationProgress from "./GenerationProgress";
+import WorkflowRecommendationPanel from "./WorkflowRecommendationPanel";
 import { EvidenceCard } from "@/components/ui/EvidenceCard";
 import { ToolRecommendationCard } from "@/components/ui/ToolRecommendationCard";
 import { Collapsible } from "@/components/ui/Collapsible";
@@ -1322,6 +1323,13 @@ export default function IPDetailClient({
                       )}
                     </div>
                   )}
+
+                  {/* Dynamic Workflow Recommendation (P1 Enhancement) */}
+                  <WorkflowRecommendationPanel
+                    ipSlug={slug}
+                    ipGenre={ip?.genre}
+                    language={language}
+                  />
 
                   {/* User prompt */}
                   <div className="mb-6">
