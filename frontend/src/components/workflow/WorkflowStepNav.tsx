@@ -92,6 +92,9 @@ function WorkflowStepNavInner({
   // 진행률
   const progress = workflowState ? getWorkflowProgress(urlParams.ipSlug!) : 0;
 
+  // 이전 단계 미완료 체크 (2026 UX Best Practice: Progressive Validation)
+  const prevStepIncomplete = currentStep > 1 && !isStepCompleted(urlParams.ipSlug!, currentStep - 1);
+
   // 워크플로우가 없으면 렌더링하지 않음
   if (!urlParams.ipSlug || !workflowState) {
     return null;
@@ -160,6 +163,28 @@ function WorkflowStepNavInner({
     }
   };
 
+  // 이전 단계 미완료 경고 배너 (2026 UX Best Practice)
+  const WarningBanner = prevStepIncomplete ? (
+    <div className="mb-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <span className="text-sm text-amber-700 dark:text-amber-300">
+          {ko
+            ? `${currentStep - 1}단계가 아직 완료되지 않았습니다.`
+            : `Step ${currentStep - 1} is not completed yet.`}
+        </span>
+      </div>
+      <button
+        onClick={handlePrevStep}
+        className="text-sm font-medium text-amber-600 dark:text-amber-400 hover:underline"
+      >
+        {ko ? "이전 단계로" : "Go to prev step"}
+      </button>
+    </div>
+  ) : null;
+
   // 컴팩트 모드: 다음 단계 버튼만 표시
   if (compact) {
     if (!nextStep) return null;
@@ -186,104 +211,131 @@ function WorkflowStepNavInner({
 
   // 전체 네비게이션 바
   return (
-    <div
-      className={`
-        flex items-center justify-between gap-4 p-[var(--workflow-nav-padding)]
-        bg-[var(--workflow-nav-bg)]
-        border border-[var(--workflow-nav-border)]
-        rounded-[var(--workflow-nav-radius)]
-        ${className}
-      `}
-    >
-      {/* 왼쪽: IP 정보 + 진행률 */}
-      <div className="flex items-center gap-4">
-        {/* IP로 돌아가기 */}
-        <button
-          onClick={handleBackToIP}
-          className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-          title={ko ? "IP 페이지로" : "Back to IP"}
-        >
-          <Home className="w-4 h-4 text-slate-500" />
-        </button>
+    <>
+      {WarningBanner}
+      <div
+        className={`
+          flex items-center justify-between gap-4 p-[var(--workflow-nav-padding)]
+          bg-[var(--workflow-nav-bg)]
+          border border-[var(--workflow-nav-border)]
+          rounded-[var(--workflow-nav-radius)]
+          ${className}
+        `}
+      >
+        {/* 왼쪽: IP 정보 + 진행률 */}
+        <div className="flex items-center gap-4">
+          {/* IP로 돌아가기 */}
+          <button
+            onClick={handleBackToIP}
+            className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+            title={ko ? "IP 페이지로" : "Back to IP"}
+          >
+            <Home className="w-4 h-4 text-slate-500" />
+          </button>
 
-        {/* 초기화 버튼 */}
-        <button
-          onClick={handleReset}
-          className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors group"
-          title={ko ? "처음부터 다시 시작" : "Start over"}
-        >
-          <RotateCcw className="w-4 h-4 text-slate-400 group-hover:text-red-500 transition-colors" />
-        </button>
+          {/* 초기화 버튼 */}
+          <button
+            onClick={handleReset}
+            className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors group"
+            title={ko ? "처음부터 다시 시작" : "Start over"}
+          >
+            <RotateCcw className="w-4 h-4 text-slate-400 group-hover:text-red-500 transition-colors" />
+          </button>
 
-        {/* 진행률 */}
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            {ko ? `${currentStep}단계` : `Step ${currentStep}`}
-            <span className="text-slate-400 dark:text-slate-500">
-              {" "}
-              / {totalSteps}
+          {/* 진행률 */}
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              {ko ? `${currentStep}단계` : `Step ${currentStep}`}
+              <span className="text-slate-400 dark:text-slate-500">
+                {" "}
+                / {totalSteps}
+              </span>
             </span>
-          </span>
 
-          {/* 진행률 바 */}
-          <div className="w-24 bg-[var(--workflow-progress-bg)] rounded-[var(--workflow-progress-radius)] overflow-hidden" style={{ height: 'var(--workflow-progress-height)' }}>
-            <div
-              className="h-full bg-[var(--workflow-progress-fill)] rounded-[var(--workflow-progress-radius)] transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-
-          {/* 단계 점 표시 */}
-          <div className="flex items-center gap-1">
-            {workflowState.steps.map((step, index) => {
-              const stepNum = index + 1;
-              const completed = isStepCompleted(urlParams.ipSlug!, stepNum);
-              const isCurrent = stepNum === currentStep;
-
-              return (
+            {/* 진행률 바 + % 표시 */}
+            <div className="flex items-center gap-2">
+              <div className="w-24 bg-[var(--workflow-progress-bg)] rounded-[var(--workflow-progress-radius)] overflow-hidden" style={{ height: 'var(--workflow-progress-height)' }}>
                 <div
-                  key={step.app}
-                  className="w-2 h-2 rounded-full transition-all"
-                  style={{
-                    backgroundColor: completed
-                      ? 'var(--workflow-step-dot-complete)'
-                      : isCurrent
-                        ? 'var(--workflow-step-dot-current)'
-                        : 'var(--workflow-step-dot-default)'
-                  }}
-                  title={ko ? step.name_ko : step.name_en}
+                  className="h-full bg-[var(--workflow-progress-fill)] rounded-[var(--workflow-progress-radius)] transition-all duration-300"
+                  style={{ width: `${progress}%` }}
                 />
-              );
-            })}
+              </div>
+              <span className="text-xs text-slate-500 dark:text-slate-400 min-w-[2rem]">
+                {progress}%
+              </span>
+            </div>
+
+            {/* 단계 점 표시 (클릭 가능) */}
+            <div className="flex items-center gap-1">
+              {workflowState.steps.map((step, index) => {
+                const stepNum = index + 1;
+                const completed = isStepCompleted(urlParams.ipSlug!, stepNum);
+                const isCurrent = stepNum === currentStep;
+
+                // 완료된 단계는 클릭 가능
+                const canNavigate = completed && !isCurrent;
+
+                const handleStepClick = () => {
+                  if (!canNavigate || !urlParams.ipSlug || !urlParams.workflowKey) return;
+                  const stepUrl = buildStepUrl(
+                    step,
+                    urlParams.ipSlug,
+                    stepNum,
+                    urlParams.workflowKey,
+                    urlParams.prompt || undefined
+                  );
+                  router.push(stepUrl);
+                };
+
+                return (
+                  <button
+                    key={step.app}
+                    onClick={handleStepClick}
+                    disabled={!canNavigate}
+                    className={`
+                      w-2 h-2 rounded-full transition-all
+                      ${canNavigate ? 'cursor-pointer hover:scale-125' : 'cursor-default'}
+                    `}
+                    style={{
+                      backgroundColor: completed
+                        ? 'var(--workflow-step-dot-complete)'
+                        : isCurrent
+                          ? 'var(--workflow-step-dot-current)'
+                          : 'var(--workflow-step-dot-default)'
+                    }}
+                    title={`${ko ? step.name_ko : step.name_en}${canNavigate ? (ko ? ' (클릭하여 이동)' : ' (click to navigate)') : ''}`}
+                  />
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* 오른쪽: 네비게이션 버튼 */}
-      <div className="flex items-center gap-2">
-        {/* 이전 단계 */}
-        {prevStep && (
-          <button
-            onClick={handlePrevStep}
-            className="
+        {/* 오른쪽: 네비게이션 버튼 */}
+        <div className="flex items-center gap-2">
+          {/* 이전 단계 */}
+          {prevStep && (
+            <button
+              onClick={handlePrevStep}
+              className="
               inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
               border border-slate-200 dark:border-slate-600
               text-slate-600 dark:text-slate-400
               hover:bg-slate-100 dark:hover:bg-slate-700
               text-sm transition-all
             "
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            {ko ? "이전" : "Prev"}
-          </button>
-        )}
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              {ko ? "이전" : "Prev"}
+            </button>
+          )}
 
-        {/* 다음 단계 */}
-        {nextStep ? (
-          <button
-            onClick={handleNextStep}
-            disabled={disabled}
-            className={`
+          {/* 다음 단계 */}
+          {nextStep ? (
+            <button
+              onClick={handleNextStep}
+              disabled={disabled}
+              className={`
               inline-flex items-center gap-1.5 px-4 py-1.5 rounded-[var(--cta-primary-radius)]
               bg-[var(--bg-primary)] hover:bg-[var(--bg-primary-hover)] disabled:bg-[var(--bg-interactive)]
               text-[var(--fg-on-primary)] text-sm font-medium
@@ -291,30 +343,31 @@ function WorkflowStepNavInner({
               transition-[var(--transition-interactive)]
               ${disabled ? "cursor-not-allowed opacity-60" : ""}
             `}
-          >
-            {ko ? "다음: " : "Next: "}
-            <span className="max-w-[120px] truncate">
-              {ko ? nextStep.name_ko : nextStep.name_en}
-            </span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        ) : (
-          /* 완료 */
-          <button
-            onClick={handleBackToIP}
-            className="
+            >
+              {ko ? "다음: " : "Next: "}
+              <span className="max-w-[120px] truncate">
+                {ko ? nextStep.name_ko : nextStep.name_en}
+              </span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          ) : (
+            /* 완료 */
+            <button
+              onClick={handleBackToIP}
+              className="
               inline-flex items-center gap-1.5 px-4 py-1.5 rounded-[var(--cta-primary-radius)]
               bg-[var(--bg-success)] hover:brightness-110
               text-[var(--fg-on-primary)] text-sm font-medium
               transition-[var(--transition-interactive)]
             "
-          >
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            {ko ? "완료" : "Complete"}
-          </button>
-        )}
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              {ko ? "완료" : "Complete"}
+            </button>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
