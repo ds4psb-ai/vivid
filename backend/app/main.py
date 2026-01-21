@@ -217,6 +217,7 @@ setup_monitoring(app)
 # =============================================================================
 # Security Hardening: Explicit allow_headers instead of wildcard (H1.1)
 # This prevents exposure of sensitive headers and reduces attack surface
+# H1.1: Explicit allowed headers definition
 CORS_ALLOWED_HEADERS = [
     "Authorization",
     "Content-Type",
@@ -226,6 +227,8 @@ CORS_ALLOWED_HEADERS = [
     "Accept",
     "Accept-Language",
     "Cache-Control",
+    "sentry-trace",
+    "baggage",
 ]
 
 app.add_middleware(
@@ -240,7 +243,7 @@ app.add_middleware(
     ],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=CORS_ALLOWED_HEADERS,
     expose_headers=["X-Request-ID", "X-RateLimit-Limit", "X-RateLimit-Remaining"],
     max_age=600,
 )
