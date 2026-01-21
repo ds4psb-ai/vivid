@@ -10,16 +10,9 @@
 import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import {
-  Brain,
-  Search,
-  Layers,
-  Image as ImageIcon,
-  Video,
-  Palette,
-  Sparkles,
-} from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { DIMENSION_ICONS, DIMENSION_ITEMS } from "@/lib/dimension-data";
 
 interface DimensionApp {
   id: string;
@@ -113,13 +106,22 @@ const COLOR_CLASSES: Record<ColorKey, {
 };
 
 // =============================================================================
-// Core Apps (데모용 핵심 앱 8개)
+// Core Apps (메인페이지 하단 Core Tools)
 // =============================================================================
-const CORE_APPS: DimensionApp[] = [
-  {
-    id: "reference-decoder",
-    href: "/dimension/reference-decoder",
-    icon: Search,
+const CORE_APP_IDS = [
+  "reference-decoder",
+  "abyss-mirror",
+  "aesthetic-director",
+  "story-architect",
+  "video-maker",
+  "suno-music",
+] as const;
+
+const CORE_APP_OVERRIDES: Record<
+  (typeof CORE_APP_IDS)[number],
+  Pick<DimensionApp, "badge" | "titleKo" | "titleEn" | "descKo" | "descEn" | "color">
+> = {
+  "reference-decoder": {
     badge: "4D",
     titleKo: "레퍼런스 해석기",
     titleEn: "Reference Decoder",
@@ -127,10 +129,7 @@ const CORE_APPS: DimensionApp[] = [
     descEn: "4D Analysis",
     color: "blue",
   },
-  {
-    id: "abyss-mirror",
-    href: "/dimension/abyss",
-    icon: Brain,
+  "abyss-mirror": {
     badge: "AI",
     titleKo: "심연의 거울",
     titleEn: "Abyss Mirror",
@@ -138,10 +137,7 @@ const CORE_APPS: DimensionApp[] = [
     descEn: "Character Essence",
     color: "violet",
   },
-  {
-    id: "aesthetic-director",
-    href: "/dimension/aesthetic",
-    icon: Palette,
+  "aesthetic-director": {
     badge: "AD",
     titleKo: "미학디렉터",
     titleEn: "Aesthetic Director",
@@ -149,43 +145,15 @@ const CORE_APPS: DimensionApp[] = [
     descEn: "Visual Style",
     color: "amber",
   },
-  {
-    id: "story-architect",
-    href: "/dimension/story-architect",
-    icon: Layers,
-    badge: "2D",
+  "story-architect": {
+    badge: "STORY",
     titleKo: "시나리오 생성기",
     titleEn: "Story Architect",
     descKo: "서사 구조",
     descEn: "Narrative Logic",
     color: "emerald",
   },
-  {
-    id: "visual-realizer",
-    href: "/dimension/visual-realizer",
-    icon: ImageIcon,
-    badge: "3D",
-    titleKo: "비주얼 생성",
-    titleEn: "Visual Realizer",
-    descKo: "키프레임 생성",
-    descEn: "Key Frames",
-    color: "rose",
-  },
-  {
-    id: "suno",
-    href: "/dimension/suno",
-    icon: Sparkles,
-    badge: "BGM",
-    titleKo: "Suno 음악",
-    titleEn: "Suno Music",
-    descKo: "BGM & 사운드",
-    descEn: "BGM & Sound",
-    color: "purple",
-  },
-  {
-    id: "video-maker",
-    href: "/dimension/video-maker",
-    icon: Video,
+  "video-maker": {
     badge: "VEO",
     titleKo: "VEO 비디오",
     titleEn: "VEO Video",
@@ -193,18 +161,33 @@ const CORE_APPS: DimensionApp[] = [
     descEn: "Video Generation",
     color: "cyan",
   },
-  {
-    id: "kling",
-    href: "/dimension/kling",
-    icon: Video,
-    badge: "KLING",
-    titleKo: "Kling 영상",
-    titleEn: "Kling Video",
-    descKo: "Kling 2.6 영상",
-    descEn: "Kling 2.6 Video",
-    color: "orange",
+  "suno-music": {
+    badge: "BGM",
+    titleKo: "Suno 음악",
+    titleEn: "Suno Music",
+    descKo: "BGM & 사운드",
+    descEn: "BGM & Sound",
+    color: "purple",
   },
-];
+};
+
+const CORE_APPS: DimensionApp[] = CORE_APP_IDS.map((id) => {
+  const base = DIMENSION_ITEMS.find((item) => item.id === id);
+  const overrides = CORE_APP_OVERRIDES[id];
+  const icon = base ? DIMENSION_ICONS[base.iconName] ?? Sparkles : Sparkles;
+
+  return {
+    id,
+    href: base?.href ?? "/dimension",
+    icon,
+    badge: overrides.badge,
+    titleKo: overrides.titleKo,
+    titleEn: overrides.titleEn,
+    descKo: overrides.descKo,
+    descEn: overrides.descEn,
+    color: overrides.color,
+  };
+});
 
 interface DimensionAppRailProps {
   /** 컴팩트 모드 (작은 크기) */
@@ -232,12 +215,19 @@ export function DimensionAppRail({
             {ko ? "차원 앱" : "Dimension Apps"}
           </h3>
         </div>
-        <Link
-          href="/flow"
-          className="text-sm text-violet-500 hover:text-violet-600 transition-colors"
-        >
-          {ko ? "전체 보기 →" : "View All →"}
-        </Link>
+        <div className="flex items-center gap-3">
+          {showCore && (
+            <span className="text-sm text-[var(--fg-muted)]">
+              {ko ? "핵심 도구" : "Core Tools"}
+            </span>
+          )}
+          <Link
+            href="/flow"
+            className="text-sm text-violet-500 hover:text-violet-600 transition-colors"
+          >
+            {ko ? "전체 보기 →" : "View All →"}
+          </Link>
+        </div>
       </div>
 
       {/* App Grid */}
