@@ -5,10 +5,11 @@ Third-party Suno API integration for music generation.
 Uses providers like sunoapi.org, musicapi.ai, etc.
 
 API Reference (2025-2026):
-- Models: V5, V4_5PLUS, V4_5, V4
+- Models: V5, V4_5PLUS (8min max), V4_5ALL, V4_5, V4 (4min max)
 - Custom mode with style/title/lyrics
 - Instrumental mode
-- Duration: 30s - 4min
+- Duration: V4 up to 4min, V4_5+ up to 8min
+- Optional: vocalGender, styleWeight, weirdnessConstraint
 
 License: arkain.info@gmail.com (Gemini Enterprise)
 """
@@ -70,12 +71,17 @@ class SunoModel(str, Enum):
 
 
 class SunoMusicRequest(BaseModel):
-    """Request model for Suno music generation."""
+    """Request model for Suno music generation.
+    
+    2026 API Parameters:
+    - V4: style max 200 chars, prompt max 3000 chars, title max 80 chars
+    - V5/V4_5+: style max 1000 chars, prompt max 5000 chars, title max 100 chars
+    """
     
     # Basic parameters
-    prompt: str = Field(..., min_length=1, max_length=2000, description="Music description or lyrics")
+    prompt: str = Field(..., min_length=1, max_length=5000, description="Music description or lyrics")
     title: str = Field(..., min_length=1, max_length=100, description="Song title")
-    style: str = Field(..., min_length=1, max_length=500, description="Music style/genre")
+    style: str = Field(..., min_length=1, max_length=1000, description="Music style/genre")
     
     # Mode settings
     custom_mode: bool = Field(default=True, description="Enable custom mode")
@@ -84,8 +90,10 @@ class SunoMusicRequest(BaseModel):
     # Model selection
     model: SunoModel = Field(default=SunoModel.V5, description="Model version")
     
-    # Optional
+    # Optional (2026 additions)
     exclude_styles: Optional[str] = Field(None, max_length=200, description="Styles to exclude")
+    vocal_gender: Optional[str] = Field(None, description="Preferred vocal gender: 'm' or 'f'")
+    style_weight: Optional[float] = Field(None, ge=0, le=1, description="Style adherence (0-1)")
 
 
 class SunoMusicResponse(BaseModel):
@@ -216,6 +224,11 @@ class SunoService:
                 payload["prompt"] = request.prompt  # As lyrics in custom mode
                 if request.exclude_styles:
                     payload["exclude_styles"] = request.exclude_styles
+                # 2026 optional parameters
+                if request.vocal_gender:
+                    payload["vocalGender"] = request.vocal_gender
+                if request.style_weight is not None:
+                    payload["styleWeight"] = request.style_weight
             else:
                 # Non-custom mode: prompt is the description
                 payload["prompt"] = request.prompt
