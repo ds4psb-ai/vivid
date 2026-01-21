@@ -822,7 +822,7 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
                                             isActive={index === activeCarIndex}
                                             onExecute={
                                                 car.status === "ready"
-                                                    ? () => handleExecuteCar(car.id)
+                                                    ? () => setPortalCarId(car.id)  // 실행 클릭 시 모달 열기 (입력 확인 후 실행)
                                                     : undefined
                                             }
                                             onRetry={
