@@ -27,8 +27,10 @@ import {
   useOptimistic,
   useTransition,
   useMemo,
+  useEffect,
 } from "react";
 import { DimensionPanel, useDimensionPanel } from "./panel";
+import { getPreviousStepResult } from "@/lib/workflow-state";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
@@ -250,6 +252,88 @@ function AestheticDirectorContent() {
   const [_files, setFiles] = useState<File[]>([]); // Reference files for moodboard
   const [showQualityScores, setShowQualityScores] = useState(true);
 
+  // ==========================================================================
+  // Session Context Inheritance (2026 Best Practice)
+  // Inject data from previous workflow step (AbyssMirror → AestheticDirector)
+  // ==========================================================================
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const ipSlug = params.get("ip");
+    const stepParam = params.get("step");
+    const currentStep = stepParam ? parseInt(stepParam, 10) : null;
+
+    // Only inject if we're in workflow mode and not the first step
+    if (!ipSlug || !currentStep || currentStep <= 1) return;
+
+    const prevResult = getPreviousStepResult(ipSlug, currentStep);
+    if (!prevResult?.outputData) return;
+
+    const data = prevResult.outputData;
+
+    // Extract and inject from AbyssMirror/ReferenceDecoder output
+    let autoConceptParts: string[] = [];
+    let autoMood = "";
+
+    // Handle persona data from AbyssMirror
+    if (data.persona && typeof data.persona === "object") {
+      const persona = data.persona as Record<string, unknown>;
+      if (persona.creative_style) {
+        autoConceptParts.push(`Creative style: ${persona.creative_style}`);
+      }
+      if (persona.traits && Array.isArray(persona.traits)) {
+        autoConceptParts.push(`Traits: ${(persona.traits as string[]).slice(0, 3).join(", ")}`);
+      }
+    }
+
+    // Handle character_dna for character-focused aesthetics
+    if (Array.isArray(data.character_dna) && data.character_dna.length > 0) {
+      const characters = (data.character_dna as Array<Record<string, unknown>>)
+        .slice(0, 2)
+        .map((c) => c.name || c.role)
+        .filter(Boolean);
+      if (characters.length > 0) {
+        autoConceptParts.push(`Characters: ${characters.join(", ")}`);
+      }
+    }
+
+    // Handle auteur_affinity for style blending
+    if (data.auteur_affinity && typeof data.auteur_affinity === "object") {
+      const auteur = data.auteur_affinity as Record<string, unknown>;
+      if (Array.isArray(auteur.blended_auteurs)) {
+        autoConceptParts.push(`Style reference: ${(auteur.blended_auteurs as string[]).slice(0, 2).join(" × ")}`);
+      }
+    }
+
+    // Handle mood from previous step
+    if (data.mood) {
+      autoMood = data.mood as string;
+    } else if (data.style && typeof data.style === "object") {
+      const style = data.style as Record<string, unknown>;
+      if (Array.isArray(style.tags)) {
+        const moodTags = (style.tags as string[]).filter((t) =>
+          ["romantic", "melancholic", "dramatic", "serene", "youthful", "mysterious", "nostalgic", "energetic"].includes(t.toLowerCase())
+        );
+        if (moodTags.length > 0) {
+          autoMood = moodTags[0].toLowerCase();
+        }
+      }
+    }
+
+    // Apply to form if we found useful data
+    if (autoConceptParts.length > 0 && !concept) {
+      setConcept(autoConceptParts.join(". "));
+    }
+    if (autoMood && mood === "cinematic") {
+      // Only change if still default
+      const moodMatch = MOODS.find((m) => m.value.toLowerCase().includes(autoMood.toLowerCase()));
+      if (moodMatch) {
+        setMood(moodMatch.value);
+      }
+    }
+  }, [concept, mood, MOODS]);
+
   // Hooks
   const { byokKey } = useBYOK();
   const creditCtx = useCreditContextOptional();
@@ -299,15 +383,15 @@ function AestheticDirectorContent() {
             ],
             qualityScore: response.quality_scores[idx]
               ? {
-                  groundedness: response.quality_scores[idx].groundedness,
-                  relevance: response.quality_scores[idx].relevance,
-                  coherence: response.quality_scores[idx].coherence,
-                  creativity: response.quality_scores[idx].creativity,
-                  safety: response.quality_scores[idx].safety,
-                  total_score:
-                    response.quality_scores[idx].weighted_score ||
-                    response.quality_scores[idx].total_score,
-                }
+                groundedness: response.quality_scores[idx].groundedness,
+                relevance: response.quality_scores[idx].relevance,
+                coherence: response.quality_scores[idx].coherence,
+                creativity: response.quality_scores[idx].creativity,
+                safety: response.quality_scores[idx].safety,
+                total_score:
+                  response.quality_scores[idx].weighted_score ||
+                  response.quality_scores[idx].total_score,
+              }
               : undefined,
             isRecommended: idx === response.recommended_idx,
           };
@@ -1059,14 +1143,12 @@ function RagToggle({
       </div>
       <button
         onClick={onToggle}
-        className={`relative w-12 h-6 rounded-full transition-all ${
-          useRag ? "bg-fuchsia-500" : "bg-slate-200 dark:bg-white/10"
-        }`}
+        className={`relative w-12 h-6 rounded-full transition-all ${useRag ? "bg-fuchsia-500" : "bg-slate-200 dark:bg-white/10"
+          }`}
       >
         <div
-          className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${
-            useRag ? "left-7" : "left-1"
-          }`}
+          className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${useRag ? "left-7" : "left-1"
+            }`}
         />
       </button>
     </div>
@@ -1095,14 +1177,12 @@ function QualityScoresToggle({
       </div>
       <button
         onClick={onToggle}
-        className={`relative w-12 h-6 rounded-full transition-all ${
-          showQualityScores ? "bg-amber-500" : "bg-slate-200 dark:bg-white/10"
-        }`}
+        className={`relative w-12 h-6 rounded-full transition-all ${showQualityScores ? "bg-amber-500" : "bg-slate-200 dark:bg-white/10"
+          }`}
       >
         <div
-          className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${
-            showQualityScores ? "left-7" : "left-1"
-          }`}
+          className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${showQualityScores ? "left-7" : "left-1"
+            }`}
         />
       </button>
     </div>
@@ -1194,12 +1274,11 @@ function PaletteLabStageUQSL({
             key={dir.id}
             onClick={() => onSelectDirection(dir)}
             className={`text-left p-6 rounded-2xl border transition-all relative overflow-hidden group
-              ${
-                selectedDirection?.id === dir.id
-                  ? "bg-fuchsia-50 dark:bg-fuchsia-500/20 border-fuchsia-400 dark:border-fuchsia-500/50 ring-2 ring-fuchsia-500/30"
-                  : dir.isRecommended
-                    ? "bg-amber-50/50 dark:bg-amber-500/5 border-amber-300 dark:border-amber-500/30 hover:border-amber-400 dark:hover:border-amber-500/50"
-                    : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/10"
+              ${selectedDirection?.id === dir.id
+                ? "bg-fuchsia-50 dark:bg-fuchsia-500/20 border-fuchsia-400 dark:border-fuchsia-500/50 ring-2 ring-fuchsia-500/30"
+                : dir.isRecommended
+                  ? "bg-amber-50/50 dark:bg-amber-500/5 border-amber-300 dark:border-amber-500/30 hover:border-amber-400 dark:hover:border-amber-500/50"
+                  : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/10"
               }`}
           >
             {/* Recommended Badge */}
@@ -1223,11 +1302,10 @@ function PaletteLabStageUQSL({
             </div>
 
             <h4
-              className={`text-lg font-bold mb-2 ${
-                selectedDirection?.id === dir.id
-                  ? "text-fuchsia-700 dark:text-fuchsia-300"
-                  : "text-slate-900 dark:text-white"
-              }`}
+              className={`text-lg font-bold mb-2 ${selectedDirection?.id === dir.id
+                ? "text-fuchsia-700 dark:text-fuchsia-300"
+                : "text-slate-900 dark:text-white"
+                }`}
             >
               {dir.title}
             </h4>
@@ -1418,9 +1496,8 @@ function StyleGuideResult({
 
   return (
     <div
-      className={`max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10 ${
-        isOptimistic ? "opacity-70" : ""
-      }`}
+      className={`max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10 ${isOptimistic ? "opacity-70" : ""
+        }`}
     >
       {/* Optimistic Loading Indicator */}
       {isOptimistic && (

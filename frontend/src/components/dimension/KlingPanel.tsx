@@ -17,10 +17,11 @@
  * @see https://react.dev/blog/2024/12/05/react-19
  */
 
-import { useState, useCallback, useTransition, useOptimistic } from "react";
+import { useState, useCallback, useTransition, useOptimistic, useEffect } from "react";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
+import { getPreviousStepResult } from "@/lib/workflow-state";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 
 // =============================================================================
@@ -129,6 +130,62 @@ function KlingContent() {
 
   // React 19: useTransition for non-blocking submission
   const [isTransitionPending, startTransition] = useTransition();
+
+  // ==========================================================================
+  // Session Context Inheritance (2026 Best Practice)
+  // Inject character refs/image URL from previous step (VisualRealizer → Kling)
+  // ==========================================================================
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const ipSlug = params.get("ip");
+    const stepParam = params.get("step");
+    const currentStep = stepParam ? parseInt(stepParam, 10) : null;
+
+    if (!ipSlug || !currentStep || currentStep <= 1) return;
+
+    const prevResult = getPreviousStepResult(ipSlug, currentStep);
+    if (!prevResult?.outputData) return;
+
+    const data = prevResult.outputData;
+
+    // Auto-set imageUrl from previous step character refs
+    if (Array.isArray(data.keyframes) && data.keyframes.length > 0 && !imageUrl) {
+      const firstKeyframe = (data.keyframes as Array<Record<string, unknown>>)[0];
+      if (firstKeyframe?.url) {
+        setImageUrl(firstKeyframe.url as string);
+      }
+    }
+
+    // Auto-set prompt from scene description
+    if (data.scene_prompt && !prompt) {
+      setPrompt(data.scene_prompt as string);
+    }
+
+    // Handle motion hints from style guide
+    if (data.style_guide && typeof data.style_guide === "object" && !motionPreset) {
+      const styleGuide = data.style_guide as Record<string, unknown>;
+      if (styleGuide.pacing?.toString().toLowerCase().includes("slow")) {
+        setMotionPreset("slow");
+      } else if (styleGuide.pacing?.toString().toLowerCase().includes("fast")) {
+        setMotionPreset("fast");
+      } else if (styleGuide.pacing?.toString().toLowerCase().includes("dramatic")) {
+        setMotionPreset("dramatic");
+      }
+    }
+
+    // Handle camera hints
+    if (data.camera_movement && !cameraPreset) {
+      const cam = (data.camera_movement as string).toLowerCase();
+      const matchingPreset = CAMERA_PRESETS.find((p) =>
+        cam.includes(p.value.replace("_", " "))
+      );
+      if (matchingPreset) {
+        setCameraPreset(matchingPreset.value);
+      }
+    }
+  }, [imageUrl, prompt, motionPreset, cameraPreset]);
 
   // React 19: useOptimistic for instant UI feedback
   const [optimisticResult, setOptimisticResult] = useOptimistic<KlingGenerateResponse | null>(null);
@@ -333,11 +390,10 @@ function KlingContent() {
                 key={ar.value}
                 onClick={() => setAspectRatio(ar.value)}
                 disabled={combinedLoading}
-                className={`py-2 px-3 rounded-lg text-xs font-medium transition-all ${
-                  aspectRatio === ar.value
+                className={`py-2 px-3 rounded-lg text-xs font-medium transition-all ${aspectRatio === ar.value
                     ? `${classes.bg} text-white`
                     : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-white/10"
-                } disabled:opacity-50`}
+                  } disabled:opacity-50`}
               >
                 {ar.value}
               </button>
@@ -364,11 +420,10 @@ function KlingContent() {
             <button
               onClick={() => setEnableAudio(!enableAudio)}
               disabled={combinedLoading}
-              className={`w-full py-2.5 rounded-lg text-xs font-medium transition-all ${
-                enableAudio
+              className={`w-full py-2.5 rounded-lg text-xs font-medium transition-all ${enableAudio
                   ? `${classes.bg} text-white`
                   : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-zinc-400"
-              } disabled:opacity-50`}
+                } disabled:opacity-50`}
             >
               {enableAudio ? "Enabled" : "Disabled"}
             </button>
@@ -464,9 +519,8 @@ function KlingContent() {
         {/* Result */}
         {displayResult && displayResult.success && displayResult.video_url && (
           <div
-            className={`max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10 ${
-              isOptimistic ? "opacity-70" : ""
-            }`}
+            className={`max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10 ${isOptimistic ? "opacity-70" : ""
+              }`}
           >
             <DimensionPanel.Result forceShow>
               <div className="space-y-4">

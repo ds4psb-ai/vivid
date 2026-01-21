@@ -16,11 +16,12 @@
  * @see https://react.dev/blog/2024/12/05/react-19
  */
 
-import { useState, useCallback, useTransition, useRef, useMemo } from "react";
+import { useState, useCallback, useTransition, useRef, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { getPreviousStepResult } from "@/lib/workflow-state";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import { Upload, X, Music } from "lucide-react";
 
@@ -163,6 +164,48 @@ function SunoContent() {
   const [localResult, setLocalResult] = useState<SunoGenerateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showCreditsModal, setShowCreditsModal] = useState(false);
+
+  // ==========================================================================
+  // Session Context Inheritance (2026 Best Practice)
+  // Inject mood/tempo from previous step (AestheticDirector → Suno)
+  // ==========================================================================
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const ipSlug = params.get("ip");
+    const stepParam = params.get("step");
+    const currentStep = stepParam ? parseInt(stepParam, 10) : null;
+
+    if (!ipSlug || !currentStep || currentStep <= 1) return;
+
+    const prevResult = getPreviousStepResult(ipSlug, currentStep);
+    if (!prevResult?.outputData) return;
+
+    const data = prevResult.outputData;
+
+    // Auto-set mood from previous step
+    if (data.mood && !selectedMood) {
+      const moodMatch = MOODS.find((m) =>
+        m.value.toLowerCase().includes((data.mood as string).toLowerCase()) ||
+        (data.mood as string).toLowerCase().includes(m.value.toLowerCase())
+      );
+      if (moodMatch) {
+        setSelectedMood(moodMatch.value);
+      }
+    }
+
+    // Auto-set genre if style hints available
+    if (data.style_guide && typeof data.style_guide === "object" && !selectedGenre) {
+      const styleGuide = data.style_guide as Record<string, unknown>;
+      // Example: if style is "epic", suggest "orchestral"
+      if (styleGuide.composition?.toString().toLowerCase().includes("epic")) {
+        setSelectedGenre("orchestral");
+      } else if (styleGuide.composition?.toString().toLowerCase().includes("intimate")) {
+        setSelectedGenre("ambient");
+      }
+    }
+  }, [selectedMood, selectedGenre, MOODS]);
 
   const creditContext = useCreditContextOptional();
 
