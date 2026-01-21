@@ -312,20 +312,45 @@ async def extend_scene(
     - Maximum 20 extensions (148 seconds total)
     - Uses the last 1 second of video for continuity
     """
+    from app.services.scene_extension_service import (
+        ExtensionConfig,
+        get_scene_extension_service,
+    )
+    
     user_id = user.get("id", "anonymous")
     
     seq_logger.info(
         f"[SCENE_EXTEND] user={user_id} extension_count={request.extension_count}"
     )
     
-    # TODO: Implement scene extension using Veo 3.1 API
-    # This requires the Veo Scene Extension API which may not be available yet
+    # Build config
+    config = ExtensionConfig(
+        video_url=request.video_url,
+        continuation_prompt=request.continuation_prompt or "",
+        extension_count=request.extension_count,
+        aspect_ratio=request.aspect_ratio,
+    )
+    
+    # Get service
+    service = get_scene_extension_service(api_key=byok_key)
+    
+    # Execute extension
+    result = await service.extend_video(config=config)
+    
+    if result.success:
+        seq_logger.info(
+            f"[SCENE_EXTEND] Success: {result.extended_duration_seconds}s total"
+        )
+    else:
+        seq_logger.warning(f"[SCENE_EXTEND] Failed: {result.error}")
     
     return SceneExtendResult(
-        success=False,
-        error="Scene Extension API is not yet implemented. Coming soon with Veo 3.1 Scene Extension feature.",
-        original_duration_seconds=0,
-        extended_duration_seconds=0,
+        success=result.success,
+        extended_video_url=result.extended_video_url,
+        original_duration_seconds=result.original_duration_seconds,
+        extended_duration_seconds=result.extended_duration_seconds,
+        extension_count=result.extension_count,
+        error=result.error,
     )
 
 
