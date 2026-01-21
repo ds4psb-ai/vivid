@@ -61,14 +61,21 @@ class ExtensionConfig:
     
     Args:
         video_url: URL of video to extend
-        continuation_prompt: Prompt describing how scene continues
+        continuation_prompt: Prompt describing how scene continues (English recommended)
         extension_count: Number of 7-second extensions (1-20)
         aspect_ratio: Video aspect ratio (16:9 or 9:16)
+        seed: Optional seed for reproducible results
+    
+    Best Practices (per 2026 Veo 3.1 docs):
+    - Use English prompts for optimal results
+    - Maintain visual consistency with original video
+    - Videos initially generated at 4K may not be eligible for extension
     """
     video_url: str
     continuation_prompt: str = ""
     extension_count: int = 1
     aspect_ratio: str = "16:9"
+    seed: Optional[int] = None  # For reproducible results
     
     def __post_init__(self):
         # Validate extension count
@@ -80,6 +87,10 @@ class ExtensionConfig:
         # Validate aspect ratio
         if self.aspect_ratio not in SUPPORTED_ASPECT_RATIOS:
             self.aspect_ratio = "16:9"
+        
+        # Validate video_url
+        if self.video_url and not self.video_url.startswith(("http://", "https://", "gs://")):
+            logger.warning(f"[SCENE_EXT] Unusual video_url format: {self.video_url[:50]}...")
 
 
 @dataclass
