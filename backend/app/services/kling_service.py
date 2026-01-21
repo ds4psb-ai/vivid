@@ -504,10 +504,25 @@ class KlingService:
         try:
             client = self._get_client()
             
+            # Validate inputs
+            if not config.image_url:
+                return MotionTransferResult(
+                    success=False,
+                    task_id="",
+                    error="image_url is required",
+                )
+            if not config.motion_video_url:
+                return MotionTransferResult(
+                    success=False,
+                    task_id="",
+                    error="motion_video_url is required",
+                )
+            
             # Build motion transfer request payload
+            # Official Kling API: image_url, video_url (not image, video)
             payload: Dict[str, Any] = {
-                "image": config.image_url,
-                "video": config.motion_video_url,
+                "image_url": config.image_url,  # Character image
+                "video_url": config.motion_video_url,  # Motion reference video
                 "model_name": config.model,
                 "mode": config.mode.value,
                 "character_orientation": config.character_orientation.value,
