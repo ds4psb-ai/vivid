@@ -33,19 +33,89 @@ interface DimensionApp {
   color: string;
 }
 
-// 핵심 앱만 선별 (데모용)
-const CORE_APPS: DimensionApp[] = [
-  {
-    id: "abyss-mirror",
-    href: "/dimension/abyss",
-    icon: Brain,
-    badge: "AI",
-    titleKo: "심연의 거울",
-    titleEn: "Abyss Mirror",
-    descKo: "창작 DNA 분석",
-    descEn: "Creative DNA",
-    color: "violet",
+// =============================================================================
+// Color Classes Map (Tailwind can't generate dynamic classes at runtime)
+// =============================================================================
+type ColorKey = "violet" | "blue" | "emerald" | "amber" | "rose" | "cyan" | "purple" | "orange";
+
+const COLOR_CLASSES: Record<ColorKey, {
+  border: string;
+  bg: string;
+  bgHover: string;
+  text: string;
+  badge: string;
+  textHover: string;
+}> = {
+  violet: {
+    border: "hover:border-violet-500/50",
+    bg: "bg-violet-500/10",
+    bgHover: "group-hover:bg-violet-500/20",
+    text: "text-violet-500",
+    badge: "bg-violet-500",
+    textHover: "group-hover:text-violet-600 dark:group-hover:text-violet-400",
   },
+  blue: {
+    border: "hover:border-blue-500/50",
+    bg: "bg-blue-500/10",
+    bgHover: "group-hover:bg-blue-500/20",
+    text: "text-blue-500",
+    badge: "bg-blue-500",
+    textHover: "group-hover:text-blue-600 dark:group-hover:text-blue-400",
+  },
+  emerald: {
+    border: "hover:border-emerald-500/50",
+    bg: "bg-emerald-500/10",
+    bgHover: "group-hover:bg-emerald-500/20",
+    text: "text-emerald-500",
+    badge: "bg-emerald-500",
+    textHover: "group-hover:text-emerald-600 dark:group-hover:text-emerald-400",
+  },
+  amber: {
+    border: "hover:border-amber-500/50",
+    bg: "bg-amber-500/10",
+    bgHover: "group-hover:bg-amber-500/20",
+    text: "text-amber-500",
+    badge: "bg-amber-500",
+    textHover: "group-hover:text-amber-600 dark:group-hover:text-amber-400",
+  },
+  rose: {
+    border: "hover:border-rose-500/50",
+    bg: "bg-rose-500/10",
+    bgHover: "group-hover:bg-rose-500/20",
+    text: "text-rose-500",
+    badge: "bg-rose-500",
+    textHover: "group-hover:text-rose-600 dark:group-hover:text-rose-400",
+  },
+  cyan: {
+    border: "hover:border-cyan-500/50",
+    bg: "bg-cyan-500/10",
+    bgHover: "group-hover:bg-cyan-500/20",
+    text: "text-cyan-500",
+    badge: "bg-cyan-500",
+    textHover: "group-hover:text-cyan-600 dark:group-hover:text-cyan-400",
+  },
+  purple: {
+    border: "hover:border-purple-500/50",
+    bg: "bg-purple-500/10",
+    bgHover: "group-hover:bg-purple-500/20",
+    text: "text-purple-500",
+    badge: "bg-purple-500",
+    textHover: "group-hover:text-purple-600 dark:group-hover:text-purple-400",
+  },
+  orange: {
+    border: "hover:border-orange-500/50",
+    bg: "bg-orange-500/10",
+    bgHover: "group-hover:bg-orange-500/20",
+    text: "text-orange-500",
+    badge: "bg-orange-500",
+    textHover: "group-hover:text-orange-600 dark:group-hover:text-orange-400",
+  },
+};
+
+// =============================================================================
+// Core Apps (데모용 핵심 앱 8개)
+// =============================================================================
+const CORE_APPS: DimensionApp[] = [
   {
     id: "reference-decoder",
     href: "/dimension/reference-decoder",
@@ -58,15 +128,15 @@ const CORE_APPS: DimensionApp[] = [
     color: "blue",
   },
   {
-    id: "story-architect",
-    href: "/dimension/story-architect",
-    icon: Layers,
-    badge: "2D",
-    titleKo: "스토리 생성",
-    titleEn: "Story Architect",
-    descKo: "시나리오 작성",
-    descEn: "Scenario Writing",
-    color: "emerald",
+    id: "abyss-mirror",
+    href: "/dimension/abyss",
+    icon: Brain,
+    badge: "AI",
+    titleKo: "심연의 거울",
+    titleEn: "Abyss Mirror",
+    descKo: "창작 DNA 분석",
+    descEn: "Creative DNA",
+    color: "violet",
   },
   {
     id: "aesthetic-director",
@@ -80,6 +150,17 @@ const CORE_APPS: DimensionApp[] = [
     color: "amber",
   },
   {
+    id: "story-architect",
+    href: "/dimension/story-architect",
+    icon: Layers,
+    badge: "2D",
+    titleKo: "스토리 생성",
+    titleEn: "Story Architect",
+    descKo: "시나리오 작성",
+    descEn: "Scenario Writing",
+    color: "emerald",
+  },
+  {
     id: "visual-realizer",
     href: "/dimension/visual-realizer",
     icon: ImageIcon,
@@ -91,6 +172,17 @@ const CORE_APPS: DimensionApp[] = [
     color: "rose",
   },
   {
+    id: "suno",
+    href: "/dimension/suno",
+    icon: Sparkles,
+    badge: "BGM",
+    titleKo: "음악 생성",
+    titleEn: "Suno Music",
+    descKo: "Suno V5 BGM",
+    descEn: "Suno V5 BGM",
+    color: "purple",
+  },
+  {
     id: "video-maker",
     href: "/dimension/video-maker",
     icon: Video,
@@ -100,6 +192,17 @@ const CORE_APPS: DimensionApp[] = [
     descKo: "Veo 3.1 영상",
     descEn: "Veo 3.1 Video",
     color: "cyan",
+  },
+  {
+    id: "kling",
+    href: "/dimension/kling",
+    icon: Video,
+    badge: "KLING",
+    titleKo: "Kling 영상",
+    titleEn: "Kling Video",
+    descKo: "Kling 2.6 영상",
+    descEn: "Kling 2.6 Video",
+    color: "orange",
   },
 ];
 
@@ -117,7 +220,7 @@ export function DimensionAppRail({
   const { language } = useLanguage();
   const ko = language === "ko";
 
-  const apps = showCore ? CORE_APPS : CORE_APPS;
+  const apps = CORE_APPS;
 
   return (
     <div className="w-full">
@@ -139,14 +242,14 @@ export function DimensionAppRail({
 
       {/* App Grid */}
       <div
-        className={`grid gap-3 ${
-          compact
-            ? "grid-cols-3 md:grid-cols-6"
-            : "grid-cols-2 md:grid-cols-3 lg:grid-cols-6"
-        }`}
+        className={`grid gap-3 ${compact
+          ? "grid-cols-3 md:grid-cols-6"
+          : "grid-cols-2 md:grid-cols-3 lg:grid-cols-6"
+          }`}
       >
         {apps.map((app, index) => {
           const Icon = app.icon;
+          const colors = COLOR_CLASSES[app.color as ColorKey];
 
           return (
             <motion.div
@@ -157,18 +260,18 @@ export function DimensionAppRail({
             >
               <Link
                 href={app.href}
-                className={`group block p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/30 hover:border-${app.color}-500/50 hover:bg-${app.color}-50/50 dark:hover:bg-${app.color}-900/10 transition-all`}
+                className={`group block p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/30 ${colors.border} hover:bg-opacity-50 transition-all`}
               >
                 <div className="flex flex-col items-center text-center gap-2">
                   {/* Icon with Badge */}
                   <div className="relative">
                     <div
-                      className={`w-10 h-10 rounded-lg bg-${app.color}-500/10 flex items-center justify-center group-hover:bg-${app.color}-500/20 transition-colors`}
+                      className={`w-10 h-10 rounded-lg ${colors.bg} flex items-center justify-center ${colors.bgHover} transition-colors`}
                     >
-                      <Icon className={`w-5 h-5 text-${app.color}-500`} />
+                      <Icon className={`w-5 h-5 ${colors.text}`} />
                     </div>
                     <span
-                      className={`absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full bg-${app.color}-500 text-white text-[8px] font-bold`}
+                      className={`absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full ${colors.badge} text-white text-[8px] font-bold`}
                     >
                       {app.badge}
                     </span>
@@ -177,7 +280,7 @@ export function DimensionAppRail({
                   {/* Title */}
                   <div>
                     <p
-                      className={`text-xs font-medium text-[var(--fg-0)] group-hover:text-${app.color}-600 dark:group-hover:text-${app.color}-400 transition-colors line-clamp-1`}
+                      className={`text-xs font-medium text-[var(--fg-0)] ${colors.textHover} transition-colors line-clamp-1`}
                     >
                       {ko ? app.titleKo : app.titleEn}
                     </p>

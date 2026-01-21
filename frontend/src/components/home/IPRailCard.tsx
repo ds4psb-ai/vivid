@@ -121,7 +121,7 @@ export function IPRailCard({
             muted={isMuted}
             loop
             playsInline
-            preload="auto"
+            preload="metadata"
             onLoadedData={() => setVideoLoaded(true)}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${isHovered && videoLoaded ? 'opacity-100' : 'opacity-0'}`}
           />
