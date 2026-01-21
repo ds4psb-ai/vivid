@@ -185,7 +185,8 @@ function KlingContent() {
         setCameraPreset(matchingPreset.value);
       }
     }
-  }, [imageUrl, prompt, motionPreset, cameraPreset]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Initial mount only
+  }, []);
 
   // React 19: useOptimistic for instant UI feedback
   const [optimisticResult, setOptimisticResult] = useOptimistic<KlingGenerateResponse | null>(null);
@@ -391,8 +392,8 @@ function KlingContent() {
                 onClick={() => setAspectRatio(ar.value)}
                 disabled={combinedLoading}
                 className={`py-2 px-3 rounded-lg text-xs font-medium transition-all ${aspectRatio === ar.value
-                    ? `${classes.bg} text-white`
-                    : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-white/10"
+                  ? `${classes.bg} text-white`
+                  : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-white/10"
                   } disabled:opacity-50`}
               >
                 {ar.value}
@@ -421,8 +422,8 @@ function KlingContent() {
               onClick={() => setEnableAudio(!enableAudio)}
               disabled={combinedLoading}
               className={`w-full py-2.5 rounded-lg text-xs font-medium transition-all ${enableAudio
-                  ? `${classes.bg} text-white`
-                  : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-zinc-400"
+                ? `${classes.bg} text-white`
+                : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-zinc-400"
                 } disabled:opacity-50`}
             >
               {enableAudio ? "Enabled" : "Disabled"}

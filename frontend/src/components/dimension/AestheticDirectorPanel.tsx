@@ -332,7 +332,8 @@ function AestheticDirectorContent() {
         setMood(moodMatch.value);
       }
     }
-  }, [concept, mood, MOODS]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Initial mount only
+  }, []);
 
   // Hooks
   const { byokKey } = useBYOK();

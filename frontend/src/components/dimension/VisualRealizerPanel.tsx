@@ -198,7 +198,8 @@ function VisualRealizerContent() {
         setStyle("digital-art");
       }
     }
-  }, [description, style]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Initial mount only
+  }, []);
 
   // Hooks
   const { byokKey } = useBYOK();
@@ -457,8 +458,8 @@ function AspectRatioGrid({
             key={ratio.value}
             onClick={() => onChange(ratio.value)}
             className={`py-2 text-xs font-medium rounded-xl border transition-all ${value === ratio.value
-                ? `bg-${themeColor}-100 dark:bg-${themeColor}-500/10 border-${themeColor}-500 dark:border-${themeColor}-500/50 text-${themeColor}-700 dark:text-${themeColor}-400 shadow-sm`
-                : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-500 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white"
+              ? `bg-${themeColor}-100 dark:bg-${themeColor}-500/10 border-${themeColor}-500 dark:border-${themeColor}-500/50 text-${themeColor}-700 dark:text-${themeColor}-400 shadow-sm`
+              : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-500 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white"
               }`}
           >
             {ratio.value}
@@ -511,8 +512,8 @@ function PromptResultDisplay({
               <button
                 onClick={() => onCopy(result.prompt)}
                 className={`px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded-lg transition-all flex items-center gap-1.5 ${isCopied
-                    ? "bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-500/20"
-                    : "bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10"
+                  ? "bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-500/20"
+                  : "bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10"
                   }`}
               >
                 {isCopied ? labels.copied : labels.copy}

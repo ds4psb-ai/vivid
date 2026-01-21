@@ -205,7 +205,8 @@ function SunoContent() {
         setSelectedGenre("ambient");
       }
     }
-  }, [selectedMood, selectedGenre, MOODS]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Initial mount only
+  }, []);
 
   const creditContext = useCreditContextOptional();
 
