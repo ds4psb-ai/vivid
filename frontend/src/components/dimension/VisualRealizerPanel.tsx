@@ -15,12 +15,13 @@
  * @see https://react.dev/blog/2024/12/05/react-19
  */
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
+import { getPreviousStepResult } from "@/lib/workflow-state";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import type { EvidenceRef } from "./EvidenceDisplay";
@@ -134,6 +135,70 @@ function VisualRealizerContent() {
 
   // File upload state (2026 Best Practice: Multimodal input)
   const [_uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+
+  // ==========================================================================
+  // Session Context Inheritance (2026 Best Practice)
+  // Inject style_guide from previous step (AestheticDirector → VisualRealizer)
+  // ==========================================================================
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const ipSlug = params.get("ip");
+    const stepParam = params.get("step");
+    const currentStep = stepParam ? parseInt(stepParam, 10) : null;
+
+    if (!ipSlug || !currentStep || currentStep <= 1) return;
+
+    const prevResult = getPreviousStepResult(ipSlug, currentStep);
+    if (!prevResult?.outputData) return;
+
+    const data = prevResult.outputData;
+
+    // Auto-set description from auteur blend or style guide
+    if (!description) {
+      const descParts: string[] = [];
+
+      // From AestheticDirector style guide
+      if (data.style_guide && typeof data.style_guide === "object") {
+        const styleGuide = data.style_guide as Record<string, unknown>;
+        if (styleGuide.lighting) {
+          descParts.push(`Lighting: ${styleGuide.lighting}`);
+        }
+        if (styleGuide.composition) {
+          descParts.push(`Composition: ${styleGuide.composition}`);
+        }
+      }
+
+      // From auteur_blend
+      if (data.auteur_blend && typeof data.auteur_blend === "object") {
+        const auteur = data.auteur_blend as Record<string, unknown>;
+        if (auteur.primary && auteur.secondary) {
+          descParts.push(`Style blend: ${auteur.primary} × ${auteur.secondary}`);
+        }
+      }
+
+      // From color_palette
+      if (Array.isArray(data.color_palette) && data.color_palette.length > 0) {
+        descParts.push(`Palette: ${(data.color_palette as string[]).slice(0, 4).join(", ")}`);
+      }
+
+      if (descParts.length > 0) {
+        setDescription(descParts.join(". "));
+      }
+    }
+
+    // Auto-set style based on visual_guidelines or mood
+    if (style === "photorealistic") {
+      if (data.mood === "anime" || data.mood === "animated") {
+        setStyle("anime");
+      } else if (data.mood === "cinematic" || data.mood === "dramatic") {
+        setStyle("cinematic");
+      } else if (data.mood === "illustration") {
+        setStyle("digital-art");
+      }
+    }
+  }, [description, style]);
 
   // Hooks
   const { byokKey } = useBYOK();
@@ -391,11 +456,10 @@ function AspectRatioGrid({
           <button
             key={ratio.value}
             onClick={() => onChange(ratio.value)}
-            className={`py-2 text-xs font-medium rounded-xl border transition-all ${
-              value === ratio.value
+            className={`py-2 text-xs font-medium rounded-xl border transition-all ${value === ratio.value
                 ? `bg-${themeColor}-100 dark:bg-${themeColor}-500/10 border-${themeColor}-500 dark:border-${themeColor}-500/50 text-${themeColor}-700 dark:text-${themeColor}-400 shadow-sm`
                 : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-500 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white"
-            }`}
+              }`}
           >
             {ratio.value}
           </button>
@@ -446,11 +510,10 @@ function PromptResultDisplay({
               </button>
               <button
                 onClick={() => onCopy(result.prompt)}
-                className={`px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded-lg transition-all flex items-center gap-1.5 ${
-                  isCopied
+                className={`px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded-lg transition-all flex items-center gap-1.5 ${isCopied
                     ? "bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-500/20"
                     : "bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10"
-                }`}
+                  }`}
               >
                 {isCopied ? labels.copied : labels.copy}
               </button>
