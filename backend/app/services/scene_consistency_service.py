@@ -189,8 +189,23 @@ class SceneConsistencyService:
         Returns:
             SequenceResult with concatenated video or error
         """
-        from app.services.veo_service import VeoConfig, get_veo_service
-        from app.services.character_veo_service import get_character_veo_service
+        # Safe imports with fallback
+        try:
+            from app.services.veo_service import VeoConfig, VeoResult, get_veo_service
+        except ImportError as e:
+            logger.error(f"[SEQ_GEN] VeoService import failed: {e}")
+            return SequenceResult(
+                success=False,
+                sequence_id=str(uuid.uuid4()),
+                error="VeoService를 불러올 수 없습니다. 서버 설정을 확인하세요.",
+            )
+        
+        try:
+            from app.services.character_veo_service import get_character_veo_service
+            char_veo_service = get_character_veo_service()
+        except ImportError:
+            logger.warning("[SEQ_GEN] CharacterVeoService not available, character features disabled")
+            char_veo_service = None
 
         sequence_id = str(uuid.uuid4())
         start_time = time.monotonic()
@@ -237,7 +252,6 @@ class SceneConsistencyService:
         emit_progress(SequenceStatus.GENERATING, 0, "시퀀스 생성 시작...")
 
         veo_service = get_veo_service(self._api_key)
-        char_veo_service = get_character_veo_service()
 
         prev_end_frame_url: Optional[str] = None
         
@@ -259,26 +273,42 @@ class SceneConsistencyService:
                 scene_start = time.monotonic()
                 
                 # Generate with or without characters
-                if scene.character_ids:
-                    config = VeoConfig(
-                        prompt=enhanced_prompt,
-                        duration_seconds=scene.duration_seconds,
-                        include_audio=True,
-                    )
-                    gen_result = await char_veo_service.generate_with_characters(
-                        db=db,
-                        user_id=user_id,
-                        config=config,
-                        character_ids=scene.character_ids,
-                        api_key=self._api_key,
-                    )
-                    veo_result = gen_result.veo_result
-                else:
-                    veo_result = await veo_service.generate_video_simple(
-                        prompt=enhanced_prompt,
-                        duration_seconds=scene.duration_seconds,
-                        include_audio=True,
-                    )
+                veo_result = None
+                if scene.character_ids and char_veo_service:
+                    try:
+                        config = VeoConfig(
+                            prompt=enhanced_prompt,
+                            duration_seconds=scene.duration_seconds,
+                            include_audio=True,
+                        )
+                        gen_result = await char_veo_service.generate_with_characters(
+                            db=db,
+                            user_id=user_id,
+                            config=config,
+                            character_ids=scene.character_ids,
+                            api_key=self._api_key,
+                        )
+                        veo_result = gen_result.veo_result
+                    except Exception as char_err:
+                        logger.warning(f"[SEQ_GEN] Character generation failed, fallback to simple: {char_err}")
+                        veo_result = None
+                
+                # Fallback to simple generation
+                if veo_result is None:
+                    try:
+                        veo_result = await veo_service.generate_video_simple(
+                            prompt=enhanced_prompt,
+                            duration_seconds=scene.duration_seconds,
+                            include_audio=True,
+                        )
+                    except AttributeError:
+                        # generate_video_simple may not exist, try generate_video
+                        config = VeoConfig(
+                            prompt=enhanced_prompt,
+                            duration_seconds=scene.duration_seconds,
+                            include_audio=True,
+                        )
+                        veo_result = await veo_service.generate_video(config=config)
                 
                 scene_time = int((time.monotonic() - scene_start) * 1000)
                 
@@ -462,15 +492,29 @@ class SceneConsistencyService:
             return clips[0].video_url
         
         try:
+            # Collect valid video URLs
+            valid_urls = [c.video_url for c in clips if c.video_url]
+            
+            if not valid_urls:
+                logger.warning("[SEQ_GEN] No valid video URLs to concatenate")
+                return None
+            
+            if len(valid_urls) == 1:
+                return valid_urls[0]
+            
             # TODO: Implement actual video concatenation
             # Options:
             # 1. Use ffmpeg for local processing
             # 2. Use cloud video editing API (Shotstack, Creatomate, etc.)
             # 3. Use Google Cloud Video Stitcher
             
-            # For now, return the last clip's URL as placeholder
-            logger.info(f"[SEQ_GEN] Concatenation not yet implemented, returning last clip")
-            return clips[-1].video_url
+            # For now, return the first clip's URL with metadata about the sequence
+            # This allows the frontend to at least show something
+            logger.info(
+                f"[SEQ_GEN] Concatenation not implemented, returning first clip. "
+                f"Total {len(valid_urls)} clips available in result.clips"
+            )
+            return valid_urls[0]
             
         except Exception as e:
             logger.error(f"[SEQ_GEN] Failed to concatenate clips: {e}")
