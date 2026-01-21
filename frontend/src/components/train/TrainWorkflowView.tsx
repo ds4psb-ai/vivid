@@ -421,14 +421,9 @@ export const TrainWorkflowView = forwardRef<TrainWorkflowHandle, TrainWorkflowVi
             // [TIER1] 입력 검증
             const validation = validateInputs(car.dimension, preparedInputs);
             if (!validation.valid) {
-                setCars((prev) =>
-                    prev.map((c) =>
-                        c.id === carId
-                            ? { ...c, status: "failed", error: validation.error }
-                            : c
-                    )
-                );
-                showNotification("error", validation.error || "입력 검증 실패");
+                // 입력이 비어있으면 Portal Modal을 열어서 사용자가 입력할 수 있게 함
+                setPortalCarId(carId);
+                showNotification("error", validation.error || "입력값을 입력해주세요");
                 return;
             }
 
