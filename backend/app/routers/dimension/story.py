@@ -141,8 +141,8 @@ class StoryArchitectRequest(BaseModel):
     - Enum validation for genre, structure
     """
     concept: str = Field(..., min_length=1, max_length=MAX_CONCEPT_LENGTH, description="Video concept (sanitized)")
-    persona_data: str = Field("", max_length=5000, description="Creator persona data (sanitized)")
-    reference_analysis: str = Field("", max_length=5000, description="Reference analysis results (sanitized)")
+    persona_data: str = Field("", max_length=500000, description="Creator persona data (sanitized)")
+    reference_analysis: str = Field("", max_length=500000, description="Reference analysis results (sanitized)")
     genre: str = Field("drama", max_length=50, description="Video genre")
     duration: int = Field(60, ge=10, le=600, description="Target duration in seconds")
     structure: str = Field("3-act", description="Narrative structure")
@@ -157,14 +157,22 @@ class StoryArchitectRequest(BaseModel):
 
     @field_validator("persona_data", mode="before")
     @classmethod
-    def sanitize_persona_data(cls, v: str) -> str:
-        """Sanitize persona_data to prevent XSS."""
+    def sanitize_persona_data(cls, v) -> str:
+        """Sanitize persona_data to prevent XSS. Handles dict/list input from workflow steps."""
+        import json as json_lib
+        # Handle dict or list input (from workflow step data)
+        if isinstance(v, (dict, list)):
+            v = json_lib.dumps(v, ensure_ascii=False)
         return _sanitize_text_field(v, default="")
 
     @field_validator("reference_analysis", mode="before")
     @classmethod
-    def sanitize_reference_analysis(cls, v: str) -> str:
-        """Sanitize reference_analysis to prevent XSS."""
+    def sanitize_reference_analysis(cls, v) -> str:
+        """Sanitize reference_analysis to prevent XSS. Handles dict/list input from workflow steps."""
+        import json as json_lib
+        # Handle dict or list input (from workflow step data)
+        if isinstance(v, (dict, list)):
+            v = json_lib.dumps(v, ensure_ascii=False)
         return _sanitize_text_field(v, default="")
 
     @field_validator("genre")

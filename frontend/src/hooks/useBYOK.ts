@@ -61,11 +61,21 @@ export function useBYOK(): UseBYOKResult {
 }
 
 /**
- * Get headers for API requests with BYOK support
+ * Get headers for API requests with BYOK support and demo user ID
  */
 export function getBYOKHeaders(byokKey: string | null): Record<string, string> {
+    // Always include x-user-id for demo mode (backend requires auth)
+    const userId = typeof window !== "undefined"
+        ? localStorage.getItem("userId") || "demo-user"
+        : "demo-user";
+
+    const headers: Record<string, string> = {
+        "x-user-id": userId,
+    };
+
     if (byokKey) {
-        return { "X-Gemini-API-Key": byokKey };
+        headers["X-Gemini-API-Key"] = byokKey;
     }
-    return {};
+
+    return headers;
 }

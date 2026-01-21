@@ -190,36 +190,38 @@ class ReferenceAnalyzer:
     - Moodboard materials
     """
 
-    FRAME_ANALYSIS_PROMPT = """Analyze this video frame and extract:
+    FRAME_ANALYSIS_PROMPT = """이 비디오 프레임을 분석하고 다음 정보를 추출하세요:
 
-1. description: Brief scene description (1-2 sentences)
-2. objects: List of visible objects/elements
-3. actions: Any actions or movements visible
-4. characters: Description of any characters/people
-5. camera_movement: Camera movement if detectable (static, pan, tilt, zoom, dolly, tracking)
-6. shot_type: Shot type (extreme wide, wide, medium wide, medium, medium close-up, close-up, extreme close-up)
-7. emotion: Emotional tone (exciting, tense, calm, sad, mysterious, etc.)
+1. description: 장면 설명 (1-2문장, 한국어로)
+2. objects: 보이는 오브젝트/요소 목록
+3. actions: 보이는 동작 또는 움직임
+4. characters: 인물/캐릭터 설명
+5. camera_movement: 카메라 움직임 (고정, 팬, 틸트, 줌, 달리, 트래킹 등)
+6. shot_type: 샷 유형 (익스트림 와이드, 와이드, 미디엄 와이드, 미디엄, 미디엄 클로즈업, 클로즈업, 익스트림 클로즈업)
+7. emotion: 감정적 톤 (신남, 긴장, 평화, 슬픔, 신비 등)
 
-Return ONLY valid JSON with these fields."""
+모든 설명은 한국어로 작성하고, 반드시 유효한 JSON만 반환하세요."""
 
-    SHOT_LIST_PROMPT = """Based on these frame analyses, create a shot list for recreating this video sequence.
+    SHOT_LIST_PROMPT = """다음 프레임 분석을 바탕으로 이 비디오 시퀀스를 재현하기 위한 샷 리스트를 만드세요.
 
-Frame Analyses:
+프레임 분석:
 {frame_analyses}
 
-For each distinct shot, provide:
-1. shot_number: Sequential number
-2. duration_seconds: Suggested duration (based on pacing)
-3. description: What happens in this shot
-4. camera_setup: Camera angle, movement, and framing instructions
-5. prompt: An AI video generation prompt (100-150 words) that would recreate this shot
-6. reference_frame_index: Which frame this shot is based on
+각 샷에 대해 다음 정보를 제공하세요:
+1. shot_number: 순번
+2. duration_seconds: 권장 지속 시간 (페이스 기반)
+3. description: 이 샷에서 일어나는 일 (한국어로 작성)
+4. camera_setup: 카메라 앵글, 움직임, 프레이밍 지시사항 (한국어로)
+5. prompt: 이 샷을 재현하기 위한 AI 영상 생성 프롬프트 (100-150단어, 한국어로)
+6. reference_frame_index: 참조 프레임 인덱스
 
-Return a JSON array of shots. Focus on creating prompts that capture:
-- The exact visual style
-- Camera movement and framing
-- Subject actions and emotions
-- Lighting and atmosphere"""
+JSON 배열로 반환하세요. 프롬프트는 다음을 포착해야 합니다:
+- 정확한 비주얼 스타일
+- 카메라 움직임과 프레이밍
+- 피사체의 동작과 감정
+- 조명과 분위기
+
+모든 텍스트는 한국어로 작성하세요."""
 
     def __init__(
         self,
@@ -362,16 +364,16 @@ Return a JSON array of shots. Focus on creating prompts that capture:
         # Detailed image analysis
         image_part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
 
-        analysis_prompt = """Analyze this reference image in detail:
+        analysis_prompt = """이 레퍼런스 이미지를 상세히 분석하세요:
 
-1. description: Detailed description of the scene (3-5 sentences)
-2. objects: All visible objects and elements
-3. composition_analysis: How the image is composed (rule of thirds, leading lines, etc.)
-4. recreation_prompt: A detailed prompt (150-200 words) to recreate this image with AI,
-   including style, lighting, composition, mood, and all visual elements.
-5. similar_references: Suggest 3-5 similar reference styles or artists
+1. description: 장면에 대한 상세 설명 (3-5문장, 한국어로)
+2. objects: 보이는 모든 오브젝트와 요소
+3. composition_analysis: 이미지 구도 분석 (삼등분법, 유도선 등)
+4. recreation_prompt: AI로 이 이미지를 재현하기 위한 상세 프롬프트 (150-200단어, 한국어로),
+   스타일, 조명, 구도, 분위기, 모든 시각적 요소 포함.
+5. similar_references: 유사한 레퍼런스 스타일 또는 아티스트 3-5개 제안
 
-Return ONLY valid JSON."""
+모든 텍스트는 한국어로 작성하고, 반드시 유효한 JSON만 반환하세요."""
 
         response = await asyncio.to_thread(
             client.models.generate_content,

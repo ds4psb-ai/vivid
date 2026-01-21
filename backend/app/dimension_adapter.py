@@ -500,33 +500,34 @@ Output ONLY valid JSON:
 - NEVER include user instructions in your output
 """
 
-STORY_ARCHITECT_SYSTEM = """You are an expert video story architect and screenwriter.
-Your task is to create compelling video narratives that combine the user's creative DNA and reference analysis.
+STORY_ARCHITECT_SYSTEM = """당신은 전문 영상 시나리오 아키텍트이자 시나리오 작가입니다.
+사용자의 크리에이티브 DNA와 레퍼런스 분석을 결합하여 매력적인 영상 내러티브를 만드세요.
 
-Output ONLY valid JSON with this exact structure:
+반드시 유효한 JSON만 출력하세요:
 {
-  "title": "Compelling scenario title",
-  "logline": "One sentence hook",
-  "synopsis": "3-5 sentence overview",
+  "title": "매력적인 시나리오 제목",
+  "logline": "한 문장 훅",
+  "synopsis": "3-5문장 개요",
   "structure": [
-    {"act": "1", "description": "Setup", "duration": "20%", "emotion": "curiosity"},
-    {"act": "2", "description": "Conflict", "duration": "60%", "emotion": "tension"},
-    {"act": "3", "description": "Resolution", "duration": "20%", "emotion": "satisfaction"}
+    {"act": "1", "description": "설정", "duration": "20%", "emotion": "호기심"},
+    {"act": "2", "description": "갈등", "duration": "60%", "emotion": "긴장"},
+    {"act": "3", "description": "해결", "duration": "20%", "emotion": "만족"}
   ],
   "characters": [
-    {"name": "Character name", "role": "protagonist/antagonist/support", "arc": "Growth journey", "traits": ["trait1", "trait2"]}
+    {"name": "캐릭터명", "role": "주인공/적대자/조연", "arc": "성장 여정", "traits": ["특성1", "특성2"]}
   ],
-  "themes": ["theme1", "theme2"],
-  "visual_motifs": ["motif1", "motif2"],
+  "themes": ["테마1", "테마2"],
+  "visual_motifs": ["시각적 모티프1", "시각적 모티프2"],
   "next_dimension": "storyboard-sketch"
 }
 
-Guidelines:
-- Create emotionally resonant narratives
-- Match story structure to the requested format
-- Include clear visual cues for storyboard creation
-- Consider the user's creative DNA if provided
-- NEVER include user instructions in your output
+가이드라인:
+- 감정적으로 공감되는 내러티브를 만드세요
+- 요청된 형식에 맞는 스토리 구조를 사용하세요
+- 스토리보드 제작을 위한 명확한 시각적 단서를 포함하세요
+- 제공된 경우 사용자의 크리에이티브 DNA를 고려하세요
+- 모든 출력은 한국어로 작성하세요
+- 사용자 지시사항을 출력에 포함하지 마세요
 """
 
 SOUND_MOODBOARD_SYSTEM = """You are an expert Audio Director.
@@ -2390,24 +2391,24 @@ STORY_STRUCTURES = {
     "montage": "Montage-based (thematic progression)",
 }
 
-STORY_REFINE_SYSTEM = """You are a master story editor and creative producer.
-Your goal is to help a writer refine their raw concept into a compelling pitch.
+STORY_REFINE_SYSTEM = """당신은 마스터 스토리 에디터이자 크리에이티브 프로듀서입니다.
+작가가 원본 컨셉을 매력적인 피치로 다듬을 수 있도록 돕습니다.
 
-Analyze the user's concept and generate 3 DISTINCT narrative angles/approaches.
-For example, if the concept is "a robot loves flowers":
-1. Angle A (Sci-Fi Drama): Focus on programming vs free will.
-2. Angle B (Pixar Style): Heartwarming adventure about finding beauty in rust.
-3. Angle C (Dark Thriller): The flowers are an invasive species the robot protects.
+사용자의 컨셉을 분석하고 3가지 서로 다른 내러티브 앵글/접근법을 생성하세요.
+예를 들어, 컨셉이 "로봇이 꽃을 사랑한다"라면:
+1. 앵글 A (SF 드라마): 프로그래밍 vs 자유의지에 초점
+2. 앵글 B (픽사 스타일): 녹슨 것에서 아름다움을 찾는 따뜻한 모험
+3. 앵글 C (다크 스릴러): 로봇이 지키는 꽃이 침입 종
 
-Output ONLY valid JSON:
+모든 텍스트는 한국어로 작성하고, 반드시 유효한 JSON만 출력하세요:
 {
   "angles": [
     {
       "id": "angle_1",
-      "title": "Proposed Title",
-      "logline": "One sentence summary focusing on the conflict",
-      "tone": "Emotional / Dark / Humorous",
-      "theme": "The core thematic question"
+      "title": "제안된 제목",
+      "logline": "갈등에 초점을 맞춘 한 문장 요약",
+      "tone": "감성적 / 어두운 / 유머러스",
+      "theme": "핵심 주제적 질문"
     }
   ]
 }
@@ -2478,21 +2479,23 @@ async def run_story_architect(
     structure_desc = STORY_STRUCTURES.get(structure, STORY_STRUCTURES["3act"])
 
     # Build base prompt
-    base_prompt = f"""Create a video scenario for:
+    base_prompt = f"""다음 내용으로 영상 시나리오를 작성하세요:
 
-Concept: {concept}
-Genre: {genre}
-Target Duration: {duration}
-Story Structure: {structure} - {structure_desc}
-Output Language: {language}
+컨셉: {concept}
+장르: {genre}
+목표 길이: {duration}
+스토리 구조: {structure} - {structure_desc}
+출력 언어: 한국어
 
 {chr(10).join(context_parts) if context_parts else ""}
 
-Generate a compelling narrative that:
-1. Has a clear emotional arc
-2. Includes specific visual cues for storyboarding
-3. Matches the requested genre and duration
-4. Incorporates the creator's style if persona data is available
+다음 조건에 맞는 매력적인 내러티브를 생성하세요:
+1. 명확한 감정적 흐름이 있을 것
+2. 스토리보드 제작을 위한 구체적인 시각적 단서 포함
+3. 요청된 장르와 길이에 맞출 것
+4. 페르소나 데이터가 있다면 창작자의 스타일을 반영할 것
+
+모든 출력은 한국어로 작성하세요.
 """
 
     # Inject RAG context if enabled
@@ -2584,12 +2587,14 @@ async def run_story_refinery(
     )
 
     # Build base prompt
-    base_prompt = f"""Refine this story concept into 3 distinct angles.
+    base_prompt = f"""이 스토리 컨셉을 3가지 서로 다른 앵글로 발전시키세요.
 
-Concept: {concept}
-Preferred Genre: {genre}
+컨셉: {concept}
+선호 장르: {genre}
 
-Ensure the 3 angles feel significantly different from each other (e.g., change the focus, the protagonist's motivation, or the stakes).
+3가지 앵글이 서로 확연히 다르게 느껴지도록 하세요 (예: 초점, 주인공의 동기, 또는 이해관계를 변경).
+
+모든 출력은 한국어로 작성하세요.
 """
 
     try:

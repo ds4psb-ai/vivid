@@ -563,12 +563,69 @@ function StoryArchitectContent() {
           )}
 
           {stage === "script" && (
-            <button
-              onClick={() => setStage("blueprint")}
-              className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 transition-all font-medium"
-            >
-              {labels.backToDesign}
-            </button>
+            <div className="space-y-3">
+              {/* 다음 단계 버튼들 */}
+              <div className="space-y-2">
+                <p className="text-xs text-slate-400 dark:text-white/50 mb-2">
+                  {isKo ? "다음 단계로 이동" : "Continue to next step"}
+                </p>
+                <button
+                  onClick={() => {
+                    const params = new URLSearchParams(window.location.search);
+                    const ipParam = params.get("ip");
+                    const promptParam = params.get("prompt");
+                    const workflowParam = params.get("workflow");
+
+                    // Build URL with context
+                    let url = "/dimension/storyboard-sketch";
+                    const queryParts: string[] = [];
+                    if (ipParam) queryParts.push(`ip=${ipParam}`);
+                    if (promptParam) queryParts.push(`prompt=${encodeURIComponent(promptParam)}`);
+                    if (workflowParam) {
+                      const step = parseInt(params.get("step") || "3", 10);
+                      queryParts.push(`step=${step + 1}`);
+                      queryParts.push(`workflow=${workflowParam}`);
+                    }
+                    if (queryParts.length > 0) url += `?${queryParts.join("&")}`;
+
+                    window.location.href = url;
+                  }}
+                  className={`w-full py-3 rounded-xl bg-${token.themeColor}-600 hover:bg-${token.themeColor}-700 text-white font-medium transition-all flex items-center justify-center gap-2`}
+                >
+                  <Layers className="w-4 h-4" />
+                  {isKo ? "스토리보드 스케치로" : "To Storyboard Sketch"}
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => {
+                    const params = new URLSearchParams(window.location.search);
+                    const ipParam = params.get("ip");
+                    const promptParam = params.get("prompt");
+
+                    let url = "/dimension/prompt-alchemy";
+                    const queryParts: string[] = [];
+                    if (ipParam) queryParts.push(`ip=${ipParam}`);
+                    if (promptParam) queryParts.push(`prompt=${encodeURIComponent(promptParam)}`);
+                    if (queryParts.length > 0) url += `?${queryParts.join("&")}`;
+
+                    window.location.href = url;
+                  }}
+                  className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 transition-all font-medium flex items-center justify-center gap-2"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  {isKo ? "프롬프트 연금술로" : "To Prompt Alchemy"}
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* 다시 설계하기 버튼 */}
+              <button
+                onClick={() => setStage("blueprint")}
+                className="w-full py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 border border-white/5 transition-all text-sm"
+              >
+                {labels.backToDesign}
+              </button>
+            </div>
           )}
 
           {/* Credit Cost */}

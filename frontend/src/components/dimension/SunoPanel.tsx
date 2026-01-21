@@ -18,7 +18,7 @@
 
 import { useState, useCallback, useTransition, useRef, useMemo } from "react";
 import Image from "next/image";
-import { DimensionPanel } from "./panel";
+import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
@@ -104,6 +104,7 @@ const getComposerStyles = (isKo: boolean) => [
 function SunoContent() {
   const { language } = useLanguage();
   const isKo = language === "ko";
+  const { setResult: setContextResult } = useDimensionPanel();
 
   // Memoized presets based on language
   const MODELS = useMemo(() => getModels(isKo), [isKo]);
@@ -159,7 +160,7 @@ function SunoContent() {
 
   // UI state
   const [isPending, startTransition] = useTransition();
-  const [result, setResult] = useState<SunoGenerateResponse | null>(null);
+  const [localResult, setLocalResult] = useState<SunoGenerateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showCreditsModal, setShowCreditsModal] = useState(false);
 
@@ -203,7 +204,7 @@ function SunoContent() {
     }
 
     setError(null);
-    setResult(null);
+    setLocalResult(null);
 
     startTransition(async () => {
       try {
@@ -235,7 +236,8 @@ function SunoContent() {
           throw new Error(data.detail || labels.errorGeneration);
         }
 
-        setResult(data);
+        setLocalResult(data);
+        setContextResult(data);  // Enable NextNav in workflow mode
 
         // Refresh credits
         if (creditContext?.refresh) {
@@ -304,11 +306,10 @@ function SunoContent() {
               <button
                 key={genre.value}
                 onClick={() => handleGenreSelect(genre.value)}
-                className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
-                  selectedGenre === genre.value
-                    ? "bg-purple-600 text-white"
-                    : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                }`}
+                className={`px-3 py-1.5 rounded-full text-sm transition-colors ${selectedGenre === genre.value
+                  ? "bg-purple-600 text-white"
+                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  }`}
               >
                 {genre.label}
               </button>
@@ -326,11 +327,10 @@ function SunoContent() {
               <button
                 key={mood.value}
                 onClick={() => handleMoodSelect(mood.value)}
-                className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
-                  selectedMood === mood.value
-                    ? "bg-indigo-600 text-white"
-                    : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                }`}
+                className={`px-3 py-1.5 rounded-full text-sm transition-colors ${selectedMood === mood.value
+                  ? "bg-indigo-600 text-white"
+                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  }`}
               >
                 {mood.label}
               </button>
@@ -366,11 +366,10 @@ function SunoContent() {
             {labels.reference}
           </label>
           <div
-            className={`border-2 border-dashed rounded-lg p-4 transition-colors ${
-              referenceFiles.length > 0
-                ? "border-purple-500 bg-purple-500/10"
-                : "border-gray-600 hover:border-gray-500"
-            }`}
+            className={`border-2 border-dashed rounded-lg p-4 transition-colors ${referenceFiles.length > 0
+              ? "border-purple-500 bg-purple-500/10"
+              : "border-gray-600 hover:border-gray-500"
+              }`}
             onDragOver={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -446,14 +445,12 @@ function SunoContent() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setInstrumental(!instrumental)}
-            className={`relative w-12 h-6 rounded-full transition-colors ${
-              instrumental ? "bg-purple-600" : "bg-gray-600"
-            }`}
+            className={`relative w-12 h-6 rounded-full transition-colors ${instrumental ? "bg-purple-600" : "bg-gray-600"
+              }`}
           >
             <span
-              className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                instrumental ? "left-7" : "left-1"
-              }`}
+              className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${instrumental ? "left-7" : "left-1"
+                }`}
             />
           </button>
           <span className="text-sm text-gray-300">
@@ -535,12 +532,12 @@ function SunoContent() {
         )}
 
         {/* Results */}
-        {result?.success && result.songs.length > 0 && (
+        {localResult?.success && localResult.songs.length > 0 && (
           <div className="space-y-3">
             <h3 className="text-sm font-medium text-gray-300">
-              {labels.generatedMusic(result.songs.length)}
+              {labels.generatedMusic(localResult.songs.length)}
             </h3>
-            {result.songs.map((song, index) => (
+            {localResult.songs.map((song, index) => (
               <div
                 key={song.id || index}
                 className="p-4 bg-gray-800 rounded-lg space-y-3"
@@ -591,6 +588,13 @@ function SunoContent() {
             ))}
           </div>
         )}
+
+        {/* Workflow Navigation */}
+        {localResult?.success && (
+          <div className="mt-4">
+            <DimensionPanel.NextNav currentDimension="suno" />
+          </div>
+        )}
       </div>
 
       {/* Footer */}
@@ -598,11 +602,10 @@ function SunoContent() {
         <button
           onClick={handleGenerate}
           disabled={isPending || !title.trim() || !prompt.trim()}
-          className={`w-full py-3 rounded-lg font-medium transition-colors ${
-            isPending || !title.trim() || !prompt.trim()
-              ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-              : "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-500 hover:to-indigo-500"
-          }`}
+          className={`w-full py-3 rounded-lg font-medium transition-colors ${isPending || !title.trim() || !prompt.trim()
+            ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+            : "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-500 hover:to-indigo-500"
+            }`}
         >
           {isPending ? (
             <span className="flex items-center justify-center gap-2">
