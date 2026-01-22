@@ -23,6 +23,7 @@ from app.services.app_registry import (
     AppStatus,
     AppManifest,
 )
+from app.utils.error_sanitize import safe_error_detail
 
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -411,7 +412,7 @@ async def register_tool(
         await db.refresh(new_tool)
     except Exception as e:
         await db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=safe_error_detail(e, "Create tool"))
     
     # Invalidate Cache
     loader = DynamicToolLoader(db)
@@ -527,7 +528,7 @@ async def list_pending_settlements(
             failed_count=failed_count.scalar() or 0,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)[:100]}")
+        raise HTTPException(status_code=500, detail=safe_error_detail(e, "Database operation"))
 
 
 @router.get("/settlements/failed", response_model=SettlementListResponse)

@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import flag_modified
 
 from app.database import get_db
+from app.utils.error_sanitize import safe_error_detail
 from app.models_constellation import Constellation
 from app.models_singularity import BlackholeTemplate
 from app.dependencies import get_optional_user_id
@@ -444,7 +445,7 @@ async def add_star(
             scene_number=data.scene_number,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Constellation operation"))
 
     flag_modified(constellation, "star_points")
     constellation.updated_at = datetime.utcnow()

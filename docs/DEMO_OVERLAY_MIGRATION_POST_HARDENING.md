@@ -1,7 +1,7 @@
 # Demo Overlay → Production Migration Guide (Post‑Hardening)
 
 > **목적**: Hardening 완료 직후, 데모용 Soft Overlay를 실제 데이터 흐름으로 안전하게 전환한다.
-> **대상 문서**: `HARDENING_MASTER_PLAN_2026.md`, `SSOT_DECISIONS_LOG.md`, `ip-first-coordination-roadmap.md`
+> **대상 문서**: `15_HARDENING_MASTER_PLAN_2026.md`, `SSOT_DECISIONS_LOG.md`, `ip-first-coordination-roadmap.md`
 > **작성일**: 2026-01-20
 
 ---
@@ -19,7 +19,7 @@ Hardening이 완료되었는지 **반드시 확인** 후 진행한다.
 - H1.4b get_db_with_rls 도입
 - H1.5 TenantMiddleware 활성화
 
-> **완료 확인**: `docs/HARDENING_MASTER_PLAN_2026.md` H1 체크리스트
+> **완료 확인**: `docs/15_HARDENING_MASTER_PLAN_2026.md` H1 체크리스트
 
 ---
 
@@ -137,7 +137,7 @@ cd frontend && npm run build
 
 ## 7) 참고 문서
 
-- `/docs/HARDENING_MASTER_PLAN_2026.md`
+- `/docs/15_HARDENING_MASTER_PLAN_2026.md`
 - `/docs/SSOT_DECISIONS_LOG.md`
 - `/Users/ted/.claude/plans/ip-first-coordination-roadmap.md`
 

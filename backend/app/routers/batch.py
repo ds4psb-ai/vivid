@@ -11,8 +11,10 @@ All batch jobs complete within 24 hours.
 """
 
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel, Field
+
+from app.middleware.rate_limit import limiter, RATE_LIMIT_BATCH
 
 from app.services.batch_processor import (
     BatchProcessor,
@@ -28,6 +30,7 @@ from app.services.batch_processor import (
 )
 from app.dependencies import get_current_user_optional
 from app.logging_config import get_logger
+from app.utils.error_sanitize import safe_error_detail
 
 router = APIRouter(prefix="/api/v1/batch", tags=["batch"])
 logger = get_logger("batch_router")
@@ -99,8 +102,10 @@ class BatchResultsResponse(BaseModel):
 # =============================================================================
 
 @router.post("/submit", response_model=BatchJobResponse)
+@limiter.limit(RATE_LIMIT_BATCH)
 async def submit_batch(
-    request: SubmitBatchRequest,
+    request: Request,
+    body: SubmitBatchRequest,
     user: Optional[dict] = Depends(get_current_user_optional),
 ):
     """
@@ -118,30 +123,30 @@ async def submit_batch(
     - translation
     - summarization
     """
-    if not request.requests:
+    if not body.requests:
         raise HTTPException(status_code=400, detail="At least one request required")
-    
-    if len(request.requests) > 1000:
+
+    if len(body.requests) > 1000:
         raise HTTPException(status_code=400, detail="Maximum 1000 requests per batch")
-    
+
     user_id = user.get("sub") if user else None
-    
+
     config = BatchJobConfig(
-        job_type=request.job_type,
-        display_name=request.display_name,
-        model=request.model,
-        temperature=request.temperature,
-        max_output_tokens=request.max_output_tokens,
-        callback_url=request.callback_url,
+        job_type=body.job_type,
+        display_name=body.display_name,
+        model=body.model,
+        temperature=body.temperature,
+        max_output_tokens=body.max_output_tokens,
+        callback_url=body.callback_url,
         user_id=user_id,
     )
     
     try:
-        job_record = await BatchProcessor.submit_job(request.requests, config)
+        job_record = await BatchProcessor.submit_job(body.requests, config)
         return _to_response(job_record)
     except Exception as e:
         logger.error("Failed to submit batch job", exc_info=e)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=safe_error_detail(e, "Batch operation"))
 
 
 @router.post("/review", response_model=BatchJobResponse)
@@ -165,7 +170,7 @@ async def submit_review_batch(
         return _to_response(job_record)
     except Exception as e:
         logger.error("Failed to submit review batch", exc_info=e)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=safe_error_detail(e, "Batch operation"))
 
 
 @router.post("/analyze", response_model=BatchJobResponse)
@@ -189,7 +194,7 @@ async def submit_analysis_batch(
         return _to_response(job_record)
     except Exception as e:
         logger.error("Failed to submit analysis batch", exc_info=e)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=safe_error_detail(e, "Batch operation"))
 
 
 @router.post("/storyboards", response_model=BatchJobResponse)
@@ -214,7 +219,7 @@ async def submit_storyboard_batch(
         return _to_response(job_record)
     except Exception as e:
         logger.error("Failed to submit storyboard batch", exc_info=e)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=safe_error_detail(e, "Batch operation"))
 
 
 @router.get("/{job_id}", response_model=BatchJobResponse)

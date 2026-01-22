@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_current_user_optional
+from app.utils.error_sanitize import safe_error_detail
 from app.schemas.rag_feedback_schemas import (
     ExplicitFeedbackCreate,
     ImplicitFeedbackCreate,
@@ -94,7 +95,7 @@ async def submit_explicit_feedback(
             message="Explicit feedback submitted successfully",
         )
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=safe_error_detail(e, "RAG feedback lookup"))
     except Exception as e:
         logger.error(f"Failed to submit explicit feedback: {e}")
         raise HTTPException(status_code=500, detail="Failed to submit feedback")
@@ -136,7 +137,7 @@ async def track_implicit_feedback(
             message=f"Implicit feedback ({data.event_type.value}) tracked successfully",
         )
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=safe_error_detail(e, "RAG feedback lookup"))
     except Exception as e:
         logger.error(f"Failed to track implicit feedback: {e}")
         raise HTTPException(status_code=500, detail="Failed to track feedback")
@@ -274,7 +275,7 @@ async def get_response_feedbacks(
         )
         return feedbacks
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=safe_error_detail(e, "RAG feedback lookup"))
     except Exception as e:
         logger.error(f"Failed to get feedbacks: {e}")
         raise HTTPException(status_code=500, detail="Failed to retrieve feedbacks")

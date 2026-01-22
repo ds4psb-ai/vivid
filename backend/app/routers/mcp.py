@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.mcp_servers.pattern_truth_mcp import pattern_truth_mcp
 from app.database import get_db
+from app.utils.error_sanitize import safe_error_detail
 from app.models_telemetry import ToolManifest, ToolTier
 
 logger = logging.getLogger(__name__)
@@ -144,7 +145,7 @@ async def call_pattern_truth_tool(request: ToolCallRequest):
         )
     except ValueError as e:
         logger.warning(f"MCP Tool not found: {request.tool_name}")
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=safe_error_detail(e, "MCP lookup"))
     except Exception as e:
         elapsed_ms = (time.time() - start) * 1000
         logger.error(f"MCP Tool error: {request.tool_name} - {e}")
@@ -182,7 +183,7 @@ async def read_pattern_truth_resource(resource_path: str):
         return result
     except ValueError as e:
         logger.warning(f"MCP Resource not found: {uri}")
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=safe_error_detail(e, "MCP lookup"))
 
 
 # =========================================================================

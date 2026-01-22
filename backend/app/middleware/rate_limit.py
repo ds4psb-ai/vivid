@@ -99,7 +99,7 @@ def _create_limiter() -> Limiter:
             key_func=get_user_or_ip,
             storage_uri=REDIS_URL,
             default_limits=["100/minute"],
-            strategy="fixed-window-elastic-expiry",  # 2026 best practice
+            strategy="fixed-window",  # Standard fixed window strategy
         )
         logger.info(f"Rate limiter initialized with Redis: {REDIS_URL}")
         return limiter

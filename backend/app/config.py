@@ -23,11 +23,11 @@ class Settings(BaseSettings):
     POSTGRES_PORT: int = 5433
 
     # CORS Configuration
-    # Development: localhost origins are default
+    # Development: localhost origins are default (http://localhost:3000 for Next.js dev)
     # Production: Set CORS_ORIGINS env var to your production domains (comma-separated)
     # Example: CORS_ORIGINS=https://crebit.app,https://www.crebit.app
-    CORS_ORIGINS: str = "http://localhost:3100,http://127.0.0.1:3100"
-    CORS_PRODUCTION_ORIGINS: str = "https://crebit.app,https://www.crebit.app,https://api.crebit.app"
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:3100,http://127.0.0.1:3100"
+    CORS_PRODUCTION_ORIGINS: str = "https://crebit.app,https://www.crebit.app,https://api.crebit.app,https://shorti.ai,https://www.shorti.ai,https://vivid-frontend.vercel.app"
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_MAX_AGE: int = 600  # Preflight cache time in seconds (10 minutes)
     

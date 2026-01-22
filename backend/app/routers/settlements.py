@@ -16,6 +16,7 @@ from sqlalchemy.orm import selectinload
 
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.utils.error_sanitize import safe_error_detail
 from app.models_settlement import (
     SettlementTransaction,
     SettlementPayout,
@@ -187,7 +188,7 @@ async def create_dispute(
         )
         return DisputeResponse.model_validate(dispute)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Settlement operation"))
 
 
 @router.get("/preview/{tool_id}", response_model=SettlementPreview)
@@ -440,4 +441,4 @@ async def resolve_dispute(
         )
         return DisputeResponse.model_validate(dispute)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Settlement operation"))

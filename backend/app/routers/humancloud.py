@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.utils.error_sanitize import safe_error_detail
 from app.models_humancloud import (
     CreativeRequest,
     CreatorProfile,
@@ -319,7 +320,7 @@ async def publish_request(
             created_at=request.created_at,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Human Cloud operation"))
 
 
 @router.get("/requests/open", response_model=List[RequestResponse])
@@ -378,7 +379,7 @@ async def create_assignment(
             created_at=assignment.created_at,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Human Cloud operation"))
 
 
 @router.post("/assignments/{assignment_id}/accept", response_model=AssignmentResponse)
@@ -405,7 +406,7 @@ async def accept_assignment(
             created_at=assignment.created_at,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Human Cloud operation"))
 
 
 @router.post("/assignments/{assignment_id}/start", response_model=AssignmentResponse)
@@ -432,7 +433,7 @@ async def start_work(
             created_at=assignment.created_at,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Human Cloud operation"))
 
 
 # =============================================================================
@@ -488,7 +489,7 @@ async def submit_delivery(
             submitted_at=delivery.submitted_at,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Human Cloud operation"))
 
 
 @router.post("/deliveries/{delivery_id}/approve")
@@ -518,7 +519,7 @@ async def approve_delivery(
             },
         }
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Human Cloud operation"))
 
 
 # =============================================================================

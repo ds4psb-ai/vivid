@@ -21,8 +21,10 @@ import uuid
 from typing import Optional, AsyncGenerator
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
+
+from app.middleware.rate_limit import limiter, RATE_LIMIT_UQSL_MULTI
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -66,8 +68,10 @@ _sessions: dict[str, dict] = {}  # Deprecated: Use _session_cache
 
 
 @router.post("/generate", response_model=GenerateCandidatesResponse)
+@limiter.limit(RATE_LIMIT_UQSL_MULTI)
 async def generate_candidates(
-    request: GenerateCandidatesRequest,
+    request: Request,
+    body: GenerateCandidatesRequest,
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -88,9 +92,9 @@ async def generate_candidates(
 
     # 1. Generate candidates
     candidates = await engine.generate_candidates(
-        prompt=request.prompt,
-        app_key=request.app_key,
-        n_candidates=request.n_candidates,
+        prompt=body.prompt,
+        app_key=body.app_key,
+        n_candidates=body.n_candidates,
     )
 
     # 2. Evaluate quality
@@ -100,18 +104,18 @@ async def generate_candidates(
     result = await selector.select_best(
         candidates=candidates,
         scores=scores,
-        strategy=request.strategy,
+        strategy=body.strategy,
     )
 
     # 4. Store session for potential HITL (Redis-backed, 2026 Best Practice)
-    prompt_hash = hashlib.sha256(request.prompt.encode()).hexdigest()[:64]
+    prompt_hash = hashlib.sha256(body.prompt.encode()).hexdigest()[:64]
     await _session_cache.set(result.session_id, {
         "candidates": [c.model_dump() for c in candidates],
         "scores": [s.model_dump() for s in scores],
         "prompt_hash": prompt_hash,
-        "prompt_preview": request.prompt[:200],
-        "app_key": request.app_key,
-        "strategy": request.strategy,
+        "prompt_preview": body.prompt[:200],
+        "app_key": body.app_key,
+        "strategy": body.strategy,
         "arms_used": result.arms_used,
         "created_at": datetime.utcnow().isoformat(),
     })
@@ -119,9 +123,9 @@ async def generate_candidates(
     # 5. Record selection history
     try:
         history = SelectionHistory(
-            app_key=request.app_key,
+            app_key=body.app_key,
             prompt_hash=prompt_hash,
-            prompt_preview=request.prompt[:200],
+            prompt_preview=body.prompt[:200],
             n_candidates=len(candidates),
             candidates_data={"candidates": [c.model_dump() for c in candidates]},
             quality_scores={"scores": [s.model_dump() for s in scores]},
@@ -129,7 +133,7 @@ async def generate_candidates(
             selection_method=result.method,
             selection_confidence=result.confidence,
             arms_used=result.arms_used,
-            dimension=request.app_key.split(".")[-1] if "." in request.app_key else None,
+            dimension=body.app_key.split(".")[-1] if "." in body.app_key else None,
         )
         db.add(history)
         await db.commit()
@@ -182,7 +186,7 @@ async def generate_candidates_stream(
             yield sse_progress(5, "Thompson Sampling 라우터 초기화 완료", "processing")
 
             # Generate candidates with streaming updates
-            n = request.n_candidates
+            n = body.n_candidates
             candidates = []
             scores = []
 
@@ -191,8 +195,8 @@ async def generate_candidates_stream(
             # Generate candidates in parallel with progress updates
             async def generate_single(idx: int) -> tuple[int, CandidateResult]:
                 candidate = await engine._execute_generation(
-                    prompt=request.prompt,
-                    app_key=request.app_key,
+                    prompt=body.prompt,
+                    app_key=body.app_key,
                     seed=idx * 1000,
                     temperature=0.7 + (idx * 0.3 / n),
                     timeout=30.0,
@@ -253,7 +257,7 @@ async def generate_candidates_stream(
             result = await selector.select_best(
                 candidates=candidates,
                 scores=scores,
-                strategy=request.strategy,
+                strategy=body.strategy,
             )
 
             # Stream selection event with Thompson Sampling stats
@@ -272,14 +276,14 @@ async def generate_candidates_stream(
             yield sse_progress(95, "세션 저장 중...", "finalizing")
 
             # Store session (Redis-backed, 2026 Best Practice)
-            prompt_hash = hashlib.sha256(request.prompt.encode()).hexdigest()[:64]
+            prompt_hash = hashlib.sha256(body.prompt.encode()).hexdigest()[:64]
             await _session_cache.set(session_id, {
                 "candidates": [c.model_dump() for c in candidates],
                 "scores": [s.model_dump() for s in scores],
                 "prompt_hash": prompt_hash,
-                "prompt_preview": request.prompt[:200],
-                "app_key": request.app_key,
-                "strategy": request.strategy,
+                "prompt_preview": body.prompt[:200],
+                "app_key": body.app_key,
+                "strategy": body.strategy,
                 "arms_used": result.arms_used,
                 "created_at": datetime.utcnow().isoformat(),
             })
@@ -287,9 +291,9 @@ async def generate_candidates_stream(
             # Record history (non-blocking)
             try:
                 history = SelectionHistory(
-                    app_key=request.app_key,
+                    app_key=body.app_key,
                     prompt_hash=prompt_hash,
-                    prompt_preview=request.prompt[:200],
+                    prompt_preview=body.prompt[:200],
                     n_candidates=len(candidates),
                     candidates_data={"candidates": [c.model_dump() for c in candidates]},
                     quality_scores={"scores": [s.model_dump() for s in scores]},
@@ -297,7 +301,7 @@ async def generate_candidates_stream(
                     selection_method=result.method,
                     selection_confidence=result.confidence,
                     arms_used=result.arms_used,
-                    dimension=request.app_key.split(".")[-1] if "." in request.app_key else None,
+                    dimension=body.app_key.split(".")[-1] if "." in body.app_key else None,
                 )
                 db.add(history)
                 await db.commit()
@@ -318,7 +322,7 @@ async def generate_candidates_stream(
                 metrics={
                     "latency_ms": latency_ms,
                     "n_candidates": n,
-                    "strategy": request.strategy,
+                    "strategy": body.strategy,
                 },
             )
 

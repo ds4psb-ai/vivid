@@ -33,6 +33,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.utils.error_sanitize import safe_error_detail
 from app.credit_service import deduct_credits, get_or_create_user_credits, refund_credits
 from app.services.suno_service import (
     SunoService,
@@ -533,7 +534,7 @@ async def generate_music(
         
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
+            detail=safe_error_detail(e, "Suno generation"),
         )
 
 

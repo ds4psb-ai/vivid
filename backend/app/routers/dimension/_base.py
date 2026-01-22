@@ -22,6 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.utils.error_sanitize import safe_error_detail
 from app.credit_service import deduct_credits, get_or_create_user_credits, refund_credits
 from app.dimension_adapter import (
     execute_dimension_capsule,
@@ -1661,4 +1662,6 @@ __all__ = [
     "Dict",
     "List",
     "Any",
+    # Security
+    "safe_error_detail",
 ]

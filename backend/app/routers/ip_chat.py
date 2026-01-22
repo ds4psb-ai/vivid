@@ -32,6 +32,7 @@ from app.auth_tokens import decode_token
 from app.config import settings
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.utils.error_sanitize import safe_error_detail
 from app.models_ip import IPCatalog
 from app.models_ip_chat import IPChatSession, IPChatMessage, IPChatScenario
 from app.services.ip_chat_service import IPChatService
@@ -186,7 +187,7 @@ async def create_session(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Chat operation"))
 
 
 @router.get("/sessions", response_model=SessionListResponse)
@@ -324,7 +325,7 @@ async def send_message(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Chat operation"))
 
 
 @router.get("/sessions/{session_id}/messages", response_model=MessageListResponse)
@@ -400,7 +401,7 @@ async def regenerate_message(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Chat operation"))
 
 
 # =============================================================================
@@ -691,7 +692,7 @@ async def switch_scenario(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Chat operation"))
 
 
 # =============================================================================

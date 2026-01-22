@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.utils.error_sanitize import safe_error_detail
 from app.models_workflow import CheckpointAction
 from app.services.approval_gate import ApprovalGateService
 from app.schemas.approval_gate_schemas import (
@@ -151,7 +152,7 @@ async def resolve_approval(
         await db.commit()
         return result
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Approval gate operation"))
     except Exception as e:
         logger.exception(f"Failed to resolve approval: {e}")
         await db.rollback()

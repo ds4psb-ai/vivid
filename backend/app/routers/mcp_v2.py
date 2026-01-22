@@ -36,6 +36,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth import require_user_id, get_is_admin
 from app.config import settings
 from app.database import get_db
+from app.utils.error_sanitize import safe_error_detail
 from app.mcp import (
     MCPClientManager,
     get_mcp_client_manager,
@@ -742,7 +743,7 @@ async def assign_policy_to_user(
     try:
         gateway.assign_policy(target_user_id, policy_id)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=safe_error_detail(e, "MCP operation"))
 
     return {
         "success": True,

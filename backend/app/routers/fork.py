@@ -13,6 +13,7 @@ from sqlalchemy.orm import selectinload
 
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.utils.error_sanitize import safe_error_detail
 from app.models_telemetry import ToolManifest
 from app.models_versioning import ToolVersion, ToolDiff, ToolTestCase, VersionStatus
 from app.schemas.versioning_schemas import (
@@ -123,7 +124,7 @@ async def submit_version(
         updated = await versioning_service.submit_for_review(db, version_id)
         return {"status": "submitted", "version_id": str(updated.id)}
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Fork operation"))
 
 
 @router.post("/versions/{version_id}/approve")
@@ -146,7 +147,7 @@ async def approve_version(
         )
         return {"status": "approved", "version_id": str(version.id), "is_live": True}
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Fork operation"))
 
 
 # =============================================================================
@@ -264,7 +265,7 @@ async def create_fork(
         )
     
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Fork operation"))
 
 
 @router.get("/diffs/{diff_id}", response_model=DiffResponse)

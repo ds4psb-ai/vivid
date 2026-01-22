@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.utils.error_sanitize import safe_error_detail
 from app.models_telemetry import ToolManifest, ToolRunEvent, ForkEvent, MetricEvent
 from app.schemas.telemetry_schemas import (
     ToolManifestCreate,
@@ -63,7 +64,7 @@ async def create_tool(
         manifest = await telemetry_service.create_tool_manifest(db, data, current_user["id"])
         return manifest
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Telemetry operation"))
 
 
 @router.get("/tools/{tool_key}", response_model=ToolManifestResponse)
@@ -140,7 +141,7 @@ async def get_tool_analytics(
         analytics = await telemetry_service.get_tool_analytics(db, tool_id, days)
         return analytics
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=safe_error_detail(e, "Telemetry lookup"))
 
 
 @router.get("/tools/{tool_id}/tier/evaluate", response_model=dict)
@@ -156,7 +157,7 @@ async def evaluate_tool_tier(
         evaluation = await telemetry_service.evaluate_tier_promotion(db, tool_id)
         return evaluation
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=safe_error_detail(e, "Telemetry lookup"))
 
 
 @router.post("/tools/{tool_id}/tier/promote", response_model=dict)
@@ -190,7 +191,7 @@ async def promote_tool(
             "promoted_at": manifest.approved_at.isoformat() if manifest.approved_at else None,
         }
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=safe_error_detail(e, "Telemetry lookup"))
 
 
 @router.get("/tools/tier/check-all", response_model=list)
@@ -311,7 +312,7 @@ async def complete_tool_run(
 
         return event
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=safe_error_detail(e, "Telemetry lookup"))
 
 
 @router.post("/runs/{event_id}/feedback", response_model=ToolRunEventResponse)
@@ -364,7 +365,7 @@ async def add_run_feedback(
 
         return event
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=safe_error_detail(e, "Telemetry lookup"))
 
 
 @router.get("/runs", response_model=list[ToolRunEventResponse])
@@ -422,7 +423,7 @@ async def create_fork(
         
         return event
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Telemetry operation"))
 
 
 @router.get("/forks/{fork_id}", response_model=ForkEventResponse)
@@ -454,7 +455,7 @@ async def submit_fork_test(
         )
         return fork
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=safe_error_detail(e, "Telemetry lookup"))
 
 
 @router.post("/forks/{fork_id}/attribution", response_model=AttributionScoreResponse)
@@ -475,7 +476,7 @@ async def calculate_attribution(
         score = await telemetry_service.calculate_attribution_score(db, fork_id)
         return score
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=safe_error_detail(e, "Telemetry lookup"))
 
 
 @router.get("/forks", response_model=list[ForkEventResponse])

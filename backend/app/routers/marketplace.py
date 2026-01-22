@@ -27,6 +27,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.utils.error_sanitize import safe_error_detail
 from app.services.marketplace_service import MarketplaceService
 
 logger = logging.getLogger(__name__)
@@ -220,7 +221,7 @@ async def create_listing(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Marketplace operation"))
 
 
 @router.get("/listings", response_model=ListingListResponse)
@@ -396,7 +397,7 @@ async def purchase_listing(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Marketplace operation"))
 
 
 @router.get("/purchases", response_model=PurchaseListResponse)
@@ -516,7 +517,7 @@ async def create_review(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Marketplace operation"))
 
 
 @router.get("/listings/{listing_id}/reviews", response_model=ReviewListResponse)

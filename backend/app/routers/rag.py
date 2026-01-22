@@ -10,8 +10,10 @@ Provides:
 import logging
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
+
+from app.middleware.rate_limit import limiter, RATE_LIMIT_RAG_QUERY
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -61,8 +63,10 @@ class ReindexResponse(BaseModel):
 # === Endpoints ===
 
 @router.post("/search", response_model=SearchResponse)
+@limiter.limit(RATE_LIMIT_RAG_QUERY)
 async def search_tools(
-    request: SearchRequest,
+    request: Request,
+    body: SearchRequest,
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -75,10 +79,10 @@ async def search_tools(
     service = get_vector_service()
     
     results = service.search(
-        query=request.query,
-        limit=request.limit,
-        category=request.category,
-        min_tier=request.min_tier,
+        query=body.query,
+        limit=body.limit,
+        category=body.category,
+        min_tier=body.min_tier,
     )
     
     return SearchResponse(

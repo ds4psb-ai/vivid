@@ -54,6 +54,7 @@ from ._base import (
     MAX_SCENE_COUNT,
     get_sse_headers,
     Optional,
+    safe_error_detail,
 )
 
 logger = logging.getLogger(__name__)
@@ -1032,7 +1033,7 @@ async def extract_style_from_image(
 
     except StyleExtractionError as e:
         logger.error(f"Style extraction failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=safe_error_detail(e, "Style extraction"))
     except Exception as e:
         logger.exception(f"Unexpected error in style extraction: {e}")
         raise HTTPException(status_code=500, detail="스타일 추출 중 오류가 발생했습니다.")
@@ -1079,7 +1080,7 @@ async def analyze_video_reference(
     try:
         analysis_depth = _validate_analysis_depth(analysis_depth)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Validation"))
 
     # Validate file type
     content_type = file.content_type or ""
@@ -1125,7 +1126,7 @@ async def analyze_video_reference(
 
     except ReferenceAnalysisError as e:
         logger.error(f"Video analysis failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=safe_error_detail(e, "Video analysis"))
     except Exception as e:
         logger.exception(f"Unexpected error in video analysis: {e}")
         raise HTTPException(status_code=500, detail="비디오 분석 중 오류가 발생했습니다.")
@@ -1207,7 +1208,7 @@ async def analyze_image_reference(
 
     except ReferenceAnalysisError as e:
         logger.error(f"Image analysis failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=safe_error_detail(e, "Image analysis"))
     except Exception as e:
         logger.exception(f"Unexpected error in image analysis: {e}")
         raise HTTPException(status_code=500, detail="이미지 분석 중 오류가 발생했습니다.")

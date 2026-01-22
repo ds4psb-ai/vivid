@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.utils.error_sanitize import safe_error_detail
 from app.middleware.tenant import get_current_tenant, require_tenant
 from app.models_tenant import Tenant
 from app.services.tenant_service import TenantService, PLAN_LIMITS
@@ -161,7 +162,7 @@ async def create_tenant(
             updated_at=tenant.updated_at,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Tenant operation"))
 
 
 @router.get("", response_model=List[TenantResponse])

@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_db
+from app.utils.error_sanitize import safe_error_detail
 
 router = APIRouter(tags=["health"])
 
@@ -57,9 +58,10 @@ async def health_check(db: AsyncSession = Depends(get_db)) -> HealthStatus:
             "latency_ms": round(db_latency, 2),
         }
     except Exception as e:
+        logger.error(f"Database health check failed: {e}")
         checks["database"] = {
             "status": "unhealthy",
-            "message": str(e),
+            "message": "Database connection failed",
         }
         overall_status = "unhealthy"
     
@@ -119,7 +121,7 @@ async def readiness_probe(db: AsyncSession = Depends(get_db)) -> dict:
         return {"status": "ready"}
     except Exception as e:
         from fastapi import HTTPException
-        raise HTTPException(status_code=503, detail=f"Not ready: {str(e)}")
+        raise HTTPException(status_code=503, detail=f"Not ready: {safe_error_detail(e, 'Readiness check')}")
 
 
 @router.get("/health/notebooklm")
@@ -148,9 +150,10 @@ async def notebooklm_health() -> dict:
         
         return health
     except Exception as e:
+        logger.error(f"NotebookLM health check failed: {e}")
         return {
             "status": "error",
-            "error": str(e),
+            "message": "NotebookLM unavailable",
         }
 
 
@@ -176,9 +179,10 @@ async def rag_cache_health() -> dict:
             **stats.__dict__,  # CacheStats dataclass
         }
     except Exception as e:
+        logger.error(f"RAG cache health check failed: {e}")
         return {
             "status": "error",
-            "error": str(e)
+            "message": "RAG cache unavailable",
         }
 
 
@@ -203,9 +207,10 @@ async def uqsl_health(db: AsyncSession = Depends(get_db)) -> dict:
         from app.uqsl.metrics import get_uqsl_metrics_summary
         health_data["components"]["metrics"] = get_uqsl_metrics_summary()
     except Exception as e:
+        logger.debug(f"UQSL metrics check failed: {e}")
         health_data["components"]["metrics"] = {
             "status": "error",
-            "error": str(e),
+            "message": "Metrics unavailable",
         }
 
     # Check Thompson Sampling router
@@ -226,9 +231,10 @@ async def uqsl_health(db: AsyncSession = Depends(get_db)) -> dict:
             "arms": list(arm_stats.keys()),
         }
     except Exception as e:
+        logger.debug(f"Thompson Sampling check failed: {e}")
         health_data["components"]["thompson_sampling"] = {
             "status": "error",
-            "error": str(e),
+            "message": "Thompson Sampling unavailable",
         }
         health_data["status"] = "degraded"
 
@@ -241,9 +247,10 @@ async def uqsl_health(db: AsyncSession = Depends(get_db)) -> dict:
             "active_sessions": session_count,
         }
     except Exception as e:
+        logger.debug(f"Sessions check failed: {e}")
         health_data["components"]["sessions"] = {
             "status": "unknown",
-            "error": str(e),
+            "message": "Sessions unavailable",
         }
 
     # Check Ensemble++ router
@@ -255,9 +262,10 @@ async def uqsl_health(db: AsyncSession = Depends(get_db)) -> dict:
             "arms": list(ensemble.arms.keys()),
         }
     except Exception as e:
+        logger.debug(f"Ensemble++ check failed: {e}")
         health_data["components"]["ensemble_plus_plus"] = {
             "status": "error",
-            "error": str(e),
+            "message": "Ensemble++ unavailable",
         }
         if health_data["status"] == "healthy":
             health_data["status"] = "degraded"

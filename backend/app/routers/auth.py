@@ -9,6 +9,8 @@ from urllib.parse import urlencode, quote
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse, RedirectResponse
+
+from app.middleware.rate_limit import limiter, RATE_LIMIT_AUTH_LOGIN
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -230,7 +232,8 @@ async def get_session(request: Request) -> JSONResponse:
 
 
 @router.post("/logout")
-async def logout() -> JSONResponse:
+@limiter.limit(RATE_LIMIT_AUTH_LOGIN)
+async def logout(request: Request) -> JSONResponse:
     response = JSONResponse({"success": True})
     response.delete_cookie(settings.SESSION_COOKIE_NAME)
     return response

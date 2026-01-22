@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.utils.error_sanitize import safe_error_detail
 from app.models_telemetry import ToolManifest
 from app.models_versioning import ToolVersion
 from app.models_review import (
@@ -192,7 +193,7 @@ async def check_tier_eligibility(
         result = await review_service.check_tier_eligibility(db, tool_id)
         return result
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=safe_error_detail(e, "Review lookup"))
 
 
 # =============================================================================
@@ -325,7 +326,7 @@ async def assign_review(
         review = await review_service.assign_review(db, review_id, current_user["id"])
         return {"status": "assigned", "assigned_to": current_user["id"]}
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Review operation"))
 
 
 @router.post("/{review_id}/approve")
@@ -349,7 +350,7 @@ async def approve_review(
             "tool_id": str(review.tool_id),
         }
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Review operation"))
 
 
 @router.post("/{review_id}/reject")
@@ -373,7 +374,7 @@ async def reject_review(
             "reason": data.reason,
         }
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Review operation"))
 
 
 @router.post("/tools/{tool_id}/promote")
@@ -402,4 +403,4 @@ async def promote_tool(
             "promotion_id": str(promotion.id),
         }
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Review operation"))

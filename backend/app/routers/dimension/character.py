@@ -49,6 +49,7 @@ from ._base import (
     sse_progress,
     sse_complete,
     sse_error,
+    safe_error_detail,
 )
 from app.schemas.character_schemas import (
     CharacterCreateRequest,
@@ -207,7 +208,7 @@ async def create_character_endpoint(
         character_logger.error(f"[CHARACTER_CREATE] Failed: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
+            detail=safe_error_detail(e, "Character creation"),
         )
 
 

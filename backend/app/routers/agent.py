@@ -9,8 +9,10 @@ from datetime import datetime
 from typing import AsyncGenerator, List, Optional
 
 from cachetools import TTLCache
-from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, File
 from fastapi.responses import StreamingResponse
+
+from app.middleware.rate_limit import limiter, RATE_LIMIT_LLM_GENERATE, RATE_LIMIT_UPLOAD
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,6 +28,7 @@ from app.agents.vivid_agent import VividAgent
 from app.config import settings
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.utils.error_sanitize import safe_error_detail
 from app.logging_config import get_logger
 from app.models import AgentArtifact, AgentMessage as AgentMessageRecord, AgentSession
 
@@ -428,7 +431,9 @@ def _start_stream_thread(
 
 
 @router.post("/upload")
+@limiter.limit(RATE_LIMIT_UPLOAD)
 async def upload_file(
+    request: Request,
     file: UploadFile = File(...),
     user: dict = Depends(get_current_user),  # P0: Auth required - prevent API abuse
 ):
@@ -455,7 +460,7 @@ async def upload_file(
         }
     except Exception as e:
         logger.error(f"File upload failed: {e}")
-        raise HTTPException(status_code=500, detail=f"File upload failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=safe_error_detail(e, "File upload"))
     finally:
         # Cleanup temp file
         if os.path.exists(temp_filename):
@@ -463,15 +468,17 @@ async def upload_file(
 
 
 @router.post("/chat")
+@limiter.limit(RATE_LIMIT_LLM_GENERATE)
 async def chat_agent(
-    request: AgentChatRequest,
+    request: Request,
+    chat_request: AgentChatRequest,
     user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     session = None
-    if request.session_id:
+    if chat_request.session_id:
         try:
-            session_uuid = uuid.UUID(request.session_id)
+            session_uuid = uuid.UUID(chat_request.session_id)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail="Invalid session id") from exc
         result = await db.execute(select(AgentSession).where(AgentSession.id == session_uuid))
@@ -483,14 +490,14 @@ async def chat_agent(
         if session.owner_id and session.owner_id != user_id:
             raise HTTPException(status_code=403, detail="Access denied")
     else:
-        title = (request.message or "").strip()
+        title = (chat_request.message or "").strip()
         if len(title) > 80:
             title = f"{title[:77]}..."
         user_id = user.get("id") or user.get("sub")
         session = AgentSession(
             status="active",
             title=title or None,
-            meta=request.metadata or {},
+            meta=chat_request.metadata or {},
             owner_id=user_id,  # P0 BOLA: Store owner for access control
         )
         db.add(session)
@@ -500,19 +507,19 @@ async def chat_agent(
         "Agent chat request",
         extra={
             "session_id": str(session.id),
-            "existing_session": bool(request.session_id),
+            "existing_session": bool(chat_request.session_id),
         },
     )
 
-    if request.metadata:
-        session.meta = _merge_metadata(session.meta, request.metadata)
-    model_name = _resolve_agent_model(session, request)
+    if chat_request.metadata:
+        session.meta = _merge_metadata(session.meta, chat_request.metadata)
+    model_name = _resolve_agent_model(session, chat_request)
     session.meta = _merge_metadata(session.meta, {"agent_model": model_name})
-    
+
     # Store page context for context-aware agent responses
-    if request.page_context:
-        session.meta = _merge_metadata(session.meta, {"page_context": request.page_context})
-    
+    if chat_request.page_context:
+        session.meta = _merge_metadata(session.meta, {"page_context": chat_request.page_context})
+
     agent = _get_agent(model_name)
 
     existing_messages_result = await db.execute(
@@ -524,14 +531,14 @@ async def chat_agent(
     state_messages = [_to_core_message(message) for message in existing_messages]
     state = AgentState(session_id=str(session.id), messages=state_messages, metadata=session.meta or {})
 
-    user_content = request.message.strip()
+    user_content = chat_request.message.strip()
     state.messages.append(CoreAgentMessage(role=AgentRole.USER, content=user_content))
     user_record = AgentMessageRecord(
         session_id=session.id,
         role="user",
         content=user_content,
         tool_calls=[],
-        payload={"attachments": request.attachments} if request.attachments else None,
+        payload={"attachments": chat_request.attachments} if chat_request.attachments else None,
     )
     db.add(user_record)
     await db.commit()

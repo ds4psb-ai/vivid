@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.utils.error_sanitize import safe_error_detail
 from app.models_sandbox import SandboxConfig, SandboxExecution, ExecutionStatus
 from app.models_telemetry import ToolManifest
 from app.services import sandbox_executor
@@ -127,7 +128,7 @@ async def execute_tool(
         )
         
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=safe_error_detail(e, "Sandbox execution"))
     except Exception as e:
         logger.exception(f"Sandbox execution failed: {e}")
         raise HTTPException(status_code=500, detail="Execution failed")

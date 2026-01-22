@@ -19,8 +19,10 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
 from fastapi.responses import StreamingResponse
+
+from app.middleware.rate_limit import limiter, RATE_LIMIT_LLM_GENERATE
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -36,6 +38,7 @@ from app.credit_service import (
     refund_credits as refund_user_credits,
 )
 from app.routers.run_token import verify_run_token
+from app.utils.error_sanitize import safe_error_detail
 
 logger = logging.getLogger(__name__)
 
@@ -124,7 +127,7 @@ async def list_capsules(
         return [CapsuleSpecResponse(**spec.to_dict()) for spec in specs]
     except Exception as e:
         logger.error(f"Failed to list specs: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=safe_error_detail(e, "List capsules"))
 
 
 @router.get("/{capsule_key}", response_model=CapsuleSpecResponse)
@@ -146,7 +149,7 @@ async def get_capsule(
         raise
     except Exception as e:
         logger.error(f"Failed to get spec: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=safe_error_detail(e, "Get capsule"))
 
 
 async def _execute_capsule_background(
@@ -254,8 +257,10 @@ async def _execute_capsule_background(
 
 
 @router.post("/run", response_model=RunResponse)
+@limiter.limit(RATE_LIMIT_LLM_GENERATE)
 async def run_capsule(
-    request: RunRequest,
+    request: Request,
+    body: RunRequest,
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
 ):
@@ -279,13 +284,13 @@ async def run_capsule(
         from app.services.capsule_specs import parse_capsule_id, get_spec
         
         # Parse capsule_id
-        capsule_key, version = parse_capsule_id(request.capsule_id)
-        
+        capsule_key, version = parse_capsule_id(body.capsule_id)
+
         # Get spec for credit cost
         spec = await get_spec(db, capsule_key, version)
         if spec and spec.credit_costs:
             # Use model from params or default
-            model = request.params.get("model", "gemini-3-flash-preview")
+            model = body.params.get("model", "gemini-3-flash-preview")
             credit_cost = spec.credit_costs.get(model, 5)
         else:
             credit_cost = 10  # Default cost
@@ -312,12 +317,12 @@ async def run_capsule(
         credits_deducted = True
         
         # Use explicit version from request if provided
-        effective_version = request.capsule_version or version or "latest"
-        
+        effective_version = body.capsule_version or version or "latest"
+
         # Store credit cost in params for cancel refund
-        stored_params = dict(request.params)
+        stored_params = dict(body.params)
         stored_params["_credit_cost"] = credit_cost
-        
+
         # Create run record (queued) with user_id for BOLA
         run_record = CapsuleRun(
             id=uuid.UUID(run_id),
@@ -325,9 +330,9 @@ async def run_capsule(
             capsule_key=capsule_key,
             capsule_version=effective_version,
             status="queued",
-            inputs=request.inputs,
+            inputs=body.inputs,
             params=stored_params,
-            upstream_context=request.upstream_context or {},
+            upstream_context=body.upstream_context or {},
         )
         db.add(run_record)
         await db.commit()
@@ -464,8 +469,8 @@ async def run_capsule(
             "run_id": run_id,
             "error": str(e),
         })
-        
-        raise HTTPException(status_code=500, detail=str(e))
+
+        raise HTTPException(status_code=500, detail=safe_error_detail(e, "Capsule execution"))
 
 
 @router.get("/run/{run_id}", response_model=RunStatusResponse)

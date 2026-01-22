@@ -231,21 +231,19 @@ CORS_ALLOWED_HEADERS = [
     "baggage",
 ]
 
+# H1.1: Explicit allowed methods (no wildcard for security)
+CORS_ALLOWED_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+
 app.add_middleware(
     CORSMiddleware,
+    # Security: Use config-based origins instead of hardcoded list
     # credentials=True 일 때는 "*" 사용 불가 → 정확한 origin 지정 필수
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:3100",
-        "https://shorti.ai",
-        "https://www.shorti.ai",
-        "https://vivid-frontend.vercel.app",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+    allow_methods=CORS_ALLOWED_METHODS,
     allow_headers=CORS_ALLOWED_HEADERS,
     expose_headers=["X-Request-ID", "X-RateLimit-Limit", "X-RateLimit-Remaining"],
-    max_age=600,
+    max_age=settings.CORS_MAX_AGE,
 )
 
 # =============================================================================

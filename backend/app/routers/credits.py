@@ -16,6 +16,7 @@ from app.credit_service import (
 from app.database import get_db
 from app.models import CreditLedger
 from app.auth import require_user_id
+from app.utils.error_sanitize import safe_error_detail
 
 
 router = APIRouter(tags=["credits"])
@@ -190,6 +191,6 @@ async def deduct_credits(
             capsule_run_id=capsule_run_uuid,
         )
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise HTTPException(status_code=400, detail=safe_error_detail(exc, "Credit deduction")) from exc
 
     return {"success": True, "new_balance": entry.balance_snapshot}
