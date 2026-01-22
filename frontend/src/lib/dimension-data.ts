@@ -318,6 +318,7 @@ export const DIMENSION_ITEMS: DimensionItemData[] = [
 export interface FlowStartOption {
   key: string;
   dimension: string;
+  phase: "4D" | "Story" | "1D"; // WorkflowPhase 시작점
   name: string;
   nameEn: string;
   description: string;
@@ -329,6 +330,7 @@ export const FLOW_START_OPTIONS: readonly FlowStartOption[] = [
   {
     key: "reference-decoder",
     dimension: "4D",
+    phase: "4D",
     name: "레퍼런스 해석기",
     nameEn: "Reference Decoder",
     description: "거장의 레퍼런스 분석부터 시작",
@@ -338,6 +340,7 @@ export const FLOW_START_OPTIONS: readonly FlowStartOption[] = [
   {
     key: "story-architect",
     dimension: "STORY",
+    phase: "Story",
     name: "시나리오 생성기",
     nameEn: "Story Architect",
     description: "스토리 구성부터 시작",
@@ -347,6 +350,7 @@ export const FLOW_START_OPTIONS: readonly FlowStartOption[] = [
   {
     key: "prompt-alchemy",
     dimension: "1D",
+    phase: "1D",
     name: "프롬프트 연금술",
     nameEn: "Prompt Alchemy",
     description: "프롬프트 작성부터 시작",

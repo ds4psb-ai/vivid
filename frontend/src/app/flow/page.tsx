@@ -11,14 +11,14 @@ import { FlowSidebar } from "@/components/flow/FlowSidebar";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Copy, Check, Sparkles, LayoutGrid, Image as ImageIcon, Film, X, Download, Save, CheckCircle, Palette, Moon, Video, Loader2, BookOpen, Music, Construction, ArrowLeft, AlertCircle, Workflow, Search, Layers, Wand2, PanelLeft } from "lucide-react";
+import { ChevronDown, Copy, Check, Sparkles, LayoutGrid, Image as ImageIcon, Film, X, Download, Save, CheckCircle, Palette, Moon, Video, Loader2, BookOpen, Music, Construction, ArrowLeft, AlertCircle, Workflow, PanelLeft } from "lucide-react";
 import { api, SingularityTemplate } from "@/lib/api";
 import { FLOW_ENABLED } from "@/lib/feature-flags";
 import { dimensionIdToCode, getDimensionToken } from "@/lib/tokens";
 import { normalizeWorkflowDimension, type WorkflowDimension } from "@/lib/dimension-types";
-import { FLOW_START_OPTIONS, STANDALONE_TOOLS } from "@/lib/dimension-data";
-import { useMachine } from "@xstate/react";
-import { workflowMachine, type WorkflowPhase } from "@/machines/workflowMachine";
+import { FLOW_START_OPTIONS } from "@/lib/dimension-data";
+import { useWorkflowController } from "@/hooks/useWorkflowController";
+import type { WorkflowPhase } from "@/machines/workflowMachine";
 import Link from "next/link";
 import type {
     WorkflowStartEvent,
@@ -223,8 +223,18 @@ function FlowPageContent() {
     const [expandedResult, setExpandedResult] = useState<string | null>(null);
     const [copiedField, setCopiedField] = useState<string | null>(null);
 
-    // XState workflow machine for structured state management
-    const [workflowState, sendWorkflow] = useMachine(workflowMachine);
+    // Workflow controller hook (XState + handlers)
+    const {
+        workflowState,
+        sendWorkflow,
+        currentPhase,
+        chainData,
+        handleStartWorkflow,
+        handlePhaseClick,
+        handleWorkflowControl,
+        getWorkflowStateForSidebar,
+        startFromPhase,
+    } = useWorkflowController();
 
     // Show DAG canvas toggle
     const [showDagCanvas, setShowDagCanvas] = useState(false);
@@ -510,53 +520,16 @@ function FlowPageContent() {
         standaloneTools: language === "ko" ? "독립 도구" : "Standalone Tools",
     };
 
-    // Workflow start handlers
-    const handleStartWorkflow = useCallback((startOption: typeof FLOW_START_OPTIONS[number]) => {
-        const phaseMap: Record<string, "START_4D" | "START_STORY" | "START_1D"> = {
-            "reference-decoder": "START_4D",
-            "story-architect": "START_STORY",
-            "prompt-alchemy": "START_1D",
-        };
-        const event = phaseMap[startOption.key];
-        if (event) {
-            sendWorkflow({ type: event });
-        }
-    }, [sendWorkflow]);
+    // 사이드바 핸들러 - Mobile 닫기 통합
+    const handleSidebarStartSelect = useCallback((phase: WorkflowPhase, closeMobile = false) => {
+        startFromPhase(phase);
+        if (closeMobile) setShowMobileSidebar(false);
+    }, [startFromPhase]);
 
-    // Get current phase for DAG canvas
-    const currentPhase = workflowState.context.currentPhase;
-
-    // Handle phase click from sidebar
-    const handlePhaseClick = useCallback((phase: WorkflowPhase) => {
-        // If idle and valid start phase, start the workflow
-        if (workflowState.matches("idle")) {
-            const phaseMap: Record<string, "START_4D" | "START_STORY" | "START_1D" | null> = {
-                "4D": "START_4D",
-                "Story": "START_STORY",
-                "1D": "START_1D",
-            };
-            const event = phaseMap[phase];
-            if (event) {
-                sendWorkflow({ type: event });
-            }
-        }
-    }, [workflowState, sendWorkflow]);
-
-    // Get workflow state for sidebar
-    const getWorkflowStateForSidebar = useCallback((): "idle" | "running" | "completed" | "error" => {
-        if (workflowState.matches("idle")) return "idle";
-        if (workflowState.matches("completed")) return "completed";
-        if (workflowState.matches("error")) return "error";
-        return "running";
-    }, [workflowState]);
-
-    // Handle workflow control actions from sidebar
-    const handleWorkflowControl = useCallback((action: "play" | "pause" | "reset") => {
-        if (action === "reset") {
-            sendWorkflow({ type: "RESET" });
-        }
-        // Note: play/pause would require additional state machine events
-    }, [sendWorkflow]);
+    const handleSidebarPhaseClick = useCallback((phase: WorkflowPhase, closeMobile = false) => {
+        handlePhaseClick(phase);
+        if (closeMobile) setShowMobileSidebar(false);
+    }, [handlePhaseClick]);
 
     // 🆕 Save workflow results as template
     const handleSaveAsTemplate = async () => {
@@ -920,19 +893,9 @@ function FlowPageContent() {
                 <div className="hidden lg:block relative z-20">
                     <FlowSidebar
                         activePhase={currentPhase}
-                        chainData={workflowState.context.chainData}
+                        chainData={chainData}
                         workflowState={getWorkflowStateForSidebar()}
-                        onStartSelect={(phase) => {
-                            const option = FLOW_START_OPTIONS.find(o => {
-                                const phaseMap: Record<string, WorkflowPhase> = {
-                                    "reference-decoder": "4D",
-                                    "story-architect": "Story",
-                                    "prompt-alchemy": "1D",
-                                };
-                                return phaseMap[o.key] === phase;
-                            });
-                            if (option) handleStartWorkflow(option);
-                        }}
+                        onStartSelect={(phase) => handleSidebarStartSelect(phase)}
                         onPhaseClick={handlePhaseClick}
                         onWorkflowControl={handleWorkflowControl}
                         language={language}
@@ -961,24 +924,10 @@ function FlowPageContent() {
                             >
                                 <FlowSidebar
                                     activePhase={currentPhase}
-                                    chainData={workflowState.context.chainData}
+                                    chainData={chainData}
                                     workflowState={getWorkflowStateForSidebar()}
-                                    onStartSelect={(phase) => {
-                                        const option = FLOW_START_OPTIONS.find(o => {
-                                            const phaseMap: Record<string, WorkflowPhase> = {
-                                                "reference-decoder": "4D",
-                                                "story-architect": "Story",
-                                                "prompt-alchemy": "1D",
-                                            };
-                                            return phaseMap[o.key] === phase;
-                                        });
-                                        if (option) handleStartWorkflow(option);
-                                        setShowMobileSidebar(false);
-                                    }}
-                                    onPhaseClick={(phase) => {
-                                        handlePhaseClick(phase);
-                                        setShowMobileSidebar(false);
-                                    }}
+                                    onStartSelect={(phase) => handleSidebarStartSelect(phase, true)}
+                                    onPhaseClick={(phase) => handleSidebarPhaseClick(phase, true)}
                                     onWorkflowControl={handleWorkflowControl}
                                     language={language}
                                     collapsed={false}
@@ -1127,112 +1076,7 @@ function FlowPageContent() {
                             </div>
                         )}
 
-                        {/* Workflow Start Options - 3옵션 시작점 고정 */}
-                        {!loadedTemplate && !templateApplied && workflowState.matches("idle") && (
-                            <motion.div
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="card-glass p-6 mb-6"
-                            >
-                                <div className="flex items-center justify-between mb-4">
-                                    <div>
-                                        <h2 className="text-lg font-bold text-[var(--fg-0)] flex items-center gap-2">
-                                            <Workflow className={`w-5 h-5 ${BRAND_TONE.text}`} />
-                                            {labels.selectStart}
-                                        </h2>
-                                        <p className="text-sm text-[var(--fg-muted)] mt-1">
-                                            {labels.startDescription}
-                                        </p>
-                                    </div>
-                                    <button
-                                        onClick={() => setShowDagCanvas(!showDagCanvas)}
-                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                                            showDagCanvas
-                                                ? `${BRAND_TONE.solid} text-[var(--fg-on-emphasis)]`
-                                                : `${BRAND_TONE.bg} ${BRAND_TONE.textSoft} ${BRAND_TONE.hoverBg}`
-                                        }`}
-                                    >
-                                        <LayoutGrid className="w-4 h-4" />
-                                        {labels.dagToggle}
-                                    </button>
-                                </div>
-
-                                {/* 3 Start Options */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                                    {FLOW_START_OPTIONS.map((option) => {
-                                        const StartIcon = option.iconName === "search" ? Search
-                                            : option.iconName === "layers" ? Layers
-                                            : option.iconName === "wand" ? Wand2
-                                            : Sparkles;
-
-                                        return (
-                                            <button
-                                                key={option.key}
-                                                onClick={() => handleStartWorkflow(option)}
-                                                className={`
-                                                    p-5 rounded-xl border-2 border-[var(--border-subtle)]
-                                                    bg-[var(--surface-1)] hover:bg-[var(--surface-2)]
-                                                    transition-all hover:scale-[1.02] hover:shadow-lg
-                                                    text-left group
-                                                `}
-                                            >
-                                                <div className={`
-                                                    w-12 h-12 rounded-xl ${BRAND_TONE.bg}
-                                                    flex items-center justify-center mb-3
-                                                    group-hover:scale-110 transition-transform
-                                                `}>
-                                                    <StartIcon className={`w-6 h-6 ${BRAND_TONE.text}`} />
-                                                </div>
-                                                <div className={`text-sm font-bold ${BRAND_TONE.text} mb-1`}>
-                                                    {option.dimension}
-                                                </div>
-                                                <div className="text-base font-semibold text-[var(--fg-0)] mb-2">
-                                                    {language === "ko" ? option.name : option.nameEn}
-                                                </div>
-                                                <p className="text-sm text-[var(--fg-muted)]">
-                                                    {language === "ko" ? option.description : option.descriptionEn}
-                                                </p>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-
-                                {/* Standalone Tools Section */}
-                                <div className="border-t border-[var(--border-subtle)] pt-4">
-                                    <h3 className="text-sm font-medium text-[var(--fg-muted)] mb-3">
-                                        {labels.standaloneTools}
-                                    </h3>
-                                    <div className="flex gap-3">
-                                        {STANDALONE_TOOLS.map((tool) => (
-                                            <Link
-                                                key={tool.key}
-                                                href={`/dimension/abyss`}
-                                                className={`
-                                                    flex items-center gap-3 px-4 py-2.5 rounded-lg
-                                                    border border-[var(--border-subtle)]
-                                                    bg-[var(--surface-1)] hover:bg-[var(--surface-2)]
-                                                    transition-colors text-sm
-                                                `}
-                                            >
-                                                <div className={`w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center`}>
-                                                    <Moon className="w-4 h-4 text-violet-400" />
-                                                </div>
-                                                <div>
-                                                    <div className="font-medium text-[var(--fg-0)]">
-                                                        {language === "ko" ? tool.name : tool.nameEn}
-                                                    </div>
-                                                    <div className="text-xs text-[var(--fg-muted)]">
-                                                        {tool.dimension}
-                                                    </div>
-                                                </div>
-                                            </Link>
-                                        ))}
-                                    </div>
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {/* DAG Canvas (Toggleable) */}
+                        {/* DAG Canvas (Toggleable) - 사이드바에서 시작점 선택 */}
                         <AnimatePresence>
                             {showDagCanvas && (
                                 <motion.div
@@ -1244,7 +1088,7 @@ function FlowPageContent() {
                                     <div className="card-glass p-1">
                                         <WorkflowCanvas
                                             activePhase={currentPhase}
-                                            chainData={workflowState.context.chainData}
+                                            chainData={chainData}
                                             onNodeClick={() => {
                                                 // Node click handler - can be extended for interactivity
                                             }}
