@@ -27,17 +27,19 @@ fi
 
 ## 3. 백엔드 서버 종료 및 재시작 (강건한 버전)
 ```bash
-# 1. 기존 Vivid 백엔드 프로세스 종료 (uvicorn vivid 또는 포트 8100)
-pkill -f "uvicorn.*vivid" 2>/dev/null || true
+# 1. 기존 백엔드 프로세스 graceful 종료 (SIGTERM → SIGKILL)
+pkill -f "uvicorn.*app\.main" 2>/dev/null || true
+sleep 2
+# 강제 종료 (남아있는 프로세스)
+pkill -9 -f "uvicorn.*app\.main" 2>/dev/null || true
 lsof -ti :8100 | xargs -r kill -9 2>/dev/null || true
 sleep 1
 
-# 2. venv 활성화 확인 후 서버 시작
-cd /Users/ted/vivid/backend
+# 2. venv 활성화 + 서버 시작 (단일 쉘에서 실행)
+cd /Users/ted/vivid/backend && \
 if [ -f venv/bin/activate ]; then
-    source venv/bin/activate
-    nohup uvicorn app.main:app --host 0.0.0.0 --port 8100 --reload > /tmp/vivid-backend.log 2>&1 &
-    echo "Backend starting... (PID: $!)"
+    bash -c 'source venv/bin/activate && nohup uvicorn app.main:app --host 0.0.0.0 --port 8100 --reload > /tmp/vivid-backend.log 2>&1 &' && \
+    echo "Backend starting..."
 else
     echo "ERROR: venv not found at /Users/ted/vivid/backend/venv"
 fi
@@ -57,14 +59,17 @@ done
 
 ## 5. 프론트엔드 서버 종료 및 재시작
 ```bash
-# 1. 기존 Vivid 프론트엔드 종료 + 캐시 완전 삭제
-pkill -9 -f "bun.*vivid" 2>/dev/null || true
-pkill -9 -f "next.*vivid" 2>/dev/null || true
+# 1. 기존 프론트엔드 graceful 종료 (SIGTERM → SIGKILL)
+pkill -f "node.*/Users/ted/vivid/frontend" 2>/dev/null || true
+pkill -f "bun.*dev.*3100" 2>/dev/null || true
+sleep 2
+# 강제 종료 (남아있는 프로세스)
+pkill -9 -f "node.*/Users/ted/vivid/frontend" 2>/dev/null || true
 lsof -ti :3100 | xargs -r kill -9 2>/dev/null || true
-rm -rf /Users/ted/vivid/frontend/.next 2>/dev/null || true
 sleep 1
 
-# 2. 프론트엔드 시작 (Bun)
+# 2. 캐시 삭제 + 프론트엔드 시작 (Bun)
+rm -rf /Users/ted/vivid/frontend/.next 2>/dev/null || true
 cd /Users/ted/vivid/frontend && nohup bun run dev > /tmp/vivid-frontend.log 2>&1 &
 echo "Frontend starting... (PID: $!)"
 ```
@@ -95,7 +100,15 @@ echo "Logs: /tmp/vivid-backend.log, /tmp/vivid-frontend.log"
 ## 참고사항
 - 이 워크플로우는 `/Users/ted/vivid` 경로의 프로세스만 대상으로 합니다
 - Health Check 루프로 서버 시작 완료를 확실히 확인
-- `pkill` + `lsof`로 이중 종료 보장 (좀비 프로세스 방지)
+- Graceful shutdown: SIGTERM(2초 대기) → SIGKILL → lsof 포트 정리
 - Frontend는 **Bun** 사용 (`bun run dev`)
 - 로그 위치: `/tmp/vivid-backend.log`, `/tmp/vivid-frontend.log`
 - **Qdrant 없이도 서버 정상 동작** (RAG 기능만 비활성화됨)
+
+## 트러블슈팅
+| 증상 | 해결 |
+|------|------|
+| 포트 사용 중 | `lsof -ti :8100 \| xargs kill -9` |
+| venv 활성화 실패 | `cd backend && python3 -m venv venv` |
+| Frontend 빌드 에러 | `rm -rf .next node_modules && bun install` |
+| Docker 연결 실패 | `colima restart` |
