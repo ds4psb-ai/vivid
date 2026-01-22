@@ -7,7 +7,7 @@
  * 투자자 데모용 메인 페이지 하단에 사용됩니다.
  */
 
-import React from "react";
+import React, { useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
@@ -171,23 +171,25 @@ const CORE_APP_OVERRIDES: Record<
   },
 };
 
-const CORE_APPS: DimensionApp[] = CORE_APP_IDS.map((id) => {
-  const base = DIMENSION_ITEMS.find((item) => item.id === id);
-  const overrides = CORE_APP_OVERRIDES[id];
-  const icon = base ? DIMENSION_ICONS[base.iconName] ?? Sparkles : Sparkles;
+function buildCoreApps(): DimensionApp[] {
+  return CORE_APP_IDS.map((id) => {
+    const base = DIMENSION_ITEMS.find((item) => item.id === id);
+    const overrides = CORE_APP_OVERRIDES[id];
+    const icon = base ? DIMENSION_ICONS[base.iconName] ?? Sparkles : Sparkles;
 
-  return {
-    id,
-    href: base?.href ?? "/dimension",
-    icon,
-    badge: overrides.badge,
-    titleKo: overrides.titleKo,
-    titleEn: overrides.titleEn,
-    descKo: overrides.descKo,
-    descEn: overrides.descEn,
-    color: overrides.color,
-  };
-});
+    return {
+      id,
+      href: base?.href ?? "/dimension",
+      icon,
+      badge: overrides.badge,
+      titleKo: overrides.titleKo,
+      titleEn: overrides.titleEn,
+      descKo: overrides.descKo,
+      descEn: overrides.descEn,
+      color: overrides.color,
+    };
+  });
+}
 
 interface DimensionAppRailProps {
   /** 컴팩트 모드 (작은 크기) */
@@ -203,11 +205,12 @@ export function DimensionAppRail({
   const { language } = useLanguage();
   const ko = language === "ko";
 
-  const apps = CORE_APPS;
+  // 성능 최적화: CORE_APPS 메모화
+  const apps = useMemo(() => buildCoreApps(), []);
 
   return (
-    <section className="w-full">
-      <div className="mx-auto max-w-6xl px-6 py-10 space-y-6 rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(255,_255,_255,_0.08),_transparent_60%)] backdrop-blur-2xl shadow-2xl shadow-violet-500/10">
+    <section className="w-full" aria-labelledby="dimension-rail-title">
+      <div className="mx-auto max-w-6xl px-6 py-10 space-y-6 rounded-3xl border border-gray-200 dark:border-white/10 bg-gray-50/30 dark:bg-white/[0.02] backdrop-blur-sm">
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
             {showCore && (
@@ -216,7 +219,7 @@ export function DimensionAppRail({
                 {ko ? "핵심 도구" : "Core Tools"}
               </div>
             )}
-            <h3 className="text-2xl font-semibold text-[var(--fg-0)]">
+            <h3 id="dimension-rail-title" className="text-2xl font-semibold text-[var(--fg-0)]">
               {ko ? "차원 앱으로 시작하세요" : "Kick off with Dimension Apps"}
             </h3>
             <p className="text-sm text-[var(--fg-muted)] mt-1 leading-relaxed max-w-2xl">
@@ -227,20 +230,18 @@ export function DimensionAppRail({
           </div>
           <div className="flex items-center gap-4">
             <Link
-              href="/flow"
-              className="text-sm font-semibold text-violet-500 hover:text-violet-600 transition-colors"
+              href="/dimension"
+              className="text-sm font-semibold text-violet-500 hover:text-violet-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 rounded-sm"
+              aria-label={ko ? "모든 차원 앱 보기" : "View all dimension apps"}
             >
               {ko ? "전체 보기 →" : "View All →"}
             </Link>
-            {!compact && (
-              <span className="hidden md:inline text-sm text-[var(--fg-muted)]">
-                {ko ? "공간을 넓혀 보세요" : "Explore the workspace"}
-              </span>
-            )}
           </div>
         </div>
 
         <div
+          role="list"
+          aria-label={ko ? "핵심 차원 앱 목록" : "Core dimension apps list"}
           className={`grid gap-4 ${compact
             ? "grid-cols-3 sm:grid-cols-4"
             : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"
@@ -253,13 +254,15 @@ export function DimensionAppRail({
             return (
               <motion.div
                 key={app.id}
+                role="listitem"
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
               >
                 <Link
                   href={app.href}
-                  className={`group block relative overflow-hidden rounded-2xl border border-white/10 bg-white/30 px-4 py-5 text-center shadow-xl shadow-black/20 transition-all duration-200 hover:border-white/30 hover:bg-white/40`}
+                  aria-label={ko ? `${app.titleKo} - ${app.descKo}` : `${app.titleEn} - ${app.descEn}`}
+                  className="group block relative overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02] backdrop-blur-sm px-4 py-5 text-center transition-all duration-200 hover:bg-gray-100/80 dark:hover:bg-white/[0.04] hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
                 >
                   <div className="flex items-center justify-center">
                     <div className={`w-12 h-12 ${colors.bg} rounded-2xl flex items-center justify-center ${colors.bgHover} transition-colors duration-200`}>

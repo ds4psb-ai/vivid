@@ -1327,7 +1327,7 @@ export default function IPDetailClient({
                   {/* Dynamic Workflow Recommendation (P1 Enhancement) */}
                   <WorkflowRecommendationPanel
                     ipSlug={slug}
-                    ipGenre={ip?.genre}
+                    ipGenre={ip?.genre?.[0]}
                     language={language}
                   />
 
