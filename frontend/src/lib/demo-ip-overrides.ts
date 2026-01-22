@@ -23,9 +23,8 @@ export interface DemoWorkflow {
  * 콘텐츠 유형별 분류
  * - vertical-shortform: 세로 숏폼 웹드라마 (9:16)
  * - horizontal-anime-mv: 가로 애니메이션 MV (16:9)
- * - default: 일반 IP (기존 4개)
  */
-export type ContentType = "vertical-shortform" | "horizontal-anime-mv" | "default";
+export type ContentType = "vertical-shortform" | "horizontal-anime-mv";
 
 export interface DemoIPOverride {
   // 기본 정보
@@ -62,230 +61,6 @@ export interface DemoIPOverride {
  * slug를 key로 사용하여 빠른 조회 지원
  */
 export const DEMO_IP_OVERRIDES: Record<string, DemoIPOverride> = {
-  "moonlight-contract": {
-    slug: "moonlight-contract",
-    titleKo: "달빛 계약",
-    titleEn: "Moonlight Contract",
-    descKo: "재벌 3세와 계약 연애를 시작한 평범한 대학생의 이야기",
-    descEn: "A college student enters a contract relationship with a chaebol heir",
-    genre: "로맨스",
-    previewVideoUrl:
-      "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-    detailVideoUrl:
-      "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-    thumbnailUrl: "https://picsum.photos/seed/moonlight/400/600",
-    isHot: true,
-    viewCount: "2.3M",
-    workflows: [
-      {
-        id: "story-remix",
-        title: "Story Remix",
-        titleKo: "스토리 리믹스",
-        description: "Transform the story into different genres or styles",
-        descriptionKo: "이 스토리를 다른 장르나 스타일로 변환합니다",
-        icon: "BookOpen",
-        href: "/dimension/story-architect",
-        badge: "AI",
-      },
-      {
-        id: "visual-transform",
-        title: "Visual Transform",
-        titleKo: "비주얼 변환",
-        description: "Convert scenes to anime, webtoon, or other art styles",
-        descriptionKo: "장면을 애니메이션, 웹툰 등 다양한 아트 스타일로 변환",
-        icon: "Palette",
-        href: "/dimension/visual-realizer",
-        badge: "HOT",
-      },
-      {
-        id: "persona-analysis",
-        title: "Persona Deep Dive",
-        titleKo: "캐릭터 심리 분석",
-        description: "Explore character psychology and hidden motivations",
-        descriptionKo: "캐릭터의 심리와 숨겨진 동기를 탐구합니다",
-        icon: "Brain",
-        href: "/dimension/abyss",
-        badge: "NEW",
-      },
-      {
-        id: "style-guide",
-        title: "Style Guide",
-        titleKo: "스타일 가이드",
-        description: "Generate consistent visual style guidelines",
-        descriptionKo: "일관된 비주얼 스타일 가이드를 생성합니다",
-        icon: "Sparkles",
-        href: "/dimension/aesthetic",
-      },
-    ],
-  },
-
-  "office-nightmare": {
-    slug: "office-nightmare",
-    titleKo: "야근 지옥",
-    titleEn: "Office Nightmare",
-    descKo: "매일 야근하는 직장인이 갑자기 회사 대표가 되는 판타지",
-    descEn: "An overworked employee suddenly becomes the CEO",
-    genre: "코미디/판타지",
-    previewVideoUrl:
-      "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    detailVideoUrl:
-      "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    thumbnailUrl: "https://picsum.photos/seed/office/400/600",
-    isNew: true,
-    viewCount: "1.8M",
-    workflows: [
-      {
-        id: "story-branch",
-        title: "Story Branch",
-        titleKo: "스토리 분기",
-        description: "Create alternative story branches and endings",
-        descriptionKo: "대안적인 스토리 분기와 엔딩을 만듭니다",
-        icon: "GitBranch",
-        href: "/dimension/story-architect",
-        badge: "AI",
-      },
-      {
-        id: "webtoon-convert",
-        title: "Webtoon Style",
-        titleKo: "웹툰 스타일",
-        description: "Convert to Korean webtoon visual style",
-        descriptionKo: "한국 웹툰 비주얼 스타일로 변환합니다",
-        icon: "Image",
-        href: "/dimension/visual-realizer",
-      },
-      {
-        id: "character-deep",
-        title: "Character Analysis",
-        titleKo: "캐릭터 분석",
-        description: "Deep dive into character relationships",
-        descriptionKo: "캐릭터 관계를 심층 분석합니다",
-        icon: "Users",
-        href: "/dimension/abyss",
-      },
-      {
-        id: "prompt-craft",
-        title: "Prompt Craft",
-        titleKo: "프롬프트 연금술",
-        description: "Craft optimized prompts for content generation",
-        descriptionKo: "콘텐츠 생성을 위한 최적화된 프롬프트 작성",
-        icon: "Wand2",
-        href: "/dimension/prompt-alchemy",
-        badge: "PRO",
-      },
-    ],
-  },
-
-  "campus-fantasy": {
-    slug: "campus-fantasy",
-    titleKo: "캠퍼스 판타지",
-    titleEn: "Campus Fantasy",
-    descKo: "마법 대학교에 입학한 평범한 고등학생의 성장기",
-    descEn: "An ordinary high schooler enters a magic university",
-    genre: "판타지/학원",
-    previewVideoUrl:
-      "https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-    detailVideoUrl:
-      "https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-    thumbnailUrl: "https://picsum.photos/seed/campus/400/600",
-    viewCount: "980K",
-    workflows: [
-      {
-        id: "world-build",
-        title: "World Building",
-        titleKo: "세계관 구축",
-        description: "Expand the magical world and its rules",
-        descriptionKo: "마법 세계와 규칙을 확장합니다",
-        icon: "Globe",
-        href: "/dimension/story-architect",
-      },
-      {
-        id: "anime-style",
-        title: "Anime Style",
-        titleKo: "애니메이션 스타일",
-        description: "Convert to Japanese anime visual style",
-        descriptionKo: "일본 애니메이션 비주얼 스타일로 변환",
-        icon: "Clapperboard",
-        href: "/dimension/visual-realizer",
-        badge: "HOT",
-      },
-      {
-        id: "magic-system",
-        title: "Magic System",
-        titleKo: "마법 체계 분석",
-        description: "Analyze and expand the magic system",
-        descriptionKo: "마법 체계를 분석하고 확장합니다",
-        icon: "Sparkles",
-        href: "/dimension/abyss",
-      },
-      {
-        id: "video-teaser",
-        title: "Video Teaser",
-        titleKo: "티저 영상 제작",
-        description: "Create promotional video teasers",
-        descriptionKo: "프로모션 티저 영상을 제작합니다",
-        icon: "Video",
-        href: "/dimension/video-maker",
-        badge: "NEW",
-      },
-    ],
-  },
-
-  "delivery-hero": {
-    slug: "delivery-hero",
-    titleKo: "배달의 히어로",
-    titleEn: "Delivery Hero",
-    descKo: "낮에는 배달 라이더, 밤에는 히어로로 활약하는 청년",
-    descEn: "By day a delivery rider, by night a hero",
-    genre: "액션/히어로",
-    previewVideoUrl:
-      "https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
-    detailVideoUrl:
-      "https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
-    thumbnailUrl: "https://picsum.photos/seed/hero/400/600",
-    isHot: true,
-    viewCount: "3.1M",
-    workflows: [
-      {
-        id: "action-sequence",
-        title: "Action Sequence",
-        titleKo: "액션 시퀀스",
-        description: "Design dynamic action sequences",
-        descriptionKo: "다이나믹한 액션 시퀀스를 디자인합니다",
-        icon: "Zap",
-        href: "/dimension/story-architect",
-        badge: "AI",
-      },
-      {
-        id: "comic-style",
-        title: "Comic Style",
-        titleKo: "코믹 스타일",
-        description: "Convert to American comic book style",
-        descriptionKo: "미국 코믹북 스타일로 변환합니다",
-        icon: "Layers",
-        href: "/dimension/visual-realizer",
-      },
-      {
-        id: "hero-psychology",
-        title: "Hero Psychology",
-        titleKo: "히어로 심리학",
-        description: "Explore the hero's dual identity psychology",
-        descriptionKo: "히어로의 이중 정체성 심리를 탐구합니다",
-        icon: "Heart",
-        href: "/dimension/abyss",
-        badge: "DEEP",
-      },
-      {
-        id: "aesthetic-guide",
-        title: "Aesthetic Guide",
-        titleKo: "미학 가이드",
-        description: "Create visual aesthetic guidelines for the IP",
-        descriptionKo: "IP를 위한 비주얼 미학 가이드를 만듭니다",
-        icon: "Palette",
-        href: "/dimension/aesthetic",
-      },
-    ],
-  },
-
   // ============================================================================
   // Rail 1: 세로 숏폼 웹드라마 (9:16)
   // ============================================================================
@@ -451,7 +226,7 @@ export const DEMO_IP_LIST = Object.values(DEMO_IP_OVERRIDES);
  * 콘텐츠 유형별 IP 필터링
  */
 export function getIPsByContentType(contentType: ContentType): DemoIPOverride[] {
-  return DEMO_IP_LIST.filter((ip) => (ip.contentType || "default") === contentType);
+  return DEMO_IP_LIST.filter((ip) => ip.contentType === contentType);
 }
 
 /**
@@ -463,11 +238,6 @@ export const VERTICAL_SHORTFORM_IPS = getIPsByContentType("vertical-shortform");
  * Rail 2: 가로 애니 뮤비 (16:9)
  */
 export const HORIZONTAL_ANIME_MV_IPS = getIPsByContentType("horizontal-anime-mv");
-
-/**
- * 기본 IP (기존 4개)
- */
-export const DEFAULT_IPS = getIPsByContentType("default");
 
 /**
  * slug로 데모 IP 오버라이드 조회

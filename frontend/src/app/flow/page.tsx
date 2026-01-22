@@ -332,7 +332,6 @@ function FlowPageContent() {
                 }
 
                 setLoadedTemplate(template);
-                console.log("[Flow] Loaded template:", template.title);
             } catch (err) {
                 const errorMessage = err instanceof Error ? err.message : "템플릿 로드 실패";
                 console.error("[Flow] Failed to load template:", err);
@@ -360,8 +359,6 @@ function FlowPageContent() {
 
         const toolSequence = loadedTemplate.tool_sequence || loadedTemplate.dimension_sequence;
         if (!toolSequence || toolSequence.length === 0) return;
-
-        console.log("[Flow] Applying template:", loadedTemplate.title, "with sequence:", toolSequence);
 
         // Clear existing cars
         workflowRef.current.clearCars();
@@ -493,7 +490,6 @@ function FlowPageContent() {
         setTemplateApplied(true);
         setAppliedTemplateSequence(appliedSequence);
         setTemplateSkippedDimensions(skippedSequence);
-        console.log(`[Flow] Applied ${toolSequence.length} cars from template with dimension-specific presets`);
     }, [loadedTemplate, templateApplied, toolsById, isConfigLoading, getToolInfoFromDimension, dimensionToToolId]);
 
     // Track agent-created cars for updating status
@@ -532,7 +528,6 @@ function FlowPageContent() {
 
     // Handle phase click from sidebar
     const handlePhaseClick = useCallback((phase: WorkflowPhase) => {
-        console.log("[Flow] Phase clicked:", phase);
         // If idle and valid start phase, start the workflow
         if (workflowState.matches("idle")) {
             const phaseMap: Record<string, "START_4D" | "START_STORY" | "START_1D" | null> = {
@@ -614,7 +609,6 @@ function FlowPageContent() {
                 category: "user_created",
             });
 
-            console.log("[Flow] Template saved:", response);
             setSavedTemplateId(response.id);  // 🆕 Store for singularity link
             setTemplateSaveSuccess(true);
             setTemplateSaveError(null);
@@ -682,8 +676,6 @@ function FlowPageContent() {
     }, []);
 
     const handleWorkflowStart = useCallback((data: WorkflowStartEvent) => {
-        console.log("[Flow] Workflow started:", data);
-
         // Defensive: validate data
         if (!data || typeof data !== 'object') {
             console.warn('[Flow] Invalid workflow start data');
@@ -695,8 +687,6 @@ function FlowPageContent() {
 
     // Handle workflow structure created (from create_workflow tool)
     const handleWorkflowCreated = useCallback((data: WorkflowCreatedEvent) => {
-        console.log("[Flow] Workflow created:", data);
-
         // Defensive: validate data
         if (!data || typeof data !== 'object' || !Array.isArray(data.nodes)) {
             console.warn('[Flow] Invalid workflow created data');
@@ -731,13 +721,9 @@ function FlowPageContent() {
                 carIdMapRef.current.set(idx, carId);
             }
         });
-
-        console.log(`[Flow] Created ${data.nodes.length} cars from workflow structure`);
     }, [clearWorkflowState, getToolInfoFromAgentTool]);
 
     const handleWorkflowStep = useCallback((event: WorkflowStepEvent) => {
-        console.log("[Flow] Workflow step:", event);
-
         if (!workflowRef.current) return;
 
         const toolInfo = getToolInfoFromAgentTool(event.tool_name) || {
@@ -786,7 +772,6 @@ function FlowPageContent() {
     }, [getToolInfoFromAgentTool]);
 
     const handleWorkflowComplete = useCallback((data: { total_credits: number; success_count: number }) => {
-        console.log("[Flow] Workflow completed:", data);
         // Show results panel if there are results
         if (data.success_count > 0) {
             setShowResults(true);
@@ -800,8 +785,6 @@ function FlowPageContent() {
         output: Record<string, unknown>;
         arguments?: Record<string, unknown>;  // 🔧 Fixed: matches AgentChatAccordion
     }) => {
-        console.log("[Flow] Tool result:", result);
-
         // Defensive: validate result
         if (!result || typeof result !== 'object') {
             console.warn('[Flow] Invalid tool result');
@@ -1262,8 +1245,8 @@ function FlowPageContent() {
                                         <WorkflowCanvas
                                             activePhase={currentPhase}
                                             chainData={workflowState.context.chainData}
-                                            onNodeClick={(phase) => {
-                                                console.log("[Flow] Node clicked:", phase);
+                                            onNodeClick={() => {
+                                                // Node click handler - can be extended for interactivity
                                             }}
                                             onStartSelect={(phase) => {
                                                 const eventMap: Record<WorkflowPhase, "START_4D" | "START_STORY" | "START_1D" | null> = {
@@ -1294,8 +1277,8 @@ function FlowPageContent() {
                             <div className="overflow-hidden p-6 sm:p-8">
                                 <TrainWorkflowView
                                     ref={workflowRef}
-                                    onComplete={(results) => {
-                                        console.log("Workflow completed:", results);
+                                    onComplete={() => {
+                                        // Workflow completion handler
                                     }}
                                 />
                             </div>

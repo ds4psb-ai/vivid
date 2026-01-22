@@ -364,7 +364,7 @@ export default function IPDetailClient({
   }, [demoOverride]);
 
   // 콘텐츠 유형 가져오기 (hooks 이후에 파생 값 계산)
-  const contentType: ContentType = demoOverride?.contentType || "default";
+  const contentType = demoOverride?.contentType;
   const isComplexWorkflow = contentType === "horizontal-anime-mv";
   const isVerticalShortform = contentType === "vertical-shortform";
 
