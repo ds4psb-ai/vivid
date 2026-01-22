@@ -187,9 +187,7 @@ export default function BYOKSettingsModal({ isOpen, onClose }: BYOKSettingsModal
                             </svg>
                         </a>
                         <a
-                            href="/settings"
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            href="/api-key-guide"
                             className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-emerald-500/10 to-teal-500/5 hover:from-emerald-500/15 hover:to-teal-500/10 rounded-xl border border-emerald-500/20 hover:border-emerald-500/30 transition-all group"
                         >
                             <div className="flex items-center gap-3">
