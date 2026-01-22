@@ -5,9 +5,14 @@ Security Note (H1.4b):
 - Includes RLS context support via ContextVar
 - Use get_db_with_rls() for tenant-isolated queries
 - TenantMiddleware sets the current_tenant ContextVar
+
+Security Note (H2.2):
+- SSL connection is configurable via DB_SSL_MODE setting
+- Production should use "require" or "verify-full"
 """
+import ssl
 from contextvars import ContextVar
-from typing import Optional, AsyncGenerator
+from typing import Optional, AsyncGenerator, Any
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
@@ -18,6 +23,53 @@ from app.config import settings
 # H1.4b: ContextVar for current tenant (set by TenantMiddleware)
 current_tenant: ContextVar[Optional[str]] = ContextVar("current_tenant", default=None)
 
+
+def _build_ssl_context() -> Any:
+    """Build SSL context based on DB_SSL_MODE setting.
+
+    H2.2: Database SSL Security
+    - disable: No SSL
+    - allow/prefer: SSL optional (development)
+    - require: SSL mandatory (production baseline)
+    - verify-ca/verify-full: SSL + certificate verification (highest security)
+    """
+    ssl_mode = settings.DB_SSL_MODE.lower()
+
+    if ssl_mode == "disable":
+        return None
+
+    if ssl_mode in {"allow", "prefer"}:
+        # SSL optional - asyncpg handles this mode
+        return ssl_mode
+
+    if ssl_mode == "require":
+        # SSL required but no cert verification
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        return ctx
+
+    if ssl_mode in {"verify-ca", "verify-full"}:
+        # SSL with certificate verification
+        ctx = ssl.create_default_context()
+        if ssl_mode == "verify-full":
+            ctx.check_hostname = True
+        else:
+            ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_REQUIRED
+        return ctx
+
+    # Default to prefer for unknown modes
+    return "prefer"
+
+
+# H2.2: Build connect_args with SSL configuration
+_connect_args: dict[str, Any] = {}
+_ssl_context = _build_ssl_context()
+if _ssl_context is not None:
+    _connect_args["ssl"] = _ssl_context
+
+
 engine = create_async_engine(
     settings.DATABASE_URL,
     pool_pre_ping=True,
@@ -27,6 +79,8 @@ engine = create_async_engine(
     max_overflow=20,        # Allow up to 20 extra connections during peak
     pool_recycle=1800,      # Recycle connections after 30 minutes (prevent stale)
     pool_timeout=30,        # Wait max 30s for available connection
+    # H2.2: SSL connection configuration
+    connect_args=_connect_args,
 )
 
 AsyncSessionLocal = async_sessionmaker(

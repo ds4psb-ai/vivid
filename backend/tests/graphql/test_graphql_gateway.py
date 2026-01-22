@@ -151,6 +151,16 @@ class TestGraphQLTypes:
 class TestGraphQLContext:
     """Tests for GraphQL context."""
 
+    @pytest.fixture(autouse=True)
+    def enable_dev_auth_bypass(self):
+        """H2.1: Enable dev auth bypass for tests."""
+        with patch("app.auth.settings") as mock_settings:
+            mock_settings.ENABLE_DEV_AUTH_BYPASS = True
+            mock_settings.ENVIRONMENT = "development"
+            mock_settings.SESSION_COOKIE_NAME = "crebit_session"
+            mock_settings.SESSION_SECRET.get_secret_value.return_value = ""
+            yield mock_settings
+
     @pytest.fixture
     def mock_request(self):
         """Create mock request."""
@@ -178,7 +188,11 @@ class TestGraphQLContext:
     @pytest.mark.asyncio
     async def test_context_with_auth(self, mock_request, mock_response):
         """Test context creation with authentication."""
-        mock_request.headers = {"Authorization": "Bearer user-123"}
+        # H2.1: Use X-User-Id header for dev bypass authentication
+        mock_request.headers = {
+            "Authorization": "Bearer user-123",
+            "X-User-Id": "user-123",
+        }
 
         context = await get_graphql_context(mock_request, mock_response)
 
@@ -188,12 +202,16 @@ class TestGraphQLContext:
     @pytest.mark.asyncio
     async def test_context_with_admin(self, mock_request, mock_response):
         """Test context creation with admin access."""
+        # H2.1: Use X-User-Id and X-Admin-Mode headers for dev bypass
         mock_request.headers = {
             "Authorization": "Bearer admin-user",
-            "X-Admin-Access": "true",
+            "X-User-Id": "admin-user",
+            "X-Admin-Mode": "true",
         }
 
-        context = await get_graphql_context(mock_request, mock_response)
+        # Patch get_is_admin to return True for this test
+        with patch("app.graphql.context.get_is_admin", new_callable=AsyncMock, return_value=True):
+            context = await get_graphql_context(mock_request, mock_response)
 
         assert context.is_authenticated is True
         assert context.is_admin is True

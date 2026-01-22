@@ -108,7 +108,7 @@ export function generateOrderId(prefix: string = 'CREBIT'): string {
  * Crebit ATC payment constants
  */
 export const CREBIT_PAYMENT = {
-    AMOUNT: 340000,  // 34만원
+    AMOUNT: 240000,  // 24만원
     GOODS_NAME: 'Crebit ATC 1기 수강권',
-    EARLY_BIRD_AMOUNT: 340000,
+    EARLY_BIRD_AMOUNT: 240000,
 } as const;

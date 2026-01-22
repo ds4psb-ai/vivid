@@ -22,12 +22,21 @@ class Settings(BaseSettings):
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: int = 5433
 
+    # H2.2: Database SSL Configuration
+    # - disable: No SSL (local development only)
+    # - allow: Try SSL, fallback to non-SSL
+    # - prefer: Try SSL first (default for development)
+    # - require: SSL required (recommended for production)
+    # - verify-ca: SSL required + verify server certificate
+    # - verify-full: SSL required + verify cert + hostname
+    DB_SSL_MODE: str = "prefer"  # Set to "require" or "verify-full" for production
+
     # CORS Configuration
     # Development: localhost origins are default (http://localhost:3000 for Next.js dev)
     # Production: Set CORS_ORIGINS env var to your production domains (comma-separated)
     # Example: CORS_ORIGINS=https://crebit.app,https://www.crebit.app
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:3100,http://127.0.0.1:3100"
-    CORS_PRODUCTION_ORIGINS: str = "https://crebit.app,https://www.crebit.app,https://api.crebit.app,https://shorti.ai,https://www.shorti.ai,https://vivid-frontend.vercel.app"
+    CORS_PRODUCTION_ORIGINS: str = "https://crebit.app,https://www.crebit.app,https://api.crebit.app,https://vivid-frontend.vercel.app"
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_MAX_AGE: int = 600  # Preflight cache time in seconds (10 minutes)
     
@@ -262,6 +271,13 @@ class Settings(BaseSettings):
     SECURITY_SUSPICIOUS_DETECTION: bool = True
     SECURITY_MAX_BODY_SIZE: int = 10485760  # 10MB max request body
 
+    # H2.1: Dev Auth Bypass Feature Flag
+    # Controls X-User-Id and X-Admin-Mode header bypass in development
+    # Default: True for development, False for production
+    # This allows X-User-Id header auth in local development
+    # IMPORTANT: Set to False explicitly in production .env
+    ENABLE_DEV_AUTH_BYPASS: bool = True
+
     # ==========================================================================
     # MCP (Model Context Protocol) Configuration - Phase 4 2026
     # ==========================================================================
@@ -408,6 +424,10 @@ class Settings(BaseSettings):
             # Check for sandbox payment in production
             if self.NICEPAY_MODE == "sandbox":
                 errors.append("NICEPAY_MODE is 'sandbox' - switch to 'production' for live payments")
+
+            # H2.1: Dev auth bypass must be disabled in production
+            if self.ENABLE_DEV_AUTH_BYPASS:
+                errors.append("ENABLE_DEV_AUTH_BYPASS is True - must be False in production")
         
         if errors:
             raise ValueError(

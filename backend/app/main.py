@@ -224,6 +224,8 @@ CORS_ALLOWED_HEADERS = [
     "X-Request-ID",
     "X-CSRF-Token",
     "X-API-Key",
+    "X-User-Id",        # H2.1: Dev auth bypass header
+    "X-Admin-Mode",     # H2.1: Dev admin bypass header
     "Accept",
     "Accept-Language",
     "Cache-Control",

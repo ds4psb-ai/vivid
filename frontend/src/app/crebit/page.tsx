@@ -785,7 +785,7 @@ export default function AIVideoWorkflowMasterPage() {
                 {/* ==================== FREE CREDITS BANNER ==================== */}
                 <section className="py-12 lg:py-16 relative z-10 px-6 lg:px-[--base-padding-x]">
                     <Link
-                        href="/api-key-guide"
+                        href="/settings"
                         className="block max-w-4xl mx-auto group"
                     >
                         <div className="relative overflow-hidden rounded-2xl border border-emerald-500/30
@@ -864,7 +864,7 @@ export default function AIVideoWorkflowMasterPage() {
                             <p>© 2026 AI Video Master. All rights reserved.</p>
                             <nav className="flex gap-6" aria-label="Footer navigation">
                                 <Link
-                                    href="/api-key-guide"
+                                    href="/settings"
                                     className="hover:text-emerald-400 transition-colors font-medium text-emerald-500"
                                 >
                                     💰 $300 무료 크레딧

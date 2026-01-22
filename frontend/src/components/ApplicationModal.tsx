@@ -118,7 +118,7 @@ export default function ApplicationModal({ isOpen, onClose }: ApplicationModalPr
                             <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-6 py-4">
                                 <div>
                                     <h2 className="text-lg font-bold text-[var(--fg-0)]">Crebit ATC 1기 신청</h2>
-                                    <p className="text-sm text-[var(--fg-muted)]">얼리버드 특가 34만원</p>
+                                    <p className="text-sm text-[var(--fg-muted)]">얼리버드 특가 24만원</p>
                                 </div>
                                 <button
                                     onClick={onClose}

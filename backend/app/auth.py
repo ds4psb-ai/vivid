@@ -27,8 +27,12 @@ async def get_user_id(
     payload = _get_session_payload(request)
     if payload and isinstance(payload.get("user_id"), str):
         return payload["user_id"]
-    # X-User-Id header fallback only in development environments
-    if settings.ENVIRONMENT.lower() in {"development", "dev", "local"}:
+    # H2.1: X-User-Id header fallback requires explicit feature flag
+    # Both conditions must be met: dev environment AND ENABLE_DEV_AUTH_BYPASS=true
+    if (
+        settings.ENABLE_DEV_AUTH_BYPASS
+        and settings.ENVIRONMENT.lower() in {"development", "dev", "local"}
+    ):
         return x_user_id
     return None
 
@@ -61,7 +65,11 @@ async def get_is_admin(
         role = payload.get("role")
         if isinstance(role, str) and role.lower() in {"admin", "master"}:
             return True
-    if settings.ENVIRONMENT.lower() in {"production", "prod"}:
+    # H2.1: X-Admin-Mode header bypass requires explicit feature flag
+    # Both conditions must be met: dev environment AND ENABLE_DEV_AUTH_BYPASS=true
+    if not settings.ENABLE_DEV_AUTH_BYPASS:
+        return False
+    if settings.ENVIRONMENT.lower() in {"production", "prod", "staging"}:
         return False
     if x_admin_mode is None:
         return False

@@ -279,6 +279,7 @@ export default function CollapsibleSidebar({ defaultExpanded = false }: Collapsi
         { label: "숏폼", href: "/shortform", icon: Sparkles, badge: "9:16" },
         { label: "애니 MV", href: "/anime-mv", icon: Orbit, badge: "16:9" },
         { label: "차원 플로우", href: "/flow", icon: Waypoints },
+        { label: "크레빗 아카데미", href: "/crebit", icon: FlaskConical, badge: "Hot" },
     ];
 
     const QUICK_ACTIONS: { label: string; href: string; icon: React.ElementType }[] = [];

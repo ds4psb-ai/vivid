@@ -15,6 +15,39 @@ from uuid import uuid4
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
+# H1.3: Sensitive query parameter keys to mask in logs
+SENSITIVE_PARAM_KEYS = frozenset({
+    "api_key", "apikey", "api-key",
+    "token", "access_token", "refresh_token", "auth_token",
+    "secret", "secret_key",
+    "password", "passwd", "pwd",
+    "auth", "authorization",
+    "key", "private_key",
+    "credential", "credentials",
+    "session_id", "session",
+    "bearer",
+})
+
+
+def mask_sensitive_params(query_params) -> str:
+    """Mask sensitive query parameters for safe logging.
+
+    H1.3: Prevents PII/secrets from appearing in logs.
+    """
+    if not query_params:
+        return ""
+
+    masked_parts = []
+    for key, value in query_params.items():
+        key_lower = key.lower()
+        if key_lower in SENSITIVE_PARAM_KEYS or any(s in key_lower for s in ("key", "token", "secret", "pass", "auth")):
+            masked_parts.append(f"{key}=***MASKED***")
+        else:
+            masked_parts.append(f"{key}={value}")
+
+    return "&".join(masked_parts)
+
+
 # Context variables for request tracking
 request_id_ctx: ContextVar[str] = ContextVar("request_id", default="")
 user_id_ctx: ContextVar[str] = ContextVar("user_id", default="")
@@ -93,14 +126,14 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         # Get logger
         logger = get_logger("http")
         
-        # Log request
+        # Log request (H1.3: mask sensitive query params)
         logger.info(
             f"{request.method} {request.url.path}",
             extra={
                 "type": "request",
                 "method": request.method,
                 "path": request.url.path,
-                "query": str(request.query_params),
+                "query": mask_sensitive_params(request.query_params),
             }
         )
         
