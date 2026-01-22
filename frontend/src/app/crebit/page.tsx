@@ -182,9 +182,9 @@ const SOCIAL_PROOF = {
     totalStudents: 127,
     recentViews: 23,
     price: {
-        original: 890000,
-        discounted: 490000,
-        discountPercent: 45,
+        original: 490000,
+        discounted: 240000,
+        discountPercent: 51,
     },
     badges: ["입문~중급", "4주 완성", "한국어"],
 };
