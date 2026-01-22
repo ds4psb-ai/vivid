@@ -206,87 +206,88 @@ export function DimensionAppRail({
   const apps = CORE_APPS;
 
   return (
-    <div className="w-full">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-violet-500" />
-          <h3 className="text-lg font-semibold text-[var(--fg-0)]">
-            {ko ? "차원 앱" : "Dimension Apps"}
-          </h3>
-        </div>
-        <div className="flex items-center gap-3">
-          {showCore && (
-            <span className="text-sm text-[var(--fg-muted)]">
-              {ko ? "핵심 도구" : "Core Tools"}
-            </span>
-          )}
-          <Link
-            href="/flow"
-            className="text-sm text-violet-500 hover:text-violet-600 transition-colors"
-          >
-            {ko ? "전체 보기 →" : "View All →"}
-          </Link>
-        </div>
-      </div>
-
-      {/* App Grid */}
-      <div
-        className={`grid gap-3 ${compact
-          ? "grid-cols-3 md:grid-cols-6"
-          : "grid-cols-2 md:grid-cols-3 lg:grid-cols-6"
-          }`}
-      >
-        {apps.map((app, index) => {
-          const Icon = app.icon;
-          const colors = COLOR_CLASSES[app.color as ColorKey];
-
-          return (
-            <motion.div
-              key={app.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
+    <section className="w-full">
+      <div className="mx-auto max-w-6xl px-6 py-10 space-y-6 rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(255,_255,_255,_0.08),_transparent_60%)] backdrop-blur-2xl shadow-2xl shadow-violet-500/10">
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            {showCore && (
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--fg-muted)]">
+                <Sparkles className="w-4 h-4 text-violet-400" />
+                {ko ? "핵심 도구" : "Core Tools"}
+              </div>
+            )}
+            <h3 className="text-2xl font-semibold text-[var(--fg-0)]">
+              {ko ? "차원 앱으로 시작하세요" : "Kick off with Dimension Apps"}
+            </h3>
+            <p className="text-sm text-[var(--fg-muted)] mt-1 leading-relaxed max-w-2xl">
+              {ko
+                ? "Flow를 미리 보기 전에 주요 차원 앱을 간결한 카드로 확인하세요. 아이콘, 배지, 설명이 한눈에 들어옵니다."
+                : "Preview the key dimension tools in a focused rail before entering the Flow. Icons, badges, and descriptions stay concise."}
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/flow"
+              className="text-sm font-semibold text-violet-500 hover:text-violet-600 transition-colors"
             >
-              <Link
-                href={app.href}
-                className={`group block p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/30 ${colors.border} hover:bg-opacity-50 transition-all`}
+              {ko ? "전체 보기 →" : "View All →"}
+            </Link>
+            {!compact && (
+              <span className="hidden md:inline text-sm text-[var(--fg-muted)]">
+                {ko ? "공간을 넓혀 보세요" : "Explore the workspace"}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div
+          className={`grid gap-4 ${compact
+            ? "grid-cols-3 sm:grid-cols-4"
+            : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"
+            }`}
+        >
+          {apps.map((app, index) => {
+            const Icon = app.icon;
+            const colors = COLOR_CLASSES[app.color as ColorKey];
+
+            return (
+              <motion.div
+                key={app.id}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
               >
-                <div className="flex flex-col items-center text-center gap-2">
-                  {/* Icon with Badge */}
-                  <div className="relative">
-                    <div
-                      className={`w-10 h-10 rounded-lg ${colors.bg} flex items-center justify-center ${colors.bgHover} transition-colors`}
-                    >
-                      <Icon className={`w-5 h-5 ${colors.text}`} />
+                <Link
+                  href={app.href}
+                  className={`group block relative overflow-hidden rounded-2xl border border-white/10 bg-white/30 px-4 py-5 text-center shadow-xl shadow-black/20 transition-all duration-200 hover:border-white/30 hover:bg-white/40`}
+                >
+                  <div className="flex items-center justify-center">
+                    <div className={`w-12 h-12 ${colors.bg} rounded-2xl flex items-center justify-center ${colors.bgHover} transition-colors duration-200`}>
+                      <Icon className={`w-6 h-6 ${colors.text}`} />
                     </div>
+                  </div>
+                  <div className="mt-4 space-y-1">
                     <span
-                      className={`absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full ${colors.badge} text-white text-[8px] font-bold`}
+                      className={`inline-flex items-center justify-center rounded-full px-3 py-0.5 text-[10px] font-semibold tracking-wide text-white ${colors.badge}`}
                     >
                       {app.badge}
                     </span>
-                  </div>
-
-                  {/* Title */}
-                  <div>
-                    <p
-                      className={`text-xs font-medium text-[var(--fg-0)] ${colors.textHover} transition-colors line-clamp-1`}
-                    >
+                    <p className="text-sm font-semibold text-[var(--fg-0)] tracking-tight">
                       {ko ? app.titleKo : app.titleEn}
                     </p>
                     {!compact && (
-                      <p className="text-[10px] text-[var(--fg-muted)] mt-0.5 line-clamp-1">
+                      <p className="text-xs text-[var(--fg-muted)] leading-snug">
                         {ko ? app.descKo : app.descEn}
                       </p>
                     )}
                   </div>
-                </div>
-              </Link>
-            </motion.div>
-          );
-        })}
+                </Link>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </section>
   );
 }
 
