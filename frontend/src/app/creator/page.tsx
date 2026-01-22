@@ -17,52 +17,15 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { cn } from "@/lib/utils";
+import { StatCard, type StatTone } from "@/components/shared/StatCard";
+import type { LucideIcon } from "lucide-react";
 
-interface StatCardProps {
+interface StripeStatConfig {
   label: string;
   value: string;
   helper: string;
-  icon: React.ElementType;
-  tone?: "info" | "success" | "warning" | "neutral";
-}
-
-function StatCard({ label, value, helper, icon: Icon, tone = "neutral" }: StatCardProps) {
-  const toneStyles = {
-    info: "bg-violet-500/10 text-violet-400",
-    success: "bg-emerald-500/10 text-emerald-400",
-    warning: "bg-amber-500/10 text-amber-400",
-    neutral: "bg-slate-500/10 text-slate-300",
-  };
-  const toneStripe = {
-    info: "bg-violet-500/60",
-    success: "bg-emerald-500/60",
-    warning: "bg-amber-500/60",
-    neutral: "bg-slate-500/40",
-  };
-
-  return (
-    <Card className="border border-white/5 bg-[var(--surface-1)]/70 overflow-hidden">
-      <div className={cn("h-1 w-full", toneStripe[tone])} />
-      <CardContent className="pt-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center", toneStyles[tone])}>
-              <Icon className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-xs text-[var(--fg-muted)]">{label}</p>
-              <p className="text-xl font-semibold text-[var(--fg-0)]">{value}</p>
-            </div>
-          </div>
-          <Badge variant="outline" className="text-xs">
-            BETA
-          </Badge>
-        </div>
-        <p className="mt-3 text-xs text-[var(--fg-subtle)]">{helper}</p>
-      </CardContent>
-    </Card>
-  );
+  icon: LucideIcon;
+  tone: StatTone;
 }
 
 export default function CreatorHubPage() {
@@ -143,7 +106,7 @@ export default function CreatorHubPage() {
     };
   }, [language]);
 
-  const stats: StatCardProps[] = [
+  const stats: StripeStatConfig[] = [
     {
       label: copy.cards.approvals,
       value: "—",
@@ -201,7 +164,7 @@ export default function CreatorHubPage() {
           <div className="text-sm font-semibold text-[var(--fg-0)]">{copy.summary}</div>
           <div className="grid gap-4 md:grid-cols-3">
             {stats.map((stat) => (
-              <StatCard key={stat.label} {...stat} />
+              <StatCard key={stat.label} variant="stripe" {...stat} />
             ))}
           </div>
         </div>

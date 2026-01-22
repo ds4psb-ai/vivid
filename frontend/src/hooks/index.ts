@@ -19,3 +19,11 @@ export type {
   EngagementScore,
   TopTool,
 } from "./useAnalyticsDashboard";
+
+export {
+  useCardMotion,
+  CARD_HOVER_TRANSITION,
+  CARD_HOVER_STATE,
+  CARD_MOTION_PROPS,
+} from "./useCardMotion";
+export type { CardMotionPreset, CardMotionConfig, CardMotionResult } from "./useCardMotion";

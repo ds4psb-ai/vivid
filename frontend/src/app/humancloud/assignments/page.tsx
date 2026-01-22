@@ -17,16 +17,18 @@ import {
     ChevronRight,
     Clock,
     DollarSign,
-    CheckCircle,
-    Play,
-    Send,
-    FileCheck,
     Filter,
 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { fetchWithAuth } from "@/lib/api-client";
+import {
+    getAssignmentStatus,
+    getStatusLabel,
+    ASSIGNMENT_STATUS_FILTERS,
+} from "@/lib/status-config";
+import { CARD_MOTION_PROPS } from "@/hooks/useCardMotion";
 
 interface Assignment {
     id: string;
@@ -39,26 +41,8 @@ interface Assignment {
     created_at: string;
 }
 
-const STATUS_CONFIG: Record<string, { color: string; bgColor: string; icon: React.ElementType; label: string; labelKo: string }> = {
-    pending: { color: "text-yellow-400", bgColor: "bg-yellow-500/10", icon: Clock, label: "Pending", labelKo: "대기중" },
-    accepted: { color: "text-blue-400", bgColor: "bg-blue-500/10", icon: CheckCircle, label: "Accepted", labelKo: "수락됨" },
-    in_progress: { color: "text-purple-400", bgColor: "bg-purple-500/10", icon: Play, label: "In Progress", labelKo: "진행중" },
-    delivered: { color: "text-emerald-400", bgColor: "bg-emerald-500/10", icon: Send, label: "Delivered", labelKo: "납품됨" },
-    completed: { color: "text-emerald-400", bgColor: "bg-emerald-500/10", icon: FileCheck, label: "Completed", labelKo: "완료" },
-    rejected: { color: "text-red-400", bgColor: "bg-red-500/10", icon: AlertTriangle, label: "Rejected", labelKo: "거절됨" },
-};
-
-const STATUS_FILTERS = [
-    { value: "", label: "All", labelKo: "전체" },
-    { value: "pending", label: "Pending", labelKo: "대기중" },
-    { value: "accepted", label: "Accepted", labelKo: "수락됨" },
-    { value: "in_progress", label: "In Progress", labelKo: "진행중" },
-    { value: "delivered", label: "Delivered", labelKo: "납품됨" },
-    { value: "completed", label: "Completed", labelKo: "완료" },
-];
-
 function AssignmentCard({ assignment, onClick, language }: { assignment: Assignment; onClick: () => void; language: string }) {
-    const config = STATUS_CONFIG[assignment.status] || STATUS_CONFIG.pending;
+    const config = getAssignmentStatus(assignment.status);
     const StatusIcon = config.icon;
     const now = useMemo(() => new Date(), []);
     const daysLeft = assignment.agreed_deadline
@@ -68,8 +52,7 @@ function AssignmentCard({ assignment, onClick, language }: { assignment: Assignm
     return (
         <motion.div
             onClick={onClick}
-            whileHover={{ y: -3, scale: 1.01 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            {...CARD_MOTION_PROPS}
             className="group card-glass card-glass-hover p-5 cursor-pointer"
         >
             <div className="flex items-start justify-between mb-3">
@@ -78,7 +61,7 @@ function AssignmentCard({ assignment, onClick, language }: { assignment: Assignm
                 </h3>
                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-full whitespace-nowrap ${config.bgColor} ${config.color}`}>
                     <StatusIcon className="w-3 h-3" />
-                    {language === "ko" ? config.labelKo : config.label}
+                    {getStatusLabel(config, language)}
                 </span>
             </div>
 
@@ -190,7 +173,7 @@ export default function AssignmentsPage() {
                     {/* Status Filter */}
                     <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
                         <Filter className="w-4 h-4 text-slate-500 flex-shrink-0" />
-                        {STATUS_FILTERS.map((f) => (
+                        {ASSIGNMENT_STATUS_FILTERS.map((f) => (
                             <button
                                 key={f.value}
                                 onClick={() => setStatusFilter(f.value)}

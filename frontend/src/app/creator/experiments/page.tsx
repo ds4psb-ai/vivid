@@ -21,44 +21,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
+import { StatCard, type StatTone } from "@/components/shared/StatCard";
+import type { LucideIcon } from "lucide-react";
 
-interface StatCardProps {
+interface DashboardStatConfig {
   title: string;
   value: string;
   helper: string;
-  icon: React.ElementType;
-  tone?: "success" | "warning" | "neutral" | "info";
-}
-
-function StatCard({ title, value, helper, icon: Icon, tone = "neutral" }: StatCardProps) {
-  const toneStyles = {
-    success: "bg-emerald-500/10 text-emerald-400",
-    warning: "bg-amber-500/10 text-amber-400",
-    neutral: "bg-slate-500/10 text-slate-300",
-    info: "bg-violet-500/10 text-violet-400",
-  };
-
-  return (
-    <Card className="border border-white/5 bg-[var(--surface-1)]/70">
-      <CardContent className="pt-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center", toneStyles[tone])}>
-              <Icon className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-xs text-[var(--fg-muted)]">{title}</p>
-              <p className="text-xl font-semibold text-[var(--fg-0)]">{value}</p>
-            </div>
-          </div>
-          <Badge variant="outline" className="text-xs">
-            BETA
-          </Badge>
-        </div>
-        <p className="mt-3 text-xs text-[var(--fg-subtle)]">{helper}</p>
-      </CardContent>
-    </Card>
-  );
+  icon: LucideIcon;
+  tone: StatTone;
 }
 
 export default function CreatorExperimentsPage() {
@@ -189,7 +160,7 @@ export default function CreatorExperimentsPage() {
     };
   }, [language]);
 
-  const stats: StatCardProps[] = [
+  const stats: DashboardStatConfig[] = [
     {
       title: copy.cards.active,
       value: "—",
@@ -244,7 +215,7 @@ export default function CreatorExperimentsPage() {
           </div>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {stats.map((stat) => (
-              <StatCard key={stat.title} {...stat} />
+              <StatCard key={stat.title} variant="dashboard" {...stat} />
             ))}
           </div>
         </motion.div>

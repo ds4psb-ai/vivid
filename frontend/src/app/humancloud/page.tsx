@@ -68,40 +68,7 @@ interface CreatorProfile {
     is_verified: boolean;
 }
 
-// =============================================================================
-// Stat Card Component (Lusion Style)
-// =============================================================================
-
-function StatCard({
-    icon: Icon,
-    label,
-    value,
-    color,
-}: {
-    icon: React.ElementType;
-    label: string;
-    value: string | number;
-    color: string;
-}) {
-    return (
-        <div className="card-glass p-5">
-            {/* Subtle glow */}
-            <div className={`absolute -right-8 -top-8 h-32 w-32 rounded-full ${color} opacity-10 blur-[50px]`} />
-
-            <div className="relative flex items-center justify-between">
-                <div>
-                    <div className="text-3xl font-bold text-white mb-1">
-                        {typeof value === "number" ? value.toLocaleString() : value}
-                    </div>
-                    <div className="text-sm text-[var(--fg-muted)]">{label}</div>
-                </div>
-                <div className={`p-3 rounded-xl bg-white/5 border border-white/10`}>
-                    <Icon className={`w-5 h-5 ${color.replace('bg-', 'text-')}`} />
-                </div>
-            </div>
-        </div>
-    );
-}
+import { StatCard, type StatColor } from "@/components/shared/StatCard";
 
 // =============================================================================
 // Request Card Component (Card Premium Style)
@@ -372,28 +339,32 @@ export default function HumanCloudPage() {
                                 className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-16"
                             >
                                 <StatCard
+                                    variant="lusion"
                                     icon={FileText}
                                     label="Open Requests"
                                     value={stats.open_requests}
-                                    color="bg-violet-500"
+                                    color="violet"
                                 />
                                 <StatCard
+                                    variant="lusion"
                                     icon={Users}
                                     label="Active Creators"
                                     value={stats.active_creators}
-                                    color="bg-blue-500"
+                                    color="blue"
                                 />
                                 <StatCard
+                                    variant="lusion"
                                     icon={CheckCircle}
                                     label="Completed"
                                     value={stats.completed_requests}
-                                    color="bg-emerald-500"
+                                    color="emerald"
                                 />
                                 <StatCard
+                                    variant="lusion"
                                     icon={DollarSign}
                                     label="Credits Paid"
                                     value={stats.total_volume_credits}
-                                    color="bg-yellow-500"
+                                    color="yellow"
                                 />
                             </motion.div>
                         )}

@@ -24,6 +24,13 @@ import { AuroraBackground } from "@/components/AuroraBackground";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { fetchWithAuth } from "@/lib/api-client";
 
+import {
+    getRequestStatus,
+    getStatusLabel,
+    REQUEST_CATEGORY_FILTERS,
+} from "@/lib/status-config";
+import { CARD_MOTION_PROPS } from "@/hooks/useCardMotion";
+
 interface CreativeRequest {
     id: string;
     client_id: string;
@@ -36,26 +43,8 @@ interface CreativeRequest {
     created_at: string;
 }
 
-const STATUS_CONFIG: Record<string, { color: string; bgColor: string; label: string; labelKo: string }> = {
-    draft: { color: "text-slate-400", bgColor: "bg-slate-500/10", label: "Draft", labelKo: "초안" },
-    open: { color: "text-emerald-400", bgColor: "bg-emerald-500/10", label: "Open", labelKo: "공개" },
-    assigned: { color: "text-blue-400", bgColor: "bg-blue-500/10", label: "Assigned", labelKo: "배정됨" },
-    in_progress: { color: "text-purple-400", bgColor: "bg-purple-500/10", label: "In Progress", labelKo: "진행중" },
-    delivered: { color: "text-yellow-400", bgColor: "bg-yellow-500/10", label: "Delivered", labelKo: "납품됨" },
-    completed: { color: "text-emerald-400", bgColor: "bg-emerald-500/10", label: "Completed", labelKo: "완료" },
-};
-
-const CATEGORIES = [
-    { value: "", label: "All", labelKo: "전체" },
-    { value: "video_creative", label: "Video", labelKo: "영상" },
-    { value: "image_design", label: "Image", labelKo: "이미지" },
-    { value: "motion_graphics", label: "Motion", labelKo: "모션" },
-    { value: "short_form", label: "Short-form", labelKo: "숏폼" },
-    { value: "brand_content", label: "Brand", labelKo: "브랜드" },
-];
-
 function RequestCard({ request, onClick, language }: { request: CreativeRequest; onClick: () => void; language: string }) {
-    const config = STATUS_CONFIG[request.status] || STATUS_CONFIG.draft;
+    const config = getRequestStatus(request.status);
     const now = useMemo(() => new Date(), []);
     const daysLeft = request.deadline
         ? Math.ceil((new Date(request.deadline).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
@@ -64,8 +53,7 @@ function RequestCard({ request, onClick, language }: { request: CreativeRequest;
     return (
         <motion.div
             onClick={onClick}
-            whileHover={{ y: -3, scale: 1.01 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            {...CARD_MOTION_PROPS}
             className="group card-glass card-glass-hover p-5 cursor-pointer"
         >
             <div className="flex items-start justify-between mb-3">
@@ -73,7 +61,7 @@ function RequestCard({ request, onClick, language }: { request: CreativeRequest;
                     {request.title}
                 </h3>
                 <span className={`px-2.5 py-0.5 text-xs rounded-full whitespace-nowrap ${config.bgColor} ${config.color}`}>
-                    {language === "ko" ? config.labelKo : config.label}
+                    {getStatusLabel(config, language)}
                 </span>
             </div>
 
@@ -207,7 +195,7 @@ export default function RequestsListPage() {
                             />
                         </div>
                         <div className="flex gap-2 flex-wrap">
-                            {CATEGORIES.map((cat) => (
+                            {REQUEST_CATEGORY_FILTERS.map((cat) => (
                                 <button
                                     key={cat.value}
                                     onClick={() => setCategory(cat.value)}
