@@ -2,9 +2,11 @@
 
 /**
  * BYOKSettingsModal - API Key 설정 모달
- * 
+ *
  * 사이드바에서 직접 API Key를 입력/수정/삭제할 수 있는 모달입니다.
  * 작업 중인 화면을 떠나지 않고 설정을 변경할 수 있습니다.
+ *
+ * Security: API Key는 AES-GCM 암호화되어 저장됩니다 (P0 hardening)
  */
 
 import { useState } from "react";
@@ -29,11 +31,11 @@ export default function BYOKSettingsModal({ isOpen, onClose }: BYOKSettingsModal
         if (!inputValue.trim()) return;
 
         setIsSaving(true);
-        setBYOKKey(inputValue.trim());
-
-        // 상태 전파를 위한 짧은 대기
-        await new Promise(resolve => setTimeout(resolve, 100));
-
+        try {
+            await setBYOKKey(inputValue.trim());
+        } catch (error) {
+            console.error("[BYOK] Failed to save key:", error);
+        }
         setIsSaving(false);
         onClose();
     };

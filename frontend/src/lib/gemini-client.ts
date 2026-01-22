@@ -1,6 +1,13 @@
 /**
  * Gemini API Client for Chokki Agent
  * Using Gemini 3.0 Flash Preview model
+ *
+ * @deprecated P0 HARDENING: This file violates the Sealed Capsule principle.
+ * All AI calls should go through the FastAPI backend (/agent/chat endpoint).
+ * This file is scheduled for removal. Use api.agent.chat() instead.
+ *
+ * Migration: Use the backend /api/v1/agent/chat endpoint which properly
+ * handles Gemini API calls with server-side secrets.
  */
 
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models";

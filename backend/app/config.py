@@ -17,7 +17,8 @@ class Settings(BaseSettings):
     FLOW_ENABLED: bool = False
 
     POSTGRES_USER: str = "crebit_user"
-    POSTGRES_PASSWORD: SecretStr = SecretStr("crebit_password")
+    # P0: Default is clearly marked as dev-only; production validation will catch this
+    POSTGRES_PASSWORD: SecretStr = SecretStr("crebit_dev_only")
     POSTGRES_DB: str = "crebit_canvas"
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: int = 5433
@@ -145,6 +146,10 @@ class Settings(BaseSettings):
     STRIPE_API_VERSION: str = "2024-12-18.acacia"
     # Enable Stripe payments (set to True when configured)
     STRIPE_ENABLED: bool = False
+    # P1: Stripe webhook IP whitelist (comma-separated, empty = skip IP check)
+    # Get current IPs from https://stripe.com/docs/ips#webhook-ip-addresses
+    # Production example: "3.18.12.63,3.130.192.231,13.235.14.237,35.154.171.200,..."
+    STRIPE_WEBHOOK_IP_WHITELIST: str = ""
 
     # Google Cloud Platform
     # Project: vivid-canvas-482303 (Production Project)
@@ -185,6 +190,11 @@ class Settings(BaseSettings):
     # Prometheus: Metrics collection
     PROMETHEUS_ENABLED: bool = True
     PROMETHEUS_METRICS_PATH: str = "/metrics"
+    # P1: Metrics endpoint protection (comma-separated IPs or "internal" for 10.x/172.x/192.168.x only)
+    # Empty = no protection (not recommended for production)
+    PROMETHEUS_ALLOWED_IPS: str = ""
+    # Optional bearer token for metrics access (alternative to IP whitelist)
+    PROMETHEUS_BEARER_TOKEN: SecretStr = SecretStr("")
     
     # Logging
     LOG_LEVEL: str = "INFO"  # DEBUG, INFO, WARNING, ERROR
@@ -271,12 +281,12 @@ class Settings(BaseSettings):
     SECURITY_SUSPICIOUS_DETECTION: bool = True
     SECURITY_MAX_BODY_SIZE: int = 10485760  # 10MB max request body
 
-    # H2.1: Dev Auth Bypass Feature Flag
-    # Controls X-User-Id and X-Admin-Mode header bypass in development
-    # Default: True for development, False for production
-    # This allows X-User-Id header auth in local development
-    # IMPORTANT: Set to False explicitly in production .env
-    ENABLE_DEV_AUTH_BYPASS: bool = True
+    # H2.1: Dev Auth Bypass Feature Flag (P0 Hardening)
+    # Controls X-User-Id header bypass in development
+    # Default: False (secure by default)
+    # Set to True ONLY for local development in .env
+    # IMPORTANT: Production validation will fail if True
+    ENABLE_DEV_AUTH_BYPASS: bool = False
 
     # ==========================================================================
     # MCP (Model Context Protocol) Configuration - Phase 4 2026
@@ -399,11 +409,13 @@ class Settings(BaseSettings):
         """
         Validate configuration for production safety.
         Returns list of critical warnings. Raises ValueError for blockers.
+
+        P0 Hardening: Enhanced validation for security-critical settings.
         """
         errors = []
         warnings = []
         is_prod = self.ENVIRONMENT.lower() in {"production", "prod", "staging"}
-        
+
         if is_prod:
             # Check for localhost in critical URLs
             if "localhost" in self.AUTH_SUCCESS_REDIRECT or "127.0.0.1" in self.AUTH_SUCCESS_REDIRECT:
@@ -414,13 +426,13 @@ class Settings(BaseSettings):
                 warnings.append("QDRANT_URL contains localhost - ensure Qdrant is accessible")
             if "localhost" in self.REDIS_URL or "127.0.0.1" in self.REDIS_URL:
                 warnings.append("REDIS_URL contains localhost - ensure Redis is accessible")
-            
+
             # Check for empty required secrets (H1.3: SecretStr compatibility)
             if not self.SESSION_SECRET.get_secret_value():
                 errors.append("SESSION_SECRET is empty - required for session encryption")
             if not self.GOOGLE_CLIENT_ID or not self.GOOGLE_CLIENT_SECRET.get_secret_value():
                 warnings.append("Google OAuth credentials not configured")
-            
+
             # Check for sandbox payment in production
             if self.NICEPAY_MODE == "sandbox":
                 errors.append("NICEPAY_MODE is 'sandbox' - switch to 'production' for live payments")
@@ -428,12 +440,17 @@ class Settings(BaseSettings):
             # H2.1: Dev auth bypass must be disabled in production
             if self.ENABLE_DEV_AUTH_BYPASS:
                 errors.append("ENABLE_DEV_AUTH_BYPASS is True - must be False in production")
-        
+
+            # P0: Check for default/weak passwords in production
+            default_passwords = {"crebit_password", "crebit_dev_only", "password", "changeme"}
+            if self.POSTGRES_PASSWORD.get_secret_value() in default_passwords:
+                errors.append("POSTGRES_PASSWORD is a default value - use a strong, unique password")
+
         if errors:
             raise ValueError(
                 f"Production configuration errors:\n" + "\n".join(f"  - {e}" for e in errors)
             )
-        
+
         return warnings
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")

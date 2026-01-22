@@ -1,3 +1,12 @@
+/**
+ * @deprecated P0 HARDENING: This API route violates the Sealed Capsule principle.
+ * All AI calls should go through the FastAPI backend.
+ * Use the backend /api/v1/agent/chat endpoint instead.
+ *
+ * This route is scheduled for removal. If you need chat functionality,
+ * use the api.agent.chat() function from @/lib/api.ts which routes
+ * to the proper backend endpoint.
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { chatWithChokki } from "@/lib/gemini-client";
 

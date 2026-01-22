@@ -237,6 +237,11 @@ export const api = {
 /**
  * Legacy compatible fetch with auth and retry
  * @deprecated Use api.get/post instead
+ *
+ * Security Note (P0 Hardening):
+ * - Removed X-Admin-Mode header from client side
+ * - Admin verification must be done server-side via session/JWT
+ * - X-User-Id is kept for development auth bypass (controlled by backend config)
  */
 export async function fetchWithAuth<T>(
     url: string,
@@ -246,9 +251,8 @@ export async function fetchWithAuth<T>(
     const token = getAuthToken();
     const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
 
-    // Admin 모드 헤더 추가 (localStorage에서 가져오기)
-    const userId = typeof window !== "undefined" ? localStorage.getItem("userId") || "admin" : "admin";
-    const isAdmin = typeof window !== "undefined" ? localStorage.getItem("isAdmin") === "true" : false;
+    // Dev-only X-User-Id header (backend validates ENABLE_DEV_AUTH_BYPASS)
+    const userId = typeof window !== "undefined" ? localStorage.getItem("userId") || "demo-user" : "demo-user";
 
     const doFetch = () => fetch(fullUrl, {
         ...options,
@@ -257,7 +261,7 @@ export async function fetchWithAuth<T>(
             Authorization: token ? `Bearer ${token}` : "",
             "Content-Type": "application/json",
             "X-User-Id": userId,
-            ...(isAdmin || url.includes("/admin/") ? { "X-Admin-Mode": "true" } : {}),
+            // P0 Security: X-Admin-Mode removed - admin rights verified server-side only
         },
     });
 

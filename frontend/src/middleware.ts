@@ -3,10 +3,12 @@ import type { NextRequest } from "next/server";
 
 /**
  * Next.js Middleware for Route Protection
- * 
+ *
  * Checks for `crebit_session` cookie and redirects to /login
  * for protected routes if not authenticated.
- * 
+ *
+ * P1 Hardening: Added /admin/* and /humancloud/* protection
+ *
  * @see https://nextjs.org/docs/app/building-your-application/routing/middleware
  */
 
@@ -16,6 +18,10 @@ const PROTECTED_ROUTES = [
     "/usage",
     "/teaching",
     "/ainspire",
+    "/admin",       // P1: Admin routes require authentication
+    "/humancloud",  // P1: Human Cloud routes require authentication
+    "/creator",     // P1: Creator dashboard requires authentication
+    "/settlements", // P1: Settlement routes require authentication
 ];
 
 const PUBLIC_ROUTES = [
@@ -80,5 +86,9 @@ export const config = {
         "/usage/:path*",
         "/teaching/:path*",
         "/ainspire/:path*",
+        "/admin/:path*",       // P1: Admin routes
+        "/humancloud/:path*",  // P1: Human Cloud routes
+        "/creator/:path*",     // P1: Creator routes
+        "/settlements/:path*", // P1: Settlement routes
     ],
 };

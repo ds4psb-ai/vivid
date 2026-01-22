@@ -64,6 +64,38 @@ class PaymentConfigResponse(BaseModel):
 # Webhook Endpoint
 # =============================================================================
 
+def _get_client_ip(request: Request) -> str:
+    """Extract client IP from request, handling proxies."""
+    # Check for forwarded headers (in order of preference)
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        # Take the first IP (original client)
+        return forwarded_for.split(",")[0].strip()
+
+    real_ip = request.headers.get("X-Real-IP")
+    if real_ip:
+        return real_ip.strip()
+
+    # Fall back to direct connection IP
+    if request.client:
+        return request.client.host
+    return ""
+
+
+def _verify_stripe_ip(client_ip: str) -> bool:
+    """P1: Verify client IP is in Stripe's webhook IP whitelist."""
+    whitelist = settings.STRIPE_WEBHOOK_IP_WHITELIST
+    if not whitelist:
+        # No whitelist configured - skip IP check (rely on signature only)
+        return True
+
+    allowed_ips = {ip.strip() for ip in whitelist.split(",") if ip.strip()}
+    if not allowed_ips:
+        return True
+
+    return client_ip in allowed_ips
+
+
 @router.post("/webhook", response_model=WebhookResponse)
 async def stripe_webhook(
     request: Request,
@@ -71,7 +103,7 @@ async def stripe_webhook(
     stripe_signature: Optional[str] = Header(None, alias="Stripe-Signature"),
 ):
     """
-    Handle Stripe webhook events (H2.3 Enhanced).
+    Handle Stripe webhook events (H2.3 Enhanced + P1 IP Whitelist).
 
     CRITICAL: All webhooks MUST have valid signatures.
     This endpoint processes payment-related events from Stripe.
@@ -83,10 +115,20 @@ async def stripe_webhook(
     - checkout.session.expired: Session expired
 
     Security:
+    - P1: Optional IP whitelist check (defense-in-depth)
     - Signature verification is MANDATORY
     - All events are logged for audit
     - Duplicate events are handled idempotently
     """
+    # P1: IP whitelist check (defense-in-depth, before signature verification)
+    client_ip = _get_client_ip(request)
+    if not _verify_stripe_ip(client_ip):
+        logger.warning(f"Stripe webhook rejected: IP {client_ip} not in whitelist")
+        raise HTTPException(
+            status_code=403,
+            detail="Webhook source IP not authorized"
+        )
+
     # Get raw body for signature verification
     payload = await request.body()
 
@@ -94,7 +136,8 @@ async def stripe_webhook(
     logger.info(
         f"Stripe webhook received, "
         f"signature_present={bool(stripe_signature)}, "
-        f"payload_size={len(payload)}"
+        f"payload_size={len(payload)}, "
+        f"client_ip={client_ip}"
     )
 
     # Signature verification is MANDATORY

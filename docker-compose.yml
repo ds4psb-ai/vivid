@@ -1,41 +1,97 @@
+# P0 Security Hardening:
+# - External ports removed by default (use Docker network for internal communication)
+# - Sensitive credentials moved to .env.docker file
+# - Redis password enabled
+# - Healthchecks added for all services
+#
+# For local development requiring external access:
+#   docker-compose --profile dev-exposed up
+
 services:
   postgres:
     image: pgvector/pgvector:pg16
     container_name: crebit-postgres
-    ports:
-      - "5433:5432"
+    env_file:
+      - .env.docker
     environment:
-      POSTGRES_USER: crebit_user
-      POSTGRES_PASSWORD: crebit_password
-      POSTGRES_DB: crebit_canvas
+      # Fallback defaults for local dev (override in .env.docker for production)
+      POSTGRES_USER: ${POSTGRES_USER:-crebit_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-crebit_dev_only}
+      POSTGRES_DB: ${POSTGRES_DB:-crebit_canvas}
     volumes:
       - crebit_postgres_data:/var/lib/postgresql/data
-
-  qdrant:
-    image: qdrant/qdrant:latest
-    container_name: crebit-qdrant
-    ports:
-      - "6333:6333" # REST API
-      - "6334:6334" # gRPC
-    volumes:
-      - crebit_qdrant_data:/qdrant/storage
-    environment:
-      QDRANT__SERVICE__GRPC_PORT: 6334
-    restart: unless-stopped
-
-  redis:
-    image: redis:alpine
-    container_name: crebit-redis
-    ports:
-      - "6380:6379"
-    volumes:
-      - crebit_redis_data:/data
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-crebit_user} -d $${POSTGRES_DB:-crebit_canvas}"]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    # P0: External port removed - access via Docker network only
+    # For dev access, use profile: docker-compose --profile dev-exposed up
+
+  # Development profile: PostgreSQL with external port
+  postgres-exposed:
+    extends:
+      service: postgres
+    profiles: ["dev-exposed"]
+    ports:
+      - "5433:5432"
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: crebit-qdrant
+    volumes:
+      - crebit_qdrant_data:/qdrant/storage
+    environment:
+      QDRANT__SERVICE__GRPC_PORT: 6334
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    # P0: External ports removed - access via Docker network only
+
+  # Development profile: Qdrant with external ports
+  qdrant-exposed:
+    extends:
+      service: qdrant
+    profiles: ["dev-exposed"]
+    ports:
+      - "6333:6333"  # REST API
+      - "6334:6334"  # gRPC
+
+  redis:
+    image: redis:alpine
+    container_name: crebit-redis
+    env_file:
+      - .env.docker
+    # P0: Redis password enabled - requirepass via command
+    command: >
+      sh -c "
+        if [ -n \"$$REDIS_PASSWORD\" ]; then
+          redis-server --requirepass $$REDIS_PASSWORD --appendonly yes
+        else
+          redis-server --appendonly yes
+        fi
+      "
+    volumes:
+      - crebit_redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ${REDIS_PASSWORD:+-a $REDIS_PASSWORD} ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    # P0: External port removed
+
+  # Development profile: Redis with external port
+  redis-exposed:
+    extends:
+      service: redis
+    profiles: ["dev-exposed"]
+    ports:
+      - "6380:6379"
 
   # Local monitoring (optional) - use: docker-compose --profile monitoring up
   prometheus:

@@ -183,6 +183,10 @@ app = FastAPI(
 from app.middleware.secure_logging import SecureLoggingMiddleware
 app.add_middleware(SecureLoggingMiddleware)
 
+# P1: Add metrics endpoint protection middleware
+from app.middleware.metrics_protection import MetricsProtectionMiddleware
+app.add_middleware(MetricsProtectionMiddleware)
+
 # Add mTLS middleware (for internal S2S routes)
 app.add_middleware(MTLSMiddleware)
 
@@ -218,20 +222,30 @@ setup_monitoring(app)
 # Security Hardening: Explicit allow_headers instead of wildcard (H1.1)
 # This prevents exposure of sensitive headers and reduces attack surface
 # H1.1: Explicit allowed headers definition
-CORS_ALLOWED_HEADERS = [
+# P1: Dev auth headers are only included in non-production environments
+_BASE_CORS_HEADERS = [
     "Authorization",
     "Content-Type",
     "X-Request-ID",
     "X-CSRF-Token",
     "X-API-Key",
-    "X-User-Id",        # H2.1: Dev auth bypass header
-    "X-Admin-Mode",     # H2.1: Dev admin bypass header
     "Accept",
     "Accept-Language",
     "Cache-Control",
     "sentry-trace",
     "baggage",
 ]
+
+# P1: Only allow dev auth headers in non-production environments
+_is_production = settings.ENVIRONMENT.lower() in {"production", "prod", "staging"}
+if _is_production:
+    CORS_ALLOWED_HEADERS = _BASE_CORS_HEADERS
+else:
+    CORS_ALLOWED_HEADERS = _BASE_CORS_HEADERS + [
+        "X-User-Id",        # H2.1: Dev auth bypass header (DEV ONLY)
+        "X-Admin-Mode",     # H2.1: Dev admin bypass header (DEV ONLY)
+        "X-Gemini-API-Key", # BYOK header (DEV ONLY - use backend proxy in prod)
+    ]
 
 # H1.1: Explicit allowed methods (no wildcard for security)
 CORS_ALLOWED_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]

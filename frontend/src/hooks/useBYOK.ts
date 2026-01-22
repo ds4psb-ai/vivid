@@ -2,22 +2,28 @@
 
 /**
  * useBYOK - Bring Your Own Key hook
- * 
+ *
  * Manages user's personal API key for AI services.
- * Stored in localStorage, never sent to our servers.
+ * Stored encrypted using AES-GCM, never sent to our servers.
+ *
+ * Security: Uses secure-storage.ts for encrypted storage (P0 hardening)
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { secureSet, secureGet, secureRemove, migratePlaintextToSecure } from "@/lib/secure-storage";
 
-const STORAGE_KEY = "crebit:byok_gemini_key";
+const SECURE_KEY = "byok_gemini";
+const LEGACY_STORAGE_KEY = "crebit:byok_gemini_key";
 
 interface UseBYOKResult {
     /** Current BYOK key (null if not set) */
     byokKey: string | null;
     /** Whether BYOK is enabled */
     isBYOKEnabled: boolean;
+    /** Loading state for async decryption */
+    isLoading: boolean;
     /** Set or update BYOK key */
-    setBYOKKey: (key: string | null) => void;
+    setBYOKKey: (key: string | null) => Promise<void>;
     /** Clear BYOK key */
     clearBYOKKey: () => void;
     /** Toggle BYOK mode */
@@ -25,24 +31,46 @@ interface UseBYOKResult {
 }
 
 export function useBYOK(): UseBYOKResult {
-    const [byokKey, setByokKeyState] = useState<string | null>(() => {
-        if (typeof window === "undefined") return null;
-        return localStorage.getItem(STORAGE_KEY);
-    });
-    const [isInitialized] = useState(() => typeof window !== "undefined");
+    const [byokKey, setByokKeyState] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const setBYOKKey = useCallback((key: string | null) => {
+    // Initialize: migrate plaintext keys and load encrypted value
+    useEffect(() => {
+        if (typeof window === "undefined") {
+            setIsLoading(false);
+            return;
+        }
+
+        const initializeKey = async () => {
+            try {
+                // Migrate legacy plaintext key to encrypted storage
+                await migratePlaintextToSecure(LEGACY_STORAGE_KEY, SECURE_KEY);
+
+                // Load encrypted key
+                const key = await secureGet(SECURE_KEY);
+                setByokKeyState(key);
+            } catch (error) {
+                console.error("[useBYOK] Failed to initialize:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        initializeKey();
+    }, []);
+
+    const setBYOKKey = useCallback(async (key: string | null) => {
         if (key && key.trim()) {
-            localStorage.setItem(STORAGE_KEY, key.trim());
+            await secureSet(SECURE_KEY, key.trim());
             setByokKeyState(key.trim());
         } else {
-            localStorage.removeItem(STORAGE_KEY);
+            secureRemove(SECURE_KEY);
             setByokKeyState(null);
         }
     }, []);
 
     const clearBYOKKey = useCallback(() => {
-        localStorage.removeItem(STORAGE_KEY);
+        secureRemove(SECURE_KEY);
         setByokKeyState(null);
     }, []);
 
@@ -52,8 +80,9 @@ export function useBYOK(): UseBYOKResult {
     }, []);
 
     return {
-        byokKey: isInitialized ? byokKey : null,
+        byokKey,
         isBYOKEnabled: Boolean(byokKey),
+        isLoading,
         setBYOKKey,
         clearBYOKKey,
         toggleBYOK,
