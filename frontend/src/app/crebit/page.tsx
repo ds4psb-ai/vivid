@@ -782,6 +782,40 @@ export default function AIVideoWorkflowMasterPage() {
                     </div>
                 </section>
 
+                {/* ==================== FREE CREDITS BANNER ==================== */}
+                <section className="py-12 lg:py-16 relative z-10 px-6 lg:px-[--base-padding-x]">
+                    <Link
+                        href="/api-key-guide"
+                        className="block max-w-4xl mx-auto group"
+                    >
+                        <div className="relative overflow-hidden rounded-2xl border border-emerald-500/30
+                                      bg-gradient-to-r from-emerald-900/40 via-teal-900/30 to-cyan-900/40
+                                      p-6 sm:p-8 transition-all duration-300
+                                      hover:border-emerald-400/50 hover:shadow-[0_0_40px_rgba(16,185,129,0.2)]">
+                            <div className="absolute inset-0 bg-[url('/images/grid.svg')] opacity-5" />
+                            <div className="relative flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-emerald-500/20 rounded-xl">
+                                        <Sparkles className="w-6 h-6 text-emerald-400" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg sm:text-xl font-bold text-white mb-1">
+                                            $300 무료 크레딧 받는 법
+                                        </h3>
+                                        <p className="text-sm text-emerald-300/80">
+                                            90일간 약 40만원 상당 무료! Google Cloud 신규 가입 혜택
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 text-emerald-400 font-medium group-hover:gap-3 transition-all">
+                                    <span>자세히 보기</span>
+                                    <ArrowRight className="w-4 h-4" />
+                                </div>
+                            </div>
+                        </div>
+                    </Link>
+                </section>
+
                 {/* ==================== CURRICULUM SECTION ==================== */}
                 <section
                     id="curriculum"
@@ -829,6 +863,12 @@ export default function AIVideoWorkflowMasterPage() {
                         <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-xs text-[var(--fg-subtle)]">
                             <p>© 2026 AI Video Master. All rights reserved.</p>
                             <nav className="flex gap-6" aria-label="Footer navigation">
+                                <Link
+                                    href="/api-key-guide"
+                                    className="hover:text-emerald-400 transition-colors font-medium text-emerald-500"
+                                >
+                                    💰 $300 무료 크레딧
+                                </Link>
                                 <Link
                                     href="/crebit/terms?tab=terms"
                                     className="hover:text-[var(--fg-0)] transition-colors"
