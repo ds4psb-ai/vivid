@@ -21,7 +21,7 @@ description: Vivid 투자자 데모용 서버 실행 (포트 8100/3100, 시드�
 ## 1. Docker 서비스 확인 및 시작
 ```bash
 colima status 2>/dev/null || colima start
-docker start crebit-postgres crebit-redis crebit-qdrant 2>/dev/null || docker-compose -f /Users/ted/vivid/docker-compose.yml --profile dev-exposed up -d
+docker start crebit-postgres crebit-redis crebit-qdrant 2>/dev/null || docker-compose -f /Users/ted/vivid/docker-compose.yml up -d
 sleep 3
 ```
 

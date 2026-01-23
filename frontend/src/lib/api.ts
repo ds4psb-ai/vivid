@@ -2437,41 +2437,6 @@ class ApiClient {
     return this.request<ABTestResultResponse[]>("/api/v1/content-metrics/ab-tests");
   }
 
-  // --- Director API (AI 바이브 코딩) ---
-
-  // =========================================================================
-  // DEPRECATED: Director APIs - Only used by deprecated canvas components
-  // These will be removed in a future release
-  // =========================================================================
-
-  /** @deprecated Only used by deprecated canvas. Use Dimension APIs instead. */
-  async getVibePresets(): Promise<VibePresetsResponse> {
-    return this.request<VibePresetsResponse>("/api/v1/director/presets");
-  }
-
-  /** @deprecated Only used by deprecated canvas. Use Dimension APIs instead. */
-  async interpretVibe(request: VibeInterpretRequest): Promise<WorkflowPlanResponse> {
-    return this.request<WorkflowPlanResponse>("/api/v1/director/interpret-vibe", {
-      method: "POST",
-      body: JSON.stringify(request),
-    });
-  }
-
-  /** @deprecated Only used by deprecated canvas. Use Dimension APIs instead. */
-  async checkDnaCompliance(request: DnaComplianceRequest): Promise<DnaComplianceResponse> {
-    return this.request<DnaComplianceResponse>("/api/v1/director/check-compliance", {
-      method: "POST",
-      body: JSON.stringify(request),
-    });
-  }
-
-  /** @deprecated Only used by deprecated canvas. Use Dimension APIs instead. */
-  async analyzeForeshadow(request: ForeshadowRequest): Promise<ForeshadowResponse> {
-    return this.request<ForeshadowResponse>("/api/v1/director/analyze-foreshadow", {
-      method: "POST",
-      body: JSON.stringify(request),
-    });
-  }
 
   // =========================================================================
   // DEPRECATED: Node Execution APIs - Only used by deprecated canvas
@@ -2662,28 +2627,7 @@ export interface ABTestResultResponse {
   confidence_level?: number;
 }
 
-// --- Director API Types (AI 바이브 코딩) ---
-
-export interface VibePreset {
-  id: string;
-  title: string;
-  tone: string[];
-  visual_style: string;
-  emotional_arc: string;
-  reference_works: string[];
-}
-
-export interface VibePresetsResponse {
-  presets: VibePreset[];
-}
-
-export interface VibeInterpretRequest {
-  type: "preset" | "custom";
-  preset_id?: string;
-  custom_description?: string;
-  output_type: "short_drama" | "ad" | "animation" | "music_video";
-  target_length_sec: number;
-}
+// --- Workflow Types (used by canvasSync) ---
 
 export interface NarrativeDNA {
   core_theme: string;
@@ -2726,75 +2670,6 @@ export interface WorkflowPlanResponse {
   capsule_id?: string | null;
   logic_vector?: Record<string, number> | null;
   persona_vector?: Record<string, number> | null;
-}
-
-// --- DNA Compliance Types ---
-
-export interface DnaComplianceRequest {
-  content: string;
-  content_type: "script" | "dialogue" | "description" | "visual";
-  narrative_dna: NarrativeDNA;
-  node_id?: string;
-}
-
-export interface ComplianceIssue {
-  id: string;
-  type: string;
-  severity: "low" | "medium" | "high";
-  field: string;
-  expected: string;
-  actual: string;
-  location?: string;
-  message: string;
-  suggestion: string;
-}
-
-export interface DnaComplianceResponse {
-  content_id: string;
-  is_compliant: boolean;
-  compliance_score: number;
-  issues: ComplianceIssue[];
-  suggestions: ProactiveSuggestion[];
-}
-
-export interface ProactiveSuggestion {
-  id: string;
-  type: "improvement" | "warning" | "opportunity" | "dna_violation";
-  title: string;
-  message: string;
-  targetNodeId?: string;
-  suggestedAction?: {
-    type: string;
-    params: Record<string, unknown>;
-    label: string;
-  };
-  confidence: number;
-  dnaField?: string;
-  timestamp: number;
-}
-
-// --- Foreshadow Types ---
-
-export interface ForeshadowRequest {
-  full_script: string;
-  segments?: Array<{ label: string; content: string }>;
-}
-
-export interface NarrativeSeed {
-  id: string;
-  description: string;
-  planted_at: string;
-  planted_text: string;
-  importance: "major" | "minor";
-  expected_payoff?: string;
-}
-
-export interface ForeshadowResponse {
-  total_seeds: number;
-  resolved_seeds: number;
-  orphaned_seeds: NarrativeSeed[];
-  suggestions: ProactiveSuggestion[];
-  analysis_score: number;
 }
 
 // --- Dimension API Types (Flow UI 연동) ---
