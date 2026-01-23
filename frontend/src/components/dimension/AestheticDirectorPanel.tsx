@@ -273,7 +273,7 @@ function AestheticDirectorContent() {
     const data = prevResult.outputData;
 
     // Extract and inject from AbyssMirror/ReferenceDecoder output
-    let autoConceptParts: string[] = [];
+    const autoConceptParts: string[] = [];
     let autoMood = "";
 
     // Handle persona data from AbyssMirror

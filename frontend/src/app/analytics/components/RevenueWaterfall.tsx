@@ -12,7 +12,6 @@ import {
   AlertCircle,
   ArrowDown,
   ArrowUp,
-  Minus,
   Wallet,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -190,8 +189,7 @@ export function RevenueWaterfall({ data, loading, onFetch }: RevenueWaterfallPro
     );
   }
 
-  // Calculate cumulative values for positioning
-  let cumulative = 0;
+  // Calculate max value for scaling
   const maxValue = Math.max(
     data.total_revenue,
     data.tool_usage_revenue + data.fork_revenue_received,
@@ -209,6 +207,20 @@ export function RevenueWaterfall({ data, loading, onFetch }: RevenueWaterfallPro
     }
   };
 
+  // Pre-calculate cumulative values for each step
+  const cumulativeValues = WATERFALL_STEPS.reduce<number[]>((acc, step) => {
+    const prevCumulative = acc.length > 0 ? acc[acc.length - 1] : 0;
+    const value = getStepValue(step.key);
+    let newCumulative = prevCumulative;
+    if (step.type === "positive") {
+      newCumulative = prevCumulative + value;
+    } else if (step.type === "negative") {
+      newCumulative = prevCumulative - value;
+    }
+    acc.push(newCumulative);
+    return acc;
+  }, []);
+
   return (
     <Card className="border border-white/5 bg-[var(--surface-1)]/70">
       <CardHeader className="flex-row items-center justify-between space-y-0">
@@ -225,13 +237,7 @@ export function RevenueWaterfall({ data, loading, onFetch }: RevenueWaterfallPro
         <div className="flex gap-2">
           {WATERFALL_STEPS.map((step, index) => {
             const value = getStepValue(step.key);
-            const prevCumulative = cumulative;
-
-            if (step.type === "positive") {
-              cumulative += value;
-            } else if (step.type === "negative") {
-              cumulative -= value;
-            }
+            const prevCumulative = index > 0 ? cumulativeValues[index - 1] : 0;
 
             return (
               <WaterfallBar

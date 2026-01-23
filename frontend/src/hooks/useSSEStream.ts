@@ -73,6 +73,7 @@ export function useSSEStream<T = unknown>(
   const eventSourceRef = useRef<EventSource | null>(null);
   const retriesRef = useRef(0);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const connectRef = useRef<() => void>(() => {});
 
   const clearReconnectTimeout = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -148,7 +149,7 @@ export function useSSEStream<T = unknown>(
 
           const delay = reconnectDelay * Math.pow(2, retriesRef.current - 1);
           reconnectTimeoutRef.current = setTimeout(() => {
-            connect();
+            connectRef.current();
           }, delay);
         } else if (retriesRef.current >= maxRetries) {
           const err = new Error(`SSE connection failed after ${maxRetries} retries`);
@@ -164,8 +165,14 @@ export function useSSEStream<T = unknown>(
     }
   }, [url, reconnect, reconnectDelay, maxRetries, isConnected, onConnect, onDisconnect, onError]);
 
+  // Keep ref in sync with latest connect function
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
+
   // Auto-connect on mount
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     connect();
     return () => {
       disconnect();

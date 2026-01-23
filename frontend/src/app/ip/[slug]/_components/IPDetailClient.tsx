@@ -903,7 +903,7 @@ export default function IPDetailClient({
                       {wb.logline && (
                         <div className="p-4 rounded-xl bg-gradient-to-r from-violet-500/10 to-blue-500/10 border border-violet-500/20">
                           <p className="text-base font-medium text-slate-800 dark:text-slate-200 italic leading-relaxed">
-                            "{wb.logline}"
+                            &ldquo;{wb.logline}&rdquo;
                           </p>
                         </div>
                       )}

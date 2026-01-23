@@ -25,8 +25,8 @@ export async function loadTranslations(
     lang: Language = "ko"
 ): Promise<Record<string, string>> {
     if (!cachedTranslations) {
-        const module = await import("../translations");
-        cachedTranslations = module.translations;
+        const translationModule = await import("../translations");
+        cachedTranslations = translationModule.translations;
     }
     return cachedTranslations[lang];
 }

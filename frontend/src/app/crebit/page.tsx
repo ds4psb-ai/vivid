@@ -7,7 +7,7 @@
  * @see ai_video_course_design.md
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -257,11 +257,12 @@ function useCountdown(deadline: number): TimeLeft {
         minutes: 0,
         seconds: 0,
     });
-    const [isMounted, setIsMounted] = useState(false);
+    const isMountedRef = useRef(false);
 
     useEffect(() => {
-        setIsMounted(true);
-        // Calculate immediately on mount
+        isMountedRef.current = true;
+        // Calculate immediately on mount - intentional pattern for SSR hydration
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setTimeLeft(calculateTimeLeft());
 
         const interval = setInterval(() => {
@@ -278,10 +279,8 @@ function useCountdown(deadline: number): TimeLeft {
     }, [calculateTimeLeft]);
 
     // Return zeros until mounted to match SSR
-    if (!isMounted) {
-        return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-    }
-
+    // Note: timeLeft is updated synchronously in the effect,
+    // so we can rely on its state for hydration safety
     return timeLeft;
 }
 

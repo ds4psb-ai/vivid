@@ -219,7 +219,7 @@ function VeoVideoContent() {
         context.scenarioTitle = data.title as string;
 
         // Build full script from synopsis and structure
-        let scriptParts: string[] = [];
+        const scriptParts: string[] = [];
         if (data.logline) scriptParts.push(data.logline as string);
         if (data.synopsis) scriptParts.push(data.synopsis as string);
 

@@ -13,6 +13,7 @@ import {
     Plus,
     Download,
 } from "lucide-react";
+import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { api, type CreditTransaction } from "@/lib/api";
@@ -356,13 +357,13 @@ export default function CreditsPage() {
                                     {labels.inviteDesc}
                                 </div>
                             </div>
-                            <a
+                            <Link
                                 href="/settlements"
                                 className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-xs font-semibold text-emerald-600 dark:text-emerald-200 transition-colors hover:bg-emerald-500/20"
                             >
                                 {labels.inviteCta}
                                 <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
-                            </a>
+                            </Link>
                         </div>
                     </motion.div>
 
