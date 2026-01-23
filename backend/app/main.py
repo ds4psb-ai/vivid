@@ -102,6 +102,9 @@ from app.routers.miniapps import router as miniapps_router
 # Context Library (Expert Workflow - Context Injection)
 from app.routers.context import router as context_router
 
+# Style Presets (Style Library CRUD - 4D Reference Decoder)
+from app.routers.style_presets import router as style_presets_router
+
 # Intent Presets (Creative Intent API)
 from app.routers.intent import router as intent_router
 
@@ -460,6 +463,9 @@ app.include_router(miniapps_router, prefix="/api/v1", tags=["miniapps"])
 
 # Context Library (Expert Workflow - Context Injection)
 app.include_router(context_router, prefix="/api/v1", tags=["context"])
+
+# Style Presets (Style Library CRUD - 4D Reference Decoder)
+app.include_router(style_presets_router, prefix="/api", tags=["style-presets"])
 
 # Phase 7: HITL Enhancement (Approval Gate, Creator Dashboard)
 app.include_router(approval_gate_router, prefix="/api/v1", tags=["approval-gate"])
