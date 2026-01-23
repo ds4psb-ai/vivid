@@ -6,7 +6,7 @@ Tree of Thoughts (ToT) Schemas
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Union
 from pydantic import BaseModel, Field
 from enum import Enum
 import uuid
@@ -75,7 +75,7 @@ class ToTTree(BaseModel):
     
     # 문제 정의
     problem: str = Field(description="해결할 문제")
-    context: Optional[str] = Field(None, description="추가 컨텍스트")
+    context: Optional[Union[str, Dict[str, Any]]] = Field(None, description="추가 컨텍스트")
     
     # 트리 구조
     root: Optional[ThoughtNode] = None
@@ -119,7 +119,7 @@ class ToTTree(BaseModel):
 class SimulationRequest(BaseModel):
     """ToT 시뮬레이션 요청"""
     problem: str = Field(..., min_length=1)
-    context: Optional[str] = None
+    context: Optional[Union[str, Dict[str, Any]]] = None
     strategy: SearchStrategy = SearchStrategy.BFS
     max_depth: int = Field(default=3, ge=1, le=5)
     branching_factor: int = Field(default=3, ge=1, le=5)

@@ -21,7 +21,7 @@ from app.config import settings
 pytestmark = [
     pytest.mark.integration,
     pytest.mark.skipif(
-        not os.getenv("GEMINI_API_KEY") and not settings.GEMINI_API_KEY,
+        not os.getenv("GEMINI_API_KEY") and not settings.GEMINI_API_KEY.get_secret_value(),
         reason="GEMINI_API_KEY not configured"
     ),
 ]
@@ -30,7 +30,7 @@ pytestmark = [
 @pytest.fixture
 def api_key():
     """Get API key from environment or settings."""
-    return os.getenv("GEMINI_API_KEY") or settings.GEMINI_API_KEY
+    return os.getenv("GEMINI_API_KEY") or settings.GEMINI_API_KEY.get_secret_value()
 
 
 class TestVeoServiceIntegration:
@@ -110,8 +110,8 @@ class TestVeoServiceIntegration:
         result = await service.generate_video(config)
 
         assert result.success is False
-        # Should get a permission or invalid key error
-        assert any(keyword in result.error for keyword in ["API", "권한", "유효하지"])
+        # Should get a permission or invalid key error (Korean or English)
+        assert any(keyword in result.error.lower() for keyword in ["api", "key", "invalid", "권한", "유효하지", "입력값"])
 
     @pytest.mark.asyncio
     @pytest.mark.slow

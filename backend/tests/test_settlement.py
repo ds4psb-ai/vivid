@@ -370,15 +370,28 @@ class TestSettlementRollback:
             created_at=datetime.utcnow(),
         )
         settlement.payouts = [payout]
-        
-        mock_result = MagicMock()
-        mock_result.scalars.return_value.first.return_value = settlement
-        mock_db.execute = AsyncMock(return_value=mock_result)
-        
+
+        # Mock ForkEvent for the second db.execute call
+        mock_fork = MagicMock(spec=ForkEvent)
+        mock_fork.revenue_generated = 100
+        mock_fork.child_tool_id = settlement.tool_id
+
+        # Setup mock to return different results for different queries
+        settlement_result = MagicMock()
+        settlement_result.scalars.return_value.first.return_value = settlement
+
+        fork_result = MagicMock()
+        fork_result.scalars.return_value.first.return_value = mock_fork
+
+        update_result = MagicMock()  # For the update query
+
+        # Return settlement first, then fork, then update result
+        mock_db.execute = AsyncMock(side_effect=[settlement_result, fork_result, update_result])
+
         mock_user_credits = MagicMock()
         mock_user_credits.topup_credits = 70
         mock_user_credits.balance = 70
-        
+
         with patch('app.services.fork_revenue_service.get_or_create_user_credits',
                    AsyncMock(return_value=mock_user_credits)):
             with patch('app.services.fork_revenue_service.record_transaction',
