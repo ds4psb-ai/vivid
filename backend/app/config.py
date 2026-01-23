@@ -221,6 +221,11 @@ class Settings(BaseSettings):
     RAG_EVAL_ALERT_THRESHOLD: float = 0.6  # Alert if avg score drops below
     RAG_EVAL_LLM_MODEL: str = "gpt-4o-mini"  # LLM for evaluation
 
+    # Unified Orchestration (2026 Best Practice - LangGraph StateGraph)
+    # When True, use unified graph instead of hybrid_rag for RAG queries
+    USE_UNIFIED_GRAPH: bool = False  # Feature flag for gradual rollout
+    UNIFIED_GRAPH_AB_RATIO: float = 0.0  # A/B test ratio (0.0 = all legacy, 1.0 = all unified)
+
     # ==========================================================================
     # Phase 8: Personalization Configuration
     # ==========================================================================
