@@ -44,9 +44,13 @@ import { EvidenceWrapper } from "./EvidenceWrapper";
 import { FeedbackWrapper } from "./FeedbackWrapper";
 import { NextNavWrapper } from "./NextNavWrapper";
 import { FileUploadWrapper } from "./FileUploadWrapper";
+// Legacy UQSL wrappers (deprecated - use QualitySelection instead)
 import { ABComparisonWrapper } from "./ABComparisonWrapper";
 import { ThreeWayComparisonWrapper } from "./ThreeWayComparisonWrapper";
 import { MultiGenerateWrapper } from "./MultiGenerateWrapper";
+// P1.1 Consolidated Components
+import { QualitySelection } from "./QualitySelection";
+import { AsyncState } from "./AsyncState";
 
 // =============================================================================
 // ROOT COMPONENT
@@ -117,15 +121,18 @@ export const DimensionPanel = Object.assign(DimensionPanelRoot, {
   GenerateButton,
   FileUpload: FileUploadWrapper,
 
-  // Result Components
-  Loading: LoadingState,
-  Error: ErrorState,
+  // Result Components - P1.1 Consolidated
+  AsyncState,  // NEW: Unified loading + error state
+  Loading: LoadingState,  // Legacy (use AsyncState)
+  Error: ErrorState,  // Legacy (use AsyncState)
   Result: ResultCard,
   Evidence: EvidenceWrapper,
   Feedback: FeedbackWrapper,
   NextNav: NextNavWrapper,
 
-  // UQSL Quality Selection Components
+  // UQSL Quality Selection - P1.1 Consolidated
+  QualitySelection,  // NEW: Unified ab/three-way/multi comparison
+  // Legacy wrappers (use QualitySelection with strategy prop instead)
   ABComparison: ABComparisonWrapper,
   ThreeWay: ThreeWayComparisonWrapper,
   MultiGenerate: MultiGenerateWrapper,
