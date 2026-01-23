@@ -57,6 +57,13 @@ from app.rag.rerankers import get_reranker, DocumentToRerank
 from app.rag.metrics import record_rag_query, record_rag_error, track_rag_operation, log_router_decision
 from app.rag.semantic_cache import get_semantic_cache
 
+# === P0 Security: Input Sanitization & Attribution ===
+from app.core.utils.sanitize import (
+    sanitize_query,
+    sanitize_context,
+    calculate_risk_score,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -461,7 +468,22 @@ async def hybrid_query(
 
     import time
     start_time = time.monotonic()
-    
+
+    # === P0 Security: Input Sanitization ===
+    risk_score = calculate_risk_score(query)
+    if risk_score >= 0.8:
+        logger.warning(
+            f"[P0 Security] High risk query rejected: score={risk_score:.2f} | "
+            f"query_preview='{query[:50]}...'"
+        )
+        return HybridRAGResult(
+            answer="요청을 처리할 수 없습니다. 다른 질문을 시도해 주세요.",
+            confidence=0.0,
+            strategy_used="rejected_high_risk",
+            query_time_ms=int((time.monotonic() - start_time) * 1000),
+        )
+    query = sanitize_query(query)
+
     # === Step 0: Semantic Cache Check (90%+ hit rate) ===
     cached_result = None  # Initialize for later reference in log_router_decision
     if use_semantic_cache:
@@ -880,8 +902,14 @@ async def _query_auteur_first(
         query=query,
     )
 
+    # P0 Security: Sanitize answer from external source
+    sanitized_answer = sanitize_context(
+        notebooklm_result.answer,
+        source="notebooklm",
+    )
+
     return HybridRAGResult(
-        answer=notebooklm_result.answer,
+        answer=sanitized_answer,
         notebooklm_sources=notebooklm_result.sources,
         confidence=notebooklm_result.confidence,
         strategy_used="auteur_first",
@@ -912,11 +940,11 @@ async def _query_dimension(
         rag = get_dimension_rag(dimension.upper())
         results = rag.hybrid_search(query=query, limit=10)
 
-        # Convert Qdrant results to RAGSource format
+        # P0 Security: Sanitize Qdrant results
         sources = [
             RAGSource(
                 source_id=r.get("doc_id", ""),
-                content=r.get("content", ""),
+                content=sanitize_context(r.get("content", ""), source="qdrant"),
                 relevance_score=r.get("score", 0.0),
                 document_name=r.get("metadata", {}).get("source", ""),
                 metadata=r.get("metadata", {}),
@@ -924,10 +952,12 @@ async def _query_dimension(
             for r in results
         ]
 
-        # Synthesize answer from top results
-        answer = "\n\n".join(
-            r.get("content", "")[:500] for r in results[:3]
-        ) if results else "검색 결과를 찾을 수 없습니다."
+        # Synthesize answer from top results (using sanitized content)
+        answer_parts = [
+            sanitize_context(r.get("content", "")[:500], source="qdrant")
+            for r in results[:3]
+        ]
+        answer = "\n\n".join(answer_parts) if answer_parts else "검색 결과를 찾을 수 없습니다."
 
         return HybridRAGResult(
             answer=answer,
@@ -1201,25 +1231,30 @@ def _convert_ensemble_to_hybrid_result(
     vertex_sources: List[RAGSource] = []  # Using local RAGSource for backward compat
     grounding_sources: List[Dict[str, Any]] = []
 
-    # 소스별 분류
+    # 소스별 분류 (P0 Security: sanitize all text content)
     for result in fused_results:
         source_type = result.source
+        # P0 Security: Sanitize text from each source
+        sanitized_text = sanitize_context(
+            result.text or "",
+            source=source_type,
+        )
 
         if source_type == "notebooklm":
             notebooklm_sources.append(
                 NotebookSource(
                     source_id=result.doc_id,
                     title=result.metadata.get("title", ""),
-                    excerpt=result.text[:500] if result.text else "",
+                    excerpt=sanitized_text[:500] if sanitized_text else "",
                     relevance_score=result.metadata.get("original_score", result.score),
-                    citation_text=result.text[:200] if result.text else "",
+                    citation_text=sanitized_text[:200] if sanitized_text else "",
                 )
             )
         elif source_type in ("qdrant_hybrid", "vertex_grounding", "tavily_grounding"):
             vertex_sources.append(
                 RAGSource(
                     source_id=result.doc_id,
-                    content=result.text,
+                    content=sanitized_text,
                     relevance_score=result.metadata.get("original_score", result.score),
                     document_name=result.metadata.get("document_name", ""),
                     metadata=result.metadata,
@@ -1229,7 +1264,7 @@ def _convert_ensemble_to_hybrid_result(
             if result.metadata.get("type") in ("google_search", "web_search"):
                 grounding_sources.append({
                     "uri": result.metadata.get("url", ""),
-                    "source": result.text,
+                    "source": sanitized_text,
                 })
 
     # 신뢰도 계산 (RRF 스코어 기반)
@@ -1239,11 +1274,12 @@ def _convert_ensemble_to_hybrid_result(
         max_rrf = max(r.score for r in fused_results)
         avg_confidence = min(0.95, max_rrf * 50)  # 스케일 조정
 
-    # Answer 생성 (상위 결과 기반)
+    # Answer 생성 (상위 결과 기반, sanitized)
     answer_parts = []
     for result in fused_results[:3]:  # 상위 3개
         if result.text:
-            answer_parts.append(result.text[:300])
+            sanitized_part = sanitize_context(result.text[:300], source=result.source)
+            answer_parts.append(sanitized_part)
     answer = "\n\n".join(answer_parts) if answer_parts else "검색 결과를 찾을 수 없습니다."
 
     return HybridRAGResult(
@@ -1366,6 +1402,9 @@ async def ensemble_retrieve(
     from app.rag.backends import get_backend
 
     start_time = time.monotonic()
+
+    # === P0 Security: Input Sanitization ===
+    query = sanitize_query(query)
 
     # 1. Manifest 로드
     manifest = get_manifest(app_key)
