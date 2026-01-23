@@ -1,8 +1,9 @@
 # Vivid Frontend Components Guide
 
-> **Version**: 1.0
+> **Version**: 2.0
+> **Last Updated**: 2026-01-24
 > **Framework**: Next.js 16.1 + TypeScript + TailwindCSS
-> **Package Manager**: npm
+> **Package Manager**: bun
 
 ---
 
@@ -27,13 +28,26 @@ frontend/src/
 │   ├── flow/               # Workflow (Train) pages
 │   └── singularity/        # Template gallery
 ├── components/
-│   ├── dimension/          # 10 Dimension panel components
+│   ├── dimension/          # 13 Dimension panel components
 │   ├── shared/             # Reusable UI components
 │   ├── train/              # Train workflow UI
 │   └── AgentChatAccordion.tsx  # Global chat component
 ├── hooks/                  # Custom React hooks
-├── lib/                    # Utilities, API clients
-└── contexts/              # React contexts (Credit, Theme)
+├── lib/
+│   ├── api.ts              # Main API client (89KB → 85KB after cleanup)
+│   ├── api/                # [NEW] Modular API types
+│   │   ├── types.ts        # Core shared types
+│   │   ├── canvas.types.ts # Canvas/Template types
+│   │   ├── credits.types.ts # Credits types
+│   │   ├── agent.types.ts  # Agent session types
+│   │   ├── dimension.types.ts # Capsule/Storyboard types
+│   │   ├── admin.types.ts  # Pipeline/Ops types
+│   │   └── index.ts        # Re-exports
+│   ├── i18n/               # [NEW] Dynamic translation loader
+│   │   ├── loader.ts       # loadTranslations(), preloadTranslations()
+│   │   └── index.ts
+│   └── translations.ts     # Full translations (81KB)
+└── contexts/               # React contexts (Credit, Theme)
 ```
 
 ---

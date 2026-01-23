@@ -1,8 +1,12 @@
 # Vivid API Reference
 
-> **Version**: 1.0
+> **Version**: 1.1
+> **Last Updated**: 2026-01-24
 > **Base URL**: `http://localhost:8100` (development)
 > **Authentication**: Google OAuth session cookie, or `X-User-Id` header (dev only)
+
+> [!NOTE]
+> **2026-01-24 변경사항**: Director API 4개 함수 제거됨 (`getVibePresets`, `interpretVibe`, `checkDnaCompliance`, `analyzeForeshadow`). 대신 Dimension API 사용 권장.
 
 ---
 

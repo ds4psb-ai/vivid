@@ -1,7 +1,7 @@
 # Vivid Documentation Master Index
 
-> **Version**: 1.1
-> **Last Updated**: 2026-01-18
+> **Version**: 1.2
+> **Last Updated**: 2026-01-24
 > **Purpose**: 전체 문서 네비게이션 및 SSoT 참조
 
 ---
@@ -197,4 +197,6 @@
 
 | 버전 | 날짜 | 변경 |
 |------|------|------|
+| 1.2 | 2026-01-24 | 레거시 패널 11개 삭제, API 타입 모듈화, i18n 동적 로더, Deprecated Director API 제거 |
+| 1.1 | 2026-01-18 | Reference Library, OTEL 통합 |
 | 1.0 | 2026-01-17 | 초기 생성, 13개 앱 및 P0-P7 완료 반영 |
