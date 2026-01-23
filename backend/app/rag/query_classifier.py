@@ -379,3 +379,115 @@ async def get_classification_result(
         matched_example=matched_example,
         latency_ms=latency_ms,
     )
+
+
+# ============================================================================
+# P7 Self-Correction Hooks
+# ============================================================================
+
+
+async def get_experiment_config(
+    user_id: str,
+    db: "AsyncSession",  # type: ignore
+) -> Optional[RoutingConfig]:
+    """P7 A/B 테스트에서 사용자별 라우팅 설정 조회.
+
+    A/B 테스트가 실행 중이면 실험 variant에 따라 다른 설정 반환.
+
+    Args:
+        user_id: 사용자 ID (해싱용)
+        db: Database session
+
+    Returns:
+        실험 variant의 RoutingConfig 또는 None (실험 없음)
+    """
+    try:
+        from app.experiments.ab_testing import get_ab_testing
+
+        ab_service = get_ab_testing()
+
+        # Check threshold tuning experiment
+        assignment = await ab_service.assign_variant(
+            experiment_key="p7_threshold_tuning_active",
+            user_id=user_id,
+            db=db,
+        )
+
+        if assignment and not assignment.is_control:
+            # Treatment variant - use tuned thresholds
+            payload = assignment.payload
+            if payload:
+                return RoutingConfig(
+                    enabled=True,
+                    semantic_threshold=payload.get("semantic_threshold", 0.7),
+                    llm_fallback=True,
+                    skip_retrieval_types=[
+                        QueryType(t) for t in payload.get(
+                            "skip_retrieval_types",
+                            ["simple_factual", "creative"]
+                        )
+                    ],
+                )
+
+        return None  # Use default config
+
+    except Exception as e:
+        logger.debug(f"[QueryClassifier] Experiment config lookup failed: {e}")
+        return None
+
+
+def get_classification_prompt_for_experiment(
+    experiment_key: str,
+    variant_name: str = "treatment",
+) -> Optional[str]:
+    """P7 A/B 테스트 variant의 분류 프롬프트 조회.
+
+    PromptTuner 실험에서 사용할 개선된 프롬프트를 조회합니다.
+
+    Args:
+        experiment_key: 실험 키
+        variant_name: variant 이름 (기본: treatment)
+
+    Returns:
+        프롬프트 문자열 또는 None
+    """
+    try:
+        from app.services.prompt_tuner import get_prompt_tuner
+
+        tuner = get_prompt_tuner()
+
+        # If this experiment's treatment is active, return improved prompt
+        # This is a simplified version - in production, would query DB
+        return tuner.get_current_prompt()
+
+    except Exception as e:
+        logger.debug(f"[QueryClassifier] Experiment prompt lookup failed: {e}")
+        return None
+
+
+async def classify_query_with_experiment(
+    query: str,
+    user_id: str,
+    db: "AsyncSession",  # type: ignore
+    config: Optional[RoutingConfig] = None,
+) -> Tuple[QueryType, float]:
+    """P7 A/B 테스트를 고려한 쿼리 분류.
+
+    실험 중인 경우 실험 설정을 사용하여 분류합니다.
+
+    Args:
+        query: 입력 쿼리
+        user_id: 사용자 ID
+        db: Database session
+        config: 기본 설정 (실험 없을 때 사용)
+
+    Returns:
+        (QueryType, confidence) 튜플
+    """
+    # Check for experiment config
+    experiment_config = await get_experiment_config(user_id, db)
+
+    if experiment_config:
+        return await classify_query(query, experiment_config)
+
+    return await classify_query(query, config)

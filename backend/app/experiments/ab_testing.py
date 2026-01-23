@@ -487,3 +487,107 @@ async def init_ab_testing() -> ABTestingService:
     service = get_ab_testing()
     await service._get_redis()
     return service
+
+
+# =============================================================================
+# P7 Self-Correction Helpers
+# =============================================================================
+
+
+async def get_p7_experiments(
+    db: AsyncSession,
+    status: Optional[ExperimentStatus] = None,
+) -> list[Experiment]:
+    """P7 Self-Correction 실험 목록 조회.
+
+    Args:
+        db: Database session
+        status: 상태 필터 (None이면 전체)
+
+    Returns:
+        P7 실험 목록
+    """
+    query = select(Experiment).where(
+        Experiment.experiment_key.like("p7_%")
+    )
+
+    if status:
+        query = query.where(Experiment.status == status)
+
+    result = await db.execute(query.order_by(Experiment.created_at.desc()))
+    return list(result.scalars().all())
+
+
+async def get_active_p7_prompt_experiment(
+    db: AsyncSession,
+) -> Optional[Experiment]:
+    """활성 P7 프롬프트 튜닝 실험 조회.
+
+    Returns:
+        실행 중인 프롬프트 튜닝 실험 또는 None
+    """
+    result = await db.execute(
+        select(Experiment)
+        .where(
+            Experiment.experiment_key.like("p7_prompt_tuning_%"),
+            Experiment.status == ExperimentStatus.RUNNING,
+        )
+        .order_by(Experiment.start_date.desc())
+        .limit(1)
+    )
+    return result.scalar_one_or_none()
+
+
+async def get_active_p7_threshold_experiment(
+    db: AsyncSession,
+) -> Optional[Experiment]:
+    """활성 P7 임계값 튜닝 실험 조회.
+
+    Returns:
+        실행 중인 임계값 튜닝 실험 또는 None
+    """
+    result = await db.execute(
+        select(Experiment)
+        .where(
+            Experiment.experiment_key.like("p7_threshold_tuning_%"),
+            Experiment.status == ExperimentStatus.RUNNING,
+        )
+        .order_by(Experiment.start_date.desc())
+        .limit(1)
+    )
+    return result.scalar_one_or_none()
+
+
+def is_p7_experiment(experiment: Experiment) -> bool:
+    """실험이 P7 Self-Correction 실험인지 확인.
+
+    Args:
+        experiment: Experiment 객체
+
+    Returns:
+        P7 실험이면 True
+    """
+    return experiment.experiment_key.startswith("p7_")
+
+
+def get_p7_experiment_type(experiment: Experiment) -> Optional[str]:
+    """P7 실험의 타입 반환.
+
+    Args:
+        experiment: Experiment 객체
+
+    Returns:
+        "prompt_tuning", "threshold_tuning", "route_examples", 또는 None
+    """
+    if not is_p7_experiment(experiment):
+        return None
+
+    key = experiment.experiment_key
+    if "prompt_tuning" in key:
+        return "prompt_tuning"
+    elif "threshold_tuning" in key:
+        return "threshold_tuning"
+    elif "route_examples" in key:
+        return "route_examples"
+
+    return None
