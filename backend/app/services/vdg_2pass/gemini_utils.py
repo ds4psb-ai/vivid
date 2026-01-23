@@ -3,8 +3,10 @@ Gemini API Utilities
 
 P0-4: Retry + Async Fallback + JSON Repair
 P4-1: Circuit Breaker Integration
+
+Updated for google.genai (new library) pattern.
 """
-from typing import TypeVar, Type, Callable, Any, Optional
+from typing import TypeVar, Type, Callable, Any, Optional, Dict
 import json
 import asyncio
 import logging
@@ -20,7 +22,7 @@ T = TypeVar('T', bound=BaseModel)
 
 
 async def robust_generate_content(
-    model,
+    model: Dict[str, Any],
     contents: list,
     result_schema: Type[T],
     max_retries: int = 3,
@@ -29,77 +31,78 @@ async def robust_generate_content(
 ) -> T:
     """
     Robust content generation with retry, backoff, circuit breaker, and JSON repair.
-    
+
     P0-4 + P4-1 Hardening:
     0. Circuit breaker check (fail fast if service is down)
     1. Retry with exponential backoff (429/5xx/network errors)
     2. Async fallback (use sync generate_content in thread if async fails)
     3. JSON repair loop (1 attempt if parsing fails)
-    
+
     Args:
-        model: Gemini GenerativeModel instance
+        model: Dict with model_name, system_instruction, generation_config
+               (google.genai - new library pattern)
         contents: Content parts to send
         result_schema: Pydantic model class for parsing
         max_retries: Maximum retry attempts
         initial_backoff: Starting backoff in seconds
         json_repair_prompt: Prompt for JSON repair attempt
-        
+
     Returns:
         Parsed result of type T
-        
+
     Raises:
         CircuitBreakerOpen: If Gemini API circuit is open
         Exception: If all retries exhausted
     """
     # P4-1: Check circuit breaker first
     GEMINI_BREAKER.check_state()
-    
+
     last_error = None
     backoff = initial_backoff
-    
+
     for attempt in range(max_retries):
         try:
             # Try async first
             response = await _try_generate_async(model, contents)
-            
+
             # Try to parse response
             try:
                 result_dict = json.loads(response.text)
                 result = result_schema(**result_dict)
-                
+
                 # P4-1: Record success
                 GEMINI_BREAKER.record_success()
                 return result
             except json.JSONDecodeError as je:
                 logger.warning(f"JSON parse failed (attempt {attempt + 1}): {je}")
-                
+
                 # JSON Repair: One repair attempt
                 if attempt < max_retries - 1:
                     repair_contents = contents + [json_repair_prompt]
                     repair_response = await _try_generate_async(model, repair_contents)
                     result_dict = json.loads(repair_response.text)
                     result = result_schema(**result_dict)
-                    
+
                     # P4-1: Record success
                     GEMINI_BREAKER.record_success()
                     return result
                 else:
                     raise
-                    
+
         except CircuitBreakerOpen:
             # Re-raise circuit breaker exceptions without recording
             raise
         except Exception as e:
             last_error = e
             error_str = str(e).lower()
-            
+
             # Check if retryable
             is_retryable = any(x in error_str for x in [
-                "429", "rate limit", "quota", 
-                "500", "502", "503", "504", "internal", 
+                "429", "rate limit", "quota",
+                "500", "502", "503", "504", "internal",
                 "timeout", "connection", "network"
             ])
-            
+
             if is_retryable and attempt < max_retries - 1:
                 # Add jitter to prevent thundering herd
                 jitter = random.uniform(0, backoff * 0.5)
@@ -113,35 +116,53 @@ async def robust_generate_content(
                 # P4-1: Record failure for circuit breaker
                 GEMINI_BREAKER.record_failure(e)
                 raise
-    
+
     # P4-1: Record failure if all retries exhausted
     GEMINI_BREAKER.record_failure(last_error)
     raise last_error or Exception("All retries exhausted")
 
 
-async def _try_generate_async(model, contents: list):
+async def _try_generate_async(model: Dict[str, Any], contents: list):
     """
-    Try async generation with sync fallback.
+    Try async generation using google.genai client.
+
+    Args:
+        model: Dict with model_name, system_instruction, generation_config
+        contents: Content parts to send
+
+    Returns:
+        Generation response
     """
+    from app.services.genai_utils import get_genai_client
+
+    client = get_genai_client()
+    model_name = model.get("model_name", "gemini-1.5-pro-latest")
+    system_instruction = model.get("system_instruction")
+    generation_config = model.get("generation_config", {})
+
+    # Build config with system instruction
+    config = dict(generation_config)
+    if system_instruction:
+        config["system_instruction"] = system_instruction
+
     try:
-        # Try async method first
-        if hasattr(model, 'generate_content_async'):
-            return await model.generate_content_async(contents=contents)
-        else:
-            # Fallback to sync in thread
-            logger.info("Using sync generate_content in thread executor")
-            loop = asyncio.get_event_loop()
-            return await loop.run_in_executor(
-                None,
-                lambda: model.generate_content(contents=contents)
-            )
-    except AttributeError:
-        # Async method doesn't exist, use sync fallback
-        logger.info("Async method not available, using sync fallback")
+        # Use async client (google.genai - new library)
+        return await client.aio.models.generate_content(
+            model=model_name,
+            contents=contents,
+            config=config,
+        )
+    except Exception as e:
+        # Fallback to sync in thread executor if async fails
+        logger.info(f"Async generation failed ({e}), trying sync fallback")
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
             None,
-            lambda: model.generate_content(contents=contents)
+            lambda: client.models.generate_content(
+                model=model_name,
+                contents=contents,
+                config=config,
+            )
         )
 
 

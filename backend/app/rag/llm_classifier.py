@@ -95,15 +95,16 @@ async def classify_with_llm(
     start = time.time()
 
     try:
-        import google.generativeai as genai
+        from app.services.genai_utils import get_genai_client
 
-        model = genai.GenerativeModel(model_name)
+        client = get_genai_client()
         prompt = CLASSIFICATION_PROMPT.format(query=query)
 
-        # Gemini API 호출
-        response = await model.generate_content_async(
-            prompt,
-            generation_config={
+        # Gemini API 호출 (google.genai - new library)
+        response = await client.aio.models.generate_content(
+            model=model_name,
+            contents=prompt,
+            config={
                 "temperature": 0.1,  # 낮은 temperature로 일관된 분류
                 "max_output_tokens": 256,
                 "response_mime_type": "application/json",

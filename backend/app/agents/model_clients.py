@@ -31,15 +31,14 @@ class GeminiModelClient:
         if not settings.GEMINI_API_KEY.get_secret_value():
             raise ValueError("GEMINI_API_KEY not set")
         try:
-            import google.generativeai as genai
+            from app.services.genai_utils import get_genai_client
+            self._client = get_genai_client()
         except ImportError as exc:
-            raise ImportError("google-generativeai not installed") from exc
+            raise ImportError("google-genai not installed") from exc
 
-        self._genai = genai
-        self._genai.configure(api_key=settings.GEMINI_API_KEY.get_secret_value())
         self._use_cache = use_cache
         self._model_name = model_name
-        
+
         # Get system prompt from cache manager if caching enabled
         if use_cache:
             from app.services.cache_manager import get_chokki_system_prompt
@@ -56,7 +55,7 @@ class GeminiModelClient:
                 "[{\"id\": \"optional\", \"name\": \"tool_name\", \"arguments\": {}}]}. "
                 "Always put the 'content' field first. Use empty tool_calls when none."
             )
-        
+
         self._generation_config = {
             "temperature": temperature,
             "top_p": 0.95,
@@ -73,10 +72,18 @@ class GeminiModelClient:
     ) -> AgentMessage:
         import time
         start_time = time.perf_counter()
-        
+
         contents = self._build_content_parts(messages, tools)
-        response = self._model.generate_content(contents)
-        
+        # Use new google.genai client API
+        response = self._client.models.generate_content(
+            model=self._model_name,
+            contents=contents,
+            config={
+                **self._generation_config,
+                "system_instruction": self._system_prompt,
+            },
+        )
+
         # Record usage metrics for monitoring
         latency_ms = (time.perf_counter() - start_time) * 1000
         try:
@@ -84,7 +91,7 @@ class GeminiModelClient:
             record_gemini_usage(response, model=self._model_name, latency_ms=latency_ms)
         except Exception as e:
             logger.debug("Failed to record usage metrics", exc_info=e)
-        
+
         text = (response.text or "").strip()
         return self._build_message(text, tools)
 
@@ -95,14 +102,21 @@ class GeminiModelClient:
     ) -> Iterator[str]:
         import time
         start_time = time.perf_counter()
-        
+
         contents = self._build_content_parts(messages, tools)
-        model = self._build_model()
-        stream = model.generate_content(contents, stream=True)
+        # Use new google.genai client API with streaming
+        stream = self._client.models.generate_content_stream(
+            model=self._model_name,
+            contents=contents,
+            config={
+                **self._generation_config,
+                "system_instruction": self._system_prompt,
+            },
+        )
         parser = JSONContentStreamParser()
         raw_text = ""
         last_chunk = None
-        
+
         for chunk in stream:
             last_chunk = chunk
             chunk_text = (chunk.text or "")
@@ -112,7 +126,7 @@ class GeminiModelClient:
             delta = parser.feed(chunk_text)
             if delta:
                 yield delta
-        
+
         # Record usage metrics after streaming completes
         latency_ms = (time.perf_counter() - start_time) * 1000
         if last_chunk is not None:
@@ -125,19 +139,25 @@ class GeminiModelClient:
         return self._build_message(raw_text, tools, parser.content)
 
     def _build_model(self):
-        """Build GenerativeModel, using cached content if enabled."""
+        """Build model configuration.
+
+        Note: With google.genai (new library), we use the client directly
+        rather than creating GenerativeModel instances. This method now
+        returns a config dict for potential caching support.
+        """
         if self._use_cache:
             try:
                 from app.services.cache_manager import GeminiCacheManager
                 return GeminiCacheManager.get_model_from_cache(self._model_name)
             except Exception as e:
                 logger.warning("Failed to get cached model, using direct", exc_info=e)
-        
-        return self._genai.GenerativeModel(
-            model_name=self._model_name,
-            system_instruction=self._system_prompt,
-            generation_config=self._generation_config,
-        )
+
+        # Return config dict for reference (actual generation uses client directly)
+        return {
+            "model_name": self._model_name,
+            "system_instruction": self._system_prompt,
+            "generation_config": self._generation_config,
+        }
 
     def _build_content_parts(self, messages: List[AgentMessage], tools: List[ToolSpec]) -> List[Any]:
         tool_lines = []

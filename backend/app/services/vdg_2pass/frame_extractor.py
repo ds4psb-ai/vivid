@@ -159,9 +159,9 @@ def frames_to_model_parts(
         List of Part objects for model input
     """
     try:
-        from google.generativeai import types
+        from google.genai import types  # google.genai - new library
     except ImportError:
-        logger.error("google.generativeai not available")
+        logger.error("google.genai not available")
         return []
     
     parts = []

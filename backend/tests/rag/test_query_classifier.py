@@ -290,22 +290,22 @@ class TestSemanticRouterMocked:
 
 
 class TestLLMClassifierMocked:
-    """LLM Classifier tests with mocked Gemini."""
+    """LLM Classifier tests with mocked Gemini (google.genai - new library)."""
 
     @pytest.fixture
-    def mock_genai(self):
-        """Mock google.generativeai module (deprecated library used by llm_classifier)."""
+    def mock_genai_client(self):
+        """Mock get_genai_client for llm_classifier (google.genai - new library)."""
         mock_response = MagicMock()
         mock_response.text = '{"query_type": "domain_specific", "confidence": 0.9, "reasoning": "test"}'
 
-        mock_model = MagicMock()
-        mock_model.generate_content_async = AsyncMock(return_value=mock_response)
+        mock_client = MagicMock()
+        mock_client.aio.models.generate_content = AsyncMock(return_value=mock_response)
 
-        with patch("google.generativeai.GenerativeModel", return_value=mock_model):
-            yield mock_model
+        with patch("app.services.genai_utils.get_genai_client", return_value=mock_client):
+            yield mock_client
 
     @pytest.mark.asyncio
-    async def test_classify_with_llm(self, mock_genai):
+    async def test_classify_with_llm(self, mock_genai_client):
         """LLM classifier returns correct type."""
         from app.rag.llm_classifier import classify_with_llm
 
@@ -319,10 +319,10 @@ class TestLLMClassifierMocked:
         """LLM classifier returns AMBIGUOUS on error."""
         from app.rag.llm_classifier import classify_with_llm
 
-        mock_model = MagicMock()
-        mock_model.generate_content_async = AsyncMock(side_effect=Exception("API Error"))
+        mock_client = MagicMock()
+        mock_client.aio.models.generate_content = AsyncMock(side_effect=Exception("API Error"))
 
-        with patch("google.generativeai.GenerativeModel", return_value=mock_model):
+        with patch("app.services.genai_utils.get_genai_client", return_value=mock_client):
             query_type, confidence = await classify_with_llm("test query")
 
             assert query_type == QueryType.AMBIGUOUS
@@ -335,19 +335,19 @@ class TestLLMClassifierMocked:
 
 
 class TestDirectLLMMocked:
-    """Direct LLM tests with mocked Gemini."""
+    """Direct LLM tests with mocked Gemini (google.genai - new library)."""
 
     @pytest.fixture
     def mock_genai_for_direct(self):
-        """Mock google.generativeai for direct LLM (deprecated library used by direct_llm)."""
+        """Mock get_genai_client for direct LLM (google.genai - new library)."""
         mock_response = MagicMock()
         mock_response.text = "Python is a programming language."
 
-        mock_model = MagicMock()
-        mock_model.generate_content_async = AsyncMock(return_value=mock_response)
+        mock_client = MagicMock()
+        mock_client.aio.models.generate_content = AsyncMock(return_value=mock_response)
 
-        with patch("google.generativeai.GenerativeModel", return_value=mock_model):
-            yield mock_model
+        with patch("app.services.genai_utils.get_genai_client", return_value=mock_client):
+            yield mock_client
 
     @pytest.mark.asyncio
     async def test_direct_llm_response(self, mock_genai_for_direct):

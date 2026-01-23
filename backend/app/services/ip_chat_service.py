@@ -444,7 +444,7 @@ class IPChatService:
         parent_message_id: Optional[uuid.UUID] = None,
     ) -> IPChatMessage:
         """Generate an AI response for the user message."""
-        import google.generativeai as genai
+        from app.services.genai_utils import get_genai_client
 
         # Get IP and persona
         ip = await self.db.get(IPCatalog, session.ip_id)
@@ -457,21 +457,24 @@ class IPChatService:
         model_config = MODEL_CONFIGS.get(session.model_preference, MODEL_CONFIGS["flash"])
         messages = self._build_chat_messages(persona_prompt, history, session)
 
-        # Call Gemini
+        # Call Gemini (google.genai - new library)
         start_time = datetime.utcnow()
         try:
-            # H1.3: SecretStr - use .get_secret_value() for actual API key
-            genai.configure(api_key=settings.GEMINI_API_KEY.get_secret_value())
-            model = genai.GenerativeModel(
-                model_name=model_config["model_name"],
-                generation_config={
+            client = get_genai_client()
+
+            # Build contents from message history
+            contents = []
+            for msg in messages:
+                contents.append({"role": msg["role"], "parts": [msg["parts"]]})
+
+            response = await client.aio.models.generate_content(
+                model=model_config["model_name"],
+                contents=contents,
+                config={
                     "temperature": model_config["temperature"],
                     "max_output_tokens": model_config["max_tokens"],
                 },
             )
-
-            chat = model.start_chat(history=messages[:-1])
-            response = await chat.send_message_async(messages[-1]["parts"])
             response_text = response.text
 
             # Estimate tokens
@@ -509,7 +512,7 @@ class IPChatService:
         user_message: IPChatMessage,
     ) -> AsyncGenerator[str, None]:
         """Generate a streaming AI response."""
-        import google.generativeai as genai
+        from app.services.genai_utils import get_genai_client
 
         # Get IP and persona
         ip = await self.db.get(IPCatalog, session.ip_id)
@@ -523,23 +526,22 @@ class IPChatService:
         messages = self._build_chat_messages(persona_prompt, history, session)
 
         try:
-            # H1.3: SecretStr - use .get_secret_value() for actual API key
-            genai.configure(api_key=settings.GEMINI_API_KEY.get_secret_value())
-            model = genai.GenerativeModel(
-                model_name=model_config["model_name"],
-                generation_config={
+            client = get_genai_client()
+
+            # Build contents from message history (google.genai - new library)
+            contents = []
+            for msg in messages:
+                contents.append({"role": msg["role"], "parts": [msg["parts"]]})
+
+            # Use async streaming
+            async for chunk in client.aio.models.generate_content_stream(
+                model=model_config["model_name"],
+                contents=contents,
+                config={
                     "temperature": model_config["temperature"],
                     "max_output_tokens": model_config["max_tokens"],
                 },
-            )
-
-            chat = model.start_chat(history=messages[:-1])
-            response = await chat.send_message_async(
-                messages[-1]["parts"],
-                stream=True,
-            )
-
-            async for chunk in response:
+            ):
                 if chunk.text:
                     yield chunk.text
 

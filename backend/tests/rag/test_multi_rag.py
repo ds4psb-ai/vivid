@@ -296,12 +296,14 @@ class TestGeminiEmbedderMock:
 
     @pytest.mark.asyncio
     async def test_embed_text_mock(self):
-        """Test text embedding with mock."""
-        with patch("app.rag.multi_rag.embedders.gemini_embedder._get_genai") as mock_genai:
-            # Setup mock
-            mock_genai.return_value.embed_content.return_value = {
-                "embedding": [0.1] * 768
-            }
+        """Test text embedding with mock (google.genai - new library)."""
+        with patch("app.rag.multi_rag.embedders.gemini_embedder._get_genai_client") as mock_client:
+            # Setup mock - new API returns embeddings[0].values
+            mock_embedding = MagicMock()
+            mock_embedding.values = [0.1] * 768
+            mock_response = MagicMock()
+            mock_response.embeddings = [mock_embedding]
+            mock_client.return_value.models.embed_content.return_value = mock_response
 
             from app.rag.multi_rag.embedders import GeminiMultiModalEmbedder
 

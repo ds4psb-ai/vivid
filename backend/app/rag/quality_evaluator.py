@@ -133,13 +133,12 @@ class QualityEvaluator:
 
     @property
     def genai_client(self):
-        """Lazy-initialize Gemini client."""
+        """Lazy-initialize Gemini client (google.genai - new library)."""
         if self._genai_client is None:
             try:
-                import google.generativeai as genai
-                # H1.3: SecretStr - use .get_secret_value() for actual API key
-                genai.configure(api_key=settings.GEMINI_API_KEY.get_secret_value())
-                self._genai_client = genai.GenerativeModel(self.model)
+                from app.services.genai_utils import get_genai_client
+                # genai_utils handles H1.3: SecretStr internally
+                self._genai_client = get_genai_client()
             except Exception as e:
                 logger.error(f"[QualityEvaluator] Failed to initialize Gemini: {e}")
                 self._genai_client = None
@@ -231,9 +230,10 @@ class QualityEvaluator:
                 logger.warning("[QualityEvaluator] Gemini unavailable, using fallback")
                 return self._fallback_evaluation(dimension, input_request, output_result)
 
-            response = await client.generate_content_async(
-                prompt,
-                generation_config={
+            response = await client.aio.models.generate_content(
+                model=self.model,
+                contents=prompt,
+                config={
                     "temperature": 0.1,  # Low temperature for consistent evaluation
                     "max_output_tokens": 500,
                 },

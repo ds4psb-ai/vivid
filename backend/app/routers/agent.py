@@ -255,15 +255,13 @@ def _to_core_message(record: AgentMessageRecord) -> CoreAgentMessage:
 
 
 def _ensure_genai():
+    """Get google.genai client via genai_utils factory."""
     try:
-        import google.generativeai as genai
-        # H1.3: SecretStr - use .get_secret_value() for actual API key
-        if not settings.GEMINI_API_KEY.get_secret_value():
-             raise ValueError("GEMINI_API_KEY not set")
-        genai.configure(api_key=settings.GEMINI_API_KEY.get_secret_value())
-        return genai
+        from app.services.genai_utils import get_genai_client
+        # genai_utils handles H1.3: SecretStr internally
+        return get_genai_client()
     except ImportError:
-        raise HTTPException(status_code=500, detail="google-generativeai not installed")
+        raise HTTPException(status_code=500, detail="google-genai not installed")
     except ValueError:
         raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
 
@@ -438,19 +436,19 @@ async def upload_file(
     user: dict = Depends(get_current_user),  # P0: Auth required - prevent API abuse
 ):
     """Upload a file to Gemini File API."""
-    genai = _ensure_genai()
-    
+    client = _ensure_genai()
+
     # Save to temp file first
     temp_filename = f"temp_{uuid.uuid4().hex}_{file.filename}"
     try:
         async with aiofiles.open(temp_filename, 'wb') as out_file:
             content = await file.read()
             await out_file.write(content)
-        
-        # Upload to Gemini
-        # Note: upload_file handles MIME type detection, but we can hint it or verify
-        uploaded_file = genai.upload_file(path=temp_filename, display_name=file.filename)
-        
+
+        # Upload to Gemini (google.genai - new library)
+        # Note: upload handles MIME type detection, but we can hint it or verify
+        uploaded_file = client.files.upload(file=temp_filename, config={"display_name": file.filename})
+
         # Return info needed for the chat request
         return {
             "file_uri": uploaded_file.uri,

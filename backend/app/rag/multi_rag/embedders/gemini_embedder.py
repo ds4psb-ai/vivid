@@ -27,26 +27,22 @@ from app.rag.multi_rag.types import EmbeddingResult, Modality
 
 logger = logging.getLogger(__name__)
 
-# Lazy-load genai
-_genai = None
+# Lazy-load genai client (google.genai - new library)
+_genai_client = None
 
 
-def _get_genai():
-    """Lazy-load google.generativeai module."""
-    global _genai
-    if _genai is None:
+def _get_genai_client():
+    """Lazy-load google.genai client via genai_utils."""
+    global _genai_client
+    if _genai_client is None:
         try:
-            import google.generativeai as genai
-
-            api_key = settings.GEMINI_API_KEY
-            if api_key:
-                genai.configure(api_key=api_key)
-            _genai = genai
+            from app.services.genai_utils import get_genai_client
+            _genai_client = get_genai_client()
         except ImportError:
             raise EmbedderError(
-                "google-generativeai not installed. Run: pip install google-generativeai"
+                "google-genai not installed. Run: pip install google-genai"
             )
-    return _genai
+    return _genai_client
 
 
 # =============================================================================
@@ -105,12 +101,12 @@ class GeminiMultiModalEmbedder(BaseMultiModalEmbedder):
         self._initialized = False
 
     def _ensure_initialized(self) -> None:
-        """Ensure genai is configured."""
+        """Ensure genai client is configured."""
         if self._initialized:
             return
 
         try:
-            _get_genai()
+            _get_genai_client()
             self._initialized = True
             logger.info(
                 f"[GeminiEmbedder] Initialized with model={self._model_name}, "
@@ -140,17 +136,19 @@ class GeminiMultiModalEmbedder(BaseMultiModalEmbedder):
         start_time = time.time()
 
         try:
-            genai = _get_genai()
+            client = _get_genai_client()
 
-            # Gemini embed_content API
-            result = genai.embed_content(
+            # Gemini embed_content API (google.genai - new library)
+            result = client.models.embed_content(
                 model=self._model_name,
-                content=text,
-                task_type=self._task_type,
-                output_dimensionality=self._output_dimensionality,
+                contents=text,
+                config={
+                    "task_type": self._task_type,
+                    "output_dimensionality": self._output_dimensionality,
+                } if self._output_dimensionality else {"task_type": self._task_type},
             )
 
-            vector = result["embedding"]
+            vector = result.embeddings[0].values
 
             # Validate dimensions
             if len(vector) != self._embedding_dim:
@@ -195,7 +193,9 @@ class GeminiMultiModalEmbedder(BaseMultiModalEmbedder):
         start_time = time.time()
 
         try:
-            genai = _get_genai()
+            from google.genai import types as genai_types
+
+            client = _get_genai_client()
 
             # 이미지를 base64로 인코딩
             image_b64 = base64.b64encode(image).decode("utf-8")
@@ -207,34 +207,31 @@ class GeminiMultiModalEmbedder(BaseMultiModalEmbedder):
             elif image[:4] == b"RIFF" and image[8:12] == b"WEBP":
                 mime_type = "image/webp"
 
-            # Gemini Vision으로 이미지 설명 생성
-            vision_model = genai.GenerativeModel("gemini-1.5-flash")
-
-            response = vision_model.generate_content(
-                [
-                    {
-                        "mime_type": mime_type,
-                        "data": image_b64,
-                    },
+            # Gemini Vision으로 이미지 설명 생성 (google.genai - new library)
+            response = client.models.generate_content(
+                model="gemini-1.5-flash",
+                contents=[
+                    genai_types.Part.from_bytes(data=image, mime_type=mime_type),
                     "Describe this image in detail for cinematic analysis. "
                     "Focus on: composition, lighting, color palette, mood, camera angle, "
                     "subject positioning, and visual storytelling elements. "
                     "Be concise but comprehensive (max 200 words).",
-                ]
+                ],
             )
 
             image_description = response.text
 
-            # 설명 텍스트를 임베딩
-            genai = _get_genai()
-            result = genai.embed_content(
+            # 설명 텍스트를 임베딩 (google.genai - new library)
+            result = client.models.embed_content(
                 model=self._model_name,
-                content=image_description,
-                task_type=self._task_type,
-                output_dimensionality=self._output_dimensionality,
+                contents=image_description,
+                config={
+                    "task_type": self._task_type,
+                    "output_dimensionality": self._output_dimensionality,
+                } if self._output_dimensionality else {"task_type": self._task_type},
             )
 
-            vector = result["embedding"]
+            vector = result.embeddings[0].values
 
             return self._create_result(
                 vector=vector,
@@ -287,17 +284,19 @@ class GeminiMultiModalEmbedder(BaseMultiModalEmbedder):
         if texts:
             start_time = time.time()
             try:
-                genai = _get_genai()
+                client = _get_genai_client()
 
-                # Gemini 배치 임베딩
-                batch_result = genai.embed_content(
+                # Gemini 배치 임베딩 (google.genai - new library)
+                batch_result = client.models.embed_content(
                     model=self._model_name,
-                    content=texts,
-                    task_type=self._task_type,
-                    output_dimensionality=self._output_dimensionality,
+                    contents=texts,
+                    config={
+                        "task_type": self._task_type,
+                        "output_dimensionality": self._output_dimensionality,
+                    } if self._output_dimensionality else {"task_type": self._task_type},
                 )
 
-                embeddings = batch_result["embedding"]
+                embeddings = [e.values for e in batch_result.embeddings]
                 processing_time = (time.time() - start_time) * 1000
 
                 for i, (text, vector) in enumerate(zip(texts, embeddings)):

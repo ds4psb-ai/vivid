@@ -496,22 +496,19 @@ class IntentRouter:
     
     def _classify_with_llm_sync(self, message: str) -> Optional[RoutingResult]:
         """Synchronous LLM classification using Gemini Flash.
-        
+
         P1-2: Uses lightweight model for cost efficiency.
         """
         try:
-            import google.generativeai as genai
+            from app.services.genai_utils import get_genai_client
             from app.config import settings
-            
+
             # H1.3: SecretStr - use .get_secret_value() for actual API key
             if not settings.GEMINI_API_KEY.get_secret_value():
                 return None
 
-            genai.configure(api_key=settings.GEMINI_API_KEY.get_secret_value())
-            
-            # Use fast model for classification
-            model = genai.GenerativeModel("gemini-2.0-flash")
-            
+            client = get_genai_client()
+
             # Build classification prompt
             prompt = f"""Classify the user intent for a video creation assistant.
 
@@ -531,13 +528,15 @@ Intent categories:
 
 Respond with ONLY valid JSON:
 {{"intent": "<category>", "confidence": <0.0-1.0>}}"""
-            
-            response = model.generate_content(
-                prompt,
-                generation_config=genai.GenerationConfig(
-                    temperature=0.1,
-                    max_output_tokens=100,
-                )
+
+            # Use fast model for classification (google.genai - new library)
+            response = client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=prompt,
+                config={
+                    "temperature": 0.1,
+                    "max_output_tokens": 100,
+                },
             )
             
             # Parse response
@@ -570,7 +569,7 @@ Respond with ONLY valid JSON:
                 )
                 
         except ImportError:
-            logger.debug("google-generativeai not installed")
+            logger.debug("google-genai not installed")
         except Exception as e:
             logger.warning(f"LLM classification error: {e}")
         

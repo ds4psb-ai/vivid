@@ -8,8 +8,8 @@ from typing import Dict, Any, List
 import json
 import logging
 from datetime import datetime
-import google.generativeai as genai
-from google.generativeai import types
+from google.genai import types  # google.genai - new library
+from app.services.genai_utils import get_genai_client
 from app.schemas.vdg_v4 import (
     VisualPassResult, 
     AnalysisPlan, 
@@ -51,11 +51,11 @@ class VisualPass:
     def __init__(self, client=None):
         self.client = client
         if not self.client and settings.GEMINI_API_KEY:
-            genai.configure(api_key=settings.GEMINI_API_KEY)
-        
+            self.client = get_genai_client()
+
         # Use config or default to 1.5 Pro
         self.model_name = getattr(settings, "GEMINI_MODEL_PRO", "gemini-1.5-pro-latest")
-        
+
         # P0-2: Check if frame extraction is available
         self._use_frames = FrameExtractor.is_available()
         if self._use_frames:
@@ -137,16 +137,18 @@ class VisualPass:
             input_mode = "full_video (fallback)"
         
         # 4. Generate Content with P0-4 hardening
-        model = genai.GenerativeModel(
-            model_name=self.model_name,
-            system_instruction=system_prompt,
-            generation_config=types.GenerationConfig(
-                response_mime_type="application/json",
-                response_schema=VisualPassResult,
-                temperature=0.0,  # Zero temp for precise measurement
-                max_output_tokens=8192
-            )
-        )
+        # Note: With google.genai (new library), we pass config directly to generate_content
+        # The model object here is just for reference; actual generation uses client
+        model = {
+            "model_name": self.model_name,
+            "system_instruction": system_prompt,
+            "generation_config": {
+                "response_mime_type": "application/json",
+                "response_schema": VisualPassResult,
+                "temperature": 0.0,  # Zero temp for precise measurement
+                "max_output_tokens": 8192
+            }
+        }
         
         logger.info(f"🎥 Starting Visual Pass (Model: {self.model_name})")
         logger.info(f"   └─ Input mode: {input_mode}")

@@ -77,9 +77,9 @@ async def direct_llm_response(
     start = time.time()
 
     try:
-        import google.generativeai as genai
+        from app.services.genai_utils import get_genai_client
 
-        model = genai.GenerativeModel(model_name)
+        client = get_genai_client()
 
         # Get system prompt for query type
         system_prompt = SYSTEM_PROMPTS.get(
@@ -94,10 +94,11 @@ async def direct_llm_response(
         # Build prompt
         full_prompt = f"{system_prompt}\n\nUser Query: {query}"
 
-        # Generate response
-        response = await model.generate_content_async(
-            full_prompt,
-            generation_config={
+        # Generate response (google.genai - new library)
+        response = await client.aio.models.generate_content(
+            model=model_name,
+            contents=full_prompt,
+            config={
                 "temperature": temperature,
                 "max_output_tokens": max_tokens,
             },
