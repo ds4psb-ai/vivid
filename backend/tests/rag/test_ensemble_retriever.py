@@ -394,6 +394,7 @@ class TestHybridQueryEnsembleIntegration:
             result = await hybrid_query(
                 query="test query",
                 strategy="ensemble",
+                dimension="AD",  # P5 skip retrieval 우회를 위해 dimension 추가
                 app_key="dimension.aesthetic.direct",
                 use_semantic_cache=False,
             )
@@ -416,6 +417,7 @@ class TestHybridQueryEnsembleIntegration:
             from app.rag.hybrid_rag import hybrid_query
             result = await hybrid_query(
                 query="test query",
+                dimension="AD",  # P5 skip retrieval 우회를 위해 dimension 추가
                 pipeline_hints={"use_ensemble": True, "rrf_k": 30},
                 use_semantic_cache=False,
             )
