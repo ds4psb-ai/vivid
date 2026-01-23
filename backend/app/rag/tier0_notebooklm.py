@@ -829,17 +829,115 @@ class NotebookLMService:
                     if pw_result and pw_result.get("success"):
                         answer = pw_result.get("answer", "")
                         if answer:
+                            # Parse sources from the Playwright result
+                            sources = self._parse_sources_from_playwright_result(pw_result, answer)
                             return NotebookQueryResult(
                                 answer=answer,
-                                sources=[],  # TODO: parse sources from pw_result
-                                confidence=0.90,
-                                grounded=True,
+                                sources=sources,
+                                confidence=0.90 if sources else 0.70,
+                                grounded=len(sources) > 0,
                                 notebook_id=notebook_id,
                             )
                 except Exception as pw_error:
                     logger.warning(f"[NotebookLM] Playwright fallback failed: {pw_error}")
             
             return await self._simulate_query(notebook_id, query, notebook_info)
+
+    def _parse_sources_from_playwright_result(
+        self,
+        pw_result: Dict[str, Any],
+        answer: str,
+    ) -> List[NotebookSource]:
+        """Parse source references from Playwright query result.
+
+        Extracts citation markers from the answer text and creates
+        NotebookSource objects with available information.
+
+        Citation patterns:
+        - [1], [2], [3] - numbered inline citations
+        - [Source Title] - title-based citations
+
+        Args:
+            pw_result: Raw result from Playwright query
+            answer: Extracted answer text
+
+        Returns:
+            List of NotebookSource objects
+        """
+        import re
+
+        sources: List[NotebookSource] = []
+
+        # 1. Try to extract sources from source_count if available
+        source_count = pw_result.get("source_count", 0)
+
+        # 2. Extract citation markers from the answer text
+        # Pattern: [1], [2], [3], etc.
+        citation_pattern = r'\[(\d+)\]'
+        citations = set(re.findall(citation_pattern, answer))
+
+        # 3. Also look for text citations like [Source Title]
+        text_citation_pattern = r'\[([^0-9\[\]]{3,50})\]'
+        text_citations = re.findall(text_citation_pattern, answer)
+
+        # 4. Create sources from citation numbers
+        for i, citation_num in enumerate(sorted(citations, key=int)):
+            sources.append(
+                NotebookSource(
+                    source_id=f"nb_src_{citation_num}",
+                    title=f"Source {citation_num}",
+                    excerpt=f"Referenced in answer with citation [{citation_num}]",
+                    relevance_score=1.0 - (i * 0.05),  # Decreasing relevance
+                    citation_text=f"[{citation_num}]",
+                )
+            )
+
+        # 5. If no numbered citations, try text citations
+        if not sources and text_citations:
+            for i, title in enumerate(text_citations[:5]):  # Limit to 5
+                sources.append(
+                    NotebookSource(
+                        source_id=f"nb_src_title_{i}",
+                        title=title,
+                        excerpt=f"Referenced as [{title}]",
+                        relevance_score=0.9 - (i * 0.1),
+                        citation_text=f"[{title}]",
+                    )
+                )
+
+        # 6. If still no sources but source_count > 0, create placeholders
+        if not sources and source_count > 0:
+            for i in range(min(source_count, 5)):
+                sources.append(
+                    NotebookSource(
+                        source_id=f"nb_src_{i + 1}",
+                        title=f"NotebookLM Source {i + 1}",
+                        excerpt="Source document used for grounded response",
+                        relevance_score=0.8 - (i * 0.1),
+                        citation_text=f"[{i + 1}]",
+                    )
+                )
+
+        # 7. Try to extract from raw_response if available
+        raw_response = pw_result.get("raw_response", "")
+        if not sources and raw_response:
+            # Look for source references in the raw JSON
+            # Pattern: sourceId or source_id in the response
+            source_id_pattern = r'"(?:sourceId|source_id)"\s*:\s*"([^"]+)"'
+            source_ids = set(re.findall(source_id_pattern, raw_response))
+            for i, sid in enumerate(list(source_ids)[:5]):
+                sources.append(
+                    NotebookSource(
+                        source_id=sid,
+                        title=f"Source Document",
+                        excerpt="Extracted from response metadata",
+                        relevance_score=0.75,
+                        citation_text=f"[{i + 1}]",
+                    )
+                )
+
+        logger.debug(f"[NotebookLM] Parsed {len(sources)} sources from Playwright result")
+        return sources
 
     async def _simulate_query(
         self,
