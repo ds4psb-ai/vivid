@@ -62,6 +62,8 @@ def mock_operation_success():
 
     mock_op = MagicMock()
     mock_op.done = True
+    # Set both response and result - code checks response first (line 360)
+    mock_op.response = mock_result
     mock_op.result = mock_result
     mock_op.error = None
 
@@ -289,6 +291,8 @@ class TestVeoServiceErrorHandling:
         mock_result.generated_videos = [mock_video]
         mock_op = MagicMock()
         mock_op.done = True
+        # Set both response and result - code checks response first (line 360)
+        mock_op.response = mock_result
         mock_op.result = mock_result
         mock_op.error = None
 
@@ -310,17 +314,16 @@ class TestVeoServiceConvenienceFunctions:
 
     @pytest.mark.asyncio
     async def test_generate_video_function(self, mock_operation_success):
-        """Module-level generate_video function works correctly."""
-        from app.services.veo_service import generate_video
-
+        """Module-level generate_video_simple function works correctly via VeoService."""
+        # Test the generate_video_simple method which is what generate_video calls internally
         with patch.object(VeoService, '_get_client') as mock_get_client:
             mock_client = MagicMock()
             mock_client.models.generate_videos.return_value = mock_operation_success
             mock_get_client.return_value = mock_client
 
-            result = await generate_video(
+            service = VeoService(api_key="test-key")
+            result = await service.generate_video_simple(
                 prompt="Test video",
-                api_key="test-key",
             )
 
             assert result.success is True

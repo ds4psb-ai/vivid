@@ -294,17 +294,15 @@ class TestLLMClassifierMocked:
 
     @pytest.fixture
     def mock_genai(self):
-        """Mock google-genai client."""
+        """Mock google.generativeai module (deprecated library used by llm_classifier)."""
         mock_response = MagicMock()
         mock_response.text = '{"query_type": "domain_specific", "confidence": 0.9, "reasoning": "test"}'
-        mock_models = MagicMock()
-        mock_models.generate_content = AsyncMock(return_value=mock_response)
-        mock_aio = MagicMock()
-        mock_aio.models = mock_models
-        mock_client = MagicMock()
-        mock_client.aio = mock_aio
-        with patch("app.services.genai_utils.get_genai_client", return_value=mock_client):
-            yield mock_client
+
+        mock_model = MagicMock()
+        mock_model.generate_content_async = AsyncMock(return_value=mock_response)
+
+        with patch("google.generativeai.GenerativeModel", return_value=mock_model):
+            yield mock_model
 
     @pytest.mark.asyncio
     async def test_classify_with_llm(self, mock_genai):
@@ -321,9 +319,10 @@ class TestLLMClassifierMocked:
         """LLM classifier returns AMBIGUOUS on error."""
         from app.rag.llm_classifier import classify_with_llm
 
-        with patch("app.services.genai_utils.get_genai_client") as mock:
-            mock.side_effect = Exception("API Error")
+        mock_model = MagicMock()
+        mock_model.generate_content_async = AsyncMock(side_effect=Exception("API Error"))
 
+        with patch("google.generativeai.GenerativeModel", return_value=mock_model):
             query_type, confidence = await classify_with_llm("test query")
 
             assert query_type == QueryType.AMBIGUOUS
@@ -340,17 +339,15 @@ class TestDirectLLMMocked:
 
     @pytest.fixture
     def mock_genai_for_direct(self):
-        """Mock google-genai for direct LLM."""
+        """Mock google.generativeai for direct LLM (deprecated library used by direct_llm)."""
         mock_response = MagicMock()
         mock_response.text = "Python is a programming language."
-        mock_models = MagicMock()
-        mock_models.generate_content = AsyncMock(return_value=mock_response)
-        mock_aio = MagicMock()
-        mock_aio.models = mock_models
-        mock_client = MagicMock()
-        mock_client.aio = mock_aio
-        with patch("app.services.genai_utils.get_genai_client", return_value=mock_client):
-            yield mock_client
+
+        mock_model = MagicMock()
+        mock_model.generate_content_async = AsyncMock(return_value=mock_response)
+
+        with patch("google.generativeai.GenerativeModel", return_value=mock_model):
+            yield mock_model
 
     @pytest.mark.asyncio
     async def test_direct_llm_response(self, mock_genai_for_direct):

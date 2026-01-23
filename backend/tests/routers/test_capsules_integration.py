@@ -97,8 +97,10 @@ class TestDoD:
     
     def test_endpoints_defined(self):
         """All required endpoints should be defined."""
-        route_paths = [r.path for r in router.routes]
-        
+        # Routes include the prefix, so strip it for cleaner assertions
+        prefix = "/api/v1/capsules"
+        route_paths = [r.path.replace(prefix, "") or "/" for r in router.routes]
+
         # Check for required endpoints
         assert "/" in route_paths  # list_capsules
         assert "/{capsule_key}" in route_paths  # get_capsule

@@ -262,10 +262,13 @@ class TestGraphQLContext:
         )
 
         loader = context.get_tool_loader()
-        result = await loader.load("tool-123")
+        # Use a valid UUID format - non-UUID strings return None by design
+        test_uuid = "12345678-1234-5678-1234-567812345678"
+        result = await loader.load(test_uuid)
 
+        # Without a real DB, the fallback returns dummy data for valid UUIDs
         assert result is not None
-        assert result["id"] == "tool-123"
+        assert result["id"] == test_uuid
 
 
 # =============================================================================

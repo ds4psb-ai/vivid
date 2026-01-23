@@ -178,10 +178,11 @@ class TestExecuteCapsule:
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = None
         mock_db.execute.return_value = mock_result
-        
+
         user = {"id": "test-user"}
-        
-        with patch("app.services.capsule_executor.get_spec", return_value=None):
+
+        # Patch get_spec in capsule_specs module (where it's imported from)
+        with patch("app.services.capsule_specs.get_spec", new_callable=AsyncMock, return_value=None):
             result = await execute_capsule(
                 capsule_id="nonexistent.capsule",
                 inputs={},
@@ -189,6 +190,6 @@ class TestExecuteCapsule:
                 user=user,
                 db=mock_db,
             )
-        
+
         assert result.status == "failed"
         assert "not found" in result.error.lower()
