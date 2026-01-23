@@ -3295,7 +3295,6 @@ DIMENSION_ADAPTERS: Dict[str, Callable] = {
     DimensionCapsuleId.PERSONA_ANALYZE.value: run_persona_analyzer,
     DimensionCapsuleId.SOUND_MOODBOARD.value: run_sound_moodboard,
     DimensionCapsuleId.VEO_VIDEO_GENERATE.value: run_veo_generator,
-    DimensionCapsuleId.VEO_VIDEO_GENERATE.value: run_veo_generator,
     # 4-Stage Workflow additions
     DimensionCapsuleId.STORY_ARCHITECT.value: run_story_architect,
     DimensionCapsuleId.STORY_REFINE.value: run_story_refinery,
