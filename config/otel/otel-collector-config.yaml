@@ -38,7 +38,7 @@ processors:
         value: vivid
         action: upsert
       - key: deployment.environment
-        value: ${ENVIRONMENT:-development}
+        value: development
         action: upsert
 
   # Filter out health check spans
