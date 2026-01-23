@@ -17,16 +17,71 @@ Usage:
 import asyncio
 import logging
 import os
+import re
 import shutil
 import tempfile
+import threading
 import uuid
 from pathlib import Path
-from typing import List, Optional
-from dataclasses import dataclass
+from typing import List, Optional, Set
+from dataclasses import dataclass, field
+from urllib.parse import urlparse
 
+import aiofiles
 import httpx
 
 logger = logging.getLogger(__name__)
+
+# =============================================================================
+# Security Constants
+# =============================================================================
+
+MAX_VIDEO_SIZE = 500 * 1024 * 1024  # 500MB max download
+MAX_VIDEOS_PER_CONCAT = 20  # Max videos to concatenate
+
+# Allowed URL schemes and domains for SSRF protection
+ALLOWED_SCHEMES: Set[str] = {"http", "https"}
+BLOCKED_HOSTS: Set[str] = {"localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"}
+ALLOWED_DOMAINS: Set[str] = {
+    "storage.googleapis.com",
+    "storage.cloud.google.com",
+    "firebasestorage.googleapis.com",
+    "crebit-studio-media.storage.googleapis.com",
+    # Add other allowed CDN/storage domains
+}
+
+
+def _validate_url(url: str) -> None:
+    """Validate URL to prevent SSRF attacks.
+
+    Args:
+        url: URL to validate
+
+    Raises:
+        ValueError: If URL is not allowed
+    """
+    try:
+        parsed = urlparse(url)
+    except Exception as e:
+        raise ValueError(f"Invalid URL format: {e}")
+
+    # Check scheme
+    if parsed.scheme not in ALLOWED_SCHEMES:
+        raise ValueError(f"URL scheme not allowed: {parsed.scheme}")
+
+    # Check for blocked hosts
+    hostname = parsed.hostname or ""
+    if hostname in BLOCKED_HOSTS:
+        raise ValueError(f"URL host not allowed: {hostname}")
+
+    # Check for private IP ranges
+    if hostname.startswith(("10.", "172.", "192.168.", "169.254.")):
+        raise ValueError(f"Private IP addresses not allowed: {hostname}")
+
+    # In production, enforce domain whitelist
+    # Uncomment to enable strict domain checking:
+    # if not any(hostname.endswith(d) for d in ALLOWED_DOMAINS):
+    #     raise ValueError(f"Domain not whitelisted: {hostname}")
 
 # =============================================================================
 # Configuration
@@ -95,30 +150,66 @@ class VideoProcessingService:
         return self._ffmpeg_available
 
     async def _download_to_temp(self, url: str) -> Optional[str]:
-        """Download URL to temporary file."""
+        """Download URL to temporary file with validation and streaming.
+
+        Args:
+            url: URL to download (must pass SSRF validation)
+
+        Returns:
+            Path to downloaded temp file, or None on failure
+        """
+        temp_path = None
         try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                response = await client.get(url)
-                response.raise_for_status()
+            # Validate URL for SSRF protection
+            _validate_url(url)
 
-                # Generate temp filename
-                suffix = ".mp4"
-                if ".webm" in url:
-                    suffix = ".webm"
-                elif ".mov" in url:
-                    suffix = ".mov"
+            # Generate temp filename
+            suffix = ".mp4"
+            if ".webm" in url.lower():
+                suffix = ".webm"
+            elif ".mov" in url.lower():
+                suffix = ".mov"
 
-                temp_path = os.path.join(
-                    self.config.temp_dir,
-                    f"{uuid.uuid4()}{suffix}"
-                )
+            temp_path = os.path.join(
+                self.config.temp_dir,
+                f"{uuid.uuid4()}{suffix}"
+            )
 
-                with open(temp_path, "wb") as f:
-                    f.write(response.content)
+            # Stream download with size limit
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                async with client.stream("GET", url) as response:
+                    response.raise_for_status()
 
-                return temp_path
+                    # Check content-length if available
+                    content_length = response.headers.get("content-length")
+                    if content_length and int(content_length) > MAX_VIDEO_SIZE:
+                        raise ValueError(
+                            f"Video too large: {content_length} bytes (max {MAX_VIDEO_SIZE})"
+                        )
+
+                    # Stream to file with size tracking
+                    total_size = 0
+                    async with aiofiles.open(temp_path, "wb") as f:
+                        async for chunk in response.aiter_bytes(chunk_size=65536):
+                            total_size += len(chunk)
+                            if total_size > MAX_VIDEO_SIZE:
+                                raise ValueError(
+                                    f"Video exceeds {MAX_VIDEO_SIZE} bytes during download"
+                                )
+                            await f.write(chunk)
+
+            logger.debug(f"[VIDEO] Downloaded {total_size} bytes to {temp_path}")
+            return temp_path
+
+        except ValueError as e:
+            logger.error(f"[VIDEO] Validation error for {url}: {e}")
+            if temp_path and os.path.exists(temp_path):
+                os.remove(temp_path)
+            return None
         except Exception as e:
             logger.error(f"[VIDEO] Failed to download {url}: {e}")
+            if temp_path and os.path.exists(temp_path):
+                os.remove(temp_path)
             return None
 
     async def extract_last_frame(
@@ -237,12 +328,21 @@ class VideoProcessingService:
 
         Returns:
             Path to concatenated video, or None on failure
+
+        Raises:
+            ValueError: If too many videos requested
         """
         if not await self.is_ffmpeg_available():
             return None
 
         if not video_urls:
             return None
+
+        # Limit number of videos to prevent DoS
+        if len(video_urls) > MAX_VIDEOS_PER_CONCAT:
+            raise ValueError(
+                f"Too many videos: {len(video_urls)} (max {MAX_VIDEOS_PER_CONCAT})"
+            )
 
         if len(video_urls) == 1:
             # Single video - just download it
@@ -429,46 +529,61 @@ class VideoProcessingService:
             if temp_audio and os.path.exists(temp_audio):
                 os.remove(temp_audio)
 
-    def cleanup_temp_files(self, max_age_hours: int = 1):
-        """Clean up old temporary files.
+    async def cleanup_temp_files(self, max_age_hours: int = 1) -> int:
+        """Clean up old temporary files asynchronously.
 
         Args:
             max_age_hours: Delete files older than this
+
+        Returns:
+            Number of files cleaned up
         """
         import time
 
-        temp_dir = Path(self.config.temp_dir)
-        if not temp_dir.exists():
-            return
+        def _sync_cleanup() -> int:
+            temp_dir = Path(self.config.temp_dir)
+            if not temp_dir.exists():
+                return 0
 
-        cutoff = time.time() - (max_age_hours * 3600)
-        cleaned = 0
+            cutoff = time.time() - (max_age_hours * 3600)
+            cleaned = 0
 
-        for file_path in temp_dir.iterdir():
-            if file_path.is_file() and file_path.stat().st_mtime < cutoff:
-                file_path.unlink()
-                cleaned += 1
+            for file_path in temp_dir.iterdir():
+                try:
+                    if file_path.is_file() and file_path.stat().st_mtime < cutoff:
+                        file_path.unlink()
+                        cleaned += 1
+                except OSError as e:
+                    logger.warning(f"[VIDEO] Failed to cleanup {file_path}: {e}")
 
+            return cleaned
+
+        cleaned = await asyncio.to_thread(_sync_cleanup)
         if cleaned:
             logger.info(f"[VIDEO] Cleaned up {cleaned} old temp files")
+        return cleaned
 
 
 # =============================================================================
-# Singleton Instance
+# Singleton Instance (Thread-safe)
 # =============================================================================
 
 _service: Optional[VideoProcessingService] = None
+_lock = threading.Lock()
 
 
 def get_video_processor() -> VideoProcessingService:
-    """Get or create VideoProcessingService instance."""
+    """Get or create VideoProcessingService instance (thread-safe)."""
     global _service
     if _service is None:
-        _service = VideoProcessingService()
+        with _lock:
+            if _service is None:  # Double-check locking
+                _service = VideoProcessingService()
     return _service
 
 
 def reset_video_processor():
     """Reset singleton for testing."""
     global _service
-    _service = None
+    with _lock:
+        _service = None

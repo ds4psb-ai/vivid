@@ -466,24 +466,37 @@ function VeoVideoContent() {
 
   // Handle chain data from previous dimensions (visual-realizer, prompt-alchemy, sound-crafter)
   const handleApplyChainData = useCallback((data: Record<string, ChainData>) => {
+    // Type-safe extraction helper
+    const getStringValue = (obj: unknown, key: string): string | undefined => {
+      if (obj && typeof obj === "object" && key in obj) {
+        const val = (obj as Record<string, unknown>)[key];
+        return typeof val === "string" ? val : undefined;
+      }
+      return undefined;
+    };
+
     // From visual-realizer: get generated image prompt for video generation
-    if (data["visual-realizer"]?.output?.prompt && !prompt) {
-      setPrompt(data["visual-realizer"].output.prompt as string);
+    const visualOutput = data["visual-realizer"]?.output as Record<string, unknown> | undefined;
+    const visualPrompt = getStringValue(visualOutput, "prompt");
+    if (visualPrompt && !prompt) {
+      setPrompt(visualPrompt);
     }
 
     // From prompt-alchemy: get video prompt
-    if (data["prompt-alchemy"]?.output?.prompt && !prompt) {
-      setPrompt(data["prompt-alchemy"].output.prompt as string);
+    const promptOutput = data["prompt-alchemy"]?.output as Record<string, unknown> | undefined;
+    const alchemyPrompt = getStringValue(promptOutput, "prompt");
+    if (alchemyPrompt && !prompt) {
+      setPrompt(alchemyPrompt);
     }
 
     // Set negative prompt from visual-realizer if available
-    if (data["visual-realizer"]?.output?.negative_prompt && !negativePrompt) {
-      setNegativePrompt(data["visual-realizer"].output.negative_prompt as string);
+    const negPrompt = getStringValue(visualOutput, "negative_prompt");
+    if (negPrompt && !negativePrompt) {
+      setNegativePrompt(negPrompt);
     }
 
     // Set style from prompt-alchemy parameters
-    const promptAlchemyOutput = data["prompt-alchemy"]?.output as Record<string, unknown> | undefined;
-    const styleData = promptAlchemyOutput?.style as Record<string, unknown> | undefined;
+    const styleData = promptOutput?.style as Record<string, unknown> | undefined;
     if (styleData?.cinematography) {
       const cinematography = String(styleData.cinematography);
       if (cinematography.toLowerCase().includes("anime")) setStyle("anime");

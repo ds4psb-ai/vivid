@@ -617,27 +617,112 @@ def _get_extractor():
     return _extractor
 
 
+MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10MB max image size
+MAX_BASE64_SIZE = MAX_IMAGE_SIZE * 4 // 3 + 100  # Base64 overhead + padding
+
+# Blocked hosts for SSRF protection
+_BLOCKED_HOSTS = {"localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"}
+
+
+def _validate_image_url(url: str) -> None:
+    """Validate image URL for SSRF protection."""
+    from urllib.parse import urlparse
+
+    try:
+        parsed = urlparse(url)
+    except Exception as e:
+        raise ValueError(f"Invalid URL format: {e}")
+
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError(f"URL scheme not allowed: {parsed.scheme}")
+
+    hostname = parsed.hostname or ""
+    if hostname in _BLOCKED_HOSTS:
+        raise ValueError(f"URL host not allowed: {hostname}")
+
+    # Block private IP ranges
+    if hostname.startswith(("10.", "172.", "192.168.", "169.254.")):
+        raise ValueError(f"Private IP addresses not allowed: {hostname}")
+
+
 async def _get_image_data(
     base64_data: Optional[str] = None,
     image_url: Optional[str] = None,
 ) -> Optional[bytes]:
-    """Fetch image data from base64 or URL."""
+    """Fetch image data from base64 or URL with validation.
+
+    Args:
+        base64_data: Base64 encoded image data
+        image_url: URL to fetch image from
+
+    Returns:
+        Image bytes or None on failure
+
+    Note:
+        - Max image size: 10MB
+        - URLs are validated for SSRF protection
+    """
     if base64_data:
         try:
+            # Check base64 size limit before decoding
+            if len(base64_data) > MAX_BASE64_SIZE:
+                logger.warning(
+                    f"Base64 data too large: {len(base64_data)} bytes (max {MAX_BASE64_SIZE})"
+                )
+                return None
+
             # Remove data URI prefix if present
             if "," in base64_data:
                 base64_data = base64_data.split(",", 1)[1]
-            return base64.b64decode(base64_data)
+
+            decoded = base64.b64decode(base64_data)
+
+            # Verify decoded size
+            if len(decoded) > MAX_IMAGE_SIZE:
+                logger.warning(
+                    f"Decoded image too large: {len(decoded)} bytes (max {MAX_IMAGE_SIZE})"
+                )
+                return None
+
+            return decoded
         except Exception as e:
             logger.warning(f"Failed to decode base64 image: {e}")
             return None
 
     if image_url:
         try:
+            # Validate URL for SSRF protection
+            _validate_image_url(image_url)
+
             async with httpx.AsyncClient(timeout=30) as client:
-                response = await client.get(image_url)
-                response.raise_for_status()
-                return response.content
+                # Stream download with size check
+                async with client.stream("GET", image_url) as response:
+                    response.raise_for_status()
+
+                    # Check content-length header
+                    content_length = response.headers.get("content-length")
+                    if content_length and int(content_length) > MAX_IMAGE_SIZE:
+                        logger.warning(
+                            f"Image too large: {content_length} bytes (max {MAX_IMAGE_SIZE})"
+                        )
+                        return None
+
+                    # Stream and accumulate with size limit
+                    chunks = []
+                    total_size = 0
+                    async for chunk in response.aiter_bytes(chunk_size=65536):
+                        total_size += len(chunk)
+                        if total_size > MAX_IMAGE_SIZE:
+                            logger.warning(
+                                f"Image exceeds {MAX_IMAGE_SIZE} bytes during download"
+                            )
+                            return None
+                        chunks.append(chunk)
+
+                    return b"".join(chunks)
+        except ValueError as e:
+            logger.warning(f"URL validation failed: {e}")
+            return None
         except Exception as e:
             logger.warning(f"Failed to fetch image URL: {e}")
             return None

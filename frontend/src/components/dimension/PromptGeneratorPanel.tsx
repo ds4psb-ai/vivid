@@ -263,32 +263,56 @@ function PromptGeneratorContent() {
 
   // Handle chain data from previous dimensions (story-architect, storyboard-sketch)
   const handleApplyChainData = useCallback((data: Record<string, ChainData>) => {
+    // Type-safe extraction helper
+    const getStringValue = (obj: unknown, key: string): string | undefined => {
+      if (obj && typeof obj === "object" && key in obj) {
+        const val = (obj as Record<string, unknown>)[key];
+        return typeof val === "string" ? val : undefined;
+      }
+      return undefined;
+    };
+
     // From story-architect: get logline or synopsis as topic hint
-    if (data["story-architect"]?.output?.logline && !topic) {
-      setTopic(data["story-architect"].output.logline as string);
-    } else if (data["story-architect"]?.output?.synopsis && !topic) {
-      setTopic((data["story-architect"].output.synopsis as string).slice(0, 500));
+    const storyOutput = data["story-architect"]?.output as Record<string, unknown> | undefined;
+    if (storyOutput && !topic) {
+      const logline = getStringValue(storyOutput, "logline");
+      const synopsis = getStringValue(storyOutput, "synopsis");
+      if (logline) {
+        setTopic(logline);
+      } else if (synopsis) {
+        setTopic(synopsis.slice(0, 500));
+      }
     }
 
     // From storyboard-sketch: get scene descriptions as topic hint
-    if (data["storyboard-sketch"]?.output?.scenes && !topic) {
-      const scenes = data["storyboard-sketch"].output.scenes as Array<{ description: string }>;
-      if (scenes.length > 0) {
-        setTopic(scenes.map(s => s.description).join("\n").slice(0, 500));
+    const storyboardOutput = data["storyboard-sketch"]?.output as Record<string, unknown> | undefined;
+    if (storyboardOutput?.scenes && !topic) {
+      const scenes = storyboardOutput.scenes;
+      if (Array.isArray(scenes) && scenes.length > 0) {
+        const descriptions = scenes
+          .filter((s): s is { description: string } =>
+            typeof s === "object" && s !== null && "description" in s && typeof s.description === "string"
+          )
+          .map(s => s.description);
+        if (descriptions.length > 0) {
+          setTopic(descriptions.join("\n").slice(0, 500));
+        }
       }
     }
 
     // From aesthetic-director: get mood and style hints
-    if (data["aesthetic-director"]?.output?.mood) {
-      const adMood = data["aesthetic-director"].output.mood as string;
+    const adOutput = data["aesthetic-director"]?.output as Record<string, unknown> | undefined;
+    const adMood = getStringValue(adOutput, "mood");
+    if (adMood) {
       const moodMap: Record<string, string> = {
         dramatic: "dramatic",
         calm: "calm",
         energetic: "energetic",
         melancholic: "melancholic",
       };
-      if (moodMap[adMood.toLowerCase()]) {
-        setMood(moodMap[adMood.toLowerCase()]);
+      const mappedMood = moodMap[adMood.toLowerCase()];
+      if (mappedMood) {
+        setMood(mappedMood);
       }
     }
   }, [topic]);

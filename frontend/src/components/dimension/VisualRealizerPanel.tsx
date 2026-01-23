@@ -329,28 +329,43 @@ function VisualRealizerContent() {
 
   // Handle chain data from previous dimensions (prompt-alchemy, storyboard-sketch)
   const handleApplyChainData = useCallback((data: Record<string, ChainData>) => {
+    // Type-safe extraction helper
+    const getStringValue = (obj: unknown, key: string): string | undefined => {
+      if (obj && typeof obj === "object" && key in obj) {
+        const val = (obj as Record<string, unknown>)[key];
+        return typeof val === "string" ? val : undefined;
+      }
+      return undefined;
+    };
+
     // From prompt-alchemy: get generated prompt
-    if (data["prompt-alchemy"]?.output?.prompt && !description) {
-      setDescription(data["prompt-alchemy"].output.prompt as string);
+    const promptOutput = data["prompt-alchemy"]?.output as Record<string, unknown> | undefined;
+    const prompt = getStringValue(promptOutput, "prompt");
+    if (prompt && !description) {
+      setDescription(prompt);
     }
 
     // From storyboard-sketch: get scene descriptions for visual generation
-    if (data["storyboard-sketch"]?.output?.scenes && !description) {
-      const scenes = data["storyboard-sketch"].output.scenes as Array<{
-        description: string;
-        midjourney_prompt?: string;
-        visual_prompt?: string;
-      }>;
-      if (scenes.length > 0) {
-        // Use the first scene's visual prompt or description
+    const storyboardOutput = data["storyboard-sketch"]?.output as Record<string, unknown> | undefined;
+    if (storyboardOutput?.scenes && !description) {
+      const scenes = storyboardOutput.scenes;
+      if (Array.isArray(scenes) && scenes.length > 0) {
+        // Type-guard for scene objects
         const firstScene = scenes[0];
-        setDescription(firstScene.midjourney_prompt || firstScene.visual_prompt || firstScene.description);
+        if (firstScene && typeof firstScene === "object") {
+          const s = firstScene as Record<string, unknown>;
+          const visual = getStringValue(s, "midjourney_prompt") ||
+                        getStringValue(s, "visual_prompt") ||
+                        getStringValue(s, "description");
+          if (visual) {
+            setDescription(visual);
+          }
+        }
       }
     }
 
     // Set style based on data from prompt-alchemy
-    const promptAlchemyOutput = data["prompt-alchemy"]?.output as Record<string, unknown> | undefined;
-    const styleData = promptAlchemyOutput?.style as Record<string, unknown> | undefined;
+    const styleData = promptOutput?.style as Record<string, unknown> | undefined;
     if (styleData?.cinematography) {
       const cinematography = String(styleData.cinematography);
       if (cinematography.toLowerCase().includes("anime")) setStyle("anime");

@@ -16,6 +16,8 @@ Usage:
 import hashlib
 import logging
 import os
+import re
+import threading
 from pathlib import Path
 from typing import Optional
 from abc import ABC, abstractmethod
@@ -24,6 +26,15 @@ import aiofiles
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
+
+# =============================================================================
+# Security Constants
+# =============================================================================
+
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB max upload size
+MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10MB max image size
+MAX_VIDEO_SIZE = 100 * 1024 * 1024  # 100MB max video size
+SAFE_PATH_PATTERN = re.compile(r'^[a-zA-Z0-9_\-/\.]+$')  # Safe path characters
 
 # =============================================================================
 # Configuration
@@ -98,8 +109,37 @@ class LocalStorageBackend(StorageBackend):
 
     def __init__(self, config: StorageConfig):
         self.config = config
-        self.base_path = Path(config.local_storage_path)
+        self.base_path = Path(config.local_storage_path).resolve()
         self.base_path.mkdir(parents=True, exist_ok=True)
+
+    def _validate_path(self, path: str) -> Path:
+        """Validate and resolve path to prevent traversal attacks.
+
+        Args:
+            path: Relative path within storage
+
+        Returns:
+            Resolved absolute path
+
+        Raises:
+            ValueError: If path is invalid or attempts traversal
+        """
+        # Check for dangerous patterns
+        if '..' in path or path.startswith('/'):
+            raise ValueError(f"Invalid path: {path}")
+
+        # Only allow safe characters
+        if not SAFE_PATH_PATTERN.match(path):
+            raise ValueError(f"Path contains invalid characters: {path}")
+
+        # Resolve and verify within base_path
+        full_path = (self.base_path / path).resolve()
+        try:
+            full_path.relative_to(self.base_path)
+        except ValueError:
+            raise ValueError(f"Path traversal detected: {path}")
+
+        return full_path
 
     async def upload(
         self,
@@ -108,18 +148,30 @@ class LocalStorageBackend(StorageBackend):
         content_type: str = "application/octet-stream",
     ) -> str:
         """Upload to local filesystem."""
-        full_path = self.base_path / path
+        # Validate path
+        full_path = self._validate_path(path)
+
+        # Check size limit
+        if len(data) > MAX_FILE_SIZE:
+            raise ValueError(f"File too large: {len(data)} bytes (max {MAX_FILE_SIZE})")
+
         full_path.parent.mkdir(parents=True, exist_ok=True)
 
-        async with aiofiles.open(full_path, "wb") as f:
-            await f.write(data)
+        try:
+            async with aiofiles.open(full_path, "wb") as f:
+                await f.write(data)
+        except OSError as e:
+            # Clean up partial file on failure
+            if full_path.exists():
+                full_path.unlink()
+            raise RuntimeError(f"Storage write failed: {e}")
 
         logger.info(f"[STORAGE] Uploaded {len(data)} bytes to {full_path}")
         return f"{self.config.local_base_url}/{path}"
 
     async def download(self, path: str) -> Optional[bytes]:
         """Download from local filesystem."""
-        full_path = self.base_path / path
+        full_path = self._validate_path(path)
         if not full_path.exists():
             return None
 
@@ -128,7 +180,7 @@ class LocalStorageBackend(StorageBackend):
 
     async def delete(self, path: str) -> bool:
         """Delete from local filesystem."""
-        full_path = self.base_path / path
+        full_path = self._validate_path(path)
         if full_path.exists():
             full_path.unlink()
             return True
@@ -136,7 +188,11 @@ class LocalStorageBackend(StorageBackend):
 
     async def exists(self, path: str) -> bool:
         """Check if file exists locally."""
-        return (self.base_path / path).exists()
+        try:
+            full_path = self._validate_path(path)
+            return full_path.exists()
+        except ValueError:
+            return False
 
     async def get_signed_url(
         self,
@@ -158,6 +214,26 @@ class GCSStorageBackend(StorageBackend):
         self.config = config
         self._client = None
         self._bucket = None
+
+    def _validate_path(self, path: str) -> str:
+        """Validate GCS path to prevent injection.
+
+        Args:
+            path: Object path within bucket
+
+        Returns:
+            Validated path
+
+        Raises:
+            ValueError: If path is invalid
+        """
+        if '..' in path or path.startswith('/'):
+            raise ValueError(f"Invalid path: {path}")
+
+        if not SAFE_PATH_PATTERN.match(path):
+            raise ValueError(f"Path contains invalid characters: {path}")
+
+        return path
 
     @property
     def client(self):
@@ -190,12 +266,28 @@ class GCSStorageBackend(StorageBackend):
         path: str,
         content_type: str = "application/octet-stream",
     ) -> str:
-        """Upload to GCS."""
+        """Upload to GCS with retry."""
         import asyncio
+
+        # Validate path and size
+        path = self._validate_path(path)
+        if len(data) > MAX_FILE_SIZE:
+            raise ValueError(f"File too large: {len(data)} bytes (max {MAX_FILE_SIZE})")
 
         def _upload():
             blob = self.bucket.blob(path)
-            blob.upload_from_string(data, content_type=content_type)
+            # Retry transient errors (network issues, etc.)
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    blob.upload_from_string(data, content_type=content_type)
+                    return blob.public_url
+                except Exception as e:
+                    if attempt == max_retries - 1:
+                        raise
+                    logger.warning(f"[STORAGE] GCS upload attempt {attempt + 1} failed: {e}")
+                    import time
+                    time.sleep(2 ** attempt)  # Exponential backoff
             return blob.public_url
 
         url = await asyncio.get_event_loop().run_in_executor(None, _upload)
@@ -206,11 +298,15 @@ class GCSStorageBackend(StorageBackend):
         """Download from GCS."""
         import asyncio
 
+        path = self._validate_path(path)
+
         def _download():
-            blob = self.bucket.blob(path)
-            if not blob.exists():
+            from google.api_core.exceptions import NotFound
+            try:
+                blob = self.bucket.blob(path)
+                return blob.download_as_bytes()
+            except NotFound:
                 return None
-            return blob.download_as_bytes()
 
         return await asyncio.get_event_loop().run_in_executor(None, _download)
 
@@ -275,7 +371,7 @@ class StorageService:
         path: str,
         content_type: str = "image/jpeg",
     ) -> str:
-        """Upload image with content-type detection.
+        """Upload image with content-type detection and validation.
 
         Args:
             image_data: Image bytes
@@ -284,8 +380,15 @@ class StorageService:
 
         Returns:
             Public URL of uploaded image
+
+        Raises:
+            ValueError: If image is too large or invalid
         """
-        # Auto-detect content type from magic bytes
+        # Check size limit
+        if len(image_data) > MAX_IMAGE_SIZE:
+            raise ValueError(f"Image too large: {len(image_data)} bytes (max {MAX_IMAGE_SIZE})")
+
+        # Validate magic bytes - must be a known image format
         if image_data[:8] == b'\x89PNG\r\n\x1a\n':
             content_type = "image/png"
         elif image_data[:2] == b'\xff\xd8':
@@ -294,6 +397,8 @@ class StorageService:
             content_type = "image/gif"
         elif image_data[:4] == b'RIFF' and image_data[8:12] == b'WEBP':
             content_type = "image/webp"
+        else:
+            raise ValueError("Invalid image format: unknown magic bytes")
 
         return await self.backend.upload(image_data, path, content_type)
 
@@ -371,23 +476,26 @@ class StorageService:
 
 
 # =============================================================================
-# Singleton Instance
+# Singleton Instance (Thread-safe)
 # =============================================================================
 
 _service: Optional[StorageService] = None
 _config: Optional[StorageConfig] = None
+_lock = threading.Lock()
 
 
 def get_storage_config() -> StorageConfig:
     """Get storage configuration."""
     global _config
     if _config is None:
-        _config = StorageConfig()
+        with _lock:
+            if _config is None:  # Double-check locking
+                _config = StorageConfig()
     return _config
 
 
 def get_storage_service() -> StorageService:
-    """Get or create StorageService instance.
+    """Get or create StorageService instance (thread-safe).
 
     Returns:
         StorageService with appropriate backend (GCS or local)
@@ -395,16 +503,18 @@ def get_storage_service() -> StorageService:
     global _service
 
     if _service is None:
-        config = get_storage_config()
+        with _lock:
+            if _service is None:  # Double-check locking
+                config = get_storage_config()
 
-        if config.use_gcs:
-            backend = GCSStorageBackend(config)
-            logger.info("[STORAGE] Using GCS storage backend")
-        else:
-            backend = LocalStorageBackend(config)
-            logger.info("[STORAGE] Using local storage backend")
+                if config.use_gcs:
+                    backend = GCSStorageBackend(config)
+                    logger.info("[STORAGE] Using GCS storage backend")
+                else:
+                    backend = LocalStorageBackend(config)
+                    logger.info("[STORAGE] Using local storage backend")
 
-        _service = StorageService(backend)
+                _service = StorageService(backend)
 
     return _service
 
@@ -412,5 +522,6 @@ def get_storage_service() -> StorageService:
 def reset_storage_service():
     """Reset singleton for testing."""
     global _service, _config
-    _service = None
-    _config = None
+    with _lock:
+        _service = None
+        _config = None

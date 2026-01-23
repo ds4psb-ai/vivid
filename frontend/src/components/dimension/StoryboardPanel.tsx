@@ -277,19 +277,30 @@ function StoryboardContent() {
 
   // Handle chain data from previous dimensions (story-architect, reference-decoder)
   const handleApplyChainData = useCallback((data: Record<string, ChainData>) => {
-    // From story-architect: get logline, synopsis, or structure
-    if (data["story-architect"]?.output) {
-      const storyData = data["story-architect"].output;
+    // Type-safe extraction helper
+    const getStringValue = (obj: unknown, key: string): string | undefined => {
+      if (obj && typeof obj === "object" && key in obj) {
+        const val = (obj as Record<string, unknown>)[key];
+        return typeof val === "string" ? val : undefined;
+      }
+      return undefined;
+    };
 
-      if (storyData.synopsis && !script) {
-        setScript(storyData.synopsis as string);
-      } else if (storyData.logline && !script) {
-        setScript(storyData.logline as string);
+    // From story-architect: get logline, synopsis, or structure
+    const storyOutput = data["story-architect"]?.output as Record<string, unknown> | undefined;
+    if (storyOutput) {
+      const synopsis = getStringValue(storyOutput, "synopsis");
+      const logline = getStringValue(storyOutput, "logline");
+
+      if (synopsis && !script) {
+        setScript(synopsis);
+      } else if (logline && !script) {
+        setScript(logline);
       }
 
       // If there's structure, use it to suggest scene count
-      if (storyData.structure && Array.isArray(storyData.structure)) {
-        const actCount = (storyData.structure as Array<unknown>).length;
+      if (Array.isArray(storyOutput.structure)) {
+        const actCount = storyOutput.structure.length;
         if (actCount <= 4) setSceneCount(4);
         else if (actCount <= 6) setSceneCount(6);
         else setSceneCount(8);
@@ -297,8 +308,10 @@ function StoryboardContent() {
     }
 
     // From reference-decoder: get style analysis
-    if (data["reference-decoder"]?.output?.style_prompt && !script) {
-      setScript(data["reference-decoder"].output.style_prompt as string);
+    const refOutput = data["reference-decoder"]?.output as Record<string, unknown> | undefined;
+    const stylePrompt = getStringValue(refOutput, "style_prompt");
+    if (stylePrompt && !script) {
+      setScript(stylePrompt);
     }
   }, [script]);
 

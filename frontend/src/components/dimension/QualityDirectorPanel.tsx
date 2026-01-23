@@ -259,19 +259,29 @@ function QualityDirectorContent() {
 
   // Handle chain data from previous dimensions (video-maker, visual-realizer)
   const handleApplyChainData = useCallback((data: Record<string, ChainData>) => {
+    // Type-safe extraction helper
+    const getStringValue = (obj: unknown, key: string): string | undefined => {
+      if (obj && typeof obj === "object" && key in obj) {
+        const val = (obj as Record<string, unknown>)[key];
+        return typeof val === "string" ? val : undefined;
+      }
+      return undefined;
+    };
+
     // From visual-realizer: get generated image prompt for QC
-    if (data["visual-realizer"]?.output?.prompt && !content) {
-      setContent(data["visual-realizer"].output.prompt as string);
+    const visualOutput = data["visual-realizer"]?.output as Record<string, unknown> | undefined;
+    const visualPrompt = getStringValue(visualOutput, "prompt");
+    if (visualPrompt && !content) {
+      setContent(visualPrompt);
       setContentType("image_prompt");
     }
 
     // From video-maker: get video info for QC
-    if (data["video-maker"]?.output) {
-      const videoData = data["video-maker"].output;
-      if (videoData.prompt && !content) {
-        setContent(videoData.prompt as string);
-        setContentType("prompt");
-      }
+    const videoOutput = data["video-maker"]?.output as Record<string, unknown> | undefined;
+    const videoPrompt = getStringValue(videoOutput, "prompt");
+    if (videoPrompt && !content) {
+      setContent(videoPrompt);
+      setContentType("prompt");
     }
   }, [content]);
 
