@@ -147,6 +147,7 @@ class MCPServerConfig(BaseModel):
 
     # Metadata
     tags: tuple[str, ...] = Field(default_factory=tuple)
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata (tier, credit_cost, etc.)")
 
     def with_enabled(self, enabled: bool) -> MCPServerConfig:
         """활성화 상태 변경한 새 인스턴스 반환."""

@@ -73,8 +73,8 @@ class TestKellyIntegratedCreditService:
     
     def test_default_success_probs(self, service):
         """기본 성공 확률"""
-        assert service.DEFAULT_SUCCESS_PROBS["gemini-2.5-flash"] == 0.75
-        assert service.DEFAULT_SUCCESS_PROBS["veo-3.1"] == 0.7
+        assert service.DEFAULT_SUCCESS_PROBS["gemini-3-flash-preview"] == 0.8
+        assert service.DEFAULT_SUCCESS_PROBS["veo-3.0"] == 0.7
     
     def test_max_bankruptcy_prob(self, service):
         """최대 파산 확률"""
@@ -93,31 +93,31 @@ class TestKellyIntegration:
     async def test_send_feedback(self):
         """피드백 전송"""
         service = KellyIntegratedCreditService()
-        
+
         sent = await service._send_feedback(
             capsule_id="test_capsule",
             success=True,
             rule_ids=[],
-            model="gemini-2.5-flash",
+            model="gemini-3-flash-preview",
         )
-        
+
         assert sent is True
     
     @pytest.mark.asyncio
     async def test_get_success_probability(self):
         """성공 확률 조회"""
         service = KellyIntegratedCreditService()
-        
+
         # Mock DB session
         mock_db = AsyncMock()
-        
+
         prob = await service._get_success_probability(
             db=mock_db,
             user_id="test_user",
-            model="gemini-2.5-flash",
+            model="gemini-3-flash-preview",
         )
-        
-        assert prob == 0.75  # 기본값
+
+        assert prob == 0.8  # 기본값
     
     @pytest.mark.asyncio
     async def test_get_success_probability_unknown_model(self):

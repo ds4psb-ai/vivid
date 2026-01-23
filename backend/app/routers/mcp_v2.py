@@ -101,7 +101,7 @@ class MCPToolCallRequest(BaseModel):
         arguments: 도구 인자
         run_token: Run-Token (선택적, 크레딧 차감용)
     """
-    server_id: str = Field(..., min_length=1, max_length=64, description="MCP 서버 ID")
+    server_id: str = Field(..., min_length=1, max_length=64, pattern=r"^[a-zA-Z0-9_-]+$", description="MCP 서버 ID")
     tool_name: str = Field(..., min_length=1, max_length=128, description="도구 이름")
     arguments: Dict[str, Any] = Field(default_factory=dict, description="도구 인자")
     run_token: Optional[str] = Field(default=None, description="Run-Token (크레딧 차감용)")

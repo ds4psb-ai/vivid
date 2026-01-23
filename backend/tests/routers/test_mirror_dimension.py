@@ -553,7 +553,7 @@ class TestEdgeCases:
     def test_stage_all_allowed_values(self):
         expected_stages = {
             "intro", "birth", "saju", "psychology",
-            "creativity", "preferences", "synthesis", "final"
+            "creativity", "preferences", "synthesis", "summary", "final"
         }
         assert ALLOWED_STAGES == expected_stages
 
@@ -606,7 +606,7 @@ class TestConstants:
         assert "" in ALLOWED_GENDERS  # Empty allowed
 
     def test_stages_complete(self):
-        expected = {"intro", "birth", "saju", "psychology", "creativity", "preferences", "synthesis", "final"}
+        expected = {"intro", "birth", "saju", "psychology", "creativity", "preferences", "synthesis", "summary", "final"}
         assert ALLOWED_STAGES == expected
 
     def test_mbti_chars_structure(self):

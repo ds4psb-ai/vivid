@@ -180,8 +180,8 @@ class TestKellyBasedCreditAllocator:
     # 모델 비용 테스트
     def test_get_model_cost(self, allocator):
         """모델별 비용 조회"""
-        assert allocator.get_model_cost("gemini-2.0-flash-exp") == 10
-        assert allocator.get_model_cost("veo-3.1") == 120
+        assert allocator.get_model_cost("gemini-3-flash-preview") == 10
+        assert allocator.get_model_cost("veo-3.0") == 100
         assert allocator.get_model_cost("unknown_model") == 10  # 기본값
 
 
@@ -195,18 +195,18 @@ class TestKellyIntegration:
     
     def test_full_allocation_cycle(self):
         """전체 배분 사이클"""
-        # 시뮬레이션: 1000 크레딧으로 veo-3.1 사용
+        # 시뮬레이션: 1000 크레딧으로 veo-3.0 사용
         balance = 1000
-        cost = kelly_allocator.get_model_cost("veo-3.1")
-        
+        cost = kelly_allocator.get_model_cost("veo-3.0")
+
         result = kelly_allocator.calculate_allocation(
             user_balance=balance,
             base_cost=cost,
             success_probability=0.75,
             reward_ratio=3.0,
         )
-        
+
         # 합리적인 배분 확인
         assert result.max_safe_investment <= balance
         assert result.max_safe_investment >= cost  # 최소 1회 실행 가능
-        assert result.bankruptcy_probability < 0.15  # veo-3.1 is expensive, slightly higher threshold
+        assert result.bankruptcy_probability < 0.15  # veo-3.0 is expensive, slightly higher threshold

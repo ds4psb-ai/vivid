@@ -189,28 +189,39 @@ class TestMCPV2ToolEndpoints:
         mock_user_id,
     ):
         """POST /mcp/v2/call executes MCP tool."""
-        with patch("app.routers.mcp_v2.get_gateway") as mock_gateway:
-            mock_gateway.return_value.call_tool = AsyncMock(return_value={
-                "success": True,
-                "result": {"data": "search results"},
-                "latency_ms": 150.0,
-                "request_id": "abc123",
-            })
+        from app.main import app
+        from app.routers.mcp_v2 import get_gateway
 
-            with patch("app.routers.mcp_v2.require_user_id", return_value=mock_user_id):
-                response = await async_client.post(
-                    "/api/v1/mcp/v2/call",
-                    json={
-                        "server_id": "tavily",
-                        "tool_name": "search",
-                        "arguments": {"query": "test"},
-                    }
-                )
+        # Create mock gateway
+        mock_gateway_instance = MagicMock()
+        mock_gateway_instance.call_tool = AsyncMock(return_value={
+            "success": True,
+            "result": {"data": "search results"},
+            "latency_ms": 150.0,
+            "request_id": "abc123",
+        })
 
-        assert response.status_code == 200
-        data = response.json()
-        assert data["success"] is True
-        assert "result" in data
+        async def override_gateway():
+            return mock_gateway_instance
+
+        app.dependency_overrides[get_gateway] = override_gateway
+
+        try:
+            response = await async_client.post(
+                "/api/v1/mcp/v2/call",
+                json={
+                    "server_id": "tavily",
+                    "tool_name": "search",
+                    "arguments": {"query": "test"},
+                }
+            )
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["success"] is True
+            assert "result" in data
+        finally:
+            app.dependency_overrides.pop(get_gateway, None)
 
     @pytest.mark.asyncio
     async def test_call_mcp_tool_failure(
@@ -219,27 +230,38 @@ class TestMCPV2ToolEndpoints:
         mock_user_id,
     ):
         """POST /mcp/v2/call handles failure."""
-        with patch("app.routers.mcp_v2.get_gateway") as mock_gateway:
-            mock_gateway.return_value.call_tool = AsyncMock(return_value={
-                "success": False,
-                "error": "Rate limit exceeded",
-                "error_code": 429,
-            })
+        from app.main import app
+        from app.routers.mcp_v2 import get_gateway
 
-            with patch("app.routers.mcp_v2.require_user_id", return_value=mock_user_id):
-                response = await async_client.post(
-                    "/api/v1/mcp/v2/call",
-                    json={
-                        "server_id": "tavily",
-                        "tool_name": "search",
-                        "arguments": {"query": "test"},
-                    }
-                )
+        # Create mock gateway
+        mock_gateway_instance = MagicMock()
+        mock_gateway_instance.call_tool = AsyncMock(return_value={
+            "success": False,
+            "error": "Rate limit exceeded",
+            "error_code": 429,
+        })
 
-        assert response.status_code == 200  # Error returned in response body
-        data = response.json()
-        assert data["success"] is False
-        assert "error" in data
+        async def override_gateway():
+            return mock_gateway_instance
+
+        app.dependency_overrides[get_gateway] = override_gateway
+
+        try:
+            response = await async_client.post(
+                "/api/v1/mcp/v2/call",
+                json={
+                    "server_id": "tavily",
+                    "tool_name": "search",
+                    "arguments": {"query": "test"},
+                }
+            )
+
+            assert response.status_code == 200  # Error returned in response body
+            data = response.json()
+            assert data["success"] is False
+            assert "error" in data
+        finally:
+            app.dependency_overrides.pop(get_gateway, None)
 
     @pytest.mark.asyncio
     async def test_execute_hybrid(
@@ -248,27 +270,38 @@ class TestMCPV2ToolEndpoints:
         mock_user_id,
     ):
         """POST /mcp/v2/execute uses hybrid executor."""
-        with patch("app.routers.mcp_v2.get_executor") as mock_executor:
-            mock_executor.return_value.execute = AsyncMock(return_value=ToolExecutionResult(
-                success=True,
-                outputs={"result": "data"},
-                latency_ms=100.0,
-                metadata={"execution_type": "mcp", "server_id": "tavily"},
-            ))
+        from app.main import app
+        from app.routers.mcp_v2 import get_executor
 
-            with patch("app.routers.mcp_v2.require_user_id", return_value=mock_user_id):
-                response = await async_client.post(
-                    "/api/v1/mcp/v2/execute",
-                    json={
-                        "tool_id": "web_search",
-                        "inputs": {"query": "test"},
-                    }
-                )
+        # Create mock executor
+        mock_executor_instance = MagicMock()
+        mock_executor_instance.execute = AsyncMock(return_value=ToolExecutionResult(
+            success=True,
+            outputs={"result": "data"},
+            latency_ms=100.0,
+            metadata={"execution_type": "mcp", "server_id": "tavily"},
+        ))
 
-        assert response.status_code == 200
-        data = response.json()
-        assert data["success"] is True
-        assert "execution_type" in data
+        async def override_executor():
+            return mock_executor_instance
+
+        app.dependency_overrides[get_executor] = override_executor
+
+        try:
+            response = await async_client.post(
+                "/api/v1/mcp/v2/execute",
+                json={
+                    "tool_id": "web_search",
+                    "inputs": {"query": "test"},
+                }
+            )
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["success"] is True
+            assert "execution_type" in data
+        finally:
+            app.dependency_overrides.pop(get_executor, None)
 
 
 # =============================================================================
@@ -344,17 +377,29 @@ class TestMCPV2HealthEndpoints:
         async_client: AsyncClient,
     ):
         """GET /mcp/v2/health shows degraded status."""
-        with patch("app.routers.mcp_v2.get_client_manager") as mock_manager:
-            mock_manager.return_value.health_check_all = AsyncMock(return_value={
-                "tavily": True,
-                "qdrant": False,  # One server unhealthy
-            })
+        from app.main import app
+        from app.routers.mcp_v2 import get_client_manager
 
+        # Create a mock manager with degraded state
+        mock_manager = MagicMock()
+        mock_manager.health_check_all = AsyncMock(return_value={
+            "tavily": True,
+            "qdrant": False,  # One server unhealthy
+        })
+
+        async def override_manager():
+            return mock_manager
+
+        app.dependency_overrides[get_client_manager] = override_manager
+
+        try:
             response = await async_client.get("/api/v1/mcp/v2/health")
 
-        assert response.status_code == 200
-        data = response.json()
-        assert data["status"] == "degraded"
+            assert response.status_code == 200
+            data = response.json()
+            assert data["status"] == "degraded"
+        finally:
+            app.dependency_overrides.pop(get_client_manager, None)
 
 
 # =============================================================================
@@ -388,51 +433,73 @@ class TestMCPV2AdminEndpoints:
     @pytest.mark.asyncio
     async def test_create_policy(
         self,
-        async_client: AsyncClient,
+        admin_async_client: AsyncClient,
         mock_admin_id,
     ):
         """POST /mcp/v2/admin/policies creates policy."""
-        with patch("app.routers.mcp_v2.get_gateway") as mock_gateway, \
-             patch("app.routers.mcp_v2.require_admin", return_value=mock_admin_id):
-            mock_gateway.return_value.register_policy = MagicMock()
+        from app.main import app
+        from app.routers.mcp_v2 import require_admin  # Use the router's own require_admin
 
-            response = await async_client.post(
-                "/api/v1/mcp/v2/admin/policies",
-                json={
-                    "policy_id": "new-policy",
-                    "name": "New Policy",
-                    "max_calls_per_minute": 50,
-                }
-            )
+        # Override require_admin to return admin user ID
+        async def override_admin():
+            return mock_admin_id
 
-        assert response.status_code == 200
-        data = response.json()
-        assert data["success"] is True
-        assert data["policy_id"] == "new-policy"
+        app.dependency_overrides[require_admin] = override_admin
+
+        try:
+            with patch("app.routers.mcp_v2.get_gateway") as mock_gateway:
+                mock_gateway.return_value.register_policy = MagicMock()
+
+                response = await admin_async_client.post(
+                    "/api/v1/mcp/v2/admin/policies",
+                    json={
+                        "policy_id": "new-policy",
+                        "name": "New Policy",
+                        "max_calls_per_minute": 50,
+                    }
+                )
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["success"] is True
+            assert data["policy_id"] == "new-policy"
+        finally:
+            app.dependency_overrides.pop(require_admin, None)
 
     @pytest.mark.asyncio
     async def test_list_policies(
         self,
-        async_client: AsyncClient,
+        admin_async_client: AsyncClient,
         mock_admin_id,
     ):
         """GET /mcp/v2/admin/policies lists policies."""
+        from app.main import app
+        from app.routers.mcp_v2 import require_admin  # Use the router's own require_admin
+
         mock_policy = MCPPolicy(
             policy_id="test-policy",
             name="Test Policy",
         )
 
-        with patch("app.routers.mcp_v2.get_gateway") as mock_gateway, \
-             patch("app.routers.mcp_v2.require_admin", return_value=mock_admin_id):
-            mock_gateway.return_value._policies = {"test-policy": mock_policy}
-            mock_gateway.return_value._default_policy = mock_policy
+        # Override require_admin to return admin user ID
+        async def override_admin():
+            return mock_admin_id
 
-            response = await async_client.get("/api/v1/mcp/v2/admin/policies")
+        app.dependency_overrides[require_admin] = override_admin
 
-        assert response.status_code == 200
-        data = response.json()
-        assert "policies" in data
-        assert "total" in data
+        try:
+            with patch("app.routers.mcp_v2.get_gateway") as mock_gateway:
+                mock_gateway.return_value._policies = {"test-policy": mock_policy}
+                mock_gateway.return_value._default_policy = mock_policy
+
+                response = await admin_async_client.get("/api/v1/mcp/v2/admin/policies")
+
+            assert response.status_code == 200
+            data = response.json()
+            assert "policies" in data
+            assert "total" in data
+        finally:
+            app.dependency_overrides.pop(require_admin, None)
 
 
 # =============================================================================
