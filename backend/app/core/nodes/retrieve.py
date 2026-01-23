@@ -8,7 +8,8 @@
 1. 선택된 소스에 병렬 쿼리
 2. RRF 융합
 3. (선택적) Reranker 적용
-4. Evidence refs 생성
+4. P0 Security: Content sanitization + Attribution metadata
+5. Evidence refs 생성
 
 Usage:
     from app.core.nodes.retrieve import retrieve_node
@@ -29,6 +30,8 @@ from app.core.unified_schemas import (
 )
 from app.core.unified_state import UnifiedState, state_with_retrieval, should_skip_node
 from app.core.utils.rrf import weighted_rrf
+from app.core.utils.sanitize import sanitize_retrieved_docs
+from app.core.utils.attribution import format_evidence_refs, AttributedSource
 
 logger = logging.getLogger(__name__)
 
@@ -105,11 +108,33 @@ async def retrieve_node(state: UnifiedState) -> UnifiedState:
             for doc_id, score, doc in fused_results[:DEFAULT_TOP_K]
         ]
 
-        # 5. Evidence refs 생성
-        evidence_refs = [
-            f"db:{doc['source']}:{doc['id']}"
-            for doc in retrieved_docs
-        ]
+        # =====================================================================
+        # P0 Security: Content Sanitization + Attribution
+        # =====================================================================
+
+        # 5a. 검색 결과 정제 (간접 프롬프트 주입 방지)
+        retrieved_docs = sanitize_retrieved_docs(
+            retrieved_docs,
+            content_key="content",
+            max_content_length=8000,
+        )
+
+        # 5b. Attribution metadata 추가
+        for doc in retrieved_docs:
+            attributed = AttributedSource.from_doc(doc)
+            doc["_attribution"] = {
+                "trust_level": attributed.trust_level,
+                "content_hash": attributed.content_hash,
+                "source_type": attributed.source_type,
+            }
+
+        logger.debug(
+            f"[P0 Security] Sanitized {len(retrieved_docs)} docs, "
+            f"trust_levels: {[d.get('_attribution', {}).get('trust_level') for d in retrieved_docs[:3]]}"
+        )
+
+        # 6. Evidence refs 생성 (Vivid 표준 형식)
+        evidence_refs = format_evidence_refs(retrieved_docs)
 
         latency_ms = (time.perf_counter() - start_time) * 1000
         logger.info(

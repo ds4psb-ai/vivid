@@ -7,10 +7,11 @@
 4. app/workflow/dag_builder.py:IntentAnalyzer - DAG 빌더
 
 Pipeline:
-1. SemanticRouter (Fast Path, ~15ms)
-2. 신뢰도 낮으면 LLM Fallback (~200ms)
-3. Intent 분류 병행
-4. 결과 통합
+1. Input Sanitization (P0 Security - OWASP 2025)
+2. SemanticRouter (Fast Path, ~15ms)
+3. 신뢰도 낮으면 LLM Fallback (~200ms)
+4. Intent 분류 병행
+5. 결과 통합
 
 Usage:
     from app.core.nodes.classify import classify_node
@@ -31,6 +32,11 @@ from app.core.unified_schemas import (
     SKIP_RETRIEVAL_TYPES,
 )
 from app.core.unified_state import UnifiedState, state_with_classification
+from app.core.utils.sanitize import (
+    sanitize_query,
+    detect_injection_attempt,
+    calculate_risk_score,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -38,11 +44,14 @@ logger = logging.getLogger(__name__)
 SEMANTIC_ROUTER_THRESHOLD = 0.7
 LLM_FALLBACK_THRESHOLD = 0.6
 
+# P0: 위험도 임계값 (이 값 이상이면 처리 거부)
+RISK_SCORE_THRESHOLD = 0.8
+
 
 async def classify_node(state: UnifiedState) -> UnifiedState:
     """쿼리 분류 노드.
 
-    SemanticRouter (Fast Path) → LLM Fallback → Intent 분류.
+    P0 Security → SemanticRouter (Fast Path) → LLM Fallback → Intent 분류.
 
     Args:
         state: 현재 상태 (query 필수)
@@ -51,15 +60,61 @@ async def classify_node(state: UnifiedState) -> UnifiedState:
         업데이트된 상태 (query_type, intent, confidence 등)
     """
     start_time = time.perf_counter()
-    query = state.get("query", "")
+    raw_query = state.get("query", "")
 
-    if not query:
+    if not raw_query:
         return state_with_classification(
             state,
             query_type=QueryType.AMBIGUOUS,
             intent=Intent.UNKNOWN,
             confidence=0.0,
         )
+
+    # =========================================================================
+    # P0 Security: Input Sanitization (OWASP 2025/2026)
+    # =========================================================================
+
+    # 1. 위험도 점수 계산
+    risk_score = calculate_risk_score(raw_query)
+
+    # 2. 프롬프트 주입 시도 탐지
+    is_suspicious, matched_patterns = detect_injection_attempt(raw_query)
+
+    if is_suspicious:
+        logger.warning(
+            f"[P0 Security] Injection attempt detected: patterns={matched_patterns}, "
+            f"risk_score={risk_score:.2f}, query_preview='{raw_query[:80]}...'"
+        )
+
+    # 3. 위험도가 임계값 이상이면 안전하게 거부
+    if risk_score >= RISK_SCORE_THRESHOLD:
+        logger.error(
+            f"[P0 Security] Query rejected due to high risk: score={risk_score:.2f}"
+        )
+        return state_with_classification(
+            state,
+            query_type=QueryType.AMBIGUOUS,
+            intent=Intent.UNKNOWN,
+            confidence=0.0,
+            skip_retrieval=True,  # 검색도 수행하지 않음
+        )
+
+    # 4. 쿼리 정제 (위험 패턴 중화)
+    query = sanitize_query(raw_query)
+
+    # 5. 정제 후 빈 쿼리면 거부
+    if not query.strip():
+        logger.warning("[P0 Security] Query became empty after sanitization")
+        return state_with_classification(
+            state,
+            query_type=QueryType.AMBIGUOUS,
+            intent=Intent.UNKNOWN,
+            confidence=0.0,
+        )
+
+    # =========================================================================
+    # 쿼리 분류 (기존 로직)
+    # =========================================================================
 
     try:
         # 1. 기존 분류기 호출 시도

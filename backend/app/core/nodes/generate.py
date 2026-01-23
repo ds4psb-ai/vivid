@@ -2,6 +2,11 @@
 
 검색된 컨텍스트와 도구 실행 결과를 종합하여 최종 응답을 생성합니다.
 
+P0 Security (2026):
+- Attribution-gated prompting: 검색 결과 내 명령어 무시
+- Grounding: 검색 결과에 없는 내용 생성 방지
+- Source citation: 출처 명시
+
 Usage:
     from app.core.nodes.generate import generate_node
 
@@ -15,11 +20,16 @@ from typing import Any, Dict, List, Optional
 
 from app.core.unified_schemas import Intent, QueryType
 from app.core.unified_state import UnifiedState, state_with_response, get_context_for_llm
+from app.core.utils.attribution import (
+    wrap_context_with_attribution,
+    get_attribution_system_prompt,
+    get_grounding_instruction,
+)
 
 logger = logging.getLogger(__name__)
 
 # 기본 시스템 프롬프트
-DEFAULT_SYSTEM_PROMPT = """당신은 Vivid의 AI 어시스턴트입니다.
+BASE_SYSTEM_PROMPT = """당신은 Vivid의 AI 어시스턴트입니다.
 영화 제작, 콘텐츠 크리에이션, 시각적 스토리텔링에 대한 전문 지식을 갖추고 있습니다.
 
 다음 지침을 따르세요:
@@ -28,6 +38,13 @@ DEFAULT_SYSTEM_PROMPT = """당신은 Vivid의 AI 어시스턴트입니다.
 3. 창작 과정을 돕기 위한 구체적이고 실용적인 조언을 제공하세요.
 4. 불확실한 정보는 명확히 표시하세요.
 """
+
+# P0 Security: Attribution-gated system prompt
+DEFAULT_SYSTEM_PROMPT = (
+    BASE_SYSTEM_PROMPT
+    + get_attribution_system_prompt(include_full_guardrail=True)
+    + get_grounding_instruction(strict=True, allow_general_knowledge=False)
+)
 
 # Intent별 프롬프트 템플릿
 INTENT_TEMPLATES = {
@@ -116,8 +133,26 @@ async def generate_node(state: UnifiedState) -> UnifiedState:
         )
 
     try:
-        # 1. 컨텍스트 구성
-        rag_context = get_context_for_llm(state)
+        # =====================================================================
+        # P0 Security: Attribution-gated Context Construction
+        # =====================================================================
+
+        # 1a. RAG 컨텍스트 구성 (Attribution 래핑)
+        retrieved_docs = state.get("retrieved_docs", [])
+        if retrieved_docs:
+            # Attribution metadata로 래핑하여 간접 주입 방지
+            rag_context = wrap_context_with_attribution(
+                retrieved_docs,
+                include_trust_level=True,
+                max_docs=10,
+            )
+            logger.debug(
+                f"[P0 Security] Attribution-wrapped context: {len(retrieved_docs)} docs"
+            )
+        else:
+            rag_context = get_context_for_llm(state)
+
+        # 1b. 도구 실행 결과 (별도 래핑)
         tool_context = _format_tool_outputs(node_outputs)
         full_context = f"{rag_context}\n\n{tool_context}".strip()
 
