@@ -1,4 +1,4 @@
-"""User History Backend Adapter (P0 2026).
+"""User History Backend Adapter (P1 2026).
 
 사용자 과거 작업 히스토리에서 유사 컨텍스트 검색.
 
@@ -6,6 +6,7 @@ Features:
     - RAGSourceBackend Protocol 구현
     - CapsuleRun 테이블에서 과거 성공 결과 검색
     - 차원별, 앱별 필터링
+    - 하이브리드 검색: Vector Similarity (0.7) + Keyword Matching (0.3)
 
 Usage:
     from app.rag.multi_rag.backends import UserHistoryAdapter
@@ -18,10 +19,32 @@ from __future__ import annotations
 import logging
 from typing import Any, Callable, Dict, List, Optional
 
+import numpy as np
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.services.embedder import get_embedder
+
 logger = logging.getLogger(__name__)
+
+
+def _cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
+    """Compute cosine similarity between two vectors.
+
+    Args:
+        vec_a: First vector
+        vec_b: Second vector
+
+    Returns:
+        Cosine similarity score (0.0 ~ 1.0)
+    """
+    a = np.array(vec_a)
+    b = np.array(vec_b)
+    norm_a = np.linalg.norm(a)
+    norm_b = np.linalg.norm(b)
+    if norm_a < 1e-8 or norm_b < 1e-8:
+        return 0.0
+    return float(np.dot(a, b) / (norm_a * norm_b))
 
 
 class UserHistoryAdapter:
@@ -56,10 +79,12 @@ class UserHistoryAdapter:
         filters: Optional[Dict[str, Any]] = None,
         limit: int = 10,
     ) -> List[Dict[str, Any]]:
-        """사용자 히스토리 검색.
+        """사용자 히스토리 하이브리드 검색.
+
+        Vector Similarity (0.7) + Keyword Matching (0.3) 하이브리드 방식.
 
         Args:
-            query: 검색 쿼리 (현재는 키워드 매칭, TODO: vector similarity)
+            query: 검색 쿼리 (벡터 유사도 + 키워드 매칭)
             filters: 메타데이터 필터
                 - user_id: (필수) 사용자 ID
                 - dimension: (선택) 차원 코드
@@ -70,7 +95,7 @@ class UserHistoryAdapter:
             검색 결과 리스트. 각 결과는 다음 필드 포함:
             - id: CapsuleRun ID
             - content: 작업 결과 요약
-            - score: 관련성 점수 (현재는 시간 기반)
+            - score: 하이브리드 관련성 점수 (vector 0.7 + keyword 0.3)
             - metadata: 추가 메타데이터
         """
         filters = filters or {}
@@ -105,28 +130,35 @@ class UserHistoryAdapter:
                 result = await db.execute(stmt)
                 runs = result.scalars().all()
 
-                # TODO: Vector similarity 기반 정렬
-                # 현재는 최신순 + 키워드 매칭 점수
+                # 하이브리드 검색: Vector (0.7) + Keyword (0.3)
+                embedder = get_embedder()
+                query_vec = embedder.embed(query)
 
                 documents: List[Dict[str, Any]] = []
                 query_lower = query.lower()
+                keywords = query_lower.split()
 
                 for idx, run in enumerate(runs):
-                    # 키워드 매칭 점수 계산
+                    # 문서 콘텐츠 생성
                     output_str = str(run.output) if run.output else ""
                     input_str = str(run.input_params) if run.input_params else ""
-                    combined = f"{output_str} {input_str}".lower()
+                    combined = f"{output_str} {input_str}"
+                    combined_lower = combined.lower()
 
-                    # 간단한 키워드 매칭 점수
-                    keywords = query_lower.split()
-                    match_count = sum(1 for kw in keywords if kw in combined)
-                    keyword_score = match_count / len(keywords) if keywords else 0
+                    # 1. 키워드 매칭 점수 (0.3 가중치)
+                    match_count = sum(1 for kw in keywords if kw in combined_lower)
+                    keyword_score = match_count / len(keywords) if keywords else 0.5
 
-                    # 시간 기반 감쇠 (최신 결과 우선)
-                    recency_score = 1.0 / (idx + 1)
+                    # 2. 벡터 유사도 점수 (0.7 가중치)
+                    doc_vec = embedder.embed(combined[:1000])  # 1000자 제한
+                    vector_score = _cosine_similarity(query_vec, doc_vec)
 
-                    # 최종 점수
-                    score = keyword_score * 0.7 + recency_score * 0.3
+                    # 3. 하이브리드 점수
+                    score = keyword_score * 0.3 + vector_score * 0.7
+
+                    # 최소 임계값 (너무 낮은 점수 필터링)
+                    if score < 0.1:
+                        continue
 
                     # 결과 요약 생성
                     summary = run.output.get("summary", "") if run.output else ""

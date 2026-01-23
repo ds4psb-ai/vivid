@@ -2,6 +2,10 @@
 
 사용자의 과거 작업 히스토리에서 유사 컨텍스트를 검색합니다.
 PostgreSQL CapsuleRun 테이블 기반.
+
+Features (P1 2026):
+    - 하이브리드 검색: Vector Similarity (0.7) + Keyword Matching (0.3)
+    - SentenceTransformers all-MiniLM-L6-v2 (384 dimensions)
 """
 
 from __future__ import annotations
@@ -9,10 +13,32 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+import numpy as np
+
 from app.rag.router.backends.base import BaseRAGBackend
 from app.rag.router.types import RAGDocument, RAGSourceType
+from app.services.embedder import get_embedder
 
 logger = logging.getLogger(__name__)
+
+
+def _cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
+    """Compute cosine similarity between two vectors.
+
+    Args:
+        vec_a: First vector
+        vec_b: Second vector
+
+    Returns:
+        Cosine similarity score (0.0 ~ 1.0)
+    """
+    a = np.array(vec_a)
+    b = np.array(vec_b)
+    norm_a = np.linalg.norm(a)
+    norm_b = np.linalg.norm(b)
+    if norm_a < 1e-8 or norm_b < 1e-8:
+        return 0.0
+    return float(np.dot(a, b) / (norm_a * norm_b))
 
 
 class UserHistoryBackend(BaseRAGBackend):
@@ -34,17 +60,19 @@ class UserHistoryBackend(BaseRAGBackend):
         filters: dict[str, Any] | None = None,
         limit: int = 10,
     ) -> list[RAGDocument]:
-        """사용자 히스토리 검색.
+        """사용자 히스토리 하이브리드 검색.
+
+        Vector Similarity (0.7) + Keyword Matching (0.3) 하이브리드 방식.
 
         Args:
-            query: 검색 쿼리 (키워드 매칭)
+            query: 검색 쿼리 (벡터 유사도 + 키워드 매칭)
             filters: 필터 조건
                 - user_id: 사용자 ID (필수)
                 - dimension: 차원 (선택)
             limit: 최대 결과 수
 
         Returns:
-            RAGDocument 리스트
+            RAGDocument 리스트 (하이브리드 점수순)
         """
         user_id = (filters or {}).get("user_id")
         if not user_id:
@@ -72,10 +100,13 @@ class UserHistoryBackend(BaseRAGBackend):
                 if dimension:
                     stmt = stmt.where(CapsuleRun.dimension == dimension)
 
-                # 키워드 검색 (output JSON 내)
-                # TODO: 향후 Vector similarity 추가
+                # 하이브리드 검색: Vector (0.7) + Keyword (0.3)
                 query_lower = query.lower()
                 keywords = query_lower.split()
+
+                # 쿼리 벡터 생성 (한 번만)
+                embedder = get_embedder()
+                query_vec = embedder.embed(query)
 
                 # 최근순 정렬
                 stmt = stmt.order_by(desc(CapsuleRun.created_at)).limit(limit * 2)
@@ -83,20 +114,29 @@ class UserHistoryBackend(BaseRAGBackend):
                 result = await db.execute(stmt)
                 runs = result.scalars().all()
 
-                # 간단한 키워드 매칭 점수 계산
+                # 하이브리드 점수 계산
                 documents = []
                 for run in runs:
                     output = run.output or {}
-                    summary = str(output.get("summary", "")).lower()
-                    prompt = str(output.get("prompt", "")).lower()
+                    summary = str(output.get("summary", ""))
+                    prompt = str(output.get("prompt", ""))
                     content = summary + " " + prompt
+                    content_lower = content.lower()
 
-                    # 키워드 매칭 점수
-                    match_count = sum(1 for kw in keywords if kw in content)
-                    if match_count == 0:
+                    # 1. 키워드 매칭 점수 (0.3 가중치)
+                    match_count = sum(1 for kw in keywords if kw in content_lower)
+                    keyword_score = match_count / len(keywords) if keywords else 0.5
+
+                    # 2. 벡터 유사도 점수 (0.7 가중치)
+                    doc_vec = embedder.embed(content[:1000])  # 1000자 제한
+                    vector_score = _cosine_similarity(query_vec, doc_vec)
+
+                    # 3. 하이브리드 점수
+                    score = keyword_score * 0.3 + vector_score * 0.7
+
+                    # 최소 임계값 (너무 낮은 점수 필터링)
+                    if score < 0.1:
                         continue
-
-                    score = match_count / len(keywords) if keywords else 0.5
 
                     doc = RAGDocument(
                         id=str(run.id),
