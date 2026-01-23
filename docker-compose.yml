@@ -26,14 +26,7 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-    # P0: External port removed - access via Docker network only
-    # For dev access, use profile: docker-compose --profile dev-exposed up
-
-  # Development profile: PostgreSQL with external port
-  postgres-exposed:
-    extends:
-      service: postgres
-    profiles: ["dev-exposed"]
+    # Local dev: port 5433 exposed for backend access
     ports:
       - "5433:5432"
 
@@ -50,13 +43,7 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-    # P0: External ports removed - access via Docker network only
-
-  # Development profile: Qdrant with external ports
-  qdrant-exposed:
-    extends:
-      service: qdrant
-    profiles: ["dev-exposed"]
+    # Local dev: ports exposed for backend access
     ports:
       - "6333:6333"  # REST API
       - "6334:6334"  # gRPC
@@ -83,13 +70,7 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-    # P0: External port removed
-
-  # Development profile: Redis with external port
-  redis-exposed:
-    extends:
-      service: redis
-    profiles: ["dev-exposed"]
+    # Local dev: port exposed for backend access
     ports:
       - "6380:6379"
 

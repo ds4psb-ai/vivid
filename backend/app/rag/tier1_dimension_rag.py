@@ -703,7 +703,7 @@ class Tier1DimensionRAG:
                 "dimension": self.dimension,
                 "collection": self.collection_name,
                 "points_count": info.points_count,
-                "vectors_count": info.vectors_count,
+                # vectors_count removed in qdrant-client 1.7+ (use points_count)
                 "status": info.status.value if info.status else "unknown",
             }
 
@@ -716,7 +716,6 @@ class Tier1DimensionRAG:
                         stats["hybrid"] = {
                             "collection": hybrid_name,
                             "points_count": hybrid_info.points_count,
-                            "vectors_count": hybrid_info.vectors_count,
                             "status": hybrid_info.status.value if hybrid_info.status else "unknown",
                         }
                     except Exception:

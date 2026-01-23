@@ -138,22 +138,22 @@ class GraphQLContext(BaseContext):
         This prevents N+1 queries when resolving user fields.
         """
         try:
-            from app.models import User
+            from app.models import UserAccount
             from sqlalchemy import select
 
             result = await self.db.execute(
-                select(User).where(User.id.in_(user_ids))
+                select(UserAccount).where(UserAccount.user_id.in_(user_ids))
             )
-            items = {item.id: item for item in result.scalars().all()}
+            items = {item.user_id: item for item in result.scalars().all()}
 
             return [
                 {
-                    "id": items[uid].id,
+                    "id": items[uid].user_id,
                     "email": items[uid].email,
-                    "display_name": getattr(items[uid], "display_name", None),
-                    "credit_balance": getattr(items[uid], "credit_balance", 0),
-                    "tier": getattr(items[uid], "tier", "free"),
-                    "created_at": getattr(items[uid], "created_at", None),
+                    "display_name": items[uid].name,
+                    "credit_balance": 0,  # Credits stored in UserCredits table
+                    "tier": items[uid].role or "free",
+                    "created_at": items[uid].created_at,
                 }
                 if uid in items else None
                 for uid in user_ids

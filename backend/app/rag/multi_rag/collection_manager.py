@@ -522,8 +522,7 @@ class MultiModalCollectionManager:
             return {
                 "name": name,
                 "points_count": info.points_count,
-                "vectors_count": info.vectors_count,
-                "indexed_vectors_count": info.indexed_vectors_count,
+                # vectors_count/indexed_vectors_count removed in qdrant-client 1.7+
                 "status": info.status.value,
                 "vectors_config": {
                     vec_name: {

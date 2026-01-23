@@ -48,7 +48,7 @@ EVAL_CASES = load_eval_cases()
 THRESHOLDS = {
     "min_groundedness": 0.6,
     "min_relevance": 0.5,
-    "deflection_evidence_threshold": 2,
+    "deflection_evidence_threshold": 3,  # P1: increased from 2 to prevent weak evidence passing
     "pass_rate": 0.7,
 }
 

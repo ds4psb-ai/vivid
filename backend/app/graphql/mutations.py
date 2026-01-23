@@ -503,28 +503,30 @@ class Mutation:
                 )
 
             # 2. Get or create user credit record
-            from app.models import User
+            from app.models import UserCredits
             result = await db.execute(
-                select(User).where(User.id == user_id)
+                select(UserCredits).where(UserCredits.user_id == user_id)
             )
-            user = result.scalar_one_or_none()
+            user_credits = result.scalar_one_or_none()
 
             transaction_id = str(uuid4())
 
-            if user:
+            if user_credits:
                 # Update existing user balance
-                current_balance = getattr(user, "credit_balance", 0) or 0
+                current_balance = user_credits.balance or 0
                 new_balance = current_balance + amount
 
                 await db.execute(
-                    update(User)
-                    .where(User.id == user_id)
-                    .values(credit_balance=new_balance)
+                    update(UserCredits)
+                    .where(UserCredits.user_id == user_id)
+                    .values(balance=new_balance, topup_credits=UserCredits.topup_credits + amount)
                 )
                 await db.commit()
             else:
-                # User doesn't exist in database - return current purchase amount
-                # This can happen with external auth systems
+                # Create new credit record for user
+                new_credits = UserCredits(user_id=user_id, balance=amount, topup_credits=amount)
+                db.add(new_credits)
+                await db.commit()
                 new_balance = amount
 
             # 3. Create transaction record (optional: depends on credit_ledger table)
@@ -599,25 +601,29 @@ class Mutation:
             credit_amount = promo["credits"]
 
             # 2. Get user and update balance
-            from app.models import User
+            from app.models import UserCredits
             result = await db.execute(
-                select(User).where(User.id == user_id)
+                select(UserCredits).where(UserCredits.user_id == user_id)
             )
-            user = result.scalar_one_or_none()
+            user_credits = result.scalar_one_or_none()
 
             transaction_id = str(uuid4())
 
-            if user:
-                current_balance = getattr(user, "credit_balance", 0) or 0
+            if user_credits:
+                current_balance = user_credits.balance or 0
                 new_balance = current_balance + credit_amount
 
                 await db.execute(
-                    update(User)
-                    .where(User.id == user_id)
-                    .values(credit_balance=new_balance)
+                    update(UserCredits)
+                    .where(UserCredits.user_id == user_id)
+                    .values(balance=new_balance, promo_credits=UserCredits.promo_credits + credit_amount)
                 )
                 await db.commit()
             else:
+                # Create new credit record for user with promo credits
+                new_credits = UserCredits(user_id=user_id, balance=credit_amount, promo_credits=credit_amount)
+                db.add(new_credits)
+                await db.commit()
                 new_balance = credit_amount
 
             # Invalidate DataLoader caches
