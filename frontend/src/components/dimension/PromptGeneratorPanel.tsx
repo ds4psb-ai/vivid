@@ -15,21 +15,42 @@
  * @see https://react.dev/blog/2024/12/05/react-19
  */
 
-import { useState, useCallback, useTransition, useOptimistic } from "react";
+import { useState, useCallback, useEffect, useTransition, useOptimistic } from "react";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
+import {
+  useDimensionChainOptional,
+  type ChainData,
+} from "@/contexts/DimensionChainContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
+import ChainDataInput from "./ChainDataInput";
 import { type EvidenceRef } from "./EvidenceDisplay";
+import { type ThemeColor as DimensionThemeColor } from "@/lib/dimension-theme";
 
 // =============================================================================
 // CONSTANTS
 // =============================================================================
 
 const DIMENSION_CODE = "1d" as const;
+const DIMENSION_KEY = "prompt-alchemy"; // Chain context key
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
+
+// Map tokens.ts ThemeColor to dimension-theme.ts ThemeColor for ChainDataInput
+const CHAIN_INPUT_THEME_MAP: Record<string, DimensionThemeColor> = {
+  violet: "violet",
+  cyan: "cyan",
+  emerald: "emerald",
+  amber: "amber",
+  rose: "rose",
+  fuchsia: "fuchsia",
+  indigo: "indigo",
+  sky: "sky",
+  purple: "violet",
+  red: "rose",
+};
 
 // =============================================================================
 // TYPES
@@ -103,7 +124,8 @@ export default function PromptGeneratorPanel() {
 
 function PromptGeneratorContent() {
   // Context
-  const { classes, setLoading, setError, setResult } = useDimensionPanel();
+  const { token, classes, setLoading, setError, setResult } = useDimensionPanel();
+  const chainCtx = useDimensionChainOptional();
 
   // Form state
   const [topic, setTopic] = useState("");
@@ -114,6 +136,13 @@ function PromptGeneratorContent() {
   const [model, setModel] = useState("gemini-3-flash-preview");
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Set current dimension on mount
+  useEffect(() => {
+    if (chainCtx) {
+      chainCtx.setCurrentDimension(DIMENSION_KEY);
+    }
+  }, [chainCtx]);
 
   // React 19: useTransition for non-blocking form submission
   const [isTransitionPending, startTransition] = useTransition();
@@ -145,6 +174,16 @@ function PromptGeneratorContent() {
     onSuccess: (data) => {
       if (data.success) {
         setResult(data.output);
+
+        // Store in chain context for downstream dimensions
+        if (chainCtx) {
+          chainCtx.setChainData(
+            DIMENSION_KEY,
+            data.output as unknown as Record<string, unknown>,
+            data.output.prompt?.slice(0, 50) || topic.slice(0, 50)
+          );
+        }
+
         if (!byokKey && creditCtx) {
           void creditCtx.refresh();
         }
@@ -222,6 +261,38 @@ function PromptGeneratorContent() {
     copyToClipboard(text);
   }, [copyToClipboard]);
 
+  // Handle chain data from previous dimensions (story-architect, storyboard-sketch)
+  const handleApplyChainData = useCallback((data: Record<string, ChainData>) => {
+    // From story-architect: get logline or synopsis as topic hint
+    if (data["story-architect"]?.output?.logline && !topic) {
+      setTopic(data["story-architect"].output.logline as string);
+    } else if (data["story-architect"]?.output?.synopsis && !topic) {
+      setTopic((data["story-architect"].output.synopsis as string).slice(0, 500));
+    }
+
+    // From storyboard-sketch: get scene descriptions as topic hint
+    if (data["storyboard-sketch"]?.output?.scenes && !topic) {
+      const scenes = data["storyboard-sketch"].output.scenes as Array<{ description: string }>;
+      if (scenes.length > 0) {
+        setTopic(scenes.map(s => s.description).join("\n").slice(0, 500));
+      }
+    }
+
+    // From aesthetic-director: get mood and style hints
+    if (data["aesthetic-director"]?.output?.mood) {
+      const adMood = data["aesthetic-director"].output.mood as string;
+      const moodMap: Record<string, string> = {
+        dramatic: "dramatic",
+        calm: "calm",
+        energetic: "energetic",
+        melancholic: "melancholic",
+      };
+      if (moodMap[adMood.toLowerCase()]) {
+        setMood(moodMap[adMood.toLowerCase()]);
+      }
+    }
+  }, [topic]);
+
   const handleExportJSON = useCallback(() => {
     if (result?.output) {
       exportJSON(result.output, `veo-prompt-${Date.now()}.json`);
@@ -243,6 +314,13 @@ function PromptGeneratorContent() {
 
       {/* Sidebar */}
       <DimensionPanel.Sidebar>
+        {/* Chain Data Input - data from story-architect, storyboard-sketch */}
+        <ChainDataInput
+          currentDimension={DIMENSION_KEY}
+          onApplyData={handleApplyChainData}
+          themeColor={CHAIN_INPUT_THEME_MAP[token.themeColor] || "violet"}
+        />
+
         {/* Topic Textarea */}
         <DimensionPanel.Textarea
           label="주제 (Topic)"

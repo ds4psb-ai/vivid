@@ -14,14 +14,20 @@
  * @see docs/PANEL_DESIGN_UNITY_SPEC.md
  */
 
-import { useState, useCallback, useTransition, useOptimistic, useMemo } from "react";
+import { useState, useCallback, useEffect, useTransition, useOptimistic, useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
+import {
+  useDimensionChainOptional,
+  type ChainData,
+} from "@/contexts/DimensionChainContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
+import ChainDataInput from "./ChainDataInput";
+import { type ThemeColor as DimensionThemeColor } from "@/lib/dimension-theme";
 import { CheckCircle, XCircle, AlertTriangle, Download, Shield } from "lucide-react";
 
 // ============================================================================
@@ -29,9 +35,23 @@ import { CheckCircle, XCircle, AlertTriangle, Download, Shield } from "lucide-re
 // ============================================================================
 
 const DIMENSION_CODE = "qc"; // Quality Director uses qc dimension
-const DIMENSION_KEY = "quality-director";
+const DIMENSION_KEY = "quality-director"; // Chain context key
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 const MAX_CONTENT_LENGTH = 5000;
+
+// Map tokens.ts ThemeColor to dimension-theme.ts ThemeColor for ChainDataInput
+const CHAIN_INPUT_THEME_MAP: Record<string, DimensionThemeColor> = {
+  violet: "violet",
+  cyan: "cyan",
+  emerald: "emerald",
+  amber: "amber",
+  rose: "rose",
+  fuchsia: "fuchsia",
+  indigo: "indigo",
+  sky: "sky",
+  purple: "violet",
+  red: "rose",
+};
 
 interface CriterionResult {
   score: number;
@@ -88,6 +108,14 @@ function QualityDirectorContent() {
   const { token, setLoading, setResult, setError, classes } = useDimensionPanel();
   const { language } = useLanguage();
   const isKo = language === "ko";
+  const chainCtx = useDimensionChainOptional();
+
+  // Set current dimension on mount
+  useEffect(() => {
+    if (chainCtx) {
+      chainCtx.setCurrentDimension(DIMENSION_KEY);
+    }
+  }, [chainCtx]);
 
   // Model options with i18n
   const MODELS = useMemo(() => getModels(isKo), [isKo]);
@@ -229,6 +257,24 @@ function QualityDirectorContent() {
     exportJSON(qualityResult, `quality-check-${Date.now()}.json`);
   }, [qualityResult, exportJSON]);
 
+  // Handle chain data from previous dimensions (video-maker, visual-realizer)
+  const handleApplyChainData = useCallback((data: Record<string, ChainData>) => {
+    // From visual-realizer: get generated image prompt for QC
+    if (data["visual-realizer"]?.output?.prompt && !content) {
+      setContent(data["visual-realizer"].output.prompt as string);
+      setContentType("image_prompt");
+    }
+
+    // From video-maker: get video info for QC
+    if (data["video-maker"]?.output) {
+      const videoData = data["video-maker"].output;
+      if (videoData.prompt && !content) {
+        setContent(videoData.prompt as string);
+        setContentType("prompt");
+      }
+    }
+  }, [content]);
+
   // Combined loading state: async operation OR React 19 transition
   const isPending = isLoading || isTransitionPending;
   const displayError = validationError || error;
@@ -244,6 +290,13 @@ function QualityDirectorContent() {
       <DimensionPanel.Header title="퀄리티 디렉터" creditCost={CREDIT_COST} />
 
       <DimensionPanel.Sidebar>
+        {/* Chain Data Input - data from video-maker, visual-realizer */}
+        <ChainDataInput
+          currentDimension={DIMENSION_KEY}
+          onApplyData={handleApplyChainData}
+          themeColor={CHAIN_INPUT_THEME_MAP[token.themeColor] || "amber"}
+        />
+
         {/* Content Input */}
         <DimensionPanel.Textarea
           label="검수 콘텐츠"

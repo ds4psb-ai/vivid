@@ -457,18 +457,43 @@ class SceneConsistencyService:
         """
         if not video_url:
             return None
-        
+
         try:
-            # TODO: Implement actual frame extraction
-            # Options:
-            # 1. Use Gemini's video understanding to get last frame
-            # 2. Use ffmpeg to extract last frame
-            # 3. Use cloud video processing service
-            
-            # For now, return None (frame extraction to be implemented)
-            logger.debug(f"[SEQ_GEN] Frame extraction not yet implemented for {scene_id}")
-            return None
-            
+            from app.services.video_processing_service import get_video_processor
+            from app.services.storage_service import get_storage_service
+
+            processor = get_video_processor()
+            storage = get_storage_service()
+
+            # Check if ffmpeg is available
+            if not await processor.is_ffmpeg_available():
+                logger.debug(f"[SEQ_GEN] FFmpeg not available, skipping frame extraction for {scene_id}")
+                return None
+
+            # Extract last frame using ffmpeg
+            frame_path = await processor.extract_last_frame(video_url, output_format="jpg")
+            if not frame_path:
+                logger.warning(f"[SEQ_GEN] Failed to extract frame for {scene_id}")
+                return None
+
+            # Upload frame to storage
+            import aiofiles
+            async with aiofiles.open(frame_path, "rb") as f:
+                frame_data = await f.read()
+
+            frame_url = await storage.upload_image(
+                frame_data,
+                f"frames/{scene_id}/end_frame.jpg"
+            )
+
+            # Cleanup local temp file
+            import os
+            if os.path.exists(frame_path):
+                os.remove(frame_path)
+
+            logger.info(f"[SEQ_GEN] Extracted end frame for {scene_id}: {frame_url}")
+            return frame_url
+
         except Exception as e:
             logger.warning(f"[SEQ_GEN] Failed to extract end frame: {e}")
             return None
@@ -487,35 +512,60 @@ class SceneConsistencyService:
         """
         if not clips:
             return None
-        
+
         if len(clips) == 1:
             return clips[0].video_url
-        
+
         try:
             # Collect valid video URLs
             valid_urls = [c.video_url for c in clips if c.video_url]
-            
+
             if not valid_urls:
                 logger.warning("[SEQ_GEN] No valid video URLs to concatenate")
                 return None
-            
+
             if len(valid_urls) == 1:
                 return valid_urls[0]
-            
-            # TODO: Implement actual video concatenation
-            # Options:
-            # 1. Use ffmpeg for local processing
-            # 2. Use cloud video editing API (Shotstack, Creatomate, etc.)
-            # 3. Use Google Cloud Video Stitcher
-            
-            # For now, return the first clip's URL with metadata about the sequence
-            # This allows the frontend to at least show something
-            logger.info(
-                f"[SEQ_GEN] Concatenation not implemented, returning first clip. "
-                f"Total {len(valid_urls)} clips available in result.clips"
+
+            from app.services.video_processing_service import get_video_processor
+            from app.services.storage_service import get_storage_service
+
+            processor = get_video_processor()
+            storage = get_storage_service()
+
+            # Check if ffmpeg is available
+            if not await processor.is_ffmpeg_available():
+                logger.info(
+                    f"[SEQ_GEN] FFmpeg not available, returning first clip. "
+                    f"Total {len(valid_urls)} clips available in result.clips"
+                )
+                return valid_urls[0]
+
+            # Concatenate videos using ffmpeg
+            concat_path = await processor.concatenate_videos(valid_urls)
+            if not concat_path:
+                logger.warning("[SEQ_GEN] Concatenation failed, returning first clip")
+                return valid_urls[0]
+
+            # Upload concatenated video to storage
+            import aiofiles
+            async with aiofiles.open(concat_path, "rb") as f:
+                video_data = await f.read()
+
+            import uuid
+            concat_url = await storage.upload_video(
+                video_data,
+                f"sequences/{uuid.uuid4()}/concatenated.mp4"
             )
-            return valid_urls[0]
-            
+
+            # Cleanup local temp file
+            import os
+            if os.path.exists(concat_path):
+                os.remove(concat_path)
+
+            logger.info(f"[SEQ_GEN] Concatenated {len(valid_urls)} clips: {concat_url}")
+            return concat_url
+
         except Exception as e:
             logger.error(f"[SEQ_GEN] Failed to concatenate clips: {e}")
             return None
@@ -537,14 +587,46 @@ class SceneConsistencyService:
             URL of audio-synced video, or None
         """
         try:
-            # TODO: Implement audio sync
-            # Options:
-            # 1. ffmpeg: ffmpeg -i video.mp4 -i audio.mp3 -c:v copy -c:a aac output.mp4
-            # 2. Cloud video editing API
-            
-            logger.info(f"[SEQ_GEN] Audio sync not yet implemented")
-            return video_url  # Return original for now
-            
+            from app.services.video_processing_service import get_video_processor
+            from app.services.storage_service import get_storage_service
+
+            processor = get_video_processor()
+            storage = get_storage_service()
+
+            # Check if ffmpeg is available
+            if not await processor.is_ffmpeg_available():
+                logger.info("[SEQ_GEN] FFmpeg not available, returning video without audio sync")
+                return video_url
+
+            # Sync audio using ffmpeg
+            synced_path = await processor.sync_audio(
+                video_url,
+                audio_url,
+                output_duration=float(duration_seconds),
+            )
+            if not synced_path:
+                logger.warning("[SEQ_GEN] Audio sync failed, returning original video")
+                return video_url
+
+            # Upload synced video to storage
+            import aiofiles
+            async with aiofiles.open(synced_path, "rb") as f:
+                video_data = await f.read()
+
+            import uuid
+            synced_url = await storage.upload_video(
+                video_data,
+                f"sequences/{uuid.uuid4()}/audio_synced.mp4"
+            )
+
+            # Cleanup local temp file
+            import os
+            if os.path.exists(synced_path):
+                os.remove(synced_path)
+
+            logger.info(f"[SEQ_GEN] Audio synced: {synced_url}")
+            return synced_url
+
         except Exception as e:
             logger.error(f"[SEQ_GEN] Failed to sync audio: {e}")
             return None

@@ -652,18 +652,17 @@ async def _upload_image(
 ) -> str:
     """Upload image to storage and return URL.
 
-    TODO: Integrate with actual storage service (GCS, S3)
-    Currently generates deterministic mock URL for development.
+    Uses StorageService for GCS (production) or local storage (development).
     """
+    from app.services.storage_service import get_storage_service
+
     # Generate deterministic filename from content hash
     content_hash = hashlib.sha256(image_data).hexdigest()[:16]
     filename = f"characters/{user_id}/{character_id}/{content_hash}.jpg"
 
-    # TODO: Upload to actual storage
-    # from app.services.storage import upload_to_gcs
-    # return await upload_to_gcs(image_data, filename)
-
-    return f"https://storage.crebit.studio/{filename}"
+    # Upload using storage service (GCS or local depending on config)
+    service = get_storage_service()
+    return await service.upload_image(image_data, filename)
 
 
 async def _extract_and_store_embeddings(

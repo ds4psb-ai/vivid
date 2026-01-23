@@ -23,8 +23,14 @@ import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { getPreviousStepResult } from "@/lib/workflow-state";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
+import {
+  useDimensionChainOptional,
+  type ChainData,
+} from "@/contexts/DimensionChainContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
+import ChainDataInput from "./ChainDataInput";
 import type { EvidenceRef } from "./EvidenceDisplay";
+import { type ThemeColor as DimensionThemeColor } from "@/lib/dimension-theme";
 import { Image as ImageIcon } from "lucide-react";
 
 // ============================================================================
@@ -32,7 +38,22 @@ import { Image as ImageIcon } from "lucide-react";
 // ============================================================================
 
 const DIMENSION_CODE = "3d";
+const DIMENSION_KEY = "visual-realizer"; // Chain context key
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
+
+// Map tokens.ts ThemeColor to dimension-theme.ts ThemeColor for ChainDataInput
+const CHAIN_INPUT_THEME_MAP: Record<string, DimensionThemeColor> = {
+  violet: "violet",
+  cyan: "cyan",
+  emerald: "emerald",
+  amber: "amber",
+  rose: "rose",
+  fuchsia: "fuchsia",
+  indigo: "indigo",
+  sky: "sky",
+  purple: "violet",
+  red: "rose",
+};
 
 interface ImagePromptResult {
   prompt: string;
@@ -92,6 +113,14 @@ function VisualRealizerContent() {
     useDimensionPanel();
   const { language } = useLanguage();
   const isKo = language === "ko";
+  const chainCtx = useDimensionChainOptional();
+
+  // Set current dimension on mount
+  useEffect(() => {
+    if (chainCtx) {
+      chainCtx.setCurrentDimension(DIMENSION_KEY);
+    }
+  }, [chainCtx]);
 
   // i18n labels
   const labels = useMemo(() => ({
@@ -226,11 +255,21 @@ function VisualRealizerContent() {
     error?: string;
   }>({
     onSuccess: (data) => {
-      if (data.success && !byokKey && creditCtx) {
-        void creditCtx.refresh();
-      }
       if (data.success) {
         setResult(data.output);
+
+        // Store in chain context for downstream dimensions (video-maker, quality-director)
+        if (chainCtx) {
+          chainCtx.setChainData(
+            DIMENSION_KEY,
+            data.output as unknown as Record<string, unknown>,
+            data.output.prompt?.slice(0, 50) || description.slice(0, 50)
+          );
+        }
+
+        if (!byokKey && creditCtx) {
+          void creditCtx.refresh();
+        }
       }
     },
     onError: (err) => {
@@ -288,6 +327,38 @@ function VisualRealizerContent() {
     }
   };
 
+  // Handle chain data from previous dimensions (prompt-alchemy, storyboard-sketch)
+  const handleApplyChainData = useCallback((data: Record<string, ChainData>) => {
+    // From prompt-alchemy: get generated prompt
+    if (data["prompt-alchemy"]?.output?.prompt && !description) {
+      setDescription(data["prompt-alchemy"].output.prompt as string);
+    }
+
+    // From storyboard-sketch: get scene descriptions for visual generation
+    if (data["storyboard-sketch"]?.output?.scenes && !description) {
+      const scenes = data["storyboard-sketch"].output.scenes as Array<{
+        description: string;
+        midjourney_prompt?: string;
+        visual_prompt?: string;
+      }>;
+      if (scenes.length > 0) {
+        // Use the first scene's visual prompt or description
+        const firstScene = scenes[0];
+        setDescription(firstScene.midjourney_prompt || firstScene.visual_prompt || firstScene.description);
+      }
+    }
+
+    // Set style based on data from prompt-alchemy
+    const promptAlchemyOutput = data["prompt-alchemy"]?.output as Record<string, unknown> | undefined;
+    const styleData = promptAlchemyOutput?.style as Record<string, unknown> | undefined;
+    if (styleData?.cinematography) {
+      const cinematography = String(styleData.cinematography);
+      if (cinematography.toLowerCase().includes("anime")) setStyle("anime");
+      else if (cinematography.toLowerCase().includes("cinematic")) setStyle("cinematic");
+      else if (cinematography.toLowerCase().includes("3d")) setStyle("3d-render");
+    }
+  }, [description]);
+
   // Extracted result data
   const displayResult = result?.success ? result.output : null;
   const displayError =
@@ -298,6 +369,13 @@ function VisualRealizerContent() {
       <DimensionPanel.Header title={labels.title} creditCost={CREDIT_COST} />
 
       <DimensionPanel.Sidebar>
+        {/* Chain Data Input - data from prompt-alchemy, storyboard-sketch */}
+        <ChainDataInput
+          currentDimension={DIMENSION_KEY}
+          onApplyData={handleApplyChainData}
+          themeColor={CHAIN_INPUT_THEME_MAP[token.themeColor] || "emerald"}
+        />
+
         {/* Description Input */}
         <DimensionPanel.Textarea
           label={labels.descriptionLabel}
@@ -403,7 +481,7 @@ function VisualRealizerContent() {
         )}
 
         {/* Next Dimension Navigation */}
-        {displayResult && <DimensionPanel.NextNav />}
+        {displayResult && <DimensionPanel.NextNav currentDimension={DIMENSION_KEY} />}
 
         {/* Empty State */}
         {!displayResult && !isLoading && !displayError && (

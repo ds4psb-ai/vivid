@@ -14,14 +14,20 @@
  * @see docs/PANEL_DESIGN_UNITY_SPEC.md
  */
 
-import { useState, useCallback, useTransition, useOptimistic, useMemo } from "react";
+import { useState, useCallback, useEffect, useTransition, useOptimistic, useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
+import {
+  useDimensionChainOptional,
+  type ChainData,
+} from "@/contexts/DimensionChainContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
+import ChainDataInput from "./ChainDataInput";
+import { type ThemeColor as DimensionThemeColor } from "@/lib/dimension-theme";
 import { Download, Layout } from "lucide-react";
 
 // ============================================================================
@@ -29,9 +35,23 @@ import { Download, Layout } from "lucide-react";
 // ============================================================================
 
 const DIMENSION_CODE = "2d"; // Storyboard uses 2d dimension
-const DIMENSION_KEY = "storyboard";
+const DIMENSION_KEY = "storyboard-sketch"; // Chain context key
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 const MAX_SCRIPT_LENGTH = 3000;
+
+// Map tokens.ts ThemeColor to dimension-theme.ts ThemeColor for ChainDataInput
+const CHAIN_INPUT_THEME_MAP: Record<string, DimensionThemeColor> = {
+  violet: "violet",
+  cyan: "cyan",
+  emerald: "emerald",
+  amber: "amber",
+  rose: "rose",
+  fuchsia: "fuchsia",
+  indigo: "indigo",
+  sky: "sky",
+  purple: "violet",
+  red: "rose",
+};
 
 interface StoryboardScene {
   scene_number: number;
@@ -87,6 +107,14 @@ function StoryboardContent() {
   const { token, setLoading, setResult, setError, classes } = useDimensionPanel();
   const { language: appLanguage } = useLanguage();
   const isKo = appLanguage === "ko";
+  const chainCtx = useDimensionChainOptional();
+
+  // Set current dimension on mount
+  useEffect(() => {
+    if (chainCtx) {
+      chainCtx.setCurrentDimension(DIMENSION_KEY);
+    }
+  }, [chainCtx]);
 
   // i18n labels
   const labels = useMemo(() => ({
@@ -158,6 +186,16 @@ function StoryboardContent() {
       if (data.success) {
         setStoryboardResult(data.output);
         setResult(data.output);
+
+        // Store in chain context for downstream dimensions (sound-crafter, visual-realizer)
+        if (chainCtx) {
+          chainCtx.setChainData(
+            DIMENSION_KEY,
+            data.output as unknown as Record<string, unknown>,
+            `${data.output.scenes.length} scenes generated`
+          );
+        }
+
         if (!byokKey && creditCtx) {
           void creditCtx.refresh();
         }
@@ -237,6 +275,33 @@ function StoryboardContent() {
     }
   }, [storyboardResult, exportJSON]);
 
+  // Handle chain data from previous dimensions (story-architect, reference-decoder)
+  const handleApplyChainData = useCallback((data: Record<string, ChainData>) => {
+    // From story-architect: get logline, synopsis, or structure
+    if (data["story-architect"]?.output) {
+      const storyData = data["story-architect"].output;
+
+      if (storyData.synopsis && !script) {
+        setScript(storyData.synopsis as string);
+      } else if (storyData.logline && !script) {
+        setScript(storyData.logline as string);
+      }
+
+      // If there's structure, use it to suggest scene count
+      if (storyData.structure && Array.isArray(storyData.structure)) {
+        const actCount = (storyData.structure as Array<unknown>).length;
+        if (actCount <= 4) setSceneCount(4);
+        else if (actCount <= 6) setSceneCount(6);
+        else setSceneCount(8);
+      }
+    }
+
+    // From reference-decoder: get style analysis
+    if (data["reference-decoder"]?.output?.style_prompt && !script) {
+      setScript(data["reference-decoder"].output.style_prompt as string);
+    }
+  }, [script]);
+
   // Helper to format duration
   const formatTime = (duration: string | undefined) => {
     if (!duration) return "N/A";
@@ -258,6 +323,13 @@ function StoryboardContent() {
       <DimensionPanel.Header title={labels.title} creditCost={CREDIT_COST} />
 
       <DimensionPanel.Sidebar>
+        {/* Chain Data Input - data from story-architect, reference-decoder */}
+        <ChainDataInput
+          currentDimension={DIMENSION_KEY}
+          onApplyData={handleApplyChainData}
+          themeColor={CHAIN_INPUT_THEME_MAP[token.themeColor] || "cyan"}
+        />
+
         {/* Script Input */}
         <div className="space-y-2">
           <label className={`text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1`}>

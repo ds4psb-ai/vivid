@@ -21,14 +21,34 @@ import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
+import {
+  useDimensionChainOptional,
+  type ChainData,
+} from "@/contexts/DimensionChainContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
+import ChainDataInput from "./ChainDataInput";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getPreviousStepResult, parseWorkflowUrlParams } from "@/lib/workflow-state";
+import { type ThemeColor as DimensionThemeColor } from "@/lib/dimension-theme";
 import { Sparkles } from "lucide-react";
 
 const DIMENSION_CODE = "veo";
-const DIMENSION_KEY = "video-maker";
+const DIMENSION_KEY = "video-maker"; // Chain context key
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
+
+// Map tokens.ts ThemeColor to dimension-theme.ts ThemeColor for ChainDataInput
+const CHAIN_INPUT_THEME_MAP: Record<string, DimensionThemeColor> = {
+  violet: "violet",
+  cyan: "cyan",
+  emerald: "emerald",
+  amber: "amber",
+  rose: "rose",
+  fuchsia: "fuchsia",
+  indigo: "indigo",
+  sky: "sky",
+  purple: "violet",
+  red: "rose",
+};
 
 interface VideoResult {
   video_url?: string;
@@ -102,6 +122,14 @@ function VeoVideoContent() {
   const { language } = useLanguage();
   const isKo = language === "ko";
   const searchParams = useSearchParams();
+  const chainCtx = useDimensionChainOptional();
+
+  // Set current dimension on mount
+  useEffect(() => {
+    if (chainCtx) {
+      chainCtx.setCurrentDimension(DIMENSION_KEY);
+    }
+  }, [chainCtx]);
 
   // i18n labels
   const labels = useMemo(() => ({
@@ -323,6 +351,16 @@ function VeoVideoContent() {
     onSuccess: (data) => {
       setVideoResult(data);
       setResult(data);
+
+      // Store in chain context for downstream dimensions (quality-director)
+      if (data.status === "completed" && chainCtx) {
+        chainCtx.setChainData(
+          DIMENSION_KEY,
+          { ...data, prompt } as unknown as Record<string, unknown>,
+          `Video generated: ${data.metadata?.duration || "unknown"}`
+        );
+      }
+
       if (data.status === "completed" && !byokKey && creditCtx) {
         void creditCtx.refresh();
       }
@@ -426,6 +464,34 @@ function VeoVideoContent() {
     copyToClipboard(prompt);
   }, [prompt, copyToClipboard]);
 
+  // Handle chain data from previous dimensions (visual-realizer, prompt-alchemy, sound-crafter)
+  const handleApplyChainData = useCallback((data: Record<string, ChainData>) => {
+    // From visual-realizer: get generated image prompt for video generation
+    if (data["visual-realizer"]?.output?.prompt && !prompt) {
+      setPrompt(data["visual-realizer"].output.prompt as string);
+    }
+
+    // From prompt-alchemy: get video prompt
+    if (data["prompt-alchemy"]?.output?.prompt && !prompt) {
+      setPrompt(data["prompt-alchemy"].output.prompt as string);
+    }
+
+    // Set negative prompt from visual-realizer if available
+    if (data["visual-realizer"]?.output?.negative_prompt && !negativePrompt) {
+      setNegativePrompt(data["visual-realizer"].output.negative_prompt as string);
+    }
+
+    // Set style from prompt-alchemy parameters
+    const promptAlchemyOutput = data["prompt-alchemy"]?.output as Record<string, unknown> | undefined;
+    const styleData = promptAlchemyOutput?.style as Record<string, unknown> | undefined;
+    if (styleData?.cinematography) {
+      const cinematography = String(styleData.cinematography);
+      if (cinematography.toLowerCase().includes("anime")) setStyle("anime");
+      else if (cinematography.toLowerCase().includes("realistic")) setStyle("realistic");
+      else if (cinematography.toLowerCase().includes("artistic")) setStyle("artistic");
+    }
+  }, [prompt, negativePrompt]);
+
   const displayError = validationError || error;
 
   return (
@@ -435,6 +501,13 @@ function VeoVideoContent() {
       <div className="flex flex-1 min-h-0">
         {/* Sidebar */}
         <DimensionPanel.Sidebar>
+          {/* Chain Data Input - data from visual-realizer, prompt-alchemy, sound-crafter */}
+          <ChainDataInput
+            currentDimension={DIMENSION_KEY}
+            onApplyData={handleApplyChainData}
+            themeColor={CHAIN_INPUT_THEME_MAP[token.themeColor] || "sky"}
+          />
+
           {/* Workflow Context Banner */}
           {workflowContext && (
             <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-3">
