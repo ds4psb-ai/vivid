@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 import uuid
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
@@ -37,6 +38,29 @@ from app.services.veo_service import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+# =============================================================================
+# Prompt Sanitization Utilities
+# =============================================================================
+
+MAX_FIELD_LENGTH = 100
+UNSAFE_CHARS = re.compile(r'[\[\]{}()<>"|;`$\\]')
+
+
+def _sanitize_prompt_input(value: str, max_length: int = MAX_FIELD_LENGTH) -> str:
+    """Sanitize user input for prompt injection prevention.
+
+    Strips unsafe characters and limits length.
+
+    Args:
+        value: Input string to sanitize
+        max_length: Maximum allowed length
+
+    Returns:
+        Sanitized string
+    """
+    return UNSAFE_CHARS.sub('', value.strip()[:max_length])
 
 # =============================================================================
 # Constants
@@ -271,10 +295,13 @@ class CharacterVeoService:
         Returns:
             Enhanced prompt
         """
+        # Sanitize character names
+        sanitized_names = [_sanitize_prompt_input(name) for name in character_names]
+
         # Check if characters already mentioned
         prompt_lower = prompt.lower()
         unmentioned = [
-            name for name in character_names
+            name for name in sanitized_names
             if name.lower() not in prompt_lower
         ]
 

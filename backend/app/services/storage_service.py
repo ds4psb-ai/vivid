@@ -266,31 +266,29 @@ class GCSStorageBackend(StorageBackend):
         path: str,
         content_type: str = "application/octet-stream",
     ) -> str:
-        """Upload to GCS with retry."""
+        """Upload to GCS with retry for transient errors."""
         import asyncio
+        from google.api_core import retry
+        from google.api_core.exceptions import ServiceUnavailable, TooManyRequests
 
         # Validate path and size
         path = self._validate_path(path)
         if len(data) > MAX_FILE_SIZE:
             raise ValueError(f"File too large: {len(data)} bytes (max {MAX_FILE_SIZE})")
 
-        def _upload():
+        @retry.Retry(
+            predicate=retry.if_exception_type(ServiceUnavailable, TooManyRequests),
+            initial=1.0,
+            maximum=60.0,
+            multiplier=2.0,
+            deadline=120.0,
+        )
+        def _upload_with_retry():
             blob = self.bucket.blob(path)
-            # Retry transient errors (network issues, etc.)
-            max_retries = 3
-            for attempt in range(max_retries):
-                try:
-                    blob.upload_from_string(data, content_type=content_type)
-                    return blob.public_url
-                except Exception as e:
-                    if attempt == max_retries - 1:
-                        raise
-                    logger.warning(f"[STORAGE] GCS upload attempt {attempt + 1} failed: {e}")
-                    import time
-                    time.sleep(2 ** attempt)  # Exponential backoff
+            blob.upload_from_string(data, content_type=content_type)
             return blob.public_url
 
-        url = await asyncio.get_event_loop().run_in_executor(None, _upload)
+        url = await asyncio.get_event_loop().run_in_executor(None, _upload_with_retry)
         logger.info(f"[STORAGE] Uploaded {len(data)} bytes to GCS: {path}")
         return url
 

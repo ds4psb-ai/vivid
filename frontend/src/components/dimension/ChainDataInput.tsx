@@ -8,8 +8,9 @@
  */
 
 import { useDimensionChainOptional, type ChainData } from "@/contexts/DimensionChainContext";
+import { safeValidateChainDataRecord } from "@/lib/schemas/chain.schema";
 import { THEME_COLOR_CLASSES, type ThemeColor } from "@/lib/dimension-theme";
-import { Database, ChevronDown, ChevronUp, Check } from "lucide-react";
+import { Database, ChevronDown, ChevronUp, Check, AlertCircle } from "lucide-react";
 import { useState } from "react";
 
 interface ChainDataInputProps {
@@ -29,6 +30,7 @@ export default function ChainDataInput({
     const chainContext = useDimensionChainOptional();
     const [isExpanded, setIsExpanded] = useState(false);
     const [applied, setApplied] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const colors = THEME_COLOR_CLASSES[themeColor];
 
     if (!chainContext) return null;
@@ -39,10 +41,25 @@ export default function ChainDataInput({
     if (availableInputs.length === 0) return null;
 
     const handleApply = () => {
-        if (onApplyData) {
+        if (!onApplyData) return;
+
+        // Clear previous error
+        setError(null);
+
+        try {
+            // Validate chain data before applying
+            const validated = safeValidateChainDataRecord(inputData);
+            if (!validated) {
+                setError("데이터 형식이 올바르지 않습니다.");
+                return;
+            }
+
             onApplyData(inputData);
             setApplied(true);
             setTimeout(() => setApplied(false), 2000);
+        } catch (err) {
+            console.error("[ChainDataInput] Apply error:", err);
+            setError("데이터 적용 중 오류가 발생했습니다.");
         }
     };
 
@@ -94,6 +111,14 @@ export default function ChainDataInput({
                             )}
                         </div>
                     ))}
+
+                    {/* Error message */}
+                    {error && (
+                        <div className="flex items-center gap-2 p-2 rounded-lg bg-red-500/10 border border-red-500/30">
+                            <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+                            <span className="text-red-400 text-xs">{error}</span>
+                        </div>
+                    )}
 
                     {/* Apply button */}
                     {onApplyData && (

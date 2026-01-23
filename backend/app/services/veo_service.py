@@ -207,20 +207,23 @@ class VeoService:
         # Helper to emit progress updates
         def emit_progress(status: str, message: str = "", poll_count: int = 0):
             if progress_callback:
-                elapsed = time.monotonic() - start_time
-                # Estimate remaining time based on typical generation times
-                estimated_remaining = None
-                if status == "polling" and elapsed < max_wait_seconds:
-                    # Veo typically takes 60-180 seconds for fast model, 120-360 for standard
-                    avg_time = 90 if "fast" in model else 180
-                    estimated_remaining = max(0, avg_time - elapsed)
-                progress_callback(VeoProgress(
-                    status=status,
-                    elapsed_seconds=elapsed,
-                    estimated_remaining_seconds=estimated_remaining,
-                    poll_count=poll_count,
-                    message=message,
-                ))
+                try:
+                    elapsed = time.monotonic() - start_time
+                    # Estimate remaining time based on typical generation times
+                    estimated_remaining = None
+                    if status == "polling" and elapsed < max_wait_seconds:
+                        # Veo typically takes 60-180 seconds for fast model, 120-360 for standard
+                        avg_time = 90 if "fast" in model else 180
+                        estimated_remaining = max(0, avg_time - elapsed)
+                    progress_callback(VeoProgress(
+                        status=status,
+                        elapsed_seconds=elapsed,
+                        estimated_remaining_seconds=estimated_remaining,
+                        poll_count=poll_count,
+                        message=message,
+                    ))
+                except Exception as e:
+                    logger.warning(f"[VEO] Progress callback failed: {e}")
 
         logger.info(f"Starting Veo generation: model={model}, duration={config.duration_seconds}s")
         emit_progress("submitting", "영상 생성 요청 중...")

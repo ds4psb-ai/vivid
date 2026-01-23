@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -32,6 +33,29 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+# =============================================================================
+# Prompt Sanitization Utilities
+# =============================================================================
+
+MAX_FIELD_LENGTH = 100
+UNSAFE_CHARS = re.compile(r'[\[\]{}()<>"|;`$\\]')
+
+
+def _sanitize_prompt_input(value: str, max_length: int = MAX_FIELD_LENGTH) -> str:
+    """Sanitize user input for prompt injection prevention.
+
+    Strips unsafe characters and limits length.
+
+    Args:
+        value: Input string to sanitize
+        max_length: Maximum allowed length
+
+    Returns:
+        Sanitized string
+    """
+    return UNSAFE_CHARS.sub('', value.strip()[:max_length])
 
 
 # =============================================================================
@@ -232,21 +256,24 @@ class SceneConsistencyService:
             message: str = "",
         ):
             if progress_callback:
-                elapsed = time.monotonic() - start_time
-                avg_time_per_scene = elapsed / max(current_scene, 1)
-                remaining_scenes = len(scenes) - current_scene
-                estimated_remaining = avg_time_per_scene * remaining_scenes if current_scene > 0 else None
-                
-                scene_name = scenes[current_scene - 1].scene_id if current_scene > 0 else ""
-                progress_callback(SequenceProgress(
-                    status=status,
-                    current_scene=current_scene,
-                    total_scenes=len(scenes),
-                    elapsed_seconds=elapsed,
-                    estimated_remaining_seconds=estimated_remaining,
-                    current_scene_name=scene_name,
-                    message=message,
-                ))
+                try:
+                    elapsed = time.monotonic() - start_time
+                    avg_time_per_scene = elapsed / max(current_scene, 1)
+                    remaining_scenes = len(scenes) - current_scene
+                    estimated_remaining = avg_time_per_scene * remaining_scenes if current_scene > 0 else None
+
+                    scene_name = scenes[current_scene - 1].scene_id if current_scene > 0 else ""
+                    progress_callback(SequenceProgress(
+                        status=status,
+                        current_scene=current_scene,
+                        total_scenes=len(scenes),
+                        elapsed_seconds=elapsed,
+                        estimated_remaining_seconds=estimated_remaining,
+                        current_scene_name=scene_name,
+                        message=message,
+                    ))
+                except Exception as e:
+                    logger.warning(f"[SEQ_GEN] Progress callback failed: {e}")
 
         logger.info(f"[SEQ_GEN] Starting sequence {sequence_id} with {len(scenes)} scenes")
         emit_progress(SequenceStatus.GENERATING, 0, "시퀀스 생성 시작...")
@@ -412,31 +439,35 @@ class SceneConsistencyService:
         prev_end_frame_url: Optional[str],
     ) -> str:
         """Enhance prompt with style guide and continuity hints.
-        
+
         Args:
             prompt: Original scene prompt
             style_guide: Visual style guide
             prev_end_frame_url: Previous scene's end frame
-            
+
         Returns:
             Enhanced prompt
         """
         parts = [prompt]
-        
+
         if style_guide:
             if style_guide.mood:
-                parts.append(f"[Mood: {style_guide.mood}]")
+                sanitized_mood = _sanitize_prompt_input(style_guide.mood)
+                parts.append(f"[Mood: {sanitized_mood}]")
             if style_guide.lighting:
-                parts.append(f"[Lighting: {style_guide.lighting}]")
+                sanitized_lighting = _sanitize_prompt_input(style_guide.lighting)
+                parts.append(f"[Lighting: {sanitized_lighting}]")
             if style_guide.camera_style:
-                parts.append(f"[Camera: {style_guide.camera_style}]")
+                sanitized_camera = _sanitize_prompt_input(style_guide.camera_style)
+                parts.append(f"[Camera: {sanitized_camera}]")
             if style_guide.color_palette:
-                colors = ", ".join(style_guide.color_palette[:5])
+                sanitized_colors = [_sanitize_prompt_input(c) for c in style_guide.color_palette[:5]]
+                colors = ", ".join(sanitized_colors)
                 parts.append(f"[Colors: {colors}]")
-        
+
         if prev_end_frame_url:
             parts.append("[CONTINUITY: Match previous scene ending]")
-        
+
         return " ".join(parts)
 
     async def _extract_end_frame(

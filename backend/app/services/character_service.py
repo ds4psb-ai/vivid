@@ -977,15 +977,19 @@ async def _compute_quality_score(image_data: bytes) -> float:
 
 
 def _compute_cosine_similarity(a: List[float], b: List[float]) -> float:
-    """Compute cosine similarity between two vectors."""
+    """Compute cosine similarity between two vectors using numpy for performance."""
+    import numpy as np
+
     if not a or not b or len(a) != len(b):
         return 0.0
-    dot = sum(x * y for x, y in zip(a, b))
-    norm_a = sum(x ** 2 for x in a) ** 0.5
-    norm_b = sum(x ** 2 for x in b) ** 0.5
+
+    arr_a, arr_b = np.array(a, dtype=np.float32), np.array(b, dtype=np.float32)
+    norm_a, norm_b = np.linalg.norm(arr_a), np.linalg.norm(arr_b)
+
     if norm_a == 0 or norm_b == 0:
         return 0.0
-    return dot / (norm_a * norm_b)
+
+    return float(np.dot(arr_a, arr_b) / (norm_a * norm_b))
 
 
 def _select_diverse_keyframes(
