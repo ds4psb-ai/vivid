@@ -1,0 +1,147 @@
+# OpenTelemetry Collector Configuration
+# For Vivid Backend observability pipeline
+#
+# Endpoints:
+#   - OTLP gRPC: 4317
+#   - OTLP HTTP: 4318
+#   - Prometheus metrics: 9464
+#
+# Usage:
+#   docker compose --profile monitoring up -d
+#   open http://localhost:16686  # Jaeger UI
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  # Batch processor for better performance
+  batch:
+    timeout: 10s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+  # Memory limiter to prevent OOM
+  memory_limiter:
+    check_interval: 5s
+    limit_mib: 512
+    spike_limit_mib: 128
+
+  # Add resource attributes
+  resource:
+    attributes:
+      - key: service.namespace
+        value: vivid
+        action: upsert
+      - key: deployment.environment
+        value: ${ENVIRONMENT:-development}
+        action: upsert
+
+  # Filter out health check spans
+  filter/health:
+    error_mode: ignore
+    traces:
+      span:
+        - 'attributes["http.target"] == "/health"'
+        - 'attributes["http.target"] == "/health/live"'
+        - 'attributes["http.target"] == "/health/ready"'
+        - 'attributes["http.target"] == "/metrics"'
+
+  # Tail-based sampling for traces
+  tail_sampling:
+    decision_wait: 10s
+    num_traces: 100
+    expected_new_traces_per_sec: 10
+    policies:
+      # Always sample errors
+      - name: errors
+        type: status_code
+        status_code:
+          status_codes:
+            - ERROR
+      # Sample slow requests (> 500ms)
+      - name: slow-requests
+        type: latency
+        latency:
+          threshold_ms: 500
+      # Sample RAG operations
+      - name: rag-operations
+        type: string_attribute
+        string_attribute:
+          key: rag.operation
+          values:
+            - hybrid_query
+            - ensemble_retrieve
+            - auteur_first
+      # Probabilistic sampling for the rest
+      - name: probabilistic
+        type: probabilistic
+        probabilistic:
+          sampling_percentage: 10
+
+exporters:
+  # Debug exporter for development
+  debug:
+    verbosity: detailed
+    sampling_initial: 5
+    sampling_thereafter: 200
+
+  # OTLP to Jaeger
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+
+  # Prometheus metrics exporter
+  prometheus:
+    endpoint: "0.0.0.0:9464"
+    namespace: vivid
+    const_labels:
+      service: vivid-backend
+    resource_to_telemetry_conversion:
+      enabled: true
+
+  # Logging exporter for traces (backup)
+  logging:
+    verbosity: normal
+    sampling_initial: 2
+    sampling_thereafter: 500
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+  pprof:
+    endpoint: 0.0.0.0:1888
+
+service:
+  extensions: [health_check, zpages, pprof]
+
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, filter/health, batch]
+      exporters: [otlp/jaeger, debug]
+
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus, debug]
+
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [logging]
+
+  telemetry:
+    logs:
+      level: info
+    metrics:
+      address: 0.0.0.0:8888

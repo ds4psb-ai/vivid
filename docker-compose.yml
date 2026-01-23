@@ -90,6 +90,49 @@ services:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
+  # OpenTelemetry Collector - Central telemetry pipeline
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.92.0
+    container_name: vivid-otel-collector
+    profiles: ["monitoring"]
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "9464:9464"   # Prometheus metrics exporter
+      - "13133:13133" # Health check
+      - "55679:55679" # zpages
+    volumes:
+      - ./config/otel/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:13133/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - jaeger
+    restart: unless-stopped
+
+  # Jaeger - Distributed tracing visualization
+  jaeger:
+    image: jaegertracing/all-in-one:1.53
+    container_name: vivid-jaeger
+    profiles: ["monitoring"]
+    ports:
+      - "16686:16686"  # Web UI
+      - "14268:14268"  # HTTP collector
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+      SPAN_STORAGE_TYPE: "memory"  # For dev; use cassandra/elasticsearch in prod
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:16686/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
 volumes:
   crebit_postgres_data:
   crebit_qdrant_data:

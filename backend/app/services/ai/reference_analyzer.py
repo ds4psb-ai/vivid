@@ -29,6 +29,17 @@ from app.services.ai.style_extractor import (
     StyleExtractionResult,
     get_style_extractor,
 )
+from app.services.ai.auteur_matcher import (
+    AuteurMatcher,
+    AuteurMatch,
+    get_auteur_matcher,
+)
+from app.services.ai.technique_detector import (
+    TechniqueDetector,
+    DetectedTechnique,
+    TechniqueCategory,
+    get_technique_detector,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +97,27 @@ class SceneSegment(BaseModel):
     key_frame_index: int = Field(description="Index of representative frame")
 
 
+class AuteurMatchSummary(BaseModel):
+    """Summary of auteur match for serialization."""
+
+    auteur_key: str = Field(description="Auteur key")
+    auteur_name: str = Field(description="Auteur name in Korean")
+    similarity_score: float = Field(description="Similarity score (0-1)")
+    matched_techniques: List[str] = Field(default_factory=list)
+    evidence_refs: List[str] = Field(default_factory=list)
+
+
+class DetectedTechniqueSummary(BaseModel):
+    """Summary of detected technique for serialization."""
+
+    technique_id: str = Field(description="Technique identifier")
+    name: str = Field(description="Technique name")
+    category: str = Field(description="Category (shot_type, camera_movement, etc.)")
+    confidence: float = Field(description="Detection confidence")
+    timestamp: Optional[float] = Field(default=None)
+    description: Optional[str] = Field(default=None)
+
+
 class VideoReferenceAnalysis(BaseModel):
     """Complete analysis result for a video reference."""
 
@@ -109,6 +141,16 @@ class VideoReferenceAnalysis(BaseModel):
         default_factory=StyleExtractionResult, description="Extracted visual style"
     )
 
+    # Auteur matching (Phase 2)
+    auteur_matches: List[AuteurMatchSummary] = Field(
+        default_factory=list, description="Matched auteurs based on style"
+    )
+
+    # Technique detection (Phase 2)
+    detected_techniques: List[DetectedTechniqueSummary] = Field(
+        default_factory=list, description="Detected cinematography techniques"
+    )
+
     # Shot list for recreation
     suggested_shots: List[ShotSuggestion] = Field(
         default_factory=list, description="Suggested shots to recreate"
@@ -127,6 +169,11 @@ class VideoReferenceAnalysis(BaseModel):
         default=0.0, ge=0.0, le=1.0, description="Overall confidence"
     )
 
+    # Evidence refs (RAG traceability)
+    evidence_refs: List[str] = Field(
+        default_factory=list, description="Evidence references for RAG traceability"
+    )
+
 
 class ImageReferenceAnalysis(BaseModel):
     """Analysis result for an image reference."""
@@ -142,6 +189,21 @@ class ImageReferenceAnalysis(BaseModel):
     )
     similar_references: List[str] = Field(
         default_factory=list, description="Similar reference suggestions"
+    )
+
+    # Phase 2: Auteur matching
+    auteur_matches: List[AuteurMatchSummary] = Field(
+        default_factory=list, description="Matched auteurs based on style"
+    )
+
+    # Phase 2: Technique detection
+    detected_techniques: List[DetectedTechniqueSummary] = Field(
+        default_factory=list, description="Detected composition techniques"
+    )
+
+    # Evidence refs for RAG traceability
+    evidence_refs: List[str] = Field(
+        default_factory=list, description="Evidence references"
     )
 
 
@@ -228,6 +290,8 @@ JSON 배열로 반환하세요. 프롬프트는 다음을 포착해야 합니다
         api_key: Optional[str] = None,
         config: Optional[ReferenceAnalyzerConfig] = None,
         style_extractor: Optional[StyleExtractor] = None,
+        auteur_matcher: Optional[AuteurMatcher] = None,
+        technique_detector: Optional[TechniqueDetector] = None,
     ):
         """Initialize ReferenceAnalyzer.
 
@@ -235,11 +299,15 @@ JSON 배열로 반환하세요. 프롬프트는 다음을 포착해야 합니다
             api_key: Optional API key
             config: Optional configuration
             style_extractor: Optional StyleExtractor instance
+            auteur_matcher: Optional AuteurMatcher instance
+            technique_detector: Optional TechniqueDetector instance
         """
         # H1.3: SecretStr - use .get_secret_value() for actual API key
         self._api_key = api_key or settings.GEMINI_API_KEY.get_secret_value()
         self.config = config or ReferenceAnalyzerConfig()
         self._style_extractor = style_extractor
+        self._auteur_matcher = auteur_matcher
+        self._technique_detector = technique_detector
         self._client = None
 
     def _get_client(self):
@@ -259,6 +327,18 @@ JSON 배열로 반환하세요. 프롬프트는 다음을 포착해야 합니다
         if self._style_extractor is None:
             self._style_extractor = get_style_extractor(self._api_key)
         return self._style_extractor
+
+    def _get_auteur_matcher(self) -> AuteurMatcher:
+        """Get or create AuteurMatcher instance."""
+        if self._auteur_matcher is None:
+            self._auteur_matcher = get_auteur_matcher()
+        return self._auteur_matcher
+
+    def _get_technique_detector(self) -> TechniqueDetector:
+        """Get or create TechniqueDetector instance."""
+        if self._technique_detector is None:
+            self._technique_detector = get_technique_detector()
+        return self._technique_detector
 
     async def analyze_video_reference(
         self,
@@ -313,6 +393,41 @@ JSON 배열로 반환하세요. 프롬프트는 다음을 포착해야 합니다
         # Detect scenes (simple shot boundary detection)
         scenes = self._detect_scenes(frame_analyses, timestamps)
 
+        # Phase 2: Auteur matching based on style
+        auteur_matcher = self._get_auteur_matcher()
+        auteur_matches_raw = await auteur_matcher.match_style_to_auteurs(style, max_matches=3)
+
+        # Convert AuteurMatch to AuteurMatchSummary for serialization
+        auteur_matches = [
+            AuteurMatchSummary(
+                auteur_key=match.auteur_key,
+                auteur_name=match.auteur_name,
+                similarity_score=match.similarity_score,
+                matched_techniques=[t.name for t in match.matched_techniques],
+                evidence_refs=match.evidence_refs,
+            )
+            for match in auteur_matches_raw
+        ]
+
+        # Phase 2: Technique detection from frame analyses
+        technique_detector = self._get_technique_detector()
+        detected_techniques_raw = await technique_detector.detect_techniques(
+            frame_analyses, timestamps
+        )
+
+        # Convert DetectedTechnique to DetectedTechniqueSummary for serialization
+        detected_techniques = [
+            DetectedTechniqueSummary(
+                technique_id=tech.technique_id,
+                name=tech.name,
+                category=tech.category,
+                confidence=tech.confidence,
+                timestamp=tech.timestamp,
+                description=tech.description,
+            )
+            for tech in detected_techniques_raw
+        ]
+
         # Generate shot list
         suggested_shots = await self._generate_shot_list(
             frame_analyses, style, timestamps
@@ -326,6 +441,11 @@ JSON 배열로 반환하세요. 프롬프트는 다음을 포착해야 합니다
             1.0 for f in frame_analyses if f.description
         ) / max(len(frame_analyses), 1)
 
+        # Collect evidence refs for RAG traceability
+        evidence_refs = []
+        for match in auteur_matches:
+            evidence_refs.extend(match.evidence_refs)
+
         return VideoReferenceAnalysis(
             total_duration=total_duration,
             frame_count=len(frames),
@@ -333,10 +453,13 @@ JSON 배열로 반환하세요. 프롬프트는 다음을 포착해야 합니다
             frames=frame_analyses,
             scenes=scenes,
             style=style,
+            auteur_matches=auteur_matches,
+            detected_techniques=detected_techniques,
             suggested_shots=suggested_shots,
             moodboard_frames=moodboard_frames,
             analysis_depth=analysis_depth,
             confidence=confidence,
+            evidence_refs=evidence_refs,
         )
 
     async def analyze_image_reference(
@@ -390,6 +513,52 @@ JSON 배열로 반환하세요. 프롬프트는 다음을 포착해야 합니다
         except json.JSONDecodeError:
             data = {}
 
+        # Phase 2: Auteur matching based on extracted style
+        auteur_matcher = self._get_auteur_matcher()
+        auteur_matches_raw = await auteur_matcher.match_style_to_auteurs(style, max_matches=3)
+
+        # Convert to summary format
+        auteur_matches = [
+            AuteurMatchSummary(
+                auteur_key=match.auteur_key,
+                auteur_name=match.auteur_name,
+                similarity_score=match.similarity_score,
+                matched_techniques=[t.name for t in match.matched_techniques],
+                evidence_refs=match.evidence_refs,
+            )
+            for match in auteur_matches_raw
+        ]
+
+        # Phase 2: Simple technique detection for images (composition-focused)
+        technique_detector = self._get_technique_detector()
+
+        # Create a single frame analysis from image data for technique detection
+        frame_analysis = FrameAnalysis(
+            timestamp=0.0,
+            frame_number=0,
+            description=data.get("description", ""),
+            objects=data.get("objects", []),
+            shot_type=self._infer_shot_type_from_composition(data.get("composition_analysis", "")),
+        )
+        detected_techniques_raw = await technique_detector.detect_techniques([frame_analysis], [0.0])
+
+        detected_techniques = [
+            DetectedTechniqueSummary(
+                technique_id=tech.technique_id,
+                name=tech.name,
+                category=tech.category,
+                confidence=tech.confidence,
+                timestamp=tech.timestamp,
+                description=tech.description,
+            )
+            for tech in detected_techniques_raw
+        ]
+
+        # Collect evidence refs
+        evidence_refs = []
+        for match in auteur_matches:
+            evidence_refs.extend(match.evidence_refs)
+
         return ImageReferenceAnalysis(
             description=data.get("description", ""),
             style=style,
@@ -397,7 +566,21 @@ JSON 배열로 반환하세요. 프롬프트는 다음을 포착해야 합니다
             composition_analysis=data.get("composition_analysis", ""),
             recreation_prompt=data.get("recreation_prompt", ""),
             similar_references=data.get("similar_references", []),
+            auteur_matches=auteur_matches,
+            detected_techniques=detected_techniques,
+            evidence_refs=evidence_refs,
         )
+
+    def _infer_shot_type_from_composition(self, composition: str) -> Optional[str]:
+        """Infer shot type from composition analysis text."""
+        composition_lower = composition.lower()
+        if "클로즈업" in composition_lower or "close-up" in composition_lower or "얼굴" in composition_lower:
+            return "클로즈업"
+        if "와이드" in composition_lower or "wide" in composition_lower or "전경" in composition_lower:
+            return "와이드"
+        if "미디엄" in composition_lower or "medium" in composition_lower:
+            return "미디엄"
+        return None
 
     def _extract_video_frames(
         self,

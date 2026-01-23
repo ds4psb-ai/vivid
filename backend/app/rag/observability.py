@@ -1,10 +1,14 @@
-"""RAG Pipeline Observability with Langfuse.
+"""RAG Pipeline Observability with Langfuse + OpenTelemetry.
 
 Phase 4: LLM tracing and monitoring for the hybrid RAG pipeline.
 Provides decorators and utilities for tracking:
 - Query execution (retrieval, generation, reranking)
 - Latency and token usage
 - Source attribution and scores
+
+Dual Tracing:
+- Langfuse: LLM-specific observability (prompts, tokens, generations)
+- OpenTelemetry: Distributed tracing (spans, B3 propagation, Jaeger)
 
 Usage:
     from app.rag.observability import trace_rag, get_langfuse
@@ -21,6 +25,14 @@ from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 from contextlib import asynccontextmanager
 
 from app.config import settings
+from app.telemetry.otel_setup import get_tracer, OTEL_AVAILABLE
+
+if OTEL_AVAILABLE:
+    from opentelemetry.trace import Status, StatusCode, SpanKind
+else:
+    Status = None
+    StatusCode = None
+    SpanKind = None
 
 logger = logging.getLogger(__name__)
 
@@ -86,15 +98,19 @@ def trace_rag(
     tags: Optional[List[str]] = None,
 ):
     """
-    Decorator to trace RAG operations with Langfuse.
-    
-    Falls back to no-op if Langfuse is not configured.
-    
+    Decorator to trace RAG operations with Langfuse + OpenTelemetry.
+
+    Dual tracing:
+    - Langfuse: LLM-specific observability (prompts, tokens, scores)
+    - OpenTelemetry: Distributed tracing (spans, B3 propagation, Jaeger)
+
+    Falls back to no-op if neither is configured.
+
     Args:
         name: Name of the operation (e.g., "hybrid_query", "rerank")
         metadata: Additional metadata to attach to trace
         tags: Tags for filtering in Langfuse dashboard
-        
+
     Example:
         @trace_rag(name="hybrid_query", tags=["rag", "auteur"])
         async def hybrid_query(query: str, auteur_key: str = None):
@@ -104,139 +120,193 @@ def trace_rag(
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
             langfuse = get_langfuse()
-            
-            if langfuse is None:
-                # No-op: just execute the function
-                return await func(*args, **kwargs)
-            
+            tracer = get_tracer()
+
             # Extract query from args/kwargs for trace context
             query = kwargs.get("query") or (args[0] if args else "unknown")
-            
+            auteur_key = kwargs.get("auteur_key")
+            dimension = kwargs.get("dimension")
+            strategy = kwargs.get("strategy", "vector")
+
             start_time = time.monotonic()
             trace = None
-            span = None
-            
-            try:
-                # Create trace
-                trace = langfuse.trace(
-                    name=name,
-                    input={"query": query, **kwargs},
-                    metadata={
-                        **(metadata or {}),
-                        "auteur_key": kwargs.get("auteur_key"),
-                        "dimension": kwargs.get("dimension"),
-                    },
-                    tags=tags or ["rag"],
-                )
-                
-                # Create span for the operation
-                span = trace.span(
-                    name=f"{name}_execution",
-                    input={"query": query},
-                )
-                
-                # Execute the function
-                result = await func(*args, **kwargs)
-                
-                # Calculate metrics
-                elapsed_ms = int((time.monotonic() - start_time) * 1000)
-                
-                # Update span with output
-                if span:
-                    output_data = {}
-                    if hasattr(result, "__dict__"):
-                        # Dataclass or object with __dict__
-                        output_data = {
-                            k: v for k, v in result.__dict__.items()
-                            if not k.startswith("_") and not callable(v)
-                        }
-                    elif isinstance(result, dict):
-                        output_data = result
-                    else:
-                        output_data = {"result": str(result)[:500]}
-                    
-                    span.end(
-                        output=output_data,
-                        metadata={"elapsed_ms": elapsed_ms},
+            langfuse_span = None
+
+            # OpenTelemetry span context
+            otel_span_name = f"rag.{name}"
+            span_kind = SpanKind.INTERNAL if OTEL_AVAILABLE else None
+
+            # Start OpenTelemetry span
+            with tracer.start_as_current_span(otel_span_name, kind=span_kind) as otel_span:
+                # Set RAG semantic attributes
+                if OTEL_AVAILABLE:
+                    otel_span.set_attribute("rag.operation", name)
+                    if isinstance(query, str):
+                        otel_span.set_attribute("rag.query", query[:200])
+                        otel_span.set_attribute("rag.query_length", len(query))
+                    if auteur_key:
+                        otel_span.set_attribute("rag.auteur_key", auteur_key)
+                    if dimension:
+                        otel_span.set_attribute("rag.dimension", dimension)
+                    otel_span.set_attribute("rag.strategy", strategy)
+                    if tags:
+                        otel_span.set_attribute("rag.tags", ",".join(tags))
+
+                try:
+                    # Langfuse trace (if available)
+                    if langfuse:
+                        trace = langfuse.trace(
+                            name=name,
+                            input={"query": query, **{k: v for k, v in kwargs.items() if k != "query"}},
+                            metadata={
+                                **(metadata or {}),
+                                "auteur_key": auteur_key,
+                                "dimension": dimension,
+                            },
+                            tags=tags or ["rag"],
+                        )
+                        langfuse_span = trace.span(
+                            name=f"{name}_execution",
+                            input={"query": query},
+                        )
+
+                    # Execute the function
+                    result = await func(*args, **kwargs)
+
+                    # Calculate metrics
+                    elapsed_ms = int((time.monotonic() - start_time) * 1000)
+
+                    # Update OpenTelemetry span with result attributes
+                    if OTEL_AVAILABLE:
+                        otel_span.set_attribute("duration_ms", elapsed_ms)
+                        if hasattr(result, "confidence"):
+                            otel_span.set_attribute("rag.confidence", result.confidence)
+                        if hasattr(result, "retrieval_count"):
+                            otel_span.set_attribute("rag.results_count", result.retrieval_count)
+                        if hasattr(result, "strategy_used"):
+                            otel_span.set_attribute("rag.strategy_used", result.strategy_used)
+                        if hasattr(result, "grounded"):
+                            otel_span.set_attribute("rag.grounded", result.grounded)
+                        if hasattr(result, "rrf_enabled"):
+                            otel_span.set_attribute("rag.rrf_enabled", result.rrf_enabled)
+                        if hasattr(result, "query_time_ms"):
+                            otel_span.set_attribute("rag.query_time_ms", result.query_time_ms)
+                        otel_span.set_status(Status(StatusCode.OK))
+
+                    # Update Langfuse span with output
+                    if langfuse_span:
+                        output_data = {}
+                        if hasattr(result, "__dict__"):
+                            output_data = {
+                                k: v for k, v in result.__dict__.items()
+                                if not k.startswith("_") and not callable(v)
+                            }
+                        elif isinstance(result, dict):
+                            output_data = result
+                        else:
+                            output_data = {"result": str(result)[:500]}
+
+                        langfuse_span.end(
+                            output=output_data,
+                            metadata={"elapsed_ms": elapsed_ms},
+                        )
+
+                    # Score the Langfuse trace
+                    if trace and hasattr(result, "confidence"):
+                        trace.score(name="confidence", value=result.confidence)
+                    if trace and hasattr(result, "retrieval_count"):
+                        trace.score(name="retrieval_count", value=result.retrieval_count)
+
+                    logger.debug(
+                        f"[Observability] {name} traced | "
+                        f"elapsed={elapsed_ms}ms | trace_id={trace.id if trace else 'N/A'}"
                     )
-                
-                # Score the trace
-                if trace and hasattr(result, "confidence"):
-                    trace.score(
-                        name="confidence",
-                        value=result.confidence,
-                    )
-                
-                if trace and hasattr(result, "retrieval_count"):
-                    trace.score(
-                        name="retrieval_count",
-                        value=result.retrieval_count,
-                    )
-                
-                logger.debug(
-                    f"[Observability] {name} traced | "
-                    f"elapsed={elapsed_ms}ms | trace_id={trace.id if trace else 'N/A'}"
-                )
-                
-                return result
-                
-            except Exception as e:
-                # Log error to trace
-                if span:
-                    span.end(
-                        level="ERROR",
-                        status_message=str(e),
-                    )
-                if trace:
-                    trace.update(
-                        metadata={"error": str(e)},
-                    )
-                raise
-            
-            finally:
-                # Flush traces (async-safe)
-                if langfuse:
-                    try:
-                        langfuse.flush()
-                    except Exception:
-                        pass
-        
+
+                    return result
+
+                except Exception as e:
+                    # Log error to OpenTelemetry span
+                    if OTEL_AVAILABLE:
+                        otel_span.set_status(Status(StatusCode.ERROR, str(e)))
+                        otel_span.record_exception(e)
+                    otel_span.set_attribute("error.type", type(e).__name__)
+                    otel_span.set_attribute("error.message", str(e)[:500])
+
+                    # Log error to Langfuse trace
+                    if langfuse_span:
+                        langfuse_span.end(level="ERROR", status_message=str(e))
+                    if trace:
+                        trace.update(metadata={"error": str(e)})
+                    raise
+
+                finally:
+                    # Flush Langfuse traces (async-safe)
+                    if langfuse:
+                        try:
+                            langfuse.flush()
+                        except Exception:
+                            pass
+
         @wraps(func)
         def sync_wrapper(*args, **kwargs):
             # Sync fallback (rarely used in RAG)
             langfuse = get_langfuse()
-            if langfuse is None:
+            tracer = get_tracer()
+
+            if langfuse is None and not OTEL_AVAILABLE:
                 return func(*args, **kwargs)
-            
+
             start_time = time.monotonic()
             query = kwargs.get("query") or (args[0] if args else "unknown")
-            
-            trace = langfuse.trace(
-                name=name,
-                input={"query": query},
-                tags=tags or ["rag"],
-            )
-            
-            try:
-                result = func(*args, **kwargs)
-                elapsed_ms = int((time.monotonic() - start_time) * 1000)
-                trace.update(
-                    output={"result": str(result)[:500]},
-                    metadata={"elapsed_ms": elapsed_ms},
-                )
-                return result
-            except Exception as e:
-                trace.update(metadata={"error": str(e)})
-                raise
-            finally:
-                langfuse.flush()
-        
+
+            otel_span_name = f"rag.{name}"
+            span_kind = SpanKind.INTERNAL if OTEL_AVAILABLE else None
+
+            with tracer.start_as_current_span(otel_span_name, kind=span_kind) as otel_span:
+                if OTEL_AVAILABLE:
+                    otel_span.set_attribute("rag.operation", name)
+                    if isinstance(query, str):
+                        otel_span.set_attribute("rag.query", query[:200])
+
+                trace = None
+                if langfuse:
+                    trace = langfuse.trace(
+                        name=name,
+                        input={"query": query},
+                        tags=tags or ["rag"],
+                    )
+
+                try:
+                    result = func(*args, **kwargs)
+                    elapsed_ms = int((time.monotonic() - start_time) * 1000)
+
+                    if OTEL_AVAILABLE:
+                        otel_span.set_attribute("duration_ms", elapsed_ms)
+                        otel_span.set_status(Status(StatusCode.OK))
+
+                    if trace:
+                        trace.update(
+                            output={"result": str(result)[:500]},
+                            metadata={"elapsed_ms": elapsed_ms},
+                        )
+                    return result
+                except Exception as e:
+                    if OTEL_AVAILABLE:
+                        otel_span.set_status(Status(StatusCode.ERROR, str(e)))
+                        otel_span.record_exception(e)
+                    if trace:
+                        trace.update(metadata={"error": str(e)})
+                    raise
+                finally:
+                    if langfuse:
+                        langfuse.flush()
+
         # Return appropriate wrapper based on function type
         import asyncio
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
         return sync_wrapper
-    
+
     return decorator
 
 

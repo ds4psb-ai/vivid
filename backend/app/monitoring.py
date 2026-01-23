@@ -218,8 +218,13 @@ def setup_openllmetry(app: FastAPI) -> bool:
 
 def setup_opentelemetry(app: FastAPI) -> bool:
     """
-    Configure OpenTelemetry for distributed tracing.
-    
+    Configure OpenTelemetry for distributed tracing with B3 propagation.
+
+    Features:
+    - B3 multi-format propagation for cross-service tracing
+    - OTLP export to collector/Jaeger
+    - FastAPI and SQLAlchemy instrumentation
+
     Requires:
         OTEL_ENABLED=true
         OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
@@ -227,7 +232,7 @@ def setup_opentelemetry(app: FastAPI) -> bool:
     if not getattr(settings, "OTEL_ENABLED", False):
         logger.info("OpenTelemetry disabled")
         return False
-    
+
     try:
         from opentelemetry import trace
         from opentelemetry.sdk.trace import TracerProvider
@@ -235,34 +240,74 @@ def setup_opentelemetry(app: FastAPI) -> bool:
         from opentelemetry.sdk.resources import Resource, SERVICE_NAME
         from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
         from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
-        
-        # Create resource
+
+        # B3 Propagation for cross-service tracing (Zipkin/Jaeger compatible)
+        try:
+            from opentelemetry.propagate import set_global_textmap
+            from opentelemetry.propagators.composite import CompositePropagator
+            from opentelemetry.propagators.b3 import B3MultiFormat
+            from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
+
+            # Set composite propagator: W3C TraceContext + B3 Multi-format
+            set_global_textmap(CompositePropagator([
+                TraceContextTextMapPropagator(),  # W3C standard
+                B3MultiFormat(),                   # Zipkin/Jaeger B3
+            ]))
+            logger.info("B3 multi-format propagation enabled")
+        except ImportError:
+            logger.warning("B3 propagator not available, using default propagation")
+
+        # Create resource with service metadata
         resource = Resource.create({
-            SERVICE_NAME: settings.PROJECT_NAME,
+            SERVICE_NAME: getattr(settings, "OTEL_SERVICE_NAME", settings.PROJECT_NAME),
             "deployment.environment": settings.ENVIRONMENT,
+            "service.namespace": "vivid",
+            "service.version": "1.0.0",
         })
-        
+
         # Create tracer provider
         provider = TracerProvider(resource=resource)
-        
+
         # Add OTLP exporter if configured
         otlp_endpoint = getattr(settings, "OTEL_EXPORTER_OTLP_ENDPOINT", None)
         if otlp_endpoint:
             from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
             exporter = OTLPSpanExporter(endpoint=otlp_endpoint)
             provider.add_span_processor(BatchSpanProcessor(exporter))
-        
+            logger.info(f"OTLP exporter configured: {otlp_endpoint}")
+
         trace.set_tracer_provider(provider)
-        
+
         # Instrument FastAPI
         FastAPIInstrumentor.instrument_app(app)
-        
+
         # Instrument SQLAlchemy
         SQLAlchemyInstrumentor().instrument()
-        
-        logger.info("OpenTelemetry tracing initialized")
+
+        # Try to instrument additional libraries
+        try:
+            from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+            HTTPXClientInstrumentor().instrument()
+            logger.info("HTTPX instrumentation enabled")
+        except ImportError:
+            pass
+
+        try:
+            from opentelemetry.instrumentation.aiohttp_client import AioHttpClientInstrumentor
+            AioHttpClientInstrumentor().instrument()
+            logger.info("aiohttp client instrumentation enabled")
+        except ImportError:
+            pass
+
+        logger.info(
+            "OpenTelemetry tracing initialized",
+            extra={
+                "service_name": getattr(settings, "OTEL_SERVICE_NAME", settings.PROJECT_NAME),
+                "otlp_endpoint": otlp_endpoint,
+            }
+        )
         return True
-        
+
     except ImportError:
         logger.warning("OpenTelemetry packages not installed")
         return False

@@ -105,6 +105,9 @@ from app.routers.context import router as context_router
 # Style Presets (Style Library CRUD - 4D Reference Decoder)
 from app.routers.style_presets import router as style_presets_router
 
+# Reference Library (4D Reference Decoder)
+from app.routers.reference_library import router as reference_library_router
+
 # Intent Presets (Creative Intent API)
 from app.routers.intent import router as intent_router
 
@@ -466,6 +469,9 @@ app.include_router(context_router, prefix="/api/v1", tags=["context"])
 
 # Style Presets (Style Library CRUD - 4D Reference Decoder)
 app.include_router(style_presets_router, prefix="/api", tags=["style-presets"])
+
+# Reference Library (4D Reference Decoder)
+app.include_router(reference_library_router, prefix="/api", tags=["reference-library"])
 
 # Phase 7: HITL Enhancement (Approval Gate, Creator Dashboard)
 app.include_router(approval_gate_router, prefix="/api/v1", tags=["approval-gate"])
