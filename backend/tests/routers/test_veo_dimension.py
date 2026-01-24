@@ -18,9 +18,9 @@ from app.routers.dimension.veo import (
     # Request model
     VeoGenerateRequest,
     # Helpers
-    _sanitize_text_field,
     _validate_veo_model,
 )
+from app.routers.dimension._video_base import sanitize_video_text
 
 
 # ============================================================================
@@ -51,39 +51,39 @@ class TestVeoModelEnum:
 # ============================================================================
 
 class TestSanitizeTextField:
-    """Test _sanitize_text_field helper."""
+    """Test sanitize_video_text helper."""
 
     def test_removes_html_tags(self):
         """Test HTML tag removal."""
-        result = _sanitize_text_field("<div>cinematic</div>")
+        result = sanitize_video_text("<div>cinematic</div>")
         assert "<div>" not in result
         assert "</div>" not in result
 
     def test_removes_script_tags(self):
         """Test script tag removal."""
-        result = _sanitize_text_field("<script>evil()</script>test")
+        result = sanitize_video_text("<script>evil()</script>test")
         assert "<script>" not in result
         assert "</script>" not in result
 
     def test_removes_javascript_protocol(self):
         """Test javascript: protocol removal."""
-        result = _sanitize_text_field("javascript:alert(1)")
+        result = sanitize_video_text("javascript:alert(1)")
         assert "javascript:" not in result.lower()
 
     def test_removes_event_handlers(self):
         """Test on* event handler removal."""
-        result = _sanitize_text_field("onload=alert(1)")
+        result = sanitize_video_text("onload=alert(1)")
         assert "onload=" not in result.lower()
 
     def test_empty_returns_default(self):
         """Test empty string returns default."""
-        assert _sanitize_text_field("") == ""
-        assert _sanitize_text_field("", default="test") == "test"
-        assert _sanitize_text_field("   ", default="fallback") == "fallback"
+        assert sanitize_video_text("") == ""
+        assert sanitize_video_text("", default="test") == "test"
+        assert sanitize_video_text("   ", default="fallback") == "fallback"
 
     def test_preserves_normal_text(self):
         """Test normal text is preserved."""
-        result = _sanitize_text_field("cinematic, noir, moody")
+        result = sanitize_video_text("cinematic, noir, moody")
         assert "cinematic" in result
         assert "noir" in result
 

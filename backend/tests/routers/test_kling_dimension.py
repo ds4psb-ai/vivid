@@ -25,7 +25,6 @@ from app.routers.dimension.kling import (
     KlingGenerateResponse,
     KlingStatusResponse,
     # Helpers
-    _sanitize_prompt,
     _validate_duration,
     _validate_aspect_ratio,
     _validate_resolution,
@@ -41,15 +40,16 @@ from app.routers.dimension.kling import (
     KlingPromptQualityScore,
     # 2026 Functions
     assess_kling_prompt_quality,
-    # 2026 Patterns
+    # 2026 Patterns (Kling-specific)
     BEAT_TIMESTAMP_PATTERN,
     DIALOGUE_PATTERN,
     TONE_DESCRIPTOR_PATTERN,
-    # 2026 Constants
+    # 2026 Constants (Kling-specific)
     RECOMMENDED_AUDIO_NEGATIVE,
     RECOMMENDED_VISUAL_NEGATIVE,
     CAMERA_MOVEMENT_KEYWORDS,
 )
+from app.routers.dimension._video_base import sanitize_video_text
 
 
 # ============================================================================
@@ -57,39 +57,39 @@ from app.routers.dimension.kling import (
 # ============================================================================
 
 class TestSanitizePrompt:
-    """Test _sanitize_prompt helper."""
+    """Test sanitize_video_text helper."""
 
     def test_removes_html_tags(self):
         """Test HTML tag removal."""
-        result = _sanitize_prompt("<div>video prompt</div>")
+        result = sanitize_video_text("<div>video prompt</div>")
         assert "<div>" not in result
         assert "</div>" not in result
         assert "video prompt" in result
 
     def test_removes_script_tags(self):
         """Test script tag removal."""
-        result = _sanitize_prompt("<script>evil()</script>test")
+        result = sanitize_video_text("<script>evil()</script>test")
         assert "<script>" not in result
 
     def test_removes_javascript_protocol(self):
         """Test javascript: protocol removal."""
-        result = _sanitize_prompt("javascript:alert(1)")
+        result = sanitize_video_text("javascript:alert(1)")
         assert "javascript:" not in result.lower()
 
     def test_removes_event_handlers(self):
         """Test on* event handler removal."""
-        result = _sanitize_prompt("onload=alert(1)")
+        result = sanitize_video_text("onload=alert(1)")
         assert "onload=" not in result.lower()
 
     def test_preserves_normal_text(self):
         """Test normal text is preserved."""
-        result = _sanitize_prompt("A cinematic video of mountains")
+        result = sanitize_video_text("A cinematic video of mountains")
         assert "cinematic" in result
         assert "mountains" in result
 
     def test_preserves_korean(self):
         """Test Korean characters preserved."""
-        result = _sanitize_prompt("산 위의 영화적인 장면")
+        result = sanitize_video_text("산 위의 영화적인 장면")
         assert "산" in result
         assert "영화적인" in result
 

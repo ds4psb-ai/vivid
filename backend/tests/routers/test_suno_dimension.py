@@ -25,7 +25,6 @@ from app.routers.dimension.suno import (
     SunoGenerateResponse,
     SunoPromptQualityScore,
     # Helpers
-    _sanitize_text,
     _validate_suno_model,
     assess_prompt_quality,
     # 2026 Enums
@@ -34,6 +33,7 @@ from app.routers.dimension.suno import (
     SunoExtendMode,
     SunoV5Capabilities,
 )
+from app.routers.dimension._audio_base import sanitize_audio_text
 
 
 # ============================================================================
@@ -41,39 +41,39 @@ from app.routers.dimension.suno import (
 # ============================================================================
 
 class TestSanitizeText:
-    """Test _sanitize_text helper."""
+    """Test sanitize_audio_text helper."""
 
     def test_removes_html_tags(self):
         """Test HTML tag removal."""
-        result = _sanitize_text("<div>lyrics here</div>")
+        result = sanitize_audio_text("<div>lyrics here</div>")
         assert "<div>" not in result
         assert "</div>" not in result
         assert "lyrics here" in result
 
     def test_removes_script_tags(self):
         """Test script tag removal."""
-        result = _sanitize_text("<script>evil()</script>music")
+        result = sanitize_audio_text("<script>evil()</script>music")
         assert "<script>" not in result
 
     def test_removes_javascript_protocol(self):
         """Test javascript: protocol removal."""
-        result = _sanitize_text("javascript:alert(1)")
+        result = sanitize_audio_text("javascript:alert(1)")
         assert "javascript:" not in result.lower()
 
     def test_removes_event_handlers(self):
         """Test on* event handler removal."""
-        result = _sanitize_text("onload=alert(1)")
+        result = sanitize_audio_text("onload=alert(1)")
         assert "onload=" not in result.lower()
 
     def test_preserves_normal_text(self):
         """Test normal text is preserved."""
-        result = _sanitize_text("Jazz, Smooth, Relaxing")
+        result = sanitize_audio_text("Jazz, Smooth, Relaxing")
         assert "Jazz" in result
         assert "Smooth" in result
 
     def test_preserves_korean(self):
         """Test Korean characters preserved."""
-        result = _sanitize_text("감미로운 재즈 음악")
+        result = sanitize_audio_text("감미로운 재즈 음악")
         assert "감미로운" in result
         assert "재즈" in result
 

@@ -22,12 +22,12 @@ from app.routers.dimension.kling import (
     KlingStatusResponse,
     KlingElementInput,
     get_credit_cost,
-    _sanitize_prompt,
     _validate_duration,
     _validate_aspect_ratio,
     _validate_resolution,
     _validate_mode,
 )
+from app.routers.dimension._video_base import sanitize_video_text
 from app.services.kling_service import (
     KlingService,
     KlingVideoRequest,
@@ -51,40 +51,40 @@ class TestPromptSanitization:
     """Test XSS sanitization for prompts."""
 
     def test_sanitize_empty_prompt(self):
-        """Empty prompt returns empty."""
-        assert _sanitize_prompt("") == ""
-        assert _sanitize_prompt(None) is None
+        """Empty prompt returns empty string."""
+        assert sanitize_video_text("") == ""
+        assert sanitize_video_text("", default="test") == "test"
 
     def test_sanitize_strips_whitespace(self):
         """Whitespace is stripped."""
-        assert _sanitize_prompt("  hello world  ") == "hello world"
+        assert sanitize_video_text("  hello world  ") == "hello world"
 
     def test_sanitize_removes_html_tags(self):
         """HTML tags are removed (content between may be kept or removed)."""
-        result = _sanitize_prompt("<script>alert('xss')</script>hello")
+        result = sanitize_video_text("<script>alert('xss')</script>hello")
         assert "<script>" not in result
         assert "</script>" not in result
         assert "hello" in result
 
-        result = _sanitize_prompt("hello<b>world</b>")
+        result = sanitize_video_text("hello<b>world</b>")
         assert "<b>" not in result
         assert "helloworld" in result
 
     def test_sanitize_escapes_entities(self):
         """HTML entities are escaped (& becomes &amp;)."""
         # Note: < and > may be stripped as tags first, then remaining content escaped
-        result = _sanitize_prompt("test & value")
+        result = sanitize_video_text("test & value")
         assert "&amp;" in result
 
     def test_sanitize_removes_javascript(self):
         """JavaScript patterns are removed."""
-        assert "javascript" not in _sanitize_prompt("javascript:alert(1)")
-        assert _sanitize_prompt("onclick=evil()").find("onclick=") == -1
+        assert "javascript" not in sanitize_video_text("javascript:alert(1)")
+        assert sanitize_video_text("onclick=evil()").find("onclick=") == -1
 
     def test_sanitize_complex_xss(self):
         """Complex XSS patterns are handled."""
         dangerous = '<img src="x" onerror="alert(1)">'
-        result = _sanitize_prompt(dangerous)
+        result = sanitize_video_text(dangerous)
         assert "<" not in result
         assert "onerror" not in result
 

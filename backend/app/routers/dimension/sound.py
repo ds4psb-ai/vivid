@@ -17,11 +17,8 @@ Security:
 """
 from __future__ import annotations
 
-import html
 import logging
-import re
 import uuid
-from enum import Enum
 from typing import Dict, List
 
 from fastapi import APIRouter, Depends
@@ -48,6 +45,20 @@ from ._base import (
     get_sse_headers,
     Optional,
 )
+from ._audio_base import (
+    sanitize_audio_text,
+    validate_tempo,
+    validate_audio_platform,
+    AudioPlatform,
+    AudioQuality,
+    StemExportFormat,
+    SunoV5Capabilities,
+    UdioCapabilities,
+    ALLOWED_TEMPOS,
+    ALLOWED_AUDIO_PLATFORMS,
+    ALLOWED_LANGUAGE_MIX,
+    ALLOWED_SONG_STRUCTURES,
+)
 
 router = APIRouter()
 
@@ -56,74 +67,8 @@ sound_logger = logging.getLogger(__name__)
 
 
 # ============================================================================
-# Constants
+# Sound-specific Response Models
 # ============================================================================
-
-ALLOWED_TEMPOS = frozenset({"slow", "medium", "fast", "very-slow", "very-fast"})
-ALLOWED_AUDIO_PLATFORMS = frozenset({"suno", "udio", "elevenlabs"})
-ALLOWED_LANGUAGE_MIX = frozenset({"korean", "english", "japanese", "mixed"})
-ALLOWED_SONG_STRUCTURES = frozenset({
-    "verse-chorus-verse-chorus-bridge-chorus",
-    "verse-chorus-verse-chorus",
-    "intro-verse-chorus-verse-chorus-outro",
-    "aaba",
-    "ababcb",
-    "custom",
-})
-
-
-# ============================================================================
-# 2026 Audio Platform Capabilities (Suno v5, Udio, MiniMax Music-2.0)
-# ============================================================================
-
-class AudioPlatform(str, Enum):
-    """Supported audio generation platforms (2026)."""
-    SUNO = "suno"
-    UDIO = "udio"
-    ELEVENLABS = "elevenlabs"
-    MINIMAX = "minimax"  # MiniMax Music-2.0 (new 2026)
-
-
-class AudioQuality(str, Enum):
-    """Audio quality levels (2026 industry standards)."""
-    STANDARD = "standard"  # 32 kHz
-    HIGH = "high"  # 44.1 kHz (CD quality)
-    STUDIO = "studio"  # 48 kHz (broadcast quality)
-
-
-class StemExportFormat(str, Enum):
-    """Stem export formats (Suno v5 feature)."""
-    WAV = "wav"  # Time-aligned WAV
-    MIDI = "midi"  # MIDI export
-    MP3 = "mp3"  # Compressed
-
-
-class SunoV5Capabilities(BaseModel):
-    """Suno v5 (2026) platform capabilities.
-
-    Reference: Suno v5 delivers studio-grade audio at 44.1 kHz,
-    12-stem export, MIDI conversion, and 8-minute extended tracks.
-    """
-    max_duration_seconds: int = Field(480, description="8-minute extended tracks")
-    sample_rate_khz: float = Field(44.1, description="Studio-grade 44.1 kHz")
-    max_stems: int = Field(12, description="12 time-aligned WAV stems")
-    supports_midi_export: bool = Field(True, description="MIDI export capability")
-    supports_audio_upload: bool = Field(True, description="Audio clip input")
-    supports_vocals_upload: bool = Field(True, description="Vocal upload for guidance")
-
-
-class UdioCapabilities(BaseModel):
-    """Udio (2026) platform capabilities.
-
-    Reference: Higher audio fidelity (48 kHz), complex song structures,
-    better genre-blend handling, more human-sounding vocals.
-    """
-    max_duration_seconds: int = Field(300, description="5-minute tracks")
-    sample_rate_khz: float = Field(48.0, description="Broadcast-grade 48 kHz")
-    supports_detailed_remixing: bool = Field(True, description="Detailed remix control")
-    supports_song_extensions: bool = Field(True, description="Iterative extension")
-    vocal_quality: str = Field("human-like", description="More realistic vocal synthesis")
-
 
 class SoundGenerationResult(BaseModel):
     """Comprehensive sound generation result (2026 pattern).
@@ -168,53 +113,8 @@ class StructureSegment(BaseModel):
 
 
 # ============================================================================
-# Sanitization Helpers
+# Sound-specific Validation Helpers
 # ============================================================================
-
-def _sanitize_text_field(value: str, default: str = "") -> str:
-    """Sanitize text fields to prevent XSS.
-
-    Args:
-        value: Raw text input
-        default: Default value if empty
-
-    Returns:
-        Sanitized string
-    """
-    if not value:
-        return default
-    value = value.strip()
-    if not value:
-        return default
-    # Remove HTML tags
-    value = re.sub(r"<[^>]+>", "", value)
-    # Escape HTML entities
-    value = html.escape(value)
-    # Remove script/javascript patterns
-    value = re.sub(r"(?i)javascript\s*:", "", value)
-    value = re.sub(r"(?i)on\w+\s*=", "", value)
-    return value or default
-
-
-def _validate_tempo(value: str) -> str:
-    """Validate tempo is in allowed list.
-
-    Args:
-        value: Raw tempo
-
-    Returns:
-        Validated tempo
-
-    Raises:
-        ValueError: If not in allowed list
-    """
-    value = value.strip().lower()
-    if value not in ALLOWED_TEMPOS:
-        raise ValueError(
-            f"지원하지 않는 템포: {value}. Allowed: {sorted(ALLOWED_TEMPOS)}"
-        )
-    return value
-
 
 def _validate_sound_type(value: str) -> str:
     """Validate sound_type is in allowed list.
@@ -256,26 +156,6 @@ def _validate_genre(value: str) -> str:
     return value
 
 
-def _validate_audio_platform(value: str) -> str:
-    """Validate target_platform is in allowed audio platform list.
-
-    Args:
-        value: Raw platform
-
-    Returns:
-        Validated platform
-
-    Raises:
-        ValueError: If not in allowed list
-    """
-    value = value.strip().lower()
-    if value not in ALLOWED_AUDIO_PLATFORMS:
-        raise ValueError(
-            f"지원하지 않는 오디오 플랫폼: {value}. Allowed: {sorted(ALLOWED_AUDIO_PLATFORMS)}"
-        )
-    return value
-
-
 # ============================================================================
 # Request Models
 # ============================================================================
@@ -302,19 +182,19 @@ class SoundCraftRequest(BaseModel):
     @classmethod
     def sanitize_concept(cls, v: str) -> str:
         """Sanitize concept to prevent XSS."""
-        return _sanitize_text_field(v)
+        return sanitize_audio_text(v)
 
     @field_validator("storyboard", mode="before")
     @classmethod
     def sanitize_storyboard(cls, v: str) -> str:
         """Sanitize storyboard to prevent XSS."""
-        return _sanitize_text_field(v, default="")
+        return sanitize_audio_text(v, default="")
 
     @field_validator("mood", mode="before")
     @classmethod
     def sanitize_mood(cls, v: str) -> str:
         """Sanitize mood to prevent XSS."""
-        return _sanitize_text_field(v, default="cinematic")
+        return sanitize_audio_text(v, default="cinematic")
 
     @field_validator("sound_type")
     @classmethod
@@ -332,13 +212,13 @@ class SoundCraftRequest(BaseModel):
     @classmethod
     def validate_tempo(cls, v: str) -> str:
         """Validate tempo is in allowed list."""
-        return _validate_tempo(v)
+        return validate_tempo(v)
 
     @field_validator("target_platform")
     @classmethod
     def validate_platform(cls, v: str) -> str:
         """Validate target_platform is in allowed audio platform list."""
-        return _validate_audio_platform(v)
+        return validate_audio_platform(v)
 
     @field_validator("language")
     @classmethod
@@ -364,7 +244,7 @@ class SoundMoodboardRequest(BaseModel):
     @classmethod
     def sanitize_concept(cls, v: str) -> str:
         """Sanitize concept to prevent XSS."""
-        return _sanitize_text_field(v)
+        return sanitize_audio_text(v)
 
     @field_validator("model")
     @classmethod
@@ -638,7 +518,7 @@ class LyricsRequest(BaseModel):
     @classmethod
     def sanitize_topic(cls, v: str) -> str:
         """Sanitize topic to prevent XSS."""
-        return _sanitize_text_field(v)
+        return sanitize_audio_text(v)
 
     @field_validator("model")
     @classmethod

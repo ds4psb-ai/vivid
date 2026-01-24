@@ -21,10 +21,10 @@ from app.routers.dimension.suno import (
     SunoStatusResponse,
     SunoSongResponse,
     get_credit_cost,
-    _sanitize_text,
     _validate_suno_model,
     ALLOWED_SUNO_MODELS,
 )
+from app.routers.dimension._audio_base import sanitize_audio_text
 from app.services.suno_service import (
     SunoService,
     SunoMusicRequest,
@@ -45,22 +45,22 @@ class TestTextSanitization:
 
     def test_sanitize_empty_text(self):
         """Empty text returns empty."""
-        assert _sanitize_text("") == ""
+        assert sanitize_audio_text("") == ""
 
     def test_sanitize_strips_whitespace(self):
         """Whitespace is stripped."""
-        assert _sanitize_text("  hello world  ") == "hello world"
+        assert sanitize_audio_text("  hello world  ") == "hello world"
 
     def test_sanitize_removes_html_tags(self):
         """HTML tags are removed."""
-        result = _sanitize_text("<script>alert('xss')</script>hello")
+        result = sanitize_audio_text("<script>alert('xss')</script>hello")
         assert "<script>" not in result
         assert "hello" in result
 
     def test_sanitize_removes_javascript(self):
         """JavaScript patterns are removed."""
-        assert "javascript" not in _sanitize_text("javascript:alert(1)")
-        assert _sanitize_text("onclick=evil()").find("onclick=") == -1
+        assert "javascript" not in sanitize_audio_text("javascript:alert(1)")
+        assert sanitize_audio_text("onclick=evil()").find("onclick=") == -1
 
 
 # =============================================================================

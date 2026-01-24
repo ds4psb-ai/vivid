@@ -19,10 +19,8 @@ Security:
 from __future__ import annotations
 
 import asyncio
-import html
 import json
 import logging
-import re
 import uuid as uuid_lib
 from enum import Enum
 from typing import Dict, List
@@ -50,6 +48,7 @@ from ._base import (
     logger,
     Optional,
 )
+from ._video_base import sanitize_video_text
 from app.credit_service import deduct_credits, get_or_create_user_credits
 
 router = APIRouter()
@@ -172,34 +171,8 @@ class VideoGenerationResult(BaseModel):
 
 
 # ============================================================================
-# Sanitization Helpers
+# Veo-specific Validation
 # ============================================================================
-
-def _sanitize_text_field(value: str, default: str = "") -> str:
-    """Sanitize text fields (style, negative_prompt) to prevent XSS.
-
-    Args:
-        value: Raw text input
-        default: Default value if empty
-
-    Returns:
-        Sanitized string
-    """
-    if not value:
-        return default
-    # Strip whitespace
-    value = value.strip()
-    if not value:
-        return default
-    # Remove HTML tags
-    value = re.sub(r"<[^>]+>", "", value)
-    # Escape HTML entities
-    value = html.escape(value)
-    # Remove script/javascript patterns
-    value = re.sub(r"(?i)javascript\s*:", "", value)
-    value = re.sub(r"(?i)on\w+\s*=", "", value)
-    return value or default
-
 
 def _validate_veo_model(value: str) -> str:
     """Validate Veo model is in allowed list.
@@ -255,13 +228,13 @@ class VeoGenerateRequest(BaseModel):
     @classmethod
     def sanitize_negative_prompt(cls, v: str) -> str:
         """Sanitize negative_prompt to prevent XSS."""
-        return _sanitize_text_field(v, default="")
+        return sanitize_video_text(v, default="")
 
     @field_validator("style", mode="before")
     @classmethod
     def sanitize_style(cls, v: str) -> str:
         """Sanitize style to prevent XSS."""
-        return _sanitize_text_field(v, default="cinematic")
+        return sanitize_video_text(v, default="cinematic")
 
     @field_validator("aspect_ratio")
     @classmethod

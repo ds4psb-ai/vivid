@@ -10,22 +10,26 @@ import pytest
 from pydantic import ValidationError
 
 from app.routers.dimension.sound import (
-    # Constants
-    ALLOWED_TEMPOS,
-    ALLOWED_AUDIO_PLATFORMS,
-    ALLOWED_LANGUAGE_MIX,
-    ALLOWED_SONG_STRUCTURES,
     # Request models
     SoundCraftRequest,
     SoundMoodboardRequest,
     LyricsRequest,
     LyricsStyleGuide,
-    # Helpers
-    _sanitize_text_field,
-    _validate_tempo,
+    # Helpers (sound-specific)
     _validate_sound_type,
     _validate_genre,
-    _validate_audio_platform,
+)
+from app.routers.dimension._audio_base import (
+    # Sanitization
+    sanitize_audio_text,
+    # Validation
+    validate_tempo,
+    validate_audio_platform,
+    # Constants
+    ALLOWED_TEMPOS,
+    ALLOWED_AUDIO_PLATFORMS,
+    ALLOWED_LANGUAGE_MIX,
+    ALLOWED_SONG_STRUCTURES,
 )
 from app.routers.dimension._base import (
     ALLOWED_GENRES,
@@ -38,58 +42,58 @@ from app.routers.dimension._base import (
 # ============================================================================
 
 class TestSanitizeTextField:
-    """Test _sanitize_text_field helper."""
+    """Test sanitize_audio_text helper."""
 
     def test_removes_html_tags(self):
         """Test HTML tag removal."""
-        result = _sanitize_text_field("<div>music concept</div>")
+        result = sanitize_audio_text("<div>music concept</div>")
         assert "<div>" not in result
         assert "</div>" not in result
         assert "music concept" in result
 
     def test_removes_script_tags(self):
         """Test script tag removal."""
-        result = _sanitize_text_field("<script>evil()</script>sound")
+        result = sanitize_audio_text("<script>evil()</script>sound")
         assert "<script>" not in result
         assert "sound" in result
 
     def test_removes_javascript_protocol(self):
         """Test javascript: protocol removal."""
-        result = _sanitize_text_field("javascript:alert(1)")
+        result = sanitize_audio_text("javascript:alert(1)")
         assert "javascript:" not in result.lower()
 
     def test_removes_event_handlers(self):
         """Test on* event handler removal."""
-        result = _sanitize_text_field("onload=alert(1)")
+        result = sanitize_audio_text("onload=alert(1)")
         assert "onload=" not in result.lower()
 
     def test_preserves_normal_text(self):
         """Test normal text is preserved."""
-        result = _sanitize_text_field("A cinematic music piece with strings")
+        result = sanitize_audio_text("A cinematic music piece with strings")
         assert "cinematic" in result
         assert "music" in result
         assert "strings" in result
 
     def test_preserves_korean(self):
         """Test Korean characters preserved."""
-        result = _sanitize_text_field("감미로운 재즈 음악")
+        result = sanitize_audio_text("감미로운 재즈 음악")
         assert "감미로운" in result
         assert "재즈" in result
         assert "음악" in result
 
     def test_empty_returns_default(self):
         """Test empty string returns default."""
-        result = _sanitize_text_field("", default="기본값")
+        result = sanitize_audio_text("", default="기본값")
         assert result == "기본값"
 
     def test_none_returns_default(self):
         """Test None returns default."""
-        result = _sanitize_text_field(None, default="fallback")
+        result = sanitize_audio_text(None, default="fallback")
         assert result == "fallback"
 
     def test_whitespace_only_returns_default(self):
         """Test whitespace-only string returns default."""
-        result = _sanitize_text_field("   ", default="default")
+        result = sanitize_audio_text("   ", default="default")
         assert result == "default"
 
 
@@ -98,28 +102,28 @@ class TestSanitizeTextField:
 # ============================================================================
 
 class TestValidateTempo:
-    """Test _validate_tempo helper."""
+    """Test validate_tempo helper."""
 
     def test_valid_tempos(self):
         """Test all valid tempos pass."""
         for tempo in ALLOWED_TEMPOS:
-            assert _validate_tempo(tempo) == tempo
+            assert validate_tempo(tempo) == tempo
 
     def test_strips_whitespace(self):
         """Test whitespace stripping."""
-        assert _validate_tempo("  medium  ") == "medium"
+        assert validate_tempo("  medium  ") == "medium"
 
     def test_case_insensitive(self):
         """Test case insensitivity."""
-        assert _validate_tempo("MEDIUM") == "medium"
-        assert _validate_tempo("Fast") == "fast"
+        assert validate_tempo("MEDIUM") == "medium"
+        assert validate_tempo("Fast") == "fast"
 
     def test_invalid_tempo_raises(self):
         """Test invalid tempo raises ValueError."""
         with pytest.raises(ValueError, match="지원하지 않는 템포"):
-            _validate_tempo("invalid_tempo")
+            validate_tempo("invalid_tempo")
         with pytest.raises(ValueError, match="지원하지 않는 템포"):
-            _validate_tempo("allegro")
+            validate_tempo("allegro")
 
 
 class TestValidateSoundType:
@@ -168,25 +172,25 @@ class TestValidateGenre:
 
 
 class TestValidateAudioPlatform:
-    """Test _validate_audio_platform helper."""
+    """Test validate_audio_platform helper."""
 
     def test_valid_platforms(self):
         """Test all valid audio platforms pass."""
         for platform in ALLOWED_AUDIO_PLATFORMS:
-            assert _validate_audio_platform(platform) == platform
+            assert validate_audio_platform(platform) == platform
 
     def test_strips_whitespace(self):
         """Test whitespace stripping."""
-        assert _validate_audio_platform("  suno  ") == "suno"
+        assert validate_audio_platform("  suno  ") == "suno"
 
     def test_case_insensitive(self):
         """Test case insensitivity."""
-        assert _validate_audio_platform("SUNO") == "suno"
+        assert validate_audio_platform("SUNO") == "suno"
 
     def test_invalid_platform_raises(self):
         """Test invalid platform raises ValueError."""
         with pytest.raises(ValueError, match="지원하지 않는 오디오 플랫폼"):
-            _validate_audio_platform("invalid_platform")
+            validate_audio_platform("invalid_platform")
 
 
 class TestAllowedConstantsVerification:

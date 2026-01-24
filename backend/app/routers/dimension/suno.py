@@ -20,12 +20,13 @@ Security:
 """
 from __future__ import annotations
 
-import html
 import logging
 import re
 import uuid
 from enum import Enum
 from typing import Any, Dict, List, Optional
+
+from app.routers.dimension._audio_base import sanitize_audio_text
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, field_validator
@@ -148,30 +149,8 @@ STRUCTURE_TAG_PATTERN = re.compile(r"\[(Verse|Chorus|Bridge|Intro|Outro|Hook|Dro
 
 
 # =============================================================================
-# Sanitization Helpers
+# Suno-specific Validation
 # =============================================================================
-
-def _sanitize_text(value: str) -> str:
-    """Sanitize text fields to prevent XSS.
-
-    Args:
-        value: Raw text input
-
-    Returns:
-        Sanitized string
-    """
-    if not value:
-        return value
-    value = value.strip()
-    # Remove HTML tags
-    value = re.sub(r"<[^>]+>", "", value)
-    # Escape HTML entities
-    value = html.escape(value)
-    # Remove script/javascript patterns
-    value = re.sub(r"(?i)javascript\s*:", "", value)
-    value = re.sub(r"(?i)on\w+\s*=", "", value)
-    return value
-
 
 def _validate_suno_model(value: str) -> str:
     """Validate Suno model is in allowed list.
@@ -215,19 +194,19 @@ class SunoGenerateRequest(BaseModel):
     @classmethod
     def sanitize_prompt(cls, v: str) -> str:
         """Sanitize prompt to prevent XSS."""
-        return _sanitize_text(v)
+        return sanitize_audio_text(v)
 
     @field_validator("title", mode="before")
     @classmethod
     def sanitize_title(cls, v: str) -> str:
         """Sanitize title to prevent XSS."""
-        return _sanitize_text(v)
+        return sanitize_audio_text(v)
 
     @field_validator("style", mode="before")
     @classmethod
     def sanitize_style(cls, v: str) -> str:
         """Sanitize style to prevent XSS."""
-        return _sanitize_text(v)
+        return sanitize_audio_text(v)
 
     @field_validator("model")
     @classmethod

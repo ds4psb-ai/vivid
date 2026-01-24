@@ -21,7 +21,6 @@ Security:
 """
 from __future__ import annotations
 
-import html
 import logging
 import re
 import uuid
@@ -35,6 +34,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.utils.error_sanitize import safe_error_detail
+from ._video_base import sanitize_video_text
 from app.credit_service import deduct_credits, get_or_create_user_credits, refund_credits
 from app.services.kling_service import (
     KlingService,
@@ -224,32 +224,6 @@ def assess_kling_prompt_quality(prompt: str, negative_prompt: str | None = None)
     )
 
 
-# =============================================================================
-# Sanitization Helpers
-# =============================================================================
-
-def _sanitize_prompt(value: str) -> str:
-    """Sanitize prompt field to prevent XSS.
-
-    Args:
-        value: Raw prompt input
-
-    Returns:
-        Sanitized string
-    """
-    if not value:
-        return value
-    value = value.strip()
-    # Remove HTML tags
-    value = re.sub(r"<[^>]+>", "", value)
-    # Escape HTML entities
-    value = html.escape(value)
-    # Remove script/javascript patterns
-    value = re.sub(r"(?i)javascript\s*:", "", value)
-    value = re.sub(r"(?i)on\w+\s*=", "", value)
-    return value
-
-
 def _validate_duration(value: str) -> str:
     """Validate duration is 5 or 10.
 
@@ -371,7 +345,7 @@ class KlingGenerateRequest(BaseModel):
     @classmethod
     def sanitize_prompt(cls, v: str) -> str:
         """Sanitize prompt to prevent XSS."""
-        return _sanitize_prompt(v)
+        return sanitize_video_text(v)
 
     @field_validator("negative_prompt", mode="before")
     @classmethod
@@ -379,7 +353,7 @@ class KlingGenerateRequest(BaseModel):
         """Sanitize negative_prompt to prevent XSS."""
         if v is None:
             return None
-        return _sanitize_prompt(v)
+        return sanitize_video_text(v)
 
     @field_validator("duration")
     @classmethod
