@@ -170,10 +170,10 @@ export default function ChatPanel({
   const canSend = draft.trim().length > 0 && !isStreaming;
 
   return (
-    <div className={`flex h-full flex-col rounded-3xl border border-white/10 bg-white/5 ${className ?? ""}`}>
+    <div className={`flex h-full flex-col glass-card rounded-3xl ${className ?? ""}`}>
       {/* Header - hidden when minimized */}
       {!isMinimized && (
-        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+        <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-5 py-4">
           <div>
             <div className="text-sm font-semibold text-slate-100">{t("studioChatTitle")}</div>
             <div className="text-xs text-slate-400">{t("studioChatSubtitle")}</div>

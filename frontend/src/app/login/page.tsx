@@ -43,7 +43,7 @@ function LoginContent() {
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl border border-white/10 bg-slate-950/60 p-6 backdrop-blur-xl"
+          className="glass-card rounded-2xl p-6"
         >
           <h1 className="text-2xl font-semibold text-[var(--fg-0)]">{labels.title}</h1>
           <p className="mt-2 text-sm text-[var(--fg-muted)]">{labels.subtitle}</p>

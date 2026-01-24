@@ -368,7 +368,7 @@ function DimensionCard({
     >
       <Link
         href={dimension.href}
-        className="block relative overflow-hidden rounded-[2rem] border border-[var(--border-subtle)] bg-[var(--surface-1)] p-6 backdrop-blur-2xl hover:bg-[var(--surface-2)] transition-all duration-700 hover:-translate-y-2 shadow-lg"
+        className="block relative overflow-hidden rounded-2xl glass-card p-6 transition-all duration-300 hover:-translate-y-1"
       >
         {/* NEW Badge */}
         {dimension.isNew && (

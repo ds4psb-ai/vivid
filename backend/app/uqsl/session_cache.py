@@ -322,6 +322,12 @@ class UQSLSessionCache:
 _session_cache: Optional[UQSLSessionCache] = None
 
 
+def reset_session_cache() -> None:
+    """Reset singleton for testing. DO NOT use in production."""
+    global _session_cache
+    _session_cache = None
+
+
 def get_session_cache() -> UQSLSessionCache:
     """Get or create singleton session cache."""
     global _session_cache

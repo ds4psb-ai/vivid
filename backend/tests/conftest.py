@@ -1,17 +1,16 @@
-"""Root pytest configuration for Vivid backend tests.
-
-This conftest.py ensures the app module is importable.
 """
+Root Test Configuration
+
+Sets up environment variables before any app modules are imported.
+This ensures Redis-dependent modules use fallback/mock modes.
+"""
+
 import os
 import sys
-from pathlib import Path
 
-# Add backend directory to Python path
-backend_dir = Path(__file__).parent.parent
-if str(backend_dir) not in sys.path:
-    sys.path.insert(0, str(backend_dir))
+# Set BEFORE any app imports to ensure fallback modes are used
+os.environ.setdefault("TESTING", "1")
+os.environ.setdefault("REDIS_URL", "")  # Empty = use in-memory fallback
 
-# H2.1: Enable dev auth bypass for tests (before importing app.config)
-# This allows X-User-Id and X-Admin-Mode headers to work in test environment
-os.environ.setdefault("ENABLE_DEV_AUTH_BYPASS", "true")
-os.environ.setdefault("ENVIRONMENT", "development")
+# Common pytest fixtures and configuration
+import pytest

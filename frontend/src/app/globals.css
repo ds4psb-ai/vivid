@@ -1347,6 +1347,274 @@ html.lenis body {
   animation: aurora-drift-medium 15s ease-in-out infinite;
 }
 
+/* ─── Stitch-Inspired Advanced Animations (2026) ─── */
+
+/* Gradient animation for hero backgrounds */
+@keyframes gradient-xy {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.animate-gradient-xy {
+  background-size: 200% 200%;
+  animation: gradient-xy 8s ease infinite;
+}
+
+/* Floating animation for orbs */
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(10px, -20px) scale(1.05); }
+  50% { transform: translate(-5px, 10px) scale(0.95); }
+  75% { transform: translate(15px, 5px) scale(1.02); }
+}
+
+.animate-float {
+  animation: float 15s ease-in-out infinite;
+}
+
+/* Horizontal gradient animation for borders */
+@keyframes gradient-x {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-gradient-x {
+  background-size: 200% auto;
+  animation: gradient-x 3s linear infinite;
+}
+
+/* Shimmer effect for cards */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.dimension-card-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255,255,255,0.08) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.dimension-card-shimmer:hover::after {
+  opacity: 1;
+}
+
+/* Sparkle pulse for particles */
+@keyframes sparkle-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.5); }
+}
+
+.animate-sparkle {
+  animation: sparkle-pulse 2s ease-in-out infinite;
+}
+
+/* Glow border animation */
+@keyframes glow-border {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.animate-glow-border {
+  animation: glow-border 2s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STITCH AI GENERATED STYLES (2026.01)
+   Generated via Google Stitch MCP API
+   Project: Vivid Crebit Studio UI Redesign
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Aurora Background - Emerald & Purple radial gradients */
+.aurora-bg {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(13, 242, 89, 0.12) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(147, 51, 234, 0.12) 0%, transparent 40%);
+}
+
+.dark .aurora-bg-enhanced {
+  background:
+    radial-gradient(ellipse at 15% 25%, rgba(13, 242, 89, 0.18) 0%, transparent 35%),
+    radial-gradient(ellipse at 85% 75%, rgba(147, 51, 234, 0.15) 0%, transparent 35%),
+    radial-gradient(ellipse at 50% 50%, rgba(124, 58, 237, 0.08) 0%, transparent 50%);
+}
+
+/* Glass Header - Frosted glass effect for navigation */
+.glass-header {
+  background: rgba(10, 10, 10, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+:root:not(.dark) .glass-header {
+  background: rgba(255, 255, 255, 0.8);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Glass Card - Premium glassmorphism cards */
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  border-color: rgba(124, 58, 237, 0.5);
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(124, 58, 237, 0.15);
+}
+
+:root:not(.dark) .glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+:root:not(.dark) .glass-card:hover {
+  border-color: rgba(124, 58, 237, 0.4);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 12px 40px rgba(124, 58, 237, 0.1);
+}
+
+/* Neon Glow Button - Primary CTA with glow effect */
+.neon-glow-btn {
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
+  transition: all 0.3s ease;
+}
+
+.neon-glow-btn:hover {
+  box-shadow: 0 0 35px rgba(124, 58, 237, 0.6);
+  transform: scale(1.02);
+}
+
+.neon-glow-emerald {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+}
+
+.neon-glow-emerald:hover {
+  box-shadow: 0 0 35px rgba(16, 185, 129, 0.6);
+}
+
+/* Dimension Card Glow Effects - Stitch AI Generated */
+.glow-purple {
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.15);
+}
+.glow-purple:hover {
+  box-shadow: 0 0 30px rgba(139, 92, 246, 0.35);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+}
+.glow-emerald:hover {
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.35);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.15);
+}
+.glow-cyan:hover {
+  box-shadow: 0 0 30px rgba(6, 182, 212, 0.35);
+}
+
+.glow-amber {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
+}
+.glow-amber:hover {
+  box-shadow: 0 0 30px rgba(245, 158, 11, 0.35);
+}
+
+.glow-rose {
+  box-shadow: 0 0 20px rgba(244, 63, 94, 0.15);
+}
+.glow-rose:hover {
+  box-shadow: 0 0 30px rgba(244, 63, 94, 0.35);
+}
+
+/* Ping Badge Animation - Status indicators */
+@keyframes ping-slow {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.animate-ping-slow {
+  animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Content Card Rail - Horizontal scrolling */
+.content-rail {
+  display: flex;
+  overflow-x: auto;
+  gap: 1.5rem;
+  padding-bottom: 1rem;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.content-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.content-rail > * {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+/* Video Card Overlay - Play button on hover */
+.video-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.group:hover .video-card-overlay {
+  opacity: 1;
+}
+
+/* Hero Gradient Text */
+.gradient-text-hero {
+  background: linear-gradient(135deg, var(--accent) 0%, #10b981 50%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Section Divider with glow */
+.section-divider-glow {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(124, 58, 237, 0.5) 50%, transparent 100%);
+}
+
+/* 3D Card tilt transition */
+.card-3d-tilt {
+  transition: transform 0.2s ease-out;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
 /* ─── Lusion Button Styles ─── */
 .button-primary {
   display: inline-flex;

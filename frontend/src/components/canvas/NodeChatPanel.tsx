@@ -515,7 +515,7 @@ export default function NodeChatPanel({
 
             {/* Input */}
             <div className="border-t border-white/10 px-5 py-4">
-                <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-3">
+                <div className="glass-card rounded-2xl p-3">
                     <textarea
                         value={draft}
                         onChange={(e) => setDraft(e.target.value)}

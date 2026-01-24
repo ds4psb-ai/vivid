@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { ShieldCheck, ShieldAlert, ShieldX, Play, Eye, Flame, Sparkles, Volume2, VolumeX } from "lucide-react";
 
@@ -53,13 +53,27 @@ export function IPRailCard({
   const status = STATUS_STYLES[licenseStatus];
   const StatusIcon = status.icon;
   const videoRef = useRef<HTMLVideoElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [isMuted, setIsMuted] = useState(true); // 기본 muted 상태
+  const [tiltStyle, setTiltStyle] = useState({ transform: '' });
 
   // 세로 영상(9:16)은 더 높은 카드, 가로 영상(16:9)은 기본 높이
   const isVertical = aspectRatio === "9:16";
   const thumbnailHeightClass = isVertical ? "h-72" : "h-44";
+
+  // 3D Tilt effect handler
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+
+    setTiltStyle({
+      transform: `perspective(1000px) rotateY(${x * 8}deg) rotateX(${y * -8}deg) scale(1.02)`
+    });
+  }, []);
 
   const handleMouseEnter = useCallback(() => {
     setIsHovered(true);
@@ -77,6 +91,8 @@ export function IPRailCard({
     }
     // 마우스 나가면 다시 muted로 초기화
     setIsMuted(true);
+    // Reset 3D tilt
+    setTiltStyle({ transform: 'perspective(1000px) rotateY(0) rotateX(0) scale(1)' });
   }, []);
 
   // Mute 상태 동기화
@@ -96,8 +112,11 @@ export function IPRailCard({
 
   return (
     <div
-      className="group h-full overflow-hidden bg-[var(--ip-card-bg)] border border-[var(--ip-card-border)] hover:border-[var(--ip-card-border-hover)] hover:bg-[var(--ip-card-bg-hover)] shadow-[var(--ip-card-shadow)] hover:shadow-[var(--ip-card-shadow-hover)] rounded-[var(--ip-card-radius)] transition-[var(--transition-hover)] hover:scale-[var(--ip-card-scale-hover)] hover:-translate-y-[var(--ip-card-translate-hover)]"
+      ref={cardRef}
+      className="group h-full overflow-hidden bg-[var(--ip-card-bg)] border border-[var(--ip-card-border)] hover:border-[var(--ip-card-border-hover)] hover:bg-[var(--ip-card-bg-hover)] shadow-[var(--ip-card-shadow)] hover:shadow-[var(--ip-card-shadow-hover)] rounded-[var(--ip-card-radius)] transition-all duration-200 ease-out"
+      style={tiltStyle}
       onMouseEnter={handleMouseEnter}
+      onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
       {/* 썸네일/비디오 영역 - aspectRatio에 따라 높이 조정 */}

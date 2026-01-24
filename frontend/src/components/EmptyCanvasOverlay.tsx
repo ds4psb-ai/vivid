@@ -134,7 +134,7 @@ export default function EmptyCanvasOverlay({
                                     onSelectSeed(option.id);
                                 }
                             }}
-                            className="group relative flex flex-col items-start rounded-2xl border border-white/5 bg-slate-950/40 p-6 text-left backdrop-blur-xl transition-all hover:border-sky-500/30 hover:shadow-lg hover:shadow-sky-500/10"
+                            className="group relative flex flex-col items-start rounded-2xl glass-card p-6 text-left transition-all hover:border-sky-500/30 hover:shadow-lg hover:shadow-sky-500/10"
                         >
                             {/* Gradient Accent */}
                             <div
@@ -171,7 +171,7 @@ export default function EmptyCanvasOverlay({
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.6 }}
-                    className="mt-8 rounded-xl border border-white/10 bg-slate-950/40 p-6 backdrop-blur-sm"
+                    className="mt-8 glass-card rounded-xl p-6"
                 >
                     <div className="text-xs uppercase tracking-widest text-[var(--fg-muted)] mb-4 font-semibold text-center">
                         {t("seedGraphPreviewTitle")}

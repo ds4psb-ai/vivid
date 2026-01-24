@@ -60,11 +60,21 @@ router = APIRouter(prefix="/api/v1/uqsl", tags=["uqsl"])
 
 # Redis-backed session cache (2026 Best Practice)
 # Fallback to in-memory if Redis unavailable
-_session_cache: UQSLSessionCache = get_session_cache()
+# Lazy initialization to allow mocking in tests
+_session_cache: UQSLSessionCache | None = None
+
+
+def _get_session_cache() -> UQSLSessionCache:
+    """Get session cache with lazy initialization."""
+    global _session_cache
+    if _session_cache is None:
+        _session_cache = get_session_cache()
+    return _session_cache
+
 
 # Legacy compatibility alias (for imports from other modules)
-# Use _session_cache.get/set instead of direct dict access
-_sessions: dict[str, dict] = {}  # Deprecated: Use _session_cache
+# Use _get_session_cache().get/set instead of direct dict access
+_sessions: dict[str, dict] = {}  # Deprecated: Use _get_session_cache()
 
 
 @router.post("/generate", response_model=GenerateCandidatesResponse)
@@ -109,7 +119,7 @@ async def generate_candidates(
 
     # 4. Store session for potential HITL (Redis-backed, 2026 Best Practice)
     prompt_hash = hashlib.sha256(body.prompt.encode()).hexdigest()[:64]
-    await _session_cache.set(result.session_id, {
+    await _get_session_cache().set(result.session_id, {
         "candidates": [c.model_dump() for c in candidates],
         "scores": [s.model_dump() for s in scores],
         "prompt_hash": prompt_hash,
@@ -277,7 +287,7 @@ async def generate_candidates_stream(
 
             # Store session (Redis-backed, 2026 Best Practice)
             prompt_hash = hashlib.sha256(body.prompt.encode()).hexdigest()[:64]
-            await _session_cache.set(session_id, {
+            await _get_session_cache().set(session_id, {
                 "candidates": [c.model_dump() for c in candidates],
                 "scores": [s.model_dump() for s in scores],
                 "prompt_hash": prompt_hash,
@@ -497,7 +507,7 @@ async def select_candidate(
     Called when user selects from presented candidates.
     Updates Thompson Sampling arms based on selection.
     """
-    session = await _session_cache.get(request.session_id)
+    session = await _get_session_cache().get(request.session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found or expired")
 
@@ -519,7 +529,7 @@ async def select_candidate(
             await ts_router.update(db, f"backend:{c_backend}", reward=False)
 
     # Update session (Redis-backed)
-    await _session_cache.update(request.session_id, {
+    await _get_session_cache().update(request.session_id, {
         "selected_idx": request.selected_idx,
         "selection_time": datetime.utcnow().isoformat(),
     })
@@ -555,7 +565,7 @@ async def submit_feedback(
 
     if not history:
         # Try session-based lookup (Redis-backed)
-        session = await _session_cache.get(request.selection_id)
+        session = await _get_session_cache().get(request.selection_id)
         if session:
             arms_used = session.get("arms_used", [])
         else:
@@ -857,7 +867,7 @@ async def get_cache_stats():
 
     2026 Best Practice: Monitor cache health and performance.
     """
-    stats = await _session_cache.get_stats()
+    stats = await _get_session_cache().get_stats()
     return {
         "session_cache": stats,
         "status": "healthy" if stats.get("redis_healthy") else "degraded",

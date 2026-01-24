@@ -51,8 +51,10 @@ class TestGenerateEndpoint:
     """Test POST /api/v1/uqsl/generate endpoint."""
 
     @pytest.mark.asyncio
-    async def test_generate_success(self, async_client):
+    async def test_generate_success(self, async_client, mock_session_cache):
         """Test successful candidate generation."""
+        # mock_session_cache is provided by conftest fixture
+
         with patch("app.routers.uqsl.get_multi_generate_engine") as mock_engine, \
              patch("app.routers.uqsl.get_quality_evaluator") as mock_evaluator, \
              patch("app.routers.uqsl.get_best_selector") as mock_selector:
@@ -127,17 +129,12 @@ class TestSelectEndpoint:
     """Test POST /api/v1/uqsl/select endpoint."""
 
     @pytest.mark.asyncio
-    async def test_select_success(self, async_client):
+    async def test_select_success(self, async_client, mock_session_cache):
         """Test successful selection with pre-created session."""
-        # Pre-populate session using Redis-backed cache
-        import app.routers.uqsl as uqsl_module
-        from app.uqsl.session_cache import get_session_cache
-
         test_session_id = "test-session-123"
-        session_cache = get_session_cache()
 
-        # Store session data (as dicts, not Pydantic models)
-        await session_cache.set(test_session_id, {
+        # Configure mock session cache with pre-populated data
+        mock_session_data = {
             "candidates": [
                 {"idx": 0, "content": "Result 0", "backend_used": "backend_a", "metadata": {}, "latency_ms": 0},
                 {"idx": 1, "content": "Result 1", "backend_used": "backend_b", "metadata": {}, "latency_ms": 0},
@@ -146,24 +143,21 @@ class TestSelectEndpoint:
             "app_key": "test_app",
             "arms_used": ["backend:backend_a", "backend:backend_b"],
             "created_at": "2026-01-16T00:00:00",
-        })
+        }
+        mock_session_cache.get = AsyncMock(return_value=mock_session_data)
 
-        try:
-            response = await async_client.post(
-                "/api/v1/uqsl/select",
-                json={
-                    "session_id": test_session_id,
-                    "selected_idx": 1,
-                },
-            )
+        response = await async_client.post(
+            "/api/v1/uqsl/select",
+            json={
+                "session_id": test_session_id,
+                "selected_idx": 1,
+            },
+        )
 
-            assert response.status_code == 200
-            data = response.json()
-            assert data["status"] == "selected"
-            assert data["session_id"] == test_session_id
-        finally:
-            # Cleanup
-            await session_cache.delete(test_session_id)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "selected"
+        assert data["session_id"] == test_session_id
 
     @pytest.mark.asyncio
     async def test_select_session_not_found(self, async_client):

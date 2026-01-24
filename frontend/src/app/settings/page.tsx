@@ -183,7 +183,7 @@ export default function SettingsPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.05 }}
-                        className="mb-4 rounded-lg border border-white/10 bg-slate-950/60 p-4 sm:mb-6 sm:rounded-xl sm:p-5"
+                        className="mb-4 glass-card rounded-xl p-4 sm:mb-6 sm:rounded-2xl sm:p-5"
                         aria-labelledby="overview-heading"
                     >
                         <div className="flex items-center gap-2 mb-3 sm:mb-4">
@@ -192,13 +192,13 @@ export default function SettingsPage() {
                         </div>
                         <p className="text-xs text-[var(--fg-muted)]">{labels.overviewSubtitle}</p>
                         <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                            <div className="rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2">
+                            <div className="glass-card rounded-xl px-3 py-2">
                                 <div className="text-[9px] uppercase text-[var(--fg-muted)]">{labels.canvasCount}</div>
                                 <div className="mt-1 text-sm font-semibold text-[var(--fg-0)]">
                                     {formatNumber(canvasCount, undefined, undefined, "-")}
                                 </div>
                             </div>
-                            <div className="rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2">
+                            <div className="glass-card rounded-xl px-3 py-2">
                                 <div className="text-[9px] uppercase text-[var(--fg-muted)]">{labels.credits}</div>
                                 <div className="mt-1 text-sm font-semibold text-[var(--fg-0)]">
                                     {formatNumber(creditBalance, undefined, undefined, "-")}
@@ -212,7 +212,7 @@ export default function SettingsPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
-                        className="mb-4 rounded-lg border border-white/10 bg-slate-950/60 p-4 sm:mb-6 sm:rounded-xl sm:p-5"
+                        className="mb-4 glass-card rounded-xl p-4 sm:mb-6 sm:rounded-xl sm:p-5"
                         aria-labelledby="language-heading"
                     >
                         <div className="flex items-center gap-2 mb-3 sm:mb-4">
@@ -243,7 +243,7 @@ export default function SettingsPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.15 }}
-                        className="mb-4 rounded-lg border border-white/10 bg-slate-950/60 p-4 sm:mb-6 sm:rounded-xl sm:p-5"
+                        className="mb-4 glass-card rounded-xl p-4 sm:mb-6 sm:rounded-xl sm:p-5"
                         aria-labelledby="theme-heading"
                     >
                         <div className="flex items-center gap-2 mb-3 sm:mb-4">
@@ -276,7 +276,7 @@ export default function SettingsPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="mb-4 rounded-lg border border-white/10 bg-slate-950/60 p-4 sm:mb-6 sm:rounded-xl sm:p-5"
+                        className="mb-4 glass-card rounded-xl p-4 sm:mb-6 sm:rounded-xl sm:p-5"
                     >
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -305,7 +305,7 @@ export default function SettingsPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.25 }}
-                        className="mb-4 rounded-lg border border-white/10 bg-slate-950/60 p-4 sm:mb-6 sm:rounded-xl sm:p-5"
+                        className="mb-4 glass-card rounded-xl p-4 sm:mb-6 sm:rounded-xl sm:p-5"
                         aria-labelledby="apikey-heading"
                     >
                         <div className="flex items-center gap-2 mb-3 sm:mb-4">
@@ -400,7 +400,7 @@ export default function SettingsPage() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.25 + sectionIndex * 0.05 }}
-                            className="mb-4 rounded-lg border border-white/10 bg-slate-950/60 overflow-hidden sm:mb-6 sm:rounded-xl"
+                            className="mb-4 glass-card rounded-xl overflow-hidden sm:mb-6 sm:rounded-xl"
                             aria-labelledby={`section-${section.title}`}
                         >
                             <div className="flex items-center gap-2 border-b border-white/5 px-4 py-3 sm:px-5">
