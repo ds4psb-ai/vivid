@@ -16,12 +16,12 @@ Features:
 import pytest
 from unittest.mock import patch, AsyncMock, MagicMock
 
+from app.routers.dimension._base import sanitize_generic_text
 from app.routers.dimension.mirror import (
     MirrorInitRequest,
     MirrorChatRequest,
     MirrorInitResponse,
     MirrorChatResponse,
-    _sanitize_text_field,
     _validate_mbti,
     _validate_blood_type,
     _validate_gender,
@@ -58,23 +58,23 @@ class TestTextSanitization:
 
     def test_sanitize_empty_text(self):
         """Empty text returns default."""
-        assert _sanitize_text_field("") == ""
-        assert _sanitize_text_field("", "default") == "default"
+        assert sanitize_generic_text("") == ""
+        assert sanitize_generic_text("", "default") == "default"
 
     def test_sanitize_strips_whitespace(self):
         """Whitespace is stripped."""
-        assert _sanitize_text_field("  hello world  ") == "hello world"
+        assert sanitize_generic_text("  hello world  ") == "hello world"
 
     def test_sanitize_removes_html_tags(self):
         """HTML tags are removed."""
-        result = _sanitize_text_field("<script>alert('xss')</script>hello")
+        result = sanitize_generic_text("<script>alert('xss')</script>hello")
         assert "<script>" not in result
         assert "hello" in result
 
     def test_sanitize_removes_javascript(self):
         """JavaScript patterns are removed."""
-        assert "javascript" not in _sanitize_text_field("javascript:alert(1)")
-        assert _sanitize_text_field("onclick=evil()").find("onclick=") == -1
+        assert "javascript" not in sanitize_generic_text("javascript:alert(1)")
+        assert sanitize_generic_text("onclick=evil()").find("onclick=") == -1
 
 
 class TestServiceSanitization:

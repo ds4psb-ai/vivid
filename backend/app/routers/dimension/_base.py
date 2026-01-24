@@ -10,8 +10,10 @@ This module contains:
 from __future__ import annotations
 
 import asyncio
+import html
 import json
 import logging
+import re
 import time
 from typing import Any, Dict, List, Optional
 
@@ -242,6 +244,34 @@ def _validate_veo_duration(v: int) -> int:
 def _strip_string(v: str) -> str:
     """Strip whitespace from string."""
     return v.strip() if v else v
+
+
+def sanitize_generic_text(value: str, default: str = "") -> str:
+    """Sanitize text fields to prevent XSS.
+
+    Universal sanitization for all text inputs across dimension routers.
+    Removes HTML tags, escapes entities, and strips JS injection patterns.
+
+    Args:
+        value: Raw text input
+        default: Default value if empty
+
+    Returns:
+        Sanitized string
+    """
+    if not value:
+        return default
+    value = value.strip()
+    if not value:
+        return default
+    # Remove HTML tags
+    value = re.sub(r"<[^>]+>", "", value)
+    # Escape HTML entities
+    value = html.escape(value)
+    # Remove script/javascript patterns
+    value = re.sub(r"(?i)javascript\s*:", "", value)
+    value = re.sub(r"(?i)on\w+\s*=", "", value)
+    return value or default
 
 
 # ============================================================================

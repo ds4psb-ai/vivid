@@ -11,6 +11,7 @@ Covers:
 import pytest
 from pydantic import ValidationError
 
+from app.routers.dimension._base import sanitize_generic_text
 from app.routers.dimension.mirror import (
     # Constants
     ALLOWED_BLOOD_TYPES,
@@ -18,7 +19,6 @@ from app.routers.dimension.mirror import (
     ALLOWED_STAGES,
     VALID_MBTI_CHARS,
     # Helpers
-    _sanitize_text_field,
     _validate_mbti,
     _validate_blood_type,
     _validate_gender,
@@ -48,69 +48,69 @@ from app.routers.dimension.mirror import (
 # ============================================================================
 
 class TestSanitizeTextField:
-    """Tests for _sanitize_text_field helper."""
+    """Tests for sanitize_generic_text helper."""
 
     def test_empty_string_returns_default(self):
-        assert _sanitize_text_field("") == ""
-        assert _sanitize_text_field("", "fallback") == "fallback"
+        assert sanitize_generic_text("") == ""
+        assert sanitize_generic_text("", "fallback") == "fallback"
 
     def test_none_returns_default(self):
         # If passed None (though type hints say str)
-        assert _sanitize_text_field(None) == ""
-        assert _sanitize_text_field(None, "default") == "default"
+        assert sanitize_generic_text(None) == ""
+        assert sanitize_generic_text(None, "default") == "default"
 
     def test_whitespace_only_returns_default(self):
-        assert _sanitize_text_field("   ") == ""
-        assert _sanitize_text_field("\t\n", "default") == "default"
+        assert sanitize_generic_text("   ") == ""
+        assert sanitize_generic_text("\t\n", "default") == "default"
 
     def test_strips_whitespace(self):
-        assert _sanitize_text_field("  hello  ") == "hello"
+        assert sanitize_generic_text("  hello  ") == "hello"
 
     def test_removes_html_tags(self):
-        assert _sanitize_text_field("<p>hello</p>") == "hello"
-        assert _sanitize_text_field("<div><span>test</span></div>") == "test"
+        assert sanitize_generic_text("<p>hello</p>") == "hello"
+        assert sanitize_generic_text("<div><span>test</span></div>") == "test"
 
     def test_removes_script_tags(self):
-        result = _sanitize_text_field("<script>alert('xss')</script>")
+        result = sanitize_generic_text("<script>alert('xss')</script>")
         assert "<script>" not in result
         assert "alert" in result  # Content preserved, tags removed
 
     def test_escapes_html_entities(self):
         # Note: < and > are removed as HTML tag delimiters before escaping
         # Only & is escaped since it's not part of a tag
-        result = _sanitize_text_field("A & B")
+        result = sanitize_generic_text("A & B")
         assert "&amp;" in result
 
     def test_escapes_ampersand(self):
-        result = _sanitize_text_field("Tom & Jerry")
+        result = sanitize_generic_text("Tom & Jerry")
         assert "&amp;" in result
         assert "Tom" in result
         assert "Jerry" in result
 
     def test_removes_javascript_protocol(self):
-        assert "javascript" not in _sanitize_text_field("javascript:alert(1)")
-        assert "javascript" not in _sanitize_text_field("JAVASCRIPT:void(0)")
-        assert "javascript" not in _sanitize_text_field("JavaScript : alert()")
+        assert "javascript" not in sanitize_generic_text("javascript:alert(1)")
+        assert "javascript" not in sanitize_generic_text("JAVASCRIPT:void(0)")
+        assert "javascript" not in sanitize_generic_text("JavaScript : alert()")
 
     def test_removes_event_handlers(self):
-        result = _sanitize_text_field("onclick=alert(1)")
+        result = sanitize_generic_text("onclick=alert(1)")
         assert "onclick=" not in result
-        result = _sanitize_text_field("ONMOUSEOVER=bad()")
+        result = sanitize_generic_text("ONMOUSEOVER=bad()")
         assert "onmouseover=" not in result.lower()
 
     def test_preserves_normal_text(self):
         text = "안녕하세요, 반갑습니다. Hello World!"
-        result = _sanitize_text_field(text)
+        result = sanitize_generic_text(text)
         assert "안녕하세요" in result
 
     def test_complex_xss_attack_vector(self):
         attack = '<img src="x" onerror="alert(document.cookie)">'
-        result = _sanitize_text_field(attack)
+        result = sanitize_generic_text(attack)
         assert "<img" not in result
         assert "onerror=" not in result
 
     def test_nested_html_tags(self):
-        result = _sanitize_text_field("<div><p><a href='x'>link</a></p></div>")
+        result = sanitize_generic_text("<div><p><a href='x'>link</a></p></div>")
         assert "<" not in result or "&lt;" in result
 
 
@@ -494,7 +494,7 @@ class TestXSSPrevention:
 
     @pytest.mark.parametrize("payload", XSS_PAYLOADS)
     def test_xss_payloads_sanitized(self, payload):
-        result = _sanitize_text_field(payload)
+        result = sanitize_generic_text(payload)
         # Should not contain raw script tags
         assert "<script" not in result.lower()
         # Should not contain javascript: protocol
@@ -523,17 +523,17 @@ class TestEdgeCases:
     """Edge case tests for mirror dimension."""
 
     def test_unicode_preservation(self):
-        result = _sanitize_text_field("안녕하세요 Hello 你好")
+        result = sanitize_generic_text("안녕하세요 Hello 你好")
         assert "안녕하세요" in result
         assert "Hello" in result
 
     def test_emoji_preservation(self):
-        result = _sanitize_text_field("Hello 😀 World 🌍")
+        result = sanitize_generic_text("Hello 😀 World 🌍")
         assert "😀" in result
         assert "🌍" in result
 
     def test_newlines_preserved(self):
-        result = _sanitize_text_field("Line1\nLine2\nLine3")
+        result = sanitize_generic_text("Line1\nLine2\nLine3")
         assert "\n" in result
 
     def test_mbti_boundary_cases(self):

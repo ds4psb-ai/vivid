@@ -16,9 +16,7 @@ Security:
 """
 from __future__ import annotations
 
-import html
 import logging
-import re
 import uuid
 from enum import Enum
 from typing import List
@@ -36,6 +34,7 @@ from ._base import (
     _execute_dimension_tool_stream,
     _validate_model,
     _strip_string,
+    sanitize_generic_text,
     DimensionResponse,
     DimensionErrorResponse,
     DimensionCapsuleId,
@@ -94,35 +93,6 @@ ALLOWED_COLOR_MOODS = frozenset([c.value for c in ColorMood])
 ALLOWED_STYLE_REFERENCES = frozenset([s.value for s in StyleReference])
 ALLOWED_PERSONA_STAGES = frozenset([s.value for s in PersonaStage])
 ALLOWED_TARGET_MEDIUMS = frozenset(["video", "image", "animation", "web", "print", "social"])
-
-
-# ============================================================================
-# Sanitization Helpers
-# ============================================================================
-
-def _sanitize_text_field(value: str, default: str = "") -> str:
-    """Sanitize text fields to prevent XSS.
-
-    Args:
-        value: Raw text input
-        default: Default value if empty
-
-    Returns:
-        Sanitized string
-    """
-    if not value:
-        return default
-    value = value.strip()
-    if not value:
-        return default
-    # Remove HTML tags
-    value = re.sub(r"<[^>]+>", "", value)
-    # Escape HTML entities
-    value = html.escape(value)
-    # Remove script/javascript patterns
-    value = re.sub(r"(?i)javascript\s*:", "", value)
-    value = re.sub(r"(?i)on\w+\s*=", "", value)
-    return value or default
 
 
 def _validate_lighting_style(value: str) -> str:
@@ -249,19 +219,19 @@ class AestheticDirectRequest(BaseModel):
     @classmethod
     def sanitize_concept(cls, v: str) -> str:
         """Sanitize concept to prevent XSS."""
-        return _sanitize_text_field(v)
+        return sanitize_generic_text(v)
 
     @field_validator("reference_style", mode="before")
     @classmethod
     def sanitize_reference_style(cls, v: str) -> str:
         """Sanitize reference_style to prevent XSS."""
-        return _sanitize_text_field(v, default="bong")
+        return sanitize_generic_text(v, default="bong")
 
     @field_validator("mood", mode="before")
     @classmethod
     def sanitize_mood(cls, v: str) -> str:
         """Sanitize mood to prevent XSS."""
-        return _sanitize_text_field(v, default="cinematic")
+        return sanitize_generic_text(v, default="cinematic")
 
     @field_validator("lighting_style")
     @classmethod
@@ -301,13 +271,13 @@ class AestheticMoodboardRequest(BaseModel):
     @classmethod
     def sanitize_concept(cls, v: str) -> str:
         """Sanitize concept to prevent XSS."""
-        return _sanitize_text_field(v)
+        return sanitize_generic_text(v)
 
     @field_validator("mood", mode="before")
     @classmethod
     def sanitize_mood(cls, v: str) -> str:
         """Sanitize mood to prevent XSS."""
-        return _sanitize_text_field(v, default="cinematic")
+        return sanitize_generic_text(v, default="cinematic")
 
     @field_validator("model")
     @classmethod
@@ -549,13 +519,13 @@ class PersonaAnalyzeRequest(BaseModel):
     @classmethod
     def sanitize_subject(cls, v: str) -> str:
         """Sanitize subject to prevent XSS."""
-        return _sanitize_text_field(v)
+        return sanitize_generic_text(v)
 
     @field_validator("user_message", mode="before")
     @classmethod
     def sanitize_user_message(cls, v: str) -> str:
         """Sanitize user_message to prevent XSS."""
-        return _sanitize_text_field(v, default="")
+        return sanitize_generic_text(v, default="")
 
     @field_validator("current_stage")
     @classmethod
@@ -685,31 +655,31 @@ class CharacterDNARequest(BaseModel):
     @classmethod
     def sanitize_name(cls, v: str) -> str:
         """Sanitize name to prevent XSS."""
-        return _sanitize_text_field(v)
+        return sanitize_generic_text(v)
 
     @field_validator("role", mode="before")
     @classmethod
     def sanitize_role(cls, v: str) -> str:
         """Sanitize role to prevent XSS."""
-        return _sanitize_text_field(v)
+        return sanitize_generic_text(v)
 
     @field_validator("personality", mode="before")
     @classmethod
     def sanitize_personality(cls, v: str) -> str:
         """Sanitize personality to prevent XSS."""
-        return _sanitize_text_field(v, default="")
+        return sanitize_generic_text(v, default="")
 
     @field_validator("physical_traits", mode="before")
     @classmethod
     def sanitize_physical_traits(cls, v: str) -> str:
         """Sanitize physical_traits to prevent XSS."""
-        return _sanitize_text_field(v, default="")
+        return sanitize_generic_text(v, default="")
 
     @field_validator("wiki_context", mode="before")
     @classmethod
     def sanitize_wiki_context(cls, v: str) -> str:
         """Sanitize wiki_context to prevent XSS."""
-        return _sanitize_text_field(v, default="")
+        return sanitize_generic_text(v, default="")
 
     @field_validator("style_reference")
     @classmethod

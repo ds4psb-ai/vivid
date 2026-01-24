@@ -10,6 +10,7 @@ Tests include:
 import pytest
 from pydantic import ValidationError
 
+from app.routers.dimension._base import sanitize_generic_text
 from app.routers.dimension.classic import (
     # Enums
     AnalysisDepth,
@@ -25,7 +26,6 @@ from app.routers.dimension.classic import (
     ReferenceAnalyzeRequest,
     PromptMultiGenerateRequest,
     # Helpers
-    _sanitize_style_mood,
     _validate_analysis_depth,
     _validate_output_format,
     _validate_focus_areas,
@@ -106,49 +106,50 @@ class TestFocusAreasConstants:
 # ============================================================================
 
 class TestSanitizeStyleMood:
-    """Test _sanitize_style_mood helper."""
+    """Test sanitize_generic_text helper."""
 
     def test_removes_html_tags(self):
         """Test HTML tag removal."""
-        result = _sanitize_style_mood("<div>cinematic</div>")
+        result = sanitize_generic_text("<div>cinematic</div>")
         assert "<div>" not in result
         assert "</div>" not in result
 
     def test_removes_script_tags(self):
         """Test script tag removal."""
-        result = _sanitize_style_mood("<script>evil()</script>test")
+        result = sanitize_generic_text("<script>evil()</script>test")
         assert "<script>" not in result
         assert "</script>" not in result
 
     def test_removes_javascript_protocol(self):
         """Test javascript: protocol removal."""
-        result = _sanitize_style_mood("javascript:alert(1)")
+        result = sanitize_generic_text("javascript:alert(1)")
         assert "javascript:" not in result.lower()
 
     def test_removes_event_handlers(self):
         """Test on* event handler removal."""
-        result = _sanitize_style_mood("onload=alert(1)cinematic")
+        result = sanitize_generic_text("onload=alert(1)cinematic")
         assert "onload=" not in result.lower()
-        result2 = _sanitize_style_mood("onerror=evil()noir")
+        result2 = sanitize_generic_text("onerror=evil()noir")
         assert "onerror=" not in result2.lower()
 
     def test_empty_returns_default(self):
         """Test empty string returns default."""
-        assert _sanitize_style_mood("") == "cinematic"
-        assert _sanitize_style_mood("   ") == "cinematic"
-        assert _sanitize_style_mood("", default="noir") == "noir"
+        assert sanitize_generic_text("", default="cinematic") == "cinematic"
+        assert sanitize_generic_text("   ", default="cinematic") == "cinematic"
+        assert sanitize_generic_text("", default="noir") == "noir"
 
     def test_preserves_korean(self):
         """Test Korean characters preserved."""
-        result = _sanitize_style_mood("시네마틱 느와르")
+        result = sanitize_generic_text("시네마틱 느와르")
         assert "시네마틱" in result
         assert "느와르" in result
 
-    def test_limits_length(self):
-        """Test length limit of 100 chars."""
+    def test_handles_long_input(self):
+        """Test long input is sanitized (no length limit in generic function)."""
         long_input = "a" * 200
-        result = _sanitize_style_mood(long_input)
-        assert len(result) <= 100
+        result = sanitize_generic_text(long_input)
+        # Generic sanitization preserves content (length limiting is domain-specific)
+        assert len(result) == 200
 
 
 class TestValidateAnalysisDepth:

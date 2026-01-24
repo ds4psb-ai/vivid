@@ -15,7 +15,6 @@ Translates scene descriptions into optimized prompts for:
 """
 from __future__ import annotations
 
-import html
 import logging
 import re
 import uuid
@@ -37,6 +36,7 @@ from ._base import (
     _validate_language,
     _validate_model,
     _strip_string,
+    sanitize_generic_text,
     DimensionResponse,
     DimensionErrorResponse,
     DimensionCapsuleId,
@@ -218,35 +218,6 @@ class UQSLStrategy(str, Enum):
 AUTEUR_KEY_PATTERN = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]*$")
 
 
-# ============================================================================
-# Sanitization Helpers
-# ============================================================================
-
-def _sanitize_style(value: str) -> str:
-    """Sanitize style field to prevent XSS and injection attacks.
-
-    Args:
-        value: Raw style input
-
-    Returns:
-        Sanitized style string
-    """
-    if not value:
-        return "cinematic"
-    # Strip whitespace
-    value = value.strip()
-    # Remove HTML tags
-    value = re.sub(r"<[^>]+>", "", value)
-    # Escape HTML entities
-    value = html.escape(value)
-    # Remove script/javascript patterns
-    value = re.sub(r"(?i)javascript\s*:", "", value)
-    value = re.sub(r"(?i)on\w+\s*=", "", value)
-    # Limit to reasonable characters
-    value = re.sub(r"[^\w\s가-힣\-_.,]", "", value)
-    return value[:100] or "cinematic"
-
-
 def _validate_auteur_key(value: Optional[str]) -> Optional[str]:
     """Validate auteur_key format.
 
@@ -403,7 +374,7 @@ class PromptTranslateRequest(BaseModel):
     @classmethod
     def sanitize_style(cls, v: str) -> str:
         """Sanitize style to prevent XSS attacks."""
-        return _sanitize_style(v)
+        return sanitize_generic_text(v, default="cinematic")
 
     @field_validator("auteur_key")
     @classmethod
@@ -465,7 +436,7 @@ class BatchTranslateRequest(BaseModel):
     @field_validator("style", mode="before")
     @classmethod
     def sanitize_style(cls, v: str) -> str:
-        return _sanitize_style(v)
+        return sanitize_generic_text(v, default="cinematic")
 
     @field_validator("auteur_key")
     @classmethod

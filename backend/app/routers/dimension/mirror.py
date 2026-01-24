@@ -16,9 +16,7 @@ Security:
 """
 from __future__ import annotations
 
-import html
 import logging
-import re
 import uuid
 from enum import Enum
 from fastapi import APIRouter, Depends, HTTPException
@@ -35,6 +33,7 @@ from ._base import (
     get_byok_key,
     _validate_model,
     _strip_string,
+    sanitize_generic_text,
     DimensionErrorResponse,
     get_sse_headers,
     Optional,
@@ -344,35 +343,6 @@ def assess_mirror_profile_quality(
     )
 
 
-# ============================================================================
-# Sanitization Helpers
-# ============================================================================
-
-def _sanitize_text_field(value: str, default: str = "") -> str:
-    """Sanitize text fields to prevent XSS.
-
-    Args:
-        value: Raw text input
-        default: Default value if empty
-
-    Returns:
-        Sanitized string
-    """
-    if not value:
-        return default
-    value = value.strip()
-    if not value:
-        return default
-    # Remove HTML tags
-    value = re.sub(r"<[^>]+>", "", value)
-    # Escape HTML entities
-    value = html.escape(value)
-    # Remove script/javascript patterns
-    value = re.sub(r"(?i)javascript\s*:", "", value)
-    value = re.sub(r"(?i)on\w+\s*=", "", value)
-    return value or default
-
-
 def _validate_mbti(value: str) -> str:
     """Validate MBTI type.
 
@@ -512,7 +482,7 @@ class MirrorChatRequest(BaseModel):
     @classmethod
     def sanitize_user_message(cls, v: str) -> str:
         """Sanitize user_message to prevent XSS."""
-        return _sanitize_text_field(v)
+        return sanitize_generic_text(v)
 
     @field_validator("current_stage")
     @classmethod

@@ -20,9 +20,7 @@ Security:
 from __future__ import annotations
 
 import base64
-import html
 import logging
-import re
 from enum import Enum
 from typing import List
 
@@ -43,6 +41,7 @@ from ._base import (
     _validate_model,
     _validate_aspect_ratio,
     _strip_string,
+    sanitize_generic_text,
     DimensionResponse,
     DimensionErrorResponse,
     DimensionCapsuleId,
@@ -94,36 +93,6 @@ ALLOWED_FOCUS_AREAS = frozenset([
 ])
 
 DEFAULT_FOCUS_AREAS = ["cinematography", "editing", "color", "sound"]
-
-
-# ============================================================================
-# Sanitization Helpers
-# ============================================================================
-
-def _sanitize_style_mood(value: str, default: str = "cinematic") -> str:
-    """Sanitize style/mood field to prevent XSS and injection attacks.
-
-    Args:
-        value: Raw style or mood input
-        default: Default value if empty
-
-    Returns:
-        Sanitized string
-    """
-    if not value:
-        return default
-    # Strip whitespace
-    value = value.strip()
-    # Remove HTML tags
-    value = re.sub(r"<[^>]+>", "", value)
-    # Escape HTML entities
-    value = html.escape(value)
-    # Remove script/javascript patterns
-    value = re.sub(r"(?i)javascript\s*:", "", value)
-    value = re.sub(r"(?i)on\w+\s*=", "", value)
-    # Limit to reasonable characters (alphanumeric, spaces, Korean, basic punctuation)
-    value = re.sub(r"[^\w\s가-힣\-_.,]", "", value)
-    return value[:100] or default
 
 
 def _validate_analysis_depth(value: str) -> str:
@@ -245,13 +214,13 @@ class PromptGenerateRequest(BaseModel):
     @classmethod
     def sanitize_style(cls, v: str) -> str:
         """Sanitize style to prevent XSS attacks."""
-        return _sanitize_style_mood(v, default="cinematic")
+        return sanitize_generic_text(v, default="cinematic")
 
     @field_validator("mood", mode="before")
     @classmethod
     def sanitize_mood(cls, v: str) -> str:
         """Sanitize mood to prevent XSS attacks."""
-        return _sanitize_style_mood(v, default="neutral")
+        return sanitize_generic_text(v, default="neutral")
 
     @field_validator("language")
     @classmethod
@@ -307,7 +276,7 @@ class ImageGenerateRequest(BaseModel):
     @classmethod
     def sanitize_style(cls, v: str) -> str:
         """Sanitize style to prevent XSS attacks."""
-        return _sanitize_style_mood(v, default="photorealistic")
+        return sanitize_generic_text(v, default="photorealistic")
 
     @field_validator("aspect_ratio")
     @classmethod
@@ -491,13 +460,13 @@ class PromptMultiGenerateRequest(BaseModel):
     @classmethod
     def sanitize_style(cls, v: str) -> str:
         """Sanitize style to prevent XSS attacks."""
-        return _sanitize_style_mood(v, default="cinematic")
+        return sanitize_generic_text(v, default="cinematic")
 
     @field_validator("mood", mode="before")
     @classmethod
     def sanitize_mood(cls, v: str) -> str:
         """Sanitize mood to prevent XSS attacks."""
-        return _sanitize_style_mood(v, default="neutral")
+        return sanitize_generic_text(v, default="neutral")
 
     @field_validator("language")
     @classmethod

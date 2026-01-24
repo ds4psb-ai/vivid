@@ -25,9 +25,7 @@ from typing import List
 from unittest.mock import patch, AsyncMock, MagicMock
 from uuid import uuid4, UUID
 
-from app.routers.dimension.character import (
-    _sanitize_text,
-)
+from app.routers.dimension._base import sanitize_generic_text
 from app.schemas.character_schemas import (
     CharacterCreateRequest,
     CharacterUpdateRequest,
@@ -57,23 +55,23 @@ class TestTextSanitization:
 
     def test_sanitize_empty_text(self):
         """Empty text returns default."""
-        assert _sanitize_text("") == ""
-        assert _sanitize_text("", "default") == "default"
+        assert sanitize_generic_text("") == ""
+        assert sanitize_generic_text("", "default") == "default"
 
     def test_sanitize_strips_whitespace(self):
         """Whitespace is stripped."""
-        assert _sanitize_text("  hello world  ") == "hello world"
+        assert sanitize_generic_text("  hello world  ") == "hello world"
 
     def test_sanitize_removes_html_tags(self):
         """HTML tags are removed."""
-        result = _sanitize_text("<script>alert('xss')</script>hello")
+        result = sanitize_generic_text("<script>alert('xss')</script>hello")
         assert "<script>" not in result
         assert "hello" in result
 
     def test_sanitize_removes_javascript(self):
         """JavaScript patterns are removed."""
-        assert "javascript" not in _sanitize_text("javascript:alert(1)")
-        assert _sanitize_text("onclick=evil()").find("onclick=") == -1
+        assert "javascript" not in sanitize_generic_text("javascript:alert(1)")
+        assert sanitize_generic_text("onclick=evil()").find("onclick=") == -1
 
 
 # =============================================================================

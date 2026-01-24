@@ -52,8 +52,8 @@ from app.schemas.character_schemas import (
     CharacterSimilarity,
     CharacterListResponse,
 )
+from app.routers.dimension._base import sanitize_generic_text
 from app.routers.dimension.character import (
-    _sanitize_text,
     _validate_image_file,
     ALLOWED_IMAGE_TYPES,
     MAX_IMAGE_SIZE,
@@ -128,40 +128,40 @@ class TestSanitizeText:
 
     def test_strips_whitespace(self):
         """Strips leading and trailing whitespace."""
-        assert _sanitize_text("  hello  ") == "hello"
+        assert sanitize_generic_text("  hello  ") == "hello"
 
     def test_returns_default_for_empty(self):
         """Returns default for empty string."""
-        assert _sanitize_text("") == ""
-        assert _sanitize_text("", "default") == "default"
+        assert sanitize_generic_text("") == ""
+        assert sanitize_generic_text("", "default") == "default"
 
     def test_returns_default_for_whitespace_only(self):
         """Returns default for whitespace-only string."""
-        assert _sanitize_text("   ") == ""
-        assert _sanitize_text("   ", "default") == "default"
+        assert sanitize_generic_text("   ") == ""
+        assert sanitize_generic_text("   ", "default") == "default"
 
     def test_removes_html_tags(self):
         """Removes HTML tags."""
-        assert _sanitize_text("<script>alert('xss')</script>hello") == "alert(&#x27;xss&#x27;)hello"
+        assert sanitize_generic_text("<script>alert('xss')</script>hello") == "alert(&#x27;xss&#x27;)hello"
 
     def test_escapes_html_entities(self):
         """Escapes HTML entities."""
-        result = _sanitize_text("Tom & Jerry")
+        result = sanitize_generic_text("Tom & Jerry")
         assert "&amp;" in result
 
     def test_removes_javascript_protocol(self):
         """Removes javascript: protocol."""
-        result = _sanitize_text("javascript:alert(1)")
+        result = sanitize_generic_text("javascript:alert(1)")
         assert "javascript" not in result.lower() or ":" not in result
 
     def test_removes_event_handlers(self):
         """Removes event handler attributes."""
-        result = _sanitize_text("onclick=alert(1)")
+        result = sanitize_generic_text("onclick=alert(1)")
         assert "onclick=" not in result
 
     def test_handles_none(self):
         """Handles None input."""
-        assert _sanitize_text(None) == ""
+        assert sanitize_generic_text(None) == ""
 
 
 # ============================================================================
@@ -328,7 +328,7 @@ class TestCharacterEndpoints:
         }
 
         # Verify that sanitization is applied
-        sanitized_name = _sanitize_text(request_data["name"])
+        sanitized_name = sanitize_generic_text(request_data["name"])
         assert "<script>" not in sanitized_name
 
     @pytest.mark.asyncio
@@ -457,7 +457,7 @@ class TestXSSPrevention:
     @pytest.mark.parametrize("payload,dangerous_content", XSS_PAYLOADS)
     def test_sanitizes_xss_payload(self, payload: str, dangerous_content: str):
         """Sanitizes various XSS payloads."""
-        sanitized = _sanitize_text(payload)
+        sanitized = sanitize_generic_text(payload)
         # Should not contain dangerous content
         assert dangerous_content.lower() not in sanitized.lower()
 

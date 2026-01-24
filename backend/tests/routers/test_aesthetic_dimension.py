@@ -9,6 +9,7 @@ Tests include:
 import pytest
 from pydantic import ValidationError
 
+from app.routers.dimension._base import sanitize_generic_text
 from app.routers.dimension.aesthetic import (
     # Constants
     ALLOWED_LIGHTING_STYLES,
@@ -26,7 +27,6 @@ from app.routers.dimension.aesthetic import (
     AestheticQualityScore,
     AestheticPreferenceAspect,
     # Helpers
-    _sanitize_text_field,
     _validate_lighting_style,
     _validate_color_mood,
     _validate_style_reference,
@@ -52,50 +52,50 @@ from app.routers.dimension.aesthetic import (
 # ============================================================================
 
 class TestSanitizeTextField:
-    """Test _sanitize_text_field helper."""
+    """Test sanitize_generic_text helper."""
 
     def test_removes_html_tags(self):
         """Test HTML tag removal."""
-        result = _sanitize_text_field("<div>visual concept</div>")
+        result = sanitize_generic_text("<div>visual concept</div>")
         assert "<div>" not in result
         assert "</div>" not in result
         assert "visual concept" in result
 
     def test_removes_script_tags(self):
         """Test script tag removal."""
-        result = _sanitize_text_field("<script>evil()</script>concept")
+        result = sanitize_generic_text("<script>evil()</script>concept")
         assert "<script>" not in result
 
     def test_removes_javascript_protocol(self):
         """Test javascript: protocol removal."""
-        result = _sanitize_text_field("javascript:alert(1)")
+        result = sanitize_generic_text("javascript:alert(1)")
         assert "javascript:" not in result.lower()
 
     def test_removes_event_handlers(self):
         """Test on* event handler removal."""
-        result = _sanitize_text_field("onload=alert(1)")
+        result = sanitize_generic_text("onload=alert(1)")
         assert "onload=" not in result.lower()
 
     def test_preserves_normal_text(self):
         """Test normal text is preserved."""
-        result = _sanitize_text_field("cinematic, moody, atmospheric")
+        result = sanitize_generic_text("cinematic, moody, atmospheric")
         assert "cinematic" in result
         assert "moody" in result
 
     def test_preserves_korean(self):
         """Test Korean characters preserved."""
-        result = _sanitize_text_field("영화적인 분위기의 시각적 컨셉")
+        result = sanitize_generic_text("영화적인 분위기의 시각적 컨셉")
         assert "영화적인" in result
         assert "분위기" in result
 
     def test_empty_returns_default(self):
         """Test empty string returns default."""
-        assert _sanitize_text_field("", default="cinematic") == "cinematic"
-        assert _sanitize_text_field("   ", default="cinematic") == "cinematic"
+        assert sanitize_generic_text("", default="cinematic") == "cinematic"
+        assert sanitize_generic_text("   ", default="cinematic") == "cinematic"
 
     def test_none_returns_default(self):
         """Test None returns default."""
-        result = _sanitize_text_field(None, default="default")
+        result = sanitize_generic_text(None, default="default")
         assert result == "default"
 
 

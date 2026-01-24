@@ -28,9 +28,7 @@ References:
 """
 from __future__ import annotations
 
-import html
 import logging
-import re
 from typing import List, Optional
 from uuid import UUID
 
@@ -43,6 +41,7 @@ from ._base import (
     get_db,
     get_current_user,
     get_byok_key,
+    sanitize_generic_text,
     DimensionResponse,
     DimensionErrorResponse,
     get_sse_headers,
@@ -151,24 +150,6 @@ async def _validate_image_size(file: UploadFile) -> bytes:
 
 
 # ============================================================================
-# Sanitization Helpers
-# ============================================================================
-
-def _sanitize_text(value: str, default: str = "") -> str:
-    """Sanitize text field to prevent XSS."""
-    if not value:
-        return default
-    value = value.strip()
-    if not value:
-        return default
-    value = re.sub(r"<[^>]+>", "", value)
-    value = html.escape(value)
-    value = re.sub(r"(?i)javascript\s*:", "", value)
-    value = re.sub(r"(?i)on\w+\s*=", "", value)
-    return value or default
-
-
-# ============================================================================
 # Character CRUD Endpoints
 # ============================================================================
 
@@ -197,9 +178,9 @@ async def create_character_endpoint(
     )
 
     # Sanitize text fields
-    request.name = _sanitize_text(request.name)
+    request.name = sanitize_generic_text(request.name)
     if request.description:
-        request.description = _sanitize_text(request.description)
+        request.description = sanitize_generic_text(request.description)
 
     try:
         character = await create_character(db, user_id, request)
@@ -263,9 +244,9 @@ async def update_character_endpoint(
 
     # Sanitize text fields
     if request.name:
-        request.name = _sanitize_text(request.name)
+        request.name = sanitize_generic_text(request.name)
     if request.description:
-        request.description = _sanitize_text(request.description)
+        request.description = sanitize_generic_text(request.description)
 
     character = await update_character(db, character_id, user_id, request)
     if not character:

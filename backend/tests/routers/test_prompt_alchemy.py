@@ -18,13 +18,13 @@ from app.dimension_adapter import (
     PROMPT_ALCHEMY_PLATFORMS,
     run_prompt_translator,
 )
+from app.routers.dimension._base import sanitize_generic_text
 from app.routers.dimension.prompt import (
     SUPPORTED_PLATFORMS,
     PLATFORM_INFO,
     PromptTranslateRequest,
     BatchTranslateRequest,
     UQSLStrategy,
-    _sanitize_style,
     _validate_auteur_key,
     # 2026 Best Practices imports
     SixLayerDimension,
@@ -473,27 +473,27 @@ class TestSanitizationHelpers:
     """Test sanitization helper functions directly."""
 
     def test_sanitize_style_removes_html(self):
-        """Test _sanitize_style removes HTML tags."""
-        result = _sanitize_style("<div>cinematic</div>")
+        """Test sanitize_generic_text removes HTML tags."""
+        result = sanitize_generic_text("<div>cinematic</div>")
         assert "<div>" not in result
         assert "</div>" not in result
 
     def test_sanitize_style_removes_script(self):
-        """Test _sanitize_style removes script tags."""
-        result = _sanitize_style("<script>evil()</script>test")
+        """Test sanitize_generic_text removes script tags."""
+        result = sanitize_generic_text("<script>evil()</script>test")
         # Script tags are removed (content may remain but is not executable)
         assert "<script>" not in result
         assert "</script>" not in result
         assert "test" in result
 
     def test_sanitize_style_empty_returns_default(self):
-        """Test _sanitize_style returns default for empty."""
-        assert _sanitize_style("") == "cinematic"
-        assert _sanitize_style("   ") == "cinematic"
+        """Test sanitize_generic_text returns default for empty."""
+        assert sanitize_generic_text("", default="cinematic") == "cinematic"
+        assert sanitize_generic_text("   ", default="cinematic") == "cinematic"
 
     def test_sanitize_style_preserves_korean(self):
-        """Test _sanitize_style preserves Korean characters."""
-        result = _sanitize_style("시네마틱 느와르")
+        """Test sanitize_generic_text preserves Korean characters."""
+        result = sanitize_generic_text("시네마틱 느와르")
         assert "시네마틱" in result
         assert "느와르" in result
 
