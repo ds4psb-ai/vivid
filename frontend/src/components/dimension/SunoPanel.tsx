@@ -639,6 +639,10 @@ function SunoContent() {
           </div>
         )}
 
+        {/* Evidence Display */}
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        {localResult?.success && <DimensionPanel.Evidence refs={(localResult as any)?.evidence_refs} />}
+
         {/* Workflow Navigation */}
         {localResult?.success && (
           <div className="mt-4">

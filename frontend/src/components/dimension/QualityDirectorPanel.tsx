@@ -475,6 +475,10 @@ function QualityDirectorContent() {
           />
         )}
 
+        {/* Evidence Display */}
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        <DimensionPanel.Evidence refs={(qualityResult as any)?.evidence_refs} />
+
         {/* Empty State */}
         {!qualityResult && !isPending && !displayError && (
           <EmptyState themeColor={token.themeColor} />

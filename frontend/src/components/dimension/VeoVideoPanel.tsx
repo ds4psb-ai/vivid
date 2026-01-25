@@ -831,6 +831,10 @@ function VeoVideoContent() {
                 </div>
               )}
 
+              {/* Evidence Display */}
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {videoResult.status === "completed" && <DimensionPanel.Evidence refs={(videoResult as any)?.evidence_refs} />}
+
               {/* Next Dimension Navigation */}
               {videoResult.status === "completed" && (
                 <DimensionPanel.NextNav currentDimension={DIMENSION_KEY} />

@@ -821,6 +821,10 @@ function StoryArchitectContent() {
                 )}
               </div>
 
+              {/* Evidence Display */}
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <DimensionPanel.Evidence refs={(storyResult as any)?.evidence_refs} />
+
               {/* Next Dimension Navigation */}
               <DimensionPanel.NextNav currentDimension={DIMENSION_KEY} />
             </div>

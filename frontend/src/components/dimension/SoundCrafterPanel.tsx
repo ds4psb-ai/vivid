@@ -532,6 +532,10 @@ function SoundCrafterContent() {
           />
         )}
 
+        {/* Evidence Display */}
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        {currentStage === "mastering" && <DimensionPanel.Evidence refs={(finalResult as any)?.evidence_refs} />}
+
         {/* NextNav for final result */}
         {currentStage === "mastering" && finalResult && (
           <DimensionPanel.NextNav />

@@ -128,6 +128,8 @@ function CreativeEditorContent() {
     regenerate: isKo ? "다시 제안받기" : "Get New Suggestions",
     changeLog: isKo ? "변경 내역 로그" : "Change Log",
     validationError: isKo ? "검토할 콘텐츠를 입력해주세요." : "Please enter content to review.",
+    referenceFiles: isKo ? "참고 자료 (선택)" : "Reference Material (Optional)",
+    referenceFilesHelper: isKo ? "시나리오, 스크립트, 참고 문서" : "Scripts, outlines, reference docs",
   }), [isKo]);
 
   // Form state
@@ -136,6 +138,7 @@ function CreativeEditorContent() {
   const [persona, setPersona] = useState("Senior Editor");
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [_files, setFiles] = useState<File[]>([]);
 
   // Result state
   const [editorResult, setEditorResult] = useState<EditorResult | null>(null);
@@ -242,6 +245,16 @@ function CreativeEditorContent() {
           />
         </div>
 
+        {/* Reference Files Upload */}
+        <DimensionPanel.FileUpload
+          accept={[".pdf", ".docx", ".txt", "text/*", ".md"]}
+          maxSizeMB={50}
+          multiple={false}
+          onUpload={setFiles}
+          label={labels.referenceFiles}
+          helperText={labels.referenceFilesHelper}
+        />
+
         {/* Persona Selection */}
         <div className="space-y-2">
           <label
@@ -319,6 +332,10 @@ function CreativeEditorContent() {
             labels={labels}
           />
         )}
+
+        {/* Evidence Display */}
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        <DimensionPanel.Evidence refs={(editorResult as any)?.evidence_refs} />
 
         {/* Next Dimension Navigation */}
         <DimensionPanel.NextNav currentDimension={DIMENSION_KEY} />

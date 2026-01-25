@@ -586,6 +586,10 @@ function KlingContent() {
               </div>
             </DimensionPanel.Result>
 
+            {/* Evidence Display */}
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <DimensionPanel.Evidence refs={(displayResult as any)?.evidence_refs} />
+
             {/* Next Navigation */}
             <DimensionPanel.NextNav />
           </div>

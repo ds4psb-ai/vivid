@@ -13,6 +13,7 @@
  */
 
 import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -66,13 +67,22 @@ function DimensionIcon({
 
 export default function DimensionHubClient() {
   const { language } = useLanguage();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [selectedStage, setSelectedStage] = useState<DimensionStage | null>(
-    null
+    (searchParams.get("stage") as DimensionStage) || null
   );
   const [showChainPanel, setShowChainPanel] = useState(false);
   const chainCtx = useDimensionChainOptional();
   useParallaxScroll();
+
+  const handleStageChange = (stage: DimensionStage | null) => {
+    setSelectedStage(stage);
+    const params = new URLSearchParams();
+    if (stage) params.set("stage", stage);
+    router.push(params.toString() ? `/dimension?${params}` : "/dimension");
+  };
 
   const filteredItems = selectedStage
     ? DIMENSION_ITEMS.filter((d) => d.stage === selectedStage)
@@ -108,7 +118,7 @@ export default function DimensionHubClient() {
           <StageToggle
             stageKeys={stageKeys}
             selectedStage={selectedStage}
-            onStageChange={setSelectedStage}
+            onStageChange={handleStageChange}
             language={language}
           />
 

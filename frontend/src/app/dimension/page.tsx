@@ -14,6 +14,7 @@
  */
 
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import DimensionHubClient from "./_components/DimensionHubClient";
 
 export const metadata: Metadata = {
@@ -44,5 +45,10 @@ export const metadata: Metadata = {
 export default function DimensionHubPage() {
   // This is a Server Component - no "use client" directive
   // All interactive logic is in DimensionHubClient
-  return <DimensionHubClient />;
+  // Suspense boundary required for useSearchParams()
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-zinc-950 animate-pulse" />}>
+      <DimensionHubClient />
+    </Suspense>
+  );
 }

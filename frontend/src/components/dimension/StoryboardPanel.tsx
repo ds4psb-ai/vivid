@@ -495,6 +495,10 @@ function StoryboardContent() {
           />
         )}
 
+        {/* Evidence Display */}
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        <DimensionPanel.Evidence refs={(storyboardResult as any)?.evidence_refs} />
+
         {/* Empty State */}
         {!storyboardResult && !isPending && !displayError && !optimisticResult && (
           <EmptyState themeColor={token.themeColor} isKo={isKo} />
