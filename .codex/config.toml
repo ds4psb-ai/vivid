@@ -1,0 +1,5 @@
+# Project-local Codex config (keeps MCP changes scoped to this repo).
+
+[mcp_servers.stitch]
+command = "npx"
+args = ["@_davideast/stitch-mcp", "proxy"]

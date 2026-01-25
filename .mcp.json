@@ -77,6 +77,14 @@
         "@modelcontextprotocol/server-postgres",
         "postgresql://postgres:postgres@localhost:5433/crebit"
       ]
+    },
+    "stitch": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@_davideast/stitch-mcp",
+        "proxy"
+      ]
     }
   }
 }

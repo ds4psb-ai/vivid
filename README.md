@@ -156,6 +156,22 @@ Optional (admin-only data visibility):
 NEXT_PUBLIC_ADMIN_MODE=true
 ```
 
+## Codex MCP (project-local)
+
+- Project-scoped MCP config lives in `.codex/config.toml` and `.mcp.json` (no global edits).
+- Verify Stitch is registered:
+  ```bash
+  codex mcp list
+  ```
+- ADC / permissions / service check:
+  ```bash
+  PROJECT_ID="your-project-id" ADC_EMAIL="you@example.com" ./scripts/stitch_mcp_check.sh
+  ```
+  If you have no ADC token yet, run once:
+  ```bash
+  gcloud auth application-default login
+  ```
+
 ## Ports (non-conflicting with komission)
 
 - Frontend: http://localhost:3100

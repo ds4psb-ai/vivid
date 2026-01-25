@@ -25,17 +25,26 @@ else
 fi
 ```
 
-## 3. 백엔드 서버 종료 및 재시작 (강건한 버전)
+## 3. 필수 환경변수 확인 (로그인 무한루프 방지)
 ```bash
-# 1. 기존 백엔드 프로세스 graceful 종료 (SIGTERM → SIGKILL)
-pkill -f "uvicorn.*app\.main" 2>/dev/null || true
-sleep 2
-# 강제 종료 (남아있는 프로세스)
-pkill -9 -f "uvicorn.*app\.main" 2>/dev/null || true
-lsof -ti :8100 | xargs -r kill -9 2>/dev/null || true
+cd /Users/ted/vivid/backend
+# ENABLE_DEV_AUTH_BYPASS 없으면 X-User-Id 헤더 인증이 안되어 무한 로그인 루프 발생
+if ! grep -q "^ENABLE_DEV_AUTH_BYPASS=" .env 2>/dev/null; then
+    echo "ENABLE_DEV_AUTH_BYPASS=true" >> .env
+    echo "⚠️  Added missing ENABLE_DEV_AUTH_BYPASS=true"
+else
+    echo "✅ Environment variables OK"
+fi
+```
+
+## 4. 백엔드 서버 종료 및 재시작 (zsh 호환)
+```bash
+# zsh에서 regex escape 문제로 bash -c로 래핑
+bash -c 'pkill -f "uvicorn.*app.main" 2>/dev/null || true; sleep 2; pkill -9 -f "uvicorn.*app.main" 2>/dev/null || true'
+lsof -ti :8100 | xargs kill -9 2>/dev/null || true
 sleep 1
 
-# 2. venv 활성화 + 서버 시작 (단일 쉘에서 실행)
+# venv 활성화 + 서버 시작 (단일 bash에서 실행)
 cd /Users/ted/vivid/backend && \
 if [ -f venv/bin/activate ]; then
     bash -c 'source venv/bin/activate && nohup uvicorn app.main:app --host 0.0.0.0 --port 8100 --reload > /tmp/vivid-backend.log 2>&1 &' && \
@@ -45,52 +54,56 @@ else
 fi
 ```
 
-## 4. 백엔드 Health Check (최대 10초 대기)
+## 5. 백엔드 Health Check (최대 10초 대기)
 ```bash
 for i in {1..10}; do
     if curl -s http://localhost:8100/health > /dev/null 2>&1; then
         echo "✅ Backend (8100): healthy"
         break
     fi
-    [ $i -eq 10 ] && echo "❌ Backend (8100): failed to start - check /tmp/vivid-backend.log"
+    if [ $i -eq 10 ]; then
+        echo "❌ Backend (8100): failed to start"
+        echo "--- Last 20 lines of backend log ---"
+        tail -20 /tmp/vivid-backend.log
+    fi
     sleep 1
 done
 ```
 
-## 5. 프론트엔드 서버 종료 및 재시작
+## 6. 프론트엔드 서버 종료 및 재시작
 ```bash
-# 1. 기존 프론트엔드 graceful 종료 (SIGTERM → SIGKILL)
-pkill -f "node.*/Users/ted/vivid/frontend" 2>/dev/null || true
-pkill -f "bun.*dev.*3100" 2>/dev/null || true
-sleep 2
-# 강제 종료 (남아있는 프로세스)
-pkill -9 -f "node.*/Users/ted/vivid/frontend" 2>/dev/null || true
-lsof -ti :3100 | xargs -r kill -9 2>/dev/null || true
+# zsh 호환 - bash -c로 래핑
+bash -c 'pkill -f "node.*/Users/ted/vivid/frontend" 2>/dev/null || true; pkill -f "bun.*dev" 2>/dev/null || true; sleep 2; pkill -9 -f "node.*/Users/ted/vivid/frontend" 2>/dev/null || true'
+lsof -ti :3100 | xargs kill -9 2>/dev/null || true
 sleep 1
 
-# 2. 캐시 삭제 + 프론트엔드 시작 (Bun)
+# 캐시 삭제 + 프론트엔드 시작 (Bun)
 rm -rf /Users/ted/vivid/frontend/.next 2>/dev/null || true
 cd /Users/ted/vivid/frontend && nohup bun run dev > /tmp/vivid-frontend.log 2>&1 &
 echo "Frontend starting... (PID: $!)"
 ```
 
-## 6. 프론트엔드 Health Check (최대 15초 대기 - 빌드 시간)
+## 7. 프론트엔드 Health Check (최대 15초 대기)
 ```bash
 for i in {1..15}; do
     if curl -s http://localhost:3100 > /dev/null 2>&1; then
         echo "✅ Frontend (3100): ready"
         break
     fi
-    [ $i -eq 15 ] && echo "❌ Frontend (3100): failed to start - check /tmp/vivid-frontend.log"
+    if [ $i -eq 15 ]; then
+        echo "❌ Frontend (3100): failed to start"
+        echo "--- Last 20 lines of frontend log ---"
+        tail -20 /tmp/vivid-frontend.log
+    fi
     sleep 1
 done
 ```
 
-## 7. 전체 상태 요약
+## 8. 전체 상태 요약
 ```bash
 echo ""
 echo "=== Vivid Server Status ==="
-curl -s http://localhost:8100/health | python3 -c "import sys,json; d=json.load(sys.stdin); print(f\"Backend: {d['status']} (DB: {d['checks']['database']['status']}, Redis: {d['checks']['redis']['status']})\")" 2>/dev/null || echo "Backend: ❌ not responding"
+curl -s http://localhost:8100/health | python3 -c "import sys,json; d=json.load(sys.stdin); print(f\"Backend: {d['status']} (DB: {d['checks']['database']['status']}, Redis: {d['checks']['redis']['status']})\") if d else print('Backend: parse error')" 2>/dev/null || echo "Backend: ❌ not responding"
 curl -s -o /dev/null -w "Frontend: HTTP %{http_code}\n" http://localhost:3100/ 2>/dev/null || echo "Frontend: ❌ not responding"
 curl -s -o /dev/null -w "Qdrant: HTTP %{http_code}\n" http://localhost:6333/ 2>/dev/null || echo "Qdrant: (optional) not running"
 echo ""
@@ -108,7 +121,9 @@ echo "Logs: /tmp/vivid-backend.log, /tmp/vivid-frontend.log"
 ## 트러블슈팅
 | 증상 | 해결 |
 |------|------|
+| 무한 로그인 루프 | `ENABLE_DEV_AUTH_BYPASS=true` 확인 (Step 3) |
 | 포트 사용 중 | `lsof -ti :8100 \| xargs kill -9` |
 | venv 활성화 실패 | `cd backend && python3 -m venv venv` |
 | Frontend 빌드 에러 | `rm -rf .next node_modules && bun install` |
 | Docker 연결 실패 | `colima restart` |
+| zsh regex 에러 | 이미 bash -c로 래핑됨 ✅ |
