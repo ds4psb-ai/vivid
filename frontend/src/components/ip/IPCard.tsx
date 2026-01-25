@@ -56,7 +56,7 @@ export default function IPCard({
       className={"group block " + sizeClasses[size] + " focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded-xl"}
     >
       {/* Thumbnail */}
-      <div className={"relative " + sizeClasses[size] + " " + heightClasses[size] + " rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 mb-2"}>
+      <div className={"relative " + sizeClasses[size] + " " + heightClasses[size] + " rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 mb-2 group-hover:-translate-y-1 transition-transform dimension-card-shimmer"}>
         {thumbnailUrl ? (
           <img
             src={thumbnailUrl}

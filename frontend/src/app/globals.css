@@ -1397,7 +1397,7 @@ html.lenis body {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255,255,255,0.08) 50%,
+    rgba(0,0,0,0.04) 50%,
     transparent 100%
   );
   background-size: 200% 100%;
@@ -1406,6 +1406,15 @@ html.lenis body {
   border-radius: inherit;
   opacity: 0;
   transition: opacity 0.3s;
+}
+
+:is(.dark) .dimension-card-shimmer::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255,255,255,0.08) 50%,
+    transparent 100%
+  );
 }
 
 .dimension-card-shimmer:hover::after {

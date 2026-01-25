@@ -44,7 +44,7 @@ export function WorkRailCard({
   const StatusIcon = meta.icon;
 
   return (
-    <div className="group h-full rounded-2xl border border-[var(--border-muted)] bg-[var(--surface-1)] p-4 hover:border-[var(--border-strong)] transition-all">
+    <div className="group h-full rounded-2xl border border-[var(--border-muted)] bg-[var(--surface-1)] p-4 hover:border-[var(--border-strong)] hover:-translate-y-1 transition-all relative overflow-hidden dimension-card-shimmer">
       <div className="flex items-center justify-between gap-2">
         <div>
           <p className="text-sm font-semibold text-[var(--fg-0)] line-clamp-1">{title}</p>

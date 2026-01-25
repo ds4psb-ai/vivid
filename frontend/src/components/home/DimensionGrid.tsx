@@ -166,7 +166,7 @@ export function DimensionGrid({ showTitle = true, showFilters = true, compact = 
                             >
                                 <Link
                                     href={dimension.href}
-                                    className={`group block relative overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02] backdrop-blur-sm hover:bg-gray-100/80 dark:hover:bg-white/[0.04] transition-all hover:-translate-y-1 ${compact ? "p-3" : "p-5"
+                                    className={`group block relative overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02] backdrop-blur-sm hover:bg-gray-100/80 dark:hover:bg-white/[0.04] transition-all hover:-translate-y-1 dimension-card-shimmer ${compact ? "p-3" : "p-5"
                                         }`}
                                 >
                                     {/* NEW Badge */}

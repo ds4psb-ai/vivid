@@ -244,6 +244,7 @@ function FlowPageContent() {
     const [isSavingTemplate, setIsSavingTemplate] = useState(false);
     const [templateSaveSuccess, setTemplateSaveSuccess] = useState(false);
     const [templateSaveError, setTemplateSaveError] = useState<string | null>(null);  // 🆕 Inline error
+    const [_savedTemplateId, setSavedTemplateId] = useState<string | null>(null);  // 🆕 For singularity link (TODO: implement link UI)
 
     const workflowRef = useRef<TrainWorkflowHandle>(null);
     const { language } = useLanguage();

@@ -42,7 +42,7 @@ export function useToolRecommendations(
   const { autoFetch: _autoFetch = false, maxResults = 5 } = options;
 
   const [recommendations, setRecommendations] = useState<ToolRecommendation[]>(
-    [maxResults]
+    []
   );
   const [response, setResponse] = useState<ToolRecommendationResponse | null>(
     null
