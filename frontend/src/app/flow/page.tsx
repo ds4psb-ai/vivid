@@ -16,7 +16,6 @@ import { api, SingularityTemplate } from "@/lib/api";
 import { FLOW_ENABLED } from "@/lib/feature-flags";
 import { dimensionIdToCode, getDimensionToken } from "@/lib/tokens";
 import { normalizeWorkflowDimension, type WorkflowDimension } from "@/lib/dimension-types";
-import { FLOW_START_OPTIONS } from "@/lib/dimension-data";
 import { useWorkflowController } from "@/hooks/useWorkflowController";
 import type { WorkflowPhase } from "@/machines/workflowMachine";
 import Link from "next/link";
@@ -212,11 +211,6 @@ const WARNING_TONE = {
     border: "border-[var(--warning)]/30",
 };
 
-const INFO_TONE = {
-    solid: "bg-[var(--info)]",
-    hover: "hover:opacity-90",
-};
-
 function FlowPageContent() {
     const [workflowResults, setWorkflowResults] = useState<WorkflowResult[]>([]);
     const [showResults, setShowResults] = useState(false);
@@ -229,7 +223,6 @@ function FlowPageContent() {
         sendWorkflow,
         currentPhase,
         chainData,
-        handleStartWorkflow,
         handlePhaseClick,
         handleWorkflowControl,
         getWorkflowStateForSidebar,
@@ -250,7 +243,6 @@ function FlowPageContent() {
     const [templateTags, setTemplateTags] = useState("");
     const [isSavingTemplate, setIsSavingTemplate] = useState(false);
     const [templateSaveSuccess, setTemplateSaveSuccess] = useState(false);
-    const [savedTemplateId, setSavedTemplateId] = useState<string | null>(null);  // 🆕 For singularity link
     const [templateSaveError, setTemplateSaveError] = useState<string | null>(null);  // 🆕 Inline error
 
     const workflowRef = useRef<TrainWorkflowHandle>(null);

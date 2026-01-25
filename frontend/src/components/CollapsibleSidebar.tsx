@@ -6,30 +6,17 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { FLOW_ENABLED } from "@/lib/feature-flags";
 import {
     Home,
-    Activity,
-    TrendingUp,
-    Settings,
     ChevronLeft,
     ChevronRight,
     ChevronDown,
     MessageCircle,
     Orbit,
     Waypoints,
-    CircleDashed,
     Globe,
     Sparkles,
-    FolderOpen,
-    User,
-    Wrench,
-    ShieldCheck,
-    MessageSquareText,
     FlaskConical,
-    BarChart3,
-    CreditCard,
-    Plus,
     Pin,
     PinOff,
 } from "lucide-react";

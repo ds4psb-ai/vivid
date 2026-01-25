@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, Clock, ChevronRight, BookOpen, Loader2 } from "lucide-react";
+import { Sparkles, ChevronRight, BookOpen, Loader2 } from "lucide-react";
 
 interface WorkflowStep {
     tool_id: string;

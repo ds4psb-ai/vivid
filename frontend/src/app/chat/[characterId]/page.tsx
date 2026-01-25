@@ -1,8 +1,9 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { Send, ArrowLeft, Settings, RefreshCw, MoreVertical } from "lucide-react";
+import { Send, ArrowLeft, Settings, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Types
@@ -99,7 +100,7 @@ export default function ChatPage() {
         const data = await res.json();
         setCharacter(data);
         setModelPreference(data.chat_model_default || "flash");
-      } catch (err) {
+      } catch {
         setError("캐릭터 정보를 불러오지 못했습니다");
       }
     }
@@ -148,7 +149,7 @@ export default function ChatPage() {
 
         // Fetch initial messages (opening message)
         await fetchMessages(data.id);
-      } catch (err) {
+      } catch {
         setError("채팅 세션을 시작하지 못했습니다");
       }
     }
@@ -156,7 +157,7 @@ export default function ChatPage() {
     if (characterId && character) {
       initSession();
     }
-  }, [characterId, character, sessionIdParam]);
+  }, [characterId, character, sessionIdParam, modelPreference, router]);
 
   // Fetch scenarios
   useEffect(() => {
@@ -169,8 +170,8 @@ export default function ChatPage() {
           const data = await res.json();
           setScenarios(data);
         }
-      } catch (err) {
-        console.error("Failed to fetch scenarios", err);
+      } catch {
+        console.error("Failed to fetch scenarios");
       }
     }
 
@@ -189,8 +190,8 @@ export default function ChatPage() {
         const data = await res.json();
         setMessages(data.messages);
       }
-    } catch (err) {
-      console.error("Failed to fetch messages", err);
+    } catch {
+      console.error("Failed to fetch messages");
     }
   }
 
@@ -261,7 +262,7 @@ export default function ChatPage() {
         setIsStreaming(false);
         eventSource.close();
       };
-    } catch (err) {
+    } catch {
       setError("메시지 전송에 실패했습니다");
       setIsStreaming(false);
     }
@@ -292,7 +293,7 @@ export default function ChatPage() {
           return [...filtered, newMessage];
         });
       }
-    } catch (err) {
+    } catch {
       setError("재생성에 실패했습니다");
     } finally {
       setIsLoading(false);

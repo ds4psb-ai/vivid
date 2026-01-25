@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -26,7 +27,6 @@ import {
   Music,
   Eye,
   ArrowRight,
-  CheckCircle2,
   Volume2,
   VolumeX,
 } from "lucide-react";
@@ -46,12 +46,10 @@ import {
   isDemoIP,
   resolveVideoUrl,
   type DemoWorkflow,
-  type ContentType,
 } from "@/lib/demo-ip-overrides";
 import {
   saveWorkflowState,
   buildStepUrl,
-  type WorkflowStep as WorkflowStateStep,
 } from "@/lib/workflow-state";
 
 // =============================================================================

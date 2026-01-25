@@ -39,10 +39,10 @@ interface UseToolRecommendationsOptions {
 export function useToolRecommendations(
   options: UseToolRecommendationsOptions = {}
 ) {
-  const { autoFetch = false, maxResults = 5 } = options;
+  const { autoFetch: _autoFetch = false, maxResults = 5 } = options;
 
   const [recommendations, setRecommendations] = useState<ToolRecommendation[]>(
-    []
+    [maxResults]
   );
   const [response, setResponse] = useState<ToolRecommendationResponse | null>(
     null
@@ -141,7 +141,7 @@ export function useToolRecommendations(
         setIsLoading(false);
       }
     },
-    []
+    [maxResults]
   );
 
   /**

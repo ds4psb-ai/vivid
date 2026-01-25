@@ -68,7 +68,7 @@ interface CreatorProfile {
     is_verified: boolean;
 }
 
-import { StatCard, type StatColor } from "@/components/shared/StatCard";
+import { StatCard } from "@/components/shared/StatCard";
 
 // =============================================================================
 // Request Card Component (Card Premium Style)

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
 
 interface Sparkle {
   id: number;
@@ -17,24 +17,32 @@ interface SparkleParticlesProps {
 }
 
 export function SparkleParticles({ count = 15, className = "" }: SparkleParticlesProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   const sparkles = useMemo<Sparkle[]>(() => {
-    return Array.from({ length: count }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      size: Math.random() * 3 + 1,
-      delay: Math.random() * 3,
-      duration: Math.random() * 2 + 2,
-    }));
-  }, [count]);
+    const seededRandom = (seed: number) => {
+      let t = seed + 0x6D2B79F5;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
 
-  if (!mounted) return null;
+    return Array.from({ length: count }, (_, i) => {
+      const base = (count + 1) * (i + 1);
+      const r1 = seededRandom(base);
+      const r2 = seededRandom(base + 1);
+      const r3 = seededRandom(base + 2);
+      const r4 = seededRandom(base + 3);
+      const r5 = seededRandom(base + 4);
+
+      return {
+        id: i,
+        x: r1 * 100,
+        y: r2 * 100,
+        size: r3 * 3 + 1,
+        delay: r4 * 3,
+        duration: r5 * 2 + 2,
+      };
+    });
+  }, [count]);
 
   return (
     <div className={`absolute inset-0 overflow-hidden pointer-events-none ${className}`}>

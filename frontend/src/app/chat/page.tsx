@@ -1,8 +1,8 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { MessageCircle, Users, TrendingUp, Clock, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +38,6 @@ interface ChatSession {
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 export default function ChatListPage() {
-  const router = useRouter();
   const [ips, setIps] = useState<ChatIP[]>([]);
   const [recentSessions, setRecentSessions] = useState<ChatSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);

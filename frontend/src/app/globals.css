@@ -1565,8 +1565,10 @@ html.lenis body {
   overflow-x: auto;
   gap: 1.5rem;
   padding-bottom: 1rem;
-  scroll-snap-type: x mandatory;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: 1.5rem;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
 
 .content-rail::-webkit-scrollbar {
@@ -1576,6 +1578,24 @@ html.lenis body {
 .content-rail > * {
   scroll-snap-align: start;
   flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .content-rail {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+  }
+
+  .content-rail > * {
+    flex-shrink: initial;
+  }
+}
+
+@media (min-width: 1024px) {
+  .content-rail {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 /* Video Card Overlay - Play button on hover */
@@ -1596,10 +1616,43 @@ html.lenis body {
 
 /* Hero Gradient Text */
 .gradient-text-hero {
-  background: linear-gradient(135deg, var(--accent) 0%, #10b981 50%, #8b5cf6 100%);
+  background: linear-gradient(120deg, #ffffff 0%, #2bee79 45%, #8b5cf6 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+/* Dimension Flow Banner - Conic gradient border */
+@keyframes spin-slow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.dimension-border {
+  position: relative;
+  border-radius: 1.5rem;
+  padding: 1px;
+  overflow: hidden;
+}
+
+.dimension-border::before {
+  content: "";
+  position: absolute;
+  inset: -50%;
+  background: conic-gradient(from 180deg, rgba(139, 92, 246, 0.9), rgba(16, 185, 129, 0.9), rgba(139, 92, 246, 0.9));
+  animation: spin-slow 10s linear infinite;
+  opacity: 0.6;
+  z-index: 0;
+}
+
+.dimension-content {
+  position: relative;
+  border-radius: calc(1.5rem - 1px);
+  background: rgba(8, 10, 12, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 1;
 }
 
 /* Section Divider with glow */

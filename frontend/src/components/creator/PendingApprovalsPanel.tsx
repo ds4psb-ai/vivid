@@ -6,7 +6,7 @@
  * Displays pending approval checkpoints for the creator.
  */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ClipboardCheck,
   Loader2,
@@ -14,7 +14,6 @@ import {
   Clock,
   Check,
   X,
-  ExternalLink,
   ChevronRight,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -70,11 +69,7 @@ export function PendingApprovalsPanel() {
     showMore: language === "ko" ? "더 보기" : "Show More",
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -88,7 +83,11 @@ export function PendingApprovalsPanel() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [labels.errorMsg]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   async function handleApproval(checkpointId: string, action: "approve" | "reject") {
     try {

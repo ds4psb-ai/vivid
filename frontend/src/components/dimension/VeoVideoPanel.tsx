@@ -241,7 +241,7 @@ function VeoVideoContent() {
           };
 
           // Add all act descriptions to script
-          structure.forEach((act, i) => {
+          structure.forEach((act) => {
             scriptParts.push(`[${act.act}] ${act.description} (${act.emotion})`);
           });
         }
@@ -250,7 +250,6 @@ function VeoVideoContent() {
 
         // Extract visual motifs for style hints
         if (data.visual_motifs && Array.isArray(data.visual_motifs)) {
-          const motifs = data.visual_motifs as string[];
           context.styleHints = {
             mood: (data.structure as Array<{ emotion: string }>)?.[0]?.emotion,
           };

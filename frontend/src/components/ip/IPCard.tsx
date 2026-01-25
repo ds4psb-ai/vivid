@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import React from "react";
 import Link from "next/link";
@@ -21,13 +22,13 @@ interface IPCardProps {
 }
 
 export default function IPCard({
-  id,
+  id: _id,
   slug,
   nameKo,
   nameEn,
   thumbnailUrl,
   genre = [],
-  tags = [],
+  tags: _tags = [],
   presetCount,
   generationCount,
   licenseStatus,

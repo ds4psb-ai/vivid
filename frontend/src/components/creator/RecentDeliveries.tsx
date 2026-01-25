@@ -11,7 +11,6 @@ import {
   Package,
   Loader2,
   AlertCircle,
-  Clock,
   CheckCircle,
   XCircle,
   Star,
@@ -68,7 +67,7 @@ export function RecentDeliveries() {
       }
     }
     loadData();
-  }, []);
+  }, [labels.errorMsg]);
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);

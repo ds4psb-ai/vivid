@@ -269,7 +269,7 @@ export function useAnalyticsDashboard(
           : prev
       );
     }
-  }, [streamData]);
+  }, [streamData, kpis]);
 
   // Fetch KPIs
   const refreshKPIs = useCallback(async () => {

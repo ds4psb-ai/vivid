@@ -195,7 +195,7 @@ export default function CreatorFeedbackPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {copy.pipelineStages.map((stage, index) => (
+                  {copy.pipelineStages.map((stage) => (
                     <div
                       key={stage.title}
                       className="flex items-center justify-between rounded-lg border border-white/5 bg-[var(--surface-2)]/50 px-4 py-3"

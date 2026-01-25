@@ -6,7 +6,7 @@
  */
 
 import { useMemo } from "react";
-import type { MotionProps, Transition, TargetAndTransition, Easing } from "framer-motion";
+import type { MotionProps, Transition, TargetAndTransition } from "framer-motion";
 
 // =============================================================================
 // Types

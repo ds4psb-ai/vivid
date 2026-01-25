@@ -10,9 +10,6 @@ import { useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   BarChart3,
-  Activity,
-  DollarSign,
-  Users,
   ArrowUpRight,
   Sparkles,
 } from "lucide-react";

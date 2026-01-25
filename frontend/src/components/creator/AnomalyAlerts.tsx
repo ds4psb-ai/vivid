@@ -6,7 +6,7 @@
  * Displays AI-detected anomalies in creator metrics.
  */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   AlertTriangle,
   Loader2,
@@ -17,7 +17,6 @@ import {
   DollarSign,
   Activity,
   Check,
-  X,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { fetchWithAuth } from "@/lib/api-client";
@@ -82,11 +81,7 @@ export function AnomalyAlerts() {
     } as Record<string, string>,
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -99,7 +94,11 @@ export function AnomalyAlerts() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [labels.errorMsg]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   async function handleResolve(anomalyId: string) {
     try {

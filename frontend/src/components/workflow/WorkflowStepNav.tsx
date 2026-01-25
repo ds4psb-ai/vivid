@@ -51,7 +51,7 @@ export interface WorkflowStepNavProps {
 // =============================================================================
 
 function WorkflowStepNavInner({
-  currentApp,
+  currentApp: _currentApp,
   onComplete,
   disabled = false,
   resultData,

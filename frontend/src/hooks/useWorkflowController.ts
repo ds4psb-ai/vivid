@@ -18,8 +18,6 @@ const PHASE_TO_START_EVENT = {
   "1D": "START_1D",
 } as const;
 
-type StartEventType = (typeof PHASE_TO_START_EVENT)[keyof typeof PHASE_TO_START_EVENT];
-
 export function useWorkflowController() {
   // XState workflow machine
   const [workflowState, sendWorkflow] = useMachine(workflowMachine);

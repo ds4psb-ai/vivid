@@ -1486,8 +1486,7 @@ function StyleGuideResult({
     avoidElements: string;
   };
 }) {
-  const { language, t } = useLanguage();
-  const isKo = language === "ko";
+  const { t } = useLanguage();
   const defaultLabels = {
     generatingGuide: "스타일 가이드 생성 중...",
     exportJson: "JSON 내보내기",

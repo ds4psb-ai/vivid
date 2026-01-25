@@ -15,7 +15,6 @@ import {
   ChevronDown,
   AlertTriangle,
   Clock,
-  Users,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { FunnelAnalysis, FunnelStep } from "@/hooks/useAnalyticsDashboard";

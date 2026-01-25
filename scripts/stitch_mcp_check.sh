@@ -100,10 +100,21 @@ else:
 
 cmd_screens() {
   local project_id="$1"
-  stitch_call "list_screens" "{\"parent\":\"projects/$project_id\"}" | python3 -c "
+  stitch_call "list_screens" "{\"projectId\":\"$project_id\"}" | python3 -c "
 import sys, json
 data = json.load(sys.stdin)
 screens = data.get('result', {}).get('structuredContent', {}).get('screens', [])
+if not screens:
+    payload = None
+    for block in data.get('result', {}).get('content', []):
+        if block.get('type') == 'text':
+            try:
+                payload = json.loads(block.get('text', ''))
+            except json.JSONDecodeError:
+                payload = None
+            break
+    if isinstance(payload, dict):
+        screens = payload.get('screens', []) or []
 if not screens:
     print('No screens found')
 else:
@@ -118,17 +129,48 @@ cmd_generate() {
   local project_id="$1"
   local description="$2"
   echo "Generating screen (this may take 30-120 seconds)..."
-  stitch_call "generate_screen_from_text" "{\"parent\":\"projects/$project_id\",\"prompt\":\"$description\"}" | python3 -c "
+  stitch_call "generate_screen_from_text" "{\"projectId\":\"$project_id\",\"prompt\":\"$description\"}" | python3 -c "
 import sys, json
 data = json.load(sys.stdin)
 content = data.get('result', {}).get('structuredContent', {})
-if 'name' in content:
+if isinstance(content, dict) and content.get('name'):
     sid = content['name'].split('/')[-1]
     title = content.get('title', 'Generated')
     print(f'Generated screen: {sid}')
     print(f'Title: {title}')
 else:
-    print('Result:', json.dumps(data, indent=2)[:500])
+    payload = None
+    for block in data.get('result', {}).get('content', []):
+        if block.get('type') == 'text':
+            try:
+                payload = json.loads(block.get('text', ''))
+            except json.JSONDecodeError:
+                payload = None
+            break
+
+    screen = None
+    if isinstance(payload, dict):
+        for comp in payload.get('outputComponents', []):
+            design = comp.get('design', {})
+            screens = design.get('screens', [])
+            if screens:
+                screen = screens[0]
+                break
+
+    if screen:
+        name = screen.get('name') or ''
+        sid = name.split('/')[-1] if name else screen.get('id', 'unknown')
+        title = screen.get('title', 'Generated')
+        print(f'Generated screen: {sid}')
+        print(f'Title: {title}')
+        screenshot = screen.get('screenshot', {}).get('downloadUrl')
+        html = screen.get('htmlCode', {}).get('downloadUrl')
+        if screenshot:
+            print(f'Screenshot: {screenshot}')
+        if html:
+            print(f'HTML: {html}')
+    else:
+        print('Result:', json.dumps(data, indent=2)[:500])
 "
 }
 

@@ -15,7 +15,6 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
@@ -26,7 +25,7 @@ import { useDimensionChainOptional, type ChainData } from "@/contexts/DimensionC
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import ChainDataInput from "./ChainDataInput";
 import { getDemoIPOverride } from "@/lib/demo-ip-overrides";
-import { getPreviousStepResult, parseWorkflowUrlParams } from "@/lib/workflow-state";
+import { getPreviousStepResult } from "@/lib/workflow-state";
 import { Layers, ArrowRight, CheckCircle, Download, Sparkles, BookOpen, Film } from "lucide-react";
 import { type ThemeColor as DimensionThemeColor } from "@/lib/dimension-theme";
 
@@ -346,7 +345,7 @@ function StoryArchitectContent() {
     if (promptParam) {
       setConcept(decodeURIComponent(promptParam));
     }
-  }, [isKo]);
+  }, [isKo, concept]);
 
   // Handler to apply chain data from previous dimensions
   const handleApplyChainData = (data: Record<string, ChainData>) => {

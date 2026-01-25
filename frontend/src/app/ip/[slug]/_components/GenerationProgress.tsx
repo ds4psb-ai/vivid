@@ -56,7 +56,7 @@ export default function GenerationProgress({
   onComplete,
   onCancel,
 }: GenerationProgressProps) {
-  const { language, t } = useLanguage();
+  const { t } = useLanguage();
 
   const [progress, setProgress] = useState<GenerationProgress | null>(null);
   const [evidence, setEvidence] = useState<EvidenceData | null>(null);

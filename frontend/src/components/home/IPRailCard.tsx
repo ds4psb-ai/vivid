@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { ShieldCheck, ShieldAlert, ShieldX, Play, Eye, Flame, Sparkles, Volume2, VolumeX } from "lucide-react";
 

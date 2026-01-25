@@ -160,8 +160,8 @@ function SunoContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 2026 API enhancements
-  const [vocalGender, setVocalGender] = useState<string>(""); // "m" or "f"
-  const [styleWeight, setStyleWeight] = useState<number | null>(null); // 0-1
+  const [vocalGender, _setVocalGender] = useState<string>(""); // "m" or "f"
+  const [styleWeight, _setStyleWeight] = useState<number | null>(null); // 0-1
 
   // UI state
   const [isPending, startTransition] = useTransition();
@@ -297,7 +297,7 @@ function SunoContent() {
         setError(err instanceof Error ? err.message : labels.errorUnknown);
       }
     });
-  }, [title, prompt, model, instrumental, buildStyleString, creditContext, labels]);
+  }, [title, prompt, model, instrumental, buildStyleString, creditContext, labels, styleWeight, vocalGender, setContextResult]);
 
   // Handle genre select
   const handleGenreSelect = (genreValue: string) => {

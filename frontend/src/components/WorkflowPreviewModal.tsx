@@ -21,24 +21,10 @@ import {
   Image as ImageIcon,
   Video,
   Music,
-  Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { saveWorkflowState, buildStepUrl } from "@/lib/workflow-state";
-
-// Icon mapping
-const ICON_MAP: Record<string, React.ElementType> = {
-  brain: Brain,
-  search: Search,
-  layers: Layers,
-  palette: Palette,
-  image: ImageIcon,
-  video: Video,
-  music: Music,
-  users: Users,
-  sparkles: Sparkles,
-};
 
 export interface WorkflowStep {
   app: string;

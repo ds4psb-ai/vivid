@@ -77,7 +77,7 @@ export function EngagementChart({ period: initialPeriod = "7d" }: EngagementChar
       }
     }
     loadData();
-  }, [period]);
+  }, [period, labels.errorMsg]);
 
   // Calculate max values for scaling
   const maxViews = Math.max(...data.map((d) => d.views), 1);

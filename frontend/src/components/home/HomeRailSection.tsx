@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import React, { useRef, useState, useEffect, useCallback, TouchEvent } from "react";
 import { motion, useReducedMotion } from "framer-motion";
@@ -29,7 +30,7 @@ interface HomeRailSectionProps {
 }
 
 export default function HomeRailSection({
-  sectionId,
+  sectionId: _sectionId,
   titleKo,
   titleEn,
   items,

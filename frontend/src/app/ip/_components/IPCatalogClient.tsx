@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search, Filter, Grid, List, ChevronDown } from "lucide-react";
+import { Search, Grid, List, ChevronDown } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { useLanguage } from "@/contexts/LanguageContext";
 import IPCard from "@/components/ip/IPCard";

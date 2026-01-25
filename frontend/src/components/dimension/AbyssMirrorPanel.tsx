@@ -573,7 +573,7 @@ function AbyssMirrorContent() {
         setIsLoadingLocal(false);
       }
     });
-  }, [inputMessage, isPending, sessionId, byokKey, creditCtx, messages, personaData, currentStage, model, creditCost, fetchSuggestion, addTrace, saveLocal, chainContext, ragEnabled, addOptimisticMessage, startTransition, labels]);
+  }, [inputMessage, isPending, sessionId, byokKey, creditCtx, messages, personaData, currentStage, model, creditCost, fetchSuggestion, addTrace, saveLocal, chainContext, ragEnabled, addOptimisticMessage, startTransition, labels, setResult]);
 
   const handleExportJson = useCallback(() => {
     if (Object.keys(personaData).length === 0) return;

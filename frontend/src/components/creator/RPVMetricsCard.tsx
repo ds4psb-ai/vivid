@@ -106,7 +106,7 @@ export function RPVMetricsCard() {
       }
     }
     loadMetrics();
-  }, []);
+  }, [labels.errorMsg]);
 
   if (loading) {
     return (

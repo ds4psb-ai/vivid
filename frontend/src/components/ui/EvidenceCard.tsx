@@ -284,7 +284,7 @@ export function EvidenceCard({
       copied: t("copied"),
       copyTrace: t("copyTrace"),
     }),
-    [t, language]
+    [t]
   );
 
   const handleCopyEvidenceRefs = async () => {

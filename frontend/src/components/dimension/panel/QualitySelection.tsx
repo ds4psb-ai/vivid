@@ -11,7 +11,7 @@
  * @see UQSL_SPEC.md - Universal Quality Selection Layer
  */
 
-import { type ComponentProps, type ReactNode, useCallback, useState } from "react";
+import { type ReactNode, useCallback, useState } from "react";
 import { useDimensionPanel } from "./DimensionPanelContext";
 import { useUQSLFeedback } from "@/hooks/useUQSL";
 import { type ThemeColor as DimensionThemeColor } from "@/lib/dimension-theme";
