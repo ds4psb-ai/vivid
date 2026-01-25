@@ -28,7 +28,6 @@ export default function ChainDataInput({
     themeColor = "emerald",
 }: ChainDataInputProps) {
     const chainContext = useDimensionChainOptional();
-    const [isExpanded, setIsExpanded] = useState(false);
     const [applied, setApplied] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const colors = THEME_COLOR_CLASSES[themeColor];
@@ -37,6 +36,9 @@ export default function ChainDataInput({
 
     const inputData = chainContext.getInputData(currentDimension);
     const availableInputs = Object.entries(inputData);
+
+    // P0 Fix: Default expanded when data exists (2026-01-25)
+    const [isExpanded, setIsExpanded] = useState(availableInputs.length > 0);
 
     if (availableInputs.length === 0) return null;
 

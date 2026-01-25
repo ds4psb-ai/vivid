@@ -50,6 +50,7 @@ import {
   Film,
   Layers,
 } from "lucide-react";
+import NextDimensionNav from "./NextDimensionNav";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
@@ -818,6 +819,11 @@ export default function CharacterConsistencyPanel({
                 </div>
               </TabsContent>
             </Tabs>
+
+            {/* P0 Fix: Add NextNav for workflow continuity (2026-01-25) */}
+            <div className="mt-6 pt-6 border-t border-[var(--border-muted)]">
+              <NextDimensionNav currentDimension="cc" show={true} themeColor="cyan" />
+            </div>
           </div>
         ) : (
           <div className="h-full flex items-center justify-center text-[var(--fg-subtle)]">
