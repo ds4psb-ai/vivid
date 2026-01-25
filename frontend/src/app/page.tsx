@@ -1,25 +1,23 @@
 "use client";
 
 /**
- * Home Page - Investor Demo Version
+ * Home Page - Clean & Simple
  *
- * Simplified layout focusing on:
- * 1. Shortform Web Drama (9:16)
- * 2. Animation MV (16:9)
- * 3. Dimension Flow CTA
+ * Content-first layout:
+ * 1. Category tabs for quick navigation
+ * 2. Shortform Web Drama (9:16)
+ * 3. Animation MV (16:9)
+ * 4. Dimension tools
  */
 
-import React, { Suspense } from "react";
+import React, { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Sparkles, Play, Layers, ArrowRight, Search, LogIn, Zap, Compass } from "lucide-react";
+import { Sparkles, Play, Layers, Search, LogIn } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { IPRailCard } from "@/components/home/IPRailCard";
 import { DimensionAppRail } from "@/components/home/DimensionAppRail";
-import { SparkleParticles } from "@/components/ui/SparkleParticles";
-import { GlowButton } from "@/components/ui/GlowButton";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,10 +26,19 @@ import {
   HORIZONTAL_ANIME_MV_IPS,
 } from "@/lib/demo-ip-overrides";
 
+type TabKey = "all" | "shortform" | "anime" | "tools";
+
 function HomePageContent() {
-  const router = useRouter();
   const { language } = useLanguage();
   const ko = language === "ko";
+  const [activeTab, setActiveTab] = useState<TabKey>("all");
+
+  const tabs: { key: TabKey; label: string; labelEn: string }[] = [
+    { key: "all", label: "전체", labelEn: "All" },
+    { key: "shortform", label: "숏폼", labelEn: "Shortform" },
+    { key: "anime", label: "애니 MV", labelEn: "Anime MV" },
+    { key: "tools", label: "도구", labelEn: "Tools" },
+  ];
 
   return (
     <AppShell showTopBar={false}>
@@ -39,7 +46,7 @@ function HomePageContent() {
       <AuroraBackground />
 
       <div className="relative z-10 min-h-screen aurora-bg">
-        {/* Glass Header - Stitch AI Generated Style */}
+        {/* Glass Header */}
         <header className="sticky top-0 z-50 glass-header">
           <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -53,7 +60,7 @@ function HomePageContent() {
                 <Search className="absolute left-3 w-4 h-4 text-[var(--fg-muted)]" />
                 <input
                   type="text"
-                  placeholder={ko ? "차원 검색..." : "Search Dimensions..."}
+                  placeholder={ko ? "검색..." : "Search..."}
                   className="pl-9 pr-4 py-2 text-sm glass-card rounded-xl text-[var(--fg-0)] placeholder:text-[var(--fg-muted)] focus:outline-none focus:ring-2 focus:ring-violet-500/50 w-40 md:w-56"
                 />
               </div>
@@ -67,94 +74,38 @@ function HomePageContent() {
           </div>
         </header>
 
-        {/* Main Content - IP First */}
-        <div className="px-6 py-8 pb-20">
+        {/* Category Tabs */}
+        <div className="sticky top-16 z-40 glass-header border-b border-white/5">
+          <div className="mx-auto max-w-6xl px-6">
+            <div className="flex gap-1 py-2 overflow-x-auto scrollbar-hide">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                    activeTab === tab.key
+                      ? "bg-violet-500/20 text-violet-300"
+                      : "text-[var(--fg-muted)] hover:text-[var(--fg-0)] hover:bg-white/5"
+                  }`}
+                >
+                  {ko ? tab.label : tab.labelEn}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="px-6 py-6 pb-20">
           <div className="mx-auto max-w-6xl space-y-8">
-            {/* Hero - Urgent UX upgrade (clear value prop + CTA hierarchy) */}
-            <motion.section
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 }}
-            >
-              <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/60 p-8 md:p-12 lg:p-14">
-                <div className="absolute inset-0 bg-gradient-to-br from-violet-600/20 via-transparent to-emerald-500/20 animate-gradient-xy" />
-                <div className="absolute -top-20 right-0 h-64 w-64 rounded-full bg-violet-500/20 blur-3xl animate-float" />
-                <div
-                  className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-emerald-500/20 blur-3xl animate-float"
-                  style={{ animationDelay: "-6s" }}
-                />
-
-                <div className="relative z-10 grid gap-10 md:grid-cols-[1.2fr_0.8fr] md:items-center">
-                  <div className="space-y-5 md:space-y-6 text-center md:text-left">
-                    <div className="flex flex-wrap items-center justify-center gap-2 md:justify-start">
-                      <Badge variant="outline" className="border-violet-500/50 text-violet-300">
-                        {ko ? "AI 콘텐츠 스튜디오" : "AI Content Studio"}
-                      </Badge>
-                      <Badge variant="secondary" className="text-[10px] uppercase tracking-widest">
-                        {ko ? "차원 플로우" : "Dimension Flow"}
-                      </Badge>
-                    </div>
-                    <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold uppercase gradient-text-hero leading-[1.02] tracking-[-0.02em] max-w-[720px] mx-auto md:mx-0">
-                      {ko ? "차원을 펼쳐라" : "Unleash your"}
-                      <span className="block">{ko ? "Vivid 플로우" : "dimension"}</span>
-                    </h1>
-                    <p className="text-[15px] md:text-lg leading-relaxed text-[var(--fg-muted)] max-w-xl mx-auto md:mx-0">
-                      {ko
-                        ? "AI 기반 스토리텔링을 생각의 속도로. 레퍼런스 분석부터 영상 생성까지 한 번에 연결하세요."
-                        : "AI-driven storytelling at the speed of thought. Connect reference decoding to video generation in one flow."}
-                    </p>
-                    <div className="flex flex-wrap gap-3 justify-center md:justify-start">
-                      <GlowButton onClick={() => router.push("/flow")} glowColor="emerald" size="lg" className="w-full sm:w-auto">
-                        {ko ? "차원 플로우 시작" : "Start Dimension Flow"}
-                        <Zap className="w-4 h-4" />
-                      </GlowButton>
-                      <Button
-                        variant="outline"
-                        size="lg"
-                        className="rounded-full border-white/20 text-[var(--fg-0)] hover:border-white/40 hover:bg-white/5 glass-card w-full sm:w-auto"
-                        onClick={() => router.push("/ip")}
-                      >
-                        {ko ? "IP 둘러보기" : "Browse IP"}
-                        <Compass className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    <div className="flex flex-wrap gap-2 justify-center md:justify-start text-xs text-[var(--fg-muted)]">
-                      <Badge variant="secondary">{ko ? "숏폼 9:16" : "Shortform 9:16"}</Badge>
-                      <Badge variant="secondary">{ko ? "애니 MV 16:9" : "Animation MV 16:9"}</Badge>
-                      <Badge variant="secondary">{ko ? "실시간 프리뷰" : "Realtime previews"}</Badge>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-center md:text-left">
-                      <div className="glass-card rounded-xl px-3 py-2">
-                        <p className="text-lg font-bold text-[var(--fg-0)]">3</p>
-                        <p className="text-[10px] text-[var(--fg-muted)] uppercase tracking-widest">
-                          {ko ? "플로우 단계" : "Flow steps"}
-                        </p>
-                      </div>
-                      <div className="glass-card rounded-xl px-3 py-2">
-                        <p className="text-lg font-bold text-[var(--fg-0)]">2</p>
-                        <p className="text-[10px] text-[var(--fg-muted)] uppercase tracking-widest">
-                          {ko ? "콘텐츠 포맷" : "Formats"}
-                        </p>
-                      </div>
-                      <div className="glass-card rounded-xl px-3 py-2">
-                        <p className="text-lg font-bold text-[var(--fg-0)]">Live</p>
-                        <p className="text-[10px] text-[var(--fg-muted)] uppercase tracking-widest">
-                          {ko ? "프리뷰" : "Preview"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-            </motion.section>
 
             {/* Rail 1: 세로 숏폼 웹드라마 */}
-            {VERTICAL_SHORTFORM_IPS.length > 0 && (
+            {(activeTab === "all" || activeTab === "shortform") && VERTICAL_SHORTFORM_IPS.length > 0 && (
               <motion.section
+                key="shortform"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
+                transition={{ delay: 0.05 }}
               >
                 <div className="flex items-center gap-3 mb-4">
                   <div className="flex items-center gap-2">
@@ -189,11 +140,12 @@ function HomePageContent() {
             )}
 
             {/* Rail 2: 가로 애니 뮤비 */}
-            {HORIZONTAL_ANIME_MV_IPS.length > 0 && (
+            {(activeTab === "all" || activeTab === "anime") && HORIZONTAL_ANIME_MV_IPS.length > 0 && (
               <motion.section
+                key="anime"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
+                transition={{ delay: 0.1 }}
               >
                 <div className="flex items-center gap-3 mb-4">
                   <div className="flex items-center gap-2">
@@ -204,9 +156,6 @@ function HomePageContent() {
                   </div>
                   <Badge variant="outline" className="border-emerald-500/50 text-emerald-400">
                     16:9
-                  </Badge>
-                  <Badge variant="secondary" className="text-[10px]">
-                    {ko ? "씬 일관성" : "Scene Consistency"}
                   </Badge>
                 </div>
                 <div className="content-rail">
@@ -230,57 +179,17 @@ function HomePageContent() {
               </motion.section>
             )}
 
-            {/* Dimension Flow CTA - Upgraded with Stitch-inspired design */}
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <div className="relative group">
-                <div className="dimension-border">
-                  <div className="dimension-content relative overflow-hidden p-8">
-                  {/* Sparkle particles */}
-                  <SparkleParticles count={20} />
-
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2 rounded-xl bg-violet-500/20 group-hover:bg-violet-500/30 transition-colors">
-                        <Sparkles className="w-6 h-6 text-violet-400 group-hover:text-violet-300 transition-colors" />
-                      </div>
-                      <h2 className="text-xl font-semibold text-[var(--fg-0)]">
-                        {ko ? "차원 플로우 시작하기" : "Start Dimension Flow"}
-                      </h2>
-                    </div>
-                    <p className="text-sm text-[var(--fg-muted)] mb-6 max-w-xl">
-                      {ko
-                        ? "여러 차원 도구를 직접 조합하여 나만의 AI 파이프라인을 구축하세요. Reference Decoder → Abyss Mirror → Video Maker"
-                        : "Build your own AI pipeline by combining dimension tools. Reference Decoder → Abyss Mirror → Video Maker"}
-                    </p>
-                    <GlowButton
-                      onClick={() => router.push("/flow")}
-                      glowColor="violet"
-                    >
-                      {ko ? "차원 플로우" : "Dimension Flow"}
-                      <ArrowRight className="w-4 h-4" />
-                    </GlowButton>
-                  </div>
-
-                  {/* Background orbs with float animation */}
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-violet-500/20 to-transparent rounded-full blur-3xl animate-float" />
-                  <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-emerald-500/20 to-transparent rounded-full blur-3xl animate-float" style={{ animationDelay: '-5s' }} />
-                </div>
-                </div>
-              </div>
-            </motion.section>
-
             {/* Dimension App Rail */}
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              <DimensionAppRail compact={true} showCore={true} />
-            </motion.section>
+            {(activeTab === "all" || activeTab === "tools") && (
+              <motion.section
+                key="tools"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+              >
+                <DimensionAppRail compact={true} showCore={true} />
+              </motion.section>
+            )}
           </div>
         </div>
       </div>
