@@ -1,7 +1,7 @@
 # Vivid Documentation Master Index
 
-> **Version**: 1.2
-> **Last Updated**: 2026-01-24
+> **Version**: 1.3
+> **Last Updated**: 2026-01-25
 > **Purpose**: 전체 문서 네비게이션 및 SSoT 참조
 
 ---
@@ -10,12 +10,14 @@
 
 | 목적 | 문서 |
 |------|------|
+| **핸드오버** | [HANDOVER_2026_01_25.md](./HANDOVER_2026_01_25.md) |
 | 프로젝트 개요 | [README.md](./README.md) |
 | 앱 개발 시작 | [DIMENSION_APP_DEVELOPER_GUIDE.md](./DIMENSION_APP_DEVELOPER_GUIDE.md) |
 | RAG 시스템 | [RAG_ARCHITECTURE.md](./RAG_ARCHITECTURE.md) |
 | 테스트 작성 | [TESTING_GUIDE.md](./TESTING_GUIDE.md) |
 | 2026 로드맵 | [2026_PRIORITY_ROADMAP.md](./2026_PRIORITY_ROADMAP.md) |
 | 앱 하드닝 리포트 | [DIMENSION_APP_AUDIT_REPORT_2026.md](./DIMENSION_APP_AUDIT_REPORT_2026.md) |
+| 디자인 컨설팅 | [DESIGN_CONSULTING_REPORT.md](./DESIGN_CONSULTING_REPORT.md) |
 
 ---
 
