@@ -1,199 +1,151 @@
 "use client";
 
 /**
- * Home Page - Clean & Simple
+ * Crebit Home Page - Netflix-style AI OTT Platform
  *
- * Content-first layout:
- * 1. Category tabs for quick navigation
- * 2. Shortform Web Drama (9:16)
- * 3. Animation MV (16:9)
- * 4. Dimension tools
+ * A cinematic landing page featuring:
+ * 1. Full-screen hero with featured IP
+ * 2. Variations grid showing possible remixes
+ * 3. Clean navigation and footer
+ *
+ * Design: Stitch AI (January 2026)
  */
 
-import React, { Suspense, useState } from "react";
-import Link from "next/link";
-import { motion } from "framer-motion";
-import { Sparkles, Play, Layers, Search, LogIn } from "lucide-react";
-import AppShell from "@/components/AppShell";
-import { AuroraBackground } from "@/components/AuroraBackground";
-import { IPRailCard } from "@/components/home/IPRailCard";
-import { DimensionAppRail } from "@/components/home/DimensionAppRail";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  VERTICAL_SHORTFORM_IPS,
-  HORIZONTAL_ANIME_MV_IPS,
-} from "@/lib/demo-ip-overrides";
+import React, { Suspense, useMemo } from "react";
+import { CrebitNavbar } from "@/components/home/CrebitNavbar";
+import { CinematicHero, FeaturedIP } from "@/components/home/CinematicHero";
+import { VariationsGrid, VariationCard } from "@/components/home/VariationsGrid";
+import { CrebitFooter } from "@/components/home/CrebitFooter";
+import { DEMO_IP_OVERRIDES } from "@/lib/demo-ip-overrides";
 
-type TabKey = "all" | "shortform" | "anime" | "tools";
+/**
+ * Transform demo IP data to Featured IP format
+ */
+function getFeaturedIP(): FeaturedIP {
+  // Use the most popular IP as featured
+  const demoIP = DEMO_IP_OVERRIDES["cooking-anime-mv"];
+
+  return {
+    slug: demoIP.slug,
+    titleKo: demoIP.titleKo,
+    titleEn: demoIP.titleEn,
+    descriptionKo: demoIP.descKo,
+    descriptionEn: demoIP.descEn,
+    bannerUrl:
+      demoIP.thumbnailUrl ||
+      "https://images.unsplash.com/photo-1534809027769-b00d750a6bac?w=1920&q=80",
+    tags: ["Anime", "Music Video", "4K HDR"],
+    rating: 4.9,
+    remixCount: 12405,
+    topStyle: "Cyberpunk Anime",
+  };
+}
+
+/**
+ * Transform demo workflows to Variation Cards
+ * Maps our dimension apps to the new card format
+ */
+function getVariationCards(): VariationCard[] {
+  return [
+    {
+      id: "anime-adaptation",
+      slug: "anime-adaptation",
+      nameKo: "애니메이션 각색",
+      nameEn: "Anime Adaptation",
+      descriptionKo:
+        "도시의 거친 거리를 고속 애니메이션 시리즈로 재탄생. 과장된 액션과 생동감 넘치는 색감에 집중합니다.",
+      descriptionEn:
+        "Reimagine the gritty streets as a high-octane anime series. Focus on exaggerated action sequences and vibrant color palettes.",
+      thumbnailUrl:
+        "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=600&q=80",
+      category: "visual",
+      version: "V2.0",
+      href: "/dimension/visual-realizer",
+    },
+    {
+      id: "shortform-drama",
+      slug: "shortform-drama",
+      nameKo: "숏폼 드라마",
+      nameEn: "Short-form Drama",
+      descriptionKo:
+        "스토리라인을 60초의 세로 에피소드로 압축. 소셜 플랫폼에 최적화된 콘텐츠를 생성합니다.",
+      descriptionEn:
+        "Condense the storyline into punchy 60-second vertical episodes optimized for social platforms.",
+      thumbnailUrl:
+        "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600&q=80",
+      category: "video",
+      isBeta: true,
+      href: "/dimension/video-maker",
+    },
+    {
+      id: "graphic-novel",
+      slug: "graphic-novel",
+      nameKo: "그래픽 노블",
+      nameEn: "Graphic Novel",
+      descriptionKo:
+        "풀 컬러 그래픽 노블 레이아웃 생성. 핵심 대화를 추출하고 일관된 캐릭터 아트 패널을 만듭니다.",
+      descriptionEn:
+        "Generate a full-color graphic novel layout. Extracts key dialogue and creates consistent character art panels.",
+      thumbnailUrl:
+        "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?w=600&q=80",
+      category: "story",
+      version: "V1.5",
+      href: "/dimension/storyboard-sketcher",
+    },
+    {
+      id: "immersive-audio",
+      slug: "immersive-audio",
+      nameKo: "이머시브 오디오",
+      nameEn: "Immersive Audio",
+      descriptionKo:
+        "스크립트를 3D 바이노럴 오디오 드라마로 변환. AI 성우와 생성된 사운드스케이프를 활용합니다.",
+      descriptionEn:
+        "Convert the script into a 3D binaural audio drama with AI voice actors and generated soundscapes.",
+      thumbnailUrl:
+        "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&q=80",
+      category: "audio",
+      version: "V3.1",
+      href: "/dimension/sound-crafter",
+    },
+    {
+      id: "interactive-novel",
+      slug: "interactive-novel",
+      nameKo: "인터랙티브 비주얼 노블",
+      nameEn: "Interactive Visual Novel",
+      descriptionKo:
+        "사용자가 캐릭터의 다양한 경로를 선택할 수 있는 분기형 내러티브 게임을 만듭니다.",
+      descriptionEn:
+        "Create a branching narrative game where users can choose different paths for the character.",
+      thumbnailUrl:
+        "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&q=80",
+      category: "interactive",
+      isNew: true,
+      href: "/dimension/scenario-generator",
+    },
+  ];
+}
 
 function HomePageContent() {
-  const { language } = useLanguage();
-  const ko = language === "ko";
-  const [activeTab, setActiveTab] = useState<TabKey>("all");
-
-  const tabs: { key: TabKey; label: string; labelEn: string }[] = [
-    { key: "all", label: "전체", labelEn: "All" },
-    { key: "shortform", label: "숏폼", labelEn: "Shortform" },
-    { key: "anime", label: "애니 MV", labelEn: "Anime MV" },
-    { key: "tools", label: "도구", labelEn: "Tools" },
-  ];
+  const featuredIP = useMemo(() => getFeaturedIP(), []);
+  const variations = useMemo(() => getVariationCards(), []);
 
   return (
-    <AppShell showTopBar={false}>
-      {/* Aurora Background */}
-      <AuroraBackground />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+      {/* Navigation */}
+      <CrebitNavbar />
 
-      <div className="relative z-10 min-h-screen aurora-bg">
-        {/* Glass Header */}
-        <header className="sticky top-0 z-50 glass-header">
-          <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-violet-500 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-lg font-bold text-[var(--fg-0)]">Vivid AI</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="relative flex items-center">
-                <Search className="absolute left-3 w-4 h-4 text-[var(--fg-muted)]" />
-                <input
-                  type="text"
-                  placeholder={ko ? "검색..." : "Search..."}
-                  className="pl-9 pr-4 py-2 text-sm glass-card rounded-xl text-[var(--fg-0)] placeholder:text-[var(--fg-muted)] focus:outline-none focus:ring-2 focus:ring-violet-500/50 w-40 md:w-56"
-                />
-              </div>
-              <Link href="/login">
-                <Button variant="ghost" size="sm" className="gap-2 text-[var(--fg-muted)] hover:text-[var(--fg-0)]">
-                  <LogIn className="w-4 h-4" />
-                  {ko ? "로그인" : "Login"}
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </header>
+      {/* Main Content */}
+      <main className="relative pt-16">
+        {/* Cinematic Hero */}
+        <CinematicHero featured={featuredIP} />
 
-        {/* Category Tabs */}
-        <div className="sticky top-16 z-40 glass-header border-b border-white/5">
-          <div className="mx-auto max-w-6xl px-6">
-            <div className="flex gap-1 py-2 overflow-x-auto scrollbar-hide">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                    activeTab === tab.key
-                      ? "bg-violet-500/20 text-violet-300"
-                      : "text-[var(--fg-muted)] hover:text-[var(--fg-0)] hover:bg-white/5"
-                  }`}
-                >
-                  {ko ? tab.label : tab.labelEn}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        {/* Variations Grid */}
+        <VariationsGrid variations={variations} ipSlug={featuredIP.slug} />
+      </main>
 
-        {/* Main Content */}
-        <div className="px-6 py-6 pb-20">
-          <div className="mx-auto max-w-6xl space-y-8">
-
-            {/* Rail 1: 세로 숏폼 웹드라마 */}
-            {(activeTab === "all" || activeTab === "shortform") && VERTICAL_SHORTFORM_IPS.length > 0 && (
-              <motion.section
-                key="shortform"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 }}
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex items-center gap-2">
-                    <Play className="w-5 h-5 text-violet-500" />
-                    <h2 className="text-xl font-semibold text-[var(--fg-0)]">
-                      {ko ? "숏폼 웹드라마" : "Shortform Web Drama"}
-                    </h2>
-                  </div>
-                  <Badge variant="outline" className="border-violet-500/50 text-violet-400">
-                    9:16
-                  </Badge>
-                </div>
-                <div className="content-rail">
-                  {VERTICAL_SHORTFORM_IPS.map((ip) => (
-                    <Link key={ip.slug} href={`/ip/${ip.slug}`} className="min-w-[168px] sm:min-w-[190px] md:min-w-0">
-                      <IPRailCard
-                        title={ko ? ip.titleKo : ip.titleEn}
-                        subtitle={ip.genre}
-                        licenseStatus="allowed"
-                        genres={[ip.genre]}
-                        thumbnailUrl={ip.thumbnailUrl}
-                        previewVideoUrl={ip.previewVideoUrl}
-                        viewCount={ip.viewCount}
-                        isHot={ip.isHot}
-                        isNew={ip.isNew}
-                        aspectRatio="9:16"
-                      />
-                    </Link>
-                  ))}
-                </div>
-              </motion.section>
-            )}
-
-            {/* Rail 2: 가로 애니 뮤비 */}
-            {(activeTab === "all" || activeTab === "anime") && HORIZONTAL_ANIME_MV_IPS.length > 0 && (
-              <motion.section
-                key="anime"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex items-center gap-2">
-                    <Layers className="w-5 h-5 text-emerald-500" />
-                    <h2 className="text-xl font-semibold text-[var(--fg-0)]">
-                      {ko ? "애니메이션 MV" : "Animation MV"}
-                    </h2>
-                  </div>
-                  <Badge variant="outline" className="border-emerald-500/50 text-emerald-400">
-                    16:9
-                  </Badge>
-                </div>
-                <div className="content-rail">
-                  {HORIZONTAL_ANIME_MV_IPS.map((ip) => (
-                    <Link key={ip.slug} href={`/ip/${ip.slug}`} className="min-w-[280px] sm:min-w-[320px] md:min-w-0">
-                      <IPRailCard
-                        title={ko ? ip.titleKo : ip.titleEn}
-                        subtitle={ip.genre}
-                        licenseStatus="allowed"
-                        genres={[ip.genre]}
-                        thumbnailUrl={ip.thumbnailUrl}
-                        previewVideoUrl={ip.previewVideoUrl}
-                        viewCount={ip.viewCount}
-                        isHot={ip.isHot}
-                        isNew={ip.isNew}
-                        aspectRatio="16:9"
-                      />
-                    </Link>
-                  ))}
-                </div>
-              </motion.section>
-            )}
-
-            {/* Dimension App Rail */}
-            {(activeTab === "all" || activeTab === "tools") && (
-              <motion.section
-                key="tools"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }}
-              >
-                <DimensionAppRail compact={true} showCore={true} />
-              </motion.section>
-            )}
-          </div>
-        </div>
-      </div>
-    </AppShell>
+      {/* Footer */}
+      <CrebitFooter />
+    </div>
   );
 }
 
@@ -201,8 +153,15 @@ export default function HomePage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--bg-0)]">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-400 flex items-center justify-center text-white font-bold animate-pulse">
+              C
+            </div>
+            <div className="h-1 w-24 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div className="h-full w-1/2 bg-violet-500 rounded-full animate-pulse" />
+            </div>
+          </div>
         </div>
       }
     >
