@@ -90,7 +90,33 @@ curl -s -X POST "https://api.vercel.com/v10/projects/crebit/env" \
 
 ## 트러블슈팅
 
-### 1. `env_secret_missing` 에러
+### 1. CLI 업로드 실패 (Socket closed unexpectedly)
+
+**원인**: VPN(NordVPN 등)이 대용량 업로드 연결을 끊음
+
+```bash
+# 증상
+Uploading [--------------------] (0.0B/89.8MB)
+Error: FetchError: request to https://api.vercel.com/v2/files failed,
+reason: The socket connection was closed unexpectedly.
+```
+
+**해결**:
+1. VPN 완전 종료 (백그라운드 포함)
+2. 또는 **API 방식 배포 사용** (권장)
+
+### 2. Git author 권한 에러
+
+```bash
+# 증상
+Error: Git author ds4psbravo@gmail.com must have access to the team
+```
+
+**해결**:
+- CLI 대신 **API 방식 배포** 사용 (Git author 체크 우회)
+- 또는 Vercel 대시보드에서 팀 멤버 초대
+
+### 3. `env_secret_missing` 에러
 
 `vercel.json`에서 `@secret_name` 참조 제거:
 
@@ -101,7 +127,7 @@ curl -s -X POST "https://api.vercel.com/v10/projects/crebit/env" \
 }
 ```
 
-### 2. Root Directory 에러
+### 4. Root Directory 에러
 
 ```bash
 # Root Directory 설정
@@ -111,13 +137,24 @@ curl -X PATCH "https://api.vercel.com/v9/projects/crebit" \
   -d '{"rootDirectory": "frontend"}'
 ```
 
-### 3. Git webhook 안 됨
+### 5. Git webhook 안 됨
 
 Vercel 대시보드에서:
 1. Settings > Git
 2. Disconnect
 3. 다시 Connect Git Repository
 4. `ds4psb-ai/vivid` 선택, Root: `frontend`
+
+---
+
+## CLI vs API 비교
+
+| 방식 | 장점 | 단점 |
+|------|------|------|
+| **CLI** (`vercel deploy`) | 간단 | VPN 간섭, Git author 체크, 대용량 업로드 실패 |
+| **API** (curl) | 안정적, Git author 우회 | 명령어 복잡 |
+
+**권장**: API 방식 사용
 
 ---
 
