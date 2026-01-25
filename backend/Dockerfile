@@ -85,17 +85,9 @@ USER vivid
 EXPOSE 8080
 
 # Health check (Cloud Run probes)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8080/health/live || exit 1
+# Railway uses $PORT env var, disable Docker healthcheck (Railway has its own)
+# HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+#     CMD curl -f http://localhost:${PORT:-8080}/health/live || exit 1
 
-# Startup command
-# - Workers: 2 (Cloud Run gen2 default)
-# - Timeout: 0 (no timeout, Cloud Run handles this)
-# - Access log: disabled (Cloud Run logs)
-CMD ["uvicorn", "app.main:app", \
-     "--host", "0.0.0.0", \
-     "--port", "8080", \
-     "--workers", "2", \
-     "--timeout-keep-alive", "65", \
-     "--access-log", \
-     "--log-level", "info"]
+# Startup command - use shell form for $PORT expansion
+CMD sh -c "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --workers 2 --timeout-keep-alive 65 --log-level info"
