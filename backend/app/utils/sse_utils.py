@@ -228,7 +228,7 @@ async def create_dimension_stream_with_progress(
     execute_fn: Callable[[ProgressEmitter], Any],
     operation_name: str = "처리",
     timeout_seconds: float = 120.0,
-    heartbeat_interval: float = 10.0,
+    heartbeat_interval: float = 3.0,
 ) -> AsyncGenerator[str, None]:
     """Create an SSE stream with real-time progress updates.
 

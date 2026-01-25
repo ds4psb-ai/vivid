@@ -37,11 +37,11 @@ export function ErrorState({
   if (!error && !hasError) return null;
 
   const errorMessage =
-    typeof error === "string"
+    typeof error === "string" && error
       ? error
-      : error instanceof Error
+      : error instanceof Error && error.message
         ? error.message
-        : "알 수 없는 오류가 발생했습니다.";
+        : "요청 처리에 실패했습니다. 다시 시도해주세요.";
 
   const handleDismiss = () => {
     setError(null);

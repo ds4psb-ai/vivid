@@ -7,6 +7,7 @@ Provides endpoints for:
 - Home rail data
 """
 
+import json
 import logging
 from typing import Optional
 from uuid import UUID
@@ -19,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.auth import require_user_id, get_user_id
 from app.models_ip import IPCatalog, IPWorkflowPreset, IPRights, IPGeneration
+from app.redis_client import get_redis_client
 
 logger = logging.getLogger(__name__)
 
@@ -122,102 +124,78 @@ async def get_home_rails(
     db: AsyncSession = Depends(get_db),
     user_id: Optional[str] = Depends(get_user_id),
 ):
-    """Get home page rails (popular IPs, new presets, etc.)."""
-    sections = []
+    """Get home page rails (popular IPs, new presets, etc.).
 
-    # Section 1: Featured/Popular IPs
-    featured_result = await db.execute(
+    Optimized: Single query + Python grouping instead of 5+ separate queries.
+    Before: 5+ queries (featured + new + 3 genres), After: 1 query
+    """
+    # Single query: fetch all active IPs we might need
+    # Sort by generation_count to prioritize popular ones
+    all_result = await db.execute(
         select(IPCatalog)
         .where(IPCatalog.is_active == True)
-        .where(IPCatalog.is_featured == True)
-        .order_by(asc(IPCatalog.featured_order))
-        .limit(10)
+        .order_by(desc(IPCatalog.generation_count))
+        .limit(100)  # Enough for all rails
     )
-    featured_ips = featured_result.scalars().all()
+    all_ips = all_result.scalars().all()
 
+    # Python-side classification
+    sections = []
+
+    # Helper to convert IP to RailItem
+    def to_rail_item(ip: IPCatalog) -> RailItem:
+        return RailItem(
+            id=str(ip.id),
+            slug=ip.slug,
+            name_ko=ip.name_ko,
+            name_en=ip.name_en,
+            thumbnail_url=ip.thumbnail_url,
+            license_status=ip.license_status,
+            preset_count=ip.preset_count,
+        )
+
+    # Section 1: Featured/Popular IPs (sorted by featured_order)
+    featured_ips = sorted(
+        [ip for ip in all_ips if ip.is_featured],
+        key=lambda x: x.featured_order or 999
+    )[:10]
     if featured_ips:
         sections.append(HomeRailSection(
             section_id="featured",
             title_ko="인기 IP",
             title_en="Popular IPs",
-            items=[
-                RailItem(
-                    id=str(ip.id),
-                    slug=ip.slug,
-                    name_ko=ip.name_ko,
-                    name_en=ip.name_en,
-                    thumbnail_url=ip.thumbnail_url,
-                    license_status=ip.license_status,
-                    preset_count=ip.preset_count,
-                )
-                for ip in featured_ips
-            ],
+            items=[to_rail_item(ip) for ip in featured_ips],
             has_more=len(featured_ips) >= 10,
         ))
 
-    # Section 2: Newly Added IPs
-    new_result = await db.execute(
-        select(IPCatalog)
-        .where(IPCatalog.is_active == True)
-        .order_by(desc(IPCatalog.created_at))
-        .limit(10)
-    )
-    new_ips = new_result.scalars().all()
-
+    # Section 2: Newly Added IPs (sorted by created_at)
+    new_ips = sorted(all_ips, key=lambda x: x.created_at, reverse=True)[:10]
     if new_ips:
         sections.append(HomeRailSection(
             section_id="new",
             title_ko="새로운 IP",
             title_en="New IPs",
-            items=[
-                RailItem(
-                    id=str(ip.id),
-                    slug=ip.slug,
-                    name_ko=ip.name_ko,
-                    name_en=ip.name_en,
-                    thumbnail_url=ip.thumbnail_url,
-                    license_status=ip.license_status,
-                    preset_count=ip.preset_count,
-                )
-                for ip in new_ips
-            ],
+            items=[to_rail_item(ip) for ip in new_ips],
             has_more=len(new_ips) >= 10,
         ))
 
-    # Section 3: Genre-based sections (K-Drama, Movie, etc.)
+    # Section 3: Genre-based sections (already sorted by generation_count from query)
     genre_sections = [
         ("kdrama", "K-드라마", "K-Drama"),
         ("movie", "영화", "Movies"),
         ("anime", "애니메이션", "Anime"),
     ]
-
     for genre_key, title_ko, title_en in genre_sections:
-        genre_result = await db.execute(
-            select(IPCatalog)
-            .where(IPCatalog.is_active == True)
-            .where(IPCatalog.genre.contains([genre_key]))
-            .order_by(desc(IPCatalog.generation_count))
-            .limit(10)
-        )
-        genre_ips = genre_result.scalars().all()
-
+        genre_ips = [
+            ip for ip in all_ips
+            if ip.genre and genre_key in ip.genre
+        ][:10]
         if genre_ips:
             sections.append(HomeRailSection(
                 section_id=f"genre_{genre_key}",
                 title_ko=title_ko,
                 title_en=title_en,
-                items=[
-                    RailItem(
-                        id=str(ip.id),
-                        slug=ip.slug,
-                        name_ko=ip.name_ko,
-                        name_en=ip.name_en,
-                        thumbnail_url=ip.thumbnail_url,
-                        license_status=ip.license_status,
-                        preset_count=ip.preset_count,
-                    )
-                    for ip in genre_ips
-                ],
+                items=[to_rail_item(ip) for ip in genre_ips],
                 has_more=len(genre_ips) >= 10,
             ))
 
@@ -261,17 +239,19 @@ async def list_ip_catalog(
     else:
         query = query.order_by(desc(IPCatalog.generation_count))
 
-    # Count total
-    count_query = select(func.count()).select_from(query.subquery())
-    total_result = await db.execute(count_query)
-    total = total_result.scalar() or 0
-
-    # Pagination
+    # Single query with window function for count + pagination
+    # Before: 2 queries (count + select), After: 1 query
     offset = (page - 1) * page_size
-    query = query.offset(offset).limit(page_size)
+    query_with_count = query.add_columns(
+        func.count().over().label("total_count")
+    ).offset(offset).limit(page_size)
 
-    result = await db.execute(query)
-    items = result.scalars().all()
+    result = await db.execute(query_with_count)
+    rows = result.all()
+
+    # Extract items and total count
+    items = [row[0] for row in rows]
+    total = rows[0].total_count if rows else 0
 
     return IPCatalogListResponse(
         items=[
@@ -435,9 +415,24 @@ async def list_genres(
 ):
     """List available genres with counts.
 
-    Optimized: Single query with unnest instead of N+1 queries.
+    Optimized:
+    - Redis cache with 1 hour TTL (genre counts rarely change)
+    - Single query with unnest instead of N+1 queries
+
     Reference: 2026 PostgreSQL best practice for JSONB array aggregation.
     """
+    CACHE_KEY = "ip:genres:list"
+    CACHE_TTL = 3600  # 1 hour
+
+    # Try cache first
+    try:
+        redis = get_redis_client()
+        cached = await redis.get(CACHE_KEY)
+        if cached:
+            return json.loads(cached)
+    except Exception as e:
+        logger.warning(f"Redis cache read failed: {e}")
+
     # Genre definitions
     GENRE_DEFINITIONS = [
         {"key": "kdrama", "label_ko": "K-드라마", "label_en": "K-Drama"},
@@ -451,8 +446,6 @@ async def list_genres(
     ]
 
     # Single query: unnest genre array and count all genres at once
-    # Before: 8 queries (1 per genre) = N+1 problem
-    # After: 1 query
     genre_counts_result = await db.execute(
         select(
             func.unnest(IPCatalog.genre).label("genre_key"),
@@ -472,7 +465,15 @@ async def list_genres(
         for genre_def in GENRE_DEFINITIONS
     ]
 
-    return {"genres": genres}
+    result = {"genres": genres}
+
+    # Cache result
+    try:
+        await redis.set(CACHE_KEY, json.dumps(result), ex=CACHE_TTL)
+    except Exception as e:
+        logger.warning(f"Redis cache write failed: {e}")
+
+    return result
 
 
 class PopularIPItem(BaseModel):
