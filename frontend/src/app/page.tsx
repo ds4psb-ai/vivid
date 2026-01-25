@@ -43,8 +43,6 @@ const VARIATION_CARDS: VariationCard[] = [
     thumbnailUrl:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuA0r2qo4L4VmyuCId41jiXkjFCO1haV7IDSbJhzCT6sPC8I6bFdZoQ5VQLPEsgaDpW2JOJCpwKmN0UJA_6nPVGcahgFpfO173A6v14e7C8XM8-kEdxrM6gZ-TZS4TQt2a7UMte3lDWQcJqLmkD6ngyZQavT8o6TPkBBqKrIbGYOHcD-TeIJ9TEVzGHA_xBxbmGL_EG2quNe5YDycI_3U9pBrWvnSqZuWgsBM8fwrFmuTEI8Fx6RlNSom13VC6oaPwi8ZZK8ku4Ccpg",
     category: "visual",
-    categoryIcon: "brush",
-    categoryColor: "text-pink-400",
     badge: "V2.0",
     href: "/dimension/visual-realizer",
     isPrimary: true,
@@ -60,8 +58,6 @@ const VARIATION_CARDS: VariationCard[] = [
     thumbnailUrl:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuB2tBApxBE_y5JRz_79of0LwA_koCjfEHgjOyoZf-2CVrADOm8_JKbNcctgPyf3UtxEJKmBaw3uTQvbxKjduBeL0Z6Mz43TAIAVzOd_qDFhow4m2v6SmhINvJX-47fh4Wvc0_ZBjZnIz-A5jf3Yz3eLMG3bnGw7hbkSBM-RFY59uxEaghM_I1l9Oio_CN263M4wqBXOMEWca2FWIo6VKIj-c_qJbdRoougP0LQ7Imc2xIedTOaaDUzBOsI4rYWLAlrzNUFGovWrQrM",
     category: "video",
-    categoryIcon: "movie",
-    categoryColor: "text-blue-400",
     badge: "BETA",
     href: "/dimension/video-maker",
   },
@@ -76,8 +72,6 @@ const VARIATION_CARDS: VariationCard[] = [
     thumbnailUrl:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuAEjDABfWSOWoCE8z39Uf9HewzfInWI575WbW6482O4KXOTY4J6Ybhkw-yssBuKTYCIYzZP8WeUtfvQCCnfp6z7jPJblSnyIDsDGoKMtm5csZjfOkyHQr2dG_Aywxj49Dpp_f_mgb98_I5E7DTFWKX7nLFa6FH_9VYSadkBwZ0IuCNBxjWETlsCn_GrcELcuXzy3OTzT1XvbBgvCiYe9l_gSJ8GMJ2foRZh3pI6Fb5CQ5jzeWBLShpIKNYekf2x4rWV60GtVQS9yIA",
     category: "story",
-    categoryIcon: "auto_stories",
-    categoryColor: "text-yellow-400",
     badge: "V1.5",
     href: "/dimension/storyboard-sketcher",
   },
@@ -92,8 +86,6 @@ const VARIATION_CARDS: VariationCard[] = [
     thumbnailUrl:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuCYZPJFPKgMSdKVU_W3iR-uzF7kSGHOsv3rhcmwdb-TRfrnJZIib_FptEDLGD6MwCRe1cIbPOoWkZhcr54lZc3bateyYL9vgzf-IudGmZv4aTceiquaSXjj8FzpR3pqqtDtPw303Kvoz__-yP3u2u3rNK2Do3dNfBPCNwlZR16hSrXOSx9VcIJJE56EUiMs1T4mJ9TDj8fQBdgLeB9MPSIbRsxzHRfZnYpzlwjn-c6q-9R2Qr8O5ncDux8qhYXzRKSiUmdtDz6RWUk",
     category: "audio",
-    categoryIcon: "headphones",
-    categoryColor: "text-green-400",
     badge: "V3.1",
     href: "/dimension/sound-crafter",
   },
@@ -108,8 +100,6 @@ const VARIATION_CARDS: VariationCard[] = [
     thumbnailUrl:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuCcUjKInzOtfp5cZifxh65zNNJgO0SHc3gwqrIYN83WKGibsUZxOuzS646dMw8NQYrVJeCY1iUbp-olKPlBnzlfuii2pTXStRq2-9HMGivbpfRQ92rETfQeRL5vi3w0FkA2S5g2YfjHun1F0FkcMduJY9ISG_0m7AlaTpvfn0gc_ZMn499FAUEJ1XDT_kO4H2vherED8sacBwgnPUgDFlSzUu9prPIj7Gb9-kg6tw7Jmurqtbu4lWihBv93ivATNMC135caqdvH25M",
     category: "interactive",
-    categoryIcon: "sports_esports",
-    categoryColor: "text-purple-400",
     badge: "NEW",
     href: "/dimension/scenario-generator",
   },

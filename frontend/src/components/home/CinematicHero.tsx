@@ -10,6 +10,7 @@
 import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { Sparkles, Play, Star, BarChart3 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 export interface FeaturedIP {
@@ -70,7 +71,7 @@ export function CinematicHero({ featured }: CinematicHeroProps) {
                 </span>
               ))}
               <div className="flex items-center text-yellow-400 text-sm font-bold">
-                <span className="material-icons-round text-base mr-1">star</span>
+                <Star className="w-4 h-4 mr-1 fill-current" />
                 {featured.rating}
               </div>
             </div>
@@ -95,13 +96,13 @@ export function CinematicHero({ featured }: CinematicHeroProps) {
                 href={`/ip/${featured.slug}`}
                 className="group relative inline-flex items-center justify-center px-8 py-4 text-base font-bold text-white transition-all duration-200 bg-violet-500 rounded-full hover:bg-violet-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 focus:ring-offset-gray-900 shadow-lg shadow-violet-500/30"
               >
-                <span className="material-icons-round mr-2 animate-pulse">auto_awesome</span>
+                <Sparkles className="w-5 h-5 mr-2 animate-pulse" />
                 {ko ? "AI로 리믹스" : "Remix with AI"}
                 <div className="absolute inset-0 rounded-full ring-2 ring-white/20 group-hover:ring-white/40 transition-all" />
               </Link>
 
               <button className="inline-flex items-center justify-center px-8 py-4 text-base font-medium text-white transition-all duration-200 bg-white/10 backdrop-blur-md border border-white/20 rounded-full hover:bg-white/20 focus:outline-none">
-                <span className="material-icons-round mr-2">play_arrow</span>
+                <Play className="w-5 h-5 mr-2" />
                 {ko ? "원본 보기" : "Watch Original"}
               </button>
             </div>
@@ -116,7 +117,7 @@ export function CinematicHero({ featured }: CinematicHeroProps) {
           >
             <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-6 rounded-2xl w-full max-w-sm">
               <h3 className="text-white font-display font-bold text-lg mb-4 flex items-center gap-2">
-                <span className="material-icons-round text-violet-400">analytics</span>
+                <BarChart3 className="w-5 h-5 text-violet-400" />
                 {ko ? "리믹스 통계" : "Remix Stats"}
               </h3>
 
