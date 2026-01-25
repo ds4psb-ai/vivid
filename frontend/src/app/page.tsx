@@ -145,39 +145,6 @@ function HomePageContent() {
                     </div>
                   </div>
 
-                  <div className="hidden md:block">
-                    <div className="glass-card rounded-2xl p-6 space-y-4">
-                      <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[var(--fg-muted)]">
-                        <Sparkles className="h-4 w-4 text-violet-400" />
-                        {ko ? "빠른 시작" : "Quick start"}
-                      </div>
-                      <div className="space-y-3 text-sm">
-                        <div className="flex items-center gap-3 text-[var(--fg-0)]">
-                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-violet-500/20 text-violet-300">
-                            1
-                          </div>
-                          {ko ? "레퍼런스 디코더" : "Reference Decoder"}
-                        </div>
-                        <div className="flex items-center gap-3 text-[var(--fg-0)]">
-                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300">
-                            2
-                          </div>
-                          {ko ? "어비스 미러" : "Abyss Mirror"}
-                        </div>
-                        <div className="flex items-center gap-3 text-[var(--fg-0)]">
-                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-violet-500/20 text-violet-300">
-                            3
-                          </div>
-                          {ko ? "비디오 메이커" : "Video Maker"}
-                        </div>
-                      </div>
-                      <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-[var(--fg-muted)]">
-                        {ko
-                          ? "가장 빠른 경로로 결과를 확인하세요."
-                          : "See results faster with the guided flow."}
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             </motion.section>

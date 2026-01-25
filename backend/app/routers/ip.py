@@ -445,14 +445,18 @@ async def list_genres(
         {"key": "scifi", "label_ko": "SF", "label_en": "Sci-Fi"},
     ]
 
-    # Single query: unnest genre array and count all genres at once
+    # Single query: extract JSONB array elements and count all genres at once
+    # Note: IPCatalog.genre is JSONB type, so we use jsonb_array_elements_text instead of unnest
+    from sqlalchemy import literal_column
+
     genre_counts_result = await db.execute(
         select(
-            func.unnest(IPCatalog.genre).label("genre_key"),
+            literal_column("jsonb_array_elements_text(ip_catalog.genre)").label("genre_key"),
             func.count().label("count"),
         )
+        .select_from(IPCatalog)
         .where(IPCatalog.is_active == True)
-        .group_by(text("genre_key"))
+        .group_by(literal_column("jsonb_array_elements_text(ip_catalog.genre)"))
     )
     count_map = {row.genre_key: row.count for row in genre_counts_result}
 
