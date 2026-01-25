@@ -56,6 +56,25 @@ cd frontend && npm run build  # Frontend
 | 크레딧 시스템 | `docs/13_CREDITS_AND_BILLING_SPEC_V1.md` | Run-Token 흐름 |
 | 아키텍처 코덱스 | `docs/15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md` | 설계 철학 |
 | Backend CLAUDE.md | `backend/CLAUDE.md` | DB/API 패턴 |
+| **Railway 배포** | `docs/RAILWAY_DEPLOYMENT_GUIDE.md` | Railway 배포 가이드 |
+
+### 5. Railway 배포 핵심 (P0)
+
+```bash
+# Dockerfile - shell form 필수 ($PORT 확장)
+CMD sh -c "uvicorn app.main:app --port ${PORT:-8080}"
+
+# DATABASE_URL - asyncpg 드라이버 명시
+DATABASE_URL=postgresql+asyncpg://...@postgres.railway.internal:5432/...
+
+# Private networking 사용 (egress 무료)
+REDIS_URL=redis://...@redis.railway.internal:6379
+```
+
+**주의사항:**
+- `railway.json` startCommand와 Dockerfile CMD 중 **하나만** 사용
+- 변수 참조 안 되면 하드코딩 (`${{Service.VAR}}` → 실제값)
+- 상세: `docs/RAILWAY_DEPLOYMENT_GUIDE.md`
 
 ### 4. 큐레이션 체크리스트 (앱 완성도 평가)
 ```
