@@ -160,6 +160,16 @@
 
 @layer components {
 
+  /* Font Display - Space Grotesk for headings (Stitch AI design) */
+  .font-display {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+  }
+
+  /* Font Sans - Inter for body text (Stitch AI design) */
+  .font-sans {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
   /* Lusion-style Glass Card (Standardized) */
   .card-glass {
     @apply relative overflow-hidden bg-black/40 backdrop-blur-xl border border-white/5 rounded-[1.5rem] dark:bg-black/40 dark:border-white/5 bg-white/40 border-black/5;
