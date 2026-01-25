@@ -1,0 +1,159 @@
+"use client";
+
+/**
+ * Featured Characters Section - Stitch V2 Neon Red Design
+ *
+ * 4-column grid of AI character cards
+ * Deep charcoal theme with neon red accents
+ */
+
+import React from "react";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { MessageCircle, PlusCircle, ArrowRight } from "lucide-react";
+
+export interface Character {
+  id: string;
+  name: string;
+  imageUrl: string;
+  chatCount: string;
+  quote: string;
+  creator: string;
+  badge?: "NEW" | "TOP_RATED";
+}
+
+interface FeaturedCharactersProps {
+  characters?: Character[];
+  onCharacterClick?: (id: string) => void;
+}
+
+// Default character data matching stitch_ui_1 design
+const DEFAULT_CHARACTERS: Character[] = [
+  {
+    id: "akari",
+    name: "Akari",
+    imageUrl:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuDN5xpf62iQyVAxpu6bfMxxxUbBcRwdTWKyxVSWszsqTN31eV3lNWr3ntBTIXhAjJCKXZkUTQqa3EGMRF80TU-gL20v7zBokSFOkWBAsTDF1sbc1ZVFQ9mdz8k7yBCcSho6XXcihaNCoPVzRCdkL4NiFhZDwRx0Kz5naME5XI-yk3VW7t2C2_RlgLPW9xvZ4XUOi8L6hP4pzyuhDSqjwjDdfaFxbpEZl3dpeP0ZGPes6jLYMw8Wtgl9pUvGmoggChFffG4ovuIp3PQ",
+    chatCount: "12k",
+    quote: "오늘 밤, 네온 사인 아래서 드라이브 어때요?",
+    creator: "@neon_dreamer",
+    badge: "NEW",
+  },
+  {
+    id: "eunha",
+    name: "Eunha",
+    imageUrl:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuAEFUIE-TQP1GnONSNxQtpr031HoEzolGFK2FWaSHqPYsH6fpO5MPtnwQjO1hwcDP5jIRxRI32PLsYs0_r7616VUNOCjAblP58zu6tKWxDImRG1UFotWIZLlfdp7PizcXWOM8DzpgmawyougUuKINa34yP-SWURdtC3teIcKW4b5qZn_vK1s78Vog3DWjDnhk94JdYZlgpdJ-tY_S7h3PlNB3BQ4oKHgpzy_9bmErbhIjGQDjaHRs7DbzYv-w6FmWMvdK_VmyAZGEc",
+    chatCount: "8.5k",
+    quote: "기억은 데이터일 뿐이야, 하지만 감정은...",
+    creator: "@cyber_seoul",
+  },
+  {
+    id: "kael-09",
+    name: "Kael-09",
+    imageUrl:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuBHjP-yAEmieU8ZR7BGCjOf87BCqS1oNthXjyueryDqarRJRg93-565PbZplWYN1fVcOmvrsgYqYAmX9uAASSyf6E39qspKgpMoAj3VB0x_nluS7pJcT7t2OC1ldHWHNRD-GHFDNUVH8m-326z3A-IMme3dmGaylYYzr8LuUFwANlPnx_TEMMwZSvXhaPaMaqH27R4T6fbyH77f4EeAMnnwGI-ypIJsRNLQ5G_4UfJqklGZKznJk3As4RwaNbqzHp7Z59OaM0si_hc",
+    chatCount: "24k",
+    quote: "시스템 위반 감지. 프로토콜을 재설정합니다.",
+    creator: "@mech_mind",
+    badge: "TOP_RATED",
+  },
+  {
+    id: "freya",
+    name: "Freya",
+    imageUrl:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuC7vaZSBYUxTzwl-IFEjB3d0_2weZnn_nCa-zHA-XVE08ZsoEgrzC_lgpB6cJbLoQukteCs6l8kl7SokLXUPnRwVVfoRZEaIAP-lkaj5UIuwkRXrfR6pnV39ETkT03rPy4j29893_5NRNamCBjprU_4IpGZ1UcHklPOlp1hEcch8Br8SM9hsGmwdHjaR7U-MSu5sYLrMkx7y9PzTmyRs8h5xeLNAj46AKTolxMBgp3-fE0MOMrXKvvCuUsNCRJWkXemH-FVPR4lQ74",
+    chatCount: "15k",
+    quote: "숲의 속삭임이 디지털 바람을 타고 들려와요.",
+    creator: "@nature_tech",
+  },
+];
+
+export function FeaturedCharacters({
+  characters = DEFAULT_CHARACTERS,
+  onCharacterClick,
+}: FeaturedCharactersProps) {
+  return (
+    <section className="relative z-20 px-6 md:px-16 pt-24 bg-[#050505]">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-end mb-10">
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">
+            추천 <span className="text-[#FF003C]">캐릭터</span>
+          </h2>
+          <Link
+            href="/characters"
+            className="text-xs font-bold text-gray-500 hover:text-[#FF003C] transition-colors uppercase tracking-widest mt-4 md:mt-0 flex items-center"
+          >
+            모두 보기 <ArrowRight className="w-4 h-4 ml-1" />
+          </Link>
+        </div>
+
+        {/* Character Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {characters.map((character, index) => (
+            <motion.div
+              key={character.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="group relative bg-[#0F0F0F] border border-gray-800 rounded-xl overflow-hidden hover:border-[#FF003C]/50 transition-all duration-300"
+              onClick={() => onCharacterClick?.(character.id)}
+            >
+              {/* Image */}
+              <div className="aspect-[3/4] overflow-hidden relative">
+                <img
+                  alt={character.name}
+                  className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 ${
+                    character.id === "kael-09" ? "grayscale group-hover:grayscale-0" : ""
+                  }`}
+                  src={character.imageUrl}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
+
+                {/* Badge */}
+                {character.badge && (
+                  <div
+                    className={`absolute top-3 right-3 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold border ${
+                      character.badge === "NEW"
+                        ? "bg-black/60 text-[#FF003C] border-[#FF003C]/30"
+                        : "bg-[#FF003C]/20 text-[#FF003C] border-[#FF003C]/50"
+                    }`}
+                  >
+                    {character.badge === "NEW" ? "NEW" : "TOP RATED"}
+                  </div>
+                )}
+              </div>
+
+              {/* Content */}
+              <div className="p-5 relative">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-xl font-bold text-white">{character.name}</h3>
+                  <div className="flex items-center text-xs text-gray-400">
+                    <MessageCircle className="w-3.5 h-3.5 mr-1 text-[#FF003C]" />
+                    {character.chatCount}
+                  </div>
+                </div>
+
+                <p className="text-xs text-gray-400 mb-4 line-clamp-2 italic">
+                  &quot;{character.quote}&quot;
+                </p>
+
+                <div className="flex items-center justify-between border-t border-white/10 pt-3 mt-auto">
+                  <span className="text-[10px] text-gray-500 font-mono">
+                    {character.creator}
+                  </span>
+                  <button className="text-[#FF003C] hover:text-white transition-colors">
+                    <PlusCircle className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default FeaturedCharacters;

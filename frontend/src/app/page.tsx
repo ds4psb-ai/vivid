@@ -3,34 +3,38 @@
 /**
  * Crebit Home Page - Stitch V2 Cinematic AI OTT Experience
  *
- * Ultra-dark theme with neon accents
+ * Deep charcoal theme with neon red accents
  * Split hero layout with character model card
  * Bento box variations grid
+ * Featured characters + Masters touch + Human Cloud CTA
  */
 
 import React, { Suspense } from "react";
 import { CrebitNavbar } from "@/components/home/CrebitNavbar";
 import { CinematicHero, FeaturedIP } from "@/components/home/CinematicHero";
 import { VariationsGrid, VariationCard } from "@/components/home/VariationsGrid";
+import { FeaturedCharacters } from "@/components/home/FeaturedCharacters";
+import { MastersTouchSection } from "@/components/home/MastersTouchSection";
+import { HumanCloudCTA } from "@/components/home/HumanCloudCTA";
 import { CrebitFooter } from "@/components/home/CrebitFooter";
 
-// Featured IP data - Stitch V2 design
+// Featured IP data - Stitch V2 Neon Red design
 const FEATURED_IP: FeaturedIP = {
   slug: "neon-horizon",
   title: "NEON",
   titleAccent: "HORIZON",
   description:
-    "In a city that never sleeps, a rogue AI begins to dream. Uncover the synthetic truth before your memory is erased.",
+    "잠들지 않는 도시에서, 이단 AI가 꿈을 꾸기 시작합니다. 당신의 기억이 지워지기 전에 합성된 진실을 밝혀내세요.",
   bannerUrl:
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuDh2e3UoFCS76v_Zznn9MxmBvQaJyklYFDZbBaI6UWaLtBrvkSxVQOSfTDbNVaX0cJij8j99B6IkOH0_MLfMlraZlyPRnRaY35g62p2Fe3R-yGq81_vnAl8ApHAzCfA3X79StAD67u-A4-DR_a7qo79v8QqKabI5tSUDJOkrj3ar1DGf6NekiqYpIm1BRm9w-yJGN3id3hoUa69Gg5AfkthMK_sMISLHxIrIsXNKIn0RZbHYaG5XLjO7cA22Oe0bJx8HDku_VFzYNg",
-  tags: ["Season 1", "2042"],
+    "https://lh3.googleusercontent.com/aida-public/AB6AXuAnK4vWkCZjrOPWwMEwuJ0km4m8lqtIFwhUKg1REgmZyY5i9xLX3f-0C3U3caIjYYL0EY7zr0_TuMwG4hSbxBUVCLDMNdm6l241-FenheSVYCdrI8w8KIeXS3v4UgTHeg9UwJiM2pBaX_Mk-IqEQuOBJv70c3nN2zf9k6Pk0XBs7VjoAFv07GZc2VxmGhNk3Y4To7R0IB9w2tyC2sMilOgnpEMAMotqozzHfufSs234LzjzB9gByd-GQiBOB0_NHW9FMlqiRwEd4RE",
+  tags: ["시즌 1", "2042"],
   rating: 4.9,
   remixCount: "12K",
   matchPercent: 98,
   character: {
     name: "Kael-09",
-    description: "Cybernetic protagonist. Fully rigged for animation and style transfer.",
-    status: "Character Model Ready",
+    description: "사이버네틱 주인공. 애니메이션 및 스타일 전송을 위한 완벽한 리깅이 적용되었습니다.",
+    status: "캐릭터 모델 준비 완료",
   },
 };
 
@@ -99,17 +103,26 @@ const VARIATION_CARDS: VariationCard[] = [
 
 function HomePageContent() {
   return (
-    <div className="min-h-screen bg-[#030014] text-gray-100 font-sans">
+    <div className="min-h-screen bg-[#050505] text-gray-100 font-sans selection:bg-[#FF003C] selection:text-white overflow-x-hidden">
       {/* Navigation */}
       <CrebitNavbar />
 
       {/* Main Content */}
-      <main className="relative">
-        {/* Cinematic Hero */}
+      <main className="relative w-full min-h-screen pb-20">
+        {/* 1. Cinematic Hero */}
         <CinematicHero featured={FEATURED_IP} />
 
-        {/* Variations Grid */}
+        {/* 2. Variations Grid */}
         <VariationsGrid variations={VARIATION_CARDS} />
+
+        {/* 3. Featured Characters */}
+        <FeaturedCharacters />
+
+        {/* 4. Masters Touch */}
+        <MastersTouchSection />
+
+        {/* 5. Human Cloud CTA */}
+        <HumanCloudCTA />
       </main>
 
       {/* Footer */}
@@ -122,13 +135,13 @@ export default function HomePage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#030014]">
+        <div className="min-h-screen flex items-center justify-center bg-[#050505]">
           <div className="flex flex-col items-center gap-4">
-            <div className="w-10 h-10 bg-white text-[#030014] font-display font-bold text-xl flex items-center justify-center rounded-sm animate-pulse">
+            <div className="w-10 h-10 bg-white text-[#050505] font-display font-bold text-xl flex items-center justify-center rounded-sm animate-pulse">
               C
             </div>
             <div className="h-1 w-24 bg-gray-800 rounded-full overflow-hidden">
-              <div className="h-full w-1/2 bg-violet-500 rounded-full animate-pulse" />
+              <div className="h-full w-1/2 bg-[#FF003C] rounded-full animate-pulse" />
             </div>
           </div>
         </div>

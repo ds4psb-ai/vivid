@@ -76,6 +76,18 @@ DATABASE_URL=postgresql://...
 DATABASE_URL=postgresql+asyncpg://...
 ```
 
+### 5. Private Networking SSL
+
+Railway private networking은 SSL을 사용하지 않음:
+
+```bash
+# ❌ SSL 연결 시도 (ConnectionRefusedError)
+DB_SSL_MODE=prefer  # 기본값
+
+# ✅ SSL 비활성화
+DB_SSL_MODE=disable
+```
+
 ### 5. 변수 참조 vs 하드코딩
 
 Railway 변수 참조 (`${{Service.VAR}}`)가 안 될 때 하드코딩:
@@ -95,6 +107,7 @@ DATABASE_URL=postgresql://...@postgres.railway.internal:5432/...
 ```bash
 # Database
 DATABASE_URL=postgresql+asyncpg://postgres:{PASSWORD}@postgres.railway.internal:5432/railway
+DB_SSL_MODE=disable  # ⚠️ Private networking은 SSL 없음
 
 # Redis
 REDIS_URL=redis://default:{PASSWORD}@redis.railway.internal:6379
@@ -154,6 +167,7 @@ PyYAML>=6.0.0
 1. DATABASE_URL에 `+asyncpg` 드라이버 확인
 2. Private domain 사용 확인 (`*.railway.internal`)
 3. 서비스 이름 일치 확인 (`postgres`, `redis`)
+4. **DB_SSL_MODE=disable** 설정 확인 (private networking은 SSL 미사용)
 
 ### Production Validation Error
 

@@ -1456,20 +1456,24 @@ html.lenis body {
    Ultra-dark theme with neon accents for immersive content browsing
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Stitch V2 Color Tokens */
+/* Stitch V2 Color Tokens - Neon Red Theme (2026.01.26) */
 :root {
-  --stitch-bg-dark: #030014;
-  --stitch-card-dark: #0F0720;
-  --stitch-surface-dark: #1e1b4b;
-  --stitch-primary: #7C3AED;
-  --stitch-primary-accent: #D946EF;
+  --stitch-bg-dark: #050505;
+  --stitch-card-dark: #0F0F0F;
+  --stitch-surface-dark: #0F0F0F;
+  --stitch-primary: #FF003C;
+  --stitch-primary-dark: #cc0030;
+  --stitch-primary-accent: #ff4d6d;
+  --stitch-neon-red: #FF003C;
+  --stitch-neon-white: #ffffff;
+  /* Legacy violet references for gradual migration */
   --stitch-neon-purple: #a855f7;
   --stitch-neon-blue: #3b82f6;
 }
 
 /* Glass Panel - Frosted glass effect for cards and overlays */
 .glass-panel {
-  background: rgba(15, 7, 32, 0.4);
+  background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -1492,7 +1496,7 @@ html.lenis body {
   position: absolute;
   inset: -1px;
   z-index: -1;
-  background: linear-gradient(45deg, #7C3AED, #D946EF, #3b82f6);
+  background: linear-gradient(45deg, var(--stitch-primary), var(--stitch-primary-accent), var(--stitch-primary));
   filter: blur(8px);
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -1506,11 +1510,24 @@ html.lenis body {
 
 /* Text Glow - Neon text shadow effect */
 .text-glow {
-  text-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+  text-shadow: 0 0 20px rgba(255, 0, 60, 0.5);
 }
 
 .text-glow-pink {
   text-shadow: 0 0 20px rgba(217, 70, 239, 0.5);
+}
+
+.text-glow-red {
+  text-shadow: 0 0 15px rgba(255, 0, 60, 0.5);
+}
+
+/* Neon Red Shadow Effect */
+.shadow-neon {
+  box-shadow: 0 0 20px rgba(255, 0, 60, 0.4);
+}
+
+.shadow-neon-sm {
+  box-shadow: 0 0 10px rgba(255, 0, 60, 0.3);
 }
 
 /* Background Grid Pattern */
@@ -1520,13 +1537,22 @@ html.lenis body {
                     linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
 }
 
-/* Cinematic Background - Ultra dark with violet tint */
+/* Cinematic Background - Deep charcoal black */
 .bg-cinematic {
-  background-color: #030014;
+  background-color: #050505;
 }
 
 .bg-cinematic-card {
-  background-color: #0F0720;
+  background-color: #0F0F0F;
+}
+
+/* Stitch V2 Neon Red Theme Background */
+.bg-stitch-dark {
+  background-color: var(--stitch-bg-dark);
+}
+
+.bg-stitch-surface {
+  background-color: var(--stitch-surface-dark);
 }
 
 /* Clip Diagonal - For hero sections */
@@ -1610,11 +1636,11 @@ html.lenis body {
 
 /* Character Model Card */
 .character-card {
-  background: rgba(15, 7, 32, 0.4);
+  background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-left: 4px solid #D946EF;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-left: none;
 }
 
 /* Status Indicator Pulse */

@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * Crebit Footer - Stitch V2 Design
+ * Crebit Footer - Stitch V2 Neon Red Design
  *
- * Minimal footer with dark theme
+ * Minimal footer with deep charcoal theme
  * Logo, version info, and navigation links
  */
 
@@ -12,42 +12,29 @@ import Link from "next/link";
 
 export function CrebitFooter() {
   return (
-    <footer className="border-t border-white/5 bg-[#030014] py-12 px-6 sm:px-12 lg:px-20">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+    <footer className="mt-0 border-t border-white/10 py-8 px-6 md:px-16 bg-[#050505]">
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center text-xs text-gray-500 font-bold tracking-wider uppercase">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-6 h-6 bg-white text-[#030014] font-display font-bold text-xs flex items-center justify-center rounded-sm">
+        <div className="flex items-center gap-2 mb-4 md:mb-0">
+          <div className="h-6 w-6 bg-white text-black font-bold flex items-center justify-center rounded text-xs">
             C
           </div>
-          <span className="font-display font-bold text-white tracking-tight">
-            Crebit AI
-          </span>
-        </Link>
-
-        {/* Version Info */}
-        <div className="text-xs text-gray-600 font-mono">
-          NEURAL ARCHITECTURE V1.0 // EST. 2023
+          <span>Crebit AI</span>
         </div>
 
+        {/* Version Info */}
+        <div>Neural Architecture v1.0 // 2023년 설립</div>
+
         {/* Navigation Links */}
-        <div className="flex gap-6">
-          <Link
-            href="/manifesto"
-            className="text-gray-500 hover:text-white transition-colors text-sm"
-          >
-            Manifesto
+        <div className="flex gap-6 mt-4 md:mt-0">
+          <Link href="/manifesto" className="hover:text-[#FF003C] transition-colors">
+            선언문
           </Link>
-          <Link
-            href="/legal"
-            className="text-gray-500 hover:text-white transition-colors text-sm"
-          >
-            Legal
+          <Link href="/legal" className="hover:text-[#FF003C] transition-colors">
+            법적 고지
           </Link>
-          <Link
-            href="/connect"
-            className="text-gray-500 hover:text-white transition-colors text-sm"
-          >
-            Connect
+          <Link href="/connect" className="hover:text-[#FF003C] transition-colors">
+            연결
           </Link>
         </div>
       </div>
