@@ -1,2 +1,15 @@
+# dependencies
+node_modules
+.pnp
+.pnp.js
+
+# build
+.next
+out
+build
+
+# vercel
 .vercel
+
+# env
 .env*.local
