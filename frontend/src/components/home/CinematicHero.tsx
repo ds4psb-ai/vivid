@@ -1,29 +1,32 @@
 "use client";
 
 /**
- * Cinematic Hero Section
+ * Cinematic Hero Section - Stitch V2 Design
  *
- * Netflix-style full-width hero with featured IP
- * Exact match to Stitch AI design
+ * Split layout with character model card
+ * Ultra-dark theme with neon accents
  */
 
 import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Sparkles, Play, Star, BarChart3 } from "lucide-react";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { Sparkles, Play, ArrowRight } from "lucide-react";
 
 export interface FeaturedIP {
   slug: string;
-  titleLine1: string;
-  titleLine2: string;
+  title: string;
+  titleAccent: string;
   description: string;
-  descriptionKo: string;
   bannerUrl: string;
   tags: string[];
   rating: number;
   remixCount: string;
-  topStyle: string;
+  matchPercent: number;
+  character?: {
+    name: string;
+    description: string;
+    status: string;
+  };
 }
 
 interface CinematicHeroProps {
@@ -31,122 +34,134 @@ interface CinematicHeroProps {
 }
 
 export function CinematicHero({ featured }: CinematicHeroProps) {
-  const { language } = useLanguage();
-  const ko = language === "ko";
-
   return (
-    <div className="relative w-full h-[85vh] overflow-hidden">
-      {/* Background with cinematic gradient overlay */}
-      <img
-        alt="Cinematic Background"
-        className="absolute inset-0 w-full h-full object-cover z-0 blur-sm scale-105"
-        src={featured.bannerUrl}
-      />
-      {/* Cinematic gradient overlay */}
-      <div
-        className="absolute inset-0 z-10"
-        style={{
-          background: 'linear-gradient(to bottom, rgba(17, 24, 39, 0.4) 0%, rgba(17, 24, 39, 0.8) 60%, rgba(17, 24, 39, 1) 100%)'
-        }}
-      />
+    <section className="relative min-h-screen flex flex-col lg:flex-row overflow-hidden bg-[#030014]">
+      {/* Background Grid Pattern */}
+      <div className="fixed inset-0 bg-grid z-0 pointer-events-none" />
 
-      {/* Content */}
-      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-end pb-24">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 w-full">
-          {/* Left column - Title & CTA */}
-          <motion.div
-            className="lg:col-span-7 flex flex-col justify-end space-y-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            {/* Tags */}
-            <div className="flex items-center gap-3">
-              {featured.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="px-3 py-1 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-xs font-semibold text-white tracking-wide uppercase"
-                >
-                  {tag}
-                </span>
-              ))}
-              <div className="flex items-center text-yellow-400 text-sm font-bold">
-                <Star className="w-4 h-4 mr-1 fill-current" />
+      {/* Left Column - Content */}
+      <div className="w-full lg:w-1/2 relative flex flex-col justify-center px-6 sm:px-12 lg:px-20 py-24 lg:py-0 z-20">
+        {/* Gradient overlay for mobile */}
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-[#030014]/0 via-[#030014]/20 to-[#030014] lg:bg-gradient-to-r lg:from-[#030014] lg:via-[#030014] lg:to-transparent z-[-1]" />
+
+        <motion.div
+          className="space-y-8 max-w-xl"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          {/* Tags */}
+          <div className="flex flex-wrap items-center gap-4 text-xs font-mono tracking-widest uppercase text-gray-400">
+            <span className="flex items-center gap-1 text-fuchsia-400">
+              <Sparkles className="w-3.5 h-3.5" />
+              AI Enabled
+            </span>
+            {featured.tags.map((tag, i) => (
+              <React.Fragment key={tag}>
+                <span className="w-1 h-1 bg-gray-600 rounded-full" />
+                <span>{tag}</span>
+              </React.Fragment>
+            ))}
+          </div>
+
+          {/* Title */}
+          <h1 className="font-display font-bold text-6xl md:text-7xl lg:text-8xl leading-[0.9] tracking-tighter text-white">
+            {featured.title}
+            <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 to-violet-600 text-glow">
+              {featured.titleAccent}
+            </span>
+          </h1>
+
+          {/* Description */}
+          <p className="text-gray-400 text-lg font-light leading-relaxed max-w-md border-l-2 border-violet-500/30 pl-6">
+            {featured.description}
+          </p>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-6 pt-6">
+            <Link
+              href={`/ip/${featured.slug}`}
+              className="group relative px-8 py-4 bg-white text-[#030014] font-display font-bold text-lg tracking-wide hover:bg-gray-200 transition-colors flex items-center gap-3 overflow-hidden"
+            >
+              <span className="relative z-10">REMIX WITH AI</span>
+              <ArrowRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
+              <div className="absolute inset-0 bg-gradient-to-r from-fuchsia-500 to-violet-600 opacity-0 group-hover:opacity-10 transition-opacity" />
+            </Link>
+
+            <button className="px-8 py-4 border border-white/20 text-white font-display font-medium text-lg tracking-wide hover:bg-white/5 transition-colors flex items-center gap-2 backdrop-blur-sm">
+              <Play className="w-5 h-5" />
+              <span>TRAILER</span>
+            </button>
+          </div>
+
+          {/* Stats */}
+          <div className="pt-12 grid grid-cols-3 gap-8 border-t border-white/10">
+            <div>
+              <div className="text-2xl font-display font-bold text-white">
                 {featured.rating}
               </div>
-            </div>
-
-            {/* Title with gradient */}
-            <h1 className="font-display text-5xl md:text-7xl font-bold text-white leading-tight drop-shadow-lg">
-              {featured.titleLine1}
-              <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
-                {featured.titleLine2}
-              </span>
-            </h1>
-
-            {/* Description */}
-            <p className="text-lg md:text-xl text-gray-200 max-w-2xl font-light leading-relaxed drop-shadow-md">
-              {ko ? featured.descriptionKo : featured.description}
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-wrap items-center gap-4 pt-4">
-              <Link
-                href={`/ip/${featured.slug}`}
-                className="group relative inline-flex items-center justify-center px-8 py-4 text-base font-bold text-white transition-all duration-200 bg-violet-500 rounded-full hover:bg-violet-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 focus:ring-offset-gray-900 shadow-lg shadow-violet-500/30"
-              >
-                <Sparkles className="w-5 h-5 mr-2 animate-pulse" />
-                {ko ? "AI로 리믹스" : "Remix with AI"}
-                <div className="absolute inset-0 rounded-full ring-2 ring-white/20 group-hover:ring-white/40 transition-all" />
-              </Link>
-
-              <button className="inline-flex items-center justify-center px-8 py-4 text-base font-medium text-white transition-all duration-200 bg-white/10 backdrop-blur-md border border-white/20 rounded-full hover:bg-white/20 focus:outline-none">
-                <Play className="w-5 h-5 mr-2" />
-                {ko ? "원본 보기" : "Watch Original"}
-              </button>
-            </div>
-          </motion.div>
-
-          {/* Right column - Remix Stats */}
-          <motion.div
-            className="hidden lg:flex lg:col-span-5 flex-col justify-end items-end space-y-4"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-6 rounded-2xl w-full max-w-sm">
-              <h3 className="text-white font-display font-bold text-lg mb-4 flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-violet-400" />
-                {ko ? "리믹스 통계" : "Remix Stats"}
-              </h3>
-
-              <div className="space-y-4">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-300">{ko ? "총 리믹스" : "Total Remixes"}</span>
-                  <span className="text-white font-mono font-bold">{featured.remixCount}</span>
-                </div>
-
-                <div className="w-full bg-gray-700/50 rounded-full h-1.5">
-                  <div
-                    className="bg-gradient-to-r from-violet-500 to-pink-500 h-1.5 rounded-full"
-                    style={{ width: "75%" }}
-                  />
-                </div>
-
-                <div className="flex justify-between items-center text-sm pt-2">
-                  <span className="text-gray-300">{ko ? "인기 스타일" : "Top Style"}</span>
-                  <span className="text-violet-300 font-semibold">{featured.topStyle}</span>
-                </div>
+              <div className="text-xs text-gray-500 uppercase tracking-widest">
+                Rating
               </div>
             </div>
-          </motion.div>
-        </div>
+            <div>
+              <div className="text-2xl font-display font-bold text-white">
+                {featured.remixCount}
+              </div>
+              <div className="text-xs text-gray-500 uppercase tracking-widest">
+                Remixes
+              </div>
+            </div>
+            <div>
+              <div className="text-2xl font-display font-bold text-fuchsia-400">
+                {featured.matchPercent}%
+              </div>
+              <div className="text-xs text-gray-500 uppercase tracking-widest">
+                Match
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </div>
 
-      {/* Bottom gradient fade to page background */}
-      <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-gray-50 dark:from-gray-900 to-transparent z-20" />
-    </div>
+      {/* Right Column - Image */}
+      <div className="absolute inset-0 lg:relative lg:w-1/2 h-full min-h-[50vh]">
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#030014] via-transparent to-transparent lg:bg-gradient-to-l lg:from-transparent lg:via-transparent lg:to-[#030014] z-10" />
+
+        <img
+          alt="Featured IP Banner"
+          className="w-full h-full object-cover object-center lg:object-left filter contrast-125 brightness-90 saturate-150"
+          src={featured.bannerUrl}
+        />
+
+        {/* Character Model Card */}
+        {featured.character && (
+          <motion.div
+            className="hidden lg:block absolute bottom-12 right-12 z-20"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
+            <div className="character-card p-6 max-w-xs rounded-lg">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full status-pulse" />
+                <span className="text-xs font-mono uppercase text-gray-300">
+                  {featured.character.status}
+                </span>
+              </div>
+              <h3 className="text-xl font-display font-bold text-white mb-1">
+                {featured.character.name}
+              </h3>
+              <p className="text-sm text-gray-400">
+                {featured.character.description}
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </div>
+    </section>
   );
 }
 

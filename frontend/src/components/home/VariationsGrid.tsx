@@ -1,85 +1,111 @@
 "use client";
 
 /**
- * Variations Grid Section
+ * Variations Grid Section - Stitch V2 Design
  *
- * Exact match to Stitch AI design - 6 cards + Custom Remix
+ * Bento Box layout with varying card sizes
+ * Neon border effects and glass panels
  */
 
 import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
-  Brush,
-  Video,
+  Film,
+  Gamepad2,
   BookOpen,
   Headphones,
-  Gamepad2,
   Plus,
-  ArrowRight,
-  Filter,
+  Play,
+  ArrowUpRight,
 } from "lucide-react";
-import { useLanguage } from "@/contexts/LanguageContext";
 
 export interface VariationCard {
   id: string;
   name: string;
-  nameKo: string;
   description: string;
-  descriptionKo: string;
   thumbnailUrl: string;
   category: "visual" | "video" | "story" | "audio" | "interactive";
-  badge: string;
+  badge?: string;
+  badgeColor?: string;
   href: string;
-  isPrimary?: boolean;
+  layout?: "tall" | "wide" | "normal";
+  icon?: React.ReactNode;
+  iconColor?: string;
 }
 
 interface VariationsGridProps {
   variations: VariationCard[];
 }
 
-const CATEGORY_CONFIG = {
-  visual: { icon: Brush, label: "Visual", color: "text-pink-400" },
-  video: { icon: Video, label: "Video", color: "text-blue-400" },
-  story: { icon: BookOpen, label: "Story", color: "text-yellow-400" },
-  audio: { icon: Headphones, label: "Audio", color: "text-green-400" },
-  interactive: { icon: Gamepad2, label: "Interactive", color: "text-purple-400" },
+const CATEGORY_ICONS = {
+  visual: Film,
+  video: Film,
+  story: BookOpen,
+  audio: Headphones,
+  interactive: Gamepad2,
+};
+
+const ICON_COLORS = {
+  visual: "text-pink-400",
+  video: "text-blue-400",
+  story: "text-yellow-400",
+  audio: "text-green-400",
+  interactive: "text-purple-400",
+};
+
+const PROGRESS_COLORS = {
+  visual: "bg-pink-500",
+  video: "bg-blue-500",
+  story: "bg-yellow-500",
+  audio: "bg-green-500",
+  interactive: "bg-purple-500",
 };
 
 export function VariationsGrid({ variations }: VariationsGridProps) {
-  const { language } = useLanguage();
-  const ko = language === "ko";
-
   return (
-    <section className="relative z-30 -mt-10 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <section className="relative py-24 px-6 sm:px-12 lg:px-20 bg-[#030014]">
+      {/* Top divider */}
+      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-violet-500/50 to-transparent" />
+
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6 max-w-7xl mx-auto">
         <div>
-          <h2 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-2">
-            {ko ? "가능한 변주" : "Possible Variations"}
+          <h2 className="text-4xl md:text-5xl font-display font-bold text-white mb-4">
+            Possible{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-500 to-fuchsia-500">
+              Variations
+            </span>
           </h2>
-          <p className="text-gray-500 dark:text-gray-400">
-            {ko
-              ? "AI 생성 엔진으로 이 IP를 새로운 포맷으로 변환하세요."
-              : "Transform this IP into new formats using our generative engine."}
+          <p className="text-gray-400 max-w-md text-lg">
+            Deconstruct and reconstruct this IP into entirely new formats using
+            our neural engine.
           </p>
         </div>
-
-        <div className="flex gap-2">
-          <button className="p-2 rounded-full border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition-colors">
-            <Filter className="w-5 h-5" />
+        <div className="flex gap-4">
+          <button className="px-6 py-2 border border-white/10 rounded-full text-sm font-medium hover:border-violet-500 transition-colors text-gray-300 hover:text-white">
+            Most Popular
           </button>
-          <button className="px-4 py-2 rounded-full border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm font-medium transition-colors">
-            {ko ? "전체 보기" : "View All"}
+          <button className="px-6 py-2 border border-white/10 rounded-full text-sm font-medium hover:border-violet-500 transition-colors text-gray-300 hover:text-white">
+            Newest
           </button>
         </div>
       </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Bento Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-[300px] max-w-7xl mx-auto">
         {variations.map((card, index) => {
-          const categoryConfig = CATEGORY_CONFIG[card.category];
-          const CategoryIcon = categoryConfig.icon;
+          const Icon = CATEGORY_ICONS[card.category];
+          const iconColor = ICON_COLORS[card.category];
+          const progressColor = PROGRESS_COLORS[card.category];
+
+          // Determine grid span based on layout
+          const gridClass =
+            card.layout === "tall"
+              ? "lg:col-span-1 lg:row-span-2"
+              : card.layout === "wide"
+                ? "md:col-span-2 lg:col-span-2"
+                : "md:col-span-1 lg:col-span-1";
 
           return (
             <motion.div
@@ -87,78 +113,137 @@ export function VariationsGrid({ variations }: VariationsGridProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-xl hover:shadow-violet-500/10 transition-all duration-300 transform hover:-translate-y-1"
+              className={`group relative rounded-2xl overflow-hidden neon-border ${gridClass}`}
             >
-              {/* Thumbnail */}
-              <div className="relative h-48 overflow-hidden">
-                <img
-                  alt={card.name}
-                  className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 ${
-                    card.category === "audio" ? "grayscale group-hover:grayscale-0" : ""
-                  }`}
-                  src={card.thumbnailUrl}
-                />
-                {/* Category Badge */}
-                <div className="absolute top-3 left-3">
-                  <span className="px-2 py-1 bg-black/60 backdrop-blur-sm text-white text-xs font-bold rounded flex items-center gap-1">
-                    <CategoryIcon className={`w-3 h-3 ${categoryConfig.color}`} />
-                    {categoryConfig.label}
-                  </span>
-                </div>
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
-              </div>
+              {/* Background */}
+              <div className="absolute inset-0 bg-[#0F0720] z-0" />
+
+              {/* Image */}
+              <img
+                alt={card.name}
+                className={`absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-80 group-hover:scale-110 transition-all duration-700 ${
+                  card.category === "audio"
+                    ? "grayscale group-hover:grayscale-0"
+                    : ""
+                }`}
+                src={card.thumbnailUrl}
+              />
+
+              {/* Gradient overlay */}
+              <div
+                className={`absolute inset-0 z-10 ${
+                  card.layout === "wide"
+                    ? "bg-gradient-to-r from-black via-black/50 to-transparent"
+                    : "bg-gradient-to-t from-black via-black/40 to-transparent"
+                }`}
+              />
 
               {/* Content */}
-              <div className="p-5">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white group-hover:text-violet-500 transition-colors">
-                    {ko ? card.nameKo : card.name}
-                  </h3>
-                  <span className="text-xs font-mono text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
-                    {card.badge}
-                  </span>
-                </div>
-
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 line-clamp-2">
-                  {ko ? card.descriptionKo : card.description}
-                </p>
-
-                <Link
-                  href={card.href}
-                  className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all ${
-                    card.isPrimary
-                      ? "bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-violet-500 dark:hover:bg-violet-500 hover:text-white dark:hover:text-white group-hover:ring-2 ring-offset-2 dark:ring-offset-gray-800 ring-violet-500"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-violet-500 dark:hover:bg-violet-500 hover:text-white"
+              <div
+                className={`absolute bottom-0 left-0 w-full p-6 z-20 ${
+                  card.layout === "wide"
+                    ? "flex flex-col justify-end items-start h-full p-8"
+                    : ""
+                }`}
+              >
+                <div
+                  className={`transform group-hover:translate-y-[-8px] transition-transform duration-300 ${
+                    card.layout === "wide" ? "group-hover:translate-x-2" : ""
                   }`}
                 >
-                  <span>{ko ? "워크플로우 시작" : "Start Workflow"}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
+                  {/* Badge */}
+                  {card.badge && (
+                    <span
+                      className={`inline-block px-2 py-1 mb-3 text-[10px] font-bold tracking-widest uppercase text-white ${
+                        card.badgeColor || "bg-violet-600"
+                      }`}
+                    >
+                      {card.badge}
+                    </span>
+                  )}
+
+                  {/* Title */}
+                  {card.layout === "tall" ? (
+                    <h3 className="text-2xl font-display font-bold text-white mb-2 leading-tight">
+                      {card.name.split(" ").map((word, i) => (
+                        <React.Fragment key={i}>
+                          {word}
+                          {i === 0 && <br />}
+                        </React.Fragment>
+                      ))}
+                    </h3>
+                  ) : card.layout === "wide" ? (
+                    <>
+                      <h3 className="text-3xl font-display font-bold text-white mb-2">
+                        {card.name}
+                      </h3>
+                      <p className="text-gray-300 max-w-md mb-4 text-sm">
+                        {card.description}
+                      </p>
+                      <button className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white hover:text-black transition-all">
+                        <Play className="w-5 h-5" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Icon
+                        className={`w-10 h-10 mb-2 opacity-80 ${iconColor}`}
+                      />
+                      <h3 className="text-xl font-display font-bold text-white mb-1">
+                        {card.name}
+                      </h3>
+                      {/* Progress bar on hover */}
+                      <div
+                        className={`h-1 w-0 ${progressColor} group-hover:w-full transition-all duration-500`}
+                      />
+                    </>
+                  )}
+
+                  {/* Description for tall cards */}
+                  {card.layout === "tall" && (
+                    <>
+                      <p className="text-sm text-gray-400 mb-4 line-clamp-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
+                        {card.description}
+                      </p>
+                      <Link
+                        href={card.href}
+                        className="flex items-center gap-2 text-fuchsia-400 font-bold text-sm tracking-wide group-hover:text-white transition-colors"
+                      >
+                        START WORKFLOW{" "}
+                        <ArrowUpRight className="w-4 h-4" />
+                      </Link>
+                    </>
+                  )}
+                </div>
               </div>
             </motion.div>
           );
         })}
 
-        {/* Custom Remix Card */}
+        {/* Custom Workflow Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: variations.length * 0.1 }}
+          className="group relative md:col-span-1 lg:col-span-1 bg-gradient-to-br from-gray-900 to-black rounded-2xl border border-white/10 hover:border-violet-500/50 transition-colors flex flex-col items-center justify-center text-center p-6 cursor-pointer overflow-hidden"
         >
-          <Link
-            href="/dimension"
-            className="group relative flex flex-col justify-center items-center h-full min-h-[380px] bg-gray-50 dark:bg-gray-800/50 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-violet-500 dark:hover:border-violet-500 transition-all duration-300 cursor-pointer"
-          >
-            <div className="w-16 h-16 rounded-full bg-violet-500/10 flex items-center justify-center mb-4 group-hover:bg-violet-500 group-hover:text-white text-violet-500 transition-all duration-300">
-              <Plus className="w-8 h-8" />
+          {/* Carbon fiber pattern */}
+          <div
+            className="absolute inset-0 opacity-20"
+            style={{
+              backgroundImage:
+                "url('https://www.transparenttextures.com/patterns/carbon-fibre.png')",
+            }}
+          />
+
+          <Link href="/dimension" className="relative z-10 flex flex-col items-center">
+            <div className="w-16 h-16 rounded-full border border-dashed border-gray-600 group-hover:border-violet-500 flex items-center justify-center mb-4 transition-colors">
+              <Plus className="w-8 h-8 text-gray-400 group-hover:text-violet-500 transition-colors" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-              {ko ? "커스텀 리믹스" : "Custom Remix"}
+            <h3 className="text-xl font-display font-bold text-white mb-1 group-hover:text-violet-500 transition-colors">
+              Custom Workflow
             </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 text-center px-8">
-              {ko ? "나만의 워크플로우를 처음부터 만들어보세요" : "Build your own workflow from scratch"}
-            </p>
+            <p className="text-xs text-gray-500 mt-2">Design from scratch</p>
           </Link>
         </motion.div>
       </div>

@@ -1,68 +1,54 @@
 "use client";
 
 /**
- * Crebit Footer
+ * Crebit Footer - Stitch V2 Design
  *
- * Minimal footer with:
- * - Logo
- * - Copyright
- * - Social links
+ * Minimal footer with dark theme
+ * Logo, version info, and navigation links
  */
 
 import React from "react";
 import Link from "next/link";
-import { Twitter, Github, Youtube } from "lucide-react";
 
 export function CrebitFooter() {
-  const currentYear = new Date().getFullYear();
-
   return (
-    <footer className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 py-12 mt-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
+    <footer className="border-t border-white/5 bg-[#030014] py-12 px-6 sm:px-12 lg:px-20">
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-purple-400 flex items-center justify-center text-white text-xs font-bold">
+          <div className="w-6 h-6 bg-white text-[#030014] font-display font-bold text-xs flex items-center justify-center rounded-sm">
             C
           </div>
-          <span className="font-bold text-gray-900 dark:text-white">
-            Crebit
+          <span className="font-display font-bold text-white tracking-tight">
+            Crebit AI
           </span>
         </Link>
 
-        {/* Copyright */}
-        <div className="text-sm text-gray-500 dark:text-gray-400">
-          &copy; {currentYear} Crebit AI Inc. All rights reserved.
+        {/* Version Info */}
+        <div className="text-xs text-gray-600 font-mono">
+          NEURAL ARCHITECTURE V1.0 // EST. 2023
         </div>
 
-        {/* Social Links */}
+        {/* Navigation Links */}
         <div className="flex gap-6">
-          <a
-            href="https://twitter.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-gray-400 hover:text-violet-500 transition-colors"
-            aria-label="Twitter"
+          <Link
+            href="/manifesto"
+            className="text-gray-500 hover:text-white transition-colors text-sm"
           >
-            <Twitter className="w-5 h-5" />
-          </a>
-          <a
-            href="https://github.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-gray-400 hover:text-violet-500 transition-colors"
-            aria-label="GitHub"
+            Manifesto
+          </Link>
+          <Link
+            href="/legal"
+            className="text-gray-500 hover:text-white transition-colors text-sm"
           >
-            <Github className="w-5 h-5" />
-          </a>
-          <a
-            href="https://youtube.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-gray-400 hover:text-violet-500 transition-colors"
-            aria-label="YouTube"
+            Legal
+          </Link>
+          <Link
+            href="/connect"
+            className="text-gray-500 hover:text-white transition-colors text-sm"
           >
-            <Youtube className="w-5 h-5" />
-          </a>
+            Connect
+          </Link>
         </div>
       </div>
     </footer>

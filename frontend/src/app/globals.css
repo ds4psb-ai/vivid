@@ -1452,6 +1452,186 @@ html.lenis body {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   STITCH AI V2 - CINEMATIC OTT EXPERIENCE (2026.01.25)
+   Ultra-dark theme with neon accents for immersive content browsing
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Stitch V2 Color Tokens */
+:root {
+  --stitch-bg-dark: #030014;
+  --stitch-card-dark: #0F0720;
+  --stitch-surface-dark: #1e1b4b;
+  --stitch-primary: #7C3AED;
+  --stitch-primary-accent: #D946EF;
+  --stitch-neon-purple: #a855f7;
+  --stitch-neon-blue: #3b82f6;
+}
+
+/* Glass Panel - Frosted glass effect for cards and overlays */
+.glass-panel {
+  background: rgba(15, 7, 32, 0.4);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.glass-panel-light {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Neon Border - Glowing border effect on hover */
+.neon-border {
+  position: relative;
+}
+
+.neon-border::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  background: linear-gradient(45deg, #7C3AED, #D946EF, #3b82f6);
+  filter: blur(8px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: inherit;
+}
+
+.group:hover .neon-border::before,
+.neon-border:hover::before {
+  opacity: 0.6;
+}
+
+/* Text Glow - Neon text shadow effect */
+.text-glow {
+  text-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+}
+
+.text-glow-pink {
+  text-shadow: 0 0 20px rgba(217, 70, 239, 0.5);
+}
+
+/* Background Grid Pattern */
+.bg-grid {
+  background-size: 40px 40px;
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+}
+
+/* Cinematic Background - Ultra dark with violet tint */
+.bg-cinematic {
+  background-color: #030014;
+}
+
+.bg-cinematic-card {
+  background-color: #0F0720;
+}
+
+/* Clip Diagonal - For hero sections */
+.clip-diagonal {
+  clip-path: polygon(0 0, 100% 0, 100% 85%, 0% 100%);
+}
+
+/* Stitch Hero Split Layout */
+.hero-split {
+  display: flex;
+  min-height: 100vh;
+}
+
+.hero-split-content {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 5rem;
+  position: relative;
+  z-index: 20;
+}
+
+.hero-split-image {
+  width: 50%;
+  position: relative;
+}
+
+@media (max-width: 1024px) {
+  .hero-split {
+    flex-direction: column;
+  }
+  .hero-split-content,
+  .hero-split-image {
+    width: 100%;
+  }
+  .hero-split-content {
+    padding: 2rem;
+    min-height: 60vh;
+  }
+  .hero-split-image {
+    min-height: 50vh;
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+}
+
+/* Bento Box Grid */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: 300px;
+  gap: 1.5rem;
+}
+
+.bento-tall {
+  grid-row: span 2;
+}
+
+.bento-wide {
+  grid-column: span 2;
+}
+
+@media (max-width: 1024px) {
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .bento-grid {
+    grid-template-columns: 1fr;
+  }
+  .bento-tall,
+  .bento-wide {
+    grid-column: span 1;
+    grid-row: span 1;
+  }
+}
+
+/* Character Model Card */
+.character-card {
+  background: rgba(15, 7, 32, 0.4);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-left: 4px solid #D946EF;
+}
+
+/* Status Indicator Pulse */
+.status-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    STITCH AI GENERATED STYLES (2026.01)
    Generated via Google Stitch MCP API
    Project: Vivid Crebit Studio UI Redesign
