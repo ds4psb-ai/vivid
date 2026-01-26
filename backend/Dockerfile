@@ -90,4 +90,5 @@ EXPOSE 8080
 #     CMD curl -f http://localhost:${PORT:-8080}/health/live || exit 1
 
 # Startup command - use shell form for $PORT expansion
-CMD sh -c "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --workers 2 --timeout-keep-alive 65 --log-level info"
+# Run Alembic migrations first, then start uvicorn
+CMD sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --workers 2 --timeout-keep-alive 65 --log-level info"

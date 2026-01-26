@@ -353,10 +353,22 @@ class Settings(BaseSettings):
         Priority:
         1. DATABASE_URL env var (for Railway/Render/Heroku compatibility)
         2. Build from individual POSTGRES_* vars (legacy/local dev)
+
+        Note: Railway/Heroku provide postgres:// URLs, but SQLAlchemy 2.0+
+        requires postgresql:// and we need +asyncpg for async driver.
         """
         # Use DATABASE_URL env var if provided (Railway, Render, Heroku, etc.)
         if self.DATABASE_URL_OVERRIDE:
-            return self.DATABASE_URL_OVERRIDE
+            url = self.DATABASE_URL_OVERRIDE
+
+            # Railway/Heroku compatibility: convert postgres:// to postgresql+asyncpg://
+            # Order matters: check postgres:// first (shorter prefix)
+            if url.startswith("postgres://"):
+                url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+            elif url.startswith("postgresql://") and "+asyncpg" not in url:
+                url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+            return url
 
         # Fallback: build from individual components
         password = self.POSTGRES_PASSWORD.get_secret_value()
