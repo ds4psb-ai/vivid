@@ -94,7 +94,7 @@ export function HumanCloudCTA({
           {/* Title */}
           <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight text-white">
             프로에게 <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-600 to-gray-400 dark:from-white dark:to-gray-500">
               의뢰하기
             </span>
           </h2>
