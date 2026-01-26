@@ -91,4 +91,10 @@ EXPOSE 8080
 
 # Startup command - use shell form for $PORT expansion
 # Run Alembic migrations first, then start uvicorn
-CMD sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --workers 2 --timeout-keep-alive 65 --log-level info"
+CMD sh -c "echo '=== Starting container ===' && \
+    echo 'PORT='$PORT && \
+    echo 'DATABASE_URL='$(echo $DATABASE_URL | sed 's/:.*@/:***@/') && \
+    echo '=== Running alembic upgrade ===' && \
+    alembic upgrade head 2>&1 || { echo '=== ALEMBIC FAILED ==='; exit 1; } && \
+    echo '=== Starting uvicorn ===' && \
+    uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --workers 2 --timeout-keep-alive 65 --log-level info"
