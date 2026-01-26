@@ -17,25 +17,25 @@ export function CrebitFooter() {
         {/* Logo */}
         <div className="flex items-center gap-2 mb-4 md:mb-0">
           <div className="h-6 w-6 bg-white text-black font-bold flex items-center justify-center rounded text-xs">
-            C
+            A
           </div>
-          <span>Crebit AI</span>
+          <span>주식회사 아캐인</span>
         </div>
 
-        {/* Version Info */}
-        <div>뉴럴 아키텍처 v1.0 // 2024년 설립</div>
+        {/* Company Info */}
+        <div className="normal-case">Crebit by Arkain // AI 콘텐츠 스튜디오</div>
 
         {/* Navigation Links */}
         <div className="flex gap-6 mt-4 md:mt-0">
-          <Link href="/manifesto" className="hover:text-[var(--fg-primary)] transition-colors">
-            선언문
+          <Link href="/terms" className="hover:text-[var(--fg-primary)] transition-colors">
+            이용약관
           </Link>
-          <Link href="/legal" className="hover:text-[var(--fg-primary)] transition-colors">
-            법적 고지
+          <Link href="/terms?tab=privacy" className="hover:text-[var(--fg-primary)] transition-colors">
+            개인정보처리방침
           </Link>
-          <Link href="/connect" className="hover:text-[var(--fg-primary)] transition-colors">
-            연결
-          </Link>
+          <a href="mailto:support@crebit.ai" className="hover:text-[var(--fg-primary)] transition-colors">
+            문의
+          </a>
         </div>
       </div>
     </footer>
