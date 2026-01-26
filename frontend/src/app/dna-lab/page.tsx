@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dna, Video, Palette, Brain, CheckCircle } from "lucide-react";
+import { Dna, Video, Palette, Brain, CheckCircle, Loader2 } from "lucide-react";
 
 // Import existing panels
 import AestheticDirectorPanel from "@/components/dimension/AestheticDirectorPanel";
@@ -63,8 +64,47 @@ const TAB_CONFIG: TabConfig[] = [
   },
 ];
 
+/**
+ * DNALabPage - Wrapper with Suspense boundary
+ */
 export default function DNALabPage() {
-  const [activeTab, setActiveTab] = useState("vpe");
+  return (
+    <Suspense fallback={<DNALabLoading />}>
+      <DNALabContent />
+    </Suspense>
+  );
+}
+
+/**
+ * Loading state for DNALabPage
+ */
+function DNALabLoading() {
+  return (
+    <AppShell showTopBar={false}>
+      <div className="h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading DNA Lab...</p>
+        </div>
+      </div>
+    </AppShell>
+  );
+}
+
+/**
+ * DNALabContent - Actual content with useSearchParams
+ */
+function DNALabContent() {
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState(tabParam || "vpe");
+
+  // Sync with URL params
+  useEffect(() => {
+    if (tabParam && TAB_CONFIG.find((t) => t.value === tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
 
   return (
     <AppShell showTopBar={false}>

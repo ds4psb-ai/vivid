@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Layers, Wand2, FileCode } from "lucide-react";
+import { BookOpen, Layers, Wand2, FileCode, Loader2 } from "lucide-react";
 
 // Import existing panels
 import StoryArchitectPanel from "@/components/dimension/StoryArchitectPanel";
@@ -56,8 +57,47 @@ const TAB_CONFIG: TabConfig[] = [
   },
 ];
 
+/**
+ * StoryEnginePage - Wrapper with Suspense boundary
+ */
 export default function StoryEnginePage() {
-  const [activeTab, setActiveTab] = useState("story");
+  return (
+    <Suspense fallback={<StoryEngineLoading />}>
+      <StoryEngineContent />
+    </Suspense>
+  );
+}
+
+/**
+ * Loading state for StoryEnginePage
+ */
+function StoryEngineLoading() {
+  return (
+    <AppShell showTopBar={false}>
+      <div className="h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading Story Engine...</p>
+        </div>
+      </div>
+    </AppShell>
+  );
+}
+
+/**
+ * StoryEngineContent - Actual content with useSearchParams
+ */
+function StoryEngineContent() {
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState(tabParam || "story");
+
+  // Sync with URL params
+  useEffect(() => {
+    if (tabParam && TAB_CONFIG.find((t) => t.value === tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
 
   return (
     <AppShell showTopBar={false}>

@@ -37,6 +37,7 @@ import {
   DIMENSION_ICONS,
   WORKFLOW_STAGES,
   ROUTE_KEYS,
+  MEGA_APPS,
 } from "@/lib/dimension-data";
 
 // Stage color mappings for toggle buttons
@@ -134,6 +135,13 @@ export default function DimensionHubClient() {
               />
             )}
           </AnimatePresence>
+        </section>
+
+        {/* Mega Apps Section */}
+        <section className="relative z-10 px-4 sm:px-6 pb-8">
+          <div className="mx-auto max-w-7xl">
+            <MegaAppsSection language={language} />
+          </div>
         </section>
 
         {/* Content Section - Cards */}
@@ -479,5 +487,87 @@ function ProposeButton({ onOpenSubmitModal, language }: ProposeButtonProps) {
         </p>
       </div>
     </button>
+  );
+}
+
+// =============================================================================
+// MEGA APPS SECTION
+// =============================================================================
+
+interface MegaAppsSectionProps {
+  language: string;
+}
+
+function MegaAppsSection({ language }: MegaAppsSectionProps) {
+  const megaApps = Object.values(MEGA_APPS);
+
+  return (
+    <div className="mb-8">
+      {/* Section Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">🚀</span>
+          <h2 className="text-sm font-bold tracking-wider uppercase text-[var(--fg-muted)]">
+            {language === "ko" ? "메가 앱" : "Mega Apps"}
+          </h2>
+        </div>
+        <span className="text-xs text-[var(--fg-subtle)] px-2 py-1 rounded-full bg-[var(--surface-1)]">
+          {language === "ko" ? "통합 허브" : "Unified Hubs"}
+        </span>
+      </div>
+
+      {/* Mega Apps Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {megaApps.map((app) => (
+          <Link
+            key={app.href}
+            href={app.href}
+            className="group relative overflow-hidden rounded-xl border border-[var(--border-subtle)] bg-gradient-to-br from-[var(--surface-1)] to-[var(--surface-2)] p-4 hover:border-[var(--color-brand-primary)]/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+          >
+            {/* Gradient overlay on hover */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-brand-primary)]/5 to-[var(--color-brand-accent)]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+            <div className="relative flex items-start gap-3">
+              {/* Icon */}
+              <div className="flex-shrink-0 text-2xl">
+                {app.icon}
+              </div>
+
+              <div className="flex-1 min-w-0">
+                {/* Title */}
+                <h3 className="font-semibold text-[var(--fg-0)] group-hover:text-[var(--color-brand-primary)] transition-colors">
+                  {language === "ko" ? app.nameKo : app.name}
+                </h3>
+
+                {/* Description */}
+                <p className="text-xs text-[var(--fg-muted)] mt-1 line-clamp-2">
+                  {language === "ko" ? app.descriptionKo : app.description}
+                </p>
+
+                {/* Module badges */}
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {app.modules.slice(0, 3).map((module) => (
+                    <span
+                      key={module}
+                      className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--surface-2)] text-[var(--fg-subtle)] uppercase tracking-wide"
+                    >
+                      {module}
+                    </span>
+                  ))}
+                  {app.modules.length > 3 && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--surface-2)] text-[var(--fg-subtle)]">
+                      +{app.modules.length - 3}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Arrow */}
+              <ChevronRight className="w-4 h-4 text-[var(--fg-subtle)] group-hover:text-[var(--fg-0)] group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }
