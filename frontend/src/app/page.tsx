@@ -32,8 +32,8 @@ const FEATURED_IP: FeaturedIP = {
   remixCount: "12K",
   matchPercent: 98,
   character: {
-    name: "Kael-09",
-    description: "사이버네틱 주인공. 애니메이션 및 스타일 전송을 위한 완벽한 리깅이 적용되었습니다.",
+    name: "순애",
+    description: "순수한 감성의 로맨스 캐릭터. 시간을 초월한 사랑 이야기의 주인공입니다.",
     status: "캐릭터 모델 준비 완료",
   },
 };

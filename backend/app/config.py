@@ -6,7 +6,7 @@ Sensitive fields use SecretStr to prevent accidental exposure in logs/repr.
 Access secret values via: settings.FIELD_NAME.get_secret_value()
 """
 from typing import List
-from pydantic import SecretStr
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     GRAPHQL_ENABLED: bool = False
     FLOW_ENABLED: bool = False
+
+    # Database Configuration
+    # Priority: DATABASE_URL env var > individual POSTGRES_* vars
+    # Railway/Render/Heroku set DATABASE_URL directly
+    DATABASE_URL_OVERRIDE: str = Field(default="", validation_alias="DATABASE_URL")
 
     POSTGRES_USER: str = "crebit_user"
     # P0: Default is clearly marked as dev-only; production validation will catch this
@@ -342,7 +347,18 @@ class Settings(BaseSettings):
 
     @property
     def DATABASE_URL(self) -> str:
-        """Build database URL with SecretStr password."""
+        """
+        Get database URL.
+
+        Priority:
+        1. DATABASE_URL env var (for Railway/Render/Heroku compatibility)
+        2. Build from individual POSTGRES_* vars (legacy/local dev)
+        """
+        # Use DATABASE_URL env var if provided (Railway, Render, Heroku, etc.)
+        if self.DATABASE_URL_OVERRIDE:
+            return self.DATABASE_URL_OVERRIDE
+
+        # Fallback: build from individual components
         password = self.POSTGRES_PASSWORD.get_secret_value()
         return (
             f"postgresql+asyncpg://{self.POSTGRES_USER}:{password}"
@@ -447,9 +463,11 @@ class Settings(BaseSettings):
                 errors.append("ENABLE_DEV_AUTH_BYPASS is True - must be False in production")
 
             # P0: Check for default/weak passwords in production
-            default_passwords = {"crebit_password", "crebit_dev_only", "password", "changeme"}
-            if self.POSTGRES_PASSWORD.get_secret_value() in default_passwords:
-                errors.append("POSTGRES_PASSWORD is a default value - use a strong, unique password")
+            # Skip if DATABASE_URL is provided (password is embedded in URL)
+            if not self.DATABASE_URL_OVERRIDE:
+                default_passwords = {"crebit_password", "crebit_dev_only", "password", "changeme"}
+                if self.POSTGRES_PASSWORD.get_secret_value() in default_passwords:
+                    errors.append("POSTGRES_PASSWORD is a default value - use a strong, unique password")
 
         # TODO: Re-enable strict validation after initial deployment
         # if errors:

@@ -49,23 +49,22 @@ const DEFAULT_CHARACTERS: Character[] = [
     creator: "@cyber_seoul",
   },
   {
-    id: "kael-09",
-    name: "Kael-09",
-    imageUrl:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBHjP-yAEmieU8ZR7BGCjOf87BCqS1oNthXjyueryDqarRJRg93-565PbZplWYN1fVcOmvrsgYqYAmX9uAASSyf6E39qspKgpMoAj3VB0x_nluS7pJcT7t2OC1ldHWHNRD-GHFDNUVH8m-326z3A-IMme3dmGaylYYzr8LuUFwANlPnx_TEMMwZSvXhaPaMaqH27R4T6fbyH77f4EeAMnnwGI-ypIJsRNLQ5G_4UfJqklGZKznJk3As4RwaNbqzHp7Z59OaM0si_hc",
-    chatCount: "24k",
-    quote: "시스템 위반 감지. 프로토콜을 재설정합니다.",
-    creator: "@mech_mind",
-    badge: "TOP_RATED",
+    id: "soonae",
+    name: "순애",
+    imageUrl: "/assets/characters/candidates/pure_love.avif",
+    chatCount: "18k",
+    quote: "시간을 초월하는 순수한 사랑, 그게 나야.",
+    creator: "@romance_ai",
+    badge: "NEW",
   },
   {
-    id: "freya",
-    name: "Freya",
-    imageUrl:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuC7vaZSBYUxTzwl-IFEjB3d0_2weZnn_nCa-zHA-XVE08ZsoEgrzC_lgpB6cJbLoQukteCs6l8kl7SokLXUPnRwVVfoRZEaIAP-lkaj5UIuwkRXrfR6pnV39ETkT03rPy4j29893_5NRNamCBjprU_4IpGZ1UcHklPOlp1hEcch8Br8SM9hsGmwdHjaR7U-MSu5sYLrMkx7y9PzTmyRs8h5xeLNAj46AKTolxMBgp3-fE0MOMrXKvvCuUsNCRJWkXemH-FVPR4lQ74",
-    chatCount: "15k",
-    quote: "숲의 속삭임이 디지털 바람을 타고 들려와요.",
-    creator: "@nature_tech",
+    id: "koko",
+    name: "Koko",
+    imageUrl: "/assets/characters/candidates/koko.jpg",
+    chatCount: "21k",
+    quote: "HTML로 세상을 코딩하는 안드로이드, 반가워요!",
+    creator: "@android_dev",
+    badge: "TOP_RATED",
   },
 ];
 
@@ -104,9 +103,7 @@ export function FeaturedCharacters({
               <div className="aspect-[3/4] overflow-hidden relative">
                 <img
                   alt={character.name}
-                  className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 ${
-                    character.id === "kael-09" ? "grayscale group-hover:grayscale-0" : ""
-                  }`}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   src={character.imageUrl}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
@@ -114,11 +111,10 @@ export function FeaturedCharacters({
                 {/* Badge */}
                 {character.badge && (
                   <div
-                    className={`absolute top-3 right-3 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold border ${
-                      character.badge === "NEW"
-                        ? "bg-black/60 text-[var(--fg-primary)] border-[var(--border-primary)]/30"
-                        : "bg-[var(--bg-primary)]/20 text-[var(--fg-primary)] border-[var(--border-primary)]/50"
-                    }`}
+                    className={`absolute top-3 right-3 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold border ${character.badge === "NEW"
+                      ? "bg-black/60 text-[var(--fg-primary)] border-[var(--border-primary)]/30"
+                      : "bg-[var(--bg-primary)]/20 text-[var(--fg-primary)] border-[var(--border-primary)]/50"
+                      }`}
                   >
                     {character.badge === "NEW" ? "NEW" : "TOP RATED"}
                   </div>
