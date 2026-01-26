@@ -88,6 +88,36 @@ curl -s -X POST "https://api.vercel.com/v10/projects/crebit/env" \
 
 ---
 
+## 토큰 관리
+
+### 토큰 위치
+
+```bash
+# 토큰 파일 경로
+/Users/ted/Library/Application Support/com.vercel.cli/auth.json
+```
+
+### 토큰 만료 시 재발급
+
+토큰이 만료되면 API 호출 시 `401 Unauthorized` 에러 발생.
+
+```bash
+# 1. 기존 토큰 확인 (만료 여부)
+VERCEL_TOKEN=$(cat "/Users/ted/Library/Application Support/com.vercel.cli/auth.json" | jq -r '.token')
+curl -s "https://api.vercel.com/v2/user" -H "Authorization: Bearer $VERCEL_TOKEN" | jq '.error'
+# null이면 정상, "unauthorized" 등이면 만료
+
+# 2. 재로그인으로 토큰 재발급
+vercel login
+
+# 3. 새 토큰 확인
+cat "/Users/ted/Library/Application Support/com.vercel.cli/auth.json" | jq -r '.token'
+```
+
+**주의**: `vercel login` 후 auth.json 파일이 자동 갱신됨. 이후 API 배포 명령어 그대로 사용 가능.
+
+---
+
 ## 트러블슈팅
 
 ### 1. CLI 업로드 실패 (Socket closed unexpectedly)
