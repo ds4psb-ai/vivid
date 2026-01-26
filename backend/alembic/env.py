@@ -1,10 +1,11 @@
-"""Alembic env.py - Configured for async SQLAlchemy with Vivid models."""
-import asyncio
+"""Alembic env.py - Configured for sync SQLAlchemy with Vivid models.
+
+Note: Alembic migrations run with SYNC driver (psycopg2), not async (asyncpg).
+The app uses asyncpg at runtime, but migrations use psycopg2 for compatibility.
+"""
 from logging.config import fileConfig
 
-from sqlalchemy import pool
-from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy import pool, create_engine
 
 from alembic import context
 
@@ -25,7 +26,9 @@ from app.config import settings
 config = context.config
 
 # Set the database URL from settings
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL.replace("+asyncpg", "+psycopg"))
+# Convert async driver (+asyncpg) to sync driver (+psycopg2) for Alembic
+sync_url = settings.DATABASE_URL.replace("+asyncpg", "+psycopg2")
+config.set_main_option("sqlalchemy.url", sync_url)
 
 # Interpret the config file for Python logging.
 if config.config_file_name is not None:
@@ -58,30 +61,18 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def do_run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)
-
-    with context.begin_transaction():
-        context.run_migrations()
-
-
-async def run_async_migrations() -> None:
-    """Run migrations in 'online' mode with async engine."""
-    connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
-
-    async with connectable.connect() as connection:
-        await connection.run_sync(do_run_migrations)
-
-    await connectable.dispose()
-
-
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode."""
-    asyncio.run(run_async_migrations())
+    """Run migrations in 'online' mode with sync engine.
+
+    Uses psycopg2 (sync) driver instead of asyncpg for Alembic compatibility.
+    """
+    url = config.get_main_option("sqlalchemy.url")
+    connectable = create_engine(url, poolclass=pool.NullPool)
+
+    with connectable.connect() as connection:
+        context.configure(connection=connection, target_metadata=target_metadata)
+        with context.begin_transaction():
+            context.run_migrations()
 
 
 if context.is_offline_mode():
