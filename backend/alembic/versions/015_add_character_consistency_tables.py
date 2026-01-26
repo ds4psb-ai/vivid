@@ -38,12 +38,9 @@ def upgrade() -> None:
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True,
                   server_default=sa.text('gen_random_uuid()')),
 
-        # Ownership
-        sa.Column('user_id', sa.String(255), sa.ForeignKey('users.id', ondelete='CASCADE'),
-                  nullable=False, index=True),
-        sa.Column('project_id', postgresql.UUID(as_uuid=True),
-                  sa.ForeignKey('projects.id', ondelete='SET NULL'),
-                  nullable=True, index=True),
+        # Ownership (no FK - user_id is external auth ID)
+        sa.Column('user_id', sa.String(255), nullable=False, index=True),
+        sa.Column('project_id', postgresql.UUID(as_uuid=True), nullable=True, index=True),
 
         # Metadata
         sa.Column('name', sa.String(100), nullable=False),
