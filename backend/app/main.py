@@ -139,6 +139,15 @@ from app.routers.tenant import router as tenant_router
 # GraphQL Gateway (2026 Best Practices - P3.3)
 from app.graphql import graphql_router
 
+# VPE (Visual Prompt Engineering)
+from app.routers.vpe import router as vpe_router
+
+# Story Engine (Narrative Generation)
+from app.routers.story_engine.router import router as story_engine_router
+
+# Production Bridge (Video Generation - Veo, Kling, Suno)
+from app.routers.production.router import router as production_router
+
 from app.middleware.rate_limit import setup_rate_limiting
 from app.middleware.mtls import MTLSMiddleware
 from app.middleware.security import setup_security_middleware
@@ -332,6 +341,29 @@ async def vivid_exception_handler(request: Request, exc: VividException):
     )
 
 
+def _sanitize_validation_errors(errors: list) -> list:
+    """Sanitize Pydantic validation errors for JSON serialization.
+
+    Converts non-serializable objects in 'ctx' to strings.
+    """
+    sanitized = []
+    for err in errors:
+        clean_err = {
+            "type": err.get("type"),
+            "loc": err.get("loc"),
+            "msg": err.get("msg"),
+            "input": err.get("input"),
+        }
+        # Convert ctx values to strings if they contain non-serializable objects
+        if "ctx" in err and err["ctx"]:
+            clean_err["ctx"] = {
+                k: str(v) if not isinstance(v, (str, int, float, bool, type(None), list, dict)) else v
+                for k, v in err["ctx"].items()
+            }
+        sanitized.append(clean_err)
+    return sanitized
+
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Handle Pydantic validation errors with RFC 9457 format."""
@@ -343,7 +375,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         request_id=_get_request_id(),
         instance=str(request.url.path),
         error_code="VALIDATION_ERROR",
-        errors=exc.errors(),
+        errors=_sanitize_validation_errors(exc.errors()),
     )
     return JSONResponse(
         status_code=422,
@@ -519,6 +551,15 @@ app.include_router(analytics_dashboard_router, tags=["analytics"])
 app.include_router(ip_chat_router, tags=["ip-chat"])
 app.include_router(marketplace_router, tags=["marketplace"])
 app.include_router(tenant_router, tags=["tenants"])
+
+# VPE (Visual Prompt Engineering) - prefix already in router
+app.include_router(vpe_router, tags=["vpe"])
+
+# Story Engine (Narrative Generation) - prefix already in router
+app.include_router(story_engine_router, tags=["story-engine"])
+
+# Production Bridge (Video Generation - Veo, Kling, Suno) - prefix already in router
+app.include_router(production_router, tags=["production"])
 
 # GraphQL Gateway (2026 Best Practices - P3.3)
 if settings.ENVIRONMENT.lower() in {"production", "prod", "staging"}:

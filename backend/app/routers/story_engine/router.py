@@ -64,8 +64,8 @@ router = APIRouter(prefix="/api/story-engine", tags=["Story Engine"])
 
 async def get_db():
     """Get database session."""
-    from app.db import async_session_maker
-    async with async_session_maker() as session:
+    from app.database import AsyncSessionLocal
+    async with AsyncSessionLocal() as session:
         yield session
 
 
