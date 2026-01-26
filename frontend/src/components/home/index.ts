@@ -12,3 +12,4 @@ export { RailControls } from "./RailControls";
 export { IPRailCard } from "./IPRailCard";
 export { PresetRailCard } from "./PresetRailCard";
 export { WorkRailCard } from "./WorkRailCard";
+export { MegaAppShowcase } from "./MegaAppShowcase";
