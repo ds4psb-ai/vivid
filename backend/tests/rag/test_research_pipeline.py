@@ -447,7 +447,7 @@ class TestPipelineIntegration:
 
         result = await pipeline.research(
             query="cinematography techniques",
-            auteur_key="nolan",
+            auteur_key="epoch",
             dimension="4D",
             max_results=5,
             save_results=True,

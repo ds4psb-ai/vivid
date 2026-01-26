@@ -25,7 +25,7 @@ Usage:
     orchestrator.set_daily_budget(10.0)  # $10/day
 
     plan = TaskPlan()
-    plan.add_task(AgentTaskType.RESEARCH, {"query": "봉준호 스타일"})
+    plan.add_task(AgentTaskType.RESEARCH, {"query": "강주노 스타일"})
     plan.add_task(AgentTaskType.CREATE, {"prompt": "..."}, dependencies=[...])
 
     results = await orchestrator.execute_plan(plan)

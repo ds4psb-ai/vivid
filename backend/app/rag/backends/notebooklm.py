@@ -48,7 +48,7 @@ class NotebookLMBackend(BaseBackend):
         """NotebookLM 검색.
 
         Config options:
-            notebook_id: 노트북 ID (예: "DNA_봉준호") - 필수
+            notebook_id: 노트북 ID (예: "DNA_강주노") - 필수
             source_filter: 소스 필터 (예: "auteur_dna")
         """
         config = config or {}

@@ -255,7 +255,7 @@ class TestEnsembleRetrieve:
 
                 from app.rag.hybrid_rag import ensemble_retrieve
                 result = await ensemble_retrieve(
-                    query="봉준호 스타일",
+                    query="강주노 스타일",
                     app_key="dimension.aesthetic.direct",
                 )
 
@@ -371,8 +371,8 @@ class TestEnsembleRetrieve:
                     auteur_key="bong",
                 )
 
-                # auteur_key="bong"이 DNA_봉준호로 변환되어 config에 적용
-                assert captured_config.get("notebook_id") == "DNA_봉준호"
+                # auteur_key="bong"이 DNA_강주노로 변환되어 config에 적용
+                assert captured_config.get("notebook_id") == "DNA_강주노"
 
 
 class TestHybridQueryEnsembleIntegration:

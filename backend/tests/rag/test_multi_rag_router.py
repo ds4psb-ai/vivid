@@ -110,7 +110,7 @@ class TestRouteDecision:
         decision = RouteDecision(
             selected_sources=["notebooklm", "multimodal_qdrant"],
             query_intent=QueryIntent.STYLE_REFERENCE,
-            sub_queries={"notebooklm": "봉준호 스타일"},
+            sub_queries={"notebooklm": "강주노 스타일"},
             confidence=0.85,
         )
         assert len(decision.selected_sources) == 2
@@ -122,8 +122,8 @@ class TestPresets:
 
     def test_auteur_keywords(self):
         """Test auteur keywords."""
-        assert "봉준호" in AUTEUR_KEYWORDS
-        assert "kubrick" in AUTEUR_KEYWORDS
+        assert "강주노" in AUTEUR_KEYWORDS
+        assert "prism" in AUTEUR_KEYWORDS
         assert "스타일" in AUTEUR_KEYWORDS
 
     def test_history_keywords(self):
@@ -269,7 +269,7 @@ class TestIntelligentRAGRouter:
                 source_type=RAGSourceType.AUTEUR_DNA,
                 display_name="거장 DNA",
                 description="거장 스타일",
-                keywords=["봉준호", "스타일", "거장"],
+                keywords=["강주노", "스타일", "거장"],
                 priority=9,
             ),
             MockNotebookLMBackend(),
@@ -303,7 +303,7 @@ class TestIntelligentRAGRouter:
         router = IntelligentRAGRouter(self.registry)
 
         decision = await router.route(
-            query="봉준호 감독의 계단 상징",
+            query="강주노 감독의 계단 상징",
             context={"auteur_key": "bong"},
         )
 
@@ -367,7 +367,7 @@ class TestMultiRAGOrchestrator:
                 "bong": [
                     RAGDocument(
                         id="nlm_1",
-                        content="봉준호 계단 상징",
+                        content="강주노 계단 상징",
                         score=0.95,
                         evidence_ref="db:notebooklm:bong:nlm_1",
                         source_type=RAGSourceType.AUTEUR_DNA,
@@ -395,7 +395,7 @@ class TestMultiRAGOrchestrator:
                 source_type=RAGSourceType.AUTEUR_DNA,
                 display_name="거장 DNA",
                 description="거장 스타일",
-                keywords=["봉준호", "거장"],
+                keywords=["강주노", "거장"],
                 priority=9,
             ),
             self.mock_nlm,
@@ -419,7 +419,7 @@ class TestMultiRAGOrchestrator:
     async def test_query_single_source(self):
         """Test query with single source."""
         result = await self.orchestrator.query(
-            query="봉준호 감독 스타일",
+            query="강주노 감독 스타일",
             context={"auteur_key": "bong"},
             max_sources=1,
         )
@@ -432,7 +432,7 @@ class TestMultiRAGOrchestrator:
     async def test_query_multiple_sources(self):
         """Test query with multiple sources."""
         result = await self.orchestrator.query(
-            query="봉준호 스타일로 4D 영상 분석",
+            query="강주노 스타일로 4D 영상 분석",
             context={"auteur_key": "bong", "dimension": "4D"},
             max_sources=2,
         )
@@ -477,7 +477,7 @@ class TestMultiRAGOrchestrator:
     async def test_evidence_refs_in_result(self):
         """Test evidence_refs are included in result."""
         result = await self.orchestrator.query(
-            query="봉준호 스타일",
+            query="강주노 스타일",
             context={"auteur_key": "bong"},
         )
 

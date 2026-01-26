@@ -630,7 +630,7 @@ class TestStoryEngineIntegration:
         """Test system prompt generation with different auteurs."""
         generator = SystemPromptGenerator()
 
-        for auteur_id in ["bong", "nolan", "kubrick", "wong", "tarantino"]:
+        for auteur_id in ["bong", "epoch", "prism", "wong", "voltage"]:
             mock_logic_vector.auteur_id = auteur_id
             result = generator.generate(
                 logic_vector=mock_logic_vector,

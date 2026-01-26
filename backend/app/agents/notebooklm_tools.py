@@ -349,7 +349,7 @@ _SPECS = [
             "properties": {
                 "title": {
                     "type": "string",
-                    "description": "노트북 제목 (예: '봉준호 HOOK 분석')",
+                    "description": "노트북 제목 (예: '강주노 HOOK 분석')",
                     "default": "Untitled Notebook",
                 },
             },
@@ -411,18 +411,18 @@ _SPECS = [
     ),
     ToolSpec(
         name="rag_query",
-        description="거장 DNA 또는 차원별 지식 베이스를 검색합니다. 봉준호, 놀란 등 거장의 영화적 스타일이나 차원별 레퍼런스를 검색할 때 사용합니다.",
+        description="거장 DNA 또는 차원별 지식 베이스를 검색합니다. 강주노, 테오 에포크 등 거장의 영화적 스타일이나 차원별 레퍼런스를 검색할 때 사용합니다.",
         input_schema={
             "type": "object",
             "properties": {
                 "query": {
                     "type": "string",
-                    "description": "검색 질의 (예: '봉준호 감독의 시각적 스타일')",
+                    "description": "검색 질의 (예: '강주노 감독의 시각적 스타일')",
                 },
                 "auteur_key": {
                     "type": "string",
-                    "description": "거장 키 (선택적): bong, nolan, villeneuve, wong, tarantino, park, shinkai",
-                    "enum": ["bong", "nolan", "villeneuve", "wong", "tarantino", "park", "shinkai"],
+                    "description": "거장 키 (선택적): bong, epoch, abyss, wong, voltage, park, azure",
+                    "enum": ["bong", "epoch", "abyss", "velvet", "voltage", "yoon", "azure"],
                 },
                 "dimension": {
                     "type": "string",

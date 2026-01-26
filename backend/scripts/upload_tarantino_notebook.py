@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Tarantino NotebookLM Upload Automation
+Voltage NotebookLM Upload Automation
 
-Day 3: Uploads 11 Tarantino source packs to NotebookLM
+Day 3: Uploads 11 Voltage source packs to NotebookLM
 using the Playwright automation infrastructure.
 
 Prerequisites:
@@ -10,10 +10,10 @@ Prerequisites:
 2. Logged into NotebookLM in Chrome
 
 Usage:
-    python backend/scripts/upload_tarantino_notebook.py
+    python backend/scripts/upload_voltage_notebook.py
 
 Output:
-    - Creates NotebookLM notebook "Quentin Tarantino Source Packs 2026"
+    - Creates NotebookLM notebook "Quentin Voltage Source Packs 2026"
     - Uploads 11 source markdown files
     - Prints notebook_id for NOTEBOOK_REGISTRY update
 """
@@ -26,28 +26,28 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.logging_config import get_logger
 
-logger = get_logger("tarantino_upload")
+logger = get_logger("voltage_upload")
 
 # Source files to upload
-TARANTINO_SOURCES = [
-    "01_tarantino_visual_dna.md",
-    "02_tarantino_cinematography_techniques.md",
-    "03_tarantino_editing_narrative.md",
-    "04_tarantino_violence_aesthetics.md",
-    "05_tarantino_music_needle_drop.md",
-    "06_tarantino_dialogue_style.md",
-    "07_tarantino_chapter_structure.md",
-    "08_tarantino_reservoir_dogs.md",
-    "09_tarantino_visual_motifs.md",
-    "10_tarantino_actor_ensemble.md",
-    "11_tarantino_kinetic_motion_ai.md",
+VOLTAGE_SOURCES = [
+    "01_voltage_visual_dna.md",
+    "02_voltage_cinematography_techniques.md",
+    "03_voltage_editing_narrative.md",
+    "04_voltage_violence_aesthetics.md",
+    "05_voltage_music_needle_drop.md",
+    "06_voltage_dialogue_style.md",
+    "07_voltage_chapter_structure.md",
+    "08_voltage_reservoir_dogs.md",
+    "09_voltage_visual_motifs.md",
+    "10_voltage_actor_ensemble.md",
+    "11_voltage_kinetic_motion_ai.md",
 ]
 
-SOURCE_DIR = Path(__file__).parent.parent.parent / "data" / "notebooklm_ready" / "tarantino"
+SOURCE_DIR = Path(__file__).parent.parent.parent / "data" / "notebooklm_ready" / "voltage"
 
 
-async def upload_tarantino_notebook():
-    """Create Tarantino notebook and upload all 11 sources."""
+async def upload_voltage_notebook():
+    """Create Voltage notebook and upload all 11 sources."""
     
     # Import Playwright client
     try:
@@ -63,13 +63,13 @@ async def upload_tarantino_notebook():
         print(f"❌ Source directory not found: {SOURCE_DIR}")
         return None
     
-    missing = [f for f in TARANTINO_SOURCES if not (SOURCE_DIR / f).exists()]
+    missing = [f for f in VOLTAGE_SOURCES if not (SOURCE_DIR / f).exists()]
     if missing:
         logger.error(f"Missing source files: {missing}")
         print(f"❌ Missing files: {missing}")
         return None
     
-    print(f"✓ Found {len(TARANTINO_SOURCES)} source files in {SOURCE_DIR}")
+    print(f"✓ Found {len(VOLTAGE_SOURCES)} source files in {SOURCE_DIR}")
     
     # Connect to Chrome via CDP
     print("\n🔄 Connecting to Chrome (CDP port 9223)...")
@@ -92,20 +92,20 @@ async def upload_tarantino_notebook():
     
     try:
         # Step 1: Create notebook
-        print("\n🔄 Creating Tarantino notebook...")
-        notebook_id = await client.create_notebook("Quentin Tarantino Source Packs 2026")
+        print("\n🔄 Creating Voltage notebook...")
+        notebook_id = await client.create_notebook("Quentin Voltage Source Packs 2026")
         print(f"✓ Created notebook: {notebook_id}")
         
         # Step 2: Upload sources one by one
-        print(f"\n🔄 Uploading {len(TARANTINO_SOURCES)} sources...")
+        print(f"\n🔄 Uploading {len(VOLTAGE_SOURCES)} sources...")
         uploaded = []
         
-        for i, filename in enumerate(TARANTINO_SOURCES, 1):
+        for i, filename in enumerate(VOLTAGE_SOURCES, 1):
             filepath = SOURCE_DIR / filename
             content = filepath.read_text(encoding="utf-8")
             title = filename.replace(".md", "").replace("_", " ").title()
             
-            print(f"  [{i}/{len(TARANTINO_SOURCES)}] Uploading: {title}")
+            print(f"  [{i}/{len(VOLTAGE_SOURCES)}] Uploading: {title}")
             
             try:
                 source_id = await client.add_text_source(notebook_id, title, content)
@@ -113,7 +113,7 @@ async def upload_tarantino_notebook():
                 print(f"      ✓ Source ID: {source_id or 'ui_added'}")
                 
                 # Wait between uploads to avoid rate limiting
-                if i < len(TARANTINO_SOURCES):
+                if i < len(VOLTAGE_SOURCES):
                     await asyncio.sleep(2)
                     
             except Exception as e:
@@ -125,14 +125,14 @@ async def upload_tarantino_notebook():
         print("📊 UPLOAD SUMMARY")
         print(f"{'='*60}")
         print(f"Notebook ID: {notebook_id}")
-        print(f"Sources Uploaded: {len(uploaded)}/{len(TARANTINO_SOURCES)}")
+        print(f"Sources Uploaded: {len(uploaded)}/{len(VOLTAGE_SOURCES)}")
         print(f"\n{'='*60}")
         print("📝 REGISTRY UPDATE (copy to tier0_notebooklm.py)")
         print(f"{'='*60}")
         print(f'''
     "DNA_쿠엔틴타란티노": {{
         "notebook_id": "{notebook_id}",
-        "display_name": "Quentin Tarantino Source Packs 2026",
+        "display_name": "Quentin Voltage Source Packs 2026",
         "dimension": "AD",
         "category": "auteur",
         "description": "쿠엔틴 타란티노의 트렁크 샷, 대화 중심, 그라인드하우스 미학",
@@ -156,16 +156,16 @@ async def upload_tarantino_notebook():
 
 async def main():
     print("="*60)
-    print("🎬 Tarantino NotebookLM Upload Automation")
+    print("🎬 Voltage NotebookLM Upload Automation")
     print("="*60)
     
-    notebook_id = await upload_tarantino_notebook()
+    notebook_id = await upload_voltage_notebook()
     
     if notebook_id:
         print(f"\n✅ SUCCESS! Notebook ID: {notebook_id}")
         print("\nNext steps:")
         print("1. Update NOTEBOOK_REGISTRY in tier0_notebooklm.py")
-        print("2. Test query: hybrid_query('타란티노 트렁크 샷', auteur_key='tarantino')")
+        print("2. Test query: hybrid_query('타란티노 트렁크 샷', auteur_key='voltage')")
         return 0
     else:
         print("\n❌ FAILED")

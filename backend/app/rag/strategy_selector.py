@@ -14,7 +14,7 @@ Usage:
     from app.rag.strategy_selector import select_strategy, Strategy
 
     strategy = await select_strategy(
-        query="봉준호 롱테이크",
+        query="강주노 롱테이크",
         app_key="dimension.aesthetic.direct"
     )
     # Strategy(

@@ -692,9 +692,9 @@ class TestEdgeCases:
         """Test unicode characters in reason summary."""
         resp = ToolRecommendationResponse(
             recommendations=[],
-            reason_summary="봉준호 감독 스타일의 드라마에 최적화된 도구",
+            reason_summary="강주노 감독 스타일의 드라마에 최적화된 도구",
         )
-        assert "봉준호" in resp.reason_summary
+        assert "강주노" in resp.reason_summary
 
     def test_special_characters_in_slug(self):
         """Test special characters in IP slug."""

@@ -7,7 +7,7 @@ Usage:
 
     task = AgentTask(
         task_type="research",
-        input_context={"query": "봉준호 스타일"},
+        input_context={"query": "강주노 스타일"},
         estimated_cost=0.01,
     )
 """

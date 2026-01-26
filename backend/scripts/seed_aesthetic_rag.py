@@ -366,7 +366,7 @@ def verify_indexing(rag) -> bool:
 
     # Test searches
     queries = [
-        ("봉준호 시각적 스타일 구도", "layer0"),
+        ("강주노 시각적 스타일 구도", "layer0"),
         ("박찬욱 대칭성과 색감", "layer1")
     ]
     

@@ -12,7 +12,7 @@ Usage:
     # AI 품질 평가
     quality = await evaluator.evaluate(
         dimension="AD",
-        input_request={"concept": "봉준호 스타일"},
+        input_request={"concept": "강주노 스타일"},
         output_result={"visual_guidelines": "..."},
     )
 

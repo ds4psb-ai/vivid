@@ -175,7 +175,7 @@ class ThreeWayResult(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "query": "봉준호 스타일의 영화 장면",
+                "query": "강주노 스타일의 영화 장면",
                 "recommended": "ab",
                 "arms_stats": {
                     "qdrant_only": {"alpha": 10, "beta": 3},

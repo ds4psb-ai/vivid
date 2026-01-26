@@ -49,7 +49,7 @@ def sample_style_preset_request():
             "color_palette": ["#1a1a1a", "#f0f0f0"],
             "mood": "dramatic",
         },
-        "auteur_references": ["nolan"],
+        "auteur_references": ["epoch"],
         "is_public": False,
     }
 

@@ -28,7 +28,7 @@ class TestQdrantHybridBackend:
             mock_get_rag.return_value = mock_rag
 
             results = await backend.retrieve(
-                query="봉준호 스타일",
+                query="강주노 스타일",
                 config={"dimension": "AD"},
             )
 
@@ -158,8 +158,8 @@ class TestNotebookLMBackend:
             mock_get_service.return_value = mock_service
 
             results = await backend.retrieve(
-                query="봉준호 스타일",
-                config={"notebook_id": "DNA_봉준호"},
+                query="강주노 스타일",
+                config={"notebook_id": "DNA_강주노"},
             )
 
             assert len(results) == 1
@@ -227,7 +227,7 @@ class TestBackendConfig:
                 BackendConfig(
                     id="notebooklm",
                     weight=0.4,
-                    config={"notebook_id": "DNA_봉준호"},
+                    config={"notebook_id": "DNA_강주노"},
                 ),
             ],
         )

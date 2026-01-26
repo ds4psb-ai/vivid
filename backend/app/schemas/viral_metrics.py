@@ -41,7 +41,7 @@ class RiskLevel(str, Enum):
 
 class DissonanceType(str, Enum):
     """부조화 유형"""
-    CLASS_CONTRAST = "class_contrast"       # 계급 대비 (봉준호 스타일)
+    CLASS_CONTRAST = "class_contrast"       # 계급 대비 (강주노 스타일)
     SITUATION_PARADOX = "situation_paradox" # 상황 역설
     CHARACTER_CONTRADICTION = "character_contradiction"  # 캐릭터 모순
     VISUAL_CONTRAST = "visual_contrast"     # 시각적 대비

@@ -14,7 +14,7 @@ Usage:
     from app.rag.router import multi_rag_query
 
     result = await multi_rag_query(
-        query="봉준호 감독의 계단 상징",
+        query="강주노 감독의 계단 상징",
         dimension="4D",
         auteur_key="bong",
     )

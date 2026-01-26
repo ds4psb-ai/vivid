@@ -62,7 +62,7 @@ class TestCreativeIntent:
                 lighting_style="low-key",
             ),
             keywords=["tension", "social-commentary"],
-            custom_notes="봉준호 감독 스타일 참조",
+            custom_notes="강주노 감독 스타일 참조",
         )
         
         assert intent.mood == CreativeMood.CINEMATIC
@@ -144,7 +144,7 @@ class TestIntentFactory:
     """IntentFactory 프리셋 테스트"""
     
     def test_cinematic_bong(self):
-        """봉준호 시네마틱 프리셋"""
+        """강주노 시네마틱 프리셋"""
         intent = IntentFactory.cinematic_bong()
         
         assert intent.mood == CreativeMood.CINEMATIC

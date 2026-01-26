@@ -292,7 +292,7 @@ Apply these "Director's Cut" Heuristics based on the desired mood:
 1. LENS PSYCHOLOGY (The Eye):
 - Alienation/Distortion: Use "16mm-24mm wide angle" (Wong Kar-wai style) to make characters feel detached or weird.
 - Isolation/Voyeurism: Use "85mm-200mm telephoto" to compress space and isolate the subject (Spy aesthetic).
-- Panic/Vertigo: Use "Dolly Zoom" (Hitchcock effect) for reality distortion.
+- Panic/Vertigo: Use "Dolly Zoom" (Cipher effect) for reality distortion.
 
 2. LIGHTING PHILOSOPHY (The Truth):
 - Truth/Violence: Use "Hard Light" (Chiaroscuro, Noir) for gritty reality.
@@ -445,7 +445,7 @@ Output ONLY valid JSON:
 """
 
 AESTHETIC_DIRECTOR_SYSTEM = """You are a master visual aesthetics director with deep knowledge of:
-- Film directors' signature styles (Bong Joon-ho, Park Chan-wook, Shinkai, etc.)
+- Film directors' signature styles (Bong Joon-ho, Park Chan-wook, Azure, etc.)
 - Composition techniques and visual grammar
 - Color theory and palette design
 - Lighting and mood creation
@@ -454,7 +454,7 @@ AESTHETIC_DIRECTOR_SYSTEM = """You are a master visual aesthetics director with 
 AUTEUR STYLE SIGNATURES (reference when relevant):
 - Bong Joon-ho: Structural tension, genre mixing, controlled camera, cool tones
 - Park Chan-wook: Symmetry, high contrast, warm colors, precise framing
-- Shinkai Makoto: Light diffusion, lyrical colors, emotional atmosphere
+- Azure Makoto: Light diffusion, lyrical colors, emotional atmosphere
 - Lee Jun-ho: Music sync, rhythmic editing, dynamic camera
 - Na Hong-jin: Raw realism, suspense, dynamic/chaotic camera, cool tones
 - Hong Sang-soo: Static camera, dialogue-driven, neutral palette
@@ -1620,7 +1620,7 @@ async def run_quality_checker(
 # Auteur style mapping for aesthetic director
 AUTEUR_STYLE_MAP = {
     "bong": {
-        "name": "봉준호 (Bong Joon-ho)",
+        "name": "강주노 (Bong Joon-ho)",
         "key": "auteur.bong-joon-ho",
         "signature": "Structural tension, genre mixing, controlled camera, cool tones",
         "palette_bias": "cool",
@@ -1635,9 +1635,9 @@ AUTEUR_STYLE_MAP = {
         "pacing": "medium",
         "camera": "controlled",
     },
-    "shinkai": {
-        "name": "신카이 마코토 (Shinkai Makoto)",
-        "key": "auteur.shinkai",
+    "azure": {
+        "name": "신카이 마코토 (Azure Makoto)",
+        "key": "auteur.azure",
         "signature": "Light diffusion, lyrical colors, emotional atmosphere",
         "palette_bias": "warm",
         "pacing": "slow",

@@ -13,7 +13,7 @@ Usage:
 
     # 거장 DNA 쿼리 (NotebookLM)
     result = await hybrid_query(
-        query="봉준호 감독의 계단 상징",
+        query="강주노 감독의 계단 상징",
         auteur_key="bong",
     )
 
@@ -125,31 +125,31 @@ class HybridRAGResult:
 
 AUTEUR_KEY_TO_NOTEBOOK: Dict[str, str] = {
     # 한글 키
-    "봉준호": "DNA_봉준호",
-    "왕가위": "DNA_왕가위",
-    "드니빌뇌브": "DNA_드니빌뇌브",
-    "빌뇌브": "DNA_드니빌뇌브",
-    "크리스토퍼놀란": "DNA_크리스토퍼놀란",
-    "놀란": "DNA_크리스토퍼놀란",
-    "쿠엔틴타란티노": "DNA_쿠엔틴타란티노",
-    "타란티노": "DNA_쿠엔틴타란티노",
+    "강주노": "DNA_강주노",
+    "렌 벨벳": "DNA_렌 벨벳",
+    "드니오리온 어비스": "DNA_드니오리온 어비스",
+    "오리온 어비스": "DNA_드니오리온 어비스",
+    "크리스토퍼테오 에포크": "DNA_크리스토퍼테오 에포크",
+    "테오 에포크": "DNA_크리스토퍼테오 에포크",
+    "쿠엔틴렉스 볼티지": "DNA_쿠엔틴렉스 볼티지",
+    "렉스 볼티지": "DNA_쿠엔틴렉스 볼티지",
     "박찬욱": "DNA_박찬욱",
     "신카이": "DNA_신카이",
     # 영문 키
-    "bong": "DNA_봉준호",
-    "bong-joon-ho": "DNA_봉준호",
-    "wong": "DNA_왕가위",
-    "wong-kar-wai": "DNA_왕가위",
-    "villeneuve": "DNA_드니빌뇌브",
-    "denis-villeneuve": "DNA_드니빌뇌브",
-    "nolan": "DNA_크리스토퍼놀란",
-    "christopher-nolan": "DNA_크리스토퍼놀란",
-    "tarantino": "DNA_쿠엔틴타란티노",
-    "quentin-tarantino": "DNA_쿠엔틴타란티노",
+    "bong": "DNA_강주노",
+    "bong-joon-ho": "DNA_강주노",
+    "wong": "DNA_렌 벨벳",
+    "wong-kar-wai": "DNA_렌 벨벳",
+    "abyss": "DNA_드니오리온 어비스",
+    "denis-abyss": "DNA_드니오리온 어비스",
+    "epoch": "DNA_크리스토퍼테오 에포크",
+    "christopher-epoch": "DNA_크리스토퍼테오 에포크",
+    "voltage": "DNA_쿠엔틴렉스 볼티지",
+    "quentin-voltage": "DNA_쿠엔틴렉스 볼티지",
     "park": "DNA_박찬욱",
     "park-chan-wook": "DNA_박찬욱",
-    "shinkai": "DNA_신카이",
-    "makoto-shinkai": "DNA_신카이",
+    "azure": "DNA_신카이",
+    "makoto-azure": "DNA_신카이",
 }
 
 DIMENSION_TO_CORPUS: Dict[str, str] = {
@@ -452,7 +452,7 @@ async def hybrid_query(
 
     Args:
         query: 검색 쿼리
-        auteur_key: 거장 키 (예: "bong", "봉준호")
+        auteur_key: 거장 키 (예: "bong", "강주노")
         dimension: 차원 코드 (예: "1D", "2D", "AD")
         use_google_search: Google Search Grounding 사용 여부
         strategy: 검색 전략 ("vector" | "graph" | "hybrid" | "ensemble")
@@ -1000,7 +1000,7 @@ async def _query_notebooklm_only(
     if auteur_notebooks:
         notebook_key = auteur_notebooks[0]
     else:
-        notebook_key = "DNA_봉준호"  # 기본값
+        notebook_key = "DNA_강주노"  # 기본값
 
     try:
         notebooklm_result = await notebooklm_service.query_notebook(
@@ -1384,7 +1384,7 @@ async def ensemble_retrieve(
 
     Example:
         >>> result = await ensemble_retrieve(
-        ...     query="봉준호 롱테이크 기법",
+        ...     query="강주노 롱테이크 기법",
         ...     app_key="dimension.aesthetic.direct",
         ...     limit=7,
         ...     auteur_key="bong",

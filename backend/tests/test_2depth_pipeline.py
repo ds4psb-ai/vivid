@@ -93,9 +93,9 @@ class TestPodcastServiceFocusPrompt:
         service = PodcastService()
         prompt = service._build_focus_prompt(
             PodcastFormat.DEEP_DIVE,
-            custom_focus="봉준호 감독 스타일에 집중"
+            custom_focus="강주노 감독 스타일에 집중"
         )
-        assert "봉준호" in prompt
+        assert "강주노" in prompt
 
 
 # ============================================================================
@@ -113,7 +113,7 @@ class TestLivePodcast:
 
         service = get_podcast_service()
         result = await service.generate_podcast(
-            sources=["테스트 콘텐츠입니다. 봉준호 감독의 영화적 특징을 분석합니다."],
+            sources=["테스트 콘텐츠입니다. 강주노 감독의 영화적 특징을 분석합니다."],
             title="테스트 팟캐스트",
             format=PodcastFormat.BRIEF,
             length=PodcastLength.SHORT,

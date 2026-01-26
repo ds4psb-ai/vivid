@@ -43,7 +43,7 @@ Usage:
     # Execute tool (automatically routes to MCP or native)
     result = await executor.execute(
         tool_id="web_search",
-        inputs={"query": "봉준호 영화 촬영 기법"},
+        inputs={"query": "강주노 영화 촬영 기법"},
         context={"user_id": "..."},
     )
 """

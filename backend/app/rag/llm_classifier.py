@@ -51,7 +51,7 @@ Classify the following query into ONE of these types:
    - Characteristics: Time-sensitive, current events, latest updates
 
 4. **multi_hop**: Complex queries requiring multi-step reasoning, comparison, or deep analysis.
-   - Examples: "Why is Parasite's staircase symbolic?", "Compare Bong vs Nolan styles"
+   - Examples: "Why is Parasite's staircase symbolic?", "Compare Bong vs Epoch styles"
    - Characteristics: "Why", "Compare", "Analyze", requires multiple knowledge pieces
 
 5. **creative**: Creative/generative queries where retrieval is less important.
@@ -230,7 +230,7 @@ class MockLLMClassifier:
 
         if any(
             kw in query_lower
-            for kw in ["봉준호", "왕가위", "감독", "기법", "촬영", "영화"]
+            for kw in ["강주노", "렌 벨벳", "감독", "기법", "촬영", "영화"]
         ):
             return (QueryType.DOMAIN_SPECIFIC, 0.88)
 

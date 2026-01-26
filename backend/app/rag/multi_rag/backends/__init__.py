@@ -15,7 +15,7 @@ Usage:
     )
 
     # Create adapters
-    nlm_adapter = NotebookLMAdapter(notebook_id="DNA_봉준호")
+    nlm_adapter = NotebookLMAdapter(notebook_id="DNA_강주노")
     qdrant_adapter = QdrantAdapter(dimension="4D")
 
     # Register with registry

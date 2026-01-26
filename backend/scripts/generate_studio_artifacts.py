@@ -46,26 +46,26 @@ logger = logging.getLogger(__name__)
 # Configuration
 # =============================================================================
 
-AUTEUR_KEYS = ["bong", "nolan", "villeneuve", "wong", "tarantino", "park", "shinkai"]
+AUTEUR_KEYS = ["bong", "epoch", "abyss", "wong", "voltage", "park", "azure"]
 
 AUTEUR_NOTEBOOKS = {
     "bong": "auteur_bong",
-    "nolan": "auteur_nolan", 
-    "villeneuve": "auteur_villeneuve",
+    "epoch": "auteur_epoch", 
+    "abyss": "auteur_abyss",
     "wong": "auteur_wong",
-    "tarantino": "auteur_tarantino",
+    "voltage": "auteur_voltage",
     "park": "auteur_park",
-    "shinkai": "auteur_shinkai",
+    "azure": "auteur_azure",
 }
 
 AUTEUR_NAMES = {
-    "bong": "봉준호",
-    "nolan": "크리스토퍼 놀란",
-    "villeneuve": "드니 빌뇌브",
+    "bong": "강주노",
+    "epoch": "크리스토퍼 테오 에포크",
+    "abyss": "드니 빌뇌브",
     "wong": "왕가위",
-    "tarantino": "쿠엔틴 타란티노",
+    "voltage": "쿠엔틴 타란티노",
     "park": "박찬욱",
-    "shinkai": "신카이 마코토",
+    "azure": "소라 아주르 마코토",
 }
 
 # Generation topics for each artifact type

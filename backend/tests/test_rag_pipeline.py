@@ -32,7 +32,7 @@ class TestNotebookLMService:
         """노트북 레지스트리 확인."""
         from app.rag.tier0_notebooklm import NOTEBOOK_REGISTRY
 
-        assert "DNA_봉준호" in NOTEBOOK_REGISTRY
+        assert "DNA_강주노" in NOTEBOOK_REGISTRY
         assert "DNA_박찬욱" in NOTEBOOK_REGISTRY
         assert "META_INVARIANTS" in NOTEBOOK_REGISTRY
 
@@ -59,12 +59,12 @@ class TestNotebookLMService:
 
         service = get_notebooklm_service()
         result = await service.query_notebook(
-            notebook_id="DNA_봉준호",
-            query="봉준호 감독의 시각적 특징"
+            notebook_id="DNA_강주노",
+            query="강주노 감독의 시각적 특징"
         )
 
         assert result.answer
-        assert result.notebook_id == "DNA_봉준호"
+        assert result.notebook_id == "DNA_강주노"
         assert result.grounded
 
 
@@ -147,11 +147,11 @@ class TestLightRAGAdapter:
         from app.rag.lightrag_adapter import EntityExtractor
 
         extractor = EntityExtractor()
-        content = "봉준호 감독의 기생충은 deep focus 기법을 사용한다"
+        content = "강주노 감독의 기생충은 deep focus 기법을 사용한다"
         entities = extractor.extract_entities(content)
 
         entity_names = {e.name.lower() for e in entities}
-        assert "봉준호" in entity_names or "deep focus" in entity_names
+        assert "강주노" in entity_names or "deep focus" in entity_names
 
     @pytest.mark.asyncio
     async def test_index_document(self):
@@ -163,7 +163,7 @@ class TestLightRAGAdapter:
 
         result = await adapter.index_document(
             doc_id="test_doc_1",
-            content="봉준호 감독의 기생충은 deep focus 기법과 tracking shot을 사용한다",
+            content="강주노 감독의 기생충은 deep focus 기법과 tracking shot을 사용한다",
             dimension="AD",
         )
 
@@ -177,11 +177,11 @@ class TestLightRAGAdapter:
 
         adapter = get_lightrag_adapter()
         result = await adapter.search(
-            query="봉준호 시각적 특징",
+            query="강주노 시각적 특징",
             search_level="hybrid",
         )
 
-        assert result.query == "봉준호 시각적 특징"
+        assert result.query == "강주노 시각적 특징"
         assert result.search_level == "hybrid"
 
     def test_get_stats(self):

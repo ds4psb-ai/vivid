@@ -10,7 +10,7 @@
  * ```tsx
  * <DNAContextBanner
  *   cardType="master"
- *   cardName="봉준호"
+ *   cardName="강주노"
  *   onDismiss={handleDismiss}
  * />
  * ```

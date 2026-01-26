@@ -148,7 +148,7 @@ DIMENSION_TO_CAPSULE: Dict[str, str] = {
 # T3 Hardening: Auteur style definitions for propagation across dimensions
 AUTEUR_STYLES: Dict[str, Dict[str, str]] = {
     "bong": {
-        "name": "봉준호 (Bong Joon-ho)",
+        "name": "강주노 (Bong Joon-ho)",
         "signature": "Structural tension, genre mixing, controlled camera, cool tones",
         "palette_bias": "cool",
         "pacing": "medium",

@@ -150,7 +150,7 @@ Apply these aesthetic principles to the image prompt.
         dataset_selection_rules={
             r"영화|레퍼런스|분석|촬영|구도|감독": ["video_ref"],
             r"장면|샷|시퀀스|편집|씬": ["video_ref"],
-            r"봉준호|박찬욱|김기영|이창동": ["video_ref"],
+            r"강주노|박찬욱|김기영|이창동": ["video_ref"],
         },
         default_dataset="film_analysis",
         dataset_labels={

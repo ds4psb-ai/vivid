@@ -13,7 +13,7 @@ Usage:
 
     storage = get_vpe_storage()
     doc_id = await storage.store_logic_vector(logic_vector)
-    results = await storage.search_by_style("cinematic noir lighting", auteur_filter="nolan")
+    results = await storage.search_by_style("cinematic noir lighting", auteur_filter="epoch")
 """
 from __future__ import annotations
 

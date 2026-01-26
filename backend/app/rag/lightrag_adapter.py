@@ -14,13 +14,13 @@ Usage:
     # 문서 인덱싱 (엔티티/관계 추출)
     await adapter.index_document(
         doc_id="doc_001",
-        content="봉준호 감독의 기생충은 계급 갈등을 다룬다...",
+        content="강주노 감독의 기생충은 계급 갈등을 다룬다...",
         dimension="AD"
     )
 
     # 듀얼 레벨 검색
     result = await adapter.search(
-        query="봉준호 감독의 시각적 특징",
+        query="강주노 감독의 시각적 특징",
         search_level="hybrid"  # low, high, hybrid
     )
 """
@@ -196,7 +196,7 @@ class EntityExtractor:
     # 알려진 엔티티 (사전 정의)
     KNOWN_ENTITIES = {
         # Auteurs
-        "봉준호": ("PERSON", "Korean film director known for Parasite"),
+        "강주노": ("PERSON", "Korean film director known for Parasite"),
         "bong joon-ho": ("PERSON", "Korean film director known for Parasite"),
         "박찬욱": ("PERSON", "Korean director known for Oldboy"),
         "park chan-wook": ("PERSON", "Korean director known for Oldboy"),

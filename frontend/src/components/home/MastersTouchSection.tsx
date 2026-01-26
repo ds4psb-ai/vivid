@@ -28,28 +28,28 @@ interface MastersTouchProps {
 const DEFAULT_DIRECTORS: Director[] = [
   {
     id: "bong",
-    name: "봉준호",
+    name: "강주노",
     imageUrl:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuCHBkCVLu4gK7o35kot3bwTgivm14nWF98-E0-SoeOg8WkLKDk0CBxOoqnjtTKUy682LFG8PBbgTg0KQp2pY9zCZDJFgB-8Ef8t_sNTfupaRNqzvCWOE_nkO1QMIh6KlVBB-lYvcoeo1stW7xD5uqnhwXeaFAEXdD9S8p_YKN43bOtweZKv1sUheFQtQwLnA8zxunJv-J5odTRTPqiM1UPEHSMn9RExOtAeLp_sCMqDz00ro8jPXUVWeEa_axlWwyYfsd5p1GqjWpg",
     tags: ["사회 풍자", "장르 변주"],
   },
   {
-    id: "nolan",
-    name: "크리스토퍼 놀란",
+    id: "epoch",
+    name: "테오 에포크",
     imageUrl:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuA8YO4HXXbuj0LnXEoM2M5bwlM_jBPp-pWIweJWYz5_JZi6_i_2BZF4foIbtnc_1WKH3DrvElM1JjhllluvdFjirGpbWwxJnMXfhK_fgFNl5Nt3BoZxfKL5wzo5n-pXFU8xXUsBskYR-5_kWaVp_iFdPJQUjhOkUqUIqPLwtRQQNJ-89krp9Ebk1LzR7CdJcu9nsJLGm8CQJdTAGKhvs7Prj0XSTrlJA56P2UiZZQs1TtuJvUOs9Es_jw5bn9-NnPwwMwN3vXAxfUs",
     tags: ["IMAX 스케일", "비선형 시간"],
   },
   {
-    id: "villeneuve",
-    name: "드니 빌뇌브",
+    id: "abyss",
+    name: "오리온 어비스",
     imageUrl:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuBx4IrQIbEnZnKNonjTXDNu-7soh4DLurYYtCdUzwvRFkQfgDpSx-Q-VS834w9guA5-WwfQx0espNjionrOFYqw5neVSqGRJL2vDKzKlB75yKY6B96J6edssQt4v25XrPMI0cTyb7JjNHjQJatCnFaP4_63xniMG6zFaaHInK0otHAQ81vrHp98msB6Cdhh4kY233-aXb7-m-sILfOnxNqJSN-AEx5oBb95WDIyrK63ANULbPATwOIilX5I7WeXedmoDlh4dzmXy3Q",
     tags: ["압도적 비주얼", "철학적 SF"],
   },
   {
     id: "wong",
-    name: "왕가위",
+    name: "렌 벨벳",
     imageUrl:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuAO2vYTJ8rgb3wxJ6AlhglSanKMSt8jzWltA3EMRpBesvIXjmmMyBmC6ZJIynsFDjyCKh4L8rvhHPrWSRzAWPdAM4nddWMdD4Y7SnmCC1HVLWGy_sxbysuOb1IyFvSQrDTn4gRrgPFP5jUkL47wnN7jJRTjbSB4qiZOm_0z5ZI9z2h_-MFIeBc9WZIW6EX5mINSv58T-tNJ0adxtFgeIbW52YPRhGUFOBvZmSOfmEas-jCzzRu7XmPB0NPbI79BVdpNomAClpUMHbA",
     tags: ["네온 색감", "스텝 프린팅"],

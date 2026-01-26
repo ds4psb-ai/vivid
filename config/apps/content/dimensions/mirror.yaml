@@ -181,7 +181,7 @@ extensions:
           - "복잡한 플롯 구조"
           - "세계관 설계"
           - "논리적 일관성"
-        recommended_auteurs: ["nolan", "villeneuve", "kubrick"]
+        recommended_auteurs: ["epoch", "abyss", "prism"]
 
       - id: "dramatic_director"
         name: "드라마 감독"
@@ -190,7 +190,7 @@ extensions:
           - "대규모 서사"
           - "캐릭터 성장 아크"
           - "감정적 고조"
-        recommended_auteurs: ["spielberg", "cameron", "ridley"]
+        recommended_auteurs: ["seoyeon", "seoyeon", "abyss"]
 
       - id: "experimental_artist"
         name: "실험 예술가"
@@ -199,7 +199,7 @@ extensions:
           - "장르 혼합"
           - "비선형 서사"
           - "기술적 혁신"
-        recommended_auteurs: ["tarantino", "fincher", "refn"]
+        recommended_auteurs: ["voltage", "yoon", "yoon"]
 
     # 페르소나 DNA 출력 스키마
     persona_dna_schema:

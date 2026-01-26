@@ -79,9 +79,9 @@ export default function StudioEmptyState({ onSendPrompt }: StudioEmptyStateProps
     const suggestions: PromptSuggestion[] = language === "ko" ? [
         {
             id: "auteur-bong",
-            label: "봉준호 스타일 시네마틱",
+            label: "강주노 스타일 시네마틱",
             description: "수직적 계층 구도와 블랙 코미디 톤의 30초 영상",
-            prompt: "봉준호 감독 스타일로 30초 브랜드 영상 워크플로우를 만들어줘. 수직적 계층 구도와 블랙 코미디 톤으로.",
+            prompt: "강주노 감독 스타일로 30초 브랜드 영상 워크플로우를 만들어줘. 수직적 계층 구도와 블랙 코미디 톤으로.",
             icon: Film,
             color: "sky",
         },

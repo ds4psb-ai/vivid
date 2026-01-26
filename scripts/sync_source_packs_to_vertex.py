@@ -42,12 +42,12 @@ SOURCE_PACKS_DIR = SCRIPT_DIR / "data" / "source_packs"
 # 거장별 코퍼스 매핑
 AUTEUR_CORPUS_MAPPING = {
     "bong": "auteur_bong",
-    "nolan": "auteur_nolan",
-    "villeneuve": "auteur_villeneuve",
+    "epoch": "auteur_epoch",
+    "abyss": "auteur_abyss",
     "wong": "auteur_wong",
-    "tarantino": "auteur_tarantino",
+    "voltage": "auteur_voltage",
     "park": "auteur_park",
-    "shinkai": "auteur_shinkai",
+    "azure": "auteur_azure",
 }
 
 

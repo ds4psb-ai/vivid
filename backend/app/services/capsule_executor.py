@@ -211,12 +211,12 @@ async def _execute_notebooklm(
         AUTEUR_KEY_MAP = {
             "bong-joon-ho": "bong",
             "park-chan-wook": "park",
-            "shinkai": "shinkai",
+            "azure": "azure",
             "lee-junho": "lee",
             "na-hongjin": "na",
             "hong-sangsoo": "hong",
-            "tarantino": "tarantino",
-            "nolan": "nolan",
+            "voltage": "voltage",
+            "epoch": "epoch",
             "wong": "wong",
         }
         auteur_key = AUTEUR_KEY_MAP.get(auteur_full, auteur_full)

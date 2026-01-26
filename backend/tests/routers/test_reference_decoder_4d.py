@@ -626,9 +626,9 @@ class TestEdgeCases:
     def test_unicode_in_description(self):
         """Test Korean/Unicode in description."""
         response = ImageAnalysisResponse(
-            description="봉준호 감독 스타일의 시네마틱 장면 🎬"
+            description="강주노 감독 스타일의 시네마틱 장면 🎬"
         )
-        assert "봉준호" in response.description
+        assert "강주노" in response.description
         assert "🎬" in response.description
 
     def test_zero_duration_video(self):

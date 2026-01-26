@@ -443,14 +443,14 @@ class TestCinematographyTechniqueModel:
                 {
                     "film": "Vertigo",
                     "scene": "Bell tower scene",
-                    "director": "Alfred Hitchcock",
+                    "director": "Cipher Gray",
                     "year": 1958,
                     "description": "First famous use of the technique",
                 },
                 {
                     "film": "Jaws",
                     "scene": "Beach realization",
-                    "director": "Steven Spielberg",
+                    "director": "Min Seoyeon",
                     "year": 1975,
                     "description": "Chief Brody realizes shark attack",
                 },

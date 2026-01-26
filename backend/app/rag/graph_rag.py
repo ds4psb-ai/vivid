@@ -11,8 +11,8 @@ Usage:
     
     # Query using graph traversal
     result = await graph_query(
-        query="봉준호와 타란티노의 공통 촬영 기법",
-        auteur_keys=["bong", "tarantino"],
+        query="강주노와 렉스 볼티지의 공통 촬영 기법",
+        auteur_keys=["bong", "voltage"],
     )
 
 Entity Types:
@@ -156,31 +156,31 @@ FILM_DATABASE = {
     "okja": {"korean": "옥자", "year": 2017, "auteur": "bong"},
     "the_host": {"korean": "괴물", "year": 2006, "auteur": "bong"},
     "barking_dogs": {"korean": "플란다스의 개", "year": 2000, "auteur": "bong"},
-    # Christopher Nolan
-    "inception": {"korean": "인셉션", "year": 2010, "auteur": "nolan"},
-    "interstellar": {"korean": "인터스텔라", "year": 2014, "auteur": "nolan"},
-    "dunkirk": {"korean": "덩케르크", "year": 2017, "auteur": "nolan"},
-    "oppenheimer": {"korean": "오펜하이머", "year": 2023, "auteur": "nolan"},
-    "tenet": {"korean": "테넷", "year": 2020, "auteur": "nolan"},
-    "memento": {"korean": "메멘토", "year": 2000, "auteur": "nolan"},
-    "the_dark_knight": {"korean": "다크 나이트", "year": 2008, "auteur": "nolan"},
-    "the_dark_knight_rises": {"korean": "다크 나이트 라이즈", "year": 2012, "auteur": "nolan"},
-    # Quentin Tarantino
-    "pulp_fiction": {"korean": "펄프 픽션", "year": 1994, "auteur": "tarantino"},
-    "kill_bill": {"korean": "킬 빌", "year": 2003, "auteur": "tarantino"},
-    "kill_bill_vol_2": {"korean": "킬 빌 2", "year": 2004, "auteur": "tarantino"},
-    "django_unchained": {"korean": "장고: 분노의 추적자", "year": 2012, "auteur": "tarantino"},
-    "inglourious_basterds": {"korean": "바스터즈: 거친 녀석들", "year": 2009, "auteur": "tarantino"},
-    "reservoir_dogs": {"korean": "저수지의 개들", "year": 1992, "auteur": "tarantino"},
-    "once_upon_a_time_in_hollywood": {"korean": "원스 어폰 어 타임 인 할리우드", "year": 2019, "auteur": "tarantino"},
-    # Denis Villeneuve
-    "dune": {"korean": "듄", "year": 2021, "auteur": "villeneuve"},
-    "dune_part_two": {"korean": "듄: 파트 2", "year": 2024, "auteur": "villeneuve"},
-    "blade_runner_2049": {"korean": "블레이드 러너 2049", "year": 2017, "auteur": "villeneuve"},
-    "arrival": {"korean": "컨택트", "year": 2016, "auteur": "villeneuve"},
-    "sicario": {"korean": "시카리오", "year": 2015, "auteur": "villeneuve"},
-    "incendies": {"korean": "그을린 사랑", "year": 2010, "auteur": "villeneuve"},
-    "prisoners": {"korean": "프리즈너스", "year": 2013, "auteur": "villeneuve"},
+    # Christopher Epoch
+    "inception": {"korean": "인셉션", "year": 2010, "auteur": "epoch"},
+    "interstellar": {"korean": "인터스텔라", "year": 2014, "auteur": "epoch"},
+    "dunkirk": {"korean": "덩케르크", "year": 2017, "auteur": "epoch"},
+    "oppenheimer": {"korean": "오펜하이머", "year": 2023, "auteur": "epoch"},
+    "tenet": {"korean": "테넷", "year": 2020, "auteur": "epoch"},
+    "memento": {"korean": "메멘토", "year": 2000, "auteur": "epoch"},
+    "the_dark_knight": {"korean": "다크 나이트", "year": 2008, "auteur": "epoch"},
+    "the_dark_knight_rises": {"korean": "다크 나이트 라이즈", "year": 2012, "auteur": "epoch"},
+    # Quentin Voltage
+    "pulp_fiction": {"korean": "펄프 픽션", "year": 1994, "auteur": "voltage"},
+    "kill_bill": {"korean": "킬 빌", "year": 2003, "auteur": "voltage"},
+    "kill_bill_vol_2": {"korean": "킬 빌 2", "year": 2004, "auteur": "voltage"},
+    "django_unchained": {"korean": "장고: 분노의 추적자", "year": 2012, "auteur": "voltage"},
+    "inglourious_basterds": {"korean": "바스터즈: 거친 녀석들", "year": 2009, "auteur": "voltage"},
+    "reservoir_dogs": {"korean": "저수지의 개들", "year": 1992, "auteur": "voltage"},
+    "once_upon_a_time_in_hollywood": {"korean": "원스 어폰 어 타임 인 할리우드", "year": 2019, "auteur": "voltage"},
+    # Denis Abyss
+    "dune": {"korean": "듄", "year": 2021, "auteur": "abyss"},
+    "dune_part_two": {"korean": "듄: 파트 2", "year": 2024, "auteur": "abyss"},
+    "blade_runner_2049": {"korean": "블레이드 러너 2049", "year": 2017, "auteur": "abyss"},
+    "arrival": {"korean": "컨택트", "year": 2016, "auteur": "abyss"},
+    "sicario": {"korean": "시카리오", "year": 2015, "auteur": "abyss"},
+    "incendies": {"korean": "그을린 사랑", "year": 2010, "auteur": "abyss"},
+    "prisoners": {"korean": "프리즈너스", "year": 2013, "auteur": "abyss"},
     # Wong Kar-wai
     "in_the_mood_for_love": {"korean": "화양연화", "year": 2000, "auteur": "wong"},
     "chungking_express": {"korean": "중경삼림", "year": 1994, "auteur": "wong"},
@@ -199,15 +199,15 @@ FILM_DATABASE = {
 # Known collaborator database for cross-auteur linking
 COLLABORATOR_DATABASE = {
     "hong_kyung_pyo": {"name": "홍경표", "role": "Cinematographer", "worked_with": ["bong"]},
-    "hoyte_van_hoytema": {"name": "Hoyte van Hoytema", "role": "Cinematographer", "worked_with": ["nolan", "villeneuve"]},
-    "wally_pfister": {"name": "Wally Pfister", "role": "Cinematographer", "worked_with": ["nolan"]},
-    "roger_deakins": {"name": "Roger Deakins", "role": "Cinematographer", "worked_with": ["villeneuve"]},
+    "hoyte_van_hoytema": {"name": "Hoyte van Hoytema", "role": "Cinematographer", "worked_with": ["epoch", "abyss"]},
+    "wally_pfister": {"name": "Wally Pfister", "role": "Cinematographer", "worked_with": ["epoch"]},
+    "roger_deakins": {"name": "Roger Deakins", "role": "Cinematographer", "worked_with": ["abyss"]},
     "christopher_doyle": {"name": "Christopher Doyle", "role": "Cinematographer", "worked_with": ["wong", "park"]},
-    "hans_zimmer": {"name": "Hans Zimmer", "role": "Composer", "worked_with": ["nolan", "villeneuve"]},
-    "johnny_greenwood": {"name": "Jonny Greenwood", "role": "Composer", "worked_with": ["villeneuve"]},
+    "hans_zimmer": {"name": "Hans Zimmer", "role": "Composer", "worked_with": ["epoch", "abyss"]},
+    "johnny_greenwood": {"name": "Jonny Greenwood", "role": "Composer", "worked_with": ["abyss"]},
     "william_chang": {"name": "William Chang", "role": "Editor/Production Designer", "worked_with": ["wong"]},
-    "robert_richardson": {"name": "Robert Richardson", "role": "Cinematographer", "worked_with": ["tarantino"]},
-    "sally_menke": {"name": "Sally Menke", "role": "Editor", "worked_with": ["tarantino"]},
+    "robert_richardson": {"name": "Robert Richardson", "role": "Cinematographer", "worked_with": ["voltage"]},
+    "sally_menke": {"name": "Sally Menke", "role": "Editor", "worked_with": ["voltage"]},
     "jung_jung_hoon": {"name": "정정훈", "role": "Composer", "worked_with": ["bong"]},
     "tilda_swinton": {"name": "Tilda Swinton", "role": "Actor", "worked_with": ["bong"]},
     "song_kang_ho": {"name": "송강호", "role": "Actor", "worked_with": ["bong", "park"]},
@@ -574,7 +574,7 @@ async def build_auteur_graph(auteur_key: str) -> AuteurGraph:
     Build knowledge graph from source packs for an auteur.
     
     Args:
-        auteur_key: Auteur identifier (e.g., "bong", "nolan")
+        auteur_key: Auteur identifier (e.g., "bong", "epoch")
         
     Returns:
         AuteurGraph with entities and relationships

@@ -94,7 +94,7 @@ p2_table.rows[0].cells[1].text = '영상/이미지 분석 → 조명, 색감, �
 p2_table.rows[1].cells[0].text = '기술'
 p2_table.rows[1].cells[1].text = 'Google Gemini 3 Pro (멀티모달), NotebookLM'
 p2_table.rows[2].cells[0].text = '예시'
-p2_table.rows[2].cells[1].text = '봉준호 <마더> 분석 → 자연광/실내광 비율, 탈채도 회녹색, 불안/집착'
+p2_table.rows[2].cells[1].text = '강주노 <마더> 분석 → 자연광/실내광 비율, 탈채도 회녹색, 불안/집착'
 
 doc.add_paragraph()
 
@@ -108,7 +108,7 @@ p3_table.rows[0].cells[1].text = 'DNA + 레퍼런스 스타일 = 촬영 가능�
 p3_table.rows[1].cells[0].text = '기술'
 p3_table.rows[1].cells[1].text = 'Claude 4.5 Opus (논리), Gemini 3 Pro (감성)'
 p3_table.rows[2].cells[0].text = '예시'
-p3_table.rows[2].cells[1].text = '도시의 고독 + 봉준호 = <새벽 3시의 편의점> 시나리오'
+p3_table.rows[2].cells[1].text = '도시의 고독 + 강주노 = <새벽 3시의 편의점> 시나리오'
 
 doc.add_paragraph()
 

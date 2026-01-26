@@ -688,7 +688,7 @@ class TestWorkflowIntegration:
             intent="SF 영화 스토리보드 생성",
             selected_tools=["story_architect", "storyboard_generator"],
             initial_inputs={"concept": "우주 탐험"},
-            user_context={"auteur_key": "nolan"},
+            user_context={"auteur_key": "epoch"},
         )
 
         # 3. Verify DAG structure
@@ -712,7 +712,7 @@ class TestWorkflowIntegration:
             intent="레퍼런스 분석",
             selected_tools=["reference_decoder"],
             initial_inputs={
-                "description": "봉준호 기생충 계단 씬",
+                "description": "강주노 기생충 계단 씬",
             },
         )
 

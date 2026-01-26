@@ -202,7 +202,7 @@ class BaseCapsuleResolver(ABC):
             from app.rag.rag_presets import get_auteur_style_hints
             
             # 알려진 거장 키 목록 (Registry에서 조회)
-            KNOWN_AUTEURS = ["bong", "nolan", "villeneuve", "wong", "tarantino", "park", "shinkai"]
+            KNOWN_AUTEURS = ["bong", "epoch", "abyss", "wong", "voltage", "park", "azure"]
             
             auteur_ref_lower = auteur_ref.lower()
             for auteur_key in KNOWN_AUTEURS:
@@ -218,8 +218,8 @@ class BaseCapsuleResolver(ABC):
             
             # 한글 이름 매핑 (YAML keywords 기반으로 확장 가능)
             KOREAN_AUTEUR_MAPPING = {
-                "봉준호": "bong", "놀란": "nolan", "빌뇌브": "villeneuve",
-                "왕가위": "wong", "타란티노": "tarantino", "박찬욱": "park", "신카이": "shinkai",
+                "강주노": "bong", "테오 에포크": "epoch", "오리온 어비스": "abyss",
+                "렌 벨벳": "wong", "렉스 볼티지": "voltage", "박찬욱": "park", "신카이": "azure",
             }
             for korean_name, auteur_key in KOREAN_AUTEUR_MAPPING.items():
                 if korean_name in auteur_ref_lower:

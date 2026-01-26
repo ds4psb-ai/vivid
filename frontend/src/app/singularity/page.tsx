@@ -131,10 +131,10 @@ function TagFilter({
 // =============================================================================
 
 const PRESET_DISPLAY: Record<string, { label: string; icon: string; color: string }> = {
-    "cinematic_bong": { label: "봉준호", icon: "🎬", color: "violet" },
-    "cinematic_nolan": { label: "놀란", icon: "🌀", color: "blue" },
-    "cinematic_villeneuve": { label: "빌뇌브", icon: "🏜️", color: "amber" },
-    "cinematic_wong": { label: "왕가위", icon: "🌃", color: "pink" },
+    "cinematic_bong": { label: "강주노", icon: "🎬", color: "violet" },
+    "cinematic_epoch": { label: "테오 에포크", icon: "🌀", color: "blue" },
+    "cinematic_abyss": { label: "오리온 어비스", icon: "🏜️", color: "amber" },
+    "cinematic_wong": { label: "렌 벨벳", icon: "🌃", color: "pink" },
     "horror_na": { label: "나홍진", icon: "👁️", color: "red" },
     "arthouse_hong": { label: "홍상수", icon: "🍷", color: "emerald" },
     "animation_shinkai": { label: "신카이", icon: "🌸", color: "sky" },

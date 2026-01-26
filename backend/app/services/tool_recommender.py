@@ -336,7 +336,7 @@ class ToolRecommenderService:
                 "persona", "페르소나", "변주", "variation", "인물",
             ],
             "style-remix": [
-                "스타일", "style", "봉준호", "노란", "ghibli", "지브리",
+                "스타일", "style", "강주노", "노란", "ghibli", "지브리",
                 "거장", "auteur", "미학", "aesthetic", "색감", "톤", "tone",
             ],
             "scene-extension": [
@@ -363,7 +363,7 @@ class ToolRecommenderService:
             client = get_gemini_client()
             classification_prompt = f"""Classify the following user prompt into one of these workflow types:
 - character-variation: For character personality, MBTI, persona changes
-- style-remix: For visual style, auteur style (봉준호, Ghibli, etc.), aesthetic changes
+- style-remix: For visual style, auteur style (강주노, Ghibli, etc.), aesthetic changes
 - scene-extension: For extending scenes, continuations, next parts
 - full-production: For complete video production from scratch
 
@@ -585,17 +585,17 @@ Respond with ONLY the workflow type name (e.g., "character-variation")."""
                 "quality_check": 0.2,
                 "analyze_reference": 0.25,
             },
-            "nolan": {
+            "epoch": {
                 "story_architect": 0.3,  # Complex narratives
                 "analyze_reference": 0.2,
                 "aesthetic_direct": 0.2,
             },
-            "kubrick": {
+            "prism": {
                 "aesthetic_direct": 0.35,  # Meticulous visual style
                 "quality_check": 0.25,
                 "analyze_reference": 0.2,
             },
-            "tarantino": {
+            "voltage": {
                 "story_architect": 0.25,  # Dialogue-heavy
                 "sound_crafter": 0.3,  # Music emphasis
                 "aesthetic_direct": 0.15,
@@ -605,7 +605,7 @@ Respond with ONLY the workflow type name (e.g., "character-variation")."""
                 "aesthetic_direct": 0.25,
                 "story_architect": 0.2,
             },
-            "villeneuve": {
+            "abyss": {
                 "veo_generate": 0.25,  # Grand visuals
                 "aesthetic_direct": 0.25,
                 "sound_crafter": 0.2,

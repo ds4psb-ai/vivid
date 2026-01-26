@@ -188,7 +188,7 @@ class LogicVector(BaseModel):
     """
     auteur_id: str = Field(
         ...,
-        description="Auteur identifier (e.g., 'bong', 'nolan', 'kubrick')"
+        description="Auteur identifier (e.g., 'bong', 'epoch', 'prism')"
     )
     cadence: Cadence = Field(
         default_factory=Cadence,

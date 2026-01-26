@@ -189,21 +189,21 @@ class VEOResolver(BaseCapsuleResolver):
             "depth_of_field": "deep",
             "composition": "symmetrical",
         },
-        "tarantino": {
+        "voltage": {
             "aspect_ratio": "21:9",
             "camera_style": "bold",
             "lens_style": "wide",
             "color_grade": "saturated_retro",
             "motion_intensity": "punchy",
         },
-        "nolan": {
+        "epoch": {
             "aspect_ratio": "21:9",
             "camera_style": "epic",
             "lens_style": "imax",
             "color_grade": "cold_teal",
             "motion_intensity": "precise",
         },
-        "villeneuve": {
+        "abyss": {
             "aspect_ratio": "21:9",
             "camera_style": "atmospheric",
             "lens_style": "large_format",

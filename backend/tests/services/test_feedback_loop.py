@@ -137,7 +137,7 @@ class TestFeedbackLoopService:
         mock_response.query = "test query"
         mock_response.answer = "test response"
         mock_response.dimension = "4D"
-        mock_response.auteur_key = "kubrick"
+        mock_response.auteur_key = "prism"
         mock_response.app_key = "4D"
 
         with patch.object(service, '_index_to_qdrant', return_value="point_123") as mock_ingest:
@@ -188,7 +188,7 @@ class TestFeedbackLoopService:
         mock_response.id = uuid4()
         mock_response.query = "test query"
         mock_response.dimension = "4D"
-        mock_response.auteur_key = "kubrick"
+        mock_response.auteur_key = "prism"
         mock_response.query_hash = "hash123"
         mock_response.crag_triggered = False
         mock_response.sources = []

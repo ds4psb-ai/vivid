@@ -8,7 +8,7 @@ Usage:
     from app.core.entrypoint import unified_query
 
     # 기본 사용
-    result = await unified_query("봉준호 롱테이크 분석")
+    result = await unified_query("강주노 롱테이크 분석")
 
     # 옵션 지정
     result = await unified_query(
@@ -57,7 +57,7 @@ async def unified_query(
         user_id: 사용자 ID (개인화에 사용)
         session_id: 세션 ID (컨텍스트 유지에 사용)
         dimension: 명시적 차원 지정 (1D, 2D, 3D, 4D, QC, AD, AI, VEO, STORY, SOUND)
-        auteur_key: 명시적 거장 지정 (bong, kubrick, nolan, tarantino 등)
+        auteur_key: 명시적 거장 지정 (bong, prism, epoch, voltage 등)
         skip_cache: 캐시 우회 여부
         request_id: 요청 ID (없으면 자동 생성)
 
@@ -75,9 +75,9 @@ async def unified_query(
         - cache_hit: 캐시 히트 여부
 
     Example:
-        >>> result = await unified_query("봉준호 롱테이크 분석")
+        >>> result = await unified_query("강주노 롱테이크 분석")
         >>> print(result["final_response"])
-        "봉준호 감독의 롱테이크는..."
+        "강주노 감독의 롱테이크는..."
         >>> print(result["evidence_refs"])
         ["db:notebooklm:doc_123", "db:qdrant:doc_456"]
     """

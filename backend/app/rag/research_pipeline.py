@@ -10,7 +10,7 @@ Usage:
 
     pipeline = ResearchPipeline()
     results = await pipeline.research(
-        query="봉준호 촬영 기법",
+        query="강주노 촬영 기법",
         auteur_key="bong",
         dimension="4D",
     )
@@ -650,7 +650,7 @@ class ResearchPipeline:
 
         Args:
             query: Search query
-            auteur_key: Optional auteur identifier (bong, nolan, etc.)
+            auteur_key: Optional auteur identifier (bong, epoch, etc.)
             dimension: Optional dimension (4D, AD, etc.)
             max_results: Maximum search results
             search_depth: "basic" or "advanced"
@@ -729,7 +729,7 @@ async def research_auteur(
     """Research an auteur across multiple topics.
 
     Args:
-        auteur_key: Auteur identifier (bong, nolan, wong, etc.)
+        auteur_key: Auteur identifier (bong, epoch, wong, etc.)
         topics: List of topics to research (default: cinematography-related)
         max_results_per_topic: Max results per topic
 
@@ -747,13 +747,13 @@ async def research_auteur(
         ]
 
     auteur_names = {
-        "bong": "봉준호 Bong Joon-ho",
-        "nolan": "Christopher Nolan",
-        "wong": "왕가위 Wong Kar-wai",
-        "tarantino": "Quentin Tarantino",
-        "villeneuve": "Denis Villeneuve",
+        "bong": "강주노 Bong Joon-ho",
+        "epoch": "Christopher Epoch",
+        "wong": "렌 벨벳 Wong Kar-wai",
+        "voltage": "Quentin Voltage",
+        "abyss": "Denis Abyss",
         "park": "박찬욱 Park Chan-wook",
-        "kubrick": "Stanley Kubrick",
+        "prism": "Stanley Prism",
     }
 
     auteur_name = auteur_names.get(auteur_key, auteur_key)
@@ -815,7 +815,7 @@ if __name__ == "__main__":
     async def main():
         if len(sys.argv) < 2:
             print("Usage: python -m app.rag.research_pipeline <query> [auteur_key]")
-            print("Example: python -m app.rag.research_pipeline '봉준호 촬영 기법' bong")
+            print("Example: python -m app.rag.research_pipeline '강주노 촬영 기법' bong")
             sys.exit(1)
 
         query = sys.argv[1]

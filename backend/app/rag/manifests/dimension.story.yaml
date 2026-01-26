@@ -33,7 +33,7 @@ backends:
     weight: 0.2
     enabled: true
     config:
-      notebook_id: DNA_봉준호
+      notebook_id: DNA_강주노
 
   - id: tavily_grounding
     weight: 0.1

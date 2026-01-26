@@ -18,7 +18,7 @@ Usage:
     from app.rag.semantic_router import get_semantic_router
 
     router = get_semantic_router()
-    query_type, confidence = await router.classify("봉준호 롱테이크")
+    query_type, confidence = await router.classify("강주노 롱테이크")
     # QueryType.DOMAIN_SPECIFIC, 0.85
 """
 from __future__ import annotations
@@ -140,10 +140,10 @@ class SemanticRouter:
                 {
                     "type": "domain_specific",
                     "examples": [
-                        "봉준호 감독의 롱테이크 기법",
+                        "강주노 감독의 롱테이크 기법",
                         "기생충 계단 장면 분석",
-                        "왕가위 색감 스타일",
-                        "타란티노 대화 스타일",
+                        "렌 벨벳 색감 스타일",
+                        "렉스 볼티지 대화 스타일",
                     ],
                 },
                 {
@@ -159,7 +159,7 @@ class SemanticRouter:
                     "type": "multi_hop",
                     "examples": [
                         "왜 기생충의 계단이 상징적인가 설명해줘",
-                        "봉준호와 놀란의 시각 스타일 비교",
+                        "강주노와 테오 에포크의 시각 스타일 비교",
                         "한국 영화가 세계 시장에서 성공한 이유 분석",
                     ],
                 },

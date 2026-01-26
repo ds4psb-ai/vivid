@@ -33,9 +33,9 @@ test.describe('Singularity Gallery', () => {
         // Check for preset section header
         await expect(page.locator('text=크리에이티브 프리셋')).toBeVisible();
 
-        // Check for at least one preset button (e.g., 봉준호)
-        const presetButtons = page.locator('button:has-text("봉준호")').or(
-            page.locator('button:has-text("놀란")')
+        // Check for at least one preset button (e.g., 강주노)
+        const presetButtons = page.locator('button:has-text("강주노")').or(
+            page.locator('button:has-text("테오 에포크")')
         ).or(
             page.locator('button:has-text("숏폼")')
         );
@@ -94,7 +94,7 @@ test.describe('Singularity Preset Integration', () => {
         await page.waitForSelector('button:has-text("전체")', { state: 'visible' });
 
         // Click on a preset
-        const presetBtn = page.locator('button:has-text("봉준호")');
+        const presetBtn = page.locator('button:has-text("강주노")');
         if (await presetBtn.count() > 0) {
             await presetBtn.click();
 

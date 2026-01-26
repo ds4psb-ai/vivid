@@ -202,7 +202,7 @@ def get_default_source_specs() -> list[RAGSourceSpec]:
             source_type=RAGSourceType.AUTEUR_DNA,
             display_name="거장 DNA",
             description="영화 거장들의 스타일, 기법, 철학에 대한 깊이있는 지식",
-            keywords=["거장", "스타일", "봉준호", "쿠브릭", "놀란", "auteur"],
+            keywords=["거장", "스타일", "강주노", "쿠브릭", "테오 에포크", "auteur"],
             priority=9,
             latency_ms_avg=2000,
             backend_type="notebooklm",

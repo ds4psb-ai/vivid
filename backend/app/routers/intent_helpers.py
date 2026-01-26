@@ -75,11 +75,11 @@ REFERENCE_STYLE_TO_DOMAIN = {
 
     # AI Auteur Personas (글로벌)
     "velvet": ContentDomain.AUTEUR_WONG,  # 렌 벨벳 - 네온 속 감정
-    "epoch": ContentDomain.AUTEUR_NOLAN,  # 테오 에포크 - 시간의 설계자
-    "voltage": ContentDomain.AUTEUR_TARANTINO,  # 렉스 볼티지 - 폭발적 에너지
-    "abyss": ContentDomain.AUTEUR_VILLENEUVE,  # 오리온 어비스 - 우주의 심연
-    "azure": ContentDomain.AUTEUR_VILLENEUVE,  # 소라 아주르 - 하늘빛 서정
-    "prism": ContentDomain.AUTEUR_NOLAN,  # 마일로 프리즘 - 기하학적 완벽
+    "epoch": ContentDomain.AUTEUR_EPOCH,  # 테오 에포크 - 시간의 설계자
+    "voltage": ContentDomain.AUTEUR_VOLTAGE,  # 렉스 볼티지 - 폭발적 에너지
+    "abyss": ContentDomain.AUTEUR_ABYSS,  # 오리온 어비스 - 우주의 심연
+    "azure": ContentDomain.AUTEUR_ABYSS,  # 소라 아주르 - 하늘빛 서정
+    "prism": ContentDomain.AUTEUR_EPOCH,  # 마일로 프리즘 - 기하학적 완벽
 
     # Style-based
     "cinematic": ContentDomain.GENRE_DRAMA,

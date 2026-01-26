@@ -203,18 +203,18 @@ def sample_queries() -> List[Dict[str, Any]]:
     """Sample queries for quality evaluation."""
     return [
         {
-            "query": "봉준호 감독의 계단 상징",
+            "query": "강주노 감독의 계단 상징",
             "auteur_key": "bong",
             "expected_topics": ["계급", "수직", "구조", "기생충"],
         },
         {
-            "query": "왕가위 감독의 블러 모션 기법",
+            "query": "렌 벨벳 감독의 블러 모션 기법",
             "auteur_key": "wong",
             "expected_topics": ["블러", "슬로모션", "향수", "시간"],
         },
         {
-            "query": "크리스토퍼 놀란의 IMAX 촬영",
-            "auteur_key": "nolan",
+            "query": "테오 에포크의 IMAX 촬영",
+            "auteur_key": "epoch",
             "expected_topics": ["IMAX", "필름", "실용", "스케일"],
         },
     ]
@@ -273,7 +273,7 @@ class TestRAGQuality:
         
         # Query that should have weak/no evidence
         result = await hybrid_query(
-            query="봉준호 감독의 2030년 신작 영화 줄거리",  # Future = no evidence
+            query="강주노 감독의 2030년 신작 영화 줄거리",  # Future = no evidence
             auteur_key="bong",
         )
         
@@ -325,8 +325,8 @@ async def generate_quality_report() -> Dict[str, Any]:
     from app.rag.hybrid_rag import hybrid_query
     
     test_cases = [
-        {"query": "봉준호 감독 스타일", "auteur_key": "bong"},
-        {"query": "왕가위 감독의 색감", "auteur_key": "wong"},
+        {"query": "강주노 감독 스타일", "auteur_key": "bong"},
+        {"query": "렌 벨벳 감독의 색감", "auteur_key": "wong"},
         {"query": "스토리보드 제작 가이드", "dimension": "2D"},
     ]
     

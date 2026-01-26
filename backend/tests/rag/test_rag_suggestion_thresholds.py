@@ -131,7 +131,7 @@ class TestSuggestionThresholds:
                     
                     result = service.get_suggestion(
                         app_key="dimension.aesthetic.direct",
-                        query="봉준호 스타일",
+                        query="강주노 스타일",
                     )
                     
                     # 0.65 < 0.7 이므로 필터됨

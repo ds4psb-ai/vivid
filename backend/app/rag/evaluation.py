@@ -124,9 +124,9 @@ class RAGEvaluationPipeline:
     Usage:
         pipeline = RAGEvaluationPipeline()
         result = await pipeline.evaluate_single(
-            question="봉준호 감독의 영화적 특징은?",
-            answer="봉준호는 비선형 서사와 계급 갈등을 주제로...",
-            contexts=["봉준호는 기생충에서...", "봉준호의 초기작..."],
+            question="강주노 감독의 영화적 특징은?",
+            answer="강주노는 비선형 서사와 계급 갈등을 주제로...",
+            contexts=["강주노는 기생충에서...", "강주노의 초기작..."],
         )
 
         # Batch evaluation with golden dataset
@@ -640,7 +640,7 @@ class GoldenDatasetManager:
     Manages golden dataset for RAG evaluation.
 
     Golden dataset structure (YAML):
-        - query: "봉준호 감독의 영화적 특징은?"
+        - query: "강주노 감독의 영화적 특징은?"
           ground_truth: "비선형 서사, 계급 갈등, 블랙 코미디..."
           expected_contexts:
             - "db:rag_docs:AD:auteur:bong:..."

@@ -25,15 +25,15 @@ class TestSourceMapping:
     """Domain → Source 매핑 테스트"""
     
     def test_auteur_bong_mapping(self):
-        """봉준호 → NotebookLM 매핑"""
+        """강주노 → NotebookLM 매핑"""
         sources = DOMAIN_TO_SOURCES.get(ContentDomain.AUTEUR_BONG, [])
         
         assert len(sources) >= 1
         assert sources[0].source_type == RAGSourceType.NOTEBOOKLM
-        assert sources[0].notebook_id == "DNA_봉준호"
+        assert sources[0].notebook_id == "DNA_강주노"
     
     def test_auteur_wong_mapping(self):
-        """왕가위 → NotebookLM 매핑"""
+        """렌 벨벳 → NotebookLM 매핑"""
         sources = DOMAIN_TO_SOURCES.get(ContentDomain.AUTEUR_WONG, [])
         
         assert len(sources) >= 1
@@ -73,7 +73,7 @@ class TestSourceTypeResolver:
         
         assert len(sources) >= 1
         assert sources[0].source_type == RAGSourceType.NOTEBOOKLM
-        assert sources[0].notebook_id == "DNA_봉준호"
+        assert sources[0].notebook_id == "DNA_강주노"
     
     def test_resolve_multiple_domains(self, resolver):
         """여러 도메인 소스 처리"""
@@ -88,7 +88,7 @@ class TestSourceTypeResolver:
         sources = resolver.resolve_sources(intent)
         
         assert len(sources) >= 2
-        # 봉준호 + thriller 모두 포함
+        # 강주노 + thriller 모두 포함
         source_types = [s.source_type for s in sources]
         assert RAGSourceType.NOTEBOOKLM in source_types
         assert RAGSourceType.DIMENSION_RAG in source_types
@@ -118,7 +118,7 @@ class TestSourceTypeResolver:
         
         sources = resolver.resolve_sources(intent)
         
-        # 봉준호 (priority 10)가 먼저
+        # 강주노 (priority 10)가 먼저
         assert sources[0].priority > sources[-1].priority if len(sources) > 1 else True
     
     def test_future_source_excluded(self, resolver):
@@ -156,10 +156,10 @@ class TestIntentFactoryIntegration:
         
         sources = resolver.resolve_sources(intent)
         
-        # 봉준호 NotebookLM이 포함되어야 함
+        # 강주노 NotebookLM이 포함되어야 함
         notebook_sources = [s for s in sources if s.source_type == RAGSourceType.NOTEBOOKLM]
         assert len(notebook_sources) >= 1
-        assert any(s.notebook_id == "DNA_봉준호" for s in notebook_sources)
+        assert any(s.notebook_id == "DNA_강주노" for s in notebook_sources)
     
     def test_saju_factory_sources(self):
         """IntentFactory.saju_guided()가 사주 소스 포함"""

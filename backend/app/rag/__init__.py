@@ -27,12 +27,12 @@ Usage:
     # NotebookLM Tier 0 검색
     from app.rag import get_notebooklm_service
     service = get_notebooklm_service()
-    result = await service.query_notebook("DNA_봉준호", "visual grammar")
+    result = await service.query_notebook("DNA_강주노", "visual grammar")
 
     # LightRAG 그래프 검색
     from app.rag import get_lightrag_adapter
     adapter = get_lightrag_adapter()
-    result = await adapter.search("봉준호 시각적 특징", search_level="hybrid")
+    result = await adapter.search("강주노 시각적 특징", search_level="hybrid")
 """
 from app.rag.tier1_dimension_rag import (
     Tier1DimensionRAG,

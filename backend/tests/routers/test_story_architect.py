@@ -149,7 +149,7 @@ class TestSanitizeTextField:
 
     def test_preserves_korean_text(self):
         """Preserves Korean text."""
-        korean = "봉준호 감독의 영화 스타일"
+        korean = "강주노 감독의 영화 스타일"
         assert _sanitize_text_field(korean) == korean
 
 
@@ -709,10 +709,10 @@ class TestEdgeCases:
     def test_unicode_concept(self):
         """Handles unicode in concept."""
         request = StoryArchitectRequest(
-            concept="봉준호 감독 스타일의 영화 시나리오",
+            concept="강주노 감독 스타일의 영화 시나리오",
             genre="drama",
         )
-        assert "봉준호" in request.concept
+        assert "강주노" in request.concept
 
     def test_emoji_in_concept(self):
         """Handles emoji in concept."""

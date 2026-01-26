@@ -436,7 +436,7 @@ async def _dimension_tool_handler(
             auteur_key = None
             for field in ["style", "auteur", "director", "capsule_id"]:
                 value = str(inputs.get(field, "")).lower()
-                for key in ["bong", "nolan", "villeneuve", "wong", "tarantino", "park", "shinkai"]:
+                for key in ["bong", "epoch", "abyss", "velvet", "voltage", "yoon", "azure"]:
                     if key in value:
                         auteur_key = key
                         break

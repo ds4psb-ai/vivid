@@ -458,7 +458,7 @@ class AppContextLoader:
         """기본 Auteur 스타일."""
         return {
             "bong": {
-                "name": "봉준호 (Bong Joon-ho)",
+                "name": "강주노 (Bong Joon-ho)",
                 "signature": "Structural tension, genre mixing, controlled camera",
                 "palette_bias": "cool",
                 "techniques": ["deep focus", "tracking shots", "visual metaphor"],

@@ -14,7 +14,7 @@ Usage:
 
     reranker = get_reranker("local_cross_encoder")
     result = await reranker.rerank(
-        query="봉준호 감독의 계단 상징",
+        query="강주노 감독의 계단 상징",
         documents=[DocumentToRerank(id="1", text="기생충에서...")],
         top_k=5,
     )

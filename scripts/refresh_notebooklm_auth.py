@@ -89,7 +89,7 @@ async def verify_api_call():
         
         service = get_notebooklm_service()
         result = await service.query_notebook(
-            notebook_id="DNA_봉준호",
+            notebook_id="DNA_강주노",
             query="테스트 쿼리"
         )
         

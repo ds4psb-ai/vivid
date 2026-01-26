@@ -347,7 +347,7 @@ class TestCompletionRate:
             },
             "creativity": {
                 "visual_style_affinity": "cinematic",
-                "recommended_auteurs": ["nolan", "villeneuve"],
+                "recommended_auteurs": ["epoch", "abyss"],
             },
             "persona": {
                 "archetype": "visionary_architect",

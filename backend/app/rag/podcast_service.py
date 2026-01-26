@@ -19,7 +19,7 @@ Usage:
 
     # 팟캐스트 생성
     result = await service.generate_podcast(
-        sources=[{"text": "봉준호 감독의 영화적 특징..."}],
+        sources=[{"text": "강주노 감독의 영화적 특징..."}],
         title="거장 분석",
         length=PodcastLength.STANDARD,
         language="ko",

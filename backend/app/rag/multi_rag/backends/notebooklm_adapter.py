@@ -10,7 +10,7 @@ Features:
 Usage:
     from app.rag.multi_rag.backends import NotebookLMAdapter
 
-    adapter = NotebookLMAdapter(notebook_id="DNA_봉준호")
+    adapter = NotebookLMAdapter(notebook_id="DNA_강주노")
     results = await adapter.query("계단 연출 기법")
 """
 from __future__ import annotations
@@ -27,11 +27,11 @@ class NotebookLMAdapter:
     기존 tier0_notebooklm.NotebookLMService를 Multi-RAG Protocol에 맞게 래핑합니다.
 
     Attributes:
-        notebook_id: 노트북 ID (예: "DNA_봉준호")
+        notebook_id: 노트북 ID (예: "DNA_강주노")
         _service: NotebookLM 서비스 인스턴스 (lazy loading)
 
     Example:
-        >>> adapter = NotebookLMAdapter(notebook_id="DNA_봉준호")
+        >>> adapter = NotebookLMAdapter(notebook_id="DNA_강주노")
         >>> results = await adapter.query("계단 연출 기법", limit=5)
         >>> for r in results:
         ...     print(r["content"][:100])
@@ -41,7 +41,7 @@ class NotebookLMAdapter:
         """어댑터 초기화.
 
         Args:
-            notebook_id: 노트북 ID (예: "DNA_봉준호")
+            notebook_id: 노트북 ID (예: "DNA_강주노")
         """
         self.notebook_id = notebook_id
         self._service = None

@@ -13,7 +13,7 @@ Usage:
     await service.index_document(
         text="cinematic lighting technique",
         dimension="3D",
-        auteur_key="kubrick",
+        auteur_key="prism",
     )
     
     # Search
@@ -63,7 +63,7 @@ class MultiModalRAGService:
 
         # 문서 인덱싱
         doc_id = await service.index_text(
-            text="봉준호 감독의 수직적 프레이밍",
+            text="강주노 감독의 수직적 프레이밍",
             dimension="4D",
             auteur_key="bong",
             content_type=ContentType.TECHNIQUE,

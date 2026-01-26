@@ -47,16 +47,16 @@ logger = logging.getLogger(__name__)
 # Configuration
 # =============================================================================
 
-AUTEUR_KEYS = ["bong", "nolan", "villeneuve", "wong", "tarantino", "park", "shinkai"]
+AUTEUR_KEYS = ["bong", "epoch", "abyss", "wong", "voltage", "park", "azure"]
 
 AUTEUR_NAMES = {
-    "bong": "봉준호",
-    "nolan": "크리스토퍼 놀란",
-    "villeneuve": "드니 빌뇌브",
+    "bong": "강주노",
+    "epoch": "크리스토퍼 테오 에포크",
+    "abyss": "드니 빌뇌브",
     "wong": "왕가위",
-    "tarantino": "쿠엔틴 타란티노",
+    "voltage": "쿠엔틴 타란티노",
     "park": "박찬욱",
-    "shinkai": "신카이 마코토",
+    "azure": "소라 아주르 마코토",
 }
 
 # Question templates for auteur DNA
@@ -98,11 +98,11 @@ DIMENSION_QUESTIONS = {
 
 # Comparison questions (for variety)
 COMPARISON_QUESTIONS = [
-    "봉준호와 놀란의 연출 스타일 비교",
+    "강주노와 테오 에포크의 연출 스타일 비교",
     "왕가위와 박찬욱의 색감 사용 비교",
-    "빌뇌브와 놀란의 SF 영화 스타일 비교",
+    "빌뇌브와 테오 에포크의 SF 영화 스타일 비교",
     "타란티노와 박찬욱의 폭력 묘사 비교",
-    "신카이와 봉준호의 공간 활용 비교",
+    "소라 아주르와 강주노의 공간 활용 비교",
 ]
 
 
@@ -330,7 +330,7 @@ async def verify_cache() -> bool:
     
     # Test queries
     test_queries = [
-        ("봉준호의 시각적 특징", "bong"),
+        ("강주노의 시각적 특징", "bong"),
         ("스토리보드 작성 가이드", None),
     ]
     

@@ -232,13 +232,13 @@ class TestQueryClassificationResult:
             query_type=QueryType.DOMAIN_SPECIFIC,
             confidence=0.85,
             classifier_used="semantic_router",
-            matched_example="봉준호 롱테이크",
+            matched_example="강주노 롱테이크",
             latency_ms=15,
         )
         assert result.query_type == QueryType.DOMAIN_SPECIFIC
         assert result.confidence == 0.85
         assert result.classifier_used == "semantic_router"
-        assert result.matched_example == "봉준호 롱테이크"
+        assert result.matched_example == "강주노 롱테이크"
         assert result.latency_ms == 15
 
     def test_confidence_validation(self):
@@ -309,7 +309,7 @@ class TestLLMClassifierMocked:
         """LLM classifier returns correct type."""
         from app.rag.llm_classifier import classify_with_llm
 
-        query_type, confidence = await classify_with_llm("봉준호 롱테이크")
+        query_type, confidence = await classify_with_llm("강주노 롱테이크")
 
         assert query_type == QueryType.DOMAIN_SPECIFIC
         assert confidence == 0.9
@@ -390,7 +390,7 @@ class TestMockClassifier:
         mock = MockLLMClassifier()
 
         # Domain-specific query
-        qt, conf = await mock.classify("봉준호 영화 특징")
+        qt, conf = await mock.classify("강주노 영화 특징")
         assert qt == QueryType.DOMAIN_SPECIFIC
 
         # Simple factual

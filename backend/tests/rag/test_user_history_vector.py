@@ -225,9 +225,9 @@ class TestKeywordScoring:
 
     def test_full_keyword_match(self):
         """모든 키워드 매칭."""
-        query = "봉준호 영화 스타일"
+        query = "강주노 영화 스타일"
         keywords = query.lower().split()
-        content = "봉준호 감독의 영화 스타일 분석"
+        content = "강주노 감독의 영화 스타일 분석"
         content_lower = content.lower()
 
         match_count = sum(1 for kw in keywords if kw in content_lower)
@@ -237,9 +237,9 @@ class TestKeywordScoring:
 
     def test_partial_keyword_match(self):
         """일부 키워드만 매칭."""
-        query = "봉준호 영화 스타일"
+        query = "강주노 영화 스타일"
         keywords = query.lower().split()
-        content = "봉준호 감독 작품"  # "영화", "스타일" 없음
+        content = "강주노 감독 작품"  # "영화", "스타일" 없음
         content_lower = content.lower()
 
         match_count = sum(1 for kw in keywords if kw in content_lower)
@@ -249,7 +249,7 @@ class TestKeywordScoring:
 
     def test_no_keyword_match(self):
         """키워드 매칭 없음."""
-        query = "봉준호 영화"
+        query = "강주노 영화"
         keywords = query.lower().split()
         content = "완전히 다른 내용"
         content_lower = content.lower()
@@ -269,8 +269,8 @@ class TestVectorScoring:
 
         embedder = get_embedder()
 
-        text1 = "봉준호 감독의 영화 스타일"
-        text2 = "봉준호 감독 영화 스타일 분석"
+        text1 = "강주노 감독의 영화 스타일"
+        text2 = "강주노 감독 영화 스타일 분석"
 
         vec1 = embedder.embed(text1)
         vec2 = embedder.embed(text2)
@@ -285,7 +285,7 @@ class TestVectorScoring:
 
         embedder = get_embedder()
 
-        text1 = "봉준호 감독의 영화 스타일"
+        text1 = "강주노 감독의 영화 스타일"
         text2 = "completely different content about programming"
 
         vec1 = embedder.embed(text1)

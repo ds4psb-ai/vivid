@@ -108,7 +108,7 @@ class TestGraphRAGSearch:
             ]
         }
 
-        result = await searcher.global_search("봉준호 스타일", auteur_keys=["bong"])
+        result = await searcher.global_search("강주노 스타일", auteur_keys=["bong"])
 
         assert result.community_reports is not None
         assert result.confidence >= 0.0
@@ -182,7 +182,7 @@ class TestGraphQdrantBackend:
             ]
 
             results = await backend.retrieve(
-                query="봉준호 스타일",
+                query="강주노 스타일",
                 config={"graph_strategy": "hybrid", "auteur_keys": ["bong"]},
             )
 

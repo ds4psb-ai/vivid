@@ -278,14 +278,14 @@ class TestRAGEvaluationBatchIntegration:
 
         pipeline = RAGEvaluationPipeline()
         sample = EvaluationSample(
-            question="봉준호 감독의 특징은?",
+            question="강주노 감독의 특징은?",
             answer="비선형 서사와 계급 갈등을 다룹니다.",
-            contexts=["봉준호는 기생충으로 아카데미상을 받았습니다."],
+            contexts=["강주노는 기생충으로 아카데미상을 받았습니다."],
         )
 
         prompt = pipeline._build_evaluation_prompt(sample)
 
-        assert "봉준호" in prompt
+        assert "강주노" in prompt
         assert "비선형 서사" in prompt
         assert "기생충" in prompt
         assert "faithfulness" in prompt.lower()

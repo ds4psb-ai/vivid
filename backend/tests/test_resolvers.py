@@ -122,7 +122,7 @@ class TestVEOResolver:
     
     @pytest.mark.asyncio
     async def test_auteur_style_bong(self, resolver):
-        """봉준호 스타일 적용"""
+        """강주노 스타일 적용"""
         intent = CreativeIntent(
             mood=CreativeMood.CINEMATIC,
             domain_sources=[ContentDomain.AUTEUR_BONG],
@@ -134,7 +134,7 @@ class TestVEOResolver:
     
     @pytest.mark.asyncio
     async def test_auteur_style_wong(self, resolver):
-        """왕가위 스타일 적용"""
+        """렌 벨벳 스타일 적용"""
         intent = CreativeIntent(
             mood=CreativeMood.NOSTALGIC,
             domain_sources=[ContentDomain.AUTEUR_WONG],

@@ -404,7 +404,7 @@ class TestEnsembleRerankerIntegration:
         mock_results = [
             RetrievalResult(
                 doc_id="doc_1",
-                text="봉준호 감독의 롱테이크",
+                text="강주노 감독의 롱테이크",
                 score=0.9,
                 source="qdrant_hybrid",
                 rank=1,
@@ -441,9 +441,9 @@ class TestEnsembleRerankerIntegration:
             mock_reranker.rerank.return_value = RerankResult(
                 documents=[
                     {"id": "doc_2", "text": "기생충 계단 장면", "rerank_score": 0.95},
-                    {"id": "doc_1", "text": "봉준호 감독의 롱테이크", "rerank_score": 0.85},
+                    {"id": "doc_1", "text": "강주노 감독의 롱테이크", "rerank_score": 0.85},
                 ],
-                query="봉준호",
+                query="강주노",
                 model="BAAI/bge-reranker-base",
                 latency_ms=30,
                 original_count=2,
@@ -452,7 +452,7 @@ class TestEnsembleRerankerIntegration:
             mock_get_reranker.return_value = mock_reranker
 
             result = await ensemble_retrieve(
-                query="봉준호 스타일",
+                query="강주노 스타일",
                 app_key="test.ensemble.reranker",
             )
 

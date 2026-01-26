@@ -153,7 +153,7 @@ def get_auteur_config(auteur_key: str) -> Optional[Any]:
     """v2: Registry에서 거장 설정 조회.
     
     Args:
-        auteur_key: 거장 키 (예: "bong", "nolan")
+        auteur_key: 거장 키 (예: "bong", "epoch")
         
     Returns:
         AppConfig or None
@@ -415,12 +415,12 @@ TEMPLATE_RAG_OVERRIDES: Dict[str, Dict[str, Any]] = {
         "auteur_key": "bong",
         "confidence_threshold": 0.8,
     },
-    "nolan-action": {
-        "auteur_key": "nolan",
+    "epoch-action": {
+        "auteur_key": "epoch",
         "use_google_search": True,
     },
-    "villeneuve-scifi": {
-        "auteur_key": "villeneuve",
+    "abyss-scifi": {
+        "auteur_key": "abyss",
         "confidence_threshold": 0.7,
     },
 }

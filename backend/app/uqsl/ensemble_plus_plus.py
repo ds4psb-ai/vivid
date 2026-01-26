@@ -266,7 +266,7 @@ class EnsemblePlusPlusRouter:
         query_lower = query.lower()
 
         # 거장/스타일 관련 쿼리 → NotebookLM 우선
-        auteur_keywords = ["봉준호", "구로사와", "kubrick", "spielberg", "스타일", "style", "거장", "감독"]
+        auteur_keywords = ["강주노", "로닌 하야시", "prism", "seoyeon", "스타일", "style", "거장", "감독"]
         if any(kw in query_lower for kw in auteur_keywords):
             return "b_primary"
 

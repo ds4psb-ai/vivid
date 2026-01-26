@@ -317,7 +317,7 @@ class WorkflowState(BaseModel):
 
     Example:
         >>> state = WorkflowState(
-        ...     query="봉준호 스타일로 3분 MV 만들어줘",
+        ...     query="강주노 스타일로 3분 MV 만들어줘",
         ...     intent_type="full_production",
         ...     user_context={"auteur_key": "bong"},
         ... )

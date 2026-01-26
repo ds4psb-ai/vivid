@@ -162,7 +162,7 @@ async def research_and_seed_auteur(
     """Research an auteur and seed to RAG.
 
     Args:
-        auteur_key: Auteur identifier (bong, nolan, etc.)
+        auteur_key: Auteur identifier (bong, epoch, etc.)
         dimension: Target dimension
         max_results: Max results per topic
         dry_run: If True, don't actually index
@@ -296,7 +296,7 @@ async def research_all_auteurs(
     Returns:
         List of stats for each auteur
     """
-    auteurs = ["bong", "nolan", "wong", "tarantino", "villeneuve", "park"]
+    auteurs = ["bong", "epoch", "wong", "voltage", "abyss", "park"]
     results = []
 
     for auteur in auteurs:
@@ -352,7 +352,7 @@ async def main():
     mode_group.add_argument(
         "--auteur",
         type=str,
-        help="Research a specific auteur (bong, nolan, wong, etc.)",
+        help="Research a specific auteur (bong, epoch, wong, etc.)",
     )
     mode_group.add_argument(
         "--dimension",

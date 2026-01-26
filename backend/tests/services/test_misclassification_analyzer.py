@@ -140,7 +140,7 @@ class TestMisclassifiedQuery:
         """Should create retrieval_but_crag misclassified query."""
         query = MisclassifiedQuery(
             response_id=uuid4(),
-            query="봉준호 감독의 롱테이크 기법",
+            query="강주노 감독의 롱테이크 기법",
             query_hash="def456",
             predicted_type="domain_specific",
             confidence=0.85,

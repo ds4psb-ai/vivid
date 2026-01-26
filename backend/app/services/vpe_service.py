@@ -110,7 +110,7 @@ VPE_SYSTEM_PROMPT = """당신은 영화 분석 전문가입니다. 제공된 영
 ```json
 {
   "logic_vector": {
-    "auteur_id": "분석 결과 추정된 스타일 (예: bong, nolan, kubrick, wong, tarantino, park, spielberg, fincher, villeneuve, wes_anderson, coen, scorsese, lynch, original)",
+    "auteur_id": "분석 결과 추정된 스타일 (예: bong, epoch, prism, wong, voltage, park, seoyeon, yoon, abyss, wes_anderson, coen, nova, lynch, original)",
     "cadence": {
       "hook": 0.0,
       "build": 0.0,

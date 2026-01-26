@@ -15,13 +15,13 @@ Usage:
     searcher = GraphRAGSearcher()
 
     # Local search (entity-focused, 2-hop traversal)
-    result = await searcher.local_search("봉준호 롱테이크", auteur_keys=["bong"])
+    result = await searcher.local_search("강주노 롱테이크", auteur_keys=["bong"])
 
     # Global search (community-based map-reduce)
     result = await searcher.global_search("영화 감독들의 공통 기법", community_level=1)
 
     # Hybrid search (combines both)
-    result = await searcher.hybrid_search("타란티노와 봉준호의 대화 스타일")
+    result = await searcher.hybrid_search("렉스 볼티지와 강주노의 대화 스타일")
 """
 from __future__ import annotations
 

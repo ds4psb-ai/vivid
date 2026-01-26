@@ -60,7 +60,7 @@ class TestVideoRefDataset:
         _index_test_doc(
             rag,
             doc_id=doc_id,
-            content="봉준호 레퍼런스 촬영 구도 분석 테스트",
+            content="강주노 레퍼런스 촬영 구도 분석 테스트",
             metadata={
                 "dataset_id": "video_ref",
                 "app_key": "teaching.reference.analyze",
@@ -71,7 +71,7 @@ class TestVideoRefDataset:
         
         # Search with dataset filter (use same text for mock embedding match)
         results = rag.search(
-            query="봉준호 레퍼런스 촬영 구도 분석 테스트",  # Same as indexed content
+            query="강주노 레퍼런스 촬영 구도 분석 테스트",  # Same as indexed content
             limit=5,
             min_score=0.1,  # Lower for mock embeddings
             metadata_filters={"dataset_id": "video_ref"},

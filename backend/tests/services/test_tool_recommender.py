@@ -488,12 +488,12 @@ class TestScoringLogic:
         score = service._auteur_tool_affinity("bong", "quality_check")
         assert score > 0.1
 
-    def test_auteur_tool_affinity_tarantino(self, mock_db):
-        """Test auteur-tool affinity for Tarantino."""
+    def test_auteur_tool_affinity_voltage(self, mock_db):
+        """Test auteur-tool affinity for Voltage."""
         service = ToolRecommenderService(mock_db)
 
-        # Tarantino should favor sound (music)
-        score = service._auteur_tool_affinity("tarantino", "sound_crafter")
+        # Voltage should favor sound (music)
+        score = service._auteur_tool_affinity("voltage", "sound_crafter")
         assert score > 0.2
 
     def test_auteur_tool_affinity_unknown(self, mock_db):

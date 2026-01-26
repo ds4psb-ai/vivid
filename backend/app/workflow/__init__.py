@@ -40,7 +40,7 @@ Usage:
     # V2: LLM 기반 의도 분석 + 조건부 실행
     dag_v2 = await build_dag_from_intent_v2(
         intent="SF 영화 스토리보드 생성, 만약 레퍼런스가 있으면 분석도",
-        user_context={"auteur_key": "nolan"},
+        user_context={"auteur_key": "epoch"},
     )
     executor = await create_executor_v2(db)
     execution_id = await executor.start_workflow_v2(dag_v2, user_id)

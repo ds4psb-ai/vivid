@@ -8,7 +8,7 @@ Usage:
 
     backend = get_backend("graph_qdrant")
     results = await backend.retrieve(
-        query="봉준호 롱테이크 기법",
+        query="강주노 롱테이크 기법",
         config={
             "graph_strategy": "hybrid",
             "graph_weight": 0.4,

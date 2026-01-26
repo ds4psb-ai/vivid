@@ -37,7 +37,7 @@ class TestClassifyNode:
                 None,
             )
 
-            state = create_initial_state(query="봉준호 롱테이크 분석")
+            state = create_initial_state(query="강주노 롱테이크 분석")
             result = await classify_node(state)
 
             assert result["query_type"] == QueryType.DOMAIN_SPECIFIC
@@ -75,7 +75,7 @@ class TestHeuristicClassify:
 
     def test_domain_specific_patterns(self):
         """도메인 특화 쿼리 패턴."""
-        assert _heuristic_classify("봉준호 감독의 롱테이크") == QueryType.DOMAIN_SPECIFIC
+        assert _heuristic_classify("강주노 감독의 롱테이크") == QueryType.DOMAIN_SPECIFIC
         assert _heuristic_classify("쿠브릭 스타일 분석") == QueryType.DOMAIN_SPECIFIC
         assert _heuristic_classify("기생충 계단 장면") == QueryType.DOMAIN_SPECIFIC
         assert _heuristic_classify("카메라 워크 설명") == QueryType.DOMAIN_SPECIFIC
@@ -89,7 +89,7 @@ class TestHeuristicClassify:
     def test_multi_hop_patterns(self):
         """복합 추론 쿼리 패턴."""
         assert _heuristic_classify("왜 이 장면이 중요한가?") == QueryType.MULTI_HOP
-        assert _heuristic_classify("봉준호 vs 놀란 비교") == QueryType.MULTI_HOP
+        assert _heuristic_classify("강주노 vs 테오 에포크 비교") == QueryType.MULTI_HOP
         assert _heuristic_classify("compare the two directors") == QueryType.MULTI_HOP
 
     def test_ambiguous_fallback(self):

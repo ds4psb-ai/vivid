@@ -240,7 +240,7 @@ class TestEnsemblePlusPlusRouter:
 
         # 거장 키워드 → b_primary
         strategy = router._select_adaptive_strategy(
-            "봉준호 스타일", 0.6, 0.8, "short", "short"
+            "강주노 스타일", 0.6, 0.8, "short", "short"
         )
         assert strategy == "b_primary"
 

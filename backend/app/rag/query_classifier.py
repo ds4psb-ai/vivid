@@ -15,7 +15,7 @@ Architecture:
 Usage:
     from app.rag.query_classifier import classify_query, QueryType
 
-    query_type, confidence = await classify_query("봉준호 롱테이크")
+    query_type, confidence = await classify_query("강주노 롱테이크")
     # QueryType.DOMAIN_SPECIFIC, 0.85
 
 Strategy Mapping:
@@ -69,7 +69,7 @@ class QueryType(str, Enum):
     DOMAIN_SPECIFIC = "domain_specific"
     """도메인 특화 지식 쿼리 (Vivid 영화/감독 지식).
 
-    예: "봉준호 롱테이크", "기생충 계단 장면"
+    예: "강주노 롱테이크", "기생충 계단 장면"
     전략: ensemble_rrf (NotebookLM + Qdrant)
     비용: ~$0.005
     """
@@ -86,7 +86,7 @@ class QueryType(str, Enum):
     MULTI_HOP = "multi_hop"
     """복합 추론/비교 쿼리.
 
-    예: "왜 기생충의 계단이 상징적인가?", "봉준호 vs 놀란 비교"
+    예: "왜 기생충의 계단이 상징적인가?", "강주노 vs 테오 에포크 비교"
     전략: full_pipeline (전체 파이프라인 + Reranker)
     비용: ~$0.012
     """
@@ -129,7 +129,7 @@ class QueryClassificationResult(BaseModel):
                 "query_type": "domain_specific",
                 "confidence": 0.87,
                 "classifier_used": "semantic_router",
-                "matched_example": "봉준호 감독의 롱테이크 기법",
+                "matched_example": "강주노 감독의 롱테이크 기법",
                 "latency_ms": 12,
             }
         }

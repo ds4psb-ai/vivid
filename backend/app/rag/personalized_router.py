@@ -13,7 +13,7 @@ Usage:
 
     router = PersonalizedRAGRouter()
     result = await router.retrieve(
-        query="봉준호 롱테이크",
+        query="강주노 롱테이크",
         user_id="user_123",
         session_id="sess_abc",
         limit=10,

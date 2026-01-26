@@ -383,7 +383,7 @@ async def multi_rag_query(
 
     Example:
         >>> result = await multi_rag_query(
-        ...     query="봉준호 감독의 계단 상징",
+        ...     query="강주노 감독의 계단 상징",
         ...     dimension="4D",
         ...     auteur_key="bong",
         ... )

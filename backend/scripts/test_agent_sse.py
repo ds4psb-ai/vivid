@@ -132,7 +132,7 @@ def main() -> None:
     parser.add_argument("--base-url", default="http://localhost:8000", help="API base URL")
     parser.add_argument(
         "--message",
-        default="봉준호 스타일로 30초짜리 불안한 분위기의 드라마 만들어줘",
+        default="강주노 스타일로 30초짜리 불안한 분위기의 드라마 만들어줘",
         help="Prompt to send",
     )
     parser.add_argument("--session-id", default=None, help="Existing session id")

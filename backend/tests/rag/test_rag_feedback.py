@@ -50,9 +50,9 @@ def sample_rag_response(sample_response_id):
     """Create a sample RAGResponse object."""
     response = MagicMock(spec=RAGResponse)
     response.id = sample_response_id
-    response.query = "봉준호 감독 스타일 분석"
+    response.query = "강주노 감독 스타일 분석"
     response.query_hash = "abc123"
-    response.answer = "봉준호 감독의 스타일은..."
+    response.answer = "강주노 감독의 스타일은..."
     response.query_type = "domain_specific"
     response.strategy_used = "ensemble_rrf"
     response.retrieval_skipped = False
@@ -81,8 +81,8 @@ class TestRAGFeedbackService:
         """Query hash should be consistent for same query."""
         from app.services.rag_feedback_service import compute_query_hash
 
-        hash1 = compute_query_hash("  봉준호 감독  ")
-        hash2 = compute_query_hash("봉준호 감독")
+        hash1 = compute_query_hash("  강주노 감독  ")
+        hash2 = compute_query_hash("강주노 감독")
         hash3 = compute_query_hash("박찬욱 감독")
 
         assert hash1 == hash2  # Normalized whitespace
@@ -204,7 +204,7 @@ class TestRAGFeedbackService:
             data = ImplicitFeedbackCreate(
                 response_id=sample_rag_response.id,
                 event_type=ImplicitEventTypeEnum.QUERY_REFORMULATE,
-                new_query="봉준호 감독의 계단 씬 분석",
+                new_query="강주노 감독의 계단 씬 분석",
                 duration_ms=3000,
             )
 
@@ -247,7 +247,7 @@ class TestHybridRAGResultIntegration:
         from app.services.rag_feedback_service import store_hybrid_result
 
         result = HybridRAGResult(
-            answer="봉준호 감독의 스타일...",
+            answer="강주노 감독의 스타일...",
             confidence=0.9,
             strategy_used="ensemble_rrf",
             query_time_ms=150,
@@ -269,7 +269,7 @@ class TestHybridRAGResultIntegration:
 
             response = await store_hybrid_result(
                 db=mock_db,
-                query="봉준호 감독 스타일",
+                query="강주노 감독 스타일",
                 result=result,
                 app_key="dimension.aesthetic.direct",
                 user_id=uuid4(),

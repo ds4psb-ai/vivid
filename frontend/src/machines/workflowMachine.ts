@@ -43,7 +43,7 @@ export interface ChainDataEntry {
 }
 
 export interface WorkflowContext {
-  /** 거장 키 (bong, kubrick 등) */
+  /** 거장 키 (bong, prism 등) */
   auteurKey: string | null;
   /** AI 분석 페르소나 (별도 컨텍스트로 주입) */
   personaData: Record<string, unknown> | null;

@@ -28,7 +28,7 @@ class TestAdaptiveRAGIntegration:
             router.classify_with_details.return_value = (
                 QueryType.DOMAIN_SPECIFIC,
                 0.85,
-                "봉준호 롱테이크",
+                "강주노 롱테이크",
             )
             mock.return_value = router
             yield router
@@ -47,7 +47,7 @@ class TestAdaptiveRAGIntegration:
         """Classification uses SemanticRouter first."""
         from app.rag.query_classifier import classify_query
 
-        query_type, confidence = await classify_query("봉준호 롱테이크")
+        query_type, confidence = await classify_query("강주노 롱테이크")
 
         assert query_type == QueryType.DOMAIN_SPECIFIC
         assert confidence == 0.85
@@ -105,7 +105,7 @@ class TestStrategySelectionIntegration:
         """Domain-specific query gets ensemble_rrf strategy."""
         from app.rag.strategy_selector import select_strategy
 
-        strategy = await select_strategy("봉준호 롱테이크")
+        strategy = await select_strategy("강주노 롱테이크")
 
         assert strategy.name == "ensemble_rrf"
         assert strategy.skip_retrieval is False
@@ -253,10 +253,10 @@ class TestFullFlowByQueryType:
         router.classify_with_details.return_value = (
             QueryType.DOMAIN_SPECIFIC,
             0.88,
-            "봉준호 롱테이크",
+            "강주노 롱테이크",
         )
 
-        result = await select_strategy_with_details("봉준호 감독 스타일")
+        result = await select_strategy_with_details("강주노 감독 스타일")
 
         assert result.query_type == QueryType.DOMAIN_SPECIFIC
         assert result.strategy.name == "ensemble_rrf"
@@ -295,7 +295,7 @@ class TestFullFlowByQueryType:
             "비교 분석",
         )
 
-        result = await select_strategy_with_details("봉준호와 놀란의 스타일 비교")
+        result = await select_strategy_with_details("강주노와 테오 에포크의 스타일 비교")
 
         assert result.query_type == QueryType.MULTI_HOP
         assert result.strategy.name == "full_pipeline"

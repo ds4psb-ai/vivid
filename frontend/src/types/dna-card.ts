@@ -12,7 +12,7 @@ export interface MegaAppEntry {
 
 // 거장 DNA 메타데이터
 export interface MasterDNAMetadata {
-  auteurKey: string; // 'bong', 'nolan', etc.
+  auteurKey: string; // 'bong', 'epoch', etc.
   signatureTechniques: string[];
   signatureMoods: string[];
   colorPalettes: string[][]; // HEX colors

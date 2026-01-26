@@ -162,13 +162,13 @@ class TestPydanticModels:
     def test_unified_query_request(self):
         """UnifiedQueryRequest 검증."""
         request = UnifiedQueryRequest(
-            query="봉준호 롱테이크 분석",
+            query="강주노 롱테이크 분석",
             user_id="user_123",
             dimension="4D",
             auteur_key="bong",
         )
 
-        assert request.query == "봉준호 롱테이크 분석"
+        assert request.query == "강주노 롱테이크 분석"
         assert request.user_id == "user_123"
         assert request.dimension == "4D"
         assert request.auteur_key == "bong"
@@ -182,7 +182,7 @@ class TestPydanticModels:
     def test_unified_query_response(self):
         """UnifiedQueryResponse 검증."""
         response = UnifiedQueryResponse(
-            response="봉준호 감독의 롱테이크는...",
+            response="강주노 감독의 롱테이크는...",
             query_type="domain_specific",
             intent="analyze",
             confidence=0.85,

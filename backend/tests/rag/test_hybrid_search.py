@@ -284,7 +284,7 @@ class TestHybridIndexing:
                         rag = Tier1DimensionRAG("AD")
                         result = rag.index_document(
                             doc_id="test_doc",
-                            content="봉준호 감독의 영화 스타일",
+                            content="강주노 감독의 영화 스타일",
                             metadata={"app_key": "test"}
                         )
 
@@ -319,7 +319,7 @@ class TestHybridIndexing:
                         rag = Tier1DimensionRAG("AD")
                         result = rag.index_document(
                             doc_id="test_doc",
-                            content="봉준호 감독의 영화 스타일"
+                            content="강주노 감독의 영화 스타일"
                         )
 
                         assert result is True

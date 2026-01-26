@@ -16,7 +16,7 @@ Usage:
 
     # 초기 상태 생성
     state = create_initial_state(
-        query="봉준호 롱테이크 분석",
+        query="강주노 롱테이크 분석",
         user_id="user_123",
     )
 

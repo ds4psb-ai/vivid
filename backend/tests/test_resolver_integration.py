@@ -302,7 +302,7 @@ class TestFullPipelineIntegration:
         
         # 4. VEO 파라미터 검증
         veo_params = all_params["VEO"].params
-        assert veo_params.get("aspect_ratio") == "21:9"  # 봉준호 스타일
+        assert veo_params.get("aspect_ratio") == "21:9"  # 강주노 스타일
         
         # 5. SOUND 파라미터 검증
         sound_params = all_params["SOUND"].params

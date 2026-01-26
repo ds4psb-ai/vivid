@@ -573,7 +573,7 @@ class IntentAnalyzer:
         analyzer = IntentAnalyzer(registry)
         recommended_tools = await analyzer.analyze(
             intent="SF 영화 오프닝 스토리보드 만들기",
-            user_context={"preferred_style": "nolan"},
+            user_context={"preferred_style": "epoch"},
         )
     """
 
@@ -676,7 +676,7 @@ class IntentAnalyzerV2:
         analyzer = IntentAnalyzerV2(registry)
         recommendation = await analyzer.analyze(
             intent="SF 영화 오프닝을 위한 스토리보드와 레퍼런스 분석",
-            user_context={"preferred_style": "nolan"},
+            user_context={"preferred_style": "epoch"},
             available_tools=["story_architect", "reference_decoder", ...],
         )
         # recommendation.primary_tools

@@ -295,9 +295,9 @@ class TestDNALabService:
             lighting_approach="dramatic low-key",
         )
 
-        lv = service._create_logic_vector_from_ad(guidelines, "kubrick")
+        lv = service._create_logic_vector_from_ad(guidelines, "prism")
 
-        assert lv.auteur_id == "kubrick"
+        assert lv.auteur_id == "prism"
         assert lv.composition.primary_strategy in ["symmetry", "rule_of_thirds", "negative_space"]
         assert "desaturated" in lv.color_science.palette or "blue" in lv.color_science.palette
 
@@ -458,13 +458,13 @@ class TestDNALabIntegration:
             service = DNALabService()
             result = await service.extract_dna(
                 concept="film noir detective story",
-                auteur_key="nolan",
+                auteur_key="epoch",
                 components=["ad"],
             )
 
             assert result.success is True
             assert result.logic_vector is not None  # Created from AD
-            assert result.logic_vector.auteur_id == "nolan"
+            assert result.logic_vector.auteur_id == "epoch"
             assert result.aesthetic_guidelines is not None
 
     def test_component_enum_values(self):

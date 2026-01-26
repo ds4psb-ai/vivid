@@ -119,7 +119,7 @@ class TestMultiModalDocument:
             modality=Modality.TEXT,
             content_type=ContentType.TECHNIQUE,
             text_content="Cinematic framing technique",
-            auteur_key="kubrick",
+            auteur_key="prism",
         )
         assert doc.doc_id == "doc_001"
         assert doc.dimension == "4D"
@@ -132,10 +132,10 @@ class TestMultiModalDocument:
             dimension="3D",
             modality=Modality.IMAGE,
             content_type=ContentType.REFERENCE,
-            auteur_key="nolan",
+            auteur_key="epoch",
         )
         ref = doc.get_evidence_ref()
-        assert ref == "db:rag_docs:multimodal:3D:nolan:doc_123"
+        assert ref == "db:rag_docs:multimodal:3D:epoch:doc_123"
 
     def test_evidence_ref_without_auteur(self):
         """Test evidence_ref without auteur_key."""

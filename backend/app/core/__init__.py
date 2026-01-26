@@ -17,7 +17,7 @@ Usage:
     # 통합 쿼리 실행
     from app.core import unified_query
 
-    result = await unified_query("봉준호 롱테이크 분석")
+    result = await unified_query("강주노 롱테이크 분석")
 
     # 앱 레지스트리 조회
     from app.core import AppRegistry

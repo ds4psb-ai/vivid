@@ -25,7 +25,7 @@ import VPEPanel from "@/components/dimension/VPEPanel";
  *
  * URL Parameters:
  * - tab: 탭 선택 (vpe, ad, mirror, qc)
- * - master: 거장 키 (bong, nolan, wong, etc.) - AD/VPE에서 자동 적용
+ * - master: 거장 키 (bong, epoch, wong, etc.) - AD/VPE에서 자동 적용
  * - cardType: DNA 카드 타입 (master, masterpiece, character)
  * - cardId: DNA 카드 ID
  */

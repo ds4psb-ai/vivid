@@ -915,7 +915,7 @@ class TestEvidenceRefsFormat:
 
     @pytest.mark.parametrize("ref", [
         "rag:auteur_dna:kang:visual:composition",
-        "rag:auteur_dna:kubrick:lighting:chiaroscuro",
+        "rag:auteur_dna:prism:lighting:chiaroscuro",
         "rag:character_dna:anime:visual_layer",
         "rag:aesthetic:mathematical:golden_ratio",
         "db:character_dna:uuid-1234-5678",
@@ -1491,7 +1491,7 @@ class TestAuteurBlendResultModel:
         """Test model creation."""
         result = AuteurBlendResult(
             primary_auteur="bong",
-            secondary_auteur="nolan",
+            secondary_auteur="epoch",
             compatibility_score=0.75,
             blend_ratio="60:40",
             visual_keywords=["layered framing", "IMAX scale"],

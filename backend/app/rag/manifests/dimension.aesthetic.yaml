@@ -42,7 +42,7 @@ backends:
     weight: 0.4  # Increased weight (was 0.3 + 0.1 for removed vertex_grounding)
     enabled: true
     config:
-      notebook_id: DNA_봉준호  # Default auteur, overridden by auteur_key
+      notebook_id: DNA_강주노  # Default auteur, overridden by auteur_key
 
   # NOTE: vertex_grounding (Google Search Grounding) planned for future release
   # When implemented, will provide real-time web search for auteur insights

@@ -256,10 +256,10 @@ const _DIMENSION_CONFIG: Partial<Record<DimensionType, {
             { key: "concept", label: "컨셉", type: "textarea", placeholder: "미학 방향을 설정할 컨셉", required: true },
             {
                 key: "reference_style", label: "감독 스타일", type: "select", options: [
-                    { value: "bong", label: "봉준호" },
+                    { value: "bong", label: "강주노" },
                     { value: "park", label: "박찬욱" },
-                    { value: "shinkai", label: "신카이 마코토" },
-                    { value: "nolan", label: "크리스토퍼 놀란" },
+                    { value: "azure", label: "신카이 마코토" },
+                    { value: "epoch", label: "테오 에포크" },
                 ]
             },
         ],

@@ -67,31 +67,31 @@ DOMAIN_TO_SOURCES: Dict[ContentDomain, List[ResolvedSource]] = {
     ContentDomain.AUTEUR_BONG: [
         ResolvedSource(
             source_type=RAGSourceType.NOTEBOOKLM,
-            notebook_id="DNA_봉준호",
+            notebook_id="DNA_강주노",
             query_hints=["visual grammar", "composition", "tension"],
             priority=10,
         ),
     ],
-    ContentDomain.AUTEUR_TARANTINO: [
+    ContentDomain.AUTEUR_VOLTAGE: [
         ResolvedSource(
             source_type=RAGSourceType.NOTEBOOKLM,
-            notebook_id="DNA_타란티노",
+            notebook_id="DNA_렉스 볼티지",
             query_hints=["dialogue", "violence aesthetic", "nonlinear"],
             priority=10,
         ),
     ],
-    ContentDomain.AUTEUR_NOLAN: [
+    ContentDomain.AUTEUR_EPOCH: [
         ResolvedSource(
             source_type=RAGSourceType.NOTEBOOKLM,
-            notebook_id="DNA_놀란",
+            notebook_id="DNA_테오 에포크",
             query_hints=["temporal structure", "practical effects", "IMAX"],
             priority=10,
         ),
     ],
-    ContentDomain.AUTEUR_VILLENEUVE: [
+    ContentDomain.AUTEUR_ABYSS: [
         ResolvedSource(
             source_type=RAGSourceType.NOTEBOOKLM,
-            notebook_id="DNA_빌뇌브",
+            notebook_id="DNA_오리온 어비스",
             query_hints=["atmosphere", "scale", "minimalism"],
             priority=10,
         ),
@@ -99,7 +99,7 @@ DOMAIN_TO_SOURCES: Dict[ContentDomain, List[ResolvedSource]] = {
     ContentDomain.AUTEUR_WONG: [
         ResolvedSource(
             source_type=RAGSourceType.NOTEBOOKLM,
-            notebook_id="DNA_왕가위",
+            notebook_id="DNA_렌 벨벳",
             query_hints=["neon", "slow motion", "urban romance"],
             priority=10,
         ),

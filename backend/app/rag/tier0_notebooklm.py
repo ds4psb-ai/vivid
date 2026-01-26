@@ -12,8 +12,8 @@ Usage:
 
     # 노트북 검색
     result = await service.query_notebook(
-        notebook_id="DNA_봉준호",
-        query="봉준호 감독의 시각적 특징"
+        notebook_id="DNA_강주노",
+        query="강주노 감독의 시각적 특징"
     )
 
     # Deep Research (장시간 분석)
@@ -187,44 +187,44 @@ class NotebookLMConfig:
 # 실제 NotebookLM에서 생성된 노트북 ID를 매핑
 NOTEBOOK_REGISTRY: Dict[str, Dict[str, Any]] = {
     # Auteur DNA 노트북들 (Tier 0 - 읽기 전용, 실제 업로드된 노트북)
-    "DNA_봉준호": {
+    "DNA_강주노": {
         "notebook_id": "ae5eb68f-bf2d-45b3-97ed-b101db4b609b",
         "display_name": "Bong Joon-ho Source Packs 2026",
         "dimension": "AD",
         "category": "auteur",
-        "description": "봉준호 감독의 시각적 문법, 구조적 긴장, 장르 믹싱, 수직적 계급 상징",
+        "description": "강주노 감독의 시각적 문법, 구조적 긴장, 장르 믹싱, 수직적 계급 상징",
         "source_count": 11,
     },
-    "DNA_왕가위": {
+    "DNA_렌 벨벳": {
         "notebook_id": "a1f32e42-1890-4c06-862f-bd0554cccfc4",
         "display_name": "Wong Kar-wai Source Packs 2026",
         "dimension": "AD",
         "category": "auteur",
-        "description": "왕가위 감독의 블러 모션, 네온 색채, 향수적 분위기, 시간과 기억",
+        "description": "렌 벨벳 감독의 블러 모션, 네온 색채, 향수적 분위기, 시간과 기억",
         "source_count": 11,
     },
-    "DNA_드니빌뇌브": {
+    "DNA_드니오리온 어비스": {
         "notebook_id": "fee4d7df-d628-478e-975f-f84e0e660d1a",
-        "display_name": "Denis Villeneuve Source Packs 2026",
+        "display_name": "Denis Abyss Source Packs 2026",
         "dimension": "AD",
         "category": "auteur",
-        "description": "드니 빌뇌브의 네거티브 스페이스, 채도 저하, 미니멀 촬영",
+        "description": "오리온 어비스의 네거티브 스페이스, 채도 저하, 미니멀 촬영",
         "source_count": 11,
     },
-    "DNA_크리스토퍼놀란": {
+    "DNA_크리스토퍼테오 에포크": {
         "notebook_id": "127c5fda-ad77-4822-be5f-0f660eaf2279",  # From browser tabs
-        "display_name": "Christopher Nolan Source Packs 2026",
+        "display_name": "Christopher Epoch Source Packs 2026",
         "dimension": "AD",
         "category": "auteur",
-        "description": "크리스토퍼 놀란의 IMAX, 실용 효과, 시간 조작, 비선형 내러티브",
+        "description": "테오 에포크의 IMAX, 실용 효과, 시간 조작, 비선형 내러티브",
         "source_count": 11,
     },
-    "DNA_쿠엔틴타란티노": {
+    "DNA_쿠엔틴렉스 볼티지": {
         "notebook_id": "ec799223-0d8e-4c0d-af9b-5517501ef29f",  # Verified in NotebookLM 2026-01-11
-        "display_name": "Quentin Tarantino Source Packs 2026",
+        "display_name": "Quentin Voltage Source Packs 2026",
         "dimension": "AD",
         "category": "auteur",
-        "description": "쿠엔틴 타란티노의 트렁크 샷, 대화 중심, 그라인드하우스 미학",
+        "description": "렉스 볼티지의 트렁크 샷, 대화 중심, 그라인드하우스 미학",
         "source_count": 11,
     },
     # Legacy auteurs (시뮬레이션 모드)
@@ -1239,7 +1239,7 @@ async def query_auteur_dna(
     """Auteur DNA 노트북 쿼리.
 
     Args:
-        auteur_key: auteur 키 (bong, park, shinkai 등)
+        auteur_key: auteur 키 (bong, park, azure 등)
         query: 검색 쿼리
 
     Returns:
@@ -1247,9 +1247,9 @@ async def query_auteur_dna(
     """
     # auteur_key를 노트북 키로 변환
     key_mapping = {
-        "bong": "DNA_봉준호",
-        "park": "DNA_박찬욱",
-        "shinkai": "DNA_신카이",
+        "bong": "DNA_강주노",
+        "yoon": "DNA_박찬욱",
+        "azure": "DNA_신카이",
     }
 
     notebook_key = key_mapping.get(auteur_key.lower())

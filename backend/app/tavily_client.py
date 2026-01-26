@@ -7,7 +7,7 @@ Usage:
     from app.tavily_client import search_web, get_tavily_client
 
     # Simple search
-    results = await search_web("봉준호 감독 촬영 기법")
+    results = await search_web("강주노 감독 촬영 기법")
 
     # Advanced search with options
     client = get_tavily_client()

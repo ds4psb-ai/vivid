@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 class AuteurMatch(BaseModel):
     """A matched auteur (director) with similarity details."""
 
-    auteur_key: str = Field(description="Auteur identifier (e.g., 'bong', 'nolan')")
+    auteur_key: str = Field(description="Auteur identifier (e.g., 'bong', 'epoch')")
     auteur_name: str = Field(description="Full name (e.g., 'Bong Joon-ho')")
     similarity_score: float = Field(ge=0.0, le=1.0, description="Style similarity score")
     matching_techniques: List[str] = Field(
@@ -259,6 +259,82 @@ AUTEUR_REGISTRY: Dict[str, Dict[str, Any]] = {
             ["#8B0000", "#2F2F2F", "#5C5C5C"],
         ],
         "films": ["Tempest Village", "The Chase", "Raw Tension"],
+    },
+    "nova": {
+        "name": "Nova Scarlet",
+        "name_ko": "노바 스칼렛",
+        "signature_techniques": [
+            "freeze_frame", "voice_over", "tracking_shot",
+            "montage", "whip_pan", "slow_motion"
+        ],
+        "signature_moods": [
+            "urban_grit", "religious_guilt", "violent", "redemptive"
+        ],
+        "signature_elements": [
+            "뉴욕 거리", "음악 몽타주", "종교적 상징", "내레이션"
+        ],
+        "color_palettes": [
+            ["#8B0000", "#1C1C1C", "#FFD700"],
+            ["#2F2F2F", "#DC143C", "#FFFAF0"],
+        ],
+        "films": ["Street Saints", "Mean Borough", "The Last Confession"],
+    },
+    "cipher": {
+        "name": "Cipher Gray",
+        "name_ko": "사이퍼 그레이",
+        "signature_techniques": [
+            "dolly_zoom", "pov_shot", "silhouette",
+            "staircase_shot", "shadow_play", "suspense_editing"
+        ],
+        "signature_moods": [
+            "suspenseful", "paranoid", "voyeuristic", "psychological"
+        ],
+        "signature_elements": [
+            "관음증적 시선", "서스펜스 편집", "실루엣", "계단 장면"
+        ],
+        "color_palettes": [
+            ["#000000", "#696969", "#DCDCDC"],
+            ["#2F4F4F", "#708090", "#C0C0C0"],
+        ],
+        "films": ["The Watcher", "Shadow Protocol", "Vertigo Effect"],
+    },
+    "legacy": {
+        "name": "Legacy Dark",
+        "name_ko": "레거시 다크",
+        "signature_techniques": [
+            "low_key_lighting", "long_take", "deep_focus",
+            "cross_dissolve", "operatic_staging", "tableau"
+        ],
+        "signature_moods": [
+            "epic_tragedy", "family_saga", "operatic", "melancholic"
+        ],
+        "signature_elements": [
+            "가족 사가", "어두운 조명", "오페라틱 연출", "타블로 구성"
+        ],
+        "color_palettes": [
+            ["#1C1C1C", "#8B4513", "#DAA520"],
+            ["#2D1B00", "#4A3728", "#C9A227"],
+        ],
+        "films": ["The Dynasty", "Family Empire", "The Patriarch"],
+    },
+    "ronin": {
+        "name": "Ronin Hayashi",
+        "name_ko": "로닌 하야시",
+        "signature_techniques": [
+            "wipe_transition", "telephoto_lens", "weather_symbolism",
+            "ensemble_staging", "axial_cut", "dynamic_movement"
+        ],
+        "signature_moods": [
+            "epic_humanism", "moral_complexity", "dramatic", "contemplative"
+        ],
+        "signature_elements": [
+            "날씨 상징", "앙상블 연출", "휴머니즘", "도덕적 딜레마"
+        ],
+        "color_palettes": [
+            ["#2F4F4F", "#000000", "#FFFFFF"],
+            ["#4A4A4A", "#8B7355", "#D3D3D3"],
+        ],
+        "films": ["Seven Warriors", "The Human Condition", "Throne of Shadows"],
     },
 }
 

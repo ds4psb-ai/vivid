@@ -20,7 +20,7 @@ Usage:
     python scripts/setup_rag_corpus.py list
 
     # 테스트 쿼리
-    python scripts/setup_rag_corpus.py query "봉준호 감독의 시각적 특징"
+    python scripts/setup_rag_corpus.py query "강주노 감독의 시각적 특징"
 """
 import asyncio
 import json

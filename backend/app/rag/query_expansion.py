@@ -10,10 +10,10 @@ Usage:
     from app.rag.query_expansion import expand_query
     
     expanded = await expand_query(
-        query="봉준호 영화의 계단",
+        query="강주노 영화의 계단",
         strategy="llm",
     )
-    # ["봉준호 영화의 계단", "기생충 계단 장면", "수직 공간 상징"]
+    # ["강주노 영화의 계단", "기생충 계단 장면", "수직 공간 상징"]
 """
 from __future__ import annotations
 

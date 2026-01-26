@@ -40,8 +40,8 @@ REASON_CODE_VALUES = {
         "aerial", "handheld", "static", "dolly", "crane"
     ],
     ReasonCodeCategory.AUTEUR: [
-        "bong", "nolan", "kubrick", "tarantino", "ghibli",
-        "villeneuve", "fincher", "wes_anderson", "spielberg", "scorsese"
+        "bong", "epoch", "prism", "voltage", "ghibli",
+        "abyss", "yoon", "wes_anderson", "seoyeon", "nova"
     ],
     ReasonCodeCategory.DIMENSION: [
         "1D", "2D", "3D", "4D", "QC", "AD", "AI", "VEO", "STORY", "SOUND", "REF", "VIS"

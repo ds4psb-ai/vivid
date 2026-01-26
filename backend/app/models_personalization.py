@@ -47,7 +47,7 @@ class UserPreferenceProfile(Base):
         user_id: Unique user identifier
         embedding: 768-dim user preference embedding
         dimension_affinities: {"4D": 0.85, "AD": 0.72} - Dimension preferences
-        auteur_preferences: {"bong": 0.92, "nolan": 0.78} - Auteur preferences
+        auteur_preferences: {"bong": 0.92, "epoch": 0.78} - Auteur preferences
         persona_memory: 2k-token compact persona summary (PersonaMem-v2 style)
         decay_factor: Preference decay rate (0-1), default 0.95
         total_signals: Total number of recorded signals

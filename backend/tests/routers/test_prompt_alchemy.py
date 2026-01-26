@@ -303,7 +303,7 @@ class TestSecurityValidation:
 
     def test_auteur_key_valid_format(self):
         """Test valid auteur_key formats."""
-        valid_keys = ["kubrick", "bong_joonho", "nolan123", "spielberg"]
+        valid_keys = ["prism", "bong_joonho", "epoch123", "seoyeon"]
         for key in valid_keys:
             request = PromptTranslateRequest(
                 scene_description="A beautiful sunset scene over the ocean",
@@ -316,12 +316,12 @@ class TestSecurityValidation:
         with pytest.raises(ValueError, match="start with a letter"):
             PromptTranslateRequest(
                 scene_description="A beautiful sunset scene over the ocean",
-                auteur_key="123kubrick",
+                auteur_key="123prism",
             )
 
     def test_auteur_key_invalid_special_chars(self):
         """Test that auteur_key with special chars is rejected."""
-        invalid_keys = ["kubrick!", "bong-joonho", "nolan@director", "spiel berg"]
+        invalid_keys = ["prism!", "bong-joonho", "epoch@director", "spiel berg"]
         for key in invalid_keys:
             with pytest.raises(ValueError, match="alphanumeric"):
                 PromptTranslateRequest(
@@ -499,8 +499,8 @@ class TestSanitizationHelpers:
 
     def test_validate_auteur_key_lowercase(self):
         """Test _validate_auteur_key lowercases input."""
-        result = _validate_auteur_key("KUBRICK")
-        assert result == "kubrick"
+        result = _validate_auteur_key("PRISM")
+        assert result == "prism"
 
     def test_validate_auteur_key_none(self):
         """Test _validate_auteur_key handles None."""
@@ -509,13 +509,13 @@ class TestSanitizationHelpers:
 
     def test_validate_auteur_key_strips_whitespace(self):
         """Test _validate_auteur_key strips whitespace."""
-        result = _validate_auteur_key("  kubrick  ")
-        assert result == "kubrick"
+        result = _validate_auteur_key("  prism  ")
+        assert result == "prism"
 
     def test_validate_auteur_key_rejects_leading_digit(self):
         """Test _validate_auteur_key rejects keys starting with digit."""
         with pytest.raises(ValueError):
-            _validate_auteur_key("1kubrick")
+            _validate_auteur_key("1prism")
 
     def test_validate_auteur_key_allows_underscore(self):
         """Test _validate_auteur_key allows underscores."""
@@ -748,7 +748,7 @@ class TestPromptOptimizationResult:
         result = PromptOptimizationResult(
             optimized_prompt="Test prompt",
             platform="kling_26",
-            evidence_refs=["db:rag_docs:PROMPT:auteur:kubrick", "db:platform_config:kling_26"],
+            evidence_refs=["db:rag_docs:PROMPT:auteur:prism", "db:platform_config:kling_26"],
         )
         # Must be List[str] per Vivid P0 rules
         assert isinstance(result.evidence_refs, list)
@@ -931,15 +931,15 @@ class TestPromptTranslatorEvidenceRefs:
     async def test_evidence_refs_with_auteur_key(self):
         """Test that auteur_key adds RAG reference."""
         inputs = {
-            "scene_description": "A cinematic shot in Kubrick style",
+            "scene_description": "A cinematic shot in Prism style",
             "target_platform": "kling_26",
-            "auteur_key": "kubrick",
+            "auteur_key": "prism",
         }
         params = {"model": "gemini-3-flash-preview", "auto_select": False}
 
         with patch("app.dimension_adapter._call_gemini") as mock_gemini, \
              patch("app.dimension_adapter._get_rag_context") as mock_rag:
-            mock_rag.return_value = {"context": "Kubrick style info"}
+            mock_rag.return_value = {"context": "Prism style info"}
             mock_gemini.return_value = (
                 {"translated_prompt": "test", "quality_score": 0.9},
                 MagicMock(latency_ms=100, input_tokens=50, output_tokens=50, model="gemini-3-flash-preview"),
@@ -948,7 +948,7 @@ class TestPromptTranslatorEvidenceRefs:
             result = await run_prompt_translator(inputs, params)
 
             refs = result["output"]["evidence_refs"]
-            assert any("auteur:kubrick" in ref for ref in refs)
+            assert any("auteur:prism" in ref for ref in refs)
 
 
 class TestPromptTranslatorConfidence:

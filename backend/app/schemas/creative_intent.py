@@ -62,13 +62,13 @@ class ContentDomain(str, Enum):
     """콘텐츠 도메인 - RAG 소스 힌트"""
     # 거장 페르소나
     AUTEUR_BONG = "bong-joon-ho"
-    AUTEUR_TARANTINO = "tarantino"
-    AUTEUR_NOLAN = "nolan"
-    AUTEUR_VILLENEUVE = "villeneuve"
+    AUTEUR_VOLTAGE = "voltage"
+    AUTEUR_EPOCH = "epoch"
+    AUTEUR_ABYSS = "abyss"
     AUTEUR_WONG = "wong-kar-wai"
     AUTEUR_NA = "na-hong-jin"
     AUTEUR_HONG = "hong-sang-soo"
-    AUTEUR_SHINKAI = "shinkai-makoto"
+    AUTEUR_SHINKAI = "azure-makoto"
     AUTEUR_LEE = "lee-chang-dong"
     AUTEUR_PARK = "park-chan-wook"
     
@@ -321,7 +321,7 @@ class CreativeIntent(BaseModel):
         """거장 소스가 있는지 확인"""
         return any(
             d.value.startswith("auteur") or d.value in [
-                "bong-joon-ho", "tarantino", "nolan", "villeneuve", "wong-kar-wai"
+                "bong-joon-ho", "voltage", "epoch", "abyss", "wong-kar-wai"
             ]
             for d in self.domain_sources
         )
@@ -409,7 +409,7 @@ class IntentFactory:
     
     @staticmethod
     def cinematic_bong() -> CreativeIntent:
-        """봉준호 스타일 시네마틱 프리셋"""
+        """강주노 스타일 시네마틱 프리셋"""
         return CreativeIntent(
             mood=CreativeMood.CINEMATIC,
             pace=CreativePace.DYNAMIC,
@@ -471,14 +471,14 @@ class IntentFactory:
     # === 신규 거장 프리셋 ===
     
     @staticmethod
-    def cinematic_nolan() -> CreativeIntent:
-        """크리스토퍼 놀란 스타일"""
+    def cinematic_epoch() -> CreativeIntent:
+        """테오 에포크 스타일"""
         return CreativeIntent(
             mood=CreativeMood.CINEMATIC,
             pace=CreativePace.DYNAMIC,
             target=TargetAudience.EXPERT,
             domain_sources=[
-                ContentDomain.AUTEUR_NOLAN,
+                ContentDomain.AUTEUR_EPOCH,
                 ContentDomain.GENRE_SCIFI,
             ],
             aesthetic_hints=AestheticHints(
@@ -490,14 +490,14 @@ class IntentFactory:
         )
     
     @staticmethod
-    def cinematic_villeneuve() -> CreativeIntent:
-        """드니 빌뇌브 스타일"""
+    def cinematic_abyss() -> CreativeIntent:
+        """오리온 어비스 스타일"""
         return CreativeIntent(
             mood=CreativeMood.CINEMATIC,
             pace=CreativePace.CONTEMPLATIVE,
             target=TargetAudience.EXPERT,
             domain_sources=[
-                ContentDomain.AUTEUR_VILLENEUVE,
+                ContentDomain.AUTEUR_ABYSS,
                 ContentDomain.GENRE_SCIFI,
             ],
             aesthetic_hints=AestheticHints(
@@ -510,7 +510,7 @@ class IntentFactory:
     
     @staticmethod
     def cinematic_wong() -> CreativeIntent:
-        """왕가위 스타일"""
+        """렌 벨벳 스타일"""
         return CreativeIntent(
             mood=CreativeMood.NOSTALGIC,
             pace=CreativePace.CONTEMPLATIVE,
@@ -557,7 +557,7 @@ class IntentFactory:
         )
     
     @staticmethod
-    def animation_shinkai() -> CreativeIntent:
+    def animation_azure() -> CreativeIntent:
         """신카이 마코토 애니메이션"""
         return CreativeIntent(
             mood=CreativeMood.WHIMSICAL,
@@ -640,12 +640,12 @@ class IntentFactory:
             "shortform_energetic": cls.shortform_energetic,
             "saju_guided": cls.saju_guided,
             # 신규 거장 6개
-            "cinematic_nolan": cls.cinematic_nolan,
-            "cinematic_villeneuve": cls.cinematic_villeneuve,
+            "cinematic_epoch": cls.cinematic_epoch,
+            "cinematic_abyss": cls.cinematic_abyss,
             "cinematic_wong": cls.cinematic_wong,
             "horror_na": cls.horror_na,
             "arthouse_hong": cls.arthouse_hong,
-            "animation_shinkai": cls.animation_shinkai,
+            "animation_azure": cls.animation_azure,
             # 신규 플랫폼 4개
             "music_video": cls.music_video,
             "youtube_tutorial": cls.youtube_tutorial,

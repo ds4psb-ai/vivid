@@ -81,7 +81,7 @@ def sample_style_preset_create():
             "contrast": "high",
         },
         style_vector=[0.1, 0.2, 0.3, 0.4, 0.5],
-        auteur_references=["nolan", "villeneuve"],
+        auteur_references=["epoch", "abyss"],
         is_public=False,
     )
 

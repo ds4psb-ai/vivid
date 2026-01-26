@@ -60,7 +60,7 @@ const MASTERPIECE_CARDS: DNACardType[] = [
     type: "masterpiece",
     name: "인터스텔라",
     nameEn: "Interstellar",
-    description: "놀란의 우주 서사시 시각 분석",
+    description: "테오 에포크의 우주 서사시 시각 분석",
     thumbnailUrl: "/ip/interstellar-thumb.jpg",
     metadata: {
       ipId: "ip-interstellar",
