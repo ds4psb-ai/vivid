@@ -1,12 +1,10 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import AppShell from "@/components/AppShell";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
+import { Dna, Video, Palette, Brain, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dna, Video, Palette, Brain, CheckCircle, Loader2 } from "lucide-react";
+import { MegaAppShell, type MegaAppTab } from "@/components/mega-app";
 
 // Import existing panels
 import AestheticDirectorPanel from "@/components/dimension/AestheticDirectorPanel";
@@ -23,16 +21,7 @@ import QualityDirectorPanel from "@/components/dimension/QualityDirectorPanel";
  * - QC (Quality Director)
  */
 
-interface TabConfig {
-  value: string;
-  label: string;
-  labelEn: string;
-  icon: React.ReactNode;
-  description: string;
-  isNew?: boolean;
-}
-
-const TAB_CONFIG: TabConfig[] = [
+const TABS: MegaAppTab[] = [
   {
     value: "vpe",
     label: "비디오 파싱",
@@ -64,121 +53,29 @@ const TAB_CONFIG: TabConfig[] = [
   },
 ];
 
-/**
- * DNALabPage - Wrapper with Suspense boundary
- */
 export default function DNALabPage() {
   return (
-    <Suspense fallback={<DNALabLoading />}>
-      <DNALabContent />
-    </Suspense>
-  );
-}
-
-/**
- * Loading state for DNALabPage
- */
-function DNALabLoading() {
-  return (
-    <AppShell showTopBar={false}>
-      <div className="h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading DNA Lab...</p>
-        </div>
-      </div>
-    </AppShell>
-  );
-}
-
-/**
- * DNALabContent - Actual content with useSearchParams
- */
-function DNALabContent() {
-  const searchParams = useSearchParams();
-  const tabParam = searchParams.get("tab");
-  const [activeTab, setActiveTab] = useState(tabParam || "vpe");
-
-  // Sync with URL params
-  useEffect(() => {
-    if (tabParam && TAB_CONFIG.find((t) => t.value === tabParam)) {
-      setActiveTab(tabParam);
-    }
-  }, [tabParam]);
-
-  return (
-    <AppShell showTopBar={false}>
-      <div className="h-screen flex flex-col">
-        {/* Header */}
-        <div className="flex-shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container py-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Dna className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold">DNA Lab</h1>
-                <p className="text-sm text-muted-foreground">
-                  거장 DNA 분석 및 오케스트레이션
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="flex-1 flex flex-col"
-        >
-          <div className="flex-shrink-0 border-b bg-muted/50">
-            <div className="container">
-              <TabsList className="h-auto p-1 bg-transparent gap-1">
-                {TAB_CONFIG.map((tab) => (
-                  <TabsTrigger
-                    key={tab.value}
-                    value={tab.value}
-                    className="flex items-center gap-2 px-4 py-2.5 data-[state=active]:bg-background"
-                  >
-                    {tab.icon}
-                    <span className="hidden sm:inline">{tab.label}</span>
-                    {tab.isNew && (
-                      <Badge variant="secondary" className="ml-1 text-xs">
-                        NEW
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </div>
-          </div>
-
-          {/* Tab Contents */}
-          <div className="flex-1 overflow-auto">
-            {/* VPE - Video Parsing Engine */}
-            <TabsContent value="vpe" className="h-full m-0 p-4">
+    <MegaAppShell
+      appId="dna-lab"
+      title="DNA Lab"
+      subtitle="거장 DNA 분석 및 오케스트레이션"
+      icon={Dna}
+      tabs={TABS}
+      defaultTab="vpe"
+    >
+      {(activeTab) => (
+        <>
+          {activeTab === "vpe" && (
+            <div className="p-4">
               <VPEPanel />
-            </TabsContent>
-
-            {/* AD - Aesthetic Director */}
-            <TabsContent value="ad" className="h-full m-0">
-              <AestheticDirectorPanel />
-            </TabsContent>
-
-            {/* Mirror - Abyss Mirror */}
-            <TabsContent value="mirror" className="h-full m-0">
-              <AbyssMirrorPanel />
-            </TabsContent>
-
-            {/* QC - Quality Director */}
-            <TabsContent value="qc" className="h-full m-0">
-              <QualityDirectorPanel />
-            </TabsContent>
-          </div>
-        </Tabs>
-      </div>
-    </AppShell>
+            </div>
+          )}
+          {activeTab === "ad" && <AestheticDirectorPanel />}
+          {activeTab === "mirror" && <AbyssMirrorPanel />}
+          {activeTab === "qc" && <QualityDirectorPanel />}
+        </>
+      )}
+    </MegaAppShell>
   );
 }
 
@@ -225,35 +122,35 @@ function VPEPanel() {
 
   return (
     <div className="container max-w-4xl mx-auto space-y-6">
-      <Card>
+      <Card className="bg-white/5 border-white/10">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-white">
             <Video className="w-5 h-5" />
             Video Parsing Engine (VPE)
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-white/60">
             영상을 분석하여 거장의 시네마틱 DNA (Logic Vector)를 추출합니다.
             Cadence, Composition, Camera Grammar, Lighting, Color Science를 분석합니다.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">영상 URL</label>
+            <label className="text-sm font-medium text-white/80">영상 URL</label>
             <input
               type="url"
               placeholder="gs://bucket/video.mp4 또는 YouTube URL"
               value={videoUrl}
               onChange={(e) => setVideoUrl(e.target.value)}
-              className="w-full px-3 py-2 border rounded-md bg-background"
+              className="w-full px-3 py-2 border rounded-md bg-white/5 border-white/10 text-white placeholder:text-white/40"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">거장 힌트 (선택)</label>
+            <label className="text-sm font-medium text-white/80">거장 힌트 (선택)</label>
             <select
               value={auteurHint}
               onChange={(e) => setAuteurHint(e.target.value)}
-              className="w-full px-3 py-2 border rounded-md bg-background"
+              className="w-full px-3 py-2 border rounded-md bg-white/5 border-white/10 text-white"
             >
               <option value="">자동 감지</option>
               <option value="bong">봉준호</option>
@@ -272,7 +169,7 @@ function VPEPanel() {
           <button
             onClick={handleAnalyze}
             disabled={!videoUrl || isLoading}
-            className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+            className="w-full px-4 py-2 bg-white/10 text-white rounded-md hover:bg-white/20 disabled:opacity-50 transition-colors"
           >
             {isLoading ? "분석 중..." : "Logic Vector 추출"}
           </button>
@@ -280,19 +177,19 @@ function VPEPanel() {
       </Card>
 
       {result && (
-        <Card>
+        <Card className="bg-white/5 border-white/10">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-white">
               분석 결과
               {result.confidence && (
-                <Badge variant="secondary">
+                <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-300">
                   신뢰도: {Math.round(result.confidence * 100)}%
                 </Badge>
               )}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <pre className="p-4 bg-muted rounded-md overflow-auto text-sm">
+            <pre className="p-4 bg-black/30 rounded-md overflow-auto text-sm text-white/80">
               {JSON.stringify(result.logicVector, null, 2)}
             </pre>
           </CardContent>

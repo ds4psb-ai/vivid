@@ -1,12 +1,9 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import AppShell from "@/components/AppShell";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
+import { BookOpen, Layers, Wand2, FileCode } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { BookOpen, Layers, Wand2, FileCode, Loader2 } from "lucide-react";
+import { MegaAppShell, type MegaAppTab } from "@/components/mega-app";
 
 // Import existing panels
 import StoryArchitectPanel from "@/components/dimension/StoryArchitectPanel";
@@ -23,16 +20,7 @@ import PromptGeneratorPanel from "@/components/dimension/PromptGeneratorPanel";
  * Workflow: Logic Vector → Story Structure → System Prompt for VEO/Kling
  */
 
-interface TabConfig {
-  value: string;
-  label: string;
-  labelEn: string;
-  icon: React.ReactNode;
-  description: string;
-  isNew?: boolean;
-}
-
-const TAB_CONFIG: TabConfig[] = [
+const TABS: MegaAppTab[] = [
   {
     value: "story",
     label: "시나리오 생성기",
@@ -57,116 +45,28 @@ const TAB_CONFIG: TabConfig[] = [
   },
 ];
 
-/**
- * StoryEnginePage - Wrapper with Suspense boundary
- */
 export default function StoryEnginePage() {
   return (
-    <Suspense fallback={<StoryEngineLoading />}>
-      <StoryEngineContent />
-    </Suspense>
-  );
-}
-
-/**
- * Loading state for StoryEnginePage
- */
-function StoryEngineLoading() {
-  return (
-    <AppShell showTopBar={false}>
-      <div className="h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading Story Engine...</p>
-        </div>
-      </div>
-    </AppShell>
-  );
-}
-
-/**
- * StoryEngineContent - Actual content with useSearchParams
- */
-function StoryEngineContent() {
-  const searchParams = useSearchParams();
-  const tabParam = searchParams.get("tab");
-  const [activeTab, setActiveTab] = useState(tabParam || "story");
-
-  // Sync with URL params
-  useEffect(() => {
-    if (tabParam && TAB_CONFIG.find((t) => t.value === tabParam)) {
-      setActiveTab(tabParam);
-    }
-  }, [tabParam]);
-
-  return (
-    <AppShell showTopBar={false}>
-      <div className="h-screen flex flex-col">
-        {/* Header */}
-        <div className="flex-shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container py-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <BookOpen className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold">Story Engine</h1>
-                <p className="text-sm text-muted-foreground">
-                  스토리 구성 및 System Prompt 생성
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="flex-1 flex flex-col"
-        >
-          <div className="flex-shrink-0 border-b bg-muted/50">
-            <div className="container">
-              <TabsList className="h-auto p-1 bg-transparent gap-1">
-                {TAB_CONFIG.map((tab) => (
-                  <TabsTrigger
-                    key={tab.value}
-                    value={tab.value}
-                    className="flex items-center gap-2 px-4 py-2.5 data-[state=active]:bg-background"
-                  >
-                    {tab.icon}
-                    <span className="hidden sm:inline">{tab.label}</span>
-                    {tab.isNew && (
-                      <Badge variant="secondary" className="ml-1 text-xs">
-                        NEW
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </div>
-          </div>
-
-          {/* Tab Contents */}
-          <div className="flex-1 overflow-auto">
-            {/* Story - Story Architect */}
-            <TabsContent value="story" className="h-full m-0">
-              <StoryArchitectPanel />
-            </TabsContent>
-
-            {/* Prompt - Prompt Alchemy */}
-            <TabsContent value="prompt" className="h-full m-0">
-              <PromptGeneratorPanel />
-            </TabsContent>
-
-            {/* System Prompt Generator */}
-            <TabsContent value="system-prompt" className="h-full m-0 p-4">
+    <MegaAppShell
+      appId="story-engine"
+      title="Story Engine"
+      subtitle="스토리 구성 및 System Prompt 생성"
+      icon={BookOpen}
+      tabs={TABS}
+      defaultTab="story"
+    >
+      {(activeTab) => (
+        <>
+          {activeTab === "story" && <StoryArchitectPanel />}
+          {activeTab === "prompt" && <PromptGeneratorPanel />}
+          {activeTab === "system-prompt" && (
+            <div className="p-4">
               <SystemPromptPanel />
-            </TabsContent>
-          </div>
-        </Tabs>
-      </div>
-    </AppShell>
+            </div>
+          )}
+        </>
+      )}
+    </MegaAppShell>
   );
 }
 
@@ -216,24 +116,22 @@ function SystemPromptPanel() {
 
   return (
     <div className="container max-w-4xl mx-auto space-y-6">
-      <Card>
+      <Card className="bg-white/5 border-white/10">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-white">
             <FileCode className="w-5 h-5" />
             System Prompt Generator
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-white/60">
             DNA Lab에서 추출한 Logic Vector를 VEO, Kling, Sora 등의 플랫폼에서
             사용할 수 있는 System Prompt로 변환합니다.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">
+            <label className="text-sm font-medium text-white/80">
               Logic Vector (JSON)
-              <span className="text-muted-foreground ml-2">
-                DNA Lab에서 복사
-              </span>
+              <span className="text-white/40 ml-2">DNA Lab에서 복사</span>
             </label>
             <textarea
               placeholder={`{
@@ -244,12 +142,12 @@ function SystemPromptPanel() {
 }`}
               value={logicVectorJson}
               onChange={(e) => setLogicVectorJson(e.target.value)}
-              className="w-full h-40 px-3 py-2 border rounded-md bg-background font-mono text-sm"
+              className="w-full h-40 px-3 py-2 border rounded-md bg-white/5 border-white/10 text-white placeholder:text-white/30 font-mono text-sm"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">
+            <label className="text-sm font-medium text-white/80">
               Story Structure (선택, JSON)
             </label>
             <textarea
@@ -260,16 +158,16 @@ function SystemPromptPanel() {
 }`}
               value={storyStructure}
               onChange={(e) => setStoryStructure(e.target.value)}
-              className="w-full h-24 px-3 py-2 border rounded-md bg-background font-mono text-sm"
+              className="w-full h-24 px-3 py-2 border rounded-md bg-white/5 border-white/10 text-white placeholder:text-white/30 font-mono text-sm"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">대상 플랫폼</label>
+            <label className="text-sm font-medium text-white/80">대상 플랫폼</label>
             <select
               value={targetPlatform}
               onChange={(e) => setTargetPlatform(e.target.value)}
-              className="w-full px-3 py-2 border rounded-md bg-background"
+              className="w-full px-3 py-2 border rounded-md bg-white/5 border-white/10 text-white"
             >
               <option value="veo">VEO 3.1</option>
               <option value="kling">Kling 2.6</option>
@@ -281,7 +179,7 @@ function SystemPromptPanel() {
           <button
             onClick={handleGenerate}
             disabled={!logicVectorJson || isLoading}
-            className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+            className="w-full px-4 py-2 bg-white/10 text-white rounded-md hover:bg-white/20 disabled:opacity-50 transition-colors"
           >
             {isLoading ? "생성 중..." : "System Prompt 생성"}
           </button>
@@ -289,20 +187,20 @@ function SystemPromptPanel() {
       </Card>
 
       {systemPrompt && (
-        <Card>
+        <Card className="bg-white/5 border-white/10">
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+            <CardTitle className="flex items-center justify-between text-white">
               생성된 System Prompt
               <button
                 onClick={() => navigator.clipboard.writeText(systemPrompt)}
-                className="text-sm px-3 py-1 bg-muted rounded-md hover:bg-muted/80"
+                className="text-sm px-3 py-1 bg-white/10 rounded-md hover:bg-white/20 transition-colors"
               >
                 복사
               </button>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <pre className="p-4 bg-muted rounded-md overflow-auto text-sm whitespace-pre-wrap">
+            <pre className="p-4 bg-black/30 rounded-md overflow-auto text-sm whitespace-pre-wrap text-white/80">
               {systemPrompt}
             </pre>
           </CardContent>

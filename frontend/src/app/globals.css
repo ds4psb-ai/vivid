@@ -149,6 +149,15 @@
   --shadow-glow-lg: 0 0 40px;
 
   /* ─────────────────────────────────────────────────────────────────────────
+     MEGA APP TOKENS
+     Theme colors for DNA Lab, Story Engine, Production mega apps
+     ───────────────────────────────────────────────────────────────────────── */
+
+  --color-mega-app-dna-lab: oklch(0.64 0.18 148);        /* Cyan-Green */
+  --color-mega-app-story-engine: oklch(0.64 0.18 45);    /* Orange-Amber */
+  --color-mega-app-production: oklch(0.64 0.18 228);     /* Blue */
+
+  /* ─────────────────────────────────────────────────────────────────────────
      ANIMATION TOKENS
      Easing curves for smooth interactions
      ───────────────────────────────────────────────────────────────────────── */
