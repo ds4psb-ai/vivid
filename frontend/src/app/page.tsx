@@ -16,6 +16,7 @@ import { MegaAppShowcase } from "@/components/home/MegaAppShowcase";
 import { VariationsGrid, VariationCard } from "@/components/home/VariationsGrid";
 import { FeaturedCharacters } from "@/components/home/FeaturedCharacters";
 import { AIDirectorSection } from "@/components/home/AIDirectorSection";
+import { UserCinemaSection } from "@/components/home/UserCinemaSection";
 import { HumanCloudCTA } from "@/components/home/HumanCloudCTA";
 import { CrebitFooter } from "@/components/home/CrebitFooter";
 
@@ -113,19 +114,22 @@ function HomePageContent() {
         {/* 1. Cinematic Hero */}
         <CinematicHero featured={FEATURED_IP} />
 
-        {/* 2. Mega App Showcase - User AI Cinema */}
+        {/* 2. User AI Cinema & Animation */}
+        <UserCinemaSection />
+
+        {/* 3. Mega App Showcase - 창작 워크플로우 */}
         <MegaAppShowcase />
 
-        {/* 3. Variations Grid - 가능한 변형 */}
+        {/* 4. Variations Grid - 가능한 변형 */}
         <VariationsGrid variations={VARIATION_CARDS} />
 
-        {/* 4. Featured Characters - 추천 캐릭터 */}
+        {/* 5. Featured Characters - 추천 캐릭터 */}
         <FeaturedCharacters />
 
-        {/* 5. AI Director Section - AI 디렉터 */}
+        {/* 6. AI Director Section - AI 디렉터 */}
         <AIDirectorSection />
 
-        {/* 6. Human Cloud CTA */}
+        {/* 7. Human Cloud CTA */}
         <HumanCloudCTA />
       </main>
 
