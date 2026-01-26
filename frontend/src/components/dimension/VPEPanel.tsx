@@ -7,6 +7,10 @@
  * Analyzes Cadence, Composition, Camera Grammar, Lighting, Color Science.
  *
  * Part of Mega App Panel Integration (Phase 2)
+ *
+ * DNA Card Context Integration:
+ * - Master DNA: 거장 힌트 자동 설정
+ * - Masterpiece DNA: Logic Vector 정보 프리로드
  */
 
 import { useState } from "react";
@@ -14,10 +18,20 @@ import { Video } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BaseMegaAppPanel } from "@/components/mega-app/panels";
+import { useDNACardContextConsumer } from "@/hooks/useDNACardContextConsumer";
+import { DNAContextBanner } from "@/components/dna-card/DNAContextBanner";
+import { MASTER_AUTEURS } from "@/components/dna-card/constants";
+import type { MasterpieceDNAMetadata } from "@/types/dna-card";
 
 interface VPEResult {
   logicVector?: Record<string, unknown>;
   confidence?: number;
+}
+
+interface PrefilledLogicVector {
+  compositionStyle?: string;
+  lightingPattern?: string;
+  pacingSignature?: string;
 }
 
 export default function VPEPanel() {
@@ -25,6 +39,50 @@ export default function VPEPanel() {
   const [auteurHint, setAuteurHint] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<VPEResult | null>(null);
+
+  // DNA 카드 컨텍스트 상태
+  const [dnaContextInfo, setDnaContextInfo] = useState<{
+    type: "master" | "masterpiece" | null;
+    name: string;
+  } | null>(null);
+  const [prefilledLogicVector, setPrefilledLogicVector] =
+    useState<PrefilledLogicVector | null>(null);
+
+  // DNA 카드 컨텍스트 소비
+  const { dismissContext } = useDNACardContextConsumer({
+    onMasterpieceContext: (ipId, metadata: MasterpieceDNAMetadata) => {
+      // 작품 DNA → Logic Vector 정보 프리로드
+      if (metadata.logicVectorSummary) {
+        setPrefilledLogicVector(metadata.logicVectorSummary);
+        setDnaContextInfo({
+          type: "masterpiece",
+          name: ipId,
+        });
+      }
+      // 작품에 연결된 거장이 있으면 힌트 설정
+      if (metadata.auteurKey) {
+        setAuteurHint(metadata.auteurKey);
+      }
+    },
+    onMasterContext: (auteurKey, metadata) => {
+      // 거장 DNA → auteur hint 자동 선택
+      setAuteurHint(auteurKey);
+      const auteurInfo = MASTER_AUTEURS.find((a) => a.key === auteurKey);
+      setDnaContextInfo({
+        type: "master",
+        name: auteurInfo?.name ?? auteurKey,
+      });
+    },
+    autoConsume: false, // 배너 표시를 위해 자동 클리어 비활성화
+  });
+
+  // DNA 컨텍스트 해제
+  const handleDismissContext = () => {
+    dismissContext();
+    setDnaContextInfo(null);
+    setPrefilledLogicVector(null);
+    setAuteurHint("");
+  };
 
   const handleAnalyze = async () => {
     if (!videoUrl) return;
@@ -66,6 +124,53 @@ export default function VPEPanel() {
         label: "System Prompt 생성하기",
       }}
     >
+      {/* DNA Context Banner */}
+      {dnaContextInfo && (
+        <DNAContextBanner
+          cardType={dnaContextInfo.type!}
+          cardName={dnaContextInfo.name}
+          onDismiss={handleDismissContext}
+          additionalInfo={
+            dnaContextInfo.type === "master"
+              ? "거장 힌트가 자동 설정되었습니다"
+              : "Logic Vector 정보가 프리로드되었습니다"
+          }
+          className="mb-4"
+        />
+      )}
+
+      {/* Prefilled Logic Vector Preview (작품 DNA에서 진입 시) */}
+      {prefilledLogicVector && (
+        <Card className="mb-4 bg-emerald-500/10 border-emerald-500/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-emerald-400 flex items-center gap-2">
+              <Video className="w-4 h-4" />
+              프리로드된 Logic Vector
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-xs text-white/70">
+            {prefilledLogicVector.compositionStyle && (
+              <div>
+                <span className="text-white/50">구도:</span>{" "}
+                {prefilledLogicVector.compositionStyle}
+              </div>
+            )}
+            {prefilledLogicVector.lightingPattern && (
+              <div>
+                <span className="text-white/50">조명:</span>{" "}
+                {prefilledLogicVector.lightingPattern}
+              </div>
+            )}
+            {prefilledLogicVector.pacingSignature && (
+              <div>
+                <span className="text-white/50">페이싱:</span>{" "}
+                {prefilledLogicVector.pacingSignature}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Video URL Input */}
       <div className="space-y-2">
         <label className="text-sm font-medium text-white/80">영상 URL</label>

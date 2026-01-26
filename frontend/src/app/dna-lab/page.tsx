@@ -17,6 +17,17 @@ import VPEPanel from "@/components/dimension/VPEPanel";
  * - AD (Aesthetic Director)
  * - Mirror (Abyss Mirror)
  * - QC (Quality Director)
+ *
+ * DNA Card Context Integration (Phase 2):
+ * - URL 파라미터 지원: /dna-lab?tab=ad&master=bong
+ * - 거장 DNA 카드 클릭 → AD 탭에서 거장 자동 선택
+ * - 작품 DNA 카드 클릭 → VPE 탭에서 Logic Vector 프리로드
+ *
+ * URL Parameters:
+ * - tab: 탭 선택 (vpe, ad, mirror, qc)
+ * - master: 거장 키 (bong, nolan, wong, etc.) - AD/VPE에서 자동 적용
+ * - cardType: DNA 카드 타입 (master, masterpiece, character)
+ * - cardId: DNA 카드 ID
  */
 
 const TABS: MegaAppTab[] = [

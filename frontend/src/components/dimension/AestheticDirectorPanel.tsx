@@ -37,6 +37,9 @@ import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useDimensionConfig } from "@/contexts/DimensionConfigContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useUQSLGenerate, useUQSLFeedback } from "@/hooks/useUQSL";
+import { useDNACardContextConsumer } from "@/hooks/useDNACardContextConsumer";
+import { DNAContextBanner } from "@/components/dna-card/DNAContextBanner";
+import { MASTER_AUTEURS } from "@/components/dna-card/constants";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import {
   Palette,
@@ -231,6 +234,55 @@ function AestheticDirectorContent() {
   const [mood, setMood] = useState("neutral");
   const [targetMedium, setTargetMedium] = useState("video");
   const [useRag, setUseRag] = useState(true);
+
+  // DNA 카드 컨텍스트 상태
+  const [dnaContextInfo, setDnaContextInfo] = useState<{
+    type: "master" | "masterpiece" | null;
+    name: string;
+    auteurKey?: string;
+  } | null>(null);
+  const [preselectedPalette, setPreselectedPalette] = useState<string[] | null>(null);
+  const [signatureTechniquesFromDNA, setSignatureTechniquesFromDNA] = useState<string[] | null>(null);
+
+  // DNA 카드 컨텍스트 소비
+  const { dismissContext: dismissDNAContext } = useDNACardContextConsumer({
+    onMasterContext: (auteurKey, metadata) => {
+      // 거장 DNA → 컨셉에 거장 스타일 반영
+      const auteurInfo = MASTER_AUTEURS.find((a) => a.key === auteurKey);
+      const auteurName = auteurInfo?.name ?? auteurKey;
+
+      // 컨셉이 비어있을 때만 자동 설정
+      if (!concept) {
+        const styleKeywords = metadata.signatureMoods?.slice(0, 2).join(", ") || "";
+        setConcept(`${auteurName} 스타일의 ${styleKeywords} 비주얼`);
+      }
+
+      // 컬러 팔레트 프리로드
+      if (metadata.colorPalettes?.[0]) {
+        setPreselectedPalette(metadata.colorPalettes[0]);
+      }
+
+      // 시그니처 기법 표시
+      if (metadata.signatureTechniques) {
+        setSignatureTechniquesFromDNA(metadata.signatureTechniques);
+      }
+
+      setDnaContextInfo({
+        type: "master",
+        name: auteurName,
+        auteurKey,
+      });
+    },
+    autoConsume: false, // 배너 표시를 위해 자동 클리어 비활성화
+  });
+
+  // DNA 컨텍스트 해제
+  const handleDismissDNAContext = useCallback(() => {
+    dismissDNAContext();
+    setDnaContextInfo(null);
+    setPreselectedPalette(null);
+    setSignatureTechniquesFromDNA(null);
+  }, [dismissDNAContext]);
 
   // Visual Identity Workshop State
   const [stage, setStage] = useState<Stage>("moodboard");
@@ -626,6 +678,40 @@ Suggested Auteur: ${selectedDirection.suggested_auteur}`;
       <DimensionPanel.Header title={labels.title} creditCost={CREDIT_COST} />
 
       <DimensionPanel.Sidebar>
+        {/* DNA Context Banner */}
+        {dnaContextInfo && (
+          <DNAContextBanner
+            cardType={dnaContextInfo.type!}
+            cardName={dnaContextInfo.name}
+            onDismiss={handleDismissDNAContext}
+            additionalInfo={
+              signatureTechniquesFromDNA
+                ? `시그니처: ${signatureTechniquesFromDNA.slice(0, 2).join(", ")}`
+                : undefined
+            }
+            className="mb-4"
+          />
+        )}
+
+        {/* Preselected Palette from DNA (거장 DNA에서 진입 시) */}
+        {preselectedPalette && (
+          <div className="mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+            <div className="text-xs text-amber-400 font-medium mb-2">
+              거장 컬러 팔레트
+            </div>
+            <div className="flex gap-1.5">
+              {preselectedPalette.map((color, i) => (
+                <div
+                  key={i}
+                  className="w-6 h-6 rounded-md border border-white/10 shadow-sm"
+                  style={{ backgroundColor: color }}
+                  title={color}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Stage Indicator with UQSL Progress */}
         <StageIndicator
           stage={stage}
