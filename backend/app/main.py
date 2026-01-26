@@ -148,6 +148,9 @@ from app.routers.story_engine.router import router as story_engine_router
 # Production Bridge (Video Generation - Veo, Kling, Suno)
 from app.routers.production.router import router as production_router
 
+# DNA Lab (Visual DNA Extraction & Analysis)
+from app.routers.dna_lab.router import router as dna_lab_router
+
 from app.middleware.rate_limit import setup_rate_limiting
 from app.middleware.mtls import MTLSMiddleware
 from app.middleware.security import setup_security_middleware
@@ -560,6 +563,9 @@ app.include_router(story_engine_router, tags=["story-engine"])
 
 # Production Bridge (Video Generation - Veo, Kling, Suno) - prefix already in router
 app.include_router(production_router, tags=["production"])
+
+# DNA Lab (Visual DNA Extraction & Analysis) - prefix already in router
+app.include_router(dna_lab_router, tags=["dna-lab"])
 
 # GraphQL Gateway (2026 Best Practices - P3.3)
 if settings.ENVIRONMENT.lower() in {"production", "prod", "staging"}:
