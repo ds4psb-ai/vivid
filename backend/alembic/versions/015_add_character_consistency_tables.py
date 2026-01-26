@@ -92,8 +92,7 @@ def upgrade() -> None:
                   sa.ForeignKey('characters.id', ondelete='CASCADE'),
                   nullable=False, index=True),
         sa.Column('shot_id', postgresql.UUID(as_uuid=True),
-                  sa.ForeignKey('shots.id', ondelete='SET NULL'),
-                  nullable=True, index=True),
+                  nullable=True, index=True),  # No FK - shots table may not exist
         sa.Column('video_generation_id', postgresql.UUID(as_uuid=True),
                   nullable=True, index=True),
 
