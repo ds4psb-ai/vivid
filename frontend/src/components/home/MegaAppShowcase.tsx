@@ -82,6 +82,37 @@ export function MegaAppShowcase({ className }: MegaAppShowcaseProps) {
         </motion.div>
       </div>
 
+      {/* Desktop Workflow Progress Bar */}
+      <div className="max-w-7xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="hidden md:flex items-center justify-center gap-6 mb-10"
+        >
+          {MEGA_APPS.map((app, index) => (
+            <React.Fragment key={`progress-${app.id}`}>
+              <Link href={app.href} className="flex items-center gap-2 group">
+                <div
+                  className="w-3 h-3 rounded-full transition-transform group-hover:scale-125"
+                  style={{
+                    backgroundColor: `oklch(0.64 0.18 ${app.hue})`,
+                    boxShadow: `0 0 8px oklch(0.64 0.18 ${app.hue} / 0.5)`,
+                  }}
+                />
+                <span className="text-sm text-white/60 group-hover:text-white transition-colors">
+                  {app.name}
+                </span>
+              </Link>
+              {index < MEGA_APPS.length - 1 && (
+                <div className="w-16 h-px bg-gradient-to-r from-white/20 via-white/10 to-white/20" />
+              )}
+            </React.Fragment>
+          ))}
+        </motion.div>
+      </div>
+
       {/* 3-Column Grid */}
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
