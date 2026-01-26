@@ -10,7 +10,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Layers, Sparkles } from "lucide-react";
+import { Layers } from "lucide-react";
 import { ModeToggle } from "@/components/mode-toggle";
 
 export function CrebitNavbar() {
@@ -38,15 +38,6 @@ export function CrebitNavbar() {
         >
           <Layers className="w-4 h-4 group-hover:scale-110 transition-transform" />
           <span className="hidden sm:inline">Tools</span>
-        </Link>
-
-        {/* AI Agent Link */}
-        <Link
-          href="/chat"
-          className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#FF003C]/90 backdrop-blur-md text-white text-sm font-medium hover:bg-[#FF003C] hover:shadow-[0_0_20px_rgba(255,0,60,0.5)] transition-all duration-300 group"
-        >
-          <Sparkles className="w-4 h-4 group-hover:scale-110 transition-transform" />
-          <span className="hidden sm:inline">초끼</span>
         </Link>
 
         {/* Mode Toggle */}
