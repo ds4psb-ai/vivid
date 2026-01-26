@@ -103,7 +103,7 @@ const VARIATION_CARDS: VariationCard[] = [
 
 function HomePageContent() {
   return (
-    <div className="min-h-screen bg-[#050505] text-gray-100 font-sans selection:bg-[#FF003C] selection:text-white overflow-x-hidden">
+    <div className="min-h-screen bg-[var(--bg-base)] text-[var(--fg-default)] font-sans selection:bg-[var(--bg-primary)] selection:text-white overflow-x-hidden">
       {/* Navigation */}
       <CrebitNavbar />
 
@@ -135,13 +135,13 @@ export default function HomePage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#050505]">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--bg-base)]">
           <div className="flex flex-col items-center gap-4">
-            <div className="w-10 h-10 bg-white text-[#050505] font-display font-bold text-xl flex items-center justify-center rounded-sm animate-pulse">
+            <div className="w-10 h-10 bg-[var(--fg-default)] text-[var(--bg-base)] font-display font-bold text-xl flex items-center justify-center rounded-sm animate-pulse">
               C
             </div>
             <div className="h-1 w-24 bg-gray-800 rounded-full overflow-hidden">
-              <div className="h-full w-1/2 bg-[#FF003C] rounded-full animate-pulse" />
+              <div className="h-full w-1/2 bg-[var(--bg-primary)] rounded-full animate-pulse" />
             </div>
           </div>
         </div>

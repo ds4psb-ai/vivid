@@ -35,7 +35,7 @@ interface CinematicHeroProps {
 
 export function CinematicHero({ featured }: CinematicHeroProps) {
   return (
-    <section className="relative min-h-[90vh] flex items-center pt-20 px-6 md:px-16 overflow-hidden bg-[#050505]">
+    <section className="relative min-h-[90vh] flex items-center pt-20 px-6 md:px-16 overflow-hidden bg-[var(--bg-base)]">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <img
@@ -47,15 +47,15 @@ export function CinematicHero({ featured }: CinematicHeroProps) {
             maskImage: "linear-gradient(to right, transparent 0%, black 30%)",
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/90 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[var(--bg-base)] via-[var(--bg-base)]/90 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-base)] via-transparent to-transparent" />
       </div>
 
       {/* Content */}
       <div className="relative z-10 w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
         <div className="lg:col-span-6 flex flex-col justify-center space-y-8">
           {/* Tags */}
-          <div className="flex items-center space-x-3 text-xs font-bold tracking-[0.1em] text-[#FF003C]">
+          <div className="flex items-center space-x-3 text-xs font-bold tracking-[0.1em] text-[var(--fg-primary)]">
             <Sparkles className="w-4 h-4 animate-pulse" />
             <span>AI 활성화</span>
             <span className="text-gray-600">•</span>
@@ -94,7 +94,7 @@ export function CinematicHero({ featured }: CinematicHeroProps) {
             >
               <span className="relative z-10">AI로 리믹스하기</span>
               <ArrowRight className="w-4 h-4 relative z-10 group-hover:translate-x-1 transition-transform" />
-              <div className="absolute inset-0 bg-[#FF003C] translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+              <div className="absolute inset-0 bg-[var(--bg-primary)] translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
             </Link>
 
             <button className="px-8 py-4 border border-gray-700 text-white font-bold tracking-wider uppercase hover:bg-white/10 transition-all duration-300 flex items-center justify-center gap-2 backdrop-blur-sm rounded-md">
@@ -114,10 +114,10 @@ export function CinematicHero({ featured }: CinematicHeroProps) {
               <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">리믹스</div>
             </div>
             <div>
-              <div className="text-3xl font-display font-bold text-[#FF003C] drop-shadow-[0_0_8px_rgba(255,0,60,0.8)]">
+              <div className="text-3xl font-display font-bold text-[var(--fg-primary)] drop-shadow-[0_0_8px_rgba(255,0,60,0.8)]">
                 {featured.matchPercent}%
               </div>
-              <div className="text-[10px] uppercase tracking-widest text-[#FF003C] font-bold">취향 일치</div>
+              <div className="text-[10px] uppercase tracking-widest text-[var(--fg-primary)] font-bold">취향 일치</div>
             </div>
           </div>
         </div>
@@ -142,7 +142,7 @@ export function CinematicHero({ featured }: CinematicHeroProps) {
                 {featured.character.description}
               </p>
               <div className="w-full bg-white/20 h-1 mt-3 rounded-full overflow-hidden">
-                <div className="w-3/4 bg-[#FF003C] h-full" />
+                <div className="w-3/4 bg-[var(--bg-primary)] h-full" />
               </div>
             </motion.div>
           )}

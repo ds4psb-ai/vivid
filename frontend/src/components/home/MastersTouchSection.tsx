@@ -61,10 +61,10 @@ export function MastersTouchSection({
   onDirectorClick,
 }: MastersTouchProps) {
   return (
-    <section className="relative z-20 px-6 md:px-16 py-24 bg-[#050505]">
+    <section className="relative z-20 px-6 md:px-16 py-24 bg-[var(--bg-base)]">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-10 border-l-4 border-[#FF003C] pl-6">
+        <div className="mb-10 border-l-4 border-[var(--border-primary)] pl-6">
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-2">
             거장의 <span className="text-gray-500">터치</span>
           </h2>

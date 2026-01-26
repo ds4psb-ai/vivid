@@ -55,7 +55,7 @@ const ICON_COLORS = {
 };
 
 const PROGRESS_COLORS = {
-  visual: "bg-[#FF003C]",
+  visual: "bg-[var(--bg-primary)]",
   video: "bg-blue-500",
   story: "bg-yellow-500",
   audio: "bg-green-500",
@@ -64,22 +64,22 @@ const PROGRESS_COLORS = {
 
 export function VariationsGrid({ variations }: VariationsGridProps) {
   return (
-    <section className="relative z-20 px-6 md:px-16 pt-10 bg-[#050505]">
+    <section className="relative z-20 px-6 md:px-16 pt-10 bg-[var(--bg-base)]">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6 max-w-7xl mx-auto">
         <div>
           <h2 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight text-white">
-            가능한 <span className="text-[#FF003C]">변형</span>
+            가능한 <span className="text-[var(--fg-primary)]">변형</span>
           </h2>
           <p className="text-gray-400 max-w-lg font-light break-keep">
             우리의 신경망 엔진을 사용하여 이 IP를 완전히 새로운 포맷으로 해체하고 재구성하세요.
           </p>
         </div>
         <div className="flex gap-4">
-          <button className="px-6 py-2 rounded-full border border-white/20 text-xs font-bold tracking-widest uppercase hover:bg-[#FF003C] hover:border-[#FF003C] hover:text-white transition-all text-gray-300">
+          <button className="px-6 py-2 rounded-full border border-white/20 text-xs font-bold tracking-widest uppercase hover:bg-[var(--bg-primary)] hover:border-[var(--border-primary)] hover:text-white transition-all text-gray-300">
             인기순
           </button>
-          <button className="px-6 py-2 rounded-full border border-white/20 text-xs font-bold tracking-widest uppercase hover:bg-[#FF003C] hover:border-[#FF003C] hover:text-white transition-all text-gray-300">
+          <button className="px-6 py-2 rounded-full border border-white/20 text-xs font-bold tracking-widest uppercase hover:bg-[var(--bg-primary)] hover:border-[var(--border-primary)] hover:text-white transition-all text-gray-300">
             최신순
           </button>
         </div>
@@ -106,7 +106,7 @@ export function VariationsGrid({ variations }: VariationsGridProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className={`group relative rounded-2xl overflow-hidden bg-[#0F0F0F] border border-white/10 hover:border-[#FF003C]/50 transition-all duration-300 ${gridClass}`}
+              className={`group relative rounded-2xl overflow-hidden bg-[var(--bg-subtle)] border border-white/10 hover:border-[var(--border-primary)]/50 transition-all duration-300 ${gridClass}`}
             >
               {/* Image */}
               <img
@@ -138,7 +138,7 @@ export function VariationsGrid({ variations }: VariationsGridProps) {
               >
                 {/* Badge */}
                 {card.badge && (
-                  <span className="px-2 py-1 bg-[#FF003C] text-white text-[10px] font-bold uppercase tracking-wider rounded mb-3 inline-block">
+                  <span className="px-2 py-1 bg-[var(--bg-primary)] text-white text-[10px] font-bold uppercase tracking-wider rounded mb-3 inline-block">
                     {card.badge}
                   </span>
                 )}
@@ -149,7 +149,7 @@ export function VariationsGrid({ variations }: VariationsGridProps) {
                     <h3 className="text-3xl font-bold text-white mb-2 leading-none break-keep">
                       애니메이션<br />각색
                     </h3>
-                    <button className="mt-4 flex items-center text-xs font-bold tracking-widest text-[#FF003C] hover:text-white transition-colors">
+                    <button className="mt-4 flex items-center text-xs font-bold tracking-widest text-[var(--fg-primary)] hover:text-white transition-colors">
                       워크플로우 시작 <ArrowUpRight className="w-4 h-4 ml-1" />
                     </button>
                   </>
@@ -160,7 +160,7 @@ export function VariationsGrid({ variations }: VariationsGridProps) {
                     <p className="text-gray-300 text-sm mb-6 break-keep">
                       바이럴 소셜 플랫폼에 최적화된 강렬한 60초 세로형 에피소드입니다.
                     </p>
-                    <button className="w-12 h-12 rounded-full border border-white/30 flex items-center justify-center hover:bg-[#FF003C] hover:border-[#FF003C] transition-all cursor-pointer group-hover:scale-110">
+                    <button className="w-12 h-12 rounded-full border border-white/30 flex items-center justify-center hover:bg-[var(--bg-primary)] hover:border-[var(--border-primary)] transition-all cursor-pointer group-hover:scale-110">
                       <Play className="w-5 h-5 text-white" />
                     </button>
                   </>
@@ -180,13 +180,13 @@ export function VariationsGrid({ variations }: VariationsGridProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: variations.length * 0.1 }}
-          className="group relative rounded-2xl overflow-hidden bg-transparent border border-dashed border-gray-600 hover:border-[#FF003C] transition-all duration-300 flex flex-col items-center justify-center cursor-pointer"
+          className="group relative rounded-2xl overflow-hidden bg-transparent border border-dashed border-gray-600 hover:border-[var(--border-primary)] transition-all duration-300 flex flex-col items-center justify-center cursor-pointer"
         >
           <Link href="/dimension" className="relative z-10 flex flex-col items-center">
-            <div className="w-16 h-16 rounded-full border border-gray-600 flex items-center justify-center mb-4 group-hover:bg-[#FF003C] group-hover:border-[#FF003C] transition-all">
+            <div className="w-16 h-16 rounded-full border border-gray-600 flex items-center justify-center mb-4 group-hover:bg-[var(--bg-primary)] group-hover:border-[var(--border-primary)] transition-all">
               <Plus className="w-8 h-8 text-gray-400 group-hover:text-white" />
             </div>
-            <h3 className="text-lg font-bold text-gray-300 group-hover:text-[#FF003C] transition-colors">
+            <h3 className="text-lg font-bold text-gray-300 group-hover:text-[var(--fg-primary)] transition-colors">
               커스텀 워크플로우
             </h3>
             <p className="text-xs text-gray-500 font-bold mt-2">나만의 디자인 만들기</p>

@@ -63,7 +63,7 @@ const DEFAULT_CREATORS: Creator[] = [
 ];
 
 const SPECIALTY_COLORS = {
-  primary: "text-[#FF003C] bg-[#FF003C]/10",
+  primary: "text-[var(--fg-primary)] bg-[var(--bg-primary)]/10",
   blue: "text-blue-400 bg-blue-400/10",
   green: "text-green-400 bg-green-400/10",
 };
@@ -74,10 +74,10 @@ export function HumanCloudCTA({
   onCreatorClick,
 }: HumanCloudCTAProps) {
   return (
-    <section className="relative z-20 px-6 md:px-16 py-24 bg-[#0F0F0F] border-t border-white/5">
+    <section className="relative z-20 px-6 md:px-16 py-24 bg-[var(--bg-subtle)] border-t border-white/5">
       {/* Background Blur Effect */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 right-0 w-[500px] h-[500px] bg-[#FF003C]/5 rounded-full blur-[100px]" />
+        <div className="absolute top-1/4 right-0 w-[500px] h-[500px] bg-[var(--bg-primary)]/5 rounded-full blur-[100px]" />
       </div>
 
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-16 relative z-10">
@@ -85,8 +85,8 @@ export function HumanCloudCTA({
         <div className="lg:col-span-4 flex flex-col justify-center">
           {/* Badge */}
           <div className="flex items-center gap-2 mb-4">
-            <span className="w-2 h-2 bg-[#FF003C] rounded-full animate-pulse" />
-            <span className="text-[#FF003C] text-xs font-bold tracking-widest uppercase">
+            <span className="w-2 h-2 bg-[var(--bg-primary)] rounded-full animate-pulse" />
+            <span className="text-[var(--fg-primary)] text-xs font-bold tracking-widest uppercase">
               Human Cloud
             </span>
           </div>
@@ -124,7 +124,7 @@ export function HumanCloudCTA({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-[#050505] p-6 rounded-xl border border-white/10 hover:border-[#FF003C]/50 transition-all group hover:-translate-y-1 duration-300 shadow-lg"
+              className="bg-[var(--bg-base)] p-6 rounded-xl border border-white/10 hover:border-[var(--border-primary)]/50 transition-all group hover:-translate-y-1 duration-300 shadow-lg"
               onClick={() => onCreatorClick?.(creator.id)}
             >
               <div className="flex items-start justify-between mb-4">
@@ -165,7 +165,7 @@ export function HumanCloudCTA({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-[#050505] p-6 rounded-xl border border-white/10 hover:border-[#FF003C]/50 transition-all group hover:-translate-y-1 duration-300 shadow-lg md:col-span-2"
+              className="bg-[var(--bg-base)] p-6 rounded-xl border border-white/10 hover:border-[var(--border-primary)]/50 transition-all group hover:-translate-y-1 duration-300 shadow-lg md:col-span-2"
               onClick={() => onCreatorClick?.(creators[2].id)}
             >
               <div className="flex items-start justify-between mb-4">

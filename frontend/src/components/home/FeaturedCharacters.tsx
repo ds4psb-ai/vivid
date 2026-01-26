@@ -74,16 +74,16 @@ export function FeaturedCharacters({
   onCharacterClick,
 }: FeaturedCharactersProps) {
   return (
-    <section className="relative z-20 px-6 md:px-16 pt-24 bg-[#050505]">
+    <section className="relative z-20 px-6 md:px-16 pt-24 bg-[var(--bg-base)]">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-10">
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">
-            추천 <span className="text-[#FF003C]">캐릭터</span>
+            추천 <span className="text-[var(--fg-primary)]">캐릭터</span>
           </h2>
           <Link
             href="/characters"
-            className="text-xs font-bold text-gray-500 hover:text-[#FF003C] transition-colors uppercase tracking-widest mt-4 md:mt-0 flex items-center"
+            className="text-xs font-bold text-gray-500 hover:text-[var(--fg-primary)] transition-colors uppercase tracking-widest mt-4 md:mt-0 flex items-center"
           >
             모두 보기 <ArrowRight className="w-4 h-4 ml-1" />
           </Link>
@@ -97,7 +97,7 @@ export function FeaturedCharacters({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="group relative bg-[#0F0F0F] border border-gray-800 rounded-xl overflow-hidden hover:border-[#FF003C]/50 transition-all duration-300"
+              className="group relative bg-[var(--bg-subtle)] border border-gray-800 rounded-xl overflow-hidden hover:border-[var(--border-primary)]/50 transition-all duration-300"
               onClick={() => onCharacterClick?.(character.id)}
             >
               {/* Image */}
@@ -116,8 +116,8 @@ export function FeaturedCharacters({
                   <div
                     className={`absolute top-3 right-3 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold border ${
                       character.badge === "NEW"
-                        ? "bg-black/60 text-[#FF003C] border-[#FF003C]/30"
-                        : "bg-[#FF003C]/20 text-[#FF003C] border-[#FF003C]/50"
+                        ? "bg-black/60 text-[var(--fg-primary)] border-[var(--border-primary)]/30"
+                        : "bg-[var(--bg-primary)]/20 text-[var(--fg-primary)] border-[var(--border-primary)]/50"
                     }`}
                   >
                     {character.badge === "NEW" ? "NEW" : "TOP RATED"}
@@ -130,7 +130,7 @@ export function FeaturedCharacters({
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-xl font-bold text-white">{character.name}</h3>
                   <div className="flex items-center text-xs text-gray-400">
-                    <MessageCircle className="w-3.5 h-3.5 mr-1 text-[#FF003C]" />
+                    <MessageCircle className="w-3.5 h-3.5 mr-1 text-[var(--fg-primary)]" />
                     {character.chatCount}
                   </div>
                 </div>
@@ -143,7 +143,7 @@ export function FeaturedCharacters({
                   <span className="text-[10px] text-gray-500 font-mono">
                     {character.creator}
                   </span>
-                  <button className="text-[#FF003C] hover:text-white transition-colors">
+                  <button className="text-[var(--fg-primary)] hover:text-white transition-colors">
                     <PlusCircle className="w-5 h-5" />
                   </button>
                 </div>
