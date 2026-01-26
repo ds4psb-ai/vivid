@@ -100,6 +100,48 @@ DATABASE_URL=postgresql://...@${{Postgres.RAILWAY_PRIVATE_DOMAIN}}:5432/...
 DATABASE_URL=postgresql://...@postgres.railway.internal:5432/...
 ```
 
+### 6. Alembic 마이그레이션 (핵심!)
+
+기존 DB에 `init_db()`로 테이블이 생성되어 있으면 alembic upgrade 실패:
+
+```dockerfile
+# ❌ 실패할 수 있음
+CMD alembic upgrade head && uvicorn ...
+
+# ✅ Fallback 패턴 (권장)
+CMD sh -c "alembic upgrade head 2>&1 || alembic stamp head && uvicorn ..."
+```
+
+**멱등성(Idempotency) 패턴** - 마이그레이션 파일 작성법:
+
+```python
+def upgrade() -> None:
+    from sqlalchemy import inspect
+    
+    bind = op.get_bind()
+    inspector = inspect(bind)
+    existing_tables = inspector.get_table_names()
+    
+    # 테이블 존재 확인 후 생성
+    if 'my_table' not in existing_tables:
+        op.create_table('my_table', ...)
+    
+    # 컬럼 추가 시 존재 확인
+    existing_columns = [c['name'] for c in inspector.get_columns('my_table')]
+    if 'new_col' not in existing_columns:
+        op.add_column('my_table', sa.Column('new_col', ...))
+```
+
+**FK 에러 방지** - 존재하지 않는 테이블 참조 금지:
+
+```python
+# ❌ users 테이블이 없으면 실패
+sa.ForeignKeyConstraint(['user_id'], ['users.id'])
+
+# ✅ FK 없이 (외부 ID는 FK 불필요)
+sa.Column('user_id', sa.String(255), nullable=False, index=True)
+```
+
 ---
 
 ## 필수 환경변수 (Railway Variables)
@@ -174,6 +216,26 @@ PyYAML>=6.0.0
 `config.py`의 `validate_production_config()` 오류 시:
 - 필요한 환경변수 설정
 - 또는 validation 임시 비활성화
+
+### Alembic 마이그레이션 에러
+
+**증상**: `alembic upgrade head` 실행 시 에러 발생
+
+| 에러 | 원인 | 해결 |
+|------|------|------|
+| `relation "xxx" already exists` | init_db()로 이미 생성됨 | `alembic stamp head`로 건너뛰기 |
+| `relation "xxx" does not exist` | FK가 없는 테이블 참조 | FK 제거 또는 테이블 먼저 생성 |
+| `null value in column "xxx"` | INSERT에 NOT NULL 컬럼 누락 | 모든 NOT NULL 컬럼 명시 |
+
+**디버깅 방법**:
+
+```dockerfile
+# Dockerfile에 로깅 추가
+CMD sh -c "echo '=== Starting ===' && \
+    echo 'DATABASE_URL='$(echo $DATABASE_URL | sed 's/:.*@/:***@/') && \
+    alembic upgrade head 2>&1 || { echo '=== FAILED ==='; alembic stamp head; } && \
+    uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}"
+```
 
 ---
 
