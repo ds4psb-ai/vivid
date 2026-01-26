@@ -1,0 +1,1 @@
+export { BaseMegaAppPanel } from "./BaseMegaAppPanel";
