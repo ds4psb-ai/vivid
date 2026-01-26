@@ -41,7 +41,7 @@ from app.schemas.vpe import (
 def sample_logic_vector() -> LogicVector:
     """Create a sample Logic Vector for testing."""
     return LogicVector(
-        auteur_id="bong",
+        auteur_id="kang",
         cadence=Cadence(
             hook=0.5,
             build=2.0,
@@ -104,7 +104,7 @@ def mock_gemini_response() -> Dict[str, Any]:
     """Mock Gemini API response for video analysis."""
     return {
         "logic_vector": {
-            "auteur_id": "bong",
+            "auteur_id": "kang",
             "cadence": {
                 "hook": 0.5,
                 "build": 2.0,
@@ -154,14 +154,14 @@ class TestVPESchemas:
 
     def test_logic_vector_creation(self, sample_logic_vector: LogicVector):
         """Test LogicVector can be created with valid data."""
-        assert sample_logic_vector.auteur_id == "bong"
+        assert sample_logic_vector.auteur_id == "kang"
         assert sample_logic_vector.confidence == 0.85
         assert sample_logic_vector.composition.symmetry_score == 0.74
 
     def test_logic_vector_to_system_prompt(self, sample_logic_vector: LogicVector):
         """Test LogicVector can be converted to system prompt context."""
         context = sample_logic_vector.to_system_prompt_context()
-        assert "BONG" in context
+        assert "KANG" in context
         assert "vertical_blocking" in context
         assert "low_key" in context
 
@@ -269,12 +269,12 @@ class TestVPEService:
 
                 result = await service.parse_video(
                     video_uri="gs://test-bucket/video.mp4",
-                    auteur_hint="bong",
+                    auteur_hint="kang",
                 )
 
             assert result.success is True
             assert result.logic_vector is not None
-            assert result.logic_vector.auteur_id == "bong"
+            assert result.logic_vector.auteur_id == "kang"
 
     @pytest.mark.asyncio
     async def test_parse_video_with_shots(self, mock_gemini_response: Dict):
@@ -327,14 +327,14 @@ class TestVPEService:
 
         service = VPEService(api_key="test-key")
 
-        # Create a second vector with different values
-        vector2 = sample_logic_vector.model_copy()
+        # Create a second vector with different values (deep=True for nested objects)
+        vector2 = sample_logic_vector.model_copy(deep=True)
         vector2.camera_grammar.dolly = 0.5
         vector2.camera_grammar.static = 0.2
 
         merged = await service.merge_logic_vectors([sample_logic_vector, vector2])
 
-        assert merged.auteur_id == "bong"
+        assert merged.auteur_id == "kang"
         # Check that camera_grammar is averaged
         assert 0.25 <= merged.camera_grammar.static <= 0.3
         assert 0.35 <= merged.camera_grammar.dolly <= 0.5
@@ -369,7 +369,7 @@ class TestVPEStorage:
                 doc_id = await storage.store_logic_vector(sample_logic_vector)
 
                 assert doc_id is not None
-                assert "vpe_bong_" in doc_id
+                assert "vpe_kang_" in doc_id
 
     @pytest.mark.asyncio
     async def test_search_by_style(self):
@@ -385,9 +385,9 @@ class TestVPEStorage:
             mock_point.id = "test-doc-id"
             mock_point.score = 0.9
             mock_point.payload = {
-                "auteur_id": "bong",
+                "auteur_id": "kang",
                 "logic_vector": {
-                    "auteur_id": "bong",
+                    "auteur_id": "kang",
                     "cadence": {},
                     "composition": {},
                     "camera_grammar": {},
@@ -408,11 +408,11 @@ class TestVPEStorage:
 
                 results = await storage.search_by_style(
                     query="dark noir lighting with slow dolly shots",
-                    auteur_filter="bong",
+                    auteur_filter="kang",
                 )
 
                 assert len(results) > 0
-                assert results[0].logic_vector.auteur_id == "bong"
+                assert results[0].logic_vector.auteur_id == "kang"
 
     @pytest.mark.asyncio
     async def test_storage_graceful_degradation(self):
@@ -454,7 +454,7 @@ class TestVPERouter:
             mock_svc.parse_video = AsyncMock(return_value=VPEParseResponse(
                 success=True,
                 trace_id="test-trace",
-                logic_vector=LogicVector(auteur_id="bong"),
+                logic_vector=LogicVector(auteur_id="kang"),
                 confidence=0.85,
             ))
             mock_service.return_value = mock_svc
@@ -467,7 +467,7 @@ class TestVPERouter:
                         "/api/vpe/parse",
                         json={
                             "video_uri": "gs://test-bucket/video.mp4",
-                            "auteur_hint": "bong",
+                            "auteur_hint": "kang",
                         },
                         headers=auth_headers,
                     )
@@ -475,7 +475,7 @@ class TestVPERouter:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["success"] is True
-        assert data["logic_vector"]["auteur_id"] == "bong"
+        assert data["logic_vector"]["auteur_id"] == "kang"
 
     @pytest.mark.asyncio
     async def test_parse_endpoint_insufficient_credits(
@@ -528,7 +528,7 @@ class TestVPERouter:
                 "/api/vpe/query",
                 json={
                     "query": "dark noir cinematography",
-                    "auteur_filter": "nolan",
+                    "auteur_filter": "epoch",
                     "top_k": 5,
                 },
                 headers=auth_headers,
@@ -551,13 +551,13 @@ class TestVPERouter:
             mock_storage.return_value = mock_store
 
             response = await async_client.get(
-                "/api/vpe/vectors/bong",
+                "/api/vpe/vectors/kang",
                 headers=auth_headers,
             )
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
-        assert data["auteur_id"] == "bong"
+        assert data["auteur_id"] == "kang"
 
     @pytest.mark.asyncio
     async def test_delete_vector(
@@ -619,7 +619,7 @@ class TestVPEIntegration:
         context = sample_logic_vector.to_system_prompt_context()
 
         # Should contain key information
-        assert "BONG" in context
+        assert "KANG" in context
         assert "Camera Movement" in context
         assert "Lighting" in context
         assert "Composition" in context
@@ -634,8 +634,8 @@ class TestVPEErrorHandling:
 
     @pytest.mark.asyncio
     async def test_json_parse_error_handling(self):
-        """Test handling of malformed JSON response."""
-        from app.services.vpe_service import VPEService
+        """Test handling of malformed JSON response raises VPEAnalysisError."""
+        from app.services.vpe_service import VPEService, VPEAnalysisError
 
         service = VPEService(api_key="test-key")
 
@@ -644,12 +644,12 @@ class TestVPEErrorHandling:
             mock_response.text = "invalid json {{"
             mock_thread.return_value = mock_response
 
-            result = await service.parse_video(
-                video_uri="gs://test-bucket/video.mp4",
-            )
+            with pytest.raises(VPEAnalysisError) as exc_info:
+                await service.parse_video(
+                    video_uri="gs://test-bucket/video.mp4",
+                )
 
-            assert result.success is False
-            assert "오류" in result.error
+            assert "Failed to parse" in str(exc_info.value)
 
     def test_video_uri_validation_edge_cases(self):
         """Test video URI validation edge cases."""

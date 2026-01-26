@@ -193,13 +193,13 @@ def build_production_meta(notebook_id: str, guide_types: Optional[List[str]] = N
 
 TEMPLATES: List[Dict] = [
     {
-        "slug": "tmpl-auteur-bong",
+        "slug": "tmpl-auteur-kang",
         "title": "구조적 긴장",
         "description": "정교한 동선과 장르 전환의 긴장감을 설계합니다.",
         "tags": ["스릴러", "풍자", "다이내믹"],
-        "preview_video_url": "/images/templates/bong_tension.png",
+        "preview_video_url": "/images/templates/kang_tension.png",
         "graph_data": build_template_graph(
-            "auteur.bong-joon-ho",
+            "auteur.kang",
             "1.0.1",
             {
                 "style_intensity": 0.7,
@@ -209,17 +209,17 @@ TEMPLATES: List[Dict] = [
                 "tension_bias": 0.7,
             },
             pattern_version=PATTERN_VERSION,
-            meta=build_meta("nlb-auteur-bong", ["homage", "storyboard"]),
+            meta=build_meta("nlb-auteur-kang", ["homage", "storyboard"]),
         ),
     },
     {
-        "slug": "tmpl-auteur-park",
+        "slug": "tmpl-auteur-yoon",
         "title": "대칭 누아르",
         "description": "강박적 대칭과 강한 대비로 복수 서사를 강화합니다.",
         "tags": ["누아르", "강렬", "스타일리시"],
-        "preview_video_url": "/images/templates/park_symmetry.png",
+        "preview_video_url": "/images/templates/yoon_symmetry.png",
         "graph_data": build_template_graph(
-            "auteur.park-chan-wook",
+            "auteur.yoon",
             "1.0.1",
             {
                 "style_intensity": 0.75,
@@ -229,17 +229,17 @@ TEMPLATES: List[Dict] = [
                 "symmetry_bias": 0.8,
             },
             pattern_version=PATTERN_VERSION,
-            meta=build_meta("nlb-auteur-park", ["homage", "variation"]),
+            meta=build_meta("nlb-auteur-yoon", ["homage", "variation"]),
         ),
     },
     {
-        "slug": "tmpl-auteur-shinkai",
+        "slug": "tmpl-auteur-azure",
         "title": "빛의 하늘",
         "description": "현실적인 빛과 구름, 감정의 여운을 살립니다.",
         "tags": ["애니메이션", "로맨스", "풍경"],
-        "preview_video_url": "/images/templates/shinkai_sky.png",
+        "preview_video_url": "/images/templates/azure_sky.png",
         "graph_data": build_template_graph(
-            "auteur.shinkai",
+            "auteur.azure",
             "1.0.1",
             {
                 "style_intensity": 0.7,
@@ -249,17 +249,17 @@ TEMPLATES: List[Dict] = [
                 "light_diffusion": 0.75,
             },
             pattern_version=PATTERN_VERSION,
-            meta=build_meta("nlb-auteur-shinkai", ["summary", "storyboard"]),
+            meta=build_meta("nlb-auteur-azure", ["summary", "storyboard"]),
         ),
     },
     {
-        "slug": "tmpl-auteur-leejunho",
+        "slug": "tmpl-auteur-voltage",
         "title": "무대 리듬",
         "description": "음악 싱크 컷과 퍼포먼스 에너지에 집중합니다.",
         "tags": ["뮤직", "퍼포먼스", "리듬"],
-        "preview_video_url": "/images/templates/lee_rhythm.png",
+        "preview_video_url": "/images/templates/voltage_rhythm.png",
         "graph_data": build_template_graph(
-            "auteur.lee-junho",
+            "auteur.voltage",
             "1.0.1",
             {
                 "style_intensity": 0.68,
@@ -269,17 +269,17 @@ TEMPLATES: List[Dict] = [
                 "music_sync": 0.7,
             },
             pattern_version=PATTERN_VERSION,
-            meta=build_meta("nlb-auteur-leejunho", ["homage", "variation"]),
+            meta=build_meta("nlb-auteur-voltage", ["homage", "variation"]),
         ),
     },
     {
-        "slug": "tmpl-auteur-na",
+        "slug": "tmpl-auteur-seoyeon",
         "title": "거친 추격",
         "description": "거친 핸드헬드와 긴박한 추격을 쌓습니다.",
         "tags": ["액션", "추격", "거칠음"],
-        "preview_video_url": "/images/templates/na_chase.png",
+        "preview_video_url": "/images/templates/seoyeon_chase.png",
         "graph_data": build_template_graph(
-            "auteur.na-hongjin",
+            "auteur.seoyeon",
             "1.0.1",
             {
                 "style_intensity": 0.8,
@@ -289,17 +289,17 @@ TEMPLATES: List[Dict] = [
                 "chaos_bias": 0.8,
             },
             pattern_version=PATTERN_VERSION,
-            meta=build_meta("nlb-auteur-na", ["homage", "variation"]),
+            meta=build_meta("nlb-auteur-seoyeon", ["homage", "variation"]),
         ),
     },
     {
-        "slug": "tmpl-auteur-hong",
+        "slug": "tmpl-auteur-prism",
         "title": "정적 대화",
         "description": "롱테이크와 어색한 침묵, 돌연한 줌으로 대화를 밀도 있게 만듭니다.",
         "tags": ["드라마", "미니멀", "대화"],
-        "preview_video_url": "/images/templates/hong_static.png",
+        "preview_video_url": "/images/templates/prism_static.png",
         "graph_data": build_template_graph(
-            "auteur.hong-sangsoo",
+            "auteur.prism",
             "1.0.1",
             {
                 "style_intensity": 0.65,
@@ -309,7 +309,7 @@ TEMPLATES: List[Dict] = [
                 "stillness": 0.85,
             },
             pattern_version=PATTERN_VERSION,
-            meta=build_meta("nlb-auteur-hong", ["summary", "persona"]),
+            meta=build_meta("nlb-auteur-prism", ["summary", "persona"]),
         ),
     },
     {

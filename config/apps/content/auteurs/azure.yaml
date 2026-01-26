@@ -1,16 +1,17 @@
 $schema: "vivid-app/v2"
 
+# ===== AI Auteur: 소라 아주르 (Sora Azure) =====
 metadata:
-  name: shinkai
+  name: azure
   type: auteur
   version: "1.0.0"
   bounded_context: content
 
 display:
-  name_ko: "신카이 마코토"
-  name_en: "Makoto Shinkai"
+  name_ko: "소라 아주르"
+  name_en: "Sora Azure"
   icon: "🌸"
-  description: "너의 이름은, 날씨의 아이 감독. 아름다운 하늘과 청춘 서사의 거장."
+  description: "하늘빛 서정 - 빛과 그리움의 애니메이션 시인."
 
 capabilities:
   - name: rag
@@ -32,17 +33,17 @@ extensions:
     corpus_type: v-shape
     sources:
       - type: source_pack
-        path: data/source_packs/shinkai/*.json
+        path: data/source_packs/azure/*.json
       - type: vertex_ai
-        corpus_name: auteur_shinkai
-        
+        corpus_name: auteur_azure
+
     style_hints:
       camera_style: contemplative
       color_grade: vivid
       lens_style: wide
       sky_emphasis: true
       light_rays: true
-      
+
     themes:
       - 청춘과 상실
       - 시공간 초월
@@ -51,11 +52,8 @@ extensions:
 
 keywords:
   patterns:
-    - "shinkai"
-    - "신카이"
-    - "마코토"
-    - "너의.*이름"
-    - "your.*name"
-    - "날씨의.*아이"
-    - "weathering"
-    - "언어의.*정원"
+    - "azure"
+    - "소라 아주르"
+    - "azure crossing"
+    - "light years apart"
+    - "cloud memories"

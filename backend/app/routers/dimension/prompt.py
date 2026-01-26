@@ -214,7 +214,7 @@ class UQSLStrategy(str, Enum):
     SPEED = "speed"
 
 
-# Auteur key pattern: alphanumeric and underscore only (e.g., "kubrick", "bong_joonho")
+# AI Auteur key pattern: alphanumeric and underscore only (e.g., "prism", "kang")
 AUTEUR_KEY_PATTERN = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]*$")
 
 
@@ -243,7 +243,7 @@ def _validate_auteur_key(value: Optional[str]) -> Optional[str]:
     if not AUTEUR_KEY_PATTERN.match(value):
         raise ValueError(
             "auteur_key must start with a letter and contain only "
-            "alphanumeric characters and underscores (e.g., 'kubrick', 'bong_joonho')"
+            "alphanumeric characters and underscores (e.g., 'prism', 'kang')"
         )
     return value
 
@@ -347,7 +347,7 @@ class PromptTranslateRequest(BaseModel):
         None,
         max_length=50,
         description="거장 키 (RAG 활성화). 알파벳과 언더스코어만 허용.",
-        examples=["kubrick", "bong_joonho", "nolan"],
+        examples=["prism", "kang", "epoch"],
     )
     duration: Optional[int] = Field(
         None,

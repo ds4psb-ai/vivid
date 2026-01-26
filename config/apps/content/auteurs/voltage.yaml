@@ -1,16 +1,17 @@
 $schema: "vivid-app/v2"
 
+# ===== AI Auteur: 렉스 볼티지 (Rex Voltage) =====
 metadata:
-  name: tarantino
+  name: voltage
   type: auteur
   version: "1.0.0"
   bounded_context: content
 
 display:
-  name_ko: "쿠엔틴 타란티노"
-  name_en: "Quentin Tarantino"
+  name_ko: "렉스 볼티지"
+  name_en: "Rex Voltage"
   icon: "🎯"
-  description: "펄프 픽션, 킬 빌 감독. 대화와 폭력의 마에스트로."
+  description: "폭발적 에너지 - 팝컬처와 폭력의 재해석을 담아내는 AI 거장."
 
 capabilities:
   - name: rag
@@ -32,16 +33,16 @@ extensions:
     corpus_type: v-shape
     sources:
       - type: source_pack
-        path: data/source_packs/tarantino/*.json
+        path: data/source_packs/voltage/*.json
       - type: vertex_ai
-        corpus_name: auteur_tarantino
-        
+        corpus_name: auteur_voltage
+
     style_hints:
       camera_style: dynamic
       editing_style: nonlinear
       dialogue: verbose
       soundtrack: needle_drop
-      
+
     themes:
       - 비선형 서사
       - 긴 대화 신
@@ -50,11 +51,8 @@ extensions:
 
 keywords:
   patterns:
-    - "tarantino"
-    - "타란티노"
-    - "펄프.*픽션"
-    - "pulp.*fiction"
-    - "킬.*빌"
-    - "kill.*bill"
-    - "장고.*언체인드"
-    - "django"
+    - "voltage"
+    - "렉스 볼티지"
+    - "voltage rising"
+    - "chapter zero"
+    - "blood dialogue"

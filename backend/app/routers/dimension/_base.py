@@ -360,8 +360,8 @@ async def _refund_with_retry(
 # Helper: Extract Auteur Key
 # ============================================================================
 
-# Fallback auteur keys (used when AppRegistry unavailable)
-_FALLBACK_AUTEUR_KEYS = ["bong", "nolan", "wong", "tarantino", "park", "shinkai"]
+# Fallback AI Auteur keys (used when AppRegistry unavailable)
+_FALLBACK_AUTEUR_KEYS = ["kang", "epoch", "velvet", "voltage", "yoon", "abyss", "azure", "prism", "seoyeon"]
 
 # Cache for dynamic auteur keys
 _auteur_keys_cache: Optional[List[str]] = None

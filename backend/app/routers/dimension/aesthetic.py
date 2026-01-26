@@ -207,7 +207,7 @@ class AestheticDirectRequest(BaseModel):
     - Enum validation for lighting_style, color_mood, target_medium
     """
     concept: str = Field(..., min_length=1, max_length=MAX_CONCEPT_LENGTH, description="Visual concept (sanitized)")
-    reference_style: str = Field("bong", max_length=100, description="Auteur reference style (sanitized)")
+    reference_style: str = Field("kang", max_length=100, description="AI Auteur reference style (sanitized)")
     mood: str = Field("cinematic", max_length=100, description="Visual mood (sanitized)")
     lighting_style: str = Field("natural", max_length=50, description="Lighting style: natural, high-key, low-key, dramatic, soft")
     color_mood: str = Field("neutral", max_length=50, description="Color mood: neutral, warm, cool, desaturated, vibrant")
@@ -225,7 +225,7 @@ class AestheticDirectRequest(BaseModel):
     @classmethod
     def sanitize_reference_style(cls, v: str) -> str:
         """Sanitize reference_style to prevent XSS."""
-        return sanitize_generic_text(v, default="bong")
+        return sanitize_generic_text(v, default="kang")
 
     @field_validator("mood", mode="before")
     @classmethod
@@ -705,7 +705,7 @@ class CharacterDNAResponse(BaseModel):
     trace_id: str = Field("", description="Trace ID for auditability")
     evidence_refs: List[str] = Field(
         default_factory=list,
-        description="RAG evidence references (format: 'rag:auteur_dna:bong:visual:composition', 'db:character_dna:uuid')",
+        description="RAG evidence references (format: 'rag:auteur_dna:kang:visual:composition', 'db:character_dna:uuid')",
     )
     confidence: float = Field(0.0, ge=0.0, le=1.0, description="AI confidence score")
 
@@ -735,43 +735,31 @@ class AestheticQualityScore(BaseModel):
 # 2026 Enhancements: Auteur Style Blending & Mathematical Aesthetics
 # ============================================================================
 
-# Auteur compatibility matrix for style blending
+# AI Auteur compatibility matrix for style blending
 AUTEUR_COMPATIBILITY_MATRIX: dict[str, dict[str, float]] = {
-    "bong": {"nolan": 0.75, "fincher": 0.80, "wong": 0.60, "tarantino": 0.45, "villeneuve": 0.70},
-    "nolan": {"bong": 0.75, "fincher": 0.85, "villeneuve": 0.90, "kubrick": 0.80, "spielberg": 0.65},
-    "wong": {"bong": 0.60, "tarantino": 0.55, "kar_wai": 1.0, "wong_kar_wai": 1.0},
-    "villeneuve": {"nolan": 0.90, "kubrick": 0.85, "ridley_scott": 0.80, "bong": 0.70},
-    "tarantino": {"guy_ritchie": 0.75, "rodriguez": 0.80, "wong": 0.55, "bong": 0.45},
-    "miyazaki": {"shinkai": 0.65, "ghibli": 1.0, "hosoda": 0.70, "isao": 0.80},
-    "kubrick": {"nolan": 0.80, "villeneuve": 0.85, "fincher": 0.75, "bong": 0.60},
-    "fincher": {"nolan": 0.85, "bong": 0.80, "kubrick": 0.75, "villeneuve": 0.80},
-    "spielberg": {"cameron": 0.75, "nolan": 0.65, "zemeckis": 0.70},
+    "kang": {"epoch": 0.75, "yoon": 0.80, "velvet": 0.60, "voltage": 0.45, "abyss": 0.70},
+    "epoch": {"kang": 0.75, "prism": 0.85, "abyss": 0.90, "yoon": 0.70, "seoyeon": 0.65},
+    "velvet": {"kang": 0.60, "voltage": 0.55, "azure": 0.70, "yoon": 0.65},
+    "abyss": {"epoch": 0.90, "prism": 0.85, "kang": 0.70, "yoon": 0.75},
+    "voltage": {"velvet": 0.55, "kang": 0.45, "seoyeon": 0.70, "yoon": 0.60},
+    "azure": {"velvet": 0.70, "abyss": 0.65, "yoon": 0.50, "prism": 0.55},
+    "prism": {"epoch": 0.80, "abyss": 0.85, "yoon": 0.75, "kang": 0.60},
+    "yoon": {"kang": 0.80, "prism": 0.75, "abyss": 0.80, "seoyeon": 0.85},
+    "seoyeon": {"yoon": 0.85, "kang": 0.75, "voltage": 0.70, "epoch": 0.65},
 }
 
-# Visual style keywords for each auteur
+# Visual style keywords for each AI Auteur
 # Must align with AUTEUR_COMPATIBILITY_MATRIX keys
 AUTEUR_VISUAL_KEYWORDS: dict[str, List[str]] = {
-    "bong": ["layered framing", "class symbolism", "muted palette", "vertical depth", "social tension"],
-    "nolan": ["IMAX scale", "temporal complexity", "practical effects", "blue-gold palette", "geometric precision"],
-    "wong": ["neon expressionism", "handheld intimacy", "color saturation", "reflection shots", "time distortion"],
-    "villeneuve": ["vast scale", "minimal dialogue", "architectural framing", "amber-grey palette", "slow revelation"],
-    "tarantino": ["split screens", "trunk shots", "pop culture references", "vibrant colors", "genre homage"],
-    "miyazaki": ["hand-drawn warmth", "nature harmony", "flight sequences", "watercolor backgrounds", "child wonder"],
-    "kubrick": ["one-point perspective", "symmetrical composition", "cold precision", "long takes", "existential dread"],
-    "fincher": ["dark atmosphere", "desaturated palette", "forensic detail", "shadow play", "meticulous control"],
-    # Added to align with AUTEUR_COMPATIBILITY_MATRIX
-    "spielberg": ["lens flare", "wonder shots", "suburban americana", "emotional crescendo", "child perspective"],
-    "cameron": ["blue palette", "technological sublime", "underwater imagery", "strong female leads", "epic scale"],
-    "ridley_scott": ["smoke and light", "industrial decay", "historical epic", "rain noir", "textured environments"],
-    "guy_ritchie": ["snappy editing", "British gangster aesthetic", "split-screen montage", "kinetic camera", "masculine ensemble"],
-    "shinkai": ["photorealistic backgrounds", "light rays", "cloud formations", "urban loneliness", "romantic melancholy"],
-    "rodriguez": ["grindhouse aesthetic", "high contrast", "practical gore", "low-budget inventiveness", "action rhythm"],
-    "zemeckis": ["motion capture innovation", "time travel motifs", "visual effects integration", "nostalgic americana", "Boomer appeal"],
-    "hosoda": ["family bonds", "digital worlds", "summer settings", "coming-of-age warmth", "vibrant colors"],
-    "isao": ["naturalistic movement", "quiet observation", "wartime memory", "pastoral beauty", "emotional restraint"],
-    "kar_wai": ["neon expressionism", "handheld intimacy", "color saturation", "reflection shots", "time distortion"],
-    "wong_kar_wai": ["neon expressionism", "handheld intimacy", "color saturation", "reflection shots", "time distortion"],
-    "ghibli": ["hand-drawn warmth", "nature harmony", "flight sequences", "watercolor backgrounds", "child wonder"],
+    "kang": ["layered framing", "class symbolism", "muted palette", "vertical depth", "social tension"],
+    "epoch": ["IMAX scale", "temporal complexity", "practical effects", "blue-gold palette", "geometric precision"],
+    "velvet": ["neon expressionism", "handheld intimacy", "color saturation", "reflection shots", "time distortion"],
+    "abyss": ["vast scale", "minimal dialogue", "architectural framing", "amber-grey palette", "slow revelation"],
+    "voltage": ["split screens", "trunk shots", "pop culture references", "vibrant colors", "genre homage"],
+    "azure": ["photorealistic backgrounds", "light rays", "cloud formations", "urban loneliness", "romantic melancholy"],
+    "prism": ["one-point perspective", "symmetrical composition", "cold precision", "long takes", "existential dread"],
+    "yoon": ["symmetrical composition", "color coding", "revenge aesthetic", "operatic violence", "psychological depth"],
+    "seoyeon": ["handheld intensity", "natural lighting", "raw realism", "relentless pacing", "location authenticity"],
 }
 
 # Mathematical aesthetics constants

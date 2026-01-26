@@ -273,21 +273,21 @@ class TestAestheticDirectRequest:
         """Test valid request creation."""
         request = AestheticDirectRequest(
             concept="A cinematic urban nightscape with neon lights",
-            reference_style="bong",
+            reference_style="kang",
             mood="moody",
             lighting_style="dramatic",
             color_mood="cool",
             target_medium="video",
         )
         assert "nightscape" in request.concept
-        assert request.reference_style == "bong"
+        assert request.reference_style == "kang"
         assert request.lighting_style == "dramatic"
         assert request.color_mood == "cool"
 
     def test_default_values(self):
         """Test default values are applied."""
         request = AestheticDirectRequest(concept="Test concept")
-        assert request.reference_style == "bong"
+        assert request.reference_style == "kang"
         assert request.mood == "cinematic"
         assert request.lighting_style == "natural"
         assert request.color_mood == "neutral"
@@ -315,7 +315,7 @@ class TestAestheticDirectRequest:
         """Test reference_style XSS sanitization."""
         request = AestheticDirectRequest(
             concept="Test concept",
-            reference_style="<img onerror=evil()>bong",
+            reference_style="<img onerror=evil()>kang",
         )
         assert "<img" not in request.reference_style
         assert "onerror" not in request.reference_style
@@ -766,7 +766,7 @@ class TestCharacterDNAResponse:
             full_prompt="full",
             usage_hint="hint",
             evidence_refs=[
-                "rag:auteur_dna:bong:visual:composition",
+                "rag:auteur_dna:kang:visual:composition",
                 "rag:character_dna:anime:psychological_layer",
             ],
         )
@@ -914,7 +914,7 @@ class TestEvidenceRefsFormat:
     """Test evidence_refs format validation."""
 
     @pytest.mark.parametrize("ref", [
-        "rag:auteur_dna:bong:visual:composition",
+        "rag:auteur_dna:kang:visual:composition",
         "rag:auteur_dna:kubrick:lighting:chiaroscuro",
         "rag:character_dna:anime:visual_layer",
         "rag:aesthetic:mathematical:golden_ratio",
@@ -937,8 +937,8 @@ class TestEvidenceRefsFormat:
     def test_multiple_evidence_refs(self):
         """Test multiple evidence_refs."""
         refs = [
-            "rag:auteur_dna:bong:visual:composition",
-            "rag:auteur_dna:bong:audio:silence_usage",
+            "rag:auteur_dna:kang:visual:composition",
+            "rag:auteur_dna:kang:audio:silence_usage",
             "rag:mathematical_aesthetics:golden_ratio",
             "db:style_guide:session-uuid",
         ]
@@ -1020,9 +1020,9 @@ class TestMultimodalAestheticPatterns:
             full_prompt="full",
             usage_hint="hint",
             evidence_refs=[
-                "rag:auteur_dna:bong:visual:composition",
-                "rag:auteur_dna:bong:audio:silence_usage",
-                "rag:auteur_dna:bong:narrative:pacing",
+                "rag:auteur_dna:kang:visual:composition",
+                "rag:auteur_dna:kang:audio:silence_usage",
+                "rag:auteur_dna:kang:narrative:pacing",
             ],
         )
         # Cross-modal: visual, audio, narrative
@@ -1039,8 +1039,8 @@ class TestAuteurCompatibilityMatrix:
     """Test AUTEUR_COMPATIBILITY_MATRIX constant."""
 
     def test_matrix_has_expected_auteurs(self):
-        """Test matrix contains key auteurs."""
-        expected = {"bong", "nolan", "wong", "villeneuve", "tarantino", "miyazaki", "kubrick", "fincher"}
+        """Test matrix contains key AI auteurs."""
+        expected = {"kang", "epoch", "velvet", "abyss", "voltage", "azure", "prism", "yoon", "seoyeon"}
         actual = set(AUTEUR_COMPATIBILITY_MATRIX.keys())
         assert expected.issubset(actual)
 
@@ -1050,21 +1050,21 @@ class TestAuteurCompatibilityMatrix:
             for secondary, score in mappings.items():
                 assert 0.0 <= score <= 1.0, f"{primary}-{secondary}: {score} out of range"
 
-    def test_bong_nolan_compatibility(self):
-        """Test Bong-Nolan compatibility is high."""
-        assert AUTEUR_COMPATIBILITY_MATRIX["bong"]["nolan"] >= 0.7
+    def test_kang_epoch_compatibility(self):
+        """Test Kang-Epoch compatibility is high."""
+        assert AUTEUR_COMPATIBILITY_MATRIX["kang"]["epoch"] >= 0.7
 
-    def test_nolan_villeneuve_compatibility(self):
-        """Test Nolan-Villeneuve compatibility is very high."""
-        assert AUTEUR_COMPATIBILITY_MATRIX["nolan"]["villeneuve"] >= 0.85
+    def test_epoch_abyss_compatibility(self):
+        """Test Epoch-Abyss compatibility is very high."""
+        assert AUTEUR_COMPATIBILITY_MATRIX["epoch"]["abyss"] >= 0.85
 
 
 class TestAuteurVisualKeywords:
     """Test AUTEUR_VISUAL_KEYWORDS constant."""
 
     def test_keywords_has_expected_auteurs(self):
-        """Test keywords contains key auteurs."""
-        expected = {"bong", "nolan", "wong", "villeneuve", "tarantino", "miyazaki", "kubrick", "fincher"}
+        """Test keywords contains key AI auteurs."""
+        expected = {"kang", "epoch", "velvet", "abyss", "voltage", "azure", "prism", "yoon", "seoyeon"}
         actual = set(AUTEUR_VISUAL_KEYWORDS.keys())
         assert expected.issubset(actual)
 
@@ -1074,15 +1074,15 @@ class TestAuteurVisualKeywords:
             assert isinstance(keywords, list), f"{auteur} keywords not a list"
             assert len(keywords) >= 3, f"{auteur} should have at least 3 keywords"
 
-    def test_bong_keywords_contain_expected(self):
-        """Test Bong keywords contain expected terms."""
-        bong_keywords = AUTEUR_VISUAL_KEYWORDS["bong"]
-        assert "class symbolism" in bong_keywords or any("class" in kw for kw in bong_keywords)
+    def test_kang_keywords_contain_expected(self):
+        """Test Kang keywords contain expected terms."""
+        kang_keywords = AUTEUR_VISUAL_KEYWORDS["kang"]
+        assert "class symbolism" in kang_keywords or any("class" in kw for kw in kang_keywords)
 
-    def test_nolan_keywords_contain_expected(self):
-        """Test Nolan keywords contain expected terms."""
-        nolan_keywords = AUTEUR_VISUAL_KEYWORDS["nolan"]
-        assert "IMAX scale" in nolan_keywords or any("imax" in kw.lower() for kw in nolan_keywords)
+    def test_epoch_keywords_contain_expected(self):
+        """Test Epoch keywords contain expected terms."""
+        epoch_keywords = AUTEUR_VISUAL_KEYWORDS["epoch"]
+        assert "IMAX scale" in epoch_keywords or any("imax" in kw.lower() for kw in epoch_keywords)
 
     def test_keywords_align_with_compatibility_matrix(self):
         """Regression test for P3 issue: all compatibility matrix auteurs must have keywords.
@@ -1100,24 +1100,24 @@ class TestAuteurVisualKeywords:
         missing = matrix_auteurs - keywords_auteurs
         assert len(missing) == 0, f"Missing keywords for: {missing}"
 
-    def test_spielberg_keywords_exist(self):
-        """Test Spielberg keywords exist (previously missing)."""
-        assert "spielberg" in AUTEUR_VISUAL_KEYWORDS
-        assert len(AUTEUR_VISUAL_KEYWORDS["spielberg"]) >= 3
+    def test_yoon_keywords_exist(self):
+        """Test Yoon keywords exist."""
+        assert "yoon" in AUTEUR_VISUAL_KEYWORDS
+        assert len(AUTEUR_VISUAL_KEYWORDS["yoon"]) >= 3
 
-    def test_cameron_keywords_exist(self):
-        """Test Cameron keywords exist (previously missing)."""
-        assert "cameron" in AUTEUR_VISUAL_KEYWORDS
-        assert any("blue" in kw.lower() for kw in AUTEUR_VISUAL_KEYWORDS["cameron"])
+    def test_abyss_keywords_exist(self):
+        """Test Abyss keywords exist."""
+        assert "abyss" in AUTEUR_VISUAL_KEYWORDS
+        assert any("scale" in kw.lower() or "epic" in kw.lower() for kw in AUTEUR_VISUAL_KEYWORDS["abyss"])
 
-    def test_shinkai_keywords_exist(self):
-        """Test Shinkai keywords exist (previously missing)."""
-        assert "shinkai" in AUTEUR_VISUAL_KEYWORDS
-        assert any("background" in kw.lower() or "light" in kw.lower() for kw in AUTEUR_VISUAL_KEYWORDS["shinkai"])
+    def test_azure_keywords_exist(self):
+        """Test Azure keywords exist."""
+        assert "azure" in AUTEUR_VISUAL_KEYWORDS
+        assert any("background" in kw.lower() or "light" in kw.lower() for kw in AUTEUR_VISUAL_KEYWORDS["azure"])
 
-    def test_blend_with_spielberg_has_keywords(self):
-        """Test blending with Spielberg now returns visual keywords."""
-        result = blend_auteur_styles("spielberg", "cameron")
+    def test_blend_with_yoon_has_keywords(self):
+        """Test blending with Yoon now returns visual keywords."""
+        result = blend_auteur_styles("yoon", "abyss")
         assert len(result.visual_keywords) >= 2
         assert result.compatibility_score > 0
 
@@ -1127,18 +1127,18 @@ class TestGetAuteurCompatibility:
 
     def test_same_auteur_returns_1(self):
         """Test same auteur has perfect compatibility."""
-        assert get_auteur_compatibility("bong", "bong") == 1.0
-        assert get_auteur_compatibility("nolan", "nolan") == 1.0
+        assert get_auteur_compatibility("kang", "kang") == 1.0
+        assert get_auteur_compatibility("epoch", "epoch") == 1.0
 
     def test_known_pair_returns_score(self):
         """Test known pair returns correct score."""
-        score = get_auteur_compatibility("bong", "nolan")
-        assert score == AUTEUR_COMPATIBILITY_MATRIX["bong"]["nolan"]
+        score = get_auteur_compatibility("kang", "epoch")
+        assert score == AUTEUR_COMPATIBILITY_MATRIX["kang"]["epoch"]
 
     def test_reverse_order_same_score(self):
         """Test reverse order returns same score."""
-        score1 = get_auteur_compatibility("bong", "fincher")
-        score2 = get_auteur_compatibility("fincher", "bong")
+        score1 = get_auteur_compatibility("kang", "prism")
+        score2 = get_auteur_compatibility("prism", "kang")
         assert score1 == score2
 
     def test_unknown_pair_returns_default(self):
@@ -1148,8 +1148,8 @@ class TestGetAuteurCompatibility:
 
     def test_case_insensitive(self):
         """Test function is case insensitive."""
-        score1 = get_auteur_compatibility("Bong", "NOLAN")
-        score2 = get_auteur_compatibility("bong", "nolan")
+        score1 = get_auteur_compatibility("Kang", "EPOCH")
+        score2 = get_auteur_compatibility("kang", "epoch")
         assert score1 == score2
 
 
@@ -1158,55 +1158,55 @@ class TestBlendAuteurStyles:
 
     def test_blend_returns_auteur_blend_result(self):
         """Test blend returns AuteurBlendResult."""
-        result = blend_auteur_styles("bong", "nolan")
+        result = blend_auteur_styles("kang", "epoch")
         assert isinstance(result, AuteurBlendResult)
 
     def test_blend_has_correct_auteurs(self):
         """Test result has correct auteur names."""
-        result = blend_auteur_styles("bong", "nolan")
-        assert result.primary_auteur == "bong"
-        assert result.secondary_auteur == "nolan"
+        result = blend_auteur_styles("kang", "epoch")
+        assert result.primary_auteur == "kang"
+        assert result.secondary_auteur == "epoch"
 
     def test_blend_has_compatibility_score(self):
         """Test result has valid compatibility score."""
-        result = blend_auteur_styles("bong", "nolan")
+        result = blend_auteur_styles("kang", "epoch")
         assert 0.0 <= result.compatibility_score <= 1.0
-        assert result.compatibility_score == get_auteur_compatibility("bong", "nolan")
+        assert result.compatibility_score == get_auteur_compatibility("kang", "epoch")
 
     def test_blend_has_visual_keywords(self):
         """Test result has visual keywords from both auteurs."""
-        result = blend_auteur_styles("bong", "nolan")
+        result = blend_auteur_styles("kang", "epoch")
         assert len(result.visual_keywords) >= 2
 
     def test_blend_ratio_default_60_40(self):
         """Test default blend ratio is 60:40."""
-        result = blend_auteur_styles("bong", "nolan")
+        result = blend_auteur_styles("kang", "epoch")
         assert result.blend_ratio == "60:40"
 
     def test_blend_ratio_custom_weight(self):
         """Test custom weight produces correct ratio."""
-        result = blend_auteur_styles("bong", "nolan", primary_weight=0.7)
+        result = blend_auteur_styles("kang", "epoch", primary_weight=0.7)
         assert result.blend_ratio == "70:30"
 
     def test_high_compatibility_has_seamless_blend(self):
         """Test high compatibility produces seamless blend approach."""
-        result = blend_auteur_styles("nolan", "villeneuve")  # 0.90 compatibility
+        result = blend_auteur_styles("epoch", "abyss")  # 0.90 compatibility
         assert "seamless" in result.color_approach.lower() or result.compatibility_score >= 0.8
 
     def test_low_compatibility_has_separate_zones(self):
         """Test low compatibility suggests separate zones."""
-        result = blend_auteur_styles("bong", "tarantino")  # 0.45 compatibility
+        result = blend_auteur_styles("kang", "voltage")  # lower compatibility
         assert "separate" in result.color_approach.lower() or "zone" in result.color_approach.lower()
 
     def test_recommended_for_includes_entries(self):
         """Test recommended_for has suggestions."""
-        result = blend_auteur_styles("bong", "nolan")
+        result = blend_auteur_styles("kang", "epoch")
         assert len(result.recommended_for) >= 1
 
     def test_case_insensitive_auteurs(self):
         """Test function handles case variations."""
-        result1 = blend_auteur_styles("Bong", "NOLAN")
-        result2 = blend_auteur_styles("bong", "nolan")
+        result1 = blend_auteur_styles("Kang", "EPOCH")
+        result2 = blend_auteur_styles("kang", "epoch")
         assert result1.compatibility_score == result2.compatibility_score
 
 
@@ -1426,13 +1426,13 @@ class TestAssessAestheticPromptQuality:
     def test_auteur_reference_increases_score(self):
         """Test auteur reference increases style score."""
         without_auteur = assess_aesthetic_prompt_quality("A scene")
-        with_auteur = assess_aesthetic_prompt_quality("A scene", reference_style="bong")
+        with_auteur = assess_aesthetic_prompt_quality("A scene", reference_style="kang")
         assert with_auteur.style_specificity > without_auteur.style_specificity
         assert with_auteur.has_auteur_reference is True
 
     def test_known_auteur_higher_than_unknown(self):
         """Test known auteur scores higher than unknown."""
-        known = assess_aesthetic_prompt_quality("A scene", reference_style="bong")
+        known = assess_aesthetic_prompt_quality("A scene", reference_style="kang")
         unknown = assess_aesthetic_prompt_quality("A scene", reference_style="unknown_director")
         assert known.style_specificity >= unknown.style_specificity
 
@@ -1456,7 +1456,7 @@ class TestAssessAestheticPromptQuality:
         """Test fully specified prompt gets high score."""
         result = assess_aesthetic_prompt_quality(
             concept="A wide composition shot of a character silhouette against a dramatic landscape with layered framing and foreground elements",
-            reference_style="bong",
+            reference_style="kang",
             mood="cinematic and moody",
             lighting_style="dramatic",
             color_mood="desaturated",

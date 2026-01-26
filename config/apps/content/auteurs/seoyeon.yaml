@@ -1,0 +1,58 @@
+$schema: "vivid-app/v2"
+
+# ===== AI Auteur: 민서연 (Min Seoyeon) =====
+metadata:
+  name: seoyeon
+  type: auteur
+  version: "1.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "민서연"
+  name_en: "Min Seoyeon"
+  icon: "🌪️"
+  description: "폭풍의 긴장 - 거친 리얼리즘과 긴박한 서스펜스를 담아내는 AI 거장."
+
+capabilities:
+  - name: rag
+    enabled: true
+    config:
+      mode: auteur_only
+      confidence_threshold: 0.7
+      retrieval:
+        strategy: hybrid
+        top_k: 10
+
+  - name: cache
+    enabled: true
+    config:
+      ttl: 7200
+
+extensions:
+  auteur:
+    corpus_type: v-shape
+    sources:
+      - type: source_pack
+        path: data/source_packs/seoyeon/*.json
+      - type: vertex_ai
+        corpus_name: auteur_seoyeon
+
+    style_hints:
+      camera_style: handheld
+      color_grade: desaturated
+      pacing: relentless
+      lighting: natural
+
+    themes:
+      - 거친 리얼리즘
+      - 긴박한 서스펜스
+      - 심리적 공포
+      - 인간의 본성
+
+keywords:
+  patterns:
+    - "seoyeon"
+    - "민서연"
+    - "tempest village"
+    - "the chase"
+    - "raw tension"

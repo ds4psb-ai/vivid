@@ -752,25 +752,25 @@ class TestAuteurAffinity:
 
     def test_visionary_auteurs(self):
         auteurs = get_auteur_affinity(CreativeStyle.VISIONARY_STORYTELLER)
-        assert "bong" in auteurs
-        assert "wong" in auteurs
-        assert "miyazaki" in auteurs
+        assert "kang" in auteurs
+        assert "velvet" in auteurs
+        assert "azure" in auteurs
 
     def test_architect_auteurs(self):
         auteurs = get_auteur_affinity(CreativeStyle.LOGICAL_ARCHITECT)
-        assert "nolan" in auteurs
-        assert "villeneuve" in auteurs
-        assert "kubrick" in auteurs
+        assert "epoch" in auteurs
+        assert "abyss" in auteurs
+        assert "prism" in auteurs
 
     def test_dramatic_auteurs(self):
         auteurs = get_auteur_affinity(CreativeStyle.DRAMATIC_DIRECTOR)
-        assert "spielberg" in auteurs
-        assert "cameron" in auteurs
+        assert "yoon" in auteurs
+        assert "seoyeon" in auteurs
 
     def test_experimental_auteurs(self):
         auteurs = get_auteur_affinity(CreativeStyle.EXPERIMENTAL_ARTIST)
-        assert "tarantino" in auteurs
-        assert "guy_ritchie" in auteurs
+        assert "voltage" in auteurs
+        assert "velvet" in auteurs
 
     def test_unknown_returns_empty(self):
         auteurs = get_auteur_affinity(CreativeStyle.UNKNOWN)
@@ -837,7 +837,7 @@ class TestProfileQualityAssessment:
         )
         assert quality.creativity_index == 2.5
         assert quality.creative_style == "visionary_storyteller"
-        assert "bong" in quality.auteur_affinity
+        assert "kang" in quality.auteur_affinity
         assert "emotional_depth" in quality.creative_strengths
 
     def test_assessment_without_mbti(self):

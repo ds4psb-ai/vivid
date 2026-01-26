@@ -183,25 +183,24 @@ export default function VPEPanel() {
         />
       </div>
 
-      {/* Auteur Hint Selector */}
+      {/* AI Auteur Hint Selector */}
       <div className="space-y-2">
-        <label className="text-sm font-medium text-white/80">거장 힌트 (선택)</label>
+        <label className="text-sm font-medium text-white/80">AI 거장 힌트 (선택)</label>
         <select
           value={auteurHint}
           onChange={(e) => setAuteurHint(e.target.value)}
           className="w-full px-3 py-2 border rounded-md bg-white/5 border-white/10 text-white"
         >
           <option value="">자동 감지</option>
-          <option value="bong">봉준호</option>
-          <option value="nolan">크리스토퍼 놀란</option>
-          <option value="kubrick">스탠리 큐브릭</option>
-          <option value="wong">왕가위</option>
-          <option value="tarantino">쿠엔틴 타란티노</option>
-          <option value="park">박찬욱</option>
-          <option value="spielberg">스티븐 스필버그</option>
-          <option value="fincher">데이비드 핀처</option>
-          <option value="villeneuve">드니 빌뇌브</option>
-          <option value="wes_anderson">웨스 앤더슨</option>
+          <option value="kang">강주노 (Kang Juno)</option>
+          <option value="epoch">테오 에포크 (Theo Epoch)</option>
+          <option value="velvet">렌 벨벳 (Ren Velvet)</option>
+          <option value="abyss">오리온 어비스 (Orion Abyss)</option>
+          <option value="yoon">윤수하 (Yoon Suha)</option>
+          <option value="prism">마일로 프리즘 (Milo Prism)</option>
+          <option value="voltage">렉스 볼티지 (Rex Voltage)</option>
+          <option value="azure">소라 아주르 (Sora Azure)</option>
+          <option value="seoyeon">민서연 (Min Seoyeon)</option>
         </select>
       </div>
 

@@ -94,22 +94,17 @@ PLATFORM_TEMPLATES = {
 }
 
 
-# Auteur style descriptions
+# AI Auteur style descriptions (법적 안전성 + 창의적 자유)
 AUTEUR_STYLE_HINTS = {
-    "bong": "Bong Joon-ho's signature style with vertical blocking, stark class contrasts, and deliberate camera movements",
-    "nolan": "Christopher Nolan's precise cinematography with IMAX-scale compositions and practical lighting",
-    "kubrick": "Stanley Kubrick's symmetrical framing, one-point perspective, and methodical pacing",
-    "wong": "Wong Kar-wai's neon-drenched visuals, step-printing, and romantic melancholy",
-    "tarantino": "Quentin Tarantino's dynamic angles, trunk shots, and pop culture aesthetics",
-    "park": "Park Chan-wook's baroque compositions, rich colors, and operatic visual storytelling",
-    "spielberg": "Steven Spielberg's accessible framing, warm lighting, and emotional depth",
-    "fincher": "David Fincher's precise compositions, desaturated palette, and clinical atmosphere",
-    "villeneuve": "Denis Villeneuve's vast landscapes, minimal dialogue, and contemplative pacing",
-    "wes_anderson": "Wes Anderson's symmetrical framing, pastel palette, and whimsical tableaux",
-    "coen": "Coen Brothers' wide-angle lenses, dark humor, and regional authenticity",
-    "scorsese": "Martin Scorsese's tracking shots, freeze frames, and urban energy",
-    "lynch": "David Lynch's surreal imagery, dreamlike transitions, and uncanny atmosphere",
-    "shinkai": "Makoto Shinkai's photorealistic backgrounds, lens flares, and emotional skyscapes",
+    "kang": "Kang Juno's signature style with vertical blocking, stark class contrasts, and deliberate camera movements",
+    "epoch": "Theo Epoch's precise cinematography with IMAX-scale compositions and practical lighting",
+    "prism": "Milo Prism's symmetrical framing, one-point perspective, and methodical pacing",
+    "velvet": "Ren Velvet's neon-drenched visuals, step-printing, and romantic melancholy",
+    "voltage": "Rex Voltage's dynamic angles, trunk shots, and pop culture aesthetics",
+    "yoon": "Yoon Suha's baroque compositions, rich colors, and operatic visual storytelling",
+    "abyss": "Orion Abyss's vast landscapes, minimal dialogue, and contemplative pacing",
+    "azure": "Sora Azure's photorealistic backgrounds, lens flares, and emotional skyscapes",
+    "seoyeon": "Min Seoyeon's handheld intensity, natural lighting, and relentless pacing",
 }
 
 

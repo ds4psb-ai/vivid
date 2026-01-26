@@ -110,12 +110,12 @@ MBTI_CREATIVE_STYLE_MAP: Dict[str, CreativeStyle] = {
     "ISFJ": CreativeStyle.VISIONARY_STORYTELLER,
 }
 
-# Auteur affinity mapping by creative style
+# AI Auteur affinity mapping by creative style
 AUTEUR_AFFINITY_MAP: Dict[CreativeStyle, List[str]] = {
-    CreativeStyle.VISIONARY_STORYTELLER: ["bong", "wong", "miyazaki", "shinkai"],
-    CreativeStyle.LOGICAL_ARCHITECT: ["nolan", "villeneuve", "kubrick", "fincher"],
-    CreativeStyle.DRAMATIC_DIRECTOR: ["spielberg", "cameron", "ridley_scott"],
-    CreativeStyle.EXPERIMENTAL_ARTIST: ["tarantino", "guy_ritchie", "edgar_wright", "wes_anderson"],
+    CreativeStyle.VISIONARY_STORYTELLER: ["kang", "velvet", "azure"],
+    CreativeStyle.LOGICAL_ARCHITECT: ["epoch", "abyss", "prism"],
+    CreativeStyle.DRAMATIC_DIRECTOR: ["yoon", "seoyeon"],
+    CreativeStyle.EXPERIMENTAL_ARTIST: ["voltage", "velvet"],
     CreativeStyle.UNKNOWN: [],
 }
 

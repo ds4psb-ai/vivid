@@ -1,16 +1,17 @@
 $schema: "vivid-app/v2"
 
+# ===== AI Auteur: 윤수하 (Yoon Suha) =====
 metadata:
-  name: park
+  name: yoon
   type: auteur
   version: "1.0.0"
   bounded_context: content
 
 display:
-  name_ko: "박찬욱"
-  name_en: "Park Chan-wook"
+  name_ko: "윤수하"
+  name_en: "Yoon Suha"
   icon: "🗡️"
-  description: "올드보이, 아가씨 감독. 복수와 미학의 거장."
+  description: "어둠의 미학 - 복수와 욕망의 누아르를 담아내는 AI 거장."
 
 capabilities:
   - name: rag
@@ -32,16 +33,16 @@ extensions:
     corpus_type: v-shape
     sources:
       - type: source_pack
-        path: data/source_packs/park/*.json
+        path: data/source_packs/yoon/*.json
       - type: vertex_ai
-        corpus_name: auteur_park
-        
+        corpus_name: auteur_yoon
+
     style_hints:
       camera_style: elaborate
       color_grade: stylized
       symmetry: true
       violence: aesthetic
-      
+
     themes:
       - 복수와 구원
       - 탐미주의
@@ -50,11 +51,8 @@ extensions:
 
 keywords:
   patterns:
-    - "park"
-    - "박찬욱"
-    - "올드보이"
-    - "oldboy"
-    - "아가씨"
-    - "handmaiden"
-    - "친절한 금자씨"
-    - "헤어질 결심"
+    - "yoon"
+    - "윤수하"
+    - "obsidian mirror"
+    - "elegant revenge"
+    - "crimson silk"

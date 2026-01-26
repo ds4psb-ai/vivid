@@ -525,7 +525,7 @@ async def get_vectors_by_auteur(
     """Get all Logic Vectors for a specific auteur.
 
     Args:
-        auteur_id: Auteur ID to filter by (e.g., "bong", "nolan")
+        auteur_id: AI Auteur ID to filter by (e.g., "kang", "epoch")
         limit: Maximum results to return
         user: Authenticated user
 

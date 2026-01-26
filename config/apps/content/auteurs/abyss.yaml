@@ -1,19 +1,18 @@
 $schema: "vivid-app/v2"
 
-# ===== 공통 메타데이터 =====
+# ===== AI Auteur: 오리온 어비스 (Orion Abyss) =====
 metadata:
-  name: villeneuve
+  name: abyss
   type: auteur
   version: "1.0.0"
   bounded_context: content
 
 display:
-  name_ko: "드니 빌뇌브"
-  name_en: "Denis Villeneuve"
-  icon: "🎥"
-  description: "듄, 블레이드 러너 2049, 컨택트 감독. 장대한 스케일과 철학적 SF의 거장."
+  name_ko: "오리온 어비스"
+  name_en: "Orion Abyss"
+  icon: "🌌"
+  description: "우주의 심연 - 존재의 의미를 묻는 SF 철학자."
 
-# ===== Capability 플러그인 =====
 capabilities:
   - name: rag
     enabled: true
@@ -29,23 +28,22 @@ capabilities:
   - name: cache
     enabled: true
     config:
-      ttl: 7200  # 2시간
+      ttl: 7200
 
   - name: webhook
     enabled: false
 
-# ===== 도메인 확장 (Auteur 전용) =====
 extensions:
   auteur:
     corpus_type: v-shape
     sources:
       - type: source_pack
-        path: data/source_packs/villeneuve/*.json
+        path: data/source_packs/abyss/*.json
       - type: notebooklm
-        notebook_id: villeneuve_visual_dna
+        notebook_id: abyss_visual_dna
       - type: vertex_ai
-        corpus_name: auteur_villeneuve
-        
+        corpus_name: auteur_abyss
+
     style_hints:
       camera_style: epic_slow
       aspect_ratio: "2.39:1"
@@ -53,7 +51,7 @@ extensions:
       lens_style: anamorphic
       lighting: natural_diffused
       scale: monumental
-      
+
     themes:
       - 인류의 존재론적 질문
       - 시간과 인과의 비선형성
@@ -61,20 +59,10 @@ extensions:
       - 언어와 커뮤니케이션
       - 환경과 생존
 
-# ===== 키워드 패턴 =====
 keywords:
   patterns:
-    - "villeneuve"
-    - "빌뇌브"
-    - "드니"
-    - "denis"
-    - "듄"
-    - "dune"
-    - "블레이드.*러너"
-    - "blade.*runner"
-    - "컨택트"
-    - "arrival"
-    - "시카리오"
-    - "sicario"
-    - "프리즈너스"
-    - "인큐베이션"
+    - "abyss"
+    - "오리온 어비스"
+    - "void protocol"
+    - "sand empire"
+    - "first contact"

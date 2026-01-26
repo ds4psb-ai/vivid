@@ -118,9 +118,9 @@ def build_exposed_params(defaults: dict, signature: dict) -> dict:
 
 CAPSULE_SPECS = [
     {
-        "capsule_key": "auteur.bong-joon-ho",
+        "capsule_key": "auteur.kang",
         "version": "1.0.1",
-        "display_name": "봉준호 스타일 캡슐",
+        "display_name": "강주노 스타일 캡슐",
         "description": "구조적 긴장과 장르 믹스의 리듬을 설계합니다.",
         "spec": {
             **COMMON_SPEC_BASE,
@@ -136,16 +136,16 @@ CAPSULE_SPECS = [
             "policy": POLICY,
             "adapter": {
                 "type": "hybrid",
-                "internalGraphRef": "private-dag://auteur/bong/v1",
-                "clusterRef": "CL_BONG_01",
+                "internalGraphRef": "private-dag://auteur/kang/v1",
+                "clusterRef": "CL_KANG_01",
                 "temporalPhases": ["HOOK", "BUILD", "PAYOFF"],
             },
         },
     },
     {
-        "capsule_key": "auteur.park-chan-wook",
+        "capsule_key": "auteur.yoon",
         "version": "1.0.1",
-        "display_name": "박찬욱 스타일 캡슐",
+        "display_name": "윤수하 스타일 캡슐",
         "description": "대칭 미장센과 강한 대비를 강조합니다.",
         "spec": {
             **COMMON_SPEC_BASE,
@@ -161,16 +161,16 @@ CAPSULE_SPECS = [
             "policy": POLICY,
             "adapter": {
                 "type": "hybrid",
-                "internalGraphRef": "private-dag://auteur/park/v1",
-                "clusterRef": "CL_PARK_01",
+                "internalGraphRef": "private-dag://auteur/yoon/v1",
+                "clusterRef": "CL_YOON_01",
                 "temporalPhases": ["HOOK", "BUILD", "PAYOFF"],
             },
         },
     },
     {
-        "capsule_key": "auteur.shinkai",
+        "capsule_key": "auteur.azure",
         "version": "1.0.1",
-        "display_name": "신카이 스타일 캡슐",
+        "display_name": "소라 아주르 스타일 캡슐",
         "description": "감정적인 빛 확산과 서정적인 컬러 전이를 구성합니다.",
         "spec": {
             **COMMON_SPEC_BASE,
@@ -186,16 +186,16 @@ CAPSULE_SPECS = [
             "policy": POLICY,
             "adapter": {
                 "type": "hybrid",
-                "internalGraphRef": "private-dag://auteur/shinkai/v1",
-                "clusterRef": "CL_SHINKAI_01",
+                "internalGraphRef": "private-dag://auteur/azure/v1",
+                "clusterRef": "CL_AZURE_01",
                 "temporalPhases": ["HOOK", "BUILD", "PAYOFF"],
             },
         },
     },
     {
-        "capsule_key": "auteur.lee-junho",
+        "capsule_key": "auteur.voltage",
         "version": "1.0.1",
-        "display_name": "이준호 스타일 캡슐",
+        "display_name": "렉스 볼티지 스타일 캡슐",
         "description": "음악 싱크 비트와 리듬감 있는 전개를 만듭니다.",
         "spec": {
             **COMMON_SPEC_BASE,
@@ -211,16 +211,16 @@ CAPSULE_SPECS = [
             "policy": POLICY,
             "adapter": {
                 "type": "hybrid",
-                "internalGraphRef": "private-dag://auteur/leejunho/v1",
-                "clusterRef": "CL_LEE_01",
+                "internalGraphRef": "private-dag://auteur/voltage/v1",
+                "clusterRef": "CL_VOLTAGE_01",
                 "temporalPhases": ["HOOK", "BUILD", "PAYOFF"],
             },
         },
     },
     {
-        "capsule_key": "auteur.na-hongjin",
+        "capsule_key": "auteur.seoyeon",
         "version": "1.0.1",
-        "display_name": "나홍진 스타일 캡슐",
+        "display_name": "민서연 스타일 캡슐",
         "description": "거친 리얼리즘과 긴박한 서스펜스를 강화합니다.",
         "spec": {
             **COMMON_SPEC_BASE,
@@ -236,16 +236,16 @@ CAPSULE_SPECS = [
             "policy": POLICY,
             "adapter": {
                 "type": "hybrid",
-                "internalGraphRef": "private-dag://auteur/na/v1",
-                "clusterRef": "CL_NA_01",
+                "internalGraphRef": "private-dag://auteur/seoyeon/v1",
+                "clusterRef": "CL_SEOYEON_01",
                 "temporalPhases": ["HOOK", "BUILD", "PAYOFF"],
             },
         },
     },
     {
-        "capsule_key": "auteur.hong-sangsoo",
+        "capsule_key": "auteur.prism",
         "version": "1.0.1",
-        "display_name": "홍상수 스타일 캡슐",
+        "display_name": "마일로 프리즘 스타일 캡슐",
         "description": "정적 카메라와 대화 중심의 호흡을 유지합니다.",
         "spec": {
             **COMMON_SPEC_BASE,
@@ -261,8 +261,8 @@ CAPSULE_SPECS = [
             "policy": POLICY,
             "adapter": {
                 "type": "hybrid",
-                "internalGraphRef": "private-dag://auteur/hong/v1",
-                "clusterRef": "CL_HONG_01",
+                "internalGraphRef": "private-dag://auteur/prism/v1",
+                "clusterRef": "CL_PRISM_01",
                 "temporalPhases": ["HOOK", "BUILD", "PAYOFF"],
             },
         },

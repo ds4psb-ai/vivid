@@ -68,19 +68,19 @@ MOOD_MAPPING = {
 # =========================================================================
 
 REFERENCE_STYLE_TO_DOMAIN = {
-    # Korean Auteurs
-    "bong": ContentDomain.AUTEUR_BONG,
-    "park": ContentDomain.AUTEUR_BONG,  # Park Chan-wook
-    "hong": ContentDomain.AUTEUR_BONG,  # Hong Sang-soo
-    
-    # International Auteurs
-    "wong": ContentDomain.AUTEUR_WONG,
-    "wongkarwai": ContentDomain.AUTEUR_WONG,
-    "nolan": ContentDomain.AUTEUR_NOLAN,
-    "tarantino": ContentDomain.AUTEUR_TARANTINO,
-    "villeneuve": ContentDomain.AUTEUR_VILLENEUVE,
-    "shinkai": ContentDomain.AUTEUR_VILLENEUVE,  # anime → similar aesthetic
-    
+    # AI Auteur Personas (한국 이름)
+    "kang": ContentDomain.AUTEUR_BONG,  # 강주노 - 양면의 시선
+    "yoon": ContentDomain.AUTEUR_BONG,  # 윤수하 - 어둠의 미학
+    "seoyeon": ContentDomain.AUTEUR_BONG,  # 민서연 - 폭풍의 긴장
+
+    # AI Auteur Personas (글로벌)
+    "velvet": ContentDomain.AUTEUR_WONG,  # 렌 벨벳 - 네온 속 감정
+    "epoch": ContentDomain.AUTEUR_NOLAN,  # 테오 에포크 - 시간의 설계자
+    "voltage": ContentDomain.AUTEUR_TARANTINO,  # 렉스 볼티지 - 폭발적 에너지
+    "abyss": ContentDomain.AUTEUR_VILLENEUVE,  # 오리온 어비스 - 우주의 심연
+    "azure": ContentDomain.AUTEUR_VILLENEUVE,  # 소라 아주르 - 하늘빛 서정
+    "prism": ContentDomain.AUTEUR_NOLAN,  # 마일로 프리즘 - 기하학적 완벽
+
     # Style-based
     "cinematic": ContentDomain.GENRE_DRAMA,
     "documentary": ContentDomain.GENRE_DOCUMENTARY,
@@ -141,7 +141,7 @@ def infer_intent_from_request(
     Args:
         mood: 분위기 (예: "cinematic", "dramatic", "calm")
         style: 스타일 (예: "cinematic", "documentary")
-        reference_style: 참조 감독 스타일 (예: "bong", "wong", "nolan")
+        reference_style: AI 거장 스타일 (예: "kang", "velvet", "epoch")
         genre: 장르 (예: "drama", "thriller", "horror")
         tempo: 템포 (예: "slow", "medium", "fast")
         target_medium: 타겟 미디어 (예: "video", "image")

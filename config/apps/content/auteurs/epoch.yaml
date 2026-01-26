@@ -1,16 +1,17 @@
 $schema: "vivid-app/v2"
 
+# ===== AI Auteur: 테오 에포크 (Theo Epoch) =====
 metadata:
-  name: nolan
+  name: epoch
   type: auteur
   version: "1.0.0"
   bounded_context: content
 
 display:
-  name_ko: "크리스토퍼 놀란"
-  name_en: "Christopher Nolan"
+  name_ko: "테오 에포크"
+  name_en: "Theo Epoch"
   icon: "🎥"
-  description: "인셉션, 인터스텔라, 오펜하이머 감독. 시간과 공간의 마법사."
+  description: "시간의 설계자 - 시공간을 조각하는 서사 건축가."
 
 capabilities:
   - name: rag
@@ -32,17 +33,17 @@ extensions:
     corpus_type: v-shape
     sources:
       - type: source_pack
-        path: data/source_packs/nolan/*.json
+        path: data/source_packs/epoch/*.json
       - type: vertex_ai
-        corpus_name: auteur_nolan
-        
+        corpus_name: auteur_epoch
+
     style_hints:
       camera_style: stable
       lens_style: anamorphic
       aspect_ratio: "2.20:1"
       fps: 24
       film_stock: imax
-      
+
     themes:
       - 시간 조작과 비선형 서사
       - 실용 효과와 IMAX
@@ -51,12 +52,8 @@ extensions:
 
 keywords:
   patterns:
-    - "nolan"
-    - "놀란"
-    - "인셉션"
-    - "inception"
-    - "인터스텔라"
-    - "interstellar"
-    - "오펜하이머"
-    - "dunkirk"
-    - "tenet"
+    - "epoch"
+    - "테오 에포크"
+    - "temporal fold"
+    - "fifth dimension"
+    - "gravity's edge"

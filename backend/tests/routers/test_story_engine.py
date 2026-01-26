@@ -44,7 +44,7 @@ from app.routers.story_engine.system_prompt import (
 def mock_logic_vector() -> LogicVector:
     """Create a mock Logic Vector."""
     return LogicVector(
-        auteur_id="bong",
+        auteur_id="kang",
         confidence=0.85,
         cadence=Cadence(
             avg_shot_length=4.5,
@@ -69,7 +69,7 @@ def mock_logic_vector() -> LogicVector:
             shadow_quality="hard",
         ),
         color_science=ColorScience(
-            lut_reference="parasite_basement",
+            lut_reference="threshold_society",
             palette=["desaturated", "green_tint", "yellow_accent"],
             saturation_level="muted",
         ),
@@ -127,7 +127,7 @@ class TestSystemPromptGenerator:
         assert result.system_prompt
         assert result.platform == "veo"
         assert result.character_count > 0
-        assert "bong" in result.system_prompt.lower() or "joon-ho" in result.system_prompt.lower()
+        assert "kang" in result.system_prompt.lower() or "juno" in result.system_prompt.lower()
 
     def test_generate_with_story_structure(self, mock_logic_vector: LogicVector):
         """Test system prompt with story structure."""
@@ -205,11 +205,11 @@ class TestSystemPromptGenerator:
 
     def test_auteur_style_hints(self):
         """Test auteur style hints are available."""
-        assert "bong" in AUTEUR_STYLE_HINTS
-        assert "nolan" in AUTEUR_STYLE_HINTS
-        assert "kubrick" in AUTEUR_STYLE_HINTS
+        assert "kang" in AUTEUR_STYLE_HINTS
+        assert "epoch" in AUTEUR_STYLE_HINTS
+        assert "prism" in AUTEUR_STYLE_HINTS
 
-        hint = AUTEUR_STYLE_HINTS["bong"]
+        hint = AUTEUR_STYLE_HINTS["kang"]
         assert "vertical" in hint.lower() or "contrast" in hint.lower()
 
     def test_target_platform_enum(self):

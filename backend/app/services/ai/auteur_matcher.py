@@ -87,11 +87,11 @@ class AuteurTechnique(BaseModel):
 # =============================================================================
 
 
-# Auteur metadata for matching
+# AI Auteur Persona Registry (법적 안전성 + 창의적 자유)
 AUTEUR_REGISTRY: Dict[str, Dict[str, Any]] = {
-    "bong": {
-        "name": "Bong Joon-ho",
-        "name_ko": "봉준호",
+    "kang": {
+        "name": "Kang Juno",
+        "name_ko": "강주노",
         "signature_techniques": [
             "staircase_symbolism", "class_contrast", "genre_mixing",
             "long_take", "deep_focus", "dutch_angle"
@@ -103,14 +103,14 @@ AUTEUR_REGISTRY: Dict[str, Dict[str, Any]] = {
             "계층 상징", "계단 모티프", "반전 장치", "현실적 대사"
         ],
         "color_palettes": [
-            ["#2C3E50", "#BDC3C7", "#95A5A6"],  # Parasite basement
-            ["#F1C40F", "#E74C3C", "#2ECC71"],  # Bright contrast
+            ["#2C3E50", "#BDC3C7", "#95A5A6"],
+            ["#F1C40F", "#E74C3C", "#2ECC71"],
         ],
-        "films": ["기생충", "살인의 추억", "마더", "옥자", "괴물"],
+        "films": ["The Vertical Divide", "Threshold Society", "Mirrored Class"],
     },
-    "nolan": {
-        "name": "Christopher Nolan",
-        "name_ko": "크리스토퍼 놀란",
+    "epoch": {
+        "name": "Theo Epoch",
+        "name_ko": "테오 에포크",
         "signature_techniques": [
             "practical_effects", "imax_cinematography", "non_linear_narrative",
             "extreme_close_up", "cross_cutting", "natural_lighting"
@@ -119,17 +119,17 @@ AUTEUR_REGISTRY: Dict[str, Dict[str, Any]] = {
             "cerebral", "epic", "tense", "philosophical"
         ],
         "signature_elements": [
-            "시간 조작", "실제 촬영", "IMAX 대형 포맷", "한스 짐머 스코어"
+            "시간 조작", "실제 촬영", "IMAX 대형 포맷", "웅장한 스코어"
         ],
         "color_palettes": [
-            ["#1A1A2E", "#16213E", "#0F3460"],  # Dark blue
-            ["#E8D5B7", "#B8860B", "#8B7355"],  # Warm desaturated
+            ["#1A1A2E", "#16213E", "#0F3460"],
+            ["#E8D5B7", "#B8860B", "#8B7355"],
         ],
-        "films": ["인터스텔라", "덩케르크", "테넷", "인셉션", "다크나이트"],
+        "films": ["Temporal Fold", "The Fifth Dimension", "Gravity's Edge"],
     },
-    "wong": {
-        "name": "Wong Kar-wai",
-        "name_ko": "왕가위",
+    "velvet": {
+        "name": "Ren Velvet",
+        "name_ko": "렌 벨벳",
         "signature_techniques": [
             "step_printing", "slow_motion", "handheld_camera",
             "neon_lighting", "reflections", "window_framing"
@@ -141,14 +141,14 @@ AUTEUR_REGISTRY: Dict[str, Dict[str, Any]] = {
             "네온 조명", "비 내리는 거리", "담배 연기", "거울/창문 반사"
         ],
         "color_palettes": [
-            ["#FF6B6B", "#4ECDC4", "#2C3E50"],  # Neon contrast
-            ["#C0392B", "#1ABC9C", "#9B59B6"],  # Saturated
+            ["#FF6B6B", "#4ECDC4", "#2C3E50"],
+            ["#C0392B", "#1ABC9C", "#9B59B6"],
         ],
-        "films": ["화양연화", "중경삼림", "2046", "해피 투게더", "타락천사"],
+        "films": ["Neon Corridor", "Midnight Rain", "2AM Stories"],
     },
-    "tarantino": {
-        "name": "Quentin Tarantino",
-        "name_ko": "쿠엔틴 타란티노",
+    "voltage": {
+        "name": "Rex Voltage",
+        "name_ko": "렉스 볼티지",
         "signature_techniques": [
             "trunk_shot", "mexican_standoff", "chapter_structure",
             "long_dialogue", "feet_shot", "low_angle"
@@ -160,14 +160,14 @@ AUTEUR_REGISTRY: Dict[str, Dict[str, Any]] = {
             "챕터 구조", "긴 대화 씬", "팝컬처 레퍼런스", "비선형 서사"
         ],
         "color_palettes": [
-            ["#8B0000", "#FFD700", "#000000"],  # Kill Bill
-            ["#2F4F4F", "#8B4513", "#DAA520"],  # Western
+            ["#8B0000", "#FFD700", "#000000"],
+            ["#2F4F4F", "#8B4513", "#DAA520"],
         ],
-        "films": ["펄프 픽션", "킬 빌", "장고", "저수지의 개들", "원스 어폰 어 타임"],
+        "films": ["Voltage Rising", "Chapter Zero", "Blood Dialogue"],
     },
-    "park": {
-        "name": "Park Chan-wook",
-        "name_ko": "박찬욱",
+    "yoon": {
+        "name": "Yoon Suha",
+        "name_ko": "윤수하",
         "signature_techniques": [
             "symmetrical_composition", "long_take_violence", "color_coding",
             "tracking_shot", "split_screen", "mirror_shots"
@@ -179,14 +179,14 @@ AUTEUR_REGISTRY: Dict[str, Dict[str, Any]] = {
             "대칭 구도", "색채 코드", "복수 서사", "오페라틱 폭력"
         ],
         "color_palettes": [
-            ["#006400", "#8B0000", "#FFD700"],  # Oldboy
-            ["#4B0082", "#800020", "#2F4F4F"],  # Handmaiden
+            ["#006400", "#8B0000", "#FFD700"],
+            ["#4B0082", "#800020", "#2F4F4F"],
         ],
-        "films": ["올드보이", "아가씨", "친절한 금자씨", "박쥐", "헤어질 결심"],
+        "films": ["Obsidian Mirror", "The Elegant Revenge", "Crimson Silk"],
     },
-    "villeneuve": {
-        "name": "Denis Villeneuve",
-        "name_ko": "드니 빌뇌브",
+    "abyss": {
+        "name": "Orion Abyss",
+        "name_ko": "오리온 어비스",
         "signature_techniques": [
             "aerial_shots", "minimal_dialogue", "deakins_lighting",
             "wide_angle", "symmetry", "slow_reveal"
@@ -195,17 +195,17 @@ AUTEUR_REGISTRY: Dict[str, Dict[str, Any]] = {
             "atmospheric", "meditative", "ominous", "epic_scale"
         ],
         "signature_elements": [
-            "광활한 공간", "미니멀 대사", "로저 디킨스 촬영", "한스 짐머 스코어"
+            "광활한 공간", "미니멀 대사", "시네마틱 촬영", "앰비언트 스코어"
         ],
         "color_palettes": [
-            ["#C19A6B", "#8B7355", "#696969"],  # Dune desert
-            ["#2F4F4F", "#708090", "#A9A9A9"],  # Blade Runner
+            ["#C19A6B", "#8B7355", "#696969"],
+            ["#2F4F4F", "#708090", "#A9A9A9"],
         ],
-        "films": ["듄", "블레이드 러너 2049", "컨택트", "시카리오", "프리즈너스"],
+        "films": ["The Void Protocol", "Sand Empire", "First Contact"],
     },
-    "shinkai": {
-        "name": "Makoto Shinkai",
-        "name_ko": "신카이 마코토",
+    "azure": {
+        "name": "Sora Azure",
+        "name_ko": "소라 아주르",
         "signature_techniques": [
             "lens_flare", "rain_animation", "cloud_timelapse",
             "light_beam", "reflection_detail", "train_scenes"
@@ -217,10 +217,48 @@ AUTEUR_REGISTRY: Dict[str, Dict[str, Any]] = {
             "빛 표현", "구름 묘사", "비 애니메이션", "거리와 시간"
         ],
         "color_palettes": [
-            ["#87CEEB", "#FFB6C1", "#FFA07A"],  # Sunset sky
-            ["#4169E1", "#00CED1", "#FFFFFF"],  # Clear sky
+            ["#87CEEB", "#FFB6C1", "#FFA07A"],
+            ["#4169E1", "#00CED1", "#FFFFFF"],
         ],
-        "films": ["너의 이름은", "날씨의 아이", "초속 5센티미터", "언어의 정원", "스즈메의 문단속"],
+        "films": ["Azure Crossing", "Light Years Apart", "Cloud Memories"],
+    },
+    "prism": {
+        "name": "Milo Prism",
+        "name_ko": "마일로 프리즘",
+        "signature_techniques": [
+            "one_point_perspective", "long_take", "symmetrical_composition",
+            "wide_angle", "steadicam", "practical_lighting"
+        ],
+        "signature_moods": [
+            "cold_observation", "human_nature", "perfectionist", "unsettling"
+        ],
+        "signature_elements": [
+            "원포인트 원근법", "롱 테이크", "대칭 구도", "불안한 정적"
+        ],
+        "color_palettes": [
+            ["#FFFFFF", "#FF0000", "#000000"],
+            ["#2D3436", "#636E72", "#B2BEC3"],
+        ],
+        "films": ["Geometric Madness", "The Perfect Frame", "Symmetry"],
+    },
+    "seoyeon": {
+        "name": "Min Seoyeon",
+        "name_ko": "민서연",
+        "signature_techniques": [
+            "handheld_camera", "natural_lighting", "intense_editing",
+            "close_up", "long_take", "real_locations"
+        ],
+        "signature_moods": [
+            "raw_realism", "suspenseful", "psychological_horror", "relentless"
+        ],
+        "signature_elements": [
+            "핸드헬드 카메라", "자연광", "긴박한 편집", "로케이션 촬영"
+        ],
+        "color_palettes": [
+            ["#1A1A1A", "#2D2D2D", "#4A4A4A"],
+            ["#8B0000", "#2F2F2F", "#5C5C5C"],
+        ],
+        "films": ["Tempest Village", "The Chase", "Raw Tension"],
     },
 }
 

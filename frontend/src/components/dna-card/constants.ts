@@ -38,131 +38,140 @@ export const DNA_CARD_CONFIG: Record<
   },
 };
 
-// P0: 거장별 고유 메타데이터 (AUTEUR_REGISTRY 기반)
+// P0: AI Auteur 페르소나 메타데이터 (법적 안전성 + 창의적 자유)
 export const AUTEUR_SPECIFIC_DATA: Record<string, MasterDNAMetadata> = {
-  bong: {
-    auteurKey: "bong",
+  kang: {
+    auteurKey: "kang",
     signatureTechniques: ["수직 블로킹", "비대칭 프레이밍", "장면 간 대비"],
     signatureMoods: ["블랙 코미디", "사회 비판", "긴장감"],
     colorPalettes: [["#1a1a2e", "#16213e", "#0f3460", "#e94560"]],
-    films: ["기생충", "살인의 추억", "괴물", "마더", "옥자"],
+    films: ["The Vertical Divide", "Threshold Society", "Mirrored Class"],
   },
-  nolan: {
-    auteurKey: "nolan",
+  epoch: {
+    auteurKey: "epoch",
     signatureTechniques: ["비선형 내러티브", "IMAX 촬영", "실제 스턴트"],
     signatureMoods: ["서사적 규모", "시간 왜곡", "철학적 탐구"],
     colorPalettes: [["#0a0a0a", "#1c1c1c", "#3d5a80", "#98c1d9"]],
-    films: ["다크 나이트", "인셉션", "인터스텔라", "테넷", "오펜하이머"],
+    films: ["Temporal Fold", "The Fifth Dimension", "Gravity's Edge"],
   },
-  wong: {
-    auteurKey: "wong",
+  velvet: {
+    auteurKey: "velvet",
     signatureTechniques: ["스텝 프린팅", "스모키 렌즈", "네온 조명"],
     signatureMoods: ["멜랑콜리", "도시적 고독", "감각적 로맨스"],
     colorPalettes: [["#ff6b6b", "#c44569", "#546de5", "#303952"]],
-    films: ["화양연화", "중경삼림", "2046", "해피 투게더"],
+    films: ["Neon Corridor", "Midnight Rain", "2AM Stories"],
   },
-  tarantino: {
-    auteurKey: "tarantino",
+  voltage: {
+    auteurKey: "voltage",
     signatureTechniques: ["트렁크 샷", "비선형 편집", "장면 긴장"],
     signatureMoods: ["팝 문화 오마주", "블랙 유머", "폭력의 미학"],
     colorPalettes: [["#e74c3c", "#f1c40f", "#2c3e50", "#ecf0f1"]],
-    films: ["펄프 픽션", "킬 빌", "장고: 분노의 추적자", "원스 어폰 어 타임"],
+    films: ["Voltage Rising", "Chapter Zero", "Blood Dialogue"],
   },
-  park: {
-    auteurKey: "park",
+  yoon: {
+    auteurKey: "yoon",
     signatureTechniques: ["대칭 구도", "색채 상징", "폭력 안무"],
     signatureMoods: ["복수 서사", "에로티시즘", "충격적 반전"],
     colorPalettes: [["#2d3436", "#636e72", "#b2bec3", "#dfe6e9"]],
-    films: ["올드보이", "아가씨", "친절한 금자씨", "박쥐"],
+    films: ["Obsidian Mirror", "The Elegant Revenge", "Crimson Silk"],
   },
-  villeneuve: {
-    auteurKey: "villeneuve",
+  abyss: {
+    auteurKey: "abyss",
     signatureTechniques: ["광활한 스케일", "사운드 디자인", "미니멀 대사"],
     signatureMoods: ["존재론적 불안", "장엄한 고독", "서서히 고조"],
     colorPalettes: [["#f5e6d3", "#d4a574", "#8b7355", "#2c2c2c"]],
-    films: ["블레이드 러너 2049", "듄", "시카리오", "어라이벌"],
+    films: ["The Void Protocol", "Sand Empire", "First Contact"],
   },
-  shinkai: {
-    auteurKey: "shinkai",
+  azure: {
+    auteurKey: "azure",
     signatureTechniques: ["하이퍼 리얼리즘", "빛 산란 효과", "하늘/구름 묘사"],
     signatureMoods: ["청춘 그리움", "시간 초월 사랑", "자연과 도시"],
     colorPalettes: [["#74b9ff", "#0984e3", "#6c5ce7", "#fd79a8"]],
-    films: ["너의 이름은", "날씨의 아이", "스즈메의 문단속", "초속 5센티미터"],
+    films: ["Azure Crossing", "Light Years Apart", "Cloud Memories"],
   },
-  kubrick: {
-    auteurKey: "kubrick",
+  prism: {
+    auteurKey: "prism",
     signatureTechniques: ["원포인트 원근법", "롱 테이크", "대칭 구도"],
     signatureMoods: ["냉소적 관찰", "인간 본성 탐구", "완벽주의"],
     colorPalettes: [["#ffffff", "#ff0000", "#000000", "#2d3436"]],
-    films: [
-      "2001 스페이스 오디세이",
-      "샤이닝",
-      "시계태엽 오렌지",
-      "풀 메탈 재킷",
-    ],
+    films: ["Geometric Madness", "The Perfect Frame", "Symmetry"],
+  },
+  seoyeon: {
+    auteurKey: "seoyeon",
+    signatureTechniques: ["핸드헬드 카메라", "자연광", "긴박한 편집"],
+    signatureMoods: ["거친 리얼리즘", "긴박한 서스펜스", "심리적 공포"],
+    colorPalettes: [["#1a1a1a", "#2d2d2d", "#4a4a4a", "#8b0000"]],
+    films: ["Tempest Village", "The Chase", "Raw Tension"],
   },
 };
 
-// 거장 목록 (프론트엔드 표시용)
+// AI Auteur 목록 (프론트엔드 표시용)
 export const MASTER_AUTEURS = [
   {
-    key: "bong",
-    name: "봉준호",
-    nameEn: "Bong Joon-ho",
-    thumbnail: "/auteurs/bong.jpg",
+    key: "kang",
+    name: "강주노",
+    nameEn: "Kang Juno",
+    thumbnail: "/auteurs/kang.jpg",
   },
   {
-    key: "nolan",
-    name: "크리스토퍼 놀란",
-    nameEn: "Christopher Nolan",
-    thumbnail: "/auteurs/nolan.jpg",
+    key: "epoch",
+    name: "테오 에포크",
+    nameEn: "Theo Epoch",
+    thumbnail: "/auteurs/epoch.jpg",
   },
   {
-    key: "wong",
-    name: "왕가위",
-    nameEn: "Wong Kar-wai",
-    thumbnail: "/auteurs/wong.jpg",
+    key: "velvet",
+    name: "렌 벨벳",
+    nameEn: "Ren Velvet",
+    thumbnail: "/auteurs/velvet.jpg",
   },
   {
-    key: "tarantino",
-    name: "쿠엔틴 타란티노",
-    nameEn: "Quentin Tarantino",
-    thumbnail: "/auteurs/tarantino.jpg",
+    key: "voltage",
+    name: "렉스 볼티지",
+    nameEn: "Rex Voltage",
+    thumbnail: "/auteurs/voltage.jpg",
   },
   {
-    key: "park",
-    name: "박찬욱",
-    nameEn: "Park Chan-wook",
-    thumbnail: "/auteurs/park.jpg",
+    key: "yoon",
+    name: "윤수하",
+    nameEn: "Yoon Suha",
+    thumbnail: "/auteurs/yoon.jpg",
   },
   {
-    key: "villeneuve",
-    name: "드니 빌뇌브",
-    nameEn: "Denis Villeneuve",
-    thumbnail: "/auteurs/villeneuve.jpg",
+    key: "abyss",
+    name: "오리온 어비스",
+    nameEn: "Orion Abyss",
+    thumbnail: "/auteurs/abyss.jpg",
   },
   {
-    key: "shinkai",
-    name: "신카이 마코토",
-    nameEn: "Makoto Shinkai",
-    thumbnail: "/auteurs/shinkai.jpg",
+    key: "azure",
+    name: "소라 아주르",
+    nameEn: "Sora Azure",
+    thumbnail: "/auteurs/azure.jpg",
   },
   {
-    key: "kubrick",
-    name: "스탠리 큐브릭",
-    nameEn: "Stanley Kubrick",
-    thumbnail: "/auteurs/kubrick.jpg",
+    key: "prism",
+    name: "마일로 프리즘",
+    nameEn: "Milo Prism",
+    thumbnail: "/auteurs/prism.jpg",
+  },
+  {
+    key: "seoyeon",
+    name: "민서연",
+    nameEn: "Min Seoyeon",
+    thumbnail: "/auteurs/seoyeon.jpg",
   },
 ];
 
-// 거장별 hue 값 매핑
+// AI Auteur별 hue 값 매핑
 export const AUTEUR_HUE_MAP: Record<string, number> = {
-  bong: 45, // Gold/Amber - 기생충의 황금빛
-  nolan: 220, // Blue - 인터스텔라의 우주
-  wong: 340, // Magenta/Pink - 화양연화의 붉은 색감
-  tarantino: 15, // Red-Orange - 피와 폭력
-  park: 180, // Cyan - 차가운 복수
-  villeneuve: 35, // Sand/Desert - 듄의 사막
-  shinkai: 200, // Sky Blue - 하늘과 구름
-  kubrick: 0, // Red - 샤이닝의 붉은색
+  kang: 45, // Gold/Amber - 양면의 시선
+  epoch: 220, // Blue - 시간의 설계자
+  velvet: 340, // Magenta/Pink - 네온 속 감정
+  voltage: 15, // Red-Orange - 폭발적 에너지
+  yoon: 180, // Cyan - 어둠의 미학
+  abyss: 35, // Sand/Desert - 우주의 심연
+  azure: 200, // Sky Blue - 하늘빛 서정
+  prism: 0, // Red - 기하학적 완벽
+  seoyeon: 270, // Purple - 폭풍의 긴장
 };

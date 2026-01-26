@@ -1,0 +1,59 @@
+$schema: "vivid-app/v2"
+
+# ===== AI Auteur: 마일로 프리즘 (Milo Prism) =====
+metadata:
+  name: prism
+  type: auteur
+  version: "1.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "마일로 프리즘"
+  name_en: "Milo Prism"
+  icon: "🔺"
+  description: "기하학적 완벽 - 대칭과 광기 사이의 냉철함을 담아내는 AI 거장."
+
+capabilities:
+  - name: rag
+    enabled: true
+    config:
+      mode: auteur_only
+      confidence_threshold: 0.7
+      retrieval:
+        strategy: hybrid
+        top_k: 10
+
+  - name: cache
+    enabled: true
+    config:
+      ttl: 7200
+
+extensions:
+  auteur:
+    corpus_type: v-shape
+    sources:
+      - type: source_pack
+        path: data/source_packs/prism/*.json
+      - type: vertex_ai
+        corpus_name: auteur_prism
+
+    style_hints:
+      camera_style: methodical
+      composition: one_point_perspective
+      symmetry: extreme
+      pacing: deliberate
+      color_grade: controlled
+
+    themes:
+      - 인간 본성의 탐구
+      - 기하학적 구도
+      - 냉철한 관찰
+      - 완벽주의와 광기
+
+keywords:
+  patterns:
+    - "prism"
+    - "마일로 프리즘"
+    - "geometric madness"
+    - "perfect frame"
+    - "symmetry"

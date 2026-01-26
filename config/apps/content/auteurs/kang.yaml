@@ -1,17 +1,17 @@
 $schema: "vivid-app/v2"
 
-# ===== 공통 메타데이터 =====
+# ===== AI Auteur: 강주노 (Kang Juno) =====
 metadata:
-  name: bong
+  name: kang
   type: auteur
   version: "1.0.0"
   bounded_context: content
 
 display:
-  name_ko: "봉준호"
-  name_en: "Bong Joon-ho"
+  name_ko: "강주노"
+  name_en: "Kang Juno"
   icon: "🎬"
-  description: "기생충, 마더, 옥자 등의 감독. 사회비판과 장르 블렌딩의 거장."
+  description: "양면의 시선 - 비대칭 구도와 사회의 이면을 포착하는 AI 거장."
 
 # ===== Capability 플러그인 =====
 capabilities:
@@ -40,18 +40,18 @@ extensions:
     corpus_type: v-shape
     sources:
       - type: source_pack
-        path: data/source_packs/bong/*.json
+        path: data/source_packs/kang/*.json
       - type: notebooklm
-        notebook_id: bong_visual_dna
+        notebook_id: kang_visual_dna
       - type: vertex_ai
-        corpus_name: auteur_bong
-        
+        corpus_name: auteur_kang
+
     style_hints:
       camera_style: tracking
       aspect_ratio: "2.35:1"
       color_grade: naturalistic
       lens_style: wide
-      
+
     themes:
       - 사회적 계급과 불평등
       - 장르 블렌딩 (희극+비극)
@@ -61,10 +61,8 @@ extensions:
 # ===== 키워드 패턴 =====
 keywords:
   patterns:
-    - "bong"
-    - "봉준호"
-    - "기생충"
-    - "parasite"
-    - "마더"
-    - "옥자"
-    - "살인의.*추억"
+    - "kang"
+    - "강주노"
+    - "vertical divide"
+    - "threshold society"
+    - "mirrored class"

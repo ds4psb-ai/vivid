@@ -102,8 +102,8 @@ async def list_intent_presets_by_category(
     
     # 카테고리 분류
     auteur_presets = [
-        "cinematic_bong", "cinematic_nolan", "cinematic_villeneuve",
-        "cinematic_wong", "horror_na", "arthouse_hong", "animation_shinkai",
+        "cinematic_kang", "cinematic_epoch", "cinematic_abyss",
+        "cinematic_velvet", "cinematic_seoyeon", "cinematic_yoon", "animation_azure",
     ]
     platform_presets = [
         "shortform_energetic", "music_video", "youtube_tutorial",

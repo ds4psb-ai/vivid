@@ -1,16 +1,17 @@
 $schema: "vivid-app/v2"
 
+# ===== AI Auteur: 렌 벨벳 (Ren Velvet) =====
 metadata:
-  name: wong
+  name: velvet
   type: auteur
   version: "1.0.0"
   bounded_context: content
 
 display:
-  name_ko: "왕가위"
-  name_en: "Wong Kar-wai"
+  name_ko: "렌 벨벳"
+  name_en: "Ren Velvet"
   icon: "🌃"
-  description: "화양연화, 중경삼림 감독. 색채와 감정의 시인."
+  description: "네온 속 감정 - 도시의 밤과 스쳐가는 사랑을 담아내는 AI 거장."
 
 capabilities:
   - name: rag
@@ -32,17 +33,17 @@ extensions:
     corpus_type: v-shape
     sources:
       - type: source_pack
-        path: data/source_packs/wong/*.json
+        path: data/source_packs/velvet/*.json
       - type: vertex_ai
-        corpus_name: auteur_wong
-        
+        corpus_name: auteur_velvet
+
     style_hints:
       camera_style: handheld
       color_grade: saturated
       step_printing: true
       slow_motion: true
       neon_lights: true
-      
+
     themes:
       - 사랑과 그리움
       - 시간과 기억
@@ -51,11 +52,8 @@ extensions:
 
 keywords:
   patterns:
-    - "wong"
-    - "왕가위"
-    - "화양연화"
-    - "in.*the.*mood"
-    - "중경삼림"
-    - "chungking"
-    - "타락천사"
-    - "해피.*투게더"
+    - "velvet"
+    - "렌 벨벳"
+    - "neon corridor"
+    - "midnight rain"
+    - "2am stories"

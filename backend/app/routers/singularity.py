@@ -492,12 +492,12 @@ async def seed_templates(
             "tool_sequence": ["AI", "AD", "STORY", "2D", "1D", "3D"],
             "input_preset": {
                 "depth": "deep",
-                "reference_style": "bong",
+                "reference_style": "kang",
                 "mood": "atmospheric",
                 "target_medium": "video",
             },
             "output_example": {
-                "visual_guidelines": "봉준호 스타일 가이드",
+                "visual_guidelines": "강주노 스타일 가이드",
                 "color_palette": ["#2D3436", "#636E72", "#B2BEC3"],
                 "image_prompts": ["Scene 1 prompt", "Scene 2 prompt"],
             },
@@ -783,19 +783,19 @@ async def seed_templates(
         # 추가 워크플로우 - 직관적 이름
         # =============================================================================
         {
-            "title": "감독 스타일 뮤비",
-            "description": "나의 창작 DNA + 거장 감독 스타일 + BGM까지. 봉준호/박찬욱 등 6인 감독 스타일로 뮤직비디오 완성.",
+            "title": "AI 거장 스타일 뮤비",
+            "description": "나의 창작 DNA + AI 거장 스타일 + BGM까지. 강주노/윤수하 등 9인 AI 거장 스타일로 뮤직비디오 완성.",
             "thumbnail_url": "/images/portfolio_mv.png",
             "dimension_source": "AI",
             "tool_sequence": ["AI", "AD", "STORY", "2D", "SOUND", "VEO"],
             "input_preset": {
                 "depth": "deep",
-                "reference_style": "bong",
+                "reference_style": "kang",
                 "sound_type": "bgm",
                 "genre": "cinematic",
             },
             "output_example": {
-                "auteur_style": "봉준호 - 긴장감 있는 미장센",
+                "auteur_style": "강주노 - 긴장감 있는 미장센",
                 "music_prompt": "Suno/Udio 호환 프롬프트",
                 "video_uri": "generated_video.mp4",
             },

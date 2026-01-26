@@ -28,8 +28,8 @@ def auteur_matcher():
 
 
 @pytest.fixture
-def bong_style_result():
-    """Create a StyleExtractionResult matching Bong Joon-ho's style."""
+def kang_style_result():
+    """Create a StyleExtractionResult matching Kang Juno's style."""
     return StyleExtractionResult(
         dominant_colors=["#2C3E50", "#BDC3C7", "#95A5A6"],
         color_palette=["#2C3E50", "#BDC3C7", "#95A5A6", "#f0f0f0", "#d4af37"],
@@ -49,8 +49,8 @@ def bong_style_result():
 
 
 @pytest.fixture
-def nolan_style_result():
-    """Create a StyleExtractionResult matching Christopher Nolan's style."""
+def epoch_style_result():
+    """Create a StyleExtractionResult matching Theo Epoch's style."""
     return StyleExtractionResult(
         dominant_colors=["#0a1520", "#1e3a5f", "#2c4a6e"],
         color_palette=["#0a1520", "#1e3a5f", "#c0c0c0", "#d4af37", "#f0f0f0"],
@@ -91,8 +91,8 @@ class TestAuteurRegistry:
     """Tests for auteur registry configuration."""
 
     def test_registry_has_expected_auteurs(self):
-        """Test that registry contains expected auteurs."""
-        expected_keys = ["bong", "nolan", "wong", "tarantino", "park", "villeneuve", "shinkai"]
+        """Test that registry contains expected AI auteurs."""
+        expected_keys = ["kang", "epoch", "velvet", "voltage", "yoon", "abyss", "azure", "prism", "seoyeon"]
         for key in expected_keys:
             assert key in AUTEUR_REGISTRY
 
@@ -104,11 +104,11 @@ class TestAuteurRegistry:
             assert "signature_techniques" in auteur
             assert "signature_moods" in auteur
 
-    def test_bong_auteur_details(self):
-        """Test Bong Joon-ho auteur details."""
-        bong = AUTEUR_REGISTRY["bong"]
-        assert bong["name_ko"] == "봉준호"
-        assert "staircase_symbolism" in bong["signature_techniques"]
+    def test_kang_auteur_details(self):
+        """Test Kang Juno (강주노) auteur details."""
+        kang = AUTEUR_REGISTRY["kang"]
+        assert kang["name_ko"] == "강주노"
+        assert "staircase_symbolism" in kang["signature_techniques"]
 
 
 # =============================================================================
@@ -120,10 +120,10 @@ class TestStyleMatching:
     """Tests for style-to-auteur matching."""
 
     @pytest.mark.asyncio
-    async def test_match_bong_style(self, auteur_matcher, bong_style_result):
-        """Test matching Bong Joon-ho style."""
+    async def test_match_kang_style(self, auteur_matcher, kang_style_result):
+        """Test matching Kang Juno style."""
         matches = await auteur_matcher.match_style_to_auteurs(
-            bong_style_result, max_matches=3
+            kang_style_result, max_matches=3
         )
 
         assert len(matches) > 0
@@ -136,22 +136,22 @@ class TestStyleMatching:
         assert 0 <= first_match.similarity_score <= 1
 
     @pytest.mark.asyncio
-    async def test_match_nolan_style(self, auteur_matcher, nolan_style_result):
-        """Test matching Christopher Nolan style."""
+    async def test_match_epoch_style(self, auteur_matcher, epoch_style_result):
+        """Test matching Theo Epoch style."""
         matches = await auteur_matcher.match_style_to_auteurs(
-            nolan_style_result, max_matches=3
+            epoch_style_result, max_matches=3
         )
 
         assert len(matches) > 0
-        # Nolan should be in top matches for his style
+        # Epoch should be in top matches for his style
         auteur_keys = [m.auteur_key for m in matches]
         # Note: May not always be exact match due to algorithm
 
     @pytest.mark.asyncio
-    async def test_match_returns_sorted_by_score(self, auteur_matcher, bong_style_result):
+    async def test_match_returns_sorted_by_score(self, auteur_matcher, kang_style_result):
         """Test that matches are sorted by similarity score."""
         matches = await auteur_matcher.match_style_to_auteurs(
-            bong_style_result, max_matches=5
+            kang_style_result, max_matches=5
         )
 
         if len(matches) > 1:
@@ -159,10 +159,10 @@ class TestStyleMatching:
                 assert matches[i].similarity_score >= matches[i + 1].similarity_score
 
     @pytest.mark.asyncio
-    async def test_match_max_matches_limit(self, auteur_matcher, bong_style_result):
+    async def test_match_max_matches_limit(self, auteur_matcher, kang_style_result):
         """Test max_matches parameter."""
         matches = await auteur_matcher.match_style_to_auteurs(
-            bong_style_result, max_matches=2
+            kang_style_result, max_matches=2
         )
 
         assert len(matches) <= 2
@@ -193,18 +193,18 @@ class TestTechniqueRetrieval:
     @pytest.mark.asyncio
     async def test_get_auteur_techniques_all(self, auteur_matcher):
         """Test getting all techniques for an auteur."""
-        techniques = await auteur_matcher.get_auteur_techniques("bong")
+        techniques = await auteur_matcher.get_auteur_techniques("kang")
 
         assert len(techniques) > 0
         for tech in techniques:
             assert isinstance(tech, AuteurTechnique)
-            assert tech.auteur_key == "bong"
+            assert tech.auteur_key == "kang"
 
     @pytest.mark.asyncio
     async def test_get_auteur_techniques_by_category(self, auteur_matcher):
         """Test getting techniques filtered by category."""
         techniques = await auteur_matcher.get_auteur_techniques(
-            "nolan", category="camera"
+            "epoch", category="camera"
         )
 
         # Should only return camera-related techniques
@@ -227,10 +227,10 @@ class TestEvidenceRefs:
     """Tests for evidence_refs generation."""
 
     @pytest.mark.asyncio
-    async def test_match_includes_evidence_refs(self, auteur_matcher, bong_style_result):
+    async def test_match_includes_evidence_refs(self, auteur_matcher, kang_style_result):
         """Test that matches include evidence refs."""
         matches = await auteur_matcher.match_style_to_auteurs(
-            bong_style_result, max_matches=1
+            kang_style_result, max_matches=1
         )
 
         if matches:
@@ -252,13 +252,13 @@ class TestAuteurMatchModel:
     def test_auteur_match_creation(self):
         """Test creating AuteurMatch instance."""
         match = AuteurMatch(
-            auteur_key="bong",
-            auteur_name="Bong Joon-ho",
+            auteur_key="kang",
+            auteur_name="Kang Juno",
             similarity_score=0.85,
             matching_techniques=["staircase", "class_contrast"],
-            evidence_refs=["db:auteurs:bong"],
+            evidence_refs=["db:auteurs:kang"],
         )
-        assert match.auteur_key == "bong"
+        assert match.auteur_key == "kang"
         assert match.similarity_score == 0.85
 
 
