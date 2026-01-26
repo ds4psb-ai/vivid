@@ -238,33 +238,41 @@ def upgrade() -> None:
     # INSERT DEFAULT POLICY
     # ==========================================================================
 
-    # Insert default policy
+    # Insert default policy (include all NOT NULL columns)
     op.execute("""
         INSERT INTO mcp_policies (
             policy_id, name, description,
+            allowed_servers, denied_servers, allowed_tools, denied_tools,
             max_calls_per_minute, max_calls_per_hour, max_calls_per_day,
             max_credit_per_call, max_credit_per_day,
+            allowed_hours_start, allowed_hours_end, require_run_token,
             audit_level, status, priority
         ) VALUES (
             'default', 'Default Policy', 'Default MCP access policy for all users',
+            '{}', '{}', '{}', '{}',
             30, 500, 5000,
             100, 10000,
+            0, 24, false,
             'basic', 'active', 0
         )
         ON CONFLICT (policy_id) DO NOTHING
     """)
 
-    # Insert premium policy
+    # Insert premium policy (include all NOT NULL columns)
     op.execute("""
         INSERT INTO mcp_policies (
             policy_id, name, description,
+            allowed_servers, denied_servers, allowed_tools, denied_tools,
             max_calls_per_minute, max_calls_per_hour, max_calls_per_day,
             max_credit_per_call, max_credit_per_day,
+            allowed_hours_start, allowed_hours_end, require_run_token,
             audit_level, status, priority
         ) VALUES (
             'premium', 'Premium Policy', 'Premium tier MCP access with higher limits',
+            '{}', '{}', '{}', '{}',
             100, 2000, 20000,
             500, 50000,
+            0, 24, false,
             'full', 'active', 10
         )
         ON CONFLICT (policy_id) DO NOTHING
