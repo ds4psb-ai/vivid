@@ -13,10 +13,9 @@ import React, { Suspense } from "react";
 import { CrebitNavbar } from "@/components/home/CrebitNavbar";
 import { CinematicHero, FeaturedIP } from "@/components/home/CinematicHero";
 import { MegaAppShowcase } from "@/components/home/MegaAppShowcase";
-import { DNACardsSection } from "@/components/home/DNACardsSection";
 import { VariationsGrid, VariationCard } from "@/components/home/VariationsGrid";
 import { FeaturedCharacters } from "@/components/home/FeaturedCharacters";
-import { MastersTouchSection } from "@/components/home/MastersTouchSection";
+import { AIDirectorSection } from "@/components/home/AIDirectorSection";
 import { HumanCloudCTA } from "@/components/home/HumanCloudCTA";
 import { CrebitFooter } from "@/components/home/CrebitFooter";
 
@@ -114,22 +113,19 @@ function HomePageContent() {
         {/* 1. Cinematic Hero */}
         <CinematicHero featured={FEATURED_IP} />
 
-        {/* 2. Mega App Showcase */}
+        {/* 2. Mega App Showcase - User AI Cinema */}
         <MegaAppShowcase />
 
-        {/* 3. DNA Cards Section */}
-        <DNACardsSection />
-
-        {/* 4. Variations Grid */}
+        {/* 3. Variations Grid - 가능한 변형 */}
         <VariationsGrid variations={VARIATION_CARDS} />
 
-        {/* 5. Featured Characters */}
+        {/* 4. Featured Characters - 추천 캐릭터 */}
         <FeaturedCharacters />
 
-        {/* 6. Masters Touch */}
-        <MastersTouchSection />
+        {/* 5. AI Director Section - AI 디렉터 */}
+        <AIDirectorSection />
 
-        {/* 7. Human Cloud CTA */}
+        {/* 6. Human Cloud CTA */}
         <HumanCloudCTA />
       </main>
 
