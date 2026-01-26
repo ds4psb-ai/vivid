@@ -184,10 +184,22 @@ async def get_db_context():
 
 async def init_db(drop_all: bool = False) -> None:
     """Initialize database. If drop_all=True, drop all tables first (dev only)."""
+    from app.config import settings
+    import logging
+    logger = logging.getLogger("database")
+
     async with engine.begin() as conn:
         if drop_all:
             await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
+
+        # In production, skip create_all() - use Alembic migrations instead
+        # create_all() can fail on existing indexes (DuplicateTableError)
+        is_prod = settings.ENVIRONMENT.lower() in {"production", "prod", "staging"}
+        if is_prod:
+            logger.info("[DB] Production mode - skipping create_all(), using Alembic migrations")
+        else:
+            logger.info("[DB] Development mode - running create_all()")
+            await conn.run_sync(Base.metadata.create_all)
         await conn.execute(
             text("ALTER TABLE canvases ADD COLUMN IF NOT EXISTS version INTEGER DEFAULT 1")
         )
