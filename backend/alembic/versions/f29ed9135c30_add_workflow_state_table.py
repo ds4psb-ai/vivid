@@ -20,7 +20,16 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    """Add workflow_states table."""
+    """Add workflow_states table (idempotent)."""
+    from sqlalchemy import inspect
+
+    bind = op.get_bind()
+    inspector = inspect(bind)
+    existing_tables = inspector.get_table_names()
+
+    if 'workflow_states' in existing_tables:
+        return  # Already exists, skip
+
     op.create_table('workflow_states',
         sa.Column('id', sa.UUID(), nullable=False),
         sa.Column('session_id', sa.UUID(), nullable=False),
