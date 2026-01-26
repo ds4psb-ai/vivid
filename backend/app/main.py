@@ -148,32 +148,67 @@ from app.monitoring import setup_monitoring
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    import logging
+    logger = logging.getLogger("startup")
+
+    logger.info("[STARTUP] Starting lifespan initialization...")
+    logger.info(f"[STARTUP] ENVIRONMENT={settings.ENVIRONMENT}")
+    logger.info(f"[STARTUP] DATABASE_URL set: {bool(settings.DATABASE_URL_OVERRIDE)}")
+    logger.info(f"[STARTUP] REDIS_URL={settings.REDIS_URL[:30]}...")
+
     # Validate production configuration (fail fast)
     if settings.ENVIRONMENT.lower() in {"production", "prod", "staging"}:
         warnings = settings.validate_production_config()
         if warnings:
-            import logging
-            logger = logging.getLogger("startup")
             for warning in warnings:
                 logger.warning(f"[PROD CONFIG] {warning}")
 
     # Initialize database
-    await init_db(drop_all=False)
-    
-    # Initialize Redis client
+    try:
+        logger.info("[STARTUP] Initializing database...")
+        await init_db(drop_all=False)
+        logger.info("[STARTUP] Database initialized successfully")
+    except Exception as e:
+        logger.error(f"[STARTUP] Database initialization failed: {e}")
+        raise  # DB failure is fatal
+
+    # Initialize Redis client (non-fatal - app can run without Redis)
     from app.redis_client import init_redis, close_redis
-    await init_redis()
-    
-    # Initialize Arq Redis Pool
-    app.state.arq_pool = await create_pool(RedisSettings.from_dsn(settings.REDIS_URL))
-    
+    redis_available = False
+    try:
+        logger.info("[STARTUP] Initializing Redis client...")
+        await init_redis()
+        redis_available = True
+        logger.info("[STARTUP] Redis client initialized successfully")
+    except Exception as e:
+        logger.warning(f"[STARTUP] Redis client initialization failed (non-fatal): {e}")
+
+    # Initialize Arq Redis Pool (non-fatal)
+    app.state.arq_pool = None
+    if redis_available:
+        try:
+            logger.info("[STARTUP] Creating Arq Redis pool...")
+            app.state.arq_pool = await create_pool(RedisSettings.from_dsn(settings.REDIS_URL))
+            logger.info("[STARTUP] Arq Redis pool created successfully")
+        except Exception as e:
+            logger.warning(f"[STARTUP] Arq Redis pool creation failed (non-fatal): {e}")
+
+    logger.info("[STARTUP] Lifespan initialization complete - app is ready")
+
     yield
-    
+
     # Close Arq Redis Pool
-    await app.state.arq_pool.close()
-    
+    if app.state.arq_pool:
+        try:
+            await app.state.arq_pool.close()
+        except Exception:
+            pass
+
     # Close Redis client
-    await close_redis()
+    try:
+        await close_redis()
+    except Exception:
+        pass
 
 
 app = FastAPI(

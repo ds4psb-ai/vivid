@@ -10,6 +10,7 @@
 
 | 목적 | 문서 |
 |------|------|
+| **⭐ 메가앱 아키텍처** | [MEGA_APP_ARCHITECTURE_2026.md](./MEGA_APP_ARCHITECTURE_2026.md) |
 | **핸드오버** | [HANDOVER_2026_01_25.md](./HANDOVER_2026_01_25.md) |
 | 프로젝트 개요 | [README.md](./README.md) |
 | 앱 개발 시작 | [DIMENSION_APP_DEVELOPER_GUIDE.md](./DIMENSION_APP_DEVELOPER_GUIDE.md) |
@@ -51,6 +52,8 @@
 
 | 문서 | 설명 | 상태 |
 |------|------|------|
+| [MEGA_APP_ARCHITECTURE_2026.md](./MEGA_APP_ARCHITECTURE_2026.md) | **⭐ 3-메가앱 아키텍처 SSoT** | ✅ Active |
+| [MEGA_APP_IMPLEMENTATION_ROADMAP_2026.md](./MEGA_APP_IMPLEMENTATION_ROADMAP_2026.md) | **⭐ 메가앱 구현 로드맵 (코드 예시)** | ✅ Active |
 | [2026_PRIORITY_ROADMAP.md](./2026_PRIORITY_ROADMAP.md) | 2026 우선순위 로드맵 | ✅ Active |
 | [15_HARDENING_MASTER_PLAN_2026.md](./15_HARDENING_MASTER_PLAN_2026.md) | **Phase 1-10 하드닝 마스터플랜 (보안/안정성 강화)** | ✅ Active |
 | [P0_IMPLEMENTATION_SPEC_2026.md](./P0_IMPLEMENTATION_SPEC_2026.md) | P0 상세 설계서 | ✅ Active |

@@ -2,12 +2,14 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 /**
- * Next.js Middleware for Route Protection
+ * Next.js Middleware for Route Protection and Legacy Redirects
  *
- * Checks for `crebit_session` cookie and redirects to /login
- * for protected routes if not authenticated.
+ * Features:
+ * 1. Route protection: Checks for `crebit_session` cookie
+ * 2. Legacy redirects: Redirects old dimension URLs to mega app hubs
  *
  * P1 Hardening: Added /admin/* and /humancloud/* protection
+ * 2026 Mega Apps: Added legacy URL redirects for backward compatibility
  *
  * @see https://nextjs.org/docs/app/building-your-application/routing/middleware
  */
@@ -36,10 +38,34 @@ const PUBLIC_ROUTES = [
 
 const PRIVATE_MEDIA_ROUTES = ["/teaching", "/ainspire"];
 
+/**
+ * Legacy URL redirects for 2026 Mega Apps
+ *
+ * Old dimension URLs → New mega app hubs
+ * These redirects ensure backward compatibility for bookmarks and links.
+ */
+const LEGACY_REDIRECTS: Record<string, string> = {
+    "/dimension/aesthetic": "/dna-lab?tab=ad",
+    "/dimension/abyss": "/dna-lab?tab=mirror",
+    "/dimension/quality-check": "/dna-lab?tab=qc",
+    "/dimension/story-architect": "/story-engine?tab=story",
+    "/dimension/prompt": "/story-engine?tab=prompt",
+    "/dimension/video-maker": "/production?provider=veo",
+    "/dimension/kling": "/production?provider=kling",
+    "/dimension/suno": "/production?provider=suno",
+};
+
 const SESSION_COOKIE_NAME = "crebit_session";
 
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
+
+    // Check for legacy redirects first (2026 Mega Apps)
+    const redirectTarget = LEGACY_REDIRECTS[pathname];
+    if (redirectTarget) {
+        const redirectUrl = new URL(redirectTarget, request.url);
+        return NextResponse.redirect(redirectUrl, { status: 301 }); // Permanent redirect
+    }
 
     // Skip public routes (exact match for "/" , prefix match for others)
     const isPublic = PUBLIC_ROUTES.some((route) => {
@@ -81,6 +107,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
     matcher: [
+        // Protected routes
         "/settings/:path*",
         "/billing/:path*",
         "/usage/:path*",
@@ -90,5 +117,14 @@ export const config = {
         "/humancloud/:path*",  // P1: Human Cloud routes
         "/creator/:path*",     // P1: Creator routes
         "/settlements/:path*", // P1: Settlement routes
+        // Legacy dimension redirects (2026 Mega Apps)
+        "/dimension/aesthetic",
+        "/dimension/abyss",
+        "/dimension/quality-check",
+        "/dimension/story-architect",
+        "/dimension/prompt",
+        "/dimension/video-maker",
+        "/dimension/kling",
+        "/dimension/suno",
     ],
 };

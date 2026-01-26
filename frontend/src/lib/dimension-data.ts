@@ -423,6 +423,75 @@ export const ROUTE_KEYS: Record<string, string> = {
   "/dimension/character-consistency": "character-consistency",
   "/dimension/suno": "suno-music",
   "/dimension/kling": "kling-video",
+  // Mega Apps
+  "/dna-lab": "dna-lab",
+  "/story-engine": "story-engine",
+  "/production": "production",
+};
+
+// =============================================================================
+// MEGA APPS (2026 Architecture)
+// =============================================================================
+
+/**
+ * Mega Apps - Consolidated hub pages for related tools
+ *
+ * DNA Lab: VPE, AD, Mirror, QC → Logic Vector extraction
+ * Story Engine: Story, Prompt → System Prompt generation
+ * Production Bridge: VEO, Kling, Suno → Media generation
+ */
+export interface MegaAppConfig {
+  name: string;
+  nameKo: string;
+  icon: string;
+  href: string;
+  description: string;
+  descriptionKo: string;
+  modules: string[];
+}
+
+export const MEGA_APPS: Record<string, MegaAppConfig> = {
+  "dna-lab": {
+    name: "DNA Lab",
+    nameKo: "DNA 연구실",
+    icon: "🧬",
+    href: "/dna-lab",
+    description: "Auteur DNA extraction and orchestration",
+    descriptionKo: "거장 DNA 분석 및 오케스트레이션",
+    modules: ["vpe", "ad", "mirror", "qc"],
+  },
+  "story-engine": {
+    name: "Story Engine",
+    nameKo: "스토리 엔진",
+    icon: "📝",
+    href: "/story-engine",
+    description: "Story composition and System Prompt generation",
+    descriptionKo: "스토리 구성 및 System Prompt 생성",
+    modules: ["story", "prompt"],
+  },
+  "production": {
+    name: "Production Bridge",
+    nameKo: "프로덕션 브릿지",
+    icon: "🎬",
+    href: "/production",
+    description: "Unified media generation platform",
+    descriptionKo: "통합 미디어 생성 플랫폼",
+    modules: ["veo", "kling", "suno", "imagen"],
+  },
+};
+
+/**
+ * Legacy URL redirects for backward compatibility
+ */
+export const LEGACY_REDIRECTS: Record<string, string> = {
+  "/dimension/aesthetic": "/dna-lab?tab=ad",
+  "/dimension/abyss": "/dna-lab?tab=mirror",
+  "/dimension/quality-check": "/dna-lab?tab=qc",
+  "/dimension/story-architect": "/story-engine?tab=story",
+  "/dimension/prompt": "/story-engine?tab=prompt",
+  "/dimension/video-maker": "/production?provider=veo",
+  "/dimension/kling": "/production?provider=kling",
+  "/dimension/suno": "/production?provider=suno",
 };
 
 // =============================================================================

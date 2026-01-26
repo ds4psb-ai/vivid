@@ -1,7 +1,7 @@
 # SSoT Decisions Log (IP-First Coordination)
 
-> **버전**: 0.5
-> **최종 업데이트**: 2026-01-20
+> **버전**: 0.6
+> **최종 업데이트**: 2026-01-26
 > **범위**: IP-First 통합 로드맵(v2.1.1) + Phase 4-7 확장
 > **근거 문서**: `/Users/ted/.claude/plans/ip-first-coordination-roadmap.md`
 > **목적**: 설계/구현 중 SSoT 결정을 **명시적으로 기록**하고, 변경 이력을 추적한다.
@@ -446,7 +446,50 @@ revalidateTag(`ip:${slug}`);
 
 ---
 
-## 6) Phase 8-10 로드맵 (2026 리서치 기반)
+### Decision 011 — 18앱 → 3 메가앱 통합 (DNA 중심 구조)
+- **ID**: SSoT-DEC-011
+- **날짜**: 2026-01-26 (Updated)
+- **상태**: **Accepted** ✅ 2026 트렌드 검증 완료
+- **결정 요약**: 18개 산재된 Dimension 앱을 DNA 중심 3개 메가앱으로 통합
+- **배경/문제**:
+  - 18개 앱 중 완전 구현 7개, 부분 구현 8개, 미구현 3개
+  - 2026 AI 영상 생성 모델(Veo 3.1, Sora 2 Pro, Kling 2.6) 발전으로 "공룡 API" 교체 용이성 필요
+  - 거장 DNA + 영상 해석 데이터가 핵심 자산으로 분리 필요
+- **대안**:
+  - A) 기능 기반 5개 앱 (Video, Story, Visual, Audio, Character)
+  - B) 파이프라인 기반 5개 앱 (Ideation → Visualization → Production)
+  - C) 목적 기반 5개 앱 (Make Video, Write Story, etc.)
+  - D) **DNA 중심 3개 앱** (DNA Lab, Story Engine, Production Bridge) — **채택**
+- **결정**: **D안 채택** (DNA 중심 3-앱 구조)
+  - 🧬 **DNA Lab**: AD + VPE(신규) + Mirror + QC → Logic Vector 생성
+  - 📝 **Story Engine**: Story + Prompt(1D) → System Prompt 생성
+  - 🎬 **Production Bridge**: VEO + Kling + Sora + Suno + Imagen → 공룡 API 래퍼
+- **핵심 원칙**: "공룡 모델이 바뀌어도, 우리의 Logic Vector는 영원하다"
+- **VPE (신규 모듈)**: 
+  - Gemini 3 Pro 기반 마스터피스 영상 해석
+  - Shot Grammar 추출: camera_grammar, lighting_physics, color_science
+- **2026 트렌드 검증** (2026-01-26 웹 리서치):
+  - ✅ Shot Grammar = 2026 업계 표준 프레임워크 확인
+  - ✅ Logic Vector = 설계 유효, 경쟁 우위 유지
+  - ✅ Provider Pattern = 추상화 필수 (모든 플랫폼 API 상이)
+  - 🔄 Veo 3.1: Reference Images 3장, First/Last Frame 지원 → Phase 4.5
+  - 🔄 Sora 2 Pro: Storyboard Mode, Caption Cards → 향후 통합
+  - 🆕 Continuity Supervisor: Multimodal QA → Phase 6
+- **근거 문서**: [MEGA_APP_ARCHITECTURE_2026.md](./MEGA_APP_ARCHITECTURE_2026.md) (v2.0)
+- **Supersedes**: 
+  - `unified_4layer_strategy.md` → `archive/strategic_2026_01/`
+  - `story_first_architecture_roadmap.md` → `archive/strategic_2026_01/`
+- **구현 로드맵**: (업데이트됨)
+  - Phase 1: VPE 신규 구축 ✅ 완료
+  - Phase 2: DNA Lab 통합 ✅ 완료
+  - Phase 3: Story Engine 통합 ✅ 완료
+  - Phase 4: Production Bridge ✅ 완료
+  - **Phase 4.5: Schema Enhancement** 🔄 진행 (Reference Images, First/Last Frame)
+  - Phase 5: Frontend 통합 ⏳ 대기
+  - **Phase 6: Continuity Supervisor** 🆕 계획 (Multimodal QA)
+
+---
+
 
 ### Phase 8 — Advanced Personalization (고급 개인화)
 
