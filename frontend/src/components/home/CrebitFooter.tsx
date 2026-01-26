@@ -23,7 +23,7 @@ export function CrebitFooter() {
         </div>
 
         {/* Version Info */}
-        <div>Neural Architecture v1.0 // 2023년 설립</div>
+        <div>뉴럴 아키텍처 v1.0 // 2024년 설립</div>
 
         {/* Navigation Links */}
         <div className="flex gap-6 mt-4 md:mt-0">

@@ -41,7 +41,7 @@ export function CrebitNavbar() {
           className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-white text-sm font-medium hover:bg-white/20 transition-all duration-300 group"
         >
           <Layers className="w-4 h-4 group-hover:scale-110 transition-transform" />
-          <span className="hidden sm:inline">Tools</span>
+          <span className="hidden sm:inline">도구</span>
         </Link>
 
         {/* Mode Toggle */}

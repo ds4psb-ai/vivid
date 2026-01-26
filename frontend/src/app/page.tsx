@@ -34,9 +34,10 @@ const FEATURED_IP: FeaturedIP = {
   remixCount: "12K",
   matchPercent: 98,
   character: {
-    name: "순애",
-    description: "순수한 감성의 로맨스 캐릭터. 시간을 초월한 사랑 이야기의 주인공입니다.",
+    name: "아카리",
+    description: "네온 사인 아래 밤 드라이브를 즐기는 감성 AI. 도시의 불빛 속에서 당신과 함께합니다.",
     status: "캐릭터 모델 준비 완료",
+    imageUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuDN5xpf62iQyVAxpu6bfMxxxUbBcRwdTWKyxVSWszsqTN31eV3lNWr3ntBTIXhAjJCKXZkUTQqa3EGMRF80TU-gL20v7zBokSFOkWBAsTDF1sbc1ZVFQ9mdz8k7yBCcSho6XXcihaNCoPVzRCdkL4NiFhZDwRx0Kz5naME5XI-yk3VW7t2C2_RlgLPW9xvZ4XUOi8L6hP4pzyuhDSqjwjDdfaFxbpEZl3dpeP0ZGPes6jLYMw8Wtgl9pUvGmoggChFffG4ovuIp3PQ",
   },
 };
 

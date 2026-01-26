@@ -29,7 +29,7 @@ export interface VariationCard {
   badge?: string;
   badgeColor?: string;
   href: string;
-  layout?: "tall" | "wide" | "normal";
+  layout?: "tall" | "wide" | "normal" | "two-thirds" | "one-third";
   icon?: React.ReactNode;
   iconColor?: string;
 }
@@ -85,113 +85,152 @@ export function VariationsGrid({ variations }: VariationsGridProps) {
         </div>
       </div>
 
-      {/* Bento Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-[300px] max-w-7xl mx-auto">
-        {variations.map((card, index) => {
-          const Icon = CATEGORY_ICONS[card.category];
-          const iconColor = ICON_COLORS[card.category];
-          const progressColor = PROGRESS_COLORS[card.category];
+      {/* Bento Grid - 12-column layout */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-auto md:h-[600px] max-w-7xl mx-auto">
+        {/* Left Column - 애니메이션 각색 (full height) */}
+        <div className="md:col-span-3 h-[400px] md:h-full">
+          {variations.filter(c => c.layout === "tall").map((card, index) => {
+            const Icon = CATEGORY_ICONS[card.category];
+            const iconColor = ICON_COLORS[card.category];
+            return (
+              <motion.div
+                key={card.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="group relative rounded-2xl overflow-hidden bg-[var(--bg-subtle)] border border-white/10 hover:border-[var(--border-primary)]/50 transition-all duration-300 h-full"
+              >
+                <img
+                  alt={card.name}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  src={card.thumbnailUrl}
+                />
+                <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+                <div className="absolute bottom-0 left-0 w-full p-6 z-20">
+                  {card.badge && (
+                    <span className="px-2 py-1 bg-[var(--bg-primary)] text-white text-[10px] font-bold uppercase tracking-wider rounded mb-3 inline-block">
+                      {card.badge}
+                    </span>
+                  )}
+                  <h3 className="text-3xl font-bold text-white mb-2 leading-none break-keep">
+                    애니메이션<br />각색
+                  </h3>
+                  <button className="mt-4 flex items-center text-xs font-bold tracking-widest text-[var(--fg-primary)] hover:text-white transition-colors">
+                    워크플로우 시작 <ArrowUpRight className="w-4 h-4 ml-1" />
+                  </button>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
 
-          // Determine grid span based on layout
-          const gridClass =
-            card.layout === "tall"
-              ? "md:row-span-2"
-              : card.layout === "wide"
-                ? "lg:col-span-2"
-                : "";
-
-          return (
+        {/* Center Column - 숏폼 드라마 (top) + 2-grid (bottom) */}
+        <div className="md:col-span-6 flex flex-col gap-6 h-auto md:h-full">
+          {/* 숏폼 드라마 - 1/2 height */}
+          {variations.filter(c => c.layout === "wide").map((card, index) => (
             <motion.div
               key={card.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className={`group relative rounded-2xl overflow-hidden bg-[var(--bg-subtle)] border border-white/10 hover:border-[var(--border-primary)]/50 transition-all duration-300 ${gridClass}`}
+              transition={{ delay: 0.1 }}
+              className="group relative rounded-2xl overflow-hidden bg-[var(--bg-subtle)] border border-white/10 hover:border-[var(--border-primary)]/50 transition-all duration-300 h-[280px] md:h-1/2"
             >
-              {/* Image */}
               <img
                 alt={card.name}
-                className={`absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${
-                  card.category === "audio"
-                    ? "grayscale group-hover:grayscale-0"
-                    : ""
-                }`}
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 src={card.thumbnailUrl}
               />
-
-              {/* Gradient overlay */}
-              <div
-                className={`absolute inset-0 z-10 ${
-                  card.layout === "wide"
-                    ? "bg-gradient-to-r from-black/90 via-black/50 to-transparent"
-                    : "bg-gradient-to-t from-black via-black/40 to-transparent"
-                } opacity-80 group-hover:opacity-90 transition-opacity`}
-              />
-
-              {/* Content */}
-              <div
-                className={`absolute bottom-0 left-0 w-full p-6 z-20 ${
-                  card.layout === "wide"
-                    ? "flex flex-col justify-center items-start h-full p-8 max-w-md"
-                    : ""
-                }`}
-              >
-                {/* Badge */}
-                {card.badge && (
-                  <span className="px-2 py-1 bg-[var(--bg-primary)] text-white text-[10px] font-bold uppercase tracking-wider rounded mb-3 inline-block">
-                    {card.badge}
-                  </span>
-                )}
-
-                {/* Title */}
-                {card.layout === "tall" ? (
-                  <>
-                    <h3 className="text-3xl font-bold text-white mb-2 leading-none break-keep">
-                      애니메이션<br />각색
-                    </h3>
-                    <button className="mt-4 flex items-center text-xs font-bold tracking-widest text-[var(--fg-primary)] hover:text-white transition-colors">
-                      워크플로우 시작 <ArrowUpRight className="w-4 h-4 ml-1" />
-                    </button>
-                  </>
-                ) : card.layout === "wide" ? (
-                  <>
-                    <span className="text-blue-400 font-bold uppercase text-xs tracking-widest mb-2">포맷</span>
-                    <h3 className="text-4xl font-bold text-white mb-4">숏폼 드라마</h3>
-                    <p className="text-gray-300 text-sm mb-6 break-keep">
-                      바이럴 소셜 플랫폼에 최적화된 강렬한 60초 세로형 에피소드입니다.
-                    </p>
-                    <button className="w-12 h-12 rounded-full border border-white/30 flex items-center justify-center hover:bg-[var(--bg-primary)] hover:border-[var(--border-primary)] transition-all cursor-pointer group-hover:scale-110">
-                      <Play className="w-5 h-5 text-white" />
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Icon className={`w-10 h-10 mb-2 opacity-80 ${iconColor}`} />
-                    <h3 className="text-xl font-bold text-white">{card.name}</h3>
-                  </>
-                )}
+              <div className="absolute inset-0 z-10 bg-gradient-to-r from-black/90 via-black/50 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+              <div className="absolute bottom-0 left-0 w-full p-8 z-20 flex flex-col justify-center items-start h-full max-w-md">
+                <span className="text-blue-400 font-bold uppercase text-xs tracking-widest mb-2">포맷</span>
+                <h3 className="text-4xl font-bold text-white mb-4">숏폼 드라마</h3>
+                <p className="text-gray-300 text-sm mb-6 break-keep">
+                  바이럴 소셜 플랫폼에 최적화된 강렬한 60초 세로형 에피소드입니다.
+                </p>
+                <button className="w-12 h-12 rounded-full border border-white/30 flex items-center justify-center hover:bg-[var(--bg-primary)] hover:border-[var(--border-primary)] transition-all cursor-pointer group-hover:scale-110">
+                  <Play className="w-5 h-5 text-white" />
+                </button>
               </div>
             </motion.div>
-          );
-        })}
+          ))}
 
-        {/* Custom Workflow Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: variations.length * 0.1 }}
-          className="group relative rounded-2xl overflow-hidden bg-transparent border border-dashed border-gray-600 hover:border-[var(--border-primary)] transition-all duration-300 flex flex-col items-center justify-center cursor-pointer"
-        >
-          <Link href="/dimension" className="relative z-10 flex flex-col items-center">
-            <div className="w-16 h-16 rounded-full border border-gray-600 flex items-center justify-center mb-4 group-hover:bg-[var(--bg-primary)] group-hover:border-[var(--border-primary)] transition-all">
-              <Plus className="w-8 h-8 text-gray-400 group-hover:text-white" />
-            </div>
-            <h3 className="text-lg font-bold text-gray-300 group-hover:text-[var(--fg-primary)] transition-colors">
-              커스텀 워크플로우
-            </h3>
-            <p className="text-xs text-gray-500 font-bold mt-2">나만의 디자인 만들기</p>
-          </Link>
-        </motion.div>
+          {/* Bottom 2-grid: Graphic Novel + 3D Audio */}
+          <div className="grid grid-cols-2 gap-6 h-[200px] md:h-1/2">
+            {variations.filter(c => c.layout === "normal" && c.category !== "interactive").slice(0, 2).map((card, index) => {
+              const Icon = CATEGORY_ICONS[card.category];
+              const iconColor = ICON_COLORS[card.category];
+              return (
+                <motion.div
+                  key={card.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 + index * 0.1 }}
+                  className="group relative rounded-2xl overflow-hidden bg-[var(--bg-subtle)] border border-white/10 hover:border-[var(--border-primary)]/50 transition-all duration-300"
+                >
+                  <img
+                    alt={card.name}
+                    className={`absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${
+                      card.category === "audio" ? "grayscale group-hover:grayscale-0" : ""
+                    }`}
+                    src={card.thumbnailUrl}
+                  />
+                  <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+                  <div className="absolute bottom-0 left-0 w-full p-6 z-20">
+                    <Icon className={`w-10 h-10 mb-2 opacity-80 ${iconColor}`} />
+                    <h3 className="text-xl font-bold text-white">{card.name}</h3>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Right Column - Interactive Game (2/3) + Custom Workflow (1/3) */}
+        <div className="md:col-span-3 flex flex-col gap-6 h-auto md:h-full">
+          {/* Interactive Game - 2/3 height */}
+          {variations.filter(c => c.category === "interactive").map((card, index) => {
+            const Icon = CATEGORY_ICONS[card.category];
+            const iconColor = ICON_COLORS[card.category];
+            return (
+              <motion.div
+                key={card.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="group relative rounded-2xl overflow-hidden bg-[var(--bg-subtle)] border border-white/10 hover:border-[var(--border-primary)]/50 transition-all duration-300 h-[300px] md:h-2/3"
+              >
+                <img
+                  alt={card.name}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  src={card.thumbnailUrl}
+                />
+                <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+                <div className="absolute bottom-0 left-0 w-full p-6 z-20">
+                  <Icon className={`w-10 h-10 mb-2 opacity-80 ${iconColor}`} />
+                  <h3 className="text-xl font-bold text-white">{card.name}</h3>
+                </div>
+              </motion.div>
+            );
+          })}
+
+          {/* Custom Workflow Card - 1/3 height */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="group relative rounded-2xl overflow-hidden bg-transparent border border-dashed border-gray-600 hover:border-[var(--border-primary)] transition-all duration-300 flex flex-col items-center justify-center cursor-pointer h-[150px] md:h-1/3"
+          >
+            <Link href="/dimension" className="relative z-10 flex flex-col items-center">
+              <div className="w-12 h-12 rounded-full border border-gray-600 flex items-center justify-center mb-3 group-hover:bg-[var(--bg-primary)] group-hover:border-[var(--border-primary)] transition-all">
+                <Plus className="w-6 h-6 text-gray-400 group-hover:text-white" />
+              </div>
+              <h3 className="text-base font-bold text-gray-300 group-hover:text-[var(--fg-primary)] transition-colors">
+                커스텀 워크플로우
+              </h3>
+              <p className="text-xs text-gray-500 font-bold mt-1">나만의 디자인 만들기</p>
+            </Link>
+          </motion.div>
+        </div>
       </div>
     </section>
   );
