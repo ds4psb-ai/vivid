@@ -13,6 +13,7 @@ import React, { Suspense } from "react";
 import { CrebitNavbar } from "@/components/home/CrebitNavbar";
 import { CinematicHero, FeaturedIP } from "@/components/home/CinematicHero";
 import { MegaAppShowcase } from "@/components/home/MegaAppShowcase";
+import { DNACardsSection } from "@/components/home/DNACardsSection";
 import { VariationsGrid, VariationCard } from "@/components/home/VariationsGrid";
 import { FeaturedCharacters } from "@/components/home/FeaturedCharacters";
 import { MastersTouchSection } from "@/components/home/MastersTouchSection";
@@ -116,16 +117,19 @@ function HomePageContent() {
         {/* 2. Mega App Showcase */}
         <MegaAppShowcase />
 
-        {/* 3. Variations Grid */}
+        {/* 3. DNA Cards Section */}
+        <DNACardsSection />
+
+        {/* 4. Variations Grid */}
         <VariationsGrid variations={VARIATION_CARDS} />
 
-        {/* 4. Featured Characters */}
+        {/* 5. Featured Characters */}
         <FeaturedCharacters />
 
-        {/* 5. Masters Touch */}
+        {/* 6. Masters Touch */}
         <MastersTouchSection />
 
-        {/* 6. Human Cloud CTA */}
+        {/* 7. Human Cloud CTA */}
         <HumanCloudCTA />
       </main>
 
