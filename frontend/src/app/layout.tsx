@@ -13,8 +13,12 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Crebit Node Canvas",
-  description: "Node-based canvas for generative spec design",
+  title: "Crebit AI Studio",
+  description: "AI-powered creative studio for generative content",
+  icons: {
+    icon: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 import { LanguageProvider } from "@/contexts/LanguageContext";
