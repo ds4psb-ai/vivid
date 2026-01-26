@@ -50,7 +50,7 @@ export function CrebitNavbar() {
         </Link>
 
         {/* Mode Toggle */}
-        <ModeToggle />
+        <ModeToggle iconClassName="text-white" />
       </div>
     </nav>
   );

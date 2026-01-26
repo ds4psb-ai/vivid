@@ -3,8 +3,14 @@
 import * as React from "react"
 import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
+import { cn } from "@/lib/utils"
 
-export function ModeToggle() {
+interface ModeToggleProps {
+    /** Force icon color (e.g., "text-white" for dark backgrounds) */
+    iconClassName?: string;
+}
+
+export function ModeToggle({ iconClassName }: ModeToggleProps) {
     const { setTheme, resolvedTheme } = useTheme()
     const [mounted, setMounted] = React.useState(false)
 
@@ -23,6 +29,7 @@ export function ModeToggle() {
     }
 
     const isDark = resolvedTheme === "dark"
+    const iconColor = iconClassName ?? "text-gray-700 dark:text-white"
 
     return (
         <button
@@ -39,19 +46,21 @@ export function ModeToggle() {
         >
             <span className="sr-only">Toggle theme</span>
             <Sun
-                className={`
-                    h-[1.2rem] w-[1.2rem]
-                    transition-all duration-300 ease-out
-                    ${isDark ? "rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"}
-                `}
+                className={cn(
+                    "h-[1.2rem] w-[1.2rem]",
+                    iconColor,
+                    "transition-all duration-300 ease-out",
+                    isDark ? "rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
+                )}
             />
             <Moon
-                className={`
-                    absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
-                    h-[1.2rem] w-[1.2rem]
-                    transition-all duration-300 ease-out
-                    ${isDark ? "rotate-0 scale-100 opacity-100" : "rotate-90 scale-0 opacity-0"}
-                `}
+                className={cn(
+                    "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
+                    "h-[1.2rem] w-[1.2rem]",
+                    iconColor,
+                    "transition-all duration-300 ease-out",
+                    isDark ? "rotate-0 scale-100 opacity-100" : "rotate-90 scale-0 opacity-0"
+                )}
             />
         </button>
     )
