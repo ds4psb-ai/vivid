@@ -89,12 +89,12 @@
      Crebit/Vivid brand identity colors
      ───────────────────────────────────────────────────────────────────────── */
 
-  --color-brand-primary: oklch(0.62 0.26 290);
-  /* Vivid Violet */
-  --color-brand-secondary: oklch(0.78 0.20 145);
-  /* Vivid Emerald */
-  --color-brand-accent: oklch(0.80 0.16 85);
-  /* Vivid Amber */
+  --color-brand-primary: oklch(0.62 0.28 20);
+  /* Neon Red #FF003C */
+  --color-brand-secondary: oklch(0.55 0.26 20);
+  /* Red-600 */
+  --color-brand-accent: oklch(0.68 0.24 20);
+  /* Red-400 - bright accent */
 
   /* ─────────────────────────────────────────────────────────────────────────
      SPACING TOKENS
@@ -176,7 +176,8 @@
   }
 
   .card-glass-hover {
-    @apply hover:bg-white/[0.03] hover:border-white/10 hover:shadow-2xl hover:shadow-violet-500/5 transition-all duration-500 ease-out dark:hover:bg-white/[0.03] hover:bg-black/5;
+    @apply hover:bg-white/[0.03] hover:border-white/10 hover:shadow-2xl transition-all duration-500 ease-out dark:hover:bg-white/[0.03] hover:bg-black/5;
+    --tw-shadow-color: oklch(0.62 0.28 20 / 0.1);  /* Neon Red glow */
   }
 }
 

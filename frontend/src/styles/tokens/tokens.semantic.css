@@ -14,12 +14,12 @@
 
 :root {
   /* -------------------------------------------------------------------------
-     BACKGROUND TOKENS
+     BACKGROUND TOKENS (Light Mode - Stitch Light Design)
      ------------------------------------------------------------------------- */
-  --bg-base: var(--neutral-0);
+  --bg-base: oklch(99% 0.002 280);      /* #F9FAFB - Clean light base */
   --bg-subtle: var(--neutral-50);
   --bg-muted: var(--neutral-100);
-  --bg-elevated: var(--neutral-0);
+  --bg-elevated: var(--neutral-0);       /* #FFFFFF - Cards */
   --bg-overlay: oklch(0% 0 0 / 0.5);
   --bg-inverse: var(--neutral-900);
 
@@ -28,16 +28,16 @@
   --bg-interactive-hover: var(--neutral-200);
   --bg-interactive-active: var(--neutral-300);
 
-  /* Brand backgrounds */
-  --bg-primary: var(--violet-500);
-  --bg-primary-hover: var(--violet-600);
-  --bg-primary-active: var(--violet-700);
-  --bg-primary-subtle: var(--violet-50);
+  /* Brand backgrounds - RED PRIMARY */
+  --bg-primary: var(--red-500);          /* #FF003C Neon Red */
+  --bg-primary-hover: var(--red-600);
+  --bg-primary-active: var(--red-700);
+  --bg-primary-subtle: var(--red-50);
 
-  --bg-secondary: var(--cyan-500);
-  --bg-secondary-hover: var(--cyan-600);
-  --bg-secondary-active: var(--cyan-700);
-  --bg-secondary-subtle: var(--cyan-50);
+  --bg-secondary: var(--red-600);        /* Darker red for secondary */
+  --bg-secondary-hover: var(--red-700);
+  --bg-secondary-active: var(--red-800);
+  --bg-secondary-subtle: var(--red-100);
 
   /* State backgrounds */
   --bg-success: var(--state-success);
@@ -60,10 +60,10 @@
   --fg-on-primary: var(--neutral-0);
   --fg-on-secondary: var(--neutral-0);
 
-  /* Brand foregrounds */
-  --fg-primary: var(--violet-600);
-  --fg-primary-hover: var(--violet-700);
-  --fg-secondary: var(--cyan-600);
+  /* Brand foregrounds - RED PRIMARY */
+  --fg-primary: var(--red-600);
+  --fg-primary-hover: var(--red-700);
+  --fg-secondary: var(--red-700);
 
   /* State foregrounds */
   --fg-success: var(--state-success-dark);
@@ -80,13 +80,13 @@
   --border-strong: var(--neutral-400);
   --border-inverse: var(--neutral-700);
 
-  /* Interactive borders */
-  --border-focus: var(--violet-500);
-  --border-focus-ring: oklch(62% 0.20 280 / 0.3);
+  /* Interactive borders - RED PRIMARY */
+  --border-focus: var(--red-500);
+  --border-focus-ring: oklch(62% 0.28 20 / 0.3);
 
-  /* Brand borders */
-  --border-primary: var(--violet-500);
-  --border-secondary: var(--cyan-500);
+  /* Brand borders - RED PRIMARY */
+  --border-primary: var(--red-500);
+  --border-secondary: var(--red-600);
 
   /* State borders */
   --border-success: var(--state-success);
@@ -105,12 +105,25 @@
   --glass-shadow: 0 8px 32px oklch(0% 0 0 / 0.1);
 
   /* -------------------------------------------------------------------------
-     GRADIENT TOKENS
+     GRADIENT TOKENS - RED PRIMARY
      ------------------------------------------------------------------------- */
-  --gradient-primary: linear-gradient(135deg, var(--violet-500), var(--cyan-500));
-  --gradient-primary-soft: linear-gradient(135deg, var(--violet-100), var(--cyan-100));
+  --gradient-primary: linear-gradient(90deg, var(--red-500), var(--red-700));
+  --gradient-primary-soft: linear-gradient(135deg, var(--red-100), var(--red-200));
   --gradient-dark: linear-gradient(180deg, var(--neutral-800), var(--neutral-950));
-  --gradient-radial-glow: radial-gradient(circle at center, var(--violet-500) 0%, transparent 70%);
+  --gradient-radial-glow: radial-gradient(circle at center, var(--red-500) 0%, transparent 70%);
+
+  /* -------------------------------------------------------------------------
+     GLOW TOKENS (Light Mode - Subtle)
+     ------------------------------------------------------------------------- */
+  --glow-primary: 0 0 20px oklch(62% 0.28 20 / 0.15);
+  --glow-primary-strong: 0 0 40px oklch(62% 0.28 20 / 0.25);
+  --glow-primary-subtle: 0 0 12px oklch(62% 0.28 20 / 0.1);
+
+  /* -------------------------------------------------------------------------
+     SHADOW TOKENS (Light Mode - Soft)
+     ------------------------------------------------------------------------- */
+  --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 2px 8px -1px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 /* =============================================================================
@@ -119,30 +132,30 @@
 
 .dark {
   /* -------------------------------------------------------------------------
-     BACKGROUND TOKENS
+     BACKGROUND TOKENS (Dark Mode - Cinematic OTT)
      ------------------------------------------------------------------------- */
-  --bg-base: var(--neutral-950);
-  --bg-subtle: var(--neutral-900);
-  --bg-muted: var(--neutral-800);
-  --bg-elevated: var(--neutral-900);
+  --bg-base: var(--neutral-cinematic-950);     /* #0B0C10 - Deep charcoal */
+  --bg-subtle: var(--neutral-cinematic-900);
+  --bg-muted: var(--neutral-cinematic-800);
+  --bg-elevated: var(--neutral-cinematic-800); /* Card backgrounds */
   --bg-overlay: oklch(0% 0 0 / 0.7);
   --bg-inverse: var(--neutral-100);
 
   /* Interactive backgrounds */
-  --bg-interactive: var(--neutral-800);
-  --bg-interactive-hover: var(--neutral-700);
-  --bg-interactive-active: var(--neutral-600);
+  --bg-interactive: var(--neutral-cinematic-800);
+  --bg-interactive-hover: var(--neutral-cinematic-700);
+  --bg-interactive-active: var(--neutral-cinematic-600);
 
-  /* Brand backgrounds */
-  --bg-primary: var(--violet-500);
-  --bg-primary-hover: var(--violet-400);
-  --bg-primary-active: var(--violet-300);
-  --bg-primary-subtle: oklch(62% 0.20 280 / 0.15);
+  /* Brand backgrounds - RED PRIMARY with neon effect */
+  --bg-primary: var(--red-500);
+  --bg-primary-hover: var(--red-400);         /* Brighter on hover */
+  --bg-primary-active: var(--red-300);
+  --bg-primary-subtle: oklch(62% 0.28 20 / 0.15);
 
-  --bg-secondary: var(--cyan-500);
-  --bg-secondary-hover: var(--cyan-400);
-  --bg-secondary-active: var(--cyan-300);
-  --bg-secondary-subtle: oklch(62% 0.18 200 / 0.15);
+  --bg-secondary: var(--red-600);
+  --bg-secondary-hover: var(--red-500);
+  --bg-secondary-active: var(--red-400);
+  --bg-secondary-subtle: oklch(55% 0.26 20 / 0.15);
 
   /* State backgrounds */
   --bg-success-subtle: oklch(65% 0.18 145 / 0.15);
@@ -151,18 +164,19 @@
   --bg-info-subtle: oklch(60% 0.16 240 / 0.15);
 
   /* -------------------------------------------------------------------------
-     FOREGROUND / TEXT TOKENS
+     FOREGROUND / TEXT TOKENS (Cinematic OTT - warm-tinted for readability)
      ------------------------------------------------------------------------- */
-  --fg-default: var(--neutral-100);
-  --fg-muted: var(--neutral-400);
-  --fg-subtle: var(--neutral-500);
-  --fg-disabled: var(--neutral-600);
+  --fg-default: var(--fg-cinematic-default);    /* 98% warm white */
+  --fg-muted: var(--fg-cinematic-muted);        /* 82% warm gray */
+  --fg-subtle: var(--fg-cinematic-subtle);      /* 68% warm mid-gray */
+  --fg-disabled: var(--fg-cinematic-disabled);  /* 50% cool gray */
   --fg-inverse: var(--neutral-900);
+  --fg-placeholder: var(--fg-cinematic-placeholder);
 
-  /* Brand foregrounds */
-  --fg-primary: var(--violet-400);
-  --fg-primary-hover: var(--violet-300);
-  --fg-secondary: var(--cyan-400);
+  /* Brand foregrounds - RED PRIMARY */
+  --fg-primary: var(--red-400);
+  --fg-primary-hover: var(--red-300);
+  --fg-secondary: var(--red-500);
 
   /* State foregrounds */
   --fg-success: var(--state-success-light);
@@ -189,9 +203,22 @@
   --glass-shadow: 0 8px 32px oklch(0% 0 0 / 0.3);
 
   /* -------------------------------------------------------------------------
-     GRADIENT TOKENS
+     GRADIENT TOKENS - RED PRIMARY
      ------------------------------------------------------------------------- */
-  --gradient-primary-soft: linear-gradient(135deg, oklch(62% 0.20 280 / 0.2), oklch(62% 0.18 200 / 0.2));
+  --gradient-primary-soft: linear-gradient(135deg, oklch(62% 0.28 20 / 0.2), oklch(55% 0.26 20 / 0.2));
+
+  /* -------------------------------------------------------------------------
+     GLOW TOKENS (Dark Mode - Neon Effect)
+     ------------------------------------------------------------------------- */
+  --glow-primary: 0 0 20px oklch(62% 0.28 20 / 0.5);
+  --glow-primary-strong: 0 0 40px oklch(62% 0.28 20 / 0.6);
+  --glow-primary-subtle: 0 0 12px oklch(62% 0.28 20 / 0.4);
+
+  /* -------------------------------------------------------------------------
+     SHADOW TOKENS (Dark Mode - Cinematic)
+     ------------------------------------------------------------------------- */
+  --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.3);
+  --shadow-card: 0 4px 16px -2px rgba(0, 0, 0, 0.4), 0 0 0 1px oklch(100% 0 0 / 0.05);
 }
 
 /* =============================================================================
@@ -278,7 +305,7 @@
     --fg-default: var(--neutral-1000);
     --fg-muted: var(--neutral-800);
     --border-default: var(--neutral-600);
-    --border-focus-ring: oklch(62% 0.20 280 / 0.6);
+    --border-focus-ring: oklch(62% 0.28 20 / 0.6);  /* Red focus ring */
   }
 
   .dark {

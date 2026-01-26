@@ -49,7 +49,7 @@ const VARIATION_CARDS: VariationCard[] = [
       "https://lh3.googleusercontent.com/aida-public/AB6AXuA0r2qo4L4VmyuCId41jiXkjFCO1haV7IDSbJhzCT6sPC8I6bFdZoQ5VQLPEsgaDpW2JOJCpwKmN0UJA_6nPVGcahgFpfO173A6v14e7C8XM8-kEdxrM6gZ-TZS4TQt2a7UMte3lDWQcJqLmkD6ngyZQavT8o6TPkBBqKrIbGYOHcD-TeIJ9TEVzGHA_xBxbmGL_EG2quNe5YDycI_3U9pBrWvnSqZuWgsBM8fwrFmuTEI8Fx6RlNSom13VC6oaPwi8ZZK8ku4Ccpg",
     category: "visual",
     badge: "VISUAL STYLE",
-    badgeColor: "bg-violet-600",
+    badgeColor: "bg-red-600",
     href: "/dimension/visual-realizer",
     layout: "tall",
   },

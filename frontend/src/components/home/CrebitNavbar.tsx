@@ -5,11 +5,13 @@
  *
  * Minimal floating navigation with glass morphism
  * Fixed position, transparent with blur
+ * Includes ModeToggle and Tools link
  */
 
 import React from "react";
 import Link from "next/link";
-import { Menu } from "lucide-react";
+import { Layers, Sparkles } from "lucide-react";
+import { ModeToggle } from "@/components/mode-toggle";
 
 export function CrebitNavbar() {
   return (
@@ -27,11 +29,28 @@ export function CrebitNavbar() {
         </span>
       </Link>
 
-      {/* Menu Button */}
-      <div className="pointer-events-auto">
-        <button className="w-12 h-12 rounded-full glass-panel flex items-center justify-center hover:bg-white/10 transition-colors group">
-          <Menu className="w-5 h-5 text-white group-hover:rotate-90 transition-transform duration-300" />
-        </button>
+      {/* Right Section */}
+      <div className="flex items-center gap-3 pointer-events-auto">
+        {/* Dimension Tools Link */}
+        <Link
+          href="/dimension"
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-white text-sm font-medium hover:bg-white/20 transition-all duration-300 group"
+        >
+          <Layers className="w-4 h-4 group-hover:scale-110 transition-transform" />
+          <span className="hidden sm:inline">Tools</span>
+        </Link>
+
+        {/* AI Agent Link */}
+        <Link
+          href="/chat"
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#FF003C]/90 backdrop-blur-md text-white text-sm font-medium hover:bg-[#FF003C] hover:shadow-[0_0_20px_rgba(255,0,60,0.5)] transition-all duration-300 group"
+        >
+          <Sparkles className="w-4 h-4 group-hover:scale-110 transition-transform" />
+          <span className="hidden sm:inline">초끼</span>
+        </Link>
+
+        {/* Mode Toggle */}
+        <ModeToggle />
       </div>
     </nav>
   );

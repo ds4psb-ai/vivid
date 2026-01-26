@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-type GlowColor = "violet" | "emerald" | "amber" | "cyan";
+type GlowColor = "red" | "violet" | "emerald" | "amber" | "cyan";
 
 interface GlowButtonProps {
   children: React.ReactNode;
@@ -17,6 +17,10 @@ interface GlowButtonProps {
 }
 
 const glowColorMap: Record<GlowColor, { gradient: string; glow: string }> = {
+  red: {
+    gradient: "from-red-600 to-red-500 hover:from-red-500 hover:to-rose-500",
+    glow: "from-red-400/50 to-rose-400/50",
+  },
   violet: {
     gradient: "from-violet-600 to-violet-500 hover:from-violet-500 hover:to-fuchsia-500",
     glow: "from-violet-400/50 to-fuchsia-400/50",
@@ -44,7 +48,7 @@ const sizeMap = {
 export function GlowButton({
   children,
   className,
-  glowColor = "violet",
+  glowColor = "red",
   size = "md",
   variant = "solid",
   disabled,

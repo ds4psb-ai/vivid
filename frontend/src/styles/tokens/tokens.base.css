@@ -35,7 +35,7 @@
    ============================================================================= */
 
 :root {
-  /* Violet - Primary brand */
+  /* Violet - Legacy (deprecated, use Red) */
   --violet-50: oklch(97% 0.02 280);
   --violet-100: oklch(94% 0.04 280);
   --violet-200: oklch(88% 0.08 280);
@@ -47,7 +47,7 @@
   --violet-800: oklch(40% 0.18 280);
   --violet-900: oklch(32% 0.14 280);
 
-  /* Cyan - Secondary brand */
+  /* Cyan - Legacy (deprecated, use Red) */
   --cyan-50: oklch(97% 0.02 200);
   --cyan-100: oklch(94% 0.04 200);
   --cyan-200: oklch(88% 0.08 200);
@@ -58,6 +58,40 @@
   --cyan-700: oklch(48% 0.16 200);
   --cyan-800: oklch(40% 0.14 200);
   --cyan-900: oklch(32% 0.12 200);
+
+  /* Red - Primary brand (Neon Red #FF003C) */
+  --red-50: oklch(97% 0.02 20);
+  --red-100: oklch(92% 0.06 20);
+  --red-200: oklch(85% 0.12 20);
+  --red-300: oklch(75% 0.18 20);
+  --red-400: oklch(68% 0.24 20);      /* Dark mode hover */
+  --red-500: oklch(62% 0.28 20);      /* #FF003C - PRIMARY */
+  --red-600: oklch(55% 0.26 20);
+  --red-700: oklch(48% 0.24 20);
+  --red-800: oklch(40% 0.20 20);
+  --red-900: oklch(32% 0.16 20);
+}
+
+/* =============================================================================
+   CINEMATIC DARK NEUTRALS
+   Deep charcoal tones for OTT-style dark mode
+   ============================================================================= */
+
+:root {
+  /* Cinematic neutrals - Backgrounds (blue-tinted dark) */
+  --neutral-cinematic-950: oklch(8% 0.010 240);    /* #0B0C10 - bg-base dark */
+  --neutral-cinematic-900: oklch(10% 0.012 240);   /* Slightly elevated */
+  --neutral-cinematic-850: oklch(12% 0.012 240);   /* Card backgrounds */
+  --neutral-cinematic-800: oklch(14% 0.012 240);   /* bg-elevated dark */
+  --neutral-cinematic-700: oklch(18% 0.010 240);   /* Interactive hover */
+  --neutral-cinematic-600: oklch(24% 0.008 240);   /* Borders */
+
+  /* Cinematic neutrals - Foregrounds (warm-tinted light for OTT readability) */
+  --fg-cinematic-default: oklch(98% 0.005 60);     /* Warm white - primary text */
+  --fg-cinematic-muted: oklch(82% 0.008 60);       /* Warm gray - secondary text */
+  --fg-cinematic-subtle: oklch(68% 0.010 60);      /* Warm mid-gray - tertiary */
+  --fg-cinematic-disabled: oklch(50% 0.008 240);   /* Cool gray - disabled */
+  --fg-cinematic-placeholder: oklch(58% 0.006 240); /* Placeholder text */
 }
 
 /* =============================================================================
