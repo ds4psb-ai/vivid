@@ -21,8 +21,12 @@ export function CrebitNavbar() {
         href="/"
         className="flex items-center gap-3 pointer-events-auto"
       >
-        <div className="w-10 h-10 bg-white text-[#030014] font-display font-bold text-xl flex items-center justify-center rounded-sm">
-          C
+        <div className="w-10 h-10 bg-white flex items-center justify-center rounded-sm p-1.5">
+          <img
+            src="/assets/characters/crebit-logo.png"
+            alt="Crebit"
+            className="w-full h-full object-contain"
+          />
         </div>
         <span className="font-display font-bold text-xl tracking-tighter uppercase text-white mix-blend-difference">
           Crebit
