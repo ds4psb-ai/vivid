@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clapperboard, Video, Film, Music2, Image as ImageIcon } from "lucide-react";
+import { Clapperboard, Video, Film, Music2, Image as ImageIcon, Loader2 } from "lucide-react";
 
 // Import existing panels
 import VeoVideoPanel from "@/components/dimension/VeoVideoPanel";
@@ -76,7 +76,37 @@ const TAB_CONFIG: TabConfig[] = [
   },
 ];
 
+/**
+ * ProductionPage - Wrapper with Suspense boundary
+ */
 export default function ProductionPage() {
+  return (
+    <Suspense fallback={<ProductionPageLoading />}>
+      <ProductionPageContent />
+    </Suspense>
+  );
+}
+
+/**
+ * Loading state for ProductionPage
+ */
+function ProductionPageLoading() {
+  return (
+    <AppShell showTopBar={false}>
+      <div className="h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading Production Bridge...</p>
+        </div>
+      </div>
+    </AppShell>
+  );
+}
+
+/**
+ * ProductionPageContent - Actual content with useSearchParams
+ */
+function ProductionPageContent() {
   const searchParams = useSearchParams();
   const providerParam = searchParams.get("provider");
   const [activeTab, setActiveTab] = useState(providerParam || "veo");

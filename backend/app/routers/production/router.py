@@ -159,7 +159,7 @@ class GenerateAutoRequest(BaseModel):
 
 class GenerateMultiRequest(BaseModel):
     """Request for multi-provider generation."""
-    jobs: List[Dict[str, Any]] = Field(..., min_items=1, max_items=5)
+    jobs: List[Dict[str, Any]] = Field(..., min_length=1, max_length=5)
     parallel: bool = Field(True, description="Run jobs in parallel")
 
 
