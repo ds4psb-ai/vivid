@@ -148,7 +148,7 @@ export function VariationsGrid({ variations }: VariationsGridProps) {
                   바이럴 소셜 플랫폼에 최적화된 강렬한 60초 세로형 에피소드입니다.
                 </p>
                 <button className="w-12 h-12 rounded-full border border-white/50 bg-black/30 flex items-center justify-center hover:bg-[var(--bg-primary)] hover:border-[var(--border-primary)] transition-all cursor-pointer group-hover:scale-110">
-                  <Play className="w-5 h-5 text-white drop-shadow-md" />
+                  <Play className="w-5 h-5 text-white fill-white drop-shadow-md" />
                 </button>
               </div>
             </motion.div>
@@ -218,16 +218,16 @@ export function VariationsGrid({ variations }: VariationsGridProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="group relative rounded-2xl overflow-hidden bg-transparent border border-dashed border-gray-600 hover:border-[var(--border-primary)] transition-all duration-300 flex flex-col items-center justify-center cursor-pointer h-[150px] md:h-1/3"
+            className="group relative rounded-2xl overflow-hidden bg-[var(--bg-subtle)] border border-dashed border-white/30 hover:border-[var(--border-primary)] transition-all duration-300 flex flex-col items-center justify-center cursor-pointer h-[150px] md:h-1/3"
           >
             <Link href="/dimension" className="relative z-10 flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full border border-gray-500 dark:border-gray-600 flex items-center justify-center mb-3 group-hover:bg-[var(--bg-primary)] group-hover:border-[var(--border-primary)] transition-all">
-                <Plus className="w-6 h-6 text-gray-500 dark:text-gray-400 group-hover:text-white" />
+              <div className="w-12 h-12 rounded-full border border-white/50 flex items-center justify-center mb-3 group-hover:bg-[var(--bg-primary)] group-hover:border-[var(--border-primary)] transition-all">
+                <Plus className="w-6 h-6 text-white group-hover:text-white transition-colors" />
               </div>
-              <h3 className="text-base font-bold text-gray-600 dark:text-gray-300 group-hover:text-[var(--fg-primary)] transition-colors">
+              <h3 className="text-base font-bold text-white group-hover:text-[var(--fg-primary)] transition-colors">
                 커스텀 워크플로우
               </h3>
-              <p className="text-xs text-gray-500 font-bold mt-1">나만의 디자인 만들기</p>
+              <p className="text-xs text-white/70 font-bold mt-1">나만의 디자인 만들기</p>
             </Link>
           </motion.div>
         </div>

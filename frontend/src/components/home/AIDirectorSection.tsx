@@ -190,10 +190,10 @@ export function AIDirectorSection() {
 
               {/* Bottom Info */}
               <div className="absolute bottom-6 left-6">
-                <h3 className="text-lg font-bold text-white mb-0.5">
+                <h3 className="text-lg font-bold text-white mb-0.5 drop-shadow-[0_2px_8px_rgba(0,0,0,1)]">
                   {card.name}
                 </h3>
-                <p className="text-xs text-gray-300">{card.specialty}</p>
+                <p className="text-xs text-white/80 drop-shadow-[0_2px_8px_rgba(0,0,0,1)]">{card.specialty}</p>
               </div>
             </motion.div>
           ))}
