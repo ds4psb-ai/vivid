@@ -105,17 +105,17 @@ export function VariationsGrid({ variations }: VariationsGridProps) {
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   src={card.thumbnailUrl}
                 />
-                <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+                <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/60 to-black/30 opacity-90 group-hover:opacity-95 transition-opacity" />
                 <div className="absolute bottom-0 left-0 w-full p-6 z-20">
                   {card.badge && (
                     <span className="px-2 py-1 bg-[var(--bg-primary)] text-white text-[10px] font-bold uppercase tracking-wider rounded mb-3 inline-block">
                       {card.badge}
                     </span>
                   )}
-                  <h3 className="text-3xl font-bold text-white mb-2 leading-none break-keep">
+                  <h3 className="text-3xl font-bold text-white mb-2 leading-none break-keep drop-shadow-lg">
                     애니메이션<br />각색
                   </h3>
-                  <button className="mt-4 flex items-center text-xs font-bold tracking-widest text-[var(--fg-primary)] hover:text-white transition-colors">
+                  <button className="mt-4 flex items-center text-xs font-bold tracking-widest text-[var(--fg-primary)] hover:text-white transition-colors drop-shadow-md">
                     워크플로우 시작 <ArrowUpRight className="w-4 h-4 ml-1" />
                   </button>
                 </div>
@@ -140,15 +140,15 @@ export function VariationsGrid({ variations }: VariationsGridProps) {
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 src={card.thumbnailUrl}
               />
-              <div className="absolute inset-0 z-10 bg-gradient-to-r from-black/90 via-black/50 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+              <div className="absolute inset-0 z-10 bg-gradient-to-r from-black/95 via-black/70 to-transparent opacity-90 group-hover:opacity-95 transition-opacity" />
               <div className="absolute bottom-0 left-0 w-full p-8 z-20 flex flex-col justify-center items-start h-full max-w-md">
-                <span className="text-blue-400 font-bold uppercase text-xs tracking-widest mb-2">포맷</span>
-                <h3 className="text-4xl font-bold text-white mb-4">숏폼 드라마</h3>
-                <p className="text-gray-300 text-sm mb-6 break-keep">
+                <span className="text-blue-400 font-bold uppercase text-xs tracking-widest mb-2 drop-shadow-md">포맷</span>
+                <h3 className="text-4xl font-bold text-white mb-4 drop-shadow-lg">숏폼 드라마</h3>
+                <p className="text-gray-200 text-sm mb-6 break-keep drop-shadow-md">
                   바이럴 소셜 플랫폼에 최적화된 강렬한 60초 세로형 에피소드입니다.
                 </p>
-                <button className="w-12 h-12 rounded-full border border-white/30 flex items-center justify-center hover:bg-[var(--bg-primary)] hover:border-[var(--border-primary)] transition-all cursor-pointer group-hover:scale-110">
-                  <Play className="w-5 h-5 text-white" />
+                <button className="w-12 h-12 rounded-full border border-white/50 bg-black/30 flex items-center justify-center hover:bg-[var(--bg-primary)] hover:border-[var(--border-primary)] transition-all cursor-pointer group-hover:scale-110">
+                  <Play className="w-5 h-5 text-white drop-shadow-md" />
                 </button>
               </div>
             </motion.div>
@@ -174,10 +174,10 @@ export function VariationsGrid({ variations }: VariationsGridProps) {
                     }`}
                     src={card.thumbnailUrl}
                   />
-                  <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+                  <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/60 to-black/30 opacity-90 group-hover:opacity-95 transition-opacity" />
                   <div className="absolute bottom-0 left-0 w-full p-6 z-20">
-                    <Icon className={`w-10 h-10 mb-2 opacity-80 ${iconColor}`} />
-                    <h3 className="text-xl font-bold text-white">{card.name}</h3>
+                    <Icon className={`w-10 h-10 mb-2 opacity-90 ${iconColor} drop-shadow-md`} />
+                    <h3 className="text-xl font-bold text-white drop-shadow-lg">{card.name}</h3>
                   </div>
                 </motion.div>
               );
@@ -204,10 +204,10 @@ export function VariationsGrid({ variations }: VariationsGridProps) {
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   src={card.thumbnailUrl}
                 />
-                <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+                <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/60 to-black/30 opacity-90 group-hover:opacity-95 transition-opacity" />
                 <div className="absolute bottom-0 left-0 w-full p-6 z-20">
-                  <Icon className={`w-10 h-10 mb-2 opacity-80 ${iconColor}`} />
-                  <h3 className="text-xl font-bold text-white">{card.name}</h3>
+                  <Icon className={`w-10 h-10 mb-2 opacity-90 ${iconColor} drop-shadow-md`} />
+                  <h3 className="text-xl font-bold text-white drop-shadow-lg">{card.name}</h3>
                 </div>
               </motion.div>
             );
@@ -221,10 +221,10 @@ export function VariationsGrid({ variations }: VariationsGridProps) {
             className="group relative rounded-2xl overflow-hidden bg-transparent border border-dashed border-gray-600 hover:border-[var(--border-primary)] transition-all duration-300 flex flex-col items-center justify-center cursor-pointer h-[150px] md:h-1/3"
           >
             <Link href="/dimension" className="relative z-10 flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full border border-gray-600 flex items-center justify-center mb-3 group-hover:bg-[var(--bg-primary)] group-hover:border-[var(--border-primary)] transition-all">
-                <Plus className="w-6 h-6 text-gray-400 group-hover:text-white" />
+              <div className="w-12 h-12 rounded-full border border-gray-500 dark:border-gray-600 flex items-center justify-center mb-3 group-hover:bg-[var(--bg-primary)] group-hover:border-[var(--border-primary)] transition-all">
+                <Plus className="w-6 h-6 text-gray-500 dark:text-gray-400 group-hover:text-white" />
               </div>
-              <h3 className="text-base font-bold text-gray-300 group-hover:text-[var(--fg-primary)] transition-colors">
+              <h3 className="text-base font-bold text-gray-600 dark:text-gray-300 group-hover:text-[var(--fg-primary)] transition-colors">
                 커스텀 워크플로우
               </h3>
               <p className="text-xs text-gray-500 font-bold mt-1">나만의 디자인 만들기</p>
