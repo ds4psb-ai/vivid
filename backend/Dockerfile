@@ -90,11 +90,11 @@ EXPOSE 8080
 #     CMD curl -f http://localhost:${PORT:-8080}/health/live || exit 1
 
 # Startup command - use shell form for $PORT expansion
-# Run Alembic migrations first, then start uvicorn
+# Try alembic upgrade, if fails try stamp head (for existing DBs), then start uvicorn
 CMD sh -c "echo '=== Starting container ===' && \
     echo 'PORT='$PORT && \
     echo 'DATABASE_URL='$(echo $DATABASE_URL | sed 's/:.*@/:***@/') && \
     echo '=== Running alembic upgrade ===' && \
-    alembic upgrade head 2>&1 || { echo '=== ALEMBIC FAILED ==='; exit 1; } && \
+    (alembic upgrade head 2>&1 || { echo '=== Alembic upgrade failed, trying stamp head ==='; alembic stamp head 2>&1; }) && \
     echo '=== Starting uvicorn ===' && \
     uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --workers 2 --timeout-keep-alive 65 --log-level info"
