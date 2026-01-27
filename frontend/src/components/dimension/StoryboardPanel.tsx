@@ -25,10 +25,11 @@ import {
   useDimensionChainOptional,
   type ChainData,
 } from "@/contexts/DimensionChainContext";
+import { useChainDataInjection } from "@/hooks/useChainDataInjection";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import ChainDataInput from "./ChainDataInput";
 import { type ThemeColor as DimensionThemeColor } from "@/lib/dimension-theme";
-import { Download, Layout } from "lucide-react";
+import { Download, Layout, Link2 } from "lucide-react";
 
 // ============================================================================
 // Constants & Types
@@ -116,6 +117,14 @@ function StoryboardContent() {
     }
   }, [chainCtx]);
 
+  // Chain Data Injection - auto-inject from story-architect, reference-decoder
+  const {
+    logicVector,
+    evidenceRefs: chainEvidenceRefs,
+    hasUpstreamData,
+    rawInputData,
+  } = useChainDataInjection(DIMENSION_KEY);
+
   // i18n labels
   const labels = useMemo(() => ({
     title: isKo ? "스토리보드 생성기" : "Storyboard Generator",
@@ -176,6 +185,45 @@ function StoryboardContent() {
   // Export utilities
   const { exportJSON } = useResultExport();
 
+  // Auto-apply upstream chain data (story-architect structure)
+  useEffect(() => {
+    if (!hasUpstreamData || script) return;
+
+    // Type-safe access to rawInputData
+    const typedInputData = rawInputData as Record<string, { output?: Record<string, unknown> } | undefined>;
+
+    // Extract story structure from story-architect
+    const storyOutput = typedInputData["story-architect"]?.output;
+    if (storyOutput) {
+      // Apply synopsis or logline as script input
+      const synopsis = storyOutput.synopsis as string | undefined;
+      const logline = storyOutput.logline as string | undefined;
+      if (synopsis) {
+        setScript(synopsis);
+      } else if (logline) {
+        setScript(logline);
+      }
+
+      // Set scene count based on story structure
+      if (Array.isArray(storyOutput.structure)) {
+        const actCount = storyOutput.structure.length;
+        if (actCount <= 4) setSceneCount(4);
+        else if (actCount <= 6) setSceneCount(6);
+        else setSceneCount(8);
+      }
+    }
+
+    // Extract visual style from reference-decoder if available
+    const refOutput = typedInputData["reference-decoder"]?.output;
+    if (refOutput?.visual_style && typeof refOutput.visual_style === "string") {
+      const visualStyle = refOutput.visual_style.toLowerCase();
+      if (visualStyle.includes("anime")) setStyle("Anime");
+      else if (visualStyle.includes("noir")) setStyle("Noir");
+      else if (visualStyle.includes("cyberpunk")) setStyle("Cyberpunk");
+      else if (visualStyle.includes("fantasy")) setStyle("Fantasy");
+    }
+  }, [hasUpstreamData, rawInputData, script]);
+
   // Async operation hook
   const { isLoading, error, execute, retry, canRetry } = useAsyncOperation<{
     success: boolean;
@@ -189,10 +237,15 @@ function StoryboardContent() {
 
         // Store in chain context for downstream dimensions (sound-crafter, visual-realizer)
         if (chainCtx) {
+          // Combine upstream evidence refs with current output refs
+          const outputRefs = (data.output as unknown as { evidence_refs?: string[] }).evidence_refs || [];
+          const combinedRefs = [...new Set([...chainEvidenceRefs, ...outputRefs])];
+
           chainCtx.setChainData(
             DIMENSION_KEY,
             data.output as unknown as Record<string, unknown>,
-            `${data.output.scenes.length} scenes generated`
+            `${data.output.scenes.length} scenes generated`,
+            combinedRefs
           );
         }
 
@@ -336,6 +389,23 @@ function StoryboardContent() {
       <DimensionPanel.Header title={labels.title} creditCost={CREDIT_COST} />
 
       <DimensionPanel.Sidebar>
+        {/* Upstream Data Banner */}
+        {hasUpstreamData && (
+          <div className="mb-4 p-3 bg-cyan-500/10 border border-cyan-500/20 rounded-lg animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-2 text-cyan-600 dark:text-cyan-400">
+              <Link2 className="w-4 h-4" />
+              <span className="text-xs font-medium">
+                {isKo ? "Story Architect 데이터가 자동 적용됩니다" : "Story Architect data auto-applied"}
+              </span>
+            </div>
+            {logicVector?.auteur_id && (
+              <p className="text-[10px] text-cyan-500/70 mt-1 ml-6">
+                Auteur: {logicVector.auteur_id}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Chain Data Input - data from story-architect, reference-decoder */}
         <ChainDataInput
           currentDimension={DIMENSION_KEY}

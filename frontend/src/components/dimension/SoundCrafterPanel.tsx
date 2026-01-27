@@ -29,6 +29,7 @@ import {
   useDimensionChainOptional,
   type ChainData,
 } from "@/contexts/DimensionChainContext";
+import { useChainDataInjection } from "@/hooks/useChainDataInjection";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import ChainDataInput from "./ChainDataInput";
 import { type ThemeColor as DimensionThemeColor } from "@/lib/dimension-theme";
@@ -43,6 +44,7 @@ import {
   Disc,
   Sliders,
   Zap,
+  Link2,
 } from "lucide-react";
 
 // ============================================================================
@@ -185,6 +187,41 @@ function SoundCrafterContent() {
     }
   }, [chainCtx]);
 
+  // Chain Data Injection - auto-inject from story-architect, system-prompt
+  const {
+    evidenceRefs: chainEvidenceRefs,
+    hasUpstreamData,
+    rawInputData,
+  } = useChainDataInjection(DIMENSION_KEY);
+
+  // Auto-apply upstream chain data (story-architect mood/logline)
+  useEffect(() => {
+    if (!hasUpstreamData || concept) return;
+
+    // Type-safe access to rawInputData
+    const typedInputData = rawInputData as Record<string, { output?: Record<string, unknown> } | undefined>;
+
+    // Extract mood/logline from story-architect
+    const storyOutput = typedInputData["story-architect"]?.output;
+    if (storyOutput) {
+      const logline = storyOutput.logline as string | undefined;
+      const mood = storyOutput.mood as string | undefined;
+      const tone = storyOutput.tone as string | undefined;
+
+      if (logline) {
+        setConcept(logline);
+      } else if (mood) {
+        setConcept(`Mood: ${mood}${tone ? `, Tone: ${tone}` : ""}`);
+      }
+    }
+
+    // Extract system prompt tone if available
+    const systemOutput = typedInputData["system-prompt"]?.output;
+    if (systemOutput?.tone && !concept) {
+      setConcept(`System tone: ${systemOutput.tone}`);
+    }
+  }, [hasUpstreamData, rawInputData, concept]);
+
   // ASYNC OP 1: Moodboard Generator
   const moodOp = useAsyncOperation<{
     success: boolean;
@@ -221,10 +258,15 @@ function SoundCrafterContent() {
 
         // Chain Data Update
         if (chainCtx) {
+          // Combine upstream evidence refs with current output refs
+          const outputRefs = (data.output as unknown as { evidence_refs?: string[] }).evidence_refs || [];
+          const combinedRefs = [...new Set([...chainEvidenceRefs, ...outputRefs])];
+
           chainCtx.setChainData(
             DIMENSION_KEY,
             data.output as unknown as Record<string, unknown>,
-            data.output.music_prompt?.slice(0, 50) || concept.slice(0, 50)
+            data.output.music_prompt?.slice(0, 50) || concept.slice(0, 50),
+            combinedRefs
           );
         }
         if (!byokKey && creditCtx) void creditCtx.refresh();
@@ -380,6 +422,18 @@ function SoundCrafterContent() {
       />
 
       <DimensionPanel.Sidebar>
+        {/* Upstream Data Banner */}
+        {hasUpstreamData && (
+          <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
+              <Link2 className="w-4 h-4" />
+              <span className="text-xs font-medium">
+                Story Architect 데이터가 자동 적용됩니다
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Chain Data Input */}
         <ChainDataInput
           currentDimension={DIMENSION_KEY}

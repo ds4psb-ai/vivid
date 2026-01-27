@@ -25,10 +25,11 @@ import {
   useDimensionChainOptional,
   type ChainData,
 } from "@/contexts/DimensionChainContext";
+import { useChainDataInjection } from "@/hooks/useChainDataInjection";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import ChainDataInput from "./ChainDataInput";
 import { type ThemeColor as DimensionThemeColor } from "@/lib/dimension-theme";
-import { CheckCircle, XCircle, AlertTriangle, Download, Shield } from "lucide-react";
+import { CheckCircle, XCircle, AlertTriangle, Download, Shield, Link2 } from "lucide-react";
 import { useDNACardContextConsumer } from "@/hooks/useDNACardContextConsumer";
 import { DNAContextBanner } from "@/components/dna-card/DNAContextBanner";
 import { MASTER_AUTEURS } from "@/components/dna-card/constants";
@@ -120,6 +121,13 @@ function QualityDirectorContent() {
     }
   }, [chainCtx]);
 
+  // Chain Data Injection - auto-inject from video-maker, visual-realizer
+  const {
+    evidenceRefs: chainEvidenceRefs,
+    hasUpstreamData,
+    rawInputData,
+  } = useChainDataInjection(DIMENSION_KEY);
+
   // DNA 카드 컨텍스트 상태
   const [dnaContextInfo, setDnaContextInfo] = useState<{
     type: "master" | "masterpiece" | null;
@@ -182,6 +190,29 @@ function QualityDirectorContent() {
   // Result state
   const [qualityResult, setQualityResult] = useState<QualityResult | null>(null);
 
+  // Auto-apply upstream chain data (video-maker, visual-realizer prompts)
+  useEffect(() => {
+    if (!hasUpstreamData || content) return;
+
+    // Type-safe access to rawInputData
+    const typedInputData = rawInputData as Record<string, { output?: Record<string, unknown> } | undefined>;
+
+    // Extract from visual-realizer
+    const visualOutput = typedInputData["visual-realizer"]?.output;
+    if (visualOutput?.prompt && typeof visualOutput.prompt === "string") {
+      setContent(visualOutput.prompt);
+      setContentType("image_prompt");
+      return;
+    }
+
+    // Extract from video-maker
+    const videoOutput = typedInputData["video-maker"]?.output;
+    if (videoOutput?.prompt && typeof videoOutput.prompt === "string") {
+      setContent(videoOutput.prompt);
+      setContentType("prompt");
+    }
+  }, [hasUpstreamData, rawInputData, content]);
+
   // React 19: useTransition for non-blocking form submission
   const [isTransitionPending, startTransition] = useTransition();
 
@@ -208,6 +239,25 @@ function QualityDirectorContent() {
       if (data.success) {
         setQualityResult(data.output);
         setResult(data.output);
+
+        // Store QC result in chain context - completes the DNA→Story→Production chain
+        if (chainCtx) {
+          // Combine upstream evidence refs with any new refs
+          const outputRefs = (data.output as unknown as { evidence_refs?: string[] }).evidence_refs || [];
+          const combinedRefs = [...new Set([...chainEvidenceRefs, ...outputRefs])];
+
+          chainCtx.setChainData(
+            DIMENSION_KEY,
+            {
+              ...data.output,
+              quality_score: data.output.score,
+              quality_passed: data.output.passed,
+            } as unknown as Record<string, unknown>,
+            `QC ${data.output.passed ? "통과" : "미통과"}: ${data.output.score}점`,
+            combinedRefs
+          );
+        }
+
         if (!byokKey && creditCtx) {
           void creditCtx.refresh();
         }
@@ -345,6 +395,21 @@ function QualityDirectorContent() {
       <DimensionPanel.Header title="퀄리티 디렉터" creditCost={CREDIT_COST} />
 
       <DimensionPanel.Sidebar>
+        {/* Upstream Data Banner */}
+        {hasUpstreamData && (
+          <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+              <Link2 className="w-4 h-4" />
+              <span className="text-xs font-medium">
+                Production 데이터가 자동 적용됩니다
+              </span>
+            </div>
+            <p className="text-[10px] text-amber-500/70 mt-1 ml-6">
+              Video Maker / Visual Realizer 결과물 검수
+            </p>
+          </div>
+        )}
+
         {/* DNA Context Banner */}
         {dnaContextInfo && (
           <DNAContextBanner

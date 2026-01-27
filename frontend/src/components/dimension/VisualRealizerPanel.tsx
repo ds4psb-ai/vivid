@@ -27,11 +27,12 @@ import {
   useDimensionChainOptional,
   type ChainData,
 } from "@/contexts/DimensionChainContext";
+import { useChainDataInjection } from "@/hooks/useChainDataInjection";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import ChainDataInput from "./ChainDataInput";
 import type { EvidenceRef } from "./EvidenceDisplay";
 import { type ThemeColor as DimensionThemeColor } from "@/lib/dimension-theme";
-import { Image as ImageIcon } from "lucide-react";
+import { Image as ImageIcon, Link2 } from "lucide-react";
 
 // ============================================================================
 // Constants & Types
@@ -121,6 +122,14 @@ function VisualRealizerContent() {
       chainCtx.setCurrentDimension(DIMENSION_KEY);
     }
   }, [chainCtx]);
+
+  // Chain Data Injection - auto-inject from prompt-alchemy, system-prompt
+  const {
+    logicVector,
+    evidenceRefs: chainEvidenceRefs,
+    hasUpstreamData,
+    rawInputData,
+  } = useChainDataInjection(DIMENSION_KEY);
 
   // i18n labels
   const labels = useMemo(() => ({
@@ -230,6 +239,42 @@ function VisualRealizerContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Initial mount only
   }, []);
 
+  // Auto-apply upstream chain data (prompt-alchemy translated_prompt)
+  useEffect(() => {
+    if (!hasUpstreamData || description) return;
+
+    // Type-safe access to rawInputData
+    const typedInputData = rawInputData as Record<string, { output?: Record<string, unknown> } | undefined>;
+
+    // Extract prompt from prompt-alchemy
+    const promptOutput = typedInputData["prompt-alchemy"]?.output;
+    if (promptOutput) {
+      const translatedPrompt = promptOutput.translated_prompt as string | undefined;
+      const prompt = promptOutput.prompt as string | undefined;
+      if (translatedPrompt) {
+        setDescription(translatedPrompt);
+      } else if (prompt) {
+        setDescription(prompt);
+      }
+
+      // Apply style from prompt-alchemy
+      const styleData = promptOutput.style as Record<string, unknown> | undefined;
+      if (styleData?.cinematography && typeof styleData.cinematography === "string") {
+        const cine = styleData.cinematography.toLowerCase();
+        if (cine.includes("anime")) setStyle("anime");
+        else if (cine.includes("cinematic")) setStyle("cinematic");
+        else if (cine.includes("3d")) setStyle("3d-render");
+        else if (cine.includes("illustration")) setStyle("illustration");
+      }
+    }
+
+    // Extract from system-prompt if available
+    const systemOutput = typedInputData["system-prompt"]?.output;
+    if (systemOutput?.visual_guide && typeof systemOutput.visual_guide === "string" && !description) {
+      setDescription(systemOutput.visual_guide);
+    }
+  }, [hasUpstreamData, rawInputData, description]);
+
   // Hooks
   const { byokKey } = useBYOK();
   const creditCtx = useCreditContextOptional();
@@ -260,10 +305,17 @@ function VisualRealizerContent() {
 
         // Store in chain context for downstream dimensions (video-maker, quality-director)
         if (chainCtx) {
+          // Combine upstream evidence refs with current output refs
+          const outputRefs = data.output.evidence_refs?.map(ref =>
+            typeof ref === "string" ? ref : (ref as { ref_id?: string }).ref_id || ""
+          ).filter(Boolean) || [];
+          const combinedRefs = [...new Set([...chainEvidenceRefs, ...outputRefs])];
+
           chainCtx.setChainData(
             DIMENSION_KEY,
             data.output as unknown as Record<string, unknown>,
-            data.output.prompt?.slice(0, 50) || description.slice(0, 50)
+            data.output.prompt?.slice(0, 50) || description.slice(0, 50),
+            combinedRefs
           );
         }
 
@@ -384,6 +436,23 @@ function VisualRealizerContent() {
       <DimensionPanel.Header title={labels.title} creditCost={CREDIT_COST} />
 
       <DimensionPanel.Sidebar>
+        {/* Upstream Data Banner */}
+        {hasUpstreamData && (
+          <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+              <Link2 className="w-4 h-4" />
+              <span className="text-xs font-medium">
+                {isKo ? "Prompt Alchemy 데이터가 자동 적용됩니다" : "Prompt Alchemy data auto-applied"}
+              </span>
+            </div>
+            {logicVector?.auteur_id && (
+              <p className="text-[10px] text-emerald-500/70 mt-1 ml-6">
+                Auteur: {logicVector.auteur_id}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Chain Data Input - data from prompt-alchemy, storyboard-sketch */}
         <ChainDataInput
           currentDimension={DIMENSION_KEY}

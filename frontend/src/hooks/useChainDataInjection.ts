@@ -110,24 +110,27 @@ export interface ChainDataInjection {
 
 /** Input map: which dimensions provide input to which */
 const INPUT_MAP: Record<string, string[]> = {
+  // DNA Lab dimensions (mostly independent or feed others)
+  "reference-decoder": [],
+  "aesthetic-director": ["reference-decoder"],
+  "abyss-mirror": [],
+
   // Story Engine dimensions
   "story-architect": ["reference-decoder", "aesthetic-director"],
   "prompt-alchemy": ["story-architect", "reference-decoder"],
   "system-prompt": ["story-architect", "prompt-alchemy", "reference-decoder"],
 
   // Production dimensions
-  "video-maker": ["system-prompt", "prompt-alchemy", "story-architect"],
-  "visual-realizer": ["prompt-alchemy", "system-prompt"],
+  "storyboard-sketch": ["story-architect", "reference-decoder"],
   "sound-crafter": ["story-architect", "system-prompt"],
+  "visual-realizer": ["prompt-alchemy", "system-prompt"],
+  "video-maker": ["system-prompt", "prompt-alchemy", "story-architect"],
+  "quality-director": ["video-maker", "visual-realizer"],
+
+  // Video Providers
   veo: ["system-prompt", "prompt-alchemy"],
   kling: ["system-prompt", "prompt-alchemy"],
   suno: ["story-architect", "sound-crafter"],
-
-  // DNA Lab dimensions (mostly independent or feed others)
-  "reference-decoder": [],
-  "aesthetic-director": ["reference-decoder"],
-  "abyss-mirror": [],
-  "quality-director": ["video-maker", "visual-realizer"],
 };
 
 /**
