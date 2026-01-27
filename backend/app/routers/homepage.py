@@ -244,16 +244,22 @@ async def get_featured_ip(db: AsyncSession = Depends(get_db)) -> FeaturedIPRespo
     """Get featured IP for cinematic hero section.
 
     Returns the highest-priority featured IP from IPCatalog.
-    Falls back to default if no featured IP exists.
+    Falls back to default if no featured IP exists or on DB error.
     """
-    stmt = (
-        select(IPCatalog)
-        .where(IPCatalog.is_featured == True, IPCatalog.is_active == True)
-        .order_by(IPCatalog.featured_order.asc())
-        .limit(1)
-    )
-    result = await db.execute(stmt)
-    ip = result.scalar_one_or_none()
+    try:
+        stmt = (
+            select(IPCatalog)
+            .where(IPCatalog.is_featured == True, IPCatalog.is_active == True)
+            .order_by(IPCatalog.featured_order.asc())
+            .limit(1)
+        )
+        result = await db.execute(stmt)
+        ip = result.scalar_one_or_none()
+    except Exception as e:
+        # Log error and return fallback
+        import logging
+        logging.warning(f"Failed to fetch featured IP: {e}")
+        return DEFAULT_FEATURED_IP
 
     if not ip:
         return DEFAULT_FEATURED_IP
@@ -295,16 +301,21 @@ async def get_homepage_characters(
     """Get featured characters for homepage section.
 
     Returns chat-enabled IPs with highest session counts.
-    Falls back to defaults if no characters exist.
+    Falls back to defaults if no characters exist or on DB error.
     """
-    stmt = (
-        select(IPCatalog)
-        .where(IPCatalog.chat_enabled == True, IPCatalog.is_active == True)
-        .order_by(IPCatalog.chat_session_count.desc())
-        .limit(limit)
-    )
-    result = await db.execute(stmt)
-    ips = result.scalars().all()
+    try:
+        stmt = (
+            select(IPCatalog)
+            .where(IPCatalog.chat_enabled == True, IPCatalog.is_active == True)
+            .order_by(IPCatalog.chat_session_count.desc())
+            .limit(limit)
+        )
+        result = await db.execute(stmt)
+        ips = result.scalars().all()
+    except Exception as e:
+        import logging
+        logging.warning(f"Failed to fetch homepage characters: {e}")
+        return DEFAULT_CHARACTERS[:limit]
 
     if not ips:
         return DEFAULT_CHARACTERS[:limit]
@@ -339,16 +350,21 @@ async def get_homepage_cinema(
     """Get cinema cards for user AI cinema section.
 
     Returns featured blackhole templates.
-    Falls back to defaults if no templates exist.
+    Falls back to defaults if no templates exist or on DB error.
     """
-    stmt = (
-        select(BlackholeTemplate)
-        .where(BlackholeTemplate.is_featured == True, BlackholeTemplate.is_public == True)
-        .order_by(BlackholeTemplate.use_count.desc())
-        .limit(limit)
-    )
-    result = await db.execute(stmt)
-    templates = result.scalars().all()
+    try:
+        stmt = (
+            select(BlackholeTemplate)
+            .where(BlackholeTemplate.is_featured == True, BlackholeTemplate.is_public == True)
+            .order_by(BlackholeTemplate.use_count.desc())
+            .limit(limit)
+        )
+        result = await db.execute(stmt)
+        templates = result.scalars().all()
+    except Exception as e:
+        import logging
+        logging.warning(f"Failed to fetch homepage cinema: {e}")
+        return DEFAULT_CINEMA_CARDS[:limit]
 
     if not templates:
         return DEFAULT_CINEMA_CARDS[:limit]
@@ -391,16 +407,21 @@ async def get_homepage_creators(
     """Get creators for human cloud CTA section.
 
     Returns verified and available creators.
-    Falls back to defaults if no creators exist.
+    Falls back to defaults if no creators exist or on DB error.
     """
-    stmt = (
-        select(CreatorProfile)
-        .where(CreatorProfile.is_available == True, CreatorProfile.is_verified == True)
-        .order_by(CreatorProfile.avg_rating.desc().nullslast(), CreatorProfile.completed_count.desc())
-        .limit(limit)
-    )
-    result = await db.execute(stmt)
-    creators = result.scalars().all()
+    try:
+        stmt = (
+            select(CreatorProfile)
+            .where(CreatorProfile.is_available == True, CreatorProfile.is_verified == True)
+            .order_by(CreatorProfile.avg_rating.desc().nullslast(), CreatorProfile.completed_count.desc())
+            .limit(limit)
+        )
+        result = await db.execute(stmt)
+        creators = result.scalars().all()
+    except Exception as e:
+        import logging
+        logging.warning(f"Failed to fetch homepage creators: {e}")
+        return DEFAULT_CREATORS[:limit]
 
     if not creators:
         return DEFAULT_CREATORS[:limit]
@@ -473,37 +494,47 @@ async def list_characters(
     """List all characters with search and filter support.
 
     Server-side filtering for /characters page.
+    Falls back to defaults on DB error.
     """
-    # Base query
-    query = select(IPCatalog).where(IPCatalog.chat_enabled == True, IPCatalog.is_active == True)
+    # Try DB query, fallback to defaults on error
+    try:
+        # Base query
+        query = select(IPCatalog).where(IPCatalog.chat_enabled == True, IPCatalog.is_active == True)
 
-    # Apply search filter
-    if search:
-        search_pattern = f"%{search}%"
-        query = query.where(
-            or_(
-                IPCatalog.name_ko.ilike(search_pattern),
-                IPCatalog.name_en.ilike(search_pattern),
-                IPCatalog.description_ko.ilike(search_pattern),
+        # Apply search filter
+        if search:
+            search_pattern = f"%{search}%"
+            query = query.where(
+                or_(
+                    IPCatalog.name_ko.ilike(search_pattern),
+                    IPCatalog.name_en.ilike(search_pattern),
+                    IPCatalog.description_ko.ilike(search_pattern),
+                )
             )
-        )
 
-    # Apply category filter
-    if category and category.lower() != "all":
-        # Filter by genre (JSONB contains)
-        query = query.where(IPCatalog.genre.contains([category]))
+        # Apply category filter
+        if category and category.lower() != "all":
+            # Filter by genre (JSONB contains)
+            query = query.where(IPCatalog.genre.contains([category]))
 
-    # Count total
-    count_query = select(func.count()).select_from(query.subquery())
-    total_result = await db.execute(count_query)
-    total = total_result.scalar() or 0
+        # Count total
+        count_query = select(func.count()).select_from(query.subquery())
+        total_result = await db.execute(count_query)
+        total = total_result.scalar() or 0
 
-    # Apply pagination
-    offset = (page - 1) * page_size
-    query = query.order_by(IPCatalog.chat_session_count.desc()).offset(offset).limit(page_size)
+        # Apply pagination
+        offset = (page - 1) * page_size
+        query = query.order_by(IPCatalog.chat_session_count.desc()).offset(offset).limit(page_size)
 
-    result = await db.execute(query)
-    ips = result.scalars().all()
+        result = await db.execute(query)
+        ips = result.scalars().all()
+    except Exception as e:
+        import logging
+        logging.warning(f"Failed to fetch character list: {e}")
+        # Fall through to default handling
+        ips = []
+        total = 0
+        offset = (page - 1) * page_size
 
     # If no results from DB, use defaults with filtering and pagination
     if not ips:
