@@ -129,6 +129,8 @@
 | [DATA_GOVERNANCE_POLICY.md](./DATA_GOVERNANCE_POLICY.md) | 데이터 거버넌스 | ✅ Active |
 | [INCIDENT_RESPONSE_AND_BCP.md](./INCIDENT_RESPONSE_AND_BCP.md) | 인시던트 대응 | ✅ Active |
 | [SECURE_SDLC_POLICY.md](./SECURE_SDLC_POLICY.md) | 보안 SDLC | ✅ Active |
+| [LOGGING_MONITORING_POLICY.md](./LOGGING_MONITORING_POLICY.md) | 로깅/모니터링 정책 | ✅ Active |
+| [OBSERVABILITY_ACTIVATION_GUIDE.md](./OBSERVABILITY_ACTIVATION_GUIDE.md) | **OpenTelemetry/Security 활성화 가이드** | ✅ Active |
 
 ---
 
