@@ -11,6 +11,12 @@
 
 18개 Dimension 앱 → 3개 메가앱 통합 + VPE 신규 모듈 구현
 
+**4-D DNA 통합 목표** (Codex 검증 완료):
+- ✅ 거장 DNA: Qdrant 10개 컬렉션
+- ✅ 영상 DNA: VPE + Multimodal RAG  
+- 🔄 유저 DNA: PersonaMem-v2 + **Big Five (OCEAN) 추가**
+- ✅ IP 페르소나: MegaNova 패턴 JSON
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │  [🧬 DNA Lab]              [📝 Story Engine]     [🎬 Production]    │

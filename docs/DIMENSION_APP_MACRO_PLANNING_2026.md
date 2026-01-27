@@ -601,6 +601,15 @@ app_1_1_abyss_mirror:
         reasoning: "string"
         secondary_matches: "list[object]"
 
+      # NEW: Big Five (OCEAN) - 2026 Psychographic 표준
+      big_five_ocean:
+        openness: "float (0.0-1.0)"       # 창의성, 호기심
+        conscientiousness: "float (0.0-1.0)"  # 꼼꼼함, 계획성
+        extraversion: "float (0.0-1.0)"    # 사교성, 에너지
+        agreeableness: "float (0.0-1.0)"   # 협조성, 친화력
+        neuroticism: "float (0.0-1.0)"     # 감정 기복, 민감성
+        # Sources: Averi AI, Psympl (2026 상용 서비스)
+
       creative_dna_prompt:
         description: "다른 앱에서 사용할 DNA 프롬프트 문자열"
         example: "perfectionist storyteller with visual minimalism preference, drawn to psychological depth and ambiguous endings, influenced by Bong Joon-ho's social commentary and Wong Kar-wai's emotional color palette"

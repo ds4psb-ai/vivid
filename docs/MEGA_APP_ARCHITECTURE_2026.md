@@ -22,6 +22,20 @@
 
 ![Crebit 3-Mega App Architecture](./assets/mega_app_architecture.png)
 
+### 4-D DNA 비전 (2026 핵심 차별화)
+
+> [!TIP]
+> **세상에 거의 없는 통합**: 4개 DNA 축을 하나의 파이프라인으로 통합
+
+| DNA 축 | 기술 기반 | 현재 상태 |
+|--------|----------|:--------:|
+| 1️⃣ 거장 명작 DNA | Qdrant 10개 컬렉션 | ✅ 완료 |
+| 2️⃣ 수작 영상 DNA | VPE + Multimodal RAG | ✅ 완료 |
+| 3️⃣ 심연의 유저 해석 | PersonaMem-v2 + Big Five | 🔄 OCEAN 추가 |
+| 4️⃣ IP 페르소나 관리 | MegaNova 패턴 JSON | ✅ 완료 |
+
+**경쟁 우위**: Runway AI, LTX Studio 모두 개별 기능만 제공. **4-D 통합은 Vivid 유일**.
+
 ---
 
 ## 🔬 2026 트렌드 검증 (웹 리서치 기반)
