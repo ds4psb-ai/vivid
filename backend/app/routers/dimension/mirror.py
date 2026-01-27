@@ -1044,10 +1044,202 @@ async def chat_mirror_stream(
 
         # 스트리밍 전송
         yield f"data: {json.dumps(result, ensure_ascii=False)}\n\n"
-    
+
     return StreamingResponse(
         generate_stream(),
         media_type="text/event-stream",
         headers=get_sse_headers(),
     )
+
+
+# ============================================================================
+# P5: Style Quiz Endpoints (Gamified Quick Quiz)
+# ============================================================================
+
+class QuizOptionResponse(BaseModel):
+    """Quiz option response model."""
+    id: str
+    text: str
+    image_url: Optional[str] = None
+
+
+class QuizQuestionResponse(BaseModel):
+    """Quiz question response model."""
+    id: str
+    dimension: str
+    question_ko: str
+    question_en: str
+    options: List[QuizOptionResponse]
+    order: int
+
+
+class QuizQuestionsResponse(BaseModel):
+    """Response for quiz questions endpoint."""
+    success: bool
+    questions: List[QuizQuestionResponse]
+    total_questions: int
+    estimated_time_seconds: int = 30
+
+
+class QuizAnswerRequest(BaseModel):
+    """Request model for quiz submission."""
+    answers: Dict[str, str] = Field(
+        ...,
+        description="Map of question_id to selected option_id",
+        examples=[{"q1_visual": "q1_a", "q2_narrative": "q2_b"}],
+    )
+
+
+class AuteurMatchResponse(BaseModel):
+    """Auteur match result model."""
+    auteur_key: str
+    name_ko: str
+    name_en: str
+    match_percentage: float
+    signature: str
+    keywords: List[str]
+
+
+class QuizResultResponse(BaseModel):
+    """Response for quiz submission."""
+    success: bool
+    primary_match: AuteurMatchResponse
+    secondary_matches: List[AuteurMatchResponse]
+    dimension_scores: Dict[str, str]
+    creative_profile: Dict[str, Any]
+    share_text: str
+    evidence_refs: List[str] = Field(default_factory=list)
+    error: Optional[str] = None
+
+
+@router.get(
+    "/mirror/quiz",
+    response_model=QuizQuestionsResponse,
+    summary="스타일 퀴즈: 질문 조회",
+    description="30초 스타일 퀴즈 질문 목록 (3-5문항)",
+    tags=["Dimension Extended"],
+)
+async def get_quiz_questions(
+    limit: int = 5,
+) -> QuizQuestionsResponse:
+    """Get style quiz questions.
+
+    P5: Gamified Quick Quiz for creator DNA matching.
+    Based on PSYCHOGRAPHIC_UX_RESEARCH_2026.md Pattern C.
+    """
+    from app.services.style_quiz_service import get_style_quiz_service
+
+    service = get_style_quiz_service()
+    questions = service.get_questions(limit=limit)
+
+    response_questions = [
+        QuizQuestionResponse(
+            id=q.id,
+            dimension=q.dimension.value,
+            question_ko=q.question_ko,
+            question_en=q.question_en,
+            options=[
+                QuizOptionResponse(
+                    id=opt.id,
+                    text=opt.text,
+                    image_url=opt.image_url,
+                )
+                for opt in q.options
+            ],
+            order=q.order,
+        )
+        for q in questions
+    ]
+
+    mirror_logger.info(f"[STYLE_QUIZ_GET] questions={len(response_questions)}")
+
+    return QuizQuestionsResponse(
+        success=True,
+        questions=response_questions,
+        total_questions=len(response_questions),
+        estimated_time_seconds=30,
+    )
+
+
+@router.post(
+    "/mirror/quiz/submit",
+    response_model=QuizResultResponse,
+    responses={
+        400: {"model": DimensionErrorResponse},
+    },
+    summary="스타일 퀴즈: 결과 제출",
+    description="퀴즈 답변 제출 및 거장 DNA 매칭 결과",
+    tags=["Dimension Extended"],
+)
+async def submit_quiz_answers(
+    request: QuizAnswerRequest,
+    user: dict = Depends(get_current_user),
+) -> QuizResultResponse:
+    """Submit quiz answers and get auteur DNA matching result.
+
+    P5: Gamified Quick Quiz - instant result with DNA matching.
+    """
+    from app.services.style_quiz_service import get_style_quiz_service
+
+    user_id = user.get("id", "unknown")
+    service = get_style_quiz_service()
+
+    result = service.calculate_result(
+        answers=request.answers,
+        user_id=user_id,
+    )
+
+    mirror_logger.info(
+        f"[STYLE_QUIZ_SUBMIT] user={user_id} "
+        f"primary={result.primary_match.auteur_key} "
+        f"match={result.primary_match.match_percentage}%"
+    )
+
+    return QuizResultResponse(
+        success=result.success,
+        primary_match=AuteurMatchResponse(
+            auteur_key=result.primary_match.auteur_key,
+            name_ko=result.primary_match.name_ko,
+            name_en=result.primary_match.name_en,
+            match_percentage=result.primary_match.match_percentage,
+            signature=result.primary_match.signature,
+            keywords=result.primary_match.keywords,
+        ),
+        secondary_matches=[
+            AuteurMatchResponse(
+                auteur_key=m.auteur_key,
+                name_ko=m.name_ko,
+                name_en=m.name_en,
+                match_percentage=m.match_percentage,
+                signature=m.signature,
+                keywords=m.keywords,
+            )
+            for m in result.secondary_matches
+        ],
+        dimension_scores=result.dimension_scores,
+        creative_profile=result.creative_profile,
+        share_text=result.share_text,
+        evidence_refs=result.evidence_refs,
+        error=result.error,
+    )
+
+
+@router.get(
+    "/mirror/quiz/auteurs",
+    summary="스타일 퀴즈: 거장 목록",
+    description="매칭 가능한 거장 목록 조회",
+    tags=["Dimension Extended"],
+)
+async def get_auteur_list() -> Dict[str, Any]:
+    """Get list of available auteurs for DNA matching."""
+    from app.services.style_quiz_service import get_style_quiz_service
+
+    service = get_style_quiz_service()
+    auteurs = service.get_all_auteurs()
+
+    return {
+        "success": True,
+        "auteurs": auteurs,
+        "total": len(auteurs),
+    }
 
