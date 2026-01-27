@@ -35,6 +35,9 @@ from ._base import (
     _validate_model,
     _strip_string,
     sanitize_generic_text,
+    validate_content_size,
+    MAX_CONTENT_SIZE,
+    MAX_WIKI_CONTEXT_SIZE,
     DimensionResponse,
     DimensionErrorResponse,
     DimensionCapsuleId,
@@ -641,13 +644,14 @@ class CharacterDNARequest(BaseModel):
 
     Includes:
     - XSS sanitization for name, role, personality, physical_traits, wiki_context
+    - Content size validation (wiki_context max 10KB)
     - Enum validation for style_reference
     """
     name: str = Field(..., min_length=1, max_length=100, description="Character name (sanitized)")
     role: str = Field(..., min_length=1, max_length=200, description="Character role (sanitized)")
     personality: str = Field("", max_length=1000, description="Personality traits and behaviors (sanitized)")
     physical_traits: str = Field("", max_length=1000, description="Physical appearance details (sanitized)")
-    wiki_context: str = Field("", max_length=5000, description="External context (sanitized)")
+    wiki_context: str = Field("", max_length=10000, description="External context (sanitized, max 10KB)")
     style_reference: str = Field("anime", max_length=100, description="Visual style: anime, realistic, stylized, cinematic")
     model: str = Field("gemini-3-flash-preview", description="AI model")
 
@@ -678,8 +682,9 @@ class CharacterDNARequest(BaseModel):
     @field_validator("wiki_context", mode="before")
     @classmethod
     def sanitize_wiki_context(cls, v: str) -> str:
-        """Sanitize wiki_context to prevent XSS."""
-        return sanitize_generic_text(v, default="")
+        """Sanitize wiki_context and validate size to prevent XSS and DoS."""
+        sanitized = sanitize_generic_text(v, default="")
+        return validate_content_size(sanitized, MAX_WIKI_CONTEXT_SIZE, "wiki_context")
 
     @field_validator("style_reference")
     @classmethod

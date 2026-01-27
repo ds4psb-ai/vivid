@@ -314,24 +314,39 @@ class VPEParseRequest(BaseModel):
     @field_validator("video_uri")
     @classmethod
     def validate_video_uri(cls, v: str) -> str:
-        """Validate video URI format."""
+        """Validate video URI format.
+
+        Security:
+        - Only allows HTTPS and GCS (gs://) schemes
+        - Blocks HTTP to prevent SSRF and man-in-the-middle attacks
+        - Validates minimum URI length
+        """
         v = v.strip()
         if not v:
             raise ValueError("video_uri cannot be empty")
 
-        valid_prefixes = ("gs://", "https://", "http://")
+        # Security: Only allow secure protocols (https, gs)
+        # HTTP is rejected to prevent SSRF and insecure connections
+        valid_prefixes = ("gs://", "https://")
         youtube_patterns = ("youtube.com", "youtu.be")
 
         if not any(v.startswith(p) for p in valid_prefixes):
-            raise ValueError(f"video_uri must start with one of: {valid_prefixes}")
+            raise ValueError(
+                f"video_uri must use secure scheme (gs:// or https://). "
+                f"HTTP is not allowed for security reasons."
+            )
 
-        # Allow YouTube URLs
+        # Allow YouTube URLs (must be HTTPS)
         if any(p in v for p in youtube_patterns):
             return v
 
-        # For GCS/HTTP, basic validation
+        # For GCS, validate minimum URI length
         if v.startswith("gs://") and len(v) < 10:
-            raise ValueError("Invalid GCS URI")
+            raise ValueError("Invalid GCS URI: too short")
+
+        # For HTTPS, validate minimum URI length
+        if v.startswith("https://") and len(v) < 15:
+            raise ValueError("Invalid HTTPS URI: too short")
 
         return v
 

@@ -35,6 +35,8 @@ from ._base import (
     _execute_dimension_tool_stream,
     _validate_model,
     _strip_string,
+    validate_content_size,
+    MAX_CONTENT_SIZE,
     DimensionResponse,
     DimensionErrorResponse,
     DimensionCapsuleId,
@@ -300,9 +302,10 @@ class QualityCheckRequest(BaseModel):
 
     Includes:
     - XSS sanitization for content
+    - Content size validation (max 50KB)
     - Enum validation for content_type, inspection_mode, criteria
     """
-    content: str = Field(..., min_length=1, max_length=10000, description="Content to evaluate (sanitized)")
+    content: str = Field(..., min_length=1, max_length=50000, description="Content to evaluate (sanitized, max 50KB)")
     content_type: str = Field("prompt", max_length=50, description="Type of content")
     inspection_mode: str = Field("comprehensive", max_length=50, description="Inspection mode (backward compat)")
     inspection_modes: Optional[List[str]] = Field(None, description="Multi-mode list (P3)")
@@ -316,9 +319,10 @@ class QualityCheckRequest(BaseModel):
 
     @field_validator("content", mode="before")
     @classmethod
-    def sanitize_content(cls, v: str) -> str:
-        """Sanitize content to prevent XSS."""
-        return _sanitize_text_field(v)
+    def sanitize_and_validate_content(cls, v: str) -> str:
+        """Sanitize content and validate size to prevent XSS and DoS."""
+        sanitized = _sanitize_text_field(v)
+        return validate_content_size(sanitized, MAX_CONTENT_SIZE, "content")
 
     @field_validator("content_type")
     @classmethod
@@ -375,9 +379,10 @@ class CreativeEditorRequest(BaseModel):
 
     Includes:
     - XSS sanitization for content, context
+    - Content size validation (max 50KB)
     - Enum validation for persona
     """
-    content: str = Field(..., min_length=1, max_length=10000, description="Content to improve (sanitized)")
+    content: str = Field(..., min_length=1, max_length=50000, description="Content to improve (sanitized, max 50KB)")
     context: str = Field(..., min_length=1, max_length=1000, description="Context/Genre/Audience (sanitized)")
     persona: str = Field("Senior Editor", max_length=100, description="Editorial persona")
     use_rag: bool = Field(True, description="Use RAG for editing principles")
@@ -385,9 +390,10 @@ class CreativeEditorRequest(BaseModel):
 
     @field_validator("content", mode="before")
     @classmethod
-    def sanitize_content(cls, v: str) -> str:
-        """Sanitize content to prevent XSS."""
-        return _sanitize_text_field(v)
+    def sanitize_and_validate_content(cls, v: str) -> str:
+        """Sanitize content and validate size to prevent XSS and DoS."""
+        sanitized = _sanitize_text_field(v)
+        return validate_content_size(sanitized, MAX_CONTENT_SIZE, "content")
 
     @field_validator("context", mode="before")
     @classmethod

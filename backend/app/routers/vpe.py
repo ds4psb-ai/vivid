@@ -111,7 +111,21 @@ async def _refund_with_retry(
 async def get_byok_key(
     x_gemini_api_key: Optional[str] = Header(None, alias="X-Gemini-API-Key"),
 ) -> Optional[str]:
-    """Extract optional BYOK key from header."""
+    """Extract optional BYOK key from header.
+
+    Security: Validates API key format (must start with 'AIza' for Gemini).
+    """
+    if x_gemini_api_key:
+        # Validate Gemini API key format
+        if not x_gemini_api_key.startswith("AIza"):
+            from fastapi import HTTPException
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "INVALID_API_KEY_FORMAT",
+                    "message": "API 키 형식이 올바르지 않습니다. Gemini API 키는 'AIza'로 시작해야 합니다.",
+                }
+            )
     return x_gemini_api_key
 
 

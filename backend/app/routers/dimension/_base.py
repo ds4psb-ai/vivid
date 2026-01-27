@@ -54,6 +54,10 @@ logger = logging.getLogger(__name__)
 REFUND_MAX_RETRIES = 3
 REFUND_RETRY_BASE_DELAY_MS = 100
 
+# Security: Content size limits
+MAX_CONTENT_SIZE = 50000  # 50KB max content size for DoS prevention
+MAX_WIKI_CONTEXT_SIZE = 10000  # 10KB for wiki/external context
+
 
 # ============================================================================
 # Dimension Mapping
@@ -274,6 +278,33 @@ def sanitize_generic_text(value: str, default: str = "") -> str:
     return value or default
 
 
+def validate_content_size(value: str, max_size: int = MAX_CONTENT_SIZE, field_name: str = "content") -> str:
+    """Validate content size to prevent DoS attacks.
+
+    Security: Enforces maximum content size limits.
+
+    Args:
+        value: Content string to validate
+        max_size: Maximum allowed size in bytes (default: 50KB)
+        field_name: Field name for error message
+
+    Returns:
+        Original value if within size limit
+
+    Raises:
+        ValueError: If content exceeds size limit
+    """
+    if not value:
+        return value
+    content_size = len(value.encode('utf-8'))
+    if content_size > max_size:
+        raise ValueError(
+            f"{field_name} 크기가 너무 큽니다. 최대 {max_size // 1000}KB까지 허용됩니다. "
+            f"(현재: {content_size // 1000}KB)"
+        )
+    return value
+
+
 # ============================================================================
 # Response Models
 # ============================================================================
@@ -310,7 +341,20 @@ class DimensionErrorResponse(BaseModel):
 async def get_byok_key(
     x_gemini_api_key: Optional[str] = Header(None, alias="X-Gemini-API-Key"),
 ) -> Optional[str]:
-    """Extract optional BYOK key from header."""
+    """Extract optional BYOK key from header.
+
+    Security: Validates API key format (must start with 'AIza' for Gemini).
+    """
+    if x_gemini_api_key:
+        # Validate Gemini API key format
+        if not x_gemini_api_key.startswith("AIza"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "code": "INVALID_API_KEY_FORMAT",
+                    "message": "API 키 형식이 올바르지 않습니다. Gemini API 키는 'AIza'로 시작해야 합니다.",
+                }
+            )
     return x_gemini_api_key
 
 
@@ -1644,6 +1688,8 @@ __all__ = [
     "_validate_aspect_ratio",
     "_validate_veo_duration",
     "_strip_string",
+    "sanitize_generic_text",
+    "validate_content_size",
     # Response models
     "DimensionResponse",
     "DimensionErrorResponse",
@@ -1658,6 +1704,8 @@ __all__ = [
     "ALLOWED_PLATFORMS",
     "ALLOWED_STRUCTURES",
     "ALLOWED_VEO_DURATIONS",
+    "MAX_CONTENT_SIZE",
+    "MAX_WIKI_CONTEXT_SIZE",
     # Re-exports from dimension_adapter
     "DimensionCapsuleId",
     "ALLOWED_LANGUAGES",

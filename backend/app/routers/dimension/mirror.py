@@ -34,6 +34,8 @@ from ._base import (
     _validate_model,
     _strip_string,
     sanitize_generic_text,
+    validate_content_size,
+    MAX_CONTENT_SIZE,
     DimensionErrorResponse,
     get_sse_headers,
     Optional,
@@ -478,10 +480,11 @@ class MirrorChatRequest(BaseModel):
 
     Includes:
     - XSS sanitization for user_message
+    - Content size validation (max 2KB for message)
     - Enum validation for current_stage
     """
     session_id: str = Field(..., min_length=1, description="세션 ID")
-    user_message: str = Field(..., min_length=1, max_length=2000, description="사용자 메시지 (sanitized)")
+    user_message: str = Field(..., min_length=1, max_length=2000, description="사용자 메시지 (sanitized, max 2KB)")
     persona_data: Dict[str, Any] = Field(default_factory=dict, description="누적된 페르소나 데이터")
     chat_history: List[Dict[str, str]] = Field(default_factory=list, description="대화 기록")
     current_stage: str = Field("intro", description="현재 분석 단계")
@@ -490,8 +493,10 @@ class MirrorChatRequest(BaseModel):
     @field_validator("user_message", mode="before")
     @classmethod
     def sanitize_user_message(cls, v: str) -> str:
-        """Sanitize user_message to prevent XSS."""
-        return sanitize_generic_text(v)
+        """Sanitize user_message and validate size to prevent XSS and DoS."""
+        sanitized = sanitize_generic_text(v)
+        # Limit to 2KB for chat messages
+        return validate_content_size(sanitized, 2000, "user_message")
 
     @field_validator("current_stage")
     @classmethod
