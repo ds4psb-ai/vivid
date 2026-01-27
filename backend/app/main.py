@@ -160,9 +160,11 @@ from app.routers.homepage import router as homepage_router
 # Chain Sessions (P7+: Workflow Chain Persistence)
 from app.routers.chain import router as chain_router
 
-from app.middleware.rate_limit import setup_rate_limiting
+from app.middleware.rate_limit import setup_rate_limiting, DefaultRateLimitMiddleware
 from app.middleware.mtls import MTLSMiddleware
 from app.middleware.security import setup_security_middleware
+from app.middleware.body_size_limit import BodySizeLimitMiddleware
+from app.middleware.csrf import CSRFMiddleware
 from app.logging_config import setup_logging, LoggingMiddleware
 from app.monitoring import setup_monitoring
 
@@ -240,6 +242,19 @@ app = FastAPI(
 
 # CORSMiddleware moved to the end to ensure it runs first
 
+# =============================================================================
+# Security Hardening Middlewares (2026 Best Practices)
+# =============================================================================
+# Middleware execution order (bottom to top):
+# 1. CORS (added last, runs first)
+# 2. Body Size Limit (reject oversized requests early)
+# 3. Rate Limiting (protect against DDoS)
+# 4. CSRF (protect cookie sessions)
+# 5. Security Headers (HSTS, CSP, etc.)
+# 6. mTLS (S2S authentication)
+# 7. Tenant (multi-tenant RLS)
+# 8. Secure Logging (PII redaction)
+
 # Add secure logging middleware (PII Redaction)
 # LoggingMiddleware는 제거하고 SecureLoggingMiddleware 사용
 from app.middleware.secure_logging import SecureLoggingMiddleware
@@ -263,8 +278,21 @@ if settings.SECURITY_HEADERS_ENABLED:
         enable_suspicious_detection=settings.SECURITY_SUSPICIOUS_DETECTION,
     )
 
-# Setup rate limiting
+# Setup rate limiting (SlowAPI decorator-based)
 setup_rate_limiting(app)
+
+# Add Default Rate Limiting Middleware (100% endpoint coverage)
+# This ensures ALL endpoints have at least a default rate limit
+app.add_middleware(DefaultRateLimitMiddleware)
+
+# Add CSRF Protection (for cookie-based sessions)
+# API key and Bearer token auth bypass CSRF automatically
+_csrf_enabled = settings.ENVIRONMENT.lower() in {"production", "prod", "staging"}
+app.add_middleware(CSRFMiddleware, enabled=_csrf_enabled)
+
+# Add Body Size Limit Middleware (OWASP A06:2021)
+# Must be early in the chain to reject oversized requests quickly
+app.add_middleware(BodySizeLimitMiddleware)
 
 # H1.5: Add TenantMiddleware for multi-tenant RLS support
 # This must be added after security middleware and before route handlers

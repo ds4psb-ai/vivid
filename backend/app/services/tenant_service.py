@@ -17,7 +17,7 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, func, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models_tenant import Tenant, TenantAPIKey
@@ -128,27 +128,50 @@ class TenantService:
         return result.scalar_one_or_none()
 
     async def get_tenant_by_api_key(self, api_key: str) -> Optional[Tenant]:
-        """Get tenant by API key (for middleware authentication)."""
+        """Get tenant by API key (for middleware authentication).
+
+        Security (OWASP A07:2021 - Identification and Authentication Failures):
+        - API key expiration is checked at query level for efficiency
+        - Expired keys are immediately rejected without further processing
+        """
         # Hash the API key
         key_hash = self._hash_api_key(api_key)
+        current_time = datetime.utcnow()
 
+        # P1 Security: Check expiration at query level (more efficient)
+        # This prevents unnecessary database round-trips for expired keys
         result = await self.db.execute(
             select(TenantAPIKey).where(
-                TenantAPIKey.key_hash == key_hash,
-                TenantAPIKey.is_active == True,
+                and_(
+                    TenantAPIKey.key_hash == key_hash,
+                    TenantAPIKey.is_active == True,
+                    # Expiration check: NULL (never expires) OR future date
+                    (
+                        (TenantAPIKey.expires_at == None) |
+                        (TenantAPIKey.expires_at > current_time)
+                    ),
+                )
             )
         )
         api_key_record = result.scalar_one_or_none()
 
         if not api_key_record:
+            # Log if key exists but is expired (for security monitoring)
+            expired_result = await self.db.execute(
+                select(TenantAPIKey).where(
+                    TenantAPIKey.key_hash == key_hash,
+                    TenantAPIKey.is_active == True,
+                )
+            )
+            if expired_result.scalar_one_or_none():
+                logger.warning(
+                    "Expired API key attempted",
+                    extra={"key_prefix": api_key[:12] if len(api_key) >= 12 else "unknown"}
+                )
             return None
 
-        # Check expiration
-        if api_key_record.expires_at and api_key_record.expires_at < datetime.utcnow():
-            return None
-
-        # Update last used
-        api_key_record.last_used_at = datetime.utcnow()
+        # Update last used (async, non-blocking)
+        api_key_record.last_used_at = current_time
         await self.db.commit()
 
         return await self.get_tenant(api_key_record.tenant_id)

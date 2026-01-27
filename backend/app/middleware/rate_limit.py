@@ -265,3 +265,249 @@ def limit_upload(func):
 def limit_by_tier(func):
     """Rate limit decorator with dynamic user-tier based limits."""
     return limiter.limit(get_user_tier_limit)(func)
+
+
+# =============================================================================
+# Default Rate Limit Middleware (2026 Security Hardening)
+# =============================================================================
+
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse as StarletteJSONResponse
+import re
+import time
+
+
+class DefaultRateLimitMiddleware(BaseHTTPMiddleware):
+    """
+    Middleware that applies default rate limits to ALL endpoints.
+
+    This ensures 100% rate limit coverage for DDoS protection (OWASP A04:2021).
+    Endpoints with explicit @limiter.limit decorators will have BOTH limits applied
+    (decorator limit is typically more restrictive).
+
+    Configuration:
+    - EXEMPT_PATHS: Paths that bypass rate limiting (health checks, metrics)
+    - PATH_LIMITS: Path-specific rate limits (regex patterns supported)
+    - DEFAULT_LIMIT: Fallback limit for unmatched paths
+    """
+
+    # Paths exempt from rate limiting
+    EXEMPT_PATHS = frozenset({
+        "/",
+        "/health",
+        "/healthz",
+        "/health/live",
+        "/health/ready",
+        "/metrics",
+        "/openapi.json",
+        "/docs",
+        "/redoc",
+    })
+
+    # Path-specific limits (more restrictive than default)
+    # Format: (regex_pattern, limit_string)
+    PATH_LIMITS = [
+        # Authentication - strict limits for brute force protection
+        (re.compile(r"^/api/v1/auth/"), "5/minute"),
+        # LLM generation - expensive operations
+        (re.compile(r"^/api/dimension/"), "10/minute"),
+        (re.compile(r"^/api/v1/agent/"), "10/minute"),
+        (re.compile(r"^/api/v1/uqsl/"), "10/minute"),
+        (re.compile(r"^/api/v1/capsules/"), "10/minute"),
+        # RAG queries - moderate limits
+        (re.compile(r"^/api/v1/rag/"), "30/minute"),
+        # Batch operations - strict limits
+        (re.compile(r"^/api/v1/batch/"), "5/minute"),
+        # File uploads - moderate limits
+        (re.compile(r"^/api/v1/upload/"), "30/minute"),
+        # Search operations
+        (re.compile(r"^/api/v1/search/"), "60/minute"),
+    ]
+
+    # Default limit for all other endpoints
+    DEFAULT_LIMIT = "100/minute"
+
+    def __init__(self, app, redis_url: str | None = None):
+        super().__init__(app)
+        self.redis_url = redis_url or REDIS_URL
+        self._rate_limits: dict[str, tuple[int, int]] = {}  # key -> (count, window_start)
+
+    async def dispatch(self, request: Request, call_next):
+        """Apply rate limiting to all requests."""
+        path = request.url.path
+
+        # Skip exempt paths
+        if path in self.EXEMPT_PATHS:
+            return await call_next(request)
+
+        # Skip OPTIONS requests (CORS preflight)
+        if request.method == "OPTIONS":
+            return await call_next(request)
+
+        # Get rate limit for this path
+        limit_string = self._get_limit_for_path(path)
+        limit, window = self._parse_limit(limit_string)
+
+        # Get rate limit key
+        key = self._get_rate_key(request, path)
+
+        # Check rate limit
+        is_allowed, remaining, reset_time = await self._check_rate_limit(
+            key, limit, window
+        )
+
+        if not is_allowed:
+            logger.warning(
+                f"Rate limit exceeded",
+                extra={
+                    "path": path,
+                    "key": key,
+                    "limit": limit_string,
+                }
+            )
+            return StarletteJSONResponse(
+                status_code=429,
+                content={
+                    "error": "rate_limit_exceeded",
+                    "detail": "Too many requests. Please slow down.",
+                    "retry_after_seconds": reset_time,
+                },
+                headers={
+                    "Retry-After": str(reset_time),
+                    "X-RateLimit-Limit": str(limit),
+                    "X-RateLimit-Remaining": "0",
+                    "X-RateLimit-Reset": str(int(time.time()) + reset_time),
+                },
+            )
+
+        # Process request and add rate limit headers
+        response = await call_next(request)
+
+        # Add rate limit headers to response
+        response.headers["X-RateLimit-Limit"] = str(limit)
+        response.headers["X-RateLimit-Remaining"] = str(max(0, remaining))
+        response.headers["X-RateLimit-Reset"] = str(int(time.time()) + reset_time)
+
+        return response
+
+    def _get_limit_for_path(self, path: str) -> str:
+        """Get the rate limit string for a given path."""
+        for pattern, limit in self.PATH_LIMITS:
+            if pattern.match(path):
+                return limit
+        return self.DEFAULT_LIMIT
+
+    def _parse_limit(self, limit_string: str) -> tuple[int, int]:
+        """
+        Parse limit string like "100/minute" into (count, seconds).
+
+        Returns:
+            Tuple of (max_requests, window_seconds)
+        """
+        parts = limit_string.split("/")
+        count = int(parts[0])
+
+        window_map = {
+            "second": 1,
+            "minute": 60,
+            "hour": 3600,
+            "day": 86400,
+        }
+
+        window = window_map.get(parts[1], 60)
+        return count, window
+
+    def _get_rate_key(self, request: Request, path: str) -> str:
+        """Generate rate limit key based on user or IP."""
+        # Use the same key function as SlowAPI for consistency
+        base_key = get_user_or_ip(request)
+        # Include path prefix for path-specific limits
+        path_prefix = path.split("/")[1:3]  # e.g., ["api", "v1"]
+        return f"rl:{base_key}:{'/'.join(path_prefix)}"
+
+    async def _check_rate_limit(
+        self,
+        key: str,
+        limit: int,
+        window: int,
+    ) -> tuple[bool, int, int]:
+        """
+        Check if request is within rate limit.
+
+        Returns:
+            Tuple of (is_allowed, remaining_requests, seconds_until_reset)
+        """
+        current_time = int(time.time())
+        window_start = current_time - (current_time % window)
+
+        # Try Redis first, fall back to in-memory
+        try:
+            return await self._check_redis_rate_limit(key, limit, window, window_start)
+        except Exception as e:
+            logger.debug(f"Redis rate limit check failed, using in-memory: {e}")
+            return self._check_memory_rate_limit(key, limit, window, window_start, current_time)
+
+    async def _check_redis_rate_limit(
+        self,
+        key: str,
+        limit: int,
+        window: int,
+        window_start: int,
+    ) -> tuple[bool, int, int]:
+        """Check rate limit using Redis."""
+        from app.redis_client import get_redis
+
+        redis = await get_redis()
+        if not redis:
+            raise RuntimeError("Redis not available")
+
+        full_key = f"{key}:{window_start}"
+
+        # Atomic increment and get
+        pipe = redis.pipeline()
+        pipe.incr(full_key)
+        pipe.expire(full_key, window + 1)  # Expire slightly after window
+        results = await pipe.execute()
+
+        count = results[0]
+        remaining = max(0, limit - count)
+        reset_time = window - (int(time.time()) - window_start)
+
+        return count <= limit, remaining, max(1, reset_time)
+
+    def _check_memory_rate_limit(
+        self,
+        key: str,
+        limit: int,
+        window: int,
+        window_start: int,
+        current_time: int,
+    ) -> tuple[bool, int, int]:
+        """Check rate limit using in-memory storage (fallback)."""
+        full_key = f"{key}:{window_start}"
+
+        # Clean old entries
+        self._cleanup_old_entries(window_start)
+
+        if full_key not in self._rate_limits:
+            self._rate_limits[full_key] = (0, window_start)
+
+        count, _ = self._rate_limits[full_key]
+        count += 1
+        self._rate_limits[full_key] = (count, window_start)
+
+        remaining = max(0, limit - count)
+        reset_time = window - (current_time - window_start)
+
+        return count <= limit, remaining, max(1, reset_time)
+
+    def _cleanup_old_entries(self, current_window: int):
+        """Remove rate limit entries from old windows."""
+        # Only cleanup occasionally to avoid performance impact
+        if len(self._rate_limits) > 10000:
+            old_keys = [
+                k for k, (_, ws) in self._rate_limits.items()
+                if ws < current_window - 3600  # Keep last hour
+            ]
+            for k in old_keys:
+                del self._rate_limits[k]

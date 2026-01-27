@@ -6,6 +6,7 @@ Provides secure HTTP client with:
 - Size limits
 - Content-type validation
 - Async support
+- SSRF protection (OWASP A10:2021)
 """
 from __future__ import annotations
 
@@ -14,6 +15,11 @@ from contextlib import asynccontextmanager
 from typing import Optional, Tuple
 
 import httpx
+
+from app.utils.url_validator import (
+    validate_url_for_ssrf,
+    SSRFError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +36,11 @@ class DownloadTooLargeError(Exception):
 
 class InvalidContentTypeError(Exception):
     """Raised when content type is not allowed."""
+    pass
+
+
+class SSRFBlockedError(Exception):
+    """Raised when URL is blocked due to SSRF protection."""
     pass
 
 
@@ -76,15 +87,17 @@ async def fetch_bytes_limited(
     url: str,
     max_bytes: int = 100 * 1024 * 1024,  # 100MB default
     allowed_content_types: Tuple[str, ...] = ("*/*",),
+    skip_ssrf_check: bool = False,
 ) -> bytes:
     """
-    Fetch URL content with size and content-type limits.
+    Fetch URL content with size, content-type limits, and SSRF protection.
 
     Args:
         client: httpx.AsyncClient instance
         url: URL to fetch
         max_bytes: Maximum allowed download size
         allowed_content_types: Allowed content types (wildcards supported)
+        skip_ssrf_check: Skip SSRF validation (use only for trusted internal URLs)
 
     Returns:
         Downloaded bytes
@@ -92,7 +105,16 @@ async def fetch_bytes_limited(
     Raises:
         DownloadTooLargeError: If content exceeds max_bytes
         InvalidContentTypeError: If content type not allowed
+        SSRFBlockedError: If URL is blocked by SSRF protection
     """
+    # SSRF Protection (OWASP A10:2021)
+    if not skip_ssrf_check:
+        try:
+            validate_url_for_ssrf(url)
+        except SSRFError as e:
+            logger.warning(f"SSRF protection blocked URL: {url} - {e}")
+            raise SSRFBlockedError(f"URL blocked by security policy: {str(e)}")
+
     # First, do a HEAD request to check size and content-type
     try:
         head_response = await client.head(url)
@@ -181,4 +203,5 @@ __all__ = [
     "fetch_bytes_limited",
     "DownloadTooLargeError",
     "InvalidContentTypeError",
+    "SSRFBlockedError",
 ]
