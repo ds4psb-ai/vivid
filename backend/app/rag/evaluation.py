@@ -169,19 +169,19 @@ class RAGEvaluationPipeline:
                 ContextPrecision,
                 ContextRecall,
             )
-            from langchain_openai import ChatOpenAI
-            from ragas.llms import LangchainLLMWrapper
+            from ragas.llms import llm_factory
+            from openai import OpenAI
 
-            # Initialize LLM wrapper for Ragas
-            llm = ChatOpenAI(model=self.llm_model)
-            self._evaluator_llm = LangchainLLMWrapper(llm)
+            # Initialize LLM using Ragas v0.4 factory with OpenAI client
+            client = OpenAI()
+            self._evaluator_llm = llm_factory(self.llm_model, client=client)
 
-            # Map metrics to Ragas metric instances
+            # Map metrics to Ragas metric instances (v0.4: no LLM in constructor)
             metric_map = {
-                EvaluationMetric.FAITHFULNESS: Faithfulness(llm=self._evaluator_llm),
-                EvaluationMetric.ANSWER_RELEVANCY: AnswerRelevancy(llm=self._evaluator_llm),
-                EvaluationMetric.CONTEXT_PRECISION: ContextPrecision(llm=self._evaluator_llm),
-                EvaluationMetric.CONTEXT_RECALL: ContextRecall(llm=self._evaluator_llm),
+                EvaluationMetric.FAITHFULNESS: Faithfulness(),
+                EvaluationMetric.ANSWER_RELEVANCY: AnswerRelevancy(),
+                EvaluationMetric.CONTEXT_PRECISION: ContextPrecision(),
+                EvaluationMetric.CONTEXT_RECALL: ContextRecall(),
             }
 
             self._ragas_metrics = [
@@ -193,6 +193,10 @@ class RAGEvaluationPipeline:
 
         except ImportError as e:
             logger.warning(f"Ragas not installed: {e}. Using fallback evaluation.")
+            self._ragas_metrics = []
+        except Exception as e:
+            # Catch OpenAI API key errors and other initialization failures
+            logger.warning(f"Ragas initialization failed: {e}. Using fallback evaluation.")
             self._ragas_metrics = []
 
     async def evaluate_single(
@@ -248,36 +252,39 @@ class RAGEvaluationPipeline:
         contexts: list[str],
         ground_truth: Optional[str] = None,
     ) -> dict[str, float]:
-        """Evaluate using Ragas framework."""
+        """Evaluate using Ragas framework (v0.4 API)."""
         try:
-            from ragas import evaluate
-            from datasets import Dataset
+            from ragas import evaluate, EvaluationDataset, SingleTurnSample
 
-            # Prepare dataset
-            data = {
-                "question": [question],
-                "answer": [answer],
-                "contexts": [contexts],
-            }
+            # Prepare dataset using v0.4 API
+            sample = SingleTurnSample(
+                user_input=question,
+                response=answer,
+                retrieved_contexts=contexts,
+                reference=ground_truth,
+            )
+            dataset = EvaluationDataset(samples=[sample])
 
-            if ground_truth:
-                data["ground_truth"] = [ground_truth]
+            # Run evaluation with v0.4 API (llm parameter required)
+            result = evaluate(
+                dataset=dataset,
+                metrics=self._ragas_metrics,
+                llm=self._evaluator_llm,
+            )
 
-            dataset = Dataset.from_dict(data)
-
-            # Run evaluation
-            result = evaluate(dataset, metrics=self._ragas_metrics)
-
-            # Extract scores
+            # Extract scores from v0.4 result format
             scores = {}
             for metric in self.metric_types:
                 metric_name = metric.value
                 if metric_name in result:
-                    score = result[metric_name]
-                    # Handle numpy types
-                    if hasattr(score, 'item'):
-                        score = score.item()
-                    scores[metric_name] = float(score)
+                    score_obj = result[metric_name]
+                    # v0.4: handle MetricResult object or direct values
+                    if hasattr(score_obj, 'score'):
+                        scores[metric_name] = float(score_obj.score)
+                    elif hasattr(score_obj, 'item'):
+                        scores[metric_name] = float(score_obj.item())
+                    else:
+                        scores[metric_name] = float(score_obj)
 
             return scores
 
