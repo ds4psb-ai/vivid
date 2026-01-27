@@ -213,9 +213,9 @@ class Settings(BaseSettings):
 
     # OpenTelemetry Configuration (2026 Best Practices)
     # Enable distributed tracing with OTLP exporter
-    OTEL_ENABLED: bool = False  # Set to True to enable OpenTelemetry
-    OTEL_EXPORTER_OTLP_ENDPOINT: str = "localhost:4317"  # Jaeger/Tempo/OTEL Collector
-    OTEL_SAMPLE_RATE: float = 0.1  # 10% sampling in production
+    OTEL_ENABLED: bool = True  # Enabled by default for observability
+    OTEL_EXPORTER_OTLP_ENDPOINT: str = "http://localhost:4317"  # Tempo/Jaeger/OTEL Collector
+    OTEL_SAMPLE_RATE: float = 1.0  # 100% in dev, set to 0.1 (10%) in production
     OTEL_USE_GRPC: bool = True  # Use gRPC for better performance
     OTEL_SERVICE_NAME: str = "vivid-backend"
     OTEL_SERVICE_VERSION: str = "2.0.0"

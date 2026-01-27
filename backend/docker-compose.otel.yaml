@@ -1,0 +1,93 @@
+# OpenTelemetry Stack for Vivid Backend (P8)
+#
+# Includes:
+# - OpenTelemetry Collector: Receives traces from the backend
+# - Grafana Tempo: Distributed tracing backend
+# - Grafana: Visualization dashboard
+#
+# Usage:
+#   docker-compose -f docker-compose.otel.yaml up -d
+#
+# Access:
+#   - Grafana: http://localhost:3000 (admin/admin)
+#   - Tempo: http://localhost:3200
+#   - OTLP gRPC: localhost:4317
+#   - OTLP HTTP: localhost:4318
+
+version: "3.8"
+
+services:
+  # OpenTelemetry Collector
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.96.0
+    container_name: vivid-otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "8888:8888"   # Prometheus metrics (collector self)
+      - "8889:8889"   # Prometheus exporter (scraped by Prometheus)
+    depends_on:
+      - tempo
+    networks:
+      - vivid-otel
+
+  # Grafana Tempo - Distributed Tracing Backend
+  tempo:
+    image: grafana/tempo:2.4.0
+    container_name: vivid-tempo
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    volumes:
+      - ./otel/tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo-data:/var/tempo
+    ports:
+      - "3200:3200"   # Tempo HTTP API
+      - "9095:9095"   # Tempo gRPC (internal)
+    networks:
+      - vivid-otel
+
+  # Grafana - Visualization
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: vivid-grafana
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor
+    volumes:
+      - ./otel/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - tempo
+    networks:
+      - vivid-otel
+
+  # Optional: Prometheus for metrics
+  prometheus:
+    image: prom/prometheus:v2.50.0
+    container_name: vivid-prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-remote-write-receiver"
+    volumes:
+      - ./otel/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - vivid-otel
+
+networks:
+  vivid-otel:
+    driver: bridge
+
+volumes:
+  tempo-data:
+  grafana-data:
+  prometheus-data:

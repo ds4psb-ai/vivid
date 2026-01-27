@@ -24,6 +24,7 @@ from qdrant_client.http.exceptions import UnexpectedResponse
 from app.config import settings
 from app.services.embedder import get_embedder
 from app.services.circuit_breaker import QDRANT_BREAKER, CircuitBreakerOpen  # P6-3
+from app.rag.qdrant_tracing import traced_qdrant_operation, set_results_count  # P8
 
 # Lazy import for sparse embedder (P0: Hybrid Search)
 _sparse_embedder = None
@@ -435,71 +436,87 @@ class Tier1DimensionRAG:
             logger.debug(f"[{self.dimension}] Qdrant unavailable, returning empty")
             return []
 
-        try:
-            # 쿼리 임베딩
-            query_vector = self.embedder.embed(query)
+        # P8: OpenTelemetry tracing for Qdrant search
+        with traced_qdrant_operation(
+            operation="search",
+            collection=self.collection_name,
+            dimension=self.dimension,
+            query_length=len(query),
+            limit=limit,
+            is_hybrid=False,
+            filters={"app_key": app_key} if app_key else metadata_filters,
+        ) as span:
+            try:
+                # 쿼리 임베딩
+                query_vector = self.embedder.embed(query)
 
-            # 필터 조건 구성
-            must_conditions = []
-            
-            # 기존 app_key 필터
-            if app_key:
-                must_conditions.append(
-                    qdrant_models.FieldCondition(
-                        key="app_key",
-                        match=qdrant_models.MatchValue(value=app_key),
+                # 필터 조건 구성
+                must_conditions = []
+
+                # 기존 app_key 필터
+                if app_key:
+                    must_conditions.append(
+                        qdrant_models.FieldCondition(
+                            key="app_key",
+                            match=qdrant_models.MatchValue(value=app_key),
+                        )
                     )
+
+                # P1: metadata_filters 처리 (dataset_id 등)
+                if metadata_filters:
+                    for key, value in metadata_filters.items():
+                        if isinstance(value, dict) and "$in" in value:
+                            # $in 연산자: 여러 값 중 하나 매칭
+                            must_conditions.append(
+                                qdrant_models.FieldCondition(
+                                    key=key,
+                                    match=qdrant_models.MatchAny(any=value["$in"]),
+                                )
+                            )
+                        else:
+                            # 단일 값 매칭
+                            must_conditions.append(
+                                qdrant_models.FieldCondition(
+                                    key=key,
+                                    match=qdrant_models.MatchValue(value=value),
+                                )
+                            )
+
+                filter_conditions = qdrant_models.Filter(must=must_conditions) if must_conditions else None
+
+                # 검색 (qdrant-client 1.16+ uses query_points instead of search)
+                response = client.query_points(
+                    collection_name=self.collection_name,
+                    query=query_vector,
+                    query_filter=filter_conditions,
+                    limit=limit,
+                    score_threshold=min_score,
+                    with_payload=True,
                 )
-            
-            # P1: metadata_filters 처리 (dataset_id 등)
-            if metadata_filters:
-                for key, value in metadata_filters.items():
-                    if isinstance(value, dict) and "$in" in value:
-                        # $in 연산자: 여러 값 중 하나 매칭
-                        must_conditions.append(
-                            qdrant_models.FieldCondition(
-                                key=key,
-                                match=qdrant_models.MatchAny(any=value["$in"]),
-                            )
-                        )
-                    else:
-                        # 단일 값 매칭
-                        must_conditions.append(
-                            qdrant_models.FieldCondition(
-                                key=key,
-                                match=qdrant_models.MatchValue(value=value),
-                            )
-                        )
-            
-            filter_conditions = qdrant_models.Filter(must=must_conditions) if must_conditions else None
 
-            # 검색 (qdrant-client 1.16+ uses query_points instead of search)
-            response = client.query_points(
-                collection_name=self.collection_name,
-                query=query_vector,
-                query_filter=filter_conditions,
-                limit=limit,
-                score_threshold=min_score,
-                with_payload=True,
-            )
+                QDRANT_BREAKER.record_success()  # P6-3
 
-            QDRANT_BREAKER.record_success()  # P6-3
-            return [
-                {
-                    "content": r.payload.get("content", "") if r.payload else "",
-                    "score": r.score,
-                    "doc_id": r.payload.get("doc_id") if r.payload else None,
-                    "metadata": {
-                        k: v for k, v in (r.payload or {}).items()
-                        if k not in ("content", "doc_id")
-                    },
-                }
-                for r in response.points
-            ]
-        except Exception as e:
-            QDRANT_BREAKER.record_failure(e)  # P6-3
-            logger.error(f"[{self.dimension}] Search failed: {e}")
-            return []
+                results = [
+                    {
+                        "content": r.payload.get("content", "") if r.payload else "",
+                        "score": r.score,
+                        "doc_id": r.payload.get("doc_id") if r.payload else None,
+                        "metadata": {
+                            k: v for k, v in (r.payload or {}).items()
+                            if k not in ("content", "doc_id")
+                        },
+                    }
+                    for r in response.points
+                ]
+
+                # P8: Record results count
+                set_results_count(span, len(results))
+                return results
+
+            except Exception as e:
+                QDRANT_BREAKER.record_failure(e)  # P6-3
+                logger.error(f"[{self.dimension}] Search failed: {e}")
+                raise
 
     def hybrid_search(
         self,
@@ -552,103 +569,117 @@ class Tier1DimensionRAG:
             logger.debug(f"[{self.dimension}] Qdrant unavailable, returning empty")
             return []
 
-        try:
-            # P0.5: use_hybrid 플래그에 따라 컬렉션 선택
-            if self.collection_config.get("use_hybrid"):
-                collection_name = self.collection_config.get("name_hybrid", self.collection_name)
-            else:
-                collection_name = self.collection_name
+        # P0.5: use_hybrid 플래그에 따라 컬렉션 선택
+        if self.collection_config.get("use_hybrid"):
+            collection_name = self.collection_config.get("name_hybrid", self.collection_name)
+        else:
+            collection_name = self.collection_name
 
-            # 임베딩 생성 (Dense + Sparse)
-            dense_vector = self.embedder.embed(query)
-            sparse_indices, sparse_values = sparse_embedder.embed(query)
+        # P8: OpenTelemetry tracing for Qdrant hybrid search
+        with traced_qdrant_operation(
+            operation="hybrid_search",
+            collection=collection_name,
+            dimension=self.dimension,
+            query_length=len(query),
+            limit=limit,
+            is_hybrid=True,
+            prefetch_limit=prefetch_limit,
+            filters={"app_key": app_key} if app_key else metadata_filters,
+        ) as span:
+            try:
+                # 임베딩 생성 (Dense + Sparse)
+                dense_vector = self.embedder.embed(query)
+                sparse_indices, sparse_values = sparse_embedder.embed(query)
 
-            # 필터 조건 구성
-            must_conditions = []
-            if app_key:
-                must_conditions.append(
-                    qdrant_models.FieldCondition(
-                        key="app_key",
-                        match=qdrant_models.MatchValue(value=app_key),
+                # 필터 조건 구성
+                must_conditions = []
+                if app_key:
+                    must_conditions.append(
+                        qdrant_models.FieldCondition(
+                            key="app_key",
+                            match=qdrant_models.MatchValue(value=app_key),
+                        )
                     )
-                )
-            if metadata_filters:
-                for key, value in metadata_filters.items():
-                    if isinstance(value, dict) and "$in" in value:
-                        must_conditions.append(
-                            qdrant_models.FieldCondition(
-                                key=key,
-                                match=qdrant_models.MatchAny(any=value["$in"]),
+                if metadata_filters:
+                    for key, value in metadata_filters.items():
+                        if isinstance(value, dict) and "$in" in value:
+                            must_conditions.append(
+                                qdrant_models.FieldCondition(
+                                    key=key,
+                                    match=qdrant_models.MatchAny(any=value["$in"]),
+                                )
                             )
-                        )
-                    else:
-                        must_conditions.append(
-                            qdrant_models.FieldCondition(
-                                key=key,
-                                match=qdrant_models.MatchValue(value=value),
+                        else:
+                            must_conditions.append(
+                                qdrant_models.FieldCondition(
+                                    key=key,
+                                    match=qdrant_models.MatchValue(value=value),
+                                )
                             )
-                        )
 
-            query_filter = qdrant_models.Filter(must=must_conditions) if must_conditions else None
+                query_filter = qdrant_models.Filter(must=must_conditions) if must_conditions else None
 
-            # Qdrant Native Hybrid Search with Prefetch + RRF Fusion
-            response = client.query_points(
-                collection_name=collection_name,
-                prefetch=[
-                    # Dense search prefetch
-                    models.Prefetch(
-                        query=dense_vector,
-                        using="dense",
-                        limit=prefetch_limit,
-                    ),
-                    # Sparse search prefetch
-                    models.Prefetch(
-                        query=models.SparseVector(
-                            indices=sparse_indices,
-                            values=sparse_values,
+                # Qdrant Native Hybrid Search with Prefetch + RRF Fusion
+                response = client.query_points(
+                    collection_name=collection_name,
+                    prefetch=[
+                        # Dense search prefetch
+                        models.Prefetch(
+                            query=dense_vector,
+                            using="dense",
+                            limit=prefetch_limit,
                         ),
-                        using="sparse",
-                        limit=prefetch_limit,
-                    ),
-                ],
-                query=models.FusionQuery(fusion=models.Fusion.RRF),
-                limit=limit,
-                query_filter=query_filter,
-                with_payload=True,
-            )
+                        # Sparse search prefetch
+                        models.Prefetch(
+                            query=models.SparseVector(
+                                indices=sparse_indices,
+                                values=sparse_values,
+                            ),
+                            using="sparse",
+                            limit=prefetch_limit,
+                        ),
+                    ],
+                    query=models.FusionQuery(fusion=models.Fusion.RRF),
+                    limit=limit,
+                    query_filter=query_filter,
+                    with_payload=True,
+                )
 
-            QDRANT_BREAKER.record_success()
+                QDRANT_BREAKER.record_success()
 
-            results = [
-                {
-                    "content": r.payload.get("content", "") if r.payload else "",
-                    "score": r.score,
-                    "doc_id": r.payload.get("doc_id") if r.payload else None,
-                    "metadata": {
-                        k: v for k, v in (r.payload or {}).items()
-                        if k not in ("content", "doc_id")
-                    },
-                }
-                for r in response.points
-            ]
+                results = [
+                    {
+                        "content": r.payload.get("content", "") if r.payload else "",
+                        "score": r.score,
+                        "doc_id": r.payload.get("doc_id") if r.payload else None,
+                        "metadata": {
+                            k: v for k, v in (r.payload or {}).items()
+                            if k not in ("content", "doc_id")
+                        },
+                    }
+                    for r in response.points
+                ]
 
-            logger.debug(
-                f"[{self.dimension}] Hybrid search: collection={collection_name} "
-                f"query='{query[:30]}...' prefetch={prefetch_limit} results={len(results)}"
-            )
-            return results
+                # P8: Record results count
+                set_results_count(span, len(results))
 
-        except Exception as e:
-            QDRANT_BREAKER.record_failure(e)
-            logger.warning(
-                f"[{self.dimension}] Hybrid search failed ({e}), "
-                "falling back to dense-only"
-            )
-            # Fallback to dense-only search
-            return self.search(
-                query, limit, app_key=app_key,
-                min_score=0.5, metadata_filters=metadata_filters
-            )
+                logger.debug(
+                    f"[{self.dimension}] Hybrid search: collection={collection_name} "
+                    f"query='{query[:30]}...' prefetch={prefetch_limit} results={len(results)}"
+                )
+                return results
+
+            except Exception as e:
+                QDRANT_BREAKER.record_failure(e)
+                logger.warning(
+                    f"[{self.dimension}] Hybrid search failed ({e}), "
+                    "falling back to dense-only"
+                )
+                # Fallback to dense-only search
+                return self.search(
+                    query, limit, app_key=app_key,
+                    min_score=0.5, metadata_filters=metadata_filters
+                )
 
     def delete_document(self, doc_id: str) -> bool:
         """문서 삭제.

@@ -299,6 +299,16 @@ def setup_opentelemetry(app: FastAPI) -> bool:
         except ImportError:
             pass
 
+        # Redis instrumentation (P8: OpenTelemetry Integration)
+        try:
+            from opentelemetry.instrumentation.redis import RedisInstrumentor
+            RedisInstrumentor().instrument()
+            logger.info("Redis instrumentation enabled")
+        except ImportError:
+            logger.debug("opentelemetry-instrumentation-redis not installed")
+        except Exception as e:
+            logger.warning(f"Failed to instrument Redis: {e}")
+
         logger.info(
             "OpenTelemetry tracing initialized",
             extra={
