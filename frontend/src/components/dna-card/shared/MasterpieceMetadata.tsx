@@ -1,6 +1,7 @@
 "use client";
 
 import type { MasterpieceDNAMetadata } from "@/types/dna-card";
+import { MetadataSection } from "./MetadataSection";
 
 interface MasterpieceMetadataProps {
   metadata: MasterpieceDNAMetadata;
@@ -97,31 +98,6 @@ export function MasterpieceMetadata({
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function MetadataSection({
-  title,
-  isCompact,
-  children,
-}: {
-  title: string;
-  isCompact: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className={isCompact ? "" : "space-y-2"}>
-      <h5
-        className={`font-medium uppercase tracking-wider ${
-          isCompact
-            ? "text-[10px] text-white/50 mb-1"
-            : "text-xs text-[var(--fg-muted)]"
-        }`}
-      >
-        {title}
-      </h5>
-      {children}
     </div>
   );
 }
