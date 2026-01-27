@@ -21,6 +21,7 @@ from .base import (
     BaseProvider,
     MediaType,
     ProviderStatus,
+    ReferenceImage,
     GenerationRequest,
     GenerationProgress,
     GenerationResult,
@@ -169,8 +170,27 @@ class VeoProvider(BaseProvider):
                 ))
 
             # Prepare reference images (Veo 3.1 supports up to 3)
+            # P1: Support typed reference_image_configs with role/weight
             reference_images_list = []
-            if request.reference_images:
+            reference_roles = {}  # Track roles for metadata
+
+            if request.reference_image_configs:
+                # Use typed configs (P1 enhancement)
+                # Sort by weight (highest first), take up to 3
+                sorted_configs = sorted(
+                    request.reference_image_configs,
+                    key=lambda x: x.weight,
+                    reverse=True
+                )[:3]
+
+                for config in sorted_configs:
+                    reference_images_list.append(
+                        types.Part.from_uri(file_uri=config.url, mime_type="image/*")
+                    )
+                    reference_roles[config.url] = {"role": config.role, "weight": config.weight}
+
+            elif request.reference_images:
+                # Backward compatibility: plain URL list
                 for img_url in request.reference_images[:3]:  # Max 3 images
                     reference_images_list.append(
                         types.Part.from_uri(file_uri=img_url, mime_type="image/*")
@@ -281,8 +301,17 @@ class VeoProvider(BaseProvider):
                 "aspect_ratio": request.aspect_ratio,
                 "duration_seconds": request.duration_seconds or 8,
             }
-            if request.reference_images:
+
+            # P1: Include reference image configs with role/weight in metadata
+            if request.reference_image_configs:
+                metadata["reference_images_count"] = len(request.reference_image_configs[:3])
+                metadata["reference_image_configs"] = [
+                    {"role": cfg.role, "weight": cfg.weight}
+                    for cfg in request.reference_image_configs[:3]
+                ]
+            elif request.reference_images:
                 metadata["reference_images_count"] = len(request.reference_images[:3])
+
             if request.first_frame_url or request.last_frame_url:
                 metadata["frame_control"] = {
                     "first_frame": request.first_frame_url is not None,

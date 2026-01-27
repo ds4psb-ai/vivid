@@ -51,6 +51,31 @@ class ProviderStatus(str, Enum):
 # =============================================================================
 
 @dataclass
+class ReferenceImage:
+    """Reference image with role and weight for generation.
+
+    P1 Enhancement (2026):
+    - role: Specifies how the image influences generation
+    - weight: Influence strength (0.0-1.0)
+
+    Roles:
+    - primary: Main reference for overall style/content
+    - style: Style transfer reference
+    - character: Character consistency reference
+    - environment: Background/setting reference
+    - pose: Pose/composition reference
+    """
+    url: str
+    role: str = "primary"  # primary, style, character, environment, pose
+    weight: float = 1.0    # 0.0-1.0 influence strength
+
+    def __post_init__(self):
+        """Validate weight is in valid range."""
+        if not 0.0 <= self.weight <= 1.0:
+            self.weight = max(0.0, min(1.0, self.weight))
+
+
+@dataclass
 class GenerationRequest:
     """Unified request for content generation.
 
@@ -59,6 +84,9 @@ class GenerationRequest:
     Veo 3.1 Enhancements (2026):
     - reference_images: Up to 3 reference images for character/style consistency
     - first_frame_url/last_frame_url: Frame control for transition generation
+
+    P1 Enhancement (2026):
+    - reference_image_configs: Typed reference images with role/weight
     """
     prompt: str
     negative_prompt: Optional[str] = None
@@ -80,6 +108,9 @@ class GenerationRequest:
     # Veo 3.1 Reference Images (max 3) - Character/Style Consistency
     reference_images: List[str] = field(default_factory=list)
 
+    # P1: Typed Reference Images with role/weight
+    reference_image_configs: List[ReferenceImage] = field(default_factory=list)
+
     # Veo 3.1 First/Last Frame Control - Transition Generation
     first_frame_url: Optional[str] = None
     last_frame_url: Optional[str] = None
@@ -93,6 +124,26 @@ class GenerationRequest:
     seed: Optional[int] = None
     cfg_scale: float = 0.5
     extra_options: Dict[str, Any] = field(default_factory=dict)
+
+    def get_reference_images_by_role(self, role: str) -> List[ReferenceImage]:
+        """Get reference images filtered by role.
+
+        Args:
+            role: Role to filter by (primary, style, character, environment, pose)
+
+        Returns:
+            List of ReferenceImage with matching role
+        """
+        return [img for img in self.reference_image_configs if img.role == role]
+
+    def get_primary_reference(self) -> Optional[ReferenceImage]:
+        """Get the primary reference image if available.
+
+        Returns:
+            Primary ReferenceImage or None
+        """
+        primaries = self.get_reference_images_by_role("primary")
+        return primaries[0] if primaries else None
 
 
 @dataclass
@@ -386,6 +437,7 @@ __all__ = [
     "BaseProvider",
     "MediaType",
     "ProviderStatus",
+    "ReferenceImage",
     "GenerationRequest",
     "GenerationProgress",
     "GenerationResult",

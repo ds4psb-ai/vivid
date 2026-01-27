@@ -4,7 +4,8 @@ Visual Pass (VDG v4.0 Pass 2)
 P0-2: Uses Plan-based frame extraction (not full mp4)
 P0-4: Uses robust_generate_content for retry/fallback/JSON repair
 """
-from typing import Dict, Any, List
+from dataclasses import dataclass
+from typing import Dict, Any, List, Optional, Tuple
 import json
 import logging
 from datetime import datetime
@@ -28,6 +29,35 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 
+# =============================================================================
+# Config and Error Classes
+# =============================================================================
+
+
+@dataclass
+class VisualPassConfig:
+    """Configuration for Visual Pass."""
+    detection_conf_threshold: float = 0.5
+    ocr_enabled: bool = True
+    extraction_fps: float = 2.0
+    max_frames_per_point: int = 5
+
+
+@dataclass
+class VisualPassProvenance:
+    """Provenance tracking for Visual Pass."""
+    model_id: str = ""
+    frames_analyzed: int = 0
+    entities_detected: int = 0
+    texts_detected: int = 0
+    processing_time_sec: float = 0.0
+
+
+class VisualPassError(Exception):
+    """Error during Visual Pass processing."""
+    pass
+
+
 class VisualPass:
     """
     VDG v4.0 Pass 2: Visual Analysis
@@ -48,10 +78,11 @@ class VisualPass:
     - JSON repair loop
     """
     
-    def __init__(self, client=None):
+    def __init__(self, client=None, config: Optional[VisualPassConfig] = None):
         self.client = client
         if not self.client and settings.GEMINI_API_KEY:
             self.client = get_genai_client()
+        self.config = config or VisualPassConfig()
 
         # Use config or default to 1.5 Pro
         self.model_name = getattr(settings, "GEMINI_MODEL_PRO", "gemini-1.5-pro-latest")
@@ -214,6 +245,53 @@ class VisualPass:
         
         if unknown_count > 0:
             logger.warning(f"⚠️ VisualPass: {unknown_count} unknown metric_ids (marked)")
-        
+
         logger.info(f"   └─ Metrics validated: {validated_count}, unknown: {unknown_count}")
         return result
+
+    def run(
+        self,
+        video_path: str,
+        analysis_points: List[Dict[str, Any]],
+        entity_hints: List[Dict[str, Any]],
+        duration_ms: int,
+    ) -> Tuple[Dict[str, Any], VisualPassProvenance]:
+        """
+        Synchronous wrapper for Visual Pass execution.
+
+        Used by VDGUnifiedPipeline for entity tracking.
+
+        Args:
+            video_path: Path to video file
+            analysis_points: List of analysis point dicts with t_center_ms, t_window_ms
+            entity_hints: List of entity hint dicts
+            duration_ms: Video duration in milliseconds
+
+        Returns:
+            Tuple of (result_dict, VisualPassProvenance)
+        """
+        import time
+        start_time = time.time()
+
+        provenance = VisualPassProvenance(
+            model_id=getattr(self, 'model_name', 'unknown'),
+        )
+
+        # P1 Stub: Return empty results for now
+        # TODO: Integrate with actual Visual Pass logic
+        result = {
+            "entity_catalog": [],
+            "text_geometries": [],
+            "analysis_point_results": [],
+        }
+
+        # Track timing
+        provenance.processing_time_sec = time.time() - start_time
+
+        logger.info(
+            f"👁️ VisualPass.run complete: "
+            f"entities={len(result.get('entity_catalog', []))}, "
+            f"texts={len(result.get('text_geometries', []))}"
+        )
+
+        return result, provenance

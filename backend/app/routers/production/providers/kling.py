@@ -39,17 +39,33 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 KLING_MODELS = {
+    "kling-v3.0": {
+        "display_name": "Kling 3.0",
+        "max_duration": 120,  # Up to 2 minutes
+        "credits_per_second": 15,  # Higher quality = higher cost
+        "base_credits": 100,
+        "supports_audio": True,
+        "supports_long_form": True,
+    },
     "kling-v2.6": {
         "display_name": "Kling 2.6",
+        "max_duration": 10,
         "credits_5s": 50,
         "credits_10s": 100,
+        "credits_per_second": 10,
+        "base_credits": 0,
         "supports_audio": True,
+        "supports_long_form": False,
     },
     "kling-v2.5": {
         "display_name": "Kling 2.5",
+        "max_duration": 10,
         "credits_5s": 35,
         "credits_10s": 70,
+        "credits_per_second": 7,
+        "base_credits": 0,
         "supports_audio": False,
+        "supports_long_form": False,
     },
 }
 
@@ -57,7 +73,9 @@ DEFAULT_MODEL = "kling-v2.6"
 BASE_URL = "https://api.klingai.com/v1"
 REQUEST_TIMEOUT = 30.0
 POLL_TIMEOUT = 300.0
+POLL_TIMEOUT_EXTENDED = 900.0  # 15 minutes for long-form video (v3.0)
 POLL_INTERVAL = 5.0
+POLL_INTERVAL_LONG = 10.0  # Longer interval for long-form video
 
 
 # =============================================================================
@@ -65,17 +83,30 @@ POLL_INTERVAL = 5.0
 # =============================================================================
 
 class KlingProvider(BaseProvider):
-    """Kuaishou Kling AI video generation provider."""
+    """Kuaishou Kling AI video generation provider.
 
-    def __init__(self, api_key: Optional[str] = None, base_url: Optional[str] = None):
+    Supports:
+    - Kling 2.5: Basic video generation (up to 10s)
+    - Kling 2.6: With audio support (up to 10s)
+    - Kling 3.0: Long-form video generation (up to 120s)
+    """
+
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        model: Optional[str] = None,
+    ):
         """Initialize Kling provider.
 
         Args:
             api_key: Optional Kling API key
             base_url: Optional API base URL
+            model: Optional default model (e.g., "kling-v3.0" for long-form)
         """
         self._api_key = api_key or getattr(settings, "KLING_API_KEY", None)
         self._base_url = base_url or BASE_URL
+        self._model = model  # Allow setting default model
 
     @property
     def name(self) -> str:
@@ -83,39 +114,56 @@ class KlingProvider(BaseProvider):
 
     @property
     def display_name(self) -> str:
-        return "Kling 2.6"
+        model = self._model or DEFAULT_MODEL
+        model_info = KLING_MODELS.get(model, KLING_MODELS[DEFAULT_MODEL])
+        return model_info["display_name"]
 
     @property
     def media_types(self) -> List[MediaType]:
         return [MediaType.VIDEO]
 
     def get_capabilities(self) -> ProviderCapabilities:
+        # Dynamic capabilities based on selected model
+        model = self._model or DEFAULT_MODEL
+        model_info = KLING_MODELS.get(model, KLING_MODELS[DEFAULT_MODEL])
+
         return ProviderCapabilities(
             name=self.name,
-            display_name=self.display_name,
+            display_name=model_info["display_name"],
             media_types=self.media_types,
-            max_duration_seconds=10,
+            max_duration_seconds=model_info["max_duration"],
             supported_resolutions=["720p", "1080p"],
             supported_aspect_ratios=["16:9", "9:16", "1:1"],
-            supports_audio=True,
+            supports_audio=model_info["supports_audio"],
             supports_image_to_video=True,
             supports_reference_images=True,
-            default_model=DEFAULT_MODEL,
+            default_model=model,
             available_models=list(KLING_MODELS.keys()),
-            credit_cost_base=50,
-            credit_cost_per_second=10,
+            credit_cost_base=model_info.get("base_credits", 50),
+            credit_cost_per_second=model_info.get("credits_per_second", 10),
         )
 
     def calculate_credits(self, request: GenerationRequest) -> int:
-        """Calculate credit cost for Kling generation."""
-        model = request.model or DEFAULT_MODEL
-        model_info = KLING_MODELS.get(model, KLING_MODELS[DEFAULT_MODEL])
+        """Calculate credit cost for Kling generation.
 
+        Kling 3.0: base_credits + (duration * credits_per_second)
+        Kling 2.x: Fixed pricing based on 5s/10s tiers
+        """
+        model = request.model or self._model or DEFAULT_MODEL
+        model_info = KLING_MODELS.get(model, KLING_MODELS[DEFAULT_MODEL])
         duration = request.duration_seconds or 5
+
+        # Kling 3.0 uses per-second pricing for long-form
+        if model_info.get("supports_long_form", False):
+            base = model_info.get("base_credits", 0)
+            per_second = model_info.get("credits_per_second", 15)
+            return base + (duration * per_second)
+
+        # Kling 2.x uses tiered pricing
         if duration <= 5:
-            return model_info["credits_5s"]
+            return model_info.get("credits_5s", 50)
         else:
-            return model_info["credits_10s"]
+            return model_info.get("credits_10s", 100)
 
     async def generate(
         self,
@@ -162,16 +210,25 @@ class KlingProvider(BaseProvider):
             if request.system_prompt:
                 full_prompt = f"{request.system_prompt}\n\n{request.prompt}"
 
-            model = request.model or DEFAULT_MODEL
+            model = request.model or self._model or DEFAULT_MODEL
             model_info = KLING_MODELS.get(model, KLING_MODELS[DEFAULT_MODEL])
+
+            # Determine duration (with model max limit)
+            max_duration = model_info.get("max_duration", 10)
+            duration = min(request.duration_seconds or 5, max_duration)
+
+            # Determine polling settings based on model/duration
+            is_long_form = model_info.get("supports_long_form", False) and duration > 30
+            poll_timeout = POLL_TIMEOUT_EXTENDED if is_long_form else POLL_TIMEOUT
+            poll_interval = POLL_INTERVAL_LONG if is_long_form else POLL_INTERVAL
 
             # Build request payload
             payload = {
                 "model": model,
                 "prompt": full_prompt,
-                "duration": str(request.duration_seconds or 5),
+                "duration": str(duration),
                 "aspect_ratio": request.aspect_ratio,
-                "mode": "std",
+                "mode": "pro" if is_long_form else "std",  # Use pro mode for long-form
                 "cfg_scale": request.cfg_scale,
             }
 
@@ -208,22 +265,32 @@ class KlingProvider(BaseProvider):
                 if not task_id:
                     raise ProviderError("No task ID returned", error_code="NO_TASK_ID")
 
-                # Poll for completion
+                # Poll for completion with dynamic timeout
                 poll_count = 0
-                max_polls = int(POLL_TIMEOUT / POLL_INTERVAL)
+                max_polls = int(poll_timeout / poll_interval)
+
+                logger.info(
+                    f"[KLING_PROVIDER] Starting poll: model={model}, duration={duration}s, "
+                    f"timeout={poll_timeout}s, interval={poll_interval}s"
+                )
 
                 while poll_count < max_polls:
-                    await asyncio.sleep(POLL_INTERVAL)
+                    await asyncio.sleep(poll_interval)
                     poll_count += 1
 
                     elapsed = time.time() - start_time
                     progress = min(0.9, 0.1 + (poll_count / max_polls) * 0.8)
 
+                    # Show extended message for long-form
+                    msg = f"영상 생성 중... ({int(elapsed)}초 경과)"
+                    if is_long_form:
+                        msg = f"장편 영상 생성 중... ({int(elapsed)}초/{int(poll_timeout)}초)"
+
                     if progress_callback:
                         progress_callback(GenerationProgress(
                             status=ProviderStatus.PROCESSING,
                             progress=progress,
-                            message=f"영상 생성 중... ({int(elapsed)}초 경과)",
+                            message=msg,
                             elapsed_seconds=elapsed,
                             poll_count=poll_count,
                         ))
@@ -266,7 +333,8 @@ class KlingProvider(BaseProvider):
                                     "model": model,
                                     "task_id": task_id,
                                     "aspect_ratio": request.aspect_ratio,
-                                    "duration_seconds": request.duration_seconds or 5,
+                                    "duration_seconds": duration,
+                                    "is_long_form": is_long_form,
                                 },
                             )
 
@@ -276,7 +344,7 @@ class KlingProvider(BaseProvider):
 
                 # Timeout
                 raise ProviderTimeoutError(
-                    f"Kling generation timed out after {POLL_TIMEOUT}s",
+                    f"Kling generation timed out after {poll_timeout}s",
                     error_code="TIMEOUT",
                 )
 
