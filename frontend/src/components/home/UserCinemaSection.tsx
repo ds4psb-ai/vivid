@@ -9,6 +9,7 @@
  * - Creator info with avatar, name, views and likes
  */
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Play, Eye, ThumbsUp, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -118,82 +119,83 @@ export function UserCinemaSection() {
         {/* Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {CINEMA_CARDS.map((card, index) => (
-            <motion.div
-              key={card.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="group cursor-pointer"
-            >
-              {/* Thumbnail */}
-              <div className="relative rounded-3xl overflow-hidden aspect-video shadow-lg mb-4">
-                {/* Category Badge */}
-                <span
-                  className={cn(
-                    "absolute top-4 left-4 z-10",
-                    "text-[10px] font-bold px-2 py-1 rounded-full text-white",
-                    card.categoryColor
-                  )}
-                >
-                  {card.category}
-                </span>
+            <Link key={card.id} href={`/singularity?video=${card.id}`}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="group cursor-pointer"
+              >
+                {/* Thumbnail */}
+                <div className="relative rounded-3xl overflow-hidden aspect-video shadow-lg mb-4">
+                  {/* Category Badge */}
+                  <span
+                    className={cn(
+                      "absolute top-4 left-4 z-10",
+                      "text-[10px] font-bold px-2 py-1 rounded-full text-white",
+                      card.categoryColor
+                    )}
+                  >
+                    {card.category}
+                  </span>
 
-                {/* Duration */}
-                <span className="absolute bottom-4 right-4 z-10 bg-black/50 backdrop-blur-md text-white text-xs font-medium px-2 py-1 rounded-md">
-                  {card.duration}
-                </span>
+                  {/* Duration */}
+                  <span className="absolute bottom-4 right-4 z-10 bg-black/50 backdrop-blur-md text-white text-xs font-medium px-2 py-1 rounded-md">
+                    {card.duration}
+                  </span>
 
-                {/* Image */}
-                <img
-                  src={card.thumbnailUrl}
-                  alt={card.title}
-                  className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
-                />
+                  {/* Image */}
+                  <img
+                    src={card.thumbnailUrl}
+                    alt={card.title}
+                    className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                  />
 
-                {/* Gradient overlay on hover */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  {/* Gradient overlay on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                {/* Play button on hover */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/30">
-                    <Play className="w-5 h-5 fill-white" />
+                  {/* Play button on hover */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/30">
+                      <Play className="w-5 h-5 fill-white" />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Content */}
-              <h4 className="font-bold text-lg text-white group-hover:text-[var(--fg-primary)] transition-colors">
-                {card.title}
-              </h4>
-              <p className="text-sm text-gray-400 line-clamp-2 mt-1 mb-3">
-                {card.description}
-              </p>
+                {/* Content */}
+                <h4 className="font-bold text-lg text-white group-hover:text-[var(--fg-primary)] transition-colors">
+                  {card.title}
+                </h4>
+                <p className="text-sm text-gray-400 line-clamp-2 mt-1 mb-3">
+                  {card.description}
+                </p>
 
-              {/* Footer - Creator info */}
-              <div className="flex items-center justify-between text-xs text-gray-500 border-t border-gray-800 pt-3">
-                <div className="flex items-center gap-2">
-                  <img
-                    src={card.creator.avatarUrl}
-                    alt={card.creator.name}
-                    className="w-6 h-6 rounded-full object-cover"
-                  />
-                  <span className="font-medium text-gray-300">
-                    {card.creator.name}
-                  </span>
+                {/* Footer - Creator info */}
+                <div className="flex items-center justify-between text-xs text-gray-500 border-t border-gray-800 pt-3">
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={card.creator.avatarUrl}
+                      alt={card.creator.name}
+                      className="w-6 h-6 rounded-full object-cover"
+                    />
+                    <span className="font-medium text-gray-300">
+                      {card.creator.name}
+                    </span>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="flex items-center gap-1">
+                      <Eye className="w-4 h-4" />
+                      {card.views}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <ThumbsUp className="w-4 h-4" />
+                      {card.likePercent}%
+                    </span>
+                  </div>
                 </div>
-                <div className="flex gap-3">
-                  <span className="flex items-center gap-1">
-                    <Eye className="w-4 h-4" />
-                    {card.views}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <ThumbsUp className="w-4 h-4" />
-                    {card.likePercent}%
-                  </span>
-                </div>
-              </div>
-            </motion.div>
+              </motion.div>
+            </Link>
           ))}
         </div>
 

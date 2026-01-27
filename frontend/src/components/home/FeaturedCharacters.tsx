@@ -91,60 +91,61 @@ export function FeaturedCharacters({
         {/* Character Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {characters.map((character, index) => (
-            <motion.div
-              key={character.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="group relative bg-[var(--bg-subtle)] border border-gray-800 rounded-xl overflow-hidden hover:border-[var(--border-primary)]/50 transition-all duration-300"
-              onClick={() => onCharacterClick?.(character.id)}
-            >
-              {/* Image */}
-              <div className="aspect-[3/4] overflow-hidden relative">
-                <img
-                  alt={character.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  src={character.imageUrl}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
+            <Link key={character.id} href={`/chat/${character.id}`}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="group relative bg-[var(--bg-subtle)] border border-gray-800 rounded-xl overflow-hidden hover:border-[var(--border-primary)]/50 transition-all duration-300 cursor-pointer"
+                onClick={() => onCharacterClick?.(character.id)}
+              >
+                {/* Image */}
+                <div className="aspect-[3/4] overflow-hidden relative">
+                  <img
+                    alt={character.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    src={character.imageUrl}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
 
-                {/* Badge */}
-                {character.badge && (
-                  <div
-                    className={`absolute top-3 right-3 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold border ${character.badge === "NEW"
-                      ? "bg-black/60 text-[var(--fg-primary)] border-[var(--border-primary)]/30"
-                      : "bg-[var(--bg-primary)]/20 text-[var(--fg-primary)] border-[var(--border-primary)]/50"
-                      }`}
-                  >
-                    {character.badge === "NEW" ? "NEW" : "TOP RATED"}
-                  </div>
-                )}
-              </div>
-
-              {/* Content */}
-              <div className="p-5 relative">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-xl font-bold text-white">{character.name}</h3>
-                  <div className="flex items-center text-xs text-gray-400">
-                    <MessageCircle className="w-3.5 h-3.5 mr-1 text-[var(--fg-primary)]" />
-                    {character.chatCount}
-                  </div>
+                  {/* Badge */}
+                  {character.badge && (
+                    <div
+                      className={`absolute top-3 right-3 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold border ${character.badge === "NEW"
+                        ? "bg-black/60 text-[var(--fg-primary)] border-[var(--border-primary)]/30"
+                        : "bg-[var(--bg-primary)]/20 text-[var(--fg-primary)] border-[var(--border-primary)]/50"
+                        }`}
+                    >
+                      {character.badge === "NEW" ? "NEW" : "TOP RATED"}
+                    </div>
+                  )}
                 </div>
 
-                <p className="text-xs text-gray-400 mb-4 line-clamp-2 italic">
-                  &quot;{character.quote}&quot;
-                </p>
+                {/* Content */}
+                <div className="p-5 relative">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-xl font-bold text-white">{character.name}</h3>
+                    <div className="flex items-center text-xs text-gray-400">
+                      <MessageCircle className="w-3.5 h-3.5 mr-1 text-[var(--fg-primary)]" />
+                      {character.chatCount}
+                    </div>
+                  </div>
 
-                <div className="flex items-center justify-between border-t border-white/10 pt-3 mt-auto">
-                  <span className="text-[10px] text-gray-500 font-mono">
-                    {character.creator}
-                  </span>
-                  <button className="text-[var(--fg-primary)] hover:text-white transition-colors">
-                    <PlusCircle className="w-5 h-5" />
-                  </button>
+                  <p className="text-xs text-gray-400 mb-4 line-clamp-2 italic">
+                    &quot;{character.quote}&quot;
+                  </p>
+
+                  <div className="flex items-center justify-between border-t border-white/10 pt-3 mt-auto">
+                    <span className="text-[10px] text-gray-500 font-mono">
+                      {character.creator}
+                    </span>
+                    <span className="text-[var(--fg-primary)] group-hover:text-white transition-colors">
+                      <PlusCircle className="w-5 h-5" />
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
+            </Link>
           ))}
         </div>
       </div>

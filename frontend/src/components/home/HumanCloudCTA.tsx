@@ -153,9 +153,12 @@ export function HumanCloudCTA({
                 {creator.description}
               </p>
 
-              <button className="w-full py-3 border border-white/20 rounded-lg text-sm font-bold text-white uppercase hover:bg-white hover:text-black transition-all">
+              <Link
+                href={`/humancloud?creator=${creator.id}`}
+                className="block w-full py-3 border border-white/20 rounded-lg text-sm font-bold text-white uppercase hover:bg-white hover:text-black transition-all text-center"
+              >
                 의뢰 시작하기
-              </button>
+              </Link>
             </motion.div>
           ))}
 
@@ -194,9 +197,12 @@ export function HumanCloudCTA({
                 {creators[2].description}
               </p>
 
-              <button className="w-full py-3 border border-white/20 rounded-lg text-sm font-bold text-white uppercase hover:bg-white hover:text-black transition-all">
+              <Link
+                href={`/humancloud?creator=${creators[2].id}`}
+                className="block w-full py-3 border border-white/20 rounded-lg text-sm font-bold text-white uppercase hover:bg-white hover:text-black transition-all text-center"
+              >
                 의뢰 시작하기
-              </button>
+              </Link>
             </motion.div>
           )}
         </div>

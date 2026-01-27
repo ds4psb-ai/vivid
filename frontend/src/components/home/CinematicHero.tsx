@@ -7,10 +7,10 @@
  * Based on Stitch design with dark mode adaptation
  */
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { Play, ArrowRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Play, ArrowRight, X } from "lucide-react";
 
 export interface FeaturedIP {
   slug: string;
@@ -35,6 +35,8 @@ interface CinematicHeroProps {
 }
 
 export function CinematicHero({ featured }: CinematicHeroProps) {
+  const [showTrailer, setShowTrailer] = useState(false);
+
   return (
     <header className="relative min-h-screen flex items-center justify-center pt-16 overflow-hidden bg-[var(--bg-base)]">
       {/* Background Image */}
@@ -84,7 +86,10 @@ export function CinematicHero({ featured }: CinematicHeroProps) {
               <span>AI로 리믹스하기</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
-            <button className="px-8 py-3 rounded-full font-bold border border-white/30 text-white flex items-center gap-2 hover:bg-white/10 transition-all backdrop-blur-sm">
+            <button
+              onClick={() => setShowTrailer(true)}
+              className="px-8 py-3 rounded-full font-bold border border-white/30 text-white flex items-center gap-2 hover:bg-white/10 transition-all backdrop-blur-sm"
+            >
               <Play className="w-4 h-4" />
               <span>예고편</span>
             </button>
@@ -110,48 +115,88 @@ export function CinematicHero({ featured }: CinematicHeroProps) {
         {/* Right: Character Card - Stitch Style */}
         <div className="hidden lg:block relative">
           {featured.character && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              whileHover={{ y: -8, scale: 1.02 }}
-              className="group relative w-80 ml-auto bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[var(--border-primary)]/50 rounded-2xl p-4 shadow-2xl cursor-pointer transition-colors duration-300"
-            >
-              {/* Status Badge - Top Right */}
-              <div className="absolute -top-4 -right-4 bg-[var(--bg-primary)] text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg group-hover:shadow-[0_0_20px_rgba(255,30,86,0.5)] transition-shadow">
-                {featured.character.status}
-              </div>
-
-              {/* Character Image */}
-              <div className="aspect-[3/4] rounded-xl overflow-hidden mb-4 relative">
-                <img
-                  alt="Character Portrait"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  src={featured.character.imageUrl || "https://lh3.googleusercontent.com/aida-public/AB6AXuB7A2Y_KtEP8fVbTQXGCKp766B5wgZGTvVrGAluur7jkYJpAapyOR2PrT_Bv_tnsHl7y6xEL3uXzp72KZCyk4NQTNpM-LnQlreCoxoTzxnI_N3DnnZla1Hr5rwDpZ8vpNqmHKs7AzgpV24D7Eln4zzc6cdrAhCYyeubXz22yKkIZBIL7nX-xbjqpkXJKkmFcor65s9ZdyfAg7Az7y2IZdRkSVKdwSRTRBk1QPkS0AnMsdFT-1MO1AKYGk797pV5PJalILDsTS_fVHU"}
-                />
-                {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                {/* Character Info */}
-                <div className="absolute bottom-4 left-4 right-4">
-                  <h3 className="text-white text-xl font-bold">{featured.character.name}</h3>
-                  <p className="text-gray-300 text-xs mt-1 line-clamp-2">
-                    {featured.character.description}
-                  </p>
+            <Link href="/chat/akari">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                whileHover={{ y: -8, scale: 1.02 }}
+                className="group relative w-80 ml-auto bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[var(--border-primary)]/50 rounded-2xl p-4 shadow-2xl cursor-pointer transition-colors duration-300"
+              >
+                {/* Status Badge - Top Right */}
+                <div className="absolute -top-4 -right-4 bg-[var(--bg-primary)] text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg group-hover:shadow-[0_0_20px_rgba(255,30,86,0.5)] transition-shadow">
+                  {featured.character.status}
                 </div>
-              </div>
 
-              {/* Progress Bar */}
-              <div className="h-1 w-full bg-gray-700 rounded-full overflow-hidden">
-                <div className="h-full bg-[var(--bg-primary)] w-3/4" />
-              </div>
-              <div className="flex justify-between text-xs text-gray-500 mt-2">
-                <span>동기화 중...</span>
-                <span>75%</span>
-              </div>
-            </motion.div>
+                {/* Character Image */}
+                <div className="aspect-[3/4] rounded-xl overflow-hidden mb-4 relative">
+                  <img
+                    alt="Character Portrait"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    src={featured.character.imageUrl || "https://lh3.googleusercontent.com/aida-public/AB6AXuB7A2Y_KtEP8fVbTQXGCKp766B5wgZGTvVrGAluur7jkYJpAapyOR2PrT_Bv_tnsHl7y6xEL3uXzp72KZCyk4NQTNpM-LnQlreCoxoTzxnI_N3DnnZla1Hr5rwDpZ8vpNqmHKs7AzgpV24D7Eln4zzc6cdrAhCYyeubXz22yKkIZBIL7nX-xbjqpkXJKkmFcor65s9ZdyfAg7Az7y2IZdRkSVKdwSRTRBk1QPkS0AnMsdFT-1MO1AKYGk797pV5PJalILDsTS_fVHU"}
+                  />
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                  {/* Character Info */}
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <h3 className="text-white text-xl font-bold">{featured.character.name}</h3>
+                    <p className="text-gray-300 text-xs mt-1 line-clamp-2">
+                      {featured.character.description}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="h-1 w-full bg-gray-700 rounded-full overflow-hidden">
+                  <div className="h-full bg-[var(--bg-primary)] w-3/4" />
+                </div>
+                <div className="flex justify-between text-xs text-gray-500 mt-2">
+                  <span>동기화 중...</span>
+                  <span>75%</span>
+                </div>
+              </motion.div>
+            </Link>
           )}
         </div>
       </div>
+
+      {/* Trailer Modal */}
+      <AnimatePresence>
+        {showTrailer && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
+            onClick={() => setShowTrailer(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative w-full max-w-4xl mx-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close button */}
+              <button
+                onClick={() => setShowTrailer(false)}
+                className="absolute -top-12 right-0 text-white/70 hover:text-white transition-colors"
+              >
+                <X className="w-8 h-8" />
+              </button>
+
+              {/* Video placeholder */}
+              <div className="aspect-video bg-gray-900 rounded-2xl overflow-hidden flex items-center justify-center border border-white/10">
+                <div className="text-center">
+                  <Play className="w-16 h-16 text-white/50 mx-auto mb-4" />
+                  <p className="text-white/70 text-lg">예고편 준비 중</p>
+                  <p className="text-white/50 text-sm mt-2">곧 공개됩니다</p>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }
