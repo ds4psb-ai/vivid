@@ -18,22 +18,42 @@
  * @see https://react.dev/blog/2024/12/05/react-19
  */
 
-import { useState, useCallback, useTransition, useOptimistic, useMemo } from "react";
+import { useState, useEffect, useCallback, useTransition, useOptimistic, useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
+import { useDimensionChainOptional } from "@/contexts/DimensionChainContext";
+import { useChainDataInjection } from "@/hooks/useChainDataInjection";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
+import ChainDataInput from "./ChainDataInput";
 import { type EvidenceRef } from "./EvidenceDisplay";
+import { Sparkles } from "lucide-react";
+import { type ThemeColor as DimensionThemeColor } from "@/lib/dimension-theme";
 
 // =============================================================================
 // CONSTANTS
 // =============================================================================
 
 const DIMENSION_CODE = "1d" as const;
+const DIMENSION_KEY = "prompt-alchemy";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 const CREDIT_COST = 5;
+
+// Map tokens ThemeColor to dimension-theme ThemeColor
+const CHAIN_INPUT_THEME_MAP: Record<string, DimensionThemeColor> = {
+  violet: "violet",
+  cyan: "cyan",
+  emerald: "emerald",
+  amber: "amber",
+  rose: "rose",
+  fuchsia: "fuchsia",
+  indigo: "indigo",
+  sky: "sky",
+  purple: "violet",
+  red: "rose",
+};
 
 // =============================================================================
 // TYPES
@@ -166,9 +186,23 @@ export default function PromptAlchemyPanel() {
 // =============================================================================
 
 function PromptAlchemyContent() {
-  const { classes, styles: _styles, setLoading, setError, setResult } = useDimensionPanel();
+  const { token, classes, styles: _styles, setLoading, setError, setResult } = useDimensionPanel();
   const { language: appLanguage } = useLanguage();
   const isKo = appLanguage === "ko";
+
+  // Chain context for storing output
+  const chainCtx = useDimensionChainOptional();
+
+  // Chain data injection for upstream data (Story→Production flow)
+  const { logicVector: _logicVector, hasUpstreamData, rawInputData: _rawInputData, evidenceRefs } =
+    useChainDataInjection(DIMENSION_KEY);
+
+  // Set current dimension when mounted
+  useEffect(() => {
+    if (chainCtx) {
+      chainCtx.setCurrentDimension(DIMENSION_KEY);
+    }
+  }, [chainCtx]);
 
   // Model options with i18n
   const MODELS = useMemo(() => getModels(isKo), [isKo]);
@@ -213,6 +247,18 @@ function PromptAlchemyContent() {
     onSuccess: (data) => {
       if (data.success) {
         setResult(data);
+
+        // Store in chain context for downstream dimensions
+        if (chainCtx && "output" in data) {
+          const outputRefs = (data.output as { evidence_refs?: EvidenceRef[] }).evidence_refs?.map((ref) => ref.ref_id) || [];
+          chainCtx.setChainData(
+            DIMENSION_KEY,
+            data.output as unknown as Record<string, unknown>,
+            data.output.translated_prompt?.slice(0, 50) || "Prompt translated",
+            outputRefs.length > 0 ? outputRefs : evidenceRefs
+          );
+        }
+
         if (!byokKey && creditCtx) {
           void creditCtx.refresh();
         }
@@ -375,6 +421,22 @@ function PromptAlchemyContent() {
 
       {/* Sidebar */}
       <DimensionPanel.Sidebar>
+        {/* Chain Data Input - data from story-architect, reference-decoder */}
+        <ChainDataInput
+          currentDimension={DIMENSION_KEY}
+          themeColor={CHAIN_INPUT_THEME_MAP[token.themeColor] || "violet"}
+        />
+
+        {/* Upstream Data Banner */}
+        {hasUpstreamData && !combinedLoading && !result && (
+          <div className="mb-4 p-3 bg-violet-500/10 border border-violet-500/20 rounded-lg">
+            <div className="flex items-center gap-2 text-sm text-violet-600 dark:text-violet-400">
+              <Sparkles className="w-4 h-4" />
+              <span>이전 단계 데이터가 자동 적용됩니다</span>
+            </div>
+          </div>
+        )}
+
         {/* Mode Toggle */}
         <div className="space-y-2" role="radiogroup" aria-label="Translation mode">
           <label
