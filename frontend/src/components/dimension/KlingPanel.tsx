@@ -21,7 +21,9 @@ import { useState, useCallback, useTransition, useOptimistic, useEffect } from "
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
-import { getPreviousStepResult } from "@/lib/workflow-state";
+import { useDimensionChainOptional, type ChainData } from "@/contexts/DimensionChainContext";
+import ChainDataInput from "./ChainDataInput";
+import { useChainDataInjection } from "@/hooks/useChainDataInjection";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 
 // =============================================================================
@@ -29,6 +31,7 @@ import InsufficientCreditsModal from "./InsufficientCreditsModal";
 // =============================================================================
 
 const DIMENSION_CODE = "veo" as const; // Shares color theme with VEO
+const DIMENSION_KEY = "kling"; // Chain context key
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
 // =============================================================================
@@ -43,6 +46,7 @@ interface KlingGenerateResponse {
   thumbnail_url?: string;
   credits_used: number;
   error?: string;
+  evidence_refs?: string[];
 }
 
 // =============================================================================
@@ -111,6 +115,10 @@ export default function KlingPanel() {
 function KlingContent() {
   const { classes, styles: _styles, setLoading, setError, setResult } = useDimensionPanel();
 
+  // Chain context for data flow
+  const chainCtx = useDimensionChainOptional();
+  const { logicVector, rawInputData, evidenceRefs, hasUpstreamData } = useChainDataInjection(DIMENSION_KEY);
+
   // Form state
   const [prompt, setPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("");
@@ -132,61 +140,65 @@ function KlingContent() {
   const [isTransitionPending, startTransition] = useTransition();
 
   // ==========================================================================
-  // Session Context Inheritance (2026 Best Practice)
-  // Inject character refs/image URL from previous step (VisualRealizer → Kling)
+  // Chain Context Integration (4-D DNA Architecture)
+  // Inject data from upstream dimensions (system-prompt, prompt-alchemy)
   // ==========================================================================
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (chainCtx) chainCtx.setCurrentDimension(DIMENSION_KEY);
+  }, [chainCtx]);
 
-    const params = new URLSearchParams(window.location.search);
-    const ipSlug = params.get("ip");
-    const stepParam = params.get("step");
-    const currentStep = stepParam ? parseInt(stepParam, 10) : null;
-
-    if (!ipSlug || !currentStep || currentStep <= 1) return;
-
-    const prevResult = getPreviousStepResult(ipSlug, currentStep);
-    if (!prevResult?.outputData) return;
-
-    const data = prevResult.outputData;
-
-    // Auto-set imageUrl from previous step character refs
-    if (Array.isArray(data.keyframes) && data.keyframes.length > 0 && !imageUrl) {
-      const firstKeyframe = (data.keyframes as Array<Record<string, unknown>>)[0];
-      if (firstKeyframe?.url) {
-        setImageUrl(firstKeyframe.url as string);
-      }
+  // Auto-inject from upstream chain data
+  useEffect(() => {
+    // From system-prompt: apply systemPrompt
+    const sysPromptOutput = rawInputData["system-prompt"] as { output?: { systemPrompt?: string } } | undefined;
+    if (sysPromptOutput?.output?.systemPrompt && !prompt) {
+      setPrompt(sysPromptOutput.output.systemPrompt);
     }
 
-    // Auto-set prompt from scene description
-    if (data.scene_prompt && !prompt) {
-      setPrompt(data.scene_prompt as string);
+    // From prompt-alchemy: apply prompt
+    const promptOutput = rawInputData["prompt-alchemy"] as { output?: { prompt?: string; negative_prompt?: string } } | undefined;
+    if (promptOutput?.output?.prompt && !prompt) {
+      setPrompt(promptOutput.output.prompt);
+    }
+    if (promptOutput?.output?.negative_prompt && !negativePrompt) {
+      setNegativePrompt(promptOutput.output.negative_prompt);
     }
 
-    // Handle motion hints from style guide
-    if (data.style_guide && typeof data.style_guide === "object" && !motionPreset) {
-      const styleGuide = data.style_guide as Record<string, unknown>;
-      if (styleGuide.pacing?.toString().toLowerCase().includes("slow")) {
-        setMotionPreset("slow");
-      } else if (styleGuide.pacing?.toString().toLowerCase().includes("fast")) {
-        setMotionPreset("fast");
-      } else if (styleGuide.pacing?.toString().toLowerCase().includes("dramatic")) {
-        setMotionPreset("dramatic");
-      }
+    // From logicVector: derive motion/camera hints
+    if (logicVector?.camera_grammar && !motionPreset) {
+      const g = logicVector.camera_grammar;
+      if ((g.handheld ?? 0) > 0.3) setMotionPreset("dramatic");
+      else if ((g.dolly ?? 0) > 0.3) setMotionPreset("slow");
+      else if ((g.tracking ?? 0) > 0.3) setMotionPreset("fast");
+    }
+  }, [rawInputData, logicVector, prompt, negativePrompt, motionPreset]);
+
+  // Handle chain data from ChainDataInput component
+  const handleApplyChainData = useCallback((data: Record<string, ChainData>) => {
+    // From system-prompt
+    const sysOutput = data["system-prompt"]?.output;
+    if (sysOutput?.systemPrompt && !prompt) {
+      setPrompt(sysOutput.systemPrompt as string);
     }
 
-    // Handle camera hints
-    if (data.camera_movement && !cameraPreset) {
-      const cam = (data.camera_movement as string).toLowerCase();
-      const matchingPreset = CAMERA_PRESETS.find((p) =>
-        cam.includes(p.value.replace("_", " "))
-      );
-      if (matchingPreset) {
-        setCameraPreset(matchingPreset.value);
-      }
+    // From prompt-alchemy
+    const promptAlchemyOutput = data["prompt-alchemy"]?.output;
+    if (promptAlchemyOutput?.prompt && !prompt) {
+      setPrompt(promptAlchemyOutput.prompt as string);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Initial mount only
-  }, []);
+    if (promptAlchemyOutput?.negative_prompt && !negativePrompt) {
+      setNegativePrompt(promptAlchemyOutput.negative_prompt as string);
+    }
+
+    // From reference-decoder: extract style hints
+    const refOutput = data["reference-decoder"]?.output;
+    const lv = (refOutput?.logic_vector || refOutput?.logicVector) as { camera_grammar?: { handheld?: number; dolly?: number } } | undefined;
+    if (lv?.camera_grammar && !motionPreset) {
+      const g = lv.camera_grammar;
+      if ((g.handheld ?? 0) > 0.3) setMotionPreset("dramatic");
+      else if ((g.dolly ?? 0) > 0.3) setMotionPreset("slow");
+    }
+  }, [prompt, negativePrompt, motionPreset]);
 
   // React 19: useOptimistic for instant UI feedback
   const [optimisticResult, setOptimisticResult] = useOptimistic<KlingGenerateResponse | null>(null);
@@ -217,6 +229,17 @@ function KlingContent() {
     onSuccess: (data) => {
       if (data.success) {
         setResult(data);
+
+        // Store in chain context for downstream dimensions
+        if (chainCtx) {
+          chainCtx.setChainData(
+            DIMENSION_KEY,
+            { ...data, prompt },
+            `Kling 비디오 생성`,
+            data.evidence_refs || evidenceRefs
+          );
+        }
+
         if (creditCtx) {
           void creditCtx.refresh();
         }
@@ -336,6 +359,30 @@ function KlingContent() {
 
       {/* Sidebar */}
       <DimensionPanel.Sidebar>
+        {/* Chain Data Input */}
+        <ChainDataInput
+          currentDimension={DIMENSION_KEY}
+          onApplyData={handleApplyChainData}
+          themeColor="sky"
+        />
+
+        {/* Upstream Data Banner */}
+        {hasUpstreamData && (
+          <div className="p-3 rounded-xl bg-sky-500/10 border border-sky-500/20 mb-3">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
+              <span className="text-xs font-medium text-sky-400">
+                Story Engine 데이터 감지됨
+              </span>
+            </div>
+            {"system-prompt" in rawInputData && (
+              <p className="text-xs text-white/50 mt-1 ml-4">
+                System Prompt 자동 적용 가능
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Prompt */}
         <DimensionPanel.Textarea
           label="Video Description"

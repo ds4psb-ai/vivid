@@ -27,6 +27,7 @@ import {
 } from "@/contexts/DimensionChainContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import ChainDataInput from "./ChainDataInput";
+import { useChainDataInjection } from "@/hooks/useChainDataInjection";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getPreviousStepResult, parseWorkflowUrlParams } from "@/lib/workflow-state";
 import { type ThemeColor as DimensionThemeColor } from "@/lib/dimension-theme";
@@ -124,12 +125,8 @@ function VeoVideoContent() {
   const searchParams = useSearchParams();
   const chainCtx = useDimensionChainOptional();
 
-  // Set current dimension on mount
-  useEffect(() => {
-    if (chainCtx) {
-      chainCtx.setCurrentDimension(DIMENSION_KEY);
-    }
-  }, [chainCtx]);
+  // Chain data injection for upstream data
+  const { logicVector, hasUpstreamData, rawInputData, evidenceRefs } = useChainDataInjection(DIMENSION_KEY);
 
   // i18n labels
   const labels = useMemo(() => ({
@@ -198,6 +195,34 @@ function VeoVideoContent() {
   const [workflowContext, setWorkflowContext] = useState<WorkflowScenarioContext | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Set current dimension on mount
+  useEffect(() => {
+    if (chainCtx) {
+      chainCtx.setCurrentDimension(DIMENSION_KEY);
+    }
+  }, [chainCtx]);
+
+  // Auto-apply logicVector style hints
+  useEffect(() => {
+    if (logicVector && !prompt) {
+      const hints: string[] = [];
+      if (logicVector.auteur_id) hints.push(`${logicVector.auteur_id} style`);
+      if (logicVector.lighting_physics?.key_light) hints.push(logicVector.lighting_physics.key_light);
+      if (logicVector.composition?.primary_strategy) hints.push(`${logicVector.composition.primary_strategy} composition`);
+      if (hints.length > 0) {
+        setPrompt(hints.join(", "));
+      }
+    }
+  }, [logicVector, prompt]);
+
+  // Auto-apply system-prompt from chain
+  useEffect(() => {
+    const sysPromptData = rawInputData["system-prompt"] as { output?: { systemPrompt?: string } } | undefined;
+    if (sysPromptData?.output?.systemPrompt && !prompt) {
+      setPrompt(sysPromptData.output.systemPrompt);
+    }
+  }, [rawInputData, prompt]);
 
   // Load previous step data on mount (workflow integration)
   useEffect(() => {
@@ -356,7 +381,8 @@ function VeoVideoContent() {
         chainCtx.setChainData(
           DIMENSION_KEY,
           { ...data, prompt } as unknown as Record<string, unknown>,
-          `Video generated: ${data.metadata?.duration || "unknown"}`
+          `Video generated: ${data.metadata?.duration || "unknown"}`,
+          (data as unknown as { evidence_refs?: string[] }).evidence_refs || evidenceRefs
         );
       }
 
@@ -463,7 +489,7 @@ function VeoVideoContent() {
     copyToClipboard(prompt);
   }, [prompt, copyToClipboard]);
 
-  // Handle chain data from previous dimensions (visual-realizer, prompt-alchemy, sound-crafter)
+  // Handle chain data from previous dimensions (visual-realizer, prompt-alchemy, sound-crafter, reference-decoder)
   const handleApplyChainData = useCallback((data: Record<string, ChainData>) => {
     // Type-safe extraction helper
     const getStringValue = (obj: unknown, key: string): string | undefined => {
@@ -473,6 +499,13 @@ function VeoVideoContent() {
       }
       return undefined;
     };
+
+    // From system-prompt: get generated system prompt
+    const sysPromptOutput = data["system-prompt"]?.output as Record<string, unknown> | undefined;
+    const systemPromptStr = getStringValue(sysPromptOutput, "systemPrompt");
+    if (systemPromptStr && !prompt) {
+      setPrompt(systemPromptStr);
+    }
 
     // From visual-realizer: get generated image prompt for video generation
     const visualOutput = data["visual-realizer"]?.output as Record<string, unknown> | undefined;
@@ -492,6 +525,22 @@ function VeoVideoContent() {
     const negPrompt = getStringValue(visualOutput, "negative_prompt");
     if (negPrompt && !negativePrompt) {
       setNegativePrompt(negPrompt);
+    }
+
+    // From reference-decoder: extract logicVector for style hints
+    const refOutput = data["reference-decoder"]?.output as Record<string, unknown> | undefined;
+    const lv = (refOutput?.logic_vector || refOutput?.logicVector) as {
+      lighting_physics?: { key_light?: string };
+      composition?: { primary_strategy?: string };
+      auteur_id?: string;
+    } | undefined;
+
+    if (lv && !prompt) {
+      const parts: string[] = [];
+      if (lv.lighting_physics?.key_light) parts.push(`${lv.lighting_physics.key_light} lighting`);
+      if (lv.composition?.primary_strategy) parts.push(`${lv.composition.primary_strategy} composition`);
+      if (lv.auteur_id) parts.push(`in the style of ${lv.auteur_id}`);
+      if (parts.length > 0) setPrompt(parts.join(", "));
     }
 
     // Set style from prompt-alchemy parameters
@@ -519,6 +568,29 @@ function VeoVideoContent() {
             onApplyData={handleApplyChainData}
             themeColor={CHAIN_INPUT_THEME_MAP[token.themeColor] || "sky"}
           />
+
+          {/* Chain Upstream Data Banner */}
+          {hasUpstreamData && !workflowContext && (
+            <div className="p-3 rounded-xl bg-sky-500/10 border border-sky-500/20 mb-3">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
+                <span className="text-xs font-medium text-sky-400">
+                  {isKo ? "DNA/Story Engine 데이터 감지됨" : "DNA/Story Engine Data Detected"}
+                </span>
+              </div>
+              {"system-prompt" in rawInputData && (
+                <p className="text-xs text-[var(--fg-muted)] mt-1 ml-4">
+                  {isKo ? "System Prompt 자동 적용 가능" : "System Prompt auto-apply available"}
+                </p>
+              )}
+              {logicVector && (
+                <p className="text-xs text-[var(--fg-muted)] mt-1 ml-4">
+                  {isKo ? "Logic Vector 스타일 힌트 감지" : "Logic Vector style hints detected"}
+                  {logicVector.auteur_id && ` (${logicVector.auteur_id})`}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Workflow Context Banner */}
           {workflowContext && (
