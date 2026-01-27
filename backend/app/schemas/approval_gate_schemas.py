@@ -9,7 +9,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class ApprovalDecision(str, Enum):
@@ -86,8 +86,7 @@ class PendingApproval(BaseModel):
     node_output: Optional[Dict[str, Any]] = None
     reviewer_id: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ApprovalResult(BaseModel):

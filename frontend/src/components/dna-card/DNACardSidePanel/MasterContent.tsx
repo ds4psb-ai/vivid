@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import type { DNACard, MasterDNAMetadata } from "@/types/dna-card";
 import { DNA_CARD_CONFIG } from "../constants";
 import { MasterMetadata } from "../shared";
@@ -18,10 +19,12 @@ export function MasterContent({ card }: MasterContentProps) {
       {/* Thumbnail */}
       <div className="relative aspect-video rounded-xl overflow-hidden bg-black/20">
         {card.thumbnailUrl ? (
-          <img
+          <Image
             src={card.thumbnailUrl}
             alt={card.name}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            sizes="400px"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import type { CharacterDNAMetadata } from "@/types/dna-card";
 
 interface CharacterMetadataProps {
@@ -81,11 +82,13 @@ export function CharacterMetadata({
 
       {/* Character Image (compact variant only) */}
       {isCompact && metadata.primaryImageUrl && (
-        <div className="rounded-lg overflow-hidden h-20">
-          <img
+        <div className="relative rounded-lg overflow-hidden h-20">
+          <Image
             src={metadata.primaryImageUrl}
             alt="Character preview"
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            sizes="200px"
           />
         </div>
       )}

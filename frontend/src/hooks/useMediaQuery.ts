@@ -1,36 +1,30 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
 /**
- * Responsive media query hook
+ * Responsive media query hook using useSyncExternalStore for SSR compatibility
  * @param query CSS media query string (e.g., "(max-width: 767px)")
  * @returns boolean indicating if the query matches
  */
 export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(false);
+  const subscribe = useCallback(
+    (callback: () => void) => {
+      const mediaQuery = window.matchMedia(query);
+      mediaQuery.addEventListener("change", callback);
+      return () => mediaQuery.removeEventListener("change", callback);
+    },
+    [query]
+  );
 
-  useEffect(() => {
-    const mediaQuery = window.matchMedia(query);
+  const getSnapshot = useCallback(
+    () => window.matchMedia(query).matches,
+    [query]
+  );
 
-    // Set initial value
-    setMatches(mediaQuery.matches);
+  const getServerSnapshot = useCallback(() => false, []);
 
-    // Create event listener
-    const handleChange = (event: MediaQueryListEvent) => {
-      setMatches(event.matches);
-    };
-
-    // Add listener
-    mediaQuery.addEventListener("change", handleChange);
-
-    // Cleanup
-    return () => {
-      mediaQuery.removeEventListener("change", handleChange);
-    };
-  }, [query]);
-
-  return matches;
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 /**

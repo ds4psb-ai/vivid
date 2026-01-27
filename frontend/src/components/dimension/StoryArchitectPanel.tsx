@@ -28,6 +28,9 @@ import { getDemoIPOverride } from "@/lib/demo-ip-overrides";
 import { getPreviousStepResult } from "@/lib/workflow-state";
 import { Layers, ArrowRight, CheckCircle, Download, Sparkles, BookOpen, Film } from "lucide-react";
 import { type ThemeColor as DimensionThemeColor } from "@/lib/dimension-theme";
+import { useDNACardContextConsumer } from "@/hooks/useDNACardContextConsumer";
+import { DNAContextBanner } from "@/components/dna-card/DNAContextBanner";
+import { MASTER_AUTEURS } from "@/components/dna-card/constants";
 
 const DIMENSION_CODE = "story";
 const DIMENSION_KEY = "story-architect";
@@ -220,6 +223,60 @@ function StoryArchitectContent() {
   const creditCost = toolConfig?.creditCost ?? 10;
 
   const { exportJSON } = useResultExport();
+
+  // DNA 카드 컨텍스트 상태
+  const [dnaContextInfo, setDnaContextInfo] = useState<{
+    type: "master" | "masterpiece" | null;
+    name: string;
+    auteurKey?: string;
+    ipId?: string;
+  } | null>(null);
+  const [narrativeStyleHint, setNarrativeStyleHint] = useState<string | null>(null);
+
+  // DNA 카드 컨텍스트 소비 - 거장/작품 DNA에서 스토리 힌트 적용
+  const { dismissContext: dismissDNAContext } = useDNACardContextConsumer({
+    onMasterContext: (auteurKey, metadata) => {
+      const auteurInfo = MASTER_AUTEURS.find((a) => a.key === auteurKey);
+      const auteurName = auteurInfo?.name ?? auteurKey;
+
+      // 거장 특성에서 내러티브 스타일 힌트 추출
+      if (metadata.signatureMoods) {
+        setNarrativeStyleHint(metadata.signatureMoods.slice(0, 2).join(", "));
+      }
+
+      // 컨셉이 비어있을 때만 자동 설정
+      if (!concept) {
+        setConcept(`${auteurName} 스타일의 영상 시나리오`);
+      }
+
+      setDnaContextInfo({
+        type: "master",
+        name: auteurName,
+        auteurKey,
+      });
+    },
+    onMasterpieceContext: (ipId, metadata) => {
+      // 작품 DNA에서 로직벡터 요약을 컨셉에 반영
+      if (metadata.logicVectorSummary && !concept) {
+        const { compositionStyle, lightingPattern } = metadata.logicVectorSummary;
+        setConcept(`"${ipId}" 작품의 서사 구조를 참고한 새로운 시나리오\n\n스타일 힌트: ${compositionStyle}, ${lightingPattern}`);
+      }
+
+      setDnaContextInfo({
+        type: "masterpiece",
+        name: ipId,
+        ipId,
+      });
+    },
+    autoConsume: false,
+  });
+
+  // DNA 컨텍스트 해제
+  const handleDismissDNAContext = useCallback(() => {
+    dismissDNAContext();
+    setDnaContextInfo(null);
+    setNarrativeStyleHint(null);
+  }, [dismissDNAContext]);
 
   // Async operation hook
   const {
@@ -466,6 +523,21 @@ function StoryArchitectContent() {
 
       <div className="flex flex-1 min-h-0">
         <DimensionPanel.Sidebar>
+          {/* DNA Context Banner */}
+          {dnaContextInfo && (
+            <DNAContextBanner
+              cardType={dnaContextInfo.type!}
+              cardName={dnaContextInfo.name}
+              onDismiss={handleDismissDNAContext}
+              additionalInfo={
+                narrativeStyleHint
+                  ? `스타일: ${narrativeStyleHint}`
+                  : undefined
+              }
+              className="mb-4"
+            />
+          )}
+
           {/* Chain Data Input */}
           <ChainDataInput
             currentDimension={DIMENSION_KEY}

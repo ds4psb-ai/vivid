@@ -11,7 +11,7 @@ from typing import Optional, List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy import select, func, desc, asc
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -40,9 +40,8 @@ class TemplateListItem(BaseModel):
     creator_name: str
     is_featured: bool
     tool_names: List[str] = []  # 사용된 도구 이름들
-    
-    class Config:
-        from_attributes = True
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TemplateDetail(TemplateListItem):

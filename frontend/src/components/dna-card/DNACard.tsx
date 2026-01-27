@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import { AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DNACard as DNACardType } from "@/types/dna-card";
@@ -95,10 +96,12 @@ export function DNACard({
         {/* 썸네일 */}
         <div className="relative h-32 bg-black/20 overflow-hidden">
           {card.thumbnailUrl ? (
-            <img
+            <Image
               src={card.thumbnailUrl}
               alt={card.name}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 176px, (max-width: 1024px) 208px, 224px"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">

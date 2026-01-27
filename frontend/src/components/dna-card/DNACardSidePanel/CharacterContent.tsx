@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import type { DNACard, CharacterDNAMetadata } from "@/types/dna-card";
 import { DNA_CARD_CONFIG } from "../constants";
 import { CharacterMetadata } from "../shared";
@@ -18,16 +19,20 @@ export function CharacterContent({ card }: CharacterContentProps) {
       {/* Primary Image */}
       <div className="relative aspect-square rounded-xl overflow-hidden bg-black/20">
         {metadata.primaryImageUrl ? (
-          <img
+          <Image
             src={metadata.primaryImageUrl}
             alt={card.name}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            sizes="400px"
           />
         ) : card.thumbnailUrl ? (
-          <img
+          <Image
             src={card.thumbnailUrl}
             alt={card.name}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            sizes="400px"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">

@@ -33,6 +33,8 @@ import { useDimensionChainOptional } from "@/contexts/DimensionChainContext";
 import { getDemoIPOverride } from "@/lib/demo-ip-overrides";
 import { getPreviousStepResult } from "@/lib/workflow-state";
 import { Send, User, Bot, Sparkles, Download, ArrowLeft, Zap, Upload, RefreshCw, AlertTriangle, Film, RotateCcw } from "lucide-react";
+import { useDNACardContextConsumer } from "@/hooks/useDNACardContextConsumer";
+import { DNAContextBanner } from "@/components/dna-card/DNAContextBanner";
 
 const DIMENSION_CODE = "mirror";
 const DIMENSION_KEY = "abyss-mirror";
@@ -211,6 +213,38 @@ function AbyssMirrorContent() {
     markAsOverridden,
     restoreSuggestion,
   } = useRAGSuggestion({ appKey: "dimension.mirror" });
+
+  // DNA 카드 컨텍스트 상태
+  const [dnaContextInfo, setDnaContextInfo] = useState<{
+    type: "character" | null;
+    name: string;
+    characterId?: string;
+  } | null>(null);
+  const [characterTraits, setCharacterTraits] = useState<string[] | null>(null);
+
+  // DNA 카드 컨텍스트 소비 - 캐릭터 DNA에서 페르소나 시드 적용
+  const { dismissContext: dismissDNAContext } = useDNACardContextConsumer({
+    onCharacterContext: (characterId, metadata) => {
+      // 캐릭터 태그를 특성 힌트로 사용
+      if (metadata.tags && metadata.tags.length > 0) {
+        setCharacterTraits(metadata.tags.slice(0, 4));
+      }
+
+      setDnaContextInfo({
+        type: "character",
+        name: characterId,
+        characterId,
+      });
+    },
+    autoConsume: false,
+  });
+
+  // DNA 컨텍스트 해제
+  const handleDismissDNAContext = useCallback(() => {
+    dismissDNAContext();
+    setDnaContextInfo(null);
+    setCharacterTraits(null);
+  }, [dismissDNAContext]);
 
   // Preset management
   const {
@@ -1068,6 +1102,21 @@ function AbyssMirrorContent() {
 
       <div className="flex flex-1 min-h-0">
         <DimensionPanel.Sidebar>
+          {/* DNA Context Banner */}
+          {dnaContextInfo && (
+            <DNAContextBanner
+              cardType={dnaContextInfo.type!}
+              cardName={dnaContextInfo.name}
+              onDismiss={handleDismissDNAContext}
+              additionalInfo={
+                characterTraits
+                  ? `특성: ${characterTraits.slice(0, 2).join(", ")}`
+                  : undefined
+              }
+              className="mb-4"
+            />
+          )}
+
           {phase !== "input" && (
             <button
               onClick={handleReset}

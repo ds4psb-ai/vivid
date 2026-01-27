@@ -13,7 +13,7 @@ License: arkain.info@gmail.com
 """
 
 from typing import Dict, List, Optional, Literal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
 
 
@@ -80,8 +80,7 @@ class HookVariant(BaseModel):
         description="A/B 테스트 대조군 여부"
     )
     
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class HookVariantSet(BaseModel):

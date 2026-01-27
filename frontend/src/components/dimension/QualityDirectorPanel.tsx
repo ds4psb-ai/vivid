@@ -29,6 +29,9 @@ import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import ChainDataInput from "./ChainDataInput";
 import { type ThemeColor as DimensionThemeColor } from "@/lib/dimension-theme";
 import { CheckCircle, XCircle, AlertTriangle, Download, Shield } from "lucide-react";
+import { useDNACardContextConsumer } from "@/hooks/useDNACardContextConsumer";
+import { DNAContextBanner } from "@/components/dna-card/DNAContextBanner";
+import { MASTER_AUTEURS } from "@/components/dna-card/constants";
 
 // ============================================================================
 // Constants & Types
@@ -116,6 +119,48 @@ function QualityDirectorContent() {
       chainCtx.setCurrentDimension(DIMENSION_KEY);
     }
   }, [chainCtx]);
+
+  // DNA 카드 컨텍스트 상태
+  const [dnaContextInfo, setDnaContextInfo] = useState<{
+    type: "master" | "masterpiece" | null;
+    name: string;
+    auteurKey?: string;
+  } | null>(null);
+
+  // DNA 카드 컨텍스트 소비 - 거장 기준으로 품질 체크 기준 사전 설정
+  const { dismissContext: dismissDNAContext } = useDNACardContextConsumer({
+    onMasterContext: (auteurKey, metadata) => {
+      const auteurInfo = MASTER_AUTEURS.find((a) => a.key === auteurKey);
+      const auteurName = auteurInfo?.name ?? auteurKey;
+
+      // 거장 특성에 따라 검수 기준 자동 설정
+      const auteurCriteria: string[] = ["aesthetic", "consistency"];
+      if (metadata.signatureTechniques?.some(t =>
+        t.toLowerCase().includes("narrative") || t.toLowerCase().includes("story")
+      )) {
+        auteurCriteria.push("narrative");
+      }
+      if (metadata.signatureMoods?.some(m =>
+        m.toLowerCase().includes("safe") || m.toLowerCase().includes("family")
+      )) {
+        auteurCriteria.push("safety");
+      }
+      setSelectedCriteria(auteurCriteria);
+
+      setDnaContextInfo({
+        type: "master",
+        name: auteurName,
+        auteurKey,
+      });
+    },
+    autoConsume: false,
+  });
+
+  // DNA 컨텍스트 해제
+  const handleDismissDNAContext = useCallback(() => {
+    dismissDNAContext();
+    setDnaContextInfo(null);
+  }, [dismissDNAContext]);
 
   // Model options with i18n
   const MODELS = useMemo(() => getModels(isKo), [isKo]);
@@ -300,6 +345,17 @@ function QualityDirectorContent() {
       <DimensionPanel.Header title="퀄리티 디렉터" creditCost={CREDIT_COST} />
 
       <DimensionPanel.Sidebar>
+        {/* DNA Context Banner */}
+        {dnaContextInfo && (
+          <DNAContextBanner
+            cardType={dnaContextInfo.type!}
+            cardName={dnaContextInfo.name}
+            onDismiss={handleDismissDNAContext}
+            additionalInfo={`거장 품질 기준 적용됨`}
+            className="mb-4"
+          />
+        )}
+
         {/* Chain Data Input - data from video-maker, visual-realizer */}
         <ChainDataInput
           currentDimension={DIMENSION_KEY}

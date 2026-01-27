@@ -11,7 +11,7 @@ References:
 
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Literal, Tuple
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
 
 
@@ -78,8 +78,7 @@ class ToolDefinition(BaseModel):
         description="Map output fields to next tool's input fields"
     )
 
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 # =============================================================================

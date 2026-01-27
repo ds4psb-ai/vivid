@@ -301,7 +301,4 @@ class VDGv4(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     processing_time_sec: float = Field(default=0.0)
     
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+    # Note: Pydantic V2 automatically serializes datetime to ISO format

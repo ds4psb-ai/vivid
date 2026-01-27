@@ -12,7 +12,7 @@ from uuid import UUID
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -58,8 +58,7 @@ class CreatorProfileResponse(BaseModel):
     is_available: bool
     is_verified: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RequestCreate(BaseModel):
@@ -82,8 +81,7 @@ class RequestResponse(BaseModel):
     deadline: Optional[datetime]
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AssignmentCreate(BaseModel):
@@ -102,8 +100,7 @@ class AssignmentResponse(BaseModel):
     agreed_deadline: Optional[datetime]
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DeliveryCreate(BaseModel):
@@ -119,8 +116,7 @@ class DeliveryResponse(BaseModel):
     status: str
     submitted_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DeliveryApproval(BaseModel):
@@ -137,8 +133,7 @@ class EvidenceLogResponse(BaseModel):
     attachments: List[str]
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =============================================================================

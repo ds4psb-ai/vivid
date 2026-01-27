@@ -25,7 +25,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth_tokens import decode_token
@@ -70,8 +70,7 @@ class SessionResponse(BaseModel):
     created_at: datetime
     last_message_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SessionListResponse(BaseModel):
@@ -101,8 +100,7 @@ class MessageResponse(BaseModel):
     is_regenerated: bool = False
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MessageListResponse(BaseModel):
@@ -121,8 +119,7 @@ class ScenarioResponse(BaseModel):
     character_mood: str
     is_default: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SwitchScenarioRequest(BaseModel):
@@ -142,8 +139,7 @@ class ChatIPResponse(BaseModel):
     chat_session_count: int
     chat_message_count: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =============================================================================
