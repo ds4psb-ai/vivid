@@ -11,7 +11,7 @@
  *
  * Structure:
  * ┌──────────────────────────────────────────────────────────────────────┐
- * │ [Logo]   [홈]  [도구 ▼]  [플로우]  [싱귤래리티]     [검색] [테마]   │
+ * │ [Logo]   [홈]  [만들기 ▼]  [스튜디오]  [캐릭터]     [검색] [테마]   │
  * └──────────────────────────────────────────────────────────────────────┘
  */
 
@@ -38,9 +38,9 @@ function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 
   const navItems = [
     { href: "/", label: "홈" },
-    { href: "/dimension", label: "도구" },
-    { href: "/flow", label: "플로우" },
-    { href: "/singularity", label: "싱귤래리티" },
+    { href: "/dimension", label: "만들기" },
+    { href: "/studio", label: "스튜디오" },
+    { href: "/characters", label: "캐릭터" },
   ];
 
   return (
@@ -209,7 +209,7 @@ export function CrebitNavbar({
                 aria-expanded={isMenuOpen}
                 aria-haspopup="true"
               >
-                <span>도구</span>
+                <span>만들기</span>
                 <ChevronDown
                   className={`w-4 h-4 transition-transform duration-200 ${
                     isMenuOpen ? "rotate-180" : ""
@@ -221,8 +221,8 @@ export function CrebitNavbar({
               <MegaMenu isOpen={isMenuOpen} onClose={handleCloseMegaMenu} />
             </div>
 
-            <NavLink href="/flow">플로우</NavLink>
-            <NavLink href="/singularity">싱귤래리티</NavLink>
+            <NavLink href="/studio">스튜디오</NavLink>
+            <NavLink href="/characters">캐릭터</NavLink>
           </div>
 
           {/* Right: Actions */}
