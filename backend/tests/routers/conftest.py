@@ -43,6 +43,7 @@ def get_mock_db():
     mock_db.commit = AsyncMock()
     mock_db.refresh = AsyncMock()
     mock_db.rollback = AsyncMock()
+    mock_db.get = AsyncMock(return_value=None)  # SQLAlchemy session.get() is async
     return mock_db
 
 

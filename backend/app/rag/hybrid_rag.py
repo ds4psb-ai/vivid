@@ -802,7 +802,6 @@ async def hybrid_query(
     # === Phase 8: Personalization Integration ===
     if user_id:
         try:
-            from app.config import settings
             if getattr(settings, "PERSONALIZATION_ENABLED", False):
                 from app.services.preference_learning_service import PreferenceLearningService
 

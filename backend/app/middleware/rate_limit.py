@@ -455,12 +455,14 @@ class DefaultRateLimitMiddleware(BaseHTTPMiddleware):
         window_start: int,
     ) -> tuple[bool, int, int]:
         """Check rate limit using Redis."""
-        from app.redis_client import get_redis
+        # Import here to avoid circular imports
+        from app import redis_client as redis_module
 
-        redis = await get_redis()
-        if not redis:
-            raise RuntimeError("Redis not available")
+        # Check if Redis is initialized (avoid MagicMock issues in tests)
+        if redis_module._redis_client is None:
+            raise RuntimeError("Redis client not initialized")
 
+        redis = redis_module._redis_client
         full_key = f"{key}:{window_start}"
 
         # Atomic increment and get
