@@ -4,24 +4,17 @@
  * Characters Gallery Page
  *
  * Browse all AI characters and start conversations
+ * Server-side filtering via API
  */
 
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { MessageCircle, Search, Filter } from "lucide-react";
+import { MessageCircle, Search, Loader2 } from "lucide-react";
+import { api, type HomepageCharacter } from "@/lib/api";
 
-interface Character {
-  id: string;
-  name: string;
-  imageUrl: string;
-  chatCount: string;
-  quote: string;
-  creator: string;
-  badge?: "NEW" | "TOP_RATED";
-  category: string;
-}
-
-const CHARACTERS: Character[] = [
+// Fallback character data for when API is unavailable
+const FALLBACK_CHARACTERS: HomepageCharacter[] = [
   {
     id: "akari",
     name: "Akari",
@@ -87,7 +80,86 @@ const CHARACTERS: Character[] = [
 
 const CATEGORIES = ["All", "Cyberpunk", "Sci-Fi", "Romance", "Tech", "Fantasy", "Adventure"];
 
+// Debounce hook for search input
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 export default function CharactersPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [characters, setCharacters] = useState<HomepageCharacter[]>(FALLBACK_CHARACTERS);
+  const [loading, setLoading] = useState(false);
+  const [total, setTotal] = useState(FALLBACK_CHARACTERS.length);
+
+  const debouncedSearch = useDebounce(searchQuery, 300);
+
+  // Fetch characters from API with search and filter
+  const fetchCharacters = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await api.listCharacters({
+        search: debouncedSearch || undefined,
+        category: activeCategory !== "All" ? activeCategory : undefined,
+        page: 1,
+        pageSize: 20,
+      });
+
+      if (response.items.length > 0) {
+        setCharacters(response.items);
+        setTotal(response.total);
+      } else if (!debouncedSearch && activeCategory === "All") {
+        // No results and no filters - use fallback
+        setCharacters(FALLBACK_CHARACTERS);
+        setTotal(FALLBACK_CHARACTERS.length);
+      } else {
+        // No results with filters - show empty
+        setCharacters([]);
+        setTotal(0);
+      }
+    } catch (error) {
+      console.warn("Using fallback characters:", error);
+      // On error, filter fallback data client-side
+      let filtered = FALLBACK_CHARACTERS;
+      if (debouncedSearch) {
+        const searchLower = debouncedSearch.toLowerCase();
+        filtered = filtered.filter(
+          (c) =>
+            c.name.toLowerCase().includes(searchLower) ||
+            c.quote.toLowerCase().includes(searchLower)
+        );
+      }
+      if (activeCategory !== "All") {
+        filtered = filtered.filter((c) => c.category === activeCategory);
+      }
+      setCharacters(filtered);
+      setTotal(filtered.length);
+    } finally {
+      setLoading(false);
+    }
+  }, [debouncedSearch, activeCategory]);
+
+  // Fetch on mount and when filters change
+  useEffect(() => {
+    fetchCharacters();
+  }, [fetchCharacters]);
+
+  const handleCategoryClick = (category: string) => {
+    setActiveCategory(category);
+  };
+
   return (
     <main className="min-h-screen bg-[var(--bg-base)] pt-24 pb-16">
       <div className="max-w-7xl mx-auto px-6 md:px-16">
@@ -118,8 +190,13 @@ export default function CharactersPage() {
             <input
               type="text"
               placeholder="캐릭터 검색..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-12 pr-4 py-3 bg-[var(--bg-subtle)] border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[var(--border-primary)]/50 transition-colors"
             />
+            {loading && (
+              <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 animate-spin" />
+            )}
           </div>
 
           {/* Category Filters */}
@@ -127,8 +204,9 @@ export default function CharactersPage() {
             {CATEGORIES.map((category) => (
               <button
                 key={category}
+                onClick={() => handleCategoryClick(category)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  category === "All"
+                  category === activeCategory
                     ? "bg-[var(--bg-primary)] text-white"
                     : "bg-[var(--bg-subtle)] text-gray-400 hover:bg-white/10 hover:text-white border border-white/10"
                 }`}
@@ -139,9 +217,48 @@ export default function CharactersPage() {
           </div>
         </motion.div>
 
+        {/* Results count */}
+        {(debouncedSearch || activeCategory !== "All") && (
+          <p className="text-gray-500 text-sm mb-4">
+            {total}개의 캐릭터
+            {debouncedSearch && <span> &quot;{debouncedSearch}&quot; 검색 결과</span>}
+          </p>
+        )}
+
         {/* Characters Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {CHARACTERS.map((character, index) => (
+          {loading ? (
+            // Loading skeleton
+            [...Array(4)].map((_, index) => (
+              <div key={index} className="animate-pulse">
+                <div className="bg-[var(--bg-subtle)] border border-gray-800 rounded-xl overflow-hidden">
+                  <div className="aspect-[3/4] bg-gray-800" />
+                  <div className="p-5">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="h-6 bg-gray-800 rounded w-20" />
+                      <div className="h-4 bg-gray-800 rounded w-12" />
+                    </div>
+                    <div className="h-4 bg-gray-800 rounded w-full mb-2" />
+                    <div className="h-4 bg-gray-800 rounded w-3/4 mb-4" />
+                    <div className="border-t border-white/10 pt-3">
+                      <div className="flex justify-between items-center">
+                        <div className="h-3 bg-gray-800 rounded w-20" />
+                        <div className="h-4 bg-gray-800 rounded w-16" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : characters.length === 0 ? (
+            // Empty state
+            <div className="col-span-full text-center py-16">
+              <p className="text-gray-400 text-lg mb-2">캐릭터를 찾을 수 없습니다</p>
+              <p className="text-gray-500 text-sm">
+                다른 검색어나 카테고리를 시도해 보세요
+              </p>
+            </div>
+          ) : characters.map((character, index) => (
             <motion.div
               key={character.id}
               initial={{ opacity: 0, y: 20 }}
@@ -173,9 +290,11 @@ export default function CharactersPage() {
                     )}
 
                     {/* Category */}
-                    <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-medium text-gray-300 border border-white/10">
-                      {character.category}
-                    </div>
+                    {character.category && (
+                      <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-medium text-gray-300 border border-white/10">
+                        {character.category}
+                      </div>
+                    )}
                   </div>
 
                   {/* Content */}

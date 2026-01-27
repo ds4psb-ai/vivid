@@ -2437,6 +2437,57 @@ class ApiClient {
     return this.request<ABTestResultResponse[]>("/api/v1/content-metrics/ab-tests");
   }
 
+  // =========================================================================
+  // Homepage API
+  // =========================================================================
+
+  /**
+   * Get featured IP for cinematic hero section
+   */
+  async getHomepageFeatured(): Promise<HomepageFeaturedIP> {
+    return this.request<HomepageFeaturedIP>("/api/v1/homepage/featured");
+  }
+
+  /**
+   * Get featured characters for homepage section
+   */
+  async getHomepageCharacters(limit: number = 4): Promise<HomepageCharacter[]> {
+    return this.request<HomepageCharacter[]>(`/api/v1/homepage/characters?limit=${limit}`);
+  }
+
+  /**
+   * Get cinema cards for user AI cinema section
+   */
+  async getHomepageCinema(limit: number = 3): Promise<HomepageCinemaCard[]> {
+    return this.request<HomepageCinemaCard[]>(`/api/v1/homepage/cinema?limit=${limit}`);
+  }
+
+  /**
+   * Get creators for human cloud CTA section
+   */
+  async getHomepageCreators(limit: number = 3): Promise<HomepageCreator[]> {
+    return this.request<HomepageCreator[]>(`/api/v1/homepage/creators?limit=${limit}`);
+  }
+
+  /**
+   * Get variation cards for bento grid
+   */
+  async getHomepageVariations(sort: "popular" | "new" = "popular"): Promise<HomepageVariationCard[]> {
+    return this.request<HomepageVariationCard[]>(`/api/v1/homepage/variations?sort=${sort}`);
+  }
+
+  /**
+   * List all characters with search and filter support
+   */
+  async listCharacters(params: CharacterListParams = {}): Promise<CharacterListResponse> {
+    const searchParams = new URLSearchParams();
+    if (params.search) searchParams.set("search", params.search);
+    if (params.category) searchParams.set("category", params.category);
+    if (params.page) searchParams.set("page", String(params.page));
+    if (params.pageSize) searchParams.set("page_size", String(params.pageSize));
+    const query = searchParams.toString() ? `?${searchParams.toString()}` : "";
+    return this.request<CharacterListResponse>(`/api/v1/homepage/characters/list${query}`);
+  }
 
   // =========================================================================
   // DEPRECATED: Node Execution APIs - Only used by deprecated canvas
@@ -3002,6 +3053,94 @@ export interface UQSLArmStats {
 export interface UQSLArmStatsResponse {
   arms: Record<string, UQSLArmStats>;
   total_arms: number;
+}
+
+// --- Homepage Types ---
+
+export interface HomepageFeaturedCharacter {
+  name: string;
+  description: string;
+  status: string;
+  imageUrl?: string;
+}
+
+export interface HomepageFeaturedIP {
+  slug: string;
+  title: string;
+  titleAccent: string;
+  description: string;
+  bannerUrl: string;
+  tags: string[];
+  rating: number;
+  remixCount: string;
+  matchPercent: number;
+  character?: HomepageFeaturedCharacter;
+}
+
+export interface HomepageCharacter {
+  id: string;
+  name: string;
+  imageUrl: string;
+  chatCount: string;
+  quote: string;
+  creator: string;
+  badge?: "NEW" | "TOP_RATED";
+  category?: string;
+}
+
+export interface HomepageCreatorInfo {
+  name: string;
+  avatarUrl: string;
+}
+
+export interface HomepageCinemaCard {
+  id: string;
+  title: string;
+  description: string;
+  thumbnailUrl: string;
+  duration: string;
+  category: string;
+  categoryColor: string;
+  creator: HomepageCreatorInfo;
+  views: string;
+  likePercent: number;
+}
+
+export interface HomepageCreator {
+  id: string;
+  initial: string;
+  name: string;
+  specialty: string;
+  specialtyColor: "primary" | "blue" | "green";
+  rating: number;
+  description: string;
+}
+
+export interface HomepageVariationCard {
+  id: string;
+  name: string;
+  description: string;
+  thumbnailUrl: string;
+  category: "visual" | "video" | "story" | "audio" | "interactive";
+  badge?: string;
+  badgeColor?: string;
+  href: string;
+  layout?: "tall" | "wide" | "normal";
+}
+
+export interface CharacterListParams {
+  search?: string;
+  category?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface CharacterListResponse {
+  items: HomepageCharacter[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
 }
 
 export const api = new ApiClient();

@@ -26,6 +26,7 @@ interface HumanCloudCTAProps {
   creators?: Creator[];
   onStartMatching?: () => void;
   onCreatorClick?: (id: string) => void;
+  loading?: boolean;
 }
 
 // Default creator data matching stitch_ui_2 design
@@ -69,10 +70,40 @@ const SPECIALTY_COLORS = {
 };
 
 export function HumanCloudCTA({
-  creators = DEFAULT_CREATORS,
+  creators,
   onStartMatching,
   onCreatorClick,
+  loading = false,
 }: HumanCloudCTAProps) {
+  // Use provided creators or fall back to defaults
+  const displayCreators = creators ?? DEFAULT_CREATORS;
+
+  // Loading skeleton component
+  const LoadingSkeleton = () => (
+    <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+      {[...Array(3)].map((_, index) => (
+        <div
+          key={index}
+          className={`bg-[var(--bg-base)] p-6 rounded-xl border border-white/10 animate-pulse ${index === 2 ? "md:col-span-2" : ""}`}
+        >
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-full bg-gray-800" />
+              <div>
+                <div className="h-5 bg-gray-800 rounded w-24 mb-2" />
+                <div className="h-4 bg-gray-800 rounded w-16" />
+              </div>
+            </div>
+            <div className="h-6 bg-gray-800 rounded w-12" />
+          </div>
+          <div className="h-4 bg-gray-800 rounded w-full mb-2" />
+          <div className="h-4 bg-gray-800 rounded w-3/4 mb-6" />
+          <div className="h-12 bg-gray-800 rounded w-full" />
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <section className="relative z-20 px-6 md:px-16 py-24 bg-[var(--bg-subtle)] border-t border-white/5">
       {/* Background Blur Effect */}
@@ -117,8 +148,11 @@ export function HumanCloudCTA({
         </div>
 
         {/* Right Column - Creator Cards */}
+        {loading ? (
+          <LoadingSkeleton />
+        ) : (
         <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {creators.slice(0, 2).map((creator, index) => (
+          {displayCreators.slice(0, 2).map((creator, index) => (
             <motion.div
               key={creator.id}
               initial={{ opacity: 0, y: 20 }}
@@ -163,42 +197,42 @@ export function HumanCloudCTA({
           ))}
 
           {/* Full Width Third Card */}
-          {creators[2] && (
+          {displayCreators[2] && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
               className="bg-[var(--bg-base)] p-6 rounded-xl border border-white/10 hover:border-[var(--border-primary)]/50 transition-all group hover:-translate-y-1 duration-300 shadow-lg md:col-span-2"
-              onClick={() => onCreatorClick?.(creators[2].id)}
+              onClick={() => onCreatorClick?.(displayCreators[2].id)}
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white text-xl font-bold border border-white/10">
-                    {creators[2].initial}
+                    {displayCreators[2].initial}
                   </div>
                   <div>
-                    <h4 className="text-lg font-bold text-white">{creators[2].name}</h4>
+                    <h4 className="text-lg font-bold text-white">{displayCreators[2].name}</h4>
                     <span
                       className={`text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wider ${
-                        SPECIALTY_COLORS[creators[2].specialtyColor]
+                        SPECIALTY_COLORS[displayCreators[2].specialtyColor]
                       }`}
                     >
-                      {creators[2].specialty}
+                      {displayCreators[2].specialty}
                     </span>
                   </div>
                 </div>
                 <div className="flex items-center text-yellow-500 gap-1 bg-yellow-500/10 px-2 py-1 rounded">
                   <Star className="w-3.5 h-3.5 fill-current" />
-                  <span className="font-bold text-xs">{creators[2].rating}</span>
+                  <span className="font-bold text-xs">{displayCreators[2].rating}</span>
                 </div>
               </div>
 
               <p className="text-sm text-gray-400 mb-6 line-clamp-2">
-                {creators[2].description}
+                {displayCreators[2].description}
               </p>
 
               <Link
-                href={`/humancloud?creator=${creators[2].id}`}
+                href={`/humancloud?creator=${displayCreators[2].id}`}
                 className="block w-full py-3 border border-white/20 rounded-lg text-sm font-bold text-white uppercase hover:bg-white hover:text-black transition-all text-center"
               >
                 의뢰 시작하기
@@ -206,9 +240,12 @@ export function HumanCloudCTA({
             </motion.div>
           )}
         </div>
+        )}
       </div>
     </section>
   );
 }
+
+export { DEFAULT_CREATORS };
 
 export default HumanCloudCTA;

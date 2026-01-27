@@ -7,18 +7,21 @@
  * Split hero layout with character model card
  * Bento box variations grid
  * Featured characters + Masters touch + Human Cloud CTA
+ *
+ * API-connected homepage with graceful fallbacks
  */
 
-import React, { Suspense } from "react";
+import React, { Suspense, useState, useEffect } from "react";
 import { CrebitNavbar } from "@/components/home/CrebitNavbar";
 import { CinematicHero, FeaturedIP } from "@/components/home/CinematicHero";
 import { MegaAppShowcase } from "@/components/home/MegaAppShowcase";
 import { VariationsGrid, VariationCard } from "@/components/home/VariationsGrid";
-import { FeaturedCharacters } from "@/components/home/FeaturedCharacters";
+import { FeaturedCharacters, Character, DEFAULT_CHARACTERS } from "@/components/home/FeaturedCharacters";
 import { AIDirectorSection } from "@/components/home/AIDirectorSection";
-import { UserCinemaSection } from "@/components/home/UserCinemaSection";
-import { HumanCloudCTA } from "@/components/home/HumanCloudCTA";
+import { UserCinemaSection, CinemaCard } from "@/components/home/UserCinemaSection";
+import { HumanCloudCTA, Creator, DEFAULT_CREATORS } from "@/components/home/HumanCloudCTA";
 import { CrebitFooter } from "@/components/home/CrebitFooter";
+import { api, type HomepageFeaturedIP, type HomepageCharacter, type HomepageCinemaCard, type HomepageCreator } from "@/lib/api";
 
 // Featured IP data - Stitch V2 Neon Red design
 const FEATURED_IP: FeaturedIP = {
@@ -104,7 +107,145 @@ const VARIATION_CARDS: VariationCard[] = [
   },
 ];
 
+// Interface for homepage data state
+interface HomepageData {
+  featured: FeaturedIP | null;
+  characters: Character[] | null;
+  cinema: CinemaCard[] | null;
+  cinemaTotal: number;
+  creators: Creator[] | null;
+}
+
+// Transform API response to component format
+function transformFeatured(data: HomepageFeaturedIP): FeaturedIP {
+  return {
+    slug: data.slug,
+    title: data.title,
+    titleAccent: data.titleAccent,
+    description: data.description,
+    bannerUrl: data.bannerUrl,
+    tags: data.tags,
+    rating: data.rating,
+    remixCount: data.remixCount,
+    matchPercent: data.matchPercent,
+    character: data.character ? {
+      name: data.character.name,
+      description: data.character.description,
+      status: data.character.status,
+      imageUrl: data.character.imageUrl,
+    } : undefined,
+  };
+}
+
+function transformCharacters(data: HomepageCharacter[]): Character[] {
+  return data.map((c) => ({
+    id: c.id,
+    name: c.name,
+    imageUrl: c.imageUrl,
+    chatCount: c.chatCount,
+    quote: c.quote,
+    creator: c.creator,
+    badge: c.badge,
+  }));
+}
+
+function transformCinema(data: HomepageCinemaCard[]): CinemaCard[] {
+  return data.map((c) => ({
+    id: c.id,
+    title: c.title,
+    description: c.description,
+    thumbnailUrl: c.thumbnailUrl,
+    duration: c.duration,
+    category: c.category,
+    categoryColor: c.categoryColor,
+    creator: {
+      name: c.creator.name,
+      avatarUrl: c.creator.avatarUrl,
+    },
+    views: c.views,
+    likePercent: c.likePercent,
+  }));
+}
+
+function transformCreators(data: HomepageCreator[]): Creator[] {
+  return data.map((c) => ({
+    id: c.id,
+    initial: c.initial,
+    name: c.name,
+    specialty: c.specialty,
+    specialtyColor: c.specialtyColor,
+    rating: c.rating,
+    description: c.description,
+  }));
+}
+
 function HomePageContent() {
+  const [data, setData] = useState<HomepageData>({
+    featured: null,
+    characters: null,
+    cinema: null,
+    cinemaTotal: 12, // Default count
+    creators: null,
+  });
+  const [loading, setLoading] = useState({
+    featured: true,
+    characters: true,
+    cinema: true,
+    creators: true,
+  });
+
+  // Fetch homepage data on mount
+  useEffect(() => {
+    async function fetchData() {
+      // Fetch all data in parallel
+      const [featuredResult, charactersResult, cinemaResult, creatorsResult] = await Promise.allSettled([
+        api.getHomepageFeatured(),
+        api.getHomepageCharacters(4),
+        api.getHomepageCinema(3),
+        api.getHomepageCreators(3),
+      ]);
+
+      // Process featured
+      if (featuredResult.status === "fulfilled") {
+        setData((prev) => ({
+          ...prev,
+          featured: transformFeatured(featuredResult.value),
+        }));
+      }
+      setLoading((prev) => ({ ...prev, featured: false }));
+
+      // Process characters
+      if (charactersResult.status === "fulfilled" && charactersResult.value.length > 0) {
+        setData((prev) => ({
+          ...prev,
+          characters: transformCharacters(charactersResult.value),
+        }));
+      }
+      setLoading((prev) => ({ ...prev, characters: false }));
+
+      // Process cinema
+      if (cinemaResult.status === "fulfilled" && cinemaResult.value.length > 0) {
+        setData((prev) => ({
+          ...prev,
+          cinema: transformCinema(cinemaResult.value),
+          cinemaTotal: cinemaResult.value.length > 0 ? 12 : 3, // TODO: Get actual count from API
+        }));
+      }
+      setLoading((prev) => ({ ...prev, cinema: false }));
+
+      // Process creators
+      if (creatorsResult.status === "fulfilled" && creatorsResult.value.length > 0) {
+        setData((prev) => ({
+          ...prev,
+          creators: transformCreators(creatorsResult.value),
+        }));
+      }
+      setLoading((prev) => ({ ...prev, creators: false }));
+    }
+
+    fetchData();
+  }, []);
+
   return (
     <div className="min-h-screen bg-[var(--bg-base)] text-[var(--fg-default)] font-sans selection:bg-[var(--bg-primary)] selection:text-white overflow-x-hidden">
       {/* Navigation */}
@@ -113,10 +254,14 @@ function HomePageContent() {
       {/* Main Content */}
       <main className="relative w-full min-h-screen pb-20">
         {/* 1. Cinematic Hero */}
-        <CinematicHero featured={FEATURED_IP} />
+        <CinematicHero featured={data.featured ?? FEATURED_IP} />
 
         {/* 2. User AI Cinema & Animation */}
-        <UserCinemaSection />
+        <UserCinemaSection
+          cards={data.cinema ?? undefined}
+          totalCount={data.cinemaTotal}
+          loading={loading.cinema}
+        />
 
         {/* 3. Mega App Showcase - 창작 워크플로우 */}
         <MegaAppShowcase />
@@ -125,13 +270,19 @@ function HomePageContent() {
         <VariationsGrid variations={VARIATION_CARDS} />
 
         {/* 5. Featured Characters - 추천 캐릭터 */}
-        <FeaturedCharacters />
+        <FeaturedCharacters
+          characters={data.characters ?? undefined}
+          loading={loading.characters}
+        />
 
         {/* 6. AI Director Section - AI 디렉터 */}
         <AIDirectorSection />
 
         {/* 7. Human Cloud CTA */}
-        <HumanCloudCTA />
+        <HumanCloudCTA
+          creators={data.creators ?? undefined}
+          loading={loading.creators}
+        />
       </main>
 
       {/* Footer */}

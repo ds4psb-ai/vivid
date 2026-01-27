@@ -115,7 +115,7 @@ export function CinematicHero({ featured }: CinematicHeroProps) {
         {/* Right: Character Card - Stitch Style */}
         <div className="hidden lg:block relative">
           {featured.character && (
-            <Link href="/chat/akari">
+            <Link href={`/chat/${featured.slug}`}>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

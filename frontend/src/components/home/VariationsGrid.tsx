@@ -7,7 +7,7 @@
  * Deep charcoal theme with neon red accents
  */
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -19,6 +19,7 @@ import {
   Play,
   ArrowUpRight,
 } from "lucide-react";
+import { api } from "@/lib/api";
 
 export interface VariationCard {
   id: string;
@@ -36,6 +37,7 @@ export interface VariationCard {
 
 interface VariationsGridProps {
   variations: VariationCard[];
+  enableFiltering?: boolean;
 }
 
 const CATEGORY_ICONS = {
@@ -62,7 +64,50 @@ const PROGRESS_COLORS = {
   interactive: "bg-purple-500",
 };
 
-export function VariationsGrid({ variations }: VariationsGridProps) {
+export function VariationsGrid({ variations: initialVariations, enableFiltering = true }: VariationsGridProps) {
+  const [activeFilter, setActiveFilter] = useState<"popular" | "new">("popular");
+  const [variations, setVariations] = useState<VariationCard[]>(initialVariations);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch variations from API when filter changes
+  useEffect(() => {
+    if (!enableFiltering) return;
+
+    async function fetchVariations() {
+      setLoading(true);
+      try {
+        const data = await api.getHomepageVariations(activeFilter);
+        if (data.length > 0) {
+          // Transform API response to match component interface
+          const transformedData: VariationCard[] = data.map((item) => ({
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            thumbnailUrl: item.thumbnailUrl,
+            category: item.category,
+            badge: item.badge,
+            badgeColor: item.badgeColor,
+            href: item.href,
+            layout: item.layout,
+          }));
+          setVariations(transformedData);
+        }
+        // If API returns empty, keep using initial variations
+      } catch (error) {
+        console.warn("Using fallback variations:", error);
+        // On error, keep using initial variations
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchVariations();
+  }, [activeFilter, enableFiltering]);
+
+  const handleFilterClick = (filter: "popular" | "new") => {
+    setActiveFilter(filter);
+  };
+
   return (
     <section className="relative z-20 px-6 md:px-16 pt-10 bg-[var(--bg-base)]">
       {/* Header */}
@@ -76,10 +121,24 @@ export function VariationsGrid({ variations }: VariationsGridProps) {
           </p>
         </div>
         <div className="flex gap-4">
-          <button className="px-6 py-2 rounded-full border border-white/20 text-xs font-bold tracking-widest uppercase hover:bg-[var(--bg-primary)] hover:border-[var(--border-primary)] hover:text-white transition-all text-gray-300">
+          <button
+            onClick={() => handleFilterClick("popular")}
+            className={`px-6 py-2 rounded-full border text-xs font-bold tracking-widest uppercase transition-all ${
+              activeFilter === "popular"
+                ? "bg-[var(--bg-primary)] border-[var(--border-primary)] text-white"
+                : "border-white/20 text-gray-300 hover:bg-[var(--bg-primary)] hover:border-[var(--border-primary)] hover:text-white"
+            }`}
+          >
             인기순
           </button>
-          <button className="px-6 py-2 rounded-full border border-white/20 text-xs font-bold tracking-widest uppercase hover:bg-[var(--bg-primary)] hover:border-[var(--border-primary)] hover:text-white transition-all text-gray-300">
+          <button
+            onClick={() => handleFilterClick("new")}
+            className={`px-6 py-2 rounded-full border text-xs font-bold tracking-widest uppercase transition-all ${
+              activeFilter === "new"
+                ? "bg-[var(--bg-primary)] border-[var(--border-primary)] text-white"
+                : "border-white/20 text-gray-300 hover:bg-[var(--bg-primary)] hover:border-[var(--border-primary)] hover:text-white"
+            }`}
+          >
             최신순
           </button>
         </div>

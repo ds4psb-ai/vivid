@@ -25,6 +25,7 @@ export interface Character {
 interface FeaturedCharactersProps {
   characters?: Character[];
   onCharacterClick?: (id: string) => void;
+  loading?: boolean;
 }
 
 // Default character data matching stitch_ui_1 design
@@ -69,9 +70,13 @@ const DEFAULT_CHARACTERS: Character[] = [
 ];
 
 export function FeaturedCharacters({
-  characters = DEFAULT_CHARACTERS,
+  characters,
   onCharacterClick,
+  loading = false,
 }: FeaturedCharactersProps) {
+  // Use provided characters or fall back to defaults
+  const displayCharacters = characters ?? DEFAULT_CHARACTERS;
+
   return (
     <section className="relative z-20 px-6 md:px-16 pt-24 bg-[var(--bg-base)]">
       <div className="max-w-7xl mx-auto">
@@ -90,7 +95,30 @@ export function FeaturedCharacters({
 
         {/* Character Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {characters.map((character, index) => (
+          {loading ? (
+            // Loading skeleton
+            [...Array(4)].map((_, index) => (
+              <div key={index} className="animate-pulse">
+                <div className="bg-[var(--bg-subtle)] border border-gray-800 rounded-xl overflow-hidden">
+                  <div className="aspect-[3/4] bg-gray-800" />
+                  <div className="p-5">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="h-6 bg-gray-800 rounded w-20" />
+                      <div className="h-4 bg-gray-800 rounded w-12" />
+                    </div>
+                    <div className="h-4 bg-gray-800 rounded w-full mb-2" />
+                    <div className="h-4 bg-gray-800 rounded w-3/4 mb-4" />
+                    <div className="border-t border-white/10 pt-3">
+                      <div className="flex justify-between items-center">
+                        <div className="h-3 bg-gray-800 rounded w-20" />
+                        <div className="w-5 h-5 bg-gray-800 rounded-full" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : displayCharacters.map((character, index) => (
             <Link key={character.id} href={`/chat/${character.id}`}>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -152,5 +180,7 @@ export function FeaturedCharacters({
     </section>
   );
 }
+
+export { DEFAULT_CHARACTERS };
 
 export default FeaturedCharacters;

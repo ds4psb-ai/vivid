@@ -14,7 +14,7 @@ import { motion } from "framer-motion";
 import { Play, Eye, ThumbsUp, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface CinemaCard {
+export interface CinemaCard {
   id: string;
   title: string;
   description: string;
@@ -28,6 +28,12 @@ interface CinemaCard {
   };
   views: string;
   likePercent: number;
+}
+
+export interface UserCinemaSectionProps {
+  cards?: CinemaCard[];
+  totalCount?: number;
+  loading?: boolean;
 }
 
 const CINEMA_CARDS: CinemaCard[] = [
@@ -87,7 +93,14 @@ const CINEMA_CARDS: CinemaCard[] = [
   },
 ];
 
-export function UserCinemaSection() {
+export function UserCinemaSection({
+  cards,
+  totalCount,
+  loading = false,
+}: UserCinemaSectionProps) {
+  const displayCards = cards ?? CINEMA_CARDS;
+  const displayCount = totalCount ?? displayCards.length;
+
   return (
     <section className="py-20 px-6 md:px-16 bg-[var(--bg-base)]">
       <div className="max-w-7xl mx-auto">
@@ -111,14 +124,33 @@ export function UserCinemaSection() {
             href="/singularity"
             className="group text-gray-400 hover:text-[var(--fg-primary)] text-sm font-medium hidden md:flex items-center gap-1 transition-colors"
           >
-            12개의 숏폼 모두 보기
+            {displayCount}개의 숏폼 모두 보기
             <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </a>
         </motion.div>
 
         {/* Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {CINEMA_CARDS.map((card, index) => (
+          {loading ? (
+            // Loading skeleton
+            [...Array(3)].map((_, index) => (
+              <div key={index} className="animate-pulse">
+                <div className="bg-gray-800 rounded-3xl aspect-video mb-4" />
+                <div className="h-5 bg-gray-800 rounded w-3/4 mb-2" />
+                <div className="h-4 bg-gray-800 rounded w-full mb-3" />
+                <div className="flex items-center justify-between pt-3 border-t border-gray-800">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 bg-gray-800 rounded-full" />
+                    <div className="h-3 bg-gray-800 rounded w-16" />
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="h-3 bg-gray-800 rounded w-12" />
+                    <div className="h-3 bg-gray-800 rounded w-10" />
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : displayCards.map((card, index) => (
             <Link key={card.id} href={`/singularity?video=${card.id}`}>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -205,7 +237,7 @@ export function UserCinemaSection() {
             href="/singularity"
             className="text-[var(--fg-primary)] text-sm font-medium flex items-center gap-2"
           >
-            12개의 숏폼 모두 보기
+            {displayCount}개의 숏폼 모두 보기
             <ChevronRight className="w-4 h-4" />
           </a>
         </div>
