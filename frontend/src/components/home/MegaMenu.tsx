@@ -232,7 +232,7 @@ export function MegaMenu({ isOpen, onClose }: MegaMenuProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute top-full left-0 right-0 mt-2 z-50
+            className="fixed top-14 left-4 right-4 z-50
                        bg-[var(--surface-1)] dark:bg-[rgba(22,22,24,0.95)]
                        backdrop-blur-xl
                        border border-[var(--glass-border)]
