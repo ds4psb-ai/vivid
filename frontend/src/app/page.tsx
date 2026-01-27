@@ -248,8 +248,8 @@ function HomePageContent() {
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)] text-[var(--fg-default)] font-sans selection:bg-[var(--bg-primary)] selection:text-white overflow-x-hidden">
-      {/* Navigation */}
-      <CrebitNavbar />
+      {/* Navigation - transparent overlay on hero */}
+      <CrebitNavbar transparent showSpacer={false} />
 
       {/* Main Content */}
       <main className="relative w-full min-h-screen pb-20">

@@ -1,5 +1,17 @@
 "use client";
 
+/**
+ * @deprecated This sidebar component is deprecated in favor of the new
+ * top header mega menu navigation (CrebitNavbar + MegaMenu).
+ *
+ * Migration:
+ * - Use CrebitNavbar from "@/components/home/CrebitNavbar" for main navigation
+ * - Use DimensionTabs from "@/components/dimension/DimensionTabs" for in-page navigation
+ *
+ * This file will be removed in a future version.
+ * Last updated: 2026-01-27
+ */
+
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
