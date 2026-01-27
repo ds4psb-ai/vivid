@@ -213,6 +213,15 @@ def get_creative_strengths(creative_style: CreativeStyle) -> List[str]:
     return CREATIVE_STRENGTHS_MAP.get(creative_style, [])
 
 
+class OceanTraits(BaseModel):
+    """Big Five (OCEAN) personality traits."""
+    openness: float = Field(ge=0.0, le=1.0, description="개방성 (0.0-1.0)")
+    conscientiousness: float = Field(ge=0.0, le=1.0, description="성실성 (0.0-1.0)")
+    extraversion: float = Field(ge=0.0, le=1.0, description="외향성 (0.0-1.0)")
+    agreeableness: float = Field(ge=0.0, le=1.0, description="우호성 (0.0-1.0)")
+    neuroticism: float = Field(ge=0.0, le=1.0, description="신경성 (0.0-1.0)")
+
+
 class MirrorProfileQuality(BaseModel):
     """2026 Profile Quality assessment for Abyss Mirror."""
 
@@ -514,6 +523,10 @@ class MirrorInitResponse(BaseModel):
     profile_quality: Optional[MirrorProfileQuality] = Field(
         None, description="Profile quality assessment with MBTI-CI"
     )
+    # P2: Big Five (OCEAN) traits from MBTI
+    ocean_traits: Optional[OceanTraits] = Field(
+        None, description="Big Five personality traits calculated from MBTI"
+    )
 
 
 
@@ -536,6 +549,10 @@ class MirrorChatResponse(BaseModel):
     # 2026 Profile Quality
     profile_quality: Optional[MirrorProfileQuality] = Field(
         None, description="Profile quality assessment with MBTI-CI"
+    )
+    # P2: Big Five (OCEAN) traits from MBTI
+    ocean_traits: Optional[OceanTraits] = Field(
+        None, description="Big Five personality traits calculated from MBTI"
     )
     error: Optional[str] = None
 
@@ -583,6 +600,7 @@ async def init_mirror(
     import uuid
     from app.services.mirror_service import (
         calculate_saju_pillars,
+        calculate_ocean_from_mbti,
         validate_persona_preset,
     )
     
@@ -669,9 +687,19 @@ async def init_mirror(
         chat_turn_count=0,
     )
 
+    # P2: Calculate OCEAN traits from MBTI
+    ocean_traits = None
+    if request.mbti:
+        ocean_dict = calculate_ocean_from_mbti(request.mbti)
+        ocean_traits = OceanTraits(**ocean_dict)
+        # Add OCEAN evidence refs
+        for trait_name, trait_value in ocean_dict.items():
+            evidence_refs.append(f"rag:mirror:ocean:{trait_name}:{trait_value}")
+
     mirror_logger.info(
         f"[MIRROR_INIT_2026] trace_id={trace_id} mbti={request.mbti} "
-        f"ci={profile_quality.creativity_index:.1f} style={profile_quality.creative_style}"
+        f"ci={profile_quality.creativity_index:.1f} style={profile_quality.creative_style} "
+        f"ocean={ocean_traits is not None}"
     )
 
     return MirrorInitResponse(
@@ -685,6 +713,8 @@ async def init_mirror(
         trace_id=trace_id,
         evidence_refs=evidence_refs,
         profile_quality=profile_quality,
+        # P2: OCEAN traits
+        ocean_traits=ocean_traits,
     )
 
 
@@ -714,7 +744,7 @@ async def chat_mirror(
         f"[MIRROR_CHAT] user={user_id} session={request.session_id} "
         f"stage={request.current_stage} msg_len={len(request.user_message)}"
     )
-    from app.services.mirror_service import analyze_persona_with_mirror
+    from app.services.mirror_service import analyze_persona_with_mirror, calculate_ocean_from_mbti
     
     # 분석 실행
     result = await analyze_persona_with_mirror(
@@ -755,10 +785,51 @@ async def chat_mirror(
         chat_turn_count=chat_turn_count,
     )
 
+    # P2: Calculate OCEAN traits from MBTI
+    ocean_traits = None
+    if mbti:
+        ocean_dict = calculate_ocean_from_mbti(mbti)
+        ocean_traits = OceanTraits(**ocean_dict)
+        # Add OCEAN evidence refs
+        for trait_name, trait_value in ocean_dict.items():
+            evidence_refs.append(f"rag:mirror:ocean:{trait_name}:{trait_value}")
+
     mirror_logger.info(
         f"[MIRROR_CHAT_2026] trace_id={trace_id} session={request.session_id} "
-        f"stage={result['next_stage']} quality={profile_quality.overall_score}"
+        f"stage={result['next_stage']} quality={profile_quality.overall_score} "
+        f"ocean={ocean_traits is not None}"
     )
+
+    # P3: 분석 완료 시 OCEAN 저장 (is_complete=True일 때)
+    if result["is_complete"] and ocean_traits:
+        from app.services.ocean_storage_service import (
+            get_ocean_storage_service,
+            OceanScores,
+        )
+        ocean_service = get_ocean_storage_service()
+        save_result = await ocean_service.save_ocean(
+            user_id=user_id,
+            ocean=OceanScores(
+                openness=ocean_traits.openness,
+                conscientiousness=ocean_traits.conscientiousness,
+                extraversion=ocean_traits.extraversion,
+                agreeableness=ocean_traits.agreeableness,
+                neuroticism=ocean_traits.neuroticism,
+            ),
+            source="mirror",
+        )
+        if save_result.success:
+            mirror_logger.info(
+                f"[MIRROR_OCEAN_SAVED] user={user_id} "
+                f"values={save_result.new_values}"
+            )
+            # Add evidence ref for saved OCEAN
+            evidence_refs.append(f"db:user_preference_profiles:{user_id}:ocean")
+        else:
+            mirror_logger.warning(
+                f"[MIRROR_OCEAN_SAVE_FAILED] user={user_id} "
+                f"error={save_result.error}"
+            )
 
     # Ensure error is always a string or None (防止 ValueError object serialization)
     error_value = result.get("error")
@@ -779,6 +850,8 @@ async def chat_mirror(
         is_crisis=result.get("is_crisis", False),
         # 2026 Profile Quality
         profile_quality=profile_quality,
+        # P2: OCEAN traits
+        ocean_traits=ocean_traits,
         error=error_value,
     )
 
@@ -878,7 +951,7 @@ async def chat_mirror_stream(
         raise HTTPException(status_code=402, detail=err or "Insufficient credits")
     
     async def generate_stream():
-        from app.services.mirror_service import analyze_persona_with_mirror
+        from app.services.mirror_service import analyze_persona_with_mirror, calculate_ocean_from_mbti
 
         # 분석 실행
         result = await analyze_persona_with_mirror(
@@ -917,19 +990,56 @@ async def chat_mirror_stream(
             chat_turn_count=chat_turn_count,
         )
 
+        # P2: Calculate OCEAN traits from MBTI
+        ocean_traits_dict = None
+        if mbti:
+            ocean_dict = calculate_ocean_from_mbti(mbti)
+            ocean_traits_dict = ocean_dict
+            # Add OCEAN evidence refs
+            for trait_name, trait_value in ocean_dict.items():
+                evidence_refs.append(f"rag:mirror:ocean:{trait_name}:{trait_value}")
+
         # Add 2026 fields to result
         result["trace_id"] = trace_id
         result["evidence_refs"] = evidence_refs
         result["confidence"] = min(1.0, profile_quality.overall_score / 100)
         result["profile_quality"] = profile_quality.model_dump()
+        # P2: OCEAN traits
+        result["ocean_traits"] = ocean_traits_dict
 
         # Ensure error is always a string or None (防止 ValueError object serialization)
         if "error" in result and result["error"] is not None:
             if not isinstance(result["error"], str):
                 result["error"] = str(result["error"])
 
+        # P3: 분석 완료 시 OCEAN 저장 (is_complete=True일 때)
+        if result.get("is_complete") and ocean_traits_dict:
+            from app.services.ocean_storage_service import (
+                get_ocean_storage_service,
+                OceanScores,
+            )
+            ocean_service = get_ocean_storage_service()
+            save_result = await ocean_service.save_ocean(
+                user_id=user_id,
+                ocean=OceanScores(**ocean_traits_dict),
+                source="mirror_stream",
+            )
+            if save_result.success:
+                mirror_logger.info(
+                    f"[MIRROR_STREAM_OCEAN_SAVED] user={user_id} "
+                    f"values={save_result.new_values}"
+                )
+                evidence_refs.append(f"db:user_preference_profiles:{user_id}:ocean")
+                result["evidence_refs"] = evidence_refs
+            else:
+                mirror_logger.warning(
+                    f"[MIRROR_STREAM_OCEAN_SAVE_FAILED] user={user_id} "
+                    f"error={save_result.error}"
+                )
+
         mirror_logger.info(
-            f"[MIRROR_STREAM_2026] trace_id={trace_id} quality={profile_quality.overall_score}"
+            f"[MIRROR_STREAM_2026] trace_id={trace_id} quality={profile_quality.overall_score} "
+            f"ocean={ocean_traits_dict is not None}"
         )
 
         # 스트리밍 전송

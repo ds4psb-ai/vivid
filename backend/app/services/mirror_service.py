@@ -289,6 +289,61 @@ FIVE_ELEMENTS = {"갑": "목", "을": "목", "병": "화", "정": "화", "무": 
                  "기": "토", "경": "금", "신": "금", "임": "수", "계": "수"}
 
 
+def calculate_ocean_from_mbti(mbti: str) -> Dict[str, float]:
+    """
+    MBTI를 Big Five (OCEAN) 점수로 변환.
+
+    연구 기반 상관관계 (Costa & McCrae, 1989; Furnham, 1996):
+    - E/I ↔ Extraversion (r=0.74)
+    - S/N ↔ Openness (r=0.72)
+    - T/F ↔ Agreeableness (r=0.44)
+    - J/P ↔ Conscientiousness (r=0.49)
+    - Neuroticism: I, N, F, P 조합에서 높음
+
+    Returns: Dict with keys: openness, conscientiousness, extraversion,
+             agreeableness, neuroticism (values 0.0-1.0)
+    """
+    if not mbti or len(mbti) != 4:
+        return {
+            "openness": 0.5,
+            "conscientiousness": 0.5,
+            "extraversion": 0.5,
+            "agreeableness": 0.5,
+            "neuroticism": 0.5,
+        }
+
+    mbti = mbti.upper()
+
+    # E/I → Extraversion
+    extraversion = 0.75 if mbti[0] == "E" else 0.35
+
+    # S/N → Openness (N = high openness)
+    openness = 0.80 if mbti[1] == "N" else 0.35
+
+    # T/F → Agreeableness (F = high agreeableness)
+    agreeableness = 0.70 if mbti[2] == "F" else 0.40
+
+    # J/P → Conscientiousness (J = high conscientiousness)
+    conscientiousness = 0.75 if mbti[3] == "J" else 0.40
+
+    # Neuroticism: I, N, F, P 조합에서 증가
+    neuroticism_factors = sum([
+        0.15 if mbti[0] == "I" else 0,
+        0.10 if mbti[1] == "N" else 0,
+        0.15 if mbti[2] == "F" else 0,
+        0.10 if mbti[3] == "P" else 0,
+    ])
+    neuroticism = 0.30 + neuroticism_factors  # Base 0.30 + factors
+
+    return {
+        "openness": round(openness, 2),
+        "conscientiousness": round(conscientiousness, 2),
+        "extraversion": round(extraversion, 2),
+        "agreeableness": round(agreeableness, 2),
+        "neuroticism": round(neuroticism, 2),
+    }
+
+
 def calculate_saju_pillars(year: int, month: int, day: int, hour: int = 12) -> Dict[str, str]:
     """사주팔자 기본 계산 (간략화된 버전).
     
