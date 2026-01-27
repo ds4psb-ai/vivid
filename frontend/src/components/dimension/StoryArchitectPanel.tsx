@@ -29,6 +29,7 @@ import { getPreviousStepResult } from "@/lib/workflow-state";
 import { Layers, ArrowRight, CheckCircle, Download, Sparkles, BookOpen, Film } from "lucide-react";
 import { type ThemeColor as DimensionThemeColor } from "@/lib/dimension-theme";
 import { useDNACardContextConsumer } from "@/hooks/useDNACardContextConsumer";
+import { useChainDataInjection } from "@/hooks/useChainDataInjection";
 import { DNAContextBanner } from "@/components/dna-card/DNAContextBanner";
 import { MASTER_AUTEURS } from "@/components/dna-card/constants";
 
@@ -123,6 +124,10 @@ function StoryArchitectContent() {
   const { language } = useLanguage();
   const isKo = language === "ko";
 
+  // Chain data injection for upstream data (DNA→Story flow)
+  const { logicVector, personaDNA, hasUpstreamData, rawInputData, evidenceRefs } =
+    useChainDataInjection(DIMENSION_KEY);
+
   // i18n labels
   const labels = useMemo(() => ({
     title: isKo ? "시나리오 생성기" : "Scenario Generator",
@@ -203,10 +208,6 @@ function StoryArchitectContent() {
   const [angles, setAngles] = useState<NarrativeAngle[]>([]);
   const [selectedAngle, setSelectedAngle] = useState<NarrativeAngle | null>(null);
   const [storyResult, setStoryResult] = useState<StoryResult | null>(null);
-
-  // Chain data from previous dimensions
-  const [personaData, setPersonaData] = useState<Record<string, unknown>>({});
-  const [referenceAnalysis, setReferenceAnalysis] = useState<Record<string, unknown>>({});
 
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -293,7 +294,8 @@ function StoryArchitectContent() {
           chainCtx.setChainData(
             DIMENSION_KEY,
             data.output as unknown as Record<string, unknown>,
-            data.output.title || data.output.logline || concept.slice(0, 50)
+            data.output.title || data.output.logline || concept.slice(0, 50),
+            (data as { evidence_refs?: string[] }).evidence_refs || evidenceRefs
           );
         }
         // Refresh credits
@@ -368,6 +370,8 @@ function StoryArchitectContent() {
       }
 
       // Load previous step results from workflow state (P0: Critical for data flow)
+      // Note: useChainDataInjection now handles most chain data automatically
+      // This legacy logic handles URL param-based workflow state for backwards compatibility
       if (currentStep && currentStep > 1) {
         // Check for Reference Decoder result (typically step before scenario)
         for (let prevStep = currentStep - 1; prevStep >= 1; prevStep--) {
@@ -376,7 +380,6 @@ function StoryArchitectContent() {
             const data = prevResult.outputData;
             // Check if this is Reference Decoder output (has style/analysis fields)
             if (data.style_prompt || data.recreation_prompt || data.description || data.style) {
-              setReferenceAnalysis(data);
               // Also update concept to include reference context
               const refPrompt = (data.style_prompt || data.recreation_prompt || data.description || "") as string;
               if (refPrompt && !concept) {
@@ -386,13 +389,8 @@ function StoryArchitectContent() {
                   : `Create a new scenario preserving the core story structure of "${ipTitle}":\n\nOriginal style: ${refPrompt.slice(0, 200)}`;
                 setConcept(enrichedConcept);
               }
-              console.log("[StoryArchitectPanel] Loaded reference analysis from workflow step", prevStep);
+              console.log("[StoryArchitectPanel] Loaded reference context from workflow step", prevStep);
               break;
-            }
-            // Check if this is Abyss Mirror output (has persona fields)
-            if (data.persona || data.psychology || data.creativity) {
-              setPersonaData(data);
-              console.log("[StoryArchitectPanel] Loaded persona data from workflow step", prevStep);
             }
           }
         }
@@ -404,15 +402,32 @@ function StoryArchitectContent() {
     }
   }, [isKo, concept]);
 
-  // Handler to apply chain data from previous dimensions
-  const handleApplyChainData = (data: Record<string, ChainData>) => {
-    if (data["abyss-mirror"]) {
-      setPersonaData(data["abyss-mirror"].output);
+  // Auto-apply upstream data from useChainDataInjection
+  useEffect(() => {
+    // From reference-decoder: 자동으로 컨셉에 스타일 힌트 적용
+    if (logicVector && !concept) {
+      const hints: string[] = [];
+      if (logicVector.auteur_id) hints.push(`${logicVector.auteur_id} 스타일`);
+      if (logicVector.composition?.primary_strategy) hints.push(logicVector.composition.primary_strategy);
+      if (hints.length > 0) {
+        setConcept(hints.join(" - "));
+      }
     }
-    if (data["reference-decoder"]) {
-      setReferenceAnalysis(data["reference-decoder"].output);
+  }, [logicVector, concept]);
+
+  // Handler to apply chain data from previous dimensions (manual fallback via ChainDataInput)
+  // Note: useChainDataInjection now handles most of this automatically
+  const handleApplyChainData = useCallback((data: Record<string, ChainData>) => {
+    // Extract hints from reference-decoder for concept if empty
+    const refOutput = data["reference-decoder"]?.output as Record<string, unknown> | undefined;
+    if (refOutput && !concept) {
+      const stylePrompt = refOutput.style_prompt as string | undefined;
+      const description = refOutput.description as string | undefined;
+      if (stylePrompt || description) {
+        setConcept(`${stylePrompt || description}`.slice(0, 500));
+      }
     }
-  };
+  }, [concept]);
 
   const MAX_CONCEPT_LENGTH = 3000;
 
@@ -499,15 +514,16 @@ function StoryArchitectContent() {
         structure,
         language: "ko",
         model: "gemini-3-pro-preview",
-        persona_data: personaData,
-        reference_analysis: referenceAnalysis,
+        // Use hook-provided data (from useChainDataInjection)
+        persona_data: personaDNA || {},
+        reference_analysis: logicVector ? { logic_vector: logicVector } : {},
       },
       getBYOKHeaders(byokKey)
     );
     if (res && res.success) {
       setStage("script");
     }
-  }, [concept, genre, duration, structure, personaData, referenceAnalysis, byokKey, creditCtx, creditCost, wrappedExecute, selectedAngle, labels]);
+  }, [concept, genre, duration, structure, personaDNA, logicVector, byokKey, creditCtx, creditCost, wrappedExecute, selectedAngle, labels]);
 
   const handleExportJson = useCallback(() => {
     if (!storyResult) return;
@@ -544,6 +560,16 @@ function StoryArchitectContent() {
             onApplyData={handleApplyChainData}
             themeColor={CHAIN_INPUT_THEME_MAP[token.themeColor] || "emerald"}
           />
+
+          {/* Upstream Data Banner */}
+          {hasUpstreamData && !isAnyLoading && stage === "pitch" && (
+            <div className="mb-4 p-3 bg-violet-500/10 border border-violet-500/20 rounded-lg">
+              <div className="flex items-center gap-2 text-sm text-violet-600 dark:text-violet-400">
+                <Sparkles className="w-4 h-4" />
+                <span>{isKo ? "이전 분석 데이터가 자동 적용됩니다" : "Upstream analysis data auto-applied"}</span>
+              </div>
+            </div>
+          )}
 
           {/* Stage Indicator */}
           <div className="flex items-center justify-between text-xs text-slate-400 dark:text-white/50 mb-2">

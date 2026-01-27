@@ -29,6 +29,8 @@ import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import ChainDataInput from "./ChainDataInput";
 import { type EvidenceRef } from "./EvidenceDisplay";
 import { type ThemeColor as DimensionThemeColor } from "@/lib/dimension-theme";
+import { useChainDataInjection } from "@/hooks/useChainDataInjection";
+import { Sparkles } from "lucide-react";
 
 // =============================================================================
 // CONSTANTS
@@ -127,6 +129,10 @@ function PromptGeneratorContent() {
   const { token, classes, setLoading, setError, setResult } = useDimensionPanel();
   const chainCtx = useDimensionChainOptional();
 
+  // Chain data injection for upstream data (Story→Production flow)
+  const { logicVector, hasUpstreamData, rawInputData, evidenceRefs } =
+    useChainDataInjection(DIMENSION_KEY);
+
   // Form state
   const [topic, setTopic] = useState("");
   const [style, setStyle] = useState("cinematic");
@@ -143,6 +149,27 @@ function PromptGeneratorContent() {
       chainCtx.setCurrentDimension(DIMENSION_KEY);
     }
   }, [chainCtx]);
+
+  // Auto-apply upstream data from useChainDataInjection
+  useEffect(() => {
+    // From story-architect: logline 또는 synopsis를 topic으로
+    const storyOutput = rawInputData["story-architect"] as { output?: { logline?: string; synopsis?: string } } | undefined;
+    if (storyOutput?.output?.logline && !topic) {
+      setTopic(storyOutput.output.logline);
+    } else if (storyOutput?.output?.synopsis && !topic) {
+      setTopic(storyOutput.output.synopsis.slice(0, 500));
+    }
+
+    // From aesthetic-director: mood 자동 적용
+    const adOutput = rawInputData["aesthetic-director"] as { output?: { mood?: string } } | undefined;
+    if (adOutput?.output?.mood) {
+      const moodMap: Record<string, string> = {
+        dramatic: "dramatic", calm: "calm", energetic: "energetic", melancholic: "melancholic",
+      };
+      const mapped = moodMap[adOutput.output.mood.toLowerCase()];
+      if (mapped) setMood(mapped);
+    }
+  }, [rawInputData, topic]);
 
   // React 19: useTransition for non-blocking form submission
   const [isTransitionPending, startTransition] = useTransition();
@@ -177,10 +204,13 @@ function PromptGeneratorContent() {
 
         // Store in chain context for downstream dimensions
         if (chainCtx) {
+          // Convert EvidenceRef[] to string[] for chain storage
+          const outputRefs = data.output.evidence_refs?.map((ref) => ref.ref_id) || [];
           chainCtx.setChainData(
             DIMENSION_KEY,
             data.output as unknown as Record<string, unknown>,
-            data.output.prompt?.slice(0, 50) || topic.slice(0, 50)
+            data.output.prompt?.slice(0, 50) || topic.slice(0, 50),
+            outputRefs.length > 0 ? outputRefs : evidenceRefs
           );
         }
 
@@ -344,6 +374,16 @@ function PromptGeneratorContent() {
           onApplyData={handleApplyChainData}
           themeColor={CHAIN_INPUT_THEME_MAP[token.themeColor] || "violet"}
         />
+
+        {/* Upstream Data Banner */}
+        {hasUpstreamData && !combinedLoading && !displayResult && (
+          <div className="mb-4 p-3 bg-violet-500/10 border border-violet-500/20 rounded-lg">
+            <div className="flex items-center gap-2 text-sm text-violet-600 dark:text-violet-400">
+              <Sparkles className="w-4 h-4" />
+              <span>이전 단계 데이터가 자동 적용됩니다</span>
+            </div>
+          </div>
+        )}
 
         {/* Topic Textarea */}
         <DimensionPanel.Textarea
