@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 import type { DNACard as DNACardType } from "@/types/dna-card";
 import { DNA_CARD_CONFIG } from "./constants";
 import { DNACardPreview } from "./DNACardPreview";
+import { useIsMobile } from "@/hooks/useMediaQuery";
+import { useDNACardContext } from "@/stores/dnaCardContextStore";
 
 interface DNACardProps {
   card: DNACardType;
@@ -25,6 +27,29 @@ export function DNACard({
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
   const config = DNA_CARD_CONFIG[card.type];
   const Icon = config.icon;
+
+  // Responsive: Side Panel on desktop, page navigation on mobile
+  const isMobile = useIsMobile();
+  const openSidePanel = useDNACardContext((s) => s.openSidePanel);
+
+  const handleCardClick = useCallback(
+    (e: React.MouseEvent) => {
+      // If custom onClick is provided, use it
+      if (onClick) {
+        e.preventDefault();
+        onClick(card);
+        return;
+      }
+
+      // Desktop: open Side Panel instead of navigating
+      if (!isMobile) {
+        e.preventDefault();
+        openSidePanel(card);
+      }
+      // Mobile: let the Link navigate normally
+    },
+    [onClick, isMobile, openSidePanel, card]
+  );
 
   const href = `/${card.megaAppEntry.app}?tab=${card.megaAppEntry.tab}${
     card.megaAppEntry.preloadParams
@@ -50,12 +75,7 @@ export function DNACard({
       <Link
         ref={cardRef}
         href={href}
-        onClick={(e) => {
-          if (onClick) {
-            e.preventDefault();
-            onClick(card);
-          }
-        }}
+        onClick={handleCardClick}
         className={cn(
           "block overflow-hidden",
           // P1: 반응형 크기

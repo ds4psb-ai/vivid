@@ -26,6 +26,7 @@ import { SessionProvider } from "@/contexts/SessionContext";
 import { DimensionConfigProvider } from "@/contexts/DimensionConfigContext";
 import { ToastProvider } from "@/components/Toast";
 import { ThemeProvider } from "@/components/theme-provider";
+import { DNACardSidePanelPortal } from "@/components/dna-card/DNACardSidePanel";
 
 export default function RootLayout({
   children,
@@ -58,6 +59,7 @@ export default function RootLayout({
               <DimensionConfigProvider>
                 <ToastProvider>
                   {children}
+                  <DNACardSidePanelPortal />
                 </ToastProvider>
               </DimensionConfigProvider>
             </LanguageProvider>

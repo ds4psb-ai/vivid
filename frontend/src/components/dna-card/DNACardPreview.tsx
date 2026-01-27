@@ -10,6 +10,11 @@ import type {
   CharacterDNAMetadata,
 } from "@/types/dna-card";
 import { DNA_CARD_CONFIG } from "./constants";
+import {
+  MasterMetadata,
+  MasterpieceMetadata,
+  CharacterMetadata,
+} from "./shared";
 
 interface DNACardPreviewProps {
   card: DNACard;
@@ -95,18 +100,25 @@ export function DNACardPreview({ card, anchorRect }: DNACardPreviewProps) {
           </div>
         </div>
 
-        {/* 타입별 상세 정보 */}
+        {/* 타입별 상세 정보 (공통 컴포넌트 사용) */}
         {card.type === "master" && (
-          <MasterPreviewContent metadata={card.metadata as MasterDNAMetadata} />
+          <MasterMetadata
+            metadata={card.metadata as MasterDNAMetadata}
+            hue={cardHue}
+            variant="compact"
+          />
         )}
         {card.type === "masterpiece" && (
-          <MasterpiecePreviewContent
+          <MasterpieceMetadata
             metadata={card.metadata as MasterpieceDNAMetadata}
+            variant="compact"
           />
         )}
         {card.type === "character" && (
-          <CharacterPreviewContent
+          <CharacterMetadata
             metadata={card.metadata as CharacterDNAMetadata}
+            hue={cardHue}
+            variant="compact"
           />
         )}
 
@@ -127,151 +139,3 @@ export function DNACardPreview({ card, anchorRect }: DNACardPreviewProps) {
   );
 }
 
-// 거장 프리뷰
-function MasterPreviewContent({ metadata }: { metadata: MasterDNAMetadata }) {
-  return (
-    <div className="space-y-3">
-      {/* 시그니처 기법 */}
-      <div>
-        <h5 className="text-[10px] font-medium text-white/50 uppercase mb-1">
-          Signature Techniques
-        </h5>
-        <div className="flex flex-wrap gap-1">
-          {metadata.signatureTechniques.slice(0, 3).map((tech, i) => (
-            <span
-              key={i}
-              className="px-2 py-0.5 text-[10px] rounded-full bg-white/5 text-white/70"
-            >
-              {tech}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* 컬러 팔레트 */}
-      {metadata.colorPalettes?.[0] && (
-        <div>
-          <h5 className="text-[10px] font-medium text-white/50 uppercase mb-1">
-            Color Palette
-          </h5>
-          <div className="flex gap-1">
-            {metadata.colorPalettes[0].slice(0, 5).map((color, i) => (
-              <div
-                key={i}
-                className="w-6 h-6 rounded-md border border-white/10"
-                style={{ backgroundColor: color }}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 필모그래피 */}
-      {metadata.films && (
-        <div>
-          <h5 className="text-[10px] font-medium text-white/50 uppercase mb-1">
-            Filmography
-          </h5>
-          <p className="text-xs text-white/60">
-            {metadata.films.slice(0, 3).join(", ")}
-            {metadata.films.length > 3 && ` 외 ${metadata.films.length - 3}편`}
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// 작품 프리뷰
-function MasterpiecePreviewContent({
-  metadata,
-}: {
-  metadata: MasterpieceDNAMetadata;
-}) {
-  return (
-    <div className="space-y-3">
-      {/* 장르 */}
-      <div>
-        <h5 className="text-[10px] font-medium text-white/50 uppercase mb-1">
-          Genres
-        </h5>
-        <div className="flex flex-wrap gap-1">
-          {metadata.genres.map((genre, i) => (
-            <span
-              key={i}
-              className="px-2 py-0.5 text-[10px] rounded-full bg-white/5 text-white/70"
-            >
-              {genre}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Logic Vector 요약 */}
-      {metadata.logicVectorSummary && (
-        <div className="text-xs text-white/60 space-y-1">
-          <p>
-            <span className="text-white/40">Composition:</span>{" "}
-            {metadata.logicVectorSummary.compositionStyle}
-          </p>
-          <p>
-            <span className="text-white/40">Lighting:</span>{" "}
-            {metadata.logicVectorSummary.lightingPattern}
-          </p>
-          <p>
-            <span className="text-white/40">Pacing:</span>{" "}
-            {metadata.logicVectorSummary.pacingSignature}
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// 캐릭터 프리뷰
-function CharacterPreviewContent({
-  metadata,
-}: {
-  metadata: CharacterDNAMetadata;
-}) {
-  return (
-    <div className="space-y-3">
-      {/* 태그 */}
-      <div className="flex flex-wrap gap-1">
-        {metadata.tags.slice(0, 4).map((tag, i) => (
-          <span
-            key={i}
-            className="px-2 py-0.5 text-[10px] rounded-full bg-white/5 text-white/70"
-          >
-            {tag}
-          </span>
-        ))}
-      </div>
-
-      {/* 메모리 키프레임 */}
-      <div className="text-xs text-white/60 space-y-1">
-        <p>
-          <span className="text-white/40">Memory Keyframes:</span>{" "}
-          {metadata.memoryKeyframeCount}개
-        </p>
-        {metadata.consistencyScore !== undefined && (
-          <p>
-            <span className="text-white/40">Consistency:</span>{" "}
-            {Math.round(metadata.consistencyScore * 100)}%
-          </p>
-        )}
-      </div>
-
-      {/* 캐릭터 프리뷰 이미지 */}
-      {metadata.primaryImageUrl && (
-        <div className="rounded-lg overflow-hidden h-20">
-          <img
-            src={metadata.primaryImageUrl}
-            alt="Character preview"
-            className="w-full h-full object-cover"
-          />
-        </div>
-      )}
-    </div>
-  );
-}

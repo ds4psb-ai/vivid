@@ -5,15 +5,19 @@ interface DNACardContextStore {
   // 상태
   activeCard: DNACard | null;
   preloadedData: Record<string, unknown> | null;
+  isSidePanelOpen: boolean;
 
   // 액션
   setActiveCard: (card: DNACard, data?: Record<string, unknown>) => void;
   clearContext: () => void;
+  openSidePanel: (card: DNACard) => void;
+  closeSidePanel: () => void;
 }
 
 export const useDNACardContext = create<DNACardContextStore>((set) => ({
   activeCard: null,
   preloadedData: null,
+  isSidePanelOpen: false,
 
   setActiveCard: (card, data) => {
     set({
@@ -26,24 +30,23 @@ export const useDNACardContext = create<DNACardContextStore>((set) => ({
     set({
       activeCard: null,
       preloadedData: null,
+      isSidePanelOpen: false,
+    });
+  },
+
+  openSidePanel: (card) => {
+    set({
+      activeCard: card,
+      isSidePanelOpen: true,
+    });
+  },
+
+  closeSidePanel: () => {
+    set({
+      isSidePanelOpen: false,
     });
   },
 }));
 
-// 헬퍼: 메가앱에서 컨텍스트 소비
-export function useDNACardContextConsumer() {
-  const { activeCard, preloadedData, clearContext } = useDNACardContext();
-
-  const consumeContext = () => {
-    const context = { activeCard, preloadedData };
-    clearContext(); // 사용 후 정리
-    return context;
-  };
-
-  return {
-    activeCard,
-    preloadedData,
-    consumeContext,
-    hasContext: !!activeCard,
-  };
-}
+// NOTE: useDNACardContextConsumer 훅은 hooks/useDNACardContextConsumer.ts에 있습니다.
+// 그 훅은 URL 파라미터 fallback과 타입별 콜백을 지원합니다.
