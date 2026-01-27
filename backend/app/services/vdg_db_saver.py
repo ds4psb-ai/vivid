@@ -880,6 +880,32 @@ class VDGDatabaseSaver:
                         )
                     # === End Content Category ===
 
+                    # === Phase 11: 3-Axis Hook Attributes 저장 (2026-01-27) ===
+                    hook_genome = vdg_data.get("hook_genome", {})
+                    if isinstance(hook_genome, dict):
+                        hook_attrs = hook_genome.get("hook_attributes", {})
+                        if isinstance(hook_attrs, dict) and hook_attrs:
+                            # Save full hook_attributes JSONB
+                            outlier_item.hook_attributes = hook_attrs
+
+                            # Sync denormalized filter columns
+                            hook_format = hook_attrs.get("format")
+                            hook_trigger = hook_attrs.get("trigger")
+                            hook_device = hook_attrs.get("device")
+
+                            if hook_format and hook_format != "unknown":
+                                outlier_item.hook_format = hook_format
+                            if hook_trigger and hook_trigger != "unknown":
+                                outlier_item.hook_trigger = hook_trigger
+                            if hook_device and hook_device != "unknown":
+                                outlier_item.hook_device = hook_device
+
+                            logger.info(
+                                f"[VDG Phase 11] Hook attributes saved: "
+                                f"format={hook_format}, trigger={hook_trigger}, device={hook_device}"
+                            )
+                    # === End Phase 11 ===
+
                     logger.info(
                         f"[VDG P2] Feature vector saved: quality={quality_score:.3f}, "
                         f"features={list(feature_vector.keys())}"

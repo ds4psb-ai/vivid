@@ -30,6 +30,7 @@ from app.schemas.vdg_unified_pass import (
     AnalysisPointSeedLLM,
     CapsuleBriefLLM,
     EntityHintLLM,
+    HookAttributesLLM,
     HookGenomeLLM,
     MeasurementSpecLLM,
     MicrobeatLLM,
@@ -115,6 +116,15 @@ Your task is to analyze a video and produce a structured analysis plan for compu
    - strength: 0.0-1.0
    - microbeats: Time-coded beats with roles
    - audio_sync_score: How well visual hook syncs with audio beats
+   - **hook_attributes** (REQUIRED - 3-Axis Classification):
+     - format: pov/skit/listicle/tutorial/challenge/duet/vlog/meme_remix/reaction/storytime/unknown
+     - trigger: curiosity_gap/shock/relatability/satisfaction/educational/humor/nostalgia/fear/aspiration/unknown
+     - device: text_on_screen/visual_hook/loud_noise/question/countdown/insert_clip/direct_address/cliffhanger/misdirection/unknown
+     - secondary_triggers: Array of additional triggers (optional, max 2)
+     - format_confidence: 0.0-1.0 (how confident in format classification)
+     - trigger_confidence: 0.0-1.0 (how confident in trigger classification)
+     - device_confidence: 0.0-1.0 (how confident in device classification)
+     - classification_reasoning: Brief 1-sentence explanation for choices
 
 2. **scenes**: Time-coded scene breakdown
    - Each scene: scene_id, t_start_ms, t_end_ms, role, description, key_elements
@@ -436,6 +446,21 @@ class UnifiedPass:
                         visual_element=mb.get("visual_element"),
                         audio_element=mb.get("audio_element"),
                     ))
+                # Parse hook_attributes (3-axis classification)
+                hook_attributes = None
+                if hg.get("hook_attributes"):
+                    ha = hg["hook_attributes"]
+                    hook_attributes = HookAttributesLLM(
+                        format=ha.get("format", "unknown"),
+                        trigger=ha.get("trigger", "unknown"),
+                        device=ha.get("device", "unknown"),
+                        secondary_triggers=ha.get("secondary_triggers", []),
+                        format_confidence=float(ha.get("format_confidence", 0.7)),
+                        trigger_confidence=float(ha.get("trigger_confidence", 0.7)),
+                        device_confidence=float(ha.get("device_confidence", 0.7)),
+                        classification_reasoning=ha.get("classification_reasoning"),
+                    )
+
                 hook_genome = HookGenomeLLM(
                     pattern=hg.get("pattern", "unknown"),
                     strength=float(hg.get("strength", 0.5)),
@@ -443,6 +468,7 @@ class UnifiedPass:
                     trigger_element=hg.get("trigger_element"),
                     emotional_target=hg.get("emotional_target"),
                     audio_sync_score=hg.get("audio_sync_score"),
+                    hook_attributes=hook_attributes,
                 )
 
             # Parse scenes

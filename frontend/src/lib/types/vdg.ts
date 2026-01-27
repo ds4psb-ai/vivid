@@ -79,6 +79,70 @@ export interface MicrobeatsLegacy {
 }
 
 // ─────────────────────────────────────────────────────────────
+// 3-Axis Hook Classification (VDG v5.0)
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * HookFormat - Structural form of the video
+ */
+export type HookFormat =
+  | "pov"
+  | "skit"
+  | "listicle"
+  | "tutorial"
+  | "challenge"
+  | "duet"
+  | "vlog"
+  | "meme_remix"
+  | "reaction"
+  | "storytime"
+  | "unknown";
+
+/**
+ * HookTrigger - Psychological driver for continued watching
+ */
+export type HookTrigger =
+  | "curiosity_gap"
+  | "shock"
+  | "relatability"
+  | "satisfaction"
+  | "educational"
+  | "humor"
+  | "nostalgia"
+  | "fear"
+  | "aspiration"
+  | "unknown";
+
+/**
+ * HookDevice - Technique used in first 3 seconds
+ */
+export type HookDevice =
+  | "text_on_screen"
+  | "visual_hook"
+  | "loud_noise"
+  | "question"
+  | "countdown"
+  | "insert_clip"
+  | "direct_address"
+  | "cliffhanger"
+  | "misdirection"
+  | "unknown";
+
+/**
+ * HookAttributes - 3-axis classification attributes
+ */
+export interface HookAttributes {
+  format: HookFormat;
+  trigger: HookTrigger;
+  device: HookDevice;
+  secondary_triggers?: HookTrigger[];
+  format_confidence?: number;
+  trigger_confidence?: number;
+  device_confidence?: number;
+  classification_reasoning?: string;
+}
+
+// ─────────────────────────────────────────────────────────────
 // Hook Genome Types
 // ─────────────────────────────────────────────────────────────
 
@@ -102,6 +166,8 @@ export interface HookGenome {
   microbeats?: Microbeat[] | MicrobeatsLegacy;
   /** Virality analysis metadata */
   virality_analysis?: Record<string, string>;
+  /** 3-axis classification (VDG v5.0) */
+  hook_attributes?: HookAttributes;
 }
 
 // ─────────────────────────────────────────────────────────────

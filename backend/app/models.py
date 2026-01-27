@@ -10,6 +10,20 @@ from pgvector.sqlalchemy import Vector
 
 from app.database import Base
 
+# VDG Outlier Models (re-exported for compatibility)
+from app.models_outlier import (
+    OutlierItem,
+    RemixNode,
+    VDGEdge,
+    ViralKick,
+    KeyframeEvidence,
+    CommentEvidence,
+    ViralKickStatus,
+    VDGEdgeType,
+    VDGEdgeStatus,
+    AnalysisStatus,
+)
+
 
 class Canvas(Base):
     __tablename__ = "canvases"

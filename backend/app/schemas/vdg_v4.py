@@ -19,7 +19,7 @@ from datetime import datetime
 # =============================================================================
 
 class HookPattern(str, Enum):
-    """Hook pattern types for viral content."""
+    """Hook pattern types for viral content (legacy single-axis)."""
     QUESTION = "question"
     SHOCK = "shock"
     PROMISE = "promise"
@@ -27,6 +27,53 @@ class HookPattern(str, Enum):
     CONFLICT = "conflict"
     TRANSFORMATION = "transformation"
     EMOTION = "emotion"
+    UNKNOWN = "unknown"
+
+
+# =============================================================================
+# 3-Axis Hook Classification (VDG v5.0)
+# =============================================================================
+
+class HookFormat(str, Enum):
+    """Hook format - structural form of the video."""
+    POV = "pov"
+    SKIT = "skit"
+    LISTICLE = "listicle"
+    TUTORIAL = "tutorial"
+    CHALLENGE = "challenge"
+    DUET = "duet"
+    VLOG = "vlog"
+    MEME_REMIX = "meme_remix"
+    REACTION = "reaction"
+    STORYTIME = "storytime"
+    UNKNOWN = "unknown"
+
+
+class HookTrigger(str, Enum):
+    """Hook trigger - psychological driver for continued watching."""
+    CURIOSITY_GAP = "curiosity_gap"
+    SHOCK = "shock"
+    RELATABILITY = "relatability"
+    SATISFACTION = "satisfaction"
+    EDUCATIONAL = "educational"
+    HUMOR = "humor"
+    NOSTALGIA = "nostalgia"
+    FEAR = "fear"
+    ASPIRATION = "aspiration"
+    UNKNOWN = "unknown"
+
+
+class HookDevice(str, Enum):
+    """Hook device - technique used in first 3 seconds."""
+    TEXT_ON_SCREEN = "text_on_screen"
+    VISUAL_HOOK = "visual_hook"
+    LOUD_NOISE = "loud_noise"
+    QUESTION = "question"
+    COUNTDOWN = "countdown"
+    INSERT_CLIP = "insert_clip"
+    DIRECT_ADDRESS = "direct_address"
+    CLIFFHANGER = "cliffhanger"
+    MISDIRECTION = "misdirection"
     UNKNOWN = "unknown"
 
 
@@ -59,6 +106,22 @@ class QualityTier(str, Enum):
 
 
 # =============================================================================
+# Hook Attributes (3-Axis Classification)
+# =============================================================================
+
+class HookAttributes(BaseModel):
+    """3-axis hook classification attributes."""
+    format: HookFormat = Field(default=HookFormat.UNKNOWN, description="Structural format of the video")
+    trigger: HookTrigger = Field(default=HookTrigger.UNKNOWN, description="Primary psychological trigger")
+    device: HookDevice = Field(default=HookDevice.UNKNOWN, description="Technique used in first 3 seconds")
+    secondary_triggers: List[HookTrigger] = Field(default_factory=list, description="Additional triggers")
+    format_confidence: float = Field(default=0.7, ge=0.0, le=1.0, description="Format classification confidence")
+    trigger_confidence: float = Field(default=0.7, ge=0.0, le=1.0, description="Trigger classification confidence")
+    device_confidence: float = Field(default=0.7, ge=0.0, le=1.0, description="Device classification confidence")
+    classification_reasoning: Optional[str] = Field(default=None, description="Brief explanation for classification")
+
+
+# =============================================================================
 # Microbeat & Hook Genome (Pass 1)
 # =============================================================================
 
@@ -80,6 +143,7 @@ class HookGenome(BaseModel):
     microbeats: List[Microbeat] = Field(default_factory=list, description="Hook microstructure")
     trigger_element: Optional[str] = Field(default=None, description="What specifically triggers attention")
     emotional_target: Optional[str] = Field(default=None, description="Target emotion: curiosity, fear, excitement, etc.")
+    hook_attributes: Optional[HookAttributes] = Field(default=None, description="3-axis classification (format, trigger, device)")
 
 
 # =============================================================================

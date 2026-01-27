@@ -122,6 +122,23 @@ class EntityHintLLM(BaseModel):
 
 
 # =============================================================================
+# Hook Attributes (3-Axis Classification)
+# =============================================================================
+
+
+class HookAttributesLLM(BaseModel):
+    """3-axis hook classification from LLM analysis."""
+    format: str = Field(default="unknown", description="pov/skit/listicle/tutorial/challenge/duet/vlog/meme_remix/reaction/storytime/unknown")
+    trigger: str = Field(default="unknown", description="curiosity_gap/shock/relatability/satisfaction/educational/humor/nostalgia/fear/aspiration/unknown")
+    device: str = Field(default="unknown", description="text_on_screen/visual_hook/loud_noise/question/countdown/insert_clip/direct_address/cliffhanger/misdirection/unknown")
+    secondary_triggers: List[str] = Field(default_factory=list, description="Additional triggers")
+    format_confidence: float = Field(default=0.7, ge=0.0, le=1.0)
+    trigger_confidence: float = Field(default=0.7, ge=0.0, le=1.0)
+    device_confidence: float = Field(default=0.7, ge=0.0, le=1.0)
+    classification_reasoning: Optional[str] = Field(default=None, description="Brief explanation")
+
+
+# =============================================================================
 # Hook Genome (Pass 1)
 # =============================================================================
 
@@ -148,6 +165,10 @@ class HookGenomeLLM(BaseModel):
         default=None,
         ge=0.0, le=1.0,
         description="How well hook syncs with audio beats"
+    )
+    hook_attributes: Optional[HookAttributesLLM] = Field(
+        default=None,
+        description="3-axis classification (format, trigger, device)"
     )
 
 
@@ -348,6 +369,7 @@ __all__ = [
     "AnalysisPlanLLM",
     "EntityHintLLM",
     "MicrobeatLLM",
+    "HookAttributesLLM",
     "HookGenomeLLM",
     "SceneLLM",
     "CapsuleBriefLLM",
