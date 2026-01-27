@@ -71,7 +71,8 @@ export default function ProductionPage() {
       icon={Clapperboard}
       tabs={TABS}
       defaultTab="veo"
-      tabParamName="provider"
+      tabParamName="tab"
+      showAurora={true}
       headerRight={<ProviderStats />}
     >
       {(activeTab) => (

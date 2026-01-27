@@ -53,6 +53,8 @@ export default function StoryEnginePage() {
       icon={BookOpen}
       tabs={TABS}
       defaultTab="story"
+      showAurora={true}
+      tabParamName="tab"
     >
       {(activeTab) => (
         <>

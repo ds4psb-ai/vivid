@@ -71,6 +71,8 @@ export default function DNALabPage() {
       icon={Dna}
       tabs={TABS}
       defaultTab="vpe"
+      showAurora={true}
+      tabParamName="tab"
     >
       {(activeTab) => (
         <>

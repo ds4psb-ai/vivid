@@ -38,7 +38,7 @@ USER_EMBEDDING_DIM = 768  # text-embedding-004 dimension
 # =============================================================================
 
 class UserPreferenceProfile(Base):
-    """User preference profile with embedding vector.
+    """User preference profile with embedding vector and Big Five (OCEAN) traits.
 
     Stores Netflix-style user embeddings and PersonaMem-v2 compact memory
     for personalized RAG retrieval.
@@ -51,6 +51,13 @@ class UserPreferenceProfile(Base):
         persona_memory: 2k-token compact persona summary (PersonaMem-v2 style)
         decay_factor: Preference decay rate (0-1), default 0.95
         total_signals: Total number of recorded signals
+
+    Big Five (OCEAN) Personality Traits:
+        openness: Creativity, curiosity, openness to experience (0.0-1.0)
+        conscientiousness: Organization, dependability, self-discipline (0.0-1.0)
+        extraversion: Sociability, assertiveness, positive emotions (0.0-1.0)
+        agreeableness: Cooperation, trust, altruism (0.0-1.0)
+        neuroticism: Emotional instability, anxiety, moodiness (0.0-1.0)
     """
     __tablename__ = "user_preference_profiles"
     __table_args__ = (
@@ -70,10 +77,19 @@ class UserPreferenceProfile(Base):
     # PersonaMem-v2: Compact persona memory (max 2k tokens)
     persona_memory: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
+    # Big Five (OCEAN) personality traits (0.0 - 1.0)
+    # These influence content generation and recommendations
+    openness: Mapped[Optional[float]] = mapped_column(Float, nullable=True, default=0.5)
+    conscientiousness: Mapped[Optional[float]] = mapped_column(Float, nullable=True, default=0.5)
+    extraversion: Mapped[Optional[float]] = mapped_column(Float, nullable=True, default=0.5)
+    agreeableness: Mapped[Optional[float]] = mapped_column(Float, nullable=True, default=0.5)
+    neuroticism: Mapped[Optional[float]] = mapped_column(Float, nullable=True, default=0.5)
+
     # Preference decay settings
     decay_factor: Mapped[float] = mapped_column(Float, default=0.95)
     total_signals: Mapped[int] = mapped_column(Integer, default=0)
     last_embedding_update: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    last_ocean_update: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

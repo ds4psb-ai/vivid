@@ -75,12 +75,29 @@ class AestheticGuidelines:
 
 @dataclass
 class PersonaDNA:
-    """Mirror (Persona) analysis output."""
+    """Mirror (Persona) analysis output with Big Five (OCEAN) traits.
+
+    Big Five Personality Model:
+    - Openness: creativity, curiosity, openness to new experiences (0.0-1.0)
+    - Conscientiousness: organization, dependability, self-discipline (0.0-1.0)
+    - Extraversion: sociability, energy, positive emotions (0.0-1.0)
+    - Agreeableness: cooperation, trust, altruism (0.0-1.0)
+    - Neuroticism: emotional instability, anxiety, moodiness (0.0-1.0)
+
+    These traits influence content generation preferences and creative direction.
+    """
     persona_type: str = ""
     creative_tendencies: List[str] = field(default_factory=list)
     visual_preferences: List[str] = field(default_factory=list)
     narrative_style: str = ""
     emotional_range: List[str] = field(default_factory=list)
+
+    # Big Five (OCEAN) traits - values from 0.0 to 1.0
+    openness: float = 0.5  # Creativity, curiosity
+    conscientiousness: float = 0.5  # Organization, planning
+    extraversion: float = 0.5  # Sociability, energy
+    agreeableness: float = 0.5  # Cooperation, empathy
+    neuroticism: float = 0.5  # Emotional sensitivity
 
 
 @dataclass
@@ -313,12 +330,47 @@ class DNALabService:
             mirror_result = results["mirror"]
             if mirror_result.get("success"):
                 output = mirror_result.get("output", {})
+
+                # Extract Big Five (OCEAN) traits if available, otherwise infer from other traits
+                ocean = output.get("big_five", output.get("ocean", {}))
+                openness = ocean.get("openness") if ocean else None
+                conscientiousness = ocean.get("conscientiousness") if ocean else None
+                extraversion = ocean.get("extraversion") if ocean else None
+                agreeableness = ocean.get("agreeableness") if ocean else None
+                neuroticism = ocean.get("neuroticism") if ocean else None
+
+                # Infer OCEAN from creative tendencies if not directly provided
+                if openness is None:
+                    openness = self._infer_openness(
+                        output.get("creative_tendencies", []),
+                        output.get("visual_preferences", []),
+                    )
+                if conscientiousness is None:
+                    conscientiousness = self._infer_conscientiousness(
+                        output.get("narrative_style", ""),
+                    )
+                if extraversion is None:
+                    extraversion = self._infer_extraversion(
+                        output.get("emotional_range", []),
+                    )
+                if agreeableness is None:
+                    agreeableness = 0.5  # Default neutral
+                if neuroticism is None:
+                    neuroticism = self._infer_neuroticism(
+                        output.get("emotional_range", []),
+                    )
+
                 persona_dna = PersonaDNA(
                     persona_type=output.get("persona_type", ""),
                     creative_tendencies=output.get("creative_tendencies", []),
                     visual_preferences=output.get("visual_preferences", []),
                     narrative_style=output.get("narrative_style", ""),
                     emotional_range=output.get("emotional_range", []),
+                    openness=openness,
+                    conscientiousness=conscientiousness,
+                    extraversion=extraversion,
+                    agreeableness=agreeableness,
+                    neuroticism=neuroticism,
                 )
                 evidence_refs.extend(output.get("evidence_refs", []))
 
@@ -519,6 +571,116 @@ class DNALabService:
             except (ValueError, KeyError):
                 pass
         return total
+
+    # ==========================================================================
+    # Big Five (OCEAN) Inference Helpers
+    # ==========================================================================
+
+    def _infer_openness(
+        self,
+        creative_tendencies: List[str],
+        visual_preferences: List[str],
+    ) -> float:
+        """Infer Openness from creative tendencies and visual preferences.
+
+        High openness indicators: experimental, avant-garde, unconventional, abstract
+        Low openness indicators: traditional, classical, conventional, realistic
+        """
+        high_indicators = {
+            "experimental", "avant-garde", "unconventional", "abstract",
+            "surreal", "innovative", "artistic", "creative", "bold",
+            "unique", "original", "imaginative", "visionary",
+        }
+        low_indicators = {
+            "traditional", "classical", "conventional", "realistic",
+            "conservative", "familiar", "standard", "typical",
+        }
+
+        all_traits = [t.lower() for t in creative_tendencies + visual_preferences]
+
+        high_count = sum(1 for t in all_traits if any(h in t for h in high_indicators))
+        low_count = sum(1 for t in all_traits if any(l in t for l in low_indicators))
+
+        if high_count + low_count == 0:
+            return 0.5
+
+        # Score from 0.0 to 1.0
+        return min(1.0, max(0.0, 0.5 + (high_count - low_count) * 0.1))
+
+    def _infer_conscientiousness(self, narrative_style: str) -> float:
+        """Infer Conscientiousness from narrative style.
+
+        High conscientiousness: structured, detailed, methodical, organized
+        Low conscientiousness: spontaneous, freestyle, chaotic, abstract
+        """
+        style_lower = narrative_style.lower()
+
+        high_indicators = [
+            "structured", "detailed", "methodical", "organized",
+            "precise", "careful", "planned", "systematic",
+        ]
+        low_indicators = [
+            "spontaneous", "freestyle", "chaotic", "abstract",
+            "random", "improvised", "loose", "fluid",
+        ]
+
+        high_count = sum(1 for h in high_indicators if h in style_lower)
+        low_count = sum(1 for l in low_indicators if l in style_lower)
+
+        if high_count + low_count == 0:
+            return 0.5
+
+        return min(1.0, max(0.0, 0.5 + (high_count - low_count) * 0.15))
+
+    def _infer_extraversion(self, emotional_range: List[str]) -> float:
+        """Infer Extraversion from emotional range.
+
+        High extraversion: energetic, enthusiastic, social, expressive
+        Low extraversion: calm, reserved, introspective, subtle
+        """
+        high_indicators = {
+            "energetic", "enthusiastic", "social", "expressive",
+            "vibrant", "dynamic", "bold", "passionate", "intense",
+        }
+        low_indicators = {
+            "calm", "reserved", "introspective", "subtle",
+            "quiet", "contemplative", "meditative", "serene",
+        }
+
+        emotions_lower = [e.lower() for e in emotional_range]
+
+        high_count = sum(1 for e in emotions_lower if any(h in e for h in high_indicators))
+        low_count = sum(1 for e in emotions_lower if any(l in e for l in low_indicators))
+
+        if high_count + low_count == 0:
+            return 0.5
+
+        return min(1.0, max(0.0, 0.5 + (high_count - low_count) * 0.12))
+
+    def _infer_neuroticism(self, emotional_range: List[str]) -> float:
+        """Infer Neuroticism from emotional range.
+
+        High neuroticism: anxious, tense, moody, volatile, dramatic
+        Low neuroticism: stable, calm, resilient, balanced, steady
+        """
+        high_indicators = {
+            "anxious", "tense", "moody", "volatile", "dramatic",
+            "emotional", "intense", "turbulent", "sensitive", "melancholic",
+        }
+        low_indicators = {
+            "stable", "calm", "resilient", "balanced", "steady",
+            "peaceful", "composed", "grounded", "secure",
+        }
+
+        emotions_lower = [e.lower() for e in emotional_range]
+
+        high_count = sum(1 for e in emotions_lower if any(h in e for h in high_indicators))
+        low_count = sum(1 for e in emotions_lower if any(l in e for l in low_indicators))
+
+        if high_count + low_count == 0:
+            return 0.5
+
+        return min(1.0, max(0.0, 0.5 + (high_count - low_count) * 0.12))
 
 
 # =============================================================================

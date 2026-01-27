@@ -5,15 +5,21 @@
  *
  * Manages data flow between dimension panels in the 4-Stage Video Workflow.
  * Stores outputs from each dimension and provides navigation to next dimensions.
+ *
+ * Enhanced Features (4-D DNA Architecture):
+ * - Evidence refs accumulation across workflow
+ * - SessionStorage synchronization for cross-MegaApp persistence
+ * - MegaApp awareness for intelligent routing
  */
 
-import { createContext, useContext, useCallback, useState, ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { createContext, useContext, useCallback, useState, useEffect, ReactNode } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import {
     DIMENSION_DISPLAY_NAMES,
     DIMENSION_STAGES,
     DIMENSION_CONNECTIONS,
 } from "@/lib/dimension-theme";
+import { DIMENSION_TO_MEGA_APP, type MegaAppId } from "@/lib/dimension-mega-app-map";
 
 /** Chain data stored for each dimension */
 export interface ChainData {
@@ -25,6 +31,8 @@ export interface ChainData {
     timestamp: number;
     /** Summary text for display */
     summary?: string;
+    /** Evidence references from this dimension */
+    evidenceRefs?: string[];
 }
 
 /** Navigation history entry */
@@ -32,6 +40,9 @@ export interface NavigationEntry {
     dimensionKey: string;
     timestamp: number;
 }
+
+/** Session storage key prefix */
+const SESSION_STORAGE_PREFIX = "vivid_chain_";
 
 interface DimensionChainContextValue {
     /** Chain data indexed by dimension route key */
@@ -42,7 +53,7 @@ interface DimensionChainContextValue {
     currentDimension: string | null;
 
     /** Store output from a dimension */
-    setChainData: (dimensionKey: string, output: Record<string, unknown>, summary?: string) => void;
+    setChainData: (dimensionKey: string, output: Record<string, unknown>, summary?: string, evidenceRefs?: string[]) => void;
     /** Get input data available for a dimension (from its input_dimensions) */
     getInputData: (dimensionKey: string) => Record<string, ChainData>;
     /** Get next dimensions available from current dimension */
@@ -61,6 +72,26 @@ interface DimensionChainContextValue {
     getDimensionName: (dimensionKey: string) => string;
     /** Get summary of current chain */
     getChainSummary: () => Array<{ key: string; name: string; summary?: string; timestamp: number }>;
+
+    // NEW: Evidence refs accumulation (4-D DNA)
+    /** Accumulated evidence refs across all dimensions */
+    accumulatedEvidenceRefs: string[];
+    /** Append new evidence refs (deduped) */
+    appendEvidenceRefs: (refs: string[]) => void;
+
+    // NEW: SessionStorage synchronization
+    /** Sync current chain to sessionStorage for IP/project persistence */
+    syncToSession: (ipSlug: string) => void;
+    /** Load chain from sessionStorage */
+    loadFromSession: (ipSlug: string) => boolean;
+    /** Check if session data exists */
+    hasSessionData: (ipSlug: string) => boolean;
+
+    // NEW: MegaApp awareness
+    /** Current MegaApp context */
+    currentMegaApp: MegaAppId | null;
+    /** Get MegaApp for a dimension */
+    getMegaAppForDimension: (dimensionKey: string) => MegaAppId | null;
 }
 
 const DimensionChainContext = createContext<DimensionChainContextValue | null>(null);
@@ -71,25 +102,63 @@ interface DimensionChainProviderProps {
 
 export function DimensionChainProvider({ children }: DimensionChainProviderProps) {
     const router = useRouter();
+    const pathname = usePathname();
     const [chainData, setChainDataState] = useState<Record<string, ChainData>>({});
     const [history, setHistory] = useState<NavigationEntry[]>([]);
     const [currentDimension, setCurrentDimensionState] = useState<string | null>(null);
+    const [accumulatedEvidenceRefs, setAccumulatedEvidenceRefs] = useState<string[]>([]);
+
+    // Derive current MegaApp from pathname
+    const currentMegaApp: MegaAppId | null = (() => {
+        if (pathname?.startsWith("/dna-lab")) return "dna-lab";
+        if (pathname?.startsWith("/story-engine")) return "story-engine";
+        if (pathname?.startsWith("/production")) return "production";
+        // Also check dimension routes
+        const dimensionMatch = pathname?.match(/^\/dimension\/([^/]+)/);
+        if (dimensionMatch) {
+            const dimKey = dimensionMatch[1];
+            return DIMENSION_TO_MEGA_APP[dimKey as keyof typeof DIMENSION_TO_MEGA_APP] || null;
+        }
+        return null;
+    })();
+
+    const getMegaAppForDimension = useCallback((dimensionKey: string): MegaAppId | null => {
+        return DIMENSION_TO_MEGA_APP[dimensionKey as keyof typeof DIMENSION_TO_MEGA_APP] || null;
+    }, []);
 
     const setChainData = useCallback((
         dimensionKey: string,
         output: Record<string, unknown>,
-        summary?: string
+        summary?: string,
+        evidenceRefs?: string[]
     ) => {
         const newData: ChainData = {
             dimensionKey,
             output,
             timestamp: Date.now(),
             summary,
+            evidenceRefs,
         };
         setChainDataState(prev => ({
             ...prev,
             [dimensionKey]: newData,
         }));
+
+        // Auto-accumulate evidence refs if provided
+        if (evidenceRefs && evidenceRefs.length > 0) {
+            setAccumulatedEvidenceRefs(prev => {
+                const combined = new Set([...prev, ...evidenceRefs]);
+                return Array.from(combined);
+            });
+        }
+    }, []);
+
+    const appendEvidenceRefs = useCallback((refs: string[]) => {
+        if (refs.length === 0) return;
+        setAccumulatedEvidenceRefs(prev => {
+            const combined = new Set([...prev, ...refs]);
+            return Array.from(combined);
+        });
     }, []);
 
     const getInputData = useCallback((dimensionKey: string): Record<string, ChainData> => {
@@ -190,6 +259,67 @@ export function DimensionChainProvider({ children }: DimensionChainProviderProps
             }));
     }, [chainData]);
 
+    // SessionStorage synchronization
+    const syncToSession = useCallback((ipSlug: string) => {
+        if (typeof window === "undefined") return;
+
+        const sessionData = {
+            chainData,
+            accumulatedEvidenceRefs,
+            history,
+            currentDimension,
+            syncedAt: Date.now(),
+        };
+
+        try {
+            sessionStorage.setItem(
+                `${SESSION_STORAGE_PREFIX}${ipSlug}`,
+                JSON.stringify(sessionData)
+            );
+        } catch (e) {
+            // SessionStorage might be full or disabled
+            console.warn("[DimensionChain] Failed to sync to session:", e);
+        }
+    }, [chainData, accumulatedEvidenceRefs, history, currentDimension]);
+
+    const loadFromSession = useCallback((ipSlug: string): boolean => {
+        if (typeof window === "undefined") return false;
+
+        try {
+            const stored = sessionStorage.getItem(`${SESSION_STORAGE_PREFIX}${ipSlug}`);
+            if (!stored) return false;
+
+            const sessionData = JSON.parse(stored);
+
+            // Validate data structure
+            if (!sessionData.chainData || typeof sessionData.chainData !== "object") {
+                return false;
+            }
+
+            // Restore state
+            setChainDataState(sessionData.chainData);
+            setAccumulatedEvidenceRefs(sessionData.accumulatedEvidenceRefs || []);
+            setHistory(sessionData.history || []);
+            setCurrentDimensionState(sessionData.currentDimension || null);
+
+            return true;
+        } catch (e) {
+            console.warn("[DimensionChain] Failed to load from session:", e);
+            return false;
+        }
+    }, []);
+
+    const hasSessionData = useCallback((ipSlug: string): boolean => {
+        if (typeof window === "undefined") return false;
+
+        try {
+            const stored = sessionStorage.getItem(`${SESSION_STORAGE_PREFIX}${ipSlug}`);
+            return !!stored;
+        } catch {
+            return false;
+        }
+    }, []);
+
     return (
         <DimensionChainContext.Provider
             value={{
@@ -206,6 +336,16 @@ export function DimensionChainProvider({ children }: DimensionChainProviderProps
                 hasChainData,
                 getDimensionName,
                 getChainSummary,
+                // NEW: Evidence refs
+                accumulatedEvidenceRefs,
+                appendEvidenceRefs,
+                // NEW: SessionStorage
+                syncToSession,
+                loadFromSession,
+                hasSessionData,
+                // NEW: MegaApp awareness
+                currentMegaApp,
+                getMegaAppForDimension,
             }}
         >
             {children}

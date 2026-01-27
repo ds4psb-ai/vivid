@@ -1,13 +1,15 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { MegaAppHeader } from "./MegaAppHeader";
 import { MegaAppTabs } from "./MegaAppTabs";
 import { WorkflowProgress } from "./WorkflowProgress";
 import { MegaAppAurora } from "./MegaAppAurora";
 import { useMegaAppTab } from "./hooks/useMegaAppTab";
+import { useDimensionChainOptional } from "@/contexts/DimensionChainContext";
 import type { MegaAppShellProps } from "./types";
 
 /**
@@ -110,6 +112,29 @@ function MegaAppShellContent({
     defaultTab,
     paramName: tabParamName,
   });
+
+  const chain = useDimensionChainOptional();
+  const searchParams = useSearchParams();
+
+  // Auto-load chain data from session if ipSlug is provided
+  useEffect(() => {
+    const ipSlug = searchParams?.get("ip");
+    if (ipSlug && chain?.hasSessionData(ipSlug) && Object.keys(chain.chainData).length === 0) {
+      chain.loadFromSession(ipSlug);
+    }
+  }, [searchParams, chain]);
+
+  // Auto-sync to session when chain data changes (with debounce)
+  useEffect(() => {
+    const ipSlug = searchParams?.get("ip");
+    if (!ipSlug || !chain || Object.keys(chain.chainData).length === 0) return;
+
+    const timeoutId = setTimeout(() => {
+      chain.syncToSession(ipSlug);
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchParams, chain, chain?.chainData]);
 
   return (
     <AppShell showTopBar={false}>
