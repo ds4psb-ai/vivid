@@ -75,6 +75,26 @@ def _error_redirect(reason: str) -> RedirectResponse:
     return RedirectResponse(f"{target}{separator}reason={quote(reason)}")
 
 
+@router.get("/status")
+async def auth_status() -> JSONResponse:
+    """Check if OAuth is configured and available."""
+    try:
+        google_configured = bool(
+            settings.GOOGLE_CLIENT_ID
+            and settings.GOOGLE_CLIENT_SECRET.get_secret_value()
+            and settings.GOOGLE_REDIRECT_URI
+        )
+        session_configured = bool(settings.SESSION_SECRET.get_secret_value())
+    except Exception:
+        google_configured = False
+        session_configured = False
+
+    return JSONResponse({
+        "google_oauth_available": google_configured and session_configured,
+        "providers": ["google"] if google_configured and session_configured else [],
+    })
+
+
 @router.get("/google/start")
 async def google_start() -> RedirectResponse:
     _require_oauth_config()

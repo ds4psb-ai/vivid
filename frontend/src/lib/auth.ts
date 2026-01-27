@@ -29,6 +29,7 @@ export const AUTH_ROUTES = {
         GOOGLE_START: "/api/v1/auth/google/start",
         SESSION: "/api/v1/auth/me",
         LOGOUT: "/api/v1/auth/logout",
+        STATUS: "/api/v1/auth/status",
     },
 } as const;
 
@@ -65,10 +66,31 @@ export type ProtectedRoute = (typeof AUTH_ROUTES.PROTECTED)[number];
 
 /**
  * Check if a given path requires authentication
- * 
+ *
  * @param pathname - The path to check
  * @returns True if the path requires authentication
  */
 export function isProtectedRoute(pathname: string): boolean {
     return AUTH_ROUTES.PROTECTED.some((route) => pathname.startsWith(route));
+}
+
+/**
+ * Check if OAuth authentication is available
+ *
+ * @returns Promise resolving to true if OAuth is configured and available
+ */
+export async function isOAuthAvailable(): Promise<boolean> {
+    try {
+        const base = process.env.NEXT_PUBLIC_API_URL || "";
+        const endpoint = AUTH_ROUTES.ENDPOINTS.STATUS;
+        const url = base ? `${base}${endpoint}` : endpoint;
+
+        const response = await fetch(url);
+        if (!response.ok) return false;
+
+        const data = await response.json();
+        return data.google_oauth_available ?? false;
+    } catch {
+        return false;
+    }
 }
