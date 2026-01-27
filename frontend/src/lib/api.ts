@@ -2490,6 +2490,69 @@ class ApiClient {
   }
 
   // =========================================================================
+  // Chain Session APIs (P7+: Workflow Chain Persistence)
+  // =========================================================================
+
+  /**
+   * Create a new chain session
+   */
+  async createChainSession(data: ChainSessionCreate = {}): Promise<ChainSessionResponse> {
+    return this.request<ChainSessionResponse>("/api/v1/chain/session", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  /**
+   * Get a chain session by ID
+   */
+  async getChainSession(sessionId: string): Promise<ChainSessionResponse> {
+    return this.request<ChainSessionResponse>(`/api/v1/chain/session/${sessionId}`);
+  }
+
+  /**
+   * Update a chain session with optimistic locking
+   * Requires version field - will return 409 if version mismatch
+   */
+  async updateChainSession(
+    sessionId: string,
+    data: ChainSessionUpdate
+  ): Promise<ChainSessionResponse> {
+    return this.request<ChainSessionResponse>(`/api/v1/chain/session/${sessionId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  /**
+   * Delete a chain session
+   */
+  async deleteChainSession(sessionId: string): Promise<void> {
+    await this.request<void>(`/api/v1/chain/session/${sessionId}`, {
+      method: "DELETE",
+    });
+  }
+
+  /**
+   * List user's chain sessions
+   */
+  async listChainSessions(
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<ChainSessionListItem[]> {
+    return this.request<ChainSessionListItem[]>(
+      `/api/v1/chain/user?limit=${limit}&offset=${offset}`
+    );
+  }
+
+  /**
+   * Get previous run output for a dimension
+   */
+  async getPreviousRun(dimensionKey: string): Promise<PreviousRunResponse> {
+    return this.request<PreviousRunResponse>(`/api/v1/chain/${dimensionKey}/previous-run`);
+  }
+
+  // =========================================================================
   // DEPRECATED: Node Execution APIs - Only used by deprecated canvas
   // These will be removed in a future release
   // =========================================================================
@@ -3053,6 +3116,80 @@ export interface UQSLArmStats {
 export interface UQSLArmStatsResponse {
   arms: Record<string, UQSLArmStats>;
   total_arms: number;
+}
+
+// --- Chain Session Types (P7+: Workflow Chain Persistence) ---
+
+/** Chain data output from a single dimension execution */
+export interface ChainDataOutput {
+  dimension_key: string;
+  output: Record<string, unknown>;
+  title: string;
+  evidence_refs: string[];
+  created_at: string;
+}
+
+/** Request to create a new chain session */
+export interface ChainSessionCreate {
+  mega_app?: string;
+  title?: string;
+  ip_slug?: string;
+}
+
+/** Request to update a chain session (requires version for optimistic locking) */
+export interface ChainSessionUpdate {
+  chain_data?: Record<string, ChainDataOutput>;
+  accumulated_evidence_refs?: string[];
+  current_dimension?: string;
+  navigation_history?: string[];
+  title?: string;
+  version: number; // Required for optimistic locking
+}
+
+/** Full chain session response */
+export interface ChainSessionResponse {
+  id: string;
+  user_id: string;
+  chain_data: Record<string, ChainDataOutput>;
+  accumulated_evidence_refs: string[];
+  current_dimension: string | null;
+  navigation_history: string[];
+  mega_app: string | null;
+  title: string | null;
+  ip_slug: string | null;
+  version: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Abbreviated session for list views */
+export interface ChainSessionListItem {
+  id: string;
+  title: string | null;
+  mega_app: string | null;
+  ip_slug: string | null;
+  version: number;
+  current_dimension: string | null;
+  dimension_count: number;
+  updated_at: string;
+}
+
+/** Version conflict error response (409) */
+export interface ChainConflictError {
+  error: "VERSION_CONFLICT";
+  server_version: number;
+  your_version: number;
+  message: string;
+}
+
+/** Previous run response */
+export interface PreviousRunResponse {
+  run_id: string | null;
+  dimension_key: string;
+  output: Record<string, unknown>;
+  evidence_refs: string[];
+  created_at: string | null;
+  found: boolean;
 }
 
 // --- Homepage Types ---

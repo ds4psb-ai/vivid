@@ -942,7 +942,7 @@ class RouterDecisionLog(Base):
         Index("ix_router_decision_logs_created_at", "created_at"),
         Index("ix_router_decision_logs_dimension", "dimension"),
     )
-    
+
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
@@ -958,3 +958,49 @@ class RouterDecisionLog(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow
     )
+
+
+# =============================================================================
+# Chain Sessions (P7+: Workflow Chain Persistence)
+# =============================================================================
+
+class ChainSession(Base):
+    """Persistent chain session for cross-dimension workflow data.
+
+    Stores chain data (dimension outputs) for workflow persistence across
+    browser sessions, tabs, and devices. Supports optimistic locking via
+    version field to prevent race conditions.
+
+    Features:
+    - JSONB storage for flexible chain_data schema
+    - Optimistic locking via version field
+    - IP/project association via ip_slug
+    - MegaApp context tracking
+    """
+    __tablename__ = "chain_sessions"
+    __table_args__ = (
+        Index("ix_chain_sessions_user_id", "user_id"),
+        Index("ix_chain_sessions_ip_slug", "ip_slug"),
+        Index("ix_chain_sessions_updated_at", "updated_at"),
+        Index("ix_chain_sessions_user_updated", "user_id", "updated_at"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[str] = mapped_column(String(255), index=True)
+    ip_slug: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+
+    # Chain state (JSONB - validated via Pydantic schemas)
+    chain_data: Mapped[dict] = mapped_column(JSONB, default=dict)
+    accumulated_evidence_refs: Mapped[list] = mapped_column(JSONB, default=list)
+    current_dimension: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    navigation_history: Mapped[list] = mapped_column(JSONB, default=list)
+
+    # Metadata
+    mega_app: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    title: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+
+    # Optimistic Locking (P7+ requirement)
+    version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

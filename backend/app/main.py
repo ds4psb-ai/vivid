@@ -154,6 +154,9 @@ from app.routers.dna_lab.router import router as dna_lab_router
 # Homepage (Homepage data aggregation)
 from app.routers.homepage import router as homepage_router
 
+# Chain Sessions (P7+: Workflow Chain Persistence)
+from app.routers.chain import router as chain_router
+
 from app.middleware.rate_limit import setup_rate_limiting
 from app.middleware.mtls import MTLSMiddleware
 from app.middleware.security import setup_security_middleware
@@ -572,6 +575,9 @@ app.include_router(dna_lab_router, tags=["dna-lab"])
 
 # Homepage (Homepage data aggregation)
 app.include_router(homepage_router, prefix="/api/v1", tags=["homepage"])
+
+# Chain Sessions (P7+: Workflow Chain Persistence)
+app.include_router(chain_router, prefix="/api/v1", tags=["chain"])
 
 # GraphQL Gateway (2026 Best Practices - P3.3)
 if settings.ENVIRONMENT.lower() in {"production", "prod", "staging"}:

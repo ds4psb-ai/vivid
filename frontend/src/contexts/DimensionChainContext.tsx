@@ -54,6 +54,8 @@ interface DimensionChainContextValue {
 
     /** Store output from a dimension */
     setChainData: (dimensionKey: string, output: Record<string, unknown>, summary?: string, evidenceRefs?: string[]) => void;
+    /** Bulk set chain data (for loading from server/storage) */
+    setChainDataBulk: (data: Record<string, ChainData>) => void;
     /** Get input data available for a dimension (from its input_dimensions) */
     getInputData: (dimensionKey: string) => Record<string, ChainData>;
     /** Get next dimensions available from current dimension */
@@ -73,13 +75,15 @@ interface DimensionChainContextValue {
     /** Get summary of current chain */
     getChainSummary: () => Array<{ key: string; name: string; summary?: string; timestamp: number }>;
 
-    // NEW: Evidence refs accumulation (4-D DNA)
+    // Evidence refs accumulation (4-D DNA)
     /** Accumulated evidence refs across all dimensions */
     accumulatedEvidenceRefs: string[];
     /** Append new evidence refs (deduped) */
     appendEvidenceRefs: (refs: string[]) => void;
+    /** Set accumulated evidence refs (for loading from server) */
+    setAccumulatedEvidenceRefsBulk: (refs: string[]) => void;
 
-    // NEW: SessionStorage synchronization
+    // SessionStorage synchronization
     /** Sync current chain to sessionStorage for IP/project persistence */
     syncToSession: (ipSlug: string) => void;
     /** Load chain from sessionStorage */
@@ -87,11 +91,25 @@ interface DimensionChainContextValue {
     /** Check if session data exists */
     hasSessionData: (ipSlug: string) => boolean;
 
-    // NEW: MegaApp awareness
+    // MegaApp awareness
     /** Current MegaApp context */
     currentMegaApp: MegaAppId | null;
     /** Get MegaApp for a dimension */
     getMegaAppForDimension: (dimensionKey: string) => MegaAppId | null;
+
+    // P7+: Server persistence
+    /** Server session ID (null if not synced) */
+    serverSessionId: string | null;
+    /** Set server session ID */
+    setServerSessionId: (id: string | null) => void;
+    /** Current server sync version */
+    version: number;
+    /** Set server sync version */
+    setVersion: (v: number) => void;
+    /** Sync status */
+    syncStatus: "idle" | "syncing" | "synced" | "error" | "conflict";
+    /** Set sync status */
+    setSyncStatus: (status: "idle" | "syncing" | "synced" | "error" | "conflict") => void;
 }
 
 const DimensionChainContext = createContext<DimensionChainContextValue | null>(null);
@@ -107,6 +125,11 @@ export function DimensionChainProvider({ children }: DimensionChainProviderProps
     const [history, setHistory] = useState<NavigationEntry[]>([]);
     const [currentDimension, setCurrentDimensionState] = useState<string | null>(null);
     const [accumulatedEvidenceRefs, setAccumulatedEvidenceRefs] = useState<string[]>([]);
+
+    // P7+: Server persistence state
+    const [serverSessionId, setServerSessionIdState] = useState<string | null>(null);
+    const [version, setVersionState] = useState<number>(1);
+    const [syncStatus, setSyncStatusState] = useState<"idle" | "syncing" | "synced" | "error" | "conflict">("idle");
 
     // Derive current MegaApp from pathname
     const currentMegaApp: MegaAppId | null = (() => {
@@ -159,6 +182,27 @@ export function DimensionChainProvider({ children }: DimensionChainProviderProps
             const combined = new Set([...prev, ...refs]);
             return Array.from(combined);
         });
+    }, []);
+
+    // P7+: Bulk setters for loading from server/storage
+    const setChainDataBulk = useCallback((data: Record<string, ChainData>) => {
+        setChainDataState(data);
+    }, []);
+
+    const setAccumulatedEvidenceRefsBulk = useCallback((refs: string[]) => {
+        setAccumulatedEvidenceRefs(refs);
+    }, []);
+
+    const setServerSessionId = useCallback((id: string | null) => {
+        setServerSessionIdState(id);
+    }, []);
+
+    const setVersion = useCallback((v: number) => {
+        setVersionState(v);
+    }, []);
+
+    const setSyncStatus = useCallback((status: "idle" | "syncing" | "synced" | "error" | "conflict") => {
+        setSyncStatusState(status);
     }, []);
 
     const getInputData = useCallback((dimensionKey: string): Record<string, ChainData> => {
@@ -327,6 +371,7 @@ export function DimensionChainProvider({ children }: DimensionChainProviderProps
                 history,
                 currentDimension,
                 setChainData,
+                setChainDataBulk,
                 getInputData,
                 getNextDimensions,
                 navigateToDimension,
@@ -336,16 +381,24 @@ export function DimensionChainProvider({ children }: DimensionChainProviderProps
                 hasChainData,
                 getDimensionName,
                 getChainSummary,
-                // NEW: Evidence refs
+                // Evidence refs
                 accumulatedEvidenceRefs,
                 appendEvidenceRefs,
-                // NEW: SessionStorage
+                setAccumulatedEvidenceRefsBulk,
+                // SessionStorage
                 syncToSession,
                 loadFromSession,
                 hasSessionData,
-                // NEW: MegaApp awareness
+                // MegaApp awareness
                 currentMegaApp,
                 getMegaAppForDimension,
+                // P7+: Server persistence
+                serverSessionId,
+                setServerSessionId,
+                version,
+                setVersion,
+                syncStatus,
+                setSyncStatus,
             }}
         >
             {children}
