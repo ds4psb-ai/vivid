@@ -1,0 +1,175 @@
+# VDG Canonical Schema Data Contract
+# Based on ODCS v3.1.0 (Open Data Contract Standard)
+# https://bitol.io/odcs
+
+contract: vdg_canonical
+version: "1.0.0"
+status: active
+
+# ==================
+# METADATA
+# ==================
+metadata:
+  name: VDG Canonical Schema
+  description: |
+    VDG (Video Data Graph) 분석 결과를 canonical flat 구조로 정규화하는 계약.
+    v3/v4/v5 구조를 통일하여 모든 소비부가 동일한 인터페이스로 접근.
+  created: "2026-01-11"
+  owner:
+    team: pattern-engine
+    email: ted.taeeun.kim@gmail.com
+
+# ==================
+# INPUTS
+# ==================
+inputs:
+  - name: raw_vdg
+    description: VDG pipeline 원본 출력
+    supported_versions:
+      - v3.3      # legacy flat structure
+      - v4.0      # semantic nested structure
+      - v4.0-exp  # experimental semantic_output
+      - v5.x      # future versions
+    source_paths:
+      - RemixNode.gemini_analysis
+      - NotebookLibraryEntry.analysis_schema
+
+# ==================
+# OUTPUTS
+# ==================
+outputs:
+  - name: canonical_vdg
+    description: 정규화된 flat 구조
+    schema:
+      type: object
+      required_fields:
+        - hook_genome
+        - scenes
+      optional_fields:
+        - capsule_brief
+        - implementation_layer  # P0 2026-01-23: 구조 상세화
+        - mise_en_scene_signals
+        - viral_kicks
+        - asr_transcript
+        - audience_reaction
+        - commerce
+        - intent_layer
+        - ocr_content
+
+      # VDG v4/v5 implementation_layer 상세 구조 (2026-01-23 추가)
+      implementation_layer_schema:
+        camera_physics:
+          movement_vectors:
+            type: array
+            items: {technique: str, speed: str, direction: str, t_start_ms: int, t_end_ms: int}
+        audio_engineering:
+          bpm: float
+          sync_points:
+            type: array
+            items: {event: str, t_ms: int, beat_aligned: bool}
+        post_production:
+          editing_notes: array
+
+      # scenes 필드 구조 (v4/v5)
+      scenes_schema:
+        items:
+          time_start: float  # 초 단위 (NOT window.start_ms)
+          time_end: float    # 초 단위 (NOT window.end_ms)
+          duration_sec: float
+          summary: str
+          narrative_role: str
+      meta_fields:
+        - meta
+        - provenance
+        - platform
+        - duration_sec
+        - vdg_version
+
+# ==================
+# CONSUMERS
+# ==================
+consumers:
+  - name: DNAExtractor
+    file: backend/app/services/dna_extractor.py
+    usage: Pattern DNA 추출
+
+  - name: PatternClusteringService
+    file: backend/app/services/clustering.py
+    usage: 유사도 클러스터링
+    status: ⚠️ P2 수정 필요  # 2026-01-23: v3 scenes[].shots[] 경로 사용 중
+
+  - name: VDGQualityValidator
+    file: backend/app/validators/vdg_quality_validator.py
+    usage: VDG 품질 검증
+
+  - name: NotebookLMSync
+    file: backend/app/services/notebooklm_sync.py
+    usage: Source pack 생성
+
+# ==================
+# SLA / SLO
+# ==================
+sla:
+  empty_canonical_rate:
+    target: "0%"
+    description: 정규화 후 빈 스키마 비율
+
+  normalize_success_rate:
+    target: ">=99.5%"
+    description: 정규화 성공률
+
+  response_time_p99:
+    target: "<10ms"
+    description: normalize_vdg_schema 호출 응답시간
+
+# ==================
+# COMPATIBILITY RULES (Avro-style)
+# ==================
+compatibility:
+  writer_rules:
+    - "필드 추가: OK (default 제공 필수)"
+    - "필드 삭제: MAJOR version bump 필요"
+    - "타입 변경: 금지 (새 필드로 추가)"
+
+  reader_rules:
+    - "알 수 없는 필드: 무시"
+    - "missing 필드: 기본값 사용"
+    - "normalize 함수가 최종 진입점"
+
+# ==================
+# SECURITY
+# ==================
+security:
+  max_schema_size_bytes: 5242880  # 5MB
+  max_json_depth: 15  # P0 2026-01-23: VDG v4/v5는 depth 9-12 필요 (was 8)
+  logging:
+    - "raw schema는 로그에 남기지 않음"
+    - "민감정보 마스킹 필수"
+  validation:
+    - "non-dict 입력은 빈 canonical로 폴백"
+    - "예외 발생 시 안전하게 기본값 반환"
+
+# ==================
+# QUALITY GATE
+# ==================
+quality:
+  rules:
+    - name: hook_genome_exists
+      condition: "hook_genome is not None"
+      severity: critical
+
+    - name: scenes_count
+      condition: "len(scenes) >= 1"
+      severity: warning
+
+    - name: hook_script_length
+      condition: "len(capsule_brief.hook_script) >= 10"
+      severity: warning
+
+  scoring:
+    pass_threshold: 0.60
+    warn_threshold: 0.40
+
+  incremental:
+    partition: "24h"
+    failure_table: "vdg_quality_failures"

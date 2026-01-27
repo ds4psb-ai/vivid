@@ -43,6 +43,22 @@ from app.services.production_bridge_service import (
     ProductionBridgeResult,
     get_production_bridge_service,
 )
+from app.schemas.storyboard import (
+    StoryboardRequest,
+    StoryboardShot,
+    StoryboardResult,
+    StoryboardProgress,
+    StoryboardProvider,
+    CoherenceLevel,
+    TransitionType,
+    ShotPhase,
+    CreateStoryboardRequest,
+    StoryboardStatusResponse,
+)
+from app.services.storyboard_orchestrator import (
+    StoryboardOrchestrator,
+    generate_storyboard,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -569,6 +585,269 @@ async def health_check():
         "providers": service.list_providers(),
         "version": "1.0.0",
     }
+
+
+# =============================================================================
+# Storyboard Endpoints (Phase 6 - P0)
+# =============================================================================
+
+
+class StoryboardShotRequest(BaseModel):
+    """Single shot in storyboard request."""
+    prompt: str = Field(..., min_length=5, description="Shot prompt")
+    duration_seconds: float = Field(default=3.0, ge=1.0, le=30.0, description="Shot duration")
+    phase: str = Field(default="development", description="Narrative phase: hook, development, payoff")
+    transition: str = Field(default="cut", description="Transition to next shot")
+    reference_from_previous: bool = Field(default=True, description="Use previous shot's last frame")
+    reference_images: List[str] = Field(default_factory=list, description="Reference images for this shot")
+
+
+class StoryboardGenerateRequest(BaseModel):
+    """Request for storyboard generation."""
+    shots: List[StoryboardShotRequest] = Field(
+        ...,
+        min_length=2,
+        max_length=25,
+        description="List of shots (2-25)",
+    )
+    total_duration_seconds: int = Field(
+        ...,
+        ge=2,
+        le=120,
+        description="Total video duration",
+    )
+    provider: str = Field(default="sora", description="Provider: sora, veo, kling")
+    coherence_level: str = Field(default="both", description="Coherence: character, style, both, none")
+    aspect_ratio: str = Field(default="16:9", description="Aspect ratio")
+    resolution: str = Field(default="1080p", description="Resolution")
+    include_audio: bool = Field(default=True, description="Include audio")
+    visual_style: Optional[str] = Field(None, description="Global visual style")
+    negative_prompt: Optional[str] = Field(None, description="Global negative prompt")
+    global_reference_images: List[str] = Field(
+        default_factory=list,
+        max_length=10,
+        description="Global reference images for consistency",
+    )
+
+
+class StoryboardGenerateResponse(BaseModel):
+    """Response from storyboard generation."""
+    success: bool
+    provider: str
+    trace_id: str
+    total_duration_ms: int = 0
+    generation_latency_ms: int = 0
+    shots_completed: int = 0
+    shots_failed: int = 0
+    composite_media_uri: Optional[str] = None
+    individual_clips: List[str] = []
+    credits_used: int = 0
+    evidence_refs: List[str] = []
+    error: Optional[str] = None
+
+
+@router.post(
+    "/generate/storyboard",
+    response_model=StoryboardGenerateResponse,
+    summary="Generate Storyboard (Multi-Shot)",
+    description="""
+Generate multi-shot storyboard video with shot-to-shot coherence.
+
+**2026 Provider Support:**
+- Sora 2 Pro: Native storyboard mode (1s segments, 25s max)
+- VEO: Chained generation with frame references (8s per shot)
+- Kling: Chained generation (10s per shot, 3.0 will support 120s)
+
+**Coherence Levels:**
+- character: Maintain character consistency across shots
+- style: Maintain visual style consistency
+- both: Character + style consistency (recommended)
+- none: No coherence requirement
+
+**Example:**
+```json
+{
+    "shots": [
+        {"prompt": "Wide establishing shot of city at sunset", "duration_seconds": 3, "phase": "hook"},
+        {"prompt": "Medium shot of woman walking through crowd", "duration_seconds": 4, "phase": "development"},
+        {"prompt": "Close-up of her face, determined expression", "duration_seconds": 3, "phase": "payoff"}
+    ],
+    "total_duration_seconds": 10,
+    "provider": "sora",
+    "coherence_level": "both"
+}
+```
+    """,
+)
+async def generate_storyboard_endpoint(
+    request: StoryboardGenerateRequest,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> StoryboardGenerateResponse:
+    """Generate multi-shot storyboard video."""
+    user_id = user.get("id", "unknown")
+    trace_id = f"storyboard-{uuid.uuid4().hex[:12]}"
+
+    logger.info(
+        f"[STORYBOARD] user={user_id} provider={request.provider} "
+        f"shots={len(request.shots)} duration={request.total_duration_seconds}s"
+    )
+
+    try:
+        # Convert request to StoryboardShot objects
+        shots = []
+        for i, shot_req in enumerate(request.shots):
+            shots.append(StoryboardShot(
+                index=i,
+                prompt=shot_req.prompt,
+                duration_seconds=shot_req.duration_seconds,
+                phase=ShotPhase(shot_req.phase),
+                transition_to_next=TransitionType(shot_req.transition),
+                reference_from_previous=shot_req.reference_from_previous,
+                reference_images=shot_req.reference_images,
+            ))
+
+        # Build storyboard request
+        storyboard_request = StoryboardRequest(
+            shots=shots,
+            total_duration_seconds=request.total_duration_seconds,
+            coherence_level=CoherenceLevel(request.coherence_level),
+            provider=StoryboardProvider(request.provider),
+            aspect_ratio=request.aspect_ratio,
+            resolution=request.resolution,
+            include_audio=request.include_audio,
+            visual_style=request.visual_style,
+            negative_prompt=request.negative_prompt,
+            global_reference_images=request.global_reference_images,
+        )
+
+        # Execute storyboard generation
+        orchestrator = StoryboardOrchestrator()
+        result = await orchestrator.execute(storyboard_request)
+
+        return StoryboardGenerateResponse(
+            success=result.success,
+            provider=result.provider,
+            trace_id=result.trace_id,
+            total_duration_ms=result.total_duration_ms,
+            generation_latency_ms=result.generation_latency_ms,
+            shots_completed=result.shots_completed,
+            shots_failed=result.shots_failed,
+            composite_media_uri=result.composite_media_uri,
+            individual_clips=result.individual_clips,
+            credits_used=result.credits_used,
+            evidence_refs=result.evidence_refs,
+            error=result.error,
+        )
+
+    except ValueError as e:
+        logger.warning(f"[STORYBOARD] Validation error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"error": str(e), "trace_id": trace_id},
+        )
+    except Exception as e:
+        logger.error(f"[STORYBOARD] Error: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": str(e), "trace_id": trace_id},
+        )
+
+
+@router.post(
+    "/generate/storyboard/stream",
+    summary="Generate Storyboard (SSE Stream)",
+    description="Generate storyboard with real-time progress updates via SSE.",
+)
+async def generate_storyboard_stream(
+    request: StoryboardGenerateRequest,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> StreamingResponse:
+    """Generate storyboard with SSE streaming."""
+    user_id = user.get("id", "unknown")
+    trace_id = f"storyboard-{uuid.uuid4().hex[:12]}"
+
+    async def stream_generator():
+        try:
+            yield await _sse_event("start", {
+                "trace_id": trace_id,
+                "provider": request.provider,
+                "total_shots": len(request.shots),
+                "status": "started",
+            })
+
+            # Convert request
+            shots = []
+            for i, shot_req in enumerate(request.shots):
+                shots.append(StoryboardShot(
+                    index=i,
+                    prompt=shot_req.prompt,
+                    duration_seconds=shot_req.duration_seconds,
+                    phase=ShotPhase(shot_req.phase),
+                    transition_to_next=TransitionType(shot_req.transition),
+                    reference_from_previous=shot_req.reference_from_previous,
+                    reference_images=shot_req.reference_images,
+                ))
+
+            storyboard_request = StoryboardRequest(
+                shots=shots,
+                total_duration_seconds=request.total_duration_seconds,
+                coherence_level=CoherenceLevel(request.coherence_level),
+                provider=StoryboardProvider(request.provider),
+                aspect_ratio=request.aspect_ratio,
+                resolution=request.resolution,
+                include_audio=request.include_audio,
+                visual_style=request.visual_style,
+                negative_prompt=request.negative_prompt,
+                global_reference_images=request.global_reference_images,
+            )
+
+            # Progress callback for SSE
+            progress_events = []
+
+            def progress_callback(progress: StoryboardProgress):
+                progress_events.append(progress)
+
+            # Execute
+            orchestrator = StoryboardOrchestrator()
+            result = await orchestrator.execute(storyboard_request, progress_callback)
+
+            # Send accumulated progress events
+            for progress in progress_events:
+                yield await _sse_event("progress", {
+                    "status": progress.status,
+                    "current_shot": progress.current_shot,
+                    "total_shots": progress.total_shots,
+                    "progress": progress.progress,
+                    "message": progress.message,
+                })
+
+            # Send final result
+            yield await _sse_event("complete", {
+                "success": result.success,
+                "provider": result.provider,
+                "trace_id": result.trace_id,
+                "shots_completed": result.shots_completed,
+                "shots_failed": result.shots_failed,
+                "composite_media_uri": result.composite_media_uri,
+                "individual_clips": result.individual_clips,
+                "generation_latency_ms": result.generation_latency_ms,
+            })
+
+        except Exception as e:
+            logger.error(f"[STORYBOARD_STREAM] Error: {e}", exc_info=True)
+            yield await _sse_event("error", {"error": str(e), "trace_id": trace_id})
+
+    return StreamingResponse(
+        stream_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 # =============================================================================
