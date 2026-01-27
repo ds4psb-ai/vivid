@@ -221,10 +221,13 @@ class Settings(BaseSettings):
     OTEL_SERVICE_VERSION: str = "2.0.0"
 
     # RAG Evaluation Configuration
-    RAG_EVAL_ENABLED: bool = False  # Enable RAG quality evaluation
+    RAG_EVAL_ENABLED: bool = True  # Enable RAG quality evaluation
     RAG_EVAL_SAMPLE_RATE: float = 0.01  # 1% of production traffic
     RAG_EVAL_ALERT_THRESHOLD: float = 0.6  # Alert if avg score drops below
     RAG_EVAL_LLM_MODEL: str = "gpt-4o-mini"  # LLM for evaluation
+    RAG_EVAL_BATCH_MODEL: str = "gemini-3-flash-preview"  # Batch API model (50% cost)
+    RAG_EVAL_GOLDEN_DATASET_PATH: str = "data/rag_eval/golden_dataset.yaml"
+    RAG_EVAL_LANGFUSE_DATASET: str = "rag-evaluation"  # Langfuse dataset name
 
     # Unified Orchestration (2026 Best Practice - LangGraph StateGraph)
     # When True, use unified graph instead of hybrid_rag for RAG queries

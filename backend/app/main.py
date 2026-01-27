@@ -60,6 +60,9 @@ from app.routers.rag import router as rag_router
 # RAG Pipeline (3-Tier RAG Administration)
 from app.routers.rag_admin import router as rag_pipeline_router
 
+# RAG Evaluation (P1.2: Quality Assessment Pipeline)
+from app.routers.rag_evaluation import router as rag_evaluation_router
+
 # Workflow (Tool Chain Orchestration)
 from app.routers.workflow import router as workflow_router
 
@@ -475,6 +478,9 @@ app.include_router(rag_router, prefix="/api/v1", tags=["rag"])
 
 # RAG Pipeline (3-Tier Administration)
 app.include_router(rag_pipeline_router, prefix="/api/v1", tags=["rag-pipeline"])
+
+# RAG Evaluation (P1.2: Quality Assessment)
+app.include_router(rag_evaluation_router, prefix="/api/v1", tags=["rag-evaluation"])
 
 # UQSL (Universal Quality Selection Layer) - prefix already in router
 app.include_router(uqsl_router, tags=["uqsl"])

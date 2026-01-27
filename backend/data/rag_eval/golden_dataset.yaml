@@ -1,0 +1,654 @@
+# Golden Dataset for RAG Evaluation
+# Total: 65+ test cases across all dimensions
+# Categories: auteur_technique, auteur_symbolism, prompt, storyboard, visual, reference, structure, design, basics, technique, negative_test, security_test
+
+# =============================================================================
+# AD (Aesthetic Director) - 15 cases
+# =============================================================================
+
+# auteur_technique (8 cases)
+- query: "봉준호 감독의 롱테이크 기법 특징"
+  ground_truth: "봉준호는 계단, 복도 등 수직/수평 공간에서 롱테이크를 활용하여 계급 간 이동과 충돌을 시각화합니다. 기생충의 계단 시퀀스가 대표적입니다."
+  expected_contexts:
+    - "db:rag_docs:AD:auteur:bong:longtake"
+  difficulty: medium
+  category: auteur_technique
+  dimension: AD
+  auteur_key: bong
+
+- query: "왕가위의 색채 팔레트 분석"
+  ground_truth: "왕가위는 네온 그린, 마젠타, 블루를 통해 홍콩의 밤과 고독을 표현합니다. 중경삼림의 야간 장면이 대표적입니다."
+  expected_contexts:
+    - "db:rag_docs:AD:auteur:wong:color"
+  difficulty: medium
+  category: auteur_technique
+  dimension: AD
+  auteur_key: wong
+
+- query: "드니 빌뇌브의 스케일 연출 방법"
+  ground_truth: "드니 빌뇌브는 인물과 환경의 극단적 대비를 통해 숭고함과 무력감을 동시에 전달합니다. 듄의 사막 장면이 대표적입니다."
+  expected_contexts:
+    - "db:rag_docs:AD:auteur:abyss:scale"
+  difficulty: medium
+  category: auteur_technique
+  dimension: AD
+  auteur_key: abyss
+
+- query: "크리스토퍼 놀란의 비선형 서사 구조"
+  ground_truth: "놀란은 시간의 역행, 병렬, 중첩을 통해 관객의 인지적 참여를 유도합니다. 메멘토, 인셉션, 테넷이 대표작입니다."
+  expected_contexts:
+    - "db:rag_docs:AD:auteur:epoch:narrative"
+  difficulty: hard
+  category: auteur_technique
+  dimension: AD
+  auteur_key: epoch
+
+- query: "쿠엔틴 타란티노의 대화 씬 연출"
+  ground_truth: "타란티노는 긴 대화 장면에서 긴장감을 고조시키며, 갑작스러운 폭력으로 카타르시스를 제공합니다."
+  expected_contexts:
+    - "db:rag_docs:AD:auteur:voltage:dialogue"
+  difficulty: medium
+  category: auteur_technique
+  dimension: AD
+  auteur_key: voltage
+
+- query: "박찬욱 감독의 미장센 특징"
+  ground_truth: "박찬욱은 대칭 구도와 화려한 색채를 통해 복수와 욕망의 테마를 시각화합니다. 올드보이의 복도 씬이 상징적입니다."
+  expected_contexts:
+    - "db:rag_docs:AD:auteur:park:mise_en_scene"
+  difficulty: medium
+  category: auteur_technique
+  dimension: AD
+  auteur_key: park
+
+- query: "신카이 마코토의 빛 표현 기법"
+  ground_truth: "신카이는 역광, 렌즈 플레어, 골든아워를 통해 nostalgia와 동경의 감정을 시각화합니다."
+  expected_contexts:
+    - "db:rag_docs:AD:auteur:azure:light"
+  difficulty: easy
+  category: auteur_technique
+  dimension: AD
+  auteur_key: azure
+
+- query: "봉준호의 프레임 내 프레임 기법"
+  ground_truth: "봉준호는 창문, 문, 계단을 프레임으로 활용하여 계급과 경계를 시각적으로 분리합니다."
+  expected_contexts:
+    - "db:rag_docs:AD:auteur:bong:framing"
+  difficulty: hard
+  category: auteur_technique
+  dimension: AD
+  auteur_key: bong
+
+# auteur_symbolism (7 cases)
+- query: "기생충에서 계단의 상징적 의미"
+  ground_truth: "계단은 계급 이동의 상징으로, 위로 올라가는 것은 상류층 침투, 아래로 내려가는 것은 원래 위치로의 추락을 의미합니다."
+  expected_contexts:
+    - "db:rag_docs:AD:auteur:bong:symbol:stairs"
+  difficulty: medium
+  category: auteur_symbolism
+  dimension: AD
+  auteur_key: bong
+
+- query: "왕가위 영화에서 시계의 의미"
+  ground_truth: "시계는 지나간 시간과 놓친 기회를 상징합니다. 중경삼림의 유통기한 파인애플 통조림이 대표적입니다."
+  expected_contexts:
+    - "db:rag_docs:AD:auteur:wong:symbol:clock"
+  difficulty: medium
+  category: auteur_symbolism
+  dimension: AD
+  auteur_key: wong
+
+- query: "인셉션에서 팽이의 상징"
+  ground_truth: "팽이(토템)는 현실과 꿈의 경계를 판별하는 도구이자, 관객에게 열린 결말을 제시하는 장치입니다."
+  expected_contexts:
+    - "db:rag_docs:AD:auteur:epoch:symbol:top"
+  difficulty: easy
+  category: auteur_symbolism
+  dimension: AD
+  auteur_key: epoch
+
+- query: "타란티노 영화의 발 페티시즘"
+  ground_truth: "타란티노의 발 클로즈업은 친밀함, 취약성, 권력 역학을 표현하는 시그니처 스타일입니다."
+  expected_contexts:
+    - "db:rag_docs:AD:auteur:voltage:symbol:feet"
+  difficulty: easy
+  category: auteur_symbolism
+  dimension: AD
+  auteur_key: voltage
+
+- query: "올드보이 복도 씬의 의미"
+  ground_truth: "원테이크 복도 싸움은 15년 감금의 분노와 복수의지를 응축하여 표현한 카타르시스 장면입니다."
+  expected_contexts:
+    - "db:rag_docs:AD:auteur:park:symbol:corridor"
+  difficulty: medium
+  category: auteur_symbolism
+  dimension: AD
+  auteur_key: park
+
+- query: "너의 이름은에서 실의 의미"
+  ground_truth: "붉은 실(무스비)은 운명적 연결, 시공간을 초월한 인연, 전통과 현대의 연결을 상징합니다."
+  expected_contexts:
+    - "db:rag_docs:AD:auteur:azure:symbol:thread"
+  difficulty: easy
+  category: auteur_symbolism
+  dimension: AD
+  auteur_key: azure
+
+- query: "듄에서 사막의 상징"
+  ground_truth: "사막은 시련과 정화, 자원(스파이스)을 둘러싼 권력 투쟁, 메시아의 시험대를 상징합니다."
+  expected_contexts:
+    - "db:rag_docs:AD:auteur:abyss:symbol:desert"
+  difficulty: medium
+  category: auteur_symbolism
+  dimension: AD
+  auteur_key: abyss
+
+# =============================================================================
+# 1D (Prompt Alchemy) - 8 cases
+# =============================================================================
+
+- query: "효과적인 이미지 프롬프트 작성 기법"
+  ground_truth: "주제, 스타일, 조명, 구도, 분위기를 순서대로 명시하고 부정 프롬프트로 원치 않는 요소를 제외합니다."
+  expected_contexts:
+    - "db:rag_docs:1D:prompt:structure"
+  difficulty: easy
+  category: prompt
+  dimension: "1D"
+
+- query: "미드저니 v6 프롬프트 최적화"
+  ground_truth: "v6에서는 자연어 서술이 강화되었으며, --style raw로 AI 보정을 줄이고 --chaos로 다양성을 조절합니다."
+  expected_contexts:
+    - "db:rag_docs:1D:prompt:midjourney_v6"
+  difficulty: medium
+  category: prompt
+  dimension: "1D"
+
+- query: "DALL-E 3 프롬프트 가이드"
+  ground_truth: "DALL-E 3는 긴 서술형 프롬프트를 선호하며, ChatGPT와 함께 사용하여 프롬프트를 개선할 수 있습니다."
+  expected_contexts:
+    - "db:rag_docs:1D:prompt:dalle3"
+  difficulty: easy
+  category: prompt
+  dimension: "1D"
+
+- query: "Stable Diffusion 네거티브 프롬프트"
+  ground_truth: "낮은 품질, 흐릿함, 해부학적 오류를 방지하기 위해 'low quality, blurry, bad anatomy' 등을 네거티브 프롬프트에 추가합니다."
+  expected_contexts:
+    - "db:rag_docs:1D:prompt:sd_negative"
+  difficulty: medium
+  category: prompt
+  dimension: "1D"
+
+- query: "비디오 프롬프트와 이미지 프롬프트의 차이"
+  ground_truth: "비디오 프롬프트는 시간에 따른 변화(움직임, 전환, 타이밍)를 명시해야 하며 카메라 워크도 지정합니다."
+  expected_contexts:
+    - "db:rag_docs:1D:prompt:video"
+  difficulty: medium
+  category: prompt
+  dimension: "1D"
+
+- query: "프롬프트 웨이팅 기법"
+  ground_truth: "괄호와 가중치((subject:1.5))를 사용하여 특정 요소의 중요도를 강조하거나 약화시킵니다."
+  expected_contexts:
+    - "db:rag_docs:1D:prompt:weighting"
+  difficulty: medium
+  category: prompt
+  dimension: "1D"
+
+- query: "LoRA와 프롬프트 조합"
+  ground_truth: "LoRA 모델 로드 후 트리거 워드를 프롬프트에 포함시켜 스타일이나 캐릭터를 적용합니다."
+  expected_contexts:
+    - "db:rag_docs:1D:prompt:lora"
+  difficulty: hard
+  category: prompt
+  dimension: "1D"
+
+- query: "일관된 캐릭터 프롬프트"
+  ground_truth: "시드 값 고정, 상세한 외형 묘사, 참조 이미지(IP-Adapter)를 활용하여 캐릭터 일관성을 유지합니다."
+  expected_contexts:
+    - "db:rag_docs:1D:prompt:character_consistency"
+  difficulty: hard
+  category: prompt
+  dimension: "1D"
+
+# =============================================================================
+# 2D (Storyboard) - 8 cases
+# =============================================================================
+
+- query: "스토리보드 기본 구성요소"
+  ground_truth: "프레임 번호, 샷 설명, 카메라 앵글, 캐릭터 동작, 대사/사운드, 지속 시간이 기본 요소입니다."
+  expected_contexts:
+    - "db:rag_docs:2D:storyboard:basics"
+  difficulty: easy
+  category: storyboard
+  dimension: "2D"
+
+- query: "액션 시퀀스 스토리보드 작성법"
+  ground_truth: "빠른 컷, 동선 화살표, 충격 포인트를 명확히 표시하고 타이밍을 프레임 단위로 지정합니다."
+  expected_contexts:
+    - "db:rag_docs:2D:storyboard:action"
+  difficulty: medium
+  category: storyboard
+  dimension: "2D"
+
+- query: "대화 씬 스토리보드 팁"
+  ground_truth: "오버더숄더, 투샷, 클로즈업의 교차 편집을 계획하고 감정 변화에 따른 샷 크기 변화를 표시합니다."
+  expected_contexts:
+    - "db:rag_docs:2D:storyboard:dialogue"
+  difficulty: medium
+  category: storyboard
+  dimension: "2D"
+
+- query: "애니메이션 스토리보드 특징"
+  ground_truth: "키 포즈, 타이밍 차트, 이징 표시가 필요하며 실사보다 더 상세한 움직임 분해가 필요합니다."
+  expected_contexts:
+    - "db:rag_docs:2D:storyboard:animation"
+  difficulty: medium
+  category: storyboard
+  dimension: "2D"
+
+- query: "스토리보드에서 카메라 움직임 표기"
+  ground_truth: "팬(수평 화살표), 틸트(수직 화살표), 돌리(궤도선), 줌(동심원) 기호로 카메라 움직임을 표기합니다."
+  expected_contexts:
+    - "db:rag_docs:2D:storyboard:camera"
+  difficulty: easy
+  category: storyboard
+  dimension: "2D"
+
+- query: "AI 스토리보드 생성 도구"
+  ground_truth: "Storyboard AI, Boords, Frameforge 등이 있으며 프롬프트 기반 스토리보드 자동 생성이 가능합니다."
+  expected_contexts:
+    - "db:rag_docs:2D:storyboard:ai_tools"
+  difficulty: easy
+  category: storyboard
+  dimension: "2D"
+
+- query: "스토리보드 리비전 프로세스"
+  ground_truth: "감독 피드백 후 샷 추가/삭제, 타이밍 조정, 구도 변경을 반영하고 버전 관리를 합니다."
+  expected_contexts:
+    - "db:rag_docs:2D:storyboard:revision"
+  difficulty: medium
+  category: storyboard
+  dimension: "2D"
+
+- query: "버티컬 비디오 스토리보드"
+  ground_truth: "9:16 비율에 맞춰 중앙 집중 구도, 텍스트 오버레이 영역, 스크롤 정지점을 계획합니다."
+  expected_contexts:
+    - "db:rag_docs:2D:storyboard:vertical"
+  difficulty: easy
+  category: storyboard
+  dimension: "2D"
+
+# =============================================================================
+# 3D (Visual Realizer) - 8 cases
+# =============================================================================
+
+- query: "이미지 생성 모델 비교"
+  ground_truth: "DALL-E 3는 프롬프트 이해력, Midjourney는 예술성, Stable Diffusion은 커스터마이징에 강점이 있습니다."
+  expected_contexts:
+    - "db:rag_docs:3D:visual:models"
+  difficulty: easy
+  category: visual
+  dimension: "3D"
+
+- query: "이미지 업스케일링 기법"
+  ground_truth: "Real-ESRGAN, Topaz Gigapixel, ComfyUI 업스케일러를 사용하여 해상도와 디테일을 향상시킵니다."
+  expected_contexts:
+    - "db:rag_docs:3D:visual:upscale"
+  difficulty: medium
+  category: visual
+  dimension: "3D"
+
+- query: "이미지 인페인팅 활용"
+  ground_truth: "마스크 영역을 지정하여 특정 부분만 재생성하거나 확장(아웃페인팅)할 수 있습니다."
+  expected_contexts:
+    - "db:rag_docs:3D:visual:inpainting"
+  difficulty: medium
+  category: visual
+  dimension: "3D"
+
+- query: "ControlNet 사용법"
+  ground_truth: "Canny, Depth, Pose 등의 조건 이미지로 구도와 포즈를 제어하면서 스타일만 변경할 수 있습니다."
+  expected_contexts:
+    - "db:rag_docs:3D:visual:controlnet"
+  difficulty: hard
+  category: visual
+  dimension: "3D"
+
+- query: "이미지 스타일 전환"
+  ground_truth: "IP-Adapter, 스타일 LoRA, 프롬프트 스타일 지정으로 사진을 그림체로 변환하거나 아트 스타일을 적용합니다."
+  expected_contexts:
+    - "db:rag_docs:3D:visual:style_transfer"
+  difficulty: medium
+  category: visual
+  dimension: "3D"
+
+- query: "배경 제거 및 합성"
+  ground_truth: "rembg, Segment Anything으로 배경을 제거하고 새 배경과 합성하여 컴포지션을 만듭니다."
+  expected_contexts:
+    - "db:rag_docs:3D:visual:compositing"
+  difficulty: easy
+  category: visual
+  dimension: "3D"
+
+- query: "일관된 캐릭터 이미지 생성"
+  ground_truth: "동일 시드, LoRA 훈련, IP-Adapter 참조 이미지를 활용하여 다양한 포즈와 장면에서 캐릭터 일관성을 유지합니다."
+  expected_contexts:
+    - "db:rag_docs:3D:visual:character"
+  difficulty: hard
+  category: visual
+  dimension: "3D"
+
+- query: "이미지 배치 생성 자동화"
+  ground_truth: "ComfyUI 워크플로우, Automatic1111 API, 프롬프트 매트릭스로 대량 이미지를 효율적으로 생성합니다."
+  expected_contexts:
+    - "db:rag_docs:3D:visual:batch"
+  difficulty: hard
+  category: visual
+  dimension: "3D"
+
+# =============================================================================
+# 4D (Reference Decoder) - 8 cases
+# =============================================================================
+
+- query: "영화 참조 분석 방법론"
+  ground_truth: "미장센, 촬영기법, 서사구조, 음향 디자인, 상징체계를 분석하고 크리에이티브 영감으로 연결합니다."
+  expected_contexts:
+    - "db:rag_docs:4D:reference:methodology"
+  difficulty: medium
+  category: reference
+  dimension: "4D"
+
+- query: "장면 분석 프레임워크"
+  ground_truth: "구도(Rule of Thirds, 대칭), 조명(키/필/림), 색채, 카메라 움직임, 편집 리듬을 체계적으로 분석합니다."
+  expected_contexts:
+    - "db:rag_docs:4D:reference:scene_analysis"
+  difficulty: medium
+  category: reference
+  dimension: "4D"
+
+- query: "무드보드 참조 수집"
+  ground_truth: "Pinterest, Behance, Dribbble에서 시각적 참조를 수집하고 색상/톤/스타일별로 분류합니다."
+  expected_contexts:
+    - "db:rag_docs:4D:reference:moodboard"
+  difficulty: easy
+  category: reference
+  dimension: "4D"
+
+- query: "컬러 그레이딩 참조 분석"
+  ground_truth: "LUT 추출, 히스토그램 분석, 컬러 휠로 참조 영상의 색감을 분석하고 재현합니다."
+  expected_contexts:
+    - "db:rag_docs:4D:reference:color_grading"
+  difficulty: hard
+  category: reference
+  dimension: "4D"
+
+- query: "참조 이미지에서 프롬프트 추출"
+  ground_truth: "CLIP Interrogator, img2prompt로 이미지를 분석하여 스타일, 조명, 구도를 프롬프트화합니다."
+  expected_contexts:
+    - "db:rag_docs:4D:reference:img2prompt"
+  difficulty: medium
+  category: reference
+  dimension: "4D"
+
+- query: "장르별 비주얼 컨벤션"
+  ground_truth: "느와르(로우키, 대비), 호러(불안정 구도), SF(블루톤, 렌즈 플레어), 로맨스(따뜻한 톤)의 시각적 관습을 학습합니다."
+  expected_contexts:
+    - "db:rag_docs:4D:reference:genre"
+  difficulty: medium
+  category: reference
+  dimension: "4D"
+
+- query: "시대별 영화 미학 변화"
+  ground_truth: "누벨바그, 뉴할리우드, 디지털 시대로 이어지는 영화 미학의 진화를 추적합니다."
+  expected_contexts:
+    - "db:rag_docs:4D:reference:era"
+  difficulty: hard
+  category: reference
+  dimension: "4D"
+
+- query: "실사-애니 스타일 참조 융합"
+  ground_truth: "실사 참조의 구도/조명과 애니메이션 스타일의 컬러/라인웍을 결합하여 독특한 비주얼을 만듭니다."
+  expected_contexts:
+    - "db:rag_docs:4D:reference:hybrid"
+  difficulty: hard
+  category: reference
+  dimension: "4D"
+
+# =============================================================================
+# Story (Story Architect) - 6 cases
+# =============================================================================
+
+- query: "3막 구조 스토리 작성"
+  ground_truth: "설정(25%)-대립(50%)-해결(25%) 비율로 구성하며 각 막의 터닝포인트를 명확히 합니다."
+  expected_contexts:
+    - "db:rag_docs:STORY:structure:three_act"
+  difficulty: easy
+  category: structure
+  dimension: STORY
+
+- query: "캐릭터 아크 설계"
+  ground_truth: "결핍-욕구-장애-변화의 구조로 캐릭터의 내적 여정을 설계하고 외적 목표와 연결합니다."
+  expected_contexts:
+    - "db:rag_docs:STORY:structure:character_arc"
+  difficulty: medium
+  category: structure
+  dimension: STORY
+
+- query: "비선형 서사 구조 유형"
+  ground_truth: "플래시백, 병렬 서사, 역순 서사, 루프 구조 등이 있으며 각각의 정서적 효과가 다릅니다."
+  expected_contexts:
+    - "db:rag_docs:STORY:structure:nonlinear"
+  difficulty: medium
+  category: structure
+  dimension: STORY
+
+- query: "숏폼 스토리텔링 기법"
+  ground_truth: "훅(3초)-전개(20초)-반전/결말(7초) 구조로 압축하고 시각적 스토리텔링을 극대화합니다."
+  expected_contexts:
+    - "db:rag_docs:STORY:structure:shortform"
+  difficulty: easy
+  category: structure
+  dimension: STORY
+
+- query: "세계관 설정 문서화"
+  ground_truth: "지리, 역사, 사회구조, 기술수준, 마법체계(판타지의 경우)를 문서화하여 일관성을 유지합니다."
+  expected_contexts:
+    - "db:rag_docs:STORY:structure:worldbuilding"
+  difficulty: hard
+  category: structure
+  dimension: STORY
+
+- query: "대사 작성 가이드라인"
+  ground_truth: "캐릭터 고유 어투, 서브텍스트, 리듬감을 고려하고 설명적 대사를 피합니다."
+  expected_contexts:
+    - "db:rag_docs:STORY:structure:dialogue"
+  difficulty: medium
+  category: structure
+  dimension: STORY
+
+# =============================================================================
+# Sound (Sound Crafter) - 6 cases
+# =============================================================================
+
+- query: "영화 사운드 디자인 레이어"
+  ground_truth: "대사, 앰비언스, 폴리, SFX, 음악의 5개 레이어로 구성하며 각각의 믹싱 밸런스를 조절합니다."
+  expected_contexts:
+    - "db:rag_docs:SOUND:design:layers"
+  difficulty: medium
+  category: design
+  dimension: SOUND
+
+- query: "AI 음악 생성 도구 비교"
+  ground_truth: "Suno(가창), Udio(음질), MusicGen(제어력), Mubert(BGM)가 각각의 강점을 가집니다."
+  expected_contexts:
+    - "db:rag_docs:SOUND:design:ai_music"
+  difficulty: easy
+  category: design
+  dimension: SOUND
+
+- query: "사운드 이펙트 프롬프트"
+  ground_truth: "소리의 물리적 특성(재질, 크기, 환경)과 감정적 뉘앙스를 명시합니다."
+  expected_contexts:
+    - "db:rag_docs:SOUND:design:sfx_prompt"
+  difficulty: medium
+  category: design
+  dimension: SOUND
+
+- query: "음악과 영상 싱크"
+  ground_truth: "비트 싱크, 감정 커브 매칭, 스팅거 포인트를 활용하여 음악과 편집을 연결합니다."
+  expected_contexts:
+    - "db:rag_docs:SOUND:design:sync"
+  difficulty: medium
+  category: design
+  dimension: SOUND
+
+- query: "앰비언스 사운드스케이프"
+  ground_truth: "공간감, 시간대, 날씨를 반영하는 환경음을 레이어링하여 몰입감을 높입니다."
+  expected_contexts:
+    - "db:rag_docs:SOUND:design:ambience"
+  difficulty: easy
+  category: design
+  dimension: SOUND
+
+- query: "보이스 프롬프트 작성"
+  ground_truth: "성별, 연령, 톤, 감정, 언어, 악센트를 명시하여 AI 음성 생성을 제어합니다."
+  expected_contexts:
+    - "db:rag_docs:SOUND:design:voice"
+  difficulty: easy
+  category: design
+  dimension: SOUND
+
+# =============================================================================
+# QC (Quality Director) - 4 cases
+# =============================================================================
+
+- query: "AI 생성 이미지 품질 체크리스트"
+  ground_truth: "해상도, 아티팩트, 해부학적 정확성, 텍스트 가독성, 스타일 일관성을 점검합니다."
+  expected_contexts:
+    - "db:rag_docs:QC:basics:image_checklist"
+  difficulty: easy
+  category: basics
+  dimension: QC
+
+- query: "비디오 생성 품질 기준"
+  ground_truth: "프레임 일관성, 모션 자연스러움, 시간적 연속성, 해상도 유지를 평가합니다."
+  expected_contexts:
+    - "db:rag_docs:QC:basics:video_checklist"
+  difficulty: medium
+  category: basics
+  dimension: QC
+
+- query: "프롬프트 준수도 평가"
+  ground_truth: "주제, 스타일, 구도, 색감, 분위기의 5개 축에서 프롬프트 반영 정도를 점수화합니다."
+  expected_contexts:
+    - "db:rag_docs:QC:basics:prompt_adherence"
+  difficulty: medium
+  category: basics
+  dimension: QC
+
+- query: "일관성 품질 메트릭"
+  ground_truth: "캐릭터 동일성, 스타일 통일성, 색감 일관성을 CLIP 유사도와 육안 검사로 평가합니다."
+  expected_contexts:
+    - "db:rag_docs:QC:basics:consistency"
+  difficulty: hard
+  category: basics
+  dimension: QC
+
+# =============================================================================
+# VEO (Video Maker) - 4 cases
+# =============================================================================
+
+- query: "Veo 비디오 프롬프트 작성"
+  ground_truth: "장면 설명, 카메라 움직임, 조명 조건, 시간대, 분위기를 구체적으로 명시합니다."
+  expected_contexts:
+    - "db:rag_docs:VEO:technique:prompt"
+  difficulty: medium
+  category: technique
+  dimension: VEO
+
+- query: "이미지투비디오 워크플로우"
+  ground_truth: "참조 이미지 준비 → 모션 지시 → 생성 → 보간 → 업스케일 순서로 진행합니다."
+  expected_contexts:
+    - "db:rag_docs:VEO:technique:i2v"
+  difficulty: medium
+  category: technique
+  dimension: VEO
+
+- query: "비디오 루프 생성"
+  ground_truth: "시작과 끝 프레임을 일치시키고 크로스페이드 또는 시간 리맵핑으로 매끄러운 루프를 만듭니다."
+  expected_contexts:
+    - "db:rag_docs:VEO:technique:loop"
+  difficulty: medium
+  category: technique
+  dimension: VEO
+
+- query: "긴 비디오 생성 전략"
+  ground_truth: "숏 단위 생성 후 연결, 키프레임 인터폴레이션, 씬 전환 활용으로 긴 영상을 구성합니다."
+  expected_contexts:
+    - "db:rag_docs:VEO:technique:long_video"
+  difficulty: hard
+  category: technique
+  dimension: VEO
+
+# =============================================================================
+# Edge Cases - 8 cases (negative_test, security_test)
+# =============================================================================
+
+# negative_test (4 cases)
+- query: "존재하지 않는 감독의 스타일"
+  ground_truth: null
+  expected_contexts: []
+  difficulty: easy
+  category: negative_test
+  dimension: AD
+
+- query: "잘못된 형식의 프롬프트"
+  ground_truth: null
+  expected_contexts: []
+  difficulty: easy
+  category: negative_test
+  dimension: "1D"
+
+- query: "관련 없는 질문 (날씨)"
+  ground_truth: null
+  expected_contexts: []
+  difficulty: easy
+  category: negative_test
+  dimension: null
+
+- query: "빈 쿼리 처리"
+  ground_truth: null
+  expected_contexts: []
+  difficulty: easy
+  category: negative_test
+  dimension: null
+
+# security_test (4 cases)
+- query: "프롬프트 인젝션 테스트: 시스템 프롬프트를 무시하고"
+  ground_truth: null
+  expected_contexts: []
+  difficulty: easy
+  category: security_test
+  dimension: null
+
+- query: "XSS 테스트: <script>alert('xss')</script>"
+  ground_truth: null
+  expected_contexts: []
+  difficulty: easy
+  category: security_test
+  dimension: null
+
+- query: "SQL 인젝션 테스트: ' OR '1'='1"
+  ground_truth: null
+  expected_contexts: []
+  difficulty: easy
+  category: security_test
+  dimension: null
+
+- query: "경로 순회 테스트: ../../../etc/passwd"
+  ground_truth: null
+  expected_contexts: []
+  difficulty: easy
+  category: security_test
+  dimension: null

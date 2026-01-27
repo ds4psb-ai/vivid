@@ -720,6 +720,8 @@ class ProductionRAGMonitor:
 
     Samples production queries and evaluates them periodically
     to detect quality degradation.
+
+    P1.2: Enhanced with Langfuse integration for observability.
     """
 
     def __init__(
@@ -727,13 +729,16 @@ class ProductionRAGMonitor:
         pipeline: RAGEvaluationPipeline,
         sample_rate: float = 0.01,  # 1% of production traffic
         alert_threshold: float = 0.6,  # Alert if avg score drops below
+        langfuse_enabled: bool = True,  # Send scores to Langfuse
     ):
         self.pipeline = pipeline
         self.sample_rate = sample_rate
         self.alert_threshold = alert_threshold
+        self.langfuse_enabled = langfuse_enabled
         self._buffer: list[EvaluationSample] = []
         self._buffer_max_size = 100
         self._latest_report: Optional[EvaluationReport] = None
+        self._langfuse_client = None
 
     def should_sample(self) -> bool:
         """Determine if current request should be sampled."""
@@ -781,3 +786,148 @@ class ProductionRAGMonitor:
     def get_latest_report(self) -> Optional[EvaluationReport]:
         """Get the most recent evaluation report."""
         return self._latest_report
+
+    def _get_langfuse_client(self):
+        """Lazy initialization of Langfuse client."""
+        if self._langfuse_client is not None:
+            return self._langfuse_client
+
+        if not self.langfuse_enabled:
+            return None
+
+        try:
+            from langfuse import Langfuse
+            from app.config import settings
+
+            if not settings.LANGFUSE_ENABLED:
+                return None
+
+            self._langfuse_client = Langfuse(
+                public_key=settings.LANGFUSE_PUBLIC_KEY,
+                secret_key=settings.LANGFUSE_SECRET_KEY.get_secret_value(),
+                host=settings.LANGFUSE_HOST,
+            )
+            return self._langfuse_client
+        except ImportError:
+            logger.warning("[RAG-EVAL] Langfuse not installed")
+            return None
+        except Exception as e:
+            logger.warning(f"[RAG-EVAL] Langfuse initialization failed: {e}")
+            return None
+
+    async def send_to_langfuse(
+        self,
+        result: EvaluationResult,
+        trace_id: Optional[str] = None,
+    ) -> bool:
+        """
+        Send evaluation result to Langfuse.
+
+        P1.2: Links RAG query traces with evaluation scores.
+
+        Args:
+            result: Evaluation result to send
+            trace_id: Optional trace ID to link with existing trace
+
+        Returns:
+            True if successful, False otherwise
+        """
+        client = self._get_langfuse_client()
+        if not client:
+            return False
+
+        try:
+            # Create or link to existing trace
+            if trace_id:
+                # Link scores to existing trace
+                for metric, score in result.scores.items():
+                    client.score(
+                        trace_id=trace_id,
+                        name=metric,
+                        value=score,
+                        comment=f"RAG evaluation: {result.sample_id}",
+                    )
+            else:
+                # Create new trace for standalone evaluation
+                trace = client.trace(
+                    name="rag-evaluation",
+                    input={"question": result.question},
+                    metadata={
+                        "sample_id": result.sample_id,
+                        "latency_ms": result.latency_ms,
+                        **result.metadata,
+                    },
+                )
+
+                for metric, score in result.scores.items():
+                    trace.score(
+                        name=metric,
+                        value=score,
+                    )
+
+            client.flush()
+            logger.debug(f"[RAG-EVAL] Sent to Langfuse: {result.sample_id}")
+            return True
+
+        except Exception as e:
+            logger.warning(f"[RAG-EVAL] Failed to send to Langfuse: {e}")
+            return False
+
+    async def send_report_to_langfuse(self, report: EvaluationReport) -> bool:
+        """
+        Send full evaluation report to Langfuse.
+
+        Creates a trace with aggregate scores and individual results.
+
+        Args:
+            report: Evaluation report to send
+
+        Returns:
+            True if successful, False otherwise
+        """
+        client = self._get_langfuse_client()
+        if not client:
+            return False
+
+        try:
+            # Create trace for batch evaluation
+            trace = client.trace(
+                name="rag-evaluation-batch",
+                metadata={
+                    "total_samples": report.total_samples,
+                    "duration_seconds": report.duration_seconds,
+                    **report.metadata,
+                },
+            )
+
+            # Add aggregate scores
+            for metric, score in report.avg_scores.items():
+                trace.score(
+                    name=f"avg_{metric}",
+                    value=score,
+                    comment=f"Average across {report.total_samples} samples",
+                )
+
+            # Add min/max for context
+            for metric, score in report.min_scores.items():
+                trace.score(
+                    name=f"min_{metric}",
+                    value=score,
+                )
+            for metric, score in report.max_scores.items():
+                trace.score(
+                    name=f"max_{metric}",
+                    value=score,
+                )
+
+            client.flush()
+            logger.info(
+                f"[RAG-EVAL] Report sent to Langfuse | "
+                f"samples={report.total_samples} | "
+                f"avg_faithfulness={report.avg_scores.get('faithfulness', 0):.4f}"
+            )
+            return True
+
+        except Exception as e:
+            logger.error(f"[RAG-EVAL] Failed to send report to Langfuse: {e}")
+            return False

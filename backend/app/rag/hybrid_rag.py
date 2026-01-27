@@ -30,6 +30,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Literal, Optional, Tuple
 
+from app.config import settings
 from app.rag.tier0_notebooklm import (
     get_notebooklm_service,
     NotebookQueryResult,
@@ -840,6 +841,30 @@ async def hybrid_query(
                         )
         except Exception as e:
             logger.warning(f"[HybridRAG] Personalization failed: {e}")
+
+    # === P1.2: Automatic RAG Evaluation Hook ===
+    if settings.RAG_EVAL_ENABLED:
+        try:
+            import random
+            if random.random() < settings.RAG_EVAL_SAMPLE_RATE:
+                from app.routers.rag_evaluation import record_evaluation_sample
+                # Extract context strings for evaluation
+                eval_contexts = [
+                    src.excerpt if hasattr(src, 'excerpt') else str(src.content if hasattr(src, 'content') else src)
+                    for src in (result.notebooklm_sources + result.vertex_sources)[:5]
+                ]
+                if eval_contexts:
+                    # Fire and forget - don't block main response
+                    asyncio.create_task(
+                        record_evaluation_sample(
+                            question=query,
+                            answer=result.answer,
+                            contexts=eval_contexts,
+                        )
+                    )
+                    logger.debug(f"[HybridRAG] P1.2 Evaluation sample recorded")
+        except Exception as e:
+            logger.debug(f"[HybridRAG] P1.2 Evaluation hook error (non-fatal): {e}")
 
     # === Load preset for Cache thresholds ===
     from app.rag.rag_presets import get_rag_preset
