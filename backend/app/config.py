@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     # Production: Set CORS_ORIGINS env var to your production domains (comma-separated)
     # Example: CORS_ORIGINS=https://crebit.app,https://www.crebit.app
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:3100,http://127.0.0.1:3100"
-    CORS_PRODUCTION_ORIGINS: str = "https://crebit.app,https://www.crebit.app,https://api.crebit.app,https://vivid-frontend.vercel.app"
+    CORS_PRODUCTION_ORIGINS: str = "https://crebit.app,https://www.crebit.app,https://api.crebit.app,https://vivid-frontend.vercel.app,https://prompty.co.kr,https://www.prompty.co.kr"
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_MAX_AGE: int = 600  # Preflight cache time in seconds (10 minutes)
     
