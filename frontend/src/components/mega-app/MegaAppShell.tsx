@@ -62,12 +62,13 @@ export function MegaAppShell({
         icon={icon}
         tabs={tabs}
         defaultTab={defaultTab}
-        children={children}
         headerRight={headerRight}
         showAurora={showAurora}
         showWorkflowProgress={showWorkflowProgress}
         tabParamName={tabParamName}
-      />
+      >
+        {children}
+      </MegaAppShellContent>
     </Suspense>
   );
 }

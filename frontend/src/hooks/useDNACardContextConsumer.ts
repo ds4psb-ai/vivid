@@ -24,7 +24,7 @@
  * ```
  */
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useDNACardContext } from "@/stores/dnaCardContextStore";
 import { AUTEUR_SPECIFIC_DATA } from "@/components/dna-card/constants";
@@ -74,29 +74,36 @@ export function useDNACardContextConsumer(
   const cardId = searchParams.get("cardId");
   const masterKey = searchParams.get("master");
 
-  // 로드된 거장 키 추적
-  const [loadedMasterKey, setLoadedMasterKey] = useState<string | null>(null);
-  // 컨텍스트가 처리되었는지 추적 (중복 처리 방지)
-  const [hasProcessed, setHasProcessed] = useState(false);
+  // 컨텍스트가 처리되었는지 추적 (중복 처리 방지) - useRef로 리렌더 방지
+  const hasProcessedRef = useRef(false);
+
+  // 로드된 거장 키 - 직접 계산 (렌더링 시점 계산)
+  const loadedMasterKey = (() => {
+    if (activeCard?.type === "master") {
+      return (activeCard.metadata as MasterDNAMetadata).auteurKey;
+    }
+    if (masterKey && AUTEUR_SPECIFIC_DATA[masterKey]) {
+      return masterKey;
+    }
+    return null;
+  })();
 
   // 컨텍스트 해제 함수
   const dismissContext = useCallback(() => {
     clearContext();
-    setLoadedMasterKey(null);
-    setHasProcessed(false);
+    hasProcessedRef.current = false;
   }, [clearContext]);
 
   useEffect(() => {
     // 이미 처리된 경우 스킵
-    if (hasProcessed) return;
+    if (hasProcessedRef.current) return;
 
     // Zustand 스토어에서 컨텍스트가 있으면 사용
     if (activeCard) {
-      setHasProcessed(true);
+      hasProcessedRef.current = true;
 
       if (activeCard.type === "master" && options.onMasterContext) {
         const metadata = activeCard.metadata as MasterDNAMetadata;
-        setLoadedMasterKey(metadata.auteurKey);
         options.onMasterContext(metadata.auteurKey, metadata);
       }
 
@@ -125,8 +132,7 @@ export function useDNACardContextConsumer(
     if (masterKey && options.onMasterContext) {
       const metadata = AUTEUR_SPECIFIC_DATA[masterKey];
       if (metadata) {
-        setHasProcessed(true);
-        setLoadedMasterKey(masterKey);
+        hasProcessedRef.current = true;
         options.onMasterContext(masterKey, metadata);
       }
     }
@@ -135,7 +141,6 @@ export function useDNACardContextConsumer(
     masterKey,
     options,
     clearContext,
-    hasProcessed,
   ]);
 
   return {

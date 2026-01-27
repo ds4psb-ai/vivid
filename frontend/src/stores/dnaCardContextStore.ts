@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { DNACard, MasterDNAMetadata } from "@/types/dna-card";
+import type { DNACard } from "@/types/dna-card";
 
 interface DNACardContextStore {
   // 상태

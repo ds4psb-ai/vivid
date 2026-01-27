@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useMemo, useCallback } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import type { MegaAppTab } from "../types";
 
@@ -33,24 +33,14 @@ export function useMegaAppTab({
   const router = useRouter();
   const pathname = usePathname();
 
-  // Get initial tab from URL or default
-  const getInitialTab = useCallback(() => {
+  // Derive active tab from URL (single source of truth)
+  const activeTab = useMemo(() => {
     const urlTab = searchParams.get(paramName);
     if (urlTab && tabs.some((t) => t.value === urlTab && !t.isDisabled)) {
       return urlTab;
     }
     return defaultTab || tabs[0]?.value || "";
   }, [searchParams, paramName, tabs, defaultTab]);
-
-  const [activeTab, setActiveTabState] = useState(getInitialTab);
-
-  // Sync state with URL changes
-  useEffect(() => {
-    const urlTab = searchParams.get(paramName);
-    if (urlTab && tabs.some((t) => t.value === urlTab && !t.isDisabled)) {
-      setActiveTabState(urlTab);
-    }
-  }, [searchParams, paramName, tabs]);
 
   // Update URL when tab changes
   const setActiveTab = useCallback(
@@ -60,9 +50,7 @@ export function useMegaAppTab({
         return;
       }
 
-      setActiveTabState(tab);
-
-      // Update URL
+      // Update URL (which will update activeTab via useMemo)
       const params = new URLSearchParams(searchParams.toString());
       params.set(paramName, tab);
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });

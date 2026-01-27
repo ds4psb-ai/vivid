@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type {
@@ -20,22 +20,21 @@ type PreviewPosition = "right" | "left" | "bottom";
 
 export function DNACardPreview({ card, anchorRect }: DNACardPreviewProps) {
   const config = DNA_CARD_CONFIG[card.type];
-  const [position, setPosition] = useState<PreviewPosition>("right");
 
-  // P0: 동적 위치 계산
-  useEffect(() => {
-    if (!anchorRect) return;
+  // P0: 동적 위치 계산 (useMemo로 동기적 계산)
+  const position = useMemo<PreviewPosition>(() => {
+    if (!anchorRect || typeof window === "undefined") return "right";
 
     const spaceRight = window.innerWidth - anchorRect.right;
     const spaceLeft = anchorRect.left;
 
     // 모바일: 항상 바텀시트
     if (window.innerWidth < 768) {
-      setPosition("bottom");
+      return "bottom";
     } else if (spaceRight < 320 && spaceLeft > 320) {
-      setPosition("left");
+      return "left";
     } else {
-      setPosition("right");
+      return "right";
     }
   }, [anchorRect]);
 

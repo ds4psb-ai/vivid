@@ -1,5 +1,3 @@
-import type { LucideIcon } from "lucide-react";
-
 // 카드 타입 (3종)
 export type DNACardType = "master" | "masterpiece" | "character";
 

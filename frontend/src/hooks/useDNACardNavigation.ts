@@ -2,8 +2,20 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
-import type { DNACard } from "@/types/dna-card";
+import type {
+  DNACard,
+  MasterDNAMetadata,
+  MasterpieceDNAMetadata,
+  CharacterDNAMetadata,
+} from "@/types/dna-card";
 import { useDNACardContext } from "@/stores/dnaCardContextStore";
+
+// Type for gtag window
+declare global {
+  interface Window {
+    gtag?: (command: string, event: string, params: Record<string, unknown>) => void;
+  }
+}
 
 interface UseDNACardNavigationOptions {
   onBeforeNavigate?: (card: DNACard) => boolean | void;
@@ -23,8 +35,8 @@ export function useDNACardNavigation(options?: UseDNACardNavigationOptions) {
       }
 
       // P1: Analytics 이벤트 (gtag가 있다면)
-      if (typeof window !== "undefined" && (window as any).gtag) {
-        (window as any).gtag("event", "dna_card_click", {
+      if (typeof window !== "undefined" && window.gtag) {
+        window.gtag("event", "dna_card_click", {
           card_id: card.id,
           card_type: card.type,
           target_app: card.megaAppEntry.app,
@@ -37,15 +49,15 @@ export function useDNACardNavigation(options?: UseDNACardNavigationOptions) {
       setActiveCard(card, {
         // 타입별 프리로드 데이터
         ...(card.type === "master" && {
-          colorPalettes: (card.metadata as any).colorPalettes,
-          signatureTechniques: (card.metadata as any).signatureTechniques,
+          colorPalettes: (card.metadata as MasterDNAMetadata).colorPalettes,
+          signatureTechniques: (card.metadata as MasterDNAMetadata).signatureTechniques,
         }),
         ...(card.type === "masterpiece" && {
-          logicVectorSummary: (card.metadata as any).logicVectorSummary,
+          logicVectorSummary: (card.metadata as MasterpieceDNAMetadata).logicVectorSummary,
         }),
         ...(card.type === "character" && {
-          primaryImageUrl: (card.metadata as any).primaryImageUrl,
-          tags: (card.metadata as any).tags,
+          primaryImageUrl: (card.metadata as CharacterDNAMetadata).primaryImageUrl,
+          tags: (card.metadata as CharacterDNAMetadata).tags,
         }),
       });
 

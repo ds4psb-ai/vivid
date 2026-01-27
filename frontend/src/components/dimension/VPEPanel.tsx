@@ -64,7 +64,7 @@ export default function VPEPanel() {
         setAuteurHint(metadata.auteurKey);
       }
     },
-    onMasterContext: (auteurKey, metadata) => {
+    onMasterContext: (auteurKey, _metadata) => {
       // 거장 DNA → auteur hint 자동 선택
       setAuteurHint(auteurKey);
       const auteurInfo = MASTER_AUTEURS.find((a) => a.key === auteurKey);

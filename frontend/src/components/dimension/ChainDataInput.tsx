@@ -30,16 +30,14 @@ export default function ChainDataInput({
     const chainContext = useDimensionChainOptional();
     const [applied, setApplied] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isExpanded, setIsExpanded] = useState(true);
     const colors = THEME_COLOR_CLASSES[themeColor];
 
-    if (!chainContext) return null;
-
-    const inputData = chainContext.getInputData(currentDimension);
+    const inputData = chainContext?.getInputData(currentDimension) ?? {};
     const availableInputs = Object.entries(inputData);
 
-    // P0 Fix: Default expanded when data exists (2026-01-25)
-    const [isExpanded, setIsExpanded] = useState(availableInputs.length > 0);
-
+    // Early returns after all hooks
+    if (!chainContext) return null;
     if (availableInputs.length === 0) return null;
 
     const handleApply = () => {
