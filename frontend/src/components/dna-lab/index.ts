@@ -17,7 +17,7 @@ export {
 // Step components
 export { DNALabStepPanel, useChainInputInjection } from "./DNALabStepPanel";
 export { DNALabChainSummary } from "./DNALabChainSummary";
-export { DNALabStepNav, DNALabStepNavCompact } from "./DNALabStepNav";
+export { DNALabStepNav, DNALabStepNavCompact, DNALabRunPipelineButton } from "./DNALabStepNav";
 
 // Hook
 export { useDNALabWorkflow, type StepState, type DNALabWorkflowState } from "./hooks/useDNALabWorkflow";

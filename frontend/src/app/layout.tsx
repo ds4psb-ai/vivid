@@ -24,6 +24,7 @@ export const metadata: Metadata = {
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { SessionProvider } from "@/contexts/SessionContext";
 import { DimensionConfigProvider } from "@/contexts/DimensionConfigContext";
+import { DimensionChainProvider } from "@/contexts/DimensionChainContext";
 import { ToastProvider } from "@/components/Toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { DNACardSidePanelPortal } from "@/components/dna-card/DNACardSidePanel";
@@ -57,10 +58,12 @@ export default function RootLayout({
           <SessionProvider>
             <LanguageProvider>
               <DimensionConfigProvider>
-                <ToastProvider>
-                  {children}
-                  <DNACardSidePanelPortal />
-                </ToastProvider>
+                <DimensionChainProvider>
+                  <ToastProvider>
+                    {children}
+                    <DNACardSidePanelPortal />
+                  </ToastProvider>
+                </DimensionChainProvider>
               </DimensionConfigProvider>
             </LanguageProvider>
           </SessionProvider>

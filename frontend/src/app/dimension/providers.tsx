@@ -9,11 +9,12 @@
  * can remain a Server Component.
  *
  * 2026 RSC Pattern: "Provider Islands" for client-side state.
+ *
+ * Note: DimensionChainProvider is now at root layout for cross-MegaApp sharing.
  */
 
 import { TeachingSettingsProvider } from "@/contexts/DimensionSettingsContext";
 import { CreditProvider } from "@/contexts/CreditContext";
-import { DimensionChainProvider } from "@/contexts/DimensionChainContext";
 
 interface DimensionProvidersProps {
   children: React.ReactNode;
@@ -24,9 +25,7 @@ export default function DimensionProviders({
 }: DimensionProvidersProps) {
   return (
     <CreditProvider>
-      <TeachingSettingsProvider>
-        <DimensionChainProvider>{children}</DimensionChainProvider>
-      </TeachingSettingsProvider>
+      <TeachingSettingsProvider>{children}</TeachingSettingsProvider>
     </CreditProvider>
   );
 }

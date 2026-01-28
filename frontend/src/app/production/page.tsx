@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Clapperboard, Video, Film, Music2, Image as ImageIcon } from "lucide-react";
+import { Image as ImageIcon } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MegaAppShell, type MegaAppTab } from "@/components/mega-app";
+import { UnifiedWorkflowShell } from "@/components/workflow";
 
 // Import existing panels
 import VeoVideoPanel from "@/components/dimension/VeoVideoPanel";
@@ -26,72 +26,53 @@ import SunoPanel from "@/components/dimension/SunoPanel";
  * - System Prompt integration from Story Engine
  * - Reference Images support (Veo 3.1)
  * - First/Last Frame control (Veo 3.1)
+ *
+ * Migration Note (2026.01):
+ * Using UnifiedWorkflowShell for consistent cross-MegaApp behavior.
+ * Step-based workflow replaces tab-based navigation.
  */
-
-const TABS: MegaAppTab[] = [
-  {
-    value: "veo",
-    label: "VEO 3.1",
-    labelEn: "VEO 3.1",
-    icon: <Video className="w-4 h-4" />,
-    description: "Google VEO 3.1 비디오 생성",
-    isNew: true,
-  },
-  {
-    value: "kling",
-    label: "Kling 2.6",
-    labelEn: "Kling 2.6",
-    icon: <Film className="w-4 h-4" />,
-    description: "고품질 시네마틱 비디오 생성",
-  },
-  {
-    value: "suno",
-    label: "Suno AI",
-    labelEn: "Suno AI",
-    icon: <Music2 className="w-4 h-4" />,
-    description: "AI 음악 생성 (작사/작곡)",
-  },
-  {
-    value: "imagen",
-    label: "Imagen 3",
-    labelEn: "Imagen 3",
-    icon: <ImageIcon className="w-4 h-4" />,
-    description: "고품질 이미지 생성 (Coming Soon)",
-    isDisabled: true,
-    badge: "Soon",
-  },
-];
 
 export default function ProductionPage() {
   return (
-    <MegaAppShell
+    <UnifiedWorkflowShell
       appId="production"
-      title="Production Bridge"
-      subtitle="통합 미디어 생성 플랫폼"
-      icon={Clapperboard}
-      tabs={TABS}
-      defaultTab="veo"
-      tabParamName="tab"
       showAurora={true}
+      showWorkflowProgress={true}
+      showChainSummary={true}
       headerRight={<ProviderStats />}
     >
-      {(activeTab) => (
-        <>
-          {activeTab === "veo" && <VeoVideoPanel />}
-          {activeTab === "kling" && <KlingPanel />}
-          {activeTab === "suno" && <SunoPanel />}
-          {activeTab === "imagen" && (
-            <div className="p-4">
-              <ComingSoonPanel
-                title="Imagen 3"
-                description="Google Imagen 3 고품질 이미지 생성이 곧 출시됩니다."
-              />
-            </div>
-          )}
-        </>
-      )}
-    </MegaAppShell>
+      {(currentStepId) => <StepContent stepId={currentStepId} />}
+    </UnifiedWorkflowShell>
   );
+}
+
+/**
+ * Step content renderer
+ */
+function StepContent({ stepId }: { stepId: string }) {
+  switch (stepId) {
+    case "veo":
+      return <VeoVideoPanel />;
+
+    case "kling":
+      return <KlingPanel />;
+
+    case "suno":
+      return <SunoPanel />;
+
+    case "imagen":
+      return (
+        <div className="p-4">
+          <ComingSoonPanel
+            title="Imagen 3"
+            description="Google Imagen 3 고품질 이미지 생성이 곧 출시됩니다."
+          />
+        </div>
+      );
+
+    default:
+      return <VeoVideoPanel />;
+  }
 }
 
 /**

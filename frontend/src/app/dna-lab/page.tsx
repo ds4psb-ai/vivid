@@ -19,9 +19,14 @@
  * - step: Current step (vpe, ad, mirror, qc)
  * - master: Auteur key for AD/VPE (bong, epoch, wong, etc.)
  * - ip: IP slug for chain data persistence
+ *
+ * Migration Note (2026.01):
+ * Using UnifiedWorkflowShell instead of DNALabWorkflowShell
+ * for consistent cross-MegaApp behavior.
  */
 
-import { DNALabWorkflowShell, DNALabStepPanel, type DNALabStepId } from "@/components/dna-lab";
+import { UnifiedWorkflowShell } from "@/components/workflow";
+import { DNALabStepPanel, DNALabRunPipelineButton, type DNALabStepId } from "@/components/dna-lab";
 
 // Import existing panels
 import AestheticDirectorPanel from "@/components/dimension/AestheticDirectorPanel";
@@ -31,15 +36,17 @@ import VPEPanel from "@/components/dimension/VPEPanel";
 
 export default function DNALabPage() {
   return (
-    <DNALabWorkflowShell
+    <UnifiedWorkflowShell
+      appId="dna-lab"
       showAurora={true}
       showWorkflowProgress={true}
       showChainSummary={true}
+      headerRight={<DNALabRunPipelineButton className="hidden sm:flex" />}
     >
-      {(stepId: DNALabStepId) => (
-        <StepContent stepId={stepId} />
+      {(currentStepId) => (
+        <StepContent stepId={currentStepId as DNALabStepId} />
       )}
-    </DNALabWorkflowShell>
+    </UnifiedWorkflowShell>
   );
 }
 
