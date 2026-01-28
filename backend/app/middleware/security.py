@@ -67,10 +67,11 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         """Generate default Content Security Policy."""
         policies = [
             "default-src 'self'",
-            "script-src 'self'",
-            "style-src 'self' 'unsafe-inline'",  # Allow inline styles for error pages
+            "script-src 'self' 'unsafe-inline' https://vercel.live",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "img-src 'self' data: https:",
-            "font-src 'self'",
+            "font-src 'self' https://fonts.gstatic.com",
+            "connect-src 'self' https://vercel.live wss://vercel.live",
             "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self'",

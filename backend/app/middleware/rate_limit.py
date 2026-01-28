@@ -307,9 +307,13 @@ class DefaultRateLimitMiddleware(BaseHTTPMiddleware):
     # Path-specific limits (more restrictive than default)
     # Format: (regex_pattern, limit_string)
     PATH_LIMITS = [
-        # Authentication - strict limits for brute force protection
-        (re.compile(r"^/api/v1/auth/"), "5/minute"),
-        # LLM generation - expensive operations
+        # Authentication - strict for login, relaxed for read-only session checks
+        (re.compile(r"^/api/v1/auth/login$"), "5/minute"),
+        (re.compile(r"^/api/v1/auth/register$"), "3/minute"),
+        (re.compile(r"^/api/v1/auth/(session|status)$"), "60/minute"),  # Read-only, needed on page load
+        (re.compile(r"^/api/v1/auth/"), "30/minute"),  # Other auth endpoints
+        # LLM generation - expensive operations (but tools config is read-only)
+        (re.compile(r"^/api/dimension/tools$"), "120/minute"),  # Config endpoint, needed on page load
         (re.compile(r"^/api/dimension/"), "10/minute"),
         (re.compile(r"^/api/v1/agent/"), "10/minute"),
         (re.compile(r"^/api/v1/uqsl/"), "10/minute"),
