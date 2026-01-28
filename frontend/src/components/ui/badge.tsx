@@ -1,11 +1,13 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface BadgeProps extends React.HTMLAttributes<HTMLElement> {
   variant?: "default" | "secondary" | "destructive" | "outline";
+  /** Semantic element type - defaults to "span" for inline, use "div" for block */
+  as?: "span" | "div";
 }
 
-function Badge({ className, variant = "default", ...props }: BadgeProps) {
+function Badge({ className, variant = "default", as: Component = "span", ...props }: BadgeProps) {
   const variants: Record<string, string> = {
     default: "badge",
     secondary: "badge badge-secondary",
@@ -14,7 +16,7 @@ function Badge({ className, variant = "default", ...props }: BadgeProps) {
   };
 
   return (
-    <div
+    <Component
       className={cn(
         variants[variant],
         className

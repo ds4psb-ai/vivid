@@ -1010,11 +1010,11 @@ function AbyssMirrorContent() {
           {/* React 19: Show loading during transition */}
           {isPending && (
             <div className="flex gap-3">
-              <div className={`w-8 h-8 rounded-full bg-${token.themeColor}-100 dark:bg-${token.themeColor}-500/20 border border-${token.themeColor}-300 dark:border-${token.themeColor}-500/30 flex items-center justify-center animate-pulse`}>
+              <div className={`w-8 h-8 rounded-full bg-${token.themeColor}-100 dark:bg-${token.themeColor}-500/20 border border-${token.themeColor}-300 dark:border-${token.themeColor}-500/30 flex items-center justify-center motion-safe:animate-pulse`}>
                 <Bot className={`w-4 h-4 text-${token.themeColor}-600 dark:text-${token.themeColor}-400`} />
               </div>
               <div className="flex-1 max-w-[var(--layout-bubble-max-narrow)] p-4 bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-2xl">
-                <div className="animate-pulse space-y-2">
+                <div className="motion-safe:animate-pulse space-y-2">
                   <div className={`h-3 bg-${token.themeColor}-200 dark:bg-${token.themeColor}-500/30 rounded w-3/4`}></div>
                   <div className={`h-3 bg-${token.themeColor}-200 dark:bg-${token.themeColor}-500/30 rounded w-1/2`}></div>
                   <div className={`h-3 bg-${token.themeColor}-200 dark:bg-${token.themeColor}-500/30 rounded w-2/3`}></div>
@@ -1126,7 +1126,7 @@ function AbyssMirrorContent() {
         <DimensionPanel.Sidebar>
           {/* Pipeline Data Banner */}
           {hasPipelineData && (
-            <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg animate-in fade-in slide-in-from-top-2">
+            <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2">
               <div className="flex items-center gap-2 text-emerald-400">
                 <CheckCircle className="w-4 h-4" />
                 <span className="text-sm font-medium">파이프라인 결과 표시 중</span>

@@ -43,7 +43,9 @@ export function StarRating({
                     onMouseLeave={() => setHoverValue(0)}
                     whileHover={!readonly ? { scale: 1.2 } : undefined}
                     whileTap={!readonly ? { scale: 0.9 } : undefined}
-                    className={`${readonly ? "cursor-default" : "cursor-pointer"} focus:outline-none`}
+                    aria-label={`${star}점 평가`}
+                    aria-pressed={value >= star}
+                    className={`${readonly ? "cursor-default" : "cursor-pointer"} focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 rounded-sm`}
                 >
                     <Star
                         className={`${sizeMap[size]} transition-colors ${star <= displayValue
@@ -108,9 +110,12 @@ export function RatingModal({
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="rating-modal-title"
                 className="relative z-10 w-full max-w-md mx-4 p-6 dialog-panel"
             >
-                <h3 className="text-lg font-bold text-[var(--fg-0)] mb-2">
+                <h3 id="rating-modal-title" className="text-lg font-bold text-[var(--fg-0)] mb-2">
                     템플릿이 도움이 되셨나요?
                 </h3>
                 <p className="text-sm text-[var(--fg-muted)] mb-4">
@@ -123,7 +128,9 @@ export function RatingModal({
                 </div>
 
                 {/* Feedback */}
+                <label htmlFor="rating-feedback" className="sr-only">피드백</label>
                 <textarea
+                    id="rating-feedback"
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
                     placeholder="피드백을 남겨주세요 (선택)"

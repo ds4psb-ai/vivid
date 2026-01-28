@@ -11,6 +11,7 @@ import {
     X,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { useToast } from "@/components/Toast";
 
 interface ActionConsoleProps {
     status: string;
@@ -22,6 +23,7 @@ interface ActionConsoleProps {
 
 export default function ActionConsole({ status, role, onAction, budget }: ActionConsoleProps) {
     const [loading, setLoading] = useState(false);
+    const toast = useToast();
 
     // Form states
     const [rating, setRating] = useState(5);
@@ -55,8 +57,10 @@ export default function ActionConsole({ status, role, onAction, budget }: Action
             }
 
             setUploadedFiles((prev) => [...prev, ...uploadedList]);
+            toast.success(`${uploadedList.length}개 파일 업로드 완료`);
         } catch (error) {
             console.error("File upload failed:", error);
+            toast.error("파일 업로드에 실패했습니다. 다시 시도해주세요.");
         } finally {
             setUploading(false);
             setUploadProgress(0);

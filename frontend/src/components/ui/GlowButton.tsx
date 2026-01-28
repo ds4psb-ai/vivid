@@ -63,6 +63,7 @@ export function GlowButton({
       className={cn(
         "relative rounded-full font-semibold text-white overflow-hidden group",
         "transition-all duration-300 ease-out",
+        "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white/50 focus:outline-none",
         variant === "solid" && `bg-gradient-to-r ${colors.gradient}`,
         variant === "outline" && "border-2 border-white/20 hover:border-white/40 bg-transparent",
         sizeMap[size],

@@ -536,6 +536,7 @@ export function getDimensionInputStyle(code: DimensionCode): string {
     "bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-lg px-4 py-3",
     "text-[var(--fg-0)] placeholder:text-[var(--fg-subtle)]",
     `focus:border-${key}/50 focus:ring-1 focus:ring-${key}/30`,
+    `focus-visible:ring-2 focus-visible:ring-${key}/50 focus-visible:ring-offset-2`,
     "focus:outline-none transition-colors duration-200",
   ].join(" ");
 }
@@ -545,9 +546,11 @@ export function getDimensionInputStyle(code: DimensionCode): string {
  * @example getDimensionButtonStyle("ad") => full button classes with gradient + glow
  */
 export function getDimensionButtonStyle(code: DimensionCode): string {
+  const key = DIMENSION_TOKENS[code].tailwindKey;
   return [
     "relative overflow-hidden px-6 py-3 rounded-xl font-semibold text-[var(--fg-on-emphasis)]",
     "transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed",
+    `focus-visible:ring-2 focus-visible:ring-${key}/50 focus-visible:ring-offset-2 focus:outline-none`,
     getDimensionGradient(code),
     getDimensionGlow(code, "lg"),
     "hover:scale-[1.02]",

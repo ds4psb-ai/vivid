@@ -715,7 +715,7 @@ Suggested Auteur: ${selectedDirection.suggested_auteur}`;
       <DimensionPanel.Sidebar>
         {/* Pipeline Data Banner */}
         {hasPipelineData && (
-          <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg animate-in fade-in slide-in-from-top-2">
+          <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2">
             <div className="flex items-center gap-2 text-emerald-400">
               <CheckCircle className="w-4 h-4" />
               <span className="text-sm font-medium">파이프라인 결과 표시 중</span>
@@ -1048,7 +1048,7 @@ function StageIndicator({
         <span className={stage === "guide" ? activeClass : ""}>3. {labels.guide}</span>
       </div>
       {uqslMessage && (
-        <div className="text-xs text-fuchsia-400 dark:text-fuchsia-300 animate-pulse">
+        <div className="text-xs text-fuchsia-400 dark:text-fuchsia-300 motion-safe:animate-pulse">
           {uqslMessage}
         </div>
       )}
@@ -1123,7 +1123,7 @@ function UQSLStreamingState({
   cancelLabel: string;
 }) {
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500">
+    <div className="max-w-4xl mx-auto space-y-6 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500">
       {/* Progress Header */}
       <div className="text-center space-y-4">
         <div className="relative inline-flex">
@@ -1136,7 +1136,7 @@ function UQSLStreamingState({
           <h3 className="text-lg font-bold text-slate-900 dark:text-white">
             UQSL Multi-Generate
           </h3>
-          <p className="text-sm text-slate-500 dark:text-fuchsia-300/70 animate-pulse">
+          <p className="text-sm text-slate-500 dark:text-fuchsia-300/70 motion-safe:animate-pulse">
             {message}
           </p>
         </div>
@@ -1148,7 +1148,7 @@ function UQSLStreamingState({
           {candidates.map((candidate, idx) => (
             <div
               key={idx}
-              className="p-4 rounded-xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 animate-in slide-in-from-bottom-4 duration-500"
+              className="p-4 rounded-xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 motion-safe:animate-in motion-safe:slide-in-from-bottom-4 motion-safe:duration-500"
               style={{ animationDelay: `${idx * 100}ms` }}
             >
               <div className="flex items-center justify-between mb-2">
@@ -1162,7 +1162,7 @@ function UQSLStreamingState({
                 )}
               </div>
               <div className="h-2 bg-slate-200/50 dark:bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-fuchsia-500 to-violet-500 animate-pulse" />
+                <div className="h-full bg-gradient-to-r from-fuchsia-500 to-violet-500 motion-safe:animate-pulse" />
               </div>
             </div>
           ))}
@@ -1390,7 +1390,7 @@ function PaletteLabStageUQSL({
   };
 }) {
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500">
+    <div className="max-w-4xl mx-auto space-y-6 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500">
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <Eye className="w-5 h-5 text-fuchsia-500 dark:text-fuchsia-400" />
@@ -1408,7 +1408,7 @@ function PaletteLabStageUQSL({
           <button
             key={dir.id}
             onClick={() => onSelectDirection(dir)}
-            className={`text-left p-6 rounded-2xl border transition-all relative overflow-hidden group
+            className={`text-left p-6 rounded-2xl border transition-all relative overflow-hidden group focus-visible:ring-2 focus-visible:ring-fuchsia-500 focus-visible:ring-offset-2 focus:outline-none
               ${selectedDirection?.id === dir.id
                 ? "bg-fuchsia-50 dark:bg-fuchsia-500/20 border-fuchsia-400 dark:border-fuchsia-500/50 ring-2 ring-fuchsia-500/30"
                 : dir.isRecommended
@@ -1419,7 +1419,7 @@ function PaletteLabStageUQSL({
             {/* Recommended Badge */}
             {dir.isRecommended && (
               <div className="absolute top-3 right-3 z-10">
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 font-medium animate-pulse">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 font-medium motion-safe:animate-pulse">
                   ⭐ {labels.recommended}
                 </span>
               </div>
@@ -1630,13 +1630,13 @@ function StyleGuideResult({
 
   return (
     <div
-      className={`max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10 ${isOptimistic ? "opacity-70" : ""
+      className={`max-w-4xl mx-auto space-y-8 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:duration-500 pb-10 ${isOptimistic ? "opacity-70" : ""
         }`}
     >
       {/* Optimistic Loading Indicator */}
       {isOptimistic && (
         <div className="flex items-center justify-center gap-2 py-2 px-4 bg-fuchsia-500/10 rounded-lg border border-fuchsia-500/20">
-          <div className="w-3 h-3 rounded-full bg-fuchsia-500 animate-pulse" />
+          <div className="w-3 h-3 rounded-full bg-fuchsia-500 motion-safe:animate-pulse" />
           <span className="text-sm text-fuchsia-600 dark:text-fuchsia-300">
             {l.generatingGuide}
           </span>

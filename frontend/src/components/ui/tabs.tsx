@@ -30,9 +30,16 @@ function Tabs({ defaultValue, value, onValueChange, className, children, ...prop
   );
 }
 
-function TabsList({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+interface TabsListProps extends React.HTMLAttributes<HTMLDivElement> {
+  /** Accessible label for the tablist */
+  "aria-label"?: string;
+}
+
+function TabsList({ className, children, "aria-label": ariaLabel, ...props }: TabsListProps) {
   return (
     <div
+      role="tablist"
+      aria-label={ariaLabel}
       className={cn(
         "tabs-list",
         className
@@ -51,11 +58,19 @@ interface TabsTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement>
 function TabsTrigger({ className, value, children, ...props }: TabsTriggerProps) {
   const context = React.useContext(TabsContext);
   const isSelected = context?.value === value;
+  const triggerId = `tab-${value}`;
+  const panelId = `tabpanel-${value}`;
 
   return (
     <button
+      role="tab"
+      id={triggerId}
+      aria-selected={isSelected}
+      aria-controls={panelId}
+      tabIndex={isSelected ? 0 : -1}
       className={cn(
         "tabs-trigger disabled:pointer-events-none disabled:opacity-50",
+        "focus-visible:ring-2 focus-visible:ring-[var(--ring-primary)] focus-visible:ring-offset-2 focus:outline-none",
         isSelected && "tabs-trigger-active",
         className
       )}
@@ -74,11 +89,17 @@ interface TabsContentProps extends React.HTMLAttributes<HTMLDivElement> {
 function TabsContent({ className, value, children, ...props }: TabsContentProps) {
   const context = React.useContext(TabsContext);
   const isSelected = context?.value === value;
+  const triggerId = `tab-${value}`;
+  const panelId = `tabpanel-${value}`;
 
   if (!isSelected) return null;
 
   return (
     <div
+      role="tabpanel"
+      id={panelId}
+      aria-labelledby={triggerId}
+      tabIndex={0}
       className={cn(
         "tabs-content",
         className

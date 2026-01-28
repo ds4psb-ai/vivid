@@ -11,6 +11,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, ArrowRight, X } from "lucide-react";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 export interface FeaturedIP {
   slug: string;
@@ -36,6 +37,7 @@ interface CinematicHeroProps {
 
 export function CinematicHero({ featured }: CinematicHeroProps) {
   const [showTrailer, setShowTrailer] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
 
   return (
     <header className="relative min-h-screen flex items-center justify-center pt-16 overflow-hidden bg-[var(--bg-base)]">
@@ -117,10 +119,10 @@ export function CinematicHero({ featured }: CinematicHeroProps) {
           {featured.character && (
             <Link href={`/chat/${featured.slug}`}>
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                whileHover={{ y: -8, scale: 1.02 }}
+                initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
+                animate={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+                transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.6, delay: 0.3 }}
+                whileHover={prefersReducedMotion ? {} : { y: -8, scale: 1.02 }}
                 className="group relative w-80 ml-auto bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[var(--border-primary)]/50 rounded-2xl p-4 shadow-2xl cursor-pointer transition-colors duration-300"
               >
                 {/* Status Badge - Top Right */}
@@ -164,16 +166,16 @@ export function CinematicHero({ featured }: CinematicHeroProps) {
       <AnimatePresence>
         {showTrailer && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={prefersReducedMotion ? {} : { opacity: 0 }}
+            animate={prefersReducedMotion ? {} : { opacity: 1 }}
+            exit={prefersReducedMotion ? {} : { opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
             onClick={() => setShowTrailer(false)}
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
+              initial={prefersReducedMotion ? {} : { scale: 0.9, opacity: 0 }}
+              animate={prefersReducedMotion ? {} : { scale: 1, opacity: 1 }}
+              exit={prefersReducedMotion ? {} : { scale: 0.9, opacity: 0 }}
               className="relative w-full max-w-4xl mx-4"
               onClick={(e) => e.stopPropagation()}
             >

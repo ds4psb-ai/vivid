@@ -437,7 +437,9 @@ export function EvidenceCard({
           {isCollapsible ? (
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="flex items-center gap-1 text-xs font-medium opacity-75 hover:opacity-100 transition-opacity w-full"
+              aria-expanded={isExpanded}
+              aria-controls="evidence-details-section"
+              className="flex items-center gap-1 text-xs font-medium opacity-75 hover:opacity-100 transition-opacity w-full focus-visible:ring-2 focus-visible:ring-[var(--ring-primary)] focus-visible:ring-offset-2 focus:outline-none rounded-sm"
             >
               <Database className="w-3 h-3" />
               <span>{labels.evidenceTitle}</span>
@@ -455,7 +457,7 @@ export function EvidenceCard({
           )}
 
           {isExpanded && (
-            <div className="mt-2 rounded-md border border-current/10 bg-white/60 dark:bg-slate-900/60 p-3 space-y-3 animate-in fade-in duration-200">
+            <div id="evidence-details-section" className="mt-2 rounded-md border border-current/10 bg-white/60 dark:bg-slate-900/60 p-3 space-y-3 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200">
               {/* Evidence Sources */}
               {evidenceItems.length > 0 && (
                 <div className="space-y-2">
@@ -569,16 +571,22 @@ export function EvidenceCard({
                     ))}
                   </div>
                   <div className="flex items-center gap-3 text-[10px] text-slate-500 dark:text-slate-400">
-                    <span>{labels.evidenceTraceMinConfidence}</span>
+                    <label htmlFor="min-confidence-range" className="sr-only">{labels.evidenceTraceMinConfidence}</label>
+                    <span aria-hidden="true">{labels.evidenceTraceMinConfidence}</span>
                     <input
+                      id="min-confidence-range"
                       type="range"
                       min={0}
                       max={100}
                       value={minConfidence}
                       onChange={(event) => setMinConfidence(Number(event.target.value))}
+                      aria-label={`${labels.evidenceTraceMinConfidence}: ${minConfidence}%`}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={minConfidence}
                       className="flex-1 accent-violet-500"
                     />
-                    <span className="tabular-nums">{minConfidence}%</span>
+                    <span className="tabular-nums" aria-hidden="true">{minConfidence}%</span>
                   </div>
                   {filteredTrace.length === 0 ? (
                     <div className="text-[11px] text-slate-400">
