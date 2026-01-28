@@ -112,8 +112,66 @@ const nextConfig: NextConfig = {
     ];
   },
   async redirects() {
-    // Removed: / -> /dimension redirect (unified home now handles this)
-    return [];
+    // Phase 5: Legacy dimension routes → Mega App redirects
+    // Preserves backward compatibility while directing users to unified experience
+    return [
+      // ===== DNA Lab redirects =====
+      {
+        source: "/dimension/aesthetic",
+        destination: "/dna-lab?step=ad",
+        permanent: false, // 307 - allows changing later
+      },
+      {
+        source: "/dimension/abyss",
+        destination: "/dna-lab?step=mirror",
+        permanent: false,
+      },
+      {
+        source: "/dimension/quality-check",
+        destination: "/dna-lab?step=qc",
+        permanent: false,
+      },
+      {
+        source: "/dimension/reference-decoder",
+        destination: "/dna-lab?step=vpe",
+        permanent: false,
+      },
+
+      // ===== Story Engine redirects =====
+      {
+        source: "/dimension/story-architect",
+        destination: "/story-engine?step=story",
+        permanent: false,
+      },
+      {
+        source: "/dimension/prompt",
+        destination: "/story-engine?step=prompt",
+        permanent: false,
+      },
+
+      // ===== Production Bridge redirects =====
+      {
+        source: "/dimension/video-maker",
+        destination: "/production?step=veo",
+        permanent: false,
+      },
+      {
+        source: "/dimension/kling",
+        destination: "/production?step=kling",
+        permanent: false,
+      },
+      {
+        source: "/dimension/suno",
+        destination: "/production?step=suno",
+        permanent: false,
+      },
+
+      // ===== Future: Additional redirects =====
+      // Uncomment when these are integrated into mega apps:
+      // { source: "/dimension/storyboard", destination: "/story-engine?step=storyboard", permanent: false },
+      // { source: "/dimension/visual-realizer", destination: "/production?step=visual", permanent: false },
+      // { source: "/dimension/sound-crafter", destination: "/production?step=sound", permanent: false },
+    ];
   },
   async rewrites() {
     return [
