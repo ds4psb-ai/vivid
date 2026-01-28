@@ -540,15 +540,195 @@ async def quality_direct(
 
 
 # =============================================================================
+# Unified Pipeline (Saga Pattern)
+# =============================================================================
+
+@router.post("/run-pipeline")
+async def run_dna_pipeline(
+    request: Dict[str, Any],
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    byok_key: Optional[str] = Depends(get_byok_key),
+):
+    """Run unified DNA pipeline with Saga pattern orchestration.
+
+    Executes steps in order: VPE → AD → Mirror → QC
+    with automatic compensation (rollback) on failure.
+
+    Args:
+        request: Pipeline configuration
+            - video_uri: Video URI for VPE (gs:// or https://)
+            - concept: Creative concept for AD
+            - auteur_key: Auteur hint
+            - steps: List of steps to run (default: all)
+            - persona_context: Context for Mirror
+            - quality_content: Content for QC
+            - ip_id: IP ID for context-aware QC
+            - store_to_qdrant: Whether to sync to Qdrant (default: true)
+            - fail_fast: Stop on first failure (default: false)
+
+    Returns:
+        DNALabResult with all outputs and execution metadata
+    """
+    from app.schemas.dna_lab_unified import DNALabPipelineRequest, PipelineStep
+    from app.services.dna_lab_orchestrator import get_orchestrator, STEP_CREDITS
+
+    start_time = time.time()
+    user_id = user.get("id")
+    trace_id = str(uuid.uuid4())
+
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": "INVALID_USER", "message": "유효하지 않은 사용자입니다."}
+        )
+
+    # Parse request
+    try:
+        # Convert step strings to enums if needed
+        if "steps" in request and isinstance(request["steps"], list):
+            request["steps"] = [
+                PipelineStep(s) if isinstance(s, str) else s
+                for s in request["steps"]
+            ]
+        pipeline_request = DNALabPipelineRequest(**request)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "INVALID_REQUEST", "message": str(e)}
+        )
+
+    # Calculate credit cost
+    steps = pipeline_request.steps or [
+        PipelineStep.VPE, PipelineStep.AD, PipelineStep.MIRROR, PipelineStep.QC
+    ]
+    credit_cost = sum(STEP_CREDITS.get(s, 0) for s in steps)
+    credits_deducted = False
+
+    # Credit check (skip for BYOK users)
+    if not byok_key and credit_cost > 0:
+        user_credits = await get_or_create_user_credits(db, user_id)
+        if user_credits.balance < credit_cost:
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail={
+                    "code": "INSUFFICIENT_CREDITS",
+                    "message": "크레딧이 부족합니다.",
+                    "required": credit_cost,
+                    "balance": user_credits.balance,
+                }
+            )
+        await deduct_credits(
+            db, user_id, credit_cost,
+            description=f"DNA Lab Pipeline: {', '.join(s.value for s in steps)}",
+            meta={"steps": [s.value for s in steps]}
+        )
+        credits_deducted = True
+
+    try:
+        # Run pipeline
+        orchestrator = get_orchestrator(api_key=byok_key)
+        result = await orchestrator.run_pipeline(
+            request=pipeline_request,
+            user_id=user_id,
+            db=db,
+        )
+
+        # Partial refund if not all steps succeeded
+        if credits_deducted and result.credits_used < credit_cost:
+            refund_amount = credit_cost - result.credits_used
+            if refund_amount > 0:
+                await _refund_with_retry(
+                    db=db,
+                    user_id=user_id,
+                    amount=refund_amount,
+                    description="DNA Lab Pipeline partial refund",
+                    meta={"errors": result.errors},
+                )
+
+        # Record telemetry
+        try:
+            await record_tool_run(
+                db=db,
+                tool_key="dna_lab.pipeline",
+                user_id=user_id,
+                inputs_summary={
+                    "steps": [s.value for s in steps],
+                    "has_video": bool(pipeline_request.video_uri),
+                    "auteur_key": pipeline_request.auteur_key,
+                },
+                outputs_summary={
+                    "success": result.success,
+                    "status": result.status.value,
+                    "completed_steps": [sr.step.value for sr in result.steps if sr.status == "completed"],
+                },
+                status="success" if result.success else "failure",
+                latency_ms=int((time.time() - start_time) * 1000),
+                credits_charged=result.credits_used if credits_deducted else 0,
+            )
+        except Exception:
+            pass
+
+        # Serialize result
+        return {
+            "success": result.success,
+            "trace_id": result.trace_id,
+            "status": result.status.value,
+            "vpe": result.vpe.model_dump() if result.vpe else None,
+            "ad": result.ad.model_dump() if result.ad else None,
+            "mirror": result.mirror.model_dump() if result.mirror else None,
+            "qc": result.qc.model_dump() if result.qc else None,
+            "evidence_refs": result.evidence_refs,
+            "steps": [
+                {
+                    "step": sr.step.value,
+                    "status": sr.status,
+                    "duration_ms": sr.duration_ms,
+                    "credits_used": sr.credits_used,
+                    "error": sr.error,
+                }
+                for sr in result.steps
+            ],
+            "credits_used": result.credits_used,
+            "processing_time_ms": result.processing_time_ms,
+            "errors": result.errors,
+        }
+
+    except Exception as e:
+        logger.exception(f"[DNALab] Pipeline error: {e}")
+
+        if credits_deducted:
+            await _refund_with_retry(
+                db=db,
+                user_id=user_id,
+                amount=credit_cost,
+                description="DNA Lab Pipeline error",
+                meta={"error": str(e)[:500]},
+            )
+
+        return {
+            "success": False,
+            "trace_id": trace_id,
+            "status": "failed",
+            "errors": {"pipeline": f"파이프라인 오류: {type(e).__name__}"},
+        }
+
+
+# =============================================================================
 # Health Check
 # =============================================================================
 
 @router.get("/health")
 async def health_check() -> Dict[str, Any]:
     """Health check endpoint for DNA Lab service."""
+    from app.services.dna_lab_orchestrator import STEP_CREDITS
+    from app.schemas.dna_lab_unified import PipelineStep
+
     return {
         "service": "dna_lab",
         "status": "healthy",
         "components": [c.value for c in DNAComponent],
         "component_credits": {c.value: COMPONENT_CREDITS[c] for c in DNAComponent},
+        "pipeline_steps": [s.value for s in PipelineStep],
+        "pipeline_step_credits": {s.value: STEP_CREDITS[s] for s in PipelineStep},
     }
