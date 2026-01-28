@@ -158,7 +158,7 @@ class TestRateLimiting:
 
         # Auth endpoints should be strict
         assert middleware._get_limit_for_path("/api/v1/auth/login") == "5/minute"
-        assert middleware._get_limit_for_path("/api/v1/auth/register") == "5/minute"
+        assert middleware._get_limit_for_path("/api/v1/auth/register") == "3/minute"
 
         # Dimension endpoints should be limited
         assert middleware._get_limit_for_path("/api/dimension/1d/generate") == "10/minute"

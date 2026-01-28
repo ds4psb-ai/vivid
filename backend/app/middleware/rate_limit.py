@@ -310,8 +310,12 @@ class DefaultRateLimitMiddleware(BaseHTTPMiddleware):
         # Authentication - strict for login, relaxed for read-only session checks
         (re.compile(r"^/api/v1/auth/login$"), "5/minute"),
         (re.compile(r"^/api/v1/auth/register$"), "3/minute"),
-        (re.compile(r"^/api/v1/auth/(session|status)$"), "60/minute"),  # Read-only, needed on page load
+        (re.compile(r"^/api/v1/auth/(session|status)$"), "300/minute"),  # Read-only, needed on every page load
         (re.compile(r"^/api/v1/auth/"), "30/minute"),  # Other auth endpoints
+        # Homepage APIs - read-only, needed on page load (featured, cinema, variations)
+        (re.compile(r"^/api/v1/homepage/"), "300/minute"),
+        # Credits balance - read-only, needed on every page load
+        (re.compile(r"^/api/v1/credits/balance$"), "300/minute"),
         # LLM generation - expensive operations (but tools config is read-only)
         (re.compile(r"^/api/dimension/tools$"), "120/minute"),  # Config endpoint, needed on page load
         (re.compile(r"^/api/dimension/"), "10/minute"),
