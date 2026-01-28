@@ -75,17 +75,86 @@
 
 ---
 
-## Implementation Status
+## Implementation Status (2026-H2 통합 아키텍처)
 
-| Phase | 상태 | 설명 |
-|-------|------|------|
-| Phase 1: VPE | ✅ 완료 | Logic Vector 추출 |
-| Phase 2: DNA Lab | ✅ 완료 | 거장 DNA 오케스트레이션 |
-| Phase 3: Story Engine | ✅ 완료 | System Prompt Generator |
-| Phase 4: Production Bridge | ✅ 완료 | Provider 패턴 |
-| **Phase 4.5: Schema Enhancement** | 🔄 **진행** | Reference Images 확장, First/Last Frame |
-| Phase 5: Frontend | ⏳ 대기 | 3개 메가앱 페이지 |
-| **Phase 6: Continuity Supervisor** | 🆕 **신규** | 영상 QA 자동화 |
+> [!IMPORTANT]
+> **2026-01-28 업데이트**: 독립 4개 앱 → 통합 파이프라인 + 2026 표준 아키텍처
+
+### 아키텍처 개선 비교
+
+| 항목 | 현재 | 개선 후 |
+|------|------|--------|
+| **실행 방식** | 독립 호출 (4회) | **Saga 패턴 파이프라인** |
+| **데이터 동기화** | 즉시 Qdrant | **Transactional Outbox** |
+| **실패 처리** | 개별 refund | **Saga 보상 트랜잭션** |
+| **Mirror 모델** | MBTI만 | **MBTI + Big Five (OCEAN)** |
+| **QC 기준** | 고정 | **IP Context-aware** |
+| **Logic Vector** | 고정 (v1 영구) | **Versioning + Drift Detection** |
+| **Shot Grammar** | 포맷 변환만 | **Transpiler (엔진별 최적화)** |
+| **피드백** | 알림만 | **HITL Dashboard + Auto-Apply** |
+
+### Phase 진행 현황
+
+| Phase | 주차 | 상태 | 설명 |
+|-------|:----:|:----:|------|
+| **Phase 1.1** | W1 | ⏳ | Unified Schema (`DNALabResult`) |
+| **Phase 1.2** | W1-2 | ⏳ | Saga Orchestrator (`VPE→AD→Mirror→QC`) |
+| **Phase 1.3** | W2 | ⏳ | Transactional Outbox + Publisher |
+| **Phase 1.4** | W3 | ⏳ | API Endpoint (`/run-pipeline`) |
+| **Phase 1.5.1** | W3-4 | ⏳ | Big Five (OCEAN) 심리학 모델 |
+| **Phase 1.5.2** | W3-4 | ⏳ | Context-aware QC |
+| **Phase 1.5.3** | W3-4 | ⏳ | Logic Vector Versioning + Drift Detection |
+| **Phase 1.5.4** | W3-4 | ⏳ | Shot Grammar Transpiler (Veo/Kling/Sora) |
+| **Phase 2.1** | W5 | ⏳ | Feedback Table + Analytics |
+| **Phase 2.2** | W5-6 | ⏳ | Auto-Improvement Cron |
+| **Phase 2.3** | W5-6 | ⏳ | HITL Dashboard + Auto-Apply |
+
+### 핵심 신규 컴포넌트
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    DNA Lab 통합 파이프라인 (Saga)                        │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  [VPE] ──→ [AD] ──→ [Mirror] ──→ [QC]                                  │
+│    ↓         ↓         ↓          ↓                                    │
+│  Logic   Aesthetic  Persona    Quality                                 │
+│  Vector  Guidelines   DNA      Report                                  │
+│    │         │         │          │                                    │
+│    └─────────┴────┬────┴──────────┘                                    │
+│                   ↓                                                     │
+│            DNALabResult                                                │
+│                   ↓                                                     │
+│         ┌────────┴────────┐                                            │
+│         ↓                 ↓                                            │
+│    [Outbox]         [Transpiler]                                       │
+│         ↓                 ↓                                            │
+│    Qdrant Sync      Veo/Kling/Sora                                     │
+│                                                                         │
+├─────────────────────────────────────────────────────────────────────────┤
+│  [Drift Detection] ──→ [HITL Dashboard] ──→ [Auto-Apply]               │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### 신규 파일 목록 (15개)
+
+| 파일 | 용도 | Phase |
+|------|------|:-----:|
+| `schemas/dna_lab_unified.py` | 통합 스키마 | 1.1 |
+| `services/dna_lab_orchestrator.py` | Saga 오케스트레이터 | 1.2 |
+| `models_outbox.py` | Outbox 테이블 | 1.3 |
+| `services/outbox_publisher.py` | Qdrant 동기화 | 1.3 |
+| `services/logic_vector_versioning.py` | Drift Detection | 1.5.3 |
+| `schemas/drift_detection.py` | Drift 스키마 | 1.5.3 |
+| `routers/production/providers/adapters/transpiler.py` | Shot Grammar Transpiler | 1.5.4 |
+| `services/feedback_analyzer.py` | 피드백 분석 | 2.2 |
+| `services/hitl_workflow.py` | HITL 워크플로우 | 2.3 |
+| `routers/hitl.py` | HITL API | 2.3 |
+| `frontend/src/app/admin/hitl/page.tsx` | HITL 대시보드 | 2.3 |
+| `alembic/.../add_outbox.py` | Outbox 마이그레이션 | 1.3 |
+| `alembic/.../add_ocean.py` | Big Five 컬럼 | 1.5.1 |
+| `alembic/.../add_logic_vector_versions.py` | 버전 테이블 | 1.5.3 |
+| `alembic/.../add_hitl_review_items.py` | HITL 테이블 | 2.3 |
 
 ---
 

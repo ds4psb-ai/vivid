@@ -1,20 +1,34 @@
 # 4-D DNA Unified Architecture - Handover Document
 
-> **Date**: 2026-01-27
+> **Date**: 2026-01-28
 > **Author**: Claude Opus 4.5
-> **Status**: Skeleton Implementation Complete
+> **Status**: 🔄 2026-H2 통합 아키텍처 구현 중
 > **Commit**: `f8979491` (main)
 
 ---
 
 ## 1. Executive Summary
 
+### 기존 완료 (Phase 1-4)
+
 **완료된 작업**: 4-D DNA Unified Architecture의 기본 인프라 구축
 - DimensionChainContext 확장 (evidence_refs, sessionStorage, MegaApp 인식)
 - PersonaDNA Big Five (OCEAN) 확장
 - MegaApp 통합 기반 마련
 
-**다음 작업**: 각 Panel에서 실제로 이 인프라를 활용하도록 연결
+### 신규 진행 (Phase 1.x-2.x)
+
+**2026-H2 통합 아키텍처**: 독립 앱 → Saga 패턴 파이프라인 + 학습 가능한 시스템
+
+| 컴포넌트 | 현재 → 개선 후 | Phase |
+|---------|---------------|:-----:|
+| **실행 방식** | 독립 호출 → Saga 패턴 | 1.2 |
+| **데이터 동기화** | 즉시 Qdrant → Transactional Outbox | 1.3 |
+| **Mirror 모델** | MBTI → MBTI + Big Five | 1.5.1 |
+| **QC 기준** | 고정 → IP Context-aware | 1.5.2 |
+| **Logic Vector** | 고정 v1 → Versioning + Drift Detection | 1.5.3 |
+| **Shot Grammar** | 포맷 변환 → Transpiler (엔진별 최적화) | 1.5.4 |
+| **피드백** | 알림 → HITL Dashboard + Auto-Apply | 2.3 |
 
 ---
 
@@ -190,6 +204,182 @@ class UserPreferenceProfile(Base):
 ```
 
 **마이그레이션**: `backend/alembic/versions/034_add_ocean_to_user_profiles.py`
+
+---
+
+## 2.5 2026-H2 신규 컴포넌트 (Phase 1.x-2.x)
+
+### 2.5.1 Unified Schema
+
+**신규 파일**: `backend/app/schemas/dna_lab_unified.py`
+
+```python
+class AestheticGuidelines(BaseModel):
+    """AD 출력"""
+    visual_style: str
+    color_palette: List[str]
+    mood_keywords: List[str]
+    auteur_reference: Optional[str] = None
+
+class PersonaDNA(BaseModel):
+    """Mirror 출력 (MBTI + Big Five)"""
+    mbti: Optional[str] = None
+    openness: float = 0.5
+    conscientiousness: float = 0.5
+    extraversion: float = 0.5
+    agreeableness: float = 0.5
+    neuroticism: float = 0.5
+    archetype: Optional[str] = None
+
+class QualityReport(BaseModel):
+    """QC 출력"""
+    passed: bool
+    score: float
+    criteria_results: Dict[str, float]
+    issues: List[str] = []
+    suggestions: List[str] = []
+
+class DNALabResult(BaseModel):
+    """통합 결과"""
+    success: bool
+    trace_id: str
+    vpe: Optional[LogicVector] = None
+    ad: Optional[AestheticGuidelines] = None
+    mirror: Optional[PersonaDNA] = None
+    qc: Optional[QualityReport] = None
+    evidence_refs: List[str] = []
+    credits_used: int = 0
+```
+
+### 2.5.2 Saga Orchestrator
+
+**신규 파일**: `backend/app/services/dna_lab_orchestrator.py`
+
+```python
+class DNALabOrchestrator:
+    """Saga 패턴으로 VPE → AD → Mirror → QC 순차 실행"""
+
+    async def run_pipeline(
+        self, video_uri: str, user_id: str, db: AsyncSession
+    ) -> DNALabResult:
+        trace_id = str(uuid.uuid4())
+        completed = []
+
+        try:
+            vpe_result = await self._run_vpe(video_uri)
+            completed.append("vpe")
+
+            ad_result = await self._run_ad(vpe_result)
+            completed.append("ad")
+
+            mirror_result = await self._run_mirror()
+            completed.append("mirror")
+
+            qc_result = await self._run_qc(ad_result)
+            completed.append("qc")
+
+            await self._write_to_outbox(trace_id, result, db)
+
+            return DNALabResult(success=True, trace_id=trace_id, ...)
+
+        except Exception as e:
+            await self._compensate(completed, trace_id, db)
+            raise
+```
+
+### 2.5.3 Transactional Outbox
+
+**신규 파일**: `backend/app/models_outbox.py`
+
+```python
+class Outbox(Base):
+    __tablename__ = "outbox"
+    id = Column(UUID, primary_key=True)
+    event_type = Column(String(50), nullable=False)  # "dna_lab_result"
+    payload = Column(JSONB, nullable=False)
+    status = Column(String(20), default="pending")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    published_at = Column(DateTime, nullable=True)
+    retry_count = Column(Integer, default=0)
+```
+
+**신규 파일**: `backend/app/services/outbox_publisher.py`
+- 폴링 방식으로 pending 이벤트 → Qdrant 동기화
+- 최대 3회 재시도 후 failed 상태 전환
+
+### 2.5.4 Logic Vector Versioning + Drift Detection
+
+**신규 파일**: `backend/app/services/logic_vector_versioning.py`
+
+```python
+class LogicVectorVersioning:
+    DRIFT_THRESHOLD = 0.15  # cosine distance > 15% = drift
+
+    async def detect_drift(
+        self, ip_id: str, new_videos: List[str], db: AsyncSession
+    ) -> DriftDetectionResult:
+        # 1. 새 영상 Logic Vector 추출
+        # 2. 현재 active version 로드
+        # 3. Cosine distance + KS-test
+        # 4. drift 감지 시 HITL 검토 요청
+```
+
+**DB 테이블**: `logic_vector_versions`
+- `ip_id`, `version_number`, `embedding`, `logic_vector`
+- `is_active`, `valid_from`, `valid_until`
+- `drift_score_from_prev`, `drift_reason`
+
+### 2.5.5 Shot Grammar Transpiler
+
+**신규 파일**: `backend/app/routers/production/providers/adapters/transpiler.py`
+
+```python
+class ShotGrammarTranspiler:
+    """공통 Shot Grammar → 엔진별 최적 포맷 변환"""
+
+    async def transpile(
+        self, prompt_cards: PromptCards, target_engine: str,
+        logic_vector: Optional[LogicVector] = None
+    ) -> Dict[str, Any]:
+        if target_engine == "veo":
+            return self._to_veo_optimal(prompt_cards, logic_vector)
+        elif target_engine == "kling":
+            return self._to_kling_optimal(prompt_cards, logic_vector)
+        elif target_engine == "sora":
+            return self._to_sora_optimal(prompt_cards, logic_vector)
+```
+
+**엔진별 최적화**:
+- **Veo 3.1**: `[Cinematography] + [Subject] + [Action] + [Context] + [Style]` + first/last frame
+- **Kling 2.6**: Subject-first + motion_intensity + beat_markers
+- **Sora 2**: Timeline/Storyboard cards + physics hints
+
+### 2.5.6 HITL Dashboard + Auto-Apply
+
+**신규 파일**: `backend/app/services/hitl_workflow.py`
+
+```python
+class HITLWorkflowService:
+    async def create_review_item(
+        self, review_type: str, payload: Dict, severity: str = "medium"
+    ) -> HITLReviewItem:
+        # 검토 항목 생성 + 알림 발송
+
+    async def approve_and_apply(
+        self, item_id: str, decision_by: str, modified_action: Optional[Dict]
+    ) -> HITLReviewItem:
+        # 승인 + 자동 적용 (vector_drift → upgrade, qc_failure → 기준 조정)
+```
+
+**DB 테이블**: `hitl_review_items`
+- `review_type`: vector_drift, qc_failure, prompt_pattern
+- `severity`: low, medium, high, critical
+- `status`: pending, in_review, approved, rejected
+- `suggested_action`, `decision`, `auto_applied`
+
+**프론트엔드**: `frontend/src/app/admin/hitl/page.tsx`
+- 3가지 유형 탭: Vector Drift | QC Failure | Prompt Pattern
+- KPI Cards, Severity 기반 정렬, 승인/거부 버튼
 
 ---
 

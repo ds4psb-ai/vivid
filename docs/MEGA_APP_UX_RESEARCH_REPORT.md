@@ -147,6 +147,57 @@ Color Space: Oklch (wide-gamut, perceptually uniform)
 3. **비주얼 데모**: 텍스트 설명보다 애니메이션 데모가 이해도 향상
 4. **신뢰 지표**: 기업 로고, 사용 사례, 평점 표시
 
+### 2.3 🆕 2026 Non-Linear Workflow UX 패턴 (최신 추가)
+
+> **Sources**: 
+> - [userguiding.com](https://userguiding.com) - Value Before Signup 트렌드
+> - [qurioos.com](https://qurioos.com) - Non-Linear Onboarding 연구
+> - [LTX Studio](https://ltx.studio) - Parallel Preview 구현 사례
+
+2026년 AI 크리에이티브 도구의 핵심 트렌드는 **순차적 강제 → 비순차적 자유**로의 전환입니다.
+
+#### 🔴 기존 패턴 (문제점)
+
+```
+VPE → AD → Mirror → QC (무조건 순서대로)
+     ↑
+   "이전 단계 미완료" 경고 = Friction
+```
+
+#### 🟢 2026 패턴 (권장)
+
+| 패턴 | 설명 | DNA Lab 적용 |
+|------|------|-------------|
+| **Intent-Driven Entry** | "봉준호 스타일로 분석해줘" → 바로 결과 | 자연어 명령 진입점 추가 |
+| **Value Before Step** | 어느 단계든 진입 → AI가 빈 데이터 추론 | 경고 대신 자동 채움 제안 |
+| **Parallel Preview** | 모든 단계 병렬 미리보기 → "확정" 클릭 | LTX Studio 스타일 그리드 뷰 |
+
+#### 구체적 구현 권장
+
+**1. Intent-Driven Entry Point**
+```
+/dna-lab → 무조건 VPE 탭부터 (현재)
+/dna-lab?intent="봉준호 스타일 분석" → 바로 결과 (2026)
+```
+
+**2. Value Before Step**
+```
+AD 탭 직접 진입 시:
+- 현재: "VPE 먼저 완료하세요" 경고
+- 2026: "Logic Vector 없음 → AI가 기본값 제안" 자동 채움
+```
+
+**3. Parallel Preview (LTX Studio 참조)**
+```
+┌─────────────────────────────────────────────┐
+│  DNA Lab - 병렬 미리보기 모드               │
+├──────────┬──────────┬──────────┬──────────┤
+│  VPE     │  AD      │  Mirror  │  QC      │
+│ [미리보기]│ [미리보기]│ [미리보기]│ [미리보기]│
+└──────────┴──────────┴──────────┴──────────┘
+         ↓ 원하는 결과 선택 → 상세 편집
+```
+
 ---
 
 ## 3. 메인페이지 통합 방안
@@ -359,6 +410,17 @@ Production Bridge
 | WorkflowProgress 컴포넌트 | `components/mega-app/WorkflowProgress.tsx` | 단계 시각화 |
 | 메가앱 간 네비게이션 | 각 메가앱 페이지 | "다음 단계" CTA |
 | 실시간 프리뷰 패턴 | VPE, System Prompt 패널 | 입력 중 미리보기 |
+
+### Phase 4: 🆕 Non-Linear Workflow UX (1주)
+
+> 2026 트렌드 반영 - 순차적 강제 → 비순차적 자유
+
+| 작업 | 파일 | 설명 |
+|------|------|------|
+| Intent-Driven Entry | `app/dna-lab/page.tsx` | `?intent=` 파라미터 처리, 자연어 → 단계 스킵 |
+| Auto-Fill Missing Data | `hooks/useChainDataInjection.ts` | 빈 데이터 AI 추론 제안 |
+| Parallel Preview Grid | `components/dna-lab/DNALabParallelView.tsx` | 4단계 동시 미리보기 |
+| Smart Defaults | `services/dna_lab_service.py` | Chain 데이터 없을 시 기본값 생성 |
 
 ---
 
