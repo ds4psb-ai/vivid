@@ -79,17 +79,21 @@ export function VariationsGrid({ variations: initialVariations, enableFiltering 
         const data = await api.getHomepageVariations(activeFilter);
         if (data.length > 0) {
           // Transform API response to match component interface
-          const transformedData: VariationCard[] = data.map((item) => ({
-            id: item.id,
-            name: item.name,
-            description: item.description,
-            thumbnailUrl: item.thumbnailUrl,
-            category: item.category,
-            badge: item.badge,
-            badgeColor: item.badgeColor,
-            href: item.href,
-            layout: item.layout,
-          }));
+          // API returns snake_case, convert to camelCase with fallbacks
+          const transformedData: VariationCard[] = data.map((item) => {
+            const raw = item as any;
+            return {
+              id: raw.id,
+              name: raw.name,
+              description: raw.description,
+              thumbnailUrl: raw.thumbnail_url || raw.thumbnailUrl || "",
+              category: raw.category,
+              badge: raw.badge,
+              badgeColor: raw.badge_color || raw.badgeColor || "",
+              href: raw.href,
+              layout: raw.layout,
+            };
+          });
           setVariations(transformedData);
         }
         // If API returns empty, keep using initial variations
@@ -123,21 +127,19 @@ export function VariationsGrid({ variations: initialVariations, enableFiltering 
         <div className="flex gap-4">
           <button
             onClick={() => handleFilterClick("popular")}
-            className={`px-6 py-2 rounded-full border text-xs font-bold tracking-widest uppercase transition-all ${
-              activeFilter === "popular"
+            className={`px-6 py-2 rounded-full border text-xs font-bold tracking-widest uppercase transition-all ${activeFilter === "popular"
                 ? "bg-[var(--bg-primary)] border-[var(--border-primary)] text-white"
                 : "border-white/20 text-gray-300 hover:bg-[var(--bg-primary)] hover:border-[var(--border-primary)] hover:text-white"
-            }`}
+              }`}
           >
             인기순
           </button>
           <button
             onClick={() => handleFilterClick("new")}
-            className={`px-6 py-2 rounded-full border text-xs font-bold tracking-widest uppercase transition-all ${
-              activeFilter === "new"
+            className={`px-6 py-2 rounded-full border text-xs font-bold tracking-widest uppercase transition-all ${activeFilter === "new"
                 ? "bg-[var(--bg-primary)] border-[var(--border-primary)] text-white"
                 : "border-white/20 text-gray-300 hover:bg-[var(--bg-primary)] hover:border-[var(--border-primary)] hover:text-white"
-            }`}
+              }`}
           >
             최신순
           </button>
@@ -230,9 +232,8 @@ export function VariationsGrid({ variations: initialVariations, enableFiltering 
                   >
                     <img
                       alt={card.name}
-                      className={`absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${
-                        card.category === "audio" ? "grayscale group-hover:grayscale-0" : ""
-                      }`}
+                      className={`absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${card.category === "audio" ? "grayscale group-hover:grayscale-0" : ""
+                        }`}
                       src={card.thumbnailUrl}
                     />
                     <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/60 to-black/30 opacity-90 group-hover:opacity-95 transition-opacity" />
