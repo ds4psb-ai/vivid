@@ -15,6 +15,7 @@ from app.routers.production.providers.base import (
 from app.routers.production.providers.veo import VeoProvider
 from app.routers.production.providers.kling import KlingProvider
 from app.routers.production.providers.suno import SunoProvider
+from app.routers.production.providers.sora import SoraProvider
 
 __all__ = [
     "BaseProvider",
@@ -28,4 +29,5 @@ __all__ = [
     "VeoProvider",
     "KlingProvider",
     "SunoProvider",
+    "SoraProvider",
 ]

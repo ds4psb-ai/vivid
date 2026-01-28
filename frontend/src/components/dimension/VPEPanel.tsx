@@ -11,16 +11,21 @@
  * DNA Card Context Integration:
  * - Master DNA: 거장 힌트 자동 설정
  * - Masterpiece DNA: Logic Vector 정보 프리로드
+ *
+ * Pipeline Integration (P0):
+ * - Dual-mode: Shows pipeline results if available, otherwise individual analysis
+ * - Auto-populates from chain context
  */
 
-import { useState } from "react";
-import { Video } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Video, Link2, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BaseMegaAppPanel } from "@/components/mega-app/panels";
 import { useDNACardContextConsumer } from "@/hooks/useDNACardContextConsumer";
 import { DNAContextBanner } from "@/components/dna-card/DNAContextBanner";
 import { MASTER_AUTEURS } from "@/components/dna-card/constants";
+import { useDimensionChainOptional } from "@/contexts/DimensionChainContext";
 import type { MasterpieceDNAMetadata } from "@/types/dna-card";
 
 interface VPEResult {
@@ -39,6 +44,30 @@ export default function VPEPanel() {
   const [auteurHint, setAuteurHint] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<VPEResult | null>(null);
+
+  // Pipeline integration: Check for chain context data
+  const chainCtx = useDimensionChainOptional();
+  const pipelineResult = useMemo(() => {
+    if (!chainCtx) return null;
+    const vpeData = chainCtx.chainData["vpe"];
+    if (vpeData?.output) {
+      return vpeData.output as Record<string, unknown>;
+    }
+    return null;
+  }, [chainCtx]);
+
+  // If pipeline result exists, display it
+  const hasPipelineData = !!pipelineResult;
+
+  // Sync pipeline result to local result state
+  useEffect(() => {
+    if (pipelineResult && !result) {
+      setResult({
+        logicVector: pipelineResult,
+        confidence: (pipelineResult as { confidence?: number }).confidence,
+      });
+    }
+  }, [pipelineResult, result]);
 
   // DNA 카드 컨텍스트 상태
   const [dnaContextInfo, setDnaContextInfo] = useState<{
@@ -124,6 +153,19 @@ export default function VPEPanel() {
         label: "System Prompt 생성하기",
       }}
     >
+      {/* Pipeline Data Banner */}
+      {hasPipelineData && (
+        <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center gap-2 text-emerald-400">
+            <CheckCircle className="w-4 h-4" />
+            <span className="text-sm font-medium">파이프라인 결과 표시 중</span>
+          </div>
+          <p className="text-xs text-emerald-400/70 mt-1 ml-6">
+            DNA Lab 파이프라인에서 분석된 결과입니다
+          </p>
+        </div>
+      )}
+
       {/* DNA Context Banner */}
       {dnaContextInfo && (
         <DNAContextBanner

@@ -32,7 +32,7 @@ import { initMirror, chatMirror, type MirrorChatResponse } from "@/lib/mirrorApi
 import { useDimensionChainOptional } from "@/contexts/DimensionChainContext";
 import { getDemoIPOverride } from "@/lib/demo-ip-overrides";
 import { getPreviousStepResult } from "@/lib/workflow-state";
-import { Send, User, Bot, Sparkles, Download, ArrowLeft, Zap, Upload, RefreshCw, AlertTriangle, Film, RotateCcw } from "lucide-react";
+import { Send, User, Bot, Sparkles, Download, ArrowLeft, Zap, Upload, RefreshCw, AlertTriangle, Film, RotateCcw, CheckCircle } from "lucide-react";
 import { useDNACardContextConsumer } from "@/hooks/useDNACardContextConsumer";
 import { DNAContextBanner } from "@/components/dna-card/DNAContextBanner";
 
@@ -148,6 +148,20 @@ function AbyssMirrorContent() {
     errorUnknown: isKo ? "알 수 없는 오류" : "Unknown error",
   }), [isKo]);
 
+  // Pipeline integration: Check for chain context data
+  const chainCtx = useDimensionChainOptional();
+  const pipelineResult = useMemo(() => {
+    if (!chainCtx) return null;
+    const mirrorData = chainCtx.chainData["abyss-mirror"];
+    if (mirrorData?.output) {
+      return mirrorData.output as Record<string, unknown>;
+    }
+    return null;
+  }, [chainCtx]);
+
+  // If pipeline result exists, display it
+  const hasPipelineData = !!pipelineResult;
+
   // Phase state
   const [phase, setPhase] = useState<Phase>("input");
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -259,6 +273,14 @@ function AbyssMirrorContent() {
 
   // ChainContext for workflow integration
   const chainContext = useDimensionChainOptional();
+
+  // Pipeline result sync: Show complete phase if pipeline data exists
+  useEffect(() => {
+    if (pipelineResult && phase === "input") {
+      setPersonaData(pipelineResult);
+      setPhase("complete");
+    }
+  }, [pipelineResult, phase]);
 
   // Auto-scroll
   useEffect(() => {
@@ -1102,6 +1124,19 @@ function AbyssMirrorContent() {
 
       <div className="flex flex-1 min-h-0">
         <DimensionPanel.Sidebar>
+          {/* Pipeline Data Banner */}
+          {hasPipelineData && (
+            <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg animate-in fade-in slide-in-from-top-2">
+              <div className="flex items-center gap-2 text-emerald-400">
+                <CheckCircle className="w-4 h-4" />
+                <span className="text-sm font-medium">파이프라인 결과 표시 중</span>
+              </div>
+              <p className="text-xs text-emerald-400/70 mt-1 ml-6">
+                DNA Lab 파이프라인에서 분석된 페르소나입니다
+              </p>
+            </div>
+          )}
+
           {/* DNA Context Banner */}
           {dnaContextInfo && (
             <DNAContextBanner

@@ -31,6 +31,7 @@ from app.routers.production.providers.base import (
 from app.routers.production.providers.veo import VeoProvider
 from app.routers.production.providers.kling import KlingProvider
 from app.routers.production.providers.suno import SunoProvider
+from app.routers.production.providers.sora import SoraProvider
 from app.services.production_bridge_service import (
     ProductionBridgeService,
     ProductionBridgeResult,
@@ -263,6 +264,91 @@ class TestKlingProvider:
         result = await provider.generate(mock_generation_request)
         assert result.success is False
         assert result.error_code == "NO_API_KEY"
+
+
+# =============================================================================
+# Sora Provider Tests
+# =============================================================================
+
+class TestSoraProvider:
+    """Tests for Sora provider."""
+
+    def test_provider_properties(self):
+        """Test Sora provider properties."""
+        provider = SoraProvider()
+        assert provider.name == "sora"
+        assert provider.display_name == "OpenAI Sora 2"
+        assert MediaType.VIDEO in provider.media_types
+
+    def test_capabilities(self):
+        """Test Sora capabilities."""
+        provider = SoraProvider()
+        caps = provider.get_capabilities()
+
+        assert caps.name == "sora"
+        assert caps.max_duration_seconds == 20
+        assert caps.supports_audio is False
+        assert caps.supports_image_to_video is True
+        assert caps.supports_reference_images is True
+        assert caps.max_reference_images == 2
+        assert caps.supports_frame_control is True
+        assert "sora-2" in caps.available_models
+        assert "sora-2-fast" in caps.available_models
+
+    def test_calculate_credits(self, mock_generation_request: GenerationRequest):
+        """Test Sora credit calculation."""
+        provider = SoraProvider()
+
+        # 5 second video (default): 50 + (5 * 20) = 150
+        mock_generation_request.duration_seconds = 5
+        credits = provider.calculate_credits(mock_generation_request)
+        assert credits == 150
+
+        # 10 second video: 50 + (10 * 20) = 250
+        mock_generation_request.duration_seconds = 10
+        credits = provider.calculate_credits(mock_generation_request)
+        assert credits == 250
+
+    def test_calculate_credits_fast_model(self, mock_generation_request: GenerationRequest):
+        """Test Sora Fast model credit calculation."""
+        provider = SoraProvider()
+        mock_generation_request.model = "sora-2-fast"
+        mock_generation_request.duration_seconds = 5
+
+        # sora-2-fast: 30 + (5 * 10) = 80
+        credits = provider.calculate_credits(mock_generation_request)
+        assert credits == 80
+
+    @pytest.mark.asyncio
+    async def test_generate_no_api_key(self, mock_generation_request: GenerationRequest):
+        """Test Sora generation without API key."""
+        provider = SoraProvider(api_key=None)
+
+        result = await provider.generate(mock_generation_request)
+        assert result.success is False
+        assert result.error_code == "NO_API_KEY"
+
+    @pytest.mark.asyncio
+    async def test_generate_validation_error(self):
+        """Test Sora generation with invalid request."""
+        provider = SoraProvider(api_key="test-key")
+        request = GenerationRequest(prompt="")  # Empty prompt
+
+        result = await provider.generate(request)
+        assert result.success is False
+        assert result.error_code == "VALIDATION_ERROR"
+
+    @pytest.mark.asyncio
+    async def test_generate_success_mock(self, mock_generation_request: GenerationRequest):
+        """Test Sora generation with mock response."""
+        provider = SoraProvider(api_key="test-key")
+
+        result = await provider.generate(mock_generation_request)
+        assert result.success is True
+        assert result.provider == "sora"
+        assert result.media_type == MediaType.VIDEO
+        assert "sora-2" in result.metadata["model"]
+        assert result.trace_id.startswith("sora-")
 
 
 # =============================================================================

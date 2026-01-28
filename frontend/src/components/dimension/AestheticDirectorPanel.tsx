@@ -40,11 +40,13 @@ import { useUQSLGenerate, useUQSLFeedback } from "@/hooks/useUQSL";
 import { useDNACardContextConsumer } from "@/hooks/useDNACardContextConsumer";
 import { DNAContextBanner } from "@/components/dna-card/DNAContextBanner";
 import { MASTER_AUTEURS } from "@/components/dna-card/constants";
+import { useDimensionChainOptional } from "@/contexts/DimensionChainContext";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import {
   Palette,
   Copy,
   Check,
+  CheckCircle,
   Download,
   Sparkles,
   Eye,
@@ -150,6 +152,28 @@ function AestheticDirectorContent() {
     useDimensionPanel();
   const { language } = useLanguage();
   const isKo = language === "ko";
+
+  // Pipeline integration: Check for chain context data
+  const chainCtx = useDimensionChainOptional();
+  const pipelineResult = useMemo((): AestheticResult | null => {
+    if (!chainCtx) return null;
+    const adData = chainCtx.chainData["aesthetic-director"];
+    if (adData?.output && typeof adData.output === "object") {
+      // Type guard: check for required AestheticResult properties
+      const output = adData.output as Record<string, unknown>;
+      if (
+        "visual_guidelines" in output &&
+        "color_palette" in output &&
+        "style_keywords" in output
+      ) {
+        return output as unknown as AestheticResult;
+      }
+    }
+    return null;
+  }, [chainCtx]);
+
+  // If pipeline result exists, display it
+  const hasPipelineData = !!pipelineResult;
 
   // i18n presets
   const MOODS = useMemo(() => getMoods(isKo), [isKo]);
@@ -303,6 +327,17 @@ function AestheticDirectorContent() {
   const [validationError, setValidationError] = useState<string | null>(null);
   const [_files, setFiles] = useState<File[]>([]); // Reference files for moodboard
   const [showQualityScores, setShowQualityScores] = useState(true);
+
+  // ==========================================================================
+  // Pipeline Result Sync (P0)
+  // Sync pipeline results to local UI state
+  // ==========================================================================
+  useEffect(() => {
+    if (pipelineResult && !optimisticResult) {
+      setOptimisticResult(pipelineResult);
+      setStage("guide"); // Show final result view
+    }
+  }, [pipelineResult, optimisticResult, setOptimisticResult]);
 
   // ==========================================================================
   // Session Context Inheritance (2026 Best Practice)
@@ -678,6 +713,19 @@ Suggested Auteur: ${selectedDirection.suggested_auteur}`;
       <DimensionPanel.Header title={labels.title} creditCost={CREDIT_COST} />
 
       <DimensionPanel.Sidebar>
+        {/* Pipeline Data Banner */}
+        {hasPipelineData && (
+          <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-2 text-emerald-400">
+              <CheckCircle className="w-4 h-4" />
+              <span className="text-sm font-medium">파이프라인 결과 표시 중</span>
+            </div>
+            <p className="text-xs text-emerald-400/70 mt-1 ml-6">
+              DNA Lab 파이프라인에서 분석된 미학 가이드입니다
+            </p>
+          </div>
+        )}
+
         {/* DNA Context Banner */}
         {dnaContextInfo && (
           <DNAContextBanner

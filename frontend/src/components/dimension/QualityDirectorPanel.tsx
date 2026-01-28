@@ -114,6 +114,27 @@ function QualityDirectorContent() {
   const isKo = language === "ko";
   const chainCtx = useDimensionChainOptional();
 
+  // Pipeline integration: Check for chain context data
+  const pipelineResult = useMemo((): QualityResult | null => {
+    if (!chainCtx) return null;
+    const qcData = chainCtx.chainData["quality-director"];
+    if (qcData?.output && typeof qcData.output === "object") {
+      const output = qcData.output as Record<string, unknown>;
+      // Type guard: check for required QualityResult properties
+      if (
+        "passed" in output &&
+        "score" in output &&
+        "criteria_results" in output
+      ) {
+        return output as unknown as QualityResult;
+      }
+    }
+    return null;
+  }, [chainCtx]);
+
+  // If pipeline result exists, display it
+  const hasPipelineData = !!pipelineResult;
+
   // Set current dimension on mount
   useEffect(() => {
     if (chainCtx) {
@@ -212,6 +233,14 @@ function QualityDirectorContent() {
       setContentType("prompt");
     }
   }, [hasUpstreamData, rawInputData, content]);
+
+  // Pipeline result sync: Show result if pipeline data exists
+  useEffect(() => {
+    if (pipelineResult && !qualityResult) {
+      setQualityResult(pipelineResult);
+      setResult(pipelineResult);
+    }
+  }, [pipelineResult, qualityResult, setResult]);
 
   // React 19: useTransition for non-blocking form submission
   const [isTransitionPending, startTransition] = useTransition();
@@ -395,8 +424,21 @@ function QualityDirectorContent() {
       <DimensionPanel.Header title="퀄리티 디렉터" creditCost={CREDIT_COST} />
 
       <DimensionPanel.Sidebar>
+        {/* Pipeline Data Banner */}
+        {hasPipelineData && (
+          <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-2 text-emerald-400">
+              <CheckCircle className="w-4 h-4" />
+              <span className="text-sm font-medium">파이프라인 결과 표시 중</span>
+            </div>
+            <p className="text-xs text-emerald-400/70 mt-1 ml-6">
+              DNA Lab 파이프라인에서 분석된 품질 검증 결과입니다
+            </p>
+          </div>
+        )}
+
         {/* Upstream Data Banner */}
-        {hasUpstreamData && (
+        {hasUpstreamData && !hasPipelineData && (
           <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg animate-in fade-in slide-in-from-top-2">
             <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
               <Link2 className="w-4 h-4" />
