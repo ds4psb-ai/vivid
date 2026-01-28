@@ -28,6 +28,7 @@ import { DimensionChainProvider } from "@/contexts/DimensionChainContext";
 import { ToastProvider } from "@/components/Toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { DNACardSidePanelPortal } from "@/components/dna-card/DNACardSidePanel";
+import { NetworkStatusBadge } from "@/components/ui/NetworkStatusBadge";
 
 export default function RootLayout({
   children,
@@ -60,6 +61,8 @@ export default function RootLayout({
               <DimensionConfigProvider>
                 <DimensionChainProvider>
                   <ToastProvider>
+                    {/* Offline status indicator */}
+                    <NetworkStatusBadge />
                     {children}
                     <DNACardSidePanelPortal />
                   </ToastProvider>

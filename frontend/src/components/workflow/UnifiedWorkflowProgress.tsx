@@ -14,6 +14,7 @@
  */
 
 import { Check, AlertCircle, Sparkles, Loader2 } from "lucide-react";
+import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { WorkflowConfig, UnifiedWorkflowState, StepState } from "./types";
 
@@ -106,22 +107,47 @@ function StepItem({
   const isCompleted = status === "completed";
   const hasMissingInputs = missingInputs.length > 0;
 
+  // Tooltip content with step details
+  const tooltipContent = (
+    <div className="space-y-1">
+      <p className="font-medium">{step.label}</p>
+      <p className="text-xs text-[var(--fg-muted)]">{step.description}</p>
+      {step.inputs && step.inputs.length > 0 && (
+        <p className="text-xs text-amber-400 mt-2">
+          필요 데이터: {step.inputs.join(", ")}
+        </p>
+      )}
+      {isCompleted && (
+        <p className="text-xs text-emerald-400 mt-1">완료됨</p>
+      )}
+      {hasMissingInputs && !isCompleted && (
+        <p className="text-xs text-amber-400 mt-1">
+          미완료: {missingInputs.join(", ")}
+        </p>
+      )}
+    </div>
+  );
+
   return (
     <div className="flex items-center flex-1 sm:flex-initial">
-      {/* Step button */}
-      <button
-        onClick={onClick}
-        className={cn(
-          "group relative flex items-center gap-3 sm:flex-col sm:gap-2 p-3 sm:p-4 rounded-xl transition-all duration-200",
-          "hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-white/20",
-          // Mobile: full width row
-          "w-full sm:w-auto",
-          // Current step highlight
-          isCurrent && "bg-white/10 ring-1 ring-white/20",
-          // Completed step
-          isCompleted && "bg-white/5"
-        )}
-      >
+      {/* Step button with tooltip */}
+      <Tooltip content={tooltipContent} position="bottom" delay={300}>
+        <button
+          onClick={onClick}
+          data-onboarding={index === 0 ? "workflow-progress" : undefined}
+          className={cn(
+            "group relative flex items-center gap-3 sm:flex-col sm:gap-2 p-3 sm:p-4 rounded-xl transition-all duration-200",
+            "hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-white/20",
+            // WCAG touch target
+            "min-h-[44px]",
+            // Mobile: full width row
+            "w-full sm:w-auto",
+            // Current step highlight
+            isCurrent && "bg-white/10 ring-1 ring-white/20",
+            // Completed step
+            isCompleted && "bg-white/5"
+          )}
+        >
         {/* Step icon with status indicator */}
         <div className="relative">
           <div
@@ -198,22 +224,23 @@ function StepItem({
         </div>
 
         {/* Mobile: status badge */}
-        <div className="sm:hidden">
-          {isCompleted ? (
-            <span className="text-xs text-emerald-400 px-2 py-1 bg-emerald-500/10 rounded">
-              완료
-            </span>
-          ) : isCurrent ? (
-            <span className="text-xs text-cyan-400 px-2 py-1 bg-cyan-500/10 rounded">
-              진행 중
-            </span>
-          ) : hasMissingInputs ? (
-            <span className="text-xs text-amber-400 px-2 py-1 bg-amber-500/10 rounded">
-              대기
-            </span>
-          ) : null}
-        </div>
-      </button>
+          <div className="sm:hidden">
+            {isCompleted ? (
+              <span className="text-xs text-emerald-400 px-2 py-1 bg-emerald-500/10 rounded">
+                완료
+              </span>
+            ) : isCurrent ? (
+              <span className="text-xs text-cyan-400 px-2 py-1 bg-cyan-500/10 rounded">
+                진행 중
+              </span>
+            ) : hasMissingInputs ? (
+              <span className="text-xs text-amber-400 px-2 py-1 bg-amber-500/10 rounded">
+                대기
+              </span>
+            ) : null}
+          </div>
+        </button>
+      </Tooltip>
 
       {/* Connector line (desktop only, not after last step) */}
       {!isLast && (

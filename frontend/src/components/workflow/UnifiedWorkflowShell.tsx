@@ -12,7 +12,7 @@
  */
 
 import { Suspense, useEffect, useState } from "react";
-import { Loader2, ChevronRight, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { Loader2, ChevronRight, PanelRightClose, PanelRightOpen, Home } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { useDimensionChainOptional } from "@/contexts/DimensionChainContext";
@@ -23,6 +23,8 @@ import { UnifiedChainSidebar } from "./UnifiedChainSidebar";
 import { UnifiedWorkflowProgress } from "./UnifiedWorkflowProgress";
 import { UnifiedStepNav } from "./UnifiedStepNav";
 import { MissingDataBanner } from "./MissingDataBanner";
+import { MobileSidebarDrawer } from "./MobileSidebarDrawer";
+import { WorkflowBreadcrumb, buildWorkflowBreadcrumb } from "@/components/ui/WorkflowBreadcrumb";
 import { useUnifiedWorkflow } from "./hooks/useUnifiedWorkflow";
 import { WorkflowObservabilityProvider } from "./hooks/useWorkflowObservability";
 import { getWorkflowConfig, CHAIN_DATA_SOURCE_MAP } from "./workflow-configs";
@@ -179,6 +181,16 @@ function UnifiedWorkflowShellContent({
           }
         />
 
+        {/* Breadcrumb Navigation */}
+        <WorkflowBreadcrumb
+          items={buildWorkflowBreadcrumb({
+            appId,
+            appTitle: config.title,
+            currentStepLabel: currentStep.label,
+          })}
+          className="border-b border-white/5"
+        />
+
         {/* Step Progress */}
         <div className="px-4 py-3 border-b border-white/10">
           <UnifiedWorkflowProgress workflow={workflow} config={config} />
@@ -238,6 +250,17 @@ function UnifiedWorkflowShellContent({
                 onClose={config.sidebar.collapsible ? () => setSidebarOpen(false) : undefined}
               />
             </div>
+          )}
+
+          {/* Mobile Sidebar Drawer */}
+          {showChainSummary && (
+            <MobileSidebarDrawer title="체인 요약" triggerLabel="요약">
+              <UnifiedChainSidebar
+                mode={config.sidebar.mode}
+                workflow={workflow}
+                config={config}
+              />
+            </MobileSidebarDrawer>
           )}
         </div>
       </div>

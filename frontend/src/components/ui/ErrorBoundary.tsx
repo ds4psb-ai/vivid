@@ -5,36 +5,73 @@
  *
  * React Error Boundaries for graceful error handling in the UI.
  * Uses react-error-boundary for declarative error handling.
+ * Categorizes errors for differentiated UX treatment.
+ *
+ * 2026 UX Pattern: Contextual error styling
  */
 
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw, AlertTriangle, WifiOff } from "lucide-react";
+import { categorizeError, getErrorStyle, type ErrorCategory } from "@/lib/validation";
+import { CopyButton } from "@/components/ui/CopyButton";
+import { cn } from "@/lib/utils";
 
 interface ErrorFallbackProps extends FallbackProps {
   /** Custom title for the error message */
   title?: string;
 }
 
+// Category-specific config
+const CATEGORY_CONFIG: Record<ErrorCategory, { title: string; Icon: typeof AlertCircle }> = {
+  user: { title: "입력 확인 필요", Icon: AlertTriangle },
+  system: { title: "시스템 오류", Icon: AlertCircle },
+  network: { title: "네트워크 오류", Icon: WifiOff },
+};
+
 /**
- * Default error fallback component.
+ * Default error fallback component with categorized styling.
  */
 function DefaultErrorFallback({
   error,
   resetErrorBoundary,
-  title = "오류가 발생했습니다",
+  title,
 }: ErrorFallbackProps) {
+  const category = categorizeError(error);
+  const styles = getErrorStyle(category);
+  const config = CATEGORY_CONFIG[category];
+  const Icon = config.Icon;
+  const displayTitle = title || config.title;
+  const errorMessage = error?.message || "알 수 없는 오류가 발생했습니다.";
+
   return (
-    <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-center">
+    <div
+      className={cn(
+        "p-4 rounded-xl border text-center",
+        styles.bgColor,
+        styles.borderColor
+      )}
+    >
       <div className="flex items-center justify-center gap-2 mb-2">
-        <AlertCircle className="w-5 h-5 text-red-400" />
-        <span className="text-red-400 font-medium">{title}</span>
+        <Icon className={cn("w-5 h-5", styles.textColor)} />
+        <span className={cn("font-medium", styles.textColor)}>{displayTitle}</span>
       </div>
-      <p className="text-white/60 text-sm mb-3">
-        {error?.message || "알 수 없는 오류가 발생했습니다."}
-      </p>
+      <div className="flex items-center justify-center gap-2 mb-3">
+        <p className="text-white/60 text-sm">{errorMessage}</p>
+        <CopyButton
+          text={errorMessage}
+          label="에러 복사"
+          size="sm"
+          variant={category === "user" ? "amber" : category === "network" ? "gray" : "red"}
+        />
+      </div>
       <button
         onClick={resetErrorBoundary}
-        className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-red-300 text-sm transition-colors"
+        className={cn(
+          "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors min-h-[44px]",
+          category === "user" && "bg-amber-500/20 hover:bg-amber-500/30 text-amber-300",
+          category === "system" && "bg-red-500/20 hover:bg-red-500/30 text-red-300",
+          category === "network" && "bg-gray-500/20 hover:bg-gray-500/30 text-gray-300"
+        )}
       >
         <RefreshCw className="w-4 h-4" />
         다시 시도

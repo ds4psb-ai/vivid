@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDimensionChainOptional, type ChainData } from "@/contexts/DimensionChainContext";
+import { AnimatedList, AnimatedListItem, AnimatedTagList, AnimatedTagItem } from "@/components/ui/AnimatedList";
 import { STEP_LABELS, CHAIN_DATA_SOURCE_MAP, getAllStepsMap } from "./workflow-configs";
 import type { SidebarMode, WorkflowConfig, UnifiedWorkflowState, WorkflowStepMetadata } from "./types";
 
@@ -137,19 +138,22 @@ export function UnifiedChainSidebar({
             {config.title}
           </span>
         </div>
-        {workflow.steps.map((stepState) => (
-          <ChainDataItem
-            key={stepState.step.id}
-            stepId={stepState.step.id}
-            step={stepState.step}
-            chainEntry={allChainEntries[stepState.step.id] || allChainEntries[stepState.step.outputs[0]]}
-            mode={mode}
-            isExpanded={expandedSteps.has(stepState.step.id)}
-            isCompleted={stepState.hasData}
-            onToggle={() => toggleExpanded(stepState.step.id)}
-            onNavigate={() => workflow.goToStep(stepState.step.id)}
-          />
-        ))}
+        <AnimatedList staggerDelay={50} className="divide-y divide-white/5">
+          {workflow.steps.map((stepState) => (
+            <AnimatedListItem key={stepState.step.id}>
+              <ChainDataItem
+                stepId={stepState.step.id}
+                step={stepState.step}
+                chainEntry={allChainEntries[stepState.step.id] || allChainEntries[stepState.step.outputs[0]]}
+                mode={mode}
+                isExpanded={expandedSteps.has(stepState.step.id)}
+                isCompleted={stepState.hasData}
+                onToggle={() => toggleExpanded(stepState.step.id)}
+                onNavigate={() => workflow.goToStep(stepState.step.id)}
+              />
+            </AnimatedListItem>
+          ))}
+        </AnimatedList>
 
         {/* Required chain data from previous apps (if any) */}
         {config.requiredChainData && config.requiredChainData.length > 0 && (
@@ -159,27 +163,30 @@ export function UnifiedChainSidebar({
                 이전 단계 데이터
               </span>
             </div>
-            {config.requiredChainData.map((key) => {
-              const source = CHAIN_DATA_SOURCE_MAP[key];
-              const chainEntry = allChainEntries[key];
-              const allSteps = getAllStepsMap();
-              const step = allSteps[key];
+            <AnimatedList staggerDelay={50} className="divide-y divide-white/5">
+              {config.requiredChainData.map((key) => {
+                const source = CHAIN_DATA_SOURCE_MAP[key];
+                const chainEntry = allChainEntries[key];
+                const allSteps = getAllStepsMap();
+                const step = allSteps[key];
 
-              return (
-                <ChainDataItem
-                  key={key}
-                  stepId={key}
-                  step={step}
-                  chainEntry={chainEntry}
-                  mode={mode}
-                  isExpanded={expandedSteps.has(key)}
-                  isCompleted={!!chainEntry}
-                  isExternal
-                  externalSource={source}
-                  onToggle={() => toggleExpanded(key)}
-                />
-              );
-            })}
+                return (
+                  <AnimatedListItem key={key}>
+                    <ChainDataItem
+                      stepId={key}
+                      step={step}
+                      chainEntry={chainEntry}
+                      mode={mode}
+                      isExpanded={expandedSteps.has(key)}
+                      isCompleted={!!chainEntry}
+                      isExternal
+                      externalSource={source}
+                      onToggle={() => toggleExpanded(key)}
+                    />
+                  </AnimatedListItem>
+                );
+              })}
+            </AnimatedList>
           </>
         )}
       </div>
@@ -190,22 +197,21 @@ export function UnifiedChainSidebar({
           <div className="text-xs text-white/40 mb-2">
             Evidence Refs ({chain.accumulatedEvidenceRefs.length})
           </div>
-          <div className="flex flex-wrap gap-1">
+          <AnimatedTagList className="gap-1" staggerDelay={30}>
             {chain.accumulatedEvidenceRefs.slice(0, 5).map((ref, i) => (
-              <span
+              <AnimatedTagItem
                 key={i}
                 className="px-1.5 py-0.5 bg-white/5 text-white/60 text-[10px] rounded truncate max-w-[120px]"
-                title={ref}
               >
-                {ref.split(":").pop()}
-              </span>
+                <span title={ref}>{ref.split(":").pop()}</span>
+              </AnimatedTagItem>
             ))}
             {chain.accumulatedEvidenceRefs.length > 5 && (
-              <span className="px-1.5 py-0.5 bg-white/10 text-white/40 text-[10px] rounded">
+              <AnimatedTagItem className="px-1.5 py-0.5 bg-white/10 text-white/40 text-[10px] rounded">
                 +{chain.accumulatedEvidenceRefs.length - 5} more
-              </span>
+              </AnimatedTagItem>
             )}
-          </div>
+          </AnimatedTagList>
         </div>
       )}
 

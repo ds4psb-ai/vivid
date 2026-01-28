@@ -732,6 +732,83 @@ html.dark body {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   REDUCED MOTION SUPPORT (WCAG 2.1 SC 2.3.3)
+
+   Respects user's motion preferences for accessibility.
+   Users with vestibular disorders or motion sensitivity can disable animations.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  /* Disable all animations */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Specifically disable common animation utilities */
+  .animate-spin {
+    animation: none !important;
+  }
+
+  .animate-pulse {
+    animation: none !important;
+  }
+
+  .animate-bounce {
+    animation: none !important;
+  }
+
+  .animate-ping {
+    animation: none !important;
+  }
+
+  /* Disable transition utilities */
+  .transition-all,
+  .transition,
+  .transition-colors,
+  .transition-opacity,
+  .transition-shadow,
+  .transition-transform {
+    transition: none !important;
+  }
+
+  /* Override motion duration tokens */
+  :root,
+  .dark {
+    --motion-duration-instant: 0ms;
+    --motion-duration-fast: 0ms;
+    --motion-duration-normal: 0ms;
+    --motion-duration-slow: 0ms;
+    --motion-duration-slower: 0ms;
+  }
+}
+
+/* Motion-safe utility class - apply animations only when motion is OK */
+@media (prefers-reduced-motion: no-preference) {
+  .motion-safe\:animate-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  .motion-safe\:animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .motion-safe\:transition-all {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
+
+  .motion-safe\:active\:scale-\[0\.98\]:active {
+    transform: scale(0.98);
+  }
+}
+
 @supports (color: oklch(50% 0.02 280)) {
   :root {
     --neutral-0: oklch(100% 0 0);
