@@ -5,6 +5,7 @@ Kuaishou Kling AI video generation provider with:
 - Beat timestamp format
 - Image-to-video support
 - Reference image consistency
+- Shot Grammar Transpiler integration (P1)
 
 Based on KlingService patterns.
 """
@@ -30,6 +31,7 @@ from .base import (
     ProviderError,
     ProviderTimeoutError,
 )
+from .adapters.transpiler import ShotGrammarTranspiler, PromptCards
 
 logger = logging.getLogger(__name__)
 
@@ -205,10 +207,27 @@ class KlingProvider(BaseProvider):
                     message="Kling 영상 생성 요청 중...",
                 ))
 
-            # Build prompt with system prompt if provided
+            # P1: Transpile prompt cards if provided
             full_prompt = request.prompt
-            if request.system_prompt:
-                full_prompt = f"{request.system_prompt}\n\n{request.prompt}"
+            transpiler_used = False
+            transpiled_data = {}
+            if request.prompt_cards and isinstance(request.prompt_cards, PromptCards):
+                try:
+                    transpiler = ShotGrammarTranspiler()
+                    transpiled_data = await transpiler.transpile(
+                        prompt_cards=request.prompt_cards,
+                        target_engine="kling",
+                        logic_vector=request.logic_vector,
+                    )
+                    full_prompt = transpiled_data.get("prompt", request.prompt)
+                    transpiler_used = True
+                    logger.info(f"[KLING_PROVIDER] Transpiled prompt: {full_prompt[:100]}...")
+                except Exception as e:
+                    logger.warning(f"[KLING_PROVIDER] Transpiler failed, using raw prompt: {e}")
+
+            # Build prompt with system prompt if provided (only if not using transpiler)
+            if request.system_prompt and not transpiler_used:
+                full_prompt = f"{request.system_prompt}\n\n{full_prompt}"
 
             model = request.model or self._model or DEFAULT_MODEL
             model_info = KLING_MODELS.get(model, KLING_MODELS[DEFAULT_MODEL])
@@ -232,7 +251,17 @@ class KlingProvider(BaseProvider):
                 "cfg_scale": request.cfg_scale,
             }
 
-            if request.negative_prompt:
+            # P1: Use transpiled data for Kling-specific features
+            if transpiler_used and transpiled_data:
+                if transpiled_data.get("motion_intensity"):
+                    payload["motion_intensity"] = transpiled_data["motion_intensity"]
+                if transpiled_data.get("camera_preset"):
+                    payload["camera_preset"] = transpiled_data["camera_preset"]
+                if transpiled_data.get("negative_prompt"):
+                    payload["negative_prompt"] = transpiled_data["negative_prompt"]
+                if transpiled_data.get("beat_markers"):
+                    payload["beat_markers"] = transpiled_data["beat_markers"]
+            elif request.negative_prompt:
                 payload["negative_prompt"] = request.negative_prompt
 
             if request.reference_image_url:
@@ -335,6 +364,7 @@ class KlingProvider(BaseProvider):
                                     "aspect_ratio": request.aspect_ratio,
                                     "duration_seconds": duration,
                                     "is_long_form": is_long_form,
+                                    "transpiler_used": transpiler_used,
                                 },
                             )
 

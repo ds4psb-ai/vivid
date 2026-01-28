@@ -271,3 +271,26 @@ async def uqsl_health(db: AsyncSession = Depends(get_db)) -> dict:
             health_data["status"] = "degraded"
 
     return health_data
+
+
+@router.get("/metrics")
+async def prometheus_metrics():
+    """
+    Prometheus metrics endpoint.
+
+    Returns metrics in Prometheus text format for scraping.
+    Includes DNA Lab metrics:
+    - dna_lab_drift_detection_score
+    - dna_lab_hitl_review_pending_count
+    - dna_lab_transpiler_latency_seconds
+    - dna_lab_pipeline_duration_seconds
+
+    Protected by MetricsProtectionMiddleware (IP whitelist or bearer token).
+    """
+    from fastapi.responses import Response
+    from app.metrics import get_metrics
+
+    return Response(
+        content=get_metrics(),
+        media_type="text/plain; version=0.0.4; charset=utf-8",
+    )

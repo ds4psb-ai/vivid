@@ -484,6 +484,203 @@ async def process_expired_approval_checkpoints(
         return {"status": "failed", "error": str(e)}
 
 
+async def poll_outbox(
+    ctx: Dict[str, Any],
+    batch_size: int = 100,
+) -> Dict[str, Any]:
+    """
+    Poll and publish outbox events to Qdrant.
+
+    This cron job runs every minute to:
+    1. Fetch pending outbox events
+    2. Publish them to external systems (Qdrant)
+    3. Mark as published or schedule retry on failure
+
+    Args:
+        batch_size: Maximum events to process per poll
+
+    Returns:
+        Summary of published events.
+    """
+    from app.database import AsyncSessionLocal
+    from app.services.outbox_publisher import OutboxPublisher
+
+    logger.info(f"[Cron] poll_outbox: batch_size={batch_size}")
+
+    try:
+        publisher = OutboxPublisher(batch_size=batch_size)
+        async with AsyncSessionLocal() as db:
+            published_count = await publisher.poll_and_publish(db)
+
+            logger.info(f"[Cron] Outbox poll complete: published={published_count}")
+
+            return {
+                "status": "completed",
+                "published": published_count,
+            }
+    except Exception as e:
+        logger.exception(f"poll_outbox failed: {e}")
+        return {"status": "failed", "error": str(e)}
+
+
+async def run_drift_detection(
+    ctx: Dict[str, Any],
+    auteur_keys: List[str] = None,
+) -> Dict[str, Any]:
+    """
+    Run periodic drift detection for Logic Vectors.
+
+    This cron job runs every 6 hours to:
+    1. Get all active auteur keys (or specified subset)
+    2. Run detect_drift() for each
+    3. Queue high-drift items for HITL review
+    4. Record metrics for monitoring
+
+    Args:
+        ctx: Arq context
+        auteur_keys: Optional list of specific auteurs to check.
+
+    Returns:
+        Summary of drift detection results.
+    """
+    import time
+    from app.database import AsyncSessionLocal
+    from app.services.logic_vector_versioning import LogicVectorVersioning, DRIFT_THRESHOLD
+    from app.schemas.drift_detection import DriftAction
+    from app.metrics import record_drift_score, record_drift_detection
+
+    logger.info(f"[Cron] run_drift_detection: auteurs={auteur_keys}")
+
+    try:
+        async with AsyncSessionLocal() as db:
+            service = LogicVectorVersioning()
+
+            # Get auteur keys to check
+            if not auteur_keys:
+                auteur_keys = await service.get_active_auteur_keys(db)
+
+            if not auteur_keys:
+                logger.info("[Cron] No active auteur keys found for drift detection")
+                return {
+                    "status": "completed",
+                    "checked": 0,
+                    "message": "No active auteur keys found",
+                }
+
+            results = {
+                "checked": 0,
+                "drifted": 0,
+                "queued_for_review": 0,
+                "auto_upgraded": 0,
+                "details": {},
+            }
+
+            for auteur_key in auteur_keys:
+                start_time = time.time()
+                try:
+                    # Use auteur_key as ip_id (or construct proper ip_id)
+                    ip_id = f"auteur:{auteur_key}"
+
+                    # Detect drift (without new videos - checks current state)
+                    drift_result = await service.detect_drift(
+                        ip_id=ip_id,
+                        new_videos=[],  # Empty = check current version only
+                        db=db,
+                    )
+
+                    duration = time.time() - start_time
+                    results["checked"] += 1
+
+                    # Record metrics
+                    record_drift_score(auteur_key, drift_result.drift_score)
+                    record_drift_detection(
+                        auteur_key,
+                        drift_result.action.value if drift_result.action else "NO_CHANGE",
+                        duration,
+                    )
+
+                    results["details"][auteur_key] = {
+                        "drift_score": drift_result.drift_score,
+                        "action": drift_result.action.value if drift_result.action else None,
+                        "duration_seconds": round(duration, 2),
+                    }
+
+                    if drift_result.drift_score > DRIFT_THRESHOLD:
+                        results["drifted"] += 1
+
+                    if drift_result.action == DriftAction.REQUIRE_HUMAN_REVIEW:
+                        results["queued_for_review"] += 1
+
+                    if drift_result.action == DriftAction.AUTO_UPGRADE:
+                        results["auto_upgraded"] += 1
+
+                except Exception as e:
+                    logger.warning(f"[Cron] Drift detection failed for {auteur_key}: {e}")
+                    results["details"][auteur_key] = {
+                        "error": str(e),
+                    }
+
+            await db.commit()
+
+            logger.info(
+                f"[Cron] Drift detection complete: checked={results['checked']}, "
+                f"drifted={results['drifted']}, queued={results['queued_for_review']}"
+            )
+            return {"status": "completed", **results}
+
+    except Exception as e:
+        logger.exception(f"run_drift_detection failed: {e}")
+        return {"status": "failed", "error": str(e)}
+
+
+async def analyze_feedback_weekly(
+    ctx: Dict[str, Any],
+) -> Dict[str, Any]:
+    """
+    Run weekly feedback analysis.
+
+    This cron job runs every Sunday at 03:00 UTC to:
+    1. Detect failure patterns in DNA Lab pipeline
+    2. Detect low-rating patterns
+    3. Generate improvement recommendations
+    4. Notify admin on critical patterns
+
+    Returns:
+        Summary of analysis including pattern counts.
+    """
+    from app.database import AsyncSessionLocal
+    from app.services.feedback_analyzer import FeedbackAnalyzer
+
+    logger.info("[Cron] analyze_feedback_weekly")
+
+    try:
+        analyzer = FeedbackAnalyzer()
+        async with AsyncSessionLocal() as db:
+            summary = await analyzer.analyze_weekly(db)
+            await db.commit()
+
+            logger.info(
+                f"[Cron] Weekly feedback analysis complete: "
+                f"total_runs={summary.total_runs}, "
+                f"failure_patterns={len(summary.failure_patterns)}, "
+                f"recommendations={len(summary.recommendations)}"
+            )
+
+            return {
+                "status": "completed",
+                "period_start": summary.period_start.isoformat(),
+                "period_end": summary.period_end.isoformat(),
+                "total_runs": summary.total_runs,
+                "success_count": summary.success_count,
+                "failure_count": summary.failure_count,
+                "patterns": len(summary.failure_patterns),
+                "recommendations": len(summary.recommendations),
+            }
+    except Exception as e:
+        logger.exception(f"analyze_feedback_weekly failed: {e}")
+        return {"status": "failed", "error": str(e)}
+
+
 class WorkerSettings:
     """Arq WorkerSettings for job processing."""
     functions = [
@@ -497,6 +694,9 @@ class WorkerSettings:
         process_ip_payout_holdbacks,
         run_daily_learning_cycle,
         process_expired_approval_checkpoints,
+        poll_outbox,
+        analyze_feedback_weekly,
+        run_drift_detection,
     ]
 
     # Cron jobs - scheduled tasks
@@ -529,6 +729,24 @@ class WorkerSettings:
         {
             "func": process_expired_approval_checkpoints,
             "cron": "0 * * * *",  # Every hour
+            "unique": True,
+        },
+        # Poll outbox for Qdrant sync every minute (DNA Lab P0)
+        {
+            "func": poll_outbox,
+            "cron": "*/1 * * * *",  # Every minute
+            "unique": True,
+        },
+        # Weekly feedback analysis on Sunday at 3 AM UTC (DNA Lab P0)
+        {
+            "func": analyze_feedback_weekly,
+            "cron": "0 3 * * 0",  # Sunday 03:00 UTC
+            "unique": True,
+        },
+        # Drift detection every 6 hours (DNA Lab P1)
+        {
+            "func": run_drift_detection,
+            "cron": "0 */6 * * *",  # Every 6 hours at minute 0
             "unique": True,
         },
     ]

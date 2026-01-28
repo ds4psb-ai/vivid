@@ -487,23 +487,37 @@ class HITLWorkflowService:
 
             notification = NotificationService()
 
-            severity_emoji = {
-                HITLSeverity.CRITICAL.value: "!!",
-                HITLSeverity.HIGH.value: "!",
-                HITLSeverity.MEDIUM.value: "",
-                HITLSeverity.LOW.value: "",
+            # Map HITL severity to notification severity
+            severity_map = {
+                HITLSeverity.CRITICAL.value: "critical",
+                HITLSeverity.HIGH.value: "warning",
+                HITLSeverity.MEDIUM.value: "warning",
+                HITLSeverity.LOW.value: "info",
             }
 
+            notification_severity = severity_map.get(item.severity, "info")
+
+            # Build descriptive message
+            message_parts = [
+                f"New *{item.severity}* severity review pending.",
+                f"Type: `{item.review_type}`",
+            ]
+            if item.ip_id:
+                message_parts.append(f"IP: `{item.ip_id}`")
+            if item.expires_at:
+                message_parts.append(f"Expires: {item.expires_at.strftime('%Y-%m-%d %H:%M UTC')}")
+
             await notification.send_admin_alert(
-                title=f"{severity_emoji.get(item.severity, '')} HITL Review Required: {item.review_type}",
-                message=f"New {item.severity} severity {item.review_type} review pending.",
+                title=f"HITL Review Required: {item.review_type}",
+                message="\n".join(message_parts),
+                severity=notification_severity,
                 data={
                     "item_id": str(item.id),
                     "review_type": item.review_type,
                     "severity": item.severity,
                     "ip_id": item.ip_id,
-                    "expires_at": item.expires_at.isoformat() if item.expires_at else None,
                 },
+                trace_id=item.trace_id,
             )
 
         except ImportError:

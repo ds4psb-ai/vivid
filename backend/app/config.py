@@ -203,6 +203,11 @@ class Settings(BaseSettings):
     
     # Logging
     LOG_LEVEL: str = "INFO"  # DEBUG, INFO, WARNING, ERROR
+
+    # Slack Notifications (HITL Alerts)
+    # Get webhook URL from: https://api.slack.com/messaging/webhooks
+    # Create an incoming webhook for your workspace/channel
+    SLACK_WEBHOOK_URL: str = ""  # Leave empty to disable Slack notifications
     
     # Langfuse Observability (Phase 4) (H1.3: SecretStr)
     # Get keys from https://langfuse.com

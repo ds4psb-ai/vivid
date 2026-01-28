@@ -5,6 +5,7 @@ Google VEO 3.1 video generation provider with:
 - Async polling
 - Progress callbacks
 - Credit calculation
+- Shot Grammar Transpiler integration (P1)
 
 Based on VeoService patterns.
 """
@@ -29,6 +30,7 @@ from .base import (
     ProviderError,
     ProviderTimeoutError,
 )
+from .adapters.transpiler import ShotGrammarTranspiler, PromptCards
 
 logger = logging.getLogger(__name__)
 
@@ -142,10 +144,26 @@ class VeoProvider(BaseProvider):
                     message="영상 생성 요청 중...",
                 ))
 
-            # Build prompt with system prompt if provided
+            # P1: Transpile prompt cards if provided
             full_prompt = request.prompt
-            if request.system_prompt:
-                full_prompt = f"{request.system_prompt}\n\n{request.prompt}"
+            transpiler_used = False
+            if request.prompt_cards and isinstance(request.prompt_cards, PromptCards):
+                try:
+                    transpiler = ShotGrammarTranspiler()
+                    transpiled = await transpiler.transpile(
+                        prompt_cards=request.prompt_cards,
+                        target_engine="veo",
+                        logic_vector=request.logic_vector,
+                    )
+                    full_prompt = transpiled.get("prompt", request.prompt)
+                    transpiler_used = True
+                    logger.info(f"[VEO_PROVIDER] Transpiled prompt: {full_prompt[:100]}...")
+                except Exception as e:
+                    logger.warning(f"[VEO_PROVIDER] Transpiler failed, using raw prompt: {e}")
+
+            # Build prompt with system prompt if provided
+            if request.system_prompt and not transpiler_used:
+                full_prompt = f"{request.system_prompt}\n\n{full_prompt}"
 
             # Initialize client
             client = genai.Client(api_key=self._api_key)
@@ -300,6 +318,7 @@ class VeoProvider(BaseProvider):
                 "model": model,
                 "aspect_ratio": request.aspect_ratio,
                 "duration_seconds": request.duration_seconds or 8,
+                "transpiler_used": transpiler_used,
             }
 
             # P1: Include reference image configs with role/weight in metadata

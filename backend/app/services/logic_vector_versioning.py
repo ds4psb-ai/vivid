@@ -204,6 +204,47 @@ class LogicVectorVersioning:
             "created_at": new_version.created_at.isoformat(),
         }
 
+    async def get_active_auteur_keys(
+        self,
+        db: AsyncSession,
+    ) -> List[str]:
+        """Get all auteur keys with active Logic Vector versions.
+
+        Args:
+            db: Database session
+
+        Returns:
+            List of auteur key strings
+        """
+        try:
+            from app.models_logic_vector import LogicVectorVersion
+
+            query = (
+                select(LogicVectorVersion.ip_id)
+                .where(LogicVectorVersion.is_active == True)
+                .distinct()
+            )
+
+            result = await db.execute(query)
+            rows = result.scalars().all()
+
+            # Extract auteur key from ip_id (format: "auteur:key" or just "key")
+            auteur_keys = []
+            for ip_id in rows:
+                if ":" in ip_id:
+                    auteur_keys.append(ip_id.split(":")[-1])
+                else:
+                    auteur_keys.append(ip_id)
+
+            return auteur_keys
+
+        except ImportError:
+            logger.warning("[Versioning] LogicVectorVersion model not found")
+            return []
+        except Exception as e:
+            logger.error(f"[Versioning] Failed to get active auteur keys: {e}")
+            return []
+
     async def get_version_history(
         self,
         ip_id: str,

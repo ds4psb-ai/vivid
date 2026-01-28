@@ -125,6 +125,11 @@ class GenerationRequest:
     cfg_scale: float = 0.5
     extra_options: Dict[str, Any] = field(default_factory=dict)
 
+    # P1: Shot Grammar Transpiler support
+    # When provided, transpiler converts prompt_cards to engine-optimal format
+    prompt_cards: Optional[Any] = None  # PromptCards from transpiler.py
+    logic_vector: Optional[Dict[str, Any]] = None  # Logic Vector for style context
+
     def get_reference_images_by_role(self, role: str) -> List[ReferenceImage]:
         """Get reference images filtered by role.
 
