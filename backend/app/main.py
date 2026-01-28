@@ -216,9 +216,30 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning(f"[STARTUP] Arq Redis pool creation failed (non-fatal): {e}")
 
+    # Initialize Drift Cron Service (HITL automation)
+    drift_cron = None
+    if settings.SLACK_WEBHOOK_URL:
+        try:
+            from app.services.drift_cron import DriftCronService
+            drift_cron = DriftCronService()
+            drift_cron.start_scheduler(hour=2, minute=0)  # 02:00 UTC daily
+            app.state.drift_cron = drift_cron
+            logger.info("[STARTUP] Drift Cron scheduler started (02:00 UTC)")
+        except Exception as e:
+            logger.warning(f"[STARTUP] Drift Cron initialization failed (non-fatal): {e}")
+    else:
+        logger.info("[STARTUP] Drift Cron disabled (SLACK_WEBHOOK_URL not set)")
+
     logger.info("[STARTUP] Lifespan initialization complete - app is ready")
 
     yield
+
+    # Stop Drift Cron scheduler
+    if drift_cron:
+        try:
+            drift_cron.stop_scheduler()
+        except Exception:
+            pass
 
     # Close Arq Redis Pool
     if app.state.arq_pool:
