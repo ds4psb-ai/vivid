@@ -189,7 +189,9 @@ function VeoVideoContent() {
   const [videoResult, setVideoResult] = useState<VideoResult | null>(null);
 
   // File upload state (2026 Best Practice: Multimodal input)
-  const [_uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  // Processed file URLs for API (base64 or uploaded URLs)
+  const [uploadedFileUrls, setUploadedFileUrls] = useState<string[]>([]);
 
   // Workflow context - data from previous steps (Scenario Generator, Reference Decoder)
   const [workflowContext, setWorkflowContext] = useState<WorkflowScenarioContext | null>(null);
@@ -202,6 +204,38 @@ function VeoVideoContent() {
       chainCtx.setCurrentDimension(DIMENSION_KEY);
     }
   }, [chainCtx]);
+
+  // Convert uploaded files to base64 URLs for API transmission
+  useEffect(() => {
+    if (uploadedFiles.length === 0) {
+      setUploadedFileUrls([]);
+      return;
+    }
+
+    const processFiles = async () => {
+      const urls: string[] = [];
+      // Only process first 3 files (VEO 3.1 limit)
+      for (const file of uploadedFiles.slice(0, 3)) {
+        // Only process image files
+        if (!file.type.startsWith("image/")) continue;
+
+        try {
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+          urls.push(base64);
+        } catch (err) {
+          console.error("[VeoPanel] File conversion error:", err);
+        }
+      }
+      setUploadedFileUrls(urls);
+    };
+
+    void processFiles();
+  }, [uploadedFiles]);
 
   // Auto-apply logicVector style hints
   useEffect(() => {
@@ -447,6 +481,10 @@ function VeoVideoContent() {
         style,
         model: veoModel, // veo-3.1-generate-preview (Quality) or veo-3.1-fast-generate-preview (Fast)
         seed: useRandomSeed ? undefined : seed,
+        // Reference images for Image-to-Video (VEO 3.1 supports up to 3 images)
+        reference_images: uploadedFileUrls.length > 0 ? uploadedFileUrls : undefined,
+        // First/last frame support (if user marks specific images)
+        first_frame_url: uploadedFileUrls[0] || undefined,
       },
       getBYOKHeaders(byokKey)
     );
@@ -464,6 +502,7 @@ function VeoVideoContent() {
     creditCost,
     wrappedExecuteStream,
     labels,
+    uploadedFileUrls,
   ]);
 
   const handleDownload = useCallback(async () => {

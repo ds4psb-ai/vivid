@@ -125,7 +125,7 @@ function StoryArchitectContent() {
   const isKo = language === "ko";
 
   // Chain data injection for upstream data (DNA→Story flow)
-  const { logicVector, personaDNA, hasUpstreamData, rawInputData, evidenceRefs } =
+  const { logicVector, aestheticGuidelines, personaDNA, hasUpstreamData, rawInputData, evidenceRefs } =
     useChainDataInjection(DIMENSION_KEY);
 
   // i18n labels
@@ -415,17 +415,86 @@ function StoryArchitectContent() {
     }
   }, [logicVector, concept]);
 
+  // Auto-apply aesthetic guidelines from AD
+  useEffect(() => {
+    if (aestheticGuidelines && !concept) {
+      const adHints: string[] = [];
+
+      // Add visual style
+      if (aestheticGuidelines.visual_style) {
+        adHints.push(`Visual: ${aestheticGuidelines.visual_style}`);
+      }
+
+      // Add mood keywords
+      if (aestheticGuidelines.mood_keywords && aestheticGuidelines.mood_keywords.length > 0) {
+        adHints.push(`Mood: ${aestheticGuidelines.mood_keywords.slice(0, 3).join(", ")}`);
+      }
+
+      // Add lighting approach
+      if (aestheticGuidelines.lighting_approach) {
+        adHints.push(`Lighting: ${aestheticGuidelines.lighting_approach}`);
+      }
+
+      // Add reference directors
+      if (aestheticGuidelines.reference_directors && aestheticGuidelines.reference_directors.length > 0) {
+        adHints.push(`Reference: ${aestheticGuidelines.reference_directors.slice(0, 2).join(", ")}`);
+      }
+
+      if (adHints.length > 0) {
+        setConcept(adHints.join("\n"));
+      }
+    }
+  }, [aestheticGuidelines, concept]);
+
   // Handler to apply chain data from previous dimensions (manual fallback via ChainDataInput)
   // Note: useChainDataInjection now handles most of this automatically
   const handleApplyChainData = useCallback((data: Record<string, ChainData>) => {
+    const conceptParts: string[] = [];
+
     // Extract hints from reference-decoder for concept if empty
     const refOutput = data["reference-decoder"]?.output as Record<string, unknown> | undefined;
-    if (refOutput && !concept) {
+    if (refOutput) {
       const stylePrompt = refOutput.style_prompt as string | undefined;
       const description = refOutput.description as string | undefined;
       if (stylePrompt || description) {
-        setConcept(`${stylePrompt || description}`.slice(0, 500));
+        conceptParts.push(`${stylePrompt || description}`.slice(0, 300));
       }
+    }
+
+    // Extract hints from aesthetic-director (AD)
+    const adOutput = data["aesthetic-director"]?.output as Record<string, unknown> | undefined;
+    if (adOutput) {
+      const adHints: string[] = [];
+
+      // Visual style
+      if (adOutput.visual_style) {
+        adHints.push(`스타일: ${adOutput.visual_style}`);
+      }
+
+      // Color palette
+      const colorPalette = adOutput.color_palette as string[] | undefined;
+      if (colorPalette && colorPalette.length > 0) {
+        adHints.push(`색상: ${colorPalette.slice(0, 3).join(", ")}`);
+      }
+
+      // Mood keywords
+      const moodKeywords = adOutput.mood_keywords as string[] | undefined;
+      if (moodKeywords && moodKeywords.length > 0) {
+        adHints.push(`무드: ${moodKeywords.slice(0, 3).join(", ")}`);
+      }
+
+      // Lighting approach
+      if (adOutput.lighting_approach) {
+        adHints.push(`조명: ${adOutput.lighting_approach}`);
+      }
+
+      if (adHints.length > 0) {
+        conceptParts.push(`[AD 가이드라인]\n${adHints.join("\n")}`);
+      }
+    }
+
+    if (conceptParts.length > 0 && !concept) {
+      setConcept(conceptParts.join("\n\n"));
     }
   }, [concept]);
 
@@ -566,8 +635,20 @@ function StoryArchitectContent() {
             <div className="mb-4 p-3 bg-violet-500/10 border border-violet-500/20 rounded-lg">
               <div className="flex items-center gap-2 text-sm text-violet-600 dark:text-violet-400">
                 <Sparkles className="w-4 h-4" />
-                <span>{isKo ? "이전 분석 데이터가 자동 적용됩니다" : "Upstream analysis data auto-applied"}</span>
+                <span>{isKo ? "DNA Lab 데이터 감지됨" : "DNA Lab Data Detected"}</span>
               </div>
+              {logicVector && (
+                <p className="text-xs text-violet-500/80 mt-1 ml-6">
+                  {isKo ? "Reference Decoder 스타일 힌트 적용 가능" : "Reference Decoder style hints available"}
+                  {logicVector.auteur_id && ` (${logicVector.auteur_id})`}
+                </p>
+              )}
+              {aestheticGuidelines && (
+                <p className="text-xs text-amber-500/80 mt-1 ml-6">
+                  {isKo ? "Aesthetic Director 가이드라인 감지" : "Aesthetic Director guidelines detected"}
+                  {aestheticGuidelines.visual_style && ` - ${aestheticGuidelines.visual_style}`}
+                </p>
+              )}
             </div>
           )}
 

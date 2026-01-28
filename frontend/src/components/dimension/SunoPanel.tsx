@@ -22,15 +22,34 @@ import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getPreviousStepResult } from "@/lib/workflow-state";
+import { useChainDataInjection } from "@/hooks/useChainDataInjection";
+import { useDimensionChainOptional, type ChainData } from "@/contexts/DimensionChainContext";
+import ChainDataInput from "./ChainDataInput";
 import InsufficientCreditsModal from "./InsufficientCreditsModal";
-import { Upload, X, Music } from "lucide-react";
+import { Upload, X, Music, Sparkles } from "lucide-react";
+import { type ThemeColor as DimensionThemeColor } from "@/lib/dimension-theme";
 
 // =============================================================================
 // CONSTANTS
 // =============================================================================
 
 const DIMENSION_CODE = "sound" as const; // Shares color theme with Sound
+const DIMENSION_KEY = "suno"; // Chain context key
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
+
+// Map tokens ThemeColor to dimension-theme ThemeColor for ChainDataInput
+const CHAIN_INPUT_THEME_MAP: Record<string, DimensionThemeColor> = {
+  violet: "violet",
+  cyan: "cyan",
+  emerald: "emerald",
+  amber: "amber",
+  rose: "rose",
+  fuchsia: "fuchsia",
+  indigo: "indigo",
+  sky: "sky",
+  purple: "violet",
+  red: "rose",
+};
 
 // =============================================================================
 // TYPES
@@ -105,7 +124,12 @@ const getComposerStyles = (isKo: boolean) => [
 function SunoContent() {
   const { language } = useLanguage();
   const isKo = language === "ko";
-  const { setResult: setContextResult } = useDimensionPanel();
+  const { token, setResult: setContextResult } = useDimensionPanel();
+  const chainCtx = useDimensionChainOptional();
+
+  // Chain data injection for upstream data (Story→Suno flow)
+  const { logicVector, hasUpstreamData, rawInputData, evidenceRefs } =
+    useChainDataInjection(DIMENSION_KEY);
 
   // Memoized presets based on language
   const MODELS = useMemo(() => getModels(isKo), [isKo]);
@@ -170,7 +194,70 @@ function SunoContent() {
   const [showCreditsModal, setShowCreditsModal] = useState(false);
 
   // ==========================================================================
-  // Session Context Inheritance (2026 Best Practice)
+  // Set current dimension on mount
+  // ==========================================================================
+  useEffect(() => {
+    if (chainCtx) {
+      chainCtx.setCurrentDimension(DIMENSION_KEY);
+    }
+  }, [chainCtx]);
+
+  // ==========================================================================
+  // Chain Data Injection (2026 Best Practice)
+  // Auto-inject data from Story Engine and upstream dimensions
+  // ==========================================================================
+  useEffect(() => {
+    // From story-architect: get concept and mood
+    const storyData = rawInputData["story-architect"] as { output?: { title?: string; logline?: string; themes?: string[]; structure?: Array<{ emotion?: string }> } } | undefined;
+    if (storyData?.output) {
+      const story = storyData.output;
+      // Auto-set title from story if not set
+      if (story.title && !title) {
+        setTitle(`${story.title} - BGM`);
+      }
+      // Auto-set prompt from logline
+      if (story.logline && !prompt) {
+        setPrompt(story.logline);
+      }
+      // Auto-set mood from structure emotion
+      if (story.structure?.[0]?.emotion && !selectedMood) {
+        const emotion = story.structure[0].emotion.toLowerCase();
+        const moodMatch = MOODS.find((m) =>
+          emotion.includes(m.value.toLowerCase()) ||
+          m.keywords.toLowerCase().includes(emotion)
+        );
+        if (moodMatch) {
+          setSelectedMood(moodMatch.value);
+        }
+      }
+    }
+
+    // From system-prompt: get mood hints
+    const sysPromptData = rawInputData["system-prompt"] as { output?: { systemPrompt?: string; mood?: string } } | undefined;
+    if (sysPromptData?.output?.mood && !selectedMood) {
+      const mood = sysPromptData.output.mood.toLowerCase();
+      const moodMatch = MOODS.find((m) =>
+        mood.includes(m.value.toLowerCase()) ||
+        m.keywords.toLowerCase().includes(mood)
+      );
+      if (moodMatch) {
+        setSelectedMood(moodMatch.value);
+      }
+    }
+
+    // From sound-crafter: get genre hints
+    const soundData = rawInputData["sound-crafter"] as { output?: { genre?: string; style?: string } } | undefined;
+    if (soundData?.output?.genre && !selectedGenre) {
+      const genre = soundData.output.genre.toLowerCase();
+      const genreMatch = GENRES.find((g) => g.value === genre || g.label.toLowerCase().includes(genre));
+      if (genreMatch) {
+        setSelectedGenre(genreMatch.value);
+      }
+    }
+  }, [rawInputData, title, prompt, selectedMood, selectedGenre, MOODS, GENRES]);
+
+  // ==========================================================================
+  // Session Context Inheritance (Legacy)
   // Inject mood/tempo from previous step (AestheticDirector → Suno)
   // ==========================================================================
   useEffect(() => {
@@ -289,6 +376,16 @@ function SunoContent() {
         setLocalResult(data);
         setContextResult(data);  // Enable NextNav in workflow mode
 
+        // Store in chain context for downstream dimensions
+        if (data.success && chainCtx) {
+          chainCtx.setChainData(
+            DIMENSION_KEY,
+            { ...data, title: title.trim(), genre: selectedGenre, mood: selectedMood } as unknown as Record<string, unknown>,
+            `Music: ${title.trim()}`,
+            (data as { evidence_refs?: string[] }).evidence_refs || evidenceRefs
+          );
+        }
+
         // Refresh credits
         if (creditContext?.refresh) {
           creditContext.refresh();
@@ -297,7 +394,37 @@ function SunoContent() {
         setError(err instanceof Error ? err.message : labels.errorUnknown);
       }
     });
-  }, [title, prompt, model, instrumental, buildStyleString, creditContext, labels, styleWeight, vocalGender, setContextResult]);
+  }, [title, prompt, model, instrumental, buildStyleString, creditContext, labels, styleWeight, vocalGender, setContextResult, chainCtx, selectedGenre, selectedMood, evidenceRefs]);
+
+  // Handle chain data application from ChainDataInput
+  const handleApplyChainData = useCallback((data: Record<string, ChainData>) => {
+    // From story-architect: get mood and concept
+    const storyOutput = data["story-architect"]?.output as Record<string, unknown> | undefined;
+    if (storyOutput) {
+      if (storyOutput.title && !title) {
+        setTitle(`${storyOutput.title} - BGM`);
+      }
+      if (storyOutput.logline && !prompt) {
+        setPrompt(storyOutput.logline as string);
+      }
+      if (storyOutput.themes && Array.isArray(storyOutput.themes) && !prompt) {
+        setPrompt((storyOutput.themes as string[]).slice(0, 3).join(", "));
+      }
+    }
+
+    // From system-prompt: get mood
+    const sysPromptOutput = data["system-prompt"]?.output as Record<string, unknown> | undefined;
+    if (sysPromptOutput?.mood && !selectedMood) {
+      const mood = String(sysPromptOutput.mood).toLowerCase();
+      const moodMatch = MOODS.find((m) =>
+        mood.includes(m.value.toLowerCase()) ||
+        m.keywords.toLowerCase().includes(mood)
+      );
+      if (moodMatch) {
+        setSelectedMood(moodMatch.value);
+      }
+    }
+  }, [title, prompt, selectedMood, MOODS]);
 
   // Handle genre select
   const handleGenreSelect = (genreValue: string) => {
@@ -331,6 +458,30 @@ function SunoContent() {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Chain Data Input - data from story-architect, system-prompt */}
+        <ChainDataInput
+          currentDimension={DIMENSION_KEY}
+          onApplyData={handleApplyChainData}
+          themeColor={CHAIN_INPUT_THEME_MAP[token.themeColor] || "violet"}
+        />
+
+        {/* Chain Upstream Data Banner */}
+        {hasUpstreamData && (
+          <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 mb-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-purple-400" />
+              <span className="text-xs font-medium text-purple-400">
+                {isKo ? "Story Engine 데이터 감지됨" : "Story Engine Data Detected"}
+              </span>
+            </div>
+            {"story-architect" in rawInputData && (
+              <p className="text-xs text-gray-400 mt-1 ml-6">
+                {isKo ? "스토리 무드/테마 자동 적용 가능" : "Story mood/theme auto-apply available"}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Title Input */}
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">

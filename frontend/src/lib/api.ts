@@ -896,11 +896,14 @@ class ApiClient {
       if (response.status === 401) {
         // Clear any cached session and redirect to login
         if (typeof window !== "undefined") {
-          // Store current path for redirect after login
-          const returnPath = window.location.pathname + window.location.search;
-          if (returnPath !== "/login") {
-            sessionStorage.setItem("auth_redirect", returnPath);
+          const currentPath = window.location.pathname;
+          // /login 페이지에서는 리다이렉트 하지 않음 (무한 루프 방지)
+          if (currentPath === "/login") {
+            throw new Error("세션이 만료되었습니다. 다시 로그인해주세요.");
           }
+          // Store current path for redirect after login
+          const returnPath = currentPath + window.location.search;
+          sessionStorage.setItem("auth_redirect", returnPath);
           window.location.href = "/login?expired=true";
         }
         throw new Error("세션이 만료되었습니다. 다시 로그인해주세요.");
@@ -912,6 +915,11 @@ class ApiClient {
 
       if (response.status === 403) {
         throw new Error(`${message} (admin-only)`);
+      }
+
+      // Handle rate limiting (429)
+      if (response.status === 429) {
+        throw new Error("요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
       }
 
       if (response.status === 504) {
