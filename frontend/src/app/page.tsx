@@ -117,66 +117,78 @@ interface HomepageData {
 }
 
 // Transform API response to component format
+// API returns snake_case, convert to camelCase for component
 function transformFeatured(data: HomepageFeaturedIP): FeaturedIP {
+  // Cast to any to access snake_case properties from API
+  const raw = data as any;
   return {
-    slug: data.slug,
-    title: data.title,
-    titleAccent: data.titleAccent,
-    description: data.description,
-    bannerUrl: data.bannerUrl,
-    tags: data.tags,
-    rating: data.rating,
-    remixCount: data.remixCount,
-    matchPercent: data.matchPercent,
-    character: data.character ? {
-      name: data.character.name,
-      description: data.character.description,
-      status: data.character.status,
-      imageUrl: data.character.imageUrl,
+    slug: raw.slug,
+    title: raw.title,
+    titleAccent: raw.title_accent || raw.titleAccent || "",
+    description: raw.description,
+    bannerUrl: raw.banner_url || raw.bannerUrl || "",
+    tags: raw.tags || [],
+    rating: raw.rating || 0,
+    remixCount: raw.remix_count || raw.remixCount || "0",
+    matchPercent: raw.match_percent || raw.matchPercent || 0,
+    character: raw.character ? {
+      name: raw.character.name,
+      description: raw.character.description,
+      status: raw.character.status,
+      imageUrl: raw.character.image_url || raw.character.imageUrl || "",
     } : undefined,
   };
 }
 
 function transformCharacters(data: HomepageCharacter[]): Character[] {
-  return data.map((c) => ({
-    id: c.id,
-    name: c.name,
-    imageUrl: c.imageUrl,
-    chatCount: c.chatCount,
-    quote: c.quote,
-    creator: c.creator,
-    badge: c.badge,
-  }));
+  return data.map((c) => {
+    const raw = c as any;
+    return {
+      id: raw.id,
+      name: raw.name,
+      imageUrl: raw.image_url || raw.imageUrl || "",
+      chatCount: raw.chat_count || raw.chatCount || "0",
+      quote: raw.quote,
+      creator: raw.creator,
+      badge: raw.badge,
+    };
+  });
 }
 
 function transformCinema(data: HomepageCinemaCard[]): CinemaCard[] {
-  return data.map((c) => ({
-    id: c.id,
-    title: c.title,
-    description: c.description,
-    thumbnailUrl: c.thumbnailUrl,
-    duration: c.duration,
-    category: c.category,
-    categoryColor: c.categoryColor,
-    creator: {
-      name: c.creator.name,
-      avatarUrl: c.creator.avatarUrl,
-    },
-    views: c.views,
-    likePercent: c.likePercent,
-  }));
+  return data.map((c) => {
+    const raw = c as any;
+    return {
+      id: raw.id,
+      title: raw.title,
+      description: raw.description,
+      thumbnailUrl: raw.thumbnail_url || raw.thumbnailUrl || "",
+      duration: raw.duration,
+      category: raw.category,
+      categoryColor: raw.category_color || raw.categoryColor || "",
+      creator: {
+        name: raw.creator?.name || "",
+        avatarUrl: raw.creator?.avatar_url || raw.creator?.avatarUrl || "",
+      },
+      views: raw.views,
+      likePercent: raw.like_percent || raw.likePercent || 0,
+    };
+  });
 }
 
 function transformCreators(data: HomepageCreator[]): Creator[] {
-  return data.map((c) => ({
-    id: c.id,
-    initial: c.initial,
-    name: c.name,
-    specialty: c.specialty,
-    specialtyColor: c.specialtyColor,
-    rating: c.rating,
-    description: c.description,
-  }));
+  return data.map((c) => {
+    const raw = c as any;
+    return {
+      id: raw.id,
+      initial: raw.initial,
+      name: raw.name,
+      specialty: raw.specialty,
+      specialtyColor: raw.specialty_color || raw.specialtyColor || "",
+      rating: raw.rating || 0,
+      description: raw.description,
+    };
+  });
 }
 
 function HomePageContent() {
