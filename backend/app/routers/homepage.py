@@ -202,7 +202,7 @@ DEFAULT_VARIATIONS: list[VariationCard] = [
         description="Create a branching narrative game where users can choose different paths.",
         thumbnail_url="https://lh3.googleusercontent.com/aida-public/AB6AXuCcUjKInzOtfp5cZifxh65zNNJgO0SHc3gwqrIYN83WKGibsUZxOuzS646dMw8NQYrVJeCY1iUbp-olKPlBnzlfuii2pTXStRq2-9HMGivbpfRQ92rETfQeRL5vi3w0FkA2S5g2YfjHun1F0FkcMduJY9ISG_0m7AlaTpvfn0gc_ZMn499FAUEJ1XDT_kO4H2vherED8sacBwgnPUgDFlSzUu9prPIj7Gb9-kg6tw7Jmurqtbu4lWihBv93ivATNMC135caqdvH25M",
         category="interactive",
-        href="/dimension/scenario-generator",
+        href="/dimension/story-architect",
         layout="normal",
     ),
     VariationCard(
@@ -211,7 +211,7 @@ DEFAULT_VARIATIONS: list[VariationCard] = [
         description="Generate a full-color graphic novel layout with consistent character art panels.",
         thumbnail_url="https://lh3.googleusercontent.com/aida-public/AB6AXuAEjDABfWSOWoCE8z39Uf9HewzfInWI575WbW6482O4KXOTY4J6Ybhkw-yssBuKTYCIYzZP8WeUtfvQCCnfp6z7jPJblSnyIDsDGoKMtm5csZjfOkyHQr2dG_Aywxj49Dpp_f_mgb98_I5E7DTFWKX7nLFa6FH_9VYSadkBwZ0IuCNBxjWETlsCn_GrcELcuXzy3OTzT1XvbBgvCiYe9l_gSJ8GMJ2foRZh3pI6Fb5CQ5jzeWBLShpIKNYekf2x4rWV60GtVQS9yIA",
         category="story",
-        href="/dimension/storyboard-sketcher",
+        href="/dimension/storyboard",
         layout="normal",
     ),
     VariationCard(
