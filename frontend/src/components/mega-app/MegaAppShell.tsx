@@ -13,6 +13,20 @@ import { useDimensionChainOptional } from "@/contexts/DimensionChainContext";
 import type { MegaAppShellProps } from "./types";
 
 /**
+ * @deprecated Use `UnifiedWorkflowShell` from `@/components/workflow` instead.
+ *
+ * This component will be removed in a future release.
+ * Migration guide:
+ * ```tsx
+ * // Before
+ * import { MegaAppShell } from "@/components/mega-app/MegaAppShell";
+ * <MegaAppShell appId="dna-lab" tabs={TABS}>{children}</MegaAppShell>
+ *
+ * // After
+ * import { UnifiedWorkflowShell } from "@/components/workflow";
+ * <UnifiedWorkflowShell appId="dna-lab">{children}</UnifiedWorkflowShell>
+ * ```
+ *
  * MegaAppShell - Unified shell component for mega apps
  *
  * Features:

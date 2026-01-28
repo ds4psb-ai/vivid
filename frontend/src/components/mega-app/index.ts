@@ -1,26 +1,29 @@
 /**
- * MegaApp Shell - Unified layout components for mega apps
+ * @deprecated MegaApp Shell components are deprecated.
  *
- * Usage:
+ * Use the new `@/components/workflow` components instead:
+ * - `UnifiedWorkflowShell` replaces `MegaAppShell`
+ * - `UnifiedWorkflowProgress` replaces `MegaAppTabs`
+ * - `UnifiedStepNav` for step-based navigation
+ * - `UnifiedChainSidebar` for chain data display
+ *
+ * Migration example:
  * ```tsx
+ * // Before
  * import { MegaAppShell, type MegaAppTab } from "@/components/mega-app";
+ * <MegaAppShell appId="dna-lab" tabs={TABS}>{children}</MegaAppShell>
  *
- * const TABS: MegaAppTab[] = [
- *   { value: "vpe", label: "비디오 파싱", ... },
- * ];
- *
- * export default function DNALabPage() {
- *   return (
- *     <MegaAppShell
- *       appId="dna-lab"
- *       title="DNA Lab"
- *       ...
- *     >
- *       {(activeTab) => <Content tab={activeTab} />}
- *     </MegaAppShell>
- *   );
- * }
+ * // After
+ * import { UnifiedWorkflowShell } from "@/components/workflow";
+ * <UnifiedWorkflowShell appId="dna-lab">{children}</UnifiedWorkflowShell>
  * ```
+ *
+ * Note: `MegaAppHeader`, `MegaAppAurora`, and `WorkflowProgress` are still
+ * actively used by the new workflow system and are NOT deprecated.
+ *
+ * ---
+ *
+ * MegaApp Shell - Unified layout components for mega apps (Legacy)
  */
 
 // Main component

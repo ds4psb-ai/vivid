@@ -40,12 +40,33 @@ export { UnifiedChainSidebar } from "./UnifiedChainSidebar";
 // Missing data UI
 export { MissingDataBanner, MissingDataIndicator } from "./MissingDataBanner";
 
+// Execution Timer
+export {
+  StepExecutionTimer,
+  InlineTimer,
+  WorkflowTimingSummary,
+  formatDuration,
+  formatDurationPrecise,
+} from "./StepExecutionTimer";
+
+// Sync Status
+export { SyncStatusIndicator, InlineSyncStatus } from "./SyncStatusIndicator";
+
 // Hooks
 export { useUnifiedWorkflow } from "./hooks/useUnifiedWorkflow";
 export {
   useRequiredChainData,
   useOptionalChainData,
 } from "./hooks/useRequiredChainData";
+export {
+  useWorkflowObservability,
+  WorkflowObservabilityProvider,
+  useWorkflowObservabilityContext,
+  useWorkflowObservabilityOptional,
+} from "./hooks/useWorkflowObservability";
+export {
+  useChainDataWithOptimism,
+} from "./hooks/useChainDataWithOptimism";
 
 // Configs & Utilities
 export {
@@ -80,3 +101,17 @@ export type {
   UnifiedWorkflowShellProps,
   ChainDataSource,
 } from "./types";
+
+// Observability types
+export type {
+  StepMetrics,
+  WorkflowMetrics,
+  WorkflowObservabilityResult,
+} from "./hooks/useWorkflowObservability";
+
+// Optimistic state types
+export type {
+  OptimisticOptions,
+  OptimisticSyncStatus,
+  ChainDataWithOptimismResult,
+} from "./hooks/useChainDataWithOptimism";

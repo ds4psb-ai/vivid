@@ -24,6 +24,7 @@ import { UnifiedWorkflowProgress } from "./UnifiedWorkflowProgress";
 import { UnifiedStepNav } from "./UnifiedStepNav";
 import { MissingDataBanner } from "./MissingDataBanner";
 import { useUnifiedWorkflow } from "./hooks/useUnifiedWorkflow";
+import { WorkflowObservabilityProvider } from "./hooks/useWorkflowObservability";
 import { getWorkflowConfig, CHAIN_DATA_SOURCE_MAP } from "./workflow-configs";
 import { cn } from "@/lib/utils";
 import type { MegaAppId, UnifiedWorkflowShellProps } from "./types";
@@ -48,15 +49,18 @@ export function UnifiedWorkflowShell({
 }: UnifiedWorkflowShellProps) {
   return (
     <Suspense fallback={<UnifiedLoading appId={appId} />}>
-      <UnifiedWorkflowShellContent
-        appId={appId}
-        showAurora={showAurora}
-        showWorkflowProgress={showWorkflowProgress}
-        showChainSummary={showChainSummary}
-        headerRight={headerRight}
-      >
-        {children}
-      </UnifiedWorkflowShellContent>
+      {/* Wrap with observability provider for shared metrics state */}
+      <WorkflowObservabilityProvider appId={appId}>
+        <UnifiedWorkflowShellContent
+          appId={appId}
+          showAurora={showAurora}
+          showWorkflowProgress={showWorkflowProgress}
+          showChainSummary={showChainSummary}
+          headerRight={headerRight}
+        >
+          {children}
+        </UnifiedWorkflowShellContent>
+      </WorkflowObservabilityProvider>
     </Suspense>
   );
 }

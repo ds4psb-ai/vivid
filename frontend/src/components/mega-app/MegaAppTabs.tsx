@@ -5,6 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import type { MegaAppTabsProps } from "./types";
 
 /**
+ * @deprecated Use `UnifiedWorkflowProgress` from `@/components/workflow` instead.
+ *
+ * This component will be removed in a future release.
+ * The new workflow system uses `UnifiedWorkflowProgress` and `UnifiedStepNav`
+ * for step-based navigation instead of tab-based navigation.
+ *
  * MegaAppTabs - Responsive tab navigation
  *
  * Features:
