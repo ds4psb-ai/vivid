@@ -21,6 +21,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, HttpUrl, field_validator
 
+from app.schemas.base import StrictBaseModel
+
 
 # ============================================================================
 # Enums
@@ -86,11 +88,12 @@ class CharacterRef(BaseModel):
 # Request Schemas
 # ============================================================================
 
-class CharacterCreateRequest(BaseModel):
-    """Create a new character.
+class CharacterCreateRequest(StrictBaseModel):
+    """Create a new character (strict mode for type safety).
 
     Supports both base64 image data and URL references.
     """
+
     name: str = Field(..., min_length=1, max_length=100, description="Character name")
     description: Optional[str] = Field(None, max_length=1000, description="Character description")
     tags: List[str] = Field(default_factory=list, max_length=20, description="Character tags")
@@ -113,36 +116,41 @@ class CharacterCreateRequest(BaseModel):
         return [tag.strip().lower() for tag in v if tag.strip()][:20]
 
 
-class CharacterUpdateRequest(BaseModel):
-    """Update character metadata."""
+class CharacterUpdateRequest(StrictBaseModel):
+    """Update character metadata (strict mode for type safety)."""
+
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     description: Optional[str] = Field(None, max_length=1000)
     tags: Optional[List[str]] = Field(None, max_length=20)
     primary_image_url: Optional[str] = None
 
 
-class AddReferenceRequest(BaseModel):
-    """Add reference images to existing character."""
+class AddReferenceRequest(StrictBaseModel):
+    """Add reference images to existing character (strict mode for type safety)."""
+
     image_urls: List[str] = Field(default_factory=list, max_length=10)
     images_base64: List[str] = Field(default_factory=list, max_length=10)
 
 
-class PlatformSyncRequest(BaseModel):
-    """Request to sync character to a platform."""
+class PlatformSyncRequest(StrictBaseModel):
+    """Request to sync character to a platform (strict mode for type safety)."""
+
     platform: PlatformType
     style_strength: Optional[float] = Field(0.8, ge=0.0, le=1.0)
     auto_update_memory: bool = Field(True, description="Update memory bank after generation")
 
 
-class MemoryBankUpdateRequest(BaseModel):
-    """Update memory bank from generated video."""
+class MemoryBankUpdateRequest(StrictBaseModel):
+    """Update memory bank from generated video (strict mode for type safety)."""
+
     video_url: str = Field(..., description="URL of the generated video")
     max_keyframes: int = Field(10, ge=1, le=50, description="Maximum keyframes to extract")
     long_term_count: int = Field(5, ge=1, le=20, description="Number of long-term keyframes to keep")
 
 
-class CharacterSearchRequest(BaseModel):
-    """Search characters by various criteria."""
+class CharacterSearchRequest(StrictBaseModel):
+    """Search characters by various criteria (strict mode for type safety)."""
+
     query: Optional[str] = Field(None, max_length=200)
     tags: Optional[List[str]] = None
     project_id: Optional[UUID] = None

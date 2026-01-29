@@ -1,0 +1,12 @@
+exclude_dirs:
+  - tests
+  - venv
+  - migrations
+  - alembic
+  - .venv
+  - __pycache__
+
+skips:
+  - B101  # assert_used
+  - B104  # hardcoded_bind_all_interfaces
+  - B311  # random

@@ -11,6 +11,8 @@ from pydantic import BaseModel, Field
 from enum import Enum
 import uuid
 
+from app.schemas.base import StrictBaseModel
+
 
 class IntentType(str, Enum):
     """의도 유형"""
@@ -87,15 +89,16 @@ class NodeEditIntent(BaseModel):
         }
 
 
-class IntentParseRequest(BaseModel):
-    """의도 파싱 요청"""
+class IntentParseRequest(StrictBaseModel):
+    """의도 파싱 요청 (strict mode for type safety)."""
+
     user_input: str = Field(..., min_length=1, max_length=1000)
-    
+
     # 컨텍스트
     node_id: Optional[str] = None
     node_type: Optional[str] = None
     current_properties: Optional[Dict[str, Any]] = None
-    
+
     # 옵션
     include_stpf_eval: bool = True
     language: str = "ko"

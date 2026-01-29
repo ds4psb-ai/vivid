@@ -6,6 +6,8 @@ Kelly 기반 자원 배분을 위한 스키마.
 from typing import Optional, List
 from pydantic import BaseModel, Field
 
+from app.schemas.base import StrictBaseModel
+
 
 class KellyResult(BaseModel):
     """Kelly Criterion 계산 결과"""
@@ -53,18 +55,19 @@ class CreditAllocation(BaseModel):
     )
 
 
-class AllocationRequest(BaseModel):
-    """배분 요청"""
+class AllocationRequest(StrictBaseModel):
+    """배분 요청 (strict mode for type safety)."""
+
     user_id: str
     capsule_id: Optional[str] = None
     model: str = Field(default="gemini-2.0-flash-exp")
     success_probability: Optional[float] = Field(
         default=None,
-        description="외부 제공 성공확률 (없으면 히스토리에서 추정)"
+        description="외부 제공 성공확률 (없으면 히스토리에서 추정)",
     )
     reward_ratio: float = Field(
         default=2.0,
-        description="성공 시 보상 비율"
+        description="성공 시 보상 비율",
     )
 
 
@@ -74,8 +77,9 @@ class AllocationResponse(BaseModel):
     message: str
 
 
-class BatchAllocationRequest(BaseModel):
-    """다중 캡슐 배분 요청"""
+class BatchAllocationRequest(StrictBaseModel):
+    """다중 캡슐 배분 요청 (strict mode for type safety)."""
+
     user_id: str
     capsule_ids: List[str]
     model: str = Field(default="gemini-2.0-flash-exp")

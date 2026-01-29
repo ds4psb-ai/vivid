@@ -26,6 +26,8 @@ from enum import Enum
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field, field_validator
 
+from app.schemas.base import StrictBaseModel
+
 
 class TransitionType(str, Enum):
     """Shot-to-shot transition types."""
@@ -150,8 +152,8 @@ class StoryboardShot(BaseModel):
 # =============================================================================
 
 
-class StoryboardRequest(BaseModel):
-    """Request to generate a multi-shot storyboard video.
+class StoryboardRequest(StrictBaseModel):
+    """Request to generate a multi-shot storyboard video (strict mode for type safety).
 
     Example:
         request = StoryboardRequest(
@@ -310,8 +312,8 @@ class StoryboardProgress(BaseModel):
 # =============================================================================
 
 
-class CreateStoryboardRequest(BaseModel):
-    """POST /production/storyboard - Create storyboard generation request."""
+class CreateStoryboardRequest(StrictBaseModel):
+    """POST /production/storyboard - Create storyboard generation request (strict mode)."""
 
     storyboard: StoryboardRequest
     webhook_url: Optional[str] = Field(

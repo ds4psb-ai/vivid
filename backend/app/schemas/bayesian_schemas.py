@@ -7,6 +7,8 @@ from typing import List, Optional, Literal
 from pydantic import BaseModel, Field
 from datetime import datetime
 
+from app.schemas.base import StrictBaseModel
+
 
 class Evidence(BaseModel):
     """
@@ -49,8 +51,9 @@ class ConfidenceUpdate(BaseModel):
     likelihood: float = Field(description="우도 (P(E|H))")
 
 
-class BayesianUpdateRequest(BaseModel):
-    """베이지안 갱신 요청"""
+class BayesianUpdateRequest(StrictBaseModel):
+    """베이지안 갱신 요청 (strict mode for type safety)."""
+
     rule_id: str
     evidence: Evidence
 
@@ -61,8 +64,9 @@ class BayesianUpdateResponse(BaseModel):
     message: str
 
 
-class BulkUpdateRequest(BaseModel):
-    """다중 증거 일괄 갱신 요청"""
+class BulkUpdateRequest(StrictBaseModel):
+    """다중 증거 일괄 갱신 요청 (strict mode for type safety)."""
+
     pack_id: str
     evidences: List[Evidence]
 

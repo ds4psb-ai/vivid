@@ -8,6 +8,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.base import StrictBaseModel
+
 
 # =============================================================================
 # Payout Schemas
@@ -87,15 +89,17 @@ class SettlementPreview(BaseModel):
 # Dispute Schemas
 # =============================================================================
 
-class DisputeCreate(BaseModel):
-    """Create dispute request."""
+class DisputeCreate(StrictBaseModel):
+    """Create dispute request (strict mode for type safety)."""
+
     reason: str = Field(..., min_length=10, max_length=2000)
     expected_amount: Optional[int] = Field(None, ge=0)
     evidence: Optional[dict] = None
 
 
-class DisputeResolve(BaseModel):
-    """Resolve dispute request."""
+class DisputeResolve(StrictBaseModel):
+    """Resolve dispute request (strict mode for type safety)."""
+
     resolution: str = Field(..., min_length=10, max_length=2000)
     status: str = Field(..., pattern="^(resolved|rejected)$")
     adjustment_amount: Optional[int] = Field(None, ge=0)
@@ -145,8 +149,9 @@ class AdminSettlementStats(BaseModel):
 # Batch Schemas
 # =============================================================================
 
-class BatchProcessRequest(BaseModel):
-    """Batch settlement processing request."""
+class BatchProcessRequest(StrictBaseModel):
+    """Batch settlement processing request (strict mode for type safety)."""
+
     limit: int = Field(100, ge=1, le=1000)
 
 

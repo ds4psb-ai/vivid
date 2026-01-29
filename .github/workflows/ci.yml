@@ -300,6 +300,70 @@ jobs:
           retention-days: 30
 
   # =============================================================================
+  # Security Scanning (Dependency Vulnerability & Static Analysis)
+  # =============================================================================
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+          cache-dependency-path: backend/requirements*.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pip-audit safety bandit
+
+      # 1. pip-audit - PyPI Advisory Database 기반 취약점 검사
+      - name: Run pip-audit
+        run: pip-audit -r requirements.txt --strict
+        continue-on-error: false
+
+      # 2. safety - Safety DB 기반 추가 취약점 검사
+      - name: Run safety check
+        run: safety check -r requirements.txt --output json > safety-report.json || true
+        continue-on-error: true
+
+      # 3. bandit - Python 코드 보안 정적 분석
+      - name: Run bandit
+        run: bandit -r app -c ../.bandit -f json -o bandit-report.json || true
+
+      - name: Check bandit results
+        run: |
+          if [ -f bandit-report.json ]; then
+            HIGH_ISSUES=$(python -c "import json; r=json.load(open('bandit-report.json')); print(len([i for i in r.get('results', []) if i.get('issue_severity') == 'HIGH']))")
+            if [ "$HIGH_ISSUES" -gt 0 ]; then
+              echo "❌ Found $HIGH_ISSUES HIGH severity issues"
+              cat bandit-report.json | python -m json.tool
+              exit 1
+            fi
+            echo "✅ No HIGH severity issues found"
+          fi
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-reports
+          path: |
+            backend/safety-report.json
+            backend/bandit-report.json
+          retention-days: 30
+
+  # =============================================================================
   # Type Check Job (Optional - can be enabled when TypeScript strict mode is ready)
   # =============================================================================
 
