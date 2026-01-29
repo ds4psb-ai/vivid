@@ -82,7 +82,7 @@ export function MegaAppShowcase({ className }: MegaAppShowcaseProps) {
           transition={{ duration: 0.6 }}
           className="mb-12"
         >
-          <h2 className="text-3xl md:text-4xl font-bold mb-3 tracking-tight text-white">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight text-white">
             당신의 창작 <span className="text-[var(--fg-primary)]">워크플로우</span>
           </h2>
           <p className="text-gray-400 max-w-lg font-light break-keep">
@@ -109,7 +109,7 @@ export function MegaAppShowcase({ className }: MegaAppShowcaseProps) {
         {/* Cards Container */}
         <div className="relative">
           {/* Dashed connection line (desktop) */}
-          <div className="hidden lg:block absolute top-1/2 left-0 w-full h-px border-t border-dashed border-gray-700 -z-10" />
+          <div className="hidden lg:block absolute top-1/2 left-0 w-full h-px border-t border-dashed border-white/20 -z-10" />
 
           {/* 3-Column Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -128,11 +128,11 @@ export function MegaAppShowcase({ className }: MegaAppShowcaseProps) {
                   <Link href={app.href} className="block h-full group">
                     <div
                       className={cn(
-                        "relative rounded-3xl overflow-hidden",
-                        "bg-[var(--bg-base)] border border-gray-800",
+                        "relative rounded-2xl overflow-hidden",
+                        "bg-[var(--bg-base)] border border-white/10",
                         "p-8 h-full min-h-[280px]",
                         "transition-all duration-300",
-                        "hover:border-gray-600",
+                        "hover:border-[var(--border-primary)]/50",
                         "hover:-translate-y-1"
                       )}
                     >
@@ -169,7 +169,7 @@ export function MegaAppShowcase({ className }: MegaAppShowcaseProps) {
                         {app.features.map((feature) => (
                           <span
                             key={feature}
-                            className="px-3 py-1 rounded-full bg-gray-800 text-xs font-medium text-gray-300 border border-gray-700"
+                            className="px-3 py-1 rounded-full bg-white/5 text-xs font-medium text-gray-300 border border-white/10"
                           >
                             {feature}
                           </span>
@@ -178,7 +178,7 @@ export function MegaAppShowcase({ className }: MegaAppShowcaseProps) {
 
                       {/* Arrow Button */}
                       <div className="mt-8 flex justify-end">
-                        <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 group-hover:bg-gray-700 group-hover:text-white transition-colors">
+                        <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 group-hover:bg-[var(--bg-primary)] group-hover:border-[var(--border-primary)] group-hover:text-white transition-all">
                           <ArrowRight className="w-4 h-4" />
                         </div>
                       </div>
