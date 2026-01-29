@@ -19,7 +19,7 @@ import {
   ToolRecommendationResponse,
   ToolEvidenceResponse,
   ToolDisplayInfo,
-} from "@/lib/api-client";
+} from "@/lib/api";
 
 // =============================================================================
 // Hook Options

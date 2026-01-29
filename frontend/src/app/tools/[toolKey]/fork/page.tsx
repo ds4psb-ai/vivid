@@ -32,7 +32,7 @@ import {
 } from "./_components";
 
 // Shared
-import { fetchWithAuth } from "@/lib/api-client";
+import { fetchWithAuth } from "@/lib/api";
 import type { Tool, DiffPreview } from "@/types/api.types";
 import { useToast } from "@/components/Toast";
 
