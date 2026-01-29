@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Create all missing database tables using SQLAlchemy create_all().
+"""Create all missing database tables using SQLAlchemy.
 
-This script imports all models and runs Base.metadata.create_all()
-to create any tables that don't exist yet.
+This script imports all models and creates tables one by one,
+handling duplicate index errors gracefully.
 
 Usage:
     DATABASE_URL=... python scripts/create_missing_tables.py
@@ -13,7 +13,8 @@ import os
 # Add backend to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, inspect
+from sqlalchemy.exc import ProgrammingError
 
 # Import Base first
 from app.database import Base
@@ -60,28 +61,40 @@ def main():
     print(f"[INFO] Connecting to database...")
     engine = create_engine(sync_url)
 
-    with engine.connect() as conn:
-        # Count tables before
-        result = conn.execute(text(
-            "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public'"
-        ))
-        before_count = result.scalar()
-        print(f"[INFO] Tables before: {before_count}")
+    # First, drop orphaned indexes (indexes for tables that don't exist)
+    print("[INFO] Checking for orphaned indexes...")
+    with engine.begin() as conn:
+        # Find all indexes that reference non-existent tables
+        result = conn.execute(text("""
+            SELECT indexname, tablename
+            FROM pg_indexes
+            WHERE schemaname = 'public'
+            AND tablename NOT IN (
+                SELECT table_name FROM information_schema.tables
+                WHERE table_schema = 'public'
+            )
+        """))
+        orphaned = result.fetchall()
 
-        # List existing tables
-        result = conn.execute(text(
-            "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name"
-        ))
-        existing_tables = [row[0] for row in result.fetchall()]
-        print(f"[INFO] Existing tables: {existing_tables}")
+        for idx_name, table_name in orphaned:
+            try:
+                conn.execute(text(f'DROP INDEX IF EXISTS "{idx_name}"'))
+                print(f"[OK] Dropped orphaned index: {idx_name}")
+            except Exception as e:
+                print(f"[WARN] Could not drop {idx_name}: {e}")
+
+    # Get existing tables
+    inspector = inspect(engine)
+    existing_tables = set(inspector.get_table_names())
+    print(f"[INFO] Tables before: {len(existing_tables)}")
 
     # Get all tables defined in models
     model_tables = set(Base.metadata.tables.keys())
     print(f"[INFO] Tables defined in models: {len(model_tables)}")
 
     # Find missing tables
-    missing_tables = model_tables - set(existing_tables)
-    print(f"[INFO] Missing tables: {sorted(missing_tables)}")
+    missing_tables = model_tables - existing_tables
+    print(f"[INFO] Missing tables: {len(missing_tables)}")
 
     if not missing_tables:
         print("[INFO] All tables already exist. Nothing to do.")
@@ -89,29 +102,50 @@ def main():
 
     print(f"[INFO] Creating {len(missing_tables)} missing tables...")
 
-    # Create all tables (checkfirst=True means it won't fail if table exists)
-    Base.metadata.create_all(engine, checkfirst=True)
+    created = 0
+    skipped = 0
+    errors = 0
 
-    with engine.connect() as conn:
-        # Count tables after
-        result = conn.execute(text(
-            "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public'"
-        ))
-        after_count = result.scalar()
-        print(f"[INFO] Tables after: {after_count}")
-        print(f"[INFO] Created {after_count - before_count} new tables")
+    # Create tables one by one to handle errors gracefully
+    for table_name in sorted(missing_tables):
+        table = Base.metadata.tables.get(table_name)
+        if table is None:
+            continue
 
-        # Verify missing tables are now created
-        result = conn.execute(text(
-            "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name"
-        ))
-        new_tables = [row[0] for row in result.fetchall()]
+        try:
+            # Use a fresh connection for each table to avoid transaction issues
+            with engine.begin() as conn:
+                table.create(conn, checkfirst=True)
+            created += 1
+            print(f"[OK] Created: {table_name}")
+        except ProgrammingError as e:
+            error_msg = str(e)
+            if "already exists" in error_msg:
+                skipped += 1
+                # Extract what already exists (table or index)
+                if "relation" in error_msg:
+                    print(f"[SKIP] {table_name} (index already exists)")
+                else:
+                    print(f"[SKIP] {table_name} (already exists)")
+            else:
+                errors += 1
+                print(f"[ERROR] {table_name}: {e}")
+        except Exception as e:
+            errors += 1
+            print(f"[ERROR] {table_name}: {e}")
 
-        still_missing = model_tables - set(new_tables)
-        if still_missing:
-            print(f"[WARNING] Still missing tables: {sorted(still_missing)}")
-        else:
-            print("[SUCCESS] All model tables now exist!")
+    print(f"\n[SUMMARY] Created: {created}, Skipped: {skipped}, Errors: {errors}")
+
+    # Verify final state
+    inspector = inspect(engine)
+    final_tables = set(inspector.get_table_names())
+    print(f"[INFO] Tables after: {len(final_tables)}")
+
+    still_missing = model_tables - final_tables
+    if still_missing:
+        print(f"[WARNING] Still missing {len(still_missing)} tables")
+    else:
+        print("[SUCCESS] All model tables now exist!")
 
 
 if __name__ == "__main__":
