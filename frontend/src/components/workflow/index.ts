@@ -71,6 +71,9 @@ export {
   ResponsiveWorkflowCarousel,
 } from "./MobileWorkflowCarousel";
 
+// Intent Search Bar (Phase 11)
+export { IntentSearchBar } from "./IntentSearchBar";
+
 // Missing data UI
 export { MissingDataBanner, MissingDataIndicator } from "./MissingDataBanner";
 
@@ -223,3 +226,10 @@ export type {
   MobileWorkflowCarouselProps,
   ResponsiveWorkflowCarouselProps,
 } from "./MobileWorkflowCarousel";
+
+// IntentSearchBar types (Phase 11)
+export type {
+  IntentSearchBarProps,
+  IntentSuggestion,
+  IntentType,
+} from "./IntentSearchBar";
