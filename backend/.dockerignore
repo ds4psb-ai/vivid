@@ -62,5 +62,4 @@ logs/
 Makefile
 docker-compose*.yml
 *.sh
-scripts/
 sandbox/
