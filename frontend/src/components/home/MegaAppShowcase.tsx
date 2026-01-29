@@ -33,7 +33,7 @@ const MEGA_APPS: MegaApp[] = [
     icon: Dna,
     color: "text-green-400",
     bgColor: "bg-green-500/10",
-    features: ["영상 파싱", "스타일 추출"],
+    features: ["영상 분석", "스타일 추출"],
     href: "/dna-lab",
   },
   {
@@ -43,7 +43,7 @@ const MEGA_APPS: MegaApp[] = [
     icon: BookOpen,
     color: "text-orange-400",
     bgColor: "bg-orange-500/10",
-    features: ["스토리 설계", "프롬프트 연금술"],
+    features: ["스토리 설계", "프롬프트 최적화"],
     href: "/story-engine",
   },
   {
@@ -53,7 +53,7 @@ const MEGA_APPS: MegaApp[] = [
     icon: Clapperboard,
     color: "text-blue-400",
     bgColor: "bg-blue-500/10",
-    features: ["영상 생성", "사운드 합성"],
+    features: ["영상 생성", "음악 생성"],
     href: "/production",
   },
 ];
