@@ -1,7 +1,7 @@
 """Add user_accounts table
 
-Revision ID: 017_add_user_accounts
-Revises: 016_add_reference_decoder_tables
+Revision ID: 041_add_user_accounts
+Revises: 040_add_hitl_review_items
 Create Date: 2026-01-29
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ from sqlalchemy.dialects.postgresql import UUID
 
 
 # revision identifiers, used by Alembic.
-revision: str = '017_add_user_accounts'
-down_revision: Union[str, None] = '016_add_reference_decoder_tables'
+revision: str = '041_add_user_accounts'
+down_revision: Union[str, None] = '040_add_hitl_review_items'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
