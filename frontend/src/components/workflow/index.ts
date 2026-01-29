@@ -92,6 +92,9 @@ export {
 export {
   useIPChainData,
 } from "./hooks/useIPChainData";
+export {
+  useProviderHealth,
+} from "./hooks/useProviderHealth";
 
 // Configs & Utilities
 export {
@@ -161,6 +164,19 @@ export type {
   ADDefaults,
   MirrorDefaults,
   StoryDefaults,
+} from "./hooks/types";
+
+// Provider Health types (Phase 8)
+export type {
+  ProviderId,
+  ProviderHealthStatus,
+  CircuitBreakerState,
+  ProviderCapabilities,
+  ProviderModel,
+  ProviderHealth,
+  ProviderListResponse,
+  UseProviderHealthOptions,
+  UseProviderHealthResult,
 } from "./hooks/types";
 
 // StepPreviewCard types (Phase 4)

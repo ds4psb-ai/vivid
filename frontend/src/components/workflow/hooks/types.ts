@@ -196,3 +196,159 @@ export interface StoryDefaults {
   logline?: string;
   mood?: string;
 }
+
+// =============================================================================
+// Provider Health Types (Phase 8)
+// =============================================================================
+
+/**
+ * Provider IDs available in Production
+ */
+export type ProviderId = "veo" | "kling" | "suno" | "imagen";
+
+/**
+ * Provider health status levels
+ */
+export type ProviderHealthStatus = "healthy" | "degraded" | "unhealthy" | "unknown";
+
+/**
+ * Circuit breaker states for provider failover
+ */
+export type CircuitBreakerState = "closed" | "open" | "half-open";
+
+/**
+ * Provider capability flags
+ */
+export interface ProviderCapabilities {
+  /** Maximum duration in seconds */
+  maxDuration: number;
+  /** Minimum duration in seconds */
+  minDuration?: number;
+  /** Supported aspect ratios */
+  aspectRatios: string[];
+  /** Supports reference images */
+  referenceImages?: boolean;
+  /** Max reference images allowed */
+  maxReferenceImages?: number;
+  /** Supports first/last frame control */
+  frameControl?: boolean;
+  /** Supports audio generation */
+  audioSupport?: boolean;
+  /** Supports lip sync */
+  lipSync?: boolean;
+  /** Media type produced */
+  mediaType: "video" | "audio" | "image";
+}
+
+/**
+ * Provider model pricing info
+ */
+export interface ProviderModel {
+  id: string;
+  name: string;
+  creditsPerUnit: number;
+  /** Unit type (seconds, image, song) */
+  unit: "second" | "image" | "song";
+  /** Whether this is the default model */
+  isDefault?: boolean;
+}
+
+/**
+ * Individual provider health data
+ */
+export interface ProviderHealth {
+  /** Provider identifier */
+  provider: ProviderId;
+  /** Display name */
+  displayName: string;
+  /** Current health status */
+  status: ProviderHealthStatus;
+  /** Response latency in milliseconds (from last check) */
+  latencyMs: number | null;
+  /** Last health check timestamp */
+  lastChecked: number | null;
+  /** Available models for this provider */
+  models: ProviderModel[];
+  /** Provider capabilities */
+  capabilities: ProviderCapabilities;
+  /** Circuit breaker state for failover */
+  circuitBreaker?: {
+    state: CircuitBreakerState;
+    failureCount: number;
+    lastFailure: number | null;
+    /** Auto-reset time in ms */
+    resetTimeout: number;
+  };
+  /** Error message if unhealthy */
+  errorMessage?: string;
+}
+
+/**
+ * Provider stats from /api/production/providers
+ */
+export interface ProviderListResponse {
+  providers: string[];
+  default_video: string;
+  default_audio: string;
+}
+
+/**
+ * Options for useProviderHealth hook
+ */
+export interface UseProviderHealthOptions {
+  /** Providers to monitor (default: all) */
+  providers?: ProviderId[];
+  /** Auto-refresh interval in ms (0 = disabled, default: 60000) */
+  refreshInterval?: number;
+  /** Enable circuit breaker tracking */
+  enableCircuitBreaker?: boolean;
+  /** Fetch on mount (default: true) */
+  fetchOnMount?: boolean;
+}
+
+/**
+ * Result returned by useProviderHealth hook
+ */
+export interface UseProviderHealthResult {
+  // Health State
+  /** Health data for all providers */
+  providers: Record<ProviderId, ProviderHealth>;
+  /** Whether any fetch is in progress */
+  isLoading: boolean;
+  /** Last error if any */
+  error: Error | null;
+  /** Timestamp of last successful fetch */
+  lastUpdated: number | null;
+
+  // Quick Accessors
+  /** Get health status for a provider */
+  getStatus: (providerId: ProviderId) => ProviderHealthStatus;
+  /** Check if provider is healthy or degraded (usable) */
+  isUsable: (providerId: ProviderId) => boolean;
+  /** Get latency for a provider */
+  getLatency: (providerId: ProviderId) => number | null;
+  /** Get models for a provider */
+  getModels: (providerId: ProviderId) => ProviderModel[];
+  /** Get capabilities for a provider */
+  getCapabilities: (providerId: ProviderId) => ProviderCapabilities | null;
+
+  // Derived State
+  /** All healthy providers */
+  healthyProviders: ProviderId[];
+  /** All degraded providers */
+  degradedProviders: ProviderId[];
+  /** All unhealthy providers */
+  unhealthyProviders: ProviderId[];
+  /** Best provider for video (by latency among healthy) */
+  bestVideoProvider: ProviderId | null;
+  /** Best provider for audio (by latency among healthy) */
+  bestAudioProvider: ProviderId | null;
+
+  // Actions
+  /** Refresh health for all providers */
+  refresh: () => Promise<void>;
+  /** Check health for a specific provider */
+  checkProvider: (providerId: ProviderId) => Promise<void>;
+  /** Reset circuit breaker for a provider */
+  resetCircuitBreaker: (providerId: ProviderId) => void;
+}
