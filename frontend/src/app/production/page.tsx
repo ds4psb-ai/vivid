@@ -5,6 +5,7 @@ import { Image as ImageIcon } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UnifiedWorkflowShell } from "@/components/workflow";
+import { ProductionStepPanel } from "@/components/production";
 
 // Import existing panels
 import VeoVideoPanel from "@/components/dimension/VeoVideoPanel";
@@ -30,6 +31,7 @@ import SunoPanel from "@/components/dimension/SunoPanel";
  * Migration Note (2026.01):
  * Using UnifiedWorkflowShell for consistent cross-MegaApp behavior.
  * Step-based workflow replaces tab-based navigation.
+ * ProductionStepPanel provides input banner and completion actions.
  */
 
 export default function ProductionPage() {
@@ -47,18 +49,30 @@ export default function ProductionPage() {
 }
 
 /**
- * Step content renderer
+ * Step content renderer with ProductionStepPanel wrapper
  */
 function StepContent({ stepId }: { stepId: string }) {
   switch (stepId) {
     case "veo":
-      return <VeoVideoPanel />;
+      return (
+        <ProductionStepPanel stepId="veo" showCompletionActions>
+          <VeoVideoPanel />
+        </ProductionStepPanel>
+      );
 
     case "kling":
-      return <KlingPanel />;
+      return (
+        <ProductionStepPanel stepId="kling" showCompletionActions>
+          <KlingPanel />
+        </ProductionStepPanel>
+      );
 
     case "suno":
-      return <SunoPanel />;
+      return (
+        <ProductionStepPanel stepId="suno" showCompletionActions>
+          <SunoPanel />
+        </ProductionStepPanel>
+      );
 
     case "imagen":
       return (
@@ -71,7 +85,11 @@ function StepContent({ stepId }: { stepId: string }) {
       );
 
     default:
-      return <VeoVideoPanel />;
+      return (
+        <ProductionStepPanel stepId="veo" showCompletionActions>
+          <VeoVideoPanel />
+        </ProductionStepPanel>
+      );
   }
 }
 
