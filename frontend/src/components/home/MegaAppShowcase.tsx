@@ -1,16 +1,16 @@
 "use client";
 
 /**
- * MegaAppShowcase Section - Stitch V2 Light Theme (Dark Mode Adapted)
+ * MegaAppShowcase Section - Stitch V2 Neon Red Design
  *
- * DNA Lab → Story Engine → Production Bridge
- * Premium card design with step numbers and feature badges
+ * 분석 → 구성 → 제작
+ * Minimal card design with Korean labels
  */
 
 import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Dna, BookOpen, Clapperboard, ArrowRight } from "lucide-react";
+import { Dna, BookOpen, Clapperboard, ArrowUpRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,48 +21,40 @@ interface MegaApp {
   icon: LucideIcon;
   color: string;
   bgColor: string;
-  hoverBgColor: string;
   features: string[];
   href: string;
-  step: string;
 }
 
 const MEGA_APPS: MegaApp[] = [
   {
     id: "dna-lab",
-    name: "DNA Lab",
-    subtitle: "거장 DNA 분석 및 오케스트레이션",
+    name: "분석",
+    subtitle: "거장의 스타일을 해체하세요",
     icon: Dna,
     color: "text-green-400",
     bgColor: "bg-green-500/10",
-    hoverBgColor: "group-hover:text-green-50/50",
-    features: ["Video Parsing", "Aesthetic Director", "Quality Check"],
+    features: ["영상 파싱", "스타일 추출"],
     href: "/dna-lab",
-    step: "01",
   },
   {
     id: "story-engine",
-    name: "Story Engine",
-    subtitle: "스토리 구성 및 System Prompt 생성",
+    name: "구성",
+    subtitle: "당신만의 이야기를 설계하세요",
     icon: BookOpen,
     color: "text-orange-400",
     bgColor: "bg-orange-500/10",
-    hoverBgColor: "group-hover:text-orange-50/50",
-    features: ["Story Architect", "Prompt Alchemy"],
+    features: ["스토리 설계", "프롬프트 연금술"],
     href: "/story-engine",
-    step: "02",
   },
   {
     id: "production",
-    name: "Production Bridge",
-    subtitle: "통합 미디어 생성 플랫폼",
+    name: "제작",
+    subtitle: "아이디어를 현실로 만드세요",
     icon: Clapperboard,
     color: "text-blue-400",
     bgColor: "bg-blue-500/10",
-    hoverBgColor: "group-hover:text-blue-50/50",
-    features: ["VEO 3.1", "Kling 2.6", "Suno AI"],
+    features: ["영상 생성", "사운드 합성"],
     href: "/production",
-    step: "03",
   },
 ];
 
@@ -72,8 +64,8 @@ interface MegaAppShowcaseProps {
 
 export function MegaAppShowcase({ className }: MegaAppShowcaseProps) {
   return (
-    <section className={cn("relative z-20 py-20 bg-[var(--bg-subtle)]", className)}>
-      <div className="max-w-7xl mx-auto px-6 md:px-16">
+    <section className={cn("relative z-20 px-6 md:px-16 py-24 bg-[var(--bg-subtle)]", className)}>
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -83,111 +75,78 @@ export function MegaAppShowcase({ className }: MegaAppShowcaseProps) {
           className="mb-12"
         >
           <h2 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight text-white">
-            당신의 창작 <span className="text-[var(--fg-primary)]">워크플로우</span>
+            창작 <span className="text-[var(--fg-primary)]">파이프라인</span>
           </h2>
           <p className="text-gray-400 max-w-lg font-light break-keep">
-            DNA 분석부터 최종 제작까지, 세 단계로 완성하세요.
+            세 단계로 아이디어를 완성하세요.
           </p>
-
-          {/* Workflow Indicators */}
-          <div className="flex items-center gap-6 mt-6 text-sm font-medium">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-500" />
-              <span className="text-gray-300">DNA Lab</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-orange-500" />
-              <span className="text-gray-300">Story Engine</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-blue-500" />
-              <span className="text-gray-300">Production Bridge</span>
-            </div>
-          </div>
         </motion.div>
 
-        {/* Cards Container */}
-        <div className="relative">
-          {/* Dashed connection line (desktop) */}
-          <div className="hidden lg:block absolute top-1/2 left-0 w-full h-px border-t border-dashed border-white/20 -z-10" />
+        {/* 3-Column Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {MEGA_APPS.map((app, index) => {
+            const Icon = app.icon;
 
-          {/* 3-Column Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {MEGA_APPS.map((app, index) => {
-              const Icon = app.icon;
-
-              return (
-                <motion.div
-                  key={app.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.15, duration: 0.5 }}
-                  className="relative z-10"
-                >
-                  <Link href={app.href} className="block h-full group">
+            return (
+              <motion.div
+                key={app.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Link href={app.href} className="block h-full group">
+                  <div
+                    className={cn(
+                      "relative rounded-2xl overflow-hidden",
+                      "bg-[var(--bg-base)] border border-white/10",
+                      "p-8 h-full min-h-[240px]",
+                      "transition-all duration-300",
+                      "hover:border-[var(--border-primary)]/50",
+                      "hover:-translate-y-1"
+                    )}
+                  >
+                    {/* Icon */}
                     <div
                       className={cn(
-                        "relative rounded-2xl overflow-hidden",
-                        "bg-[var(--bg-base)] border border-white/10",
-                        "p-8 h-full min-h-[280px]",
-                        "transition-all duration-300",
-                        "hover:border-[var(--border-primary)]/50",
-                        "hover:-translate-y-1"
+                        "w-12 h-12 rounded-xl flex items-center justify-center mb-6",
+                        app.bgColor
                       )}
                     >
-                      {/* Step Number (Background) */}
-                      <div className="absolute top-0 right-0 p-4 opacity-50">
-                        <span
-                          className={cn(
-                            "text-6xl font-black text-gray-800/80",
-                            app.hoverBgColor,
-                            "transition-colors"
-                          )}
-                        >
-                          {app.step}
-                        </span>
-                      </div>
-
-                      {/* Icon */}
-                      <div
-                        className={cn(
-                          "w-10 h-10 rounded-full flex items-center justify-center mb-6",
-                          app.bgColor
-                        )}
-                      >
-                        <Icon className={cn("w-5 h-5", app.color)} />
-                      </div>
-
-                      {/* Title */}
-                      <h3 className="text-xl font-bold text-white mb-4">
-                        {app.name}
-                      </h3>
-
-                      {/* Feature Badges */}
-                      <div className="flex flex-wrap gap-2">
-                        {app.features.map((feature) => (
-                          <span
-                            key={feature}
-                            className="px-3 py-1 rounded-full bg-white/5 text-xs font-medium text-gray-300 border border-white/10"
-                          >
-                            {feature}
-                          </span>
-                        ))}
-                      </div>
-
-                      {/* Arrow Button */}
-                      <div className="mt-8 flex justify-end">
-                        <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 group-hover:bg-[var(--bg-primary)] group-hover:border-[var(--border-primary)] group-hover:text-white transition-all">
-                          <ArrowRight className="w-4 h-4" />
-                        </div>
-                      </div>
+                      <Icon className={cn("w-6 h-6", app.color)} />
                     </div>
-                  </Link>
-                </motion.div>
-              );
-            })}
-          </div>
+
+                    {/* Title */}
+                    <h3 className="text-2xl font-bold text-white mb-2">
+                      {app.name}
+                    </h3>
+
+                    {/* Subtitle */}
+                    <p className="text-gray-400 text-sm mb-6 break-keep">
+                      {app.subtitle}
+                    </p>
+
+                    {/* Feature Tags */}
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      {app.features.map((feature) => (
+                        <span
+                          key={feature}
+                          className="text-xs text-gray-500"
+                        >
+                          {feature}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* CTA */}
+                    <div className="flex items-center text-xs font-bold tracking-widest text-[var(--fg-primary)] group-hover:text-white transition-colors uppercase">
+                      시작하기 <ArrowUpRight className="w-4 h-4 ml-1" />
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
