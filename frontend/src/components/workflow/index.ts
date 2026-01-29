@@ -65,6 +65,12 @@ export { SmartProviderSelector } from "./SmartProviderSelector";
 // Cost Estimator (Phase 9)
 export { CostEstimator, useCostEstimate } from "./CostEstimator";
 
+// Mobile Workflow Carousel (Phase 10)
+export {
+  MobileWorkflowCarousel,
+  ResponsiveWorkflowCarousel,
+} from "./MobileWorkflowCarousel";
+
 // Missing data UI
 export { MissingDataBanner, MissingDataIndicator } from "./MissingDataBanner";
 
@@ -211,3 +217,9 @@ export type { SmartProviderSelectorProps } from "./SmartProviderSelector";
 
 // CostEstimator types (Phase 9)
 export type { CostEstimatorProps, CostBreakdown } from "./CostEstimator";
+
+// MobileWorkflowCarousel types (Phase 10)
+export type {
+  MobileWorkflowCarouselProps,
+  ResponsiveWorkflowCarouselProps,
+} from "./MobileWorkflowCarousel";
