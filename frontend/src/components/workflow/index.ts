@@ -37,6 +37,28 @@ export { UnifiedStepNav, UnifiedStepNavCompact } from "./UnifiedStepNav";
 // Chain sidebar
 export { UnifiedChainSidebar } from "./UnifiedChainSidebar";
 
+// Step Preview Card (Phase 4)
+export {
+  StepPreviewCard,
+  StepStatusBadge,
+  InputSourceBadge,
+  OutputDataPreview,
+} from "./StepPreviewCard";
+
+// Parallel Preview Grid (Phase 5)
+export {
+  ParallelPreviewGrid,
+  buildInputSources,
+  getInputSourceOrigin,
+  getGridColsClass,
+} from "./ParallelPreviewGrid";
+
+// DNA Lab Overview (Phase 6)
+export { DNALabOverview } from "./DNALabOverview";
+
+// Story Engine Overview (Phase 7)
+export { StoryEngineOverview } from "./StoryEngineOverview";
+
 // Missing data UI
 export { MissingDataBanner, MissingDataIndicator } from "./MissingDataBanner";
 
@@ -140,3 +162,24 @@ export type {
   MirrorDefaults,
   StoryDefaults,
 } from "./hooks/types";
+
+// StepPreviewCard types (Phase 4)
+export type {
+  InputSourceOrigin,
+  InputSourceInfo,
+  StepPreviewMode,
+  StepPreviewCardProps,
+} from "./StepPreviewCard";
+
+// ParallelPreviewGrid types (Phase 5)
+export type {
+  GridColumns,
+  GridGap,
+  ParallelPreviewGridProps,
+} from "./ParallelPreviewGrid";
+
+// DNALabOverview types (Phase 6)
+export type { DNALabOverviewProps } from "./DNALabOverview";
+
+// StoryEngineOverview types (Phase 7)
+export type { StoryEngineOverviewProps } from "./StoryEngineOverview";

@@ -43,7 +43,7 @@
 import { useState, useEffect, Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Database } from "lucide-react";
-import { UnifiedWorkflowShell, MissingDataBanner, useIPChainData } from "@/components/workflow";
+import { UnifiedWorkflowShell, MissingDataBanner, useIPChainData, DNALabOverview } from "@/components/workflow";
 import { DNALabStepPanel, DNALabRunPipelineButton, DNALabOnboarding, type DNALabStepId } from "@/components/dna-lab";
 import AppShell from "@/components/AppShell";
 
@@ -79,21 +79,51 @@ function DNALabLoadingFallback() {
 
 /**
  * Main content with URL parameter handling
+ *
+ * Phase 6 Routing Logic:
+ * - /dna-lab (no params, no session) → Onboarding
+ * - /dna-lab?ip=slug → Overview (IP connected)
+ * - /dna-lab?step=overview → Overview (explicit)
+ * - /dna-lab?step=vpe → Step detail
+ * - /dna-lab (has session) → Overview
  */
 function DNALabPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Check for URL parameters that skip onboarding
+  // Check for URL parameters
+  const step = searchParams?.get("step");
   const ipSlug = searchParams?.get("ip");
   const videoUrl = searchParams?.get("url");
   const masterKey = searchParams?.get("master");
-  const mode = searchParams?.get("mode");
 
-  // Determine if we should show onboarding
-  // Skip onboarding if any entry parameter is present
+  // Manual dismissal state for onboarding
+  const [manuallyDismissed, setManuallyDismissed] = useState(false);
+
+  // Check for existing session (simple check - any chain data present)
+  // This is a lightweight check; full session restoration happens in useIPChainData
+  const [hasExistingSession, setHasExistingSession] = useState(false);
+
+  useEffect(() => {
+    // Check localStorage for any DNA Lab session data
+    if (typeof window !== "undefined") {
+      const sessionKeys = Object.keys(localStorage).filter(
+        (key) => key.startsWith("dna-lab-session") || key.startsWith("chain-data-dna-lab")
+      );
+      setHasExistingSession(sessionKeys.length > 0);
+    }
+  }, []);
+
+  // Determine view mode
   const hasEntryParams = !!(ipSlug || videoUrl || masterKey);
-  const [showOnboarding, setShowOnboarding] = useState(!hasEntryParams);
+  const isStepDetail = step && step !== "overview";
+  const isExplicitOverview = step === "overview";
+
+  // 1. Onboarding: No params + no session + not manually dismissed
+  const showOnboarding = !hasEntryParams && !step && !hasExistingSession && !manuallyDismissed;
+
+  // 2. Overview: step=overview OR (no step + (ipSlug OR hasSession OR manuallyDismissed))
+  const showOverview = isExplicitOverview || (!isStepDetail && !showOnboarding && (ipSlug || hasExistingSession || manuallyDismissed));
 
   // Onboarding handlers
   const handleSelectIP = (slug: string) => {
@@ -114,10 +144,18 @@ function DNALabPageContent() {
   };
 
   const handleManualStart = () => {
-    setShowOnboarding(false);
+    setManuallyDismissed(true);
   };
 
-  // Show onboarding if no entry params and user hasn't manually dismissed
+  // Overview navigation handler
+  const handleStepClick = (stepId: string) => {
+    const params = new URLSearchParams();
+    params.set("step", stepId);
+    if (ipSlug) params.set("ip", ipSlug);
+    router.push(`/dna-lab?${params.toString()}`);
+  };
+
+  // 1. Show Onboarding
   if (showOnboarding) {
     return (
       <AppShell showTopBar={false} showNavbar={false}>
@@ -131,7 +169,37 @@ function DNALabPageContent() {
     );
   }
 
-  // Show workflow with IP integration
+  // 2. Show Overview
+  if (showOverview) {
+    return (
+      <UnifiedWorkflowShell
+        appId="dna-lab"
+        showAurora={true}
+        showWorkflowProgress={false}
+        showChainSummary={false}
+        headerRight={
+          <div className="flex items-center gap-3">
+            {ipSlug && (
+              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-violet-500/10 text-violet-400 text-xs">
+                <Database className="w-3.5 h-3.5" />
+                <span className="font-medium">{ipSlug}</span>
+              </div>
+            )}
+            <DNALabRunPipelineButton className="hidden sm:flex" />
+          </div>
+        }
+      >
+        {() => (
+          <DNALabOverview
+            ipSlug={ipSlug}
+            onStepClick={handleStepClick}
+          />
+        )}
+      </UnifiedWorkflowShell>
+    );
+  }
+
+  // 3. Show Step Detail (original workflow)
   return (
     <UnifiedWorkflowShell
       appId="dna-lab"
