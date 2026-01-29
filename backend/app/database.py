@@ -247,10 +247,36 @@ async def init_db(drop_all: bool = False) -> None:
             logger.info("[DB] Development mode - running create_all()")
             await conn.run_sync(Base.metadata.create_all)
         else:
-            # Production: Also run create_all() with checkfirst=True
-            # This creates missing tables without affecting existing ones
-            # Required because many tables were initially created by init_db()
-            # but never captured in Alembic migrations
-            logger.info("[DB] Production mode - running create_all(checkfirst=True)")
-            await conn.run_sync(lambda sync_conn: Base.metadata.create_all(sync_conn, checkfirst=True))
+            # Production: Create missing tables one by one
+            # checkfirst=True only checks tables, not indexes
+            # So we create each table individually and catch duplicate index errors
+            logger.info("[DB] Production mode - creating missing tables individually")
+
+            def create_tables_safely(sync_conn):
+                from sqlalchemy import inspect
+                from sqlalchemy.exc import ProgrammingError
+
+                inspector = inspect(sync_conn)
+                existing_tables = set(inspector.get_table_names())
+
+                created = 0
+                skipped = 0
+                for table in Base.metadata.sorted_tables:
+                    if table.name in existing_tables:
+                        skipped += 1
+                        continue
+                    try:
+                        table.create(sync_conn, checkfirst=True)
+                        created += 1
+                        logger.info(f"[DB] Created table: {table.name}")
+                    except ProgrammingError as e:
+                        if "already exists" in str(e):
+                            skipped += 1
+                        else:
+                            logger.error(f"[DB] Failed to create {table.name}: {e}")
+                            raise
+
+                logger.info(f"[DB] Tables - created: {created}, skipped: {skipped}")
+
+            await conn.run_sync(create_tables_safely)
 
