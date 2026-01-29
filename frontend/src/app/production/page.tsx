@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Image as ImageIcon } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { UnifiedWorkflowShell } from "@/components/workflow";
-import { ProductionStepPanel } from "@/components/production";
+import { UnifiedWorkflowShell, ProductionOverview } from "@/components/workflow";
+import { ProductionStepPanel, type ProductionStepId } from "@/components/production";
 
 // Import existing panels
 import VeoVideoPanel from "@/components/dimension/VeoVideoPanel";
@@ -21,6 +22,13 @@ import SunoPanel from "@/components/dimension/SunoPanel";
  * - Suno (Suno Music)
  * - Imagen (Image Generation - Future)
  *
+ * Phase 12: Overview 뷰 통합
+ * - /production                → Overview (3개 Provider 한눈에)
+ * - /production?step=overview  → Overview (명시적)
+ * - /production?step=veo       → VEO 3.1
+ * - /production?step=kling     → Kling 2.6
+ * - /production?step=suno      → Suno AI
+ *
  * Features:
  * - Unified provider interface
  * - Auto provider selection
@@ -34,7 +42,57 @@ import SunoPanel from "@/components/dimension/SunoPanel";
  * ProductionStepPanel provides input banner and completion actions.
  */
 
-export default function ProductionPage() {
+/**
+ * Valid step IDs for Production
+ */
+const VALID_STEP_IDS: ProductionStepId[] = ["veo", "kling", "suno"];
+
+/**
+ * Check if a string is a valid step ID
+ */
+function isValidStepId(step: string | null): step is ProductionStepId {
+  return VALID_STEP_IDS.includes(step as ProductionStepId);
+}
+
+/**
+ * Inner component that uses useSearchParams
+ */
+function ProductionPageInner() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const stepParam = searchParams.get("step");
+
+  // Determine view mode
+  const showOverview = useMemo(() => {
+    if (!stepParam) return true;
+    if (stepParam === "overview") return true;
+    if (!isValidStepId(stepParam)) return true;
+    return false;
+  }, [stepParam]);
+
+  // Handle step navigation from Overview
+  const handleStepClick = useCallback(
+    (stepId: string) => {
+      router.push(`/production?step=${stepId}`);
+    },
+    [router]
+  );
+
+  // Render Overview or Step Detail
+  if (showOverview) {
+    return (
+      <UnifiedWorkflowShell
+        appId="production"
+        showAurora={true}
+        showWorkflowProgress={false}
+        showChainSummary={false}
+        headerRight={<ProviderStats />}
+      >
+        {() => <ProductionOverview onStepClick={handleStepClick} />}
+      </UnifiedWorkflowShell>
+    );
+  }
+
   return (
     <UnifiedWorkflowShell
       appId="production"
@@ -45,6 +103,28 @@ export default function ProductionPage() {
     >
       {(currentStepId) => <StepContent stepId={currentStepId} />}
     </UnifiedWorkflowShell>
+  );
+}
+
+export default function ProductionPage() {
+  return (
+    <Suspense fallback={<ProductionLoadingFallback />}>
+      <ProductionPageInner />
+    </Suspense>
+  );
+}
+
+/**
+ * Loading fallback for Suspense boundary
+ */
+function ProductionLoadingFallback() {
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-black">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 animate-pulse" />
+        <div className="text-sm text-white/50">Production 로딩 중...</div>
+      </div>
+    </div>
   );
 }
 

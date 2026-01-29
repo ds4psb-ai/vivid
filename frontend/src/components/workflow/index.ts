@@ -59,6 +59,9 @@ export { DNALabOverview } from "./DNALabOverview";
 // Story Engine Overview (Phase 7)
 export { StoryEngineOverview } from "./StoryEngineOverview";
 
+// Production Overview (Phase 12)
+export { ProductionOverview } from "./ProductionOverview";
+
 // Smart Provider Selector (Phase 9)
 export { SmartProviderSelector } from "./SmartProviderSelector";
 
@@ -214,6 +217,9 @@ export type { DNALabOverviewProps } from "./DNALabOverview";
 
 // StoryEngineOverview types (Phase 7)
 export type { StoryEngineOverviewProps } from "./StoryEngineOverview";
+
+// ProductionOverview types (Phase 12)
+export type { ProductionOverviewProps } from "./ProductionOverview";
 
 // SmartProviderSelector types (Phase 9)
 export type { SmartProviderSelectorProps } from "./SmartProviderSelector";
