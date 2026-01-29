@@ -30,7 +30,7 @@ import {
 import AppShell from "@/components/AppShell";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { fetchWithAuth } from "@/lib/api-client";
+import { fetchWithAuth } from "@/lib/api";
 
 // =============================================================================
 // Types

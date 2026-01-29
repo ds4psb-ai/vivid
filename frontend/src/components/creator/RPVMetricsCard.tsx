@@ -20,7 +20,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { fetchWithAuth } from "@/lib/api-client";
+import { fetchWithAuth } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface CreatorMetrics {

@@ -25,7 +25,7 @@ import {
     FileX,
 } from "lucide-react";
 
-import { fetchWithAuth } from "@/lib/api-client";
+import { fetchWithAuth } from "@/lib/api";
 import { StatusBadge, StatCard, EmptyState } from "@/components/shared";
 import AppShell from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";

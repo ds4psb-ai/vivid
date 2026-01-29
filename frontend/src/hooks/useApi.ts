@@ -9,7 +9,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { api, ApiError } from "@/lib/api-client";
+import { simpleApi, LegacyApiError } from "@/lib/api";
 
 export interface UseApiOptions {
     /** Skip initial fetch */
@@ -21,7 +21,7 @@ export interface UseApiOptions {
 export interface UseApiResult<T> {
     data: T | null;
     loading: boolean;
-    error: ApiError | null;
+    error: LegacyApiError | null;
     refetch: () => Promise<void>;
 }
 
@@ -39,7 +39,7 @@ export function useApi<T>(
 
     const [data, setData] = useState<T | null>(null);
     const [loading, setLoading] = useState(!skip);
-    const [error, setError] = useState<ApiError | null>(null);
+    const [error, setError] = useState<LegacyApiError | null>(null);
 
     const fetchData = useCallback(async () => {
         if (skip) return;
@@ -47,7 +47,7 @@ export function useApi<T>(
         setLoading(true);
         setError(null);
 
-        const result = await api.get<T>(endpoint);
+        const result = await simpleApi.get<T>(endpoint);
 
         if (result.ok) {
             setData(result.data);
@@ -78,7 +78,7 @@ export function useMutation<T, B = unknown>(
     method: "POST" | "PUT" | "DELETE" = "POST"
 ) {
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<ApiError | null>(null);
+    const [error, setError] = useState<LegacyApiError | null>(null);
 
     const mutate = useCallback(
         async (body?: B): Promise<T | null> => {
@@ -88,13 +88,13 @@ export function useMutation<T, B = unknown>(
             let result;
             switch (method) {
                 case "POST":
-                    result = await api.post<T>(endpoint, body);
+                    result = await simpleApi.post<T>(endpoint, body);
                     break;
                 case "PUT":
-                    result = await api.put<T>(endpoint, body);
+                    result = await simpleApi.put<T>(endpoint, body);
                     break;
                 case "DELETE":
-                    result = await api.delete<T>(endpoint);
+                    result = await simpleApi.delete<T>(endpoint);
                     break;
             }
 

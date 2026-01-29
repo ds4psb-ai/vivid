@@ -20,7 +20,7 @@ import {
     FileCode,
     Shield,
 } from "lucide-react";
-import { fetchWithAuth } from "@/lib/api-client";
+import { fetchWithAuth } from "@/lib/api";
 
 interface ForkToolModalProps {
     toolId: string;

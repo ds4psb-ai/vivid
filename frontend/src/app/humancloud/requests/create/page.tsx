@@ -21,7 +21,7 @@ import {
 import AppShell from "@/components/AppShell";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { fetchWithAuth } from "@/lib/api-client";
+import { fetchWithAuth } from "@/lib/api";
 
 const CATEGORIES = [
     { value: "video_creative", label: "Video Creative", labelKo: "영상 크리에이티브" },

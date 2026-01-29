@@ -29,7 +29,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 
-import { fetchWithAuth } from "@/lib/api-client";
+import { fetchWithAuth } from "@/lib/api";
 import { StatCard, StatusBadge, PageHeader, EmptyState } from "@/components/shared";
 import AppShell from "@/components/AppShell";
 import { Button } from "@/components/ui/button";

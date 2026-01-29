@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 
 // Shared imports
-import { fetchWithAuth } from "@/lib/api-client";
+import { fetchWithAuth } from "@/lib/api";
 import { StatusBadge, StatCard, EmptyState } from "@/components/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Payout, PayoutSummary } from "@/types/api.types";

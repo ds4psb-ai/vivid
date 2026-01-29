@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Coins, Info, Sparkles, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
-import { toolsApi, type ToolDisplayInfo, type ToolEvidenceResponse } from "@/lib/api-client";
+import { toolsApi, type ToolDisplayInfo, type ToolEvidenceResponse } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import {

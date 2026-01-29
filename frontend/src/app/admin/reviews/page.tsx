@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 
 // Shared imports
-import { fetchWithAuth } from "@/lib/api-client";
+import { fetchWithAuth } from "@/lib/api";
 import { StatCard, StatusBadge, PageHeader, EmptyState } from "@/components/shared";
 import type { Review, ReviewStats, CheckResult } from "@/types/api.types";
 import AppShell from "@/components/AppShell";

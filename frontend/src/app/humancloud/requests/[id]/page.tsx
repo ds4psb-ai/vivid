@@ -29,7 +29,7 @@ import {
 import AppShell from "@/components/AppShell";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { fetchWithAuth } from "@/lib/api-client";
+import { fetchWithAuth } from "@/lib/api";
 import EvidenceTimeline, { EvidenceLog } from "@/components/humancloud/EvidenceTimeline";
 import ActionConsole from "@/components/humancloud/ActionConsole";
 
