@@ -112,6 +112,7 @@ async def google_start() -> RedirectResponse:
         httponly=True,
         samesite="lax",
         secure=settings.COOKIE_SECURE,
+        domain=settings.COOKIE_DOMAIN or None,
     )
     return response
 
@@ -224,6 +225,7 @@ async def google_callback(
         httponly=True,
         samesite="lax",
         secure=settings.COOKIE_SECURE,
+        domain=settings.COOKIE_DOMAIN or None,
     )
     return response
 

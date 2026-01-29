@@ -119,6 +119,9 @@ class Settings(BaseSettings):
     OAUTH_STATE_COOKIE_NAME: str = "crebit_oauth_state"
     AUTH_SUCCESS_REDIRECT: str = "http://localhost:3100"
     AUTH_ERROR_REDIRECT: str = "http://localhost:3100/login?error=auth_failed"
+    # Cross-subdomain cookie sharing (e.g., ".prompty.co.kr" for api.prompty.co.kr <-> www.prompty.co.kr)
+    # Leave empty for same-origin only (default behavior)
+    COOKIE_DOMAIN: str = ""
     MASTER_ADMIN_EMAILS: str = ""
 
     # Frontend Integration (Phase 6 Cache Invalidation)
