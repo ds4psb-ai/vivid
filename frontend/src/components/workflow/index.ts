@@ -59,6 +59,12 @@ export { DNALabOverview } from "./DNALabOverview";
 // Story Engine Overview (Phase 7)
 export { StoryEngineOverview } from "./StoryEngineOverview";
 
+// Smart Provider Selector (Phase 9)
+export { SmartProviderSelector } from "./SmartProviderSelector";
+
+// Cost Estimator (Phase 9)
+export { CostEstimator, useCostEstimate } from "./CostEstimator";
+
 // Missing data UI
 export { MissingDataBanner, MissingDataIndicator } from "./MissingDataBanner";
 
@@ -199,3 +205,9 @@ export type { DNALabOverviewProps } from "./DNALabOverview";
 
 // StoryEngineOverview types (Phase 7)
 export type { StoryEngineOverviewProps } from "./StoryEngineOverview";
+
+// SmartProviderSelector types (Phase 9)
+export type { SmartProviderSelectorProps } from "./SmartProviderSelector";
+
+// CostEstimator types (Phase 9)
+export type { CostEstimatorProps, CostBreakdown } from "./CostEstimator";
