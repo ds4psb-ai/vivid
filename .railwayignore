@@ -1,0 +1,22 @@
+# Frontend
+frontend/
+*.mp4
+
+# Backend virtual environments
+backend/venv/
+backend/.venv/
+backend/venv314/
+backend/__pycache__/
+backend/*.pyc
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.ruff_cache/
+backend/logs/
+
+# Other
+.git/
+scripts/
+ainspire-code/
+video/
+data/
+docs/
