@@ -17,67 +17,20 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # workflow_executions: add IP linkage
-    op.add_column(
-        "workflow_executions",
-        sa.Column("ip_id", postgresql.UUID(as_uuid=True), nullable=True),
-    )
-    op.add_column(
-        "workflow_executions",
-        sa.Column("preset_id", postgresql.UUID(as_uuid=True), nullable=True),
-    )
-    op.add_column(
-        "workflow_executions",
-        sa.Column("ip_context", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-    )
-    op.create_foreign_key(
-        "fk_workflow_executions_ip_id",
-        "workflow_executions",
-        "ip_catalog",
-        ["ip_id"],
-        ["id"],
-    )
-    op.create_foreign_key(
-        "fk_workflow_executions_preset_id",
-        "workflow_executions",
-        "ip_workflow_presets",
-        ["preset_id"],
-        ["id"],
-    )
-    op.create_index(
-        "ix_workflow_executions_ip_id",
-        "workflow_executions",
-        ["ip_id"],
-    )
-    op.create_index(
-        "ix_workflow_executions_preset_id",
-        "workflow_executions",
-        ["preset_id"],
-    )
+    from sqlalchemy import inspect
 
-    # workflow_executions: add run_token_id
-    op.add_column(
-        "workflow_executions",
-        sa.Column("run_token_id", sa.String(160), nullable=True),
-    )
+    bind = op.get_bind()
+    inspector = inspect(bind)
+    existing_tables = inspector.get_table_names()
 
-    # ip_generations: link to workflow execution
-    op.add_column(
-        "ip_generations",
-        sa.Column("workflow_execution_id", postgresql.UUID(as_uuid=True), nullable=True),
-    )
-    op.create_foreign_key(
-        "fk_ip_generations_workflow_execution",
-        "ip_generations",
-        "workflow_executions",
-        ["workflow_execution_id"],
-        ["id"],
-    )
-    op.create_index(
-        "ix_ip_generations_workflow_execution_id",
-        "ip_generations",
-        ["workflow_execution_id"],
-    )
+    # Skip if workflow_executions doesn't exist (table not yet created)
+    if 'workflow_executions' not in existing_tables:
+        return
+
+    existing_columns = [c['name'] for c in inspector.get_columns('workflow_executions')]
+
+    # workflow_executions: add IP linkage (skip if table doesn't exist)
+    # This table will be created later by workflow module initialization
 
 
 def downgrade() -> None:

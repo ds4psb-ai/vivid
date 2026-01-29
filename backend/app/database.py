@@ -196,6 +196,42 @@ async def init_db(drop_all: bool = False) -> None:
     import logging
     logger = logging.getLogger("database")
 
+    # Import ALL models to register them with Base.metadata
+    # This ensures create_all() knows about all tables
+    try:
+        from app.models import *  # noqa: F401, F403
+        from app.models_telemetry import *  # noqa: F401, F403
+        from app.models_feedback import *  # noqa: F401, F403
+        from app.models_uqsl import *  # noqa: F401, F403
+        from app.models_ip import *  # noqa: F401, F403
+        from app.models_workflow import *  # noqa: F401, F403
+        from app.models_ip_evidence import *  # noqa: F401, F403
+        from app.models_singularity import *  # noqa: F401, F403
+        from app.models_humancloud import *  # noqa: F401, F403
+        from app.models_settlement import *  # noqa: F401, F403
+        from app.models_sandbox import *  # noqa: F401, F403
+        from app.models_character import *  # noqa: F401, F403
+        from app.models_reference import *  # noqa: F401, F403
+        from app.models_review import *  # noqa: F401, F403
+        from app.models_marketplace import *  # noqa: F401, F403
+        from app.models_versioning import *  # noqa: F401, F403
+        from app.models_miniapps import *  # noqa: F401, F403
+        from app.models_analytics import *  # noqa: F401, F403
+        from app.models_dlq import *  # noqa: F401, F403
+        from app.models_constellation import *  # noqa: F401, F403
+        from app.models_ip_chat import *  # noqa: F401, F403
+        from app.models_mcp import *  # noqa: F401, F403
+        from app.models_tenant import *  # noqa: F401, F403
+        from app.models_outlier import *  # noqa: F401, F403
+        from app.models_personalization import *  # noqa: F401, F403
+        from app.models_outbox import *  # noqa: F401, F403
+        from app.models_logic_vector import *  # noqa: F401, F403
+        from app.models_pipeline import *  # noqa: F401, F403
+        from app.models_hitl import *  # noqa: F401, F403
+        logger.info(f"[DB] Registered {len(Base.metadata.tables)} tables with Base.metadata")
+    except ImportError as e:
+        logger.warning(f"[DB] Some models failed to import: {e}")
+
     async with engine.begin() as conn:
         # Verify connection works
         result = await conn.execute(text("SELECT 1"))
@@ -211,5 +247,10 @@ async def init_db(drop_all: bool = False) -> None:
             logger.info("[DB] Development mode - running create_all()")
             await conn.run_sync(Base.metadata.create_all)
         else:
-            logger.info("[DB] Production mode - schema managed by Alembic")
+            # Production: Also run create_all() with checkfirst=True
+            # This creates missing tables without affecting existing ones
+            # Required because many tables were initially created by init_db()
+            # but never captured in Alembic migrations
+            logger.info("[DB] Production mode - running create_all(checkfirst=True)")
+            await conn.run_sync(lambda sync_conn: Base.metadata.create_all(sync_conn, checkfirst=True))
 

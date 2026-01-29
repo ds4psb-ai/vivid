@@ -18,6 +18,29 @@ from app.models_uqsl import *  # noqa: F401, F403  # UQSL: Quality Selection Lay
 from app.models_ip import *  # noqa: F401, F403  # IP-First UX models
 from app.models_workflow import *  # noqa: F401, F403  # Workflow Checkpoint models
 from app.models_ip_evidence import *  # noqa: F401, F403  # IP Evidence models
+# Additional models that must be imported for complete schema
+from app.models_singularity import *  # noqa: F401, F403  # Blackhole templates
+from app.models_humancloud import *  # noqa: F401, F403  # Human Cloud
+from app.models_settlement import *  # noqa: F401, F403  # Settlement
+from app.models_sandbox import *  # noqa: F401, F403  # Sandbox
+from app.models_character import *  # noqa: F401, F403  # Character consistency
+from app.models_reference import *  # noqa: F401, F403  # Reference decoder
+from app.models_review import *  # noqa: F401, F403  # Review
+from app.models_marketplace import *  # noqa: F401, F403  # Marketplace
+from app.models_versioning import *  # noqa: F401, F403  # Versioning
+from app.models_miniapps import *  # noqa: F401, F403  # Miniapps
+from app.models_analytics import *  # noqa: F401, F403  # Analytics
+from app.models_dlq import *  # noqa: F401, F403  # DLQ
+from app.models_constellation import *  # noqa: F401, F403  # Constellation
+from app.models_ip_chat import *  # noqa: F401, F403  # IP Chat
+from app.models_mcp import *  # noqa: F401, F403  # MCP
+from app.models_tenant import *  # noqa: F401, F403  # Tenant
+from app.models_outlier import *  # noqa: F401, F403  # Outlier
+from app.models_personalization import *  # noqa: F401, F403  # Personalization
+from app.models_outbox import *  # noqa: F401, F403  # Outbox
+from app.models_logic_vector import *  # noqa: F401, F403  # Logic vector
+from app.models_pipeline import *  # noqa: F401, F403  # Pipeline
+from app.models_hitl import *  # noqa: F401, F403  # HITL
 
 # Load settings
 from app.config import settings

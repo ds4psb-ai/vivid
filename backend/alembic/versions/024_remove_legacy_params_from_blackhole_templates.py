@@ -15,7 +15,16 @@ depends_on = None
 
 
 def upgrade() -> None:
+    from sqlalchemy import inspect
+
     bind = op.get_bind()
+    inspector = inspect(bind)
+    existing_tables = inspector.get_table_names()
+
+    # Skip if blackhole_templates doesn't exist yet (will be created later)
+    if 'blackhole_templates' not in existing_tables:
+        return
+
     if bind.dialect.name == "postgresql":
         op.execute(
             """
