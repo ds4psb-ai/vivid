@@ -894,6 +894,12 @@ class ApiClient {
 
       // Handle authentication errors (JWT expired or invalid)
       if (response.status === 401) {
+        // ⚠️ TEMP: 디자이너 프리뷰용 - 401에서 로그인 리다이렉트 비활성화
+        // TODO: 리뷰 후 제거
+        const SKIP_AUTH_REDIRECT = true;
+        if (SKIP_AUTH_REDIRECT) {
+          throw new Error("인증이 필요합니다.");
+        }
         // Clear any cached session and redirect to login
         if (typeof window !== "undefined") {
           const currentPath = window.location.pathname;
