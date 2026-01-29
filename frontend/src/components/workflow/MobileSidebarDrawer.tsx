@@ -12,6 +12,7 @@
 import { PanelRight, ChevronLeft } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useState } from "react";
+import { RESPONSIVE_CONFIG } from "./workflow-configs";
 
 export interface MobileSidebarDrawerProps {
   /** Sidebar content to render in drawer */
@@ -41,12 +42,12 @@ export function MobileSidebarDrawer({
 
   return (
     <>
-      {/* Floating Action Button - Only visible on mobile/tablet */}
+      {/* Floating Action Button - Only visible on mobile (< md breakpoint) */}
       <button
         onClick={() => setOpen(true)}
-        className="
+        className={`
           fixed bottom-6 right-6 z-40
-          lg:hidden
+          ${RESPONSIVE_CONFIG.breakpoints.showMobileFab}
           flex items-center gap-2
           min-h-[48px] min-w-[48px]
           px-4 py-3
@@ -57,7 +58,7 @@ export function MobileSidebarDrawer({
           hover:bg-[var(--surface-2)]
           active:scale-95
           transition-all duration-200
-        "
+        `}
         aria-label={`${title} 열기`}
       >
         <PanelRight className="w-5 h-5 text-[var(--fg-subtle)]" />
@@ -70,7 +71,7 @@ export function MobileSidebarDrawer({
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent
           side="right"
-          className="w-80 p-0 flex flex-col"
+          className={`${RESPONSIVE_CONFIG.sidebar.mobile.width} ${RESPONSIVE_CONFIG.sidebar.mobile.maxWidth} p-0 flex flex-col`}
           onClose={() => setOpen(false)}
         >
           {/* Header */}
@@ -113,7 +114,7 @@ export function MobileSidebarTrigger({
     <button
       onClick={onClick}
       className={`
-        lg:hidden
+        ${RESPONSIVE_CONFIG.breakpoints.showMobileFab}
         flex items-center gap-2
         min-h-[44px] min-w-[44px]
         px-3 py-2

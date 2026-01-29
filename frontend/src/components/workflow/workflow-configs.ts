@@ -22,6 +22,49 @@ import {
 import type { WorkflowConfig, WorkflowStepMetadata, MegaAppId, ChainDataSource } from "./types";
 
 /**
+ * Responsive Layout Configuration
+ *
+ * Centralized config for breakpoints and sidebar widths.
+ * Q2 리팩토링 시 AdaptiveLayout + Compound Components로 전환 예정.
+ *
+ * Breakpoints (Tailwind default):
+ * - sm: 640px
+ * - md: 768px
+ * - lg: 1024px
+ * - xl: 1280px
+ */
+export const RESPONSIVE_CONFIG = {
+  sidebar: {
+    mobile: {
+      width: "w-[85vw]",
+      maxWidth: "max-w-80",
+    },
+    tablet: {
+      width: "w-72", // 288px
+      padding: "pr-72",
+    },
+    desktop: {
+      width: "w-80", // 320px
+      padding: "pr-80",
+    },
+  },
+  breakpoints: {
+    /** Mobile: < 768px (show FAB + Sheet drawer) */
+    showMobileFab: "md:hidden",
+    /** Tablet+: >= 768px (show fixed sidebar) */
+    showFixedSidebar: "hidden md:block",
+    /** Toggle button: >= 768px */
+    showToggleButton: "hidden md:flex",
+  },
+  viewport: {
+    /** Dynamic viewport height for iOS Safari */
+    height: "h-[100dvh]",
+    /** Fallback for browsers without dvh support */
+    heightFallback: "h-screen",
+  },
+} as const;
+
+/**
  * DNA Lab workflow steps
  */
 export const DNA_LAB_STEPS: WorkflowStepMetadata[] = [

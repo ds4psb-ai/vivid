@@ -130,10 +130,10 @@ export function UnifiedChainSidebar({
         </div>
       </div>
 
-      {/* Steps list based on mode */}
-      <div className="flex-1 overflow-auto">
-        {/* Current app steps */}
-        <div className="px-4 pt-3 pb-1">
+      {/* Steps list based on mode - with overscroll-contain to prevent scroll chaining */}
+      <div className="flex-1 overflow-y-auto overscroll-contain">
+        {/* Current app steps - sticky section header */}
+        <div className="sticky top-0 z-10 px-4 pt-3 pb-1 bg-black/95 backdrop-blur-sm">
           <span className="text-[10px] uppercase tracking-wider text-white/30">
             {config.title}
           </span>
@@ -155,10 +155,10 @@ export function UnifiedChainSidebar({
           ))}
         </AnimatedList>
 
-        {/* Required chain data from previous apps (if any) */}
+        {/* Required chain data from previous apps (if any) - sticky section header */}
         {config.requiredChainData && config.requiredChainData.length > 0 && (
           <>
-            <div className="px-4 pt-4 pb-1">
+            <div className="sticky top-0 z-10 px-4 pt-4 pb-1 bg-black/95 backdrop-blur-sm">
               <span className="text-[10px] uppercase tracking-wider text-white/30">
                 이전 단계 데이터
               </span>

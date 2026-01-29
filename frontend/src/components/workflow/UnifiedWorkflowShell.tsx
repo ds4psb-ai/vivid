@@ -27,7 +27,7 @@ import { MobileSidebarDrawer } from "./MobileSidebarDrawer";
 import { WorkflowBreadcrumb, buildWorkflowBreadcrumb } from "@/components/ui/WorkflowBreadcrumb";
 import { useUnifiedWorkflow } from "./hooks/useUnifiedWorkflow";
 import { WorkflowObservabilityProvider } from "./hooks/useWorkflowObservability";
-import { getWorkflowConfig, CHAIN_DATA_SOURCE_MAP } from "./workflow-configs";
+import { getWorkflowConfig, CHAIN_DATA_SOURCE_MAP, RESPONSIVE_CONFIG } from "./workflow-configs";
 import { cn } from "@/lib/utils";
 import type { MegaAppId, UnifiedWorkflowShellProps } from "./types";
 
@@ -75,7 +75,7 @@ function UnifiedLoading({ appId }: { appId: MegaAppId }) {
 
   return (
     <AppShell showTopBar={false}>
-      <div className="h-screen flex items-center justify-center bg-black">
+      <div className={`${RESPONSIVE_CONFIG.viewport.height} flex items-center justify-center bg-black`}>
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-white/60" />
           <p className="text-sm text-white/40">Loading {config.title}...</p>
@@ -142,7 +142,7 @@ function UnifiedWorkflowShellContent({
 
   return (
     <AppShell showTopBar={false}>
-      <div className="h-screen flex flex-col bg-black relative">
+      <div className={`${RESPONSIVE_CONFIG.viewport.height} flex flex-col bg-black relative`}>
         {/* Aurora Background */}
         {showAurora && <MegaAppAurora appId={appId} />}
 
@@ -158,11 +158,11 @@ function UnifiedWorkflowShellContent({
           headerRight={
             <div className="flex items-center gap-4">
               {headerRight}
-              {/* Sidebar toggle (desktop) - only if collapsible */}
+              {/* Sidebar toggle (tablet+) - only if collapsible */}
               {showChainSummary && config.sidebar.collapsible && (
                 <button
                   onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="hidden lg:flex items-center gap-2 px-3 py-1.5 text-sm text-white/60 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+                  className={`${RESPONSIVE_CONFIG.breakpoints.showToggleButton} items-center gap-2 px-3 py-1.5 text-sm text-white/60 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors`}
                 >
                   {sidebarOpen ? (
                     <>
@@ -202,7 +202,7 @@ function UnifiedWorkflowShellContent({
           <div
             className={cn(
               "flex-1 flex flex-col overflow-hidden",
-              sidebarOpen && showChainSummary && "lg:pr-80"
+              sidebarOpen && showChainSummary && `md:${RESPONSIVE_CONFIG.sidebar.tablet.padding} lg:${RESPONSIVE_CONFIG.sidebar.desktop.padding}`
             )}
           >
             {/* Current step indicator */}
@@ -232,11 +232,13 @@ function UnifiedWorkflowShellContent({
             <UnifiedStepNav workflow={workflow} />
           </div>
 
-          {/* Chain Summary Sidebar (desktop) */}
+          {/* Chain Summary Sidebar (tablet+) */}
           {showChainSummary && (
             <div
               className={cn(
-                "hidden lg:block fixed right-0 top-0 bottom-0 w-80 transform transition-transform duration-300",
+                `${RESPONSIVE_CONFIG.breakpoints.showFixedSidebar} fixed right-0 top-0 bottom-0`,
+                `${RESPONSIVE_CONFIG.sidebar.tablet.width} lg:${RESPONSIVE_CONFIG.sidebar.desktop.width}`,
+                "transform transition-transform duration-300",
                 sidebarOpen ? "translate-x-0" : "translate-x-full",
                 // Non-collapsible sidebar is always visible
                 !config.sidebar.collapsible && "translate-x-0"
