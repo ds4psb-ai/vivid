@@ -282,3 +282,44 @@ QDRANT_BREAKER = CircuitBreaker(
         half_open_max_calls=2,    # Test with 2 calls
     )
 )
+
+# NotebookLM circuit breaker (more fragile, longer recovery)
+NOTEBOOKLM_BREAKER = CircuitBreaker(
+    "notebooklm",
+    CircuitBreakerConfig(
+        failure_threshold=3,      # Trip after 3 failures
+        success_threshold=2,      # Require 2 successes to close
+        timeout_seconds=60.0,     # 60 second cooldown (browser-based)
+        half_open_max_calls=1,    # Test with 1 call only
+    )
+)
+
+# Veo Video Generation circuit breaker
+VEO_BREAKER = CircuitBreaker(
+    "veo",
+    CircuitBreakerConfig(
+        failure_threshold=3,      # Trip after 3 failures
+        success_threshold=1,      # 1 success to close (slow service)
+        timeout_seconds=120.0,    # 2 minute cooldown (video gen is slow)
+        half_open_max_calls=1,    # Test with 1 call
+    )
+)
+
+
+def get_circuit_health() -> Dict[str, Any]:
+    """Get aggregated health status of all circuit breakers.
+
+    Returns:
+        Dict with overall health and individual circuit states
+    """
+    all_status = CircuitBreaker.get_all_status()
+    open_circuits = [
+        name for name, status in all_status.items()
+        if status["state"] == "open"
+    ]
+
+    return {
+        "healthy": len(open_circuits) == 0,
+        "open_circuits": open_circuits,
+        "circuits": all_status,
+    }

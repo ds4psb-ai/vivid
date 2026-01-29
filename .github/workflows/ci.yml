@@ -186,12 +186,16 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-asyncio pytest-cov
 
-      - name: Run pytest
-        run: pytest --tb=short -q --cov=app --cov-report=xml
+      - name: Run pytest with coverage threshold
+        run: pytest --tb=short -q --cov=app --cov-report=xml --cov-fail-under=60
         env:
           DATABASE_URL: postgresql://test:test@localhost:5433/test_db
           REDIS_URL: redis://localhost:6380/0
           TESTING: "true"
+
+      - name: Verify coverage threshold
+        run: |
+          echo "✅ Coverage threshold (60%) enforced via --cov-fail-under"
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4

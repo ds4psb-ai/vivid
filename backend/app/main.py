@@ -163,6 +163,7 @@ from app.middleware.mtls import MTLSMiddleware
 from app.middleware.security import setup_security_middleware
 from app.middleware.body_size_limit import BodySizeLimitMiddleware
 from app.middleware.csrf import CSRFMiddleware
+from app.middleware.timeout import TimeoutMiddleware
 from app.logging_config import setup_logging, LoggingMiddleware
 from app.monitoring import setup_monitoring
 
@@ -278,6 +279,10 @@ app = FastAPI(
 # LoggingMiddleware는 제거하고 SecureLoggingMiddleware 사용
 from app.middleware.secure_logging import SecureLoggingMiddleware
 app.add_middleware(SecureLoggingMiddleware)
+
+# Add request timeout middleware (P0: Production Readiness)
+# Prevents slow requests from holding resources indefinitely
+app.add_middleware(TimeoutMiddleware)
 
 # P1: Add metrics endpoint protection middleware
 from app.middleware.metrics_protection import MetricsProtectionMiddleware

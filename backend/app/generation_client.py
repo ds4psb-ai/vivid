@@ -21,6 +21,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from app.config import settings
 from app.storyboard_utils import build_shot_id, infer_shot_type, normalize_storyboard_cards
+from app.services.circuit_breaker import VEO_BREAKER, CircuitBreakerOpen
 
 logger = logging.getLogger(__name__)
 
@@ -275,6 +276,18 @@ async def generate_shot(
             if provider == GenProvider.MOCK:
                 result = await _run_mock_generation(prompt_contract)
             elif provider == GenProvider.VEO:
+                # Circuit breaker check for Veo API
+                try:
+                    VEO_BREAKER.check_state()
+                except CircuitBreakerOpen as e:
+                    logger.warning(f"[Veo] Circuit breaker open: {e}")
+                    return GenResult(
+                        shot_id=contract.shot_id,
+                        status="failed",
+                        iteration=iteration,
+                        error=f"Service temporarily unavailable (circuit open). Try again in {e.remaining_seconds:.0f}s",
+                    )
+
                 # Use unified veo_service instead of legacy _run_veo_generation
                 from app.services.veo_service import generate_video
                 veo_result = await generate_video(
@@ -282,6 +295,13 @@ async def generate_shot(
                     duration_seconds=min(prompt_contract.duration_sec, 8),
                     aspect_ratio=prompt_contract.aspect_ratio,
                 )
+
+                # Record circuit breaker result
+                if veo_result.success:
+                    VEO_BREAKER.record_success()
+                else:
+                    VEO_BREAKER.record_failure(Exception(veo_result.error or "Veo generation failed"))
+
                 result = GenResult(
                     shot_id=prompt_contract.shot_id,
                     status="success" if veo_result.success else "failed",
