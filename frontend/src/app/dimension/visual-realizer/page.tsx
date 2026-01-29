@@ -1,14 +1,10 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import AppShell from "@/components/AppShell";
-import VisualRealizerPanel from "@/components/dimension/VisualRealizerPanel";
-
+/**
+ * Visual Realizer - Redirects to Production
+ * Legacy route: /dimension/visual-realizer
+ * New route: /production?step=veo
+ */
 export default function VisualRealizerPage() {
-    return (
-        <AppShell showTopBar={false}>
-            <div className="h-screen">
-                <VisualRealizerPanel />
-            </div>
-        </AppShell>
-    );
+  redirect("/production?step=veo");
 }

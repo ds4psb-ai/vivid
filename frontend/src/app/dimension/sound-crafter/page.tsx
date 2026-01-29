@@ -1,14 +1,10 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import AppShell from "@/components/AppShell";
-import SoundCrafterPanel from "@/components/dimension/SoundCrafterPanel";
-
+/**
+ * Sound Crafter - Redirects to Production
+ * Legacy route: /dimension/sound-crafter
+ * New route: /production?step=suno
+ */
 export default function SoundCrafterPage() {
-    return (
-        <AppShell showTopBar={false}>
-            <div className="h-screen">
-                <SoundCrafterPanel />
-            </div>
-        </AppShell>
-    );
+  redirect("/production?step=suno");
 }

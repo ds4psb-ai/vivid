@@ -1,14 +1,10 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import AppShell from "@/components/AppShell";
-import CreativeEditorPanel from "@/components/dimension/CreativeEditorPanel";
-
+/**
+ * Quality Director - Redirects to DNA Lab
+ * Legacy route: /dimension/quality-check
+ * New route: /dna-lab?step=qc
+ */
 export default function QualityCheckPage() {
-    return (
-        <AppShell showTopBar={false}>
-            <div className="h-screen">
-                <CreativeEditorPanel />
-            </div>
-        </AppShell>
-    );
+  redirect("/dna-lab?step=qc");
 }

@@ -1,21 +1,10 @@
-"use client";
+import { redirect } from "next/navigation";
 
 /**
- * Creative Editor Page - AI-powered Editorial Review
- *
- * Provides editorial review and improvement of creative content
- * with narrative, visual, and pacing analysis.
+ * Creative Editor - Redirects to Production
+ * Legacy route: /dimension/creative-editor
+ * New route: /production?step=veo
  */
-
-import AppShell from "@/components/AppShell";
-import CreativeEditorPanel from "@/components/dimension/CreativeEditorPanel";
-
 export default function CreativeEditorPage() {
-  return (
-    <AppShell showTopBar={false}>
-      <div className="h-screen">
-        <CreativeEditorPanel />
-      </div>
-    </AppShell>
-  );
+  redirect("/production?step=veo");
 }

@@ -1,14 +1,10 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import AppShell from "@/components/AppShell";
-import ReferenceDecoderPanel from "@/components/dimension/ReferenceDecoderPanel";
-
+/**
+ * Reference Decoder (VPE) - Redirects to DNA Lab
+ * Legacy route: /dimension/reference-decoder
+ * New route: /dna-lab?step=vpe
+ */
 export default function ReferenceDecoderPage() {
-    return (
-        <AppShell showTopBar={false}>
-            <div className="h-screen">
-                <ReferenceDecoderPanel />
-            </div>
-        </AppShell>
-    );
+  redirect("/dna-lab?step=vpe");
 }

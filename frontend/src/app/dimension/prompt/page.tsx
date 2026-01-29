@@ -1,14 +1,10 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import AppShell from "@/components/AppShell";
-import PromptGeneratorPanel from "@/components/dimension/PromptGeneratorPanel";
-
-export default function TeachingPromptPage() {
-    return (
-        <AppShell showTopBar={false}>
-            <div className="h-screen">
-                <PromptGeneratorPanel />
-            </div>
-        </AppShell>
-    );
+/**
+ * Prompt Alchemy - Redirects to Story Engine
+ * Legacy route: /dimension/prompt
+ * New route: /story-engine?step=prompt
+ */
+export default function PromptPage() {
+  redirect("/story-engine?step=prompt");
 }

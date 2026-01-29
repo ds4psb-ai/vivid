@@ -1,24 +1,10 @@
-"use client";
+import { redirect } from "next/navigation";
 
 /**
- * Character Consistency Page - StoryMem Character Library
- *
- * Features:
- * - Character library with CRUD operations
- * - StoryMem memory bank (arXiv:2512.19539)
- * - Platform sync (Veo, Kling, Runway, Hailuo)
- * - Similar character search via Qdrant
+ * Character Consistency - Redirects to DNA Lab
+ * Legacy route: /dimension/character-consistency
+ * New route: /dna-lab?step=mirror
  */
-
-import AppShell from "@/components/AppShell";
-import CharacterConsistencyPanel from "@/components/dimension/CharacterConsistencyPanel";
-
 export default function CharacterConsistencyPage() {
-  return (
-    <AppShell showTopBar={false}>
-      <div className="h-screen">
-        <CharacterConsistencyPanel />
-      </div>
-    </AppShell>
-  );
+  redirect("/dna-lab?step=mirror");
 }

@@ -1,54 +1,14 @@
+import { redirect } from "next/navigation";
+
 /**
- * Dimension Hub Page - Server Component
- * ======================================
+ * Dimension Hub - Redirects to DNA Lab
  *
- * 2026 RSC Best Practice:
- * - Page component is a Server Component
- * - Static metadata export
- * - Dynamic content in client island
+ * Legacy route: /dimension
+ * New route: /dna-lab (start of workflow)
  *
- * Benefits:
- * - SEO-friendly metadata at build time
- * - Reduced client-side JavaScript
- * - Faster Time to First Byte (TTFB)
+ * Migration (2026.01): All dimension apps are now consolidated
+ * into 3 MegaApps. The workflow starts at DNA Lab.
  */
-
-import type { Metadata } from "next";
-import { Suspense } from "react";
-import DimensionHubClient from "./_components/DimensionHubClient";
-
-export const metadata: Metadata = {
-  title: "Dimension Studio | Crebit",
-  description:
-    "AI 비디오 제작 도구 - 기획부터 완성까지 10개의 전문 도구로 창작하세요",
-  keywords: [
-    "AI video",
-    "creative tools",
-    "video production",
-    "storyboard",
-    "prompt engineering",
-  ],
-  openGraph: {
-    title: "Dimension Studio | Crebit",
-    description:
-      "AI 비디오 제작 도구 - 기획부터 완성까지 10개의 전문 도구로 창작하세요",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Dimension Studio | Crebit",
-    description:
-      "AI 비디오 제작 도구 - 기획부터 완성까지 10개의 전문 도구로 창작하세요",
-  },
-};
-
 export default function DimensionHubPage() {
-  // This is a Server Component - no "use client" directive
-  // All interactive logic is in DimensionHubClient
-  // Suspense boundary required for useSearchParams()
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-zinc-950 animate-pulse" />}>
-      <DimensionHubClient />
-    </Suspense>
-  );
+  redirect("/dna-lab");
 }

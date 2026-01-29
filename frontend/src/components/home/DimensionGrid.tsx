@@ -2,9 +2,11 @@
 
 /**
  * DimensionGrid - Grid display of dimension tools
- * 
+ *
  * Extracted from /dimension/page.tsx for reuse on unified home.
  * Shows all 10 dimension tools with stage filtering.
+ *
+ * Migration (2026.01): Links now point to MegaApp routes with step params.
  */
 
 import { useState } from "react";
@@ -39,21 +41,21 @@ const WORKFLOW_STAGES = {
 } as const;
 
 const DIMENSION_ITEMS: DimensionItem[] = [
-    // Planning
-    { href: "/dimension/abyss", icon: Brain, stage: "planning", stageOrder: 1, dimensionCode: "mirror", titleKo: "심연의 거울", titleEn: "Abyss Mirror", descKo: "나만의 취향과 창작 DNA 분석", descEn: "Analyze your creative DNA" },
-    { href: "/dimension/reference-decoder", icon: Search, stage: "planning", stageOrder: 2, dimensionCode: "4d", titleKo: "레퍼런스 해석기", titleEn: "Reference Decoder", descKo: "조명, 색감, 연출의 전문가적 분석", descEn: "Expert analysis of lighting, color, direction" },
-    { href: "/dimension/story-architect", icon: Layers, stage: "planning", stageOrder: 3, dimensionCode: "story", titleKo: "시나리오 생성기", titleEn: "Story Architect", descKo: "DNA와 스타일을 결합한 시나리오 작성", descEn: "Write scenarios combining DNA and style", isNew: true },
-    // Pre-production
-    { href: "/dimension/sound-crafter", icon: Music, stage: "pre_production", stageOrder: 1, dimensionCode: "sound", titleKo: "사운드 크래프터", titleEn: "Sound Crafter", descKo: "BGM 및 성우 내레이션 생성 (Suno, Udio)", descEn: "Generate BGM and narration (Suno, Udio)", isNew: true },
-    { href: "/dimension/storyboard", icon: LayoutGrid, stage: "pre_production", stageOrder: 2, dimensionCode: "storyboard", titleKo: "스토리보드 스케치", titleEn: "Storyboard Sketch", descKo: "글을 시각적 컷으로 스케치", descEn: "Sketch text into visual cuts" },
-    { href: "/dimension/prompt", icon: Wand2, stage: "pre_production", stageOrder: 3, dimensionCode: "prompt", titleKo: "프롬프트 연금술", titleEn: "Prompt Alchemy", descKo: "AI가 이해하는 전문 언어로 번역", descEn: "Translate to AI-native language" },
-    // Production
-    { href: "/dimension/visual-realizer", icon: ImageIcon, stage: "production", stageOrder: 1, dimensionCode: "3d", titleKo: "비주얼 리얼라이저", titleEn: "Visual Realizer", descKo: "Key Frame 고품질 생성 (Midjourney)", descEn: "Generate high-quality keyframes" },
-    { href: "/dimension/video-maker", icon: Video, stage: "production", stageOrder: 2, dimensionCode: "veo", titleKo: "비디오 메이커", titleEn: "Video Maker", descKo: "영상 변환 및 모션 제어 (Veo 3.1, Kling)", descEn: "Video conversion & motion control" },
-    // Finishing
-    { href: "/dimension/quality-check", icon: CheckCircle, stage: "finishing", stageOrder: 1, dimensionCode: "qc", titleKo: "퀄리티 디렉터", titleEn: "Quality Director", descKo: "시각적 일관성 및 동작 자연스러움 검수", descEn: "Check visual consistency & motion smoothness" },
-    // Extended
-    { href: "/dimension/aesthetic", icon: Palette, stage: "extended", stageOrder: 1, dimensionCode: "ad", titleKo: "미학디렉터", titleEn: "Aesthetic Director", descKo: "거장들의 미학을 적용합니다", descEn: "Apply masters' aesthetics" },
+    // Planning → DNA Lab
+    { href: "/dna-lab?step=mirror", icon: Brain, stage: "planning", stageOrder: 1, dimensionCode: "mirror", titleKo: "심연의 거울", titleEn: "Abyss Mirror", descKo: "나만의 취향과 창작 DNA 분석", descEn: "Analyze your creative DNA" },
+    { href: "/dna-lab?step=vpe", icon: Search, stage: "planning", stageOrder: 2, dimensionCode: "4d", titleKo: "레퍼런스 해석기", titleEn: "Reference Decoder", descKo: "조명, 색감, 연출의 전문가적 분석", descEn: "Expert analysis of lighting, color, direction" },
+    { href: "/story-engine?step=story", icon: Layers, stage: "planning", stageOrder: 3, dimensionCode: "story", titleKo: "시나리오 생성기", titleEn: "Story Architect", descKo: "DNA와 스타일을 결합한 시나리오 작성", descEn: "Write scenarios combining DNA and style", isNew: true },
+    // Pre-production → Story Engine / Production
+    { href: "/production?step=suno", icon: Music, stage: "pre_production", stageOrder: 1, dimensionCode: "sound", titleKo: "사운드 크래프터", titleEn: "Sound Crafter", descKo: "BGM 및 성우 내레이션 생성 (Suno, Udio)", descEn: "Generate BGM and narration (Suno, Udio)", isNew: true },
+    { href: "/story-engine?step=story", icon: LayoutGrid, stage: "pre_production", stageOrder: 2, dimensionCode: "storyboard", titleKo: "스토리보드 스케치", titleEn: "Storyboard Sketch", descKo: "글을 시각적 컷으로 스케치", descEn: "Sketch text into visual cuts" },
+    { href: "/story-engine?step=prompt", icon: Wand2, stage: "pre_production", stageOrder: 3, dimensionCode: "prompt", titleKo: "프롬프트 연금술", titleEn: "Prompt Alchemy", descKo: "AI가 이해하는 전문 언어로 번역", descEn: "Translate to AI-native language" },
+    // Production → Production Bridge
+    { href: "/production?step=veo", icon: ImageIcon, stage: "production", stageOrder: 1, dimensionCode: "3d", titleKo: "비주얼 리얼라이저", titleEn: "Visual Realizer", descKo: "Key Frame 고품질 생성 (Midjourney)", descEn: "Generate high-quality keyframes" },
+    { href: "/production?step=veo", icon: Video, stage: "production", stageOrder: 2, dimensionCode: "veo", titleKo: "비디오 메이커", titleEn: "Video Maker", descKo: "영상 변환 및 모션 제어 (Veo 3.1, Kling)", descEn: "Video conversion & motion control" },
+    // Finishing → DNA Lab
+    { href: "/dna-lab?step=qc", icon: CheckCircle, stage: "finishing", stageOrder: 1, dimensionCode: "qc", titleKo: "퀄리티 디렉터", titleEn: "Quality Director", descKo: "시각적 일관성 및 동작 자연스러움 검수", descEn: "Check visual consistency & motion smoothness" },
+    // Extended → DNA Lab
+    { href: "/dna-lab?step=ad", icon: Palette, stage: "extended", stageOrder: 1, dimensionCode: "ad", titleKo: "미학디렉터", titleEn: "Aesthetic Director", descKo: "거장들의 미학을 적용합니다", descEn: "Apply masters' aesthetics" },
 ];
 
 type StageKey = keyof typeof WORKFLOW_STAGES;
@@ -94,10 +96,10 @@ export function DimensionGrid({ showTitle = true, showFilters = true, compact = 
                         </h2>
                     </div>
                     <Link
-                        href="/dimension"
+                        href="/dna-lab"
                         className="flex items-center gap-1 text-sm text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                     >
-                        {language === "ko" ? "전체보기" : "See all"}
+                        {language === "ko" ? "워크플로우 시작" : "Start Workflow"}
                         <ChevronRight className="h-4 w-4" />
                     </Link>
                 </div>

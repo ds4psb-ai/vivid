@@ -1,14 +1,10 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import AppShell from "@/components/AppShell";
-import VeoVideoPanel from "@/components/dimension/VeoVideoPanel";
-
+/**
+ * Video Maker (VEO) - Redirects to Production
+ * Legacy route: /dimension/video-maker
+ * New route: /production?step=veo
+ */
 export default function VideoMakerPage() {
-    return (
-        <AppShell showTopBar={false}>
-            <div className="h-screen">
-                <VeoVideoPanel />
-            </div>
-        </AppShell>
-    );
+  redirect("/production?step=veo");
 }

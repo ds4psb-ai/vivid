@@ -1,14 +1,10 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import AppShell from "@/components/AppShell";
-import StoryboardPanel from "@/components/dimension/StoryboardPanel";
-
-export default function TeachingStoryboardPage() {
-    return (
-        <AppShell showTopBar={false}>
-            <div className="h-screen">
-                <StoryboardPanel />
-            </div>
-        </AppShell>
-    );
+/**
+ * Storyboard Sketch - Redirects to Story Engine
+ * Legacy route: /dimension/storyboard
+ * New route: /story-engine?step=story
+ */
+export default function StoryboardPage() {
+  redirect("/story-engine?step=story");
 }
