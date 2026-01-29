@@ -201,3 +201,74 @@ export interface ChainDataSource {
   step: string;
   label: string;
 }
+
+// =============================================================================
+// AI Suggested Defaults (Phase 2: MissingDataBanner 확장)
+// =============================================================================
+
+/**
+ * AI-inferred default value for missing chain data
+ * Used by MissingDataBanner to propose values instead of blocking
+ */
+export interface SuggestedDefault {
+  /** Inferred value (can be any JSON-serializable data) */
+  value: unknown;
+  /** Confidence score 0-100 */
+  confidence: number;
+  /** Confidence level category */
+  confidenceLevel: "high" | "medium" | "low";
+  /** Evidence sources (evidence_refs format, e.g., "db:rag_docs:4D:kang:001") */
+  evidenceSources?: string[];
+  /** Human-readable summary of inference reasoning */
+  summary?: string;
+}
+
+/**
+ * Confidence level type (shared with EvidenceCard)
+ */
+export type ConfidenceLevel = "high" | "medium" | "low";
+
+/**
+ * Get confidence level from numeric score
+ * - high: >= 85%
+ * - medium: 50-84%
+ * - low: < 50%
+ */
+export function getConfidenceLevel(confidence: number): ConfidenceLevel {
+  if (confidence >= 85) return "high";
+  if (confidence >= 50) return "medium";
+  return "low";
+}
+
+/**
+ * Get color configuration for confidence level
+ * Matches EvidenceCard/RAGSuggestionCard patterns
+ */
+export function getConfidenceColorConfig(level: ConfidenceLevel) {
+  switch (level) {
+    case "high":
+      return {
+        bg: "bg-emerald-500/10",
+        text: "text-emerald-400",
+        border: "border-emerald-500/20",
+        label: "높음",
+        labelEn: "High",
+      };
+    case "medium":
+      return {
+        bg: "bg-amber-500/10",
+        text: "text-amber-400",
+        border: "border-amber-500/20",
+        label: "보통",
+        labelEn: "Medium",
+      };
+    case "low":
+      return {
+        bg: "bg-slate-500/10",
+        text: "text-slate-400",
+        border: "border-slate-500/20",
+        label: "낮음",
+        labelEn: "Low",
+      };
+  }
+}

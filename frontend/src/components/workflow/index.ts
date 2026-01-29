@@ -67,6 +67,9 @@ export {
 export {
   useChainDataWithOptimism,
 } from "./hooks/useChainDataWithOptimism";
+export {
+  useIPChainData,
+} from "./hooks/useIPChainData";
 
 // Configs & Utilities
 export {
@@ -100,6 +103,15 @@ export type {
   ChainDataEntry,
   UnifiedWorkflowShellProps,
   ChainDataSource,
+  // Phase 2: Suggested Defaults
+  SuggestedDefault,
+  ConfidenceLevel,
+} from "./types";
+
+// Helper functions
+export {
+  getConfidenceLevel,
+  getConfidenceColorConfig,
 } from "./types";
 
 // Observability types
@@ -115,3 +127,16 @@ export type {
   OptimisticSyncStatus,
   ChainDataWithOptimismResult,
 } from "./hooks/useChainDataWithOptimism";
+
+// IP Chain Data types (Phase 3)
+export type {
+  SyntheticIPDetail,
+  IPWorldbuilding,
+  SyntheticPreset,
+  UseIPChainDataOptions,
+  UseIPChainDataResult,
+  VPEDefaults,
+  ADDefaults,
+  MirrorDefaults,
+  StoryDefaults,
+} from "./hooks/types";

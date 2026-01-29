@@ -8,6 +8,9 @@
 // Main shell
 export { DNALabWorkflowShell } from "./DNALabWorkflowShell";
 
+// Onboarding
+export { DNALabOnboarding } from "./DNALabOnboarding";
+
 // Progress/Stepper
 export {
   DNALabWorkflowProgress,
