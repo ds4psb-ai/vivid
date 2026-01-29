@@ -60,6 +60,17 @@ const SESSION_COOKIE_NAME = "crebit_session";
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
+    // ⚠️ TEMP: Auth disabled for designer preview - REMOVE AFTER REVIEW
+    const AUTH_DISABLED = true;
+    if (AUTH_DISABLED) {
+        // Only handle legacy redirects, skip all auth
+        const redirectTarget = LEGACY_REDIRECTS[pathname];
+        if (redirectTarget) {
+            return NextResponse.redirect(new URL(redirectTarget, request.url), { status: 301 });
+        }
+        return NextResponse.next();
+    }
+
     // Check for legacy redirects first (2026 Mega Apps)
     const redirectTarget = LEGACY_REDIRECTS[pathname];
     if (redirectTarget) {
