@@ -17,7 +17,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { fetchWithAuth } from "@/lib/api";
+import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface DeliveryRecord {
@@ -56,7 +56,7 @@ export function RecentDeliveries() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetchWithAuth<DeliveriesResponse>(
+        const response = await api.get<DeliveriesResponse>(
           "/api/v1/creator/deliveries?limit=5"
         );
         setData(response.items);

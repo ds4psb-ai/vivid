@@ -30,7 +30,7 @@ import {
 import AppShell from "@/components/AppShell";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { fetchWithAuth } from "@/lib/api";
+import { api } from "@/lib/api";
 
 // =============================================================================
 // Types
@@ -251,14 +251,14 @@ export default function HumanCloudPage() {
         setError(null);
         try {
             const [statsRes, requestsRes, creatorsRes] = await Promise.all([
-                fetchWithAuth("/api/v1/humancloud/stats").catch(() => null),
-                fetchWithAuth("/api/v1/humancloud/requests/open?limit=6"),
-                fetchWithAuth("/api/v1/humancloud/creators?limit=6"),
+                api.get<MarketplaceStats>("/api/v1/humancloud/stats").catch(() => null),
+                api.get<CreativeRequest[]>("/api/v1/humancloud/requests/open?limit=6"),
+                api.get<CreatorProfile[]>("/api/v1/humancloud/creators?limit=6"),
             ]);
 
-            if (statsRes) setStats(statsRes as MarketplaceStats);
-            setOpenRequests((requestsRes as CreativeRequest[]) || []);
-            setTopCreators((creatorsRes as CreatorProfile[]) || []);
+            if (statsRes) setStats(statsRes);
+            setOpenRequests(requestsRes || []);
+            setTopCreators(creatorsRes || []);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to load");
         } finally {

@@ -21,7 +21,7 @@ import {
 import AppShell from "@/components/AppShell";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { fetchWithAuth } from "@/lib/api";
+import { api } from "@/lib/api";
 
 // =============================================================================
 // Types
@@ -121,7 +121,7 @@ export default function CreatorProfilePage() {
             setLoading(true);
             setError(null);
             try {
-                const data = await fetchWithAuth(`/api/v1/humancloud/creators/${creatorId}`) as CreatorProfile;
+                const data = await api.get<CreatorProfile>(`/api/v1/humancloud/creators/${creatorId}`);
                 setCreator(data);
             } catch (err) {
                 setError(err instanceof Error ? err.message : "Failed to load creator");

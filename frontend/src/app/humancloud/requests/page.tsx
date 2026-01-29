@@ -22,7 +22,7 @@ import {
 import AppShell from "@/components/AppShell";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { fetchWithAuth } from "@/lib/api";
+import { api } from "@/lib/api";
 
 import {
     getRequestStatus,
@@ -134,7 +134,7 @@ export default function RequestsListPage() {
             const params = new URLSearchParams();
             if (category) params.append("category", category);
             const url = `/api/v1/humancloud/requests${params.toString() ? `?${params}` : ""}`;
-            const data = await fetchWithAuth(url) as CreativeRequest[];
+            const data = await api.get<CreativeRequest[]>(url);
             setRequests(data || []);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to load");

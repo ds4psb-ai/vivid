@@ -32,7 +32,7 @@ import {
 } from "./_components";
 
 // Shared
-import { fetchWithAuth } from "@/lib/api";
+import { api } from "@/lib/api";
 import type { Tool, DiffPreview } from "@/types/api.types";
 import { useToast } from "@/components/Toast";
 
@@ -41,14 +41,11 @@ import { useToast } from "@/components/Toast";
 // =============================================================================
 
 async function getToolWithCode(toolKey: string): Promise<Tool> {
-    return fetchWithAuth(`/api/v1/mcp/tools/${toolKey}?include_code=true`);
+    return api.get(`/api/v1/mcp/tools/${toolKey}?include_code=true`);
 }
 
 async function previewDiff(toolId: string, code: string): Promise<DiffPreview> {
-    return fetchWithAuth(`/api/v1/fork/tools/${toolId}/preview-diff`, {
-        method: "POST",
-        body: JSON.stringify({ code_content: code }),
-    });
+    return api.post(`/api/v1/fork/tools/${toolId}/preview-diff`, { code_content: code });
 }
 
 async function createFork(
@@ -58,14 +55,11 @@ async function createFork(
     code: string,
     changelog?: string
 ): Promise<{ tool_id: string; tool_key: string; sybil_flagged: boolean }> {
-    return fetchWithAuth(`/api/v1/fork/tools/${toolId}/fork`, {
-        method: "POST",
-        body: JSON.stringify({
-            new_tool_key: toolKey,
-            new_display_name: displayName,
-            code_content: code,
-            changelog,
-        }),
+    return api.post(`/api/v1/fork/tools/${toolId}/fork`, {
+        new_tool_key: toolKey,
+        new_display_name: displayName,
+        code_content: code,
+        changelog,
     });
 }
 

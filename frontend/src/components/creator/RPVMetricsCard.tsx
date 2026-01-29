@@ -20,7 +20,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { fetchWithAuth } from "@/lib/api";
+import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface CreatorMetrics {
@@ -97,7 +97,7 @@ export function RPVMetricsCard() {
       try {
         setLoading(true);
         setError(null);
-        const data = await fetchWithAuth<CreatorMetrics>("/api/v1/creator/metrics?period_days=30");
+        const data = await api.get<CreatorMetrics>("/api/v1/creator/metrics?period_days=30");
         setMetrics(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : labels.errorMsg);

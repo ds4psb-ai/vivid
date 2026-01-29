@@ -19,7 +19,7 @@ import {
   Check,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { fetchWithAuth } from "@/lib/api";
+import { api } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -85,7 +85,7 @@ export function AnomalyAlerts() {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetchWithAuth<AnomaliesResponse>(
+      const response = await api.get<AnomaliesResponse>(
         "/api/v1/creator/anomalies?limit=10"
       );
       setData(response.items);
@@ -103,9 +103,8 @@ export function AnomalyAlerts() {
   async function handleResolve(anomalyId: string) {
     try {
       setResolvingId(anomalyId);
-      await fetchWithAuth(`/api/v1/creator/anomalies/${anomalyId}/resolve`, {
-        method: "POST",
-        body: JSON.stringify({ resolution_notes: "Resolved from dashboard" }),
+      await api.post(`/api/v1/creator/anomalies/${anomalyId}/resolve`, {
+        resolution_notes: "Resolved from dashboard",
       });
       // Remove from list
       setData((prev) => prev.filter((item) => item.id !== anomalyId));

@@ -17,7 +17,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { fetchWithAuth } from "@/lib/api";
+import { api } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -73,7 +73,7 @@ export function PendingApprovalsPanel() {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetchWithAuth<PendingApprovalsResponse>(
+      const response = await api.get<PendingApprovalsResponse>(
         "/api/v1/creator/pending-approvals?limit=10"
       );
       setData(response.items);
@@ -92,11 +92,8 @@ export function PendingApprovalsPanel() {
   async function handleApproval(checkpointId: string, action: "approve" | "reject") {
     try {
       setProcessingId(checkpointId);
-      await fetchWithAuth(`/api/v1/approval-gate/${checkpointId}/resolve`, {
-        method: "POST",
-        body: JSON.stringify({
-          action: action === "approve" ? "approve_continue" : "reject",
-        }),
+      await api.post(`/api/v1/approval-gate/${checkpointId}/resolve`, {
+        action: action === "approve" ? "approve_continue" : "reject",
       });
       // Remove from list
       setData((prev) => prev.filter((item) => item.checkpoint_id !== checkpointId));

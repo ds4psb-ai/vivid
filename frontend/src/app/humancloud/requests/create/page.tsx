@@ -21,7 +21,7 @@ import {
 import AppShell from "@/components/AppShell";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { fetchWithAuth } from "@/lib/api";
+import { api } from "@/lib/api";
 
 const CATEGORIES = [
     { value: "video_creative", label: "Video Creative", labelKo: "영상 크리에이티브" },
@@ -82,10 +82,7 @@ export default function CreateRequestPage() {
                     payload.deadline = new Date(formData.deadline).toISOString();
                 }
 
-                const result = await fetchWithAuth("/api/v1/humancloud/requests", {
-                    method: "POST",
-                    body: JSON.stringify(payload),
-                }) as { id: string };
+                const result = await api.post<{ id: string }>("/api/v1/humancloud/requests", payload);
 
                 // Redirect to request detail or publish
                 router.push(`/humancloud/requests/${result.id}`);

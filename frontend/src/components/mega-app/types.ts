@@ -44,24 +44,6 @@ export interface WorkflowStep {
 }
 
 /**
- * Main Shell Props
- */
-export interface MegaAppShellProps {
-  appId: MegaAppId;
-  title: string;
-  subtitle: string;
-  icon: LucideIcon;
-  tabs: MegaAppTab[];
-  defaultTab?: string;
-  children: (activeTab: string) => ReactNode;
-  headerRight?: ReactNode;
-  showAurora?: boolean;
-  showWorkflowProgress?: boolean;
-  /** URL parameter name for tab (default: "tab") */
-  tabParamName?: string;
-}
-
-/**
  * Header Props
  */
 export interface MegaAppHeaderProps {
@@ -70,15 +52,6 @@ export interface MegaAppHeaderProps {
   subtitle: string;
   icon: LucideIcon;
   headerRight?: ReactNode;
-}
-
-/**
- * Tabs Props
- */
-export interface MegaAppTabsProps {
-  tabs: MegaAppTab[];
-  activeTab: string;
-  onTabChange: (tab: string) => void;
 }
 
 /**

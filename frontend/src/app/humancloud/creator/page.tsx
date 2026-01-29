@@ -23,7 +23,7 @@ import {
 import AppShell from "@/components/AppShell";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { fetchWithAuth } from "@/lib/api";
+import { api } from "@/lib/api";
 
 const SKILL_OPTIONS = [
     "video_editing", "motion_graphics", "color_grading", "sound_design",
@@ -103,10 +103,7 @@ export default function CreatorRegistrationPage() {
 
         startTransition(async () => {
             try {
-                await fetchWithAuth("/api/v1/humancloud/creators", {
-                    method: "POST",
-                    body: JSON.stringify(formData),
-                });
+                await api.post("/api/v1/humancloud/creators", formData);
                 setSuccess(true);
             } catch (err) {
                 setError(err instanceof Error ? err.message : "Failed to register");

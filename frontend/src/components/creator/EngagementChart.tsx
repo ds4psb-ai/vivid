@@ -17,7 +17,7 @@ import {
   Share2,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { fetchWithAuth } from "@/lib/api";
+import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface EngagementData {
@@ -66,7 +66,7 @@ export function EngagementChart({ period: initialPeriod = "7d" }: EngagementChar
       try {
         setLoading(true);
         setError(null);
-        const response = await fetchWithAuth<EngagementTimelineResponse>(
+        const response = await api.get<EngagementTimelineResponse>(
           `/api/v1/creator/engagement?period=${period}`
         );
         setData(response.data);

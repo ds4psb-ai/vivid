@@ -20,7 +20,7 @@ import {
     FileCode,
     Shield,
 } from "lucide-react";
-import { fetchWithAuth } from "@/lib/api";
+import { api } from "@/lib/api";
 
 interface ForkToolModalProps {
     toolId: string;
@@ -74,14 +74,11 @@ export default function ForkToolModal({
         setLoading(true);
         setError(null);
         try {
-            const preview = await fetchWithAuth<DiffPreview>(
+            const preview = await api.post<DiffPreview>(
                 `/api/v1/fork/preview/${toolId}`,
                 {
-                    method: "POST",
-                    body: JSON.stringify({
-                        new_prompt: newPrompt,
-                        new_system_prompt: null,
-                    }),
+                    new_prompt: newPrompt,
+                    new_system_prompt: null,
                 }
             );
             setDiffPreview(preview);
@@ -97,16 +94,13 @@ export default function ForkToolModal({
         setStep("creating");
         setError(null);
         try {
-            const result = await fetchWithAuth<ForkResult>(
+            const result = await api.post<ForkResult>(
                 `/api/v1/fork/create/${toolId}`,
                 {
-                    method: "POST",
-                    body: JSON.stringify({
-                        name,
-                        description,
-                        new_prompt: newPrompt,
-                        new_system_prompt: null,
-                    }),
+                    name,
+                    description,
+                    new_prompt: newPrompt,
+                    new_system_prompt: null,
                 }
             );
             setForkResult(result);

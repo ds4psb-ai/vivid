@@ -29,7 +29,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 
-import { fetchWithAuth } from "@/lib/api";
+import { api } from "@/lib/api";
 import { StatCard, StatusBadge, PageHeader, EmptyState } from "@/components/shared";
 import AppShell from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -242,7 +242,7 @@ export default function HITLDashboardPage() {
       const reviewType = activeTab === "all" ? undefined : activeTab;
       const params = reviewType ? `?review_type=${reviewType}` : "";
 
-      const data = await fetchWithAuth<{ items: HITLItem[]; counts: HITLCounts }>(`/api/hitl/pending${params}`);
+      const data = await api.get<{ items: HITLItem[]; counts: HITLCounts }>(`/api/hitl/pending${params}`);
       setItems(data.items || []);
       setCounts(data.counts || { total: 0 });
     } catch (err) {
@@ -260,10 +260,7 @@ export default function HITLDashboardPage() {
     try {
       setProcessing(itemId);
 
-      await fetchWithAuth<{ success: boolean }>(`/api/hitl/${itemId}/approve`, {
-        method: "POST",
-        body: JSON.stringify({ notes: "Approved via dashboard" }),
-      });
+      await api.post<{ success: boolean }>(`/api/hitl/${itemId}/approve`, { notes: "Approved via dashboard" });
 
       // Refresh list
       await fetchItems();
@@ -281,10 +278,7 @@ export default function HITLDashboardPage() {
     try {
       setProcessing(itemId);
 
-      await fetchWithAuth<{ success: boolean }>(`/api/hitl/${itemId}/reject`, {
-        method: "POST",
-        body: JSON.stringify({ reason }),
-      });
+      await api.post<{ success: boolean }>(`/api/hitl/${itemId}/reject`, { reason });
 
       await fetchItems();
     } catch (err) {

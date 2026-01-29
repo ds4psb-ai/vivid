@@ -25,7 +25,7 @@ import {
     FileX,
 } from "lucide-react";
 
-import { fetchWithAuth } from "@/lib/api";
+import { api } from "@/lib/api";
 import { StatusBadge, StatCard, EmptyState } from "@/components/shared";
 import AppShell from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
@@ -411,9 +411,9 @@ export default function AdminOpsPage() {
         setError(null);
         try {
             const [settlements, dlq, stats] = await Promise.all([
-                fetchWithAuth<SettlementListResponse>("/api/v1/admin/settlements/pending"),
-                fetchWithAuth<DLQListResponse>("/api/v1/admin/dlq?status=pending"),
-                fetchWithAuth<DLQStats>("/api/v1/admin/dlq/stats"),
+                api.get<SettlementListResponse>("/api/v1/admin/settlements/pending"),
+                api.get<DLQListResponse>("/api/v1/admin/dlq?status=pending"),
+                api.get<DLQStats>("/api/v1/admin/dlq/stats"),
             ]);
             setSettlementData(settlements);
             setDlqData(dlq);
@@ -433,9 +433,9 @@ export default function AdminOpsPage() {
         setProcessingBatch(true);
         setBatchResult(null);
         try {
-            const result = await fetchWithAuth<BatchProcessResult>(
+            const result = await api.post<BatchProcessResult>(
                 "/api/v1/admin/settlements/process-batch",
-                { method: "POST", body: JSON.stringify({ limit: 100 }) }
+                { limit: 100 }
             );
             setBatchResult(result);
             await fetchData();
@@ -448,7 +448,7 @@ export default function AdminOpsPage() {
 
     const handleSettlementRetry = async (id: string) => {
         try {
-            await fetchWithAuth(`/api/v1/admin/settlements/${id}/retry`, { method: "POST" });
+            await api.post(`/api/v1/admin/settlements/${id}/retry`);
             await fetchData();
         } catch (err) {
             setError(err instanceof Error ? err.message : "재시도에 실패했습니다");
@@ -457,7 +457,7 @@ export default function AdminOpsPage() {
 
     const handleDLQRetry = async (id: string) => {
         try {
-            await fetchWithAuth(`/api/v1/admin/dlq/${id}/retry`, { method: "POST" });
+            await api.post(`/api/v1/admin/dlq/${id}/retry`);
             await fetchData();
         } catch (err) {
             setError(err instanceof Error ? err.message : "DLQ 재시도에 실패했습니다");
@@ -466,12 +466,9 @@ export default function AdminOpsPage() {
 
     const handleDLQResolve = async (id: string, skip: boolean) => {
         try {
-            await fetchWithAuth(`/api/v1/admin/dlq/${id}/resolve`, {
-                method: "POST",
-                body: JSON.stringify({
-                    resolution_notes: skip ? "관리자가 수동으로 건너뜀" : "관리자가 수동으로 해결함",
-                    skip,
-                }),
+            await api.post(`/api/v1/admin/dlq/${id}/resolve`, {
+                resolution_notes: skip ? "관리자가 수동으로 건너뜀" : "관리자가 수동으로 해결함",
+                skip,
             });
             await fetchData();
         } catch (err) {

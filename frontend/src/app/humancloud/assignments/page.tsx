@@ -22,7 +22,7 @@ import {
 import AppShell from "@/components/AppShell";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { fetchWithAuth } from "@/lib/api";
+import { api } from "@/lib/api";
 import {
     getAssignmentStatus,
     getStatusLabel,
@@ -128,7 +128,7 @@ export default function AssignmentsPage() {
             const params = new URLSearchParams();
             if (statusFilter) params.append("status", statusFilter);
             const url = `/api/v1/humancloud/my-assignments${params.toString() ? `?${params}` : ""}`;
-            const data = await fetchWithAuth(url) as Assignment[];
+            const data = await api.get<Assignment[]>(url);
             setAssignments(data || []);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to load");

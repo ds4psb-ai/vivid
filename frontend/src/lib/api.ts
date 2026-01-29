@@ -1033,17 +1033,65 @@ class ApiClient {
     return response.json();
   }
 
-  // Generic HTTP methods for flexible API calls
-  async post<T>(endpoint: string, data?: unknown, headers?: Record<string, string>): Promise<T> {
+  // =============================================================================
+  // Generic HTTP Methods (prefer these over fetchWithAuth)
+  // =============================================================================
+
+  /**
+   * Generic GET request
+   * @example
+   * const data = await api.get<MyType>('/api/v1/endpoint');
+   */
+  async get<T>(endpoint: string, options: Omit<RequestInit, 'method' | 'body'> = {}): Promise<T> {
+    return this.request<T>(endpoint, { ...options, method: 'GET' });
+  }
+
+  /**
+   * Generic POST request
+   * @example
+   * const result = await api.post<ResultType>('/api/v1/endpoint', { data: 'value' });
+   */
+  async post<T>(endpoint: string, body?: unknown, options: Omit<RequestInit, 'method' | 'body'> = {}): Promise<T> {
     return this.request<T>(endpoint, {
-      method: "POST",
-      body: data ? JSON.stringify(data) : undefined,
-      headers,
+      ...options,
+      method: 'POST',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   }
 
-  async get<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint);
+  /**
+   * Generic PUT request
+   * @example
+   * const result = await api.put<ResultType>('/api/v1/endpoint', { data: 'value' });
+   */
+  async put<T>(endpoint: string, body?: unknown, options: Omit<RequestInit, 'method' | 'body'> = {}): Promise<T> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: 'PUT',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  }
+
+  /**
+   * Generic PATCH request
+   * @example
+   * const result = await api.patch<ResultType>('/api/v1/endpoint', { field: 'newValue' });
+   */
+  async patch<T>(endpoint: string, body?: unknown, options: Omit<RequestInit, 'method' | 'body'> = {}): Promise<T> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: 'PATCH',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  }
+
+  /**
+   * Generic DELETE request
+   * @example
+   * await api.delete('/api/v1/endpoint/123');
+   */
+  async delete<T = void>(endpoint: string, options: Omit<RequestInit, 'method' | 'body'> = {}): Promise<T> {
+    return this.request<T>(endpoint, { ...options, method: 'DELETE' });
   }
 
   // --- Singularity (특이점) API ---

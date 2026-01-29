@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 
 // Shared imports
-import { fetchWithAuth } from "@/lib/api";
+import { api } from "@/lib/api";
 import { StatCard, StatusBadge, PageHeader, EmptyState } from "@/components/shared";
 import type { Review, ReviewStats, CheckResult } from "@/types/api.types";
 import AppShell from "@/components/AppShell";
@@ -163,7 +163,7 @@ function ReviewDetailModal({
     const [rejectReason, setRejectReason] = useState("");
 
     useEffect(() => {
-        fetchWithAuth<ReviewDetail>(`/api/v1/reviews/${reviewId}`)
+        api.get<ReviewDetail>(`/api/v1/reviews/${reviewId}`)
             .then(setData)
             .catch(console.error)
             .finally(() => setLoading(false));
@@ -299,8 +299,8 @@ export default function AdminReviewsPage() {
         setLoading(true);
         try {
             const [statsData, queueData] = await Promise.all([
-                fetchWithAuth<ReviewStats>("/api/v1/reviews/stats"),
-                fetchWithAuth<Review[]>(`/api/v1/reviews/queue${filter ? `?review_type=${filter}` : ""}`),
+                api.get<ReviewStats>("/api/v1/reviews/stats"),
+                api.get<Review[]>(`/api/v1/reviews/queue${filter ? `?review_type=${filter}` : ""}`),
             ]);
             setStats(statsData);
             setReviews(queueData);
@@ -317,10 +317,7 @@ export default function AdminReviewsPage() {
 
     const handleApprove = async (reviewId: string) => {
         try {
-            await fetchWithAuth(`/api/v1/reviews/${reviewId}/approve`, {
-                method: "POST",
-                body: JSON.stringify({ notes: "Approved via admin dashboard" }),
-            });
+            await api.post(`/api/v1/reviews/${reviewId}/approve`, { notes: "Approved via admin dashboard" });
             await loadData();
             setSelectedReview(null);
         } catch (err) {
@@ -330,10 +327,7 @@ export default function AdminReviewsPage() {
 
     const handleReject = async (reviewId: string, reason = "Does not meet quality standards") => {
         try {
-            await fetchWithAuth(`/api/v1/reviews/${reviewId}/reject`, {
-                method: "POST",
-                body: JSON.stringify({ reason }),
-            });
+            await api.post(`/api/v1/reviews/${reviewId}/reject`, { reason });
             await loadData();
             setSelectedReview(null);
         } catch (err) {

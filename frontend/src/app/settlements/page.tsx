@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 
 // Shared imports
-import { fetchWithAuth } from "@/lib/api";
+import { api } from "@/lib/api";
 import { StatusBadge, StatCard, EmptyState } from "@/components/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Payout, PayoutSummary } from "@/types/api.types";
@@ -218,8 +218,8 @@ export default function SettlementsPage() {
         setError(null);
         try {
             const [summaryData, payoutsData] = await Promise.all([
-                fetchWithAuth<PayoutSummary>(`/api/v1/settlements/my/summary?days=${periodDays}`),
-                fetchWithAuth<Payout[]>(`/api/v1/settlements/my?days=${periodDays}`),
+                api.get<PayoutSummary>(`/api/v1/settlements/my/summary?days=${periodDays}`),
+                api.get<Payout[]>(`/api/v1/settlements/my?days=${periodDays}`),
             ]);
             setSummary(summaryData);
             setPayouts(payoutsData);

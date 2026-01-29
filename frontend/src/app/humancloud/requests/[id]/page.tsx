@@ -29,7 +29,7 @@ import {
 import AppShell from "@/components/AppShell";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { fetchWithAuth } from "@/lib/api";
+import { api } from "@/lib/api";
 import EvidenceTimeline, { EvidenceLog } from "@/components/humancloud/EvidenceTimeline";
 import ActionConsole from "@/components/humancloud/ActionConsole";
 
@@ -120,16 +120,16 @@ export default function RequestDetailPage() {
         setMsg(null);
         try {
             // 1. Get User
-            const userData = await fetchWithAuth("/api/v1/users/me") as UserProfile;
+            const userData = await api.get("/api/v1/users/me") as UserProfile;
             setUser(userData);
 
             // 2. Get Request
-            const reqData = await fetchWithAuth(`/api/v1/humancloud/requests/${requestId}`) as RequestDetail;
+            const reqData = await api.get(`/api/v1/humancloud/requests/${requestId}`) as RequestDetail;
             setRequest(reqData);
 
             // 3. Get Assignment (if any)
             try {
-                const assigns = await fetchWithAuth(`/api/v1/humancloud/requests/${requestId}/assignments`) as Assignment[];
+                const assigns = await api.get(`/api/v1/humancloud/requests/${requestId}/assignments`) as Assignment[];
                 // Find active assignment
                 const activeAssign = Array.isArray(assigns) ? assigns[0] : null;
                 setAssignment(activeAssign);
@@ -146,9 +146,9 @@ export default function RequestDetailPage() {
                     // We need assignment ID for evidence. 
                     // If we found assignment above, use it.
                     // The API expects /assignments/{id}/evidence
-                    const assigns = await fetchWithAuth(`/api/v1/humancloud/requests/${requestId}/assignments`) as Assignment[];
+                    const assigns = await api.get(`/api/v1/humancloud/requests/${requestId}/assignments`) as Assignment[];
                     if (assigns && assigns.length > 0) {
-                        const logs = await fetchWithAuth(`/api/v1/humancloud/assignments/${assigns[0].id}/evidence`) as EvidenceLog[];
+                        const logs = await api.get(`/api/v1/humancloud/assignments/${assigns[0].id}/evidence`) as EvidenceLog[];
                         setEvidenceLogs(logs || []);
                     }
                 } catch {
@@ -175,27 +175,24 @@ export default function RequestDetailPage() {
         setMsg(null);
         try {
             if (action === "publish") {
-                await fetchWithAuth(`/api/v1/humancloud/requests/${requestId}/publish`, { method: "POST" });
+                await api.post(`/api/v1/humancloud/requests/${requestId}/publish`);
                 setMsg({ type: 'success', text: "Request published and credits escrowed." });
             }
             else if (action === "accept" && assignment) {
-                await fetchWithAuth(`/api/v1/humancloud/assignments/${assignment.id}/accept`, { method: "POST" });
+                await api.post(`/api/v1/humancloud/assignments/${assignment.id}/accept`);
                 setMsg({ type: 'success', text: "Assignment accepted. Contract started." });
             }
             else if (action === "start" && assignment) {
-                await fetchWithAuth(`/api/v1/humancloud/assignments/${assignment.id}/start`, { method: "POST" });
+                await api.post(`/api/v1/humancloud/assignments/${assignment.id}/start`);
                 setMsg({ type: 'success', text: "Work started." });
             }
             else if (action === "deliver" && assignment) {
-                await fetchWithAuth(`/api/v1/humancloud/assignments/${assignment.id}/deliver`, {
-                    method: "POST",
-                    body: JSON.stringify(data)
-                });
+                await api.post(`/api/v1/humancloud/assignments/${assignment.id}/deliver`, data);
                 setMsg({ type: 'success', text: "Delivery submitted for review." });
             }
             else if (action === "approve" && assignment) {
                 // Fetch deliveries to find the latest one
-                const deliveries = await fetchWithAuth(`/api/v1/humancloud/assignments/${assignment.id}/deliveries`) as Delivery[];
+                const deliveries = await api.get<Delivery[]>(`/api/v1/humancloud/assignments/${assignment.id}/deliveries`);
 
                 // Find latest pending delivery
                 const pendingDelivery = deliveries.find((d) => d.status === 'pending');
@@ -204,10 +201,7 @@ export default function RequestDetailPage() {
                     throw new Error("No pending delivery found to approve.");
                 }
 
-                await fetchWithAuth(`/api/v1/humancloud/deliveries/${pendingDelivery.id}/approve`, {
-                    method: "POST",
-                    body: JSON.stringify(data) // { rating, feedback }
-                });
+                await api.post(`/api/v1/humancloud/deliveries/${pendingDelivery.id}/approve`, data);
 
                 setMsg({ type: 'success', text: "Delivery approved! Payment released." });
             }
