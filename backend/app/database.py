@@ -247,36 +247,22 @@ async def init_db(drop_all: bool = False) -> None:
             logger.info("[DB] Development mode - running create_all()")
             await conn.run_sync(Base.metadata.create_all)
         else:
-            # Production: Create missing tables one by one
-            # checkfirst=True only checks tables, not indexes
-            # So we create each table individually and catch duplicate index errors
-            logger.info("[DB] Production mode - creating missing tables individually")
+            # Production: Skip create_all, rely on alembic migrations
+            # Tables should be created by alembic, not init_db
+            logger.info("[DB] Production mode - skipping create_all (use alembic)")
 
-            def create_tables_safely(sync_conn):
+            # Just verify some critical tables exist
+            def check_tables(sync_conn):
                 from sqlalchemy import inspect
-                from sqlalchemy.exc import ProgrammingError
-
                 inspector = inspect(sync_conn)
-                existing_tables = set(inspector.get_table_names())
+                existing = set(inspector.get_table_names())
+                critical = {'user_accounts', 'user_credits', 'capsule_runs'}
+                missing = critical - existing
+                if missing:
+                    logger.warning(f"[DB] Missing critical tables: {missing}")
+                    logger.warning("[DB] Run: railway run --service vivid 'python scripts/create_missing_tables.py'")
+                else:
+                    logger.info(f"[DB] Critical tables verified. Total tables: {len(existing)}")
 
-                created = 0
-                skipped = 0
-                for table in Base.metadata.sorted_tables:
-                    if table.name in existing_tables:
-                        skipped += 1
-                        continue
-                    try:
-                        table.create(sync_conn, checkfirst=True)
-                        created += 1
-                        logger.info(f"[DB] Created table: {table.name}")
-                    except ProgrammingError as e:
-                        if "already exists" in str(e):
-                            skipped += 1
-                        else:
-                            logger.error(f"[DB] Failed to create {table.name}: {e}")
-                            raise
-
-                logger.info(f"[DB] Tables - created: {created}, skipped: {skipped}")
-
-            await conn.run_sync(create_tables_safely)
+            await conn.run_sync(check_tables)
 

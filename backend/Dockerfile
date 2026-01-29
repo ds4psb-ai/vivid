@@ -75,7 +75,7 @@ WORKDIR /app
 # Copy application code
 COPY --chown=vivid:vivid . .
 
-# Remove unnecessary files
+# Remove unnecessary files (keep scripts/ for table creation)
 RUN rm -rf tests/ docs/ .git/ .pytest_cache/ __pycache__/ *.md
 
 # Switch to non-root user
@@ -90,10 +90,14 @@ EXPOSE 8080
 #     CMD curl -f http://localhost:${PORT:-8080}/health/live || exit 1
 
 # Startup command - use shell form for $PORT expansion
-# Try alembic upgrade, if fails try stamp head (for existing DBs), then start uvicorn
+# 1. Create missing tables (checkfirst=True, safe to run multiple times)
+# 2. Run alembic (stamp if upgrade fails - for existing DBs)
+# 3. Start uvicorn
 CMD sh -c "echo '=== Starting container ===' && \
     echo 'PORT='$PORT && \
     echo 'DATABASE_URL='$(echo $DATABASE_URL | sed 's/:.*@/:***@/') && \
+    echo '=== Creating missing tables ===' && \
+    python scripts/create_missing_tables.py 2>&1 && \
     echo '=== Running alembic upgrade ===' && \
     (alembic upgrade head 2>&1 || { echo '=== Alembic upgrade failed, trying stamp head ==='; alembic stamp head 2>&1; }) && \
     echo '=== Starting uvicorn ===' && \
