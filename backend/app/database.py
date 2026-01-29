@@ -199,35 +199,35 @@ async def init_db(drop_all: bool = False) -> None:
     # Import ALL models to register them with Base.metadata
     # This ensures create_all() knows about all tables
     try:
-        from app.models import *  # noqa: F401, F403
-        from app.models_telemetry import *  # noqa: F401, F403
-        from app.models_feedback import *  # noqa: F401, F403
-        from app.models_uqsl import *  # noqa: F401, F403
-        from app.models_ip import *  # noqa: F401, F403
-        from app.models_workflow import *  # noqa: F401, F403
-        from app.models_ip_evidence import *  # noqa: F401, F403
-        from app.models_singularity import *  # noqa: F401, F403
-        from app.models_humancloud import *  # noqa: F401, F403
-        from app.models_settlement import *  # noqa: F401, F403
-        from app.models_sandbox import *  # noqa: F401, F403
-        from app.models_character import *  # noqa: F401, F403
-        from app.models_reference import *  # noqa: F401, F403
-        from app.models_review import *  # noqa: F401, F403
-        from app.models_marketplace import *  # noqa: F401, F403
-        from app.models_versioning import *  # noqa: F401, F403
-        from app.models_miniapps import *  # noqa: F401, F403
-        from app.models_analytics import *  # noqa: F401, F403
-        from app.models_dlq import *  # noqa: F401, F403
-        from app.models_constellation import *  # noqa: F401, F403
-        from app.models_ip_chat import *  # noqa: F401, F403
-        from app.models_mcp import *  # noqa: F401, F403
-        from app.models_tenant import *  # noqa: F401, F403
-        from app.models_outlier import *  # noqa: F401, F403
-        from app.models_personalization import *  # noqa: F401, F403
-        from app.models_outbox import *  # noqa: F401, F403
-        from app.models_logic_vector import *  # noqa: F401, F403
-        from app.models_pipeline import *  # noqa: F401, F403
-        from app.models_hitl import *  # noqa: F401, F403
+        import app.models  # noqa: F401
+        import app.models_telemetry  # noqa: F401
+        import app.models_feedback  # noqa: F401
+        import app.models_uqsl  # noqa: F401
+        import app.models_ip  # noqa: F401
+        import app.models_workflow  # noqa: F401
+        import app.models_ip_evidence  # noqa: F401
+        import app.models_singularity  # noqa: F401
+        import app.models_humancloud  # noqa: F401
+        import app.models_settlement  # noqa: F401
+        import app.models_sandbox  # noqa: F401
+        import app.models_character  # noqa: F401
+        import app.models_reference  # noqa: F401
+        import app.models_review  # noqa: F401
+        import app.models_marketplace  # noqa: F401
+        import app.models_versioning  # noqa: F401
+        import app.models_miniapps  # noqa: F401
+        import app.models_analytics  # noqa: F401
+        import app.models_dlq  # noqa: F401
+        import app.models_constellation  # noqa: F401
+        import app.models_ip_chat  # noqa: F401
+        import app.models_mcp  # noqa: F401
+        import app.models_tenant  # noqa: F401
+        import app.models_outlier  # noqa: F401
+        import app.models_personalization  # noqa: F401
+        import app.models_outbox  # noqa: F401
+        import app.models_logic_vector  # noqa: F401
+        import app.models_pipeline  # noqa: F401
+        import app.models_hitl  # noqa: F401
         logger.info(f"[DB] Registered {len(Base.metadata.tables)} tables with Base.metadata")
     except ImportError as e:
         logger.warning(f"[DB] Some models failed to import: {e}")
