@@ -13,6 +13,69 @@ import type { ReactNode } from "react";
  */
 export type MegaAppId = "dna-lab" | "story-engine" | "production";
 
+// =============================================================================
+// Phase 2-1: Progressive Disclosure
+// =============================================================================
+
+/**
+ * Disclosure level for progressive UI complexity
+ * - basic: 프롬프트 입력 + 생성 버튼만 (최소 UI)
+ * - intermediate: 스타일/거장 선택 추가 (기본값)
+ * - advanced: 전체 단계 수동 접근 (전문가용)
+ */
+export type DisclosureLevel = "basic" | "intermediate" | "advanced";
+
+/**
+ * Disclosure level configuration
+ */
+export interface DisclosureLevelConfig {
+  value: DisclosureLevel;
+  label: string;
+  labelEn: string;
+  description: string;
+  descriptionEn: string;
+  icon: "simple" | "balanced" | "full";
+}
+
+/**
+ * Available disclosure levels with metadata
+ */
+export const DISCLOSURE_LEVELS: DisclosureLevelConfig[] = [
+  {
+    value: "basic",
+    label: "간편",
+    labelEn: "Basic",
+    description: "필수 입력만",
+    descriptionEn: "Essential inputs only",
+    icon: "simple",
+  },
+  {
+    value: "intermediate",
+    label: "중급",
+    labelEn: "Standard",
+    description: "스타일/거장 선택",
+    descriptionEn: "Style & auteur options",
+    icon: "balanced",
+  },
+  {
+    value: "advanced",
+    label: "전문가",
+    labelEn: "Expert",
+    description: "모든 옵션 표시",
+    descriptionEn: "All options visible",
+    icon: "full",
+  },
+];
+
+/**
+ * Get disclosure level config by value
+ */
+export function getDisclosureLevelConfig(
+  level: DisclosureLevel
+): DisclosureLevelConfig {
+  return DISCLOSURE_LEVELS.find((l) => l.value === level) || DISCLOSURE_LEVELS[1];
+}
+
 /**
  * Sidebar display modes for progressive deepening UI
  */
@@ -55,6 +118,18 @@ export interface WorkflowStepMetadata {
   color: string;
   /** Panel component name for dynamic loading */
   panelComponent: string;
+
+  // Phase 1-2: Merged step support
+  /** Steps that were merged into this one (for compatibility) */
+  mergedFrom?: string[];
+  /** Credit cost for this step */
+  creditCost?: number;
+
+  // Phase 1-2: Auto-skip support
+  /** Skip this step if condition is met */
+  skipIfExists?: boolean;
+  /** Condition name for skip logic (e.g., "userHasPersona") */
+  skipCondition?: string;
 }
 
 /**
@@ -157,6 +232,10 @@ export interface UnifiedWorkflowState {
   // AI Inference
   canInferForStep: (stepId: string) => boolean;
   getMissingInputsForStep: (stepId: string) => string[];
+
+  // Phase 2-1: Progressive Disclosure
+  disclosureLevel: DisclosureLevel;
+  setDisclosureLevel: (level: DisclosureLevel) => void;
 }
 
 /**
@@ -181,8 +260,8 @@ export interface ChainDataEntry {
 export interface UnifiedWorkflowShellProps {
   /** App identifier */
   appId: MegaAppId;
-  /** Children render function receives current step ID */
-  children: (currentStepId: string) => ReactNode;
+  /** Children render function receives current step ID and disclosure level */
+  children: (currentStepId: string, disclosureLevel: DisclosureLevel) => ReactNode;
   /** Show aurora background */
   showAurora?: boolean;
   /** Show global workflow progress */
@@ -238,6 +317,60 @@ export function getConfidenceLevel(confidence: number): ConfidenceLevel {
   if (confidence >= 85) return "high";
   if (confidence >= 50) return "medium";
   return "low";
+}
+
+// =============================================================================
+// Phase 2-2: Quick Generate
+// =============================================================================
+
+/**
+ * Quick generate execution state
+ */
+export type QuickGenerateStatus =
+  | "idle"
+  | "confirming"
+  | "planning"
+  | "executing"
+  | "completed"
+  | "error";
+
+/**
+ * Quick generate step progress
+ */
+export interface QuickGenerateStepProgress {
+  stepId: string;
+  label: string;
+  status: "pending" | "running" | "completed" | "error";
+  creditCost?: number;
+  output?: Record<string, unknown>;
+  error?: string;
+}
+
+/**
+ * Quick generate state
+ */
+export interface QuickGenerateState {
+  status: QuickGenerateStatus;
+  currentStepIndex: number;
+  totalSteps: number;
+  steps: QuickGenerateStepProgress[];
+  totalCreditCost: number;
+  usedCredits: number;
+  sessionId?: string;
+  error?: string;
+}
+
+/**
+ * Quick generate result
+ */
+export interface QuickGenerateResult {
+  success: boolean;
+  sessionId: string;
+  outputs: Record<string, Record<string, unknown>>;
+  totalCreditsUsed: number;
+  completedSteps: string[];
+  failedStep?: string;
+  error?: string;
 }
 
 /**

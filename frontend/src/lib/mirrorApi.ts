@@ -28,6 +28,10 @@ export interface MirrorInitRequest {
     session_id?: string;
     seed_preset?: Record<string, unknown>;
     prior_outputs?: object[];
+    // Phase 1-1: Quick Mode parameters
+    mode?: "quick" | "full";
+    skip_if_exists?: boolean;
+    force_refresh?: boolean;
 }
 
 export interface MirrorChatRequest {
@@ -37,6 +41,8 @@ export interface MirrorChatRequest {
     chat_history: Array<{ role: string; content: string }>;
     current_stage: string;
     model?: string;
+    // Phase 1-1: Quick Mode parameter
+    mode?: "quick" | "full";
 }
 
 export interface EvidenceRef {
@@ -55,6 +61,11 @@ export interface MirrorInitResponse {
     initial_message: string;
     persona_data: Record<string, unknown>;
     completion_rate: number;
+    // Phase 1-1: Quick Mode fields
+    status?: "started" | "skipped" | "resumed";
+    mode?: "quick" | "full";
+    total_stages?: number;
+    stages?: string[];
 }
 
 export interface MirrorChatResponse {
@@ -115,6 +126,10 @@ export async function initMirror(
             session_id: request.session_id,
             seed_preset: request.seed_preset,
             prior_outputs: request.prior_outputs,
+            // Phase 1-1: Quick Mode parameters
+            mode: request.mode ?? 'full',
+            skip_if_exists: request.skip_if_exists ?? false,
+            force_refresh: request.force_refresh ?? false,
         }),
     });
 
@@ -144,6 +159,8 @@ export async function chatMirror(
             chat_history: request.chat_history,
             current_stage: request.current_stage,
             model: request.model ?? 'gemini-3-flash-preview',
+            // Phase 1-1: Quick Mode parameter
+            mode: request.mode ?? 'full',
         }),
     });
 

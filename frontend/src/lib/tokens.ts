@@ -35,7 +35,8 @@ export type DimensionCode =
   | "character"
   | "prompt"
   | "json-gen"
-  | "nanobanana";
+  | "nanobanana"
+  | "analysis"; // Phase 1-2: Merged VPE + AD
 
 /**
  * Theme color type (for Tailwind class mapping)
@@ -243,6 +244,16 @@ export const DIMENSION_TOKENS: Record<DimensionCode, DimensionToken> = {
     label: "Nanobanana Editor Adapter",
     labelKo: "나노바나나 에디터",
     description: "Convert lighting and camera presets into ShotContract",
+  },
+  // Phase 1-2: Merged VPE + AD
+  analysis: {
+    code: "analysis",
+    cssVar: "--color-dimension-analysis",
+    tailwindKey: "dimension-analysis",
+    themeColor: "cyan",
+    label: "Unified Analysis",
+    labelKo: "통합 분석",
+    description: "Combined Video Parsing and Aesthetic Direction",
   },
 };
 
@@ -487,6 +498,7 @@ const DIMENSION_GRADIENTS: Record<DimensionCode, string> = {
   "prompt": "bg-gradient-to-r from-violet-500 to-purple-600",
   "json-gen": "bg-gradient-to-r from-violet-500 to-purple-600",
   "nanobanana": "bg-gradient-to-r from-amber-500 to-orange-600",
+  "analysis": "bg-gradient-to-r from-cyan-500 to-blue-600", // Phase 1-2: Merged VPE + AD
 };
 
 /**

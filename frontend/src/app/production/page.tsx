@@ -101,7 +101,7 @@ function ProductionPageInner() {
       showChainSummary={true}
       headerRight={<ProviderStats />}
     >
-      {(currentStepId) => <StepContent stepId={currentStepId} />}
+      {(currentStepId, _disclosureLevel) => <StepContent stepId={currentStepId} />}
     </UnifiedWorkflowShell>
   );
 }

@@ -80,6 +80,15 @@ export { IntentSearchBar } from "./IntentSearchBar";
 // Missing data UI
 export { MissingDataBanner, MissingDataIndicator } from "./MissingDataBanner";
 
+// Phase 2-1: Progressive Disclosure
+export {
+  DisclosureLevelToggle,
+  DisclosureLevelToggleInline,
+} from "./DisclosureLevelToggle";
+
+// Phase 2-2: Quick Generate
+export { QuickGenerateButton } from "./QuickGenerateButton";
+
 // Execution Timer
 export {
   StepExecutionTimer,
@@ -113,6 +122,9 @@ export {
 export {
   useProviderHealth,
 } from "./hooks/useProviderHealth";
+export {
+  useQuickGenerate,
+} from "./hooks/useQuickGenerate";
 
 // Configs & Utilities
 export {
@@ -149,12 +161,22 @@ export type {
   // Phase 2: Suggested Defaults
   SuggestedDefault,
   ConfidenceLevel,
+  // Phase 2-1: Progressive Disclosure
+  DisclosureLevel,
+  DisclosureLevelConfig,
+  // Phase 2-2: Quick Generate
+  QuickGenerateStatus,
+  QuickGenerateStepProgress,
+  QuickGenerateState,
+  QuickGenerateResult,
 } from "./types";
 
 // Helper functions
 export {
   getConfidenceLevel,
   getConfidenceColorConfig,
+  getDisclosureLevelConfig,
+  DISCLOSURE_LEVELS,
 } from "./types";
 
 // Observability types
@@ -239,3 +261,19 @@ export type {
   IntentSuggestion,
   IntentType,
 } from "./IntentSearchBar";
+
+// DisclosureLevelToggle types (Phase 2-1)
+export type {
+  DisclosureLevelToggleProps,
+} from "./DisclosureLevelToggle";
+
+// QuickGenerateButton types (Phase 2-2)
+export type {
+  QuickGenerateButtonProps,
+} from "./QuickGenerateButton";
+
+// useQuickGenerate types (Phase 2-2)
+export type {
+  UseQuickGenerateOptions,
+  UseQuickGenerateResult,
+} from "./hooks/useQuickGenerate";

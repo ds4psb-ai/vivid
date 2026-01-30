@@ -227,7 +227,8 @@ export function useChainInputInjection(stepId: StoryEngineStepId) {
       break;
 
     case "prompt":
-      // Prompt Alchemy gets everything from DNA Lab + Story
+      // Phase 1-3: Unified Prompt (merged with System Prompt)
+      // Gets everything from DNA Lab + Story
       if (inputData.vpe) {
         injectedProps.prefillLogicVector = inputData.vpe;
       }
@@ -236,16 +237,6 @@ export function useChainInputInjection(stepId: StoryEngineStepId) {
       }
       if (inputData.story) {
         injectedProps.prefillStory = inputData.story;
-      }
-      break;
-
-    case "system-prompt":
-      // System Prompt gets Story + Prompt
-      if (inputData.story) {
-        injectedProps.prefillStory = inputData.story;
-      }
-      if (inputData.prompt) {
-        injectedProps.prefillPrompt = inputData.prompt;
       }
       break;
   }

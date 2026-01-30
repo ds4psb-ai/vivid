@@ -66,31 +66,27 @@ export const RESPONSIVE_CONFIG = {
 
 /**
  * DNA Lab workflow steps
+ *
+ * Phase 1-2: VPE + AD merged into "Analysis" step
+ * - 4 steps → 3 steps (Analysis, Mirror, QC)
+ * - Mirror auto-skips if user has existing persona (skip_if_exists)
+ * - Effective 2-step flow for returning users
  */
 export const DNA_LAB_STEPS: WorkflowStepMetadata[] = [
   {
-    id: "vpe",
-    label: "영상 분석",
-    labelEn: "Video Parsing",
+    id: "analysis",
+    label: "통합 분석",
+    labelEn: "Unified Analysis",
     icon: Video,
-    description: "Logic Vector 추출",
+    description: "영상 분석 + 미학 적용",
     inputs: [],
-    outputs: ["vpe"],
+    outputs: ["vpe", "ad"], // Outputs both VPE and AD for compatibility
     canInfer: false,
     color: "oklch(0.7 0.15 200)", // Blue
-    panelComponent: "VPEPanel",
-  },
-  {
-    id: "ad",
-    label: "미학 적용",
-    labelEn: "Aesthetic Director",
-    icon: Palette,
-    description: "거장 스타일 적용",
-    inputs: ["vpe"],
-    outputs: ["ad"],
-    canInfer: true,
-    color: "oklch(0.7 0.15 45)", // Amber
-    panelComponent: "AestheticDirectorPanel",
+    panelComponent: "UnifiedAnalysisPanel",
+    // Phase 1-2: Merged step metadata
+    mergedFrom: ["vpe", "ad"],
+    creditCost: 60, // VPE(50) + AD(10)
   },
   {
     id: "mirror",
@@ -103,6 +99,10 @@ export const DNA_LAB_STEPS: WorkflowStepMetadata[] = [
     canInfer: true,
     color: "oklch(0.7 0.15 280)", // Purple
     panelComponent: "AbyssMirrorPanel",
+    // Phase 1-2: Auto-skip if persona exists
+    skipIfExists: true,
+    skipCondition: "userHasPersona",
+    optional: true, // Can be skipped for returning users
   },
   {
     id: "qc",
@@ -119,7 +119,66 @@ export const DNA_LAB_STEPS: WorkflowStepMetadata[] = [
 ];
 
 /**
+ * Legacy DNA Lab steps (for backward compatibility)
+ * @deprecated Use DNA_LAB_STEPS instead
+ */
+export const DNA_LAB_STEPS_LEGACY: WorkflowStepMetadata[] = [
+  {
+    id: "vpe",
+    label: "영상 분석",
+    labelEn: "Video Parsing",
+    icon: Video,
+    description: "Logic Vector 추출",
+    inputs: [],
+    outputs: ["vpe"],
+    canInfer: false,
+    color: "oklch(0.7 0.15 200)",
+    panelComponent: "VPEPanel",
+  },
+  {
+    id: "ad",
+    label: "미학 적용",
+    labelEn: "Aesthetic Director",
+    icon: Palette,
+    description: "거장 스타일 적용",
+    inputs: ["vpe"],
+    outputs: ["ad"],
+    canInfer: true,
+    color: "oklch(0.7 0.15 45)",
+    panelComponent: "AestheticDirectorPanel",
+  },
+  {
+    id: "mirror",
+    label: "창작 DNA",
+    labelEn: "Abyss Mirror",
+    icon: Brain,
+    description: "페르소나 DNA 분석",
+    inputs: ["vpe", "ad"],
+    outputs: ["mirror"],
+    canInfer: true,
+    color: "oklch(0.7 0.15 280)",
+    panelComponent: "AbyssMirrorPanel",
+  },
+  {
+    id: "qc",
+    label: "품질 검증",
+    labelEn: "Quality Director",
+    icon: CheckCircle,
+    description: "최종 품질 검수",
+    inputs: ["vpe", "ad", "mirror"],
+    outputs: ["qc"],
+    canInfer: false,
+    color: "oklch(0.7 0.15 148)",
+    panelComponent: "QualityDirectorPanel",
+  },
+];
+
+/**
  * Story Engine workflow steps
+ *
+ * Phase 1-3: Prompt + SystemPrompt merged into "Prompt" step
+ * - 3 steps → 2 steps (Story, Prompt)
+ * - Prompt now outputs both "prompt" and "system-prompt"
  */
 export const STORY_ENGINE_STEPS: WorkflowStepMetadata[] = [
   {
@@ -136,27 +195,18 @@ export const STORY_ENGINE_STEPS: WorkflowStepMetadata[] = [
   },
   {
     id: "prompt",
-    label: "프롬프트 연금술",
-    labelEn: "Prompt Alchemy",
+    label: "프롬프트 생성",
+    labelEn: "Prompt Generator",
     icon: Wand2,
-    description: "AI 프롬프트 생성",
+    description: "AI 프롬프트 + System Prompt 통합 생성",
     inputs: ["vpe", "ad", "story"],
-    outputs: ["prompt"],
+    outputs: ["prompt", "system-prompt"], // Phase 1-3: Outputs both
     canInfer: true,
     color: "oklch(0.7 0.15 320)", // Pink
-    panelComponent: "PromptGeneratorPanel",
-  },
-  {
-    id: "system-prompt",
-    label: "시스템 프롬프트",
-    labelEn: "System Prompt",
-    icon: FileCode,
-    description: "최종 시스템 프롬프트",
-    inputs: ["story", "prompt"],
-    outputs: ["system-prompt"],
-    canInfer: false,
-    color: "oklch(0.7 0.15 190)", // Cyan
-    panelComponent: "SystemPromptPanel",
+    panelComponent: "UnifiedPromptPanel",
+    // Phase 1-3: Merged step metadata
+    mergedFrom: ["prompt", "system-prompt"],
+    creditCost: 10, // Prompt(5) + SystemPrompt(5)
   },
 ];
 
@@ -272,18 +322,24 @@ export const WORKFLOW_CONFIGS: Record<MegaAppId, WorkflowConfig> = {
 /**
  * Chain data source mapping
  * Maps each chain data key to its source app and step
+ *
+ * Phase 1-2: VPE and AD keys now point to the merged "analysis" step,
+ * but maintain separate entries for backward compatibility
  */
 export const CHAIN_DATA_SOURCE_MAP: Record<string, ChainDataSource> = {
-  // DNA Lab outputs
-  vpe: { app: "dna-lab", step: "vpe", label: "영상 분석" },
-  ad: { app: "dna-lab", step: "ad", label: "미학 적용" },
+  // DNA Lab outputs (Phase 1-2: merged analysis step)
+  analysis: { app: "dna-lab", step: "analysis", label: "통합 분석" },
+  // Legacy keys point to analysis for compatibility
+  vpe: { app: "dna-lab", step: "analysis", label: "영상 분석" },
+  ad: { app: "dna-lab", step: "analysis", label: "미학 적용" },
   mirror: { app: "dna-lab", step: "mirror", label: "창작 DNA" },
   qc: { app: "dna-lab", step: "qc", label: "품질 검증" },
 
-  // Story Engine outputs
+  // Story Engine outputs (Phase 1-3: merged prompt step)
   story: { app: "story-engine", step: "story", label: "스토리 설계" },
-  prompt: { app: "story-engine", step: "prompt", label: "프롬프트" },
-  "system-prompt": { app: "story-engine", step: "system-prompt", label: "시스템 프롬프트" },
+  prompt: { app: "story-engine", step: "prompt", label: "프롬프트 생성" },
+  // Legacy key points to prompt for compatibility (Phase 1-3 merged)
+  "system-prompt": { app: "story-engine", step: "prompt", label: "시스템 프롬프트" },
 
   // Production outputs
   veo: { app: "production", step: "veo", label: "VEO 3.1" },

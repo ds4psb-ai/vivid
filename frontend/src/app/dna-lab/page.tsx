@@ -219,28 +219,34 @@ function DNALabPageContent() {
         </div>
       }
     >
-      {(currentStepId) => (
+      {(currentStepId, disclosureLevel) => (
         <StepContent
           stepId={currentStepId as DNALabStepId}
           ipSlug={ipSlug}
+          disclosureLevel={disclosureLevel}
         />
       )}
     </UnifiedWorkflowShell>
   );
 }
 
+/** Disclosure level for progressive UI complexity */
+type DisclosureLevel = "basic" | "intermediate" | "advanced";
+
 /**
  * Step content renderer
  * Wraps each panel with DNALabStepPanel for chain data integration
  *
  * Phase 3: Enhanced with IP-based suggested defaults
+ * Phase 2-1: Added disclosureLevel prop for progressive disclosure
  */
 interface StepContentProps {
   stepId: DNALabStepId;
   ipSlug: string | null;
+  disclosureLevel?: DisclosureLevel;
 }
 
-function StepContent({ stepId, ipSlug }: StepContentProps) {
+function StepContent({ stepId, ipSlug, disclosureLevel = "intermediate" }: StepContentProps) {
   // Phase 3: IP + Chain Data integration
   const {
     ipData,

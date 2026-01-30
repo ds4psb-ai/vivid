@@ -3,19 +3,18 @@
 /**
  * Story Engine Hub - Mega App for System Prompt Generation
  *
- * Consolidates:
+ * Phase 1-3: Story Engine Step Simplification
+ * Consolidates (merged):
  * - Story (Story Architect)
- * - Prompt (Prompt Alchemy / Generator)
- * - System Prompt Generator - Converts Logic Vector to platform-specific prompts
+ * - Prompt (Unified: Prompt Alchemy + System Prompt Generator)
  *
- * Workflow: DNA Lab (VPE + AD) → Story → Prompt → System Prompt → Production
+ * Workflow: DNA Lab (Analysis) → Story → Prompt → Production
  *
  * Phase 7: Overview 뷰 통합
- * - /story-engine                → Overview (3단계 한눈에)
+ * - /story-engine                → Overview (2단계 한눈에)
  * - /story-engine?step=overview  → Overview (명시적)
  * - /story-engine?step=story     → Story Architect
- * - /story-engine?step=prompt    → Prompt Alchemy
- * - /story-engine?step=system-prompt → System Prompt
+ * - /story-engine?step=prompt    → Unified Prompt Generator (merged)
  *
  * Migration Note (2026.01):
  * Using UnifiedWorkflowShell for consistent cross-MegaApp behavior.
@@ -30,15 +29,15 @@ import {
   type StoryEngineStepId,
 } from "@/components/story-engine";
 
-// Import existing panels
+// Import panels
 import StoryArchitectPanel from "@/components/dimension/StoryArchitectPanel";
-import PromptGeneratorPanel from "@/components/dimension/PromptGeneratorPanel";
-import SystemPromptPanel from "@/components/dimension/SystemPromptPanel";
+import UnifiedPromptPanel from "@/components/dimension/UnifiedPromptPanel";
 
 /**
  * Valid step IDs for Story Engine
+ * Phase 1-3: Reduced to 2 steps (system-prompt merged into prompt)
  */
-const VALID_STEP_IDS: StoryEngineStepId[] = ["story", "prompt", "system-prompt"];
+const VALID_STEP_IDS: StoryEngineStepId[] = ["story", "prompt"];
 
 /**
  * Check if a string is a valid step ID
@@ -57,7 +56,7 @@ function StoryEnginePageInner() {
 
   // Determine view mode
   // Overview: no step param, or step=overview
-  // Step Detail: valid step ID (story, prompt, system-prompt)
+  // Step Detail: valid step ID (story, prompt)
   const showOverview = useMemo(() => {
     if (!stepParam) return true; // No param → Overview
     if (stepParam === "overview") return true; // Explicit overview
@@ -94,7 +93,12 @@ function StoryEnginePageInner() {
       showWorkflowProgress={true}
       showChainSummary={true}
     >
-      {(currentStepId) => <StepContent stepId={currentStepId as StoryEngineStepId} />}
+      {(currentStepId, disclosureLevel) => (
+        <StepContent
+          stepId={currentStepId as StoryEngineStepId}
+          disclosureLevel={disclosureLevel}
+        />
+      )}
     </UnifiedWorkflowShell>
   );
 }
@@ -121,15 +125,27 @@ function StoryEngineLoadingFallback() {
   );
 }
 
+/** Disclosure level for progressive UI complexity */
+type DisclosureLevel = "basic" | "intermediate" | "advanced";
+
 /**
  * Step content renderer with StoryEngineStepPanel wrapper
  *
+ * Phase 1-3: Simplified to 2 steps (prompt merged with system-prompt)
+ * Phase 2-1: Added disclosureLevel prop for progressive disclosure
+ *
  * Each panel is wrapped with StoryEngineStepPanel to provide:
  * - Input data banner (shows available/missing data)
- * - Production bridge (for system-prompt step)
+ * - Production bridge (for prompt step - now final step)
  * - Chain data integration
  */
-function StepContent({ stepId }: { stepId: StoryEngineStepId }) {
+function StepContent({
+  stepId,
+  disclosureLevel = "intermediate",
+}: {
+  stepId: StoryEngineStepId;
+  disclosureLevel?: DisclosureLevel;
+}) {
   switch (stepId) {
     case "story":
       return (
@@ -139,17 +155,11 @@ function StepContent({ stepId }: { stepId: StoryEngineStepId }) {
       );
 
     case "prompt":
+      // Phase 1-3: Unified Prompt Panel (outputs both prompt and system-prompt)
       return (
-        <StoryEngineStepPanel stepId="prompt">
-          <PromptGeneratorPanel />
-        </StoryEngineStepPanel>
-      );
-
-    case "system-prompt":
-      return (
-        <StoryEngineStepPanel stepId="system-prompt" showProductionBridge>
+        <StoryEngineStepPanel stepId="prompt" showProductionBridge>
           <div className="p-4">
-            <SystemPromptPanel />
+            <UnifiedPromptPanel disclosureLevel={disclosureLevel} />
           </div>
         </StoryEngineStepPanel>
       );

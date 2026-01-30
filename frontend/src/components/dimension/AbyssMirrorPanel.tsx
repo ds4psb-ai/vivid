@@ -32,7 +32,7 @@ import { initMirror, chatMirror, type MirrorChatResponse } from "@/lib/mirrorApi
 import { useDimensionChainOptional } from "@/contexts/DimensionChainContext";
 import { getDemoIPOverride } from "@/lib/demo-ip-overrides";
 import { getPreviousStepResult } from "@/lib/workflow-state";
-import { Send, User, Bot, Sparkles, Download, ArrowLeft, Zap, Upload, RefreshCw, AlertTriangle, Film, RotateCcw, CheckCircle } from "lucide-react";
+import { Send, User, Bot, Sparkles, Download, ArrowLeft, Zap, Upload, RefreshCw, AlertTriangle, Film, RotateCcw, CheckCircle, Clock, Timer } from "lucide-react";
 import { useDNACardContextConsumer } from "@/hooks/useDNACardContextConsumer";
 import { DNAContextBanner } from "@/components/dna-card/DNAContextBanner";
 
@@ -146,6 +146,16 @@ function AbyssMirrorContent() {
     errorAuth: isKo ? "인증 오류가 발생했습니다. 다시 시작해주세요." : "Authentication error. Please start again.",
     errorCredits: isKo ? "크레딧이 부족합니다." : "Insufficient credits.",
     errorUnknown: isKo ? "알 수 없는 오류" : "Unknown error",
+
+    // Phase 1-1: Quick Mode labels
+    quickMode: isKo ? "빠른 분석" : "Quick Analysis",
+    fullMode: isKo ? "정밀 분석" : "Full Analysis",
+    quickModeDesc: isKo ? "3질문, 2-3분" : "3 questions, 2-3 min",
+    fullModeDesc: isKo ? "8단계, 15분" : "8 stages, 15 min",
+    personaExists: isKo ? "이미 페르소나가 있습니다" : "You already have a persona",
+    reanalyze: isKo ? "다시 분석하기" : "Re-analyze",
+    useExisting: isKo ? "기존 페르소나 사용" : "Use Existing Persona",
+    skippedMessage: isKo ? "기존 페르소나가 발견되어 분석을 건너뛰었습니다." : "Existing persona found, analysis skipped.",
   }), [isKo]);
 
   // Pipeline integration: Check for chain context data
@@ -165,6 +175,11 @@ function AbyssMirrorContent() {
   // Phase state
   const [phase, setPhase] = useState<Phase>("input");
   const [sessionId, setSessionId] = useState<string | null>(null);
+
+  // Phase 1-1: Quick Mode state
+  const [analysisMode, setAnalysisMode] = useState<"quick" | "full">("quick"); // Default to quick
+  const [personaSkipped, setPersonaSkipped] = useState(false);
+  const [existingPersonaData, setExistingPersonaData] = useState<Record<string, unknown> | null>(null);
 
   // Input form state
   const [birthInfo, setBirthInfo] = useState({
@@ -430,7 +445,7 @@ function AbyssMirrorContent() {
   // Handlers
   // ========================================================================
 
-  const handleStartAnalysis = useCallback((quick = false) => {
+  const handleStartAnalysis = useCallback((quick = false, skipIfExists = false, forceRefresh = false) => {
     if (!quick && (!birthInfo.year || !birthInfo.month || !birthInfo.day)) {
       setError(labels.errorBirthDate);
       return;
@@ -459,6 +474,7 @@ function AbyssMirrorContent() {
       setIsLoadingLocal(true);
       setLoading(true);
       setError(null);
+      setPersonaSkipped(false);
 
       try {
         // Parse and validate birth_hour (0-23)
@@ -477,17 +493,39 @@ function AbyssMirrorContent() {
           gender: birthInfo.gender,
           model,
           seed_preset: seedPreset,
+          // Phase 1-1: Quick Mode parameters
+          mode: analysisMode,
+          skip_if_exists: skipIfExists,
+          force_refresh: forceRefresh,
         }, byokKey);
 
         if (response.success) {
-          setSessionId(response.session_id);
-          setPersonaData(response.persona_data);
-          setCompletionRate(response.completion_rate);
-          setMessages([{
-            role: "assistant",
-            content: response.initial_message,
-          }]);
-          setPhase("chat");
+          // Phase 1-1: Handle skipped status
+          if (response.status === "skipped") {
+            setPersonaSkipped(true);
+            setExistingPersonaData(response.persona_data);
+            setPersonaData(response.persona_data);
+            setCompletionRate(100);
+            setPhase("complete");
+            setResult(response.persona_data);
+            // Notify workflow context
+            if (chainContext) {
+              chainContext.setChainData(
+                "abyss-mirror",
+                response.persona_data,
+                labels.personaExists
+              );
+            }
+          } else {
+            setSessionId(response.session_id);
+            setPersonaData(response.persona_data);
+            setCompletionRate(response.completion_rate);
+            setMessages([{
+              role: "assistant",
+              content: response.initial_message,
+            }]);
+            setPhase("chat");
+          }
 
           if (!byokKey && creditCtx) {
             void creditCtx.refresh();
@@ -500,7 +538,7 @@ function AbyssMirrorContent() {
         setLoading(false);
       }
     });
-  }, [birthInfo, byokKey, creditCtx, model, creditCost, setLoading, startTransition, labels, workflowContext]);
+  }, [birthInfo, byokKey, creditCtx, model, creditCost, setLoading, startTransition, labels, workflowContext, analysisMode, chainContext, setResult]);
 
   const handleSendMessage = useCallback(() => {
     if (!inputMessage.trim() || isPending || !sessionId) return;
@@ -535,6 +573,8 @@ function AbyssMirrorContent() {
           chat_history: messages.map(m => ({ role: m.role, content: m.content })),
           current_stage: currentStage,
           model,
+          // Phase 1-1: Pass mode for stage progression
+          mode: analysisMode,
         }, byokKey);
 
         if (response.success) {
@@ -674,6 +714,9 @@ function AbyssMirrorContent() {
     setCompletionRate(0);
     setCurrentStage("intro");
     setError(null);
+    // Phase 1-1: Reset skip state
+    setPersonaSkipped(false);
+    setExistingPersonaData(null);
   }, []);
 
   // ========================================================================
@@ -756,6 +799,49 @@ function AbyssMirrorContent() {
             )}
           </div>
         )}
+
+        {/* Phase 1-1: Quick/Full Mode Toggle */}
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-[var(--fg-muted)] uppercase">
+            {isKo ? "분석 모드" : "Analysis Mode"}
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setAnalysisMode("quick")}
+              className={`p-3 rounded-xl border transition-all text-left ${
+                analysisMode === "quick"
+                  ? `bg-${token.themeColor}-500/20 border-${token.themeColor}-500/50`
+                  : "bg-[var(--surface-1)] border-[var(--border-subtle)] hover:bg-[var(--surface-2)]"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Timer className={`w-4 h-4 ${analysisMode === "quick" ? `text-${token.themeColor}-500` : "text-[var(--fg-muted)]"}`} />
+                <span className={`text-sm font-medium ${analysisMode === "quick" ? "text-[var(--fg-0)]" : "text-[var(--fg-muted)]"}`}>
+                  {labels.quickMode}
+                </span>
+              </div>
+              <p className="text-xs text-[var(--fg-subtle)] mt-1">{labels.quickModeDesc}</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setAnalysisMode("full")}
+              className={`p-3 rounded-xl border transition-all text-left ${
+                analysisMode === "full"
+                  ? `bg-${token.themeColor}-500/20 border-${token.themeColor}-500/50`
+                  : "bg-[var(--surface-1)] border-[var(--border-subtle)] hover:bg-[var(--surface-2)]"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Clock className={`w-4 h-4 ${analysisMode === "full" ? `text-${token.themeColor}-500` : "text-[var(--fg-muted)]"}`} />
+                <span className={`text-sm font-medium ${analysisMode === "full" ? "text-[var(--fg-0)]" : "text-[var(--fg-muted)]"}`}>
+                  {labels.fullMode}
+                </span>
+              </div>
+              <p className="text-xs text-[var(--fg-subtle)] mt-1">{labels.fullModeDesc}</p>
+            </button>
+          </div>
+        </div>
 
         {/* Resume Previous Session Banner */}
         {presets.length > 0 && presets[0].meta.completion_rate > 0 && (
@@ -1074,6 +1160,18 @@ function AbyssMirrorContent() {
         {/* Complete State */}
         {phase === "complete" && (
           <div className={`flex-shrink-0 p-6 border-t border-[var(--border-subtle)] bg-gradient-to-r from-${token.themeColor}-500/10 to-purple-500/10`}>
+            {/* Phase 1-1: Skipped persona banner */}
+            {personaSkipped && (
+              <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                  <CheckCircle className="w-4 h-4" />
+                  <span className="text-sm font-medium">{labels.personaExists}</span>
+                </div>
+                <p className="text-xs text-amber-600/70 dark:text-amber-400/70 mt-1">
+                  {labels.skippedMessage}
+                </p>
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Sparkles className={`w-6 h-6 text-${token.themeColor}-600 dark:text-${token.themeColor}-400`} />
@@ -1087,6 +1185,19 @@ function AbyssMirrorContent() {
                   <Download className="w-4 h-4" />
                   {labels.exportJson}
                 </button>
+                {/* Phase 1-1: Re-analyze button for skipped personas */}
+                {personaSkipped && (
+                  <button
+                    onClick={() => {
+                      setPersonaSkipped(false);
+                      handleStartAnalysis(false, false, true); // force_refresh=true
+                    }}
+                    className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-[var(--fg-on-emphasis)] rounded-lg flex items-center gap-2 text-sm transition-all"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    {labels.reanalyze}
+                  </button>
+                )}
                 <button
                   onClick={handleReset}
                   className={`px-4 py-2 bg-${token.themeColor}-500 hover:bg-${token.themeColor}-600 text-[var(--fg-on-emphasis)] rounded-lg flex items-center gap-2 text-sm transition-all`}

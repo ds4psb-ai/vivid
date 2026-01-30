@@ -24,6 +24,8 @@ import { UnifiedWorkflowProgress } from "./UnifiedWorkflowProgress";
 import { UnifiedStepNav } from "./UnifiedStepNav";
 import { MissingDataBanner } from "./MissingDataBanner";
 import { MobileSidebarDrawer } from "./MobileSidebarDrawer";
+import { DisclosureLevelToggle } from "./DisclosureLevelToggle";
+import { QuickGenerateButton } from "./QuickGenerateButton";
 import { WorkflowBreadcrumb, buildWorkflowBreadcrumb } from "@/components/ui/WorkflowBreadcrumb";
 import { useUnifiedWorkflow } from "./hooks/useUnifiedWorkflow";
 import { WorkflowObservabilityProvider } from "./hooks/useWorkflowObservability";
@@ -98,7 +100,7 @@ function UnifiedWorkflowShellContent({
 }: UnifiedWorkflowShellProps) {
   const config = getWorkflowConfig(appId);
   const workflow = useUnifiedWorkflow(config);
-  const { currentStepId, currentStep } = workflow;
+  const { currentStepId, currentStep, disclosureLevel, setDisclosureLevel } = workflow;
   const chain = useDimensionChainOptional();
   const searchParams = useSearchParams();
 
@@ -156,8 +158,32 @@ function UnifiedWorkflowShellContent({
           subtitle={config.subtitle}
           icon={config.icon}
           headerRight={
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
+              {/* Phase 2-1: Progressive Disclosure Toggle */}
+              <DisclosureLevelToggle
+                value={disclosureLevel}
+                onChange={setDisclosureLevel}
+                compact={false}
+                className="hidden sm:flex"
+              />
+              <DisclosureLevelToggle
+                value={disclosureLevel}
+                onChange={setDisclosureLevel}
+                compact={true}
+                className="sm:hidden"
+              />
+
+              {/* Phase 2-2: Quick Generate Button (only if pipeline feature enabled) */}
+              {config.features.pipeline && (
+                <QuickGenerateButton
+                  appId={appId}
+                  steps={config.steps}
+                  className="hidden md:flex"
+                />
+              )}
+
               {headerRight}
+
               {/* Sidebar toggle (tablet+) - only if collapsible */}
               {showChainSummary && config.sidebar.collapsible && (
                 <button
@@ -225,8 +251,8 @@ function UnifiedWorkflowShellContent({
               </div>
             )}
 
-            {/* Panel content */}
-            <div className="flex-1 overflow-auto">{children(currentStepId)}</div>
+            {/* Panel content - passes both stepId and disclosureLevel */}
+            <div className="flex-1 overflow-auto">{children(currentStepId, disclosureLevel)}</div>
 
             {/* Step Navigation */}
             <UnifiedStepNav workflow={workflow} />

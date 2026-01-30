@@ -431,11 +431,77 @@ def _validate_stage(value: str) -> str:
 # Request/Response Models
 # ============================================================================
 
+class MirrorMode(str, Enum):
+    """Mirror analysis mode."""
+    QUICK = "quick"  # 3 stages: intro → psychology → synthesis (2-3 min)
+    FULL = "full"    # 8 stages: full analysis (15 min)
+
+
+# Quick Mode stages (3 stages for 2-3 minute completion)
+QUICK_MODE_STAGES = frozenset({"intro", "psychology", "synthesis"})
+
+# Stage progression for Quick Mode
+QUICK_MODE_STAGE_ORDER = ["intro", "psychology", "synthesis"]
+QUICK_MODE_COMPLETION_RATES = {
+    "intro": 0,
+    "psychology": 40,
+    "synthesis": 80,
+    "final": 100,
+}
+
+# Full Mode stage progression
+FULL_MODE_STAGE_ORDER = [
+    "intro", "birth", "saju", "psychology",
+    "creativity", "preferences", "synthesis", "final"
+]
+FULL_MODE_COMPLETION_RATES = {
+    "intro": 0,
+    "birth": 15,
+    "saju": 25,
+    "psychology": 45,
+    "creativity": 65,
+    "preferences": 80,
+    "synthesis": 90,
+    "final": 100,
+}
+
+
+def get_next_stage(current_stage: str, mode: str = "full") -> tuple[str, float, bool]:
+    """Get the next stage based on current stage and mode.
+
+    Args:
+        current_stage: Current analysis stage
+        mode: "quick" or "full"
+
+    Returns:
+        Tuple of (next_stage, completion_rate, is_complete)
+    """
+    if mode == "quick":
+        stage_order = QUICK_MODE_STAGE_ORDER
+        completion_rates = QUICK_MODE_COMPLETION_RATES
+    else:
+        stage_order = FULL_MODE_STAGE_ORDER
+        completion_rates = FULL_MODE_COMPLETION_RATES
+
+    try:
+        current_idx = stage_order.index(current_stage)
+        if current_idx >= len(stage_order) - 1:
+            # At last stage, mark complete
+            return "final", 100.0, True
+        next_stage = stage_order[current_idx + 1]
+        return next_stage, completion_rates.get(next_stage, 0), False
+    except ValueError:
+        # Stage not found, default to first stage
+        return stage_order[0], 0, False
+
+
 class MirrorInitRequest(BaseModel):
     """심연의 거울 초기화 요청.
 
     Includes:
     - Validation for mbti, blood_type, gender
+    - Quick Mode support for 3-stage rapid analysis
+    - skip_if_exists for DB persona reuse
     """
     mbti: str = Field("", max_length=4, description="MBTI 유형 (예: INTJ)")
     blood_type: str = Field("", max_length=2, description="혈액형 (A/B/O/AB)")
@@ -446,10 +512,24 @@ class MirrorInitRequest(BaseModel):
     gender: str = Field("", max_length=10, description="성별 (M/F/Other)")
     model: str = Field("gemini-3-flash-preview", description="AI 모델")
 
+    # Phase 1-1: Quick Mode parameters
+    mode: str = Field("full", description="분석 모드 (quick: 3단계, full: 8단계)")
+    skip_if_exists: bool = Field(False, description="기존 페르소나가 있으면 스킵")
+    force_refresh: bool = Field(False, description="기존 페르소나 무시하고 재분석")
+
     # P5-3: 워크플로우 재진입 필드
     session_id: Optional[str] = Field(None, description="기존 세션 ID (재진입)")
     seed_preset: Optional[Dict[str, Any]] = Field(None, description="시드 프리셋 데이터")
     prior_outputs: Optional[List[Dict[str, Any]]] = Field(None, description="이전 출력 목록")
+
+    @field_validator("mode", mode="before")
+    @classmethod
+    def validate_mode(cls, v: str) -> str:
+        """Validate mode is quick or full."""
+        v = v.lower().strip() if v else "full"
+        if v not in ("quick", "full"):
+            return "full"
+        return v
 
     @field_validator("mbti", mode="before")
     @classmethod
@@ -482,6 +562,7 @@ class MirrorChatRequest(BaseModel):
     - XSS sanitization for user_message
     - Content size validation (max 2KB for message)
     - Enum validation for current_stage
+    - Phase 1-1: Quick Mode support
     """
     session_id: str = Field(..., min_length=1, description="세션 ID")
     user_message: str = Field(..., min_length=1, max_length=2000, description="사용자 메시지 (sanitized, max 2KB)")
@@ -489,6 +570,8 @@ class MirrorChatRequest(BaseModel):
     chat_history: List[Dict[str, str]] = Field(default_factory=list, description="대화 기록")
     current_stage: str = Field("intro", description="현재 분석 단계")
     model: str = Field("gemini-3-flash-preview", description="AI 모델")
+    # Phase 1-1: Quick Mode parameter
+    mode: str = Field("full", description="분석 모드 (quick: 3단계, full: 8단계)")
 
     @field_validator("user_message", mode="before")
     @classmethod
@@ -518,6 +601,13 @@ class MirrorInitResponse(BaseModel):
     initial_message: str
     persona_data: Dict[str, Any]
     completion_rate: float
+
+    # Phase 1-1: Quick Mode fields
+    status: str = Field("started", description="세션 상태 (started, skipped, resumed)")
+    mode: str = Field("full", description="분석 모드 (quick, full)")
+    total_stages: int = Field(8, description="총 단계 수")
+    stages: List[str] = Field(default_factory=list, description="분석 단계 목록")
+
     # 2026 RAG Protocol Fields
     trace_id: str = Field("", description="Trace ID for auditability")
     evidence_refs: List[str] = Field(
@@ -596,19 +686,88 @@ async def init_mirror(
     byok_key: Optional[str] = Depends(get_byok_key),
     db: AsyncSession = Depends(get_db),
 ) -> MirrorInitResponse:
-    """심연의 거울 분석 세션 초기화."""
+    """심연의 거울 분석 세션 초기화.
+
+    Phase 1-1 Quick Mode Support:
+    - mode="quick": 3단계 분석 (intro → psychology → synthesis, 2-3분)
+    - mode="full": 8단계 분석 (기존 전체 분석, 15분)
+    - skip_if_exists=True: 기존 페르소나가 있으면 스킵
+    """
     user_id = user.get("id", "unknown")
+    is_quick_mode = request.mode == "quick"
+
     mirror_logger.info(
         f"[MIRROR_INIT] user={user_id} mbti={request.mbti} blood={request.blood_type} "
-        f"birth={request.birth_year}-{request.birth_month:02d}-{request.birth_day:02d} gender={request.gender}"
+        f"birth={request.birth_year}-{request.birth_month:02d}-{request.birth_day:02d} "
+        f"mode={request.mode} skip_if_exists={request.skip_if_exists}"
     )
     import uuid
+    from sqlalchemy import select
     from app.services.mirror_service import (
         calculate_saju_pillars,
         calculate_ocean_from_mbti,
         validate_persona_preset,
     )
-    
+    from app.models_personalization import UserPreferenceProfile
+
+    # Phase 1-1: Check for existing persona if skip_if_exists=True
+    if request.skip_if_exists and not request.force_refresh:
+        try:
+            stmt = select(UserPreferenceProfile).where(
+                UserPreferenceProfile.user_id == user_id
+            )
+            result = await db.execute(stmt)
+            existing_profile = result.scalar_one_or_none()
+
+            if existing_profile and existing_profile.persona_memory:
+                # Existing persona found - return skipped status
+                mirror_logger.info(
+                    f"[MIRROR_SKIP] user={user_id} persona exists, skipping analysis"
+                )
+                trace_id = str(uuid.uuid4())
+
+                # Build persona_data from existing profile
+                existing_persona_data = {
+                    "persona_memory": existing_profile.persona_memory,
+                    "ocean": {
+                        "openness": existing_profile.openness,
+                        "conscientiousness": existing_profile.conscientiousness,
+                        "extraversion": existing_profile.extraversion,
+                        "agreeableness": existing_profile.agreeableness,
+                        "neuroticism": existing_profile.neuroticism,
+                    },
+                    "auteur_preferences": existing_profile.auteur_preferences or {},
+                    "dimension_affinities": existing_profile.dimension_affinities or {},
+                }
+
+                ocean_traits = OceanTraits(
+                    openness=existing_profile.openness or 0.5,
+                    conscientiousness=existing_profile.conscientiousness or 0.5,
+                    extraversion=existing_profile.extraversion or 0.5,
+                    agreeableness=existing_profile.agreeableness or 0.5,
+                    neuroticism=existing_profile.neuroticism or 0.5,
+                )
+
+                return MirrorInitResponse(
+                    success=True,
+                    session_id="",  # No session needed for skipped
+                    saju={},
+                    initial_message="기존 페르소나가 발견되었습니다. '다시 분석하기'를 눌러 재분석할 수 있습니다.",
+                    persona_data=existing_persona_data,
+                    completion_rate=100.0,
+                    status="skipped",
+                    mode=request.mode,
+                    total_stages=0,
+                    stages=[],
+                    trace_id=trace_id,
+                    evidence_refs=[f"db:user_preference_profiles:{user_id}"],
+                    profile_quality=None,
+                    ocean_traits=ocean_traits,
+                )
+        except Exception as e:
+            mirror_logger.warning(f"[MIRROR_SKIP_ERROR] user={user_id} error={e}")
+            # Continue with normal flow if DB check fails
+
     # 세션 ID 생성 (또는 재사용)
     # P5-3: 기존 세션 ID가 있으면 재사용
     session_id = request.session_id if request.session_id else str(uuid.uuid4())
@@ -642,15 +801,29 @@ async def init_mirror(
     
     # 초기 메시지 생성
     element_names = {
-        "목": "나무(木)", "화": "불(火)", "토": "흙(土)", 
+        "목": "나무(木)", "화": "불(火)", "토": "흙(土)",
         "금": "쇠(金)", "수": "물(水)"
     }
     element_desc = element_names.get(saju.get("dominant_element", ""), "")
-    
+
     mbti_intro = f"MBTI {request.mbti} 유형이시군요! " if request.mbti else ""
     blood_intro = f"혈액형 {request.blood_type}형의 특성과 " if request.blood_type else ""
-    
-    initial_message = f"""🪞 **심연의 거울에 오신 것을 환영합니다.**
+
+    # Phase 1-1: Quick Mode uses different initial message
+    if is_quick_mode:
+        initial_message = f"""🪞 **심연의 거울 - 빠른 분석 모드**
+
+{mbti_intro}{blood_intro}당신의 사주를 분석했습니다.
+
+**사주 핵심:** {element_desc} 기운
+
+3가지 핵심 질문으로 당신의 창작 DNA를 빠르게 분석합니다. (약 2-3분)
+
+**첫 번째 질문:**
+당신이 창작할 때 가장 중요하게 생각하는 가치는 무엇인가요?
+(예: 감정적 깊이, 논리적 구조, 시각적 아름다움, 새로운 시도 등)"""
+    else:
+        initial_message = f"""🪞 **심연의 거울에 오신 것을 환영합니다.**
 
 {mbti_intro}{blood_intro}당신의 사주를 분석했습니다.
 
@@ -665,7 +838,7 @@ async def init_mirror(
 이제 당신의 심층 페르소나를 탐구해볼까요? 🔮
 
 **첫 번째 질문:**
-어린 시절, 가장 몰입했던 놀이나 활동이 있다면 무엇이었나요? 
+어린 시절, 가장 몰입했던 놀이나 활동이 있다면 무엇이었나요?
 (이것은 당신의 핵심 욕구와 창작 성향을 드러냅니다)"""
 
     # 2026: Generate trace_id and evidence_refs
@@ -701,8 +874,19 @@ async def init_mirror(
         for trait_name, trait_value in ocean_dict.items():
             evidence_refs.append(f"rag:mirror:ocean:{trait_name}:{trait_value}")
 
+    # Phase 1-1: Determine stages based on mode
+    if is_quick_mode:
+        stages = QUICK_MODE_STAGE_ORDER
+        total_stages = len(stages)
+        initial_completion = 0  # Quick mode starts at 0%
+    else:
+        stages = list(ALLOWED_STAGES - {"summary", "final"})  # Exclude meta-stages
+        total_stages = 8
+        initial_completion = 25.0  # Full mode: saju complete = 25%
+
     mirror_logger.info(
         f"[MIRROR_INIT_2026] trace_id={trace_id} mbti={request.mbti} "
+        f"mode={request.mode} stages={total_stages} "
         f"ci={profile_quality.creativity_index:.1f} style={profile_quality.creative_style} "
         f"ocean={ocean_traits is not None}"
     )
@@ -713,7 +897,12 @@ async def init_mirror(
         saju=saju,
         initial_message=initial_message,
         persona_data=persona_data,
-        completion_rate=25.0,  # 사주 완료 = 25%
+        completion_rate=initial_completion,
+        # Phase 1-1: Quick Mode fields
+        status="started",
+        mode=request.mode,
+        total_stages=total_stages,
+        stages=stages,
         # 2026 Fields
         trace_id=trace_id,
         evidence_refs=evidence_refs,

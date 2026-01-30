@@ -39,7 +39,34 @@ extensions:
 
   # 심연의 거울 전용 확장
   abyss_mirror:
-    # 분석 단계
+    # Phase 1-1: Quick Mode Configuration (2-3 min, 3 stages)
+    quick_mode:
+      enabled: true
+      default: false  # Users opt-in to quick mode
+      stages:
+        - id: "intro"
+          name: "핵심 질문"
+          order: 1
+          completion_rate: 0
+          description: "창작 가치관 파악"
+
+        - id: "psychology"
+          name: "심리 분석"
+          order: 2
+          completion_rate: 40
+          description: "핵심 성향 빠른 분석"
+
+        - id: "synthesis"
+          name: "종합 분석"
+          order: 3
+          completion_rate: 80
+          description: "페르소나 DNA 자동 종합"
+
+      estimated_time_minutes: 3
+      question_count: 3
+      auto_synthesis: true  # Auto-generate persona at end
+
+    # 분석 단계 (Full Mode - 8 stages)
     stages:
       - id: "intro"
         name: "인사 단계"

@@ -116,9 +116,11 @@ export function useStoryEngineWorkflow(): StoryEngineWorkflowState {
     });
   }, [unifiedWorkflow.steps]);
 
-  // Check if can proceed to Production (system-prompt completed)
+  // Check if can proceed to Production (prompt step completed with system-prompt)
+  // Phase 1-3: prompt step now outputs both prompt and system-prompt
   const canProceedToProduction = useMemo((): boolean => {
-    return !!chainData["system-prompt"];
+    // Check either the merged prompt output or legacy system-prompt key
+    return !!chainData["system-prompt"] || !!chainData["prompt"]?.systemPrompt;
   }, [chainData]);
 
   // Navigate to Production with system-prompt data

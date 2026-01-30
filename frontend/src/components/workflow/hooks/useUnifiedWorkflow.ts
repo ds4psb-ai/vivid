@@ -11,7 +11,7 @@
  * - Single hook, multiple behaviors
  */
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useDimensionChainOptional } from "@/contexts/DimensionChainContext";
 import {
@@ -27,7 +27,43 @@ import type {
   StepState,
   StepStatus,
   UnifiedWorkflowState,
+  DisclosureLevel,
 } from "../types";
+
+/**
+ * Get localStorage key for disclosure level
+ */
+function getDisclosureStorageKey(appId: string): string {
+  return `vivid_disclosure_${appId}`;
+}
+
+/**
+ * Read disclosure level from localStorage
+ */
+function readDisclosureLevel(appId: string): DisclosureLevel {
+  if (typeof window === "undefined") return "intermediate";
+  try {
+    const stored = localStorage.getItem(getDisclosureStorageKey(appId));
+    if (stored === "basic" || stored === "intermediate" || stored === "advanced") {
+      return stored;
+    }
+  } catch {
+    // localStorage may not be available
+  }
+  return "intermediate"; // default
+}
+
+/**
+ * Write disclosure level to localStorage
+ */
+function writeDisclosureLevel(appId: string, level: DisclosureLevel): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(getDisclosureStorageKey(appId), level);
+  } catch {
+    // localStorage may not be available
+  }
+}
 
 /**
  * Unified Workflow Hook
@@ -45,6 +81,28 @@ export function useUnifiedWorkflow(config: WorkflowConfig): UnifiedWorkflowState
 
   const stepParamName = config.stepParamName || "step";
   const defaultStep = config.defaultStep || config.steps[0]?.id;
+
+  // Phase 2-1: Progressive Disclosure state with localStorage persistence
+  const [disclosureLevel, setDisclosureLevelState] = useState<DisclosureLevel>(() =>
+    readDisclosureLevel(config.id)
+  );
+
+  // Sync disclosure level with localStorage on change
+  const setDisclosureLevel = useCallback(
+    (level: DisclosureLevel) => {
+      setDisclosureLevelState(level);
+      writeDisclosureLevel(config.id, level);
+    },
+    [config.id]
+  );
+
+  // Initialize from localStorage on mount (hydration fix)
+  useEffect(() => {
+    const stored = readDisclosureLevel(config.id);
+    if (stored !== disclosureLevel) {
+      setDisclosureLevelState(stored);
+    }
+  }, [config.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Get current step from URL
   const currentStepId = useMemo((): string => {
@@ -270,5 +328,9 @@ export function useUnifiedWorkflow(config: WorkflowConfig): UnifiedWorkflowState
     // AI Inference
     canInferForStep,
     getMissingInputsForStep,
+
+    // Phase 2-1: Progressive Disclosure
+    disclosureLevel,
+    setDisclosureLevel,
   };
 }
