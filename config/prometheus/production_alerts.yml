@@ -1,0 +1,356 @@
+# Vivid Production Alert Rules
+# Prometheus alerting rules for production monitoring
+#
+# Alert severity levels:
+# - critical: Requires immediate attention, pages on-call
+# - warning: Requires attention within hours
+# - info: For tracking, no immediate action needed
+#
+# Include this file in prometheus.yml:
+#   rule_files:
+#     - /path/to/production_alerts.yml
+
+groups:
+  # =============================================================================
+  # Circuit Breaker Alerts
+  # =============================================================================
+  - name: vivid_circuit_breakers
+    rules:
+      - alert: CircuitBreakerOpen
+        expr: circuit_breaker_state{state="open"} == 1
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Circuit breaker {{ $labels.name }} is OPEN"
+          description: |
+            Circuit breaker {{ $labels.name }} has been open for more than 1 minute.
+            Service {{ $labels.service }} is experiencing failures.
+            Last failure: {{ $labels.last_failure }}
+          runbook_url: "https://docs.crebit.app/runbooks/circuit-breaker-open"
+
+      - alert: CircuitBreakerHalfOpen
+        expr: circuit_breaker_state{state="half_open"} == 1
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Circuit breaker {{ $labels.name }} is HALF-OPEN"
+          description: |
+            Circuit breaker {{ $labels.name }} is testing recovery.
+            If it doesn't close within 10 minutes, investigate the underlying service.
+
+      - alert: CircuitBreakerHighFailureRate
+        expr: |
+          rate(circuit_breaker_failures_total[5m]) /
+          rate(circuit_breaker_calls_total[5m]) > 0.3
+        for: 2m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "High failure rate on circuit {{ $labels.name }}"
+          description: "Circuit {{ $labels.name }} has >30% failure rate"
+
+  # =============================================================================
+  # Error Rate Alerts
+  # =============================================================================
+  - name: vivid_error_rates
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m])) /
+          sum(rate(http_requests_total[5m])) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "High error rate (>5%)"
+          description: |
+            Server error rate is {{ $value | humanizePercentage }}.
+            Investigate application logs for root cause.
+          runbook_url: "https://docs.crebit.app/runbooks/high-error-rate"
+
+      - alert: VeryHighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m])) /
+          sum(rate(http_requests_total[5m])) > 0.1
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+          page: "true"
+        annotations:
+          summary: "CRITICAL: Error rate >10%"
+          description: |
+            Server error rate is {{ $value | humanizePercentage }}.
+            Immediate investigation required.
+
+      - alert: EndpointHighErrorRate
+        expr: |
+          sum by (path) (rate(http_requests_total{status=~"5.."}[5m])) /
+          sum by (path) (rate(http_requests_total[5m])) > 0.1
+        for: 3m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "High error rate on endpoint {{ $labels.path }}"
+          description: "Endpoint {{ $labels.path }} has {{ $value | humanizePercentage }} error rate"
+
+  # =============================================================================
+  # Latency Alerts
+  # =============================================================================
+  - name: vivid_latency
+    rules:
+      - alert: HighLatencyP99
+        expr: |
+          histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "High P99 latency (>5s)"
+          description: "P99 latency is {{ $value | humanizeDuration }}"
+
+      - alert: HighLatencyP50
+        expr: |
+          histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "High P50 latency (>2s)"
+          description: "Median latency is {{ $value | humanizeDuration }}"
+
+      - alert: SlowEndpoint
+        expr: |
+          histogram_quantile(0.95, sum by (path) (rate(http_request_duration_seconds_bucket[5m]))) > 10
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Slow endpoint {{ $labels.path }}"
+          description: "P95 latency for {{ $labels.path }} is {{ $value | humanizeDuration }}"
+
+  # =============================================================================
+  # Credit System Alerts
+  # =============================================================================
+  - name: vivid_credits
+    rules:
+      - alert: CreditDeductionFailures
+        expr: rate(credit_deduction_failures_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Credit deduction failures detected"
+          description: |
+            Credit deductions are failing at {{ $value }} failures/sec.
+            This may indicate database issues or logic errors.
+            Users may be getting free executions!
+          runbook_url: "https://docs.crebit.app/runbooks/credit-failures"
+
+      - alert: HighRefundRate
+        expr: |
+          rate(credit_refunds_total[1h]) /
+          rate(credit_deductions_total[1h]) > 0.1
+        for: 15m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "High credit refund rate (>10%)"
+          description: "Refund rate is {{ $value | humanizePercentage }}. Check for execution failures."
+
+      - alert: CreditBalanceAnomaly
+        expr: |
+          abs(delta(credit_balance_total[1h])) > 10000
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Unusual credit balance change"
+          description: "Credit balance changed by {{ $value }} in 1 hour"
+
+  # =============================================================================
+  # RAG System Alerts
+  # =============================================================================
+  - name: vivid_rag
+    rules:
+      - alert: RAGLowQualityScore
+        expr: avg(rag_quality_score) < 0.6
+        for: 15m
+        labels:
+          severity: warning
+          team: ml
+        annotations:
+          summary: "RAG quality score dropped below 0.6"
+          description: "Average RAG quality score is {{ $value }}. Review RAG pipeline."
+
+      - alert: NotebookLMCircuitOpen
+        expr: circuit_breaker_state{name="notebooklm", state="open"} == 1
+        for: 1m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "NotebookLM circuit breaker is OPEN"
+          description: "NotebookLM queries are failing. Check browser automation."
+
+      - alert: QdrantCircuitOpen
+        expr: circuit_breaker_state{name="qdrant", state="open"} == 1
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Qdrant circuit breaker is OPEN"
+          description: "Vector search is unavailable. Check Qdrant cluster."
+
+  # =============================================================================
+  # Video Generation Alerts
+  # =============================================================================
+  - name: vivid_video
+    rules:
+      - alert: VeoCircuitOpen
+        expr: circuit_breaker_state{name="veo", state="open"} == 1
+        for: 2m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Veo circuit breaker is OPEN"
+          description: "Veo video generation is unavailable."
+
+      - alert: HighVideoGenerationFailures
+        expr: |
+          rate(video_generation_failures_total[15m]) /
+          rate(video_generation_attempts_total[15m]) > 0.2
+        for: 10m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "High video generation failure rate"
+          description: "{{ $value | humanizePercentage }} of video generations are failing"
+
+      - alert: VideoGenerationQueueBacklog
+        expr: video_generation_queue_size > 100
+        for: 10m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Video generation queue backlog"
+          description: "{{ $value }} jobs waiting in queue"
+
+  # =============================================================================
+  # Infrastructure Alerts
+  # =============================================================================
+  - name: vivid_infrastructure
+    rules:
+      - alert: HighMemoryUsage
+        expr: |
+          (process_resident_memory_bytes / 1024 / 1024 / 1024) > 2
+        for: 10m
+        labels:
+          severity: warning
+          team: infra
+        annotations:
+          summary: "High memory usage (>2GB)"
+          description: "Process is using {{ $value | humanize }}GB of memory"
+
+      - alert: HighCPUUsage
+        expr: |
+          rate(process_cpu_seconds_total[5m]) * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+          team: infra
+        annotations:
+          summary: "High CPU usage (>80%)"
+          description: "CPU usage is {{ $value | humanize }}%"
+
+      - alert: DatabaseConnectionPoolExhausted
+        expr: sqlalchemy_pool_overflow > 0
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Database connection pool overflow"
+          description: "Connection pool is exhausted, check for connection leaks"
+
+      - alert: RedisConnectionFailure
+        expr: redis_connection_failures_total > 0
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Redis connection failures"
+          description: "Unable to connect to Redis. Check Redis server status."
+
+  # =============================================================================
+  # Timeout Alerts
+  # =============================================================================
+  - name: vivid_timeouts
+    rules:
+      - alert: HighTimeoutRate
+        expr: |
+          rate(http_requests_total{status="504"}[5m]) /
+          rate(http_requests_total[5m]) > 0.02
+        for: 3m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "High timeout rate (>2%)"
+          description: "{{ $value | humanizePercentage }} of requests are timing out"
+
+      - alert: EndpointTimeouts
+        expr: |
+          sum by (path) (rate(http_requests_total{status="504"}[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Timeouts on endpoint {{ $labels.path }}"
+          description: "{{ $labels.path }} is experiencing timeouts"
+
+  # =============================================================================
+  # Rate Limiting Alerts
+  # =============================================================================
+  - name: vivid_rate_limits
+    rules:
+      - alert: HighRateLimitHits
+        expr: |
+          sum(rate(rate_limit_hits_total[5m])) > 10
+        for: 5m
+        labels:
+          severity: info
+          team: backend
+        annotations:
+          summary: "High rate limit hit rate"
+          description: "Users are hitting rate limits frequently. Consider adjustment."
+
+      - alert: PotentialDDoS
+        expr: |
+          sum by (client_ip) (rate(http_requests_total[1m])) > 100
+        for: 2m
+        labels:
+          severity: critical
+          team: security
+        annotations:
+          summary: "Potential DDoS from {{ $labels.client_ip }}"
+          description: "{{ $labels.client_ip }} is making >100 requests/min"

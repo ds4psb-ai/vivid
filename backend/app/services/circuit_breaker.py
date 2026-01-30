@@ -112,17 +112,49 @@ class CircuitBreaker:
         old_state = self._state.state
         self._state.state = new_state
         self._state.last_state_change = time.time()
-        
+
         if new_state == CircuitState.HALF_OPEN:
             self._state.half_open_calls = 0
             self._state.success_count = 0
         elif new_state == CircuitState.CLOSED:
             self._state.failure_count = 0
             self._state.success_count = 0
-        
+
         logger.warning(
             f"⚡ Circuit '{self.name}' state: {old_state.value} → {new_state.value}"
         )
+
+        # Send alert for state transitions (non-blocking)
+        self._send_transition_alert(old_state, new_state)
+
+    def _send_transition_alert(self, old_state: CircuitState, new_state: CircuitState):
+        """Send alert for circuit state transition (fire-and-forget)."""
+        try:
+            import asyncio
+            from app.services.alert_manager import get_alert_manager
+
+            alert_mgr = get_alert_manager()
+
+            if new_state == CircuitState.OPEN:
+                # Create task but don't await (fire-and-forget)
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    asyncio.create_task(
+                        alert_mgr.circuit_breaker_open(
+                            self.name,
+                            f"Failure threshold ({self.config.failure_threshold}) exceeded",
+                            self.config.timeout_seconds,
+                        )
+                    )
+            elif new_state == CircuitState.HALF_OPEN:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    asyncio.create_task(
+                        alert_mgr.circuit_breaker_half_open(self.name)
+                    )
+        except Exception as e:
+            # Don't let alert failures affect circuit breaker operation
+            logger.debug(f"Failed to send circuit breaker alert: {e}")
     
     def check_state(self):
         """
@@ -323,3 +355,55 @@ def get_circuit_health() -> Dict[str, Any]:
         "open_circuits": open_circuits,
         "circuits": all_status,
     }
+
+
+# =============================================================================
+# Circuit Breaker with Fallback Integration
+# =============================================================================
+
+async def call_with_circuit_fallback(
+    operation: Callable,
+    breaker: "CircuitBreaker",
+    fallback_provider: str,
+    params: Optional[Dict[str, Any]] = None,
+    *args,
+    **kwargs,
+) -> Any:
+    """
+    Execute operation with circuit breaker and automatic fallback.
+
+    This is the recommended way to call external services with resilience.
+
+    Args:
+        operation: Async callable to execute
+        breaker: CircuitBreaker instance
+        fallback_provider: Provider name for fallback (gemini, rag, veo, etc.)
+        params: Parameters for cache key generation
+        *args, **kwargs: Arguments to pass to operation
+
+    Returns:
+        Operation result or FallbackResponse
+
+    Example:
+        result = await call_with_circuit_fallback(
+            call_gemini_api,
+            breaker=GEMINI_BREAKER,
+            fallback_provider="gemini",
+            params={"prompt": prompt},
+            prompt=prompt,
+        )
+    """
+    from app.services.fallback_strategies import (
+        call_with_fallback,
+        get_fallback_manager,
+    )
+
+    return await call_with_fallback(
+        operation=operation,
+        provider=fallback_provider,
+        params=params,
+        breaker=breaker,
+        fallback_manager=get_fallback_manager(),
+        *args,
+        **kwargs,
+    )

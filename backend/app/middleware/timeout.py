@@ -23,39 +23,23 @@ logger = logging.getLogger(__name__)
 
 
 # =============================================================================
-# Configuration
+# Configuration (delegated to centralized timeout config)
 # =============================================================================
+
+from app.core.timeouts import TimeoutConfig
 
 # Default timeout in seconds
 DEFAULT_TIMEOUT = 30.0
 
-# Route-specific timeouts (regex pattern -> timeout in seconds)
-# Longer timeouts for LLM/video generation endpoints
-ROUTE_TIMEOUTS: List[Tuple[str, float]] = [
-    # Video generation - very slow operations
-    (r"^/api/v1/production/", 300.0),  # 5 minutes for video generation
-    (r"^/api/dimension/veo", 300.0),   # 5 minutes for Veo
-
-    # LLM operations - can be slow
-    (r"^/api/dimension/", 120.0),      # 2 minutes for dimension apps
-    (r"^/api/v1/agent/", 120.0),       # 2 minutes for agent chat
-
-    # RAG operations
-    (r"^/api/v1/rag/", 60.0),          # 1 minute for RAG queries
-
-    # Batch operations
-    (r"^/api/v1/batch/", 600.0),       # 10 minutes for batch jobs
-
-    # Standard API operations
-    (r"^/api/", 30.0),                 # 30 seconds for general API
-
-    # Health checks - should be fast
-    (r"^/health", 5.0),                # 5 seconds for health checks
-]
+# Route-specific timeouts from centralized config
+# This ensures consistency across the application
+ROUTE_TIMEOUTS: List[Tuple[str, float]] = TimeoutConfig.get_route_timeout_list()
 
 
 def get_timeout_for_path(path: str) -> float:
     """Get timeout for a given request path.
+
+    Uses centralized TimeoutConfig for consistency.
 
     Args:
         path: Request URL path
@@ -63,10 +47,7 @@ def get_timeout_for_path(path: str) -> float:
     Returns:
         Timeout in seconds
     """
-    for pattern, timeout in ROUTE_TIMEOUTS:
-        if re.match(pattern, path):
-            return timeout
-    return DEFAULT_TIMEOUT
+    return TimeoutConfig.get_for_route(path)
 
 
 # =============================================================================

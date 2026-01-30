@@ -6,10 +6,19 @@ for generating storyboards and shot contracts using Gemini 3.0 Pro.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import time
 from typing import Any, Dict, List, Optional, Tuple
+
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential_jitter,
+    retry_if_exception_type,
+    before_sleep_log,
+)
 
 from app.config import settings
 from app.services.genai_utils import (
@@ -158,78 +167,93 @@ def _get_video_model():
     return _get_model(use_video=True)
 
 
-def _call_with_retry(
+def _make_gemini_call(
     prompt: str,
     system_instruction: str,
-    max_retries: int = 3,
-    initial_delay: float = 1.0,
 ) -> Tuple[Dict[str, Any], Dict[str, int]]:
-    """Call Gemini API with exponential backoff retry.
-    
+    """Make a single Gemini API call (no retry, for use with tenacity).
+
     Args:
         prompt: User prompt
         system_instruction: System instruction for the model
-        max_retries: Maximum retry attempts
-        initial_delay: Initial delay in seconds
-        
+
     Returns:
         Tuple of (parsed_response, token_usage)
     """
-    model = _get_model()
-    delay = initial_delay
-    last_error = None
-    
-    for attempt in range(max_retries):
-        try:
-            start_time = time.time()
-            
-            client = _get_client()
-            response = client.models.generate_content(
-                model=settings.GEMINI_MODEL,
-                contents=prompt,
-                config=build_generate_config(
-                    {
-                        "temperature": 0.7,
-                        "top_p": 0.95,
-                        "top_k": 40,
-                        "max_output_tokens": 8192,
-                        "response_mime_type": "application/json",
-                    },
-                    system_instruction=system_instruction,
-                ),
-            )
-            elapsed = time.time() - start_time
-            
-            # Parse JSON response
-            text = response.text.strip()
-            parsed = json.loads(text)
-            
-            # Extract token usage
-            usage = {
-                "input": getattr(response.usage_metadata, 'prompt_token_count', 0) if hasattr(response, 'usage_metadata') else 0,
-                "output": getattr(
-                    response.usage_metadata,
-                    'response_token_count',
-                    getattr(response.usage_metadata, 'candidates_token_count', 0),
-                ) if hasattr(response, 'usage_metadata') else 0,
-            }
-            usage["total"] = usage["input"] + usage["output"]
-            
-            logger.info(f"Gemini call completed in {elapsed:.2f}s, tokens: {usage['total']}")
-            return parsed, usage
-            
-        except json.JSONDecodeError as e:
-            logger.warning(f"Gemini returned invalid JSON (attempt {attempt + 1}): {e}")
-            last_error = e
-        except Exception as e:
-            logger.warning(f"Gemini API error (attempt {attempt + 1}): {e}")
-            last_error = e
-        
-        if attempt < max_retries - 1:
-            time.sleep(delay)
-            delay *= 2
-    
-    raise GeminiGenerationError(f"Gemini API failed after {max_retries} attempts: {last_error}")
+    start_time = time.time()
+
+    client = _get_client()
+    response = client.models.generate_content(
+        model=settings.GEMINI_MODEL,
+        contents=prompt,
+        config=build_generate_config(
+            {
+                "temperature": 0.7,
+                "top_p": 0.95,
+                "top_k": 40,
+                "max_output_tokens": 8192,
+                "response_mime_type": "application/json",
+            },
+            system_instruction=system_instruction,
+        ),
+    )
+    elapsed = time.time() - start_time
+
+    # Parse JSON response
+    text = response.text.strip()
+    parsed = json.loads(text)
+
+    # Extract token usage
+    usage = {
+        "input": getattr(response.usage_metadata, 'prompt_token_count', 0) if hasattr(response, 'usage_metadata') else 0,
+        "output": getattr(
+            response.usage_metadata,
+            'response_token_count',
+            getattr(response.usage_metadata, 'candidates_token_count', 0),
+        ) if hasattr(response, 'usage_metadata') else 0,
+    }
+    usage["total"] = usage["input"] + usage["output"]
+
+    logger.info(f"Gemini call completed in {elapsed:.2f}s, tokens: {usage['total']}")
+    return parsed, usage
+
+
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential_jitter(initial=1.0, max=10.0, jitter=2.0),
+    retry=retry_if_exception_type((ConnectionError, TimeoutError, json.JSONDecodeError)),
+    before_sleep=before_sleep_log(logger, logging.WARNING),
+    reraise=True,
+)
+def _call_with_retry(
+    prompt: str,
+    system_instruction: str,
+    max_retries: int = 3,  # Kept for API compatibility, tenacity handles retries
+    initial_delay: float = 1.0,  # Kept for API compatibility
+) -> Tuple[Dict[str, Any], Dict[str, int]]:
+    """Call Gemini API with exponential backoff retry using tenacity.
+
+    Uses tenacity for standardized retry logic with:
+    - 3 retry attempts
+    - Exponential backoff (1s -> 2s -> 4s) with jitter
+    - Retries on ConnectionError, TimeoutError, JSONDecodeError
+
+    Args:
+        prompt: User prompt
+        system_instruction: System instruction for the model
+        max_retries: Deprecated - kept for API compatibility
+        initial_delay: Deprecated - kept for API compatibility
+
+    Returns:
+        Tuple of (parsed_response, token_usage)
+
+    Raises:
+        GeminiGenerationError: If all retries fail
+    """
+    try:
+        return _make_gemini_call(prompt, system_instruction)
+    except Exception as e:
+        raise GeminiGenerationError(f"Gemini API failed: {e}") from e
 
 
 # ─────────────────────────────────────────────────────────────────────────────
