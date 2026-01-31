@@ -718,14 +718,32 @@ function VeoVideoContent() {
             </p>
           </div>
 
-          {/* Negative Prompt */}
-          <DimensionPanel.Textarea
-            label={labels.negativePromptLabel}
-            value={negativePrompt}
-            onChange={(e) => setNegativePrompt(e.target.value)}
-            placeholder={labels.negativePromptPlaceholder}
-            rows={3}
-          />
+          {/* Advanced Options Toggle */}
+          <button
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="w-full py-2 text-xs text-slate-500 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300 transition-colors flex items-center justify-center gap-1"
+          >
+            <span>{isKo ? (showAdvanced ? "고급 옵션 숨기기" : "고급 옵션 표시") : (showAdvanced ? "Hide Advanced Options" : "Show Advanced Options")}</span>
+            <svg
+              className={`w-3 h-3 transition-transform ${showAdvanced ? "rotate-180" : ""}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {/* Negative Prompt - Advanced */}
+          {showAdvanced && (
+            <DimensionPanel.Textarea
+              label={labels.negativePromptLabel}
+              value={negativePrompt}
+              onChange={(e) => setNegativePrompt(e.target.value)}
+              placeholder={labels.negativePromptPlaceholder}
+              rows={3}
+            />
+          )}
 
           {/* Aspect Ratio & Duration */}
           <div className="grid grid-cols-2 gap-3">
@@ -789,36 +807,38 @@ function VeoVideoContent() {
             </p>
           </div>
 
-          {/* Seed Control */}
-          <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-white/5 mt-2">
-            <div className="flex items-center justify-between">
-              <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">{labels.seedLabel}</label>
-              <button
-                onClick={() => setUseRandomSeed(!useRandomSeed)}
-                className={`relative w-10 h-5 rounded-full transition-all ${
-                  useRandomSeed ? `bg-${token.themeColor}-500` : "bg-slate-200 dark:bg-white/10"
-                }`}
-              >
-                <span
-                  className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${
-                    useRandomSeed ? "left-5" : "left-0.5"
+          {/* Seed Control - Advanced */}
+          {showAdvanced && (
+            <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-white/5 mt-2">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">{labels.seedLabel}</label>
+                <button
+                  onClick={() => setUseRandomSeed(!useRandomSeed)}
+                  className={`relative w-10 h-5 rounded-full transition-all ${
+                    useRandomSeed ? `bg-${token.themeColor}-500` : "bg-slate-200 dark:bg-white/10"
                   }`}
+                >
+                  <span
+                    className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${
+                      useRandomSeed ? "left-5" : "left-0.5"
+                    }`}
+                  />
+                </button>
+              </div>
+              {!useRandomSeed && (
+                <input
+                  type="number"
+                  value={seed ?? ""}
+                  onChange={(e) => setSeed(e.target.value ? parseInt(e.target.value) : undefined)}
+                  placeholder={labels.seedPlaceholder}
+                  className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400/50 text-sm font-mono"
                 />
-              </button>
+              )}
+              <p className="text-[10px] text-slate-500 dark:text-zinc-600">
+                {useRandomSeed ? labels.seedRandomDesc : labels.seedFixedDesc}
+              </p>
             </div>
-            {!useRandomSeed && (
-              <input
-                type="number"
-                value={seed ?? ""}
-                onChange={(e) => setSeed(e.target.value ? parseInt(e.target.value) : undefined)}
-                placeholder={labels.seedPlaceholder}
-                className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400/50 text-sm font-mono"
-              />
-            )}
-            <p className="text-[10px] text-slate-500 dark:text-zinc-600">
-              {useRandomSeed ? labels.seedRandomDesc : labels.seedFixedDesc}
-            </p>
-          </div>
+          )}
 
           {/* Credit Cost Info */}
           <div className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-${token.themeColor}-500/5 border border-${token.themeColor}-500/10`}>
