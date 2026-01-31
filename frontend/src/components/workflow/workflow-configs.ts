@@ -276,7 +276,7 @@ export const WORKFLOW_CONFIGS: Record<MegaAppId, WorkflowConfig> = {
       showTimer: true,
     },
     stepParamName: "step",
-    defaultStep: "vpe",
+    defaultStep: "analysis",
   },
   "story-engine": {
     id: "story-engine",

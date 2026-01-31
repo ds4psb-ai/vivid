@@ -48,10 +48,9 @@ import { DNALabStepPanel, DNALabRunPipelineButton, DNALabOnboarding, type DNALab
 import AppShell from "@/components/AppShell";
 
 // Import existing panels
-import AestheticDirectorPanel from "@/components/dimension/AestheticDirectorPanel";
 import AbyssMirrorPanel from "@/components/dimension/AbyssMirrorPanel";
 import QualityDirectorPanel from "@/components/dimension/QualityDirectorPanel";
-import VPEPanel from "@/components/dimension/VPEPanel";
+import UnifiedAnalysisPanel from "@/components/dimension/UnifiedAnalysisPanel";
 
 export default function DNALabPage() {
   return (
@@ -300,12 +299,12 @@ function StepContent({ stepId, ipSlug, disclosureLevel = "intermediate" }: StepC
   // Step-specific content with IP-aware MissingDataBanner
   const renderStepContent = () => {
     // Show MissingDataBanner with suggested defaults if data is missing
-    const showMissingBanner = hasMissingData && stepId !== "vpe"; // VPE is start step
+    const showMissingBanner = hasMissingData && stepId !== "analysis"; // analysis is start step
 
     switch (stepId) {
-      case "vpe":
+      case "analysis":
         return (
-          <DNALabStepPanel stepId="vpe" showInputBanner={false}>
+          <DNALabStepPanel stepId="analysis" showInputBanner={false}>
             <div className="p-4">
               {/* IP info header when connected */}
               {ipData && (
@@ -314,27 +313,8 @@ function StepContent({ stepId, ipSlug, disclosureLevel = "intermediate" }: StepC
                   sessionRestored={sessionRestored}
                 />
               )}
-              <VPEPanel />
+              <UnifiedAnalysisPanel disclosureLevel={disclosureLevel} />
             </div>
-          </DNALabStepPanel>
-        );
-
-      case "ad":
-        return (
-          <DNALabStepPanel stepId="ad">
-            {showMissingBanner && (
-              <div className="mb-4">
-                <MissingDataBanner
-                  missingKeys={missingKeys}
-                  onGoToSource={goToSource}
-                  suggestedDefaults={ipDefaults}
-                  onApplySuggestion={applySuggestion}
-                  onDismissSuggestion={handleDismissSuggestion}
-                  variant="info"
-                />
-              </div>
-            )}
-            <AestheticDirectorPanel />
           </DNALabStepPanel>
         );
 
@@ -377,10 +357,19 @@ function StepContent({ stepId, ipSlug, disclosureLevel = "intermediate" }: StepC
         );
 
       default:
+        // Fallback to analysis for unknown steps
         return (
-          <div className="p-8 text-center text-white/40">
-            Unknown step: {stepId}
-          </div>
+          <DNALabStepPanel stepId="analysis" showInputBanner={false}>
+            <div className="p-4">
+              {ipData && (
+                <IPContextHeader
+                  ipData={ipData}
+                  sessionRestored={sessionRestored}
+                />
+              )}
+              <UnifiedAnalysisPanel disclosureLevel={disclosureLevel} />
+            </div>
+          </DNALabStepPanel>
         );
     }
   };
@@ -425,15 +414,14 @@ function IPContextHeader({
 
 /**
  * Get required chain data keys for each step
+ * Phase 1-2: Updated for merged analysis step
  */
 function getRequiredKeysForStep(stepId: DNALabStepId): string[] {
   switch (stepId) {
-    case "vpe":
-      return []; // VPE is the starting step, no requirements
-    case "ad":
-      return ["vpe"]; // AD requires VPE output
+    case "analysis":
+      return []; // Analysis (VPE+AD merged) is the starting step, no requirements
     case "mirror":
-      return ["vpe", "ad"]; // Mirror requires VPE + AD
+      return ["vpe", "ad"]; // Mirror requires analysis outputs (vpe + ad)
     case "qc":
       return ["vpe", "ad", "mirror"]; // QC requires all previous
     default:

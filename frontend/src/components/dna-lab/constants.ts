@@ -8,12 +8,13 @@
  * - Parallel preview capability
  */
 
-import { Video, Palette, Brain, CheckCircle, type LucideIcon } from "lucide-react";
+import { Video, Brain, CheckCircle, type LucideIcon } from "lucide-react";
 
 /**
  * Step IDs for DNA Lab workflow
+ * Phase 1-2: VPE + AD merged into "analysis"
  */
-export type DNALabStepId = "vpe" | "ad" | "mirror" | "qc";
+export type DNALabStepId = "analysis" | "mirror" | "qc";
 
 /**
  * Step configuration for DNA Lab workflow
@@ -40,27 +41,20 @@ export interface DNALabStep {
 /**
  * DNA Lab workflow steps
  * Order represents logical flow, but access is non-sequential
+ *
+ * Phase 1-2: VPE + AD merged into "analysis" step
+ * - 4 steps → 3 steps (Analysis, Mirror, QC)
  */
 export const DNA_LAB_STEPS: DNALabStep[] = [
   {
-    id: "vpe",
-    label: "영상 분석",
-    labelEn: "Video Parsing",
+    id: "analysis",
+    label: "통합 분석",
+    labelEn: "Unified Analysis",
     icon: Video,
-    description: "Logic Vector 추출",
-    outputKey: "logicVector",
-    dimensionKey: "vpe",
+    description: "영상 분석 + 미학 적용",
+    outputKey: "analysis",
+    dimensionKey: "analysis",
     canInferInput: false, // Entry point, needs user input
-  },
-  {
-    id: "ad",
-    label: "미학 적용",
-    labelEn: "Aesthetic Director",
-    icon: Palette,
-    description: "거장 스타일 적용",
-    outputKey: "aestheticGuidelines",
-    dimensionKey: "aesthetic-director",
-    canInferInput: true, // Can work with auteur hint alone
   },
   {
     id: "mirror",
@@ -99,21 +93,23 @@ export const DNA_LAB_STEPS_MAP: Record<DNALabStepId, DNALabStep> = DNA_LAB_STEPS
  * 2026 Enhancement: Non-sequential access
  * - Steps can be accessed directly without completing dependencies
  * - Missing data triggers AI inference suggestions
+ *
+ * Phase 1-2: Updated for merged analysis step
  */
 export const DNA_LAB_INPUT_MAP: Record<DNALabStepId, DNALabStepId[]> = {
-  vpe: [], // Entry point
-  ad: ["vpe"], // Uses Logic Vector from VPE
-  mirror: ["vpe", "ad"], // Uses Logic Vector + Aesthetic Guidelines
-  qc: ["vpe", "ad", "mirror"], // Uses all previous outputs
+  analysis: [], // Entry point (VPE + AD merged)
+  mirror: ["analysis"], // Uses Analysis output (Logic Vector + Aesthetic Guidelines)
+  qc: ["analysis", "mirror"], // Uses all previous outputs
 };
 
 /**
  * Output dependency map (reverse of input)
  * Which steps consume this step's output
+ *
+ * Phase 1-2: Updated for merged analysis step
  */
 export const DNA_LAB_OUTPUT_MAP: Record<DNALabStepId, DNALabStepId[]> = {
-  vpe: ["ad", "mirror", "qc"], // VPE output flows to all
-  ad: ["mirror", "qc"], // AD output flows to Mirror and QC
+  analysis: ["mirror", "qc"], // Analysis output flows to Mirror and QC
   mirror: ["qc"], // Mirror output flows to QC
   qc: [], // Final step, no downstream
 };
@@ -125,17 +121,15 @@ export type StepStatus = "pending" | "active" | "completed" | "skipped";
 
 /**
  * Chain data output structure for each step
+ * Phase 1-2: Updated for merged analysis step
  */
 export interface DNALabChainOutput {
-  vpe?: {
+  analysis?: {
     logicVector: Record<string, unknown>;
-    videoUrl?: string;
-    analysisTimestamp: number;
-  };
-  ad?: {
     aestheticGuidelines: Record<string, unknown>;
+    videoUrl?: string;
     auteurKey?: string;
-    moodboard?: unknown[];
+    analysisTimestamp: number;
   };
   mirror?: {
     personaDNA: Record<string, unknown>;
@@ -161,10 +155,10 @@ export const DNA_LAB_THEME = {
 
 /**
  * Step theme colors (for visual distinction)
+ * Phase 1-2: Updated for merged analysis step
  */
 export const DNA_LAB_STEP_THEMES: Record<DNALabStepId, { hue: number; color: string }> = {
-  vpe: { hue: 200, color: "oklch(0.7 0.15 200)" }, // Blue
-  ad: { hue: 45, color: "oklch(0.7 0.15 45)" }, // Amber
+  analysis: { hue: 200, color: "oklch(0.7 0.15 200)" }, // Blue
   mirror: { hue: 280, color: "oklch(0.7 0.15 280)" }, // Purple
   qc: { hue: 148, color: "oklch(0.7 0.15 148)" }, // Green
 };
@@ -176,8 +170,9 @@ export const DNA_LAB_STEP_PARAM = "step";
 
 /**
  * Default step when no parameter provided
+ * Phase 1-2: Changed to analysis (merged VPE + AD)
  */
-export const DNA_LAB_DEFAULT_STEP: DNALabStepId = "vpe";
+export const DNA_LAB_DEFAULT_STEP: DNALabStepId = "analysis";
 
 /**
  * Get step by ID with type safety

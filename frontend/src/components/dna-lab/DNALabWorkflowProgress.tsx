@@ -18,10 +18,13 @@ import { useDNALabWorkflow, type StepState } from "./hooks/useDNALabWorkflow";
 import { DNA_LAB_STEPS, DNA_LAB_STEP_THEMES, type DNALabStepId } from "./constants";
 import type { StepExecutionStatus, PipelineStepId } from "./hooks/useDNALabPipeline";
 
-/** Map pipeline step IDs to DNA Lab step IDs */
+/**
+ * Map pipeline step IDs to DNA Lab step IDs
+ * Phase 1-2: VPE and AD pipeline steps map to merged "analysis" step
+ */
 const PIPELINE_TO_STEP_MAP: Record<PipelineStepId, DNALabStepId> = {
-  vpe: "vpe",
-  ad: "ad",
+  vpe: "analysis",
+  ad: "analysis",
   mirror: "mirror",
   qc: "qc",
 };

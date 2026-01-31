@@ -178,15 +178,16 @@ function VeoVideoContent() {
   // Form state
   const [prompt, setPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("");
-  const [aspectRatio, setAspectRatio] = useState("16:9");
+  const [aspectRatio, setAspectRatio] = useState("9:16"); // Default: 숏폼 최적화
   const [duration, setDuration] = useState("8");
   const [style, setStyle] = useState("cinematic");
-  const [veoModel, setVeoModel] = useState("veo-3.1-generate-preview"); // Default: Quality mode
+  const [veoModel, setVeoModel] = useState("veo-3.1-fast-generate-preview"); // Default: Fast mode (50% 저렴)
   const [seed, setSeed] = useState<number | undefined>(undefined);
   const [useRandomSeed, setUseRandomSeed] = useState(true);
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [videoResult, setVideoResult] = useState<VideoResult | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false); // 고급 옵션 토글
 
   // File upload state (2026 Best Practice: Multimodal input)
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -674,9 +675,48 @@ function VeoVideoContent() {
             maxSizeMB={100}
             multiple
             onUpload={setUploadedFiles}
-            label={labels.referenceLabel}
+            label={isKo ? "💡 캐릭터 일관성: 참고 이미지 추가 (선택)" : "💡 Character Consistency: Add Reference Images (Optional)"}
             helperText={labels.referenceHelper}
           />
+
+          {/* Quick Presets */}
+          <div className="space-y-2 mb-4">
+            <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">
+              {isKo ? "빠른 시작" : "Quick Start"}
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {/* Shorts Preset */}
+              <button
+                onClick={() => {
+                  setAspectRatio("9:16");
+                  setDuration("8");
+                  setVeoModel("veo-3.1-fast-generate-preview");
+                  setStyle("cinematic");
+                }}
+                className="px-3 py-2.5 rounded-lg text-xs font-medium bg-violet-100 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-200 dark:hover:bg-violet-500/20 transition-colors flex items-center justify-center gap-1.5"
+              >
+                <span>📱</span>
+                <span>{isKo ? "숏폼 (9:16)" : "Shorts (9:16)"}</span>
+              </button>
+
+              {/* Cinematic Preset */}
+              <button
+                onClick={() => {
+                  setAspectRatio("16:9");
+                  setDuration("8");
+                  setVeoModel("veo-3.1-generate-preview");
+                  setStyle("cinematic");
+                }}
+                className="px-3 py-2.5 rounded-lg text-xs font-medium bg-amber-100 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-500/20 transition-colors flex items-center justify-center gap-1.5"
+              >
+                <span>🎬</span>
+                <span>{isKo ? "시네마틱 (16:9)" : "Cinematic (16:9)"}</span>
+              </button>
+            </div>
+            <p className="text-[10px] text-slate-500 dark:text-zinc-600 text-center">
+              {isKo ? "자주 쓰는 설정을 한 번에 적용" : "Apply common settings in one click"}
+            </p>
+          </div>
 
           {/* Negative Prompt */}
           <DimensionPanel.Textarea

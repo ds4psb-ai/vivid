@@ -129,33 +129,31 @@ export function useChainInputInjection(stepId: DNALabStepId) {
   const canInfer = canInferForStep(stepId);
 
   // Build injected props based on step
+  // Phase 1-2: Updated for merged analysis step
   const injectedProps: Record<string, unknown> = {};
 
   switch (stepId) {
-    case "ad":
-      // Aesthetic Director gets Logic Vector from VPE
-      if (inputData.vpe?.logicVector) {
-        injectedProps.prefillLogicVector = inputData.vpe.logicVector;
-      }
+    case "analysis":
+      // Analysis is entry point, no injection needed
       break;
 
     case "mirror":
-      // Abyss Mirror gets Logic Vector + Aesthetic Guidelines
-      if (inputData.vpe?.logicVector) {
-        injectedProps.prefillLogicVector = inputData.vpe.logicVector;
+      // Abyss Mirror gets Logic Vector + Aesthetic Guidelines from Analysis
+      if (inputData.analysis?.logicVector) {
+        injectedProps.prefillLogicVector = inputData.analysis.logicVector;
       }
-      if (inputData.ad?.aestheticGuidelines) {
-        injectedProps.prefillAesthetics = inputData.ad.aestheticGuidelines;
+      if (inputData.analysis?.aestheticGuidelines) {
+        injectedProps.prefillAesthetics = inputData.analysis.aestheticGuidelines;
       }
       break;
 
     case "qc":
       // Quality Director gets all previous outputs
-      if (inputData.vpe?.logicVector) {
-        injectedProps.prefillLogicVector = inputData.vpe.logicVector;
+      if (inputData.analysis?.logicVector) {
+        injectedProps.prefillLogicVector = inputData.analysis.logicVector;
       }
-      if (inputData.ad?.aestheticGuidelines) {
-        injectedProps.prefillAesthetics = inputData.ad.aestheticGuidelines;
+      if (inputData.analysis?.aestheticGuidelines) {
+        injectedProps.prefillAesthetics = inputData.analysis.aestheticGuidelines;
       }
       if (inputData.mirror?.personaDNA) {
         injectedProps.prefillPersonaDNA = inputData.mirror.personaDNA;
