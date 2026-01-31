@@ -482,6 +482,37 @@ function SunoContent() {
           </div>
         )}
 
+        {/* Quick Presets */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-300">
+            {isKo ? "빠른 시작" : "Quick Start"}
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => {
+                setInstrumental(true);
+                setSelectedGenre("ambient");
+                setSelectedMood("relaxing");
+              }}
+              disabled={isPending}
+              className="p-2 text-xs rounded-lg border border-gray-600 hover:bg-gray-700 transition-colors disabled:opacity-50"
+            >
+              {isKo ? "BGM (인스트루멘탈)" : "BGM (Instrumental)"}
+            </button>
+            <button
+              onClick={() => {
+                setInstrumental(false);
+                setSelectedGenre("pop");
+                setSelectedMood("happy");
+              }}
+              disabled={isPending}
+              className="p-2 text-xs rounded-lg border border-gray-600 hover:bg-gray-700 transition-colors disabled:opacity-50"
+            >
+              {isKo ? "보컬 송 (Pop)" : "Vocal Song (Pop)"}
+            </button>
+          </div>
+        </div>
+
         {/* Title Input */}
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">

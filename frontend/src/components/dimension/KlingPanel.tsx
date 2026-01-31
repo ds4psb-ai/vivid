@@ -406,6 +406,37 @@ function KlingContent() {
           helperText="스타일 참고 이미지 첨부"
         />
 
+        {/* Quick Presets */}
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">
+            Quick Start
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => {
+                setAspectRatio("9:16");
+                setDuration("5");
+                setMode("std");
+              }}
+              disabled={combinedLoading}
+              className="p-2 text-xs rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors disabled:opacity-50"
+            >
+              Short-form (9:16, 5s)
+            </button>
+            <button
+              onClick={() => {
+                setAspectRatio("16:9");
+                setDuration("10");
+                setMode("pro");
+              }}
+              disabled={combinedLoading}
+              className="p-2 text-xs rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors disabled:opacity-50"
+            >
+              Cinematic (16:9, 10s)
+            </button>
+          </div>
+        </div>
+
         {/* Duration & Resolution */}
         <div className="grid grid-cols-2 gap-3">
           <DimensionPanel.Select
