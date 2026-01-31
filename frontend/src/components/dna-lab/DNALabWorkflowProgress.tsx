@@ -16,13 +16,14 @@ import { Check, AlertCircle, Sparkles, Loader2, Clock, Coins } from "lucide-reac
 import { cn } from "@/lib/utils";
 import { useDNALabWorkflow, type StepState } from "./hooks/useDNALabWorkflow";
 import { DNA_LAB_STEPS, DNA_LAB_STEP_THEMES, type DNALabStepId } from "./constants";
-import type { StepExecutionStatus, PipelineStepId } from "./hooks/useDNALabPipeline";
+import type { StepExecutionStatus, PipelineStepId, LegacyPipelineStepId } from "./hooks/useDNALabPipeline";
 
 /**
- * Map pipeline step IDs to DNA Lab step IDs
+ * Map legacy pipeline step IDs to DNA Lab step IDs
  * Phase 1-2: VPE and AD pipeline steps map to merged "analysis" step
+ * Backend still returns legacy step IDs (vpe, ad), so we need this mapping
  */
-const PIPELINE_TO_STEP_MAP: Record<PipelineStepId, DNALabStepId> = {
+const PIPELINE_TO_STEP_MAP: Record<LegacyPipelineStepId, DNALabStepId> = {
   vpe: "analysis",
   ad: "analysis",
   mirror: "mirror",
@@ -38,8 +39,8 @@ interface DNALabWorkflowProgressProps {
   className?: string;
   /** Pipeline execution status (from useDNALabPipeline) */
   pipelineSteps?: StepExecutionStatus[];
-  /** Currently running pipeline step */
-  pipelineCurrentStep?: PipelineStepId | null;
+  /** Currently running pipeline step (uses legacy step IDs from backend) */
+  pipelineCurrentStep?: LegacyPipelineStepId | null;
   /** Is pipeline currently running */
   isPipelineRunning?: boolean;
 }
@@ -59,13 +60,15 @@ export function DNALabWorkflowProgress({
     useDNALabWorkflow();
 
   // Get pipeline status for a step
+  // For "analysis" step, we need to find vpe or ad status (whichever is available)
   const getPipelineStatus = (stepId: DNALabStepId): StepExecutionStatus | undefined => {
     if (!pipelineSteps) return undefined;
-    const pipelineId = Object.entries(PIPELINE_TO_STEP_MAP).find(
-      ([, id]) => id === stepId
-    )?.[0] as PipelineStepId | undefined;
-    if (!pipelineId) return undefined;
-    return pipelineSteps.find((s) => s.step === pipelineId);
+    // Find all legacy step IDs that map to this step
+    const legacyIds = Object.entries(PIPELINE_TO_STEP_MAP)
+      .filter(([, id]) => id === stepId)
+      .map(([legacyId]) => legacyId as LegacyPipelineStepId);
+    // Return first matching pipeline status
+    return pipelineSteps.find((s) => legacyIds.includes(s.step));
   };
 
   // Check if a step is currently running in the pipeline

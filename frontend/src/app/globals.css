@@ -115,11 +115,13 @@
   /* ─────────────────────────────────────────────────────────────────────────
      TYPOGRAPHY TOKENS
      Font families and sizes for consistent typography
+     Korean font: Noto Sans KR fallback for CJK characters
      ───────────────────────────────────────────────────────────────────────── */
 
-  --font-heading: 'Space Grotesk', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
+  --font-heading: 'Space Grotesk', 'Noto Sans KR', system-ui, sans-serif;
+  --font-body: 'Inter', 'Noto Sans KR', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-korean: 'Noto Sans KR', 'Inter', system-ui, sans-serif;
 
   /* ─────────────────────────────────────────────────────────────────────────
      BORDER RADIUS TOKENS
@@ -165,18 +167,62 @@
   --ease-default: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-inertia: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     BACKGROUND TOKENS (V5/V6/V7 Design System)
+     Surface colors for light/dark themes
+     ───────────────────────────────────────────────────────────────────────── */
+
+  --bg-light: #F8F9FA;
+  --bg-dark: #030005;
+  --surface-light: #FFFFFF;
+  --surface-dark: #110D14;
+  --surface-elevated-light: #FFFFFF;
+  --surface-elevated-dark: #1A1520;
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     Z-INDEX SCALE
+     Consistent layering across the application
+     ───────────────────────────────────────────────────────────────────────── */
+
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-dropdown: 20;
+  --z-fixed: 30;
+  --z-overlay: 40;
+  --z-modal: 50;
+  --z-toast: 60;
+  --z-tooltip: 70;
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     GLASS MORPHISM TOKENS
+     Frosted glass effects for modern UI
+     ───────────────────────────────────────────────────────────────────────── */
+
+  --glass-bg: rgba(0, 0, 0, 0.4);
+  --glass-bg-light: rgba(255, 255, 255, 0.6);
+  --glass-blur: blur(24px);
+  --glass-blur-sm: blur(12px);
+  --glass-blur-lg: blur(40px);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-light: rgba(0, 0, 0, 0.1);
 }
 
 @layer components {
 
   /* Font Display - Space Grotesk for headings (Stitch AI design) */
   .font-display {
-    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-family: 'Space Grotesk', 'Noto Sans KR', system-ui, sans-serif;
   }
 
   /* Font Sans - Inter for body text (Stitch AI design) */
   .font-sans {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Inter', 'Noto Sans KR', system-ui, sans-serif;
+  }
+
+  /* Font Korean - Noto Sans KR primary for Korean-heavy content */
+  .font-korean {
+    font-family: 'Noto Sans KR', 'Inter', system-ui, sans-serif;
   }
 
   /* Lusion-style Glass Card (Standardized) */

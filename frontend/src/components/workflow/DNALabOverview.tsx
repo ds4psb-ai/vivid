@@ -11,7 +11,7 @@
 
 import { useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Video, Palette, Brain, CheckCircle, ArrowUpRight } from "lucide-react";
+import { Video, Brain, CheckCircle, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 
@@ -28,7 +28,10 @@ export interface DNALabOverviewProps {
   className?: string;
 }
 
-// Step definitions - minimal
+/**
+ * Step definitions - Phase 1-2 unified
+ * VPE + AD merged into "analysis"
+ */
 const STEPS: {
   id: string;
   name: string;
@@ -38,20 +41,12 @@ const STEPS: {
   bgColor: string;
 }[] = [
   {
-    id: "vpe",
-    name: "영상 분석",
-    subtitle: "Logic Vector 추출",
+    id: "analysis",
+    name: "통합 분석",
+    subtitle: "영상 분석 + 미학 적용",
     icon: Video,
     color: "text-blue-400",
     bgColor: "bg-blue-500/10",
-  },
-  {
-    id: "ad",
-    name: "미학 적용",
-    subtitle: "거장 스타일 적용",
-    icon: Palette,
-    color: "text-amber-400",
-    bgColor: "bg-amber-500/10",
   },
   {
     id: "mirror",

@@ -415,15 +415,17 @@ function IPContextHeader({
 /**
  * Get required chain data keys for each step
  * Phase 1-2: Updated for merged analysis step
+ *
+ * Note: Uses "analysis" key for unified VPE+AD output
  */
 function getRequiredKeysForStep(stepId: DNALabStepId): string[] {
   switch (stepId) {
     case "analysis":
       return []; // Analysis (VPE+AD merged) is the starting step, no requirements
     case "mirror":
-      return ["vpe", "ad"]; // Mirror requires analysis outputs (vpe + ad)
+      return ["analysis"]; // Mirror requires analysis output
     case "qc":
-      return ["vpe", "ad", "mirror"]; // QC requires all previous
+      return ["analysis", "mirror"]; // QC requires all previous
     default:
       return [];
   }

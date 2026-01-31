@@ -198,14 +198,14 @@ export function DNALabRunPipelineButton({
   const handleRunPipeline = async () => {
     try {
       // Extract existing chain data for pipeline input
-      const vpeData = workflow.chainData.vpe;
-      const adData = workflow.chainData.ad;
+      // Phase 1-2: "analysis" is unified step containing vpe + ad data
+      const analysisData = workflow.chainData.analysis;
 
       const pipelineOptions: PipelineOptions = {
-        steps: ["vpe", "ad", "mirror", "qc"],
-        video_uri: (vpeData as Record<string, unknown>)?.videoUrl as string | undefined,
-        concept: (adData as Record<string, unknown>)?.concept as string | undefined,
-        auteur_key: (adData as Record<string, unknown>)?.auteurKey as string | undefined,
+        steps: ["analysis", "mirror", "qc"],
+        video_uri: (analysisData as Record<string, unknown>)?.videoUrl as string | undefined,
+        concept: (analysisData as Record<string, unknown>)?.concept as string | undefined,
+        auteur_key: (analysisData as Record<string, unknown>)?.auteurKey as string | undefined,
         ...options,
       };
 

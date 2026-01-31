@@ -17,14 +17,24 @@ import { useDimensionChainOptional } from "@/contexts/DimensionChainContext";
 
 /**
  * Pipeline step identifiers
+ *
+ * Phase 1-2: VPE + AD merged into "analysis"
+ * Legacy "vpe" | "ad" maintained for backend compatibility
  */
-export type PipelineStepId = "vpe" | "ad" | "mirror" | "qc";
+export type PipelineStepId = "analysis" | "mirror" | "qc";
+
+/**
+ * Legacy step identifiers for backend API compatibility
+ * The backend still expects "vpe", "ad" as separate steps
+ */
+export type LegacyPipelineStepId = "vpe" | "ad" | "mirror" | "qc";
 
 /**
  * Step execution status
+ * Uses LegacyPipelineStepId for backend API response compatibility
  */
 export interface StepExecutionStatus {
-  step: PipelineStepId;
+  step: LegacyPipelineStepId;
   status: "pending" | "running" | "completed" | "failed";
   duration_ms?: number;
   credits_used?: number;
@@ -45,13 +55,18 @@ export interface PipelineState {
 
 /**
  * Pipeline result from backend
+ * Backend returns legacy keys (vpe, ad) which are merged into "analysis" for frontend
  */
 export interface PipelineResult {
   success: boolean;
   trace_id: string;
   status: "completed" | "partial" | "failed";
+  /** Legacy: VPE output from backend */
   vpe?: Record<string, unknown>;
+  /** Legacy: AD output from backend */
   ad?: Record<string, unknown>;
+  /** Merged analysis output (vpe + ad) for frontend consumption */
+  analysis?: Record<string, unknown>;
   mirror?: Record<string, unknown>;
   qc?: Record<string, unknown>;
   evidence_refs: string[];
@@ -65,11 +80,11 @@ export interface PipelineResult {
  * Pipeline execution options
  */
 export interface PipelineOptions {
-  /** Steps to run (default: all) */
+  /** Steps to run (default: all). Uses frontend step IDs */
   steps?: PipelineStepId[];
-  /** Video URI for VPE */
+  /** Video URI for analysis (VPE) */
   video_uri?: string;
-  /** Creative concept for AD */
+  /** Creative concept for analysis (AD) */
   concept?: string;
   /** Auteur key for style matching */
   auteur_key?: string;
@@ -84,6 +99,25 @@ export interface PipelineOptions {
   /** Stop on first failure (default: false) */
   fail_fast?: boolean;
 }
+
+/**
+ * Convert frontend step IDs to backend legacy step IDs
+ * "analysis" → ["vpe", "ad"]
+ */
+function toBackendSteps(frontendSteps: PipelineStepId[]): LegacyPipelineStepId[] {
+  const backendSteps: LegacyPipelineStepId[] = [];
+  for (const step of frontendSteps) {
+    if (step === "analysis") {
+      backendSteps.push("vpe", "ad");
+    } else {
+      backendSteps.push(step);
+    }
+  }
+  return backendSteps;
+}
+
+/** Default frontend steps */
+const DEFAULT_STEPS: PipelineStepId[] = ["analysis", "mirror", "qc"];
 
 const initialState: PipelineState = {
   isRunning: false,
@@ -109,11 +143,14 @@ export function useDNALabPipeline() {
    */
   const runPipeline = useCallback(
     async (options: PipelineOptions) => {
+      const frontendSteps = options.steps || DEFAULT_STEPS;
+      const backendSteps = toBackendSteps(frontendSteps);
+
       setState({
         ...initialState,
         isRunning: true,
         progress: 5,
-        steps: (options.steps || ["vpe", "ad", "mirror", "qc"]).map((step) => ({
+        steps: backendSteps.map((step) => ({
           step,
           status: "pending",
         })),
@@ -126,7 +163,8 @@ export function useDNALabPipeline() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            steps: options.steps || ["vpe", "ad", "mirror", "qc"],
+            // Send legacy step IDs to backend
+            steps: backendSteps,
             video_uri: options.video_uri,
             concept: options.concept,
             auteur_key: options.auteur_key,
@@ -148,22 +186,23 @@ export function useDNALabPipeline() {
         const result: PipelineResult = await response.json();
 
         // Update chain context with results
+        // Merge vpe + ad into unified "analysis" key for frontend consumption
         if (chain) {
-          if (result.vpe) {
+          // Store unified analysis output (vpe + ad merged)
+          if (result.vpe || result.ad) {
+            const analysisOutput = {
+              logicVector: result.vpe || {},
+              aestheticGuidelines: result.ad || {},
+              analysisTimestamp: Date.now(),
+            };
             chain.setChainData(
-              "vpe",
-              { output: result.vpe },
-              "VPE 분석 완료",
-              result.evidence_refs.filter((ref) => ref.includes("vpe"))
+              "analysis",
+              { output: analysisOutput },
+              "통합 분석 완료",
+              result.evidence_refs.filter((ref) => ref.includes("vpe") || ref.includes("ad"))
             );
-          }
-          if (result.ad) {
-            chain.setChainData(
-              "aesthetic-director",
-              { output: result.ad },
-              "미학 분석 완료",
-              result.evidence_refs.filter((ref) => ref.includes("ad"))
-            );
+            // Also set on result for getStepResult compatibility
+            result.analysis = analysisOutput;
           }
           if (result.mirror) {
             chain.setChainData(
@@ -220,20 +259,32 @@ export function useDNALabPipeline() {
 
   /**
    * Get result for a specific step
+   * Supports both frontend (analysis) and legacy (vpe, ad) step IDs
    */
   const getStepResult = useCallback(
-    (stepId: PipelineStepId): Record<string, unknown> | undefined => {
+    (stepId: PipelineStepId | LegacyPipelineStepId): Record<string, unknown> | undefined => {
       if (!state.result) return undefined;
-      return state.result[stepId] as Record<string, unknown> | undefined;
+      // For "analysis", return the merged result
+      if (stepId === "analysis") {
+        return state.result.analysis as Record<string, unknown> | undefined;
+      }
+      return state.result[stepId as keyof PipelineResult] as Record<string, unknown> | undefined;
     },
     [state.result]
   );
 
   /**
    * Check if a specific step completed successfully
+   * For "analysis", checks both vpe and ad completion
    */
   const isStepCompleted = useCallback(
-    (stepId: PipelineStepId): boolean => {
+    (stepId: PipelineStepId | LegacyPipelineStepId): boolean => {
+      if (stepId === "analysis") {
+        // Analysis is complete when both vpe and ad are complete
+        const vpeStatus = state.steps.find((s) => s.step === "vpe");
+        const adStatus = state.steps.find((s) => s.step === "ad");
+        return vpeStatus?.status === "completed" && adStatus?.status === "completed";
+      }
       const stepStatus = state.steps.find((s) => s.step === stepId);
       return stepStatus?.status === "completed";
     },
