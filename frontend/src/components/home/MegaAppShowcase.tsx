@@ -5,14 +5,19 @@
  *
  * 분석 → 구성 → 제작
  * Minimal card design with Korean labels
+ *
+ * 2026 Enhancement: Intent-Driven Entry Point
+ * - IntentSearchBar integration for natural language navigation
  */
 
-import React from "react";
+import React, { useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Dna, BookOpen, Clapperboard, ArrowUpRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { IntentSearchBar, type IntentSuggestion } from "@/components/workflow/IntentSearchBar";
 
 interface MegaApp {
   id: string;
@@ -63,6 +68,18 @@ interface MegaAppShowcaseProps {
 }
 
 export function MegaAppShowcase({ className }: MegaAppShowcaseProps) {
+  const router = useRouter();
+
+  // Handle IntentSearchBar selection
+  const handleIntentSelect = useCallback(
+    (suggestion: IntentSuggestion) => {
+      // Build navigation URL with step parameter
+      const stepParam = suggestion.targetStep ? `?step=${suggestion.targetStep}` : "";
+      router.push(`/${suggestion.targetApp}${stepParam}`);
+    },
+    [router]
+  );
+
   return (
     <section className={cn("relative z-20 px-6 md:px-16 py-24 bg-[var(--bg-subtle)]", className)}>
       <div className="max-w-7xl mx-auto">
@@ -80,6 +97,23 @@ export function MegaAppShowcase({ className }: MegaAppShowcaseProps) {
           <p className="text-gray-400 max-w-lg font-light break-keep">
             세 단계로 아이디어를 완성하세요.
           </p>
+        </motion.div>
+
+        {/* Intent-Driven Entry Point */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="mb-12"
+        >
+          <IntentSearchBar
+            onSelect={handleIntentSelect}
+            placeholder="무엇을 만들고 싶으세요? (예: 봉준호 스타일 분석, 숏폼 영상 제작)"
+            showPresets
+            showRecent
+            className="max-w-2xl"
+          />
         </motion.div>
 
         {/* 3-Column Grid */}
