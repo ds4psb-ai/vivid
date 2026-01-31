@@ -44,7 +44,7 @@ import { useState, useEffect, Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Database } from "lucide-react";
 import { UnifiedWorkflowShell, MissingDataBanner, useIPChainData, DNALabOverview } from "@/components/workflow";
-import { DNALabStepPanel, DNALabRunPipelineButton, DNALabOnboarding, type DNALabStepId } from "@/components/dna-lab";
+import { DNALabStepPanel, DNALabRunPipelineButton, DNALabOnboarding, DNALabQuickStart, type DNALabStepId } from "@/components/dna-lab";
 import AppShell from "@/components/AppShell";
 
 // Import existing panels
@@ -118,11 +118,14 @@ function DNALabPageContent() {
   const isStepDetail = step && step !== "overview";
   const isExplicitOverview = step === "overview";
 
+  // 0. Quick Mode: master + mode=quick (no step specified)
+  const isQuickMode = masterKey && searchParams?.get("mode") === "quick" && !step;
+
   // 1. Onboarding: No params + no session + not manually dismissed
   const showOnboarding = !hasEntryParams && !step && !hasExistingSession && !manuallyDismissed;
 
   // 2. Overview: step=overview OR (no step + (ipSlug OR hasSession OR manuallyDismissed))
-  const showOverview = isExplicitOverview || (!isStepDetail && !showOnboarding && (ipSlug || hasExistingSession || manuallyDismissed));
+  const showOverview = isExplicitOverview || (!isStepDetail && !showOnboarding && !isQuickMode && (ipSlug || hasExistingSession || manuallyDismissed));
 
   // Onboarding handlers
   const handleSelectIP = (slug: string) => {
@@ -153,6 +156,24 @@ function DNALabPageContent() {
     if (ipSlug) params.set("ip", ipSlug);
     router.push(`/dna-lab?${params.toString()}`);
   };
+
+  // 0. Show Quick Start (master + mode=quick)
+  if (isQuickMode && masterKey) {
+    return (
+      <AppShell showTopBar={false} showNavbar={false}>
+        <DNALabQuickStart
+          masterKey={masterKey}
+          onStart={({ videoUrl }) => {
+            const params = new URLSearchParams();
+            params.set("step", "analysis"); // 첫 스텝으로 이동
+            params.set("master", masterKey);
+            if (videoUrl) params.set("url", encodeURIComponent(videoUrl));
+            router.push(`/dna-lab?${params.toString()}`);
+          }}
+        />
+      </AppShell>
+    );
+  }
 
   // 1. Show Onboarding
   if (showOnboarding) {

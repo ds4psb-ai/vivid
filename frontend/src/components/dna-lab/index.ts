@@ -11,6 +11,9 @@ export { DNALabWorkflowShell } from "./DNALabWorkflowShell";
 // Onboarding
 export { DNALabOnboarding } from "./DNALabOnboarding";
 
+// Quick Start (V7 Cinematic Style)
+export { DNALabQuickStart } from "./DNALabQuickStart";
+
 // Progress/Stepper
 export {
   DNALabWorkflowProgress,

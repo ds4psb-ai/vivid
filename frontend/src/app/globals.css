@@ -1688,6 +1688,36 @@ html.lenis body {
   background-color: var(--stitch-surface-dark);
 }
 
+/* Aurora Neon Background - Stitch AI V7 스타일 */
+.aurora-neon {
+  background: radial-gradient(
+    circle at 50% 0%,
+    rgba(255, 0, 60, 0.25) 0%,
+    transparent 60%
+  );
+}
+
+.aurora-neon-subtle {
+  background: radial-gradient(
+    circle at 50% 0%,
+    rgba(255, 0, 60, 0.15) 0%,
+    transparent 50%
+  );
+}
+
+/* Neon Red CTA Button - Stitch AI V7 스타일 */
+.btn-neon-red {
+  @apply px-6 py-4 rounded-xl font-semibold text-white;
+  background: var(--stitch-primary);
+  box-shadow: 0 0 10px rgba(255, 0, 60, 0.3);
+  transition: all 0.2s ease;
+}
+
+.btn-neon-red:hover {
+  background: var(--stitch-primary-dark);
+  box-shadow: 0 0 20px rgba(255, 0, 60, 0.5);
+}
+
 /* Clip Diagonal - For hero sections */
 .clip-diagonal {
   clip-path: polygon(0 0, 100% 0, 100% 85%, 0% 100%);

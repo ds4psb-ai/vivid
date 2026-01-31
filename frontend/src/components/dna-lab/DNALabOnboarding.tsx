@@ -59,10 +59,10 @@ export function DNALabOnboarding({
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
-      {/* Aurora Background */}
+      {/* Aurora Background - Neon Red + Violet 점진적 전환 */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-violet-600/20 rounded-full blur-[128px] animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-cyan-600/15 rounded-full blur-[100px] animate-pulse delay-1000" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[var(--stitch-primary)]/20 rounded-full blur-[128px] animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-violet-600/15 rounded-full blur-[100px] animate-pulse delay-1000" />
       </div>
 
       {/* Content */}
@@ -279,7 +279,7 @@ function OnboardingCard({
   return (
     <button
       onClick={onClick}
-      className="group relative flex flex-col items-center p-6 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-2xl transition-all duration-300 text-center overflow-hidden"
+      className="group relative flex flex-col items-center p-6 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-2xl transition-all duration-300 text-center overflow-hidden hover:shadow-[0_0_30px_rgba(255,0,60,0.15)]"
       style={{
         ["--card-hue" as string]: hue,
       }}

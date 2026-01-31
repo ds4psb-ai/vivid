@@ -87,7 +87,7 @@ export function DNALabWorkflowProgress({
         </div>
         <div className="h-1 bg-white/10 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 transition-all duration-500"
+            className="h-full bg-gradient-to-r from-[var(--stitch-primary)] to-cyan-500 transition-all duration-500"
             style={{ width: `${completionPercentage}%` }}
           />
         </div>

@@ -110,11 +110,12 @@ export function DNALabOverview({
               onClick={() => handleStepClick(step.id)}
               className={cn(
                 "group relative text-left rounded-2xl overflow-hidden",
-                "bg-white/[0.02] border border-white/10",
+                "bg-white/[0.04] border border-white/10",
                 "p-6 min-h-[140px]",
                 "transition-all duration-200",
-                "hover:border-[var(--border-primary)]/50",
-                "hover:bg-white/[0.04]"
+                "hover:border-[var(--stitch-primary)]/30",
+                "hover:bg-white/[0.06]",
+                "hover:shadow-[0_0_25px_rgba(255,0,60,0.1)]"
               )}
             >
               {/* Icon */}
@@ -139,7 +140,7 @@ export function DNALabOverview({
 
               {/* CTA */}
               <div className="absolute bottom-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity">
-                <ArrowUpRight className="w-5 h-5 text-[var(--fg-primary)]" />
+                <ArrowUpRight className="w-5 h-5 text-[var(--stitch-primary)]" />
               </div>
             </motion.button>
           );

@@ -144,7 +144,7 @@ function UnifiedWorkflowShellContent({
 
   return (
     <AppShell showTopBar={false}>
-      <div className={`${RESPONSIVE_CONFIG.viewport.height} flex flex-col bg-black relative`}>
+      <div className={`${RESPONSIVE_CONFIG.viewport.height} flex flex-col bg-stitch-dark relative`}>
         {/* Aurora Background */}
         {showAurora && <MegaAppAurora appId={appId} />}
 
