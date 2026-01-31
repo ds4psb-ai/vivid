@@ -1718,6 +1718,18 @@ html.lenis body {
   box-shadow: 0 0 20px rgba(255, 0, 60, 0.5);
 }
 
+.btn-neon-red:active {
+  transform: scale(0.98);
+  box-shadow: 0 0 25px rgba(255, 0, 60, 0.6);
+}
+
+/* Error State - Neon Red Theme */
+.error-neon {
+  background: rgba(255, 0, 60, 0.15);
+  border: 1px solid rgba(255, 0, 60, 0.3);
+  box-shadow: 0 0 20px rgba(255, 0, 60, 0.1);
+}
+
 /* Clip Diagonal - For hero sections */
 .clip-diagonal {
   clip-path: polygon(0 0, 100% 0, 100% 85%, 0% 100%);
