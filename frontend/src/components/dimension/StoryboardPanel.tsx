@@ -422,7 +422,7 @@ function StoryboardContent() {
             value={script}
             onChange={(e) => setScript(e.target.value)}
             placeholder={labels.scriptPlaceholder}
-            className={`w-full h-48 px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 resize-none focus:outline-none focus:ring-2 focus:ring-${token.themeColor}-500/50`}
+            className="w-full h-48 px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 resize-none focus:outline-none focus:ring-2 focus:ring-[var(--stitch-primary)]/50"
             disabled={isLoading}
           />
           <div className="text-xs text-slate-400 dark:text-white/40 text-right">
@@ -609,7 +609,7 @@ function StoryboardResultDisplay({
     <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
       <div className="flex items-center justify-between px-1">
         <h3 className="text-sm font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2">
-          <span className={`w-1.5 h-1.5 rounded-full bg-${themeColor}-400`}></span>
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--stitch-primary)]"></span>
           Generated Scenes ({result.scenes.length})
         </h3>
         <button
@@ -625,24 +625,24 @@ function StoryboardResultDisplay({
         {result.scenes.map((scene, idx) => (
           <div key={idx} className="group relative">
             <div
-              className={`absolute inset-0 bg-${themeColor}-500/5 blur-xl rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
+              className="absolute inset-0 bg-[var(--stitch-primary)]/5 blur-xl rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
             />
             <div
-              className={`p-4 bg-white/80 dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] font-mono text-base leading-relaxed text-slate-800 dark:text-zinc-100 group-hover:border-${themeColor}-400/50 dark:group-hover:border-${themeColor}-500/30 group-hover:bg-white dark:group-hover:bg-black/50 transition-all relative overflow-hidden h-full`}
+              className="p-4 bg-white/80 dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] font-mono text-base leading-relaxed text-slate-800 dark:text-zinc-100 group-hover:border-[var(--stitch-primary)]/50 group-hover:bg-white dark:group-hover:bg-black/50 transition-all relative overflow-hidden h-full"
             >
               <div
-                className={`absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-${themeColor}-400 to-blue-500 dark:from-${themeColor}-500 dark:to-blue-500 shadow-[0_0_20px_#06b6d4]`}
+                className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[var(--stitch-primary)] to-blue-500 shadow-[0_0_20px_#06b6d4]"
               ></div>
 
               {/* Scene Header */}
               <div className="flex justify-between items-center mb-4 border-b border-slate-100 dark:border-white/5 pb-2">
                 <h4
-                  className={`text-[12px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest group-hover:text-${themeColor}-600 dark:group-hover:text-${themeColor}-400/80 transition-colors`}
+                  className="text-[12px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest group-hover:text-[var(--stitch-primary)] transition-colors"
                 >
                   Scene #{scene.scene_number}
                 </h4>
                 <span
-                  className={`text-[10px] px-2 py-0.5 rounded-full bg-${themeColor}-100 dark:bg-${themeColor}-900/30 text-${themeColor}-700 dark:text-${themeColor}-300 border border-${themeColor}-200 dark:border-${themeColor}-500/30`}
+                  className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--stitch-primary)]/10 text-[var(--stitch-primary)] border border-[var(--stitch-primary)]/30"
                 >
                   {formatTime(scene.duration)}
                 </span>
@@ -680,7 +680,7 @@ function StoryboardResultDisplay({
                       <span className="text-[10px] text-slate-400 dark:text-zinc-500 block mb-1">
                         Camera
                       </span>
-                      <span className={`text-xs text-${themeColor}-700 dark:text-${themeColor}-300 font-medium`}>
+                      <span className="text-xs text-[var(--stitch-primary)] font-medium">
                         {scene.camera_angle}
                       </span>
                     </div>
@@ -688,7 +688,7 @@ function StoryboardResultDisplay({
                       <span className="text-[10px] text-slate-400 dark:text-zinc-500 block mb-1">
                         Movement
                       </span>
-                      <span className={`text-xs text-${themeColor}-700 dark:text-${themeColor}-300 font-medium`}>
+                      <span className="text-xs text-[var(--stitch-primary)] font-medium">
                         {scene.camera_movement}
                       </span>
                     </div>
@@ -712,19 +712,19 @@ function StoryboardResultDisplay({
   );
 }
 
-function EmptyState({ themeColor, isKo }: { themeColor: string; isKo: boolean }) {
+function EmptyState({ themeColor: _themeColor, isKo }: { themeColor: string; isKo: boolean }) {
   return (
     <div className="flex flex-col items-center justify-center h-full text-zinc-500 space-y-8 animate-in fade-in zoom-in-95 duration-700">
       <div className="relative group">
         <div
-          className={`absolute inset-0 bg-${themeColor}-500/20 blur-[80px] rounded-full group-hover:bg-${themeColor}-500/30 transition-colors duration-1000`}
+          className="absolute inset-0 bg-[var(--stitch-primary)]/20 blur-[80px] rounded-full group-hover:bg-[var(--stitch-primary)]/30 transition-colors duration-1000"
         />
         <div
-          className={`w-32 h-32 rounded-[2rem] bg-white/[0.02] border border-white/10 flex items-center justify-center shadow-[0_0_60px_rgba(0,0,0,0.3)] backdrop-blur-md relative transform group-hover:scale-105 transition-all duration-500 group-hover:border-${themeColor}-500/20`}
+          className="w-32 h-32 rounded-[2rem] bg-white/[0.02] border border-white/10 flex items-center justify-center shadow-[0_0_60px_rgba(0,0,0,0.3)] backdrop-blur-md relative transform group-hover:scale-105 transition-all duration-500 group-hover:border-[var(--stitch-primary)]/20"
         >
           <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent rounded-[2rem]" />
           <svg
-            className={`w-12 h-12 text-white/20 group-hover:text-${themeColor}-400 transition-colors duration-500`}
+            className="w-12 h-12 text-white/20 group-hover:text-[var(--stitch-primary)] transition-colors duration-500"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -745,7 +745,7 @@ function EmptyState({ themeColor, isKo }: { themeColor: string; isKo: boolean })
         <p className="text-sm text-slate-500 dark:text-zinc-500 max-w-xs mx-auto font-light leading-relaxed">
           {isKo ? "스토리를 장면 단위로 시각화하고" : "Visualize your story scene by scene and"}
           <br />
-          <span className={`text-${themeColor}-600 dark:text-${themeColor}-500/80 font-medium`}>
+          <span className="text-[var(--stitch-primary)] font-medium">
             {isKo ? "Midjourney & Runway 프롬프트" : "Midjourney & Runway prompts"}
           </span>
           {isKo ? "를 자동 생성합니다." : " will be auto-generated."}

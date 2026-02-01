@@ -501,7 +501,7 @@ function QualityDirectorContent() {
                 onClick={() => setContentType(type.value)}
                 className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                   contentType === type.value
-                    ? `${classes.bg}/20 ${classes.text} border border-${token.themeColor}-500/30`
+                    ? `${classes.bgSubtle} ${classes.text} border ${classes.border}`
                     : "bg-white dark:bg-white/5 text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 border border-transparent"
                 }`}
               >
@@ -523,7 +523,7 @@ function QualityDirectorContent() {
                 onClick={() => toggleCriterion(criterion.value)}
                 className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-all ${
                   selectedCriteria.includes(criterion.value)
-                    ? `${classes.bg}/10 border border-${token.themeColor}-500/30`
+                    ? `${classes.bgSubtle} border ${classes.border}`
                     : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20"
                 }`}
               >
@@ -544,7 +544,7 @@ function QualityDirectorContent() {
                 <div
                   className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
                     selectedCriteria.includes(criterion.value)
-                      ? `border-${token.themeColor}-500 bg-${token.themeColor}-500`
+                      ? `${classes.border} ${classes.bg}`
                       : "border-slate-300 dark:border-white/20"
                   }`}
                 >
@@ -583,7 +583,7 @@ function QualityDirectorContent() {
             max="95"
             value={threshold}
             onChange={(e) => setThreshold(Number(e.target.value))}
-            className={`w-full accent-${token.themeColor}-500`}
+            className="w-full accent-[var(--stitch-primary)]"
           />
         </div>
 
@@ -696,7 +696,7 @@ function QualityResultDisplay({
       {/* Overall Score */}
       <div className="relative overflow-hidden rounded-3xl bg-white/80 dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-8">
         <div
-          className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-${themeColor}-500 to-pink-500`}
+          className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--stitch-primary)] to-pink-500"
         />
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -803,18 +803,18 @@ function QualityResultDisplay({
   );
 }
 
-function EmptyState({ themeColor }: { themeColor: string }) {
+function EmptyState({ themeColor: _themeColor }: { themeColor: string }) {
   return (
     <div className="flex flex-col items-center justify-center h-full text-zinc-500 space-y-8">
       <div className="relative group">
         <div
-          className={`absolute inset-0 bg-${themeColor}-500/20 blur-[80px] rounded-full`}
+          className="absolute inset-0 bg-[var(--stitch-primary)]/20 blur-[80px] rounded-full"
         />
         <div
-          className={`w-32 h-32 rounded-[2rem] bg-white/[0.02] border border-white/10 flex items-center justify-center backdrop-blur-md relative group-hover:border-${themeColor}-500/20 transition-all`}
+          className="w-32 h-32 rounded-[2rem] bg-white/[0.02] border border-white/10 flex items-center justify-center backdrop-blur-md relative group-hover:border-[var(--stitch-primary)]/20 transition-all"
         >
           <CheckCircle
-            className={`w-12 h-12 text-white/20 group-hover:text-${themeColor}-400 transition-colors`}
+            className="w-12 h-12 text-white/20 group-hover:text-[var(--stitch-primary)] transition-colors"
           />
         </div>
       </div>
@@ -825,7 +825,7 @@ function EmptyState({ themeColor }: { themeColor: string }) {
         <p className="text-sm text-slate-500 dark:text-zinc-500 max-w-xs mx-auto font-light leading-relaxed">
           좌측 패널에서 콘텐츠와 검수 기준을 설정하고
           <br />
-          <span className={`text-${themeColor}-600 dark:text-${themeColor}-400 font-medium`}>
+          <span className="text-[var(--stitch-primary)] font-medium">
             6가지 기준
           </span>
           으로 품질을 검증하세요.

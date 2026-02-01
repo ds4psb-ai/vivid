@@ -119,7 +119,7 @@ interface WorkflowScenarioContext {
 
 // === Content Component ===
 function VeoVideoContent() {
-  const { token, setLoading, setResult, setError } = useDimensionPanel();
+  const { token, classes, styles, setLoading, setResult, setError } = useDimensionPanel();
   const { language } = useLanguage();
   const isKo = language === "ko";
   const searchParams = useSearchParams();
@@ -771,7 +771,7 @@ function VeoVideoContent() {
                   onClick={() => setStyle(s.value)}
                   className={`px-4 py-3 rounded-xl text-sm font-medium transition-all border ${
                     style === s.value
-                      ? `bg-${token.themeColor}-100 dark:bg-${token.themeColor}-500/20 border-${token.themeColor}-400 dark:border-${token.themeColor}-500/40 text-${token.themeColor}-600 dark:text-${token.themeColor}-400 shadow-[0_0_15px_rgba(14,165,233,0.2)]`
+                      ? `${classes.bgSubtle} border-dimension-${token.code} ${classes.text} shadow-[0_0_15px] shadow-dimension-${token.code}/20`
                       : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
@@ -791,7 +791,7 @@ function VeoVideoContent() {
                   onClick={() => setVeoModel(m.value)}
                   className={`px-3 py-3 rounded-xl text-xs font-medium transition-all border flex flex-col items-center gap-1 ${
                     veoModel === m.value
-                      ? `bg-${token.themeColor}-100 dark:bg-${token.themeColor}-500/20 border-${token.themeColor}-400 dark:border-${token.themeColor}-500/40 text-${token.themeColor}-600 dark:text-${token.themeColor}-400 shadow-[0_0_15px_rgba(14,165,233,0.2)]`
+                      ? `${classes.bgSubtle} border-dimension-${token.code} ${classes.text} shadow-[0_0_15px] shadow-dimension-${token.code}/20`
                       : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
@@ -815,7 +815,7 @@ function VeoVideoContent() {
                 <button
                   onClick={() => setUseRandomSeed(!useRandomSeed)}
                   className={`relative w-10 h-5 rounded-full transition-all ${
-                    useRandomSeed ? `bg-${token.themeColor}-500` : "bg-slate-200 dark:bg-white/10"
+                    useRandomSeed ? classes.bg : "bg-slate-200 dark:bg-white/10"
                   }`}
                 >
                   <span
@@ -841,11 +841,11 @@ function VeoVideoContent() {
           )}
 
           {/* Credit Cost Info */}
-          <div className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-${token.themeColor}-500/5 border border-${token.themeColor}-500/10`}>
-            <svg className={`w-4 h-4 text-${token.themeColor}-400`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${classes.bgSubtle} border ${classes.border}`}>
+            <svg className={`w-4 h-4 ${classes.text}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
-            <span className={`text-xs text-${token.themeColor}-400 font-medium`}>{creditCost} {labels.creditCost}</span>
+            <span className={`text-xs ${classes.text} font-medium`}>{creditCost} {labels.creditCost}</span>
           </div>
 
           {/* Generate Button */}
@@ -880,10 +880,10 @@ function VeoVideoContent() {
             <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
               {/* Processing State */}
               {videoResult.status === "processing" && (
-                <div className={`flex items-center justify-center gap-3 p-6 bg-${token.themeColor}-500/10 border border-${token.themeColor}-500/20 rounded-2xl`}>
-                  <div className={`w-6 h-6 border-2 border-${token.themeColor}-400/30 border-t-${token.themeColor}-400 rounded-full animate-spin`} />
+                <div className={`flex items-center justify-center gap-3 p-6 ${classes.bgSubtle} border ${classes.border} rounded-2xl`}>
+                  <div className={`w-6 h-6 border-2 border-dimension-${token.code}/30 border-t-dimension-${token.code} rounded-full animate-spin`} />
                   <div className="text-center">
-                    <p className={`text-${token.themeColor}-400 font-medium`}>{labels.processing}</p>
+                    <p className={`${classes.text} font-medium`}>{labels.processing}</p>
                     <p className="text-xs text-zinc-500 mt-1">{labels.processingDesc}</p>
                   </div>
                 </div>
@@ -892,7 +892,7 @@ function VeoVideoContent() {
               {/* Video Player */}
               {videoResult.status === "completed" && videoResult.video_url && (
                 <div className="relative group">
-                  <div className={`absolute -inset-1 bg-gradient-to-r from-${token.themeColor}-500/20 to-blue-500/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                  <div className={`absolute -inset-1 bg-gradient-to-r from-dimension-${token.code}/20 to-blue-500/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                   <div className="relative bg-black rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
                     <video
                       ref={videoRef}
@@ -948,25 +948,25 @@ function VeoVideoContent() {
                   {videoResult.metadata.duration && (
                     <div className="p-4 bg-white/[0.03] border border-white/5 rounded-xl text-center">
                       <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Duration</p>
-                      <p className={`text-lg font-mono text-${token.themeColor}-400`}>{videoResult.metadata.duration}</p>
+                      <p className={`text-lg font-mono ${classes.text}`}>{videoResult.metadata.duration}</p>
                     </div>
                   )}
                   {videoResult.metadata.resolution && (
                     <div className="p-4 bg-white/[0.03] border border-white/5 rounded-xl text-center">
                       <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Resolution</p>
-                      <p className={`text-lg font-mono text-${token.themeColor}-400`}>{videoResult.metadata.resolution}</p>
+                      <p className={`text-lg font-mono ${classes.text}`}>{videoResult.metadata.resolution}</p>
                     </div>
                   )}
                   {videoResult.metadata.fps && (
                     <div className="p-4 bg-white/[0.03] border border-white/5 rounded-xl text-center">
                       <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">FPS</p>
-                      <p className={`text-lg font-mono text-${token.themeColor}-400`}>{videoResult.metadata.fps}</p>
+                      <p className={`text-lg font-mono ${classes.text}`}>{videoResult.metadata.fps}</p>
                     </div>
                   )}
                   {videoResult.metadata.model && (
                     <div className="p-4 bg-white/[0.03] border border-white/5 rounded-xl text-center">
                       <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Model</p>
-                      <p className={`text-lg font-mono text-${token.themeColor}-400`}>{videoResult.metadata.model}</p>
+                      <p className={`text-lg font-mono ${classes.text}`}>{videoResult.metadata.model}</p>
                     </div>
                   )}
                 </div>
@@ -983,10 +983,10 @@ function VeoVideoContent() {
                     >
                       {isCopied ? (
                         <>
-                          <svg className={`w-3.5 h-3.5 text-${token.themeColor}-400`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className={`w-3.5 h-3.5 ${classes.text}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
-                          <span className={`text-${token.themeColor}-400`}>{labels.copied}</span>
+                          <span className={classes.text}>{labels.copied}</span>
                         </>
                       ) : (
                         <>
@@ -1015,10 +1015,10 @@ function VeoVideoContent() {
             // Empty State
             <div className="flex flex-col items-center justify-center h-full text-slate-500 dark:text-zinc-500 space-y-8 animate-in fade-in zoom-in-95 duration-700">
               <div className="relative group">
-                <div className={`absolute inset-0 bg-${token.themeColor}-500/20 blur-[80px] rounded-full group-hover:bg-${token.themeColor}-500/30 transition-colors duration-1000`} />
-                <div className={`w-32 h-32 rounded-[2rem] bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 flex items-center justify-center shadow-lg dark:shadow-[0_0_60px_rgba(0,0,0,0.3)] backdrop-blur-md relative transform group-hover:scale-105 transition-all duration-500 group-hover:border-${token.themeColor}-300 dark:group-hover:border-${token.themeColor}-500/20`}>
-                  <div className={`absolute inset-0 bg-gradient-to-tr from-${token.themeColor}-500/5 to-transparent rounded-[2rem]`} />
-                  <svg className={`w-12 h-12 text-slate-300 dark:text-white/20 group-hover:text-${token.themeColor}-500 dark:group-hover:text-${token.themeColor}-400 transition-colors duration-500`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className={`absolute inset-0 bg-dimension-${token.code}/20 blur-[80px] rounded-full group-hover:bg-dimension-${token.code}/30 transition-colors duration-1000`} />
+                <div className={`w-32 h-32 rounded-[2rem] bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 flex items-center justify-center shadow-lg dark:shadow-[0_0_60px_rgba(0,0,0,0.3)] backdrop-blur-md relative transform group-hover:scale-105 transition-all duration-500 group-hover:border-dimension-${token.code}/50`}>
+                  <div className={`absolute inset-0 bg-gradient-to-tr from-dimension-${token.code}/5 to-transparent rounded-[2rem]`} />
+                  <svg className={`w-12 h-12 text-slate-300 dark:text-white/20 group-hover:${classes.text} transition-colors duration-500`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
                 </div>
@@ -1027,10 +1027,10 @@ function VeoVideoContent() {
                 <h3 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{labels.emptyStateTitle}</h3>
                 <p className="text-sm text-slate-500 dark:text-[var(--fg-muted)] max-w-xs mx-auto font-light leading-relaxed">
                   {labels.emptyStateDesc1}<br />
-                  <span className={`text-${token.themeColor}-600 dark:text-${token.themeColor}-400 font-medium`}>{labels.emptyStateDesc2}</span> {labels.emptyStateDesc3}
+                  <span className={`${classes.text} font-medium`}>{labels.emptyStateDesc2}</span> {labels.emptyStateDesc3}
                 </p>
                 <div className="flex items-center justify-center gap-2 pt-2">
-                  <span className={`px-2 py-1 bg-${token.themeColor}-100 dark:bg-${token.themeColor}-500/10 border border-${token.themeColor}-200 dark:border-${token.themeColor}-500/20 rounded text-[10px] text-${token.themeColor}-600 dark:text-${token.themeColor}-400 font-medium`}>Veo 3.1</span>
+                  <span className={`px-2 py-1 ${classes.bgSubtle} border ${classes.border} rounded text-[10px] ${classes.text} font-medium`}>Veo 3.1</span>
                   <span className={`px-2 py-1 rounded text-[10px] font-medium ${
                     veoModel === "veo-3.1-generate-preview"
                       ? "bg-amber-100 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-600 dark:text-amber-400"

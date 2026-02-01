@@ -241,7 +241,7 @@ function CreativeEditorContent() {
             value={context}
             onChange={(e) => setContext(e.target.value)}
             placeholder={labels.genrePlaceholder}
-            className={`w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 text-sm focus:outline-none focus:border-${token.themeColor}-500/50 transition-all`}
+            className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 text-sm focus:outline-none focus:border-[var(--stitch-primary)]/50 transition-all"
           />
         </div>
 
@@ -269,7 +269,7 @@ function CreativeEditorContent() {
                 onClick={() => setPersona(p.value)}
                 className={`w-full p-3 rounded-xl border text-left transition-all ${
                   persona === p.value
-                    ? `${classes.bg}/10 border-${token.themeColor}-500/50`
+                    ? `${classes.bgSubtle} ${classes.border}`
                     : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10"
                 }`}
               >
@@ -403,7 +403,7 @@ function ContentInputArea({
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder={labels.contentPlaceholder}
-            className={`w-full h-[var(--layout-editor-height)] p-6 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white resize-none focus:outline-none focus:border-${themeColor}-500/50 text-lg leading-relaxed font-serif`}
+            className="w-full h-[var(--layout-editor-height)] p-6 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white resize-none focus:outline-none focus:border-[var(--stitch-primary)]/50 text-lg leading-relaxed font-serif"
           />
         </div>
       </div>
@@ -412,8 +412,8 @@ function ContentInputArea({
 
   return (
     <div className="flex flex-col items-center justify-center h-full space-y-6 animate-in fade-in zoom-in-95">
-      <div className={`w-20 h-20 bg-${themeColor}-500/10 rounded-full flex items-center justify-center mx-auto`}>
-        <PenTool className={`w-8 h-8 text-${themeColor}-400`} />
+      <div className="w-20 h-20 bg-[var(--stitch-primary)]/10 rounded-full flex items-center justify-center mx-auto">
+        <PenTool className="w-8 h-8 text-[var(--stitch-primary)]" />
       </div>
       <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Creative Editor</h2>
       <p className="text-slate-500 dark:text-white/50 max-w-md text-center">

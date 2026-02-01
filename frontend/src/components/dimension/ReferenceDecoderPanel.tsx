@@ -649,7 +649,7 @@ function ReferenceDecoderContent() {
                   onClick={() => handleModeChange(m)}
                   className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
                     isActive
-                      ? `${classes.bg}/20 border border-${token.themeColor}-500/50 ${classes.text}`
+                      ? `${classes.bgSubtle} border ${classes.border} ${classes.text}`
                       : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-white/10"
                   }`}
                 >
@@ -705,7 +705,7 @@ function ReferenceDecoderContent() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder={t.placeholders.description}
-                className={`w-full h-32 px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:outline-none focus:border-${token.themeColor}-500 focus:ring-4 focus:ring-${token.themeColor}-500/10 transition-all resize-none text-sm font-light leading-relaxed`}
+                className="w-full h-32 px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 focus:outline-none focus:border-[var(--stitch-primary)] focus:ring-4 focus:ring-[var(--stitch-primary)]/10 transition-all resize-none text-sm font-light leading-relaxed"
               />
             </div>
 
@@ -720,7 +720,7 @@ function ReferenceDecoderContent() {
                     onClick={() => toggleFocusArea(area.value)}
                     className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${
                       focusAreas.includes(area.value)
-                        ? `${classes.bg}/20 border-${token.themeColor}-500/50 ${classes.text}`
+                        ? `${classes.bgSubtle} ${classes.border} ${classes.text}`
                         : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-white/10"
                     }`}
                   >
@@ -1065,7 +1065,7 @@ function TextAnalysisDisplay({
           <ul className="space-y-2">
             {result.recommendations.map((rec, idx) => (
               <li key={idx} className="flex items-start gap-2 text-sm text-slate-700 dark:text-zinc-200">
-                <span className={`mt-1.5 w-1.5 h-1.5 rounded-full bg-${themeColor}-500`} />
+                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[var(--stitch-primary)]" />
                 {rec}
               </li>
             ))}
@@ -1099,7 +1099,7 @@ function StyleExtractionDisplay({
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in pb-20">
       <div className="flex items-center justify-between px-1">
         <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-          <Sparkles className={`w-4 h-4 text-${themeColor}-500`} />
+          <Sparkles className="w-4 h-4 text-[var(--stitch-primary)]" />
           {t.results.styleExtraction}
         </h3>
         <button onClick={onExport} className="px-3 py-1.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs rounded-lg flex items-center gap-2">
@@ -1117,7 +1117,7 @@ function StyleExtractionDisplay({
           {result.style_tags.map((tag, idx) => (
             <span
               key={idx}
-              className={`px-3 py-1 bg-${themeColor}-500/10 text-${themeColor}-600 dark:text-${themeColor}-400 text-sm rounded-full`}
+              className="px-3 py-1 bg-[var(--stitch-primary)]/10 text-[var(--stitch-primary)] text-sm rounded-full"
             >
               {tag}
             </span>
@@ -1224,7 +1224,7 @@ function VideoAnalysisDisplay({
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in pb-20">
       <div className="flex items-center justify-between px-1">
         <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-          <Film className={`w-4 h-4 text-${themeColor}-500`} />
+          <Film className="w-4 h-4 text-[var(--stitch-primary)]" />
           {t.results.videoAnalysis}
         </h3>
         <div className="flex items-center gap-2">
@@ -1245,7 +1245,7 @@ function VideoAnalysisDisplay({
         </h4>
         <div className="flex flex-wrap gap-2 mb-4">
           {result.style.style_tags.map((tag, idx) => (
-            <span key={idx} className={`px-3 py-1 bg-${themeColor}-500/10 text-${themeColor}-600 dark:text-${themeColor}-400 text-sm rounded-full`}>
+            <span key={idx} className="px-3 py-1 bg-[var(--stitch-primary)]/10 text-[var(--stitch-primary)] text-sm rounded-full">
               {tag}
             </span>
           ))}
@@ -1267,7 +1267,7 @@ function VideoAnalysisDisplay({
             onClick={() => setActiveTab(key as typeof activeTab)}
             className={`px-4 py-2 text-sm font-medium rounded-t-lg flex items-center gap-2 transition-colors ${
               activeTab === key
-                ? `text-${themeColor}-600 dark:text-${themeColor}-400 border-b-2 border-${themeColor}-500`
+                ? "text-[var(--stitch-primary)] border-b-2 border-[var(--stitch-primary)]"
                 : "text-slate-500 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300"
             }`}
           >
@@ -1295,7 +1295,7 @@ function VideoAnalysisDisplay({
               className="p-4 bg-white/80 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className={`text-xs font-bold text-${themeColor}-500`}>
+                <span className="text-xs font-bold text-[var(--stitch-primary)]">
                   {frame.timestamp.toFixed(1)}s
                 </span>
                 {frame.shot_type && (
@@ -1359,7 +1359,7 @@ function ShotCard({
     <div className="p-6 bg-white/80 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          <span className={`w-8 h-8 flex items-center justify-center rounded-full bg-${themeColor}-500/20 text-${themeColor}-600 dark:text-${themeColor}-400 font-bold text-sm`}>
+          <span className="w-8 h-8 flex items-center justify-center rounded-full bg-[var(--stitch-primary)]/20 text-[var(--stitch-primary)] font-bold text-sm">
             {shot.shot_number}
           </span>
           <div>
@@ -1415,7 +1415,7 @@ function ImageAnalysisDisplay({
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in pb-20">
       <div className="flex items-center justify-between px-1">
         <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-          <ImageIcon className={`w-4 h-4 text-${themeColor}-500`} />
+          <ImageIcon className="w-4 h-4 text-[var(--stitch-primary)]" />
           {t.results.imageAnalysis}
         </h3>
         <button onClick={onExport} className="px-3 py-1.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs rounded-lg flex items-center gap-2">
@@ -1465,7 +1465,7 @@ function ImageAnalysisDisplay({
           </h4>
           <div className="flex flex-wrap gap-2">
             {result.style.style_tags.map((tag, idx) => (
-              <span key={idx} className={`px-3 py-1 bg-${themeColor}-500/10 text-${themeColor}-600 dark:text-${themeColor}-400 text-sm rounded-full`}>
+              <span key={idx} className="px-3 py-1 bg-[var(--stitch-primary)]/10 text-[var(--stitch-primary)] text-sm rounded-full">
                 {tag}
               </span>
             ))}

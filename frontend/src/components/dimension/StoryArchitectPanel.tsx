@@ -120,7 +120,7 @@ const getStructures = (isKo: boolean) => [
 
 // === Content Component ===
 function StoryArchitectContent() {
-  const { token, setLoading, setResult, setError } = useDimensionPanel();
+  const { token, classes, styles, setLoading, setResult, setError } = useDimensionPanel();
   const { language } = useLanguage();
   const isKo = language === "ko";
 
@@ -654,11 +654,11 @@ function StoryArchitectContent() {
 
           {/* Stage Indicator */}
           <div className="flex items-center justify-between text-xs text-slate-400 dark:text-white/50 mb-2">
-            <span className={stage === "pitch" ? `text-${token.themeColor}-600 dark:text-${token.themeColor}-400 font-bold` : ""}>1. {labels.stagePitch}</span>
+            <span className={stage === "pitch" ? `${classes.text} font-bold` : ""}>1. {labels.stagePitch}</span>
             <span>→</span>
-            <span className={stage === "blueprint" ? `text-${token.themeColor}-600 dark:text-${token.themeColor}-400 font-bold` : ""}>2. {labels.stageBlueprint}</span>
+            <span className={stage === "blueprint" ? `${classes.text} font-bold` : ""}>2. {labels.stageBlueprint}</span>
             <span>→</span>
-            <span className={stage === "script" ? `text-${token.themeColor}-600 dark:text-${token.themeColor}-400 font-bold` : ""}>3. {labels.stageScript}</span>
+            <span className={stage === "script" ? `${classes.text} font-bold` : ""}>3. {labels.stageScript}</span>
           </div>
 
           {/* Concept Input */}
@@ -707,8 +707,8 @@ function StoryArchitectContent() {
 
           {stage === "blueprint" && (
             <>
-              <div className={`p-4 bg-${token.themeColor}-100 dark:bg-${token.themeColor}-500/10 border border-${token.themeColor}-200 dark:border-${token.themeColor}-500/20 rounded-xl`}>
-                <h4 className={`text-${token.themeColor}-600 dark:text-${token.themeColor}-400 text-sm font-bold mb-1`}>{labels.selectedAngleLabel}</h4>
+              <div className={`p-4 ${classes.bgSubtle} border ${classes.border} rounded-xl`}>
+                <h4 className={`${classes.text} text-sm font-bold mb-1`}>{labels.selectedAngleLabel}</h4>
                 <p className="text-slate-800 dark:text-white font-medium text-sm">{selectedAngle?.title || labels.notSelectedYet}</p>
               </div>
 
@@ -768,7 +768,7 @@ function StoryArchitectContent() {
 
                     window.location.href = url;
                   }}
-                  className={`w-full py-3 rounded-xl bg-${token.themeColor}-600 hover:bg-${token.themeColor}-700 text-white font-medium transition-all flex items-center justify-center gap-2`}
+                  className={`w-full py-3 rounded-xl ${classes.bg} hover:brightness-110 text-white font-medium transition-all flex items-center justify-center gap-2`}
                 >
                   <Layers className="w-4 h-4" />
                   {isKo ? "스토리보드 스케치로" : "To Storyboard Sketch"}
@@ -821,8 +821,8 @@ function StoryArchitectContent() {
           {/* Stage 1: Pitch (Initial State) */}
           {stage === "pitch" && !isAnyLoading && (
             <div className="flex flex-col items-center justify-center h-full min-h-[var(--layout-panel-min-height)] text-center p-8">
-              <div className={`w-20 h-20 rounded-full bg-${token.themeColor}-500/10 flex items-center justify-center mb-6`}>
-                <Sparkles className={`w-10 h-10 text-${token.themeColor}-600 dark:text-${token.themeColor}-400`} />
+              <div className={`w-20 h-20 rounded-full ${classes.bgSubtle} flex items-center justify-center mb-6`}>
+                <Sparkles className={`w-10 h-10 ${classes.text}`} />
               </div>
               <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">{labels.pitchWelcome}</h3>
               <p className="text-slate-600 dark:text-white/60 max-w-md leading-relaxed">
@@ -854,7 +854,7 @@ function StoryArchitectContent() {
           {stage === "blueprint" && !isAnyLoading && (
             <div className="space-y-6 animate-in fade-in duration-500">
               <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                <BookOpen className={`w-5 h-5 text-${token.themeColor}-400`} />
+                <BookOpen className={`w-5 h-5 ${classes.text}`} />
                 {labels.selectDirection}
               </h3>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -864,20 +864,20 @@ function StoryArchitectContent() {
                     onClick={() => setSelectedAngle(angle)}
                     className={`text-left p-6 rounded-2xl border transition-all relative overflow-hidden group
                       ${selectedAngle?.id === angle.id
-                        ? `bg-${token.themeColor}-100 dark:bg-${token.themeColor}-500/20 border-${token.themeColor}-500 ring-2 ring-${token.themeColor}-500/30`
+                        ? `${classes.bgSubtle} border-dimension-${token.code} ring-2 ring-dimension-${token.code}/30`
                         : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/10"
                       }`}
                   >
                     <div className="relative z-10">
                       <div className="mb-4">
-                        <span className={`text-xs font-bold px-2 py-1 rounded-full ${selectedAngle?.id === angle.id ? `bg-${token.themeColor}-200 text-${token.themeColor}-800 dark:bg-white/10 dark:text-white/70` : "bg-slate-200 text-slate-700 dark:bg-white/10 dark:text-white/70"}`}>
+                        <span className={`text-xs font-bold px-2 py-1 rounded-full ${selectedAngle?.id === angle.id ? `${classes.bgSubtle} ${classes.text}` : "bg-slate-200 text-slate-700 dark:bg-white/10 dark:text-white/70"}`}>
                           {angle.tone}
                         </span>
                       </div>
-                      <h4 className={`text-lg font-bold mb-2 ${selectedAngle?.id === angle.id ? `text-${token.themeColor}-700 dark:text-${token.themeColor}-300` : "text-slate-900 dark:text-white"}`}>
+                      <h4 className={`text-lg font-bold mb-2 ${selectedAngle?.id === angle.id ? classes.text : "text-slate-900 dark:text-white"}`}>
                         {angle.title}
                       </h4>
-                      <p className={`text-sm leading-relaxed mb-4 ${selectedAngle?.id === angle.id ? `text-${token.themeColor}-800 dark:text-white/70` : "text-slate-600 dark:text-white/70"}`}>
+                      <p className={`text-sm leading-relaxed mb-4 ${selectedAngle?.id === angle.id ? "text-slate-700 dark:text-white/70" : "text-slate-600 dark:text-white/70"}`}>
                         {angle.logline}
                       </p>
                       <div className="pt-4 border-t border-black/5 dark:border-white/5">
@@ -896,10 +896,10 @@ function StoryArchitectContent() {
           {stage === "script" && storyResult && (
             <div className="space-y-6 animate-in fade-in duration-500 pb-10">
               {/* Title & Logline */}
-              <div className={`p-6 rounded-2xl bg-${token.themeColor}-50 dark:bg-${token.themeColor}-500/10 border border-${token.themeColor}-100 dark:border-${token.themeColor}-500/20`}>
+              <div className={`p-6 rounded-2xl ${classes.bgSubtle} border ${classes.border}`}>
                 <div className="flex items-center gap-2 mb-3">
-                  <CheckCircle className={`w-5 h-5 text-${token.themeColor}-600 dark:text-${token.themeColor}-400`} />
-                  <span className={`text-${token.themeColor}-700 dark:text-${token.themeColor}-400 font-bold text-sm`}>{labels.generationComplete}</span>
+                  <CheckCircle className={`w-5 h-5 ${classes.text}`} />
+                  <span className={`${classes.text} font-bold text-sm`}>{labels.generationComplete}</span>
                 </div>
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{storyResult.title}</h2>
                 <p className="text-slate-600 dark:text-white/70 italic">&ldquo;{storyResult.logline}&rdquo;</p>
@@ -932,11 +932,11 @@ function StoryArchitectContent() {
                     {storyResult.structure.map((act, i) => (
                       <div key={i} className="p-4 rounded-xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10">
                         <div className="flex items-center justify-between mb-2">
-                          <span className={`text-${token.themeColor}-600 dark:text-${token.themeColor}-400 font-bold`}>Act {act.act}</span>
+                          <span className={`${classes.text} font-bold`}>Act {act.act}</span>
                           <span className="text-xs text-slate-400 dark:text-white/40">{act.duration}</span>
                         </div>
                         <p className="text-slate-600 dark:text-white/70 text-sm">{act.description}</p>
-                        <span className={`inline-block mt-2 px-2 py-1 text-xs rounded-full bg-${token.themeColor}-100 dark:bg-${token.themeColor}-500/20 text-${token.themeColor}-700 dark:text-${token.themeColor}-400`}>
+                        <span className={`inline-block mt-2 px-2 py-1 text-xs rounded-full ${classes.bgSubtle} ${classes.text}`}>
                           {act.emotion}
                         </span>
                       </div>
@@ -961,7 +961,7 @@ function StoryArchitectContent() {
                         <p className="text-slate-600 dark:text-white/60 text-sm mb-2">{char.arc}</p>
                         <div className="flex flex-wrap gap-1">
                           {char.traits?.map((trait, j) => (
-                            <span key={j} className={`text-xs px-2 py-0.5 rounded-full bg-${token.themeColor}-100 dark:bg-${token.themeColor}-500/20 text-${token.themeColor}-700 dark:text-${token.themeColor}-400`}>
+                            <span key={j} className={`text-xs px-2 py-0.5 rounded-full ${classes.bgSubtle} ${classes.text}`}>
                               {trait}
                             </span>
                           ))}
@@ -991,7 +991,7 @@ function StoryArchitectContent() {
                     <h3 className="text-sm font-bold text-slate-700 dark:text-white/80">{labels.visualMotifsLabel}</h3>
                     <div className="flex flex-wrap gap-1">
                       {storyResult.visual_motifs.map((motif, i) => (
-                        <span key={i} className={`text-xs px-2 py-1 rounded-full bg-${token.themeColor}-100 dark:bg-${token.themeColor}-500/10 text-${token.themeColor}-700 dark:text-${token.themeColor}-400`}>
+                        <span key={i} className={`text-xs px-2 py-1 rounded-full ${classes.bgSubtle} ${classes.text}`}>
                           {motif}
                         </span>
                       ))}
@@ -1012,7 +1012,7 @@ function StoryArchitectContent() {
           {/* Empty State */}
           {!stage && !storyResult && !displayError && (
             <div className="flex flex-col items-center justify-center h-full min-h-[var(--layout-panel-min-height)] text-center">
-              <Layers className={`w-16 h-16 text-${token.themeColor}-500/30 dark:text-${token.themeColor}-400/30 mb-4`} />
+              <Layers className={`w-16 h-16 ${classes.text} opacity-30 mb-4`} />
               <h3 className="text-xl font-bold text-slate-400 dark:text-white/60 mb-2">{labels.emptyStateTitle}</h3>
               <p className="text-slate-400 dark:text-white/40 text-sm max-w-md">
                 {labels.emptyStateDesc2}

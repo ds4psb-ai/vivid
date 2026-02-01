@@ -1730,6 +1730,95 @@ html.lenis body {
   box-shadow: 0 0 20px rgba(255, 0, 60, 0.1);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   DNA LAB V7 UTILITIES - Neon Red (#FF003C) Theme
+   Pre-Phase 0-C: Standardized utility classes for DNA Lab components
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Text accent color */
+.dna-accent {
+  color: var(--stitch-primary);
+}
+
+/* Background accent - solid */
+.dna-bg-accent {
+  background-color: var(--stitch-primary);
+}
+
+/* Background accent - subtle with transparency */
+.dna-bg-accent-subtle {
+  background-color: color-mix(in oklch, var(--stitch-primary) 20%, transparent);
+}
+
+/* Border accent - solid */
+.dna-border-accent {
+  border-color: var(--stitch-primary);
+}
+
+/* Border accent - subtle with transparency */
+.dna-border-accent-subtle {
+  border-color: color-mix(in oklch, var(--stitch-primary) 50%, transparent);
+}
+
+/* Focus ring accent */
+.dna-ring-accent {
+  --tw-ring-color: color-mix(in oklch, var(--stitch-primary) 50%, transparent);
+}
+
+/* Gradient background - primary to accent */
+.dna-gradient {
+  background: linear-gradient(135deg, var(--stitch-primary), var(--stitch-primary-accent, #FF1A4D));
+}
+
+/* DNA Lab card - glassmorphism with neon red accent */
+.dna-card {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid color-mix(in oklch, var(--stitch-primary) 20%, transparent);
+  border-radius: 1rem;
+}
+
+/* DNA Lab input - themed focus state */
+.dna-input {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.5rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.dna-input:focus {
+  border-color: color-mix(in oklch, var(--stitch-primary) 50%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--stitch-primary) 20%, transparent);
+  outline: none;
+}
+
+/* DNA Lab button - gradient with glow */
+.dna-btn {
+  background: linear-gradient(135deg, var(--stitch-primary), var(--stitch-primary-dark));
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 0 15px rgba(255, 0, 60, 0.3);
+  transition: all 0.2s ease;
+}
+
+.dna-btn:hover {
+  box-shadow: 0 0 25px rgba(255, 0, 60, 0.5);
+  transform: translateY(-1px);
+}
+
+.dna-btn:active {
+  transform: scale(0.98);
+}
+
+.dna-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 /* Clip Diagonal - For hero sections */
 .clip-diagonal {
   clip-path: polygon(0 0, 100% 0, 100% 85%, 0% 100%);

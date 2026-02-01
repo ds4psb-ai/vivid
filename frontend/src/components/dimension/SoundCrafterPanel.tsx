@@ -647,7 +647,7 @@ function StageIndicator({
                 className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all
                 ${
                   isActive || isPast
-                    ? `bg-[var(--bg-0)] border-${themeColor}-500 text-${themeColor}-500`
+                    ? "bg-[var(--bg-0)] border-[var(--stitch-primary)] text-[var(--stitch-primary)]"
                     : "bg-[var(--bg-0)] border-[var(--border-muted)] text-[var(--fg-subtle)]"
                 }`}
               >

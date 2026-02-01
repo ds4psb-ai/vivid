@@ -1035,7 +1035,7 @@ function StageIndicator({
     guide: string;
   };
 }) {
-  const activeClass = `text-${themeColor}-400 font-bold`;
+  const activeClass = "text-[var(--stitch-primary)] font-bold";
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between text-xs text-slate-500 dark:text-white/50">
