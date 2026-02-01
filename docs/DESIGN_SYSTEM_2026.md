@@ -3,7 +3,7 @@
 > 2026년 기준 최신 표준/가이드 반영 + Crebit Studio 서비스 특화 개선안
 > **Status**: ✅ **구현 완료** (6-Week UX Roadmap 배포됨)
 
-*업데이트: 2026-01-19 (Initial) → 2026-06-30 (Final Implementation)*  
+*업데이트: 2026-01-19 (Initial) → 2026-02-02 (V7 Mega App Theme)*
 *작성: Design Systems Research (MCP + Web)*
 
 
@@ -189,7 +189,49 @@ const appColor = (appId, theme) => {
 };
 ```
 
-### 3.5 철학 기반 시스템 토큰 (필수)
+### 3.5 V7 Mega App Theme (2026-02-02 적용)
+
+> **변경 사항**: 모든 메가앱(DNA Lab, Story Engine, Production)을 **Neon Red (#FF003C)** 테마로 통일
+
+**목적**
+- 3개 메가앱 간 시각적 일관성 확보
+- 브랜드 아이덴티티 강화 (Crebit = Neon Red)
+- CSS 변수 기반 테마 관리로 유지보수성 향상
+
+**테마 정의 (`frontend/src/components/mega-app/constants.ts`)**
+
+```typescript
+export const MEGA_APP_THEMES: Record<MegaAppId, MegaAppTheme> = {
+  "dna-lab": {
+    hue: 0,  // Red
+    glowColor: "oklch(0.62 0.28 20 / 0.3)",
+  },
+  "story-engine": {
+    hue: 0,  // Red (기존: purple/pink)
+    glowColor: "oklch(0.62 0.28 20 / 0.3)",
+  },
+  "production": {
+    hue: 0,  // Red (기존: emerald/cyan)
+    glowColor: "oklch(0.62 0.28 20 / 0.3)",
+  },
+};
+```
+
+**CSS 변수 마이그레이션**
+- 모든 하드코딩된 색상을 CSS 변수로 전환
+- `--stitch-primary`, `--stitch-glow` 등 통합 변수 사용
+- `StoryEngineStepPanel`, `ProductionStepPanel`, `UnifiedPromptPanel` 마이그레이션 완료
+
+**이전 테마 (레거시)**
+| 앱 | 이전 색상 | 새 색상 |
+|---|---|---|
+| DNA Lab | Neon Red | Neon Red (유지) |
+| Story Engine | Purple/Pink/Fuchsia | Neon Red |
+| Production | Emerald/Cyan/Green | Neon Red |
+
+---
+
+### 3.6 철학 기반 시스템 토큰 (필수)
 
 **Evidence / Provenance**
 - `--evidence-badge-bg`, `--evidence-badge-fg`
@@ -630,7 +672,7 @@ Adaptive Glass는 **표준 기능**이지만, `blur/backdrop-filter`는 GPU 리�
 
 ## 결론
 
-Crebit Studio 디자인 시스템은 **2026년 표준을 흡수한 토큰 중심 구조**로 개편될 준비가 되어 있습니다. 이 문서의 업그레이드를 적용하면:
+Crebit Studio 디자인 시스템은 **2026년 표준을 흡수한 토큰 중심 구조**로 개편되었습니다. 최신 업그레이드를 통해:
 
 - 디자인↔개발 간 토큰 동기화
 - 다크/라이트/고대비의 체계적 대응
@@ -638,9 +680,10 @@ Crebit Studio 디자인 시스템은 **2026년 표준을 흡수한 토큰 중심
 - **Evidence-first / Sealed Capsule / Credit-First** UX를 토큰/컴포넌트로 고정
 - Chat-first + Flow-first 구조의 일관성 강화
 - AppRegistry 기반 Dimension/앱 컬러 정합성 확보
+- **V7 Mega App Theme**: 모든 메가앱(DNA Lab, Story Engine, Production)을 Neon Red로 통일
 
-을 동시에 달성할 수 있습니다.
+을 동시에 달성했습니다.
 
 ---
 
-*문서 업데이트: 2026-01-18*
+*문서 업데이트: 2026-02-02*

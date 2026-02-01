@@ -1,7 +1,7 @@
 # Vivid Documentation Master Index
 
-> **Version**: 1.3
-> **Last Updated**: 2026-01-25
+> **Version**: 1.4
+> **Last Updated**: 2026-02-02
 > **Purpose**: 전체 문서 네비게이션 및 SSoT 참조
 
 ---
@@ -31,7 +31,7 @@
 | [RAG_RELIABILITY.md](./RAG_RELIABILITY.md) | RAG 시스템 신뢰성 가이드 | ✅ Active |
 | [PANEL_DESIGN_UNITY_SPEC.md](./PANEL_DESIGN_UNITY_SPEC.md) | Compound Component System | ✅ Active |
 | [UQSL_IMPLEMENTATION_SPEC.md](./UQSL_IMPLEMENTATION_SPEC.md) | Universal Quality Selection Layer | ✅ Active |
-| [DESIGN_SYSTEM_2026.md](./DESIGN_SYSTEM_2026.md) | **디자인 시스템 SSoT (토큰, OKLCH, 철학)** | ✅ Active |
+| [DESIGN_SYSTEM_2026.md](./DESIGN_SYSTEM_2026.md) | **디자인 시스템 SSoT (V7 Neon Red, OKLCH, 철학)** | ✅ Active |
 | [SSOT_DECISIONS_LOG.md](./docs/SSOT_DECISIONS_LOG.md) | **IP-First 아키텍처 SSoT 결정 로그** | ✅ Active |
 
 ---
@@ -62,6 +62,8 @@
 | [DIMENSION_APP_MACRO_PLANNING_2026.md](./DIMENSION_APP_MACRO_PLANNING_2026.md) | Dimension 앱 매크로 플래닝 | ✅ Active |
 | [DIMENSION_PANEL_UX_AUDIT_2026.md](./DIMENSION_PANEL_UX_AUDIT_2026.md) | UX 오디트 2026 | ✅ Active |
 | [DIMENSION_APP_AUDIT_REPORT_2026.md](./DIMENSION_APP_AUDIT_REPORT_2026.md) | **전문가 워크플로우 vs Vivid 비교 분석** | ✅ Active |
+| [DNA_LAB_UX_MIGRATION_STRATEGY.md](./DNA_LAB_UX_MIGRATION_STRATEGY.md) | **DNA Lab V5/V6/V7 UX 마이그레이션 전략** | ✅ Active |
+| [DNA_LAB_DESIGN_BRIEF_V2.md](./DNA_LAB_DESIGN_BRIEF_V2.md) | DNA Lab 디자인 브리프 V2 | ✅ Active |
 
 ---
 
@@ -204,6 +206,8 @@
 
 | 버전 | 날짜 | 변경 |
 |------|------|------|
+| 1.4 | 2026-02-02 | V7 Neon Red 테마 통일, DNA Lab UX 마이그레이션 문서 추가, 5,000+ lines dead code 제거 |
+| 1.3 | 2026-01-25 | 메가앱 아키텍처 문서화, 핸드오버 문서 추가 |
 | 1.2 | 2026-01-24 | 레거시 패널 11개 삭제, API 타입 모듈화, i18n 동적 로더, Deprecated Director API 제거 |
 | 1.1 | 2026-01-18 | Reference Library, OTEL 통합 |
 | 1.0 | 2026-01-17 | 초기 생성, 13개 앱 및 P0-P7 완료 반영 |
