@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 
@@ -80,7 +81,7 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: isDev
               ? "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: blob:; media-src 'self' https: blob:; connect-src 'self' ws: wss: http: https:; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self'; frame-ancestors 'none';"
-              : "default-src 'self'; script-src 'self' 'unsafe-inline' https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: blob:; media-src 'self' https: blob:; connect-src 'self' https: wss://vercel.live; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://vercel.live; frame-ancestors 'none'; upgrade-insecure-requests;",
+              : "default-src 'self'; script-src 'self' 'unsafe-inline' https://vercel.live https://*.sentry.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: blob:; media-src 'self' https: blob:; connect-src 'self' https: wss://vercel.live https://*.ingest.sentry.io; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://vercel.live; frame-ancestors 'none'; upgrade-insecure-requests;",
           },
           // HSTS - enforce HTTPS (production only effective)
           {
@@ -186,4 +187,29 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Wrap with Sentry configuration
+export default withSentryConfig(nextConfig, {
+  // For all available options, see:
+  // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
+
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+
+  // Only print logs in CI
+  silent: !process.env.CI,
+
+  // Upload source maps for better error stack traces
+  // Requires SENTRY_AUTH_TOKEN environment variable
+  sourcemaps: {
+    deleteSourcemapsAfterUpload: true,
+  },
+
+  // Disable Sentry telemetry
+  telemetry: false,
+
+  // Automatically tree-shake Sentry logger statements
+  widenClientFileUpload: true,
+
+  // Route browser requests to Sentry through a Next.js rewrite to avoid ad-blockers
+  tunnelRoute: "/monitoring",
+});
