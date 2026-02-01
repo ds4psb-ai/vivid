@@ -293,16 +293,16 @@ ${output.suggestions ? (output.suggestions as string[]).join("\n- ") : "Use defa
         <ChainDataInput
           currentDimension={DIMENSION_KEY}
           onApplyData={handleApplyChainData}
-          themeColor="fuchsia"
+          themeColor="rose"
         />
       )}
 
       {/* Upstream Data Banner - hidden in basic mode */}
       {disclosureLevel !== "basic" && hasUpstreamData && (
-        <div className="p-3 rounded-xl bg-fuchsia-500/10 border border-fuchsia-500/20 mb-3">
+        <div className="p-3 rounded-xl bg-[var(--stitch-primary)]/10 border border-[var(--stitch-primary)]/20 mb-3">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-fuchsia-500 animate-pulse" />
-            <span className="text-xs font-medium text-fuchsia-400">
+            <span className="w-2 h-2 rounded-full bg-[var(--stitch-primary)] animate-pulse" />
+            <span className="text-xs font-medium text-[var(--stitch-primary)]">
               Story Engine 데이터 감지됨 - 자동 적용됨
             </span>
           </div>
@@ -341,7 +341,7 @@ ${output.suggestions ? (output.suggestions as string[]).join("\n- ") : "Use defa
                 disabled={combinedLoading}
                 className={`p-3 rounded-lg border text-left transition-all ${
                   targetPlatform === platform.value
-                    ? "bg-fuchsia-500/20 border-fuchsia-500/50 text-white"
+                    ? "bg-[var(--stitch-primary)]/20 border-[var(--stitch-primary)]/50 text-white"
                     : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
                 }`}
               >
@@ -408,8 +408,8 @@ ${output.suggestions ? (output.suggestions as string[]).join("\n- ") : "Use defa
 
           {/* Auteur Key */}
           {auteurKey && (
-            <div className="p-2 rounded-md bg-fuchsia-500/10 border border-fuchsia-500/20">
-              <span className="text-xs text-fuchsia-400">
+            <div className="p-2 rounded-md bg-[var(--stitch-primary)]/10 border border-[var(--stitch-primary)]/20">
+              <span className="text-xs text-[var(--stitch-primary)]">
                 거장 스타일: <strong>{auteurKey}</strong> (DNA Lab에서 자동 적용)
               </span>
             </div>
@@ -428,7 +428,7 @@ ${output.suggestions ? (output.suggestions as string[]).join("\n- ") : "Use defa
       <button
         onClick={handleGenerate}
         disabled={!sceneDescription.trim() || sceneDescription.length < 10 || combinedLoading}
-        className="w-full px-4 py-3 bg-gradient-to-r from-fuchsia-500 to-pink-500 text-white rounded-lg font-medium hover:from-fuchsia-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+        className="w-full px-4 py-3 bg-[var(--stitch-primary)] text-white rounded-lg font-medium hover:bg-[var(--stitch-primary-dark)] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
       >
         {combinedLoading ? (
           <>
@@ -451,7 +451,7 @@ ${output.suggestions ? (output.suggestions as string[]).join("\n- ") : "Use defa
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center justify-between text-white text-sm">
                 <div className="flex items-center gap-2">
-                  <Wand2 className="w-4 h-4 text-fuchsia-400" />
+                  <Wand2 className="w-4 h-4 text-[var(--stitch-primary)]" />
                   생성된 프롬프트
                 </div>
                 <button

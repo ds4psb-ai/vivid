@@ -75,8 +75,8 @@ function OverviewHeader({
     <div className={cn("flex flex-col gap-2", className)}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
-            <BookOpen className="w-5 h-5 text-purple-400" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--stitch-primary)]/20 to-[var(--stitch-primary-accent)]/20 flex items-center justify-center">
+            <BookOpen className="w-5 h-5 text-[var(--stitch-primary)]" />
           </div>
           <div>
             <h1 className="text-lg font-semibold text-white">
@@ -91,7 +91,7 @@ function OverviewHeader({
         {/* DNA Lab connection status */}
         <div className="flex items-center gap-2">
           {hasDNALabData ? (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--stitch-primary)]/10 text-[var(--stitch-primary)] text-xs">
               <Link className="w-3.5 h-3.5" />
               <span>DNA Lab 연결됨</span>
             </div>
@@ -128,7 +128,7 @@ function DataTag({ label, available }: { label: string; available: boolean }) {
       className={cn(
         "text-xs px-2 py-0.5 rounded flex items-center gap-1",
         available
-          ? "bg-emerald-500/10 text-emerald-400"
+          ? "bg-[var(--stitch-primary)]/10 text-[var(--stitch-primary)]"
           : "bg-white/5 text-white/40"
       )}
     >
@@ -198,14 +198,14 @@ function ProductionBridgeBanner({
   return (
     <div
       className={cn(
-        "p-4 rounded-xl bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20",
+        "p-4 rounded-xl bg-gradient-to-r from-[var(--stitch-primary)]/10 to-[var(--stitch-primary-accent)]/10 border border-[var(--stitch-primary)]/20",
         className
       )}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-            <Clapperboard className="w-5 h-5 text-emerald-400" />
+          <div className="w-10 h-10 rounded-lg bg-[var(--stitch-primary)]/10 flex items-center justify-center">
+            <Clapperboard className="w-5 h-5 text-[var(--stitch-primary)]" />
           </div>
           <div>
             <h3 className="text-sm font-medium text-white">
@@ -218,7 +218,7 @@ function ProductionBridgeBanner({
         </div>
         <button
           onClick={onGoToProduction}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:opacity-90 transition-opacity"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-[var(--stitch-primary)] text-white hover:opacity-90 transition-opacity"
         >
           Production으로 이동
           <ArrowRight className="w-4 h-4" />
@@ -261,7 +261,7 @@ function QuickActionBar({
       {hasDNALabData && onStartFromFirst && (
         <button
           onClick={onStartFromFirst}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90 transition-opacity"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-[var(--stitch-primary)] text-white hover:opacity-90 transition-opacity"
         >
           스토리 설계 시작
           <ArrowRight className="w-4 h-4" />

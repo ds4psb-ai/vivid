@@ -98,7 +98,7 @@ export function StoryEngineStepPanel({
           {/* Available inputs */}
           {hasInputs && (
             <div className="flex items-center flex-wrap gap-2 text-xs text-white/60 mb-1">
-              <span className="text-emerald-400">입력 데이터:</span>
+              <span className="text-[var(--stitch-primary)]">입력 데이터:</span>
               {Object.keys(inputData).map((inputKey) => {
                 const source = CHAIN_DATA_SOURCE_MAP[inputKey];
                 const isExternal = source?.app === "dna-lab";
@@ -110,7 +110,7 @@ export function StoryEngineStepPanel({
                       "px-2 py-0.5 rounded flex items-center gap-1",
                       isExternal
                         ? "bg-cyan-500/10 text-cyan-400"
-                        : "bg-emerald-500/10 text-emerald-400"
+                        : "bg-[var(--stitch-primary)]/10 text-[var(--stitch-primary)]"
                     )}
                   >
                     {getInputLabel(inputKey)}
@@ -155,7 +155,7 @@ export function StoryEngineStepPanel({
 
               {/* AI inference hint */}
               {canInfer && (
-                <span className="ml-2 px-2 py-0.5 bg-purple-500/10 text-purple-400 rounded flex items-center gap-1">
+                <span className="ml-2 px-2 py-0.5 bg-[var(--stitch-primary)]/10 text-[var(--stitch-primary)] rounded flex items-center gap-1">
                   <Sparkles className="w-3 h-3" />
                   AI 추론 가능
                 </span>
@@ -170,11 +170,11 @@ export function StoryEngineStepPanel({
 
       {/* Production Bridge (for final step when complete) */}
       {shouldShowProductionBridge && hasSystemPromptResult && (
-        <div className="px-4 py-3 border-t border-white/10 bg-gradient-to-r from-green-500/10 via-transparent to-cyan-500/10">
+        <div className="px-4 py-3 border-t border-white/10 bg-gradient-to-r from-[var(--stitch-primary)]/10 via-transparent to-[var(--stitch-primary-accent)]/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/20">
-                <Rocket className="w-5 h-5 text-green-400" />
+              <div className="p-2 rounded-lg bg-[var(--stitch-primary)]/20">
+                <Rocket className="w-5 h-5 text-[var(--stitch-primary)]" />
               </div>
               <div>
                 <p className="text-sm font-medium text-white">시스템 프롬프트 완료!</p>
@@ -185,7 +185,7 @@ export function StoryEngineStepPanel({
             </div>
             <button
               onClick={goToProduction}
-              className="flex items-center gap-2 px-4 py-2 bg-green-500/20 text-green-300 rounded-lg hover:bg-green-500/30 transition-colors font-medium text-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--stitch-primary)]/20 text-[var(--stitch-primary)] rounded-lg hover:bg-[var(--stitch-primary)]/30 transition-colors font-medium text-sm"
             >
               <span>Production으로 이동</span>
               <ArrowRight className="w-4 h-4" />

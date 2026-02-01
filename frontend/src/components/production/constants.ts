@@ -139,22 +139,24 @@ export interface ProductionChainOutput {
 
 /**
  * Theme configuration for Production
+ * V7 Design: Unified Neon Red theme
  */
 export const PRODUCTION_THEME = {
-  hue: 148, // Green (production/output theme)
-  primaryColor: "oklch(0.64 0.18 148)",
-  glowColor: "oklch(0.64 0.18 148 / 0.3)",
-  gradientFrom: "from-green-500/20",
-  gradientTo: "to-cyan-500/20",
+  hue: 0, // Neon Red (V7 unified theme)
+  primaryColor: "oklch(0.62 0.28 20)",
+  glowColor: "oklch(0.62 0.28 20 / 0.3)",
+  gradientFrom: "from-[var(--stitch-primary)]/20",
+  gradientTo: "to-[var(--stitch-primary-accent)]/20",
 };
 
 /**
  * Step theme colors (for visual distinction)
+ * V7 Design: Unified Neon Red theme with subtle variations
  */
 export const PRODUCTION_STEP_THEMES: Record<ProductionStepId, { hue: number; color: string }> = {
-  veo: { hue: 148, color: "oklch(0.7 0.15 148)" }, // Green
-  kling: { hue: 30, color: "oklch(0.7 0.15 30)" }, // Orange
-  suno: { hue: 0, color: "oklch(0.7 0.15 0)" }, // Red
+  veo: { hue: 0, color: "oklch(0.62 0.28 20)" }, // Neon Red
+  kling: { hue: 5, color: "oklch(0.60 0.26 15)" }, // Neon Red variant
+  suno: { hue: 10, color: "oklch(0.58 0.24 10)" }, // Neon Red variant
 };
 
 /**

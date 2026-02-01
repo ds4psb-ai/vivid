@@ -121,7 +121,7 @@ function ProductionLoadingFallback() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-black">
       <div className="flex flex-col items-center gap-4">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 animate-pulse" />
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--stitch-primary)]/20 to-[var(--stitch-primary-accent)]/20 animate-pulse" />
         <div className="text-sm text-white/50">Production 로딩 중...</div>
       </div>
     </div>

@@ -141,23 +141,25 @@ export interface StoryEngineChainOutput {
 
 /**
  * Theme configuration for Story Engine
+ * V7 Design: Unified Neon Red theme
  */
 export const STORY_ENGINE_THEME = {
-  hue: 270, // Purple (story/creative theme)
-  primaryColor: "oklch(0.64 0.18 270)",
-  glowColor: "oklch(0.64 0.18 270 / 0.3)",
-  gradientFrom: "from-purple-500/20",
-  gradientTo: "to-pink-500/20",
+  hue: 0, // Neon Red (V7 unified theme)
+  primaryColor: "oklch(0.62 0.28 20)",
+  glowColor: "oklch(0.62 0.28 20 / 0.3)",
+  gradientFrom: "from-[var(--stitch-primary)]/20",
+  gradientTo: "to-[var(--stitch-primary-accent)]/20",
 };
 
 /**
  * Step theme colors (for visual distinction)
+ * V7 Design: Unified Neon Red theme with slight variations
  *
  * Phase 1-3: Reduced to 2 steps
  */
 export const STORY_ENGINE_STEP_THEMES: Record<StoryEngineStepId, { hue: number; color: string }> = {
-  story: { hue: 270, color: "oklch(0.7 0.15 270)" }, // Purple
-  prompt: { hue: 320, color: "oklch(0.7 0.15 320)" }, // Pink
+  story: { hue: 0, color: "oklch(0.62 0.28 20)" }, // Neon Red
+  prompt: { hue: 10, color: "oklch(0.60 0.26 15)" }, // Neon Red variant
 };
 
 /**

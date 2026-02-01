@@ -131,7 +131,7 @@ function ProductionInputBanner({
       {/* Available inputs */}
       {hasInputs && (
         <div className="flex items-center flex-wrap gap-2 text-xs text-white/60 mb-1">
-          <span className="text-emerald-400">입력 데이터:</span>
+          <span className="text-[var(--stitch-primary)]">입력 데이터:</span>
           {Object.keys(inputData).map((inputKey) => {
             const source = CHAIN_DATA_SOURCE_MAP[inputKey];
             const isFromStoryEngine = source?.app === "story-engine";
@@ -146,7 +146,7 @@ function ProductionInputBanner({
                     ? "bg-purple-500/10 text-purple-400"
                     : isFromDNALab
                     ? "bg-cyan-500/10 text-cyan-400"
-                    : "bg-emerald-500/10 text-emerald-400"
+                    : "bg-[var(--stitch-primary)]/10 text-[var(--stitch-primary)]"
                 )}
               >
                 {getInputLabel(inputKey)}
@@ -174,7 +174,7 @@ function ProductionInputBanner({
                 className={cn(
                   "px-2 py-0.5 rounded transition-colors flex items-center gap-1",
                   isFromStoryEngine
-                    ? "bg-purple-500/10 text-purple-400 hover:bg-purple-500/20"
+                    ? "bg-[var(--stitch-primary)]/10 text-[var(--stitch-primary)] hover:bg-[var(--stitch-primary)]/20"
                     : "bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20"
                 )}
               >
@@ -208,12 +208,12 @@ function ProductionCompletionBar({
   const step = PRODUCTION_STEPS_MAP[stepId];
 
   return (
-    <div className="px-4 py-3 border-t border-white/10 bg-gradient-to-r from-green-500/10 via-transparent to-cyan-500/10">
+    <div className="px-4 py-3 border-t border-white/10 bg-gradient-to-r from-[var(--stitch-primary)]/10 via-transparent to-[var(--stitch-primary-accent)]/10">
       <div className="flex items-center justify-between flex-wrap gap-3">
         {/* Success message */}
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-green-500/20">
-            <Rocket className="w-5 h-5 text-green-400" />
+          <div className="p-2 rounded-lg bg-[var(--stitch-primary)]/20">
+            <Rocket className="w-5 h-5 text-[var(--stitch-primary)]" />
           </div>
           <div>
             <p className="text-sm font-medium text-white">{step.label} 생성 완료!</p>
@@ -248,7 +248,7 @@ function ProductionCompletionBar({
           {/* Gallery button */}
           <button
             onClick={onGoToGallery}
-            className="flex items-center gap-2 px-4 py-2 bg-green-500/20 text-green-300 rounded-lg hover:bg-green-500/30 transition-colors font-medium text-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-[var(--stitch-primary)]/20 text-[var(--stitch-primary)] rounded-lg hover:bg-[var(--stitch-primary)]/30 transition-colors font-medium text-sm"
           >
             <FolderOpen className="w-4 h-4" />
             <span>갤러리에서 보기</span>
