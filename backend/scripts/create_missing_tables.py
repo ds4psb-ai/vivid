@@ -41,7 +41,6 @@ from app.models_analytics import *  # noqa: F401, F403
 from app.models_dlq import *  # noqa: F401, F403
 from app.models_constellation import *  # noqa: F401, F403
 from app.models_ip_chat import *  # noqa: F401, F403
-from app.models_mcp import *  # noqa: F401, F403
 from app.models_tenant import *  # noqa: F401, F403
 from app.models_outlier import *  # noqa: F401, F403
 from app.models_personalization import *  # noqa: F401, F403

@@ -220,7 +220,6 @@ async def init_db(drop_all: bool = False) -> None:
         import app.models_dlq  # noqa: F401
         import app.models_constellation  # noqa: F401
         import app.models_ip_chat  # noqa: F401
-        import app.models_mcp  # noqa: F401
         import app.models_tenant  # noqa: F401
         import app.models_outlier  # noqa: F401
         import app.models_personalization  # noqa: F401
