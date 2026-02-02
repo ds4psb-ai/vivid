@@ -2,25 +2,64 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { api, PromptyTemplate } from "@/lib/api";
+import { api, PromptyTemplate, AuthSession } from "@/lib/api";
+import PromptyDashboard from "@/components/prompty/PromptyDashboard";
 
 export default function PromptyHomePage() {
+  const [session, setSession] = useState<AuthSession | null>(null);
   const [featuredTemplates, setFeaturedTemplates] = useState<PromptyTemplate[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadTemplates() {
+    async function init() {
       try {
-        const response = await api.listPromptyTemplates(1, 6, { featured_only: true });
-        setFeaturedTemplates(response.items);
+        // Check auth session
+        const authSession = await api.getSession();
+        setSession(authSession);
+
+        // Only load templates for landing page (not logged in)
+        if (!authSession.authenticated) {
+          const response = await api.listPromptyTemplates(1, 6, { featured_only: true });
+          setFeaturedTemplates(response.items);
+        }
       } catch (error) {
-        console.error("Failed to load templates:", error);
+        console.error("Failed to initialize:", error);
+        // On auth error, show landing page
+        try {
+          const response = await api.listPromptyTemplates(1, 6, { featured_only: true });
+          setFeaturedTemplates(response.items);
+        } catch {
+          // Ignore template load error
+        }
       } finally {
         setLoading(false);
       }
     }
-    loadTemplates();
+    init();
   }, []);
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="animate-pulse space-y-8">
+          <div className="h-48 bg-muted rounded-xl" />
+          <div className="grid md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-64 bg-muted rounded-xl" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Logged in -> Show Dashboard
+  if (session?.authenticated) {
+    return <PromptyDashboard />;
+  }
+
+  // Not logged in -> Show Landing (PromptyLanding inlined)
 
   return (
     <div className="container mx-auto px-4 py-8">

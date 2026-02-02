@@ -19,3 +19,9 @@ export { QuickResumeBanner } from "./QuickResumeBanner";
 // Phase 6: Error Handling & UX
 export { TikitakaErrorBoundary } from "./TikitakaErrorBoundary";
 export { TikitakaSkeleton } from "./TikitakaSkeleton";
+
+// Community Platform Components
+export { PromptyDashboard } from "./PromptyDashboard";
+export { VisibilitySettings, VisibilityBadge, VisibilityToggle } from "./VisibilitySettings";
+export { ProjectCard, ProjectCardCompact } from "./ProjectCard";
+export { ForkModal } from "./ForkModal";

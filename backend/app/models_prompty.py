@@ -26,6 +26,7 @@ class PromptyProject(Base):
         Index("ix_prompty_projects_template", "template_id"),
         Index("ix_prompty_projects_status", "status"),
         Index("ix_prompty_projects_created", "created_at"),
+        Index("ix_prompty_projects_visibility", "visibility"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -72,6 +73,19 @@ class PromptyProject(Base):
     # Status
     status: Mapped[str] = mapped_column(String(32), default="active")
     # active, paused, completed, archived
+
+    # Community visibility: private | prompts-only | full
+    # - private: only owner can see
+    # - prompts-only: community can see results/scores, prompts visible only after fork
+    # - full: everything is public
+    visibility: Mapped[str] = mapped_column(String(20), default="private")
+
+    # Fork tracking
+    forked_from_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
+    fork_count: Mapped[int] = mapped_column(Integer, default=0)
+
+    # Critique summary (denormalized for community display)
+    avg_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

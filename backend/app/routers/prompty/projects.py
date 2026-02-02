@@ -47,6 +47,7 @@ class ProjectUpdate(BaseModel):
     current_step: Optional[str] = None
     progress_percent: Optional[int] = Field(None, ge=0, le=100)
     status: Optional[str] = None
+    visibility: Optional[str] = Field(None, pattern="^(private|prompts-only|full)$")
 
 
 class ProjectResponse(BaseModel):
@@ -61,6 +62,10 @@ class ProjectResponse(BaseModel):
     current_step: str
     progress_percent: int
     status: str
+    visibility: str
+    forked_from_id: Optional[UUID]
+    fork_count: int
+    avg_score: Optional[float]
     created_at: datetime
     updated_at: datetime
     completed_at: Optional[datetime]
@@ -75,8 +80,12 @@ class ProjectListItem(BaseModel):
     description: Optional[str]
     thumbnail_url: Optional[str]
     current_stage: str
+    current_step: str
     progress_percent: int
     status: str
+    visibility: str
+    avg_score: Optional[float]
+    fork_count: int
     created_at: datetime
     updated_at: datetime
 
@@ -250,6 +259,8 @@ async def update_project_state(
         project.status = data.status
         if data.status == "completed":
             project.completed_at = datetime.utcnow()
+    if data.visibility is not None:
+        project.visibility = data.visibility
 
     project.updated_at = datetime.utcnow()
 
@@ -279,3 +290,77 @@ async def delete_project(
 
     await db.delete(project)
     await db.commit()
+
+
+# =============================================================================
+# FORK ENDPOINT
+# =============================================================================
+
+class ForkRequest(BaseModel):
+    """Fork request body."""
+    name: Optional[str] = Field(None, max_length=200)
+
+
+@router.post("/{project_id}/fork", response_model=ProjectResponse, status_code=201)
+async def fork_project(
+    project_id: UUID,
+    data: ForkRequest = ForkRequest(),
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    """Fork a public project.
+
+    Creates a new project based on the source project.
+    - Copies state/config from source
+    - Sets visibility to 'private'
+    - Tracks fork relationship
+    - Increments source fork_count
+    """
+    # Get source project
+    result = await db.execute(
+        select(PromptyProject).where(PromptyProject.id == project_id)
+    )
+    source = result.scalar_one_or_none()
+
+    if not source:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Check visibility - can only fork non-private projects (or own projects)
+    if source.visibility == "private" and source.user_id != user_id:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Create forked project
+    forked_name = data.name or f"{source.name} (Fork)"
+
+    # Copy state - reset progress for new project
+    forked_state = dict(source.state) if source.state else {}
+    # Reset step statuses to pending
+    if "stages" in forked_state:
+        for stage_data in forked_state["stages"].values():
+            if isinstance(stage_data, dict):
+                stage_data["status"] = "pending"
+    forked_state["last_activity"] = datetime.utcnow().isoformat()
+
+    forked = PromptyProject(
+        name=forked_name,
+        description=source.description,
+        user_id=user_id,
+        template_id=source.template_id,
+        state=forked_state,
+        current_stage=source.current_stage or "analysis",
+        current_step="",
+        progress_percent=0,
+        status="active",
+        visibility="private",  # Forked projects start as private
+        forked_from_id=source.id,
+    )
+
+    db.add(forked)
+
+    # Increment source fork count
+    source.fork_count += 1
+
+    await db.commit()
+    await db.refresh(forked)
+
+    return forked

@@ -2740,6 +2740,62 @@ class ApiClient {
   }
 
   // =========================================================================
+  // Prompty Community APIs
+  // =========================================================================
+
+  /**
+   * List community projects (public gallery)
+   */
+  async listCommunityProjects(
+    page: number = 1,
+    pageSize: number = 20,
+    options?: { sort?: "recent" | "top-scores" | "most-forked"; status?: "active" | "completed" }
+  ): Promise<PromptyCommunityListResponse> {
+    const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
+    if (options?.sort) params.set("sort", options.sort);
+    if (options?.status) params.set("status", options.status);
+    return this.request<PromptyCommunityListResponse>(`/api/prompty/community?${params}`);
+  }
+
+  /**
+   * Get community project details
+   */
+  async getCommunityProject(projectId: string): Promise<PromptyCommunityProject> {
+    return this.request<PromptyCommunityProject>(`/api/prompty/community/${projectId}`);
+  }
+
+  /**
+   * Fork a community project
+   */
+  async forkProject(projectId: string, name?: string): Promise<PromptyProject> {
+    return this.request<PromptyProject>(`/api/prompty/projects/${projectId}/fork`, {
+      method: "POST",
+      body: JSON.stringify({ name }),
+    });
+  }
+
+  /**
+   * [Instructor] List all student projects
+   */
+  async listInstructorProjects(
+    page: number = 1,
+    pageSize: number = 50,
+    options?: { sort?: "recent" | "user" | "score"; user_filter?: string }
+  ): Promise<PromptyCommunityListResponse> {
+    const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
+    if (options?.sort) params.set("sort", options.sort);
+    if (options?.user_filter) params.set("user_filter", options.user_filter);
+    return this.request<PromptyCommunityListResponse>(`/api/prompty/community/instructor/all?${params}`);
+  }
+
+  /**
+   * [Instructor] List all students
+   */
+  async listInstructorStudents(): Promise<{ students: string[]; total: number }> {
+    return this.request<{ students: string[]; total: number }>("/api/prompty/community/instructor/students");
+  }
+
+  // =========================================================================
   // Prompty Tikitaka APIs (6-step Dual AI Workflow)
   // =========================================================================
 
@@ -3626,9 +3682,15 @@ export interface PromptyProject {
   current_step: string;
   progress_percent: number;
   status: "active" | "paused" | "completed" | "archived";
+  visibility: "private" | "prompts-only" | "full";
+  forked_from_id?: string;
+  fork_count: number;
+  avg_score?: number;
   created_at: string;
   updated_at: string;
   completed_at?: string;
+  // Community-added fields (populated in community API)
+  user_name?: string;
 }
 
 export interface PromptyProjectCreate {
@@ -3646,10 +3708,42 @@ export interface PromptyProjectUpdate {
   current_step?: string;
   progress_percent?: number;
   status?: string;
+  visibility?: "private" | "prompts-only" | "full";
 }
 
 export interface PromptyProjectListResponse {
   items: PromptyProject[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+// Community types
+export interface PromptyCommunityProject {
+  id: string;
+  name: string;
+  description?: string;
+  thumbnail_url?: string;
+  user_id: string;
+  user_name?: string;
+  template_id?: string;
+  state?: Record<string, unknown>;  // Only available for 'full' visibility
+  current_stage: string;
+  current_step: string;
+  progress_percent: number;
+  status: string;
+  visibility: "private" | "prompts-only" | "full";
+  forked_from_id?: string;
+  avg_score?: number;
+  fork_count: number;
+  created_at: string;
+  updated_at: string;
+  completed_at?: string;
+  can_see_prompts: boolean;
+}
+
+export interface PromptyCommunityListResponse {
+  items: PromptyCommunityProject[];
   total: number;
   page: number;
   page_size: number;
