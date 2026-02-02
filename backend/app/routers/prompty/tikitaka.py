@@ -14,7 +14,7 @@ Frontend responsibilities:
 - Prompt templates (TIKITAKA_PROMPTS constant)
 - UI rendering and copy functionality
 """
-from typing import Optional, List, Dict, Literal
+from typing import Optional, List, Dict
 from uuid import UUID
 from datetime import datetime
 
@@ -243,7 +243,7 @@ async def get_current_state(
     tikitaka = state.get("tikitaka")
 
     if not tikitaka:
-        raise HTTPException(status_code=400, detail="Tikitaka workflow not started")
+        raise HTTPException(status_code=404, detail="Tikitaka workflow not started")
 
     return TikitakaCurrentResponse(
         tikitaka_id=tikitaka.get("tikitaka_id", ""),
@@ -281,7 +281,7 @@ async def advance_step(
     tikitaka = state.get("tikitaka")
 
     if not tikitaka:
-        raise HTTPException(status_code=400, detail="Tikitaka workflow not started")
+        raise HTTPException(status_code=404, detail="Tikitaka workflow not started")
 
     current_step = tikitaka.get("current_step", 1)
 
@@ -401,7 +401,7 @@ async def goto_step(
     tikitaka = state.get("tikitaka")
 
     if not tikitaka:
-        raise HTTPException(status_code=400, detail="Tikitaka workflow not started")
+        raise HTTPException(status_code=404, detail="Tikitaka workflow not started")
 
     # Log the goto action if reason provided
     if data.reason:
@@ -443,7 +443,7 @@ async def set_anchor_scene(
     tikitaka = state.get("tikitaka")
 
     if not tikitaka:
-        raise HTTPException(status_code=400, detail="Tikitaka workflow not started")
+        raise HTTPException(status_code=404, detail="Tikitaka workflow not started")
 
     tikitaka["anchor_scene_id"] = anchor_scene_id
     state["tikitaka"] = tikitaka

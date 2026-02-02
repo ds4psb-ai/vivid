@@ -10,6 +10,9 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<PromptyProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<PromptyProject | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     loadProjects();
@@ -36,6 +39,33 @@ export default function ProjectsPage() {
     } catch (error) {
       console.error("Failed to create project:", error);
       setCreating(false);
+    }
+  }
+
+  function openDeleteModal(project: PromptyProject, e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setProjectToDelete(project);
+    setDeleteModalOpen(true);
+  }
+
+  function closeDeleteModal() {
+    setDeleteModalOpen(false);
+    setProjectToDelete(null);
+  }
+
+  async function confirmDelete() {
+    if (!projectToDelete) return;
+
+    setDeleting(true);
+    try {
+      await api.deletePromptyProject(projectToDelete.id);
+      setProjects((prev) => prev.filter((p) => p.id !== projectToDelete.id));
+      closeDeleteModal();
+    } catch (error) {
+      console.error("Failed to delete project:", error);
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -128,9 +158,34 @@ export default function ProjectsPage() {
             <Link
               key={project.id}
               href={`/prompty/projects/${project.id}`}
-              className="group block rounded-xl border border-border bg-card p-6 hover:border-primary/50 transition"
+              className="group block rounded-xl border border-border bg-card p-6 hover:border-primary/50 transition relative"
             >
-              <div className="flex items-start justify-between mb-4">
+              {/* Delete Button */}
+              <button
+                onClick={(e) => openDeleteModal(project, e)}
+                className="absolute top-3 right-3 p-1.5 rounded-md text-muted-foreground hover:text-red-500 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition"
+                title="프로젝트 삭제"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M3 6h18" />
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                  <line x1="10" y1="11" x2="10" y2="17" />
+                  <line x1="14" y1="11" x2="14" y2="17" />
+                </svg>
+              </button>
+
+              <div className="flex items-start justify-between mb-4 pr-8">
                 <h3 className="font-semibold group-hover:text-primary transition line-clamp-1">
                   {project.name}
                 </h3>
@@ -166,6 +221,37 @@ export default function ProjectsPage() {
               </div>
             </Link>
           ))}
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && projectToDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card rounded-xl border border-border p-6 max-w-md w-full mx-4 shadow-lg">
+            <h3 className="text-lg font-semibold mb-2">프로젝트 삭제</h3>
+            <p className="text-muted-foreground mb-4">
+              <span className="font-medium text-foreground">{projectToDelete.name}</span>
+              을(를) 정말 삭제하시겠습니까?
+              <br />
+              <span className="text-sm text-red-500">이 작업은 되돌릴 수 없습니다.</span>
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={closeDeleteModal}
+                disabled={deleting}
+                className="px-4 py-2 border border-border rounded-lg hover:bg-accent transition disabled:opacity-50"
+              >
+                취소
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={deleting}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition disabled:opacity-50"
+              >
+                {deleting ? "삭제 중..." : "삭제"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
