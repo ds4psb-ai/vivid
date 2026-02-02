@@ -245,7 +245,7 @@ export default function ProjectWorkflowPage() {
               {guide.stages.length}
             </span>
             <Link
-              href={`/prompty/projects/${projectId}/critique`}
+              href={`/prompty/projects/${projectId}/critique?stage=${guide?.current_stage || ''}&step=${guide?.current_step || ''}`}
               className="px-4 py-2 border border-border rounded-lg hover:bg-accent transition text-sm"
             >
               Critique
@@ -444,7 +444,7 @@ export default function ProjectWorkflowPage() {
                         All steps completed. Check your critique results.
                       </p>
                       <Link
-                        href={`/prompty/projects/${projectId}/critique`}
+                        href={`/prompty/projects/${projectId}/critique?stage=${guide.current_stage}&step=${guide.current_step}`}
                         className="px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition"
                       >
                         View Critique Results
