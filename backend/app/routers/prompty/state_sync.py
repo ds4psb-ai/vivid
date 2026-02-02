@@ -54,7 +54,8 @@ class StateMdParsed(BaseModel):
 
 class StateSyncRequest(BaseModel):
     """Request to sync STATE.md content."""
-    state_md_content: str = Field(..., description="Raw STATE.md file content")
+    state_md_content: Optional[str] = Field(None, description="Raw STATE.md file content")
+    parsed_state: Optional[dict] = Field(None, description="Pre-parsed state JSON from frontend")
 
 
 class StateSyncResponse(BaseModel):
@@ -325,8 +326,40 @@ async def sync_state_from_local(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    # Parse STATE.md
-    parsed = parse_state_md(data.state_md_content)
+    # Parse STATE.md or use pre-parsed data
+    if data.parsed_state:
+        # Use pre-parsed data from frontend
+        parsed = StateMdParsed(
+            scenes=[
+                SceneProgress(
+                    scene=str(s.get("scene_number", "")),
+                    description=s.get("description", ""),
+                    image_status=s.get("image_path") or "-",
+                    video_status=s.get("video_path") or "-",
+                    status_emoji="✅ 확정" if s.get("status") == "completed" else "🔄 진행" if s.get("status") == "in_progress" else "⏳ 대기",
+                )
+                for s in data.parsed_state.get("scenes", [])
+            ],
+            stages=[
+                StageProgress(
+                    stage_id=f"stage{i+1}",
+                    name=p.get("name", ""),
+                    percent=p.get("percent", 0),
+                    bar=generate_progress_bar(p.get("percent", 0)),
+                )
+                for i, p in enumerate(data.parsed_state.get("overall_progress", []))
+            ],
+            current_task=data.parsed_state.get("current_task"),
+            anchor_scene=next(
+                (str(s.get("scene_number")) for s in data.parsed_state.get("scenes", []) if s.get("is_anchor")),
+                None
+            ),
+            tikitaka_count=0,
+        )
+    elif data.state_md_content:
+        parsed = parse_state_md(data.state_md_content)
+    else:
+        raise HTTPException(status_code=400, detail="Either state_md_content or parsed_state required")
 
     # Build state dict
     state = project.state or {}

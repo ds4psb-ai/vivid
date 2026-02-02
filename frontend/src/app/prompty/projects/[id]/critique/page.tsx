@@ -117,8 +117,7 @@ export default function CritiquePage() {
         fullNotes += `\n\n[개선 프롬프트]\n${result.improvedPrompt}`;
       }
 
-      await api.submitPromptyCritique({
-        project_id: projectId,
+      await api.submitPromptyCritique(projectId, {
         stage,
         step_id: stepId,
         scores: critiqueScores,
@@ -171,8 +170,7 @@ export default function CritiquePage() {
         };
       });
 
-      await api.submitPromptyCritique({
-        project_id: projectId,
+      await api.submitPromptyCritique(projectId, {
         stage,
         step_id: stepId,
         scores: critiqueScores,

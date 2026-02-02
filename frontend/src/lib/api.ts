@@ -2657,10 +2657,13 @@ class ApiClient {
   /**
    * Submit critique for a project step
    */
-  async submitPromptyCritique(data: PromptyCritiqueSubmit): Promise<PromptyCritique> {
+  async submitPromptyCritique(
+    projectId: string,
+    data: Omit<PromptyCritiqueSubmit, "project_id">
+  ): Promise<PromptyCritique> {
     return this.request<PromptyCritique>("/api/prompty/critique", {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify({ ...data, project_id: projectId }),
     });
   }
 
@@ -2705,14 +2708,20 @@ class ApiClient {
 
   /**
    * Sync local STATE.md content to database
+   * @param projectId - Project UUID
+   * @param stateData - Either raw STATE.md content (string) or parsed JSON object
    */
   async syncPromptyState(
     projectId: string,
-    stateMdContent: string
+    stateData: string | object
   ): Promise<PromptyStateSyncResponse> {
+    const body = typeof stateData === "string"
+      ? { state_md_content: stateData }
+      : { parsed_state: stateData };
+
     return this.request<PromptyStateSyncResponse>(`/api/prompty/state/${projectId}/sync`, {
       method: "POST",
-      body: JSON.stringify({ state_md_content: stateMdContent }),
+      body: JSON.stringify(body),
     });
   }
 
@@ -3675,10 +3684,15 @@ export interface PromptyCritiqueScore {
 }
 
 export interface PromptyCritiqueSubmit {
-  project_id: string;
+  project_id?: string;  // Optional - can be set by API method
   stage: string;
   step_id: string;
-  scores: Record<string, PromptyCritiqueScore>;
+  scores?: Record<string, PromptyCritiqueScore>;
+  scores_detail?: Record<string, number>;  // Alternative: direct score values
+  score?: number;  // Total score
+  verdict?: "PASS" | "REVISE" | "REJECT";
+  issues?: string[];
+  suggestions?: string[];
   notes?: string;
 }
 

@@ -1,0 +1,39 @@
+# Prompty Configuration
+# 프로젝트 기본 설정
+
+version: "2.0"
+
+# 기본 도구 설정
+defaults:
+  image_tool: "nanobanana"  # nanobanana | midjourney
+  video_tool: "kling"       # kling | sora
+  aspect_ratio: "9:16"      # 9:16 | 16:9 | 1:1
+
+# 키프레임 추출 설정
+keyframes:
+  default_count: 10
+  quality: 1  # 1-31, lower is better
+  format: "png"
+
+# ANCHOR 설정
+anchor:
+  priority: true
+  generate_first: true
+  reference_for_all_scenes: true
+
+# Critique 기준
+critique:
+  pass_threshold: 80
+  auto_revise_threshold: 60
+  dimensions:
+    - identity_accuracy      # 인물 정확도
+    - composition_match      # 구도 일치
+    - color_consistency      # 색감 일관성
+    - era_authenticity       # 시대 재현
+    - anchor_similarity      # ANCHOR 유사도
+
+# 파일 경로
+paths:
+  projects: "./projects"
+  templates: "./templates"
+  guides: "./guides"

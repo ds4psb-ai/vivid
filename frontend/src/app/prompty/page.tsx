@@ -32,7 +32,7 @@ export default function PromptyHomePage() {
         <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
           AI 없이도 98% 품질. Gemini CLI + Antigravity로 직접 만드는 바이럴 콘텐츠 가이드
         </p>
-        <div className="flex gap-4 justify-center">
+        <div className="flex gap-4 justify-center flex-wrap">
           <Link
             href="/prompty/templates"
             className="px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition"
@@ -45,6 +45,13 @@ export default function PromptyHomePage() {
           >
             내 프로젝트
           </Link>
+          <a
+            href="/api/prompty/download/package"
+            className="px-6 py-3 border border-border rounded-lg font-medium hover:bg-accent transition flex items-center gap-2"
+          >
+            <span>📦</span>
+            <span>프로젝트 패키지 다운로드</span>
+          </a>
         </div>
       </section>
 
