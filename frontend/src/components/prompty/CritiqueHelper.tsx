@@ -48,6 +48,11 @@ export function CritiqueHelper({
     Record<string, boolean>
   >({});
 
+  // 규칙 보기 상태 (아이템별)
+  const [expandedRules, setExpandedRules] = useState<
+    Record<string, boolean>
+  >({});
+
   const [saving, setSaving] = useState(false);
   const [markdownCopied, setMarkdownCopied] = useState(false);
 
@@ -122,6 +127,14 @@ export function CritiqueHelper({
     setExpandedDimensions((prev) => ({
       ...prev,
       [dimensionId]: !prev[dimensionId],
+    }));
+  }, []);
+
+  // 규칙 토글
+  const toggleRule = useCallback((itemId: string) => {
+    setExpandedRules((prev) => ({
+      ...prev,
+      [itemId]: !prev[itemId],
     }));
   }, []);
 
@@ -397,7 +410,7 @@ export function CritiqueHelper({
                           className="mt-1"
                         />
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-medium text-sm">
                               {item.label}
                             </span>
@@ -410,11 +423,30 @@ export function CritiqueHelper({
                             >
                               {isChecked ? "+" : ""}{item.weight}pt
                             </span>
+                            {item.suggestion && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleRule(item.id);
+                                }}
+                                className="text-xs px-2 py-0.5 bg-blue-500/10 text-blue-500 rounded hover:bg-blue-500/20 transition"
+                              >
+                                {expandedRules[item.id] ? "규칙 접기" : "규칙 보기"}
+                              </button>
+                            )}
                           </div>
                           <p className="text-xs text-muted-foreground">
                             {item.description}
                           </p>
-                          {!isChecked && (
+                          {expandedRules[item.id] && item.suggestion && (
+                            <div className="mt-2 p-2 bg-blue-500/5 border border-blue-500/20 rounded text-xs">
+                              <p className="font-medium text-blue-600 dark:text-blue-400 mb-1">개선 규칙:</p>
+                              <p className="text-blue-600/80 dark:text-blue-400/80">
+                                {item.suggestion}
+                              </p>
+                            </div>
+                          )}
+                          {!isChecked && !expandedRules[item.id] && (
                             <p className="text-xs text-orange-400 mt-1">
                               → {item.suggestion}
                             </p>

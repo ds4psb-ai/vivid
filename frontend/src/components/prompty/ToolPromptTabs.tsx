@@ -95,6 +95,16 @@ export function ToolPromptTabs({
           </div>
         </div>
 
+        {/* Example Values Warning */}
+        {activePrompt && (
+          <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+            <p className="text-sm text-amber-600 dark:text-amber-400">
+              <span className="font-medium">주의:</span> 아래 프롬프트에는 <strong>예시 값</strong>이 포함되어 있습니다.
+              본인 영상에 맞게 수정 후 사용하세요.
+            </p>
+          </div>
+        )}
+
         {/* Prompt */}
         {activePrompt ? (
           <pre className="p-4 bg-muted rounded-lg text-sm overflow-x-auto whitespace-pre-wrap font-mono max-h-96">
