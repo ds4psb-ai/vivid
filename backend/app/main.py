@@ -12,7 +12,7 @@ from app.database import init_db
 from app.routers.auth import router as auth_router
 from app.routers.credits import router as credits_router
 from app.routers.dimension import router as dimension_router
-from app.routers.agent import router as agent_router
+# [PIVOTED] from app.routers.agent import router as agent_router
 from app.routers.mcp import router as mcp_router
 from app.routers.mcp_v2 import router as mcp_v2_router
 from app.routers.health import router as health_router
@@ -20,9 +20,9 @@ from app.routers.user_settings import router as user_settings_router
 from app.routers.dashboard import router as dashboard_router
 from app.routers.feedback import router as feedback_router
 
-# Crebit (강의 판매 + 결제)
-from app.routers.crebit import router as crebit_router
-from app.routers.payment import router as payment_router
+# [PIVOTED] Crebit (강의 판매 + 결제) - prompty에서 불필요
+# from app.routers.crebit import router as crebit_router
+# from app.routers.payment import router as payment_router
 
 # Telemetry (4-Layer Ecosystem)
 from app.routers.telemetry import router as telemetry_router
@@ -39,8 +39,8 @@ from app.features.router import router as feature_flags_router
 # A/B Testing (Experimentation Infrastructure)
 from app.experiments.router import router as experiments_router
 
-# Settlements (Revenue Distribution)
-from app.routers.settlements import router as settlements_router
+# [PIVOTED] Settlements (Revenue Distribution) - prompty에서 불필요
+# from app.routers.settlements import router as settlements_router
 
 # Fork (Version Control & Fork Creation)
 from app.routers.fork import router as fork_router
@@ -48,11 +48,11 @@ from app.routers.fork import router as fork_router
 # Reviews (Approval Workflow)
 from app.routers.reviews import router as reviews_router
 
-# Sandbox (Isolated Execution)
-from app.routers.sandbox import router as sandbox_router
+# [PIVOTED] Sandbox (Isolated Execution) - prompty에서 불필요
+# from app.routers.sandbox import router as sandbox_router
 
-# Human Cloud (Creative Marketplace)
-from app.routers.humancloud import router as humancloud_router
+# [PIVOTED] Human Cloud (Creative Marketplace) - prompty에서 불필요
+# from app.routers.humancloud import router as humancloud_router
 
 # RAG (Vector Search)
 from app.routers.rag import router as rag_router
@@ -81,8 +81,8 @@ from app.routers.batch import router as batch_router
 # Content Metrics (Viral/Engagement Tracking)
 from app.routers.content_metrics import router as content_metrics_router
 
-# Affiliate (Referral System)
-from app.routers.affiliate import router as affiliate_router
+# [PIVOTED] Affiliate (Referral System) - prompty에서 불필요
+# from app.routers.affiliate import router as affiliate_router
 
 # Monitor (API Cost and Performance Tracking)
 from app.routers.monitor import router as monitor_router
@@ -93,8 +93,8 @@ from app.routers.admin import router as admin_router
 # Ops Audit (Admin Ops Logs)
 from app.routers.ops_audit import router as ops_audit_router
 
-# Run Token (App Execution Tokens)
-from app.routers.run_token import router as run_token_router
+# [PIVOTED] Run Token (App Execution Tokens) - prompty에서 불필요
+# from app.routers.run_token import router as run_token_router
 
 # Internal S2S (mTLS Protected)
 from app.routers.internal import router as internal_router
@@ -114,14 +114,14 @@ from app.routers.reference_library import router as reference_library_router
 # Intent Presets (Creative Intent API)
 from app.routers.intent import router as intent_router
 
-# Capsules (Direct Capsule Execution - P5)
-from app.routers.capsules import router as capsules_router
+# [PIVOTED] Capsules (Direct Capsule Execution - P5) - prompty에서 불필요
+# from app.routers.capsules import router as capsules_router
 
 # IP (Intellectual Property) - IP-First UX
 from app.routers.ip import router as ip_router
 from app.routers.ip_generation import router as ip_generation_router
 from app.routers.dmca import router as dmca_router
-from app.routers.ip_payout import router as ip_payout_router
+# [PIVOTED] from app.routers.ip_payout import router as ip_payout_router
 # Tool Recommendation (IP-First Coordination Phase 2.5)
 from app.routers.tool_recommendation import router as tool_recommendation_router
 
@@ -135,7 +135,7 @@ from app.routers.analytics_dashboard import router as analytics_dashboard_router
 # Phase 10: IP Character Chat + Marketplace + Tenant
 from app.routers.ip_chat import router as ip_chat_router
 from app.routers.marketplace import router as marketplace_router
-from app.routers.tenant import router as tenant_router
+# [PIVOTED] from app.routers.tenant import router as tenant_router
 
 # GraphQL Gateway (2026 Best Practices - P3.3)
 from app.graphql import graphql_router
@@ -143,20 +143,23 @@ from app.graphql import graphql_router
 # VPE (Visual Prompt Engineering)
 from app.routers.vpe import router as vpe_router
 
-# Story Engine (Narrative Generation)
-from app.routers.story_engine.router import router as story_engine_router
+# [PIVOTED] Story Engine (Narrative Generation) - prompty에서 불필요
+# from app.routers.story_engine.router import router as story_engine_router
 
-# Production Bridge (Video Generation - Veo, Kling, Suno)
-from app.routers.production.router import router as production_router
+# [PIVOTED] Production Bridge (Video Generation - Veo, Kling, Suno) - prompty에서 불필요
+# from app.routers.production.router import router as production_router
 
-# DNA Lab (Visual DNA Extraction & Analysis)
-from app.routers.dna_lab.router import router as dna_lab_router
+# [PIVOTED] DNA Lab (Visual DNA Extraction & Analysis) - prompty에서 불필요
+# from app.routers.dna_lab.router import router as dna_lab_router
 
 # Homepage (Homepage data aggregation)
 from app.routers.homepage import router as homepage_router
 
 # Chain Sessions (P7+: Workflow Chain Persistence)
 from app.routers.chain import router as chain_router
+
+# Prompty (AI-free Workflow Guide Platform)
+from app.routers.prompty import router as prompty_router
 
 from app.middleware.rate_limit import setup_rate_limiting, DefaultRateLimitMiddleware
 from app.middleware.mtls import MTLSMiddleware
@@ -484,8 +487,8 @@ app.include_router(dimension_router, prefix="/api/dimension", tags=["dimension"]
 # Layer 1: Teaching Tools (레거시 호환용 - deprecated)
 # [DEPRECATED] teaching API - use /api/dimension/* instead
 
-# Layer 2: Agent Chat
-app.include_router(agent_router, prefix="/api/v1", tags=["agent"])
+# [PIVOTED] Layer 2: Agent Chat - prompty에서 불필요
+# app.include_router(agent_router, prefix="/api/v1", tags=["agent"])
 
 # Layer 3: MCP (Model Context Protocol)
 app.include_router(mcp_router, prefix="/api/v1", tags=["mcp"])
@@ -500,9 +503,9 @@ app.include_router(user_settings_router, prefix="")
 app.include_router(dashboard_router, prefix="/api/v1", tags=["dashboard"])
 app.include_router(feedback_router, prefix="/api/v1", tags=["feedback"])
 
-# Crebit (강의 판매 + 결제)
-app.include_router(crebit_router, prefix="/api/v1/crebit", tags=["crebit"])
-app.include_router(payment_router, prefix="/api/v1/payment", tags=["payment"])
+# [PIVOTED] Crebit (강의 판매 + 결제) - prompty에서 불필요
+# app.include_router(crebit_router, prefix="/api/v1/crebit", tags=["crebit"])
+# app.include_router(payment_router, prefix="/api/v1/payment", tags=["payment"])
 
 # Telemetry (4-Layer Ecosystem: Tool tracking, Forks, Attribution)
 app.include_router(telemetry_router, prefix="/api/v1/telemetry", tags=["telemetry"])
@@ -510,8 +513,8 @@ app.include_router(telemetry_router, prefix="/api/v1/telemetry", tags=["telemetr
 # RAG Feedback (P6: Feedback Collection for P7/P8)
 app.include_router(rag_feedback_router, prefix="/api/v1", tags=["rag-feedback"])
 
-# Settlements (Revenue Distribution)
-app.include_router(settlements_router, prefix="/api/v1", tags=["settlements"])
+# [PIVOTED] Settlements (Revenue Distribution) - prompty에서 불필요
+# app.include_router(settlements_router, prefix="/api/v1", tags=["settlements"])
 
 # Fork (Version Control & Fork Creation)
 app.include_router(fork_router, prefix="/api/v1", tags=["fork"])
@@ -519,11 +522,11 @@ app.include_router(fork_router, prefix="/api/v1", tags=["fork"])
 # Reviews (Approval Workflow)
 app.include_router(reviews_router, prefix="/api/v1", tags=["reviews"])
 
-# Sandbox (Isolated Execution)
-app.include_router(sandbox_router, prefix="/api/v1", tags=["sandbox"])
+# [PIVOTED] Sandbox (Isolated Execution) - prompty에서 불필요
+# app.include_router(sandbox_router, prefix="/api/v1", tags=["sandbox"])
 
-# Human Cloud (Creative Marketplace)
-app.include_router(humancloud_router, prefix="/api/v1", tags=["humancloud"])
+# [PIVOTED] Human Cloud (Creative Marketplace) - prompty에서 불필요
+# app.include_router(humancloud_router, prefix="/api/v1", tags=["humancloud"])
 
 # RAG (Vector Search & Recommendations)
 app.include_router(rag_router, prefix="/api/v1", tags=["rag"])
@@ -559,19 +562,19 @@ app.include_router(intent_router, prefix="/api/v1", tags=["intent"])
 app.include_router(ip_router, prefix="/api/v1/ip", tags=["ip"])
 app.include_router(ip_generation_router, prefix="/api/v1/ip", tags=["ip-generation"])
 app.include_router(dmca_router, prefix="/api/v1/dmca", tags=["dmca"])
-app.include_router(ip_payout_router, prefix="/api/v1/ip", tags=["ip-payout"])
+# [PIVOTED] app.include_router(ip_payout_router, prefix="/api/v1/ip", tags=["ip-payout"])
 
 # Tool Recommendation (IP-First Coordination Phase 2.5)
 app.include_router(tool_recommendation_router, prefix="/api/v1", tags=["tool-recommendation"])
 
-# Capsules (Direct Capsule Execution - P5)
-app.include_router(capsules_router, tags=["capsules"])
+# [PIVOTED] Capsules (Direct Capsule Execution - P5) - prompty에서 불필요
+# app.include_router(capsules_router, tags=["capsules"])
 
 # Content Metrics (Viral/Engagement Tracking)
 app.include_router(content_metrics_router, prefix="/api/v1", tags=["content-metrics"])
 
-# Affiliate (Referral System)
-app.include_router(affiliate_router, prefix="/api/v1", tags=["affiliate"])
+# [PIVOTED] Affiliate (Referral System) - prompty에서 불필요
+# app.include_router(affiliate_router, prefix="/api/v1", tags=["affiliate"])
 
 # Tool Registry (MCP-compatible tool discovery)
 app.include_router(tools_router, tags=["tools"])
@@ -588,8 +591,8 @@ app.include_router(admin_router, prefix="/api/v1", tags=["admin"])
 # Ops Audit (Admin Logs)
 app.include_router(ops_audit_router, prefix="/api/v1", tags=["ops"])
 
-# Run Token (App Execution Tokens)
-app.include_router(run_token_router, prefix="/api/v1", tags=["run-token"])
+# [PIVOTED] Run Token (App Execution Tokens) - prompty에서 불필요
+# app.include_router(run_token_router, prefix="/api/v1", tags=["run-token"])
 
 # Internal S2S (mTLS Protected)
 app.include_router(internal_router, prefix="/api/v1", tags=["internal"])
@@ -616,25 +619,28 @@ app.include_router(analytics_dashboard_router, tags=["analytics"])
 # Phase 10: IP Character Chat + Marketplace + Tenant
 app.include_router(ip_chat_router, tags=["ip-chat"])
 app.include_router(marketplace_router, tags=["marketplace"])
-app.include_router(tenant_router, tags=["tenants"])
+# [PIVOTED] app.include_router(tenant_router, tags=["tenants"])
 
 # VPE (Visual Prompt Engineering) - prefix already in router
 app.include_router(vpe_router, tags=["vpe"])
 
-# Story Engine (Narrative Generation) - prefix already in router
-app.include_router(story_engine_router, tags=["story-engine"])
+# [PIVOTED] Story Engine (Narrative Generation) - prompty에서 불필요
+# app.include_router(story_engine_router, tags=["story-engine"])
 
-# Production Bridge (Video Generation - Veo, Kling, Suno) - prefix already in router
-app.include_router(production_router, tags=["production"])
+# [PIVOTED] Production Bridge (Video Generation) - prompty에서 불필요
+# app.include_router(production_router, tags=["production"])
 
-# DNA Lab (Visual DNA Extraction & Analysis) - prefix already in router
-app.include_router(dna_lab_router, tags=["dna-lab"])
+# [PIVOTED] DNA Lab (Visual DNA Extraction & Analysis) - prompty에서 불필요
+# app.include_router(dna_lab_router, tags=["dna-lab"])
 
 # Homepage (Homepage data aggregation)
 app.include_router(homepage_router, prefix="/api/v1", tags=["homepage"])
 
 # Chain Sessions (P7+: Workflow Chain Persistence)
 app.include_router(chain_router, prefix="/api/v1", tags=["chain"])
+
+# Prompty (AI-free Workflow Guide Platform)
+app.include_router(prompty_router, prefix="/api", tags=["prompty"])
 
 # GraphQL Gateway (2026 Best Practices - P3.3)
 if settings.ENVIRONMENT.lower() in {"production", "prod", "staging"}:

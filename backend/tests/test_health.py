@@ -20,9 +20,14 @@ def test_routes_registered() -> None:
     assert "/api/dimension/3d/generate" in paths
     assert "/api/dimension/4d/analyze" in paths
 
-    # Agent routes
-    assert "/api/v1/agent/chat" in paths
+    # [PIVOTED] Agent routes - disabled for prompty pivot
+    # assert "/api/v1/agent/chat" in paths
 
     # MiniApps routes
     assert "/api/v1/miniapps/submit" in paths
     assert "/api/v1/miniapps/submissions" in paths
+
+    # Prompty routes (new)
+    assert "/api/prompty/projects" in paths
+    assert "/api/prompty/templates" in paths
+    assert "/api/prompty/critique" in paths

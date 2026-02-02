@@ -23,16 +23,16 @@ logger = logging.getLogger(__name__)
 
 # Import sub-routers
 from .classic import router as classic_router
-from .aesthetic import router as aesthetic_router
-from .sound import router as sound_router
-from .story import router as story_router
+# [PIVOTED] from .aesthetic import router as aesthetic_router
+# [PIVOTED] from .sound import router as sound_router
+# [PIVOTED] from .story import router as story_router
 from .quality import router as quality_router
 from .veo import router as veo_router
 from .kling import router as kling_router
 from .suno import router as suno_router
 from .json_gen import router as json_gen_router
 from .nanobanana import router as nanobanana_router
-from .mirror import router as mirror_router
+# [PIVOTED] from .mirror import router as mirror_router
 from .prompt import router as prompt_router
 from .character import router as character_router
 from .storyboard import router as storyboard_router
@@ -56,16 +56,16 @@ router = APIRouter()
 
 # Include all sub-routers
 router.include_router(classic_router)
-router.include_router(aesthetic_router)
-router.include_router(sound_router)
-router.include_router(story_router)
+# [PIVOTED] router.include_router(aesthetic_router)
+# [PIVOTED] router.include_router(sound_router)
+# [PIVOTED] router.include_router(story_router)
 router.include_router(quality_router)
 router.include_router(veo_router)
 router.include_router(kling_router)
 router.include_router(suno_router)
 router.include_router(json_gen_router)
 router.include_router(nanobanana_router)
-router.include_router(mirror_router)
+# [PIVOTED] router.include_router(mirror_router)
 router.include_router(prompt_router)
 router.include_router(character_router)
 router.include_router(storyboard_router)

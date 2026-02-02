@@ -2552,6 +2552,153 @@ class ApiClient {
   }
 
   // =========================================================================
+  // Prompty APIs (AI-free Workflow Guide Platform)
+  // =========================================================================
+
+  /**
+   * Create a new prompty project
+   */
+  async createPromptyProject(data: PromptyProjectCreate): Promise<PromptyProject> {
+    return this.request<PromptyProject>("/api/prompty/projects", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  /**
+   * List user's prompty projects
+   */
+  async listPromptyProjects(
+    page: number = 1,
+    pageSize: number = 20,
+    status?: string
+  ): Promise<PromptyProjectListResponse> {
+    const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
+    if (status) params.set("status", status);
+    return this.request<PromptyProjectListResponse>(`/api/prompty/projects?${params}`);
+  }
+
+  /**
+   * Get a prompty project by ID
+   */
+  async getPromptyProject(projectId: string): Promise<PromptyProject> {
+    return this.request<PromptyProject>(`/api/prompty/projects/${projectId}`);
+  }
+
+  /**
+   * Update prompty project state
+   */
+  async updatePromptyProjectState(
+    projectId: string,
+    data: PromptyProjectUpdate
+  ): Promise<PromptyProject> {
+    return this.request<PromptyProject>(`/api/prompty/projects/${projectId}/state`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  /**
+   * Delete a prompty project
+   */
+  async deletePromptyProject(projectId: string): Promise<void> {
+    await this.request<void>(`/api/prompty/projects/${projectId}`, {
+      method: "DELETE",
+    });
+  }
+
+  /**
+   * List prompty templates
+   */
+  async listPromptyTemplates(
+    page: number = 1,
+    pageSize: number = 20,
+    options?: { category?: string; featured_only?: boolean; search?: string }
+  ): Promise<PromptyTemplateListResponse> {
+    const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
+    if (options?.category) params.set("category", options.category);
+    if (options?.featured_only) params.set("featured_only", "true");
+    if (options?.search) params.set("search", options.search);
+    return this.request<PromptyTemplateListResponse>(`/api/prompty/templates?${params}`);
+  }
+
+  /**
+   * Get prompty template details
+   */
+  async getPromptyTemplate(templateId: string): Promise<PromptyTemplate> {
+    return this.request<PromptyTemplate>(`/api/prompty/templates/${templateId}`);
+  }
+
+  /**
+   * Use a template to create a project
+   */
+  async usePromptyTemplate(templateId: string): Promise<{ project_id: string; template_title: string }> {
+    return this.request<{ project_id: string; template_title: string }>(
+      `/api/prompty/templates/${templateId}/use`,
+      { method: "POST" }
+    );
+  }
+
+  /**
+   * Rate a prompty template
+   */
+  async ratePromptyTemplate(templateId: string, rating: number): Promise<void> {
+    await this.request<void>(`/api/prompty/templates/${templateId}/rate`, {
+      method: "POST",
+      body: JSON.stringify({ rating }),
+    });
+  }
+
+  /**
+   * Submit critique for a project step
+   */
+  async submitPromptyCritique(data: PromptyCritiqueSubmit): Promise<PromptyCritique> {
+    return this.request<PromptyCritique>("/api/prompty/critique", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  /**
+   * Get critique history for a project
+   */
+  async getPromptyCritiqueHistory(projectId: string): Promise<PromptyCritiqueHistory> {
+    return this.request<PromptyCritiqueHistory>(`/api/prompty/critique/${projectId}`);
+  }
+
+  /**
+   * Get workflow guide for a project
+   */
+  async getPromptyGuide(projectId: string): Promise<PromptyGuideResponse> {
+    return this.request<PromptyGuideResponse>(`/api/prompty/guide/${projectId}`);
+  }
+
+  /**
+   * Advance to next step in workflow
+   */
+  async advancePromptyStep(projectId: string): Promise<PromptyNextStepResponse> {
+    return this.request<PromptyNextStepResponse>(`/api/prompty/guide/${projectId}/next`, {
+      method: "POST",
+    });
+  }
+
+  /**
+   * Log guide action for analytics
+   */
+  async logPromptyAction(
+    projectId: string,
+    action: string,
+    stage?: string,
+    stepId?: string,
+    extraData?: Record<string, unknown>
+  ): Promise<void> {
+    await this.request<void>(`/api/prompty/guide/${projectId}/log`, {
+      method: "POST",
+      body: JSON.stringify({ action, stage, step_id: stepId, extra_data: extraData }),
+    });
+  }
+
+  // =========================================================================
   // Chain Session APIs (P7+: Workflow Chain Persistence)
   // =========================================================================
 
@@ -3340,6 +3487,143 @@ export interface CharacterListResponse {
   page: number;
   pageSize: number;
   hasMore: boolean;
+}
+
+// =============================================================================
+// Prompty Types (AI-free Workflow Guide Platform)
+// =============================================================================
+
+export interface PromptyProject {
+  id: string;
+  name: string;
+  description?: string;
+  thumbnail_url?: string;
+  template_id?: string;
+  state: Record<string, unknown>;
+  current_stage: string;
+  current_step: string;
+  progress_percent: number;
+  status: "active" | "paused" | "completed" | "archived";
+  created_at: string;
+  updated_at: string;
+  completed_at?: string;
+}
+
+export interface PromptyProjectCreate {
+  name: string;
+  description?: string;
+  template_id?: string;
+}
+
+export interface PromptyProjectUpdate {
+  name?: string;
+  description?: string;
+  thumbnail_url?: string;
+  state?: Record<string, unknown>;
+  current_stage?: string;
+  current_step?: string;
+  progress_percent?: number;
+  status?: string;
+}
+
+export interface PromptyProjectListResponse {
+  items: PromptyProject[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface PromptyTemplate {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail_url?: string;
+  category: string;
+  tags: string[];
+  use_count: number;
+  rating_avg: number;
+  creator_name: string;
+  is_featured: boolean;
+  workflow_config?: Record<string, unknown>;
+  critique_config?: Record<string, unknown>;
+  example_project_url?: string;
+}
+
+export interface PromptyTemplateListResponse {
+  items: PromptyTemplate[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface PromptyCritiqueScore {
+  score: number;
+  notes?: string;
+}
+
+export interface PromptyCritiqueSubmit {
+  project_id: string;
+  stage: string;
+  step_id: string;
+  scores: Record<string, PromptyCritiqueScore>;
+  notes?: string;
+}
+
+export interface PromptyCritique {
+  id: string;
+  project_id: string;
+  stage: string;
+  step_id: string;
+  scores: Record<string, PromptyCritiqueScore>;
+  total_score: number;
+  passed: boolean;
+  revision_number: number;
+  notes?: string;
+  created_at: string;
+}
+
+export interface PromptyCritiqueHistory {
+  items: PromptyCritique[];
+  average_score: number;
+  total_critiques: number;
+  pass_rate: number;
+}
+
+export interface PromptyStepInfo {
+  id: string;
+  name: string;
+  description?: string;
+  prompt_text?: string;
+  prompt_file?: string;
+  external_tool?: string;
+  external_url?: string;
+  tips: string[];
+  status: "pending" | "in_progress" | "completed";
+  score?: number;
+}
+
+export interface PromptyStageInfo {
+  id: string;
+  name: string;
+  description?: string;
+  steps: PromptyStepInfo[];
+  status: "pending" | "in_progress" | "completed";
+}
+
+export interface PromptyGuideResponse {
+  project_id: string;
+  project_name: string;
+  current_stage: string;
+  current_step: string;
+  progress_percent: number;
+  stages: PromptyStageInfo[];
+  current_step_info?: PromptyStepInfo;
+}
+
+export interface PromptyNextStepResponse {
+  new_stage: string;
+  new_step: string;
+  completed: boolean;
 }
 
 export const api = new ApiClient();
