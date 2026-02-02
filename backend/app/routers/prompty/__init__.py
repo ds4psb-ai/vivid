@@ -13,7 +13,7 @@ from .tikitaka import router as tikitaka_router
 from .download import router as download_router
 from .community import router as community_router
 
-router = APIRouter(prefix="/prompty", tags=["prompty"])
+router = APIRouter(tags=["prompty"])
 
 router.include_router(projects_router)
 router.include_router(templates_router)

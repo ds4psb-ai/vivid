@@ -197,7 +197,7 @@ export default function DashboardPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center py-12">
           <p className="text-destructive mb-4">{error || "Project not found"}</p>
-          <Link href="/prompty/projects" className="text-primary hover:underline">
+          <Link href="/projects" className="text-primary hover:underline">
             Back to projects
           </Link>
         </div>
@@ -302,7 +302,7 @@ export default function DashboardPage() {
       <div className="flex justify-between items-start mb-8">
         <div>
           <Link
-            href={`/prompty/projects/${projectId}`}
+            href={`/projects/${projectId}`}
             className="text-muted-foreground hover:text-foreground text-sm mb-2 inline-block"
           >
             ← Back to Project
@@ -344,7 +344,7 @@ export default function DashboardPage() {
             아직 Critique 데이터가 없습니다.
           </p>
           <Link
-            href={`/prompty/projects/${projectId}/critique`}
+            href={`/projects/${projectId}/critique`}
             className="text-primary hover:underline"
           >
             Critique 시작하기 →
@@ -365,7 +365,7 @@ export default function DashboardPage() {
           이미지나 영상을 평가하고 점수를 기록하세요.
         </p>
         <Link
-          href={`/prompty/projects/${projectId}/critique`}
+          href={`/projects/${projectId}/critique`}
           className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition"
         >
           <span>📋</span>

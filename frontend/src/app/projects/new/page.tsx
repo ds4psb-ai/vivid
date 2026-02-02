@@ -8,7 +8,7 @@
  * - Unauthenticated users: Create locally, redirect to local project
  */
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api";
@@ -16,7 +16,7 @@ import { useSessionContext } from "@/contexts/SessionContext";
 import { useToast } from "@/components/Toast";
 import { localProjectsService } from "@/lib/local-projects";
 
-export default function NewProjectPage() {
+function NewProjectPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, isLoading: sessionLoading } = useSessionContext();
@@ -59,7 +59,7 @@ export default function NewProjectPage() {
           description: description.trim() || undefined,
           template_id: templateId || undefined,
         });
-        router.push(`/prompty/projects/${project.id}`);
+        router.push(`/projects/${project.id}`);
       } else {
         // Create locally
         if (!storageAvailable) {
@@ -72,7 +72,7 @@ export default function NewProjectPage() {
           name: name.trim(),
         });
         if (local) {
-          router.push(`/prompty/projects/local:${local.local_id}`);
+          router.push(`/projects/local:${local.local_id}`);
         } else {
           toast.error("프로젝트 생성 실패");
           setCreating(false);
@@ -100,7 +100,7 @@ export default function NewProjectPage() {
           {/* Header */}
           <div className="mb-8">
             <Link
-              href="/prompty/projects"
+              href="/projects"
               className="text-sm text-muted-foreground hover:text-foreground transition mb-4 inline-block"
             >
               ← 프로젝트 목록
@@ -179,7 +179,7 @@ export default function NewProjectPage() {
             {/* Actions */}
             <div className="flex gap-3">
               <Link
-                href="/prompty/projects"
+                href="/projects"
                 className="flex-1 px-6 py-3 text-center border border-border rounded-lg hover:bg-accent transition"
               >
                 취소
@@ -198,7 +198,7 @@ export default function NewProjectPage() {
           <div className="mt-8 pt-8 border-t border-border">
             <h2 className="text-lg font-semibold mb-4">또는 템플릿으로 시작</h2>
             <Link
-              href="/prompty/templates"
+              href="/templates"
               className="block p-4 rounded-xl border border-border bg-card hover:border-primary/50 transition"
             >
               <div className="flex items-center justify-between">
@@ -215,5 +215,19 @@ export default function NewProjectPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function NewProjectPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="animate-pulse text-muted-foreground">로딩 중...</div>
+        </div>
+      }
+    >
+      <NewProjectPageContent />
+    </Suspense>
   );
 }

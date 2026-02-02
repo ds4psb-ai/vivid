@@ -174,10 +174,10 @@ ENDPOINT_RATE_LIMITS = {
     "/api/v1/upload/*": RATE_LIMIT_UPLOAD,
 
     # Prompty endpoints
-    "/api/prompty/projects": RATE_LIMIT_PROMPTY_PROJECT_CREATE,
-    "/api/prompty/critique": RATE_LIMIT_PROMPTY_CRITIQUE,
-    "/api/prompty/community": RATE_LIMIT_PROMPTY_COMMUNITY,
-    "/api/prompty/download/*": RATE_LIMIT_PROMPTY_DOWNLOAD,
+    "/api/projects": RATE_LIMIT_PROMPTY_PROJECT_CREATE,
+    "/api/critique": RATE_LIMIT_PROMPTY_CRITIQUE,
+    "/api/community": RATE_LIMIT_PROMPTY_COMMUNITY,
+    "/api/download/*": RATE_LIMIT_PROMPTY_DOWNLOAD,
 }
 
 

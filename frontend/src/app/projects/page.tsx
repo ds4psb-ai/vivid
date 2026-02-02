@@ -88,7 +88,7 @@ export default function ProjectsPage() {
     try {
       if (isAuthenticated) {
         const project = await api.createPromptyProject({ name });
-        router.push(`/prompty/projects/${project.id}`);
+        router.push(`/projects/${project.id}`);
       } else {
         if (!storageAvailable) {
           toast.error("시크릿 모드에서는 프로젝트를 저장할 수 없습니다");
@@ -97,7 +97,7 @@ export default function ProjectsPage() {
         }
         const local = localProjectsService.create({ name });
         if (local) {
-          router.push(`/prompty/projects/local:${local.local_id}`);
+          router.push(`/projects/local:${local.local_id}`);
         } else {
           toast.error("프로젝트 생성 실패");
           setCreating(false);
@@ -199,7 +199,7 @@ export default function ProjectsPage() {
     return (
       <Link
         key={id}
-        href={`/prompty/projects/${id}`}
+        href={`/projects/${id}`}
         className="group block rounded-xl border border-border bg-card p-6 hover:border-primary/50 transition relative"
       >
         {/* Local Badge */}
@@ -291,7 +291,7 @@ export default function ProjectsPage() {
             </span>
           )}
           <Link
-            href="/prompty/templates"
+            href="/templates"
             className="px-4 py-2 border border-border rounded-lg hover:bg-accent transition"
           >
             템플릿에서 시작
@@ -332,7 +332,7 @@ export default function ProjectsPage() {
           </p>
           <div className="flex gap-3 justify-center">
             <Link
-              href="/prompty/templates"
+              href="/templates"
               className="px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition"
             >
               템플릿 둘러보기

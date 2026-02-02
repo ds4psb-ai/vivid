@@ -33,7 +33,7 @@ export default function TemplateDetailPage() {
     setUsing(true);
     try {
       const result = await api.usePromptyTemplate(templateId);
-      router.push(`/prompty/projects/${result.project_id}`);
+      router.push(`/projects/${result.project_id}`);
     } catch (error) {
       console.error("Failed to use template:", error);
       alert("템플릿 사용에 실패했습니다.");
@@ -62,7 +62,7 @@ export default function TemplateDetailPage() {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
         <h1 className="text-2xl font-bold mb-4">템플릿을 찾을 수 없습니다</h1>
-        <Link href="/prompty/templates" className="text-primary hover:underline">
+        <Link href="/templates" className="text-primary hover:underline">
           템플릿 목록으로 돌아가기
         </Link>
       </div>
@@ -82,7 +82,7 @@ export default function TemplateDetailPage() {
       <header className="border-b border-border">
         <div className="container mx-auto px-4 py-4">
           <Link
-            href="/prompty/templates"
+            href="/templates"
             className="text-muted-foreground hover:text-foreground transition"
           >
             ← 템플릿 목록

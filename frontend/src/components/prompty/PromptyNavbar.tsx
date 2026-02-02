@@ -24,9 +24,9 @@ import { api, type AuthSession } from "@/lib/api";
 
 const PROMPTY_TABS = [
   { href: "/", label: "대시보드", exact: true },
-  { href: "/prompty/templates", label: "템플릿", exact: false },
-  { href: "/prompty/projects", label: "프로젝트", exact: false },
-  { href: "/prompty/community", label: "커뮤니티", exact: false },
+  { href: "/templates", label: "템플릿", exact: false },
+  { href: "/projects", label: "프로젝트", exact: false },
+  { href: "/community", label: "커뮤니티", exact: false },
 ] as const;
 
 // =============================================================================

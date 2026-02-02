@@ -58,7 +58,7 @@ export default function CommunityPage() {
       setForkModalOpen(false);
       setForkTarget(null);
       // Redirect to new project
-      window.location.href = `/prompty/projects/${newProject.id}`;
+      window.location.href = `/projects/${newProject.id}`;
     } catch (error) {
       console.error("Failed to fork project:", error);
       alert("Fork에 실패했습니다. 다시 시도해주세요.");
@@ -79,7 +79,7 @@ export default function CommunityPage() {
             </p>
           </div>
           <Link
-            href="/prompty"
+            href="/"
             className="px-4 py-2 border border-border rounded-lg hover:bg-accent transition"
           >
             내 프로젝트로
@@ -146,7 +146,7 @@ export default function CommunityPage() {
             첫 번째로 프로젝트를 공개해보세요!
           </p>
           <Link
-            href="/prompty"
+            href="/"
             className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition"
           >
             내 프로젝트로 이동
@@ -162,7 +162,7 @@ export default function CommunityPage() {
                 showUser
                 showForkButton
                 onFork={handleForkClick}
-                linkPrefix="/prompty/community"
+                linkPrefix="/community"
               />
             ))}
           </div>

@@ -27,7 +27,7 @@ export function ProjectCard({
   showUser = false,
   showForkButton = false,
   onFork,
-  linkPrefix = "/prompty/projects",
+  linkPrefix = "/projects",
 }: ProjectCardProps) {
   const isCompleted = project.status === "completed";
   const hasScore = project.avg_score !== null && project.avg_score !== undefined;

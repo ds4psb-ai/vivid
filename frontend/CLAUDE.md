@@ -34,13 +34,14 @@ Gemini CLI (영상 @언급) ←→ Claude Antigravity
 
 ```
 src/
-├── app/prompty/                    # Prompty 라우트
-│   ├── page.tsx                    # 랜딩
+├── app/                            # Prompty 라우트 (루트 레벨)
+│   ├── page.tsx                    # 랜딩/대시보드
 │   ├── templates/                  # 템플릿 목록/상세
-│   └── projects/                   # 프로젝트 가이드
-│       └── [id]/
-│           ├── page.tsx            # 워크플로우 가이드
-│           └── critique/page.tsx   # Critique 입력
+│   ├── projects/                   # 프로젝트 가이드
+│   │   └── [id]/
+│   │       ├── page.tsx            # 워크플로우 가이드
+│   │       └── critique/page.tsx   # Critique 입력
+│   └── community/                  # 커뮤니티
 ├── components/prompty/             # Prompty UI 컴포넌트
 │   ├── CopyPromptButton.tsx        # 프롬프트 복사
 │   ├── GuideWorkflow.tsx           # 4-Stage 진행바

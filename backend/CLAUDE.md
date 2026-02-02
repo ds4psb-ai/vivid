@@ -61,14 +61,14 @@ app/
 
 | Method | Path | 설명 |
 |--------|------|------|
-| GET | `/api/prompty/templates` | 템플릿 목록 |
-| GET | `/api/prompty/templates/{id}` | 템플릿 상세 |
-| POST | `/api/prompty/projects` | 프로젝트 생성 |
-| GET | `/api/prompty/guide/{project_id}` | 현재 워크플로우 상태 |
-| POST | `/api/prompty/guide/{project_id}/advance` | 다음 스텝 진행 |
-| POST | `/api/prompty/critique` | Critique 저장 |
-| GET | `/api/prompty/critique/{project_id}` | Critique 이력 |
-| GET | `/api/prompty/critique/{project_id}/{step_id}` | 특정 스텝 Critique |
+| GET | `/api/templates` | 템플릿 목록 |
+| GET | `/api/templates/{id}` | 템플릿 상세 |
+| POST | `/api/projects` | 프로젝트 생성 |
+| GET | `/api/guide/{project_id}` | 현재 워크플로우 상태 |
+| POST | `/api/guide/{project_id}/advance` | 다음 스텝 진행 |
+| POST | `/api/critique` | Critique 저장 |
+| GET | `/api/critique/{project_id}` | Critique 이력 |
+| GET | `/api/critique/{project_id}/{step_id}` | 특정 스텝 Critique |
 
 ---
 

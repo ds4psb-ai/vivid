@@ -115,7 +115,7 @@ export function PromptyDashboard() {
               <span className="text-orange-500">🔥</span> 진행 중인 프로젝트
             </h2>
             <Link
-              href="/prompty/projects/new"
+              href="/projects/new"
               className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90 transition"
             >
               + 새 프로젝트
@@ -168,7 +168,7 @@ export function PromptyDashboard() {
 
             {inProgressProjects.length === 0 && (
               <Link
-                href="/prompty/projects/new"
+                href="/projects/new"
                 className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90 transition"
               >
                 + 새 프로젝트
@@ -195,7 +195,7 @@ export function PromptyDashboard() {
           커뮤니티에서 다양한 프로젝트를 둘러보고 Fork해서 나만의 버전을 만들어보세요.
         </p>
         <Link
-          href="/prompty/community"
+          href="/community"
           className="inline-block px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition"
         >
           커뮤니티 둘러보기
@@ -239,7 +239,7 @@ function InProgressCard({ project }: { project: PromptyProject }) {
 
   return (
     <Link
-      href={`/prompty/projects/${project.id}`}
+      href={`/projects/${project.id}`}
       className="block p-4 rounded-xl border border-primary/30 bg-primary/5 hover:border-primary/50 transition"
     >
       <div className="flex items-center justify-between">
@@ -288,7 +288,7 @@ function ProjectCard({ project }: { project: PromptyProject }) {
 
   return (
     <Link
-      href={`/prompty/projects/${project.id}`}
+      href={`/projects/${project.id}`}
       className="group block rounded-xl border border-border bg-card overflow-hidden hover:border-primary/50 transition"
     >
       {/* Thumbnail */}
@@ -372,7 +372,7 @@ function EmptyState({ filter }: { filter: FilterStatus }) {
         템플릿으로 첫 프로젝트를 시작해보세요!
       </p>
       <Link
-        href="/prompty/templates"
+        href="/templates"
         className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition"
       >
         템플릿 둘러보기

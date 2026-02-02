@@ -28,6 +28,6 @@ def test_routes_registered() -> None:
     assert "/api/v1/miniapps/submissions" in paths
 
     # Prompty routes (new)
-    assert "/api/prompty/projects" in paths
-    assert "/api/prompty/templates" in paths
-    assert "/api/prompty/critique" in paths
+    assert "/api/projects" in paths
+    assert "/api/templates" in paths
+    assert "/api/critique" in paths

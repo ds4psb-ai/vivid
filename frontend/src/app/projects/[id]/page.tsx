@@ -61,7 +61,7 @@ export default function ProjectWorkflowPage() {
         const local = localProjectsService.getById(localId);
         if (!local) {
           toast.error("프로젝트를 찾을 수 없습니다");
-          router.push("/prompty/projects");
+          router.push("/projects");
           return;
         }
         // Convert LocalProject to PromptyGuideResponse-like structure
@@ -192,7 +192,7 @@ export default function ProjectWorkflowPage() {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
         <h1 className="text-2xl font-bold mb-4">Project not found</h1>
-        <Link href="/prompty/projects" className="text-primary hover:underline">
+        <Link href="/projects" className="text-primary hover:underline">
           Back to projects
         </Link>
       </div>
@@ -208,7 +208,7 @@ export default function ProjectWorkflowPage() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link
-              href="/prompty/projects"
+              href="/projects"
               className="text-muted-foreground hover:text-foreground transition"
             >
               Back
@@ -245,7 +245,7 @@ export default function ProjectWorkflowPage() {
               {guide.stages.length}
             </span>
             <Link
-              href={`/prompty/projects/${projectId}/critique?stage=${guide?.current_stage || ''}&step=${guide?.current_step || ''}`}
+              href={`/projects/${projectId}/critique?stage=${guide?.current_stage || ''}&step=${guide?.current_step || ''}`}
               className="px-4 py-2 border border-border rounded-lg hover:bg-accent transition text-sm"
             >
               Critique
@@ -422,7 +422,7 @@ export default function ProjectWorkflowPage() {
                       {/* Action Buttons */}
                       <div className="flex justify-between items-center p-6 rounded-xl border border-border bg-card">
                         <Link
-                          href={`/prompty/projects/${projectId}/critique?stage=${guide.current_stage}&step=${guide.current_step}`}
+                          href={`/projects/${projectId}/critique?stage=${guide.current_stage}&step=${guide.current_step}`}
                           className="px-6 py-3 border border-border rounded-lg hover:bg-accent transition"
                         >
                           Critique
@@ -444,7 +444,7 @@ export default function ProjectWorkflowPage() {
                         All steps completed. Check your critique results.
                       </p>
                       <Link
-                        href={`/prompty/projects/${projectId}/critique?stage=${guide.current_stage}&step=${guide.current_step}`}
+                        href={`/projects/${projectId}/critique?stage=${guide.current_stage}&step=${guide.current_step}`}
                         className="px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition"
                       >
                         View Critique Results

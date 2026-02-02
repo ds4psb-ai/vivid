@@ -73,19 +73,19 @@ export default function PromptyHomePage() {
         </p>
         <div className="flex gap-4 justify-center flex-wrap">
           <Link
-            href="/prompty/templates"
+            href="/templates"
             className="px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition"
           >
             템플릿 둘러보기
           </Link>
           <Link
-            href="/prompty/projects"
+            href="/projects"
             className="px-6 py-3 border border-border rounded-lg font-medium hover:bg-accent transition"
           >
             내 프로젝트
           </Link>
           <a
-            href="/api/prompty/download/package"
+            href="/api/download/package"
             className="px-6 py-3 border border-border rounded-lg font-medium hover:bg-accent transition flex items-center gap-2"
           >
             <span>📦</span>
@@ -119,7 +119,7 @@ export default function PromptyHomePage() {
       <section className="py-12">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold">추천 템플릿</h2>
-          <Link href="/prompty/templates" className="text-primary hover:underline">
+          <Link href="/templates" className="text-primary hover:underline">
             전체 보기 &rarr;
           </Link>
         </div>
@@ -139,7 +139,7 @@ export default function PromptyHomePage() {
             {featuredTemplates.map((template) => (
               <Link
                 key={template.id}
-                href={`/prompty/templates/${template.id}`}
+                href={`/templates/${template.id}`}
                 className="group block rounded-xl border border-border bg-card overflow-hidden hover:border-primary/50 transition"
               >
                 <div className="aspect-video bg-muted relative">

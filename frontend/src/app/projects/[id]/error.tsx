@@ -29,7 +29,7 @@ export default function Error({
             다시 시도
           </button>
           <Link
-            href="/prompty/projects"
+            href="/projects"
             className="px-4 py-2 border border-border rounded-lg hover:bg-muted transition"
           >
             프로젝트 목록으로

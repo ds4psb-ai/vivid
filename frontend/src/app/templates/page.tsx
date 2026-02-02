@@ -121,7 +121,7 @@ export default function TemplatesPage() {
             {templates.map((template) => (
               <Link
                 key={template.id}
-                href={`/prompty/templates/${template.id}`}
+                href={`/templates/${template.id}`}
                 className="group block rounded-xl border border-border bg-card overflow-hidden hover:border-primary/50 transition"
               >
                 {/* Thumbnail */}

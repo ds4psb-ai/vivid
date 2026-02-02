@@ -2564,7 +2564,7 @@ class ApiClient {
    * Create a new prompty project
    */
   async createPromptyProject(data: PromptyProjectCreate): Promise<PromptyProject> {
-    return this.request<PromptyProject>("/api/prompty/projects", {
+    return this.request<PromptyProject>("/api/projects", {
       method: "POST",
       body: JSON.stringify(data),
     });
@@ -2580,14 +2580,14 @@ class ApiClient {
   ): Promise<PromptyProjectListResponse> {
     const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
     if (status) params.set("status", status);
-    return this.request<PromptyProjectListResponse>(`/api/prompty/projects?${params}`);
+    return this.request<PromptyProjectListResponse>(`/api/projects?${params}`);
   }
 
   /**
    * Get a prompty project by ID
    */
   async getPromptyProject(projectId: string): Promise<PromptyProject> {
-    return this.request<PromptyProject>(`/api/prompty/projects/${projectId}`);
+    return this.request<PromptyProject>(`/api/projects/${projectId}`);
   }
 
   /**
@@ -2597,7 +2597,7 @@ class ApiClient {
     projectId: string,
     data: PromptyProjectUpdate
   ): Promise<PromptyProject> {
-    return this.request<PromptyProject>(`/api/prompty/projects/${projectId}/state`, {
+    return this.request<PromptyProject>(`/api/projects/${projectId}/state`, {
       method: "PUT",
       body: JSON.stringify(data),
     });
@@ -2607,7 +2607,7 @@ class ApiClient {
    * Delete a prompty project
    */
   async deletePromptyProject(projectId: string): Promise<void> {
-    await this.request<void>(`/api/prompty/projects/${projectId}`, {
+    await this.request<void>(`/api/projects/${projectId}`, {
       method: "DELETE",
     });
   }
@@ -2624,14 +2624,14 @@ class ApiClient {
     if (options?.category) params.set("category", options.category);
     if (options?.featured_only) params.set("featured_only", "true");
     if (options?.search) params.set("search", options.search);
-    return this.request<PromptyTemplateListResponse>(`/api/prompty/templates?${params}`);
+    return this.request<PromptyTemplateListResponse>(`/api/templates?${params}`);
   }
 
   /**
    * Get prompty template details
    */
   async getPromptyTemplate(templateId: string): Promise<PromptyTemplate> {
-    return this.request<PromptyTemplate>(`/api/prompty/templates/${templateId}`);
+    return this.request<PromptyTemplate>(`/api/templates/${templateId}`);
   }
 
   /**
@@ -2639,7 +2639,7 @@ class ApiClient {
    */
   async usePromptyTemplate(templateId: string): Promise<{ project_id: string; template_title: string }> {
     return this.request<{ project_id: string; template_title: string }>(
-      `/api/prompty/templates/${templateId}/use`,
+      `/api/templates/${templateId}/use`,
       { method: "POST" }
     );
   }
@@ -2648,7 +2648,7 @@ class ApiClient {
    * Rate a prompty template
    */
   async ratePromptyTemplate(templateId: string, rating: number): Promise<void> {
-    await this.request<void>(`/api/prompty/templates/${templateId}/rate`, {
+    await this.request<void>(`/api/templates/${templateId}/rate`, {
       method: "POST",
       body: JSON.stringify({ rating }),
     });
@@ -2661,7 +2661,7 @@ class ApiClient {
     projectId: string,
     data: Omit<PromptyCritiqueSubmit, "project_id">
   ): Promise<PromptyCritique> {
-    return this.request<PromptyCritique>("/api/prompty/critique", {
+    return this.request<PromptyCritique>("/api/critique", {
       method: "POST",
       body: JSON.stringify({ ...data, project_id: projectId }),
     });
@@ -2671,21 +2671,21 @@ class ApiClient {
    * Get critique history for a project
    */
   async getPromptyCritiqueHistory(projectId: string): Promise<PromptyCritiqueHistory> {
-    return this.request<PromptyCritiqueHistory>(`/api/prompty/critique/${projectId}`);
+    return this.request<PromptyCritiqueHistory>(`/api/critique/${projectId}`);
   }
 
   /**
    * Get workflow guide for a project
    */
   async getPromptyGuide(projectId: string): Promise<PromptyGuideResponse> {
-    return this.request<PromptyGuideResponse>(`/api/prompty/guide/${projectId}`);
+    return this.request<PromptyGuideResponse>(`/api/guide/${projectId}`);
   }
 
   /**
    * Advance to next step in workflow
    */
   async advancePromptyStep(projectId: string): Promise<PromptyNextStepResponse> {
-    return this.request<PromptyNextStepResponse>(`/api/prompty/guide/${projectId}/next`, {
+    return this.request<PromptyNextStepResponse>(`/api/guide/${projectId}/next`, {
       method: "POST",
     });
   }
@@ -2700,7 +2700,7 @@ class ApiClient {
     stepId?: string,
     extraData?: Record<string, unknown>
   ): Promise<void> {
-    await this.request<void>(`/api/prompty/guide/${projectId}/log`, {
+    await this.request<void>(`/api/guide/${projectId}/log`, {
       method: "POST",
       body: JSON.stringify({ action, stage, step_id: stepId, extra_data: extraData }),
     });
@@ -2719,7 +2719,7 @@ class ApiClient {
       ? { state_md_content: stateData }
       : { parsed_state: stateData };
 
-    return this.request<PromptyStateSyncResponse>(`/api/prompty/state/${projectId}/sync`, {
+    return this.request<PromptyStateSyncResponse>(`/api/state/${projectId}/sync`, {
       method: "POST",
       body: JSON.stringify(body),
     });
@@ -2729,14 +2729,14 @@ class ApiClient {
    * Export project state as STATE.md format
    */
   async exportPromptyStateMd(projectId: string): Promise<PromptyStateExportResponse> {
-    return this.request<PromptyStateExportResponse>(`/api/prompty/state/${projectId}/state.md`);
+    return this.request<PromptyStateExportResponse>(`/api/state/${projectId}/state.md`);
   }
 
   /**
    * Get parsed state from database
    */
   async getPromptyParsedState(projectId: string): Promise<PromptyStateParsed> {
-    return this.request<PromptyStateParsed>(`/api/prompty/state/${projectId}/parsed`);
+    return this.request<PromptyStateParsed>(`/api/state/${projectId}/parsed`);
   }
 
   // =========================================================================
@@ -2754,21 +2754,21 @@ class ApiClient {
     const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
     if (options?.sort) params.set("sort", options.sort);
     if (options?.status) params.set("status", options.status);
-    return this.request<PromptyCommunityListResponse>(`/api/prompty/community?${params}`);
+    return this.request<PromptyCommunityListResponse>(`/api/community?${params}`);
   }
 
   /**
    * Get community project details
    */
   async getCommunityProject(projectId: string): Promise<PromptyCommunityProject> {
-    return this.request<PromptyCommunityProject>(`/api/prompty/community/${projectId}`);
+    return this.request<PromptyCommunityProject>(`/api/community/${projectId}`);
   }
 
   /**
    * Fork a community project
    */
   async forkProject(projectId: string, name?: string): Promise<PromptyProject> {
-    return this.request<PromptyProject>(`/api/prompty/projects/${projectId}/fork`, {
+    return this.request<PromptyProject>(`/api/projects/${projectId}/fork`, {
       method: "POST",
       body: JSON.stringify({ name }),
     });
@@ -2785,14 +2785,14 @@ class ApiClient {
     const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
     if (options?.sort) params.set("sort", options.sort);
     if (options?.user_filter) params.set("user_filter", options.user_filter);
-    return this.request<PromptyCommunityListResponse>(`/api/prompty/community/instructor/all?${params}`);
+    return this.request<PromptyCommunityListResponse>(`/api/community/instructor/all?${params}`);
   }
 
   /**
    * [Instructor] List all students
    */
   async listInstructorStudents(): Promise<{ students: string[]; total: number }> {
-    return this.request<{ students: string[]; total: number }>("/api/prompty/community/instructor/students");
+    return this.request<{ students: string[]; total: number }>("/api/community/instructor/students");
   }
 
   // =========================================================================
@@ -2806,7 +2806,7 @@ class ApiClient {
     projectId: string,
     anchorSceneId?: string
   ): Promise<TikitakaStartResponse> {
-    return this.request<TikitakaStartResponse>(`/api/prompty/tikitaka/${projectId}/start`, {
+    return this.request<TikitakaStartResponse>(`/api/tikitaka/${projectId}/start`, {
       method: "POST",
       body: JSON.stringify({ anchor_scene_id: anchorSceneId }),
     });
@@ -2816,7 +2816,7 @@ class ApiClient {
    * Get current tikitaka workflow state
    */
   async getPromptyTikitakaCurrent(projectId: string): Promise<TikitakaCurrentResponse> {
-    return this.request<TikitakaCurrentResponse>(`/api/prompty/tikitaka/${projectId}/current`);
+    return this.request<TikitakaCurrentResponse>(`/api/tikitaka/${projectId}/current`);
   }
 
   /**
@@ -2826,7 +2826,7 @@ class ApiClient {
     projectId: string,
     data: TikitakaAdvanceRequest
   ): Promise<TikitakaAdvanceResponse> {
-    return this.request<TikitakaAdvanceResponse>(`/api/prompty/tikitaka/${projectId}/advance`, {
+    return this.request<TikitakaAdvanceResponse>(`/api/tikitaka/${projectId}/advance`, {
       method: "POST",
       body: JSON.stringify(data),
     });
@@ -2836,7 +2836,7 @@ class ApiClient {
    * Get tool-specific prompts
    */
   async getPromptyTikitakaToolPrompts(projectId: string): Promise<TikitakaToolPromptsResponse> {
-    return this.request<TikitakaToolPromptsResponse>(`/api/prompty/tikitaka/${projectId}/prompts`);
+    return this.request<TikitakaToolPromptsResponse>(`/api/tikitaka/${projectId}/prompts`);
   }
 
   /**
@@ -2848,7 +2848,7 @@ class ApiClient {
     reason?: string
   ): Promise<{ step: number; reason?: string }> {
     return this.request<{ step: number; reason?: string }>(
-      `/api/prompty/tikitaka/${projectId}/goto/${step}`,
+      `/api/tikitaka/${projectId}/goto/${step}`,
       {
         method: "POST",
         body: JSON.stringify({ reason }),
@@ -2864,7 +2864,7 @@ class ApiClient {
     anchorSceneId: string
   ): Promise<{ anchor_scene_id: string }> {
     return this.request<{ anchor_scene_id: string }>(
-      `/api/prompty/tikitaka/${projectId}/anchor?anchor_scene_id=${encodeURIComponent(anchorSceneId)}`,
+      `/api/tikitaka/${projectId}/anchor?anchor_scene_id=${encodeURIComponent(anchorSceneId)}`,
       { method: "PATCH" }
     );
   }
