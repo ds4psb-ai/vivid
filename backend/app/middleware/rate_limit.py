@@ -141,6 +141,12 @@ RATE_LIMIT_SEARCH = "60/minute"          # Search operations
 # Burst handling (allows short bursts but enforces minute limit)
 RATE_LIMIT_BURST = "10/second;100/minute"
 
+# Prompty-specific rate limits
+RATE_LIMIT_PROMPTY_PROJECT_CREATE = "10/minute"  # Project creation
+RATE_LIMIT_PROMPTY_CRITIQUE = "30/minute"        # Critique submissions
+RATE_LIMIT_PROMPTY_COMMUNITY = "60/minute"       # Community listing
+RATE_LIMIT_PROMPTY_DOWNLOAD = "5/minute"         # Package downloads
+
 
 # =============================================================================
 # Endpoint-specific rate limits
@@ -166,6 +172,12 @@ ENDPOINT_RATE_LIMITS = {
 
     # File operations
     "/api/v1/upload/*": RATE_LIMIT_UPLOAD,
+
+    # Prompty endpoints
+    "/api/prompty/projects": RATE_LIMIT_PROMPTY_PROJECT_CREATE,
+    "/api/prompty/critique": RATE_LIMIT_PROMPTY_CRITIQUE,
+    "/api/prompty/community": RATE_LIMIT_PROMPTY_COMMUNITY,
+    "/api/prompty/download/*": RATE_LIMIT_PROMPTY_DOWNLOAD,
 }
 
 

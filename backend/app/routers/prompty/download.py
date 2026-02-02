@@ -3,11 +3,16 @@
 Download gift-package as ZIP.
 """
 import io
+import logging
 import zipfile
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
+
+from app.middleware.rate_limit import limiter, RATE_LIMIT_PROMPTY_DOWNLOAD
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/download", tags=["prompty-download"])
 
@@ -19,7 +24,8 @@ MAX_ZIP_SIZE = 50 * 1024 * 1024  # 50MB 제한
 
 
 @router.get("/package")
-async def download_package():
+@limiter.limit(RATE_LIMIT_PROMPTY_DOWNLOAD)
+async def download_package(request: Request):
     """Download Prompty project package as ZIP.
 
     Returns the complete gift-package with:
@@ -70,6 +76,7 @@ async def download_package():
 
     zip_buffer.seek(0)
 
+    logger.info(f"Package downloaded: files={len(list(GIFT_PACKAGE_PATH.rglob('*')))}, size={total_size}")
     return StreamingResponse(
         zip_buffer,
         media_type="application/zip",

@@ -778,6 +778,73 @@ export const KLING_TEMPLATE: ToolSpecificTemplate = {
   ],
 };
 
+// Sora 2 Pro Template (VIDEO_SORA.md)
+export const SORA_TEMPLATE: ToolSpecificTemplate = {
+  id: "sora",
+  name: "Sora 2 Pro",
+  language: "english",
+  singleRefTemplate: `**Reference Image:** [Upload reference image]
+
+**Scene Description:**
+{{SCENE_DESCRIPTION}}
+
+**Visual Style:**
+- Cinematography: {{CAMERA_TYPE}}
+- Lighting: {{LIGHTING_DESCRIPTION}}
+- Color Grade: {{COLOR_STYLE}}
+- Era: {{ERA_STYLE}}
+
+**Motion Direction:**
+- Subject: {{SUBJECT_MOTION}}
+- Camera: {{CAMERA_MOVEMENT}}
+- Environment: {{ENV_MOTION}}
+
+**Duration:** {{DURATION}} seconds
+**Aspect Ratio:** {{ASPECT_RATIO}}`,
+  multiRefTemplate: `**References:**
+- [Image 1: COMPOSITION/LAYOUT]
+- [Image 2: CHARACTER FACE (ANCHOR)]
+
+**Scene Setup:**
+{{DETAILED_SCENE_SETUP}}
+
+**Character Direction:**
+- {{CHARACTER_1}}: {{CHARACTER_1_ACTION}}
+- Expression: {{EXPRESSION}}
+- Costume: {{COSTUME_DESCRIPTION}}
+
+**Motion:**
+- Primary action: {{PRIMARY_MOTION}}
+- Secondary action: {{SECONDARY_MOTION}}
+- Camera: {{CAMERA_MOVEMENT}}
+
+**Style:**
+- Film look: {{FILM_STYLE}}
+- Color temperature: {{COLOR_TEMP}}
+- Atmosphere: {{ATMOSPHERE}}
+
+**Duration:** {{DURATION}} seconds
+**Aspect Ratio:** {{ASPECT_RATIO}}`,
+  parameterGuide: [
+    { param: "Duration", description: "최대 20초 (1280p)", example: "5-10 seconds 권장", impact: "critical" },
+    { param: "Aspect Ratio", description: "16:9, 9:16, 1:1", example: "--ar 16:9", impact: "important" },
+    { param: "Camera", description: "카메라 움직임", example: "dolly in, pan left, static", impact: "important" },
+    { param: "Style", description: "영상 스타일", example: "cinematic, documentary, vintage", impact: "important" },
+    { param: "Motion Scale", description: "움직임 크기", example: "subtle, moderate, dynamic", impact: "optional" },
+  ],
+  eraSpecificNegatives: {
+    "1990s": "modern technology, LED screens, smartphones, contemporary fashion, cold color grading",
+    "2020s": "vintage aesthetics, film grain, warm tungsten, nostalgic elements, analog artifacts",
+  },
+  commonIssues: [
+    { problem: "캐릭터 변형", solution: "ANCHOR 이미지 해상도 높이고, 얼굴 클로즈업 제공" },
+    { problem: "움직임 부자연", solution: "Motion scale을 'subtle'로 설정, 짧은 duration (3-5초)" },
+    { problem: "스타일 불일치", solution: "Film look과 color temp를 명시적으로 지정" },
+    { problem: "배경 왜곡", solution: "환경 설명을 더 구체적으로 작성" },
+    { problem: "물리 오류", solution: "간단한 동작부터 시작, 복잡한 상호작용 피하기" },
+  ],
+};
+
 // Veo 3.1 Template (VIDEO_VEO.md)
 export const VEO_TEMPLATE: ToolSpecificTemplate = {
   id: "veo",
@@ -1007,6 +1074,16 @@ export const TOOL_CONFIGS: Record<string, ToolConfig> = {
     template: VEO_TEMPLATE,
     parameterGuide: VEO_TEMPLATE.parameterGuide,
     commonIssues: VEO_TEMPLATE.commonIssues,
+  },
+  sora: {
+    id: "sora",
+    name: "Sora 2 Pro",
+    url: "https://sora.com",
+    format: "english",
+    icon: "SR",
+    template: SORA_TEMPLATE,
+    parameterGuide: SORA_TEMPLATE.parameterGuide,
+    commonIssues: SORA_TEMPLATE.commonIssues,
   },
 };
 

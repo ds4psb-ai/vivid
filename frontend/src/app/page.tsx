@@ -5,8 +5,14 @@
  * 기존 Crebit 홈페이지는 page.crebit-backup.tsx에 백업
  */
 
-import PromptyHomePage from "./prompty/page";
+import { PromptyNavbar } from "@/components/prompty/PromptyNavbar";
+import PromptyHomePage from "@/components/prompty/PromptyHomePage";
 
 export default function Home() {
-  return <PromptyHomePage />;
+  return (
+    <>
+      <PromptyNavbar />
+      <PromptyHomePage />
+    </>
+  );
 }

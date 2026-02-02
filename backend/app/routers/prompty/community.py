@@ -193,14 +193,26 @@ async def get_community_project(
 
 
 # =============================================================================
-# INSTRUCTOR ACCESS (Hardcoded IDs)
+# INSTRUCTOR ACCESS (Environment-based)
 # =============================================================================
 
-# Hardcoded instructor IDs - can see all student projects
-INSTRUCTOR_IDS = [
-    "ted@example.com",
-    "admin@prompty.co.kr",
-]
+import os
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Instructor IDs from environment variable (comma-separated)
+# Example: INSTRUCTOR_IDS=ted@example.com,admin@prompty.co.kr
+_instructor_ids_raw = os.getenv("INSTRUCTOR_IDS", "")
+INSTRUCTOR_IDS: set[str] = set(filter(None, [
+    id.strip() for id in _instructor_ids_raw.split(",")
+]))
+
+if not INSTRUCTOR_IDS:
+    logger.warning(
+        "INSTRUCTOR_IDS environment variable is empty or not set. "
+        "Instructor-only endpoints will be inaccessible."
+    )
 
 
 @router.get("/instructor/all", response_model=CommunityProjectListResponse)

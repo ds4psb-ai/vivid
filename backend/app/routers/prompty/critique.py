@@ -3,11 +3,12 @@
 Quality assessment for workflow steps.
 Based on CRITIQUE_*.md checklists from viral-video-automation.
 """
+import logging
 from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy import select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,6 +17,9 @@ from sqlalchemy.orm import attributes
 from app.database import get_db
 from app.models_prompty import PromptyCritique, PromptyProject, PromptyTemplate
 from app.dependencies import get_current_user_id
+from app.middleware.rate_limit import limiter, RATE_LIMIT_PROMPTY_CRITIQUE
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/critique", tags=["prompty-critique"])
 
@@ -114,7 +118,9 @@ def calculate_total_score(scores: dict, critique_config: dict) -> tuple[float, b
 # =============================================================================
 
 @router.post("", response_model=CritiqueResponse, status_code=201)
+@limiter.limit(RATE_LIMIT_PROMPTY_CRITIQUE)
 async def submit_critique(
+    request: Request,
     data: CritiqueSubmit,
     db: AsyncSession = Depends(get_db),
     user_id: str = Depends(get_current_user_id),
@@ -133,7 +139,10 @@ async def submit_critique(
     project = result.scalar_one_or_none()
 
     if not project:
+        logger.warning(f"Project not found for critique: id={data.project_id}, user_id={user_id}")
         raise HTTPException(status_code=404, detail="Project not found")
+
+    logger.info(f"Submitting critique: project_id={data.project_id}, stage={data.stage}, step_id={data.step_id}")
 
     # Get critique config from template
     critique_config = {}
@@ -208,6 +217,11 @@ async def submit_critique(
 
     await db.commit()
     await db.refresh(critique)
+
+    logger.info(
+        f"Critique submitted: id={critique.id}, project_id={data.project_id}, "
+        f"total_score={total_score}, passed={passed}, revision={revision_number}"
+    )
 
     return CritiqueResponse(
         id=critique.id,

@@ -2,11 +2,12 @@
 
 CRUD operations for user workflow projects.
 """
+import logging
 from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy import select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,6 +16,9 @@ from sqlalchemy.orm import attributes
 from app.database import get_db
 from app.models_prompty import PromptyProject, PromptyTemplate
 from app.dependencies import get_current_user_id
+from app.middleware.rate_limit import limiter, RATE_LIMIT_PROMPTY_PROJECT_CREATE
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/projects", tags=["prompty-projects"])
 
@@ -105,7 +109,9 @@ class ProjectListResponse(BaseModel):
 # =============================================================================
 
 @router.post("", response_model=ProjectResponse, status_code=201)
+@limiter.limit(RATE_LIMIT_PROMPTY_PROJECT_CREATE)
 async def create_project(
+    request: Request,
     data: ProjectCreate,
     db: AsyncSession = Depends(get_db),
     user_id: str = Depends(get_current_user_id),
@@ -114,6 +120,8 @@ async def create_project(
 
     Optionally based on a template from the marketplace.
     """
+    logger.info(f"Creating project: name={data.name}, user_id={user_id}, template_id={data.template_id}")
+
     # Initialize state
     initial_state = {
         "stages": {
@@ -160,6 +168,7 @@ async def create_project(
     await db.commit()
     await db.refresh(project)
 
+    logger.info(f"Project created: id={project.id}, user_id={user_id}")
     return project
 
 
@@ -212,6 +221,7 @@ async def get_project(
     project = result.scalar_one_or_none()
 
     if not project:
+        logger.warning(f"Project not found: id={project_id}, user_id={user_id}")
         raise HTTPException(status_code=404, detail="Project not found")
 
     return project
@@ -237,7 +247,10 @@ async def update_project_state(
     project = result.scalar_one_or_none()
 
     if not project:
+        logger.warning(f"Project not found for state update: id={project_id}, user_id={user_id}")
         raise HTTPException(status_code=404, detail="Project not found")
+
+    logger.debug(f"Updating project state: id={project_id}")
 
     # Update fields
     if data.name is not None:
@@ -290,6 +303,8 @@ async def delete_project(
 
     await db.delete(project)
     await db.commit()
+
+    logger.info(f"Project deleted: id={project_id}, user_id={user_id}")
 
 
 # =============================================================================
@@ -363,4 +378,5 @@ async def fork_project(
     await db.commit()
     await db.refresh(forked)
 
+    logger.info(f"Project forked: source_id={project_id}, forked_id={forked.id}, user_id={user_id}")
     return forked

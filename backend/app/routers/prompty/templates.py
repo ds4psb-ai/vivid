@@ -2,6 +2,7 @@
 
 Template discovery and management.
 """
+import logging
 from typing import Optional, List
 from uuid import UUID
 
@@ -13,6 +14,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models_prompty import PromptyTemplate, PromptyProject
 from app.dependencies import get_current_user, get_current_user_id, get_optional_user_id, require_admin
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/templates", tags=["prompty-templates"])
 
@@ -226,6 +229,7 @@ async def use_template(
     await db.commit()
     await db.refresh(project)
 
+    logger.info(f"Template used: template_id={template_id}, project_id={project.id}, user_id={current_user['id']}")
     return UseTemplateResponse(
         project_id=project.id,
         template_title=template.title,
@@ -284,6 +288,7 @@ async def create_template(
     await db.commit()
     await db.refresh(template)
 
+    logger.info(f"Template created: id={template.id}, title={data.title}, creator={admin_user['user_id']}")
     return TemplateDetail(
         id=template.id,
         title=template.title,

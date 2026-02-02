@@ -14,6 +14,7 @@ Frontend responsibilities:
 - Prompt templates (TIKITAKA_PROMPTS constant)
 - UI rendering and copy functionality
 """
+import logging
 from typing import Optional, List, Dict
 from uuid import UUID
 from datetime import datetime
@@ -27,6 +28,8 @@ from sqlalchemy.orm import attributes
 from app.database import get_db
 from app.models_prompty import PromptyProject
 from app.dependencies import get_current_user, get_current_user_id
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/tikitaka", tags=["prompty-tikitaka"])
 
@@ -123,6 +126,10 @@ TOOL_CONFIGS = {
         "name": "Veo 3.1",
         "url": "https://labs.google/fx/tools/veo",
     },
+    "sora": {
+        "name": "Sora 2 Pro",
+        "url": "https://sora.com",
+    },
 }
 
 
@@ -164,6 +171,21 @@ Style: Photorealistic
 Duration: 4 seconds
 Motion: Smooth, cinematic"""
 
+    # Sora 2 Pro (English)
+    prompts["sora"] = f"""[Reference Image Upload Required]
+
+Scene Description:
+{base_prompt}
+
+Motion Direction:
+- Subject: Natural, subtle movement
+- Camera: Slow dolly in
+- Environment: Ambient motion
+
+Style: Cinematic, photorealistic
+Duration: 5 seconds
+Aspect Ratio: 16:9"""
+
     return prompts
 
 
@@ -191,10 +213,12 @@ async def start_tikitaka(
     project = result.scalar_one_or_none()
 
     if not project:
+        logger.warning(f"Project not found for tikitaka start: id={project_id}, user_id={user_id}")
         raise HTTPException(status_code=404, detail="Project not found")
 
     # Initialize tikitaka state
     tikitaka_id = f"tt_{project_id.hex[:8]}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+    logger.info(f"Starting tikitaka workflow: project_id={project_id}, tikitaka_id={tikitaka_id}")
 
     tikitaka_state = {
         "tikitaka_id": tikitaka_id,
@@ -318,6 +342,7 @@ async def advance_step(
 
     await db.commit()
 
+    logger.info(f"Tikitaka advanced: project_id={project_id}, step={current_step}->{new_step}")
     return TikitakaAdvanceResponse(new_step=new_step, completed=False)
 
 
@@ -417,6 +442,7 @@ async def goto_step(
 
     await db.commit()
 
+    logger.info(f"Tikitaka goto: project_id={project_id}, step={step}, reason={data.reason}")
     return {"step": step, "reason": data.reason}
 
 

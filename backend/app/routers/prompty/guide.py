@@ -2,6 +2,7 @@
 
 Step-by-step guide navigation and prompt delivery.
 """
+import logging
 from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
@@ -15,6 +16,8 @@ from sqlalchemy.orm import attributes
 from app.database import get_db
 from app.models_prompty import PromptyProject, PromptyTemplate, PromptyGuideLog
 from app.dependencies import get_current_user_id
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/guide", tags=["prompty-guide"])
 
@@ -389,3 +392,5 @@ async def log_action(
 
     db.add(log)
     await db.commit()
+
+    logger.debug(f"Guide action logged: project_id={project_id}, action={data.action}, stage={data.stage}, step={data.step_id}")
