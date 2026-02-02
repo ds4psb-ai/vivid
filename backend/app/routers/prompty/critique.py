@@ -78,7 +78,8 @@ def calculate_total_score(scores: dict, critique_config: dict) -> tuple[float, b
         (total_score: 0-100, passed: bool)
     """
     items = critique_config.get("items", [])
-    passing_score = critique_config.get("passing_score", 75)
+    # FE와 통일: PASS 85+, REVISE 60-84, REJECT <60
+    passing_score = critique_config.get("passing_score", 85)
 
     if not items:
         # No config - simple average

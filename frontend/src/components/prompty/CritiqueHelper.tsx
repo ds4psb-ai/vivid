@@ -1,19 +1,16 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
-  generateCritiquePrompt,
-  copyToClipboard,
-  IMAGE_CRITIQUE_DIMENSIONS,
-  VIDEO_CRITIQUE_DIMENSIONS,
-  type CritiqueContext,
-} from "@/lib/critique-prompt-generator";
-import {
-  parseCritiqueResult,
-  calculateWeightedScore,
-  getVerdictFromScore,
-  type ParsedCritiqueResult,
-} from "@/lib/critique-result-parser";
+  CRITIQUE_DIMENSIONS,
+  VERDICT_THRESHOLDS,
+  getVerdict,
+  calculateItemScore,
+  generateCritiqueMarkdown,
+  generateImprovedPrompt,
+  type CritiqueItemResult,
+} from "@/lib/tikitaka-prompts";
+import { copyToClipboard } from "@/lib/critique-prompt-generator";
 import { api } from "@/lib/api";
 
 interface CritiqueHelperProps {
@@ -26,6 +23,7 @@ interface CritiqueHelperProps {
   }>;
   anchorImagePath?: string;
   onCritiqueSaved?: () => void;
+  originalPrompt?: string; // 현재 프롬프트 (개선 프롬프트 생성용)
 }
 
 export function CritiqueHelper({
@@ -33,86 +31,143 @@ export function CritiqueHelper({
   scenes,
   anchorImagePath,
   onCritiqueSaved,
+  originalPrompt = "",
 }: CritiqueHelperProps) {
   const [selectedScene, setSelectedScene] = useState<string>(
     scenes[0]?.id || ""
   );
   const [critiqueType, setCritiqueType] = useState<"image" | "video">("image");
-  const [generatedPrompt, setGeneratedPrompt] = useState<string>("");
-  const [aiOutput, setAiOutput] = useState<string>("");
-  const [parsedResult, setParsedResult] = useState<ParsedCritiqueResult | null>(
-    null
-  );
+
+  // 5D×23 체크리스트 상태: {dimension_id: {item_id: boolean}}
+  const [checkedItems, setCheckedItems] = useState<
+    Record<string, Record<string, boolean>>
+  >({});
+
+  // 아코디언 열림 상태
+  const [expandedDimensions, setExpandedDimensions] = useState<
+    Record<string, boolean>
+  >({});
+
   const [saving, setSaving] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [markdownCopied, setMarkdownCopied] = useState(false);
 
   const currentScene = scenes.find((s) => s.id === selectedScene);
 
-  // Step 1: Generate prompt
-  const handleGeneratePrompt = useCallback(() => {
-    if (!currentScene) return;
+  // 점수 및 결과 계산
+  const { score, passedItems, failedItems } = useMemo(() => {
+    return calculateItemScore(checkedItems);
+  }, [checkedItems]);
 
-    const context: CritiqueContext = {
-      sceneId: currentScene.id,
-      sceneName: currentScene.name,
-      isAnchor: currentScene.isAnchor,
-      imagePath: currentScene.imagePath,
-      anchorImagePath: currentScene.isAnchor ? undefined : anchorImagePath,
-      critiqueType,
-    };
+  const verdict = useMemo(() => getVerdict(score), [score]);
 
-    const prompt = generateCritiquePrompt(context);
-    setGeneratedPrompt(prompt);
-    setStep(2);
-  }, [currentScene, anchorImagePath, critiqueType]);
+  // 개선 프롬프트 생성 (규칙 기반)
+  const improvedPrompt = useMemo(() => {
+    if (failedItems.length === 0 || !originalPrompt) return undefined;
+    return generateImprovedPrompt(originalPrompt, failedItems);
+  }, [originalPrompt, failedItems]);
 
-  // Copy prompt to clipboard
-  const handleCopyPrompt = async () => {
-    const success = await copyToClipboard(generatedPrompt);
+  // Markdown 출력 생성
+  const markdownOutput = useMemo(() => {
+    if (!currentScene) return "";
+    return generateCritiqueMarkdown(
+      currentScene.name,
+      score,
+      verdict,
+      passedItems,
+      failedItems,
+      improvedPrompt
+    );
+  }, [currentScene, score, verdict, passedItems, failedItems, improvedPrompt]);
+
+  // 아이템 체크/해제
+  const handleItemToggle = useCallback(
+    (dimensionId: string, itemId: string) => {
+      setCheckedItems((prev) => {
+        const dimItems = prev[dimensionId] || {};
+        return {
+          ...prev,
+          [dimensionId]: {
+            ...dimItems,
+            [itemId]: !dimItems[itemId],
+          },
+        };
+      });
+    },
+    []
+  );
+
+  // 차원 전체 체크/해제
+  const handleDimensionToggleAll = useCallback(
+    (dimensionId: string, items: { id: string }[]) => {
+      setCheckedItems((prev) => {
+        const dimItems = prev[dimensionId] || {};
+        const allChecked = items.every((item) => dimItems[item.id] === true);
+
+        const newDimItems: Record<string, boolean> = {};
+        for (const item of items) {
+          newDimItems[item.id] = !allChecked;
+        }
+
+        return {
+          ...prev,
+          [dimensionId]: newDimItems,
+        };
+      });
+    },
+    []
+  );
+
+  // 아코디언 토글
+  const toggleDimension = useCallback((dimensionId: string) => {
+    setExpandedDimensions((prev) => ({
+      ...prev,
+      [dimensionId]: !prev[dimensionId],
+    }));
+  }, []);
+
+  // Markdown 복사
+  const handleCopyMarkdown = async () => {
+    const success = await copyToClipboard(markdownOutput);
     if (success) {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setMarkdownCopied(true);
+      setTimeout(() => setMarkdownCopied(false), 2000);
     }
   };
 
-  // Step 2: Parse AI output
-  const handleParseOutput = useCallback(() => {
-    const result = parseCritiqueResult(aiOutput);
-    if (result) {
-      // Recalculate score if needed
-      if (Object.keys(result.scores).length > 0) {
-        result.totalScore = calculateWeightedScore(result.scores, critiqueType);
-        result.verdict = getVerdictFromScore(result.totalScore);
-      }
-      result.sceneId = selectedScene;
-      result.critiqueType = critiqueType;
-      setParsedResult(result);
-      setStep(3);
-    }
-  }, [aiOutput, selectedScene, critiqueType]);
-
-  // Step 3: Save to database
+  // 저장
   const handleSave = async () => {
-    if (!parsedResult) return;
+    if (!currentScene) return;
     setSaving(true);
 
     try {
+      // 차원별 점수 계산 (기존 API 호환용)
+      const dimensionScores: Record<string, number> = {};
+      for (const dim of CRITIQUE_DIMENSIONS) {
+        const dimChecks = checkedItems[dim.id] || {};
+        let dimEarned = 0;
+        let dimTotal = 0;
+        for (const item of dim.items) {
+          dimTotal += item.weight;
+          if (dimChecks[item.id]) {
+            dimEarned += item.weight;
+          }
+        }
+        dimensionScores[dim.id] = dimTotal > 0 ? Math.round((dimEarned / dimTotal) * 100) : 0;
+      }
+
       await api.submitPromptyCritique(projectId, {
         stage: critiqueType,
-        step_id: parsedResult.sceneId,
-        score: parsedResult.totalScore,
-        verdict: parsedResult.verdict,
-        issues: parsedResult.issues,
-        suggestions: parsedResult.suggestions,
-        scores_detail: parsedResult.scores as Record<string, number>,
+        step_id: currentScene.id,
+        score: score,
+        verdict: verdict,
+        issues: failedItems.map((f) => `[${f.dimensionName}] ${f.label}`),
+        suggestions: failedItems.map((f) => f.suggestion),
+        scores_detail: dimensionScores,
       });
       onCritiqueSaved?.();
+
       // Reset for next critique
-      setAiOutput("");
-      setParsedResult(null);
-      setGeneratedPrompt("");
-      setStep(1);
+      setCheckedItems({});
     } catch (error) {
       console.error("Failed to save critique:", error);
     } finally {
@@ -120,10 +175,33 @@ export function CritiqueHelper({
     }
   };
 
-  const dimensions =
-    critiqueType === "image"
-      ? IMAGE_CRITIQUE_DIMENSIONS
-      : VIDEO_CRITIQUE_DIMENSIONS;
+  // 전체 리셋
+  const handleReset = useCallback(() => {
+    setCheckedItems({});
+    setExpandedDimensions({});
+  }, []);
+
+  // 전체 체크 (모두 통과)
+  const handleCheckAll = useCallback(() => {
+    const allChecked: Record<string, Record<string, boolean>> = {};
+    for (const dim of CRITIQUE_DIMENSIONS) {
+      allChecked[dim.id] = {};
+      for (const item of dim.items) {
+        allChecked[dim.id][item.id] = true;
+      }
+    }
+    setCheckedItems(allChecked);
+  }, []);
+
+  // 체크된 항목 수 계산
+  const getCheckedCount = (dimensionId: string): { checked: number; total: number } => {
+    const dim = CRITIQUE_DIMENSIONS.find((d) => d.id === dimensionId);
+    if (!dim) return { checked: 0, total: 0 };
+
+    const dimChecks = checkedItems[dimensionId] || {};
+    const checked = dim.items.filter((item) => dimChecks[item.id] === true).length;
+    return { checked, total: dim.items.length };
+  };
 
   return (
     <div className="space-y-6">
@@ -155,7 +233,7 @@ export function CritiqueHelper({
                   : "border-border hover:bg-accent"
               }`}
             >
-              🖼️ Image
+              Image
             </button>
             <button
               onClick={() => setCritiqueType("video")}
@@ -165,237 +243,226 @@ export function CritiqueHelper({
                   : "border-border hover:bg-accent"
               }`}
             >
-              🎬 Video
+              Video
             </button>
           </div>
         </div>
       </div>
 
-      {/* Step Indicator */}
-      <div className="flex items-center gap-2 text-sm">
-        {[1, 2, 3].map((s) => (
-          <div key={s} className="flex items-center">
+      {/* Score Display */}
+      <div className="p-4 border border-border rounded-lg bg-card">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h3 className="font-medium">{currentScene?.name || "Select Scene"}</h3>
+            <div className="text-xs text-muted-foreground mt-1">
+              PASS: {VERDICT_THRESHOLDS.PASS}+ | REVISE: {VERDICT_THRESHOLDS.REVISE_MIN}-{VERDICT_THRESHOLDS.PASS - 1} | REJECT: &lt;{VERDICT_THRESHOLDS.REVISE_MIN}
+            </div>
+          </div>
+          <div className="text-right">
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center font-medium ${
-                step >= s
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
+              className={`text-3xl font-bold ${
+                verdict === "PASS"
+                  ? "text-green-500"
+                  : verdict === "REVISE"
+                  ? "text-yellow-500"
+                  : "text-red-500"
               }`}
             >
-              {s}
+              {score}
             </div>
-            {s < 3 && (
-              <div
-                className={`w-8 h-0.5 ${
-                  step > s ? "bg-primary" : "bg-muted"
-                }`}
-              />
-            )}
+            <span
+              className={`text-sm font-medium ${
+                verdict === "PASS"
+                  ? "text-green-500"
+                  : verdict === "REVISE"
+                  ? "text-yellow-500"
+                  : "text-red-500"
+              }`}
+            >
+              {verdict}
+            </span>
           </div>
-        ))}
-        <span className="ml-2 text-muted-foreground">
-          {step === 1 && "프롬프트 생성"}
-          {step === 2 && "AI 결과 붙여넣기"}
-          {step === 3 && "결과 확인 & 저장"}
-        </span>
-      </div>
+        </div>
 
-      {/* Step 1: Generate Prompt */}
-      {step === 1 && (
-        <div className="space-y-4">
-          <div className="p-4 border border-border rounded-lg bg-card">
-            <h3 className="font-medium mb-2">5D 평가 기준</h3>
-            <ul className="text-sm space-y-1 text-muted-foreground">
-              {dimensions.map((d) => (
-                <li key={d.id}>
-                  • <strong>{d.nameKo}</strong> ({d.weight}%): {d.description}
-                </li>
-              ))}
-            </ul>
-          </div>
+        {/* Quick Actions */}
+        <div className="flex gap-2 text-xs">
           <button
-            onClick={handleGeneratePrompt}
-            disabled={!currentScene}
-            className="w-full py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 transition"
+            onClick={handleCheckAll}
+            className="px-2 py-1 bg-green-500/10 text-green-500 rounded hover:bg-green-500/20 transition"
           >
-            프롬프트 생성하기
+            All Pass
+          </button>
+          <button
+            onClick={handleReset}
+            className="px-2 py-1 bg-red-500/10 text-red-500 rounded hover:bg-red-500/20 transition"
+          >
+            Reset
           </button>
         </div>
-      )}
+      </div>
 
-      {/* Step 2: Copy & Paste */}
-      {step === 2 && (
-        <div className="space-y-4">
-          {/* Generated Prompt */}
-          <div className="relative">
-            <label className="block text-sm font-medium mb-1">
-              1. 이 프롬프트를 복사하여 Gemini/Claude에 붙여넣기
-            </label>
-            <textarea
-              value={generatedPrompt}
-              readOnly
-              rows={8}
-              className="w-full px-3 py-2 bg-muted border border-border rounded-lg font-mono text-sm resize-none"
-            />
-            <button
-              onClick={handleCopyPrompt}
-              className="absolute top-8 right-2 px-3 py-1 bg-primary text-primary-foreground text-sm rounded hover:bg-primary/90 transition"
+      {/* 5D Accordion Checklist */}
+      <div className="space-y-2">
+        {CRITIQUE_DIMENSIONS.map((dimension) => {
+          const isExpanded = expandedDimensions[dimension.id] ?? false;
+          const { checked, total } = getCheckedCount(dimension.id);
+          const isFullyChecked = checked === total;
+          const isPartiallyChecked = checked > 0 && checked < total;
+
+          return (
+            <div
+              key={dimension.id}
+              className="border border-border rounded-lg overflow-hidden"
             >
-              {copied ? "✅ Copied!" : "📋 Copy"}
-            </button>
-          </div>
-
-          {/* AI Output */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              2. AI 응답을 여기에 붙여넣기
-            </label>
-            <textarea
-              value={aiOutput}
-              onChange={(e) => setAiOutput(e.target.value)}
-              rows={8}
-              placeholder="Gemini/Claude의 응답을 여기에 붙여넣으세요..."
-              className="w-full px-3 py-2 bg-background border border-border rounded-lg font-mono text-sm resize-none"
-            />
-          </div>
-
-          <div className="flex gap-2">
-            <button
-              onClick={() => setStep(1)}
-              className="px-4 py-2 border border-border rounded-lg hover:bg-accent transition"
-            >
-              ← 이전
-            </button>
-            <button
-              onClick={handleParseOutput}
-              disabled={!aiOutput.trim()}
-              className="flex-1 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 transition"
-            >
-              결과 파싱하기
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Step 3: Review & Save */}
-      {step === 3 && parsedResult && (
-        <div className="space-y-4">
-          {/* Score Summary */}
-          <div className="p-4 border border-border rounded-lg bg-card">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="font-medium">{currentScene?.name}</h3>
-                <span className="text-sm text-muted-foreground">
-                  {critiqueType === "image" ? "🖼️ Image" : "🎬 Video"} Critique
-                </span>
-              </div>
-              <div className="text-right">
-                <div
-                  className={`text-3xl font-bold ${
-                    parsedResult.verdict === "PASS"
-                      ? "text-green-500"
-                      : parsedResult.verdict === "REVISE"
-                      ? "text-yellow-500"
-                      : "text-red-500"
-                  }`}
-                >
-                  {parsedResult.totalScore}
+              {/* Accordion Header */}
+              <button
+                onClick={() => toggleDimension(dimension.id)}
+                className={`w-full px-4 py-3 flex items-center justify-between text-left transition ${
+                  isFullyChecked
+                    ? "bg-green-500/10"
+                    : isPartiallyChecked
+                    ? "bg-yellow-500/10"
+                    : "bg-card hover:bg-accent"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`w-6 h-6 rounded flex items-center justify-center text-xs font-bold ${
+                      isFullyChecked
+                        ? "bg-green-500 text-white"
+                        : isPartiallyChecked
+                        ? "bg-yellow-500 text-white"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {checked}
+                  </span>
+                  <span className="font-medium">
+                    {dimension.nameKo}
+                    {dimension.id === "consistency" && " ⭐"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    ({dimension.weight}%)
+                  </span>
                 </div>
-                <span
-                  className={`text-sm font-medium ${
-                    parsedResult.verdict === "PASS"
-                      ? "text-green-500"
-                      : parsedResult.verdict === "REVISE"
-                      ? "text-yellow-500"
-                      : "text-red-500"
-                  }`}
-                >
-                  {parsedResult.verdict}
-                </span>
-              </div>
-            </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    {checked}/{total}
+                  </span>
+                  <span
+                    className={`transition-transform ${
+                      isExpanded ? "rotate-180" : ""
+                    }`}
+                  >
+                    ▼
+                  </span>
+                </div>
+              </button>
 
-            {/* Individual Scores */}
-            <div className="space-y-2">
-              {dimensions.map((dim) => {
-                const score =
-                  parsedResult.scores[
-                    dim.id as keyof typeof parsedResult.scores
-                  ];
-                return (
-                  <div key={dim.id} className="flex items-center gap-2 text-sm">
-                    <span className="w-32 text-muted-foreground">
-                      {dim.nameKo}
-                    </span>
-                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+              {/* Accordion Content */}
+              {isExpanded && (
+                <div className="px-4 py-2 space-y-1 bg-background">
+                  {/* Toggle All Button */}
+                  <button
+                    onClick={() =>
+                      handleDimensionToggleAll(dimension.id, dimension.items)
+                    }
+                    className="text-xs text-muted-foreground hover:text-foreground mb-2"
+                  >
+                    {isFullyChecked ? "Uncheck All" : "Check All"}
+                  </button>
+
+                  {dimension.items.map((item) => {
+                    const isChecked =
+                      checkedItems[dimension.id]?.[item.id] === true;
+
+                    return (
                       <div
-                        className={`h-full transition-all ${
-                          score !== undefined && score >= 85
-                            ? "bg-green-500"
-                            : score !== undefined && score >= 60
-                            ? "bg-yellow-500"
-                            : "bg-red-500"
+                        key={item.id}
+                        className={`flex items-start gap-2 p-2 rounded transition cursor-pointer ${
+                          isChecked
+                            ? "bg-green-500/10"
+                            : "hover:bg-accent"
                         }`}
-                        style={{ width: `${score ?? 0}%` }}
-                      />
-                    </div>
-                    <span className="w-10 text-right">
-                      {score !== undefined ? score : "-"}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Issues & Suggestions */}
-          {(parsedResult.issues.length > 0 ||
-            parsedResult.suggestions.length > 0) && (
-            <div className="p-4 border border-border rounded-lg bg-card space-y-3">
-              {parsedResult.issues.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-medium text-red-400 mb-1">
-                    문제점
-                  </h4>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    {parsedResult.issues.map((issue, i) => (
-                      <li key={i}>• {issue}</li>
-                    ))}
-                  </ul>
+                        onClick={() =>
+                          handleItemToggle(dimension.id, item.id)
+                        }
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() =>
+                            handleItemToggle(dimension.id, item.id)
+                          }
+                          className="mt-1"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm">
+                              {item.label}
+                            </span>
+                            <span
+                              className={`text-xs px-1 rounded ${
+                                isChecked
+                                  ? "bg-green-500/20 text-green-500"
+                                  : "bg-muted text-muted-foreground"
+                              }`}
+                            >
+                              {isChecked ? "+" : ""}{item.weight}pt
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {item.description}
+                          </p>
+                          {!isChecked && (
+                            <p className="text-xs text-orange-400 mt-1">
+                              → {item.suggestion}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
-              {parsedResult.suggestions.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-medium text-blue-400 mb-1">
-                    개선 제안
-                  </h4>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    {parsedResult.suggestions.map((sug, i) => (
-                      <li key={i}>→ {sug}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </div>
-          )}
+          );
+        })}
+      </div>
 
-          <div className="flex gap-2">
+      {/* Markdown Output */}
+      {(passedItems.length > 0 || failedItems.length > 0) && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="block text-sm font-medium">
+              Markdown 출력 (복사용)
+            </label>
             <button
-              onClick={() => setStep(2)}
-              className="px-4 py-2 border border-border rounded-lg hover:bg-accent transition"
+              onClick={handleCopyMarkdown}
+              className="px-3 py-1 bg-primary text-primary-foreground text-sm rounded hover:bg-primary/90 transition"
             >
-              ← 수정
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="flex-1 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 transition"
-            >
-              {saving ? "저장 중..." : "💾 저장하기"}
+              {markdownCopied ? "Copied!" : "Copy"}
             </button>
           </div>
+          <textarea
+            value={markdownOutput}
+            readOnly
+            rows={12}
+            className="w-full px-3 py-2 bg-muted border border-border rounded-lg font-mono text-xs resize-none"
+          />
         </div>
       )}
+
+      {/* Save Button */}
+      <div className="flex gap-2">
+        <button
+          onClick={handleSave}
+          disabled={saving || score === 0}
+          className="flex-1 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 transition"
+        >
+          {saving ? "Saving..." : "Save Critique"}
+        </button>
+      </div>
     </div>
   );
 }

@@ -1095,6 +1095,8 @@ export interface CritiqueItem {
   id: string;
   label: string;
   description: string;
+  suggestion: string;  // 실패 시 규칙 기반 제안 문구
+  weight: number;      // 항목별 가중치 (점수)
 }
 
 export const CRITIQUE_DIMENSIONS: CritiqueDimension[] = [
@@ -1104,12 +1106,12 @@ export const CRITIQUE_DIMENSIONS: CritiqueDimension[] = [
     nameKo: "프롬프트 준수",
     weight: 25,
     items: [
-      { id: "subject", label: "주제 정확성", description: "주제(Subject)가 정확히 표현됨" },
-      { id: "background", label: "배경/환경", description: "배경과 환경이 의도대로 생성됨" },
-      { id: "lighting", label: "조명/색감", description: "조명과 색감이 지시와 일치" },
-      { id: "style", label: "스타일", description: "요청한 스타일과 일치" },
-      { id: "no_missing", label: "누락 없음", description: "누락된 요소가 없음" },
-      { id: "no_extra", label: "추가 없음", description: "불필요한 추가 요소가 없음" },
+      { id: "subject", label: "주제 정확성", description: "주제(Subject)가 정확히 표현됨", suggestion: "주제를 더 구체적으로 명시 (예: 'Korean boy, 7 years old')", weight: 5 },
+      { id: "background", label: "배경/환경", description: "배경과 환경이 의도대로 생성됨", suggestion: "배경 설명 추가 (예: '1990s Korean living room, wooden furniture')", weight: 4 },
+      { id: "lighting", label: "조명/색감", description: "조명과 색감이 지시와 일치", suggestion: "K값 명시 (예: '3200K tungsten lighting' 또는 '6500K LED')", weight: 5 },
+      { id: "style", label: "스타일", description: "요청한 스타일과 일치", suggestion: "시대별 스타일 명시 (예: 'Kodak Portra 400 film look' 또는 '--style raw')", weight: 4 },
+      { id: "no_missing", label: "누락 없음", description: "누락된 요소가 없음", suggestion: "원본 키프레임 다시 확인하고 누락된 요소 추가", weight: 4 },
+      { id: "no_extra", label: "추가 없음", description: "불필요한 추가 요소가 없음", suggestion: "--no 파라미터로 불필요한 요소 제거 (예: '--no modern furniture, smartphones')", weight: 3 },
     ],
   },
   {
@@ -1118,10 +1120,10 @@ export const CRITIQUE_DIMENSIONS: CritiqueDimension[] = [
     nameKo: "미적 품질",
     weight: 20,
     items: [
-      { id: "composition", label: "구도", description: "구도가 균형잡히고 시선 유도가 적절함" },
-      { id: "color_harmony", label: "색감 조화", description: "팔레트가 일관성 있음" },
-      { id: "lighting_natural", label: "조명", description: "조명이 자연스럽고 분위기에 맞음" },
-      { id: "impact", label: "시각적 임팩트", description: "전체적으로 시각적으로 매력적임" },
+      { id: "composition", label: "구도", description: "구도가 균형잡히고 시선 유도가 적절함", suggestion: "--iw 2.0~2.5로 레퍼런스 영향력 높이기", weight: 5 },
+      { id: "color_harmony", label: "색감 조화", description: "팔레트가 일관성 있음", suggestion: "color palette HEX 코드 명시 (예: '#F5DEB3 warm beige tones')", weight: 5 },
+      { id: "lighting_natural", label: "조명", description: "조명이 자연스럽고 분위기에 맞음", suggestion: "조명 방향/소스 명시 (예: 'soft key light from left, candle fill')", weight: 5 },
+      { id: "impact", label: "시각적 임팩트", description: "전체적으로 시각적으로 매력적임", suggestion: "--stylize 100-250 조정으로 예술적 해석 조절", weight: 5 },
     ],
   },
   {
@@ -1130,10 +1132,10 @@ export const CRITIQUE_DIMENSIONS: CritiqueDimension[] = [
     nameKo: "기술적 완성도",
     weight: 15,
     items: [
-      { id: "resolution", label: "해상도/선명도", description: "충분한 디테일이 있음" },
-      { id: "texture", label: "텍스처", description: "텍스처가 자연스러움" },
-      { id: "noise", label: "노이즈/그레인", description: "의도적이거나 없음" },
-      { id: "artifacts", label: "아티팩트", description: "글리치나 왜곡이 없음" },
+      { id: "resolution", label: "해상도/선명도", description: "충분한 디테일이 있음", suggestion: "해상도 명시 (예: '4K resolution, sharp details')", weight: 4 },
+      { id: "texture", label: "텍스처", description: "텍스처가 자연스러움", suggestion: "텍스처 스타일 명시 (예: 'subtle film grain, natural skin texture')", weight: 4 },
+      { id: "noise", label: "노이즈/그레인", description: "의도적이거나 없음", suggestion: "1990s면 'film grain' 추가, 2020s면 '--no film grain'", weight: 3 },
+      { id: "artifacts", label: "아티팩트", description: "글리치나 왜곡이 없음", suggestion: "--no artifacts, glitches, distortion 추가", weight: 4 },
     ],
   },
   {
@@ -1142,11 +1144,11 @@ export const CRITIQUE_DIMENSIONS: CritiqueDimension[] = [
     nameKo: "캐릭터 일관성",
     weight: 25, // 가장 중요
     items: [
-      { id: "face", label: "얼굴", description: "ANCHOR와 얼굴이 일치함" },
-      { id: "hair", label: "헤어스타일", description: "헤어스타일이 일치함" },
-      { id: "ethnicity", label: "민족/피부톤", description: "한국인으로 정확히 표현됨" },
-      { id: "clothing", label: "의상", description: "색상과 스타일이 일치함" },
-      { id: "age", label: "나이", description: "나이가 적절하게 표현됨" },
+      { id: "face", label: "얼굴", description: "ANCHOR와 얼굴이 일치함", suggestion: "--oref [ANCHOR URL] --cw 80-100 으로 얼굴 고정", weight: 8 },
+      { id: "hair", label: "헤어스타일", description: "헤어스타일이 일치함", suggestion: "헤어스타일 구체적 명시 (예: 'bowl cut, black straight hair')", weight: 4 },
+      { id: "ethnicity", label: "민족/피부톤", description: "한국인으로 정확히 표현됨", suggestion: "Korean::2 + --no western features, caucasian skin, blonde, blue eyes", weight: 8 },
+      { id: "clothing", label: "의상", description: "색상과 스타일이 일치함", suggestion: "의상 색상 정확히 명시 (예: 'red striped t-shirt, same as Image 1')", weight: 3 },
+      { id: "age", label: "나이", description: "나이가 적절하게 표현됨", suggestion: "나이 구체적 명시 (예: '7 years old Korean boy')", weight: 2 },
     ],
   },
   {
@@ -1155,16 +1157,16 @@ export const CRITIQUE_DIMENSIONS: CritiqueDimension[] = [
     nameKo: "해부학/물리",
     weight: 15,
     items: [
-      { id: "hands", label: "손", description: "자연스러운 포즈, 손가락 수 정확" },
-      { id: "face_features", label: "얼굴 특징", description: "눈/코/입 배치가 정상" },
-      { id: "body_proportion", label: "신체 비율", description: "신체 비율이 자연스러움" },
-      { id: "physics", label: "물리적 논리", description: "중력, 그림자 등이 적절함" },
+      { id: "hands", label: "손", description: "자연스러운 포즈, 손가락 수 정확", suggestion: "--no 6 fingers, extra fingers, deformed hands 또는 'hands hidden behind back'", weight: 5 },
+      { id: "face_features", label: "얼굴 특징", description: "눈/코/입 배치가 정상", suggestion: "--no distorted face, asymmetric features, crossed eyes", weight: 4 },
+      { id: "body_proportion", label: "신체 비율", description: "신체 비율이 자연스러움", suggestion: "--no elongated limbs, disproportionate body", weight: 3 },
+      { id: "physics", label: "물리적 논리", description: "중력, 그림자 등이 적절함", suggestion: "그림자 방향 명시 (예: 'shadows consistent with candle light source')", weight: 3 },
     ],
   },
 ];
 
 /**
- * Calculate total score from dimension scores
+ * Calculate total score from dimension scores (legacy)
  */
 export function calculateTotalScore(dimensionScores: Record<string, number>): number {
   let totalScore = 0;
@@ -1177,4 +1179,160 @@ export function calculateTotalScore(dimensionScores: Record<string, number>): nu
   }
 
   return Math.round(totalScore / totalWeight);
+}
+
+/**
+ * Checked item result with pass/fail
+ */
+export interface CritiqueItemResult {
+  dimensionId: string;
+  dimensionName: string;
+  itemId: string;
+  label: string;
+  passed: boolean;
+  weight: number;
+  suggestion: string;
+}
+
+/**
+ * Calculate total score from individual item checks (5D×23)
+ */
+export function calculateItemScore(
+  checkedItems: Record<string, Record<string, boolean>> // {dimension_id: {item_id: passed}}
+): { score: number; passedItems: CritiqueItemResult[]; failedItems: CritiqueItemResult[] } {
+  let earnedPoints = 0;
+  let totalPoints = 0;
+  const passedItems: CritiqueItemResult[] = [];
+  const failedItems: CritiqueItemResult[] = [];
+
+  for (const dimension of CRITIQUE_DIMENSIONS) {
+    const dimChecks = checkedItems[dimension.id] || {};
+
+    for (const item of dimension.items) {
+      totalPoints += item.weight;
+      const passed = dimChecks[item.id] === true;
+
+      const result: CritiqueItemResult = {
+        dimensionId: dimension.id,
+        dimensionName: dimension.nameKo,
+        itemId: item.id,
+        label: item.label,
+        passed,
+        weight: item.weight,
+        suggestion: item.suggestion,
+      };
+
+      if (passed) {
+        earnedPoints += item.weight;
+        passedItems.push(result);
+      } else {
+        failedItems.push(result);
+      }
+    }
+  }
+
+  // Normalize to 0-100 scale
+  const score = totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0;
+  return { score, passedItems, failedItems };
+}
+
+/**
+ * Generate Markdown critique output for copy-paste
+ */
+export function generateCritiqueMarkdown(
+  sceneName: string,
+  score: number,
+  verdict: "PASS" | "REVISE" | "REJECT",
+  passedItems: CritiqueItemResult[],
+  failedItems: CritiqueItemResult[],
+  improvedPrompt?: string
+): string {
+  const verdictEmoji = verdict === "PASS" ? "✅" : verdict === "REVISE" ? "🔄" : "❌";
+
+  let md = `## 🎯 Critique 결과 (${sceneName})
+
+### 점수: ${score}/100 → ${verdictEmoji} ${verdict}
+
+`;
+
+  if (passedItems.length > 0) {
+    md += `### ✅ 통과 항목
+`;
+    for (const item of passedItems) {
+      md += `- [${item.dimensionName}] ${item.label} (+${item.weight})
+`;
+    }
+    md += `
+`;
+  }
+
+  if (failedItems.length > 0) {
+    md += `### ❌ 실패 항목
+`;
+    for (const item of failedItems) {
+      md += `- [${item.dimensionName}] ${item.label} (-${item.weight})
+  → 제안: ${item.suggestion}
+`;
+    }
+    md += `
+`;
+  }
+
+  if (improvedPrompt) {
+    md += `### 💡 개선된 프롬프트
+\`\`\`
+${improvedPrompt}
+\`\`\`
+`;
+  }
+
+  return md;
+}
+
+/**
+ * Generate improved prompt by appending suggestions from failed items
+ */
+export function generateImprovedPrompt(
+  originalPrompt: string,
+  failedItems: CritiqueItemResult[]
+): string {
+  const suggestions: string[] = [];
+  const noParams: string[] = [];
+
+  for (const item of failedItems) {
+    // Extract --no parameters from suggestions
+    const noMatch = item.suggestion.match(/--no\s+([^,]+(?:,\s*[^,]+)*)/);
+    if (noMatch) {
+      noParams.push(noMatch[1].trim());
+    }
+
+    // Collect other suggestions
+    if (!item.suggestion.startsWith("--no")) {
+      suggestions.push(`// ${item.dimensionName}: ${item.suggestion}`);
+    }
+  }
+
+  let improved = originalPrompt;
+
+  // Append --no parameters if any
+  if (noParams.length > 0) {
+    const existingNo = originalPrompt.match(/--no\s+([^\n]+)/);
+    if (existingNo) {
+      // Append to existing --no
+      improved = improved.replace(
+        /--no\s+([^\n]+)/,
+        `--no ${existingNo[1]}, ${noParams.join(", ")}`
+      );
+    } else {
+      // Add new --no line
+      improved += `\n\n--no ${noParams.join(", ")}`;
+    }
+  }
+
+  // Add suggestions as comments at the end
+  if (suggestions.length > 0) {
+    improved += `\n\n/* 개선 제안:\n${suggestions.join("\n")}\n*/`;
+  }
+
+  return improved;
 }

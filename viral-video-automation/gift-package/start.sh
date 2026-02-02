@@ -72,26 +72,49 @@ echo "   > docs/ANALYSIS.md 읽고 프롬프트 정제해줘"
 echo ""
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo -e "${YELLOW}Gemini JSON 요청 템플릿:${NC}"
+echo -e "${YELLOW}Gemini 첫 프롬프트 (아래 복사해서 붙여넣기):${NC}"
 echo ""
+echo -e "${CYAN}━━━━━━ COPY START ━━━━━━${NC}"
 cat << 'TEMPLATE'
 이 영상을 분석해줘. 아래 형식으로 출력:
 
-## CUT-BY-CUT
-| Cut | Timecode | Description |
-|-----|----------|-------------|
-| 1 | 00:00~00:02 | ... |
+## CUT-BY-CUT (0.01초 정밀도)
+| Cut | Timecode | Duration | Description | Camera | Subject |
+|-----|----------|----------|-------------|--------|---------|
+| 1 | 00:00.00~00:02.34 | 2.34s | ... | Medium | ... |
+
+## CHARACTER PROFILES (ALL PEOPLE - 흐릿한 배경 포함!)
+각 인물에 대해:
+- ID: ID_[역할]
+- Ethnicity: Korean (필수!)
+- Age, Hair, Clothing 색상, Position (9-Grid)
+
+## VISUAL STYLE
+- Color Temperature: [K값]
+- Era: 1990s or 2020s
+- Film Style: Kodak Portra 400 / Digital Sharp
 
 ## ANCHOR 추천
 - Cut #:
-- 이유:
+- 이유: (얼굴 선명, 조명 좋음, 정면/3/4 앵글)
+
+## ERROR PREVENTION (AI 실수 가능 항목)
+- 예: "배경 인물 서양인으로 생성 가능"
+- 예: "1990년대인데 스마트폰 등장 가능"
+
+## --no 리스트 (시대별)
+1990s: --no western features, caucasian skin, blonde, blue eyes, smartphones, LED lights, modern furniture
+2020s: --no warm lighting, candles, tungsten, genuine happiness, film grain, retro furniture
 
 ## KEYFRAMES_JSON (필수!)
 <!-- KEYFRAMES_JSON
 {"keyframes":[
-  {"timestamp":"00:01.50","filename":"scene01","anchor":false},
-  {"timestamp":"00:03.00","filename":"ANCHOR_IMG","anchor":true}
+  {"timestamp":"00:XX.XX","filename":"scene01","anchor":false},
+  {"timestamp":"00:XX.XX","filename":"ANCHOR_IMG","anchor":true}
 ]}
 -->
 TEMPLATE
+echo -e "${CYAN}━━━━━━ COPY END ━━━━━━${NC}"
+echo ""
+echo -e "${YELLOW}[Ctrl+Shift+C to copy above]${NC}"
 echo ""
