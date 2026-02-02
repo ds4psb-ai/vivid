@@ -2698,6 +2698,33 @@ class ApiClient {
     });
   }
 
+  /**
+   * Sync local STATE.md content to database
+   */
+  async syncPromptyState(
+    projectId: string,
+    stateMdContent: string
+  ): Promise<PromptyStateSyncResponse> {
+    return this.request<PromptyStateSyncResponse>(`/api/prompty/state/${projectId}/sync`, {
+      method: "POST",
+      body: JSON.stringify({ state_md_content: stateMdContent }),
+    });
+  }
+
+  /**
+   * Export project state as STATE.md format
+   */
+  async exportPromptyStateMd(projectId: string): Promise<PromptyStateExportResponse> {
+    return this.request<PromptyStateExportResponse>(`/api/prompty/state/${projectId}/state.md`);
+  }
+
+  /**
+   * Get parsed state from database
+   */
+  async getPromptyParsedState(projectId: string): Promise<PromptyStateParsed> {
+    return this.request<PromptyStateParsed>(`/api/prompty/state/${projectId}/parsed`);
+  }
+
   // =========================================================================
   // Chain Session APIs (P7+: Workflow Chain Persistence)
   // =========================================================================
@@ -3624,6 +3651,49 @@ export interface PromptyNextStepResponse {
   new_stage: string;
   new_step: string;
   completed: boolean;
+}
+
+// STATE.md Sync Types
+export interface PromptySceneProgress {
+  scene: string;
+  description: string;
+  image_status: string;
+  video_status: string;
+  status_emoji: string;
+}
+
+export interface PromptyStageProgressItem {
+  stage_id: string;
+  name: string;
+  percent: number;
+  bar: string;
+}
+
+export interface PromptyStateParsed {
+  scenes: PromptySceneProgress[];
+  stages: PromptyStageProgressItem[];
+  current_task?: string;
+  anchor_scene?: string;
+  tikitaka_count: number;
+}
+
+export interface PromptyStateSyncRequest {
+  state_md_content: string;
+}
+
+export interface PromptyStateSyncResponse {
+  synced: boolean;
+  progress_percent: number;
+  current_stage: string;
+  current_step: string;
+  scenes_total: number;
+  scenes_completed: number;
+  anchor_scene?: string;
+}
+
+export interface PromptyStateExportResponse {
+  content: string;
+  last_synced?: string;
 }
 
 export const api = new ApiClient();
