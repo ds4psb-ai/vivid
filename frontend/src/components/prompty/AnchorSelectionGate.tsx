@@ -2,12 +2,22 @@
 
 import { useState } from "react";
 
+export interface CharacterProfile {
+  facialFeatures?: string;   // "oval face, sharp jawline"
+  skinTone?: string;         // "warm beige"
+  hairColor?: string;        // "dark brown"
+  emotion?: string;          // "neutral"
+  lighting?: string;         // "soft front light"
+  clarity?: number;          // 0-100 얼굴 선명도
+}
+
 export interface Scene {
   id: string;
   name: string;
   thumbnail?: string;
   description?: string;
   shotType?: string;
+  characterProfile?: CharacterProfile;
 }
 
 interface AnchorSelectionGateProps {
@@ -167,6 +177,63 @@ export function AnchorSelectionGate({
               >
                 Confirm
               </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Character Profile (Phase 6) */}
+      {selectedScene?.characterProfile && (
+        <div className="rounded-xl border border-border bg-card p-6">
+          <h3 className="font-semibold mb-4">Character Profile</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+            {selectedScene.characterProfile.facialFeatures && (
+              <div>
+                <p className="text-muted-foreground">Features</p>
+                <p className="font-medium">{selectedScene.characterProfile.facialFeatures}</p>
+              </div>
+            )}
+            {selectedScene.characterProfile.skinTone && (
+              <div>
+                <p className="text-muted-foreground">Skin Tone</p>
+                <p className="font-medium">{selectedScene.characterProfile.skinTone}</p>
+              </div>
+            )}
+            {selectedScene.characterProfile.hairColor && (
+              <div>
+                <p className="text-muted-foreground">Hair Color</p>
+                <p className="font-medium">{selectedScene.characterProfile.hairColor}</p>
+              </div>
+            )}
+            {selectedScene.characterProfile.emotion && (
+              <div>
+                <p className="text-muted-foreground">Emotion</p>
+                <p className="font-medium">{selectedScene.characterProfile.emotion}</p>
+              </div>
+            )}
+            {selectedScene.characterProfile.lighting && (
+              <div>
+                <p className="text-muted-foreground">Lighting</p>
+                <p className="font-medium">{selectedScene.characterProfile.lighting}</p>
+              </div>
+            )}
+            {selectedScene.characterProfile.clarity !== undefined && (
+              <div>
+                <p className="text-muted-foreground">Clarity</p>
+                <div className="flex items-center gap-2">
+                  <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${
+                        selectedScene.characterProfile.clarity >= 80 ? "bg-green-500" :
+                        selectedScene.characterProfile.clarity >= 60 ? "bg-yellow-500" :
+                        "bg-red-500"
+                      }`}
+                      style={{ width: `${selectedScene.characterProfile.clarity}%` }}
+                    />
+                  </div>
+                  <span className="font-medium">{selectedScene.characterProfile.clarity}%</span>
+                </div>
+              </div>
             )}
           </div>
         </div>

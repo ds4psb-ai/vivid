@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api, PromptyGuideResponse, TikitakaCurrentResponse } from "@/lib/api";
+import { trackTikitakaStart, trackAnchorSelected, trackToolPromptCopy } from "@/lib/analytics";
+import { Suspense } from "react";
 import {
   CopyPromptButton,
   GuideWorkflow,
@@ -12,6 +14,8 @@ import {
   AnchorSelectionGate,
   ToolPromptTabs,
   QuickResumeBanner,
+  TikitakaErrorBoundary,
+  TikitakaSkeleton,
   Scene,
 } from "@/components/prompty";
 
@@ -105,6 +109,7 @@ export default function ProjectWorkflowPage() {
 
     try {
       const response = await api.startPromptyTikitaka(projectId, anchorSceneId);
+      trackTikitakaStart(projectId, anchorSceneId);
       setTikitaka({
         tikitaka_id: response.tikitaka_id,
         current_step: response.current_step,
@@ -125,13 +130,20 @@ export default function ProjectWorkflowPage() {
 
   async function handleAnchorConfirm() {
     if (!anchorSceneId) return;
+    // Track anchor selection with clarity if available
+    const selectedScene = scenes.find(s => s.id === anchorSceneId);
+    trackAnchorSelected(projectId, anchorSceneId, selectedScene?.characterProfile?.clarity);
     await startTikitaka();
   }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <TikitakaSkeleton />
+          </div>
+        </div>
       </div>
     );
   }
@@ -233,18 +245,20 @@ export default function ProjectWorkflowPage() {
             {mode === "tikitaka" && tikitaka ? (
               /* Tikitaka Mode */
               <div className="max-w-4xl mx-auto">
-                <TikitakaWorkflow
-                  projectId={projectId}
-                  initialStep={tikitaka.current_step}
-                  anchorSceneId={anchorSceneId}
-                  onStepChange={(step) => {
-                    setTikitaka((prev) => (prev ? { ...prev, current_step: step } : null));
-                  }}
-                  onComplete={() => {
-                    alert("Tikitaka workflow completed!");
-                    loadGuide();
-                  }}
-                />
+                <TikitakaErrorBoundary projectId={projectId} onReset={loadGuide}>
+                  <TikitakaWorkflow
+                    projectId={projectId}
+                    initialStep={tikitaka.current_step}
+                    anchorSceneId={anchorSceneId}
+                    onStepChange={(step) => {
+                      setTikitaka((prev) => (prev ? { ...prev, current_step: step } : null));
+                    }}
+                    onComplete={() => {
+                      alert("Tikitaka workflow completed!");
+                      loadGuide();
+                    }}
+                  />
+                </TikitakaErrorBoundary>
 
                 {/* Tool Prompts (Step 5-6) */}
                 {tikitaka.current_step >= 5 && Object.keys(tikitaka.tool_prompts).length > 0 && (
@@ -252,6 +266,7 @@ export default function ProjectWorkflowPage() {
                     <ToolPromptTabs
                       prompts={tikitaka.tool_prompts}
                       onCopy={(toolId) => {
+                        trackToolPromptCopy(projectId, toolId, tikitaka.current_step);
                         api.logPromptyAction(projectId, "copy_tool_prompt", undefined, undefined, {
                           tool: toolId,
                           step: tikitaka.current_step,

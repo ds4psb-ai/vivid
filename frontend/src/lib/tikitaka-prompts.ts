@@ -248,38 +248,103 @@ export function getAiRoleColorClass(role: TikitakaAiRole): string {
 }
 
 /**
- * Tool configurations
+ * Parameter Guide for tool-specific prompts
  */
-export const TOOL_CONFIGS = {
+export interface ParameterGuide {
+  param: string;
+  description: string;
+  example: string;
+  impact: "critical" | "important" | "optional";
+}
+
+export interface CommonIssue {
+  problem: string;
+  solution: string;
+}
+
+export interface ToolConfig {
+  id: string;
+  name: string;
+  url: string;
+  format: "korean" | "english" | "english_with_params";
+  icon: string;
+  parameterGuide?: ParameterGuide[];
+  commonIssues?: CommonIssue[];
+}
+
+/**
+ * Tool configurations with parameter guides
+ */
+export const TOOL_CONFIGS: Record<string, ToolConfig> = {
   nanobanana: {
     id: "nanobanana",
     name: "NanoBanana",
     url: "https://nanobanana.ai",
-    format: "korean" as const,
+    format: "korean",
     icon: "NB",
+    parameterGuide: [
+      { param: "--no", description: "제거 요소", example: "--no caucasian background", impact: "critical" },
+      { param: "--seed", description: "재현성", example: "--seed 42", impact: "optional" },
+      { param: "--ar", description: "화면비", example: "--ar 16:9", impact: "important" },
+    ],
+    commonIssues: [
+      { problem: "배경 인물 서양인", solution: "--no background caucasian 추가" },
+      { problem: "중복 요소 생성", solution: "--no duplicate 추가" },
+    ],
   },
   midjourney: {
     id: "midjourney",
     name: "MJ V7",
     url: "https://discord.com/channels/@me",
-    format: "english_with_params" as const,
+    format: "english_with_params",
     icon: "MJ",
+    parameterGuide: [
+      { param: "--cw", description: "캐릭터 가중치", example: "--cw 80-100", impact: "critical" },
+      { param: "--cref", description: "캐릭터 레퍼런스", example: "--cref <url>", impact: "critical" },
+      { param: "--ar", description: "화면비", example: "--ar 16:9", impact: "important" },
+      { param: "--v", description: "버전", example: "--v 7", impact: "important" },
+      { param: "--no", description: "제거 요소", example: "--no deformed hands", impact: "critical" },
+      { param: "--style", description: "스타일", example: "--style raw", impact: "optional" },
+    ],
+    commonIssues: [
+      { problem: "얼굴 불일치", solution: "--cw 90-100으로 올리기" },
+      { problem: "손 왜곡", solution: "--no deformed hands 또는 hands hidden 포즈" },
+      { problem: "배경 인물 서양인", solution: "--no caucasian background people 추가" },
+    ],
   },
   kling: {
     id: "kling",
     name: "Kling 2.6",
     url: "https://klingai.com",
-    format: "english" as const,
+    format: "english",
     icon: "KL",
+    parameterGuide: [
+      { param: "duration", description: "영상 길이", example: "3-5초 권장", impact: "important" },
+      { param: "camera", description: "카메라 움직임", example: "subtle pan, dolly", impact: "optional" },
+      { param: "reference", description: "이미지 레퍼런스", example: "Upload reference image", impact: "critical" },
+    ],
+    commonIssues: [
+      { problem: "급격한 움직임", solution: "subtle, slow motion 키워드 추가" },
+      { problem: "캐릭터 불일치", solution: "Strong reference image 업로드" },
+    ],
   },
   veo: {
     id: "veo",
     name: "Veo 3.1",
     url: "https://labs.google/fx/tools/veo",
-    format: "english" as const,
+    format: "english",
     icon: "VE",
+    parameterGuide: [
+      { param: "duration", description: "영상 길이", example: "4-6초 최적", impact: "important" },
+      { param: "motion", description: "움직임 명시", example: "smooth dolly forward", impact: "critical" },
+      { param: "style", description: "스타일", example: "photorealistic, cinematic", impact: "optional" },
+    ],
+    commonIssues: [
+      { problem: "정적인 영상", solution: "camera movement 명시적 기술" },
+      { problem: "인물 왜곡", solution: "subtle movement만 요청" },
+    ],
   },
-} as const;
+};
 
 export type ToolId = keyof typeof TOOL_CONFIGS;
 

@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { api } from "@/lib/api";
+import { trackTikitakaStepAdvance, trackTikitakaComplete, trackVerdictAction } from "@/lib/analytics";
 import {
   TIKITAKA_STEPS,
   getTikitakaStep,
@@ -45,8 +46,10 @@ export function TikitakaWorkflow({
       const response = await api.advancePromptyTikitaka(projectId, {});
 
       if (response.completed) {
+        trackTikitakaComplete(projectId);
         onComplete?.();
       } else {
+        trackTikitakaStepAdvance(projectId, currentStep, response.new_step);
         setCurrentStep(response.new_step);
         setCheckedAttachments(new Set());
         onStepChange?.(response.new_step);
@@ -56,12 +59,18 @@ export function TikitakaWorkflow({
     } finally {
       setIsAdvancing(false);
     }
-  }, [projectId, stepConfig, onComplete, onStepChange]);
+  }, [projectId, stepConfig, currentStep, onComplete, onStepChange]);
 
   const handleGotoStep = useCallback(
     async (step: number, reason?: string) => {
       try {
         await api.gotoPromptyTikitakaStep(projectId, step, reason);
+
+        // Track verdict actions
+        if (reason === "REJECT" || reason === "REVISE" || reason === "PASS") {
+          trackVerdictAction(projectId, reason as "PASS" | "REVISE" | "REJECT", currentStep);
+        }
+
         setCurrentStep(step);
         setCheckedAttachments(new Set());
         onStepChange?.(step);
@@ -69,7 +78,7 @@ export function TikitakaWorkflow({
         console.error("Failed to goto step:", error);
       }
     },
-    [projectId, onStepChange]
+    [projectId, currentStep, onStepChange]
   );
 
   const toggleAttachment = (name: string) => {

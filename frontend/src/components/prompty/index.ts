@@ -12,6 +12,10 @@ export type { CritiqueIteration } from "./CritiqueHistory";
 // Phase 5: Tikitaka Workflow Components
 export { TikitakaWorkflow } from "./TikitakaWorkflow";
 export { AnchorSelectionGate } from "./AnchorSelectionGate";
-export type { Scene } from "./AnchorSelectionGate";
+export type { Scene, CharacterProfile } from "./AnchorSelectionGate";
 export { ToolPromptTabs } from "./ToolPromptTabs";
 export { QuickResumeBanner } from "./QuickResumeBanner";
+
+// Phase 6: Error Handling & UX
+export { TikitakaErrorBoundary } from "./TikitakaErrorBoundary";
+export { TikitakaSkeleton } from "./TikitakaSkeleton";

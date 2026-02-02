@@ -2975,7 +2975,14 @@ export interface AnalyticsEventRequest {
   | "crebit_cta_click"
   | "crebit_modal_open"
   | "crebit_form_submit"
-  | "crebit_form_error";
+  | "crebit_form_error"
+  // Prompty Tikitaka events (Phase 6)
+  | "tikitaka_start"
+  | "tikitaka_step_advance"
+  | "tikitaka_complete"
+  | "anchor_selected"
+  | "tool_prompt_copied"
+  | "verdict_action";
   template_id?: string;
   capsule_id?: string;
   run_id?: string;

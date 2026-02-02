@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { TOOL_CONFIGS, ToolId } from "@/lib/tikitaka-prompts";
+import { TOOL_CONFIGS, ToolId, ParameterGuide, CommonIssue } from "@/lib/tikitaka-prompts";
 import { CopyPromptButton } from "./CopyPromptButton";
 
 interface ToolPromptTabsProps {
@@ -106,6 +106,42 @@ export function ToolPromptTabs({
             <p className="text-sm text-muted-foreground mt-2">
               Complete Step 2 (Draft) or Step 4 (Revise) to generate tool-specific prompts.
             </p>
+          </div>
+        )}
+
+        {/* Parameter Guide Section */}
+        {activeConfig.parameterGuide && activeConfig.parameterGuide.length > 0 && (
+          <div className="mt-4 p-4 border border-border rounded-lg">
+            <h4 className="text-sm font-semibold mb-3">Parameters</h4>
+            <div className="space-y-2">
+              {activeConfig.parameterGuide.map((p) => (
+                <div key={p.param} className="flex items-start gap-2 text-sm">
+                  <code className={`px-1.5 py-0.5 rounded text-xs font-mono shrink-0 ${
+                    p.impact === "critical" ? "bg-red-500/10 text-red-500" :
+                    p.impact === "important" ? "bg-yellow-500/10 text-yellow-500" :
+                    "bg-muted text-muted-foreground"
+                  }`}>{p.param}</code>
+                  <span className="text-muted-foreground">{p.description}</span>
+                  <span className="text-xs text-muted-foreground/70 ml-auto shrink-0">{p.example}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Common Issues Section */}
+        {activeConfig.commonIssues && activeConfig.commonIssues.length > 0 && (
+          <div className="mt-4 p-4 border border-yellow-500/20 bg-yellow-500/5 rounded-lg">
+            <h4 className="text-sm font-semibold mb-3 text-yellow-600 dark:text-yellow-400">Common Issues</h4>
+            <div className="space-y-2">
+              {activeConfig.commonIssues.map((issue, i) => (
+                <div key={i} className="text-sm">
+                  <span className="text-muted-foreground">{issue.problem}</span>
+                  <span className="mx-2 text-muted-foreground/50">→</span>
+                  <span className="text-foreground">{issue.solution}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
