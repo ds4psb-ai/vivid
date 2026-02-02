@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models_prompty import PromptyProject, PromptyTemplate, PromptyGuideLog
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, get_current_user_id
 
 router = APIRouter(prefix="/guide", tags=["prompty-guide"])
 
@@ -242,7 +242,7 @@ def find_next_step(stages_info: List[StageInfo], current_stage: str, current_ste
 async def get_guide(
     project_id: UUID,
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Get current workflow guide state for a project."""
     # Get project
@@ -285,7 +285,7 @@ async def get_guide(
 async def advance_to_next_step(
     project_id: UUID,
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Advance to the next workflow step.
 
@@ -348,7 +348,7 @@ async def log_action(
     project_id: UUID,
     data: LogActionRequest,
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Log a guide action for analytics.
 

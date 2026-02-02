@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models_prompty import PromptyProject, PromptyTemplate
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, get_current_user_id
 
 router = APIRouter(prefix="/projects", tags=["prompty-projects"])
 
@@ -98,7 +98,7 @@ class ProjectListResponse(BaseModel):
 async def create_project(
     data: ProjectCreate,
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Create a new workflow project.
 
@@ -159,7 +159,7 @@ async def list_projects(
     page_size: int = Query(20, ge=1, le=100),
     status: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id),
 ):
     """List user's projects."""
     query = select(PromptyProject).where(PromptyProject.user_id == user_id)
@@ -190,7 +190,7 @@ async def list_projects(
 async def get_project(
     project_id: UUID,
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Get project details."""
     result = await db.execute(
@@ -212,7 +212,7 @@ async def update_project_state(
     project_id: UUID,
     data: ProjectUpdate,
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Update project state (STATE.md sync).
 
@@ -261,7 +261,7 @@ async def update_project_state(
 async def delete_project(
     project_id: UUID,
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Delete a project."""
     result = await db.execute(

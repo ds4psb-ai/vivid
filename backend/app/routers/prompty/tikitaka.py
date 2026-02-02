@@ -25,7 +25,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models_prompty import PromptyProject
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, get_current_user_id
 
 router = APIRouter(prefix="/tikitaka", tags=["prompty-tikitaka"])
 
@@ -175,7 +175,7 @@ async def start_tikitaka(
     project_id: UUID,
     data: TikitakaStartRequest,
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Start tikitaka workflow for a project.
 
@@ -223,7 +223,7 @@ async def start_tikitaka(
 async def get_current_state(
     project_id: UUID,
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Get current tikitaka workflow state."""
     result = await db.execute(
@@ -258,7 +258,7 @@ async def advance_step(
     project_id: UUID,
     data: TikitakaAdvanceRequest,
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Advance to the next tikitaka step.
 
@@ -321,7 +321,7 @@ async def advance_step(
 async def get_tool_prompts(
     project_id: UUID,
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Get tool-specific prompts for the project.
 
@@ -371,7 +371,7 @@ async def goto_step(
     step: int,
     data: TikitakaGotoRequest = TikitakaGotoRequest(),
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Jump to a specific tikitaka step.
 
@@ -420,7 +420,7 @@ async def set_anchor_scene(
     project_id: UUID,
     anchor_scene_id: str,
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Set or update the anchor scene for tikitaka workflow."""
     result = await db.execute(

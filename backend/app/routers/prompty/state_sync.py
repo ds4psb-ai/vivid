@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models_prompty import PromptyProject
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, get_current_user_id
 
 
 router = APIRouter(prefix="/state", tags=["prompty-state"])
@@ -306,7 +306,7 @@ async def sync_state_from_local(
     project_id: UUID,
     data: StateSyncRequest,
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Sync local STATE.md to database.
 
@@ -397,7 +397,7 @@ async def sync_state_from_local(
 async def export_state_md(
     project_id: UUID,
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Export project state as STATE.md format.
 
@@ -435,7 +435,7 @@ async def export_state_md(
 async def get_parsed_state(
     project_id: UUID,
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Get parsed state from database.
 

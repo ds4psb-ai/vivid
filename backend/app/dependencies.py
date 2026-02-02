@@ -65,6 +65,31 @@ async def get_optional_user_id(
     return user_id
 
 
+async def get_current_user_id(
+    request: Request,
+    x_user_id: Optional[str] = Header(default=None, alias="X-User-Id"),
+) -> str:
+    """Get current user ID as a string.
+    
+    Returns just the user ID string, not the full user dict.
+    For development, returns "dev-user-001" if no auth.
+    
+    Use this when you only need the user_id string (e.g., for DB inserts).
+    """
+    user_id = await get_user_id(request, x_user_id)
+    
+    if not user_id:
+        if settings.ENVIRONMENT.lower() in {"development", "dev", "local"}:
+            user_id = "dev-user-001"
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication required",
+            )
+    
+    return user_id
+
+
 async def get_current_user_optional(
     request: Request,
     x_user_id: Optional[str] = Header(default=None, alias="X-User-Id"),

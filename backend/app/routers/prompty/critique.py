@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models_prompty import PromptyCritique, PromptyProject, PromptyTemplate
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, get_current_user_id
 
 router = APIRouter(prefix="/critique", tags=["prompty-critique"])
 
@@ -115,7 +115,7 @@ def calculate_total_score(scores: dict, critique_config: dict) -> tuple[float, b
 async def submit_critique(
     data: CritiqueSubmit,
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Submit critique scores for a workflow step.
 
@@ -224,7 +224,7 @@ async def submit_critique(
 async def get_critique_history(
     project_id: UUID,
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Get critique history for a project."""
     # Verify project ownership
@@ -280,4 +280,57 @@ async def get_critique_history(
         average_score=round(avg_score, 1),
         total_critiques=total,
         pass_rate=round(pass_rate, 1),
+    )
+
+
+@router.get("/{project_id}/{step_id}", response_model=Optional[CritiqueResponse])
+async def get_step_critique(
+    project_id: UUID,
+    step_id: str,
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    """Get the latest critique for a specific step.
+
+    Returns the most recent critique for the given project and step,
+    or null if no critique exists.
+    """
+    # Verify project ownership
+    result = await db.execute(
+        select(PromptyProject).where(
+            PromptyProject.id == project_id,
+            PromptyProject.user_id == user_id,
+        )
+    )
+    project = result.scalar_one_or_none()
+
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Get latest critique for this step
+    result = await db.execute(
+        select(PromptyCritique)
+        .where(
+            PromptyCritique.project_id == project_id,
+            PromptyCritique.step_id == step_id,
+        )
+        .order_by(desc(PromptyCritique.created_at))
+        .limit(1)
+    )
+    critique = result.scalar_one_or_none()
+
+    if not critique:
+        return None
+
+    return CritiqueResponse(
+        id=critique.id,
+        project_id=critique.project_id,
+        stage=critique.stage,
+        step_id=critique.step_id,
+        scores=critique.scores,
+        total_score=critique.total_score,
+        passed=critique.passed,
+        revision_number=critique.revision_number,
+        notes=critique.notes,
+        created_at=critique.created_at,
     )

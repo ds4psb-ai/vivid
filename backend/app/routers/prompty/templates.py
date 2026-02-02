@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models_prompty import PromptyTemplate, PromptyProject
-from app.dependencies import get_current_user, get_optional_user_id, require_admin
+from app.dependencies import get_current_user, get_current_user_id, get_optional_user_id, require_admin
 
 router = APIRouter(prefix="/templates", tags=["prompty-templates"])
 
@@ -182,7 +182,7 @@ async def get_template(
 async def use_template(
     template_id: UUID,
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
 ):
     """Use a template to create a new project.
 
@@ -213,7 +213,7 @@ async def use_template(
     project = PromptyProject(
         name=f"{template.title} - New Project",
         description=f"Based on: {template.title}",
-        user_id=user_id,
+        user_id=current_user["id"],
         template_id=template.id,
         state=initial_state,
         current_stage=stages[0] if stages else "analysis",
@@ -237,7 +237,7 @@ async def rate_template(
     template_id: UUID,
     data: TemplateRating,
     db: AsyncSession = Depends(get_db),
-    user_id: str = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Rate a template after using it."""
     result = await db.execute(
