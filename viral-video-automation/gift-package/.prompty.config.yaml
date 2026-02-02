@@ -2,6 +2,8 @@
 # 프로젝트 기본 설정
 
 version: "2.0"
+name: "Prompty Project Package"
+description: "AI Video Parody Starter Kit - Kyle Nut Level"
 
 # 기본 도구 설정
 defaults:
@@ -37,3 +39,34 @@ paths:
   projects: "./projects"
   templates: "./templates"
   guides: "./guides"
+  examples: "./examples"
+
+# 템플릿 목록
+templates:
+  - IMAGE_PROMPTS.md
+  - MOTION_PROMPTS.md
+  - ANALYSIS.md
+  - STATE.md
+  - PROJECT_CONTEXT.md
+  - CRITIQUE_LOG.md
+
+# 가이드 목록
+guides:
+  - MODE_TIKITAKA.md
+  - DUAL_AI_WORKFLOW.md
+  - STEP_BY_STEP.md
+  - PROMPTS_NANOBANANA.md
+  - PROMPTS_MIDJOURNEY.md
+
+# 예시 프로젝트
+examples:
+  - birthday-parody
+
+# 주요 기능
+features:
+  - "5D×23 Critique Checklist"
+  - "Kyle Nut Level Templates"
+  - "ANCHOR-First Workflow"
+  - "ALL PEOPLE Rule Enforcement"
+  - "Beat Timing for Motion"
+  - "COPY START/END Markers"

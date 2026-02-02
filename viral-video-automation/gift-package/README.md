@@ -7,15 +7,20 @@
 
 ## Quick Start
 
+### 먼저 예시 확인 (권장)
 ```bash
-# 1. 패키지 압축 해제
-unzip prompty-project.zip
-cd prompty-project
+# 완성된 예시 먼저 보기 - Kyle Nut 수준 10-Cut
+cat examples/birthday-parody/README.md
+cat examples/birthday-parody/prompts/IMAGE_PROMPTS.md
+```
 
-# 2. 새 프로젝트 시작
+### 새 프로젝트 시작
+```bash
 ./start.sh
+```
 
-# 또는 수동으로:
+### 또는 수동으로:
+```bash
 ./scripts/init.sh my-video
 ```
 
@@ -62,11 +67,19 @@ prompty-project/
 │   ├── MOTION_PROMPTS.md
 │   ├── ANALYSIS.md
 │   └── CRITIQUE_LOG.md
-├── guides/                  # 가이드 문서 (4개)
+├── guides/                  # 가이드 문서 (5개)
 │   ├── MODE_TIKITAKA.md
 │   ├── DUAL_AI_WORKFLOW.md
 │   ├── PROMPTS_NANOBANANA.md
-│   └── PROMPTS_MIDJOURNEY.md
+│   ├── PROMPTS_MIDJOURNEY.md
+│   └── STEP_BY_STEP.md      # 6단계 복사용 프롬프트
+├── examples/                # 완성된 예시 프로젝트
+│   └── birthday-parody/     # Kyle Nut 수준 10-Cut 예시
+│       ├── README.md
+│       ├── docs/ANALYSIS.md
+│       └── prompts/
+│           ├── IMAGE_PROMPTS.md
+│           └── MOTION_PROMPTS.md
 └── projects/                # 생성된 프로젝트들
     └── {project-name}/
 ```
@@ -177,6 +190,46 @@ claude
 # macOS
 brew install ffmpeg jq
 ```
+
+---
+
+## 예시 프로젝트
+
+### birthday-parody (Kyle Nut 수준)
+
+완성된 10-Cut 프로젝트 예시입니다. 프롬프트 작성 전에 참고하세요.
+
+```bash
+# 전체 구조 확인
+ls -la examples/birthday-parody/
+
+# IMAGE 프롬프트 예시 (Kyle Nut 수준)
+cat examples/birthday-parody/prompts/IMAGE_PROMPTS.md
+
+# MOTION 프롬프트 예시
+cat examples/birthday-parody/prompts/MOTION_PROMPTS.md
+
+# 분석 결과
+cat examples/birthday-parody/docs/ANALYSIS.md
+```
+
+**포함 내용:**
+- `README.md` - 프로젝트 개요
+- `docs/ANALYSIS.md` - 영상 분석 결과
+- `prompts/IMAGE_PROMPTS.md` - 10컷 이미지 프롬프트 (Kyle Nut 수준)
+- `prompts/MOTION_PROMPTS.md` - 10컷 모션 프롬프트
+
+---
+
+## 6단계 STEP_BY_STEP 가이드
+
+`guides/STEP_BY_STEP.md`에서 Gemini 첫 대화용 복사 프롬프트를 확인하세요.
+
+```bash
+cat guides/STEP_BY_STEP.md
+```
+
+각 단계에 `<!-- COPY START -->` / `<!-- COPY END -->` 마커가 있어 바로 복사해서 사용할 수 있습니다.
 
 ---
 
