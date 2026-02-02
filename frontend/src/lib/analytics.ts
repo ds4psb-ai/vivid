@@ -1,8 +1,10 @@
 /**
  * Analytics utility for tracking user interactions.
  * Sends events to backend /api/v1/analytics/events endpoint.
+ * Also sends to PostHog for product analytics (funnels, session replay, etc.)
  */
 import { api } from "./api";
+import posthog from "posthog-js";
 
 export type AnalyticsEventType =
     | "evidence_ref_opened"
@@ -14,7 +16,14 @@ export type AnalyticsEventType =
     | "crebit_cta_click"
     | "crebit_modal_open"
     | "crebit_form_submit"
-    | "crebit_form_error";
+    | "crebit_form_error"
+    // Prompty Tikitaka events (Phase 6)
+    | "tikitaka_start"
+    | "tikitaka_step_advance"
+    | "tikitaka_complete"
+    | "anchor_selected"
+    | "tool_prompt_copied"
+    | "verdict_action";
 
 export interface TrackEventOptions {
     templateId?: string;
@@ -26,13 +35,22 @@ export interface TrackEventOptions {
     track?: string;     // For Crebit track selection
     applicationId?: string; // For application tracking
     errorMessage?: string;  // For error tracking
+    // Tikitaka event options (Phase 6)
+    projectId?: string;
+    step?: number;
+    fromStep?: number;
+    toStep?: number;
+    sceneId?: string;
+    toolId?: string;
+    verdict?: "PASS" | "REVISE" | "REJECT";
+    clarity?: number;
     meta?: Record<string, unknown>;
     // Allow any additional properties
     [key: string]: unknown;
 }
 
 /**
- * Track an analytics event and send to backend.
+ * Track an analytics event and send to backend + PostHog.
  * In development, also logs to console.
  */
 export async function trackEvent(
@@ -43,6 +61,19 @@ export async function trackEvent(
         console.log(`[Analytics] ${eventType}`, options || "");
     }
 
+    // Send to PostHog (if initialized)
+    try {
+        if (typeof window !== "undefined" && posthog.__loaded) {
+            posthog.capture(eventType, {
+                ...options,
+                $set: options?.projectId ? { last_project_id: options.projectId } : undefined,
+            });
+        }
+    } catch (error) {
+        console.warn("[Analytics] PostHog capture failed:", error);
+    }
+
+    // Send to backend analytics
     try {
         await api.trackAnalyticsEvent({
             event_type: eventType,
@@ -109,3 +140,63 @@ export const EVENTS = {
     FORM_SUBMIT: "crebit_form_submit",
     FORM_ERROR: "crebit_form_error",
 } as const;
+
+// Tikitaka event helpers (Phase 6)
+
+/**
+ * Track when tikitaka workflow starts
+ */
+export function trackTikitakaStart(projectId: string, anchorSceneId?: string): void {
+    void trackEvent("tikitaka_start", { projectId, sceneId: anchorSceneId });
+}
+
+/**
+ * Track tikitaka step advancement
+ */
+export function trackTikitakaStepAdvance(
+    projectId: string,
+    fromStep: number,
+    toStep: number
+): void {
+    void trackEvent("tikitaka_step_advance", { projectId, fromStep, toStep });
+}
+
+/**
+ * Track tikitaka workflow completion
+ */
+export function trackTikitakaComplete(projectId: string): void {
+    void trackEvent("tikitaka_complete", { projectId });
+}
+
+/**
+ * Track ANCHOR scene selection
+ */
+export function trackAnchorSelected(
+    projectId: string,
+    sceneId: string,
+    clarity?: number
+): void {
+    void trackEvent("anchor_selected", { projectId, sceneId, clarity });
+}
+
+/**
+ * Track tool prompt copy
+ */
+export function trackToolPromptCopy(
+    projectId: string,
+    toolId: string,
+    step: number
+): void {
+    void trackEvent("tool_prompt_copied", { projectId, toolId, step });
+}
+
+/**
+ * Track verdict action (PASS/REVISE/REJECT)
+ */
+export function trackVerdictAction(
+    projectId: string,
+    verdict: "PASS" | "REVISE" | "REJECT",
+    step: number
+): void {
+    void trackEvent("verdict_action", { projectId, verdict, step });
+}

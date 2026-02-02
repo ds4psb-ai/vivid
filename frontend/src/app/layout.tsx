@@ -29,6 +29,7 @@ import { ToastProvider } from "@/components/Toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { DNACardSidePanelPortal } from "@/components/dna-card/DNACardSidePanel";
 import { NetworkStatusBadge } from "@/components/ui/NetworkStatusBadge";
+import { PostHogProvider } from "@/app/providers/PostHogProvider";
 
 export default function RootLayout({
   children,
@@ -38,6 +39,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* PWA Manifest */}
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#6366f1" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
         {/* Material Icons for Stitch AI design */}
         <link
           href="https://fonts.googleapis.com/icon?family=Material+Icons+Round"
@@ -55,28 +62,31 @@ export default function RootLayout({
         />
       </head>
       <body className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} font-sans antialiased`} suppressHydrationWarning>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <SessionProvider>
-            <LanguageProvider>
-              <DimensionConfigProvider>
-                <DimensionChainProvider>
-                  <ToastProvider>
-                    {/* Offline status indicator */}
-                    <NetworkStatusBadge />
-                    {children}
-                    <DNACardSidePanelPortal />
-                  </ToastProvider>
-                </DimensionChainProvider>
-              </DimensionConfigProvider>
-            </LanguageProvider>
-          </SessionProvider>
-        </ThemeProvider>
+        <PostHogProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <SessionProvider>
+              <LanguageProvider>
+                <DimensionConfigProvider>
+                  <DimensionChainProvider>
+                    <ToastProvider>
+                      {/* Offline status indicator */}
+                      <NetworkStatusBadge />
+                      {children}
+                      <DNACardSidePanelPortal />
+                    </ToastProvider>
+                  </DimensionChainProvider>
+                </DimensionConfigProvider>
+              </LanguageProvider>
+            </SessionProvider>
+          </ThemeProvider>
+        </PostHogProvider>
       </body>
     </html>
   );
 }
+
