@@ -11,8 +11,8 @@ from fastapi.responses import StreamingResponse
 
 router = APIRouter(prefix="/download", tags=["prompty-download"])
 
-# gift-package 경로 (상대 경로로 설정)
-GIFT_PACKAGE_PATH = Path(__file__).parent.parent.parent.parent.parent / "viral-video-automation" / "gift-package"
+# gift-package 경로 (backend/assets 내부)
+GIFT_PACKAGE_PATH = Path(__file__).parent.parent.parent.parent / "assets" / "gift-package"
 
 # 보안 상수
 MAX_ZIP_SIZE = 50 * 1024 * 1024  # 50MB 제한
