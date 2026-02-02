@@ -83,7 +83,7 @@ describe("ToolPromptTabs", () => {
 
   it("shows tool tips section", () => {
     render(<ToolPromptTabs {...defaultProps} />);
-    expect(screen.getByText("NanoBanana Tips:")).toBeInTheDocument();
+    expect(screen.getByText("NanoBanana Pro Tips:")).toBeInTheDocument();
   });
 
   it("shows parameter guide section", () => {

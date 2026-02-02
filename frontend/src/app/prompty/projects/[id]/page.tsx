@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { api, PromptyGuideResponse, TikitakaCurrentResponse } from "@/lib/api";
 import { trackTikitakaStart, trackAnchorSelected, trackToolPromptCopy } from "@/lib/analytics";
-import { Suspense } from "react";
+import { useToast } from "@/components/Toast";
+import { localProjectsService, LocalProject } from "@/lib/local-projects";
 import {
   CopyPromptButton,
   GuideWorkflow,
@@ -24,7 +25,13 @@ type WorkflowMode = "guide" | "tikitaka";
 export default function ProjectWorkflowPage() {
   const params = useParams();
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const toast = useToast();
   const projectId = params.id as string;
+
+  // Detect local project (local: prefix)
+  const isLocalProject = projectId.startsWith("local:");
+  const localId = isLocalProject ? projectId.slice(6) : null;
 
   // Mode from URL query param (default: guide)
   const initialMode = (searchParams.get("mode") as WorkflowMode) || "guide";
@@ -49,27 +56,60 @@ export default function ProjectWorkflowPage() {
 
   const loadGuide = useCallback(async () => {
     try {
-      const response = await api.getPromptyGuide(projectId);
-      setGuide(response);
-
-      // Check if tikitaka is active
-      try {
-        const tikitakaState = await api.getPromptyTikitakaCurrent(projectId);
-        setTikitaka(tikitakaState);
-        setAnchorSceneId(tikitakaState.anchor_scene_id);
-        // Auto-switch to tikitaka mode if workflow is active
-        if (tikitakaState.tikitaka_id && !tikitakaState.completed_at) {
-          setMode("tikitaka");
+      if (isLocalProject && localId) {
+        // Load from localStorage
+        const local = localProjectsService.getById(localId);
+        if (!local) {
+          toast.error("프로젝트를 찾을 수 없습니다");
+          router.push("/prompty/projects");
+          return;
         }
-      } catch {
-        // Tikitaka not started, stay in guide mode
+        // Convert LocalProject to PromptyGuideResponse-like structure
+        setGuide({
+          project_id: `local:${local.local_id}`,
+          project_name: local.name,
+          current_stage: local.current_stage,
+          current_step: local.current_step,
+          progress_percent: local.progress_percent,
+          stages: [
+            { id: "analysis", name: "Analysis", steps: [], status: local.current_stage === "analysis" ? "in_progress" : "pending" },
+            { id: "image", name: "Image", steps: [], status: local.current_stage === "image" ? "in_progress" : "pending" },
+            { id: "video", name: "Video", steps: [], status: local.current_stage === "video" ? "in_progress" : "pending" },
+            { id: "assembly", name: "Assembly", steps: [], status: local.current_stage === "assembly" ? "in_progress" : "pending" },
+          ],
+          current_step_info: {
+            id: local.current_step,
+            name: "Local Project Step",
+            description: "로그인하면 전체 가이드를 이용할 수 있습니다",
+            tips: [],
+            status: "in_progress",
+          },
+        });
+      } else {
+        // Load from server
+        const response = await api.getPromptyGuide(projectId);
+        setGuide(response);
+
+        // Check if tikitaka is active
+        try {
+          const tikitakaState = await api.getPromptyTikitakaCurrent(projectId);
+          setTikitaka(tikitakaState);
+          setAnchorSceneId(tikitakaState.anchor_scene_id);
+          // Auto-switch to tikitaka mode if workflow is active
+          if (tikitakaState.tikitaka_id && !tikitakaState.completed_at) {
+            setMode("tikitaka");
+          }
+        } catch {
+          // Tikitaka not started, stay in guide mode
+        }
       }
     } catch (error) {
       console.error("Failed to load guide:", error);
+      toast.error("프로젝트 로드 실패");
     } finally {
       setLoading(false);
     }
-  }, [projectId]);
+  }, [projectId, isLocalProject, localId, router, toast]);
 
   useEffect(() => {
     loadGuide();
