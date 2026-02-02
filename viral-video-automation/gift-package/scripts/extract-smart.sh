@@ -7,7 +7,7 @@
 # {"keyframes":[{"timestamp":"00:01.50","filename":"scene01","anchor":false},...]}
 # -->
 
-set -e
+set -eo pipefail
 
 # Colors
 GREEN='\033[0;32m'
@@ -115,8 +115,11 @@ echo "$KEYFRAMES_JSON" | jq -r '.keyframes[] | "\(.timestamp)|\(.filename)|\(.an
         echo -e "    ${CYAN}$description${NC}"
     fi
 
-    # ffmpeg로 프레임 추출
-    ffmpeg -ss "$timestamp" -i "$VIDEO_FILE" -vframes 1 -q:v 1 "$output_file" -y -loglevel error
+    # ffmpeg로 프레임 추출 (30초 타임아웃)
+    if ! timeout 30 ffmpeg -ss "$timestamp" -i "$VIDEO_FILE" -vframes 1 -q:v 1 "$output_file" -y -loglevel error 2>/dev/null; then
+        echo -e "    ${RED}Timeout or error extracting frame at $timestamp${NC}"
+        continue
+    fi
 
     # 파일 검증
     if [ -f "$output_file" ]; then

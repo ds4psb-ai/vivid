@@ -48,21 +48,38 @@ export interface ParsedState {
 }
 
 /**
+ * Default empty state for error recovery
+ */
+const DEFAULT_STATE: ParsedState = {
+  projectName: null,
+  scenes: [],
+  overallProgress: [],
+  currentTask: null,
+  lastConversation: null,
+  sessionNotes: [],
+  blockers: [],
+  decisions: [],
+  lastUpdated: null,
+  quickResumePrompt: null,
+};
+
+/**
  * Parse STATUS.md content into structured data
  */
 export function parseStateMd(content: string): ParsedState {
-  const result: ParsedState = {
-    projectName: null,
-    scenes: [],
-    overallProgress: [],
-    currentTask: null,
-    lastConversation: null,
-    sessionNotes: [],
-    blockers: [],
-    decisions: [],
-    lastUpdated: null,
-    quickResumePrompt: null,
-  };
+  try {
+    return parseStateMdInternal(content);
+  } catch (error) {
+    console.error("STATE.md parsing failed:", error);
+    return { ...DEFAULT_STATE };
+  }
+}
+
+/**
+ * Internal parser (wrapped by try-catch in parseStateMd)
+ */
+function parseStateMdInternal(content: string): ParsedState {
+  const result: ParsedState = { ...DEFAULT_STATE };
 
   // Extract project name from title
   const titleMatch = content.match(/^#\s+State:\s*(.+)$/m);
@@ -176,7 +193,7 @@ function parseSceneProgressTable(content: string): SceneProgress[] {
       .filter(Boolean);
     if (cols.length < 5) continue;
 
-    const sceneNum = parseInt(cols[0]) || 0;
+    const sceneNum = parseInt(cols[0], 10) || 0;
     if (sceneNum === 0) continue;
 
     const description = cols[1] || "-";
@@ -228,7 +245,7 @@ function parseOverallProgress(content: string): StageProgress[] {
     const stageNum = match[1];
     const stageName = match[2].trim();
     const bar = match[3];
-    const percent = parseInt(match[4]) || 0;
+    const percent = parseInt(match[4], 10) || 0;
 
     const filled = (bar.match(/█/g) || []).length;
     const empty = (bar.match(/░/g) || []).length;

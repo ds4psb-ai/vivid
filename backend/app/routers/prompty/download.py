@@ -14,6 +14,9 @@ router = APIRouter(prefix="/download", tags=["prompty-download"])
 # gift-package 경로 (상대 경로로 설정)
 GIFT_PACKAGE_PATH = Path(__file__).parent.parent.parent.parent.parent / "viral-video-automation" / "gift-package"
 
+# 보안 상수
+MAX_ZIP_SIZE = 50 * 1024 * 1024  # 50MB 제한
+
 
 @router.get("/package")
 async def download_package():
@@ -37,14 +40,33 @@ async def download_package():
 
     # ZIP 생성
     zip_buffer = io.BytesIO()
+    total_size = 0
+
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
         for file_path in GIFT_PACKAGE_PATH.rglob('*'):
-            if file_path.is_file():
-                # .DS_Store 등 제외
-                if file_path.name.startswith('.') and file_path.name != '.prompty.config.yaml':
-                    continue
-                arcname = f"prompty-project/{file_path.relative_to(GIFT_PACKAGE_PATH)}"
-                zf.write(file_path, arcname)
+            # symlink 건너뛰기 (보안)
+            if file_path.is_symlink():
+                continue
+            if not file_path.is_file():
+                continue
+            # 경로 탈출 방지 (path traversal)
+            if not file_path.resolve().is_relative_to(GIFT_PACKAGE_PATH.resolve()):
+                continue
+            # .DS_Store 등 제외
+            if file_path.name.startswith('.') and file_path.name != '.prompty.config.yaml':
+                continue
+
+            # 파일 크기 누적 체크
+            file_size = file_path.stat().st_size
+            total_size += file_size
+            if total_size > MAX_ZIP_SIZE:
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"Package exceeds maximum size ({MAX_ZIP_SIZE // (1024*1024)}MB)"
+                )
+
+            arcname = f"prompty-project/{file_path.relative_to(GIFT_PACKAGE_PATH)}"
+            zf.write(file_path, arcname)
 
     zip_buffer.seek(0)
 
@@ -75,16 +97,23 @@ async def list_package_contents():
     total_size = 0
 
     for file_path in GIFT_PACKAGE_PATH.rglob('*'):
-        if file_path.is_file():
-            if file_path.name.startswith('.') and file_path.name != '.prompty.config.yaml':
-                continue
-            size = file_path.stat().st_size
-            total_size += size
-            files.append({
-                "path": str(file_path.relative_to(GIFT_PACKAGE_PATH)),
-                "size": size,
-                "size_human": _format_size(size),
-            })
+        # symlink 건너뛰기 (보안)
+        if file_path.is_symlink():
+            continue
+        if not file_path.is_file():
+            continue
+        # 경로 탈출 방지
+        if not file_path.resolve().is_relative_to(GIFT_PACKAGE_PATH.resolve()):
+            continue
+        if file_path.name.startswith('.') and file_path.name != '.prompty.config.yaml':
+            continue
+        size = file_path.stat().st_size
+        total_size += size
+        files.append({
+            "path": str(file_path.relative_to(GIFT_PACKAGE_PATH)),
+            "size": size,
+            "size_human": _format_size(size),
+        })
 
     return {
         "files": sorted(files, key=lambda x: x["path"]),
