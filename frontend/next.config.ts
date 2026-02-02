@@ -80,8 +80,8 @@ const nextConfig: NextConfig = {
           {
             key: "Content-Security-Policy",
             value: isDev
-              ? "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: blob:; media-src 'self' https: blob:; connect-src 'self' ws: wss: http: https:; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self'; frame-ancestors 'none';"
-              : "default-src 'self'; script-src 'self' 'unsafe-inline' https://vercel.live https://*.sentry.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: blob:; media-src 'self' https: blob:; connect-src 'self' https: wss://vercel.live https://*.ingest.sentry.io; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://vercel.live; frame-ancestors 'none'; upgrade-insecure-requests;",
+              ? "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.posthog.com https://*.i.posthog.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: blob:; media-src 'self' https: blob:; connect-src 'self' ws: wss: http: https: https://*.posthog.com https://*.i.posthog.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self'; frame-ancestors 'none';"
+              : "default-src 'self'; script-src 'self' 'unsafe-inline' https://vercel.live https://*.sentry.io https://*.posthog.com https://*.i.posthog.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: blob:; media-src 'self' https: blob:; connect-src 'self' https: wss://vercel.live https://*.ingest.sentry.io https://*.posthog.com https://*.i.posthog.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://vercel.live; frame-ancestors 'none'; upgrade-insecure-requests;",
           },
           // HSTS - enforce HTTPS (production only effective)
           {
