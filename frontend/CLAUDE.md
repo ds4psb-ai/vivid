@@ -1,198 +1,144 @@
 # Frontend CLAUDE.md
 
-> Next.js 16 + React 19 + TypeScript + Tailwind
+> **Prompty.co.kr** - Dual AI 티키타카 워크플로우 가이드 플랫폼
+> Next.js 16 + React 19 + TypeScript
 
 ---
 
 ## Quick Commands
 
 ```bash
-# 개발 서버
-npm run dev  # localhost:3100
-
-# 빌드
-npm run build
-
-# 린트
-npm run lint
-
-# E2E 테스트
-npm run test:e2e
+npm run dev      # localhost:3100
+npm run build    # 프로덕션 빌드
+npm run lint     # 린트
 ```
 
 ---
 
-## 코딩 스타일
+## 핵심 철학
 
-- **들여쓰기**: 2 spaces
-- **컴포넌트**: PascalCase
-- **Hooks**: useXxx
-- **Utilities**: camelCase
-- **ESLint**: `eslint.config.mjs` 참조
-
-```tsx
-// 컴포넌트 예시
-interface ButtonProps {
-  variant: 'primary' | 'secondary';
-  onClick: () => void;
-  children: React.ReactNode;
-}
-
-export function Button({ variant, onClick, children }: ButtonProps) {
-  return (
-    <button
-      className={cn('px-4 py-2', variant === 'primary' && 'bg-blue-500')}
-      onClick={onClick}
-    >
-      {children}
-    </button>
-  );
-}
 ```
+Gemini CLI (영상 @언급) ←→ Claude Antigravity
+         │                         │
+         └───── projects/{name}/ ──────┘
+                      ↓
+               STATE.md (공유 상태)
+```
+
+- **NOT**: AI가 대신 호출/생성
+- **YES**: Dual AI 티키타카의 "길잡이" + Critique 기록 추적
 
 ---
 
-## 디렉토리 구조
+## Prompty 디렉토리 구조
 
 ```
 src/
-├── app/                    # Next.js App Router
-│   ├── (dashboard)/        # 대시보드 레이아웃 그룹
-│   ├── api/                # API routes
-│   └── _deprecated/        # 레거시 캔버스 코드
-├── components/             # 재사용 컴포넌트
-│   ├── ui/                 # 기본 UI 컴포넌트
-│   └── AppShell.tsx        # 글로벌 레이아웃
-├── contexts/               # React Context
-│   └── DimensionSettingsContext.tsx
-├── lib/                    # 유틸리티
-│   ├── api.ts              # Typed API 클라이언트
-│   └── utils.ts
-├── hooks/                  # Custom hooks
-└── types/                  # TypeScript 타입
+├── app/prompty/                    # Prompty 라우트
+│   ├── page.tsx                    # 랜딩
+│   ├── templates/                  # 템플릿 목록/상세
+│   └── projects/                   # 프로젝트 가이드
+│       └── [id]/
+│           ├── page.tsx            # 워크플로우 가이드
+│           └── critique/page.tsx   # Critique 입력
+├── components/prompty/             # Prompty UI 컴포넌트
+│   ├── CopyPromptButton.tsx        # 프롬프트 복사
+│   ├── GuideWorkflow.tsx           # 4-Stage 진행바
+│   ├── CritiqueChecklist.tsx       # 평가 체크리스트
+│   └── ExternalToolLinks.tsx       # 외부 도구 링크
+└── lib/api.ts                      # API 클라이언트
 ```
 
 ---
 
-## API 클라이언트 사용법
+## 4-Stage 워크플로우
+
+| Stage | 도구 | 출력 |
+|-------|------|------|
+| ANALYZE | Gemini CLI | ANALYSIS.md, PROFILES.md |
+| IMAGE | NanoBanana, MJ | ANCHOR + 씬 이미지 |
+| VIDEO | Kling, Veo | Image-to-Video |
+| ASSEMBLY | CapCut | 최종 편집 |
+
+---
+
+## Critique 판정 기준
+
+```
+PASS   (85+)   → 다음 단계
+REVISE (60-84) → 수정 후 재생성 (티키타카)
+REJECT (<60)   → 프롬프트 재검토
+```
+
+---
+
+## 컴포넌트 사용 예시
+
+```tsx
+import { 
+  CopyPromptButton, 
+  GuideWorkflow, 
+  CritiqueChecklist 
+} from '@/components/prompty';
+
+// 프롬프트 복사
+<CopyPromptButton 
+  promptText={step.prompt_text} 
+  onCopy={handleCopyAnalytics} 
+/>
+
+// 4-Stage 진행바
+<GuideWorkflow 
+  stages={guide.stages}
+  currentStage="stage2"
+  progressPercent={60}
+/>
+
+// Critique 체크리스트
+<CritiqueChecklist
+  items={template.critique_config.items}
+  scores={scores}
+  onScoreChange={handleScore}
+  passingScore={85}
+/>
+```
+
+---
+
+## API 클라이언트
 
 ```typescript
 import { api } from '@/lib/api';
 
-// Dimension API 호출
-const result = await api.dimension.generate1D({
-  prompt: 'Create a video prompt',
-  style: 'cinematic'
-});
+// 템플릿 목록
+const templates = await api.getPromptyTemplates();
 
-// Agent Chat (SSE)
-const stream = await api.agent.chat({
-  message: 'Help me create a storyboard',
-  sessionId: 'xxx'
-});
+// 프로젝트 Guide
+const guide = await api.getPromptyGuide(projectId);
 
-for await (const event of stream) {
-  console.log(event.type, event.data);
-}
+// Critique 제출
+await api.submitPromptyCritique(projectId, stage, stepId, scores);
+
+// 액션 로그
+await api.logPromptyAction(projectId, 'copy_prompt', stage, step);
 ```
-
----
-
-## 상태 처리 패턴
-
-### Loading/Error/Success
-```tsx
-function DataComponent() {
-  const { data, isLoading, error } = useQuery(...);
-
-  if (isLoading) return <Skeleton />;
-  if (error) return <ErrorMessage error={error} />;
-  if (!data) return <EmptyState />;
-
-  return <DataView data={data} />;
-}
-```
-
-### 폼 상태
-```tsx
-const [state, formAction] = useActionState(submitAction, initialState);
-
-return (
-  <form action={formAction}>
-    {state.error && <ErrorBanner message={state.error} />}
-    <SubmitButton pending={state.pending} />
-  </form>
-);
-```
-
----
-
-## Dimension 도구 통합
-
-### Context 사용
-```tsx
-import { useDimensionSettings } from '@/contexts/DimensionSettingsContext';
-
-function DimensionTool() {
-  const { settings, updateSettings } = useDimensionSettings();
-
-  const handleGenerate = async () => {
-    const result = await api.dimension.generate1D(settings);
-    // ...
-  };
-}
-```
-
----
-
-## 테스트 가이드
-
-### E2E 테스트 (Playwright)
-```typescript
-// e2e/dimension.spec.ts
-test('1D 생성 흐름', async ({ page }) => {
-  await page.goto('/dimension/1d');
-  await page.fill('[data-testid="prompt-input"]', 'Test prompt');
-  await page.click('[data-testid="generate-button"]');
-  await expect(page.locator('[data-testid="result"]')).toBeVisible();
-});
-```
-
-### 필수 E2E 파일
-| 변경 영역 | 테스트 파일 |
-|-----------|-------------|
-| Dimension | `e2e/dimension.spec.ts` |
-| Credits | `e2e/credits.spec.ts` |
-| Agent | `e2e/agent-chat.spec.ts` |
-| Flow | `e2e/flow.spec.ts` |
 
 ---
 
 ## 환경 변수
 
 ```bash
-# .env.local
 NEXT_PUBLIC_API_URL=http://127.0.0.1:8100
-NEXT_PUBLIC_USER_ID=demo-user  # Dev 전용
 ```
 
 ---
 
-## 주의사항
+## SSoT 참조
 
-### Sealed Capsule 원칙
-```typescript
-// ❌ 금지 - 프론트에서 Gemini 직접 호출
-const response = await fetch('https://generativelanguage.googleapis.com/...');
-
-// ✅ 올바름 - 백엔드 캡슐 통해 호출
-const response = await api.dimension.generate1D(params);
 ```
-
-### 크레딧 UI
-```tsx
-// 크레딧 부족 시 처리
-if (error?.status === 402) {
-  return <InsufficientCreditsModal onTopUp={handleTopUp} />;
-}
+viral-video-automation/templates/
+├── CRITIQUE_IMAGE.md    # 이미지 평가 기준
+├── CRITIQUE_VIDEO.md    # 영상 평가 기준
+├── CRITIQUE_SELFLOOP.md # Self-Loop 흐름
+└── MODE_TIKITAKA.md     # 티키타카 UX
 ```
