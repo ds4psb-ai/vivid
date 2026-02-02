@@ -10,13 +10,14 @@
  * - Dark/Light mode toggle
  */
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, LogOut, User } from "lucide-react";
 import { ModeToggle } from "@/components/mode-toggle";
 import { api, type AuthSession } from "@/lib/api";
+import { useSessionContext } from "@/contexts/SessionContext";
 
 // =============================================================================
 // CONSTANTS
@@ -213,34 +214,17 @@ interface PromptyNavbarProps {
 export function PromptyNavbar({ showSpacer = true }: PromptyNavbarProps = {}) {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [session, setSession] = useState<AuthSession | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Fetch session on mount
-  useEffect(() => {
-    const fetchSession = async () => {
-      try {
-        const sessionData = await api.getSession();
-        setSession(sessionData);
-      } catch {
-        // Not authenticated or error - set to null
-        setSession({ authenticated: false });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchSession();
-  }, []);
+  const { session, isLoading, refresh } = useSessionContext();
 
   const handleLogout = useCallback(async () => {
     try {
       await api.logout();
-      setSession({ authenticated: false });
+      await refresh(); // Update SessionContext
       router.refresh();
     } catch (error) {
       console.error("Logout failed:", error);
     }
-  }, [router]);
+  }, [router, refresh]);
 
   const handleCloseMobileMenu = useCallback(() => {
     setIsMobileMenuOpen(false);
