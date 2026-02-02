@@ -2726,6 +2726,80 @@ class ApiClient {
   }
 
   // =========================================================================
+  // Prompty Tikitaka APIs (6-step Dual AI Workflow)
+  // =========================================================================
+
+  /**
+   * Start tikitaka workflow for a project
+   */
+  async startPromptyTikitaka(
+    projectId: string,
+    anchorSceneId?: string
+  ): Promise<TikitakaStartResponse> {
+    return this.request<TikitakaStartResponse>(`/api/prompty/tikitaka/${projectId}/start`, {
+      method: "POST",
+      body: JSON.stringify({ anchor_scene_id: anchorSceneId }),
+    });
+  }
+
+  /**
+   * Get current tikitaka workflow state
+   */
+  async getPromptyTikitakaCurrent(projectId: string): Promise<TikitakaCurrentResponse> {
+    return this.request<TikitakaCurrentResponse>(`/api/prompty/tikitaka/${projectId}/current`);
+  }
+
+  /**
+   * Advance to next tikitaka step
+   */
+  async advancePromptyTikitaka(
+    projectId: string,
+    data: TikitakaAdvanceRequest
+  ): Promise<TikitakaAdvanceResponse> {
+    return this.request<TikitakaAdvanceResponse>(`/api/prompty/tikitaka/${projectId}/advance`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  /**
+   * Get tool-specific prompts
+   */
+  async getPromptyTikitakaToolPrompts(projectId: string): Promise<TikitakaToolPromptsResponse> {
+    return this.request<TikitakaToolPromptsResponse>(`/api/prompty/tikitaka/${projectId}/prompts`);
+  }
+
+  /**
+   * Jump to a specific tikitaka step
+   */
+  async gotoPromptyTikitakaStep(
+    projectId: string,
+    step: number,
+    reason?: string
+  ): Promise<{ step: number; reason?: string }> {
+    return this.request<{ step: number; reason?: string }>(
+      `/api/prompty/tikitaka/${projectId}/goto/${step}`,
+      {
+        method: "POST",
+        body: JSON.stringify({ reason }),
+      }
+    );
+  }
+
+  /**
+   * Set or update anchor scene for tikitaka workflow
+   */
+  async setPromptyTikitakaAnchor(
+    projectId: string,
+    anchorSceneId: string
+  ): Promise<{ anchor_scene_id: string }> {
+    return this.request<{ anchor_scene_id: string }>(
+      `/api/prompty/tikitaka/${projectId}/anchor?anchor_scene_id=${encodeURIComponent(anchorSceneId)}`,
+      { method: "PATCH" }
+    );
+  }
+
+  // =========================================================================
   // Chain Session APIs (P7+: Workflow Chain Persistence)
   // =========================================================================
 
@@ -3694,6 +3768,47 @@ export interface PromptyStateSyncResponse {
 export interface PromptyStateExportResponse {
   content: string;
   last_synced?: string;
+}
+
+// Tikitaka Types (6-step Dual AI Workflow)
+export interface TikitakaStartResponse {
+  project_id: string;
+  tikitaka_id: string;
+  current_step: number;
+  anchor_scene_id?: string;
+}
+
+export interface TikitakaCurrentResponse {
+  tikitaka_id: string;
+  current_step: number;
+  anchor_scene_id?: string;
+  started_at: string;
+  completed_at?: string;
+  tool_prompts: Record<string, string>;
+}
+
+export interface TikitakaAdvanceRequest {
+  gemini_output?: string;
+  claude_output?: string;
+  user_feedback?: string;
+}
+
+export interface TikitakaAdvanceResponse {
+  new_step: number;
+  completed: boolean;
+}
+
+export interface TikitakaToolPrompt {
+  tool_id: string;
+  tool_name: string;
+  prompt_text: string;
+  external_url?: string;
+  recommended: boolean;
+}
+
+export interface TikitakaToolPromptsResponse {
+  prompts: TikitakaToolPrompt[];
+  recommended_tool: string;
 }
 
 export const api = new ApiClient();

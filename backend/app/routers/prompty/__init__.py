@@ -9,6 +9,7 @@ from .templates import router as templates_router
 from .critique import router as critique_router
 from .guide import router as guide_router
 from .state_sync import router as state_sync_router
+from .tikitaka import router as tikitaka_router
 
 router = APIRouter(prefix="/prompty", tags=["prompty"])
 
@@ -17,5 +18,6 @@ router.include_router(templates_router)
 router.include_router(critique_router)
 router.include_router(guide_router)
 router.include_router(state_sync_router)
+router.include_router(tikitaka_router)
 
 __all__ = ["router"]

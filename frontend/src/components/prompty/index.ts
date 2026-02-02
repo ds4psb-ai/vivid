@@ -8,3 +8,10 @@ export { CritiqueInput } from "./CritiqueInput";
 export type { CritiqueResult } from "./CritiqueInput";
 export { CritiqueHistory } from "./CritiqueHistory";
 export type { CritiqueIteration } from "./CritiqueHistory";
+
+// Phase 5: Tikitaka Workflow Components
+export { TikitakaWorkflow } from "./TikitakaWorkflow";
+export { AnchorSelectionGate } from "./AnchorSelectionGate";
+export type { Scene } from "./AnchorSelectionGate";
+export { ToolPromptTabs } from "./ToolPromptTabs";
+export { QuickResumeBanner } from "./QuickResumeBanner";
