@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy import select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import attributes
 
 from app.database import get_db
 from app.models_prompty import PromptyProject, PromptyTemplate
@@ -238,6 +239,7 @@ async def update_project_state(
         project.thumbnail_url = data.thumbnail_url
     if data.state is not None:
         project.state = data.state.model_dump()
+        attributes.flag_modified(project, "state")
     if data.current_stage is not None:
         project.current_stage = data.current_stage
     if data.current_step is not None:

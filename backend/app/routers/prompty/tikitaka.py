@@ -22,6 +22,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import attributes
 
 from app.database import get_db
 from app.models_prompty import PromptyProject
@@ -204,9 +205,10 @@ async def start_tikitaka(
         "tool_prompts": {},
     }
 
-    state = project.state or {}
+    state = dict(project.state) if project.state else {}
     state["tikitaka"] = tikitaka_state
     project.state = state
+    attributes.flag_modified(project, "state")
 
     await db.commit()
     await db.refresh(project)
@@ -303,6 +305,7 @@ async def advance_step(
         tikitaka["completed_at"] = datetime.utcnow().isoformat()
         state["tikitaka"] = tikitaka
         project.state = state
+        attributes.flag_modified(project, "state")
         await db.commit()
 
         return TikitakaAdvanceResponse(new_step=6, completed=True)
@@ -311,6 +314,7 @@ async def advance_step(
     tikitaka["current_step"] = new_step
     state["tikitaka"] = tikitaka
     project.state = state
+    attributes.flag_modified(project, "state")
 
     await db.commit()
 
@@ -409,6 +413,7 @@ async def goto_step(
     tikitaka["completed_at"] = None  # Reset completion if going back
     state["tikitaka"] = tikitaka
     project.state = state
+    attributes.flag_modified(project, "state")
 
     await db.commit()
 
@@ -443,6 +448,7 @@ async def set_anchor_scene(
     tikitaka["anchor_scene_id"] = anchor_scene_id
     state["tikitaka"] = tikitaka
     project.state = state
+    attributes.flag_modified(project, "state")
 
     await db.commit()
 

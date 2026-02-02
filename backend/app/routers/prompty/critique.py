@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy import select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import attributes
 
 from app.database import get_db
 from app.models_prompty import PromptyCritique, PromptyProject, PromptyTemplate
@@ -193,6 +194,7 @@ async def submit_critique(
         state["stages"] = stages
         state["last_activity"] = datetime.utcnow().isoformat()
         project.state = state
+        attributes.flag_modified(project, "state")
 
         # Calculate overall progress
         total_stages = len(stages)

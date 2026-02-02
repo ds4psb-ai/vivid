@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import attributes
 
 from app.database import get_db
 from app.models_prompty import PromptyProject
@@ -363,6 +364,7 @@ async def sync_state_from_local(
     state["tikitaka_count"] = parsed.tikitaka_count
 
     project.state = state
+    attributes.flag_modified(project, "state")
 
     # Calculate overall progress
     total_stages = len(parsed.stages) or 4

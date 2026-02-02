@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import attributes
 
 from app.database import get_db
 from app.models_prompty import PromptyProject, PromptyTemplate, PromptyGuideLog
@@ -333,6 +334,7 @@ async def advance_to_next_step(
     state = project.state or {}
     state["last_activity"] = datetime.utcnow().isoformat()
     project.state = state
+    attributes.flag_modified(project, "state")
 
     await db.commit()
 
