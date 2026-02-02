@@ -221,6 +221,15 @@ def find_next_step(stages_info: List[StageInfo], current_stage: str, current_ste
     Returns:
         (next_stage, next_step, is_completed)
     """
+    # current_step이 비어있으면 첫 번째 pending step 찾기
+    if not current_step:
+        for stage in stages_info:
+            for step in stage.steps:
+                if step.status != "completed":
+                    return stage.id, step.id, False
+        return current_stage, "", True  # 모든 step 완료
+
+    # 기존 로직: current_step 이후의 다음 pending step 찾기
     found_current = False
 
     for stage in stages_info:
