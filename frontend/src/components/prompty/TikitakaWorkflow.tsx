@@ -9,6 +9,7 @@ import {
   getAiRoleDisplayName,
   getAiRoleColorClass,
   TikitakaAiRole,
+  TikitakaActionGuide,
 } from "@/lib/tikitaka-prompts";
 import { CopyPromptButton } from "./CopyPromptButton";
 
@@ -124,6 +125,9 @@ export function TikitakaWorkflow({
 
         <p className="text-muted-foreground">{stepConfig.expectedOutput}</p>
       </div>
+
+      {/* Step Action Guide */}
+      <StepActionGuide actionGuide={stepConfig.actionGuide} />
 
       {/* Prompt Section */}
       <div className="rounded-xl border border-border bg-card p-6">
@@ -326,6 +330,46 @@ function AiRoleBadge({ role }: { role: TikitakaAiRole }) {
       {role === "claude" && "C Claude"}
       {role === "user" && "U You"}
     </span>
+  );
+}
+
+function StepActionGuide({ actionGuide }: { actionGuide: TikitakaActionGuide }) {
+  return (
+    <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
+      <h3 className="font-semibold mb-3 text-sm text-primary">Step Action Guide</h3>
+      <div className="grid grid-cols-2 gap-3 text-sm">
+        <div className="flex items-start gap-2">
+          <span className="text-lg">🎯</span>
+          <div>
+            <span className="text-muted-foreground text-xs">목표</span>
+            <p className="font-medium">{actionGuide.goal}</p>
+          </div>
+        </div>
+        <div className="flex items-start gap-2">
+          <span className="text-lg">📂</span>
+          <div>
+            <span className="text-muted-foreground text-xs">열기</span>
+            <p className="font-medium">{actionGuide.tool}</p>
+          </div>
+        </div>
+        {actionGuide.attachPath && (
+          <div className="flex items-start gap-2">
+            <span className="text-lg">📎</span>
+            <div>
+              <span className="text-muted-foreground text-xs">첨부</span>
+              <p className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">{actionGuide.attachPath}</p>
+            </div>
+          </div>
+        )}
+        <div className="flex items-start gap-2">
+          <span className="text-lg">💾</span>
+          <div>
+            <span className="text-muted-foreground text-xs">저장</span>
+            <p className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">{actionGuide.savePath}</p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

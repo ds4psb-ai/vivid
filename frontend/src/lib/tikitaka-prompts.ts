@@ -22,6 +22,13 @@ export interface TikitakaAttachment {
   required: boolean;
 }
 
+export interface TikitakaActionGuide {
+  goal: string;           // 목표
+  tool: string;           // 열기
+  attachPath?: string;    // 첨부
+  savePath: string;       // 저장
+}
+
 export interface TikitakaStepConfig {
   name: string;
   aiRole: TikitakaAiRole;
@@ -29,6 +36,7 @@ export interface TikitakaStepConfig {
   attachments: TikitakaAttachment[];
   expectedOutput: string;
   tips: string[];
+  actionGuide: TikitakaActionGuide;
 }
 
 // =============================================================================
@@ -481,6 +489,12 @@ export const TIKITAKA_STEPS: Record<number, TikitakaStepConfig> = {
       "ALL PEOPLE Rule: 배경 인물도 한국인으로 명시되도록 요청",
       "시대별 --no 리스트 꼭 받기 (1990s vs 2020s)",
     ],
+    actionGuide: {
+      goal: "영상 분석 -> JSON 출력",
+      tool: "Gemini CLI",
+      attachPath: "reference/source.mp4",
+      savePath: "docs/ANALYSIS.md",
+    },
   },
   2: {
     name: "Draft",
@@ -497,6 +511,12 @@ export const TIKITAKA_STEPS: Record<number, TikitakaStepConfig> = {
       "error_prevention → --no 변환 빠짐없이",
       "NanoBanana는 한글, MJ는 영어+파라미터",
     ],
+    actionGuide: {
+      goal: "JSON -> 이미지 프롬프트 초안",
+      tool: "Claude Antigravity",
+      attachPath: "docs/ANALYSIS.md 내용 복사",
+      savePath: "prompts/IMAGE_PROMPTS.md",
+    },
   },
   3: {
     name: "Critique",
@@ -514,6 +534,12 @@ export const TIKITAKA_STEPS: Record<number, TikitakaStepConfig> = {
       "구체적인 개선 방향이 나오도록 유도",
       "85점 이상 = PASS, 60-84점 = REVISE, 60점 미만 = REJECT",
     ],
+    actionGuide: {
+      goal: "프롬프트 초안 비평",
+      tool: "Gemini CLI",
+      attachPath: "reference/source.mp4 + prompts/IMAGE_PROMPTS.md",
+      savePath: "docs/CRITIQUE_LOG.md",
+    },
   },
   4: {
     name: "Revise",
@@ -530,6 +556,12 @@ export const TIKITAKA_STEPS: Record<number, TikitakaStepConfig> = {
       "변경 사항을 Before/After로 명시적으로 기록",
       "강점(Keep)은 유지, 약점(Fix)만 수정",
     ],
+    actionGuide: {
+      goal: "비평 반영 -> 프롬프트 수정",
+      tool: "Claude Antigravity",
+      attachPath: "prompts/IMAGE_PROMPTS.md + docs/CRITIQUE_LOG.md",
+      savePath: "prompts/IMAGE_PROMPTS.md (덮어쓰기)",
+    },
   },
   5: {
     name: "Generate + Review",
@@ -545,6 +577,12 @@ export const TIKITAKA_STEPS: Record<number, TikitakaStepConfig> = {
       "캐릭터 일관성(한국인, ANCHOR 일치) 가장 먼저 확인",
       "85점 이상이면 PASS, 60-84점이면 STEP 6으로",
     ],
+    actionGuide: {
+      goal: "이미지/영상 생성 + QA",
+      tool: "NanoBanana / MJ V7 / Kling",
+      attachPath: "prompts/IMAGE_PROMPTS.md에서 복사",
+      savePath: "generated/images/",
+    },
   },
   6: {
     name: "Micro-adjust",
@@ -561,6 +599,12 @@ export const TIKITAKA_STEPS: Record<number, TikitakaStepConfig> = {
       "--iw 올리면 구도 더 정확, --cw 올리면 얼굴 더 정확",
       "큰 문제는 STEP 2로 돌아가 근본적 수정",
     ],
+    actionGuide: {
+      goal: "파라미터 미세 조정 -> 재생성",
+      tool: "NanoBanana / MJ V7",
+      attachPath: "generated/images/에서 문제 이미지 확인",
+      savePath: "generated/images/ (재생성)",
+    },
   },
 } as const;
 
