@@ -196,65 +196,25 @@ function SetupContent() {
     <div className="space-y-8">
       <SectionHeader
         title="환경 설정"
-        subtitle="시작하기 전에 필요한 것들을 준비해요"
+        subtitle="딱 2개만 준비하면 됩니다"
         color="emerald"
       />
 
       {/* AI Studio */}
-      <ContentCard title="Google AI Studio 접속" step={1} color="emerald">
-        <p className="text-slate-400 mb-4">모든 도구는 AI Studio에서 실행됩니다</p>
-        <Checklist
-          items={[
-            { text: "브라우저에서 aistudio.google.com 접속", link: "https://aistudio.google.com" },
-            { text: "Google 계정으로 로그인" },
-          ]}
-        />
-      </ContentCard>
-
-      {/* Canvas App */}
-      <ContentCard title="캔버스 앱 사용법" step={2} color="emerald">
-        <Checklist
-          items={[
-            { text: '좌측 패널 → "+ 새 앱" 클릭' },
-            { text: '"Canvas App" 선택' },
-            { text: "ZIP 파일 업로드" },
-          ]}
-        />
-        <div className="mt-4 p-4 rounded-xl bg-white/5 border border-white/10">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-slate-400">
-                <th className="text-left py-2">ZIP 파일</th>
-                <th className="text-left py-2">용도</th>
-              </tr>
-            </thead>
-            <tbody className="text-slate-300">
-              <tr><td className="py-1.5"><code className="text-emerald-400">builder1-hardened.zip</code></td><td>영상 분석기</td></tr>
-              <tr><td className="py-1.5"><code className="text-emerald-400">builder2-hardened.zip</code></td><td>변주 엔진</td></tr>
-              <tr><td className="py-1.5"><code className="text-emerald-400">vibe-philosophy.zip</code></td><td>바이브 철학관</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <Callout type="warning" className="mt-4">
-          ZIP 파일은 최대 10개 파일, 100MB 이하여야 해요
-        </Callout>
+      <ContentCard title="Google AI Studio" step={1} color="emerald">
+        <p className="text-slate-300 mb-4">Builder 1, 2, 바이브 철학관 모두 여기서 실행</p>
+        <LinkButton href="https://aistudio.google.com" className="w-full justify-center">
+          AI Studio 접속하기
+        </LinkButton>
       </ContentCard>
 
       {/* Antigravity */}
-      <ContentCard title="Antigravity 설치 (선택)" step={3} color="emerald">
-        <p className="text-slate-400 mb-4">Google의 AI 코딩 도우미. 프레임 추출 등을 대신 해줘요.</p>
-
-        <Checklist
-          items={[
-            { text: "antigravity.google 접속", link: "https://antigravity.google" },
-            { text: "운영체제에 맞는 버전 다운로드" },
-            { text: "설치 후 Google 계정 로그인" },
-          ]}
-        />
-
-        <Callout type="tip" className="mt-4">
-          FFmpeg 등 필요한 도구는 Antigravity가 알아서 설치해줍니다
-        </Callout>
+      <ContentCard title="Antigravity 설치" step={2} color="emerald">
+        <p className="text-slate-300 mb-4">프레임 추출, 파일 정리 등을 대신 해주는 AI 코딩 도우미</p>
+        <LinkButton href="https://antigravity.google" className="w-full justify-center">
+          Antigravity 다운로드
+        </LinkButton>
+        <p className="text-slate-500 text-xs mt-3 text-center">설치 후 Google 계정으로 로그인</p>
       </ContentCard>
     </div>
   );
@@ -265,60 +225,67 @@ function AnchorContent() {
     <div className="space-y-8">
       <SectionHeader
         title="기준 프레임 추출"
-        subtitle="Antigravity한테 시키면 끝"
+        subtitle="Antigravity 채팅으로 간단하게"
         color="cyan"
       />
 
-      <ContentCard title="Antigravity에서 프레임 추출하기" color="cyan">
-        <p className="text-slate-300 mb-4">
-          Builder 1 결과물(씬 테이블)을 Antigravity에 붙여넣고 이렇게 말하세요:
-        </p>
+      <ContentCard title="Antigravity 채팅 순서" color="cyan">
+        <div className="space-y-4">
+          {/* Step 1 */}
+          <div className="flex gap-3">
+            <span className="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 text-xs font-bold flex items-center justify-center shrink-0">1</span>
+            <div>
+              <p className="text-white font-medium">ffmpeg 설치 요청</p>
+              <div className="mt-2 p-3 rounded-lg bg-black/30 border border-white/10">
+                <p className="text-cyan-300 text-sm">&quot;ffmpeg 설치해줘&quot;</p>
+              </div>
+            </div>
+          </div>
 
-        <div className="p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
-          <p className="text-cyan-200 italic">
-            &quot;이 영상에서 각 씬 전환 직후 첫 컷 프레임 이미지 모두 추출해서
-            <code className="mx-1 px-2 py-0.5 rounded bg-black/30 text-cyan-300">frames/</code>
-            폴더에 넣어줘&quot;
-          </p>
+          {/* Step 2 */}
+          <div className="flex gap-3">
+            <span className="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 text-xs font-bold flex items-center justify-center shrink-0">2</span>
+            <div>
+              <p className="text-white font-medium">영상 파일 드래그앤드롭</p>
+              <p className="text-slate-400 text-sm mt-1">분석할 영상을 Antigravity 화면에 끌어다 놓기</p>
+            </div>
+          </div>
+
+          {/* Step 3 */}
+          <div className="flex gap-3">
+            <span className="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 text-xs font-bold flex items-center justify-center shrink-0">3</span>
+            <div>
+              <p className="text-white font-medium">Builder 1 결과물(.md) 드래그앤드롭</p>
+              <p className="text-slate-400 text-sm mt-1">씬 테이블이 담긴 마크다운 파일을 채팅창에 끌어다 놓기</p>
+            </div>
+          </div>
+
+          {/* Step 4 */}
+          <div className="flex gap-3">
+            <span className="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 text-xs font-bold flex items-center justify-center shrink-0">4</span>
+            <div>
+              <p className="text-white font-medium">프레임 추출 요청</p>
+              <div className="mt-2 p-3 rounded-lg bg-black/30 border border-white/10">
+                <p className="text-cyan-300 text-sm">&quot;각 씬 전환 직후 첫 컷 프레임 이미지로 추출해서 frames 폴더에 넣어줘&quot;</p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <p className="text-slate-400 text-sm mt-4">
-          Antigravity가 알아서 ffmpeg 설치하고 추출해줍니다.
+        <p className="text-slate-500 text-sm mt-6 text-center">
+          끝. Antigravity가 알아서 해줍니다.
         </p>
       </ContentCard>
 
-      <ContentCard title="직접 하고 싶다면" color="slate">
-        <Collapsible title="FFmpeg 명령어 (선택사항)">
-          <div className="space-y-4 pt-2">
-            <div>
-              <p className="text-xs text-slate-500 mb-2">첫 프레임 추출</p>
-              <CodeBlock code={`ffmpeg -i 영상.mp4 -vf "select=eq(n\\,0)" -vframes 1 frame.png`} />
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 mb-2">특정 시간대 (2.5초)</p>
-              <CodeBlock code={`ffmpeg -i 영상.mp4 -ss 00:00:02.500 -vframes 1 frame.png`} />
-            </div>
-          </div>
-        </Collapsible>
-      </ContentCard>
-
-      <ContentCard title="좋은 기준 프레임" color="cyan">
+      <ContentCard title="좋은 기준 프레임" color="slate">
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <p className="text-emerald-400 font-medium mb-2">✅ 이런 장면</p>
-            <ul className="text-slate-400 space-y-1">
-              <li>• 얼굴 정면 or 3/4</li>
-              <li>• 조명 균일</li>
-              <li>• 선명한 해상도</li>
-            </ul>
+            <p className="text-emerald-400 font-medium mb-2">✅ 좋음</p>
+            <p className="text-slate-400">얼굴 정면, 조명 균일, 선명</p>
           </div>
           <div>
-            <p className="text-red-400 font-medium mb-2">❌ 피할 장면</p>
-            <ul className="text-slate-400 space-y-1">
-              <li>• 뒷모습, 옆모습</li>
-              <li>• 역광, 흔들림</li>
-              <li>• 모션 블러</li>
-            </ul>
+            <p className="text-red-400 font-medium mb-2">❌ 피하기</p>
+            <p className="text-slate-400">뒷모습, 역광, 흔들림</p>
           </div>
         </div>
       </ContentCard>
