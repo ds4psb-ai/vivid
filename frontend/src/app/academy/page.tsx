@@ -108,7 +108,7 @@ function AcademyContent() {
           <div className="p-6 pb-2">
             <div className="flex items-center gap-3">
               <img
-                src="/assets/characters/chokki.png"
+                src="/favicon.png"
                 alt="초끼"
                 className="w-10 h-10 rounded-full object-cover border-2 border-white/20"
               />
