@@ -364,16 +364,20 @@ function SetupContent() {
         <p className="text-gray-400 mb-4">모든 핵심 도구 사용을 위해 필요합니다 (18세 이상)</p>
         <div className="p-4 rounded-xl bg-white text-gray-900">
           <p className="font-bold text-purple-600 mb-1">Google AI Pro</p>
-          <p className="text-2xl font-black text-gray-900 mb-2">₩29,000/월</p>
+          <div className="flex items-baseline gap-2 mb-2">
+            <p className="text-2xl font-black text-gray-900">₩14,500/월</p>
+            <p className="text-sm text-gray-400 line-through">₩29,000</p>
+            <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">2개월 프로모션</span>
+          </div>
           <ul className="text-gray-600 text-sm space-y-1">
             <li>✓ <strong>Antigravity</strong> - AI 코딩 도우미</li>
             <li>✓ <strong>NanoBanana Pro</strong> - 한글 이미지 생성</li>
-            <li>✓ <strong>Veo 3.1</strong> - AI 영상 생성 (하루 3회)</li>
-            <li>✓ 연간 ₩140,000 (59% 할인)</li>
-            <li>✓ 학생 12개월 무료</li>
+            <li>✓ <strong>Veo 3.1 + Flow</strong> - AI 영상 생성</li>
+            <li>✓ AI 크레딧 1,000/월 (Flow, Whisk 사용)</li>
+            <li>✓ 2TB 클라우드 스토리지</li>
           </ul>
           <a
-            href="https://one.google.com/?pli=1"
+            href="https://one.google.com/ai?utm_source=gemini&utm_medium=web&utm_campaign=geminiplanspage&sc=EgIIAQ&hl=ko&icid=geminiplanspage&g1_landing_page=75"
             target="_blank"
             rel="noopener noreferrer"
             className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-bold hover:bg-purple-700 transition-colors"
@@ -516,16 +520,18 @@ function ImageContent() {
         <p className="text-gray-400 mb-4">NanoBanana Pro 사용을 위해 필요합니다 (18세 이상)</p>
         <div className="p-4 rounded-xl bg-white text-gray-900">
           <p className="font-bold text-purple-600 mb-1">Google AI Pro</p>
-          <p className="text-2xl font-black text-gray-900 mb-2">₩29,000/월</p>
+          <div className="flex items-baseline gap-2 mb-2">
+            <p className="text-2xl font-black text-gray-900">₩14,500/월</p>
+            <p className="text-sm text-gray-400 line-through">₩29,000</p>
+            <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">2개월</span>
+          </div>
           <ul className="text-gray-600 text-sm space-y-1">
-            <li>• Gemini 챗에서 NanoBanana Pro 무제한</li>
-            <li>• Antigravity 사용 가능</li>
-            <li>• 연간 ₩140,000 (59% 할인)</li>
-            <li>• 가족 공유 5명 (1인당 ₩5,800)</li>
-            <li>• 학생 12개월 무료</li>
+            <li>• Gemini 챗에서 NanoBanana Pro 이미지 생성</li>
+            <li>• AI 크레딧 1,000/월</li>
+            <li>• 2TB 클라우드 스토리지</li>
           </ul>
           <a
-            href="https://one.google.com/?pli=1"
+            href="https://one.google.com/ai?utm_source=gemini&utm_medium=web&utm_campaign=geminiplanspage&sc=EgIIAQ&hl=ko&icid=geminiplanspage&g1_landing_page=75"
             target="_blank"
             rel="noopener noreferrer"
             className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-bold hover:bg-purple-700 transition-colors"
@@ -562,15 +568,18 @@ function VideoContent() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="p-4 rounded-xl bg-white text-gray-900">
             <p className="font-bold text-purple-600 mb-1">Google AI Pro (필수)</p>
-            <p className="text-2xl font-black text-gray-900 mb-2">₩29,000/월</p>
+            <div className="flex items-baseline gap-2 mb-2">
+              <p className="text-2xl font-black text-gray-900">₩14,500/월</p>
+              <p className="text-sm text-gray-400 line-through">₩29,000</p>
+            </div>
+            <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full mb-2 inline-block">2개월 프로모션</span>
             <ul className="text-gray-600 text-sm space-y-1">
-              <li>✓ Veo 3.1 Fast (하루 3회)</li>
-              <li>✓ Flow - 대사 있는 영상</li>
-              <li>✓ 연간 ₩140,000 (59% 할인)</li>
-              <li>✓ 학생 12개월 무료</li>
+              <li>✓ Veo 3.1 + Flow 영상 생성</li>
+              <li>✓ Whisk 이미지→영상</li>
+              <li>✓ AI 크레딧 1,000/월</li>
             </ul>
             <a
-              href="https://one.google.com/?pli=1"
+              href="https://one.google.com/ai?utm_source=gemini&utm_medium=web&utm_campaign=geminiplanspage&sc=EgIIAQ&hl=ko&icid=geminiplanspage&g1_landing_page=75"
               target="_blank"
               rel="noopener noreferrer"
               className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-bold hover:bg-purple-700 transition-colors"
@@ -581,11 +590,11 @@ function VideoContent() {
           </div>
           <div className="p-4 rounded-xl bg-white text-gray-900">
             <p className="font-bold text-cyan-600 mb-1">Kling 3.0 (추천)</p>
-            <p className="text-2xl font-black text-gray-900 mb-2">₩8,400~/월</p>
+            <p className="text-2xl font-black text-gray-900 mb-2">₩31,200~/월</p>
             <ul className="text-gray-600 text-sm space-y-1">
               <li>✓ 4K 고화질 시네마틱</li>
-              <li>✓ 애니메이션 스타일 강점</li>
-              <li>✓ Pro ₩31,200/월 (660 크레딧)</li>
+              <li>✓ Pro 3,000cr (2.6기준 5초 60개)</li>
+              <li>✓ Premier ₩78,000 (8,000cr)</li>
               <li>✓ 상업용 라이선스 포함</li>
             </ul>
             <a
@@ -602,46 +611,34 @@ function VideoContent() {
         <p className="text-gray-500 text-xs mt-4">※ 환율 변동에 따라 가격이 달라질 수 있습니다 (USD 1,200원 기준)</p>
       </ContentCard>
       <ContentCard>
-        <h3 className="text-lg font-bold text-white mb-4">Kling 3.0 플랜 상세</h3>
+        <h3 className="text-lg font-bold text-white mb-4">Kling 추천 플랜</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-gray-400 border-b border-white/10">
                 <th className="text-left py-2">플랜</th>
                 <th className="text-right py-2">월간</th>
-                <th className="text-right py-2">연간(월)</th>
                 <th className="text-right py-2">크레딧</th>
+                <th className="text-right py-2">5초 영상 (2.6)</th>
               </tr>
             </thead>
             <tbody className="text-gray-300">
-              <tr className="border-b border-white/5">
-                <td className="py-2">Basic</td>
-                <td className="text-right">₩8,400</td>
-                <td className="text-right">₩5,000</td>
-                <td className="text-right">66</td>
-              </tr>
-              <tr className="border-b border-white/5">
-                <td className="py-2">Standard</td>
-                <td className="text-right">₩15,600</td>
-                <td className="text-right">₩10,400</td>
-                <td className="text-right">330</td>
-              </tr>
               <tr className="border-b border-white/5 bg-cyan-500/10">
                 <td className="py-2 font-bold text-cyan-400">Pro (추천)</td>
                 <td className="text-right">₩31,200</td>
-                <td className="text-right">₩18,000</td>
-                <td className="text-right">660</td>
+                <td className="text-right">3,000</td>
+                <td className="text-right">~60개</td>
               </tr>
-              <tr>
-                <td className="py-2">Premier</td>
-                <td className="text-right">₩77,900</td>
-                <td className="text-right">₩52,000</td>
-                <td className="text-right">3000</td>
+              <tr className="bg-cyan-500/5">
+                <td className="py-2 font-bold text-cyan-300">Premier</td>
+                <td className="text-right">₩78,000</td>
+                <td className="text-right">8,000</td>
+                <td className="text-right">~160개</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <p className="text-gray-500 text-xs mt-3">※ 5초 영상 ≈ 10 크레딧, 10초 영상 ≈ 35 크레딧</p>
+        <p className="text-gray-500 text-xs mt-3">※ Kling 2.6: 5초=50cr | 3.0 크레딧 미정 | $25.99 / $64.99 (환율 1,200원)</p>
       </ContentCard>
       <ContentCard>
         <h3 className="text-lg font-bold text-white mb-4">언제 뭘 쓰나요?</h3>
