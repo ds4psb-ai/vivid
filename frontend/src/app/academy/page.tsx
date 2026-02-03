@@ -487,6 +487,30 @@ function ImageContent() {
   return (
     <div className="max-w-3xl mx-auto space-y-8">
       <PageHeader title="이미지 생성" sub="프롬프트 → 이미지" />
+      <ContentCard highlight>
+        <h3 className="text-lg font-bold text-white mb-4">⚡ Google AI Pro 구독 필수</h3>
+        <p className="text-gray-400 mb-4">NanoBanana Pro 사용을 위해 필요합니다 (18세 이상)</p>
+        <div className="p-4 rounded-xl bg-white text-gray-900">
+          <p className="font-bold text-purple-600 mb-1">Google AI Pro</p>
+          <p className="text-2xl font-black text-gray-900 mb-2">₩29,000/월</p>
+          <ul className="text-gray-600 text-sm space-y-1">
+            <li>• Gemini 챗에서 NanoBanana Pro 무제한</li>
+            <li>• Antigravity 사용 가능</li>
+            <li>• 연간 ₩140,000 (59% 할인)</li>
+            <li>• 가족 공유 5명 (1인당 ₩5,800)</li>
+            <li>• 학생 12개월 무료</li>
+          </ul>
+          <a
+            href="https://one.google.com/?pli=1"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-bold hover:bg-purple-700 transition-colors"
+          >
+            구독하기
+            <span className="material-symbols-outlined text-sm">open_in_new</span>
+          </a>
+        </div>
+      </ContentCard>
       <ContentCard>
         <h3 className="text-lg font-bold text-white mb-4">도구 비교</h3>
         <div className="grid grid-cols-2 gap-4">
@@ -509,6 +533,105 @@ function VideoContent() {
   return (
     <div className="max-w-3xl mx-auto space-y-8">
       <PageHeader title="영상 생성" sub="이미지 + 프롬프트 → 영상" />
+      <ContentCard highlight>
+        <h3 className="text-lg font-bold text-white mb-4">⚡ 구독 안내 (18세 이상)</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-4 rounded-xl bg-white text-gray-900">
+            <p className="font-bold text-purple-600 mb-1">Google AI Pro (필수)</p>
+            <p className="text-2xl font-black text-gray-900 mb-2">₩29,000/월</p>
+            <ul className="text-gray-600 text-sm space-y-1">
+              <li>✓ Veo 3.1 Fast (하루 3회)</li>
+              <li>✓ Flow - 대사 있는 영상</li>
+              <li>✓ 연간 ₩140,000 (59% 할인)</li>
+              <li>✓ 학생 12개월 무료</li>
+            </ul>
+            <a
+              href="https://one.google.com/?pli=1"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-bold hover:bg-purple-700 transition-colors"
+            >
+              구독하기
+              <span className="material-symbols-outlined text-sm">open_in_new</span>
+            </a>
+          </div>
+          <div className="p-4 rounded-xl bg-white text-gray-900">
+            <p className="font-bold text-cyan-600 mb-1">Kling 3.0 (추천)</p>
+            <p className="text-2xl font-black text-gray-900 mb-2">₩8,400~/월</p>
+            <ul className="text-gray-600 text-sm space-y-1">
+              <li>✓ 4K 고화질 시네마틱</li>
+              <li>✓ 애니메이션 스타일 강점</li>
+              <li>✓ Pro ₩31,200/월 (660 크레딧)</li>
+              <li>✓ 상업용 라이선스 포함</li>
+            </ul>
+            <a
+              href="https://app.klingai.com/global/membership/membership-plan"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-600 text-white text-sm font-bold hover:bg-cyan-700 transition-colors"
+            >
+              구독하기
+              <span className="material-symbols-outlined text-sm">open_in_new</span>
+            </a>
+          </div>
+        </div>
+        <p className="text-gray-500 text-xs mt-4">※ 환율 변동에 따라 가격이 달라질 수 있습니다 (USD 1,200원 기준)</p>
+      </ContentCard>
+      <ContentCard>
+        <h3 className="text-lg font-bold text-white mb-4">Kling 3.0 플랜 상세</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-gray-400 border-b border-white/10">
+                <th className="text-left py-2">플랜</th>
+                <th className="text-right py-2">월간</th>
+                <th className="text-right py-2">연간(월)</th>
+                <th className="text-right py-2">크레딧</th>
+              </tr>
+            </thead>
+            <tbody className="text-gray-300">
+              <tr className="border-b border-white/5">
+                <td className="py-2">Basic</td>
+                <td className="text-right">₩8,400</td>
+                <td className="text-right">₩5,000</td>
+                <td className="text-right">66</td>
+              </tr>
+              <tr className="border-b border-white/5">
+                <td className="py-2">Standard</td>
+                <td className="text-right">₩15,600</td>
+                <td className="text-right">₩10,400</td>
+                <td className="text-right">330</td>
+              </tr>
+              <tr className="border-b border-white/5 bg-cyan-500/10">
+                <td className="py-2 font-bold text-cyan-400">Pro (추천)</td>
+                <td className="text-right">₩31,200</td>
+                <td className="text-right">₩18,000</td>
+                <td className="text-right">660</td>
+              </tr>
+              <tr>
+                <td className="py-2">Premier</td>
+                <td className="text-right">₩77,900</td>
+                <td className="text-right">₩52,000</td>
+                <td className="text-right">3000</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="text-gray-500 text-xs mt-3">※ 5초 영상 ≈ 10 크레딧, 10초 영상 ≈ 35 크레딧</p>
+      </ContentCard>
+      <ContentCard>
+        <h3 className="text-lg font-bold text-white mb-4">언제 뭘 쓰나요?</h3>
+        <div className="space-y-3 text-sm">
+          <div className="flex items-start gap-3">
+            <span className="text-red-400 font-bold shrink-0">Veo 3.1</span>
+            <span className="text-gray-400">→ 대사/효과음이 필요한 영상 (Flow 활용)</span>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="text-cyan-400 font-bold shrink-0">Kling 3.0</span>
+            <span className="text-gray-400">→ 고화질 시네마/애니, 대사 없는 모션, Canvas Agent 스토리보드</span>
+          </div>
+        </div>
+      </ContentCard>
       <ContentCard>
         <h3 className="text-lg font-bold text-white mb-4">도구 비교</h3>
         <div className="grid grid-cols-2 gap-4">
