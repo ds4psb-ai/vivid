@@ -69,10 +69,8 @@ function AcademyContent() {
           </Link>
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
-              VIVID
+              AI 영상 워크플로우
             </span>
-            <span className="text-slate-500">×</span>
-            <span className="text-white font-medium">성수페이지 아카데미</span>
           </div>
           <div className="w-16" /> {/* Spacer for centering */}
         </div>
@@ -130,8 +128,7 @@ function AcademyContent() {
 
       {/* Footer */}
       <footer className="border-t border-white/5 py-8 text-center text-xs text-slate-500">
-        <p>© 2026 VIVID × 성수페이지 아카데미</p>
-        <p className="mt-2">AI 영상 자동화 워크샵 · 1강</p>
+        <p>© 2026 VIVID · AI 영상 오마주 & 패러디 워크플로우</p>
       </footer>
     </div>
   );
@@ -145,10 +142,10 @@ function HomeContent() {
       <div className="text-center py-8">
         <h1 className="text-3xl sm:text-4xl font-bold mb-4">
           <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-            AI 영상 자동화 워크샵
+            AI 영상 오마주 & 패러디
           </span>
         </h1>
-        <p className="text-slate-400 text-lg">내 영상을 AI로 재탄생시키는 완전 가이드</p>
+        <p className="text-slate-400 text-lg">바이럴 영상을 분석하고, 나만의 버전으로 재창조하는 워크플로우</p>
       </div>
 
       {/* Flow Diagram */}
@@ -157,17 +154,17 @@ function HomeContent() {
         <div className="flex flex-col items-center gap-2 text-sm">
           <FlowStep emoji="📹" text="내 영상" />
           <FlowArrow />
-          <FlowStep emoji="🔍" text="Builder 1 (영상 분석기)" />
+          <FlowStepLink emoji="🔍" text="Builder 1 (영상 분석기)" tab="builder1" />
           <FlowArrow />
-          <div className="flex items-center gap-4">
-            <FlowStep emoji="🎭" text="Builder 2 (변주 엔진)" />
+          <div className="flex items-center gap-4 flex-wrap justify-center">
+            <FlowStepLink emoji="🎭" text="Builder 2 (변주 엔진)" tab="builder2" />
             <span className="text-slate-500">←</span>
-            <FlowStep emoji="🔮" text="나의 프로필 (선택)" subtle />
+            <FlowStepLink emoji="🔮" text="나의 프로필 (선택)" tab="vibe" subtle />
           </div>
           <FlowArrow />
-          <FlowStep emoji="🖼️" text="이미지 생성" />
+          <FlowStepLink emoji="🖼️" text="이미지 생성" tab="image" />
           <FlowArrow />
-          <FlowStep emoji="🎬" text="영상 생성" />
+          <FlowStepLink emoji="🎬" text="영상 생성" tab="video" />
           <FlowArrow />
           <FlowStep emoji="✨" text="나만의 영상 완성!" highlight />
         </div>
@@ -951,6 +948,22 @@ function FlowStep({ emoji, text, subtle, highlight }: { emoji: string; text: str
       <span className="mr-2">{emoji}</span>
       <span className={subtle ? "text-slate-500" : "text-slate-300"}>{text}</span>
     </div>
+  );
+}
+
+function FlowStepLink({ emoji, text, tab, subtle }: { emoji: string; text: string; tab: string; subtle?: boolean }) {
+  return (
+    <Link
+      href={`/academy?tab=${tab}`}
+      className={`px-4 py-2 rounded-xl transition-all hover:scale-105 cursor-pointer ${
+        subtle
+          ? "bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20"
+          : "bg-white/10 border border-white/10 hover:bg-violet-500/20 hover:border-violet-500/30"
+      }`}
+    >
+      <span className="mr-2">{emoji}</span>
+      <span className={subtle ? "text-slate-500 hover:text-slate-300" : "text-slate-300"}>{text}</span>
+    </Link>
   );
 }
 
