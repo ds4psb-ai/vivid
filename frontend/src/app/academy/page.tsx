@@ -243,7 +243,7 @@ function HomeContent({ setActiveTab }: { setActiveTab: (tab: TabKey) => void }) 
             <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-mono text-gray-400 tracking-[0.1em] uppercase">Input Source</div>
             <button className="bg-white text-gray-900 px-10 py-5 rounded-2xl flex items-center gap-3 shadow-[0_10px_30px_-10px_rgba(255,255,255,0.3)] hover:scale-105 transition-transform duration-300">
               <span className="material-symbols-outlined">movie</span>
-              <span className="font-bold text-lg">내 영상 업로드</span>
+              <span className="font-bold text-lg">아웃라이어 영상 업로드</span>
             </button>
           </div>
 
@@ -409,33 +409,66 @@ function SetupContent() {
 
 // ============ Anchor Content ============
 function AnchorContent() {
+  const PROMPT_1 = `ffmpeg 설치해줘`;
+  const PROMPT_2 = `영상 프로젝트 폴더에 넣고, 첫 프레임 + 씬 전환 프레임 추출해줘 (threshold 0.18). 타임스탬프는 0.01초로 올림해서 복붙 가능하게 따로 알려줘.`;
+
+  const [copied1, setCopied1] = useState(false);
+  const [copied2, setCopied2] = useState(false);
+
+  const handleCopy = async (text: string, setCopied: (v: boolean) => void) => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
-      <PageHeader title="기준 프레임 추출" sub="Antigravity 채팅으로 간단하게" />
+    <div className="max-w-3xl mx-auto space-y-6">
+      <PageHeader title="기준 프레임 추출" sub="Antigravity 복붙 2번이면 끝" />
+
+      {/* 섹션 1: ffmpeg 설치 */}
       <ContentCard>
-        <h3 className="text-lg font-bold text-white mb-4">Antigravity 채팅 순서</h3>
-        <div className="space-y-4">
-          <Step num={1} title="ffmpeg 설치 요청">
-            <ChatBubble>&quot;ffmpeg 설치해줘&quot;</ChatBubble>
-          </Step>
-          <Step num={2} title="영상 파일 드래그앤드롭">
-            <p className="text-gray-400 text-sm">분석할 영상을 Antigravity 화면에 끌어다 놓기</p>
-          </Step>
-          <Step num={3} title="이미지 프롬프트 생성기 결과물(.md) 드래그앤드롭">
-            <p className="text-gray-400 text-sm">씬 테이블이 담긴 마크다운 파일을 채팅창에 끌어다 놓기</p>
-          </Step>
-          <Step num={4} title="프레임 추출 요청">
-            <ChatBubble>&quot;각 씬 전환 직후 첫 컷 프레임 이미지로 추출해서 frames 폴더에 넣어줘&quot;</ChatBubble>
-          </Step>
+        <div className="flex items-center gap-3 mb-3">
+          <span className="w-7 h-7 rounded-full bg-purple-500/20 text-purple-400 text-sm font-bold flex items-center justify-center">1</span>
+          <p className="text-white font-bold">ffmpeg 설치 (최초 1회)</p>
         </div>
-        <p className="text-gray-500 text-sm mt-6 text-center">끝. Antigravity가 알아서 해줍니다.</p>
+        <div className="relative">
+          <div className="p-3 rounded-xl bg-black/50 border border-white/10">
+            <p className="text-purple-200 text-sm pr-16">{PROMPT_1}</p>
+          </div>
+          <button
+            onClick={() => handleCopy(PROMPT_1, setCopied1)}
+            className={`absolute top-2 right-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              copied1 ? 'bg-emerald-500 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'
+            }`}
+          >
+            {copied1 ? '복사됨!' : '복사'}
+          </button>
+        </div>
       </ContentCard>
-      <ContentCard>
-        <h3 className="text-lg font-bold text-white mb-4">좋은 기준 프레임</h3>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div><p className="text-emerald-400 font-medium mb-2">✅ 좋음</p><p className="text-gray-400">얼굴 정면, 조명 균일, 선명</p></div>
-          <div><p className="text-red-400 font-medium mb-2">❌ 피하기</p><p className="text-gray-400">뒷모습, 역광, 흔들림</p></div>
+
+      {/* 섹션 2: 영상 드래그 + 프레임 추출 */}
+      <ContentCard highlight>
+        <div className="flex items-center gap-3 mb-3">
+          <span className="w-7 h-7 rounded-full bg-purple-500/20 text-purple-400 text-sm font-bold flex items-center justify-center">2</span>
+          <p className="text-white font-bold">영상 드래그앤드롭 + 복붙</p>
         </div>
+        <p className="text-gray-400 text-sm mb-3">영상 파일을 Antigravity 채팅창에 끌어다 놓고 아래 복붙</p>
+        <div className="relative">
+          <div className="p-3 rounded-xl bg-black/50 border border-purple-500/30">
+            <p className="text-purple-200 text-sm pr-16">{PROMPT_2}</p>
+          </div>
+          <button
+            onClick={() => handleCopy(PROMPT_2, setCopied2)}
+            className={`absolute top-2 right-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              copied2 ? 'bg-emerald-500 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'
+            }`}
+          >
+            {copied2 ? '복사됨!' : '복사'}
+          </button>
+        </div>
+        <p className="text-emerald-400 text-sm mt-4 text-center font-medium">
+          끝! 씬 전환 자동 감지 → 프레임 추출 → 경로 안내까지
+        </p>
       </ContentCard>
     </div>
   );
