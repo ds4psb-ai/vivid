@@ -358,12 +358,36 @@ function HomeContent({ setActiveTab }: { setActiveTab: (tab: TabKey) => void }) 
 function SetupContent() {
   return (
     <div className="max-w-3xl mx-auto space-y-8">
-      <PageHeader title="환경 설정" sub="Antigravity만 설치하면 됩니다" />
+      <PageHeader title="환경 설정" sub="Gemini Pro 구독 + Antigravity 설치" />
+      <ContentCard highlight>
+        <h3 className="text-lg font-bold text-white mb-4">⚡ Google AI Pro 구독 필수</h3>
+        <p className="text-gray-400 mb-4">모든 핵심 도구 사용을 위해 필요합니다 (18세 이상)</p>
+        <div className="p-4 rounded-xl bg-white text-gray-900">
+          <p className="font-bold text-purple-600 mb-1">Google AI Pro</p>
+          <p className="text-2xl font-black text-gray-900 mb-2">₩29,000/월</p>
+          <ul className="text-gray-600 text-sm space-y-1">
+            <li>✓ <strong>Antigravity</strong> - AI 코딩 도우미</li>
+            <li>✓ <strong>NanoBanana Pro</strong> - 한글 이미지 생성</li>
+            <li>✓ <strong>Veo 3.1</strong> - AI 영상 생성 (하루 3회)</li>
+            <li>✓ 연간 ₩140,000 (59% 할인)</li>
+            <li>✓ 학생 12개월 무료</li>
+          </ul>
+          <a
+            href="https://one.google.com/?pli=1"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-bold hover:bg-purple-700 transition-colors"
+          >
+            구독하기
+            <span className="material-symbols-outlined text-sm">open_in_new</span>
+          </a>
+        </div>
+      </ContentCard>
       <ContentCard>
         <h3 className="text-lg font-bold text-white mb-4">Antigravity 설치</h3>
         <p className="text-gray-400 mb-4">프레임 추출, 파일 정리 등을 대신 해주는 AI 코딩 도우미</p>
         <WhiteButton href={TOOL_LINKS.antigravity}>Antigravity 다운로드</WhiteButton>
-        <p className="text-gray-500 text-xs mt-3">설치 후 Google 계정으로 로그인</p>
+        <p className="text-gray-500 text-xs mt-3">설치 후 Google 계정으로 로그인 (Pro 구독 필요)</p>
       </ContentCard>
       <ContentCard>
         <h3 className="text-lg font-bold text-white mb-4">도구 바로가기</h3>
