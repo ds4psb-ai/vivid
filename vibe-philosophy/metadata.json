@@ -1,0 +1,5 @@
+{
+  "name": "바이브 철학관 프로토타입",
+  "description": "Google AI Studio 프로토타입: 혈액형, MBTI, 사주를 통합한 멀티모달 철학관 에이전트. Gemini 3를 활용한 실시간 추론 시뮬레이션.",
+  "requestFramePermissions": []
+}

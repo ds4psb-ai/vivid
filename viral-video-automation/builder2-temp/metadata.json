@@ -1,0 +1,5 @@
+{
+  "name": "패러디 엔진 (Parody Engine)",
+  "description": "IMAGE_PROMPTS RAW를 받아 바이럴 로직 분석, 품질 체크, MOTION 프롬프트를 생성합니다. 페르소나 변환과 패러디 옵션을 지원합니다.",
+  "requestFramePermissions": []
+}

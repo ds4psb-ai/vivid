@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>성수페이지 아카데미 가이드</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">성수페이지 아카데미 가이드</h1>
+</header>
+<h1 id="vivid-ai-영상-자동화-워크샵---수강생-가이드">🎬 VIVID AI 영상
+자동화 워크샵 - 수강생 가이드</h1>
+<blockquote>
+<p><strong>성수페이지 아카데미 | 1강 자료</strong><br />
+작성일: 2026년 2월 4일<br />
+Version: 1.0</p>
+</blockquote>
+<hr />
+<h2 id="목차">📋 목차</h2>
+<ol type="1">
+<li><a href="#1-환경-설정">환경 설정</a></li>
+<li><a href="#2-첫-프레임-추출-anchor-image">첫 프레임 추출</a></li>
+<li><a href="#3-builder-1-이미지-프롬프트-생성">Builder 1: 이미지
+프롬프트 생성</a></li>
+<li><a href="#4-바이브-철학관-자기-데이터셋-생성">바이브 철학관: 자기
+데이터셋 생성</a></li>
+<li><a href="#5-builder-2-패러디-엔진">Builder 2: 패러디 엔진</a></li>
+<li><a href="#6-이미지-생성-도구">이미지 생성 도구</a></li>
+<li><a href="#7-영상-생성-도구">영상 생성 도구</a></li>
+<li><a href="#8-2강-과제-안내">2강 과제 안내</a></li>
+</ol>
+<hr />
+<h2 id="환경-설정">1. 환경 설정</h2>
+<h3 id="google-ai-studio-접속">1.1 Google AI Studio 접속</h3>
+<p>모든 Builder 도구는 <strong>Google AI Studio</strong>에서
+실행됩니다.</p>
+<p><strong>접속 방법:</strong> 1. 브라우저에서 <strong><a
+href="https://aistudio.google.com">aistudio.google.com</a></strong> 접속
+2. Google 계정으로 로그인</p>
+<p><strong>Canvas 앱 사용 방법:</strong> 1. 좌측 패널 상단 <strong>“+ 새
+앱”</strong> 클릭 2. <strong>“Canvas App”</strong> 선택 3. <strong>ZIP
+파일 업로드</strong>: 제공받은 <code>builder1-hardened.zip</code> 또는
+<code>builder2-hardened.zip</code> 업로드 4. 자동으로 앱이 로드됨</p>
+<blockquote>
+<p>⚠️ <strong>ZIP 파일 제한</strong>: 최대 10개 파일, 100MB 이하</p>
+</blockquote>
+<hr />
+<h3 id="antigravity-설치-선택사항">1.2 Antigravity 설치 (선택사항)</h3>
+<p><strong>Antigravity</strong>는 Google의 AI 기반 코딩
+어시스턴트입니다. 로컬에서 코드를 수정하거나 확장하려면 설치합니다.</p>
+<p><strong>설치 방법:</strong> 1. <strong><a
+href="https://antigravity.google">antigravity.google</a></strong> 접속
+2. 운영체제에 맞는 설치 파일 다운로드 - macOS: Monterey 12 이상 -
+Windows: 64-bit Windows 10 이상 3. 설치 마법사 실행 후 Google 계정으로
+로그인 4. <strong>“Start fresh”</strong> 선택 → 다크 테마 추천</p>
+<hr />
+<h3 id="ffmpeg-설치-프레임-추출용">1.3 FFmpeg 설치 (프레임 추출용)</h3>
+<p><strong>macOS (Homebrew 사용):</strong></p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Homebrew 업데이트</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">brew</span> update</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># FFmpeg 설치</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="ex">brew</span> install ffmpeg</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 설치 확인</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-version</span></span></code></pre></div>
+<p><strong>Windows:</strong> 1. <strong><a
+href="https://ffmpeg.org/download.html">ffmpeg.org/download.html</a></strong>
+접속 2. Windows 빌드 다운로드 및 압축 해제 3. 환경변수 PATH에 ffmpeg/bin
+폴더 추가</p>
+<hr />
+<h2 id="첫-프레임-추출-anchor-image">2. 첫 프레임 추출 (ANCHOR
+Image)</h2>
+<h3 id="왜-필요한가">2.1 왜 필요한가?</h3>
+<p>ANCHOR 이미지는 캐릭터 일관성의 기준점입니다. 영상의 첫 프레임(또는
+캐릭터가 가장 잘 보이는 프레임)을 추출하여 이후 모든 이미지 생성의
+레퍼런스로 사용합니다.</p>
+<h3 id="ffmpeg-명령어">2.2 FFmpeg 명령어</h3>
+<p><strong>첫 프레임 추출:</strong></p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input_video.mp4 <span class="at">-vf</span> <span class="st">&quot;select=eq(n\,0)&quot;</span> <span class="at">-vframes</span> 1 anchor_frame.png</span></code></pre></div>
+<p><strong>특정 시간대 프레임 추출 (예: 2.5초 지점):</strong></p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffmpeg</span> <span class="at">-i</span> input_video.mp4 <span class="at">-ss</span> 00:00:02.500 <span class="at">-vframes</span> 1 anchor_frame.png</span></code></pre></div>
+<p><strong>영상 정보 확인:</strong></p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ffprobe</span> input_video.mp4</span></code></pre></div>
+<h3 id="프레임-선택-팁">2.3 프레임 선택 팁</h3>
+<table>
+<thead>
+<tr>
+<th>좋은 ANCHOR</th>
+<th>피해야 할 ANCHOR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>캐릭터 얼굴이 정면/3/4 각도</td>
+<td>뒷모습, 옆모습</td>
+</tr>
+<tr>
+<td>조명이 균일함</td>
+<td>역광, 극단적 명암</td>
+</tr>
+<tr>
+<td>표정이 중립적</td>
+<td>과격한 표정</td>
+</tr>
+<tr>
+<td>해상도가 선명함</td>
+<td>모션 블러, 흔들림</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="builder-1-이미지-프롬프트-생성">3. Builder 1: 이미지 프롬프트
+생성</h2>
+<h3 id="개요">3.1 개요</h3>
+<p><strong>Builder 1</strong>은 영상을 분석하여 이미지 생성용 프롬프트를
+만드는 도구입니다.</p>
+<p><strong>출력 형식:</strong> - <strong>NanoBanana Pro</strong> (한글,
+기본) - <strong>Midjourney V7</strong> (영문, 선택)</p>
+<h3 id="사용-방법">3.2 사용 방법</h3>
+<ol type="1">
+<li><strong>ZIP 파일 업로드</strong>: Google AI Studio Canvas에
+<code>builder1-hardened.zip</code> 업로드</li>
+<li><strong>영상 파일 업로드</strong>: 분석할 영상 첨부</li>
+<li><strong>4-STEP 워크플로우 진행</strong>:</li>
+</ol>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>STEP</th>
+<th>내용</th>
+<th>출력</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1</strong></td>
+<td>영상 분석</td>
+<td>씬 테이블 + 캐릭터 프로필 + Visual Rhyme + 구도 분석</td>
+</tr>
+<tr>
+<td><strong>2</strong></td>
+<td>Phase 1-2</td>
+<td>과거/회상 씬 이미지 프롬프트</td>
+</tr>
+<tr>
+<td><strong>3</strong></td>
+<td>Phase 3-4</td>
+<td>현재/결말 씬 이미지 프롬프트</td>
+</tr>
+<tr>
+<td><strong>4</strong></td>
+<td>최종 출력</td>
+<td>RAW 마크다운 (Builder 2 입력용)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="출력-예시">3.3 출력 예시</h3>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode markdown"><code class="sourceCode markdown"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>&lt;&lt;<span class="dt">&lt;</span><span class="kw">ANALYSIS_START</span><span class="dt">&gt;</span>&gt;&gt;</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">## 📊 영상 분석 요약</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="fu">### 씬 테이블</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Scene <span class="pp">|</span> Phase <span class="pp">|</span> Timecode <span class="pp">|</span> Description <span class="pp">|</span> ANCHOR <span class="pp">|</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="pp">|-------|-------|----------|-------------|--------|</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 01 <span class="pp">|</span> ANCHOR ⭐ <span class="pp">|</span> 00:00.00~00:01.27 <span class="pp">|</span> 거실에서 케이크 들고 있는 엄마 <span class="pp">|</span> ✅ <span class="pp">|</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 02 <span class="pp">|</span> THE 90s <span class="pp">|</span> 00:01.27~00:02.28 <span class="pp">|</span> 7살 소년의 생일파티 <span class="pp">|</span> <span class="pp">|</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>&lt;&lt;<span class="dt">&lt;</span><span class="kw">ANALYSIS_END</span><span class="dt">&gt;</span>&gt;&gt;</span></code></pre></div>
+<hr />
+<h2 id="바이브-철학관-자기-데이터셋-생성">4. 바이브 철학관: 자기
+데이터셋 생성</h2>
+<h3 id="개요-1">4.1 개요</h3>
+<p><strong>바이브 철학관</strong>은 대화를 통해 심층 페르소나 프로필을
+생성하는 도구입니다. 생성된 JSON 데이터셋은 Builder 2에서 패러디/변주
+생성 시 고도화에 사용됩니다.</p>
+<h3 id="사용-방법-1">4.2 사용 방법</h3>
+<ol type="1">
+<li><strong>ZIP 파일 업로드</strong>: Google AI Studio Canvas에
+<code>vibe-philosophy.zip</code> 업로드</li>
+<li><strong>프로필 입력</strong>:
+<ul>
+<li>이름, 생년월일 (음력/양력)</li>
+<li>관상 사진 (드래그 앤 드롭 가능)</li>
+<li>MBTI (선택)</li>
+</ul></li>
+<li><strong>세션 시작</strong>: “세션 시작” 버튼 클릭</li>
+<li><strong>대화 진행</strong>: AI와 자연스럽게 대화하며 심층 분석
+진행</li>
+</ol>
+<h3 id="심도-시스템-6단계">4.3 심도 시스템 (6단계)</h3>
+<table>
+<thead>
+<tr>
+<th>단계</th>
+<th>심도</th>
+<th>분석 내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>탐색</td>
+<td>0-25%</td>
+<td>라포 형성, 기본 정보</td>
+</tr>
+<tr>
+<td>전개</td>
+<td>26-45%</td>
+<td>표면적 고민 확인</td>
+</tr>
+<tr>
+<td>잠재의식</td>
+<td>46-65%</td>
+<td>조건화된 반응 패턴</td>
+</tr>
+<tr>
+<td>무의식</td>
+<td>66-85%</td>
+<td>그림자 분석, 억압된 욕구</td>
+</tr>
+<tr>
+<td>원형</td>
+<td>86-95%</td>
+<td>원형 통합, 집단무의식</td>
+</tr>
+<tr>
+<td>합성</td>
+<td>96-100%</td>
+<td>최종 솔루션 합성</td>
+</tr>
+</tbody>
+</table>
+<h3 id="출력-digital-twin-json">4.4 출력: Digital Twin JSON</h3>
+<p><strong>50% 이상</strong>에서 “영혼 추출” 버튼이 활성화되며, 다음
+구조의 JSON을 다운로드할 수 있습니다:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;meta&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;currentDepth&quot;</span><span class="fu">:</span> <span class="dv">78</span><span class="fu">,</span> <span class="dt">&quot;currentStage&quot;</span><span class="fu">:</span> <span class="st">&quot;unconscious&quot;</span> <span class="fu">},</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;extracted&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;emotionalKeywords&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;그리움&quot;</span><span class="ot">,</span> <span class="st">&quot;후회&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;topicKeywords&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;가족&quot;</span><span class="ot">,</span> <span class="st">&quot;어린시절&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;deepSignals&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;인정욕구&quot;</span><span class="ot">,</span> <span class="st">&quot;분리불안&quot;</span><span class="ot">]</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;depthAnalysis&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;dominantArchetype&quot;</span><span class="fu">:</span> <span class="st">&quot;영원한 소년 (Puer Aeternus)&quot;</span><span class="fu">,</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;shadowAspects&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;권위에 대한 반발&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;attachmentStyle&quot;</span><span class="fu">:</span> <span class="st">&quot;불안-회피형&quot;</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<hr />
+<h2 id="builder-2-패러디-엔진">5. Builder 2: 패러디 엔진</h2>
+<h3 id="개요-2">5.1 개요</h3>
+<p><strong>Builder 2</strong>는 Builder 1의 출력과 페르소나 데이터를
+결합하여 <strong>오마쥬/패러디/변주</strong> 프롬프트를 생성합니다.</p>
+<h3 id="입력-데이터">5.2 입력 데이터</h3>
+<table>
+<thead>
+<tr>
+<th>필수</th>
+<th>선택</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>원본 영상</td>
+<td>페르소나 JSON (철학관 출력)</td>
+</tr>
+<tr>
+<td>Builder 1 출력 (마크다운)</td>
+<td>베스트 댓글 (최대 5개)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="사용-방법-2">5.3 사용 방법</h3>
+<ol type="1">
+<li><strong>ZIP 파일 업로드</strong>: <code>builder2-hardened.zip</code>
+업로드</li>
+<li><strong>입력 데이터 업로드</strong>:
+<ul>
+<li>영상 파일 드래그 앤 드롭</li>
+<li>Builder 1 마크다운 파일 드래그 앤 드롭 (또는 붙여넣기)</li>
+<li>(선택) 페르소나 JSON 파일 드래그 앤 드롭</li>
+</ul></li>
+<li><strong>4-STEP 워크플로우 진행</strong>:</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>STEP</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1</strong></td>
+<td>텍스트 재현성 검증</td>
+</tr>
+<tr>
+<td><strong>2</strong></td>
+<td>오마쥬 프롬프트 생성</td>
+</tr>
+<tr>
+<td><strong>3</strong></td>
+<td>변주/패러디 프롬프트 생성</td>
+</tr>
+<tr>
+<td><strong>4</strong></td>
+<td>최종 출력 (RAW 다운로드)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="오마쥬-vs-변주">5.4 오마쥬 vs 변주</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>유형</th>
+<th>설명</th>
+<th>예시</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>오마쥬</strong></td>
+<td>원본 구도/분위기 유지, 캐릭터만 교체</td>
+<td>생일 케이크 씬 → 내 어린시절로</td>
+</tr>
+<tr>
+<td><strong>변주/패러디</strong></td>
+<td>구도 유지, 상황/맥락 변형</td>
+<td>생일 케이크 → 퇴직 케이크</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="이미지-생성-도구">6. 이미지 생성 도구</h2>
+<h3 id="nanobanana-pro-추천">6.1 NanoBanana Pro (추천)</h3>
+<p><strong>특징:</strong> - 한글 프롬프트 지원 - 4K 이미지 출력 (약
+3-8초) - 캐릭터 일관성 우수 - 멀티 이미지 레퍼런스 지원</p>
+<p><strong>접속:</strong> Google AI Studio 또는 <strong><a
+href="https://nanobanana-pro.com">nanobanana-pro.com</a></strong></p>
+<p><strong>사용 순서:</strong> 1. 레퍼런스 이미지 업로드 (ANCHOR 이미지)
+2. Builder 1/2에서 생성된 한글 프롬프트 붙여넣기 3. Generate 클릭 → 4K
+이미지 다운로드</p>
+<hr />
+<h3 id="midjourney-v7-선택">6.2 Midjourney V7 (선택)</h3>
+<p><strong>특징:</strong> - 영문 프롬프트 전용 - 예술적 스타일 강점 -
+파라미터 커스터마이징</p>
+<p><strong>핵심 파라미터:</strong></p>
+<pre><code>--iw 2.0      # 이미지 가중치
+--ar 9:16     # 세로 영상 비율
+--v 7         # 버전 7
+--style raw   # 원본 스타일
+--cref [URL]  # 캐릭터 레퍼런스
+--stylize 250 # 스타일 강도 (과거 씬)
+--stylize 400 # 스타일 강도 (현재 씬)
+--no [항목]   # 제외할 요소</code></pre>
+<hr />
+<h2 id="영상-생성-도구">7. 영상 생성 도구</h2>
+<h3 id="veo-3.1-google">7.1 Veo 3.1 (Google)</h3>
+<p><strong>특징:</strong> - 1080p/4K 출력 - 네이티브 오디오 생성
+(배경음, 대사, 효과음) - 실사 물리 시뮬레이션 - 텍스트 → 영상 / 이미지 →
+영상</p>
+<p><strong>접속:</strong> <strong>Gemini App</strong> 또는 <strong><a
+href="https://gemini.google.com">gemini.google.com</a></strong> →
+Flow</p>
+<p><strong>사용법:</strong> 1. ANCHOR 이미지 + Builder 프롬프트 입력 2.
+9:16 (세로) 또는 16:9 (가로) 선택 3. Generate → 영상 다운로드</p>
+<hr />
+<h3 id="kling-ai-kuaishou">7.2 Kling AI (Kuaishou)</h3>
+<p><strong>특징:</strong> - 멀티 이미지 레퍼런스 (최대 4장) - 캐릭터
+일관성 강점 - 동시 영상+오디오 생성 (2.6 버전)</p>
+<p><strong>접속:</strong> <strong><a
+href="https://klingai.com">klingai.com</a></strong></p>
+<p><strong>Canvas 기능:</strong> - 여러 장의 이미지에서 캐릭터 특징 추출
+- 동적 상호작용 영상 생성</p>
+<hr />
+<h2 id="강-과제-안내">8. 2강 과제 안내</h2>
+<h3 id="예정-2026년-2월-6일-목">📅 예정: 2026년 2월 6일 (목)</h3>
+<h3 id="과제-내용">과제 내용</h3>
+<ol type="1">
+<li><strong>Builder 1 완료</strong>
+<ul>
+<li>본인이 선정한 바이럴 영상 분석</li>
+<li>RAW 마크다운 출력물 저장</li>
+</ul></li>
+<li><strong>바이브 철학관 세션</strong>
+<ul>
+<li>최소 50% 심도 도달</li>
+<li>페르소나 JSON 다운로드</li>
+</ul></li>
+<li>(선택) <strong>Builder 2 미리 체험</strong>
+<ul>
+<li>오마쥬 프롬프트 1개 생성 시도</li>
+</ul></li>
+</ol>
+<h3 id="강-실습-예정">2강 실습 예정</h3>
+<ul>
+<li>오마쥬 이미지 생성 (NanoBanana Pro)</li>
+<li>변주/패러디 이미지 생성</li>
+<li>Veo 3.1 / Kling 3로 영상 생성</li>
+</ul>
+<hr />
+<h2 id="문의">📞 문의</h2>
+<ul>
+<li><strong>디스코드</strong>: [성수페이지 채널]</li>
+<li><strong>이메일</strong>: academy@seongsupage.com</li>
+</ul>
+<hr />
+<blockquote>
+<p><strong>© 2026 VIVID x 성수페이지 아카데미</strong><br />
+AI 영상 자동화 워크샵 - Lecture 1</p>
+</blockquote>
+</body>
+</html>

@@ -1,242 +1,207 @@
-# Prompty Project Package v2.0
+# 🎁 영상 파로디 기프트 패키지 v3.1
 
-> **AI Video Parody 프로젝트 스타터 키트**
-> Bring Your Own AI - Gemini CLI + Claude Code 듀얼 워크플로우
-
----
-
-## Quick Start
-
-### 먼저 예시 확인 (권장)
-```bash
-# 완성된 예시 먼저 보기 - Kyle Nut 수준 10-Cut
-cat examples/birthday-parody/README.md
-cat examples/birthday-parody/prompts/IMAGE_PROMPTS.md
-```
-
-### 새 프로젝트 시작
-```bash
-./start.sh
-```
-
-### 또는 수동으로:
-```bash
-./scripts/init.sh my-video
-```
+> **완전 초보용**: "패키지 설치해줘" 한마디로 시작
+> **For**: Claude Opus 4.5 (Antigravity) 사용자
 
 ---
 
-## 워크플로우
+## 🎯 첫 시작 (이것만 따라하세요!)
 
+### Claude에게 이렇게 말하세요:
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    YOUR LOCAL ENVIRONMENT                   │
-│                                                             │
-│  Terminal 1 (Gemini CLI)        Terminal 2 (Claude Code)   │
-│  ┌─────────────────────┐        ┌─────────────────────┐    │
-│  │ gemini              │        │ claude              │    │
-│  │ > @source.mp4       │   ↔    │ > STATE.md 읽고    │    │
-│  │ > 이 영상 분석해줘  │        │ > 프롬프트 정제해줘│    │
-│  └──────────┬──────────┘        └──────────┬──────────┘    │
-│             │          공유 폴더            │               │
-│             └──────────────┬───────────────┘               │
-│                            ▼                               │
-│              projects/my-video/                            │
-│              ├── reference/source.mp4                      │
-│              ├── docs/ANALYSIS.md                          │
-│              ├── prompts/IMAGE_PROMPTS.md                  │
-│              └── STATE.md                                  │
-└─────────────────────────────────────────────────────────────┘
+이 패키지 압축 풀고 설치해줘
 ```
+
+Claude가 자동으로:
+1. ✅ 압축 해제
+2. ✅ FFmpeg 설치 확인
+3. ✅ 작업 폴더 생성
+4. ✅ 다음 단계 안내
 
 ---
 
-## 폴더 구조
+## 🔄 전체 워크플로우
 
 ```
-prompty-project/
-├── start.sh                 # 원클릭 시작
-├── scripts/
-│   ├── init.sh              # 프로젝트 초기화
-│   ├── extract.sh           # 균등 키프레임 추출
-│   └── extract-smart.sh     # Gemini 분석 기반 스마트 추출
-├── templates/               # 핵심 템플릿 (6개)
-│   ├── PROJECT_CONTEXT.md
-│   ├── STATE.md
-│   ├── IMAGE_PROMPTS.md
-│   ├── MOTION_PROMPTS.md
-│   ├── ANALYSIS.md
-│   └── CRITIQUE_LOG.md
-├── guides/                  # 가이드 문서 (5개)
-│   ├── MODE_TIKITAKA.md
-│   ├── DUAL_AI_WORKFLOW.md
-│   ├── PROMPTS_NANOBANANA.md
-│   ├── PROMPTS_MIDJOURNEY.md
-│   └── STEP_BY_STEP.md      # 6단계 복사용 프롬프트
-├── examples/                # 완성된 예시 프로젝트
-│   └── birthday-parody/     # Kyle Nut 수준 10-Cut 예시
-│       ├── README.md
-│       ├── docs/ANALYSIS.md
-│       └── prompts/
-│           ├── IMAGE_PROMPTS.md
-│           └── MOTION_PROMPTS.md
-└── projects/                # 생성된 프로젝트들
-    └── {project-name}/
+┌──────────────────────────────────────────────────────────────────────┐
+│  STEP 0: 패키지 설치                                                 │
+│  → Claude에게 "패키지 설치해줘" 말하기                               │
+└───────────────────────────────┬──────────────────────────────────────┘
+                                ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│  STEP 1: 영상 분석 (AI 빌더 사용)                                    │
+│  → 빌더 링크 클릭 → 영상 업로드 → 5단계 대화                        │
+│  → IMAGE_PROMPTS.md 다운로드                                        │
+└───────────────────────────────┬──────────────────────────────────────┘
+                                ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│  STEP 2: 모션 프롬프트 생성 (Claude에게 요청)                        │
+│  → "이 IMAGE_PROMPTS.md로 모션 프롬프트 만들어줘"                   │
+│  → MOTION_PROMPTS.md 받기                                           │
+└───────────────────────────────┬──────────────────────────────────────┘
+                                ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│  STEP 3: 키프레임 추출 (Claude가 자동 실행)                          │
+│  → "키프레임 추출해줘" → FFmpeg 자동 실행                           │
+└───────────────────────────────┬──────────────────────────────────────┘
+                                ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│  STEP 4: 이미지/영상 생성                                            │
+│  → NanoBanana/Midjourney로 이미지                                   │
+│  → Kling/Runway로 영상                                              │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 스크립트 사용법
+## 📌 핵심 링크
 
-### 1. init.sh - 프로젝트 초기화
+### 👉 [AI Studio Builder 바로가기](https://aistudio.google.com/app/prompts?state=%7B%22ids%22:%5B%221AAcse-ic6mNRbtgjy6jWYThp8qwZL31m%22%5D,%22action%22:%22open%22,%22userId%22:%22114876486829819877093%22,%22resourceKeys%22:%7B%7D%7D&usp=sharing)
 
-```bash
-./scripts/init.sh <project-name>
+---
 
-# 예시:
-./scripts/init.sh dance-challenge
+## 💬 Claude에게 말하는 법
+
+### 패키지 설치
+```
+패키지 설치해줘
 ```
 
-**생성되는 파일:**
-- `brief.md` - 프로젝트 개요
-- `PROJECT_CONTEXT.md` - AI 컨텍스트
-- `STATE.md` - 진행 상황 추적
-- `prompts/IMAGE_PROMPTS.md` - 이미지 프롬프트
-- `prompts/MOTION_PROMPTS.md` - 모션 프롬프트
-- `docs/ANALYSIS.md` - 분석 결과
-
-### 2. extract.sh - 균등 키프레임 추출
-
-```bash
-./scripts/extract.sh <project-name> [scene-count]
-
-# 예시: 10개 씬으로 분할
-./scripts/extract.sh dance-challenge 10
+### 모션 프롬프트 생성
+```
+[IMAGE_PROMPTS.md 첨부]
+이 이미지 프롬프트로 모션 프롬프트 만들어줘
+- 대사가 있으면 자막 타이밍도 포함해줘
 ```
 
-### 3. extract-smart.sh - 스마트 추출
-
-```bash
-# 먼저 Gemini로 영상 분석 후 ANALYSIS.md에 JSON 블록 추가
-./scripts/extract-smart.sh <project-name>
+### 키프레임 추출
+```
+[영상 첨부]
+이 영상에서 키프레임 추출해줘
+타임코드: 00:01.27, 00:02.28, 00:04.05 ...
 ```
 
-**ANALYSIS.md에 필요한 JSON 형식:**
+### 품질 크리틱
+```
+[생성된 이미지 첨부]
+IMAGE_PROMPTS.md Scene 3과 비교해서 크리틱해줘
+```
+
+---
+
+## 📂 폴더 구조 (자동 생성됨)
+
+```
+my-project/
+├── 📹 reference/          # 원본 영상
+│   └── source.mp4
+├── 🖼️ keyframes/          # 추출된 프레임 (Claude가 추출)
+│   ├── scene01.png
+│   └── ANCHOR_IMG.png
+├── 📝 prompts/            # 프롬프트
+│   ├── IMAGE_PROMPTS.md   ← AI 빌더가 생성
+│   └── MOTION_PROMPTS.md  ← Claude가 생성
+└── 🎨 generated/          # 생성된 이미지/영상
+```
+
+---
+
+## ⚙️ 요구사항 (Claude가 자동 확인)
+
+| 도구 | 용도 | 설치 |
+|------|------|------|
+| FFmpeg | 키프레임 추출 | `brew install ffmpeg` |
+| jq | JSON 파싱 | `brew install jq` |
+
+> **Windows**: `winget install ffmpeg`
+
+---
+
+## 🎬 대사가 있는 영상인 경우
+
+모션 프롬프트 요청 시:
+```
+이 IMAGE_PROMPTS.md로 모션 프롬프트 만들어줘
+⚠️ 이 영상에는 대사가 있어:
+- 00:02~00:04: "생일 축하합니다~"
+- 00:08~00:10: "촛불 불어!"
+대사 타이밍을 MOTION_PROMPTS.md에 포함해줘
+```
+
+Claude가 자동으로 립싱크 타이밍 포함:
 ```markdown
-<!-- KEYFRAMES_JSON
-{"keyframes":[
-  {"timestamp":"00:01.50","filename":"scene01_arrival","anchor":false},
-  {"timestamp":"00:03.00","filename":"ANCHOR_IMG","anchor":true},
-  {"timestamp":"00:05.50","filename":"scene03_action","anchor":false}
-]}
--->
+### [📋 COPY] Positive
+A Korean family singing IMMEDIATELY from beat one.
+**Lip-sync**: "HAPPY BIRTHDAY" mouthed clearly, synced to beat.
 ```
 
 ---
 
-## Dual AI 워크플로우
+## 🔄 티키타카 워크플로우
 
-### Step 1: Gemini - 영상 분석
-
-```bash
-gemini
-> @{projects/my-video/reference/source.mp4}
-> 이 영상 분석해줘. KEYFRAMES_JSON 포함해서.
 ```
-
-### Step 2: 키프레임 추출
-
-```bash
-./scripts/extract-smart.sh my-video
-```
-
-### Step 3: Claude - 프롬프트 정제
-
-```bash
-claude
-> docs/ANALYSIS.md 읽고 프롬프트 정제해줘
-```
-
-### Step 4: 생성 + Critique
-
-1. IMAGE_PROMPTS.md에서 ANCHOR 프롬프트 복사
-2. NanoBanana/Midjourney에서 생성
-3. 결과물을 Claude에게 Critique 요청
-4. STATE.md 업데이트
-
----
-
-## 파일 설명
-
-| 파일 | 역할 | 작성자 |
-|------|------|--------|
-| `PROJECT_CONTEXT.md` | AI가 즉시 맥락 파악 | 사람 + AI |
-| `STATE.md` | 동적 진행 상황 | AI (Claude) |
-| `ANALYSIS.md` | 영상 분석 결과 | AI (Gemini) |
-| `IMAGE_PROMPTS.md` | 이미지 생성 프롬프트 | AI (Claude) |
-| `MOTION_PROMPTS.md` | 영상 생성 프롬프트 | AI (Claude) |
-| `CRITIQUE_LOG.md` | 피드백 기록 | AI (Claude) |
-
----
-
-## 요구사항
-
-- ffmpeg (키프레임 추출)
-- jq (JSON 파싱, extract-smart.sh용)
-- Gemini CLI
-- Claude Code (Antigravity)
-
-```bash
-# macOS
-brew install ffmpeg jq
+┌─────────────────┐     ┌─────────────────┐
+│  AI 빌더        │     │  Claude         │
+│  (Gemini Pro)   │     │  (Antigravity)  │
+│                 │     │                 │
+│  영상 분석      │ ──▶ │  모션 생성      │
+│  IMAGE 생성     │     │  키프레임 추출  │
+│  품질 크리틱    │ ◀── │  결과물 개선    │
+└─────────────────┘     └─────────────────┘
 ```
 
 ---
 
-## 예시 프로젝트
+## 💡 오버코딩 방지 팁
 
-### birthday-parody (Kyle Nut 수준)
+1. **한번에 하나씩**: 한 단계 끝나면 다음 단계
+2. **결과 확인**: 각 단계 출력 확인 후 진행
+3. **작은 영상으로 시작**: 15초 이하 영상으로 연습
+4. **문제 있으면 물어보기**: "이거 왜 안돼?" 질문 OK
 
-완성된 10-Cut 프로젝트 예시입니다. 프롬프트 작성 전에 참고하세요.
+---
 
-```bash
-# 전체 구조 확인
-ls -la examples/birthday-parody/
+## ❓ 자주 묻는 질문
 
-# IMAGE 프롬프트 예시 (Kyle Nut 수준)
-cat examples/birthday-parody/prompts/IMAGE_PROMPTS.md
-
-# MOTION 프롬프트 예시
-cat examples/birthday-parody/prompts/MOTION_PROMPTS.md
-
-# 분석 결과
-cat examples/birthday-parody/docs/ANALYSIS.md
+### Q: FFmpeg가 안 깔려요
+```
+Claude에게: "FFmpeg 설치해줘"
 ```
 
-**포함 내용:**
-- `README.md` - 프로젝트 개요
-- `docs/ANALYSIS.md` - 영상 분석 결과
-- `prompts/IMAGE_PROMPTS.md` - 10컷 이미지 프롬프트 (Kyle Nut 수준)
-- `prompts/MOTION_PROMPTS.md` - 10컷 모션 프롬프트
+### Q: 영상이 안 올라가요
+- 100MB 이하로 줄이세요
+- mp4, mov, webm만 지원
 
----
-
-## 6단계 STEP_BY_STEP 가이드
-
-`guides/STEP_BY_STEP.md`에서 Gemini 첫 대화용 복사 프롬프트를 확인하세요.
-
-```bash
-cat guides/STEP_BY_STEP.md
+### Q: 모션이 이상해요
+```
+Claude에게: "Scene 3 모션 다시 만들어줘, 박수 동작이 늦어"
 ```
 
-각 단계에 `<!-- COPY START -->` / `<!-- COPY END -->` 마커가 있어 바로 복사해서 사용할 수 있습니다.
+---
+
+## 📋 체크리스트
+
+- [ ] 패키지 설치 완료
+- [ ] FFmpeg 확인됨
+- [ ] AI 빌더에서 IMAGE_PROMPTS.md 받음
+- [ ] Claude에서 MOTION_PROMPTS.md 받음
+- [ ] 키프레임 추출 완료
+- [ ] 이미지 생성 (NanoBanana/Midjourney)
+- [ ] 영상 생성 (Kling/Runway)
 
 ---
 
-## 라이선스
+## 🛠️ 도구 링크
 
-MIT License - 자유롭게 사용하세요!
+| 도구 | 용도 |
+|------|------|
+| [AI 빌더](https://aistudio.google.com/app/prompts?state=%7B%22ids%22:%5B%221AAcse-ic6mNRbtgjy6jWYThp8qwZL31m%22%5D,%22action%22:%22open%22,%22userId%22:%22114876486829819877093%22,%22resourceKeys%22:%7B%7D%7D&usp=sharing) | IMAGE 프롬프트 생성 |
+| Claude (Antigravity) | MOTION 프롬프트 + 키프레임 |
+| NanoBanana Pro | 한글 이미지 생성 |
+| Midjourney V8 | 영문 이미지 생성 |
+| Kling 2.0 | Frame-to-Video |
 
 ---
 
-> **Prompty** - AI와 함께하는 영상 파로디 제작
+> **🎬 즐거운 AI 영상 제작 되세요!**
+> **문제가 생기면 Claude에게 물어보세요!**

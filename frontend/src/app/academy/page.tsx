@@ -240,35 +240,21 @@ function SetupContent() {
         </Callout>
       </ContentCard>
 
-      {/* FFmpeg */}
-      <ContentCard title="FFmpeg 설치" step={3} color="emerald">
-        <p className="text-slate-400 mb-4">영상에서 기준 프레임을 추출할 때 필요해요</p>
+      {/* Antigravity */}
+      <ContentCard title="Antigravity 설치 (선택)" step={3} color="emerald">
+        <p className="text-slate-400 mb-4">Google의 AI 코딩 도우미. 프레임 추출 등을 대신 해줘요.</p>
 
-        <h4 className="text-sm font-medium text-white mb-2">macOS 사용자</h4>
-        <CodeBlock
-          code={`# 1. Homebrew 업데이트
-brew update
-
-# 2. FFmpeg 설치
-brew install ffmpeg
-
-# 3. 설치 확인
-ffmpeg -version`}
+        <Checklist
+          items={[
+            { text: "antigravity.google 접속", link: "https://antigravity.google" },
+            { text: "운영체제에 맞는 버전 다운로드" },
+            { text: "설치 후 Google 계정 로그인" },
+          ]}
         />
 
         <Callout type="tip" className="mt-4">
-          Homebrew가 없다면 brew.sh에서 먼저 설치하세요
+          FFmpeg 등 필요한 도구는 Antigravity가 알아서 설치해줍니다
         </Callout>
-
-        <Collapsible title="Windows 사용자" className="mt-6">
-          <Checklist
-            items={[
-              { text: "ffmpeg.org/download.html 접속", link: "https://ffmpeg.org/download.html" },
-              { text: "Windows 빌드 다운로드 & 압축 해제" },
-              { text: "환경변수 PATH에 ffmpeg/bin 폴더 추가" },
-            ]}
-          />
-        </Collapsible>
       </ContentCard>
     </div>
   );
@@ -279,56 +265,61 @@ function AnchorContent() {
     <div className="space-y-8">
       <SectionHeader
         title="기준 프레임 추출"
-        subtitle="기준 프레임 (ANCHOR) = 모든 이미지 생성의 기준점"
+        subtitle="Antigravity한테 시키면 끝"
         color="cyan"
       />
 
-      <ContentCard title="왜 필요한가요?" color="cyan">
+      <ContentCard title="Antigravity에서 프레임 추출하기" color="cyan">
         <p className="text-slate-300 mb-4">
-          AI가 영상 속 캐릭터를 일관되게 그리려면 <strong className="text-white">&quot;이 사람이야!&quot;</strong> 하고 알려줄 기준 이미지가 필요해요.
+          Builder 1 결과물(씬 테이블)을 Antigravity에 붙여넣고 이렇게 말하세요:
         </p>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-center">
-            <div className="text-2xl mb-2">😵</div>
-            <p className="text-red-300">기준 프레임 없이</p>
-            <p className="text-red-400/70 text-xs mt-1">매번 다른 얼굴</p>
-          </div>
-          <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center">
-            <div className="text-2xl mb-2">😊</div>
-            <p className="text-emerald-300">기준 프레임 사용</p>
-            <p className="text-emerald-400/70 text-xs mt-1">같은 캐릭터 유지</p>
-          </div>
+
+        <div className="p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+          <p className="text-cyan-200 italic">
+            &quot;이 영상에서 각 씬 전환 직후 첫 컷 프레임 이미지 모두 추출해서
+            <code className="mx-1 px-2 py-0.5 rounded bg-black/30 text-cyan-300">frames/</code>
+            폴더에 넣어줘&quot;
+          </p>
         </div>
+
+        <p className="text-slate-400 text-sm mt-4">
+          Antigravity가 알아서 ffmpeg 설치하고 추출해줍니다.
+        </p>
       </ContentCard>
 
-      <ContentCard title="기준 프레임 추출하기" step={1} color="cyan">
-        <h4 className="text-sm font-medium text-white mb-2">첫 번째 프레임 추출</h4>
-        <CodeBlock code={`ffmpeg -i 내영상.mp4 -vf "select=eq(n\\,0)" -vframes 1 기준프레임.png`} />
-        <p className="text-xs text-slate-500 mt-2">영상의 맨 첫 장면을 이미지로 저장해요</p>
-
-        <h4 className="text-sm font-medium text-white mt-6 mb-2">특정 시간대 추출 (예: 2.5초 지점)</h4>
-        <CodeBlock code={`ffmpeg -i 내영상.mp4 -ss 00:00:02.500 -vframes 1 기준프레임.png`} />
-        <Callout type="tip" className="mt-3">
-          얼굴이 가장 잘 보이는 장면을 찾아 그 시간대를 입력하세요
-        </Callout>
+      <ContentCard title="직접 하고 싶다면" color="slate">
+        <Collapsible title="FFmpeg 명령어 (선택사항)">
+          <div className="space-y-4 pt-2">
+            <div>
+              <p className="text-xs text-slate-500 mb-2">첫 프레임 추출</p>
+              <CodeBlock code={`ffmpeg -i 영상.mp4 -vf "select=eq(n\\,0)" -vframes 1 frame.png`} />
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 mb-2">특정 시간대 (2.5초)</p>
+              <CodeBlock code={`ffmpeg -i 영상.mp4 -ss 00:00:02.500 -vframes 1 frame.png`} />
+            </div>
+          </div>
+        </Collapsible>
       </ContentCard>
 
-      <ContentCard title="좋은 기준 프레임 vs 나쁜 기준 프레임" color="cyan">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr>
-                <th className="text-left py-2 text-emerald-400">✅ 좋은 기준 프레임</th>
-                <th className="text-left py-2 text-red-400">❌ 피해야 할 기준 프레임</th>
-              </tr>
-            </thead>
-            <tbody className="text-slate-300">
-              <tr><td className="py-1.5">얼굴이 정면 또는 3/4 각도</td><td>뒷모습, 옆모습만 보임</td></tr>
-              <tr><td className="py-1.5">조명이 균일함</td><td>역광, 극단적 명암</td></tr>
-              <tr><td className="py-1.5">표정이 자연스러움</td><td>과격한 표정</td></tr>
-              <tr><td className="py-1.5">해상도가 선명함</td><td>모션 블러, 흔들림</td></tr>
-            </tbody>
-          </table>
+      <ContentCard title="좋은 기준 프레임" color="cyan">
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <p className="text-emerald-400 font-medium mb-2">✅ 이런 장면</p>
+            <ul className="text-slate-400 space-y-1">
+              <li>• 얼굴 정면 or 3/4</li>
+              <li>• 조명 균일</li>
+              <li>• 선명한 해상도</li>
+            </ul>
+          </div>
+          <div>
+            <p className="text-red-400 font-medium mb-2">❌ 피할 장면</p>
+            <ul className="text-slate-400 space-y-1">
+              <li>• 뒷모습, 옆모습</li>
+              <li>• 역광, 흔들림</li>
+              <li>• 모션 블러</li>
+            </ul>
+          </div>
         </div>
       </ContentCard>
     </div>

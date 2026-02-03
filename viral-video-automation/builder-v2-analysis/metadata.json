@@ -1,0 +1,5 @@
+{
+  "name": "오마쥬 프롬프터 다단계",
+  "description": "Transforms video footage into expert-level Midjourney prompts for video cloning, enforcing specific stylistic rules and Korean styling.",
+  "requestFramePermissions": []
+}
