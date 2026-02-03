@@ -5,7 +5,7 @@
  * Stitch 5 + 6 디자인 조합
  */
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, startTransition, useMemo } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -101,7 +101,7 @@ function AcademyContent() {
                   </div>
                 )}
                 <button
-                  onClick={() => setActiveTab(item.key)}
+                  onClick={() => startTransition(() => setActiveTab(item.key))}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-r-xl text-sm font-medium transition-all duration-200 ${
                     activeTab === item.key
                       ? "bg-gradient-to-r from-purple-500/15 to-transparent border-l-[3px] border-purple-500 text-white"
@@ -223,9 +223,9 @@ function HomeContent({ setActiveTab }: { setActiveTab: (tab: TabKey) => void }) 
           </div>
 
           <FlowConnector />
-          <FlowNode icon="image" label="이미지 생성" sub="Generative Process" onClick={() => setActiveTab("image")} />
+          <FlowNode icon="image" label="이미지 생성" sub="Generative Process" onClick={() => startTransition(() => setActiveTab("image"))} />
           <FlowConnector />
-          <FlowNode icon="movie_filter" label="영상 생성" sub="Rendering" onClick={() => setActiveTab("video")} />
+          <FlowNode icon="movie_filter" label="영상 생성" sub="Rendering" onClick={() => startTransition(() => setActiveTab("video"))} />
           <FlowConnector />
           <FlowNode icon="check" label="나만의 영상 완성!" sub="Output Ready" final />
         </div>
@@ -237,10 +237,10 @@ function HomeContent({ setActiveTab }: { setActiveTab: (tab: TabKey) => void }) 
         바로가기
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <BentoCard icon="settings" label="환경 설정" sub="Antigravity 설치" color="indigo" onClick={() => setActiveTab("setup")} />
+        <BentoCard icon="settings" label="환경 설정" sub="Antigravity 설치" color="indigo" onClick={() => startTransition(() => setActiveTab("setup"))} />
         <BentoCard icon="construction" label="이미지 프롬프트 생성기" sub="영상 분석" color="purple" href={TOOL_LINKS.builder1} />
         <BentoCard icon="brush" label="패러디 오마주 엔진" sub="변주 생성" color="pink" href={TOOL_LINKS.builder2} />
-        <BentoCard icon="assignment_turned_in" label="과제 확인" sub="제출 안내" color="blue" onClick={() => setActiveTab("homework")} highlight />
+        <BentoCard icon="assignment_turned_in" label="과제 확인" sub="제출 안내" color="blue" onClick={() => startTransition(() => setActiveTab("homework"))} highlight />
       </div>
 
       <footer className="mt-20 text-center text-xs text-gray-600 font-light tracking-wider">
