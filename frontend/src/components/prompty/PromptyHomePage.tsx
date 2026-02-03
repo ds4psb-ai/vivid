@@ -65,12 +65,9 @@ export default function PromptyHomePage() {
     <div className="container mx-auto px-4 py-8">
       {/* Hero Section */}
       <section className="text-center py-16">
-        <h1 className="text-5xl font-bold mb-4">
+        <h1 className="text-5xl font-bold mb-8">
           prompty<span className="text-primary">.co.kr</span>
         </h1>
-        <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-          AI 없이도 98% 품질. Gemini CLI + Antigravity로 직접 만드는 바이럴 콘텐츠 가이드
-        </p>
         <div className="flex gap-4 justify-center flex-wrap">
           <Link
             href="/templates"
@@ -178,33 +175,6 @@ export default function PromptyHomePage() {
         )}
       </section>
 
-      {/* Why Prompty */}
-      <section className="py-12 text-center">
-        <h2 className="text-2xl font-bold mb-8">왜 Prompty인가요?</h2>
-        <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-          <div className="p-6">
-            <div className="text-4xl mb-4">💰</div>
-            <h3 className="font-semibold mb-2">비용 $200 → $10</h3>
-            <p className="text-sm text-muted-foreground">
-              AI API 직접 호출 대신 로컬 도구 활용으로 95% 비용 절감
-            </p>
-          </div>
-          <div className="p-6">
-            <div className="text-4xl mb-4">🎯</div>
-            <h3 className="font-semibold mb-2">품질 70% → 98%</h3>
-            <p className="text-sm text-muted-foreground">
-              Critique 체크리스트로 각 단계 품질 보장
-            </p>
-          </div>
-          <div className="p-6">
-            <div className="text-4xl mb-4">🚀</div>
-            <h3 className="font-semibold mb-2">학습 효과</h3>
-            <p className="text-sm text-muted-foreground">
-              단순 생성이 아닌 프로세스 학습으로 실력 향상
-            </p>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
