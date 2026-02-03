@@ -470,6 +470,34 @@ function AnchorContent() {
           끝! 씬 전환 자동 감지 → 프레임 추출 → 경로 안내까지
         </p>
       </ContentCard>
+
+      {/* 영상 다운로더 링크 */}
+      <ContentCard>
+        <h3 className="text-lg font-bold text-white mb-4">아웃라이어 영상 다운로드</h3>
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <p className="text-red-400 font-medium text-sm mb-2">YouTube Shorts</p>
+            <div className="space-y-2">
+              <a href="https://savefrom.net" target="_blank" rel="noopener noreferrer" className="block text-xs text-gray-400 hover:text-white transition-colors">savefrom.net</a>
+              <a href="https://y2mate.com" target="_blank" rel="noopener noreferrer" className="block text-xs text-gray-400 hover:text-white transition-colors">y2mate.com</a>
+            </div>
+          </div>
+          <div>
+            <p className="text-pink-400 font-medium text-sm mb-2">TikTok</p>
+            <div className="space-y-2">
+              <a href="https://snaptik.app" target="_blank" rel="noopener noreferrer" className="block text-xs text-gray-400 hover:text-white transition-colors">snaptik.app</a>
+              <a href="https://ssstik.io" target="_blank" rel="noopener noreferrer" className="block text-xs text-gray-400 hover:text-white transition-colors">ssstik.io</a>
+            </div>
+          </div>
+          <div>
+            <p className="text-purple-400 font-medium text-sm mb-2">Instagram Reels</p>
+            <div className="space-y-2">
+              <a href="https://snapinsta.app" target="_blank" rel="noopener noreferrer" className="block text-xs text-gray-400 hover:text-white transition-colors">snapinsta.app</a>
+              <a href="https://igram.io" target="_blank" rel="noopener noreferrer" className="block text-xs text-gray-400 hover:text-white transition-colors">igram.io</a>
+            </div>
+          </div>
+        </div>
+      </ContentCard>
     </div>
   );
 }
