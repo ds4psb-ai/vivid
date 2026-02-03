@@ -107,9 +107,11 @@ function AcademyContent() {
           {/* Logo */}
           <div className="p-6 pb-2">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-purple-400 flex items-center justify-center text-white font-bold text-lg shadow-[0_0_15px_rgba(168,85,247,0.4)]">
-                A
-              </div>
+              <img
+                src="/assets/characters/chokki.png"
+                alt="초끼"
+                className="w-10 h-10 rounded-full object-cover border-2 border-white/20"
+              />
               <span className="text-sm font-bold tracking-widest text-white/90 font-mono">
                 AI <span className="opacity-50 font-normal">ACADEMY</span>
               </span>
