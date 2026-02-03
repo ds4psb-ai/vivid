@@ -154,12 +154,12 @@ function HomeContent() {
         <div className="flex flex-col items-center gap-2 text-sm">
           <FlowStep emoji="📹" text="내 영상" />
           <FlowArrow />
-          <FlowStepLink emoji="🔍" text="Builder 1 (영상 분석기)" tab="builder1" />
+          <FlowStepExternal emoji="🔍" text="이미지 프롬프트 생성기" href={TOOL_LINKS.builder1} />
           <FlowArrow />
           <div className="flex items-center gap-4 flex-wrap justify-center">
-            <FlowStepLink emoji="🎭" text="Builder 2 (변주 엔진)" tab="builder2" />
+            <FlowStepExternal emoji="🎭" text="패러디 오마주 엔진" href={TOOL_LINKS.builder2} />
             <span className="text-slate-500">←</span>
-            <FlowStepLink emoji="🔮" text="나의 프로필 (선택)" tab="vibe" subtle />
+            <FlowStepExternal emoji="🔮" text="바이브 철학관 (선택)" href={TOOL_LINKS.vibe} subtle />
           </div>
           <FlowArrow />
           <FlowStepLink emoji="🖼️" text="이미지 생성" tab="image" />
@@ -191,30 +191,45 @@ function HomeContent() {
   );
 }
 
+// Tool Links
+const TOOL_LINKS = {
+  builder1: "https://aistudio.google.com/app/prompts?state=%7B%22ids%22:%5B%221D3hHLIb6-e4QJQ3tDrOtTb8qZ80cOabz%22%5D,%22action%22:%22open%22,%22userId%22:%22109914641793744493802%22,%22resourceKeys%22:%7B%7D%7D&usp=sharing",
+  vibe: "https://aistudio.google.com/app/prompts?state=%7B%22ids%22:%5B%221wKUuefdolzOVFp7YAxSfcO13prtAWvgu%22%5D,%22action%22:%22open%22,%22userId%22:%22109914641793744493802%22,%22resourceKeys%22:%7B%7D%7D&usp=sharing",
+  builder2: "https://aistudio.google.com/app/prompts?state=%7B%22ids%22:%5B%221W-ooRbimFIPbrOfAptWKcThofLDe9GF0%22%5D,%22action%22:%22open%22,%22userId%22:%22109914641793744493802%22,%22resourceKeys%22:%7B%7D%7D&usp=sharing",
+  antigravity: "https://antigravity.google",
+};
+
 function SetupContent() {
   return (
     <div className="space-y-8">
       <SectionHeader
         title="환경 설정"
-        subtitle="딱 2개만 준비하면 됩니다"
+        subtitle="Antigravity만 설치하면 됩니다"
         color="emerald"
       />
 
-      {/* AI Studio */}
-      <ContentCard title="Google AI Studio" step={1} color="emerald">
-        <p className="text-slate-300 mb-4">Builder 1, 2, 바이브 철학관 모두 여기서 실행</p>
-        <LinkButton href="https://aistudio.google.com" className="w-full justify-center">
-          AI Studio 접속하기
-        </LinkButton>
-      </ContentCard>
-
       {/* Antigravity */}
-      <ContentCard title="Antigravity 설치" step={2} color="emerald">
+      <ContentCard title="Antigravity 설치" color="emerald">
         <p className="text-slate-300 mb-4">프레임 추출, 파일 정리 등을 대신 해주는 AI 코딩 도우미</p>
-        <LinkButton href="https://antigravity.google" className="w-full justify-center">
+        <LinkButton href={TOOL_LINKS.antigravity} className="w-full justify-center">
           Antigravity 다운로드
         </LinkButton>
         <p className="text-slate-500 text-xs mt-3 text-center">설치 후 Google 계정으로 로그인</p>
+      </ContentCard>
+
+      {/* Tool Links */}
+      <ContentCard title="도구 바로가기" color="emerald">
+        <div className="space-y-3">
+          <LinkButton href={TOOL_LINKS.builder1} className="w-full justify-center">
+            🔍 이미지 프롬프트 생성기 (Builder 1)
+          </LinkButton>
+          <LinkButton href={TOOL_LINKS.vibe} className="w-full justify-center">
+            🔮 바이브 철학관
+          </LinkButton>
+          <LinkButton href={TOOL_LINKS.builder2} className="w-full justify-center">
+            🎭 패러디 오마주 엔진 (Builder 2)
+          </LinkButton>
+        </div>
       </ContentCard>
     </div>
   );
@@ -297,25 +312,31 @@ function Builder1Content() {
   return (
     <div className="space-y-8">
       <SectionHeader
-        title="Builder 1: 영상 분석기"
-        subtitle="영상 넣으면 → 이미지용 명령어 나옴"
+        title="이미지 프롬프트 생성기"
+        subtitle="영상 넣으면 → 이미지용 프롬프트 나옴"
         color="blue"
       />
 
-      <ContentCard title="Builder 1이란?" color="blue">
-        <div className="flex flex-col items-center gap-2 text-sm py-4">
-          <FlowStep emoji="📹" text="내 영상" />
-          <FlowArrow />
-          <FlowStep emoji="🔍" text="Builder 1이 분석" />
-          <FlowArrow />
-          <FlowStep emoji="📝" text="이미지 생성용 프롬프트" />
-        </div>
-        <div className="mt-4 p-4 rounded-xl bg-white/5 border border-white/10">
-          <p className="text-sm text-slate-400 mb-2">출력 형식 선택 가능:</p>
-          <ul className="text-sm text-slate-300 space-y-1">
-            <li>• <strong>NanoBanana Pro</strong>: 한글 프롬프트 (기본)</li>
-            <li>• <strong>Midjourney V7</strong>: 영문 프롬프트 (선택)</li>
-          </ul>
+      <ContentCard title="바로 시작하기" color="blue">
+        <LinkButton href={TOOL_LINKS.builder1} className="w-full justify-center text-base py-3">
+          🔍 이미지 프롬프트 생성기 열기
+        </LinkButton>
+      </ContentCard>
+
+      <ContentCard title="사용법" color="blue">
+        <div className="space-y-3 text-sm">
+          <div className="flex gap-3">
+            <span className="text-blue-400 font-bold">1.</span>
+            <span className="text-slate-300">영상 파일 업로드</span>
+          </div>
+          <div className="flex gap-3">
+            <span className="text-blue-400 font-bold">2.</span>
+            <span className="text-slate-300">STEP 1~4 순서대로 진행</span>
+          </div>
+          <div className="flex gap-3">
+            <span className="text-blue-400 font-bold">3.</span>
+            <span className="text-slate-300">결과물(.md) 다운로드</span>
+          </div>
         </div>
       </ContentCard>
 
@@ -376,16 +397,29 @@ function VibeContent() {
         color="purple"
       />
 
-      <ContentCard title="바이브 철학관이란?" color="purple">
-        <div className="flex flex-col items-center gap-2 text-sm py-4">
-          <FlowStep emoji="💬" text="AI와 대화" />
-          <FlowArrow />
-          <FlowStep emoji="🔍" text="심층 분석 진행" />
-          <FlowArrow />
-          <FlowStep emoji="💾" text="나의 프로필 (JSON) 저장" />
+      <ContentCard title="바로 시작하기" color="purple">
+        <LinkButton href={TOOL_LINKS.vibe} className="w-full justify-center text-base py-3">
+          🔮 바이브 철학관 열기
+        </LinkButton>
+      </ContentCard>
+
+      <ContentCard title="사용법" color="purple">
+        <div className="space-y-3 text-sm">
+          <div className="flex gap-3">
+            <span className="text-purple-400 font-bold">1.</span>
+            <span className="text-slate-300">기본 정보 입력 (이름, 생년월일)</span>
+          </div>
+          <div className="flex gap-3">
+            <span className="text-purple-400 font-bold">2.</span>
+            <span className="text-slate-300">AI와 자연스럽게 대화</span>
+          </div>
+          <div className="flex gap-3">
+            <span className="text-purple-400 font-bold">3.</span>
+            <span className="text-slate-300">50% 이상 도달 시 프로필 저장</span>
+          </div>
         </div>
         <Callout type="tip" className="mt-4">
-          저장한 프로필은 Builder 2에서 사용해요 → 나의 감성이 담긴 변주 영상을 만들 수 있어요
+          저장한 프로필은 패러디 엔진에서 사용 → 나의 감성이 담긴 변주 생성
         </Callout>
       </ContentCard>
 
@@ -435,67 +469,49 @@ function Builder2Content() {
   return (
     <div className="space-y-8">
       <SectionHeader
-        title="Builder 2: 변주 엔진"
+        title="패러디 오마주 엔진"
         subtitle="분석 결과 + 나의 프로필 → 오마주/변주 생성"
         color="pink"
       />
 
-      <ContentCard title="오마주 vs 변주" color="pink">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
-            <h4 className="text-blue-400 font-medium mb-2">🎬 오마주</h4>
-            <p className="text-sm text-slate-300 mb-2">원본 존중</p>
-            <p className="text-xs text-slate-400">구도/분위기 유지, 캐릭터만 교체</p>
-            <p className="text-xs text-slate-500 mt-2">예: 생일 케이크 씬 → 내 어린시절로</p>
+      <ContentCard title="바로 시작하기" color="pink">
+        <LinkButton href={TOOL_LINKS.builder2} className="w-full justify-center text-base py-3">
+          🎭 패러디 오마주 엔진 열기
+        </LinkButton>
+      </ContentCard>
+
+      <ContentCard title="사용법" color="pink">
+        <div className="space-y-3 text-sm">
+          <div className="flex gap-3">
+            <span className="text-pink-400 font-bold">1.</span>
+            <span className="text-slate-300">원본 영상 + 이미지 프롬프트 생성기 결과물(.md) 업로드</span>
           </div>
-          <div className="p-4 rounded-xl bg-pink-500/10 border border-pink-500/20">
-            <h4 className="text-pink-400 font-medium mb-2">🎭 변주</h4>
-            <p className="text-sm text-slate-300 mb-2">창의적 변형</p>
-            <p className="text-xs text-slate-400">구도 유지, 상황/맥락 변형</p>
-            <p className="text-xs text-slate-500 mt-2">예: 생일 케이크 → 퇴직 케이크</p>
+          <div className="flex gap-3">
+            <span className="text-pink-400 font-bold">2.</span>
+            <span className="text-slate-300">(선택) 바이브 철학관 프로필(.json) 업로드</span>
+          </div>
+          <div className="flex gap-3">
+            <span className="text-pink-400 font-bold">3.</span>
+            <span className="text-slate-300">STEP 1~4 순서대로 진행</span>
+          </div>
+          <div className="flex gap-3">
+            <span className="text-pink-400 font-bold">4.</span>
+            <span className="text-slate-300">결과물 다운로드</span>
           </div>
         </div>
       </ContentCard>
 
-      <ContentCard title="입력 데이터" color="pink">
-        <div className="grid grid-cols-2 gap-4">
+      <ContentCard title="오마주 vs 변주" color="slate">
+        <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <h4 className="text-sm font-medium text-white mb-2">필수</h4>
-            <ul className="text-sm text-slate-300 space-y-1">
-              <li>📹 원본 영상</li>
-              <li>📝 Builder 1 출력 (마크다운)</li>
-            </ul>
+            <p className="text-blue-400 font-medium mb-1">🎬 오마주</p>
+            <p className="text-slate-400">원본 구도 유지, 캐릭터만 교체</p>
           </div>
           <div>
-            <h4 className="text-sm font-medium text-white mb-2">선택</h4>
-            <ul className="text-sm text-slate-300 space-y-1">
-              <li>🔮 나의 프로필 (JSON)</li>
-              <li>💬 베스트 댓글 (최대 5개)</li>
-            </ul>
+            <p className="text-pink-400 font-medium mb-1">🎭 변주</p>
+            <p className="text-slate-400">구도 유지, 상황/맥락 변형</p>
           </div>
         </div>
-        <Callout type="tip" className="mt-4">
-          나의 프로필을 넣으면 나의 감성이 반영된 변주가 생성돼요
-        </Callout>
-      </ContentCard>
-
-      <ContentCard title="4단계 워크플로우" color="pink">
-        {[
-          { step: 1, title: "재현성 검증 ✅", desc: "Builder 1 출력이 영상과 일치하는지 확인" },
-          { step: 2, title: "오마주 프롬프트 생성 🎬", desc: "원본을 존중하는 이미지 프롬프트" },
-          { step: 3, title: "변주 프롬프트 생성 🎭", desc: "나의 프로필을 반영한 창의적 변형" },
-          { step: 4, title: "원본 파일 다운로드 📥", desc: "이미지/영상 생성에 바로 사용 가능!" },
-        ].map((s) => (
-          <div key={s.step} className="mb-4 last:mb-0">
-            <div className="flex items-center gap-3 mb-1">
-              <span className="w-6 h-6 rounded-full bg-pink-500/20 text-pink-400 text-xs font-bold flex items-center justify-center">
-                {s.step}
-              </span>
-              <h4 className="text-white font-medium">{s.title}</h4>
-            </div>
-            <p className="ml-9 text-sm text-slate-400">{s.desc}</p>
-          </div>
-        ))}
       </ContentCard>
     </div>
   );
@@ -922,6 +938,25 @@ function FlowStepLink({ emoji, text, tab, subtle }: { emoji: string; text: strin
       <span className="mr-2">{emoji}</span>
       <span className={subtle ? "text-slate-500 hover:text-slate-300" : "text-slate-300"}>{text}</span>
     </Link>
+  );
+}
+
+function FlowStepExternal({ emoji, text, href, subtle }: { emoji: string; text: string; href: string; subtle?: boolean }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`px-4 py-2 rounded-xl transition-all hover:scale-105 cursor-pointer flex items-center gap-2 ${
+        subtle
+          ? "bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20"
+          : "bg-white/10 border border-white/10 hover:bg-violet-500/20 hover:border-violet-500/30"
+      }`}
+    >
+      <span>{emoji}</span>
+      <span className={subtle ? "text-slate-500 hover:text-slate-300" : "text-slate-300"}>{text}</span>
+      <ExternalLink className="w-3 h-3 text-slate-500" />
+    </a>
   );
 }
 
