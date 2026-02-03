@@ -818,11 +818,19 @@ export interface ConstellationUpdateData {
 
 
 class ApiClient {
+  private getCsrfToken(): string | undefined {
+    if (typeof document === "undefined") return undefined;
+    const match = document.cookie.match(/csrf_token=([^;]+)/);
+    return match?.[1];
+  }
+
   private buildHeaders(extra?: HeadersInit): Record<string, string> {
+    const csrfToken = this.getCsrfToken();
     const base: Record<string, string> = {
       "Content-Type": "application/json",
       ...(USER_ID ? { "X-User-Id": USER_ID } : {}),
       ...(ADMIN_MODE ? { "X-Admin-Mode": ADMIN_MODE } : {}),
+      ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
     };
 
     if (!extra) return base;
@@ -973,6 +981,15 @@ class ApiClient {
 
   async getSession(): Promise<AuthSession> {
     return this.request<AuthSession>("/api/v1/auth/session");
+  }
+
+  /**
+   * Ensure CSRF token is available.
+   * Call this if you get CSRF errors on existing sessions.
+   * Note: getSession() now auto-sets CSRF token if missing.
+   */
+  async refreshCsrfToken(): Promise<{ csrf_token: string }> {
+    return this.request<{ csrf_token: string }>("/api/v1/auth/csrf");
   }
 
   async getAgentSession(sessionId: string): Promise<AgentSessionResponse> {

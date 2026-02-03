@@ -18,7 +18,10 @@ from app.auth_tokens import create_token, decode_token
 from app.config import settings
 from app.credit_service import get_or_create_user_credits
 from app.database import get_db
+from app.middleware.csrf import generate_csrf_token
 from app.models import UserAccount
+
+CSRF_COOKIE_NAME = "csrf_token"
 
 router = APIRouter()
 
@@ -227,6 +230,16 @@ async def google_callback(
         secure=settings.COOKIE_SECURE,
         domain=settings.COOKIE_DOMAIN or None,
     )
+    # Set CSRF token cookie (must be readable by JS, so httponly=False)
+    response.set_cookie(
+        CSRF_COOKIE_NAME,
+        generate_csrf_token(),
+        max_age=settings.SESSION_TTL_SECONDS,
+        httponly=False,
+        samesite="lax",
+        secure=settings.COOKIE_SECURE,
+        domain=settings.COOKIE_DOMAIN or None,
+    )
     return response
 
 
@@ -239,7 +252,8 @@ async def get_session(request: Request) -> JSONResponse:
     payload = decode_token(token, settings.SESSION_SECRET.get_secret_value()) if token else None
     if not payload:
         return JSONResponse({"authenticated": False})
-    return JSONResponse(
+
+    response = JSONResponse(
         {
             "authenticated": True,
             "user": {
@@ -252,12 +266,60 @@ async def get_session(request: Request) -> JSONResponse:
         }
     )
 
+    # Auto-set CSRF token if missing (for existing sessions before CSRF was added)
+    if not request.cookies.get(CSRF_COOKIE_NAME):
+        response.set_cookie(
+            CSRF_COOKIE_NAME,
+            generate_csrf_token(),
+            max_age=settings.SESSION_TTL_SECONDS,
+            httponly=False,
+            samesite="lax",
+            secure=settings.COOKIE_SECURE,
+            domain=settings.COOKIE_DOMAIN or None,
+        )
+
+    return response
+
+
+@router.get("/csrf")
+async def get_csrf_token(request: Request) -> JSONResponse:
+    """Get or refresh CSRF token.
+
+    This endpoint sets a new CSRF token cookie for authenticated users.
+    Useful for:
+    - Existing sessions that don't have a CSRF token yet
+    - Refreshing CSRF tokens periodically
+
+    Returns 401 if not authenticated.
+    """
+    token = request.cookies.get(settings.SESSION_COOKIE_NAME)
+    if not token and request.headers.get("Authorization", "").lower().startswith("bearer "):
+        token = request.headers.get("Authorization").split(" ", 1)[1].strip()
+
+    payload = decode_token(token, settings.SESSION_SECRET.get_secret_value()) if token else None
+    if not payload:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    csrf_token = generate_csrf_token()
+    response = JSONResponse({"csrf_token": csrf_token})
+    response.set_cookie(
+        CSRF_COOKIE_NAME,
+        csrf_token,
+        max_age=settings.SESSION_TTL_SECONDS,
+        httponly=False,
+        samesite="lax",
+        secure=settings.COOKIE_SECURE,
+        domain=settings.COOKIE_DOMAIN or None,
+    )
+    return response
+
 
 @router.post("/logout")
 @limiter.limit(RATE_LIMIT_AUTH_LOGIN)
 async def logout(request: Request) -> JSONResponse:
     response = JSONResponse({"success": True})
     response.delete_cookie(settings.SESSION_COOKIE_NAME)
+    response.delete_cookie(CSRF_COOKIE_NAME)
     return response
 
 
