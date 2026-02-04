@@ -145,7 +145,8 @@ const RecursiveJson: React.FC<{
   path: string;
   updatedFields: Set<string>;
   depth?: number;
-}> = ({ data, path, updatedFields, depth = 0 }) => {
+  isLightMode?: boolean;
+}> = ({ data, path, updatedFields, depth = 0, isLightMode = false }) => {
   const [isExpanded, setIsExpanded] = React.useState(depth < 2);
   const isUpdated = updatedFields.has(path);
 
@@ -183,6 +184,7 @@ const RecursiveJson: React.FC<{
               path={`${path}[${index}]`}
               updatedFields={updatedFields}
               depth={depth + 1}
+              isLightMode={isLightMode}
             />
             {index < data.length - 1 && <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>,</span>}
           </div>
@@ -232,6 +234,7 @@ const RecursiveJson: React.FC<{
                     path={childPath}
                     updatedFields={updatedFields}
                     depth={depth + 1}
+                    isLightMode={isLightMode}
                   />
                   {index < keys.length - 1 && <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>,</span>}
                 </div>
@@ -535,12 +538,13 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
           </>
         ) : (
           /* JSON Full View */
-          <div className="p-3 rounded-lg ${isLightMode ? 'bg-amber-50 border border-amber-200' : 'bg-void-900 border border-void-700'} font-mono text-[11px] overflow-x-auto">
+          <div className={`p-3 rounded-lg font-mono text-[11px] overflow-x-auto ${isLightMode ? 'bg-amber-50 border border-amber-200' : 'bg-void-900 border border-void-700'}`}>
             <RecursiveJson
               data={personaData}
               path=""
               updatedFields={lastUpdatedFields}
               depth={0}
+              isLightMode={isLightMode}
             />
           </div>
         )}
