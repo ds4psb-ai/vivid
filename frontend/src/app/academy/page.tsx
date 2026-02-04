@@ -16,7 +16,7 @@ const TOOL_LINKS = {
   antigravity: "https://antigravity.google",
 };
 
-type TabKey = "home" | "setup" | "anchor" | "builder1" | "vibe" | "builder2" | "image" | "video" | "homework";
+type TabKey = "home" | "setup" | "credit" | "anchor" | "builder1" | "vibe" | "builder2" | "image" | "video" | "homework";
 
 const NAV_SECTIONS = [
   {
@@ -24,6 +24,7 @@ const NAV_SECTIONS = [
     items: [
       { key: "home" as TabKey, label: "홈 대시보드", icon: "dashboard" },
       { key: "setup" as TabKey, label: "환경 설정", icon: "settings" },
+      { key: "credit" as TabKey, label: "$300 무료 크레딧", icon: "redeem" },
       { key: "anchor" as TabKey, label: "기준 프레임", icon: "aspect_ratio" },
     ],
   },
@@ -201,6 +202,7 @@ function AcademyContent() {
           <div className="flex-1 overflow-y-auto p-8 relative z-10">
             {activeTab === "home" && <HomeContent setActiveTab={(tab) => startTransition(() => setActiveTab(tab))} />}
             {activeTab === "setup" && <SetupContent />}
+            {activeTab === "credit" && <CreditContent />}
             {activeTab === "anchor" && <AnchorContent />}
             {activeTab === "builder1" && <Builder1Content />}
             {activeTab === "vibe" && <VibeContent />}
@@ -561,14 +563,113 @@ function Builder2Content() {
           <div className="flex gap-3"><span className="text-pink-400 font-bold">3.</span><span className="text-gray-300">STEP 1~4 순서대로 진행</span></div>
           <div className="flex gap-3"><span className="text-pink-400 font-bold">4.</span><span className="text-gray-300">결과물 다운로드</span></div>
         </div>
-      </ContentCard>
-      <ContentCard>
-        <h3 className="text-lg font-bold text-white mb-4">오마주 vs 변주</h3>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div><p className="text-blue-400 font-medium mb-1">🎬 오마주</p><p className="text-gray-400">원본 구도 유지, 캐릭터만 교체</p></div>
-          <div><p className="text-pink-400 font-medium mb-1">🎭 변주</p><p className="text-gray-400">구도 유지, 상황/맥락 변형</p></div>
+        <div className="mt-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+          <p className="text-blue-300 text-sm">📥 다운로드가 안 될 때? → "RAW" 버튼 클릭하면 전체 원본 다운로드 가능!</p>
         </div>
       </ContentCard>
+      <ContentCard>
+        <h3 className="text-lg font-bold text-white mb-4">⚠️ 헷갈리기 쉬운 포인트</h3>
+        <div className="space-y-4 text-sm">
+          <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+            <p className="text-yellow-300 font-medium mb-2">Builder 1 결과물 ≠ 오마주 결과물</p>
+            <div className="space-y-1 text-gray-400">
+              <p>• <span className="text-gray-300">Builder 1 IMAGE:</span> 원본 그대로 분석 (외국인 캐릭터 유지)</p>
+              <p>• <span className="text-gray-300">오마주 IMAGE:</span> 한국인 버전으로 새로 작성 (완전히 다른 프롬프트!)</p>
+            </div>
+          </div>
+        </div>
+      </ContentCard>
+      <ContentCard>
+        <h3 className="text-lg font-bold text-white mb-4">결과물 한눈에 보기</h3>
+        <div className="grid grid-cols-1 gap-3 text-sm">
+          <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+            <p className="text-blue-400 font-medium mb-1">🎬 오마주 IMAGE</p>
+            <p className="text-gray-400">한국인 버전 NanoBanana + Midjourney 프롬프트</p>
+          </div>
+          <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+            <p className="text-blue-400 font-medium mb-1">🎬 오마주 MOTION</p>
+            <p className="text-gray-400">Kling + Veo 영상 프롬프트</p>
+          </div>
+          <div className="p-3 rounded-lg bg-pink-500/10 border border-pink-500/20">
+            <p className="text-pink-400 font-medium mb-1">🎭 변주 IMAGE</p>
+            <p className="text-gray-400">상황/배경 바꾼 이미지 프롬프트</p>
+          </div>
+          <div className="p-3 rounded-lg bg-pink-500/10 border border-pink-500/20">
+            <p className="text-pink-400 font-medium mb-1">🎭 변주 MOTION</p>
+            <p className="text-gray-400">상황/배경 바꾼 영상 프롬프트</p>
+          </div>
+        </div>
+      </ContentCard>
+    </div>
+  );
+}
+
+// ============ Credit Content ============
+const FREE_TRIAL_URL = "https://console.cloud.google.com/freetrial/signup/tos?facet_url=https:%2F%2Fcloud.google.com%2Ffree&facet_utm_source=google&facet_utm_campaign=17100102-GCP-DR-APAC-KR-ko-Google-BKWS-MIX-GenericCloud&facet_utm_medium=cpc";
+
+function CreditContent() {
+  return (
+    <div className="max-w-3xl mx-auto space-y-8">
+      <PageHeader title="$300 무료 크레딧" sub="Google Cloud 가입만 하면 40만원 상당 공짜!" />
+
+      {/* Step 1 */}
+      <ContentCard highlight>
+        <h3 className="text-lg font-bold text-white mb-4">1️⃣ 무료 크레딧 신청하기</h3>
+        <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 mb-4">
+          <p className="text-emerald-300 text-sm">💡 왜 필요해요? → 사용량 제한 없이 가장 빠르게 AI 사용 가능!</p>
+        </div>
+        <div className="space-y-3 text-sm text-gray-300 mb-4">
+          <p>1. 아래 버튼 클릭해서 신청 페이지로 이동</p>
+          <p>2. Google 계정으로 로그인</p>
+          <p>3. 결제 정보 입력 (걱정 마세요!)</p>
+        </div>
+        <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 mb-6">
+          <p className="text-blue-300 text-sm">🔒 결제 정보 입력해도 <strong>바로 결제 안 됨!</strong></p>
+          <p className="text-blue-300 text-sm">→ $300 무료 크레딧 다 쓸 때까지 0원</p>
+          <p className="text-blue-300 text-sm">→ 유료 전환 버튼 안 누르면 자동 결제 없음</p>
+        </div>
+        <a
+          href={FREE_TRIAL_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-center rounded-xl transition-all"
+        >
+          $300 무료 크레딧 받으러 가기 →
+        </a>
+      </ContentCard>
+
+      {/* Step 2 */}
+      <ContentCard>
+        <h3 className="text-lg font-bold text-white mb-4">2️⃣ API Key 만들기</h3>
+        <div className="space-y-3 text-sm text-gray-300 mb-4">
+          <div className="flex gap-3"><span className="text-emerald-400 font-bold">1.</span><span>아래 버튼 클릭 → Google AI Studio 이동</span></div>
+          <div className="flex gap-3"><span className="text-emerald-400 font-bold">2.</span><span>왼쪽 위 파란색 "Create API Key" 버튼 클릭</span></div>
+          <div className="flex gap-3"><span className="text-emerald-400 font-bold">3.</span><span>생성된 키(AIza...) 복사</span></div>
+        </div>
+        <a
+          href="https://aistudio.google.com/app/apikey"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block w-full py-3 bg-white/10 hover:bg-white/20 text-white font-medium text-center rounded-xl transition-all border border-white/20"
+        >
+          Google AI Studio 열기 →
+        </a>
+      </ContentCard>
+
+      {/* Step 3 */}
+      <ContentCard>
+        <h3 className="text-lg font-bold text-white mb-4">3️⃣ 키 입력하면 끝!</h3>
+        <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+          <p className="text-purple-300 text-sm mb-2">앱 사이드바 하단 → <strong>"API Key"</strong> 버튼 클릭</p>
+          <p className="text-purple-300 text-sm">→ 방금 복사한 키 붙여넣기</p>
+          <p className="text-purple-300 text-sm mt-2">🎉 완료! 이제 무제한으로 쓸 수 있어요</p>
+        </div>
+      </ContentCard>
+
+      {/* Footer */}
+      <div className="text-center text-xs text-gray-500">
+        🔒 API Key는 내 브라우저에만 저장되고 서버로 안 감
+      </div>
     </div>
   );
 }
