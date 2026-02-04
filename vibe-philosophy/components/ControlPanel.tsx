@@ -351,7 +351,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 <button
                   onClick={() => handleCalendarChange('solar')}
                   className={`flex-1 py-2 rounded-md text-xs font-bold transition-all ${profile.calendarType === 'solar'
-                    ? 'bg-gold-500 text-void-950 shadow-sm'
+                    ? isLightMode ? 'bg-amber-500 text-white shadow-sm' : 'bg-gold-500 text-void-950 shadow-sm'
                     : isLightMode ? 'text-amber-400 hover:text-amber-600' : 'text-gray-500 hover:text-gray-300'
                     }`}
                 >
@@ -735,8 +735,12 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           onClick={onStartSession}
           disabled={isAnalyzingUser || isAnalyzingPartner}
           className={`w-full py-5 rounded-xl flex items-center justify-center gap-3 font-bold tracking-wide text-base transition-all duration-500 shadow-lg ${isSessionActive
-            ? 'bg-void-800 border border-gold-500/30 text-gold-400 hover:bg-gold-500/10'
-            : 'bg-gradient-to-r from-gold-600 to-gold-400 text-void-950 hover:from-gold-500 hover:to-gold-300 shadow-[0_0_20px_rgba(212,175,55,0.2)]'
+            ? isLightMode
+              ? 'bg-amber-100 border border-amber-400 text-amber-700 hover:bg-amber-200'
+              : 'bg-void-800 border border-gold-500/30 text-gold-400 hover:bg-gold-500/10'
+            : isLightMode
+              ? 'bg-gradient-to-r from-amber-500 to-amber-400 text-white hover:from-amber-400 hover:to-amber-300 shadow-[0_0_20px_rgba(245,158,11,0.3)]'
+              : 'bg-gradient-to-r from-gold-600 to-gold-400 text-void-950 hover:from-gold-500 hover:to-gold-300 shadow-[0_0_20px_rgba(212,175,55,0.2)]'
             }`}
         >
           <Play size={16} fill="currentColor" />
@@ -746,7 +750,11 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         {isSessionActive && (
           <button
             onClick={onReset}
-            className="w-full py-3 rounded-xl text-gray-500 hover:text-red-400 hover:bg-red-500/5 transition-all text-sm tracking-wide font-medium"
+            className={`w-full py-3 rounded-xl transition-all text-sm tracking-wide font-medium ${
+              isLightMode
+                ? 'text-amber-500 hover:text-red-500 hover:bg-red-50'
+                : 'text-gray-500 hover:text-red-400 hover:bg-red-500/5'
+            }`}
           >
             초기화
           </button>
