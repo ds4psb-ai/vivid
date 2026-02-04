@@ -96,7 +96,8 @@ const App: React.FC = () => {
     setStatus('THINKING');
 
     try {
-      const response = await sendUserFeedback(text);
+      // Pass currentStep to inject Persona/comments at STEP 3 (when currentStep === 2)
+      const response = await sendUserFeedback(text, currentStep);
 
       let nextStep = currentStep;
       if (currentStep < 4) {

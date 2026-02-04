@@ -203,6 +203,12 @@ Constraints: No modern LED lighting, no stabilized footage, no digital look
 
 ### STEP 3: 변주 옵션 생성
 
+**📌 STEP 3 추가 입력:**
+- 사용자가 "변주"를 입력하면 **Persona JSON**과 **베스트 댓글**이 함께 제공됩니다.
+- **Persona**: 개인화된 변주 아이디어 (의상 스타일, 문화적 디테일 등)에 활용
+- **베스트 댓글**: 바이럴 포인트 강화 (댓글에서 언급된 요소를 변주에 반영)
+- 제공되지 않으면 기본 한국인 90년대 스타일로 진행
+
 **Action:** Propose 3 variations (8%, 15%, 18%)
 
 **📌 캐릭터 없는 영상의 변주:**
